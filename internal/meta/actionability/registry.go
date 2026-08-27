@@ -19,6 +19,9 @@ func canonicalExecutors() []Executor {
 	result = append(result, Executor{Operation: "bind-indicator-meta-program",
 		Activity: "BindIndicatorMetaProgram", ProofChoice: "coherence", Registry: "meta-binding",
 		Executor: "bootstrap/meta-binding-witness", Evaluator: "bootstrap/meta-binding-witness:check"})
+	result = append(result, Executor{Operation: "measure-integration-progress",
+		Activity: "MeasureIntegrationProgress", ProofChoice: "foundation", Registry: "integration-progress",
+		Executor: "cmd/integration-progress-witness", Evaluator: "cmd/integration-progress-witness:check"})
 	result = append(result, Executor{Operation: "partition-directory",
 		Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy",
 		Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"})

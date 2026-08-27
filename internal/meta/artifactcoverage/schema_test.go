@@ -11,8 +11,8 @@ func TestCanonicalProgramIsMetaBound(t *testing.T) {
 	if err := Validate(program); err != nil {
 		t.Fatal(err)
 	}
-	if len(program.ArtifactBindings) != 5 {
-		t.Fatalf("artifact bindings = %d, want 5", len(program.ArtifactBindings))
+	if len(program.ArtifactBindings) != 6 {
+		t.Fatalf("artifact bindings = %d, want 6", len(program.ArtifactBindings))
 	}
 }
 
