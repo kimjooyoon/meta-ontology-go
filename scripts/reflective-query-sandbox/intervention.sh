@@ -43,4 +43,12 @@ jq -e '
   .nonsemantic_intervention.claim_state_after == "DISCHARGED"
 ' "$output" >/dev/null
 
-echo 'reflective query sandbox interventions: PASS semantic relation changed; comment preserved semantic query'
+{
+	echo '## Reflective query sandbox interventions'
+	echo
+	echo '| Case | Field | Payload | API outcome | Decision/resolution | Authority | Graph before | Original after | Returned graph | Claim state |'
+	echo '|---|---|---|---|---|---|---|---|---|---|'
+	jq -r '"| Baseline | \(.base.mutation_field) | \(.base.mutation_payload) | \(.base.mutation_api_outcome) | \(.base.mutation_decision)/\(.base.mutation_resolution) | \(.base.mutation_authority) | \(.base.graph_digest_before) | \(.base.original_graph_digest_after) | \(.base.returned_graph_digest // "") | \(.base.claim_state) |", "| Semantic intervention | \(.semantic_intervention.mutation_field_after) | \(.semantic_intervention.mutation_payload_after) | \(.semantic_intervention.mutation_api_outcome_after) | \(.semantic_intervention.mutation_decision_after)/\(.semantic_intervention.mutation_resolution_after) | \(.semantic_intervention.mutation_authority_after) | \(.semantic_intervention.graph_digest_before) | \(.semantic_intervention.original_graph_digest_after) | \(.semantic_intervention.returned_graph_digest_after // "") | \(.semantic_intervention.claim_state_after) |", "| Nonsemantic intervention | \(.nonsemantic_intervention.mutation_field_after) | \(.nonsemantic_intervention.mutation_payload_after) | \(.nonsemantic_intervention.mutation_api_outcome_after) | \(.nonsemantic_intervention.mutation_decision_after)/\(.nonsemantic_intervention.mutation_resolution_after) | \(.nonsemantic_intervention.mutation_authority_after) | \(.nonsemantic_intervention.graph_digest_before) | \(.nonsemantic_intervention.original_graph_digest_after) | \(.nonsemantic_intervention.returned_graph_digest_after // "") | \(.nonsemantic_intervention.claim_state_after) |"' "$output"
+} >> "${GITHUB_STEP_SUMMARY:-$output/summary.md}"
+
+echo 'reflective query sandbox interventions: PASS source-declared mutation changed; comment preserved semantics'

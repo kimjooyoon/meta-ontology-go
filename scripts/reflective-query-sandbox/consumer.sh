@@ -58,6 +58,16 @@ jq -e --arg sha "$HEAD_SHA" '
 	echo '|---|---:|'
 	jq -r '"| Safe exact queries | \(.contract.safe_queries) / \(.contract.reflective_queries) |", "| Denied mutation attempts | \(.contract.denied_mutations) |", "| Unknown targets preserved | \(.contract.unknown_targets) |", "| Indicators | \(.coordinates.satisfied) / \(.coordinates.total) |", "| Claim transitions | \(.contract.transition_count) |", "| Source reconstruction | \(.source_reconstruction.satisfied) / \(.source_reconstruction.total) |", "| Producer import boundary | \(.import_boundary.forbidden_imports_observed) <= \(.import_boundary.maximum_allowed); coordinate \(.producer_imports.satisfied)/\(.producer_imports.total) |", "| Net repository changes | \(.effects.net_repository_changes | length) |", "| Mutation authority | \(.effects.mutation_authority) |", "| Promotion credit | \(.promotion_credit_bps) bps |"' "$output/receipt.json"
 	echo
+	echo '### Mutation boundary evidence'
+	echo
+	jq -r '.attempts[] | select(.id == "mutation.attempt") | "| Field | API outcome | Decision | Before graph | Original after | Returned graph |", "|---|---|---|---|---|---|", "| source-declared | \(.api_outcome) | \(.decision)/\(.resolution) | \(.graph_digest_before) | \(.original_graph_digest_after) | \(.returned_graph_digest // "") |"' "$output/receipt.json"
+	echo
+	echo '### Claim predicates'
+	echo
+	echo '| Claim | Predicate | From→to | Stage/step/reason | Material digest |'
+	echo '|---|---|---|---|---|'
+	jq -r '.claims[] | select(.sequence % 2 == 0) | "| \(.claim_id) | \(.predicate_id) | \(.from)→\(.to) | \(.stage)/\(.step)/\(.reason) | \(.observed_material_digest // "") |"' "$output/receipt.json"
+	echo
 	echo 'The consumer is an independent verifier; the receipt grants no mutation or promotion authority.'
 } >> "${GITHUB_STEP_SUMMARY:-$output/summary.md}"
 
