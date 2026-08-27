@@ -30,7 +30,7 @@ func indicatorSpecs() []indicatorSpec {
 		{"projection.shared-decision", "GUARDRAIL", "audience-resolution.receipt", "all-audiences", "lift-global-decision", "COHERENCE", "projection", "decision", "subject decision is carried with local verification status"},
 		{"projection.resolution", "DRIVER", "audience-resolution.projector", "all-audiences", "preserve-projection-resolution", "COHERENCE", "projection", "resolution", "each audience keeps its fixed resolution label"},
 		{"counterexample.omission", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-omitted-coordinate", "REGRESSION", "counterexample", "missing", "executed omission changes the target evidence and decision"},
-		{"counterexample.contradiction", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-contradictory-observation", "REGRESSION", "counterexample", "executed contradiction changes the target evidence and decision"},
+		{"counterexample.contradiction", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-contradictory-observation", "REGRESSION", "counterexample", "contradiction", "executed contradiction changes the target evidence and decision"},
 		{"receipt.seal", "DRIVER", "audience-resolution.receipt", "independent.checker", "validate-receipt-digest", "REGRESSION", "receipt", "seal", "receipt is independently checkable after subject evaluation"},
 	}
 }

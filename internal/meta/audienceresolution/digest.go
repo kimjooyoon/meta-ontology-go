@@ -25,6 +25,16 @@ func digestJSON(value any) string {
 	return digestBytes(canonical)
 }
 
+func canonicalJSON(value any) []byte {
+	raw, _ := json.Marshal(value)
+	var normalized any
+	if json.Unmarshal(raw, &normalized) != nil {
+		return raw
+	}
+	canonical, _ := json.Marshal(normalized)
+	return canonical
+}
+
 func digestBytes(value []byte) string {
 	sum := sha256.Sum256(value)
 	return "sha256:" + hex.EncodeToString(sum[:])

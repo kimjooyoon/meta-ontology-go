@@ -123,9 +123,10 @@ func runProjection(input Input, ledger Ledger, model semanticSourceModel, replay
 		}
 		sourceArtifactPath, sourceArtifactDigest := "", ""
 		if spec.ID == "source.binding" {
-			sourceArtifactPath, sourceArtifactDigest, err = writeRawArtifact(input.ArtifactRoot, "current/source-binding-source.gooo", input.Source)
-			if err != nil {
-				return projectionRun{}, err
+			var sourceErr error
+			sourceArtifactPath, sourceArtifactDigest, sourceErr = writeRawArtifact(input.ArtifactRoot, "current/source-binding-source.gooo", input.Source)
+			if sourceErr != nil {
+				return projectionRun{}, sourceErr
 			}
 		}
 		if sourceArtifactPath != "" {
@@ -209,10 +210,24 @@ func executeCounterexample(input Input, model semanticSourceModel, baseline proj
 	if err != nil {
 		return CounterexampleResult{}, err
 	}
-	replay, err := replayForLedger(mutatedBytes, input.SourcePath, input.Source, model)
+	replayA, err := replayForLedger(mutatedBytes, input.SourcePath, input.Source, model)
 	if err != nil {
 		return CounterexampleResult{}, err
 	}
+	replayB, err := replayForLedger(mutatedBytes, input.SourcePath, input.Source, model)
+	if err != nil {
+		return CounterexampleResult{}, err
+	}
+	replayAPath, replayADigest, err := writeArtifact(input.ArtifactRoot, "counterexamples/"+safeArtifactName(counterexample.ID)+"-replay-a.json", json.RawMessage(replayA))
+	if err != nil {
+		return CounterexampleResult{}, err
+	}
+	replayBPath, replayBDigest, err := writeArtifact(input.ArtifactRoot, "counterexamples/"+safeArtifactName(counterexample.ID)+"-replay-b.json", json.RawMessage(replayB))
+	if err != nil {
+		return CounterexampleResult{}, err
+	}
+	replay := ReplayVerification{RunAPath: replayAPath, RunADigest: replayADigest, RunBPath: replayBPath, RunBDigest: replayBDigest,
+		Equal: bytes.Equal(replayA, replayB), CombinedDigest: digestBytes(append(append([]byte{}, replayA...), replayB...))}
 	force := map[string]string{}
 	if counterexample.Kind == "DECISION_CONTRADICTION" {
 		force[counterexample.TargetCoordinate] = "CONTRADICTORY"
