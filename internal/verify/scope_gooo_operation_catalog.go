@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/language-operation-catalog.yml",
 		"examples/language-operation-catalog",
 		"examples/language-syntax-roundtrip/corpus.json",
+		"internal/meta/languageassurance/verticalsliceclosureshadow",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
