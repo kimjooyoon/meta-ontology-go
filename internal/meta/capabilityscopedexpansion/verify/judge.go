@@ -391,9 +391,22 @@ func Judge(source, providerRaw, receiptRaw []byte) Verdict {
 	if !ok {
 		return invalid("receipt case is not a semantic source case")
 	}
+	if !reflect.DeepEqual(observed.Capabilities, rawCapabilities(item)) {
+		return invalid("receipt capabilities are not reconstructed from source values")
+	}
+	if !reflect.DeepEqual(observed.Evidence, rawEvidenceFor(model, provider, item)) {
+		return invalid("receipt evidence is not reconstructed from provider observations")
+	}
 	wantDecision, wantResolution, wantReason, wantUnknown := expected(model, provider, item)
 	if observed.Decision != wantDecision || observed.Resolution != wantResolution || observed.Reason != wantReason {
 		return invalid(fmt.Sprintf("decision reconstruction disagrees: want %s/%s/%s", wantDecision, wantResolution, wantReason))
+	}
+	wantEffect := "BLOCK"
+	if wantDecision == decisionAllow {
+		wantEffect = "NONE"
+	}
+	if observed.EnforcementEffect != wantEffect {
+		return invalid("receipt enforcement effect disagrees with reconstructed decision")
 	}
 	if err := validateUnknown(observed, wantUnknown); err != nil {
 		return invalid(err.Error())
@@ -514,6 +527,44 @@ func parseCase(fields map[string]string, declarations []declaration) (caseSpec, 
 		return caseSpec{}, fmt.Errorf("semantic case is incomplete")
 	}
 	return item, nil
+}
+
+func rawCapabilities(item caseSpec) []rawCapability {
+	capabilities := make([]rawCapability, 0, len(item.Requests))
+	for _, request := range item.Requests {
+		capabilities = append(capabilities, rawCapability{ValueID: request.ValueID, Kind: request.Kind, Operation: request.Operation, Target: request.Target})
+	}
+	return capabilities
+}
+
+func rawEvidenceFor(model sourceModel, provider providerObservation, item caseSpec) []rawEvidence {
+	evidence := make([]rawEvidence, 0, len(item.Requests))
+	for _, request := range item.Requests {
+		declaration, ok := findDeclaration(model.Declarations, request.ValueID)
+		if !ok || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target {
+			continue
+		}
+		if declaration.Evidence != currentEvidence {
+			continue
+		}
+		if declaration.Kind == "file" {
+			for _, observation := range provider.FileReads {
+				if observation.Target == declaration.Target && observation.Observed && observation.EvidenceClass == currentEvidence {
+					digest := digestBytes([]byte(request.ValueID + "=" + observation.ContentDigest))
+					evidence = append(evidence, rawEvidence{ValueID: request.ValueID, Observed: observation.ContentDigest, EvidenceClass: currentEvidence, EvidenceDigest: digest, Provenance: "provider.file.read"})
+				}
+			}
+		}
+		if declaration.Kind == "time" {
+			for _, observation := range provider.LogicalInputs {
+				if observation.Target == declaration.Target && observation.Observed && observation.EvidenceClass == currentEvidence {
+					digest := digestBytes([]byte(request.ValueID + "=" + observation.Value))
+					evidence = append(evidence, rawEvidence{ValueID: request.ValueID, Observed: observation.Value, EvidenceClass: currentEvidence, EvidenceDigest: digest, Provenance: "provider.logical.input"})
+				}
+			}
+		}
+	}
+	return evidence
 }
 
 func decodeProvider(raw []byte) (providerObservation, error) {
