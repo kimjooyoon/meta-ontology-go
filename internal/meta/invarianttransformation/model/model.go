@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 )
 
 const (
@@ -55,6 +56,7 @@ type ValueSpec struct {
 
 type CaseSpec struct {
 	ID                 string `json:"id"`
+	Activity           string `json:"activity"`
 	Kind               string `json:"kind"`
 	ExpectedDecision   string `json:"expected_decision"`
 	ExpectedResolution string `json:"expected_resolution"`
@@ -101,13 +103,25 @@ type Claim struct {
 
 type TransformationEvidence struct {
 	SourceDigest             string `json:"source_digest"`
+	InputValue               int64  `json:"input_value"`
+	CandidateOperation       string `json:"candidate_operation"`
+	CandidateResult          int64  `json:"candidate_result"`
+	ExpectedValue            int64  `json:"expected_value"`
+	Invariant                string `json:"invariant"`
 	CandidateDigest          string `json:"candidate_digest"`
 	SemanticBeforeDigest     string `json:"semantic_before_digest"`
 	SemanticAfterDigest      string `json:"semantic_after_digest"`
+	ExpectedSemanticDigest   string `json:"expected_semantic_digest"`
 	RegressionWitnessPresent bool   `json:"regression_witness_present"`
 	ReplayBeforeDigest       string `json:"replay_before_digest,omitempty"`
 	ReplayAfterDigest        string `json:"replay_after_digest,omitempty"`
 	ReplayCount              int    `json:"replay_count"`
+}
+
+type CandidateComputation struct {
+	Operation string `json:"operation"`
+	Input     int64  `json:"input"`
+	Output    int64  `json:"output"`
 }
 
 type Effect struct {
@@ -222,10 +236,10 @@ func CanonicalContract() Contract {
 			{ID: "regression-witness", Kind: "REGRESSION_WITNESS", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "replay-regression-witness", ProofChoice: ProofRegression, Coordinate: Coordinate{"REGRESSION", "replay-before-after", "REGRESSION_WITNESS"}},
 		},
 		Cases: []CaseSpec{
-			{ID: "preserved-translation", Kind: "PRESERVED", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 0},
-			{ID: "semantic-violation", Kind: "VIOLATION", ExpectedDecision: DecisionRefuted, ExpectedResolution: ResolutionInvariant, ExpectedReason: "SEMANTIC_POSTCONDITION_REFUTED", ExpectedStatus: StatusRefuted, ExpectedEffects: 0},
-			{ID: "missing-regression-witness", Kind: "EVIDENCE_MISSING", ExpectedDecision: DecisionBlocked, ExpectedResolution: ResolutionLower, ExpectedReason: "REGRESSION_WITNESS_MISSING", ExpectedStatus: StatusOpen, ExpectedEffects: 0},
-			{ID: "approved-artifact", Kind: "APPROVED_ARTIFACT", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 1},
+			{ID: "preserved-translation", Activity: "PreservedTranslation", Kind: "PRESERVED", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 0},
+			{ID: "semantic-violation", Activity: "SemanticViolation", Kind: "VIOLATION", ExpectedDecision: DecisionRefuted, ExpectedResolution: ResolutionInvariant, ExpectedReason: "SEMANTIC_POSTCONDITION_REFUTED", ExpectedStatus: StatusRefuted, ExpectedEffects: 0},
+			{ID: "missing-regression-witness", Activity: "MissingRegressionWitness", Kind: "EVIDENCE_MISSING", ExpectedDecision: DecisionBlocked, ExpectedResolution: ResolutionLower, ExpectedReason: "REGRESSION_WITNESS_MISSING", ExpectedStatus: StatusOpen, ExpectedEffects: 0},
+			{ID: "approved-artifact", Activity: "ApprovedArtifact", Kind: "APPROVED_ARTIFACT", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 1},
 		},
 	}
 }
@@ -241,6 +255,22 @@ func Digest(value any) string {
 		panic(err)
 	}
 	return DigestBytes(raw)
+}
+
+func SemanticDigest(value int64) string {
+	return Digest([]string{"int64", strconv.FormatInt(value, 10)})
+}
+
+func CandidateDigest(operation string, input, output int64) string {
+	return Digest(CandidateComputation{Operation: operation, Input: input, Output: output})
+}
+
+func PostconditionDigest(before, after, expected string) string {
+	return Digest([]string{before, after, expected})
+}
+
+func ReplayDigest(before, after string) string {
+	return Digest([]string{before, after, "replay-1"})
 }
 
 func SealReceipt(receipt Receipt) Receipt {

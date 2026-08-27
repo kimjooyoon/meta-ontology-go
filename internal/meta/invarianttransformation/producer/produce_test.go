@@ -8,13 +8,26 @@ import (
 
 const testHead = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
+const testSource = `package invarianttransformation
+namespace meta
+entity Transformation id "gooo://invariant-transformation/value/transformation"
+activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
+activity SemanticViolation() -> Transformation computes "case=semantic-violation;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
+activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=missing;effect=none"
+activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;replay=present;effect=approved-artifact"
+`
+
 func TestBuildUsesAllFourInvariantValues(t *testing.T) {
-	receipt, err := Build([]byte("package fixture\n"), testHead, "preserved-translation")
+	receipt, err := Build([]byte(testSource), testHead, "preserved-translation")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if receipt.Decision != model.DecisionAllowed || receipt.Resolution != model.ResolutionExact || len(receipt.Claims) != 4 || len(receipt.Values) != 4 {
 		t.Fatalf("receipt=%+v", receipt)
+	}
+	if receipt.Evidence.InputValue != 2 || receipt.Evidence.CandidateOperation != "add:1" || receipt.Evidence.CandidateResult != 3 || receipt.Evidence.ExpectedValue != 3 ||
+		receipt.Evidence.SemanticBeforeDigest != model.SemanticDigest(2) || receipt.Evidence.SemanticAfterDigest != model.SemanticDigest(3) {
+		t.Fatalf("source fixture was not executed: %+v", receipt.Evidence)
 	}
 	for index, claim := range receipt.Claims {
 		if claim.Status != model.StatusDischarged || len(claim.Transitions) != 1 || claim.Transitions[0].From != model.StatusOpen || claim.Transitions[0].To != model.StatusDischarged {
@@ -24,7 +37,7 @@ func TestBuildUsesAllFourInvariantValues(t *testing.T) {
 }
 
 func TestBuildRecordsApprovedArtifactWithoutWrite(t *testing.T) {
-	receipt, err := Build([]byte("package fixture\n"), testHead, "approved-artifact")
+	receipt, err := Build([]byte(testSource), testHead, "approved-artifact")
 	if err != nil {
 		t.Fatal(err)
 	}

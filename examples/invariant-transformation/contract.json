@@ -60,6 +60,7 @@
   "cases": [
     {
       "id": "preserved-translation",
+      "activity": "PreservedTranslation",
       "kind": "PRESERVED",
       "expected_decision": "AUTHORIZED",
       "expected_resolution": "EXACT",
@@ -69,6 +70,7 @@
     },
     {
       "id": "semantic-violation",
+      "activity": "SemanticViolation",
       "kind": "VIOLATION",
       "expected_decision": "REFUTED",
       "expected_resolution": "INVARIANT_ONLY",
@@ -78,6 +80,7 @@
     },
     {
       "id": "missing-regression-witness",
+      "activity": "MissingRegressionWitness",
       "kind": "EVIDENCE_MISSING",
       "expected_decision": "BLOCKED",
       "expected_resolution": "LOWER_RESOLUTION",
@@ -87,6 +90,7 @@
     },
     {
       "id": "approved-artifact",
+      "activity": "ApprovedArtifact",
       "kind": "APPROVED_ARTIFACT",
       "expected_decision": "AUTHORIZED",
       "expected_resolution": "EXACT",

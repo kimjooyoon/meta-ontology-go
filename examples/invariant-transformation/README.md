@@ -6,13 +6,14 @@ This source contract treats transformation authority as a four-part invariant:
 
 The producer emits a data-only receipt. The independent judge recomputes the
 decision from the fixed denominator and the receipt, so a producer cannot mint
-authority by changing the final decision field. The judge also replays the
-receipt's source/candidate/before/after digest relationships and the regression
-witness, so a valid receipt digest alone is not sufficient. `OPEN` means
-evidence is absent, `DISCHARGED` means the obligation has a bound witness, and
-`REFUTED` records a counterexample. Only four fixed cases are admitted: a
-preserved translation, a semantic violation, missing regression evidence, and
-an approved artifact.
+authority by changing the final decision field. Each case's `computes` value
+declares an integer input, an `add:n` candidate, an expected invariant value,
+replay availability, and effect policy. The producer and judge parse and
+execute those values independently; a valid receipt digest alone is not
+sufficient. `OPEN` means evidence is absent, `DISCHARGED` means the obligation
+has a bound witness, and `REFUTED` records a counterexample. Only four fixed
+cases are admitted: a preserved translation, a semantic violation, missing
+regression evidence, and an approved artifact.
 
 The approved artifact case records one separate `APPROVED_ARTIFACT_RECORDED`
 effect. It still has `repository_writes=0` and `mutation_authority=false`:
@@ -29,8 +30,9 @@ Isabelle/HOL and treats behavior preservation as the correctness condition.
 
 Those works do not make this small Gooo model a verified refactoring engine.
 Program equivalence is undecidable; a finite receipt can only prove the chosen
-invariant and its bounded witness. Translation validation can reject or raise
-false alarms when it cannot explain a transformation, and its validator has
-non-zero cost. This experiment therefore does not claim arbitrary-program
-semantic equivalence, completeness, toolchain correctness, repository writes,
-or promotion authority. `OPEN` and `REFUTED` are deliberately non-authorizing.
+invariant for four synthetic, bounded integer fixtures. Translation validation
+can reject or raise false alarms when it cannot explain a transformation, and
+its validator has non-zero cost. This experiment therefore does not claim
+arbitrary-program semantic equivalence, completeness, toolchain correctness,
+repository writes, arbitrary transformation authorization, or promotion
+authority. `OPEN` and `REFUTED` are deliberately non-authorizing.

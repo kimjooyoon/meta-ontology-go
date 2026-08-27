@@ -42,7 +42,7 @@ func main() {
 
 	report := buildReport(source, *headSHA, contract)
 	if *check {
-		if err := judge.ValidateReport(report); err != nil {
+		if err := judge.ValidateReport(report, source); err != nil {
 			fail(err.Error())
 		}
 	}
@@ -71,7 +71,7 @@ func buildReport(source []byte, headSHA string, contract model.Contract) model.R
 		if err != nil {
 			fail(err.Error())
 		}
-		judgment := judge.Judge(receipt)
+		judgment := judge.Judge(receipt, source)
 		satisfied := judgment.Independent && judgment.Decision == spec.ExpectedDecision && judgment.Resolution == spec.ExpectedResolution &&
 			judgment.Reason == spec.ExpectedReason && judgment.Status == spec.ExpectedStatus && len(receipt.Effects) == spec.ExpectedEffects
 		report.Cases = append(report.Cases, model.CaseResult{Spec: spec, Receipt: receipt, Judgment: judgment, Satisfied: satisfied})

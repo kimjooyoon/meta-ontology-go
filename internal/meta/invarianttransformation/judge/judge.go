@@ -6,12 +6,13 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 )
 
-// Judge is intentionally implemented without importing producer. It derives
-// the authority decision from the receipt's four claims and the fixed Gooo
-// contract, so the actor cannot also be its own judge.
-func Judge(receipt model.Receipt) model.Judgment {
+// Judge is intentionally implemented without importing producer. It parses
+// the checked-in Gooo source independently, re-executes its candidate, and
+// derives authority from the source-bound receipt evidence.
+func Judge(receipt model.Receipt, source []byte) model.Judgment {
 	if receipt.Schema != model.ReceiptSchema || !model.ValidHead(receipt.HeadSHA) ||
 		receipt.SourcePath != model.SourcePath || !model.ValidDigest(receipt.SourceDigest) ||
+		receipt.SourceDigest != model.DigestBytes(source) ||
 		receipt.ContractDigest != model.Digest(model.CanonicalContract()) {
 		return invalid("RECEIPT_IDENTITY_INVALID")
 	}
@@ -25,7 +26,15 @@ func Judge(receipt model.Receipt) model.Judgment {
 		len(receipt.Values) != len(contract.Values) {
 		return invalid("RECEIPT_CONTRACT_BINDING_INVALID")
 	}
-	if !validTransformationEvidence(receipt) {
+	spec, ok := caseSpec(contract, receipt.CaseID, receipt.CaseKind)
+	if !ok {
+		return invalid("RECEIPT_CONTRACT_BINDING_INVALID")
+	}
+	semantics, err := parseSourceSemantics(source, spec)
+	if err != nil {
+		return invalid("SOURCE_DECLARATION_INVALID")
+	}
+	if !validTransformationEvidence(receipt, semantics) {
 		return invalid("TRANSFORMATION_EVIDENCE_INVALID")
 	}
 
@@ -58,7 +67,7 @@ func Judge(receipt model.Receipt) model.Judgment {
 		if firstEvidence(claim.EvidenceDigests) != expectedEvidence(receipt, spec.ID) {
 			return invalid("CLAIM_EVIDENCE_NOT_REPLAYABLE")
 		}
-		if claim.Status != expectedClaimStatus(receipt.CaseKind, spec.ID) {
+		if claim.Status != expectedClaimStatus(receipt.Evidence, spec.ID) {
 			return invalid("CLAIM_STATUS_NOT_JUSTIFIED")
 		}
 		switch claim.Status {
@@ -83,11 +92,14 @@ func Judge(receipt model.Receipt) model.Judgment {
 			return invalid("EFFECT_NOT_BOUND_TO_CANDIDATE")
 		}
 	}
-	if receipt.CaseKind != "APPROVED_ARTIFACT" && len(receipt.Effects) != 0 {
+	if !semantics.ApprovedArtifact && len(receipt.Effects) != 0 {
 		return invalid("EFFECT_ON_NON_APPROVED_CASE")
 	}
-	if receipt.CaseKind == "APPROVED_ARTIFACT" && len(receipt.Effects) != 1 {
+	if semantics.ApprovedArtifact && len(receipt.Effects) != 1 {
 		return invalid("APPROVED_ARTIFACT_EFFECT_MISSING")
+	}
+	if len(receipt.Effects) != spec.ExpectedEffects {
+		return invalid("EFFECT_CONTRACT_MISMATCH")
 	}
 
 	judgment.Decision, judgment.Resolution, judgment.Reason = derive(receipt.Claims)
@@ -98,8 +110,8 @@ func Judge(receipt model.Receipt) model.Judgment {
 	return judgment
 }
 
-func ValidateReceipt(receipt model.Receipt) error {
-	judgment := Judge(receipt)
+func ValidateReceipt(receipt model.Receipt, source []byte) error {
+	judgment := Judge(receipt, source)
 	if !judgment.Independent {
 		return fmt.Errorf("independent judge rejected receipt: %s", judgment.Reason)
 	}
@@ -112,20 +124,34 @@ func invalid(reason string) model.Judgment {
 }
 
 func knownCase(contract model.Contract, id, kind string) bool {
-	for _, spec := range contract.Cases {
-		if spec.ID == id && spec.Kind == kind {
-			return true
-		}
-	}
-	return false
+	_, ok := caseSpec(contract, id, kind)
+	return ok
 }
 
-func validTransformationEvidence(receipt model.Receipt) bool {
+func caseSpec(contract model.Contract, id, kind string) (model.CaseSpec, bool) {
+	for _, spec := range contract.Cases {
+		if spec.ID == id && spec.Kind == kind {
+			return spec, true
+		}
+	}
+	return model.CaseSpec{}, false
+}
+
+func validTransformationEvidence(receipt model.Receipt, semantics sourceSemantics) bool {
 	evidence := receipt.Evidence
 	if evidence.SourceDigest != receipt.SourceDigest || !model.ValidDigest(evidence.SourceDigest) ||
-		!model.ValidDigest(evidence.CandidateDigest) || !model.ValidDigest(evidence.SemanticBeforeDigest) ||
-		!model.ValidDigest(evidence.SemanticAfterDigest) ||
-		evidence.CandidateDigest != model.Digest([]string{evidence.SourceDigest, evidence.SemanticBeforeDigest, evidence.SemanticAfterDigest, receipt.CaseKind}) {
+		evidence.InputValue != semantics.Input || evidence.CandidateOperation != semantics.CandidateOperation ||
+		evidence.CandidateResult != semantics.CandidateResult || evidence.ExpectedValue != semantics.Expected ||
+		evidence.Invariant != semantics.Invariant || !model.ValidDigest(evidence.CandidateDigest) ||
+		!model.ValidDigest(evidence.SemanticBeforeDigest) || !model.ValidDigest(evidence.SemanticAfterDigest) ||
+		!model.ValidDigest(evidence.ExpectedSemanticDigest) ||
+		evidence.CandidateDigest != model.CandidateDigest(semantics.CandidateOperation, semantics.Input, semantics.CandidateResult) ||
+		evidence.SemanticBeforeDigest != model.SemanticDigest(semantics.Input) ||
+		evidence.SemanticAfterDigest != model.SemanticDigest(semantics.CandidateResult) ||
+		evidence.ExpectedSemanticDigest != model.SemanticDigest(semantics.Expected) {
+		return false
+	}
+	if semantics.RegressionAvailable != evidence.RegressionWitnessPresent {
 		return false
 	}
 	if evidence.RegressionWitnessPresent {
@@ -134,19 +160,13 @@ func validTransformationEvidence(receipt model.Receipt) bool {
 			!model.ValidDigest(evidence.ReplayAfterDigest) {
 			return false
 		}
+		if model.ReplayDigest(evidence.ReplayBeforeDigest, evidence.ReplayAfterDigest) != expectedEvidence(receipt, "regression-witness") {
+			return false
+		}
 	} else if evidence.ReplayCount != 0 || evidence.ReplayBeforeDigest != "" || evidence.ReplayAfterDigest != "" {
 		return false
 	}
-	switch receipt.CaseKind {
-	case "PRESERVED", "APPROVED_ARTIFACT":
-		return evidence.SemanticBeforeDigest == evidence.SemanticAfterDigest && evidence.RegressionWitnessPresent
-	case "VIOLATION":
-		return evidence.SemanticBeforeDigest != evidence.SemanticAfterDigest && evidence.RegressionWitnessPresent
-	case "EVIDENCE_MISSING":
-		return evidence.SemanticBeforeDigest == evidence.SemanticAfterDigest && !evidence.RegressionWitnessPresent
-	default:
-		return false
-	}
+	return true
 }
 
 func expectedEvidence(receipt model.Receipt, valueID string) string {
@@ -157,23 +177,30 @@ func expectedEvidence(receipt model.Receipt, valueID string) string {
 	case "transformation":
 		return evidence.CandidateDigest
 	case "postcondition":
-		return model.Digest([]string{evidence.SemanticBeforeDigest, evidence.SemanticAfterDigest})
+		return model.PostconditionDigest(evidence.SemanticBeforeDigest, evidence.SemanticAfterDigest, evidence.ExpectedSemanticDigest)
 	case "regression-witness":
 		if !evidence.RegressionWitnessPresent {
 			return ""
 		}
-		return model.Digest([]string{evidence.ReplayBeforeDigest, evidence.ReplayAfterDigest, "replay-1"})
+		return model.ReplayDigest(evidence.ReplayBeforeDigest, evidence.ReplayAfterDigest)
 	default:
 		return ""
 	}
 }
 
-func expectedClaimStatus(caseKind, valueID string) string {
-	if caseKind == "VIOLATION" && (valueID == "postcondition" || valueID == "regression-witness") {
-		return model.StatusRefuted
-	}
-	if caseKind == "EVIDENCE_MISSING" && valueID == "regression-witness" {
-		return model.StatusOpen
+func expectedClaimStatus(evidence model.TransformationEvidence, valueID string) string {
+	switch valueID {
+	case "postcondition":
+		if evidence.SemanticAfterDigest != evidence.ExpectedSemanticDigest {
+			return model.StatusRefuted
+		}
+	case "regression-witness":
+		if !evidence.RegressionWitnessPresent {
+			return model.StatusOpen
+		}
+		if evidence.SemanticAfterDigest != evidence.ExpectedSemanticDigest {
+			return model.StatusRefuted
+		}
 	}
 	return model.StatusDischarged
 }

@@ -2156,8 +2156,10 @@ jobs:
             cmd/invariant-transformation-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
             internal/meta/invarianttransformation/producer/produce.go \
+            internal/meta/invarianttransformation/producer/source.go \
             internal/meta/invarianttransformation/producer/produce_test.go \
             internal/meta/invarianttransformation/judge/judge.go \
+            internal/meta/invarianttransformation/judge/source.go \
             internal/meta/invarianttransformation/judge/report.go \
             internal/meta/invarianttransformation/judge/judge_test.go)"
           test -z "$diff"
@@ -2165,7 +2167,7 @@ jobs:
       - name: Compile the Gooo value contract
         run: go run ./cmd/gooo check examples/invariant-transformation/main.gooo
 
-      - name: Run invariant model regressions
+      - name: Run source-bound invariant regressions
         run: go test ./internal/meta/invarianttransformation/...
 
       - name: Emit and independently judge every fixed case twice

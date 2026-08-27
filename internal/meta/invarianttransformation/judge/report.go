@@ -20,10 +20,10 @@ func Indicators(summary model.Summary) []model.Indicator {
 	}
 }
 
-func ValidateReport(report model.Report) error {
+func ValidateReport(report model.Report, source []byte) error {
 	contract := model.CanonicalContract()
 	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || report.SourcePath != model.SourcePath ||
-		!model.ValidDigest(report.SourceDigest) || report.ContractDigest != model.Digest(contract) || report.DenominatorID != model.DenominatorID ||
+		!model.ValidDigest(report.SourceDigest) || report.SourceDigest != model.DigestBytes(source) || report.ContractDigest != model.Digest(contract) || report.DenominatorID != model.DenominatorID ||
 		report.DenominatorTotal != len(contract.Cases) || report.Decision != model.DecisionPass || report.Resolution != model.ResolutionExact ||
 		report.Reason != "INVARIANT_TRANSFORMATION_SUITE_SATISFIED" || report.Digest != model.SealReport(report).Digest {
 		return fmt.Errorf("invariant transformation report identity or decision mismatch")
@@ -36,7 +36,7 @@ func ValidateReport(report model.Report) error {
 		if result.Spec != contract.Cases[index] || result.Receipt.CaseID != result.Spec.ID || result.Receipt.SourceDigest != report.SourceDigest {
 			return fmt.Errorf("case %s is not source-bound", result.Spec.ID)
 		}
-		judgment := Judge(result.Receipt)
+		judgment := Judge(result.Receipt, source)
 		if !judgment.Independent || judgment != result.Judgment || !result.Satisfied ||
 			judgment.Decision != result.Spec.ExpectedDecision || judgment.Resolution != result.Spec.ExpectedResolution ||
 			judgment.Reason != result.Spec.ExpectedReason || judgment.Status != result.Spec.ExpectedStatus ||

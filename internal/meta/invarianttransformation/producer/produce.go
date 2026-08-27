@@ -24,6 +24,32 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	if !model.ValidHead(headSHA) {
 		return model.Receipt{}, fmt.Errorf("invalid head sha %q", headSHA)
 	}
+	fixture, err := parseSourceFixture(source, spec)
+	if err != nil {
+		return model.Receipt{}, err
+	}
+
+	sourceDigest := model.DigestBytes(source)
+	semanticBefore := model.SemanticDigest(fixture.Input)
+	semanticAfter := model.SemanticDigest(fixture.CandidateResult)
+	expectedSemantic := model.SemanticDigest(fixture.Expected)
+	candidateDigest := model.CandidateDigest(fixture.CandidateOperation, fixture.Input, fixture.CandidateResult)
+	postconditionDigest := model.PostconditionDigest(semanticBefore, semanticAfter, expectedSemantic)
+	regressionDigest := ""
+	if fixture.RegressionAvailable {
+		regressionDigest = model.ReplayDigest(semanticBefore, semanticAfter)
+	}
+	evidence := model.TransformationEvidence{
+		SourceDigest: sourceDigest, InputValue: fixture.Input, CandidateOperation: fixture.CandidateOperation,
+		CandidateResult: fixture.CandidateResult, ExpectedValue: fixture.Expected, Invariant: fixture.Invariant,
+		CandidateDigest: candidateDigest, SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
+		ExpectedSemanticDigest: expectedSemantic, RegressionWitnessPresent: fixture.RegressionAvailable, ReplayCount: 0,
+	}
+	if fixture.RegressionAvailable {
+		evidence.ReplayBeforeDigest = semanticBefore
+		evidence.ReplayAfterDigest = semanticAfter
+		evidence.ReplayCount = 1
+	}
 
 	statuses := map[string]string{
 		"precondition":       model.StatusDischarged,
@@ -37,43 +63,22 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 		"postcondition":      "SEMANTIC_POSTCONDITION_PRESERVED",
 		"regression-witness": "REGRESSION_REPLAY_MATCHED",
 	}
-	if spec.Kind == "VIOLATION" {
+	if fixture.CandidateResult != fixture.Expected {
 		statuses["postcondition"] = model.StatusRefuted
-		statuses["regression-witness"] = model.StatusRefuted
 		reasons["postcondition"] = "SEMANTIC_POSTCONDITION_REFUTED"
-		reasons["regression-witness"] = "REGRESSION_REPLAY_REFUTED"
 	}
-	if spec.Kind == "EVIDENCE_MISSING" {
+	if !fixture.RegressionAvailable {
 		statuses["regression-witness"] = model.StatusOpen
 		reasons["regression-witness"] = "REGRESSION_WITNESS_MISSING"
-	}
-
-	sourceDigest := model.DigestBytes(source)
-	semanticBefore := model.DigestBytes([]byte("semantic-before\x00" + headSHA))
-	semanticAfter := semanticBefore
-	if spec.Kind == "VIOLATION" {
-		semanticAfter = model.DigestBytes([]byte("semantic-after-refuted\x00" + headSHA))
-	}
-	transformationDigest := model.Digest([]string{sourceDigest, semanticBefore, semanticAfter, spec.Kind})
-	regressionDigest := ""
-	if spec.Kind != "EVIDENCE_MISSING" {
-		regressionDigest = model.Digest([]string{semanticBefore, semanticAfter, "replay-1"})
-	}
-	evidence := model.TransformationEvidence{
-		SourceDigest: sourceDigest, CandidateDigest: transformationDigest,
-		SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
-		RegressionWitnessPresent: spec.Kind != "EVIDENCE_MISSING", ReplayCount: 0,
-	}
-	if evidence.RegressionWitnessPresent {
-		evidence.ReplayBeforeDigest = semanticBefore
-		evidence.ReplayAfterDigest = semanticAfter
-		evidence.ReplayCount = 1
+	} else if fixture.CandidateResult != fixture.Expected {
+		statuses["regression-witness"] = model.StatusRefuted
+		reasons["regression-witness"] = "REGRESSION_REPLAY_REFUTED"
 	}
 
 	claims := make([]model.Claim, 0, len(contract.Values))
 	values := make([]model.MetaValue, 0, len(contract.Values))
 	for _, valueSpec := range contract.Values {
-		evidence := evidenceFor(valueSpec.ID, sourceDigest, transformationDigest, semanticBefore, semanticAfter, regressionDigest)
+		evidence := evidenceFor(valueSpec.ID, sourceDigest, candidateDigest, postconditionDigest, regressionDigest)
 		claim := model.Claim{ID: valueSpec.ID, Status: statuses[valueSpec.ID], Reason: reasons[valueSpec.ID],
 			Coordinate:      model.Coordinate{Stage: valueSpec.Coordinate.Stage, Step: valueSpec.Coordinate.Step, Reason: reasons[valueSpec.ID]},
 			EvidenceDigests: evidenceDigests(evidence), Transitions: []model.Transition{{From: model.StatusOpen, To: statuses[valueSpec.ID], Coordinate: model.Coordinate{Stage: valueSpec.Coordinate.Stage, Step: valueSpec.Coordinate.Step, Reason: reasons[valueSpec.ID]}}}}
@@ -88,22 +93,22 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 		SourcePath: model.SourcePath, SourceDigest: sourceDigest, ContractDigest: model.Digest(contract), Producer: model.ProducerID,
 		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence,
 		Decision: decision, Resolution: resolution, Reason: reason, Effects: []model.Effect{}, RepositoryWrites: 0, MutationAuthority: false}
-	if spec.Kind == "APPROVED_ARTIFACT" {
+	if fixture.ApprovedArtifact {
 		receipt.Effects = append(receipt.Effects, model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved",
-			ArtifactDigest: transformationDigest, Producer: model.ProducerID, Consumer: model.ConsumerID,
+			ArtifactDigest: candidateDigest, Producer: model.ProducerID, Consumer: model.ConsumerID,
 			MetaOperation: "record-approved-artifact-effect", RepositoryWrites: 0, MutationAuthority: false})
 	}
 	return model.SealReceipt(receipt), nil
 }
 
-func evidenceFor(id, sourceDigest, transformationDigest, before, after, regression string) string {
+func evidenceFor(id, sourceDigest, candidate, postcondition, regression string) string {
 	switch id {
 	case "precondition":
 		return sourceDigest
 	case "transformation":
-		return transformationDigest
+		return candidate
 	case "postcondition":
-		return model.Digest([]string{before, after})
+		return postcondition
 	case "regression-witness":
 		return regression
 	default:

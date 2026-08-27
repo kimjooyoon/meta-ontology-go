@@ -14,9 +14,13 @@ Its producer emits a receipt containing the four values, their
 `stage/step/reason` coordinate. A separate judge derives the decision from the
 receipt and the fixed denominator. The receipt also carries a replayable
 evidence tuple: source digest, candidate digest, before/after semantic
-digests, and either one replay witness or an explicit missing-witness marker.
-The judge recomputes the candidate, postcondition, and replay digests; it does
-not merely trust status strings or a resealed authority decision.
+digests, expected semantic digest, and either one replay witness or an
+explicit missing-witness marker. Each fixed case is an actual `computes` value
+in the Gooo source: an `int64` input, an `add:n` candidate, an expected value,
+an invariant relation, replay availability, and effect policy. The producer
+and judge each parse and execute that declaration; the judge recomputes the
+candidate, postcondition, and replay digests from the source and receipt. It
+does not merely trust status strings or a resealed authority decision.
 
 ## State and effect model
 
@@ -54,9 +58,10 @@ The experiment is smaller and weaker than either line of work. Program
 equivalence is undecidable; finite evidence cannot prove arbitrary programs or
 all effects. A validator can be incomplete or report false alarms when it
 cannot explain a transformation, and validation has runtime cost. This model
-therefore proves only the chosen fixed invariant and bounded cases. It does
-not claim a verified refactoring engine, complete semantic equivalence,
-toolchain correctness, repository mutation, or promotion authority. The
-negative cases make the claim falsifiable: changing the semantic digest makes
-the postcondition `REFUTED`, and removing the replay witness leaves it
-`OPEN`.
+therefore makes only a synthetic, bounded claim over four explicitly declared
+integer fixtures; it does not authorize arbitrary transformations or claim a
+verified refactoring engine, complete semantic equivalence, toolchain
+correctness, repository mutation, or promotion authority. The negative cases
+make the claim falsifiable: changing the `.gooo` expected value changes the
+independently recomputed result to `REFUTED`, and removing the replay witness
+leaves it `OPEN`.
