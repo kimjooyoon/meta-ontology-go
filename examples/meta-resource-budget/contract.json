@@ -1,0 +1,33 @@
+{
+  "schema": "gooo/meta-resource-budget-contract/v1",
+  "id": "meta-resource-budget-v1",
+  "source_paths": [
+    "examples/meta-resource-budget/activity.gooo",
+    "examples/meta-resource-budget/entities.gooo"
+  ],
+  "entry": "PayOrder",
+  "samples_per_operation": 3,
+  "indicators": 22,
+  "operations": [
+    {"id":"source-check","stage":"LOWER","step":"parse-source","meta_operation":"observe-source-receipt","proof_choice":"FOUNDATION","output":"RECEIPT"},
+    {"id":"project-manifest","stage":"PROJECT","step":"project-operation-manifest","meta_operation":"project-generated-operation","proof_choice":"COHERENCE","output":"GENERATED"},
+    {"id":"replay-manifest","stage":"REPLAY","step":"replay-generated-artifact","meta_operation":"prove-generated-replay","proof_choice":"REGRESSION","output":"GENERATED"}
+  ],
+  "limits": {
+    "wall_time_ms": 2000,
+    "peak_rss_kib": 131072,
+    "receipt_bytes": 8192,
+    "generated_bytes": 16384
+  },
+  "not_claimed": [
+    "cross-run performance improvement",
+    "machine-independent resource bounds",
+    "business correctness",
+    "production readiness",
+    "hermetic build guarantee"
+  ],
+  "references": [
+    {"id":"github-hosted-runners","url":"https://docs.github.com/en/actions/reference/runners/github-hosted-runners"},
+    {"id":"bazel-hermeticity","url":"https://bazel.build/basics/hermeticity"}
+  ]
+}

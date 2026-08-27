@@ -1,0 +1,42 @@
+name: Meta resource budget
+
+on:
+  pull_request:
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  resource-envelope:
+    name: resource-envelope
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up exact Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Measure and reduce runner-scoped resource evidence
+        shell: bash
+        run: bash scripts/meta-resource-budget/main.sh
+      - name: Upload resource receipts and counterexamples
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: meta-resource-budget-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-resource-budget
+          if-no-files-found: error
+          retention-days: 30

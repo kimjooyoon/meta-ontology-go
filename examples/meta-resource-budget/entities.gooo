@@ -1,0 +1,5 @@
+package resourcebudget
+namespace resourcebudget
+
+entity Order id "gooo://resource-budget/order"
+entity Receipt id "gooo://resource-budget/receipt"

@@ -1,0 +1,4 @@
+package resourcebudget
+namespace resourcebudget
+
+activity PayOrder(Order) -> Receipt
