@@ -497,7 +497,11 @@ func claimTransitions(contract cf.Contract, spec cf.CaseSpec, scenarioID, claimI
 		transitions = append(transitions, makeTransition(contract, spec, scenarioID, claimID, propositionDigest, predicateID, 3, "DISCHARGED", "DISCHARGED", "PROMOTED", coordinate.Stage, coordinate.Step, reason, evidence.Predicate.EvidenceDigest))
 		return transitions
 	}
-	transitions = append(transitions, makeTransition(contract, spec, scenarioID, claimID, propositionDigest, predicateID, 2, state, state, status, "RESOLUTION", "await-repair-proof", reason, observation.SourceDigest))
+	observationEvidence := observation.SourceDigest
+	if observationEvidence == "" {
+		observationEvidence = observation.OutputDigest
+	}
+	transitions = append(transitions, makeTransition(contract, spec, scenarioID, claimID, propositionDigest, predicateID, 2, state, state, status, "RESOLUTION", "await-repair-proof", reason, observationEvidence))
 	transitions = append(transitions, makeTransition(contract, spec, scenarioID, claimID, propositionDigest, predicateID, 3, state, state, status, coordinate.Stage, coordinate.Step, coordinate.Reason, observation.OutputDigest))
 	return transitions
 }
