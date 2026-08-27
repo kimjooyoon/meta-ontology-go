@@ -1259,7 +1259,7 @@ jobs:
 
   meta-circular-boundary:
     name: Meta-circular boundary
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
