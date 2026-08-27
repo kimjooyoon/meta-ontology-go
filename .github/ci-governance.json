@@ -2324,6 +2324,20 @@
       "paths": [
         "docs/research/zerolang.md"
       ]
+    },
+    {
+      "branch": "agent/gooo-independent-artifact-oracle",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-artifact-oracle",
+        "examples/language-artifact-oracle",
+        "internal/meta/languageartifactoracle",
+        "internal/meta/languageconcept",
+        "internal/verify/scope_language_artifact_oracle.go",
+        "scripts/language-artifact-oracle"
+      ]
     }
   ],
   "protected_kernel_paths": [
