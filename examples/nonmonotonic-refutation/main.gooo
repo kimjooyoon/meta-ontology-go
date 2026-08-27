@@ -1,0 +1,17 @@
+package nonmonotonicrefutation
+namespace nonmonotonicrefutation
+
+entity Evidence id "gooo://nonmonotonic-refutation/entity/evidence"
+entity SupportingEvidence id "gooo://nonmonotonic-refutation/entity/supporting-evidence"
+entity Counterevidence id "gooo://nonmonotonic-refutation/entity/counterevidence"
+entity ClaimState id "gooo://nonmonotonic-refutation/entity/claim-state"
+entity Producer id "gooo://nonmonotonic-refutation/entity/producer"
+entity Consumer id "gooo://nonmonotonic-refutation/entity/consumer"
+entity MetaOperation id "gooo://nonmonotonic-refutation/entity/meta-operation"
+entity ProofChoice id "gooo://nonmonotonic-refutation/entity/proof-choice"
+entity TransitionReceipt id "gooo://nonmonotonic-refutation/entity/transition-receipt"
+
+activity ObserveSupportingEvidence(Evidence, Producer) -> SupportingEvidence
+activity AcceptCounterevidence(Evidence, SupportingEvidence, MetaOperation, ProofChoice) -> Counterevidence
+activity ReevaluateClaim(Counterevidence, SupportingEvidence, Consumer) -> ClaimState
+activity EmitAppendOnlyTransitionReceipt(ClaimState, Consumer) -> TransitionReceipt

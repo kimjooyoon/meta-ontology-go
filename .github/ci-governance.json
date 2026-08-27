@@ -660,6 +660,20 @@
       ]
     },
     {
+      "branch": "agent/luna-meta-23-nonmonotonic-refutation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/nonmonotonic-refutation.yml",
+        "cmd/nonmonotonic-refutation-consumer",
+        "cmd/nonmonotonic-refutation-producer",
+        "examples/nonmonotonic-refutation",
+        "internal/meta/nonmonotonicrefutation",
+        "internal/meta/nonmonotonicrefutationoracle",
+        "internal/verify/scope_luna_meta_23.go"
+      ]
+    },
+    {
       "branch": "agent/feedback-semantic-witness-v27",
       "paths": [
         ".github/agent-scope-table.md",

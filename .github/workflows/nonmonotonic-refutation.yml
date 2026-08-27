@@ -1,0 +1,164 @@
+name: Non-monotonic refutation experiment
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - ".github/workflows/nonmonotonic-refutation.yml"
+      - "cmd/nonmonotonic-refutation-producer/**"
+      - "cmd/nonmonotonic-refutation-consumer/**"
+      - "examples/nonmonotonic-refutation/**"
+      - "internal/meta/nonmonotonicrefutation/**"
+      - "internal/meta/nonmonotonicrefutationoracle/**"
+      - "go.mod"
+  push:
+    branches: [dev]
+    paths:
+      - ".github/workflows/nonmonotonic-refutation.yml"
+      - "cmd/nonmonotonic-refutation-producer/**"
+      - "cmd/nonmonotonic-refutation-consumer/**"
+      - "examples/nonmonotonic-refutation/**"
+      - "internal/meta/nonmonotonicrefutation/**"
+      - "internal/meta/nonmonotonicrefutationoracle/**"
+      - "go.mod"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nonmonotonic-refutation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: Produce source-bound evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Produce and replay source-bound evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/nonmonotonic-refutation/producer"
+          mkdir -p "$output"
+          source="examples/nonmonotonic-refutation/main.gooo"
+          for pass in first replay; do
+            go run ./cmd/nonmonotonic-refutation-producer \
+              -source "$source" -output "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/replay.json"
+          jq -e '
+            .schema == "gooo/meta-nonmonotonic-refutation-producer/v1" and
+            .contract.schema == "gooo/meta-nonmonotonic-refutation-contract/v1" and
+            .contract.fixed_claim_total == 3 and
+            .contract.fixed_transition_total == 6 and
+            (.contract.cases | length) == 3 and
+            .effects.repository_writes == 0 and
+            .effects.mutation_authority == false and
+            .source_path == "examples/nonmonotonic-refutation/main.gooo"
+          ' "$output/first.json"
+      - name: Upload producer evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: nonmonotonic-refutation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/nonmonotonic-refutation/producer/first.json
+          if-no-files-found: error
+          retention-days: 30
+
+  consumer:
+    name: Independently adjudicate revisions
+    needs: producer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Download producer evidence
+        uses: actions/download-artifact@v6
+        with:
+          name: nonmonotonic-refutation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/nonmonotonic-refutation/producer
+      - name: Run independent oracle regressions
+        run: go test ./internal/meta/nonmonotonicrefutation ./internal/meta/nonmonotonicrefutationoracle
+      - name: Require oracle independence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if go list -deps ./internal/meta/nonmonotonicrefutationoracle | \
+            grep -Fxq "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation"; then
+            echo "oracle imports the producer semantics" >&2
+            exit 1
+          fi
+      - name: Check the actual .gooo source
+        run: go run ./cmd/gooo check examples/nonmonotonic-refutation/main.gooo
+      - name: Adjudicate and replay the evidence sequence
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/nonmonotonic-refutation/consumer"
+          mkdir -p "$output"
+          source="examples/nonmonotonic-refutation/main.gooo"
+          producer="$RUNNER_TEMP/nonmonotonic-refutation/producer/first.json"
+          for pass in first replay; do
+            go run ./cmd/nonmonotonic-refutation-consumer \
+              -producer "$producer" -source "$source" -output "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/replay.json"
+          jq -e '
+            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v1" and
+            .report.decision == "PASS" and
+            .report.resolution == "EXACT" and
+            .report.reason == "NONMONOTONIC_REFUTATION_OBSERVED" and
+            .report.metrics.fixed_claim_total == 3 and
+            .report.metrics.transition_total == 6 and
+            .report.metrics.open_to_discharged_total == 3 and
+            .report.metrics.discharged_to_refuted_total == 2 and
+            .report.metrics.refuted_to_discharged_total == 1 and
+            .report.metrics.current_discharged_total == 2 and
+            .report.metrics.current_refuted_total == 1 and
+            .report.metrics.current_discharge_basis_points == 6666 and
+            .report.metrics.retained_state_total == 9 and
+            .report.metrics.non_monotonic_revision_total == 2 and
+            (.report.cases | length) == 3 and
+            (.report.transitions | length) == 6 and
+            .report.cases[0].status_history == ["OPEN", "DISCHARGED"] and
+            .report.cases[1].status_history == ["OPEN", "DISCHARGED", "REFUTED"] and
+            .report.cases[2].status_history == ["OPEN", "DISCHARGED", "REFUTED", "DISCHARGED"] and
+            (all(.report.cases[]; .history_retained == true)) and
+            .repository_writes == 0 and
+            .mutation_authority == false and
+            .replay_verified == true
+          ' "$output/first.json"
+      - name: Upload consumer receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: nonmonotonic-refutation-consumer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/nonmonotonic-refutation/consumer/first.json
+          if-no-files-found: error
+          retention-days: 30
