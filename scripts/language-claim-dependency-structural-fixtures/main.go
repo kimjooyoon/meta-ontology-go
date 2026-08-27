@@ -19,7 +19,9 @@ import (
 
 func main() {
 	evidencePath := flag.String("evidence", "", "valid evidence receipt containing a structural inventory")
-	caseName := flag.String("case", "", "missing, duplicate, additional, or replacement")
+	caseName := flag.String("case", "", "missing, duplicate, additional, replacement, contract-substitution, or edge-predicate")
+	replacementContractPath := flag.String("replacement-contract", "", "replacement external validator contract for contract-substitution")
+	replacementManifestPath := flag.String("replacement-manifest", "", "replacement external structural manifest for contract-substitution")
 	outputPath := flag.String("output", "", "resealed malformed evidence receipt")
 	flag.Parse()
 	if *evidencePath == "" || *caseName == "" || *outputPath == "" {
@@ -40,7 +42,49 @@ func main() {
 	if err := strictJSON(evidence.ObservationBundleRaw, &bundle); err != nil {
 		fail(err.Error())
 	}
-	bundle.StructuralContradictions = mutate(bundle.StructuralContradictions, *caseName)
+	if *caseName == "edge-predicate" {
+		mutated := false
+		for i := range bundle.Observations {
+			if bundle.Observations[i].Binding == "EDGE" {
+				bundle.Observations[i].ObservedPredicate = claimdependency.ObservationUnknown
+				bundle.Observations[i].ObservedValue = "edge-predicate-mutation"
+				bundle.Observations[i].ComparisonResult = "MISMATCH"
+				bundle.Observations[i].Digest = observationDigest(bundle.Observations[i])
+				mutated = true
+				break
+			}
+		}
+		if !mutated {
+			fail("fixture requires an edge observation")
+		}
+		evidence.Observations = append([]claimdependency.ObservationReceipt(nil), bundle.Observations...)
+	} else if *caseName == "contract-substitution" {
+		if *replacementContractPath == "" || *replacementManifestPath == "" {
+			fail("contract-substitution requires -replacement-contract and -replacement-manifest")
+		}
+		contractBytes, err := os.ReadFile(*replacementContractPath)
+		if err != nil {
+			fail(err.Error())
+		}
+		manifestBytes, err := os.ReadFile(*replacementManifestPath)
+		if err != nil {
+			fail(err.Error())
+		}
+		bundle.ContractPath = *replacementContractPath
+		bundle.ContractDigest = bytesDigest(contractBytes)
+		bundle.ContractRaw = contractBytes
+		bundle.StructuralManifestPath = *replacementManifestPath
+		bundle.StructuralManifestDigest = bytesDigest(manifestBytes)
+		bundle.StructuralManifestRaw = manifestBytes
+		evidence.ValidatorContractPath = *replacementContractPath
+		evidence.ValidatorContractDigest = bytesDigest(contractBytes)
+		evidence.ValidatorContractRaw = contractBytes
+		evidence.StructuralManifestPath = *replacementManifestPath
+		evidence.StructuralManifestDigest = bytesDigest(manifestBytes)
+		evidence.StructuralManifestRaw = manifestBytes
+	} else {
+		bundle.StructuralContradictions = mutate(bundle.StructuralContradictions, *caseName)
+	}
 	for i := range bundle.StructuralContradictions {
 		bundle.StructuralContradictions[i].Digest = structuralDigest(bundle.StructuralContradictions[i])
 	}
@@ -53,12 +97,24 @@ func main() {
 	evidence.ObservationBundleRaw = bundleBytes
 	evidence.ObservationBundleDigest = bundle.Digest
 	evidence.ObservationBundleRawDigest = bytesDigest(bundleBytes)
+	if *caseName != "edge-predicate" {
+		evidence.SemanticEvidenceDigest = claimdependency.SemanticEvidenceDigestForObservation(evidence)
+	}
 	evidence.Digest = ""
 	evidence.Digest = evidenceDigest(evidence)
 	writeJSON(*outputPath, evidence)
 }
 
 func structuralDigest(value claimdependency.StructuralContradiction) string {
+	value.Digest = ""
+	data, err := json.Marshal(value)
+	if err != nil {
+		fail(err.Error())
+	}
+	return bytesDigest(data)
+}
+
+func observationDigest(value claimdependency.ObservationReceipt) string {
 	value.Digest = ""
 	data, err := json.Marshal(value)
 	if err != nil {

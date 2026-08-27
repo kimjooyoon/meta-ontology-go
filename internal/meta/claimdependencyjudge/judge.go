@@ -30,6 +30,7 @@ const evidenceProcedure = "RAW_ARTIFACT_OBSERVATION_BINDING_V3"
 const observationSchema = "gooo.meta.claim-dependency-observation/v3"
 const observationBundleSchema = "gooo.meta.claim-dependency-observation-bundle/v2"
 const validatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v2"
+const structuralManifestSchema = "gooo.meta.claim-dependency-structural-manifest/v1"
 const failureReceiptSchema = "gooo.meta.claim-dependency-failure-receipt/v2"
 const failureProcedure = "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR_V2"
 
@@ -89,27 +90,30 @@ type observationReceipt struct {
 	Digest              string           `json:"digest"`
 }
 type observationBundle struct {
-	Schema                               string                    `json:"schema"`
-	Provider                             string                    `json:"provider"`
-	SourcePath                           string                    `json:"source_path"`
-	SourceDigest                         string                    `json:"source_digest"`
-	ArtifactPath                         string                    `json:"artifact_path"`
-	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
-	ContractPath                         string                    `json:"contract_path"`
-	ContractDigest                       string                    `json:"contract_digest"`
-	ContractRaw                          []byte                    `json:"contract_raw"`
-	FailureReceiptPath                   string                    `json:"failure_receipt_path,omitempty"`
-	FailureReceiptDigest                 string                    `json:"failure_receipt_digest,omitempty"`
-	FailureReceiptRaw                    []byte                    `json:"failure_receipt_raw,omitempty"`
-	Profile                              string                    `json:"profile"`
-	Observations                         []observationReceipt      `json:"observations"`
-	StructuralContradictions             []structuralContradiction `json:"structural_contradictions,omitempty"`
-	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
-	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
-	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
-	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
-	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
-	Digest                               string                    `json:"digest"`
+	Schema                          string                    `json:"schema"`
+	Provider                        string                    `json:"provider"`
+	SourcePath                      string                    `json:"source_path"`
+	SourceDigest                    string                    `json:"source_digest"`
+	ArtifactPath                    string                    `json:"artifact_path"`
+	ArtifactBytesDigest             string                    `json:"artifact_bytes_digest"`
+	ContractPath                    string                    `json:"contract_path"`
+	ContractDigest                  string                    `json:"contract_digest"`
+	ContractRaw                     []byte                    `json:"contract_raw"`
+	StructuralManifestPath          string                    `json:"structural_manifest_path"`
+	StructuralManifestDigest        string                    `json:"structural_manifest_digest"`
+	StructuralManifestRaw           []byte                    `json:"structural_manifest_raw"`
+	FailureReceiptPath              string                    `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest            string                    `json:"failure_receipt_digest,omitempty"`
+	FailureReceiptRaw               []byte                    `json:"failure_receipt_raw,omitempty"`
+	Profile                         string                    `json:"profile"`
+	Observations                    []observationReceipt      `json:"observations"`
+	StructuralContradictions        []structuralContradiction `json:"structural_contradictions,omitempty"`
+	StructuralInventoryTotal        int                       `json:"structural_inventory_total"`
+	SemanticOccurrenceNumerator     int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator   int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator   int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator int                       `json:"raw_provenance_binding_denominator"`
+	Digest                          string                    `json:"digest"`
 }
 type structuralContradiction struct {
 	ClaimID           string           `json:"claim_id"`
@@ -139,6 +143,13 @@ type validatorContract struct {
 	ExpectedArtifactPath   string           `json:"expected_artifact_path"`
 	ExpectedArtifactDigest string           `json:"expected_artifact_digest"`
 	Claims                 []validatorClaim `json:"claims"`
+}
+type structuralInventoryManifest struct {
+	Schema                        string   `json:"schema"`
+	ManifestID                    string   `json:"manifest_id"`
+	ContractID                    string   `json:"contract_id"`
+	EligibleClaimIDs              []string `json:"eligible_claim_ids"`
+	ExpectedContradictionClaimIDs []string `json:"expected_contradiction_claim_ids"`
 }
 type validatorClaim struct {
 	ClaimID                string `json:"claim_id"`
@@ -265,35 +276,42 @@ type snapshot struct {
 	Coordinate       coordinate `json:"coordinate"`
 }
 type evidenceReceipt struct {
-	Schema                               string                    `json:"schema"`
-	Provider                             string                    `json:"provider"`
-	SourcePath                           string                    `json:"source_path"`
-	SourceBytesDigest                    string                    `json:"source_bytes_digest"`
-	SourceGraphDigest                    string                    `json:"source_graph_digest"`
-	ArtifactPath                         string                    `json:"artifact_path"`
-	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
-	Operation                            string                    `json:"operation"`
-	RequestStatus                        string                    `json:"request_status"`
-	Procedure                            string                    `json:"procedure"`
-	ObservationPath                      string                    `json:"observation_path,omitempty"`
-	ObservationBundleDigest              string                    `json:"observation_bundle_digest,omitempty"`
-	ObservationBundleRawDigest           string                    `json:"observation_bundle_raw_digest,omitempty"`
-	ObservationBundleRaw                 []byte                    `json:"observation_bundle_raw,omitempty"`
-	Observations                         []observationReceipt      `json:"observations"`
-	StructuralContradictions             []structuralContradiction `json:"structural_contradictions,omitempty"`
-	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
-	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
-	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
-	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
-	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
-	ObservedPredicate                    predicate                 `json:"observed_predicate"`
-	ObservedValue                        string                    `json:"observed_value"`
-	Status                               string                    `json:"status"`
-	Coordinate                           coordinate                `json:"coordinate"`
-	Claims                               []evidenceClaim           `json:"claims"`
-	Capability                           capability                `json:"capability"`
-	Snapshot                             snapshot                  `json:"snapshot"`
-	Digest                               string                    `json:"digest"`
+	Schema                          string                    `json:"schema"`
+	Provider                        string                    `json:"provider"`
+	SourcePath                      string                    `json:"source_path"`
+	SourceBytesDigest               string                    `json:"source_bytes_digest"`
+	SourceGraphDigest               string                    `json:"source_graph_digest"`
+	ArtifactPath                    string                    `json:"artifact_path"`
+	ArtifactBytesDigest             string                    `json:"artifact_bytes_digest"`
+	Operation                       string                    `json:"operation"`
+	RequestStatus                   string                    `json:"request_status"`
+	Procedure                       string                    `json:"procedure"`
+	ObservationPath                 string                    `json:"observation_path,omitempty"`
+	ObservationBundleDigest         string                    `json:"observation_bundle_digest,omitempty"`
+	ObservationBundleRawDigest      string                    `json:"observation_bundle_raw_digest,omitempty"`
+	ObservationBundleRaw            []byte                    `json:"observation_bundle_raw,omitempty"`
+	ValidatorContractPath           string                    `json:"validator_contract_path"`
+	ValidatorContractDigest         string                    `json:"validator_contract_digest"`
+	ValidatorContractRaw            []byte                    `json:"validator_contract_raw"`
+	StructuralManifestPath          string                    `json:"structural_manifest_path"`
+	StructuralManifestDigest        string                    `json:"structural_manifest_digest"`
+	StructuralManifestRaw           []byte                    `json:"structural_manifest_raw"`
+	Observations                    []observationReceipt      `json:"observations"`
+	StructuralContradictions        []structuralContradiction `json:"structural_contradictions,omitempty"`
+	StructuralInventoryTotal        int                       `json:"structural_inventory_total"`
+	SemanticOccurrenceNumerator     int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator   int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator   int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator int                       `json:"raw_provenance_binding_denominator"`
+	ObservedPredicate               predicate                 `json:"observed_predicate"`
+	ObservedValue                   string                    `json:"observed_value"`
+	SemanticEvidenceDigest          string                    `json:"semantic_evidence_digest"`
+	Status                          string                    `json:"status"`
+	Coordinate                      coordinate                `json:"coordinate"`
+	Claims                          []evidenceClaim           `json:"claims"`
+	Capability                      capability                `json:"capability"`
+	Snapshot                        snapshot                  `json:"snapshot"`
+	Digest                          string                    `json:"digest"`
 }
 type subject struct {
 	SourcePath          string     `json:"source_path"`
@@ -456,13 +474,50 @@ type reconstructed struct {
 }
 
 func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptBytes []byte) (Judgment, error) {
+	return judgeWithExternalMaterials(source, sourcePath, priorBytes, evidenceBytes, receiptBytes, "", "")
+}
+
+// JudgeWithExternalMaterials is the CI entry point. The judge reads the
+// contract and structural manifest independently of the producer bundle and
+// requires every embedded copy to match those exact bytes.
+func JudgeWithExternalMaterials(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptBytes []byte, contractPath, manifestPath string) (Judgment, error) {
+	if contractPath == "" || manifestPath == "" {
+		return Judgment{}, fmt.Errorf("independent judge requires external validator contract and structural manifest")
+	}
+	return judgeWithExternalMaterials(source, sourcePath, priorBytes, evidenceBytes, receiptBytes, contractPath, manifestPath)
+}
+
+func judgeWithExternalMaterials(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptBytes []byte, contractPath, manifestPath string) (Judgment, error) {
 	current, err := reconstruct(source, sourcePath)
 	if err != nil {
 		return Judgment{}, err
 	}
+	externalContract, externalContractBytes, err := readValidatorContract(contractPath)
+	if err != nil {
+		return Judgment{}, err
+	}
+	externalManifest, externalManifestBytes, err := readStructuralInventoryManifest(manifestPath)
+	if err != nil {
+		return Judgment{}, err
+	}
+	if err := validateStructuralInventoryManifest(externalManifest, externalContract, current.Graph); err != nil {
+		return Judgment{}, err
+	}
+	for _, c := range current.Graph.Nodes {
+		material, ok := contractClaim(externalContract, c.ActivityName)
+		if !ok || !claimIdentityMatchesContract(c, material) {
+			return Judgment{}, fmt.Errorf("external validator contract claim inventory does not match source claim %q", c.ActivityName)
+		}
+	}
 	var evidence evidenceReceipt
 	if err := json.Unmarshal(evidenceBytes, &evidence); err != nil {
 		return Judgment{}, fmt.Errorf("decode raw evidence: %w", err)
+	}
+	if evidence.ValidatorContractPath != contractPath || evidence.ValidatorContractDigest != digestBytes(externalContractBytes) || !bytes.Equal(evidence.ValidatorContractRaw, externalContractBytes) {
+		return Judgment{}, fmt.Errorf("EXTERNAL_VALIDATOR_CONTRACT_MISMATCH: evidence is not bound to judge contract bytes")
+	}
+	if evidence.StructuralManifestPath != manifestPath || evidence.StructuralManifestDigest != digestBytes(externalManifestBytes) || !bytes.Equal(evidence.StructuralManifestRaw, externalManifestBytes) {
+		return Judgment{}, fmt.Errorf("EXTERNAL_STRUCTURAL_MANIFEST_MISMATCH: evidence is not bound to judge manifest bytes")
 	}
 	if err := validateEvidence(evidence); err != nil {
 		return Judgment{}, err
@@ -798,6 +853,9 @@ func validateEvidence(value evidenceReceipt) error {
 	if evidenceDigest(value) != value.Digest {
 		return fmt.Errorf("raw evidence digest invalid")
 	}
+	if value.SemanticEvidenceDigest != semanticEvidenceDigest(value) {
+		return fmt.Errorf("semantic evidence projection digest is invalid")
+	}
 	if value.Snapshot.BeforeDigest == "" || value.Snapshot.AfterDigest == "" || value.Snapshot.OutputPath == "" || value.Snapshot.RepositoryWrites != 0 || value.Snapshot.BeforeDigest != value.Snapshot.AfterDigest || value.Capability.Status != "CURRENT_EVIDENCE" || value.Capability.Toolchain.Name != "go" || value.Capability.Toolchain.Version != "go1.27.0" {
 		return fmt.Errorf("raw evidence effects or capability invalid")
 	}
@@ -814,6 +872,28 @@ func validateEvidence(value evidenceReceipt) error {
 	}
 	if digestBytes(sourceBytes) != value.SourceBytesDigest || sourceGraph.Graph.Digest != value.SourceGraphDigest {
 		return fmt.Errorf("raw evidence source bytes or graph digest changed")
+	}
+	var contract validatorContract
+	var manifest structuralInventoryManifest
+	contractComplete := value.ValidatorContractPath != "" && value.ValidatorContractDigest != "" && len(value.ValidatorContractRaw) != 0
+	manifestComplete := value.StructuralManifestPath != "" && value.StructuralManifestDigest != "" && len(value.StructuralManifestRaw) != 0
+	if !contractComplete || !manifestComplete {
+		if contractComplete || manifestComplete || value.ObservationPath != "" {
+			return fmt.Errorf("current observation lacks durable external validator materials")
+		}
+	} else {
+		if digestBytes(value.ValidatorContractRaw) != value.ValidatorContractDigest || strictJSON(value.ValidatorContractRaw, &contract) != nil {
+			return fmt.Errorf("external validator contract bytes are invalid")
+		}
+		if _, err := readValidatorContract(value.ValidatorContractPath); err != nil {
+			return fmt.Errorf("external validator contract path is not readable: %w", err)
+		}
+		if err := validateContractForGraph(contract, sourceGraph.Graph); err != nil {
+			return err
+		}
+		if digestBytes(value.StructuralManifestRaw) != value.StructuralManifestDigest || strictJSON(value.StructuralManifestRaw, &manifest) != nil || validateStructuralInventoryManifest(manifest, contract, sourceGraph.Graph) != nil || value.StructuralInventoryTotal != len(manifest.EligibleClaimIDs) {
+			return fmt.Errorf("external structural manifest binding is invalid")
+		}
 	}
 	artifactBytes, err := os.ReadFile(value.ArtifactPath)
 	if err != nil {
@@ -834,11 +914,14 @@ func validateEvidence(value evidenceReceipt) error {
 		if err := validateObservationBundle(observedBundle, value.SourcePath, sourceBytes, value.ArtifactPath, artifactBytes, sourceGraph.Graph); err != nil {
 			return err
 		}
-		if observedBundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, value.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, value.StructuralContradictions) || observedBundle.ExpectedStructuralContradictionTotal != value.ExpectedStructuralContradictionTotal || observedBundle.SemanticOccurrenceNumerator != value.SemanticOccurrenceNumerator || observedBundle.SemanticOccurrenceDenominator != value.SemanticOccurrenceDenominator || observedBundle.RawProvenanceBindingNumerator != value.RawProvenanceBindingNumerator || observedBundle.RawProvenanceBindingDenominator != value.RawProvenanceBindingDenominator {
+		if observedBundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, value.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, value.StructuralContradictions) || observedBundle.StructuralInventoryTotal != value.StructuralInventoryTotal || observedBundle.SemanticOccurrenceNumerator != value.SemanticOccurrenceNumerator || observedBundle.SemanticOccurrenceDenominator != value.SemanticOccurrenceDenominator || observedBundle.RawProvenanceBindingNumerator != value.RawProvenanceBindingNumerator || observedBundle.RawProvenanceBindingDenominator != value.RawProvenanceBindingDenominator {
 			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
 		}
+		if observedBundle.ContractPath != value.ValidatorContractPath || observedBundle.ContractDigest != value.ValidatorContractDigest || !bytes.Equal(observedBundle.ContractRaw, value.ValidatorContractRaw) || observedBundle.StructuralManifestPath != value.StructuralManifestPath || observedBundle.StructuralManifestDigest != value.StructuralManifestDigest || !bytes.Equal(observedBundle.StructuralManifestRaw, value.StructuralManifestRaw) {
+			return fmt.Errorf("embedded validator materials differ from evidence external materials")
+		}
 		observations = observedBundle.Observations
-	} else if len(value.Observations) != 0 || len(value.StructuralContradictions) != 0 || value.ObservationBundleDigest != "" || value.ObservationBundleRawDigest != "" || len(value.ObservationBundleRaw) != 0 || value.ExpectedStructuralContradictionTotal != 0 || value.SemanticOccurrenceNumerator != 0 || value.RawProvenanceBindingNumerator != 0 {
+	} else if len(value.Observations) != 0 || len(value.StructuralContradictions) != 0 || value.ObservationBundleDigest != "" || value.ObservationBundleRawDigest != "" || len(value.ObservationBundleRaw) != 0 || value.StructuralInventoryTotal != len(manifest.EligibleClaimIDs) || value.SemanticOccurrenceNumerator != 0 || value.RawProvenanceBindingNumerator != 0 {
 		return fmt.Errorf("raw evidence has observations without a raw bundle")
 	}
 	expectedStatus := "UNKNOWN"
@@ -882,7 +965,7 @@ func validateEvidenceClaims(value evidenceReceipt, g graph, artifactBytes []byte
 }
 
 func validateObservationBundle(bundle observationBundle, sourcePath string, source []byte, artifactPath string, artifact []byte, g graph) error {
-	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != sourcePath || bundle.SourceDigest != digestBytes(source) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.ContractPath == "" || bundle.ContractDigest == "" || len(bundle.ContractRaw) == 0 || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
+	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != sourcePath || bundle.SourceDigest != digestBytes(source) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.ContractPath == "" || bundle.ContractDigest == "" || len(bundle.ContractRaw) == 0 || bundle.StructuralManifestPath == "" || bundle.StructuralManifestDigest == "" || len(bundle.StructuralManifestRaw) == 0 || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
 		return fmt.Errorf("target observation bundle identity or target binding is invalid")
 	}
 	if digestBytes(bundle.ContractRaw) != bundle.ContractDigest {
@@ -893,6 +976,16 @@ func validateObservationBundle(bundle observationBundle, sourcePath string, sour
 		return fmt.Errorf("embedded validator contract decode: %w", err)
 	}
 	if err := validateValidatorContract(contract); err != nil {
+		return err
+	}
+	if digestBytes(bundle.StructuralManifestRaw) != bundle.StructuralManifestDigest {
+		return fmt.Errorf("structural inventory manifest bytes changed")
+	}
+	var manifest structuralInventoryManifest
+	if err := strictJSON(bundle.StructuralManifestRaw, &manifest); err != nil {
+		return fmt.Errorf("embedded structural inventory manifest decode: %w", err)
+	}
+	if err := validateStructuralInventoryManifest(manifest, contract, g); err != nil {
 		return err
 	}
 	for _, c := range g.Nodes {
@@ -946,13 +1039,16 @@ func validateObservationBundle(bundle observationBundle, sourcePath string, sour
 			semanticOccurrenceDigests[occurrence.SemanticDigest] = true
 		}
 	}
-	if bundle.ExpectedStructuralContradictionTotal != len(expectedStructural) {
-		return fmt.Errorf("structural inventory denominator is not re-derived: got=%d want=%d", bundle.ExpectedStructuralContradictionTotal, len(expectedStructural))
+	if bundle.StructuralInventoryTotal != len(manifest.EligibleClaimIDs) {
+		return fmt.Errorf("structural inventory denominator is not external: got=%d want=%d", bundle.StructuralInventoryTotal, len(manifest.EligibleClaimIDs))
 	}
 	if bundle.SemanticOccurrenceNumerator != semanticOccurrences || bundle.SemanticOccurrenceDenominator != g.NodeTotal || bundle.RawProvenanceBindingNumerator != rawProvenanceBindings || bundle.RawProvenanceBindingDenominator != g.NodeTotal {
 		return fmt.Errorf("target occurrence metrics are not re-derived from canonical target occurrences")
 	}
 	if err := validateStructuralInventory(bundle.StructuralContradictions, expectedStructural); err != nil {
+		return err
+	}
+	if err := validateStructuralInventoryManifestRows(bundle.StructuralContradictions, manifest); err != nil {
 		return err
 	}
 	return nil
@@ -1048,6 +1144,7 @@ func readValidatorContract(path string) (validatorContract, error) {
 		return validatorContract{}, fmt.Errorf("validator contract identity or denominator is invalid")
 	}
 	seen := map[string]bool{}
+	claimIDs := map[string]bool{}
 	targets := map[string]bool{}
 	procedures := map[string]bool{}
 	rowDigests := map[string]bool{}
@@ -1072,6 +1169,74 @@ func readValidatorContract(path string) (validatorContract, error) {
 		targets[targetKey] = true
 	}
 	return value, nil
+}
+
+func readStructuralInventoryManifest(path string) (structuralInventoryManifest, []byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return structuralInventoryManifest{}, nil, fmt.Errorf("structural inventory manifest: %w", err)
+	}
+	var value structuralInventoryManifest
+	if err := strictJSON(data, &value); err != nil {
+		return structuralInventoryManifest{}, nil, fmt.Errorf("structural inventory manifest decode: %w", err)
+	}
+	return value, data, nil
+}
+
+func validateStructuralInventoryManifest(value structuralInventoryManifest, contract validatorContract, g graph) error {
+	if value.Schema != structuralManifestSchema || value.ManifestID == "" || value.ContractID != contract.ContractID || len(value.EligibleClaimIDs) == 0 {
+		return fmt.Errorf("STRUCTURAL_MANIFEST_IDENTITY_INVALID")
+	}
+	known := map[string]bool{}
+	for _, c := range g.Nodes {
+		known[c.ClaimID] = true
+	}
+	eligible := map[string]bool{}
+	for _, claimID := range value.EligibleClaimIDs {
+		if claimID == "" || !known[claimID] || eligible[claimID] {
+			return fmt.Errorf("STRUCTURAL_MANIFEST_ELIGIBLE_CLAIMS_INVALID: claim=%s", claimID)
+		}
+		eligible[claimID] = true
+	}
+	expected := map[string]bool{}
+	for _, claimID := range value.ExpectedContradictionClaimIDs {
+		if claimID == "" || !eligible[claimID] || expected[claimID] {
+			return fmt.Errorf("STRUCTURAL_MANIFEST_EXPECTED_CLAIMS_INVALID: claim=%s", claimID)
+		}
+		expected[claimID] = true
+	}
+	return nil
+}
+
+func validateStructuralInventoryManifestRows(observed []structuralContradiction, manifest structuralInventoryManifest) error {
+	expected := map[string]bool{}
+	for _, claimID := range manifest.ExpectedContradictionClaimIDs {
+		expected[claimID] = true
+	}
+	actual := map[string]bool{}
+	for _, finding := range observed {
+		if actual[finding.ClaimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_DUPLICATE: claim=%s", finding.ClaimID)
+		}
+		actual[finding.ClaimID] = true
+	}
+	if len(actual) < len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_MISSING: observed=%d expected=%d", len(actual), len(expected))
+	}
+	if len(actual) > len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_ADDITIONAL: observed=%d expected=%d", len(actual), len(expected))
+	}
+	for claimID := range expected {
+		if !actual[claimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_REPLACEMENT: claim=%s", claimID)
+		}
+	}
+	for claimID := range actual {
+		if !expected[claimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_REPLACEMENT: claim=%s", claimID)
+		}
+	}
+	return nil
 }
 
 func validatorProcedureID(activity string) string {
@@ -1100,6 +1265,16 @@ func validatorExpectedMaterialDigest(c validatorClaim) string {
 
 func claimIdentityMatchesContract(c claim, expected validatorClaim) bool {
 	return c.ClaimID == expected.ClaimID && c.PropositionDigest == expected.PropositionDigest && c.ActivityName == expected.ActivityName && reflect.DeepEqual(c.Target, expected.ExpectedTarget)
+}
+
+func validateContractForGraph(contract validatorContract, g graph) error {
+	for _, c := range g.Nodes {
+		material, ok := contractClaim(contract, c.ActivityName)
+		if !ok || !claimIdentityMatchesContract(c, material) {
+			return fmt.Errorf("external validator contract claim inventory does not match source claim %q", c.ActivityName)
+		}
+	}
+	return nil
 }
 
 func claimObservationMaterial(c claim, expected validatorClaim, artifactPath, artifactDigest, rowDigest string) string {
@@ -1141,7 +1316,7 @@ func canonicalTargetOccurrence(artifact []byte, artifactPath string, sourceClaim
 			targetClaim = &target.Graph.Nodes[i]
 		}
 	}
-	if targetClaim == nil || targetClaim.ClaimID != sourceClaim.ClaimID || !reflect.DeepEqual(targetClaim.Target, sourceClaim.Target) {
+	if targetClaim == nil || targetClaim.ClaimID != sourceClaim.ClaimID || targetClaim.PropositionDigest != sourceClaim.PropositionDigest || !reflect.DeepEqual(targetClaim.Target, sourceClaim.Target) {
 		return targetOccurrence{}, nil, fmt.Errorf("TARGET_OCCURRENCE_SEMANTIC_ADDRESS_MISMATCH: activity=%s", sourceClaim.ActivityName)
 	}
 	span := activities[0].Span
@@ -1702,8 +1877,8 @@ func blockedFrontier(i int, g graph, states []string) ([]string, []string) {
 }
 
 func deriveMetrics(g graph, states []string, resolutions []resolution, outcomes []transition, e evidenceReceipt, recovered bool) metrics {
-	structuralDenominator := e.ExpectedStructuralContradictionTotal
-	denominatorCoordinate := coordinate{Stage: "OBSERVE", Step: "structural-inventory", Reason: "RE_DERIVED_GRAPH_CONTRACT_INVENTORY"}
+	structuralDenominator := e.StructuralInventoryTotal
+	denominatorCoordinate := coordinate{Stage: "OBSERVE", Step: "structural-inventory", Reason: "EXTERNAL_STRUCTURAL_MANIFEST_INVENTORY"}
 	if structuralDenominator == 0 {
 		denominatorCoordinate.Reason = "NO_CURRENT_TARGET_OBSERVATION_EXPECTED_INVENTORY_ZERO"
 	}
@@ -1799,8 +1974,119 @@ func distinct(g graph) int {
 }
 
 func semanticEvidenceDigest(evidence evidenceReceipt) string {
-	claims := evidence.Claims
-	return digestJSON(claims)
+	claims := make([]semanticEvidenceClaim, len(evidence.Claims))
+	for i, claim := range evidence.Claims {
+		claims[i] = semanticEvidenceClaim{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, ObservedPredicate: claim.ObservedPredicate, ObservedValue: claim.ObservedValue, Status: claim.Status, Coordinate: claim.Coordinate}
+	}
+	observations := make([]semanticEvidenceObservation, 0, len(evidence.Observations))
+	for _, observation := range evidence.Observations {
+		observations = append(observations, semanticObservation(observation))
+	}
+	structural := make([]semanticStructuralContradiction, len(evidence.StructuralContradictions))
+	for i, finding := range evidence.StructuralContradictions {
+		structural[i] = semanticStructuralContradiction{ClaimID: finding.ClaimID, PropositionDigest: finding.PropositionDigest, ExpectedValue: finding.ExpectedValue, DeclaredValue: finding.DeclaredValue, ProcedureID: finding.ProcedureID, Occurrence: semanticOccurrenceProjection(finding.Occurrence)}
+	}
+	manifest := semanticStructuralManifest{}
+	if evidence.StructuralManifestRaw != nil {
+		var value structuralInventoryManifest
+		if strictJSON(evidence.StructuralManifestRaw, &value) == nil {
+			manifest = semanticStructuralManifest{EligibleClaimIDs: append([]string(nil), value.EligibleClaimIDs...), ExpectedContradictionClaimIDs: append([]string(nil), value.ExpectedContradictionClaimIDs...)}
+		}
+	}
+	projection := semanticEvidenceProjection{Status: evidence.Status, ObservedPredicate: evidence.ObservedPredicate, Claims: claims, Observations: observations, StructuralContradictions: structural, StructuralManifest: manifest, StructuralInventoryTotal: evidence.StructuralInventoryTotal, SemanticOccurrenceNumerator: evidence.SemanticOccurrenceNumerator, SemanticOccurrenceDenominator: evidence.SemanticOccurrenceDenominator}
+	return digestJSON(projection)
+}
+
+type semanticEvidenceProjection struct {
+	Status                        string                            `json:"status"`
+	ObservedPredicate             predicate                         `json:"observed_predicate"`
+	Claims                        []semanticEvidenceClaim           `json:"claims"`
+	Observations                  []semanticEvidenceObservation     `json:"observations"`
+	StructuralContradictions      []semanticStructuralContradiction `json:"structural_contradictions"`
+	StructuralManifest            semanticStructuralManifest        `json:"structural_manifest"`
+	StructuralInventoryTotal      int                               `json:"structural_inventory_total"`
+	SemanticOccurrenceNumerator   int                               `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator int                               `json:"semantic_occurrence_denominator"`
+}
+
+type semanticStructuralManifest struct {
+	EligibleClaimIDs              []string `json:"eligible_claim_ids"`
+	ExpectedContradictionClaimIDs []string `json:"expected_contradiction_claim_ids"`
+}
+
+type semanticEvidenceClaim struct {
+	ClaimID           string     `json:"claim_id"`
+	PropositionDigest string     `json:"proposition_digest"`
+	ObservedPredicate predicate  `json:"observed_predicate"`
+	ObservedValue     string     `json:"observed_value"`
+	Status            string     `json:"status"`
+	Coordinate        coordinate `json:"coordinate"`
+}
+
+type semanticEvidenceObservation struct {
+	Binding           string             `json:"binding"`
+	ClaimID           string             `json:"claim_id,omitempty"`
+	PropositionDigest string             `json:"proposition_digest,omitempty"`
+	EdgeID            string             `json:"edge_id,omitempty"`
+	FromClaimID       string             `json:"from_claim_id,omitempty"`
+	ToClaimID         string             `json:"to_claim_id,omitempty"`
+	EdgeKind          edgeKind           `json:"edge_kind,omitempty"`
+	Target            target             `json:"target"`
+	Occurrence        semanticOccurrence `json:"occurrence"`
+	ExpectedPredicate predicate          `json:"expected_predicate"`
+	ObservedPredicate predicate          `json:"observed_predicate"`
+	ComparisonResult  string             `json:"comparison_result"`
+	SemanticExpected  string             `json:"semantic_expected"`
+	SemanticObserved  string             `json:"semantic_observed"`
+	Procedure         string             `json:"procedure"`
+	ProcedureDigest   string             `json:"procedure_digest"`
+	Coordinate        coordinate         `json:"coordinate"`
+}
+
+type semanticOccurrence struct {
+	Address           string `json:"address"`
+	ActivityName      string `json:"activity_name"`
+	ClaimID           string `json:"claim_id"`
+	PropositionDigest string `json:"proposition_digest"`
+	Target            target `json:"target"`
+	ValueProgram      string `json:"value_program"`
+	SemanticDigest    string `json:"semantic_digest"`
+	ContextDigest     string `json:"context_digest"`
+}
+
+type semanticStructuralContradiction struct {
+	ClaimID           string             `json:"claim_id"`
+	PropositionDigest string             `json:"proposition_digest"`
+	ExpectedValue     string             `json:"expected_value"`
+	DeclaredValue     string             `json:"declared_value"`
+	ProcedureID       string             `json:"procedure_id"`
+	Occurrence        semanticOccurrence `json:"occurrence"`
+}
+
+func semanticObservation(value observationReceipt) semanticEvidenceObservation {
+	return semanticEvidenceObservation{Binding: value.Binding, ClaimID: value.ClaimID, PropositionDigest: value.PropositionDigest, EdgeID: value.EdgeID, FromClaimID: value.FromClaimID, ToClaimID: value.ToClaimID, EdgeKind: value.EdgeKind, Target: value.Target, Occurrence: semanticOccurrenceProjection(value.Occurrence), ExpectedPredicate: value.ExpectedPredicate, ObservedPredicate: value.ObservedPredicate, ComparisonResult: value.ComparisonResult, SemanticExpected: semanticObservationValue(value, true), SemanticObserved: semanticObservationValue(value, false), Procedure: value.Procedure, ProcedureDigest: value.ProcedureDigest, Coordinate: value.Coordinate}
+}
+
+func semanticObservationValue(value observationReceipt, expected bool) string {
+	if value.Binding == "CLAIM" {
+		if expected {
+			return value.ExpectedValue
+		}
+		return value.ObservedValue
+	}
+	if value.Binding == "EDGE" {
+		if value.EdgeKind == contradicts {
+			return "CONTRADICTS_TARGET_VALUE_OPPOSITE"
+		}
+		if value.EdgeKind == failureEntailment {
+			return "FAILURE_ANTECEDENT_PROCESS"
+		}
+	}
+	return string(value.ObservedPredicate)
+}
+
+func semanticOccurrenceProjection(value targetOccurrence) semanticOccurrence {
+	return semanticOccurrence{Address: value.Address, ActivityName: value.ActivityName, ClaimID: value.ClaimID, PropositionDigest: value.PropositionDigest, Target: value.Target, ValueProgram: value.ValueProgram, SemanticDigest: value.SemanticDigest, ContextDigest: value.ContextDigest}
 }
 func contains(values []string, target string) bool {
 	for _, v := range values {

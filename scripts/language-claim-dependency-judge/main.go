@@ -15,17 +15,19 @@ func main() {
 	evidencePath := flag.String("evidence", "", "raw CURRENT_EVIDENCE receipt")
 	priorPath := flag.String("prior-receipt", "", "raw prior UNKNOWN receipt")
 	receiptPath := flag.String("receipt", "", "producer receipt")
+	contractPath := flag.String("contract", "", "external validator contract read independently by the judge")
+	manifestPath := flag.String("structural-manifest", "", "external structural inventory oracle read independently by the judge")
 	outputPath := flag.String("output", "", "independent judgment output")
 	flag.Parse()
-	if *sourcePath == "" || *evidencePath == "" || *receiptPath == "" || *outputPath == "" {
-		fail("-source, -evidence, -receipt, and -output are required")
+	if *sourcePath == "" || *evidencePath == "" || *receiptPath == "" || *contractPath == "" || *manifestPath == "" || *outputPath == "" {
+		fail("-source, -evidence, -receipt, -contract, -structural-manifest, and -output are required")
 	}
 	source, evidence, receipt := read(*sourcePath), read(*evidencePath), read(*receiptPath)
 	var prior []byte
 	if *priorPath != "" {
 		prior = read(*priorPath)
 	}
-	judgment, err := claimdependencyjudge.Judge(source, *sourcePath, prior, evidence, receipt)
+	judgment, err := claimdependencyjudge.JudgeWithExternalMaterials(source, *sourcePath, prior, evidence, receipt, *contractPath, *manifestPath)
 	if err != nil {
 		fail(err.Error())
 	}

@@ -81,27 +81,30 @@ type ObservationReceipt struct {
 }
 
 type ObservationBundle struct {
-	Schema                               string                    `json:"schema"`
-	Provider                             string                    `json:"provider"`
-	SourcePath                           string                    `json:"source_path"`
-	SourceDigest                         string                    `json:"source_digest"`
-	ArtifactPath                         string                    `json:"artifact_path"`
-	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
-	ContractPath                         string                    `json:"contract_path"`
-	ContractDigest                       string                    `json:"contract_digest"`
-	ContractRaw                          []byte                    `json:"contract_raw"`
-	FailureReceiptPath                   string                    `json:"failure_receipt_path,omitempty"`
-	FailureReceiptDigest                 string                    `json:"failure_receipt_digest,omitempty"`
-	FailureReceiptRaw                    []byte                    `json:"failure_receipt_raw,omitempty"`
-	Profile                              string                    `json:"profile"`
-	Observations                         []ObservationReceipt      `json:"observations"`
-	StructuralContradictions             []StructuralContradiction `json:"structural_contradictions,omitempty"`
-	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
-	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
-	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
-	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
-	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
-	Digest                               string                    `json:"digest"`
+	Schema                          string                    `json:"schema"`
+	Provider                        string                    `json:"provider"`
+	SourcePath                      string                    `json:"source_path"`
+	SourceDigest                    string                    `json:"source_digest"`
+	ArtifactPath                    string                    `json:"artifact_path"`
+	ArtifactBytesDigest             string                    `json:"artifact_bytes_digest"`
+	ContractPath                    string                    `json:"contract_path"`
+	ContractDigest                  string                    `json:"contract_digest"`
+	ContractRaw                     []byte                    `json:"contract_raw"`
+	StructuralManifestPath          string                    `json:"structural_manifest_path"`
+	StructuralManifestDigest        string                    `json:"structural_manifest_digest"`
+	StructuralManifestRaw           []byte                    `json:"structural_manifest_raw"`
+	FailureReceiptPath              string                    `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest            string                    `json:"failure_receipt_digest,omitempty"`
+	FailureReceiptRaw               []byte                    `json:"failure_receipt_raw,omitempty"`
+	Profile                         string                    `json:"profile"`
+	Observations                    []ObservationReceipt      `json:"observations"`
+	StructuralContradictions        []StructuralContradiction `json:"structural_contradictions,omitempty"`
+	StructuralInventoryTotal        int                       `json:"structural_inventory_total"`
+	SemanticOccurrenceNumerator     int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator   int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator   int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator int                       `json:"raw_provenance_binding_denominator"`
+	Digest                          string                    `json:"digest"`
 }
 
 // StructuralContradiction records a source/contract disagreement without
@@ -143,6 +146,17 @@ type ValidatorContract struct {
 	ExpectedArtifactPath   string           `json:"expected_artifact_path"`
 	ExpectedArtifactDigest string           `json:"expected_artifact_digest"`
 	Claims                 []ValidatorClaim `json:"claims"`
+}
+
+// StructuralInventoryManifest is an external test oracle for the fixed
+// structural inventory. It names eligible rows and the rows expected to
+// contradict the contract for one scenario; it never supplies a claim state.
+type StructuralInventoryManifest struct {
+	Schema                        string   `json:"schema"`
+	ManifestID                    string   `json:"manifest_id"`
+	ContractID                    string   `json:"contract_id"`
+	EligibleClaimIDs              []string `json:"eligible_claim_ids"`
+	ExpectedContradictionClaimIDs []string `json:"expected_contradiction_claim_ids"`
 }
 
 type ValidatorClaim struct {
@@ -287,35 +301,42 @@ type RepositorySnapshot struct {
 }
 
 type EvidenceReceipt struct {
-	Schema                               string                    `json:"schema"`
-	Provider                             string                    `json:"provider"`
-	SourcePath                           string                    `json:"source_path"`
-	SourceBytesDigest                    string                    `json:"source_bytes_digest"`
-	SourceGraphDigest                    string                    `json:"source_graph_digest"`
-	ArtifactPath                         string                    `json:"artifact_path"`
-	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
-	Operation                            string                    `json:"operation"`
-	RequestStatus                        string                    `json:"request_status"`
-	Procedure                            string                    `json:"procedure"`
-	ObservationPath                      string                    `json:"observation_path,omitempty"`
-	ObservationBundleDigest              string                    `json:"observation_bundle_digest,omitempty"`
-	ObservationBundleRawDigest           string                    `json:"observation_bundle_raw_digest,omitempty"`
-	ObservationBundleRaw                 []byte                    `json:"observation_bundle_raw,omitempty"`
-	Observations                         []ObservationReceipt      `json:"observations"`
-	StructuralContradictions             []StructuralContradiction `json:"structural_contradictions,omitempty"`
-	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
-	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
-	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
-	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
-	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
-	ObservedPredicate                    ObservationPredicate      `json:"observed_predicate"`
-	ObservedValue                        string                    `json:"observed_value"`
-	Status                               EvidenceStatus            `json:"status"`
-	Coordinate                           Coordinate                `json:"coordinate"`
-	Claims                               []EvidenceClaim           `json:"claims"`
-	Capability                           CapabilityEvidence        `json:"capability"`
-	Snapshot                             RepositorySnapshot        `json:"snapshot"`
-	Digest                               string                    `json:"digest"`
+	Schema                          string                    `json:"schema"`
+	Provider                        string                    `json:"provider"`
+	SourcePath                      string                    `json:"source_path"`
+	SourceBytesDigest               string                    `json:"source_bytes_digest"`
+	SourceGraphDigest               string                    `json:"source_graph_digest"`
+	ArtifactPath                    string                    `json:"artifact_path"`
+	ArtifactBytesDigest             string                    `json:"artifact_bytes_digest"`
+	Operation                       string                    `json:"operation"`
+	RequestStatus                   string                    `json:"request_status"`
+	Procedure                       string                    `json:"procedure"`
+	ObservationPath                 string                    `json:"observation_path,omitempty"`
+	ObservationBundleDigest         string                    `json:"observation_bundle_digest,omitempty"`
+	ObservationBundleRawDigest      string                    `json:"observation_bundle_raw_digest,omitempty"`
+	ObservationBundleRaw            []byte                    `json:"observation_bundle_raw,omitempty"`
+	ValidatorContractPath           string                    `json:"validator_contract_path"`
+	ValidatorContractDigest         string                    `json:"validator_contract_digest"`
+	ValidatorContractRaw            []byte                    `json:"validator_contract_raw"`
+	StructuralManifestPath          string                    `json:"structural_manifest_path"`
+	StructuralManifestDigest        string                    `json:"structural_manifest_digest"`
+	StructuralManifestRaw           []byte                    `json:"structural_manifest_raw"`
+	Observations                    []ObservationReceipt      `json:"observations"`
+	StructuralContradictions        []StructuralContradiction `json:"structural_contradictions,omitempty"`
+	StructuralInventoryTotal        int                       `json:"structural_inventory_total"`
+	SemanticOccurrenceNumerator     int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator   int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator   int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator int                       `json:"raw_provenance_binding_denominator"`
+	ObservedPredicate               ObservationPredicate      `json:"observed_predicate"`
+	ObservedValue                   string                    `json:"observed_value"`
+	SemanticEvidenceDigest          string                    `json:"semantic_evidence_digest"`
+	Status                          EvidenceStatus            `json:"status"`
+	Coordinate                      Coordinate                `json:"coordinate"`
+	Claims                          []EvidenceClaim           `json:"claims"`
+	Capability                      CapabilityEvidence        `json:"capability"`
+	Snapshot                        RepositorySnapshot        `json:"snapshot"`
+	Digest                          string                    `json:"digest"`
 }
 
 type Subject struct {

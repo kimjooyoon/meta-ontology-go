@@ -16,7 +16,14 @@ recipe만 선언한다. observer가 source graph와 분리된 target artifact by
 실제로 읽고 claim별 target-specific material을 비교한다. profile은 fixture label
 일 뿐 상태나 predicate를 고르지 않는다.
 
-구조적 inventory는 accepted target `0/0`, refuted target `2/2`로 claim별
+`structural-inventory-main.json`, `structural-inventory-refuted.json`,
+`structural-inventory-comment.json`은 외부 fixed structural oracle이다. eligible
+claim ID 2개가 denominator를 고정하고, scenario별 contradiction ID set만 expected
+inventory로 제공한다. bundle 내부 contract/manifest bytes는 producer와 judge가
+각자의 외부 입력 경로와 exact equality로 검증한다.
+
+구조적 inventory manifest가 고정한 eligible 분모 2를 사용해 accepted/unknown/comment
+target은 `0/2`, refuted target은 `2/2`로 claim별
 계약 불일치를 모두 기록한다. 각 row는 canonical target occurrence address,
 raw row digest와 lowered semantic digest까지 결속한다. `negative-duplicate-target.gooo`,
 `negative/commented-out-activity.gooo`, `negative/negative-invalid-target.gooo`는 각각

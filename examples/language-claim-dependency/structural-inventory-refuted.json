@@ -1,0 +1,13 @@
+{
+  "schema": "gooo.meta.claim-dependency-structural-manifest/v1",
+  "manifest_id": "gooo://claim-dependency/structural-inventory/refuted-v1",
+  "contract_id": "gooo://claim-dependency/validator-contract/refuted-v2",
+  "eligible_claim_ids": [
+    "claimdependency://activity/contradictioncheck",
+    "claimdependency://activity/failureentailmentcheck"
+  ],
+  "expected_contradiction_claim_ids": [
+    "claimdependency://activity/contradictioncheck",
+    "claimdependency://activity/failureentailmentcheck"
+  ]
+}

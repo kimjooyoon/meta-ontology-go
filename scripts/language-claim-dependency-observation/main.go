@@ -14,12 +14,13 @@ func main() {
 	source := flag.String("source", "", "raw .gooo source whose graph supplies claim and edge bindings")
 	artifact := flag.String("artifact", "", "target artifact to observe")
 	contract := flag.String("contract", "", "fixed external validator material; it declares no outcome")
+	manifest := flag.String("structural-manifest", "", "fixed external structural inventory oracle")
 	failureReceipt := flag.String("failure-receipt", "", "optional receipt from an actually non-zero CI process")
 	profile := flag.String("profile", "", "fixture label only; it cannot select a predicate or state")
 	output := flag.String("output", "", "observation receipt output")
 	flag.Parse()
-	if *source == "" || *artifact == "" || *contract == "" || *profile == "" || *output == "" {
-		fail("-source, -artifact, -contract, -profile, and -output are required")
+	if *source == "" || *artifact == "" || *contract == "" || *manifest == "" || *profile == "" || *output == "" {
+		fail("-source, -artifact, -contract, -structural-manifest, -profile, and -output are required")
 	}
 	sourceBytes, err := os.ReadFile(*source)
 	if err != nil {
@@ -31,7 +32,7 @@ func main() {
 	}
 	actual := digestBytes(artifactBytes)
 	procedureOutput := fmt.Sprintf("read target path=%s bytes=%d actual_sha256=%s procedure=raw-bytes-read", *artifact, len(artifactBytes), actual)
-	bundle, err := claimdependency.BuildObservationBundle(*source, sourceBytes, *artifact, procedureOutput, *profile, *contract, *failureReceipt)
+	bundle, err := claimdependency.BuildObservationBundleWithManifest(*source, sourceBytes, *artifact, procedureOutput, *profile, *contract, *manifest, *failureReceipt)
 	if err != nil {
 		fail(err.Error())
 	}

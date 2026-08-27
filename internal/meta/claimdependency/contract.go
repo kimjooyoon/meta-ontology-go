@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	ValidatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v2"
-	FailureReceiptSchema    = "gooo.meta.claim-dependency-failure-receipt/v2"
-	failureProcedure        = "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR_V2"
+	ValidatorContractSchema  = "gooo.meta.claim-dependency-validator-contract/v2"
+	StructuralManifestSchema = "gooo.meta.claim-dependency-structural-manifest/v1"
+	FailureReceiptSchema     = "gooo.meta.claim-dependency-failure-receipt/v2"
+	failureProcedure         = "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR_V2"
 )
 
 type sourceGraph struct {
@@ -301,6 +302,74 @@ func readValidatorContract(path string) (ValidatorContract, error) {
 	return contract, nil
 }
 
+func readStructuralInventoryManifest(path string) (StructuralInventoryManifest, []byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return StructuralInventoryManifest{}, nil, fmt.Errorf("structural inventory manifest: %w", err)
+	}
+	var manifest StructuralInventoryManifest
+	if err := decodeStrictJSON(data, &manifest); err != nil {
+		return StructuralInventoryManifest{}, nil, fmt.Errorf("structural inventory manifest decode: %w", err)
+	}
+	return manifest, data, nil
+}
+
+func validateStructuralInventoryManifest(manifest StructuralInventoryManifest, contract ValidatorContract, graph Graph) error {
+	if manifest.Schema != StructuralManifestSchema || manifest.ManifestID == "" || manifest.ContractID != contract.ContractID || len(manifest.EligibleClaimIDs) == 0 {
+		return fmt.Errorf("STRUCTURAL_MANIFEST_IDENTITY_INVALID")
+	}
+	known := map[string]bool{}
+	for _, claim := range graph.Nodes {
+		known[claim.ClaimID] = true
+	}
+	eligible := map[string]bool{}
+	for _, claimID := range manifest.EligibleClaimIDs {
+		if claimID == "" || !known[claimID] || eligible[claimID] {
+			return fmt.Errorf("STRUCTURAL_MANIFEST_ELIGIBLE_CLAIMS_INVALID: claim=%s", claimID)
+		}
+		eligible[claimID] = true
+	}
+	expected := map[string]bool{}
+	for _, claimID := range manifest.ExpectedContradictionClaimIDs {
+		if claimID == "" || !eligible[claimID] || expected[claimID] {
+			return fmt.Errorf("STRUCTURAL_MANIFEST_EXPECTED_CLAIMS_INVALID: claim=%s", claimID)
+		}
+		expected[claimID] = true
+	}
+	return nil
+}
+
+func validateStructuralInventoryManifestRows(observed []StructuralContradiction, manifest StructuralInventoryManifest) error {
+	expected := map[string]bool{}
+	for _, claimID := range manifest.ExpectedContradictionClaimIDs {
+		expected[claimID] = true
+	}
+	actual := map[string]bool{}
+	for _, finding := range observed {
+		if actual[finding.ClaimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_DUPLICATE: claim=%s", finding.ClaimID)
+		}
+		actual[finding.ClaimID] = true
+	}
+	if len(actual) < len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_MISSING: observed=%d expected=%d", len(actual), len(expected))
+	}
+	if len(actual) > len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_ADDITIONAL: observed=%d expected=%d", len(actual), len(expected))
+	}
+	for claimID := range expected {
+		if !actual[claimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_REPLACEMENT: claim=%s", claimID)
+		}
+	}
+	for claimID := range actual {
+		if !expected[claimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_REPLACEMENT: claim=%s", claimID)
+		}
+	}
+	return nil
+}
+
 func decodeStrictJSON(data []byte, value any) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
@@ -400,7 +469,7 @@ func canonicalTargetOccurrence(artifact []byte, artifactPath string, sourceClaim
 			targetClaim = &target.Graph.Nodes[i]
 		}
 	}
-	if targetClaim == nil || targetClaim.ClaimID != sourceClaim.ClaimID || !reflect.DeepEqual(targetClaim.Target, sourceClaim.Target) {
+	if targetClaim == nil || targetClaim.ClaimID != sourceClaim.ClaimID || targetClaim.PropositionDigest != sourceClaim.PropositionDigest || !reflect.DeepEqual(targetClaim.Target, sourceClaim.Target) {
 		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_OCCURRENCE_SEMANTIC_ADDRESS_MISMATCH: activity=%s", sourceClaim.ActivityName)
 	}
 	span := activities[0].Span

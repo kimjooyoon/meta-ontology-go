@@ -1,0 +1,10 @@
+{
+  "schema": "gooo.meta.claim-dependency-structural-manifest/v1",
+  "manifest_id": "gooo://claim-dependency/structural-inventory/main-v1",
+  "contract_id": "gooo://claim-dependency/validator-contract/main-v2",
+  "eligible_claim_ids": [
+    "claimdependency://activity/contradictioncheck",
+    "claimdependency://activity/failureentailmentcheck"
+  ],
+  "expected_contradiction_claim_ids": []
+}

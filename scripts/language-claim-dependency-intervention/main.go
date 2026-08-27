@@ -184,7 +184,13 @@ func evidenceWithObservation(artifact, operation, repoRoot, capability, observat
 	if filepath.Base(artifact) == "value-intervention.gooo" {
 		sourcePath = filepath.Join(filepath.Dir(artifact), "main.gooo")
 	}
-	receipt, err := claimdependency.BuildCurrentEvidenceForSource(sourcePath, targetPath, operation, capability, repoRoot, output, observationPath)
+	contractPath := filepath.Join(filepath.Dir(artifact), "validator-contract.json")
+	manifestPath := filepath.Join(filepath.Dir(artifact), "structural-inventory-main.json")
+	if filepath.Base(targetPath) == "refuted-target.gooo" {
+		contractPath = filepath.Join(filepath.Dir(artifact), "validator-contract-refuted.json")
+		manifestPath = filepath.Join(filepath.Dir(artifact), "structural-inventory-refuted.json")
+	}
+	receipt, err := claimdependency.BuildCurrentEvidenceForSourceWithExternal(sourcePath, targetPath, operation, capability, repoRoot, output, observationPath, contractPath, manifestPath)
 	if err != nil {
 		fail(err.Error())
 	}

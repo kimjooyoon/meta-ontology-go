@@ -17,7 +17,9 @@ graph는 source marker가 아니라 syntax/IR에서 재구성된다.
 
 `.gooo`에는 claim topology와 observation recipe만 둔다.
 `validator-contract.json`은 source를 관찰 직전에 해시해 만든 값이 아니라 고정된
-외부 validator material이다. `accepted-target.gooo`와 `refuted-target.gooo`는 source
+외부 validator material이다. 별도의 `structural-inventory-*.json` manifest는 eligible
+structural claim ID와 시나리오별 expected contradiction ID를 고정하는 test oracle이며,
+producer 결과로부터 생성되지 않는다. `accepted-target.gooo`와 `refuted-target.gooo`는 source
 graph와 별도인 관찰 대상이며, 여섯 activity의 expected target tuple과 value program,
 반대 비교가 가능한 alternate value만 제공하고 status/outcome을 선언하지 않는다.
 따라서 contract의 expected bytes digest는 CI 관찰 대상에서 계산한 값이 아니다.
@@ -37,8 +39,9 @@ code를 보존한 `FailureReceipt`가 추가로 있을 때만 관측된다. zero
 profile은 fixture 목록 label일 뿐 predicate, claim state, edge activation을
 선택하지 않는다. `-operation`도 `CLAIMED_INPUT/REQUEST`다. source marker,
 호출자 문자열, 임의 accepted/contradiction 문자열은 current evidence가 아니다.
-provider와 judge는 source bytes, target bytes, contract bytes, raw observation
-bundle을 각각 재관측한다. bundle이 없거나 관련 없는 target mismatch이면
+provider와 judge는 source bytes, target bytes, contract bytes, structural manifest와 raw observation
+bundle을 각각 재관측한다. judge CLI는 외부 contract/manifest 경로를 명시적으로 받아
+bundle의 embedded raw/path/digest와 exact equality를 검사한다. bundle이 없거나 관련 없는 target mismatch이면
 `UNKNOWN`이다. `HISTORICAL_FIXTURE`는 PASS 근거가 아니다.
 
 | 조건 | 결과 |
@@ -65,12 +68,11 @@ provenance, upstream edge IDs와 upstream transition digest chain, 이전 head�
 digest 목록이다. `MaximumCausePathDepth`는 `CauseEdgeIDs`의 edge depth다.
 
 구조적 inventory는 graph+external contract의 불일치를 claim별로 전부 기록한다.
-accepted target은 structural contradiction `0/0`, refuted target은
-`2/2`(ContradictionCheck, FailureEntailmentCheck)이며 이는 re-derived expected
-inventory를 분모로 삼는 runtime edge observation이나 claim state가 아니다.
-unknown target은 현재 관측 inventory가 없으므로 분모 `0`이며
-`OBSERVE/structural-inventory/NO_CURRENT_TARGET_OBSERVATION_EXPECTED_INVENTORY_ZERO`
-좌표를 남긴다. inventory row는 claim/proposition, procedure ID, target
+분모는 observed row 수나 producer가 재생성한 expected row 수가 아니라 외부 manifest의
+eligible inventory 크기 `2`다. accepted/unknown/comment target은 `0/2`, refuted
+target은 `2/2`(ContradictionCheck, FailureEntailmentCheck)이며 이는 runtime edge
+observation이나 claim state가 아니다. 관측 자체가 없더라도 manifest는 존재하므로
+baseline `0/2`를 유지한다. inventory row는 claim/proposition, procedure ID, target
 occurrence/address, expected/declared value program, raw row digest와 semantic
 digest를 모두 결속하고 producer와 judge가 각자 다시 만든다. semantic
 address/digest는 comment/whitespace 삽입에도 보존되고 raw span/row/artifact
@@ -110,6 +112,12 @@ prior ledger에서 결과를 독립 재구성한다. CI 보고 분모는 source 
   변하지만 semantic address/occurrence digest, claim states, transition digest
   vector, decision을 보존해야 한다. 이 보존 회귀는 `1/1`이다.
 
+`semantic_evidence_digest`는 raw path/span/bytes/provenance를 제외한 canonical
+projection이다. claim observation, edge ID/type/direction, semantic target occurrence,
+expected/observed predicate와 비교 결과, structural contradiction inventory, external
+manifest의 semantic IDs와 고정 분모를 포함한다. 따라서 comment-only에서는 보존되고,
+edge predicate 또는 structural meaning 변경에서는 달라지거나 fail-closed된다.
+
 동일 source/target/contract에서 profile label만 바꾼 case도 decision과 claim
 transition 의미를 바꾸지 않는다. 반면 관련 없는 artifact mismatch, claim target
 교체, edge kind 교체, zero-exit failure label은 fail closed한다. repository
@@ -124,7 +132,8 @@ tamper 3, path metric 2, owner applicability 3, observation binding negative 7,
 structural inventory negative 4(누락/중복/추가/치환), semantic occurrence 6,
 raw provenance binding 6, comment-only semantic preservation 1이다. invalid/
 duplicate/comment-like `.gooo` target은 canonical parse/lower 실패로 evidence가
-되지 않는다. 구조적 모순 지표는 accepted `0/0`, refuted `2/2`로 고정한다.
+되지 않는다. 구조적 모순 지표는 외부 manifest가 고정한 eligible inventory 2를
+분모로 사용하며 accepted/unknown/comment는 `0/2`, refuted는 `2/2`로 고정한다.
 
 ## Principles and limits
 

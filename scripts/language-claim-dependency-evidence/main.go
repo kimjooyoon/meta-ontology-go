@@ -18,11 +18,13 @@ func main() {
 	repository := flag.String("repo-root", "", "repository root for tracked/untracked snapshot")
 	output := flag.String("output", "", "actual output path recorded in the receipt")
 	observation := flag.String("observation", "", "raw target observation receipt; omit when no external observation exists")
+	contract := flag.String("contract", "", "external validator contract bytes read by the producer")
+	manifest := flag.String("structural-manifest", "", "external structural inventory oracle bytes read by the producer")
 	flag.Parse()
-	if *source == "" || *artifact == "" || *operation == "" || *capability == "" || *repository == "" || *output == "" {
-		fail("-source, -artifact, -operation, -capability, -repo-root, and -output are required")
+	if *source == "" || *artifact == "" || *operation == "" || *capability == "" || *repository == "" || *output == "" || *contract == "" || *manifest == "" {
+		fail("-source, -artifact, -operation, -capability, -repo-root, -contract, -structural-manifest, and -output are required")
 	}
-	receipt, err := claimdependency.BuildCurrentEvidenceForSource(*source, *artifact, *operation, *capability, *repository, *output, *observation)
+	receipt, err := claimdependency.BuildCurrentEvidenceForSourceWithExternal(*source, *artifact, *operation, *capability, *repository, *output, *observation, *contract, *manifest)
 	if err != nil {
 		fail(err.Error())
 	}
