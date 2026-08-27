@@ -14,6 +14,9 @@ func bindings(summary Summary) []producer.OperationBinding {
 }
 
 func binding(metricID, class, proof, unit, relation string, value, target, denominator int, stage, step, reason string) producer.OperationBinding {
+	if denominator <= 0 {
+		reason = producer.ReasonDenominatorZero
+	}
 	satisfied := denominator > 0 && value >= target
 	if relation == "LESS_OR_EQUAL" {
 		satisfied = denominator > 0 && value <= target

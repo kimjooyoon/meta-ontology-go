@@ -40,6 +40,7 @@ type Suite struct {
 	DenominatorDigest          string       `json:"denominator_digest"`
 	Decision                   string       `json:"decision"`
 	Resolution                 string       `json:"resolution"`
+	Reason                     string       `json:"reason,omitempty"`
 	ContractReproduction       string       `json:"contract_reproduction"`
 	SubjectSemanticEquivalence string       `json:"subject_semantic_equivalence"`
 	SourcePaths                []string     `json:"source_paths"`

@@ -27,8 +27,15 @@ func runSuite(subjectSHA, outputPath string) Suite {
 	}
 	contract := contractIncomplete
 	decision, resolution := producer.DecisionFailClosed, producer.ResolutionInvariant
+	reason := ""
+	if len(definitions) == 0 {
+		reason = producer.ReasonDenominatorZero
+	} else if metaErr != nil {
+		reason = producer.ReasonMeta
+	}
 	if metaErr == nil && meta.Version == producer.DenominatorVersion && meta.DenominatorCases == len(definitions) && passed == len(definitions) && len(definitions) == 5 {
 		decision, resolution, contract = producer.DecisionFixedPoint, producer.ResolutionExact, contractReproduced
+		reason = ""
 	}
 	sources := []string{producer.MetaSourcePath}
 	for _, definition := range definitions {
@@ -39,7 +46,7 @@ func runSuite(subjectSHA, outputPath string) Suite {
 	if metaErr != nil {
 		metaDigest = ""
 	}
-	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, DenominatorID: producer.DenominatorID, DenominatorDigest: denominatorDigest, Decision: decision, Resolution: resolution, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CoverageBPS: ratio(passed, len(definitions)), MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
+	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, DenominatorID: producer.DenominatorID, DenominatorDigest: denominatorDigest, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CoverageBPS: ratio(passed, len(definitions)), MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	sealSuite(&suite)
 	return suite
 }
