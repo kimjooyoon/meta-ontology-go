@@ -49,6 +49,12 @@ func CaptureProvider(request ProviderRequest) ([]byte, error) {
 	if before.Digest != after.Digest {
 		actualWrites = 1
 	}
+	actualMutation := false
+	actualPromotion := false
+	for _, effect := range effects {
+		actualMutation = actualMutation || effect.ActualMutation
+		actualPromotion = actualPromotion || effect.ActualPromotion
+	}
 	observation := ProviderObservation{
 		Schema:                   ProviderSchema,
 		Provider:                 "capabilityscopedexpansion.SandboxProvider",
@@ -61,8 +67,8 @@ func CaptureProvider(request ProviderRequest) ([]byte, error) {
 		SandboxBefore:            before,
 		SandboxAfter:             after,
 		ActualRepositoryWrites:   actualWrites,
-		ActualMutationAuthority:  false,
-		ActualPromotionAuthority: false,
+		ActualMutationAuthority:  actualMutation,
+		ActualPromotionAuthority: actualPromotion,
 	}
 	if err := validateProviderObservation(observation); err != nil {
 		return nil, err
@@ -113,7 +119,12 @@ func (provider sandboxProvider) requestPromotion(target string) (EffectObservati
 }
 
 func effectObservation(kind, target string, before, after SnapshotObservation) EffectObservation {
-	return EffectObservation{Kind: kind, Target: target, Requested: true, Result: "DENIED", Reason: "CAPABILITY_ENFORCEMENT_OBSERVED", BoundaryObserved: true, BeforeDigest: before.Digest, AfterDigest: after.Digest, ActualWrites: boolInt(before.Digest != after.Digest), ActualMutation: false, ActualPromotion: false}
+	changed := before.Digest != after.Digest
+	actualWrites := 0
+	if kind == "repository-write" && changed {
+		actualWrites = 1
+	}
+	return EffectObservation{Kind: kind, Target: target, Requested: true, Result: "DENIED", Reason: "CAPABILITY_ENFORCEMENT_OBSERVED", BoundaryObserved: true, BeforeDigest: before.Digest, AfterDigest: after.Digest, ActualWrites: actualWrites, ActualMutation: kind == "mutation-authority" && changed, ActualPromotion: kind == "promotion-authority" && changed}
 }
 
 func snapshot(root string) (SnapshotObservation, error) {
