@@ -63,9 +63,10 @@ source_receipt="$work/source-check-1.json"
 artifact="$work/project-manifest-1.json"
 replay="$work/replay-manifest-1.json"
 jq -n --arg schema "gooo/meta-resource-budget-input/v1" --arg head "$HEAD_SHA" \
-  --slurpfile contract "$contract" --rawfile source_receipt "$source_receipt" --rawfile artifact "$artifact" \
-  --rawfile replay "$replay" --arg source_digest "$source_digest" --argjson observations "$observed" \
-  '{schema:$schema,expected_head:$head,contract:$contract[0],producer:{source_receipt:($source_receipt|fromjson),artifact:($artifact|fromjson),replay:($replay|fromjson),source_digest:$source_digest,source_files:2,go_files:0,effects:{repository_writes:0,mutation_authority:false}},observations:$observations}' \
+  --slurpfile contract "$contract" --arg source_receipt_base64 "$(base64 -w0 "$source_receipt")" \
+  --arg artifact_base64 "$(base64 -w0 "$artifact")" --arg replay_base64 "$(base64 -w0 "$replay")" \
+  --arg source_digest "$source_digest" --argjson observations "$observed" \
+  '{schema:$schema,expected_head:$head,contract:$contract[0],producer:{source_receipt_base64:$source_receipt_base64,artifact_base64:$artifact_base64,replay_base64:$replay_base64,source_digest:$source_digest,source_files:2,go_files:0,effects:{repository_writes:0,mutation_authority:false}},observations:$observations}' \
   > "$work/input.json"
 
 "$reducer" -input "$work/input.json" -output "$work/normal-report.json" -case normal

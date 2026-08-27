@@ -1,6 +1,7 @@
 package languageresourcebudget
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -50,6 +51,8 @@ func TestEvaluateAndValidateReportAreDeterministic(t *testing.T) {
 
 func fixtureInput() Input {
 	contract := CanonicalContract()
+	source := sourceReceiptFixture(contract)
+	artifact := artifactFixture()
 	observations := make([]Observation, 0, 9)
 	for _, spec := range contract.Operations {
 		for sequence := 1; sequence <= contract.SamplesPerOp; sequence++ {
@@ -57,13 +60,30 @@ func fixtureInput() Input {
 			if spec.Output == "GENERATED" {
 				receiptBytes, generatedBytes = 0, 600
 			}
+			outputDigest := "sha256:" + strings.Repeat("c", 64)
+			if sequence == 1 {
+				if spec.ID == "source-check" {
+					outputDigest = digestBytes(sourceReceiptFixture(contract))
+				}
+				if spec.ID == "project-manifest" || spec.ID == "replay-manifest" {
+					outputDigest = digestBytes(artifactFixture())
+				}
+			}
 			observations = append(observations, Observation{Schema: ObservationSchema, SubjectSHA: strings.Repeat("a", 40), Producer: Producer, Consumer: Consumer,
 				Operation: spec.ID, Stage: spec.Stage, Step: spec.Step, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
 				Reason: "RUNNER_RESOURCE_OBSERVED", Sequence: sequence, ExitCode: 0, WallTimeNS: 10000000 + int64(sequence), PeakRSSKiB: 1000,
-				ReceiptBytes: receiptBytes, GeneratedBytes: generatedBytes, OutputDigest: "sha256:" + strings.Repeat("c", 64)})
+				ReceiptBytes: receiptBytes, GeneratedBytes: generatedBytes, OutputDigest: outputDigest})
 		}
 	}
-	source, _ := json.Marshal(map[string]any{"schema_version": "gooo/diagnostics/v1", "command": "check", "status": "ok", "file": contract.SourcePaths[0], "diagnostics": []any{}})
-	artifact, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:subject", "operation": map[string]string{"activity": "PayOrder"}, "effects": Effects{}, "digest": "sha256:artifact"})
-	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceipt: source, Artifact: artifact, Replay: artifact, SourceDigest: "sha256:source", SourceFiles: 2, GoFiles: 0, Effects: Effects{}}, Observations: observations}
+	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:source", SourceFiles: 2, GoFiles: 0, Effects: Effects{}}, Observations: observations}
+}
+
+func sourceReceiptFixture(contract Contract) []byte {
+	value, _ := json.Marshal(map[string]any{"schema_version": "gooo/diagnostics/v1", "command": "check", "status": "ok", "file": contract.SourcePaths[0], "diagnostics": []any{}})
+	return value
+}
+
+func artifactFixture() []byte {
+	value, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:subject", "operation": map[string]string{"activity": "PayOrder"}, "effects": Effects{}, "digest": "sha256:artifact"})
+	return value
 }

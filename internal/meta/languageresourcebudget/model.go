@@ -1,7 +1,5 @@
 package languageresourcebudget
 
-import "encoding/json"
-
 const (
 	ContractSchema     = "gooo/meta-resource-budget-contract/v1"
 	InputSchema        = "gooo/meta-resource-budget-input/v1"
@@ -70,13 +68,13 @@ type Observation struct {
 }
 
 type ProducerEvidence struct {
-	SourceReceipt json.RawMessage `json:"source_receipt"`
-	Artifact      json.RawMessage `json:"artifact"`
-	Replay        json.RawMessage `json:"replay"`
-	SourceDigest  string          `json:"source_digest"`
-	SourceFiles   int             `json:"source_files"`
-	GoFiles       int             `json:"go_files"`
-	Effects       Effects         `json:"effects"`
+	SourceReceiptBase64 string  `json:"source_receipt_base64"`
+	ArtifactBase64      string  `json:"artifact_base64"`
+	ReplayBase64        string  `json:"replay_base64"`
+	SourceDigest        string  `json:"source_digest"`
+	SourceFiles         int     `json:"source_files"`
+	GoFiles             int     `json:"go_files"`
+	Effects             Effects `json:"effects"`
 }
 
 type Input struct {

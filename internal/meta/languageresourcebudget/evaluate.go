@@ -22,6 +22,7 @@ func Evaluate(input Input, caseName string) Report {
 	report.Summary.SourceFiles = input.Producer.SourceFiles
 	report.Summary.GoFiles = input.Producer.GoFiles
 	report.Summary.Effects = input.Producer.Effects
+	report.Summary.Semantic = report.Semantic
 	report.Effects = input.Producer.Effects
 	report.Indicators = buildIndicators(input, summaries, complete, semanticErr, budgetViolations)
 	report.Summary.Coordinates = coordinates(report.Indicators)
@@ -65,9 +66,12 @@ func finish(report Report, resolution, reason, interpretation string) Report {
 		Summary    Summary
 		Indicators []Indicator
 	}{report.Semantic, report.Summary, report.Indicators})
+	previous := ""
 	for index := range report.Transitions {
 		report.Transitions[index].Evidence = report.FactsDigest
+		report.Transitions[index].PreviousDigest = previous
 		report.Transitions[index] = sealTransition(report.Transitions[index])
+		previous = report.Transitions[index].Digest
 	}
 	return sealReport(report)
 }
