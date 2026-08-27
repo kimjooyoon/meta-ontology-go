@@ -21,12 +21,6 @@ type Claim struct {
 	EvidenceDigest string `json:"evidence_digest,omitempty"`
 }
 
-type UnknownEvidence struct {
-	Stage       string `json:"stage"`
-	IndicatorID string `json:"indicator_id"`
-	Reason      string `json:"reason"`
-}
-
 type Proof struct {
 	Mode       string `json:"mode"`
 	Status     string `json:"status"`

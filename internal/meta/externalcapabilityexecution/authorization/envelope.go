@@ -5,9 +5,9 @@ func Issue(subject, runID string, runAttempt int, reportDigest string,
 	envelope := Envelope{
 		Schema: EnvelopeSchema, SubjectSHA: subject, Issuer: ExpectedIssuer,
 		Operation: ExpectedOperation, Scope: ExpectedScope,
-		PolicySourceDigest: policy.SourceDigest,
+		PolicySourceDigest:    policy.SourceDigest,
 		PolicyGeneratedDigest: policy.GeneratedDigest,
-		SourceReportDigest: reportDigest, DefaultDecision: ExpectedDefaultDecision,
+		SourceReportDigest:    reportDigest, DefaultDecision: ExpectedDefaultDecision,
 		RunID: runID, RunAttempt: runAttempt, EffectCeiling: EffectCeiling{},
 	}
 	return sealEnvelope(envelope)

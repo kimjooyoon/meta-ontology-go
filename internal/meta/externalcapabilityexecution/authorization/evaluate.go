@@ -5,12 +5,12 @@ func Evaluate(input Input) Receipt {
 		Total: MetricDenominator, RepositoryWrites: 0, OfficialMutationCount: 0,
 		PromotionCount: 0, ExecutionAuthority: false,
 		RepositoryMutationAuthority: false, PromotionAuthority: false,
-		EnvelopeDigest: input.Envelope.EnvelopeDigest,
-		SourceReportDigest: input.Envelope.SourceReportDigest,
-		PolicySourceDigest: input.Policy.SourceDigest,
+		EnvelopeDigest:        input.Envelope.EnvelopeDigest,
+		SourceReportDigest:    input.Envelope.SourceReportDigest,
+		PolicySourceDigest:    input.Policy.SourceDigest,
 		PolicyGeneratedDigest: input.Policy.GeneratedDigest,
-		NonClaims: append([]string(nil), nonClaims...)}
-	receipt.Indicators = makeIndicators(input)
+		NonClaims:             append([]string(nil), nonClaims...),
+		Indicators:            makeIndicators(input)}
 	for _, indicator := range receipt.Indicators {
 		if indicator.Status == StatusSatisfied {
 			receipt.Completed++

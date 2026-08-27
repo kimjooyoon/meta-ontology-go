@@ -1,12 +1,10 @@
 package authorization
 
 var caseIDs = []string{
-	"exact", "envelope-unavailable", "report-unavailable", "report-decision-unknown",
-	"policy-source-unavailable", "policy-generated-unavailable", "foundation-unavailable",
-	"invocation-unavailable", "report-digest-mismatch", "subject-mismatch", "issuer-mismatch",
-	"operation-mismatch", "scope-mismatch", "policy-mismatch", "default-allow",
-	"run-id-mismatch", "run-attempt-mismatch", "nonce-mismatch", "effect-ceiling",
-	"envelope-digest-mismatch",
+	"exact", "envelope-unavailable", "report-unavailable", "report-decision-unknown", "policy-source-unavailable",
+	"policy-generated-unavailable", "foundation-unavailable", "invocation-unavailable", "report-digest-mismatch",
+	"subject-mismatch", "issuer-mismatch", "operation-mismatch", "scope-mismatch", "policy-mismatch", "default-allow",
+	"run-id-mismatch", "run-attempt-mismatch", "nonce-mismatch", "effect-ceiling", "envelope-digest-mismatch",
 }
 
 func runCase(base Input, caseID string) Receipt {

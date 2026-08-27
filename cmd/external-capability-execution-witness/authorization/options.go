@@ -7,9 +7,9 @@ import (
 )
 
 type options struct {
-	mode, subject, runID, report, policySource, generated string
+	mode, subject, runID, report, policySource, generated   string
 	foundation, envelope, receipt, suite, summary, expected string
-	runAttempt                                               int
+	runAttempt                                              int
 }
 
 func parseOptions(arguments []string) (options, error) {

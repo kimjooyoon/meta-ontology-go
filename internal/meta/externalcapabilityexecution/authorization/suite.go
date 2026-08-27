@@ -1,11 +1,13 @@
 package authorization
 
+import "slices"
+
 func exactInput(input Input) Input {
 	input.Foundation = Foundation{
 		Schema: FoundationSchema, Available: true,
 		SubjectSHA: input.Invocation.SubjectSHA, ProducerRunID: "fixture-run",
 		ArtifactID: 1, ArchiveDigest: digestValue("fixture-archive"),
-		PolicySourceDigest: input.Policy.SourceDigest,
+		PolicySourceDigest:    input.Policy.SourceDigest,
 		PolicyGeneratedDigest: input.Policy.GeneratedDigest,
 	}
 	return input
@@ -15,10 +17,8 @@ func expectedCase(caseID string) (string, string) {
 	if caseID == "exact" {
 		return DecisionAuthorized, ResolutionExact
 	}
-	for _, unknown := range caseIDs[1:8] {
-		if caseID == unknown {
-			return DecisionFailClosed, ResolutionUnknown
-		}
+	if slices.Contains(caseIDs[1:8], caseID) {
+		return DecisionFailClosed, ResolutionUnknown
 	}
 	return DecisionDenied, ResolutionExact
 }
