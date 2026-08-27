@@ -13,20 +13,19 @@ import (
 )
 
 const (
-	oracleSchema     = "gooo/meta-nonmonotonic-refutation-oracle/v2"
-	producerSchema   = "gooo/meta-nonmonotonic-refutation-producer/v2"
-	sourceSchema     = "gooo/meta-nonmonotonic-refutation-source/v1"
+	oracleSchema     = "gooo/meta-nonmonotonic-refutation-oracle/v3"
+	producerSchema   = "gooo/meta-nonmonotonic-refutation-producer/v3"
+	sourceSchema     = "gooo/meta-nonmonotonic-refutation-source/v2"
 	producerID       = "producer://nonmonotonic-refutation"
 	consumerID       = "consumer://nonmonotonic-refutation-oracle"
 	metaOperation    = "meta://revise-claim-by-evidence"
 	statusOpen       = "OPEN"
 	statusDischarged = "DISCHARGED"
 	statusRefuted    = "REFUTED"
-	reopenPolicy     = "REOPEN_IF_NEWER_ADMISSIBLE"
 )
 
-// Judge independently parses and lowers source, reconstructs its own model,
-// then compares the producer's model with that reconstruction before replay.
+// Judge is an independent adjudicator. It parses and lowers raw source
+// itself, reconstructs its own source model, and only then replays evidence.
 func Judge(producerBytes, source []byte) (Report, error) {
 	input, err := decode(producerBytes)
 	if err != nil {
@@ -36,11 +35,12 @@ func Judge(producerBytes, source []byte) (Report, error) {
 		Schema: oracleSchema, ProducerSchema: input.Schema,
 		ProducerReceiptDigest: digestBytes(producerBytes), SourcePath: input.SourcePath,
 		SourceDigest: input.SourceDigest, SourceSemanticDigest: input.SourceSemanticDigest,
-		SourceModelDigest: input.SourceModelDigest, Producer: input.Producer, Consumer: input.Consumer,
-		MetaOperation: input.MetaOperation, ProofChoice: input.ProofChoice,
-		Effects:               effects{RepositoryWrites: input.Effects.RepositoryWrites, MutationAuthority: input.Effects.MutationAuthority},
-		MetaValue:             "current knowledge is revisable while historical states remain inspectable",
-		FalsifiablePrediction: "changing an observed value or revision policy changes the adjudication, while comment-only edits preserve semantic digest and verdict",
+		SourceBindingDigest: input.SourceBindingDigest, SourceModelDigest: input.SourceModelDigest,
+		Producer: input.Producer, Consumer: input.Consumer, MetaOperation: input.MetaOperation,
+		ProofChoice:           input.ProofChoice,
+		Effects:               effects{RepositoryWrites: input.Effects.RepositoryWrites, MutationAuthority: input.Effects.MutationAuthority, PromotionCount: input.Effects.PromotionCount},
+		MetaValue:             "evidence revises current knowledge while every prior ledger row remains inspectable",
+		FalsifiablePrediction: "changing a proposition or observed value changes the relation, subject resolution, and ledger transition; comment-only edits preserve semantic meaning",
 	}
 	model, reason := reconstructSource(source)
 	if reason == "" {
@@ -55,8 +55,8 @@ func Judge(producerBytes, source []byte) (Report, error) {
 		return finishFailure(report, reason), nil
 	}
 	report.Cases, report.Transitions, report.Metrics = cases, transitions, metrics
-	report.SubjectResolution = subjectResolution(cases)
 	report.Conformance = Conformance{Decision: "PASS", Resolution: "EXACT", Reason: "SOURCE_RECONSTRUCTION_AND_REPLAY"}
+	report.SubjectResolution = subjectResolution(cases)
 	return finish(report, "PASS", "EXACT", "NONMONOTONIC_REFUTATION_OBSERVED"), nil
 }
 
@@ -99,10 +99,10 @@ func reconstructSource(source []byte) (sourceModel, string) {
 	}
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
-		if !ok || !activity.ValueProgramPresent || !strings.HasPrefix(activity.ValueProgram, "meta.observe:v1;") {
+		if !ok || !activity.ValueProgramPresent || !strings.HasPrefix(activity.ValueProgram, "meta.observe:v2;") {
 			continue
 		}
-		if len(activity.Inputs) < 3 || activity.Output == "" {
+		if len(activity.Inputs) < 5 || activity.Output == "" {
 			return sourceModel{}, "SOURCE_OBSERVATION_ENDPOINT_MISMATCH"
 		}
 		observationID, ok := entities[activity.Output]
@@ -114,16 +114,19 @@ func reconstructSource(source []byte) (sourceModel, string) {
 			return sourceModel{}, "SOURCE_OBSERVATION_FIELDS_INVALID"
 		}
 		claimID := "gooo://nonmonotonic-refutation/claim/" + fields["claim"]
-		if entities[activity.Inputs[0].Name] != claimID || entities[activity.Inputs[1].Name] != "gooo://nonmonotonic-refutation/predicate/"+fields["predicate"] || entities[activity.Inputs[2].Name] != "gooo://nonmonotonic-refutation/value/one" || fields["expected"] != "1" {
-			return sourceModel{}, "SOURCE_SUBJECT_RESOLUTION_MISMATCH"
+		if entities[activity.Inputs[0].Name] != claimID ||
+			entities[activity.Inputs[1].Name] != "gooo://nonmonotonic-refutation/predicate/"+fields["predicate"] ||
+			entities[activity.Inputs[2].Name] != "gooo://nonmonotonic-refutation/subject/"+fields["subject"] ||
+			entities[activity.Inputs[3].Name] != "gooo://nonmonotonic-refutation/input/"+fields["input"] ||
+			entities[activity.Inputs[4].Name] != "gooo://nonmonotonic-refutation/value/one" || fields["expected"] != "1" {
+			return sourceModel{}, "SOURCE_SUBJECT_INPUT_RESOLUTION_MISMATCH"
 		}
-		sequence := len(model.Contract.Observations) + 1
 		model.Contract.Observations = append(model.Contract.Observations, sourceObservation{
-			ID: observationID, Activity: activity.Name, ClaimID: claimID, Sequence: sequence,
+			ID: observationID, Activity: activity.Name, ClaimID: claimID, Sequence: len(model.Contract.Observations) + 1,
+			Proposition: fields["proposition"], Subject: fields["subject"], Input: fields["input"],
 			Predicate: fields["predicate"], ExpectedValue: fields["expected"], ObservedValue: fields["observed"],
-			Provenance: fields["provenance"], EvidenceDigest: fields["evidence_digest"], PriorState: fields["prior"],
-			RevisionPolicy: fields["revision_policy"], Producer: fields["producer"], Consumer: fields["consumer"],
-			MetaOperation: fields["meta_operation"], ProofChoice: fields["proof_choice"],
+			Provenance: fields["provenance"], EvidenceDigest: fields["evidence_digest"], Producer: fields["producer"],
+			Consumer: fields["consumer"], MetaOperation: fields["meta_operation"], ProofChoice: fields["proof_choice"],
 			Coordinate: coordinate{Stage: fields["stage"], Step: fields["step"]},
 		})
 	}
@@ -131,9 +134,10 @@ func reconstructSource(source []byte) (sourceModel, string) {
 		return sourceModel{}, "SOURCE_OBSERVATION_DENOMINATOR_MISMATCH"
 	}
 	model.Contract.Schema = sourceSchema
+	model.Contract.FixedCaseTotal = len(model.Contract.Claims)
 	model.Contract.FixedClaimTotal = len(model.Contract.Claims)
 	model.Contract.FixedObservationTotal = len(model.Contract.Observations)
-	model.Contract.FixedTransitionTotal = len(model.Contract.Observations)
+	model.Contract.FixedLedgerRowTotal = len(model.Contract.Observations)
 	if err := completeClaims(&model.Contract); err != nil {
 		return sourceModel{}, "SOURCE_CLAIM_BINDING_MISMATCH"
 	}
@@ -143,14 +147,11 @@ func reconstructSource(source []byte) (sourceModel, string) {
 func parseObservationProgram(program string) (map[string]string, bool) {
 	fields := make(map[string]string)
 	for _, part := range strings.Split(program, ";") {
-		if part == "meta.observe:v1" {
+		if part == "meta.observe:v2" {
 			continue
 		}
 		key, value, ok := strings.Cut(part, "=")
-		if !ok || key == "" || value == "" {
-			return nil, false
-		}
-		if !knownObservationField(key) {
+		if !ok || key == "" || (value == "" && key != "observed") || !knownObservationField(key) {
 			return nil, false
 		}
 		if _, exists := fields[key]; exists {
@@ -158,19 +159,19 @@ func parseObservationProgram(program string) (map[string]string, bool) {
 		}
 		fields[key] = value
 	}
-	for _, key := range []string{"claim", "predicate", "expected", "observed", "provenance", "evidence_digest", "prior", "revision_policy", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
+	for _, key := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "provenance", "evidence_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
 		if fields[key] == "" {
 			return nil, false
 		}
 	}
-	if len(fields["evidence_digest"]) != len("sha256:")+64 || !strings.HasPrefix(fields["evidence_digest"], "sha256:") {
+	if _, ok := fields["observed"]; !ok || len(fields["evidence_digest"]) != len("sha256:")+64 || !strings.HasPrefix(fields["evidence_digest"], "sha256:") {
 		return nil, false
 	}
 	return fields, true
 }
 
 func knownObservationField(key string) bool {
-	for _, known := range []string{"claim", "predicate", "expected", "observed", "provenance", "evidence_digest", "prior", "revision_policy", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
+	for _, known := range []string{"claim", "proposition", "subject", "input", "predicate", "expected", "observed", "provenance", "evidence_digest", "producer", "consumer", "meta_operation", "proof_choice", "stage", "step"} {
 		if key == known {
 			return true
 		}
@@ -185,17 +186,18 @@ func completeClaims(contract *sourceContract) error {
 			if observation.ClaimID != claim.ID {
 				continue
 			}
-			if claim.InitialStatus == "" {
-				claim.InitialStatus = observation.PriorState
+			if claim.Proposition == "" {
+				claim.Proposition = observation.Proposition
+				claim.Subject = observation.Subject
+				claim.Input = observation.Input
 				claim.Predicate = observation.Predicate
 				claim.ExpectedValue = observation.ExpectedValue
-				claim.RevisionPolicy = observation.RevisionPolicy
 			}
-			if claim.Predicate != observation.Predicate || claim.ExpectedValue != observation.ExpectedValue || claim.RevisionPolicy != observation.RevisionPolicy {
-				return fmt.Errorf("claim source changed its predicate, expected value, or revision policy")
+			if claim.Proposition != observation.Proposition || claim.Subject != observation.Subject || claim.Input != observation.Input || claim.Predicate != observation.Predicate || claim.ExpectedValue != observation.ExpectedValue {
+				return fmt.Errorf("claim source changed its proposition or subject/input")
 			}
 		}
-		if claim.InitialStatus == "" {
+		if claim.Proposition == "" {
 			return fmt.Errorf("claim has no observation")
 		}
 	}
@@ -212,32 +214,32 @@ func validateInput(input producerInput, source []byte, model sourceModel) string
 		return "PRODUCER_RECEIPT_DIGEST_MISMATCH"
 	}
 	if input.SourceDigest == "" || input.SourceDigest != digestBytes(source) || !strings.HasSuffix(input.SourcePath, ".gooo") {
-		return "SOURCE_BINDING_MISMATCH"
+		return "SOURCE_RAW_DIGEST_MISMATCH"
 	}
-	if input.SourceSemanticDigest != model.SemanticDigest || input.SourceModelDigest != digestJSON(model.Contract) || input.Contract.Schema != sourceSchema || input.Contract.FixedClaimTotal != 3 || input.Contract.FixedObservationTotal != 6 || input.Contract.FixedTransitionTotal != 6 {
+	if input.SourceBindingDigest != digestJSON(sourceBinding{RawDigest: input.SourceDigest, SemanticDigest: input.SourceSemanticDigest}) {
+		return "SOURCE_BINDING_DIGEST_MISMATCH"
+	}
+	if input.SourceSemanticDigest != model.SemanticDigest || input.Contract.Schema != sourceSchema || input.Contract.FixedCaseTotal != 3 || input.Contract.FixedClaimTotal != 3 || input.Contract.FixedObservationTotal != 6 || input.Contract.FixedLedgerRowTotal != 6 {
 		return "SOURCE_RECONSTRUCTION_MISMATCH"
 	}
-	if !sameSourceContract(input.Contract, model.Contract) {
+	if input.SourceModelDigest != digestJSON(model.Contract) || digestJSON(input.Contract) != digestJSON(model.Contract) {
 		return "PRODUCER_SOURCE_MODEL_MISMATCH"
 	}
-	if input.Producer != producerID || input.Consumer != consumerID || input.MetaOperation != metaOperation || input.Effects.RepositoryWrites != 0 || input.Effects.MutationAuthority {
+	if input.Producer != producerID || input.Consumer != consumerID || input.MetaOperation != metaOperation || input.Effects.RepositoryWrites != 0 || input.Effects.MutationAuthority || input.Effects.PromotionCount != 0 {
 		return "PRODUCER_PROVENANCE_OR_EFFECTS_MISMATCH"
 	}
 	return ""
 }
 
-func sameSourceContract(left, right sourceContract) bool {
-	return digestJSON(left) == digestJSON(right)
-}
-
 func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
-	metrics := Metrics{FixedClaimTotal: model.Contract.FixedClaimTotal, FixedObservationTotal: model.Contract.FixedObservationTotal, FixedTransitionTotal: model.Contract.FixedTransitionTotal, InScopeClaimTotal: len(model.Contract.Claims)}
+	metrics := Metrics{FixedCaseTotal: model.Contract.FixedCaseTotal, FixedClaimTotal: model.Contract.FixedClaimTotal, FixedObservationTotal: model.Contract.FixedObservationTotal, FixedLedgerRowTotal: model.Contract.FixedLedgerRowTotal, InScopeClaimTotal: len(model.Contract.Claims)}
 	cases := make([]CaseResult, len(model.Contract.Claims))
 	status := make(map[string]string, len(model.Contract.Claims))
 	caseIndex := make(map[string]int, len(model.Contract.Claims))
 	for index, claim := range model.Contract.Claims {
-		cases[index] = CaseResult{ID: strings.TrimPrefix(claim.ID, "gooo://nonmonotonic-refutation/claim/"), ClaimID: claim.ID, InitialStatus: claim.InitialStatus, StatusHistory: []string{claim.InitialStatus}, RevisionPolicy: claim.RevisionPolicy, Producer: producerID, Consumer: consumerID, MetaOperation: metaOperation}
-		status[claim.ID] = claim.InitialStatus
+		caseID := strings.TrimPrefix(claim.ID, "gooo://nonmonotonic-refutation/claim/")
+		cases[index] = CaseResult{ID: caseID, ClaimID: claim.ID, Proposition: claim.Proposition, Subject: claim.Subject, Input: claim.Input, InitialStatus: statusOpen, StatusHistory: []string{statusOpen}}
+		status[claim.ID] = statusOpen
 		caseIndex[claim.ID] = index
 	}
 	transitions := make([]Transition, 0, len(model.Contract.Observations))
@@ -248,104 +250,113 @@ func replay(model sourceModel) ([]CaseResult, []Transition, Metrics, string) {
 			return cases, transitions, metrics, "SOURCE_OBSERVATION_ORDER_MISMATCH"
 		}
 		before := status[observation.ClaimID]
-		if observation.PriorState != before {
-			return cases, transitions, metrics, "PRIOR_STATE_DOES_NOT_MATCH_LEDGER"
-		}
-		kind := classify(observation)
-		if kind == "" {
-			return cases, transitions, metrics, "INDEPENDENT_CLASSIFIER_REJECTED_PREDICATE"
-		}
-		after, accepted, reason := revise(before, kind, observation.RevisionPolicy)
-		coordinate := coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: reason}
-		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, EvidenceKind: kind, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProofChoice: observation.ProofChoice, Coordinate: coordinate, PreviousDigest: previousDigest}
+		relation := classify(observation)
+		after, accepted, reason := revise(before, relation)
+		transition := Transition{Sequence: index + 1, CaseID: cases[caseNumber].ID, ClaimID: observation.ClaimID, Before: before, After: after, Accepted: accepted, EvidenceID: observation.ID, Relation: relation, EvidenceBasis: evidenceBasis(observation), EvidenceDigest: observation.EvidenceDigest, EvidenceProvenance: observation.Provenance, ProofChoice: observation.ProofChoice, Coordinate: coordinate{Stage: observation.Coordinate.Stage, Step: observation.Coordinate.Step, Reason: reason}, PreviousDigest: previousDigest}
 		transition.TransitionDigest = transitionDigest(transition)
 		previousDigest = transition.TransitionDigest
 		transitions = append(transitions, transition)
 		metrics.TransitionTotal++
-		if !accepted {
-			finalizePartialCases(cases, status, &metrics)
-			return cases, transitions, metrics, reason
+		switch relation {
+		case "SUPPORTS":
+			metrics.SupportsTotal++
+		case "CONTRADICTS":
+			metrics.ContradictsTotal++
+		case "INSUFFICIENT":
+			metrics.InsufficientTotal++
+		case "UNKNOWN":
+			metrics.UnknownTotal++
+		}
+		if before != after {
+			switch before + "->" + after {
+			case statusOpen + "->" + statusDischarged:
+				metrics.OpenToDischargedTotal++
+			case statusDischarged + "->" + statusRefuted:
+				metrics.DischargedToRefutedTotal++
+				metrics.NonMonotonicRevisionTotal++
+				cases[caseNumber].RefutationObserved = true
+			case statusRefuted + "->" + statusDischarged:
+				metrics.RefutedToDischargedTotal++
+			}
 		}
 		status[observation.ClaimID] = after
 		cases[caseNumber].StatusHistory = append(cases[caseNumber].StatusHistory, after)
-		switch before + "->" + after {
-		case statusOpen + "->" + statusDischarged:
-			metrics.OpenToDischargedTotal++
-		case statusDischarged + "->" + statusRefuted:
-			metrics.DischargedToRefutedTotal++
-			metrics.NonMonotonicRevisionTotal++
-			cases[caseNumber].RefutationObserved = true
-		case statusRefuted + "->" + statusDischarged:
-			metrics.RefutedToDischargedTotal++
-		}
+		cases[caseNumber].ObservationTotal++
 	}
 	for index := range cases {
 		cases[index].CurrentStatus = status[cases[index].ClaimID]
-		cases[index].HistoryRetained = len(cases[index].StatusHistory) >= 1
-		if cases[index].CurrentStatus == statusDischarged {
-			metrics.CurrentDischargedTotal++
-		}
-		if cases[index].CurrentStatus == statusRefuted {
-			metrics.CurrentRefutedTotal++
-		}
+		cases[index].HistoryRetained = len(cases[index].StatusHistory) == cases[index].ObservationTotal+1
 		metrics.RetainedStateTotal += len(cases[index].StatusHistory)
+		switch cases[index].CurrentStatus {
+		case statusDischarged:
+			metrics.CurrentDischargedTotal++
+		case statusRefuted:
+			metrics.CurrentRefutedTotal++
+		case statusOpen:
+			metrics.CurrentOpenTotal++
+		}
 	}
-	if metrics.FixedClaimTotal != 3 || metrics.FixedObservationTotal != 6 || metrics.FixedTransitionTotal != 6 || metrics.TransitionTotal != 6 || metrics.OpenToDischargedTotal != 3 || metrics.DischargedToRefutedTotal != 2 || metrics.RefutedToDischargedTotal != 1 || metrics.CurrentDischargedTotal != 2 || metrics.CurrentRefutedTotal != 1 || metrics.RetainedStateTotal != 9 {
-		return cases, transitions, metrics, "FIXED_TRANSITION_COUNT_MISMATCH"
+	if metrics.FixedCaseTotal != 3 || metrics.FixedClaimTotal != 3 || metrics.FixedObservationTotal != 6 || metrics.FixedLedgerRowTotal != 6 || metrics.TransitionTotal != 6 {
+		return cases, transitions, metrics, "FIXED_SOURCE_COUNT_MISMATCH"
 	}
 	metrics.CurrentDischargeBasisPoints = metrics.CurrentDischargedTotal * 10000 / metrics.FixedClaimTotal
 	return cases, transitions, metrics, ""
 }
 
-func finalizePartialCases(cases []CaseResult, status map[string]string, metrics *Metrics) {
-	for index := range cases {
-		cases[index].CurrentStatus = status[cases[index].ClaimID]
-		cases[index].HistoryRetained = len(cases[index].StatusHistory) >= 1
-		metrics.RetainedStateTotal += len(cases[index].StatusHistory)
-	}
-}
-
 func classify(observation sourceObservation) string {
-	if observation.Predicate != "equality" {
-		return ""
+	if observation.Predicate != "equality" || observation.Subject == "" || observation.Input == "" {
+		return "UNKNOWN"
+	}
+	if observation.ObservedValue == "" {
+		return "INSUFFICIENT"
 	}
 	if observation.ObservedValue == observation.ExpectedValue {
-		return "SUPPORT"
+		return "SUPPORTS"
 	}
-	return "CONTRADICTING"
+	return "CONTRADICTS"
 }
 
-func revise(before, kind, policy string) (string, bool, string) {
-	switch {
-	case before == statusOpen && kind == "SUPPORT":
-		return statusDischarged, true, "EQUALITY_MATCH_ACCEPTED"
-	case before == statusDischarged && kind == "CONTRADICTING":
-		return statusRefuted, true, "NEW_OBSERVATION_CONTRADICTS_DISCHARGED"
-	case before == statusRefuted && kind == "SUPPORT" && policy == reopenPolicy:
-		return statusDischarged, true, "REVISION_POLICY_REOPEN_ACCEPTS_MATCH"
-	case before == statusRefuted && kind == "SUPPORT":
-		return statusRefuted, false, "REVISION_POLICY_UNKNOWN_OR_FORBIDS_REOPEN"
+func revise(before, relation string) (string, bool, string) {
+	switch relation {
+	case "SUPPORTS":
+		return statusDischarged, true, "PROPOSITION_MATCHES_OBSERVATION"
+	case "CONTRADICTS":
+		return statusRefuted, true, "OBSERVATION_DIRECTLY_CONTRADICTS_PROPOSITION"
+	case "INSUFFICIENT":
+		return statusOpen, false, "INSUFFICIENT_EVIDENCE_LEAVES_CLAIM_OPEN"
 	default:
-		return before, false, "TRANSITION_NOT_ADMISSIBLE"
+		return statusOpen, false, "UNKNOWN_RELATION_LEAVES_CLAIM_OPEN"
 	}
 }
 
 func evidenceBasis(observation sourceObservation) string {
-	return fmt.Sprintf("predicate=%s expected=%s observed=%s provenance=%s digest=%s", observation.Predicate, observation.ExpectedValue, observation.ObservedValue, observation.Provenance, observation.EvidenceDigest)
+	return fmt.Sprintf("proposition=%s subject=%s input=%s predicate=%s expected=%s observed=%s provenance=%s digest=%s", observation.Proposition, observation.Subject, observation.Input, observation.Predicate, observation.ExpectedValue, observation.ObservedValue, observation.Provenance, observation.EvidenceDigest)
 }
 
 func subjectResolution(cases []CaseResult) SubjectResolution {
+	discharged, refuted, open := 0, 0, 0
 	for _, result := range cases {
-		if result.CurrentStatus == statusRefuted {
-			return SubjectResolution{Decision: "OBSERVED", Resolution: "PARTIAL", Reason: "CURRENT_KNOWLEDGE_INCLUDES_REFUTED_SUBJECT"}
+		switch result.CurrentStatus {
+		case statusDischarged:
+			discharged++
+		case statusRefuted:
+			refuted++
+		default:
+			open++
 		}
 	}
-	return SubjectResolution{Decision: "OBSERVED", Resolution: "EXACT", Reason: "ALL_SUBJECTS_DISCHARGED"}
+	resolution := "EXACT"
+	if open > 0 {
+		resolution = "LOWER_RESOLUTION"
+	} else if refuted > 0 {
+		resolution = "PARTIAL"
+	}
+	return SubjectResolution{Decision: fmt.Sprintf("DISCHARGED=%d;REFUTED=%d;OPEN=%d", discharged, refuted, open), Resolution: resolution, Reason: "CURRENT_LEDGER_DISTRIBUTION"}
 }
 
 func finishFailure(report Report, reason string) Report {
 	report.Conformance = Conformance{Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION", Reason: reason}
-	report.SubjectResolution = SubjectResolution{Decision: "UNRESOLVED", Resolution: "FAIL_CLOSED", Reason: reason}
+	report.SubjectResolution = SubjectResolution{Decision: "UNRESOLVED", Resolution: "LOWER_RESOLUTION", Reason: reason}
 	return finish(report, "FAIL_CLOSED", "LOWER_RESOLUTION", reason)
 }
 

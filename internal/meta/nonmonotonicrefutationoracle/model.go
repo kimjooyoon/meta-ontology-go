@@ -7,11 +7,12 @@ type coordinate struct {
 }
 
 type sourceClaim struct {
-	ID             string `json:"id"`
-	Predicate      string `json:"predicate"`
-	ExpectedValue  string `json:"expected_value"`
-	InitialStatus  string `json:"initial_status"`
-	RevisionPolicy string `json:"revision_policy"`
+	ID            string `json:"id"`
+	Proposition   string `json:"proposition"`
+	Subject       string `json:"subject"`
+	Input         string `json:"input"`
+	Predicate     string `json:"predicate"`
+	ExpectedValue string `json:"expected_value"`
 }
 
 type sourceObservation struct {
@@ -19,13 +20,14 @@ type sourceObservation struct {
 	Activity       string     `json:"activity"`
 	ClaimID        string     `json:"claim_id"`
 	Sequence       int        `json:"sequence"`
+	Proposition    string     `json:"proposition"`
+	Subject        string     `json:"subject"`
+	Input          string     `json:"input"`
 	Predicate      string     `json:"predicate"`
 	ExpectedValue  string     `json:"expected_value"`
 	ObservedValue  string     `json:"observed_value"`
 	Provenance     string     `json:"provenance"`
 	EvidenceDigest string     `json:"evidence_digest"`
-	PriorState     string     `json:"prior_state"`
-	RevisionPolicy string     `json:"revision_policy"`
 	Producer       string     `json:"producer"`
 	Consumer       string     `json:"consumer"`
 	MetaOperation  string     `json:"meta_operation"`
@@ -35,9 +37,10 @@ type sourceObservation struct {
 
 type sourceContract struct {
 	Schema                string              `json:"schema"`
+	FixedCaseTotal        int                 `json:"fixed_case_total"`
 	FixedClaimTotal       int                 `json:"fixed_claim_total"`
 	FixedObservationTotal int                 `json:"fixed_observation_total"`
-	FixedTransitionTotal  int                 `json:"fixed_transition_total"`
+	FixedLedgerRowTotal   int                 `json:"fixed_ledger_row_total"`
 	Claims                []sourceClaim       `json:"claims"`
 	Observations          []sourceObservation `json:"observations"`
 }
@@ -47,9 +50,15 @@ type sourceModel struct {
 	SemanticDigest string
 }
 
+type sourceBinding struct {
+	RawDigest      string `json:"raw_digest"`
+	SemanticDigest string `json:"semantic_digest"`
+}
+
 type effects struct {
 	RepositoryWrites  int  `json:"repository_writes"`
 	MutationAuthority bool `json:"mutation_authority"`
+	PromotionCount    int  `json:"promotion_count"`
 }
 
 type producerInput struct {
@@ -58,6 +67,7 @@ type producerInput struct {
 	SourcePath           string         `json:"source_path"`
 	SourceDigest         string         `json:"source_digest"`
 	SourceSemanticDigest string         `json:"source_semantic_digest"`
+	SourceBindingDigest  string         `json:"source_binding_digest"`
 	SourceModelDigest    string         `json:"source_model_digest"`
 	Producer             string         `json:"producer"`
 	Consumer             string         `json:"consumer"`
@@ -76,7 +86,7 @@ type Transition struct {
 	After              string     `json:"after"`
 	Accepted           bool       `json:"accepted"`
 	EvidenceID         string     `json:"evidence_id"`
-	EvidenceKind       string     `json:"evidence_kind"`
+	Relation           string     `json:"relation"`
 	EvidenceBasis      string     `json:"evidence_basis"`
 	EvidenceDigest     string     `json:"evidence_digest"`
 	EvidenceProvenance string     `json:"evidence_provenance"`
@@ -89,29 +99,34 @@ type Transition struct {
 type CaseResult struct {
 	ID                 string   `json:"id"`
 	ClaimID            string   `json:"claim_id"`
+	Proposition        string   `json:"proposition"`
+	Subject            string   `json:"subject"`
+	Input              string   `json:"input"`
 	InitialStatus      string   `json:"initial_status"`
 	CurrentStatus      string   `json:"current_status"`
 	StatusHistory      []string `json:"status_history"`
 	HistoryRetained    bool     `json:"history_retained"`
+	ObservationTotal   int      `json:"observation_total"`
 	RefutationObserved bool     `json:"refutation_observed"`
-	RevisionPolicy     string   `json:"revision_policy"`
-	Producer           string   `json:"producer"`
-	Consumer           string   `json:"consumer"`
-	MetaOperation      string   `json:"meta_operation"`
-	ProofChoice        string   `json:"proof_choice"`
 }
 
 type Metrics struct {
+	FixedCaseTotal              int `json:"fixed_case_total"`
 	FixedClaimTotal             int `json:"fixed_claim_total"`
 	FixedObservationTotal       int `json:"fixed_observation_total"`
-	FixedTransitionTotal        int `json:"fixed_transition_total"`
+	FixedLedgerRowTotal         int `json:"fixed_ledger_row_total"`
 	InScopeClaimTotal           int `json:"in_scope_claim_total"`
 	TransitionTotal             int `json:"transition_total"`
+	SupportsTotal               int `json:"supports_total"`
+	ContradictsTotal            int `json:"contradicts_total"`
+	InsufficientTotal           int `json:"insufficient_total"`
+	UnknownTotal                int `json:"unknown_total"`
 	OpenToDischargedTotal       int `json:"open_to_discharged_total"`
 	DischargedToRefutedTotal    int `json:"discharged_to_refuted_total"`
 	RefutedToDischargedTotal    int `json:"refuted_to_discharged_total"`
 	CurrentDischargedTotal      int `json:"current_discharged_total"`
 	CurrentRefutedTotal         int `json:"current_refuted_total"`
+	CurrentOpenTotal            int `json:"current_open_total"`
 	RetainedStateTotal          int `json:"retained_state_total"`
 	NonMonotonicRevisionTotal   int `json:"non_monotonic_revision_total"`
 	CurrentDischargeBasisPoints int `json:"current_discharge_basis_points"`
@@ -136,6 +151,7 @@ type Report struct {
 	SourcePath            string            `json:"source_path"`
 	SourceDigest          string            `json:"source_digest"`
 	SourceSemanticDigest  string            `json:"source_semantic_digest"`
+	SourceBindingDigest   string            `json:"source_binding_digest"`
 	SourceModelDigest     string            `json:"source_model_digest"`
 	Producer              string            `json:"producer"`
 	Consumer              string            `json:"consumer"`

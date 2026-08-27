@@ -21,6 +21,7 @@ type receipt struct {
 	ReplayVerified        bool                                `json:"replay_verified"`
 	RepositoryWrites      int                                 `json:"repository_writes"`
 	MutationAuthority     bool                                `json:"mutation_authority"`
+	PromotionCount        int                                 `json:"promotion_count"`
 	ReceiptDigest         string                              `json:"receipt_digest"`
 }
 
@@ -69,9 +70,9 @@ func main() {
 		writes = 1
 	}
 	output := receipt{
-		Schema: "gooo/meta-nonmonotonic-refutation-receipt/v2", ProducerReceiptDigest: digestBytes(producer),
+		Schema: "gooo/meta-nonmonotonic-refutation-receipt/v3", ProducerReceiptDigest: digestBytes(producer),
 		Report: report, ReplayReportDigest: replay.ReportDigest, ReplayVerified: report.ReportDigest == replay.ReportDigest,
-		RepositoryWrites: writes, MutationAuthority: false,
+		RepositoryWrites: writes, MutationAuthority: false, PromotionCount: 0,
 	}
 	output.ReceiptDigest = digestJSON(output)
 	file, err := os.Create(*outputPath)

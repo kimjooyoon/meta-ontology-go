@@ -58,6 +58,10 @@ jobs:
           output="$RUNNER_TEMP/nonmonotonic-refutation/producer"
           mkdir -p "$output"
           source="examples/nonmonotonic-refutation/main.gooo"
+          if grep -En '(^|;)[[:space:]]*(kind|basis|decision|status|prior|revision_policy)=' "$source"; then
+            echo "source contains a conclusion or prior-state label" >&2
+            exit 1
+          fi
           git status --porcelain=v1 --untracked-files=all > "$output/before.status"
           go run ./cmd/nonmonotonic-refutation-producer \
             -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/first.json"
@@ -67,16 +71,20 @@ jobs:
             -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
           cmp "$output/first.json" "$output/replay.json"
           jq -e '
-            .schema == "gooo/meta-nonmonotonic-refutation-producer/v2" and
-            .contract.schema == "gooo/meta-nonmonotonic-refutation-source/v1" and
+            .schema == "gooo/meta-nonmonotonic-refutation-producer/v3" and
+            .contract.schema == "gooo/meta-nonmonotonic-refutation-source/v2" and
+            .contract.fixed_case_total == 3 and
             .contract.fixed_claim_total == 3 and
             .contract.fixed_observation_total == 6 and
-            .contract.fixed_transition_total == 6 and
+            .contract.fixed_ledger_row_total == 6 and
             (.contract.claims | length) == 3 and
             (.contract.observations | length) == 6 and
-            (all(.contract.observations[]; has("kind") | not)) and
+            (all(.contract.claims[]; .proposition != "" and .subject != "" and .input != "" and (has("status") | not) and (has("decision") | not))) and
+            (all(.contract.observations[]; .proposition != "" and .subject != "" and .input != "" and .observed_value != null and (has("relation") | not) and (has("status") | not) and (has("decision") | not) and (has("prior") | not) and (has("revision_policy") | not))) and
+            .source_digest != "" and .source_semantic_digest != "" and .source_binding_digest != "" and
             .effects.repository_writes == 0 and
-            .effects.mutation_authority == false
+            .effects.mutation_authority == false and
+            .effects.promotion_count == 0
           ' "$output/first.json"
       - name: Upload producer evidence
         uses: actions/upload-artifact@v6
@@ -141,36 +149,29 @@ jobs:
             -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
           cmp "$output/baseline.json" "$output/replay.json"
 
-          sed 's/claim=gamma;predicate=equality;expected=1;observed=1;provenance=observer-gamma-3/claim=gamma;predicate=equality;expected=1;observed=0;provenance=observer-gamma-3/' "$source" > "$variants/semantic.gooo"
-          sed 's/revision_policy=REOPEN_IF_NEWER_ADMISSIBLE/revision_policy=UNKNOWN/g' "$source" > "$variants/unknown-policy.gooo"
+          sed 's/claim=gamma;proposition=equals:gamma:input-gamma:1;subject=gamma;input=input-gamma;predicate=equality;expected=1;observed=1;provenance=observer-gamma-3/claim=gamma;proposition=equals:gamma:input-gamma:1;subject=gamma;input=input-gamma;predicate=equality;expected=1;observed=0;provenance=observer-gamma-3/' "$source" > "$variants/semantic.gooo"
+          sed '/activity ObserveAlpha1/ s/EqualityPredicate/UnknownPredicate/; /activity ObserveAlpha1/ s/predicate=equality/predicate=unknown/' "$source" > "$variants/unknown.gooo"
+          sed 's/claim=gamma;proposition=equals:gamma:input-gamma:1;subject=gamma;input=input-gamma;predicate=equality;expected=1;observed=1;provenance=observer-gamma-3/claim=gamma;proposition=equals:gamma:input-gamma:1;subject=gamma;input=input-gamma;predicate=equality;expected=1;observed=;provenance=observer-gamma-3/' "$source" > "$variants/insufficient.gooo"
           cp "$source" "$variants/comment.gooo"
-          printf '\n# comment-only intervention\n' >> "$variants/comment.gooo"
-          for variant in semantic unknown-policy comment; do
+          printf '%s\n' '# comment-only intervention' >> "$variants/comment.gooo"
+          for variant in semantic unknown insufficient comment; do
             go run ./cmd/nonmonotonic-refutation-producer \
               -source "$variants/$variant.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$variants/$variant-producer.json"
           done
 
           go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/semantic-producer.json" -source "$variants/semantic.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/semantic.json"
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/unknown-producer.json" -source "$variants/unknown.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/unknown.json"
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/insufficient-producer.json" -source "$variants/insufficient.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/insufficient.json"
+          go run ./cmd/nonmonotonic-refutation-consumer \
             -producer "$variants/comment-producer.json" -source "$variants/comment.gooo" \
             -repository-root "$GITHUB_WORKSPACE" -output "$output/comment.json"
 
-          set +e
-          go run ./cmd/nonmonotonic-refutation-consumer \
-            -producer "$variants/semantic-producer.json" -source "$variants/semantic.gooo" \
-            -repository-root "$GITHUB_WORKSPACE" -output "$output/semantic.json"
-          semantic_status=$?
-          set -e
-          test "$semantic_status" -ne 0
-
-          set +e
-          go run ./cmd/nonmonotonic-refutation-consumer \
-            -producer "$variants/unknown-policy-producer.json" -source "$variants/unknown-policy.gooo" \
-            -repository-root "$GITHUB_WORKSPACE" -output "$output/unknown-policy.json"
-          unknown_policy_status=$?
-          set -e
-          test "$unknown_policy_status" -ne 0
-
-          unsigned="$variants/tampered-unsigned.json"
           tampered="$variants/tampered.json"
           tampered_json="$(jq -c '
             .contract.observations[0].observed_value = "9" |
@@ -187,73 +188,120 @@ jobs:
           test "$tampered_status" -ne 0
 
           jq -e '
-            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v2" and
+            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v3" and
             .report.decision == "PASS" and
             .report.resolution == "EXACT" and
             .report.reason == "NONMONOTONIC_REFUTATION_OBSERVED" and
             .report.conformance.decision == "PASS" and
+            .report.conformance.resolution == "EXACT" and
+            .report.subject_resolution.decision == "DISCHARGED=2;REFUTED=1;OPEN=0" and
             .report.subject_resolution.resolution == "PARTIAL" and
+            .report.metrics.fixed_case_total == 3 and
             .report.metrics.fixed_claim_total == 3 and
             .report.metrics.fixed_observation_total == 6 and
-            .report.metrics.fixed_transition_total == 6 and
+            .report.metrics.fixed_ledger_row_total == 6 and
             .report.metrics.transition_total == 6 and
+            .report.metrics.supports_total == 4 and
+            .report.metrics.contradicts_total == 2 and
             .report.metrics.open_to_discharged_total == 3 and
             .report.metrics.discharged_to_refuted_total == 2 and
             .report.metrics.refuted_to_discharged_total == 1 and
             .report.metrics.current_discharged_total == 2 and
             .report.metrics.current_refuted_total == 1 and
+            .report.metrics.current_open_total == 0 and
             .report.metrics.current_discharge_basis_points == 6666 and
             .report.metrics.retained_state_total == 9 and
             .report.metrics.non_monotonic_revision_total == 2 and
             (.report.cases | length) == 3 and
             (.report.transitions | length) == 6 and
+            .report.cases[0].initial_status == "OPEN" and
             .report.cases[0].status_history == ["OPEN", "DISCHARGED"] and
             .report.cases[1].status_history == ["OPEN", "DISCHARGED", "REFUTED"] and
             .report.cases[2].status_history == ["OPEN", "DISCHARGED", "REFUTED", "DISCHARGED"] and
             (all(.report.cases[]; .history_retained == true)) and
-            (all(.report.transitions[]; .accepted == true and .evidence_digest != "" and .evidence_provenance != "" and .coordinate.stage != "" and .coordinate.step != "" and .coordinate.reason != "")) and
+            (all(.report.transitions[]; .accepted == true and (.relation == "SUPPORTS" or .relation == "CONTRADICTS") and .evidence_digest != "" and .evidence_provenance != "" and .proof_choice != "" and .coordinate.stage != "" and .coordinate.step != "" and .coordinate.reason != "" and .transition_digest != "")) and
             .repository_writes == 0 and
             .mutation_authority == false and
+            .promotion_count == 0 and
             .replay_verified == true
           ' "$output/baseline.json"
 
           jq -e --slurpfile baseline "$output/baseline.json" '
-            .report.decision == $baseline[0].report.decision and
+            .report.decision == "PASS" and
             .report.source_digest != $baseline[0].report.source_digest and
-            .report.source_semantic_digest == $baseline[0].report.source_semantic_digest and
-            ([.report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest])
-          ' "$output/comment.json"
-
-          jq -e --slurpfile baseline "$output/baseline.json" '
-            .report.decision == "FAIL_CLOSED" and
-            .report.reason == "TRANSITION_NOT_ADMISSIBLE" and
             .report.source_semantic_digest != $baseline[0].report.source_semantic_digest and
-            ([.report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest])
+            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=2;OPEN=0" and
+            .report.transitions[5].relation == "CONTRADICTS" and
+            .report.transitions[5].before == "REFUTED" and
+            .report.transitions[5].after == "REFUTED" and
+            .report.transitions[5].accepted == true and
+            ([.report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest]) and
+            .repository_writes == 0 and .mutation_authority == false and .promotion_count == 0
           ' "$output/semantic.json"
 
-          jq -e '
-            .report.reason == "REVISION_POLICY_UNKNOWN_OR_FORBIDS_REOPEN" and
-            .report.conformance.decision == "FAIL_CLOSED" and
-            .report.transitions[-1].before == "REFUTED" and
-            .report.transitions[-1].after == "REFUTED" and
-            .report.transitions[-1].accepted == false and
-            .report.transitions[-1].coordinate.stage != "" and
-            .report.transitions[-1].coordinate.step != "" and
-            .report.transitions[-1].coordinate.reason != ""
-          ' "$output/unknown-policy.json"
+          jq -e --slurpfile baseline "$output/baseline.json" '
+            .report.decision == "PASS" and
+            .report.source_digest != $baseline[0].report.source_digest and
+            .report.source_semantic_digest == $baseline[0].report.source_semantic_digest and
+            .report.subject_resolution.decision == $baseline[0].report.subject_resolution.decision and
+            .report.subject_resolution.resolution == $baseline[0].report.subject_resolution.resolution and
+            ([.report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest]) and
+            ([.report.cases[].status_history] == [$baseline[0].report.cases[].status_history]) and
+            .repository_writes == 0 and .mutation_authority == false and .promotion_count == 0
+          ' "$output/comment.json"
 
-          jq -e '.report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH" and .report.conformance.decision == "FAIL_CLOSED"' "$output/tampered.json"
+          jq -e '
+            .report.decision == "PASS" and
+            .report.conformance.decision == "PASS" and
+            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=1;OPEN=1" and
+            .report.subject_resolution.resolution == "LOWER_RESOLUTION" and
+            .report.metrics.unknown_total == 1 and
+            .report.transitions[0].relation == "UNKNOWN" and
+            .report.transitions[0].before == "OPEN" and
+            .report.transitions[0].after == "OPEN" and
+            .report.transitions[0].accepted == false and
+            .report.transitions[0].coordinate.stage != "" and
+            .report.transitions[0].coordinate.step != "" and
+            .report.transitions[0].coordinate.reason != "" and
+            .repository_writes == 0 and .mutation_authority == false and .promotion_count == 0
+          ' "$output/unknown.json"
+
+          jq -e '
+            .report.decision == "PASS" and
+            .report.conformance.decision == "PASS" and
+            .report.subject_resolution.decision == "DISCHARGED=1;REFUTED=0;OPEN=2" and
+            .report.subject_resolution.resolution == "LOWER_RESOLUTION" and
+            .report.metrics.insufficient_total == 1 and
+            .report.transitions[5].relation == "INSUFFICIENT" and
+            .report.transitions[5].before == "REFUTED" and
+            .report.transitions[5].after == "OPEN" and
+            .report.transitions[5].accepted == false and
+            .report.transitions[5].coordinate.stage != "" and
+            .report.transitions[5].coordinate.step != "" and
+            .report.transitions[5].coordinate.reason != "" and
+            .repository_writes == 0 and .mutation_authority == false and .promotion_count == 0
+          ' "$output/insufficient.json"
+
+          jq -e '
+            .report.decision == "FAIL_CLOSED" and
+            .report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH" and
+            .report.conformance.decision == "FAIL_CLOSED" and
+            .report.subject_resolution.resolution == "LOWER_RESOLUTION" and
+            .repository_writes == 0 and .mutation_authority == false and .promotion_count == 0
+          ' "$output/tampered.json"
 
           source_claims="$(jq '.report.metrics.fixed_claim_total' "$output/baseline.json")"
           source_observations="$(jq '.report.metrics.fixed_observation_total' "$output/baseline.json")"
-          persistent_transitions="$(jq '.report.metrics.transition_total' "$output/baseline.json")"
+          persistent_ledger_rows="$(jq '.report.metrics.fixed_ledger_row_total' "$output/baseline.json")"
+          repository_writes="$(jq '.repository_writes' "$output/baseline.json")"
           semantic_causality=1
           nonsemantic_preservation=1
           coherent_tamper_rejected=1
           jq -n \
             --argjson source_claims "$source_claims" \
             --argjson source_observations "$source_observations" \
-            --argjson persistent_transitions "$persistent_transitions" \
+            --argjson persistent_ledger_rows "$persistent_ledger_rows" \
+            --argjson repository_writes "$repository_writes" \
             --argjson semantic_causality "$semantic_causality" \
             --argjson nonsemantic_preservation "$nonsemantic_preservation" \
             --argjson coherent_tamper_rejected "$coherent_tamper_rejected" '
@@ -263,7 +311,10 @@ jobs:
               producer_imports: {observed: 0, required: 0},
               semantic_causality: {observed: $semantic_causality, required: 1},
               nonsemantic_preservation: {observed: $nonsemantic_preservation, required: 1},
-              persistent_transitions: {observed: $persistent_transitions, required: 6},
+              persistent_ledger_rows: {observed: $persistent_ledger_rows, required: 6},
+              persistent_transitions: {observed: $persistent_ledger_rows, required: 6},
+              repository_writes: {observed: $repository_writes, required: 0},
+              mutation_promotions: {observed: 0, required: 0},
               coherent_tamper_rejected: {observed: $coherent_tamper_rejected, required: 1}
             }
           ' > "$output/denominators.json"
@@ -273,7 +324,10 @@ jobs:
             .producer_imports == {observed: 0, required: 0} and
             .semantic_causality == {observed: 1, required: 1} and
             .nonsemantic_preservation == {observed: 1, required: 1} and
+            .persistent_ledger_rows == {observed: 6, required: 6} and
             .persistent_transitions == {observed: 6, required: 6} and
+            .repository_writes == {observed: 0, required: 0} and
+            .mutation_promotions == {observed: 0, required: 0} and
             .coherent_tamper_rejected == {observed: 1, required: 1}
           ' "$output/denominators.json"
       - name: Upload consumer receipt and denominator proof

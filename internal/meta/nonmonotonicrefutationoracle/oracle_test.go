@@ -32,14 +32,14 @@ func TestIndependentOracleReplaysNonMonotonicHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != "PASS" || report.Metrics.TransitionTotal != 6 ||
+	if report.Decision != "PASS" || report.Metrics.TransitionTotal != 6 || report.Metrics.SupportsTotal != 4 || report.Metrics.ContradictsTotal != 2 ||
 		report.Metrics.DischargedToRefutedTotal != 2 || report.Metrics.RefutedToDischargedTotal != 1 {
 		t.Fatalf("report = %#v", report)
 	}
-	if report.Cases[1].StatusHistory[1] != "DISCHARGED" || report.Cases[1].CurrentStatus != "REFUTED" {
+	if report.Cases[0].InitialStatus != "OPEN" || report.Cases[1].StatusHistory[1] != "DISCHARGED" || report.Cases[1].CurrentStatus != "REFUTED" {
 		t.Fatalf("refutation history = %#v", report.Cases[1])
 	}
-	if !strings.Contains(report.Transitions[2].EvidenceBasis, "observed=0") || report.Transitions[2].EvidenceDigest == "" {
+	if report.Transitions[2].Relation != "CONTRADICTS" || !strings.Contains(report.Transitions[2].EvidenceBasis, "observed=0") || report.Transitions[2].EvidenceDigest == "" || report.SourceBindingDigest == "" {
 		t.Fatalf("refutation basis = %#v", report.Transitions[2])
 	}
 	if report.Transitions[1].PreviousDigest != report.Transitions[0].TransitionDigest ||
@@ -70,7 +70,7 @@ func TestIndependentOracleRejectsSourceDigestMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != "FAIL_CLOSED" || report.Reason != "SOURCE_BINDING_MISMATCH" {
+	if report.Decision != "FAIL_CLOSED" || report.Reason != "SOURCE_RAW_DIGEST_MISMATCH" {
 		t.Fatalf("report = %#v", report)
 	}
 }

@@ -6,25 +6,33 @@ producer and consumer do not replicate a mutation log. They independently
 parse and lower the same `.gooo` source, reconstruct the observation model,
 classify values, and retain every prior claim state in an append-only ledger.
 
-The source is authoritative for three subjects, six ordered observations, the
-equality predicate, expected and observed values, provenance and evidence
-digests, prior state, and explicit revision policy. A `computes` value never
-contains `SUPPORT` or `REFUTE`; the oracle derives `SUPPORT` when the observed
-value equals the expected value and `CONTRADICTING` otherwise.
+The source is authoritative for three claim propositions, observable subjects
+and inputs, predicates, expected values, ordered observations, provenance, and
+evidence digests. A `computes` value contains no conclusion, state, decision,
+relation, or revision-policy label. The independent consumer derives
+`SUPPORTS`, `CONTRADICTS`, `INSUFFICIENT`, or `UNKNOWN` from the proposition and
+observation instead of repeating a source label.
 
-The fixed denominator is three claims and six observations/transitions:
+All claim ledgers begin at `OPEN`. Sufficient support discharges a claim,
+direct contradiction refutes it, and insufficient or unknown evidence leaves
+it `OPEN` with `LOWER_RESOLUTION` plus a stage, step, and reason. Every
+observation appends a ledger row; no earlier claim state is deleted.
 
-| Claim | Source observations | Replayed status history | Policy |
+The fixed denominator is three claims and six ordered observations/ledger
+rows:
+
+| Claim | Source observations | Replayed status history | Current status |
 | --- | ---: | --- | --- |
-| `alpha` | 1 | `OPEN -> DISCHARGED` | `NEVER_REOPEN` |
-| `beta` | 2 | `OPEN -> DISCHARGED -> REFUTED` | `NEVER_REOPEN` |
-| `gamma` | 3 | `OPEN -> DISCHARGED -> REFUTED -> DISCHARGED` | `REOPEN_IF_NEWER_ADMISSIBLE` |
+| `alpha` | 1 | `OPEN -> DISCHARGED` | `DISCHARGED` |
+| `beta` | 2 | `OPEN -> DISCHARGED -> REFUTED` | `REFUTED` |
+| `gamma` | 3 | `OPEN -> DISCHARGED -> REFUTED -> DISCHARGED` | `DISCHARGED` |
 
-The resulting counts are `OPEN->DISCHARGED=3`,
-`DISCHARGED->REFUTED=2`, and `REFUTED->DISCHARGED=1`. Two claims are currently
-`DISCHARGED`, one is currently `REFUTED`, and nine status values are retained
-including the three initial states. Current discharge coverage is `2/3 = 6666`
-basis points; it is not a claim that every subject is true.
+The baseline has `SUPPORTS=4`, `CONTRADICTS=2`,
+`OPEN->DISCHARGED=3`, `DISCHARGED->REFUTED=2`, and
+`REFUTED->DISCHARGED=1`. Two claims are currently `DISCHARGED`, one is
+`REFUTED`, and nine status values are retained, including the three initial
+states. Current discharge coverage is `2/3 = 6666` basis points; it is not a
+claim that every subject is true.
 
 ## Formal choices
 
@@ -37,49 +45,62 @@ The experiment adopts two principles from the primary literature:
    Maintenance System*, Artificial Intelligence 12(3), 1979](https://doi.org/10.1016/0004-3702(79)90008-0).
 2. Reiter's *A Logic for Default Reasoning* formalizes defaults that may be
    defeated by later information. We adopt non-monotonic revision and reject
-   the assumption that a prior `DISCHARGED` result remains valid after
+   the assumption that a prior `DISCHARGED` result remains valid after direct
    counterevidence. Source: [Reiter, *A Logic for Default Reasoning*,
    Artificial Intelligence 13(1-2), 1980](https://doi.org/10.1016/0004-3702(80)90014-4).
 
 Adopted implementation principles:
 
-- `syntax.ParseFile -> bidir.Lower` is performed independently by producer and
-  oracle. The oracle reconstructs a private wire model and does not import or
-  trust producer semantics.
-- A transition records `before`, `after`, accepted/rejected status, evidence
-  digest, provenance, proof choice, `stage`, `step`, generated reason, and the
-  previous transition digest. This makes order and refutation basis replayable.
-- `REFUTED -> DISCHARGED` is admissible only when the source explicitly says
-  `REOPEN_IF_NEWER_ADMISSIBLE`. An unknown or forbidding policy preserves the
-  current state, records a rejected attempted transition, and returns
-  `FAIL_CLOSED` with `LOWER_RESOLUTION`.
-- Conformance (did the source reconstruct and replay exactly?) is reported
-  separately from subject resolution (what current statuses were observed?).
+- `syntax.ParseFile -> bidir.Lower` is performed independently by producer
+  and oracle. The oracle reconstructs a private wire model and does not
+  import or trust producer semantics.
+- Raw and lowered semantic digests are bound together. A receipt also binds
+  the reconstructed source model, so a coherently resealed producer payload
+  cannot replace source evidence.
+- A transition records `before`, `after`, relation, accepted/rejected status,
+  evidence digest, provenance, proof choice, `stage`, `step`, generated
+  reason, and the previous transition digest. This makes order and refutation
+  basis replayable.
+- Conformance (did source reconstruction and replay pass?) is reported
+  separately from subject resolution (what current ledger statuses were
+  observed?).
+- The experiment records no mutation authority, promotion, repository write,
+  confidence ranking, or global conflict policy.
 
 Rejected principles:
 
 - no Go `CanonicalContract` table duplicated by the oracle;
 - no conclusion labels or basis sentences supplied as evidence input;
-- no arbitrary default logic, confidence ranking, probability, global conflict
-  resolution, or repository mutation;
-- no generic event-log replication presented as knowledge revision.
+- no refutation string counting, self-declared decision JSON, generic event
+  log replication, arbitrary default logic, confidence ranking, or repository
+  mutation presented as knowledge revision.
 
 ## Interventions and falsifiability
 
-Actions-only CI runs the baseline twice, then runs three source interventions:
+Actions-only CI runs the baseline twice, then independently runs four source
+interventions:
 
-- changing a real observed value changes the semantic digest, classifier,
-  transition result, and decision;
-- adding only a comment changes the raw source digest but preserves the lowered
-  semantic digest, transition chain, and verdict;
-- changing and resealing producer observations and its receipt digest is still
-  rejected because the oracle reconstructs the source model independently.
+- changing gamma's observed value from `1` to `0` changes its relation from
+  `SUPPORTS` to `CONTRADICTS`, changes the final subject distribution from
+  `DISCHARGED=2;REFUTED=1;OPEN=0` to
+  `DISCHARGED=1;REFUTED=2;OPEN=0`, and changes the final ledger transition;
+- changing alpha's predicate to an unknown predicate yields `UNKNOWN`, keeps
+  the claim `OPEN`, and lowers subject resolution;
+- removing an observed value yields `INSUFFICIENT`, keeps that claim `OPEN`,
+  and records the lower-resolution coordinate and reason;
+- adding only a comment changes the raw source digest but preserves the
+  lowered semantic digest, relation sequence, subject resolution, and ledger
+  transition chain;
+- changing and resealing producer observations and its receipt digest is
+  rejected because the oracle reconstructs the raw source and independent
+  observation model.
 
-CI observes repository status before and after every read-only run; the fixed
-suite denominator is `source_claims=3/3`, `source_observations=6/6`,
+CI exposes fixed denominators individually rather than hiding them in an
+aggregate score: `source_claims=3/3`, `source_observations=6/6`,
 `producer_imports=0/0`, `semantic_causality=1/1`,
-`nonsemantic_preservation=1/1`, `persistent_transitions=6/6`, and
-`coherent_tamper_rejected=1/1`.
+`nonsemantic_preservation=1/1`, `persistent_ledger_rows=6/6`,
+`persistent_transitions=6/6`, `repository_writes=0/0`,
+`mutation_promotions=0/0`, and `coherent_tamper_rejected=1/1`.
 
 This is a read-only semantic experiment, not a promotion gate and not a
 general-purpose knowledge base.
