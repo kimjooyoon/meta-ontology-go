@@ -1,0 +1,118 @@
+{
+  "schema": "gooo/denominator-evolution-contract/v1",
+  "version": 1,
+  "producer": "denominatorevolution.Evaluate",
+  "consumer": "denominatorevolutionverify.Verify",
+  "denominator": {
+    "version": "gooo/measurement-denominator/v1",
+    "obligations": [
+      {
+        "id": "governance/versioned-members",
+        "claim": "The measurement basis has a stable version and exact member set.",
+        "class": "OUTCOME",
+        "proof_choice": "FOUNDATION",
+        "meta_operation": "bind-fixed-denominator",
+        "stage": "FOUNDATION",
+        "step": "pin-versioned-member-set",
+        "reason": "a version and member digest identify exactly what is measured"
+      },
+      {
+        "id": "governance/change-reasons",
+        "claim": "Every addition and deletion has an explicit admissible reason.",
+        "class": "DRIVER",
+        "proof_choice": "COHERENCE",
+        "meta_operation": "classify-change-reason",
+        "stage": "PROPOSE",
+        "step": "record-add-delete-reason",
+        "reason": "change intent is evidence, not an inferred improvement"
+      },
+      {
+        "id": "governance/predecessor-digest",
+        "claim": "The predecessor version and digest resolve to a known denominator.",
+        "class": "DRIVER",
+        "proof_choice": "FOUNDATION",
+        "meta_operation": "bind-predecessor-digest",
+        "stage": "MIGRATE",
+        "step": "verify-predecessor-digest",
+        "reason": "a version label without its exact predecessor digest is unknown"
+      },
+      {
+        "id": "governance/migration-receipt",
+        "claim": "A migration receipt binds the predecessor, successor, changes, and decision.",
+        "class": "OUTCOME",
+        "proof_choice": "COHERENCE",
+        "meta_operation": "accept-migration-receipt",
+        "stage": "MIGRATE",
+        "step": "bind-receipt-to-both-versions",
+        "reason": "the receipt makes a legal denominator transition replayable"
+      },
+      {
+        "id": "governance/legacy-summary",
+        "claim": "A human summary may not replace exact denominator members.",
+        "class": "GUARDRAIL",
+        "proof_choice": "REGRESSION",
+        "meta_operation": "reject-summary-substitution",
+        "stage": "GUARD",
+        "step": "preserve-exact-members",
+        "reason": "prose and aggregate summaries cannot authorize a basis change"
+      }
+    ]
+  },
+  "policy": {
+    "no_aggregate_estimates": true,
+    "forbidden_claims": ["improvement rate", "aggregate estimate", "projected coverage"],
+    "allowed_addition_reasons": ["NEW_MEASURABLE_OBLIGATION", "GOVERNANCE_GAP_CLOSED"],
+    "allowed_deletion_reasons": ["DEPRECATED_DUPLICATE", "SCOPE_REMOVED", "NOT_MEASURABLE"]
+  },
+  "cases": [
+    {
+      "id": "legal-advance",
+      "kind": "AUTHORIZED_MIGRATION",
+      "expected_decision": "ADVANCE",
+      "expected_resolution": "EXACT",
+      "expected_reason": "DENOMINATOR_ADVANCE_AUTHORIZED",
+      "from_claim": "PROPOSED",
+      "to_claim": "ACCEPTED",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "accept-authorized-denominator-advance",
+      "stage": "DECIDE",
+      "step": "apply-migration-receipt",
+      "reason": "both versioned digests and every add-delete reason are bound"
+    },
+    {
+      "id": "unauthorized-change",
+      "kind": "UNAUTHORIZED_MUTATION",
+      "expected_decision": "BLOCK",
+      "expected_resolution": "INVARIANT_ONLY",
+      "expected_reason": "MIGRATION_RECEIPT_MISSING",
+      "from_claim": "PROPOSED",
+      "to_claim": "REJECTED",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-unreceipted-denominator-change",
+      "stage": "DECIDE",
+      "step": "reject-missing-receipt",
+      "reason": "a changed measurement basis cannot self-authorize"
+    },
+    {
+      "id": "unknown-predecessor",
+      "kind": "UNKNOWN_PREDECESSOR",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "UNKNOWN",
+      "expected_reason": "PREDECESSOR_DIGEST_UNKNOWN",
+      "from_claim": "PROPOSED",
+      "to_claim": "UNKNOWN",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "fail-closed-unknown-predecessor",
+      "stage": "RESOLVE",
+      "step": "lookup-predecessor",
+      "reason": "an unregistered predecessor is not a legal base"
+    }
+  ],
+  "not_claimed": [
+    "improvement rate",
+    "aggregate estimate",
+    "projected coverage",
+    "semantic quality",
+    "repository mutation"
+  ]
+}

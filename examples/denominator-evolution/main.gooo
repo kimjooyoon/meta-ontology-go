@@ -1,0 +1,18 @@
+package denominatorevolution
+namespace denominatorevolution
+
+entity FixedDenominator id "gooo://denominator-evolution/entity/fixed-denominator"
+entity DenominatorVersion id "gooo://denominator-evolution/entity/denominator-version"
+entity ChangeReason id "gooo://denominator-evolution/entity/change-reason"
+entity PredecessorEvidence id "gooo://denominator-evolution/entity/predecessor-evidence"
+entity MigrationReceipt id "gooo://denominator-evolution/entity/migration-receipt"
+entity ClaimTransition id "gooo://denominator-evolution/entity/claim-transition"
+entity IndependentDecision id "gooo://denominator-evolution/entity/independent-decision"
+
+activity DeclareFixedDenominator(FixedDenominator) -> DenominatorVersion
+activity ProposeDenominatorChange(DenominatorVersion) -> ChangeReason
+activity BindPredecessorDigest(DenominatorVersion) -> PredecessorEvidence
+activity RecordChangeReasons(ChangeReason) -> MigrationReceipt
+activity IssueMigrationReceipt(PredecessorEvidence) -> MigrationReceipt
+activity TransitionClaim(MigrationReceipt) -> ClaimTransition
+activity IndependentlyDecide(ClaimTransition) -> IndependentDecision
