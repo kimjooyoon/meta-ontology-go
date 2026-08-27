@@ -116,7 +116,7 @@ cat > "$observer_quoted_source" <<'EOF'
 package observerquoted
 namespace observerquoted
 
-entity Distractor id "gooo://observer/unrelated computes \"fake-string\""
+// unrelated quoted string: "computes \"fake-string\""
 entity Source id "gooo://observer/quoted/source"
 entity Target id "gooo://observer/quoted/target"
 activity Observe(Source) -> Target computes "observer.canonical.string"
