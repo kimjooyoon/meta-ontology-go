@@ -10,31 +10,47 @@ output="$RUNNER_TEMP/reflective-query-sandbox/producer"
 mkdir -p "$output"
 cd "$root"
 
-before=$(git status --porcelain=v1 --untracked-files=all)
+before_status="$output/repository-before.txt"
+after_status="$output/repository-after.txt"
+git status --porcelain=v1 --untracked-files=all > "$before_status"
 go run ./cmd/gooo check "$source_path"
 go run ./scripts/reflective-query-sandbox/producer \
-	-source "$source_path" -subject-sha "$HEAD_SHA" -output "$output/observation.json"
+	-source "$source_path" -subject-sha "$HEAD_SHA" -repository-before "$before_status" -repository-after "$before_status" -output "$output/warmup.json"
+git status --porcelain=v1 --untracked-files=all > "$after_status"
 go run ./scripts/reflective-query-sandbox/producer \
-	-source "$source_path" -subject-sha "$HEAD_SHA" -output "$output/replay.json"
+	-source "$source_path" -subject-sha "$HEAD_SHA" -repository-before "$before_status" -repository-after "$after_status" -output "$output/observation.json"
+go run ./scripts/reflective-query-sandbox/producer \
+	-source "$source_path" -subject-sha "$HEAD_SHA" -repository-before "$before_status" -repository-after "$after_status" -output "$output/replay.json"
 if ! cmp -s "$output/observation.json" "$output/replay.json"; then
 	echo 'producer replay mismatch:' >&2
 	diff -u "$output/observation.json" "$output/replay.json" >&2 || true
 	exit 1
 fi
 after=$(git status --porcelain=v1 --untracked-files=all)
-test "$before" = "$after"
+test "$(cat "$before_status")" = "$after"
 
 jq -e --arg sha "$HEAD_SHA" '
-  .schema == "gooo/reflective-query-sandbox-observation/v1" and
+  .schema == "gooo/reflective-query-sandbox-observation/v2" and
   .subject_sha == $sha and
   .source.path == "examples/reflective-query-sandbox/main.gooo" and
-  .source.node_count == 9 and .source.fact_count == 8 and .source.gooo_lines == 11 and
-  (.attempts | length) == 5 and
-  ([.attempts[] | select(.decision == "PASS" and .resolution == "EXACT")] | length) == 3 and
-  ([.attempts[] | select(.decision == "DENIED" and .reason == "READ_ONLY_QUERY_ONLY")] | length) == 1 and
-  ([.attempts[] | select(.decision == "UNKNOWN" and .reason == "UNKNOWN_TARGET")] | length) == 1 and
-  (.claims | length) == 24 and
-  .effects == {repository_writes:0, mutation_authority:false}
+  .contract.source_nodes == .source.node_count and
+  .contract.source_facts == .source.fact_count and
+  .contract.claim_count == ((.claims | length) / 2) and
+  .contract.denominator == .contract.claim_count and
+  .contract.attempt_count == (.attempts | length) and
+  .contract.reflective_queries == ([.attempts[] | select(.operation == "query")] | length) and
+  .contract.safe_queries == ([.attempts[] | select(.operation == "query" and .decision == "PASS" and .resolution == "EXACT")] | length) and
+  .contract.denied_mutations == ([.attempts[] | select(.operation == "mutate" and .decision == "DENIED")] | length) and
+  .contract.unknown_targets == ([.attempts[] | select(.decision == "UNKNOWN")] | length) and
+  .contract.refuted_attempts == ([.attempts[] | select(.decision == "REFUTED")] | length) and
+  .contract.transition_count == (.claims | length) and
+  .contract.satisfied_indicators == ([.claims[] | select(.to == "DISCHARGED" and .from != .to)] | length) and
+  ([.attempts[] | select(.id == "mutation.attempt" and .decision == "DENIED" and .api_outcome == "REJECTED" and .reason == "MUTATION_REQUEST_REJECTED")] | length) == 1 and
+  ([.attempts[] | select(.id == "unknown.target" and .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .reason == "UNKNOWN_TARGET" and .stage == "UNKNOWN" and .step == "resolve-unknown-subject")] | length) == 1 and
+  .effects.repository_writes == (.effects.repository_write_set | length) and
+  .effects.repository_before == .effects.repository_after and
+  .effects.repository_write_set == [] and
+  .effects.mutation_authority == false
 ' "$output/observation.json" >/dev/null
 
-echo 'reflective query sandbox producer: PASS 5 attempts / 24 transitions'
+echo 'reflective query sandbox producer: PASS source-derived contract and boundary observations'

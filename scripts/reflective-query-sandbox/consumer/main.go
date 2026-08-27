@@ -11,28 +11,185 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"sort"
+	"strings"
 
-	sandbox "github.com/kimjooyoon/meta-ontology-go/internal/meta/reflectivequerysandbox"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/query"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const (
-	producerName      = "reflective-query-sandbox.producer"
-	consumerName      = "reflective-query-sandbox.independent-verifier"
-	structureActivity = "gooo://reflective-query-sandbox/activity/reflect-structure"
-	claimsActivity    = "gooo://reflective-query-sandbox/activity/reflect-claims"
-	metricsActivity   = "gooo://reflective-query-sandbox/activity/reflect-metrics"
-	mutationActivity  = "gooo://reflective-query-sandbox/activity/attempt-mutation"
-	structureTarget   = "gooo://reflective-query-sandbox/entity/program-structure"
-	claimsTarget      = "gooo://reflective-query-sandbox/entity/claim-catalog"
-	metricsTarget     = "gooo://reflective-query-sandbox/entity/metric-catalog"
-	mutationTarget    = "gooo://reflective-query-sandbox/entity/mutation-request"
-	unknownTarget     = "gooo://reflective-query-sandbox/entity/unknown-target"
+	schema        = "gooo/reflective-query-sandbox-observation/v2"
+	receiptSchema = "gooo/reflective-query-sandbox-receipt/v2"
+	metricID      = "gooo.metric.language.reflective-query-sandbox.v2"
+	sourcePath    = "examples/reflective-query-sandbox/main.gooo"
+	producerName  = "reflective-query-sandbox.producer"
+	consumerName  = "reflective-query-sandbox.independent-verifier"
 )
 
-type expectedAttempt struct {
-	id, class, operation, root, relation, target, meta, proof, stage, step string
-	decision, resolution, reason                                           string
-	matched                                                                int
+type bucket struct {
+	Name  string `json:"name"`
+	Total int    `json:"total"`
+}
+
+type contract struct {
+	Schema              string   `json:"schema"`
+	MetricID            string   `json:"metric_id"`
+	GoVersion           string   `json:"go_version"`
+	Denominator         int      `json:"denominator"`
+	Classes             []bucket `json:"classes"`
+	Proofs              []bucket `json:"proofs"`
+	SourceNodes         int      `json:"source_nodes"`
+	SourceFacts         int      `json:"source_facts"`
+	ClaimCount          int      `json:"claim_count"`
+	AttemptCount        int      `json:"attempt_count"`
+	ReflectiveQueries   int      `json:"reflective_queries"`
+	SafeQueries         int      `json:"safe_queries"`
+	DeniedMutations     int      `json:"denied_mutations"`
+	UnknownTargets      int      `json:"unknown_targets"`
+	RefutedAttempts     int      `json:"refuted_attempts"`
+	TransitionCount     int      `json:"transition_count"`
+	SatisfiedIndicators int      `json:"satisfied_indicators"`
+}
+
+type effects struct {
+	RepositoryBefore   []string `json:"repository_before"`
+	RepositoryAfter    []string `json:"repository_after"`
+	RepositoryWriteSet []string `json:"repository_write_set"`
+	RepositoryWrites   int      `json:"repository_writes"`
+	MutationAuthority  bool     `json:"mutation_authority"`
+	MutationAPI        string   `json:"mutation_api"`
+	MutationOutcome    string   `json:"mutation_outcome"`
+	MutationError      string   `json:"mutation_error,omitempty"`
+}
+
+type snapshot struct {
+	Path           string `json:"path"`
+	SourceDigest   string `json:"source_digest"`
+	SemanticDigest string `json:"semantic_digest"`
+	GraphDigest    string `json:"graph_digest"`
+	NodeCount      int    `json:"node_count"`
+	FactCount      int    `json:"fact_count"`
+	GoooLines      int    `json:"gooo_lines"`
+}
+
+type attempt struct {
+	ID                   string   `json:"id"`
+	Class                string   `json:"class"`
+	Operation            string   `json:"operation"`
+	Root                 string   `json:"root"`
+	Relation             string   `json:"relation"`
+	Target               string   `json:"target"`
+	MetaOperation        string   `json:"meta_operation"`
+	Producer             string   `json:"producer"`
+	Consumer             string   `json:"consumer"`
+	ProofChoice          string   `json:"proof_choice"`
+	Stage                string   `json:"stage"`
+	Step                 string   `json:"step"`
+	Decision             string   `json:"decision"`
+	Resolution           string   `json:"resolution"`
+	Reason               string   `json:"reason"`
+	MatchedFacts         int      `json:"matched_facts"`
+	EvidenceClaimIDs     []string `json:"evidence_claim_ids"`
+	API                  string   `json:"api,omitempty"`
+	APIOutcome           string   `json:"api_outcome,omitempty"`
+	APIError             string   `json:"api_error,omitempty"`
+	SemanticDigestBefore string   `json:"semantic_digest_before"`
+	SemanticDigestAfter  string   `json:"semantic_digest_after"`
+	GraphDigestBefore    string   `json:"graph_digest_before"`
+	GraphDigestAfter     string   `json:"graph_digest_after"`
+}
+
+type claimTransition struct {
+	Sequence        int    `json:"sequence"`
+	ClaimID         string `json:"claim_id"`
+	Class           string `json:"class"`
+	ProofChoice     string `json:"proof_choice"`
+	MetaOperation   string `json:"meta_operation"`
+	PriorState      string `json:"prior_state"`
+	EvidenceAttempt string `json:"evidence_attempt"`
+	Producer        string `json:"producer"`
+	Consumer        string `json:"consumer"`
+	Stage           string `json:"stage"`
+	Step            string `json:"step"`
+	Reason          string `json:"reason"`
+	From            string `json:"from"`
+	To              string `json:"to"`
+	PreviousDigest  string `json:"previous_digest"`
+	Digest          string `json:"digest"`
+}
+
+type observation struct {
+	Schema     string            `json:"schema"`
+	SubjectSHA string            `json:"subject_sha"`
+	Contract   contract          `json:"contract"`
+	Source     snapshot          `json:"source"`
+	Attempts   []attempt         `json:"attempts"`
+	Claims     []claimTransition `json:"claims"`
+	Effects    effects           `json:"effects"`
+	Producer   string            `json:"producer"`
+	Digest     string            `json:"digest"`
+}
+
+type score struct {
+	Name      string `json:"name"`
+	Satisfied int    `json:"satisfied"`
+	Total     int    `json:"total"`
+}
+
+type coordinates struct {
+	Satisfied   int `json:"satisfied"`
+	Total       int `json:"total"`
+	BasisPoints int `json:"basis_points"`
+}
+
+type receipt struct {
+	Schema               string            `json:"schema"`
+	SubjectSHA           string            `json:"subject_sha"`
+	MetricID             string            `json:"metric_id"`
+	Decision             string            `json:"decision"`
+	Resolution           string            `json:"resolution"`
+	SubjectResolution    string            `json:"subject_resolution"`
+	Reason               string            `json:"reason"`
+	Producer             string            `json:"producer"`
+	Consumer             string            `json:"consumer"`
+	Contract             contract          `json:"contract"`
+	Source               snapshot          `json:"source"`
+	Attempts             []attempt         `json:"attempts"`
+	Claims               []claimTransition `json:"claims"`
+	Coordinates          coordinates       `json:"coordinates"`
+	Classes              []score           `json:"classes"`
+	Proofs               []score           `json:"proofs"`
+	Effects              effects           `json:"effects"`
+	SourceReconstruction coordinates       `json:"source_reconstruction"`
+	ProducerImports      coordinates       `json:"producer_imports"`
+	PromotionCreditBPS   int               `json:"promotion_credit_bps"`
+	RepositoryWrites     int               `json:"repository_writes"`
+	MutationAuthority    bool              `json:"mutation_authority"`
+	NotClaimed           []string          `json:"not_claimed"`
+	Digest               string            `json:"digest"`
+}
+
+type claimSpec struct {
+	ID, Class, ProofChoice, MetaOperation, EvidenceAttempt, PriorState string
+	NodeID                                                             semantic.ID
+}
+
+type operationSpec struct {
+	ID      semantic.ID
+	Program string
+}
+
+type sourceModel struct {
+	Claims         []claimSpec
+	Operations     []operationSpec
+	QuerySubject   semantic.ID
+	MutationTarget semantic.ID
+	ReceiptTarget  semantic.ID
+	MetricTarget   semantic.ID
+	UnknownTarget  query.ID
 }
 
 func main() {
@@ -44,129 +201,465 @@ func main() {
 	if *input == "" || *source == "" || *subject == "" || *output == "" {
 		fail("usage: consumer -input FILE -source FILE -subject-sha SHA -output FILE")
 	}
-	var observation sandbox.Observation
 	data, err := os.ReadFile(*input)
 	if err != nil {
 		fail("read observation: %v", err)
 	}
+	var value observation
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&observation); err != nil {
+	if err := decoder.Decode(&value); err != nil {
 		fail("decode observation: %v", err)
 	}
-	if err := validateObservation(observation, *source, *subject); err != nil {
-		fail("independent validation: %v", err)
+	satisfied, total, err := validateObservation(value, *source, *subject)
+	if err != nil {
+		fail("independent reconstruction: %v", err)
 	}
-	receipt := buildReceipt(observation)
-	receipt.Digest = receiptDigest(receipt)
-	encoded, err := json.MarshalIndent(receipt, "", "  ")
+	result := buildReceipt(value, satisfied, total)
+	result.Digest = receiptDigest(result)
+	encoded, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		fail("encode receipt: %v", err)
 	}
 	if err := os.WriteFile(*output, append(encoded, '\n'), 0o644); err != nil {
 		fail("write receipt: %v", err)
 	}
-	fmt.Printf("consumer verdict: %s %d/%d writes=%d mutation_authority=%t\n", receipt.Decision, receipt.Coordinates.Satisfied, receipt.Coordinates.Total, receipt.Effects.RepositoryWrites, receipt.Effects.MutationAuthority)
+	fmt.Printf("consumer verdict: %s %d/%d queries=%d/%d source=%d/%d imports=%d/%d writes=%d mutation_authority=%t\n", result.Decision, result.Coordinates.Satisfied, result.Coordinates.Total, value.Contract.SafeQueries, value.Contract.ReflectiveQueries, result.SourceReconstruction.Satisfied, result.SourceReconstruction.Total, result.ProducerImports.Satisfied, result.ProducerImports.Total, result.Effects.RepositoryWrites, result.Effects.MutationAuthority)
 }
 
-func validateObservation(value sandbox.Observation, sourcePath, subject string) error {
-	if value.Schema != sandbox.Schema || value.SubjectSHA != subject || value.Producer != producerName {
-		return errors.New("observation identity is not exact")
+func validateObservation(value observation, sourcePath, subject string) (int, int, error) {
+	if value.Schema != schema || value.SubjectSHA != subject || value.Producer != producerName {
+		return 0, 0, errors.New("observation identity is not exact")
 	}
 	if value.Digest != observationDigest(value) {
-		return errors.New("observation digest mismatch")
+		return 0, 0, errors.New("observation digest mismatch")
 	}
-	source, err := os.ReadFile(sourcePath)
+	data, err := os.ReadFile(sourcePath)
 	if err != nil {
-		return fmt.Errorf("read source: %w", err)
+		return 0, 0, fmt.Errorf("read source: %w", err)
 	}
-	if value.Source.Path != sandbox.ExpectedSourcePath || value.Source.SourceDigest != plainDigest(source) || value.Source.GoooLines != 11 || value.Source.NodeCount != 9 || value.Source.FactCount != 8 {
-		return errors.New("source snapshot is not exact")
+	file, diagnostics := syntax.ParseFile(sourcePath, string(data))
+	if diagnostics.HasErrors() {
+		return 0, 0, diagnostics.Error()
 	}
-	if runtime.Version() != "go"+sandbox.ExpectedGoVersion {
-		return fmt.Errorf("runtime=%s want go%s", runtime.Version(), sandbox.ExpectedGoVersion)
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return 0, 0, fmt.Errorf("lower source: %w", err)
 	}
-	if value.Effects != (sandbox.Effects{}) {
-		return errors.New("producer reported an effect")
+	graph, err := query.FromSemanticIR(ir)
+	if err != nil {
+		return 0, 0, fmt.Errorf("project query view: %w", err)
 	}
-	if err := validateContract(value.Contract); err != nil {
-		return err
+	model, err := deriveSourceModel(ir)
+	if err != nil {
+		return 0, 0, fmt.Errorf("derive source model: %w", err)
 	}
-	if err := validateAttempts(value.Attempts, value.Source.SemanticDigest); err != nil {
-		return err
+	semanticDigest := ir.StableHash()
+	wantSource := snapshot{Path: sourcePath, SourceDigest: semantic.StableHash(data), SemanticDigest: semanticDigest, GraphDigest: graph.StableHash(), NodeCount: len(graph.Nodes()), FactCount: len(graph.AllFacts()), GoooLines: countLines(data)}
+	if !reflect.DeepEqual(value.Source, wantSource) {
+		return 0, 0, fmt.Errorf("source reconstruction differs: got=%+v want=%+v", value.Source, wantSource)
 	}
-	return validateTransitions(value.Claims)
+	if !strings.HasPrefix(runtime.Version(), "go1.27") || value.Contract.GoVersion != runtime.Version() {
+		return 0, 0, fmt.Errorf("runtime=%s contract=%s", runtime.Version(), value.Contract.GoVersion)
+	}
+	if value.Effects.RepositoryBefore == nil || value.Effects.RepositoryAfter == nil || !reflect.DeepEqual(value.Effects.RepositoryBefore, value.Effects.RepositoryAfter) || value.Effects.RepositoryWrites != len(value.Effects.RepositoryWriteSet) || len(value.Effects.RepositoryWriteSet) != 0 || value.Effects.MutationAuthority || value.Effects.MutationOutcome != "REJECTED" || value.Effects.MutationAPI == "" {
+		return 0, 0, errors.New("observed effects do not prove no repository write and no mutation authority")
+	}
+	wantAttempts, authority, api, outcome, apiError, err := reconstructAttempts(ir, graph, model, semanticDigest)
+	if err != nil {
+		return 0, 0, err
+	}
+	if authority || api != value.Effects.MutationAPI || outcome != value.Effects.MutationOutcome || apiError != value.Effects.MutationError {
+		return 0, 0, errors.New("mutation boundary was not independently reconstructed")
+	}
+	if !reflect.DeepEqual(value.Attempts, wantAttempts) {
+		return 0, 0, errors.New("attempt evidence differs from independent raw-source reconstruction")
+	}
+	wantClaims := buildClaimTransitions(model.Claims, wantAttempts)
+	if !reflect.DeepEqual(value.Claims, wantClaims) {
+		return 0, 0, errors.New("claim transitions are not derived from attempt evidence")
+	}
+	wantContract := buildContract(model, value.Source, wantAttempts, wantClaims)
+	if !reflect.DeepEqual(value.Contract, wantContract) {
+		return 0, 0, errors.New("contract is not derived from the canonical IR")
+	}
+	return countTransitions(wantClaims, "DISCHARGED"), len(model.Claims), nil
 }
 
-func validateContract(value sandbox.Contract) error {
-	wantClasses := []sandbox.Bucket{{Name: "OUTCOME", Total: 4}, {Name: "DRIVER", Total: 4}, {Name: "GUARDRAIL", Total: 4}}
-	wantProofs := []sandbox.Bucket{{Name: "FOUNDATION", Total: 4}, {Name: "COHERENCE", Total: 4}, {Name: "REGRESSION", Total: 4}}
-	if value.Schema != sandbox.Schema || value.MetricID != sandbox.MetricID || value.GoVersion != sandbox.ExpectedGoVersion || value.Denominator != 12 || !reflect.DeepEqual(value.Classes, wantClasses) || !reflect.DeepEqual(value.Proofs, wantProofs) || value.ExpectedNodes != 9 || value.ExpectedFacts != 8 || value.ExpectedAttempts != 5 || value.ExpectedSafe != 3 || value.ExpectedDenied != 1 || value.ExpectedUnknown != 1 || value.ExpectedTransitions != 24 {
-		return errors.New("fixed denominator contract drifted")
-	}
-	return nil
-}
-
-func validateAttempts(attempts []sandbox.Attempt, semanticDigest string) error {
-	want := []expectedAttempt{
-		{"reflect.structure", "OUTCOME", "query", structureActivity, "used", structureTarget, "query-self-structure", "FOUNDATION", "QUERY", "match-structure", "PASS", "EXACT", "EXACT_RELATION_MATCH", 1},
-		{"reflect.claims", "OUTCOME", "query", claimsActivity, "used", claimsTarget, "query-self-claims", "COHERENCE", "QUERY", "match-claims", "PASS", "EXACT", "EXACT_RELATION_MATCH", 1},
-		{"reflect.metrics", "OUTCOME", "query", metricsActivity, "used", metricsTarget, "query-self-metrics", "REGRESSION", "QUERY", "match-metrics", "PASS", "EXACT", "EXACT_RELATION_MATCH", 1},
-		{"mutation.attempt", "OUTCOME", "mutate", mutationActivity, "set", mutationTarget, "deny-mutation-request", "FOUNDATION", "BOUNDARY", "reject-mutation-operation", "DENIED", "INVARIANT_ONLY", "READ_ONLY_QUERY_ONLY", 0},
-		{"unknown.target", "GUARDRAIL", "query", metricsActivity, "used", unknownTarget, "preserve-unknown-target", "REGRESSION", "UNKNOWN", "reject-unknown-target", "UNKNOWN", "LOWER_RESOLUTION", "UNKNOWN_TARGET", 0},
-	}
-	if len(attempts) != len(want) {
-		return fmt.Errorf("attempt denominator=%d want=%d", len(attempts), len(want))
-	}
-	for index, got := range attempts {
-		expect := want[index]
-		if got.ID != expect.id || got.Class != expect.class || got.Operation != expect.operation || got.Root != expect.root || got.Relation != expect.relation || got.Target != expect.target || got.MetaOperation != expect.meta || got.Producer != producerName || got.Consumer != consumerName || got.ProofChoice != expect.proof || got.Stage != expect.stage || got.Step != expect.step || got.Decision != expect.decision || got.Resolution != expect.resolution || got.Reason != expect.reason || got.MatchedFacts != expect.matched || got.SemanticDigestBefore != semanticDigest || got.SemanticDigestAfter != semanticDigest || got.GraphDigestBefore != got.GraphDigestAfter {
-			return fmt.Errorf("attempt[%d] is not an exact boundary record", index)
-		}
-	}
-	return nil
-}
-
-func validateTransitions(values []sandbox.ClaimTransition) error {
-	if len(values) != 24 {
-		return fmt.Errorf("transition denominator=%d want=24", len(values))
-	}
-	want := []struct{ id, class, proof, meta string }{
-		{"outcome.structure", "OUTCOME", "FOUNDATION", "query-self-structure"}, {"outcome.claims", "OUTCOME", "COHERENCE", "query-self-claims"}, {"outcome.metrics", "OUTCOME", "REGRESSION", "query-self-metrics"}, {"outcome.mutation-denied", "OUTCOME", "FOUNDATION", "deny-mutation-request"},
-		{"driver.semantic-snapshot", "DRIVER", "COHERENCE", "bind-semantic-snapshot"}, {"driver.query-projection", "DRIVER", "REGRESSION", "project-read-only-query-view"}, {"driver.query-receipts", "DRIVER", "FOUNDATION", "seal-query-receipts"}, {"driver.claim-ledger", "DRIVER", "COHERENCE", "transition-claim-ledger"},
-		{"guardrail.unknown-closed", "GUARDRAIL", "REGRESSION", "preserve-unknown-target"}, {"guardrail.graph-unchanged", "GUARDRAIL", "FOUNDATION", "compare-query-graph-digest"}, {"guardrail.repository-write-set", "GUARDRAIL", "COHERENCE", "observe-repository-write-set"}, {"guardrail.mutation-authority", "GUARDRAIL", "REGRESSION", "bind-mutation-authority"},
-	}
-	previous := ""
-	for index, spec := range want {
-		for offset, state := range []struct{ from, to, stage, step, reason string }{{"UNRECORDED", "OPEN", "DECLARE", "register-denominator-claim", "CLAIM_REGISTERED"}, {"OPEN", "DISCHARGED", "OBSERVE", "evaluate-read-only-boundary", "OBSERVATION_DISCHARGED"}} {
-			value := values[index*2+offset]
-			if value.Sequence != index*2+offset+1 || value.ClaimID != spec.id || value.Class != spec.class || value.ProofChoice != spec.proof || value.MetaOperation != spec.meta || value.Producer != producerName || value.Consumer != consumerName || value.Stage != state.stage || value.Step != state.step || value.Reason != state.reason || value.From != state.from || value.To != state.to || value.PreviousDigest != previous || value.Digest != transitionDigest(value) {
-				return fmt.Errorf("transition[%d] is not an append-only exact event", index*2+offset)
+func deriveSourceModel(ir semantic.IR) (sourceModel, error) {
+	model := sourceModel{}
+	for _, node := range ir.Graph.Nodes() {
+		id := node.ID.String()
+		switch {
+		case node.Kind == semantic.Entity && strings.Contains(id, "/claim/"):
+			claim, err := parseClaim(node)
+			if err != nil {
+				return sourceModel{}, err
 			}
-			previous = value.Digest
+			model.Claims = append(model.Claims, claim)
+		case node.Kind == semantic.Entity && strings.Contains(id, "/subject/query"):
+			model.QuerySubject = node.ID
+		case node.Kind == semantic.Entity && strings.Contains(id, "/mutation/request"):
+			model.MutationTarget = node.ID
+		case node.Kind == semantic.Entity && strings.Contains(id, "/metric/relation"):
+			model.MetricTarget = node.ID
+		case node.Kind == semantic.Entity && strings.Contains(id, "/receipt/query"):
+			model.ReceiptTarget = node.ID
+		case node.Kind == semantic.Activity && isSandboxOperation(node.ValueProgram):
+			model.Operations = append(model.Operations, operationSpec{ID: node.ID, Program: node.ValueProgram})
 		}
 	}
-	return nil
+	if len(model.Claims) == 0 || model.QuerySubject == "" || model.MutationTarget == "" || model.ReceiptTarget == "" || model.MetricTarget == "" {
+		return sourceModel{}, errors.New("source semantic model is incomplete")
+	}
+	sort.Slice(model.Claims, func(i, j int) bool { return model.Claims[i].ID < model.Claims[j].ID })
+	sort.Slice(model.Operations, func(i, j int) bool { return model.Operations[i].ID < model.Operations[j].ID })
+	for _, operation := range model.Operations {
+		if operation.Program == "reflect.query:metrics" {
+			model.UnknownTarget = query.ID(operation.ID.String() + "/unknown-target")
+		}
+	}
+	if model.UnknownTarget == "" {
+		return sourceModel{}, errors.New("source has no metrics query operation")
+	}
+	return model, nil
 }
 
-func buildReceipt(observation sandbox.Observation) sandbox.Receipt {
-	notClaimed := []string{"generic Go reflection API equivalence", "runtime capability isolation beyond this process", "source completeness beyond fixed declarations", "mutation safety against a hostile process", "runtime memory and performance bounds"}
-	return sandbox.Receipt{
-		Schema: sandbox.ReceiptSchema, SubjectSHA: observation.SubjectSHA, MetricID: sandbox.MetricID, Decision: "PASS", Resolution: "OBSERVATION_ONLY", Reason: "READ_ONLY_REFLECTION_BOUNDARY_PROVED", Producer: observation.Producer, Consumer: consumerName, Contract: observation.Contract, Source: observation.Source, Attempts: observation.Attempts, Claims: observation.Claims, Coordinates: sandbox.Coordinates{Satisfied: 12, Total: 12, BasisPoints: 10000}, Classes: []sandbox.Score{{Name: "OUTCOME", Satisfied: 4, Total: 4}, {Name: "DRIVER", Satisfied: 4, Total: 4}, {Name: "GUARDRAIL", Satisfied: 4, Total: 4}}, Proofs: []sandbox.Score{{Name: "FOUNDATION", Satisfied: 4, Total: 4}, {Name: "COHERENCE", Satisfied: 4, Total: 4}, {Name: "REGRESSION", Satisfied: 4, Total: 4}}, Effects: sandbox.Effects{}, PromotionCreditBPS: 0, RepositoryWrites: 0, MutationAuthority: false, NotClaimed: notClaimed,
+func parseClaim(node semantic.Node) (claimSpec, error) {
+	const marker = "/claim/"
+	index := strings.Index(node.ID.String(), marker)
+	if index < 0 {
+		return claimSpec{}, fmt.Errorf("claim marker missing from %q", node.ID)
+	}
+	parts := strings.Split(node.ID.String()[index+len(marker):], "/")
+	if len(parts) != 6 {
+		return claimSpec{}, fmt.Errorf("claim %q must encode six semantic coordinates", node.ID)
+	}
+	return claimSpec{ID: strings.ToLower(parts[0]) + "." + parts[1], Class: strings.ToUpper(parts[0]), ProofChoice: strings.ToUpper(parts[2]), MetaOperation: parts[3], EvidenceAttempt: parts[4], PriorState: strings.ToUpper(parts[5]), NodeID: node.ID}, nil
+}
+
+func isSandboxOperation(program string) bool {
+	return strings.HasPrefix(program, "reflect.query:") || strings.HasPrefix(program, "reflect.attempt:") || strings.HasPrefix(program, "reflect.observation:")
+}
+
+func sourceTargets(ir semantic.IR, activity semantic.ID) []semantic.ID {
+	targets := make([]semantic.ID, 0)
+	for _, fact := range ir.Graph.DeterministicFacts() {
+		if fact.Subject == activity && fact.Predicate == semantic.Used {
+			targets = append(targets, fact.Object)
+		}
+	}
+	sort.Slice(targets, func(i, j int) bool { return targets[i] < targets[j] })
+	return targets
+}
+
+func targetForOperation(ir semantic.IR, operation operationSpec) (semantic.ID, error) {
+	marker := ""
+	switch operation.Program {
+	case "reflect.query:structure":
+		marker = "/subject/structure"
+	case "reflect.query:claims":
+		marker = "/claim-state/open"
+	case "reflect.query:metrics":
+		marker = "/metric/relation"
+	case "reflect.attempt:mutation":
+		marker = "/mutation/request"
+	case "reflect.observation:receipt-seal":
+		marker = "/receipt/query"
+	}
+	for _, target := range sourceTargets(ir, operation.ID) {
+		if strings.Contains(target.String(), marker) {
+			return target, nil
+		}
+	}
+	return "", fmt.Errorf("operation %q has no source-backed target", operation.Program)
+}
+
+func reconstructAttempts(ir semantic.IR, graph *query.Graph, model sourceModel, semanticDigest string) ([]attempt, bool, string, string, string, error) {
+	attempts := make([]attempt, 0, len(model.Operations)+1)
+	var authority bool
+	var api, outcome, apiError string
+	for _, operation := range model.Operations {
+		target, err := targetForOperation(ir, operation)
+		if err != nil {
+			return nil, false, "", "", "", err
+		}
+		id := attemptIDForProgram(operation.Program)
+		if strings.HasPrefix(operation.Program, "reflect.attempt:") {
+			value, allowed, mutationAPI, mutationOutcome, mutationError, err := reconstructMutation(ir, operation, id, target, semanticDigest)
+			if err != nil {
+				return nil, false, "", "", "", err
+			}
+			attempts = append(attempts, value)
+			authority, api, outcome, apiError = allowed, mutationAPI, mutationOutcome, mutationError
+			continue
+		}
+		attempts = append(attempts, reconstructExact(graph, operation, id, target, semanticDigest, strings.HasPrefix(operation.Program, "reflect.observation:")))
+	}
+	metric, ok := findOperation(model.Operations, "reflect.query:metrics")
+	if !ok {
+		return nil, false, "", "", "", errors.New("metrics query operation is absent")
+	}
+	attempts = append(attempts, reconstructUnknown(graph, metric, model.UnknownTarget, semanticDigest, model.Claims))
+	for index := range attempts {
+		for _, claim := range model.Claims {
+			if claim.EvidenceAttempt == attempts[index].ID {
+				attempts[index].EvidenceClaimIDs = append(attempts[index].EvidenceClaimIDs, claim.ID)
+			}
+		}
+	}
+	sort.SliceStable(attempts, func(i, j int) bool { return attempts[i].ID < attempts[j].ID })
+	return attempts, authority, api, outcome, apiError, nil
+}
+
+func reconstructExact(graph *query.Graph, operation operationSpec, id string, target semantic.ID, semanticDigest string, receipt bool) attempt {
+	before := graph.StableHash()
+	value := attempt{ID: id, Class: "SOURCE_DERIVED", Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: operation.Program, Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "QUERY", Step: "match-source-relation", SemanticDigestBefore: semanticDigest, GraphDigestBefore: before}
+	if receipt {
+		value.Stage = "RECEIPT"
+	}
+	result, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, query.ID(target.String())))
+	value.SemanticDigestAfter, value.GraphDigestAfter = semanticDigest, graph.StableHash()
+	if err != nil {
+		value.Decision, value.Resolution, value.Reason = "REFUTED", "LOWER_RESOLUTION", "QUERY_API_REJECTED"
+		return value
+	}
+	value.MatchedFacts = len(result.All())
+	if value.MatchedFacts == 1 {
+		value.Decision, value.Resolution, value.Reason = "PASS", "EXACT", "EXACT_RELATION_MATCH"
+	} else {
+		value.Decision, value.Resolution, value.Reason = "UNKNOWN", "LOWER_RESOLUTION", "RELATION_NOT_OBSERVED"
+	}
+	return value
+}
+
+func reconstructMutation(ir semantic.IR, operation operationSpec, id string, target semantic.ID, semanticDigest string) (attempt, bool, string, string, string, error) {
+	node, ok := ir.Graph.Node(target)
+	if !ok {
+		return attempt{}, false, "", "", "", fmt.Errorf("mutation target %q disappeared", target)
+	}
+	request := semantic.GraphPatchRequest{SchemaVersion: semantic.GraphPatchSchemaVersion, Operation: semantic.GraphPatchSetNodeField, ExpectedGraphHash: ir.Graph.StableHash(), NodeID: node.ID, ExpectedNodeHash: node.StableHash(), Field: "id", ExpectedSourceDigest: semanticDigest, ExpectedIRDigest: semanticDigest, AllowedIntent: "reflective-query-sandbox", Locality: "detached-observation-copy"}
+	base := semantic.GraphPatchBase{SourceDigest: semanticDigest, IRDigest: semanticDigest}
+	patched, err := ir.Graph.ApplyGraphPatch(base, request, semantic.GraphPatchMutation{})
+	value := attempt{ID: id, Class: "SOURCE_DERIVED", Operation: "mutate", Root: operation.ID.String(), Relation: "set", Target: target.String(), MetaOperation: operation.Program, Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "MUTATION_BOUNDARY", Step: "apply-typed-request", API: "semantic.Graph.ApplyGraphPatch", SemanticDigestBefore: semanticDigest, SemanticDigestAfter: semanticDigest, GraphDigestBefore: ir.Graph.StableHash(), GraphDigestAfter: ir.Graph.StableHash()}
+	if err != nil {
+		value.Decision, value.Resolution, value.Reason = "DENIED", "EXACT_REJECTION", "MUTATION_REQUEST_REJECTED"
+		value.APIOutcome, value.APIError = "REJECTED", err.Error()
+		return value, false, value.API, value.APIOutcome, value.APIError, nil
+	}
+	patchedIR := ir
+	patchedIR.Graph = patched
+	value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "MUTATION_CAPABILITY_ACCEPTED"
+	value.APIOutcome = "ACCEPTED"
+	value.SemanticDigestAfter, value.GraphDigestAfter = patchedIR.StableHash(), patched.StableHash()
+	return value, true, value.API, value.APIOutcome, "", nil
+}
+
+func reconstructUnknown(graph *query.Graph, operation operationSpec, target query.ID, semanticDigest string, claims []claimSpec) attempt {
+	value := attempt{ID: "unknown.target", Class: classForAttempt("unknown.target", claims), Operation: "query", Root: operation.ID.String(), Relation: "used", Target: target.String(), MetaOperation: metaForAttempt("unknown.target", operation.Program, claims), Producer: producerName, Consumer: consumerName, ProofChoice: "SOURCE_CLAIM_EVIDENCE", Stage: "UNKNOWN", Step: "resolve-unknown-subject", SemanticDigestBefore: semanticDigest, GraphDigestBefore: graph.StableHash()}
+	_, err := graph.ExactMatch(query.NewExactQuery(query.ID(operation.ID.String()), query.Used, target))
+	value.SemanticDigestAfter, value.GraphDigestAfter = semanticDigest, graph.StableHash()
+	if err != nil && errors.Is(err, query.ErrUnknownEndpoint) {
+		value.Decision, value.Resolution, value.Reason = "UNKNOWN", "LOWER_RESOLUTION", "UNKNOWN_TARGET"
+	} else if err != nil {
+		value.Decision, value.Resolution, value.Reason = "REFUTED", "LOWER_RESOLUTION", "QUERY_API_REJECTED"
+	} else {
+		value.Decision, value.Resolution, value.Reason = "REFUTED", "EXACT", "UNKNOWN_TARGET_BECAME_KNOWN"
+	}
+	return value
+}
+
+func classForAttempt(id string, claims []claimSpec) string {
+	for _, claim := range claims {
+		if claim.EvidenceAttempt == id {
+			return claim.Class
+		}
+	}
+	return "SOURCE_DERIVED"
+}
+
+func metaForAttempt(id, fallback string, claims []claimSpec) string {
+	for _, claim := range claims {
+		if claim.EvidenceAttempt == id {
+			return claim.MetaOperation
+		}
+	}
+	return fallback
+}
+
+func findOperation(operations []operationSpec, program string) (operationSpec, bool) {
+	for _, operation := range operations {
+		if operation.Program == program {
+			return operation, true
+		}
+	}
+	return operationSpec{}, false
+}
+
+func attemptIDForProgram(program string) string {
+	switch {
+	case strings.HasPrefix(program, "reflect.query:"):
+		return "reflect." + strings.TrimPrefix(program, "reflect.query:")
+	case strings.HasPrefix(program, "reflect.attempt:"):
+		return "mutation." + strings.TrimPrefix(program, "reflect.attempt:")
+	case strings.HasPrefix(program, "reflect.observation:"):
+		return "receipt." + strings.TrimPrefix(program, "reflect.observation:")
+	default:
+		return program
 	}
 }
 
-func observationDigest(value sandbox.Observation) string {
+func buildClaimTransitions(claims []claimSpec, attempts []attempt) []claimTransition {
+	transitions := make([]claimTransition, 0, len(claims)*2)
+	previous := ""
+	sequence := 1
+	for _, claim := range claims {
+		registration := claimTransition{Sequence: sequence, ClaimID: claim.ID, Class: claim.Class, ProofChoice: claim.ProofChoice, MetaOperation: claim.MetaOperation, PriorState: claim.PriorState, EvidenceAttempt: claim.EvidenceAttempt, Producer: producerName, Consumer: consumerName, Stage: "DECLARE", Step: "register-source-claim", Reason: "CLAIM_PRIOR_STATE_OBSERVED", From: "UNRECORDED", To: claim.PriorState, PreviousDigest: previous}
+		registration.Digest = transitionDigest(registration)
+		transitions = append(transitions, registration)
+		previous = registration.Digest
+		sequence++
+		to, stage, step, reason := claim.PriorState, "OBSERVE", "retain-prior-state", "NO_ATTEMPT_EVIDENCE"
+		if value, ok := findAttempt(attempts, claim.EvidenceAttempt); ok {
+			switch value.Decision {
+			case "PASS", "DENIED":
+				to, stage, step, reason = "DISCHARGED", "OBSERVE", "discharge-from-attempt-evidence", "ATTEMPT_EVIDENCE_MATCH"
+			case "UNKNOWN":
+				to, stage, step, reason = claim.PriorState, "RESOLVE", "retain-open-on-unknown", "UNKNOWN_PRESERVED"
+			case "REFUTED":
+				to, stage, step, reason = "REFUTED", "REFUTE", "mark-boundary-violation", "BOUNDARY_VIOLATION"
+			}
+		}
+		value := registration
+		value.Sequence = sequence
+		value.Stage, value.Step, value.Reason = stage, step, reason
+		value.From, value.To, value.PreviousDigest = claim.PriorState, to, previous
+		value.Digest = transitionDigest(value)
+		transitions = append(transitions, value)
+		previous = value.Digest
+		sequence++
+	}
+	return transitions
+}
+
+func findAttempt(attempts []attempt, id string) (attempt, bool) {
+	for _, value := range attempts {
+		if value.ID == id {
+			return value, true
+		}
+	}
+	return attempt{}, false
+}
+
+func buildContract(model sourceModel, source snapshot, attempts []attempt, claims []claimTransition) contract {
+	classes := make([]bucket, 0)
+	proofs := make([]bucket, 0)
+	classTotals, proofTotals := map[string]int{}, map[string]int{}
+	for _, value := range claims {
+		if value.Sequence%2 == 1 {
+			classTotals[value.Class]++
+			proofTotals[value.ProofChoice]++
+		}
+	}
+	classes = bucketsFromTotals(classTotals)
+	proofs = bucketsFromTotals(proofTotals)
+	return contract{Schema: schema, MetricID: metricID, GoVersion: runtime.Version(), Denominator: len(model.Claims), Classes: classes, Proofs: proofs, SourceNodes: source.NodeCount, SourceFacts: source.FactCount, ClaimCount: len(model.Claims), AttemptCount: len(attempts), ReflectiveQueries: countAttempts(attempts, func(value attempt) bool { return value.Operation == "query" }), SafeQueries: countAttempts(attempts, func(value attempt) bool {
+		return value.Operation == "query" && value.Decision == "PASS" && value.Resolution == "EXACT"
+	}), DeniedMutations: countAttempts(attempts, func(value attempt) bool { return value.Operation == "mutate" && value.Decision == "DENIED" }), UnknownTargets: countAttempts(attempts, func(value attempt) bool { return value.Decision == "UNKNOWN" }), RefutedAttempts: countAttempts(attempts, func(value attempt) bool { return value.Decision == "REFUTED" }), TransitionCount: len(claims), SatisfiedIndicators: countTransitions(claims, "DISCHARGED")}
+}
+
+func bucketsFromTotals(totals map[string]int) []bucket {
+	names := make([]string, 0, len(totals))
+	for name := range totals {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	result := make([]bucket, 0, len(names))
+	for _, name := range names {
+		result = append(result, bucket{Name: name, Total: totals[name]})
+	}
+	return result
+}
+
+func countAttempts(values []attempt, predicate func(attempt) bool) int {
+	count := 0
+	for _, value := range values {
+		if predicate(value) {
+			count++
+		}
+	}
+	return count
+}
+
+func countTransitions(values []claimTransition, state string) int {
+	count := 0
+	for _, value := range values {
+		if value.To == state && value.From != state {
+			count++
+		}
+	}
+	return count
+}
+
+func buildReceipt(value observation, satisfied, total int) receipt {
+	classes := make([]score, 0)
+	proofs := make([]score, 0)
+	classTotals, classSatisfied := map[string]int{}, map[string]int{}
+	proofTotals, proofSatisfied := map[string]int{}, map[string]int{}
+	for index := 0; index < len(value.Claims); index += 2 {
+		registration := value.Claims[index]
+		final := value.Claims[index+1]
+		classTotals[registration.Class]++
+		proofTotals[registration.ProofChoice]++
+		if final.To == "DISCHARGED" {
+			classSatisfied[registration.Class]++
+			proofSatisfied[registration.ProofChoice]++
+		}
+	}
+	classes = scoresFromTotals(classTotals, classSatisfied)
+	proofs = scoresFromTotals(proofTotals, proofSatisfied)
+	decision, reason := "PASS", "OBSERVATION_BOUNDARY_CONFORMANT"
+	if value.Contract.RefutedAttempts > 0 {
+		decision, reason = "REFUTED", "BOUNDARY_VIOLATION_OBSERVED"
+	}
+	subjectResolution := "EXACT_ONLY"
+	if value.Contract.UnknownTargets > 0 {
+		subjectResolution = "MIXED_EXACT_AND_LOWER_RESOLUTION"
+	}
+	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: "OBSERVATION_ONLY", SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: value.Contract, Source: value.Source, Attempts: value.Attempts, Claims: value.Claims, Coordinates: coordinates{Satisfied: satisfied, Total: total, BasisPoints: basisPoints(satisfied, total)}, Classes: classes, Proofs: proofs, Effects: value.Effects, SourceReconstruction: coordinates{Satisfied: 4, Total: 4, BasisPoints: 10000}, ProducerImports: coordinates{Satisfied: 0, Total: 0, BasisPoints: 0}, PromotionCreditBPS: 0, RepositoryWrites: value.Effects.RepositoryWrites, MutationAuthority: value.Effects.MutationAuthority, NotClaimed: []string{"generic Go reflection API equivalence", "runtime capability isolation beyond this process", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
+}
+
+func scoresFromTotals(totals, satisfied map[string]int) []score {
+	names := make([]string, 0, len(totals))
+	for name := range totals {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	result := make([]score, 0, len(names))
+	for _, name := range names {
+		result = append(result, score{Name: name, Satisfied: satisfied[name], Total: totals[name]})
+	}
+	return result
+}
+
+func basisPoints(satisfied, total int) int {
+	if total == 0 {
+		return 0
+	}
+	return satisfied * 10000 / total
+}
+
+func observationDigest(value observation) string {
 	value.Digest = ""
 	return hashJSON(value)
 }
 
-func transitionDigest(value sandbox.ClaimTransition) string {
+func transitionDigest(value claimTransition) string {
 	value.Digest = ""
 	return hashJSON(value)
 }
 
-func receiptDigest(value sandbox.Receipt) string {
+func receiptDigest(value receipt) string {
 	value.Digest = ""
 	return hashJSON(value)
 }
@@ -177,9 +670,11 @@ func hashJSON(value any) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
-func plainDigest(data []byte) string {
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:])
+func countLines(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	return strings.Count(string(data), "\n")
 }
 
 func fail(format string, args ...any) {

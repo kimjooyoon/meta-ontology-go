@@ -73,7 +73,7 @@ jobs:
 
   consumer:
     name: Independently verify reflection boundary
-    needs: producer
+    needs: [producer, intervention]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -102,5 +102,33 @@ jobs:
         with:
           name: reflective-query-sandbox-consumer-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/reflective-query-sandbox/consumer
+          if-no-files-found: error
+          retention-days: 30
+
+  intervention:
+    name: Verify semantic and nonsemantic interventions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Run raw-source interventions
+        run: bash scripts/reflective-query-sandbox/intervention.sh
+      - name: Upload intervention evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: reflective-query-sandbox-intervention-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/reflective-query-sandbox/intervention.json
           if-no-files-found: error
           retention-days: 30

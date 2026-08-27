@@ -1,13 +1,13 @@
 package reflectivequerysandbox
 
 const (
-	Schema                  = "gooo/reflective-query-sandbox-observation/v1"
-	ReceiptSchema           = "gooo/reflective-query-sandbox-receipt/v1"
-	MetricID                = "gooo.metric.language.reflective-query-sandbox.v1"
-	ExpectedGoVersion       = "1.27.0"
-	ExpectedSourcePath      = "examples/reflective-query-sandbox/main.gooo"
-	ExpectedDenominator     = 12
-	ExpectedTransitionCount = 24
+	Schema             = "gooo/reflective-query-sandbox-observation/v2"
+	ReceiptSchema      = "gooo/reflective-query-sandbox-receipt/v2"
+	MetricID           = "gooo.metric.language.reflective-query-sandbox.v2"
+	SourcePath         = "examples/reflective-query-sandbox/main.gooo"
+	ProducerName       = "reflective-query-sandbox.producer"
+	ConsumerName       = "reflective-query-sandbox.independent-verifier"
+	ProducerImportPath = "github.com/kimjooyoon/meta-ontology-go/internal/meta/reflectivequerysandbox"
 )
 
 type Bucket struct {
@@ -22,67 +22,84 @@ type Contract struct {
 	Denominator         int      `json:"denominator"`
 	Classes             []Bucket `json:"classes"`
 	Proofs              []Bucket `json:"proofs"`
-	ExpectedNodes       int      `json:"expected_nodes"`
-	ExpectedFacts       int      `json:"expected_facts"`
-	ExpectedAttempts    int      `json:"expected_attempts"`
-	ExpectedSafe        int      `json:"expected_safe_queries"`
-	ExpectedDenied      int      `json:"expected_denied_mutations"`
-	ExpectedUnknown     int      `json:"expected_unknown_targets"`
-	ExpectedTransitions int      `json:"expected_transitions"`
+	SourceNodes         int      `json:"source_nodes"`
+	SourceFacts         int      `json:"source_facts"`
+	ClaimCount          int      `json:"claim_count"`
+	AttemptCount        int      `json:"attempt_count"`
+	ReflectiveQueries   int      `json:"reflective_queries"`
+	SafeQueries         int      `json:"safe_queries"`
+	DeniedMutations     int      `json:"denied_mutations"`
+	UnknownTargets      int      `json:"unknown_targets"`
+	RefutedAttempts     int      `json:"refuted_attempts"`
+	TransitionCount     int      `json:"transition_count"`
+	SatisfiedIndicators int      `json:"satisfied_indicators"`
 }
 
 type Effects struct {
-	RepositoryWrites  int  `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
+	RepositoryBefore   []string `json:"repository_before"`
+	RepositoryAfter    []string `json:"repository_after"`
+	RepositoryWriteSet []string `json:"repository_write_set"`
+	RepositoryWrites   int      `json:"repository_writes"`
+	MutationAuthority  bool     `json:"mutation_authority"`
+	MutationAPI        string   `json:"mutation_api"`
+	MutationOutcome    string   `json:"mutation_outcome"`
+	MutationError      string   `json:"mutation_error,omitempty"`
 }
 
 type Snapshot struct {
 	Path           string `json:"path"`
 	SourceDigest   string `json:"source_digest"`
 	SemanticDigest string `json:"semantic_digest"`
+	GraphDigest    string `json:"graph_digest"`
 	NodeCount      int    `json:"node_count"`
 	FactCount      int    `json:"fact_count"`
 	GoooLines      int    `json:"gooo_lines"`
 }
 
 type Attempt struct {
-	ID                   string `json:"id"`
-	Class                string `json:"class"`
-	Operation            string `json:"operation"`
-	Root                 string `json:"root"`
-	Relation             string `json:"relation"`
-	Target               string `json:"target"`
-	MetaOperation        string `json:"meta_operation"`
-	Producer             string `json:"producer"`
-	Consumer             string `json:"consumer"`
-	ProofChoice          string `json:"proof_choice"`
-	Stage                string `json:"stage"`
-	Step                 string `json:"step"`
-	Decision             string `json:"decision"`
-	Resolution           string `json:"resolution"`
-	Reason               string `json:"reason"`
-	MatchedFacts         int    `json:"matched_facts"`
-	SemanticDigestBefore string `json:"semantic_digest_before"`
-	SemanticDigestAfter  string `json:"semantic_digest_after"`
-	GraphDigestBefore    string `json:"graph_digest_before"`
-	GraphDigestAfter     string `json:"graph_digest_after"`
+	ID                   string   `json:"id"`
+	Class                string   `json:"class"`
+	Operation            string   `json:"operation"`
+	Root                 string   `json:"root"`
+	Relation             string   `json:"relation"`
+	Target               string   `json:"target"`
+	MetaOperation        string   `json:"meta_operation"`
+	Producer             string   `json:"producer"`
+	Consumer             string   `json:"consumer"`
+	ProofChoice          string   `json:"proof_choice"`
+	Stage                string   `json:"stage"`
+	Step                 string   `json:"step"`
+	Decision             string   `json:"decision"`
+	Resolution           string   `json:"resolution"`
+	Reason               string   `json:"reason"`
+	MatchedFacts         int      `json:"matched_facts"`
+	EvidenceClaimIDs     []string `json:"evidence_claim_ids"`
+	API                  string   `json:"api,omitempty"`
+	APIOutcome           string   `json:"api_outcome,omitempty"`
+	APIError             string   `json:"api_error,omitempty"`
+	SemanticDigestBefore string   `json:"semantic_digest_before"`
+	SemanticDigestAfter  string   `json:"semantic_digest_after"`
+	GraphDigestBefore    string   `json:"graph_digest_before"`
+	GraphDigestAfter     string   `json:"graph_digest_after"`
 }
 
 type ClaimTransition struct {
-	Sequence       int    `json:"sequence"`
-	ClaimID        string `json:"claim_id"`
-	Class          string `json:"class"`
-	ProofChoice    string `json:"proof_choice"`
-	MetaOperation  string `json:"meta_operation"`
-	Producer       string `json:"producer"`
-	Consumer       string `json:"consumer"`
-	Stage          string `json:"stage"`
-	Step           string `json:"step"`
-	Reason         string `json:"reason"`
-	From           string `json:"from"`
-	To             string `json:"to"`
-	PreviousDigest string `json:"previous_digest"`
-	Digest         string `json:"digest"`
+	Sequence        int    `json:"sequence"`
+	ClaimID         string `json:"claim_id"`
+	Class           string `json:"class"`
+	ProofChoice     string `json:"proof_choice"`
+	MetaOperation   string `json:"meta_operation"`
+	PriorState      string `json:"prior_state"`
+	EvidenceAttempt string `json:"evidence_attempt"`
+	Producer        string `json:"producer"`
+	Consumer        string `json:"consumer"`
+	Stage           string `json:"stage"`
+	Step            string `json:"step"`
+	Reason          string `json:"reason"`
+	From            string `json:"from"`
+	To              string `json:"to"`
+	PreviousDigest  string `json:"previous_digest"`
+	Digest          string `json:"digest"`
 }
 
 type Observation struct {
@@ -110,25 +127,28 @@ type Coordinates struct {
 }
 
 type Receipt struct {
-	Schema             string            `json:"schema"`
-	SubjectSHA         string            `json:"subject_sha"`
-	MetricID           string            `json:"metric_id"`
-	Decision           string            `json:"decision"`
-	Resolution         string            `json:"resolution"`
-	Reason             string            `json:"reason"`
-	Producer           string            `json:"producer"`
-	Consumer           string            `json:"consumer"`
-	Contract           Contract          `json:"contract"`
-	Source             Snapshot          `json:"source"`
-	Attempts           []Attempt         `json:"attempts"`
-	Claims             []ClaimTransition `json:"claims"`
-	Coordinates        Coordinates       `json:"coordinates"`
-	Classes            []Score           `json:"classes"`
-	Proofs             []Score           `json:"proofs"`
-	Effects            Effects           `json:"effects"`
-	PromotionCreditBPS int               `json:"promotion_credit_bps"`
-	RepositoryWrites   int               `json:"repository_writes"`
-	MutationAuthority  bool              `json:"mutation_authority"`
-	NotClaimed         []string          `json:"not_claimed"`
-	Digest             string            `json:"digest"`
+	Schema               string            `json:"schema"`
+	SubjectSHA           string            `json:"subject_sha"`
+	MetricID             string            `json:"metric_id"`
+	Decision             string            `json:"decision"`
+	Resolution           string            `json:"resolution"`
+	SubjectResolution    string            `json:"subject_resolution"`
+	Reason               string            `json:"reason"`
+	Producer             string            `json:"producer"`
+	Consumer             string            `json:"consumer"`
+	Contract             Contract          `json:"contract"`
+	Source               Snapshot          `json:"source"`
+	Attempts             []Attempt         `json:"attempts"`
+	Claims               []ClaimTransition `json:"claims"`
+	Coordinates          Coordinates       `json:"coordinates"`
+	Classes              []Score           `json:"classes"`
+	Proofs               []Score           `json:"proofs"`
+	Effects              Effects           `json:"effects"`
+	SourceReconstruction Coordinates       `json:"source_reconstruction"`
+	ProducerImports      Coordinates       `json:"producer_imports"`
+	PromotionCreditBPS   int               `json:"promotion_credit_bps"`
+	RepositoryWrites     int               `json:"repository_writes"`
+	MutationAuthority    bool              `json:"mutation_authority"`
+	NotClaimed           []string          `json:"not_claimed"`
+	Digest               string            `json:"digest"`
 }

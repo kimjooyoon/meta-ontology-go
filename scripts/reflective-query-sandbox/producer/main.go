@@ -13,11 +13,13 @@ func main() {
 	source := flag.String("source", "", "Gooo source")
 	subject := flag.String("subject-sha", "", "exact subject commit")
 	output := flag.String("output", "", "observation receipt")
+	repositoryBefore := flag.String("repository-before", "", "repository status before observation")
+	repositoryAfter := flag.String("repository-after", "", "repository status after observation")
 	flag.Parse()
-	if *source == "" || *subject == "" || *output == "" {
-		fail("usage: producer -source FILE -subject-sha SHA -output FILE")
+	if *source == "" || *subject == "" || *output == "" || *repositoryBefore == "" || *repositoryAfter == "" {
+		fail("usage: producer -source FILE -subject-sha SHA -repository-before FILE -repository-after FILE -output FILE")
 	}
-	observation, err := sandbox.Observe(*source, *subject)
+	observation, err := sandbox.Observe(*source, *subject, *repositoryBefore, *repositoryAfter)
 	if err != nil {
 		fail("observe source: %v", err)
 	}
