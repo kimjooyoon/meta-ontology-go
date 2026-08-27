@@ -26,6 +26,11 @@ func receiptDigest(value Receipt) string {
 	return digestValue(value)
 }
 
+func recordDigest(value DenominatorRecord) string {
+	value.Digest = ""
+	return digestValue(value)
+}
+
 func reportDigest(value Report) string {
 	value.Digest = ""
 	return digestValue(value)

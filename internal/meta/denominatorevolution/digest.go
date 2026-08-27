@@ -31,6 +31,11 @@ func claimLedgerDigest(value ClaimLedgerEntry) string {
 	return digestValue(value)
 }
 
+func denominatorRecordDigest(value DenominatorRecord) string {
+	value.Digest = ""
+	return digestValue(value)
+}
+
 func reportDigest(value Report) string {
 	value.Digest = ""
 	return digestValue(value)

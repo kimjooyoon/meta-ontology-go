@@ -1,6 +1,9 @@
 package denominatorevolutionverify
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 func verifyCheck(id, proof, operation, stage, step string, ok bool, expected, observed string) Check {
 	state := "FAIL"
@@ -18,10 +21,58 @@ func hasFailure(values []Check) bool {
 	}
 	return false
 }
-func intText(value int) string { return strconv.Itoa(value) }
+
+func status(ok bool, yes, no string) string {
+	if ok {
+		return yes
+	}
+	return no
+}
+
+func claimProof(decision string) string {
+	if decision == "FAIL_CLOSED" {
+		return "FOUNDATION"
+	}
+	if decision == "ADVANCE" {
+		return "COHERENCE"
+	}
+	return "REGRESSION"
+}
+
+func claimOperation(decision string) string {
+	if decision == "FAIL_CLOSED" {
+		return "fail-closed-unknown-predecessor"
+	}
+	if decision == "ADVANCE" {
+		return "accept-authorized-denominator-advance"
+	}
+	return "reject-invalid-denominator-change"
+}
+
+func changeText(values []Change) string {
+	if len(values) == 0 {
+		return "none"
+	}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.ObligationID+"/"+value.Reason)
+	}
+	return strings.Join(result, ",")
+}
+
+func receiptWrites(value *Receipt) string {
+	if value == nil {
+		return "snapshot-bound"
+	}
+	return intText(value.RepositoryWrites)
+}
+
 func receiptText(value *Receipt) string {
 	if value == nil {
 		return "missing"
+	}
+	if value.Decision == "" {
+		return "material-only"
 	}
 	return value.Decision + " / " + value.Reason
 }
@@ -39,6 +90,8 @@ func boolText(value bool) string {
 	}
 	return "false"
 }
+
+func intText(value int) string { return strconv.Itoa(value) }
 
 func snapshotText(value RepositorySnapshot) string {
 	return value.BeforeDigest + " -> " + value.AfterDigest + " changed_paths=" + intText(value.ChangedPaths)

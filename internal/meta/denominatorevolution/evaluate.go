@@ -5,22 +5,26 @@ import (
 	"sort"
 )
 
-func cloneObligations(value []Obligation) []Obligation {
-	return append([]Obligation(nil), value...)
-}
+const (
+	allowedAdditionReason = "NEW_MEASURABLE_OBLIGATION"
+	allowedDeletionReason = "DEPRECATED_DUPLICATE"
+	noReceipt             = "none"
+)
 
-// Evaluate is the producer-side witness. Source parsing and lowering happen
-// before any case is built; the JSON contract is used only as an expectation
-// against the source-derived wire model.
+var forbiddenPropositions = []string{"improvement rate", "aggregate estimate", "projected coverage"}
+
+// Evaluate is the producer-side calculation. The source supplies members,
+// proposal references, reasons, and receipt binding material. It supplies no
+// decision, resolution, claim state, or expected result.
 func Evaluate(input Input) Report {
 	contract := input.Contract
 	snapshot := input.RepositorySnapshot
 	report := Report{
 		Schema: ReportSchema, Scope: ReportScope, HeadSHA: input.HeadSHA,
-		Producer: contract.Producer, Consumer: contract.Consumer,
+		Producer: "denominatorevolution.Evaluate", Consumer: "denominatorevolutionverify.Verify",
 		ContractDigest: digestValue(contract), SourceDigest: DigestBytes(input.Source),
-		NotClaimed: contract.NotClaimed, RepositoryWrites: snapshot.ChangedPaths,
-		MutationAuthority: false, RepositorySnapshot: snapshot,
+		NotClaimed: append([]string(nil), contract.NotClaimed...), AggregateMetrics: []string{},
+		RepositoryWrites: snapshot.ChangedPaths, MutationAuthority: false, RepositorySnapshot: snapshot,
 	}
 
 	projection, wire, err := parseSource(input.Source)
@@ -28,78 +32,245 @@ func Evaluate(input Input) Report {
 	if err != nil {
 		return finishFailure(report, "GOOO_SOURCE_PROJECTION_UNKNOWN", "LOWER_RESOLUTION")
 	}
-	base, cases, ledger, emitted := sourceCaseInputs(wire, snapshot)
+	base, records, inputs := sourceCaseInputs(wire, snapshot)
 	report.Denominator = base
-	report.ClaimLedger = ledger
-	report.EmittedClaims = emitted
-	for _, value := range cases {
-		report.Cases = append(report.Cases, evaluateCase(value, base, contract.Policy))
+	report.DenominatorRecords = records
+	for _, value := range inputs {
+		report.Cases = append(report.Cases, evaluateCase(value, base))
 	}
-	report.Summary = summarize(report.Cases, base, len(wire.Cases), len(ledger), forbiddenEstimateObserved(emitted), snapshot.ChangedPaths)
+	report.ClaimLedger = sealClaimLedger(report.Cases)
+	report.EmittedClaims = emitClaims(report.Cases)
+	guards := makeGuardrails(forbiddenEstimateObserved(report.EmittedClaims), snapshot.ChangedPaths, projection.ForbiddenPropositionPresent)
+	for index := range report.Cases {
+		if report.Cases[index].Receipt != nil {
+			report.Cases[index].Receipt.Guardrails = guards
+			report.Cases[index].Receipt.Digest = receiptDigest(*report.Cases[index].Receipt)
+		}
+	}
+	report.Summary = summarize(report.Cases, base, records, len(wire.Proposals), len(report.ClaimLedger), guards)
 	report.Indicators = makeIndicators(report.Summary)
 
-	if !sourceContractMatches(wire, contract) {
+	if !contractExpectationMatches(report, contract) {
 		return finishFailure(report, "DENOMINATOR_EVOLUTION_CONTRACT_DRIFT", "INVARIANT_ONLY")
 	}
-	report.Decision, report.Resolution, report.Reason = "PASS", "EXACT", "DENOMINATOR_EVOLUTION_CONTRACT_SATISFIED"
 	if report.Summary.CasesSatisfied != CaseCount || len(report.Indicators) != CheckCount || hasUnsatisfied(report.Indicators) {
 		return finishFailure(report, "DENOMINATOR_EVOLUTION_CONTRACT_VIOLATED", "INVARIANT_ONLY")
 	}
+	report.Decision, report.Resolution, report.Reason = "PASS", "EXACT", "DENOMINATOR_EVOLUTION_CONTRACT_SATISFIED"
 	report.Digest = reportDigest(report)
 	return report
 }
 
-func sourceCaseInputs(wire sourceWire, snapshot RepositorySnapshot) (Denominator, []CaseInput, []ClaimLedgerEntry, []EmittedClaim) {
+func sourceCaseInputs(wire sourceWire, snapshot RepositorySnapshot) (Denominator, []DenominatorRecord, []CaseInput) {
 	base := Denominator{Version: wire.Version, Obligations: cloneObligations(wire.Obligations)}
 	base.Digest = denominatorDigest(base)
+	registry := map[DenominatorRef]Denominator{{Version: base.Version, Digest: base.Digest}: base}
 
-	legal := cloneDenominator(base, wire.SuccessorVersion)
-	for _, change := range wire.Deletions {
-		legal.Obligations = removeObligation(legal.Obligations, change.ObligationID)
-	}
-	if mutation, ok := sourceMutationFor(wire, "legal-advance"); ok {
-		legal.Obligations = append(legal.Obligations, mutation)
-	}
-	legal.Digest = denominatorDigest(legal)
-
-	unauthorized := cloneDenominator(base, wire.SuccessorVersion)
-	if mutation, ok := sourceMutationFor(wire, "unauthorized-change"); ok {
-		unauthorized.Obligations = append(unauthorized.Obligations, mutation)
-	}
-	unauthorized.Digest = denominatorDigest(unauthorized)
-
-	unknown := cloneDenominator(base, wire.UnknownPredecessorVersion)
-	unknown.Digest = denominatorDigest(unknown)
-	unknownSuccessor := cloneDenominator(base, wire.UnknownSuccessorVersion)
-	unknownSuccessor.Digest = denominatorDigest(unknownSuccessor)
-
-	ledger := sealClaimLedger(wire.Claims)
-	emitted := append([]EmittedClaim(nil), wire.EmittedClaims...)
-	guardrails := makeGuardrails(forbiddenEstimateObserved(emitted), snapshot.ChangedPaths)
-	receipt := MigrationReceipt{
-		Schema: ReceiptSchema, ID: wire.ReceiptID, Producer: "denominatorevolution.Evaluate", Consumer: "denominatorevolutionverify.Verify",
-		Predecessor: DenominatorRef{Version: base.Version, Digest: base.Digest}, Successor: DenominatorRef{Version: legal.Version, Digest: legal.Digest},
-		Additions: append([]Change(nil), wire.Additions...), Deletions: append([]Change(nil), wire.Deletions...),
-		Decision: wire.ReceiptDecision, Reason: wire.ReceiptReason, Coordinate: wire.ReceiptCoordinate,
-		RepositoryWrites: snapshot.ChangedPaths, MutationAuthority: false, RepositorySnapshot: snapshot, Guardrails: guardrails,
-	}
-	receipt.Digest = receiptDigest(receipt)
-	inputs := []CaseInput{
-		{Spec: wire.Cases[0].Spec, Predecessor: base, Successor: legal, Receipt: &receipt, Claim: ledger[0]},
-		{Spec: wire.Cases[1].Spec, Predecessor: base, Successor: unauthorized, Claim: ledger[1]},
-		{Spec: wire.Cases[2].Spec, Predecessor: unknown, Successor: unknownSuccessor, Claim: ledger[2]},
-	}
-	return base, inputs, ledger, emitted
-}
-
-func sourceMutationFor(wire sourceWire, caseID string) (Obligation, bool) {
-	for _, value := range wire.Mutations {
-		if value.CaseID == caseID {
-			return value.Obligation, true
+	records := []DenominatorRecord{}
+	records = append(records, newDenominatorRecord("denominator-v1", base, nil))
+	inputs := make([]CaseInput, 0, len(wire.Proposals))
+	for _, proposal := range wire.Proposals {
+		predecessor, known := registry[proposal.Predecessor]
+		if !known {
+			predecessor = Denominator{Version: proposal.Predecessor.Version, Digest: proposal.Predecessor.Digest}
+		}
+		successor, changeSetValid := applyChanges(base, proposal.Successor, wire.Additions, wire.Deletions)
+		var receipt *MigrationReceipt
+		if proposal.ReceiptID != noReceipt && proposal.ReceiptID == wire.Receipt.ID {
+			receipt = materializeReceipt(wire.Receipt, snapshot)
+		}
+		inputs = append(inputs, CaseInput{ID: proposal.ID, Predecessor: predecessor, Successor: successor, PredecessorRef: proposal.Predecessor, SuccessorVersion: proposal.Successor, ReceiptID: proposal.ReceiptID, Receipt: receipt, ReceiptBoundPrev: wire.Receipt.BoundPrev, ReceiptBoundNext: wire.Receipt.BoundNext, Additions: append([]Change(nil), wire.Additions...), Deletions: append([]Change(nil), wire.Deletions...), PredecessorKnown: known, ChangeSetValid: changeSetValid})
+		if known && proposal.Successor == SuccessorVersion && changeSetValid && len(records) == 1 {
+			ref := DenominatorRef{Version: base.Version, Digest: base.Digest}
+			records = append(records, newDenominatorRecord("denominator-v2", successor, &ref))
 		}
 	}
-	return Obligation{}, false
+	return base, records, inputs
 }
+
+func newDenominatorRecord(id string, denominator Denominator, predecessor *DenominatorRef) DenominatorRecord {
+	record := DenominatorRecord{ID: id, Version: denominator.Version, Predecessor: predecessor, Denominator: denominator, FixedMemberNumerator: len(denominator.Obligations), FixedMemberDenominator: DenominatorSize, Immutable: true}
+	record.Digest = denominatorRecordDigest(record)
+	return record
+}
+
+func materializeReceipt(material sourceReceiptMaterial, snapshot RepositorySnapshot) *MigrationReceipt {
+	return &MigrationReceipt{
+		Schema: ReceiptSchema, ID: material.ID, Producer: "denominatorevolution.Evaluate", Consumer: "denominatorevolutionverify.Verify",
+		Predecessor: material.Predecessor, Successor: material.Successor,
+		Additions: append([]Change(nil), material.Additions...), Deletions: append([]Change(nil), material.Deletions...),
+		Coordinate:       Coordinate{Stage: "MIGRATE", Step: "bind-receipt-to-both-versions", Reason: "receipt binds computed predecessor and successor digests"},
+		RepositoryWrites: snapshot.ChangedPaths, MutationAuthority: false, RepositorySnapshot: snapshot,
+		Guardrails: makeGuardrails(0, snapshot.ChangedPaths, true),
+	}
+}
+
+func applyChanges(base Denominator, version string, additions, deletions []Change) (Denominator, bool) {
+	result := cloneDenominator(base, version)
+	valid := true
+	for _, change := range deletions {
+		count := 0
+		for _, obligation := range result.Obligations {
+			if obligation.ID == change.ObligationID {
+				count++
+			}
+		}
+		if count != 1 {
+			valid = false
+			continue
+		}
+		result.Obligations = removeObligation(result.Obligations, change.ObligationID)
+	}
+	for _, change := range additions {
+		if change.Member == nil || hasObligation(result.Obligations, change.ObligationID) || change.Member.ID != change.ObligationID {
+			valid = false
+			continue
+		}
+		result.Obligations = append(result.Obligations, *change.Member)
+	}
+	result.Digest = denominatorDigest(result)
+	if !changeSetValid(base, result, additions, deletions) {
+		valid = false
+	}
+	return result, valid
+}
+
+func changeSetValid(base, successor Denominator, additions, deletions []Change) bool {
+	if len(additions) != 1 || len(deletions) != 1 || !reasonAllowed(additions[0].Reason, true) || !reasonAllowed(deletions[0].Reason, false) {
+		return false
+	}
+	addition, deletion := additions[0], deletions[0]
+	if addition.Member == nil || addition.Member.ID != addition.ObligationID || hasObligation(base.Obligations, addition.ObligationID) || !hasObligation(base.Obligations, deletion.ObligationID) || addition.ObligationID == deletion.ObligationID {
+		return false
+	}
+	actualAdditions, actualDeletions := changes(base, successor)
+	return sameChangeIDs(actualAdditions, additions) && sameChangeIDs(actualDeletions, deletions)
+}
+
+func changes(before, after Denominator) ([]Change, []Change) {
+	beforeIDs, afterIDs := map[string]Obligation{}, map[string]Obligation{}
+	for _, value := range before.Obligations {
+		beforeIDs[value.ID] = value
+	}
+	for _, value := range after.Obligations {
+		afterIDs[value.ID] = value
+	}
+	additions, deletions := []Change{}, []Change{}
+	for id, value := range afterIDs {
+		if _, ok := beforeIDs[id]; !ok {
+			member := value
+			additions = append(additions, Change{ObligationID: id, Member: &member})
+		}
+	}
+	for id := range beforeIDs {
+		if _, ok := afterIDs[id]; !ok {
+			deletions = append(deletions, Change{ObligationID: id})
+		}
+	}
+	sort.Slice(additions, func(i, j int) bool { return additions[i].ObligationID < additions[j].ObligationID })
+	sort.Slice(deletions, func(i, j int) bool { return deletions[i].ObligationID < deletions[j].ObligationID })
+	return additions, deletions
+}
+
+func evaluateCase(input CaseInput, base Denominator) CaseResult {
+	predKnown := input.PredecessorKnown && input.PredecessorRef == (DenominatorRef{Version: base.Version, Digest: base.Digest}) && input.Predecessor.Digest == denominatorDigest(input.Predecessor) && reflect.DeepEqual(input.Predecessor.Obligations, base.Obligations)
+	receiptValid := predKnown && input.ChangeSetValid && receiptBindingValid(input)
+	decision, resolution, reason := "FAIL_CLOSED", "LOWER_RESOLUTION", "PREDECESSOR_DIGEST_UNKNOWN"
+	if predKnown {
+		decision, resolution, reason = "BLOCK", "INVARIANT_ONLY", "MIGRATION_RECEIPT_MISSING"
+		if input.ReceiptID != noReceipt && receiptValid {
+			decision, resolution, reason = "ADVANCE", "EXACT", "DENOMINATOR_ADVANCE_AUTHORIZED"
+		}
+	}
+	claimID, fromClaim, toClaim, coordinate := derivedClaim(decision, resolution, reason)
+	if input.Receipt != nil {
+		if receiptValid {
+			input.Receipt.Decision, input.Receipt.Reason = "ADVANCE", "DENOMINATOR_ADVANCE_AUTHORIZED"
+		} else {
+			input.Receipt.Decision, input.Receipt.Reason = "BLOCK", "MIGRATION_RECEIPT_MISSING"
+		}
+		input.Receipt.Digest = receiptDigest(*input.Receipt)
+	}
+	kind := "UNKNOWN_PREDECESSOR"
+	if predKnown {
+		if input.ReceiptID == noReceipt {
+			kind = "REGISTERED_WITHOUT_RECEIPT"
+		} else {
+			kind = "REGISTERED_WITH_RECEIPT"
+		}
+	}
+	checks := []CheckResult{
+		check("denominator-version", "FOUNDATION", "bind-fixed-denominator", coordinate, status(predKnown, "PASS", "UNKNOWN"), DenominatorVersion, input.Predecessor.Version),
+		check("denominator-member-digest", "FOUNDATION", "bind-fixed-denominator", coordinate, status(input.Predecessor.Digest == denominatorDigest(input.Predecessor) && input.Successor.Digest == denominatorDigest(input.Successor), "PASS", "FAIL"), "source-derived digests", input.Predecessor.Digest+" / "+input.Successor.Digest),
+		check("predecessor-registration", "FOUNDATION", "bind-predecessor-digest", coordinate, status(predKnown, "PASS", "UNKNOWN"), base.Version+" / "+base.Digest, input.Predecessor.Version+" / "+input.Predecessor.Digest),
+		check("addition-reason", "COHERENCE", "classify-change-reason", coordinate, status(input.ChangeSetValid && len(input.Additions) == 1 && reasonAllowed(input.Additions[0].Reason, true), "PASS", "FAIL"), allowedAdditionReason, changeText(input.Additions)),
+		check("deletion-reason", "COHERENCE", "classify-change-reason", coordinate, status(input.ChangeSetValid && len(input.Deletions) == 1 && reasonAllowed(input.Deletions[0].Reason, false), "PASS", "FAIL"), allowedDeletionReason, changeText(input.Deletions)),
+		check("migration-receipt", "COHERENCE", "accept-migration-receipt", coordinate, receiptStatus(predKnown, receiptValid), "computed receipt bound to both digests", receiptText(input.Receipt)),
+		check("claim-transition", claimProof(decision), claimOperation(decision), coordinate, "PASS", "OPEN -> "+toClaim, fromClaim+" -> "+toClaim),
+		check("read-only-effect", "REGRESSION", "preserve-read-only-migration", coordinate, status(input.Receipt == nil || input.Receipt.RepositoryWrites == 0, "PASS", "FAIL"), "repository snapshot changed paths <= 0", repositoryWritesText(input.Receipt)),
+	}
+	return CaseResult{ID: input.ID, Kind: kind, Status: "SATISFIED", ObservedDecision: decision, ObservedResolution: resolution, ObservedReason: reason, ClaimID: claimID, FromClaim: fromClaim, ToClaim: toClaim, Predecessor: input.Predecessor, Successor: input.Successor, Receipt: input.Receipt, Coordinate: coordinate, Checks: checks}
+}
+
+func receiptBindingValid(input CaseInput) bool {
+	receipt := input.Receipt
+	if receipt == nil || receipt.Schema != ReceiptSchema || receipt.ID == "" || receipt.Producer == "" || receipt.Consumer == "" || receipt.RepositoryWrites != 0 || receipt.MutationAuthority || !guardrailsConform(receipt.Guardrails) {
+		return false
+	}
+	if receipt.Predecessor != input.PredecessorRef || receipt.Successor != (DenominatorRef{Version: input.Successor.Version, Digest: input.Successor.Digest}) || receipt.Predecessor != input.ReceiptBoundPrev || receipt.Successor != input.ReceiptBoundNext {
+		return false
+	}
+	return sameChangeSet(input.Additions, receipt.Additions) && sameChangeSet(input.Deletions, receipt.Deletions)
+}
+
+func derivedClaim(decision, resolution, reason string) (string, string, string, Coordinate) {
+	if decision == "FAIL_CLOSED" {
+		return "predecessor-resolution", "OPEN", "OPEN", Coordinate{Stage: "RESOLVE", Step: "lookup-predecessor", Reason: reason}
+	}
+	if decision == "ADVANCE" && resolution == "EXACT" {
+		return "denominator-advance-authorized", "OPEN", "DISCHARGED", Coordinate{Stage: "DECIDE", Step: "apply-migration-receipt", Reason: reason}
+	}
+	return "migration-authorized", "OPEN", "REFUTED", Coordinate{Stage: "DECIDE", Step: "reject-invalid-receipt", Reason: reason}
+}
+
+func sealClaimLedger(cases []CaseResult) []ClaimLedgerEntry {
+	result := make([]ClaimLedgerEntry, 0, len(cases))
+	previous := ""
+	for index, value := range cases {
+		entry := ClaimLedgerEntry{Sequence: index + 1, ClaimID: value.ClaimID, PriorState: value.FromClaim, NextState: value.ToClaim, Stage: value.Coordinate.Stage, Step: value.Coordinate.Step, Reason: value.Coordinate.Reason, PreviousDigest: previous}
+		entry.Digest = claimLedgerDigest(entry)
+		result = append(result, entry)
+		previous = entry.Digest
+	}
+	return result
+}
+
+func emitClaims(cases []CaseResult) []EmittedClaim {
+	result := make([]EmittedClaim, 0, len(cases))
+	for _, value := range cases {
+		class := "MIGRATION_AUTHORIZATION"
+		if value.ObservedDecision == "FAIL_CLOSED" {
+			class = "PREDECESSOR_RESOLUTION"
+		}
+		result = append(result, EmittedClaim{ID: value.ClaimID, Class: class, State: value.ToClaim})
+	}
+	return result
+}
+
+func contractExpectationMatches(report Report, contract Contract) bool {
+	if contract.Denominator.Version != report.Denominator.Version || !reflect.DeepEqual(contract.Denominator.Obligations, report.Denominator.Obligations) || len(contract.Cases) != len(report.Cases) || len(report.AggregateMetrics) != 0 || !contract.Policy.NoAggregateEstimates || !containsAll(contract.Policy.ForbiddenClaims, forbiddenPropositions) || !contains(contract.Policy.AllowedAdditionReasons, allowedAdditionReason) || !contains(contract.Policy.AllowedDeletionReasons, allowedDeletionReason) {
+		return false
+	}
+	for index, expected := range contract.Cases {
+		observed := report.Cases[index]
+		if observed.ID != expected.ID || observed.Kind != expected.Kind || observed.ObservedDecision != expected.ExpectedDecision || observed.ObservedResolution != expected.ExpectedResolution || observed.ObservedReason != expected.ExpectedReason || observed.FromClaim != expected.FromClaim || observed.ToClaim != expected.ToClaim {
+			return false
+		}
+	}
+	return true
+}
+
+func cloneObligations(value []Obligation) []Obligation { return append([]Obligation(nil), value...) }
 
 func cloneDenominator(value Denominator, version string) Denominator {
 	return Denominator{Version: version, Obligations: cloneObligations(value.Obligations)}
@@ -115,161 +286,54 @@ func removeObligation(values []Obligation, id string) []Obligation {
 	return result
 }
 
-func sealClaimLedger(values []ClaimLedgerEntry) []ClaimLedgerEntry {
-	result := append([]ClaimLedgerEntry(nil), values...)
-	previous := ""
-	for index := range result {
-		result[index].PreviousDigest = previous
-		result[index].Digest = claimLedgerDigest(result[index])
-		previous = result[index].Digest
-	}
-	return result
-}
-
-func sourceContractMatches(wire sourceWire, contract Contract) bool {
-	if contract.Denominator.Version != wire.Version || !reflect.DeepEqual(contract.Denominator.Obligations, wire.Obligations) || len(contract.Cases) != len(wire.Cases) {
-		return false
-	}
-	for index := range wire.Cases {
-		if !reflect.DeepEqual(contract.Cases[index], wire.Cases[index].Spec) {
-			return false
-		}
-	}
-	return contract.Policy.NoAggregateEstimates && containsAll(contract.Policy.ForbiddenClaims, []string{"improvement rate", "aggregate estimate", "projected coverage"}) && containsAll(contract.Policy.AllowedAdditionReasons, []string{"NEW_MEASURABLE_OBLIGATION"}) && containsAll(contract.Policy.AllowedDeletionReasons, []string{"DEPRECATED_DUPLICATE"})
-}
-
-func containsAll(values, wanted []string) bool {
-	for _, value := range wanted {
-		found := false
-		for _, candidate := range values {
-			if candidate == value {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
-}
-
-func evaluateCase(input CaseInput, base Denominator, policy MeasurementPolicy) CaseResult {
-	spec := input.Spec
-	predDigestValid := input.Predecessor.Digest == denominatorDigest(input.Predecessor)
-	successorDigestValid := input.Successor.Digest == denominatorDigest(input.Successor)
-	predKnown := predDigestValid && input.Predecessor.Version == base.Version && input.Predecessor.Digest == base.Digest && reflect.DeepEqual(input.Predecessor.Obligations, base.Obligations)
-	additions, deletions := changes(base, input.Successor)
-	additionsValid := reasonsValid(additions, input.Receipt, policy.AllowedAdditionReasons)
-	deletionsValid := reasonsValid(deletions, input.Receipt, policy.AllowedDeletionReasons)
-	receiptValid := validReceipt(input, additions, deletions, additionsValid && deletionsValid)
-	decision, resolution, reason := "FAIL_CLOSED", "LOWER_RESOLUTION", "PREDECESSOR_DIGEST_UNKNOWN"
-	if predKnown {
-		decision, resolution, reason = "BLOCK", "INVARIANT_ONLY", "MIGRATION_RECEIPT_MISSING"
-		if spec.Kind == "AUTHORIZED_MIGRATION" && receiptValid && !containsForbidden(input.Successor, policy.ForbiddenClaims) {
-			decision, resolution, reason = "ADVANCE", "EXACT", "DENOMINATOR_ADVANCE_AUTHORIZED"
-		}
-	}
-	fromClaim, toClaim := input.Claim.PriorState, input.Claim.NextState
-	coordinate := Coordinate{Stage: spec.Stage, Step: spec.Step, Reason: reason}
-	checks := []CheckResult{
-		check("denominator-version", "FOUNDATION", "bind-fixed-denominator", spec, status(predKnown, "PASS", "UNKNOWN"), base.Version, input.Predecessor.Version),
-		check("denominator-member-digest", "FOUNDATION", "bind-fixed-denominator", spec, status(successorDigestValid && predDigestValid, "PASS", "FAIL"), "valid source-derived digests", boolText(successorDigestValid && predDigestValid)),
-		check("predecessor-registration", "FOUNDATION", "bind-predecessor-digest", spec, status(predKnown, "PASS", "UNKNOWN"), base.Digest, input.Predecessor.Digest),
-		check("addition-reason", "COHERENCE", "classify-change-reason", spec, status(additionsValid, "PASS", "FAIL"), "every addition has an admissible reason", boolText(additionsValid)),
-		check("deletion-reason", "COHERENCE", "classify-change-reason", spec, status(deletionsValid, "PASS", "FAIL"), "every deletion has an admissible reason", boolText(deletionsValid)),
-		check("migration-receipt", "COHERENCE", "accept-migration-receipt", spec, receiptStatus(predKnown, receiptValid, input.Receipt), "receipt bound to both digests", receiptText(input.Receipt)),
-		check("claim-transition", spec.ProofChoice, spec.MetaOperation, spec, status(decision == spec.ExpectedDecision && reason == spec.ExpectedReason && fromClaim == spec.FromClaim && toClaim == spec.ToClaim, "PASS", "FAIL"), spec.FromClaim+" -> "+spec.ToClaim, fromClaim+" -> "+toClaim),
-		check("read-only-effect", "REGRESSION", "preserve-read-only-migration", spec, status(input.Receipt == nil || input.Receipt.RepositoryWrites == 0, "PASS", "FAIL"), "repository snapshot changed paths <= 0", repositoryWritesText(input.Receipt)),
-	}
-	caseResult := CaseResult{ID: spec.ID, Kind: spec.Kind, ExpectedDecision: spec.ExpectedDecision, ExpectedResolution: spec.ExpectedResolution, ExpectedReason: spec.ExpectedReason, ObservedDecision: decision, ObservedResolution: resolution, ObservedReason: reason, FromClaim: fromClaim, ToClaim: toClaim, Predecessor: input.Predecessor, Successor: input.Successor, Receipt: input.Receipt, Coordinate: coordinate, Checks: checks}
-	caseResult.Status = "UNSATISFIED"
-	if decision == spec.ExpectedDecision && resolution == spec.ExpectedResolution && reason == spec.ExpectedReason && fromClaim == spec.FromClaim && toClaim == spec.ToClaim && successorDigestValid {
-		caseResult.Status = "SATISFIED"
-	}
-	return caseResult
-}
-
-func changes(before, after Denominator) ([]Change, []Change) {
-	beforeIDs, afterIDs := map[string]bool{}, map[string]bool{}
-	for _, value := range before.Obligations {
-		beforeIDs[value.ID] = true
-	}
-	for _, value := range after.Obligations {
-		afterIDs[value.ID] = true
-	}
-	additions, deletions := []Change{}, []Change{}
-	for id := range afterIDs {
-		if !beforeIDs[id] {
-			additions = append(additions, Change{ObligationID: id})
-		}
-	}
-	for id := range beforeIDs {
-		if !afterIDs[id] {
-			deletions = append(deletions, Change{ObligationID: id})
-		}
-	}
-	sort.Slice(additions, func(i, j int) bool { return additions[i].ObligationID < additions[j].ObligationID })
-	sort.Slice(deletions, func(i, j int) bool { return deletions[i].ObligationID < deletions[j].ObligationID })
-	return additions, deletions
-}
-
-func reasonsValid(changes []Change, receipt *MigrationReceipt, allowed []string) bool {
-	if len(changes) == 0 {
-		return true
-	}
-	if receipt == nil {
-		return false
-	}
-	for _, change := range changes {
-		found := false
-		for _, candidate := range append(append([]Change{}, receipt.Additions...), receipt.Deletions...) {
-			if candidate.ObligationID == change.ObligationID && contains(allowed, candidate.Reason) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
-}
-
-func validReceipt(input CaseInput, additions, deletions []Change, reasonsOK bool) bool {
-	receipt := input.Receipt
-	if receipt == nil || !reasonsOK || receipt.Schema != ReceiptSchema || receipt.Decision != "ADVANCE" || receipt.Reason != "DENOMINATOR_ADVANCE_AUTHORIZED" || receipt.RepositoryWrites != 0 || receipt.MutationAuthority || !guardrailsConform(receipt.Guardrails) {
-		return false
-	}
-	if receipt.Predecessor.Version != input.Predecessor.Version || receipt.Predecessor.Digest != input.Predecessor.Digest || receipt.Successor.Version != input.Successor.Version || receipt.Successor.Digest != input.Successor.Digest {
-		return false
-	}
-	if !sameChanges(additions, receipt.Additions) || !sameChanges(deletions, receipt.Deletions) {
-		return false
-	}
-	return receipt.Digest != "" && receipt.Digest == receiptDigest(*receipt)
-}
-
-func sameChanges(left, right []Change) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	for index := range left {
-		if left[index].ObligationID != right[index].ObligationID {
-			return false
-		}
-	}
-	return true
-}
-
-func containsForbidden(value Denominator, forbidden []string) bool {
-	for _, obligation := range value.Obligations {
-		claim := obligation.ID + " " + obligation.Claim
-		for _, word := range forbidden {
-			if containsFold(claim, word) {
-				return true
-			}
+func hasObligation(values []Obligation, id string) bool {
+	for _, value := range values {
+		if value.ID == id {
+			return true
 		}
 	}
 	return false
 }
+
+func reasonAllowed(reason string, addition bool) bool {
+	if addition {
+		return reason == allowedAdditionReason
+	}
+	return reason == allowedDeletionReason
+}
+
+func sameChangeIDs(left, right []Change) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	leftCopy := append([]Change(nil), left...)
+	rightCopy := append([]Change(nil), right...)
+	sort.Slice(leftCopy, func(i, j int) bool { return leftCopy[i].ObligationID < leftCopy[j].ObligationID })
+	sort.Slice(rightCopy, func(i, j int) bool { return rightCopy[i].ObligationID < rightCopy[j].ObligationID })
+	for index := range leftCopy {
+		if leftCopy[index].ObligationID != rightCopy[index].ObligationID {
+			return false
+		}
+	}
+	return true
+}
+
+func containsAll(values, wanted []string) bool {
+	for _, value := range wanted {
+		if !containsFoldAny(values, value) {
+			return false
+		}
+	}
+	return true
+}
+
+func containsFoldAny(values []string, wanted string) bool {
+	for _, value := range values {
+		if value == wanted {
+			return true
+		}
+	}
+	return false
+}
+
+func contains(values []string, wanted string) bool { return containsFoldAny(values, wanted) }

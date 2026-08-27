@@ -73,37 +73,42 @@ jq -e '
   .summary.source_cases_numerator == 3 and .summary.source_cases_denominator == 3 and
   .summary.persistent_claims_numerator == 3 and .summary.persistent_claims_denominator == 3 and
   .summary.guardrail_observations_numerator == 2 and .summary.guardrail_observations_denominator == 2 and
+  .summary.version_records_numerator == 2 and .summary.version_records_denominator == 2 and
+  .summary.v1_nonretroactive_numerator == 1 and .summary.v1_nonretroactive_denominator == 1 and
+  .denominator_records[0].denominator == .denominator and .denominator_records[0].fixed_member_numerator == 5 and .denominator_records[0].fixed_member_denominator == 5 and
+  .source_projection.forbidden_proposition_present == true and (.aggregate_metrics | length) == 0 and
   .summary.legal_advance_numerator == 1 and .summary.legal_advance_denominator == 1 and
   .summary.unauthorized_rejection_numerator == 1 and .summary.unauthorized_rejection_denominator == 1 and
   .summary.unknown_predecessor_numerator == 1 and .summary.unknown_predecessor_denominator == 1 and
   .summary.addition_reason_numerator == 1 and .summary.addition_reason_denominator == 1 and
   .summary.deletion_reason_numerator == 1 and .summary.deletion_reason_denominator == 1 and
   .repository_writes == 0 and .mutation_authority == false and .repository_snapshot.changed_paths == 0 and
-  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
-  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .proposition_present == true and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.summary.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .proposition_present == false and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
   ([.indicators[] | select(.guardrail != null and .guardrail.conforms == true and .guardrail.observed == 0 and .guardrail.allowed_max == 0 and .guardrail.conformance_numerator == 1 and .guardrail.conformance_denominator == 1)] | length) == 2 and
   ([.cases[] | select(.id == "legal-advance") | .receipt.guardrails[] | select(.direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 2 and
   ([.claim_ledger[] | select(.prior_state == "OPEN")] | length) == 3 and
-  ([.cases[] | select(.id == "unknown-predecessor" and .observed_decision == "FAIL_CLOSED" and .observed_resolution == "LOWER_RESOLUTION" and .from_claim == "OPEN" and .to_claim == "OPEN")] | length) == 1 and
+  ([.emitted_claims[] | select(.class == "FORBIDDEN_ESTIMATE" and .state == "ASSERTED")] | length) == 0 and
+  .cases[0].kind == "REGISTERED_WITH_RECEIPT" and .cases[0].observed_decision == "ADVANCE" and .cases[0].observed_resolution == "EXACT" and .cases[0].from_claim == "OPEN" and .cases[0].to_claim == "DISCHARGED" and
+  .cases[1].kind == "REGISTERED_WITHOUT_RECEIPT" and .cases[1].observed_decision == "BLOCK" and .cases[1].observed_resolution == "INVARIANT_ONLY" and .cases[1].from_claim == "OPEN" and .cases[1].to_claim == "REFUTED" and
+  ([.cases[] | select(.kind == "UNKNOWN_PREDECESSOR" and .observed_decision == "FAIL_CLOSED" and .observed_resolution == "LOWER_RESOLUTION" and .from_claim == "OPEN" and .to_claim == "OPEN")] | length) == 1 and
   ([.cases[] | select(.status != "SATISFIED")] | length) == 0 and
   ([.indicators[] | select(.satisfied != true)] | length) == 0
 ' "$work/report-a.json"
 
 jq -e '
   .decision == "PASS" and .resolution == "EXACT" and .repository_writes == 0 and .mutation_authority == false and
-  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
-  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  (.aggregate_metrics | length) == 0 and ([.denominator_records[]] | length) == 2 and
+  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.forbidden-estimate.v1" and .proposition_present == true and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
+  ([.guardrails[] | select(.id == "gooo.guardrail.denominator.repository-writes.v1" and .proposition_present == false and .direction == "AT_MOST" and .observed == 0 and .allowed_max == 0 and .conformance_numerator == 1 and .conformance_denominator == 1 and .conforms == true)] | length) == 1 and
   ([.claim_ledger[] | select(.prior_state == "OPEN")] | length) == 3 and
   ([.checks[] | select(.status != "PASS")] | length) == 0
 ' "$work/verification-a.json"
 
-# Semantic intervention mutates source case and ledger values. Both judgments
-# must fail closed and source-derived semantic evidence must change.
+# Semantic intervention mutates one receipt successor binding. Both judgments
+# must fail closed while source-derived receipt and claim evidence changes.
 semantic_source="$work/semantic.gooo"
-sed -e 's/AUTHORIZED_MIGRATION\^ADVANCE\^EXACT\^DENOMINATOR_ADVANCE_AUTHORIZED\^OPEN\^DISCHARGED/AUTHORIZED_MIGRATION^BLOCK^INVARIANT_ONLY^MIGRATION_RECEIPT_MISSING^OPEN^REFUTED/' \
-	-e 's/event=1\^legal-advance\^OPEN\^DISCHARGED\^DECIDE\^apply-migration-receipt/event=1^legal-advance^OPEN^REFUTED^DECIDE^apply-migration-receipt/' \
-	-e 's/case=legal-advance\^ADVANCE\^EXACT\^DENOMINATOR_ADVANCE_AUTHORIZED/case=legal-advance^BLOCK^INVARIANT_ONLY^MIGRATION_RECEIPT_MISSING/' \
-	-e 's/The migration receipt replays to the same successor digest\./The migration receipt replays to a changed successor digest./' \
+sed -e '/^activity RecordChangeReasons/s/sha256:af97536da0d7260f0dacc3f7ab43db1db2cdb3fc6e9e53af479fda2290d12b26/sha256:tampered-successor-binding/' \
 	examples/denominator-evolution/main.gooo > "$semantic_source"
 semantic_producer_status=0
 run_producer "$semantic_source" "$work/report-semantic.json" || semantic_producer_status=$?
@@ -119,8 +124,9 @@ run_consumer "$comment_source" "$work/report-comment.json" "$work/verification-c
 semantic_causality=0
 if [[ "$semantic_producer_status" -ne 0 && "$semantic_consumer_status" -ne 0 ]] && \
 	[[ "$(jq -r '.source_projection.semantic_digest' "$work/report-a.json")" != "$(jq -r '.source_projection.semantic_digest' "$work/report-semantic.json")" ]] && \
-	[[ "$(jq -r '.claim_ledger[0].digest' "$work/report-a.json")" != "$(jq -r '.claim_ledger[0].digest' "$work/report-semantic.json")" ]] && \
-	[[ "$(jq -r '.cases[0].receipt.digest' "$work/report-a.json")" != "$(jq -r '.cases[0].receipt.digest' "$work/report-semantic.json")" ]]; then
+	[[ "$(jq -r '.cases[0].receipt.successor.digest' "$work/report-a.json")" != "$(jq -r '.cases[0].receipt.successor.digest' "$work/report-semantic.json")" ]] && \
+	[[ "$(jq -r '.cases[0].observed_decision' "$work/report-a.json")" != "$(jq -r '.cases[0].observed_decision' "$work/report-semantic.json")" ]] && \
+	[[ "$(jq -r '.claim_ledger[0].next_state' "$work/report-a.json")" != "$(jq -r '.claim_ledger[0].next_state' "$work/report-semantic.json")" ]]; then
 	semantic_causality=1
 fi
 nonsemantic_preservation=0
@@ -128,6 +134,11 @@ if [[ "$(jq -S 'del(.source_digest, .digest, .head_sha)' "$work/report-a.json")"
 	[[ "$(jq -r '.source_projection.semantic_digest' "$work/report-a.json")" == "$(jq -r '.source_projection.semantic_digest' "$work/report-comment.json")" ]] && \
 	[[ "$(jq -r '.source_digest' "$work/report-a.json")" != "$(jq -r '.source_digest' "$work/report-comment.json")" ]]; then
 	nonsemantic_preservation=1
+fi
+v1_nonretroactive=0
+if [[ "$(jq -S '.denominator_records[0]' "$work/report-a.json")" == "$(jq -S '.denominator_records[0]' "$work/report-semantic.json")" ]] && \
+	[[ "$(jq -S '.denominator_records[0]' "$work/report-a.json")" == "$(jq -S '.denominator_records[0]' "$work/report-comment.json")" ]]; then
+	v1_nonretroactive=1
 fi
 
 snapshot_repository "$work/repository-final.txt"
@@ -145,13 +156,18 @@ git diff --exit-code
 	echo "- nonsemantic_preservation=$nonsemantic_preservation/1"
 	echo "- persistent_claims=$(jq -r '.summary.persistent_claims_numerator|tostring' "$work/report-a.json")/$(jq -r '.summary.persistent_claims_denominator|tostring' "$work/report-a.json")"
 	echo "- guardrail_observations=$(jq -r '.summary.guardrail_observations_numerator|tostring' "$work/report-a.json")/$(jq -r '.summary.guardrail_observations_denominator|tostring' "$work/report-a.json")"
+	echo "- version_records=$(jq -r '.summary.version_records_numerator|tostring' "$work/report-a.json")/$(jq -r '.summary.version_records_denominator|tostring' "$work/report-a.json")"
+	echo "- v1_nonretroactive=$(jq -r '.summary.v1_nonretroactive_numerator|tostring' "$work/report-a.json")/$(jq -r '.summary.v1_nonretroactive_denominator|tostring' "$work/report-a.json")"
+	echo "- v1_nonretroactive_across_interventions=$v1_nonretroactive/1"
 	jq -r '"- fixed denominator: \(.denominator.version) / \(.summary.fixed_denominator_numerator)/\(.summary.fixed_denominator_denominator)\n- legal advance: \(.summary.legal_advance_numerator)/\(.summary.legal_advance_denominator)\n- unauthorized changes rejected: \(.summary.unauthorized_rejection_numerator)/\(.summary.unauthorized_rejection_denominator)\n- unknown predecessors fail closed: \(.summary.unknown_predecessor_numerator)/\(.summary.unknown_predecessor_denominator)\n- producer receipt: \(.digest)"' "$work/report-a.json"
-	jq -r '.summary.guardrails[] | "- guardrail \(.id): direction=\(.direction) observed=\(.observed) allowed_max=\(.allowed_max) conformance=\(.conformance_numerator)/\(.conformance_denominator) conforms=\(.conforms)"' "$work/report-a.json"
+	jq -r '"- v1 record: \(.denominator_records[0].version) members=\(.denominator_records[0].fixed_member_numerator)/\(.denominator_records[0].fixed_member_denominator) digest=\(.denominator_records[0].denominator.digest)\n- v2 record: \(.denominator_records[1].version) members=\(.denominator_records[1].fixed_member_numerator)/\(.denominator_records[1].fixed_member_denominator) digest=\(.denominator_records[1].denominator.digest) predecessor=\(.denominator_records[1].predecessor.digest)\n- changes: additions=\(.cases[0].receipt.additions | map(.obligation_id+":"+.reason) | join(",")) deletions=\(.cases[0].receipt.deletions | map(.obligation_id+":"+.reason) | join(","))"' "$work/report-a.json"
+	jq -r '.cases[] | "- case \(.id): \(.observed_decision)/\(.observed_resolution)/\(.observed_reason) claim=\(.claim_id) \(.from_claim)->\(.to_claim)"' "$work/report-a.json"
+	jq -r '.summary.guardrails[] | "- guardrail \(.id): proposition_present=\(.proposition_present) direction=\(.direction) observed=\(.observed) allowed_max=\(.allowed_max) conformance=\(.conformance_numerator)/\(.conformance_denominator) conforms=\(.conforms)"' "$work/report-a.json"
 	jq -r '"- independent decision: \(.decision) / \(.resolution)\n- consumer receipt: \(.digest)"' "$work/verification-a.json"
 	jq -r '.guardrails[] | "- independent guardrail \(.id): direction=\(.direction) observed=\(.observed) allowed_max=\(.allowed_max) conformance=\(.conformance_numerator)/\(.conformance_denominator) conforms=\(.conforms)"' "$work/verification-a.json"
 } >> "$GITHUB_STEP_SUMMARY"
 
-if [[ "$semantic_causality" != 1 || "$nonsemantic_preservation" != 1 ]]; then
+if [[ "$semantic_causality" != 1 || "$nonsemantic_preservation" != 1 || "$v1_nonretroactive" != 1 ]]; then
 	echo "source intervention predicates did not hold" >&2
 	exit 1
 fi

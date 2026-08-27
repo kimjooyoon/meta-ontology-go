@@ -38,7 +38,7 @@
       },
       {
         "id": "governance/migration-receipt",
-        "claim": "A migration receipt binds the predecessor, successor, changes, and decision.",
+        "claim": "A migration receipt binds the predecessor, successor, changes, and receipt material.",
         "class": "OUTCOME",
         "proof_choice": "COHERENCE",
         "meta_operation": "accept-migration-receipt",
@@ -48,7 +48,7 @@
       },
       {
         "id": "governance/legacy-summary",
-        "claim": "A human summary may not replace exact denominator members.",
+        "claim": "An aggregate improvement rate is not an admissible denominator member.",
         "class": "GUARDRAIL",
         "proof_choice": "REGRESSION",
         "meta_operation": "reject-summary-substitution",
@@ -66,8 +66,8 @@
   },
   "cases": [
     {
-      "id": "legal-advance",
-      "kind": "AUTHORIZED_MIGRATION",
+      "id": "proposal-1",
+      "kind": "REGISTERED_WITH_RECEIPT",
       "expected_decision": "ADVANCE",
       "expected_resolution": "EXACT",
       "expected_reason": "DENOMINATOR_ADVANCE_AUTHORIZED",
@@ -80,21 +80,21 @@
       "reason": "both versioned digests and every add-delete reason are bound"
     },
     {
-      "id": "unauthorized-change",
-      "kind": "UNAUTHORIZED_MUTATION",
+      "id": "proposal-2",
+      "kind": "REGISTERED_WITHOUT_RECEIPT",
       "expected_decision": "BLOCK",
       "expected_resolution": "INVARIANT_ONLY",
       "expected_reason": "MIGRATION_RECEIPT_MISSING",
       "from_claim": "OPEN",
       "to_claim": "REFUTED",
       "proof_choice": "REGRESSION",
-      "meta_operation": "reject-unreceipted-denominator-change",
+      "meta_operation": "reject-invalid-denominator-change",
       "stage": "DECIDE",
-      "step": "reject-missing-receipt",
+      "step": "reject-invalid-receipt",
       "reason": "a changed measurement basis cannot self-authorize"
     },
     {
-      "id": "unknown-predecessor",
+      "id": "proposal-3",
       "kind": "UNKNOWN_PREDECESSOR",
       "expected_decision": "FAIL_CLOSED",
       "expected_resolution": "LOWER_RESOLUTION",

@@ -6,6 +6,7 @@ const (
 	ReceiptSchema      = "gooo/denominator-migration-receipt/v1"
 	ReportScope        = "MEASUREMENT_DENOMINATOR_GOVERNANCE_ONLY"
 	DenominatorVersion = "gooo/measurement-denominator/v1"
+	SuccessorVersion   = "gooo/measurement-denominator/v2"
 	DenominatorSize    = 5
 	CaseCount          = 3
 	CheckCount         = 8
@@ -18,6 +19,8 @@ type Input struct {
 	RepositorySnapshot RepositorySnapshot
 }
 
+// Contract is a validator expectation. It is deliberately not the source of
+// denominator members, proposal inputs, receipt material, or decisions.
 type Contract struct {
 	Schema      string            `json:"schema"`
 	Version     int               `json:"version"`
@@ -29,8 +32,6 @@ type Contract struct {
 	NotClaimed  []string          `json:"not_claimed"`
 }
 
-// RepositorySnapshot is supplied by the CI wrapper. The producer records the
-// observation instead of assuming that read-only means zero writes.
 type RepositorySnapshot struct {
 	BeforeDigest string `json:"before_digest"`
 	AfterDigest  string `json:"after_digest"`
@@ -60,6 +61,8 @@ type Obligation struct {
 	Reason        string `json:"reason"`
 }
 
+// CaseSpec contains only expected values in contract.json. No CaseSpec is
+// decoded from main.gooo.
 type CaseSpec struct {
 	ID                 string `json:"id"`
 	Kind               string `json:"kind"`
@@ -87,8 +90,9 @@ type DenominatorRef struct {
 }
 
 type Change struct {
-	ObligationID string `json:"obligation_id"`
-	Reason       string `json:"reason"`
+	ObligationID string      `json:"obligation_id"`
+	Reason       string      `json:"reason"`
+	Member       *Obligation `json:"member,omitempty"`
 }
 
 type Coordinate struct {
@@ -119,6 +123,7 @@ type MigrationReceipt struct {
 type Guardrail struct {
 	ID                     string `json:"id"`
 	Direction              string `json:"direction"`
+	PropositionPresent     bool   `json:"proposition_present"`
 	Observed               int    `json:"observed"`
 	AllowedMax             int    `json:"allowed_max"`
 	ConformanceNumerator   int    `json:"conformance_numerator"`
@@ -126,16 +131,28 @@ type Guardrail struct {
 	Conforms               bool   `json:"conforms"`
 }
 
+type DenominatorRecord struct {
+	ID                     string          `json:"id"`
+	Version                string          `json:"version"`
+	Predecessor            *DenominatorRef `json:"predecessor,omitempty"`
+	Denominator            Denominator     `json:"denominator"`
+	FixedMemberNumerator   int             `json:"fixed_member_numerator"`
+	FixedMemberDenominator int             `json:"fixed_member_denominator"`
+	Immutable              bool            `json:"immutable"`
+	Digest                 string          `json:"digest"`
+}
+
 type SourceProjection struct {
-	EntityCount        int      `json:"entity_count"`
-	ActivityCount      int      `json:"activity_count"`
-	ObligationCount    int      `json:"obligation_count"`
-	CaseCount          int      `json:"case_count"`
-	SemanticDigest     string   `json:"semantic_digest"`
-	WireDigest         string   `json:"wire_digest"`
-	RequiredEntities   []string `json:"required_entities"`
-	RequiredActivities []string `json:"required_activities"`
-	Exact              bool     `json:"exact"`
+	EntityCount                 int      `json:"entity_count"`
+	ActivityCount               int      `json:"activity_count"`
+	ObligationCount             int      `json:"obligation_count"`
+	CaseCount                   int      `json:"case_count"`
+	ForbiddenPropositionPresent bool     `json:"forbidden_proposition_present"`
+	SemanticDigest              string   `json:"semantic_digest"`
+	WireDigest                  string   `json:"wire_digest"`
+	RequiredEntities            []string `json:"required_entities"`
+	RequiredActivities          []string `json:"required_activities"`
+	Exact                       bool     `json:"exact"`
 }
 
 type ClaimLedgerEntry struct {
@@ -170,12 +187,10 @@ type CaseResult struct {
 	ID                 string            `json:"id"`
 	Kind               string            `json:"kind"`
 	Status             string            `json:"status"`
-	ExpectedDecision   string            `json:"expected_decision"`
-	ExpectedResolution string            `json:"expected_resolution"`
-	ExpectedReason     string            `json:"expected_reason"`
 	ObservedDecision   string            `json:"observed_decision"`
 	ObservedResolution string            `json:"observed_resolution"`
 	ObservedReason     string            `json:"observed_reason"`
+	ClaimID            string            `json:"claim_id"`
 	FromClaim          string            `json:"from_claim"`
 	ToClaim            string            `json:"to_claim"`
 	Predecessor        Denominator       `json:"predecessor"`
@@ -186,11 +201,19 @@ type CaseResult struct {
 }
 
 type CaseInput struct {
-	Spec        CaseSpec
-	Predecessor Denominator
-	Successor   Denominator
-	Receipt     *MigrationReceipt
-	Claim       ClaimLedgerEntry
+	ID               string
+	Predecessor      Denominator
+	Successor        Denominator
+	PredecessorRef   DenominatorRef
+	SuccessorVersion string
+	ReceiptID        string
+	Receipt          *MigrationReceipt
+	ReceiptBoundPrev DenominatorRef
+	ReceiptBoundNext DenominatorRef
+	Additions        []Change
+	Deletions        []Change
+	PredecessorKnown bool
+	ChangeSetValid   bool
 }
 
 type Summary struct {
@@ -214,6 +237,10 @@ type Summary struct {
 	PersistentClaimsDenominator      int         `json:"persistent_claims_denominator"`
 	GuardrailObservationsNumerator   int         `json:"guardrail_observations_numerator"`
 	GuardrailObservationsDenominator int         `json:"guardrail_observations_denominator"`
+	VersionRecordsNumerator          int         `json:"version_records_numerator"`
+	VersionRecordsDenominator        int         `json:"version_records_denominator"`
+	V1NonretroactiveNumerator        int         `json:"v1_nonretroactive_numerator"`
+	V1NonretroactiveDenominator      int         `json:"v1_nonretroactive_denominator"`
 	Guardrails                       []Guardrail `json:"guardrails"`
 }
 
@@ -231,26 +258,28 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema             string             `json:"schema"`
-	Scope              string             `json:"scope"`
-	HeadSHA            string             `json:"head_sha"`
-	Producer           string             `json:"producer"`
-	Consumer           string             `json:"consumer"`
-	Decision           string             `json:"decision"`
-	Resolution         string             `json:"resolution"`
-	Reason             string             `json:"reason"`
-	ContractDigest     string             `json:"contract_digest"`
-	SourceDigest       string             `json:"source_digest"`
-	Denominator        Denominator        `json:"denominator"`
-	SourceProjection   SourceProjection   `json:"source_projection"`
-	Cases              []CaseResult       `json:"cases"`
-	Summary            Summary            `json:"summary"`
-	Indicators         []Indicator        `json:"indicators"`
-	NotClaimed         []string           `json:"not_claimed"`
-	RepositoryWrites   int                `json:"repository_writes"`
-	MutationAuthority  bool               `json:"mutation_authority"`
-	RepositorySnapshot RepositorySnapshot `json:"repository_snapshot"`
-	ClaimLedger        []ClaimLedgerEntry `json:"claim_ledger"`
-	EmittedClaims      []EmittedClaim     `json:"emitted_claims"`
-	Digest             string             `json:"digest"`
+	Schema             string              `json:"schema"`
+	Scope              string              `json:"scope"`
+	HeadSHA            string              `json:"head_sha"`
+	Producer           string              `json:"producer"`
+	Consumer           string              `json:"consumer"`
+	Decision           string              `json:"decision"`
+	Resolution         string              `json:"resolution"`
+	Reason             string              `json:"reason"`
+	ContractDigest     string              `json:"contract_digest"`
+	SourceDigest       string              `json:"source_digest"`
+	Denominator        Denominator         `json:"denominator"`
+	DenominatorRecords []DenominatorRecord `json:"denominator_records"`
+	SourceProjection   SourceProjection    `json:"source_projection"`
+	Cases              []CaseResult        `json:"cases"`
+	Summary            Summary             `json:"summary"`
+	Indicators         []Indicator         `json:"indicators"`
+	NotClaimed         []string            `json:"not_claimed"`
+	AggregateMetrics   []string            `json:"aggregate_metrics"`
+	RepositoryWrites   int                 `json:"repository_writes"`
+	MutationAuthority  bool                `json:"mutation_authority"`
+	RepositorySnapshot RepositorySnapshot  `json:"repository_snapshot"`
+	ClaimLedger        []ClaimLedgerEntry  `json:"claim_ledger"`
+	EmittedClaims      []EmittedClaim      `json:"emitted_claims"`
+	Digest             string              `json:"digest"`
 }
