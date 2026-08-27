@@ -110,7 +110,7 @@ func replay(input producerInput) ([]CaseResult, []Transition, Metrics, string) {
 			sequence++
 			transition := Transition{Sequence: sequence, CaseID: definition.ID, ClaimID: definition.ClaimID,
 				Before: before, After: after, EvidenceID: item.ID, EvidenceKind: item.Kind,
-				Coordinate: item.Coordinate, PreviousDigest: previousDigest}
+				EvidenceBasis: item.Basis, Coordinate: item.Coordinate, PreviousDigest: previousDigest}
 			transition.TransitionDigest = transitionDigest(transition)
 			previousDigest = transition.TransitionDigest
 			transitions = append(transitions, transition)

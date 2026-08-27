@@ -25,6 +25,9 @@ func TestIndependentOracleReplaysNonMonotonicHistory(t *testing.T) {
 	if report.Cases[1].StatusHistory[1] != "DISCHARGED" || report.Cases[1].CurrentStatus != "REFUTED" {
 		t.Fatalf("refutation history = %#v", report.Cases[1])
 	}
+	if report.Transitions[2].EvidenceBasis != "new counterexample contradicts the discharged claim" {
+		t.Fatalf("refutation basis = %#v", report.Transitions[2])
+	}
 	if report.Cases[2].StatusHistory[2] != "REFUTED" || report.Cases[2].CurrentStatus != "DISCHARGED" {
 		t.Fatalf("re-evaluation history = %#v", report.Cases[2])
 	}

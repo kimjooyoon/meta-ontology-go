@@ -39,7 +39,8 @@ The experiment adopts two principles from the primary literature:
 The experiment rejects three tempting shortcuts:
 
 - It does not delete or overwrite an old status; a transition stores `before`,
-  `after`, evidence ID, `stage`, `step`, `reason`, and a previous digest.
+  `after`, evidence ID, evidence basis, `stage`, `step`, `reason`, and a
+  previous digest.
 - It does not treat the producer's final answer as authoritative; the
   independent consumer replays the evidence sequence and checks the source
   digest.

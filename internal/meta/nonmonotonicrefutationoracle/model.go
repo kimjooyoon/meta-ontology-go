@@ -64,6 +64,7 @@ type Transition struct {
 	After            string     `json:"after"`
 	EvidenceID       string     `json:"evidence_id"`
 	EvidenceKind     string     `json:"evidence_kind"`
+	EvidenceBasis    string     `json:"evidence_basis"`
 	Coordinate       coordinate `json:"coordinate"`
 	PreviousDigest   string     `json:"previous_digest,omitempty"`
 	TransitionDigest string     `json:"transition_digest"`
