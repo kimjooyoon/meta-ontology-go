@@ -93,7 +93,7 @@ func Validate(report Report) error {
 func validateTransitions(transitions []ClaimTransition) error {
 	previous := ""
 	for index, transition := range transitions {
-		if transition.ClaimID == "" || transition.Proposition == "" || transition.StateDigest == "" || !validDigest(transition.TargetDigest) && transition.TargetDigest != "READ_ONLY_CONSUMPTION" ||
+		if transition.ClaimID == "" || transition.Proposition == "" || transition.StateDigest == "" || !validDigest(transition.PriorStateDigest) || !validDigest(transition.TargetDigest) && transition.TargetDigest != "READ_ONLY_CONSUMPTION" ||
 			len(transition.EvidenceDigest) == 0 || transition.PreviousDigest != previous || transition.Digest != transitionDigest(transition) {
 			return fmt.Errorf("proof-carrying transition chain mismatch")
 		}

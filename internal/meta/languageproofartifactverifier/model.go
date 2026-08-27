@@ -283,23 +283,24 @@ type InterventionResult struct {
 }
 
 type ClaimTransition struct {
-	ClaimID        string     `json:"claim_id"`
-	Proposition    string     `json:"proposition"`
-	TargetDigest   string     `json:"target_digest"`
-	StateDigest    string     `json:"state_digest"`
-	Dependencies   []string   `json:"dependencies"`
-	Capability     string     `json:"capability"`
-	From           string     `json:"from"`
-	To             string     `json:"to"`
-	Producer       string     `json:"producer"`
-	Consumer       string     `json:"consumer"`
-	ProofChoice    string     `json:"proof_choice"`
-	MetaOperation  string     `json:"meta_operation"`
-	Coordinate     Coordinate `json:"coordinate"`
-	Reason         string     `json:"reason"`
-	EvidenceDigest []string   `json:"evidence_digests"`
-	PreviousDigest string     `json:"previous_digest"`
-	Digest         string     `json:"digest"`
+	ClaimID          string     `json:"claim_id"`
+	Proposition      string     `json:"proposition"`
+	TargetDigest     string     `json:"target_digest"`
+	StateDigest      string     `json:"state_digest"`
+	Dependencies     []string   `json:"dependencies"`
+	Capability       string     `json:"capability"`
+	From             string     `json:"from"`
+	To               string     `json:"to"`
+	PriorStateDigest string     `json:"prior_state_digest"`
+	Producer         string     `json:"producer"`
+	Consumer         string     `json:"consumer"`
+	ProofChoice      string     `json:"proof_choice"`
+	MetaOperation    string     `json:"meta_operation"`
+	Coordinate       Coordinate `json:"coordinate"`
+	Reason           string     `json:"reason"`
+	EvidenceDigest   []string   `json:"evidence_digests"`
+	PreviousDigest   string     `json:"previous_digest"`
+	Digest           string     `json:"digest"`
 }
 
 type CheckoutEvidence struct {

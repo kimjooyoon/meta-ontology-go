@@ -105,7 +105,8 @@ func claimTransitions(claims []ClaimResult) []ClaimTransition {
 		}
 		transition := ClaimTransition{ClaimID: claim.ID, Proposition: claim.Proposition, TargetDigest: claim.TargetDigest, StateDigest: claim.StateDigest,
 			Dependencies: append([]string(nil), claim.Dependencies...), Capability: capability, From: from, To: to, Producer: ProducerID, Consumer: ConsumerID,
-			ProofChoice: claim.ProofChoice, MetaOperation: claim.MetaOperation, Coordinate: Coordinate{"CONSUME", "recheck-" + claim.ID, "CLAIM_TRANSITION_ACCEPTED"},
+			PriorStateDigest: priorClaimStateDigest(claim, from),
+			ProofChoice:      claim.ProofChoice, MetaOperation: claim.MetaOperation, Coordinate: Coordinate{"CONSUME", "recheck-" + claim.ID, "CLAIM_TRANSITION_ACCEPTED"},
 			Reason: reason, EvidenceDigest: append([]string(nil), claim.EvidenceDigests...), PreviousDigest: previous}
 		transition.Digest = transitionDigest(transition)
 		result = append(result, transition)

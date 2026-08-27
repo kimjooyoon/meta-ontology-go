@@ -43,6 +43,16 @@ func claimStateDigest(claim ClaimResult) string {
 	return digestValue(claim)
 }
 
+func priorClaimStateDigest(claim ClaimResult, state string) string {
+	return digestValue(struct {
+		ID           string   `json:"id"`
+		Proposition  string   `json:"proposition"`
+		TargetDigest string   `json:"target_digest"`
+		Dependencies []string `json:"dependencies"`
+		State        string   `json:"state"`
+	}{claim.ID, claim.Proposition, claim.TargetDigest, claim.Dependencies, state})
+}
+
 func transitionDigest(transition ClaimTransition) string {
 	transition.Digest = ""
 	return digestValue(transition)
