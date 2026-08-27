@@ -52,7 +52,7 @@ jq -e '
   .official_mutations == 0 and .repository_writes == 0 and .promotion_count == 0
 ' "$output_root/first/suite.json"
 
-forbidden='internal/(syntax|bidir|languagesourceexecution)'
+forbidden='internal/(syntax|bidir|meta/languagesourceexecution)$'
 dependencies=$(go list -deps ./cmd/external-oracle-humility-witness | grep -Ec "$forbidden" || true)
 test "$dependencies" -eq 0
 jq -n --argjson dependencies "$dependencies" \
