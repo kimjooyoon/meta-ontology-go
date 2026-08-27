@@ -404,8 +404,55 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	if item.SourceEdit != expectedSourceEdit {
 		return fmt.Errorf("case %q source edit is not independently reconstructed", item.ID)
 	}
-	if !reflect.DeepEqual(item.BaselineProjection, projection(baseline)) || !reflect.DeepEqual(item.MutatedProjection, projection(mutated)) || item.BaselineProjectionDigest != model.Digest(projection(baseline)) || item.MutatedProjectionDigest != model.Digest(projection(mutated)) || item.BaselineSourceDigest != baselineReceipt.SourceDigest || item.MutatedSourceDigest != mutatedReceipt.SourceDigest || item.BaselineProvenanceDigest != provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID) || item.MutatedProvenanceDigest != provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID) || item.ProvenanceDigestChanged != (baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest) || item.BaselineSemanticDigest != baseline.SemanticSourceDigest || item.MutatedSemanticDigest != mutated.SemanticSourceDigest || item.SemanticDigestEqual != (baseline.SemanticSourceDigest == mutated.SemanticSourceDigest) || item.BaselineReceiptDigest != baselineReceipt.Digest || item.MutatedReceiptDigest != mutatedReceipt.Digest || item.BaselineReceiptDecision != baselineReceipt.Decision || item.MutatedReceiptDecision != mutatedReceipt.Decision || !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence) || !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence) || !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment) || !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment) || !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)) || !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)) {
-		return fmt.Errorf("case %q is not independently reconstructed", item.ID)
+	mismatch := ""
+	switch {
+	case !reflect.DeepEqual(item.BaselineProjection, projection(baseline)):
+		mismatch = "baseline_projection"
+	case !reflect.DeepEqual(item.MutatedProjection, projection(mutated)):
+		mismatch = "mutated_projection"
+	case item.BaselineProjectionDigest != model.Digest(projection(baseline)):
+		mismatch = "baseline_projection_digest"
+	case item.MutatedProjectionDigest != model.Digest(projection(mutated)):
+		mismatch = "mutated_projection_digest"
+	case item.BaselineSourceDigest != baselineReceipt.SourceDigest:
+		mismatch = "baseline_source_digest"
+	case item.MutatedSourceDigest != mutatedReceipt.SourceDigest:
+		mismatch = "mutated_source_digest"
+	case item.BaselineProvenanceDigest != provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID):
+		mismatch = "baseline_provenance_digest"
+	case item.MutatedProvenanceDigest != provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID):
+		mismatch = "mutated_provenance_digest"
+	case item.ProvenanceDigestChanged != (baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest):
+		mismatch = "provenance_digest_changed"
+	case item.BaselineSemanticDigest != baseline.SemanticSourceDigest:
+		mismatch = "baseline_semantic_digest"
+	case item.MutatedSemanticDigest != mutated.SemanticSourceDigest:
+		mismatch = "mutated_semantic_digest"
+	case item.SemanticDigestEqual != (baseline.SemanticSourceDigest == mutated.SemanticSourceDigest):
+		mismatch = "semantic_digest_equal"
+	case item.BaselineReceiptDigest != baselineReceipt.Digest:
+		mismatch = "baseline_receipt_digest"
+	case item.MutatedReceiptDigest != mutatedReceipt.Digest:
+		mismatch = "mutated_receipt_digest"
+	case item.BaselineReceiptDecision != baselineReceipt.Decision:
+		mismatch = "baseline_receipt_decision"
+	case item.MutatedReceiptDecision != mutatedReceipt.Decision:
+		mismatch = "mutated_receipt_decision"
+	case !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence):
+		mismatch = "baseline_evidence"
+	case !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence):
+		mismatch = "mutated_evidence"
+	case !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment):
+		mismatch = "baseline_judgment"
+	case !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment):
+		mismatch = "mutated_judgment"
+	case !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)):
+		mismatch = "baseline_claim_transitions"
+	case !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)):
+		mismatch = "mutated_claim_transitions"
+	}
+	if mismatch != "" {
+		return fmt.Errorf("case %q is not independently reconstructed: %s", item.ID, mismatch)
 	}
 	if item.Claim.ID != item.ID+"::claim" || item.Claim.Status != model.StatusDischarged || len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != model.StatusDischarged || item.Claim.Coordinate.Stage != "INTERVENTION" || item.Claim.Coordinate.Step != step[0] || item.Claim.Coordinate.Reason != step[1] {
 		return fmt.Errorf("case %q claim provenance is invalid", item.ID)
