@@ -47,7 +47,7 @@ func snapshotEntries(raw []byte) (map[string]string, bool) {
 	if len(raw) == 0 {
 		return entries, true
 	}
-	for _, line := range strings.Split(strings.TrimSuffix(string(raw), "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSuffix(string(raw), "\n"), "\n") {
 		parts := strings.SplitN(line, "\t", 2)
 		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 			return nil, false

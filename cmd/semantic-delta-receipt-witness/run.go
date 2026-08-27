@@ -21,8 +21,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	if options.tamperMatrix {
 		evidence, err := consumer.BuildTamperMatrix(options.subjectSHA, options.observedCheckoutSHA)
-		if writeErr := writeJSON(options.output, evidence, stdout, stderr); writeErr != nil {
-			return writeErr
+		status := writeJSON(options.output, evidence, stdout, stderr)
+		if status != 0 {
+			return status
 		}
 		if err != nil {
 			fmt.Fprintln(stderr, err)
