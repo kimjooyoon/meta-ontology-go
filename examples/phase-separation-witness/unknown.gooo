@@ -1,0 +1,10 @@
+# Missing the transfer kind makes the source contract undecidable.
+phase-witness v1
+producer source-authority
+consumer independent-adjudicator
+meta-operation preserve-explicit-claim
+proof-choice boundary-receipt
+
+case malformed
+value source source-contract "declared instruction"
+transfer source source-contract expansion

@@ -2395,6 +2395,19 @@
         "scripts/ci-plan-usecase",
         "scripts/refactor-metrics/generation.go"
       ]
+    },
+    {
+      "branch": "agent/luna-meta-05-phase-separation-witness",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "examples/phase-separation-witness",
+        "internal/meta/phaseseparation",
+        "internal/verify/scope_phase_separation_witness.go",
+        "scripts/phase-separation-adjudicator",
+        "scripts/phase-separation-witness"
+      ]
     }
   ],
   "protected_kernel_paths": [

@@ -1,0 +1,31 @@
+# Each case contains one forbidden edge that must be rejected.
+phase-witness v1
+producer source-authority
+consumer independent-adjudicator
+meta-operation preserve-explicit-claim
+proof-choice boundary-receipt
+
+case value-leak
+value source source-secret "source-only-secret"
+value execution execution-secret "source-only-secret"
+transfer source source-secret execution execution-secret value
+
+case authority-leak
+value source source-capability "repository-write"
+value execution execution-capability "repository-write"
+transfer source source-capability execution execution-capability authority
+
+case evidence-leak
+value expansion expanded-proof "attested-by-expansion"
+value execution execution-proof "attested-by-expansion"
+transfer expansion expanded-proof execution execution-proof evidence
+
+case phase-skip
+value source source-claim "declared"
+value execution execution-claim "observed"
+transfer source source-claim execution execution-claim claim
+
+case phase-reverse
+value execution execution-result "observed"
+value expansion expansion-result "reified"
+transfer execution execution-result expansion expansion-result claim

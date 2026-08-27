@@ -1,0 +1,13 @@
+# Meta values are phase-local. Only an explicit claim can describe a boundary.
+phase-witness v1
+producer source-authority
+consumer independent-adjudicator
+meta-operation preserve-explicit-claim
+proof-choice boundary-receipt
+
+case clean
+value source source-contract "declared instruction"
+value expansion expanded-contract "reified instruction"
+value execution execution-observation "result=42"
+transfer source source-contract expansion expanded-contract claim
+transfer expansion expanded-contract execution execution-observation claim
