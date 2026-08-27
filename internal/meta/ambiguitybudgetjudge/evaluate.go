@@ -244,7 +244,7 @@ func parseComputesProgram(activity, text string) (computesProgram, error) {
 	if len(parts) == 3 && parts[0] == "ambiguity-budget" && parts[1] == "budget-policy" && parts[2] != "" {
 		return computesProgram{Activity: activity, Text: text, Kind: "BUDGET", ID: parts[2]}, nil
 	}
-	if len(parts) != 4 || parts[0] != "ambiguity-budget" || parts[1] != "case" || parts[2] == "" || parts[3] == "" {
+	if len(parts) != 3 || parts[0] != "ambiguity-budget" || parts[1] != "case" || parts[2] == "" {
 		return computesProgram{}, fmt.Errorf("unsupported computes program")
 	}
 	return computesProgram{Activity: activity, Text: text, Kind: "CASE", ID: parts[2]}, nil
