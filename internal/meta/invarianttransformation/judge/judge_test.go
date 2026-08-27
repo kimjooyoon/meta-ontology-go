@@ -58,3 +58,16 @@ func TestJudgeRejectsEscalatedWriteEffect(t *testing.T) {
 		t.Fatalf("write escalation was accepted: %+v", judgment)
 	}
 }
+
+func TestJudgeReplaysSemanticEvidence(t *testing.T) {
+	receipt, err := producer.Build([]byte("package fixture\n"), testHead, "preserved-translation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt.Evidence.SemanticAfterDigest = model.DigestBytes([]byte("tampered-after"))
+	receipt = model.SealReceipt(receipt)
+	judgment := Judge(receipt)
+	if judgment.Independent || judgment.Reason != "TRANSFORMATION_EVIDENCE_INVALID" {
+		t.Fatalf("tampered semantic evidence was accepted: %+v", judgment)
+	}
+}

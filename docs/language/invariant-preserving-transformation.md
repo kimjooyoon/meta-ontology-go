@@ -12,7 +12,11 @@ The source contract is [the checked-in Gooo value model](../../examples/invarian
 Its producer emits a receipt containing the four values, their
 `producer/consumer/meta_operation/proof_choice` bindings, and a
 `stage/step/reason` coordinate. A separate judge derives the decision from the
-receipt and the fixed denominator.
+receipt and the fixed denominator. The receipt also carries a replayable
+evidence tuple: source digest, candidate digest, before/after semantic
+digests, and either one replay witness or an explicit missing-witness marker.
+The judge recomputes the candidate, postcondition, and replay digests; it does
+not merely trust status strings or a resealed authority decision.
 
 ## State and effect model
 

@@ -25,6 +25,9 @@ func Judge(receipt model.Receipt) model.Judgment {
 		len(receipt.Values) != len(contract.Values) {
 		return invalid("RECEIPT_CONTRACT_BINDING_INVALID")
 	}
+	if !validTransformationEvidence(receipt) {
+		return invalid("TRANSFORMATION_EVIDENCE_INVALID")
+	}
 
 	judgment := model.Judgment{Independent: true, CheckedClaims: len(receipt.Claims), Effects: len(receipt.Effects)}
 	for index, spec := range contract.Values {
@@ -52,6 +55,12 @@ func Judge(receipt model.Receipt) model.Judgment {
 		if value.EvidenceDigest != firstEvidence(claim.EvidenceDigests) {
 			return invalid("META_VALUE_EVIDENCE_MISMATCH")
 		}
+		if firstEvidence(claim.EvidenceDigests) != expectedEvidence(receipt, spec.ID) {
+			return invalid("CLAIM_EVIDENCE_NOT_REPLAYABLE")
+		}
+		if claim.Status != expectedClaimStatus(receipt.CaseKind, spec.ID) {
+			return invalid("CLAIM_STATUS_NOT_JUSTIFIED")
+		}
 		switch claim.Status {
 		case model.StatusDischarged:
 			judgment.DischargedClaims++
@@ -69,6 +78,9 @@ func Judge(receipt model.Receipt) model.Judgment {
 			effect.Producer != model.ProducerID || effect.Consumer != model.ConsumerID || effect.MetaOperation != "record-approved-artifact-effect" ||
 			effect.RepositoryWrites != 0 || effect.MutationAuthority {
 			return invalid("UNAPPROVED_EFFECT")
+		}
+		if effect.ArtifactDigest != receipt.Evidence.CandidateDigest {
+			return invalid("EFFECT_NOT_BOUND_TO_CANDIDATE")
 		}
 	}
 	if receipt.CaseKind != "APPROVED_ARTIFACT" && len(receipt.Effects) != 0 {
@@ -106,6 +118,64 @@ func knownCase(contract model.Contract, id, kind string) bool {
 		}
 	}
 	return false
+}
+
+func validTransformationEvidence(receipt model.Receipt) bool {
+	evidence := receipt.Evidence
+	if evidence.SourceDigest != receipt.SourceDigest || !model.ValidDigest(evidence.SourceDigest) ||
+		!model.ValidDigest(evidence.CandidateDigest) || !model.ValidDigest(evidence.SemanticBeforeDigest) ||
+		!model.ValidDigest(evidence.SemanticAfterDigest) ||
+		evidence.CandidateDigest != model.Digest([]string{evidence.SourceDigest, evidence.SemanticBeforeDigest, evidence.SemanticAfterDigest, receipt.CaseKind}) {
+		return false
+	}
+	if evidence.RegressionWitnessPresent {
+		if evidence.ReplayCount != 1 || evidence.ReplayBeforeDigest != evidence.SemanticBeforeDigest ||
+			evidence.ReplayAfterDigest != evidence.SemanticAfterDigest || !model.ValidDigest(evidence.ReplayBeforeDigest) ||
+			!model.ValidDigest(evidence.ReplayAfterDigest) {
+			return false
+		}
+	} else if evidence.ReplayCount != 0 || evidence.ReplayBeforeDigest != "" || evidence.ReplayAfterDigest != "" {
+		return false
+	}
+	switch receipt.CaseKind {
+	case "PRESERVED", "APPROVED_ARTIFACT":
+		return evidence.SemanticBeforeDigest == evidence.SemanticAfterDigest && evidence.RegressionWitnessPresent
+	case "VIOLATION":
+		return evidence.SemanticBeforeDigest != evidence.SemanticAfterDigest && evidence.RegressionWitnessPresent
+	case "EVIDENCE_MISSING":
+		return evidence.SemanticBeforeDigest == evidence.SemanticAfterDigest && !evidence.RegressionWitnessPresent
+	default:
+		return false
+	}
+}
+
+func expectedEvidence(receipt model.Receipt, valueID string) string {
+	evidence := receipt.Evidence
+	switch valueID {
+	case "precondition":
+		return evidence.SourceDigest
+	case "transformation":
+		return evidence.CandidateDigest
+	case "postcondition":
+		return model.Digest([]string{evidence.SemanticBeforeDigest, evidence.SemanticAfterDigest})
+	case "regression-witness":
+		if !evidence.RegressionWitnessPresent {
+			return ""
+		}
+		return model.Digest([]string{evidence.ReplayBeforeDigest, evidence.ReplayAfterDigest, "replay-1"})
+	default:
+		return ""
+	}
+}
+
+func expectedClaimStatus(caseKind, valueID string) string {
+	if caseKind == "VIOLATION" && (valueID == "postcondition" || valueID == "regression-witness") {
+		return model.StatusRefuted
+	}
+	if caseKind == "EVIDENCE_MISSING" && valueID == "regression-witness" {
+		return model.StatusOpen
+	}
+	return model.StatusDischarged
 }
 
 func validStatus(status string) bool {

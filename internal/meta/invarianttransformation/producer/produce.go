@@ -59,6 +59,16 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	if spec.Kind != "EVIDENCE_MISSING" {
 		regressionDigest = model.Digest([]string{semanticBefore, semanticAfter, "replay-1"})
 	}
+	evidence := model.TransformationEvidence{
+		SourceDigest: sourceDigest, CandidateDigest: transformationDigest,
+		SemanticBeforeDigest: semanticBefore, SemanticAfterDigest: semanticAfter,
+		RegressionWitnessPresent: spec.Kind != "EVIDENCE_MISSING", ReplayCount: 0,
+	}
+	if evidence.RegressionWitnessPresent {
+		evidence.ReplayBeforeDigest = semanticBefore
+		evidence.ReplayAfterDigest = semanticAfter
+		evidence.ReplayCount = 1
+	}
 
 	claims := make([]model.Claim, 0, len(contract.Values))
 	values := make([]model.MetaValue, 0, len(contract.Values))
@@ -76,11 +86,11 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	decision, resolution, reason := deriveDecision(claims)
 	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: spec.ID, CaseKind: spec.Kind, HeadSHA: headSHA,
 		SourcePath: model.SourcePath, SourceDigest: sourceDigest, ContractDigest: model.Digest(contract), Producer: model.ProducerID,
-		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims,
+		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence,
 		Decision: decision, Resolution: resolution, Reason: reason, Effects: []model.Effect{}, RepositoryWrites: 0, MutationAuthority: false}
 	if spec.Kind == "APPROVED_ARTIFACT" {
 		receipt.Effects = append(receipt.Effects, model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved",
-			ArtifactDigest: model.DigestBytes([]byte("approved-artifact\x00" + headSHA)), Producer: model.ProducerID, Consumer: model.ConsumerID,
+			ArtifactDigest: transformationDigest, Producer: model.ProducerID, Consumer: model.ConsumerID,
 			MetaOperation: "record-approved-artifact-effect", RepositoryWrites: 0, MutationAuthority: false})
 	}
 	return model.SealReceipt(receipt), nil

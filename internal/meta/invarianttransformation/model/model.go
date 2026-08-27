@@ -99,6 +99,17 @@ type Claim struct {
 	Transitions     []Transition `json:"transitions"`
 }
 
+type TransformationEvidence struct {
+	SourceDigest             string `json:"source_digest"`
+	CandidateDigest          string `json:"candidate_digest"`
+	SemanticBeforeDigest     string `json:"semantic_before_digest"`
+	SemanticAfterDigest      string `json:"semantic_after_digest"`
+	RegressionWitnessPresent bool   `json:"regression_witness_present"`
+	ReplayBeforeDigest       string `json:"replay_before_digest,omitempty"`
+	ReplayAfterDigest        string `json:"replay_after_digest,omitempty"`
+	ReplayCount              int    `json:"replay_count"`
+}
+
 type Effect struct {
 	Kind              string `json:"kind"`
 	ArtifactID        string `json:"artifact_id,omitempty"`
@@ -111,26 +122,27 @@ type Effect struct {
 }
 
 type Receipt struct {
-	Schema            string      `json:"schema"`
-	CaseID            string      `json:"case_id"`
-	CaseKind          string      `json:"case_kind"`
-	HeadSHA           string      `json:"head_sha"`
-	SourcePath        string      `json:"source_path"`
-	SourceDigest      string      `json:"source_digest"`
-	ContractDigest    string      `json:"contract_digest"`
-	Producer          string      `json:"producer"`
-	Consumer          string      `json:"consumer"`
-	MetaOperation     string      `json:"meta_operation"`
-	ProofChoice       string      `json:"proof_choice"`
-	Values            []MetaValue `json:"values"`
-	Claims            []Claim     `json:"claims"`
-	Decision          string      `json:"decision"`
-	Resolution        string      `json:"resolution"`
-	Reason            string      `json:"reason"`
-	Effects           []Effect    `json:"effects"`
-	RepositoryWrites  int         `json:"repository_writes"`
-	MutationAuthority bool        `json:"mutation_authority"`
-	Digest            string      `json:"digest"`
+	Schema            string                 `json:"schema"`
+	CaseID            string                 `json:"case_id"`
+	CaseKind          string                 `json:"case_kind"`
+	HeadSHA           string                 `json:"head_sha"`
+	SourcePath        string                 `json:"source_path"`
+	SourceDigest      string                 `json:"source_digest"`
+	ContractDigest    string                 `json:"contract_digest"`
+	Producer          string                 `json:"producer"`
+	Consumer          string                 `json:"consumer"`
+	MetaOperation     string                 `json:"meta_operation"`
+	ProofChoice       string                 `json:"proof_choice"`
+	Values            []MetaValue            `json:"values"`
+	Claims            []Claim                `json:"claims"`
+	Evidence          TransformationEvidence `json:"evidence"`
+	Decision          string                 `json:"decision"`
+	Resolution        string                 `json:"resolution"`
+	Reason            string                 `json:"reason"`
+	Effects           []Effect               `json:"effects"`
+	RepositoryWrites  int                    `json:"repository_writes"`
+	MutationAuthority bool                   `json:"mutation_authority"`
+	Digest            string                 `json:"digest"`
 }
 
 type Judgment struct {
