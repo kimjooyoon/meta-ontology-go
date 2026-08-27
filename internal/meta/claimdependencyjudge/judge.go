@@ -544,6 +544,9 @@ func validateSourceObservation(current reconstructed, value evidenceReceipt) err
 	if strings.HasPrefix(current.RootProgram, "claim.observe:contradiction") && root != explicitContradiction {
 		return fmt.Errorf("contradiction source requires explicit contradiction evidence")
 	}
+	if !strings.HasPrefix(current.RootProgram, "claim.observe:recoverable") && !strings.HasPrefix(current.RootProgram, "claim.observe:contradiction") {
+		return fmt.Errorf("source has no recognized observation predicate")
+	}
 	return nil
 }
 func validatePrior(current reconstructed, value receipt) error {
@@ -635,7 +638,7 @@ func transitionEdges(i int, g graph, states []string, state string, refuting []s
 		return refuting
 	}
 	if state == "DISCHARGED" {
-		result := []string{}
+		var result []string
 		for _, e := range incomingEdges(i, g) {
 			if e.Kind == requires {
 				result = append(result, e.EdgeID)
@@ -646,7 +649,7 @@ func transitionEdges(i int, g graph, states []string, state string, refuting []s
 	if state != "OPEN" {
 		return nil
 	}
-	result := []string{}
+	var result []string
 	for _, e := range incomingEdges(i, g) {
 		from := indexOf(e.FromClaimID, g)
 		if from >= 0 && (states[from] == "OPEN" || states[from] == "REFUTED") && (e.Kind == supports || e.Kind == requires) {
@@ -682,7 +685,7 @@ func transitionsFor(g graph, outcomes []transition, provenance string, prior *re
 	return result
 }
 func upstreamDigests(ids []string, g graph, transitions []transition) []string {
-	result := []string{}
+	var result []string
 	for _, id := range ids {
 		for _, e := range g.Edges {
 			if e.EdgeID != id {
@@ -809,7 +812,7 @@ func indexOf(id string, g graph) int {
 	return -1
 }
 func blockedFrontier(i int, g graph, states []string) ([]string, []string) {
-	claims, edges := []string{}, []string{}
+	var claims, edges []string
 	for _, e := range incomingEdges(i, g) {
 		from := indexOf(e.FromClaimID, g)
 		if from >= 0 && (e.Kind == supports || e.Kind == requires) && (states[from] == "OPEN" || states[from] == "REFUTED") {

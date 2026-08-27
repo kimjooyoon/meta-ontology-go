@@ -159,7 +159,7 @@ func Evaluate(source []byte, sourcePath string, evidence EvidenceReceipt, prior 
 	if prior != nil {
 		currentOutcomes = transitions[len(transitions)-ClaimTotal:]
 	}
-		resolutions := buildResolutions(parsed.Graph, states, currentOutcomes, provenance)
+	resolutions := buildResolutions(parsed.Graph, states, currentOutcomes, provenance)
 	metrics := deriveMetrics(parsed.Graph, states, resolutions, currentOutcomes, evidence, prior != nil)
 	decision := decisionFor(states, evidence, prior != nil)
 	subject := Subject{SourcePath: sourcePath, SourceDigest: sourceDigest, SemanticDigest: semanticDigest, Producer: ProducerID, Consumer: ConsumerID, MetaOperation: MetaOperationID, ProofChoice: ProofChoice, ReadOnly: evidence.Snapshot.RepositoryWrites == 0, RepositoryWrites: evidence.Snapshot.RepositoryWrites, AuthorityResolution: authorityResolution(evidence), AuthorityCoordinate: evidence.Capability.Coordinate}
@@ -209,6 +209,9 @@ func validateEvidence(parsed sourceGraph, evidence EvidenceReceipt) error {
 	}
 	if strings.HasPrefix(parsed.RootProgram, "claim.observe:contradiction") && rootPredicate != ObservationContradiction {
 		return fmt.Errorf("contradiction source requires explicit contradiction evidence")
+	}
+	if !strings.HasPrefix(parsed.RootProgram, "claim.observe:recoverable") && !strings.HasPrefix(parsed.RootProgram, "claim.observe:contradiction") {
+		return fmt.Errorf("source has no recognized observation predicate")
 	}
 	capDigest, err := capabilityDigest(evidence.Capability)
 	if err != nil || capDigest != evidence.Capability.Digest || evidence.Capability.Status != CurrentEvidence {
@@ -341,7 +344,7 @@ func transitionEdges(index int, graph Graph, states []string, state string, refu
 		return refuting
 	}
 	if state == "DISCHARGED" {
-		result := []string{}
+		var result []string
 		for _, edge := range incomingEdges(index, graph) {
 			if edge.Kind == Requires {
 				result = append(result, edge.EdgeID)
@@ -352,7 +355,7 @@ func transitionEdges(index int, graph Graph, states []string, state string, refu
 	if state != "OPEN" {
 		return nil
 	}
-	result := []string{}
+	var result []string
 	for _, edge := range incomingEdges(index, graph) {
 		from := indexOfClaim(edge.FromClaimID, graph)
 		if from >= 0 && states[from] == "OPEN" && (edge.Kind == Supports || edge.Kind == Requires) {
@@ -397,7 +400,7 @@ func buildTransitions(graph Graph, outcomes []Transition, local []localObservati
 }
 
 func upstreamTransitionDigests(edgeIDs []string, graph Graph, transitions []Transition, prior *Receipt) []string {
-	result := []string{}
+	var result []string
 	for _, edgeID := range edgeIDs {
 		for _, edge := range graph.Edges {
 			if edge.EdgeID != edgeID {
@@ -537,7 +540,7 @@ func indexOfClaim(id string, graph Graph) int {
 	return -1
 }
 func blockedFrontier(index int, graph Graph, states []string) ([]string, []string) {
-	claims, edges := []string{}, []string{}
+	var claims, edges []string
 	for _, edge := range incomingEdges(index, graph) {
 		from := indexOfClaim(edge.FromClaimID, graph)
 		if from >= 0 && (edge.Kind == Supports || edge.Kind == Requires) && (states[from] == "OPEN" || states[from] == "REFUTED") {
