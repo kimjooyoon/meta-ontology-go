@@ -126,7 +126,7 @@ jq -e '
   .reason == "PROPOSAL_EMITTED_WITHOUT_PROMOTION" and .authority == "NONE" and
   .repository_writes == 0 and .mutation_authority == false and
   (.source_raw_digest | length) == 64 and (.source_semantic_digest | length) == 64 and
-  (.query_receipt_digest | length) == 64 and
+  (.query_receipt_digest | startswith("sha256:")) and
   .emitted.satisfied == 1 and .emitted.total == 3 and
   .rejected.satisfied == 1 and .rejected.total == 3 and
   .generated_artifact_count.satisfied == 3 and .generated_artifact_count.total == 3 and
