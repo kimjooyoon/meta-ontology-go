@@ -33,7 +33,7 @@ func fixtureInput(t *testing.T) meta.Input {
 		Repository: "kimjooyoon/meta-ontology-go",
 		HeadSHA:    "0123456789abcdef0123456789abcdef01234567",
 		SourcePath: meta.SourcePath,
-		Source:     []byte("package partialknowledgecomposition\nnamespace partialknowledgecomposition\nentity DirectUnknown id \"direct\"\nentity DependencyBlocked id \"blocked\"\nentity InvariantOnly id \"invariant\"\nactivity Compose(MetaValue, MetaValue) -> MetaValue\n"),
+		Source:     []byte("package partialknowledgecomposition\nnamespace partialknowledgecomposition\nentity DirectUnknown id \"direct\"\nentity DependencyBlocked id \"blocked\"\nentity InvariantOnly id \"invariant\"\nentity Foundation id \"foundation\"\nentity Coherence id \"coherence\"\nentity Regression id \"regression\"\nactivity Compose(MetaValue, MetaValue) -> MetaValue\n"),
 		Fixture: meta.Fixture{
 			Schema: meta.FixtureSchema, SourcePath: meta.SourcePath,
 			FixedDenominator: meta.FixedDenominator,
