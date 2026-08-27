@@ -14,9 +14,10 @@ import (
 )
 
 type githubClient struct {
-	baseURL string
-	token   string
-	client  *http.Client
+	baseURL      string
+	token        string
+	client       *http.Client
+	observations *observationStore
 }
 
 func newGitHubClient(baseURL, token string) *githubClient {
@@ -127,6 +128,18 @@ func (client *githubClient) getPage(ctx context.Context, endpoint string) (githu
 	if resolveErr != nil {
 		return githubPage{URL: endpoint}, resolveErr
 	}
+	if client.observations != nil && client.observations.replay {
+		observed, err := client.observations.next("PAGE", target)
+		if err != nil {
+			return githubPage{URL: target}, err
+		}
+		page := githubPage{URL: observed.URL, StatusCode: observed.StatusCode,
+			Body: append([]byte(nil), observed.Body...), Link: observed.Link}
+		if observed.Failure != "" {
+			return page, replayHTTPFailure(observed)
+		}
+		return page, nil
+	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
 		return githubPage{URL: target}, err
@@ -136,21 +149,39 @@ func (client *githubClient) getPage(ctx context.Context, endpoint string) (githu
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	response, err := client.client.Do(request)
 	if err != nil {
+		client.recordHTTPObservation("PAGE", target, 0, nil, "", err)
 		return githubPage{URL: target}, fmt.Errorf("GitHub request: %w", err)
 	}
 	defer response.Body.Close()
 	body, err := io.ReadAll(io.LimitReader(response.Body, 16<<20))
 	if err != nil {
+		client.recordHTTPObservation("PAGE", target, response.StatusCode, body,
+			response.Header.Get("Link"), err)
 		return githubPage{URL: target, StatusCode: response.StatusCode, Body: body, Link: response.Header.Get("Link")}, err
 	}
 	if response.StatusCode != http.StatusOK {
+		client.recordHTTPObservation("PAGE", target, response.StatusCode, body,
+			response.Header.Get("Link"), fmt.Errorf("status"))
 		return githubPage{URL: target, StatusCode: response.StatusCode, Body: body, Link: response.Header.Get("Link")}, fmt.Errorf("GitHub response status %d", response.StatusCode)
 	}
+	client.recordHTTPObservation("PAGE", target, response.StatusCode, body,
+		response.Header.Get("Link"), nil)
 	return githubPage{URL: target, StatusCode: response.StatusCode, Body: body, Link: response.Header.Get("Link")}, nil
 }
 
 func (client *githubClient) get(ctx context.Context, endpoint string) ([]byte, error) {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseURL+endpoint, nil)
+	target := client.baseURL + endpoint
+	if client.observations != nil && client.observations.replay {
+		observed, err := client.observations.next("GET", target)
+		if err != nil {
+			return nil, err
+		}
+		if observed.Failure != "" {
+			return nil, replayHTTPFailure(observed)
+		}
+		return append([]byte(nil), observed.Body...), nil
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -159,11 +190,51 @@ func (client *githubClient) get(ctx context.Context, endpoint string) ([]byte, e
 	request.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	response, err := client.client.Do(request)
 	if err != nil {
+		client.recordHTTPObservation("GET", target, 0, nil, "", err)
 		return nil, fmt.Errorf("GitHub request: %w", err)
 	}
 	defer response.Body.Close()
+	body, readErr := io.ReadAll(io.LimitReader(response.Body, 16<<20))
+	if readErr != nil {
+		client.recordHTTPObservation("GET", target, response.StatusCode, body, "", readErr)
+		return nil, readErr
+	}
 	if response.StatusCode != http.StatusOK {
+		client.recordHTTPObservation("GET", target, response.StatusCode, body, "",
+			fmt.Errorf("status"))
 		return nil, fmt.Errorf("GitHub response status %d", response.StatusCode)
 	}
-	return io.ReadAll(io.LimitReader(response.Body, 16<<20))
+	client.recordHTTPObservation("GET", target, response.StatusCode, body, "", nil)
+	return body, nil
+}
+
+func (client *githubClient) recordHTTPObservation(kind, target string, status int,
+	body []byte, link string, err error) {
+	if client.observations == nil || client.observations.replay {
+		return
+	}
+	failure := ""
+	if err != nil {
+		var redirectFailure pageRedirectFailure
+		if errors.As(err, &redirectFailure) {
+			failure = "REDIRECT_ORIGIN_MISMATCH"
+		} else if status != http.StatusOK {
+			failure = "HTTP_STATUS"
+		} else {
+			failure = "HTTP_FAILURE"
+		}
+	}
+	client.observations.record(observedResponse{Kind: kind, URL: target,
+		StatusCode: status, Body: append([]byte(nil), body...), Link: link,
+		Failure: failure})
+}
+
+func replayHTTPFailure(observed observedResponse) error {
+	if observed.Failure == "REDIRECT_ORIGIN_MISMATCH" {
+		return pageRedirectFailure{}
+	}
+	if observed.Failure == "HTTP_STATUS" {
+		return fmt.Errorf("GitHub response status %d", observed.StatusCode)
+	}
+	return fmt.Errorf("GitHub request replay failed")
 }

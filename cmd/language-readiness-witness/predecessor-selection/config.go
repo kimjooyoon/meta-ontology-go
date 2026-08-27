@@ -13,6 +13,8 @@ type config struct {
 	reference       string
 	bindingBaseline string
 	receipt         string
+	observation     string
+	replay          string
 }
 
 func parseConfig() config {
@@ -27,6 +29,8 @@ func parseConfig() config {
 	flag.StringVar(&value.reference, "reference", "", "selected baseline reference output")
 	flag.StringVar(&value.bindingBaseline, "binding-baseline", "", "selected binding report output")
 	flag.StringVar(&value.receipt, "receipt", "", "selection receipt output")
+	flag.StringVar(&value.observation, "observation-capture", "", "raw API observation capture outside the repository")
+	flag.StringVar(&value.replay, "observation-replay", "", "raw API observation replay outside the repository")
 	flag.Parse()
 	return value
 }
