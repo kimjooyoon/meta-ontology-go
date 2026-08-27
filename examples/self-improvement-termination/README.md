@@ -11,12 +11,15 @@ Each state is a content digest. A `NO_CHANGE` observation is a self-transition
 whose before and after digests are equal. A non-adjacent repeated digest is a
 cycle after stuttering no-change observations are removed.
 
-| case | observed trace | distinct states | decision | termination claim |
-| --- | ---: | ---: | --- | --- |
-| `fixed-point.json` | 1/4 steps | 1 | `FIXED_POINT` | proven from the final no-change self-transition |
-| `cycle-2.json` | 2/4 steps | 3 | `CYCLE` | refuted by a period-2 repeated state |
-| `in-progress.json` | 2/4 steps | 3 | `IN_PROGRESS` | no terminal or cycle evidence yet |
-| `divergence-possible.json` | 2/2 steps | 3 | `DIVERGENCE_POSSIBLE` | only a bounded strictly-growing prefix; not a proof of infinity |
+`state count` is the length of the state sequence after adjacent no-change
+stuttering is removed; it includes the repeated endpoint that proves a cycle.
+
+| case | observed trace | state count | repeated states | decision | termination claim |
+| --- | ---: | ---: | ---: | --- | --- |
+| `fixed-point.json` | 1/4 steps | 1 | 0 | `FIXED_POINT` | proven from the final no-change self-transition |
+| `cycle-2.json` | 2/4 steps | 3 | 1 (period 2) | `CYCLE` | refuted by a period-2 repeated state |
+| `in-progress.json` | 2/4 steps | 3 | 0 | `IN_PROGRESS` | no terminal or cycle evidence yet |
+| `divergence-possible.json` | 2/2 steps | 3 | 0 | `DIVERGENCE_POSSIBLE` | only a bounded strictly-growing prefix; not a proof of infinity |
 
 Every valid receipt has `10/10 = 10000` basis points because the denominator
 measures whether the selected branch was observed and bound, not whether the
