@@ -218,6 +218,7 @@ func independentBytesDigest(payload []byte) string {
 type independentTopologyExpectation struct {
 	Path             string
 	Workflow         string
+	Upstream         string
 	TriggerBlock     string
 	PullRequestBlock string
 	Concurrency      string
@@ -227,6 +228,7 @@ var independentTopologyExpectations = []independentTopologyExpectation{
 	{
 		Path:             ".github/workflows/transformation-effect.yml",
 		Workflow:         "transformation-effect",
+		Upstream:         "CI",
 		TriggerBlock:     "workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [dev, main]",
 		PullRequestBlock: "pull_request:\n    branches: [dev, main]",
 		Concurrency:      "transformation-effect-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}",
@@ -234,24 +236,28 @@ var independentTopologyExpectations = []independentTopologyExpectation{
 	{
 		Path:         ".github/workflows/self-improvement-cycle.yml",
 		Workflow:     "self-improvement-cycle",
+		Upstream:     "CI",
 		TriggerBlock: "workflow_run:\n    workflows: [\"CI\"]\n    types: [completed]\n    branches: [dev, main]",
 		Concurrency:  "self-improvement-cycle-${{ github.event.workflow_run.head_branch }}",
 	},
 	{
 		Path:         ".github/workflows/source-subject-witness.yml",
 		Workflow:     "source-subject-witness",
+		Upstream:     "CI",
 		TriggerBlock: "workflow_run:\n    workflows: [\"CI\"]\n    types: [completed]\n    branches: [dev, main]",
 		Concurrency:  "source-subject-witness-${{ github.event.workflow_run.head_branch }}",
 	},
 	{
 		Path:         ".github/workflows/metric-transition.yml",
 		Workflow:     "metric-transition",
+		Upstream:     "CI",
 		TriggerBlock: "workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [dev, main]",
 		Concurrency:  "metric-transition-${{ github.event.workflow_run.head_branch }}",
 	},
 	{
 		Path:             ".github/workflows/self-improvement-language-observation.yml",
 		Workflow:         "self-improvement-language-observation",
+		Upstream:         "Language example experiment",
 		TriggerBlock:     "workflow_run:\n    workflows: [\"Language example experiment\"]\n    types: [completed]\n    branches: [dev]",
 		PullRequestBlock: "pull_request:\n    branches: [dev]",
 		Concurrency:      "self-improvement-language-observation-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.workflow_run.head_branch }}",
