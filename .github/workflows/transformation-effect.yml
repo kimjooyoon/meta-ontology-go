@@ -963,13 +963,14 @@ jobs:
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         env:
           PREDECESSOR_MODE: ${{ steps.readiness-predecessor.outputs.mode }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
         run: |
           set -euo pipefail
           first="$RUNNER_TEMP/language-concept-artifact/first"
           replay="$RUNNER_TEMP/language-concept-artifact/replay"
           mkdir -p "$first" "$replay"
-          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          predecessor_sha="${PULL_REQUEST_BASE_SHA:-}"
           if [[ -z "$predecessor_sha" ]]; then
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
