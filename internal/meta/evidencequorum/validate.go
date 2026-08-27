@@ -3,12 +3,12 @@ package evidencequorum
 import "fmt"
 
 func Validate(report Report) error {
+	canonical := CanonicalContract()
 	if report.Schema != ReportSchema || report.Scope != Scope || !validHead(report.HeadSHA) ||
-		report.SourcePath != CanonicalContract().SourcePath || report.SourceEntry != CanonicalContract().SourceEntry ||
+		report.SourcePath != canonical.SourcePath || report.SourceEntry != canonical.SourceEntry ||
 		!validDigest(report.SourceDigest) || !validDigest(report.ProducerReceiptDigest) ||
-		!validDigest(report.UnknownProducerReceiptDigest) ||
-		report.ContractDigest != digestJSON(CanonicalContract()) {
-		return fmt.Errorf("evidence quorum identity mismatch")
+		!validDigest(report.UnknownProducerReceiptDigest) || report.ContractDigest != digestJSON(canonical) {
+		return fmt.Errorf("evidence quorum identity mismatch: source_path=%q source_entry=%q source_digest=%q producer_receipt_digest=%q unknown_producer_receipt_digest=%q contract_digest=%q expected_contract_digest=%q", report.SourcePath, report.SourceEntry, report.SourceDigest, report.ProducerReceiptDigest, report.UnknownProducerReceiptDigest, report.ContractDigest, digestJSON(canonical))
 	}
 	want := Summary{CasesSatisfied: 5, CasesTotal: 5, ClaimsTotal: 5, DischargedClaims: 1,
 		OpenClaims: 2, RefutedClaims: 1, UnknownClaims: 1, RawEvidenceTotal: 12, IndependentGroupsTotal: 11,
