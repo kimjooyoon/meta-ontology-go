@@ -2154,7 +2154,10 @@ jobs:
           test "$(go env GOVERSION)" = "go1.27.0"
           diff="$(gofmt -d \
             cmd/invariant-transformation-witness/main.go \
+            cmd/invariant-transformation-intervention-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
+            internal/meta/invarianttransformation/intervention/intervention.go \
+            internal/meta/invarianttransformation/intervention/intervention_test.go \
             internal/meta/invarianttransformation/producer/produce.go \
             internal/meta/invarianttransformation/producer/source.go \
             internal/meta/invarianttransformation/producer/produce_test.go \
@@ -2194,10 +2197,80 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if go list -deps ./internal/meta/invarianttransformation/judge | grep -Fq '/internal/meta/invarianttransformation/producer'; then
-            echo 'independent judge imports the receipt producer' >&2
-            exit 1
-          fi
+          judge_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/judge'
+          forbidden_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/producer'
+          dependencies="$(go list -deps ./internal/meta/invarianttransformation/judge)"
+          forbidden_imports="$(printf '%s\n' "$dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          allowed_forbidden_imports=0
+          dependency_output="$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
+          mkdir -p "$(dirname "$dependency_output")"
+          jq -n \
+            --arg schema 'gooo/invariant-transformation-dependency-boundary/v1' \
+            --arg package "$judge_package" \
+            --arg forbidden_package "$forbidden_package" \
+            --argjson forbidden_imports "$forbidden_imports" \
+            --argjson allowed_forbidden_imports "$allowed_forbidden_imports" \
+            '{schema: $schema, production_judge_package: $package, forbidden_package: $forbidden_package,
+              forbidden_imports: $forbidden_imports, allowed_forbidden_imports: $allowed_forbidden_imports,
+              production_only: true, test_imports_excluded: true,
+              decision: (if $forbidden_imports == $allowed_forbidden_imports then "PASS" else "FAIL" end),
+              repository_writes: 0}' > "$dependency_output"
+          test "$forbidden_imports" -eq "$allowed_forbidden_imports"
+
+      - name: Emit and validate fixed intervention denominator twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/invariant-transformation/intervention"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./cmd/invariant-transformation-intervention-witness \
+              -source examples/invariant-transformation/main.gooo \
+              -head-sha "$HEAD_SHA" \
+              -output "$output/$pass/report.json" \
+              -check
+          done
+          cmp "$output/first/report.json" "$output/second/report.json"
+          jq -e '
+            .schema == "gooo/invariant-transformation-intervention-report/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .denominator.id == "gooo/invariant-transformation-intervention-denominator/v1" and
+            .denominator.cases_total == 2 and .case_count == 2 and
+            .denominator.semantic_change.id == "gooo/invariant-transformation-intervention-semantic-denominator/v1" and
+            .denominator.semantic_change.cases_total == 1 and
+            .denominator.semantic_change.cases_satisfied == 1 and
+            .denominator.semantic_change.coverage_bps == 10000 and
+            .denominator.nonsemantic_change.id == "gooo/invariant-transformation-intervention-nonsemantic-denominator/v1" and
+            .denominator.nonsemantic_change.cases_total == 1 and
+            .denominator.nonsemantic_change.cases_satisfied == 1 and
+            .denominator.nonsemantic_change.coverage_bps == 10000 and
+            ([.cases[] | select(.kind == "SEMANTIC") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .semantic_projection_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC") | .decision_changed] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .semantic_projection_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .decision_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .reason_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .claim_transitions_equal] | all) and
+            ([.cases[].repository_writes_zero] | all) and
+            ([.cases[].claim | .status == "DISCHARGED" and (.transitions | length) == 1 and
+              .transitions[0].from == "OPEN" and .transitions[0].to == "DISCHARGED" and
+              .transitions[0].coordinate == .coordinate] | all) and
+            ([.cases[].satisfied] | all) and .repository_writes == 0
+          ' "$output/first/report.json"
+          jq -e '
+            .schema == "gooo/invariant-transformation-dependency-boundary/v1" and
+            .production_only == true and .test_imports_excluded == true and
+            .forbidden_imports == 0 and .allowed_forbidden_imports == 0 and
+            .decision == "PASS" and .repository_writes == 0
+          ' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
+          {
+            echo '### Fixed intervention denominator'
+            jq -r '"- semantic change: \(.denominator.semantic_change.cases_satisfied)/\(.denominator.semantic_change.cases_total) (\(.denominator.semantic_change.coverage_bps) BPS)"' "$output/first/report.json"
+            jq -r '"- non-semantic change: \(.denominator.nonsemantic_change.cases_satisfied)/\(.denominator.nonsemantic_change.cases_total) (\(.denominator.nonsemantic_change.coverage_bps) BPS)"' "$output/first/report.json"
+            jq -r '"- dependency boundary: forbidden=\(.forbidden_imports)/allowed=\(.allowed_forbidden_imports)"' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact metrics and authority boundary
         shell: bash

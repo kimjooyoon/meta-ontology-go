@@ -65,3 +65,23 @@ correctness, repository mutation, or promotion authority. The negative cases
 make the claim falsifiable: changing the `.gooo` expected value changes the
 independently recomputed result to `REFUTED`, and removing the replay witness
 leaves it `OPEN`.
+
+## Intervention separation
+
+The experiment also publishes a separate fixed two-case intervention report;
+its measurements are not aggregated into the authority-suite score. The
+semantic slice has denominator `1`: changing the preserved fixture's
+`expected=3` to `expected=4` changes the parsed projection, receipt, and
+independent decision from `AUTHORIZED` to `REFUTED` with reason
+`SEMANTIC_POSTCONDITION_REFUTED`. The non-semantic slice also has denominator
+`1`: adding only whitespace and a comment changes the raw `SourceDigest` and
+receipt digest, but preserves the parsed/lowered fixture projection, decision,
+resolution, reason, and claim transitions. Both slices require zero repository
+writes.
+
+The two intervention claims are bound to persistent `OPEN -> DISCHARGED`
+transitions. The semantic claim uses stage `INTERVENTION`, step
+`compare-semantic-projection-and-decision`, and reason
+`SEMANTIC_PROJECTION_AND_DECISION_CHANGED`; the non-semantic claim uses the
+same stage, step `compare-nonsemantic-projection-and-decision`, and reason
+`NONSEMANTIC_PROJECTION_AND_DECISION_PRESERVED`.

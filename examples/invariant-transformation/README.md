@@ -19,6 +19,25 @@ The approved artifact case records one separate `APPROVED_ARTIFACT_RECORDED`
 effect. It still has `repository_writes=0` and `mutation_authority=false`:
 recording an approved product is not permission to mutate the repository.
 
+## Intervention witnesses
+
+The intervention witness is a separate fixed denominator with exactly two
+cases, never folded into the four-case authority coverage score:
+
+* `semantic-change` changes the first fixture's `expected=3` to `expected=4`.
+  Its parsed projection and contracted receipt change, so the independent
+  judge changes `AUTHORIZED` to `REFUTED` with reason
+  `SEMANTIC_POSTCONDITION_REFUTED`.
+* `nonsemantic-change` appends only blank lines and a comment. Its raw
+  `SourceDigest` and receipt digest change, while the parsed/lowered fixture
+  projection, decision, resolution, reason, and claim transitions remain
+  equal. Both source variants keep zero repository writes.
+
+Each intervention is a persistent `OPEN -> DISCHARGED` claim with an exact
+`INTERVENTION` stage, comparison step, and reason. CI publishes two separate
+`1/1 (10000 BPS)` denominators and does not produce an aggregate intervention
+score.
+
 ## Research basis and limits
 
 This experiment is informed by [Necula, “Translation Validation for an
