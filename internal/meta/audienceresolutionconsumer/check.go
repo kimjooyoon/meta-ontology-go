@@ -623,6 +623,9 @@ func findRawCounterexample(values []RawCounterexample, id string) RawCounterexam
 func mutateRawLedger(raw RawLedger, counterexample RawCounterexample) RawLedger {
 	variant := raw
 	variant.Records = append([]RawRecord(nil), raw.Records...)
+	for index := range variant.Records {
+		variant.Records[index].ObservedValue = "HISTORICAL_FIXTURE"
+	}
 	if counterexample.Kind == "INFORMATION_OMISSION" {
 		filtered := variant.Records[:0]
 		for _, record := range variant.Records {
