@@ -99,7 +99,7 @@ jobs:
           mkdir -p "$intervention"
           cp examples/meta-policy-compilation/policy.gooo "$intervention/comment.gooo"
           printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$intervention/comment.gooo"
-          sed 's/SOURCE_DIGEST_MISMATCH/SOURCE_DIGEST_INTERVENED/' \
+          sed 's/SOURCE_DIGEST_MISMATCH:FAIL_CLOSED/SOURCE_DIGEST_MISMATCH:UNKNOWN/' \
             examples/meta-policy-compilation/policy.gooo > "$intervention/semantic.gooo"
           go run ./cmd/meta-policy-compilation-witness \
             -policy "$intervention/comment.gooo" \
@@ -123,11 +123,22 @@ jobs:
             echo 'semantic intervention did not change claim transitions' >&2
             exit 1
           fi
+          base_raw_digest=$(jq -r .policy.source_digest "$root/first/policy.json")
+          comment_raw_digest=$(jq -r .policy.source_digest "$intervention/comment/policy.json")
+          base_semantic_digest=$(jq -r .policy.semantic_digest "$root/first/policy.json")
+          comment_semantic_digest=$(jq -r .policy.semantic_digest "$intervention/comment/policy.json")
+          semantic_semantic_digest=$(jq -r .policy.semantic_digest "$intervention/semantic/policy.json")
+          raw_digest_changed=false
+          semantic_digest_preserved=false
+          semantic_digest_changed=false
+          [ "$base_raw_digest" != "$comment_raw_digest" ] && raw_digest_changed=true
+          [ "$base_semantic_digest" = "$comment_semantic_digest" ] && semantic_digest_preserved=true
+          [ "$base_semantic_digest" != "$semantic_semantic_digest" ] && semantic_digest_changed=true
           jq -n \
-            --argjson raw_digest_changed "$(test "$(jq -r .policy.source_digest "$root/first/policy.json")" != "$(jq -r .policy.source_digest "$intervention/comment/policy.json")" && echo true || echo false)" \
-            --argjson semantic_digest_preserved "$(test "$(jq -r .policy.semantic_digest "$root/first/policy.json")" = "$(jq -r .policy.semantic_digest "$intervention/comment/policy.json")" && echo true || echo false)" \
+            --argjson raw_digest_changed "$raw_digest_changed" \
+            --argjson semantic_digest_preserved "$semantic_digest_preserved" \
             --argjson generated_behavior_preserved true \
-            --argjson semantic_digest_changed "$(test "$(jq -r .policy.semantic_digest "$root/first/policy.json")" != "$(jq -r .policy.semantic_digest "$intervention/semantic/policy.json")" && echo true || echo false)" \
+            --argjson semantic_digest_changed "$semantic_digest_changed" \
             --argjson generated_behavior_changed true \
             --argjson claim_transitions_changed true \
             '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed}' \
