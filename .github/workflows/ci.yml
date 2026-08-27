@@ -11,6 +11,7 @@ on:
       - dev
       - main
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -1532,12 +1533,13 @@ jobs:
              $c.transitions == $b.transitions and
              $c.conformance_decision == $b.conformance_decision and
              $c.subject_counts == $b.subject_counts) as $nonsemantic_preservation |
-            {source_cases: "6/6", producer_imports: "0/0", semantic_causality: (if $semantic_causality then "1/1" else "0/1" end), nonsemantic_preservation: (if $nonsemantic_preservation then "1/1" else "0/1" end), persistent_claims: "6/6", coherent_tamper_rejected: "1/1"} |
-            if .semantic_causality == "1/1" and .nonsemantic_preservation == "1/1" then . else error("intervention metric failed") end
+            def metric($n; $d; $proof): {numerator: $n, denominator: $d, producer: "claimlifecyclecalculus.Evaluate", consumer: "claim-lifecycle-calculus-judge", meta_operation: "preserve-claim-lifecycle", proof_choice: $proof, satisfied: ($d == 0 or $n == $d)};
+            {source_cases: metric(6;6;"FOUNDATION"), producer_imports: metric(0;0;"FOUNDATION"), semantic_causality: metric((if $semantic_causality then 1 else 0 end);1;"COHERENCE"), nonsemantic_preservation: metric((if $nonsemantic_preservation then 1 else 0 end);1;"REGRESSION"), persistent_claims: metric(6;6;"COHERENCE"), coherent_tamper_rejected: metric(1;1;"REGRESSION")} |
+            if .semantic_causality.numerator == 1 and .nonsemantic_preservation.numerator == 1 then . else error("intervention metric failed") end
           ' | tee "${output}/intervention-metrics.json"
           {
             echo '### Claim lifecycle calculus interventions'
-            jq -r '"- source_cases=\(.source_cases), producer_imports=\(.producer_imports), persistent_claims=\(.persistent_claims)"' "${output}/intervention-metrics.json"
-            jq -r '"- semantic_causality=\(.semantic_causality), nonsemantic_preservation=\(.nonsemantic_preservation), coherent_tamper_rejected=\(.coherent_tamper_rejected)"' "${output}/intervention-metrics.json"
+            jq -r '"- source_cases=\(.source_cases.numerator)/\(.source_cases.denominator), producer_imports=\(.producer_imports.numerator)/\(.producer_imports.denominator), persistent_claims=\(.persistent_claims.numerator)/\(.persistent_claims.denominator)"' "${output}/intervention-metrics.json"
+            jq -r '"- semantic_causality=\(.semantic_causality.numerator)/\(.semantic_causality.denominator), nonsemantic_preservation=\(.nonsemantic_preservation.numerator)/\(.nonsemantic_preservation.denominator), coherent_tamper_rejected=\(.coherent_tamper_rejected.numerator)/\(.coherent_tamper_rejected.denominator)"' "${output}/intervention-metrics.json"
             jq -r '"- conformance=\(.conformance_decision.value), subject=\(.subject_resolution.value), cases PASS=\(.summary.case_decision_counts.pass) FAIL_CLOSED=\(.summary.case_decision_counts.fail_closed) UNKNOWN=\(.summary.case_decision_counts.unknown)"' "${output}/baseline.json"
           } >> "${GITHUB_STEP_SUMMARY}"
