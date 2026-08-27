@@ -1,6 +1,8 @@
 name: Transformation effect ledger
 
 on:
+  push:
+    branches: [agent/luna-meta-04-capability-scoped-expansion]
   pull_request:
     branches: [dev, main]
   workflow_run:
@@ -2116,12 +2118,14 @@ jobs:
 
   capability-scoped-expansion:
     name: capability-scoped-expansion
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/agent/luna-meta-04-capability-scoped-expansion'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       GOTOOLCHAIN: go1.27.0
-      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out exact head
         uses: actions/checkout@v5
