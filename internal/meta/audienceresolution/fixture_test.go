@@ -31,6 +31,6 @@ func fixtureInput(t *testing.T) Input {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return Input{Contract: contract, Ledger: ledger, Replay: ledger,
+	return Input{Contract: contract, Ledger: ledger,
 		SourcePath: "examples/audience-resolution/main.gooo", Source: source}
 }

@@ -56,32 +56,32 @@ jobs:
           source="examples/audience-resolution/main.gooo"
           ledger="examples/audience-resolution/ledger.json"
           contract="examples/audience-resolution/contract.json"
-          go run ./cmd/audience-resolution-witness --contract "$contract" --ledger "$ledger" --source "$source" --out "$out/base-receipt.json"
-          go run ./cmd/audience-resolution-consumer --ledger "$ledger" --source "$source" --receipt "$out/base-receipt.json" --out "$out/base-consumer.json" --root "$GITHUB_WORKSPACE"
-          jq -e '(.decision == "PASS") and (.summary.source_denominator == 56) and (.source.declaration_count == 56) and (.summary.coordinates.satisfied == 12) and (.summary.coordinates.total == 12) and (.views[0].visible == 4) and (.views[0].required == 12) and (.views[0].local_decision == "UNKNOWN") and (.views[1].visible == 8) and (.views[1].required == 12) and (.views[1].local_decision == "UNKNOWN") and (.views[2].visible == 12) and (.views[2].required == 12) and (.views[2].local_decision == "PASS") and ((.claim_transitions | length) == 36) and ((.counterexamples | map(.global_decision) | sort) == ["REFUTED", "UNKNOWN"])' "$out/base-receipt.json"
-          jq -e '(.decision == "PASS") and (.raw_ledger_final_fields_absent == true) and (.receipt_digest_match == true) and (.source_reconstruction.parsed_and_lowered == true) and (.source_reconstruction.declaration_count == 56) and (.source_reconstruction.receipt_matches == true) and (.producer_imports.producer_import_numerator == 0) and (.producer_imports.producer_import_denominator > 0) and (.claim_transitions_checked == 36)' "$out/base-consumer.json"
+          go run ./cmd/audience-resolution-witness --contract "$contract" --ledger "$ledger" --source "$source" --out "$out/base-receipt.json" --artifacts "$out/base-artifacts"
+          go run ./cmd/audience-resolution-consumer --ledger "$ledger" --source "$source" --receipt "$out/base-receipt.json" --out "$out/base-consumer.json" --root "$GITHUB_WORKSPACE" --artifacts "$out/base-artifacts" --attestation "$out/base-attestation.json"
+          jq -e '(.decision == "PASS") and (.provisional == true) and (.resolution == "EXACT") and (.summary.distinct_propositions == 12) and (.summary.source_denominator > 0) and (.summary.coordinates.satisfied == .summary.coordinates.total) and (.summary.coordinates.total == 10) and (.summary.evidence_counts.current_evidence == 11) and (.summary.evidence_counts.historical_fixture == 12) and (.summary.evidence_counts.unknown == 1) and (.views[0].visible == 4) and (.views[0].required == 12) and (.views[0].local_decision == "UNKNOWN") and (.views[0].local_resolution == "LOWER_RESOLUTION") and (.views[1].visible == 8) and (.views[1].required == 12) and (.views[1].local_decision == "UNKNOWN") and (.views[1].local_resolution == "LOWER_RESOLUTION") and (.views[2].visible == 12) and (.views[2].required == 12) and (.views[2].local_decision == "PASS") and (.views[2].local_resolution == "EXACT") and (.views[2].subject_required == 10) and (.summary.conformance.decision == "UNKNOWN") and (.summary.conformance.seal_evidence_status == "UNKNOWN") and ((.claim_transitions | length) == 36) and ((.counterexamples | map(.global_decision) | sort) == ["REFUTED", "UNKNOWN"]) and (.replay.equal == true) and (.replay.run_a_path != .replay.run_b_path) and (.replay.run_a_digest != "") and (.replay.run_b_digest != "")' "$out/base-receipt.json"
+          jq -e '(.decision == "PASS") and (.raw_ledger_final_fields_absent == true) and (.raw_evidence_historical_only == true) and (.receipt_digest_match == true) and (.source_reconstruction.parsed_and_lowered == true) and (.source_reconstruction.declaration_count > 0) and (.source_reconstruction.receipt_matches == true) and (.producer_imports.producer_import_numerator == 0) and (.producer_imports.producer_import_denominator > 0) and (.current_evidence_counts.current_evidence == 11) and (.current_evidence_counts.historical_fixture == 12) and (.current_evidence_counts.unknown == 1) and (.distinct_propositions == 12) and (.replay.equal == true) and (.counterexamples_checked == 2) and (.claim_transitions_checked == 36) and (.verification_attestation.decision == "PASS") and (.verification_attestation.evidence_status == "CURRENT_EVIDENCE") and (.verification_attestation.evidence.observed_value == "true")' "$out/base-consumer.json"
       - name: Execute omission counterexample from a mutated raw ledger
         shell: bash
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/audience-resolution"
           source="examples/audience-resolution/main.gooo"
-          jq 'del(.records[] | select(.coordinate == "receipt.seal"))' examples/audience-resolution/ledger.json > "$out/omission-ledger.json"
-          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/omission-ledger.json" --source "$source" --out "$out/omission-receipt.json"
-          go run ./cmd/audience-resolution-consumer --ledger "$out/omission-ledger.json" --source "$source" --receipt "$out/omission-receipt.json" --out "$out/omission-consumer.json" --root "$GITHUB_WORKSPACE"
-          jq -e '(.decision == "UNKNOWN") and (.resolution == "LOWER_RESOLUTION") and (.views[0].local_decision == "UNKNOWN") and (.views[1].local_decision == "UNKNOWN") and (.views[2].local_decision == "UNKNOWN") and (.views[2].visible == 11) and (.views[2].required == 12) and (.views[2].omitted_evidence[-1].coordinate == "receipt.seal") and ((.claim_transitions | map(select(.audience == "GOVERNOR" and .indicator_id == "receipt.seal"))[0].after) == "OPEN")' "$out/omission-receipt.json"
-          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/omission-consumer.json"
+          jq 'del(.records[] | select(.coordinate == "source.binding"))' examples/audience-resolution/ledger.json > "$out/omission-ledger.json"
+          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/omission-ledger.json" --source "$source" --out "$out/omission-receipt.json" --artifacts "$out/omission-artifacts"
+          go run ./cmd/audience-resolution-consumer --ledger "$out/omission-ledger.json" --source "$source" --receipt "$out/omission-receipt.json" --out "$out/omission-consumer.json" --root "$GITHUB_WORKSPACE" --artifacts "$out/omission-artifacts" --attestation "$out/omission-attestation.json"
+          jq -e '(.decision == "UNKNOWN") and (.resolution == "LOWER_RESOLUTION") and (.summary.evidence_counts.current_evidence == 10) and (.summary.evidence_counts.historical_fixture == 11) and (.summary.evidence_counts.unknown == 1) and (.views[0].local_decision == "UNKNOWN") and (.views[1].local_decision == "UNKNOWN") and (.views[2].local_decision == "UNKNOWN") and (.views[2].visible == 11) and (.views[2].required == 12) and ((.claim_transitions | map(select(.audience == "GOVERNOR" and .indicator_id == "source.binding"))[0].after) == "OPEN") and ((.counterexamples | map(select(.id == "counterexample.missing-information"))[0] | .execution_validated) == true) and ((.counterexamples | map(select(.id == "counterexample.missing-information"))[0] | .after_claim) == "OPEN")' "$out/omission-receipt.json"
+          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true) and (.verification_attestation.decision == "PASS")' "$out/omission-consumer.json"
       - name: Execute contradiction counterexample from a mutated raw ledger
         shell: bash
         run: |
           set -euo pipefail
           out="$RUNNER_TEMP/audience-resolution"
           source="examples/audience-resolution/main.gooo"
-          jq '(.records[] | select(.coordinate == "ledger.coverage") | .observation) = "CONTRADICTORY"' examples/audience-resolution/ledger.json > "$out/contradiction-ledger.json"
-          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/contradiction-ledger.json" --source "$source" --out "$out/contradiction-receipt.json"
-          go run ./cmd/audience-resolution-consumer --ledger "$out/contradiction-ledger.json" --source "$source" --receipt "$out/contradiction-receipt.json" --out "$out/contradiction-consumer.json" --root "$GITHUB_WORKSPACE"
-          jq -e '(.decision == "REFUTED") and (.resolution == "INVARIANT_ONLY") and (.views[0].local_decision == "REFUTED") and (.views[1].local_decision == "REFUTED") and (.views[2].local_decision == "REFUTED") and ((.claim_transitions | map(select(.indicator_id == "ledger.coverage" and .after == "REFUTED")) | length) == 3)' "$out/contradiction-receipt.json"
-          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/contradiction-consumer.json"
+          jq '(.records[] | select(.coordinate == "ledger.coverage") | .observed_value) = "CONTRADICTORY"' examples/audience-resolution/ledger.json > "$out/contradiction-ledger.json"
+          go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/contradiction-ledger.json" --source "$source" --out "$out/contradiction-receipt.json" --artifacts "$out/contradiction-artifacts"
+          go run ./cmd/audience-resolution-consumer --ledger "$out/contradiction-ledger.json" --source "$source" --receipt "$out/contradiction-receipt.json" --out "$out/contradiction-consumer.json" --root "$GITHUB_WORKSPACE" --artifacts "$out/contradiction-artifacts" --attestation "$out/contradiction-attestation.json"
+          jq -e '(.decision == "REFUTED") and (.resolution == "INVARIANT_ONLY") and (.views[0].local_decision == "REFUTED") and (.views[1].local_decision == "REFUTED") and (.views[2].local_decision == "REFUTED") and ((.claim_transitions | map(select(.indicator_id == "ledger.coverage" and .after == "REFUTED")) | length) == 3) and ((.counterexamples | map(select(.id == "counterexample.decision-contradiction"))[0] | .execution_validated) == true) and ((.counterexamples | map(select(.id == "counterexample.decision-contradiction"))[0] | .after_claim) == "REFUTED")' "$out/contradiction-receipt.json"
+          jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true) and (.verification_attestation.decision == "PASS")' "$out/contradiction-consumer.json"
       - name: Execute semantic-policy and comment-only interventions
         shell: bash
         run: |
@@ -90,7 +90,7 @@ jobs:
           source="examples/audience-resolution/main.gooo"
           cp "$source" "$out/comment-only.gooo"
           sed -i '1i# presentation-only intervention' "$out/comment-only.gooo"
-          cat "$source" > "$out/semantic-policy.gooo"
+          cp "$source" "$out/semantic-policy.gooo"
           sed -i \
             -e 's|/TOOL_AUTHOR/08/governor.coordinates|/TOOL_AUTHOR/09/governor.coordinates|' \
             -e 's|/TOOL_AUTHOR/07/author.coordinates|/TOOL_AUTHOR/08/author.coordinates|' \
@@ -113,19 +113,31 @@ jobs:
             variant="$out/$kind.gooo"
             digest="sha256:$(sha256sum "$variant" | awk '{print $1}')"
             jq --arg digest "$digest" '.source.digest = $digest' examples/audience-resolution/ledger.json > "$out/$kind-ledger.json"
-            go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/$kind-ledger.json" --source "$variant" --out "$out/$kind-receipt.json"
-            go run ./cmd/audience-resolution-consumer --ledger "$out/$kind-ledger.json" --source "$variant" --receipt "$out/$kind-receipt.json" --out "$out/$kind-consumer.json" --root "$GITHUB_WORKSPACE"
-            jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true)' "$out/$kind-consumer.json"
+            go run ./cmd/audience-resolution-witness --contract examples/audience-resolution/contract.json --ledger "$out/$kind-ledger.json" --source "$variant" --out "$out/$kind-receipt.json" --artifacts "$out/$kind-artifacts"
+            go run ./cmd/audience-resolution-consumer --ledger "$out/$kind-ledger.json" --source "$variant" --receipt "$out/$kind-receipt.json" --out "$out/$kind-consumer.json" --root "$GITHUB_WORKSPACE" --artifacts "$out/$kind-artifacts" --attestation "$out/$kind-attestation.json"
+            jq -e '(.decision == "PASS") and (.source_reconstruction.receipt_matches == true) and (.verification_attestation.decision == "PASS")' "$out/$kind-consumer.json"
           done
+          base_state="$(jq -c '[.decision,.resolution]' "$out/base-receipt.json")"
+          semantic_state="$(jq -c '[.decision,.resolution]' "$out/semantic-policy-receipt.json")"
+          comment_state="$(jq -c '[.decision,.resolution]' "$out/comment-only-receipt.json")"
+          base_views="$(jq -c '[.views[] | {audience,local_decision,local_resolution,visible,required,subject_satisfied,subject_required}]' "$out/base-receipt.json")"
+          semantic_views="$(jq -c '[.views[] | {audience,local_decision,local_resolution,visible,required,subject_satisfied,subject_required}]' "$out/semantic-policy-receipt.json")"
+          comment_views="$(jq -c '[.views[] | {audience,local_decision,local_resolution,visible,required,subject_satisfied,subject_required}]' "$out/comment-only-receipt.json")"
+          base_transitions="$(jq -c '[.claim_transitions[] | {claim_id,audience,indicator_id,before,after,visibility,evidence_status}]' "$out/base-receipt.json")"
+          semantic_transitions="$(jq -c '[.claim_transitions[] | {claim_id,audience,indicator_id,before,after,visibility,evidence_status}]' "$out/semantic-policy-receipt.json")"
+          comment_transitions="$(jq -c '[.claim_transitions[] | {claim_id,audience,indicator_id,before,after,visibility,evidence_status}]' "$out/comment-only-receipt.json")"
           jq -n \
-            --arg base_digest "$(jq -r '.source.semantic_digest' "$out/base-receipt.json")" \
-            --arg comment_digest "$(jq -r '.source.semantic_digest' "$out/comment-only-receipt.json")" \
-            --arg semantic_digest "$(jq -r '.source.semantic_digest' "$out/semantic-policy-receipt.json")" \
-            --argjson base_views "$(jq '.views' "$out/base-receipt.json")" \
-            --argjson comment_views "$(jq '.views' "$out/comment-only-receipt.json")" \
-            --argjson semantic_views "$(jq '.views' "$out/semantic-policy-receipt.json")" \
-            '{semantic_policy:{semantic_digest_changed:($base_digest != $semantic_digest),projection_changed:($base_views != $semantic_views),base_required:($base_views[2].required),variant_required:($semantic_views[2].required)},comment_only:{semantic_digest_preserved:($base_digest == $comment_digest),projection_preserved:($base_views == $comment_views)}}' > "$out/interventions.json"
-          jq -e '(.semantic_policy.semantic_digest_changed == true) and (.semantic_policy.projection_changed == true) and (.comment_only.semantic_digest_preserved == true) and (.comment_only.projection_preserved == true)' "$out/interventions.json"
+            --arg base_raw "$(jq -r '.source.digest' "$out/base-receipt.json")" \
+            --arg semantic_raw "$(jq -r '.source.digest' "$out/semantic-policy-receipt.json")" \
+            --arg comment_raw "$(jq -r '.source.digest' "$out/comment-only-receipt.json")" \
+            --arg base_semantic "$(jq -r '.source.semantic_digest' "$out/base-receipt.json")" \
+            --arg semantic_semantic "$(jq -r '.source.semantic_digest' "$out/semantic-policy-receipt.json")" \
+            --arg comment_semantic "$(jq -r '.source.semantic_digest' "$out/comment-only-receipt.json")" \
+            --argjson base_state "$base_state" --argjson semantic_state "$semantic_state" --argjson comment_state "$comment_state" \
+            --argjson base_views "$base_views" --argjson semantic_views "$semantic_views" --argjson comment_views "$comment_views" \
+            --argjson base_transitions "$base_transitions" --argjson semantic_transitions "$semantic_transitions" --argjson comment_transitions "$comment_transitions" \
+            '{semantic_policy:{raw_digest_changed:($base_raw != $semantic_raw),semantic_digest_changed:($base_semantic != $semantic_semantic),decision_changed:($base_state != $semantic_state),projection_changed:($base_views != $semantic_views),claim_transitions_changed:($base_transitions != $semantic_transitions),base_state:$base_state,variant_state:$semantic_state,base_transition_count:($base_transitions|length),variant_transition_count:($semantic_transitions|length)},comment_only:{raw_digest_changed:($base_raw != $comment_raw),semantic_digest_preserved:($base_semantic == $comment_semantic),decision_preserved:($base_state == $comment_state),projection_preserved:($base_views == $comment_views),claim_transitions_preserved:($base_transitions == $comment_transitions)}}' > "$out/interventions.json"
+          jq -e '(.semantic_policy.semantic_digest_changed == true) and (.semantic_policy.decision_changed == true or .semantic_policy.projection_changed == true or .semantic_policy.claim_transitions_changed == true) and (.semantic_policy.claim_transitions_changed == true) and (.comment_only.raw_digest_changed == true) and (.comment_only.semantic_digest_preserved == true) and (.comment_only.decision_preserved == true) and (.comment_only.projection_preserved == true) and (.comment_only.claim_transitions_preserved == true)' "$out/interventions.json"
       - name: Publish audience resolution summary
         if: always()
         shell: bash
@@ -134,11 +146,12 @@ jobs:
           if [ -f "$out/base-receipt.json" ]; then
             {
               echo '### Audience resolution projection'
-              jq -r '"- global subject: `\(.decision)` / `\(.resolution)`; canonical-IR denominator: `\(.summary.source_denominator)`"' "$out/base-receipt.json"
-              jq -r '"- USER: visible/required `\(.views[0].visible)/\(.views[0].required)`, local `\(.views[0].local_decision)` (`\(.views[0].local_resolution)`); TOOL_AUTHOR: `\(.views[1].visible)/\(.views[1].required)`, `\(.views[1].local_decision)`; GOVERNOR: `\(.views[2].visible)/\(.views[2].required)`, `\(.views[2].local_decision)`"' "$out/base-receipt.json"
-              jq -r '"- claims: `\(.claim_transitions | length)` audience-local transitions; counterexamples: `\(.counterexamples | map(.global_decision) | sort | join(", "))`"' "$out/base-receipt.json"
-              jq -r '"- independent consumer: `\(.decision)`; producer imports: `\(.producer_imports.producer_import_numerator)/\(.producer_imports.producer_import_denominator)`; source reconstruction: `\(.source_reconstruction.declaration_count)`"' "$out/base-consumer.json"
-              jq -r '"- interventions: semantic policy `\(.semantic_policy.semantic_digest_changed)/\(.semantic_policy.projection_changed)`, comment-only `\(.comment_only.semantic_digest_preserved)/\(.comment_only.projection_preserved)`"' "$out/interventions.json"
+              jq -r '"- global subject: `\(.decision)` / `\(.resolution)`; provisional: `\(.provisional)`; source-derived IR denominator: `\(.summary.source_denominator)`; distinct propositions: `\(.summary.distinct_propositions)`"' "$out/base-receipt.json"
+              jq -r '"- evidence lifecycle: CURRENT `\(.summary.evidence_counts.current_evidence)`, HISTORICAL `\(.summary.evidence_counts.historical_fixture)`, UNKNOWN `\(.summary.evidence_counts.unknown)`; replay: `\(.replay.run_a_digest)` = `\(.replay.run_b_digest)`; seal conformance: `\(.summary.conformance.decision)` / `\(.summary.conformance.seal_evidence_status)`"' "$out/base-receipt.json"
+              jq -r '"- USER: visible/required `\(.views[0].visible)/\(.views[0].required)`, local `\(.views[0].local_decision)`; TOOL_AUTHOR: `\(.views[1].visible)/\(.views[1].required)`, `\(.views[1].local_decision)`; GOVERNOR: `\(.views[2].visible)/\(.views[2].required)`, `\(.views[2].local_decision)`"' "$out/base-receipt.json"
+              jq -r '"- claims: `\(.claim_transitions | length)` audience events over `\(.summary.distinct_propositions)` propositions; counterexamples: `\(.counterexamples | map(.global_decision) | sort | join(", "))`"' "$out/base-receipt.json"
+              jq -r '"- independent consumer: `\(.decision)`; producer imports: `\(.producer_imports.producer_import_numerator)/\(.producer_imports.producer_import_denominator)`; attestation: `\(.verification_attestation.digest)`"' "$out/base-consumer.json"
+              jq -r '"- interventions: semantic digest/decision/projection/transitions `\(.semantic_policy.semantic_digest_changed)/\(.semantic_policy.decision_changed)/\(.semantic_policy.projection_changed)/\(.semantic_policy.claim_transitions_changed)`; comment-only preserved `\(.comment_only.semantic_digest_preserved)/\(.comment_only.decision_preserved)/\(.comment_only.projection_preserved)/\(.comment_only.claim_transitions_preserved)`"' "$out/interventions.json"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Upload receipts, mutations, and independent artifacts

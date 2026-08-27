@@ -10,10 +10,11 @@ import (
 )
 
 type options struct {
-	contract string
-	ledger   string
-	source   string
-	out      string
+	contract  string
+	ledger    string
+	source    string
+	out       string
+	artifacts string
 }
 
 func main() { os.Exit(run(os.Args[1:])) }
@@ -31,12 +32,20 @@ func run(args []string) int {
 	if err := readJSON(options.ledger, &input.Ledger); err != nil {
 		return reportError(err)
 	}
+	ledgerBytes, err := os.ReadFile(options.ledger)
+	if err != nil {
+		return reportError(fmt.Errorf("read ledger bytes: %w", err))
+	}
 	source, err := os.ReadFile(options.source)
 	if err != nil {
 		return reportError(fmt.Errorf("read source: %w", err))
 	}
-	input.Replay, input.SourcePath, input.Source = input.Ledger, options.source, source
-	receipt := audienceresolution.Evaluate(input)
+	input.LedgerBytes, input.SourcePath, input.Source, input.ArtifactRoot = ledgerBytes, options.source, source, options.artifacts
+	bundle, err := audienceresolution.ProvideCurrentEvidence(input)
+	if err != nil {
+		return reportError(fmt.Errorf("provide current evidence: %w", err))
+	}
+	receipt := audienceresolution.Evaluate(input, bundle)
 	payload, err := json.MarshalIndent(receipt, "", "  ")
 	if err != nil {
 		return reportError(err)
@@ -67,13 +76,15 @@ func parseOptions(args []string) (options, error) {
 			value.source = args[index+1]
 		case "--out":
 			value.out = args[index+1]
+		case "--artifacts":
+			value.artifacts = args[index+1]
 		default:
 			return options{}, errors.New("unknown option: " + args[index])
 		}
 		index++
 	}
-	if value.contract == "" || value.ledger == "" || value.source == "" || value.out == "" {
-		return options{}, errors.New("--contract, --ledger, --source, and --out are required")
+	if value.contract == "" || value.ledger == "" || value.source == "" || value.out == "" || value.artifacts == "" {
+		return options{}, errors.New("--contract, --ledger, --source, --out, and --artifacts are required")
 	}
 	return value, nil
 }

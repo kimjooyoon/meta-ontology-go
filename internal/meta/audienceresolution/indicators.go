@@ -1,6 +1,10 @@
 package audienceresolution
 
-import "reflect"
+const (
+	EvidenceCurrent    = "CURRENT_EVIDENCE"
+	EvidenceHistorical = "HISTORICAL_FIXTURE"
+	EvidenceUnknown    = "UNKNOWN"
+)
 
 type indicatorSpec struct {
 	ID            string
@@ -17,18 +21,37 @@ type indicatorSpec struct {
 func indicatorSpecs() []indicatorSpec {
 	return []indicatorSpec{
 		{"source.binding", "DRIVER", "gooo://audience-resolution/source", "audience-resolution.projector", "bind-source-ledger", "FOUNDATION", "source", "bind", "source declaration is bound as authority"},
-		{"ledger.coverage", "OUTCOME", "audience-resolution.producer", "audience-resolution.projector", "consume-canonical-ledger", "FOUNDATION", "ledger", "coverage", "all fixed coordinates are present once"},
-		{"ledger.replay", "DRIVER", "audience-resolution.projector", "audience-resolution.receipt", "replay-canonical-ledger", "REGRESSION", "ledger", "replay", "the same ledger replays byte-equivalently"},
+		{"ledger.coverage", "OUTCOME", "audience-resolution.producer", "audience-resolution.projector", "consume-canonical-ledger", "FOUNDATION", "ledger", "coverage", "all semantic coordinates have one raw recipe"},
+		{"ledger.replay", "DRIVER", "audience-resolution.projector", "audience-resolution.receipt", "replay-canonical-ledger", "REGRESSION", "ledger", "replay", "two fresh producer executions replay byte-equivalently"},
 		{"user.coordinates", "OUTCOME", "audience-resolution.projector", "USER", "project-user-coordinate-set", "FOUNDATION", "projection", "user", "USER receives exactly its four coordinates"},
 		{"author.coordinates", "DRIVER", "audience-resolution.projector", "TOOL_AUTHOR", "project-tool-author-coordinate-set", "FOUNDATION", "projection", "tool-author", "TOOL_AUTHOR receives the authoring contract"},
 		{"governor.coordinates", "OUTCOME", "audience-resolution.projector", "GOVERNOR", "project-governor-coordinate-set", "FOUNDATION", "projection", "governor", "GOVERNOR receives the full ledger"},
 		{"projection.nesting", "OUTCOME", "audience-resolution.projector", "audience-resolution.governor", "check-coordinate-nesting", "COHERENCE", "projection", "nest", "higher resolution extends the lower coordinate set"},
-		{"projection.shared-decision", "GUARDRAIL", "audience-resolution.receipt", "all-audiences", "lift-global-decision", "COHERENCE", "projection", "decision", "global decision is carried with local verification status"},
+		{"projection.shared-decision", "GUARDRAIL", "audience-resolution.receipt", "all-audiences", "lift-global-decision", "COHERENCE", "projection", "decision", "subject decision is carried with local verification status"},
 		{"projection.resolution", "DRIVER", "audience-resolution.projector", "all-audiences", "preserve-projection-resolution", "COHERENCE", "projection", "resolution", "each audience keeps its fixed resolution label"},
-		{"counterexample.omission", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-omitted-coordinate", "REGRESSION", "counterexample", "missing", "missing information cannot produce PASS"},
-		{"counterexample.contradiction", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-contradictory-observation", "REGRESSION", "counterexample", "contradiction", "contradictory evidence becomes REFUTED"},
-		{"receipt.seal", "DRIVER", "audience-resolution.receipt", "independent.checker", "validate-receipt-digest", "REGRESSION", "receipt", "seal", "receipt is independently checkable"},
+		{"counterexample.omission", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-omitted-coordinate", "REGRESSION", "counterexample", "missing", "executed omission changes the target evidence and decision"},
+		{"counterexample.contradiction", "GUARDRAIL", "audience-resolution.projector", "GOVERNOR", "execute-contradictory-observation", "REGRESSION", "counterexample", "executed contradiction changes the target evidence and decision"},
+		{"receipt.seal", "DRIVER", "audience-resolution.receipt", "independent.checker", "validate-receipt-digest", "REGRESSION", "receipt", "seal", "receipt is independently checkable after subject evaluation"},
 	}
+}
+
+func subjectIndicatorIDs() map[string]bool {
+	return map[string]bool{
+		"source.binding": true, "ledger.coverage": true, "ledger.replay": true,
+		"user.coordinates": true, "author.coordinates": true, "governor.coordinates": true,
+		"projection.nesting": true, "projection.resolution": true,
+		"counterexample.omission": true, "counterexample.contradiction": true,
+	}
+}
+
+func subjectCoordinates(model semanticSourceModel) map[string]bool {
+	result := map[string]bool{}
+	for _, coordinate := range sourceCoordinates(model) {
+		if coordinate != "projection.shared-decision" && coordinate != "receipt.seal" {
+			result[coordinate] = true
+		}
+	}
+	return result
 }
 
 type recordState struct {
@@ -36,13 +59,15 @@ type recordState struct {
 	valid      map[string]bool
 	missing    map[string]bool
 	contradict map[string]bool
+	visible    map[string]bool
 	duplicate  bool
 }
 
-func inspectRecords(ledger Ledger) recordState {
-	state := recordState{records: map[string]EvidenceRecord{}, valid: map[string]bool{}, missing: map[string]bool{}, contradict: map[string]bool{}}
+func inspectCurrentEvidence(recipes []EvidenceRecord, current []EvidenceRecord) recordState {
+	state := recordState{records: map[string]EvidenceRecord{}, valid: map[string]bool{}, missing: map[string]bool{}, contradict: map[string]bool{}, visible: map[string]bool{}}
+	recipeMap := recordMap(recipes)
 	ids := map[string]bool{}
-	for _, record := range ledger.Records {
+	for _, record := range current {
 		if record.ID == "" || ids[record.ID] {
 			state.duplicate = true
 			state.contradict[record.Coordinate] = true
@@ -55,71 +80,105 @@ func inspectRecords(ledger Ledger) recordState {
 		}
 		state.records[record.Coordinate] = record
 	}
-	for _, spec := range indicatorSpecs() {
-		record, ok := state.records[spec.ID]
-		if !ok {
-			state.missing[spec.ID] = true
+	for _, recipe := range recipes {
+		if record, ok := state.records[recipe.Coordinate]; ok {
+			state.visible[recipe.Coordinate] = true
+			if record.EvidenceStatus == EvidenceCurrent && record.ObservedValue == "false" {
+				state.contradict[recipe.Coordinate] = true
+				continue
+			}
+			if record.EvidenceStatus != EvidenceCurrent || record.ObservedValue != "true" {
+				state.missing[recipe.Coordinate] = true
+				continue
+			}
+			if !currentMatchesRecipe(record, recipe) {
+				state.contradict[recipe.Coordinate] = true
+				continue
+			}
+			state.valid[recipe.Coordinate] = true
 			continue
 		}
-		if missingRecordField(record) {
-			state.missing[spec.ID] = true
-			continue
+		state.missing[recipe.Coordinate] = true
+	}
+	for coordinate := range recipeMap {
+		if _, ok := state.records[coordinate]; !ok {
+			state.visible[coordinate] = false
 		}
-		if record.Observation == "CONTRADICTORY" || !recordMatchesSpec(record, spec) {
-			state.contradict[spec.ID] = true
-			continue
-		}
-		state.valid[spec.ID] = true
 	}
 	return state
 }
 
-func missingRecordField(record EvidenceRecord) bool {
-	return record.ID == "" || record.Coordinate == "" || record.Audience == "" ||
-		record.Stage == "" || record.Step == "" || record.Reason == "" ||
-		record.Producer == "" || record.Consumer == "" || record.MetaOperation == "" ||
-		record.ProofChoice == "" || record.PriorClaim == "" || record.Observation == ""
+func currentMatchesRecipe(current, recipe EvidenceRecord) bool {
+	return current.ID == recipe.ID && current.Coordinate == recipe.Coordinate && current.ClaimID == recipe.ClaimID &&
+		current.Proposition == recipe.Proposition && current.PropositionDigest == recipe.PropositionDigest &&
+		current.TargetAddress == recipe.TargetAddress && current.Provider != "" && current.ArtifactPath != "" &&
+		validDigest(current.ContentDigest) && current.ObservedPredicate != "" && current.EvidenceStatus == EvidenceCurrent &&
+		current.Producer == recipe.Producer && current.Consumer == recipe.Consumer && current.MetaOperation == recipe.MetaOperation &&
+		current.ProofChoice == recipe.ProofChoice && current.Stage == recipe.Stage && current.Step == recipe.Step && current.Reason == recipe.Reason &&
+		current.PriorClaim == recipe.PriorClaim
 }
 
-func recordMatchesSpec(record EvidenceRecord, spec indicatorSpec) bool {
-	return record.ID == spec.ID && record.Coordinate == spec.ID && record.Producer == spec.Producer &&
-		record.Consumer == spec.Consumer && record.MetaOperation == spec.MetaOperation &&
-		record.ProofChoice == spec.ProofChoice && record.Stage == spec.Stage && record.Step == spec.Step &&
-		record.PriorClaim == "OPEN" && record.Observation == "OBSERVED" && knownAudience(record.Audience)
-}
-
-func buildIndicators(input Input, model semanticSourceModel, state recordState, sourceBound, replay, policyValid bool, globalDecision string) []Indicator {
-	specs := indicatorSpecs()
-	user := sourceAudience(model, "USER").Coordinates
-	author := sourceAudience(model, "TOOL_AUTHOR").Coordinates
-	governor := sourceAudience(model, "GOVERNOR").Coordinates
-	values := map[string]bool{
-		"source.binding":               sourceBound,
-		"ledger.coverage":              sourceBound && policyValid && coordinatesValid(state, governor) && len(state.records) == len(governor) && !state.duplicate,
-		"ledger.replay":                replay,
-		"user.coordinates":             coordinatesValid(state, user),
-		"author.coordinates":           coordinatesValid(state, author),
-		"governor.coordinates":         coordinatesValid(state, governor),
-		"projection.nesting":           policyValid,
-		"projection.shared-decision":   globalDecision == "PASS",
-		"projection.resolution":        sourceAudienceResolutionValid(model),
-		"counterexample.omission":      counterexampleValid(input.Ledger.Counterexamples, "counterexample.missing-information"),
-		"counterexample.contradiction": counterexampleValid(input.Ledger.Counterexamples, "counterexample.decision-contradiction"),
-		"receipt.seal":                 true,
-	}
-	result := make([]Indicator, 0, len(specs))
-	for _, spec := range specs {
-		observed := 0
-		if values[spec.ID] {
-			observed = 1
+func recordMap(records []EvidenceRecord) map[string]EvidenceRecord {
+	result := map[string]EvidenceRecord{}
+	for _, record := range records {
+		if _, exists := result[record.Coordinate]; !exists {
+			result[record.Coordinate] = record
 		}
-		before, after := claimOutcome(spec.ID, state, observed == 1)
-		result = append(result, Indicator{ID: spec.ID, Class: spec.Class, Producer: spec.Producer,
-			Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
-			Stage: spec.Stage, Step: spec.Step, Reason: spec.Reason, ClaimBefore: before,
-			ClaimAfter: after, Observed: observed, Expected: 1, Satisfied: observed == 1})
 	}
 	return result
+}
+
+func buildIndicators(recipes []EvidenceRecord, current []EvidenceRecord, state recordState, model semanticSourceModel, replay ReplayVerification, cex []CounterexampleResult, sourceBound, policyValid bool, subjectDecision string) []Indicator {
+	currentMap := recordMap(current)
+	values := map[string]bool{
+		"source.binding":               state.valid["source.binding"],
+		"ledger.coverage":              state.valid["ledger.coverage"],
+		"ledger.replay":                state.valid["ledger.replay"] && replay.Equal,
+		"user.coordinates":             coordinatesValid(state, sourceAudience(model, "USER").Coordinates),
+		"author.coordinates":           coordinatesValid(state, sourceAudience(model, "TOOL_AUTHOR").Coordinates),
+		"governor.coordinates":         coordinatesValid(state, sourceAudience(model, "GOVERNOR").Coordinates),
+		"projection.nesting":           policyValid,
+		"projection.shared-decision":   subjectDecision == "PASS",
+		"projection.resolution":        sourceAudienceResolutionValid(model),
+		"counterexample.omission":      counterexamplePassed(cex, "counterexample.missing-information"),
+		"counterexample.contradiction": counterexamplePassed(cex, "counterexample.decision-contradiction"),
+		// receipt.seal is intentionally excluded from subject PASS. It is
+		// discharged only by the post-evaluation independent attestation.
+		"receipt.seal": false,
+	}
+	result := make([]Indicator, 0, len(indicatorSpecs()))
+	for _, spec := range indicatorSpecs() {
+		recipe := recipeFor(recipes, spec.ID)
+		currentRecord := currentMap[spec.ID]
+		observed := boolToInt(values[spec.ID])
+		before, after := claimOutcome(spec.ID, state, observed == 1)
+		status := EvidenceUnknown
+		if currentRecord.EvidenceStatus != "" {
+			status = currentRecord.EvidenceStatus
+		}
+		result = append(result, Indicator{ID: spec.ID, Class: spec.Class, Producer: recipe.Producer,
+			Consumer: recipe.Consumer, MetaOperation: recipe.MetaOperation, ProofChoice: recipe.ProofChoice,
+			Stage: recipe.Stage, Step: recipe.Step, Reason: recipe.Reason, ClaimBefore: before,
+			ClaimAfter: after, Observed: observed, Expected: 1, Satisfied: observed == 1,
+			EvidenceStatus: status, PropositionDigest: recipe.PropositionDigest, TargetAddress: recipe.TargetAddress,
+			ArtifactPath: currentRecord.ArtifactPath, ContentDigest: currentRecord.ContentDigest})
+	}
+	_ = sourceBound
+	return result
+}
+
+func recipeFor(recipes []EvidenceRecord, coordinate string) EvidenceRecord {
+	for _, recipe := range recipes {
+		if recipe.Coordinate == coordinate {
+			return recipe
+		}
+	}
+	proposition := "semantic policy coordinate " + coordinate
+	return EvidenceRecord{ID: coordinate, Coordinate: coordinate, ClaimID: "claim/" + coordinate,
+		Proposition: proposition, PropositionDigest: digestBytes([]byte(proposition)), TargetAddress: "gooo://audience-resolution/claim/" + coordinate,
+		Provider: "audience-resolution.policy", Producer: "audience-resolution.policy", Consumer: "audience-resolution.policy",
+		MetaOperation: "project-audience-claim", ProofChoice: "COHERENCE", Stage: "projection", Step: "policy",
+		Reason: "formal source policy coordinate has no raw recipe", PriorClaim: "OPEN"}
 }
 
 func claimOutcome(id string, state recordState, satisfied bool) (string, string) {
@@ -148,44 +207,24 @@ func coordinatesValid(state recordState, coordinates []string) bool {
 	return true
 }
 
-func coordinateVisible(state recordState, coordinate string) bool {
-	_, ok := state.records[coordinate]
-	return ok
-}
+func coordinateVisible(state recordState, coordinate string) bool { return state.visible[coordinate] }
 
 func coordinateContradictory(state recordState, coordinate string) bool {
 	return state.contradict[coordinate]
 }
 
-func counterexampleValid(values []Counterexample, id string) bool {
-	want := expectedCounterexample(id)
+func counterexamplePassed(values []CounterexampleResult, id string) bool {
 	for _, value := range values {
 		if value.ID == id {
-			return reflect.DeepEqual(value, want)
+			return value.ExecutionValidated
 		}
 	}
 	return false
 }
 
-func counterexamplesValid(values []Counterexample) bool {
-	if len(values) != 2 {
-		return false
+func boolToInt(value bool) int {
+	if value {
+		return 1
 	}
-	seen := map[string]bool{}
-	for _, value := range values {
-		if seen[value.ID] || !counterexampleValid(values, value.ID) {
-			return false
-		}
-		seen[value.ID] = true
-	}
-	return seen["counterexample.missing-information"] && seen["counterexample.decision-contradiction"]
-}
-
-func expectedCounterexample(id string) Counterexample {
-	if id == "counterexample.missing-information" {
-		return Counterexample{ID: id, Kind: "INFORMATION_OMISSION", Trigger: "author.consumer",
-			Mutation: "remove the governor-only receipt.seal observation", TargetCoordinate: "receipt.seal"}
-	}
-	return Counterexample{ID: id, Kind: "DECISION_CONTRADICTION", Trigger: "user/governor",
-		Mutation: "change ledger.coverage observation to CONTRADICTORY", TargetCoordinate: "ledger.coverage"}
+	return 0
 }

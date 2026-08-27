@@ -10,25 +10,36 @@ type RawLedger struct {
 }
 
 type RawSource struct {
-	Path           string `json:"path"`
-	Kind           string `json:"kind"`
-	Digest         string `json:"digest"`
-	SemanticDigest string `json:"semantic_digest"`
+	Path             string `json:"path"`
+	Kind             string `json:"kind"`
+	Digest           string `json:"digest"`
+	SemanticDigest   string `json:"semantic_digest,omitempty"`
+	DeclarationCount int    `json:"declaration_count,omitempty"`
+	Reconstructed    bool   `json:"reconstructed,omitempty"`
 }
 
 type RawRecord struct {
-	ID            string `json:"id"`
-	Coordinate    string `json:"coordinate"`
-	Audience      string `json:"audience"`
-	Stage         string `json:"stage"`
-	Step          string `json:"step"`
-	Reason        string `json:"reason"`
-	Producer      string `json:"producer"`
-	Consumer      string `json:"consumer"`
-	MetaOperation string `json:"meta_operation"`
-	ProofChoice   string `json:"proof_choice"`
-	PriorClaim    string `json:"prior_claim"`
-	Observation   string `json:"observation"`
+	ID                string `json:"id"`
+	Coordinate        string `json:"coordinate"`
+	Audience          string `json:"audience"`
+	ClaimID           string `json:"claim_id"`
+	Proposition       string `json:"proposition"`
+	PropositionDigest string `json:"proposition_digest"`
+	TargetAddress     string `json:"target_address"`
+	Provider          string `json:"provider"`
+	ArtifactPath      string `json:"artifact_path"`
+	ContentDigest     string `json:"content_digest"`
+	ObservedPredicate string `json:"observed_predicate"`
+	ObservedValue     string `json:"observed_value"`
+	EvidenceStatus    string `json:"evidence_status"`
+	Producer          string `json:"producer"`
+	Consumer          string `json:"consumer"`
+	MetaOperation     string `json:"meta_operation"`
+	ProofChoice       string `json:"proof_choice"`
+	Stage             string `json:"stage"`
+	Step              string `json:"step"`
+	Reason            string `json:"reason"`
+	PriorClaim        string `json:"prior_claim"`
 }
 
 type RawCounterexample struct {
@@ -46,13 +57,17 @@ type Receipt struct {
 	Decision         string                  `json:"decision"`
 	Resolution       string                  `json:"resolution"`
 	Reason           string                  `json:"reason"`
+	Provisional      bool                    `json:"provisional"`
 	Source           ReceiptSource           `json:"source"`
 	Summary          ReceiptSummary          `json:"summary"`
+	Indicators       []Indicator             `json:"indicators"`
+	CurrentEvidence  []EvidenceRecord        `json:"current_evidence"`
 	Views            []ReceiptView           `json:"views"`
+	Replay           ReplayVerification      `json:"replay"`
 	Counterexamples  []ReceiptCounterexample `json:"counterexamples"`
 	ClaimTransitions []ReceiptTransition     `json:"claim_transitions"`
-	Digest           string                  `json:"digest"`
 	FactsDigest      string                  `json:"facts_digest"`
+	Digest           string                  `json:"digest"`
 }
 
 type ReceiptSource struct {
@@ -70,27 +85,83 @@ type ReceiptSummary struct {
 		Total       int `json:"total"`
 		BasisPoints int `json:"basis_points"`
 	} `json:"coordinates"`
-	RecordsObserved         int `json:"records_observed"`
-	CounterexamplesExecuted int `json:"counterexamples_executed"`
-	SourceDenominator       int `json:"source_denominator"`
+	DistinctPropositions     int                `json:"distinct_propositions"`
+	RecordsObserved          int                `json:"records_observed"`
+	CounterexamplesExecuted  int                `json:"counterexamples_executed"`
+	MissingCoordinates       int                `json:"missing_coordinates"`
+	ContradictoryCoordinates int                `json:"contradictory_coordinates"`
+	SourceDenominator        int                `json:"source_denominator"`
+	EvidenceCounts           EvidenceCounts     `json:"evidence_counts"`
+	Conformance              ConformanceSummary `json:"conformance"`
+}
+
+type EvidenceCounts struct {
+	Current    int `json:"current_evidence"`
+	Historical int `json:"historical_fixture"`
+	Unknown    int `json:"unknown"`
+}
+
+type ConformanceSummary struct {
+	Decision           string `json:"decision"`
+	Resolution         string `json:"resolution"`
+	SealClaimBefore    string `json:"seal_claim_before"`
+	SealClaimAfter     string `json:"seal_claim_after"`
+	SealEvidenceStatus string `json:"seal_evidence_status"`
+}
+
+type EvidenceRecord struct {
+	ID                string   `json:"id"`
+	Coordinate        string   `json:"coordinate"`
+	Audience          string   `json:"audience"`
+	ClaimID           string   `json:"claim_id"`
+	Proposition       string   `json:"proposition"`
+	PropositionDigest string   `json:"proposition_digest"`
+	TargetAddress     string   `json:"target_address"`
+	Provider          string   `json:"provider"`
+	ArtifactPath      string   `json:"artifact_path"`
+	ArtifactPaths     []string `json:"artifact_paths,omitempty"`
+	ContentDigest     string   `json:"content_digest"`
+	ContentDigests    []string `json:"content_digests,omitempty"`
+	ObservedPredicate string   `json:"observed_predicate"`
+	ObservedValue     string   `json:"observed_value"`
+	EvidenceStatus    string   `json:"evidence_status"`
+	Producer          string   `json:"producer"`
+	Consumer          string   `json:"consumer"`
+	MetaOperation     string   `json:"meta_operation"`
+	ProofChoice       string   `json:"proof_choice"`
+	Stage             string   `json:"stage"`
+	Step              string   `json:"step"`
+	Reason            string   `json:"reason"`
+	PriorClaim        string   `json:"prior_claim"`
+}
+
+type Indicator struct {
+	ID                string `json:"id"`
+	Satisfied         bool   `json:"satisfied"`
+	ClaimAfter        string `json:"claim_after"`
+	EvidenceStatus    string `json:"evidence_status"`
+	PropositionDigest string `json:"proposition_digest"`
+	TargetAddress     string `json:"target_address"`
+	ArtifactPath      string `json:"artifact_path"`
+	ContentDigest     string `json:"content_digest"`
 }
 
 type ReceiptView struct {
-	Audience               string            `json:"audience"`
-	Resolution             string            `json:"resolution"`
-	GlobalDecision         string            `json:"global_decision"`
-	InheritedStatus        string            `json:"inherited_status"`
-	LocalDecision          string            `json:"local_decision"`
-	LocalResolution        string            `json:"local_resolution"`
-	LocalReason            string            `json:"local_reason"`
-	OmittedEvidence        []OmittedEvidence `json:"omitted_evidence"`
-	Satisfied              int               `json:"satisfied"`
-	Total                  int               `json:"total"`
-	Visible                int               `json:"visible"`
-	Required               int               `json:"required"`
-	BasisPoints            int               `json:"basis_points"`
-	CoordinateIDs          []string          `json:"coordinate_ids"`
-	OmittedCoordinateCount int               `json:"omitted_coordinate_count"`
+	Audience         string            `json:"audience"`
+	Resolution       string            `json:"resolution"`
+	GlobalDecision   string            `json:"global_decision"`
+	InheritedStatus  string            `json:"inherited_status"`
+	LocalDecision    string            `json:"local_decision"`
+	LocalResolution  string            `json:"local_resolution"`
+	LocalReason      string            `json:"local_reason"`
+	OmittedEvidence  []OmittedEvidence `json:"omitted_evidence"`
+	Satisfied        int               `json:"satisfied"`
+	Total            int               `json:"total"`
+	Visible          int               `json:"visible"`
+	Required         int               `json:"required"`
+	SubjectSatisfied int               `json:"subject_satisfied"`
+	SubjectRequired  int               `json:"subject_required"`
+	CoordinateIDs    []string          `json:"coordinate_ids"`
 }
 
 type OmittedEvidence struct {
@@ -100,24 +171,58 @@ type OmittedEvidence struct {
 	Reason     string `json:"reason"`
 }
 
+type ReplayVerification struct {
+	RunAPath       string `json:"run_a_path"`
+	RunADigest     string `json:"run_a_digest"`
+	RunBPath       string `json:"run_b_path"`
+	RunBDigest     string `json:"run_b_digest"`
+	Equal          bool   `json:"equal"`
+	CombinedDigest string `json:"combined_digest"`
+}
+
 type ReceiptCounterexample struct {
-	ID     string `json:"id"`
-	Global string `json:"global_decision"`
-	Reason string `json:"reason"`
-	Views  []struct {
-		Audience        string `json:"audience"`
-		LocalDecision   string `json:"local_decision"`
-		LocalResolution string `json:"local_resolution"`
-	} `json:"views"`
+	ID                 string               `json:"id"`
+	Kind               string               `json:"kind"`
+	TargetCoordinate   string               `json:"target_coordinate"`
+	TargetAddress      string               `json:"target_address"`
+	PropositionDigest  string               `json:"proposition_digest"`
+	Global             string               `json:"global_decision"`
+	Resolution         string               `json:"resolution"`
+	Stage              string               `json:"stage"`
+	Step               string               `json:"step"`
+	Reason             string               `json:"reason"`
+	Views              []CounterexampleView `json:"views"`
+	BeforeClaim        string               `json:"before_claim"`
+	AfterClaim         string               `json:"after_claim"`
+	ArtifactPath       string               `json:"artifact_path"`
+	ContentDigest      string               `json:"content_digest"`
+	ExecutionValidated bool                 `json:"execution_validated"`
+}
+
+type CounterexampleView struct {
+	Audience        string `json:"audience"`
+	Before          string `json:"before"`
+	After           string `json:"after"`
+	LocalDecision   string `json:"local_decision"`
+	LocalResolution string `json:"local_resolution"`
 }
 
 type ReceiptTransition struct {
-	IndicatorID    string `json:"indicator_id"`
-	Audience       string `json:"audience"`
-	Before         string `json:"before"`
-	After          string `json:"after"`
-	Visibility     string `json:"visibility"`
-	EvidenceDigest string `json:"evidence_digest"`
+	ClaimID              string `json:"claim_id"`
+	Audience             string `json:"audience"`
+	IndicatorID          string `json:"indicator_id"`
+	Proposition          string `json:"proposition"`
+	PropositionDigest    string `json:"proposition_digest"`
+	TargetAddress        string `json:"target_address"`
+	Before               string `json:"before"`
+	After                string `json:"after"`
+	Visibility           string `json:"visibility"`
+	EvidenceStatus       string `json:"evidence_status"`
+	EvidenceDigest       string `json:"evidence_digest"`
+	EventDigest          string `json:"event_digest"`
+	PreviousEventDigest  string `json:"previous_event_digest"`
+	SourceDigest         string `json:"source_digest"`
+	SemanticSourceDigest string `json:"semantic_source_digest"`
 }
 
 type Input struct {
@@ -128,6 +233,7 @@ type Input struct {
 	Receipt      Receipt
 	ReceiptBytes []byte
 	RepoRoot     string
+	ArtifactRoot string
 }
 
 type AudienceCheck struct {
@@ -136,7 +242,8 @@ type AudienceCheck struct {
 	Required         int    `json:"required"`
 	Decision         string `json:"local_decision"`
 	Resolution       string `json:"local_resolution"`
-	ClaimTransitions string `json:"claim_transitions"`
+	SubjectSatisfied int    `json:"subject_satisfied"`
+	SubjectRequired  int    `json:"subject_required"`
 }
 
 type SourceReconstruction struct {
@@ -153,15 +260,35 @@ type ImportAudit struct {
 	Forbidden   []string `json:"forbidden_imports,omitempty"`
 }
 
+type Attestation struct {
+	Schema               string            `json:"schema"`
+	SubjectReceiptDigest string            `json:"subject_receipt_digest"`
+	Decision             string            `json:"decision"`
+	Resolution           string            `json:"resolution"`
+	Stage                string            `json:"stage"`
+	Step                 string            `json:"step"`
+	Reason               string            `json:"reason"`
+	EvidenceStatus       string            `json:"evidence_status"`
+	Evidence             EvidenceRecord    `json:"evidence"`
+	ClaimTransition      ReceiptTransition `json:"claim_transition"`
+	Digest               string            `json:"digest"`
+}
+
 type Report struct {
 	Schema                     string               `json:"schema"`
 	Decision                   string               `json:"decision"`
 	Reason                     string               `json:"reason"`
 	RawLedgerFinalFieldsAbsent bool                 `json:"raw_ledger_final_fields_absent"`
+	RawEvidenceHistoricalOnly  bool                 `json:"raw_evidence_historical_only"`
 	ReceiptDigestMatch         bool                 `json:"receipt_digest_match"`
 	SourceReconstruction       SourceReconstruction `json:"source_reconstruction"`
 	Audiences                  []AudienceCheck      `json:"audiences"`
 	ProducerImports            ImportAudit          `json:"producer_imports"`
+	CurrentEvidenceCounts      EvidenceCounts       `json:"current_evidence_counts"`
+	DistinctPropositions       int                  `json:"distinct_propositions"`
+	Replay                     ReplayVerification   `json:"replay"`
+	CounterexamplesChecked     int                  `json:"counterexamples_checked"`
 	ClaimTransitionsChecked    int                  `json:"claim_transitions_checked"`
+	Attestation                Attestation          `json:"verification_attestation"`
 	Digest                     string               `json:"digest"`
 }

@@ -1,85 +1,112 @@
 package audienceresolution
 
-import (
-	"reflect"
-)
-
-func Evaluate(input Input) Receipt {
-	return evaluateInput(input, true)
-}
-
-func evaluateInput(input Input, executeCounterexamples bool) Receipt {
-	if !ContractValid(input.Contract) {
-		return closedReceipt(input, "INVARIANT_ONLY", "CONTRACT_SHAPE_INVALID")
-	}
+// Evaluate consumes only provider-produced evidence. The optional bundle is
+// useful to the CI producer boundary; when absent, the package creates an
+// in-memory provider bundle for compatibility with package-level callers.
+func Evaluate(input Input, provided ...CurrentEvidenceBundle) Receipt {
 	model, err := deriveSemanticSource(input.SourcePath, input.Source)
 	if err != nil {
 		return closedReceipt(input, "LOWER_RESOLUTION", "SOURCE_RECONSTRUCTION_UNAVAILABLE")
 	}
-	state := inspectRecords(input.Ledger)
-	sourceBound := sourceMatches(input, model)
-	replay := reflect.DeepEqual(input.Ledger, input.Replay)
-	policyValid := sourcePolicyValid(model) && sourceAudienceResolutionValid(model)
-	globalDecision, globalResolution, globalReason := globalState(input, model, state, sourceBound, replay, policyValid)
-	indicators := buildIndicators(input, model, state, sourceBound, replay, policyValid, globalDecision)
-	views := buildViews(model, state, globalDecision, globalResolution, globalReason)
-	receipt := Receipt{Schema: ReceiptSchema, ContractID: input.Contract.ID, Subject: input.Ledger.Subject,
-		Decision: globalDecision, Resolution: globalResolution, Reason: globalReason,
-		Source: sourceReport(input.Ledger.Source, model),
-		Summary: Summary{Coordinates: Coordinates{Satisfied: countSatisfied(indicators), Total: IndicatorTotal,
-			BasisPoints: basisPoints(countSatisfied(indicators), IndicatorTotal)}, RecordsObserved: len(input.Ledger.Records),
-			CounterexamplesExecuted: len(input.Ledger.Counterexamples), MissingCoordinates: missingCount(model, state),
-			ContradictoryCoordinates: contradictoryCount(state), SourceDenominator: model.DeclarationCount},
-		Indicators: indicators, Views: views, ClaimTransitions: claimTransitions(model, state, input.Ledger),
-		NotClaimed: append([]string(nil), input.Contract.NotClaimed...), FactsDigest: factsDigest(input.Ledger)}
-	if executeCounterexamples {
-		receipt.Counterexamples = executeCounterexamplesFromLedger(input, model)
+	var bundle CurrentEvidenceBundle
+	if len(provided) > 0 {
+		bundle = provided[0]
+	} else {
+		bundle, err = ProvideCurrentEvidence(input)
+		if err != nil {
+			return closedReceipt(input, "LOWER_RESOLUTION", "CURRENT_EVIDENCE_UNAVAILABLE")
+		}
 	}
-	return seal(receipt)
+	state := inspectCurrentEvidence(input.Ledger.Records, bundle.Records)
+	decision, resolution := subjectDecisionFromState(state, model)
+	indicators := buildIndicators(input.Ledger.Records, bundle.Records, state, model, bundle.Replay, bundle.Counterexamples, sourceBound(input, model), sourcePolicyValid(model) && sourceAudienceResolutionValid(model), decision)
+	views := buildViews(model, input.Ledger.Records, state, decision, resolution)
+	subjectIDs := subjectCoordinates(model)
+	subjectSatisfied := 0
+	for coordinate := range subjectIDs {
+		if state.valid[coordinate] {
+			subjectSatisfied++
+		}
+	}
+	sealState := EvidenceUnknown
+	sealAfter := "OPEN"
+	if seal := recordMap(bundle.Records)["receipt.seal"]; seal.EvidenceStatus != "" {
+		sealState = seal.EvidenceStatus
+	}
+	return seal(Receipt{Schema: ReceiptSchema, ContractID: input.Contract.ID, Subject: input.Ledger.Subject,
+		Decision: decision, Resolution: resolution, Reason: decisionReason(decision, resolution, state, model), Provisional: true,
+		Source: sourceReport(input.Ledger.Source, model), Summary: Summary{
+			Coordinates:          Coordinates{Satisfied: subjectSatisfied, Total: len(subjectIDs), BasisPoints: basisPoints(subjectSatisfied, len(subjectIDs))},
+			DistinctPropositions: len(sourceCoordinates(model)), RecordsObserved: len(bundle.Records),
+			CounterexamplesExecuted: len(bundle.Counterexamples), MissingCoordinates: missingCount(model, state),
+			ContradictoryCoordinates: contradictoryCount(state), SourceDenominator: model.DeclarationCount,
+			EvidenceCounts: evidenceCounts(input.Ledger.Records, bundle.Records),
+			Conformance:    ConformanceSummary{Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", SealClaimBefore: "OPEN", SealClaimAfter: sealAfter, SealEvidenceStatus: sealState}},
+		Indicators: indicators, CurrentEvidence: bundle.Records, Views: views, Replay: bundle.Replay,
+		Counterexamples: bundle.Counterexamples, ClaimTransitions: claimTransitions(model, input.Ledger.Records, state, input.Ledger.Source.Digest),
+		NotClaimed: append([]string(nil), input.Contract.NotClaimed...), FactsDigest: factsDigest(input.Ledger)})
 }
 
-func globalState(input Input, model semanticSourceModel, state recordState, sourceBound, replay, policyValid bool) (string, string, string) {
-	if state.duplicate || contradictoryCount(state) > 0 {
-		return "REFUTED", "INVARIANT_ONLY", "VISIBLE_EVIDENCE_CONTRADICTION:ledger:observation:duplicate-or-contradictory-record"
-	}
-	if missingCount(model, state) > 0 {
-		return "UNKNOWN", "LOWER_RESOLUTION", firstMissingReason(model, state)
-	}
-	if !sourceBound {
-		return "UNKNOWN", "LOWER_RESOLUTION", "SOURCE_RECONSTRUCTION_MISMATCH"
-	}
-	if !replay {
-		return "UNKNOWN", "INVARIANT_ONLY", "LEDGER_REPLAY_DIVERGED"
-	}
-	if !policyValid {
-		return "UNKNOWN", "LOWER_RESOLUTION", "SOURCE_POLICY_INVALID"
-	}
-	if !counterexamplesValid(input.Ledger.Counterexamples) {
-		return "UNKNOWN", "LOWER_RESOLUTION", "COUNTEREXAMPLE_DEFINITION_INCOMPLETE"
-	}
-	return "PASS", "EXACT", "CANONICAL_EVIDENCE_LEDGER_RECONSTRUCTED"
+func sourceBound(input Input, model semanticSourceModel) bool {
+	return input.Ledger.Source.Path == input.Contract.SourcePath && input.Ledger.Source.Kind == SourceKind &&
+		input.Ledger.Source.Digest == digestBytes(input.Source) && validDigest(input.Ledger.Source.Digest) &&
+		(model.SemanticDigest != "")
 }
 
-func sourceMatches(input Input, model semanticSourceModel) bool {
-	// Source.Path is the ledger's logical binding. The bytes supplied at
-	// SourcePath may be a CI intervention variant, so their raw digest—not a
-	// temporary filename—establishes identity.
-	return input.Ledger.Source.Path == input.Contract.SourcePath &&
-		input.Ledger.Source.Kind == SourceKind && input.Ledger.Source.Digest == digestBytes(input.Source) &&
-		(input.Ledger.Source.SemanticDigest == "" || input.Ledger.Source.SemanticDigest == model.SemanticDigest) && validDigest(input.Ledger.Source.Digest)
+func subjectDecisionFromState(state recordState, model semanticSourceModel) (string, string) {
+	for coordinate := range subjectCoordinates(model) {
+		if state.contradict[coordinate] {
+			return "REFUTED", "INVARIANT_ONLY"
+		}
+	}
+	for coordinate := range subjectCoordinates(model) {
+		if !state.valid[coordinate] {
+			return "UNKNOWN", "LOWER_RESOLUTION"
+		}
+	}
+	return "PASS", "EXACT"
 }
 
-func sourceReport(raw SourceBinding, model semanticSourceModel) SourceBinding {
-	raw.DeclarationCount = model.DeclarationCount
-	raw.SemanticDigest = model.SemanticDigest
-	raw.Reconstructed = model.CanonicalIRDigest == model.SemanticDigest
-	return raw
+func decisionReason(decision, resolution string, state recordState, model semanticSourceModel) string {
+	if decision == "REFUTED" {
+		for coordinate := range subjectCoordinates(model) {
+			if state.contradict[coordinate] {
+				return "VISIBLE_EVIDENCE_CONTRADICTION:" + coordinate
+			}
+		}
+		return "VISIBLE_EVIDENCE_CONTRADICTION"
+	}
+	if decision == "UNKNOWN" {
+		return firstMissingReason(model, state)
+	}
+	if resolution == "EXACT" {
+		return "CURRENT_EVIDENCE_SUBJECT_RECONSTRUCTED;SEAL_CONFORMANCE_POSTCONDITION"
+	}
+	return "CURRENT_EVIDENCE_SUBJECT_UNRESOLVED"
+}
+
+func firstMissingReason(model semanticSourceModel, state recordState) string {
+	for _, coordinate := range sourceCoordinates(model) {
+		if !subjectCoordinates(model)[coordinate] {
+			continue
+		}
+		if state.contradict[coordinate] {
+			return "VISIBLE_EVIDENCE_CONTRADICTION:" + coordinate
+		}
+		if !state.valid[coordinate] {
+			if record, ok := state.records[coordinate]; ok {
+				return "VISIBLE_EVIDENCE_INSUFFICIENT:" + record.Stage + ":" + record.Step + ":" + record.Reason
+			}
+			return "REQUIRED_EVIDENCE_OMITTED:projection:policy:" + coordinate
+		}
+	}
+	return "REQUIRED_EVIDENCE_UNAVAILABLE"
 }
 
 func missingCount(model semanticSourceModel, state recordState) int {
 	count := 0
-	for _, coordinate := range allCoordinates(model) {
-		if !coordinateVisible(state, coordinate) || !state.valid[coordinate] {
+	for _, coordinate := range sourceCoordinates(model) {
+		if !state.valid[coordinate] {
 			count++
 		}
 	}
@@ -99,58 +126,31 @@ func contradictoryCount(state recordState) int {
 	return count
 }
 
-func firstMissingReason(model semanticSourceModel, state recordState) string {
-	for _, coordinate := range allCoordinates(model) {
-		if coordinateContradictory(state, coordinate) {
-			return "VISIBLE_EVIDENCE_CONTRADICTION:" + coordinate
-		}
-		if !coordinateVisible(state, coordinate) || !state.valid[coordinate] {
-			for _, spec := range indicatorSpecs() {
-				if spec.ID == coordinate {
-					return "REQUIRED_EVIDENCE_OMITTED:" + spec.Stage + ":" + spec.Step + ":" + spec.Reason
-				}
-			}
-			return "REQUIRED_EVIDENCE_OMITTED:projection:policy:" + coordinate
+func evidenceCounts(recipes, current []EvidenceRecord) EvidenceCounts {
+	counts := EvidenceCounts{}
+	for _, record := range recipes {
+		if record.EvidenceStatus == EvidenceHistorical {
+			counts.Historical++
 		}
 	}
-	if !sourceAudienceResolutionValid(model) {
-		return "SOURCE_POLICY_RESOLUTION_INVALID"
+	for _, record := range current {
+		switch record.EvidenceStatus {
+		case EvidenceCurrent:
+			counts.Current++
+		case EvidenceHistorical:
+			counts.Historical++
+		default:
+			counts.Unknown++
+		}
 	}
-	if !sourcePolicyValid(model) {
-		return "SOURCE_POLICY_NESTING_INVALID"
-	}
-	return "REQUIRED_EVIDENCE_UNAVAILABLE"
+	return counts
 }
 
 func closedReceipt(input Input, resolution, reason string) Receipt {
-	model := semanticSourceModel{Audiences: CanonicalContract().Audiences, ClaimStates: []string{"OPEN", "DISCHARGED", "REFUTED"}, PriorClaim: "OPEN", EvidenceClaimRelation: "unavailable"}
-	indicators := make([]Indicator, 0, IndicatorTotal)
-	for _, spec := range indicatorSpecs() {
-		indicators = append(indicators, Indicator{ID: spec.ID, Class: spec.Class, Producer: spec.Producer,
-			Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
-			Stage: spec.Stage, Step: spec.Step, Reason: spec.Reason, ClaimBefore: "OPEN", ClaimAfter: "OPEN", Expected: 1})
-	}
 	return seal(Receipt{Schema: ReceiptSchema, ContractID: input.Contract.ID, Subject: input.Ledger.Subject,
-		Decision: "UNKNOWN", Resolution: resolution, Reason: reason, Source: input.Ledger.Source,
-		Summary: Summary{Coordinates: Coordinates{Total: IndicatorTotal}, RecordsObserved: len(input.Ledger.Records),
-			CounterexamplesExecuted: 0}, Indicators: indicators,
-		Views:      buildViews(model, inspectRecords(input.Ledger), "UNKNOWN", resolution, reason),
-		NotClaimed: append([]string(nil), CanonicalContract().NotClaimed...), FactsDigest: factsDigest(input.Ledger)})
-}
-
-func countSatisfied(indicators []Indicator) int {
-	count := 0
-	for _, indicator := range indicators {
-		if indicator.Satisfied {
-			count++
-		}
-	}
-	return count
-}
-
-func boolInt(value bool) int {
-	if value {
-		return 1
-	}
-	return 0
+		Decision: "UNKNOWN", Resolution: resolution, Reason: reason, Provisional: true, Source: input.Ledger.Source,
+		Summary: Summary{DistinctPropositions: 0, RecordsObserved: 0, SourceDenominator: 0,
+			Coordinates: Coordinates{Total: 0}, EvidenceCounts: EvidenceCounts{Unknown: 1},
+			Conformance: ConformanceSummary{Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", SealClaimBefore: "OPEN", SealClaimAfter: "OPEN", SealEvidenceStatus: EvidenceUnknown}},
+		NotClaimed: append([]string(nil), input.Contract.NotClaimed...), FactsDigest: factsDigest(input.Ledger)})
 }

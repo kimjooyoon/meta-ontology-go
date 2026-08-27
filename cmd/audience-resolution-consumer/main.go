@@ -5,16 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/audienceresolutionconsumer"
 )
 
 type options struct {
-	Ledger  string
-	Source  string
-	Receipt string
-	Out     string
-	Root    string
+	Ledger      string
+	Source      string
+	Receipt     string
+	Out         string
+	Root        string
+	Artifacts   string
+	Attestation string
 }
 
 func main() { os.Exit(run(os.Args[1:])) }
@@ -46,13 +49,30 @@ func run(args []string) int {
 		return reportError(fmt.Errorf("decode receipt: %w", err))
 	}
 	report := audienceresolutionconsumer.Check(audienceresolutionconsumer.Input{SourcePath: options.Source,
-		Source: source, Ledger: ledger, LedgerBytes: ledgerBytes, Receipt: receipt, ReceiptBytes: receiptBytes, RepoRoot: options.Root})
+		Source: source, Ledger: ledger, LedgerBytes: ledgerBytes, Receipt: receipt, ReceiptBytes: receiptBytes,
+		RepoRoot: options.Root, ArtifactRoot: options.Artifacts})
 	payload, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		return reportError(err)
 	}
 	if err := os.WriteFile(options.Out, append(payload, '\n'), 0o640); err != nil {
 		return reportError(fmt.Errorf("write report: %w", err))
+	}
+	if report.Decision == "PASS" {
+		artifactPath := filepath.Join(options.Artifacts, filepath.FromSlash(report.Attestation.Evidence.ArtifactPath))
+		if err := os.MkdirAll(filepath.Dir(artifactPath), 0o750); err != nil {
+			return reportError(fmt.Errorf("create attestation artifact directory: %w", err))
+		}
+		if err := os.WriteFile(artifactPath, append(audienceresolutionconsumer.AttestationEvidencePayload(report.Attestation), '\n'), 0o640); err != nil {
+			return reportError(fmt.Errorf("write attestation evidence: %w", err))
+		}
+		attestation, err := json.MarshalIndent(report.Attestation, "", "  ")
+		if err != nil {
+			return reportError(err)
+		}
+		if err := os.WriteFile(options.Attestation, append(attestation, '\n'), 0o640); err != nil {
+			return reportError(fmt.Errorf("write attestation: %w", err))
+		}
 	}
 	fmt.Printf("audience consumer: %s (%s), imports=%d/%d, source=%d\n", report.Decision, report.Reason,
 		report.ProducerImports.Numerator, report.ProducerImports.Denominator, report.SourceReconstruction.DeclarationCount)
@@ -79,13 +99,17 @@ func parseOptions(args []string) (options, error) {
 			value.Out = args[index+1]
 		case "--root":
 			value.Root = args[index+1]
+		case "--artifacts":
+			value.Artifacts = args[index+1]
+		case "--attestation":
+			value.Attestation = args[index+1]
 		default:
 			return options{}, errors.New("unknown option: " + args[index])
 		}
 		index++
 	}
-	if value.Ledger == "" || value.Source == "" || value.Receipt == "" || value.Out == "" || value.Root == "" {
-		return options{}, errors.New("--ledger, --source, --receipt, --out, and --root are required")
+	if value.Ledger == "" || value.Source == "" || value.Receipt == "" || value.Out == "" || value.Root == "" || value.Artifacts == "" || value.Attestation == "" {
+		return options{}, errors.New("--ledger, --source, --receipt, --out, --root, --artifacts, and --attestation are required")
 	}
 	return value, nil
 }

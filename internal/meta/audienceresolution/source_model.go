@@ -149,3 +149,10 @@ func sourceAudienceResolutionValid(model semanticSourceModel) bool {
 		sourceAudience(model, "TOOL_AUTHOR").Resolution == "TOOL_CONTRACT_COORDINATES" &&
 		sourceAudience(model, "GOVERNOR").Resolution == "GOVERNOR_FULL_LEDGER"
 }
+
+func sourceReport(binding SourceBinding, model semanticSourceModel) SourceBinding {
+	binding.SemanticDigest = model.SemanticDigest
+	binding.DeclarationCount = model.DeclarationCount
+	binding.Reconstructed = true
+	return binding
+}

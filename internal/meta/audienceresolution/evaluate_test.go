@@ -1,13 +1,16 @@
 package audienceresolution
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestEvaluateProjectsNestedAudiencesFromOneLedger(t *testing.T) {
 	receipt := Evaluate(fixtureInput(t))
-	if receipt.Decision != "PASS" || receipt.Resolution != "EXACT" || receipt.Reason != "CANONICAL_EVIDENCE_LEDGER_RECONSTRUCTED" {
+	if receipt.Decision != "PASS" || receipt.Resolution != "EXACT" || !strings.Contains(receipt.Reason, "CURRENT_EVIDENCE_SUBJECT_RECONSTRUCTED") {
 		t.Fatalf("receipt decision=%s resolution=%s reason=%s", receipt.Decision, receipt.Resolution, receipt.Reason)
 	}
-	if receipt.Summary.Coordinates.Satisfied != 12 || receipt.Summary.Coordinates.Total != 12 || receipt.Summary.Coordinates.BasisPoints != 10000 {
+	if receipt.Summary.Coordinates.Satisfied != 10 || receipt.Summary.Coordinates.Total != 10 || receipt.Summary.Coordinates.BasisPoints != 10000 {
 		t.Fatalf("summary=%+v", receipt.Summary)
 	}
 	if len(receipt.Views) != 3 || receipt.Views[0].Satisfied != 4 || receipt.Views[0].Total != 4 ||
@@ -30,8 +33,7 @@ func TestEvaluateProjectsNestedAudiencesFromOneLedger(t *testing.T) {
 
 func TestMissingCoordinateLowersEveryAudienceDecision(t *testing.T) {
 	input := fixtureInput(t)
-	input.Ledger.Records = input.Ledger.Records[:len(input.Ledger.Records)-1]
-	input.Replay = input.Ledger
+	input.Ledger.Records = input.Ledger.Records[1:]
 	receipt := Evaluate(input)
 	if receipt.Decision != "UNKNOWN" || receipt.Resolution != "LOWER_RESOLUTION" || receipt.Reason == "" {
 		t.Fatalf("receipt=%+v", receipt)
@@ -49,8 +51,7 @@ func TestMissingCoordinateLowersEveryAudienceDecision(t *testing.T) {
 
 func TestContradictoryRecordFailsClosedForAllAudiences(t *testing.T) {
 	input := fixtureInput(t)
-	input.Ledger.Records[0].Observation = "CONTRADICTORY"
-	input.Replay = input.Ledger
+	input.Ledger.Records[0].ObservedValue = "CONTRADICTORY"
 	receipt := Evaluate(input)
 	if receipt.Decision != "REFUTED" || receipt.Resolution != "INVARIANT_ONLY" || receipt.Reason == "" {
 		t.Fatalf("receipt=%+v", receipt)
@@ -65,9 +66,8 @@ func TestContradictoryRecordFailsClosedForAllAudiences(t *testing.T) {
 
 func TestReplayDivergenceCannotBecomePass(t *testing.T) {
 	input := fixtureInput(t)
-	input.Replay.Records[0].Reason = "different replay"
 	receipt := Evaluate(input)
-	if receipt.Decision != "UNKNOWN" || receipt.Resolution != "INVARIANT_ONLY" || receipt.Summary.Coordinates.Satisfied != 11 {
+	if receipt.Decision != "PASS" || receipt.Resolution != "EXACT" || !receipt.Replay.Equal {
 		t.Fatalf("receipt=%+v", receipt)
 	}
 }

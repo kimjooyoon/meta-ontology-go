@@ -9,8 +9,9 @@ evidence ledger is projected into three nested knowledge surfaces:
 | TOOL_AUTHOR | 8 | 12 | UNKNOWN |
 | GOVERNOR | 12 | 12 | PASS |
 
-The global subject decision is `PASS` for the complete ledger. A view carries
-that global value only as `global_decision`, with
+The global subject decision is `PASS` for the complete ledger. The subject
+projection has 10 semantic predicates; `receipt.seal` is a postcondition, not a
+subject predicate. A view carries the global value only as `global_decision`, with
 `inherited_status=INHERITED_NOT_LOCALLY_VERIFIED` when its visible evidence is
 insufficient. It never copies the global decision into `local_decision`.
 Every omitted coordinate reports its exact stage, step, and reason.
@@ -26,14 +27,19 @@ values through `syntax.ParseFile` → `bidir.Lower` → canonical semantic IR.
 The source denominator is the number of canonical IR nodes, currently 56; it
 is never a line-count constant.
 
-The raw [`ledger.json`](./ledger.json) contains observations only: source
-binding, evidence provenance, prior claim state, observed value, and
-counterexample mutation descriptions. It does not contain a decision,
-satisfaction bit, claim-after state, expected/observed decision, or
-`blocked:true`. Final decisions and claim transitions are derived into the
-receipt.
+The raw [`ledger.json`](./ledger.json) contains historical recipes only:
+source binding, evidence provenance, normalized propositions, prior claim
+state, and counterexample mutation descriptions. Every record is marked
+`HISTORICAL_FIXTURE`, has no content digest, and is re-observed by the CI
+provider. Provider artifacts are the only `CURRENT_EVIDENCE` used for subject
+decisions; missing observations remain `UNKNOWN` with an exact stage, step,
+and reason. The raw ledger does not contain a decision, satisfaction bit,
+claim-after state, expected/observed decision, or `blocked:true`.
 
-Claim transitions are append-only. Each audience retains the `OPEN` claim
+There are 12 distinct source-derived propositions and 36 audience-specific
+events: the same 12 claims are projected to three audiences, so the fixed
+denominator is 12 proposition digests, not 36 events. Claim transitions are
+append-only. Each audience retains the `OPEN` claim
 when the evidence is omitted, moves it to `DISCHARGED` only when its visible
 evidence is sufficient, and moves it to `REFUTED` for visible contradiction.
 The transition records the audience visibility, evidence digest, producer,
@@ -50,12 +56,17 @@ imports. The CI artifact reports the exact producer-import numerator and
 denominator, raw-final-field absence, source reconstruction, and all local
 views.
 
+The producer writes a provisional subject receipt. The consumer then creates
+`receipt.seal.attestation-evidence.json` and an independent verification
+attestation whose conformance claim is separate from the subject decision;
+the seal cannot be a premise of that decision.
+
 ## Counterexamples and interventions
 
 The Action job creates real mutated raw ledgers and records their receipts:
 
-- omission removes `receipt.seal`; the global and GOVERNOR local decisions
-  become `UNKNOWN`, and the affected `OPEN` claim remains open;
+- omission removes `source.binding`; the global and every affected local
+  decision become `UNKNOWN`, and the affected `OPEN` claim remains open;
 - contradiction changes `ledger.coverage` to `CONTRADICTORY`; the global,
   TOOL_AUTHOR, and GOVERNOR decisions become `REFUTED`, while USER can only
   report what its visible surface supports;
@@ -64,10 +75,11 @@ The Action job creates real mutated raw ledgers and records their receipts:
 - all three mutations are re-run by the independent consumer.
 
 The falsifiable claim is: for every raw ledger variant, no audience may emit
-`local_decision=PASS` unless all 12 required raw coordinates are visible and
-locally sufficient; a visible contradiction must produce `REFUTED`; and a
-semantic policy edit must change the semantic digest/projection while a
-comment-only edit must not. These are executable assertions in
+`local_decision=PASS` unless every visible subject predicate required by that
+audience is locally sufficient; a visible contradiction must produce
+`REFUTED`; and a semantic policy edit must change the semantic digest,
+projection, decision, and claim transitions while a comment-only edit must not.
+These are executable assertions in
 `.github/workflows/audience-resolution.yml` and its uploaded artifact.
 
 ## Information-flow/view principles
