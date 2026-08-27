@@ -25,12 +25,16 @@ func TestCollectWorkflowRunsPaginates(t *testing.T) {
 		var runs []workflowRun
 		switch page {
 		case 1:
-			runs = []workflowRun{{ID: 1, HeadSHA: predecessor, Status: "completed"}}
+			runs = make([]workflowRun, workflowRunPageSize)
+			for index := range runs {
+				runs[index] = workflowRun{ID: int64(index + 1), HeadSHA: predecessor, Status: "completed"}
+			}
 		case 2:
-			runs = []workflowRun{{ID: 2, HeadSHA: predecessor, Status: "completed"}}
+			runs = []workflowRun{{ID: workflowRunPageSize + 1, HeadSHA: predecessor, Status: "completed"},
+				{ID: workflowRunPageSize + 2, HeadSHA: predecessor, Status: "completed"}}
 		}
 		response.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(response).Encode(workflowRunList{TotalCount: 2, WorkflowRuns: runs}); err != nil {
+		if err := json.NewEncoder(response).Encode(workflowRunList{TotalCount: workflowRunPageSize + 2, WorkflowRuns: runs}); err != nil {
 			t.Fatalf("encode response: %v", err)
 		}
 	}))
@@ -41,7 +45,7 @@ func TestCollectWorkflowRunsPaginates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("collect workflow runs: %v", err)
 	}
-	if len(runs) != 2 || runs[0].ID != 1 || runs[1].ID != 2 {
+	if len(runs) != workflowRunPageSize+2 || runs[0].ID != 1 || runs[workflowRunPageSize+1].ID != workflowRunPageSize+2 {
 		t.Fatalf("unexpected runs: %#v", runs)
 	}
 }
