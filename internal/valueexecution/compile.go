@@ -1,6 +1,8 @@
 package valueexecution
 
 import (
+	"fmt"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -21,6 +23,10 @@ func Compile(filename string, source []byte, activityName string) (Program, erro
 	declaration, ok := activityDeclaration(document, activityName)
 	if !ok {
 		return Program{}, failAt(ReasonActivityNotFound, "LOWER", "resolve-activity", activityName)
+	}
+	if len(declaration.Inputs) != 1 || len(declaration.Outputs) != 1 {
+		detail := fmt.Sprintf("inputs=%d outputs=%d", len(declaration.Inputs), len(declaration.Outputs))
+		return Program{}, failAt(ReasonSignatureArityUnsupported, "TYPECHECK", "bind-operation-signature", detail)
 	}
 	programText, present := declaration.Attributes[bidir.ActivityValueProgramAttribute]
 	if !present || programText == "" {

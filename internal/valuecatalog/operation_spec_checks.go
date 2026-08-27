@@ -7,8 +7,9 @@ import (
 )
 
 type operationSpecCheck struct {
-	id, class, proof, operation, stage, statement, evidence string
-	satisfied                                               bool
+	id, class, proof, operation, stage, statement string
+	satisfied                                     bool
+	evidence                                      string
 }
 
 func operationSpecChecks(report Report) []operationSpecCheck {
