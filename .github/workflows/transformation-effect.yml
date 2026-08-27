@@ -7,9 +7,9 @@ on:
     workflows: [CI]
     types: [completed]
 
-    permissions:
-      actions: read
-      contents: read
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   cross-platform-release:
@@ -1499,9 +1499,9 @@ jobs:
   vertical-slice-closure-eligibility:
     name: vertical slice closure eligibility
     runs-on: ubuntu-latest
-permissions:
-  actions: read
-  contents: read
+    permissions:
+      actions: read
+      contents: read
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
