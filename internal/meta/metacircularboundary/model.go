@@ -15,6 +15,7 @@ type Attempt = metacircularboundarycontract.Attempt
 type CaseDefinition = metacircularboundarycontract.CaseDefinition
 type CaseObservation = metacircularboundarycontract.CaseObservation
 type ClaimTransition = metacircularboundarycontract.ClaimTransition
+type ExecutionArtifact = metacircularboundarycontract.ExecutionArtifact
 type Receipt = metacircularboundarycontract.Receipt
 type CaseResult = metacircularboundarycontract.CaseResult
 type Indicator = metacircularboundarycontract.Indicator
