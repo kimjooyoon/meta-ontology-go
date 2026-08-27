@@ -30,14 +30,18 @@ func Evaluate(input Input) Report {
 		return failedReport(input, "PROOF_CARRYING_ARTIFACT_WRITE_SET_NOT_BOUND")
 	}
 
+	phase := ProofPhasePreliminary
+	if input.ConsumerReceiptProvided {
+		phase = ProofPhaseFinal
+	}
 	results := make([]CaseResult, 0, len(input.Contract.Cases))
 	for _, definition := range input.Contract.Cases {
 		var observed observation
 		if definition.InputKind == "UNAUTHORIZED_CONSUMER" {
-			observed = unauthorizedConsumerObservation(input)
+			observed = unauthorizedConsumerObservation(input, phase)
 		} else {
 			artifact, source, operation, recipe := caseInput(input, definition.InputKind)
-			observed = verifyArtifact(artifact, source, operation, recipe, input.HeadSHA)
+			observed = verifyArtifact(artifact, source, operation, recipe, input.HeadSHA, phase)
 		}
 		status := "NOT_SATISFIED"
 		if observed.Decision == definition.ExpectedDecision && observed.Resolution == definition.ExpectedResolution && observed.Reason == definition.ExpectedReason {
@@ -51,7 +55,7 @@ func Evaluate(input Input) Report {
 			SemanticDigest: observed.SemanticDigest, OperationDigest: observed.OperationDigest, OperationAttachmentDigest: observed.OperationAttachmentDigest, RecipeAttachmentDigest: observed.RecipeAttachmentDigest, ConsumerTargetDigest: observed.ConsumerTargetDigest, ConsumerOutputDigest: observed.ConsumerOutputDigest, ConsumerOutputExists: observed.ConsumerOutputExists, ConsumerErrorClass: observed.ConsumerErrorClass, ConsumerErrorDigest: observed.ConsumerErrorDigest})
 	}
 
-	interventions := evaluateInterventions(input.Interventions, input.HeadSHA)
+	interventions := evaluateInterventions(input.Interventions, input.HeadSHA, phase)
 	report.WriteSet = input.WriteSet
 	report.NetChangedPaths = input.WriteSet.NetChangedPaths
 	report.CapabilityMutationGranted = input.WriteSet.CapabilityMutationGranted
@@ -107,7 +111,9 @@ func Evaluate(input Input) Report {
 			report.PreliminaryCoordinate = Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.PreliminaryReason}
 		}
 	}
-	report.Indicators = indicators(report.Summary)
+	// The producer records targets from its observations. Validator-owned
+	// phase expectations are applied only by Validate/ValidatePreliminary.
+	report.Indicators = observedIndicators(report.Summary)
 	proofReport := report
 	proofPhase := ProofPhasePreliminary
 	if structuralGate && input.BundleDigest != "" && input.ConsumerReceiptProvided {
@@ -177,7 +183,7 @@ func validCase(cases []CaseResult) *CaseResult {
 	return nil
 }
 
-func unauthorizedConsumerObservation(input Input) observation {
+func unauthorizedConsumerObservation(input Input, phase string) observation {
 	artifact, err := decodeStrict[Artifact](input.ValidArtifact)
 	if err != nil {
 		return failure("INVARIANT_ONLY", "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", "CONSUME_BUNDLE", "attestation")
@@ -188,7 +194,7 @@ func unauthorizedConsumerObservation(input Input) observation {
 		result.ConsumerErrorDigest = consumerError(ConsumerErrorBundleInvalid, input.UnauthorizedBundleError).Digest()
 		return result
 	}
-	base := verifyArtifact(input.ValidArtifact, input.Source, input.Operation, input.Recipe, input.HeadSHA)
+	base := verifyArtifact(input.ValidArtifact, input.Source, input.Operation, input.Recipe, input.HeadSHA, phase)
 	if base.Decision != "PASS" {
 		return base
 	}

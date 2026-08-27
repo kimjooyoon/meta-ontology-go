@@ -8,7 +8,7 @@ import (
 
 // verifyArtifact is the independent consumer kernel. It evaluates each
 // proposition separately and propagates failure only over declared edges.
-func verifyArtifact(raw, source, operation, recipe []byte, head string) observation {
+func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) observation {
 	artifact, err := decodeStrict[Artifact](raw)
 	if err != nil {
 		return failure("INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_DECODE", "artifact")
@@ -101,7 +101,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && recipeEvidenceGood
 	if recipeGood {
 		statuses["recipe-match"] = "DISCHARGED"
-	} else if operationMissing || (mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"]) {
+	} else if phase == ProofPhasePreliminary && (operationMissing || (mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"])) {
 		// A missing operation attachment or an invariant-only evidence change
 		// leaves the recipe claim unresolved. The recipe itself has not been
 		// contradicted, so this declared dependency remains OPEN rather than

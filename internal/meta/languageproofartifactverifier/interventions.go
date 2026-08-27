@@ -1,10 +1,10 @@
 package languageproofartifactverifier
 
-func evaluateInterventions(inputs []InterventionInput, head string) []InterventionResult {
+func evaluateInterventions(inputs []InterventionInput, head, phase string) []InterventionResult {
 	result := make([]InterventionResult, 0, len(inputs))
 	for _, input := range inputs {
-		before := verifyArtifact(input.Before.Artifact, input.Before.Source, input.Before.Operation, input.Before.Recipe, head)
-		after := verifyArtifact(input.After.Artifact, input.After.Source, input.After.Operation, input.After.Recipe, head)
+		before := verifyArtifact(input.Before.Artifact, input.Before.Source, input.Before.Operation, input.Before.Recipe, head, phase)
+		after := verifyArtifact(input.After.Artifact, input.After.Source, input.After.Operation, input.After.Recipe, head, phase)
 		item := InterventionResult{ID: input.ID, Kind: input.Kind,
 			RawSourceDigestBefore: before.SourceDigest, RawSourceDigestAfter: after.SourceDigest,
 			SemanticDigestBefore: before.SemanticDigest, SemanticDigestAfter: after.SemanticDigest,

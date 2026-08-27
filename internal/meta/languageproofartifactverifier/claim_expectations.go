@@ -14,6 +14,42 @@ type ClaimStateExpectation struct {
 	States []string `json:"states"`
 }
 
+// ClaimStateExpectationPhase is one complete, phase-indexed 16 x 5 contract.
+// The denominator is deliberately carried with the table so a missing case
+// cannot silently shrink the measurement.
+type ClaimStateExpectationPhase struct {
+	FixedDenominator int                     `json:"fixed_denominator"`
+	Cases            []ClaimStateExpectation `json:"cases"`
+	Totals           claimStateTotalsJSON    `json:"totals"`
+}
+
+// ClaimStatePhaseTransition records the one evidence-time reclassification
+// between the two fixed tables. PRELIMINARY has not supplied the external
+// attachments for the byte-only negative case, so its recipe claim is OPEN;
+// FINAL observes that absence at the independent recheck boundary and marks
+// the same claim REFUTED. The case coordinate is preserved in both reports.
+type ClaimStatePhaseTransition struct {
+	FromPhase  string     `json:"from_phase"`
+	ToPhase    string     `json:"to_phase"`
+	CaseID     string     `json:"case_id"`
+	ClaimID    string     `json:"claim_id"`
+	From       string     `json:"from"`
+	To         string     `json:"to"`
+	Coordinate Coordinate `json:"coordinate"`
+	Basis      string     `json:"basis"`
+}
+
+// ClaimStateExpectationDocument is the portable validator contract emitted
+// for CI. It contains both phase tables and the exact cross-phase transition;
+// it is not an input to Evaluate.
+type ClaimStateExpectationDocument struct {
+	Schema           string                                `json:"schema"`
+	Version          int                                   `json:"version"`
+	FixedDenominator int                                   `json:"fixed_denominator"`
+	Phases           map[string]ClaimStateExpectationPhase `json:"phases"`
+	PhaseTransitions []ClaimStatePhaseTransition           `json:"phase_transitions"`
+}
+
 type claimStateTotals struct {
 	Discharged int
 	Open       int
@@ -28,6 +64,7 @@ type claimStateMismatch struct {
 }
 
 type claimStateExpectationDetail struct {
+	Phase            string               `json:"phase"`
 	FixedDenominator int                  `json:"fixed_denominator"`
 	Mismatches       []claimStateMismatch `json:"mismatches"`
 	ActualTotals     claimStateTotalsJSON `json:"actual_totals"`
@@ -40,10 +77,11 @@ type claimStateTotalsJSON struct {
 	Refuted    int `json:"refuted"`
 }
 
-// fixedClaimStateExpectations is intentionally maintained independently from
-// Evaluate and summarize. It is the 16-case x 5-claim validator expectation
-// table for the v3 fixed denominator (80 claim instances).
-var fixedClaimStateExpectations = []ClaimStateExpectation{
+// The FINAL table is the fixed 80-instance contract used after the
+// independent consumer recheck. The PRELIMINARY table is independently
+// enumerated rather than derived from observed totals; it differs only at
+// the declared evidence-time transition above.
+var fixedClaimStateExpectationsFinal = []ClaimStateExpectation{
 	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
 	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN"}},
 	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
@@ -62,23 +100,66 @@ var fixedClaimStateExpectations = []ClaimStateExpectation{
 	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
 }
 
-func fixedClaimStateTable() []ClaimStateExpectation {
-	result := make([]ClaimStateExpectation, len(fixedClaimStateExpectations))
-	for index, item := range fixedClaimStateExpectations {
+var fixedClaimStateExpectationsPreliminary = []ClaimStateExpectation{
+	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
+	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN"}},
+	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "missing-operation-evidence", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "REFUTED", "OPEN"}},
+	{CaseID: "bytes-only-no-authority", States: []string{"OPEN", "OPEN", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "independent-recipe-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
+	{CaseID: "recipe-only-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
+	{CaseID: "missing-attachment", States: []string{"DISCHARGED", "OPEN", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "wrong-attachment-digest", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "unrelated-evidence-tamper", States: []string{"DISCHARGED", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
+	{CaseID: "stale-head", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "unauthorized-consumer", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "coherent-claim-proposition-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "coherent-claim-dependency-tamper", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "coherent-claim-proof-choice-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
+}
+
+func fixedClaimStateTable(phase string) []ClaimStateExpectation {
+	var source []ClaimStateExpectation
+	switch phase {
+	case ProofPhasePreliminary:
+		source = fixedClaimStateExpectationsPreliminary
+	case ProofPhaseFinal:
+		source = fixedClaimStateExpectationsFinal
+	default:
+		return nil
+	}
+	result := make([]ClaimStateExpectation, len(source))
+	for index, item := range source {
 		result[index] = ClaimStateExpectation{CaseID: item.CaseID, States: append([]string(nil), item.States...)}
 	}
 	return result
 }
 
-// ClaimStateExpectations exposes the validator-owned table for CI evidence.
-// It is deliberately not used by Evaluate when deriving observed states.
-func ClaimStateExpectations() []ClaimStateExpectation {
-	return fixedClaimStateTable()
+func phaseClaimStateTransitions() []ClaimStatePhaseTransition {
+	return []ClaimStatePhaseTransition{{
+		FromPhase: ProofPhasePreliminary, ToPhase: ProofPhaseFinal,
+		CaseID: "bytes-only-no-authority", ClaimID: "recipe-match", From: "OPEN", To: "REFUTED",
+		Coordinate: Coordinate{"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"},
+		Basis:      "FINAL_RECHECK_OBSERVES_MISSING_EXTERNAL_EVIDENCE",
+	}}
 }
 
-func fixedClaimStateTotals() claimStateTotals {
+// ClaimStateExpectations exposes both validator-owned phase tables and the
+// declared phase transition for CI evidence. Evaluate never calls it.
+func ClaimStateExpectations() ClaimStateExpectationDocument {
+	phases := map[string]ClaimStateExpectationPhase{}
+	for _, phase := range []string{ProofPhasePreliminary, ProofPhaseFinal} {
+		table := fixedClaimStateTable(phase)
+		totals := fixedClaimStateTotals(phase)
+		phases[phase] = ClaimStateExpectationPhase{FixedDenominator: CaseTotal * ClaimTemplateTotal, Cases: table, Totals: claimStateTotalsJSON{Discharged: totals.Discharged, Open: totals.Open, Refuted: totals.Refuted}}
+	}
+	return ClaimStateExpectationDocument{Schema: "gooo/language-proof-carrying-artifact-claim-state-expectations/v1", Version: 1, FixedDenominator: CaseTotal * ClaimTemplateTotal, Phases: phases, PhaseTransitions: phaseClaimStateTransitions()}
+}
+
+func fixedClaimStateTotals(phase string) claimStateTotals {
 	var totals claimStateTotals
-	for _, item := range fixedClaimStateExpectations {
+	for _, item := range fixedClaimStateTable(phase) {
 		for _, state := range item.States {
 			switch state {
 			case "DISCHARGED":
@@ -95,8 +176,8 @@ func fixedClaimStateTotals() claimStateTotals {
 	return totals
 }
 
-func fixedClaimStateTotalsJSON() claimStateTotalsJSON {
-	totals := fixedClaimStateTotals()
+func fixedClaimStateTotalsJSON(phase string) claimStateTotalsJSON {
+	totals := fixedClaimStateTotals(phase)
 	return claimStateTotalsJSON{Discharged: totals.Discharged, Open: totals.Open, Refuted: totals.Refuted}
 }
 
@@ -117,10 +198,13 @@ func observedClaimStateTotals(cases []CaseResult) claimStateTotalsJSON {
 	return totals
 }
 
-func validateClaimStateExpectations(cases []CaseResult) error {
-	expectations := fixedClaimStateExpectations
+func validateClaimStateExpectations(phase string, cases []CaseResult) error {
+	expectations := fixedClaimStateTable(phase)
 	if len(expectations) != CaseTotal || len(expectations)*ClaimTemplateTotal != CaseTotal*ClaimTemplateTotal {
-		return fmt.Errorf("fixed claim state expectation inventory has denominator %d, want %d", len(expectations)*ClaimTemplateTotal, CaseTotal*ClaimTemplateTotal)
+		return fmt.Errorf("fixed %s claim state expectation inventory has denominator %d, want %d", phase, len(expectations)*ClaimTemplateTotal, CaseTotal*ClaimTemplateTotal)
+	}
+	if len(cases) != CaseTotal {
+		return fmt.Errorf("observed %s claim state inventory has denominator %d, want %d", phase, len(cases)*ClaimTemplateTotal, CaseTotal*ClaimTemplateTotal)
 	}
 	claimIDs := make([]string, 0, ClaimTemplateTotal)
 	for _, spec := range claimSpecs() {
@@ -129,11 +213,11 @@ func validateClaimStateExpectations(cases []CaseResult) error {
 	mismatches := make([]claimStateMismatch, 0)
 	for caseIndex, expected := range expectations {
 		if expected.CaseID != CaseIDs()[caseIndex] || len(expected.States) != ClaimTemplateTotal || cases[caseIndex].ID != expected.CaseID {
-			return fmt.Errorf("fixed claim state expectation case inventory mismatch at index %d", caseIndex)
+			return fmt.Errorf("fixed %s claim state expectation case inventory mismatch at index %d", phase, caseIndex)
 		}
 		for claimIndex, expectedState := range expected.States {
 			if cases[caseIndex].Claims[claimIndex].ID != claimIDs[claimIndex] {
-				return fmt.Errorf("fixed claim state expectation claim inventory mismatch: %s", expected.CaseID)
+				return fmt.Errorf("fixed %s claim state expectation claim inventory mismatch: %s", phase, expected.CaseID)
 			}
 			if cases[caseIndex].Claims[claimIndex].Status != expectedState {
 				mismatches = append(mismatches, claimStateMismatch{CaseID: expected.CaseID, ClaimID: claimIDs[claimIndex], Actual: cases[caseIndex].Claims[claimIndex].Status, Expected: expectedState})
@@ -143,9 +227,95 @@ func validateClaimStateExpectations(cases []CaseResult) error {
 	if len(mismatches) == 0 {
 		return nil
 	}
-	detail, err := json.Marshal(claimStateExpectationDetail{FixedDenominator: CaseTotal * ClaimTemplateTotal, Mismatches: mismatches, ActualTotals: observedClaimStateTotals(cases), ExpectedTotals: fixedClaimStateTotalsJSON()})
+	detail, err := json.Marshal(claimStateExpectationDetail{Phase: phase, FixedDenominator: CaseTotal * ClaimTemplateTotal, Mismatches: mismatches, ActualTotals: observedClaimStateTotals(cases), ExpectedTotals: fixedClaimStateTotalsJSON(phase)})
 	if err != nil {
 		return fmt.Errorf("claim state expectation mismatch")
 	}
 	return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "case-claim-state", "CLAIM_STATE_EXPECTATION_MISMATCH"}, Detail: string(detail)}
+}
+
+func validatePhaseState(cases []CaseResult, phase string) error {
+	for _, transition := range phaseClaimStateTransitions() {
+		want := transition.To
+		if phase == transition.FromPhase {
+			want = transition.From
+		}
+		for _, item := range cases {
+			if item.ID != transition.CaseID {
+				continue
+			}
+			for _, claim := range item.Claims {
+				if claim.ID == transition.ClaimID && claim.Status != want {
+					return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: fmt.Sprintf(`{"phase":%q,"case_id":%q,"claim_id":%q,"actual":%q,"expected":%q,"stage":%q,"step":%q,"reason":%q}`, phase, transition.CaseID, transition.ClaimID, claim.Status, want, transition.Coordinate.Stage, transition.Coordinate.Step, transition.Coordinate.Reason)}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func projectCasesForPhase(cases []CaseResult, phase string) []CaseResult {
+	projected := make([]CaseResult, len(cases))
+	copy(projected, cases)
+	for index := range projected {
+		projected[index].Claims = append([]ClaimResult(nil), cases[index].Claims...)
+	}
+	for _, transition := range phaseClaimStateTransitions() {
+		want := transition.To
+		if phase == transition.FromPhase {
+			want = transition.From
+		}
+		for caseIndex := range projected {
+			if projected[caseIndex].ID != transition.CaseID {
+				continue
+			}
+			for claimIndex := range projected[caseIndex].Claims {
+				claim := &projected[caseIndex].Claims[claimIndex]
+				if claim.ID != transition.ClaimID {
+					continue
+				}
+				claim.Status = want
+				switch want {
+				case "OPEN":
+					claim.Resolution = "LOWER_RESOLUTION"
+				case "REFUTED":
+					claim.Resolution = "INVARIANT_ONLY"
+				case "DISCHARGED":
+					claim.Resolution = "EXACT"
+				}
+				claim.StateDigest = claimStateDigest(*claim)
+			}
+		}
+	}
+	return projected
+}
+
+func validatePhaseTransitionPair(preliminary, final []CaseResult) error {
+	if len(preliminary) != CaseTotal || len(final) != CaseTotal {
+		return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: "phase transition comparison requires 80 claim instances in each phase"}
+	}
+	transitions := phaseClaimStateTransitions()
+	if len(transitions) != 1 {
+		return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: "phase transition inventory is not exactly one declared transition"}
+	}
+	declared := transitions[0]
+	for caseIndex := range preliminary {
+		if preliminary[caseIndex].ID != final[caseIndex].ID || len(preliminary[caseIndex].Claims) != ClaimTemplateTotal || len(final[caseIndex].Claims) != ClaimTemplateTotal {
+			return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: "phase transition case or claim inventory mismatch"}
+		}
+		for claimIndex := range preliminary[caseIndex].Claims {
+			before := preliminary[caseIndex].Claims[claimIndex]
+			after := final[caseIndex].Claims[claimIndex]
+			expectedBefore, expectedAfter := before.Status, before.Status
+			if preliminary[caseIndex].ID == declared.CaseID && before.ID == declared.ClaimID {
+				expectedBefore, expectedAfter = declared.From, declared.To
+			}
+			if before.Status != expectedBefore || after.Status != expectedAfter ||
+				(preliminary[caseIndex].ID == declared.CaseID && before.ID == declared.ClaimID &&
+					(preliminary[caseIndex].Coordinate != declared.Coordinate || final[caseIndex].Coordinate != declared.Coordinate)) {
+				return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: fmt.Sprintf(`{"from_phase":%q,"to_phase":%q,"case_id":%q,"claim_id":%q,"actual_from":%q,"actual_to":%q,"expected_from":%q,"expected_to":%q,"stage":%q,"step":%q,"reason":%q}`, declared.FromPhase, declared.ToPhase, declared.CaseID, declared.ClaimID, before.Status, after.Status, expectedBefore, expectedAfter, declared.Coordinate.Stage, declared.Coordinate.Step, declared.Coordinate.Reason)}
+			}
+		}
+	}
+	return nil
 }

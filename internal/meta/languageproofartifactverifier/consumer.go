@@ -147,12 +147,20 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 	if err != nil {
 		return ConsumerReceipt{}, consumerError(ConsumerErrorTargetMissing, err.Error())
 	}
-	finalReport := Validate(report) == nil
+	finalErr := Validate(report)
+	finalReport := finalErr == nil
 	preliminaryErr := error(nil)
 	if !finalReport {
 		preliminaryErr = ValidatePreliminary(report)
 	}
 	if !finalReport && preliminaryErr != nil {
+		// A report that declares final authority or carries a receipt was
+		// intended as FINAL. Preserve its final validation coordinate instead
+		// of hiding a semantic final-state failure behind the preliminary
+		// authority-present error.
+		if report.ConsumerReceipt != (ConsumerReceipt{}) || report.ConformanceDecision == "PASS" || report.ArtifactUseAuthority != "" {
+			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, finalErr.Error())
+		}
 		var typed *ValidationError
 		if errors.As(preliminaryErr, &typed) {
 			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, typed.Error())
@@ -164,6 +172,17 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 	}
 	attested := consumerAttestedReport(report)
 	if !finalReport {
+		// Re-run the case oracle in FINAL mode from the bundle's content. This
+		// is what records the declared evidence-time transition; copying the
+		// preliminary cases would erase OPEN -> REFUTED semantics.
+		replayInput, replayErr := InputFromBundle(bundle)
+		if replayErr != nil {
+			return ConsumerReceipt{}, consumerError(ConsumerErrorBundleInvalid, replayErr.Error())
+		}
+		replayInput.ConsumerReceiptProvided = true
+		replayInput.ConsumerReceipt = ConsumerReceipt{}
+		replayed := Evaluate(replayInput)
+		attested = consumerAttestedReport(replayed)
 		// A preliminary report is accepted only when it can be lifted to the
 		// exact final report by this kernel, including all cases, indicators,
 		// proofs, bindings, and the receipt for the reconstructed target.
@@ -172,7 +191,7 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		// producer/consumer-independent preliminary subject. Do not inherit a
 		// digest from a receipt field while creating the first receipt.
 		attested.ConsumerReceipt = expectedConsumerReceipt(attested, report.Digest, targetPath, raw)
-		attested.Indicators = indicators(attested.Summary)
+		attested.Indicators = indicators(attested.Summary, ProofPhaseFinal)
 		attested.Proofs = proofs(attested, attested.Cases, ProofPhaseFinal)
 		attested.ConformanceDecision, attested.ConformanceResolution, attested.ConformanceReason = "PASS", "EXACT", "PROOF_CARRYING_ARTIFACT_CONTRACT_SATISFIED"
 		attested.ConformanceCoordinate = Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", attested.ConformanceReason}

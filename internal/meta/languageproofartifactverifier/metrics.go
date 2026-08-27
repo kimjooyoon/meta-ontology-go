@@ -56,8 +56,18 @@ func MetricIDs() []string {
 	}
 }
 
-func indicators(summary Summary) []Indicator {
-	claimStateTotals := fixedClaimStateTotals()
+// indicators is validator-owned: its claim-state targets come from the
+// phase-indexed fixed contract. The producer uses observedIndicators instead
+// and therefore never reads either expectation table.
+func indicators(summary Summary, phase string) []Indicator {
+	return indicatorRows(summary, fixedClaimStateTotals(phase))
+}
+
+func observedIndicators(summary Summary) []Indicator {
+	return indicatorRows(summary, claimStateTotals{Discharged: summary.CaseDischargedClaims, Open: summary.CaseOpenClaims, Refuted: summary.CaseRefutedClaims})
+}
+
+func indicatorRows(summary Summary, expectedStates claimStateTotals) []Indicator {
 	values := []struct {
 		class, proof, operation string
 		value, target           int
@@ -71,9 +81,9 @@ func indicators(summary Summary) []Indicator {
 		{"OUTCOME", "FOUNDATION", "match-independent-recipe", summary.RecipeMatches, 1},
 		{"DRIVER", "COHERENCE", "accept-digested-claim-transitions", summary.AcceptedTransitions, TransitionTotal},
 		{"DRIVER", "COHERENCE", "preserve-transport-transitions", summary.PreservedTransitions, EvidenceTotal + 1},
-		{"DRIVER", "COHERENCE", "count-case-discharged-claims", summary.CaseDischargedClaims, claimStateTotals.Discharged},
-		{"GUARDRAIL", "FOUNDATION", "count-case-open-claims", summary.CaseOpenClaims, claimStateTotals.Open},
-		{"GUARDRAIL", "REGRESSION", "count-case-refuted-claims", summary.CaseRefutedClaims, claimStateTotals.Refuted},
+		{"DRIVER", "COHERENCE", "count-case-discharged-claims", summary.CaseDischargedClaims, expectedStates.Discharged},
+		{"GUARDRAIL", "FOUNDATION", "count-case-open-claims", summary.CaseOpenClaims, expectedStates.Open},
+		{"GUARDRAIL", "REGRESSION", "count-case-refuted-claims", summary.CaseRefutedClaims, expectedStates.Refuted},
 		{"DRIVER", "FOUNDATION", "persist-final-ledger-open-claims", summary.FinalLedgerOpenClaims, ClaimTemplateTotal},
 		{"DRIVER", "COHERENCE", "persist-final-ledger-discharged-claims", summary.FinalLedgerDischargedClaims, ClaimTemplateTotal},
 		{"GUARDRAIL", "REGRESSION", "reject-tampered-evidence", summary.TamperedRejections, 1},

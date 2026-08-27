@@ -39,11 +39,11 @@ func Validate(report Report) error {
 	if err := validateWriteSet(report.WriteSet); err != nil {
 		return err
 	}
-	want := expectedSummary(report.Summary.ProducerImportDenominator, 1, 1)
+	want := expectedSummary(ProofPhaseFinal, report.Summary.ProducerImportDenominator, 1, 1)
 	if report.Summary != want || report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal {
 		return &ValidationError{Coordinate: Coordinate{"EVALUATE", "final-summary", "FINAL_SUMMARY_MISMATCH"}, Detail: summaryMismatchError("FINAL", report.Summary, want).Error()}
 	}
-	if err := validateIndicatorInventory(report, 1, 1); err != nil {
+	if err := validateIndicatorInventory(report, ProofPhaseFinal, 1, 1); err != nil {
 		return err
 	}
 	if !validDigest(report.UnauthorizedConsumerTargetDigest) || report.UnauthorizedConsumerOutputExists || report.UnauthorizedConsumerOutputDigest != "" || report.UnauthorizedConsumerErrorClass != string(ConsumerErrorAttestationMismatch) || !validDigest(report.UnauthorizedConsumerErrorDigest) {
@@ -58,7 +58,7 @@ func Validate(report Report) error {
 	if err := validateFinalLedger(report.Ledger, report.PriorLedger); err != nil {
 		return fmt.Errorf("proof-carrying final ledger mismatch: %w", err)
 	}
-	if err := validateCaseResults(report); err != nil {
+	if err := validateCaseResults(report, ProofPhaseFinal); err != nil {
 		return err
 	}
 	if err := validateLedgerAgainstValidCase(report); err != nil {
@@ -86,6 +86,9 @@ func Validate(report Report) error {
 	}
 	if report.BundleDigest != "" {
 		preliminary := canonicalPreliminaryProjection(report)
+		if err := validatePhaseTransitionPair(preliminary.Cases, report.Cases); err != nil {
+			return err
+		}
 		if report.ConsumerReceipt.PreliminaryDigest != preliminary.Digest {
 			return &ValidationError{Coordinate: Coordinate{"CONSUME_BUNDLE", "consumer-receipt", "PRELIMINARY_BINDING_MISMATCH"}, Detail: "consumer receipt preliminary digest does not match the canonical projection"}
 		}
@@ -146,16 +149,16 @@ func ValidatePreliminary(report Report) error {
 		report.WriteSet.ActualWritesObservation != "UNKNOWN" || report.WriteSet.GlobalMutationAuthority != "UNKNOWN" {
 		return fmt.Errorf("proof-carrying preliminary write observation mismatch")
 	}
-	wantSummary := expectedSummary(report.Summary.ProducerImportDenominator, wantBundleMetric, wantConsumerMetric)
+	wantSummary := expectedSummary(ProofPhasePreliminary, report.Summary.ProducerImportDenominator, wantBundleMetric, wantConsumerMetric)
 	if report.Summary != wantSummary ||
 		report.Summary.ProducerImportDenominator <= 0 || report.Summary.ProducerImportNumerator != 0 || report.Summary.CoreParserDependencies != CoreParserDependencyInventoryTotal ||
 		report.IndependenceDigest != digestValue(IndependenceEvidence{Schema: "gooo/language-proof-carrying-artifact-independence/v1", ProducerDependencies: report.Summary.ProducerDependencies, ProducerImportNumerator: report.Summary.ProducerImportNumerator, ProducerImportDenominator: report.Summary.ProducerImportDenominator, CoreParserDependencies: report.Summary.CoreParserDependencies}) {
 		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-summary", "PRELIMINARY_SUMMARY_MISMATCH"}, summaryMismatchError("PRELIMINARY", report.Summary, wantSummary))
 	}
-	if err := validateIndicatorInventory(report, wantBundleMetric, wantConsumerMetric); err != nil {
+	if err := validateIndicatorInventory(report, ProofPhasePreliminary, wantBundleMetric, wantConsumerMetric); err != nil {
 		return preliminaryValidationError(Coordinate{"EVALUATE", "preliminary-inventory", "PRELIMINARY_INDICATOR_INVENTORY_MISMATCH"}, err)
 	}
-	if err := validateCaseResults(report); err != nil {
+	if err := validateCaseResults(report, ProofPhasePreliminary); err != nil {
 		return err
 	}
 	if err := validateOpenLedger(report.PriorLedger); err != nil {
@@ -176,6 +179,9 @@ func ValidatePreliminary(report Report) error {
 	if err := validateInterventions(report.Interventions); err != nil {
 		return err
 	}
+	if err := validatePhaseState(report.Cases, ProofPhasePreliminary); err != nil {
+		return err
+	}
 	if err := validateProofInventory(report, true); err != nil {
 		return preliminaryValidationError(Coordinate{"VERIFY_PROOF", "preliminary-proof-gate", "PRELIMINARY_PROOF_NOT_SATISFIED"}, err)
 	}
@@ -192,9 +198,10 @@ func ValidatePreliminary(report Report) error {
 }
 
 // canonicalPreliminaryProjection removes only the consumer observation from a
-// valid final report. Everything that establishes the historical subject and
-// its producer-side evidence remains byte-for-byte represented in the
-// projection, so the receipt must bind to this digest rather than to an
+// valid final report and projects the one declared evidence-time claim state
+// transition back to PRELIMINARY. Everything else that establishes the
+// historical subject and its producer-side evidence remains represented in
+// the projection, so the receipt must bind to this digest rather than to an
 // arbitrary self-consistent claim.
 func canonicalPreliminaryProjection(report Report) Report {
 	preliminary := report
@@ -209,7 +216,12 @@ func canonicalPreliminaryProjection(report Report) Report {
 	preliminary.PreliminaryResolution = preliminary.ConformanceResolution
 	preliminary.PreliminaryReason = preliminary.ConformanceReason
 	preliminary.PreliminaryCoordinate = preliminary.ConformanceCoordinate
-	preliminary.Indicators = indicators(preliminary.Summary)
+	preliminary.Cases = projectCasesForPhase(report.Cases, ProofPhasePreliminary)
+	preliminary.Summary = summarize(preliminary.Cases, IndependenceEvidence{
+		ProducerDependencies: report.Summary.ProducerDependencies, ProducerImportNumerator: report.Summary.ProducerImportNumerator,
+		ProducerImportDenominator: report.Summary.ProducerImportDenominator, CoreParserDependencies: report.Summary.CoreParserDependencies,
+	}, preliminary.WriteSet, preliminary.Interventions, preliminary.Ledger, preliminary.Summary.BundleOnlyVerification, 0)
+	preliminary.Indicators = indicators(preliminary.Summary, ProofPhasePreliminary)
 	preliminary.Proofs = proofs(preliminary, preliminary.Cases, ProofPhasePreliminary)
 	preliminary.ProofSummary = proofSummary(preliminary.Proofs, ProofPhasePreliminary, preliminary.ArtifactUseAuthority)
 	preliminary.Digest = reportDigest(preliminary)
@@ -294,8 +306,8 @@ func summaryMismatchError(phase string, actual, expected Summary) error {
 	return fmt.Errorf("proof-carrying summary mismatch: %s", detail)
 }
 
-func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {
-	claimStateTotals := fixedClaimStateTotals()
+func expectedSummary(phase string, denominator, bundleMetric, consumerMetric int) Summary {
+	claimStateTotals := fixedClaimStateTotals(phase)
 	return Summary{
 		CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1,
 		EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
@@ -317,11 +329,11 @@ func expectedSummary(denominator, bundleMetric, consumerMetric int) Summary {
 	}
 }
 
-func validateIndicatorInventory(report Report, bundleMetric, consumerMetric int) error {
+func validateIndicatorInventory(report Report, phase string, bundleMetric, consumerMetric int) error {
 	if len(report.Indicators) != len(MetricIDs()) {
 		return fmt.Errorf("proof-carrying indicator inventory size mismatch")
 	}
-	want := indicators(expectedSummary(report.Summary.ProducerImportDenominator, bundleMetric, consumerMetric))
+	want := indicators(expectedSummary(phase, report.Summary.ProducerImportDenominator, bundleMetric, consumerMetric), phase)
 	byID := make(map[string]Indicator, len(report.Indicators))
 	for _, item := range report.Indicators {
 		if _, exists := byID[item.MetricID]; exists {
@@ -341,7 +353,7 @@ func validateIndicatorInventory(report Report, bundleMetric, consumerMetric int)
 	return nil
 }
 
-func validateCaseResults(report Report) error {
+func validateCaseResults(report Report, phase string) error {
 	if !caseInventoryOK(report.Cases) || len(report.Cases) != CaseTotal {
 		return fmt.Errorf("proof-carrying case inventory mismatch")
 	}
@@ -370,7 +382,7 @@ func validateCaseResults(report Report) error {
 			seen[claim.ID] = true
 		}
 	}
-	if err := validateClaimStateExpectations(report.Cases); err != nil {
+	if err := validateClaimStateExpectations(phase, report.Cases); err != nil {
 		return err
 	}
 	if valid := validCase(report.Cases); valid == nil || !validCaseClaims(*valid, report) {
