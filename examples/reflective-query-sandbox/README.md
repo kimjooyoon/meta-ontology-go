@@ -94,8 +94,10 @@ to `intervened-name`. The actual API outcome changes from typed `REJECTED` to
 from `DISCHARGED` to `REFUTED`. A nonsemantic intervention changes only a
 comment; the raw source digest changes while the semantic/graph digests,
 mutation outcome, scoped capability, and claim state are preserved.
-CI also fixes a three-case regression matrix: stale-but-well-formed subject
-SHA, changed repository before/after evidence, and missing repository evidence.
+CI also fixes a three-case receipt-decision regression matrix: invalid or
+unobserved subject identity remains `UNKNOWN`, an exact subject/check-out
+mismatch remains `REFUTED / EXACT`, and that mismatch remains `REFUTED` even
+when repository evidence is unknown.
 
 ## Research decisions
 

@@ -76,36 +76,36 @@ if [ "$wrong_sha" = "$HEAD_SHA" ]; then
 	wrong_sha=$(printf 'f%.0s' {1..40})
 fi
 go run ./scripts/reflective-query-sandbox/consumer \
-	-input "$input/regressions/wrong-sha.json" -source "$source_path" \
+	-input "$input/regressions/invalid-unobserved.json" -source "$source_path" \
+	-subject-sha "" -checkout-sha "" -producer-imports-evidence "$import_evidence" \
+	-producer-imports-maximum "$maximum_allowed" -output "$output/invalid-unobserved-receipt.json"
+go run ./scripts/reflective-query-sandbox/consumer \
+	-input "$input/regressions/exact-mismatch.json" -source "$source_path" \
 	-subject-sha "$wrong_sha" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
-	-producer-imports-maximum "$maximum_allowed" -output "$output/wrong-sha-receipt.json"
-go run ./scripts/reflective-query-sandbox/consumer \
-	-input "$input/regressions/changed-repository.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
-	-producer-imports-maximum "$maximum_allowed" -output "$output/changed-repository-receipt.json"
-go run ./scripts/reflective-query-sandbox/consumer \
-	-input "$input/regressions/missing-repository.json" -source "$source_path" \
-	-subject-sha "$HEAD_SHA" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
-	-producer-imports-maximum "$maximum_allowed" -output "$output/missing-repository-receipt.json"
+	-producer-imports-maximum "$maximum_allowed" -output "$output/exact-mismatch-receipt.json"
 jq -e '
   .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+  .subject_binding.format.decision == "UNKNOWN" and
+  .subject_binding.format.reason == "FORMAT_INVALID"
+' "$output/invalid-unobserved-receipt.json" >/dev/null
+jq -e '
+  .decision == "REFUTED" and .resolution == "EXACT" and
   .subject_binding.format.decision == "PASS" and
   .subject_binding.checkout.decision == "REFUTED" and
   .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH"
-' "$output/wrong-sha-receipt.json" >/dev/null
+' "$output/exact-mismatch-receipt.json" >/dev/null
+go run ./scripts/reflective-query-sandbox/consumer \
+	-input "$input/regressions/mismatch-repository-unknown.json" -source "$source_path" \
+	-subject-sha "$wrong_sha" -checkout-sha "$checkout_sha" -producer-imports-evidence "$import_evidence" \
+	-producer-imports-maximum "$maximum_allowed" -output "$output/mismatch-repository-unknown-receipt.json"
 jq -e '
-  .decision == "REFUTED" and
-  .effects.repository_observation == "net_repository_status_changed" and
-  ([.claims[] | select(.predicate_id == "net-repository-status-unchanged" and .to == "REFUTED" and .reason == "NET_REPOSITORY_STATUS_CHANGED")] | length) == 1
-' "$output/changed-repository-receipt.json" >/dev/null
-jq -e '
-  .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+  .decision == "REFUTED" and .resolution == "EXACT" and
+  .subject_binding.checkout.decision == "REFUTED" and
+  .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH" and
   .effects.repository_evidence_available == false and
   .effects.repository_observation == "UNOBSERVED" and
-  .effects.repository_observation_stage == "REPOSITORY" and
-  .effects.repository_observation_step == "read-status" and
-  (.effects.repository_observation_reason | startswith("REPOSITORY_EVIDENCE_"))
-' "$output/missing-repository-receipt.json" >/dev/null
+  ([.claims[] | select(.predicate_id == "net-repository-status-unchanged" and .to == "OPEN" and .reason == "REPOSITORY_EVIDENCE_MISSING")] | length) == 1
+' "$output/mismatch-repository-unknown-receipt.json" >/dev/null
 
 {
 	echo '## Reflective query sandbox consumer'

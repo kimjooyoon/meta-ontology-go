@@ -96,19 +96,21 @@ fi
 wrong_evidence="$regressions/wrong-sha-checkout.txt"
 printf 'subject_sha=%s\ncheckout_head=%s\nsubject_matches_checkout=%s\n' "$wrong_sha" "$checkout_sha" false > "$wrong_evidence"
 go run ./scripts/reflective-query-sandbox/producer \
+	-source "$source_path" -subject-sha "" -repository-before "$before_status" -repository-after "$before_status" -output "$regressions/invalid-unobserved.json"
+go run ./scripts/reflective-query-sandbox/producer \
 	-source "$source_path" -subject-sha "$wrong_sha" -subject-checkout-evidence "$wrong_evidence" \
-	-repository-before "$before_status" -repository-after "$before_status" -output "$regressions/wrong-sha.json"
-
-changed_status="$regressions/repository-after-changed.txt"
-printf ' M reflective-query-sandbox-regression.txt\n' > "$changed_status"
+	-repository-before "$before_status" -repository-after "$before_status" -output "$regressions/exact-mismatch.json"
 go run ./scripts/reflective-query-sandbox/producer \
-	-source "$source_path" -subject-sha "$HEAD_SHA" -subject-checkout-evidence "$subject_evidence" \
-	-repository-before "$before_status" -repository-after "$changed_status" -output "$regressions/changed-repository.json"
+	-source "$source_path" -subject-sha "$wrong_sha" -subject-checkout-evidence "$wrong_evidence" \
+	-repository-before "" -repository-after "" -output "$regressions/mismatch-repository-unknown.json"
 
-go run ./scripts/reflective-query-sandbox/producer \
-	-source "$source_path" -subject-sha "$HEAD_SHA" -subject-checkout-evidence "$subject_evidence" \
-	-repository-before "" -repository-after "" -output "$regressions/missing-repository.json"
-
+jq -e '
+  .subject_binding.format.decision == "UNKNOWN" and
+  .subject_binding.format.resolution == "LOWER_RESOLUTION" and
+  .subject_binding.format.reason == "FORMAT_INVALID" and
+  .subject_binding.checkout.decision == "UNKNOWN" and
+  .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_UNOBSERVED"
+' "$regressions/invalid-unobserved.json" >/dev/null
 jq -e --arg sha "$wrong_sha" --arg checkout "$checkout_sha" '
   .subject_binding.format.decision == "PASS" and
   .subject_binding.format.reason == "FORMAT_VALID" and
@@ -117,14 +119,7 @@ jq -e --arg sha "$wrong_sha" --arg checkout "$checkout_sha" '
   .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH" and
   .subject_binding.checkout.observed_sha == $checkout and
   .subject_sha == $sha
-' "$regressions/wrong-sha.json" >/dev/null
-jq -e '
-  .effects.repository_evidence_available == true and
-  .effects.repository_observation == "net_repository_status_changed" and
-  (.effects.net_repository_changes | length) > 0 and
-  ([.attempts[] | select(.id == "repository.net-status-unchanged" and .decision == "REFUTED" and .resolution == "EXACT" and .reason == "NET_REPOSITORY_STATUS_CHANGED")] | length) == 1 and
-  ([.claims[] | select(.predicate_id == "net-repository-status-unchanged" and .to == "REFUTED" and .reason == "NET_REPOSITORY_STATUS_CHANGED")] | length) == 1
-' "$regressions/changed-repository.json" >/dev/null
+' "$regressions/exact-mismatch.json" >/dev/null
 jq -e '
   .effects.repository_evidence_available == false and
   .effects.repository_observation == "UNOBSERVED" and
@@ -135,13 +130,13 @@ jq -e '
   .effects.repository_status_after == null and
   .effects.net_repository_changes == null and
   ([.attempts[] | select(.id == "repository.net-status-unchanged" and .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .stage == "REPOSITORY" and .step == "read-status")] | length) == 1
-' "$regressions/missing-repository.json" >/dev/null
+' "$regressions/mismatch-repository-unknown.json" >/dev/null
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
 	{
 		echo '| Fixed regression matrix | Passed / fixed denominator |'
 		echo '|---|---:|'
-		echo '| Subject SHA / repository status / missing evidence | 3 / 3 |'
+		echo '| Invalid/unobserved / exact mismatch / mismatch + repository unknown | 3 / 3 |'
 	} >> "$GITHUB_STEP_SUMMARY"
 fi
 

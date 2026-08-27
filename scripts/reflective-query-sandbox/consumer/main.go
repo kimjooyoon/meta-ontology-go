@@ -1037,18 +1037,16 @@ func buildReceipt(value observation, verified verifiedObservation, sourceReconst
 			proofSatisfied[registration.ProofChoice]++
 		}
 	}
-	decision, reason, resolution := "PASS", "OBSERVATION_BOUNDARY_CONFORMANT", "OBSERVATION_ONLY"
+	verdict := receiptVerdict{Decision: "PASS", Resolution: "OBSERVATION_ONLY", Reason: "OBSERVATION_BOUNDARY_CONFORMANT"}
 	for _, claim := range verified.Claims {
 		if claim.To == "REFUTED" {
-			decision, reason = "REFUTED", "BOUNDARY_VIOLATION_OBSERVED"
+			verdict = mergeReceiptVerdict(verdict, receiptVerdict{Decision: "REFUTED", Resolution: "EXACT", Reason: "BOUNDARY_VIOLATION_OBSERVED"})
 			break
 		}
 	}
-	if value.SubjectBinding.Format.Decision != "PASS" || value.SubjectBinding.Checkout.Decision != "PASS" {
-		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", subjectBindingReason(value.SubjectBinding)
-	}
-	if !value.Effects.RepositoryEvidenceAvailable && decision == "PASS" {
-		decision, resolution, reason = "UNKNOWN", "LOWER_RESOLUTION", value.Effects.RepositoryObservationReason
+	verdict = mergeReceiptVerdict(verdict, subjectBindingVerdict(value.SubjectBinding))
+	if !value.Effects.RepositoryEvidenceAvailable {
+		verdict = mergeReceiptVerdict(verdict, receiptVerdict{Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", Reason: value.Effects.RepositoryObservationReason})
 	}
 	subjectResolution := "EXACT_ONLY"
 	if verified.Contract.UnknownTargets > 0 {
@@ -1057,14 +1055,47 @@ func buildReceipt(value observation, verified verifiedObservation, sourceReconst
 	if value.SubjectBinding.Format.Decision != "PASS" || value.SubjectBinding.Checkout.Decision != "PASS" {
 		subjectResolution = "UNKNOWN_SUBJECT_SHA"
 	}
-	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: decision, Resolution: resolution, SubjectResolution: subjectResolution, Reason: reason, Producer: value.Producer, Consumer: consumerName, Contract: verified.Contract, Source: verified.Source, Attempts: verified.Attempts, Claims: verified.Claims, Coordinates: coordinates{Satisfied: countTransitions(verified.Claims, "DISCHARGED"), Total: len(verified.Model.Claims), BasisPoints: basisPoints(countTransitions(verified.Claims, "DISCHARGED"), len(verified.Model.Claims))}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SubjectBinding: value.SubjectBinding, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, ImmutableIDPatchAccepted: value.Effects.ImmutableIDPatchAccepted, DetachedGraphPatchCapability: value.Effects.DetachedGraphPatchCapability, OverallAuthority: value.Effects.OverallAuthority, ReceiptMaterialDigest: verified.Material, TransitionChainDigest: verified.TransitionChainDigest, Attestor: consumerName, NotClaimed: []string{"generic Go reflection API equivalence", "global mutation authority or repository event-level transient writes", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
+	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: verdict.Decision, Resolution: verdict.Resolution, SubjectResolution: subjectResolution, Reason: verdict.Reason, Producer: value.Producer, Consumer: consumerName, Contract: verified.Contract, Source: verified.Source, Attempts: verified.Attempts, Claims: verified.Claims, Coordinates: coordinates{Satisfied: countTransitions(verified.Claims, "DISCHARGED"), Total: len(verified.Model.Claims), BasisPoints: basisPoints(countTransitions(verified.Claims, "DISCHARGED"), len(verified.Model.Claims))}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SubjectBinding: value.SubjectBinding, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, ImmutableIDPatchAccepted: value.Effects.ImmutableIDPatchAccepted, DetachedGraphPatchCapability: value.Effects.DetachedGraphPatchCapability, OverallAuthority: value.Effects.OverallAuthority, ReceiptMaterialDigest: verified.Material, TransitionChainDigest: verified.TransitionChainDigest, Attestor: consumerName, NotClaimed: []string{"generic Go reflection API equivalence", "global mutation authority or repository event-level transient writes", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
 }
 
-func subjectBindingReason(binding subjectBinding) string {
+type receiptVerdict struct {
+	Decision   string
+	Resolution string
+	Reason     string
+}
+
+// Receipt decisions form a fail-closed lattice: REFUTED outranks UNKNOWN,
+// which outranks PASS. A known contradiction therefore cannot be hidden by a
+// lower-resolution observation from another scope.
+func subjectBindingVerdict(binding subjectBinding) receiptVerdict {
 	if binding.Format.Decision != "PASS" {
-		return binding.Format.Reason
+		return receiptVerdict{Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", Reason: binding.Format.Reason}
 	}
-	return binding.Checkout.Reason
+	if binding.Checkout.Decision == "REFUTED" && binding.Checkout.Resolution == "EXACT" && binding.Checkout.Reason == "SUBJECT_SHA_CHECKOUT_MISMATCH" {
+		return receiptVerdict{Decision: "REFUTED", Resolution: "EXACT", Reason: binding.Checkout.Reason}
+	}
+	if binding.Checkout.Decision != "PASS" {
+		return receiptVerdict{Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", Reason: binding.Checkout.Reason}
+	}
+	return receiptVerdict{Decision: "PASS", Resolution: "OBSERVATION_ONLY", Reason: "OBSERVATION_BOUNDARY_CONFORMANT"}
+}
+
+func mergeReceiptVerdict(left, right receiptVerdict) receiptVerdict {
+	if receiptDecisionRank(right.Decision) > receiptDecisionRank(left.Decision) {
+		return right
+	}
+	return left
+}
+
+func receiptDecisionRank(decision string) int {
+	switch decision {
+	case "REFUTED":
+		return 2
+	case "UNKNOWN":
+		return 1
+	default:
+		return 0
+	}
 }
 
 func scores(totals, satisfied map[string]int) []score {
