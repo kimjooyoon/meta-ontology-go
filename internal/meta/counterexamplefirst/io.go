@@ -11,7 +11,7 @@ func DecodeContract(raw []byte) (Contract, error) {
 	if err := json.Unmarshal(raw, &value); err != nil {
 		return Contract{}, fmt.Errorf("decode counterexample contract: %w", err)
 	}
-	if !ValidContract(value) {
+	if value.Schema == "" || value.Version == 0 || value.SourcePath == "" || len(value.Cases) == 0 {
 		return Contract{}, fmt.Errorf("COUNTEREXAMPLE_CONTRACT_DRIFT")
 	}
 	return value, nil

@@ -16,6 +16,14 @@ type independenceEvidence struct {
 	ProducerDependencies int    `json:"producer_dependencies"`
 }
 
+type effectsEvidence struct {
+	Schema             string `json:"schema"`
+	BeforeStatusDigest string `json:"before_status_digest"`
+	AfterStatusDigest  string `json:"after_status_digest"`
+	RepositoryWrites   int    `json:"repository_writes"`
+	MutationAuthority  bool   `json:"mutation_authority"`
+}
+
 func run(args []string) int {
 	options, ok := parseOptions(args)
 	if !ok {
@@ -29,7 +37,7 @@ func run(args []string) int {
 		return raw
 	}
 	contractRaw, source, corpusRaw := read(options.contract), read(options.source), read(options.corpus)
-	receiptsRaw, independenceRaw := read(options.receipts), read(options.independence)
+	receiptsRaw, independenceRaw, effectsRaw := read(options.receipts), read(options.independence), read(options.effects)
 	if !ok {
 		return 2
 	}
@@ -50,9 +58,16 @@ func run(args []string) int {
 		independence.Schema != independenceSchema || independence.ProducerDependencies < 0 {
 		return 2
 	}
+	var effects effectsEvidence
+	if err := json.Unmarshal(effectsRaw, &effects); err != nil || effects.Schema != "gooo/counterexample-first-effects/v1" ||
+		effects.BeforeStatusDigest == "" || effects.AfterStatusDigest == "" || effects.RepositoryWrites < 0 ||
+		effects.BeforeStatusDigest != effects.AfterStatusDigest {
+		return 2
+	}
 	report := counterexamplefirstjudge.Evaluate(cf.JudgeInput{Contract: contract, HeadSHA: options.head,
 		SourcePath: options.source, Source: source, Corpus: corpus, Receipts: receipts,
-		ProducerDependencies: independence.ProducerDependencies})
+		ProducerDependencies: independence.ProducerDependencies,
+		WorkspaceEffects:     cf.Effects{RepositoryWrites: effects.RepositoryWrites, MutationAuthority: effects.MutationAuthority}})
 	if err := cf.WriteReport(options.out, report); err != nil {
 		return 2
 	}

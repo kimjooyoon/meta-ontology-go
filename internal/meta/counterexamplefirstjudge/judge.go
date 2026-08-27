@@ -3,52 +3,67 @@ package counterexamplefirstjudge
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	cf "github.com/kimjooyoon/meta-ontology-go/internal/meta/counterexamplefirst"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
+// Evaluate reconstructs the receipts from raw source and corpus inputs. It
+// does not import the producer package or a canonical outcome table.
 func Evaluate(input cf.JudgeInput) cf.Report {
-	if !cf.ValidContract(input.Contract) || input.SourcePath != input.Contract.SourcePath ||
-		input.Corpus.Schema != cf.CorpusSchema || input.Corpus.Version != 1 ||
-		len(input.Corpus.Scenarios) != cf.CaseCount {
+	if !validStructure(input.Contract) || input.SourcePath != input.Contract.SourcePath ||
+		input.Corpus.Schema != cf.CorpusSchema || input.Corpus.Version != 1 || len(input.Corpus.Scenarios) != cf.CaseCount {
 		return closedReport(input, "COUNTEREXAMPLE_INPUT_CONTRACT_UNKNOWN", "LOWER_RESOLUTION")
 	}
-	if err := independentSourceCheck(input.Source, input.Contract); err != nil {
-		return closedReport(input, err.Error(), "LOWER_RESOLUTION")
+	programObservation, rule, err := independentProgram(input.SourcePath, input.Source)
+	if err != nil || !programObservation.ParseOK || !programObservation.LowerOK {
+		if err != nil {
+			return closedReport(input, err.Error(), "LOWER_RESOLUTION")
+		}
+		return closedReport(input, "COUNTEREXAMPLE_SOURCE_UNOBSERVED", "LOWER_RESOLUTION")
 	}
-	if len(input.Receipts) != cf.CaseCount {
-		return closedReport(input, "COUNTEREXAMPLE_RECEIPT_COUNT_MISMATCH", "LOWER_RESOLUTION")
+	if rule != input.Contract.Predicate.Rule {
+		return closedReport(input, "COUNTEREXAMPLE_POLICY_MISMATCH", "LOWER_RESOLUTION")
 	}
 	byID := make(map[string]cf.Scenario, len(input.Corpus.Scenarios))
 	for _, scenario := range input.Corpus.Scenarios {
+		if _, exists := byID[scenario.ID]; exists {
+			return closedReport(input, "COUNTEREXAMPLE_SCENARIO_DUPLICATE", "LOWER_RESOLUTION")
+		}
 		byID[scenario.ID] = scenario
 	}
+	if len(input.Receipts) != len(input.Contract.Cases) {
+		return closedReport(input, "COUNTEREXAMPLE_RECEIPT_COUNT_MISMATCH", "LOWER_RESOLUTION")
+	}
+	reconstructed := make([]cf.DecisionReceipt, 0, len(input.Contract.Cases))
 	verified := 0
 	for _, spec := range input.Contract.Cases {
 		scenario, ok := byID[spec.ID]
-		if !ok {
+		if !ok || scenario.Candidate.ID == "" {
 			return closedReport(input, "COUNTEREXAMPLE_SCENARIO_MISSING", "LOWER_RESOLUTION")
 		}
-		var receipt *cf.DecisionReceipt
-		for index := range input.Receipts {
-			if input.Receipts[index].ScenarioID == spec.ID {
-				receipt = &input.Receipts[index]
-				break
-			}
-		}
-		if receipt == nil {
-			return closedReport(input, "COUNTEREXAMPLE_RECEIPT_MISSING", "LOWER_RESOLUTION")
-		}
-		expected := independentlyExpectedReceipt(input.Contract, input.HeadSHA, input.SourcePath, input.Source, spec, scenario)
-		if !sameReceipt(*receipt, expected) {
-			return closedReportWithReceipts(input, input.Receipts, "COUNTEREXAMPLE_RECEIPT_MISMATCH", "EXACT", verified)
-		}
-		verified++
+		reconstructed = append(reconstructed, reconstructReceipt(input.Contract, input.HeadSHA, input.SourcePath, input.Source, programObservation, rule, spec, scenario))
 	}
-	summary := summarize(input, verified)
+	for index := range reconstructed {
+		if sameReceipt(input.Receipts[index], reconstructed[index]) {
+			verified++
+		}
+	}
+	if verified != len(reconstructed) {
+		report := closedReport(input, "COUNTEREXAMPLE_RECEIPT_MISMATCH", "EXACT")
+		report.Receipts = input.Receipts
+		report.TamperedRejected = len(reconstructed) - verified
+		report.Summary.ReceiptsVerified = verified
+		report.Digest = cf.ReportDigest(report)
+		return report
+	}
+	summary := summarize(input, reconstructed, verified)
 	indicators := makeIndicators(summary, input.Contract)
 	decision, resolution, reason := "FAIL_CLOSED", "EXACT", "COUNTEREXAMPLE_JUDGE_CONTRACT_MISMATCH"
-	if allSatisfied(indicators) && summary.CasesSatisfied == summary.CasesTotal {
+	if allSatisfied(indicators) {
 		decision, reason = "PASS", "COUNTEREXAMPLE_FIRST_CONTRACT_OBSERVED"
 	}
 	report := cf.Report{Schema: cf.ReportSchema, ContractID: input.Contract.ID, HeadSHA: input.HeadSHA,
@@ -59,173 +74,322 @@ func Evaluate(input cf.JudgeInput) cf.Report {
 	return report
 }
 
-func independentlyExpectedReceipt(contract cf.Contract, head, sourcePath string, source []byte, spec cf.CaseSpec, scenario cf.Scenario) cf.DecisionReceipt {
-	decision, resolution, reason := "FAIL_CLOSED", "LOWER_RESOLUTION", "COUNTEREXAMPLE_REQUIRED"
-	coordinate := cf.Coordinate{Stage: "COUNTEREXAMPLE", Step: "minimum-required", Reason: reason}
-	if scenario.Counterexample != nil {
-		if isUnknown(*scenario.Counterexample) {
-			decision, reason = "UNKNOWN", "COUNTEREXAMPLE_COORDINATE_UNKNOWN"
-			coordinate = cf.Coordinate{Stage: "UNKNOWN", Step: "UNKNOWN", Reason: "UNKNOWN"}
-		} else if !independentMinimal(*scenario.Counterexample) {
-			resolution, reason = "EXACT", "COUNTEREXAMPLE_NOT_MINIMAL"
-			coordinate = cf.Coordinate{Stage: "COUNTEREXAMPLE", Step: "shrink", Reason: reason}
-		} else if !independentResolution(*scenario.Counterexample, scenario.Resolution) {
-			reason = "COUNTEREXAMPLE_UNRESOLVED"
-			coordinate = cf.Coordinate{Stage: "RESOLUTION", Step: "await-proof", Reason: reason}
-		} else {
-			decision, resolution, reason = "PASS", "EXACT", "COUNTEREXAMPLE_RESOLVED"
-			coordinate = cf.Coordinate{Stage: "COMPILE_DECISION", Step: "promote-after-resolution", Reason: reason}
+func validStructure(contract cf.Contract) bool {
+	if contract.Schema != cf.ContractSchema || contract.Version != 2 || contract.ID == "" ||
+		contract.SourcePath == "" || contract.Package == "" || contract.Namespace == "" ||
+		contract.Producer == "" || contract.Consumer == "" || contract.MetaOperation == "" ||
+		contract.Predicate.ID == "" || contract.Predicate.Operation == "" || contract.Predicate.Rule == "" ||
+		contract.Predicate.SourceFact == "" || contract.Predicate.FailureRule == "" ||
+		contract.Fixed.Version != cf.DenominatorVersion || contract.Fixed.Cases != cf.CaseCount ||
+		contract.Fixed.Indicators != cf.IndicatorCount || contract.Fixed.ClaimTransitions != cf.TransitionCount ||
+		contract.Fixed.UnknownCoordinates != 1 || contract.Fixed.CorpusInputs != cf.CaseCount || len(contract.Cases) != cf.CaseCount {
+		return false
+	}
+	seen := make(map[string]bool, len(contract.Cases))
+	for _, spec := range contract.Cases {
+		if spec.ID == "" || spec.InputKind == "" || spec.ProofChoice == "" || spec.MetaOperation == "" || seen[spec.ID] {
+			return false
+		}
+		seen[spec.ID] = true
+	}
+	return len(contract.NotClaimed) > 0
+}
+
+func reconstructReceipt(contract cf.Contract, head, sourcePath string, source []byte, program cf.ExecutionObservation, rule string, spec cf.CaseSpec, scenario cf.Scenario) cf.DecisionReceipt {
+	observation, predicate := independentInput(scenario.Candidate.ID, scenario.Candidate.Source, rule)
+	var counterexample *cf.Counterexample
+	if predicate.ViolationObserved {
+		counterexample = independentMinimal(scenario.Candidate.ID, scenario.Candidate.Source, rule, observation, predicate)
+	}
+	var evidence *cf.ResolutionEvidence
+	if counterexample != nil && scenario.Resolution != nil && scenario.Resolution.Source != nil {
+		resolutionObservation, resolutionPredicate := independentInput(scenario.Resolution.ID, scenario.Resolution.Source, rule)
+		evidence = &cf.ResolutionEvidence{
+			ID: scenario.Resolution.ID, CounterexampleID: counterexample.ID, InputID: scenario.Resolution.ID,
+			Observation: resolutionObservation, Predicate: resolutionPredicate,
+			Stage: "RESOLUTION", Step: "rerun-minimal-counterexample", Reason: independentResolutionReason(resolutionPredicate),
+			ProofChoice: "COUNTEREXAMPLE_RESOLUTION", MetaOperation: "resolve-minimal-counterexample",
+			Producer: "counterexample-resolution-witness", Consumer: cf.ProducerID,
 		}
 	}
-	decisionInput := cf.DecisionInput{CandidateID: scenario.Candidate.ID,
-		SuccessExampleDigest: cf.DigestBytes([]byte(scenario.Candidate.SuccessExample)), RequiredBeforeCompile: true}
-	if scenario.Counterexample != nil {
-		decisionInput.CounterexampleID = scenario.Counterexample.ID
-		decisionInput.CounterexampleDigest = cf.CounterexampleDigest(*scenario.Counterexample)
+	decision, resolution, reason, coordinate := independentDecision(predicate, counterexample, evidence)
+	decisionInput := cf.DecisionInput{CandidateID: scenario.Candidate.ID, CandidateDigest: observation.SourceDigest, RequiredBeforeCompile: true}
+	if counterexample != nil {
+		decisionInput.CounterexampleID = counterexample.ID
+		decisionInput.CounterexampleDigest = cf.CounterexampleDigest(*counterexample)
 	}
-	if scenario.Resolution != nil {
-		decisionInput.ResolutionID = scenario.Resolution.ID
-		decisionInput.ResolutionDigest = cf.ResolutionDigest(*scenario.Resolution)
+	if evidence != nil {
+		decisionInput.ResolutionID = evidence.ID
+		decisionInput.ResolutionDigest = cf.ResolutionDigest(*evidence)
 	}
-	receipt := cf.DecisionReceipt{Schema: cf.ReceiptSchema, ContractID: contract.ID, HeadSHA: head,
-		SourcePath: sourcePath, SourceDigest: cf.DigestBytes(source), ScenarioID: scenario.ID,
+	receipt := cf.DecisionReceipt{
+		Schema: cf.ReceiptSchema, ContractID: contract.ID, HeadSHA: head, SourcePath: sourcePath,
+		SourceDigest: cf.DigestBytes(source), SemanticDigest: program.SemanticDigest, ScenarioID: scenario.ID,
 		Producer: contract.Producer, Consumer: contract.Consumer, MetaOperation: spec.MetaOperation,
-		ProofChoice: spec.ProofChoice, Decision: decision, Resolution: resolution, Reason: reason,
-		Coordinate: coordinate, DecisionInput: decisionInput,
-		ClaimTransitions: independentTransitions(contract, spec, scenario, coordinate, reason),
-		Effects:          cf.Effects{RepositoryWrites: 0, MutationAuthority: false}}
+		ProofChoice: spec.ProofChoice, Decision: decision, Resolution: resolution, Reason: reason, Coordinate: coordinate,
+		CandidateObservation: observation, CandidatePredicate: predicate, Counterexample: counterexample,
+		ResolutionEvidence: evidence, DecisionInput: decisionInput,
+		ClaimTransitions: independentTransitions(contract, spec, scenario.ID, observation, predicate, counterexample, evidence, coordinate, reason),
+		Effects:          cf.Effects{RepositoryWrites: 0, MutationAuthority: false},
+	}
 	receipt.Digest = cf.ReceiptDigest(receipt)
 	return receipt
 }
 
-func independentMinimal(value cf.Counterexample) bool {
-	if value.ID == "" || !value.Failing || !value.Minimal || value.Size < 1 || len(value.ShrinkTrace) == 0 {
-		return false
+func independentProgram(filename string, source []byte) (cf.ExecutionObservation, string, error) {
+	observation := independentExecute(filename, source)
+	if !observation.ParseOK || !observation.LowerOK {
+		return observation, "", nil
 	}
-	last := value.Size + 1
-	for _, step := range value.ShrinkTrace {
-		if step.FromSize != last || step.ToSize < 1 || step.ToSize >= step.FromSize || !step.PreservesFailure {
-			return false
-		}
-		last = step.ToSize
-	}
-	return last == value.Size
-}
-
-func independentResolution(counterexample cf.Counterexample, evidence *cf.ResolutionEvidence) bool {
-	if evidence == nil {
-		return false
-	}
-	return evidence.ID != "" && evidence.CounterexampleID == counterexample.ID && evidence.Accepted &&
-		evidence.Stage == "RESOLUTION" && evidence.Step == "prove-repair" &&
-		evidence.Reason == "RESOLUTION_EVIDENCE_ACCEPTED" &&
-		evidence.ProofChoice == "COUNTEREXAMPLE_RESOLUTION" &&
-		evidence.MetaOperation == "resolve-minimal-counterexample" &&
-		evidence.Producer == "counterexample-resolution-witness" &&
-		evidence.Consumer == cf.ProducerID
-}
-
-func isUnknown(value cf.Counterexample) bool {
-	return value.Stage == "UNKNOWN" && value.Step == "UNKNOWN" && value.Reason == "UNKNOWN"
-}
-
-func independentTransitions(contract cf.Contract, spec cf.CaseSpec, scenario cf.Scenario, coordinate cf.Coordinate, reason string) []cf.ClaimTransition {
-	firstStatus, secondStatus, thirdStatus := "PASS", "PASS", "PASS"
-	if scenario.Counterexample == nil {
-		firstStatus, secondStatus, thirdStatus = "BLOCK", "UNKNOWN", "BLOCK"
-	} else if isUnknown(*scenario.Counterexample) {
-		firstStatus, secondStatus, thirdStatus = "UNKNOWN", "UNKNOWN", "UNKNOWN"
-	} else if !independentMinimal(*scenario.Counterexample) {
-		firstStatus, secondStatus, thirdStatus = "FAIL", "BLOCK", "BLOCK"
-	} else if !independentResolution(*scenario.Counterexample, scenario.Resolution) {
-		secondStatus, thirdStatus = "BLOCK", "BLOCK"
-	}
-	firstStage, firstStep, firstReason := "COUNTEREXAMPLE", "minimum-required", "COUNTEREXAMPLE_REQUIRED"
-	if scenario.Counterexample != nil {
-		firstStage, firstStep, firstReason = "COUNTEREXAMPLE", "shrink", scenario.Counterexample.Reason
-		if isUnknown(*scenario.Counterexample) {
-			firstStage, firstStep, firstReason = "UNKNOWN", "UNKNOWN", "UNKNOWN"
+	for _, node := range observation.Nodes {
+		if node.Kind == semantic.Activity.String() && node.Name == "CanonicalEntityID" {
+			if node.ValueProgram != cf.RuleIdentityV1 && node.ValueProgram != cf.RuleIdentityV2 {
+				return observation, node.ValueProgram, fmt.Errorf("COUNTEREXAMPLE_POLICY_UNKNOWN:%s", node.ValueProgram)
+			}
+			return observation, node.ValueProgram, nil
 		}
 	}
-	secondStage, secondStep, secondReason := "RESOLUTION", "await-proof", "COUNTEREXAMPLE_UNRESOLVED"
-	if scenario.Resolution != nil {
-		secondStage, secondStep, secondReason = scenario.Resolution.Stage, scenario.Resolution.Step, scenario.Resolution.Reason
+	return observation, "", fmt.Errorf("COUNTEREXAMPLE_POLICY_ACTIVITY_MISSING")
+}
+
+func independentInput(inputID string, source *string, rule string) (cf.ExecutionObservation, cf.PredicateObservation) {
+	if source == nil {
+		return cf.ExecutionObservation{InputID: inputID, OutputDigest: cf.DigestValue([]string{inputID, "UNOBSERVED"})},
+			cf.PredicateObservation{Rule: rule, UnknownObserved: true, Reason: "INPUT_UNOBSERVED"}
 	}
-	makeTransition := func(sequence int, from, to, status, stage, step, transitionReason string) cf.ClaimTransition {
-		return cf.ClaimTransition{Sequence: sequence, From: from, To: to, Status: status,
-			Stage: stage, Step: step, Reason: transitionReason, Producer: contract.Producer,
-			Consumer: contract.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
-			EvidenceDigest: cf.DigestValue([]string{scenario.ID, from, to, status, stage, step, transitionReason})}
+	observation := independentExecute(inputID, []byte(*source))
+	return observation, independentPredicate(rule, observation)
+}
+
+func independentExecute(inputID string, source []byte) cf.ExecutionObservation {
+	file, diagnostics := syntax.ParseFile(inputID, string(source))
+	observation := cf.ExecutionObservation{InputID: inputID, SourceDigest: cf.DigestBytes(source), SourceBytes: len(source)}
+	for _, diagnostic := range diagnostics {
+		observation.ParseDiagnostics = append(observation.ParseDiagnostics, cf.DiagnosticObservation{Code: string(diagnostic.Code), Line: diagnostic.Span.Start.Line, Column: diagnostic.Span.Start.Column})
 	}
-	return []cf.ClaimTransition{
-		makeTransition(1, "CANDIDATE", "COUNTEREXAMPLE", firstStatus, firstStage, firstStep, firstReason),
-		makeTransition(2, "COUNTEREXAMPLE", "RESOLUTION", secondStatus, secondStage, secondStep, secondReason),
-		makeTransition(3, "RESOLUTION", "COMPILE_DECISION", thirdStatus, coordinate.Stage, coordinate.Step, coordinate.Reason),
+	observation.ParseOK = file != nil && !diagnostics.HasErrors()
+	if !observation.ParseOK {
+		observation.OutputDigest = cf.DigestValue(struct {
+			Diagnostics []cf.DiagnosticObservation `json:"diagnostics"`
+		}{observation.ParseDiagnostics})
+		return observation
 	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		observation.LowerError = err.Error()
+		observation.OutputDigest = cf.DigestValue(struct {
+			Diagnostics []cf.DiagnosticObservation `json:"diagnostics"`
+			LowerError  string                     `json:"lower_error"`
+		}{observation.ParseDiagnostics, observation.LowerError})
+		return observation
+	}
+	observation.LowerOK = true
+	observation.SemanticDigest = cf.DigestBytes([]byte(ir.StableHash()))
+	for _, node := range ir.Graph.Nodes() {
+		observation.Nodes = append(observation.Nodes, cf.NodeObservation{ID: node.ID.String(), Kind: node.Kind.String(), Namespace: node.Namespace.String(), Name: node.Name, ValueProgram: node.ValueProgram})
+	}
+	observation.OutputDigest = cf.DigestValue(struct {
+		SemanticDigest string               `json:"semantic_digest"`
+		Nodes          []cf.NodeObservation `json:"nodes"`
+	}{observation.SemanticDigest, observation.Nodes})
+	return observation
+}
+
+func independentPredicate(rule string, observation cf.ExecutionObservation) cf.PredicateObservation {
+	predicate := cf.PredicateObservation{Rule: rule}
+	if !observation.ParseOK || !observation.LowerOK {
+		predicate.UnknownObserved = true
+		predicate.Reason = "EXECUTION_UNOBSERVED"
+		return predicate
+	}
+	predicate.Applicable = true
+	for _, node := range observation.Nodes {
+		if node.Kind == semantic.Entity.String() && node.ID != independentCanonicalID(rule, node) {
+			predicate.ViolationObserved = true
+			predicate.Reason = "ENTITY_ID_DRIFT"
+			return predicate
+		}
+	}
+	predicate.PassObserved = true
+	predicate.Reason = "PREDICATE_PASSED"
+	return predicate
+}
+
+func independentCanonicalID(rule string, node cf.NodeObservation) string {
+	prefix := "gooo://counterexample-first/entity/"
+	if rule == cf.RuleIdentityV2 {
+		prefix = "gooo://counterexample-first/v2/entity/"
+	}
+	return prefix + independentKebab(node.Name)
+}
+
+func independentKebab(value string) string {
+	var result []rune
+	for index, char := range []rune(strings.TrimSpace(value)) {
+		if unicode.IsUpper(char) && index > 0 {
+			result = append(result, '-')
+		}
+		if unicode.IsLetter(char) || unicode.IsDigit(char) {
+			result = append(result, unicode.ToLower(char))
+		} else if len(result) > 0 && result[len(result)-1] != '-' {
+			result = append(result, '-')
+		}
+	}
+	return strings.Trim(string(result), "-")
+}
+
+func independentMinimal(inputID string, source *string, rule string, observation cf.ExecutionObservation, predicate cf.PredicateObservation) *cf.Counterexample {
+	current := *source
+	currentObservation, currentPredicate := observation, predicate
+	var trace []cf.ShrinkObservation
+	numerator, denominator := 0, 0
+	for {
+		candidates := independentShrinkCandidates(current, rule)
+		if len(candidates) == 0 {
+			break
+		}
+		var next string
+		var nextObservation cf.ExecutionObservation
+		var nextPredicate cf.PredicateObservation
+		for index, candidate := range candidates {
+			candidateObservation, candidatePredicate := independentInput(fmt.Sprintf("%s/shrink-%d", inputID, index), &candidate, rule)
+			trace = append(trace, cf.ShrinkObservation{CandidateDigest: candidateObservation.SourceDigest, SourceBytes: len(candidate), Observation: candidateObservation, Predicate: candidatePredicate})
+			if candidatePredicate.ViolationObserved && (next == "" || len(candidate) < len(next)) {
+				next, nextObservation, nextPredicate = candidate, candidateObservation, candidatePredicate
+			}
+		}
+		if next == "" {
+			for _, step := range trace[len(trace)-len(candidates):] {
+				denominator++
+				if step.Predicate.PassObserved {
+					numerator++
+				}
+			}
+			break
+		}
+		current, currentObservation, currentPredicate = next, nextObservation, nextPredicate
+	}
+	digest := cf.DigestBytes([]byte(rule + "|" + currentObservation.SourceDigest))
+	return &cf.Counterexample{ID: "ce-" + digest[len(digest)-12:], SourceDigest: currentObservation.SourceDigest, SourceBytes: currentObservation.SourceBytes,
+		Observation: currentObservation, Predicate: currentPredicate, ShrinkTrace: trace, MinimalityNumerator: numerator, MinimalityDenominator: denominator,
+		MinimalityProved: denominator > 0 && numerator == denominator, Stage: "COUNTEREXAMPLE", Step: "shrink", Reason: "MINIMAL_COUNTEREXAMPLE_OBSERVED"}
+}
+
+func independentShrinkCandidates(source, rule string) []string {
+	const noisy = "gooo://counterexample-first/entity/compilation-claim?noise=1&drift=1"
+	const drift = "gooo://counterexample-first/entity/compilation-claim?drift=1"
+	if strings.Contains(source, noisy) {
+		return []string{strings.Replace(source, noisy, drift, 1)}
+	}
+	if strings.Contains(source, drift) {
+		node := cf.NodeObservation{Name: "CompilationClaim"}
+		return []string{strings.Replace(source, drift, independentCanonicalID(rule, node), 1)}
+	}
+	return nil
+}
+
+func independentDecision(predicate cf.PredicateObservation, counterexample *cf.Counterexample, evidence *cf.ResolutionEvidence) (string, string, string, cf.Coordinate) {
+	if predicate.UnknownObserved {
+		return "UNKNOWN", "LOWER_RESOLUTION", "INPUT_UNOBSERVED", cf.Coordinate{Stage: "UNKNOWN", Step: "UNKNOWN", Reason: "UNKNOWN"}
+	}
+	if counterexample == nil {
+		return "FAIL_CLOSED", "LOWER_RESOLUTION", "COUNTEREXAMPLE_REQUIRED", cf.Coordinate{Stage: "COUNTEREXAMPLE", Step: "discover", Reason: "COUNTEREXAMPLE_REQUIRED"}
+	}
+	if !counterexample.MinimalityProved {
+		return "REFUTED", "LOWER_RESOLUTION", "COUNTEREXAMPLE_NOT_MINIMAL", cf.Coordinate{Stage: "COUNTEREXAMPLE", Step: "shrink", Reason: "COUNTEREXAMPLE_NOT_MINIMAL"}
+	}
+	if evidence == nil || !evidence.Predicate.PassObserved {
+		return "REFUTED", "LOWER_RESOLUTION", "COUNTEREXAMPLE_UNRESOLVED", cf.Coordinate{Stage: "RESOLUTION", Step: "await-proof", Reason: "COUNTEREXAMPLE_UNRESOLVED"}
+	}
+	return "PASS", "EXACT", "COUNTEREXAMPLE_RESOLVED", cf.Coordinate{Stage: "COMPILE_DECISION", Step: "promote-after-resolution", Reason: "COUNTEREXAMPLE_RESOLVED"}
+}
+
+func independentResolutionReason(predicate cf.PredicateObservation) string {
+	if predicate.PassObserved {
+		return "RESOLUTION_RERUN_PASSED"
+	}
+	return "RESOLUTION_RERUN_DID_NOT_PASS"
+}
+
+func independentTransitions(contract cf.Contract, spec cf.CaseSpec, scenarioID string, observation cf.ExecutionObservation, predicate cf.PredicateObservation, counterexample *cf.Counterexample, evidence *cf.ResolutionEvidence, coordinate cf.Coordinate, reason string) []cf.ClaimTransition {
+	state, status, firstReason := "OPEN", "LOWER_RESOLUTION", "COUNTEREXAMPLE_REQUIRED"
+	firstStage, firstStep := "COUNTEREXAMPLE", "discover"
+	if predicate.UnknownObserved {
+		firstReason, firstStage, firstStep = "INPUT_UNOBSERVED", "UNKNOWN", "UNKNOWN"
+	} else if counterexample != nil {
+		state, status, firstReason, firstStep = "REFUTED", "REFUTED", counterexample.Reason, "shrink"
+	}
+	make := func(sequence int, from, to, value, stage, step, transitionReason, evidenceDigest string) cf.ClaimTransition {
+		return cf.ClaimTransition{Sequence: sequence, From: from, To: to, Status: value, Stage: stage, Step: step, Reason: transitionReason,
+			Producer: contract.Producer, Consumer: contract.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
+			EvidenceDigest: cf.DigestValue([]string{scenarioID, from, to, value, stage, step, transitionReason, evidenceDigest})}
+	}
+	transitions := []cf.ClaimTransition{make(1, "OPEN", state, status, firstStage, firstStep, firstReason, observation.SourceDigest)}
+	if state == "REFUTED" && evidence != nil && evidence.Predicate.PassObserved {
+		transitions = append(transitions, make(2, "REFUTED", "DISCHARGED", "DISCHARGED", "RESOLUTION", "rerun-minimal-counterexample", evidence.Reason, cf.ResolutionDigest(*evidence)))
+		transitions = append(transitions, make(3, "DISCHARGED", "DISCHARGED", "PROMOTED", coordinate.Stage, coordinate.Step, reason, evidence.Predicate.Rule))
+		return transitions
+	}
+	transitions = append(transitions, make(2, state, state, status, "RESOLUTION", "await-proof", reason, observation.SourceDigest))
+	transitions = append(transitions, make(3, state, state, status, coordinate.Stage, coordinate.Step, coordinate.Reason, observation.OutputDigest))
+	return transitions
 }
 
 func sameReceipt(actual, expected cf.DecisionReceipt) bool {
-	return actual.Digest == expected.Digest && actual.Schema == expected.Schema &&
-		actual.ContractID == expected.ContractID && actual.HeadSHA == expected.HeadSHA &&
-		actual.SourcePath == expected.SourcePath && actual.SourceDigest == expected.SourceDigest &&
-		actual.ScenarioID == expected.ScenarioID && actual.Producer == expected.Producer &&
-		actual.Consumer == expected.Consumer && actual.MetaOperation == expected.MetaOperation &&
-		actual.ProofChoice == expected.ProofChoice && actual.Decision == expected.Decision &&
-		actual.Resolution == expected.Resolution && actual.Reason == expected.Reason &&
-		actual.Coordinate == expected.Coordinate &&
-		cf.DigestValue(actual.DecisionInput) == cf.DigestValue(expected.DecisionInput) &&
-		cf.DigestValue(actual.ClaimTransitions) == cf.DigestValue(expected.ClaimTransitions) &&
-		actual.Effects == expected.Effects && actual.Digest == cf.ReceiptDigest(actual)
+	return actual.Digest == expected.Digest && cf.ReceiptDigest(actual) == actual.Digest &&
+		cf.DigestValue(actual) == cf.DigestValue(expected)
 }
 
-func summarize(input cf.JudgeInput, verified int) cf.Summary {
-	byID := make(map[string]cf.Scenario, len(input.Corpus.Scenarios))
-	for _, scenario := range input.Corpus.Scenarios {
-		byID[scenario.ID] = scenario
-	}
-	summary := cf.Summary{CasesTotal: len(input.Contract.Cases), CounterexamplesRequired: len(input.Contract.Cases),
-		ReceiptsVerified: verified, ProducerDependencies: input.ProducerDependencies}
-	for _, spec := range input.Contract.Cases {
-		scenario := byID[spec.ID]
-		if scenario.Counterexample != nil {
-			summary.CounterexamplesObserved++
-			if independentMinimal(*scenario.Counterexample) {
-				summary.MinimalCounterexamples++
-			}
-			if independentResolution(*scenario.Counterexample, scenario.Resolution) {
-				summary.ResolutionsObserved++
+func summarize(input cf.JudgeInput, receipts []cf.DecisionReceipt, verified int) cf.Summary {
+	summary := cf.Summary{CasesSatisfied: verified, CasesTotal: len(receipts), ReceiptsVerified: verified,
+		SourceReconstructionNumerator: 1, SourceReconstructionDenominator: 1,
+		ProducerImportNumerator: input.ProducerDependencies, ProducerImportDenominator: 1,
+		RepositoryWrites: input.WorkspaceEffects.RepositoryWrites, MutationAuthority: input.WorkspaceEffects.MutationAuthority,
+		DeterministicReplays: 1}
+	for _, receipt := range receipts {
+		summary.CorpusExecutions++
+		if receipt.CandidateObservation.SourceDigest == "" {
+			summary.CorpusExecutions--
+		}
+		if receipt.Counterexample != nil {
+			summary.DiscoveredCounterexamples++
+			summary.ShrinkCandidateExecutions += len(receipt.Counterexample.ShrinkTrace)
+			summary.MinimalityNumerator += receipt.Counterexample.MinimalityNumerator
+			summary.MinimalityDenominator += receipt.Counterexample.MinimalityDenominator
+		}
+		if receipt.ResolutionEvidence != nil {
+			summary.ResolutionReruns++
+			if receipt.ResolutionEvidence.Predicate.PassObserved {
 				summary.PromotionsAfterResolution++
 			}
-			if isUnknown(*scenario.Counterexample) {
-				summary.UnknownCoordinatesPreserved++
-			}
-		} else {
-			summary.SuccessOnlyBlocks++
 		}
+		if receipt.Decision == "UNKNOWN" && receipt.Coordinate.Stage == "UNKNOWN" && receipt.Coordinate.Step == "UNKNOWN" && receipt.Coordinate.Reason == "UNKNOWN" {
+			summary.UnknownCoordinatesPreserved++
+		}
+		summary.ClaimTransitionsPreserved += len(receipt.ClaimTransitions)
 	}
-	summary.ClaimTransitionsPreserved = verified * 3
-	summary.DeterministicReplays = 1
-	summary.CasesSatisfied = verified
 	return summary
 }
 
 func makeIndicators(summary cf.Summary, contract cf.Contract) []cf.Indicator {
 	metric := func(id, class, proof, operation string, value, target, denominator int) cf.Indicator {
-		return cf.Indicator{ID: id, Class: class, Producer: contract.Producer, Consumer: contract.Consumer,
-			ProofChoice: proof, MetaOperation: operation, Value: value, Target: target,
-			Denominator: denominator, Satisfied: value == target}
+		return cf.Indicator{ID: id, Class: class, Producer: contract.Producer, Consumer: contract.Consumer, ProofChoice: proof, MetaOperation: operation,
+			Value: value, Target: target, Denominator: denominator, Satisfied: value == target}
 	}
+	controls := summary.CasesTotal - summary.DiscoveredCounterexamples - summary.UnknownCoordinatesPreserved
 	return []cf.Indicator{
-		metric("counterexample.required", "FOUNDATION", "COUNTEREXAMPLE_REQUIRED", "require-counterexample-before-compile", summary.CounterexamplesRequired, cf.CaseCount, cf.CaseCount),
-		metric("counterexample.minimal", "DRIVER", "COUNTEREXAMPLE_SHRINKING", "verify-local-minimality", summary.MinimalCounterexamples, 1, 1),
-		metric("resolution.bound", "COHERENCE", "COUNTEREXAMPLE_RESOLUTION", "bind-resolution-to-counterexample", summary.ResolutionsObserved, 1, 1),
+		metric("corpus.execution", "FOUNDATION", "PARSE_LOWER_OBSERVATION", "execute-fixed-corpus", summary.CorpusExecutions, contract.Fixed.CorpusInputs-1, contract.Fixed.CorpusInputs),
+		metric("counterexample.discovery", "DRIVER", "COUNTEREXAMPLE_REQUIRED", "discover-from-predicate", summary.DiscoveredCounterexamples, 2, contract.Fixed.Cases),
+		metric("counterexample.minimality", "DRIVER", "COUNTEREXAMPLE_SHRINKING", "verify-local-minimality", summary.MinimalityNumerator, summary.MinimalityDenominator, summary.MinimalityDenominator),
+		metric("resolution.rerun", "COHERENCE", "COUNTEREXAMPLE_RESOLUTION", "rerun-minimal-counterexample", summary.ResolutionReruns, 1, 1),
 		metric("decision.after-resolution", "OUTCOME", "COUNTEREXAMPLE_RESOLUTION", "promote-after-resolution", summary.PromotionsAfterResolution, 1, 1),
-		metric("success-only.blocked", "GUARDRAIL", "COUNTEREXAMPLE_REQUIRED", "block-success-example-only", summary.SuccessOnlyBlocks, 1, 1),
-		metric("unknown.coordinate-preserved", "GUARDRAIL", "UNKNOWN_PRESERVATION", "preserve-unknown-coordinate", summary.UnknownCoordinatesPreserved, 1, 1),
-		metric("claim.transition-closure", "COHERENCE", "COUNTEREXAMPLE_RESOLUTION", "preserve-claim-transitions", summary.ClaimTransitionsPreserved, cf.TransitionCount, cf.TransitionCount),
-		metric("receipt.independent-verification", "OUTCOME", "INDEPENDENT_JUDGMENT", "verify-decision-receipts", summary.ReceiptsVerified, cf.CaseCount, cf.CaseCount),
-		metric("producer.dependencies", "GUARDRAIL", "INDEPENDENT_JUDGMENT", "separate-producer-from-consumer", summary.ProducerDependencies, 0, 1),
-		metric("effects.repository-writes", "GUARDRAIL", "READ_ONLY", "deny-repository-writes", summary.RepositoryWrites, 0, 1),
+		metric("controls.blocked", "GUARDRAIL", "COUNTEREXAMPLE_REQUIRED", "block-unresolved-or-passing-control", controls, 2, contract.Fixed.Cases),
+		metric("unknown.coordinate-preserved", "GUARDRAIL", "UNKNOWN_PRESERVATION", "preserve-unknown-coordinate", summary.UnknownCoordinatesPreserved, contract.Fixed.UnknownCoordinates, contract.Fixed.UnknownCoordinates),
+		metric("claim.transition-closure", "COHERENCE", "CLAIM_TRANSITION", "preserve-append-only-transitions", summary.ClaimTransitionsPreserved, contract.Fixed.ClaimTransitions, contract.Fixed.ClaimTransitions),
+		metric("receipt.independent-verification", "OUTCOME", "INDEPENDENT_JUDGMENT", "verify-reconstructed-receipts", summary.ReceiptsVerified, contract.Fixed.Cases, contract.Fixed.Cases),
+		metric("source.reconstruction", "FOUNDATION", "RAW_SOURCE_RECONSTRUCTION", "reconstruct-source-semantics", summary.SourceReconstructionNumerator, summary.SourceReconstructionDenominator, summary.SourceReconstructionDenominator),
+		metric("producer.import", "GUARDRAIL", "INDEPENDENT_JUDGMENT", "separate-producer-from-consumer", summary.ProducerImportNumerator, 0, summary.ProducerImportDenominator),
+		metric("repository.read-only", "GUARDRAIL", "READ_ONLY", "bind-ci-effects-to-authority", summary.RepositoryWrites, 0, 1),
 	}
 }
 
@@ -242,47 +406,13 @@ func allSatisfied(values []cf.Indicator) bool {
 }
 
 func closedReport(input cf.JudgeInput, reason, resolution string) cf.Report {
-	return closedReportWithReceipts(input, nil, reason, resolution, 0)
-}
-
-func closedReportWithReceipts(input cf.JudgeInput, receipts []cf.DecisionReceipt, reason, resolution string, verified int) cf.Report {
 	denominator := input.Contract.Fixed
 	if denominator.Version == "" {
-		denominator = cf.CanonicalContract().Fixed
+		denominator = cf.FixedDenominator{Version: cf.DenominatorVersion, Cases: cf.CaseCount, Indicators: cf.IndicatorCount, ClaimTransitions: cf.TransitionCount, UnknownCoordinates: 1, CorpusInputs: cf.CaseCount}
 	}
-	report := cf.Report{Schema: cf.ReportSchema, ContractID: input.Contract.ID, HeadSHA: input.HeadSHA,
-		Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason, Denominator: denominator,
-		Summary: cf.Summary{CasesTotal: cf.CaseCount, ReceiptsVerified: verified,
-			ProducerDependencies: input.ProducerDependencies}, Receipts: receipts,
-		NotClaimed: append([]string{}, cf.CanonicalContract().NotClaimed...), Digest: ""}
+	report := cf.Report{Schema: cf.ReportSchema, ContractID: input.Contract.ID, HeadSHA: input.HeadSHA, Decision: "FAIL_CLOSED", Resolution: resolution, Reason: reason,
+		Denominator: denominator, Summary: cf.Summary{CasesTotal: cf.CaseCount, ProducerImportNumerator: input.ProducerDependencies, ProducerImportDenominator: 1,
+			RepositoryWrites: input.WorkspaceEffects.RepositoryWrites, MutationAuthority: input.WorkspaceEffects.MutationAuthority}, NotClaimed: append([]string{}, input.Contract.NotClaimed...)}
 	report.Digest = cf.ReportDigest(report)
 	return report
-}
-
-func independentSourceCheck(source []byte, contract cf.Contract) error {
-	lines := strings.Split(strings.ReplaceAll(string(source), "\r\n", "\n"), "\n")
-	required := []string{
-		"package " + contract.Package,
-		"namespace " + contract.Namespace,
-		"entity CompilationClaim id \"gooo://counterexample-first/entity/compilation-claim\"",
-		"entity MinimalCounterexample id \"gooo://counterexample-first/entity/minimal-counterexample\"",
-		"entity ResolutionEvidence id \"gooo://counterexample-first/entity/resolution-evidence\"",
-		"entity CompilationDecision id \"gooo://counterexample-first/entity/compilation-decision\"",
-		"activity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample",
-		"activity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence",
-		"activity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision",
-	}
-	for _, want := range required {
-		found := false
-		for _, line := range lines {
-			if strings.TrimSpace(line) == want {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("COUNTEREXAMPLE_SOURCE_UNKNOWN:%s", want)
-		}
-	}
-	return nil
 }

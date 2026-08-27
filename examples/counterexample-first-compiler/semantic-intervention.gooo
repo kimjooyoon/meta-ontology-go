@@ -6,7 +6,8 @@ entity MinimalCounterexample id "gooo://counterexample-first/entity/minimal-coun
 entity ResolutionEvidence id "gooo://counterexample-first/entity/resolution-evidence"
 entity CompilationDecision id "gooo://counterexample-first/entity/compilation-decision"
 
-activity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes "identity:v1"
+// Semantic intervention: the candidate rule now includes a versioned path.
+activity CanonicalEntityID(CompilationClaim) -> CompilationClaim computes "identity:v2"
 activity DiscoverMinimalCounterexample(CompilationClaim) -> MinimalCounterexample
 activity BindResolutionEvidence(MinimalCounterexample) -> ResolutionEvidence
 activity PromoteOnlyAfterResolution(ResolutionEvidence) -> CompilationDecision

@@ -1,26 +1,34 @@
 {
-  "schema": "gooo/counterexample-first-compiler-contract/v1",
-  "id": "counterexample-first-meta-compilation-v1",
-  "version": 1,
+  "schema": "gooo/counterexample-first-compiler-contract/v2",
+  "id": "counterexample-first-meta-compilation-v2",
+  "version": 2,
   "source_path": "examples/counterexample-first-compiler/main.gooo",
   "package": "counterexamplefirst",
   "namespace": "counterexamplefirst",
   "producer": "counterexample-first-compiler",
   "consumer": "independent-counterexample-first-judge",
   "meta_operation": "compile-after-counterexample-resolution",
+  "predicate": {
+    "id": "canonical-entity-id",
+    "operation": "syntax.ParseFile->bidir.Lower",
+    "rule": "identity:v1",
+    "source_fact": "activity CanonicalEntityID computes value program",
+    "failure_rule": "lowered Entity.ID != canonical identity(namespace, kind, name)"
+  },
   "fixed_denominator": {
-    "version": "counterexample-first-denominator/v1",
+    "version": "counterexample-first-denominator/v2",
     "cases": 5,
-    "indicators": 10,
+    "indicators": 12,
     "claim_transitions": 15,
-    "unknown_coordinates": 1
+    "unknown_coordinates": 1,
+    "corpus_inputs": 5
   },
   "cases": [
-    {"id":"resolved-minimal-counterexample","expected_decision":"PASS","expected_resolution":"EXACT","expected_reason":"COUNTEREXAMPLE_RESOLVED","expected_stage":"COMPILE_DECISION","expected_step":"promote-after-resolution","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"promote-after-resolution"},
-    {"id":"success-example-only","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"COUNTEREXAMPLE_REQUIRED","expected_stage":"COUNTEREXAMPLE","expected_step":"minimum-required","proof_choice":"COUNTEREXAMPLE_REQUIRED","meta_operation":"require-counterexample-before-compile"},
-    {"id":"unresolved-minimal-counterexample","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"COUNTEREXAMPLE_UNRESOLVED","expected_stage":"RESOLUTION","expected_step":"await-proof","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"block-unresolved-counterexample"},
-    {"id":"non-minimal-counterexample","expected_decision":"FAIL_CLOSED","expected_resolution":"EXACT","expected_reason":"COUNTEREXAMPLE_NOT_MINIMAL","expected_stage":"COUNTEREXAMPLE","expected_step":"shrink","proof_choice":"COUNTEREXAMPLE_SHRINKING","meta_operation":"reject-nonminimal-counterexample"},
-    {"id":"unknown-counterexample-coordinate","expected_decision":"UNKNOWN","expected_resolution":"LOWER_RESOLUTION","expected_reason":"COUNTEREXAMPLE_COORDINATE_UNKNOWN","expected_stage":"UNKNOWN","expected_step":"UNKNOWN","proof_choice":"UNKNOWN_PRESERVATION","meta_operation":"preserve-unknown-coordinate"}
+    {"id":"resolved-minimal-counterexample","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"promote-after-resolution"},
+    {"id":"canonical-control","input_kind":"canonical-source","proof_choice":"COUNTEREXAMPLE_REQUIRED","meta_operation":"require-counterexample-before-compile"},
+    {"id":"unresolved-counterexample","input_kind":"mutated-source","proof_choice":"COUNTEREXAMPLE_RESOLUTION","meta_operation":"block-unresolved-counterexample"},
+    {"id":"comment-only-control","input_kind":"comment-only-source","proof_choice":"COMMENT_ONLY_INVARIANCE","meta_operation":"preserve-semantic-digest"},
+    {"id":"unobserved-input","input_kind":"unobserved-source","proof_choice":"UNKNOWN_PRESERVATION","meta_operation":"preserve-unknown-coordinate"}
   ],
-  "not_claimed": ["general compiler correctness", "global minimality", "theorem proving", "performance beyond the fixed corpus", "repository mutation"]
+  "not_claimed": ["general compiler correctness", "global minimality", "theorem proving", "unbounded corpus coverage", "repository mutation"]
 }

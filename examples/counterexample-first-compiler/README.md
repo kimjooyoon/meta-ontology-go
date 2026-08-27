@@ -1,20 +1,28 @@
 # Counterexample-first meta compilation
 
-This is a bounded, read-only philosophy experiment. A successful example is
-retained as context, but it is never sufficient for promotion. The decision
-input must contain a failing counterexample, a locally minimal shrink witness,
-and resolution evidence bound to that counterexample:
+This is a bounded, read-only vertical experiment over one real Gooo
+transformation: `syntax.ParseFile` followed by `bidir.Lower`. The Gooo source
+declares the candidate policy as `CanonicalEntityID(... ) computes
+"identity:v1"`; the policy is then applied to the lowered entity nodes.
 
-`success example (context) -> minimal counterexample -> resolution evidence -> compile decision`
+The corpus contains raw source inputs only. The producer executes every
+observed input, compares lowered IDs with the policy predicate, discovers a
+violation, and runs a deterministic shrinker. The shrinker executes each
+immediate candidate and records the final local-minimality proof as a
+numerator/denominator. A compile decision can be promoted only after the same
+minimal source is re-executed through the resolution input and the observed
+predicate passes.
 
-The fixed corpus has five cases: one resolved counterexample, one success-only
-candidate that is blocked, one unresolved counterexample, one non-minimal
-counterexample, and one UNKNOWN coordinate whose stage/step/reason are
-preserved. The receipt retains producer, consumer, meta-operation, proof
-choice, decision input, and every claim transition. The independent judge does
-not import the compiler package.
+The independent judge repeats ParseFile, Lower, predicate evaluation, shrinking,
+and resolution from the raw source/corpus. It does not import the producer
+package or a shared outcome table. Receipts preserve actual diagnostics,
+lowering errors, semantic digests, producer/consumer/meta-operation/proof
+choice, append-only claim transitions, and UNKNOWN stage/step/reason.
 
-The experiment measures 10 indicators over a fixed denominator version and
-retains 15 transitions (three per case). It does not claim general compiler
-correctness, global minimality, theorem proving, performance, or repository
-mutation authority.
+The CI artifact also contains a semantic intervention (`identity:v1` to
+`identity:v2`) and a comment-only intervention. The former must change the
+semantic digest, first minimal counterexample, and claim-transition digest; the
+latter must preserve semantic digest and decision evidence.
+
+This does not claim general compiler correctness, global minimality, theorem
+proving, unbounded corpus coverage, or repository mutation authority.

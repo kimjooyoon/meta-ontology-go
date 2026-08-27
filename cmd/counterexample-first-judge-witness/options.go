@@ -3,7 +3,7 @@ package main
 import "flag"
 
 type options struct {
-	head, contract, source, corpus, receipts, independence, out string
+	head, contract, source, corpus, receipts, independence, effects, out string
 }
 
 func parseOptions(args []string) (options, bool) {
@@ -15,9 +15,10 @@ func parseOptions(args []string) (options, bool) {
 	flags.StringVar(&value.corpus, "corpus", "", "counterexample scenario corpus")
 	flags.StringVar(&value.receipts, "receipts", "", "compiler decision receipts")
 	flags.StringVar(&value.independence, "independence", "", "producer dependency evidence")
+	flags.StringVar(&value.effects, "effects", "", "CI workspace effects evidence")
 	flags.StringVar(&value.out, "out", "", "independent judge report output")
 	valid := flags.Parse(args) == nil && value.head != "" && value.contract != "" &&
 		value.source != "" && value.corpus != "" && value.receipts != "" &&
-		value.independence != "" && value.out != ""
+		value.independence != "" && value.effects != "" && value.out != ""
 	return value, valid
 }

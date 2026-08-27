@@ -1,6 +1,7 @@
 package counterexamplefirst
 namespace counterexamplefirst
 
+// Comment-only intervention: presentation changes must not alter meaning.
 entity CompilationClaim id "gooo://counterexample-first/entity/compilation-claim"
 entity MinimalCounterexample id "gooo://counterexample-first/entity/minimal-counterexample"
 entity ResolutionEvidence id "gooo://counterexample-first/entity/resolution-evidence"

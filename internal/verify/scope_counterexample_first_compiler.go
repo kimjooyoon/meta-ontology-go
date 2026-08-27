@@ -6,6 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/counterexample-first-compiler.yml",
 		"cmd/counterexample-first-compiler-witness",
+		"cmd/counterexample-first-intervention-witness",
 		"cmd/counterexample-first-judge-witness",
 		"docs/research/counterexample-first-meta-compilation.md",
 		"examples/counterexample-first-compiler",
