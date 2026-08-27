@@ -2117,3 +2117,105 @@ jobs:
           path: source-binding-promotion-output
           if-no-files-found: error
           retention-days: 30
+
+  phase-separation-producer:
+    name: phase-separation-producer
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Compile the isolated phase witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go test ./internal/meta/phaseseparation ./scripts/phase-separation-witness ./scripts/phase-separation-adjudicator
+      - name: Emit and replay producer receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/phase-separation-witness"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/phase-separation-witness \
+              -source examples/phase-separation-witness/main.gooo \
+              -leaks examples/phase-separation-witness/leaks.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/$pass.json"
+          done
+          cmp -s "$output/first.json" "$output/second.json"
+          for pass in first second; do
+            go run ./scripts/phase-separation-witness \
+              -source examples/phase-separation-witness/unknown.gooo \
+              -leaks examples/phase-separation-witness/leaks.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/unknown-$pass.json"
+          done
+          cmp -s "$output/unknown-first.json" "$output/unknown-second.json"
+          jq -e '.decision == "PASS" and .summary.clean_cases_passed == 1 and .summary.clean_cases_total == 1 and .summary.leakage_cases_caught == 5 and .summary.leakage_cases_total == 5 and .summary.claim_transitions_preserved == 2 and .summary.claim_transitions_total == 2 and .summary.indicators_satisfied == 12 and .summary.indicators_total == 12' "$output/first.json"
+          jq -e '.decision == "UNKNOWN" and .coordinate.stage == "SOURCE" and .coordinate.step == "PARSE" and .coordinate.reason == "UNKNOWN_SOURCE_SYNTAX"' "$output/unknown-first.json"
+      - name: Upload producer receipts for independent adjudication
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: phase-separation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/phase-separation-witness
+          if-no-files-found: error
+          retention-days: 14
+
+  phase-separation-adjudicator:
+    name: phase-separation-adjudicator
+    needs: [phase-separation-producer]
+    if: github.event_name == 'pull_request' && needs.phase-separation-producer.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Download producer receipts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: phase-separation-producer-${{ env.HEAD_SHA }}
+          path: phase-separation-input
+      - name: Independently adjudicate PASS and UNKNOWN receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./scripts/phase-separation-adjudicator \
+            -receipt phase-separation-input/first.json \
+            -expected-head "$HEAD_SHA" -mode proven
+          go run ./scripts/phase-separation-adjudicator \
+            -receipt phase-separation-input/unknown-first.json \
+            -expected-head "$HEAD_SHA" -mode unknown
+          {
+            echo '### Phase separation witness'
+            jq -r '"- producer→adjudicator: `\(.decision)` at `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' phase-separation-input/first.json
+            jq -r '"- clean: `\(.summary.clean_cases_passed)/\(.summary.clean_cases_total)`; leakage caught: `\(.summary.leakage_cases_caught)/\(.summary.leakage_cases_total)`"' phase-separation-input/first.json
+            jq -r '"- preserved claims: `\(.summary.claim_transitions_preserved)/\(.summary.claim_transitions_total)`; indicators: `\(.summary.indicators_satisfied)/\(.summary.indicators_total)`"' phase-separation-input/first.json
+            jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.mutation)`"' phase-separation-input/first.json
+            jq -r '"- unknown probe: `\(.decision)` at `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' phase-separation-input/unknown-first.json
+          } >> "$GITHUB_STEP_SUMMARY"
