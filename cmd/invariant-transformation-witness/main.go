@@ -69,6 +69,13 @@ func fail(message string) {
 	os.Exit(1)
 }
 
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
 func buildReport(source []byte, headSHA, executionID string) (model.Report, error) {
 	if !model.ValidHead(headSHA) {
 		return model.Report{}, fmt.Errorf("invalid head sha %q", headSHA)
