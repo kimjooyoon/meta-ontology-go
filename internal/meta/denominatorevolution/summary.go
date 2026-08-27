@@ -3,10 +3,12 @@ package denominatorevolution
 const (
 	GuardrailForbiddenEstimate = "gooo.guardrail.denominator.forbidden-estimate.v1"
 	GuardrailRepositoryWrites  = "gooo.guardrail.denominator.repository-writes.v1"
+	GuardrailCount             = 2
 )
 
-func summarize(cases []CaseResult, base Denominator, repositoryWrites int) Summary {
-	summary := Summary{CasesTotal: len(cases), FixedDenominatorNumerator: len(base.Obligations), FixedDenominatorDenominator: DenominatorSize, LegalAdvanceDenominator: 1, UnauthorizedRejectionDenominator: 1, UnknownPredecessorDenominator: 1, AdditionReasonDenominator: 1, DeletionReasonDenominator: 1, Guardrails: makeGuardrails(0, repositoryWrites)}
+func summarize(cases []CaseResult, base Denominator, sourceCases, persistentClaims, forbiddenEstimateObserved, repositoryWrites int) Summary {
+	guardrails := makeGuardrails(forbiddenEstimateObserved, repositoryWrites)
+	summary := Summary{CasesTotal: len(cases), FixedDenominatorNumerator: len(base.Obligations), FixedDenominatorDenominator: DenominatorSize, LegalAdvanceDenominator: 1, UnauthorizedRejectionDenominator: 1, UnknownPredecessorDenominator: 1, AdditionReasonDenominator: 1, DeletionReasonDenominator: 1, SourceCasesNumerator: sourceCases, SourceCasesDenominator: CaseCount, PersistentClaimsNumerator: persistentClaims, PersistentClaimsDenominator: CaseCount, GuardrailObservationsNumerator: len(guardrails), GuardrailObservationsDenominator: GuardrailCount, Guardrails: guardrails}
 	for _, value := range cases {
 		if value.Status == "SATISFIED" {
 			summary.CasesSatisfied++
@@ -27,7 +29,7 @@ func summarize(cases []CaseResult, base Denominator, repositoryWrites int) Summa
 				summary.UnauthorizedRejectionNumerator = 1
 			}
 		case "unknown-predecessor":
-			if value.ObservedDecision == "FAIL_CLOSED" && value.ObservedReason == "PREDECESSOR_DIGEST_UNKNOWN" {
+			if value.ObservedDecision == "FAIL_CLOSED" && value.ObservedResolution == "LOWER_RESOLUTION" && value.ObservedReason == "PREDECESSOR_DIGEST_UNKNOWN" && value.FromClaim == "OPEN" && value.ToClaim == "OPEN" {
 				summary.UnknownPredecessorNumerator = 1
 			}
 		}
@@ -67,6 +69,19 @@ func makeGuardrails(forbiddenEstimateObserved, repositoryWrites int) []Guardrail
 	}
 }
 
+// forbiddenEstimateObserved counts actual emitted ledger entries. A proposed
+// or rejected forbidden claim is evidence of observation, but only ASSERTED
+// forbidden claims violate this guardrail.
+func forbiddenEstimateObserved(values []EmittedClaim) int {
+	count := 0
+	for _, value := range values {
+		if value.Class == "FORBIDDEN_ESTIMATE" && value.State == "ASSERTED" {
+			count++
+		}
+	}
+	return count
+}
+
 func newGuardrail(id string, observed, allowedMax int) Guardrail {
 	conforms := observed <= allowedMax
 	numerator := 0
@@ -77,12 +92,17 @@ func newGuardrail(id string, observed, allowedMax int) Guardrail {
 }
 
 func guardrailsConform(values []Guardrail) bool {
-	expected := makeGuardrails(0, 0)
-	if len(values) != len(expected) {
+	if len(values) != GuardrailCount {
 		return false
 	}
-	for index := range expected {
-		if values[index] != expected[index] {
+	ids := []string{GuardrailForbiddenEstimate, GuardrailRepositoryWrites}
+	for index, value := range values {
+		conforms := value.Observed <= value.AllowedMax
+		numerator := 0
+		if conforms {
+			numerator = 1
+		}
+		if value.ID != ids[index] || value.Direction != "AT_MOST" || value.AllowedMax != 0 || value.ConformanceDenominator != 1 || value.ConformanceNumerator != numerator || value.Conforms != conforms {
 			return false
 		}
 	}

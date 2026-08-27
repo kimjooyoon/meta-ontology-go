@@ -1,4 +1,4 @@
-package denominatorevolution
+package denominatorevolutionverify
 
 import (
 	"fmt"
@@ -10,27 +10,19 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-var requiredEntities = []string{
-	"FixedDenominator", "DenominatorVersion", "ChangeReason", "PredecessorEvidence", "MigrationReceipt", "ClaimTransition", "IndependentDecision",
-}
+var requiredEntities = []string{"FixedDenominator", "DenominatorVersion", "ChangeReason", "PredecessorEvidence", "MigrationReceipt", "ClaimTransition", "IndependentDecision"}
+var requiredActivities = []string{"DeclareFixedDenominator", "ProposeDenominatorChange", "BindPredecessorDigest", "RecordChangeReasons", "IssueMigrationReceipt", "TransitionClaim", "IndependentlyDecide"}
 
-var requiredActivities = []string{
-	"DeclareFixedDenominator", "ProposeDenominatorChange", "BindPredecessorDigest", "RecordChangeReasons", "IssueMigrationReceipt", "TransitionClaim", "IndependentlyDecide",
-}
-
-// sourceCase is source-owned input. The JSON contract is compared to this
-// value, never used to construct it.
 type sourceCase struct {
 	Spec               CaseSpec
 	PredecessorVersion string
 	SuccessorVersion   string
 }
-
 type sourceMutation struct {
 	CaseID     string
 	Obligation Obligation
 }
-
+type sourceDecision struct{ ID, Decision, Resolution, Reason string }
 type sourceWire struct {
 	Version                   string
 	Obligations               []Obligation
@@ -51,13 +43,8 @@ type sourceWire struct {
 	Decisions                 []sourceDecision
 }
 
-type sourceDecision struct {
-	ID         string
-	Decision   string
-	Resolution string
-	Reason     string
-}
-
+// parseSource is intentionally duplicated from the producer package. The
+// independent consumer owns its own parser, wire model, and decision inputs.
 func parseSource(raw []byte) (SourceProjection, sourceWire, error) {
 	file, diagnostics := syntax.ParseFile("main.gooo", string(raw))
 	if diagnostics.HasErrors() {
@@ -67,9 +54,8 @@ func parseSource(raw []byte) (SourceProjection, sourceWire, error) {
 	if err != nil {
 		return SourceProjection{}, sourceWire{}, fmt.Errorf("GOOO_SOURCE_LOWER_INVALID: %w", err)
 	}
-
-	entities := make([]string, 0)
-	activities := make(map[string]string)
+	entities := []string{}
+	activities := map[string]string{}
 	for _, node := range ir.Graph.Nodes() {
 		switch node.Kind {
 		case semantic.Entity:
@@ -81,23 +67,18 @@ func parseSource(raw []byte) (SourceProjection, sourceWire, error) {
 			activities[node.Name] = node.ValueProgram
 		}
 	}
-	projection := SourceProjection{
-		EntityCount: len(entities), ActivityCount: len(activities),
-		RequiredEntities: missing(requiredEntities, entities), RequiredActivities: missing(requiredActivities, keys(activities)),
-		SemanticDigest: ir.StableHash(),
-	}
-	wire, err := decodeSourceActivities(activities)
+	projection := SourceProjection{EntityCount: len(entities), ActivityCount: len(activities), RequiredEntities: missing(requiredEntities, entities), RequiredActivities: missing(requiredActivities, keys(activities)), SemanticDigest: ir.StableHash()}
+	wire, err := decodeActivities(activities)
 	if err != nil {
 		return projection, sourceWire{}, err
 	}
-	projection.ObligationCount = len(wire.Obligations)
-	projection.CaseCount = len(wire.Cases)
+	projection.ObligationCount, projection.CaseCount = len(wire.Obligations), len(wire.Cases)
 	projection.WireDigest = digestValue(wire)
 	projection.Exact = len(entities) == len(requiredEntities) && len(activities) == len(requiredActivities) && len(projection.RequiredEntities) == 0 && len(projection.RequiredActivities) == 0 && wire.Exact()
 	return projection, wire, nil
 }
 
-func decodeSourceActivities(activities map[string]string) (sourceWire, error) {
+func decodeActivities(activities map[string]string) (sourceWire, error) {
 	for _, name := range requiredActivities {
 		if _, ok := activities[name]; !ok {
 			return sourceWire{}, fmt.Errorf("GOOO_SOURCE_ACTIVITY_MISSING: %s", name)
@@ -105,25 +86,25 @@ func decodeSourceActivities(activities map[string]string) (sourceWire, error) {
 	}
 	var wire sourceWire
 	var err error
-	if wire, err = decodeDenominatorActivity(activities["DeclareFixedDenominator"]); err != nil {
+	if wire, err = decodeDenominator(activities["DeclareFixedDenominator"]); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodeCasesActivity(activities["ProposeDenominatorChange"], &wire); err != nil {
+	if err = decodeCases(activities["ProposeDenominatorChange"], &wire); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodePredecessorsActivity(activities["BindPredecessorDigest"], &wire); err != nil {
+	if err = decodePredecessors(activities["BindPredecessorDigest"], &wire); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodeReceiptActivity(activities["RecordChangeReasons"], &wire); err != nil {
+	if err = decodeReceipt(activities["RecordChangeReasons"], &wire); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodeReceiptBindActivity(activities["IssueMigrationReceipt"], &wire); err != nil {
+	if err = decodeReceiptBind(activities["IssueMigrationReceipt"]); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodeClaimsActivity(activities["TransitionClaim"], &wire); err != nil {
+	if err = decodeClaims(activities["TransitionClaim"], &wire); err != nil {
 		return sourceWire{}, err
 	}
-	if err = decodeDecisionsActivity(activities["IndependentlyDecide"], &wire); err != nil {
+	if err = decodeDecisions(activities["IndependentlyDecide"], &wire); err != nil {
 		return sourceWire{}, err
 	}
 	if !wire.Exact() {
@@ -132,7 +113,7 @@ func decodeSourceActivities(activities map[string]string) (sourceWire, error) {
 	return wire, nil
 }
 
-func decodeDenominatorActivity(value string) (sourceWire, error) {
+func decodeDenominator(value string) (sourceWire, error) {
 	parts, err := payload(value, "denominator")
 	if err != nil {
 		return sourceWire{}, err
@@ -159,7 +140,7 @@ func decodeDenominatorActivity(value string) (sourceWire, error) {
 	return wire, nil
 }
 
-func decodeCasesActivity(value string, wire *sourceWire) error {
+func decodeCases(value string, wire *sourceWire) error {
 	parts, err := payload(value, "cases")
 	if err != nil {
 		return err
@@ -203,7 +184,7 @@ func decodeCasesActivity(value string, wire *sourceWire) error {
 	return nil
 }
 
-func decodePredecessorsActivity(value string, wire *sourceWire) error {
+func decodePredecessors(value string, wire *sourceWire) error {
 	parts, err := payload(value, "predecessors")
 	if err != nil {
 		return err
@@ -229,7 +210,7 @@ func decodePredecessorsActivity(value string, wire *sourceWire) error {
 	return nil
 }
 
-func decodeReceiptActivity(value string, wire *sourceWire) error {
+func decodeReceipt(value string, wire *sourceWire) error {
 	parts, err := payload(value, "receipt")
 	if err != nil {
 		return err
@@ -259,7 +240,7 @@ func decodeReceiptActivity(value string, wire *sourceWire) error {
 	return nil
 }
 
-func decodeReceiptBindActivity(value string, wire *sourceWire) error {
+func decodeReceiptBind(value string) error {
 	parts, err := payload(value, "receipt-bind")
 	if err != nil {
 		return err
@@ -278,7 +259,7 @@ func decodeReceiptBindActivity(value string, wire *sourceWire) error {
 	return nil
 }
 
-func decodeClaimsActivity(value string, wire *sourceWire) error {
+func decodeClaims(value string, wire *sourceWire) error {
 	parts, err := payload(value, "claims")
 	if err != nil {
 		return err
@@ -312,7 +293,7 @@ func decodeClaimsActivity(value string, wire *sourceWire) error {
 	return nil
 }
 
-func decodeDecisionsActivity(value string, wire *sourceWire) error {
+func decodeDecisions(value string, wire *sourceWire) error {
 	parts, err := payload(value, "decisions")
 	if err != nil {
 		return err
@@ -338,7 +319,6 @@ func payload(value, want string) ([]string, error) {
 	}
 	return parts[1:], nil
 }
-
 func parseObligation(value string) (Obligation, error) {
 	fields := strings.Split(value, "^")
 	if len(fields) != 8 {
@@ -346,7 +326,6 @@ func parseObligation(value string) (Obligation, error) {
 	}
 	return Obligation{ID: fields[0], Claim: fields[1], Class: fields[2], ProofChoice: fields[3], MetaOperation: fields[4], Stage: fields[5], Step: fields[6], Reason: fields[7]}, nil
 }
-
 func parseChange(value string) (Change, error) {
 	fields := strings.Split(value, "^")
 	if len(fields) != 2 || fields[0] == "" || fields[1] == "" {
@@ -354,7 +333,6 @@ func parseChange(value string) (Change, error) {
 	}
 	return Change{ObligationID: fields[0], Reason: fields[1]}, nil
 }
-
 func (wire sourceWire) Exact() bool {
 	if wire.Version == "" || len(wire.Obligations) != DenominatorSize || len(wire.Cases) != CaseCount || len(wire.Additions) != 1 || len(wire.Deletions) != 1 || len(wire.Mutations) != 2 || len(wire.Claims) != CaseCount || len(wire.EmittedClaims) == 0 || len(wire.Decisions) != CaseCount {
 		return false
@@ -377,7 +355,6 @@ func (wire sourceWire) Exact() bool {
 	}
 	return wire.KnownPredecessorVersion != "" && wire.UnknownPredecessorVersion != "" && wire.SuccessorVersion != "" && wire.UnknownSuccessorVersion != "" && wire.ReceiptID != "" && wire.ReceiptDecision != "" && wire.ReceiptReason != ""
 }
-
 func keys(values map[string]string) []string {
 	result := make([]string, 0, len(values))
 	for key := range values {
@@ -386,7 +363,6 @@ func keys(values map[string]string) []string {
 	sort.Strings(result)
 	return result
 }
-
 func missing(required, actual []string) []string {
 	result := []string{}
 	for _, want := range required {

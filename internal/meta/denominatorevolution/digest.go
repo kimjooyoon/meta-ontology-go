@@ -26,6 +26,11 @@ func receiptDigest(value MigrationReceipt) string {
 	return digestValue(value)
 }
 
+func claimLedgerDigest(value ClaimLedgerEntry) string {
+	value.Digest = ""
+	return digestValue(value)
+}
+
 func reportDigest(value Report) string {
 	value.Digest = ""
 	return digestValue(value)

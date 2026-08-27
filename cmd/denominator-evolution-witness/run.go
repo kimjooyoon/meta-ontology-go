@@ -8,7 +8,11 @@ import (
 	denominator "github.com/kimjooyoon/meta-ontology-go/internal/meta/denominatorevolution"
 )
 
-type options struct{ head, contract, source, out string }
+type options struct {
+	head, contract, source, out   string
+	repositoryWrites              int
+	snapshotBefore, snapshotAfter string
+}
 
 func run(args []string) int {
 	flags := flag.NewFlagSet("denominator-evolution-witness", flag.ContinueOnError)
@@ -17,6 +21,9 @@ func run(args []string) int {
 	flags.StringVar(&value.contract, "contract", "", "denominator evolution contract")
 	flags.StringVar(&value.source, "source", "", "Gooo denominator governance source")
 	flags.StringVar(&value.out, "out", "", "producer report output")
+	flags.IntVar(&value.repositoryWrites, "repository-writes", 0, "observed changed repository paths")
+	flags.StringVar(&value.snapshotBefore, "snapshot-before", "", "digest of the CI repository snapshot before execution")
+	flags.StringVar(&value.snapshotAfter, "snapshot-after", "", "digest of the CI repository snapshot after execution")
 	if flags.Parse(args) != nil || value.head == "" || value.contract == "" || value.source == "" || value.out == "" {
 		return 2
 	}
@@ -32,7 +39,7 @@ func run(args []string) int {
 	if err != nil {
 		return 2
 	}
-	report := denominator.Evaluate(denominator.Input{Contract: contract, HeadSHA: value.head, Source: source})
+	report := denominator.Evaluate(denominator.Input{Contract: contract, HeadSHA: value.head, Source: source, RepositorySnapshot: denominator.RepositorySnapshot{BeforeDigest: value.snapshotBefore, AfterDigest: value.snapshotAfter, ChangedPaths: value.repositoryWrites}})
 	if err := denominator.WriteReport(value.out, report); err != nil {
 		return 2
 	}

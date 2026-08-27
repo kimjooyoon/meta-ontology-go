@@ -39,3 +39,18 @@ func boolText(value bool) string {
 	}
 	return "false"
 }
+
+func snapshotText(value RepositorySnapshot) string {
+	return value.BeforeDigest + " -> " + value.AfterDigest + " changed_paths=" + intText(value.ChangedPaths)
+}
+
+func sourceProjectionText(value SourceProjection) string {
+	return "entities=" + intText(value.EntityCount) + " activities=" + intText(value.ActivityCount) + " obligations=" + intText(value.ObligationCount) + " cases=" + intText(value.CaseCount)
+}
+
+func sourceErrorText(value SourceProjection, err error) string {
+	if err != nil {
+		return err.Error()
+	}
+	return sourceProjectionText(value)
+}

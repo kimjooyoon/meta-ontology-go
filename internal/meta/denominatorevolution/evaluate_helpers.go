@@ -33,6 +33,12 @@ func status(ok bool, yes, no string) string {
 	return no
 }
 func boolText(value bool) string { return strconv.FormatBool(value) }
+func repositoryWritesText(receipt *MigrationReceipt) string {
+	if receipt == nil {
+		return "not applicable"
+	}
+	return strconv.Itoa(receipt.RepositoryWrites)
+}
 func contains(values []string, wanted string) bool {
 	for _, value := range values {
 		if value == wanted {
