@@ -9,7 +9,7 @@ contract="$root/examples/ambiguity-budget/contract.json"
 source="$root/examples/ambiguity-budget/main.gooo"
 
 forbidden_import='github.com/kimjooyoon/meta-ontology-go/internal/meta/ambiguitybudget"'
-forbidden_imports="$(rg -n "$forbidden_import" "$root/internal/meta/ambiguitybudgetjudge" "$root/cmd/ambiguity-budget-verifier" || true)"
+forbidden_imports="$(git -C "$root" grep -n -F "$forbidden_import" -- internal/meta/ambiguitybudgetjudge cmd/ambiguity-budget-verifier || true)"
 if [[ -n "$forbidden_imports" ]]; then
   echo "forbidden producer imports detected:" >&2
   echo "$forbidden_imports" >&2
