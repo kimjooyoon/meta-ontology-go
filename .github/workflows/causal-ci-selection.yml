@@ -333,6 +333,7 @@ jobs:
             echo '- CI evidence fixtures: normal HTTP `200`, historical permission `403`, malformed `200`, and missing artifact are separate raw cases with observed process exit/status'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload causal selection evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: causal-ci-selection-${{ env.HEAD_SHA }}
