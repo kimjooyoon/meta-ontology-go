@@ -1,0 +1,27 @@
+package audienceresolution
+namespace audienceresolution
+
+entity EvidenceLedger id "gooo://audience-resolution/entity/evidence-ledger"
+entity EvidenceRecord id "gooo://audience-resolution/entity/evidence-record"
+entity AudienceView id "gooo://audience-resolution/entity/audience-view"
+entity UserView id "gooo://audience-resolution/entity/user-view"
+entity ToolAuthorView id "gooo://audience-resolution/entity/tool-author-view"
+entity GovernorView id "gooo://audience-resolution/entity/governor-view"
+entity ProjectionReceipt id "gooo://audience-resolution/entity/projection-receipt"
+entity Counterexample id "gooo://audience-resolution/entity/counterexample"
+entity ClaimTransition id "gooo://audience-resolution/entity/claim-transition"
+entity Producer id "gooo://audience-resolution/entity/producer"
+entity Consumer id "gooo://audience-resolution/entity/consumer"
+entity ProofChoice id "gooo://audience-resolution/entity/proof-choice"
+
+activity ProduceEvidenceLedger(EvidenceRecord) -> EvidenceLedger
+activity ProjectUserView(EvidenceLedger) -> UserView
+activity ProjectToolAuthorView(EvidenceLedger) -> ToolAuthorView
+activity ProjectGovernorView(EvidenceLedger) -> GovernorView
+activity DetectMissingCoordinate(EvidenceLedger) -> Counterexample
+activity DetectContradictoryDecision(EvidenceLedger) -> Counterexample
+activity BindAudienceMetadata(Producer, Consumer, ProofChoice) -> EvidenceRecord
+activity SelectClaimTransition(EvidenceRecord) -> ClaimTransition
+activity SealProjectionReceipt(AudienceView, Counterexample, ClaimTransition) -> ProjectionReceipt
+activity ValidateProjectionReceipt(ProjectionReceipt) -> ProjectionReceipt
+activity ReplayAudienceProjection(ProjectionReceipt) -> ProjectionReceipt

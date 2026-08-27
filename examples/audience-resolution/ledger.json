@@ -1,0 +1,32 @@
+{
+  "schema": "gooo/audience-resolution-ledger/v1",
+  "id": "ledger/audience-resolution-fixture",
+  "subject": "audience-resolution-fixture",
+  "decision": "PASS",
+  "resolution": "EXACT",
+  "reason": "CANONICAL_EVIDENCE_LEDGER_BOUND",
+  "source": {
+    "path": "examples/audience-resolution/main.gooo",
+    "kind": "gooo",
+    "digest": "sha256:46a1baf074d21c225a408c1890809743efc268d19762de726662067ba0792593",
+    "declaration_count": 22
+  },
+  "records": [
+    {"id":"source.binding","coordinate":"source.binding","audience":"GOVERNOR","stage":"source","step":"bind","reason":"source declaration is bound as authority","producer":"gooo://audience-resolution/source","consumer":"audience-resolution.projector","meta_operation":"bind-source-ledger","proof_choice":"FOUNDATION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"ledger.coverage","coordinate":"ledger.coverage","audience":"GOVERNOR","stage":"ledger","step":"coverage","reason":"all fixed coordinates are present once","producer":"audience-resolution.producer","consumer":"audience-resolution.projector","meta_operation":"consume-canonical-ledger","proof_choice":"FOUNDATION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"ledger.replay","coordinate":"ledger.replay","audience":"GOVERNOR","stage":"ledger","step":"replay","reason":"the same ledger replays byte-equivalently","producer":"audience-resolution.projector","consumer":"audience-resolution.receipt","meta_operation":"replay-canonical-ledger","proof_choice":"REGRESSION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"user.coordinates","coordinate":"user.coordinates","audience":"USER","stage":"projection","step":"user","reason":"USER receives exactly its four coordinates","producer":"audience-resolution.projector","consumer":"USER","meta_operation":"project-user-coordinate-set","proof_choice":"FOUNDATION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"author.coordinates","coordinate":"author.coordinates","audience":"TOOL_AUTHOR","stage":"projection","step":"tool-author","reason":"TOOL_AUTHOR receives the authoring contract","producer":"audience-resolution.projector","consumer":"TOOL_AUTHOR","meta_operation":"project-tool-author-coordinate-set","proof_choice":"FOUNDATION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"governor.coordinates","coordinate":"governor.coordinates","audience":"GOVERNOR","stage":"projection","step":"governor","reason":"GOVERNOR receives the full ledger","producer":"audience-resolution.projector","consumer":"GOVERNOR","meta_operation":"project-governor-coordinate-set","proof_choice":"FOUNDATION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"projection.nesting","coordinate":"projection.nesting","audience":"GOVERNOR","stage":"projection","step":"nest","reason":"higher resolution extends the lower coordinate set","producer":"audience-resolution.projector","consumer":"audience-resolution.governor","meta_operation":"check-coordinate-nesting","proof_choice":"COHERENCE","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"projection.shared-decision","coordinate":"projection.shared-decision","audience":"GOVERNOR","stage":"projection","step":"decision","reason":"every audience inherits one global decision","producer":"audience-resolution.receipt","consumer":"all-audiences","meta_operation":"lift-global-decision","proof_choice":"COHERENCE","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"projection.resolution","coordinate":"projection.resolution","audience":"GOVERNOR","stage":"projection","step":"resolution","reason":"each audience keeps its fixed resolution label","producer":"audience-resolution.projector","consumer":"all-audiences","meta_operation":"preserve-projection-resolution","proof_choice":"COHERENCE","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"counterexample.omission","coordinate":"counterexample.omission","audience":"GOVERNOR","stage":"counterexample","step":"missing","reason":"missing information cannot produce PASS","producer":"audience-resolution.projector","consumer":"GOVERNOR","meta_operation":"reject-omitted-coordinate","proof_choice":"REGRESSION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"counterexample.contradiction","coordinate":"counterexample.contradiction","audience":"GOVERNOR","stage":"counterexample","step":"contradiction","reason":"contradictory decisions fail closed","producer":"audience-resolution.projector","consumer":"GOVERNOR","meta_operation":"reject-contradictory-decision","proof_choice":"REGRESSION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true},
+    {"id":"receipt.seal","coordinate":"receipt.seal","audience":"GOVERNOR","stage":"receipt","step":"seal","reason":"receipt is independently checkable","producer":"audience-resolution.receipt","consumer":"independent.checker","meta_operation":"validate-receipt-digest","proof_choice":"REGRESSION","claim_before":"UNPROVEN","claim_after":"OBSERVED","decision":"PASS","satisfied":true}
+  ],
+  "counterexamples": [
+    {"id":"counterexample.missing-information","kind":"INFORMATION_OMISSION","trigger":"author.consumer","expected_decision":"FAIL_CLOSED","observed_decision":"PASS","reason":"AUDIENCE_REQUIRED_COORDINATE_MISSING","blocked":true},
+    {"id":"counterexample.decision-contradiction","kind":"DECISION_CONTRADICTION","trigger":"user/governor","expected_decision":"FAIL_CLOSED","observed_decision":"PASS","reason":"AUDIENCE_DECISION_CONTRADICTION","blocked":true}
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "gooo/audience-resolution-contract/v1",
+  "id": "audience-resolution-v1",
+  "source_path": "examples/audience-resolution/main.gooo",
+  "source_declaration_count": 22,
+  "fixed": {
+    "indicators": 12,
+    "records": 12,
+    "counterexamples": 2,
+    "classes": {
+      "OUTCOME": 4,
+      "DRIVER": 5,
+      "GUARDRAIL": 3
+    },
+    "proof_choices": {
+      "FOUNDATION": 6,
+      "COHERENCE": 3,
+      "REGRESSION": 3
+    }
+  },
+  "audiences": [
+    {
+      "audience": "USER",
+      "resolution": "USER_VISIBLE_COORDINATES",
+      "coordinates": [
+        "ledger.coverage",
+        "user.coordinates",
+        "projection.shared-decision",
+        "projection.resolution"
+      ]
+    },
+    {
+      "audience": "TOOL_AUTHOR",
+      "resolution": "TOOL_CONTRACT_COORDINATES",
+      "coordinates": [
+        "ledger.coverage",
+        "user.coordinates",
+        "projection.shared-decision",
+        "projection.resolution",
+        "source.binding",
+        "ledger.replay",
+        "author.coordinates",
+        "governor.coordinates"
+      ]
+    },
+    {
+      "audience": "GOVERNOR",
+      "resolution": "GOVERNOR_FULL_LEDGER",
+      "coordinates": [
+        "ledger.coverage",
+        "user.coordinates",
+        "projection.shared-decision",
+        "projection.resolution",
+        "source.binding",
+        "ledger.replay",
+        "author.coordinates",
+        "governor.coordinates",
+        "projection.nesting",
+        "counterexample.omission",
+        "counterexample.contradiction",
+        "receipt.seal"
+      ]
+    }
+  ],
+  "not_claimed": [
+    "confidentiality against covert channels",
+    "human comprehension",
+    "authorization enforcement",
+    "semantic correctness of producer claims",
+    "cross-run performance determinism"
+  ]
+}

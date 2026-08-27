@@ -2395,6 +2395,17 @@
         "scripts/ci-plan-usecase",
         "scripts/refactor-metrics/generation.go"
       ]
+    },
+	{
+      "branch": "agent/luna-meta-21-audience-resolution",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/audience-resolution-witness",
+        "examples/audience-resolution",
+        "internal/meta/audienceresolution",
+        "internal/verify/scope_audience_resolution.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
