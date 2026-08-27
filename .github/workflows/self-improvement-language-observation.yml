@@ -20,13 +20,15 @@ jobs:
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     env:
+      SUBJECT_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
       HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+      TOOLING_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ env.HEAD_SHA }}
+          ref: ${{ env.TOOLING_SHA }}
           persist-credentials: false
 
       - uses: actions/setup-go@v6
@@ -34,11 +36,26 @@ jobs:
           go-version: '1.27.0'
           cache: false
 
+      - name: Compile transport metaprogram from workflow authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool="$RUNNER_TEMP/transport-tool"
+          mkdir -p "$tool"
+          go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
+          cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
+
+      - name: Checkout producer-declared logical subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          persist-credentials: false
+
       - name: Download exact language experiment
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v7
         with:
-          name: language-example-experiment-${{ env.HEAD_SHA }}
+          name: language-example-experiment-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/observation/input
           github-token: ${{ github.token }}
           run-id: ${{ env.SOURCE_RUN_ID }}
@@ -61,10 +78,10 @@ jobs:
           mkdir -p "$output"
           go run ./scripts/self-improvement-contract \
             -contract examples/self-improvement/main.gooo \
-            -commit "$HEAD_SHA" -output "$output/contract.json" -check
+            -commit "$SUBJECT_SHA" -output "$output/contract.json" -check
           for pass in first second; do
             go run ./scripts/self-improvement-observation \
-              -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
+              -head-sha "$SUBJECT_SHA" -source-run-id "$SOURCE_RUN_ID" \
               -report "$input/report.json" \
               -counterexamples "$input/counterexamples.json" \
               -contract "$output/contract.json" \
@@ -72,10 +89,34 @@ jobs:
           done
           cmp "$output/first.json" "$output/second.json"
 
+      - name: Bind producer-declared subject to transport contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/observation/output"
+          artifact="$RUNNER_TEMP/observation/artifact"
+          mkdir -p "$artifact"
+          "$RUNNER_TEMP/transport-tool/self-improvement-transport" \
+            -mode produce \
+            -contract "$RUNNER_TEMP/transport-tool/transport.gooo" \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$SUBJECT_SHA" \
+            -checkout-sha "$(git rev-parse HEAD)" \
+            -workflow-ref "$GITHUB_WORKFLOW_REF" \
+            -workflow-sha "$GITHUB_WORKFLOW_SHA" \
+            -run-id "$GITHUB_RUN_ID" -run-attempt "$GITHUB_RUN_ATTEMPT" \
+            -job observation -artifact-name self-improvement-language-observation \
+            -observation "$output/first.json" \
+            -output "$output/producer.json" -check
+          cp "$output/first.json" "$artifact/first.json"
+          cp "$output/producer.json" "$artifact/producer.json"
+
       - name: Upload exact-head read-only observation
         if: always()
+        id: upload-observation
         uses: actions/upload-artifact@v6
         with:
-          name: self-improvement-language-observation-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/observation/output/first.json
+          name: self-improvement-language-observation
+          path: ${{ runner.temp }}/observation/artifact
           if-no-files-found: error
+          retention-days: 14

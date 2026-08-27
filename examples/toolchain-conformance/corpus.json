@@ -1,8 +1,8 @@
 {
   "schema": "gooo/toolchain-conformance-corpus/v1",
   "surfaces": [
-    {"id": "language-syntax-roundtrip", "schema": "gooo/language-syntax-roundtrip/v1", "cases": 25, "indicators": 16, "proofs": 3},
-    {"id": "language-semantic-model", "schema": "gooo/language-semantic-model/v1", "cases": 27, "indicators": 19, "proofs": 3},
+    {"id": "language-syntax-roundtrip", "schema": "gooo/language-syntax-roundtrip/v1", "cases": 26, "indicators": 16, "proofs": 3},
+    {"id": "language-semantic-model", "schema": "gooo/language-semantic-model/v1", "cases": 28, "indicators": 19, "proofs": 3},
     {"id": "language-deterministic-query", "schema": "gooo/language-deterministic-query/v1", "cases": 32, "indicators": 18, "proofs": 3},
     {"id": "language-go-interoperation", "schema": "gooo/language-go-interoperation/v1", "cases": 24, "indicators": 18, "proofs": 3},
     {"id": "language-diagnostic-provenance", "schema": "gooo/language-diagnostic-provenance/v1", "cases": 18, "indicators": 18, "proofs": 3},
