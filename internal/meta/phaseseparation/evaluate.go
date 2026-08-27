@@ -32,6 +32,10 @@ func Build(sourcePath string, sourceBytes []byte, leaksPath string, leaksBytes [
 	clean, cleanResult, transitions := evaluateClean(source.Cases)
 	report.Cases = append(report.Cases, cleanResult)
 	report.Transitions = transitions
+	for index := range report.Transitions {
+		report.Transitions[index].MetaOperation = report.MetaOperation
+		report.Transitions[index].ProofChoice = report.ProofChoice
+	}
 	report.Summary.CleanCasesTotal = ExpectedCleanCases
 	report.Summary.CleanCasesPassed = boolCount(clean)
 	report.Summary.LeakageCasesTotal = ExpectedLeakageCases
