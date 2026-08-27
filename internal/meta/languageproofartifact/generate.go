@@ -46,7 +46,7 @@ func Generate(input Input) (Artifact, error) {
 			SemanticDigest: receipt.SemanticDigest, ReceiptDigest: receipt.Digest, Activity: receipt.Entry.Activity},
 		{Kind: "INVARIANT", ClaimID: "no-byte-authority", ProofChoice: "REGRESSION",
 			MetaOperation: "preserve-no-byte-authority", Coordinate: Coordinate{"GENERATE", "invariant-evidence", "BYTES_DO_NOT_GRANT_AUTHORITY"}, SourceDigest: sourceDigest,
-			SemanticDigest: receipt.SemanticDigest, Predicate: "generated-bytes-do-not-grant-authority", RepositoryWrites: writeSet.RepositoryWrites, MutationAuthority: writeSet.MutationAuthority,
+			SemanticDigest: receipt.SemanticDigest, Predicate: "generated-bytes-do-not-grant-authority", NetChangedPaths: writeSet.NetChangedPaths, CapabilityMutationGranted: writeSet.CapabilityMutationGranted,
 			ArtifactUseAuthority: "NONE", IndependentVerificationRequired: true},
 	}
 	for index := range evidence {
@@ -68,7 +68,7 @@ func Generate(input Input) (Artifact, error) {
 		Resolution: ArtifactResolution, Reason: "PROOF_CARRYING_ARTIFACT_EMITTED", SourcePath: input.SourcePath,
 		SourceDigest: sourceDigest, SemanticDigest: receipt.SemanticDigest, OperationDigest: receipt.Digest, Evidence: evidence, Claims: claims, Recipe: input.Recipe,
 		RecipeDigest: recipeDigest, PriorLedger: openLedger(claims), WriteSet: writeSet,
-		Authority: Authority{ArtifactUseAuthority: "NONE", Basis: "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED"}, Effects: Effects{RepositoryWrites: writeSet.RepositoryWrites, MutationAuthority: writeSet.MutationAuthority},
+		Authority: Authority{ArtifactUseAuthority: "NONE", Basis: "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED"}, Effects: Effects{NetChangedPaths: writeSet.NetChangedPaths, CapabilityMutationGranted: writeSet.CapabilityMutationGranted},
 		NotClaimed: []string{"consumer authorization", "full compiler semantic correctness", "external side effects"}}
 	artifact.Digest = artifactDigest(artifact)
 	return artifact, nil

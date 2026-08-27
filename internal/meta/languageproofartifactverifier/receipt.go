@@ -28,8 +28,8 @@ type receiptDiagnostic struct {
 }
 
 type receiptEffects struct {
-	RepositoryWrites  int  `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
+	NetChangedPaths           int  `json:"repository_writes"`
+	CapabilityMutationGranted bool `json:"mutation_authority"`
 }
 
 type operationReceipt struct {
@@ -51,7 +51,7 @@ func verifyOperation(receipt operationReceipt, sourceDigest, sourcePath string, 
 	if receipt.Digest != receiptDigest(receipt) || receipt.Schema != "gooo/source-execution-receipt/v1" ||
 		receipt.Decision != "PASS" || receipt.Reason != "SOURCE_ACTIVITY_EXECUTED" || receipt.Resolution != "EXACT" ||
 		receipt.Filename != sourcePath || receipt.SourceDigest != sourceDigest || receipt.SemanticDigest != want.SemanticDigest || len(receipt.Diagnostics) != 0 ||
-		receipt.Effects.RepositoryWrites != 0 || receipt.Effects.MutationAuthority {
+		receipt.Effects.NetChangedPaths != 0 || receipt.Effects.CapabilityMutationGranted {
 		return false
 	}
 	wantInputs := make([]receiptBinding, len(want.Inputs))

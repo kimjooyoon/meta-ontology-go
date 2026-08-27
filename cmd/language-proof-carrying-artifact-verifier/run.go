@@ -9,11 +9,27 @@ import (
 	verifier "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageproofartifactverifier"
 )
 
+func readBundle(path string) verifier.Bundle {
+	if path == "" {
+		return verifier.Bundle{}
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return verifier.Bundle{}
+	}
+	bundle, err := verifier.DecodeBundle(raw)
+	if err != nil {
+		return verifier.Bundle{}
+	}
+	return bundle
+}
+
 type options struct {
 	head, contract, valid, tampered, coherentTampered, missing, byteOnly, wrongRecipe                        string
 	source, operation, recipe, independence, writeSet, coherentOperation, output, check                      string
 	semanticArtifact, semanticSource, semanticOperation, commentArtifact, commentSource, commentOperation    string
 	recipeOnly, missingAttachment, wrongAttachmentDigest, unrelatedTampered, staleHead, unauthorizedConsumer string
+	claimProposition, claimDependency, claimProofChoice, claimTarget, unauthorizedBundle                     string
 	bundle, packBundle, bundleInputs, checkout                                                               string
 }
 
@@ -34,6 +50,11 @@ func run(args []string) int {
 	flags.StringVar(&value.unrelatedTampered, "unrelated-tamper", "", "unrelated evidence tamper")
 	flags.StringVar(&value.staleHead, "stale-head", "", "artifact bound to a stale head")
 	flags.StringVar(&value.unauthorizedConsumer, "unauthorized-consumer", "", "raw consumer without attestation")
+	flags.StringVar(&value.claimProposition, "claim-proposition-tamper", "", "coherently resealed proposition tamper")
+	flags.StringVar(&value.claimDependency, "claim-dependency-tamper", "", "coherently resealed dependency tamper")
+	flags.StringVar(&value.claimProofChoice, "claim-proof-choice-tamper", "", "coherently resealed proof-choice tamper")
+	flags.StringVar(&value.claimTarget, "claim-target-tamper", "", "coherently resealed target tamper")
+	flags.StringVar(&value.unauthorizedBundle, "unauthorized-bundle", "", "bundle supplied to unauthorized consumer")
 	flags.StringVar(&value.source, "source", "", "Gooo source")
 	flags.StringVar(&value.operation, "operation", "", "operation receipt")
 	flags.StringVar(&value.recipe, "recipe", "", "canonical recipe")
@@ -119,8 +140,8 @@ func run(args []string) int {
 		}
 		return 0
 	}
-	if value.head == "" || value.contract == "" || value.valid == "" || value.tampered == "" ||
-		value.missing == "" || value.byteOnly == "" || value.wrongRecipe == "" || value.recipeOnly == "" || value.missingAttachment == "" || value.wrongAttachmentDigest == "" || value.unrelatedTampered == "" || value.staleHead == "" || value.unauthorizedConsumer == "" || value.source == "" ||
+	if value.head == "" || value.contract == "" || value.valid == "" || value.tampered == "" || value.coherentTampered == "" ||
+		value.missing == "" || value.byteOnly == "" || value.wrongRecipe == "" || value.recipeOnly == "" || value.missingAttachment == "" || value.wrongAttachmentDigest == "" || value.unrelatedTampered == "" || value.staleHead == "" || value.unauthorizedConsumer == "" || value.claimProposition == "" || value.claimDependency == "" || value.claimProofChoice == "" || value.claimTarget == "" || value.source == "" ||
 		value.operation == "" || value.recipe == "" || value.independence == "" || value.writeSet == "" || value.coherentOperation == "" || value.checkout == "" || value.output == "" {
 		return 2
 	}
@@ -148,6 +169,10 @@ func run(args []string) int {
 	unrelatedTampered, unrelatedTamperedOK := read(value.unrelatedTampered)
 	staleHead, staleHeadOK := read(value.staleHead)
 	unauthorizedConsumer, unauthorizedConsumerOK := read(value.unauthorizedConsumer)
+	claimProposition, claimPropositionOK := read(value.claimProposition)
+	claimDependency, claimDependencyOK := read(value.claimDependency)
+	claimProofChoice, claimProofChoiceOK := read(value.claimProofChoice)
+	claimTarget, claimTargetOK := read(value.claimTarget)
 	source, sourceOK := read(value.source)
 	operation, operationOK := read(value.operation)
 	recipe, recipeOK := read(value.recipe)
@@ -162,7 +187,7 @@ func run(args []string) int {
 	commentOperation, commentOperationOK := read(value.commentOperation)
 	checkoutRaw, checkoutOK := read(value.checkout)
 	if !validOK || !tamperedOK || !coherentTamperedOK || !missingOK || !byteOnlyOK || !wrongRecipeOK || !sourceOK || !operationOK || !recipeOK || !independenceOK ||
-		!recipeOnlyOK || !missingAttachmentOK || !wrongAttachmentDigestOK || !unrelatedTamperedOK || !staleHeadOK || !unauthorizedConsumerOK || !checkoutOK ||
+		!recipeOnlyOK || !missingAttachmentOK || !wrongAttachmentDigestOK || !unrelatedTamperedOK || !staleHeadOK || !unauthorizedConsumerOK || !claimPropositionOK || !claimDependencyOK || !claimProofChoiceOK || !claimTargetOK || !checkoutOK ||
 		!writeSetOK || !coherentOperationOK || !semanticArtifactOK || !semanticSourceOK || !semanticOperationOK ||
 		!commentArtifactOK || !commentSourceOK || !commentOperationOK {
 		return 2
@@ -185,9 +210,9 @@ func run(args []string) int {
 	}
 	report := verifier.Evaluate(verifier.Input{Contract: contract, ContractBytes: contractRaw, HeadSHA: value.head, ValidArtifact: valid,
 		TamperedArtifact: tampered, CoherentTamperedArtifact: coherentTampered, MissingArtifact: missing, ByteOnlyArtifact: byteOnly, WrongRecipe: wrongRecipe,
-		RecipeOnlyArtifact: recipeOnly, MissingAttachment: missingAttachment, WrongAttachmentDigest: wrongAttachmentDigest, UnrelatedTamperedArtifact: unrelatedTampered, StaleHeadArtifact: staleHead, UnauthorizedConsumer: unauthorizedConsumer,
+		RecipeOnlyArtifact: recipeOnly, MissingAttachment: missingAttachment, WrongAttachmentDigest: wrongAttachmentDigest, UnrelatedTamperedArtifact: unrelatedTampered, StaleHeadArtifact: staleHead, ClaimPropositionArtifact: claimProposition, ClaimDependencyArtifact: claimDependency, ClaimProofChoiceArtifact: claimProofChoice, ClaimTargetArtifact: claimTarget, UnauthorizedConsumer: unauthorizedConsumer,
 		Source: source, Operation: operation, Recipe: recipe, Independence: independence, WriteSet: writeSet,
-		CoherentOperation: coherentOperation, Interventions: interventions, Checkout: checkout})
+		CoherentOperation: coherentOperation, Interventions: interventions, Checkout: checkout, UnauthorizedBundle: readBundle(value.unauthorizedBundle)})
 	if err := verifier.WriteReport(value.output, report); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

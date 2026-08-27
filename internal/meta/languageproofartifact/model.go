@@ -16,16 +16,16 @@ type Coordinate struct {
 }
 
 type Effects struct {
-	RepositoryWrites  int  `json:"repository_writes"`
-	MutationAuthority bool `json:"mutation_authority"`
+	NetChangedPaths           int  `json:"net_changed_paths"`
+	CapabilityMutationGranted bool `json:"capability_mutation_granted"`
 }
 
 type Authority struct {
-	ArtifactUseAuthority string `json:"artifact_use_authority"`
-	MutationAuthority    bool   `json:"mutation_authority"`
-	PromotionAuthority   bool   `json:"promotion_authority"`
-	SemanticAuthority    bool   `json:"semantic_authority"`
-	Basis                string `json:"basis"`
+	ArtifactUseAuthority      string `json:"artifact_use_authority"`
+	CapabilityMutationGranted bool   `json:"capability_mutation_granted"`
+	PromotionAuthority        bool   `json:"promotion_authority"`
+	SemanticAuthority         bool   `json:"semantic_authority"`
+	Basis                     string `json:"basis"`
 }
 
 type Evidence struct {
@@ -39,8 +39,8 @@ type Evidence struct {
 	ReceiptDigest                   string     `json:"receipt_digest,omitempty"`
 	Activity                        string     `json:"activity,omitempty"`
 	Predicate                       string     `json:"predicate,omitempty"`
-	RepositoryWrites                int        `json:"repository_writes"`
-	MutationAuthority               bool       `json:"mutation_authority"`
+	NetChangedPaths                 int        `json:"net_changed_paths"`
+	CapabilityMutationGranted       bool       `json:"capability_mutation_granted"`
 	ArtifactUseAuthority            string     `json:"artifact_use_authority"`
 	IndependentVerificationRequired bool       `json:"independent_verification_required"`
 	EvidenceDigest                  string     `json:"evidence_digest"`
@@ -74,20 +74,22 @@ type WriteSetChange struct {
 }
 
 type WriteSetObservation struct {
-	Schema            string           `json:"schema"`
-	Version           int              `json:"version"`
-	Before            []WriteSetEntry  `json:"before"`
-	After             []WriteSetEntry  `json:"after"`
-	Changed           []WriteSetChange `json:"changed"`
-	BeforeDigest      string           `json:"before_digest"`
-	AfterDigest       string           `json:"after_digest"`
-	RepositoryWrites  int              `json:"repository_writes"`
-	MutationAuthority bool             `json:"mutation_authority"`
-	ObservedScope     string           `json:"observed_scope"`
-	NetUnchanged      bool             `json:"net_repository_state_unchanged"`
-	TransientUnknown  bool             `json:"transient_writes_unknown"`
-	AuthorityBasis    string           `json:"authority_observation"`
-	Digest            string           `json:"digest"`
+	Schema                    string           `json:"schema"`
+	Version                   int              `json:"version"`
+	Before                    []WriteSetEntry  `json:"before"`
+	After                     []WriteSetEntry  `json:"after"`
+	Changed                   []WriteSetChange `json:"changed"`
+	BeforeDigest              string           `json:"before_digest"`
+	AfterDigest               string           `json:"after_digest"`
+	NetChangedPaths           int              `json:"net_changed_paths"`
+	CapabilityMutationGranted bool             `json:"capability_mutation_granted"`
+	ObservedScope             string           `json:"observed_scope"`
+	NetUnchanged              bool             `json:"net_repository_state_unchanged"`
+	TransientUnknown          bool             `json:"transient_writes_unknown"`
+	ActualWritesObservation   string           `json:"actual_writes_observation"`
+	GlobalMutationAuthority   string           `json:"global_mutation_authority"`
+	AuthorityBasis            string           `json:"authority_observation"`
+	Digest                    string           `json:"digest"`
 }
 
 type LedgerEntry struct {

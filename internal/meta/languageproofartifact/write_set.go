@@ -31,7 +31,7 @@ func normalizeWriteSet(observation WriteSetObservation) (WriteSetObservation, er
 		return WriteSetObservation{}, fmt.Errorf("repository write-set change projection mismatch")
 	}
 	observation.Changed = want
-	observation.RepositoryWrites = len(want)
+	observation.NetChangedPaths = len(want)
 	if observation.ObservedScope == "" {
 		observation.ObservedScope = "NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED"
 	}
@@ -40,7 +40,16 @@ func normalizeWriteSet(observation WriteSetObservation) (WriteSetObservation, er
 	}
 	observation.NetUnchanged = len(want) == 0
 	observation.TransientUnknown = true
-	if observation.MutationAuthority {
+	if observation.ActualWritesObservation == "" {
+		observation.ActualWritesObservation = "UNKNOWN"
+	}
+	if observation.GlobalMutationAuthority == "" {
+		observation.GlobalMutationAuthority = "UNKNOWN"
+	}
+	if observation.ActualWritesObservation != "UNKNOWN" || observation.GlobalMutationAuthority != "UNKNOWN" {
+		return WriteSetObservation{}, fmt.Errorf("repository write-set actual or global authority observation must remain unknown")
+	}
+	if observation.CapabilityMutationGranted {
 		return WriteSetObservation{}, fmt.Errorf("repository write-set mutation authority is not allowed")
 	}
 	observation.Digest = writeSetDigest(observation)

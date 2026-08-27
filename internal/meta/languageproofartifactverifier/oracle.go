@@ -32,7 +32,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 
 	identityOK := artifact.Schema == ArtifactSchema && artifact.HeadSHA == head && artifact.Producer == ProducerID && artifact.Consumer == ConsumerID && artifact.MetaOperation == "emit-proof-carrying-artifact" &&
 		artifact.Decision == "CARRIED" && artifact.Resolution == "EVIDENCE_ATTACHED" && artifact.Reason == "PROOF_CARRYING_ARTIFACT_EMITTED" &&
-		artifact.Authority.ArtifactUseAuthority == "NONE" && !artifact.Authority.MutationAuthority && !artifact.Authority.PromotionAuthority && !artifact.Authority.SemanticAuthority &&
+		artifact.Authority.ArtifactUseAuthority == "NONE" && !artifact.Authority.CapabilityMutationGranted && !artifact.Authority.PromotionAuthority && !artifact.Authority.SemanticAuthority &&
 		artifact.Authority.Basis == "INDEPENDENT_CONSUMER_VERIFICATION_REQUIRED" && artifact.SourcePath != "" && validDigest(artifact.SourceDigest) && validDigest(artifact.SemanticDigest) && validDigest(artifact.OperationDigest) &&
 		artifact.Recipe.Version == 2 && artifact.RecipeDigest == digestValue(artifact.Recipe) && validateWriteSet(artifact.WriteSet) == nil
 	if !identityOK {
@@ -57,15 +57,13 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		}
 	}
 	claimsStructureOK := validateClaimStatements(artifact.Claims, artifact.Evidence, artifact)
-	if validatePriorLedger(artifact.PriorLedger, artifact.Claims) != nil {
-		return observedFailure(artifact, "INVARIANT_ONLY", "PROOF_EVIDENCE_LEDGER_MISMATCH", "CONSUME_LEDGER", "prior-ledger", map[string]string{}, artifactEvidenceDigest, "", "", "")
-	}
+	priorLedgerOK := validatePriorLedger(artifact.PriorLedger, artifact.Claims) == nil
 
 	statuses := map[string]string{}
 	sourceDigest := digestBytes(source)
 	projection, projectionErr := projectSource(source, activityFrom(artifact))
 	sourceGood := len(source) > 0 && projectionErr == nil && artifact.SourceDigest == sourceDigest && artifact.SemanticDigest == projection.SemanticDigest &&
-		evidenceOK["SOURCE"] && claimOK(artifact.Claims, artifact.Evidence, "source-bytes-bound")
+		evidenceOK["SOURCE"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "source-bytes-bound")
 	if sourceGood {
 		statuses["source-bytes-bound"] = "DISCHARGED"
 	} else if len(source) == 0 || projectionErr != nil {
@@ -79,7 +77,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 	operationDecoded := !operationMissing && decodeInto(operation, &receipt) == nil
 	operationDigestOK := operationDecoded && receipt.Digest == receiptDigest(receipt)
 	operationGood := operationDecoded && operationDigestOK && sourceGood && verifyOperation(receipt, sourceDigest, artifact.SourcePath, projection) && artifact.OperationDigest == receipt.Digest &&
-		evidenceOK["OPERATION"] && claimOK(artifact.Claims, artifact.Evidence, "operation-receipt-bound")
+		evidenceOK["OPERATION"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "operation-receipt-bound")
 	if operationGood {
 		statuses["operation-receipt-bound"] = "DISCHARGED"
 	} else if operationMissing || !sourceGood {
@@ -88,8 +86,8 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		statuses["operation-receipt-bound"] = "REFUTED"
 	}
 
-	invariantGood := evidenceOK["INVARIANT"] && claimOK(artifact.Claims, artifact.Evidence, "no-byte-authority") && artifact.WriteSet.RepositoryWrites == 0 &&
-		!artifact.WriteSet.MutationAuthority && artifact.Effects.RepositoryWrites == 0 && !artifact.Effects.MutationAuthority && artifact.Authority.ArtifactUseAuthority == "NONE"
+	invariantGood := evidenceOK["INVARIANT"] && claimOK(artifact.Claims, artifact.Evidence, artifact, "no-byte-authority") && artifact.WriteSet.NetChangedPaths == 0 &&
+		!artifact.WriteSet.CapabilityMutationGranted && artifact.Effects.NetChangedPaths == 0 && !artifact.Effects.CapabilityMutationGranted && artifact.Authority.ArtifactUseAuthority == "NONE"
 	if invariantGood {
 		statuses["no-byte-authority"] = "DISCHARGED"
 	} else {
@@ -99,15 +97,15 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 	externalRecipe, recipeErr := decodeRecipe(recipe)
 	derivedRecipe, derivedErr := recipeFromSource(source)
 	recipeGood := recipeErr == nil && derivedErr == nil && reflect.DeepEqual(externalRecipe, CanonicalRecipe()) && reflect.DeepEqual(derivedRecipe, CanonicalRecipe()) &&
-		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && claimOK(artifact.Claims, artifact.Evidence, "recipe-match")
+		reflect.DeepEqual(artifact.Recipe, externalRecipe) && artifact.RecipeDigest == digestValue(externalRecipe) && claimOK(artifact.Claims, artifact.Evidence, artifact, "recipe-match")
 	if recipeGood {
 		statuses["recipe-match"] = "DISCHARGED"
 	} else {
 		statuses["recipe-match"] = "REFUTED"
 	}
 
-	allPrerequisites := statuses["source-bytes-bound"] == "DISCHARGED" && statuses["operation-receipt-bound"] == "DISCHARGED" && statuses["no-byte-authority"] == "DISCHARGED" && statuses["recipe-match"] == "DISCHARGED"
-	authorityGood := allPrerequisites && claimOK(artifact.Claims, artifact.Evidence, "consumer-authority") && len(raw) > 0
+	allPrerequisites := claimsStructureOK && priorLedgerOK && statuses["source-bytes-bound"] == "DISCHARGED" && statuses["operation-receipt-bound"] == "DISCHARGED" && statuses["no-byte-authority"] == "DISCHARGED" && statuses["recipe-match"] == "DISCHARGED"
+	authorityGood := allPrerequisites && claimOK(artifact.Claims, artifact.Evidence, artifact, "consumer-authority") && len(raw) > 0
 	if authorityGood {
 		statuses["consumer-authority"] = "DISCHARGED"
 	} else if !allPrerequisites {
@@ -129,6 +127,10 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		if mismatchedEvidenceKinds["INVARIANT"] && !mismatchedEvidenceKinds["SOURCE"] && !mismatchedEvidenceKinds["OPERATION"] {
 			reason, step = "INVARIANT_EVIDENCE_NOT_PRESERVED", "invariant-evidence"
 		}
+	case !priorLedgerOK:
+		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_EVIDENCE_LEDGER_MISMATCH", "CONSUME_LEDGER", "prior-ledger"
+	case !claimsStructureOK:
+		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_CLAIM_STATEMENT_MISMATCH", "CONSUME_CLAIMS", "claim-statement"
 	case !sourceGood:
 		resolution, reason, stage, step = "INVARIANT_ONLY", "SOURCE_RECONSTRUCTION_MISMATCH", "CONSUME_SOURCE", "reconstruct"
 	case !operationGood && operationDecoded && !operationDigestOK:
@@ -139,14 +141,14 @@ func verifyArtifact(raw, source, operation, recipe []byte, head string) observat
 		resolution, reason, stage, step = "INVARIANT_ONLY", "INVARIANT_EVIDENCE_NOT_PRESERVED", "CONSUME_INVARIANT", "invariant-evidence"
 	case !recipeGood:
 		resolution, reason, stage, step = "INVARIANT_ONLY", "INDEPENDENT_RECIPE_MISMATCH", "CONSUME_RECIPE", "recipe"
-	case !claimsStructureOK:
-		resolution, reason, stage, step = "INVARIANT_ONLY", "PROOF_CLAIM_STATEMENT_MISMATCH", "CONSUME_CLAIMS", "claim-statement"
 	}
 	if authorityGood {
 		claims := exactClaims(artifact.Claims)
 		result := observation{Decision: "PASS", Resolution: "EXACT", Reason: "PROOF_CARRYING_ARTIFACT_AUTHORIZED", Coordinate: Coordinate{"CONSUME_AUTHORITY", "grant-read-only-consumption", "CONSUMER_ONLY_READ_ONLY_AUTHORITY"}, ArtifactDigest: artifactEvidenceDigest, SourceDigest: sourceDigest, SemanticDigest: projection.SemanticDigest, OperationDigest: receipt.Digest, Claims: claims}
 		result.EvidenceLinkDigest = digestValue(statementEvidence(artifact.Claims))
 		result.ClaimTransitionDigest = digestValue(claimTransitions(claims))
+		result.OperationAttachmentDigest = digestBytes(operation)
+		result.RecipeAttachmentDigest = digestBytes(recipe)
 		return result
 	}
 	return observedFailure(artifact, resolution, reason, stage, step, statuses, artifactEvidenceDigest, sourceDigest, projection.SemanticDigest, receiptDigestIfValid(receipt))
@@ -202,8 +204,7 @@ func validateClaimStatements(claims []ClaimStatement, evidence []Evidence, artif
 	}
 	for _, spec := range claimSpecs() {
 		claim, ok := byID[spec.ID]
-		if !ok || claim.Proposition != spec.Proposition || claim.TargetDigest != wantTargets[spec.ID] || !reflect.DeepEqual(claim.Dependencies, spec.Dependencies) ||
-			claim.ProofChoice != spec.ProofChoice || claim.MetaOperation != spec.MetaOperation || claim.Coordinate.Stage == "" || claim.Coordinate.Step == "" || claim.Coordinate.Reason == "" || len(claim.EvidenceDigest) == 0 {
+		if !ok || !claimStatementMatches(claim, artifact, spec) || claim.TargetDigest != wantTargets[spec.ID] {
 			return false
 		}
 		for _, link := range claim.EvidenceDigest {
@@ -216,9 +217,32 @@ func validateClaimStatements(claims []ClaimStatement, evidence []Evidence, artif
 	return true
 }
 
-func claimOK(claims []ClaimStatement, evidence []Evidence, id string) bool {
+func claimStatementMatches(claim ClaimStatement, artifact Artifact, spec claimSpec) bool {
+	target := spec.TargetDigest
+	switch spec.ID {
+	case "source-bytes-bound":
+		target = artifact.SourceDigest
+	case "operation-receipt-bound":
+		target = artifact.OperationDigest
+	case "recipe-match":
+		target = artifact.RecipeDigest
+	}
+	return claim.ID == spec.ID && claim.Digest == claimStatementDigest(claim) && claim.Proposition == spec.Proposition && claim.TargetDigest == target &&
+		reflect.DeepEqual(claim.Dependencies, spec.Dependencies) && claim.ProofChoice == spec.ProofChoice && claim.MetaOperation == spec.MetaOperation &&
+		claim.Coordinate.Stage != "" && claim.Coordinate.Step != "" && claim.Coordinate.Reason != "" && len(claim.EvidenceDigest) > 0
+}
+
+func claimOK(claims []ClaimStatement, evidence []Evidence, artifact Artifact, id string) bool {
 	for _, claim := range claims {
-		if claim.ID != id || claim.Digest != claimStatementDigest(claim) || len(claim.EvidenceDigest) == 0 {
+		var spec claimSpec
+		found := false
+		for _, candidate := range claimSpecs() {
+			if candidate.ID == id {
+				spec, found = candidate, true
+				break
+			}
+		}
+		if !found || !claimStatementMatches(claim, artifact, spec) {
 			continue
 		}
 		available := map[string]bool{}

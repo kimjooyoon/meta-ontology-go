@@ -4,8 +4,9 @@ func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet W
 	summary := Summary{CasesTotal: len(cases), TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal,
 		ProducerDependencies: independence.ProducerDependencies, ProducerImportNumerator: independence.ProducerImportNumerator,
 		ProducerImportDenominator: independence.ProducerImportDenominator, CoreParserDependencies: independence.CoreParserDependencies,
-		RepositoryWrites: writeSet.RepositoryWrites, MutationAuthorities: boolToInt(writeSet.MutationAuthority),
+		NetChangedPaths: writeSet.NetChangedPaths, MutationAuthorities: boolToInt(writeSet.CapabilityMutationGranted),
 		NetRepositoryStateUnchanged: boolToInt(writeSet.NetUnchanged)}
+	summary.UnknownAuthorityObservations = boolToInt(writeSet.GlobalMutationAuthority == "UNKNOWN")
 	for _, item := range cases {
 		if item.Status == "SATISFIED" {
 			summary.CasesSatisfied++
@@ -33,7 +34,7 @@ func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet W
 		case "independent-recipe-mismatch":
 			summary.RecipeRejections = boolToInt(item.ObservedReason == "INDEPENDENT_RECIPE_MISMATCH")
 		case "recipe-only-mismatch":
-			summary.RecipeOnlyRejections = boolToInt(item.ObservedReason == "RECIPE_CLAIM_ONLY_MISMATCH")
+			summary.RecipeOnlyRejections = boolToInt(item.ObservedReason == "INDEPENDENT_RECIPE_MISMATCH")
 		case "missing-attachment":
 			summary.MissingAttachmentRejections = boolToInt(item.ObservedReason == "ARTIFACT_ATTACHMENT_MISSING")
 		case "wrong-attachment-digest":
@@ -44,6 +45,10 @@ func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet W
 			summary.StaleHeadRejections = boolToInt(item.ObservedReason == "HEAD_BINDING_MISMATCH")
 		case "unauthorized-consumer":
 			summary.UnauthorizedConsumerDenials = boolToInt(item.ObservedReason == "UNAUTHORIZED_CONSUMER_NOT_ATTESTED")
+		case "coherent-claim-proposition-tamper", "coherent-claim-dependency-tamper", "coherent-claim-proof-choice-tamper", "coherent-claim-target-tamper":
+			if item.ObservedReason == "PROOF_CLAIM_STATEMENT_MISMATCH" {
+				summary.CoherentClaimStructureRejections++
+			}
 		}
 		for _, claim := range item.Claims {
 			summary.ClaimInstances++

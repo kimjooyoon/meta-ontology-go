@@ -56,19 +56,34 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 	} else {
 		return ConsumerReceipt{}, fmt.Errorf("consumer target is outside read-only policy: %s", targetPath)
 	}
-	for _, item := range bundle.Files {
-		if item.Path != targetPath {
-			continue
-		}
-		raw, err := base64.StdEncoding.DecodeString(item.Content)
-		if err != nil {
-			return ConsumerReceipt{}, err
-		}
+	raw, err := bundleTargetBytes(bundle, targetPath)
+	if err == nil {
 		receipt := expectedConsumerReceipt(report, targetPath, raw)
 		if !reflect.DeepEqual(receipt, report.ConsumerReceipt) {
 			return ConsumerReceipt{}, fmt.Errorf("consumer receipt does not match report")
 		}
 		return receipt, nil
 	}
-	return ConsumerReceipt{}, fmt.Errorf("consumer target is absent from bundle: %s", targetPath)
+	return ConsumerReceipt{}, err
+}
+
+func bundleTargetBytes(bundle Bundle, targetPath string) ([]byte, error) {
+	for _, item := range bundle.Files {
+		if item.Path == targetPath {
+			return base64.StdEncoding.DecodeString(item.Content)
+		}
+	}
+	return nil, fmt.Errorf("consumer target is absent from bundle: %s", targetPath)
+}
+
+func bundleTargetDigests(bundle Bundle, targetPath string) (string, string) {
+	raw, err := bundleTargetBytes(bundle, targetPath)
+	if err != nil {
+		return "", ""
+	}
+	return digestBytes(raw), digestValue(struct {
+		TargetPath   string `json:"target_path"`
+		TargetDigest string `json:"target_digest"`
+		Authority    string `json:"authority"`
+	}{targetPath, digestBytes(raw), "READ_ONLY_CONSUMPTION"})
 }

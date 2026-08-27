@@ -3,7 +3,7 @@
 This experiment makes the combination of a generated artifact and its
 justification evidence a language-level object. The Gooo source declares the
 operation that produces a `ProofCarryingArtifact`; the producer emits three
-typed evidence records and carries a four-step verification recipe with them.
+typed evidence records and carries a five-step verification recipe with them.
 
 The artifact is deliberately not an authorization. It is emitted as
 `subject_artifact_decision=CARRIED`, with
@@ -46,19 +46,24 @@ core-parser dependencies are reported separately.
 The workflow snapshots all tracked and untracked repository paths before and
 after the run. The structured write-set observation is carried into the
 artifact and report, including its before/after digests and exact changed-path
-list; it is not inferred as `repository_writes=0` merely because outputs live
-outside the repository. Its scope is explicitly
-`NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED`: transient writes remain unknown, and
-the global mutation-authority observation is `UNKNOWN_GLOBAL_TRANSIENT_SCOPE`.
+list; `net_changed_paths` is a net path observation, not a write count. Actual
+transient writes and global OS mutation authority remain `UNKNOWN`; the
+policy-only field `capability_mutation_granted=false` does not make a global
+authority claim. Its content-aware scope is explicitly
+`NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED`.
 
 The uploaded `bundle.json` is a content-addressed portable proof bundle. It
 contains the source, operation receipts, source-derived recipe, validator
 contract, checkout binding, write-set, every negative case, and both
-intervention suites. The bundle-only verifier reconstructs all inputs from
+intervention suites in an exact 30-path inventory. The bundle-only verifier reconstructs all inputs from
 those bytes, rejects missing/extra/duplicate paths, and reaches the same
-conformance decision without repository checkout inputs. A downstream consumer
-accepts only the independently attested `artifact.json` target and records
-the actual target and output digests.
+conformance decision without repository checkout inputs. Its HEAD is a
+historical subject binding preserved in the bundle, not a claim about the
+verifier's current checkout. A workflow report separately records
+`CURRENT_CHECKOUT_OBSERVATION`. A downstream consumer accepts only the
+independently attested `artifact.json` target and records the actual target and
+output digests; an unauthorized consumer is sent through the same
+`ConsumeBundle` authority path and is rejected.
 
 ## Research decisions
 
@@ -86,7 +91,7 @@ research:
 
 ## Fixed cases and falsification
 
-The contract has a fixed denominator of twelve cases and forty indicators.
+The v2 contract has a fixed denominator of sixteen cases and forty indicators.
 The case table below is a validator expectation, not a producer-supplied
 authority decision:
 
@@ -98,12 +103,16 @@ authority decision:
 | artifact bytes only | `FAIL_CLOSED / LOWER_RESOLUTION`, bytes are not authority |
 | independent recipe mismatch | `FAIL_CLOSED / INVARIANT_ONLY`, recipe drift rejected |
 | coherent outer+inner reseal | `FAIL_CLOSED / INVARIANT_ONLY`, source/operation reconstruction mismatch |
-| recipe-only drift | `FAIL_CLOSED / INVARIANT_ONLY`, recipe claim only mismatch |
+| recipe-only drift | `FAIL_CLOSED / INVARIANT_ONLY`, independent recipe mismatch |
 | missing attachment | `FAIL_CLOSED / LOWER_RESOLUTION`, attachment absent |
 | wrong attachment digest | `FAIL_CLOSED / INVARIANT_ONLY`, receipt digest mismatch |
 | unrelated evidence tamper | `FAIL_CLOSED / INVARIANT_ONLY`, invariant claim not preserved |
 | stale HEAD | `FAIL_CLOSED / INVARIANT_ONLY`, checkout binding mismatch |
 | unauthorized consumer | `FAIL_CLOSED / INVARIANT_ONLY`, no independent attestation |
+| coherent proposition tamper | `FAIL_CLOSED / INVARIANT_ONLY`, claim statement mismatch |
+| coherent dependency tamper | `FAIL_CLOSED / INVARIANT_ONLY`, claim statement mismatch |
+| coherent proof-choice tamper | `FAIL_CLOSED / INVARIANT_ONLY`, claim statement mismatch |
+| coherent target tamper | `FAIL_CLOSED / INVARIANT_ONLY`, claim statement mismatch |
 
 Proof claims additionally have a canonical OPEN prior ledger. An independently
 reverified source, operation, and recipe claim is appended as `DISCHARGED`; a
@@ -114,8 +123,10 @@ are separate from the artifact transport transition `CARRIED -> PRESERVED`.
 The fixed report therefore has four preserved transport transitions and five
 total transitions after the read-only capability transition is included. Case
 claim evaluations are reported separately from the persistent ledger: the
-fixed suite has 5 unique claim templates, 60 case instances, and the valid
-case appends 5 discharged entries to the 5-entry OPEN prior ledger.
+fixed suite has 5 unique claim templates, 80 case instances, and the valid
+case appends 5 discharged entries to the 5-entry OPEN prior ledger. The four
+coherent claim-structure cases are resealed at the claim, prior-ledger, and
+outer artifact levels, but remain rejected by the canonical claim structure.
 
 The claim is falsified if generated bytes grant any authority, if the consumer
 grants read-only consumption without all three external inputs, if either a

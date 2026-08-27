@@ -1,17 +1,21 @@
 package languageproofartifactverifier
 
 type observation struct {
-	Decision              string
-	Resolution            string
-	Reason                string
-	Coordinate            Coordinate
-	ArtifactDigest        string
-	SourceDigest          string
-	SemanticDigest        string
-	OperationDigest       string
-	EvidenceLinkDigest    string
-	ClaimTransitionDigest string
-	Claims                []ClaimResult
+	Decision                  string
+	Resolution                string
+	Reason                    string
+	Coordinate                Coordinate
+	ArtifactDigest            string
+	SourceDigest              string
+	SemanticDigest            string
+	OperationDigest           string
+	OperationAttachmentDigest string
+	RecipeAttachmentDigest    string
+	EvidenceLinkDigest        string
+	ClaimTransitionDigest     string
+	ConsumerTargetDigest      string
+	ConsumerOutputDigest      string
+	Claims                    []ClaimResult
 }
 
 func failure(resolution, reason, stage, step string) observation {

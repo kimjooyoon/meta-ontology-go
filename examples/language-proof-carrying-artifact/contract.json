@@ -1,6 +1,6 @@
 {
-  "schema": "gooo/language-proof-carrying-artifact-contract/v1",
-  "version": 1,
+  "schema": "gooo/language-proof-carrying-artifact-contract/v2",
+  "version": 2,
   "cases": [
     {"id":"valid-proof-carrying-artifact","input_kind":"VALID","expected_decision":"PASS","expected_resolution":"EXACT","expected_reason":"PROOF_CARRYING_ARTIFACT_AUTHORIZED","proof_choice":"COHERENCE","meta_operation":"grant-read-only-consumption"},
     {"id":"tampered-evidence","input_kind":"TAMPERED","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_EVIDENCE_DIGEST_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-tampered-evidence"},
@@ -8,11 +8,15 @@
     {"id":"missing-operation-evidence","input_kind":"MISSING","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"PROOF_EVIDENCE_MISSING","proof_choice":"FOUNDATION","meta_operation":"lower-missing-evidence"},
     {"id":"bytes-only-no-authority","input_kind":"BYTE_ONLY","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"ARTIFACT_BYTES_NOT_AUTHORITY","proof_choice":"REGRESSION","meta_operation":"deny-byte-only-authority"},
     {"id":"independent-recipe-mismatch","input_kind":"WRONG_RECIPE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"INDEPENDENT_RECIPE_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-recipe-drift"},
-    {"id":"recipe-only-mismatch","input_kind":"RECIPE_ONLY","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"RECIPE_CLAIM_ONLY_MISMATCH","proof_choice":"COHERENCE","meta_operation":"reject-recipe-only-drift"},
+    {"id":"recipe-only-mismatch","input_kind":"RECIPE_ONLY","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"INDEPENDENT_RECIPE_MISMATCH","proof_choice":"COHERENCE","meta_operation":"reject-recipe-only-drift"},
     {"id":"missing-attachment","input_kind":"MISSING_ATTACHMENT","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"ARTIFACT_ATTACHMENT_MISSING","proof_choice":"FOUNDATION","meta_operation":"lower-missing-attachment"},
     {"id":"wrong-attachment-digest","input_kind":"WRONG_ATTACHMENT_DIGEST","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"OPERATION_ATTACHMENT_DIGEST_MISMATCH","proof_choice":"COHERENCE","meta_operation":"reject-wrong-attachment"},
     {"id":"unrelated-evidence-tamper","input_kind":"UNRELATED_TAMPER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"INVARIANT_EVIDENCE_NOT_PRESERVED","proof_choice":"REGRESSION","meta_operation":"reject-unrelated-evidence-tamper"},
     {"id":"stale-head","input_kind":"STALE_HEAD","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"HEAD_BINDING_MISMATCH","proof_choice":"FOUNDATION","meta_operation":"reject-stale-head"},
-    {"id":"unauthorized-consumer","input_kind":"UNAUTHORIZED_CONSUMER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"UNAUTHORIZED_CONSUMER_NOT_ATTESTED","proof_choice":"REGRESSION","meta_operation":"deny-unauthorized-consumer"}
+    {"id":"unauthorized-consumer","input_kind":"UNAUTHORIZED_CONSUMER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"UNAUTHORIZED_CONSUMER_NOT_ATTESTED","proof_choice":"REGRESSION","meta_operation":"deny-unauthorized-consumer"},
+    {"id":"coherent-claim-proposition-tamper","input_kind":"CLAIM_PROPOSITION_TAMPER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_CLAIM_STATEMENT_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-coherent-claim-proposition-tamper"},
+    {"id":"coherent-claim-dependency-tamper","input_kind":"CLAIM_DEPENDENCY_TAMPER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_CLAIM_STATEMENT_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-coherent-claim-dependency-tamper"},
+    {"id":"coherent-claim-proof-choice-tamper","input_kind":"CLAIM_PROOF_CHOICE_TAMPER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_CLAIM_STATEMENT_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-coherent-claim-proof-choice-tamper"},
+    {"id":"coherent-claim-target-tamper","input_kind":"CLAIM_TARGET_TAMPER","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_CLAIM_STATEMENT_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-coherent-claim-target-tamper"}
   ]
 }
