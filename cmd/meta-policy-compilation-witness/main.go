@@ -90,7 +90,7 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	receipt.WriteSet = WriteSetObservation{
+	receipt.WriteSet = policycompilation.WriteSetObservation{
 		RepositoryBeforeDigest: beforeDigest, RepositoryAfterDigest: afterDigest,
 		RepositoryBeforeCount: beforeCount, RepositoryAfterCount: afterCount,
 		RepositoryWriteChanged: beforeDigest != afterDigest,
