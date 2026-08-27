@@ -51,7 +51,7 @@ func CanonicalContract() model.Contract {
 			metric("gooo.metric.evidence-freshness.transitions.v1", "OUTCOME", "FOUNDATION", "preserve-claim-transition", model.TransitionTotal, model.TransitionTotal),
 			metric("gooo.metric.evidence-freshness.temporal-boundary.v1", "GUARDRAIL", "FOUNDATION", "enforce-temporal-boundary", 1, 1),
 			metric("gooo.metric.evidence-freshness.read-only.v1", "GUARDRAIL", "REGRESSION", "deny-repository-writes", 1, 1),
-			metric("gooo.metric.evidence-freshness.independent-decider.v1", "GUARDRAIL", "FOUNDATION", "separate-decider-import-graph", 1, 1),
+			metric("gooo.metric.evidence-freshness.independence-contract.v1", "GUARDRAIL", "FOUNDATION", "verify-independence-contract", model.IndependenceContractTotal, model.IndependenceContractTotal),
 		},
 		NotClaimed: []string{
 			"cryptographic signature authenticity",

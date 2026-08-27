@@ -20,19 +20,22 @@ entity F id "f"
 activity One(A) -> B
 activity Two(B) -> C
 activity Three(C) -> D
-`), Independence: model.IndependenceEvidence{Schema: model.IndependenceSchema}})
+	`), Independence: model.DefaultIndependenceEvidence()})
 	if err := Validate(report); err != nil {
 		t.Fatal(err)
 	}
 	if report.Summary.CasesSatisfied != model.CaseTotal || report.Summary.FreshCases != 1 ||
-		report.Summary.StaleCases != 7 || report.Summary.UnknownCases != 2 || report.Summary.AxisChangesObserved != model.AxisTotal {
+		report.Summary.StaleCases != 7 || report.Summary.UnknownCases != 2 || report.Summary.AxisChangesObserved != model.AxisTotal ||
+		report.Summary.ForbiddenDependencyCount != 0 || report.Summary.IndependenceContract != (model.FixedMetric{Numerator: 1, Denominator: 1}) ||
+		report.Independence != model.DefaultIndependenceEvidence() || report.Receipt.Independence != report.Independence {
 		t.Fatalf("summary=%+v", report.Summary)
 	}
 }
 
-func TestEvaluateFailsClosedWhenDeciderDependenciesAreDeclared(t *testing.T) {
+func TestEvaluateFailsClosedWhenForbiddenDependenciesAreObserved(t *testing.T) {
 	input := Input{Contract: CanonicalContract(), HeadSHA: strings.Repeat("a", 40), Source: []byte("invalid"),
-		Independence: model.IndependenceEvidence{Schema: model.IndependenceSchema, DeciderDependencies: 1}}
+		Independence: model.IndependenceEvidence{Schema: model.IndependenceSchema, ForbiddenDependencyCount: 1,
+			IndependenceContract: model.FixedMetric{Numerator: model.IndependenceContractTotal, Denominator: model.IndependenceContractTotal}}}
 	report := Evaluate(input)
 	if report.Decision != model.DecisionFailClosed || report.Reason != "EVIDENCE_FRESHNESS_CONTRACT_MISMATCH" {
 		t.Fatalf("report=%+v", report)

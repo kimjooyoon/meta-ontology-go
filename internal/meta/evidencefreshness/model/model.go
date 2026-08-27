@@ -32,11 +32,12 @@ const (
 	StageRunner      = "RUNNER_EXECUTION"
 	StageVerifier    = "VERIFIER_JUDGMENT"
 
-	CaseTotal       = 10
-	AxisTotal       = 6
-	CheckTotal      = 10
-	MetricTotal     = 10
-	TransitionTotal = 10
+	CaseTotal                 = 10
+	AxisTotal                 = 6
+	CheckTotal                = 10
+	MetricTotal               = 10
+	TransitionTotal           = 10
+	IndependenceContractTotal = 1
 )
 
 // EvidenceTuple is the identity of the justification boundary. These six
@@ -67,18 +68,19 @@ type Context struct {
 }
 
 type Receipt struct {
-	Schema            string           `json:"schema"`
-	HeadSHA           string           `json:"head_sha"`
-	ClaimID           string           `json:"claim_id"`
-	Producer          string           `json:"producer"`
-	Consumer          string           `json:"consumer"`
-	MetaOperation     string           `json:"meta_operation"`
-	ProofChoice       string           `json:"proof_choice"`
-	Tuple             EvidenceTuple    `json:"tuple"`
-	Boundary          TemporalBoundary `json:"boundary"`
-	RepositoryWrites  int              `json:"repository_writes"`
-	MutationAuthority bool             `json:"mutation_authority"`
-	Digest            string           `json:"digest"`
+	Schema            string               `json:"schema"`
+	HeadSHA           string               `json:"head_sha"`
+	ClaimID           string               `json:"claim_id"`
+	Producer          string               `json:"producer"`
+	Consumer          string               `json:"consumer"`
+	MetaOperation     string               `json:"meta_operation"`
+	ProofChoice       string               `json:"proof_choice"`
+	Tuple             EvidenceTuple        `json:"tuple"`
+	Boundary          TemporalBoundary     `json:"boundary"`
+	Independence      IndependenceEvidence `json:"independence"`
+	RepositoryWrites  int                  `json:"repository_writes"`
+	MutationAuthority bool                 `json:"mutation_authority"`
+	Digest            string               `json:"digest"`
 }
 
 type CaseDefinition struct {
@@ -115,10 +117,20 @@ type Contract struct {
 	NotClaimed  []string           `json:"not_claimed"`
 }
 
+type FixedMetric struct {
+	Numerator   int `json:"numerator"`
+	Denominator int `json:"denominator"`
+}
+
 type IndependenceEvidence struct {
-	Schema               string `json:"schema"`
-	ProducerDependencies int    `json:"producer_dependencies"`
-	DeciderDependencies  int    `json:"decider_dependencies"`
+	Schema                   string      `json:"schema"`
+	ForbiddenDependencyCount int         `json:"forbidden_dependency_count"`
+	IndependenceContract     FixedMetric `json:"independence_contract"`
+}
+
+func DefaultIndependenceEvidence() IndependenceEvidence {
+	return IndependenceEvidence{Schema: IndependenceSchema,
+		IndependenceContract: FixedMetric{Numerator: IndependenceContractTotal, Denominator: IndependenceContractTotal}}
 }
 
 type Coordinate struct {
@@ -184,18 +196,20 @@ type CaseResult struct {
 }
 
 type Summary struct {
-	CasesSatisfied          int            `json:"cases_satisfied"`
-	CasesTotal              int            `json:"cases_total"`
-	FreshCases              int            `json:"fresh_cases"`
-	StaleCases              int            `json:"stale_cases"`
-	UnknownCases            int            `json:"unknown_cases"`
-	AxisChangesObserved     int            `json:"axis_changes_observed"`
-	FixedAxisDenominator    int            `json:"fixed_axis_denominator"`
-	StaleByStage            map[string]int `json:"stale_by_stage"`
-	UnknownByStage          map[string]int `json:"unknown_by_stage"`
-	PreservationTransitions int            `json:"preservation_transitions"`
-	TemporalBoundaryCases   int            `json:"temporal_boundary_cases"`
-	ReadOnlyCases           int            `json:"read_only_cases"`
+	CasesSatisfied           int            `json:"cases_satisfied"`
+	CasesTotal               int            `json:"cases_total"`
+	FreshCases               int            `json:"fresh_cases"`
+	StaleCases               int            `json:"stale_cases"`
+	UnknownCases             int            `json:"unknown_cases"`
+	AxisChangesObserved      int            `json:"axis_changes_observed"`
+	FixedAxisDenominator     int            `json:"fixed_axis_denominator"`
+	StaleByStage             map[string]int `json:"stale_by_stage"`
+	UnknownByStage           map[string]int `json:"unknown_by_stage"`
+	PreservationTransitions  int            `json:"preservation_transitions"`
+	TemporalBoundaryCases    int            `json:"temporal_boundary_cases"`
+	ReadOnlyCases            int            `json:"read_only_cases"`
+	ForbiddenDependencyCount int            `json:"forbidden_dependency_count"`
+	IndependenceContract     FixedMetric    `json:"independence_contract"`
 }
 
 type Indicator struct {

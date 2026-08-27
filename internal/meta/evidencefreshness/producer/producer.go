@@ -10,7 +10,7 @@ import (
 // BuildReceipt is intentionally a bounded observer of the checked-in Gooo
 // source. It records identities and boundaries; it does not execute a build or
 // grant mutation authority.
-func BuildReceipt(source []byte, head string, base model.Context) (model.Receipt, error) {
+func BuildReceipt(source []byte, head string, base model.Context, independence model.IndependenceEvidence) (model.Receipt, error) {
 	if !model.ValidHead(head) {
 		return model.Receipt{}, fmt.Errorf("invalid head SHA")
 	}
@@ -36,6 +36,7 @@ func BuildReceipt(source []byte, head string, base model.Context) (model.Receipt
 		Tuple:         tuple,
 		Boundary: model.TemporalBoundary{ObservationEpoch: base.CurrentEpoch,
 			ValidThroughEpoch: baseBoundary(base), EnvironmentBoundary: base.EnvironmentBoundary},
+		Independence:      independence,
 		RepositoryWrites:  0,
 		MutationAuthority: false,
 	}), nil

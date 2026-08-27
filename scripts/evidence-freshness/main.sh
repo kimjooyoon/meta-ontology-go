@@ -5,11 +5,11 @@ set -euo pipefail
 output="${EVIDENCE_FRESHNESS_OUTPUT:-evidence-freshness-output}"
 mkdir -p "$output"
 
-decider_dependencies=$(go list -deps ./cmd/evidence-freshness-decider | grep -Ec 'internal/meta/evidencefreshness/(producer|evidencefreshness$)' || true)
-jq -n --argjson decider_dependencies "$decider_dependencies" \
-  '{schema:"gooo/evidence-freshness-independence/v1", producer_dependencies:0, decider_dependencies:$decider_dependencies}' \
+forbidden_dependency_count=$(go list -deps ./cmd/evidence-freshness-decider | grep -Ec 'internal/meta/evidencefreshness/(producer|evidencefreshness$)' || true)
+jq -n --argjson forbidden_dependency_count "$forbidden_dependency_count" \
+  '{schema:"gooo/evidence-freshness-independence/v1", forbidden_dependency_count:$forbidden_dependency_count, independence_contract:{numerator:1, denominator:1}}' \
   > "$output/independence.json"
-test "$decider_dependencies" = 0
+test "$forbidden_dependency_count" = 0
 
 common=(
   -contract examples/evidence-freshness/contract.json
@@ -45,6 +45,13 @@ jq -e '
   .summary.stale_by_stage.VERIFIER_JUDGMENT == 2 and
   .summary.unknown_by_stage.SUBJECT_BINDING == 1 and
   .summary.unknown_by_stage.VERIFIER_JUDGMENT == 1 and
+  .summary.forbidden_dependency_count == 0 and
+  .summary.independence_contract.numerator == 1 and
+  .summary.independence_contract.denominator == 1 and
+  .independence.forbidden_dependency_count == 0 and
+  .independence.independence_contract.numerator == 1 and
+  .independence.independence_contract.denominator == 1 and
+  .receipt.independence == .independence and
   ([.cases[] | select(.status == "SATISFIED")]|length) == 10 and
   ([.indicators[] | select(.satisfied != true)]|length) == 0 and
   .repository_writes == 0 and .mutation_authority == false
@@ -62,5 +69,5 @@ git diff --exit-code
 
 {
   echo '## Evidence freshness'
-  jq -r '"- decision: \(.decision) / \(.resolution)\n- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- fresh/stale/unknown: \(.summary.fresh_cases)/\(.summary.stale_cases)/\(.summary.unknown_cases)\n- coupling axes: \(.summary.axis_changes_observed)/\(.summary.fixed_axis_denominator)\n- claim transitions: \(.summary.preservation_transitions)\n- stale stages: subject \(.summary.stale_by_stage.SUBJECT_BINDING), material \(.summary.stale_by_stage.MATERIAL_CLOSURE), recipe \(.summary.stale_by_stage.RECIPE_RESOLUTION), environment \(.summary.stale_by_stage.ENVIRONMENT_CAPTURE), runner \(.summary.stale_by_stage.RUNNER_EXECUTION), verifier \(.summary.stale_by_stage.VERIFIER_JUDGMENT)\n- receipt: \(.receipt_digest)"' "$output/report.json"
+  jq -r '"- decision: \(.decision) / \(.resolution)\n- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- fresh/stale/unknown: \(.summary.fresh_cases)/\(.summary.stale_cases)/\(.summary.unknown_cases)\n- coupling axes: \(.summary.axis_changes_observed)/\(.summary.fixed_axis_denominator)\n- claim transitions: \(.summary.preservation_transitions)\n- stale stages: subject \(.summary.stale_by_stage.SUBJECT_BINDING), material \(.summary.stale_by_stage.MATERIAL_CLOSURE), recipe \(.summary.stale_by_stage.RECIPE_RESOLUTION), environment \(.summary.stale_by_stage.ENVIRONMENT_CAPTURE), runner \(.summary.stale_by_stage.RUNNER_EXECUTION), verifier \(.summary.stale_by_stage.VERIFIER_JUDGMENT)\n- forbidden dependency count (guardrail): \(.summary.forbidden_dependency_count)\n- independence contract: \(.summary.independence_contract.numerator)/\(.summary.independence_contract.denominator)\n- receipt: \(.receipt_digest)"' "$output/report.json"
 } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"

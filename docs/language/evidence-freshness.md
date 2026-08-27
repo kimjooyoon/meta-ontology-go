@@ -93,6 +93,14 @@ The producer and consumer are named metadata values in every metric:
 Meta-operation names and proof choices are contract-bound, not inferred from
 the final count.
 
+Independence uses two intentionally different observations. The receipt,
+report, and CI summary expose `forbidden_dependency_count` as a non-ratio
+guardrail count; the fixed observation is `0`. Separately, the actual
+independence check is represented by the positive fixed-denominator metric
+`independence_contract = 1/1`. The validator requires the receipt and report
+to carry the same values, so `0` cannot be mistaken for a complete `0/0`
+ratio.
+
 ## Falsifiability and limits
 
 The model is falsified if changing one isolated axis does not produce its

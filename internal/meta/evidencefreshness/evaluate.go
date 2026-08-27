@@ -21,7 +21,7 @@ func Evaluate(input Input) model.Report {
 		ContractDigest: model.DigestJSON(input.Contract), SourceDigest: model.DigestBytes(input.Source),
 		Independence: input.Independence, IndependenceDigest: model.DigestJSON(input.Independence), NotClaimed: append([]string{}, input.Contract.NotClaimed...),
 		RepositoryWrites: 0, MutationAuthority: false}
-	receipt, err := producer.BuildReceipt(input.Source, input.HeadSHA, input.Contract.BaseContext)
+	receipt, err := producer.BuildReceipt(input.Source, input.HeadSHA, input.Contract.BaseContext, input.Independence)
 	if err == nil {
 		report.Receipt = receipt
 		report.ReceiptDigest = receipt.Digest
@@ -47,7 +47,7 @@ func Evaluate(input Input) model.Report {
 	report.Decision, report.Resolution, report.Reason = model.DecisionFailClosed, model.ResolutionInvariant, "EVIDENCE_FRESHNESS_CONTRACT_MISMATCH"
 	if reflect.DeepEqual(input.Contract, CanonicalContract()) && model.ValidHead(input.HeadSHA) && len(input.Source) > 0 &&
 		err == nil && len(report.Cases) == model.CaseTotal && input.Independence.Schema == model.IndependenceSchema &&
-		input.Independence.ProducerDependencies == 0 && input.Independence.DeciderDependencies == 0 &&
+		independenceContractSatisfied(input.Independence) &&
 		report.Summary.CasesSatisfied == model.CaseTotal {
 		report.Decision, report.Resolution, report.Reason = model.DecisionPass, model.ResolutionExact, "EVIDENCE_FRESHNESS_CONTRACT_SATISFIED"
 	}
@@ -103,7 +103,9 @@ func caseResult(definition model.CaseDefinition, context model.Context, verdict 
 
 func summarize(cases []model.CaseResult, independence model.IndependenceEvidence) model.Summary {
 	summary := model.Summary{CasesTotal: model.CaseTotal, FixedAxisDenominator: model.AxisTotal,
-		StaleByStage: map[string]int{}, UnknownByStage: map[string]int{}, ReadOnlyCases: 1}
+		StaleByStage: map[string]int{}, UnknownByStage: map[string]int{}, ReadOnlyCases: 1,
+		ForbiddenDependencyCount: independence.ForbiddenDependencyCount,
+		IndependenceContract:     independence.IndependenceContract}
 	axis := map[string]bool{}
 	for _, item := range cases {
 		if item.Status == "SATISFIED" {
@@ -132,7 +134,6 @@ func summarize(cases []model.CaseResult, independence model.IndependenceEvidence
 		}
 	}
 	summary.AxisChangesObserved = len(axis)
-	_ = independence
 	return summary
 }
 
@@ -147,10 +148,7 @@ func indicators(report model.Report, contract model.Contract) []model.Indicator 
 	values["gooo.metric.evidence-freshness.transitions.v1"] = report.Summary.PreservationTransitions
 	values["gooo.metric.evidence-freshness.temporal-boundary.v1"] = report.Summary.TemporalBoundaryCases
 	values["gooo.metric.evidence-freshness.read-only.v1"] = boolInt(report.RepositoryWrites == 0 && !report.MutationAuthority)
-	values["gooo.metric.evidence-freshness.independent-decider.v1"] = 0
-	if report.Independence.Schema == model.IndependenceSchema && report.Independence.ProducerDependencies == 0 && report.Independence.DeciderDependencies == 0 {
-		values["gooo.metric.evidence-freshness.independent-decider.v1"] = 1
-	}
+	values["gooo.metric.evidence-freshness.independence-contract.v1"] = boolInt(independenceContractSatisfied(report.Independence))
 	result := make([]model.Indicator, len(contract.Metrics))
 	for index, definition := range contract.Metrics {
 		numerator := values[definition.MetricID]
@@ -165,6 +163,12 @@ func indicators(report model.Report, contract model.Contract) []model.Indicator 
 			Satisfied: numerator == definition.ExpectedNumerator}
 	}
 	return result
+}
+
+func independenceContractSatisfied(evidence model.IndependenceEvidence) bool {
+	return evidence.Schema == model.IndependenceSchema && evidence.ForbiddenDependencyCount == 0 &&
+		evidence.IndependenceContract.Numerator == model.IndependenceContractTotal &&
+		evidence.IndependenceContract.Denominator == model.IndependenceContractTotal
 }
 
 func distinctStages(counts map[string]int) int {

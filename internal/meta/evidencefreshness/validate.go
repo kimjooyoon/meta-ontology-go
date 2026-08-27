@@ -13,8 +13,8 @@ func Validate(report model.Report) error {
 		report.ContractDigest != model.DigestJSON(contract) || !model.ValidDigest(report.SourceDigest) ||
 		report.Receipt.Schema != model.ReceiptSchema || !model.VerifyReceiptDigest(report.Receipt) ||
 		report.ReceiptDigest != report.Receipt.Digest || report.Receipt.HeadSHA != report.HeadSHA ||
-		report.Independence.Schema != model.IndependenceSchema || report.Independence.ProducerDependencies != 0 ||
-		report.Independence.DeciderDependencies != 0 ||
+		!reflect.DeepEqual(report.Receipt.Independence, report.Independence) ||
+		!reflect.DeepEqual(report.Independence, model.DefaultIndependenceEvidence()) ||
 		report.IndependenceDigest != model.DigestJSON(report.Independence) {
 		return fmt.Errorf("EVIDENCE_FRESHNESS_IDENTITY_MISMATCH")
 	}
@@ -29,7 +29,9 @@ func Validate(report model.Report) error {
 			model.StageSubject: 1, model.StageMaterial: 1, model.StageRecipe: 1,
 			model.StageEnvironment: 1, model.StageRunner: 1, model.StageVerifier: 2,
 		}, UnknownByStage: map[string]int{model.StageSubject: 1, model.StageVerifier: 1},
-		PreservationTransitions: model.TransitionTotal, TemporalBoundaryCases: 1, ReadOnlyCases: 1}
+		PreservationTransitions: model.TransitionTotal, TemporalBoundaryCases: 1, ReadOnlyCases: 1,
+		ForbiddenDependencyCount: 0,
+		IndependenceContract:     model.FixedMetric{Numerator: model.IndependenceContractTotal, Denominator: model.IndependenceContractTotal}}
 	if !reflect.DeepEqual(report.Summary, wantSummary) {
 		return fmt.Errorf("EVIDENCE_FRESHNESS_SUMMARY_MISMATCH")
 	}

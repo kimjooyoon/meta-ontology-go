@@ -38,7 +38,7 @@
     {"metric_id":"gooo.metric.evidence-freshness.transitions.v1","class":"OUTCOME","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"preserve-claim-transition","expected_numerator":10,"denominator":10},
     {"metric_id":"gooo.metric.evidence-freshness.temporal-boundary.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"enforce-temporal-boundary","expected_numerator":1,"denominator":1},
     {"metric_id":"gooo.metric.evidence-freshness.read-only.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"REGRESSION","meta_operation":"deny-repository-writes","expected_numerator":1,"denominator":1},
-    {"metric_id":"gooo.metric.evidence-freshness.independent-decider.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"separate-decider-import-graph","expected_numerator":1,"denominator":1}
+    {"metric_id":"gooo.metric.evidence-freshness.independence-contract.v1","class":"GUARDRAIL","producer":"evidence-freshness-producer/v1","consumer":"evidence-freshness-decider/v1","proof_choice":"FOUNDATION","meta_operation":"verify-independence-contract","expected_numerator":1,"denominator":1}
   ],
   "not_claimed": [
     "cryptographic signature authenticity",

@@ -19,7 +19,7 @@ entity F id "f"
 activity One(A) -> B
 activity Two(B) -> C
 activity Three(C) -> D
-`), "0123456789abcdef0123456789abcdef01234567", baseContext())
+	`), "0123456789abcdef0123456789abcdef01234567", baseContext(), model.DefaultIndependenceEvidence())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ entity F id "f"
 activity One(A) -> B
 activity Two(B) -> C
 activity Three(C) -> D
-`), "0123456789abcdef0123456789abcdef01234567", baseContext())
+	`), "0123456789abcdef0123456789abcdef01234567", baseContext(), model.DefaultIndependenceEvidence())
 	if err != nil {
 		t.Fatal(err)
 	}
