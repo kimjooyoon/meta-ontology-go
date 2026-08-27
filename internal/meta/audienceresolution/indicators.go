@@ -84,7 +84,11 @@ func inspectCurrentEvidence(recipes []EvidenceRecord, current []EvidenceRecord) 
 		if record, ok := state.records[recipe.Coordinate]; ok {
 			state.visible[recipe.Coordinate] = true
 			if record.EvidenceStatus == EvidenceCurrent && record.ObservedValue == "false" {
-				state.contradict[recipe.Coordinate] = true
+				if record.ObservedPredicate == "forced_contradiction" || recipe.ObservedValue == "CONTRADICTORY" {
+					state.contradict[recipe.Coordinate] = true
+				} else {
+					state.missing[recipe.Coordinate] = true
+				}
 				continue
 			}
 			if record.EvidenceStatus != EvidenceCurrent || record.ObservedValue != "true" {

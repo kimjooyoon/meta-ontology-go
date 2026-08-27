@@ -223,6 +223,13 @@ type ReceiptTransition struct {
 	PreviousEventDigest  string `json:"previous_event_digest"`
 	SourceDigest         string `json:"source_digest"`
 	SemanticSourceDigest string `json:"semantic_source_digest"`
+	Producer             string `json:"producer"`
+	Consumer             string `json:"consumer"`
+	MetaOperation        string `json:"meta_operation"`
+	ProofChoice          string `json:"proof_choice"`
+	Stage                string `json:"stage"`
+	Step                 string `json:"step"`
+	Reason               string `json:"reason"`
 }
 
 type Input struct {
