@@ -121,6 +121,8 @@ jobs:
             exit 1
           fi
           jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$root/first/receipt.json" > "$intervention/base-claims.json"
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$intervention/comment/receipt.json" > "$intervention/comment-claims.json"
+          cmp "$intervention/base-claims.json" "$intervention/comment-claims.json"
           jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$intervention/semantic/receipt.json" > "$intervention/semantic-claims.json"
           if cmp "$intervention/base-claims.json" "$intervention/semantic-claims.json"; then
             echo 'semantic intervention did not change claim transitions' >&2
@@ -147,13 +149,14 @@ jobs:
             --argjson raw_digest_changed "$raw_digest_changed" \
             --argjson semantic_digest_preserved "$semantic_digest_preserved" \
             --argjson generated_behavior_preserved true \
+            --argjson claims_preserved true \
             --argjson semantic_digest_changed "$semantic_digest_changed" \
             --argjson generated_behavior_changed true \
             --argjson claim_transitions_changed true \
             --argjson semantic_claim_predicate_changed true \
-            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed, semantic_claim_predicate_changed:$semantic_claim_predicate_changed}' \
+            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, claims_preserved:$claims_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed, semantic_claim_predicate_changed:$semantic_claim_predicate_changed}' \
             > "$intervention/intervention-summary.json"
-          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed and .semantic_claim_predicate_changed)' "$intervention/intervention-summary.json"
+          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .claims_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed and .semantic_claim_predicate_changed)' "$intervention/intervention-summary.json"
       - name: Upload producer boundary
         uses: actions/upload-artifact@v6
         with:
