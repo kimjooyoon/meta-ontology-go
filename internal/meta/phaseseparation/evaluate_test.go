@@ -6,34 +6,31 @@ import (
 	"testing"
 )
 
-func TestBuildPreservesPhaseClaimsAndCatchesLeaks(t *testing.T) {
+func TestBuildReconstructsRealGoooCorpus(t *testing.T) {
 	root := filepath.Join("..", "..", "..")
-	sourceBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "main.gooo"))
+	mainBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "main.gooo"))
 	leakBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "leaks.gooo"))
-	report := Build("main.gooo", sourceBytes, "leaks.gooo", leakBytes, "0123456789012345678901234567890123456789")
-	if report.Decision != DecisionPass || report.Summary.CleanCasesPassed != ExpectedCleanCases || report.Summary.LeakageCasesCaught != ExpectedLeakageCases {
+	unknownBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "unknown.gooo"))
+	report := Build("main.gooo", mainBytes, "leaks.gooo", leakBytes, "unknown.gooo", unknownBytes, "0123456789012345678901234567890123456789", CISnapshot{})
+	if report.Decision != DecisionPass || report.Summary.SourceCasesProcessed != ExpectedSourceCases || report.Summary.LeakageRejections != ExpectedLeakageCases {
 		t.Fatalf("phase witness = %#v", report)
 	}
-	if report.Summary.ClaimTransitionsPreserved != ExpectedClaimTransitions || len(report.Transitions) != ExpectedClaimTransitions {
+	if report.Summary.ClaimTransitionsPreserved != ExpectedClaimTransitions || report.Summary.ExplicitClaimTransfers != ExpectedClaimTransitions {
 		t.Fatalf("claim transitions = %#v", report.Transitions)
 	}
-	for _, transition := range report.Transitions {
-		if transition.MetaOperation != report.MetaOperation || transition.ProofChoice != report.ProofChoice || !transition.Preserved {
-			t.Fatalf("unbound claim transition = %#v", transition)
-		}
+	if report.Summary.SemanticCausality != 1 || report.Summary.NonsemanticPreservation != 1 {
+		t.Fatalf("interventions = %#v / %#v", report.SemanticIntervention, report.NonsemanticIntervention)
 	}
 }
 
-func TestBuildKeepsMalformedSourceUnknown(t *testing.T) {
+func TestBuildKeepsUnknownProbeOpen(t *testing.T) {
 	root := filepath.Join("..", "..", "..")
-	unknownBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "unknown.gooo"))
+	mainBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "main.gooo"))
 	leakBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "leaks.gooo"))
-	report := Build("unknown.gooo", unknownBytes, "leaks.gooo", leakBytes, "0123456789012345678901234567890123456789")
-	if report.Decision != DecisionUnknown || report.Coordinate != (Coordinate{"SOURCE", "PARSE", ReasonUnknownSource}) {
-		t.Fatalf("unknown report = %#v", report)
-	}
-	if report.Summary.RepositoryWrites != 0 || report.Authority != (Authority{}) {
-		t.Fatalf("unknown authority = %#v", report.Authority)
+	unknownBytes := mustRead(t, filepath.Join(root, "examples", "phase-separation-witness", "unknown.gooo"))
+	report := Build("main.gooo", mainBytes, "leaks.gooo", leakBytes, "unknown.gooo", unknownBytes, "0123456789012345678901234567890123456789", CISnapshot{})
+	if report.Unknown.Decision != DecisionUnknown || report.Unknown.Coordinate != (Coordinate{"SOURCE", "PARSE", ReasonUnknownContract}) || report.Unknown.ClaimState != StateOpen {
+		t.Fatalf("unknown report = %#v", report.Unknown)
 	}
 }
 

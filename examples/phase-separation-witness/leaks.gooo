@@ -1,31 +1,19 @@
-# Each case contains one forbidden edge that must be rejected.
-phase-witness v1
-producer source-authority
-consumer independent-adjudicator
-meta-operation preserve-explicit-claim
-proof-choice boundary-receipt
+package phaseseparation
+namespace phaseseparation
 
-case value-leak
-value source source-secret "source-only-secret"
-value execution execution-secret "source-only-secret"
-transfer source source-secret execution execution-secret value
+entity SourceValueLeak id "phase-separation://source/value-leak"
+entity ExecutionValueLeak id "phase-separation://execution/value-leak"
+entity SourceAuthorityLeak id "phase-separation://source/authority-leak"
+entity ExpansionAuthorityLeak id "phase-separation://expansion/authority-leak"
+entity SourceEvidenceLeak id "phase-separation://source/evidence-leak"
+entity ExpansionEvidenceLeak id "phase-separation://expansion/evidence-leak"
+entity SourceSkip id "phase-separation://source/phase-skip"
+entity ExecutionSkip id "phase-separation://execution/phase-skip"
+entity ExecutionReverse id "phase-separation://execution/phase-reverse"
+entity ExpansionReverse id "phase-separation://expansion/phase-reverse"
 
-case authority-leak
-value source source-capability "repository-write"
-value execution execution-capability "repository-write"
-transfer source source-capability execution execution-capability authority
-
-case evidence-leak
-value expansion expanded-proof "attested-by-expansion"
-value execution execution-proof "attested-by-expansion"
-transfer expansion expanded-proof execution execution-proof evidence
-
-case phase-skip
-value source source-claim "declared"
-value execution execution-claim "observed"
-transfer source source-claim execution execution-claim claim
-
-case phase-reverse
-value execution execution-result "observed"
-value expansion expansion-result "reified"
-transfer execution execution-result expansion expansion-result claim
+activity ValueLeak(SourceValueLeak) -> ExecutionValueLeak computes "case=value-leak;transfer_id=leak-1;value_id=phase-separation://source/value-leak;from_value_id=phase-separation://source/value-leak;to_value_id=phase-separation://execution/value-leak;literal_class=declared;from_literal_class=declared;to_literal_class=observed;from_phase=source;to_phase=execution;payload_class=value;claim_digest=none;target_digest=none;provenance=gooo://phase-separation/value-leak/leak-1;claim_state_from=OPEN;claim_state_to=REFUTED;stage=EXECUTION;step=ADJUDICATE;reason=DECLARED_LEAK"
+activity AuthorityLeak(SourceAuthorityLeak) -> ExpansionAuthorityLeak computes "case=authority-leak;transfer_id=leak-2;value_id=phase-separation://source/authority-leak;from_value_id=phase-separation://source/authority-leak;to_value_id=phase-separation://expansion/authority-leak;literal_class=declared;from_literal_class=declared;to_literal_class=expanded;from_phase=source;to_phase=expansion;payload_class=authority;claim_digest=none;target_digest=none;provenance=gooo://phase-separation/authority-leak/leak-2;claim_state_from=OPEN;claim_state_to=REFUTED;stage=EXECUTION;step=ADJUDICATE;reason=DECLARED_LEAK"
+activity EvidenceLeak(SourceEvidenceLeak) -> ExpansionEvidenceLeak computes "case=evidence-leak;transfer_id=leak-3;value_id=phase-separation://source/evidence-leak;from_value_id=phase-separation://source/evidence-leak;to_value_id=phase-separation://expansion/evidence-leak;literal_class=declared;from_literal_class=declared;to_literal_class=expanded;from_phase=source;to_phase=expansion;payload_class=evidence;claim_digest=none;target_digest=none;provenance=gooo://phase-separation/evidence-leak/leak-3;claim_state_from=OPEN;claim_state_to=REFUTED;stage=EXECUTION;step=ADJUDICATE;reason=DECLARED_LEAK"
+activity PhaseSkip(SourceSkip) -> ExecutionSkip computes "case=phase-skip;transfer_id=leak-4;value_id=phase-separation://source/phase-skip;from_value_id=phase-separation://source/phase-skip;to_value_id=phase-separation://execution/phase-skip;literal_class=declared;from_literal_class=declared;to_literal_class=observed;from_phase=source;to_phase=execution;payload_class=claim;claim_digest=sha256:49ee5d45f7ef275835190fe40bfe358a544b3f86497ddda5bc2ce3dea9ccb281;target_digest=sha256:fecacfdc5ffc18f8b1a59d4cfd60d9bacea8ceb4f01f325233484b33fadccf1d;provenance=gooo://phase-separation/phase-skip/leak-4;claim_state_from=OPEN;claim_state_to=REFUTED;stage=EXECUTION;step=ADJUDICATE;reason=DECLARED_LEAK"
+activity PhaseReverse(ExecutionReverse) -> ExpansionReverse computes "case=phase-reverse;transfer_id=leak-5;value_id=phase-separation://execution/phase-reverse;from_value_id=phase-separation://execution/phase-reverse;to_value_id=phase-separation://expansion/phase-reverse;literal_class=observed;from_literal_class=observed;to_literal_class=expanded;from_phase=execution;to_phase=expansion;payload_class=claim;claim_digest=sha256:73b35d2f15c3da4e9baba3b81773f139ddcc477cf30f13fa6963abbd71713f59;target_digest=sha256:c9ae088a07ca4c6715f9376108358e353207f3fe82d933103cf01af57dba3d6a;provenance=gooo://phase-separation/phase-reverse/leak-5;claim_state_from=OPEN;claim_state_to=REFUTED;stage=EXECUTION;step=ADJUDICATE;reason=DECLARED_LEAK"

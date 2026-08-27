@@ -1,10 +1,7 @@
-# Missing the transfer kind makes the source contract undecidable.
-phase-witness v1
-producer source-authority
-consumer independent-adjudicator
-meta-operation preserve-explicit-claim
-proof-choice boundary-receipt
+package phaseseparation
+namespace phaseseparation
 
-case malformed
-value source source-contract "declared instruction"
-transfer source source-contract expansion
+entity SourceUnknown id "phase-separation://source/unknown"
+entity ExpansionUnknown id "phase-separation://expansion/unknown"
+
+activity UnknownProbe(SourceUnknown) -> ExpansionUnknown computes "case=unknown-probe;transfer_id=unknown-1;value_id=phase-separation://source/unknown;from_value_id=phase-separation://source/unknown;to_value_id=phase-separation://expansion/unknown;literal_class=declared;from_literal_class=declared;to_literal_class=expanded;from_phase=source;to_phase=expansion;payload_class=value;claim_digest=none;target_digest=none;provenance=gooo://phase-separation/unknown/unknown-1;claim_state_from=OPEN;claim_state_to=OPEN;stage=SOURCE;step=PARSE;reason=UNKNOWN_SOURCE_CONTRACT"

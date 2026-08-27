@@ -1,13 +1,9 @@
-# Meta values are phase-local. Only an explicit claim can describe a boundary.
-phase-witness v1
-producer source-authority
-consumer independent-adjudicator
-meta-operation preserve-explicit-claim
-proof-choice boundary-receipt
+package phaseseparation
+namespace phaseseparation
 
-case clean
-value source source-contract "declared instruction"
-value expansion expanded-contract "reified instruction"
-value execution execution-observation "result=42"
-transfer source source-contract expansion expanded-contract claim
-transfer expansion expanded-contract execution execution-observation claim
+entity SourceClean id "phase-separation://source/clean"
+entity ExpansionClean id "phase-separation://expansion/clean"
+entity ExecutionClean id "phase-separation://execution/clean"
+
+activity CleanExpand(SourceClean) -> ExpansionClean computes "case=clean;transfer_id=claim-1;value_id=phase-separation://source/clean;from_value_id=phase-separation://source/clean;to_value_id=phase-separation://expansion/clean;literal_class=declared;from_literal_class=declared;to_literal_class=expanded;from_phase=source;to_phase=expansion;payload_class=claim;claim_digest=sha256:ee3e8ebaa490d076fa230325fe30ef061c629c7cd2e5d5ef41df5e52a06548c3;target_digest=sha256:f71af2266668baa89342e7740fe22b77b58f5aa612fe716b7fe9257380fb34fa;provenance=gooo://phase-separation/clean/claim-1;claim_state_from=OPEN;claim_state_to=OPEN;stage=EXPANSION;step=TRANSFER;reason=EXPLICIT_CLAIM_TRANSFER"
+activity CleanExecute(ExpansionClean) -> ExecutionClean computes "case=clean;transfer_id=claim-2;value_id=phase-separation://expansion/clean;from_value_id=phase-separation://expansion/clean;to_value_id=phase-separation://execution/clean;literal_class=expanded;from_literal_class=expanded;to_literal_class=observed;from_phase=expansion;to_phase=execution;payload_class=claim;claim_digest=sha256:686be3415fa6b2494aafdfafad76297a24bdfce77f249320a96adfa19edd8cfd;target_digest=sha256:44e829c309eff3021078c290355340304cebc05ea50e0f32618756d95c335d27;provenance=gooo://phase-separation/clean/claim-2;claim_state_from=OPEN;claim_state_to=DISCHARGED;stage=EXECUTION;step=TRANSFER;reason=EXPLICIT_CLAIM_TRANSFER"
