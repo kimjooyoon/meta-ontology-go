@@ -87,13 +87,15 @@ jobs:
           case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
           workspace_snapshot > "$out/workspace-before.txt"
           go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
-          test -z "$(rg -n 'internal/meta/languageassurance/semanticdeltareceipt\"' internal/meta/languageassurance/semanticdeltareceiptconsumer --glob '*.go' || true)"
+          test -z "$(grep -R -n --include='*.go' 'internal/meta/languageassurance/semanticdeltareceipt\"' internal/meta/languageassurance/semanticdeltareceiptconsumer || true)"
           go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           for pass in first second; do
             go run ./cmd/semantic-delta-receipt-witness \
               --case suite --subject-sha "$HEAD_SHA" --output "$out/$pass.json"
           done
-          cmp "$out/first.json" "$out/second.json"
+          jq -S 'del(.output_path)' "$out/first.json" > "$out/first-deterministic.json"
+          jq -S 'del(.output_path)' "$out/second.json" > "$out/second-deterministic.json"
+          cmp "$out/first-deterministic.json" "$out/second-deterministic.json"
           jq -e --arg output "$out/first.json" '
             .schema == "gooo/semantic-delta-receipt-conformance/v1" and
             .decision == "FIXED_POINT" and .resolution == "EXACT" and
