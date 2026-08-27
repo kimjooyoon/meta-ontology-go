@@ -15,11 +15,16 @@ has a bound witness, and `REFUTED` records a counterexample. Only four fixed
 cases are admitted: a preserved translation, a semantic violation, missing
 regression evidence, and an approved artifact.
 
-The approved artifact case creates actual bytes under `RUNNER_TEMP` and records
-one separate `APPROVED_ARTIFACT_RECORDED` effect with path, size, and digest. It
-still has `repository_writes=-1` with `repository_writes_observed=false` and
-`mutation_authority=false`: recording an
-approved product is not permission to mutate the repository.
+The approved artifact case creates actual bytes under a canonical descendant of
+`RUNNER_TEMP` using Go's rooted `os.Root` API and records one separate
+`APPROVED_ARTIFACT_RECORDED` effect with path, size, and digest. The executor
+rejects repository paths and temporary symlinks that escape into the repository
+before opening or writing the target. Receipts still have
+`repository_writes=-1`, `repository_writes_observed=false`, and an unknown
+ambient process authority: recording an approved product is not permission to
+mutate the repository. CI separately snapshots tracked and untracked repository
+content before and after the run and reports `NET_REPOSITORY_STATE_UNCHANGED`
+only from those observed snapshots.
 
 ## Intervention witnesses
 
@@ -48,7 +53,9 @@ unobservable obligation becomes `FAIL_CLOSED` with `OPEN` and lower
 resolution. A report consumer checks these derived relationships without
 calling the producer's `Build` function. A separately named deterministic
 replay may call `Build` only to check repeatability. CI additionally asserts
-actual replay `3/3`, artifact observation `1/1`, and producer imports `0/0`.
+actual replay `3/3`, artifact observation `1/1`, producer imports `0/0`, eight
+effect gates, including repository-target and symlink-escape refusals, and
+independent target-byte snapshots.
 
 ## Research basis and limits
 

@@ -53,7 +53,7 @@ func TestJudgeDoesNotTrustResealedDecision(t *testing.T) {
 	receipt.Reason = "ALL_INVARIANTS_DISCHARGED"
 	receipt = model.SealReceipt(receipt)
 	judgment := Judge(receipt, []byte(testSource))
-	if judgment.Independent || judgment.Reason != "DECLARED_DECISION_MISMATCH" {
+	if judgment.Independent || (judgment.Reason != "DECLARED_DECISION_MISMATCH" && judgment.Reason != "AUTHORIZATION_DIGEST_INVALID") {
 		t.Fatalf("resealed forged decision was accepted: %+v", judgment)
 	}
 }

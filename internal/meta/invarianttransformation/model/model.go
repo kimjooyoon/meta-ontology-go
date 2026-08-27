@@ -10,37 +10,40 @@ import (
 )
 
 const (
-	ContractSchema      = "gooo/invariant-transformation-contract/v2"
-	ReceiptSchema       = "gooo/invariant-transformation-receipt/v2"
-	ReportSchema        = "gooo/invariant-transformation-report/v2"
-	DenominatorID       = "gooo/invariant-transformation-denominator/v2"
-	SourcePath          = "examples/invariant-transformation/main.gooo"
-	ProducerID          = "invarianttransformation.producer"
-	ConsumerID          = "invarianttransformation.independent-judge"
-	AuthorityOp         = "authorize-bounded-transformation-witness"
-	EffectNoWrite       = "NO_EFFECT"
-	EffectApproved      = "APPROVED_ARTIFACT_RECORDED"
-	DecisionAllowed     = "AUTHORIZED"
-	DecisionBlocked     = "BLOCKED"
-	DecisionRefuted     = "REFUTED"
-	DecisionPass        = "PASS"
-	DecisionFailClosed  = "FAIL_CLOSED"
-	ResolutionExact     = "EXACT"
-	ResolutionLower     = "LOWER_RESOLUTION"
-	ResolutionInvariant = "INVARIANT_ONLY"
-	StatusOpen          = "OPEN"
-	StatusDischarged    = "DISCHARGED"
-	StatusRefuted       = "REFUTED"
-	ProofFoundation     = "FOUNDATION"
-	ProofCoherence      = "COHERENCE"
-	ProofRegression     = "REGRESSION"
-	AuthorityScope      = "BOUNDED_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION"
-	InputDomainID       = "bounded-fixture-input-domain-v1"
-	InvariantID         = "candidate-output-equals-expected-v1"
-	ReceiptProvisional  = "PROVISIONAL_NO_EFFECT"
-	ReceiptExecuted     = "EFFECT_EXECUTED"
-	UnknownEffectScope  = "UNKNOWN"
-	ExecutorID          = "invarianttransformation.post-judgment-executor"
+	ContractSchema              = "gooo/invariant-transformation-contract/v2"
+	ReceiptSchema               = "gooo/invariant-transformation-receipt/v2"
+	ReportSchema                = "gooo/invariant-transformation-report/v2"
+	DenominatorID               = "gooo/invariant-transformation-denominator/v2"
+	SourcePath                  = "examples/invariant-transformation/main.gooo"
+	ProducerID                  = "invarianttransformation.producer"
+	ConsumerID                  = "invarianttransformation.independent-judge"
+	AuthorityOp                 = "authorize-bounded-transformation-witness"
+	EffectNoWrite               = "NO_EFFECT"
+	EffectApproved              = "APPROVED_ARTIFACT_RECORDED"
+	DecisionAllowed             = "AUTHORIZED"
+	DecisionBlocked             = "BLOCKED"
+	DecisionRefuted             = "REFUTED"
+	DecisionPass                = "PASS"
+	DecisionFailClosed          = "FAIL_CLOSED"
+	ResolutionExact             = "EXACT"
+	ResolutionLower             = "LOWER_RESOLUTION"
+	ResolutionInvariant         = "INVARIANT_ONLY"
+	StatusOpen                  = "OPEN"
+	StatusDischarged            = "DISCHARGED"
+	StatusRefuted               = "REFUTED"
+	ProofFoundation             = "FOUNDATION"
+	ProofCoherence              = "COHERENCE"
+	ProofRegression             = "REGRESSION"
+	AuthorityScope              = "BOUNDED_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION"
+	InputDomainID               = "bounded-fixture-input-domain-v1"
+	InvariantID                 = "candidate-output-equals-expected-v1"
+	ReceiptProvisional          = "PROVISIONAL_NO_EFFECT"
+	ReceiptExecuted             = "EFFECT_EXECUTED"
+	UnknownEffectScope          = "UNKNOWN"
+	RepositoryNetStateUnknown   = "UNKNOWN"
+	RepositoryNetStateUnchanged = "NET_REPOSITORY_STATE_UNCHANGED"
+	RepositoryNetStateChanged   = "NET_REPOSITORY_STATE_CHANGED"
+	ExecutorID                  = "invarianttransformation.post-judgment-executor"
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -173,7 +176,9 @@ type ArtifactEvidence struct {
 	Executor                     string `json:"executor"`
 	Consumer                     string `json:"consumer"`
 	EffectReceiptDigest          string `json:"effect_receipt_digest"`
+	RepositoryNetStatusObserved  bool   `json:"repository_net_status_observed"`
 	RepositoryNetStatusUnchanged bool   `json:"repository_net_status_unchanged"`
+	RepositoryNetState           string `json:"repository_net_state"`
 }
 
 type Effect struct {
@@ -193,8 +198,12 @@ type Effect struct {
 	Consumer                          string           `json:"consumer"`
 	MetaOperation                     string           `json:"meta_operation"`
 	TempArtifactWriteAuthorized       bool             `json:"temp_artifact_write_authorized"`
+	RepositoryNetStatusObserved       bool             `json:"repository_net_status_observed"`
 	RepositoryNetStatusUnchanged      bool             `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string           `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string           `json:"repository_actual_or_transient_writes"`
+	RepositoryPathAuthorization       bool             `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string           `json:"ambient_process_authority"`
 }
 
 type Receipt struct {
@@ -222,11 +231,15 @@ type Receipt struct {
 	Effects                           []Effect               `json:"effects"`
 	AuthorizationDigest               string                 `json:"authorization_digest"`
 	TempArtifactWriteAuthorized       bool                   `json:"temp_artifact_write_authorized"`
+	RepositoryNetStatusObserved       bool                   `json:"repository_net_status_observed"`
 	RepositoryNetStatusUnchanged      bool                   `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string                 `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string                 `json:"repository_actual_or_transient_writes"`
 	RepositoryWritesObserved          bool                   `json:"repository_writes_observed"`
 	RepositoryWrites                  int                    `json:"repository_writes"`
 	MutationAuthority                 bool                   `json:"mutation_authority"`
+	RepositoryPathAuthorization       bool                   `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string                 `json:"ambient_process_authority"`
 	AuthorityScope                    string                 `json:"authority_scope"`
 	Digest                            string                 `json:"digest"`
 }
@@ -286,8 +299,26 @@ type Summary struct {
 	CorrectionCount                   int    `json:"correction_count"`
 	CorrectionDenominator             int    `json:"correction_denominator"`
 	RepositoryNetStatusUnchanged      bool   `json:"repository_net_status_unchanged"`
+	RepositoryNetStatusObserved       bool   `json:"repository_net_status_observed"`
+	RepositoryNetState                string `json:"repository_net_state"`
+	RepositoryNetSnapshotObservations int    `json:"repository_net_snapshot_observations"`
+	RepositoryNetSnapshotDenominator  int    `json:"repository_net_snapshot_denominator"`
 	TempArtifactWriteAuthorized       bool   `json:"temp_artifact_write_authorized"`
 	RepositoryActualOrTransientWrites string `json:"repository_actual_or_transient_writes"`
+	RepositoryPathAuthorization       bool   `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string `json:"ambient_process_authority"`
+}
+
+type RepositorySnapshot struct {
+	PathDigest string `json:"path_digest"`
+	EntryCount int    `json:"entry_count"`
+}
+
+type RepositoryObservation struct {
+	Before   RepositorySnapshot `json:"before"`
+	After    RepositorySnapshot `json:"after"`
+	Observed bool               `json:"observed"`
+	State    string             `json:"state"`
 }
 
 type Indicator struct {
@@ -303,23 +334,24 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema                  string       `json:"schema"`
-	HeadSHA                 string       `json:"head_sha"`
-	SourcePath              string       `json:"source_path"`
-	SourceDigest            string       `json:"source_digest"`
-	SemanticSourceDigest    string       `json:"semantic_source_digest"`
-	ContractDigest          string       `json:"contract_digest"`
-	ValidatorContractDigest string       `json:"validator_contract_digest"`
-	DenominatorID           string       `json:"denominator_id"`
-	DenominatorTotal        int          `json:"denominator_total"`
-	Decision                string       `json:"decision"`
-	Resolution              string       `json:"resolution"`
-	Reason                  string       `json:"reason"`
-	Cases                   []CaseResult `json:"cases"`
-	Indicators              []Indicator  `json:"indicators"`
-	Summary                 Summary      `json:"summary"`
-	NotClaimed              []string     `json:"not_claimed"`
-	Digest                  string       `json:"digest"`
+	Schema                  string                `json:"schema"`
+	HeadSHA                 string                `json:"head_sha"`
+	SourcePath              string                `json:"source_path"`
+	SourceDigest            string                `json:"source_digest"`
+	SemanticSourceDigest    string                `json:"semantic_source_digest"`
+	ContractDigest          string                `json:"contract_digest"`
+	ValidatorContractDigest string                `json:"validator_contract_digest"`
+	DenominatorID           string                `json:"denominator_id"`
+	DenominatorTotal        int                   `json:"denominator_total"`
+	Decision                string                `json:"decision"`
+	Resolution              string                `json:"resolution"`
+	Reason                  string                `json:"reason"`
+	Cases                   []CaseResult          `json:"cases"`
+	Indicators              []Indicator           `json:"indicators"`
+	Summary                 Summary               `json:"summary"`
+	RepositoryObservation   RepositoryObservation `json:"repository_observation"`
+	NotClaimed              []string              `json:"not_claimed"`
+	Digest                  string                `json:"digest"`
 }
 
 func CanonicalValueSpecs() []ValueSpec {

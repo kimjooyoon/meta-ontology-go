@@ -3,10 +3,11 @@ package interventionconsumer
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/executor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/intervention"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
 )
 
 const consumerTestHead = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -20,17 +21,24 @@ activity MissingRegressionWitness() -> Transformation computes "case=missing-reg
 activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;kind=APPROVED_ARTIFACT;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;invariant-id=candidate-output-equals-expected-v1;domain=bounded-fixture-input-domain-v1;replay=add:1;effect=approved-artifact"
 `
 
-func testDependency(t *testing.T, report intervention.Report) DependencyBoundary {
+func testDependency(t *testing.T, report intervention.Report, source []byte) DependencyBoundary {
 	t.Helper()
-	path := t.TempDir() + "/observed.bin"
-	data := []byte("independent artifact observation")
-	if err := os.WriteFile(path, data, 0o600); err != nil {
+	fixture, err := parseFixtureCase(source, "approved-artifact")
+	if err != nil {
 		t.Fatal(err)
 	}
-	return DependencyBoundary{ArtifactEvidence: model.ArtifactEvidence{Path: path, ContentDigest: model.DigestBytes(data), Size: len(data), CaseID: "approved-artifact", SubjectSHA: consumerTestHead, AuthorizationDigest: model.DigestBytes([]byte("authorization")), Producer: model.ProducerID, Executor: model.ExecutorID, Consumer: model.ConsumerID, EffectReceiptDigest: model.DigestBytes([]byte("effect")), RepositoryNetStatusUnchanged: true}, UnknownEffectScopes: report.UnknownEffectScopes}
+	receipt := reconstructReceipt(fixture, source, consumerTestHead)
+	judgment := reconstructJudgment(receipt)
+	path := filepath.Join(os.Getenv("RUNNER_TEMP"), "observed.bin")
+	effect, err := executor.Emit(receipt, judgment, consumerTestHead, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return DependencyBoundary{ArtifactEvidence: effect.Artifact, UnknownEffectScopes: report.UnknownEffectScopes}
 }
 
 func TestConsumerReconstructsBothInterventions(t *testing.T) {
+	t.Setenv("RUNNER_TEMP", t.TempDir())
 	report, err := intervention.Build([]byte(consumerTestSource), consumerTestHead)
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +47,7 @@ func TestConsumerReconstructsBothInterventions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	audit, err := VerifyReport(raw, []byte(consumerTestSource), consumerTestHead, testDependency(t, report))
+	audit, err := VerifyReport(raw, []byte(consumerTestSource), consumerTestHead, testDependency(t, report, []byte(consumerTestSource)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,6 +57,7 @@ func TestConsumerReconstructsBothInterventions(t *testing.T) {
 }
 
 func TestConsumerRejectsCoherentResealedTamper(t *testing.T) {
+	t.Setenv("RUNNER_TEMP", t.TempDir())
 	report, err := intervention.Build([]byte(consumerTestSource), consumerTestHead)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +66,7 @@ func TestConsumerRejectsCoherentResealedTamper(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	audit, err := VerifyReport(raw, []byte(consumerTestSource), consumerTestHead, testDependency(t, report))
+	audit, err := VerifyReport(raw, []byte(consumerTestSource), consumerTestHead, testDependency(t, report, []byte(consumerTestSource)))
 	if err != nil {
 		t.Fatal(err)
 	}

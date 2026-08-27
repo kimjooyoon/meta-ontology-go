@@ -21,8 +21,8 @@ func Judge(receipt model.Receipt, source []byte) model.Judgment {
 	if receipt.Schema != model.ReceiptSchema || !model.ValidHead(receipt.HeadSHA) || receipt.SourcePath != model.SourcePath ||
 		!model.ValidDigest(receipt.SourceDigest) || receipt.SourceDigest != model.DigestBytes(source) ||
 		receipt.ContractDigest != model.ValueContractDigest() || receipt.ValidatorContractDigest != model.ValidatorContractDigest() ||
-		receipt.AuthorityScope != model.AuthorityScope || receipt.RepositoryNetStatusUnchanged != true ||
-		receipt.RepositoryActualOrTransientWrites != model.UnknownEffectScope || receipt.RepositoryWritesObserved || receipt.RepositoryWrites != -1 || receipt.MutationAuthority {
+		receipt.AuthorityScope != model.AuthorityScope || receipt.RepositoryNetStatusObserved || receipt.RepositoryNetStatusUnchanged ||
+		receipt.RepositoryNetState != model.RepositoryNetStateUnknown || receipt.RepositoryActualOrTransientWrites != model.UnknownEffectScope || receipt.RepositoryWritesObserved || receipt.RepositoryWrites != -1 || receipt.MutationAuthority || receipt.RepositoryPathAuthorization || receipt.AmbientProcessAuthority != model.UnknownEffectScope {
 		return invalid("RECEIPT_IDENTITY_INVALID")
 	}
 	if receipt.Digest == "" || receipt.Digest != model.SealReceipt(receipt).Digest {
@@ -149,12 +149,12 @@ func validTransformationEvidence(receipt model.Receipt, semantics sourceSemantic
 func validApprovedEffect(effect model.Effect, receipt model.Receipt, semantics sourceSemantics) bool {
 	if effect.Kind != model.EffectApproved || effect.CaseID != receipt.CaseID || effect.SubjectSHA != receipt.HeadSHA || effect.Intent != semantics.EffectIntent ||
 		effect.AuthorizationDigest != receipt.AuthorizationDigest || effect.Producer != receipt.Producer || effect.Executor != model.ExecutorID || effect.Consumer != receipt.Consumer ||
-		effect.MetaOperation != "execute-authorized-temp-artifact" || !effect.TempArtifactWriteAuthorized || !effect.RepositoryNetStatusUnchanged ||
-		effect.RepositoryActualOrTransientWrites != model.UnknownEffectScope || !model.ValidDigest(effect.ArtifactDigest) || !allowedTempPath(effect.Artifact.Path) ||
+		effect.MetaOperation != "execute-authorized-temp-artifact" || !effect.TempArtifactWriteAuthorized || effect.RepositoryNetStatusObserved || effect.RepositoryNetStatusUnchanged || effect.RepositoryNetState != model.RepositoryNetStateUnknown ||
+		effect.RepositoryActualOrTransientWrites != model.UnknownEffectScope || effect.RepositoryPathAuthorization || effect.AmbientProcessAuthority != model.UnknownEffectScope || !model.ValidDigest(effect.ArtifactDigest) || !allowedTempPath(effect.Artifact.Path) ||
 		effect.Artifact.Path != effect.ArtifactPath || effect.Artifact.ContentDigest != effect.ArtifactDigest || effect.Artifact.Size != effect.ArtifactSize ||
 		effect.Artifact.CaseID != receipt.CaseID || effect.Artifact.SubjectSHA != receipt.HeadSHA || effect.Artifact.AuthorizationDigest != receipt.AuthorizationDigest ||
 		effect.Artifact.Producer != receipt.Producer || effect.Artifact.Executor != model.ExecutorID || effect.Artifact.Consumer != receipt.Consumer ||
-		!effect.Artifact.RepositoryNetStatusUnchanged || model.EffectExecutionDigest(effect) != effect.ExecutionReceiptDigest || effect.Artifact.EffectReceiptDigest != effect.ExecutionReceiptDigest {
+		effect.Artifact.RepositoryNetStatusObserved || effect.Artifact.RepositoryNetStatusUnchanged || effect.Artifact.RepositoryNetState != model.RepositoryNetStateUnknown || model.EffectExecutionDigest(effect) != effect.ExecutionReceiptDigest || effect.Artifact.EffectReceiptDigest != effect.ExecutionReceiptDigest {
 		return false
 	}
 	data, err := os.ReadFile(effect.Artifact.Path)
@@ -167,20 +167,68 @@ func validApprovedEffect(effect model.Effect, receipt model.Receipt, semantics s
 }
 
 func allowedTempPath(path string) bool {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	for _, root := range tempRoots() {
+		root, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			continue
+		}
+		root, err = filepath.Abs(root)
+		if err != nil || !withinPath(root, path) || overlapsRepository(root) {
+			continue
+		}
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			continue
+		}
+		resolved, err = filepath.Abs(resolved)
+		if err == nil && withinPath(root, resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+func tempRoots() []string {
 	root := os.Getenv("RUNNER_TEMP")
 	if root == "" {
 		root = os.TempDir()
 	}
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return false
-	}
-	path, err = filepath.Abs(path)
-	if err != nil {
-		return false
-	}
+	return []string{root}
+}
+
+func withinPath(root, path string) bool {
 	relative, err := filepath.Rel(root, path)
 	return err == nil && relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator)) && !filepath.IsAbs(relative)
+}
+
+func overlapsRepository(root string) bool {
+	repository := os.Getenv("GITHUB_WORKSPACE")
+	if repository == "" {
+		repository, _ = os.Getwd()
+		for {
+			if _, err := os.Stat(filepath.Join(repository, ".git")); err == nil {
+				break
+			}
+			parent := filepath.Dir(repository)
+			if parent == repository {
+				return false
+			}
+			repository = parent
+		}
+	}
+	repository, err := filepath.EvalSymlinks(repository)
+	if err != nil {
+		return false
+	}
+	repository, err = filepath.Abs(repository)
+	if err != nil {
+		return false
+	}
+	return withinPath(root, repository) || withinPath(repository, root)
 }
 
 func expectedEvidence(receipt model.Receipt, valueID string) string {

@@ -54,7 +54,7 @@ func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
 			t.Fatalf("claim=%+v", item.Claim)
 		}
 	}
-	if report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 {
+	if report.EffectGateDenominator != 8 || report.EffectGateSatisfied != 8 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 {
 		t.Fatalf("effect gates or corrections=%+v", report)
 	}
 }

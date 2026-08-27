@@ -46,6 +46,9 @@ func ValidateReport(report model.Report, source []byte) error {
 		report.Digest == "" || report.Digest != model.SealReport(report).Digest {
 		return fmt.Errorf("report identity or digest is invalid")
 	}
+	if !validRepositoryObservation(report.RepositoryObservation) {
+		return fmt.Errorf("repository observation is not independently bound")
+	}
 	ids, err := sourceCaseIDs(source)
 	if err != nil || len(ids) != len(report.Cases) {
 		return fmt.Errorf("report case inventory is not source-derived")
@@ -93,15 +96,15 @@ func ValidateReport(report model.Report, source []byte) error {
 		!reflect.DeepEqual(report.Indicators, Indicators(report.Summary)) {
 		return fmt.Errorf("report metrics or correction denominator are invalid")
 	}
-	expectedSummary := summarizeReport(report.Cases)
+	expectedSummary := summarizeReport(report.Cases, report.RepositoryObservation)
 	if !reflect.DeepEqual(report.Summary, expectedSummary) {
 		return fmt.Errorf("report summary is not derived from independently judged cases")
 	}
 	return nil
 }
 
-func summarizeReport(cases []model.CaseResult) model.Summary {
-	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1}
+func summarizeReport(cases []model.CaseResult, observation model.RepositoryObservation) model.Summary {
+	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: observation.Observed, RepositoryNetStatusUnchanged: observation.State == model.RepositoryNetStateUnchanged, RepositoryNetState: observation.State, RepositoryNetSnapshotObservations: boolInt(observation.Observed), RepositoryNetSnapshotDenominator: boolInt(observation.Observed), RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1, AmbientProcessAuthority: model.UnknownEffectScope}
 	claimIDs := map[string]bool{}
 	for _, item := range cases {
 		if item.Satisfied {
@@ -148,7 +151,6 @@ func summarizeReport(cases []model.CaseResult) model.Summary {
 			summary.RepositoryWrites += item.Receipt.RepositoryWrites
 		}
 		summary.MutationAuthority |= boolInt(item.Receipt.MutationAuthority)
-		summary.RepositoryNetStatusUnchanged = summary.RepositoryNetStatusUnchanged && item.Receipt.RepositoryNetStatusUnchanged
 	}
 	summary.UniqueClaimInstances = len(claimIDs)
 	if summary.CasesTotal > 0 {
@@ -156,6 +158,13 @@ func summarizeReport(cases []model.CaseResult) model.Summary {
 		summary.InputDomainCoverageBPS = summary.BoundedInputDomainObservations * 10000 / summary.BoundedInputDomainDenominator
 	}
 	return summary
+}
+
+func validRepositoryObservation(observation model.RepositoryObservation) bool {
+	return observation.Observed && observation.State == model.RepositoryNetStateUnchanged &&
+		model.ValidDigest(observation.Before.PathDigest) && model.ValidDigest(observation.After.PathDigest) &&
+		observation.Before.EntryCount >= 0 && observation.After.EntryCount >= 0 &&
+		observation.Before.EntryCount == observation.After.EntryCount && observation.Before.PathDigest == observation.After.PathDigest
 }
 
 func boolInt(value bool) int {

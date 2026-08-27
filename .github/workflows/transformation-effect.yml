@@ -2180,12 +2180,61 @@ jobs:
       - name: Reject tampered intervention outcome
         run: go test -v ./internal/meta/invarianttransformation/interventionconsumer -run '^TestConsumerRejectsCoherentResealedTamper$'
 
+      - name: Bind observed checkout HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed_head="$(git rev-parse HEAD)"
+          test "$observed_head" = "$HEAD_SHA"
+          printf '%s\n' "$observed_head" > "$RUNNER_TEMP/invariant-transformation-observed-head.txt"
+
+      - name: Snapshot repository content before witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir="$RUNNER_TEMP/invariant-transformation/repository-before"
+          mkdir -p "$snapshot_dir"
+          entries="$snapshot_dir/entries.ndjson"
+          : > "$entries"
+          while IFS= read -r -d '' path; do
+            if [[ -f "$path" ]]; then
+              digest="$(sha256sum -- "$path" | awk '{print "sha256:"$1}')"
+              jq -cn --arg path "$path" --arg digest "$digest" '{path:$path,digest:$digest}' >> "$entries"
+            fi
+          done < <(git ls-files -co --exclude-standard -z)
+          sorted="$snapshot_dir/entries.json"
+          jq -s 'sort_by(.path)' "$entries" > "$sorted"
+          entry_count="$(jq 'length' "$sorted")"
+          path_digest="$(sha256sum "$sorted" | awk '{print "sha256:"$1}')"
+          jq -n --arg digest "$path_digest" --argjson count "$entry_count" '{path_digest:$digest,entry_count:$count}' > "$snapshot_dir/snapshot.json"
+
       - name: Emit and independently judge every fixed case twice
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/invariant-transformation"
           mkdir -p "$output"
+          go run ./cmd/invariant-transformation-witness \
+            -source examples/invariant-transformation/main.gooo \
+            -contract examples/invariant-transformation/contract.json \
+            -head-sha "$HEAD_SHA" \
+            -output "$output/bootstrap/report.json" \
+            -receipt-dir "$output/bootstrap/receipts"
+          snapshot_dir="$RUNNER_TEMP/invariant-transformation/repository-after"
+          mkdir -p "$snapshot_dir"
+          entries="$snapshot_dir/entries.ndjson"
+          : > "$entries"
+          while IFS= read -r -d '' path; do
+            if [[ -f "$path" ]]; then
+              digest="$(sha256sum -- "$path" | awk '{print "sha256:"$1}')"
+              jq -cn --arg path "$path" --arg digest "$digest" '{path:$path,digest:$digest}' >> "$entries"
+            fi
+          done < <(git ls-files -co --exclude-standard -z)
+          sorted="$snapshot_dir/entries.json"
+          jq -s 'sort_by(.path)' "$entries" > "$sorted"
+          entry_count="$(jq 'length' "$sorted")"
+          path_digest="$(sha256sum "$sorted" | awk '{print "sha256:"$1}')"
+          jq -n --arg digest "$path_digest" --argjson count "$entry_count" '{path_digest:$digest,entry_count:$count}' > "$snapshot_dir/snapshot.json"
           for pass in first second; do
             go run ./cmd/invariant-transformation-witness \
               -source examples/invariant-transformation/main.gooo \
@@ -2193,6 +2242,8 @@ jobs:
               -head-sha "$HEAD_SHA" \
               -output "$output/$pass/report.json" \
               -receipt-dir "$output/$pass/receipts" \
+              -repository-before "$RUNNER_TEMP/invariant-transformation/repository-before/snapshot.json" \
+              -repository-after "$RUNNER_TEMP/invariant-transformation/repository-after/snapshot.json" \
               -check
           done
           cmp "$output/first/report.json" "$output/second/report.json"
@@ -2208,6 +2259,8 @@ jobs:
           forbidden_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/producer'
           consumer_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/interventionconsumer'
           producer_intervention_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/intervention'
+          test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
+          test "$(jq -r '.head_sha' "$RUNNER_TEMP/invariant-transformation/first/report.json")" = "$HEAD_SHA"
           dependencies="$(go list -deps ./internal/meta/invarianttransformation/judge)"
           forbidden_imports="$(printf '%s\n' "$dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
           consumer_dependencies="$(go list -deps ./internal/meta/invarianttransformation/interventionconsumer)"
@@ -2248,12 +2301,13 @@ jobs:
               production_only: true, test_imports_excluded: true,
               decision: (if $forbidden_imports == $allowed_forbidden_imports and
                   $producer_dependency_imports == $allowed_producer_dependency_imports then "PASS" else "FAIL" end),
-              repository_net_status_unchanged: true,
+              repository_net_status_observed: false, repository_net_status_unchanged: false, repository_net_state: "UNKNOWN",
               repository_actual_or_transient_writes: "UNKNOWN"}' > "$dependency_output"
           test "$forbidden_imports" -eq "$allowed_forbidden_imports"
           test "$producer_dependency_imports" -eq "$allowed_producer_dependency_imports"
           test "$(jq -r '.artifact_observed' "$dependency_output")" = true
           test "$(jq -r '.artifact_evidence.content_digest' "$dependency_output")" = "$observed_artifact_digest"
+          test "$(jq -r '.artifact_evidence.subject_sha' "$dependency_output")" = "$HEAD_SHA"
 
       - name: Emit and validate fixed intervention denominator twice
         shell: bash
@@ -2325,16 +2379,17 @@ jobs:
             ([.cases[].repository_writes_not_claimed] | all) and
             ([.cases[] | .baseline_repository_writes == -1 and .mutated_repository_writes == -1 and
               .baseline_repository_writes_observed == false and .mutated_repository_writes_observed == false and
-              .baseline_repository_net_status_unchanged == true and .mutated_repository_net_status_unchanged == true and
+              .baseline_repository_net_status_unchanged == false and .mutated_repository_net_status_unchanged == false and
               .baseline_repository_actual_or_transient_writes == "UNKNOWN" and .mutated_repository_actual_or_transient_writes == "UNKNOWN"] | all) and
             ([.cases[].claim | .status == "DISCHARGED" and (.transitions | length) == 1 and
               .transitions[0].from == "OPEN" and .transitions[0].to == "DISCHARGED" and
               .transitions[0].coordinate == .coordinate] | all) and
             ([.cases[].satisfied] | all) and
-            .effect_gate_denominator == 6 and .effect_gate_satisfied == 6 and
+            .effect_gate_denominator == 8 and .effect_gate_satisfied == 8 and
             ([.effect_gates[] | .satisfied] | all) and
             .correction_count == 12 and .correction_denominator == 12 and
-            .repository_net_status_unchanged == true and .repository_actual_or_transient_writes == "UNKNOWN" and
+            .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
+            .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN" and
             .executed_effects == 1 and .independently_observed_effects == 1 and .unknown_effect_scopes == 1 and
             .repository_writes == -1 and .mutation_authority == false
           ' "$output/first/report.json"
@@ -2345,8 +2400,8 @@ jobs:
             .producer_dependency_imports == 0 and .allowed_producer_dependency_imports == 0 and
             .artifact_observed == true and (.artifact_evidence.path | length) > 0 and
             (.artifact_evidence.content_digest | startswith("sha256:")) and .artifact_evidence.size > 0 and
-            .unknown_effect_scopes == 1 and .repository_net_status_unchanged == true and
-            .repository_actual_or_transient_writes == "UNKNOWN"
+            .unknown_effect_scopes == 1 and .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
+            .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN"
           ' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           jq -e '
             .schema == "gooo/invariant-transformation-intervention-consumer/v2" and
@@ -2356,8 +2411,8 @@ jobs:
             .actual_replay == 3 and .expected_actual_replay == 3 and
             .artifact_observed == true and (.artifact_evidence.path | length) > 0 and
             .coherent_tamper_rejected == 1 and .expected_coherent_tamper_rejections == 1 and
-            .unknown_effect_scopes == 1 and .repository_net_status_unchanged == true and
-            .repository_actual_or_transient_writes == "UNKNOWN"
+            .unknown_effect_scopes == 1 and .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
+            .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN"
           ' "$output/consumer-verification.json"
           {
             echo '### Fixed intervention denominator'
@@ -2372,6 +2427,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
           jq -e '
             .schema == "gooo/invariant-transformation-report/v2" and
             .decision == "PASS" and .resolution == "EXACT" and
@@ -2389,11 +2445,21 @@ jobs:
             .summary.executed_effects == 1 and .summary.independently_observed_effects == 1 and .summary.unknown_effect_scopes == 1 and
             .summary.approved_artifact_effects == 1 and
             .summary.repository_writes == -1 and .summary.mutation_authority == 0 and
-            .summary.repository_net_status_unchanged == true and .summary.temp_artifact_write_authorized == true and
+            .summary.repository_net_status_observed == true and .summary.repository_net_status_unchanged == true and .summary.repository_net_state == "NET_REPOSITORY_STATE_UNCHANGED" and
+            .summary.repository_net_snapshot_observations == 1 and .summary.repository_net_snapshot_denominator == 1 and
+            .summary.repository_path_authorization == false and .summary.ambient_process_authority == "UNKNOWN" and .summary.temp_artifact_write_authorized == true and
             .summary.repository_actual_or_transient_writes == "UNKNOWN" and
             .summary.correction_count == 12 and .summary.correction_denominator == 12 and
             .summary.coverage_bps == 10000 and
+            .repository_observation.observed == true and .repository_observation.state == "NET_REPOSITORY_STATE_UNCHANGED" and
+            .repository_observation.before.entry_count == .repository_observation.after.entry_count and
+            .repository_observation.before.path_digest == .repository_observation.after.path_digest and
             ([.cases[].receipt.mutation_authority] | any) == false and
+            ([.cases[].receipt.repository_net_status_observed] | any) == false and
+            ([.cases[].receipt.repository_net_status_unchanged] | any) == false and
+            ([.cases[].receipt.repository_net_state] | all(. == "UNKNOWN")) and
+            ([.cases[].receipt.repository_path_authorization] | any) == false and
+            ([.cases[].receipt.ambient_process_authority] | all(. == "UNKNOWN")) and
             ([.cases[].receipt.authority_scope] | all(. == "BOUNDED_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION")) and
             ([.cases[] | select(.receipt.case_id == "preserved-translation" or .receipt.case_id == "semantic-violation" or .receipt.case_id == "approved-artifact") | .receipt.evidence.replay_count] | all(. == 2)) and
             ([.cases[] | select(.receipt.case_id == "missing-regression-witness") | .receipt.evidence.replay_count == 1 and
@@ -2406,7 +2472,10 @@ jobs:
                 .coordinate.reason == "REGRESSION_REPLAY_RECIPE_UNAVAILABLE")] | all) and
             ([.cases[] | select(.receipt.case_id == "approved-artifact") | .receipt.effects[] | select(.kind == "APPROVED_ARTIFACT_RECORDED") |
               (.artifact.path | length) > 0 and (.artifact.content_digest | startswith("sha256:")) and .artifact.size > 0 and
-              .artifact.subject_sha == .subject_sha and .artifact.authorization_digest == .authorization_digest] | all) and
+              .artifact.subject_sha == .subject_sha and .artifact.authorization_digest == .authorization_digest and
+              .artifact.repository_net_status_observed == false and .artifact.repository_net_status_unchanged == false and .artifact.repository_net_state == "UNKNOWN" and
+              .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
+              .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN"] | all) and
             (.cases | map(select(.satisfied == true)) | length) == 4
           ' "$RUNNER_TEMP/invariant-transformation/first/report.json"
           {
@@ -2415,6 +2484,7 @@ jobs:
             jq -r '"- authority outcomes: authorized=\(.summary.authorized_cases), refuted=\(.summary.refuted_cases), open=\(.summary.open_cases)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
             jq -r '"- claim ledger: unique=\(.summary.unique_claim_instances), templates=\(.summary.claim_templates), accepted-transitions=\(.summary.accepted_transitions)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
             jq -r '"- bounded domain/effects: domain=\(.summary.bounded_input_domain_observations)/\(.summary.bounded_input_domain_denominator), provisional=\(.summary.provisional_receipts), authorization=\(.summary.authorization_receipts), executed=\(.summary.executed_effects), observed=\(.summary.independently_observed_effects), unknown=\(.summary.unknown_effect_scopes)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+            jq -r '"- repository net snapshot: \(.summary.repository_net_snapshot_observations)/\(.summary.repository_net_snapshot_denominator), state=\(.summary.repository_net_state)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
             jq -r '"- effect boundary: temp-authorized=\(.summary.temp_artifact_write_authorized), repository-net-unchanged=\(.summary.repository_net_status_unchanged), actual-or-transient=\(.summary.repository_actual_or_transient_writes)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -21,6 +21,8 @@ func main() {
 	headSHA := flag.String("head-sha", "", "exact subject commit")
 	receiptDir := flag.String("receipt-dir", "", "receipt output directory")
 	outputPath := flag.String("output", "", "report output path")
+	repositoryBeforePath := flag.String("repository-before", "", "pre-run repository snapshot JSON")
+	repositoryAfterPath := flag.String("repository-after", "", "post-run repository snapshot JSON")
 	check := flag.Bool("check", false, "run independent report validation")
 	flag.Parse()
 	if *sourcePath == "" || *headSHA == "" || *receiptDir == "" || *outputPath == "" || *contractPath == "" {
@@ -45,6 +47,20 @@ func main() {
 	if err != nil {
 		fail(err.Error())
 	}
+	if (*repositoryBeforePath == "") != (*repositoryAfterPath == "") {
+		fail("-repository-before and -repository-after must be supplied together")
+	}
+	if *repositoryBeforePath != "" {
+		before, err := readSnapshot(*repositoryBeforePath)
+		if err != nil {
+			fail(err.Error())
+		}
+		after, err := readSnapshot(*repositoryAfterPath)
+		if err != nil {
+			fail(err.Error())
+		}
+		report = bindRepositoryObservation(report, before, after)
+	}
 	if *check {
 		if err := judge.ValidateReport(report, source); err != nil {
 			fail(err.Error())
@@ -67,6 +83,37 @@ func main() {
 		report.Decision, report.Summary.CasesSatisfied, report.Summary.CasesTotal, report.Summary.UniqueClaimInstances,
 		report.Summary.AcceptedTransitions, report.Summary.ProvisionalReceipts, report.Summary.AuthorizationReceipts,
 		report.Summary.ExecutedEffects, report.Summary.IndependentlyObservedEffects, report.Summary.UnknownEffectScopes)
+}
+
+func readSnapshot(path string) (model.RepositorySnapshot, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return model.RepositorySnapshot{}, fmt.Errorf("read repository snapshot: %w", err)
+	}
+	var snapshot model.RepositorySnapshot
+	if err := json.Unmarshal(raw, &snapshot); err != nil {
+		return model.RepositorySnapshot{}, fmt.Errorf("decode repository snapshot: %w", err)
+	}
+	if !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {
+		return model.RepositorySnapshot{}, fmt.Errorf("repository snapshot is invalid")
+	}
+	return snapshot, nil
+}
+
+func bindRepositoryObservation(report model.Report, before, after model.RepositorySnapshot) model.Report {
+	report.RepositoryObservation = model.RepositoryObservation{Before: before, After: after, Observed: true, State: model.RepositoryNetStateChanged}
+	if before.EntryCount == after.EntryCount && before.PathDigest == after.PathDigest {
+		report.RepositoryObservation.State = model.RepositoryNetStateUnchanged
+	}
+	report.Summary.RepositoryNetStatusObserved = true
+	report.Summary.RepositoryNetStatusUnchanged = report.RepositoryObservation.State == model.RepositoryNetStateUnchanged
+	report.Summary.RepositoryNetState = report.RepositoryObservation.State
+	report.Summary.RepositoryNetSnapshotObservations = 1
+	report.Summary.RepositoryNetSnapshotDenominator = 1
+	report.Summary.RepositoryPathAuthorization = false
+	report.Summary.AmbientProcessAuthority = model.UnknownEffectScope
+	report.Indicators = judge.Indicators(report.Summary)
+	return model.SealReport(report)
 }
 
 func buildReport(source []byte, headSHA string) (model.Report, error) {
@@ -143,8 +190,9 @@ func buildReport(source []byte, headSHA string) (model.Report, error) {
 func summarize(cases []model.CaseResult) model.Summary {
 	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainDenominator: len(cases),
 		BoundedInputDomainObservations: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()),
-		CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusUnchanged: true,
-		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1}
+		CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1,
+		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope}
 	for _, item := range cases {
 		if item.Satisfied {
 			summary.CasesSatisfied++

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -104,6 +105,15 @@ type EffectGateCase struct {
 	Scenario               string                 `json:"scenario"`
 	CaseID                 string                 `json:"case_id"`
 	SubjectSHA             string                 `json:"subject_sha"`
+	Stage                  string                 `json:"stage"`
+	Step                   string                 `json:"step"`
+	AttemptPath            string                 `json:"attempt_path"`
+	TargetPath             string                 `json:"target_path"`
+	TargetBeforeExists     bool                   `json:"target_before_exists"`
+	TargetAfterExists      bool                   `json:"target_after_exists"`
+	TargetBeforeDigest     string                 `json:"target_before_digest"`
+	TargetAfterDigest      string                 `json:"target_after_digest"`
+	TargetBytesUnchanged   bool                   `json:"target_bytes_unchanged"`
 	AuthorizationAttempted bool                   `json:"authorization_attempted"`
 	AuthorizationAccepted  bool                   `json:"authorization_accepted"`
 	ExecutorAccepted       bool                   `json:"executor_accepted"`
@@ -179,9 +189,12 @@ type Report struct {
 	TempArtifactWriteAuthorized       bool             `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool             `json:"repository_net_status_unchanged"`
 	RepositoryActualOrTransientWrites string           `json:"repository_actual_or_transient_writes"`
+	RepositoryNetStatusObserved       bool             `json:"repository_net_status_observed"`
 	ExecutedEffects                   int              `json:"executed_effects"`
 	IndependentlyObservedEffects      int              `json:"independently_observed_effects"`
 	UnknownEffectScopes               int              `json:"unknown_effect_scopes"`
+	RepositoryPathAuthorization       bool             `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string           `json:"ambient_process_authority"`
 	CorrectionCount                   int              `json:"correction_count"`
 	CorrectionDenominator             int              `json:"correction_denominator"`
 	Failure                           *Failure         `json:"failure,omitempty"`
@@ -220,8 +233,9 @@ func Build(source []byte, headSHA string) (Report, error) {
 			SemanticOperationChange: SliceDenominator{ID: SemanticOperationDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticOperationCase.Satisfied), CoverageBPS: boolInt(semanticOperationCase.Satisfied) * 10000},
 			NonSemantic:             SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemanticCase.Satisfied), CoverageBPS: boolInt(nonSemanticCase.Satisfied) * 10000}},
 		CaseCount: 3, Cases: cases, EffectGates: gates, EffectGateDenominator: len(gates), Decision: decision, Resolution: resolution, Reason: reason,
-		RepositoryWrites: writes, MutationAuthority: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusUnchanged: repositoryNetStatusUnchanged(cases),
-		RepositoryActualOrTransientWrites: model.UnknownEffectScope, ExecutedEffects: boolInt(effectGateObserved(gates)), IndependentlyObservedEffects: boolInt(effectGateObserved(gates)),
+		RepositoryWrites: writes, MutationAuthority: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
+		ExecutedEffects: boolInt(effectGateObserved(gates)), IndependentlyObservedEffects: boolInt(effectGateObserved(gates)),
 		UnknownEffectScopes: boolInt(effectGateObserved(gates)), CorrectionCount: 12, CorrectionDenominator: 12, Failure: failure}
 	for _, gate := range gates {
 		if gate.Satisfied {
@@ -283,15 +297,6 @@ func effectTotals(cases []Case) (int, bool) {
 		authority = authority || item.BaselineMutationAuthority || item.MutatedMutationAuthority
 	}
 	return writes, authority
-}
-
-func repositoryNetStatusUnchanged(cases []Case) bool {
-	for _, item := range cases {
-		if !item.BaselineRepositoryNetStatusUnchanged || !item.MutatedRepositoryNetStatusUnchanged {
-			return false
-		}
-	}
-	return true
 }
 
 func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte) ([]byte, error), claimID, step, satisfiedReason string) (Case, error) {
@@ -534,17 +539,17 @@ func buildEffectGates(source []byte, headSHA string) ([]EffectGateCase, error) {
 	if validErr == nil {
 		validObserved, observeErr = executor.Observe(validEffect)
 	}
-	valid := EffectGateCase{ID: "effect-valid-authorized", Scenario: "valid-authorized-case", CaseID: validReceipt.CaseID, SubjectSHA: headSHA, AuthorizationAttempted: true, AuthorizationAccepted: validAuth.Decision == model.DecisionAllowed && validAuth.Independent, ExecutorAccepted: validErr == nil, ArtifactCount: boolInt(validErr == nil && observeErr == nil), ArtifactExists: validErr == nil && observeErr == nil, Artifact: validObserved, Reason: "AUTHORIZED_TEMP_ARTIFACT_OBSERVED"}
+	valid := EffectGateCase{ID: "effect-valid-authorized", Scenario: "valid-authorized-case", CaseID: validReceipt.CaseID, SubjectSHA: headSHA, Stage: "EFFECT_EXECUTION", Step: "write-authorized-temp-artifact", AttemptPath: validPath, AuthorizationAttempted: true, AuthorizationAccepted: validAuth.Decision == model.DecisionAllowed && validAuth.Independent, ExecutorAccepted: validErr == nil, ArtifactCount: boolInt(validErr == nil && observeErr == nil), ArtifactExists: validErr == nil && observeErr == nil, Artifact: validObserved, Reason: "AUTHORIZED_TEMP_ARTIFACT_OBSERVED"}
 	valid.Satisfied = valid.AuthorizationAccepted && valid.ExecutorAccepted && valid.ArtifactCount == 1 && valid.ArtifactExists
 	if !valid.Satisfied {
 		valid.Reason = "AUTHORIZED_ARTIFACT_OBSERVATION_FAILED"
 	}
 	makeRejected := func(id, scenario, caseID string, receipt model.Receipt, judgment model.Judgment, subject, reason string) EffectGateCase {
 		path := executor.Path(root, "effect-gate-"+id+"-"+headSHA[:8])
+		beforeExists, beforeDigest := snapshotTarget(path)
 		_, emitErr := executor.Emit(receipt, judgment, subject, path)
-		_, statErr := os.Stat(path)
-		exists := statErr == nil
-		return EffectGateCase{ID: id, Scenario: scenario, CaseID: caseID, SubjectSHA: subject, AuthorizationAttempted: true, AuthorizationAccepted: judgment.Independent && judgment.Decision == model.DecisionAllowed, ExecutorAccepted: emitErr == nil, ArtifactCount: boolInt(exists), ArtifactExists: exists, Reason: reason, Satisfied: emitErr != nil && !exists}
+		afterExists, afterDigest := snapshotTarget(path)
+		return EffectGateCase{ID: id, Scenario: scenario, CaseID: caseID, SubjectSHA: subject, Stage: "EFFECT_AUTHORIZATION", Step: "validate-authorization", AttemptPath: path, TargetBeforeExists: beforeExists, TargetAfterExists: afterExists, TargetBeforeDigest: beforeDigest, TargetAfterDigest: afterDigest, TargetBytesUnchanged: beforeExists == afterExists && beforeDigest == afterDigest, AuthorizationAttempted: true, AuthorizationAccepted: judgment.Independent && judgment.Decision == model.DecisionAllowed && judgment.AuthorizationDigest == receipt.AuthorizationDigest, ExecutorAccepted: emitErr == nil, ArtifactCount: boolInt(afterExists), ArtifactExists: afterExists, Reason: reason, Satisfied: emitErr != nil && !afterExists}
 	}
 	refutedReceipt, err := producer.Build(source, headSHA, "semantic-violation")
 	if err != nil {
@@ -571,7 +576,75 @@ func buildEffectGates(source []byte, headSHA string) ([]EffectGateCase, error) {
 	tamperedAuth := validAuth
 	tamperedAuth.AuthorizationDigest = model.Digest([]string{"tampered-authorization"})
 	tampered := makeRejected("effect-tampered-auth", "tampered-authorization", validReceipt.CaseID, validReceipt, tamperedAuth, headSHA, "TAMPERED_AUTHORIZATION_REJECTED")
-	return []EffectGateCase{unauthorized, refuted, open, stale, tampered, valid}, nil
+	repository, ok := repositoryRoot()
+	if !ok {
+		return nil, fmt.Errorf("effect gate repository root is unavailable")
+	}
+	repositoryTarget := filepath.Join(repository, ".ci-tmp", "invariant-transformation-effect-gate-"+headSHA[:8]+"-repository.bin")
+	repositoryBeforeExists, repositoryBeforeDigest := snapshotTarget(repositoryTarget)
+	_, repositoryErr := executor.Emit(validReceipt, validAuth, headSHA, repositoryTarget)
+	repositoryAfterExists, repositoryAfterDigest := snapshotTarget(repositoryTarget)
+	repositoryGate := EffectGateCase{ID: "effect-valid-repository-path", Scenario: "valid-auth-repository-path", CaseID: validReceipt.CaseID, SubjectSHA: headSHA, Stage: "EFFECT_AUTHORIZATION", Step: "validate-temp-root-containment", AttemptPath: repositoryTarget, TargetPath: repositoryTarget, TargetBeforeExists: repositoryBeforeExists, TargetAfterExists: repositoryAfterExists, TargetBeforeDigest: repositoryBeforeDigest, TargetAfterDigest: repositoryAfterDigest, TargetBytesUnchanged: repositoryBeforeExists == repositoryAfterExists && repositoryBeforeDigest == repositoryAfterDigest, AuthorizationAttempted: true, AuthorizationAccepted: validAuth.Decision == model.DecisionAllowed && validAuth.Independent, ExecutorAccepted: repositoryErr == nil, Reason: "REPOSITORY_TARGET_REJECTED"}
+	repositoryGate.ArtifactCount = boolInt(repositoryAfterExists)
+	repositoryGate.ArtifactExists = repositoryAfterExists
+	repositoryGate.Satisfied = repositoryErr != nil && !repositoryAfterExists && repositoryGate.TargetBytesUnchanged
+	if !repositoryGate.Satisfied {
+		repositoryGate.Reason = "REPOSITORY_TARGET_MUTATION_OBSERVED"
+	}
+	symlinkPath := executor.Path(root, "effect-gate-symlink-"+headSHA[:8])
+	_ = os.Remove(symlinkPath)
+	symlinkErr := os.Symlink(repositoryTarget, symlinkPath)
+	symlinkBeforeExists, symlinkBeforeDigest := snapshotTarget(repositoryTarget)
+	_, escapeErr := executor.Emit(validReceipt, validAuth, headSHA, symlinkPath)
+	symlinkAfterExists, symlinkAfterDigest := snapshotTarget(repositoryTarget)
+	symlinkGate := EffectGateCase{ID: "effect-valid-temp-symlink", Scenario: "valid-auth-temp-symlink-escape", CaseID: validReceipt.CaseID, SubjectSHA: headSHA, Stage: "EFFECT_AUTHORIZATION", Step: "validate-rooted-target", AttemptPath: symlinkPath, TargetPath: repositoryTarget, TargetBeforeExists: symlinkBeforeExists, TargetAfterExists: symlinkAfterExists, TargetBeforeDigest: symlinkBeforeDigest, TargetAfterDigest: symlinkAfterDigest, TargetBytesUnchanged: symlinkBeforeExists == symlinkAfterExists && symlinkBeforeDigest == symlinkAfterDigest, AuthorizationAttempted: true, AuthorizationAccepted: validAuth.Decision == model.DecisionAllowed && validAuth.Independent, ExecutorAccepted: escapeErr == nil, Reason: "TEMP_SYMLINK_ESCAPE_REJECTED"}
+	symlinkGate.ArtifactCount = boolInt(regularArtifactExists(symlinkPath))
+	symlinkGate.ArtifactExists = regularArtifactExists(symlinkPath)
+	symlinkGate.Satisfied = symlinkErr == nil && escapeErr != nil && !symlinkGate.ArtifactExists && symlinkGate.TargetBytesUnchanged
+	if !symlinkGate.Satisfied {
+		symlinkGate.Reason = "TEMP_SYMLINK_ESCAPE_MUTATION_OBSERVED"
+	}
+	return []EffectGateCase{unauthorized, refuted, open, stale, tampered, repositoryGate, symlinkGate, valid}, nil
+}
+
+func snapshotTarget(path string) (bool, string) {
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return false, ""
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, ""
+	}
+	return true, model.DigestBytes(data)
+}
+
+func regularArtifactExists(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+func repositoryRoot() (string, bool) {
+	root := os.Getenv("GITHUB_WORKSPACE")
+	if root == "" {
+		root, _ = os.Getwd()
+		for {
+			if _, err := os.Stat(filepath.Join(root, ".git")); err == nil {
+				break
+			}
+			parent := filepath.Dir(root)
+			if parent == root {
+				return "", false
+			}
+			root = parent
+		}
+	}
+	root, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", false
+	}
+	root, err = filepath.Abs(root)
+	return root, err == nil
 }
 
 func effectGateObserved(gates []EffectGateCase) bool {

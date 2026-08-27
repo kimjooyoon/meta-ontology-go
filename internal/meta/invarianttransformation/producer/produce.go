@@ -105,8 +105,9 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 		ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID,
 		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims,
 		Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional,
-		Effects: []model.Effect{}, TempArtifactWriteAuthorized: false, RepositoryNetStatusUnchanged: true,
-		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, MutationAuthority: false,
+		Effects: []model.Effect{}, TempArtifactWriteAuthorized: false, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, MutationAuthority: false,
+		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
 		AuthorityScope: model.AuthorityScope,
 	}
 	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)

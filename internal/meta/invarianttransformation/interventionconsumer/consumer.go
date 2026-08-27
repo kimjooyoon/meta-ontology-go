@@ -57,7 +57,11 @@ type Audit struct {
 	Resolution                        string                 `json:"resolution"`
 	Reason                            string                 `json:"reason"`
 	RepositoryNetStatusUnchanged      bool                   `json:"repository_net_status_unchanged"`
+	RepositoryNetStatusObserved       bool                   `json:"repository_net_status_observed"`
+	RepositoryNetState                string                 `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string                 `json:"repository_actual_or_transient_writes"`
+	RepositoryPathAuthorization       bool                   `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string                 `json:"ambient_process_authority"`
 	UnknownEffectScopes               int                    `json:"unknown_effect_scopes"`
 	Digest                            string                 `json:"digest"`
 }
@@ -169,6 +173,15 @@ type gateWire struct {
 	Scenario               string                 `json:"scenario"`
 	CaseID                 string                 `json:"case_id"`
 	SubjectSHA             string                 `json:"subject_sha"`
+	Stage                  string                 `json:"stage"`
+	Step                   string                 `json:"step"`
+	AttemptPath            string                 `json:"attempt_path"`
+	TargetPath             string                 `json:"target_path"`
+	TargetBeforeExists     bool                   `json:"target_before_exists"`
+	TargetAfterExists      bool                   `json:"target_after_exists"`
+	TargetBeforeDigest     string                 `json:"target_before_digest"`
+	TargetAfterDigest      string                 `json:"target_after_digest"`
+	TargetBytesUnchanged   bool                   `json:"target_bytes_unchanged"`
 	AuthorizationAttempted bool                   `json:"authorization_attempted"`
 	AuthorizationAccepted  bool                   `json:"authorization_accepted"`
 	ExecutorAccepted       bool                   `json:"executor_accepted"`
@@ -196,7 +209,11 @@ type reportWire struct {
 	MutationAuthority                 bool                 `json:"mutation_authority"`
 	TempArtifactWriteAuthorized       bool                 `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool                 `json:"repository_net_status_unchanged"`
+	RepositoryNetStatusObserved       bool                 `json:"repository_net_status_observed"`
+	RepositoryNetState                string               `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string               `json:"repository_actual_or_transient_writes"`
+	RepositoryPathAuthorization       bool                 `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string               `json:"ambient_process_authority"`
 	ExecutedEffects                   int                  `json:"executed_effects"`
 	IndependentlyObservedEffects      int                  `json:"independently_observed_effects"`
 	UnknownEffectScopes               int                  `json:"unknown_effect_scopes"`
@@ -219,7 +236,7 @@ func VerifyReport(raw, source []byte, headSHA string, dependency DependencyBound
 	if dependency.ProducerDependencyImports != 0 || dependency.AllowedProducerDependencyImports != 0 {
 		return Audit{}, fmt.Errorf("consumer producer dependency boundary is not 0/0")
 	}
-	if err := verifyArtifact(dependency.ArtifactEvidence, headSHA); err != nil {
+	if err := verifyArtifact(dependency.ArtifactEvidence, headSHA, source); err != nil {
 		return Audit{}, err
 	}
 	observed, err := decodeReport(raw)
@@ -233,7 +250,7 @@ func VerifyReport(raw, source []byte, headSHA string, dependency DependencyBound
 	if independentlyVerify(tampered, source, headSHA, dependency) == nil {
 		return Audit{}, fmt.Errorf("coherent resealed tamper was accepted")
 	}
-	return Audit{Schema: consumerSchema, HeadSHA: headSHA, ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports, ReconstructedCases: len(observed.Cases), ExpectedCases: 3, ActualReplay: 3, ExpectedActualReplay: 3, ArtifactEvidence: dependency.ArtifactEvidence, ArtifactObserved: true, CoherentTamperRejected: 1, ExpectedCoherentTamperRejections: 1, Decision: "PASS", Resolution: model.ResolutionExact, Reason: "INDEPENDENT_SOURCE_RECONSTRUCTION_AND_EFFECT_OBSERVATION", RepositoryNetStatusUnchanged: observed.RepositoryNetStatusUnchanged, RepositoryActualOrTransientWrites: observed.RepositoryActualOrTransientWrites, UnknownEffectScopes: observed.UnknownEffectScopes}, nil
+	return Audit{Schema: consumerSchema, HeadSHA: headSHA, ProducerDependencyImports: dependency.ProducerDependencyImports, AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports, ReconstructedCases: len(observed.Cases), ExpectedCases: 3, ActualReplay: 3, ExpectedActualReplay: 3, ArtifactEvidence: dependency.ArtifactEvidence, ArtifactObserved: true, CoherentTamperRejected: 1, ExpectedCoherentTamperRejections: 1, Decision: "PASS", Resolution: model.ResolutionExact, Reason: "INDEPENDENT_SOURCE_RECONSTRUCTION_AND_EFFECT_OBSERVATION", RepositoryNetStatusObserved: observed.RepositoryNetStatusObserved, RepositoryNetStatusUnchanged: observed.RepositoryNetStatusUnchanged, RepositoryActualOrTransientWrites: observed.RepositoryActualOrTransientWrites, UnknownEffectScopes: observed.UnknownEffectScopes}, nil
 }
 
 func decodeReport(raw []byte) (reportWire, error) {
@@ -248,7 +265,7 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 	if report.Schema != reportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 3 || len(report.Cases) != 3 || report.Digest == "" || report.Digest != reseal(report).Digest {
 		return fmt.Errorf("intervention report identity or digest is invalid")
 	}
-	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || report.EffectGateDenominator != 6 || report.EffectGateSatisfied != 6 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 || report.RepositoryWrites != -1 || report.MutationAuthority || !report.RepositoryNetStatusUnchanged || report.RepositoryActualOrTransientWrites != model.UnknownEffectScope || report.ExecutedEffects != 1 || report.IndependentlyObservedEffects != 1 || report.UnknownEffectScopes != 1 {
+	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || report.EffectGateDenominator != 8 || report.EffectGateSatisfied != 8 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 || report.RepositoryWrites != -1 || report.MutationAuthority || report.RepositoryNetStatusObserved || report.RepositoryNetStatusUnchanged || report.RepositoryNetState != model.RepositoryNetStateUnknown || report.RepositoryActualOrTransientWrites != model.UnknownEffectScope || report.RepositoryPathAuthorization || report.AmbientProcessAuthority != model.UnknownEffectScope || report.ExecutedEffects != 1 || report.IndependentlyObservedEffects != 1 || report.UnknownEffectScopes != 1 {
 		return fmt.Errorf("intervention report top result or gate denominator is invalid")
 	}
 	if report.Denominator.ID != "gooo/invariant-transformation-intervention-denominator/v2" || report.Denominator.CasesTotal != 3 || report.Denominator.SemanticExpectedChange.CasesSatisfied != 1 || report.Denominator.SemanticOperationChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {
@@ -316,31 +333,45 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
 		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || !item.BaselineRepositoryNetStatusUnchanged || !item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
+	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
 		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
 	return nil
 }
 
 func verifyGates(gates []gateWire, source []byte, headSHA string) error {
-	if len(gates) != 6 {
-		return fmt.Errorf("effect gate denominator is not 6")
+	if len(gates) != 8 {
+		return fmt.Errorf("effect gate denominator is not 8")
 	}
 	expectedIDs := map[string]bool{
-		"effect-unauthorized":     false,
-		"effect-refuted":          false,
-		"effect-open":             false,
-		"effect-stale-sha":        false,
-		"effect-tampered-auth":    false,
-		"effect-valid-authorized": false,
+		"effect-unauthorized":          false,
+		"effect-refuted":               false,
+		"effect-open":                  false,
+		"effect-stale-sha":             false,
+		"effect-tampered-auth":         false,
+		"effect-valid-repository-path": false,
+		"effect-valid-temp-symlink":    false,
+		"effect-valid-authorized":      false,
 	}
 	expectedReasons := map[string]string{
-		"effect-unauthorized":     "UNAUTHORIZED_DECISION_REJECTED",
-		"effect-refuted":          "REFUTED_RECEIPT_REJECTED",
-		"effect-open":             "OPEN_RECEIPT_REJECTED",
-		"effect-stale-sha":        "STALE_SUBJECT_SHA_REJECTED",
-		"effect-tampered-auth":    "TAMPERED_AUTHORIZATION_REJECTED",
-		"effect-valid-authorized": "AUTHORIZED_TEMP_ARTIFACT_OBSERVED",
+		"effect-unauthorized":          "UNAUTHORIZED_DECISION_REJECTED",
+		"effect-refuted":               "REFUTED_RECEIPT_REJECTED",
+		"effect-open":                  "OPEN_RECEIPT_REJECTED",
+		"effect-stale-sha":             "STALE_SUBJECT_SHA_REJECTED",
+		"effect-tampered-auth":         "TAMPERED_AUTHORIZATION_REJECTED",
+		"effect-valid-repository-path": "REPOSITORY_TARGET_REJECTED",
+		"effect-valid-temp-symlink":    "TEMP_SYMLINK_ESCAPE_REJECTED",
+		"effect-valid-authorized":      "AUTHORIZED_TEMP_ARTIFACT_OBSERVED",
+	}
+	expectedCoordinates := map[string][2]string{
+		"effect-unauthorized":          {"EFFECT_AUTHORIZATION", "validate-authorization"},
+		"effect-refuted":               {"EFFECT_AUTHORIZATION", "validate-authorization"},
+		"effect-open":                  {"EFFECT_AUTHORIZATION", "validate-authorization"},
+		"effect-stale-sha":             {"EFFECT_AUTHORIZATION", "validate-authorization"},
+		"effect-tampered-auth":         {"EFFECT_AUTHORIZATION", "validate-authorization"},
+		"effect-valid-repository-path": {"EFFECT_AUTHORIZATION", "validate-temp-root-containment"},
+		"effect-valid-temp-symlink":    {"EFFECT_AUTHORIZATION", "validate-rooted-target"},
+		"effect-valid-authorized":      {"EFFECT_EXECUTION", "write-authorized-temp-artifact"},
 	}
 	approvedFixture, err := parseFixtureCase(source, "approved-artifact")
 	if err != nil {
@@ -357,20 +388,39 @@ func verifyGates(gates []gateWire, source []byte, headSHA string) error {
 		if gate.AuthorizationAttempted != true {
 			return fmt.Errorf("effect gate %q lacks authorization attempt", gate.ID)
 		}
+		coordinate := expectedCoordinates[gate.ID]
+		if gate.Stage != coordinate[0] || gate.Step != coordinate[1] || gate.Reason != expectedReasons[gate.ID] {
+			return fmt.Errorf("effect gate %q stage/step/reason is not bound", gate.ID)
+		}
 		if gate.ID == "effect-valid-authorized" {
-			if !gate.AuthorizationAccepted || !gate.ExecutorAccepted || gate.ArtifactCount != 1 || !gate.ArtifactExists || gate.SubjectSHA != headSHA || gate.CaseID != "approved-artifact" || gate.Reason != "AUTHORIZED_TEMP_ARTIFACT_OBSERVED" || gate.Artifact.Path == "" || !allowedTempPath(gate.Artifact.Path) || gate.Artifact.CaseID != "approved-artifact" || gate.Artifact.SubjectSHA != headSHA || !model.ValidDigest(gate.Artifact.ContentDigest) || gate.Artifact.Size <= 0 || gate.Artifact.AuthorizationDigest != approvedAuth || gate.Artifact.Producer != model.ProducerID || gate.Artifact.Consumer != model.ConsumerID || gate.Artifact.Executor != model.ExecutorID || !gate.Artifact.RepositoryNetStatusUnchanged {
+			if !gate.AuthorizationAccepted || !gate.ExecutorAccepted || gate.ArtifactCount != 1 || !gate.ArtifactExists || !gate.Satisfied || gate.SubjectSHA != headSHA || gate.CaseID != "approved-artifact" || gate.AttemptPath != gate.Artifact.Path || gate.TargetPath != "" || gate.TargetBytesUnchanged || gate.Artifact.Path == "" || !allowedTempPath(gate.Artifact.Path) || gate.Artifact.CaseID != "approved-artifact" || gate.Artifact.SubjectSHA != headSHA || !model.ValidDigest(gate.Artifact.ContentDigest) || gate.Artifact.Size <= 0 || gate.Artifact.AuthorizationDigest != approvedAuth || gate.Artifact.Producer != model.ProducerID || gate.Artifact.Consumer != model.ConsumerID || gate.Artifact.Executor != model.ExecutorID || gate.Artifact.RepositoryNetStatusObserved || gate.Artifact.RepositoryNetStatusUnchanged || gate.Artifact.RepositoryNetState != model.RepositoryNetStateUnknown {
 				return fmt.Errorf("valid effect gate is not observed")
 			}
 			data, err := os.ReadFile(gate.Artifact.Path)
 			if err != nil || len(data) != gate.Artifact.Size || model.DigestBytes(data) != gate.Artifact.ContentDigest || !bytes.Equal(data, artifactBytes(approvedReceipt)) {
 				return fmt.Errorf("valid effect artifact bytes are not observed")
 			}
-			expectedEffect := model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: gate.Artifact.ContentDigest, ArtifactPath: gate.Artifact.Path, ArtifactSize: gate.Artifact.Size, Artifact: gate.Artifact, CaseID: approvedReceipt.CaseID, SubjectSHA: headSHA, Intent: approvedFixture.EffectIntent, AuthorizationDigest: approvedAuth, Producer: model.ProducerID, Executor: model.ExecutorID, Consumer: model.ConsumerID, MetaOperation: "execute-authorized-temp-artifact", TempArtifactWriteAuthorized: true, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope}
+			expectedEffect := model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: gate.Artifact.ContentDigest, ArtifactPath: gate.Artifact.Path, ArtifactSize: gate.Artifact.Size, Artifact: gate.Artifact, CaseID: approvedReceipt.CaseID, SubjectSHA: headSHA, Intent: approvedFixture.EffectIntent, AuthorizationDigest: approvedAuth, Producer: model.ProducerID, Executor: model.ExecutorID, Consumer: model.ConsumerID, MetaOperation: "execute-authorized-temp-artifact", TempArtifactWriteAuthorized: true, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope}
 			if gate.Artifact.EffectReceiptDigest != model.EffectExecutionDigest(expectedEffect) {
 				return fmt.Errorf("valid effect gate execution digest is not bound")
 			}
-		} else if gate.CaseID == "" || gate.SubjectSHA == "" || gate.AuthorizationAccepted || gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || !reflect.DeepEqual(gate.Artifact, model.ArtifactEvidence{}) || gate.Reason != expectedReasons[gate.ID] || gate.Satisfied != true {
-			return fmt.Errorf("rejected effect gate %q created an artifact", gate.ID)
+		} else if gate.ID != "effect-valid-repository-path" && gate.ID != "effect-valid-temp-symlink" {
+			expectedAuthorization := gate.ID == "effect-stale-sha"
+			if gate.CaseID == "" || gate.SubjectSHA == "" || gate.AuthorizationAccepted != expectedAuthorization || gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || !reflect.DeepEqual(gate.Artifact, model.ArtifactEvidence{}) || gate.Satisfied != true {
+				return fmt.Errorf("rejected effect gate %q created an artifact", gate.ID)
+			}
+		}
+		if gate.ID == "effect-valid-repository-path" || gate.ID == "effect-valid-temp-symlink" {
+			if !gate.AuthorizationAccepted || gate.ExecutorAccepted || gate.ArtifactCount != 0 || gate.ArtifactExists || !gate.Satisfied || gate.SubjectSHA != headSHA || gate.CaseID != "approved-artifact" || !reflect.DeepEqual(gate.Artifact, model.ArtifactEvidence{}) || !gate.TargetBytesUnchanged || gate.TargetPath == "" || gate.TargetBeforeExists != gate.TargetAfterExists || gate.TargetBeforeDigest != gate.TargetAfterDigest || !targetSnapshotMatches(gate.TargetPath, gate.TargetAfterExists, gate.TargetAfterDigest) {
+				return fmt.Errorf("effect gate %q did not prove target bytes unchanged", gate.ID)
+			}
+			if gate.ID == "effect-valid-repository-path" {
+				if gate.AttemptPath != gate.TargetPath || !allowedRepositoryPath(gate.TargetPath) {
+					return fmt.Errorf("repository path gate target is not bound")
+				}
+			} else if !lexicalTempPath(gate.AttemptPath) || !allowedRepositoryPath(gate.TargetPath) || gate.AttemptPath == gate.TargetPath || !isSymlinkTo(gate.AttemptPath, gate.TargetPath) {
+				return fmt.Errorf("temporary symlink gate target is not bound")
+			}
 		}
 	}
 	for id, seen := range expectedIDs {
@@ -381,32 +431,175 @@ func verifyGates(gates []gateWire, source []byte, headSHA string) error {
 	return nil
 }
 
-func verifyArtifact(artifact model.ArtifactEvidence, headSHA string) error {
-	if artifact.Path == "" || !allowedTempPath(artifact.Path) || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer != model.ProducerID || artifact.Executor != model.ExecutorID || artifact.Consumer != model.ConsumerID || !artifact.RepositoryNetStatusUnchanged {
+func verifyArtifact(artifact model.ArtifactEvidence, headSHA string, source []byte) error {
+	if artifact.Path == "" || !allowedTempPath(artifact.Path) || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer != model.ProducerID || artifact.Executor != model.ExecutorID || artifact.Consumer != model.ConsumerID || artifact.RepositoryNetStatusObserved || artifact.RepositoryNetStatusUnchanged || artifact.RepositoryNetState != model.RepositoryNetStateUnknown {
 		return fmt.Errorf("artifact evidence is incomplete")
 	}
 	data, err := os.ReadFile(artifact.Path)
 	if err != nil || len(data) != artifact.Size || model.DigestBytes(data) != artifact.ContentDigest {
 		return fmt.Errorf("artifact evidence bytes are not observed")
 	}
+	fixture, err := parseFixtureCase(source, "approved-artifact")
+	if err != nil {
+		return fmt.Errorf("artifact source reconstruction failed: %w", err)
+	}
+	receipt := reconstructReceipt(fixture, source, headSHA)
+	if artifact.CaseID != receipt.CaseID || artifact.AuthorizationDigest != receipt.AuthorizationDigest || !bytes.Equal(data, artifactBytes(receipt)) {
+		return fmt.Errorf("artifact evidence is not source-derived")
+	}
+	expectedEffect := model.Effect{Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: artifact.ContentDigest, ArtifactPath: artifact.Path, ArtifactSize: artifact.Size, Artifact: artifact, CaseID: receipt.CaseID, SubjectSHA: headSHA, Intent: fixture.EffectIntent, AuthorizationDigest: receipt.AuthorizationDigest, Producer: model.ProducerID, Executor: model.ExecutorID, Consumer: model.ConsumerID, MetaOperation: "execute-authorized-temp-artifact", TempArtifactWriteAuthorized: true, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope}
+	if artifact.EffectReceiptDigest != model.EffectExecutionDigest(expectedEffect) {
+		return fmt.Errorf("artifact effect receipt digest is not source-derived")
+	}
 	return nil
 }
 
 func allowedTempPath(path string) bool {
-	root := os.Getenv("RUNNER_TEMP")
-	if root == "" {
-		root = os.TempDir()
-	}
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return false
-	}
 	path, err = filepath.Abs(path)
 	if err != nil {
 		return false
 	}
+	for _, root := range tempRoots() {
+		canonicalRoot, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			continue
+		}
+		canonicalRoot, err = filepath.Abs(canonicalRoot)
+		if err != nil || overlapsRepository(canonicalRoot) || allowedRepositoryPath(path) || !withinPath(canonicalRoot, path) {
+			continue
+		}
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			continue
+		}
+		resolved, err = filepath.Abs(resolved)
+		if err == nil && withinPath(canonicalRoot, resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+func lexicalTempPath(path string) bool {
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	for _, root := range tempRoots() {
+		canonicalRoot, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			continue
+		}
+		canonicalRoot, err = filepath.Abs(canonicalRoot)
+		if err == nil && !overlapsRepository(canonicalRoot) && !allowedRepositoryPath(path) && withinPath(canonicalRoot, path) {
+			return true
+		}
+	}
+	return false
+}
+
+func tempRoots() []string {
+	root := os.Getenv("RUNNER_TEMP")
+	if root == "" {
+		root = os.TempDir()
+	}
+	return []string{root}
+}
+
+func withinPath(root, path string) bool {
 	relative, err := filepath.Rel(root, path)
-	return relative != "." && relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
+	return err == nil && relative != "." && relative != ".." && !filepath.IsAbs(relative) && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
+}
+
+func overlapsRepository(root string) bool {
+	repository, ok := repositoryRoot()
+	return ok && (withinPath(root, repository) || withinPath(repository, root))
+}
+
+func allowedRepositoryPath(path string) bool {
+	repository, ok := repositoryRoot()
+	if !ok {
+		return false
+	}
+	path, err := filepath.Abs(path)
+	if err != nil || !withinPath(repository, path) {
+		return false
+	}
+	if resolved, resolveErr := filepath.EvalSymlinks(path); resolveErr == nil {
+		resolved, err = filepath.Abs(resolved)
+		return err == nil && withinPath(repository, resolved)
+	}
+	for parent := filepath.Dir(path); ; parent = filepath.Dir(parent) {
+		if resolved, resolveErr := filepath.EvalSymlinks(parent); resolveErr == nil {
+			resolved, err = filepath.Abs(resolved)
+			return err == nil && withinPath(repository, resolved)
+		}
+		next := filepath.Dir(parent)
+		if next == parent {
+			return false
+		}
+	}
+}
+
+func repositoryRoot() (string, bool) {
+	root := os.Getenv("GITHUB_WORKSPACE")
+	if root == "" {
+		root, _ = os.Getwd()
+		for {
+			if _, err := os.Stat(filepath.Join(root, ".git")); err == nil {
+				break
+			}
+			parent := filepath.Dir(root)
+			if parent == root {
+				return "", false
+			}
+			root = parent
+		}
+	}
+	root, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", false
+	}
+	root, err = filepath.Abs(root)
+	return root, err == nil
+}
+
+func snapshotPath(path string) (bool, string) {
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return false, ""
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, ""
+	}
+	return true, model.DigestBytes(data)
+}
+
+func targetSnapshotMatches(path string, exists bool, digest string) bool {
+	actualExists, actualDigest := snapshotPath(path)
+	return actualExists == exists && actualDigest == digest
+}
+
+func isSymlinkTo(path, target string) bool {
+	info, err := os.Lstat(path)
+	if err != nil || info.Mode()&os.ModeSymlink == 0 {
+		return false
+	}
+	link, err := os.Readlink(path)
+	if err != nil {
+		return false
+	}
+	absoluteLink := link
+	if !filepath.IsAbs(absoluteLink) {
+		absoluteLink = filepath.Join(filepath.Dir(path), link)
+	}
+	absoluteLink, err = filepath.Abs(absoluteLink)
+	if err != nil {
+		return false
+	}
+	absoluteTarget, err := filepath.Abs(target)
+	return err == nil && absoluteLink == absoluteTarget
 }
 
 func artifactBytes(receipt model.Receipt) []byte {
@@ -557,7 +750,7 @@ func reconstructReceipt(fixture sourceFixture, source []byte, headSHA string) mo
 		values = append(values, model.MetaValue{ID: spec.ID, Kind: spec.Kind, Value: statuses[spec.ID], EvidenceDigest: evidenceDigest, Producer: spec.Producer, Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice, VerificationCheck: spec.VerificationCheck, Coordinate: coordinate})
 	}
 	decision, resolution, reason := derive(claims)
-	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusUnchanged: true, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, AuthorityScope: model.AuthorityScope}
+	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, MutationAuthority: false, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope, AuthorityScope: model.AuthorityScope}
 	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)
 	return model.SealReceipt(receipt)
 }
