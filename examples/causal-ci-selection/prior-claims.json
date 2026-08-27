@@ -2,9 +2,16 @@
   "schema": "gooo/causal-ci-selection-prior-observation/v1",
   "claims": [
     {
-      "claim_id": "claim:causal-selection",
+      "template_id": "claim-template:causal-route",
+      "proposition": "complete policy route reconstructed",
       "state": "OPEN",
       "provenance": "gooo://causal-ci-selection/prior-claim-ledger"
+    },
+    {
+      "template_id": "claim-template:check-execution",
+      "proposition": "selected check is sufficient/passed",
+      "state": "OPEN",
+      "provenance": "gooo://causal-ci-selection/prior-check-ledger"
     }
   ]
 }

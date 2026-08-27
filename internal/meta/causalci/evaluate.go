@@ -6,9 +6,20 @@ import (
 	"strings"
 )
 
-// Evaluate produces a plan-only receipt from raw CI observations and a real
-// Gooo policy source. No check command is selected from the observation.
+// Evaluate produces only a plan. Execution remains UNKNOWN until the
+// independent consumer process writes an adjudication receipt.
 func Evaluate(observationRaw []byte, sourcePath string, source []byte) (Receipt, error) {
+	return evaluateWithBinding(observationRaw, sourcePath, source, "HEAD")
+}
+
+// EvaluateIntervention evaluates a supplied Gooo source as a semantic
+// intervention. Its bytes are intentionally not asserted to be HEAD bytes;
+// the receipt still records the observed HEAD coordinate for comparison.
+func EvaluateIntervention(observationRaw []byte, sourcePath string, source []byte) (Receipt, error) {
+	return evaluateWithBinding(observationRaw, sourcePath, source, "INTERVENTION")
+}
+
+func evaluateWithBinding(observationRaw []byte, sourcePath string, source []byte, bindingMode string) (Receipt, error) {
 	observation, err := decodeObservation(observationRaw)
 	if err != nil {
 		return Receipt{}, err
@@ -20,29 +31,32 @@ func Evaluate(observationRaw []byte, sourcePath string, source []byte) (Receipt,
 	if err != nil {
 		return Receipt{}, err
 	}
+	policy.Source.BindingMode = bindingMode
+	policy.Source.ObservedCheckoutSHA = observation.ObservedCheckoutSHA
+	policy.Source.HeadPathObjectID = observation.HeadPathObjectID
+	policy.Source.SourceBytesDigest = digestBytes(source)
+	if bindingMode == "HEAD" && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != GitBlobObjectID(source)) {
+		policy.Contradictions = append([]PolicyContradiction{{Stage: "SOURCE_BINDING", Step: "validate-exact-head", Reason: ReasonSourceBinding}}, policy.Contradictions...)
+	}
 
-	operation := deriveOperation(observation)
 	receipt := Receipt{
-		Schema:            ReceiptSchema,
-		Scope:             ReceiptScope,
-		Source:            policy.Source,
-		ObservationDigest: digestBytes(observationRaw),
-		Operation:         operation,
-		ExecutionMode:     "PLAN_ONLY",
-		IndependentVerifier: IndependentVerifier{
-			ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, ReadOnly: true,
-		},
+		Schema: ReceiptSchema, Scope: ReceiptScope, Source: policy.Source,
+		ObservationDigest: digestBytes(observationRaw), Operation: deriveOperation(observation),
+		ExecutionMode:       CapabilityPlanOnly,
+		Execution:           ExecutionStatus{Result: ExecutionUnknown, Capability: CapabilityPlanOnly, Coordinate: Coordinate{Stage: "ADJUDICATION", Step: "await-consumer", Reason: "CONSUMER_PROCESS_NOT_RUN"}},
+		CheckInventory:      ExactInventory{ExpectedIDs: fixedCheckIDSlice()},
+		IndicatorInventory:  ExactInventory{ExpectedIDs: indicatorIDSlice()},
+		IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, Capability: "SEPARATE_PROCESS"},
 	}
 	receipt.Conformance = conformanceFor(policy)
 	receipt.Subjects = evaluateSubjects(observation, policy)
 	receipt.ClaimTransitions = appendClaimTransitions(observation, policy, receipt.Subjects, receipt.ObservationDigest)
 	receipt.Metrics = deriveMetrics(observation, policy, receipt)
+	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
+	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
 	receipt.Indicators = deriveIndicators(observation, policy, receipt)
-	for _, indicator := range receipt.Indicators {
-		if indicator.Satisfied {
-			receipt.Metrics.FixedIndicatorSatisfied++
-		}
-	}
+	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
+	receipt.Metrics.FixedIndicatorSatisfied = satisfiedIndicators(receipt.Indicators)
 	receipt.PlanDigest, err = planDigest(receipt)
 	if err != nil {
 		return Receipt{}, err
@@ -55,15 +69,10 @@ func Evaluate(observationRaw []byte, sourcePath string, source []byte) (Receipt,
 }
 
 func deriveOperation(observation Observation) Operation {
-	writes := repositoryWriteCount(observation.Isolation)
 	return Operation{
-		Producer:          "gooo://producer/causal-ci-selection",
-		Consumer:          "gooo://consumer/causal-ci-selection",
-		MetaOperation:     "causal-ci-select",
-		ProofChoice:       ProofCausalPath,
-		ReadOnly:          writes == 0,
-		RepositoryWrites:  writes,
-		MutationAuthority: writes != 0,
+		Producer: "gooo://producer/causal-ci-selection", Consumer: "gooo://consumer/causal-ci-selection",
+		MetaOperation: "causal-ci-select", ProofChoice: ProofCausalPath,
+		DeclaredPlanCapability: CapabilityPlanOnly, ObservedRepositoryState: repositoryState(observation.Isolation),
 	}
 }
 
@@ -81,11 +90,7 @@ func evaluateSubjects(observation Observation, policy PolicyGraph) []SubjectReso
 	for _, file := range changed {
 		if len(policy.Contradictions) > 0 {
 			contradiction := policy.Contradictions[0]
-			result = append(result, SubjectResolution{
-				Path: file.Path, Resolution: ResolutionFailClosed,
-				Coordinate:     Coordinate{Stage: contradiction.Stage, Step: contradiction.Step, Reason: contradiction.Reason},
-				SelectedChecks: []CheckChoice{},
-			})
+			result = append(result, SubjectResolution{Path: file.Path, Resolution: ResolutionFailClosed, Coordinate: Coordinate{Stage: contradiction.Stage, Step: contradiction.Step, Reason: contradiction.Reason}, SelectedChecks: []CheckChoice{}})
 			continue
 		}
 		if file.Path != observation.SourcePath || file.Status == "D" {
@@ -109,22 +114,8 @@ func selectedSubject(path string, policy PolicyGraph) SubjectResolution {
 	if checkID == "" {
 		return unknownSubject(ChangedFileObservation{Path: path, Status: "M"}, policy.Source.Path)
 	}
-	pathEvidence := PathEvidence{
-		SubjectPath:    path,
-		ClaimIDs:       []string{policy.ClaimID},
-		SurfaceID:      policy.SurfaceID,
-		CheckID:        checkID,
-		PolicyEdgeIDs:  []string{first[0].ID, second[0].ID, third[0].ID},
-		SemanticDigest: policy.Source.SemanticDigest,
-		Explanation:    "changed-file observation traverses claim-to-surface and surface-to-check semantic policy",
-		ProofChoice:    ProofCausalPath,
-	}
-	return SubjectResolution{
-		Path: path, Resolution: ResolutionSelected,
-		Coordinate:     Coordinate{Stage: stageSubject, Step: stepSelectChecks, Reason: ReasonCompletePath},
-		Paths:          []PathEvidence{pathEvidence},
-		SelectedChecks: []CheckChoice{{CheckID: checkID, ProofChoice: ProofCausalPath, Reason: ReasonCompletePath, ClaimIDs: []string{policy.ClaimID}, PathIDs: pathEvidence.PolicyEdgeIDs}},
-	}
+	pathEvidence := PathEvidence{SubjectPath: path, ClaimIDs: []string{policy.ClaimID}, Proposition: ReasonCompleteRoute, SurfaceID: policy.SurfaceID, CheckID: checkID, PolicyEdgeIDs: []string{first[0].ID, second[0].ID, third[0].ID}, SemanticDigest: policy.Source.SemanticDigest, Explanation: "changed-file observation traverses claim-to-surface and surface-to-check semantic policy", ProofChoice: ProofCausalPath}
+	return SubjectResolution{Path: path, Resolution: ResolutionSelected, Coordinate: Coordinate{Stage: stageSubject, Step: stepSelectChecks, Reason: ReasonCompletePath}, Paths: []PathEvidence{pathEvidence}, SelectedChecks: []CheckChoice{{CheckID: checkID, ProofChoice: ProofCausalPath, Reason: ReasonCompletePath, ClaimIDs: []string{policy.ClaimID}, PathIDs: pathEvidence.PolicyEdgeIDs}}}
 }
 
 func unknownSubject(file ChangedFileObservation, sourcePath string) SubjectResolution {
@@ -132,20 +123,12 @@ func unknownSubject(file ChangedFileObservation, sourcePath string) SubjectResol
 	if file.Path == sourcePath && file.Status == "D" {
 		reason = "SOURCE_OBJECT_NOT_AVAILABLE"
 	}
-	unknown := UnknownCause{
-		SubjectPath: file.Path,
-		Coordinate:  Coordinate{Stage: stageSubject, Step: stepObserveSubject, Reason: reason},
-		Provenance:  "git://pull-request/changed-file/" + file.Path,
-	}
+	unknown := UnknownCause{SubjectPath: file.Path, Coordinate: Coordinate{Stage: stageSubject, Step: stepObserveSubject, Reason: reason}, Provenance: "git://pull-request/changed-file/" + file.Path}
 	choices := make([]CheckChoice, 0, FixedCheckDenominator)
 	for _, id := range fixedCheckIDs {
 		choices = append(choices, CheckChoice{CheckID: id, ProofChoice: ProofFullDescent, Reason: reason})
 	}
-	return SubjectResolution{
-		Path: file.Path, Resolution: ResolutionUnknown,
-		Coordinate:    Coordinate{Stage: stageSubject, Step: stepDescendFull, Reason: reason},
-		UnknownCauses: []UnknownCause{unknown}, SelectedChecks: choices,
-	}
+	return SubjectResolution{Path: file.Path, Resolution: ResolutionUnknown, Coordinate: Coordinate{Stage: stageSubject, Step: stepDescendFull, Reason: reason}, UnknownCauses: []UnknownCause{unknown}, SelectedChecks: choices}
 }
 
 func appendClaimTransitions(observation Observation, policy PolicyGraph, subjects []SubjectResolution, observationDigest string) []ClaimTransition {
@@ -157,24 +140,42 @@ func appendClaimTransitions(observation Observation, policy PolicyGraph, subject
 	result := make([]ClaimTransition, 0, len(prior))
 	previous := ""
 	for index, claim := range prior {
-		after := claim.State
-		resolution := PlanNone
-		reason := ReasonClaimLowered
+		after, resolution, reason := claim.State, PlanNone, ReasonClaimLowered
 		stage, step := stageClaimLedger, stepClaimTransition
 		if len(policy.Contradictions) > 0 {
-			after, resolution, reason = ClaimRefuted, PlanNone, ReasonClaimRefuted
-			stage, step = stageConformance, stepValidatePolicy
+			if claim.Proposition == ReasonCompleteRoute {
+				after, reason, stage, step = ClaimRefuted, ReasonClaimRefuted, stageConformance, stepValidatePolicy
+			} else {
+				reason = ReasonUnrelatedContradiction
+			}
 		} else if subject, exists := byPath[claim.SubjectPath]; exists {
 			switch subject.Resolution {
 			case ResolutionSelected:
-				after, resolution, reason = ClaimDischarged, PlanSelective, ReasonClaimDischarged
+				resolution = PlanSelective
+				if claim.Proposition == ReasonCompleteRoute {
+					after, reason = ClaimDischarged, ReasonClaimDischarged
+				} else {
+					after, reason = ClaimOpen, ReasonPlanOnlyOpen
+				}
 			case ResolutionUnknown:
-				after, resolution, reason = claim.State, PlanFull, ReasonClaimLowered
+				resolution = PlanFull
+				switch claim.State {
+				case ClaimOpen:
+					reason = ReasonClaimLowered
+				case ClaimDischarged:
+					reason = ReasonUnknownDischarged
+				case ClaimRefuted:
+					reason = ReasonUnknownRefuted
+				}
 			case ResolutionFailClosed:
-				after, resolution, reason = ClaimRefuted, PlanNone, ReasonClaimRefuted
+				if claim.Proposition == ReasonCompleteRoute {
+					after, reason = ClaimRefuted, ReasonClaimRefuted
+				} else {
+					reason = ReasonUnrelatedContradiction
+				}
 			}
 		}
-		if claim.State == ClaimRefuted {
+		if claim.State == ClaimRefuted && after != ClaimRefuted {
 			after = ClaimRefuted
 		}
 		evidence, _ := digestJSON(struct {
@@ -184,12 +185,7 @@ func appendClaimTransitions(observation Observation, policy PolicyGraph, subject
 			After       string                `json:"after"`
 			Resolution  string                `json:"resolution"`
 		}{observationDigest, policy.Source.SemanticDigest, claim, after, resolution})
-		transition := ClaimTransition{
-			Sequence: index + 1, ClaimID: claim.ClaimID, SubjectPath: claim.SubjectPath,
-			Before: claim.State, After: after, Resolution: resolution,
-			Stage: stage, Step: step, Reason: reason, EvidenceDigest: evidence,
-			Provenance: claim.Provenance, PreviousDigest: previous,
-		}
+		transition := ClaimTransition{Sequence: index + 1, TemplateID: claim.TemplateID, ClaimID: claim.InstanceID, SubjectPath: claim.SubjectPath, Proposition: claim.Proposition, Before: claim.State, After: after, Resolution: resolution, Stage: stage, Step: step, Reason: reason, EvidenceDigest: evidence, Provenance: claim.Provenance, PreviousDigest: previous}
 		transition.Digest, _ = transitionDigest(transition)
 		result = append(result, transition)
 		previous = transition.Digest
@@ -198,12 +194,12 @@ func appendClaimTransitions(observation Observation, policy PolicyGraph, subject
 }
 
 func deriveMetrics(observation Observation, policy PolicyGraph, receipt Receipt) Metrics {
-	metrics := Metrics{
-		ChangedFileNumerator: len(observation.ChangedFiles), ChangedFileDenominator: len(observation.ChangedFiles),
-		SubjectTotal: len(receipt.Subjects), FullSuiteCheckDenominator: len(policy.Checks),
-		ClaimTransitionTotal: len(receipt.ClaimTransitions), FixedIndicatorDenominator: FixedIndicatorDenominator,
-		SourceReconstructionNumer: 1, SourceReconstructionDenom: 1,
+	paths := make([]string, 0, len(observation.ChangedFiles))
+	for _, file := range sortedChangedFiles(observation.ChangedFiles) {
+		paths = append(paths, file.Path)
 	}
+	universe, _ := digestJSON(paths)
+	metrics := Metrics{SubjectUniverseDigest: universe, SubjectUniverseCount: len(paths), SubjectCoverageNumerator: len(receipt.Subjects), SubjectCoverageDenominator: len(paths), SubjectTotal: len(receipt.Subjects), FullSuiteCheckDenominator: len(policy.Checks), ClaimTransitionTotal: len(receipt.ClaimTransitions), FixedIndicatorDenominator: FixedIndicatorDenominator}
 	for _, subject := range receipt.Subjects {
 		metrics.SelectedCheckTotal += len(subject.SelectedChecks)
 		switch subject.Resolution {
@@ -230,21 +226,18 @@ func deriveMetrics(observation Observation, policy PolicyGraph, receipt Receipt)
 }
 
 func deriveIndicators(observation Observation, policy PolicyGraph, receipt Receipt) []Indicator {
+	state := receipt.Operation.ObservedRepositoryState
 	values := []bool{
 		len(policy.Contradictions) == 0 && policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
 		len(receipt.Subjects) == len(observation.ChangedFiles),
 		unknownSubjectsDescendFully(receipt.Subjects),
 		validClaimTransitions(receipt.ClaimTransitions),
-		repositoryWriteCount(observation.Isolation) == receipt.Operation.RepositoryWrites && receipt.Operation.ReadOnly == (receipt.Operation.RepositoryWrites == 0),
-		receipt.ExecutionMode == "PLAN_ONLY",
+		state.NetState == ObservedStateUnchanged && state.ChangedPathCount == 0 && state.ChangedContentCount == 0 && state.TransientWrites == ObservedUnknown && state.GlobalMutationAuthority == ObservedUnknown,
+		receipt.ExecutionMode == CapabilityPlanOnly && receipt.Execution.Result == ExecutionUnknown,
 	}
 	result := make([]Indicator, 0, FixedIndicatorDenominator)
 	for index, id := range indicatorIDs {
-		observed := 0
-		if values[index] {
-			observed = 1
-		}
-		result = append(result, Indicator{ID: id, Observed: observed, Denominator: 1, Satisfied: values[index]})
+		result = append(result, Indicator{ID: id, Observed: boolInt(values[index]), Denominator: 1, Satisfied: values[index]})
 	}
 	return result
 }
@@ -258,7 +251,7 @@ func unknownSubjectsDescendFully(subjects []SubjectResolution) bool {
 			return false
 		}
 		for index, choice := range subject.SelectedChecks {
-			if choice.CheckID != fixedCheckIDs[index] || choice.ProofChoice != ProofFullDescent || len(choice.Reason) == 0 {
+			if choice.CheckID != fixedCheckIDs[index] || choice.ProofChoice != ProofFullDescent || choice.Reason == "" {
 				return false
 			}
 		}
@@ -269,7 +262,7 @@ func unknownSubjectsDescendFully(subjects []SubjectResolution) bool {
 func validClaimTransitions(values []ClaimTransition) bool {
 	previous := ""
 	for index, value := range values {
-		if value.Sequence != index+1 || value.ClaimID == "" || value.SubjectPath == "" || value.EvidenceDigest == "" || value.Provenance == "" || value.PreviousDigest != previous {
+		if value.Sequence != index+1 || value.ClaimID == "" || value.TemplateID == "" || value.SubjectPath == "" || value.Proposition == "" || value.EvidenceDigest == "" || value.Provenance == "" || value.PreviousDigest != previous || value.ClaimID != ClaimInstanceID(value.TemplateID, value.SubjectPath, value.Proposition) {
 			return false
 		}
 		if value.Before != ClaimOpen && value.Before != ClaimDischarged && value.Before != ClaimRefuted {
@@ -285,6 +278,51 @@ func validClaimTransitions(values []ClaimTransition) bool {
 		previous = value.Digest
 	}
 	return true
+}
+
+func fixedCheckIDSlice() []string {
+	result := make([]string, len(fixedCheckIDs))
+	copy(result, fixedCheckIDs[:])
+	return result
+}
+
+func indicatorIDSlice() []string {
+	result := make([]string, len(indicatorIDs))
+	copy(result, indicatorIDs[:])
+	return result
+}
+
+func checkIDs(values []Check) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.ID)
+	}
+	return result
+}
+
+func indicatorIDsFromPolicy(values []Indicator) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.ID)
+	}
+	return result
+}
+
+func satisfiedIndicators(values []Indicator) int {
+	result := 0
+	for _, value := range values {
+		if value.Satisfied {
+			result++
+		}
+	}
+	return result
+}
+
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func sortedStrings(values []string) []string {

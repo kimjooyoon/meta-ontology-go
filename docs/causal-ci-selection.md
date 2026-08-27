@@ -18,6 +18,8 @@ activity contracts and semantic value programs define `changed-file-to-claim`,
 producer reconstructs that graph only after canonical parse, canonical format,
 lowering, and semantic digest. The raw observation is generated from the PR's
 actual `git diff`; it has no final known/decision/choice/reason fields.
+It also records the observed checkout SHA, the `HEAD:path` blob object ID, and
+the source-byte digest so a later source mutation is fail-closed.
 Its predecessor state comes from the raw
 [`prior-claims.json`](../examples/causal-ci-selection/prior-claims.json)
 ledger observation and is joined to each observed path by CI.
@@ -36,24 +38,32 @@ The receipt separates conformance from subject resolution:
 - A contradictory policy path is `FAIL_CLOSED`; each subject has no plan and
   the conformance coordinate is retained.
 
-This is explicitly a `PLAN_ONLY` artifact. The workflow validates the plan and
-uploads it; it does not execute the selected checks or authorize a merge.
+This is explicitly a `PLAN_ONLY` artifact. The producer receipt records
+`execution.result=UNKNOWN`; it does not claim that a selected check ran. A
+separate consumer process reparses and relowers the raw source and observation.
+Only its separate adjudication receipt may report an observed exit/result and
+source reconstruction `1/1` or `4/4`.
 
 ## Claim ledger
 
-CI observes prior `OPEN` claims. The producer appends a digest-linked
-transition, preserving stage, step, reason, evidence digest, and provenance:
+CI observes prior claim templates and creates a content-addressed instance for
+each subject from template ID, proposition, and subject path. The producer
+appends a digest-linked transition, preserving stage, step, reason, evidence
+digest, proposition, and provenance:
 
-- complete observed path: `OPEN -> DISCHARGED`;
-- unresolved path: `OPEN -> OPEN`, resolution `DESCEND_TO_FULL_SUITE`;
-- explicit semantic contradiction: `OPEN -> REFUTED`, resolution `NO_PLAN`.
+- the exact proposition `complete policy route reconstructed`: `OPEN -> DISCHARGED`;
+- a selected-check sufficiency proposition remains `OPEN` until execution is observed;
+- unresolved paths preserve the prior state with a state-specific persistence reason;
+- an explicit semantic contradiction refutes only the structurally linked route proposition.
 
 Evidence digests are SHA-256 values over canonical observed values, not
 placeholders. The transition chain is append-only and independently replayed.
 
 ## Interventions and falsification
 
-CI emits four source reconstructions from one raw observation:
+CI emits four source reconstructions from one raw observation, each with a
+producer plan whose execution is `UNKNOWN`. Four separate consumer processes
+then produce the adjudication evidence:
 
 1. base policy selects `go-test` for the source subject;
 2. semantic intervention changes the policy target to `go-vet`, changing the
@@ -66,8 +76,25 @@ CI emits four source reconstructions from one raw observation:
 The proposition is falsified if a filename-only rule selects a check without a
 reconstructed semantic path, a raw observation can declare a conclusion, an
 unknown subject omits the full six-check descent, a contradiction produces a
-plan, a comment changes the semantic/plan digest, or the independent consumer
-can verify a producer receipt without reparsing and relowering the raw source.
+plan, a comment changes the semantic/plan digest, a receipt reports execution
+before a consumer process ran, or the independent consumer can verify a
+producer receipt without reparsing and relowering the raw source.
+
+## Isolation and fixed inventories
+
+The before/after repository observations are snapshots of tracked and
+untracked paths plus content digests. They produce
+`NET_REPOSITORY_STATE_UNCHANGED` and changed path/content counts; transient
+writes and global mutation authority remain `UNKNOWN`, because a net snapshot
+cannot prove that no transient write occurred. The six checks, six indicators,
+and four intervention variants use exact expected/observed ID inventories.
+Changed-file counts are reported as a PR-SHA subject-universe digest/count and
+coverage, not as a fixed improvement denominator.
+
+The adjudication artifact preserves exact `go1.27.0`, `go version`,
+`go env GOVERSION`, the registered `go tool fix help` inventory, and
+`go fix -diff` stdout/stderr/exit/digests. Conformance requires exit `0` and
+an empty diff.
 
 ## Build-graph research boundary
 

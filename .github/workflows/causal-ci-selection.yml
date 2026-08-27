@@ -7,6 +7,7 @@ on:
       - .github/agent-scope-table.md
       - .github/ci-governance.json
       - .github/workflows/causal-ci-selection.yml
+      - cmd/causal-ci-selection-consumer/**
       - docs/causal-ci-selection.md
       - examples/causal-ci-selection/**
       - internal/meta/causalci/**
@@ -18,6 +19,7 @@ on:
       - .github/agent-scope-table.md
       - .github/ci-governance.json
       - .github/workflows/causal-ci-selection.yml
+      - cmd/causal-ci-selection-consumer/**
       - docs/causal-ci-selection.md
       - examples/causal-ci-selection/**
       - internal/meta/causalci/**
@@ -42,136 +44,209 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: "1.27.0"
           cache: false
-      - name: Bind Go 1.27 and validate the real Gooo source
-        run: |
-          set -euo pipefail
-          test "$(go env GOVERSION)" = "go1.27.0"
-          go run ./cmd/gooo check "$SOURCE_PATH"
-      - name: Compile the producer and independent consumer in CI
-        run: |
-          set -euo pipefail
-          go test ./internal/meta/causalci ./internal/meta/causalci/consumer
-      - name: Observe the PR diff before the isolated plan operation
+      - name: Capture exact Go 1.27 tool evidence
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/causal-ci-selection"
-          git status --porcelain=v1 > "$RUNNER_TEMP/causal-ci-selection/status-before.txt"
-          cp "$RUNNER_TEMP/causal-ci-selection/status-before.txt" "$RUNNER_TEMP/causal-ci-selection/status-before-observe.txt"
-          go run ./scripts/causal-ci-selection \
-            -mode observe -base-sha "$BASE_SHA" -head-sha "$HEAD_SHA" -source "$SOURCE_PATH" \
-            -before-status "$RUNNER_TEMP/causal-ci-selection/status-before.txt" \
-            -after-status "$RUNNER_TEMP/causal-ci-selection/status-before-observe.txt" \
-            -prior-claims examples/causal-ci-selection/prior-claims.json \
-            -output "$RUNNER_TEMP/causal-ci-selection/observation-provisional.json"
-      - name: Produce the plan and capture the after-isolation observation
+          go version > "$RUNNER_TEMP/causal-ci-selection/go-version.txt"
+          go env GOVERSION > "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt"
+          go tool fix help > "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" 2> "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt"
+          set +e
+          go fix -diff ./... > "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" 2> "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt"
+          fix_exit=$?
+          set -e
+          printf '%s\n' "$fix_exit" > "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt"
+          test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Validate the real Gooo source
         run: |
           set -euo pipefail
-          go run ./scripts/causal-ci-selection \
-            -mode produce -input "$RUNNER_TEMP/causal-ci-selection/observation-provisional.json" \
-            -source "$SOURCE_PATH" -output "$RUNNER_TEMP/causal-ci-selection/receipt-provisional.json" -check
-          git status --porcelain=v1 > "$RUNNER_TEMP/causal-ci-selection/status-after.txt"
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          go run ./cmd/gooo check "$SOURCE_PATH"
+      - name: Compile producer and independent consumer in CI
+        run: |
+          set -euo pipefail
+          go test ./internal/meta/causalci ./internal/meta/causalci/consumer ./cmd/causal-ci-selection-consumer ./scripts/causal-ci-selection
+      - name: Capture repository snapshot before plan operation
+        run: |
+          set -euo pipefail
+          go run ./scripts/causal-ci-selection -mode snapshot -output "$RUNNER_TEMP/causal-ci-selection/snapshot-before.json"
+      - name: Observe PR changed files and raw prior claims
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/causal-ci-selection/intervention-plans"
           go run ./scripts/causal-ci-selection \
             -mode observe -base-sha "$BASE_SHA" -head-sha "$HEAD_SHA" -source "$SOURCE_PATH" \
-            -before-status "$RUNNER_TEMP/causal-ci-selection/status-before.txt" \
-            -after-status "$RUNNER_TEMP/causal-ci-selection/status-after.txt" \
+            -before-snapshot "$RUNNER_TEMP/causal-ci-selection/snapshot-before.json" \
+            -after-snapshot "$RUNNER_TEMP/causal-ci-selection/snapshot-before.json" \
+            -prior-claims examples/causal-ci-selection/prior-claims.json \
+            -output "$RUNNER_TEMP/causal-ci-selection/observation-provisional.json"
+      - name: Produce plan and capture after-operation observation
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/causal-ci-selection/plans"
+          go run ./scripts/causal-ci-selection \
+            -mode produce -input "$RUNNER_TEMP/causal-ci-selection/observation-provisional.json" \
+            -source "$SOURCE_PATH" -output "$RUNNER_TEMP/causal-ci-selection/plans/base-receipt.json"
+          go run ./scripts/causal-ci-selection -mode snapshot -output "$RUNNER_TEMP/causal-ci-selection/snapshot-after.json"
+          go run ./scripts/causal-ci-selection \
+            -mode observe -base-sha "$BASE_SHA" -head-sha "$HEAD_SHA" -source "$SOURCE_PATH" \
+            -before-snapshot "$RUNNER_TEMP/causal-ci-selection/snapshot-before.json" \
+            -after-snapshot "$RUNNER_TEMP/causal-ci-selection/snapshot-after.json" \
             -prior-claims examples/causal-ci-selection/prior-claims.json \
             -output "$RUNNER_TEMP/causal-ci-selection/observation.json"
           go run ./scripts/causal-ci-selection \
             -mode produce -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
-            -source "$SOURCE_PATH" -output "$RUNNER_TEMP/causal-ci-selection/receipt.json" -check
-      - name: Replay the receipt with the independent consumer
+            -source "$SOURCE_PATH" -output "$RUNNER_TEMP/causal-ci-selection/plans/base-receipt.json"
+      - name: Execute independent consumer process for base plan
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/causal-ci-selection/adjudications"
+          set +e
+          go run ./cmd/causal-ci-selection-consumer \
+            -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$SOURCE_PATH" \
+            -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/plans/base-receipt.json" \
+            -variant-id base -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/base.json"
+          consumer_exit=$?
+          set -e
+          printf '%s\n' "$consumer_exit" > "$RUNNER_TEMP/causal-ci-selection/adjudications/base-process-exit.txt"
+      - name: Adjudicate base consumer execution and Go evidence
         run: |
           set -euo pipefail
           go run ./scripts/causal-ci-selection \
-            -mode verify -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
-            -source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/receipt.json"
-      - name: Run semantic and nonsemantic intervention artifacts
+            -mode adjudicate -scope base -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
+            -plans-dir "$RUNNER_TEMP/causal-ci-selection/plans" -adjudication-dir "$RUNNER_TEMP/causal-ci-selection/adjudications" \
+            -go-version "$RUNNER_TEMP/causal-ci-selection/go-version.txt" -go-env "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt" \
+            -fix-help "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" -fix-help-stderr "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt" \
+            -fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" -fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt" \
+            -fix-exit "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt" \
+            -output "$RUNNER_TEMP/causal-ci-selection/adjudication.json"
+      - name: Produce semantic, nonsemantic, and contradiction plans
         run: |
           set -euo pipefail
           go run ./scripts/causal-ci-selection \
-            -mode interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
-            -source "$SOURCE_PATH" \
+            -mode interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source "$SOURCE_PATH" \
             -semantic-source examples/causal-ci-selection/semantic-intervention.gooo \
             -nonsemantic-source examples/causal-ci-selection/nonsemantic-intervention.gooo \
             -contradiction-source examples/causal-ci-selection/contradiction-intervention.gooo \
-            -output "$RUNNER_TEMP/causal-ci-selection/interventions.json" -check
-      - name: Assert raw observation, dynamic changed-file counts, and causal contracts
+            -plans-dir "$RUNNER_TEMP/causal-ci-selection/intervention-plans" -output "$RUNNER_TEMP/causal-ci-selection/interventions.json"
+      - name: Execute independent consumer process for every intervention plan
+        run: |
+          set -euo pipefail
+          for variant in base semantic nonsemantic contradiction; do
+            case "$variant" in
+              base) variant_source="$SOURCE_PATH" ;;
+              semantic) variant_source=examples/causal-ci-selection/semantic-intervention.gooo ;;
+              nonsemantic) variant_source=examples/causal-ci-selection/nonsemantic-intervention.gooo ;;
+              contradiction) variant_source=examples/causal-ci-selection/contradiction-intervention.gooo ;;
+            esac
+            set +e
+            go run ./cmd/causal-ci-selection-consumer \
+              -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$variant_source" \
+              -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/intervention-plans/$variant-receipt.json" \
+              -variant-id "$variant" -intervention -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json"
+            variant_exit=$?
+            set -e
+            printf '%s\n' "$variant_exit" > "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant-process-exit.txt"
+          done
+      - name: Adjudicate all intervention executions
+        run: |
+          set -euo pipefail
+          go run ./scripts/causal-ci-selection \
+            -mode adjudicate -scope interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
+            -plans-dir "$RUNNER_TEMP/causal-ci-selection/intervention-plans" -adjudication-dir "$RUNNER_TEMP/causal-ci-selection/adjudications" \
+            -go-version "$RUNNER_TEMP/causal-ci-selection/go-version.txt" -go-env "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt" \
+            -fix-help "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help.txt" -fix-help-stderr "$RUNNER_TEMP/causal-ci-selection/go-tool-fix-help-stderr.txt" \
+            -fix-stdout "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stdout.txt" -fix-stderr "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-stderr.txt" \
+            -fix-exit "$RUNNER_TEMP/causal-ci-selection/go-fix-diff-exit.txt" \
+            -output "$RUNNER_TEMP/causal-ci-selection/intervention-adjudication.json"
+      - name: Assert exact inventories, unknown execution model, and causal evidence
         shell: bash
         run: |
           set -euo pipefail
-          observation="$RUNNER_TEMP/causal-ci-selection/observation.json"
-          receipt="$RUNNER_TEMP/causal-ci-selection/receipt.json"
-          interventions="$RUNNER_TEMP/causal-ci-selection/interventions.json"
-          test "$(jq -r 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$observation")" = "false"
+          root="$RUNNER_TEMP/causal-ci-selection"
+          observation="$root/observation.json"
+          receipt="$root/plans/base-receipt.json"
           changed_count="$(jq '.changed_files | length' "$observation")"
           test "$changed_count" -gt 0
+          test "$(jq -r '.observed_checkout_sha' "$observation")" = "$HEAD_SHA"
+          test "$(jq -r '.head_path_object_id' "$observation")" != ""
+          test "$(jq -r '.source_bytes_digest' "$observation")" != ""
+          test "$(jq -r 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$observation")" = "false"
           jq -e --arg source "$SOURCE_PATH" --argjson changed "$changed_count" '
-            .schema == "gooo/causal-ci-selection-receipt/v2" and
-            .scope == "READ_ONLY_CAUSAL_SELECTION" and
-            .execution_mode == "PLAN_ONLY" and
-            .conformance.decision == "PASS" and
-            .source.parsed_digest != "" and .source.semantic_digest != "" and
-            .metrics.changed_file_numerator == $changed and
-            .metrics.changed_file_denominator == $changed and
-            .metrics.subject_total == $changed and
-            .metrics.full_suite_check_denominator == 6 and
-            .metrics.source_reconstruction_numerator == 1 and
-            .metrics.source_reconstruction_denominator == 1 and
-            .operation.repository_writes == 0 and
-            .operation.read_only == true and .operation.mutation_authority == false and
-            .independent_verifier.mode == "INDEPENDENT_RECONSTRUCTION" and
+            .schema == "gooo/causal-ci-selection-receipt/v2" and .execution_mode == "PLAN_ONLY" and
+            .execution.result == "UNKNOWN" and .execution.capability == "PLAN_ONLY" and
+            .metrics.subject_universe_count == $changed and .metrics.subject_coverage_numerator == $changed and
+            .metrics.subject_coverage_denominator == $changed and .metrics.full_suite_check_denominator == 6 and
+            .operation.declared_plan_capability == "PLAN_ONLY" and
+            .operation.observed_repository_state.net_state == "NET_REPOSITORY_STATE_UNCHANGED" and
+            .operation.observed_repository_state.changed_path_count == 0 and
+            .operation.observed_repository_state.changed_content_count == 0 and
+            .operation.observed_repository_state.transient_writes == "UNKNOWN" and
+            .operation.observed_repository_state.global_mutation_authority == "UNKNOWN" and
+            .check_inventory.expected_ids == ["gofmt","go-vet","go-test","go-test-race","semantic-conformance","ci-policy"] and
+            .check_inventory.observed_ids == .check_inventory.expected_ids and
+            .indicator_inventory.expected_ids == ["semantic-policy-derived","changed-file-observation-bound","unknown-descends-to-full","claim-transition-append-only","isolation-state-observed","plan-only-no-execution-claim"] and
+            .indicator_inventory.observed_ids == .indicator_inventory.expected_ids and
             ([.indicators[].satisfied] | all) and
             ([.subjects[] | select(.path == $source)][0].resolution == "SELECTED") and
             ([.subjects[] | select(.path == $source)][0].selected_checks[0].check_id == "go-test") and
-            (.metrics.unknown_subject_total >= 1) and
-            ([.claim_transitions[] | select(.subject_path == $source)][0].after == "DISCHARGED") and
-            ([.subjects[] | select(.resolution == "UNKNOWN")][0].coordinate == {stage:"CAUSAL_SELECTION",step:"descend-full-suite",reason:"SOURCE_NOT_BOUND_TO_POLICY"}) and
-            ([.subjects[] | select(.resolution == "UNKNOWN")][0].unknown_causes[0].coordinate == {stage:"CAUSAL_SELECTION",step:"observe-subject",reason:"SOURCE_NOT_BOUND_TO_POLICY"}) and
+            ([.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")][0].after == "DISCHARGED") and
+            ([.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")][0].after == "OPEN") and
             ([.subjects[] | select(.resolution == "UNKNOWN") | .selected_checks | length] | all(. == 6))
           ' "$receipt"
+          jq -e '.schema == "gooo/causal-ci-selection-adjudication/v1" and .decision == "PASS" and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and .go_runtime.expected_version == "go1.27.0" and .go_runtime.go_env_goversion == "go1.27.0" and .go_runtime.fix_diff_exit_code == 0 and .go_runtime.fix_diff_stdout_bytes == 0 and .go_runtime.conformant == true and .adjudications[0].consumer_identity == "gooo://consumer/causal-ci-selection/process"' "$root/adjudication.json"
           jq -e '
             .schema == "gooo/causal-ci-selection-intervention/v1" and
-            .source_reconstruction_numerator == 4 and .source_reconstruction_denominator == 4 and
-            .base.source.raw_digest != .semantic.source.raw_digest and
-            .base.source.semantic_digest != .semantic.source.semantic_digest and
-            .base.source.parsed_digest != .semantic.source.parsed_digest and
-            .base.plan_digest != .semantic.plan_digest and
-            .base.source.raw_digest != .nonsemantic.source.raw_digest and
-            .base.source.parsed_digest == .nonsemantic.source.parsed_digest and
-            .base.source.semantic_digest == .nonsemantic.source.semantic_digest and
-            .base.plan_digest == .nonsemantic.plan_digest and
-            .contradiction.conformance.decision == "FAIL_CLOSED" and
-            ([.contradiction.claim_transitions[].after] | any(. == "REFUTED"))
-          ' "$interventions"
-          consumer_imports="$(rg -n 'internal/meta/causalci"' internal/meta/causalci/consumer --glob '*.go' || true)"
-          test -z "$consumer_imports"
-          jq -n '{schema:"gooo/causal-ci-selection-import-audit/v1", producer_import_numerator:0, producer_import_denominator:1, source:"CI static import audit"}' > "$RUNNER_TEMP/causal-ci-selection/producer-import-audit.json"
+            .expected_variant_ids == ["base","semantic","nonsemantic","contradiction"] and
+            .observed_variant_ids == .expected_variant_ids and
+            .base.execution.result == "UNKNOWN" and .semantic.execution.result == "UNKNOWN" and
+            .nonsemantic.execution.result == "UNKNOWN" and .contradiction.execution.result == "UNKNOWN" and
+            .base.source.raw_digest != .semantic.source.raw_digest and .base.source.semantic_digest != .semantic.source.semantic_digest and
+            .base.plan_digest != .semantic.plan_digest and .base.source.raw_digest != .nonsemantic.source.raw_digest and
+            .base.source.parsed_digest == .nonsemantic.source.parsed_digest and .base.source.semantic_digest == .nonsemantic.source.semantic_digest and
+            .base.plan_digest == .nonsemantic.plan_digest and .contradiction.conformance.decision == "FAIL_CLOSED" and
+            ([.contradiction.claim_transitions[] | select(.proposition == "complete policy route reconstructed") | .after] | any(. == "REFUTED")) and
+            ([.contradiction.claim_transitions[] | select(.proposition == "selected check is sufficient/passed") | .after] | all(. != "REFUTED"))
+          ' "$root/interventions.json"
+          jq -e '.schema == "gooo/causal-ci-selection-adjudication/v1" and .decision == "PASS" and .source_reconstruction_numerator == 4 and .source_reconstruction_denominator == 4 and .observed_variant_ids == .expected_variant_ids and ([.adjudications[].result] | all(. == "PASS"))' "$root/intervention-adjudication.json"
+          if rg -n 'github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci"' internal/meta/causalci/consumer --glob '*.go'; then
+            echo 'consumer imports producer package'
+            exit 1
+          fi
+          jq -n '{schema:"gooo/causal-ci-selection-import-audit/v1", producer_import_numerator:0, producer_import_denominator:1, source:"CI static import audit"}' > "$root/producer-import-audit.json"
           {
             echo '### Causal CI selection'
-            echo "- changed-file observation: ${changed_count}/${changed_count}"
-            echo '- source reconstruction: `1/1` (base receipt), interventions `4/4`'
-            echo '- fixed full-suite denominator: `6` checks'
-            echo '- subject resolutions: selected / unknown / fail-closed are computed from the raw PR diff'
-            echo '- source subject: `SELECTED`, `go-test`; unknown subjects descend to `6/6`'
-            echo '- claim transition: source subject `OPEN -> DISCHARGED`; unknown subjects preserve `OPEN` at lower resolution'
-            echo '- semantic intervention: raw/parsed/semantic/plan digests change'
-            echo '- nonsemantic intervention: raw digest changes; parsed/semantic/plan digests are preserved'
-            echo '- contradiction intervention: `FAIL_CLOSED`, `OPEN -> REFUTED`'
-            echo '- producer imports in independent consumer: `0/1`'
-            echo '- execution claim: `PLAN_ONLY`; repository writes / mutation authority: `0 / false`'
+            echo "- subject universe: ${changed_count} changed PR paths observed from ${HEAD_SHA}"
+            echo '- producer plan: consumer execution `UNKNOWN`; no execution fraction is asserted by the plan receipt'
+            echo '- base consumer adjudication: `1/1` after an independent consumer process observed PASS'
+            echo '- intervention consumer adjudication: `4/4` after four independent consumer processes observed PASS'
+            echo '- fixed check inventory: `6` exact IDs; fixed indicator inventory: `6` exact IDs'
+            echo '- repository state: `NET_REPOSITORY_STATE_UNCHANGED`, changed paths `0`, changed contents `0`, transient writes and global mutation authority `UNKNOWN`'
+            echo '- source binding: checkout SHA, `HEAD:path` object ID, and source byte digest recorded'
+            echo '- claim transitions: exact route proposition can discharge; check sufficiency remains OPEN without execution evidence'
+            echo '- semantic intervention changes semantic policy and plan; nonsemantic intervention preserves semantic policy and plan; contradiction refutes only the route proposition'
+            echo '- independent consumer producer-import audit: `0/1`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload raw observation, plan receipt, and intervention report
+      - name: Upload causal selection evidence
         uses: actions/upload-artifact@v4
         with:
           name: causal-ci-selection-${{ env.HEAD_SHA }}
           path: |
             ${{ runner.temp }}/causal-ci-selection/observation.json
-            ${{ runner.temp }}/causal-ci-selection/receipt.json
+            ${{ runner.temp }}/causal-ci-selection/plans/*.json
+            ${{ runner.temp }}/causal-ci-selection/intervention-plans/*.json
             ${{ runner.temp }}/causal-ci-selection/interventions.json
+            ${{ runner.temp }}/causal-ci-selection/adjudication.json
+            ${{ runner.temp }}/causal-ci-selection/intervention-adjudication.json
+            ${{ runner.temp }}/causal-ci-selection/adjudications/*.json
+            ${{ runner.temp }}/causal-ci-selection/go-version.txt
+            ${{ runner.temp }}/causal-ci-selection/go-env-goversion.txt
+            ${{ runner.temp }}/causal-ci-selection/go-tool-fix-help*.txt
+            ${{ runner.temp }}/causal-ci-selection/go-fix-diff-*.txt
             ${{ runner.temp }}/causal-ci-selection/producer-import-audit.json
           if-no-files-found: error
           retention-days: 14

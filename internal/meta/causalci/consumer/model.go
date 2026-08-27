@@ -1,14 +1,17 @@
 package consumer
 
 type Observation struct {
-	Schema       string                   `json:"schema"`
-	Repository   string                   `json:"repository"`
-	BaseSHA      string                   `json:"base_sha"`
-	HeadSHA      string                   `json:"head_sha"`
-	SourcePath   string                   `json:"source_path"`
-	ChangedFiles []ChangedFileObservation `json:"changed_files"`
-	PriorClaims  []PriorClaimObservation  `json:"prior_claims"`
-	Isolation    IsolationObservation     `json:"isolation"`
+	Schema              string                   `json:"schema"`
+	Repository          string                   `json:"repository"`
+	BaseSHA             string                   `json:"base_sha"`
+	HeadSHA             string                   `json:"head_sha"`
+	ObservedCheckoutSHA string                   `json:"observed_checkout_sha"`
+	SourcePath          string                   `json:"source_path"`
+	HeadPathObjectID    string                   `json:"head_path_object_id"`
+	SourceBytesDigest   string                   `json:"source_bytes_digest"`
+	ChangedFiles        []ChangedFileObservation `json:"changed_files"`
+	PriorClaims         []PriorClaimObservation  `json:"prior_claims"`
+	Isolation           IsolationObservation     `json:"isolation"`
 }
 
 type ChangedFileObservation struct {
@@ -19,8 +22,10 @@ type ChangedFileObservation struct {
 }
 
 type PriorClaimObservation struct {
-	ClaimID     string `json:"claim_id"`
+	TemplateID  string `json:"template_id"`
+	InstanceID  string `json:"instance_id"`
 	SubjectPath string `json:"subject_path"`
+	Proposition string `json:"proposition"`
 	State       string `json:"state"`
 	Provenance  string `json:"provenance"`
 }
@@ -31,15 +36,25 @@ type IsolationObservation struct {
 }
 
 type RepositorySnapshot struct {
-	StatusLines  []string `json:"status_lines"`
-	StatusDigest string   `json:"status_digest"`
+	Entries        []RepositoryEntry `json:"entries"`
+	SnapshotDigest string            `json:"snapshot_digest"`
+}
+
+type RepositoryEntry struct {
+	Path          string `json:"path"`
+	Tracked       bool   `json:"tracked"`
+	ContentDigest string `json:"content_digest"`
 }
 
 type SourceEvidence struct {
-	Path           string `json:"path"`
-	RawDigest      string `json:"raw_digest"`
-	ParsedDigest   string `json:"parsed_digest"`
-	SemanticDigest string `json:"semantic_digest"`
+	Path                string `json:"path"`
+	BindingMode         string `json:"binding_mode"`
+	ObservedCheckoutSHA string `json:"observed_checkout_sha"`
+	HeadPathObjectID    string `json:"head_path_object_id"`
+	SourceBytesDigest   string `json:"source_bytes_digest"`
+	RawDigest           string `json:"raw_digest"`
+	ParsedDigest        string `json:"parsed_digest"`
+	SemanticDigest      string `json:"semantic_digest"`
 }
 
 type Check struct {
@@ -88,19 +103,27 @@ type Coordinate struct {
 	Reason string `json:"reason"`
 }
 
+type RepositoryStateObservation struct {
+	NetState                string `json:"net_state"`
+	ChangedPathCount        int    `json:"changed_path_count"`
+	ChangedContentCount     int    `json:"changed_content_count"`
+	TransientWrites         string `json:"transient_writes"`
+	GlobalMutationAuthority string `json:"global_mutation_authority"`
+}
+
 type Operation struct {
-	Producer          string `json:"producer"`
-	Consumer          string `json:"consumer"`
-	MetaOperation     string `json:"meta_operation"`
-	ProofChoice       string `json:"proof_choice"`
-	ReadOnly          bool   `json:"read_only"`
-	RepositoryWrites  int    `json:"repository_writes"`
-	MutationAuthority bool   `json:"mutation_authority"`
+	Producer                string                     `json:"producer"`
+	Consumer                string                     `json:"consumer"`
+	MetaOperation           string                     `json:"meta_operation"`
+	ProofChoice             string                     `json:"proof_choice"`
+	DeclaredPlanCapability  string                     `json:"declared_plan_capability"`
+	ObservedRepositoryState RepositoryStateObservation `json:"observed_repository_state"`
 }
 
 type PathEvidence struct {
 	SubjectPath    string   `json:"subject_path"`
 	ClaimIDs       []string `json:"claim_ids"`
+	Proposition    string   `json:"proposition"`
 	SurfaceID      string   `json:"surface_id"`
 	CheckID        string   `json:"check_id"`
 	PolicyEdgeIDs  []string `json:"policy_edge_ids"`
@@ -134,8 +157,10 @@ type SubjectResolution struct {
 
 type ClaimTransition struct {
 	Sequence       int    `json:"sequence"`
+	TemplateID     string `json:"template_id"`
 	ClaimID        string `json:"claim_id"`
 	SubjectPath    string `json:"subject_path"`
+	Proposition    string `json:"proposition"`
 	Before         string `json:"before"`
 	After          string `json:"after"`
 	Resolution     string `json:"resolution"`
@@ -152,24 +177,28 @@ type Conformance struct {
 	Decision   string     `json:"decision"`
 	Coordinate Coordinate `json:"coordinate"`
 }
+type ExactInventory struct {
+	ExpectedIDs []string `json:"expected_ids"`
+	ObservedIDs []string `json:"observed_ids"`
+}
 
 type Metrics struct {
-	ChangedFileNumerator      int `json:"changed_file_numerator"`
-	ChangedFileDenominator    int `json:"changed_file_denominator"`
-	SubjectTotal              int `json:"subject_total"`
-	SelectedSubjectTotal      int `json:"selected_subject_total"`
-	UnknownSubjectTotal       int `json:"unknown_subject_total"`
-	FailClosedSubjectTotal    int `json:"fail_closed_subject_total"`
-	SelectedCheckTotal        int `json:"selected_check_total"`
-	FullSuiteCheckDenominator int `json:"full_suite_check_denominator"`
-	ClaimTransitionTotal      int `json:"claim_transition_total"`
-	DischargedClaimTotal      int `json:"discharged_claim_total"`
-	LowerResolutionClaimTotal int `json:"lower_resolution_claim_total"`
-	RefutedClaimTotal         int `json:"refuted_claim_total"`
-	FixedIndicatorSatisfied   int `json:"fixed_indicator_satisfied"`
-	FixedIndicatorDenominator int `json:"fixed_indicator_denominator"`
-	SourceReconstructionNumer int `json:"source_reconstruction_numerator"`
-	SourceReconstructionDenom int `json:"source_reconstruction_denominator"`
+	SubjectUniverseDigest      string `json:"subject_universe_digest"`
+	SubjectUniverseCount       int    `json:"subject_universe_count"`
+	SubjectCoverageNumerator   int    `json:"subject_coverage_numerator"`
+	SubjectCoverageDenominator int    `json:"subject_coverage_denominator"`
+	SubjectTotal               int    `json:"subject_total"`
+	SelectedSubjectTotal       int    `json:"selected_subject_total"`
+	UnknownSubjectTotal        int    `json:"unknown_subject_total"`
+	FailClosedSubjectTotal     int    `json:"fail_closed_subject_total"`
+	SelectedCheckTotal         int    `json:"selected_check_total"`
+	FullSuiteCheckDenominator  int    `json:"full_suite_check_denominator"`
+	ClaimTransitionTotal       int    `json:"claim_transition_total"`
+	DischargedClaimTotal       int    `json:"discharged_claim_total"`
+	LowerResolutionClaimTotal  int    `json:"lower_resolution_claim_total"`
+	RefutedClaimTotal          int    `json:"refuted_claim_total"`
+	FixedIndicatorSatisfied    int    `json:"fixed_indicator_satisfied"`
+	FixedIndicatorDenominator  int    `json:"fixed_indicator_denominator"`
 }
 
 type Indicator struct {
@@ -178,12 +207,16 @@ type Indicator struct {
 	Denominator int    `json:"denominator"`
 	Satisfied   bool   `json:"satisfied"`
 }
-
 type IndependentVerifier struct {
-	ID       string `json:"id"`
-	Mode     string `json:"mode"`
-	Required bool   `json:"required"`
-	ReadOnly bool   `json:"read_only"`
+	ID         string `json:"id"`
+	Mode       string `json:"mode"`
+	Required   bool   `json:"required"`
+	Capability string `json:"capability"`
+}
+type ExecutionStatus struct {
+	Result     string     `json:"result"`
+	Capability string     `json:"capability"`
+	Coordinate Coordinate `json:"coordinate"`
 }
 
 type Receipt struct {
@@ -193,12 +226,29 @@ type Receipt struct {
 	ObservationDigest   string              `json:"observation_digest"`
 	Operation           Operation           `json:"operation"`
 	ExecutionMode       string              `json:"execution_mode"`
+	Execution           ExecutionStatus     `json:"execution"`
 	Conformance         Conformance         `json:"conformance"`
 	Subjects            []SubjectResolution `json:"subjects"`
 	ClaimTransitions    []ClaimTransition   `json:"claim_transitions"`
 	Metrics             Metrics             `json:"metrics"`
+	CheckInventory      ExactInventory      `json:"check_inventory"`
+	IndicatorInventory  ExactInventory      `json:"indicator_inventory"`
 	Indicators          []Indicator         `json:"indicators"`
 	IndependentVerifier IndependentVerifier `json:"independent_verifier"`
 	PlanDigest          string              `json:"plan_digest"`
 	Digest              string              `json:"digest"`
+}
+
+type ConsumerAdjudication struct {
+	Schema            string     `json:"schema"`
+	VariantID         string     `json:"variant_id"`
+	PlanReceiptDigest string     `json:"plan_receipt_digest"`
+	InputDigest       string     `json:"input_digest"`
+	SourceBytesDigest string     `json:"source_bytes_digest"`
+	OutputDigest      string     `json:"output_digest"`
+	ConsumerIdentity  string     `json:"consumer_identity"`
+	ExitCode          int        `json:"exit_code"`
+	Result            string     `json:"result"`
+	Coordinate        Coordinate `json:"coordinate"`
+	Digest            string     `json:"digest"`
 }

@@ -1,10 +1,11 @@
 package causalci
 
 const (
-	ObservationSchema = "gooo/causal-ci-selection-observation/v2"
-	ReceiptSchema     = "gooo/causal-ci-selection-receipt/v2"
-	ReportSchema      = "gooo/causal-ci-selection-intervention/v1"
-	ReceiptScope      = "READ_ONLY_CAUSAL_SELECTION"
+	ObservationSchema  = "gooo/causal-ci-selection-observation/v2"
+	ReceiptSchema      = "gooo/causal-ci-selection-receipt/v2"
+	ReportSchema       = "gooo/causal-ci-selection-intervention/v1"
+	AdjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
+	ReceiptScope       = "READ_ONLY_CAUSAL_SELECTION"
 
 	ConformancePass       = "PASS"
 	ConformanceFailClosed = "FAIL_CLOSED"
@@ -25,15 +26,29 @@ const (
 	ProofFullDescent = "FULL_SUITE_FALLBACK"
 	ProofNone        = "NO_PLAN"
 
-	ReasonMalformedObservation = "MALFORMED_RAW_OBSERVATION"
-	ReasonMalformedPolicy      = "MALFORMED_GOOO_POLICY"
-	ReasonUnknownSubject       = "SOURCE_NOT_BOUND_TO_POLICY"
-	ReasonMissingRoute         = "CAUSAL_ROUTE_NOT_RECONSTRUCTED"
-	ReasonContradictoryPolicy  = "CONTRADICTORY_POLICY_PATH"
-	ReasonCompletePath         = "COMPLETE_CLAIM_SURFACE_CHECK_PATH"
-	ReasonClaimDischarged      = "COMPLETE_PATH_OBSERVED"
-	ReasonClaimLowered         = "UNKNOWN_PATH_PRESERVED_OPEN"
-	ReasonClaimRefuted         = "EXPLICIT_POLICY_CONTRADICTION"
+	ExecutionUnknown       = "UNKNOWN"
+	ExecutionPass          = "PASS"
+	ExecutionFail          = "FAIL"
+	CapabilityPlanOnly     = "PLAN_ONLY"
+	ObservedStateUnchanged = "NET_REPOSITORY_STATE_UNCHANGED"
+	ObservedStateChanged   = "NET_REPOSITORY_STATE_CHANGED"
+	ObservedUnknown        = "UNKNOWN"
+
+	ReasonMalformedObservation   = "MALFORMED_RAW_OBSERVATION"
+	ReasonMalformedPolicy        = "MALFORMED_GOOO_POLICY"
+	ReasonUnknownSubject         = "SOURCE_NOT_BOUND_TO_POLICY"
+	ReasonMissingRoute           = "CAUSAL_ROUTE_NOT_RECONSTRUCTED"
+	ReasonContradictoryPolicy    = "CONTRADICTORY_POLICY_PATH"
+	ReasonCompletePath           = "COMPLETE_CLAIM_SURFACE_CHECK_PATH"
+	ReasonCompleteRoute          = "complete policy route reconstructed"
+	ReasonClaimDischarged        = "COMPLETE_POLICY_ROUTE_RECONSTRUCTED"
+	ReasonClaimLowered           = "UNKNOWN_PATH_PRESERVED_OPEN"
+	ReasonUnknownDischarged      = "DISCHARGED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	ReasonUnknownRefuted         = "REFUTED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	ReasonPlanOnlyOpen           = "PLAN_ONLY_EXECUTION_NOT_OBSERVED"
+	ReasonUnrelatedContradiction = "UNRELATED_POLICY_CONTRADICTION_CANNOT_REFUTE"
+	ReasonClaimRefuted           = "STRUCTURALLY_LINKED_POLICY_CONTRADICTION"
+	ReasonSourceBinding          = "SOURCE_BYTES_NOT_BOUND_TO_EXACT_HEAD"
 
 	FixedCheckDenominator     = 6
 	FixedIndicatorDenominator = 6
@@ -46,9 +61,11 @@ var indicatorIDs = [...]string{
 	"changed-file-observation-bound",
 	"unknown-descends-to-full",
 	"claim-transition-append-only",
-	"isolation-derived-read-only",
+	"isolation-state-observed",
 	"plan-only-no-execution-claim",
 }
+
+var interventionIDs = [...]string{"base", "semantic", "nonsemantic", "contradiction"}
 
 const (
 	programChangedFileToClaim = "causal-ci.changed-file-to-claim/v2"

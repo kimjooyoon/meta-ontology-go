@@ -6,15 +6,16 @@ import (
 )
 
 func TestRawObservationHasNoConclusionSurface(t *testing.T) {
-	statusDigest, err := digestJSON([]string{})
+	snapshotDigest, err := digestJSON([]RepositoryEntry{})
 	if err != nil {
 		t.Fatal(err)
 	}
+	claimID := ClaimInstanceID("claim-template:causal-route", "policy.gooo", ReasonCompleteRoute)
 	valid := Observation{
-		Schema: ObservationSchema, Repository: "example/repository", BaseSHA: "base", HeadSHA: "head", SourcePath: "policy.gooo",
+		Schema: ObservationSchema, Repository: "example/repository", BaseSHA: "base", HeadSHA: "head", ObservedCheckoutSHA: "head", SourcePath: "policy.gooo", HeadPathObjectID: GitBlobObjectID([]byte("source")), SourceBytesDigest: digestBytes([]byte("source")),
 		ChangedFiles: []ChangedFileObservation{{Path: "policy.gooo", Status: "M"}},
-		PriorClaims:  []PriorClaimObservation{{ClaimID: "claim:causal-selection", SubjectPath: "policy.gooo", State: ClaimOpen, Provenance: "git://observation/policy.gooo"}},
-		Isolation:    IsolationObservation{Before: RepositorySnapshot{StatusLines: []string{}, StatusDigest: statusDigest}, After: RepositorySnapshot{StatusLines: []string{}, StatusDigest: statusDigest}},
+		PriorClaims:  []PriorClaimObservation{{TemplateID: "claim-template:causal-route", InstanceID: claimID, SubjectPath: "policy.gooo", Proposition: ReasonCompleteRoute, State: ClaimOpen, Provenance: "git://observation/policy.gooo"}},
+		Isolation:    IsolationObservation{Before: RepositorySnapshot{Entries: []RepositoryEntry{}, SnapshotDigest: snapshotDigest}, After: RepositorySnapshot{Entries: []RepositoryEntry{}, SnapshotDigest: snapshotDigest}},
 	}
 	raw, err := json.Marshal(valid)
 	if err != nil {

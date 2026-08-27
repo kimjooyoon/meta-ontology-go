@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -17,24 +18,39 @@ import (
 )
 
 const (
-	observationSchema = "gooo/causal-ci-selection-observation/v2"
-	receiptSchema     = "gooo/causal-ci-selection-receipt/v2"
-	receiptScope      = "READ_ONLY_CAUSAL_SELECTION"
+	observationSchema  = "gooo/causal-ci-selection-observation/v2"
+	receiptSchema      = "gooo/causal-ci-selection-receipt/v2"
+	receiptScope       = "READ_ONLY_CAUSAL_SELECTION"
+	adjudicationSchema = "gooo/causal-ci-selection-adjudication/v1"
 
-	conformancePass       = "PASS"
-	conformanceFailClosed = "FAIL_CLOSED"
-	resolutionSelected    = "SELECTED"
-	resolutionUnknown     = "UNKNOWN"
-	resolutionFailClosed  = "FAIL_CLOSED"
-	planSelective         = "SELECTIVE_PLAN"
-	planFull              = "DESCEND_TO_FULL_SUITE"
-	planNone              = "NO_PLAN"
-	claimOpen             = "OPEN"
-	claimDischarged       = "DISCHARGED"
-	claimRefuted          = "REFUTED"
-	proofCausalPath       = "CLAIM_IMPACT_REASON"
-	proofFullDescent      = "FULL_SUITE_FALLBACK"
-	fixedCheckDenominator = 6
+	conformancePass              = "PASS"
+	conformanceFailClosed        = "FAIL_CLOSED"
+	resolutionSelected           = "SELECTED"
+	resolutionUnknown            = "UNKNOWN"
+	resolutionFailClosed         = "FAIL_CLOSED"
+	planSelective                = "SELECTIVE_PLAN"
+	planFull                     = "DESCEND_TO_FULL_SUITE"
+	planNone                     = "NO_PLAN"
+	claimOpen                    = "OPEN"
+	claimDischarged              = "DISCHARGED"
+	claimRefuted                 = "REFUTED"
+	proofCausalPath              = "CLAIM_IMPACT_REASON"
+	proofFullDescent             = "FULL_SUITE_FALLBACK"
+	fixedCheckDenominator        = 6
+	fixedIndicatorDenominator    = 6
+	executionUnknown             = "UNKNOWN"
+	capabilityPlanOnly           = "PLAN_ONLY"
+	observedStateUnchanged       = "NET_REPOSITORY_STATE_UNCHANGED"
+	observedUnknown              = "UNKNOWN"
+	reasonCompleteRoute          = "complete policy route reconstructed"
+	reasonClaimDischarged        = "COMPLETE_POLICY_ROUTE_RECONSTRUCTED"
+	reasonClaimLowered           = "UNKNOWN_PATH_PRESERVED_OPEN"
+	reasonUnknownDischarged      = "DISCHARGED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	reasonUnknownRefuted         = "REFUTED_STATE_PRESERVED_UNDER_UNKNOWN_PATH"
+	reasonPlanOnlyOpen           = "PLAN_ONLY_EXECUTION_NOT_OBSERVED"
+	reasonUnrelatedContradiction = "UNRELATED_POLICY_CONTRADICTION_CANNOT_REFUTE"
+	reasonClaimRefuted           = "STRUCTURALLY_LINKED_POLICY_CONTRADICTION"
+	reasonSourceBinding          = "SOURCE_BYTES_NOT_BOUND_TO_EXACT_HEAD"
 )
 
 var fixedCheckIDs = [...]string{"gofmt", "go-vet", "go-test", "go-test-race", "semantic-conformance", "ci-policy"}
@@ -57,6 +73,16 @@ const (
 // raw observation, then parses, lowers, reconstructs, and compares a receipt.
 // This package intentionally does not import the producer package.
 func Verify(observationRaw, sourcePath string, source, receiptRaw []byte) error {
+	return verify(observationRaw, sourcePath, source, receiptRaw, false)
+}
+
+// VerifyIntervention is the same independent replay with an explicitly
+// supplied intervention source. It does not pretend those bytes are HEAD.
+func VerifyIntervention(observationRaw, sourcePath string, source, receiptRaw []byte) error {
+	return verify(observationRaw, sourcePath, source, receiptRaw, true)
+}
+
+func verify(observationRaw, sourcePath string, source, receiptRaw []byte, intervention bool) error {
 	observation, err := decodeObservation(observationRaw)
 	if err != nil {
 		return err
@@ -72,7 +98,7 @@ func Verify(observationRaw, sourcePath string, source, receiptRaw []byte) error 
 	if err != nil {
 		return err
 	}
-	expected := evaluate(observationRaw, observation, policy)
+	expected := evaluate(observationRaw, observation, policy, source, intervention)
 	if expected.Digest, err = receiptDigest(expected); err != nil {
 		return err
 	}
@@ -92,7 +118,7 @@ func decodeObservation(raw []byte) (Observation, error) {
 	if err := decoder.Decode(&value); err != nil {
 		return Observation{}, fmt.Errorf("decode raw observation: %w", err)
 	}
-	if value.Schema != observationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" {
+	if value.Schema != observationSchema || value.Repository == "" || value.BaseSHA == "" || value.HeadSHA == "" || value.ObservedCheckoutSHA == "" || filepath.Ext(value.SourcePath) != ".gooo" || value.HeadPathObjectID == "" || value.SourceBytesDigest == "" {
 		return Observation{}, fmt.Errorf("malformed raw observation")
 	}
 	seen := map[string]struct{}{}
@@ -105,10 +131,18 @@ func decodeObservation(raw []byte) (Observation, error) {
 		}
 		seen[file.Path] = struct{}{}
 	}
+	seenClaims := map[string]struct{}{}
 	for _, claim := range value.PriorClaims {
-		if claim.ClaimID == "" || claim.SubjectPath == "" || claim.State == "" || claim.Provenance == "" {
+		if claim.TemplateID == "" || claim.InstanceID == "" || claim.SubjectPath == "" || claim.Proposition == "" || claim.State == "" || claim.Provenance == "" {
 			return Observation{}, fmt.Errorf("malformed prior claim observation")
 		}
+		if claim.InstanceID != claimInstanceID(claim.TemplateID, claim.SubjectPath, claim.Proposition) {
+			return Observation{}, fmt.Errorf("content-addressed claim instance mismatch")
+		}
+		if _, exists := seenClaims[claim.InstanceID]; exists {
+			return Observation{}, fmt.Errorf("duplicate claim instance")
+		}
+		seenClaims[claim.InstanceID] = struct{}{}
 	}
 	if err := validateSnapshot(value.Isolation.Before); err != nil {
 		return Observation{}, err
@@ -130,8 +164,21 @@ func decodeReceipt(raw []byte) (Receipt, error) {
 }
 
 func validateSnapshot(value RepositorySnapshot) error {
-	digest, err := digestJSON(value.StatusLines)
-	if err != nil || digest != value.StatusDigest {
+	entries := make([]RepositoryEntry, len(value.Entries))
+	copy(entries, value.Entries)
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Path < entries[j].Path })
+	seen := map[string]struct{}{}
+	for _, entry := range entries {
+		if entry.Path == "" || entry.ContentDigest == "" {
+			return fmt.Errorf("malformed isolation snapshot entry")
+		}
+		if _, exists := seen[entry.Path]; exists {
+			return fmt.Errorf("duplicate isolation snapshot path")
+		}
+		seen[entry.Path] = struct{}{}
+	}
+	digest, err := digestJSON(entries)
+	if err != nil || digest != value.SnapshotDigest {
 		return fmt.Errorf("isolation snapshot digest mismatch")
 	}
 	return nil
@@ -310,8 +357,18 @@ func knownCheck(policy *PolicyGraph, id string) bool {
 	return false
 }
 
-func evaluate(raw []byte, observation Observation, policy PolicyGraph) Receipt {
-	receipt := Receipt{Schema: receiptSchema, Scope: receiptScope, Source: policy.Source, ObservationDigest: digestBytes(raw), Operation: operation(observation), ExecutionMode: "PLAN_ONLY", IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, ReadOnly: true}}
+func evaluate(raw []byte, observation Observation, policy PolicyGraph, source []byte, intervention bool) Receipt {
+	policy.Source.BindingMode = "HEAD"
+	if intervention {
+		policy.Source.BindingMode = "INTERVENTION"
+	}
+	policy.Source.ObservedCheckoutSHA = observation.ObservedCheckoutSHA
+	policy.Source.HeadPathObjectID = observation.HeadPathObjectID
+	policy.Source.SourceBytesDigest = digestBytes(source)
+	if !intervention && (observation.ObservedCheckoutSHA != observation.HeadSHA || observation.SourceBytesDigest != digestBytes(source) || observation.HeadPathObjectID != gitBlobID(source)) {
+		policy.Contradictions = append([]PolicyContradiction{{Stage: "SOURCE_BINDING", Step: "validate-exact-head", Reason: reasonSourceBinding}}, policy.Contradictions...)
+	}
+	receipt := Receipt{Schema: receiptSchema, Scope: receiptScope, Source: policy.Source, ObservationDigest: digestBytes(raw), Operation: operation(observation), ExecutionMode: capabilityPlanOnly, Execution: ExecutionStatus{Result: executionUnknown, Capability: capabilityPlanOnly, Coordinate: Coordinate{Stage: "ADJUDICATION", Step: "await-consumer", Reason: "CONSUMER_PROCESS_NOT_RUN"}}, CheckInventory: ExactInventory{ExpectedIDs: fixedCheckIDs[:]}, IndicatorInventory: ExactInventory{ExpectedIDs: indicatorIDs()}, IndependentVerifier: IndependentVerifier{ID: "gooo://consumer/causal-ci-selection", Mode: "INDEPENDENT_RECONSTRUCTION", Required: true, Capability: "SEPARATE_PROCESS"}}
 	if len(policy.Contradictions) > 0 {
 		value := policy.Contradictions[0]
 		receipt.Conformance = Conformance{Decision: conformanceFailClosed, Coordinate: Coordinate{Stage: value.Stage, Step: value.Step, Reason: value.Reason}}
@@ -337,13 +394,15 @@ func evaluate(raw []byte, observation Observation, policy PolicyGraph) Receipt {
 			receipt.Metrics.FixedIndicatorSatisfied++
 		}
 	}
+	receipt.CheckInventory.ObservedIDs = checkIDs(policy.Checks)
+	receipt.IndicatorInventory.ObservedIDs = indicatorIDsFromPolicy(receipt.Indicators)
+	receipt.Metrics.FixedIndicatorSatisfied = satisfiedIndicators(receipt.Indicators)
 	receipt.PlanDigest, _ = planDigest(receipt)
 	return receipt
 }
 
 func operation(observation Observation) Operation {
-	writes := repositoryWriteCount(observation.Isolation)
-	return Operation{Producer: "gooo://producer/causal-ci-selection", Consumer: "gooo://consumer/causal-ci-selection", MetaOperation: "causal-ci-select", ProofChoice: proofCausalPath, ReadOnly: writes == 0, RepositoryWrites: writes, MutationAuthority: writes != 0}
+	return Operation{Producer: "gooo://producer/causal-ci-selection", Consumer: "gooo://consumer/causal-ci-selection", MetaOperation: "causal-ci-select", ProofChoice: proofCausalPath, DeclaredPlanCapability: capabilityPlanOnly, ObservedRepositoryState: repositoryState(observation.Isolation)}
 }
 
 func selected(path string, policy PolicyGraph) SubjectResolution {
@@ -357,7 +416,7 @@ func selected(path string, policy PolicyGraph) SubjectResolution {
 	if checkID == "" {
 		return unknown(ChangedFileObservation{Path: path, Status: "M"}, policy.Source.Path)
 	}
-	pathEvidence := PathEvidence{SubjectPath: path, ClaimIDs: []string{policy.ClaimID}, SurfaceID: policy.SurfaceID, CheckID: checkID, PolicyEdgeIDs: []string{a[0].ID, b[0].ID, c[0].ID}, SemanticDigest: policy.Source.SemanticDigest, Explanation: "changed-file observation traverses claim-to-surface and surface-to-check semantic policy", ProofChoice: proofCausalPath}
+	pathEvidence := PathEvidence{SubjectPath: path, ClaimIDs: []string{policy.ClaimID}, Proposition: reasonCompleteRoute, SurfaceID: policy.SurfaceID, CheckID: checkID, PolicyEdgeIDs: []string{a[0].ID, b[0].ID, c[0].ID}, SemanticDigest: policy.Source.SemanticDigest, Explanation: "changed-file observation traverses claim-to-surface and surface-to-check semantic policy", ProofChoice: proofCausalPath}
 	return SubjectResolution{Path: path, Resolution: resolutionSelected, Coordinate: Coordinate{Stage: "CAUSAL_SELECTION", Step: "select-checks", Reason: "COMPLETE_CLAIM_SURFACE_CHECK_PATH"}, Paths: []PathEvidence{pathEvidence}, SelectedChecks: []CheckChoice{{CheckID: checkID, ProofChoice: proofCausalPath, Reason: "COMPLETE_CLAIM_SURFACE_CHECK_PATH", ClaimIDs: []string{policy.ClaimID}, PathIDs: pathEvidence.PolicyEdgeIDs}}}
 }
 
@@ -402,18 +461,39 @@ func transitions(observation Observation, policy PolicyGraph, subjects []Subject
 	result := make([]ClaimTransition, 0, len(prior))
 	previous := ""
 	for index, claim := range prior {
-		after, resolution, reason := claim.State, planNone, "UNKNOWN_PATH_PRESERVED_OPEN"
+		after, resolution, reason := claim.State, planNone, reasonClaimLowered
 		stage, step := "CLAIM_LEDGER", "append-transition"
 		if len(policy.Contradictions) > 0 {
-			after, reason, stage, step = claimRefuted, "EXPLICIT_POLICY_CONTRADICTION", "CONFORMANCE", "validate-policy"
+			if claim.Proposition == reasonCompleteRoute {
+				after, reason, stage, step = claimRefuted, reasonClaimRefuted, "CONFORMANCE", "validate-policy"
+			} else {
+				reason = reasonUnrelatedContradiction
+			}
 		} else if subject, exists := byPath[claim.SubjectPath]; exists {
 			switch subject.Resolution {
 			case resolutionSelected:
-				after, resolution, reason = claimDischarged, planSelective, "COMPLETE_PATH_OBSERVED"
+				resolution = planSelective
+				if claim.Proposition == reasonCompleteRoute {
+					after, reason = claimDischarged, reasonClaimDischarged
+				} else {
+					after, reason = claimOpen, reasonPlanOnlyOpen
+				}
 			case resolutionUnknown:
-				resolution, reason = planFull, "UNKNOWN_PATH_PRESERVED_OPEN"
+				resolution = planFull
+				switch claim.State {
+				case claimOpen:
+					reason = reasonClaimLowered
+				case claimDischarged:
+					reason = reasonUnknownDischarged
+				case claimRefuted:
+					reason = reasonUnknownRefuted
+				}
 			case resolutionFailClosed:
-				after, reason = claimRefuted, "EXPLICIT_POLICY_CONTRADICTION"
+				if claim.Proposition == reasonCompleteRoute {
+					after, reason = claimRefuted, reasonClaimRefuted
+				} else {
+					reason = reasonUnrelatedContradiction
+				}
 			}
 		}
 		if claim.State == claimRefuted {
@@ -426,7 +506,7 @@ func transitions(observation Observation, policy PolicyGraph, subjects []Subject
 			After       string                `json:"after"`
 			Resolution  string                `json:"resolution"`
 		}{observationDigest, policy.Source.SemanticDigest, claim, after, resolution})
-		value := ClaimTransition{Sequence: index + 1, ClaimID: claim.ClaimID, SubjectPath: claim.SubjectPath, Before: claim.State, After: after, Resolution: resolution, Stage: stage, Step: step, Reason: reason, EvidenceDigest: evidence, Provenance: claim.Provenance, PreviousDigest: previous}
+		value := ClaimTransition{Sequence: index + 1, TemplateID: claim.TemplateID, ClaimID: claim.InstanceID, SubjectPath: claim.SubjectPath, Proposition: claim.Proposition, Before: claim.State, After: after, Resolution: resolution, Stage: stage, Step: step, Reason: reason, EvidenceDigest: evidence, Provenance: claim.Provenance, PreviousDigest: previous}
 		value.Digest, _ = transitionDigest(value)
 		result = append(result, value)
 		previous = value.Digest
@@ -435,7 +515,12 @@ func transitions(observation Observation, policy PolicyGraph, subjects []Subject
 }
 
 func metrics(observation Observation, policy PolicyGraph, receipt Receipt) Metrics {
-	value := Metrics{ChangedFileNumerator: len(observation.ChangedFiles), ChangedFileDenominator: len(observation.ChangedFiles), SubjectTotal: len(receipt.Subjects), FullSuiteCheckDenominator: len(policy.Checks), ClaimTransitionTotal: len(receipt.ClaimTransitions), FixedIndicatorDenominator: fixedCheckDenominator, SourceReconstructionNumer: 1, SourceReconstructionDenom: 1}
+	paths := make([]string, 0, len(observation.ChangedFiles))
+	for _, file := range sortedFiles(observation.ChangedFiles) {
+		paths = append(paths, file.Path)
+	}
+	universe, _ := digestJSON(paths)
+	value := Metrics{SubjectUniverseDigest: universe, SubjectUniverseCount: len(paths), SubjectCoverageNumerator: len(receipt.Subjects), SubjectCoverageDenominator: len(paths), SubjectTotal: len(receipt.Subjects), FullSuiteCheckDenominator: len(policy.Checks), ClaimTransitionTotal: len(receipt.ClaimTransitions), FixedIndicatorDenominator: fixedIndicatorDenominator}
 	for _, subject := range receipt.Subjects {
 		value.SelectedCheckTotal += len(subject.SelectedChecks)
 		switch subject.Resolution {
@@ -462,16 +547,17 @@ func metrics(observation Observation, policy PolicyGraph, receipt Receipt) Metri
 }
 
 func indicators(observation Observation, policy PolicyGraph, receipt Receipt) []Indicator {
+	state := receipt.Operation.ObservedRepositoryState
 	values := []bool{
 		len(policy.Contradictions) == 0 && policy.Source.ParsedDigest != "" && policy.Source.SemanticDigest != "",
 		len(receipt.Subjects) == len(observation.ChangedFiles),
 		unknownSubjectsDescendFully(receipt.Subjects),
 		validTransitions(receipt.ClaimTransitions),
-		repositoryWriteCount(observation.Isolation) == receipt.Operation.RepositoryWrites && receipt.Operation.ReadOnly == (receipt.Operation.RepositoryWrites == 0),
-		receipt.ExecutionMode == "PLAN_ONLY",
+		state.NetState == observedStateUnchanged && state.ChangedPathCount == 0 && state.ChangedContentCount == 0 && state.TransientWrites == observedUnknown && state.GlobalMutationAuthority == observedUnknown,
+		receipt.ExecutionMode == capabilityPlanOnly && receipt.Execution.Result == executionUnknown,
 	}
 	result := make([]Indicator, 0, len(values))
-	ids := []string{"semantic-policy-derived", "changed-file-observation-bound", "unknown-descends-to-full", "claim-transition-append-only", "isolation-derived-read-only", "plan-only-no-execution-claim"}
+	ids := indicatorIDs()
 	for index, id := range ids {
 		observed := 0
 		if values[index] {
@@ -503,7 +589,7 @@ func validTransitions(values []ClaimTransition) bool {
 	previous := ""
 	for index, value := range values {
 		computed, err := transitionDigest(value)
-		if err != nil || value.Sequence != index+1 || value.PreviousDigest != previous || computed != value.Digest || value.EvidenceDigest == "" || value.Provenance == "" {
+		if err != nil || value.Sequence != index+1 || value.PreviousDigest != previous || computed != value.Digest || value.EvidenceDigest == "" || value.Provenance == "" || value.TemplateID == "" || value.Proposition == "" || value.ClaimID != claimInstanceID(value.TemplateID, value.SubjectPath, value.Proposition) {
 			return false
 		}
 		previous = value.Digest
@@ -547,27 +633,43 @@ func digestJSON(value any) (string, error) {
 	return digestBytes(raw), nil
 }
 
-func repositoryWriteCount(value IsolationObservation) int {
-	before := map[string]struct{}{}
-	for _, line := range value.Before.StatusLines {
-		before[line] = struct{}{}
+func repositoryState(value IsolationObservation) RepositoryStateObservation {
+	before := map[string]RepositoryEntry{}
+	for _, entry := range value.Before.Entries {
+		before[entry.Path] = entry
 	}
-	after := map[string]struct{}{}
-	for _, line := range value.After.StatusLines {
-		after[line] = struct{}{}
+	after := map[string]RepositoryEntry{}
+	for _, entry := range value.After.Entries {
+		after[entry.Path] = entry
 	}
-	count := 0
-	for line := range before {
-		if _, exists := after[line]; !exists {
-			count++
+	paths := map[string]struct{}{}
+	for path := range before {
+		paths[path] = struct{}{}
+	}
+	for path := range after {
+		paths[path] = struct{}{}
+	}
+	changedPaths, changedContents := 0, 0
+	for path := range paths {
+		left, leftOK := before[path]
+		right, rightOK := after[path]
+		if !leftOK || !rightOK {
+			changedPaths++
+			changedContents++
+			continue
+		}
+		if left.Tracked != right.Tracked {
+			changedPaths++
+		}
+		if left.ContentDigest != right.ContentDigest {
+			changedContents++
 		}
 	}
-	for line := range after {
-		if _, exists := before[line]; !exists {
-			count++
-		}
+	state := "NET_REPOSITORY_STATE_CHANGED"
+	if changedPaths == 0 && changedContents == 0 {
+		state = observedStateUnchanged
 	}
-	return count
+	return RepositoryStateObservation{NetState: state, ChangedPathCount: changedPaths, ChangedContentCount: changedContents, TransientWrites: observedUnknown, GlobalMutationAuthority: observedUnknown}
 }
 
 func sortedFiles(values []ChangedFileObservation) []ChangedFileObservation {
@@ -582,22 +684,85 @@ func sortedClaims(values []PriorClaimObservation) []PriorClaimObservation {
 		if result[i].SubjectPath != result[j].SubjectPath {
 			return result[i].SubjectPath < result[j].SubjectPath
 		}
-		return result[i].ClaimID < result[j].ClaimID
+		return result[i].InstanceID < result[j].InstanceID
 	})
 	return result
 }
 
 func validateReceipt(actual, expected Receipt, observationRaw []byte, sourcePath string, source []byte) error {
-	if actual.Schema != receiptSchema || actual.Scope != receiptScope || actual.Source.Path != sourcePath || actual.Source.RawDigest != digestBytes(source) || actual.ObservationDigest != digestBytes(observationRaw) {
+	if actual.Schema != receiptSchema || actual.Scope != receiptScope || actual.Source.Path != sourcePath || actual.Source.RawDigest != digestBytes(source) || actual.Source.SourceBytesDigest != digestBytes(source) || actual.ObservationDigest != digestBytes(observationRaw) {
 		return fmt.Errorf("receipt source binding mismatch")
 	}
-	if actual.ExecutionMode != "PLAN_ONLY" || actual.IndependentVerifier.ID != "gooo://consumer/causal-ci-selection" || actual.IndependentVerifier.Mode != "INDEPENDENT_RECONSTRUCTION" || !actual.IndependentVerifier.Required || !actual.IndependentVerifier.ReadOnly {
+	if actual.ExecutionMode != capabilityPlanOnly || actual.Execution.Result != executionUnknown || actual.IndependentVerifier.ID != "gooo://consumer/causal-ci-selection" || actual.IndependentVerifier.Mode != "INDEPENDENT_RECONSTRUCTION" || !actual.IndependentVerifier.Required || actual.IndependentVerifier.Capability != "SEPARATE_PROCESS" || !sameIDs(actual.CheckInventory.ExpectedIDs, actual.CheckInventory.ObservedIDs) || !sameIDs(actual.IndicatorInventory.ExpectedIDs, actual.IndicatorInventory.ObservedIDs) {
 		return fmt.Errorf("independent consumer declaration mismatch")
 	}
 	if !equalJSON(actual, expected) {
 		return fmt.Errorf("independent reconstruction mismatch")
 	}
 	return nil
+}
+
+func indicatorIDs() []string {
+	return []string{"semantic-policy-derived", "changed-file-observation-bound", "unknown-descends-to-full", "claim-transition-append-only", "isolation-state-observed", "plan-only-no-execution-claim"}
+}
+
+func checkIDs(values []Check) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.ID)
+	}
+	return result
+}
+
+func indicatorIDsFromPolicy(values []Indicator) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.ID)
+	}
+	return result
+}
+
+func sameIDs(expected, observed []string) bool {
+	if len(expected) != len(observed) {
+		return false
+	}
+	left, right := append([]string(nil), expected...), append([]string(nil), observed...)
+	sort.Strings(left)
+	sort.Strings(right)
+	for index := range left {
+		if left[index] == "" || right[index] == "" || left[index] != right[index] {
+			return false
+		}
+		if index > 0 && left[index] == left[index-1] {
+			return false
+		}
+	}
+	return true
+}
+
+func satisfiedIndicators(values []Indicator) int {
+	result := 0
+	for _, value := range values {
+		if value.Satisfied {
+			result++
+		}
+	}
+	return result
+}
+
+func claimInstanceID(templateID, subjectPath, proposition string) string {
+	digest, _ := digestJSON(struct {
+		TemplateID  string `json:"template_id"`
+		SubjectPath string `json:"subject_path"`
+		Proposition string `json:"proposition"`
+	}{templateID, subjectPath, proposition})
+	return "claim-instance:" + strings.TrimPrefix(digest, "sha256:")
+}
+
+func gitBlobID(data []byte) string {
+	header := []byte(fmt.Sprintf("blob %d\x00", len(data)))
+	sum := sha1.Sum(append(header, data...))
+	return hex.EncodeToString(sum[:])
 }
 
 func equalJSON(left, right any) bool {
