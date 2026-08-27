@@ -47,9 +47,11 @@ type intervention struct {
 }
 
 type report struct {
-	Schema                  string                   `json:"schema"`
-	Interventions           []intervention           `json:"interventions"`
-	EvidenceProvenanceCases []evidenceProvenanceCase `json:"evidence_provenance_cases"`
+	Schema                                     string                   `json:"schema"`
+	Interventions                              []intervention           `json:"interventions"`
+	EvidenceProvenanceCases                    []evidenceProvenanceCase `json:"evidence_provenance_cases"`
+	CommentOnlySemanticPreservationNumerator   int                      `json:"comment_only_semantic_preservation_numerator"`
+	CommentOnlySemanticPreservationDenominator int                      `json:"comment_only_semantic_preservation_denominator"`
 }
 
 type evidenceProvenanceCase struct {
@@ -100,7 +102,13 @@ func main() {
 		provenanceCompare("observation-artifact-changed", "acceptance", "acceptance", read(mainPath), mainPath, semanticSource, *semanticPath, *repoRoot, *capability, *observationDir, false),
 		provenanceCompare("observation-absent", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, *observationDir, false),
 	}
-	writeJSON(*outputPath, report{Schema: "gooo.meta.claim-dependency-intervention/v2", Interventions: items, EvidenceProvenanceCases: provenance})
+	commentPreserved := 0
+	for _, item := range items {
+		if item.Name == "comment-only" && item.BaselineSourceDigest != item.InterventionSourceDigest && !item.SemanticDigestChanged && !item.StateTransitionChanged && !item.DecisionChanged {
+			commentPreserved++
+		}
+	}
+	writeJSON(*outputPath, report{Schema: "gooo.meta.claim-dependency-intervention/v2", Interventions: items, EvidenceProvenanceCases: provenance, CommentOnlySemanticPreservationNumerator: commentPreserved, CommentOnlySemanticPreservationDenominator: 1})
 	for _, item := range items {
 		fmt.Printf("intervention=%s semantic_digest_changed=%t evidence_digest_changed=%t state_transition_changed=%t decision_changed=%t edge_type_changed=%t authority=%s/%s writes=%d/%d\n", item.Name, item.SemanticDigestChanged, item.EvidenceDigestChanged, item.StateTransitionChanged, item.DecisionChanged, item.EdgeTypeChanged, item.BaselineAuthorityResolution, item.InterventionAuthorityResolution, item.BaselineRepositoryWrites, item.InterventionRepositoryWrites)
 	}

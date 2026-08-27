@@ -26,8 +26,9 @@ graph와 별도인 관찰 대상이며, 여섯 activity의 expected target tuple
 
 CI observer는 source graph와 분리된 raw target artifact를 실제로 읽은 뒤
 `syntax.ParseFile → bidir.Lower`로 정확히 하나의 activity occurrence를 재구성한다.
-AST span은 raw row digest에만 쓰고, occurrence address/target/proposition/value와
-lowered semantic digest를 별도로 receipt에 넣는다. 하나의 whole-file digest
+occurrence address는 `activity:<claim_id>`인 위치 독립 semantic 주소다. raw span
+start/end와 raw row digest는 별도 provenance 필드이며, lowered occurrence projection
+digest와 whole-graph context digest도 서로 분리한다. 하나의 whole-file digest
 match로 여섯 claim을 discharge하지 않는다. process exit가 필요한
 `FAILURE_ENTAILMENT`는 CI가 실제 non-zero process를 실행해 stdout/stderr와 exit
 code를 보존한 `FailureReceipt`가 추가로 있을 때만 관측된다. zero/success exit에
@@ -65,10 +66,15 @@ digest 목록이다. `MaximumCausePathDepth`는 `CauseEdgeIDs`의 edge depth다.
 
 구조적 inventory는 graph+external contract의 불일치를 claim별로 전부 기록한다.
 accepted target은 structural contradiction `0/0`, refuted target은
-`2/2`(ContradictionCheck, FailureEntailmentCheck)이며 이는 runtime edge
-observation이나 claim state가 아니다. inventory row는 claim/proposition,
-procedure ID, target occurrence/address, expected/declared value program, raw row
-digest와 semantic digest를 모두 결속하고 producer와 judge가 각자 다시 만든다.
+`2/2`(ContradictionCheck, FailureEntailmentCheck)이며 이는 re-derived expected
+inventory를 분모로 삼는 runtime edge observation이나 claim state가 아니다.
+unknown target은 현재 관측 inventory가 없으므로 분모 `0`이며
+`OBSERVE/structural-inventory/NO_CURRENT_TARGET_OBSERVATION_EXPECTED_INVENTORY_ZERO`
+좌표를 남긴다. inventory row는 claim/proposition, procedure ID, target
+occurrence/address, expected/declared value program, raw row digest와 semantic
+digest를 모두 결속하고 producer와 judge가 각자 다시 만든다. semantic
+address/digest는 comment/whitespace 삽입에도 보존되고 raw span/row/artifact
+provenance는 변할 수 있다.
 missing/duplicate/additional/replacement는 각각 다른 fail-closed reason이다.
 
 UNKNOWN은 5/8 eligible blocking edge, REFUTED는 6/8 observed causal edge와
@@ -100,8 +106,9 @@ prior ledger에서 결과를 독립 재구성한다. CI 보고 분모는 source 
 * source-only: 같은 raw evidence를 고정하고 `VALUE_PROGRAM`만 바꾼다.
 * observation-only: source semantics를 고정하고 external observation 유무만 바꾼다.
 * edge-only: source value가 선언한 typed edge만 바꾼다.
-* comment-only: raw source bytes만 바꾼다. semantic/graph/evidence digest,
-  claim states, transition digest vector, decision을 보존해야 한다.
+* comment-only: 유효 target의 raw bytes만 바꾼다. raw artifact/span/provenance는
+  변하지만 semantic address/occurrence digest, claim states, transition digest
+  vector, decision을 보존해야 한다. 이 보존 회귀는 `1/1`이다.
 
 동일 source/target/contract에서 profile label만 바꾼 case도 decision과 claim
 transition 의미를 바꾸지 않는다. 반면 관련 없는 artifact mismatch, claim target
@@ -114,8 +121,10 @@ authorization은 false다.
 
 고정 CI 회귀 분모는 truth algebra 8, evidence provenance 3, authority 3, prior
 tamper 3, path metric 2, owner applicability 3, observation binding negative 7,
-structural inventory negative 4(누락/중복/추가/치환)이다. invalid/duplicate/
-comment-like `.gooo` target은 canonical parse/lower 실패로 evidence가 되지 않는다.
+structural inventory negative 4(누락/중복/추가/치환), semantic occurrence 6,
+raw provenance binding 6, comment-only semantic preservation 1이다. invalid/
+duplicate/comment-like `.gooo` target은 canonical parse/lower 실패로 evidence가
+되지 않는다. 구조적 모순 지표는 accepted `0/0`, refuted `2/2`로 고정한다.
 
 ## Principles and limits
 

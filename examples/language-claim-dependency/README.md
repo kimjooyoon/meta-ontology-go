@@ -19,8 +19,11 @@ recipe만 선언한다. observer가 source graph와 분리된 target artifact by
 구조적 inventory는 accepted target `0/0`, refuted target `2/2`로 claim별
 계약 불일치를 모두 기록한다. 각 row는 canonical target occurrence address,
 raw row digest와 lowered semantic digest까지 결속한다. `negative-duplicate-target.gooo`,
-`negative-comment-only-target.gooo`, `negative-invalid-target.gooo`는 각각
+`negative/commented-out-activity.gooo`, `negative/negative-invalid-target.gooo`는 각각
 canonical occurrence가 아니므로 producer/judge가 evidence로 승격하지 않는다.
+반대로 `comment-whitespace-target.gooo`는 유효한 동일 graph다. 이 target은 raw
+artifact/span/provenance digest만 바꾸고 semantic address, occurrence digest,
+claim transition과 decision을 보존하는 producer/judge 회귀 대상이다.
 
 `CONTRADICTS`는 established upstream과 edge-specific structured opposite value가
 함께 있을 때만 target을 `REFUTED`로 만든다. `FAILURE_ENTAILMENT`는 정확한 edge에

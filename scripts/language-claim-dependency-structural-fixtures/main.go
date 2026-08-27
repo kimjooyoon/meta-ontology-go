@@ -41,6 +41,9 @@ func main() {
 		fail(err.Error())
 	}
 	bundle.StructuralContradictions = mutate(bundle.StructuralContradictions, *caseName)
+	for i := range bundle.StructuralContradictions {
+		bundle.StructuralContradictions[i].Digest = structuralDigest(bundle.StructuralContradictions[i])
+	}
 	bundle.Digest = bundleDigest(bundle)
 	bundleBytes, err := json.Marshal(bundle)
 	if err != nil {
@@ -53,6 +56,15 @@ func main() {
 	evidence.Digest = ""
 	evidence.Digest = evidenceDigest(evidence)
 	writeJSON(*outputPath, evidence)
+}
+
+func structuralDigest(value claimdependency.StructuralContradiction) string {
+	value.Digest = ""
+	data, err := json.Marshal(value)
+	if err != nil {
+		fail(err.Error())
+	}
+	return bytesDigest(data)
 }
 
 func mutate(rows []claimdependency.StructuralContradiction, name string) []claimdependency.StructuralContradiction {

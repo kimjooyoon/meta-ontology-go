@@ -409,24 +409,37 @@ func canonicalTargetOccurrence(artifact []byte, artifactPath string, sourceClaim
 	}
 	raw := append([]byte(nil), artifact[span.Start.Offset:span.End.Offset]...)
 	occurrence := TargetOccurrence{
-		Address:           fmt.Sprintf("activity:%s@%d:%d", targetClaim.ClaimID, span.Start.Offset, span.End.Offset),
+		Address:           "activity:" + targetClaim.ClaimID,
 		ActivityName:      targetClaim.ActivityName,
 		ClaimID:           targetClaim.ClaimID,
 		PropositionDigest: targetClaim.PropositionDigest,
 		Target:            targetClaim.Target,
 		ValueProgram:      targetClaim.ValueProgram,
-		RowDigest:         digestBytes(raw),
-		SemanticDigest:    target.Graph.CanonicalIRDigest,
+		RawSpanStart:      span.Start.Offset,
+		RawSpanEnd:        span.End.Offset,
+		RawRowDigest:      digestBytes(raw),
+		SemanticDigest:    targetOccurrenceSemanticDigest(*targetClaim),
+		ContextDigest:     target.Graph.CanonicalIRDigest,
 	}
 	return occurrence, raw, nil
 }
 
 func targetOccurrenceMaterial(value TargetOccurrence) string {
-	return fmt.Sprintf("address=%s|activity=%s|claim_id=%s|proposition_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s|row_digest=%s|semantic_digest=%s", value.Address, value.ActivityName, value.ClaimID, value.PropositionDigest, strings.Join(value.Target.Inputs, ","), value.Target.Output, value.Target.Artifact, value.ValueProgram, value.RowDigest, value.SemanticDigest)
+	return fmt.Sprintf("address=%s|activity=%s|claim_id=%s|proposition_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s|semantic_digest=%s", value.Address, value.ActivityName, value.ClaimID, value.PropositionDigest, strings.Join(value.Target.Inputs, ","), value.Target.Output, value.Target.Artifact, value.ValueProgram, value.SemanticDigest)
 }
 
-func observationProcedureDigest(procedure, claimID, propositionDigest, edgeID string, occurrence TargetOccurrence, artifactDigest string) string {
-	payload := fmt.Sprintf("procedure|procedure_id=%s|claim_id=%s|proposition_digest=%s|edge_id=%s|%s|artifact_digest=%s", procedure, claimID, propositionDigest, edgeID, targetOccurrenceMaterial(occurrence), artifactDigest)
+func targetOccurrenceSemanticDigest(claim Claim) string {
+	payload := fmt.Sprintf("target-occurrence|activity=%s|claim_id=%s|proposition=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s", claim.ActivityName, claim.ClaimID, claim.Proposition, strings.Join(claim.Target.Inputs, ","), claim.Target.Output, claim.Target.Artifact, claim.ValueProgram)
+	return digestBytes([]byte(payload))
+}
+
+func observationProcedureDigest(procedure, claimID, propositionDigest, edgeID string, occurrence TargetOccurrence) string {
+	payload := fmt.Sprintf("procedure|procedure_id=%s|claim_id=%s|proposition_digest=%s|edge_id=%s|%s", procedure, claimID, propositionDigest, edgeID, targetOccurrenceMaterial(occurrence))
+	return digestBytes([]byte(payload))
+}
+
+func rawProvenanceDigest(occurrence TargetOccurrence, artifactDigest string) string {
+	payload := fmt.Sprintf("raw-provenance|artifact_digest=%s|address=%s|raw_span_start=%d|raw_span_end=%d|raw_row_digest=%s", artifactDigest, occurrence.Address, occurrence.RawSpanStart, occurrence.RawSpanEnd, occurrence.RawRowDigest)
 	return digestBytes([]byte(payload))
 }
 

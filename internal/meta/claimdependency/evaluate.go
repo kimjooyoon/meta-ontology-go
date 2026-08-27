@@ -70,6 +70,9 @@ func BuildCurrentEvidenceForSource(sourcePath, artifactPath, operation, capabili
 	}
 	observations := []ObservationReceipt{}
 	structuralContradictions := []StructuralContradiction{}
+	expectedStructuralContradictionTotal := 0
+	semanticOccurrenceNumerator, semanticOccurrenceDenominator := 0, parsed.Graph.NodeTotal
+	rawProvenanceBindingNumerator, rawProvenanceBindingDenominator := 0, parsed.Graph.NodeTotal
 	observationBundleDigest := ""
 	observationBundleRawDigest := ""
 	status := UnknownEvidence
@@ -89,6 +92,9 @@ func BuildCurrentEvidenceForSource(sourcePath, artifactPath, operation, capabili
 		}
 		observations = append([]ObservationReceipt(nil), bundle.Observations...)
 		structuralContradictions = append([]StructuralContradiction(nil), bundle.StructuralContradictions...)
+		expectedStructuralContradictionTotal = bundle.ExpectedStructuralContradictionTotal
+		semanticOccurrenceNumerator, semanticOccurrenceDenominator = bundle.SemanticOccurrenceNumerator, bundle.SemanticOccurrenceDenominator
+		rawProvenanceBindingNumerator, rawProvenanceBindingDenominator = bundle.RawProvenanceBindingNumerator, bundle.RawProvenanceBindingDenominator
 		observationBundleDigest = bundle.Digest
 		if hasClaimOrEdgeObservation(observations) {
 			status = CurrentEvidence
@@ -117,7 +123,7 @@ func BuildCurrentEvidenceForSource(sourcePath, artifactPath, operation, capabili
 		}
 		observationBundleRawDigest = digestBytes(observationRaw)
 	}
-	receipt := EvidenceReceipt{Schema: EvidenceSchema, Provider: "github-actions-current-evidence-provider/v4", SourcePath: sourcePath, SourceBytesDigest: digestBytes(source), SourceGraphDigest: parsed.Graph.Digest, ArtifactPath: artifactPath, ArtifactBytesDigest: digestBytes(artifact), Operation: operation, RequestStatus: "CLAIMED_INPUT", Procedure: evidenceProcedure, ObservationPath: observationPath, ObservationBundleDigest: observationBundleDigest, ObservationBundleRawDigest: observationBundleRawDigest, ObservationBundleRaw: observationRaw, Observations: observations, StructuralContradictions: structuralContradictions, ObservedPredicate: predicate, ObservedValue: observedValue, Status: status, Coordinate: Coordinate{Stage: "OBSERVE", Step: "current-evidence-provider", Reason: observationReason(status, predicate)}, Claims: claims, Capability: capability, Snapshot: snapshot}
+	receipt := EvidenceReceipt{Schema: EvidenceSchema, Provider: "github-actions-current-evidence-provider/v4", SourcePath: sourcePath, SourceBytesDigest: digestBytes(source), SourceGraphDigest: parsed.Graph.Digest, ArtifactPath: artifactPath, ArtifactBytesDigest: digestBytes(artifact), Operation: operation, RequestStatus: "CLAIMED_INPUT", Procedure: evidenceProcedure, ObservationPath: observationPath, ObservationBundleDigest: observationBundleDigest, ObservationBundleRawDigest: observationBundleRawDigest, ObservationBundleRaw: observationRaw, Observations: observations, StructuralContradictions: structuralContradictions, ExpectedStructuralContradictionTotal: expectedStructuralContradictionTotal, SemanticOccurrenceNumerator: semanticOccurrenceNumerator, SemanticOccurrenceDenominator: semanticOccurrenceDenominator, RawProvenanceBindingNumerator: rawProvenanceBindingNumerator, RawProvenanceBindingDenominator: rawProvenanceBindingDenominator, ObservedPredicate: predicate, ObservedValue: observedValue, Status: status, Coordinate: Coordinate{Stage: "OBSERVE", Step: "current-evidence-provider", Reason: observationReason(status, predicate)}, Claims: claims, Capability: capability, Snapshot: snapshot}
 	receipt.Digest, err = evidenceReceiptDigest(receipt)
 	if err != nil {
 		return EvidenceReceipt{}, err
@@ -168,6 +174,8 @@ func BuildObservationBundle(sourcePath string, source []byte, artifactPath, outp
 		}
 	}
 	observations := []ObservationReceipt{}
+	semanticOccurrenceNumerator, rawProvenanceBindingNumerator := 0, 0
+	semanticOccurrenceDigests := map[string]bool{}
 	structural, err := deriveStructuralInventory(parsed.Graph, contract, artifact, artifactPath)
 	if err != nil {
 		if !strings.HasPrefix(err.Error(), "TARGET_SYNTAX_OR_LOWER_INVALID") && !strings.HasPrefix(err.Error(), "TARGET_ACTIVITY_OCCURRENCE") {
@@ -184,8 +192,14 @@ func BuildObservationBundle(sourcePath string, source []byte, artifactPath, outp
 		if occurrenceErr != nil {
 			continue
 		}
-		if claimIdentityMatchesContract(claim, material) && claim.ValueProgram == material.ExpectedValueProgram && artifactPath == contract.ExpectedArtifactPath && actualDigest == contract.ExpectedArtifactDigest && occurrence.RowDigest == material.TargetRowDigest {
-			observed := claimObservationMaterial(claim, material, artifactPath, actualDigest, occurrence.RowDigest)
+		semanticOccurrenceNumerator++
+		rawProvenanceBindingNumerator++
+		if occurrence.SemanticDigest == "" || semanticOccurrenceDigests[occurrence.SemanticDigest] {
+			return ObservationBundle{}, fmt.Errorf("TARGET_OCCURRENCE_SEMANTIC_DIGEST_NOT_UNIQUE: activity=%s", claim.ActivityName)
+		}
+		semanticOccurrenceDigests[occurrence.SemanticDigest] = true
+		if claimIdentityMatchesContract(claim, material) && claim.ValueProgram == material.ExpectedValueProgram && artifactPath == contract.ExpectedArtifactPath && actualDigest == contract.ExpectedArtifactDigest && occurrence.RawRowDigest == material.TargetRowDigest {
+			observed := claimObservationMaterial(claim, material, artifactPath, actualDigest, occurrence.RawRowDigest)
 			observations = append(observations, makeObservation("CLAIM", claim.ClaimID, claim.PropositionDigest, "", "", "", "", claim.Target, occurrence, artifactPath, actualDigest, observed, observed, ObservationEvidence, ObservationEvidence, material.ProcedureID, "CURRENT_TARGET_PREDICATE_MATCH", string(row)))
 		}
 	}
@@ -205,7 +219,7 @@ func BuildObservationBundle(sourcePath string, source []byte, artifactPath, outp
 		if fromErr != nil || toErr != nil {
 			continue
 		}
-		fromRowDigest, toRowDigest := fromOccurrence.RowDigest, toOccurrence.RowDigest
+		fromRowDigest, toRowDigest := fromOccurrence.RawRowDigest, toOccurrence.RawRowDigest
 		fromExpected := fromRowDigest == fromContract.TargetRowDigest
 		toAlternate := toContract.AlternateRowDigest != "" && toRowDigest == toContract.AlternateRowDigest
 		if edge.Kind == Contradicts && fromExpected && toAlternate {
@@ -229,7 +243,7 @@ func BuildObservationBundle(sourcePath string, source []byte, artifactPath, outp
 			return ObservationBundle{}, err
 		}
 	}
-	bundle := ObservationBundle{Schema: observationBundleSchema, Provider: "github-actions-target-observer/v4", SourcePath: sourcePath, SourceDigest: digestBytes(source), ArtifactPath: artifactPath, ArtifactBytesDigest: actualDigest, ContractPath: contractPath, ContractDigest: digestBytes(contractBytes), ContractRaw: append([]byte(nil), contractBytes...), FailureReceiptPath: failureReceiptPath, Profile: profile, Observations: observations, StructuralContradictions: structural}
+	bundle := ObservationBundle{Schema: observationBundleSchema, Provider: "github-actions-target-observer/v4", SourcePath: sourcePath, SourceDigest: digestBytes(source), ArtifactPath: artifactPath, ArtifactBytesDigest: actualDigest, ContractPath: contractPath, ContractDigest: digestBytes(contractBytes), ContractRaw: append([]byte(nil), contractBytes...), FailureReceiptPath: failureReceiptPath, Profile: profile, Observations: observations, StructuralContradictions: structural, ExpectedStructuralContradictionTotal: len(structural), SemanticOccurrenceNumerator: semanticOccurrenceNumerator, SemanticOccurrenceDenominator: parsed.Graph.NodeTotal, RawProvenanceBindingNumerator: rawProvenanceBindingNumerator, RawProvenanceBindingDenominator: parsed.Graph.NodeTotal}
 	if failureReceiptPath != "" {
 		failureBytes, err := os.ReadFile(failureReceiptPath)
 		if err != nil {
@@ -250,7 +264,7 @@ func makeObservation(binding, claimID, propositionDigest, edgeID, fromClaimID, t
 	if expectedValue == observedValue {
 		comparison = "MATCH"
 	}
-	return ObservationReceipt{Schema: observationSchema, Provider: "github-actions-target-observer/v4", Binding: binding, ClaimID: claimID, PropositionDigest: propositionDigest, EdgeID: edgeID, FromClaimID: fromClaimID, ToClaimID: toClaimID, EdgeKind: edgeKind, Target: target, Occurrence: occurrence, TargetPath: artifactPath, TargetBytesDigest: targetBytesDigest, ExpectedPredicate: expectedPredicate, ExpectedValue: expectedValue, ObservedPredicate: observedPredicate, ObservedValue: observedValue, ComparisonResult: comparison, Procedure: procedure, ProcedureDigest: observationProcedureDigest(procedure, claimID, propositionDigest, edgeID, occurrence, targetBytesDigest), Output: output, OutputDigest: digestBytes([]byte(output)), Coordinate: Coordinate{Stage: "OBSERVE", Step: "target-observer", Reason: reason}}
+	return ObservationReceipt{Schema: observationSchema, Provider: "github-actions-target-observer/v4", Binding: binding, ClaimID: claimID, PropositionDigest: propositionDigest, EdgeID: edgeID, FromClaimID: fromClaimID, ToClaimID: toClaimID, EdgeKind: edgeKind, Target: target, Occurrence: occurrence, TargetPath: artifactPath, TargetBytesDigest: targetBytesDigest, ExpectedPredicate: expectedPredicate, ExpectedValue: expectedValue, ObservedPredicate: observedPredicate, ObservedValue: observedValue, ComparisonResult: comparison, Procedure: procedure, ProcedureDigest: observationProcedureDigest(procedure, claimID, propositionDigest, edgeID, occurrence), RawProvenanceDigest: rawProvenanceDigest(occurrence, targetBytesDigest), Output: output, OutputDigest: digestBytes([]byte(output)), Coordinate: Coordinate{Stage: "OBSERVE", Step: "target-observer", Reason: reason}}
 }
 
 func claimIdentityMatchesContract(claim Claim, expected ValidatorClaim) bool {
@@ -258,7 +272,7 @@ func claimIdentityMatchesContract(claim Claim, expected ValidatorClaim) bool {
 }
 
 func claimObservationMaterial(claim Claim, expected ValidatorClaim, artifactPath, artifactDigest, rowDigest string) string {
-	return fmt.Sprintf("claim-observation|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_row_digest=%s|artifact_path=%s|artifact_digest=%s|expected_value_program=%s", claim.ClaimID, claim.PropositionDigest, expected.ProcedureID, rowDigest, artifactPath, artifactDigest, expected.ExpectedValueProgram)
+	return fmt.Sprintf("claim-observation|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_inputs=%s|target_output=%s|target_artifact=%s|expected_value_program=%s", claim.ClaimID, claim.PropositionDigest, expected.ProcedureID, strings.Join(claim.Target.Inputs, ","), claim.Target.Output, claim.Target.Artifact, expected.ExpectedValueProgram)
 }
 
 func edgeTargetMaterial(prefix string, edge Edge, graph Graph, fromRowDigest, toRowDigest, artifactPath, artifactDigest string) string {
@@ -313,7 +327,28 @@ func validateObservationBundle(bundle ObservationBundle, sourcePath string, sour
 	}
 	expectedStructural, err := deriveStructuralInventory(graph, contract, artifact, artifactPath)
 	if err != nil {
-		return err
+		if !strings.HasPrefix(err.Error(), "TARGET_SYNTAX_OR_LOWER_INVALID") && !strings.HasPrefix(err.Error(), "TARGET_ACTIVITY_OCCURRENCE") {
+			return err
+		}
+		expectedStructural = []StructuralContradiction{}
+	}
+	semanticOccurrences, rawProvenanceBindings := 0, 0
+	semanticOccurrenceDigests := map[string]bool{}
+	for _, claim := range graph.Nodes {
+		if occurrence, _, occurrenceErr := canonicalTargetOccurrence(artifact, artifactPath, claim); occurrenceErr == nil {
+			semanticOccurrences++
+			rawProvenanceBindings++
+			if occurrence.SemanticDigest == "" || semanticOccurrenceDigests[occurrence.SemanticDigest] {
+				return fmt.Errorf("target occurrence semantic digest is not unique")
+			}
+			semanticOccurrenceDigests[occurrence.SemanticDigest] = true
+		}
+	}
+	if bundle.ExpectedStructuralContradictionTotal != len(expectedStructural) {
+		return fmt.Errorf("structural inventory denominator is not re-derived: got=%d want=%d", bundle.ExpectedStructuralContradictionTotal, len(expectedStructural))
+	}
+	if bundle.SemanticOccurrenceNumerator != semanticOccurrences || bundle.SemanticOccurrenceDenominator != graph.NodeTotal || bundle.RawProvenanceBindingNumerator != rawProvenanceBindings || bundle.RawProvenanceBindingDenominator != graph.NodeTotal {
+		return fmt.Errorf("target occurrence metrics are not re-derived from canonical target occurrences")
 	}
 	if err := validateStructuralInventory(bundle.StructuralContradictions, expectedStructural); err != nil {
 		return err
@@ -322,7 +357,7 @@ func validateObservationBundle(bundle ObservationBundle, sourcePath string, sour
 }
 
 func validateObservation(value ObservationReceipt, artifactPath string, artifact []byte, graph Graph, contract ValidatorContract, failure FailureReceipt, hasFailure bool) error {
-	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Procedure == "" || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence, value.TargetBytesDigest) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
+	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Procedure == "" || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence) || value.RawProvenanceDigest != rawProvenanceDigest(value.Occurrence, value.TargetBytesDigest) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
 		return fmt.Errorf("target observation identity or target binding is invalid")
 	}
 	if value.TargetBytesDigest != digestBytes(artifact) || (value.ComparisonResult != "MATCH" && value.ComparisonResult != "MISMATCH") {
@@ -339,8 +374,8 @@ func validateObservation(value ObservationReceipt, artifactPath string, artifact
 		}
 		material, ok := contractClaim(contract, graph.Nodes[claimIndex].ActivityName)
 		occurrence, row, occurrenceErr := canonicalTargetOccurrence(artifact, artifactPath, graph.Nodes[claimIndex])
-		expected := claimObservationMaterial(graph.Nodes[claimIndex], material, artifactPath, digestBytes(artifact), occurrence.RowDigest)
-		if occurrenceErr != nil || !ok || !claimIdentityMatchesContract(graph.Nodes[claimIndex], material) || graph.Nodes[claimIndex].ValueProgram != material.ExpectedValueProgram || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || occurrence.RowDigest != material.TargetRowDigest || !reflect.DeepEqual(value.Occurrence, occurrence) || value.ExpectedValue != expected || value.ObservedValue != expected || value.OutputDigest != digestBytes(row) || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence, value.TargetBytesDigest) {
+		expected := claimObservationMaterial(graph.Nodes[claimIndex], material, artifactPath, digestBytes(artifact), occurrence.RawRowDigest)
+		if occurrenceErr != nil || !ok || !claimIdentityMatchesContract(graph.Nodes[claimIndex], material) || graph.Nodes[claimIndex].ValueProgram != material.ExpectedValueProgram || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || occurrence.RawRowDigest != material.TargetRowDigest || !reflect.DeepEqual(value.Occurrence, occurrence) || value.ExpectedValue != expected || value.ObservedValue != expected || value.OutputDigest != digestBytes(row) || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence) {
 			return fmt.Errorf("claim observation does not match external validator material")
 		}
 	case "EDGE":
@@ -364,11 +399,11 @@ func validateObservation(value ObservationReceipt, artifactPath string, artifact
 		}
 		fromOccurrence, _, fromErr := canonicalTargetOccurrence(artifact, artifactPath, graph.Nodes[from])
 		toOccurrence, _, toErr := canonicalTargetOccurrence(artifact, artifactPath, graph.Nodes[to])
-		fromRowDigest, toRowDigest := fromOccurrence.RowDigest, toOccurrence.RowDigest
+		fromRowDigest, toRowDigest := fromOccurrence.RawRowDigest, toOccurrence.RawRowDigest
 		if artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || fromErr != nil || toErr != nil {
 			return fmt.Errorf("edge observation target rows are not externally bound")
 		}
-		if !reflect.DeepEqual(value.Occurrence, toOccurrence) || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence, value.TargetBytesDigest) {
+		if !reflect.DeepEqual(value.Occurrence, toOccurrence) || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence) {
 			return fmt.Errorf("edge observation occurrence or procedure is not source-bound")
 		}
 		if edge.Kind == Contradicts && (fromRowDigest != fromContract.TargetRowDigest || toContract.AlternateRowDigest == "" || toRowDigest != toContract.AlternateRowDigest) {
@@ -460,14 +495,14 @@ func validateFailureReceipt(value FailureReceipt, sourcePath string, source []by
 }
 
 func failureInputMatches(input FailureInput, claim Claim, artifactPath, artifactDigest string, occurrence TargetOccurrence) bool {
-	return input.ClaimID == claim.ClaimID && input.PropositionDigest == claim.PropositionDigest && reflect.DeepEqual(input.Target, claim.Target) && reflect.DeepEqual(input.Occurrence, occurrence) && input.TargetOutputDigest == occurrence.RowDigest && input.ValueProgram == claim.ValueProgram && input.ArtifactPath == artifactPath && input.ArtifactDigest == artifactDigest
+	return input.ClaimID == claim.ClaimID && input.PropositionDigest == claim.PropositionDigest && reflect.DeepEqual(input.Target, claim.Target) && reflect.DeepEqual(input.Occurrence, occurrence) && input.TargetOutputDigest == occurrence.RawRowDigest && input.ValueProgram == claim.ValueProgram && input.ArtifactPath == artifactPath && input.ArtifactDigest == artifactDigest
 }
 
 func failureProcedureDigest(value FailureReceipt) string {
 	parts := []string{value.Procedure, value.ExecutableDigest}
 	parts = append(parts, value.Argv...)
 	for _, input := range value.InputTargets {
-		parts = append(parts, input.ClaimID, input.PropositionDigest, input.ValueProgram, input.ArtifactPath, input.ArtifactDigest, targetOccurrenceMaterial(input.Occurrence))
+		parts = append(parts, input.ClaimID, input.PropositionDigest, input.ValueProgram, input.ArtifactPath, input.ArtifactDigest, input.TargetOutputDigest, rawProvenanceDigest(input.Occurrence, input.ArtifactDigest), targetOccurrenceMaterial(input.Occurrence))
 	}
 	return digestBytes([]byte(strings.Join(parts, "|")))
 }
@@ -515,7 +550,7 @@ func BuildFailureReceipt(sourcePath string, source []byte, artifactPath, edgeID,
 }
 
 func failureInputFor(claim Claim, artifactPath, artifactDigest string, occurrence TargetOccurrence) FailureInput {
-	return FailureInput{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, Target: claim.Target, Occurrence: occurrence, TargetOutputDigest: occurrence.RowDigest, ValueProgram: claim.ValueProgram, ArtifactPath: artifactPath, ArtifactDigest: artifactDigest}
+	return FailureInput{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, Target: claim.Target, Occurrence: occurrence, TargetOutputDigest: occurrence.RawRowDigest, ValueProgram: claim.ValueProgram, ArtifactPath: artifactPath, ArtifactDigest: artifactDigest}
 }
 
 func claimObservationFor(claim Claim, observations []ObservationReceipt) (ObservationReceipt, bool) {
@@ -658,7 +693,7 @@ func Evaluate(source []byte, sourcePath string, evidence EvidenceReceipt, prior 
 		}
 	}
 	sourceDigest, semanticDigest := digestBytes(source), parsed.Graph.CanonicalIRDigest
-	provenance := fmt.Sprintf("source-semantic:%s|evidence:%s|producer:%s|consumer:%s", semanticDigest, evidence.Digest, ProducerID, ConsumerID)
+	provenance := fmt.Sprintf("source-semantic:%s|claim-evidence:%s|producer:%s|consumer:%s", semanticDigest, semanticEvidenceDigest(evidence), ProducerID, ConsumerID)
 	states, outcomes, local := classify(parsed.Graph, evidence)
 	transitions, err := buildTransitions(parsed.Graph, outcomes, local, provenance, prior)
 	if err != nil {
@@ -742,11 +777,11 @@ func validateEvidence(parsed sourceGraph, evidence EvidenceReceipt) error {
 		if err := validateObservationBundle(observedBundle, evidence.SourcePath, evidenceSource, evidence.ArtifactPath, artifact, evidenceGraph.Graph); err != nil {
 			return err
 		}
-		if observedBundle.Digest != evidence.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, evidence.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, evidence.StructuralContradictions) {
+		if observedBundle.Digest != evidence.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, evidence.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, evidence.StructuralContradictions) || observedBundle.ExpectedStructuralContradictionTotal != evidence.ExpectedStructuralContradictionTotal || observedBundle.SemanticOccurrenceNumerator != evidence.SemanticOccurrenceNumerator || observedBundle.SemanticOccurrenceDenominator != evidence.SemanticOccurrenceDenominator || observedBundle.RawProvenanceBindingNumerator != evidence.RawProvenanceBindingNumerator || observedBundle.RawProvenanceBindingDenominator != evidence.RawProvenanceBindingDenominator {
 			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
 		}
 		observations = observedBundle.Observations
-	} else if len(evidence.Observations) != 0 || len(evidence.StructuralContradictions) != 0 || evidence.ObservationBundleDigest != "" || evidence.ObservationBundleRawDigest != "" || len(evidence.ObservationBundleRaw) != 0 {
+	} else if len(evidence.Observations) != 0 || len(evidence.StructuralContradictions) != 0 || evidence.ObservationBundleDigest != "" || evidence.ObservationBundleRawDigest != "" || len(evidence.ObservationBundleRaw) != 0 || evidence.ExpectedStructuralContradictionTotal != 0 || evidence.SemanticOccurrenceNumerator != 0 || evidence.RawProvenanceBindingNumerator != 0 {
 		return fmt.Errorf("evidence has observations without a raw observation bundle")
 	}
 
@@ -1143,7 +1178,12 @@ func blockedFrontier(index int, graph Graph, states []string) ([]string, []strin
 }
 
 func deriveMetrics(graph Graph, states []string, resolutions []Resolution, outcomes []Transition, evidence EvidenceReceipt, recovered bool) Metrics {
-	metrics := Metrics{FixedClaimTotal: ClaimTotal, DistinctPropositionTotal: distinctPropositions(graph), FixedEdgeTotal: EdgeTotal, EligibleEdgeTotal: len(graph.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: InitialTransitionTotal, TruthTableCaseTotal: len(TruthTableCases()), AuthorityCaseTotal: len(AuthorityCases()), StructuralContradictionNumerator: len(evidence.StructuralContradictions), StructuralContradictionDenominator: len(evidence.StructuralContradictions)}
+	structuralDenominator := evidence.ExpectedStructuralContradictionTotal
+	denominatorCoordinate := Coordinate{Stage: "OBSERVE", Step: "structural-inventory", Reason: "RE_DERIVED_GRAPH_CONTRACT_INVENTORY"}
+	if structuralDenominator == 0 {
+		denominatorCoordinate.Reason = "NO_CURRENT_TARGET_OBSERVATION_EXPECTED_INVENTORY_ZERO"
+	}
+	metrics := Metrics{FixedClaimTotal: ClaimTotal, DistinctPropositionTotal: distinctPropositions(graph), FixedEdgeTotal: EdgeTotal, EligibleEdgeTotal: len(graph.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: InitialTransitionTotal, TruthTableCaseTotal: len(TruthTableCases()), AuthorityCaseTotal: len(AuthorityCases()), StructuralContradictionNumerator: len(evidence.StructuralContradictions), StructuralContradictionDenominator: structuralDenominator, SemanticOccurrenceNumerator: evidence.SemanticOccurrenceNumerator, SemanticOccurrenceDenominator: evidence.SemanticOccurrenceDenominator, RawProvenanceBindingNumerator: evidence.RawProvenanceBindingNumerator, RawProvenanceBindingDenominator: evidence.RawProvenanceBindingDenominator, StructuralContradictionDenominatorCoordinate: denominatorCoordinate}
 	if recovered {
 		metrics.TransitionTotal += ClaimTotal
 	}
@@ -1232,6 +1272,11 @@ func distinctPropositions(graph Graph) int {
 		seen[claim.PropositionDigest] = true
 	}
 	return len(seen)
+}
+
+func semanticEvidenceDigest(evidence EvidenceReceipt) string {
+	digest, _ := digestJSON(evidence.Claims)
+	return digest
 }
 func contains(values []string, target string) bool {
 	for _, value := range values {

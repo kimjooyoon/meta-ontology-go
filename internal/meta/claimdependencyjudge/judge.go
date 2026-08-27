@@ -62,48 +62,54 @@ type target struct {
 	Artifact string   `json:"artifact"`
 }
 type observationReceipt struct {
-	Schema            string           `json:"schema"`
-	Provider          string           `json:"provider"`
-	Binding           string           `json:"binding"`
-	ClaimID           string           `json:"claim_id,omitempty"`
-	PropositionDigest string           `json:"proposition_digest,omitempty"`
-	EdgeID            string           `json:"edge_id,omitempty"`
-	FromClaimID       string           `json:"from_claim_id,omitempty"`
-	ToClaimID         string           `json:"to_claim_id,omitempty"`
-	EdgeKind          edgeKind         `json:"edge_kind,omitempty"`
-	Target            target           `json:"target"`
-	Occurrence        targetOccurrence `json:"target_occurrence"`
-	TargetPath        string           `json:"target_path"`
-	TargetBytesDigest string           `json:"target_bytes_digest"`
-	ExpectedPredicate predicate        `json:"expected_predicate"`
-	ExpectedValue     string           `json:"expected_value"`
-	ObservedPredicate predicate        `json:"observed_predicate"`
-	ObservedValue     string           `json:"observed_value"`
-	ComparisonResult  string           `json:"comparison_result"`
-	Procedure         string           `json:"procedure"`
-	ProcedureDigest   string           `json:"procedure_digest"`
-	Output            string           `json:"output"`
-	OutputDigest      string           `json:"output_digest"`
-	Coordinate        coordinate       `json:"coordinate"`
-	Digest            string           `json:"digest"`
+	Schema              string           `json:"schema"`
+	Provider            string           `json:"provider"`
+	Binding             string           `json:"binding"`
+	ClaimID             string           `json:"claim_id,omitempty"`
+	PropositionDigest   string           `json:"proposition_digest,omitempty"`
+	EdgeID              string           `json:"edge_id,omitempty"`
+	FromClaimID         string           `json:"from_claim_id,omitempty"`
+	ToClaimID           string           `json:"to_claim_id,omitempty"`
+	EdgeKind            edgeKind         `json:"edge_kind,omitempty"`
+	Target              target           `json:"target"`
+	Occurrence          targetOccurrence `json:"target_occurrence"`
+	TargetPath          string           `json:"target_path"`
+	TargetBytesDigest   string           `json:"target_bytes_digest"`
+	ExpectedPredicate   predicate        `json:"expected_predicate"`
+	ExpectedValue       string           `json:"expected_value"`
+	ObservedPredicate   predicate        `json:"observed_predicate"`
+	ObservedValue       string           `json:"observed_value"`
+	ComparisonResult    string           `json:"comparison_result"`
+	Procedure           string           `json:"procedure"`
+	ProcedureDigest     string           `json:"procedure_digest"`
+	RawProvenanceDigest string           `json:"raw_provenance_digest"`
+	Output              string           `json:"output"`
+	OutputDigest        string           `json:"output_digest"`
+	Coordinate          coordinate       `json:"coordinate"`
+	Digest              string           `json:"digest"`
 }
 type observationBundle struct {
-	Schema                   string                    `json:"schema"`
-	Provider                 string                    `json:"provider"`
-	SourcePath               string                    `json:"source_path"`
-	SourceDigest             string                    `json:"source_digest"`
-	ArtifactPath             string                    `json:"artifact_path"`
-	ArtifactBytesDigest      string                    `json:"artifact_bytes_digest"`
-	ContractPath             string                    `json:"contract_path"`
-	ContractDigest           string                    `json:"contract_digest"`
-	ContractRaw              []byte                    `json:"contract_raw"`
-	FailureReceiptPath       string                    `json:"failure_receipt_path,omitempty"`
-	FailureReceiptDigest     string                    `json:"failure_receipt_digest,omitempty"`
-	FailureReceiptRaw        []byte                    `json:"failure_receipt_raw,omitempty"`
-	Profile                  string                    `json:"profile"`
-	Observations             []observationReceipt      `json:"observations"`
-	StructuralContradictions []structuralContradiction `json:"structural_contradictions,omitempty"`
-	Digest                   string                    `json:"digest"`
+	Schema                               string                    `json:"schema"`
+	Provider                             string                    `json:"provider"`
+	SourcePath                           string                    `json:"source_path"`
+	SourceDigest                         string                    `json:"source_digest"`
+	ArtifactPath                         string                    `json:"artifact_path"`
+	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
+	ContractPath                         string                    `json:"contract_path"`
+	ContractDigest                       string                    `json:"contract_digest"`
+	ContractRaw                          []byte                    `json:"contract_raw"`
+	FailureReceiptPath                   string                    `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest                 string                    `json:"failure_receipt_digest,omitempty"`
+	FailureReceiptRaw                    []byte                    `json:"failure_receipt_raw,omitempty"`
+	Profile                              string                    `json:"profile"`
+	Observations                         []observationReceipt      `json:"observations"`
+	StructuralContradictions             []structuralContradiction `json:"structural_contradictions,omitempty"`
+	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
+	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
+	Digest                               string                    `json:"digest"`
 }
 type structuralContradiction struct {
 	ClaimID           string           `json:"claim_id"`
@@ -121,8 +127,11 @@ type targetOccurrence struct {
 	PropositionDigest string `json:"proposition_digest"`
 	Target            target `json:"target"`
 	ValueProgram      string `json:"value_program"`
-	RowDigest         string `json:"row_digest"`
+	RawSpanStart      int    `json:"raw_span_start"`
+	RawSpanEnd        int    `json:"raw_span_end"`
+	RawRowDigest      string `json:"raw_row_digest"`
 	SemanticDigest    string `json:"semantic_digest"`
+	ContextDigest     string `json:"context_digest"`
 }
 type validatorContract struct {
 	Schema                 string           `json:"schema"`
@@ -256,30 +265,35 @@ type snapshot struct {
 	Coordinate       coordinate `json:"coordinate"`
 }
 type evidenceReceipt struct {
-	Schema                     string                    `json:"schema"`
-	Provider                   string                    `json:"provider"`
-	SourcePath                 string                    `json:"source_path"`
-	SourceBytesDigest          string                    `json:"source_bytes_digest"`
-	SourceGraphDigest          string                    `json:"source_graph_digest"`
-	ArtifactPath               string                    `json:"artifact_path"`
-	ArtifactBytesDigest        string                    `json:"artifact_bytes_digest"`
-	Operation                  string                    `json:"operation"`
-	RequestStatus              string                    `json:"request_status"`
-	Procedure                  string                    `json:"procedure"`
-	ObservationPath            string                    `json:"observation_path,omitempty"`
-	ObservationBundleDigest    string                    `json:"observation_bundle_digest,omitempty"`
-	ObservationBundleRawDigest string                    `json:"observation_bundle_raw_digest,omitempty"`
-	ObservationBundleRaw       []byte                    `json:"observation_bundle_raw,omitempty"`
-	Observations               []observationReceipt      `json:"observations"`
-	StructuralContradictions   []structuralContradiction `json:"structural_contradictions,omitempty"`
-	ObservedPredicate          predicate                 `json:"observed_predicate"`
-	ObservedValue              string                    `json:"observed_value"`
-	Status                     string                    `json:"status"`
-	Coordinate                 coordinate                `json:"coordinate"`
-	Claims                     []evidenceClaim           `json:"claims"`
-	Capability                 capability                `json:"capability"`
-	Snapshot                   snapshot                  `json:"snapshot"`
-	Digest                     string                    `json:"digest"`
+	Schema                               string                    `json:"schema"`
+	Provider                             string                    `json:"provider"`
+	SourcePath                           string                    `json:"source_path"`
+	SourceBytesDigest                    string                    `json:"source_bytes_digest"`
+	SourceGraphDigest                    string                    `json:"source_graph_digest"`
+	ArtifactPath                         string                    `json:"artifact_path"`
+	ArtifactBytesDigest                  string                    `json:"artifact_bytes_digest"`
+	Operation                            string                    `json:"operation"`
+	RequestStatus                        string                    `json:"request_status"`
+	Procedure                            string                    `json:"procedure"`
+	ObservationPath                      string                    `json:"observation_path,omitempty"`
+	ObservationBundleDigest              string                    `json:"observation_bundle_digest,omitempty"`
+	ObservationBundleRawDigest           string                    `json:"observation_bundle_raw_digest,omitempty"`
+	ObservationBundleRaw                 []byte                    `json:"observation_bundle_raw,omitempty"`
+	Observations                         []observationReceipt      `json:"observations"`
+	StructuralContradictions             []structuralContradiction `json:"structural_contradictions,omitempty"`
+	ExpectedStructuralContradictionTotal int                       `json:"expected_structural_contradiction_total"`
+	SemanticOccurrenceNumerator          int                       `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator        int                       `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator        int                       `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator      int                       `json:"raw_provenance_binding_denominator"`
+	ObservedPredicate                    predicate                 `json:"observed_predicate"`
+	ObservedValue                        string                    `json:"observed_value"`
+	Status                               string                    `json:"status"`
+	Coordinate                           coordinate                `json:"coordinate"`
+	Claims                               []evidenceClaim           `json:"claims"`
+	Capability                           capability                `json:"capability"`
+	Snapshot                             snapshot                  `json:"snapshot"`
+	Digest                               string                    `json:"digest"`
 }
 type subject struct {
 	SourcePath          string     `json:"source_path"`
@@ -351,37 +365,44 @@ type edgeMetric struct {
 	Discharge      int      `json:"discharge"`
 }
 type metrics struct {
-	FixedClaimTotal                    int          `json:"fixed_claim_total"`
-	DistinctPropositionTotal           int          `json:"distinct_proposition_total"`
-	StructuralContradictionNumerator   int          `json:"structural_contradiction_numerator"`
-	StructuralContradictionDenominator int          `json:"structural_contradiction_denominator"`
-	FixedEdgeTotal                     int          `json:"fixed_edge_total"`
-	EligibleEdgeTotal                  int          `json:"eligible_edge_total"`
-	ObservedCausalEdgeTotal            int          `json:"observed_causal_edge_total"`
-	ShortestPathEdgeUnionTotal         int          `json:"shortest_path_edge_union_total"`
-	ClassifiedClaimTotal               int          `json:"classified_claim_total"`
-	OpenClaimTotal                     int          `json:"open_claim_total"`
-	DischargedClaimTotal               int          `json:"discharged_claim_total"`
-	RefutedClaimTotal                  int          `json:"refuted_claim_total"`
-	CurrentEvidenceTotal               int          `json:"current_evidence_total"`
-	HistoricalEvidenceTotal            int          `json:"historical_evidence_total"`
-	UnknownEvidenceTotal               int          `json:"unknown_evidence_total"`
-	DirectUnknownClaimTotal            int          `json:"direct_unknown_claim_total"`
-	DependencyBlockedClaimTotal        int          `json:"dependency_blocked_claim_total"`
-	DirectRefutedClaimTotal            int          `json:"direct_refuted_claim_total"`
-	DependencyRefutedClaimTotal        int          `json:"dependency_refuted_claim_total"`
-	DirectDischargedClaimTotal         int          `json:"direct_discharged_claim_total"`
-	DependencyDischargedTotal          int          `json:"dependency_discharged_claim_total"`
-	ObservedBlockingEdgeTotal          int          `json:"observed_blocking_edge_total"`
-	ObservedRefutingEdgeTotal          int          `json:"observed_refuting_edge_total"`
-	ObservedRecoveryEdgeTotal          int          `json:"observed_recovery_edge_total"`
-	MaximumCausePathDepth              int          `json:"maximum_cause_path_depth"`
-	TransitionTotal                    int          `json:"transition_total"`
-	AppendOnlyTransitionTotal          int          `json:"append_only_transition_total"`
-	ClassificationBasisPoints          int          `json:"classification_basis_points"`
-	TruthTableCaseTotal                int          `json:"truth_table_case_total"`
-	AuthorityCaseTotal                 int          `json:"authority_case_total"`
-	EdgeMetrics                        []edgeMetric `json:"edge_metrics"`
+	FixedClaimTotal                              int          `json:"fixed_claim_total"`
+	DistinctPropositionTotal                     int          `json:"distinct_proposition_total"`
+	StructuralContradictionNumerator             int          `json:"structural_contradiction_numerator"`
+	StructuralContradictionDenominator           int          `json:"structural_contradiction_denominator"`
+	SemanticOccurrenceNumerator                  int          `json:"semantic_occurrence_numerator"`
+	SemanticOccurrenceDenominator                int          `json:"semantic_occurrence_denominator"`
+	RawProvenanceBindingNumerator                int          `json:"raw_provenance_binding_numerator"`
+	RawProvenanceBindingDenominator              int          `json:"raw_provenance_binding_denominator"`
+	CommentOnlySemanticPreservationNumerator     int          `json:"comment_only_semantic_preservation_numerator"`
+	CommentOnlySemanticPreservationDenominator   int          `json:"comment_only_semantic_preservation_denominator"`
+	StructuralContradictionDenominatorCoordinate coordinate   `json:"structural_contradiction_denominator_coordinate"`
+	FixedEdgeTotal                               int          `json:"fixed_edge_total"`
+	EligibleEdgeTotal                            int          `json:"eligible_edge_total"`
+	ObservedCausalEdgeTotal                      int          `json:"observed_causal_edge_total"`
+	ShortestPathEdgeUnionTotal                   int          `json:"shortest_path_edge_union_total"`
+	ClassifiedClaimTotal                         int          `json:"classified_claim_total"`
+	OpenClaimTotal                               int          `json:"open_claim_total"`
+	DischargedClaimTotal                         int          `json:"discharged_claim_total"`
+	RefutedClaimTotal                            int          `json:"refuted_claim_total"`
+	CurrentEvidenceTotal                         int          `json:"current_evidence_total"`
+	HistoricalEvidenceTotal                      int          `json:"historical_evidence_total"`
+	UnknownEvidenceTotal                         int          `json:"unknown_evidence_total"`
+	DirectUnknownClaimTotal                      int          `json:"direct_unknown_claim_total"`
+	DependencyBlockedClaimTotal                  int          `json:"dependency_blocked_claim_total"`
+	DirectRefutedClaimTotal                      int          `json:"direct_refuted_claim_total"`
+	DependencyRefutedClaimTotal                  int          `json:"dependency_refuted_claim_total"`
+	DirectDischargedClaimTotal                   int          `json:"direct_discharged_claim_total"`
+	DependencyDischargedTotal                    int          `json:"dependency_discharged_claim_total"`
+	ObservedBlockingEdgeTotal                    int          `json:"observed_blocking_edge_total"`
+	ObservedRefutingEdgeTotal                    int          `json:"observed_refuting_edge_total"`
+	ObservedRecoveryEdgeTotal                    int          `json:"observed_recovery_edge_total"`
+	MaximumCausePathDepth                        int          `json:"maximum_cause_path_depth"`
+	TransitionTotal                              int          `json:"transition_total"`
+	AppendOnlyTransitionTotal                    int          `json:"append_only_transition_total"`
+	ClassificationBasisPoints                    int          `json:"classification_basis_points"`
+	TruthTableCaseTotal                          int          `json:"truth_table_case_total"`
+	AuthorityCaseTotal                           int          `json:"authority_case_total"`
+	EdgeMetrics                                  []edgeMetric `json:"edge_metrics"`
 }
 type decision struct {
 	Value                       string `json:"value"`
@@ -516,7 +537,7 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 		}
 	}
 	states, templates := classify(current.Graph, evidence)
-	provenance := fmt.Sprintf("source-semantic:%s|evidence:%s|producer:%s|consumer:%s", current.Graph.CanonicalIRDigest, evidence.Digest, producerID, consumerID)
+	provenance := fmt.Sprintf("source-semantic:%s|claim-evidence:%s|producer:%s|consumer:%s", current.Graph.CanonicalIRDigest, semanticEvidenceDigest(evidence), producerID, consumerID)
 	expectedTransitions := transitionsFor(current.Graph, templates, provenance, prior)
 	if !reflect.DeepEqual(got.Transitions, expectedTransitions) {
 		return Judgment{}, fmt.Errorf("transition chain cannot be independently reproduced")
@@ -813,11 +834,11 @@ func validateEvidence(value evidenceReceipt) error {
 		if err := validateObservationBundle(observedBundle, value.SourcePath, sourceBytes, value.ArtifactPath, artifactBytes, sourceGraph.Graph); err != nil {
 			return err
 		}
-		if observedBundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, value.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, value.StructuralContradictions) {
+		if observedBundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, value.Observations) || !reflect.DeepEqual(observedBundle.StructuralContradictions, value.StructuralContradictions) || observedBundle.ExpectedStructuralContradictionTotal != value.ExpectedStructuralContradictionTotal || observedBundle.SemanticOccurrenceNumerator != value.SemanticOccurrenceNumerator || observedBundle.SemanticOccurrenceDenominator != value.SemanticOccurrenceDenominator || observedBundle.RawProvenanceBindingNumerator != value.RawProvenanceBindingNumerator || observedBundle.RawProvenanceBindingDenominator != value.RawProvenanceBindingDenominator {
 			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
 		}
 		observations = observedBundle.Observations
-	} else if len(value.Observations) != 0 || len(value.StructuralContradictions) != 0 || value.ObservationBundleDigest != "" || value.ObservationBundleRawDigest != "" || len(value.ObservationBundleRaw) != 0 {
+	} else if len(value.Observations) != 0 || len(value.StructuralContradictions) != 0 || value.ObservationBundleDigest != "" || value.ObservationBundleRawDigest != "" || len(value.ObservationBundleRaw) != 0 || value.ExpectedStructuralContradictionTotal != 0 || value.SemanticOccurrenceNumerator != 0 || value.RawProvenanceBindingNumerator != 0 {
 		return fmt.Errorf("raw evidence has observations without a raw bundle")
 	}
 	expectedStatus := "UNKNOWN"
@@ -908,7 +929,28 @@ func validateObservationBundle(bundle observationBundle, sourcePath string, sour
 	}
 	expectedStructural, err := deriveStructuralInventory(g, contract, artifact, artifactPath)
 	if err != nil {
-		return err
+		if !strings.HasPrefix(err.Error(), "TARGET_SYNTAX_OR_LOWER_INVALID") && !strings.HasPrefix(err.Error(), "TARGET_ACTIVITY_OCCURRENCE") {
+			return err
+		}
+		expectedStructural = []structuralContradiction{}
+	}
+	semanticOccurrences, rawProvenanceBindings := 0, 0
+	semanticOccurrenceDigests := map[string]bool{}
+	for _, c := range g.Nodes {
+		if occurrence, _, occurrenceErr := canonicalTargetOccurrence(artifact, artifactPath, c); occurrenceErr == nil {
+			semanticOccurrences++
+			rawProvenanceBindings++
+			if occurrence.SemanticDigest == "" || semanticOccurrenceDigests[occurrence.SemanticDigest] {
+				return fmt.Errorf("target occurrence semantic digest is not unique")
+			}
+			semanticOccurrenceDigests[occurrence.SemanticDigest] = true
+		}
+	}
+	if bundle.ExpectedStructuralContradictionTotal != len(expectedStructural) {
+		return fmt.Errorf("structural inventory denominator is not re-derived: got=%d want=%d", bundle.ExpectedStructuralContradictionTotal, len(expectedStructural))
+	}
+	if bundle.SemanticOccurrenceNumerator != semanticOccurrences || bundle.SemanticOccurrenceDenominator != g.NodeTotal || bundle.RawProvenanceBindingNumerator != rawProvenanceBindings || bundle.RawProvenanceBindingDenominator != g.NodeTotal {
+		return fmt.Errorf("target occurrence metrics are not re-derived from canonical target occurrences")
 	}
 	if err := validateStructuralInventory(bundle.StructuralContradictions, expectedStructural); err != nil {
 		return err
@@ -917,7 +959,7 @@ func validateObservationBundle(bundle observationBundle, sourcePath string, sour
 }
 
 func validateObservation(value observationReceipt, artifactPath string, artifact []byte, g graph, contract validatorContract, failure failureReceipt, hasFailure bool) error {
-	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Procedure == "" || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence, value.TargetBytesDigest) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
+	if value.Schema != observationSchema || value.Provider == "" || value.TargetPath != artifactPath || value.Procedure == "" || value.ProcedureDigest != observationProcedureDigest(value.Procedure, value.ClaimID, value.PropositionDigest, value.EdgeID, value.Occurrence) || value.RawProvenanceDigest != rawProvenanceDigest(value.Occurrence, value.TargetBytesDigest) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
 		return fmt.Errorf("target observation identity or target binding is invalid")
 	}
 	if value.TargetBytesDigest != digestBytes(artifact) || (value.ComparisonResult != "MATCH" && value.ComparisonResult != "MISMATCH") {
@@ -934,8 +976,8 @@ func validateObservation(value observationReceipt, artifactPath string, artifact
 		}
 		material, ok := contractClaim(contract, g.Nodes[i].ActivityName)
 		occurrence, row, occurrenceErr := canonicalTargetOccurrence(artifact, artifactPath, g.Nodes[i])
-		expected := claimObservationMaterial(g.Nodes[i], material, artifactPath, digestBytes(artifact), occurrence.RowDigest)
-		if occurrenceErr != nil || !ok || !claimIdentityMatchesContract(g.Nodes[i], material) || g.Nodes[i].ValueProgram != material.ExpectedValueProgram || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || occurrence.RowDigest != material.TargetRowDigest || !reflect.DeepEqual(value.Occurrence, occurrence) || value.ExpectedValue != expected || value.ObservedValue != expected || value.OutputDigest != digestBytes(row) {
+		expected := claimObservationMaterial(g.Nodes[i], material, artifactPath, digestBytes(artifact), occurrence.RawRowDigest)
+		if occurrenceErr != nil || !ok || !claimIdentityMatchesContract(g.Nodes[i], material) || g.Nodes[i].ValueProgram != material.ExpectedValueProgram || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || occurrence.RawRowDigest != material.TargetRowDigest || !reflect.DeepEqual(value.Occurrence, occurrence) || value.ExpectedValue != expected || value.ObservedValue != expected || value.OutputDigest != digestBytes(row) {
 			return fmt.Errorf("claim observation does not match external validator material")
 		}
 	case "EDGE":
@@ -959,7 +1001,7 @@ func validateObservation(value observationReceipt, artifactPath string, artifact
 		}
 		fromOccurrence, _, fromErr := canonicalTargetOccurrence(artifact, artifactPath, g.Nodes[from])
 		toOccurrence, _, toErr := canonicalTargetOccurrence(artifact, artifactPath, g.Nodes[to])
-		fromRowDigest, toRowDigest := fromOccurrence.RowDigest, toOccurrence.RowDigest
+		fromRowDigest, toRowDigest := fromOccurrence.RawRowDigest, toOccurrence.RawRowDigest
 		if artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || fromErr != nil || toErr != nil {
 			return fmt.Errorf("edge observation target rows are not externally bound")
 		}
@@ -1061,7 +1103,7 @@ func claimIdentityMatchesContract(c claim, expected validatorClaim) bool {
 }
 
 func claimObservationMaterial(c claim, expected validatorClaim, artifactPath, artifactDigest, rowDigest string) string {
-	return fmt.Sprintf("claim-observation|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_row_digest=%s|artifact_path=%s|artifact_digest=%s|expected_value_program=%s", c.ClaimID, c.PropositionDigest, expected.ProcedureID, rowDigest, artifactPath, artifactDigest, expected.ExpectedValueProgram)
+	return fmt.Sprintf("claim-observation|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_inputs=%s|target_output=%s|target_artifact=%s|expected_value_program=%s", c.ClaimID, c.PropositionDigest, expected.ProcedureID, strings.Join(c.Target.Inputs, ","), c.Target.Output, c.Target.Artifact, expected.ExpectedValueProgram)
 }
 
 func edgeTargetMaterial(prefix string, ed edge, g graph, fromRowDigest, toRowDigest, artifactPath, artifactDigest string) string {
@@ -1107,16 +1149,26 @@ func canonicalTargetOccurrence(artifact []byte, artifactPath string, sourceClaim
 		return targetOccurrence{}, nil, fmt.Errorf("TARGET_ACTIVITY_OCCURRENCE_SPAN_INVALID: activity=%s", sourceClaim.ActivityName)
 	}
 	raw := append([]byte(nil), artifact[span.Start.Offset:span.End.Offset]...)
-	occurrence := targetOccurrence{Address: fmt.Sprintf("activity:%s@%d:%d", targetClaim.ClaimID, span.Start.Offset, span.End.Offset), ActivityName: targetClaim.ActivityName, ClaimID: targetClaim.ClaimID, PropositionDigest: targetClaim.PropositionDigest, Target: targetClaim.Target, ValueProgram: targetClaim.ValueProgram, RowDigest: digestBytes(raw), SemanticDigest: target.Graph.CanonicalIRDigest}
+	occurrence := targetOccurrence{Address: "activity:" + targetClaim.ClaimID, ActivityName: targetClaim.ActivityName, ClaimID: targetClaim.ClaimID, PropositionDigest: targetClaim.PropositionDigest, Target: targetClaim.Target, ValueProgram: targetClaim.ValueProgram, RawSpanStart: span.Start.Offset, RawSpanEnd: span.End.Offset, RawRowDigest: digestBytes(raw), SemanticDigest: targetOccurrenceSemanticDigest(*targetClaim), ContextDigest: target.Graph.CanonicalIRDigest}
 	return occurrence, raw, nil
 }
 
 func targetOccurrenceMaterial(value targetOccurrence) string {
-	return fmt.Sprintf("address=%s|activity=%s|claim_id=%s|proposition_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s|row_digest=%s|semantic_digest=%s", value.Address, value.ActivityName, value.ClaimID, value.PropositionDigest, strings.Join(value.Target.Inputs, ","), value.Target.Output, value.Target.Artifact, value.ValueProgram, value.RowDigest, value.SemanticDigest)
+	return fmt.Sprintf("address=%s|activity=%s|claim_id=%s|proposition_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s|semantic_digest=%s", value.Address, value.ActivityName, value.ClaimID, value.PropositionDigest, strings.Join(value.Target.Inputs, ","), value.Target.Output, value.Target.Artifact, value.ValueProgram, value.SemanticDigest)
 }
 
-func observationProcedureDigest(procedure, claimID, propositionDigest, edgeID string, occurrence targetOccurrence, artifactDigest string) string {
-	payload := fmt.Sprintf("procedure|procedure_id=%s|claim_id=%s|proposition_digest=%s|edge_id=%s|%s|artifact_digest=%s", procedure, claimID, propositionDigest, edgeID, targetOccurrenceMaterial(occurrence), artifactDigest)
+func targetOccurrenceSemanticDigest(c claim) string {
+	payload := fmt.Sprintf("target-occurrence|activity=%s|claim_id=%s|proposition=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s", c.ActivityName, c.ClaimID, c.Proposition, strings.Join(c.Target.Inputs, ","), c.Target.Output, c.Target.Artifact, c.ValueProgram)
+	return digestBytes([]byte(payload))
+}
+
+func observationProcedureDigest(procedure, claimID, propositionDigest, edgeID string, occurrence targetOccurrence) string {
+	payload := fmt.Sprintf("procedure|procedure_id=%s|claim_id=%s|proposition_digest=%s|edge_id=%s|%s", procedure, claimID, propositionDigest, edgeID, targetOccurrenceMaterial(occurrence))
+	return digestBytes([]byte(payload))
+}
+
+func rawProvenanceDigest(occurrence targetOccurrence, artifactDigest string) string {
+	payload := fmt.Sprintf("raw-provenance|artifact_digest=%s|address=%s|raw_span_start=%d|raw_span_end=%d|raw_row_digest=%s", artifactDigest, occurrence.Address, occurrence.RawSpanStart, occurrence.RawSpanEnd, occurrence.RawRowDigest)
 	return digestBytes([]byte(payload))
 }
 
@@ -1235,14 +1287,14 @@ func validateFailureReceipt(value failureReceipt, sourcePath string, source []by
 }
 
 func failureInputMatches(input failureInput, c claim, artifactPath, artifactDigest string, occurrence targetOccurrence) bool {
-	return input.ClaimID == c.ClaimID && input.PropositionDigest == c.PropositionDigest && reflect.DeepEqual(input.Target, c.Target) && reflect.DeepEqual(input.Occurrence, occurrence) && input.TargetOutputDigest == occurrence.RowDigest && input.ValueProgram == c.ValueProgram && input.ArtifactPath == artifactPath && input.ArtifactDigest == artifactDigest
+	return input.ClaimID == c.ClaimID && input.PropositionDigest == c.PropositionDigest && reflect.DeepEqual(input.Target, c.Target) && reflect.DeepEqual(input.Occurrence, occurrence) && input.TargetOutputDigest == occurrence.RawRowDigest && input.ValueProgram == c.ValueProgram && input.ArtifactPath == artifactPath && input.ArtifactDigest == artifactDigest
 }
 
 func failureProcedureDigest(value failureReceipt) string {
 	parts := []string{value.Procedure, value.ExecutableDigest}
 	parts = append(parts, value.Argv...)
 	for _, input := range value.InputTargets {
-		parts = append(parts, input.ClaimID, input.PropositionDigest, input.ValueProgram, input.ArtifactPath, input.ArtifactDigest, targetOccurrenceMaterial(input.Occurrence))
+		parts = append(parts, input.ClaimID, input.PropositionDigest, input.ValueProgram, input.ArtifactPath, input.ArtifactDigest, input.TargetOutputDigest, rawProvenanceDigest(input.Occurrence, input.ArtifactDigest), targetOccurrenceMaterial(input.Occurrence))
 	}
 	return digestBytes([]byte(strings.Join(parts, "|")))
 }
@@ -1342,7 +1394,7 @@ func replayReceipt(value receipt) (receipt, error) {
 	}
 	states, outcomes := classify(parsed.Graph, value.Evidence)
 	sourceDigest := digestBytes(source)
-	provenance := fmt.Sprintf("source-semantic:%s|evidence:%s|producer:%s|consumer:%s", parsed.Graph.CanonicalIRDigest, value.Evidence.Digest, producerID, consumerID)
+	provenance := fmt.Sprintf("source-semantic:%s|claim-evidence:%s|producer:%s|consumer:%s", parsed.Graph.CanonicalIRDigest, semanticEvidenceDigest(value.Evidence), producerID, consumerID)
 	transitions := transitionsFor(parsed.Graph, outcomes, provenance, nil)
 	resolutions := buildResolutions(parsed.Graph, states, outcomes, provenance)
 	metrics := deriveMetrics(parsed.Graph, states, resolutions, outcomes, value.Evidence, false)
@@ -1650,7 +1702,12 @@ func blockedFrontier(i int, g graph, states []string) ([]string, []string) {
 }
 
 func deriveMetrics(g graph, states []string, resolutions []resolution, outcomes []transition, e evidenceReceipt, recovered bool) metrics {
-	result := metrics{FixedClaimTotal: claimTotal, DistinctPropositionTotal: distinct(g), FixedEdgeTotal: edgeTotal, EligibleEdgeTotal: len(g.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: initialTransitions, TruthTableCaseTotal: len(truthTable()), AuthorityCaseTotal: len(authorityCases()), StructuralContradictionNumerator: len(e.StructuralContradictions), StructuralContradictionDenominator: len(e.StructuralContradictions)}
+	structuralDenominator := e.ExpectedStructuralContradictionTotal
+	denominatorCoordinate := coordinate{Stage: "OBSERVE", Step: "structural-inventory", Reason: "RE_DERIVED_GRAPH_CONTRACT_INVENTORY"}
+	if structuralDenominator == 0 {
+		denominatorCoordinate.Reason = "NO_CURRENT_TARGET_OBSERVATION_EXPECTED_INVENTORY_ZERO"
+	}
+	result := metrics{FixedClaimTotal: claimTotal, DistinctPropositionTotal: distinct(g), FixedEdgeTotal: edgeTotal, EligibleEdgeTotal: len(g.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: initialTransitions, TruthTableCaseTotal: len(truthTable()), AuthorityCaseTotal: len(authorityCases()), StructuralContradictionNumerator: len(e.StructuralContradictions), StructuralContradictionDenominator: structuralDenominator, SemanticOccurrenceNumerator: e.SemanticOccurrenceNumerator, SemanticOccurrenceDenominator: e.SemanticOccurrenceDenominator, RawProvenanceBindingNumerator: e.RawProvenanceBindingNumerator, RawProvenanceBindingDenominator: e.RawProvenanceBindingDenominator, StructuralContradictionDenominatorCoordinate: denominatorCoordinate}
 	if recovered {
 		result.TransitionTotal += claimTotal
 	}
@@ -1739,6 +1796,11 @@ func distinct(g graph) int {
 		seen[c.PropositionDigest] = true
 	}
 	return len(seen)
+}
+
+func semanticEvidenceDigest(evidence evidenceReceipt) string {
+	claims := evidence.Claims
+	return digestJSON(claims)
 }
 func contains(values []string, target string) bool {
 	for _, v := range values {
