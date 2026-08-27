@@ -75,11 +75,16 @@ jobs:
             .summary.cases_total == 3 and .summary.cases_passed == 3 and
             .coverage_bps == 10000 and .summary.textual_changes == 3 and
             .summary.structural_observations == 3 and
+            .summary.claim_transition_cases == 3 and
+            .summary.adjudicated_cases == 3 and .summary.unknown_paths == 1 and
             .summary.semantic_preserved == 1 and
             .summary.semantic_changed == 1 and .summary.indeterminate == 1 and
             .summary.repository_writes == 0 and
             ([.cases[] | select(.passed == true)] | length) == 3 and
-            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceipt.Adjudicate")] | length) == 3
+            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceipt.Adjudicate")] | length) == 3 and
+            ([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
+            ([.cases[0].report.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
+            ([.cases[0].report.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1
           ' "$out/first.json"
 
       - name: Replay actual Gooo source pairs

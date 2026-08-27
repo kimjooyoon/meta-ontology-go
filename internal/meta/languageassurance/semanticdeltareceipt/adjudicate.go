@@ -57,10 +57,16 @@ func independentProject(raw []byte) (projectedSource, error) {
 			continue
 		}
 		if len(line) >= 8 && line[:8] == "package " {
+			if hasPackage {
+				return projectedSource{}, errIndependentSource
+			}
 			hasPackage = true
 			continue
 		}
 		if len(line) >= 10 && line[:10] == "namespace " {
+			if hasNamespace {
+				return projectedSource{}, errIndependentSource
+			}
 			hasNamespace = true
 			continue
 		}
