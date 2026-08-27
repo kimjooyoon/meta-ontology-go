@@ -72,4 +72,3 @@ The claim is falsified by any nondeterministic replay; by an over-budget case
 remaining exact; by an unknown case losing its coordinate or transition; by a
 changed denominator; by a forged source digest, receipt digest, or transition
 accepted by the independent verifier; or by any non-zero repository effect.
-

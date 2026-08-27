@@ -46,4 +46,3 @@ jq -e '.decision == "PASS" and .resolution == "EXACT" and .fixed_denominator == 
 cp "$output/receipt-first.json" "$output/receipt.json"
 cp "$output/judge-first.json" "$output/judge.json"
 echo "ambiguity budget: deterministic replay, boundary descent, and independent verification passed"
-

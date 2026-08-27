@@ -48,4 +48,3 @@ budget (`3/2/3`), and unknown input. The claim is falsified if a permutation of
 the same input changes a receipt, if any over-budget coordinate stays `EXACT`,
 if an `UNKNOWN` case loses its coordinate or transition, if the denominator is
 not `12`, or if the verifier accepts a modified digest/receipt.
-
