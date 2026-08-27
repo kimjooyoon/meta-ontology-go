@@ -381,9 +381,9 @@ func ciEvidence(directory, actualCaseID, outputPath string) error {
 		var trailing any
 		if decodeErr := decoder.Decode(&trailing); decodeErr != io.EOF {
 			if decodeErr == nil {
-				return fmt.Errorf("CI evidence fixture %s has trailing JSON", entry.Name)
+				return fmt.Errorf("CI evidence fixture %s has trailing JSON", entry.Name())
 			}
-			return fmt.Errorf("CI evidence fixture %s has trailing bytes: %w", entry.Name, decodeErr)
+			return fmt.Errorf("CI evidence fixture %s has trailing bytes: %w", entry.Name(), decodeErr)
 		}
 		observations = append(observations, observation)
 	}

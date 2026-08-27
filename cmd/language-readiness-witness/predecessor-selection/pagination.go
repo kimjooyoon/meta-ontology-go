@@ -177,6 +177,19 @@ func predecessorReason(endpointClass, suffix string) string {
 	return prefix + "_" + suffix
 }
 
+func knownPaginationFailureReason(reason string) bool {
+	endpointClasses := [...]string{"WORKFLOW_RUNS", "ARTIFACTS", "JOBS"}
+	suffixes := [...]string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "REDIRECT_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"}
+	for _, endpointClass := range endpointClasses {
+		for _, suffix := range suffixes {
+			if reason == predecessorReason(endpointClass, suffix) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func decodeWorkflowRunPage(raw []byte) ([]workflowRun, int, error) {
 	var page workflowRunList
 	if err := decodeJSONEOF(raw, &page); err != nil || page.TotalCount < 0 || page.WorkflowRuns == nil {

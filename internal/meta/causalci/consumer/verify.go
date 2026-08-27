@@ -84,7 +84,8 @@ func VerifyIntervention(observationRaw, sourcePath string, source, receiptRaw []
 }
 
 func verify(observationRaw, sourcePath string, source, receiptRaw []byte, intervention bool) error {
-	observation, err := decodeObservation(observationRaw)
+	observationBytes := []byte(observationRaw)
+	observation, err := decodeObservation(observationBytes)
 	if err != nil {
 		return err
 	}
@@ -99,14 +100,14 @@ func verify(observationRaw, sourcePath string, source, receiptRaw []byte, interv
 	if err != nil {
 		return err
 	}
-	expected := evaluate(observationRaw, observation, policy, source, intervention)
+	expected := evaluate(observationBytes, observation, policy, source, intervention)
 	if expected.Digest, err = receiptDigest(expected); err != nil {
 		return err
 	}
 	if actual.Digest != expected.Digest {
 		return fmt.Errorf("receipt digest mismatch")
 	}
-	if err := validateReceipt(actual, expected, observationRaw, sourcePath, source); err != nil {
+	if err := validateReceipt(actual, expected, observationBytes, sourcePath, source); err != nil {
 		return err
 	}
 	return nil
@@ -585,7 +586,7 @@ func selected(path string, policy PolicyGraph) SubjectResolution {
 	if len(a) != 1 || len(b) != 1 || len(c) != 1 || a[0].To != policy.ClaimID || b[0].To != policy.SurfaceID {
 		return unknown(ChangedFileObservation{Path: path, Status: "M"}, policy.Source.Path)
 	}
-	checkID := checkID(policy, c[0].To)
+	checkID := checkID(&policy, c[0].To)
 	if checkID == "" {
 		return unknown(ChangedFileObservation{Path: path, Status: "M"}, policy.Source.Path)
 	}
