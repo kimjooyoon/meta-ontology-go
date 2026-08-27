@@ -12,6 +12,7 @@ type options struct {
 	verifierExit    int
 	verifierVersion string
 	output          string
+	summary         string
 	check           bool
 }
 
@@ -23,6 +24,7 @@ func main() {
 	flag.IntVar(&options.verifierExit, "verifier-exit-code", 0, "gh attestation verifier exit code")
 	flag.StringVar(&options.verifierVersion, "verifier-version", "", "gh verifier version")
 	flag.StringVar(&options.output, "output", "", "resolution receipt output")
+	flag.StringVar(&options.summary, "summary", "", "human-readable metric summary output")
 	flag.BoolVar(&options.check, "check", false, "validate the emitted receipt")
 	flag.Parse()
 	if err := run(options); err != nil {

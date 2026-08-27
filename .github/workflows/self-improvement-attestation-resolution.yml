@@ -70,9 +70,11 @@ jobs:
               -transport-receipt "$root/input/transport/receipt.json" \
               -source-archive "$archive" -verification "$verification" \
               -verifier-exit-code "$verifier_exit" -verifier-version "$verifier_version" \
-              -output "$root/output/$pass.json" -check
+              -output "$root/output/$pass.json" -summary "$root/output/$pass.md" -check
           done
           cmp "$root/output/first.json" "$root/output/second.json"
+          cmp "$root/output/first.md" "$root/output/second.md"
+          cat "$root/output/first.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload producer attestation resolution
         if: always()
