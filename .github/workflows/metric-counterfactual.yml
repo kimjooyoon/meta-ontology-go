@@ -452,11 +452,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if rg -n '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v[0-6]([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
+          if grep -En '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v[0-6]([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
             echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
             exit 1
           fi
-          test -n "$(rg -n '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml || true)"
+          grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
       - name: Produce and replay proposal promotion evidence
         id: proposal-predecessor
         env:
