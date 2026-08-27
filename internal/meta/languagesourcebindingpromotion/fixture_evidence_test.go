@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-func producerFixture(head, receiptDigest string) producerEnvelope {
-	cases := fmt.Sprintf(`[{"id":"execute-billing","status":"SATISFIED","evidence_digest":%q}]`, receiptDigest)
+func producerFixture(head, receiptDigest, artifactDigest string) producerEnvelope {
+	cases := fmt.Sprintf(`[{"id":"execute-billing","status":"SATISFIED","evidence_digest":%q}]`, artifactDigest)
 	value := producerEnvelope{Schema: "gooo/language-source-execution-artifact/v1", HeadSHA: head,
 		Decision: DecisionPass, Resolution: ResolutionExact, Reason: "SOURCE_EXECUTION_CONTRACT_SATISFIED",
 		ContractDigest: receiptDigest, Cases: json.RawMessage(cases),
@@ -16,10 +16,10 @@ func producerFixture(head, receiptDigest string) producerEnvelope {
 	return value
 }
 
-func oracleFixture(head string, receipt receiptEnvelope) oracleEnvelope {
+func oracleFixture(head string, receipt receiptEnvelope, artifactDigest string) oracleEnvelope {
 	cases := []oracleCase{{ID: "genuine-source-bound", Status: "SATISFIED", ObservedDecision: DecisionPass,
 		ObservedResolution: ResolutionExact, ObservedReason: "ARTIFACT_SOURCE_PROJECTION_EXACT",
-		SourceDigest: receipt.SourceDigest, ArtifactDigest: receipt.Digest}, {}, {}, {}}
+		SourceDigest: receipt.SourceDigest, ArtifactDigest: artifactDigest}, {}, {}, {}}
 	casesRaw, _ := json.Marshal(cases)
 	value := oracleEnvelope{Schema: "gooo/language-artifact-oracle/v1", Scope: "SOURCE_EXECUTION_ARTIFACT_BINDING_ONLY",
 		HeadSHA: head, Decision: DecisionPass, Resolution: ResolutionExact, Reason: "ARTIFACT_ORACLE_CONTRACT_SATISFIED",

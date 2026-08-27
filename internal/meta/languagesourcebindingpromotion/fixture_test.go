@@ -12,8 +12,9 @@ func fixtureInput() Input {
 		SourceDigest: "sha256:" + strings.Repeat("b", 64), SemanticDigest: "sha256:" + strings.Repeat("c", 64),
 		Entry: json.RawMessage(`{}`), Events: json.RawMessage(`[]`), Diagnostics: json.RawMessage(`[]`), Effects: json.RawMessage(`{}`)}
 	receipt.Digest = digestJSON(receipt)
-	producer := producerFixture(head, receipt.Digest)
-	oracle := oracleFixture(head, receipt)
+	artifactDigest := digestBytes([]byte("execution-artifact"))
+	producer := producerFixture(head, receipt.Digest, artifactDigest)
+	oracle := oracleFixture(head, receipt, artifactDigest)
 	unknownProducer := producer
 	unknownProducer.Decision, unknownProducer.Digest = "UNKNOWN", ""
 	unknownProducer.Digest = digestJSON(unknownProducer)

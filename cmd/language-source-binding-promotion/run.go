@@ -41,10 +41,10 @@ func run(args []string) error {
 		PolicySource: values[0], PolicyArtifact: values[1], PolicyReplayArtifact: values[2],
 		Producer: values[3], Receipt: values[4], Oracle: values[5], UnknownProducer: values[6],
 		UnknownOracle: values[7], MismatchedOracle: values[8], Independence: independence})
-	if err := promotion.Validate(report); err != nil {
+	if err := promotion.WriteReport(options.output, report); err != nil {
 		return err
 	}
-	if err := promotion.WriteReport(options.output, report); err != nil {
+	if err := promotion.Validate(report); err != nil {
 		return err
 	}
 	fmt.Printf("source binding promotion: %s %d/%d\n", report.Decision, report.Summary.CasesSatisfied, report.Summary.CasesTotal)

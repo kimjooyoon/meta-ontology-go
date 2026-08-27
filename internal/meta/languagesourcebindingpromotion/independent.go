@@ -1,6 +1,6 @@
 package languagesourcebindingpromotion
 
-func assessIndependent(oracleRaw, receiptRaw []byte, head string) component {
+func assessIndependent(oracleRaw, receiptRaw []byte, head, structuralArtifactDigest string) component {
 	if len(oracleRaw) == 0 {
 		return open("ARTIFACT_ORACLE_EVIDENCE_MISSING", "PROMOTION_INPUT", "read-oracle")
 	}
@@ -27,6 +27,12 @@ func assessIndependent(oracleRaw, receiptRaw []byte, head string) component {
 	if err != nil || !verifyReceiptDigest(receipt) {
 		return refuted("SOURCE_EXECUTION_RECEIPT_INVALID", "PROMOTION_INPUT", "read-receipt", oracle.Digest)
 	}
+	if !validDigest(structuralArtifactDigest) {
+		value := open("INDEPENDENT_SOURCE_BINDING_DEPENDENCY_BLOCKED", "PROMOTION_DEPENDENCY", "structural-artifact",
+			oracle.Digest, receipt.Digest)
+		value.UnknownClass = "DEPENDENCY_BLOCKED"
+		return value
+	}
 	cases, err := decodeView[[]oracleCase](oracle.Cases)
 	if err != nil {
 		return refuted("ARTIFACT_ORACLE_CASES_INVALID", "PROMOTION_COMPARE", "oracle-cases", oracle.Digest)
@@ -38,7 +44,7 @@ func assessIndependent(oracleRaw, receiptRaw []byte, head string) component {
 		if item.Status != "SATISFIED" || item.ObservedDecision != DecisionPass || item.ObservedResolution != ResolutionExact {
 			return refuted("ARTIFACT_ORACLE_GENUINE_CASE_REJECTED", "PROMOTION_COMPARE", "genuine-source-bound", oracle.Digest)
 		}
-		if item.ArtifactDigest != receipt.Digest || item.SourceDigest != receipt.SourceDigest {
+		if item.ArtifactDigest != structuralArtifactDigest || item.SourceDigest != receipt.SourceDigest {
 			return refuted("SOURCE_BINDING_EVIDENCE_LINK_MISMATCH", "PROMOTION_LINK", "receipt-digest", oracle.Digest, receipt.Digest)
 		}
 		return discharged("INDEPENDENT_SOURCE_BINDING_EXACT", "PROMOTION_INPUT", "artifact-oracle", oracle.Digest, receipt.Digest)

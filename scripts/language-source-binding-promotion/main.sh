@@ -15,8 +15,13 @@ test -z "$(git diff -- internal/meta/languagesourcebindingpromotion cmd/language
 test -z "$(gofmt -l internal/meta/languagesourcebindingpromotion cmd/language-source-binding-promotion)"
 go test ./internal/meta/languagesourcebindingpromotion ./cmd/language-source-binding-promotion
 
-dependencies="$(go list -deps ./internal/meta/languagesourcebindingpromotion | \
-  rg '/internal/(sourceexecution|meta/languagesourceexecution|meta/languageartifactoracle)$' || true)"
+dependencies="$(go list -deps ./internal/meta/languagesourcebindingpromotion | while IFS= read -r dependency; do
+  case "$dependency" in
+    */internal/sourceexecution|*/internal/meta/languagesourceexecution|*/internal/meta/languageartifactoracle)
+      printf '%s\n' "$dependency"
+      ;;
+  esac
+done)"
 dependency_count="$(printf '%s\n' "$dependencies" | sed '/^$/d' | wc -l | tr -d ' ')"
 test "$dependency_count" -eq 0
 printf '%s\n' "$dependencies" > "$output/producer-dependencies.txt"

@@ -6,6 +6,7 @@ type component struct {
 	Reason       string
 	Coordinate   Coordinate
 	Evidence     []string
+	ArtifactDigest string
 }
 
 func discharged(reason, stage, step string, evidence ...string) component {

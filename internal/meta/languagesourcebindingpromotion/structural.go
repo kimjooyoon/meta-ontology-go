@@ -29,9 +29,12 @@ func assessStructural(producerRaw, receiptRaw []byte, head string) component {
 		return refuted("SOURCE_EXECUTION_CASES_INVALID", "PROMOTION_COMPARE", "producer-cases", producer.Digest)
 	}
 	for _, item := range cases {
-		if item.ID == "execute-billing" && item.Status == "SATISFIED" && item.EvidenceDigest == receipt.Digest {
-			return discharged("SOURCE_EXECUTION_EVIDENCE_EXACT", "PROMOTION_INPUT", "source-execution", producer.Digest, receipt.Digest)
+		if item.ID == "execute-billing" && item.Status == "SATISFIED" && validDigest(item.EvidenceDigest) {
+			result := discharged("SOURCE_EXECUTION_EVIDENCE_EXACT", "PROMOTION_INPUT", "source-execution",
+				producer.Digest, item.EvidenceDigest, receipt.Digest)
+			result.ArtifactDigest = item.EvidenceDigest
+			return result
 		}
 	}
-	return refuted("SOURCE_EXECUTION_RECEIPT_LINK_MISMATCH", "PROMOTION_LINK", "producer-receipt", producer.Digest, receipt.Digest)
+	return refuted("SOURCE_EXECUTION_ARTIFACT_MISSING", "PROMOTION_LINK", "producer-artifact", producer.Digest, receipt.Digest)
 }

@@ -24,3 +24,34 @@ func TestPolicyReplayMismatchFailsClosed(t *testing.T) {
 		t.Fatalf("report = %#v", report)
 	}
 }
+
+func TestPromotionSeparatesReceiptAndArtifactDigests(t *testing.T) {
+	input := fixtureInput()
+	receipt, err := decodeStrict[receiptEnvelope](input.Receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	producer, err := decodeStrict[producerEnvelope](input.Producer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	producerCases, err := decodeView[[]producerCase](producer.Cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oracle, err := decodeStrict[oracleEnvelope](input.Oracle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oracleCases, err := decodeView[[]oracleCase](oracle.Cases)
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifactDigest := producerCases[0].EvidenceDigest
+	if artifactDigest == receipt.Digest || oracleCases[0].ArtifactDigest != artifactDigest {
+		t.Fatalf("receipt=%s producer-artifact=%s oracle-artifact=%s", receipt.Digest, artifactDigest, oracleCases[0].ArtifactDigest)
+	}
+	if err := Validate(Evaluate(input)); err != nil {
+		t.Fatal(err)
+	}
+}

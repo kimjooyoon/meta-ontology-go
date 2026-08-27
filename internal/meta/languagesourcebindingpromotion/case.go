@@ -2,7 +2,7 @@ package languagesourcebindingpromotion
 
 func evaluateCase(definition CaseDefinition, producer, receipt, oracle []byte, head, policyDigest string) CaseResult {
 	structural := assessStructural(producer, receipt, head)
-	independent := assessIndependent(oracle, receipt, head)
+	independent := assessIndependent(oracle, receipt, head, structural.ArtifactDigest)
 	promotion := promotionClaim(structural, independent, policyDigest)
 	decision, resolution, reason, coordinate := DecisionPass, ResolutionExact, "SOURCE_BINDING_CLAIM_DISCHARGED", promotion.Coordinate
 	if structural.Status == "REFUTED" {
