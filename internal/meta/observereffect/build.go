@@ -72,6 +72,8 @@ func Build(opts BuildOptions) (Report, Receipt, Receipt, error) {
 		}
 		environment.Status = "UNKNOWN"
 		environment.Resolution = "LOWER_RESOLUTION"
+		environment.BeforeObserved = false
+		environment.AfterObserved = false
 		environment.Stage = unknown.Stage
 		environment.Step = unknown.Step
 		environment.Reason = unknown.Reason
