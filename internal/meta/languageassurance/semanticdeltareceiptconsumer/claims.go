@@ -10,7 +10,7 @@ func claimDelta(before, after projectedSource) ClaimDelta {
 		sort.Slice(beforeClaims, func(i, j int) bool { return beforeClaims[i].ID < beforeClaims[j].ID })
 		sort.Slice(afterClaims, func(i, j int) bool { return afterClaims[i].ID < afterClaims[j].ID })
 		pairs := min(len(afterClaims), len(beforeClaims))
-		for index := 0; index < pairs; index++ {
+		for index := range pairs {
 			if !claimMeaningEqual(beforeClaims[index], afterClaims[index]) {
 				result.Changed = append(result.Changed, ClaimChange{ID: preservationClaimID(beforeClaims[index]), Before: beforeClaims[index], After: afterClaims[index]})
 			}
