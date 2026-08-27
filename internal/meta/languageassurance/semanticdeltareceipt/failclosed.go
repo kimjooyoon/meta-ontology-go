@@ -2,15 +2,19 @@ package semanticdeltareceipt
 
 import "encoding/hex"
 
-func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, afterErr error) Receipt {
+func unknownReceipt(receipt Receipt, before, after projectedSource, beforeErr, afterErr error, coordinates ...string) Receipt {
+	stage, step, reason := UnavailableStage, UnavailableStep, ReasonUnavailable
+	if len(coordinates) == 3 {
+		stage, step, reason = coordinates[0], coordinates[1], coordinates[2]
+	}
 	receipt.StructuralDelta = StructuralDelta{Status: "UNKNOWN"}
 	receipt.SemanticComponentDelta = SemanticComponentDelta{Status: "UNKNOWN"}
 	receipt.SemanticClaimDelta = ClaimDelta{Status: "UNKNOWN"}
 	receipt.ModeledSemanticComponents, receipt.TotalSemanticComponents, receipt.SemanticCoverageBPS = 0, TotalComponentCount, 0
 	receipt.RawDecision, receipt.SemanticDecision = receipt.TextualDelta.Decision, SemanticUnknown
-	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, ReasonUnavailable
-	receipt.Stage, receipt.Step = UnavailableStage, UnavailableStep
-	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, UnavailableStage, UnavailableStep, ReasonUnavailable)
+	receipt.Decision, receipt.Resolution, receipt.Classification, receipt.Reason = DecisionFailClosed, ResolutionLower, ClassIndeterminate, reason
+	receipt.Stage, receipt.Step = stage, step
+	receipt.ClaimLedger, receipt.ClaimTransitions = unknownLedger(before, after, stage, step, reason)
 	receipt.TransitionCount = len(receipt.ClaimTransitions)
 	if receipt.TransitionCount > 0 {
 		receipt.TransitionHeadDigest = receipt.ClaimTransitions[receipt.TransitionCount-1].TransitionDigest

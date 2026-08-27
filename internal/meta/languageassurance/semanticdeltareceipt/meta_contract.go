@@ -48,8 +48,7 @@ func ReadMetaContract() (MetaContract, error) {
 		case strings.Contains(id, "/claim/"):
 			contract.ClaimKinds = append(contract.ClaimKinds, id[strings.LastIndex(id, "/")+1:])
 		}
-		if strings.HasPrefix(node.ValueProgram, "meta.semantic-delta.") {
-			value := strings.TrimPrefix(node.ValueProgram, "meta.semantic-delta.")
+		if value, ok := strings.CutPrefix(node.ValueProgram, "meta.semantic-delta."); ok {
 			switch {
 			case strings.HasPrefix(value, "layers:"):
 				contract.Layers = splitCSV(strings.TrimPrefix(value, "layers:"))
