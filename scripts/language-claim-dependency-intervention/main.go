@@ -55,9 +55,10 @@ func main() {
 	semanticSource := read(*semanticPath)
 	edgeSource := read(*edgePath)
 	commentSource := read(*commentPath)
+	refutedBaseline := read(filepath.Join(filepath.Dir(*semanticPath), "refuted.gooo"))
 	items := []intervention{
 		compare("semantic-value", "VALUE_PROGRAM", baseline, *baselinePath, semanticSource, *semanticPath, claimdependency.ObservationUnknown, claimdependency.ObservationContradiction),
-		compare("edge-type", "EDGE_KIND", baseline, *baselinePath, edgeSource, *edgePath, claimdependency.ObservationUnknown, claimdependency.ObservationContradiction),
+		compare("edge-type", "EDGE_KIND", refutedBaseline, filepath.Join(filepath.Dir(*semanticPath), "refuted.gooo"), edgeSource, *edgePath, claimdependency.ObservationContradiction, claimdependency.ObservationContradiction),
 		compare("comment-only", "COMMENT_ONLY", baseline, *baselinePath, commentSource, *commentPath, claimdependency.ObservationUnknown, claimdependency.ObservationUnknown),
 	}
 	result := report{Schema: "gooo.meta.claim-dependency-intervention/v1", ReadOnly: true, RepositoryWrites: 0, Interventions: items}
