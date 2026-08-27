@@ -1,0 +1,52 @@
+{
+  "schema": "gooo/meta-experiment-portfolio-contract/v1",
+  "contract_id": "meta-ontology-experiment-portfolio-v1",
+  "receipt_schema": "gooo/meta-experiment-portfolio-receipt/v1",
+  "report_schema": "gooo/meta-experiment-portfolio-report/v1",
+  "candidates": [
+    {
+      "id": "derive",
+      "source_path": "examples/experiment-portfolio/alternatives/derive.gooo",
+      "meta_operation": "derive-coordinate-vector",
+      "proof_choice": "source-digest"
+    },
+    {
+      "id": "replay",
+      "source_path": "examples/experiment-portfolio/alternatives/replay.gooo",
+      "meta_operation": "replay-independent-receipt",
+      "proof_choice": "independent-receipt"
+    },
+    {
+      "id": "reflect",
+      "source_path": "examples/experiment-portfolio/alternatives/reflect.gooo",
+      "meta_operation": "reflect-counterexample-boundary",
+      "proof_choice": "counterexample-replay"
+    }
+  ],
+  "coordinate_ids": [
+    "source-replay",
+    "receipt-independence",
+    "counterexample-boundary",
+    "unknown-localization",
+    "extension-evidence",
+    "read-only-effects"
+  ],
+  "coordinate_denominators": {
+    "source-replay": 1,
+    "receipt-independence": 1,
+    "counterexample-boundary": 2,
+    "unknown-localization": 2,
+    "extension-evidence": 1,
+    "read-only-effects": 1
+  },
+  "counterexample_slots": 2,
+  "unknown_location_slots": 2,
+  "not_claimed": [
+    "language-quality",
+    "production-readiness",
+    "semantic-equivalence",
+    "winner-or-rank",
+    "estimated-improvement",
+    "weighted-average"
+  ]
+}

@@ -1,0 +1,7 @@
+package portfolioderive
+namespace portfolioderive
+
+entity SourceClaim id "gooo://experiment-portfolio/derive/source-claim"
+entity CoordinateVector id "gooo://experiment-portfolio/derive/coordinate-vector"
+
+activity DeriveCoordinateVector(SourceClaim) -> CoordinateVector computes "meta.portfolio.derive-coordinate"

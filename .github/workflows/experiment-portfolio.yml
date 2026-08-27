@@ -1,0 +1,52 @@
+name: Meta-programming experiment portfolio
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "cmd/experiment-portfolio-receipt/**"
+      - "cmd/experiment-portfolio-evaluate/**"
+      - "internal/meta/experimentportfolio/**"
+      - "examples/experiment-portfolio/**"
+      - "docs/language/language-experiment-portfolio.md"
+      - "scripts/experiment-portfolio/**"
+      - ".github/workflows/experiment-portfolio.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experiment-portfolio-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portfolio:
+    name: Experiment portfolio
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: local
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+      - name: Set up exact Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Run read-only experiment portfolio
+        run: bash scripts/experiment-portfolio/main.sh
+      - name: Upload portfolio receipts and report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: experiment-portfolio-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/experiment-portfolio
+          if-no-files-found: error
+          retention-days: 30

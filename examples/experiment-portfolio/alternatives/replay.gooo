@@ -1,0 +1,7 @@
+package portfolioreplay
+namespace portfolioreplay
+
+entity SourceClaim id "gooo://experiment-portfolio/replay/source-claim"
+entity IndependentReceipt id "gooo://experiment-portfolio/replay/independent-receipt"
+
+activity ReplayIndependentReceipt(SourceClaim) -> IndependentReceipt computes "meta.portfolio.replay-independent"

@@ -1,0 +1,7 @@
+package portfolioreflect
+namespace portfolioreflect
+
+entity SourceClaim id "gooo://experiment-portfolio/reflect/source-claim"
+entity BoundaryReceipt id "gooo://experiment-portfolio/reflect/boundary-receipt"
+
+activity ReflectCounterexampleBoundary(SourceClaim) -> BoundaryReceipt computes "meta.portfolio.reflect-counterexample"
