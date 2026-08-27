@@ -49,28 +49,72 @@ jobs:
       - name: Check actual Gooo sources
         run: |
           set -euo pipefail
-          go run ./cmd/gooo check examples/language-hygienic-origin-identity/main.gooo
-          go run ./cmd/gooo check examples/language-hygienic-origin-identity/unknown.gooo
-      - name: Run independent judge and replay exact receipts
+          for source in main.gooo unknown.gooo comment-only.gooo intervention.gooo; do
+            go run ./cmd/gooo check "examples/language-hygienic-origin-identity/$source"
+          done
+      - name: Run consumer judge, snapshots, interventions, and exact receipts
         shell: bash
         run: |
           set -euo pipefail
-          go test ./internal/meta/hygienicoriginidentity ./scripts/language-hygienic-origin-identity
+          go test ./internal/meta/hygienicoriginidentity/... ./scripts/language-hygienic-origin-identity
           output="$RUNNER_TEMP/language-hygienic-origin-identity"
           mkdir -p "$output"
+
+          git status --porcelain=v1 > "$output/main-before.snapshot"
+          go run ./scripts/language-hygienic-origin-identity \
+            -source examples/language-hygienic-origin-identity/main.gooo \
+            -head-sha "$HEAD_SHA" -check
+          git status --porcelain=v1 > "$output/main-after.snapshot"
+          cmp "$output/main-before.snapshot" "$output/main-after.snapshot"
+          cp "$output/main-after.snapshot" "$output/main-after-for-receipt.snapshot"
           for pass in first second; do
             go run ./scripts/language-hygienic-origin-identity \
               -source examples/language-hygienic-origin-identity/main.gooo \
-              -head-sha "$HEAD_SHA" -output "$output/main-$pass.json" -check
-            go run ./scripts/language-hygienic-origin-identity \
-              -source examples/language-hygienic-origin-identity/unknown.gooo \
-              -head-sha "$HEAD_SHA" -output "$output/unknown-$pass.json" \
-              -check -expect-unknown
+              -head-sha "$HEAD_SHA" \
+              -before-snapshot "$output/main-before.snapshot" \
+              -after-snapshot "$output/main-after-for-receipt.snapshot" \
+              -output "$output/main-$pass.json" -check
           done
           cmp "$output/main-first.json" "$output/main-second.json"
+
+          git status --porcelain=v1 > "$output/unknown-before.snapshot"
+          go run ./scripts/language-hygienic-origin-identity \
+            -source examples/language-hygienic-origin-identity/unknown.gooo \
+            -head-sha "$HEAD_SHA" -expectation unknown -check
+          git status --porcelain=v1 > "$output/unknown-after.snapshot"
+          cmp "$output/unknown-before.snapshot" "$output/unknown-after.snapshot"
+          for pass in first second; do
+            go run ./scripts/language-hygienic-origin-identity \
+              -source examples/language-hygienic-origin-identity/unknown.gooo \
+              -head-sha "$HEAD_SHA" \
+              -before-snapshot "$output/unknown-before.snapshot" \
+              -after-snapshot "$output/unknown-after.snapshot" \
+              -output "$output/unknown-$pass.json" \
+              -expectation unknown -check
+          done
           cmp "$output/unknown-first.json" "$output/unknown-second.json"
+
+          go run ./scripts/language-hygienic-origin-identity \
+            -source examples/language-hygienic-origin-identity/main.gooo \
+            -compare-source examples/language-hygienic-origin-identity/comment-only.gooo \
+            -head-sha "$HEAD_SHA" \
+            -before-snapshot "$output/main-before.snapshot" \
+            -after-snapshot "$output/main-after-for-receipt.snapshot" \
+            -check
+
+          for pass in first second; do
+            go run ./scripts/language-hygienic-origin-identity \
+              -source examples/language-hygienic-origin-identity/intervention.gooo \
+              -head-sha "$HEAD_SHA" \
+              -before-snapshot "$output/main-before.snapshot" \
+              -after-snapshot "$output/main-after-for-receipt.snapshot" \
+              -output "$output/intervention-$pass.json" \
+              -expectation refuted -check
+          done
+          cmp "$output/intervention-first.json" "$output/intervention-second.json"
+
           jq -e '
-            .schema == "gooo/hygienic-origin-identity/v1" and
+            .schema == "gooo/hygienic-origin-identity/v2" and
             .decision == "PASS" and .resolution == "EXACT" and
             .producer == "gooo://hygienic-origin-identity/producer/name-generator" and
             .consumer == "gooo://hygienic-origin-identity/consumer/binding-site" and
@@ -78,44 +122,66 @@ jobs:
             .proof_choice == "ORIGIN_SCOPE_EQUIVALENCE" and
             .metrics.fixed_case_denominator == 2 and
             .metrics.fixed_claim_denominator == 4 and
-            .metrics.observed_case_total == 2 and
-            .metrics.observed_claim_total == 4 and
-            .metrics.same_spelling_case_total == 2 and
-            .metrics.captured_case_total == 1 and
-            .metrics.non_captured_case_total == 1 and
-            .metrics.classified_claim_total == 4 and
-            .metrics.discharged_claim_total == 2 and
-            .metrics.refuted_claim_total == 2 and
-            .metrics.open_claim_total == 0 and
+            .metrics.fixed_target_preservation_denominator == 2 and
+            .metrics.source_cases_observed == 2 and .metrics.source_cases_expected == 2 and
+            .metrics.producer_imports_observed == 0 and .metrics.producer_imports_expected == 0 and
+            .metrics.semantic_causality_observed == 1 and .metrics.semantic_causality_expected == 1 and
+            .metrics.comment_invariance_observed == 1 and .metrics.comment_invariance_expected == 1 and
+            .metrics.control_capture_observed == 1 and .metrics.control_capture_expected == 1 and
+            .metrics.hygienic_noncapture_observed == 1 and .metrics.hygienic_noncapture_expected == 1 and
+            .metrics.target_preservation_observed == 2 and .metrics.target_preservation_expected == 2 and
+            .metrics.target_preservation_discharged == 2 and
+            .metrics.target_preservation_refuted == 0 and
+            .metrics.target_preservation_bps == 10000 and
+            .metrics.observed_case_total == 2 and .metrics.observed_claim_total == 4 and
+            .metrics.classified_claim_total == 4 and .metrics.discharged_claim_total == 2 and
+            .metrics.refuted_claim_total == 2 and .metrics.open_claim_total == 0 and
             .metrics.classification_coverage_bps == 10000 and
-            .metrics.preservation_satisfaction_bps == 5000 and
-            .metrics.unknown_path_total == 0 and
-            (.unknowns | length) == 0 and
+            .metrics.preservation_satisfaction_bps == 10000 and
+            .metrics.unknown_path_total == 0 and (.unknowns | length) == 0 and
             .authority.repository_writes == 0 and
             .authority.repository_mutation_authorized == false and
+            .authority.snapshots_equal == true and
+            (.claim_transitions | length) == 4 and
+            ([.claim_transitions[] | select(.before == "UNCLASSIFIED")] | length) == 4 and
             ([.cases[] | select(.same_spelling == true)] | length) == 2 and
             ([.cases[] | select(.captured == true)] | length) == 1 and
             ([.claims[] | select(.status == "DISCHARGED")] | length) == 2 and
             ([.claims[] | select(.status == "REFUTED")] | length) == 2
           ' "$output/main-first.json"
           jq -e '
-            .schema == "gooo/hygienic-origin-identity/v1" and
+            .schema == "gooo/hygienic-origin-identity/v2" and
             .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
-            .metrics.fixed_case_denominator == 2 and
-            .metrics.fixed_claim_denominator == 4 and
-            .metrics.unknown_path_total == 1 and
-            .metrics.open_claim_total == 1 and
-            .metrics.observed_claim_total == 5 and
-            ([.claims[] | select(.status == "OPEN")] | length) == 1 and
-            ([.unknowns[] | select(.stage != "" and .step != "" and .reason != "")] | length) == 1
+            .metrics.fixed_case_denominator == 2 and .metrics.fixed_claim_denominator == 4 and
+            .metrics.fixed_target_preservation_denominator == 2 and
+            .metrics.source_cases_observed == 2 and .metrics.producer_imports_observed == 0 and
+            .metrics.semantic_causality_observed == 1 and .metrics.comment_invariance_observed == 1 and
+            .metrics.control_capture_observed == 1 and .metrics.hygienic_noncapture_expected == 1 and
+            .metrics.target_preservation_observed == 2 and
+            .metrics.target_preservation_discharged == 1 and
+            .metrics.target_preservation_open == 1 and
+            .metrics.observed_claim_total == 5 and .metrics.classified_claim_total == 3 and
+            .metrics.discharged_claim_total == 1 and .metrics.refuted_claim_total == 2 and
+            .metrics.open_claim_total == 2 and .metrics.unknown_path_total == 1 and
+            ([.unknowns[] | select(.stage != "" and .step != "" and .reason != "" and .evidence_digest != "" and .provenance != "")] | length) == 1 and
+            ([.claims[] | select(.status == "OPEN")] | length) == 2
           ' "$output/unknown-first.json"
+          jq -e '
+            .decision == "REFUTED" and .resolution == "EXACT" and
+            .metrics.target_preservation_discharged == 1 and
+            .metrics.target_preservation_refuted == 1 and
+            .metrics.target_preservation_bps == 5000 and
+            (.claim_transitions | length) == 4
+          ' "$output/intervention-first.json"
+          test "$(jq -r .source.semantic_digest "$output/main-first.json")" != "$(jq -r .source.semantic_digest "$output/intervention-first.json")"
+          test "$(jq -r .receipt_digest "$output/main-first.json")" != "$(jq -r .receipt_digest "$output/intervention-first.json")"
           {
             echo '### Gooo hygienic origin identity'
-            jq -r '"- decision: `\(.decision)` / `\(.resolution)`"' "$output/main-first.json"
-            jq -r '"- fixed denominator: `\(.metrics.classified_claim_total)/\(.metrics.fixed_claim_denominator)`; discharged `\(.metrics.discharged_claim_total)`; refuted `\(.metrics.refuted_claim_total)`"' "$output/main-first.json"
-            jq -r '"- same spelling: `\(.metrics.same_spelling_case_total)/\(.metrics.fixed_case_denominator)`; captured `\(.metrics.captured_case_total)`; non-captured `\(.metrics.non_captured_case_total)`"' "$output/main-first.json"
-            jq -r '"- unknown guardrail: `\(.decision)` at `\(.unknowns[0].stage // "none")/\(.unknowns[0].step // "none")/\(.unknowns[0].reason // "none")`"' "$output/unknown-first.json"
-            jq -r '"- receipt digest: `\(.receipt_digest)`; repository writes: `\(.authority.repository_writes)`"' "$output/main-first.json"
+            jq -r '"- baseline: `\(.decision)`; target preservation `\(.metrics.target_preservation_discharged)/\(.metrics.target_preservation_expected)`; controls refuted `\(.metrics.refuted_claim_total)`"' "$output/main-first.json"
+            jq -r '"- fixed denominators: source cases `\(.metrics.source_cases_observed)/\(.metrics.source_cases_expected)`, producer imports `\(.metrics.producer_imports_observed)/\(.metrics.producer_imports_expected)`, semantic causality `\(.metrics.semantic_causality_observed)/\(.metrics.semantic_causality_expected)`, comment invariance `\(.metrics.comment_invariance_observed)/\(.metrics.comment_invariance_expected)`"' "$output/main-first.json"
+            jq -r '"- UNKNOWN: `\(.unknowns[0].stage)/\(.unknowns[0].step)/\(.unknowns[0].reason)`; open claims `\(.metrics.open_claim_total)`"' "$output/unknown-first.json"
+            jq -r '"- intervention: `\(.decision)`; target preservation `\(.metrics.target_preservation_discharged)/\(.metrics.target_preservation_expected)`; receipt `\(.receipt_digest)`"' "$output/intervention-first.json"
+            jq -r '"- read-only snapshots: writes `\(.authority.repository_writes)`; equal `\(.authority.snapshots_equal)`"' "$output/main-first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head origin identity receipts
         uses: actions/upload-artifact@v6
@@ -124,5 +190,6 @@ jobs:
           path: |
             ${{ runner.temp }}/language-hygienic-origin-identity/main-first.json
             ${{ runner.temp }}/language-hygienic-origin-identity/unknown-first.json
+            ${{ runner.temp }}/language-hygienic-origin-identity/intervention-first.json
           if-no-files-found: error
           retention-days: 14

@@ -13,13 +13,16 @@ entity HygienicOriginClaim id "gooo://hygienic-origin-identity/entity/hygienic-o
 entity HygienicScopeClaim id "gooo://hygienic-origin-identity/entity/hygienic-scope-claim"
 entity ProofReceipt id "gooo://hygienic-origin-identity/entity/proof-receipt"
 
-activity ProduceSameSpelling(OriginIdentity) -> GeneratedName
-activity ConsumeName(GeneratedName) -> ConsumerBinding
+activity ProduceCapturedName(OriginIdentity) -> GeneratedName computes "hoi.produce case=captured spelling=tmp origin=consumer-binding scope=consumer-call-site"
+activity ProduceHygienicName(OriginIdentity) -> GeneratedName computes "hoi.produce case=hygienic spelling=tmp origin=producer-expansion-1 scope=fresh-producer-expansion-1"
+activity ConsumeCapturedName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=captured binding=consumer-binding"
+activity ConsumeHygienicName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=hygienic binding=producer-expansion-1"
 activity ObserveCapturedResult(ConsumerBinding) -> CapturedResult
 activity ObserveHygienicResult(ConsumerBinding) -> HygienicResult
 activity PreserveOriginIdentity(GeneratedName) -> OriginIdentity
 activity PreserveScopeProvenance(GeneratedName) -> ScopeProvenance
 activity EmitProofReceipt(CapturedResult) -> ProofReceipt
 
-# experiment.case id=captured spelling=tmp origin=consumer-binding scope=consumer-call-site resolves=consumer-binding expected=captured
-# experiment.case id=hygienic spelling=tmp origin=producer-expansion-1 scope=fresh-producer-expansion-1 resolves=producer-expansion-1 expected=not-captured
+# Comments are intentionally non-authoritative. The consumer extracts cases
+# only from the canonical lowered activity value programs above.
+# experiment.case id=captured spelling=not-authoritative
