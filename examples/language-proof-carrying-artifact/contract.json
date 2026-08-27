@@ -1,0 +1,11 @@
+{
+  "schema": "gooo/language-proof-carrying-artifact-contract/v1",
+  "version": 1,
+  "cases": [
+    {"id":"valid-proof-carrying-artifact","input_kind":"VALID","expected_decision":"PASS","expected_resolution":"EXACT","expected_reason":"PROOF_CARRYING_ARTIFACT_AUTHORIZED","proof_choice":"COHERENCE","meta_operation":"grant-only-after-proof"},
+    {"id":"tampered-evidence","input_kind":"TAMPERED","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_EVIDENCE_DIGEST_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-tampered-evidence"},
+    {"id":"missing-operation-evidence","input_kind":"MISSING","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"PROOF_EVIDENCE_MISSING","proof_choice":"FOUNDATION","meta_operation":"lower-missing-evidence"},
+    {"id":"bytes-only-no-authority","input_kind":"BYTE_ONLY","expected_decision":"FAIL_CLOSED","expected_resolution":"LOWER_RESOLUTION","expected_reason":"ARTIFACT_BYTES_NOT_AUTHORITY","proof_choice":"REGRESSION","meta_operation":"deny-byte-only-authority"},
+    {"id":"independent-recipe-mismatch","input_kind":"WRONG_RECIPE","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"INDEPENDENT_RECIPE_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-recipe-drift"}
+  ]
+}

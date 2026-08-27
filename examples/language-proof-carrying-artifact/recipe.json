@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/language-proof-carrying-recipe/v1",
+  "version": 1,
+  "id": "gooo://recipe/language-proof-carrying-artifact/v1",
+  "consumer": "gooo://consumer/language-proof-carrying-artifact-verifier",
+  "steps": [
+    {"id":"verify-source","input":"source-bytes","meta_operation":"recheck-source-digest","proof_choice":"FOUNDATION"},
+    {"id":"verify-operation","input":"operation-receipt","meta_operation":"recheck-operation-receipt","proof_choice":"COHERENCE"},
+    {"id":"verify-invariant","input":"invariant-evidence","meta_operation":"recheck-no-byte-authority","proof_choice":"REGRESSION"},
+    {"id":"grant-authority","input":"consumer-verdict","meta_operation":"grant-only-after-proof","proof_choice":"COHERENCE"}
+  ]
+}

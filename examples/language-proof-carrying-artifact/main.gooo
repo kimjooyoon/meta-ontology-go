@@ -1,0 +1,9 @@
+package proofartifact
+namespace proofartifact
+
+entity SourceEvidence id "gooo://proof/source-evidence"
+entity OperationEvidence id "gooo://proof/operation-evidence"
+entity InvariantEvidence id "gooo://proof/invariant-evidence"
+entity ProofCarryingArtifact id "gooo://proof/proof-carrying-artifact"
+
+activity GenerateProofCarryingArtifact(SourceEvidence, OperationEvidence, InvariantEvidence) -> ProofCarryingArtifact
