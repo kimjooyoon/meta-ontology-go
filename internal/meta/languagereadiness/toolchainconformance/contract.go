@@ -10,7 +10,7 @@ const (
 	ExpectedConceptID      = "toolchain-conformance"
 	ExpectedMetaOperation  = "close-toolchain-conformance-ledger"
 	ExpectedSurfaceCount   = 9
-	ExpectedCaseCount      = 173
+	ExpectedCaseCount      = 175
 	ExpectedIndicatorCount = 151
 	ExpectedProofCount     = 27
 	ExpectedTamperCount    = 13

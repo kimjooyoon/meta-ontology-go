@@ -29,7 +29,9 @@ func init() {
 				"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 				"internal/meta/languagereadiness/languagesyntax/model.go",
 				"internal/meta/languagereadiness/languagesyntax/registry.go",
-				"internal/meta/languagereadiness/toolchainconformance/corpus.go")
+				"internal/meta/languagereadiness/toolchainconformance/contract.go",
+				"internal/meta/languagereadiness/toolchainconformance/corpus.go",
+				"internal/meta/languagereadiness/toolchainconformance/evaluate_test.go")
 		}
 		branchScopeAllowlist[branch] = branchPaths
 	}
