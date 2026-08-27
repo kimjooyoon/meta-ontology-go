@@ -1,0 +1,84 @@
+name: Self-improvement producer attestation resolution
+
+on:
+  workflow_run:
+    workflows: ["Self-improvement non-executing candidate"]
+    types: [completed]
+
+permissions:
+  actions: read
+  attestations: read
+  contents: read
+
+jobs:
+  resolve:
+    name: Resolve EHT-8 producer identity
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.workflow_run.head_sha }}
+      CANDIDATE_RUN_ID: ${{ github.event.workflow_run.id }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Download exact candidate transport receipt
+        uses: actions/download-artifact@v7
+        with:
+          name: self-improvement-nonexecuting-candidate-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/attestation-resolution/input
+          github-token: ${{ github.token }}
+          run-id: ${{ env.CANDIDATE_RUN_ID }}
+
+      - name: Download immutable producer archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/attestation-resolution/input/transport/receipt.json"
+          artifact_id="$(jq -er '.transport.artifact_id | select(type == "number" and . > 0)' "$receipt")"
+          mkdir -p "$RUNNER_TEMP/attestation-resolution/source"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            > "$RUNNER_TEMP/attestation-resolution/source/archive.zip"
+
+      - name: Verify Sigstore producer identity and resolve EHT-8
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/attestation-resolution"
+          archive="$root/source/archive.zip"
+          verification="$root/source/verification.json"
+          stderr="$root/source/verification.stderr"
+          set +e
+          gh attestation verify "$archive" --repo "$GITHUB_REPOSITORY" --format json \
+            > "$verification" 2> "$stderr"
+          verifier_exit=$?
+          set -e
+          verifier_version="$(gh --version | head -n 1)"
+          mkdir -p "$root/output"
+          for pass in first second; do
+            go run ./scripts/self-improvement-attestation \
+              -transport-receipt "$root/input/transport/receipt.json" \
+              -source-archive "$archive" -verification "$verification" \
+              -verifier-exit-code "$verifier_exit" -verifier-version "$verifier_version" \
+              -output "$root/output/$pass.json" -check
+          done
+          cmp "$root/output/first.json" "$root/output/second.json"
+
+      - name: Upload producer attestation resolution
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-attestation-resolution-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/attestation-resolution/output
+          if-no-files-found: error
+          retention-days: 14
