@@ -103,6 +103,7 @@ semantic_source="$work/semantic.gooo"
 sed -e 's/AUTHORIZED_MIGRATION\^ADVANCE\^EXACT\^DENOMINATOR_ADVANCE_AUTHORIZED\^OPEN\^DISCHARGED/AUTHORIZED_MIGRATION^BLOCK^INVARIANT_ONLY^MIGRATION_RECEIPT_MISSING^OPEN^REFUTED/' \
 	-e 's/event=1\^legal-advance\^OPEN\^DISCHARGED\^DECIDE\^apply-migration-receipt/event=1^legal-advance^OPEN^REFUTED^DECIDE^apply-migration-receipt/' \
 	-e 's/case=legal-advance\^ADVANCE\^EXACT\^DENOMINATOR_ADVANCE_AUTHORIZED/case=legal-advance^BLOCK^INVARIANT_ONLY^MIGRATION_RECEIPT_MISSING/' \
+	-e 's/The migration receipt replays to the same successor digest\./The migration receipt replays to a changed successor digest./' \
 	examples/denominator-evolution/main.gooo > "$semantic_source"
 semantic_producer_status=0
 run_producer "$semantic_source" "$work/report-semantic.json" || semantic_producer_status=$?
@@ -118,7 +119,8 @@ run_consumer "$comment_source" "$work/report-comment.json" "$work/verification-c
 semantic_causality=0
 if [[ "$semantic_producer_status" -ne 0 && "$semantic_consumer_status" -ne 0 ]] && \
 	[[ "$(jq -r '.source_projection.semantic_digest' "$work/report-a.json")" != "$(jq -r '.source_projection.semantic_digest' "$work/report-semantic.json")" ]] && \
-	[[ "$(jq -r '.claim_ledger[0].digest' "$work/report-a.json")" != "$(jq -r '.claim_ledger[0].digest' "$work/report-semantic.json")" ]]; then
+	[[ "$(jq -r '.claim_ledger[0].digest' "$work/report-a.json")" != "$(jq -r '.claim_ledger[0].digest' "$work/report-semantic.json")" ]] && \
+	[[ "$(jq -r '.cases[0].receipt.digest' "$work/report-a.json")" != "$(jq -r '.cases[0].receipt.digest' "$work/report-semantic.json")" ]]; then
 	semantic_causality=1
 fi
 nonsemantic_preservation=0
