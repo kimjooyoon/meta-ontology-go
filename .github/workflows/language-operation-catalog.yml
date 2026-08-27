@@ -115,3 +115,89 @@ jobs:
             ${{ runner.temp }}/language-operation-catalog/unknown-first.json
           if-no-files-found: error
           retention-days: 14
+      - name: Classify operation claim causality
+        shell: bash
+        run: |
+          set -euo pipefail
+          format_diff="$(gofmt -d \
+            internal/valuecatalog/causality/model.go \
+            internal/valuecatalog/causality/contract.go \
+            internal/valuecatalog/causality/evaluate.go \
+            internal/valuecatalog/causality/validate.go \
+            internal/valuecatalog/causality/discover.go \
+            internal/valuecatalog/causality/causality_test.go \
+            scripts/language-operation-claim-causality/main.go)"
+          if [[ -n "${format_diff}" ]]; then
+            printf '%s\n' "${format_diff}"
+            exit 1
+          fi
+
+          go test ./internal/valuecatalog/causality
+
+          roots="${RUNNER_TEMP},${GITHUB_WORKSPACE}"
+          for run in a b; do
+            go run ./scripts/language-operation-claim-causality \
+              -discover-roots "${roots}" \
+              -mode success \
+              -output "${RUNNER_TEMP}/claim-causality-success-${run}.json" \
+              -check
+            go run ./scripts/language-operation-claim-causality \
+              -discover-roots "${roots}" \
+              -mode unknown \
+              -output "${RUNNER_TEMP}/claim-causality-unknown-${run}.json" \
+              -check
+          done
+
+          cmp -s "${RUNNER_TEMP}/claim-causality-success-a.json" "${RUNNER_TEMP}/claim-causality-success-b.json"
+          cmp -s "${RUNNER_TEMP}/claim-causality-unknown-a.json" "${RUNNER_TEMP}/claim-causality-unknown-b.json"
+
+          jq -e '
+            .schema == "gooo.language.operation-claim-causality/v1" and
+            .scope == "CAUSAL_CLASSIFICATION_ONLY" and
+            .graph.node_total == 9 and
+            .graph.edge_total == 11 and
+            .metrics.classified_claim_total == 9 and
+            .metrics.discharged_claim_total == 9 and
+            .metrics.direct_missing_claim_total == 0 and
+            .metrics.dependency_blocked_claim_total == 0 and
+            .decision.value == "PASS" and
+            .decision.semantic_promotion_authorized == false
+          ' "${RUNNER_TEMP}/claim-causality-success-a.json"
+
+          jq -e '
+            .schema == "gooo.language.operation-claim-causality/v1" and
+            .scope == "CAUSAL_CLASSIFICATION_ONLY" and
+            .graph.node_total == 9 and
+            .graph.edge_total == 11 and
+            .metrics.classified_claim_total == 9 and
+            .metrics.discharged_claim_total == 0 and
+            .metrics.direct_missing_claim_total == 1 and
+            .metrics.dependency_blocked_claim_total == 8 and
+            .metrics.observed_blocking_edge_total == 11 and
+            .metrics.maximum_cause_path_depth == 4 and
+            .decision.value == "FAIL_CLOSED" and
+            .decision.semantic_promotion_authorized == false
+          ' "${RUNNER_TEMP}/claim-causality-unknown-a.json"
+
+          {
+            echo "### Operation claim causality"
+            echo ""
+            echo "- scope: causal classification only"
+            echo "- declared graph contract: 9 claims / 11 edges"
+            echo "- success: discharged 9 / direct missing 0 / dependency blocked 0"
+            echo "- UNKNOWN: discharged 0 / direct missing 1 / dependency blocked 8"
+            echo "- UNKNOWN blocking edges: 11 / maximum cause depth: 4"
+            echo "- source-to-IR binding: UNKNOWN"
+            echo "- semantic promotion authority: 0"
+            echo "- deterministic receipts: success 2/2, UNKNOWN 2/2"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload operation claim causality receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-claim-causality-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/claim-causality-success-a.json
+            ${{ runner.temp }}/claim-causality-unknown-a.json
+          if-no-files-found: error
+          retention-days: 14
