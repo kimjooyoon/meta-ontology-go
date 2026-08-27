@@ -1,6 +1,9 @@
 package partialknowledgecomposition
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 func Evaluate(input Input) (Receipt, error) {
 	if err := ValidateInput(input); err != nil {
@@ -155,15 +158,55 @@ func boolCount(value bool) int {
 func ValidateReceipt(receipt Receipt) error {
 	if receipt.Schema != Schema || receipt.Decision != "PROVEN" ||
 		receipt.Reason != "COMPOSITION_RULES_REPLAYED" || receipt.Resolution != "COMPOSITION_CALCULUS" ||
+		receipt.Producer != Producer || receipt.Consumer != Consumer || receipt.MetaOperation != MetaOperation ||
 		receipt.FixedDenominator != FixedDenominator || len(receipt.Cases) != FixedDenominator ||
 		len(receipt.Claims) != FixedDenominator || len(receipt.Indicators) != 10 ||
-		receipt.RepositoryWrites != 0 || receipt.PromotionAuthorized || receipt.Digest != receiptDigest(receipt) {
+		receipt.RepositoryWrites != 0 || receipt.PromotionAuthorized || receipt.SourceDigest == "" ||
+		receipt.DenominatorDigest != digestValue(struct {
+			Count int      `json:"count"`
+			IDs   []string `json:"ids"`
+		}{FixedDenominator, fixedCaseIDs}) || receipt.Digest != receiptDigest(receipt) {
 		return fmt.Errorf("partial-knowledge receipt is not closed")
 	}
 	if receipt.Summary.CaseTotal != FixedDenominator || receipt.Summary.TopSuccessCases != 1 ||
 		receipt.Summary.NonExactCases != 4 || receipt.Summary.NonExactNotPromoted != 4 ||
 		receipt.Summary.ClaimTransitionTotal != FixedDenominator {
 		return fmt.Errorf("partial-knowledge receipt summary is not exact")
+	}
+	previous := ""
+	for index, result := range receipt.Cases {
+		if result.ID != fixedCaseIDs[index] || result.Producer != Producer || result.Consumer != Consumer ||
+			result.MetaOperation == "" || !validProofChoice(result.ProofChoice) {
+			return fmt.Errorf("case %d identity is not closed", index+1)
+		}
+		decision, reason, topSuccess := classify(result.Result)
+		if result.Decision != decision || result.Reason != reason || result.TopSuccess != topSuccess {
+			return fmt.Errorf("case %q classification is not closed", result.ID)
+		}
+		if result.EvidenceDigest != digestValue(struct {
+			ID     string  `json:"id"`
+			Left   Operand `json:"left"`
+			Right  Operand `json:"right"`
+			Result Value   `json:"result"`
+		}{result.ID, result.Left, result.Right, result.Result}) {
+			return fmt.Errorf("case %q evidence digest differs", result.ID)
+		}
+		claim := receipt.Claims[index]
+		if claim.Sequence != index+1 || claim.ClaimID != "composition/"+result.ID || claim.From != "OPEN" ||
+			claim.To != transitionState(result.Result.State) || claim.MetaOperation != result.MetaOperation ||
+			claim.ProofChoice != result.ProofChoice || claim.EvidenceDigest != result.EvidenceDigest ||
+			claim.PreviousDigest != previous || claim.Digest != transitionDigest(claim) {
+			return fmt.Errorf("claim transition %d is not append-only", index+1)
+		}
+		previous = claim.Digest
+	}
+	for _, indicator := range receipt.Indicators {
+		if !indicator.Satisfied || indicator.TargetBasisPoints != 10000 || indicator.Producer != Producer || indicator.Consumer != Consumer {
+			return fmt.Errorf("indicator %q is not satisfied", indicator.ID)
+		}
+	}
+	if !slices.Equal(receipt.Indicators, buildIndicators(receipt)) {
+		return fmt.Errorf("indicator reconstruction differs")
 	}
 	return nil
 }
