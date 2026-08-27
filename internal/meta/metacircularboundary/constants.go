@@ -11,6 +11,8 @@ const (
 
 	DecisionPass       = "PASS"
 	DecisionFailClosed = "FAIL_CLOSED"
+	DecisionOpen       = "OPEN"
+	DecisionRefuted    = "REFUTED"
 	ResolutionExact    = "EXACT"
 	ResolutionLower    = "LOWER_RESOLUTION"
 
@@ -28,8 +30,11 @@ const (
 	ReasonForgedCapability     = "FORGED_AUTHORIZATION_REJECTED"
 	ReasonOutOfScopeCapability = "CAPABILITY_SCOPE_EXCEEDS_READ_ONLY"
 	ReasonSourceBindingUnknown = "SELF_DESCRIPTION_BINDING_UNKNOWN"
+	ReasonCaseDataUnknown      = "CASE_COMPUTATION_DATA_UNKNOWN"
+	ReasonContradictory        = "CONTRADICTORY_CAPABILITY_EVIDENCE"
 	ReasonReportMismatch       = "INDEPENDENT_JUDGE_MISMATCH"
 	ReasonContractSatisfied    = "META_CIRCULAR_BOUNDARY_PROVEN"
+	ReasonContractUnsatisfied  = "META_CIRCULAR_BOUNDARY_CONTRACT_NOT_SATISFIED"
 	ReasonReplayMismatch       = "INDEPENDENT_REPLAY_MISMATCH"
 
 	ProofFoundation = "FOUNDATION"
@@ -54,4 +59,8 @@ var requiredActivities = []string{
 	"GrantReadOnlyMetaCapability",
 	"ExecuteMetaOperation",
 	"InspectForgedCapability",
+	"DescriptionOnlyAttempt",
+	"ExplicitReadOnlyCapabilityAttempt",
+	"ForgedCapabilityAttempt",
+	"WriteCapabilityAttempt",
 }

@@ -1282,8 +1282,12 @@ jobs:
           go test ./internal/meta/metacircularboundaryconsumer
           go vet ./cmd/meta-circular-boundary-witness ./cmd/meta-circular-boundary-consumer-witness ./cmd/meta-circular-boundary-intervention-witness ./internal/meta/metacircularboundary ./internal/meta/metacircularboundaryconsumer
 
-      - name: Run shared CaseInput regression
-        run: go test ./internal/meta/metacircularboundary -run TestConsumerRejectsSharedWrongCaseInputCounterexample -count=1
+      - name: Run shared case-fact regression
+        run: go test ./internal/meta/metacircularboundary -run TestConsumerRejectsSharedWrongCaseFactCounterexample -count=1
+
+      - name: Run authority and evidence regressions
+        run: |
+          go test ./internal/meta/metacircularboundary -run 'TestExpectedDecisionCannotMintAuthorization|TestUnknownComputationDataRemainsOpen|TestContradictoryCapabilityEvidenceIsRefuted' -count=1
 
       - name: Replay the exact-head witness twice
         shell: bash
@@ -1328,9 +1332,9 @@ jobs:
             .summary.explicit_authorizations == 1 and
             .summary.allowed_executions == 1 and
             .summary.description_only_blocked == 1 and
-            .summary.forged_blocked == 1 and
-            .summary.out_of_scope_blocked == 1 and
-            .summary.escalation_paths == 0 and
+            .summary.forged_authorizations_blocked == 1 and
+            .summary.out_of_scope_authorizations_blocked == 1 and
+            .summary.description_escalation_paths == 0 and
             .summary.replay_matches == 4 and
             .summary.repository_writes == 0 and
             .summary.mutation_authority == 0 and
@@ -1362,8 +1366,31 @@ jobs:
           jq -e '
             .schema == "gooo/meta-circular-boundary-causality/v1" and
             .summary.total == 2 and .summary.passed == 2 and .summary.coverage_bps == 10000 and
-            ([.cases[] | select(.kind == "SEMANTIC" and .semantic_changed == true and .expected_semantic_change == true and .consumer_accepted == true and .passed == true)] | length) == 1 and
-            ([.cases[] | select(.kind == "NON_SEMANTIC" and .semantic_changed == false and .expected_semantic_change == false and .source_changed == true and .consumer_accepted == true and .passed == true)] | length) == 1
+            ([.cases[] | select(
+              .kind == "SEMANTIC" and
+              .source_changed == true and .semantic_changed == true and .expected_semantic_change == true and
+              .consumer_accepted == true and .passed == true and
+              .baseline_case_decision != .intervened_case_decision and
+              .baseline_authorization != .intervened_authorization and
+              .baseline_execution != .intervened_execution and
+              .baseline_receipt_decision != .intervened_receipt_decision and
+              .baseline_capability_digest != .intervened_capability_digest and
+              .baseline_authorization_claim != .intervened_authorization_claim and
+              .baseline_execution_claim != .intervened_execution_claim and
+              .semantic_outputs_preserved == false
+            )] | length) == 1 and
+            ([.cases[] | select(
+              .kind == "NON_SEMANTIC" and
+              .source_changed == true and .semantic_changed == false and .expected_semantic_change == false and
+              .consumer_accepted == true and .passed == true and
+              .baseline_case_decision == .intervened_case_decision and
+              .baseline_authorization == .intervened_authorization and
+              .baseline_execution == .intervened_execution and
+              .baseline_receipt_decision == .intervened_receipt_decision and
+              .baseline_authorization_claim == .intervened_authorization_claim and
+              .baseline_execution_claim == .intervened_execution_claim and
+              .semantic_outputs_preserved == true
+            )] | length) == 1
           ' "$RUNNER_TEMP/meta-circular-boundary/causality.json"
 
       - name: Upload meta-circular boundary evidence

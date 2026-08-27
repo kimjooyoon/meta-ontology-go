@@ -7,17 +7,23 @@ type Coordinate struct {
 }
 
 type SourceObservation struct {
-	Path              string   `json:"path"`
-	SourceDigest      string   `json:"source_digest"`
-	SemanticDigest    string   `json:"semantic_digest"`
-	Package           string   `json:"package"`
-	Namespace         string   `json:"namespace"`
-	Entities          []string `json:"entities"`
-	Activities        []string `json:"activities"`
-	DescriptionBound  bool     `json:"description_bound"`
-	ReadOnly          bool     `json:"read_only"`
-	RepositoryWrites  int      `json:"repository_writes"`
-	MutationAuthority bool     `json:"mutation_authority"`
+	Path              string        `json:"path"`
+	SourceDigest      string        `json:"source_digest"`
+	SemanticDigest    string        `json:"semantic_digest"`
+	Package           string        `json:"package"`
+	Namespace         string        `json:"namespace"`
+	Entities          []string      `json:"entities"`
+	Activities        []string      `json:"activities"`
+	Computations      []Computation `json:"computations"`
+	DescriptionBound  bool          `json:"description_bound"`
+	ReadOnly          bool          `json:"read_only"`
+	RepositoryWrites  int           `json:"repository_writes"`
+	MutationAuthority bool          `json:"mutation_authority"`
+}
+
+type Computation struct {
+	Activity string `json:"activity"`
+	Program  string `json:"program"`
 }
 
 type Capability struct {
@@ -29,9 +35,12 @@ type Capability struct {
 }
 
 type Attempt struct {
+	FactActivity      string      `json:"fact_activity"`
 	DescriptionDigest string      `json:"description_digest"`
 	Capability        *Capability `json:"capability,omitempty"`
 	RequestExecution  bool        `json:"request_execution"`
+	Unknown           bool        `json:"unknown"`
+	Contradictory     bool        `json:"contradictory"`
 }
 
 type CaseDefinition struct {
@@ -48,6 +57,7 @@ type CaseObservation struct {
 	Description          string `json:"description"`
 	Authorization        string `json:"authorization"`
 	Execution            string `json:"execution"`
+	Decision             string `json:"decision"`
 	Reason               string `json:"reason"`
 	DescriptionEscalated bool   `json:"description_escalated"`
 	RepositoryWrites     int    `json:"repository_writes"`
@@ -172,17 +182,32 @@ type Input struct {
 }
 
 type CausalityCase struct {
-	ID                       string `json:"id"`
-	Kind                     string `json:"kind"`
-	BaselineSourceDigest     string `json:"baseline_source_digest"`
-	IntervenedSourceDigest   string `json:"intervened_source_digest"`
-	BaselineSemanticDigest   string `json:"baseline_semantic_digest"`
-	IntervenedSemanticDigest string `json:"intervened_semantic_digest"`
-	SourceChanged            bool   `json:"source_changed"`
-	SemanticChanged          bool   `json:"semantic_changed"`
-	ExpectedSemanticChange   bool   `json:"expected_semantic_change"`
-	ConsumerAccepted         bool   `json:"consumer_accepted"`
-	Passed                   bool   `json:"passed"`
+	ID                           string `json:"id"`
+	Kind                         string `json:"kind"`
+	BaselineSourceDigest         string `json:"baseline_source_digest"`
+	IntervenedSourceDigest       string `json:"intervened_source_digest"`
+	BaselineSemanticDigest       string `json:"baseline_semantic_digest"`
+	IntervenedSemanticDigest     string `json:"intervened_semantic_digest"`
+	SourceChanged                bool   `json:"source_changed"`
+	SemanticChanged              bool   `json:"semantic_changed"`
+	ExpectedSemanticChange       bool   `json:"expected_semantic_change"`
+	ConsumerAccepted             bool   `json:"consumer_accepted"`
+	BaselineCaseDecision         string `json:"baseline_case_decision"`
+	IntervenedCaseDecision       string `json:"intervened_case_decision"`
+	BaselineAuthorization        string `json:"baseline_authorization"`
+	IntervenedAuthorization      string `json:"intervened_authorization"`
+	BaselineExecution            string `json:"baseline_execution"`
+	IntervenedExecution          string `json:"intervened_execution"`
+	BaselineReceiptDecision      string `json:"baseline_receipt_decision"`
+	IntervenedReceiptDecision    string `json:"intervened_receipt_decision"`
+	BaselineCapabilityDigest     string `json:"baseline_capability_digest"`
+	IntervenedCapabilityDigest   string `json:"intervened_capability_digest"`
+	BaselineAuthorizationClaim   string `json:"baseline_authorization_claim"`
+	IntervenedAuthorizationClaim string `json:"intervened_authorization_claim"`
+	BaselineExecutionClaim       string `json:"baseline_execution_claim"`
+	IntervenedExecutionClaim     string `json:"intervened_execution_claim"`
+	SemanticOutputsPreserved     bool   `json:"semantic_outputs_preserved"`
+	Passed                       bool   `json:"passed"`
 }
 
 type CausalitySummary struct {

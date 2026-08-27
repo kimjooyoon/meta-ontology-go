@@ -4,6 +4,7 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/metacircularboundar
 
 type Coordinate = metacircularboundarycontract.Coordinate
 type SourceObservation = metacircularboundarycontract.SourceObservation
+type Computation = metacircularboundarycontract.Computation
 type Capability = metacircularboundarycontract.Capability
 type Attempt = metacircularboundarycontract.Attempt
 type CaseDefinition = metacircularboundarycontract.CaseDefinition

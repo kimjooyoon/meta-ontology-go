@@ -12,6 +12,9 @@ func observeSource(path string, source []byte) (SourceObservation, error) {
 	if diagnostics.HasErrors() {
 		return SourceObservation{}, fmt.Errorf("parse %s: %w", path, diagnostics.Error())
 	}
+	if file == nil || file.Package == nil || file.Namespace == nil {
+		return SourceObservation{}, fmt.Errorf("parse %s: invalid source", path)
+	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
 		return SourceObservation{}, fmt.Errorf("lower %s: %w", path, err)
@@ -25,12 +28,20 @@ func observeSource(path string, source []byte) (SourceObservation, error) {
 	}
 	entities := []string{}
 	activities := []string{}
-	for _, declaration := range file.Decls {
+	computations := []Computation{}
+	declarations := file.Decls
+	if declarations == nil {
+		declarations = file.Declarations
+	}
+	for _, declaration := range declarations {
 		switch value := declaration.(type) {
 		case *syntax.EntityDecl:
 			entities = append(entities, value.Name)
 		case *syntax.ActivityDecl:
 			activities = append(activities, value.Name)
+			if value.ValueProgramPresent || value.ValueProgram != "" {
+				computations = append(computations, Computation{Activity: value.Name, Program: value.ValueProgram})
+			}
 		}
 	}
 	if !containsAll(entities, requiredEntities) || !containsAll(activities, requiredActivities) {
@@ -39,6 +50,7 @@ func observeSource(path string, source []byte) (SourceObservation, error) {
 	return SourceObservation{
 		Path: path, SourceDigest: digestBytes(source), SemanticDigest: digestBytes([]byte(normalized.SemanticCanonical())),
 		Package: file.Package.Name, Namespace: file.Namespace.Name, Entities: entities, Activities: activities,
+		Computations:     computations,
 		DescriptionBound: true, ReadOnly: true, RepositoryWrites: 0, MutationAuthority: false,
 	}, nil
 }

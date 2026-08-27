@@ -11,10 +11,12 @@ keeps three claims separate:
 
 The fixed denominator has four cases: description only, explicit read-only
 capability, forged capability, and a write capability outside the read-only
-scope. `metacircularboundaryconsumer.Judge` is a separate consumer package
-and command. It shares only the versioned schema/model package and the
-language parser/lowerer; it independently derives case inputs, expected
-outcomes, receipts, summaries, and indicators. It does not import
+scope. Each attempt is an executable `computes` value in `main.gooo`; the Go
+contract fixes only the four case identities and denominator. Both producer
+and consumer parse/lower those values independently. `metacircularboundaryconsumer.Judge`
+is a separate consumer package and command. It shares only the versioned
+schema/model package and the language parser/lowerer; it independently derives
+case observations, receipts, summaries, and indicators. It does not import
 `metacircularboundary` or trust the producer's top-level decision.
 
 ## Evidence contract
@@ -37,23 +39,34 @@ evidence, and the read-only boundary is a semantic contract exercised by CI.
 The Actions dependency contract measures the consumer command with
 `go list -deps`: forbidden producer dependencies observed `0`, allowed maximum
 `0`, independence contract `1/1`. A regression test changes the
-description-only `CaseInput` from `RequestExecution: true` to `false`; its
-blocked observation is unchanged, so a coupled producer/consumer would pass,
-but the independent consumer rejects the wrong input. The producer and
-consumer no longer share that derivation seam.
+description-only source-derived case fact from `RequestExecution: true` to
+`false`; its blocked observation is unchanged, so a coupled producer/consumer
+would pass, but the independent consumer rejects the wrong fact. The producer
+and consumer no longer share that derivation seam.
 
-The semantic-causality witness runs two in-memory interventions: changing an
-entity ID must change the semantic digest, while adding a trailing newline
-must change only the source digest. Both are consumer-accepted and are
-reported as `2/2` (`10000` BPS).
+The producer derives receipt `Decision` and all claim transitions from each
+observed case, never from `ExpectedDecision` (which is validator-only metadata).
+Unknown computation data remains `OPEN/LOWER_RESOLUTION` at
+`PARSE_COMPUTES/read-case-facts`; contradictory capability evidence is
+`REFUTED` with refuted authorization and execution claims. CI includes a
+negative ExpectedDecision-minting regression.
+
+The semantic-causality witness runs two in-memory interventions. It changes
+the explicit Gooo capability fact from `READ_ONLY` to `WRITE`, requiring the
+source semantic digest, case decision, authorization, execution, receipt
+decision, capability receipt field, and persistent authorization/execution
+claims to change. Adding a trailing newline changes only source-bound syntax;
+the semantic digest and those semantic outputs are preserved. Both are
+consumer-accepted and reported as `2/2` (`10000` BPS).
 
 ## Meta value and falsifiers
 
 The meta value is an observable non-equivalence:
 `DESCRIPTION != AUTHORIZATION != EXECUTION`. A counterexample would be any
 receipt where description-only input becomes authorized, a forged or write
-grant reaches execution, or the source/receipt consumer can be changed without
-the independent judge rejecting the digest-bound report. The experiment is
-therefore falsifiable, not a self-hosting claim. Before this revision the
-judge lived in the producer package and the independence contract was `0/1`;
-afterward it is `0` forbidden producer dependencies and `1/1`.
+grant reaches execution, producer authority is minted from ExpectedDecision,
+or the source/receipt consumer can be changed without the independent judge
+rejecting the digest-bound report. The experiment is therefore falsifiable,
+not a self-hosting claim. Before this revision the judge lived in the producer
+package and the independence contract was `0/1`; afterward it is `0`
+forbidden producer dependencies and `1/1`.

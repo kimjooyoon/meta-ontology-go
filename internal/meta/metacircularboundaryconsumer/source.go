@@ -28,6 +28,7 @@ func observeSource(path string, source []byte) (contract.SourceObservation, erro
 	}
 	entities := []string{}
 	activities := []string{}
+	computations := []contract.Computation{}
 	declarations := file.Decls
 	if declarations == nil {
 		declarations = file.Declarations
@@ -38,6 +39,9 @@ func observeSource(path string, source []byte) (contract.SourceObservation, erro
 			entities = append(entities, value.Name)
 		case *syntax.ActivityDecl:
 			activities = append(activities, value.Name)
+			if value.ValueProgramPresent || value.ValueProgram != "" {
+				computations = append(computations, contract.Computation{Activity: value.Name, Program: value.ValueProgram})
+			}
 		}
 	}
 	if !containsAll(entities, requiredEntities) || !containsAll(activities, requiredActivities) {
@@ -46,6 +50,7 @@ func observeSource(path string, source []byte) (contract.SourceObservation, erro
 	return contract.SourceObservation{
 		Path: path, SourceDigest: digestBytes(source), SemanticDigest: digestBytes([]byte(normalized.SemanticCanonical())),
 		Package: file.Package.Name, Namespace: file.Namespace.Name, Entities: entities, Activities: activities,
+		Computations:     computations,
 		DescriptionBound: true, ReadOnly: true, RepositoryWrites: 0, MutationAuthority: false,
 	}, nil
 }

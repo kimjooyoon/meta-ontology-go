@@ -31,15 +31,15 @@ func main() {
 		fatal(fmt.Errorf("baseline consumer judge: %w", err))
 	}
 
-	semanticNeedle := []byte("gooo://meta-circular-boundary/entity/self-description")
-	semanticReplacement := []byte("gooo://meta-circular-boundary/entity/self-description-v2")
+	semanticNeedle := []byte("scope=READ_ONLY|handle=fixture|request_execution=true")
+	semanticReplacement := []byte("scope=WRITE|handle=fixture|request_execution=true")
 	if bytes.Count(source, semanticNeedle) != 1 {
 		fatal(fmt.Errorf("semantic intervention needle count is not one"))
 	}
 	semanticSource := bytes.Replace(source, semanticNeedle, semanticReplacement, 1)
 	nonSemanticSource := append(append([]byte(nil), source...), '\n')
 	cases := []contract.CausalityCase{
-		intervention("semantic-entity-id", "SEMANTIC", true, baseline, *sourcePath, *headSHA, semanticSource),
+		intervention("semantic-capability-scope", "SEMANTIC", true, baseline, *sourcePath, *headSHA, semanticSource),
 		intervention("trailing-newline", "NON_SEMANTIC", false, baseline, *sourcePath, *headSHA, nonSemanticSource),
 	}
 	report := contract.CausalityReport{Schema: interventionSchema, Cases: cases}
@@ -79,13 +79,65 @@ func intervention(id, kind string, expectedSemanticChange bool, baseline contrac
 	consumerAccepted := consumer.Judge(intervened, input) == nil
 	semanticChanged := baseline.Source.SemanticDigest != intervened.Source.SemanticDigest
 	sourceChanged := baseline.Source.SourceDigest != intervened.Source.SourceDigest
+	baselineCase := caseByID(baseline, "explicit-read-only-capability")
+	intervenedCase := caseByID(intervened, "explicit-read-only-capability")
+	baselineReceipt := baselineCase.Receipt
+	intervenedReceipt := intervenedCase.Receipt
+	semanticOutputsPreserved := semanticChanged == false &&
+		baselineCase.Observation.Decision == intervenedCase.Observation.Decision &&
+		baselineCase.Observation.Authorization == intervenedCase.Observation.Authorization &&
+		baselineCase.Observation.Execution == intervenedCase.Observation.Execution &&
+		baselineReceipt.Decision == intervenedReceipt.Decision &&
+		claimAfter(baselineReceipt, "authorization") == claimAfter(intervenedReceipt, "authorization") &&
+		claimAfter(baselineReceipt, "execution") == claimAfter(intervenedReceipt, "execution")
+	semanticOutputsChanged := baselineCase.Observation.Decision != intervenedCase.Observation.Decision &&
+		baselineCase.Observation.Authorization != intervenedCase.Observation.Authorization &&
+		baselineCase.Observation.Execution != intervenedCase.Observation.Execution &&
+		baselineReceipt.Decision != intervenedReceipt.Decision &&
+		baselineReceipt.CapabilityDigest != intervenedReceipt.CapabilityDigest &&
+		claimAfter(baselineReceipt, "authorization") != claimAfter(intervenedReceipt, "authorization") &&
+		claimAfter(baselineReceipt, "execution") != claimAfter(intervenedReceipt, "execution")
+	passed := consumerAccepted && sourceChanged && semanticChanged == expectedSemanticChange
+	if expectedSemanticChange {
+		passed = passed && semanticOutputsChanged && !semanticOutputsPreserved
+	} else {
+		passed = passed && semanticOutputsPreserved
+	}
 	return contract.CausalityCase{
 		ID: id, Kind: kind,
 		BaselineSourceDigest: baseline.Source.SourceDigest, IntervenedSourceDigest: intervened.Source.SourceDigest,
 		BaselineSemanticDigest: baseline.Source.SemanticDigest, IntervenedSemanticDigest: intervened.Source.SemanticDigest,
 		SourceChanged: sourceChanged, SemanticChanged: semanticChanged, ExpectedSemanticChange: expectedSemanticChange,
-		ConsumerAccepted: consumerAccepted, Passed: consumerAccepted && sourceChanged && semanticChanged == expectedSemanticChange,
+		ConsumerAccepted:     consumerAccepted,
+		BaselineCaseDecision: baselineCase.Observation.Decision, IntervenedCaseDecision: intervenedCase.Observation.Decision,
+		BaselineAuthorization: baselineCase.Observation.Authorization, IntervenedAuthorization: intervenedCase.Observation.Authorization,
+		BaselineExecution: baselineCase.Observation.Execution, IntervenedExecution: intervenedCase.Observation.Execution,
+		BaselineReceiptDecision: baselineReceipt.Decision, IntervenedReceiptDecision: intervenedReceipt.Decision,
+		BaselineCapabilityDigest: baselineReceipt.CapabilityDigest, IntervenedCapabilityDigest: intervenedReceipt.CapabilityDigest,
+		BaselineAuthorizationClaim: claimAfter(baselineReceipt, "authorization"), IntervenedAuthorizationClaim: claimAfter(intervenedReceipt, "authorization"),
+		BaselineExecutionClaim: claimAfter(baselineReceipt, "execution"), IntervenedExecutionClaim: claimAfter(intervenedReceipt, "execution"),
+		SemanticOutputsPreserved: semanticOutputsPreserved, Passed: passed,
 	}
+}
+
+func caseByID(report contract.Report, id string) contract.CaseResult {
+	for _, item := range report.Cases {
+		if item.Definition.ID == id {
+			return item
+		}
+	}
+	fatal(fmt.Errorf("missing causality case %q", id))
+	return contract.CaseResult{}
+}
+
+func claimAfter(receipt contract.Receipt, suffix string) string {
+	for _, transition := range receipt.ClaimTransitions {
+		if transition.ClaimID == receipt.CaseID+"."+suffix {
+			return transition.After
+		}
+	}
+	fatal(fmt.Errorf("missing %s claim in %q receipt", suffix, receipt.CaseID))
+	return ""
 }
 
 func fatal(err error) {
