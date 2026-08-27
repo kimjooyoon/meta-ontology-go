@@ -6,7 +6,7 @@ var catalogInputs = []int64{-2, 0, 41}
 
 func executeProgram(program valueexecution.Program, delta int64) ProgramResult {
 	result := ProgramResult{
-		Activity: program.Activity, Program: program.Text,
+		Activity: program.Activity, Program: program.Text, Operation: program.Operation,
 		SemanticFingerprint: program.SemanticFingerprint,
 	}
 	for _, input := range catalogInputs {

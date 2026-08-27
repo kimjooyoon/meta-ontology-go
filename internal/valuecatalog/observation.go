@@ -39,7 +39,7 @@ func observe(path string, source []byte) (observation, error) {
 	extensionProgram, extensionErr := valueexecution.Compile(path, source, ExtensionActivity)
 	extensionReason := valueexecution.Reason(extensionErr)
 	if extensionErr != nil && extensionReason != valueexecution.ReasonProgramMissing {
-		return observation{}, fmt.Errorf("extension compile reason = %s", extensionReason)
+		return observation{}, extensionErr
 	}
 	_, unknownErr := valueexecution.Compile(path, unknownExtensionSource(candidateSource), ExtensionActivity)
 	observed := observation{

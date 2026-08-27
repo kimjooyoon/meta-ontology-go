@@ -24,6 +24,7 @@ func reportDigest(report Report) string {
 }
 
 func finalize(report Report) Report {
+	report = closeOperationSpec(report)
 	report.Digest = reportDigest(report)
 	return report
 }
