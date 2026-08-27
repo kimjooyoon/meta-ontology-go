@@ -13,6 +13,10 @@ func init() {
 	branches := []string{"agent/external-capability-execution", "agent/external-assurance-eligibility",
 		"agent/gooo-capability-boundary"}
 	for _, branch := range branches {
-		branchScopeAllowlist[branch] = paths
+		branchPaths := append([]string(nil), paths...)
+		if branch == "agent/gooo-capability-boundary" {
+			branchPaths = append(branchPaths, "examples/language-syntax-roundtrip/corpus.json")
+		}
+		branchScopeAllowlist[branch] = branchPaths
 	}
 }

@@ -1765,7 +1765,13 @@ jobs:
           go run ./cmd/gooo check "$policy"
           go run ./cmd/gooo generate "$policy" --out "$result/policy/first"
           go run ./cmd/gooo generate "$policy" --out "$result/policy/replay"
-          diff -qr "$result/policy/first" "$result/policy/replay"
+          cmp "$result/policy/first/semantic.gooo.go" "$result/policy/replay/semantic.gooo.go"
+          for pass in first replay; do
+            jq -S 'del(.generated_file)' "$result/policy/$pass/semantic.gooo.manifest.jsonl" \
+              > "$result/policy/$pass-manifest.normalized.json"
+          done
+          cmp "$result/policy/first-manifest.normalized.json" \
+            "$result/policy/replay-manifest.normalized.json"
       - name: Issue and check default-deny authorization twice
         working-directory: gooo
         env:

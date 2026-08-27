@@ -38,6 +38,10 @@ func digestTree(root string) (string, int, error) {
 		if err != nil {
 			return err
 		}
+		raw, err = normalizeGenerated(relative, raw)
+		if err != nil {
+			return err
+		}
 		hash.Write([]byte(filepath.ToSlash(relative)))
 		hash.Write([]byte{0})
 		hash.Write(raw)
