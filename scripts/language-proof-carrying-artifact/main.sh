@@ -62,13 +62,15 @@ test "$producer_import_denominator" -gt 0
 test "$core_parser_dependencies" -gt 0
 
 make_write_set() {
-  local after_entries after_digest changed_file
+  local before_entries before_digest after_entries after_digest changed_file
   snapshot_repo "$output/repository-after.json"
+  before_entries="$(jq -c '.entries' "$output/repository-before.json")"
+  before_digest="sha256:$(printf '%s' "$before_entries" | sha256sum | awk '{print $1}')"
   after_entries="$(jq -c '.entries' "$output/repository-after.json")"
   after_digest="sha256:$(printf '%s' "$after_entries" | sha256sum | awk '{print $1}')"
   changed_file="$output/repository-write-set-changed.json"
   jq -n --slurpfile before "$output/repository-before.json" --slurpfile after "$output/repository-after.json" 'def by_path: reduce .[] as $item ({}; .[$item.path] = $item); ($before[0].entries | by_path) as $b | ($after[0].entries | by_path) as $a | (($b | keys) + ($a | keys) | unique | sort) as $paths | [$paths[] as $path | if ($b[$path] != null and $a[$path] != null and $b[$path] == $a[$path]) then empty else {path:$path,before_digest:($b[$path].digest // ""),after_digest:($a[$path].digest // ""),before_kind:($b[$path].kind // ""),after_kind:($a[$path].kind // "")} end]' > "$changed_file"
-  jq -n --slurpfile before "$output/repository-before.json" --slurpfile after "$output/repository-after.json" --slurpfile changed "$changed_file" --arg before_digest "$(jq -c '.entries' "$output/repository-before.json" | sha256sum | awk '{print "sha256:"$1}')" --arg after_digest "$after_digest" '{schema:"gooo/repository-write-set-observation/v1",version:1,before:$before[0].entries,after:$after[0].entries,changed:$changed[0],before_digest:$before_digest,after_digest:$after_digest,repository_writes:($changed[0]|length),mutation_authority:false,observed_scope:"NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED",net_repository_state_unchanged:(($changed[0]|length)==0),transient_writes_unknown:true,authority_observation:"DECLARATION_ONLY_NOT_GLOBAL_AUTHORITY",digest:""}' > "$output/write-set.json"
+  jq -n --slurpfile before "$output/repository-before.json" --slurpfile after "$output/repository-after.json" --slurpfile changed "$changed_file" --arg before_digest "$before_digest" --arg after_digest "$after_digest" '{schema:"gooo/repository-write-set-observation/v1",version:1,before:$before[0].entries,after:$after[0].entries,changed:$changed[0],before_digest:$before_digest,after_digest:$after_digest,repository_writes:($changed[0]|length),mutation_authority:false,observed_scope:"NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED",net_repository_state_unchanged:(($changed[0]|length)==0),transient_writes_unknown:true,authority_observation:"DECLARATION_ONLY_NOT_GLOBAL_AUTHORITY",digest:""}' > "$output/write-set.json"
 }
 
 make_write_set
