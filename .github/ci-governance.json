@@ -486,7 +486,11 @@
         "cmd/external-capability-execution-witness/**",
         "examples/external-capability-execution/**",
         "examples/language-syntax-roundtrip/corpus.json",
+        "examples/vertical-slice-closure-shadow/README.md",
         "internal/meta/externalcapabilityexecution/**",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/verify/scope_external_capability_execution.go"
       ]
     },

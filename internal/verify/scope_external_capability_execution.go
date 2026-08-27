@@ -15,7 +15,11 @@ func init() {
 	for _, branch := range branches {
 		branchPaths := append([]string(nil), paths...)
 		if branch == "agent/gooo-capability-boundary" {
-			branchPaths = append(branchPaths, "examples/language-syntax-roundtrip/corpus.json")
+			branchPaths = append(branchPaths, "examples/language-syntax-roundtrip/corpus.json",
+				"examples/vertical-slice-closure-shadow/README.md",
+				"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+				"internal/meta/languagereadiness/languagesyntax/model.go",
+				"internal/meta/languagereadiness/languagesyntax/registry.go")
 		}
 		branchScopeAllowlist[branch] = branchPaths
 	}

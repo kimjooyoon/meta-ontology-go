@@ -23,7 +23,7 @@ this metric closes one vertical capability, not every language obligation.
 
 | Boundary | Exact requirement |
 |---|---|
-| syntax | 26/26 registered cases |
+| syntax | 27/27 registered cases |
 | semantics | 28/28 staged semantic cases |
 | binding | 12/12 semantic coordinates |
 | executable use cases | 3/3 versioned paths |
