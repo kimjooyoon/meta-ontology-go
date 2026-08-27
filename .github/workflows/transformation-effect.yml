@@ -414,6 +414,21 @@ jobs:
           if [[ -z "$predecessor_sha" ]]; then
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
+          is_known_proposal_failure_reason() {
+            case "$1" in
+              PROPOSAL_PREDECESSOR_NOT_FOUND|PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN|\
+              PROPOSAL_PREDECESSOR_AMBIGUOUS|PROPOSAL_SYNTHESIS_JOB_CARDINALITY|\
+              PROPOSAL_RUN_PAGINATION_INCOMPLETE|PROPOSAL_JOB_PAGINATION_INCOMPLETE|\
+              PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE|PROPOSAL_API_UNAVAILABLE|\
+              PROPOSAL_API_PERMISSION_DENIED|PROPOSAL_RESPONSE_MALFORMED|\
+              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           for suffix in a b; do
             observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-proposal-observation.json")
             if [[ "$suffix" == "a" ]]; then
@@ -437,6 +452,11 @@ jobs:
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
           proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
           if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
+            proposal_reason="$(jq -r '.reason // empty' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+            if ! is_known_proposal_failure_reason "$proposal_reason"; then
+              echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
+              exit 1
+            fi
             jq -e '
               .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
               .conformance == "PASS" and .decision == "FAIL_CLOSED" and
