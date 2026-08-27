@@ -27,7 +27,12 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
-	receipt := ambiguitybudget.Evaluate(ambiguitybudget.Input{SubjectSHA: options.head, Contract: contract, Source: source})
+	effects, err := os.ReadFile(options.effects)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+	receipt := ambiguitybudget.Evaluate(ambiguitybudget.Input{SubjectSHA: options.head, Contract: contract, Source: source, EffectsArtifact: effects})
 	if err := ambiguitybudget.WriteReceipt(options.output, receipt); err != nil {
 		fmt.Fprintf(os.Stderr, "%v (source lowering=%q entities=%d activities=%d programs=%d)\n",
 			err, receipt.Source.Lowering, receipt.Source.Entities, receipt.Source.Activities, len(receipt.Source.Programs))
@@ -44,8 +49,8 @@ func run(args []string) int {
 }
 
 func printReceipt(receipt ambiguitybudget.Receipt) error {
-	fmt.Printf("ambiguity budget: conformance=%s/%s subject=%s/%s cases=%d interventions=%d denominator=%d\n",
+	fmt.Printf("ambiguity budget: conformance=%s/%s subject=%s/%s cases=%d interventions=%d\n",
 		receipt.ConformanceDecision, receipt.ConformanceResolution, receipt.SubjectDecision, receipt.SubjectResolution,
-		receipt.Summary.CasesTotal, receipt.Summary.InterventionsTotal, receipt.Summary.FixedDenominator)
+		receipt.Summary.CasesTotal, receipt.Summary.Denominator.Interventions)
 	return nil
 }

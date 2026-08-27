@@ -27,7 +27,12 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
-	result, err := judge.Evaluate(contract, receipt, source)
+	effects, err := os.ReadFile(options.effects)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+	result, err := judge.Evaluate(contract, receipt, source, effects)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
@@ -36,9 +41,9 @@ func run(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
-	fmt.Printf("ambiguity budget judge: conformance=%s/%s subject=%s/%s checks=%d denominator=%d\n",
+	fmt.Printf("ambiguity budget judge: conformance=%s/%s subject=%s/%s checks=%d\n",
 		result.ConformanceDecision, result.ConformanceResolution, result.SubjectDecision, result.SubjectResolution,
-		len(result.Checks), result.FixedDenominator)
+		len(result.Checks))
 	if result.ConformanceDecision != "PASS" {
 		return 1
 	}

@@ -1,11 +1,30 @@
 {
-  "schema": "gooo/ambiguity-budget-contract/v2",
-  "id": "gooo://ambiguity-budget/contract/v2",
+  "schema": "gooo/ambiguity-budget-contract/v3",
+  "id": "gooo://ambiguity-budget/contract/v3",
   "source_path": "examples/ambiguity-budget/main.gooo",
   "source_package": "ambiguitybudget",
   "source_namespace": "ambiguitybudget",
   "budget_activity": "FixedBudget",
-  "fixed_denominator": 2,
+  "budget_policy": {
+    "schema": "gooo/ambiguity-budget-policy/v1",
+    "id": "gooo://ambiguity-budget/policy/v1",
+    "version": "v1",
+    "authority": "CONTRACT_POLICY",
+    "dimensions": [
+      {"id": "interpretation_candidates", "limit": 2},
+      {"id": "unresolved_branches", "limit": 1},
+      {"id": "evidence_paths", "limit": 2}
+    ]
+  },
+  "denominator": {
+    "schema": "gooo/ambiguity-budget-denominator/v1",
+    "version": "v1",
+    "cases": 4,
+    "integer_observations": 12,
+    "claims": 4,
+    "interventions": 2,
+    "authority_observations": 1
+  },
   "cases": [
     {"id": "zero-ambiguity", "activity": "ZeroAmbiguity"},
     {"id": "boundary-ambiguity", "activity": "BoundaryAmbiguity"},

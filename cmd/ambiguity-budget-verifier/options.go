@@ -3,7 +3,7 @@ package main
 import "flag"
 
 type options struct {
-	contract, receipt, source, output string
+	contract, receipt, source, effects, output string
 }
 
 func parseOptions(args []string) (options, bool) {
@@ -12,7 +12,8 @@ func parseOptions(args []string) (options, bool) {
 	flags.StringVar(&value.contract, "contract", "", "ambiguity budget contract")
 	flags.StringVar(&value.receipt, "receipt", "", "producer receipt")
 	flags.StringVar(&value.source, "source", "", "Gooo source")
+	flags.StringVar(&value.effects, "effects", "", "workspace effects artifact")
 	flags.StringVar(&value.output, "output", "", "judge result output")
-	ok := flags.Parse(args) == nil && value.contract != "" && value.receipt != "" && value.source != "" && value.output != ""
+	ok := flags.Parse(args) == nil && value.contract != "" && value.receipt != "" && value.source != "" && value.effects != "" && value.output != ""
 	return value, ok
 }

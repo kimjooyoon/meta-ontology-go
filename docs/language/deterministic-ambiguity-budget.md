@@ -1,85 +1,73 @@
 # Deterministic ambiguity budget
 
-This experiment measures interpretation ambiguity as an integer set, not as
-probability or natural-language confidence. It is a read-only meta-operation:
-the repository effect is fixed at zero writes and zero mutation authority.
+This experiment is a read-only meta-operation. It counts finite semantic
+structures rather than imitating confidence language. The [executable source](../../examples/ambiguity-budget/main.gooo)
+declares graph elements; it does not declare the resulting integers or labels.
 
-## Executable source and rule
+The producer and the independent verifier each parse and lower that source
+with `syntax.ParseFile -> bidir.Lower`, then derive distinct candidate IDs,
+unresolved/resolved branch IDs, branch-observation facts, and linked evidence
+paths. The three integer coordinates are the cardinalities of the lowered
+candidate, unresolved-branch, and evidence-path sets. The contract’s versioned
+policy is authoritative (`CONTRACT_POLICY`, limits `2,1,2`); the `.gooo`
+`FixedBudget` program binds to policy version `v1`.
 
-The real [`.gooo` source](../../examples/ambiguity-budget/main.gooo) is the
-observation authority. Its canonical `computes` declarations contain the
-fixed budget `(2,1,2)` and all four observed case sets:
+| case | derived cardinalities | derived class | subject result | claim lifecycle |
+| --- | --- | --- | --- | --- |
+| zero | `1,0,1` | `ZERO` | `PASS / EXACT` | `OPEN -> DISCHARGED` |
+| boundary | `2,1,2` | `BOUNDARY` | `PASS / EXACT` | `OPEN -> DISCHARGED` |
+| over | `3,2,3` | `OVER` | `FAIL_CLOSED / LOWER_RESOLUTION` | `OPEN -> REFUTED` |
+| unknown | `2,0,2`; branch coordinate absent | `UNKNOWN` | `UNKNOWN / LOWER_RESOLUTION` | `OPEN -> OPEN` |
 
-| case | observed set | derived class / subject result / claim |
-| --- | --- | --- |
-| zero | `(1,0,1)` | `ZERO / PASS / EXACT / OPEN→DISCHARGED` |
-| boundary | `(2,1,2)` | `BOUNDARY / PASS / EXACT / OPEN→DISCHARGED` |
-| over | `(3,2,3)` | `OVER / FAIL_CLOSED / LOWER_RESOLUTION / OPEN→REFUTED` |
-| unknown | `(2,?,2)` | `UNKNOWN / UNKNOWN / LOWER_RESOLUTION / OPEN→OPEN` |
+The unknown case is missing the branch-observation relation. The evaluator
+derives the exact gap coordinate
+`AMBIGUITY_OBSERVATION / unresolved_branches /
+AMBIGUITY_COORDINATE_UNOBSERVED`. No `.gooo` `?`, `UNKNOWN`, `ZERO`,
+`BOUNDARY`, or `OVER` label is trusted as an observation. `EXACT` and
+`LOWER_RESOLUTION` are subject-resolution fields only; they never replace the
+claim state.
 
-The coordinates count interpretation candidates, unresolved branches, and
-evidence paths. A known set is within the budget only when every coordinate is
-within its corresponding limit. Any excess descends to lower resolution. Every
-claim ledger row starts at `OPEN`; a sufficient observation discharges it, a
-real excess refutes it, and an observation defect preserves `OPEN`. `EXACT`
-and `LOWER_RESOLUTION` are resolution values only. The `?` coordinate is not a
-value or a label: it is an unobserved `unresolved_branches` coordinate
-discovered by the evaluator.
+Each claim is the canonical proposition
+`counts-within-budget(case:<case-id>,budget:<policy-id>)`. Persistent
+transitions start at `OPEN` and carry proposition digest, stage, step, reason,
+and semantic evidence digest. Raw source digest is a separate provenance
+field. Thus comment-only edits can change raw provenance without changing
+claim evidence.
 
-The JSON [contract](../../examples/ambiguity-budget/contract.json) contains
-only stable source identity, case IDs, intervention IDs, and the fixed
-denominator. It intentionally does not repeat the budget, case counts, class,
-decision, or reason as evidence. The producer parses with
-`syntax.ParseFile -> bidir.Lower`, validates the canonical semantic IR, and
-then reads the lowered `computes` programs. The independent verifier repeats
-that parse/lowering and rule evaluation without importing the producer.
+## Formal choices
 
-`CONFORMANCE_DECISION` describes whether the receipt matches the executable
-source and contract. `SUBJECT_DECISION` describes the case vector. Therefore a
-receipt can conform while the subject remains `MIXED / LOWER_RESOLUTION`; an
-expected `UNKNOWN` is not converted into an aggregate `PASS / EXACT`.
+Scott and Johnstone’s [SPPF-style parsing paper](https://doi.org/10.1016/j.scico.2009.07.001)
+supports retaining alternative derivations as a shared finite structure.
+Economopoulos’s [*Generalised LR parsing algorithms*](https://ir.cwi.nl/pub/14233/14233B.pdf),
+§§4.4–4.4.1, describes local ambiguity, conflicts, and packed forests. We
+adopt their structural separation between alternatives and resolution, but
+count integer sets instead of assigning weights. We reject confidence,
+probability, default choice, intent recognition, and semantic-correctness
+claims. An SPPF/GLR engine is not required: the lowered semantic graph is the
+independent observation boundary.
 
-Every persistent claim transition records `stage`, `step`, `reason`, and an
-evidence digest. The receipt carries the producer, consumer, meta-operation,
-proof choice, source/semantic digests, and zero-effect guard. Interventions
-carry their before/after claim transitions explicitly. There is no aggregate
-score: the fixed denominator is `2`, counting the two declared interventions,
-not the twelve integer coordinates.
+The denominator is versioned and multidimensional: `cases=4`,
+`integer_observations=12`, `claims=4`, `interventions=2`, and
+`authority_observations=1`. Numerators are reported separately; there is no
+aggregate score. The ordinary receipt reports `4` conforming cases, `11`
+observed integer coordinates, `2` discharged claims, `1` refuted claim, `1`
+open claim, `2` satisfied interventions, and `0` observed authority claims.
 
-## Adopted and rejected principles
+The semantic intervention adds one candidate and one linked evidence-path
+structure, crossing the boundary case from `2,1,2` to `3,1,3` and changing its
+claim transition from `OPEN -> DISCHARGED` to `OPEN -> REFUTED`. The
+comment-only intervention changes only raw source digest. It preserves the
+semantic digest, structural elements, counts, class, subject decision and
+resolution, proposition, evidence, and claim transition.
 
-Scott and Johnstone’s paper, [“Recognition is not parsing — SPPF-style parsing
-from cubic recognisers”](https://doi.org/10.1016/j.scico.2009.07.001), presents
-SPPF-style representations for all possible derivations while sharing common
-structure. The experiment adopts the accounting boundary that alternatives
-remain observable objects until a later operation resolves them. It rejects
-an SPPF implementation here because the `.gooo` parser is a deterministic
-stage-0 parser and this experiment needs an independent integer ledger.
+CI computes tracked-plus-untracked snapshots before and after the run and
+binds both snapshot digests into the final workspace-effects artifact. The
+artifact digest is included in the final producer receipt and independently
+checked by the consumer. The write-set must be equal with repository writes
+`0`; mutation authority remains `UNKNOWN / NOT_OBSERVED` because equality is
+not a capability observation.
 
-Economopoulos’s [*Generalised LR parsing algorithms* thesis](https://ir.cwi.nl/pub/14233/14233B.pdf), especially §§4.4–4.4.1,
-describes reduce/reduce conflicts, local ambiguity, and packing multiple
-derivations into a shared forest. The experiment adopts explicit branch and
-evidence-path accounting. It rejects treating a shift/reduce choice as
-probability, confidence, or evidence of semantic correctness, and it does not
-make parser-specific graph structures an implementation dependency.
-
-The adopted principle is: make alternatives and the cost of resolving them
-explicit as integer observations and meta-operations. Rejected principles are
-probability, confidence prose, default disambiguation, intent recognition,
-and semantic-correctness claims. The `not_claimed` array makes the boundary
-machine-readable.
-
-## Interventions and falsification
-
-The semantic intervention increments the boundary case’s candidate count from
-`2` to `3`; the source and semantic digests change and the subject descends to
-`FAIL_CLOSED / LOWER_RESOLUTION`. The nonsemantic intervention inserts only a
-comment; the source digest changes while the lowered semantic digest, counts,
-and subject result remain unchanged. Both are replayed in memory and recorded
-in the receipt.
-
-The claim is falsified by nondeterministic replay; an over-budget case that
-remains exact; an unknown case that loses its coordinate or `OPEN` transition;
-duplicated observed counts in the contract; a forged source, semantic, or
-receipt digest accepted by the judge; a producer import in the judge; a changed
-denominator; or any non-zero repository effect.
+The claim is falsified by nondeterministic replay, declared counts accepted as
+evidence, a missing unknown coordinate, an over-budget case remaining exact,
+an altered denominator, a forged digest accepted by the consumer, a producer
+dependency in the consumer, or any nonzero repository write-set.

@@ -2,23 +2,16 @@ package ambiguitybudget
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
 
 const programPrefix = "ambiguity-budget"
 
 type computesProgram struct {
-	Activity             string
-	Text                 string
-	Kind                 string
-	ID                   string
-	Counts               IntegerSet
-	UnobservedDimensions []string
-}
-
-func expectedBudget() IntegerSet {
-	return IntegerSet{InterpretationCandidates: 2, UnresolvedBranches: 1, EvidencePaths: 2}
+	Activity string
+	Text     string
+	Kind     string
+	ID       string
 }
 
 func parseComputesProgram(activity, text string) (computesProgram, error) {
@@ -26,105 +19,80 @@ func parseComputesProgram(activity, text string) (computesProgram, error) {
 		return computesProgram{}, fmt.Errorf("non-canonical computes program")
 	}
 	parts := strings.Split(text, ":")
-	if len(parts) == 3 && parts[0] == programPrefix && parts[1] == "budget" {
-		counts, unobserved, err := parseIntegerSet(parts[2])
-		if err != nil {
-			return computesProgram{}, err
-		}
-		if len(unobserved) != 0 {
-			return computesProgram{}, fmt.Errorf("budget coordinates must be observed")
-		}
-		return computesProgram{Activity: activity, Text: text, Kind: "BUDGET", ID: "budget", Counts: counts}, nil
+	if len(parts) == 3 && parts[0] == programPrefix && parts[1] == "budget-policy" && parts[2] != "" {
+		return computesProgram{Activity: activity, Text: text, Kind: "BUDGET", ID: parts[2]}, nil
 	}
-	if len(parts) != 4 || parts[0] != programPrefix || parts[1] != "case" || parts[2] == "" {
+	if len(parts) != 4 || parts[0] != programPrefix || parts[1] != "case" || parts[2] == "" || parts[3] == "" {
 		return computesProgram{}, fmt.Errorf("unsupported computes program %q", text)
 	}
-	counts, unobserved, err := parseIntegerSet(parts[3])
-	if err != nil {
-		return computesProgram{}, err
-	}
-	return computesProgram{Activity: activity, Text: text, Kind: "CASE", ID: parts[2], Counts: counts, UnobservedDimensions: unobserved}, nil
-}
-
-func parseIntegerSet(text string) (IntegerSet, []string, error) {
-	parts := strings.Split(text, ",")
-	if len(parts) != IntegerDimensions {
-		return IntegerSet{}, nil, fmt.Errorf("integer set must have %d coordinates", IntegerDimensions)
-	}
-	values := [IntegerDimensions]int{}
-	unobserved := make([]string, 0, IntegerDimensions)
-	for index, part := range parts {
-		if part == "" || part != strings.TrimSpace(part) {
-			return IntegerSet{}, nil, fmt.Errorf("integer set coordinate is not canonical")
-		}
-		if part == "?" {
-			unobserved = append(unobserved, integerDimensions[index])
-			continue
-		}
-		value, err := strconv.Atoi(part)
-		if err != nil || value < 0 {
-			return IntegerSet{}, nil, fmt.Errorf("integer set coordinate %q is not a non-negative integer", part)
-		}
-		values[index] = value
-	}
-	return IntegerSet{InterpretationCandidates: values[0], UnresolvedBranches: values[1], EvidencePaths: values[2]}, unobserved, nil
-}
-
-var integerDimensions = [...]string{"interpretation_candidates", "unresolved_branches", "evidence_paths"}
-
-func formatIntegerSet(value IntegerSet, unobserved []string) string {
-	values := []string{strconv.Itoa(value.InterpretationCandidates), strconv.Itoa(value.UnresolvedBranches), strconv.Itoa(value.EvidencePaths)}
-	for index, dimension := range integerDimensions {
-		for _, missing := range unobserved {
-			if missing == dimension {
-				values[index] = "?"
-			}
-		}
-	}
-	return strings.Join(values, ",")
+	return computesProgram{Activity: activity, Text: text, Kind: "CASE", ID: parts[2]}, nil
 }
 
 func formatComputesProgram(program computesProgram) string {
 	if program.Kind == "BUDGET" {
-		return programPrefix + ":budget:" + formatIntegerSet(program.Counts, nil)
+		return programPrefix + ":budget-policy:" + program.ID
 	}
-	return strings.Join([]string{programPrefix, "case", program.ID, formatIntegerSet(program.Counts, program.UnobservedDimensions)}, ":")
+	return programPrefix + ":case:" + program.ID
 }
 
-func validCounts(counts IntegerSet, unobserved []string) bool {
-	if !validUnobserved(unobserved) {
+func budgetBinding(policy BudgetPolicy) string {
+	return programPrefix + ":budget-policy:" + policy.Version
+}
+
+func policyCounts(policy BudgetPolicy) IntegerSet {
+	var counts IntegerSet
+	for _, dimension := range policy.Dimensions {
+		switch dimension.ID {
+		case "interpretation_candidates":
+			counts.InterpretationCandidates = dimension.Limit
+		case "unresolved_branches":
+			counts.UnresolvedBranches = dimension.Limit
+		case "evidence_paths":
+			counts.EvidencePaths = dimension.Limit
+		}
+	}
+	return counts
+}
+
+func validPolicy(policy BudgetPolicy) bool {
+	if policy.Schema != PolicySchema || policy.ID == "" || policy.Version == "" || policy.Authority != "CONTRACT_POLICY" || len(policy.Dimensions) != IntegerDimensions {
 		return false
 	}
-	if contains(unobserved, "interpretation_candidates") || contains(unobserved, "evidence_paths") {
-		return counts.InterpretationCandidates >= 0 && counts.UnresolvedBranches >= 0 && counts.EvidencePaths >= 0
-	}
-	return counts.InterpretationCandidates >= 1 && counts.UnresolvedBranches >= 0 && counts.EvidencePaths >= 1
-}
-
-func validUnobserved(unobserved []string) bool {
-	if len(unobserved) == 0 {
-		return true
-	}
-	seen := make(map[string]bool, len(unobserved))
-	for _, dimension := range unobserved {
-		if !contains(integerDimensions[:], dimension) || seen[dimension] {
+	seen := map[string]bool{}
+	for _, dimension := range policy.Dimensions {
+		if !contains(integerDimensions[:], dimension.ID) || seen[dimension.ID] || dimension.Limit < 0 {
 			return false
 		}
-		seen[dimension] = true
+		seen[dimension.ID] = true
+	}
+	for _, dimension := range integerDimensions {
+		if !seen[dimension] {
+			return false
+		}
 	}
 	return true
 }
 
-func exceeds(value IntegerSet, budget IntegerSet) bool {
+func validDenominator(value Denominator) bool {
+	return value.Schema == DenominatorSchema && value.Version != "" && value.Cases == ExpectedCaseTotal &&
+		value.IntegerObservations == ExpectedCaseTotal*IntegerDimensions && value.Claims == ExpectedCaseTotal &&
+		value.Interventions == ExpectedInterventions && value.AuthorityObservations == 1
+}
+
+func expectedMinimum() IntegerSet {
+	return IntegerSet{InterpretationCandidates: 1, EvidencePaths: 1}
+}
+
+func exceeds(value, budget IntegerSet) bool {
 	return value.InterpretationCandidates > budget.InterpretationCandidates ||
 		value.UnresolvedBranches > budget.UnresolvedBranches || value.EvidencePaths > budget.EvidencePaths
 }
 
-func derivedClass(program computesProgram, budget IntegerSet) string {
+func derivedClass(program ProgramObservation, budget IntegerSet) string {
 	if len(program.UnobservedDimensions) > 0 {
 		return "UNKNOWN"
 	}
-	if program.Counts == (IntegerSet{InterpretationCandidates: 1, UnresolvedBranches: 0, EvidencePaths: 1}) {
+	if program.Counts == expectedMinimum() {
 		return "ZERO"
 	}
 	if program.Counts == budget {
@@ -136,7 +104,7 @@ func derivedClass(program computesProgram, budget IntegerSet) string {
 	return "WITHIN"
 }
 
-func inputState(program computesProgram) string {
+func inputState(program ProgramObservation) string {
 	if len(program.UnobservedDimensions) > 0 {
 		return "UNKNOWN"
 	}
@@ -154,11 +122,15 @@ func claimTarget(decision string) string {
 	}
 }
 
-func subjectDecision(program computesProgram, budget IntegerSet) (string, string, string) {
+func proposition(caseID string, policy BudgetPolicy) string {
+	return "counts-within-budget(case:" + caseID + ",budget:" + policy.ID + ")"
+}
+
+func subjectDecision(program ProgramObservation, budget IntegerSet) (string, string, string) {
 	if len(program.UnobservedDimensions) > 0 {
 		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COORDINATE_UNOBSERVED"
 	}
-	if !validCounts(program.Counts, nil) {
+	if program.Counts.InterpretationCandidates < 1 || program.Counts.EvidencePaths < 1 {
 		return "UNKNOWN", "LOWER_RESOLUTION", "AMBIGUITY_COUNT_UNKNOWN"
 	}
 	if exceeds(program.Counts, budget) {

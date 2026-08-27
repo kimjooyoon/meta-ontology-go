@@ -1,13 +1,72 @@
 package ambiguitybudget
 namespace ambiguitybudget
 
-entity InterpretationCandidate id "gooo://ambiguity-budget/entity/interpretation-candidate"
-entity UnresolvedBranch id "gooo://ambiguity-budget/entity/unresolved-branch"
-entity EvidencePath id "gooo://ambiguity-budget/entity/evidence-path"
 entity AmbiguityReceipt id "gooo://ambiguity-budget/entity/ambiguity-receipt"
 
-activity FixedBudget() -> AmbiguityReceipt computes "ambiguity-budget:budget:2,1,2"
-activity ZeroAmbiguity() -> AmbiguityReceipt computes "ambiguity-budget:case:zero-ambiguity:1,0,1"
-activity BoundaryAmbiguity() -> AmbiguityReceipt computes "ambiguity-budget:case:boundary-ambiguity:2,1,2"
-activity OverBudgetAmbiguity() -> AmbiguityReceipt computes "ambiguity-budget:case:over-budget-ambiguity:3,2,3"
-activity UnknownAmbiguity() -> AmbiguityReceipt computes "ambiguity-budget:case:unknown-ambiguity:2,?,2"
+entity ZeroCase id "gooo://ambiguity-budget/case/zero-ambiguity"
+entity ZeroCandidateA id "gooo://ambiguity-budget/case/zero-ambiguity/candidate/a"
+entity ZeroResolvedBranchA id "gooo://ambiguity-budget/case/zero-ambiguity/branch/resolved/a"
+entity ZeroEvidencePathA id "gooo://ambiguity-budget/case/zero-ambiguity/evidence-path/a"
+entity ZeroBranchObservation id "gooo://ambiguity-budget/case/zero-ambiguity/branch-observation"
+
+entity BoundaryCase id "gooo://ambiguity-budget/case/boundary-ambiguity"
+entity BoundaryCandidateA id "gooo://ambiguity-budget/case/boundary-ambiguity/candidate/a"
+entity BoundaryCandidateB id "gooo://ambiguity-budget/case/boundary-ambiguity/candidate/b"
+entity BoundaryResolvedBranchA id "gooo://ambiguity-budget/case/boundary-ambiguity/branch/resolved/a"
+entity BoundaryUnresolvedBranchA id "gooo://ambiguity-budget/case/boundary-ambiguity/branch/unresolved/a"
+entity BoundaryEvidencePathA id "gooo://ambiguity-budget/case/boundary-ambiguity/evidence-path/a"
+entity BoundaryEvidencePathB id "gooo://ambiguity-budget/case/boundary-ambiguity/evidence-path/b"
+entity BoundaryBranchObservation id "gooo://ambiguity-budget/case/boundary-ambiguity/branch-observation"
+
+entity OverCase id "gooo://ambiguity-budget/case/over-budget-ambiguity"
+entity OverCandidateA id "gooo://ambiguity-budget/case/over-budget-ambiguity/candidate/a"
+entity OverCandidateB id "gooo://ambiguity-budget/case/over-budget-ambiguity/candidate/b"
+entity OverCandidateC id "gooo://ambiguity-budget/case/over-budget-ambiguity/candidate/c"
+entity OverResolvedBranchA id "gooo://ambiguity-budget/case/over-budget-ambiguity/branch/resolved/a"
+entity OverUnresolvedBranchA id "gooo://ambiguity-budget/case/over-budget-ambiguity/branch/unresolved/a"
+entity OverUnresolvedBranchB id "gooo://ambiguity-budget/case/over-budget-ambiguity/branch/unresolved/b"
+entity OverEvidencePathA id "gooo://ambiguity-budget/case/over-budget-ambiguity/evidence-path/a"
+entity OverEvidencePathB id "gooo://ambiguity-budget/case/over-budget-ambiguity/evidence-path/b"
+entity OverEvidencePathC id "gooo://ambiguity-budget/case/over-budget-ambiguity/evidence-path/c"
+entity OverBranchObservation id "gooo://ambiguity-budget/case/over-budget-ambiguity/branch-observation"
+
+entity UnknownCase id "gooo://ambiguity-budget/case/unknown-ambiguity"
+entity UnknownCandidateA id "gooo://ambiguity-budget/case/unknown-ambiguity/candidate/a"
+entity UnknownCandidateB id "gooo://ambiguity-budget/case/unknown-ambiguity/candidate/b"
+entity UnknownEvidencePathA id "gooo://ambiguity-budget/case/unknown-ambiguity/evidence-path/a"
+entity UnknownEvidencePathB id "gooo://ambiguity-budget/case/unknown-ambiguity/evidence-path/b"
+
+activity FixedBudget() -> AmbiguityReceipt computes "ambiguity-budget:budget-policy:v1"
+activity ZeroAmbiguity(ZeroCase) -> AmbiguityReceipt computes "ambiguity-budget:case:zero-ambiguity"
+activity BoundaryAmbiguity(BoundaryCase) -> AmbiguityReceipt computes "ambiguity-budget:case:boundary-ambiguity"
+activity OverBudgetAmbiguity(OverCase) -> AmbiguityReceipt computes "ambiguity-budget:case:over-budget-ambiguity"
+activity UnknownAmbiguity(UnknownCase) -> AmbiguityReceipt computes "ambiguity-budget:case:unknown-ambiguity"
+
+activity ObserveZeroCandidateA(ZeroCase) -> ZeroCandidateA
+activity ObserveZeroResolvedBranchA(ZeroCase) -> ZeroResolvedBranchA
+activity ObserveZeroBranchObservation(ZeroCase) -> ZeroBranchObservation
+activity ObserveZeroEvidencePathA(ZeroCase, ZeroCandidateA) -> ZeroEvidencePathA
+
+activity ObserveBoundaryCandidateA(BoundaryCase) -> BoundaryCandidateA
+activity ObserveBoundaryCandidateB(BoundaryCase) -> BoundaryCandidateB
+activity ObserveBoundaryResolvedBranchA(BoundaryCase) -> BoundaryResolvedBranchA
+activity ObserveBoundaryUnresolvedBranchA(BoundaryCase) -> BoundaryUnresolvedBranchA
+activity ObserveBoundaryBranchObservation(BoundaryCase) -> BoundaryBranchObservation
+activity ObserveBoundaryEvidencePathA(BoundaryCase, BoundaryCandidateA) -> BoundaryEvidencePathA
+activity ObserveBoundaryEvidencePathB(BoundaryCase, BoundaryCandidateB) -> BoundaryEvidencePathB
+
+activity ObserveOverCandidateA(OverCase) -> OverCandidateA
+activity ObserveOverCandidateB(OverCase) -> OverCandidateB
+activity ObserveOverCandidateC(OverCase) -> OverCandidateC
+activity ObserveOverResolvedBranchA(OverCase) -> OverResolvedBranchA
+activity ObserveOverUnresolvedBranchA(OverCase) -> OverUnresolvedBranchA
+activity ObserveOverUnresolvedBranchB(OverCase) -> OverUnresolvedBranchB
+activity ObserveOverBranchObservation(OverCase) -> OverBranchObservation
+activity ObserveOverEvidencePathA(OverCase, OverCandidateA) -> OverEvidencePathA
+activity ObserveOverEvidencePathB(OverCase, OverCandidateB) -> OverEvidencePathB
+activity ObserveOverEvidencePathC(OverCase, OverCandidateC) -> OverEvidencePathC
+
+activity ObserveUnknownCandidateA(UnknownCase) -> UnknownCandidateA
+activity ObserveUnknownCandidateB(UnknownCase) -> UnknownCandidateB
+activity ObserveUnknownEvidencePathA(UnknownCase, UnknownCandidateA) -> UnknownEvidencePathA
+activity ObserveUnknownEvidencePathB(UnknownCase, UnknownCandidateB) -> UnknownEvidencePathB
