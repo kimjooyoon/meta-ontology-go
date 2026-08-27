@@ -13,11 +13,14 @@ resource references, and declared denominators. The producer discovers and
 sorts those inputs, verifies ownership paths, non-empty bindings, structured
 metric bindings, resource digests, and source-derived denominators, then
 generates catalog, corpus, registry, denominator, documentation, manifest index,
-projection, and digest outputs. Binding entries reconnect raw source, semantic
-digest, consumer entry point, and observed output digest; documentation or
-workflow self-search is not sufficient. The root topology and root README remain
-explicit exceptions; this is a bounded vertical slice rather than a migration
-of every existing global file.
+projection, and digest outputs. Binding source addresses resolve to used Go AST
+declarations or registration calls and their normalized AST bytes; comment-only
+and unused-string counterexamples fail closed. The independent consumer reads
+back its generated output artifact and records its actual path, bytes, and
+digest in each binding receipt. Documentation or workflow self-search is not
+sufficient. The root topology and root README remain explicit exceptions; this
+is a bounded vertical slice rather than a migration of every existing global
+file.
 
 ## Fixed regression denominator
 
@@ -46,6 +49,20 @@ numerator `0/1`; no number is extracted from prose. A regression clone with
 the prior declared `160` cases must produce `FAIL_CLOSED / DENOMINATOR_SOURCE_MISMATCH`,
 with declared and calculated values side by side in the receipt.
 
+The fixed predicate inventory is 17 IDs: five conformance IDs
+(`independent-manifest-order`, `independent-resource-digests`,
+`independent-denominator-reconciliation`, `independent-binding-registry`, and
+`independent-conformance-consumer`) plus twelve failure IDs
+(`consumer-malformed-manifest`, `consumer-missing-manifest`,
+`consumer-cross-directory-manifest`, `consumer-missing-binding`,
+`consumer-stale-denominator`, `consumer-stale-generated-projection`,
+`consumer-duplicate-stable-id`, `consumer-binding-self-search`,
+`consumer-binding-output-digest-mismatch`, `consumer-binding-comment-only`,
+`consumer-binding-unused-string`, and
+`consumer-success-with-diagnostic-counterexample`). Claims are exactly 17;
+failure and provenance predicates are exactly 12; static failure contracts are
+exactly 8; AST-resolved binding output receipts are exactly 9.
+
 ## Meaning gates
 
 The proof keeps raw manifest bytes separate from the semantic manifest view.
@@ -61,8 +78,8 @@ an `OPEN` transition. Subject/conformance decision is separate from observed
 predicate truth: an observed valid rejection can have decision `FAIL_CLOSED` and
 still discharge the rejection proposition. `TRUE`, `FALSE`, and `UNKNOWN` select
 `DISCHARGED`, `REFUTED`, and `OPEN`. Failure observations preserve exit code,
-exact diagnostic JSON bytes and digest, raw input digest, and durable provenance
-address. Repository tracked/untracked path-plus-content snapshots are read
+exact diagnostic JSON bytes and digest, raw input bytes and digest, all inline in
+the uploaded evidence artifact. Repository tracked/untracked path-plus-content snapshots are read
 before and after the complete proof. Net equality is reported as
 `NET_STATE_EQUAL`; transient mutation and mutation authority remain `UNKNOWN`
 unless separately observed.

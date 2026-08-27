@@ -5,6 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
 	"io"
 	"io/fs"
 	"os"
@@ -149,6 +153,8 @@ type Receipt struct {
 	Predicates                 []PredicateObservation      `json:"predicates"`
 	ProductionAdoption         PredicateMetric             `json:"production_adoption"`
 	UseCaseReceipt             UseCaseReceiptObservation   `json:"use_case_receipt"`
+	OutputArtifact             OutputArtifact              `json:"output_artifact"`
+	BindingOutputReceipts      []BindingOutputReceipt      `json:"binding_output_receipts"`
 }
 type PredicateMetric struct {
 	Numerator   int    `json:"numerator"`
@@ -166,6 +172,20 @@ type UseCaseReceiptObservation struct {
 	Stage          string `json:"stage"`
 	Step           string `json:"step"`
 	Reason         string `json:"reason"`
+}
+type OutputArtifact struct {
+	Path   string `json:"path"`
+	Digest string `json:"digest"`
+	Bytes  int    `json:"bytes"`
+}
+type BindingOutputReceipt struct {
+	MetricID           string `json:"metric_id"`
+	RawSourceAddress   string `json:"raw_source_address"`
+	SemanticDigest     string `json:"semantic_digest"`
+	ConsumerEntryPoint string `json:"consumer_entry_point"`
+	OutputAddress      string `json:"output_address"`
+	OutputDigest       string `json:"output_digest"`
+	OutputBytes        int    `json:"output_bytes"`
 }
 type diagnostic struct {
 	Decision string `json:"decision"`
@@ -240,7 +260,10 @@ func main() {
 		_, _ = os.Stdout.Write(data)
 	}
 	if receiptPath != "" {
-		receipt := buildReceipt(projection, reconciliations, data)
+		receipt, err := buildReceipt(absoluteRoot, projection, reconciliations, data, output)
+		if err != nil {
+			fail("FAIL_CLOSED", "REGRESSION", "OUTPUT", "INDEPENDENT_OUTPUT_ARTIFACT_UNAVAILABLE")
+		}
 		raw, err := json.MarshalIndent(receipt, "", "  ")
 		if err != nil {
 			fail("FAIL_CLOSED", "REGRESSION", "RECEIPT", "INDEPENDENT_RECEIPT_RENDER_FAILED")
@@ -412,11 +435,11 @@ func validateBindingRegistry(root string, manifest Manifest) error {
 		if len(parts) != 2 || !pathExists(root, parts[0]) || filepath.Ext(parts[0]) != ".go" {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
 		}
-		rawSource, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(parts[0])))
-		if err != nil || !strings.Contains(string(rawSource), binding.MetricID) {
+		semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.MetricID)
+		if err != nil {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "UNTRUSTED_BINDING_SOURCE"}}
 		}
-		if binding.SemanticDigest != bindingSemanticDigest(binding.MetricID, binding.RawSourceAddress) {
+		if binding.SemanticDigest != semanticDigest {
 			return failure{diagnostic{"FAIL_CLOSED", "FOUNDATION", "BINDING_REGISTRY", "BINDING_SEMANTIC_DIGEST_MISMATCH"}}
 		}
 		if binding.ConsumerEntryPoint != "scripts/conflict-free-registry-projection-consumer/main.go" || !pathExists(root, binding.ConsumerEntryPoint) {
@@ -441,8 +464,135 @@ func validateBindingRegistry(root string, manifest Manifest) error {
 	return nil
 }
 
-func bindingSemanticDigest(metricID, rawSourceAddress string) string {
-	return digest([]byte(metricID + "|" + rawSourceAddress))
+func resolveBindingSemantic(root, rawSourceAddress, metricID string) (string, error) {
+	parts := strings.SplitN(rawSourceAddress, "#", 2)
+	if len(parts) != 2 || parts[1] == "" {
+		return "", os.ErrInvalid
+	}
+	data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(parts[0])))
+	if err != nil {
+		return "", err
+	}
+	fileSet := token.NewFileSet()
+	file, err := parser.ParseFile(fileSet, parts[0], data, 0)
+	if err != nil {
+		return "", err
+	}
+	var matched ast.Node
+	ast.Inspect(file, func(node ast.Node) bool {
+		if matched != nil || node == nil {
+			return matched == nil
+		}
+		switch value := node.(type) {
+		case *ast.ValueSpec:
+			for _, name := range value.Names {
+				if name.Name == parts[1] && astNodeContainsString(value, metricID) {
+					matched = value
+					return false
+				}
+			}
+		case *ast.FuncDecl:
+			if value.Name != nil && value.Name.Name == parts[1] && astNodeContainsString(value, metricID) {
+				matched = value
+				return false
+			}
+		case *ast.CallExpr:
+			if functionName(value.Fun) == "concept" && len(value.Args) > 0 && stringLiteral(value.Args[0]) == parts[1] && astNodeContainsString(value, metricID) {
+				matched = value
+				return false
+			}
+		}
+		return true
+	})
+	if matched == nil {
+		return "", os.ErrNotExist
+	}
+	if isGoIdentifier(parts[1]) && symbolUseCount(root, parts[1]) < 2 {
+		return "", os.ErrInvalid
+	}
+	var normalized bytes.Buffer
+	if err := format.Node(&normalized, fileSet, matched); err != nil {
+		return "", err
+	}
+	return digest(normalized.Bytes()), nil
+}
+
+func astNodeContainsString(node ast.Node, wanted string) bool {
+	found := false
+	ast.Inspect(node, func(node ast.Node) bool {
+		if literal, ok := node.(*ast.BasicLit); ok && literal.Kind == token.STRING && stringLiteral(literal) == wanted {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
+}
+
+func stringLiteral(node ast.Node) string {
+	literal, ok := node.(*ast.BasicLit)
+	if !ok || literal.Kind != token.STRING {
+		return ""
+	}
+	value, err := strconv.Unquote(literal.Value)
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
+func functionName(node ast.Expr) string {
+	identifier, ok := node.(*ast.Ident)
+	if !ok {
+		return ""
+	}
+	return identifier.Name
+}
+
+func isGoIdentifier(value string) bool {
+	if value == "" || !(value[0] >= 'a' && value[0] <= 'z') && !(value[0] >= 'A' && value[0] <= 'Z') && value[0] != '_' {
+		return false
+	}
+	for _, character := range value[1:] {
+		if !(character >= 'a' && character <= 'z') && !(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9') && character != '_' {
+			return false
+		}
+	}
+	return true
+}
+
+func symbolUseCount(root, symbol string) int {
+	count := 0
+	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			if entry.Name() == ".git" || entry.Name() == ".parallel" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(entry.Name()) != ".go" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, data, 0)
+		if err != nil {
+			return nil
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			if identifier, ok := node.(*ast.Ident); ok && identifier.Name == symbol {
+				count++
+			}
+			return true
+		})
+		return nil
+	})
+	return count
 }
 
 func buildProjection(root string, loaded []LoadedManifest) (Projection, []DenominatorReconciliation, error) {
@@ -626,7 +776,15 @@ func calculateDenominator(root string, item LoadedManifest, denominator Denomina
 	}
 }
 
-func buildReceipt(projection Projection, reconciliations []DenominatorReconciliation, data []byte) Receipt {
+func buildReceipt(root string, projection Projection, reconciliations []DenominatorReconciliation, data []byte, outputPath string) (Receipt, error) {
+	observedOutput := data
+	if outputPath != "" {
+		var err error
+		observedOutput, err = os.ReadFile(outputPath)
+		if err != nil || !bytes.Equal(observedOutput, data) {
+			return Receipt{}, os.ErrInvalid
+		}
+	}
 	ids := make([]string, 0, len(projection.Catalog))
 	for _, entry := range projection.Catalog {
 		ids = append(ids, entry.StableID)
@@ -634,22 +792,34 @@ func buildReceipt(projection Projection, reconciliations []DenominatorReconcilia
 	sort.Strings(ids)
 	resourceData, _ := json.Marshal(append(append(append([]ResourceSnapshot{}, projection.Corpus...), projection.Registry...), projection.Documentation...))
 	denominatorData, _ := json.Marshal(projection.Denominator)
-	bindingData := make([]BindingRegistryEntry, 0)
+	bindingReceipts := make([]BindingOutputReceipt, 0)
 	for _, entry := range projection.Catalog {
-		bindingData = append(bindingData, entry.BindingRegistry...)
+		for _, binding := range entry.BindingRegistry {
+			semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.MetricID)
+			if err != nil {
+				return Receipt{}, err
+			}
+			address := outputPath
+			if address == "" {
+				address = "stdout"
+			}
+			bindingReceipts = append(bindingReceipts, BindingOutputReceipt{MetricID: binding.MetricID, RawSourceAddress: binding.RawSourceAddress, SemanticDigest: semanticDigest, ConsumerEntryPoint: binding.ConsumerEntryPoint, OutputAddress: address, OutputDigest: digest(observedOutput), OutputBytes: len(observedOutput)})
+		}
 	}
 	return Receipt{
-		Schema: receiptSchema, Decision: "PASS", ProjectionDigest: digest(data), DenominatorReconciliations: reconciliations,
+		Schema: receiptSchema, Decision: "PASS", ProjectionDigest: digest(observedOutput), DenominatorReconciliations: reconciliations,
 		Predicates: []PredicateObservation{
 			{ID: "independent-manifest-order", ObservedPredicate: "raw manifests are sorted by stable_id", TargetAddress: "raw://manifest-stable-ids", TargetDigest: digest(mustJSON(ids)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
 			{ID: "independent-resource-digests", ObservedPredicate: "raw resource refs resolve to their declared digests", TargetAddress: "raw://resource-ref-digests", TargetDigest: digest(resourceData), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
 			{ID: "independent-denominator-reconciliation", ObservedPredicate: "raw corpus and registry sources reconcile to declared denominators", TargetAddress: "raw://denominator-reconciliation", TargetDigest: digest(denominatorData), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
-			{ID: "independent-binding-registry", ObservedPredicate: "structured metric bindings reconnect raw source, semantic digest, consumer entry point, and observed output digest", TargetAddress: "raw://structured-binding-registry", TargetDigest: digest(mustJSON(bindingData)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
+			{ID: "independent-binding-registry", ObservedPredicate: "structured metric bindings reconnect raw source, semantic digest, consumer entry point, and observed consumer output digest", TargetAddress: "raw://structured-binding-registry", TargetDigest: digest(mustJSON(bindingReceipts)), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "FOUNDATION", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
 			{ID: "independent-conformance-consumer", ObservedPredicate: "independent conformance consumer projection bytes equal its raw-manifest reconstruction", TargetAddress: defaultOutput + "/projection.json", TargetDigest: digest(data), Observed: true, Decision: "PASS", PredicateTruth: "TRUE", Stage: "COHERENCE", Step: "INDEPENDENT_CONSUMER_PREDICATE", Reason: "independent_consumer_recomputed_predicate"},
 		},
-		ProductionAdoption: PredicateMetric{Numerator: 0, Denominator: 1, Decision: "UNKNOWN", Stage: "COHERENCE", Step: "PRODUCTION_CONSUMER_ADOPTION", Reason: "NO_PRODUCTION_CONSUMER_EVIDENCE"},
-		UseCaseReceipt:     UseCaseReceiptObservation{SourceArtifact: "examples/toolchain-conformance/corpus.json", Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"},
-	}
+		ProductionAdoption:    PredicateMetric{Numerator: 0, Denominator: 1, Decision: "UNKNOWN", Stage: "COHERENCE", Step: "PRODUCTION_CONSUMER_ADOPTION", Reason: "NO_PRODUCTION_CONSUMER_EVIDENCE"},
+		UseCaseReceipt:        UseCaseReceiptObservation{SourceArtifact: "examples/toolchain-conformance/corpus.json", Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "HISTORICAL_CORPUS_PRESENT_BUT_EXECUTION_RECEIPT_UNAVAILABLE"},
+		OutputArtifact:        OutputArtifact{Path: outputPath, Digest: digest(observedOutput), Bytes: len(observedOutput)},
+		BindingOutputReceipts: bindingReceipts,
+	}, nil
 }
 func mustJSON(value any) []byte { data, _ := json.Marshal(value); return data }
 func semanticDigest(manifest Manifest) string {

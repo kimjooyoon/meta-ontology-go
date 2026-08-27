@@ -8,6 +8,37 @@ const (
 	defaultOutput    = "internal/meta/registryprojection/generated"
 )
 
+var expectedConformancePredicateIDs = []string{
+	"independent-manifest-order",
+	"independent-resource-digests",
+	"independent-denominator-reconciliation",
+	"independent-binding-registry",
+	"independent-conformance-consumer",
+}
+
+var expectedFailurePredicateIDs = []string{
+	"consumer-malformed-manifest",
+	"consumer-missing-manifest",
+	"consumer-cross-directory-manifest",
+	"consumer-missing-binding",
+	"consumer-stale-denominator",
+	"consumer-stale-generated-projection",
+	"consumer-duplicate-stable-id",
+	"consumer-binding-self-search",
+	"consumer-binding-output-digest-mismatch",
+	"consumer-binding-comment-only",
+	"consumer-binding-unused-string",
+	"consumer-success-with-diagnostic-counterexample",
+}
+
+const (
+	expectedConformancePredicateCount = 5
+	expectedFailurePredicateCount     = 12
+	expectedClaimCount                = 17
+	expectedFailureContractCount      = 8
+	expectedBindingReceiptCount       = 9
+)
+
 type UseCase struct {
 	ID              string `json:"id"`
 	Trigger         string `json:"trigger"`
@@ -182,8 +213,8 @@ type PredicateObservation struct {
 	DiagnosticJSON     string `json:"diagnostic_json,omitempty"`
 	DiagnosticDigest   string `json:"diagnostic_json_digest,omitempty"`
 	RawInputDigest     string `json:"raw_input_digest,omitempty"`
+	RawInputBytes      string `json:"raw_input_bytes,omitempty"`
 	ContentDigest      string `json:"content_digest,omitempty"`
-	ProvenanceArtifact string `json:"provenance_artifact,omitempty"`
 	Stage              string `json:"stage"`
 	Step               string `json:"step"`
 	Reason             string `json:"reason"`
@@ -262,6 +293,32 @@ type UseCaseReceiptObservation struct {
 	Reason         string `json:"reason"`
 }
 
+type InventoryReceipt struct {
+	Expected []string `json:"expected"`
+	Observed []string `json:"observed"`
+	Decision string   `json:"decision"`
+	Stage    string   `json:"stage"`
+	Step     string   `json:"step"`
+	Reason   string   `json:"reason"`
+}
+
+type ObservedOutputArtifact struct {
+	ObservedPath string `json:"observed_path"`
+	Digest       string `json:"digest"`
+	Bytes        int    `json:"bytes"`
+	RawBytes     string `json:"raw_bytes"`
+}
+
+type BindingOutputReceipt struct {
+	MetricID           string `json:"metric_id"`
+	RawSourceAddress   string `json:"raw_source_address"`
+	SemanticDigest     string `json:"semantic_digest"`
+	ConsumerEntryPoint string `json:"consumer_entry_point"`
+	OutputAddress      string `json:"output_address"`
+	OutputDigest       string `json:"output_digest"`
+	OutputBytes        int    `json:"output_bytes"`
+}
+
 type Evidence struct {
 	Schema                       string                      `json:"schema"`
 	Decision                     string                      `json:"decision"`
@@ -298,4 +355,11 @@ type Evidence struct {
 	RepositoryNetState           RepositoryObservation       `json:"repository_net_state"`
 	GeneratedOutputs             []OutputMetadata            `json:"generated_outputs"`
 	FixtureGeneratedOutputs      []OutputMetadata            `json:"fixture_generated_outputs"`
+	PredicateInventory           InventoryReceipt            `json:"predicate_inventory"`
+	FailureInventory             InventoryReceipt            `json:"failure_inventory"`
+	ClaimInventory               InventoryReceipt            `json:"claim_inventory"`
+	ProvenanceInventory          InventoryReceipt            `json:"provenance_inventory"`
+	ASTResolvedBindings          PredicateMetric             `json:"ast_resolved_bindings"`
+	ConsumerOutputArtifact       ObservedOutputArtifact      `json:"consumer_output_artifact"`
+	BindingOutputReceipts        []BindingOutputReceipt      `json:"binding_output_receipts"`
 }

@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -97,11 +102,11 @@ func validateBindingRegistry(root string, manifest Manifest) *Diagnostic {
 		if len(parts) != 2 || !pathExists(root, parts[0]) || filepath.Ext(parts[0]) != ".go" {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNTRUSTED_BINDING_SOURCE"}
 		}
-		rawSource, err := readSource(root, parts[0])
-		if err != nil || !strings.Contains(string(rawSource), binding.MetricID) {
+		semanticDigest, err := resolveBindingSemantic(root, binding.RawSourceAddress, binding.MetricID)
+		if err != nil {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "UNTRUSTED_BINDING_SOURCE"}
 		}
-		if binding.SemanticDigest != bindingSemanticDigest(binding.MetricID, binding.RawSourceAddress) {
+		if binding.SemanticDigest != semanticDigest {
 			return &Diagnostic{Decision: "FAIL_CLOSED", Stage: "FOUNDATION", Step: "BINDING_REGISTRY", Reason: "BINDING_SEMANTIC_DIGEST_MISMATCH"}
 		}
 		if binding.ConsumerEntryPoint != "scripts/conflict-free-registry-projection-consumer/main.go" || !pathExists(root, binding.ConsumerEntryPoint) {
@@ -126,8 +131,135 @@ func validateBindingRegistry(root string, manifest Manifest) *Diagnostic {
 	return nil
 }
 
-func bindingSemanticDigest(metricID, rawSourceAddress string) string {
-	return digestBytes([]byte(metricID + "|" + rawSourceAddress))
+func resolveBindingSemantic(root, rawSourceAddress, metricID string) (string, error) {
+	parts := strings.SplitN(rawSourceAddress, "#", 2)
+	if len(parts) != 2 || parts[1] == "" {
+		return "", fmt.Errorf("invalid binding address")
+	}
+	data, err := readSource(root, parts[0])
+	if err != nil {
+		return "", err
+	}
+	fileSet := token.NewFileSet()
+	file, err := parser.ParseFile(fileSet, parts[0], data, 0)
+	if err != nil {
+		return "", err
+	}
+	var matched ast.Node
+	ast.Inspect(file, func(node ast.Node) bool {
+		if matched != nil || node == nil {
+			return matched == nil
+		}
+		switch value := node.(type) {
+		case *ast.ValueSpec:
+			for _, name := range value.Names {
+				if name.Name == parts[1] && astNodeContainsString(value, metricID) {
+					matched = value
+					return false
+				}
+			}
+		case *ast.FuncDecl:
+			if value.Name != nil && value.Name.Name == parts[1] && astNodeContainsString(value, metricID) {
+				matched = value
+				return false
+			}
+		case *ast.CallExpr:
+			if functionName(value.Fun) == "concept" && len(value.Args) > 0 && stringLiteral(value.Args[0]) == parts[1] && astNodeContainsString(value, metricID) {
+				matched = value
+				return false
+			}
+		}
+		return true
+	})
+	if matched == nil {
+		return "", fmt.Errorf("binding symbol not resolved")
+	}
+	if isGoIdentifier(parts[1]) && symbolUseCount(root, parts[1]) < 2 {
+		return "", fmt.Errorf("binding symbol is not registered or used")
+	}
+	var normalized bytes.Buffer
+	if err := format.Node(&normalized, fileSet, matched); err != nil {
+		return "", err
+	}
+	return digestBytes(normalized.Bytes()), nil
+}
+
+func astNodeContainsString(node ast.Node, wanted string) bool {
+	found := false
+	ast.Inspect(node, func(node ast.Node) bool {
+		if literal, ok := node.(*ast.BasicLit); ok && literal.Kind == token.STRING && stringLiteral(literal) == wanted {
+			found = true
+			return false
+		}
+		return !found
+	})
+	return found
+}
+
+func stringLiteral(node ast.Node) string {
+	literal, ok := node.(*ast.BasicLit)
+	if !ok || literal.Kind != token.STRING {
+		return ""
+	}
+	value, err := strconv.Unquote(literal.Value)
+	if err != nil {
+		return ""
+	}
+	return value
+}
+
+func functionName(node ast.Expr) string {
+	identifier, ok := node.(*ast.Ident)
+	if !ok {
+		return ""
+	}
+	return identifier.Name
+}
+
+func isGoIdentifier(value string) bool {
+	if value == "" || !(value[0] >= 'a' && value[0] <= 'z') && !(value[0] >= 'A' && value[0] <= 'Z') && value[0] != '_' {
+		return false
+	}
+	for _, character := range value[1:] {
+		if !(character >= 'a' && character <= 'z') && !(character >= 'A' && character <= 'Z') && !(character >= '0' && character <= '9') && character != '_' {
+			return false
+		}
+	}
+	return true
+}
+
+func symbolUseCount(root, symbol string) int {
+	count := 0
+	_ = filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.IsDir() {
+			if entry.Name() == ".git" || entry.Name() == ".parallel" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(entry.Name()) != ".go" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, data, 0)
+		if err != nil {
+			return nil
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			if identifier, ok := node.(*ast.Ident); ok && identifier.Name == symbol {
+				count++
+			}
+			return true
+		})
+		return nil
+	})
+	return count
 }
 
 func reconcileDenominators(root string, loaded []LoadedManifest) ([]DenominatorReconciliation, *Diagnostic) {
@@ -248,15 +380,15 @@ func observeUseCaseReceipt(root string) UseCaseReceiptObservation {
 	artifact := "examples/toolchain-conformance/corpus.json"
 	raw, err := readSource(root, artifact)
 	if err != nil {
-		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
+		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "HISTORICAL_CORPUS_PRESENT_BUT_EXECUTION_RECEIPT_UNAVAILABLE"}
 	}
 	var machineArtifact struct {
 		Cases []json.RawMessage `json:"cases"`
 	}
 	if json.Unmarshal(raw, &machineArtifact) != nil {
-		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
+		return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "HISTORICAL_CORPUS_PRESENT_BUT_EXECUTION_RECEIPT_UNAVAILABLE"}
 	}
-	return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "CURRENT_EVIDENCE_UNAVAILABLE"}
+	return UseCaseReceiptObservation{SourceArtifact: artifact, Status: "UNKNOWN", Numerator: 0, Denominator: 1, Stage: "FOUNDATION", Step: "USE_CASE_RECEIPT", Reason: "HISTORICAL_CORPUS_PRESENT_BUT_EXECUTION_RECEIPT_UNAVAILABLE"}
 }
 
 func constValue(source, name string) (int, bool) {

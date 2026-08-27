@@ -4,20 +4,20 @@
     {
       "stable_id": "language-semantic-model",
       "source_manifest": "examples/language-semantic-model/concept.manifest.json",
-      "raw_digest": "sha256:372b839eb168d0c7699e08aae31af5049b8e51c4b4fa90ac0ebe22f27c58dd6a",
-      "semantic_digest": "sha256:08f13a807f3750f23b2c419195b13f97b4352bf2c2bb3dd312f2f87e1bc60641"
+      "raw_digest": "sha256:e355230c18786677fb5d498f9dfe65d69b233e9ea9e598fbc295f64f9d76ae44",
+      "semantic_digest": "sha256:624cd017cd4068452e8588cb64e57b3251167cc5f37f9f2a8c5bca4adf312f39"
     },
     {
       "stable_id": "language-syntax-roundtrip",
       "source_manifest": "examples/language-syntax-roundtrip/concept.manifest.json",
-      "raw_digest": "sha256:799b8561edd07b08f8c4cebc45ccbfc1cc6014b4b8ba03a1e7eab149f57ed627",
-      "semantic_digest": "sha256:1afb110ba832488766a59fa1794977f80bd96dfab2c5f9ded40005a190724fb4"
+      "raw_digest": "sha256:8f1a079bbdabab99350181eb153355cea8147f21884ec0b3ca88ea75b6ed98fd",
+      "semantic_digest": "sha256:7bd3bb758ddc182957b5a40c68b306e4d79d2406af60cb7e6df0b37332e1369d"
     },
     {
       "stable_id": "toolchain-conformance",
       "source_manifest": "examples/toolchain-conformance/concept.manifest.json",
-      "raw_digest": "sha256:1d945611f70d1aa11423638b3a9c67134c6d78d5b756de948e561c4ac0d9f2bb",
-      "semantic_digest": "sha256:f584e5a8278df39a499809249ef3ba29edd5144d5337bd0faa6a1a8ba4a8b391"
+      "raw_digest": "sha256:71149ca7132cd796c495796ec60e25c29d27fec1903b5b41564e99c56b7f6248",
+      "semantic_digest": "sha256:444c60448cdee4f5ae803c4ba9b458dcaf341a9ba87b84607ac91972ff2906e8"
     }
   ]
 }
