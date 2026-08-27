@@ -9,6 +9,7 @@ func init() {
 		"cmd/experiment-portfolio-causality",
 		"cmd/experiment-portfolio-evaluate",
 		"cmd/experiment-portfolio-receipt",
+		"cmd/language-readiness-witness/predecessor-selection",
 		"docs/language/language-experiment-portfolio.md",
 		"docs/language/language-semantic-model.md",
 		"docs/language/language-semantic-readiness-binding.md",
