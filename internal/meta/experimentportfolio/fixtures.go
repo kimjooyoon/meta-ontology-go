@@ -42,6 +42,7 @@ func fixtureFor(candidateID string) (candidateFixture, error) {
 			coordinate("unknown-localization", 2, 2, "DISCHARGED", "COMPARISON", "locate-unknowns", "both unknown positions retain stage and reason"),
 			coordinate("extension-evidence", 0, 1, "OPEN", "EXTENSION", "await-consumer", "no downstream extension receipt yet"),
 			coordinate("read-only-effects", 1, 1, "DISCHARGED", "GUARDRAIL", "inspect-effects", "receipt declares zero repository writes"),
+			coordinate("source-semantic-causality", 0, 3, "OPEN", "CAUSALITY", "run-3-case-contract", "semantic intervention receipt is audited separately"),
 		}
 		fixture.Counterexamples = []Counterexample{
 			{ID: "derive-ce-01", Location: "derive/input/ambiguous-binding", Claim: "a missing binding must not become a pass", Stage: "COMPARISON", Step: "replay-counterexamples", Reason: "ambiguous binding is retained"},
@@ -62,6 +63,7 @@ func fixtureFor(candidateID string) (candidateFixture, error) {
 			coordinate("unknown-localization", 1, 2, "OPEN", "COMPARISON", "locate-unknowns", "one unknown position is unresolved"),
 			coordinate("extension-evidence", 1, 1, "DISCHARGED", "EXTENSION", "replay-consumer", "consumer replay records one extension"),
 			coordinate("read-only-effects", 1, 1, "DISCHARGED", "GUARDRAIL", "inspect-effects", "receipt declares zero repository writes"),
+			coordinate("source-semantic-causality", 0, 3, "OPEN", "CAUSALITY", "run-3-case-contract", "semantic intervention receipt is audited separately"),
 		}
 		fixture.Counterexamples = []Counterexample{
 			{ID: "replay-ce-01", Location: "replay/output/unknown-extension", Claim: "a reused receipt must expose its boundary", Stage: "COMPARISON", Step: "replay-counterexamples", Reason: "independence is not discharged"},
@@ -80,6 +82,7 @@ func fixtureFor(candidateID string) (candidateFixture, error) {
 			coordinate("unknown-localization", 0, 2, "REFUTED", "COMPARISON", "locate-unknowns", "unknown positions are not recorded"),
 			coordinate("extension-evidence", 0, 1, "REFUTED", "EXTENSION", "reflect-consumer", "extension claim has no evidence"),
 			coordinate("read-only-effects", 1, 1, "DISCHARGED", "GUARDRAIL", "inspect-effects", "receipt declares zero repository writes"),
+			coordinate("source-semantic-causality", 0, 3, "OPEN", "CAUSALITY", "run-3-case-contract", "semantic intervention receipt is audited separately"),
 		}
 	default:
 		return candidateFixture{}, fmt.Errorf("unknown portfolio candidate %q", candidateID)
@@ -106,6 +109,9 @@ func ProduceReceipt(subjectSHA, sourcePath string, source []byte, candidateID st
 		Consumer:          receiptConsumer,
 		MetaOperation:     fixture.Contract.MetaOperation,
 		ProofChoice:       fixture.Contract.ProofChoice,
+		SemanticValue:     "",
+		Decision:          "",
+		ClaimTransitions:  []ClaimTransition{},
 		CoordinateVector:  fixture.Coordinates,
 		Counterexamples:   fixture.Counterexamples,
 		UnknownLocations:  fixture.UnknownLocations,
@@ -113,13 +119,7 @@ func ProduceReceipt(subjectSHA, sourcePath string, source []byte, candidateID st
 		RepositoryWrites:  0,
 		MutationAuthority: false,
 	}
-	receipt.FactsDigest = digestValue(struct {
-		CandidateID      string
-		SourceDigest     string
-		CoordinateVector []Coordinate
-		Counterexamples  []Counterexample
-		UnknownLocations []UnknownLocation
-	}{receipt.CandidateID, receipt.SourceDigest, receipt.CoordinateVector, receipt.Counterexamples, receipt.UnknownLocations})
+	receipt.FactsDigest = receiptFactsDigest(receipt)
 	return sealReceipt(receipt), nil
 }
 

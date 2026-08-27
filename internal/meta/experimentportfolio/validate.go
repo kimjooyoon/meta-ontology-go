@@ -50,7 +50,7 @@ func receiptReason(contract Contract, subjectSHA string, receipt Receipt) string
 		receipt.ProofChoice != candidate.ProofChoice {
 		return "PORTFOLIO_RECEIPT_IDENTITY_MISMATCH"
 	}
-	if !validDigest(receipt.SourceDigest) || !validDigest(receipt.FactsDigest) || receipt.Digest != receiptDigest(receipt) {
+	if !validDigest(receipt.SourceDigest) || !validDigest(receipt.FactsDigest) || receipt.FactsDigest != receiptFactsDigest(receipt) || receipt.Digest != receiptDigest(receipt) {
 		return "PORTFOLIO_RECEIPT_DIGEST_INVALID"
 	}
 	if len(receipt.CoordinateVector) != len(contract.CoordinateIDs) {

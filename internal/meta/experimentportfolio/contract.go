@@ -5,12 +5,22 @@ import (
 )
 
 const (
-	ContractSchema      = "gooo/meta-experiment-portfolio-contract/v1"
-	ReceiptSchema       = "gooo/meta-experiment-portfolio-receipt/v1"
-	ReportSchema        = "gooo/meta-experiment-portfolio-report/v1"
-	ExpectedCandidates  = 3
-	ExpectedCoordinates = 6
+	ContractSchemaV1 = "gooo/meta-experiment-portfolio-contract/v1"
+	ReceiptSchemaV1  = "gooo/meta-experiment-portfolio-receipt/v1"
+	ReportSchemaV1   = "gooo/meta-experiment-portfolio-report/v1"
+
+	ContractSchema          = "gooo/meta-experiment-portfolio-contract/v2"
+	ReceiptSchema           = "gooo/meta-experiment-portfolio-receipt/v2"
+	ReportSchema            = "gooo/meta-experiment-portfolio-report/v2"
+	CausalityManifestSchema = "gooo/meta-source-semantic-causality-manifest/v1"
+	CausalityReportSchema   = "gooo/meta-source-semantic-causality-report/v1"
+	ExpectedCandidates      = 3
+	ExpectedCoordinatesV1   = 6
+	ExpectedCoordinates     = 7
+	ExpectedCausalCases     = 3
 )
+
+const predecessorContractDigest = "sha256:889c669db94229c8391446533dfffb51f7e53d165e5afdae8d3a5a6878751981"
 
 type CandidateContract struct {
 	ID            string `json:"id"`
@@ -20,24 +30,33 @@ type CandidateContract struct {
 }
 
 type Contract struct {
-	Schema                 string              `json:"schema"`
-	ID                     string              `json:"contract_id"`
-	ReceiptSchema          string              `json:"receipt_schema"`
-	ReportSchema           string              `json:"report_schema"`
-	Candidates             []CandidateContract `json:"candidates"`
-	CoordinateIDs          []string            `json:"coordinate_ids"`
-	CoordinateDenominators map[string]int      `json:"coordinate_denominators"`
-	CounterexampleSlots    int                 `json:"counterexample_slots"`
-	UnknownLocationSlots   int                 `json:"unknown_location_slots"`
-	NotClaimed             []string            `json:"not_claimed"`
+	Schema                    string              `json:"schema"`
+	ID                        string              `json:"contract_id"`
+	ReceiptSchema             string              `json:"receipt_schema"`
+	ReportSchema              string              `json:"report_schema"`
+	Version                   int                 `json:"version"`
+	PredecessorContractID     string              `json:"predecessor_contract_id"`
+	PredecessorContractPath   string              `json:"predecessor_contract_path"`
+	PredecessorContractDigest string              `json:"predecessor_contract_digest"`
+	UpgradeReason             string              `json:"upgrade_reason"`
+	CausalityManifestSchema   string              `json:"causality_manifest_schema"`
+	CausalityManifestPath     string              `json:"causality_manifest_path"`
+	CausalityCoordinateID     string              `json:"causality_coordinate_id"`
+	CausalityDenominator      int                 `json:"causality_denominator"`
+	Candidates                []CandidateContract `json:"candidates"`
+	CoordinateIDs             []string            `json:"coordinate_ids"`
+	CoordinateDenominators    map[string]int      `json:"coordinate_denominators"`
+	CounterexampleSlots       int                 `json:"counterexample_slots"`
+	UnknownLocationSlots      int                 `json:"unknown_location_slots"`
+	NotClaimed                []string            `json:"not_claimed"`
 }
 
-func ExpectedContract() Contract {
+func ExpectedContractV1() Contract {
 	return Contract{
-		Schema:        ContractSchema,
+		Schema:        ContractSchemaV1,
 		ID:            "meta-ontology-experiment-portfolio-v1",
-		ReceiptSchema: ReceiptSchema,
-		ReportSchema:  ReportSchema,
+		ReceiptSchema: ReceiptSchemaV1,
+		ReportSchema:  ReportSchemaV1,
 		Candidates: []CandidateContract{
 			{ID: "derive", SourcePath: "examples/experiment-portfolio/alternatives/derive.gooo", MetaOperation: "derive-coordinate-vector", ProofChoice: "source-digest"},
 			{ID: "replay", SourcePath: "examples/experiment-portfolio/alternatives/replay.gooo", MetaOperation: "replay-independent-receipt", ProofChoice: "independent-receipt"},
@@ -70,6 +89,26 @@ func ExpectedContract() Contract {
 			"weighted-average",
 		},
 	}
+}
+
+func ExpectedContract() Contract {
+	contract := ExpectedContractV1()
+	contract.Schema = ContractSchema
+	contract.ID = "meta-ontology-experiment-portfolio-v2"
+	contract.ReceiptSchema = ReceiptSchema
+	contract.ReportSchema = ReportSchema
+	contract.Version = 2
+	contract.PredecessorContractID = ExpectedContractV1().ID
+	contract.PredecessorContractPath = "examples/experiment-portfolio/contract-v1.json"
+	contract.PredecessorContractDigest = predecessorContractDigest
+	contract.UpgradeReason = "add source-semantic-causality without changing the six v1 denominators"
+	contract.CausalityManifestSchema = CausalityManifestSchema
+	contract.CausalityManifestPath = "examples/experiment-portfolio/causality-manifest.json"
+	contract.CausalityCoordinateID = "source-semantic-causality"
+	contract.CausalityDenominator = ExpectedCausalCases
+	contract.CoordinateIDs = append(contract.CoordinateIDs, contract.CausalityCoordinateID)
+	contract.CoordinateDenominators[contract.CausalityCoordinateID] = contract.CausalityDenominator
+	return contract
 }
 
 func contractReason(contract Contract) string {

@@ -6,6 +6,8 @@ on:
     paths:
       - "cmd/experiment-portfolio-receipt/**"
       - "cmd/experiment-portfolio-evaluate/**"
+      - "cmd/experiment-portfolio-causal-source/**"
+      - "cmd/experiment-portfolio-causality/**"
       - "internal/meta/experimentportfolio/**"
       - "examples/experiment-portfolio/**"
       - "docs/language/language-experiment-portfolio.md"

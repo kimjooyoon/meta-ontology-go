@@ -1,0 +1,52 @@
+{
+  "schema": "gooo/meta-source-semantic-causality-manifest/v1",
+  "manifest_id": "meta-ontology-source-semantic-causality-v1",
+  "version": 1,
+  "predecessor_contract_id": "meta-ontology-experiment-portfolio-v1",
+  "predecessor_contract_digest": "sha256:889c669db94229c8391446533dfffb51f7e53d165e5afdae8d3a5a6878751981",
+  "coordinate_id": "source-semantic-causality",
+  "cases_per_candidate": 3,
+  "required_receipt_fields": [
+    "semantic_value",
+    "decision",
+    "claim_transitions"
+  ],
+  "cases": [
+    {
+      "candidate_id": "derive",
+      "source_path": "examples/experiment-portfolio/alternatives/derive.gooo",
+      "operation_value_before": "meta.portfolio.derive-coordinate",
+      "operation_value_after": "meta.portfolio.derive-coordinate:semantic-intervention",
+      "non_semantic_comment": "source-semantic-causality non-semantic derive",
+      "required_change_fields": [
+        "semantic_value",
+        "decision",
+        "claim_transitions"
+      ]
+    },
+    {
+      "candidate_id": "replay",
+      "source_path": "examples/experiment-portfolio/alternatives/replay.gooo",
+      "operation_value_before": "meta.portfolio.replay-independent",
+      "operation_value_after": "meta.portfolio.replay-independent:semantic-intervention",
+      "non_semantic_comment": "source-semantic-causality non-semantic replay",
+      "required_change_fields": [
+        "semantic_value",
+        "decision",
+        "claim_transitions"
+      ]
+    },
+    {
+      "candidate_id": "reflect",
+      "source_path": "examples/experiment-portfolio/alternatives/reflect.gooo",
+      "operation_value_before": "meta.portfolio.reflect-counterexample",
+      "operation_value_after": "meta.portfolio.reflect-counterexample:semantic-intervention",
+      "non_semantic_comment": "source-semantic-causality non-semantic reflect",
+      "required_change_fields": [
+        "semantic_value",
+        "decision",
+        "claim_transitions"
+      ]
+    }
+  ]
+}

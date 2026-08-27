@@ -26,6 +26,19 @@ func receiptDigest(receipt Receipt) string {
 	return digestValue(receipt)
 }
 
+func receiptFactsDigest(receipt Receipt) string {
+	return digestValue(struct {
+		CandidateID      string
+		SourceDigest     string
+		SemanticValue    string
+		Decision         string
+		ClaimTransitions []ClaimTransition
+		CoordinateVector []Coordinate
+		Counterexamples  []Counterexample
+		UnknownLocations []UnknownLocation
+	}{receipt.CandidateID, receipt.SourceDigest, receipt.SemanticValue, receipt.Decision, receipt.ClaimTransitions, receipt.CoordinateVector, receipt.Counterexamples, receipt.UnknownLocations})
+}
+
 func sealReport(report Report) Report {
 	report.Digest = ""
 	report.Digest = digestValue(report)
