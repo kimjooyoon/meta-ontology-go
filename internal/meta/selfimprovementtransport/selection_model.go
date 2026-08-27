@@ -22,6 +22,7 @@ type artifactAPI struct {
 	ID          int64                  `json:"id"`
 	Name        string                 `json:"name"`
 	Expired     bool                   `json:"expired"`
+	ExpiresAt   string                 `json:"expires_at"`
 	Digest      string                 `json:"digest"`
 	SizeInBytes int64                  `json:"size_in_bytes"`
 	WorkflowRun artifactWorkflowRunAPI `json:"workflow_run"`

@@ -14,7 +14,7 @@ func contractKnown(file *syntax.File) bool {
 	if len(declarations) != len(expectedEntities)+len(expectedActivities) {
 		return false
 	}
-	entities, activities := map[string]string{}, map[string][2]string{}
+	entities, activities := map[string]string{}, map[string]expectedActivity{}
 	for _, declaration := range declarations {
 		switch value := declaration.(type) {
 		case *syntax.EntityDecl:
@@ -30,7 +30,12 @@ func contractKnown(file *syntax.File) bool {
 			if len(inputs) != 1 {
 				return false
 			}
-			activities[value.Name] = [2]string{inputs[0].Name, value.Output}
+			if value.ValueProgramPresent != (value.ValueProgram != "") {
+				return false
+			}
+			activities[value.Name] = expectedActivity{
+				Input: inputs[0].Name, Output: value.Output, Program: value.ValueProgram,
+			}
 		default:
 			return false
 		}

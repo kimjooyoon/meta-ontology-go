@@ -8,7 +8,7 @@ const (
 	expectedSyntaxValid   = 24
 	expectedSyntaxInvalid = 3
 	expectedSyntaxFiles   = 30
-	expectedSyntaxLines   = 383
+	expectedSyntaxLines   = 391
 )
 
 func expectedSyntaxPackageUnits() []syntaxPackageUnit {

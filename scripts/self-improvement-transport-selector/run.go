@@ -1,37 +1,53 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtransport"
 )
 
-func run(runPath, artifactsPath, repository string, runID int64, runAttempt int,
-	artifactName, output string) error {
-	runRaw, err := os.ReadFile(runPath)
-	if err != nil {
-		return fmt.Errorf("LOCATE/read-run/RUN_RESPONSE_UNAVAILABLE: %w", err)
+type options struct {
+	mode, contract, runPath, artifactsPath, repository string
+	artifactName, output, receipt, archive             string
+	runID                                              int64
+	runAttempt, runLookupExit, artifactsLookupExit     int
+	downloadExit                                       int
+}
+
+func run(input options) error {
+	switch input.mode {
+	case "locate":
+		return runLocate(input)
+	case "transport":
+		return runTransport(input)
+	default:
+		return fmt.Errorf("unknown lifecycle mode %q", input.mode)
 	}
-	artifactsRaw, err := os.ReadFile(artifactsPath)
-	if err != nil {
-		return fmt.Errorf("LOCATE/read-artifacts/ARTIFACT_RESPONSE_UNAVAILABLE: %w", err)
-	}
-	metadata, err := selfimprovementtransport.SelectTransportMetadata(runRaw, artifactsRaw,
-		selfimprovementtransport.ArtifactSelectionInput{Repository: repository,
-			ExpectedRunID: runID, ExpectedRunAttempt: runAttempt, ArtifactName: artifactName})
-	if err != nil {
+}
+
+func runLocate(input options) error {
+	runRaw, runExit := readLookup(input.runPath, input.runLookupExit)
+	artifactsRaw, artifactsExit := readLookup(input.artifactsPath, input.artifactsLookupExit)
+	repository := os.DirFS(filepath.Dir(input.contract))
+	metadata, receipt := selfimprovementtransport.ObserveArtifactLifecycle(
+		repository, filepath.Base(input.contract), runRaw, artifactsRaw,
+		selfimprovementtransport.ArtifactLifecycleInput{
+			Selection: selfimprovementtransport.ArtifactSelectionInput{
+				Repository: input.repository, ExpectedRunID: input.runID,
+				ExpectedRunAttempt: input.runAttempt, ArtifactName: input.artifactName,
+			},
+			RunLookupExit: runExit, ArtifactsLookupExit: artifactsExit,
+		})
+	if err := writeReceipt(input.receipt, receipt); err != nil {
 		return err
 	}
-	encoded, err := json.MarshalIndent(metadata, "", "  ")
-	if err != nil {
-		return fmt.Errorf("LOCATE/encode-selection/SELECTION_RECEIPT_INVALID: %w", err)
+	if metadata.ArtifactID > 0 {
+		if err := writeJSON(input.output, metadata); err != nil {
+			return err
+		}
 	}
-	if err := os.WriteFile(output, append(encoded, '\n'), 0o644); err != nil {
-		return fmt.Errorf("LOCATE/write-selection/SELECTION_RECEIPT_UNAVAILABLE: %w", err)
-	}
-	fmt.Printf("transport selection: run=%d attempt=%d artifact=%d\n",
-		metadata.ProducerRunID, metadata.ProducerRunAttempt, metadata.ArtifactID)
+	printReceipt(receipt)
 	return nil
 }
