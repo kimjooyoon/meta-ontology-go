@@ -123,6 +123,7 @@ jobs:
           root=examples/semantic-delta-receipt
           observed_checkout_sha="$(cat "$out/observed-checkout-sha.txt")"
           cp "$root/claim-transition-expectations.json" "$out/claim-transition-expectations.json"
+          expectation_digest="sha256:$(sha256sum "$out/claim-transition-expectations.json" | awk '{print $1}')"
           for pass in first second; do
             go run ./cmd/semantic-delta-receipt-witness \
               --case suite --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" \
@@ -131,7 +132,7 @@ jobs:
           jq -S 'del(.output_path, .suite_digest)' "$out/first.json" > "$out/first-deterministic.json"
           jq -S 'del(.output_path, .suite_digest)' "$out/second.json" > "$out/second-deterministic.json"
           cmp "$out/first-deterministic.json" "$out/second-deterministic.json"
-          jq -e --arg output "$out/first.json" --arg expected "$HEAD_SHA" --arg observed "$observed_checkout_sha" '
+          jq -e --arg output "$out/first.json" --arg expected "$HEAD_SHA" --arg observed "$observed_checkout_sha" --arg expectation_digest "$expectation_digest" '
             .schema == "gooo/semantic-delta-receipt-conformance/v2" and
             .decision == "FIXED_POINT" and .resolution == "EXACT" and
             .contract_reproduction == "FIXED_FIVE_CASE_CONTRACT_REPRODUCED" and
@@ -151,10 +152,13 @@ jobs:
             .case_contract_expected_ids == ["equivalent","semantic-change","value-program-change","indeterminate","ambiguous-match"] and
             ((.case_contract_expected_ids | sort) == (.case_contract_observed_ids | sort)) and
             ((.case_contract_expected_ids | sort) == (.case_contract_observed_recipe_ids | sort)) and
+            .claim_count_contract_version == "v1" and .claim_count_expected_total == 31 and
+            .claim_count_expected_by_case == [{"case_id":"equivalent","total":7},{"case_id":"semantic-change","total":7},{"case_id":"value-program-change","total":7},{"case_id":"indeterminate","total":3},{"case_id":"ambiguous-match","total":7}] and
             .stage == "suite-contract" and .step == "validate-case-inventory" and
             .case_contract_stage == "suite-contract" and .case_contract_step == "validate-case-inventory" and .case_contract_reason == "FIXED_CASE_ID_INVENTORY_EXACT" and
-            ([.cases[].report.claim_identity | select(.decision == "EXACT" and .resolution == "EXACT" and .stage == "claim-identity" and .step == "compare-fixed-expectation" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and (.expected_claim_ids | length) == .fixed_total and .expected_claim_ids == .observed_claim_ids and .expected_transition_identity_digest == .observed_transition_identity_digest and .coverage_bps == 10000)] | length) == 5 and
+            ([.cases[].report.claim_identity | select(.decision == "PASS" and .resolution == "EXACT" and .stage == "claim-identity" and .step == "compare-fixed-expectation" and .reason == "FIXED_CLAIM_IDENTITY_EXACT" and .expectation_artifact_digest == $expectation_digest and (.expected_claim_ids | length) == .fixed_total and .expected_claim_ids == .observed_claim_ids and .expected_transition_identity_digest == .observed_transition_identity_digest and .coverage_bps == 10000)] | length) == 5 and
             ([.cases[].report | select(.claim_identity.case_id == .case_id and .claim_identity.denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and (.claim_identity.expected_claim_ids | length) > 0 and (.claim_identity.observed_claim_ids | length) == (.claim_identity.expected_claim_ids | length))] | length) == 5 and
+            ([.cases[].report | select(.claim_identity.observed_source_pair.before_path == .source_paths[0] and .claim_identity.observed_source_pair.after_path == .source_paths[1] and .claim_identity.observed_source_pair.before_raw_digest == .receipt.before.source_digest and .claim_identity.observed_source_pair.after_raw_digest == .receipt.after.source_digest and .claim_identity.observed_source_pair.before_semantic_digest == .receipt.before.semantic_digest and .claim_identity.observed_source_pair.after_semantic_digest == .receipt.after.semantic_digest)] | length) == 5 and
             ([.cases[] | select(.passed == true)] | length) == 5 and
             ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 5 and
             ([.cases[].report.receipt | select(.expected_subject_sha == $expected and .observed_checkout_sha == $observed and .effects.status == "NET_REPOSITORY_STATE_UNCHANGED" and .effects.changed_path_or_content_count == 0 and .effects.output_location == "OUTSIDE_REPOSITORY")] | length) == 5 and
@@ -165,14 +169,16 @@ jobs:
           jq -e '
             .schema == "gooo/semantic-delta-claim-transition-expectations/v1" and
             .denominator_id == "gooo://semantic-delta-receipt-denominator/v2" and .fixed_case_total == 5 and
+            .claim_count_contract_version == "v1" and .fixed_claim_total == 31 and .denominator_evolution_receipt == "REQUIRED_FOR_FIXED_CLAIM_COUNT_CHANGE" and
             ([.cases[].id] | sort) == ["ambiguous-match","equivalent","indeterminate","semantic-change","value-program-change"] and
             ([.cases[].id] | length) == 5 and ([.cases[].id] | unique | length) == 5 and
-            ([.cases[] | select((.expected_claim_ids | length) > 0 and ((.expected_claim_ids | unique | length) == (.expected_claim_ids | length)) and (.expected_transition_identity_digest | test("^sha256:[0-9a-f]{64}$")))] | length) == 5
+            (([.cases | sort_by(.id)[] | .expected_claim_total]) == [7,7,3,7,7]) and (([.cases[].expected_claim_total] | add) == .fixed_claim_total) and
+            ([.cases[] | select((.expected_claim_ids | length) > 0 and ((.expected_claim_ids | unique | length) == (.expected_claim_ids | length)) and (.expected_claim_total > 0) and ((.expected_claim_ids | length) == .expected_claim_total) and (.expected_transition_identity_digest | test("^sha256:[0-9a-f]{64}$")) and (.case_row_digest | test("^sha256:[0-9a-f]{64}$")))] | length) == 5
           ' "$out/claim-transition-expectations.json"
           jq -e --slurpfile expected "$out/claim-transition-expectations.json" '
-            ($expected[0].cases | map({id, expected_claim_ids, expected_transition_identity_digest}) | sort_by(.id)) as $fixed |
-            ([.cases[] | {id:.report.case_id, expected_claim_ids:.report.claim_identity.expected_claim_ids, expected_transition_identity_digest:.report.claim_identity.expected_transition_identity_digest, observed_claim_ids:.report.claim_identity.observed_claim_ids, observed_transition_identity_digest:.report.claim_identity.observed_transition_identity_digest}] | sort_by(.id)) as $observed |
-            ($fixed | map({id, expected_claim_ids, expected_transition_identity_digest, observed_claim_ids:.expected_claim_ids, observed_transition_identity_digest:.expected_transition_identity_digest})) == $observed
+            ($expected[0].cases | map({id, expected_claim_ids, expected_transition_identity_digest, expected_claim_total, case_row_digest}) | sort_by(.id)) as $fixed |
+            ([.cases[] | {id:.report.case_id, expected_claim_ids:.report.claim_identity.expected_claim_ids, expected_transition_identity_digest:.report.claim_identity.expected_transition_identity_digest, expected_claim_total:.report.claim_identity.expected_claim_total, case_row_digest:.report.claim_identity.expectation_case_row_digest, observed_claim_ids:.report.claim_identity.observed_claim_ids, observed_transition_identity_digest:.report.claim_identity.observed_transition_identity_digest}] | sort_by(.id)) as $observed |
+            ($fixed | map({id, expected_claim_ids, expected_transition_identity_digest, expected_claim_total, case_row_digest, observed_claim_ids:.expected_claim_ids, observed_transition_identity_digest:.expected_transition_identity_digest})) == $observed
           ' "$out/first.json"
           test "$(jq -c '.recipes' "$root/denominator.json")" = "$(jq -c '.cases | map({id,before_path,after_path})' "$root/denominator.json")"
           go run ./cmd/semantic-delta-receipt-witness --before "$root/before.gooo" --after "$root/equivalent-after.gooo" --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --effects-before "$out/workspace-before.tsv" --effects-after "$out/workspace-after.tsv" --output "$out/equivalent.json"

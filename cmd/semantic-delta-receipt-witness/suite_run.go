@@ -1,6 +1,9 @@
 package main
 
-import producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"
+import (
+	producer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"
+	consumer "github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceiptconsumer"
+)
 
 const (
 	contractReproduced            = "FIXED_FIVE_CASE_CONTRACT_REPRODUCED"
@@ -15,11 +18,16 @@ func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outp
 	results := make([]CaseResult, 0, fixedCaseContractTotal)
 	summary := Summary{CasesTotal: fixedCaseContractTotal, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	passed := 0
+	claimCountContractOK := true
 	for _, definition := range definitions {
 		input := producer.Input{CaseID: definition.ID, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, BeforePath: definition.BeforePath, AfterPath: definition.AfterPath, EffectsBeforePath: effectsBefore, EffectsAfterPath: effectsAfter, OutputPath: outputPath}
 		report := evaluate(input, "")
 		semanticCoverageAccepted := report.Receipt.DeclaredProjectionComponentKindCoverageBPS == 10000 || definition.ExpectedResolution == producer.ResolutionLower
-		claimIdentityExact := report.ClaimIdentity.Decision == "EXACT" && report.ClaimIdentity.Resolution == producer.ResolutionExact && report.ClaimIdentity.CaseID == definition.ID && report.ClaimIdentity.FixedTotal == len(report.ClaimIdentity.ExpectedClaimIDs) && report.ClaimIdentity.CoverageBPS == 10000
+		expectedClaimTotal, knownClaimTotal := consumer.FixedClaimCountForCase(definition.ID)
+		claimIdentityExact := knownClaimTotal && report.ClaimIdentity.Decision == "PASS" && report.ClaimIdentity.Resolution == producer.ResolutionExact && report.ClaimIdentity.CaseID == definition.ID && report.ClaimIdentity.FixedTotal == expectedClaimTotal && report.ClaimIdentity.ExpectedClaimTotal == expectedClaimTotal && report.Receipt.TotalClaims == expectedClaimTotal && report.ClaimIdentity.CoverageBPS == 10000
+		if !knownClaimTotal || report.ClaimIdentity.FixedTotal != expectedClaimTotal || report.ClaimIdentity.ExpectedClaimTotal != expectedClaimTotal || report.Receipt.TotalClaims != expectedClaimTotal {
+			claimCountContractOK = false
+		}
 		casePassed := caseContractOK && claimIdentityExact && report.IndependentVerdict.Passed && report.IndependentVerdict.Decision == definition.ExpectedDecision && report.IndependentVerdict.Resolution == definition.ExpectedResolution && report.IndependentVerdict.Classification == definition.ExpectedClass && report.IndependentVerdict.Reason == definition.ExpectedReason && report.Receipt.Stage == definition.ExpectedStage && report.Receipt.Step == definition.ExpectedStep && report.Receipt.DenominatorVersion == producer.DenominatorVersion && report.Receipt.DenominatorCases == fixedCaseContractTotal && semanticCoverageAccepted
 		if casePassed {
 			passed++
@@ -38,7 +46,7 @@ func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outp
 			reason = caseContractMismatchReason
 		}
 	}
-	if caseContractOK && meta.Version == producer.DenominatorVersion && meta.DenominatorCases == fixedCaseContractTotal && passed == fixedCaseContractTotal {
+	if caseContractOK && claimCountContractOK && summary.TotalClaims == consumer.FixedClaimTotal() && meta.Version == producer.DenominatorVersion && meta.DenominatorCases == fixedCaseContractTotal && passed == fixedCaseContractTotal {
 		decision, resolution, contract = producer.DecisionFixedPoint, producer.ResolutionExact, contractReproduced
 		reason = ""
 	}
@@ -55,9 +63,18 @@ func runSuite(subjectSHA, observedCheckoutSHA, effectsBefore, effectsAfter, outp
 	if !caseContractOK {
 		caseContractReason = reason
 	}
-	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, DenominatorID: fixedCaseContractDenominatorID, DenominatorDigest: denominatorDigest, CaseContractDenominatorID: fixedCaseContractDenominatorID, CaseContractExpectedIDs: fixedCaseIDs(), CaseContractObservedIDs: observedCaseIDs(definitions), CaseContractObservedRecipeIDs: observedRecipeIDs(meta), CaseContractFixedTotal: fixedCaseContractTotal, CaseContractStage: caseContractStage, CaseContractStep: caseContractStep, CaseContractReason: caseContractReason, Stage: caseContractStage, Step: caseContractStep, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CaseContractCoverageBPS: ratio(passed, fixedCaseContractTotal), DeclaredProjectionComponentKindCoverageBPS: ratio(producer.ModeledComponentCount, producer.TotalComponentCount), SemanticEquivalenceClaim: subjectEquivalenceNotAsserted, MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
+	suite := Suite{Schema: producer.SuiteSchema, SubjectSHA: subjectSHA, ObservedCheckoutSHA: observedCheckoutSHA, DenominatorID: fixedCaseContractDenominatorID, DenominatorDigest: denominatorDigest, CaseContractDenominatorID: fixedCaseContractDenominatorID, CaseContractExpectedIDs: fixedCaseIDs(), CaseContractObservedIDs: observedCaseIDs(definitions), CaseContractObservedRecipeIDs: observedRecipeIDs(meta), CaseContractFixedTotal: fixedCaseContractTotal, CaseContractStage: caseContractStage, CaseContractStep: caseContractStep, CaseContractReason: caseContractReason, Stage: caseContractStage, Step: caseContractStep, Decision: decision, Resolution: resolution, Reason: reason, ContractReproduction: contract, SubjectSemanticEquivalence: subjectEquivalenceNotAsserted, SourcePaths: sources, OutputPath: outputPath, Cases: results, Summary: summary, CaseContractCoverageBPS: ratio(passed, fixedCaseContractTotal), ClaimCountContractVersion: consumer.ClaimCountContractVersion(), ClaimCountExpectedTotal: consumer.FixedClaimTotal(), ClaimCountExpectedByCase: fixedClaimCountRows(), DeclaredProjectionComponentKindCoverageBPS: ratio(producer.ModeledComponentCount, producer.TotalComponentCount), SemanticEquivalenceClaim: subjectEquivalenceNotAsserted, MetaSourcePath: producer.MetaSourcePath, MetaContractDigest: metaDigest, DenominatorVersion: producer.DenominatorVersion, ModeledSemanticComponents: producer.ModeledComponentCount, TotalSemanticComponents: producer.TotalComponentCount}
 	sealSuite(&suite)
 	return suite
+}
+
+func fixedClaimCountRows() []ClaimCountContractRow {
+	rows := make([]ClaimCountContractRow, 0, fixedCaseContractTotal)
+	for _, recipe := range fixedCaseRecipes {
+		total, _ := consumer.FixedClaimCountForCase(recipe.ID)
+		rows = append(rows, ClaimCountContractRow{CaseID: recipe.ID, Total: total})
+	}
+	return rows
 }
 
 func mergeSummary(summary *Summary, report Report, passed bool) {

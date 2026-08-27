@@ -48,15 +48,17 @@ type Evidence struct {
 }
 
 func evaluate(input producer.Input, outputPath string) Report {
+	consumerInput := consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}
 	receipt, err := producer.ProduceFiles(input)
 	if err != nil {
-		return Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, ReportDigest: "read-error"}
+		report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, ClaimIdentity: consumer.ValidateFixedClaimIdentity(consumerInput), ReportDigest: "read-error"}
+		sealReport(&report)
+		return report
 	}
 	raw, _ := json.Marshal(receipt)
 	wire := consumer.Receipt{}
 	_ = json.Unmarshal(raw, &wire)
-	verdict := consumer.AdjudicateFiles(consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}, wire)
-	consumerInput := consumer.Input{CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA, BeforePath: input.BeforePath, AfterPath: input.AfterPath, EffectsBeforePath: input.EffectsBeforePath, EffectsAfterPath: input.EffectsAfterPath, OutputPath: input.OutputPath}
+	verdict := consumer.AdjudicateFiles(consumerInput, wire)
 	claimIdentity := consumer.ValidateFixedClaimIdentity(consumerInput)
 	summary := summaryFor(receipt, verdict)
 	report := Report{Schema: producer.ReportSchema, CaseID: input.CaseID, SubjectSHA: input.SubjectSHA, SourcePaths: []string{input.BeforePath, input.AfterPath}, OutputPath: outputPath, Receipt: receipt, IndependentVerdict: verdict, ClaimIdentity: claimIdentity, Indicators: bindings(summary), Evidence: evidenceFor(receipt, verdict, summary)}

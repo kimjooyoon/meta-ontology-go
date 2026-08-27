@@ -98,3 +98,57 @@ func TestFixedInventoriesRejectDrift(t *testing.T) {
 		})
 	}
 }
+
+func TestFixedClaimExpectationRejectsDrift(t *testing.T) {
+	contract, raw, err := readClaimIdentityExpectations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, testCase := range []struct {
+		name   string
+		mutate func(*claimIdentityExpectationContract)
+	}{
+		{name: "duplicate-case", mutate: func(value *claimIdentityExpectationContract) { value.Cases = append(value.Cases, value.Cases[0]) }},
+		{name: "replaced-case", mutate: func(value *claimIdentityExpectationContract) { value.Cases[0].ID = "replacement" }},
+		{name: "count-drift", mutate: func(value *claimIdentityExpectationContract) { value.Cases[0].ExpectedClaimTotal++ }},
+		{name: "claim-replacement", mutate: func(value *claimIdentityExpectationContract) {
+			value.Cases[0].ExpectedClaimIDs[0] = "gooo://semantic-delta/claim/object/replacement"
+		}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			copy := contract
+			copy.Cases = append([]claimIdentityExpectation(nil), contract.Cases...)
+			for index := range copy.Cases {
+				copy.Cases[index].ExpectedClaimIDs = append([]string(nil), contract.Cases[index].ExpectedClaimIDs...)
+			}
+			testCase.mutate(&copy)
+			if validateClaimExpectationContract(copy) == nil {
+				t.Fatal("fixed claim expectation drift was accepted")
+			}
+		})
+	}
+	unknownField := append([]byte(`{"unexpected":true,`), raw[1:]...)
+	if _, err := decodeClaimIdentityExpectations(unknownField); err == nil {
+		t.Fatal("unknown expectation field was accepted")
+	}
+}
+
+func TestClaimIdentityUnknownCoordinates(t *testing.T) {
+	base := Input{CaseID: "equivalent", SubjectSHA: candidateSHA, ObservedCheckoutSHA: candidateSHA, BeforePath: fixture("before.gooo"), AfterPath: fixture("equivalent-after.gooo")}
+	for _, testCase := range []struct {
+		name       string
+		input      Input
+		wantStep   string
+		wantReason string
+	}{
+		{name: "missing-before", input: Input{CaseID: base.CaseID, SubjectSHA: base.SubjectSHA, ObservedCheckoutSHA: base.ObservedCheckoutSHA, BeforePath: fixture("missing-before.gooo"), AfterPath: base.AfterPath}, wantStep: claimSourceBeforeStep, wantReason: claimSourceBeforeReason},
+		{name: "missing-after", input: Input{CaseID: base.CaseID, SubjectSHA: base.SubjectSHA, ObservedCheckoutSHA: base.ObservedCheckoutSHA, BeforePath: base.BeforePath, AfterPath: fixture("missing-after.gooo")}, wantStep: claimSourceAfterStep, wantReason: claimSourceAfterReason},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			comparison := ValidateFixedClaimIdentity(testCase.input)
+			if comparison.Decision != decisionFailClosed || comparison.Resolution != resolutionLower || comparison.Stage != "source-pair" || comparison.Step != testCase.wantStep || comparison.Reason != testCase.wantReason {
+				t.Fatalf("comparison=%+v", comparison)
+			}
+		})
+	}
+}
