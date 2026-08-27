@@ -1,7 +1,7 @@
 {
-  "schema": "gooo/semantic-delta-claim-identity-fault/v1",
+  "schema": "gooo/semantic-delta-claim-identity-fault/v2",
   "fault_id": "raw-only-stable-id-recreation",
   "target": "alternate-observation",
-  "mutation": "stable_id_only",
-  "rule": "replace each alternate stable_id with gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)>"
+  "mutation": "stable_identity_rekey_with_reference_closure",
+  "rule": "rekey each alternate stable_id bijectively to gooo://semantic-delta/identity-fault/claim/<sha256(rule|alternate-before-raw-digest|alternate-after-raw-digest|original-stable-id)> and rewrite every internal identity reference through the same mapping"
 }

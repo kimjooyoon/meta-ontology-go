@@ -186,8 +186,9 @@ implementations. Identical raw pairs therefore fail closed with
 `RAW_EVIDENCE_UNCHANGED`; semantic-target drift fails closed with
 `SEMANTIC_TARGET_CHANGED`; ordinary added/removed claims remain
 `CLAIM_SET_CHANGED`. A separate identity-fault artifact can deliberately
-mutate only alternate `StableID` values after both raw-source reconstructions.
-The artifact path, byte count, raw digest, and exact mutation rule are bound in
+rekey alternate `StableID` values after both raw-source reconstructions and
+rewrite all internal identity references through the same mapping. The artifact
+path, byte count, raw digest, and exact mutation rule are bound in
 the probe receipt. When that fault leaves semantic evidence and targets equal,
 both implementations must classify it as
 `FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`.
@@ -195,6 +196,16 @@ This diagnostic fault is outside the canonical producer/consumer source
 projection and cannot make a normal Gooo source marker alter identity.
 Historical v1-to-v3 migration remains separate accounting and cannot satisfy
 these predicates.
+
+The diagnostic rekey is graph-closed: it first records a canonical old-to-new
+StableID bijection, then rewrites `PreservationOf` and every other internal
+identity reference through that bijection. The receipt records both inventories,
+the mapping digest, reference denominator, rewritten-reference count, dangling
+count, and an alpha-equivalent semantic-graph digest. A stale reference is
+`FAIL_CLOSED / LOWER_RESOLUTION / IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped
+mapping edges are `IDENTITY_FAULT_MAPPING_RULE_MISMATCH`; duplicate edges are
+`IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE`. Raw-only recreation is admissible only
+after bijection, reference closure, and alpha-equivalence all pass.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

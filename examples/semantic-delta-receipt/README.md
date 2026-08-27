@@ -69,14 +69,20 @@ target drift fails closed as `SEMANTIC_TARGET_CHANGED`; ordinary added/removed
 claims fail closed as `CLAIM_SET_CHANGED`. The checked-in
 `claim-identity-fault.json` is a separate diagnostic artifact, not a Gooo
 source contract: CI reconstructs normal `.gooo` pairs first, then an explicit
-mutator changes only alternate `StableID` values using the artifact's raw
-digest-bound rule. The receipt binds the artifact path, byte count, digest, and
-rule, and both independent classifiers must report
+mutator rekeys alternate `StableID` values and closes all internal identity
+references through the artifact's raw digest-bound rule. The receipt binds the
+artifact path, byte count, digest, and rule, and both independent classifiers must report
 `FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`.
 Normal producer/consumer source projection never reads a marker to alter
 identity. The semantic claim delta manifest is consumed by both raw-source
 implementations in CI, while the v1-to-v3 migration remains separate
-accounting.
+accounting. The fault rekey is graph-closed: it binds a canonical old/new
+StableID bijection, rewrites `PreservationOf` through that mapping, and reports
+mapping digest, reference denominator, rewritten references, dangling
+references, and alpha-equivalent semantic graph status. Stale references fail
+closed as `IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped or duplicate mapping
+edges fail closed with distinct mapping reasons. The raw-only recreation result
+is allowed only when this graph proof succeeds.
 
 ## Research decisions
 
