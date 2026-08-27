@@ -146,6 +146,12 @@ func parseSource(raw []byte) (sourceDocument, error) {
 	if len(document.Cases) != ExpectedCaseTotal {
 		return sourceDocument{}, fmt.Errorf("source case denominator changed: got %d want %d", len(document.Cases), ExpectedCaseTotal)
 	}
+	for id, expected := range map[string]string{"captured": "captured", "hygienic": "not-captured"} {
+		item := document.Cases[id]
+		if item.Spelling != "tmp" || item.Expected != expected {
+			return sourceDocument{}, fmt.Errorf("source case %q does not state the fixed spelling/expectation", id)
+		}
+	}
 	return document, nil
 }
 

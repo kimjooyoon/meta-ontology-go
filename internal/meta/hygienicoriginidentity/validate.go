@@ -17,6 +17,9 @@ func Validate(report Report, expectedUnknown bool, expectedHead string) error {
 	if report.Source.HeadSHA != expectedHead || !validSHA(expectedHead) {
 		return fmt.Errorf("receipt head is not the expected exact subject")
 	}
+	if report.Source.Path == "" || !validDigest(report.Source.Digest) {
+		return fmt.Errorf("receipt source subject is missing a valid digest")
+	}
 	if len(report.Cases) != ExpectedCaseTotal || (len(report.Claims) != ExpectedClaimTotal && len(report.Claims) != ExpectedClaimTotal+1) {
 		return fmt.Errorf("receipt denominator changed: cases %d/%d claims %d/%d or %d", len(report.Cases), ExpectedCaseTotal, len(report.Claims), ExpectedClaimTotal, ExpectedClaimTotal+1)
 	}
@@ -128,6 +131,15 @@ func validSHA(value string) bool {
 		return false
 	}
 	_, err := hex.DecodeString(value)
+	return err == nil
+}
+
+func validDigest(value string) bool {
+	raw := strings.TrimPrefix(value, "sha256:")
+	if len(raw) != 64 || raw != strings.ToLower(raw) {
+		return false
+	}
+	_, err := hex.DecodeString(raw)
 	return err == nil
 }
 
