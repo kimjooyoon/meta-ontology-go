@@ -8,7 +8,7 @@ func TestEvaluateClosesAllToolchainSurfaces(t *testing.T) {
 		t.Fatal(err)
 	}
 	summary := report.Summary
-	if summary.SurfacesSatisfied != 9 || summary.CasesSatisfied != 177 ||
+	if summary.SurfacesSatisfied != 9 || summary.CasesSatisfied != 181 ||
 		summary.IndicatorsSatisfied != 151 || summary.ProofsPassed != 27 ||
 		summary.TamperRejections != 13 || len(report.Indicators) != 28 {
 		t.Fatalf("summary = %#v", summary)

@@ -1082,7 +1082,11 @@ jobs:
               --head "$HEAD_SHA" \
               --registry "$semantic_registry" \
               --syntax-artifact "$syntax_first/artifact.json" \
-              --output "$target/artifact.json"
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-semantic-model artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
           done
           cmp -s "$semantic_first/artifact.json" "$semantic_replay/artifact.json"
           go run ./cmd/language-semantic-witness \
