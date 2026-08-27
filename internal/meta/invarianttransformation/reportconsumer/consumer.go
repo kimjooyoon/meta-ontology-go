@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -31,9 +32,7 @@ type ArtifactSemanticValue struct {
 	Input                int64  `json:"input"`
 	Operation            string `json:"operation"`
 	Output               int64  `json:"output"`
-	SourceDigest         string `json:"source_digest"`
 	SemanticSourceDigest string `json:"semantic_source_digest"`
-	SubjectSHA           string `json:"subject_sha"`
 }
 
 // ArtifactSemanticProjection is an independent observation of the generated
@@ -41,18 +40,21 @@ type ArtifactSemanticValue struct {
 // semantic projection remains provenance-bound; only the explicitly dynamic
 // provenance fields may be normalized for replay comparison.
 type ArtifactSemanticProjection struct {
-	Schema                 string                `json:"schema"`
-	HeadSHA                string                `json:"head_sha"`
-	CaseID                 string                `json:"case_id"`
-	Path                   string                `json:"path"`
-	RawDigest              string                `json:"raw_digest"`
-	RawSize                int                   `json:"raw_size"`
-	ExecutionID            string                `json:"execution_id"`
-	AuthorizationDigest    string                `json:"authorization_digest,omitempty"`
-	EffectDigest           string                `json:"effect_digest,omitempty"`
-	Semantic               ArtifactSemanticValue `json:"semantic"`
-	CanonicalSemanticBytes string                `json:"canonical_semantic_bytes"`
-	SemanticDigest         string                `json:"semantic_digest"`
+	Schema                      string                `json:"schema"`
+	HeadSHA                     string                `json:"head_sha"`
+	CaseID                      string                `json:"case_id"`
+	Path                        string                `json:"path"`
+	RawDigest                   string                `json:"raw_digest"`
+	RawSize                     int                   `json:"raw_size"`
+	ExecutionID                 string                `json:"execution_id"`
+	SourceDigest                string                `json:"source_digest"`
+	SubjectSHA                  string                `json:"subject_sha"`
+	ObservedAuthorizationDigest string                `json:"observed_authorization_digest"`
+	ExpectedAuthorizationDigest string                `json:"expected_authorization_digest"`
+	EffectDigest                string                `json:"effect_digest"`
+	Semantic                    ArtifactSemanticValue `json:"semantic"`
+	CanonicalSemanticBytes      string                `json:"canonical_semantic_bytes"`
+	SemanticDigest              string                `json:"semantic_digest"`
 }
 
 type artifactFields struct {
@@ -100,11 +102,14 @@ func ArtifactProjection(report model.Report, source []byte, headSHA string) (Art
 		projection.RawDigest != approved.Artifact.ContentDigest || projection.RawSize != approved.Artifact.Size ||
 		projection.Semantic.CaseID != approvedReceipt.CaseID || projection.Semantic.Input != approvedReceipt.Evidence.InputValue ||
 		projection.Semantic.Operation != approvedReceipt.Evidence.CandidateOperation || projection.Semantic.Output != approvedReceipt.Evidence.CandidateResult ||
-		projection.Semantic.SourceDigest != report.SourceDigest || projection.Semantic.SemanticSourceDigest != report.SemanticSourceDigest ||
-		projection.Semantic.SubjectSHA != headSHA || projection.ExecutionID != report.ExecutionID {
+		projection.SourceDigest != report.SourceDigest || projection.Semantic.SemanticSourceDigest != report.SemanticSourceDigest ||
+		projection.SubjectSHA != headSHA || projection.ExecutionID != report.ExecutionID {
 		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/bind-effect/ARTIFACT_SEMANTIC_PROVENANCE_MISMATCH")
 	}
-	projection.AuthorizationDigest = approved.Artifact.AuthorizationDigest
+	projection.ExpectedAuthorizationDigest = approved.Artifact.AuthorizationDigest
+	if projection.ObservedAuthorizationDigest != projection.ExpectedAuthorizationDigest {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_OBSERVATION/bind-effect/ARTIFACT_AUTHORIZATION_DIGEST_MISMATCH")
+	}
 	projection.EffectDigest = approved.ExecutionReceiptDigest
 	return projection, nil
 }
@@ -129,7 +134,7 @@ func ProjectArtifactFile(path, headSHA string) (ArtifactSemanticProjection, erro
 	}
 	semantic := ArtifactSemanticValue{
 		CaseID: fields.CaseID, Input: fields.Input, Operation: fields.Operation, Output: fields.Output,
-		SourceDigest: fields.SourceDigest, SemanticSourceDigest: fields.SemanticSourceDigest, SubjectSHA: fields.SubjectSHA,
+		SemanticSourceDigest: fields.SemanticSourceDigest,
 	}
 	canonical, err := json.Marshal(semantic)
 	if err != nil {
@@ -138,6 +143,7 @@ func ProjectArtifactFile(path, headSHA string) (ArtifactSemanticProjection, erro
 	return ArtifactSemanticProjection{
 		Schema: artifactSemanticProjectionSchema, HeadSHA: headSHA, CaseID: fields.CaseID, Path: path,
 		RawDigest: model.DigestBytes(raw), RawSize: len(raw), ExecutionID: fields.ExecutionID,
+		SourceDigest: fields.SourceDigest, SubjectSHA: fields.SubjectSHA, ObservedAuthorizationDigest: fields.AuthorizationDigest,
 		Semantic: semantic, CanonicalSemanticBytes: string(canonical), SemanticDigest: model.DigestBytes(canonical),
 	}, nil
 }
@@ -180,6 +186,185 @@ func CompareArtifactSemanticProjection(expected, actual ArtifactSemanticProjecti
 		!reflect.DeepEqual(expected.Semantic, actual.Semantic) || expected.CanonicalSemanticBytes != actual.CanonicalSemanticBytes ||
 		expected.SemanticDigest != actual.SemanticDigest {
 		return fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/compare/ARTIFACT_SEMANTIC_MISMATCH")
+	}
+	return nil
+}
+
+// ValidateArtifactProjectionBinding proves that an expected projection was
+// produced from the same baseline artifact observation. Semantic equality is
+// intentionally separate from this exact raw/provenance binding check.
+func ValidateArtifactProjectionBinding(expected, actual ArtifactSemanticProjection) error {
+	if !reflect.DeepEqual(expected, actual) {
+		return fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/bind-expected/EXPECTED_PROJECTION_NOT_BASELINE_BOUND")
+	}
+	return nil
+}
+
+// CompareArtifactProvenance checks the raw and execution-bound identity that
+// semantic comparison intentionally excludes.
+func CompareArtifactProvenance(expected, actual ArtifactSemanticProjection) error {
+	if expected.HeadSHA != actual.HeadSHA || expected.CaseID != actual.CaseID || expected.Path != actual.Path ||
+		expected.RawDigest != actual.RawDigest || expected.RawSize != actual.RawSize || expected.ExecutionID != actual.ExecutionID ||
+		expected.SourceDigest != actual.SourceDigest || expected.SubjectSHA != actual.SubjectSHA ||
+		expected.ObservedAuthorizationDigest != actual.ObservedAuthorizationDigest ||
+		expected.ExpectedAuthorizationDigest != actual.ExpectedAuthorizationDigest || expected.EffectDigest != actual.EffectDigest {
+		return fmt.Errorf("ARTIFACT_OBSERVATION/compare/ARTIFACT_PROVENANCE_MISMATCH")
+	}
+	return nil
+}
+
+// DecodeArtifactSemanticProjection rejects unknown fields and trailing JSON so
+// an expected projection cannot silently carry an unreviewed authority field.
+func DecodeArtifactSemanticProjection(raw []byte) (ArtifactSemanticProjection, error) {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	var projection ArtifactSemanticProjection
+	if err := decoder.Decode(&projection); err != nil {
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/parse/EXPECTED_PROJECTION_JSON_INVALID: %w", err)
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/parse/EXPECTED_PROJECTION_TRAILING_JSON")
+		}
+		return ArtifactSemanticProjection{}, fmt.Errorf("ARTIFACT_SEMANTIC_PROJECTION/parse/EXPECTED_PROJECTION_TRAILING_JSON: %w", err)
+	}
+	return projection, nil
+}
+
+const closureReceiptSchema = "gooo/invariant-transformation-closure-receipt/v1"
+
+type ArtifactClosureEvidence struct {
+	Path                        string `json:"path"`
+	RawDigest                   string `json:"raw_digest"`
+	RawSize                     int    `json:"raw_size"`
+	ExecutionID                 string `json:"execution_id"`
+	SourceDigest                string `json:"source_digest"`
+	SubjectSHA                  string `json:"subject_sha"`
+	ObservedAuthorizationDigest string `json:"observed_authorization_digest"`
+	ExpectedAuthorizationDigest string `json:"expected_authorization_digest"`
+	EffectDigest                string `json:"effect_digest"`
+	SemanticDigest              string `json:"semantic_digest"`
+	CanonicalSemanticBytes      string `json:"canonical_semantic_bytes"`
+}
+
+// ClosureReceipt is the final, independently reconstructed gate. A bound
+// report remains preliminary until this receipt binds both actual artifact
+// observations and both negative tamper observations.
+type ClosureReceipt struct {
+	Schema                                 string                  `json:"schema"`
+	HeadSHA                                string                  `json:"head_sha"`
+	PreliminaryDecision                    string                  `json:"preliminary_decision"`
+	PreliminaryResolution                  string                  `json:"preliminary_resolution"`
+	PreliminaryReason                      string                  `json:"preliminary_reason"`
+	PreliminaryDecisionScope               string                  `json:"preliminary_decision_scope"`
+	FirstReportDigest                      string                  `json:"first_report_digest"`
+	SecondReportDigest                     string                  `json:"second_report_digest"`
+	FirstArtifact                          ArtifactClosureEvidence `json:"first_artifact"`
+	SecondArtifact                         ArtifactClosureEvidence `json:"second_artifact"`
+	ArtifactBytesObserved                  int                     `json:"artifact_bytes_observed"`
+	ExpectedArtifactBytes                  int                     `json:"expected_artifact_bytes"`
+	RawProvenanceBindings                  int                     `json:"raw_provenance_bindings"`
+	ExpectedRawProvenanceBindings          int                     `json:"expected_raw_provenance_bindings"`
+	AuthorizationBindings                  int                     `json:"authorization_bindings"`
+	ExpectedAuthorizationBindings          int                     `json:"expected_authorization_bindings"`
+	SemanticEqualityObserved               int                     `json:"semantic_equality_observed"`
+	ExpectedSemanticEquality               int                     `json:"expected_semantic_equality"`
+	OutputSemanticTamperRejected           int                     `json:"output_semantic_tamper_rejected"`
+	ExpectedOutputSemanticTamperRejections int                     `json:"expected_output_semantic_tamper_rejections"`
+	AuthorizationTamperRejected            int                     `json:"authorization_tamper_rejected"`
+	ExpectedAuthorizationTamperRejections  int                     `json:"expected_authorization_tamper_rejections"`
+	FinalClosureGateObserved               int                     `json:"final_closure_gate_observed"`
+	ExpectedFinalClosureGate               int                     `json:"expected_final_closure_gate"`
+	Decision                               string                  `json:"decision"`
+	Resolution                             string                  `json:"resolution"`
+	Reason                                 string                  `json:"reason"`
+	Digest                                 string                  `json:"digest"`
+}
+
+// Close reconstructs both reports and both artifact projections from the
+// source boundary, then verifies the supplied projection files and negative
+// artifact cases. The final PASS is produced only here.
+func Close(firstReport, secondReport model.Report, firstExpected, secondExpected ArtifactSemanticProjection, source []byte, headSHA, outputTamperPath, authorizationTamperPath string) (ClosureReceipt, error) {
+	if !model.ValidHead(headSHA) || firstReport.DecisionScope != model.PreliminaryDecisionScope || secondReport.DecisionScope != model.PreliminaryDecisionScope {
+		return ClosureReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/bind-reports/PRELIMINARY_SCOPE_INVALID")
+	}
+	firstActual, err := ArtifactProjection(firstReport, source, headSHA)
+	if err != nil {
+		return ClosureReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/reconstruct-first/%w", err)
+	}
+	secondActual, err := ArtifactProjection(secondReport, source, headSHA)
+	if err != nil {
+		return ClosureReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/reconstruct-second/%w", err)
+	}
+	if err := ValidateArtifactProjectionBinding(firstExpected, firstActual); err != nil {
+		return ClosureReceipt{}, err
+	}
+	if err := ValidateArtifactProjectionBinding(secondExpected, secondActual); err != nil {
+		return ClosureReceipt{}, err
+	}
+	if err := CompareArtifactSemanticProjection(firstActual, secondActual); err != nil {
+		return ClosureReceipt{}, fmt.Errorf("ARTIFACT_CLOSURE/compare-semantic/SEMANTIC_REPLAY_MISMATCH")
+	}
+	if err := rejectOutputSemanticTamper(firstActual, outputTamperPath, headSHA); err != nil {
+		return ClosureReceipt{}, err
+	}
+	if err := rejectAuthorizationTamper(firstActual, authorizationTamperPath, headSHA); err != nil {
+		return ClosureReceipt{}, err
+	}
+	closure := ClosureReceipt{
+		Schema: closureReceiptSchema, HeadSHA: headSHA,
+		PreliminaryDecision: firstReport.Decision, PreliminaryResolution: firstReport.Resolution, PreliminaryReason: firstReport.Reason, PreliminaryDecisionScope: firstReport.DecisionScope,
+		FirstReportDigest: firstReport.Digest, SecondReportDigest: secondReport.Digest,
+		FirstArtifact: artifactClosureEvidence(firstActual), SecondArtifact: artifactClosureEvidence(secondActual),
+		ArtifactBytesObserved: 2, ExpectedArtifactBytes: 2, RawProvenanceBindings: 2, ExpectedRawProvenanceBindings: 2,
+		AuthorizationBindings: 2, ExpectedAuthorizationBindings: 2, SemanticEqualityObserved: 1, ExpectedSemanticEquality: 1,
+		OutputSemanticTamperRejected: 1, ExpectedOutputSemanticTamperRejections: 1, AuthorizationTamperRejected: 1, ExpectedAuthorizationTamperRejections: 1,
+		FinalClosureGateObserved: 1, ExpectedFinalClosureGate: 1,
+		Decision: model.DecisionPass, Resolution: model.ResolutionExact, Reason: "ARTIFACT_CLOSURE_AND_TAMPER_REGRESSIONS_SATISFIED",
+	}
+	closure.Digest = model.Digest(closure)
+	return closure, nil
+}
+
+func artifactClosureEvidence(projection ArtifactSemanticProjection) ArtifactClosureEvidence {
+	return ArtifactClosureEvidence{
+		Path: projection.Path, RawDigest: projection.RawDigest, RawSize: projection.RawSize, ExecutionID: projection.ExecutionID,
+		SourceDigest: projection.SourceDigest, SubjectSHA: projection.SubjectSHA,
+		ObservedAuthorizationDigest: projection.ObservedAuthorizationDigest, ExpectedAuthorizationDigest: projection.ExpectedAuthorizationDigest,
+		EffectDigest: projection.EffectDigest, SemanticDigest: projection.SemanticDigest, CanonicalSemanticBytes: projection.CanonicalSemanticBytes,
+	}
+}
+
+func rejectOutputSemanticTamper(expected ArtifactSemanticProjection, path, headSHA string) error {
+	tampered, err := ProjectArtifactFile(path, headSHA)
+	if err != nil {
+		return fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/OUTPUT_TAMPER_NOT_OBSERVABLE: %w", err)
+	}
+	if tampered.Semantic.CaseID != expected.Semantic.CaseID || tampered.Semantic.Input != expected.Semantic.Input ||
+		tampered.Semantic.Operation != expected.Semantic.Operation || tampered.Semantic.SemanticSourceDigest != expected.Semantic.SemanticSourceDigest ||
+		tampered.Semantic.Output == expected.Semantic.Output {
+		return fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/OUTPUT_SEMANTIC_FIELD_NOT_CHANGED")
+	}
+	if CompareArtifactSemanticProjection(expected, tampered) == nil {
+		return fmt.Errorf("ARTIFACT_CLOSURE/output-tamper/OUTPUT_SEMANTIC_TAMPER_ACCEPTED")
+	}
+	return nil
+}
+
+func rejectAuthorizationTamper(expected ArtifactSemanticProjection, path, headSHA string) error {
+	tampered, err := ProjectArtifactFile(path, headSHA)
+	if err != nil {
+		return fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/AUTHORIZATION_TAMPER_NOT_OBSERVABLE: %w", err)
+	}
+	if err := CompareArtifactSemanticProjection(expected, tampered); err != nil {
+		return fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/AUTHORIZATION_TAMPER_CHANGED_SEMANTICS")
+	}
+	if tampered.ObservedAuthorizationDigest == expected.ObservedAuthorizationDigest || tampered.RawDigest == expected.RawDigest {
+		return fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/AUTHORIZATION_FIELD_NOT_CHANGED")
+	}
+	if CompareArtifactProvenance(expected, tampered) == nil {
+		return fmt.Errorf("ARTIFACT_CLOSURE/authorization-tamper/AUTHORIZATION_TAMPER_ACCEPTED")
 	}
 	return nil
 }

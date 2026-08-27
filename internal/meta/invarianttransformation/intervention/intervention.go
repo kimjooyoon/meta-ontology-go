@@ -134,6 +134,12 @@ type Case struct {
 	MutatedProjectionDigest                   string                       `json:"mutated_projection_digest"`
 	BaselineSourceDigest                      string                       `json:"baseline_source_digest"`
 	MutatedSourceDigest                       string                       `json:"mutated_source_digest"`
+	BaselineProvenanceDigest                  string                       `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest                   string                       `json:"mutated_provenance_digest"`
+	ProvenanceDigestChanged                   bool                         `json:"provenance_digest_changed"`
+	BaselineSemanticDigest                    string                       `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest                     string                       `json:"mutated_semantic_digest"`
+	SemanticDigestEqual                       bool                         `json:"semantic_digest_equal"`
 	BaselineReceiptDigest                     string                       `json:"baseline_receipt_digest"`
 	MutatedReceiptDigest                      string                       `json:"mutated_receipt_digest"`
 	BaselineReceiptDecision                   string                       `json:"baseline_receipt_decision"`
@@ -325,6 +331,8 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 	baselineTransitions, mutatedTransitions := transitions(baselineReceipt), transitions(mutatedReceipt)
 	item := Case{ID: id, Kind: kind, SourceEdit: edit, BaselineProjection: baselineProjection, MutatedProjection: mutatedProjection,
 		BaselineProjectionDigest: model.Digest(baselineProjection), MutatedProjectionDigest: model.Digest(mutatedProjection), BaselineSourceDigest: baselineReceipt.SourceDigest, MutatedSourceDigest: mutatedReceipt.SourceDigest,
+		BaselineProvenanceDigest: provenanceDigest(baselineReceipt.SourceDigest, headSHA, id), MutatedProvenanceDigest: provenanceDigest(mutatedReceipt.SourceDigest, headSHA, id), ProvenanceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest,
+		BaselineSemanticDigest: baselineProjection.SemanticSourceDigest, MutatedSemanticDigest: mutatedProjection.SemanticSourceDigest, SemanticDigestEqual: baselineProjection.SemanticSourceDigest == mutatedProjection.SemanticSourceDigest,
 		BaselineReceiptDigest: baselineReceipt.Digest, MutatedReceiptDigest: mutatedReceipt.Digest, BaselineReceiptDecision: baselineReceipt.Decision, MutatedReceiptDecision: mutatedReceipt.Decision,
 		BaselineJudgment: baselineJudgment, MutatedJudgment: mutatedJudgment, BaselineClaimTransitions: baselineTransitions, MutatedClaimTransitions: mutatedTransitions,
 		RawSourceDigestChanged: baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest, ReceiptChanged: baselineReceipt.Digest != mutatedReceipt.Digest,
@@ -366,12 +374,16 @@ func adjudicate(kind string, item Case, observable bool, satisfiedReason string)
 func observationSatisfied(kind string, item Case) bool {
 	switch kind {
 	case "SEMANTIC_EXPECTED", "SEMANTIC_OPERATION":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
+		return item.RawSourceDigestChanged && item.ReceiptChanged && !item.SemanticDigestEqual && !item.SemanticProjectionEqual && !item.DecisionEqual && !item.ResolutionEqual && !item.ReasonEqual && !item.ClaimTransitionsEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionRefuted && item.MutatedJudgment.Reason == "SEMANTIC_POSTCONDITION_REFUTED"
 	case "NON_SEMANTIC":
-		return item.RawSourceDigestChanged && item.ReceiptChanged && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
+		return item.RawSourceDigestChanged && item.ProvenanceDigestChanged && item.ReceiptChanged && item.SemanticDigestEqual && item.SemanticProjectionEqual && item.DecisionEqual && item.ResolutionEqual && item.ReasonEqual && item.ClaimTransitionsEqual && item.EffectsEqual && item.ReplayObservationEqual && item.RepositoryWritesNotClaimed && item.BaselineJudgment.Decision == model.DecisionAllowed && item.MutatedJudgment.Decision == model.DecisionAllowed
 	default:
 		return false
 	}
+}
+
+func provenanceDigest(sourceDigest, headSHA, caseID string) string {
+	return model.Digest([]string{"invariant-transformation-source-provenance", sourceDigest, headSHA, caseID})
 }
 
 func replayEqual(left, right model.TransformationEvidence) bool {

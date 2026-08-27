@@ -47,6 +47,7 @@ const (
 	RepositoryNetStateUnknown          = RepositoryNetContentStateUnknown
 	ExecutorID                         = "invarianttransformation.post-judgment-executor"
 	RepositorySnapshotSchema           = "gooo/invariant-transformation-repository-snapshot/v1"
+	PreliminaryDecisionScope           = "PRELIMINARY_BOUNDED_WITNESS_PENDING_ARTIFACT_CLOSURE"
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -370,6 +371,7 @@ type Report struct {
 	Schema                  string                `json:"schema"`
 	HeadSHA                 string                `json:"head_sha"`
 	ExecutionID             string                `json:"execution_id"`
+	DecisionScope           string                `json:"decision_scope"`
 	SourcePath              string                `json:"source_path"`
 	SourceDigest            string                `json:"source_digest"`
 	SemanticSourceDigest    string                `json:"semantic_source_digest"`

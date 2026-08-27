@@ -2157,6 +2157,7 @@ jobs:
             cmd/invariant-transformation-repository-snapshot/main.go \
             cmd/invariant-transformation-report-consumer/main.go \
             cmd/invariant-transformation-artifact-semantic-consumer/main.go \
+            cmd/invariant-transformation-closure-consumer/main.go \
             cmd/invariant-transformation-intervention-witness/main.go \
             cmd/invariant-transformation-intervention-consumer-witness/main.go \
             internal/meta/invarianttransformation/model/model.go \
@@ -2244,9 +2245,12 @@ jobs:
               .schema == "gooo/invariant-transformation-artifact-semantic-projection/v1" and
               .head_sha == $head_sha and .execution_id == $execution and
               (.path | length) > 0 and (.raw_digest | startswith("sha256:")) and .raw_size > 0 and
-              (.authorization_digest | startswith("sha256:")) and (.effect_digest | startswith("sha256:")) and
-              .semantic.case_id == .case_id and .semantic.subject_sha == $head_sha and
-              (.semantic.source_digest | startswith("sha256:")) and
+              (.observed_authorization_digest | startswith("sha256:")) and
+              (.expected_authorization_digest | startswith("sha256:")) and
+              .observed_authorization_digest == .expected_authorization_digest and
+              (.effect_digest | startswith("sha256:")) and
+              .semantic.case_id == .case_id and .subject_sha == $head_sha and
+              (.source_digest | startswith("sha256:")) and
               (.semantic.semantic_source_digest | startswith("sha256:")) and
               (.canonical_semantic_bytes | length) > 0 and
               (.semantic_digest | startswith("sha256:"))
@@ -2309,12 +2313,16 @@ jobs:
               ) |
               .artifact_semantic_projection = ($artifact[0] | {
                 schema, head_sha, case_id, semantic, canonical_semantic_bytes, semantic_digest,
+                provenance: {
+                  source_digest, subject_sha
+                },
                 dynamic_binding: {
                   path: "<normalized-temp-artifact-path>",
                   raw_digest: "<normalized-artifact-raw-digest>",
                   raw_size: "<normalized-artifact-raw-size>",
                   execution_id: "<normalized-head-bound-execution-id>",
-                  authorization_digest: "<normalized-authorization-digest>",
+                  observed_authorization_digest: "<normalized-authorization-digest>",
+                  expected_authorization_digest: "<normalized-authorization-digest>",
                   effect_digest: "<normalized-effect-digest>"
                 }
               })
@@ -2339,13 +2347,71 @@ jobs:
           if go run ./cmd/invariant-transformation-artifact-semantic-consumer \
             -artifact "$tampered_artifact" \
             -expected-projection "$base/artifact-semantic-projection.json" \
+            -report "$base/report.json" \
+            -source examples/invariant-transformation/main.gooo \
             -head-sha "$HEAD_SHA" > "$tamper/artifact-semantic-tamper.log" 2>&1; then
             cat "$tamper/artifact-semantic-tamper.log" >&2
             echo 'expected artifact semantic content tamper rejection' >&2
             exit 1
           fi
           grep -F 'ARTIFACT_SEMANTIC_PROJECTION/compare/ARTIFACT_SEMANTIC_MISMATCH' "$tamper/artifact-semantic-tamper.log"
-          echo 'artifact-content semantic tamper rejected: 1/1' >> "$GITHUB_STEP_SUMMARY"
+          auth_digest='sha256:1111111111111111111111111111111111111111111111111111111111111111'
+          authorization_tampered="$tamper/artifact-authorization-tamper.bin"
+          sed "s/^authorization=.*/authorization=$auth_digest/" "$artifact_path" > "$authorization_tampered"
+          grep -q "^authorization=$auth_digest$" "$authorization_tampered"
+          if go run ./cmd/invariant-transformation-artifact-semantic-consumer \
+            -artifact "$authorization_tampered" \
+            -expected-projection "$base/artifact-semantic-projection.json" \
+            -report "$base/report.json" \
+            -source examples/invariant-transformation/main.gooo \
+            -head-sha "$HEAD_SHA" > "$tamper/artifact-authorization-tamper.log" 2>&1; then
+            cat "$tamper/artifact-authorization-tamper.log" >&2
+            echo 'expected authorization tamper rejection' >&2
+            exit 1
+          fi
+          grep -F 'ARTIFACT_OBSERVATION/compare/ARTIFACT_PROVENANCE_MISMATCH' "$tamper/artifact-authorization-tamper.log"
+          echo 'artifact-content semantic tamper rejected: 1/1; authorization coherent tamper rejected: 1/1' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build final artifact closure receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/invariant-transformation"
+          tamper="$root/artifact-regressions"
+          go run ./cmd/invariant-transformation-closure-consumer \
+            -source examples/invariant-transformation/main.gooo \
+            -head-sha "$HEAD_SHA" \
+            -first-report "$root/first/report.json" \
+            -second-report "$root/second/report.json" \
+            -first-projection "$root/first/artifact-semantic-projection.json" \
+            -second-projection "$root/second/artifact-semantic-projection.json" \
+            -output-tamper "$tamper/artifact-semantic-output-tamper.bin" \
+            -authorization-tamper "$tamper/artifact-authorization-tamper.bin" \
+            -output "$root/final-closure.json"
+          jq -e --arg head_sha "$HEAD_SHA" '
+            .schema == "gooo/invariant-transformation-closure-receipt/v1" and
+            .head_sha == $head_sha and .decision == "PASS" and .resolution == "EXACT" and
+            .preliminary_decision_scope == "PRELIMINARY_BOUNDED_WITNESS_PENDING_ARTIFACT_CLOSURE" and
+            (.first_report_digest | startswith("sha256:")) and (.second_report_digest | startswith("sha256:")) and
+            .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
+            .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
+            .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
+            .semantic_equality_observed == 1 and .expected_semantic_equality == 1 and
+            .output_semantic_tamper_rejected == 1 and .expected_output_semantic_tamper_rejections == 1 and
+            .authorization_tamper_rejected == 1 and .expected_authorization_tamper_rejections == 1 and
+            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1 and
+            (.first_artifact.path | length) > 0 and (.first_artifact.raw_digest | startswith("sha256:")) and
+            (.first_artifact.source_digest | startswith("sha256:")) and (.first_artifact.subject_sha == $head_sha) and
+            (.first_artifact.observed_authorization_digest == .first_artifact.expected_authorization_digest) and
+            (.first_artifact.effect_digest | startswith("sha256:")) and (.first_artifact.semantic_digest | startswith("sha256:")) and
+            (.second_artifact.path | length) > 0 and (.second_artifact.raw_digest | startswith("sha256:")) and
+            (.second_artifact.source_digest | startswith("sha256:")) and (.second_artifact.subject_sha == $head_sha) and
+            (.second_artifact.observed_authorization_digest == .second_artifact.expected_authorization_digest) and
+            (.second_artifact.effect_digest | startswith("sha256:")) and (.second_artifact.semantic_digest | startswith("sha256:"))
+          ' "$root/final-closure.json"
+          test "$(jq -r '.first_report_digest' "$root/final-closure.json")" = "$(jq -r '.digest' "$root/first/report.json")"
+          test "$(jq -r '.second_report_digest' "$root/final-closure.json")" = "$(jq -r '.digest' "$root/second/report.json")"
+          echo 'final artifact closure gate: 1/1; artifact bytes observed: 2/2; raw provenance binding: 2/2; authorization binding: 2/2; semantic equality: 1/1; output semantic tamper rejection: 1/1; authorization tamper rejection: 1/1' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Reject forged repository observations
         shell: bash
@@ -2375,7 +2441,7 @@ jobs:
             go run ./cmd/invariant-transformation-report-consumer \
               -source "$source" -head-sha "$HEAD_SHA" -report "$report" \
               -before "$forged_summary" -after "$base/repository-after/snapshot.json" \
-              -output "$tamper/forged-summary-report.json"
+              -output "$tamper/forged-summary-report.json" -artifact-projection "$tamper/forged-summary-projection.json"
 
           raw_tamper="$tamper/raw-tamper-entries.json"
           jq --arg digest "$fake_digest" '.[0].digest = $digest' "$base/repository-before/entries.json" > "$raw_tamper"
@@ -2385,7 +2451,7 @@ jobs:
             go run ./cmd/invariant-transformation-report-consumer \
               -source "$source" -head-sha "$HEAD_SHA" -report "$report" \
               -before "$raw_tamper_snapshot" -after "$base/repository-after/snapshot.json" \
-              -output "$tamper/raw-tamper-report.json"
+              -output "$tamper/raw-tamper-report.json" -artifact-projection "$tamper/raw-tamper-projection.json"
 
           content_tamper_snapshot="$tamper/content-tamper-snapshot.json"
           content_tamper_digest="$(sha256sum "$raw_tamper" | awk '{print "sha256:"$1}')"
@@ -2394,14 +2460,14 @@ jobs:
             go run ./cmd/invariant-transformation-report-consumer \
               -source "$source" -head-sha "$HEAD_SHA" -report "$report" \
               -before "$content_tamper_snapshot" -after "$base/repository-after/snapshot.json" \
-              -output "$tamper/content-tamper-report.json"
+              -output "$tamper/content-tamper-report.json" -artifact-projection "$tamper/content-tamper-projection.json"
 
           expect_reject 'REPOSITORY_BINDING/compare-execution-id/EXECUTION_ID_MISMATCH' "$tamper/cross-run.log" \
             go run ./cmd/invariant-transformation-report-consumer \
               -source "$source" -head-sha "$HEAD_SHA" -report "$report" \
               -before "$RUNNER_TEMP/invariant-transformation/second/repository-before/snapshot.json" \
               -after "$RUNNER_TEMP/invariant-transformation/second/repository-after/snapshot.json" \
-              -output "$tamper/cross-run-report.json"
+              -output "$tamper/cross-run-report.json" -artifact-projection "$tamper/cross-run-projection.json"
 
           echo 'repository observation regressions: forged-summary=1/1 raw-entry-tamper=1/1 content-only=1/1 cross-run-binding=1/1' >> "$GITHUB_STEP_SUMMARY"
 
@@ -2539,7 +2605,9 @@ jobs:
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .claim_transitions_equal] | all | not) and
             ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_provenance_digest != .mutated_provenance_digest and .provenance_digest_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .receipt_changed] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_semantic_digest == .mutated_semantic_digest and .semantic_digest_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .semantic_projection_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .decision_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and
@@ -2599,6 +2667,7 @@ jobs:
             jq -r '"- semantic expected change: \(.denominator.semantic_expected_change.cases_satisfied)/\(.denominator.semantic_expected_change.cases_total) (\(.denominator.semantic_expected_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- semantic operation change: \(.denominator.semantic_operation_change.cases_satisfied)/\(.denominator.semantic_operation_change.cases_total) (\(.denominator.semantic_operation_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- non-semantic change: \(.denominator.nonsemantic_change.cases_satisfied)/\(.denominator.nonsemantic_change.cases_total) (\(.denominator.nonsemantic_change.coverage_bps) BPS)"' "$output/first/report.json"
+            echo '- comment-only raw/provenance digest change with semantic digest/decision preservation: 1/1'
             jq -r '"- dependency boundary: judge=\(.forbidden_imports)/\(.allowed_forbidden_imports), intervention=\(.producer_dependency_imports)/\(.allowed_producer_dependency_imports), report-consumer=\(.report_consumer_producer_imports)/\(.allowed_report_consumer_producer_imports)"' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
             jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), actual-replay=\(.actual_replay)/\(.expected_actual_replay), artifact-observed=\(.artifact_observed), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections), content-observation-tamper-rejected=\(.content_observation_coherent_tamper_rejected)/\(.expected_content_observation_coherent_tamper_rejections)"' "$output/consumer-verification.json"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -2608,9 +2677,20 @@ jobs:
         run: |
           set -euo pipefail
           test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
+          jq -e --arg head_sha "$HEAD_SHA" '
+            .schema == "gooo/invariant-transformation-closure-receipt/v1" and
+            .head_sha == $head_sha and .decision == "PASS" and .resolution == "EXACT" and
+            .artifact_bytes_observed == 2 and .expected_artifact_bytes == 2 and
+            .raw_provenance_bindings == 2 and .expected_raw_provenance_bindings == 2 and
+            .authorization_bindings == 2 and .expected_authorization_bindings == 2 and
+            .semantic_equality_observed == 1 and .expected_semantic_equality == 1 and
+            .output_semantic_tamper_rejected == 1 and .authorization_tamper_rejected == 1 and
+            .final_closure_gate_observed == 1 and .expected_final_closure_gate == 1
+          ' "$RUNNER_TEMP/invariant-transformation/final-closure.json"
           jq -e --arg execution "$HEAD_SHA::first" --arg head_sha "$HEAD_SHA" '
             .schema == "gooo/invariant-transformation-report/v2" and
             .execution_id == $execution and
+            .decision_scope == "PRELIMINARY_BOUNDED_WITNESS_PENDING_ARTIFACT_CLOSURE" and
             .decision == "PASS" and .resolution == "EXACT" and
             .denominator_id == "gooo/invariant-transformation-denominator/v2" and
             .denominator_total == 4 and

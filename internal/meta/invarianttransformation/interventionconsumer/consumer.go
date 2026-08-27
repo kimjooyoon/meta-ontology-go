@@ -122,6 +122,12 @@ type caseWire struct {
 	MutatedProjectionDigest                   string                       `json:"mutated_projection_digest"`
 	BaselineSourceDigest                      string                       `json:"baseline_source_digest"`
 	MutatedSourceDigest                       string                       `json:"mutated_source_digest"`
+	BaselineProvenanceDigest                  string                       `json:"baseline_provenance_digest"`
+	MutatedProvenanceDigest                   string                       `json:"mutated_provenance_digest"`
+	ProvenanceDigestChanged                   bool                         `json:"provenance_digest_changed"`
+	BaselineSemanticDigest                    string                       `json:"baseline_semantic_digest"`
+	MutatedSemanticDigest                     string                       `json:"mutated_semantic_digest"`
+	SemanticDigestEqual                       bool                         `json:"semantic_digest_equal"`
 	BaselineReceiptDigest                     string                       `json:"baseline_receipt_digest"`
 	MutatedReceiptDigest                      string                       `json:"mutated_receipt_digest"`
 	BaselineReceiptDecision                   string                       `json:"baseline_receipt_decision"`
@@ -302,7 +308,7 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 		mutatedReceipt := reconstructReceipt(mutatedFixture, mutated, headSHA)
 		baselineJudgment := reconstructJudgment(baselineReceipt)
 		mutatedJudgment := reconstructJudgment(mutatedReceipt)
-		if err := compareCase(item, baselineFixture, mutatedFixture, baselineReceipt, mutatedReceipt, baselineJudgment, mutatedJudgment, steps[item.ID]); err != nil {
+		if err := compareCase(item, baselineFixture, mutatedFixture, baselineReceipt, mutatedReceipt, baselineJudgment, mutatedJudgment, steps[item.ID], headSHA); err != nil {
 			return err
 		}
 	}
@@ -318,8 +324,8 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 	return nil
 }
 
-func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt, mutatedReceipt model.Receipt, baselineJudgment, mutatedJudgment model.Judgment, step [2]string) error {
-	if !reflect.DeepEqual(item.BaselineProjection, projection(baseline)) || !reflect.DeepEqual(item.MutatedProjection, projection(mutated)) || item.BaselineProjectionDigest != model.Digest(projection(baseline)) || item.MutatedProjectionDigest != model.Digest(projection(mutated)) || item.BaselineSourceDigest != baselineReceipt.SourceDigest || item.MutatedSourceDigest != mutatedReceipt.SourceDigest || item.BaselineReceiptDigest != baselineReceipt.Digest || item.MutatedReceiptDigest != mutatedReceipt.Digest || item.BaselineReceiptDecision != baselineReceipt.Decision || item.MutatedReceiptDecision != mutatedReceipt.Decision || !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence) || !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence) || !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment) || !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment) || !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)) || !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)) {
+func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt, mutatedReceipt model.Receipt, baselineJudgment, mutatedJudgment model.Judgment, step [2]string, headSHA string) error {
+	if !reflect.DeepEqual(item.BaselineProjection, projection(baseline)) || !reflect.DeepEqual(item.MutatedProjection, projection(mutated)) || item.BaselineProjectionDigest != model.Digest(projection(baseline)) || item.MutatedProjectionDigest != model.Digest(projection(mutated)) || item.BaselineSourceDigest != baselineReceipt.SourceDigest || item.MutatedSourceDigest != mutatedReceipt.SourceDigest || item.BaselineProvenanceDigest != provenanceDigest(baselineReceipt.SourceDigest, headSHA, item.ID) || item.MutatedProvenanceDigest != provenanceDigest(mutatedReceipt.SourceDigest, headSHA, item.ID) || item.ProvenanceDigestChanged != (baselineReceipt.SourceDigest != mutatedReceipt.SourceDigest) || item.BaselineSemanticDigest != baseline.SemanticSourceDigest || item.MutatedSemanticDigest != mutated.SemanticSourceDigest || item.SemanticDigestEqual != (baseline.SemanticSourceDigest == mutated.SemanticSourceDigest) || item.BaselineReceiptDigest != baselineReceipt.Digest || item.MutatedReceiptDigest != mutatedReceipt.Digest || item.BaselineReceiptDecision != baselineReceipt.Decision || item.MutatedReceiptDecision != mutatedReceipt.Decision || !reflect.DeepEqual(item.BaselineEvidence, baselineReceipt.Evidence) || !reflect.DeepEqual(item.MutatedEvidence, mutatedReceipt.Evidence) || !reflect.DeepEqual(item.BaselineJudgment, baselineJudgment) || !reflect.DeepEqual(item.MutatedJudgment, mutatedJudgment) || !reflect.DeepEqual(item.BaselineClaimTransitions, transitionWires(baselineReceipt.Claims)) || !reflect.DeepEqual(item.MutatedClaimTransitions, transitionWires(mutatedReceipt.Claims)) {
 		return fmt.Errorf("case %q is not independently reconstructed", item.ID)
 	}
 	if item.Claim.ID != item.ID+"::claim" || item.Claim.Status != model.StatusDischarged || len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != model.StatusDischarged || item.Claim.Coordinate.Stage != "INTERVENTION" || item.Claim.Coordinate.Step != step[0] || item.Claim.Coordinate.Reason != step[1] {
@@ -339,7 +345,7 @@ func compareCase(item caseWire, baseline, mutated sourceFixture, baselineReceipt
 	if item.Claim.VerificationCheck != "intervention-observation-derived-from-two-independent-receipts" || item.Claim.Resolution != model.ResolutionExact || item.Claim.Reason != step[1] || item.Claim.TargetDigest != expectedTransition.PropositionDigest || item.Claim.PriorStateDigest != expectedTransition.PriorStateDigest || item.Claim.EvidenceDigest != expectedTransition.EvidenceDigest || !reflect.DeepEqual(item.Claim.Transitions[0], transitionFromModel(expectedTransition)) {
 		return fmt.Errorf("case %q claim ledger provenance is invalid", item.ID)
 	}
-	if item.RawSourceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
+	if item.RawSourceDigestChanged != rawChanged || item.ProvenanceDigestChanged != rawChanged || item.ReceiptChanged != receiptChanged || item.SemanticProjectionEqual != semanticEqual || item.DecisionEqual != decisionEqual || item.ResolutionEqual != resolutionEqual || item.ReasonEqual != reasonEqual || item.DecisionChanged != !decisionEqual || item.ClaimTransitionsEqual != transitionEqual || item.EffectsEqual != true || item.ReplayObservationEqual != replayEqual || !item.EvidenceObservable || !item.RepositoryWritesNotClaimed || item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryNetStatusUnchanged || item.MutatedRepositoryNetStatusUnchanged || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || !item.Satisfied {
 		return fmt.Errorf("case %q observation fields are not derived", item.ID)
 	}
 	return nil
@@ -831,6 +837,11 @@ func transitionOutcomes(left, right []model.Claim) bool {
 func replayObservationEqual(left, right model.TransformationEvidence) bool {
 	return left.ReplayCount == right.ReplayCount && left.ReplayOperation == right.ReplayOperation && left.ReplayOutput == right.ReplayOutput && left.ReplayDigest == right.ReplayDigest && left.ReplaySemanticDigest == right.ReplaySemanticDigest && left.ReplayEvidenceDigest == right.ReplayEvidenceDigest
 }
+
+func provenanceDigest(sourceDigest, headSHA, caseID string) string {
+	return model.Digest([]string{"invariant-transformation-source-provenance", sourceDigest, headSHA, caseID})
+}
+
 func transitionWires(claims []model.Claim) []transitionWire {
 	result := []transitionWire{}
 	for _, claim := range claims {

@@ -45,7 +45,7 @@ func ValidateReport(report model.Report, source []byte) error {
 	if err != nil {
 		return err
 	}
-	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || !model.ValidExecutionID(report.HeadSHA, report.ExecutionID) || report.SourcePath != model.SourcePath ||
+	if report.Schema != model.ReportSchema || report.DecisionScope != model.PreliminaryDecisionScope || !model.ValidHead(report.HeadSHA) || !model.ValidExecutionID(report.HeadSHA, report.ExecutionID) || report.SourcePath != model.SourcePath ||
 		report.SourceDigest != model.DigestBytes(source) || report.SemanticSourceDigest != semanticDigest || report.ContractDigest != model.ValueContractDigest() ||
 		report.ValidatorContractDigest != model.ValidatorContractDigest() || report.DenominatorID != model.DenominatorID || report.DenominatorTotal != len(report.Cases) ||
 		report.Digest == "" || report.Digest != model.SealReport(report).Digest {

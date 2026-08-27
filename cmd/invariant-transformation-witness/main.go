@@ -83,7 +83,7 @@ func buildReport(source []byte, headSHA, executionID string) (model.Report, erro
 	report := model.Report{Schema: model.ReportSchema, HeadSHA: headSHA, ExecutionID: executionID, SourcePath: model.SourcePath,
 		SourceDigest: model.DigestBytes(source), SemanticSourceDigest: semanticDigest, ContractDigest: model.ValueContractDigest(),
 		ValidatorContractDigest: model.ValidatorContractDigest(), DenominatorID: model.DenominatorID, DenominatorTotal: len(sourceCases),
-		Decision: model.DecisionPass, Resolution: model.ResolutionExact, Reason: "ALL_BOUNDED_CASES_SATISFIED",
+		DecisionScope: model.PreliminaryDecisionScope, Decision: model.DecisionPass, Resolution: model.ResolutionExact, Reason: "ALL_BOUNDED_CASES_SATISFIED",
 		NotClaimed: []string{"arbitrary transformation authorization", "general invariant preservation outside bounded-fixture-input-domain-v1", "repository promotion authority"}}
 	for _, sourceCase := range sourceCases {
 		expectation, ok := model.ValidatorExpectationFor(contract, sourceCase.CaseID)
