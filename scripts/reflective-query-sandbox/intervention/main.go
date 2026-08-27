@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
-	"github.com/kimjooyoon/meta-ontology-go/internal/query"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -19,27 +18,46 @@ import (
 const sourcePath = "examples/reflective-query-sandbox/main.gooo"
 
 type probe struct {
-	RawDigest      string `json:"raw_digest"`
-	SemanticDigest string `json:"semantic_digest"`
-	GraphDigest    string `json:"graph_digest"`
-	Decision       string `json:"decision"`
-	Resolution     string `json:"resolution"`
-	Reason         string `json:"reason"`
-	ClaimID        string `json:"claim_id"`
-	ClaimState     string `json:"claim_state"`
+	RawDigest                string `json:"raw_digest"`
+	SemanticDigest           string `json:"semantic_digest"`
+	GraphDigest              string `json:"graph_digest"`
+	MutationField            string `json:"mutation_field"`
+	MutationPayload          string `json:"mutation_payload"`
+	MutationDecision         string `json:"mutation_decision"`
+	MutationResolution       string `json:"mutation_resolution"`
+	MutationReason           string `json:"mutation_reason"`
+	MutationAPIOutcome       string `json:"mutation_api_outcome"`
+	MutationAuthority        bool   `json:"mutation_authority"`
+	GraphDigestBefore        string `json:"graph_digest_before"`
+	OriginalGraphDigestAfter string `json:"original_graph_digest_after"`
+	ReturnedGraphDigest      string `json:"returned_graph_digest,omitempty"`
+	ClaimID                  string `json:"claim_id"`
+	ClaimState               string `json:"claim_state"`
 }
 
 type interventionEvidence struct {
-	RawDigestChanged      bool   `json:"raw_digest_changed"`
-	SemanticDigestChanged bool   `json:"semantic_digest_changed"`
-	GraphDigestChanged    bool   `json:"graph_digest_changed"`
-	QueryDecisionBefore   string `json:"query_decision_before"`
-	QueryDecisionAfter    string `json:"query_decision_after"`
-	QueryResolutionBefore string `json:"query_resolution_before"`
-	QueryResolutionAfter  string `json:"query_resolution_after"`
-	ClaimID               string `json:"claim_id"`
-	ClaimStateBefore      string `json:"claim_state_before"`
-	ClaimStateAfter       string `json:"claim_state_after"`
+	RawDigestChanged          bool   `json:"raw_digest_changed"`
+	SemanticDigestChanged     bool   `json:"semantic_digest_changed"`
+	GraphDigestChanged        bool   `json:"graph_digest_changed"`
+	MutationFieldBefore       string `json:"mutation_field_before"`
+	MutationFieldAfter        string `json:"mutation_field_after"`
+	MutationPayloadBefore     string `json:"mutation_payload_before"`
+	MutationPayloadAfter      string `json:"mutation_payload_after"`
+	MutationDecisionBefore    string `json:"mutation_decision_before"`
+	MutationDecisionAfter     string `json:"mutation_decision_after"`
+	MutationResolutionBefore  string `json:"mutation_resolution_before"`
+	MutationResolutionAfter   string `json:"mutation_resolution_after"`
+	MutationAPIOutcomeBefore  string `json:"mutation_api_outcome_before"`
+	MutationAPIOutcomeAfter   string `json:"mutation_api_outcome_after"`
+	MutationAuthorityBefore   bool   `json:"mutation_authority_before"`
+	MutationAuthorityAfter    bool   `json:"mutation_authority_after"`
+	GraphDigestBefore         string `json:"graph_digest_before"`
+	OriginalGraphDigestAfter  string `json:"original_graph_digest_after"`
+	ReturnedGraphDigestBefore string `json:"returned_graph_digest_before,omitempty"`
+	ReturnedGraphDigestAfter  string `json:"returned_graph_digest_after,omitempty"`
+	ClaimID                   string `json:"claim_id"`
+	ClaimStateBefore          string `json:"claim_state_before"`
+	ClaimStateAfter           string `json:"claim_state_after"`
 }
 
 type report struct {
@@ -64,9 +82,10 @@ func main() {
 	if err != nil {
 		fail("probe base source: %v", err)
 	}
-	semanticRaw := strings.Replace(string(raw), "activity ReflectMetrics(QuerySubject, MetricReadRelation", "activity ReflectMetrics(QuerySubject, ClaimPriorOpen", 1)
+	semanticRaw := strings.Replace(string(raw), "gooo://reflective-query-sandbox/mutation/field/id", "gooo://reflective-query-sandbox/mutation/field/name", 1)
+	semanticRaw = strings.Replace(semanticRaw, "gooo://reflective-query-sandbox/mutation/payload/identity-preserving", "gooo://reflective-query-sandbox/mutation/payload/intervened-name", 1)
 	if semanticRaw == string(raw) {
-		fail("semantic intervention did not change a declared relation")
+		fail("semantic intervention did not change mutation contract")
 	}
 	semanticProbe, err := probeSource(semanticRaw)
 	if err != nil {
@@ -76,12 +95,7 @@ func main() {
 	if err != nil {
 		fail("probe nonsemantic intervention: %v", err)
 	}
-	result := report{
-		Schema:                  schema,
-		Base:                    base,
-		SemanticIntervention:    compare(base, semanticProbe),
-		NonsemanticIntervention: compare(base, nonsemanticProbe),
-	}
+	result := report{Schema: "gooo/reflective-query-sandbox-intervention/v2", Base: base, SemanticIntervention: compare(base, semanticProbe), NonsemanticIntervention: compare(base, nonsemanticProbe)}
 	data, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		fail("encode evidence: %v", err)
@@ -89,10 +103,8 @@ func main() {
 	if err := os.WriteFile(*output, append(data, '\n'), 0o644); err != nil {
 		fail("write evidence: %v", err)
 	}
-	fmt.Printf("intervention evidence: semantic query %s -> %s; nonsemantic semantic-digest-preserved=%t\n", base.Decision, semanticProbe.Decision, base.SemanticDigest == nonsemanticProbe.SemanticDigest)
+	fmt.Printf("intervention evidence: mutation %s/%s -> %s/%s; semantic authority=%t; nonsemantic semantic-digest-preserved=%t\n", base.MutationDecision, base.MutationAPIOutcome, semanticProbe.MutationDecision, semanticProbe.MutationAPIOutcome, semanticProbe.MutationAuthority, base.SemanticDigest == nonsemanticProbe.SemanticDigest)
 }
-
-const schema = "gooo/reflective-query-sandbox-intervention/v1"
 
 func probeSource(raw string) (probe, error) {
 	file, diagnostics := syntax.ParseFile(sourcePath, raw)
@@ -103,57 +115,78 @@ func probeSource(raw string) (probe, error) {
 	if err != nil {
 		return probe{}, err
 	}
-	graph, err := query.FromSemanticIR(ir)
-	if err != nil {
-		return probe{}, err
-	}
-	var activity, target semantic.ID
+	var activity, target, fieldNode, payloadNode, intentNode, localityNode semantic.ID
 	for _, node := range ir.Graph.Nodes() {
-		if node.Kind == semantic.Activity && node.ValueProgram == "reflect.query:metrics" {
+		id := node.ID.String()
+		if node.Kind == semantic.Activity && node.ValueProgram == "reflect.attempt:mutation" {
 			activity = node.ID
 		}
-		if node.Kind == semantic.Entity && strings.Contains(node.ID.String(), "/metric/relation") {
+		if node.Kind == semantic.Entity && strings.Contains(id, "/mutation/request") {
 			target = node.ID
 		}
+		if node.Kind == semantic.Entity && strings.Contains(id, "/mutation/field/") {
+			fieldNode = node.ID
+		}
+		if node.Kind == semantic.Entity && strings.Contains(id, "/mutation/payload/") {
+			payloadNode = node.ID
+		}
+		if node.Kind == semantic.Entity && strings.Contains(id, "/mutation/intent/") {
+			intentNode = node.ID
+		}
+		if node.Kind == semantic.Entity && strings.Contains(id, "/mutation/locality/") {
+			localityNode = node.ID
+		}
 	}
-	if activity == "" || target == "" {
-		return probe{}, errors.New("metrics activity or metric relation is missing")
+	if activity == "" || target == "" || fieldNode == "" || payloadNode == "" || intentNode == "" || localityNode == "" {
+		return probe{}, errors.New("mutation activity or source-declared contract is missing")
 	}
-	result, err := graph.ExactMatch(query.NewExactQuery(query.ID(activity.String()), query.Used, query.ID(target.String())))
-	decision, resolution, reason := "UNKNOWN", "LOWER_RESOLUTION", "RELATION_NOT_OBSERVED"
-	if err != nil {
-		if errors.Is(err, query.ErrUnknownEndpoint) {
-			reason = "UNKNOWN_TARGET"
+	node, ok := ir.Graph.Node(target)
+	if !ok {
+		return probe{}, errors.New("mutation target is missing")
+	}
+	field, payload, intent, locality := tail(fieldNode), tail(payloadNode), tail(intentNode), tail(localityNode)
+	before := ir.Graph.StableHash()
+	fieldHash := ""
+	if field != "id" {
+		fieldHash, err = semantic.NodeFieldHash(node, field)
+		if err != nil {
+			return probe{}, err
+		}
+	}
+	request := semantic.GraphPatchRequest{SchemaVersion: semantic.GraphPatchSchemaVersion, Operation: semantic.GraphPatchSetNodeField, ExpectedGraphHash: before, NodeID: node.ID, ExpectedNodeHash: node.StableHash(), Field: field, ExpectedFieldHash: fieldHash, ExpectedSourceDigest: ir.StableHash(), ExpectedIRDigest: ir.StableHash(), AllowedIntent: intent, Locality: locality}
+	patched, callErr := ir.Graph.ApplyGraphPatch(semantic.GraphPatchBase{SourceDigest: ir.StableHash(), IRDigest: ir.StableHash()}, request, semantic.GraphPatchMutation{Name: payload})
+	originalAfter := ir.Graph.StableHash()
+	returned := ""
+	decision, resolution, reason, outcome := "", "", "", ""
+	authority := false
+	if callErr != nil {
+		var conflict semantic.GraphPatchConflict
+		if errors.As(callErr, &conflict) && conflict.Code == semantic.PatchImmutableField && conflict.Detail == field && originalAfter == before {
+			decision, resolution, reason, outcome = "DENIED", "EXACT_REJECTION", "IMMUTABLE_FIELD_REJECTED", "REJECTED"
 		} else {
-			decision, reason = "REFUTED", "QUERY_API_REJECTED"
+			decision, resolution, reason, outcome = "UNKNOWN", "LOWER_RESOLUTION", "MUTATION_API_ERROR", "ERROR"
 		}
-	} else if len(result.All()) == 1 {
-		decision, resolution, reason = "PASS", "EXACT", "EXACT_RELATION_MATCH"
+	} else {
+		returned = patched.StableHash()
+		decision, resolution, reason, outcome, authority = "REFUTED", "EXACT", "MUTATION_CAPABILITY_ACCEPTED", "ACCEPTED", true
 	}
-	claimID, claimState := "", ""
-	for _, node := range ir.Graph.Nodes() {
-		marker := "/claim/"
-		index := strings.Index(node.ID.String(), marker)
-		if node.Kind != semantic.Entity || index < 0 {
-			continue
-		}
-		parts := strings.Split(node.ID.String()[index+len(marker):], "/")
-		if len(parts) == 6 && parts[4] == "reflect.metrics" {
-			claimID, claimState = strings.ToLower(parts[0])+"."+parts[1], "OPEN"
-			if decision == "PASS" {
-				claimState = "DISCHARGED"
-			}
-		}
+	state := "OPEN"
+	if decision == "DENIED" && resolution == "EXACT_REJECTION" {
+		state = "DISCHARGED"
 	}
+	if decision == "REFUTED" {
+		state = "REFUTED"
+	}
+	claimID := "outcome.mutation-denied"
 	sum := sha256.Sum256([]byte(raw))
-	return probe{RawDigest: hex.EncodeToString(sum[:]), SemanticDigest: ir.StableHash(), GraphDigest: graph.StableHash(), Decision: decision, Resolution: resolution, Reason: reason, ClaimID: claimID, ClaimState: claimState}, nil
+	return probe{RawDigest: hex.EncodeToString(sum[:]), SemanticDigest: ir.StableHash(), GraphDigest: before, MutationField: field, MutationPayload: payload, MutationDecision: decision, MutationResolution: resolution, MutationReason: reason, MutationAPIOutcome: outcome, MutationAuthority: authority, GraphDigestBefore: before, OriginalGraphDigestAfter: originalAfter, ReturnedGraphDigest: returned, ClaimID: claimID, ClaimState: state}, nil
 }
 
+func tail(id semantic.ID) string {
+	parts := strings.Split(strings.TrimSuffix(id.String(), "/"), "/")
+	return parts[len(parts)-1]
+}
 func compare(base, changed probe) interventionEvidence {
-	return interventionEvidence{RawDigestChanged: base.RawDigest != changed.RawDigest, SemanticDigestChanged: base.SemanticDigest != changed.SemanticDigest, GraphDigestChanged: base.GraphDigest != changed.GraphDigest, QueryDecisionBefore: base.Decision, QueryDecisionAfter: changed.Decision, QueryResolutionBefore: base.Resolution, QueryResolutionAfter: changed.Resolution, ClaimID: changed.ClaimID, ClaimStateBefore: base.ClaimState, ClaimStateAfter: changed.ClaimState}
+	return interventionEvidence{RawDigestChanged: base.RawDigest != changed.RawDigest, SemanticDigestChanged: base.SemanticDigest != changed.SemanticDigest, GraphDigestChanged: base.GraphDigest != changed.GraphDigest, MutationFieldBefore: base.MutationField, MutationFieldAfter: changed.MutationField, MutationPayloadBefore: base.MutationPayload, MutationPayloadAfter: changed.MutationPayload, MutationDecisionBefore: base.MutationDecision, MutationDecisionAfter: changed.MutationDecision, MutationResolutionBefore: base.MutationResolution, MutationResolutionAfter: changed.MutationResolution, MutationAPIOutcomeBefore: base.MutationAPIOutcome, MutationAPIOutcomeAfter: changed.MutationAPIOutcome, MutationAuthorityBefore: base.MutationAuthority, MutationAuthorityAfter: changed.MutationAuthority, GraphDigestBefore: changed.GraphDigestBefore, OriginalGraphDigestAfter: changed.OriginalGraphDigestAfter, ReturnedGraphDigestBefore: base.ReturnedGraphDigest, ReturnedGraphDigestAfter: changed.ReturnedGraphDigest, ClaimID: changed.ClaimID, ClaimStateBefore: base.ClaimState, ClaimStateAfter: changed.ClaimState}
 }
-
-func fail(format string, args ...any) {
-	fmt.Fprintf(os.Stderr, format+"\n", args...)
-	os.Exit(1)
-}
+func fail(format string, args ...any) { fmt.Fprintf(os.Stderr, format+"\n", args...); os.Exit(1) }

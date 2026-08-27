@@ -37,7 +37,7 @@ if [ "$(cat "$before_status")" != "$after" ]; then
 fi
 
 jq -e --arg sha "$HEAD_SHA" '
-  .schema == "gooo/reflective-query-sandbox-observation/v2" and
+  .schema == "gooo/reflective-query-sandbox-observation/v3" and
   .subject_sha == $sha and
   .source.path == "examples/reflective-query-sandbox/main.gooo" and
   .contract.source_nodes == .source.node_count and
@@ -52,11 +52,10 @@ jq -e --arg sha "$HEAD_SHA" '
   .contract.refuted_attempts == ([.attempts[] | select(.decision == "REFUTED")] | length) and
   .contract.transition_count == (.claims | length) and
   .contract.satisfied_indicators == ([.claims[] | select(.to == "DISCHARGED" and .from != .to)] | length) and
-  ([.attempts[] | select(.id == "mutation.attempt" and .decision == "DENIED" and .api_outcome == "REJECTED" and .reason == "MUTATION_REQUEST_REJECTED")] | length) == 1 and
+  ([.attempts[] | select(.id == "mutation.attempt" and .decision == "DENIED" and .resolution == "EXACT_REJECTION" and .api_outcome == "REJECTED" and .api_error_code == "immutable_field" and .reason == "IMMUTABLE_FIELD_REJECTED" and .graph_digest_before == .original_graph_digest_after and .semantic_digest_before == .original_semantic_digest_after and (.returned_graph_digest | length) == 0)] | length) == 1 and
   ([.attempts[] | select(.id == "unknown.target" and .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and .reason == "UNKNOWN_TARGET" and .stage == "UNKNOWN" and .step == "resolve-unknown-subject")] | length) == 1 and
-  .effects.repository_writes == (.effects.repository_write_set | length) and
-  .effects.repository_before == .effects.repository_after and
-  .effects.repository_write_set == [] and
+  .effects.repository_status_before == .effects.repository_status_after and
+  .effects.net_repository_changes == [] and
   .effects.mutation_authority == false
 ' "$output/observation.json" >/dev/null
 
