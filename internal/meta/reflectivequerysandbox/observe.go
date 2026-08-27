@@ -218,7 +218,7 @@ func attemptIDForProgram(program string) string {
 	case strings.HasPrefix(program, "reflect.query:"):
 		return "reflect." + strings.TrimPrefix(program, "reflect.query:")
 	case strings.HasPrefix(program, "reflect.attempt:"):
-		return "mutation." + strings.TrimPrefix(program, "reflect.attempt:")
+		return "mutation.attempt"
 	case strings.HasPrefix(program, "reflect.observation:"):
 		return "receipt." + strings.TrimPrefix(program, "reflect.observation:")
 	default:
