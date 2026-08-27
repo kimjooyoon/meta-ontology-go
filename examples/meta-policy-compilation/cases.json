@@ -1,0 +1,29 @@
+[
+  {
+    "id": "pass-semantic-equivalence",
+    "expected": "PASS",
+    "producer_available": true,
+    "consumer_available": true,
+    "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_independent_digest": "SOURCE_DIGEST_FROM_POLICY"
+  },
+  {
+    "id": "fail-closed-source-drift",
+    "expected": "FAIL_CLOSED",
+    "producer_available": true,
+    "consumer_available": true,
+    "observed_source_digest": "sha256:source-drift-is-not-equivalent",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_independent_digest": "SOURCE_DIGEST_FROM_POLICY"
+  },
+  {
+    "id": "unknown-missing-consumer",
+    "expected": "UNKNOWN",
+    "producer_available": true,
+    "consumer_available": false,
+    "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_independent_digest": "SOURCE_DIGEST_FROM_POLICY"
+  }
+]

@@ -1,0 +1,135 @@
+name: Gooo meta-policy compilation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+      - 'internal/verify/scope_policy_compilation.go'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+      - 'internal/verify/scope_policy_compilation.go'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: meta-policy-compilation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: Produce policy compilation receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Compile, execute, and replay the policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/meta-policy-compilation"
+          for pass in first replay; do
+            output="$root/$pass"
+            mkdir -p "$output"
+            go run ./cmd/meta-policy-compilation-witness \
+              -policy examples/meta-policy-compilation/policy.gooo \
+              -cases examples/meta-policy-compilation/cases.json \
+              -output "$output"
+            go run ./cmd/meta-policy-compilation-witness \
+              -policy examples/meta-policy-compilation/policy.gooo \
+              -cases examples/meta-policy-compilation/cases.json \
+              -output "$output" -check
+          done
+          cmp "$root/first/policy.json" "$root/replay/policy.json"
+          cmp "$root/first/artifact.json" "$root/replay/artifact.json"
+          cmp "$root/first/judge.go" "$root/replay/judge.go"
+          cmp "$root/first/generated-results.json" "$root/replay/generated-results.json"
+          cmp "$root/first/independent-results.json" "$root/replay/independent-results.json"
+          cmp "$root/first/receipt.json" "$root/replay/receipt.json"
+          jq -e '
+            .verification.decision == "PASS" and
+            .verification.fixed_denominator == 8 and
+            .verification.case_denominator == 3 and
+            .summary.pass_count == 1 and
+            .summary.fail_closed_count == 1 and
+            .summary.unknown_count == 1 and
+            .summary.generated_independent_equivalent == 3 and
+            .claims.event_count == 48
+          ' "$root/first/receipt.json"
+      - name: Upload producer boundary
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/first
+          if-no-files-found: error
+          retention-days: 30
+
+  consumer:
+    name: Independently consume policy compilation receipt
+    needs: producer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Download producer boundary
+        uses: actions/download-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/producer
+      - name: Replay generated and independent decisions
+        run: |
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$RUNNER_TEMP/meta-policy-compilation/producer" -check
+      - name: Publish consumer summary
+        run: |
+          jq -r '
+            "### Gooo meta-policy compilation\n" +
+            "- policy decision: " + .verification.decision + "\n" +
+            "- fixed denominator: " + (.verification.fixed_denominator|tostring) + "\n" +
+            "- case decisions: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n" +
+            "- generated/independent equivalent: " + (.summary.generated_independent_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
+            "- claim ledger events: " + (.claims.event_count|tostring)
+          ' "$RUNNER_TEMP/meta-policy-compilation/producer/receipt.json" >> "$GITHUB_STEP_SUMMARY"

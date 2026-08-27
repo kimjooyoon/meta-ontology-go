@@ -175,6 +175,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/partition-directory-executor-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-partition-witness`, `internal/meta/actionability`, `internal/meta/directorypartition`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-ci-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
+| `agent/luna-meta-18-policy-compilation` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/meta-policy-compilation.yml`, `cmd/meta-policy-compilation-witness`, `docs/language/meta-policy-compilation.md`, `examples/meta-policy-compilation`, `internal/meta/policycompilation`, `internal/verify/scope_policy_compilation.go` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |
 | `agent/source-splitter-conformance-governance` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_source_splitter_conformance.go` |
 | `agent/source-splitter-conformance-fail-closed` | `internal/meta/transformationeffect/**` |
