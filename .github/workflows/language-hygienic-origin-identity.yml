@@ -43,6 +43,7 @@ jobs:
           set -euo pipefail
           format_diff="$(gofmt -d \
             internal/meta/hygienicoriginidentity/consumer \
+            internal/meta/hygienicoriginidentity/producer \
             internal/meta/hygienicoriginidentity/verify \
             internal/verify/scope_gooo_hygienic_origin_identity.go \
             scripts/language-hygienic-origin-identity)"
