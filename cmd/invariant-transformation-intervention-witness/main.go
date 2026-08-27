@@ -42,8 +42,9 @@ func main() {
 	if err := os.WriteFile(*outputPath, append(raw, '\n'), 0o644); err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("invariant transformation interventions: %s semantic=%d/%d nonsemantic=%d/%d writes=%d\n",
-		report.Decision, report.Denominator.SemanticChange.CasesSatisfied, report.Denominator.SemanticChange.CasesTotal,
+	fmt.Printf("invariant transformation interventions: %s semantic-expected=%d/%d semantic-operation=%d/%d nonsemantic=%d/%d writes=%d\n",
+		report.Decision, report.Denominator.SemanticExpectedChange.CasesSatisfied, report.Denominator.SemanticExpectedChange.CasesTotal,
+		report.Denominator.SemanticOperationChange.CasesSatisfied, report.Denominator.SemanticOperationChange.CasesTotal,
 		report.Denominator.NonSemantic.CasesSatisfied, report.Denominator.NonSemantic.CasesTotal, report.RepositoryWrites)
 }
 

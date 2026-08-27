@@ -13,6 +13,8 @@ import (
 type dependencyReport struct {
 	ProducerDependencyImports        int `json:"producer_dependency_imports"`
 	AllowedProducerDependencyImports int `json:"allowed_producer_dependency_imports"`
+	ArtifactObservation              int `json:"artifact_observation"`
+	ExpectedArtifactObservation      int `json:"expected_artifact_observation"`
 }
 
 func main() {
@@ -44,6 +46,8 @@ func main() {
 	audit, err := interventionconsumer.VerifyReport(report, source, *headSHA, interventionconsumer.DependencyBoundary{
 		ProducerDependencyImports:        dependency.ProducerDependencyImports,
 		AllowedProducerDependencyImports: dependency.AllowedProducerDependencyImports,
+		ArtifactObservation:              dependency.ArtifactObservation,
+		ExpectedArtifactObservation:      dependency.ExpectedArtifactObservation,
 	})
 	if err != nil {
 		fail(err.Error())
@@ -58,8 +62,9 @@ func main() {
 	if err := os.WriteFile(*outputPath, append(raw, '\n'), 0o644); err != nil {
 		fail(err.Error())
 	}
-	fmt.Printf("independent intervention consumer: %s reconstructed=%d/%d coherent-tamper-rejected=%d/%d writes=%d\n",
-		audit.Decision, audit.ReconstructedCases, audit.ExpectedCases, audit.CoherentTamperRejected, audit.ExpectedCoherentTamperRejections, audit.RepositoryWrites)
+	fmt.Printf("independent intervention consumer: %s reconstructed=%d/%d actual-replay=%d/%d artifact=%d/%d coherent-tamper-rejected=%d/%d writes=%d\n",
+		audit.Decision, audit.ReconstructedCases, audit.ExpectedCases, audit.ActualReplay, audit.ExpectedActualReplay,
+		audit.ArtifactObservation, audit.ExpectedArtifactObservation, audit.CoherentTamperRejected, audit.ExpectedCoherentTamperRejections, audit.RepositoryWrites)
 }
 
 func fail(message string) {

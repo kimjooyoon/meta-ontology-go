@@ -2211,6 +2211,8 @@ jobs:
           forbidden_imports="$(printf '%s\n' "$dependencies" | awk -v forbidden="$forbidden_package" '$0 == forbidden { count++ } END { print count + 0 }')"
           consumer_dependencies="$(go list -deps ./internal/meta/invarianttransformation/interventionconsumer)"
           producer_dependency_imports="$(printf '%s\n' "$consumer_dependencies" | awk -v forbidden="$producer_intervention_package" '$0 == forbidden { count++ } END { print count + 0 }')"
+          artifact_observation="$(jq '[.cases[].receipt.effects[]? | select(.kind == "APPROVED_ARTIFACT_RECORDED" and (.artifact_path | length) > 0 and (.artifact_digest | length) > 0 and .artifact_size > 0)] | length' "$RUNNER_TEMP/invariant-transformation/first/report.json")"
+          expected_artifact_observation=1
           allowed_forbidden_imports=0
           allowed_producer_dependency_imports=0
           dependency_output="$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
@@ -2225,18 +2227,23 @@ jobs:
             --argjson allowed_forbidden_imports "$allowed_forbidden_imports" \
             --argjson producer_dependency_imports "$producer_dependency_imports" \
             --argjson allowed_producer_dependency_imports "$allowed_producer_dependency_imports" \
+            --argjson artifact_observation "$artifact_observation" \
+            --argjson expected_artifact_observation "$expected_artifact_observation" \
             '{schema: $schema, production_judge_package: $package, forbidden_package: $forbidden_package,
               forbidden_imports: $forbidden_imports, allowed_forbidden_imports: $allowed_forbidden_imports,
               production_consumer_package: $consumer_package, producer_intervention_package: $producer_intervention_package,
               judge_forbidden_imports: $forbidden_imports, judge_allowed_forbidden_imports: $allowed_forbidden_imports,
               producer_dependency_imports: $producer_dependency_imports,
               allowed_producer_dependency_imports: $allowed_producer_dependency_imports,
+              artifact_observation: $artifact_observation,
+              expected_artifact_observation: $expected_artifact_observation,
               production_only: true, test_imports_excluded: true,
               decision: (if $forbidden_imports == $allowed_forbidden_imports and
                   $producer_dependency_imports == $allowed_producer_dependency_imports then "PASS" else "FAIL" end),
               repository_writes: 0}' > "$dependency_output"
           test "$forbidden_imports" -eq "$allowed_forbidden_imports"
           test "$producer_dependency_imports" -eq "$allowed_producer_dependency_imports"
+          test "$artifact_observation" -eq "$expected_artifact_observation"
 
       - name: Emit and validate fixed intervention denominator twice
         shell: bash
@@ -2262,23 +2269,35 @@ jobs:
             .schema == "gooo/invariant-transformation-intervention-report/v1" and
             .decision == "PASS" and .resolution == "EXACT" and
             .denominator.id == "gooo/invariant-transformation-intervention-denominator/v1" and
-            .denominator.cases_total == 2 and .case_count == 2 and
-            .denominator.semantic_change.id == "gooo/invariant-transformation-intervention-semantic-denominator/v1" and
-            .denominator.semantic_change.cases_total == 1 and
-            .denominator.semantic_change.cases_satisfied == 1 and
-            .denominator.semantic_change.coverage_bps == 10000 and
+            .denominator.cases_total == 3 and .case_count == 3 and
+            .denominator.semantic_expected_change.id == "gooo/invariant-transformation-intervention-semantic-expected-denominator/v1" and
+            .denominator.semantic_expected_change.cases_total == 1 and
+            .denominator.semantic_expected_change.cases_satisfied == 1 and
+            .denominator.semantic_expected_change.coverage_bps == 10000 and
+            .denominator.semantic_operation_change.id == "gooo/invariant-transformation-intervention-semantic-operation-denominator/v1" and
+            .denominator.semantic_operation_change.cases_total == 1 and
+            .denominator.semantic_operation_change.cases_satisfied == 1 and
+            .denominator.semantic_operation_change.coverage_bps == 10000 and
             .denominator.nonsemantic_change.id == "gooo/invariant-transformation-intervention-nonsemantic-denominator/v1" and
             .denominator.nonsemantic_change.cases_total == 1 and
             .denominator.nonsemantic_change.cases_satisfied == 1 and
             .denominator.nonsemantic_change.coverage_bps == 10000 and
-            ([.cases[] | select(.kind == "SEMANTIC") | .raw_source_digest_changed] | all) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .receipt_changed] | all) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .semantic_projection_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .decision_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .resolution_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .reason_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .claim_transitions_equal] | all | not) and
-            ([.cases[] | select(.kind == "SEMANTIC") | .decision_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .receipt_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .semantic_projection_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .resolution_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .reason_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .claim_transitions_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_EXPECTED") | .decision_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .raw_source_digest_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .receipt_changed] | all) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .semantic_projection_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .resolution_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .reason_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .claim_transitions_equal] | all | not) and
+            ([.cases[] | select(.kind == "SEMANTIC_OPERATION") | .decision_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .raw_source_digest_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .receipt_changed] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .semantic_projection_equal] | all) and
@@ -2286,6 +2305,13 @@ jobs:
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .resolution_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .reason_equal] | all) and
             ([.cases[] | select(.kind == "NON_SEMANTIC") | .claim_transitions_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .effects_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .replay_observation_equal] | all) and
+            ([.cases[] | select(.kind == "NON_SEMANTIC") | .baseline_evidence.replay_count == 2 and .mutated_evidence.replay_count == 2 and
+              .baseline_evidence.replay_output == .mutated_evidence.replay_output and
+              .baseline_evidence.replay_digest == .mutated_evidence.replay_digest and
+              .baseline_evidence.replay_semantic_digest == .mutated_evidence.replay_semantic_digest and
+              .baseline_evidence.replay_evidence_digest == .mutated_evidence.replay_evidence_digest] | all) and
             ([.cases[].repository_writes_zero] | all) and
             ([.cases[].claim | .status == "DISCHARGED" and (.transitions | length) == 1 and
               .transitions[0].from == "OPEN" and .transitions[0].to == "DISCHARGED" and
@@ -2297,22 +2323,26 @@ jobs:
             .production_only == true and .test_imports_excluded == true and
             .forbidden_imports == 0 and .allowed_forbidden_imports == 0 and
             .producer_dependency_imports == 0 and .allowed_producer_dependency_imports == 0 and
+            .artifact_observation == 1 and .expected_artifact_observation == 1 and
             .decision == "PASS" and .repository_writes == 0
           ' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           jq -e '
             .schema == "gooo/invariant-transformation-intervention-consumer/v1" and
             .decision == "PASS" and .resolution == "EXACT" and
             .producer_dependency_imports == 0 and .allowed_producer_dependency_imports == 0 and
-            .reconstructed_cases == 2 and .expected_cases == 2 and
+            .reconstructed_cases == 3 and .expected_cases == 3 and
+            .actual_replay == 2 and .expected_actual_replay == 2 and
+            .artifact_observation == 1 and .expected_artifact_observation == 1 and
             .coherent_tamper_rejected == 1 and .expected_coherent_tamper_rejections == 1 and
             .repository_writes == 0 and .mutation_authority == false
           ' "$output/consumer-verification.json"
           {
             echo '### Fixed intervention denominator'
-            jq -r '"- semantic change: \(.denominator.semantic_change.cases_satisfied)/\(.denominator.semantic_change.cases_total) (\(.denominator.semantic_change.coverage_bps) BPS)"' "$output/first/report.json"
+            jq -r '"- semantic expected change: \(.denominator.semantic_expected_change.cases_satisfied)/\(.denominator.semantic_expected_change.cases_total) (\(.denominator.semantic_expected_change.coverage_bps) BPS)"' "$output/first/report.json"
+            jq -r '"- semantic operation change: \(.denominator.semantic_operation_change.cases_satisfied)/\(.denominator.semantic_operation_change.cases_total) (\(.denominator.semantic_operation_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- non-semantic change: \(.denominator.nonsemantic_change.cases_satisfied)/\(.denominator.nonsemantic_change.cases_total) (\(.denominator.nonsemantic_change.coverage_bps) BPS)"' "$output/first/report.json"
             jq -r '"- dependency boundary: forbidden=\(.forbidden_imports)/allowed=\(.allowed_forbidden_imports), producer=\(.producer_dependency_imports)/\(.allowed_producer_dependency_imports)"' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
-            jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections)"' "$output/consumer-verification.json"
+            jq -r '"- independent consumer: reconstructed=\(.reconstructed_cases)/\(.expected_cases), actual-replay=\(.actual_replay)/\(.expected_actual_replay), artifact=\(.artifact_observation)/\(.expected_artifact_observation), coherent-tamper-rejected=\(.coherent_tamper_rejected)/\(.expected_coherent_tamper_rejections)"' "$output/consumer-verification.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish exact metrics and authority boundary
@@ -2334,6 +2364,17 @@ jobs:
             .summary.coverage_bps == 10000 and
             ([.cases[].receipt.repository_writes] | add) == 0 and
             ([.cases[].receipt.mutation_authority] | any) == false and
+            ([.cases[] | select(.receipt.case_id == "preserved-translation" or .receipt.case_id == "semantic-violation" or .receipt.case_id == "approved-artifact") | .receipt.evidence.replay_count] | all(. == 2)) and
+            ([.cases[] | select(.receipt.case_id == "missing-regression-witness") | .receipt.evidence.replay_count == 1 and
+              .receipt.evidence.replay_failure_stage == "REGRESSION" and
+              .receipt.evidence.replay_failure_step == "execute-replay" and
+              .receipt.evidence.replay_failure_reason == "REGRESSION_REPLAY_RECIPE_UNAVAILABLE" and
+              .receipt.decision == "BLOCKED" and .receipt.resolution == "LOWER_RESOLUTION" and
+              (.receipt.claims[] | select(.id == "regression-witness") | .status == "OPEN" and
+                .coordinate.stage == "REGRESSION" and .coordinate.step == "execute-replay" and
+                .coordinate.reason == "REGRESSION_REPLAY_RECIPE_UNAVAILABLE")] | all) and
+            ([.cases[] | select(.receipt.case_id == "approved-artifact") | .receipt.effects[] | select(.kind == "APPROVED_ARTIFACT_RECORDED") |
+              (.artifact_path | length) > 0 and (.artifact_digest | startswith("sha256:")) and .artifact_size > 0] | all) and
             (.cases | map(select(.satisfied == true)) | length) == 4
           ' "$RUNNER_TEMP/invariant-transformation/first/report.json"
           {

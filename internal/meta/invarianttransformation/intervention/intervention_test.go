@@ -11,25 +11,37 @@ const testHead = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 const testSource = `package invarianttransformation
 namespace meta
 entity Transformation id "gooo://invariant-transformation/value/transformation"
-activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
+activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=add:1;effect=none"
 `
 
-func TestBuildKeepsSemanticAndNonSemanticDenominatorsSeparate(t *testing.T) {
+func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
 	report, err := Build([]byte(testSource), testHead)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Denominator.CasesTotal != 2 || report.Denominator.SemanticChange.CasesTotal != 1 || report.Denominator.NonSemantic.CasesTotal != 1 {
+	if report.Denominator.CasesTotal != 3 || report.Denominator.SemanticExpectedChange.CasesTotal != 1 || report.Denominator.SemanticOperationChange.CasesTotal != 1 || report.Denominator.NonSemantic.CasesTotal != 1 {
 		t.Fatalf("denominator=%+v", report.Denominator)
 	}
-	if report.Denominator.SemanticChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {
+	if report.Denominator.SemanticExpectedChange.CasesSatisfied != 1 || report.Denominator.SemanticOperationChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {
 		t.Fatalf("denominator satisfaction=%+v", report.Denominator)
 	}
 	if report.Cases[0].RawSourceDigestChanged != true || report.Cases[0].SemanticProjectionEqual || report.Cases[0].DecisionEqual || report.Cases[0].Satisfied != true {
 		t.Fatalf("semantic case=%+v", report.Cases[0])
 	}
-	if report.Cases[1].RawSourceDigestChanged != true || !report.Cases[1].SemanticProjectionEqual || !report.Cases[1].DecisionEqual || !report.Cases[1].ResolutionEqual || !report.Cases[1].ReasonEqual || !report.Cases[1].ClaimTransitionsEqual || report.Cases[1].Satisfied != true {
-		t.Fatalf("nonsemantic case=%+v", report.Cases[1])
+	if report.Cases[0].BaselineEvidence.ReplayCount != 2 || report.Cases[0].MutatedEvidence.ReplayCount != 2 || report.Cases[0].Claim.Coordinate.Stage != InterventionStage || report.Cases[0].Claim.Coordinate.Step != SemanticExpectedStep || report.Cases[0].Claim.Coordinate.Reason != SemanticExpectedReason {
+		t.Fatalf("semantic expected evidence or claim=%+v", report.Cases[0])
+	}
+	if report.Cases[1].RawSourceDigestChanged != true || report.Cases[1].SemanticProjectionEqual || report.Cases[1].DecisionEqual || report.Cases[1].Satisfied != true {
+		t.Fatalf("semantic operation case=%+v", report.Cases[1])
+	}
+	if report.Cases[1].BaselineEvidence.ReplayCount != 2 || report.Cases[1].MutatedEvidence.ReplayCount != 2 || report.Cases[1].Claim.Coordinate.Stage != InterventionStage || report.Cases[1].Claim.Coordinate.Step != SemanticOperationStep || report.Cases[1].Claim.Coordinate.Reason != SemanticOperationReason {
+		t.Fatalf("semantic operation evidence or claim=%+v", report.Cases[1])
+	}
+	if report.Cases[2].RawSourceDigestChanged != true || !report.Cases[2].SemanticProjectionEqual || !report.Cases[2].DecisionEqual || !report.Cases[2].ResolutionEqual || !report.Cases[2].ReasonEqual || !report.Cases[2].ClaimTransitionsEqual || !report.Cases[2].EffectsEqual || !report.Cases[2].ReplayObservationEqual || report.Cases[2].Satisfied != true {
+		t.Fatalf("nonsemantic case=%+v", report.Cases[2])
+	}
+	if report.Cases[2].BaselineEvidence.ReplayCount != 2 || report.Cases[2].MutatedEvidence.ReplayCount != 2 || report.Cases[2].Claim.Coordinate.Stage != InterventionStage || report.Cases[2].Claim.Coordinate.Step != NonSemanticStep || report.Cases[2].Claim.Coordinate.Reason != NonSemanticReason {
+		t.Fatalf("nonsemantic evidence or claim=%+v", report.Cases[2])
 	}
 	for _, item := range report.Cases {
 		if item.BaselineRepositoryWrites != 0 || item.MutatedRepositoryWrites != 0 || item.BaselineMutationAuthority || item.MutatedMutationAuthority {
@@ -41,7 +53,7 @@ func TestBuildKeepsSemanticAndNonSemanticDenominatorsSeparate(t *testing.T) {
 	}
 }
 
-func TestDeterministicReplayReproducesBothInterventions(t *testing.T) {
+func TestDeterministicReplayReproducesAllInterventions(t *testing.T) {
 	report, err := Build([]byte(testSource), testHead)
 	if err != nil {
 		t.Fatal(err)

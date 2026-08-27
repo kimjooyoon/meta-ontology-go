@@ -11,12 +11,13 @@ entity ApprovedArtifactEffect id "gooo://invariant-transformation/value/approved
 entity TransformationAuthority id "gooo://invariant-transformation/value/transformation-authority"
 
 // Each fixture is executable source data: input, candidate operation, expected
-// invariant value, replay availability, and effect policy are not inferred
-// from the contract's case label.
-activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
-activity SemanticViolation() -> Transformation computes "case=semantic-violation;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
-activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=missing;effect=none"
-activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;replay=present;effect=approved-artifact"
+// invariant value, replay recipe/capability, and effect policy are not
+// inferred from the contract's case label. A recipe is evidence only after
+// producer and judge execute it.
+activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=add:1;effect=none"
+activity SemanticViolation() -> Transformation computes "case=semantic-violation;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;replay=add:2;effect=none"
+activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=unavailable;effect=none"
+activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;replay=add:1;effect=approved-artifact"
 
 activity BindTransformationPrecondition(SourceSnapshot) -> Precondition computes "meta.invariant-transformation.precondition:v1"
 activity ObserveTransformationResult(Precondition) -> Transformation computes "meta.invariant-transformation.transformation:v1"

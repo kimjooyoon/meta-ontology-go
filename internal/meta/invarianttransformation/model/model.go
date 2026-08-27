@@ -33,6 +33,7 @@ const (
 	ProofFoundation     = "FOUNDATION"
 	ProofCoherence      = "COHERENCE"
 	ProofRegression     = "REGRESSION"
+	AuthorityScope      = "SEMANTIC_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION"
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -112,10 +113,23 @@ type TransformationEvidence struct {
 	SemanticBeforeDigest     string `json:"semantic_before_digest"`
 	SemanticAfterDigest      string `json:"semantic_after_digest"`
 	ExpectedSemanticDigest   string `json:"expected_semantic_digest"`
+	ReplayRecipe             string `json:"replay_recipe"`
+	BaselineInputValue       int64  `json:"baseline_input_value"`
+	BaselineOperation        string `json:"baseline_operation"`
+	BaselineOutput           int64  `json:"baseline_output"`
+	BaselineDigest           string `json:"baseline_digest"`
+	ReplayInputValue         int64  `json:"replay_input_value"`
+	ReplayOperation          string `json:"replay_operation"`
+	ReplayOutput             int64  `json:"replay_output"`
+	ReplayDigest             string `json:"replay_digest,omitempty"`
+	ReplaySemanticDigest     string `json:"replay_semantic_digest,omitempty"`
+	ReplayEvidenceDigest     string `json:"replay_evidence_digest,omitempty"`
 	RegressionWitnessPresent bool   `json:"regression_witness_present"`
-	ReplayBeforeDigest       string `json:"replay_before_digest,omitempty"`
-	ReplayAfterDigest        string `json:"replay_after_digest,omitempty"`
 	ReplayCount              int    `json:"replay_count"`
+	ReplayFailureStage       string `json:"replay_failure_stage,omitempty"`
+	ReplayFailureStep        string `json:"replay_failure_step,omitempty"`
+	ReplayFailureReason      string `json:"replay_failure_reason,omitempty"`
+	SemanticSourceDigest     string `json:"semantic_source_digest"`
 }
 
 type CandidateComputation struct {
@@ -128,6 +142,8 @@ type Effect struct {
 	Kind              string `json:"kind"`
 	ArtifactID        string `json:"artifact_id,omitempty"`
 	ArtifactDigest    string `json:"artifact_digest,omitempty"`
+	ArtifactPath      string `json:"artifact_path,omitempty"`
+	ArtifactSize      int    `json:"artifact_size,omitempty"`
 	Producer          string `json:"producer"`
 	Consumer          string `json:"consumer"`
 	MetaOperation     string `json:"meta_operation"`
@@ -156,6 +172,7 @@ type Receipt struct {
 	Effects           []Effect               `json:"effects"`
 	RepositoryWrites  int                    `json:"repository_writes"`
 	MutationAuthority bool                   `json:"mutation_authority"`
+	AuthorityScope    string                 `json:"authority_scope"`
 	Digest            string                 `json:"digest"`
 }
 
@@ -233,12 +250,12 @@ func CanonicalContract() Contract {
 			{ID: "precondition", Kind: "PRECONDITION", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "bind-transformation-precondition", ProofChoice: ProofFoundation, Coordinate: Coordinate{"PRECONDITION", "bind-source-snapshot", "EXACT_SOURCE_SNAPSHOT"}},
 			{ID: "transformation", Kind: "TRANSFORMATION", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "observe-transformation-result", ProofChoice: ProofCoherence, Coordinate: Coordinate{"TRANSFORMATION", "observe-candidate", "TRANSFORMATION_OBSERVED"}},
 			{ID: "postcondition", Kind: "POSTCONDITION", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "compare-postcondition", ProofChoice: ProofCoherence, Coordinate: Coordinate{"POSTCONDITION", "compare-semantic-value", "SEMANTIC_POSTCONDITION"}},
-			{ID: "regression-witness", Kind: "REGRESSION_WITNESS", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "replay-regression-witness", ProofChoice: ProofRegression, Coordinate: Coordinate{"REGRESSION", "replay-before-after", "REGRESSION_WITNESS"}},
+			{ID: "regression-witness", Kind: "REGRESSION_WITNESS", Producer: ProducerID, Consumer: ConsumerID, MetaOperation: "replay-regression-witness", ProofChoice: ProofRegression, Coordinate: Coordinate{"REGRESSION", "execute-replay", "REGRESSION_REPLAY_OBSERVED"}},
 		},
 		Cases: []CaseSpec{
 			{ID: "preserved-translation", Activity: "PreservedTranslation", Kind: "PRESERVED", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 0},
 			{ID: "semantic-violation", Activity: "SemanticViolation", Kind: "VIOLATION", ExpectedDecision: DecisionRefuted, ExpectedResolution: ResolutionInvariant, ExpectedReason: "SEMANTIC_POSTCONDITION_REFUTED", ExpectedStatus: StatusRefuted, ExpectedEffects: 0},
-			{ID: "missing-regression-witness", Activity: "MissingRegressionWitness", Kind: "EVIDENCE_MISSING", ExpectedDecision: DecisionBlocked, ExpectedResolution: ResolutionLower, ExpectedReason: "REGRESSION_WITNESS_MISSING", ExpectedStatus: StatusOpen, ExpectedEffects: 0},
+			{ID: "missing-regression-witness", Activity: "MissingRegressionWitness", Kind: "EVIDENCE_MISSING", ExpectedDecision: DecisionBlocked, ExpectedResolution: ResolutionLower, ExpectedReason: "REGRESSION_REPLAY_RECIPE_UNAVAILABLE", ExpectedStatus: StatusOpen, ExpectedEffects: 0},
 			{ID: "approved-artifact", Activity: "ApprovedArtifact", Kind: "APPROVED_ARTIFACT", ExpectedDecision: DecisionAllowed, ExpectedResolution: ResolutionExact, ExpectedReason: "ALL_INVARIANTS_DISCHARGED", ExpectedStatus: StatusDischarged, ExpectedEffects: 1},
 		},
 	}

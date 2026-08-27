@@ -15,10 +15,10 @@ const testHead = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 const testSource = `package invarianttransformation
 namespace meta
 entity Transformation id "gooo://invariant-transformation/value/transformation"
-activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
-activity SemanticViolation() -> Transformation computes "case=semantic-violation;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;replay=present;effect=none"
-activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=missing;effect=none"
-activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;replay=present;effect=approved-artifact"
+activity PreservedTranslation() -> Transformation computes "case=preserved-translation;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=add:1;effect=none"
+activity SemanticViolation() -> Transformation computes "case=semantic-violation;input=2;candidate=add:2;expected=3;invariant=candidate-output-equals-expected;replay=add:2;effect=none"
+activity MissingRegressionWitness() -> Transformation computes "case=missing-regression-witness;input=2;candidate=add:1;expected=3;invariant=candidate-output-equals-expected;replay=unavailable;effect=none"
+activity ApprovedArtifact() -> Transformation computes "case=approved-artifact;input=5;candidate=add:1;expected=6;invariant=candidate-output-equals-expected;replay=add:1;effect=approved-artifact"
 `
 
 func TestJudgeSeparatesPreservationViolationAndMissingEvidence(t *testing.T) {
@@ -27,7 +27,7 @@ func TestJudgeSeparatesPreservationViolationAndMissingEvidence(t *testing.T) {
 	}{
 		{"preserved-translation", model.DecisionAllowed, model.ResolutionExact, "ALL_INVARIANTS_DISCHARGED", model.StatusDischarged},
 		{"semantic-violation", model.DecisionRefuted, model.ResolutionInvariant, "SEMANTIC_POSTCONDITION_REFUTED", model.StatusRefuted},
-		{"missing-regression-witness", model.DecisionBlocked, model.ResolutionLower, "REGRESSION_WITNESS_MISSING", model.StatusOpen},
+		{"missing-regression-witness", model.DecisionBlocked, model.ResolutionLower, "REGRESSION_REPLAY_RECIPE_UNAVAILABLE", model.StatusOpen},
 	}
 	for _, test := range cases {
 		t.Run(test.id, func(t *testing.T) {

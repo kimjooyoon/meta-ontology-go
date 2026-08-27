@@ -52,8 +52,8 @@
       "proof_choice": "REGRESSION",
       "coordinate": {
         "stage": "REGRESSION",
-        "step": "replay-before-after",
-        "reason": "REGRESSION_WITNESS"
+        "step": "execute-replay",
+        "reason": "REGRESSION_REPLAY_OBSERVED"
       }
     }
   ],
@@ -84,7 +84,7 @@
       "kind": "EVIDENCE_MISSING",
       "expected_decision": "BLOCKED",
       "expected_resolution": "LOWER_RESOLUTION",
-      "expected_reason": "REGRESSION_WITNESS_MISSING",
+      "expected_reason": "REGRESSION_REPLAY_RECIPE_UNAVAILABLE",
       "expected_status": "OPEN",
       "expected_effects": 0
     },

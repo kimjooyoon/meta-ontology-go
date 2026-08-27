@@ -8,26 +8,30 @@ The producer emits a data-only receipt. The independent judge recomputes the
 decision from the fixed denominator and the receipt, so a producer cannot mint
 authority by changing the final decision field. Each case's `computes` value
 declares an integer input, an `add:n` candidate, an expected invariant value,
-replay availability, and effect policy. The producer and judge parse and
-execute those values independently; a valid receipt digest alone is not
-sufficient. `OPEN` means evidence is absent, `DISCHARGED` means the obligation
+replay recipe/capability, and effect policy. The producer and judge parse and
+execute those values independently, including candidate and replay operations;
+a valid receipt digest or replay label alone is not sufficient. `OPEN` means evidence is absent, `DISCHARGED` means the obligation
 has a bound witness, and `REFUTED` records a counterexample. Only four fixed
 cases are admitted: a preserved translation, a semantic violation, missing
 regression evidence, and an approved artifact.
 
-The approved artifact case records one separate `APPROVED_ARTIFACT_RECORDED`
-effect. It still has `repository_writes=0` and `mutation_authority=false`:
-recording an approved product is not permission to mutate the repository.
+The approved artifact case creates actual bytes under `RUNNER_TEMP` and records
+one separate `APPROVED_ARTIFACT_RECORDED` effect with path, size, and digest. It
+still has `repository_writes=0` and `mutation_authority=false`: recording an
+approved product is not permission to mutate the repository.
 
 ## Intervention witnesses
 
-The intervention witness is a separate fixed denominator with exactly two
-cases, never folded into the four-case authority coverage score:
+The intervention witness is separate from the four-case authority score and
+has three cases with separate fixed denominators of `1`:
 
-* `semantic-change` changes the first fixture's `expected=3` to `expected=4`.
+* `semantic-expected-change` changes the first fixture's `expected=3` to `expected=4`.
   Its parsed projection and contracted receipt change, so the independent
   judge changes `AUTHORIZED` to `REFUTED` with reason
   `SEMANTIC_POSTCONDITION_REFUTED`.
+* `semantic-operation-change` changes the first fixture's candidate and replay
+  recipe from `add:1` to `add:2`, changing the transformation result and
+  postcondition decision.
 * `nonsemantic-change` appends only blank lines and a comment. Its raw
   `SourceDigest` and receipt digest change, while the parsed/lowered fixture
   projection, decision, resolution, reason, and claim transitions remain
@@ -41,7 +45,8 @@ observed contradiction becomes `FAIL_CLOSED` with `REFUTED`, and an
 unobservable obligation becomes `FAIL_CLOSED` with `OPEN` and lower
 resolution. A report consumer checks these derived relationships without
 calling the producer's `Build` function. A separately named deterministic
-replay may call `Build` only to check repeatability.
+replay may call `Build` only to check repeatability. CI additionally asserts
+actual replay `2/2`, artifact observation `1/1`, and producer imports `0/0`.
 
 ## Research basis and limits
 

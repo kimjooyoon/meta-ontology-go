@@ -10,14 +10,14 @@ import (
 )
 
 type sourceFixture struct {
-	CaseID              string
-	Input               int64
-	CandidateOperation  string
-	CandidateResult     int64
-	Expected            int64
-	Invariant           string
-	RegressionAvailable bool
-	ApprovedArtifact    bool
+	CaseID             string
+	Input              int64
+	CandidateOperation string
+	CandidateResult    int64
+	Expected           int64
+	Invariant          string
+	ReplayRecipe       string
+	ApprovedArtifact   bool
 }
 
 func parseSourceFixture(source []byte, spec model.CaseSpec) (sourceFixture, error) {
@@ -65,9 +65,9 @@ func parseSourceFixture(source []byte, spec model.CaseSpec) (sourceFixture, erro
 		return sourceFixture{}, fmt.Errorf("unsupported invariant %q", fields["invariant"])
 	}
 	fixture := sourceFixture{CaseID: fields["case"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: candidateResult,
-		Expected: expected, Invariant: fields["invariant"], RegressionAvailable: fields["replay"] == "present", ApprovedArtifact: fields["effect"] == "approved-artifact"}
-	if fields["replay"] != "present" && fields["replay"] != "missing" {
-		return sourceFixture{}, fmt.Errorf("unsupported replay value %q", fields["replay"])
+		Expected: expected, Invariant: fields["invariant"], ReplayRecipe: fields["replay"], ApprovedArtifact: fields["effect"] == "approved-artifact"}
+	if fields["replay"] == "" {
+		return sourceFixture{}, fmt.Errorf("replay recipe is empty")
 	}
 	if fields["effect"] != "none" && fields["effect"] != "approved-artifact" {
 		return sourceFixture{}, fmt.Errorf("unsupported effect value %q", fields["effect"])

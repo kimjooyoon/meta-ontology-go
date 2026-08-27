@@ -10,14 +10,14 @@ import (
 )
 
 type sourceSemantics struct {
-	CaseID              string
-	Input               int64
-	CandidateOperation  string
-	CandidateResult     int64
-	Expected            int64
-	Invariant           string
-	RegressionAvailable bool
-	ApprovedArtifact    bool
+	CaseID             string
+	Input              int64
+	CandidateOperation string
+	CandidateResult    int64
+	Expected           int64
+	Invariant          string
+	ReplayRecipe       string
+	ApprovedArtifact   bool
 }
 
 func parseSourceSemantics(source []byte, spec model.CaseSpec) (sourceSemantics, error) {
@@ -62,9 +62,9 @@ func parseSourceSemantics(source []byte, spec model.CaseSpec) (sourceSemantics, 
 		return sourceSemantics{}, fmt.Errorf("source invariant %q is not supported", fields["invariant"])
 	}
 	semantics := sourceSemantics{CaseID: fields["case"], Input: input, CandidateOperation: fields["candidate"], CandidateResult: result,
-		Expected: expected, Invariant: fields["invariant"], RegressionAvailable: fields["replay"] == "present", ApprovedArtifact: fields["effect"] == "approved-artifact"}
-	if fields["replay"] != "present" && fields["replay"] != "missing" {
-		return sourceSemantics{}, fmt.Errorf("source replay value %q is not supported", fields["replay"])
+		Expected: expected, Invariant: fields["invariant"], ReplayRecipe: fields["replay"], ApprovedArtifact: fields["effect"] == "approved-artifact"}
+	if fields["replay"] == "" {
+		return sourceSemantics{}, fmt.Errorf("source replay recipe is empty")
 	}
 	if fields["effect"] != "none" && fields["effect"] != "approved-artifact" {
 		return sourceSemantics{}, fmt.Errorf("source effect value %q is not supported", fields["effect"])
