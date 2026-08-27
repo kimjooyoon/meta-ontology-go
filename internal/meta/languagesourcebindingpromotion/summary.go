@@ -12,22 +12,19 @@ func summarize(cases []CaseResult, input Input) Summary {
 		promotion := item.Claims[2]
 		if item.ID == "exact-promotion" && promotion.Status == "DISCHARGED" {
 			summary.ExactPromotions++
-			for _, claim := range item.Claims {
-				if claim.Status == "DISCHARGED" {
-					summary.ExactClaims++
-				}
-			}
-		}
-		if promotion.UnknownClass == "DEPENDENCY_BLOCKED" {
-			summary.DependencyBlocked++
 		}
 		if promotion.Status == "REFUTED" {
 			summary.LinkRefutations++
 		}
-		for _, claim := range item.Claims[:2] {
+		for _, claim := range item.Claims {
+			if item.ID == "exact-promotion" && claim.Status == "DISCHARGED" {
+				summary.ExactClaims++
+			}
 			if claim.UnknownClass == "DIRECT_MISSING" {
 				summary.DirectUnknowns++
-				break
+			}
+			if claim.UnknownClass == "DEPENDENCY_BLOCKED" {
+				summary.DependencyBlocked++
 			}
 		}
 	}

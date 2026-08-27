@@ -55,3 +55,18 @@ func TestPromotionSeparatesReceiptAndArtifactDigests(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestDependencyBlockedMetricCountsPersistentClaims(t *testing.T) {
+	report := Evaluate(fixtureInput())
+	blockedClaims := 0
+	for _, item := range report.Cases {
+		for _, claim := range item.Claims {
+			if claim.UnknownClass == "DEPENDENCY_BLOCKED" {
+				blockedClaims++
+			}
+		}
+	}
+	if blockedClaims != 4 || report.Summary.DependencyBlocked != blockedClaims {
+		t.Fatalf("blocked claims=%d summary=%d", blockedClaims, report.Summary.DependencyBlocked)
+	}
+}

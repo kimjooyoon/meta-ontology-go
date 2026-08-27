@@ -67,7 +67,7 @@ go run ./cmd/language-source-binding-promotion --check "$output/report.json"
 jq -e '.decision == "PASS" and .resolution == "EXACT" and
   .summary.cases_satisfied == 5 and .summary.cases_total == 5 and
   .summary.exact_promotions == 1 and .summary.exact_claims == 3 and
-  .summary.direct_unknowns == 3 and .summary.dependency_blocked == 3 and
+	  .summary.direct_unknowns == 3 and .summary.dependency_blocked == 4 and
   .summary.link_refutations == 1 and .summary.policy_replays == 1 and
   .summary.producer_dependencies == 0 and .summary.semantic_correctness_claims == 0 and
   .repository_writes == 0 and .mutation_authority == false' "$output/report.json"
@@ -75,5 +75,5 @@ jq -e '([.cases[] | select(.status == "SATISFIED")] | length) == 5 and
   ([.cases[] | select((.claims | length) == 3)] | length) == 5 and
   ([.cases[] | select(.id == "exact-promotion") | .claims[] | select(.status == "DISCHARGED")] | length) == 3 and
   ([.cases[].claims[] | select(.unknown_class == "DIRECT_MISSING")] | length) == 3 and
-  ([.cases[].claims[] | select(.unknown_class == "DEPENDENCY_BLOCKED")] | length) == 3' "$output/report.json"
+	  ([.cases[].claims[] | select(.unknown_class == "DEPENDENCY_BLOCKED")] | length) == 4' "$output/report.json"
 sha256sum "$output"/*.json "$output"/policy/*/*.go > "$output/manifest.sha256"

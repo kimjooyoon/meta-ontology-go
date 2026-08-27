@@ -14,7 +14,7 @@ func Validate(report Report) error {
 		return fmt.Errorf("source binding promotion report shape mismatch")
 	}
 	want := Summary{CasesSatisfied: 5, CasesTotal: 5, ExactPromotions: 1, ExactClaims: 3,
-		DirectUnknowns: 3, DependencyBlocked: 3, LinkRefutations: 1, PolicyReplays: 1}
+		DirectUnknowns: 3, DependencyBlocked: 4, LinkRefutations: 1, PolicyReplays: 1}
 	if report.Summary != want {
 		return fmt.Errorf("source binding promotion summary mismatch")
 	}
