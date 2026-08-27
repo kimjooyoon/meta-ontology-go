@@ -104,6 +104,7 @@ semantic_meaning="$(jq -c '.summary.meaning_claim' "$repro_work/semantic-interve
 base_joint="$(jq -c '.summary.joint_claim' "$repro_work/judgment.json")"
 semantic_joint="$(jq -c '.summary.joint_claim' "$repro_work/semantic-intervention-judgment.json")"
 [[ "$base_meaning" != "$semantic_meaning" && "$base_joint" != "$semantic_joint" ]]
+jq -e '.summary.meaning_claim.numerator == 3 and .summary.meaning_claim.denominator == 4 and .summary.joint_claim.numerator == 2 and .summary.joint_claim.denominator == 4' "$repro_work/semantic-intervention-judgment.json"
 [[ "$(jq -r .source_digest "$repro_work/judgment.json")" != "$(jq -r .source_digest "$repro_work/semantic-intervention-judgment.json")" ]]
 [[ "$(jq -r .semantic_digest "$repro_work/judgment.json")" != "$(jq -r .semantic_digest "$repro_work/semantic-intervention-judgment.json")" ]]
 [[ "$(jq -r .source_digest "$repro_work/judgment.json")" != "$(jq -r .source_digest "$repro_work/presentation-intervention-judgment.json")" ]]
