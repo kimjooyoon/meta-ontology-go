@@ -24,5 +24,4 @@ func claimsFromFacts(facts []Fact) []Claim {
 
 const (
 	semanticWasGeneratedBy = "wasGeneratedBy"
-	statusOpen             = "OPEN"
 )
