@@ -1,8 +1,6 @@
 package experimentpromotionverify
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -115,9 +113,4 @@ func sortedCopy(values []string) []string {
 	result := append([]string(nil), values...)
 	sort.Strings(result)
 	return result
-}
-
-func digestBytes(raw []byte) string {
-	sum := sha256.Sum256(raw)
-	return "sha256:" + hex.EncodeToString(sum[:])
 }
