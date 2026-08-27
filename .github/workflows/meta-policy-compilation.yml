@@ -80,18 +80,21 @@ jobs:
             .verification.conformance_decision == "PASS" and
             .verification.subject_resolution == "UNRESOLVED" and
             .verification.fixed_denominator == 8 and
-            .verification.case_denominator == 3 and
+            .verification.case_denominator == 4 and
             .summary.pass_count == 1 and
             .summary.fail_closed_count == 1 and
-            .summary.unknown_count == 1 and
-            .summary.generated_independent_equivalent == 3 and
-            .summary.source_all_equivalent == 3 and
-            .summary.validator_expectations_confirmed == 3 and
-            .claims.event_count == 48 and
+            .summary.unknown_count == 2 and
+            .summary.generated_independent_equivalent == 4 and
+            .summary.source_all_equivalent == 4 and
+            .summary.validator_expectations_confirmed == 4 and
+            .claims.event_count == 64 and
             all(.evidence[]; .class == "SYNTHETIC_FIXTURE" and .observation_digest != "" and .provenance != "") and
+            all(.cases[]; (.claim_predicates|length) == 8 and ([.claim_predicates[].predicate] | unique | length) == 8) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "REFUTED")) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "OPEN")) and
             all(.claims.events[]; .observation_digest != "" and .provenance != "") and
             .write_set.generated_root_class == "RUNNER_TEMP_ONLY" and
-            .write_set.repository_write_changed == false and
+            .write_set.repository_net_change_observed == false and
             .write_set.mutation_authority == 0 and
             .write_set.promotion_authority == 0
           ' "$root/first/receipt.json"
@@ -123,6 +126,12 @@ jobs:
             echo 'semantic intervention did not change claim transitions' >&2
             exit 1
           fi
+          jq '.claims.events | map(select(.predicate == "decision-reduction") | {claim_id, from, to, decision, stage, step, reason})' "$root/first/receipt.json" > "$intervention/base-decision-reduction.json"
+          jq '.claims.events | map(select(.predicate == "decision-reduction") | {claim_id, from, to, decision, stage, step, reason})' "$intervention/semantic/receipt.json" > "$intervention/semantic-decision-reduction.json"
+          if cmp "$intervention/base-decision-reduction.json" "$intervention/semantic-decision-reduction.json"; then
+            echo 'semantic intervention did not change the decision-reduction predicate' >&2
+            exit 1
+          fi
           base_raw_digest=$(jq -r .source_digest "$root/first/policy.json")
           comment_raw_digest=$(jq -r .source_digest "$intervention/comment/policy.json")
           base_semantic_digest=$(jq -r .semantic_digest "$root/first/policy.json")
@@ -141,9 +150,10 @@ jobs:
             --argjson semantic_digest_changed "$semantic_digest_changed" \
             --argjson generated_behavior_changed true \
             --argjson claim_transitions_changed true \
-            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed}' \
+            --argjson semantic_claim_predicate_changed true \
+            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed, semantic_claim_predicate_changed:$semantic_claim_predicate_changed}' \
             > "$intervention/intervention-summary.json"
-          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed)' "$intervention/intervention-summary.json"
+          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed and .semantic_claim_predicate_changed)' "$intervention/intervention-summary.json"
       - name: Upload producer boundary
         uses: actions/upload-artifact@v6
         with:
@@ -198,15 +208,21 @@ jobs:
             .raw_cases_parsed and
             .gooo_derived_rule_numerator == 8 and
             .gooo_derived_rule_denominator == 8 and
-            .generated_executions_numerator == 3 and
-            .generated_executions_denominator == 3 and
-            .independent_reconstructions_numerator == 3 and
-            .independent_reconstructions_denominator == 3 and
+            .generated_executions_numerator == 4 and
+            .generated_executions_denominator == 4 and
+            .independent_reconstructions_numerator == 4 and
+            .independent_reconstructions_denominator == 4 and
+            .contract_digest_match and
             .import_boundary.producer_compiler_imports == "0/1" and
             .import_boundary.generated_template_imports == "0/1" and
             .import_boundary.independent_evaluator_imports == "0/1" and
             all(.synthetic_evidence[]; .class == "SYNTHETIC_FIXTURE") and
+            (.synthetic_evidence|length) == 4 and
             .current_evidence.class == "CURRENT_EVIDENCE" and
+            .current_evidence.source_digest != "" and
+            .current_evidence.artifact_source_digest != "" and
+            .current_evidence.generated_judge_digest != "" and
+            .current_evidence.independent_digest != "" and
             .subject_resolution == "RESOLVED" and
             .subject_decision.decision == "PASS"
           ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"

@@ -12,7 +12,7 @@ another policy DSL”.
 steps and its reduction. Each of its eight activities has a `computes` value
 carrying source-supplied semantic fields `role`, `meta-operation`,
 `proof-choice`, `stage`, `step`, `reason`, and `claim`. The reduction activity
-also carries six typed source rules that supply the output decision, stage,
+also carries seven typed source rules that supply the output decision, stage,
 step, and reason. The compiler lowers this file through the semantic IR and
 checks only schema, token, cardinality, uniqueness, and safety invariants;
 there is no Go-side list of the eight correct rule values. Changing declaration
@@ -28,19 +28,23 @@ parses/lowers raw `.gooo` and raw cases itself and reconstructs the results
 without importing the producer compiler, generated template, or
 `IndependentEvaluate`.
 
-The fixed denominator is eight policy obligations. The case denominator is
-three synthetic fixtures: one pass, one fail-closed source drift, and one
-unknown missing-consumer case. `validator_expectation` is a validator oracle,
-not producer authority. Every case gets eight `UNRECORDED -> OPEN` claim
-registrations followed by eight persistent outcome transitions. Each transition
-carries the case observation digest and provenance. The receipt therefore
-contains exactly 48 chained events. Separately, the consumer observes the
-runner-temp artifact as `CURRENT_EVIDENCE` and emits subject resolution; this
-is not conflated with synthetic conformance.
+The fixed denominator is eight policy obligations. The case denominator is four
+synthetic fixtures: pass, valid source-digest contradiction, missing consumer,
+and malformed source digest. A valid SHA-256 mismatch is `FAIL_CLOSED`; a
+malformed or missing digest is `UNKNOWN` at `LOWER_RESOLUTION` with its reason
+preserved. `validator_expectation` is a validator oracle, not producer
+authority. Each case gets eight `UNRECORDED -> OPEN` claim registrations
+followed by eight persistent predicate-specific outcome transitions. Each
+transition carries the case observation digest and provenance. The receipt
+therefore contains exactly 64 chained events. Separately, the consumer observes
+the runner-temp artifact as `CURRENT_EVIDENCE`—including actual raw source,
+artifact source, generated judge, and independent contract digests—and emits
+subject resolution; this is not conflated with synthetic conformance.
 
-The producer also records a before/after repository write-set observation. The
-generated six-file bundle is classified `RUNNER_TEMP_ONLY`, with mutation and
-promotion authority both explicitly `0`.
+The producer also records a before/after repository observation named
+`repository_net_change_observed`. The generated six-file bundle is classified
+`RUNNER_TEMP_ONLY`, with mutation and promotion authority both explicitly `0`;
+the observation is about net repository status, not write count.
 
 ## Research basis and limits
 
@@ -71,7 +75,8 @@ The experiment is falsifiable. It fails closed if the schema safety shape,
 source-derived reduction, producer/artifact source digests, generated result,
 independent reconstruction, or claim chain diverge. It remains `UNKNOWN` when
 required evidence is unavailable. CI performs a semantic intervention that
-changes a source reduction reason and claim transition, plus a comment-only
-intervention that changes only the raw digest while preserving semantic digest
-and normalized generated behavior. This remains evidence for the modeled
-contract, not a machine-checked universal compiler theorem.
+changes a source reduction reason and the exact `decision-reduction` predicate,
+plus a comment-only intervention that changes only the raw digest while
+preserving semantic digest, generated behavior, and claims. This remains
+evidence for the modeled contract, not a machine-checked universal compiler
+theorem.

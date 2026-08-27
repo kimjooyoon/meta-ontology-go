@@ -30,7 +30,8 @@ const (
 	receiptSchema        = "gooo/meta-policy-compilation-receipt/v2"
 	reductionSchema      = "decision-reduction:v1"
 	fixedDenominator     = 8
-	reductionRuleCount   = 6
+	reductionRuleCount   = 7
+	claimPredicateCount  = 8
 	decisionPass         = "PASS"
 	decisionFailClosed   = "FAIL_CLOSED"
 	decisionUnknown      = "UNKNOWN"
@@ -40,10 +41,19 @@ const (
 	subjectResolved      = "RESOLVED"
 	conditionUnavailable = "EVIDENCE_UNAVAILABLE"
 	conditionEmpty       = "DIGEST_UNAVAILABLE"
+	conditionMalformed   = "MALFORMED_DIGEST"
 	conditionSource      = "SOURCE_DIGEST_MISMATCH"
 	conditionArtifact    = "ARTIFACT_SOURCE_MISMATCH"
 	conditionIndependent = "INDEPENDENT_SOURCE_MISMATCH"
 	conditionEquivalent  = "SEMANTIC_EQUIVALENCE"
+	claimSourceBound     = "source-bound"
+	claimArtifactBound   = "artifact-digest-bound"
+	claimGenerated       = "generated-execution"
+	claimIndependent     = "independent-replay"
+	claimProof           = "proof-selection"
+	claimLedger          = "ledger-chain"
+	claimReduction       = "decision-reduction"
+	claimLineage         = "lineage-seal"
 )
 
 type rule struct {
@@ -98,6 +108,7 @@ type input struct {
 	ConsumerAvailable            bool   `json:"consumer_available"`
 	ObservedSourceDigest         string `json:"observed_source_digest"`
 	ObservedArtifactSourceDigest string `json:"observed_artifact_source_digest"`
+	ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 	ObservedIndependentDigest    string `json:"observed_independent_digest"`
 }
 
@@ -115,6 +126,7 @@ type result struct {
 type claimTransition struct {
 	Event             int    `json:"event"`
 	ClaimID           string `json:"claim_id"`
+	Predicate         string `json:"predicate"`
 	From              string `json:"from"`
 	To                string `json:"to"`
 	Decision          string `json:"decision"`
@@ -123,6 +135,7 @@ type claimTransition struct {
 	Reason            string `json:"reason"`
 	ObservationDigest string `json:"observation_digest"`
 	Provenance        string `json:"provenance"`
+	Observed          bool   `json:"observed"`
 	PriorDigest       string `json:"prior_digest"`
 	Digest            string `json:"digest"`
 }
@@ -142,6 +155,9 @@ type summary struct {
 	GeneratedIndependentEqual      int `json:"generated_independent_equivalent"`
 	ValidatorExpectationsConfirmed int `json:"validator_expectations_confirmed"`
 	SourceAllEquivalent            int `json:"source_all_equivalent"`
+	ClaimPredicatesDischarged      int `json:"claim_predicates_discharged"`
+	ClaimPredicatesRefuted         int `json:"claim_predicates_refuted"`
+	ClaimPredicatesOpen            int `json:"claim_predicates_open"`
 }
 
 type verification struct {
@@ -156,31 +172,44 @@ type verification struct {
 }
 
 type caseReceipt struct {
-	ID                   string `json:"id"`
-	ValidatorExpectation string `json:"validator_expectation"`
-	EvidenceClass        string `json:"evidence_class"`
-	ObservationDigest    string `json:"observation_digest"`
-	Provenance           string `json:"provenance"`
-	Source               result `json:"source"`
-	Generated            result `json:"generated"`
-	Independent          result `json:"independent"`
-	AllEquivalent        bool   `json:"all_decisions_equivalent"`
-	Equivalent           bool   `json:"decisions_equivalent"`
-	ValidatorConfirmed   bool   `json:"validator_expectation_confirmed"`
-	ClaimStartDigest     string `json:"claim_start_digest"`
-	ClaimEndDigest       string `json:"claim_end_digest"`
+	ID                   string                      `json:"id"`
+	ValidatorExpectation string                      `json:"validator_expectation"`
+	EvidenceClass        string                      `json:"evidence_class"`
+	ObservationDigest    string                      `json:"observation_digest"`
+	Provenance           string                      `json:"provenance"`
+	Source               result                      `json:"source"`
+	Generated            result                      `json:"generated"`
+	Independent          result                      `json:"independent"`
+	AllEquivalent        bool                        `json:"all_decisions_equivalent"`
+	Equivalent           bool                        `json:"decisions_equivalent"`
+	ValidatorConfirmed   bool                        `json:"validator_expectation_confirmed"`
+	ClaimPredicates      []claimPredicateObservation `json:"claim_predicates"`
+	ClaimStartDigest     string                      `json:"claim_start_digest"`
+	ClaimEndDigest       string                      `json:"claim_end_digest"`
+}
+
+type claimPredicateObservation struct {
+	ClaimID           string `json:"claim_id"`
+	Predicate         string `json:"predicate"`
+	Outcome           string `json:"outcome"`
+	Observed          bool   `json:"observed"`
+	Stage             string `json:"stage"`
+	Step              int    `json:"step"`
+	Reason            string `json:"reason"`
+	ObservationDigest string `json:"observation_digest"`
+	Provenance        string `json:"provenance"`
 }
 
 type writeSet struct {
-	RepositoryBeforeDigest string   `json:"repository_before_digest"`
-	RepositoryAfterDigest  string   `json:"repository_after_digest"`
-	RepositoryBeforeCount  int      `json:"repository_before_count"`
-	RepositoryAfterCount   int      `json:"repository_after_count"`
-	RepositoryWriteChanged bool     `json:"repository_write_changed"`
-	GeneratedRootClass     string   `json:"generated_root_class"`
-	GeneratedFiles         []string `json:"generated_files"`
-	MutationAuthority      int      `json:"mutation_authority"`
-	PromotionAuthority     int      `json:"promotion_authority"`
+	RepositoryBeforeDigest      string   `json:"repository_before_digest"`
+	RepositoryAfterDigest       string   `json:"repository_after_digest"`
+	RepositoryBeforeCount       int      `json:"repository_before_count"`
+	RepositoryAfterCount        int      `json:"repository_after_count"`
+	RepositoryNetChangeObserved bool     `json:"repository_net_change_observed"`
+	GeneratedRootClass          string   `json:"generated_root_class"`
+	GeneratedFiles              []string `json:"generated_files"`
+	MutationAuthority           int      `json:"mutation_authority"`
+	PromotionAuthority          int      `json:"promotion_authority"`
 }
 
 type receipt struct {
@@ -201,14 +230,18 @@ type receipt struct {
 }
 
 type evidenceObservation struct {
-	Class             string `json:"class"`
-	CaseID            string `json:"case_id"`
-	ProducerAvailable bool   `json:"producer_available"`
-	ConsumerAvailable bool   `json:"consumer_available"`
-	SourceDigest      string `json:"source_digest"`
-	ArtifactDigest    string `json:"artifact_digest"`
-	ObservationDigest string `json:"observation_digest"`
-	Provenance        string `json:"provenance"`
+	Class                string `json:"class"`
+	CaseID               string `json:"case_id"`
+	ProducerAvailable    bool   `json:"producer_available"`
+	ConsumerAvailable    bool   `json:"consumer_available"`
+	SourceDigest         string `json:"source_digest"`
+	ArtifactSourceDigest string `json:"artifact_source_digest"`
+	ArtifactDigest       string `json:"artifact_digest"`
+	GeneratedJudgeDigest string `json:"generated_judge_digest"`
+	IndependentDigest    string `json:"independent_digest"`
+	SemanticDigest       string `json:"semantic_digest"`
+	ObservationDigest    string `json:"observation_digest"`
+	Provenance           string `json:"provenance"`
 }
 
 type importBoundary struct {
@@ -227,6 +260,9 @@ type consumerReport struct {
 	GeneratedExecutionsDenominator        int                   `json:"generated_executions_denominator"`
 	IndependentReconstructionsNumerator   int                   `json:"independent_reconstructions_numerator"`
 	IndependentReconstructionsDenominator int                   `json:"independent_reconstructions_denominator"`
+	ProducerContractDigest                string                `json:"producer_contract_digest"`
+	ConsumerContractDigest                string                `json:"consumer_contract_digest"`
+	ContractDigestMatch                   bool                  `json:"contract_digest_match"`
 	ImportBoundary                        importBoundary        `json:"import_boundary"`
 	SyntheticEvidence                     []evidenceObservation `json:"synthetic_evidence"`
 	CurrentEvidence                       evidenceObservation   `json:"current_evidence"`
@@ -260,13 +296,16 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	cases, err := readRawCases(casesPath, compiled.SourceDigest)
+	artifactBytes, err := os.ReadFile(filepath.Join(artifactDir, "artifact.json"))
 	if err != nil {
 		return err
 	}
-	artifact, err := readStrict[artifact](filepath.Join(artifactDir, "artifact.json"))
+	artifact, err := decodeBytes[artifact](artifactBytes)
 	if err != nil {
-		return err
+		return fmt.Errorf("decode artifact: %w", err)
+	}
+	if digestBytes(artifactBytes) != digestJSONIndented(artifact) {
+		return errors.New("consumer observed a non-canonical artifact byte stream")
 	}
 	if artifact.Schema != artifactSchema || !samePolicy(artifact.Policy, compiled) {
 		return errors.New("consumer observed an artifact that differs from its raw-source reconstruction")
@@ -278,6 +317,10 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if digestBytes(judge) != artifact.GeneratedJudgeHash {
 		return errors.New("consumer observed a generated judge digest mismatch")
 	}
+	cases, err := readRawCases(casesPath, compiled.SourceDigest, compiled.SemanticDigest, artifact.GeneratedJudgeHash)
+	if err != nil {
+		return err
+	}
 	storedGenerated, err := readStrict[[]result](filepath.Join(artifactDir, "generated-results.json"))
 	if err != nil {
 		return err
@@ -286,9 +329,16 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	storedReceipt, err := readStrict[receipt](filepath.Join(artifactDir, "receipt.json"))
+	receiptBytes, err := os.ReadFile(filepath.Join(artifactDir, "receipt.json"))
 	if err != nil {
 		return err
+	}
+	storedReceipt, err := decodeBytes[receipt](receiptBytes)
+	if err != nil {
+		return fmt.Errorf("decode receipt: %w", err)
+	}
+	if digestReceipt(storedReceipt) != storedReceipt.ReceiptDigest {
+		return errors.New("consumer observed a receipt digest mismatch")
 	}
 	if storedReceipt.Schema != receiptSchema || !samePolicy(storedReceipt.Policy, compiled) || storedReceipt.GeneratedDigest != artifact.GeneratedJudgeHash {
 		return errors.New("consumer observed a receipt not bound to the raw source and artifact")
@@ -299,8 +349,12 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if len(storedGenerated) != len(cases) || len(storedIndependent) != len(cases) || len(storedReceipt.Cases) != len(cases) {
 		return errors.New("consumer observed incomplete result denominators")
 	}
-	if storedReceipt.Summary.CaseCount != len(cases) || storedReceipt.Summary.PassCount != 1 || storedReceipt.Summary.FailClosedCount != 1 || storedReceipt.Summary.UnknownCount != 1 || storedReceipt.Summary.GeneratedIndependentEqual != len(cases) || storedReceipt.Summary.SourceAllEquivalent != len(cases) || storedReceipt.Summary.ValidatorExpectationsConfirmed != len(cases) {
+	if storedReceipt.Summary.CaseCount != len(cases) || storedReceipt.Summary.PassCount != 1 || storedReceipt.Summary.FailClosedCount != 1 || storedReceipt.Summary.UnknownCount != 2 || storedReceipt.Summary.GeneratedIndependentEqual != len(cases) || storedReceipt.Summary.SourceAllEquivalent != len(cases) || storedReceipt.Summary.ValidatorExpectationsConfirmed != len(cases) {
 		return errors.New("consumer observed an incomplete conformance summary")
+	}
+	discharged, refuted, open := countPredicates(storedReceipt.Cases)
+	if storedReceipt.Summary.ClaimPredicatesDischarged != discharged || storedReceipt.Summary.ClaimPredicatesRefuted != refuted || storedReceipt.Summary.ClaimPredicatesOpen != open {
+		return errors.New("consumer observed claim outcomes not reflected in the summary")
 	}
 	generatedByID := make(map[string]result, len(storedGenerated))
 	independentByID := make(map[string]result, len(storedIndependent))
@@ -335,8 +389,8 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err := verifyReceiptObservations(storedReceipt, cases, compiled, artifact); err != nil {
 		return err
 	}
-	current := observeCurrentEvidence(artifactDir, compiled, source)
-	currentInput := input{ID: "current-subject", EvidenceClass: evidenceCurrent, Provenance: current.Provenance, ProducerAvailable: current.ProducerAvailable, ConsumerAvailable: current.ConsumerAvailable, ObservedSourceDigest: current.SourceDigest, ObservedArtifactSourceDigest: artifact.Policy.SourceDigest, ObservedIndependentDigest: compiled.SourceDigest}
+	current := observeCurrentEvidence(artifactDir, compiled, source, artifact, judge)
+	currentInput := input{ID: "current-subject", EvidenceClass: evidenceCurrent, Provenance: current.Provenance, ProducerAvailable: current.ProducerAvailable, ConsumerAvailable: current.ConsumerAvailable, ObservedSourceDigest: current.SourceDigest, ObservedArtifactSourceDigest: current.ArtifactSourceDigest, ObservedGeneratedJudgeDigest: current.GeneratedJudgeDigest, ObservedIndependentDigest: current.IndependentDigest}
 	currentDecision := evaluate(compiled, currentInput)
 	if currentDecision.Decision == decisionPass {
 		currentDecision.Reason = "CURRENT_ARTIFACT_BOUND"
@@ -346,12 +400,13 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 		GoooDerivedRuleNumerator: len(compiled.Rules), GoooDerivedRuleDenominator: fixedDenominator,
 		GeneratedExecutionsNumerator: generatedCount, GeneratedExecutionsDenominator: len(cases),
 		IndependentReconstructionsNumerator: independentCount, IndependentReconstructionsDenominator: len(cases),
+		ProducerContractDigest: artifact.Policy.SemanticDigest, ConsumerContractDigest: compiled.SemanticDigest, ContractDigestMatch: artifact.Policy.SemanticDigest == compiled.SemanticDigest,
 		ImportBoundary:    importBoundary{ProducerCompilerImports: "0/1", GeneratedTemplateImports: "0/1", IndependentEvaluatorImports: "0/1"},
 		SyntheticEvidence: make([]evidenceObservation, 0, len(cases)), CurrentEvidence: current,
 		SubjectResolution: subjectUnresolved, SubjectDecision: currentDecision, IndependentResults: reconstructed,
 	}
 	for _, value := range cases {
-		report.SyntheticEvidence = append(report.SyntheticEvidence, evidenceObservation{Class: value.EvidenceClass, CaseID: value.ID, ProducerAvailable: value.ProducerAvailable, ConsumerAvailable: value.ConsumerAvailable, SourceDigest: value.ObservedSourceDigest, ArtifactDigest: digestBytes(mustRead(filepath.Join(artifactDir, "artifact.json"))), ObservationDigest: digestInput(value), Provenance: value.Provenance})
+		report.SyntheticEvidence = append(report.SyntheticEvidence, evidenceObservation{Class: value.EvidenceClass, CaseID: value.ID, ProducerAvailable: value.ProducerAvailable, ConsumerAvailable: value.ConsumerAvailable, SourceDigest: value.ObservedSourceDigest, ArtifactSourceDigest: value.ObservedArtifactSourceDigest, ArtifactDigest: digestBytes(artifactBytes), GeneratedJudgeDigest: value.ObservedGeneratedJudgeDigest, IndependentDigest: value.ObservedIndependentDigest, SemanticDigest: compiled.SemanticDigest, ObservationDigest: digestInput(value), Provenance: value.Provenance})
 	}
 	if currentDecision.Decision == decisionPass {
 		report.SubjectResolution = subjectResolved
@@ -371,7 +426,7 @@ func parseRawPolicy(source []byte) (policy, error) {
 	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
 		return policy{}, errors.New("consumer rejected raw policy package/namespace")
 	}
-	result := policy{Schema: policySchema, PolicyID: "gooo://meta-policy-compilation/policy/v2", Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: ir.StableHash(), Denominator: fixedDenominator, Rules: make([]rule, 0, fixedDenominator)}
+	result := policy{Schema: policySchema, PolicyID: "gooo://meta-policy-compilation/policy/v2", Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenominator, Rules: make([]rule, 0, fixedDenominator)}
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity {
 			continue
@@ -400,7 +455,27 @@ func parseRawPolicy(source []byte) (policy, error) {
 			return policy{}, errors.New("consumer rejected duplicate or missing source rule step")
 		}
 	}
+	if err := validateClaims(result.Rules); err != nil {
+		return policy{}, err
+	}
 	return result, nil
+}
+
+func validateClaims(rules []rule) error {
+	want := []string{claimSourceBound, claimArtifactBound, claimGenerated, claimIndependent, claimProof, claimLedger, claimReduction, claimLineage}
+	seen := make(map[string]bool, len(want))
+	for _, value := range rules {
+		if seen[value.Claim] {
+			return fmt.Errorf("consumer rejected duplicate claim predicate %q", value.Claim)
+		}
+		seen[value.Claim] = true
+	}
+	for _, value := range want {
+		if !seen[value] {
+			return fmt.Errorf("consumer rejected missing claim predicate %q", value)
+		}
+	}
+	return nil
 }
 
 type activityValues struct {
@@ -460,12 +535,12 @@ func parseReduction(value string) (reduction, error) {
 	return result, nil
 }
 
-func readRawCases(path, sourceDigest string) ([]input, error) {
+func readRawCases(path, sourceDigest, semanticDigest, judgeDigest string) ([]input, error) {
 	values, err := readStrict[[]input](path)
 	if err != nil {
 		return nil, err
 	}
-	if len(values) != 3 {
+	if len(values) != 4 {
 		return nil, fmt.Errorf("consumer rejected synthetic case denominator %d", len(values))
 	}
 	seen := make(map[string]bool, len(values))
@@ -480,14 +555,15 @@ func readRawCases(path, sourceDigest string) ([]input, error) {
 		}
 		value.ObservedSourceDigest = bindDigest(value.ObservedSourceDigest, sourceDigest)
 		value.ObservedArtifactSourceDigest = bindDigest(value.ObservedArtifactSourceDigest, sourceDigest)
-		value.ObservedIndependentDigest = bindDigest(value.ObservedIndependentDigest, sourceDigest)
+		value.ObservedGeneratedJudgeDigest = bindDigest(value.ObservedGeneratedJudgeDigest, judgeDigest)
+		value.ObservedIndependentDigest = bindDigest(value.ObservedIndependentDigest, semanticDigest)
 	}
 	return values, nil
 }
 
-func bindDigest(value, sourceDigest string) string {
-	if value == "SOURCE_DIGEST_FROM_POLICY" {
-		return sourceDigest
+func bindDigest(value, expected string) string {
+	if value == "SOURCE_DIGEST_FROM_POLICY" || value == "SEMANTIC_DIGEST_FROM_POLICY" || value == "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT" {
+		return expected
 	}
 	return value
 }
@@ -498,7 +574,7 @@ func evaluate(policy policy, value input) result {
 		return setSafety(base, "FIXED_DENOMINATOR_CHANGED")
 	}
 	for _, row := range policy.Reduction.Rules {
-		if matches(row.Condition, policy.SourceDigest, value) {
+		if matches(row.Condition, policy.SourceDigest, policy.SemanticDigest, value) {
 			base.Decision, base.Stage, base.Step, base.Reason = row.Decision, row.Stage, row.Step, row.Reason
 			return base
 		}
@@ -506,21 +582,26 @@ func evaluate(policy policy, value input) result {
 	return setSafety(base, "NO_REDUCTION_RULE_MATCHED")
 }
 
-func matches(condition, sourceDigest string, value input) bool {
+func matches(condition, sourceDigest, semanticDigest string, value input) bool {
 	available := value.ProducerAvailable && value.ConsumerAvailable
+	valid := func(value string) bool { return regexp.MustCompile(`^sha256:[0-9a-f]{64}$`).MatchString(value) }
+	empty := value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedGeneratedJudgeDigest == "" || value.ObservedIndependentDigest == ""
+	malformed := !valid(value.ObservedSourceDigest) || !valid(value.ObservedArtifactSourceDigest) || !valid(value.ObservedGeneratedJudgeDigest) || !valid(value.ObservedIndependentDigest)
 	switch condition {
 	case conditionUnavailable:
 		return !available
 	case conditionEmpty:
-		return available && (value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedIndependentDigest == "")
+		return available && empty
+	case conditionMalformed:
+		return available && !empty && malformed
 	case conditionSource:
-		return available && value.ObservedSourceDigest != "" && value.ObservedArtifactSourceDigest != "" && value.ObservedIndependentDigest != "" && value.ObservedSourceDigest != sourceDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest != sourceDigest
 	case conditionArtifact:
-		return available && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest != "" && value.ObservedArtifactSourceDigest != sourceDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest != sourceDigest
 	case conditionIndependent:
-		return available && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest == sourceDigest && value.ObservedIndependentDigest != "" && value.ObservedIndependentDigest != sourceDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest == sourceDigest && value.ObservedIndependentDigest != semanticDigest
 	case conditionEquivalent:
-		return available && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest == sourceDigest && value.ObservedIndependentDigest == sourceDigest
+		return available && !empty && !malformed && value.ObservedSourceDigest == sourceDigest && value.ObservedArtifactSourceDigest == sourceDigest && value.ObservedIndependentDigest == semanticDigest
 	default:
 		return false
 	}
@@ -538,8 +619,9 @@ func executeJudge(ctx commandContextValue, path, dir string, value input) (resul
 		ConsumerAvailable            bool   `json:"consumer_available"`
 		ObservedSourceDigest         string `json:"observed_source_digest"`
 		ObservedArtifactSourceDigest string `json:"observed_artifact_source_digest"`
+		ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 		ObservedIndependentDigest    string `json:"observed_independent_digest"`
-	}{ID: value.ID, ProducerAvailable: value.ProducerAvailable, ConsumerAvailable: value.ConsumerAvailable, ObservedSourceDigest: value.ObservedSourceDigest, ObservedArtifactSourceDigest: value.ObservedArtifactSourceDigest, ObservedIndependentDigest: value.ObservedIndependentDigest})
+	}{ID: value.ID, ProducerAvailable: value.ProducerAvailable, ConsumerAvailable: value.ConsumerAvailable, ObservedSourceDigest: value.ObservedSourceDigest, ObservedArtifactSourceDigest: value.ObservedArtifactSourceDigest, ObservedGeneratedJudgeDigest: value.ObservedGeneratedJudgeDigest, ObservedIndependentDigest: value.ObservedIndependentDigest})
 	if err != nil {
 		return result{}, err
 	}
@@ -561,7 +643,7 @@ func commandContext() commandContextValue {
 }
 
 func verifyReceiptObservations(value receipt, cases []input, policy policy, artifact artifact) error {
-	if len(value.Cases) != len(cases) || len(value.Evidence) != len(cases) || len(value.Claims.Events) != len(cases)*fixedDenominator*2 || value.Claims.EventCount != len(value.Claims.Events) || value.Claims.Schema != "gooo/meta-policy-compilation-claims/v2" {
+	if len(value.Cases) != len(cases) || len(value.Evidence) != len(cases) || len(value.Claims.Events) != len(cases)*claimPredicateCount*2 || value.Claims.EventCount != len(value.Claims.Events) || value.Claims.Schema != "gooo/meta-policy-compilation-claims/v2" {
 		return errors.New("consumer rejected claim or case denominator")
 	}
 	byID := make(map[string]caseReceipt, len(value.Cases))
@@ -575,8 +657,11 @@ func verifyReceiptObservations(value receipt, cases []input, policy policy, arti
 		}
 		source := evaluate(policy, input)
 		independent := evaluate(policy, input)
-		if !sameResult(stored.Source, source) || !sameResult(stored.Independent, independent) || !sameResult(stored.Source, stored.Generated) || !stored.AllEquivalent || !stored.Equivalent || !stored.ValidatorConfirmed {
+		if len(stored.ClaimPredicates) != claimPredicateCount || !sameResult(stored.Source, source) || !sameResult(stored.Independent, independent) || !sameResult(stored.Source, stored.Generated) || !stored.AllEquivalent || !stored.Equivalent || !stored.ValidatorConfirmed {
 			return fmt.Errorf("consumer rejected source/generated/independent lineage for %q", input.ID)
+		}
+		if err := verifyPredicateObservations(stored, policy, input, artifact); err != nil {
+			return err
 		}
 	}
 	evidenceByID := make(map[string]evidenceObservation, len(value.Evidence))
@@ -585,18 +670,229 @@ func verifyReceiptObservations(value receipt, cases []input, policy policy, arti
 	}
 	for _, input := range cases {
 		observed, ok := evidenceByID[input.ID]
-		if !ok || observed.Class != evidenceSynthetic || observed.ProducerAvailable != input.ProducerAvailable || observed.ConsumerAvailable != input.ConsumerAvailable || observed.SourceDigest != input.ObservedSourceDigest || observed.ObservationDigest != digestInput(input) || observed.Provenance != input.Provenance {
+		if !ok || observed.Class != evidenceSynthetic || observed.ProducerAvailable != input.ProducerAvailable || observed.ConsumerAvailable != input.ConsumerAvailable || observed.SourceDigest != input.ObservedSourceDigest || observed.ArtifactSourceDigest != input.ObservedArtifactSourceDigest || observed.ArtifactDigest != digestJSONIndented(artifact) || observed.GeneratedJudgeDigest != input.ObservedGeneratedJudgeDigest || observed.IndependentDigest != input.ObservedIndependentDigest || observed.SemanticDigest != policy.SemanticDigest || observed.ObservationDigest != digestInput(input) || observed.Provenance != input.Provenance {
 			return fmt.Errorf("consumer rejected receipt evidence provenance for %q", input.ID)
 		}
 	}
 	if err := verifyClaimChain(value.Claims, cases); err != nil {
 		return err
 	}
-	if value.WriteSet.RepositoryBeforeDigest == "" || value.WriteSet.RepositoryBeforeDigest != value.WriteSet.RepositoryAfterDigest || value.WriteSet.RepositoryWriteChanged || value.WriteSet.RepositoryBeforeCount != value.WriteSet.RepositoryAfterCount || value.WriteSet.GeneratedRootClass != "RUNNER_TEMP_ONLY" || value.WriteSet.MutationAuthority != 0 || value.WriteSet.PromotionAuthority != 0 {
+	if err := verifyClaimEventBindings(value, cases, policy); err != nil {
+		return err
+	}
+	if value.WriteSet.RepositoryBeforeDigest == "" || value.WriteSet.RepositoryBeforeDigest != value.WriteSet.RepositoryAfterDigest || value.WriteSet.RepositoryNetChangeObserved || value.WriteSet.RepositoryBeforeCount != value.WriteSet.RepositoryAfterCount || value.WriteSet.GeneratedRootClass != "RUNNER_TEMP_ONLY" || value.WriteSet.MutationAuthority != 0 || value.WriteSet.PromotionAuthority != 0 {
 		return errors.New("consumer rejected generated write-set authority")
 	}
 	if value.Policy.SourceDigest != policy.SourceDigest || artifact.Policy.SourceDigest != policy.SourceDigest {
 		return errors.New("consumer rejected source digest lineage")
+	}
+	return nil
+}
+
+func verifyPredicateObservations(stored caseReceipt, policy policy, input input, artifact artifact) error {
+	seen := make(map[string]bool, claimPredicateCount)
+	byID := make(map[string]claimPredicateObservation, claimPredicateCount)
+	for _, observation := range stored.ClaimPredicates {
+		if seen[observation.Predicate] || observation.ObservationDigest != stored.ObservationDigest || observation.Provenance != stored.Provenance {
+			return fmt.Errorf("consumer rejected duplicate or unbound predicate for %q", stored.ID)
+		}
+		seen[observation.Predicate] = true
+		byID[observation.ClaimID] = observation
+	}
+	for _, rule := range policy.Rules {
+		claim := claimID(stored.ID, rule)
+		observation, ok := byID[claim]
+		if !ok || observation.Predicate != rule.Claim || observation.ClaimID != claim || (observation.Outcome != "OPEN" && observation.Outcome != "DISCHARGED" && observation.Outcome != "REFUTED") {
+			return fmt.Errorf("consumer rejected predicate %q for %q", rule.Claim, stored.ID)
+		}
+		expected := assessPredicate(rule, policy, artifact, input, stored.Source, stored.Generated, stored.Independent)
+		if observation.Outcome != expected.outcome || observation.Observed != expected.observed || observation.Stage != expected.stage || observation.Step != expected.step || observation.Reason != expected.reason {
+			return fmt.Errorf("consumer independently rejected predicate %q for %q", rule.Claim, stored.ID)
+		}
+	}
+	return nil
+}
+
+func byPredicate(stored caseReceipt, predicate string) claimPredicateObservation {
+	for _, value := range stored.ClaimPredicates {
+		if value.Predicate == predicate {
+			return value
+		}
+	}
+	return claimPredicateObservation{}
+}
+
+func claimID(caseID string, rule rule) string {
+	return fmt.Sprintf("gooo://meta-policy-compilation/claim/%s/%02d-%s", caseID, rule.Step, rule.Claim)
+}
+
+type predicateAssessment struct {
+	outcome  string
+	observed bool
+	stage    string
+	step     int
+	reason   string
+}
+
+func countPredicates(cases []caseReceipt) (int, int, int) {
+	discharged, refuted, open := 0, 0, 0
+	for _, stored := range cases {
+		for _, observation := range stored.ClaimPredicates {
+			switch observation.Outcome {
+			case "DISCHARGED":
+				discharged++
+			case "REFUTED":
+				refuted++
+			case "OPEN":
+				open++
+			}
+		}
+	}
+	return discharged, refuted, open
+}
+
+func assessPredicate(rule rule, policy policy, artifact artifact, input input, source, generated, independent result) predicateAssessment {
+	open := predicateAssessment{outcome: "OPEN", stage: "VERIFY", step: 4, reason: conditionUnavailable}
+	switch rule.Claim {
+	case claimSourceBound:
+		return assessConsumerDigest(rule, input.ProducerAvailable, input.ObservedSourceDigest, policy.SourceDigest, conditionSource)
+	case claimArtifactBound:
+		return assessConsumerDigest(rule, input.ConsumerAvailable, input.ObservedArtifactSourceDigest, policy.SourceDigest, conditionArtifact)
+	case claimGenerated:
+		if !input.ProducerAvailable {
+			return open
+		}
+		if input.ObservedGeneratedJudgeDigest == "" {
+			open.reason = conditionEmpty
+			return open
+		}
+		if !validDigest(input.ObservedGeneratedJudgeDigest) {
+			open.reason, open.stage = conditionMalformed, "LOWER_RESOLUTION"
+			return open
+		}
+		if input.ObservedGeneratedJudgeDigest != artifact.GeneratedJudgeHash {
+			return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "GENERATED_JUDGE_DIGEST_MISMATCH"}
+		}
+		if validResult(generated, input.ID, policy) {
+			return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "GENERATED_EXECUTION_OBSERVED"}
+		}
+		return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "GENERATED_EXECUTION_INVALID"}
+	case claimIndependent:
+		if !input.ConsumerAvailable {
+			return open
+		}
+		if input.ObservedIndependentDigest == "" {
+			open.reason = conditionEmpty
+			return open
+		}
+		if !validDigest(input.ObservedIndependentDigest) {
+			open.reason, open.stage = conditionMalformed, "LOWER_RESOLUTION"
+			return open
+		}
+		if !validResult(independent, input.ID, policy) || !sameResult(source, independent) {
+			return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "INDEPENDENT_REPLAY_MISMATCH"}
+		}
+		if input.ObservedIndependentDigest != policy.SemanticDigest {
+			return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: conditionIndependent}
+		}
+		return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "INDEPENDENT_REPLAY_OBSERVED"}
+	case claimProof:
+		for _, candidate := range policy.Rules {
+			if candidate.Claim == claimProof && candidate.ProofChoice != "" {
+				return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "PROOF_SELECTION_OBSERVED"}
+			}
+		}
+		return predicateAssessment{outcome: "OPEN", stage: rule.Stage, step: rule.Step, reason: "PROOF_SELECTION_MISSING"}
+	case claimLedger:
+		return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "LEDGER_CHAIN_APPENDED"}
+	case claimReduction:
+		if !input.ProducerAvailable {
+			return open
+		}
+		if validResult(source, input.ID, policy) && sameResult(source, generated) && sameResult(source, independent) && reductionMatches(policy, input, source) {
+			return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: source.Reason}
+		}
+		return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "DECISION_REDUCTION_MISMATCH"}
+	case claimLineage:
+		if !input.ProducerAvailable || !input.ConsumerAvailable {
+			return open
+		}
+		if input.ObservedSourceDigest == "" || input.ObservedArtifactSourceDigest == "" || input.ObservedGeneratedJudgeDigest == "" || input.ObservedIndependentDigest == "" {
+			open.reason = conditionEmpty
+			return open
+		}
+		if !validDigest(input.ObservedSourceDigest) || !validDigest(input.ObservedArtifactSourceDigest) || !validDigest(input.ObservedGeneratedJudgeDigest) || !validDigest(input.ObservedIndependentDigest) {
+			open.reason, open.stage = conditionMalformed, "LOWER_RESOLUTION"
+			return open
+		}
+		if input.ObservedSourceDigest != policy.SourceDigest {
+			return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: conditionSource}
+		}
+		if input.ObservedArtifactSourceDigest != artifact.Policy.SourceDigest || input.ObservedGeneratedJudgeDigest != artifact.GeneratedJudgeHash || input.ObservedIndependentDigest != policy.SemanticDigest {
+			return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "LINEAGE_DIGEST_MISMATCH"}
+		}
+		if validResult(source, input.ID, policy) && sameResult(source, generated) && sameResult(source, independent) {
+			return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "LINEAGE_SEALED"}
+		}
+		return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: "LINEAGE_RESULT_MISMATCH"}
+	}
+	return open
+}
+
+func assessConsumerDigest(rule rule, available bool, observed, expected, mismatch string) predicateAssessment {
+	open := predicateAssessment{outcome: "OPEN", stage: "VERIFY", step: 4, reason: conditionUnavailable}
+	if !available {
+		return open
+	}
+	if observed == "" {
+		open.reason = conditionEmpty
+		return open
+	}
+	if !validDigest(observed) {
+		open.reason, open.stage = conditionMalformed, "LOWER_RESOLUTION"
+		return open
+	}
+	if observed == expected {
+		return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "DIGEST_BOUND"}
+	}
+	return predicateAssessment{outcome: "REFUTED", observed: true, stage: rule.Stage, step: rule.Step, reason: mismatch}
+}
+
+func validResult(value result, caseID string, policy policy) bool {
+	return value.CaseID == caseID && value.PolicyDigest == policy.SourceDigest && value.SemanticDigest == policy.SemanticDigest && value.Denominator == policy.Denominator && knownDecision(value.Decision) && value.Stage != "" && value.Step > 0 && value.Reason != ""
+}
+
+func reductionMatches(policy policy, value input, expected result) bool {
+	for _, row := range policy.Reduction.Rules {
+		if matches(row.Condition, policy.SourceDigest, policy.SemanticDigest, value) {
+			return expected.Decision == row.Decision && expected.Stage == row.Stage && expected.Step == row.Step && expected.Reason == row.Reason
+		}
+	}
+	return false
+}
+
+func verifyClaimEventBindings(value receipt, cases []input, policy policy) error {
+	byID := make(map[string]caseReceipt, len(value.Cases))
+	for _, stored := range value.Cases {
+		byID[stored.ID] = stored
+	}
+	order := append([]input(nil), cases...)
+	sort.Slice(order, func(i, j int) bool { return order[i].ID < order[j].ID })
+	for caseIndex, input := range order {
+		stored, ok := byID[input.ID]
+		if !ok {
+			return fmt.Errorf("consumer has no claim segment for %q", input.ID)
+		}
+		base := caseIndex * claimPredicateCount * 2
+		for ruleIndex, sourceRule := range policy.Rules {
+			observation := byPredicate(stored, sourceRule.Claim)
+			opening := value.Claims.Events[base+ruleIndex]
+			outcome := value.Claims.Events[base+claimPredicateCount+ruleIndex]
+			claim := claimID(input.ID, sourceRule)
+			if opening.ClaimID != claim || opening.Predicate != sourceRule.Claim || opening.From != "UNRECORDED" || opening.To != "OPEN" || opening.Observed || opening.Reason != "CLAIM_OPENED" || outcome.ClaimID != claim || outcome.Predicate != sourceRule.Claim || outcome.From != "OPEN" || outcome.To != observation.Outcome || outcome.Observed != observation.Observed || outcome.Stage != observation.Stage || outcome.Step != observation.Step || outcome.Reason != observation.Reason {
+				return fmt.Errorf("consumer claim event binding is invalid for %q/%s", input.ID, sourceRule.Claim)
+			}
+		}
 	}
 	return nil
 }
@@ -610,7 +906,7 @@ func verifyClaimChain(ledger claimLedger, cases []input) error {
 		allowed[digestInput(value)] = value.Provenance
 	}
 	for index, event := range ledger.Events {
-		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || event.ObservationDigest == "" || event.Provenance == "" || allowed[event.ObservationDigest] != event.Provenance || counts[event.ClaimID] >= 2 {
+		if event.Event != index+1 || event.PriorDigest != prior || event.ClaimID == "" || event.Predicate == "" || event.ObservationDigest == "" || event.Provenance == "" || allowed[event.ObservationDigest] != event.Provenance || counts[event.ClaimID] >= 2 {
 			return fmt.Errorf("consumer claim chain broken at event %d", event.Event)
 		}
 		canonical := event
@@ -620,6 +916,9 @@ func verifyClaimChain(ledger claimLedger, cases []input) error {
 		}
 		if !validTransition(event.From, event.To) {
 			return fmt.Errorf("consumer claim transition %s -> %s is invalid", event.From, event.To)
+		}
+		if (event.From == "UNRECORDED" && (event.To != "OPEN" || event.Observed)) || (event.From == "OPEN" && (event.To == "DISCHARGED" || event.To == "REFUTED") != event.Observed) {
+			return fmt.Errorf("consumer claim observation invalid at event %d", event.Event)
 		}
 		if current, ok := states[event.ClaimID]; ok && current != event.From {
 			return fmt.Errorf("consumer claim %q does not continue", event.ClaimID)
@@ -646,7 +945,7 @@ func validTransition(from, to string) bool {
 	return (from == "UNRECORDED" && to == "OPEN") || (from == "OPEN" && (to == "OPEN" || to == "DISCHARGED" || to == "REFUTED"))
 }
 
-func observeCurrentEvidence(dir string, policy policy, source []byte) evidenceObservation {
+func observeCurrentEvidence(dir string, policy policy, source []byte, artifact artifact, judge []byte) evidenceObservation {
 	files := []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"}
 	available := true
 	for _, name := range files {
@@ -659,8 +958,8 @@ func observeCurrentEvidence(dir string, policy policy, source []byte) evidenceOb
 	if err == nil {
 		artifactDigest = digestBytes(artifactBytes)
 	}
-	provenance := "runner-temp producer artifact observed by raw-source consumer"
-	observation := evidenceObservation{Class: evidenceCurrent, CaseID: "current-subject", ProducerAvailable: available, ConsumerAvailable: true, SourceDigest: digestBytes(source), ArtifactDigest: artifactDigest, Provenance: provenance}
+	provenance := "current runner-temp artifact: raw policy, artifact source, generated judge bytes, and independent raw-source contract observed"
+	observation := evidenceObservation{Class: evidenceCurrent, CaseID: "current-subject", ProducerAvailable: available, ConsumerAvailable: available, SourceDigest: digestBytes(source), ArtifactSourceDigest: artifact.Policy.SourceDigest, ArtifactDigest: artifactDigest, GeneratedJudgeDigest: digestBytes(judge), IndependentDigest: policy.SemanticDigest, SemanticDigest: policy.SemanticDigest, Provenance: provenance}
 	observation.ObservationDigest = digestEvidence(observation)
 	return observation
 }
@@ -683,6 +982,16 @@ func digestEvidence(value evidenceObservation) string {
 func digestJSON(value any) string {
 	data, _ := json.Marshal(value)
 	return digestBytes(data)
+}
+
+func digestJSONIndented(value any) string {
+	data, _ := json.MarshalIndent(value, "", "  ")
+	return digestBytes(append(data, '\n'))
+}
+
+func digestReceipt(value receipt) string {
+	value.ReceiptDigest = ""
+	return digestJSON(value)
 }
 
 func digestBytes(data []byte) string {
@@ -735,7 +1044,7 @@ func mustRead(path string) []byte {
 
 func knownCondition(value string) bool {
 	switch value {
-	case conditionUnavailable, conditionEmpty, conditionSource, conditionArtifact, conditionIndependent, conditionEquivalent:
+	case conditionUnavailable, conditionEmpty, conditionMalformed, conditionSource, conditionArtifact, conditionIndependent, conditionEquivalent:
 		return true
 	default:
 		return false

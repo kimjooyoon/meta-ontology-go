@@ -56,9 +56,9 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	cases = bindCaseDigests(cases, policy.SourceDigest)
 	judge := policycompilation.GenerateJudge(policy)
 	judgeHash := policycompilation.DigestBytes(judge)
+	cases = bindCaseDigests(cases, policy.SourceDigest, policy.SemanticDigest, judgeHash)
 	artifact := policycompilation.PolicyArtifact{Schema: policycompilation.ArtifactSchema, Policy: policy, GeneratedJudgeHash: judgeHash}
 	generated, independent, err := executeAll(judge, policy, cases)
 	if err != nil {
@@ -93,10 +93,10 @@ func produce(policyPath, casesPath, outputDir string) error {
 	receipt.WriteSet = policycompilation.WriteSetObservation{
 		RepositoryBeforeDigest: beforeDigest, RepositoryAfterDigest: afterDigest,
 		RepositoryBeforeCount: beforeCount, RepositoryAfterCount: afterCount,
-		RepositoryWriteChanged: beforeDigest != afterDigest,
-		GeneratedRootClass:     "RUNNER_TEMP_ONLY",
-		GeneratedFiles:         []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"},
-		MutationAuthority:      0, PromotionAuthority: 0,
+		RepositoryNetChangeObserved: beforeDigest != afterDigest,
+		GeneratedRootClass:          "RUNNER_TEMP_ONLY",
+		GeneratedFiles:              []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"},
+		MutationAuthority:           0, PromotionAuthority: 0,
 	}
 	if err := policycompilation.FinalizeReceipt(&receipt); err != nil {
 		return err
@@ -147,7 +147,7 @@ func readCases(path string) ([]policycompilation.Case, error) {
 	return values, nil
 }
 
-func bindCaseDigests(cases []policycompilation.Case, sourceDigest string) []policycompilation.Case {
+func bindCaseDigests(cases []policycompilation.Case, sourceDigest, semanticDigest, judgeHash string) []policycompilation.Case {
 	bound := append([]policycompilation.Case(nil), cases...)
 	for index := range bound {
 		if bound[index].ObservedSourceDigest == "SOURCE_DIGEST_FROM_POLICY" {
@@ -156,8 +156,11 @@ func bindCaseDigests(cases []policycompilation.Case, sourceDigest string) []poli
 		if bound[index].ObservedArtifactSourceDigest == "SOURCE_DIGEST_FROM_POLICY" {
 			bound[index].ObservedArtifactSourceDigest = sourceDigest
 		}
+		if bound[index].ObservedGeneratedJudgeDigest == "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT" {
+			bound[index].ObservedGeneratedJudgeDigest = judgeHash
+		}
 		if bound[index].ObservedIndependentDigest == "SOURCE_DIGEST_FROM_POLICY" {
-			bound[index].ObservedIndependentDigest = sourceDigest
+			bound[index].ObservedIndependentDigest = semanticDigest
 		}
 	}
 	return bound
