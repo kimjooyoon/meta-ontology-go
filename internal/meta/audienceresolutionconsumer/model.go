@@ -181,22 +181,25 @@ type ReplayVerification struct {
 }
 
 type ReceiptCounterexample struct {
-	ID                 string               `json:"id"`
-	Kind               string               `json:"kind"`
-	TargetCoordinate   string               `json:"target_coordinate"`
-	TargetAddress      string               `json:"target_address"`
-	PropositionDigest  string               `json:"proposition_digest"`
-	Global             string               `json:"global_decision"`
-	Resolution         string               `json:"resolution"`
-	Stage              string               `json:"stage"`
-	Step               string               `json:"step"`
-	Reason             string               `json:"reason"`
-	Views              []CounterexampleView `json:"views"`
-	BeforeClaim        string               `json:"before_claim"`
-	AfterClaim         string               `json:"after_claim"`
-	ArtifactPath       string               `json:"artifact_path"`
-	ContentDigest      string               `json:"content_digest"`
-	ExecutionValidated bool                 `json:"execution_validated"`
+	ID                  string               `json:"id"`
+	Kind                string               `json:"kind"`
+	TargetCoordinate    string               `json:"target_coordinate"`
+	TargetAddress       string               `json:"target_address"`
+	PropositionDigest   string               `json:"proposition_digest"`
+	Global              string               `json:"global_decision"`
+	Resolution          string               `json:"resolution"`
+	Stage               string               `json:"stage"`
+	Step                string               `json:"step"`
+	Reason              string               `json:"reason"`
+	Views               []CounterexampleView `json:"views"`
+	BeforeClaim         string               `json:"before_claim"`
+	AfterClaim          string               `json:"after_claim"`
+	ArtifactPath        string               `json:"artifact_path"`
+	ContentDigest       string               `json:"content_digest"`
+	MutatedLedgerPath   string               `json:"mutated_ledger_path"`
+	MutatedLedgerDigest string               `json:"mutated_ledger_digest"`
+	Replay              ReplayVerification   `json:"replay"`
+	ExecutionValidated  bool                 `json:"execution_validated"`
 }
 
 type CounterexampleView struct {
@@ -281,21 +284,54 @@ type Attestation struct {
 	Digest               string            `json:"digest"`
 }
 
+type CounterexampleExecution struct {
+	ID                  string               `json:"id"`
+	Kind                string               `json:"kind"`
+	TargetCoordinate    string               `json:"target_coordinate"`
+	PropositionDigest   string               `json:"proposition_digest"`
+	EvidenceDigest      string               `json:"evidence_digest"`
+	MutatedLedgerPath   string               `json:"mutated_ledger_path"`
+	MutatedLedgerDigest string               `json:"mutated_ledger_digest"`
+	Replay              ReplayVerification   `json:"replay"`
+	GlobalDecision      string               `json:"global_decision"`
+	Resolution          string               `json:"resolution"`
+	Stage               string               `json:"stage"`
+	Step                string               `json:"step"`
+	ExecutionReason     string               `json:"execution_reason"`
+	BeforeClaim         string               `json:"before_claim"`
+	AfterClaim          string               `json:"after_claim"`
+	Views               []CounterexampleView `json:"views"`
+	Reexecuted          bool                 `json:"reexecuted"`
+	Passed              bool                 `json:"passed"`
+	Reason              string               `json:"reason"`
+}
+
+type CounterexampleTamperCheck struct {
+	ID                   string `json:"id"`
+	ProducerArtifactPath string `json:"producer_artifact_path"`
+	OriginalDigest       string `json:"original_digest"`
+	TamperedDigest       string `json:"tampered_digest"`
+	Detected             bool   `json:"detected"`
+}
+
 type Report struct {
-	Schema                     string               `json:"schema"`
-	Decision                   string               `json:"decision"`
-	Reason                     string               `json:"reason"`
-	RawLedgerFinalFieldsAbsent bool                 `json:"raw_ledger_final_fields_absent"`
-	RawEvidenceHistoricalOnly  bool                 `json:"raw_evidence_historical_only"`
-	ReceiptDigestMatch         bool                 `json:"receipt_digest_match"`
-	SourceReconstruction       SourceReconstruction `json:"source_reconstruction"`
-	Audiences                  []AudienceCheck      `json:"audiences"`
-	ProducerImports            ImportAudit          `json:"producer_imports"`
-	CurrentEvidenceCounts      EvidenceCounts       `json:"current_evidence_counts"`
-	DistinctPropositions       int                  `json:"distinct_propositions"`
-	Replay                     ReplayVerification   `json:"replay"`
-	CounterexamplesChecked     int                  `json:"counterexamples_checked"`
-	ClaimTransitionsChecked    int                  `json:"claim_transitions_checked"`
-	Attestation                Attestation          `json:"verification_attestation"`
-	Digest                     string               `json:"digest"`
+	Schema                     string                    `json:"schema"`
+	Decision                   string                    `json:"decision"`
+	Reason                     string                    `json:"reason"`
+	RawLedgerFinalFieldsAbsent bool                      `json:"raw_ledger_final_fields_absent"`
+	RawEvidenceHistoricalOnly  bool                      `json:"raw_evidence_historical_only"`
+	ReceiptDigestMatch         bool                      `json:"receipt_digest_match"`
+	SourceReconstruction       SourceReconstruction      `json:"source_reconstruction"`
+	Audiences                  []AudienceCheck           `json:"audiences"`
+	ProducerImports            ImportAudit               `json:"producer_imports"`
+	CurrentEvidenceCounts      EvidenceCounts            `json:"current_evidence_counts"`
+	DistinctPropositions       int                       `json:"distinct_propositions"`
+	Replay                     ReplayVerification        `json:"replay"`
+	CounterexamplesChecked     int                       `json:"counterexamples_checked"`
+	CounterexamplesReexecuted  int                       `json:"counterexamples_reexecuted"`
+	CounterexampleExecutions   []CounterexampleExecution `json:"counterexample_executions"`
+	CounterexampleTamper       CounterexampleTamperCheck `json:"counterexample_tamper_check"`
+	ClaimTransitionsChecked    int                       `json:"claim_transitions_checked"`
+	Attestation                Attestation               `json:"verification_attestation"`
+	Digest                     string                    `json:"digest"`
 }

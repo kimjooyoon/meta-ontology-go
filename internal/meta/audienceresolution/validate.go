@@ -109,7 +109,10 @@ func validateCounterexamples(values []CounterexampleResult) error {
 	for _, value := range values {
 		if seen[value.ID] || value.ID == "" || value.Global == "PASS" || !value.ExecutionValidated || len(value.Views) != 3 ||
 			value.Proposition == "" || !validDigest(value.PropositionDigest) || value.TargetAddress == "" || value.Stage == "" || value.Step == "" || value.Reason == "" ||
-			value.BeforeClaim != "OPEN" || (value.AfterClaim != "OPEN" && value.AfterClaim != "REFUTED") || !validDigest(value.ContentDigest) {
+			value.BeforeClaim != "OPEN" || (value.AfterClaim != "OPEN" && value.AfterClaim != "REFUTED") || !validDigest(value.ContentDigest) ||
+			value.MutatedLedgerPath == "" || !validDigest(value.MutatedLedgerDigest) || value.Replay.RunAPath == "" || value.Replay.RunBPath == "" ||
+			value.Replay.RunAPath == value.Replay.RunBPath || !validDigest(value.Replay.RunADigest) || !validDigest(value.Replay.RunBDigest) ||
+			!value.Replay.Equal || !validDigest(value.Replay.CombinedDigest) {
 			return fmt.Errorf("counterexample %q is not executed", value.ID)
 		}
 		seen[value.ID] = true

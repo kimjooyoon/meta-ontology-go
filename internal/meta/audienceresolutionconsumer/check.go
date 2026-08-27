@@ -67,6 +67,7 @@ func Check(input Input) Report {
 	}
 
 	values, contradictions, evidenceIssues := independentlyObserve(input, model)
+	evidenceIssues = append(evidenceIssues, verifySharedDecisionProjection(input, model, values, contradictions)...)
 	report.CurrentEvidenceCounts = countEvidence(input.Ledger, input.Receipt.CurrentEvidence)
 	report.DistinctPropositions = len(sourceCoordinates(model))
 	declaredReplay := input.Receipt.Replay
@@ -75,11 +76,10 @@ func Check(input Input) Report {
 		declaredReplay.Equal != report.Replay.Equal || declaredReplay.CombinedDigest != report.Replay.CombinedDigest {
 		evidenceIssues = append(evidenceIssues, "REPLAY_RECEIPT_DIGEST_MISMATCH")
 	}
-	report.CounterexamplesChecked, evidenceIssues = verifyCounterexamples(input, model, evidenceIssues)
+	report.CounterexamplesChecked, report.CounterexamplesReexecuted, report.CounterexampleTamper, report.CounterexampleExecutions, evidenceIssues = verifyCounterexamples(input, model, evidenceIssues)
 	report.Audiences = reconstructAudiences(model, input.Ledger, input.Receipt, values, contradictions)
 	report.ClaimTransitionsChecked, evidenceIssues = verifyTransitions(input, model, values, contradictions, evidenceIssues)
 	expectedTransitions := len(model.Audiences) * len(sourceCoordinates(model))
-	report.Attestation = buildAttestation(input, model, report.ClaimTransitionsChecked == expectedTransitions && len(evidenceIssues) == 0)
 
 	issues := append([]string{}, evidenceIssues...)
 	if input.Ledger.Schema != ledgerSchema || input.Ledger.Subject == "" || input.Ledger.Source.Kind != sourceKind ||
@@ -129,8 +129,14 @@ func Check(input Input) Report {
 	if input.Receipt.Summary.SourceDenominator != model.Denominator || input.Receipt.Summary.Coordinates.Total != len(subjectCoordinates(model)) {
 		issues = append(issues, "SOURCE_DERIVED_DENOMINATOR_INVALID")
 	}
+	// All independent checks must be complete before the attestation is made.
+	// A failed check gets a current REFUTED attestation; it may never claim a
+	// discharged conformance claim merely because the receipt was well formed.
+	attestationValid := len(issues) == 0
+	report.Attestation = buildAttestation(input, model, attestationValid, issues)
 	if !report.AttestationValid(input.Receipt.Digest) {
 		issues = append(issues, "VERIFICATION_ATTESTATION_INVALID")
+		report.Attestation = buildAttestation(input, model, false, issues)
 	}
 	if len(issues) == 0 {
 		report.Decision, report.Reason = "PASS", "INDEPENDENT_RAW_ARTIFACT_RECONSTRUCTION_MATCHED"
@@ -142,10 +148,23 @@ func Check(input Input) Report {
 
 func (report Report) AttestationValid(subjectDigest string) bool {
 	attestation := report.Attestation
-	if attestation.Schema == "" || attestation.SubjectReceiptDigest != subjectDigest || attestation.Decision != "PASS" ||
+	if attestation.Schema == "" || attestation.SubjectReceiptDigest != subjectDigest ||
 		attestation.EvidenceStatus != "CURRENT_EVIDENCE" || !validDigest(attestation.Evidence.ContentDigest) ||
-		attestation.Evidence.ArtifactPath == "" || attestation.Evidence.ObservedValue != "true" || attestation.ClaimTransition.After != "DISCHARGED" ||
+		attestation.Evidence.ArtifactPath == "" || attestation.Evidence.ObservedPredicate != "receipt_digest_recomputed" ||
+		attestation.Evidence.Reason != attestation.Reason || attestation.ClaimTransition.Reason != attestation.Reason ||
+		attestation.ClaimTransition.EvidenceStatus != attestation.EvidenceStatus || attestation.ClaimTransition.EvidenceDigest != attestation.Evidence.ContentDigest ||
 		!validDigest(attestation.Digest) {
+		return false
+	}
+	if attestation.Decision == "PASS" {
+		if attestation.Resolution != "EXACT" || attestation.Evidence.ObservedValue != "true" || attestation.ClaimTransition.After != "DISCHARGED" {
+			return false
+		}
+	} else if attestation.Decision == "REFUTED" {
+		if attestation.Resolution != "INVARIANT_ONLY" || attestation.Evidence.ObservedValue != "false" || attestation.ClaimTransition.After != "REFUTED" {
+			return false
+		}
+	} else {
 		return false
 	}
 	copy := attestation
@@ -265,6 +284,11 @@ func nested(values []audiencePolicy) bool {
 	return true
 }
 
+func validResolutions(model sourceModel) bool {
+	return len(model.Audiences) == 3 && model.Audiences[0].Resolution == "USER_VISIBLE_COORDINATES" &&
+		model.Audiences[1].Resolution == "TOOL_CONTRACT_COORDINATES" && model.Audiences[2].Resolution == "GOVERNOR_FULL_LEDGER"
+}
+
 func independentlyObserve(input Input, model sourceModel) (map[string]bool, map[string]bool, []string) {
 	values := map[string]bool{}
 	contradictions := map[string]bool{}
@@ -373,7 +397,9 @@ func observeArtifactPredicate(coordinate string, artifact map[string]any, input 
 	case "projection.resolution":
 		return len(model.Audiences) == 3 && model.Audiences[0].Resolution == "USER_VISIBLE_COORDINATES" && model.Audiences[1].Resolution == "TOOL_CONTRACT_COORDINATES" && model.Audiences[2].Resolution == "GOVERNOR_FULL_LEDGER", false, true
 	case "projection.shared-decision":
-		return input.Receipt.Decision == "PASS", false, true
+		details, _ := artifact["details"].(map[string]any)
+		decision := stringValue(details["global_decision"])
+		return sharedDecisionValid(decision) && decision == input.Receipt.Decision && stringValue(artifact["observed_predicate"]) == "global_decision_carried", false, true
 	case "counterexample.omission", "counterexample.contradiction":
 		for _, value := range input.Receipt.Counterexamples {
 			if (coordinate == "counterexample.omission" && value.ID == "counterexample.missing-information") ||
@@ -387,6 +413,44 @@ func observeArtifactPredicate(coordinate string, artifact map[string]any, input 
 	default:
 		return false, false, false
 	}
+}
+
+func verifySharedDecisionProjection(input Input, model sourceModel, values, contradictions map[string]bool) []string {
+	issues := []string{}
+	current := findCurrent(input.Receipt.CurrentEvidence, "projection.shared-decision")
+	if current.Coordinate == "" {
+		return []string{"SHARED_DECISION_EVIDENCE_MISSING"}
+	}
+	artifact, err := readArtifact(input.ArtifactRoot, current.ArtifactPath)
+	if err != nil {
+		return []string{"SHARED_DECISION_ARTIFACT_UNAVAILABLE"}
+	}
+	details, _ := artifact["details"].(map[string]any)
+	globalDecision := stringValue(details["global_decision"])
+	if !sharedDecisionValid(globalDecision) || globalDecision != input.Receipt.Decision || stringValue(details["resolution"]) != input.Receipt.Resolution {
+		issues = append(issues, "SHARED_DECISION_GLOBAL_MISMATCH")
+	}
+	expectedDecision, expectedResolution := subjectDecision(model, values, contradictions)
+	if expectedDecision != input.Receipt.Decision || expectedResolution != input.Receipt.Resolution {
+		issues = append(issues, "SHARED_DECISION_SUBJECT_MISMATCH")
+	}
+	expected := reconstructAudiences(model, input.Ledger, input.Receipt, values, contradictions)
+	if len(expected) != len(input.Receipt.Views) {
+		return append(issues, "SHARED_DECISION_VIEW_COUNT_MISMATCH")
+	}
+	for index, audience := range expected {
+		view := input.Receipt.Views[index]
+		inherited := "LOCALLY_VERIFIED"
+		if audience.Decision != input.Receipt.Decision {
+			inherited = "INHERITED_NOT_LOCALLY_VERIFIED"
+		}
+		if view.Audience != audience.Audience || view.GlobalDecision != input.Receipt.Decision || view.LocalDecision != audience.Decision ||
+			view.LocalResolution != audience.Resolution || view.InheritedStatus != inherited || view.Visible != audience.Visible || view.Required != audience.Required ||
+			view.SubjectSatisfied != audience.SubjectSatisfied || view.SubjectRequired != audience.SubjectRequired {
+			issues = append(issues, "SHARED_DECISION_VIEW_MISMATCH:"+audience.Audience)
+		}
+	}
+	return unique(issues)
 }
 
 func reconstructAudiences(model sourceModel, ledger RawLedger, receipt Receipt, values map[string]bool, contradictions map[string]bool) []AudienceCheck {
@@ -431,8 +495,14 @@ func verifyReplay(input Input) ReplayVerification {
 	return replay
 }
 
-func verifyCounterexamples(input Input, model sourceModel, issues []string) (int, []string) {
+func verifyCounterexamples(input Input, model sourceModel, issues []string) (int, int, CounterexampleTamperCheck, []CounterexampleExecution, []string) {
 	seen := map[string]bool{}
+	executions := []CounterexampleExecution{}
+	var raw RawLedger
+	if err := json.Unmarshal(input.LedgerBytes, &raw); err != nil {
+		issues = append(issues, "RAW_COUNTEREXAMPLE_LEDGER_UNAVAILABLE")
+		raw = input.Ledger
+	}
 	for _, value := range input.Receipt.Counterexamples {
 		seen[value.ID] = true
 		artifact, err := readArtifact(input.ArtifactRoot, value.ArtifactPath)
@@ -440,26 +510,272 @@ func verifyCounterexamples(input Input, model sourceModel, issues []string) (int
 			issues = append(issues, "COUNTEREXAMPLE_ARTIFACT_INVALID:"+value.ID)
 			continue
 		}
-		expectedAfter := "OPEN"
-		expectedDecision, expectedResolution := "UNKNOWN", "LOWER_RESOLUTION"
-		if value.Kind == "DECISION_CONTRADICTION" {
-			expectedAfter, expectedDecision, expectedResolution = "REFUTED", "REFUTED", "INVARIANT_ONLY"
+		definition := findRawCounterexample(raw.Counterexamples, value.ID)
+		if definition.ID == "" {
+			issues = append(issues, "RAW_COUNTEREXAMPLE_DEFINITION_MISSING:"+value.ID)
+			continue
 		}
-		if value.TargetCoordinate == "" || value.PropositionDigest == "" || value.Global != expectedDecision || value.Resolution != expectedResolution ||
-			value.BeforeClaim != "OPEN" || value.AfterClaim != expectedAfter || !value.ExecutionValidated ||
-			stringValue(artifact["target_coordinate"]) != value.TargetCoordinate || stringValue(artifact["proposition_digest"]) != value.PropositionDigest ||
-			stringValue(artifact["target_address"]) != value.TargetAddress || stringValue(artifact["global_decision"]) != value.Global || stringValue(artifact["resolution"]) != value.Resolution ||
-			stringValue(artifact["stage"]) != value.Stage || stringValue(artifact["step"]) != value.Step || stringValue(artifact["reason"]) != value.Reason || !boolValue(artifact["execution_validated"]) {
-			issues = append(issues, "COUNTEREXAMPLE_EXECUTION_NOT_VALIDATED:"+value.ID)
-		}
-		if len(value.Views) != len(model.Audiences) {
-			issues = append(issues, "COUNTEREXAMPLE_AUDIENCE_VIEWS_MISSING:"+value.ID)
+		execution, passed, executionIssues := independentlyReexecuteCounterexample(input, model, raw, definition, value, artifact)
+		executions = append(executions, execution)
+		issues = append(issues, executionIssues...)
+		if !passed {
+			issues = append(issues, "INDEPENDENT_COUNTEREXAMPLE_REEXECUTION_FAILED:"+value.ID)
 		}
 	}
 	if !seen["counterexample.missing-information"] || !seen["counterexample.decision-contradiction"] {
 		issues = append(issues, "COUNTEREXAMPLE_SET_INCOMPLETE")
 	}
-	return len(input.Receipt.Counterexamples), unique(issues)
+
+	tamper := CounterexampleTamperCheck{ID: "counterexample.tampered-producer-artifact"}
+	if len(input.Receipt.Counterexamples) > 0 {
+		value := input.Receipt.Counterexamples[0]
+		tamper.ProducerArtifactPath = value.ArtifactPath
+		tamper.OriginalDigest = value.ContentDigest
+		artifact, err := readArtifact(input.ArtifactRoot, value.ArtifactPath)
+		if err == nil {
+			tampered := cloneObject(artifact)
+			tampered["execution_validated"] = false
+			tampered["global_decision"] = "PASS"
+			tamper.TamperedDigest = digestBytes(canonicalJSON(tampered))
+			tamper.Detected = tamper.TamperedDigest != value.ContentDigest && !producerCounterexampleArtifactMatches(tampered, value)
+		}
+	}
+	if !tamper.Detected {
+		issues = append(issues, "TAMPERED_COUNTEREXAMPLE_ARTIFACT_NOT_DETECTED")
+	}
+	return len(executions) + 1, len(executions), tamper, executions, unique(issues)
+}
+
+func independentlyReexecuteCounterexample(input Input, model sourceModel, raw RawLedger, definition RawCounterexample, declared ReceiptCounterexample, artifact map[string]any) (CounterexampleExecution, bool, []string) {
+	issues := []string{}
+	recipe := findRaw(input.Ledger.Records, definition.TargetCoordinate)
+	if recipe.ID == "" {
+		recipe = fallbackRecipe(definition.TargetCoordinate)
+	}
+	variant := mutateRawLedger(raw, definition)
+	mutatedBytes, err := readRawArtifact(input.ArtifactRoot, declared.MutatedLedgerPath)
+	if err != nil {
+		issues = append(issues, "COUNTEREXAMPLE_MUTATED_LEDGER_UNAVAILABLE:"+definition.ID)
+		mutatedBytes = canonicalJSON(variant)
+	}
+	mutatedDigest := digestBytes(canonicalJSONBytes(mutatedBytes))
+	if declared.MutatedLedgerPath == "" || declared.MutatedLedgerDigest == "" || mutatedDigest != declared.MutatedLedgerDigest || string(canonicalJSONBytes(mutatedBytes)) != string(canonicalJSON(variant)) {
+		issues = append(issues, "COUNTEREXAMPLE_MUTATED_LEDGER_MISMATCH:"+definition.ID)
+	}
+	var observedVariant RawLedger
+	if err := json.Unmarshal(mutatedBytes, &observedVariant); err != nil {
+		issues = append(issues, "COUNTEREXAMPLE_MUTATED_LEDGER_INVALID:"+definition.ID)
+		observedVariant = variant
+	}
+
+	expectedReplayBytes := independentReplayBytes(observedVariant, input.SourcePath, input.Source, model)
+	replay := declared.Replay
+	actualA, actualAErr := readArtifact(input.ArtifactRoot, replay.RunAPath)
+	actualB, actualBErr := readArtifact(input.ArtifactRoot, replay.RunBPath)
+	actualABytes, actualBBytes := canonicalJSON(actualA), canonicalJSON(actualB)
+	if actualAErr != nil || actualBErr != nil || replay.RunAPath == replay.RunBPath || replay.RunADigest != digestBytes(actualABytes) || replay.RunBDigest != digestBytes(actualBBytes) ||
+		!replay.Equal || replay.RunADigest != replay.RunBDigest || string(actualABytes) != string(actualBBytes) || string(actualABytes) != string(expectedReplayBytes) {
+		issues = append(issues, "COUNTEREXAMPLE_REPLAY_REEXECUTION_MISMATCH:"+definition.ID)
+	}
+
+	values, contradictions := evaluateRawVariant(input, model, observedVariant, digestBytes(actualABytes) == digestBytes(actualBBytes))
+	global, resolution := subjectDecision(model, values, contradictions)
+	views := independentCounterexampleViews(model, observedVariant, values, contradictions, declared.Views)
+	before := recipe.PriorClaim
+	if before == "" {
+		before = "OPEN"
+	}
+	after := "OPEN"
+	if definition.Kind == "DECISION_CONTRADICTION" {
+		after = "REFUTED"
+	}
+	evidenceDigest := digestBytes(canonicalJSON(map[string]any{
+		"target_coordinate": definition.TargetCoordinate, "proposition_digest": recipe.PropositionDigest,
+		"mutated_ledger_digest": mutatedDigest, "replay_a_digest": replay.RunADigest, "replay_b_digest": replay.RunBDigest,
+		"global_decision": global, "resolution": resolution, "before_claim": before, "after_claim": after,
+	}))
+	passed := definition.TargetCoordinate != "" && recipe.PropositionDigest != "" && recipe.TargetAddress != "" && before == "OPEN" &&
+		((definition.Kind == "INFORMATION_OMISSION" && global == "UNKNOWN" && resolution == "LOWER_RESOLUTION" && after == "OPEN") ||
+			(definition.Kind == "DECISION_CONTRADICTION" && global == "REFUTED" && resolution == "INVARIANT_ONLY" && after == "REFUTED")) &&
+		counterexampleViewsMatch(declared.Views, views)
+	if declared.TargetCoordinate != definition.TargetCoordinate || declared.PropositionDigest != recipe.PropositionDigest || declared.TargetAddress != recipe.TargetAddress ||
+		declared.Global != global || declared.Resolution != resolution || declared.BeforeClaim != before || declared.AfterClaim != after || !declared.ExecutionValidated ||
+		declared.MutatedLedgerPath == "" || declared.MutatedLedgerDigest == "" || declared.Replay.RunAPath == "" {
+		issues = append(issues, "COUNTEREXAMPLE_DECLARATION_MISMATCH:"+definition.ID)
+		passed = false
+	}
+	return CounterexampleExecution{ID: definition.ID, Kind: definition.Kind, TargetCoordinate: definition.TargetCoordinate,
+		PropositionDigest: recipe.PropositionDigest, EvidenceDigest: evidenceDigest, MutatedLedgerPath: declared.MutatedLedgerPath,
+		MutatedLedgerDigest: declared.MutatedLedgerDigest, Replay: replay, GlobalDecision: global, Resolution: resolution,
+		Stage: declared.Stage, Step: declared.Step, ExecutionReason: declared.Reason, BeforeClaim: before, AfterClaim: after,
+		Views: views, Reexecuted: true, Passed: passed, Reason: "raw mutation independently parsed, replayed, and evaluated"}, passed, unique(issues)
+}
+
+func findRawCounterexample(values []RawCounterexample, id string) RawCounterexample {
+	for _, value := range values {
+		if value.ID == id {
+			return value
+		}
+	}
+	return RawCounterexample{}
+}
+
+func mutateRawLedger(raw RawLedger, counterexample RawCounterexample) RawLedger {
+	variant := raw
+	variant.Records = append([]RawRecord(nil), raw.Records...)
+	if counterexample.Kind == "INFORMATION_OMISSION" {
+		filtered := variant.Records[:0]
+		for _, record := range variant.Records {
+			if record.Coordinate != counterexample.TargetCoordinate {
+				filtered = append(filtered, record)
+			}
+		}
+		variant.Records = filtered
+		return variant
+	}
+	for index := range variant.Records {
+		if variant.Records[index].Coordinate == counterexample.TargetCoordinate {
+			variant.Records[index].ObservedValue = "CONTRADICTORY"
+		}
+	}
+	return variant
+}
+
+func evaluateRawVariant(input Input, model sourceModel, raw RawLedger, replayEqual bool) (map[string]bool, map[string]bool) {
+	present := map[string]bool{}
+	contradictions := map[string]bool{}
+	for _, record := range raw.Records {
+		present[record.Coordinate] = true
+		if record.ObservedValue == "CONTRADICTORY" {
+			contradictions[record.Coordinate] = true
+		}
+	}
+	values := map[string]bool{
+		"source.binding":               raw.Source.Path == input.SourcePath && raw.Source.Kind == sourceKind && raw.Source.Digest == rawDigest(input.Source) && validDigest(raw.Source.Digest),
+		"ledger.coverage":              len(raw.Records) == len(sourceCoordinates(model)) && rawCoveragePresent(raw, sourceCoordinates(model)),
+		"ledger.replay":                replayEqual,
+		"user.coordinates":             rawPolicyCoordinatesPresent(model, "USER", present),
+		"author.coordinates":           rawPolicyCoordinatesPresent(model, "TOOL_AUTHOR", present),
+		"governor.coordinates":         rawPolicyCoordinatesPresent(model, "GOVERNOR", present),
+		"projection.nesting":           nested(model.Audiences),
+		"projection.resolution":        validResolutions(model),
+		"counterexample.omission":      rawCounterexamplePresent(raw, "counterexample.missing-information"),
+		"counterexample.contradiction": rawCounterexamplePresent(raw, "counterexample.decision-contradiction"),
+	}
+	decision, _ := subjectDecision(model, values, contradictions)
+	values["projection.shared-decision"] = sharedDecisionValid(decision)
+	return values, contradictions
+}
+
+func rawCoveragePresent(raw RawLedger, coordinates []string) bool {
+	seen := map[string]bool{}
+	for _, record := range raw.Records {
+		seen[record.Coordinate] = true
+	}
+	for _, coordinate := range coordinates {
+		if !seen[coordinate] {
+			return false
+		}
+	}
+	return true
+}
+
+func rawPolicyCoordinatesPresent(model sourceModel, audience string, present map[string]bool) bool {
+	for _, coordinate := range audienceCoordinates(model, audience) {
+		if !present[coordinate] {
+			return false
+		}
+	}
+	return true
+}
+
+func rawCounterexamplePresent(raw RawLedger, id string) bool {
+	return findRawCounterexample(raw.Counterexamples, id).ID != ""
+}
+
+func independentCounterexampleViews(model sourceModel, raw RawLedger, values, contradictions map[string]bool, declared []CounterexampleView) []CounterexampleView {
+	result := make([]CounterexampleView, 0, len(model.Audiences))
+	subject := subjectCoordinates(model)
+	for _, policy := range model.Audiences {
+		decision, resolution := "PASS", "EXACT"
+		for coordinate := range subject {
+			if !contains(policy.Coordinates, coordinate) {
+				continue
+			}
+			if contradictions[coordinate] {
+				decision, resolution = "REFUTED", "INVARIANT_ONLY"
+				break
+			}
+			if !values[coordinate] {
+				decision, resolution = "UNKNOWN", "LOWER_RESOLUTION"
+			}
+		}
+		before := "UNKNOWN"
+		if len(declared) > len(result) {
+			before = declared[len(result)].Before
+		}
+		result = append(result, CounterexampleView{Audience: policy.Audience, Before: before, After: decision, LocalDecision: decision, LocalResolution: resolution})
+	}
+	return result
+}
+
+func counterexampleViewsMatch(declared, expected []CounterexampleView) bool {
+	if len(declared) != len(expected) {
+		return false
+	}
+	for index := range expected {
+		if declared[index].Audience != expected[index].Audience || declared[index].After != expected[index].After ||
+			declared[index].LocalDecision != expected[index].LocalDecision || declared[index].LocalResolution != expected[index].LocalResolution {
+			return false
+		}
+	}
+	return true
+}
+
+func independentReplayBytes(raw RawLedger, filename string, source []byte, model sourceModel) []byte {
+	return canonicalJSON(map[string]any{"schema": "gooo/audience-resolution/replay/v1", "source_digest": digestBytes(source),
+		"source_semantic_digest": model.Digest, "source_denominator": model.Denominator,
+		"ledger_facts_digest": rawFactsDigest(raw), "record_coordinates": rawRecordCoordinates(raw.Records), "filename": filepath.Base(filename)})
+}
+
+func rawFactsDigest(raw RawLedger) string {
+	return digestBytes(canonicalJSON(struct {
+		Schema          string              `json:"schema"`
+		ID              string              `json:"id"`
+		Subject         string              `json:"subject"`
+		Source          RawSource           `json:"source"`
+		Records         []RawRecord         `json:"records"`
+		Counterexamples []RawCounterexample `json:"counterexamples"`
+	}{raw.Schema, raw.ID, raw.Subject, raw.Source, raw.Records, raw.Counterexamples}))
+}
+
+func rawRecordCoordinates(values []RawRecord) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		result = append(result, value.Coordinate)
+	}
+	return result
+}
+
+func canonicalJSONBytes(raw []byte) []byte {
+	var value any
+	if json.Unmarshal(raw, &value) != nil {
+		return raw
+	}
+	return canonicalJSON(value)
+}
+
+func cloneObject(value map[string]any) map[string]any {
+	result := map[string]any{}
+	for key, child := range value {
+		result[key] = child
+	}
+	return result
+}
+
+func producerCounterexampleArtifactMatches(artifact map[string]any, declared ReceiptCounterexample) bool {
+	return stringValue(artifact["target_coordinate"]) == declared.TargetCoordinate && stringValue(artifact["proposition_digest"]) == declared.PropositionDigest &&
+		stringValue(artifact["global_decision"]) == declared.Global && stringValue(artifact["resolution"]) == declared.Resolution && boolValue(artifact["execution_validated"]) == declared.ExecutionValidated
 }
 
 func verifyTransitions(input Input, model sourceModel, values, contradictions map[string]bool, issues []string) (int, []string) {
@@ -544,24 +860,33 @@ func verifyTransitions(input Input, model sourceModel, values, contradictions ma
 	return index, unique(issues)
 }
 
-func buildAttestation(input Input, model sourceModel, valid bool) Attestation {
+func buildAttestation(input Input, model sourceModel, valid bool, issues []string) Attestation {
 	recipe := findRaw(input.Ledger.Records, "receipt.seal")
+	if recipe.ID == "" {
+		recipe = fallbackRecipe("receipt.seal")
+	}
 	path := "current/receipt.seal.attestation-evidence.json"
+	reason := "receipt digest independently recomputed after all subject, source, audience, denominator, replay, counterexample, and transition checks"
+	decision, resolution, after := "PASS", "EXACT", "DISCHARGED"
+	if !valid {
+		decision, resolution, after = "REFUTED", "INVARIANT_ONLY", "REFUTED"
+		reason = "independent verification rejected: " + strings.Join(unique(issues), ";")
+	}
 	evidencePayload := map[string]any{"schema": "gooo/audience-resolution/attestation-evidence/v1", "subject_receipt_digest": input.Receipt.Digest,
 		"receipt_digest_recomputed": valid, "observed_predicate": "receipt_digest_recomputed", "observed_value": boolString(valid), "evidence_status": "CURRENT_EVIDENCE"}
 	evidenceDigest := digestBytes(canonicalJSON(evidencePayload))
 	transition := ReceiptTransition{ClaimID: "claim/receipt.seal/conformance", Audience: "CONFORMANCE", IndicatorID: "receipt.seal",
-		Proposition: recipe.Proposition, PropositionDigest: recipe.PropositionDigest, TargetAddress: recipe.TargetAddress, Before: "OPEN", After: "DISCHARGED", Visibility: "VISIBLE",
+		Proposition: recipe.Proposition, PropositionDigest: recipe.PropositionDigest, TargetAddress: recipe.TargetAddress, Before: "OPEN", After: after, Visibility: "VISIBLE",
 		EvidenceStatus: "CURRENT_EVIDENCE", EvidenceDigest: evidenceDigest, PreviousEventDigest: finalEvent(input.Receipt.ClaimTransitions), SourceDigest: input.Ledger.Source.Digest,
 		SemanticSourceDigest: model.Digest, Producer: "independent.checker", Consumer: "audience-resolution.conformance", MetaOperation: "verify-receipt-seal",
-		ProofChoice: "REGRESSION", Stage: "receipt", Step: "seal", Reason: "receipt digest independently recomputed after subject evaluation"}
+		ProofChoice: "REGRESSION", Stage: "receipt", Step: "seal", Reason: reason}
 	transition.EventDigest = transitionDigest(transition)
 	attestation := Attestation{Schema: "gooo/audience-resolution-verification-attestation/v1", SubjectReceiptDigest: input.Receipt.Digest,
-		Decision: "PASS", Resolution: "EXACT", Stage: "receipt", Step: "seal", Reason: "receipt digest independently recomputed after subject evaluation",
+		Decision: decision, Resolution: resolution, Stage: "receipt", Step: "seal", Reason: reason,
 		EvidenceStatus: "CURRENT_EVIDENCE", Evidence: EvidenceRecord{ID: "receipt.seal.attestation", Coordinate: "receipt.seal", Audience: "independent.checker",
 			ClaimID: recipe.ClaimID, Proposition: recipe.Proposition, PropositionDigest: recipe.PropositionDigest, TargetAddress: recipe.TargetAddress,
 			Provider: "independent.checker", ArtifactPath: path, ContentDigest: evidenceDigest, ObservedPredicate: "receipt_digest_recomputed", ObservedValue: boolString(valid), EvidenceStatus: "CURRENT_EVIDENCE",
-			Producer: "independent.checker", Consumer: "audience-resolution.conformance", MetaOperation: "verify-receipt-seal", ProofChoice: "REGRESSION", Stage: "receipt", Step: "seal", Reason: "receipt digest independently recomputed after subject evaluation", PriorClaim: "OPEN"}, ClaimTransition: transition}
+			Producer: "independent.checker", Consumer: "audience-resolution.conformance", MetaOperation: "verify-receipt-seal", ProofChoice: "REGRESSION", Stage: "receipt", Step: "seal", Reason: reason, PriorClaim: "OPEN"}, ClaimTransition: transition}
 	attestation.Digest = digestBytes(canonicalJSON(attestation))
 	return attestation
 }
@@ -811,6 +1136,10 @@ func subjectDecision(model sourceModel, values, contradictions map[string]bool) 
 		}
 	}
 	return "PASS", "EXACT"
+}
+
+func sharedDecisionValid(decision string) bool {
+	return decision == "PASS" || decision == "UNKNOWN" || decision == "REFUTED"
 }
 
 func contains(values []string, target string) bool {

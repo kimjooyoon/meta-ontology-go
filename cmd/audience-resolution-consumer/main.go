@@ -58,21 +58,19 @@ func run(args []string) int {
 	if err := os.WriteFile(options.Out, append(payload, '\n'), 0o640); err != nil {
 		return reportError(fmt.Errorf("write report: %w", err))
 	}
-	if report.Decision == "PASS" {
-		artifactPath := filepath.Join(options.Artifacts, filepath.FromSlash(report.Attestation.Evidence.ArtifactPath))
-		if err := os.MkdirAll(filepath.Dir(artifactPath), 0o750); err != nil {
-			return reportError(fmt.Errorf("create attestation artifact directory: %w", err))
-		}
-		if err := os.WriteFile(artifactPath, append(audienceresolutionconsumer.AttestationEvidencePayload(report.Attestation), '\n'), 0o640); err != nil {
-			return reportError(fmt.Errorf("write attestation evidence: %w", err))
-		}
-		attestation, err := json.MarshalIndent(report.Attestation, "", "  ")
-		if err != nil {
-			return reportError(err)
-		}
-		if err := os.WriteFile(options.Attestation, append(attestation, '\n'), 0o640); err != nil {
-			return reportError(fmt.Errorf("write attestation: %w", err))
-		}
+	artifactPath := filepath.Join(options.Artifacts, filepath.FromSlash(report.Attestation.Evidence.ArtifactPath))
+	if err := os.MkdirAll(filepath.Dir(artifactPath), 0o750); err != nil {
+		return reportError(fmt.Errorf("create attestation artifact directory: %w", err))
+	}
+	if err := os.WriteFile(artifactPath, append(audienceresolutionconsumer.AttestationEvidencePayload(report.Attestation), '\n'), 0o640); err != nil {
+		return reportError(fmt.Errorf("write attestation evidence: %w", err))
+	}
+	attestation, err := json.MarshalIndent(report.Attestation, "", "  ")
+	if err != nil {
+		return reportError(err)
+	}
+	if err := os.WriteFile(options.Attestation, append(attestation, '\n'), 0o640); err != nil {
+		return reportError(fmt.Errorf("write attestation: %w", err))
 	}
 	fmt.Printf("audience consumer: %s (%s), imports=%d/%d, source=%d\n", report.Decision, report.Reason,
 		report.ProducerImports.Numerator, report.ProducerImports.Denominator, report.SourceReconstruction.DeclarationCount)

@@ -193,25 +193,28 @@ type CounterexampleView struct {
 }
 
 type CounterexampleResult struct {
-	ID                 string               `json:"id"`
-	Kind               string               `json:"kind"`
-	Trigger            string               `json:"trigger"`
-	Mutation           string               `json:"mutation"`
-	TargetCoordinate   string               `json:"target_coordinate"`
-	TargetAddress      string               `json:"target_address"`
-	Proposition        string               `json:"proposition"`
-	PropositionDigest  string               `json:"proposition_digest"`
-	Global             string               `json:"global_decision"`
-	Resolution         string               `json:"resolution"`
-	Stage              string               `json:"stage"`
-	Step               string               `json:"step"`
-	Reason             string               `json:"reason"`
-	Views              []CounterexampleView `json:"views"`
-	BeforeClaim        string               `json:"before_claim"`
-	AfterClaim         string               `json:"after_claim"`
-	ArtifactPath       string               `json:"artifact_path"`
-	ContentDigest      string               `json:"content_digest"`
-	ExecutionValidated bool                 `json:"execution_validated"`
+	ID                  string               `json:"id"`
+	Kind                string               `json:"kind"`
+	Trigger             string               `json:"trigger"`
+	Mutation            string               `json:"mutation"`
+	TargetCoordinate    string               `json:"target_coordinate"`
+	TargetAddress       string               `json:"target_address"`
+	Proposition         string               `json:"proposition"`
+	PropositionDigest   string               `json:"proposition_digest"`
+	Global              string               `json:"global_decision"`
+	Resolution          string               `json:"resolution"`
+	Stage               string               `json:"stage"`
+	Step                string               `json:"step"`
+	Reason              string               `json:"reason"`
+	Views               []CounterexampleView `json:"views"`
+	BeforeClaim         string               `json:"before_claim"`
+	AfterClaim          string               `json:"after_claim"`
+	ArtifactPath        string               `json:"artifact_path"`
+	ContentDigest       string               `json:"content_digest"`
+	MutatedLedgerPath   string               `json:"mutated_ledger_path"`
+	MutatedLedgerDigest string               `json:"mutated_ledger_digest"`
+	Replay              ReplayVerification   `json:"replay"`
+	ExecutionValidated  bool                 `json:"execution_validated"`
 }
 
 type VerificationAttestation struct {

@@ -98,7 +98,7 @@ func runProjection(input Input, ledger Ledger, model semanticSourceModel, replay
 		values[resultIndicatorID(result.ID)] = result.ExecutionValidated
 	}
 	decision, resolution := subjectDecision(values, contradict, model)
-	values["projection.shared-decision"] = decision == "PASS"
+	values["projection.shared-decision"] = sharedDecisionValid(decision)
 	current := make([]EvidenceRecord, 0, len(recipes))
 	for _, spec := range indicatorSpecs() {
 		recipe := recipeFor(recipes, spec.ID)
@@ -117,7 +117,7 @@ func runProjection(input Input, ledger Ledger, model semanticSourceModel, replay
 			current = append(current, evidenceFromRecipe(recipe, false, "pending_independent_verification", path, digest, EvidenceUnknown))
 			continue
 		}
-		observation, ok := observePredicate(spec.ID, model, ledger, present, values, replay, counterexamples)
+		observation, ok := observePredicate(spec.ID, model, ledger, present, values, contradict, replay, counterexamples)
 		if !ok {
 			continue
 		}
@@ -170,7 +170,7 @@ func runProjection(input Input, ledger Ledger, model semanticSourceModel, replay
 	return projectionRun{Values: values, Contradict: contradict, Current: current, Replay: replay, Decision: decision, Resolution: resolution, Views: views}, nil
 }
 
-func observePredicate(id string, model semanticSourceModel, ledger Ledger, present map[string]bool, values map[string]bool, replay ReplayVerification, counterexamples []CounterexampleResult) (predicateObservation, bool) {
+func observePredicate(id string, model semanticSourceModel, ledger Ledger, present map[string]bool, values map[string]bool, contradict map[string]bool, replay ReplayVerification, counterexamples []CounterexampleResult) (predicateObservation, bool) {
 	if id == "counterexample.omission" {
 		return predicateObservation{Value: counterexamplePassed(counterexamples, "counterexample.missing-information"), Predicate: "executed_counterexample", Details: counterexamples}, true
 	}
@@ -181,8 +181,8 @@ func observePredicate(id string, model semanticSourceModel, ledger Ledger, prese
 		return predicateObservation{Value: replay.Equal, Predicate: "replay_bytes_equal", Details: replay}, true
 	}
 	if id == "projection.shared-decision" {
-		decision, _ := subjectDecision(values, map[string]bool{}, model)
-		return predicateObservation{Value: decision == "PASS", Predicate: "subject_decision_carried", Details: map[string]any{"decision": decision}}, true
+		decision, resolution := subjectDecision(values, contradict, model)
+		return predicateObservation{Value: sharedDecisionValid(decision), Predicate: "global_decision_carried", Details: map[string]any{"global_decision": decision, "resolution": resolution, "carried_status": "all audience views"}}, true
 	}
 	if id == "source.binding" {
 		return predicateObservation{Value: values[id], Predicate: "source_parse_lower_matches_digest", Details: map[string]any{"semantic_digest": model.SemanticDigest, "declaration_count": model.DeclarationCount}}, true
@@ -258,6 +258,7 @@ func executeCounterexample(input Input, model semanticSourceModel, baseline proj
 		"kind": counterexample.Kind, "target_coordinate": counterexample.TargetCoordinate,
 		"target_address": recipe.TargetAddress, "proposition_digest": recipe.PropositionDigest,
 		"mutated_ledger_path": ledgerPath, "mutated_ledger_digest": digestBytes(mutatedBytes),
+		"replay":          replay,
 		"global_decision": variant.Decision, "resolution": variant.Resolution,
 		"stage": recipe.Stage, "step": recipe.Step, "reason": recipe.Reason,
 		"before_claim": before, "after_claim": after, "execution_validated": valid,
@@ -272,7 +273,8 @@ func executeCounterexample(input Input, model semanticSourceModel, baseline proj
 		TargetAddress: recipe.TargetAddress, Proposition: recipe.Proposition, PropositionDigest: recipe.PropositionDigest,
 		Global: variant.Decision, Resolution: variant.Resolution, Stage: recipe.Stage, Step: recipe.Step, Reason: recipe.Reason,
 		Views: counterexampleViews(baseline.Views, variant.Views), BeforeClaim: before, AfterClaim: after,
-		ArtifactPath: path, ContentDigest: digest, ExecutionValidated: valid}, nil
+		ArtifactPath: path, ContentDigest: digest, MutatedLedgerPath: ledgerPath, MutatedLedgerDigest: digestBytes(mutatedBytes),
+		Replay: replay, ExecutionValidated: valid}, nil
 }
 
 func counterexampleExecutionValid(counterexample Counterexample, variant projectionRun, before, after string, recipe EvidenceRecord) bool {

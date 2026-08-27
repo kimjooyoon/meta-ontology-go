@@ -142,7 +142,7 @@ func buildIndicators(recipes []EvidenceRecord, current []EvidenceRecord, state r
 		"author.coordinates":           coordinatesValid(state, sourceAudience(model, "TOOL_AUTHOR").Coordinates),
 		"governor.coordinates":         coordinatesValid(state, sourceAudience(model, "GOVERNOR").Coordinates),
 		"projection.nesting":           policyValid,
-		"projection.shared-decision":   subjectDecision == "PASS",
+		"projection.shared-decision":   sharedDecisionValid(subjectDecision),
 		"projection.resolution":        sourceAudienceResolutionValid(model),
 		"counterexample.omission":      counterexamplePassed(cex, "counterexample.missing-information"),
 		"counterexample.contradiction": counterexamplePassed(cex, "counterexample.decision-contradiction"),
@@ -169,6 +169,10 @@ func buildIndicators(recipes []EvidenceRecord, current []EvidenceRecord, state r
 	}
 	_ = sourceBound
 	return result
+}
+
+func sharedDecisionValid(decision string) bool {
+	return decision == "PASS" || decision == "UNKNOWN" || decision == "REFUTED"
 }
 
 func recipeFor(recipes []EvidenceRecord, coordinate string) EvidenceRecord {
