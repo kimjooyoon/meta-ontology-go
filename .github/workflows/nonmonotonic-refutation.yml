@@ -134,6 +134,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trap 'status=$?; echo "::error title=nonmonotonic adjudication::failed at shell line ${LINENO} with status ${status}"; exit "$status"' ERR
           output="$RUNNER_TEMP/nonmonotonic-refutation/consumer"
           variants="$RUNNER_TEMP/nonmonotonic-refutation/variants"
           mkdir -p "$output" "$variants"
@@ -180,11 +181,13 @@ jobs:
           ' "$producer")"
           tampered_digest="$(printf '%s' "$tampered_json" | sha256sum | awk '{print "sha256:" $1}')"
           printf '%s\n' "$tampered_json" | jq --arg digest "$tampered_digest" '.receipt_digest = $digest' > "$tampered"
+          trap - ERR
           set +e
           go run ./cmd/nonmonotonic-refutation-consumer \
             -producer "$tampered" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/tampered.json"
           tampered_status=$?
           set -e
+          trap 'status=$?; echo "::error title=nonmonotonic adjudication::failed at shell line ${LINENO} with status ${status}"; exit "$status"' ERR
           test "$tampered_status" -ne 0
 
           jq -e '
