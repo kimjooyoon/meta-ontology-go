@@ -201,6 +201,7 @@ type Report struct {
 	RepositoryMutationAuthorized      bool             `json:"repository_mutation_authorized"`
 	TempArtifactWriteAuthorized       bool             `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool             `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string           `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string           `json:"repository_actual_or_transient_writes"`
 	RepositoryNetStatusObserved       bool             `json:"repository_net_status_observed"`
 	ExecutedEffects                   int              `json:"executed_effects"`
@@ -247,7 +248,7 @@ func Build(source []byte, headSHA string) (Report, error) {
 			NonSemantic:             SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemanticCase.Satisfied), CoverageBPS: boolInt(nonSemanticCase.Satisfied) * 10000}},
 		CaseCount: 3, Cases: cases, EffectGates: gates, EffectGateDenominator: len(gates), Decision: decision, Resolution: resolution, Reason: reason,
 		RepositoryWrites: writes, RepositoryMutationAuthorized: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
-		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
+		RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
 		ExecutedEffects: boolInt(effectGateObserved(gates)), IndependentlyObservedEffects: boolInt(effectGateObserved(gates)),
 		UnknownEffectScopes: boolInt(effectGateObserved(gates)), CorrectionCount: 12, CorrectionDenominator: 12, Failure: failure}
 	for _, gate := range gates {
