@@ -95,18 +95,14 @@ func fixtureInput() Input {
 	}
 	return Input{Contract: contract, HeadSHA: strings.Repeat("a", 40), SourcePath: contract.SourcePath,
 		Source: source, CaseReceipts: [][][]byte{
-			{newReceipt("producer-1", "producer", "producer-run", "SUPPORTS", 9100),
-				newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 8800),
+			{newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 8800),
 				newReceipt("meta-1", "meta-operation", "quorum-meta", "SUPPORTS", 7600)},
-			{newReceipt("producer-1", "producer", "producer-run", "SUPPORTS", 10000),
-				newReceipt("producer-replica", "producer", "producer-run", "SUPPORTS", 10000),
+			{newReceipt("producer-replica", "producer", "producer-run", "SUPPORTS", 10000),
 				newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 10000)},
-			{newReceipt("producer-1", "producer", "producer-run", "SUPPORTS", 9900),
-				newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 9900),
+			{newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 9900),
 				newReceipt("meta-1", "meta-operation", "quorum-meta", "SUPPORTS", 9900),
 				newReceipt("contradictory-1", "consumer", "contradictory-check", "CONTRADICTS", 100)},
-			{newReceipt("producer-1", "producer", "producer-run", "SUPPORTS", 10000),
-				newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 10000)},
+			{newReceipt("consumer-1", "consumer", "consumer-check", "SUPPORTS", 10000)},
 			{}}, ProducerReceipt: marshalProducerReceipt(producer),
 		UnknownProducerReceipt: marshalProducerReceipt(unknownProducer)}
 }
