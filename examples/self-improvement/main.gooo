@@ -27,3 +27,7 @@ activity Evaluate(ExecutionManifest) -> Receipt
 activity Verify(Receipt) -> Evidence
 activity Observe(LanguageExperimentReceipt) -> ReadOnlyImprovementInput
 activity Improve(Evidence) -> SourceTree
+entity SourceExecutionReceipt id "gooo://evidence/source-execution-receipt"
+entity IndependentArtifactOracle id "gooo://evidence/independent-artifact-oracle"
+entity SourceBindingPromotion id "gooo://claim/source-binding-promotion"
+activity PromoteSourceBinding(SourceExecutionReceipt, IndependentArtifactOracle) -> SourceBindingPromotion
