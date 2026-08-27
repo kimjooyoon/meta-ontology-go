@@ -93,7 +93,7 @@ func validReceipt(input termination.Input, receipt termination.Receipt, class cl
 		receipt.Stage != termination.TraceStage || receipt.Decision != class.decision ||
 		receipt.Reason != class.reason || receipt.InputDigest != digestJSON(input) ||
 		receipt.TraceDigest != digestJSON(input.Trace) || !reflect.DeepEqual(receipt.Observations, input.Trace) ||
-		!reflect.DeepEqual(receipt.ClaimTransitions, transitions(class)) || receipt.Authority != (termination.Authority{ReadOnly: true}) {
+		!reflect.DeepEqual(receipt.ClaimTransitions, transitions(class, len(input.Trace))) || receipt.Authority != (termination.Authority{ReadOnly: true}) {
 		return fmt.Errorf("independent judge: receipt does not match the observed trace")
 	}
 	if receipt.Summary.ObservedSteps != len(input.Trace) || receipt.Summary.MaxSteps != input.MaxSteps ||
@@ -172,10 +172,10 @@ func repeatedState(states []string) (int, int) {
 	return -1, 0
 }
 
-func transitions(class classification) []termination.ClaimTransition {
+func transitions(class classification, finalStep int) []termination.ClaimTransition {
 	return []termination.ClaimTransition{
 		{Stage: termination.ClaimStage, Step: 0, From: "UNPROVEN", To: "OBSERVED", Reason: "TRACE_BOUND"},
-		{Stage: termination.ClaimStage, Step: class.stateCount - 1, From: "OBSERVED", To: class.decision, Reason: class.reason},
+		{Stage: termination.ClaimStage, Step: finalStep, From: "OBSERVED", To: class.decision, Reason: class.reason},
 	}
 }
 

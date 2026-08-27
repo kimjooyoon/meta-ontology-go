@@ -25,7 +25,7 @@ func Evaluate(input Input) (Receipt, error) {
 			TerminationProven: class.decision == DecisionFixedPoint,
 		}, Authority: Authority{ReadOnly: true},
 	}
-	receipt.ClaimTransitions = transitions(class)
+	receipt.ClaimTransitions = transitions(class, len(input.Trace))
 	receipt.Indicators = indicators(input, class)
 	receipt.Summary.Total = len(receipt.Indicators)
 	for _, indicator := range receipt.Indicators {
@@ -115,10 +115,10 @@ func basisPoints(satisfied, total int) int {
 	return satisfied * 10000 / total
 }
 
-func transitions(class classification) []ClaimTransition {
+func transitions(class classification, finalStep int) []ClaimTransition {
 	return []ClaimTransition{
 		{Stage: ClaimStage, Step: 0, From: "UNPROVEN", To: "OBSERVED", Reason: "TRACE_BOUND"},
-		{Stage: ClaimStage, Step: class.stateCount - 1, From: "OBSERVED", To: class.decision, Reason: class.reason},
+		{Stage: ClaimStage, Step: finalStep, From: "OBSERVED", To: class.decision, Reason: class.reason},
 	}
 }
 
