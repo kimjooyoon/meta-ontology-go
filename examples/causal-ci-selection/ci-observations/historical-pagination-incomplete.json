@@ -10,7 +10,7 @@
       "run_id": 33098087709,
       "job_id": 98608698224,
       "job_name": "language-concept-artifact",
-      "id": "current-pagination-incomplete",
+      "id": "historical-pagination-incomplete",
       "endpoint": "/repos/kimjooyoon/meta-ontology-go/actions/workflows/transformation-effect.yml/runs?branch=dev&event=workflow_run&head_sha=1333a1b1afaf91e1cb90f40e2d22f6e60a0e51bc&per_page=100&status=completed",
       "endpoint_class": "ACTIONS_WORKFLOW_RUNS_LIST",
       "source_class": "HISTORICAL_FIXTURE",

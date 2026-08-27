@@ -138,35 +138,39 @@ type CIEvidenceArtifactObservation struct {
 }
 
 type CIEvidenceAdjudication struct {
-	Schema                          string                          `json:"schema"`
-	Scope                           string                          `json:"scope"`
-	ObservationDigest               string                          `json:"observation_digest"`
-	ExpectedCaseIDs                 []string                        `json:"expected_case_ids"`
-	ObservedCaseIDs                 []string                        `json:"observed_case_ids"`
-	Rows                            []CIEvidenceRow                 `json:"rows"`
-	ArtifactObservations            []CIEvidenceArtifactObservation `json:"artifact_observations"`
-	ActualCaseID                    string                          `json:"actual_case_id"`
-	ActualRootCauseNumerator        int                             `json:"actual_root_cause_numerator"`
-	ActualRootCauseDenominator      int                             `json:"actual_root_cause_denominator"`
-	DownstreamMissingNumerator      int                             `json:"downstream_missing_artifact_numerator"`
-	DownstreamMissingDenominator    int                             `json:"downstream_missing_artifact_denominator"`
-	ActualResolution                string                          `json:"actual_resolution"`
-	ActualDecision                  string                          `json:"actual_decision"`
-	ActualCoordinate                Coordinate                      `json:"actual_coordinate"`
-	CurrentOutcome                  string                          `json:"current_outcome"`
-	CurrentPermissionDenominator    int                             `json:"current_permission_denial_denominator"`
-	CurrentPermissionNumerator      int                             `json:"current_permission_denial_numerator"`
-	HistoricalPermissionDenominator int                             `json:"historical_permission_denial_denominator"`
-	HistoricalPermissionNumerator   int                             `json:"historical_permission_denial_numerator"`
-	CurrentSourceNumerator          int                             `json:"current_source_numerator"`
-	CurrentSourceDenominator        int                             `json:"current_source_denominator"`
-	HistoricalSourceNumerator       int                             `json:"historical_source_numerator"`
-	HistoricalSourceDenominator     int                             `json:"historical_source_denominator"`
-	SyntheticSourceNumerator        int                             `json:"synthetic_source_numerator"`
-	SyntheticSourceDenominator      int                             `json:"synthetic_source_denominator"`
-	CurrentPageCount                int                             `json:"current_page_count"`
-	CurrentPageInventoryComplete    bool                            `json:"current_page_inventory_complete"`
-	Digest                          string                          `json:"digest"`
+	Schema                           string                          `json:"schema"`
+	Scope                            string                          `json:"scope"`
+	ObservationDigest                string                          `json:"observation_digest"`
+	ExpectedCaseIDs                  []string                        `json:"expected_case_ids"`
+	ObservedCaseIDs                  []string                        `json:"observed_case_ids"`
+	Rows                             []CIEvidenceRow                 `json:"rows"`
+	ArtifactObservations             []CIEvidenceArtifactObservation `json:"artifact_observations"`
+	ActualCaseID                     string                          `json:"actual_case_id"`
+	ActualRootCauseNumerator         int                             `json:"actual_root_cause_numerator"`
+	ActualRootCauseDenominator       int                             `json:"actual_root_cause_denominator"`
+	ExpectedDownstreamArtifactIDs    []string                        `json:"expected_downstream_artifact_ids"`
+	ObservedDownstreamArtifactIDs    []string                        `json:"observed_downstream_artifact_ids"`
+	DownstreamObservationNumerator   int                             `json:"downstream_artifact_observation_numerator"`
+	DownstreamObservationDenominator int                             `json:"downstream_artifact_observation_denominator"`
+	DownstreamMissingNumerator       *int                            `json:"downstream_missing_artifact_numerator"`
+	DownstreamMissingDenominator     *int                            `json:"downstream_missing_artifact_denominator"`
+	ActualResolution                 string                          `json:"actual_resolution"`
+	ActualDecision                   string                          `json:"actual_decision"`
+	ActualCoordinate                 Coordinate                      `json:"actual_coordinate"`
+	CurrentOutcome                   string                          `json:"current_outcome"`
+	CurrentPermissionDenominator     int                             `json:"current_permission_denial_denominator"`
+	CurrentPermissionNumerator       int                             `json:"current_permission_denial_numerator"`
+	HistoricalPermissionDenominator  int                             `json:"historical_permission_denial_denominator"`
+	HistoricalPermissionNumerator    int                             `json:"historical_permission_denial_numerator"`
+	CurrentSourceNumerator           int                             `json:"current_source_numerator"`
+	CurrentSourceDenominator         int                             `json:"current_source_denominator"`
+	HistoricalSourceNumerator        int                             `json:"historical_source_numerator"`
+	HistoricalSourceDenominator      int                             `json:"historical_source_denominator"`
+	SyntheticSourceNumerator         int                             `json:"synthetic_source_numerator"`
+	SyntheticSourceDenominator       int                             `json:"synthetic_source_denominator"`
+	CurrentPageCount                 int                             `json:"current_page_count"`
+	CurrentPageInventoryComplete     bool                            `json:"current_page_inventory_complete"`
+	Digest                           string                          `json:"digest"`
 }
 
 // ValidateCIEvidenceAdjudication re-seals an independently produced receipt.
@@ -190,7 +194,8 @@ func ValidateCIEvidenceAdjudication(value CIEvidenceAdjudication) error {
 // contradiction or fixed point, and child artifact absence cannot become a
 // second root cause.
 func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID string) (CIEvidenceAdjudication, error) {
-	expected := []string{"current-pagination-incomplete", "malformed-http-200", "missing-artifact", "normal-http-200", "permission-denied-403"}
+	expected := []string{"historical-pagination-incomplete", "malformed-http-200", "missing-artifact", "normal-http-200", "permission-denied-403"}
+	expectedDownstreamArtifacts := expectedDownstreamArtifactIDs()
 	cases := make([]CIEvidenceCase, 0, len(observations))
 	var current *CIEvidenceCase
 	var observationRaw []byte
@@ -200,7 +205,7 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 		}
 		value := observation.Cases[0]
 		expectedRunID, expectedJobID, expectedJobName := int64(33088310894), int64(98574425650), "language-concept-artifact"
-		if observation.SourceClass == CIEvidenceSourceCurrent || (observation.SourceClass == CIEvidenceSourceHistorical && value.ID == "current-pagination-incomplete") {
+		if observation.SourceClass == CIEvidenceSourceCurrent || (observation.SourceClass == CIEvidenceSourceHistorical && value.ID == "historical-pagination-incomplete") {
 			expectedRunID, expectedJobID = 33098087709, 98608698224
 		}
 		if observation.RunID != expectedRunID || observation.JobID != expectedJobID || observation.JobName != expectedJobName || observation.RunID != value.RunID || observation.JobID != value.JobID || observation.JobName != value.JobName || observation.SourceClass != value.SourceClass {
@@ -285,21 +290,31 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 			historicalPermission++
 		}
 	}
-	currentMissing := 0
+	var currentMissingNumerator *int
+	var currentMissingDenominator *int
+	observedDownstreamArtifacts := []string{}
 	if current != nil {
+		observedDownstreamArtifacts = observedDownstreamArtifactIDs(current.Artifacts)
+		currentMissing := 0
 		for _, artifact := range current.Artifacts {
 			if artifact.Expected && !artifact.Present {
 				currentMissing++
 			}
 		}
+		currentMissingNumerator = &currentMissing
+		currentMissingDenominator = intPointer(len(expectedDownstreamArtifacts))
 	}
 	result := CIEvidenceAdjudication{
 		Schema: CIEvidenceAdjudicationSchema, Scope: CIEvidenceAdjudicationScope,
 		ObservationDigest: digestBytes(observationRaw), ExpectedCaseIDs: expected,
 		ObservedCaseIDs: caseIDs(cases), Rows: rows, ArtifactObservations: children,
-		ActualRootCauseDenominator: 1, DownstreamMissingNumerator: currentMissing,
-		DownstreamMissingDenominator: currentMissing, ActualResolution: actual.Resolution,
-		ActualDecision: actual.Decision, ActualCoordinate: actual.Coordinate,
+		ActualRootCauseDenominator: 1, ExpectedDownstreamArtifactIDs: expectedDownstreamArtifacts,
+		ObservedDownstreamArtifactIDs:    observedDownstreamArtifacts,
+		DownstreamObservationNumerator:   len(observedDownstreamArtifacts),
+		DownstreamObservationDenominator: len(expectedDownstreamArtifacts),
+		DownstreamMissingNumerator:       currentMissingNumerator, DownstreamMissingDenominator: currentMissingDenominator,
+		ActualResolution: actual.Resolution,
+		ActualDecision:   actual.Decision, ActualCoordinate: actual.Coordinate,
 		CurrentOutcome: actual.Outcome, CurrentPermissionDenominator: 1,
 		HistoricalPermissionNumerator: historicalPermission, HistoricalPermissionDenominator: 1,
 		CurrentSourceNumerator: boolInt(current != nil), CurrentSourceDenominator: 1,
@@ -322,7 +337,7 @@ func validateCIEvidenceCase(value CIEvidenceCase) error {
 		return fmt.Errorf("malformed CI evidence case %q", value.ID)
 	}
 	if value.SourceClass == CIEvidenceSourceHistorical {
-		if value.ID == "current-pagination-incomplete" {
+		if value.ID == "historical-pagination-incomplete" {
 			if value.RunID != 33098087709 || value.JobID != 98608698224 || value.JobName != "language-concept-artifact" {
 				return fmt.Errorf("historical CI evidence identity mismatch for %q", value.ID)
 			}
@@ -346,7 +361,7 @@ func validateCIEvidenceCase(value CIEvidenceCase) error {
 	if value.SourceClass == CIEvidenceSourceSynthetic && !strings.HasPrefix(value.Provenance, "FIXED_") && !strings.HasPrefix(value.Provenance, "SYNTHETIC_") {
 		return fmt.Errorf("synthetic CI evidence provenance mismatch for %q", value.ID)
 	}
-	if value.SourceClass == CIEvidenceSourceHistorical && value.ID != "permission-denied-403" && value.ID != "current-pagination-incomplete" {
+	if value.SourceClass == CIEvidenceSourceHistorical && value.ID != "permission-denied-403" && value.ID != "historical-pagination-incomplete" {
 		return fmt.Errorf("historical CI evidence case mismatch for %q", value.ID)
 	}
 	if value.SourceClass == CIEvidenceSourceSynthetic && value.ID == "permission-denied-403" {
@@ -374,7 +389,60 @@ func validateCurrentCIEvidenceCase(value CIEvidenceCase) error {
 	if value.SourceClass != CIEvidenceSourceCurrent || value.HTTPStatus != 200 || value.ProcessExitCode != 1 || !strings.Contains(value.Stderr, "workflow run pagination incomplete") || len(value.Pages) == 0 {
 		return fmt.Errorf("current CI evidence is not the observed pagination failure")
 	}
+	if err := validateDownstreamArtifactInventory(value.Artifacts); err != nil {
+		return err
+	}
 	return validateCIEvidenceCase(value)
+}
+
+func expectedDownstreamArtifactIDs() []string {
+	return []string{
+		"language-readiness-predecessor-selection-a",
+		"language-readiness-baseline-reference-a",
+		"language-readiness-foundation-seed-a",
+	}
+}
+
+func intPointer(value int) *int { return &value }
+
+func observedDownstreamArtifactIDs(artifacts []CIEvidenceArtifact) []string {
+	observed := make(map[string]bool, len(artifacts))
+	for _, artifact := range artifacts {
+		if artifact.Expected {
+			observed[artifact.ID] = true
+		}
+	}
+	result := make([]string, 0, len(expectedDownstreamArtifactIDs()))
+	for _, id := range expectedDownstreamArtifactIDs() {
+		if observed[id] {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
+func validateDownstreamArtifactInventory(artifacts []CIEvidenceArtifact) error {
+	expected := expectedDownstreamArtifactIDs()
+	if len(artifacts) != len(expected) {
+		return fmt.Errorf("downstream artifact inventory mismatch")
+	}
+	expectedSet := make(map[string]bool, len(expected))
+	for _, id := range expected {
+		expectedSet[id] = true
+	}
+	seen := make(map[string]bool, len(artifacts))
+	for _, artifact := range artifacts {
+		if !artifact.Expected || !expectedSet[artifact.ID] || seen[artifact.ID] {
+			return fmt.Errorf("downstream artifact inventory mismatch for %q", artifact.ID)
+		}
+		seen[artifact.ID] = true
+	}
+	for _, id := range expected {
+		if !seen[id] {
+			return fmt.Errorf("downstream artifact inventory missing %q", id)
+		}
+	}
+	return nil
 }
 
 func deriveCIEvidenceRow(value CIEvidenceCase) CIEvidenceRow {

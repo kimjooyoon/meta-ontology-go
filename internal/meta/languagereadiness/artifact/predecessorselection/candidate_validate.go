@@ -48,7 +48,7 @@ func knownPaginationFailureReason(reason string) bool {
 		return true
 	}
 	for _, prefix := range []string{"WORKFLOW_RUN", "ARTIFACT", "JOB"} {
-		for _, suffix := range []string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"} {
+		for _, suffix := range []string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "REDIRECT_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"} {
 			if reason == prefix+"_"+suffix {
 				return true
 			}

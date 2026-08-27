@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,11 +20,21 @@ type githubClient struct {
 }
 
 func newGitHubClient(baseURL, token string) *githubClient {
-	return &githubClient{
+	result := &githubClient{
 		baseURL: strings.TrimRight(baseURL, "/"),
 		token:   token,
 		client:  &http.Client{Timeout: 30 * time.Second},
 	}
+	result.client.CheckRedirect = func(request *http.Request, _ []*http.Request) error {
+		base, err := url.Parse(result.baseURL)
+		if err != nil || base == nil || base.Scheme == "" || base.Host == "" || base.User != nil || base.Fragment != "" ||
+			request == nil || request.URL == nil || request.URL.User != nil || request.URL.Fragment != "" ||
+			!strings.EqualFold(request.URL.Scheme, base.Scheme) || !strings.EqualFold(request.URL.Host, base.Host) {
+			return pageRedirectFailure{}
+		}
+		return nil
+	}
+	return result
 }
 
 func (client *githubClient) getJSON(ctx context.Context, endpoint string, output any) error {
@@ -61,6 +72,10 @@ const (
 
 func (failure pageURLFailure) Error() string { return string(failure) }
 
+type pageRedirectFailure struct{}
+
+func (pageRedirectFailure) Error() string { return "REDIRECT_ORIGIN_MISMATCH" }
+
 func (client *githubClient) resolvePageURL(reference, endpoint string) (string, error) {
 	base, err := url.Parse(client.baseURL)
 	if err != nil || base == nil || base.Scheme == "" || base.Host == "" || base.User != nil || base.Fragment != "" {
@@ -89,8 +104,12 @@ func (client *githubClient) resolvePageURL(reference, endpoint string) (string, 
 }
 
 func pageURLFailureReason(err error, endpointClass string) string {
-	failure, ok := err.(pageURLFailure)
-	if !ok {
+	var redirectFailure pageRedirectFailure
+	if errors.As(err, &redirectFailure) {
+		return predecessorReason(endpointClass, "REDIRECT_ORIGIN_MISMATCH")
+	}
+	var failure pageURLFailure
+	if !errors.As(err, &failure) {
 		return ""
 	}
 	switch failure {

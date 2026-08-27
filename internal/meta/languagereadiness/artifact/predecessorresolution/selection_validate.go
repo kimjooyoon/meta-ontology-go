@@ -44,14 +44,15 @@ func knownFailureReason(reason string) bool {
 		predecessorselection.ReasonPaginationCap,
 		predecessorselection.ReasonPaginationMalformed,
 		predecessorselection.ReasonPaginationOrigin,
+		predecessorselection.ReasonPaginationRedirect,
 		predecessorselection.ReasonPaginationDuplicate,
 		predecessorselection.ReasonResponseMalformed,
 		"ARTIFACT_HTTP_FAILURE", "ARTIFACT_NEXT_LINK_REPEATED",
 		"ARTIFACT_PAGE_CAP_EXCEEDED", "ARTIFACT_LINK_MALFORMED",
-		"ARTIFACT_LINK_ORIGIN_MISMATCH", "ARTIFACT_DUPLICATE_ID",
+		"ARTIFACT_LINK_ORIGIN_MISMATCH", "ARTIFACT_REDIRECT_ORIGIN_MISMATCH", "ARTIFACT_DUPLICATE_ID",
 		"ARTIFACT_RESPONSE_MALFORMED", "ARTIFACT_PAGINATION_INCOMPLETE",
 		"JOB_HTTP_FAILURE", "JOB_NEXT_LINK_REPEATED", "JOB_PAGE_CAP_EXCEEDED",
-		"JOB_LINK_MALFORMED", "JOB_LINK_ORIGIN_MISMATCH", "JOB_DUPLICATE_ID",
+		"JOB_LINK_MALFORMED", "JOB_LINK_ORIGIN_MISMATCH", "JOB_REDIRECT_ORIGIN_MISMATCH", "JOB_DUPLICATE_ID",
 		"JOB_RESPONSE_MALFORMED", "JOB_PAGINATION_INCOMPLETE",
 		predecessorselection.ReasonArtifactPayload:
 		return true

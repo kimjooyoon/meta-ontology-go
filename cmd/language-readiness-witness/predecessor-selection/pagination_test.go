@@ -184,6 +184,32 @@ func TestPaginationRejectsCrossOriginNextLinkBeforeRequest(t *testing.T) {
 	}
 }
 
+func TestPaginationRejectsCrossOriginRedirectBeforeRequest(t *testing.T) {
+	var externalHits atomic.Int32
+	external := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		externalHits.Add(1)
+		if request.Header.Get("Authorization") != "" {
+			t.Errorf("authorization reached cross-origin redirect target")
+		}
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer external.Close()
+
+	base := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Location", external.URL+"/runs?page=2")
+		writer.WriteHeader(http.StatusFound)
+	}))
+	defer base.Close()
+
+	_, pages, reason := collectWorkflowRuns(context.Background(), newGitHubClient(base.URL, "fixture-secret"), base.URL+"/runs?page=1")
+	if reason != "WORKFLOW_RUN_REDIRECT_ORIGIN_MISMATCH" {
+		t.Fatalf("reason = %q, want redirect origin mismatch", reason)
+	}
+	if len(pages) != 1 || externalHits.Load() != 0 {
+		t.Fatalf("pages/external hits = %d/%d, want 1/0", len(pages), externalHits.Load())
+	}
+}
+
 func TestPaginationRejectsOtherOriginCoordinates(t *testing.T) {
 	cases := map[string]func(string) string{
 		"scheme":   func(base string) string { return "https://" + strings.TrimPrefix(base, "http://") + "/runs?page=2" },
@@ -210,7 +236,7 @@ func TestPaginationRejectsOtherOriginCoordinates(t *testing.T) {
 }
 
 func TestPaginationFailureReasonAllowlist(t *testing.T) {
-	suffixes := []string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"}
+	suffixes := []string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "REDIRECT_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"}
 	for _, prefix := range []string{"WORKFLOW_RUN", "ARTIFACT", "JOB"} {
 		for _, suffix := range suffixes {
 			if !knownPaginationFailureReason(prefix + "_" + suffix) {

@@ -593,13 +593,20 @@ jobs:
             ${{ runner.temp }}/language-readiness-foundation-seed-a.json
           if-no-files-found: error
           retention-days: 14
-      - name: Upload readiness predecessor diagnostic evidence
-        if: always() && steps.readiness-predecessor.outcome != 'success'
+      - name: Upload readiness predecessor failure receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-selection-*.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload optional readiness predecessor diagnostics
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
           path: |
-            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
             ${{ runner.temp }}/language-readiness-predecessor-selection-b.json
             ${{ runner.temp }}/language-readiness-foundation-seed-a.json
             ${{ runner.temp }}/language-readiness-foundation-seed-b.json
