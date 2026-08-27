@@ -35,7 +35,8 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
       TOOLING_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
-      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || 1 }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || github.run_attempt }}
+      SOURCE_ARTIFACT_NAME: ${{ github.event_name == 'workflow_run' && 'self-improvement-language-observation' || format('self-improvement-language-observation-pr-witness-{0}', github.run_attempt) }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v5
@@ -47,7 +48,6 @@ jobs:
           go-version: 1.27.x
           check-latest: true
       - name: Compile transport metaprogram from workflow authority
-        if: github.event_name == 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -56,8 +56,53 @@ jobs:
           go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
           go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
+      - name: Reproduce exact observation for PR
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/language-example-experiment/main.sh
+          input="$RUNNER_TEMP/language-example-experiment"
+          output="$RUNNER_TEMP/candidate/observation"
+          mkdir -p "$output"
+          go run ./scripts/self-improvement-contract \
+            -contract examples/self-improvement/main.gooo \
+            -commit "$HEAD_SHA" -output "$output/contract.json" -check
+          go run ./scripts/self-improvement-observation \
+            -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
+            -report "$input/report.json" -counterexamples "$input/counterexamples.json" \
+            -contract "$output/contract.json" -output "$output/first.json" -check
+      - name: Bind PR observation to transport contract
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/candidate/observation"
+          artifact="$RUNNER_TEMP/candidate/source-artifact"
+          mkdir -p "$artifact"
+          "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
+            -mode produce \
+            -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$HEAD_SHA" \
+            -checkout-sha "$(git rev-parse HEAD)" \
+            -workflow-ref "$GITHUB_WORKFLOW_REF" \
+            -workflow-sha "$GITHUB_WORKFLOW_SHA" \
+            -run-id "$SOURCE_RUN_ID" -run-attempt "$SOURCE_RUN_ATTEMPT" \
+            -job propose-non-executing-candidate -artifact-name "$SOURCE_ARTIFACT_NAME" \
+            -observation "$output/first.json" \
+            -output "$output/producer.json" -check
+          cp "$output/first.json" "$artifact/first.json"
+          cp "$output/producer.json" "$artifact/producer.json"
+      - name: Upload PR observation transport witness
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.SOURCE_ARTIFACT_NAME }}
+          path: ${{ runner.temp }}/candidate/source-artifact
+          if-no-files-found: error
+          retention-days: 14
       - name: Observe immutable artifact metadata
-        if: github.event_name == 'workflow_run'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -77,11 +122,10 @@ jobs:
             -run "$transport/run.json" -artifacts "$transport/artifacts.json" \
             -repository "$GITHUB_REPOSITORY" -expected-run-id "$SOURCE_RUN_ID" \
             -expected-run-attempt "$SOURCE_RUN_ATTEMPT" \
-            -artifact-name self-improvement-language-observation \
+            -artifact-name "$SOURCE_ARTIFACT_NAME" \
             -run-lookup-exit "$run_exit" -artifacts-lookup-exit "$artifacts_exit" \
             -output "$transport/metadata.json" -receipt "$transport/lifecycle.json"
       - name: Download and seal artifact lifecycle
-        if: github.event_name == 'workflow_run'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -106,7 +150,7 @@ jobs:
           jq -r '"artifact lifecycle: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_step_total) (\(.metrics.coverage_basis_points) bps), unknown-path \(.metrics.unknown_path_count), \(.coordinate.stage)/\(.coordinate.step)/\(.reason)"' \
             "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload artifact lifecycle receipt
-        if: always() && github.event_name == 'workflow_run'
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-artifact-lifecycle-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
@@ -114,7 +158,6 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Require exact artifact lifecycle before consumption
-        if: github.event_name == 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -137,7 +180,6 @@ jobs:
             > "$transport/archive-digest.txt"
       - name: Verify producer-declared subject and lower unsigned resolution
         id: verify-transport
-        if: github.event_name == 'workflow_run'
         shell: bash
         run: |
           set -euo pipefail
@@ -161,36 +203,15 @@ jobs:
           jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
             "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout verified producer subject
-        if: github.event_name == 'workflow_run'
         uses: actions/checkout@v5
         with:
           ref: ${{ steps.verify-transport.outputs.subject_sha }}
           persist-credentials: false
-      - name: Reproduce exact observation for PR
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          set -euo pipefail
-          bash scripts/language-example-experiment/main.sh
-          input="$RUNNER_TEMP/language-example-experiment"
-          output="$RUNNER_TEMP/candidate/observation"
-          mkdir -p "$output"
-          go run ./scripts/self-improvement-contract \
-            -contract examples/self-improvement/main.gooo \
-            -commit "$HEAD_SHA" -output "$output/contract.json" -check
-          go run ./scripts/self-improvement-observation \
-            -head-sha "$HEAD_SHA" -source-run-id "$SOURCE_RUN_ID" \
-            -report "$input/report.json" -counterexamples "$input/counterexamples.json" \
-            -contract "$output/contract.json" -output "$output/first.json" -check
       - name: Compile Gooo candidate contract and replay proposal
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "workflow_run" ]; then
-            input="$RUNNER_TEMP/candidate/input/first.json"
-          else
-            input="$RUNNER_TEMP/candidate/observation/first.json"
-          fi
+          input="$RUNNER_TEMP/candidate/input/first.json"
           source_run_id="$(jq -r '.source_workflow_run_id' "$input")"
           if ! [[ "$source_run_id" =~ ^[1-9][0-9]*$ ]]; then
             echo "observation source workflow run id is unknown" >&2
