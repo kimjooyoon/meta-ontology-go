@@ -4,6 +4,8 @@ func CanonicalBindings() []ArtifactBinding {
 	return []ArtifactBinding{
 		binding("bind-indicator-meta-program", "BindIndicatorMetaProgram", ProofCoherence,
 			"meta-binding", "bootstrap/meta-binding-witness", "meta-binding-coverage", "meta-binding.report"),
+		binding("measure-integration-progress", "MeasureIntegrationProgress", ProofFoundation,
+			"integration-progress", "cmd/integration-progress-witness", "integration-progress-evidence", "integration-progress.report"),
 		binding("partition-directory", "PartitionDirectory", ProofFoundation,
 			"source-policy", "cmd/directory-partition-witness", "directory-partition", "directory-partition.report"),
 		binding("separate-directory-kinds", "SeparateDirectoryKinds", ProofFoundation,

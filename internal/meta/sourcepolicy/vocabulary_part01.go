@@ -68,4 +68,5 @@ const (
 	OperationPreserveWorkflow  Operation = "preserve-workflow-discovery"
 	OperationModernize         Operation = "apply-go-fix"
 	OperationSelectToolchain   Operation = "select-toolchain"
+	OperationMeasureProgress   Operation = "measure-integration-progress"
 )

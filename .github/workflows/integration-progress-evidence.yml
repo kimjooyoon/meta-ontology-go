@@ -1,0 +1,121 @@
+name: Integration progress evidence
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: integration-progress-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evidence:
+    name: Fixed-cohort integration progress
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          cache: true
+      - name: Collect exact GitHub observation
+        uses: actions/github-script@v8
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/integration-progress
+          OBSERVER_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const repository = `${context.repo.owner}/${context.repo.repo}`;
+            const classify = error => {
+              const status = Number(error && error.status || 0);
+              if (status === 403) return 'GITHUB_PERMISSION_DENIED';
+              if (status === 404) return 'GITHUB_RESOURCE_NOT_FOUND';
+              return status > 0 ? `GITHUB_API_STATUS_${status}` : 'GITHUB_API_UNAVAILABLE';
+            };
+            const observation = {
+              schema: 'gooo/integration-progress-observation/v1',
+              repository,
+              observer_head_sha: process.env.OBSERVER_HEAD_SHA,
+              observed_at: new Date().toISOString(),
+              cohort_id: 'gooo.portfolio.pr-541-570.v1',
+              pull_requests: [],
+            };
+            for (let number = 541; number <= 570; number++) {
+              const item = {number, observation_status: 'UNAVAILABLE', draft: false, runs_total: 0, runs_consumed: 0};
+              try {
+                const {data: pull} = await github.rest.pulls.get({...context.repo, pull_number: number});
+                Object.assign(item, {observation_status: 'OBSERVED', state: pull.state, draft: Boolean(pull.draft),
+                  head_sha: pull.head.sha, created_at: pull.created_at, closed_at: pull.closed_at || '', merged_at: pull.merged_at || ''});
+                try {
+                  const {data: runs} = await github.rest.actions.listWorkflowRunsForRepo({...context.repo,
+                    head_sha: pull.head.sha, event: 'pull_request', per_page: 100});
+                  item.runs_total = runs.total_count;
+                  item.runs_consumed = runs.workflow_runs.length;
+                  const candidates = runs.workflow_runs.filter(run => run.name === 'CI [PR authoritative]' && run.head_sha === pull.head.sha)
+                    .sort((left, right) => right.created_at.localeCompare(left.created_at) || right.id - left.id);
+                  if (candidates.length > 0) {
+                    const selected = candidates[0];
+                    item.authoritative_run = {id: selected.id, name: selected.name, head_sha: selected.head_sha,
+                      status: selected.status, conclusion: selected.conclusion || '', created_at: selected.created_at,
+                      run_started_at: selected.run_started_at || '', updated_at: selected.updated_at,
+                      artifacts_total: 0, artifacts_consumed: 0, artifact_matches: 0};
+                    try {
+                      const {data: artifacts} = await github.rest.actions.listWorkflowRunArtifacts({...context.repo,
+                        run_id: selected.id, per_page: 100});
+                      const expectedName = `source-line-metrics-${pull.head.sha}`;
+                      const matches = artifacts.artifacts.filter(artifact => artifact.name === expectedName);
+                      Object.assign(item.authoritative_run, {artifacts_total: artifacts.total_count,
+                        artifacts_consumed: artifacts.artifacts.length, artifact_matches: matches.length});
+                      if (matches.length === 1) {
+                        const artifact = matches[0];
+                        item.authoritative_run.artifact = {id: artifact.id, name: artifact.name,
+                          head_sha: artifact.workflow_run && artifact.workflow_run.head_sha || '',
+                          created_at: artifact.created_at, expired: Boolean(artifact.expired)};
+                      }
+                    } catch (error) {
+                      item.authoritative_run.artifact_query_failure = classify(error);
+                    }
+                  }
+                } catch (error) {
+                  item.run_query_failure = classify(error);
+                }
+              } catch (error) {
+                item.failure_reason = classify(error);
+              }
+              observation.pull_requests.push(item);
+            }
+            fs.mkdirSync(process.env.OUTPUT_DIR, {recursive: true});
+            fs.writeFileSync(path.join(process.env.OUTPUT_DIR, 'observation.json'), JSON.stringify(observation, null, 2) + '\n');
+      - name: Evaluate, replay, and parse generated Gooo
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/integration-progress
+        run: |
+          go run ./cmd/integration-progress-witness \
+            -input "$OUTPUT_DIR/observation.json" \
+            -report "$OUTPUT_DIR/report.json" \
+            -program "$OUTPUT_DIR/program.gooo"
+          go run ./cmd/integration-progress-witness \
+            -input "$OUTPUT_DIR/observation.json" \
+            -report "$OUTPUT_DIR/report.json" \
+            -program "$OUTPUT_DIR/program.gooo" -check
+          go run ./cmd/gooo check "$OUTPUT_DIR/program.gooo"
+          jq -e '.decision == "COMPLETE" or .decision == "PROGRESS_OBSERVED"' "$OUTPUT_DIR/report.json"
+          jq -r '"### Integration progress\n- decision: \(.decision) (\(.reason))\n- cells: \(.summary.closed_cells)/\(.summary.cells_total)\n- merges: \(.summary.merged_pull_requests)/\(.summary.pull_requests_total)\n- evidence reachable: \(.summary.evidence_reachable)/\(.summary.pull_requests_total)\n- evidenced merges: \(.summary.evidenced_merges)/\(.summary.pull_requests_total)\n- queue share: \(.summary.queue_share_basis_points) bps\n- unknown/refuted: \(.summary.unknown_cells)/\(.summary.refuted_cells)"' "$OUTPUT_DIR/report.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload progress evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: integration-progress-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/integration-progress
+          if-no-files-found: error
+          retention-days: 30
