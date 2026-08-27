@@ -40,10 +40,10 @@ func sealReport(report *Report) {
 }
 
 func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
-	result := Summary{CasesTotal: 1, CasesPassed: boolInt(verdict.Passed), AdjudicatedCases: boolInt(verdict.Passed), RepositoryWrites: receipt.RepositoryWrites}
-	result.TextualChanges = boolInt(receipt.TextualDelta.Changed)
-	result.StructuralObservations = boolInt(receipt.StructuralDelta.Status != "")
-	result.ClaimTransitionCases = boolInt(len(receipt.ClaimTransitions) > 0)
+	result := Summary{CasesTotal: 1, CasesPassed: boolInt(verdict.Passed), AdjudicatedCases: boolInt(verdict.Passed), RepositoryWrites: receipt.RepositoryWrites,
+		TextualChanges:         boolInt(receipt.TextualDelta.Changed),
+		StructuralObservations: boolInt(receipt.StructuralDelta.Status != ""),
+		ClaimTransitionCases:   boolInt(len(receipt.ClaimTransitions) > 0)}
 	switch receipt.Classification {
 	case producer.ClassPreserved:
 		result.SemanticPreserved = 1
