@@ -13,6 +13,14 @@ case "$output" in
 esac
 mkdir -p "$output"
 
+workflow_failure() {
+  local status="$?" failure_line="${BASH_LINENO[0]:-${LINENO}}" command="${BASH_COMMAND:-unknown}"
+  printf 'line=%s\nstatus=%s\ncommand=%s\n' "$failure_line" "$status" "$command" > "$output/ci-failure.txt" || true
+  echo "proof-carrying artifact workflow failed: line=$failure_line status=$status command=$command" >&2
+  exit "$status"
+}
+trap workflow_failure ERR
+
 source_path="examples/language-proof-carrying-artifact/main.gooo"
 recipe="examples/language-proof-carrying-artifact/recipe.json"
 contract="examples/language-proof-carrying-artifact/contract.json"
