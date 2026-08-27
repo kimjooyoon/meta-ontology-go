@@ -12,6 +12,8 @@ func init() {
 		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/toolchain-conformance/corpus.json",
 		"internal/meta/invarianttransformation",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
 		"internal/meta/languagereadiness/languagesemantic/model.go",
 		"internal/meta/languagereadiness/languagesemantic/registry_definition.go",
 		"internal/meta/languagereadiness/languagesemanticbinding/denominator.go",
