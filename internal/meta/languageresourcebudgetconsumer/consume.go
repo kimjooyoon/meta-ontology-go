@@ -73,7 +73,7 @@ func Consume(input Input, label string) Report {
 	report.Imports = input.Producer.ImportScan
 	report.Provenance = Provenance{RawSourceFiles: len(input.Producer.SourceFiles), RawOperationOutputs: len(input.Producer.RawOutputs), RawResourceSamples: len(input.Observations), RawEvidenceDigest: rawEvidenceDigest(input), ConsumerPackage: "internal/meta/languageresourcebudgetconsumer"}
 	writeTo, writeReason := writeSetState(input.Producer.WriteSets, input.Producer.Effects, input.Contract)
-	report.ClaimTransitions = transitions(semanticState, report.Resource, writeTo, writeReason)
+	report.ClaimTransitions = transitions(semanticState, report.SemanticReason, report.Resource, writeTo, writeReason)
 	report.Decision, report.Resolution, report.Reason = overallDecision(semanticState, report.Resource, report.ClaimTransitions)
 	if !validImportScan(input.Producer.ImportScan) {
 		report.Decision, report.Resolution, report.Reason = "FAIL_CLOSED", "LOWER_RESOLUTION", "IMPORT_SCAN_INVALID"
@@ -390,10 +390,12 @@ func validObservation(value Observation, spec Operation, input Input, meaning So
 	return value.Schema == "gooo/meta-resource-budget-observation/v1" && value.SubjectSHA == input.ExpectedHead && value.Producer == Producer && value.Consumer == Consumer && value.Operation == spec.ID && value.Stage == spec.Stage && value.Step == spec.Step && value.MetaOperation == spec.MetaOperation && value.ProofChoice == spec.ProofChoice && value.Reason == "RUNNER_RESOURCE_OBSERVED" && value.ExitCode == 0 && value.WallTimeNS > 0 && value.PeakRSSKiB > 0 && value.ReceiptBytes >= 0 && value.GeneratedBytes >= 0 && contentDigest(value.OutputDigest) && value.SourceRawDigest == meaning.SourceDigest && value.SourceSemanticDigest == meaning.SemanticDigest && value.EntryDigest == meaning.TargetDigest && value.TargetDigest == meaning.TargetDigest
 }
 
-func transitions(semanticState string, resource ResourceEnvelope, writeTo, writeReason string) []ClaimTransition {
-	semanticReason := "SEMANTIC_SOURCE_LOWERING_AND_ARTIFACT_REPLAY_STABLE"
-	if semanticState != "DISCHARGED" {
-		semanticReason = "SEMANTIC_EVIDENCE_" + semanticState
+func transitions(semanticState, semanticReason string, resource ResourceEnvelope, writeTo, writeReason string) []ClaimTransition {
+	reason := semanticReason
+	if semanticState == "DISCHARGED" {
+		reason = "SEMANTIC_SOURCE_LOWERING_AND_ARTIFACT_REPLAY_STABLE"
+	} else if reason == "" {
+		reason = "SEMANTIC_EVIDENCE_" + semanticState
 	}
 	resourceTo, resourceReason := "DISCHARGED", "RESOURCE_ENVELOPE_OBSERVED"
 	if resource.Resolution != "EXACT" {
@@ -401,7 +403,7 @@ func transitions(semanticState string, resource ResourceEnvelope, writeTo, write
 	} else if resource.Decision != "PASS" {
 		resourceTo, resourceReason = "REFUTED", "RESOURCE_BUDGET_EXCEEDED"
 	}
-	return []ClaimTransition{{Sequence: 1, ClaimID: "semantic-meaning", From: "OPEN", To: semanticState, Stage: "CONSUME", Step: "semantic-verdict", Reason: semanticReason}, {Sequence: 2, ClaimID: "runner-resource-envelope", From: "OPEN", To: resourceTo, Stage: "CONSUME", Step: "resource-verdict", Reason: resourceReason}, {Sequence: 3, ClaimID: "net-repository-state", From: "OPEN", To: writeTo, Stage: "CONSUME", Step: "effect-verdict", Reason: writeReason}}
+	return []ClaimTransition{{Sequence: 1, ClaimID: "semantic-meaning", From: "OPEN", To: semanticState, Stage: "CONSUME", Step: "semantic-verdict", Reason: reason}, {Sequence: 2, ClaimID: "runner-resource-envelope", From: "OPEN", To: resourceTo, Stage: "CONSUME", Step: "resource-verdict", Reason: resourceReason}, {Sequence: 3, ClaimID: "net-repository-state", From: "OPEN", To: writeTo, Stage: "CONSUME", Step: "effect-verdict", Reason: writeReason}}
 }
 
 func resourceReasonFor(resource ResourceEnvelope) string {
