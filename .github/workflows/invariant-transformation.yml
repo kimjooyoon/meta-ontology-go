@@ -1,0 +1,139 @@
+name: Invariant-preserving transformation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/invariant-transformation.yml
+      - cmd/invariant-transformation-witness/**
+      - examples/invariant-transformation/**
+      - internal/meta/invarianttransformation/**
+      - internal/verify/scope_invariant_transformation.go
+      - docs/language/invariant-preserving-transformation.md
+  push:
+    branches: [dev]
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/invariant-transformation.yml
+      - cmd/invariant-transformation-witness/**
+      - examples/invariant-transformation/**
+      - internal/meta/invarianttransformation/**
+      - internal/verify/scope_invariant_transformation.go
+      - docs/language/invariant-preserving-transformation.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  invariant-transformation:
+    name: invariant transformation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: true
+
+      - name: Require exact Go toolchain and formatted sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          diff="$(gofmt -d \
+            cmd/invariant-transformation-witness/main.go \
+            internal/meta/invarianttransformation/model/model.go \
+            internal/meta/invarianttransformation/producer/produce.go \
+            internal/meta/invarianttransformation/producer/produce_test.go \
+            internal/meta/invarianttransformation/judge/judge.go \
+            internal/meta/invarianttransformation/judge/report.go \
+            internal/meta/invarianttransformation/judge/judge_test.go)"
+          test -z "$diff"
+
+      - name: Compile the Gooo value contract
+        run: go run ./cmd/gooo check examples/invariant-transformation/main.gooo
+
+      - name: Run invariant model regressions
+        run: go test ./internal/meta/invarianttransformation/...
+
+      - name: Emit and independently judge every fixed case twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/invariant-transformation"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./cmd/invariant-transformation-witness \
+              -source examples/invariant-transformation/main.gooo \
+              -contract examples/invariant-transformation/contract.json \
+              -head-sha "$HEAD_SHA" \
+              -output "$output/$pass/report.json" \
+              -receipt-dir "$output/$pass/receipts" \
+              -check
+          done
+          cmp "$output/first/report.json" "$output/second/report.json"
+          for case in preserved-translation semantic-violation missing-regression-witness approved-artifact; do
+            cmp "$output/first/receipts/$case.json" "$output/second/receipts/$case.json"
+          done
+
+      - name: Enforce independent judge dependency boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          if go list -deps ./internal/meta/invarianttransformation/judge | grep -Fq '/internal/meta/invarianttransformation/producer'; then
+            echo 'independent judge imports the receipt producer' >&2
+            exit 1
+          fi
+
+      - name: Publish exact metrics and authority boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -e '
+            .schema == "gooo/invariant-transformation-report/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .denominator_id == "gooo/invariant-transformation-denominator/v1" and
+            .denominator_total == 4 and
+            .summary.cases_satisfied == 4 and .summary.cases_total == 4 and
+            .summary.authorized_cases == 2 and .summary.refuted_cases == 1 and
+            .summary.open_cases == 1 and .summary.claims_total == 16 and
+            .summary.discharged_claims == 13 and .summary.refuted_claims == 2 and
+            .summary.open_claims == 1 and .summary.transition_events == 16 and
+            .summary.approved_artifact_effects == 1 and
+            .summary.repository_writes == 0 and .summary.mutation_authority == 0 and
+            .summary.coverage_bps == 10000 and
+            ([.cases[].receipt.repository_writes] | add) == 0 and
+            ([.cases[].receipt.mutation_authority] | any) == false and
+            (.cases | map(select(.satisfied == true)) | length) == 4
+          ' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+          {
+            echo '### Invariant-preserving transformation'
+            jq -r '"- exact fixed denominator: \(.summary.cases_satisfied)/\(.summary.cases_total) (\(.summary.coverage_bps) BPS)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+            jq -r '"- authority outcomes: authorized=\(.summary.authorized_cases), refuted=\(.summary.refuted_cases), open=\(.summary.open_cases)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+            jq -r '"- claim values: discharged=\(.summary.discharged_claims), refuted=\(.summary.refuted_claims), open=\(.summary.open_claims), transitions=\(.summary.transition_events)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+            jq -r '"- effect boundary: writes=\(.summary.repository_writes), mutation-authority=\(.summary.mutation_authority), approved-artifact-effects=\(.summary.approved_artifact_effects)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload exact-head receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: invariant-transformation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/invariant-transformation
+          if-no-files-found: error
+          retention-days: 14
