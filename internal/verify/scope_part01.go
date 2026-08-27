@@ -9,7 +9,12 @@ func init() {
 		".github/agent-scope-table.md", ".github/ci-governance.json",
 		".github/workflows/semantic-resolution-lattice.yml",
 		"cmd/semantic-resolution-lattice-judge", "cmd/semantic-resolution-lattice-witness",
-		"examples/semantic-resolution-lattice", "internal/meta/semanticresolution",
+		"examples/language-syntax-roundtrip/corpus.json", "examples/semantic-resolution-lattice",
+		"examples/toolchain-conformance/corpus.json",
+		"internal/meta/languagereadiness/languagesemantic",
+		"internal/meta/languagereadiness/languagesemanticbinding",
+		"internal/meta/languagereadiness/languagesyntax",
+		"internal/meta/languagereadiness/toolchainconformance", "internal/meta/semanticresolution",
 		"internal/verify/scope_part01.go",
 	}
 }

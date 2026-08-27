@@ -4,11 +4,11 @@ const (
 	expectedSources       = 26
 	expectedLaws          = 3
 	expectedRejections    = 2
-	expectedSyntaxCases   = 29
-	expectedSyntaxValid   = 26
+	expectedSyntaxCases   = 30
+	expectedSyntaxValid   = 27
 	expectedSyntaxInvalid = 3
-	expectedSyntaxFiles   = 32
-	expectedSyntaxLines   = 412
+	expectedSyntaxFiles   = 33
+	expectedSyntaxLines   = 441
 )
 
 func expectedSyntaxPackageUnits() []syntaxPackageUnit {

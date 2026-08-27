@@ -235,6 +235,14 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-resolution-lattice",
+      "path": "examples/semantic-resolution-lattice/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
     }
   ],
   "package_units": [
