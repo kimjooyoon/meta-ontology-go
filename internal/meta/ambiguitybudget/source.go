@@ -116,7 +116,7 @@ func observeCaseProgram(index graphIndex, activityNode semantic.Node, program co
 		if strings.Contains(entityID, "/branch/unresolved/") {
 			elements.UnresolvedBranchIDs = append(elements.UnresolvedBranchIDs, entityID)
 		}
-		if strings.Contains(entityID, "/branch-observation/") {
+		if strings.Contains(entityID, "/branch-observation") {
 			elements.BranchObservationIDs = append(elements.BranchObservationIDs, entityID)
 		}
 		if strings.Contains(entityID, "/evidence-path/") && pathUsesCandidate(index, entityID, anchor) {
