@@ -10,6 +10,10 @@ const (
 	ReasonUnknownSource      = "UNKNOWN_SOURCE_SYNTAX"
 	ReasonUnknownContract    = "UNKNOWN_SOURCE_CONTRACT"
 	Toolchain                = "go1.27.0"
+	ProducerID               = "source-authority"
+	ConsumerID               = "independent-adjudicator"
+	MetaOperationID          = "preserve-explicit-claim"
+	ProofChoiceID            = "boundary-receipt"
 	ExpectedCleanCases       = 1
 	ExpectedLeakageCases     = 5
 	ExpectedClaimTransitions = 2

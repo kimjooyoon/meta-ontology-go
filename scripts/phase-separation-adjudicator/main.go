@@ -19,6 +19,10 @@ const (
 	expectedReason       = "PHASE_SEPARATION_WITNESS_EXACT"
 	expectedUnknownFault = "UNKNOWN_SOURCE_SYNTAX"
 	expectedToolchain    = "go1.27.0"
+	expectedProducer     = "source-authority"
+	expectedConsumer     = "independent-adjudicator"
+	expectedOperation    = "preserve-explicit-claim"
+	expectedProof        = "boundary-receipt"
 )
 
 type coordinate struct {
@@ -171,7 +175,7 @@ func checkProven(got receipt) error {
 	if got.Decision != expectedPass || got.Reason != expectedReason || got.Resolution != expectedExact || got.Coordinate != (coordinate{"EXECUTION", "ADJUDICATE", expectedReason}) {
 		return fmt.Errorf("proven decision or coordinate is not exact")
 	}
-	if got.Producer == "" || got.Consumer == "" || got.MetaOperation == "" || got.ProofChoice == "" || got.SourcePath == "" || got.LeakSourcePath == "" {
+	if got.Producer != expectedProducer || got.Consumer != expectedConsumer || got.MetaOperation != expectedOperation || got.ProofChoice != expectedProof || got.SourcePath == "" || got.LeakSourcePath == "" {
 		return fmt.Errorf("producer, consumer, operation, proof, or source binding is missing")
 	}
 	if len(got.Cases) != 6 || len(got.Transitions) != 2 || len(got.Indicators) != 12 || len(got.Views) != 3 || len(got.Proofs) != 3 {

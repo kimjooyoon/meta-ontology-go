@@ -22,7 +22,8 @@ func Build(sourcePath string, sourceBytes []byte, leaksPath string, leaksBytes [
 		report.Coordinate.Reason = ReasonUnknownSource
 		return finalize(report)
 	}
-	if source.Producer != leaks.Producer || source.Consumer != leaks.Consumer || source.MetaOperation != leaks.MetaOperation || source.ProofChoice != leaks.ProofChoice {
+	if source.Producer != leaks.Producer || source.Consumer != leaks.Consumer || source.MetaOperation != leaks.MetaOperation || source.ProofChoice != leaks.ProofChoice ||
+		source.Producer != ProducerID || source.Consumer != ConsumerID || source.MetaOperation != MetaOperationID || source.ProofChoice != ProofChoiceID {
 		report.Coordinate = Coordinate{Stage: "SOURCE", Step: "BIND", Reason: ReasonUnknownContract}
 		report.Reason = ReasonUnknownContract
 		return finalize(report)
