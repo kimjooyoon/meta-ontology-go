@@ -67,12 +67,12 @@ func summaryFor(receipt producer.Receipt, verdict consumer.Verdict) Summary {
 	result := Summary{CasesTotal: 1, CasesPassed: boolInt(verdict.Passed), AdjudicatedCases: boolInt(verdict.Passed), RepositoryWrites: receipt.RepositoryWrites, ModeledSemanticComponents: receipt.ModeledSemanticComponents, TotalSemanticComponents: receipt.TotalSemanticComponents,
 		TextualChanges:         boolInt(receipt.TextualDelta.Changed),
 		StructuralObservations: boolInt(receipt.StructuralDelta.Status != ""),
-		ClaimTransitionCases:   boolInt(len(receipt.ClaimTransitions) > 0)}
-	result.AddedClaims = len(receipt.SemanticClaimDelta.Added)
-	result.RemovedClaims = len(receipt.SemanticClaimDelta.Removed)
-	result.ChangedClaims = len(receipt.SemanticClaimDelta.Changed)
-	result.TransitionChains = len(receipt.ClaimTransitions)
-	result.AmbiguousCases = boolInt(len(receipt.SemanticClaimDelta.Ambiguous) > 0)
+		ClaimTransitionCases:   boolInt(len(receipt.ClaimTransitions) > 0),
+		AddedClaims:            len(receipt.SemanticClaimDelta.Added),
+		RemovedClaims:          len(receipt.SemanticClaimDelta.Removed),
+		ChangedClaims:          len(receipt.SemanticClaimDelta.Changed),
+		TransitionChains:       len(receipt.ClaimTransitions),
+		AmbiguousCases:         boolInt(len(receipt.SemanticClaimDelta.Ambiguous) > 0)}
 	seen := make(map[string]bool)
 	for _, claim := range receipt.ClaimLedger {
 		if claim.PropositionDigest != "" {
