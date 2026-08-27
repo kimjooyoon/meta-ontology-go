@@ -33,7 +33,7 @@ func Evaluate(input Input) (Receipt, error) {
 	}
 	receipt.ClaimTransitions = transitions(class, len(input.Trace))
 	receipt.Indicators = indicators(input.Interventions)
-	receipt.Conformance = ConformanceSummary{Satisfied: len(receipt.Indicators), Total: IndicatorTotal, BasisPoints: basisPoints(len(receipt.Indicators), IndicatorTotal)}
+	receipt.Conformance = ConformanceSummary{Satisfied: len(receipt.Indicators), Total: IndicatorTotal, BasisPoints: basisPoints(len(receipt.Indicators), IndicatorTotal), Aggregation: ConformanceAggregation}
 	receipt = seal(receipt)
 	if err := ValidateReceipt(receipt, input); err != nil {
 		return Receipt{}, fmt.Errorf("termination receipt: %w", err)
@@ -192,7 +192,7 @@ func receiptForValidation(input Input, class classification) Receipt {
 			ObservedSteps: len(input.Trace), MaxSteps: input.MaxSteps, StateCount: class.stateCount,
 			RepeatedStates: class.repeatedStates, DetectedPeriod: class.period, FinalState: class.finalState,
 			TerminationProven: class.terminationProven, ClaimState: class.claimState,
-		}, Conformance: ConformanceSummary{Satisfied: IndicatorTotal, Total: IndicatorTotal, BasisPoints: 10000},
+		}, Conformance: ConformanceSummary{Satisfied: IndicatorTotal, Total: IndicatorTotal, BasisPoints: 10000, Aggregation: ConformanceAggregation},
 		Authority: Authority{ReadOnly: true}, Indicators: indicators(input.Interventions),
 	}
 	return receipt

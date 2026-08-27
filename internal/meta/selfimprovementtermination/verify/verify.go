@@ -20,42 +20,43 @@ import (
 )
 
 const (
-	ReportSchema          = "gooo/self-improvement-termination-judge/v2"
-	inputSchema           = "gooo/self-improvement-termination-input/v2"
-	receiptSchema         = "gooo/self-improvement-termination-receipt/v2"
-	metaprogram           = "internal/meta/selfimprovementtermination"
-	producer              = "selfimprovementtermination.Evaluate"
-	consumer              = "self-improvement-cycle"
-	metaOperation         = "prove-self-improvement-termination"
-	proofChoice           = "TERMINATION"
-	traceStage            = "META_RUN"
-	claimStage            = "CLAIM"
-	interventionStage     = "INTERVENTION"
-	sourcePath            = "examples/self-improvement-termination/main.gooo"
-	sourceProgramSchema   = "termination-case/v2"
-	interventionSchema    = "termination-intervention/v1"
-	maxTraceSteps         = 64
-	indicatorTotal        = 2
-	decisionFixedPoint    = "FIXED_POINT"
-	decisionInProgress    = "IN_PROGRESS"
-	decisionCycle         = "CYCLE"
-	decisionDivergence    = "DIVERGENCE_POSSIBLE"
-	decisionFailClosed    = "FAIL_CLOSED"
-	resolutionExact       = "EXACT"
-	resolutionLower       = "LOWER_RESOLUTION"
-	receiptBound          = "BOUND"
-	receiptFailClosed     = "FAIL_CLOSED"
-	claimOpen             = "OPEN"
-	claimDischarged       = "DISCHARGED"
-	claimRefuted          = "REFUTED"
-	upstreamNoChange      = "NO_CHANGE"
-	upstreamChanged       = "CHANGED"
-	reasonNoChange        = "NO_CHANGE_FIXED_POINT_OBSERVED"
-	reasonStateChanged    = "METAPROGRAM_STATE_CHANGED"
-	reasonCycle           = "REPEATED_STATE_CYCLE_OBSERVED"
-	reasonInProgress      = "TRACE_ENDED_BEFORE_TERMINATION"
-	reasonDivergence      = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
-	reasonDecisionUnknown = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+	ReportSchema           = "gooo/self-improvement-termination-judge/v2"
+	inputSchema            = "gooo/self-improvement-termination-input/v2"
+	receiptSchema          = "gooo/self-improvement-termination-receipt/v2"
+	metaprogram            = "internal/meta/selfimprovementtermination"
+	producer               = "selfimprovementtermination.Evaluate"
+	consumer               = "self-improvement-cycle"
+	metaOperation          = "prove-self-improvement-termination"
+	proofChoice            = "TERMINATION"
+	traceStage             = "META_RUN"
+	claimStage             = "CLAIM"
+	interventionStage      = "INTERVENTION"
+	sourcePath             = "examples/self-improvement-termination/main.gooo"
+	sourceProgramSchema    = "termination-case/v2"
+	interventionSchema     = "termination-intervention/v1"
+	conformanceAggregation = "NONE"
+	maxTraceSteps          = 64
+	indicatorTotal         = 2
+	decisionFixedPoint     = "FIXED_POINT"
+	decisionInProgress     = "IN_PROGRESS"
+	decisionCycle          = "CYCLE"
+	decisionDivergence     = "DIVERGENCE_POSSIBLE"
+	decisionFailClosed     = "FAIL_CLOSED"
+	resolutionExact        = "EXACT"
+	resolutionLower        = "LOWER_RESOLUTION"
+	receiptBound           = "BOUND"
+	receiptFailClosed      = "FAIL_CLOSED"
+	claimOpen              = "OPEN"
+	claimDischarged        = "DISCHARGED"
+	claimRefuted           = "REFUTED"
+	upstreamNoChange       = "NO_CHANGE"
+	upstreamChanged        = "CHANGED"
+	reasonNoChange         = "NO_CHANGE_FIXED_POINT_OBSERVED"
+	reasonStateChanged     = "METAPROGRAM_STATE_CHANGED"
+	reasonCycle            = "REPEATED_STATE_CYCLE_OBSERVED"
+	reasonInProgress       = "TRACE_ENDED_BEFORE_TERMINATION"
+	reasonDivergence       = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
+	reasonDecisionUnknown  = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
 )
 
 type wireInput struct {
@@ -126,9 +127,10 @@ type wireOutcome struct {
 }
 
 type wireConformance struct {
-	Satisfied   int `json:"satisfied"`
-	Total       int `json:"total"`
-	BasisPoints int `json:"basis_points"`
+	Satisfied   int    `json:"satisfied"`
+	Total       int    `json:"total"`
+	BasisPoints int    `json:"basis_points"`
+	Aggregation string `json:"aggregation"`
 }
 
 type wireIndicator struct {
@@ -542,7 +544,7 @@ func receiptForValidation(input wireInput, class classification) wireReceipt {
 			ObservedSteps: len(input.Trace), MaxSteps: input.MaxSteps, StateCount: class.stateCount,
 			RepeatedStates: class.repeatedStates, DetectedPeriod: class.period, FinalState: class.finalState,
 			TerminationProven: class.terminationProven, ClaimState: class.claimState,
-		}, Conformance: wireConformance{Satisfied: indicatorTotal, Total: indicatorTotal, BasisPoints: 10000},
+		}, Conformance: wireConformance{Satisfied: indicatorTotal, Total: indicatorTotal, BasisPoints: 10000, Aggregation: conformanceAggregation},
 		Authority: wireAuthority{ReadOnly: true}, Indicators: indicators(input.Interventions),
 	}
 	return receipt

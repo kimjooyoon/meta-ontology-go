@@ -1,41 +1,42 @@
 package selfimprovementtermination
 
 const (
-	InputSchema           = "gooo/self-improvement-termination-input/v2"
-	ReceiptSchema         = "gooo/self-improvement-termination-receipt/v2"
-	Metaprogram           = "internal/meta/selfimprovementtermination"
-	Producer              = "selfimprovementtermination.Evaluate"
-	Consumer              = "self-improvement-cycle"
-	MetaOperation         = "prove-self-improvement-termination"
-	ProofChoice           = "TERMINATION"
-	TraceStage            = "META_RUN"
-	ClaimStage            = "CLAIM"
-	InterventionStage     = "INTERVENTION"
-	DecisionFixedPoint    = "FIXED_POINT"
-	DecisionInProgress    = "IN_PROGRESS"
-	DecisionCycle         = "CYCLE"
-	DecisionDivergence    = "DIVERGENCE_POSSIBLE"
-	DecisionFailClosed    = "FAIL_CLOSED"
-	ResolutionExact       = "EXACT"
-	ResolutionLower       = "LOWER_RESOLUTION"
-	ReceiptBound          = "BOUND"
-	ReceiptFailClosed     = "FAIL_CLOSED"
-	ClaimOpen             = "OPEN"
-	ClaimDischarged       = "DISCHARGED"
-	ClaimRefuted          = "REFUTED"
-	UpstreamNoChange      = "NO_CHANGE"
-	UpstreamChanged       = "CHANGED"
-	ReasonNoChange        = "NO_CHANGE_FIXED_POINT_OBSERVED"
-	ReasonStateChanged    = "METAPROGRAM_STATE_CHANGED"
-	ReasonCycle           = "REPEATED_STATE_CYCLE_OBSERVED"
-	ReasonInProgress      = "TRACE_ENDED_BEFORE_TERMINATION"
-	ReasonDivergence      = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
-	ReasonDecisionUnknown = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
-	SourcePath            = "examples/self-improvement-termination/main.gooo"
-	SourceProgramSchema   = "termination-case/v2"
-	InterventionSchema    = "termination-intervention/v1"
-	IndicatorTotal        = 2
-	MaxTraceSteps         = 64
+	InputSchema            = "gooo/self-improvement-termination-input/v2"
+	ReceiptSchema          = "gooo/self-improvement-termination-receipt/v2"
+	Metaprogram            = "internal/meta/selfimprovementtermination"
+	Producer               = "selfimprovementtermination.Evaluate"
+	Consumer               = "self-improvement-cycle"
+	MetaOperation          = "prove-self-improvement-termination"
+	ProofChoice            = "TERMINATION"
+	TraceStage             = "META_RUN"
+	ClaimStage             = "CLAIM"
+	InterventionStage      = "INTERVENTION"
+	DecisionFixedPoint     = "FIXED_POINT"
+	DecisionInProgress     = "IN_PROGRESS"
+	DecisionCycle          = "CYCLE"
+	DecisionDivergence     = "DIVERGENCE_POSSIBLE"
+	DecisionFailClosed     = "FAIL_CLOSED"
+	ResolutionExact        = "EXACT"
+	ResolutionLower        = "LOWER_RESOLUTION"
+	ReceiptBound           = "BOUND"
+	ReceiptFailClosed      = "FAIL_CLOSED"
+	ClaimOpen              = "OPEN"
+	ClaimDischarged        = "DISCHARGED"
+	ClaimRefuted           = "REFUTED"
+	UpstreamNoChange       = "NO_CHANGE"
+	UpstreamChanged        = "CHANGED"
+	ReasonNoChange         = "NO_CHANGE_FIXED_POINT_OBSERVED"
+	ReasonStateChanged     = "METAPROGRAM_STATE_CHANGED"
+	ReasonCycle            = "REPEATED_STATE_CYCLE_OBSERVED"
+	ReasonInProgress       = "TRACE_ENDED_BEFORE_TERMINATION"
+	ReasonDivergence       = "STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT"
+	ReasonDecisionUnknown  = "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+	SourcePath             = "examples/self-improvement-termination/main.gooo"
+	SourceProgramSchema    = "termination-case/v2"
+	InterventionSchema     = "termination-intervention/v1"
+	ConformanceAggregation = "NONE"
+	IndicatorTotal         = 2
+	MaxTraceSteps          = 64
 )
 
 type Input struct {
@@ -106,9 +107,10 @@ type OutcomeSummary struct {
 }
 
 type ConformanceSummary struct {
-	Satisfied   int `json:"satisfied"`
-	Total       int `json:"total"`
-	BasisPoints int `json:"basis_points"`
+	Satisfied   int    `json:"satisfied"`
+	Total       int    `json:"total"`
+	BasisPoints int    `json:"basis_points"`
+	Aggregation string `json:"aggregation"`
 }
 
 type Indicator struct {
