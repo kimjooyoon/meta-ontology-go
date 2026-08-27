@@ -35,7 +35,7 @@ go run ./cmd/language-source-execution-witness "${legacy_common[@]}" --out "$out
 jq -e '.decision=="PASS" and .summary.cases_satisfied==4 and .summary.cases_total==4' "$output/legacy-forgery-accepted.json"
 
 common=(--head "$HEAD_SHA" --contract examples/language-artifact-oracle/contract.json \
-  --source examples/billing/main.gooo --unsupported-source examples/language-artifact-oracle/unsupported.gooo \
+  --source examples/billing/main.gooo --unsupported-source examples/language-artifact-oracle/unsupported.txt \
   --entry PayOrder --genuine "$source_dir/positive.json" --forged "$output/forged.json" \
   --unknown-decision "$output/unknown-decision.json" --legacy-acceptance "$output/legacy-forgery-accepted.json" \
   --independence "$output/independence.json")

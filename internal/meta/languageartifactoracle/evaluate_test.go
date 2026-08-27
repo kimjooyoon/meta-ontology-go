@@ -12,7 +12,7 @@ func TestSuiteCapturesSharedValidatorCounterexample(t *testing.T) {
 	unknown.Digest = artifactDigest(unknown)
 	legacy := []byte(`{"decision":"PASS","summary":{"cases_satisfied":4,"cases_total":4}}`)
 	report := Evaluate(Input{Contract: CanonicalContract(), HeadSHA: "head", Entry: "PayOrder",
-		Filename: "examples/billing/main.gooo", UnsupportedFilename: "examples/language-artifact-oracle/unsupported.gooo",
+		Filename: "examples/billing/main.gooo", UnsupportedFilename: "examples/language-artifact-oracle/unsupported.txt",
 		Source: []byte(sourceFixture), UnsupportedSource: []byte("unknown Thing\n"),
 		Genuine: artifactJSON(genuine), Forged: artifactJSON(forged),
 		UnknownDecision: artifactJSON(unknown), LegacyAcceptance: legacy,
