@@ -56,17 +56,22 @@ does not claim whole-program behavioral equivalence or compiler correctness.
 
 ## Fixed denominator and cases
 
-The denominator is fixed at three cases and is never widened by the evaluator:
+The denominator is fixed at version `v2` with five cases and is never widened
+by the evaluator:
 
 | Case | Text | Structure | Claims | Result |
 | --- | --- | --- | --- | --- |
 | `equivalent` | changed | empty | empty | `SEMANTIC_PRESERVED / FIXED_POINT / EXACT` |
 | `semantic-change` | changed | one node plus one relation replacement | one changed claim | `SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT` |
+| `value-program-change` | changed | topology unchanged | value-program component changed | `SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT` |
 | `indeterminate` | changed | unavailable | unavailable | `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
+| `ambiguous-match` | changed | known | multiple candidates | `INDETERMINATE / FAIL_CLOSED / LOWER_RESOLUTION` |
 
-The suite reports `3/3 = 10000` basis points. Its fixed counts are textual
-changes `3`, structural observations `3`, semantic preservation `1`, semantic
-change `1`, indeterminate `1`, and repository writes `0`.
+The suite reports `5/5 = 10000` basis points only when all five defined cases
+are classified exactly. The semantic component denominator is `5/5`; coverage
+below `10000` cannot claim exact semantic equivalence. Repository content
+writes are attested separately from the receipt with tracked and untracked
+path-plus-content digests; the receipt's zero is only an expectation.
 
 ## Decision rule
 
@@ -74,7 +79,7 @@ For a pair that both bounded projections can parse:
 
 ```text
 textual_delta.changed && structural_delta == empty && semantic_claim_delta == empty
-  => SEMANTIC_PRESERVED / FIXED_POINT / EXACT
+  => SEMANTIC_PRESERVED / FIXED_POINT / EXACT only when semantic coverage is 10000
 
 textual_delta.changed && (structural_delta != empty || semantic_claim_delta != empty)
   => SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT
@@ -96,6 +101,12 @@ Every indicator carries its `producer`, `consumer`, `meta_operation`, `stage`,
   verdict agree; and
 - `REGRESSION` checks the no-write boundary.
 
+`main.gooo` is the semantic contract source. It declares layer identities,
+modeled component kinds (node, entity-field, activity-value-program,
+relation-fact, and IR fingerprint), claim kinds, fail-closed policy, append-only
+ledger recipe, and denominator `v2:5`. Both producer and consumer parse/lower
+it independently and bind its digest into the receipt.
+
 A transition records the claim ID, claim kind, status before and after, object
 before and after, stage, step, reason, and (for preservation rows) the
 preserved object claim ID. Object propositions and cross-version preservation
@@ -110,14 +121,16 @@ propositions are separate persistent rows. Persistent statuses are `OPEN`,
   the canonical observation; they are never refuted merely because they are
   new.
 
-Object claim IDs are digests of their propositions, preservation IDs are
-digests of the preservation proposition, and the receipt retains both old rows
-and their transitions. The semantic-change case therefore refutes the old
+Object claim type IDs are proposition digests, while observation instance IDs
+also bind target address, raw source digest, and semantic digest. Preservation
+IDs bind the before instance, after instance, and pair evidence. Each transition
+records proposition/evidence/previous-event/transition digests in an append-only
+chain. The semantic-change case therefore refutes the old
 payment preservation proposition and discharges the new reversal observation;
 it does not claim that the reversal proposition is false.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
-three-case contract was reproduced. `subject_semantic_equivalence` is recorded
+five-case contract was reproduced. `subject_semantic_equivalence` is recorded
 separately as `NOT_ASSERTED`.
 
 ## Falsifiability

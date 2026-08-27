@@ -14,5 +14,6 @@ type OperationBinding struct {
 	Relation      string `json:"relation"`
 	Value         int    `json:"value"`
 	Target        int    `json:"target"`
+	Denominator   int    `json:"denominator"`
 	Satisfied     bool   `json:"satisfied"`
 }

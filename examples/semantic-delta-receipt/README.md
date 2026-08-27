@@ -5,16 +5,15 @@ files:
 
 | Layer | What is measured | What it cannot prove alone |
 | --- | --- | --- |
-| `textual_delta` | raw bytes, byte digests, and changed byte count | that meaning changed |
+  | `textual_delta` | raw bytes, byte digests, and positional byte mismatches | that meaning changed |
 | `structural_delta` | canonical nodes and directed semantic facts | that every claim interpretation is valid |
 | `semantic_claim_delta` | stable claim IDs, changed claim values, and transitions | behavior outside the bounded Gooo grammar |
 
-The fixed denominator is three cases: `equivalent`, `semantic-change`, and
-`indeterminate`. The first changes text while preserving the graph and claims;
-the second changes one small output signature and therefore changes a semantic
-claim; the third contains a source construct outside this experiment's grammar
-and must remain `FAIL_CLOSED / LOWER_RESOLUTION` at
-`project-source/parse-lower/SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`.
+The fixed denominator is version `v2` with five cases: `equivalent`,
+`semantic-change`, `value-program-change`, `indeterminate`, and
+`ambiguous-match`. The first changes text while preserving meaning; the next
+two change modeled semantics; the last two remain `FAIL_CLOSED /
+LOWER_RESOLUTION` at their exact stage/step/reason coordinates.
 
 The producer records the three layers. The consumer is an independent
 adjudicator in a separate package: it rereads both raw sources and recomputes the expected layers
@@ -31,6 +30,10 @@ Object propositions are not preservation propositions. A changed or removed
 before object claim refutes its separate preservation row; an after-only object
 claim is a canonical source observation and is discharged. Proposition and
 preservation digests stabilize claim IDs, and old rows remain in the receipt.
+The semantic projection explicitly models node identity, entity fields,
+activity value programs, relation facts, and the IR semantic fingerprint. Its
+fixed coverage is `5/5 = 10000` basis points; an uncovered StableHash field is
+`UNMODELED_SEMANTIC_COMPONENT_CHANGED`, never preservation.
 
 ## Research decisions
 
@@ -56,13 +59,12 @@ decide, not evidence that the source is equivalent.
 
 ## Meta-operation contract
 
-The operation binds `Producer`, `Consumer`, `Stage`, `Step`, `Reason`, and a
-proof choice to every receipt indicator. `FOUNDATION` binds bytes and the
-canonical graph, `COHERENCE` checks the graph/claim/adjudication relationship,
-and `REGRESSION` checks the no-write invariant. The suite reports a fixed
-`3/3 = 10000` basis points; its observed case counts are `textual=3`,
-`structural=3`, `semantic_preserved=1`, `semantic_changed=1`, and
-`indeterminate=1`.
+The checked-in `main.gooo` is executable contract input: it declares the layer
+identities, five semantic component kinds, three claim kinds, decision policy,
+ledger recipe, and the `v2:5` denominator. Producer and consumer parse/lower
+that source independently; the Go denominator is only a validator expectation.
+The suite reports the fixed `5/5 = 10000` contract reproduction. Its subject
+semantic equivalence remains separately `NOT_ASSERTED`.
 
 For a known pair:
 
@@ -73,18 +75,17 @@ textual_changed && (structural_delta != empty || semantic_claim_delta != empty)
   => SEMANTIC_CHANGED / DELTA_OBSERVED / EXACT
 ```
 
-Any failed source projection or receipt replay is `INDETERMINATE` and
-`FAIL_CLOSED`; projection failure uses `LOWER_RESOLUTION` at
-`project-source/parse-lower`. No activation or promotion is implied. The
-suite's `FIXED_POINT` is only fixed three-case contract reproduction; subject
-semantic equivalence is separately `NOT_ASSERTED`.
+Any failed source projection, ambiguous claim match, or receipt replay is
+`INDETERMINATE` and `FAIL_CLOSED`; projection failure uses
+`project-source/parse-lower`, while ambiguity uses `claim-delta/match-claims`.
+No activation or promotion is implied. The suite's `FIXED_POINT` is only fixed
+five-case contract reproduction.
 
 ## Falsification
 
-The claim is falsifiable. Reordering stable IDs, changing the output entity,
-adding a supported relation, or changing a claim value must move the receipt
-from `SEMANTIC_PRESERVED` to `SEMANTIC_CHANGED`. Adding a grammar feature that
-the bounded projector cannot parse must remain `INDETERMINATE`. Mutating any
-receipt layer without regenerating its digest must be rejected by the
-independent adjudicator. The result does not claim whole-program behavioral
-equivalence, compiler correctness, or coverage outside the fixed grammar.
+The claim is falsifiable. Reordering declarations/comments should change only
+raw digests; changing a stable ID, output entity, relation, or activity value
+program must move the receipt to `SEMANTIC_CHANGED`. Multiple claims in one
+slot must remain `AMBIGUOUS_CLAIM_MATCH`; unsupported grammar must remain
+`SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE`. Mutating any receipt layer and
+resealing it without recomputing the independent projection must be rejected.

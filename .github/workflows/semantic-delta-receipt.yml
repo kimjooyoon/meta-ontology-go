@@ -81,12 +81,25 @@ jobs:
           set -euo pipefail
           out="$RUNNER_TEMP/semantic-delta-receipt"
           mkdir -p "$out"
-          workspace_snapshot() {
-            { git ls-files; git ls-files --others --exclude-standard; } | sort -u
+          workspace_content_snapshot() {
+            { git ls-files; git ls-files --others --exclude-standard; } | sort -u | while IFS= read -r path; do
+              if [ -f "$path" ]; then
+                printf '%s\t%s\n' "$path" "$(sha256sum "$path" | awk '{print $1}')"
+              else
+                printf '%s\tMISSING\n' "$path"
+              fi
+            done
           }
           case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
-          workspace_snapshot > "$out/workspace-before.txt"
-          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
+          workspace_content_snapshot > "$out/workspace-before.tsv"
+          set +e
+          go fix -diff ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness > "$out/go-fix.stdout" 2>&1
+          fix_status=$?
+          set -e
+          fix_empty=0
+          if [ "$fix_status" -eq 0 ] && [ ! -s "$out/go-fix.stdout" ]; then fix_empty=1; fi
+          jq -n --argjson exit "$fix_status" --argjson empty "$fix_empty" '{command:"go fix -diff", exit_code:$exit, empty_stdout:$empty, pass:($exit == 0 and $empty == 1)}' > "$out/go-fix-attestation.json"
+          test "$fix_empty" -eq 1
           test -z "$(grep -R -n --include='*.go' 'internal/meta/languageassurance/semanticdeltareceipt\"' internal/meta/languageassurance/semanticdeltareceiptconsumer || true)"
           go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           for pass in first second; do
@@ -97,22 +110,26 @@ jobs:
           jq -S 'del(.output_path, .suite_digest)' "$out/second.json" > "$out/second-deterministic.json"
           cmp "$out/first-deterministic.json" "$out/second-deterministic.json"
           jq -e --arg output "$out/first.json" '
-            .schema == "gooo/semantic-delta-receipt-conformance/v1" and
+            .schema == "gooo/semantic-delta-receipt-conformance/v2" and
             .decision == "FIXED_POINT" and .resolution == "EXACT" and
-            .contract_reproduction == "FIXED_THREE_CASE_CONTRACT_REPRODUCED" and
+            .contract_reproduction == "FIXED_FIVE_CASE_CONTRACT_REPRODUCED" and
             .subject_semantic_equivalence == "NOT_ASSERTED" and .output_path == $output and
-            ([.source_paths[]] | length) == 6 and
-            .summary.cases_total == 3 and .summary.cases_passed == 3 and
-            .coverage_bps == 10000 and .summary.textual_changes == 3 and
-            .summary.structural_observations == 3 and
-            .summary.claim_transition_cases == 3 and
-            .summary.adjudicated_cases == 3 and .summary.unknown_paths == 1 and
+            ([.source_paths[]] | length) == 11 and
+            .denominator_version == "v2" and .meta_source_path == "examples/semantic-delta-receipt/main.gooo" and
+            .modeled_semantic_components == 5 and .total_semantic_components == 5 and
+            .summary.cases_total == 5 and .summary.cases_passed == 5 and
+            .coverage_bps == 10000 and .summary.textual_changes == 5 and
+            .summary.structural_observations == 5 and
+            .summary.claim_transition_cases == 5 and
+            .summary.adjudicated_cases == 5 and .summary.unknown_paths == 2 and
             .summary.semantic_preserved == 1 and
-            .summary.semantic_changed == 1 and .summary.indeterminate == 1 and
+            .summary.semantic_changed == 2 and .summary.indeterminate == 2 and
+            .summary.distinct_propositions == 23 and .summary.added_claims == 2 and .summary.removed_claims == 2 and .summary.changed_claims == 1 and
+            .summary.open_claims == 10 and .summary.discharged_claims == 18 and .summary.refuted_claims == 3 and .summary.ambiguous_cases == 1 and
             .summary.repository_writes == 0 and
-            ([.cases[] | select((.report.source_paths | length) == 2 and .report.output_path == "")] | length) == 3 and
-            ([.cases[] | select(.passed == true)] | length) == 3 and
-            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 3 and
+            ([.cases[] | select((.report.source_paths | length) == 2 and .report.output_path == "")] | length) == 5 and
+            ([.cases[] | select(.passed == true)] | length) == 5 and
+            ([.cases[].report.independent_verdict | select(.consumer == "semanticdeltareceiptconsumer.AdjudicateFiles")] | length) == 5 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and
             ([.cases[0].report.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1
@@ -134,9 +151,17 @@ jobs:
           go run ./cmd/semantic-delta-receipt-witness \
             --before "$root/before.gooo" --after "$root/indeterminate-after.gooo" \
             --subject-sha "$HEAD_SHA" --output "$out/indeterminate.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/value-program-before.gooo" --after "$root/value-program-after.gooo" \
+            --subject-sha "$HEAD_SHA" --output "$out/value-program-change.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --before "$root/ambiguous-before.gooo" --after "$root/ambiguous-after.gooo" \
+            --subject-sha "$HEAD_SHA" --output "$out/ambiguous-match.json"
           jq -e --arg before "$root/before.gooo" --arg after "$root/equivalent-after.gooo" --arg output "$out/equivalent.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_PRESERVED" and .receipt.before.semantic_digest == .receipt.after.semantic_digest and .receipt.claim_transitions[0].kind == "BOUNDED_SEMANTIC_EQUIVALENCE" and .receipt.claim_transitions[0].to_status == "DISCHARGED" and ([.receipt.claim_transitions[] | select(.kind == "BEFORE_CLAIM_PRESERVATION" and .to_status == "DISCHARGED")] | length) == 2 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 0 and .receipt.classification == "SEMANTIC_PRESERVED" and .receipt.textual_delta.changed == true and (.receipt.structural_delta.added_nodes | length) == 0 and .independent_verdict.passed == true' "$out/equivalent.json"
           jq -e --arg before "$root/before.gooo" --arg after "$root/semantic-after.gooo" --arg output "$out/semantic-change.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.semantic_claim_delta.changed | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "BOUNDED_SEMANTIC_EQUIVALENCE" and .to_status == "REFUTED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "BEFORE_CLAIM_PRESERVATION" and .to_status == "REFUTED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.kind == "OBJECT_PROPOSITION" and .to_status == "DISCHARGED")] | length) == 1 and ([.receipt.claim_transitions[] | select(.to_status == "REFUTED")] | length) == 2 and .independent_verdict.passed == true' "$out/semantic-change.json"
           jq -e --arg before "$root/before.gooo" --arg after "$root/indeterminate-after.gooo" --arg output "$out/indeterminate.json" '.source_paths == [$before, $after] and .output_path == $output and .repository_writes == 0 and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.raw_decision == "RAW_CHANGED" and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.classification == "INDETERMINATE" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/indeterminate.json"
+          jq -e --arg before "$root/value-program-before.gooo" --arg after "$root/value-program-after.gooo" --arg output "$out/value-program-change.json" '.source_paths == [$before, $after] and .output_path == $output and .receipt.textual_delta.before_digest != .receipt.textual_delta.after_digest and .receipt.before.semantic_digest != .receipt.after.semantic_digest and .receipt.semantic_decision == "SEMANTIC_CHANGED" and .receipt.classification == "SEMANTIC_CHANGED" and (.receipt.structural_delta.added_nodes | length) == 0 and (.receipt.semantic_claim_delta.changed | length) == 0 and (.receipt.semantic_component_delta.changed | length) > 0 and .receipt.reason == "SEMANTIC_COMPONENT_DELTA_OBSERVED" and ([.receipt.claim_transitions[] | select(.kind == "BOUNDED_SEMANTIC_EQUIVALENCE" and .to_status == "REFUTED")] | length) == 1 and .independent_verdict.passed == true' "$out/value-program-change.json"
+          jq -e --arg before "$root/ambiguous-before.gooo" --arg after "$root/ambiguous-after.gooo" --arg output "$out/ambiguous-match.json" '.source_paths == [$before, $after] and .output_path == $output and .receipt.semantic_decision == "SEMANTIC_UNKNOWN" and .receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "claim-delta" and .receipt.step == "match-claims" and .receipt.reason == "AMBIGUOUS_CLAIM_MATCH" and (.receipt.semantic_claim_delta.ambiguous | length) > 0 and .independent_verdict.passed == true' "$out/ambiguous-match.json"
           go run ./cmd/semantic-delta-receipt-witness \
             --before "$root/before.gooo" --after "$root/equivalent-after.gooo" \
             --subject-sha UNKNOWN --output "$out/unknown-subject.json"
@@ -150,14 +175,28 @@ jobs:
           go run ./cmd/gooo check examples/semantic-delta-receipt/before.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/equivalent-after.gooo
           go run ./cmd/gooo check examples/semantic-delta-receipt/semantic-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/value-program-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/value-program-after.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/ambiguous-before.gooo
+          go run ./cmd/gooo check examples/semantic-delta-receipt/ambiguous-after.gooo
           out="$RUNNER_TEMP/semantic-delta-receipt"
-          workspace_snapshot() {
-            { git ls-files; git ls-files --others --exclude-standard; } | sort -u
+          workspace_content_snapshot() {
+            { git ls-files; git ls-files --others --exclude-standard; } | sort -u | while IFS= read -r path; do
+              if [ -f "$path" ]; then
+                printf '%s\t%s\n' "$path" "$(sha256sum "$path" | awk '{print $1}')"
+              else
+                printf '%s\tMISSING\n' "$path"
+              fi
+            done
           }
           case "$out" in "$RUNNER_TEMP"/*) ;; *) exit 1 ;; esac
-          workspace_snapshot > "$out/workspace-after.txt"
-          comm -13 "$out/workspace-before.txt" "$out/workspace-after.txt" > "$out/workspace-write-set.txt"
-          test ! -s "$out/workspace-write-set.txt"
+          workspace_content_snapshot > "$out/workspace-after.tsv"
+          comm -3 "$out/workspace-before.tsv" "$out/workspace-after.tsv" > "$out/workspace-write-set.tsv"
+          before_count=$(wc -l < "$out/workspace-before.tsv")
+          after_count=$(wc -l < "$out/workspace-after.tsv")
+          changed_count=$(wc -l < "$out/workspace-write-set.tsv")
+          jq -n --argjson before "$before_count" --argjson after "$after_count" --argjson changed "$changed_count" --argjson repository_writes 0 '{before_paths:$before, after_paths:$after, changed_path_or_content_digests:$changed, repository_writes:$repository_writes, authority:"UNKNOWN"}' > "$out/workspace-attestation.json"
+          test "$changed_count" -eq 0
 
       - name: Upload semantic delta receipts
         if: always()

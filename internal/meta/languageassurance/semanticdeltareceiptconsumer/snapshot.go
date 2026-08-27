@@ -9,7 +9,8 @@ func snapshot(raw []byte, source projectedSource, err error) Snapshot {
 	result.SemanticDigest = source.semanticDigest
 	result.StructuralDigest = digestValue(structuralImage{Nodes: source.nodes, Facts: source.facts})
 	result.ClaimDigest = digestValue(source.claims)
-	result.Nodes, result.Facts, result.Claims = source.nodes, source.facts, source.claims
+	result.SemanticComponentDigest = digestValue(source.semanticComponents)
+	result.Nodes, result.Facts, result.Claims, result.SemanticComponents = source.nodes, source.facts, source.claims, source.semanticComponents
 	return result
 }
 

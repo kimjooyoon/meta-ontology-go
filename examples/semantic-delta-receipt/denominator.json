@@ -1,12 +1,16 @@
 {
-  "schema": "gooo/semantic-delta-receipt-denominator/v1",
+  "schema": "gooo/semantic-delta-receipt-denominator/v2",
   "metric_id": "gooo.metric.semantic.delta-receipt-totality.v1",
   "meta_operation": "separate-text-structural-semantic-deltas",
-  "cases_total": 3,
+  "version": 2,
+  "meta_source": "examples/semantic-delta-receipt/main.gooo",
+  "cases_total": 5,
   "cases": [
-    {"id":"equivalent","decision":"FIXED_POINT","resolution":"EXACT","classification":"SEMANTIC_PRESERVED"},
-    {"id":"semantic-change","decision":"DELTA_OBSERVED","resolution":"EXACT","classification":"SEMANTIC_CHANGED"},
-    {"id":"indeterminate","decision":"FAIL_CLOSED","resolution":"LOWER_RESOLUTION","classification":"INDETERMINATE"}
+    {"id":"equivalent","kind":"text-only-preserved","before_path":"examples/semantic-delta-receipt/before.gooo","after_path":"examples/semantic-delta-receipt/equivalent-after.gooo","decision":"FIXED_POINT","resolution":"EXACT","classification":"SEMANTIC_PRESERVED","stage":"produce","step":"classify","reason":"TEXTUAL_DELTA_WITH_SEMANTIC_FIXED_POINT"},
+    {"id":"semantic-change","kind":"topology-claim-changed","before_path":"examples/semantic-delta-receipt/before.gooo","after_path":"examples/semantic-delta-receipt/semantic-after.gooo","decision":"DELTA_OBSERVED","resolution":"EXACT","classification":"SEMANTIC_CHANGED","stage":"produce","step":"classify","reason":"SEMANTIC_CLAIM_DELTA_OBSERVED"},
+    {"id":"value-program-change","kind":"value-program-only-changed","before_path":"examples/semantic-delta-receipt/value-program-before.gooo","after_path":"examples/semantic-delta-receipt/value-program-after.gooo","decision":"DELTA_OBSERVED","resolution":"EXACT","classification":"SEMANTIC_CHANGED","stage":"produce","step":"classify","reason":"SEMANTIC_COMPONENT_DELTA_OBSERVED"},
+    {"id":"indeterminate","kind":"unsupported-grammar-unknown","before_path":"examples/semantic-delta-receipt/before.gooo","after_path":"examples/semantic-delta-receipt/indeterminate-after.gooo","decision":"FAIL_CLOSED","resolution":"LOWER_RESOLUTION","classification":"INDETERMINATE","stage":"project-source","step":"parse-lower","reason":"SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE"},
+    {"id":"ambiguous-match","kind":"ambiguous-claim-matching-unknown","before_path":"examples/semantic-delta-receipt/ambiguous-before.gooo","after_path":"examples/semantic-delta-receipt/ambiguous-after.gooo","decision":"FAIL_CLOSED","resolution":"LOWER_RESOLUTION","classification":"INDETERMINATE","stage":"claim-delta","step":"match-claims","reason":"AMBIGUOUS_CLAIM_MATCH"}
   ],
   "repository_writes": 0
 }

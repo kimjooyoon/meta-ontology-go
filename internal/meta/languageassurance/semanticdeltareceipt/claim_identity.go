@@ -1,21 +1,26 @@
 package semanticdeltareceipt
 
-type claimProposition struct {
-	Kind      string `json:"kind"`
-	Subject   string `json:"subject"`
-	Predicate string `json:"predicate"`
-	Object    string `json:"object"`
-}
+import "strings"
 
 func propositionDigest(kind, subject, predicate, object string) string {
-	return digestValue(claimProposition{Kind: kind, Subject: subject, Predicate: predicate, Object: object})
+	return digestValue(normalizedProposition(kind, subject, predicate, object))
 }
 
-func objectClaimID(digest string) string {
+func normalizedProposition(kind, subject, predicate, object string) string {
+	return strings.Join([]string{kind, subject, predicate, object}, "\x00")
+}
+
+func claimTypeID(kind, subject, predicate, object string) string {
+	digest := propositionDigest(kind, subject, predicate, object)
+	return "gooo://semantic-delta/claim-type/" + digest[len("sha256:"):]
+}
+
+func objectClaimID(normalized, target, rawDigest, semanticDigest string) string {
+	digest := digestValue(strings.Join([]string{normalized, target, rawDigest, semanticDigest}, "\x00"))
 	return "gooo://semantic-delta/claim/object/" + digest[len("sha256:"):]
 }
 
-func preservationClaimID(claim Claim) string {
-	digest := propositionDigest(ClaimKindPreserve, claim.ID, "preserves", claim.PropositionDigest)
+func preservationClaimID(before, after Claim, afterObject string) string {
+	digest := digestValue(strings.Join([]string{before.ID, after.ID, afterObject, before.NormalizedProposition, after.AfterSourceDigest, after.AfterSemanticDigest}, "\x00"))
 	return "gooo://semantic-delta/claim/preservation/" + digest[len("sha256:"):]
 }

@@ -206,6 +206,34 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-delta-value-program-before",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/value-program-before.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-value-program-after",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/value-program-after.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-ambiguous-before",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-delta-ambiguous-after",
+      "kind": "SOURCE",
+      "path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

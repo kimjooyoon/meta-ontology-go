@@ -7,6 +7,22 @@ entity SemanticClaimDelta id "gooo://semantic-delta/entity/semantic-claim-delta"
 entity DeltaReceipt id "gooo://semantic-delta/entity/delta-receipt"
 entity IndependentVerdict id "gooo://semantic-delta/entity/independent-verdict"
 entity SourcePair id "gooo://semantic-delta/entity/source-pair"
+entity SemanticComponentSet id "gooo://semantic-delta/entity/semantic-component-set"
+entity TransitionLedger id "gooo://semantic-delta/entity/transition-ledger"
+entity DenominatorContract id "gooo://semantic-delta/entity/denominator-contract"
 
-activity SeparateDeltaLayers(SourcePair) -> DeltaReceipt
-activity AdjudicateDelta(DeltaReceipt) -> IndependentVerdict
+entity NodeSemanticComponent id "gooo://semantic-delta/component/node-semantic"
+entity EntityFieldComponent id "gooo://semantic-delta/component/entity-field"
+entity ActivityValueProgramComponent id "gooo://semantic-delta/component/activity-value-program"
+entity RelationFactComponent id "gooo://semantic-delta/component/relation-fact"
+entity IRSemanticFingerprintComponent id "gooo://semantic-delta/component/ir-semantic-fingerprint"
+
+entity BoundedSemanticEquivalence id "gooo://semantic-delta/claim/bounded-equivalence"
+entity ObjectProposition id "gooo://semantic-delta/claim/object-proposition"
+entity BeforeClaimPreservation id "gooo://semantic-delta/claim/before-claim-preservation"
+
+activity SeparateDeltaLayers(SourcePair) -> DeltaReceipt computes "meta.semantic-delta.layers:textual,structural,semantic"
+activity ProjectSemanticComponents(SourcePair) -> SemanticComponentSet computes "meta.semantic-delta.components:node-semantic,entity-field,activity-value-program,relation-fact,ir-semantic-fingerprint"
+activity AdjudicateDelta(DeltaReceipt) -> IndependentVerdict computes "meta.semantic-delta.policy:raw-separate;semantic-separate;fail-closed-lower-resolution"
+activity RecordTransitionLedger(DeltaReceipt) -> TransitionLedger computes "meta.semantic-delta.ledger:open,discharged,refuted,append-only"
+activity ValidateFixedDenominator(SourcePair) -> DenominatorContract computes "meta.semantic-delta.denominator:v2:5"

@@ -7,8 +7,8 @@ import (
 )
 
 var fixedSurfaces = []SurfaceDefinition{
-	{"language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", 33, 16, 3},
-	{"language-semantic-model", "gooo/language-semantic-model/v1", 34, 19, 3},
+	{"language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", 37, 16, 3},
+	{"language-semantic-model", "gooo/language-semantic-model/v1", 38, 19, 3},
 	{"language-deterministic-query", "gooo/language-deterministic-query/v1", 32, 18, 3},
 	{"language-go-interoperation", "gooo/language-go-interoperation/v1", 24, 18, 3},
 	{"language-diagnostic-provenance", "gooo/language-diagnostic-provenance/v1", 18, 18, 3},

@@ -20,7 +20,7 @@ func textualDelta(before, after []byte) TextualDelta {
 			changedBytes++
 		}
 	}
-	return TextualDelta{Changed: changed, Decision: decision, BeforeBytes: len(before), AfterBytes: len(after), ChangedBytes: changedBytes, BeforeDigest: digestBytes(before), AfterDigest: digestBytes(after)}
+	return TextualDelta{Changed: changed, Decision: decision, BeforeBytes: len(before), AfterBytes: len(after), PositionalByteMismatches: changedBytes, BeforeDigest: digestBytes(before), AfterDigest: digestBytes(after)}
 }
 
 func structuralDelta(before, after projectedSource) StructuralDelta {

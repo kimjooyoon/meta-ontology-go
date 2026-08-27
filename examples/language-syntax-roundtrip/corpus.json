@@ -261,6 +261,38 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "semantic-delta-value-program-before",
+      "path": "examples/semantic-delta-receipt/value-program-before.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-value-program-after",
+      "path": "examples/semantic-delta-receipt/value-program-after.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-ambiguous-before",
+      "path": "examples/semantic-delta-receipt/ambiguous-before.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "semantic-delta-ambiguous-after",
+      "path": "examples/semantic-delta-receipt/ambiguous-after.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "semantic-delta-indeterminate-fixture",
       "path": "examples/semantic-delta-receipt/indeterminate-after.gooo",
       "kind": "INVALID",
