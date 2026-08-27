@@ -36,10 +36,11 @@ evidence, and the read-only boundary is a semantic contract exercised by CI.
 
 The Actions dependency contract measures the consumer command with
 `go list -deps`: forbidden producer dependencies observed `0`, allowed maximum
-`0`, independence contract `1/1`. A regression test mutates the
-description-only case to reuse the explicit-capability `CaseInput`; the
-consumer must reject that report. The producer and consumer no longer share
-that derivation seam.
+`0`, independence contract `1/1`. A regression test changes the
+description-only `CaseInput` from `RequestExecution: true` to `false`; its
+blocked observation is unchanged, so a coupled producer/consumer would pass,
+but the independent consumer rejects the wrong input. The producer and
+consumer no longer share that derivation seam.
 
 The semantic-causality witness runs two in-memory interventions: changing an
 entity ID must change the semantic digest, while adding a trailing newline

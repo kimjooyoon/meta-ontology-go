@@ -56,9 +56,10 @@ func TestConsumerRejectsSharedWrongCaseInputCounterexample(t *testing.T) {
 	report := Evaluate(input)
 	tampered := report
 	tampered.Cases = append([]CaseResult(nil), report.Cases...)
-	// A coupled producer/consumer CaseInput bug could accidentally give the
-	// description-only case the explicit capability from case two.
-	tampered.Cases[0].Attempt = report.Cases[1].Attempt
+	// A coupled producer/consumer CaseInput bug could silently change this
+	// request from true to false: the description-only observation remains
+	// blocked, so a shared wrong input would still pass every outcome check.
+	tampered.Cases[0].Attempt.RequestExecution = false
 	tampered.ReportDigest = sealReport(tampered).ReportDigest
 	if err := metacircularboundaryconsumer.Judge(tampered, input); err == nil {
 		t.Fatal("consumer accepted a report with a shared wrong CaseInput")
