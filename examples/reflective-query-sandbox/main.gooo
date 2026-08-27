@@ -12,6 +12,10 @@ entity MutationPayload id "gooo://reflective-query-sandbox/mutation/payload/iden
 entity MutationIntent id "gooo://reflective-query-sandbox/mutation/intent/reflective-query-sandbox"
 entity MutationLocality id "gooo://reflective-query-sandbox/mutation/locality/detached-observation-copy"
 entity RepositoryStatusNet id "gooo://reflective-query-sandbox/repository/status/net_repository_status_unchanged"
+entity RefinementProposal id "gooo://reflective-query-sandbox/proposal/refinement"
+entity UnknownRefinementPolicy id "gooo://reflective-query-sandbox/proposal/policy/unknown-preserve-open"
+entity ProposalAuthorityNone id "gooo://reflective-query-sandbox/proposal/authority/NONE"
+entity ProposalMetaOperation id "gooo://reflective-query-sandbox/proposal/meta-operation/refinement-proposal"
 
 entity OutcomeStructure id "gooo://reflective-query-sandbox/claim/outcome/structure/query-relation-exact/foundation/query-self-structure/reflect.structure/open"
 entity OutcomeClaims id "gooo://reflective-query-sandbox/claim/outcome/claims/query-relation-exact/coherence/query-self-claims/reflect.claims/open"
@@ -32,3 +36,4 @@ activity ReflectMetrics(QuerySubject, MetricReadRelation, OutcomeMetrics, Driver
 activity AttemptMutation(QuerySubject, MutationRequest, MutationField, MutationPayload, MutationIntent, MutationLocality, OutcomeImmutableIDPatchRejected, GuardrailImmutableIDPatchAcceptedFalse) -> QueryReceipt computes "reflect.attempt:mutation"
 activity SealQueryReceipt(QueryReceipt, DriverQueryReceipts) -> QueryReceipt computes "reflect.observation:receipt-seal"
 activity ObserveRepositoryNet(QuerySubject, RepositoryStatusNet, GuardrailRepositoryWriteSet) -> QueryReceipt computes "reflect.observation:net-repository-status-unchanged"
+activity ProposeRefinement(QueryReceipt, UnknownRefinementPolicy, ProposalAuthorityNone, ProposalMetaOperation) -> RefinementProposal computes "reflect.meta:proposal:refine-unknown"

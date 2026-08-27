@@ -25,7 +25,8 @@ go run ./scripts/reflective-query-sandbox/producer \
 git status --porcelain=v1 --untracked-files=all > "$after_status"
 go run ./scripts/reflective-query-sandbox/producer \
 	-source "$source_path" -subject-sha "$HEAD_SHA" -subject-checkout-evidence "$subject_evidence" \
-	-repository-before "$before_status" -repository-after "$after_status" -output "$output/observation.json"
+	-repository-before "$before_status" -repository-after "$after_status" -output "$output/observation.json" \
+	-proposal-dir "$output/proposals" -proposal-receipt "$output/proposal-receipt.json"
 go run ./scripts/reflective-query-sandbox/producer \
 	-source "$source_path" -subject-sha "$HEAD_SHA" -subject-checkout-evidence "$subject_evidence" \
 	-repository-before "$before_status" -repository-after "$after_status" -output "$output/replay.json"
@@ -86,6 +87,22 @@ jq -e --arg sha "$HEAD_SHA" '
   .effects.mutation_outcome == "REJECTED" and
   ([.claims[] | select(.predicate_id == "claim-ledger-chained" and .to == "DISCHARGED" and .reason == "COMPLETE_TRANSITION_CHAIN_VERIFIED")] | length) == 1
 ' "$output/observation.json" >/dev/null
+
+jq -e '
+  .schema == "gooo/reflective-query-sandbox/proposal-receipt/v1" and
+  .source_path == "examples/reflective-query-sandbox/main.gooo" and
+  (.source_raw_digest | length) == 64 and
+  (.source_semantic_digest | length) == 64 and
+  (.query_receipt_digest | length) == 64 and
+  .authority == "NONE" and .repository_writes == 0 and .mutation_authority == false and
+  .proposal_count == 3 and .emitted.satisfied == 1 and .emitted.total == 3 and
+  .rejected.satisfied == 1 and .rejected.total == 3 and
+  ([.cases[] | select(.case_id == "exact-observation" and .outcome == "NOT_EMITTED" and .proposal_emitted == false and .proposal_coordinate.satisfied == 0 and .proposal_coordinate.total == 1 and .observation_kind == "EXACT")] | length) == 1 and
+  ([.cases[] | select(.case_id == "unknown-observation" and .outcome == "EMITTED" and .proposal_emitted == true and .proposal_coordinate.satisfied == 1 and .proposal_coordinate.total == 1 and .unknown_stage == "UNKNOWN" and .unknown_step == "resolve-unknown-subject" and .unknown_reason == "UNKNOWN_TARGET" and .observed_claim_from == "OPEN" and .observed_claim_to == "OPEN")] | length) == 1 and
+  ([.cases[] | select(.case_id == "mutation-request" and .outcome == "REJECTED" and .rejection_coordinate.satisfied == 1 and .rejection_coordinate.total == 1 and .proposal_emitted == false and .observation_kind == "MUTATION_REQUEST")] | length) == 1 and
+  ([.cases[] | select((.path | startswith("proposals/")) and (.bytes > 0) and (.bytes_digest | length) == 64 and (.semantic_digest | length) == 64 and (.claim_id | length) > 0 and (.target_semantic_address | length) > 0 and (.requested_refinement | length) > 0 and (.proof_choice | length) > 0 and (.meta_operation | length) > 0 and .authority == "NONE")] | length) == 3 and
+  (.portable_receipt_digest | length) == 64
+' "$output/proposal-receipt.json" >/dev/null
 
 regressions="$output/regressions"
 mkdir -p "$regressions"

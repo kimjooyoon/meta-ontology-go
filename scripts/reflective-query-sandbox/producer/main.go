@@ -16,6 +16,8 @@ func main() {
 	output := flag.String("output", "", "observation receipt")
 	repositoryBefore := flag.String("repository-before", "", "repository status before observation")
 	repositoryAfter := flag.String("repository-after", "", "repository status after observation")
+	proposalDir := flag.String("proposal-dir", "", "ephemeral generated proposal directory")
+	proposalReceipt := flag.String("proposal-receipt", "", "portable proposal receipt")
 	flag.Parse()
 	if *source == "" || *output == "" {
 		fail("usage: producer -source FILE -subject-sha SHA -subject-checkout-evidence FILE -repository-before FILE -repository-after FILE -output FILE")
@@ -38,6 +40,14 @@ func main() {
 	}
 	if err := os.WriteFile(*output, append(data, '\n'), 0o644); err != nil {
 		fail("write observation: %v", err)
+	}
+	if *proposalDir != "" || *proposalReceipt != "" {
+		if *proposalDir == "" || *proposalReceipt == "" {
+			fail("proposal-dir and proposal-receipt must be provided together")
+		}
+		if err := writeProposalArtifacts(*source, *proposalDir, *proposalReceipt, observation); err != nil {
+			fail("write proposal artifacts: %v", err)
+		}
 	}
 	fmt.Printf("producer observation: %s nodes=%d facts=%d attempts=%d transitions=%d\n", observation.Schema, observation.Source.NodeCount, observation.Source.FactCount, len(observation.Attempts), len(observation.Claims))
 }

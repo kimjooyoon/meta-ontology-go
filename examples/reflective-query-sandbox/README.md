@@ -99,6 +99,21 @@ unobserved subject identity remains `UNKNOWN`, an exact subject/check-out
 mismatch remains `REFUTED / EXACT`, and that mismatch remains `REFUTED` even
 when repository evidence is unknown.
 
+## Non-authoritative refinement closure
+
+The source also declares a `refine-unknown` proposal meta-operation, an
+`unknown-preserve-open` policy, and `authority=NONE`. CI materializes three
+portable `.gooo` proposal artifacts from the observed receipt: exact
+observation is `0/1` (no proposal), the staged unknown observation is `1/1`
+with an `OPEN -> OPEN` proposal-emitted transition, and a mutation request is
+rejected `1/1`. Each artifact binds the raw and semantic source digests, query
+receipt digest, claim, semantic target address, unknown stage/step/reason,
+requested refinement, proof choice, and meta-operation. The independent
+proposal consumer parses and lowers all three artifacts again; generated
+artifact re-consumption is `1/1`, while repository writes and mutation
+authority remain zero/false. This is a proposal-only observation and never a
+promotion or merge decision.
+
 ## Research decisions
 
 - [Go `reflect` documentation](https://pkg.go.dev/reflect) separates runtime

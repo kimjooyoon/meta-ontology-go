@@ -29,6 +29,13 @@ jq -e '
   .semantic_intervention.detached_graph_patch_capability_after == "OBSERVED" and
   .semantic_intervention.overall_authority_before == "UNKNOWN" and
   .semantic_intervention.overall_authority_after == "UNKNOWN" and
+  .semantic_intervention.proposal_policy_before == "unknown-preserve-open" and
+  .semantic_intervention.proposal_policy_after == "unknown-reject-refinement" and
+  .semantic_intervention.proposal_semantic_digest_changed and
+  .semantic_intervention.proposal_outcome_before == "EMITTED" and
+  .semantic_intervention.proposal_outcome_after == "REJECTED" and
+  .semantic_intervention.proposal_transition_before == "OPEN->OPEN" and
+  .semantic_intervention.proposal_transition_after == "" and
   .semantic_intervention.graph_digest_before == .semantic_intervention.original_graph_digest_after and
   (.semantic_intervention.returned_graph_digest_after | length) > 0 and
   .semantic_intervention.claim_state_before == "DISCHARGED" and
@@ -44,6 +51,13 @@ jq -e '
   .nonsemantic_intervention.detached_graph_patch_capability_after == "NOT_OBSERVED" and
   .nonsemantic_intervention.overall_authority_before == "UNKNOWN" and
   .nonsemantic_intervention.overall_authority_after == "UNKNOWN" and
+  .nonsemantic_intervention.proposal_policy_before == "unknown-preserve-open" and
+  .nonsemantic_intervention.proposal_policy_after == "unknown-preserve-open" and
+  (.nonsemantic_intervention.proposal_semantic_digest_changed | not) and
+  .nonsemantic_intervention.proposal_outcome_before == "EMITTED" and
+  .nonsemantic_intervention.proposal_outcome_after == "EMITTED" and
+  .nonsemantic_intervention.proposal_transition_before == "OPEN->OPEN" and
+  .nonsemantic_intervention.proposal_transition_after == "OPEN->OPEN" and
   .nonsemantic_intervention.claim_state_before == "DISCHARGED" and
   .nonsemantic_intervention.claim_state_after == "DISCHARGED"
 ' "$output" >/dev/null

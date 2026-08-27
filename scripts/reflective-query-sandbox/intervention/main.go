@@ -34,6 +34,10 @@ type probe struct {
 	ReturnedGraphDigest          string `json:"returned_graph_digest,omitempty"`
 	ClaimID                      string `json:"claim_id"`
 	ClaimState                   string `json:"claim_state"`
+	ProposalPolicy               string `json:"proposal_policy"`
+	ProposalSemanticDigest       string `json:"proposal_semantic_digest"`
+	ProposalOutcome              string `json:"proposal_outcome"`
+	ProposalTransition           string `json:"proposal_transition"`
 }
 
 type interventionEvidence struct {
@@ -65,6 +69,15 @@ type interventionEvidence struct {
 	ClaimID                            string `json:"claim_id"`
 	ClaimStateBefore                   string `json:"claim_state_before"`
 	ClaimStateAfter                    string `json:"claim_state_after"`
+	ProposalPolicyBefore               string `json:"proposal_policy_before"`
+	ProposalPolicyAfter                string `json:"proposal_policy_after"`
+	ProposalSemanticDigestChanged      bool   `json:"proposal_semantic_digest_changed"`
+	ProposalSemanticDigestBefore       string `json:"proposal_semantic_digest_before"`
+	ProposalSemanticDigestAfter        string `json:"proposal_semantic_digest_after"`
+	ProposalOutcomeBefore              string `json:"proposal_outcome_before"`
+	ProposalOutcomeAfter               string `json:"proposal_outcome_after"`
+	ProposalTransitionBefore           string `json:"proposal_transition_before"`
+	ProposalTransitionAfter            string `json:"proposal_transition_after"`
 }
 
 type report struct {
@@ -94,6 +107,7 @@ func main() {
 	}
 	semanticRaw := strings.Replace(string(raw), "gooo://reflective-query-sandbox/mutation/field/id", "gooo://reflective-query-sandbox/mutation/field/name", 1)
 	semanticRaw = strings.Replace(semanticRaw, "gooo://reflective-query-sandbox/mutation/payload/identity-preserving", "gooo://reflective-query-sandbox/mutation/payload/intervened-name", 1)
+	semanticRaw = strings.Replace(semanticRaw, "gooo://reflective-query-sandbox/proposal/policy/unknown-preserve-open", "gooo://reflective-query-sandbox/proposal/policy/unknown-reject-refinement", 1)
 	if semanticRaw == string(raw) {
 		fail("semantic intervention did not change mutation contract")
 	}
@@ -189,14 +203,55 @@ func probeSource(raw string) (probe, error) {
 	}
 	claimID := "outcome.immutable-id-patch-rejected"
 	sum := sha256.Sum256([]byte(raw))
-	return probe{RawDigest: hex.EncodeToString(sum[:]), SemanticDigest: ir.StableHash(), GraphDigest: before, MutationField: field, MutationPayload: payload, MutationDecision: decision, MutationResolution: resolution, MutationReason: reason, MutationAPIOutcome: outcome, DetachedGraphPatchCapability: capability, OverallAuthority: "UNKNOWN", GraphDigestBefore: before, OriginalGraphDigestAfter: originalAfter, ReturnedGraphDigest: returned, ClaimID: claimID, ClaimState: state}, nil
+	policy := ""
+	metaProgram := ""
+	for _, sourceNode := range ir.Graph.Nodes() {
+		id := sourceNode.ID.String()
+		if sourceNode.Kind == semantic.Entity && strings.Contains(id, "/proposal/policy/") {
+			policy = tail(sourceNode.ID)
+		}
+		if sourceNode.Kind == semantic.Activity && sourceNode.ValueProgram == "reflect.meta:proposal:refine-unknown" {
+			metaProgram = sourceNode.ValueProgram
+		}
+	}
+	if policy == "" || metaProgram == "" {
+		return probe{}, errors.New("proposal policy declaration is missing")
+	}
+	proposalOutcome := "REJECTED"
+	proposalTransition := ""
+	if policy == "unknown-preserve-open" {
+		proposalOutcome, proposalTransition = "EMITTED", "OPEN->OPEN"
+	}
+	proposalRaw := renderInterventionProposal(semantic.StableHash([]byte(raw)), ir.StableHash(), policy, proposalOutcome, proposalTransition, metaProgram)
+	proposalFile, proposalDiagnostics := syntax.ParseFile("intervention-proposal.gooo", string(proposalRaw))
+	if proposalDiagnostics.HasErrors() {
+		return probe{}, proposalDiagnostics.Error()
+	}
+	proposalIR, err := bidir.Lower(proposalFile)
+	if err != nil {
+		return probe{}, err
+	}
+	return probe{RawDigest: hex.EncodeToString(sum[:]), SemanticDigest: ir.StableHash(), GraphDigest: before, MutationField: field, MutationPayload: payload, MutationDecision: decision, MutationResolution: resolution, MutationReason: reason, MutationAPIOutcome: outcome, DetachedGraphPatchCapability: capability, OverallAuthority: "UNKNOWN", GraphDigestBefore: before, OriginalGraphDigestAfter: originalAfter, ReturnedGraphDigest: returned, ClaimID: claimID, ClaimState: state, ProposalPolicy: policy, ProposalSemanticDigest: proposalIR.StableHash(), ProposalOutcome: proposalOutcome, ProposalTransition: proposalTransition}, nil
 }
 
 func tail(id semantic.ID) string {
 	parts := strings.Split(strings.TrimSuffix(id.String(), "/"), "/")
 	return parts[len(parts)-1]
 }
+func renderInterventionProposal(sourceRawDigest, sourceSemanticDigest, policy, outcome, transition, metaProgram string) []byte {
+	value := strings.Join([]string{
+		"reflect.meta:proposal-artifact", "schema=gooo/reflective-query-sandbox/refinement-proposal/v1", "case=unknown-observation",
+		"observation=UNKNOWN", "proposal.outcome=" + outcome, "proposal.reason=INTERVENTION_POLICY",
+		"proposal.emitted=" + fmt.Sprintf("%t", outcome == "EMITTED"), "claim=guardrail.unknown-closed", "target=unknown.target",
+		"source.path=examples/reflective-query-sandbox/main.gooo", "source.semantic=" + sourceSemanticDigest,
+		"query.receipt=intervention-query-receipt", "unknown.stage=UNKNOWN", "unknown.step=resolve-unknown-subject", "unknown.reason=UNKNOWN_TARGET",
+		"requested.refinement=refine-unknown-target-resolution", "proof.choice=REGRESSION", "meta.operation=" + metaProgram, "authority=NONE",
+		"policy=" + policy, "claim.from=OPEN", "claim.to=OPEN", "claim.reason=UNKNOWN_PRESERVED", "proposal.from=" + transition,
+		"proposal.to=" + transition, "proposal.transition.reason=UNKNOWN_PRESERVED_OPEN",
+	}, ";")
+	return []byte(fmt.Sprintf("package reflectivequeryproposal\nnamespace reflectivequeryproposal\n\nentity SourceRawDigest_%s id \"gooo://reflective-query-sandbox/proposal-artifact/source-raw\"\nentity RefinementProposal id \"gooo://reflective-query-sandbox/proposal-artifact/intervention\"\nactivity RecordProposal(RefinementProposal) -> RefinementProposal computes \"%s\"\n", sourceRawDigest, value))
+}
 func compare(base, changed probe) interventionEvidence {
-	return interventionEvidence{RawDigestChanged: base.RawDigest != changed.RawDigest, RawDigestBefore: base.RawDigest, RawDigestAfter: changed.RawDigest, SemanticDigestChanged: base.SemanticDigest != changed.SemanticDigest, SemanticDigestBefore: base.SemanticDigest, SemanticDigestAfter: changed.SemanticDigest, GraphDigestChanged: base.GraphDigest != changed.GraphDigest, MutationFieldBefore: base.MutationField, MutationFieldAfter: changed.MutationField, MutationPayloadBefore: base.MutationPayload, MutationPayloadAfter: changed.MutationPayload, MutationDecisionBefore: base.MutationDecision, MutationDecisionAfter: changed.MutationDecision, MutationResolutionBefore: base.MutationResolution, MutationResolutionAfter: changed.MutationResolution, MutationAPIOutcomeBefore: base.MutationAPIOutcome, MutationAPIOutcomeAfter: changed.MutationAPIOutcome, DetachedGraphPatchCapabilityBefore: base.DetachedGraphPatchCapability, DetachedGraphPatchCapabilityAfter: changed.DetachedGraphPatchCapability, OverallAuthorityBefore: base.OverallAuthority, OverallAuthorityAfter: changed.OverallAuthority, GraphDigestBefore: changed.GraphDigestBefore, OriginalGraphDigestAfter: changed.OriginalGraphDigestAfter, ReturnedGraphDigestBefore: base.ReturnedGraphDigest, ReturnedGraphDigestAfter: changed.ReturnedGraphDigest, ClaimID: changed.ClaimID, ClaimStateBefore: base.ClaimState, ClaimStateAfter: changed.ClaimState}
+	return interventionEvidence{RawDigestChanged: base.RawDigest != changed.RawDigest, RawDigestBefore: base.RawDigest, RawDigestAfter: changed.RawDigest, SemanticDigestChanged: base.SemanticDigest != changed.SemanticDigest, SemanticDigestBefore: base.SemanticDigest, SemanticDigestAfter: changed.SemanticDigest, GraphDigestChanged: base.GraphDigest != changed.GraphDigest, MutationFieldBefore: base.MutationField, MutationFieldAfter: changed.MutationField, MutationPayloadBefore: base.MutationPayload, MutationPayloadAfter: changed.MutationPayload, MutationDecisionBefore: base.MutationDecision, MutationDecisionAfter: changed.MutationDecision, MutationResolutionBefore: base.MutationResolution, MutationResolutionAfter: changed.MutationResolution, MutationAPIOutcomeBefore: base.MutationAPIOutcome, MutationAPIOutcomeAfter: changed.MutationAPIOutcome, DetachedGraphPatchCapabilityBefore: base.DetachedGraphPatchCapability, DetachedGraphPatchCapabilityAfter: changed.DetachedGraphPatchCapability, OverallAuthorityBefore: base.OverallAuthority, OverallAuthorityAfter: changed.OverallAuthority, GraphDigestBefore: changed.GraphDigestBefore, OriginalGraphDigestAfter: changed.OriginalGraphDigestAfter, ReturnedGraphDigestBefore: base.ReturnedGraphDigest, ReturnedGraphDigestAfter: changed.ReturnedGraphDigest, ClaimID: changed.ClaimID, ClaimStateBefore: base.ClaimState, ClaimStateAfter: changed.ClaimState, ProposalPolicyBefore: base.ProposalPolicy, ProposalPolicyAfter: changed.ProposalPolicy, ProposalSemanticDigestChanged: base.ProposalSemanticDigest != changed.ProposalSemanticDigest, ProposalSemanticDigestBefore: base.ProposalSemanticDigest, ProposalSemanticDigestAfter: changed.ProposalSemanticDigest, ProposalOutcomeBefore: base.ProposalOutcome, ProposalOutcomeAfter: changed.ProposalOutcome, ProposalTransitionBefore: base.ProposalTransition, ProposalTransitionAfter: changed.ProposalTransition}
 }
 func fail(format string, args ...any) { fmt.Fprintf(os.Stderr, format+"\n", args...); os.Exit(1) }

@@ -110,6 +110,40 @@ jq -e '
   ([.claims[] | select(.predicate_id == "net-repository-status-unchanged" and .to == "OPEN" and .reason == "REPOSITORY_EVIDENCE_MISSING")] | length) == 1
 ' "$output/mismatch-repository-unknown-receipt.json" >/dev/null
 
+for proposal in "$input"/proposals/*.gooo; do
+	go run ./cmd/gooo check "$proposal"
+done
+proposal_import_evidence="$output/proposal-consumer-imports-go-list.txt"
+go list -deps ./scripts/reflective-query-sandbox/proposal-consumer > "$proposal_import_evidence"
+proposal_producer_imports=$(grep -F '/scripts/reflective-query-sandbox/producer' "$proposal_import_evidence" | wc -l | tr -d ' ' || true)
+test "$proposal_producer_imports" -eq 0
+go run ./scripts/reflective-query-sandbox/proposal-consumer \
+	-input "$input" -source "$source_path" -output "$output/proposal-receipt.json" \
+	-producer-imports-evidence "$proposal_import_evidence" -producer-imports-maximum 0
+jq -e '
+  .schema == "gooo/reflective-query-sandbox/proposal-verification/v1" and
+  .decision == "PROPOSAL_ONLY" and .resolution == "EXACT_RECONSTRUCTION" and
+  .reason == "PROPOSAL_EMITTED_WITHOUT_PROMOTION" and .authority == "NONE" and
+  .repository_writes == 0 and .mutation_authority == false and
+  (.source_raw_digest | length) == 64 and (.source_semantic_digest | length) == 64 and
+  (.query_receipt_digest | length) == 64 and
+  .emitted.satisfied == 1 and .emitted.total == 3 and
+  .rejected.satisfied == 1 and .rejected.total == 3 and
+  .generated_artifact_count.satisfied == 3 and .generated_artifact_count.total == 3 and
+  .generated_reconsumption.satisfied == 1 and .generated_reconsumption.total == 1 and
+  .open_claim_transition.satisfied == 1 and .open_claim_transition.total == 1 and
+  ([.cases[] | select(.case_id == "exact-observation" and .outcome == "NOT_EMITTED" and .proposal_emitted == false and .proposal_coordinate.satisfied == 0 and .proposal_coordinate.total == 1)] | length) == 1 and
+  ([.cases[] | select(.case_id == "unknown-observation" and .outcome == "EMITTED" and .proposal_emitted == true and .proposal_coordinate.satisfied == 1 and .proposal_coordinate.total == 1 and .claim_transition == "OPEN->OPEN" and .proposal_transition == "OPEN->OPEN")] | length) == 1 and
+  ([.cases[] | select(.case_id == "mutation-request" and .outcome == "REJECTED" and .rejection_coordinate.satisfied == 1 and .rejection_coordinate.total == 1 and .proposal_emitted == false)] | length) == 1 and
+  .counterexample_denominator == 5 and
+  ([.counterexamples[] | select(.decision == "REFUTED" and .resolution == "EXACT" and (.stage | length) > 0 and (.step | length) > 0 and (.reason | length) > 0)] | length) == 5 and
+  .directional_import_boundary.forbidden_imports_observed == 0 and
+  .directional_import_boundary.maximum_allowed == 0 and
+  .directional_import_boundary.conformance.satisfied == 1 and
+  .directional_import_boundary.conformance.total == 1 and
+  (.directional_import_boundary.evidence_digest | length) == 64
+' "$output/proposal-receipt.json" >/dev/null
+
 {
 	echo '## Reflective query sandbox consumer'
 	echo
@@ -134,6 +168,10 @@ jq -e '
 	echo '|---|---:|'
 	echo '| Scoped correction gates | 11 / 11 |'
 	echo '| Fixed regression matrix | 3 / 3 |'
+	echo '| Refinement proposal cases (exact / unknown / mutation) | 0/1, 1/1, 1/1 |'
+	echo '| Generated proposal re-consumption | 1 / 1 |'
+	echo '| Proposal counterexamples | 5 / 5 |'
+	echo '| Directional producer import boundary | observed=0; allowed=0; conformance=1/1 |'
 	echo '| Local tests | 0 |'
 } >> "${GITHUB_STEP_SUMMARY:-$output/summary.md}"
 
