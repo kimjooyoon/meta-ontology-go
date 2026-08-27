@@ -5,23 +5,26 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	meta "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition"
-	independent "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition/verify"
 )
 
 func TestVerifierRejectsReceiptWhenSourceObservationIsTampered(t *testing.T) {
 	root := filepath.Join("..", "..", "..", "..")
-	sourcePath := filepath.Join(root, meta.SourcePath)
+	logicalSourcePath := "examples/partial-knowledge-composition/main.gooo"
+	sourcePath := filepath.Join(root, logicalSourcePath)
 	source, err := os.ReadFile(sourcePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := meta.Input{Repository: "kimjooyoon/meta-ontology-go", HeadSHA: "0123456789abcdef0123456789abcdef01234567", SourcePath: meta.SourcePath, Source: source, Intervention: meta.InterventionNone}
-	receipt, err := meta.Evaluate(input)
+	input := Input{Repository: "kimjooyoon/meta-ontology-go", HeadSHA: "0123456789abcdef0123456789abcdef01234567", SourcePath: logicalSourcePath, Source: source, InterventionMode: "none"}
+	model, err := parseSource(logicalSourcePath, source)
 	if err != nil {
 		t.Fatal(err)
 	}
+	intervention, err := applyIntervention(&model, input.InterventionMode)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := reconstruct(input, model, intervention)
 	receiptRaw, err := json.Marshal(receipt)
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +45,7 @@ func TestVerifierRejectsReceiptWhenSourceObservationIsTampered(t *testing.T) {
 			break
 		}
 	}
-	if _, err := independent.Verify(independent.Input{Repository: input.Repository, HeadSHA: input.HeadSHA, SourcePath: input.SourcePath, Source: tampered, InterventionMode: string(meta.InterventionNone), Receipt: receiptRaw}); err == nil {
+	if _, err := Verify(Input{Repository: input.Repository, HeadSHA: input.HeadSHA, SourcePath: input.SourcePath, Source: tampered, InterventionMode: input.InterventionMode, Receipt: receiptRaw}); err == nil {
 		t.Fatal("source observation tampering was accepted")
 	}
 }
