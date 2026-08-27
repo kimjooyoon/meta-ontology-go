@@ -364,6 +364,9 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	if got.TruthTable == nil || !reflect.DeepEqual(got.TruthTable, truthTable()) {
 		return Judgment{}, fmt.Errorf("truth table is not independently reproduced")
 	}
+	if err := validateTruthTable(got.TruthTable); err != nil {
+		return Judgment{}, err
+	}
 	if got.TransitionHeadDigest != got.Transitions[len(got.Transitions)-1].TransitionDigest || receiptDigest(got) != got.Digest {
 		return Judgment{}, fmt.Errorf("receipt digest or transition head is invalid")
 	}
@@ -502,6 +505,39 @@ func edgeKind(program string) (edgeKind, bool) {
 }
 func truthTable() []truthCase {
 	return []truthCase{{"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-POSITIVE", supports, "established supports target", "DISCHARGED", "EVIDENCE_ACCEPTED", "OPEN", true, "support never discharges by itself"}, {"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-NEGATIVE", supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-POSITIVE", requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-NEGATIVE", requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-POSITIVE", contradicts, "established contradiction of target", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "direction is from established contradiction to target"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-NEGATIVE", contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-POSITIVE", failureEntailment, "failure entails target failure", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "failure entailment is directional"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-NEGATIVE", failureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"}}
+}
+
+func validateTruthTable(cases []truthCase) error {
+	if len(cases) != 2*4 {
+		return fmt.Errorf("truth table has %d cases, want 8", len(cases))
+	}
+	seen := map[edgeKind]int{}
+	for _, test := range cases {
+		actual := "OPEN"
+		switch test.Kind {
+		case requires:
+			if test.UpstreamState == "DISCHARGED" && test.LocalPredicate == string(accepted) {
+				actual = "DISCHARGED"
+			}
+		case contradicts, failureEntailment:
+			if test.UpstreamState == "REFUTED" && test.LocalPredicate == string(explicitContradiction) {
+				actual = "REFUTED"
+			}
+		case supports:
+		default:
+			return fmt.Errorf("truth table contains unknown edge kind %q", test.Kind)
+		}
+		if actual != test.ExpectedState {
+			return fmt.Errorf("truth table case %q computed %s, expected %s", test.CaseID, actual, test.ExpectedState)
+		}
+		seen[test.Kind]++
+	}
+	for _, kind := range []edgeKind{supports, requires, contradicts, failureEntailment} {
+		if seen[kind] != 2 {
+			return fmt.Errorf("truth table edge kind %s has %d cases", kind, seen[kind])
+		}
+	}
+	return nil
 }
 func validateEvidence(value evidenceReceipt) error {
 	if value.Schema != "gooo.meta.claim-dependency-evidence/v2" || value.Status != "CURRENT_EVIDENCE" || value.ArtifactPath == "" || value.Digest == "" {

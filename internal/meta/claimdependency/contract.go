@@ -180,6 +180,43 @@ func TruthTableCases() []TruthTableCase {
 	}
 }
 
+// validateTruthTable executes the closed edge algebra over each positive and
+// negative case before the table is emitted. The table is therefore an
+// executable counterexample set, not a list of unchecked labels.
+func validateTruthTable(cases []TruthTableCase) error {
+	if len(cases) != 2*len(EdgeKinds()) {
+		return fmt.Errorf("truth table has %d cases, want %d", len(cases), 2*len(EdgeKinds()))
+	}
+	seen := map[EdgeKind]int{}
+	for _, test := range cases {
+		actual := "OPEN"
+		switch test.Kind {
+		case Requires:
+			if test.UpstreamState == "DISCHARGED" && test.LocalPredicate == string(ObservationEvidence) {
+				actual = "DISCHARGED"
+			}
+		case Contradicts, FailureEntailment:
+			if test.UpstreamState == "REFUTED" && test.LocalPredicate == string(ObservationContradiction) {
+				actual = "REFUTED"
+			}
+		case Supports:
+			// SUPPORTS is never a discharge or refutation entailment.
+		default:
+			return fmt.Errorf("truth table contains unknown edge kind %q", test.Kind)
+		}
+		if actual != test.ExpectedState {
+			return fmt.Errorf("truth table case %q computed %s, expected %s", test.CaseID, actual, test.ExpectedState)
+		}
+		seen[test.Kind]++
+	}
+	for _, kind := range EdgeKinds() {
+		if seen[kind] != 2 {
+			return fmt.Errorf("truth table edge kind %s has %d cases", kind, seen[kind])
+		}
+	}
+	return nil
+}
+
 func graphDigest(graph Graph) (string, error)       { graph.Digest = ""; return digestJSON(graph) }
 func receiptDigest(receipt Receipt) (string, error) { receipt.Digest = ""; return digestJSON(receipt) }
 func evidenceReceiptDigest(receipt EvidenceReceipt) (string, error) {

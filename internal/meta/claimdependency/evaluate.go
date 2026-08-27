@@ -140,6 +140,10 @@ func Evaluate(source []byte, sourcePath string, evidence EvidenceReceipt, prior 
 	if err != nil {
 		return Receipt{}, err
 	}
+	truthTable := TruthTableCases()
+	if err := validateTruthTable(truthTable); err != nil {
+		return Receipt{}, err
+	}
 	if err := validateEvidence(parsed, evidence); err != nil {
 		return Receipt{}, err
 	}
@@ -163,7 +167,7 @@ func Evaluate(source []byte, sourcePath string, evidence EvidenceReceipt, prior 
 	metrics := deriveMetrics(parsed.Graph, states, resolutions, currentOutcomes, evidence, prior != nil)
 	decision := decisionFor(states, evidence, prior != nil)
 	subject := Subject{SourcePath: sourcePath, SourceDigest: sourceDigest, SemanticDigest: semanticDigest, Producer: ProducerID, Consumer: ConsumerID, MetaOperation: MetaOperationID, ProofChoice: ProofChoice, ReadOnly: evidence.Snapshot.RepositoryWrites == 0, RepositoryWrites: evidence.Snapshot.RepositoryWrites, AuthorityResolution: authorityResolution(evidence), AuthorityCoordinate: evidence.Capability.Coordinate}
-	receipt := Receipt{Schema: ReceiptSchema, Scope: Scope, Subject: subject, Evidence: evidence, Graph: parsed.Graph, TruthTable: TruthTableCases(), EvidenceDigest: evidence.Digest, Transitions: transitions, TransitionHeadDigest: transitions[len(transitions)-1].TransitionDigest, Resolutions: resolutions, Metrics: metrics, Decision: decision}
+	receipt := Receipt{Schema: ReceiptSchema, Scope: Scope, Subject: subject, Evidence: evidence, Graph: parsed.Graph, TruthTable: truthTable, EvidenceDigest: evidence.Digest, Transitions: transitions, TransitionHeadDigest: transitions[len(transitions)-1].TransitionDigest, Resolutions: resolutions, Metrics: metrics, Decision: decision}
 	if prior != nil {
 		receipt.PriorReceiptDigest, err = receiptDigest(*prior)
 		if err != nil {
