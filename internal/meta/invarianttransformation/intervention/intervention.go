@@ -330,7 +330,8 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 		BaselineRepositoryWrites: baselineReceipt.RepositoryWrites, MutatedRepositoryWrites: mutatedReceipt.RepositoryWrites,
 		BaselineMutationAuthority: baselineReceipt.MutationAuthority, MutatedMutationAuthority: mutatedReceipt.MutationAuthority,
 	}
-	caseResult.Satisfied, claimResolution, claimReason := adjudicate(kind, caseResult, evidenceObservable)
+	satisfied, claimResolution, claimReason := adjudicate(kind, caseResult, evidenceObservable)
+	caseResult.Satisfied = satisfied
 	claimCoordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: claimReason}
 	caseResult.Claim = Claim{ID: claimID, Status: statusForAdjudication(caseResult.Satisfied, evidenceObservable), Resolution: claimResolution,
 		Reason: claimReason, Coordinate: claimCoordinate,
