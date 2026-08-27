@@ -15,6 +15,7 @@ func validate(input receipt) string {
 	if len(input.Items) == 0 {
 		return "NO_PROOF_CHOICES"
 	}
+	items := map[string]item{}
 	claims := map[string]string{}
 	for _, value := range input.Items {
 		if value.ID == "" || value.Statement == "" || !validChoice(value.Choice) {
@@ -29,9 +30,10 @@ func validate(input receipt) string {
 		if value.Kind == "METRIC" && (value.Denominator != fixedDenominator || value.Numerator < 0 || value.Numerator > value.Denominator) {
 			return "FIXED_DENOMINATOR_MISMATCH"
 		}
-		if old, exists := claims[value.ID]; exists && old != value.Choice {
+		if old, exists := items[value.ID]; exists && !sameItem(old, value) {
 			return "PROOF_CHOICE_CONTRADICTION"
 		}
+		items[value.ID] = value
 		if value.Kind == "CLAIM" {
 			claims[value.ID] = value.Choice
 		}
