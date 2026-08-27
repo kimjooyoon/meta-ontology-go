@@ -512,9 +512,9 @@ func deriveCIEvidenceArtifact(value CIEvidenceCase, artifact CIEvidenceArtifact)
 	if !artifact.Expected || artifact.Present {
 		return CIEvidenceArtifactObservation{}, false, nil
 	}
-	relation := CIEvidenceFixtureScenario
-	if value.SourceClass == CIEvidenceSourceCurrent {
-		relation = CIEvidenceCausalRelationUnknown
+	relation := CIEvidenceCausalRelationUnknown
+	if value.SourceClass == CIEvidenceSourceSynthetic {
+		relation = CIEvidenceFixtureScenario
 	}
 	if artifact.DependencyObserved && artifact.DependencyEvidence != "" {
 		relation = CIEvidenceCausalChild
