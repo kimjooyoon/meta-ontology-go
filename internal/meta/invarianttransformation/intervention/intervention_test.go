@@ -47,7 +47,7 @@ func TestBuildKeepsInterventionDenominatorsSeparate(t *testing.T) {
 		t.Fatalf("nonsemantic evidence or claim=%+v", report.Cases[2])
 	}
 	for _, item := range report.Cases {
-		if item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.BaselineMutationAuthority || item.MutatedMutationAuthority {
+		if item.BaselineRepositoryWrites != -1 || item.MutatedRepositoryWrites != -1 || item.BaselineRepositoryWritesObserved || item.MutatedRepositoryWritesObserved || item.BaselineRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.MutatedRepositoryActualOrTransientWrites != model.UnknownEffectScope || item.BaselineRepositoryMutationAuthorized || item.MutatedRepositoryMutationAuthorized {
 			t.Fatalf("effect boundary=%+v", item)
 		}
 		if item.Claim.Status != model.StatusDischarged || len(item.Claim.Transitions) != 1 || item.Claim.Transitions[0].From != model.StatusOpen || item.Claim.Transitions[0].To != model.StatusDischarged || item.Claim.Transitions[0].Coordinate != item.Claim.Coordinate || item.Claim.Coordinate.Stage != InterventionStage || item.Claim.Coordinate.Reason == "" {

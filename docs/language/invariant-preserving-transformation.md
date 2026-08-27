@@ -31,16 +31,23 @@ The producer emits a `PROVISIONAL_NO_EFFECT` receipt. Only the independent
 judge's exact, digest-bound authorization is accepted by the separate
 post-judgment executor. The executor writes one artifact under `RUNNER_TEMP`;
 the judge and consumer read and verify its actual bytes, path, size, digest,
-case, subject SHA, authorization digest, and execution provenance.
+case, subject SHA, authorization digest, and execution provenance. The
+`RepositoryMutationAuthorized` field is scoped to this protocol's repository
+path authorization; ambient process/OS authority and transient writes remain
+`UNKNOWN`.
 
 The four-case denominator is deliberately mixed: one preserved translation,
 one semantic violation, one missing replay recipe, and one approved artifact.
 Temporary filesystem mutation is reported separately as
-`temp_artifact_write_authorized=true`; repository net status remains unchanged,
-while `repository_actual_or_transient_writes=UNKNOWN` unless separately
-observed. `AUTHORIZED` is scoped to the bounded transformation receipt or
-temporary artifact emission; it does not grant repository edit or promotion
-authority.
+`temp_artifact_write_authorized=true`; repository net content is observed by a
+raw tracked+untracked `path,digest` artifact immediately before and after each
+witness execution. The independent report consumer checks that artifact's
+address, byte digest, entry count, sorted entry projection, exact execution ID,
+and exact HEAD before deriving `NET_REPOSITORY_CONTENT_STATE_UNCHANGED`.
+`repository_actual_or_transient_writes=UNKNOWN` remains separate from that
+content observation. `AUTHORIZED` is scoped to the bounded transformation
+receipt or temporary artifact emission; it does not grant repository edit or
+promotion authority.
 
 The current exact receipt is `4/4` bounded source-derived cases and `10000`
 basis points, with `2` independently authorized cases, `1` refuted case, and
@@ -106,5 +113,8 @@ rejects the coherent-looking artifact.
 
 CI exposes fixed evidence counts: production judge/consumer producer imports
 `0/0`, reconstructed intervention cases `3/3`, actual replays `3/3`, one
-artifact evidence object observed from actual bytes, effect gates `6/6`, and
-coherent tamper rejection `1/1`. The correction denominator is `12/12`.
+artifact evidence object observed from actual bytes, effect gates `8/8`, and
+coherent tamper rejection `1/1`. Repository content snapshots use a fixed
+`1/1` denominator with raw-entry provenance; forged summaries, raw-entry
+tampering, content-only changes, and cross-execution bindings fail closed.
+The correction denominator is `12/12`.

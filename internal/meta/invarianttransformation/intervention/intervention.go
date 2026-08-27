@@ -164,8 +164,8 @@ type Case struct {
 	MutatedRepositoryNetStatusUnchanged       bool                         `json:"mutated_repository_net_status_unchanged"`
 	BaselineRepositoryActualOrTransientWrites string                       `json:"baseline_repository_actual_or_transient_writes"`
 	MutatedRepositoryActualOrTransientWrites  string                       `json:"mutated_repository_actual_or_transient_writes"`
-	BaselineMutationAuthority                 bool                         `json:"baseline_mutation_authority"`
-	MutatedMutationAuthority                  bool                         `json:"mutated_mutation_authority"`
+	BaselineRepositoryMutationAuthorized      bool                         `json:"baseline_repository_mutation_authorized"`
+	MutatedRepositoryMutationAuthorized       bool                         `json:"mutated_repository_mutation_authorized"`
 	Claim                                     Claim                        `json:"claim"`
 	Satisfied                                 bool                         `json:"satisfied"`
 }
@@ -185,7 +185,7 @@ type Report struct {
 	Resolution                        string           `json:"resolution"`
 	Reason                            string           `json:"reason"`
 	RepositoryWrites                  int              `json:"repository_writes"`
-	MutationAuthority                 bool             `json:"mutation_authority"`
+	RepositoryMutationAuthorized      bool             `json:"repository_mutation_authorized"`
 	TempArtifactWriteAuthorized       bool             `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool             `json:"repository_net_status_unchanged"`
 	RepositoryActualOrTransientWrites string           `json:"repository_actual_or_transient_writes"`
@@ -233,7 +233,7 @@ func Build(source []byte, headSHA string) (Report, error) {
 			SemanticOperationChange: SliceDenominator{ID: SemanticOperationDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(semanticOperationCase.Satisfied), CoverageBPS: boolInt(semanticOperationCase.Satisfied) * 10000},
 			NonSemantic:             SliceDenominator{ID: NonSemanticDenominatorID, CasesTotal: 1, CasesSatisfied: boolInt(nonSemanticCase.Satisfied), CoverageBPS: boolInt(nonSemanticCase.Satisfied) * 10000}},
 		CaseCount: 3, Cases: cases, EffectGates: gates, EffectGateDenominator: len(gates), Decision: decision, Resolution: resolution, Reason: reason,
-		RepositoryWrites: writes, MutationAuthority: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		RepositoryWrites: writes, RepositoryMutationAuthorized: mutationAuthority, TempArtifactWriteAuthorized: effectGateObserved(gates), RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
 		RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
 		ExecutedEffects: boolInt(effectGateObserved(gates)), IndependentlyObservedEffects: boolInt(effectGateObserved(gates)),
 		UnknownEffectScopes: boolInt(effectGateObserved(gates)), CorrectionCount: 12, CorrectionDenominator: 12, Failure: failure}
@@ -294,7 +294,7 @@ func effectTotals(cases []Case) (int, bool) {
 			}
 			writes += item.BaselineRepositoryWrites + item.MutatedRepositoryWrites
 		}
-		authority = authority || item.BaselineMutationAuthority || item.MutatedMutationAuthority
+		authority = authority || item.BaselineRepositoryMutationAuthorized || item.MutatedRepositoryMutationAuthorized
 	}
 	return writes, authority
 }
@@ -335,10 +335,10 @@ func buildCase(source []byte, headSHA, id, kind, edit string, mutate func([]byte
 		BaselineRepositoryWritesObserved: baselineReceipt.RepositoryWritesObserved, MutatedRepositoryWritesObserved: mutatedReceipt.RepositoryWritesObserved,
 		BaselineRepositoryNetStatusUnchanged: baselineReceipt.RepositoryNetStatusUnchanged, MutatedRepositoryNetStatusUnchanged: mutatedReceipt.RepositoryNetStatusUnchanged,
 		BaselineRepositoryActualOrTransientWrites: baselineReceipt.RepositoryActualOrTransientWrites, MutatedRepositoryActualOrTransientWrites: mutatedReceipt.RepositoryActualOrTransientWrites,
-		BaselineMutationAuthority: baselineReceipt.MutationAuthority, MutatedMutationAuthority: mutatedReceipt.MutationAuthority}
+		BaselineRepositoryMutationAuthorized: baselineReceipt.RepositoryMutationAuthorized, MutatedRepositoryMutationAuthorized: mutatedReceipt.RepositoryMutationAuthorized}
 	item.DecisionChanged = !item.DecisionEqual
 	item.ClaimTransitionsEqual = transitionOutcomeEqual(baselineTransitions, mutatedTransitions)
-	item.RepositoryWritesNotClaimed = !item.BaselineRepositoryWritesObserved && !item.MutatedRepositoryWritesObserved && item.BaselineRepositoryWrites == -1 && item.MutatedRepositoryWrites == -1 && item.BaselineRepositoryActualOrTransientWrites == model.UnknownEffectScope && item.MutatedRepositoryActualOrTransientWrites == model.UnknownEffectScope && !item.BaselineMutationAuthority && !item.MutatedMutationAuthority
+	item.RepositoryWritesNotClaimed = !item.BaselineRepositoryWritesObserved && !item.MutatedRepositoryWritesObserved && item.BaselineRepositoryWrites == -1 && item.MutatedRepositoryWrites == -1 && item.BaselineRepositoryActualOrTransientWrites == model.UnknownEffectScope && item.MutatedRepositoryActualOrTransientWrites == model.UnknownEffectScope && !item.BaselineRepositoryMutationAuthorized && !item.MutatedRepositoryMutationAuthorized
 	item.Satisfied, item.Claim.Resolution, item.Claim.Reason = adjudicate(kind, item, item.EvidenceObservable, satisfiedReason)
 	status := statusForAdjudication(item.Satisfied, item.EvidenceObservable)
 	coordinate := model.Coordinate{Stage: InterventionStage, Step: step, Reason: item.Claim.Reason}

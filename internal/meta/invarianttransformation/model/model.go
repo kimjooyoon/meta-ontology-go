@@ -10,40 +10,42 @@ import (
 )
 
 const (
-	ContractSchema              = "gooo/invariant-transformation-contract/v2"
-	ReceiptSchema               = "gooo/invariant-transformation-receipt/v2"
-	ReportSchema                = "gooo/invariant-transformation-report/v2"
-	DenominatorID               = "gooo/invariant-transformation-denominator/v2"
-	SourcePath                  = "examples/invariant-transformation/main.gooo"
-	ProducerID                  = "invarianttransformation.producer"
-	ConsumerID                  = "invarianttransformation.independent-judge"
-	AuthorityOp                 = "authorize-bounded-transformation-witness"
-	EffectNoWrite               = "NO_EFFECT"
-	EffectApproved              = "APPROVED_ARTIFACT_RECORDED"
-	DecisionAllowed             = "AUTHORIZED"
-	DecisionBlocked             = "BLOCKED"
-	DecisionRefuted             = "REFUTED"
-	DecisionPass                = "PASS"
-	DecisionFailClosed          = "FAIL_CLOSED"
-	ResolutionExact             = "EXACT"
-	ResolutionLower             = "LOWER_RESOLUTION"
-	ResolutionInvariant         = "INVARIANT_ONLY"
-	StatusOpen                  = "OPEN"
-	StatusDischarged            = "DISCHARGED"
-	StatusRefuted               = "REFUTED"
-	ProofFoundation             = "FOUNDATION"
-	ProofCoherence              = "COHERENCE"
-	ProofRegression             = "REGRESSION"
-	AuthorityScope              = "BOUNDED_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION"
-	InputDomainID               = "bounded-fixture-input-domain-v1"
-	InvariantID                 = "candidate-output-equals-expected-v1"
-	ReceiptProvisional          = "PROVISIONAL_NO_EFFECT"
-	ReceiptExecuted             = "EFFECT_EXECUTED"
-	UnknownEffectScope          = "UNKNOWN"
-	RepositoryNetStateUnknown   = "UNKNOWN"
-	RepositoryNetStateUnchanged = "NET_REPOSITORY_STATE_UNCHANGED"
-	RepositoryNetStateChanged   = "NET_REPOSITORY_STATE_CHANGED"
-	ExecutorID                  = "invarianttransformation.post-judgment-executor"
+	ContractSchema                     = "gooo/invariant-transformation-contract/v2"
+	ReceiptSchema                      = "gooo/invariant-transformation-receipt/v2"
+	ReportSchema                       = "gooo/invariant-transformation-report/v2"
+	DenominatorID                      = "gooo/invariant-transformation-denominator/v2"
+	SourcePath                         = "examples/invariant-transformation/main.gooo"
+	ProducerID                         = "invarianttransformation.producer"
+	ConsumerID                         = "invarianttransformation.independent-judge"
+	AuthorityOp                        = "authorize-bounded-transformation-witness"
+	EffectNoWrite                      = "NO_EFFECT"
+	EffectApproved                     = "APPROVED_ARTIFACT_RECORDED"
+	DecisionAllowed                    = "AUTHORIZED"
+	DecisionBlocked                    = "BLOCKED"
+	DecisionRefuted                    = "REFUTED"
+	DecisionPass                       = "PASS"
+	DecisionFailClosed                 = "FAIL_CLOSED"
+	ResolutionExact                    = "EXACT"
+	ResolutionLower                    = "LOWER_RESOLUTION"
+	ResolutionInvariant                = "INVARIANT_ONLY"
+	StatusOpen                         = "OPEN"
+	StatusDischarged                   = "DISCHARGED"
+	StatusRefuted                      = "REFUTED"
+	ProofFoundation                    = "FOUNDATION"
+	ProofCoherence                     = "COHERENCE"
+	ProofRegression                    = "REGRESSION"
+	AuthorityScope                     = "BOUNDED_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION"
+	InputDomainID                      = "bounded-fixture-input-domain-v1"
+	InvariantID                        = "candidate-output-equals-expected-v1"
+	ReceiptProvisional                 = "PROVISIONAL_NO_EFFECT"
+	ReceiptExecuted                    = "EFFECT_EXECUTED"
+	UnknownEffectScope                 = "UNKNOWN"
+	RepositoryNetContentStateUnknown   = "UNKNOWN"
+	RepositoryNetContentStateUnchanged = "NET_REPOSITORY_CONTENT_STATE_UNCHANGED"
+	RepositoryNetContentStateChanged   = "NET_REPOSITORY_CONTENT_STATE_CHANGED"
+	RepositoryNetStateUnknown          = RepositoryNetContentStateUnknown
+	ExecutorID                         = "invarianttransformation.post-judgment-executor"
+	RepositorySnapshotSchema           = "gooo/invariant-transformation-repository-snapshot/v1"
 )
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
@@ -170,6 +172,7 @@ type ArtifactEvidence struct {
 	ContentDigest                string `json:"content_digest"`
 	Size                         int    `json:"size"`
 	CaseID                       string `json:"case_id"`
+	ExecutionID                  string `json:"execution_id"`
 	SubjectSHA                   string `json:"subject_sha"`
 	AuthorizationDigest          string `json:"authorization_digest"`
 	Producer                     string `json:"producer"`
@@ -189,6 +192,7 @@ type Effect struct {
 	ArtifactSize                      int              `json:"artifact_size,omitempty"`
 	Artifact                          ArtifactEvidence `json:"artifact,omitempty"`
 	CaseID                            string           `json:"case_id"`
+	ExecutionID                       string           `json:"execution_id"`
 	SubjectSHA                        string           `json:"subject_sha"`
 	Intent                            string           `json:"intent"`
 	AuthorizationDigest               string           `json:"authorization_digest"`
@@ -209,6 +213,7 @@ type Effect struct {
 type Receipt struct {
 	Schema                            string                 `json:"schema"`
 	CaseID                            string                 `json:"case_id"`
+	ExecutionID                       string                 `json:"execution_id"`
 	CaseKind                          string                 `json:"case_kind"`
 	ActivityStableID                  string                 `json:"activity_stable_id"`
 	HeadSHA                           string                 `json:"head_sha"`
@@ -237,7 +242,7 @@ type Receipt struct {
 	RepositoryActualOrTransientWrites string                 `json:"repository_actual_or_transient_writes"`
 	RepositoryWritesObserved          bool                   `json:"repository_writes_observed"`
 	RepositoryWrites                  int                    `json:"repository_writes"`
-	MutationAuthority                 bool                   `json:"mutation_authority"`
+	RepositoryMutationAuthorized      bool                   `json:"repository_mutation_authorized"`
 	RepositoryPathAuthorization       bool                   `json:"repository_path_authorization"`
 	AmbientProcessAuthority           string                 `json:"ambient_process_authority"`
 	AuthorityScope                    string                 `json:"authority_scope"`
@@ -294,13 +299,13 @@ type Summary struct {
 	UnknownEffectScopes               int    `json:"unknown_effect_scopes"`
 	ApprovedArtifactEffects           int    `json:"approved_artifact_effects"`
 	RepositoryWrites                  int    `json:"repository_writes"`
-	MutationAuthority                 int    `json:"mutation_authority"`
+	RepositoryMutationAuthorized      int    `json:"repository_mutation_authorized"`
 	CoverageBPS                       int    `json:"coverage_bps"`
 	CorrectionCount                   int    `json:"correction_count"`
 	CorrectionDenominator             int    `json:"correction_denominator"`
 	RepositoryNetStatusUnchanged      bool   `json:"repository_net_status_unchanged"`
 	RepositoryNetStatusObserved       bool   `json:"repository_net_status_observed"`
-	RepositoryNetState                string `json:"repository_net_state"`
+	RepositoryNetContentState         string `json:"repository_net_content_state"`
 	RepositoryNetSnapshotObservations int    `json:"repository_net_snapshot_observations"`
 	RepositoryNetSnapshotDenominator  int    `json:"repository_net_snapshot_denominator"`
 	TempArtifactWriteAuthorized       bool   `json:"temp_artifact_write_authorized"`
@@ -310,15 +315,25 @@ type Summary struct {
 }
 
 type RepositorySnapshot struct {
-	PathDigest string `json:"path_digest"`
-	EntryCount int    `json:"entry_count"`
+	Schema        string `json:"schema"`
+	HeadSHA       string `json:"head_sha"`
+	ExecutionID   string `json:"execution_id"`
+	EntriesPath   string `json:"entries_path"`
+	EntriesDigest string `json:"entries_digest"`
+	PathDigest    string `json:"path_digest"`
+	EntryCount    int    `json:"entry_count"`
 }
 
 type RepositoryObservation struct {
-	Before   RepositorySnapshot `json:"before"`
-	After    RepositorySnapshot `json:"after"`
-	Observed bool               `json:"observed"`
-	State    string             `json:"state"`
+	Before                 RepositorySnapshot `json:"before"`
+	After                  RepositorySnapshot `json:"after"`
+	Observed               bool               `json:"observed"`
+	State                  string             `json:"state"`
+	ExecutionID            string             `json:"execution_id"`
+	WitnessReportDigest    string             `json:"witness_report_digest"`
+	WitnessReceiptDigests  []string           `json:"witness_receipt_digests"`
+	WitnessEffectDigests   []string           `json:"witness_effect_digests"`
+	WitnessArtifactDigests []string           `json:"witness_artifact_digests"`
 }
 
 type Indicator struct {
@@ -336,6 +351,7 @@ type Indicator struct {
 type Report struct {
 	Schema                  string                `json:"schema"`
 	HeadSHA                 string                `json:"head_sha"`
+	ExecutionID             string                `json:"execution_id"`
 	SourcePath              string                `json:"source_path"`
 	SourceDigest            string                `json:"source_digest"`
 	SemanticSourceDigest    string                `json:"semantic_source_digest"`

@@ -1,8 +1,13 @@
 package judge
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/model"
@@ -40,13 +45,13 @@ func ValidateReport(report model.Report, source []byte) error {
 	if err != nil {
 		return err
 	}
-	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || report.SourcePath != model.SourcePath ||
+	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || report.ExecutionID == "" || report.SourcePath != model.SourcePath ||
 		report.SourceDigest != model.DigestBytes(source) || report.SemanticSourceDigest != semanticDigest || report.ContractDigest != model.ValueContractDigest() ||
 		report.ValidatorContractDigest != model.ValidatorContractDigest() || report.DenominatorID != model.DenominatorID || report.DenominatorTotal != len(report.Cases) ||
 		report.Digest == "" || report.Digest != model.SealReport(report).Digest {
 		return fmt.Errorf("report identity or digest is invalid")
 	}
-	if !validRepositoryObservation(report.RepositoryObservation) {
+	if !validRepositoryObservation(report) {
 		return fmt.Errorf("repository observation is not independently bound")
 	}
 	ids, err := sourceCaseIDs(source)
@@ -104,7 +109,7 @@ func ValidateReport(report model.Report, source []byte) error {
 }
 
 func summarizeReport(cases []model.CaseResult, observation model.RepositoryObservation) model.Summary {
-	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: observation.Observed, RepositoryNetStatusUnchanged: observation.State == model.RepositoryNetStateUnchanged, RepositoryNetState: observation.State, RepositoryNetSnapshotObservations: boolInt(observation.Observed), RepositoryNetSnapshotDenominator: boolInt(observation.Observed), RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1, AmbientProcessAuthority: model.UnknownEffectScope}
+	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: observation.Observed, RepositoryNetStatusUnchanged: observation.State == model.RepositoryNetContentStateUnchanged, RepositoryNetContentState: observation.State, RepositoryNetSnapshotObservations: boolInt(observation.Observed), RepositoryNetSnapshotDenominator: 1, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1, AmbientProcessAuthority: model.UnknownEffectScope}
 	claimIDs := map[string]bool{}
 	for _, item := range cases {
 		if item.Satisfied {
@@ -150,7 +155,7 @@ func summarizeReport(cases []model.CaseResult, observation model.RepositoryObser
 			}
 			summary.RepositoryWrites += item.Receipt.RepositoryWrites
 		}
-		summary.MutationAuthority |= boolInt(item.Receipt.MutationAuthority)
+		summary.RepositoryMutationAuthorized |= boolInt(item.Receipt.RepositoryMutationAuthorized)
 	}
 	summary.UniqueClaimInstances = len(claimIDs)
 	if summary.CasesTotal > 0 {
@@ -160,11 +165,129 @@ func summarizeReport(cases []model.CaseResult, observation model.RepositoryObser
 	return summary
 }
 
-func validRepositoryObservation(observation model.RepositoryObservation) bool {
-	return observation.Observed && observation.State == model.RepositoryNetStateUnchanged &&
-		model.ValidDigest(observation.Before.PathDigest) && model.ValidDigest(observation.After.PathDigest) &&
-		observation.Before.EntryCount >= 0 && observation.After.EntryCount >= 0 &&
-		observation.Before.EntryCount == observation.After.EntryCount && observation.Before.PathDigest == observation.After.PathDigest
+type repositoryEntry struct {
+	Path   string `json:"path"`
+	Digest string `json:"digest"`
+}
+
+func validRepositoryObservation(report model.Report) bool {
+	observation := report.RepositoryObservation
+	if !observation.Observed || observation.State != model.RepositoryNetContentStateUnchanged || observation.ExecutionID == "" || observation.ExecutionID != report.ExecutionID || !model.ValidDigest(observation.WitnessReportDigest) || report.Summary.RepositoryNetSnapshotDenominator != 1 || report.Summary.RepositoryNetSnapshotObservations != 1 {
+		return false
+	}
+	before, beforeEntries, ok := validRepositorySnapshot(observation.Before, report.HeadSHA)
+	if !ok {
+		return false
+	}
+	after, afterEntries, ok := validRepositorySnapshot(observation.After, report.HeadSHA)
+	if !ok || before.ExecutionID != observation.ExecutionID || after.ExecutionID != observation.ExecutionID || !reflect.DeepEqual(beforeEntries, afterEntries) {
+		return false
+	}
+	if observation.WitnessReportDigest != unboundReportDigest(report) {
+		return false
+	}
+	witnessReceipts := make([]string, 0, len(report.Cases))
+	witnessEffects := []string{}
+	witnessArtifacts := []string{}
+	for _, item := range report.Cases {
+		if item.Receipt.ExecutionID != report.ExecutionID || !model.ValidDigest(item.Receipt.Digest) {
+			return false
+		}
+		witnessReceipts = append(witnessReceipts, item.Receipt.Digest)
+		for _, effect := range item.Receipt.Effects {
+			if effect.ExecutionID != report.ExecutionID || effect.Artifact.ExecutionID != report.ExecutionID {
+				return false
+			}
+			witnessEffects = append(witnessEffects, effect.ExecutionReceiptDigest)
+			witnessArtifacts = append(witnessArtifacts, effect.Artifact.ContentDigest)
+		}
+	}
+	return reflect.DeepEqual(observation.WitnessReceiptDigests, witnessReceipts) && reflect.DeepEqual(observation.WitnessEffectDigests, witnessEffects) && reflect.DeepEqual(observation.WitnessArtifactDigests, witnessArtifacts)
+}
+
+func unboundReportDigest(report model.Report) string {
+	unbound := report
+	unbound.RepositoryObservation = model.RepositoryObservation{}
+	unbound.Summary.RepositoryNetStatusObserved = false
+	unbound.Summary.RepositoryNetStatusUnchanged = false
+	unbound.Summary.RepositoryNetContentState = model.RepositoryNetContentStateUnknown
+	unbound.Summary.RepositoryNetSnapshotObservations = 0
+	unbound.Summary.RepositoryNetSnapshotDenominator = 1
+	unbound.Summary.RepositoryPathAuthorization = false
+	unbound.Summary.RepositoryActualOrTransientWrites = model.UnknownEffectScope
+	unbound.Summary.RepositoryWrites = -1
+	unbound.Summary.AmbientProcessAuthority = model.UnknownEffectScope
+	unbound.Indicators = Indicators(unbound.Summary)
+	return model.SealReport(unbound).Digest
+}
+
+func validRepositorySnapshot(snapshot model.RepositorySnapshot, headSHA string) (model.RepositorySnapshot, []repositoryEntry, bool) {
+	if snapshot.Schema != model.RepositorySnapshotSchema || snapshot.HeadSHA != headSHA || snapshot.ExecutionID == "" || !filepath.IsAbs(snapshot.EntriesPath) || !allowedSnapshotPath(snapshot.EntriesPath) || !model.ValidDigest(snapshot.EntriesDigest) || !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {
+		return model.RepositorySnapshot{}, nil, false
+	}
+	raw, err := os.ReadFile(snapshot.EntriesPath)
+	if err != nil || model.DigestBytes(raw) != snapshot.EntriesDigest {
+		return model.RepositorySnapshot{}, nil, false
+	}
+	var entries []repositoryEntry
+	if json.Unmarshal(raw, &entries) != nil || len(entries) != snapshot.EntryCount {
+		return model.RepositorySnapshot{}, nil, false
+	}
+	for _, item := range entries {
+		path := filepath.FromSlash(item.Path)
+		if item.Path == "" || filepath.IsAbs(path) || item.Path != filepath.ToSlash(filepath.Clean(path)) || item.Path == ".." || strings.HasPrefix(item.Path, "../") || !model.ValidDigest(item.Digest) {
+			return model.RepositorySnapshot{}, nil, false
+		}
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].Path < entries[j].Path })
+	for index := 1; index < len(entries); index++ {
+		if entries[index-1].Path == entries[index].Path {
+			return model.RepositorySnapshot{}, nil, false
+		}
+	}
+	canonical, err := json.Marshal(entries)
+	if err != nil || !bytes.Equal(raw, append(canonical, '\n')) || model.Digest(entries) != snapshot.PathDigest {
+		return model.RepositorySnapshot{}, nil, false
+	}
+	return snapshot, entries, true
+}
+
+func allowedSnapshotPath(path string) bool {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return false
+	}
+	for _, root := range []string{snapshotTempRoot()} {
+		canonicalRoot, err := filepath.EvalSymlinks(root)
+		if err != nil {
+			continue
+		}
+		canonicalRoot, err = filepath.Abs(canonicalRoot)
+		if err != nil || !withinPath(canonicalRoot, absolute) {
+			continue
+		}
+		resolved, err := filepath.EvalSymlinks(absolute)
+		if err != nil {
+			continue
+		}
+		resolved, err = filepath.Abs(resolved)
+		if err == nil && withinPath(canonicalRoot, resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+func snapshotTempRoot() string {
+	if root := os.Getenv("RUNNER_TEMP"); root != "" {
+		return root
+	}
+	return os.TempDir()
+}
+
+func withinPath(root, path string) bool {
+	relative, err := filepath.Rel(root, path)
+	return err == nil && relative != "." && relative != ".." && !filepath.IsAbs(relative) && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))
 }
 
 func boolInt(value bool) int {

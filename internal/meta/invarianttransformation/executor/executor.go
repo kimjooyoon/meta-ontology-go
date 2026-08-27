@@ -42,13 +42,13 @@ func Emit(receipt model.Receipt, judgment model.Judgment, subjectSHA, path strin
 		return model.Effect{}, fmt.Errorf("close temporary artifact: %w", err)
 	}
 	artifact := model.ArtifactEvidence{
-		Path: path, ContentDigest: model.DigestBytes(data), Size: len(data), CaseID: receipt.CaseID, SubjectSHA: subjectSHA,
+		Path: path, ContentDigest: model.DigestBytes(data), Size: len(data), CaseID: receipt.CaseID, ExecutionID: receipt.ExecutionID, SubjectSHA: subjectSHA,
 		AuthorizationDigest: receipt.AuthorizationDigest, Producer: receipt.Producer, Executor: model.ExecutorID,
 		Consumer: receipt.Consumer, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown,
 	}
 	effect := model.Effect{
 		Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: artifact.ContentDigest,
-		ArtifactPath: artifact.Path, ArtifactSize: artifact.Size, Artifact: artifact, CaseID: receipt.CaseID, SubjectSHA: subjectSHA,
+		ArtifactPath: artifact.Path, ArtifactSize: artifact.Size, Artifact: artifact, CaseID: receipt.CaseID, ExecutionID: receipt.ExecutionID, SubjectSHA: subjectSHA,
 		Intent: receipt.Evidence.EffectIntent, AuthorizationDigest: receipt.AuthorizationDigest, Producer: receipt.Producer,
 		Executor: model.ExecutorID, Consumer: receipt.Consumer, MetaOperation: "execute-authorized-temp-artifact",
 		TempArtifactWriteAuthorized: true, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope,
@@ -61,8 +61,8 @@ func Emit(receipt model.Receipt, judgment model.Judgment, subjectSHA, path strin
 }
 
 func ArtifactBytes(receipt model.Receipt) []byte {
-	return []byte(fmt.Sprintf("gooo bounded transformation artifact\ncase=%s\ninput=%d\noperation=%s\noutput=%d\nsource=%s\nsemantic-source=%s\nauthorization=%s\nsubject=%s\n",
-		receipt.CaseID, receipt.Evidence.InputValue, receipt.Evidence.CandidateOperation, receipt.Evidence.CandidateResult,
+	return []byte(fmt.Sprintf("gooo bounded transformation artifact\ncase=%s\nexecution=%s\ninput=%d\noperation=%s\noutput=%d\nsource=%s\nsemantic-source=%s\nauthorization=%s\nsubject=%s\n",
+		receipt.CaseID, receipt.ExecutionID, receipt.Evidence.InputValue, receipt.Evidence.CandidateOperation, receipt.Evidence.CandidateResult,
 		receipt.SourceDigest, receipt.SemanticSourceDigest, receipt.AuthorizationDigest, receipt.HeadSHA))
 }
 

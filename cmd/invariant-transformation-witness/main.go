@@ -19,14 +19,12 @@ func main() {
 	sourcePath := flag.String("source", "", "Gooo source value contract")
 	contractPath := flag.String("contract", "", "validator expectation contract (compatibility input)")
 	headSHA := flag.String("head-sha", "", "exact subject commit")
+	executionID := flag.String("execution-id", "", "witness execution identifier")
 	receiptDir := flag.String("receipt-dir", "", "receipt output directory")
 	outputPath := flag.String("output", "", "report output path")
-	repositoryBeforePath := flag.String("repository-before", "", "pre-run repository snapshot JSON")
-	repositoryAfterPath := flag.String("repository-after", "", "post-run repository snapshot JSON")
-	check := flag.Bool("check", false, "run independent report validation")
 	flag.Parse()
-	if *sourcePath == "" || *headSHA == "" || *receiptDir == "" || *outputPath == "" || *contractPath == "" {
-		fail("-source, -contract, -head-sha, -output, and -receipt-dir are required")
+	if *sourcePath == "" || *headSHA == "" || *executionID == "" || *receiptDir == "" || *outputPath == "" || *contractPath == "" {
+		fail("-source, -contract, -head-sha, -execution-id, -output, and -receipt-dir are required")
 	}
 	source, err := os.ReadFile(*sourcePath)
 	if err != nil {
@@ -43,28 +41,9 @@ func main() {
 	if err := model.ValidateContract(validatorContract); err != nil {
 		fail(err.Error())
 	}
-	report, err := buildReport(source, *headSHA)
+	report, err := buildReport(source, *headSHA, *executionID)
 	if err != nil {
 		fail(err.Error())
-	}
-	if (*repositoryBeforePath == "") != (*repositoryAfterPath == "") {
-		fail("-repository-before and -repository-after must be supplied together")
-	}
-	if *repositoryBeforePath != "" {
-		before, err := readSnapshot(*repositoryBeforePath)
-		if err != nil {
-			fail(err.Error())
-		}
-		after, err := readSnapshot(*repositoryAfterPath)
-		if err != nil {
-			fail(err.Error())
-		}
-		report = bindRepositoryObservation(report, before, after)
-	}
-	if *check {
-		if err := judge.ValidateReport(report, source); err != nil {
-			fail(err.Error())
-		}
 	}
 	if err := writeReceipts(*receiptDir, report.Cases); err != nil {
 		fail(err.Error())
@@ -85,38 +64,7 @@ func main() {
 		report.Summary.ExecutedEffects, report.Summary.IndependentlyObservedEffects, report.Summary.UnknownEffectScopes)
 }
 
-func readSnapshot(path string) (model.RepositorySnapshot, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return model.RepositorySnapshot{}, fmt.Errorf("read repository snapshot: %w", err)
-	}
-	var snapshot model.RepositorySnapshot
-	if err := json.Unmarshal(raw, &snapshot); err != nil {
-		return model.RepositorySnapshot{}, fmt.Errorf("decode repository snapshot: %w", err)
-	}
-	if !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {
-		return model.RepositorySnapshot{}, fmt.Errorf("repository snapshot is invalid")
-	}
-	return snapshot, nil
-}
-
-func bindRepositoryObservation(report model.Report, before, after model.RepositorySnapshot) model.Report {
-	report.RepositoryObservation = model.RepositoryObservation{Before: before, After: after, Observed: true, State: model.RepositoryNetStateChanged}
-	if before.EntryCount == after.EntryCount && before.PathDigest == after.PathDigest {
-		report.RepositoryObservation.State = model.RepositoryNetStateUnchanged
-	}
-	report.Summary.RepositoryNetStatusObserved = true
-	report.Summary.RepositoryNetStatusUnchanged = report.RepositoryObservation.State == model.RepositoryNetStateUnchanged
-	report.Summary.RepositoryNetState = report.RepositoryObservation.State
-	report.Summary.RepositoryNetSnapshotObservations = 1
-	report.Summary.RepositoryNetSnapshotDenominator = 1
-	report.Summary.RepositoryPathAuthorization = false
-	report.Summary.AmbientProcessAuthority = model.UnknownEffectScope
-	report.Indicators = judge.Indicators(report.Summary)
-	return model.SealReport(report)
-}
-
-func buildReport(source []byte, headSHA string) (model.Report, error) {
+func buildReport(source []byte, headSHA, executionID string) (model.Report, error) {
 	if !model.ValidHead(headSHA) {
 		return model.Report{}, fmt.Errorf("invalid head sha %q", headSHA)
 	}
@@ -129,7 +77,7 @@ func buildReport(source []byte, headSHA string) (model.Report, error) {
 	if err != nil {
 		return model.Report{}, err
 	}
-	report := model.Report{Schema: model.ReportSchema, HeadSHA: headSHA, SourcePath: model.SourcePath,
+	report := model.Report{Schema: model.ReportSchema, HeadSHA: headSHA, ExecutionID: executionID, SourcePath: model.SourcePath,
 		SourceDigest: model.DigestBytes(source), SemanticSourceDigest: semanticDigest, ContractDigest: model.ValueContractDigest(),
 		ValidatorContractDigest: model.ValidatorContractDigest(), DenominatorID: model.DenominatorID, DenominatorTotal: len(sourceCases),
 		Decision: model.DecisionPass, Resolution: model.ResolutionExact, Reason: "ALL_BOUNDED_CASES_SATISFIED",
@@ -143,6 +91,9 @@ func buildReport(source []byte, headSHA string) (model.Report, error) {
 		if err != nil {
 			return model.Report{}, err
 		}
+		provisional.ExecutionID = executionID
+		provisional.AuthorizationDigest = model.AuthorizationDigest(provisional)
+		provisional = model.SealReceipt(provisional)
 		authorization := judge.Judge(provisional, source)
 		receipt := provisional
 		judgment := authorization
@@ -156,7 +107,7 @@ func buildReport(source []byte, headSHA string) (model.Report, error) {
 			if root == "" {
 				root = os.TempDir()
 			}
-			effect, err := executor.Emit(provisional, authorization, headSHA, executor.Path(root, "approved-artifact"))
+			effect, err := executor.Emit(provisional, authorization, headSHA, executor.Path(root, "approved-artifact-"+executionID))
 			if err != nil {
 				return model.Report{}, err
 			}
@@ -191,7 +142,7 @@ func summarize(cases []model.CaseResult) model.Summary {
 	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainDenominator: len(cases),
 		BoundedInputDomainObservations: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()),
 		CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
-		RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1,
+		RepositoryNetContentState: model.RepositoryNetContentStateUnknown, RepositoryNetSnapshotDenominator: 1, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1,
 		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope}
 	for _, item := range cases {
 		if item.Satisfied {
@@ -232,7 +183,7 @@ func summarize(cases []model.CaseResult) model.Summary {
 			}
 		}
 		summary.RepositoryNetStatusUnchanged = summary.RepositoryNetStatusUnchanged && item.Receipt.RepositoryNetStatusUnchanged
-		summary.MutationAuthority |= boolInt(item.Receipt.MutationAuthority)
+		summary.RepositoryMutationAuthorized |= boolInt(item.Receipt.RepositoryMutationAuthorized)
 		if item.Receipt.RepositoryWritesObserved {
 			if summary.RepositoryWrites < 0 {
 				summary.RepositoryWrites = 0
