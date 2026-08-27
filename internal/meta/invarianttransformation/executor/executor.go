@@ -12,11 +12,11 @@ import (
 // authorization for the same provisional receipt and writes only a temporary
 // artifact. Repository promotion remains outside this authority scope.
 func Emit(receipt model.Receipt, judgment model.Judgment, subjectSHA, path string) (model.Effect, error) {
-	if !judgment.Independent || judgment.Decision != model.DecisionAllowed || judgment.Resolution != model.ResolutionExact ||
+	if !judgment.Independent || judgment.Decision != model.DecisionAllowed || judgment.Resolution != model.ResolutionExact || judgment.Status != model.StatusDischarged || judgment.CheckedClaims != len(receipt.Claims) || judgment.DischargedClaims != len(receipt.Claims) || judgment.OpenClaims != 0 || judgment.RefutedClaims != 0 ||
 		judgment.AuthorizationDigest == "" || receipt.AuthorizationDigest != judgment.AuthorizationDigest ||
 		model.AuthorizationDigest(receipt) != receipt.AuthorizationDigest || receipt.Phase != model.ReceiptProvisional ||
 		receipt.HeadSHA != subjectSHA || receipt.Evidence.EffectIntent != "approved-artifact" || len(receipt.Effects) != 0 ||
-		!model.ValidHead(subjectSHA) || !filepath.IsAbs(path) {
+		!model.ValidHead(subjectSHA) || receipt.Digest == "" || receipt.Digest != model.SealReceipt(receipt).Digest || !filepath.IsAbs(path) {
 		return model.Effect{}, fmt.Errorf("effect authorization is not exact or is stale")
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
