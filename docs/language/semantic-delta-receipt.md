@@ -168,11 +168,24 @@ two real v3 observations for each of the five fixed source pairs, using the
 checked-in `claim-identity-persistence-manifest.json`. Producer and consumer
 each read both files and independently rebuild the mapping. The resulting
 `stable_identity_preserved=31/31`, `evidence_only_changes=31/31`,
+`semantic_evidence_preserved_on_nonsemantic=31/31`,
 `semantic_target_preserved_on_nonsemantic=31/31`, and
 `claim_recreated_due_only_to_raw_digest=0/31` mean the same observation slot
 across two raw interventions, not before-to-after preservation within one
 pair. Each report row includes both implementations' source-pair
 observations and all per-claim stable/evidence fields.
+
+`reconstruction_exact` is intentionally weaker than
+`persistence_satisfied`: it only says that the two raw-source reconstructions
+and their record mappings agree. Persistence is promoted to `FIXED_POINT` only
+when every fixed predicate also holds: unique nonempty inventories, no added or
+removed IDs, complete stable identity, changed raw evidence, preserved
+semantic evidence and target, evidence-only change for every claim, no
+raw-only recreation, and explicit `FIXED_POINT / EXACT` decisions from both
+implementations. Identical raw pairs therefore fail closed with
+`RAW_EVIDENCE_UNCHANGED`; semantic-target drift fails closed with
+`SEMANTIC_TARGET_CHANGED`. Historical v1-to-v3 migration remains separate
+accounting and cannot satisfy these predicates.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical
@@ -203,6 +216,13 @@ bytes, digests, every case's migration added/removed IDs, independently
 reconstructed expectation-conformance rows, and the unchanged denominator.
 The same receipt separately records the two-observation v3 persistence rows;
 the checked-in expectation is never silently overwritten.
+
+The semantic claim-delta manifest is executable evidence: CI passes its raw
+bytes to producer-side and independent consumer-side source readers, then
+compares both reconstructed added/removed claim sets with the manifest's
+validator expectations. A separate persistence probe exercises identical raw
+pairs and semantic-target drift so reconstruction agreement cannot be mistaken
+for persistence.
 
 The conformance suite's `FIXED_POINT` decision means only that the fixed
 five-case contract was reproduced. `subject_semantic_equivalence` is recorded

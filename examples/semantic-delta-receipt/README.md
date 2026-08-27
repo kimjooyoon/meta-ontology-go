@@ -54,9 +54,20 @@ computed from the five baseline/alternate source pairs declared in
 `claim-identity-persistence-manifest.json`. Producer and consumer each read
 both raw pairs and emit per-claim stable identity, proposition, target, and raw
 evidence fields. The fixed result is same-slot persistence: stable identity
-31/31, evidence-only changes 31/31, semantic targets preserved 31/31, and
+31/31, evidence-only changes 31/31, semantic evidence preserved 31/31,
+semantic targets preserved 31/31, and
 raw-only claim recreation 0/31. Expectation conformance remains a separate
 5/5, 31-row check.
+
+The report distinguishes `reconstruction_exact` from
+`persistence_satisfied`. Only the latter can become `FIXED_POINT / EXACT`, and
+only after unique inventories, changed raw evidence, preserved semantic
+evidence and targets, complete evidence-only changes, zero raw-only
+recreation, and explicit producer/consumer fixed-point decisions all hold.
+Identical raw observations fail closed as `RAW_EVIDENCE_UNCHANGED`; semantic
+target drift fails closed as `SEMANTIC_TARGET_CHANGED`. The semantic claim
+delta manifest is consumed by both raw-source implementations in CI, while the
+v1-to-v3 migration remains separate accounting.
 
 ## Research decisions
 

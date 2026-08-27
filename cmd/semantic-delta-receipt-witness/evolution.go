@@ -87,6 +87,9 @@ type evolutionCase struct {
 	ConsumerAlternateObservation     persistenceObservation    `json:"consumer_alternate_observation"`
 	ProducerPersistence              persistenceMapping        `json:"producer_persistence"`
 	ConsumerPersistence              persistenceMapping        `json:"consumer_persistence"`
+	ExpectedPersistenceClaimTotal    int                       `json:"expected_persistence_claim_total"`
+	ReconstructionExact              bool                      `json:"reconstruction_exact"`
+	PersistenceSatisfied             bool                      `json:"persistence_satisfied"`
 	PersistenceExact                 bool                      `json:"persistence_exact"`
 	Decision                         string                    `json:"decision"`
 	Resolution                       string                    `json:"resolution"`
@@ -164,6 +167,8 @@ type persistenceMapping struct {
 	EvidenceOnlyTotal               int      `json:"evidence_only_total"`
 	RawEvidenceChanged              int      `json:"raw_evidence_changed"`
 	RawEvidenceTotal                int      `json:"raw_evidence_total"`
+	SemanticEvidencePreserved       int      `json:"semantic_evidence_preserved"`
+	SemanticEvidenceTotal           int      `json:"semantic_evidence_total"`
 	SemanticTargetPreserved         int      `json:"semantic_target_preserved"`
 	SemanticTargetTotal             int      `json:"semantic_target_total"`
 	ClaimRecreatedDueOnlyToRaw      int      `json:"claim_recreated_due_only_to_raw_digest"`
@@ -206,6 +211,8 @@ type evolutionReport struct {
 	RawEvidenceNonsemanticTotal       int             `json:"raw_evidence_nonsemantic_total"`
 	SemanticTargetPreserved           int             `json:"semantic_target_preserved_on_nonsemantic"`
 	SemanticTargetNonsemanticTotal    int             `json:"semantic_target_nonsemantic_total"`
+	SemanticEvidencePreserved         int             `json:"semantic_evidence_preserved_on_nonsemantic"`
+	SemanticEvidenceNonsemanticTotal  int             `json:"semantic_evidence_nonsemantic_total"`
 	ClaimRecreatedDueOnlyToRaw        int             `json:"claim_recreated_due_only_to_raw_digest"`
 	ClaimRecreatedDueOnlyToRawTotal   int             `json:"claim_recreated_due_only_to_raw_digest_total"`
 	ExpectationConformanceRows        int             `json:"expectation_conformance_rows"`
@@ -216,6 +223,8 @@ type evolutionReport struct {
 	V3ObservationPairsTotal           int             `json:"v3_observation_pairs_total"`
 	V3ProducerConsumerExact           int             `json:"v3_producer_consumer_exact"`
 	V3ProducerConsumerExactTotal      int             `json:"v3_producer_consumer_exact_total"`
+	V3PersistenceSatisfied            int             `json:"v3_persistence_satisfied"`
+	V3PersistenceSatisfiedTotal       int             `json:"v3_persistence_satisfied_total"`
 	MigrationRemoved                  int             `json:"historical_migration_removed"`
 	MigrationAdded                    int             `json:"historical_migration_added"`
 	MigrationMappingRows              int             `json:"historical_migration_mapping_rows"`
@@ -273,7 +282,8 @@ func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionRe
 		DenominatorUnchanged:  oldArtifact.DenominatorID == newArtifact.DenominatorID && oldArtifact.FixedClaimTotal == newArtifact.FixedClaimTotal,
 		FixedClaimTotalBefore: oldArtifact.FixedClaimTotal, FixedClaimTotalAfter: newArtifact.FixedClaimTotal,
 		EvolutionRowsTotal: len(newArtifact.Cases), ExpectationConformanceRowsTotal: 5, ExpectationConformanceClaimsTotal: 31,
-		V3ObservationPairsTotal: 5, V3ProducerConsumerExactTotal: 5,
+		V3ObservationPairsTotal: 5, V3ProducerConsumerExactTotal: 5, V3PersistenceSatisfiedTotal: 5,
+		PersistenceDecision: producer.DecisionFailClosed, PersistenceResolution: producer.ResolutionLower,
 		Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
 		Stage: "claim-identity-evolution", Step: "reconstruct-source-observations", Reason: "CLAIM_IDENTITY_EVOLUTION_UNKNOWN",
 	}
@@ -335,6 +345,7 @@ func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionRe
 			report.PropositionChanges += len(row.PropositionTargetChanges)
 		}
 		if alternate, ok := manifestByID[definition.ID]; ok {
+			row.ExpectedPersistenceClaimTotal = alternate.ExpectedClaimTotal
 			alternateInput := producer.Input{CaseID: definition.ID, BeforePath: alternate.AlternateBeforePath, AfterPath: alternate.AlternateAfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA}
 			producerAlternate, producerAlternateErr := producer.ClaimIdentityObservationFromFiles(alternateInput)
 			consumerAlternate, consumerAlternatePair, consumerAlternateErr := consumer.ClaimIdentityRecordsFromFiles(consumer.Input{CaseID: definition.ID, BeforePath: alternate.AlternateBeforePath, AfterPath: alternate.AlternateAfterPath, SubjectSHA: input.SubjectSHA, ObservedCheckoutSHA: input.ObservedCheckoutSHA})
@@ -352,10 +363,18 @@ func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionRe
 			consumerPersistence := consumer.CompareClaimIdentityRecords(consumerRecords, consumerAlternate)
 			row.ProducerPersistence = producerMapping(producerPersistence)
 			row.ConsumerPersistence = consumerMapping(consumerPersistence)
-			row.PersistenceExact = producerObservationErr == nil && producerAlternateErr == nil && consumerErr == nil && consumerAlternateErr == nil && producerRecordsEqual(producerRecords, consumerRecords) && producerRecordsEqual(producerAlternate.Records, consumerAlternate) && persistenceMappingsEqual(row.ProducerPersistence, row.ConsumerPersistence) && alternate.ExpectedClaimTotal == len(producerRecords) && alternate.ExpectedClaimTotal == len(producerAlternate.Records)
-			if row.PersistenceExact {
+			row.ReconstructionExact = producerObservationErr == nil && producerAlternateErr == nil && consumerErr == nil && consumerAlternateErr == nil && producerRecordsEqual(producerRecords, consumerRecords) && producerRecordsEqual(producerAlternate.Records, consumerAlternate) && alternate.ExpectedClaimTotal == len(producerRecords) && alternate.ExpectedClaimTotal == len(producerAlternate.Records)
+			mappingExact := persistenceMappingsEqual(row.ProducerPersistence, row.ConsumerPersistence)
+			row.PersistenceSatisfied = row.ReconstructionExact && mappingExact && persistenceMappingSatisfies(row.ProducerPersistence, alternate.ExpectedClaimTotal) && persistenceMappingSatisfies(row.ConsumerPersistence, alternate.ExpectedClaimTotal)
+			row.PersistenceExact = row.PersistenceSatisfied
+			if row.ReconstructionExact {
 				report.V3ObservationPairsReconstructed++
+			}
+			if row.ReconstructionExact && mappingExact {
 				report.V3ProducerConsumerExact++
+			}
+			if row.PersistenceSatisfied {
+				report.V3PersistenceSatisfied++
 			}
 			row.StableIdentityPreserved, row.StableIdentityTotal = producerPersistence.StableIdentityPreserved, producerPersistence.StableIdentityTotal
 			row.EvidenceOnlyChanges, row.EvidenceOnlyTotal = producerPersistence.EvidenceOnlyChanges, producerPersistence.EvidenceOnlyTotal
@@ -370,11 +389,17 @@ func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionRe
 			report.ClaimRecreatedDueOnlyToRawTotal += row.ClaimRecreatedDueOnlyToRawTotal
 			report.RawEvidenceChangedNonsemantic += producerPersistence.RawEvidenceChanged
 			report.RawEvidenceNonsemanticTotal += producerPersistence.RawEvidenceTotal
+			report.SemanticEvidencePreserved += producerPersistence.SemanticEvidencePreserved
+			report.SemanticEvidenceNonsemanticTotal += producerPersistence.SemanticEvidenceTotal
 			report.SemanticTargetPreserved += producerPersistence.SemanticTargetPreserved
 			report.SemanticTargetNonsemanticTotal += producerPersistence.SemanticTargetTotal
 		}
-		if row.PersistenceExact && row.OldArtifactExact && row.NewExpectationProducerExact && row.NewExpectationConsumerExact && row.ProducerConsumerExact {
+		if row.PersistenceSatisfied && row.OldArtifactExact && row.NewExpectationProducerExact && row.NewExpectationConsumerExact && row.ProducerConsumerExact {
 			row.Decision, row.Resolution, row.Stage, row.Step, row.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "claim-identity-evolution", "compare-source-derived-observations", "CLAIM_IDENTITY_EVOLUTION_EXACT"
+		} else if !row.ReconstructionExact {
+			row.Stage, row.Step, row.Reason = "claim-identity-persistence", "reconstruct-v3-observations", "INDEPENDENT_RECONSTRUCTION_MISMATCH"
+		} else if !row.PersistenceSatisfied {
+			row.Stage, row.Step, row.Reason = "claim-identity-persistence", "compare-v3-observations", persistenceFailureReason(row.ProducerPersistence, row.ConsumerPersistence, persistenceExpectedTotal(row))
 		}
 		report.Cases = append(report.Cases, row)
 	}
@@ -383,10 +408,18 @@ func reconstructEvolution(oldPath, newPath, persistencePath string) (evolutionRe
 	if report.EvolutionRowsReconstructed == report.EvolutionRowsTotal {
 		report.MigrationDecision, report.MigrationResolution = producer.DecisionFixedPoint, producer.ResolutionExact
 	}
-	if report.V3ObservationPairsReconstructed == report.V3ObservationPairsTotal {
+	if report.V3PersistenceSatisfied == report.V3PersistenceSatisfiedTotal {
 		report.PersistenceDecision, report.PersistenceResolution = producer.DecisionFixedPoint, producer.ResolutionExact
 	}
-	if report.EvolutionRowsReconstructed == 5 && report.ExpectationConformanceRows == 5 && report.ExpectationConformanceClaims == 31 && report.V3ObservationPairsReconstructed == 5 && report.V3ProducerConsumerExact == 5 && report.PersistentClaimIdentity == 31 && report.PersistentClaimIdentityTotal == 31 && report.EvidenceOnlyChanges == 31 && report.RawEvidenceChangedNonsemantic == 31 && report.RawEvidenceNonsemanticTotal == 31 && report.SemanticTargetPreserved == 31 && report.SemanticTargetNonsemanticTotal == 31 && report.ClaimRecreatedDueOnlyToRaw == 0 && report.ClaimRecreatedDueOnlyToRawTotal == 31 && report.DenominatorUnchanged && report.NewArtifactDigest == bytesDigest(newRaw) {
+	if report.V3PersistenceSatisfied != report.V3PersistenceSatisfiedTotal {
+		for _, row := range report.Cases {
+			if !row.PersistenceSatisfied {
+				report.Stage, report.Step, report.Reason = row.Stage, row.Step, row.Reason
+				break
+			}
+		}
+	}
+	if report.EvolutionRowsReconstructed == 5 && report.ExpectationConformanceRows == 5 && report.ExpectationConformanceClaims == 31 && report.V3ObservationPairsReconstructed == 5 && report.V3ProducerConsumerExact == 5 && report.V3PersistenceSatisfied == 5 && report.PersistentClaimIdentity == 31 && report.PersistentClaimIdentityTotal == 31 && report.EvidenceOnlyChanges == 31 && report.RawEvidenceChangedNonsemantic == 31 && report.RawEvidenceNonsemanticTotal == 31 && report.SemanticEvidencePreserved == 31 && report.SemanticEvidenceNonsemanticTotal == 31 && report.SemanticTargetPreserved == 31 && report.SemanticTargetNonsemanticTotal == 31 && report.ClaimRecreatedDueOnlyToRaw == 0 && report.ClaimRecreatedDueOnlyToRawTotal == 31 && report.DenominatorUnchanged && report.NewArtifactDigest == bytesDigest(newRaw) {
 		report.Decision, report.Resolution, report.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "CLAIM_IDENTITY_V3_PERSISTENCE_EXACT"
 		report.ChangeKind = "HISTORICAL_SCHEMA_MIGRATION"
 	} else {
@@ -517,11 +550,72 @@ func consumerRecordSnapshots(records []consumer.ClaimIdentityRecord) []claimIden
 }
 
 func producerMapping(mapping producer.ClaimIdentityPairComparison) persistenceMapping {
-	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
+	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticEvidencePreserved: mapping.SemanticEvidencePreserved, SemanticEvidenceTotal: mapping.SemanticEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
 }
 
 func consumerMapping(mapping consumer.ClaimIdentityPairComparison) persistenceMapping {
-	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
+	return persistenceMapping{BaselineIDs: mapping.BaselineIDs, AlternateIDs: mapping.AlternateIDs, RemovedIDs: mapping.RemovedIDs, AddedIDs: mapping.AddedIDs, StableIdentityPreserved: mapping.StableIdentityPreserved, StableIdentityTotal: mapping.StableIdentityTotal, EvidenceOnlyChanges: mapping.EvidenceOnlyChanges, EvidenceOnlyTotal: mapping.EvidenceOnlyTotal, RawEvidenceChanged: mapping.RawEvidenceChanged, RawEvidenceTotal: mapping.RawEvidenceTotal, SemanticEvidencePreserved: mapping.SemanticEvidencePreserved, SemanticEvidenceTotal: mapping.SemanticEvidenceTotal, SemanticTargetPreserved: mapping.SemanticTargetPreserved, SemanticTargetTotal: mapping.SemanticTargetTotal, ClaimRecreatedDueOnlyToRaw: mapping.ClaimRecreatedDueOnlyToRaw, ClaimRecreatedDueOnlyToRawTotal: mapping.ClaimRecreatedDueOnlyToRawTotal, Decision: mapping.Decision, Resolution: mapping.Resolution, Stage: mapping.Stage, Step: mapping.Step, Reason: mapping.Reason}
+}
+
+func persistenceExpectedTotal(row evolutionCase) int {
+	if row.ExpectedPersistenceClaimTotal > 0 {
+		return row.ExpectedPersistenceClaimTotal
+	}
+	return 0
+}
+
+func persistenceMappingSatisfies(mapping persistenceMapping, expectedTotal int) bool {
+	return expectedTotal > 0 && uniqueNonemptyIDs(mapping.BaselineIDs) && uniqueNonemptyIDs(mapping.AlternateIDs) && len(mapping.BaselineIDs) == expectedTotal && len(mapping.AlternateIDs) == expectedTotal && len(mapping.RemovedIDs) == 0 && len(mapping.AddedIDs) == 0 && mapping.StableIdentityPreserved == expectedTotal && mapping.StableIdentityTotal == expectedTotal && mapping.RawEvidenceChanged == expectedTotal && mapping.RawEvidenceTotal == expectedTotal && mapping.SemanticEvidencePreserved == expectedTotal && mapping.SemanticEvidenceTotal == expectedTotal && mapping.SemanticTargetPreserved == expectedTotal && mapping.SemanticTargetTotal == expectedTotal && mapping.EvidenceOnlyChanges == expectedTotal && mapping.EvidenceOnlyTotal == expectedTotal && mapping.ClaimRecreatedDueOnlyToRaw == 0 && mapping.ClaimRecreatedDueOnlyToRawTotal == expectedTotal && mapping.Decision == producer.DecisionFixedPoint && mapping.Resolution == producer.ResolutionExact
+}
+
+func uniqueNonemptyIDs(ids []string) bool {
+	if len(ids) == 0 {
+		return false
+	}
+	seen := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		if id == "" || seen[id] {
+			return false
+		}
+		seen[id] = true
+	}
+	return true
+}
+
+func persistenceFailureReason(producerMapping, consumerMapping persistenceMapping, expectedTotal int) string {
+	for _, mapping := range []persistenceMapping{producerMapping, consumerMapping} {
+		if !uniqueNonemptyIDs(mapping.BaselineIDs) || !uniqueNonemptyIDs(mapping.AlternateIDs) {
+			return "DUPLICATE_STABLE_CLAIM_ID"
+		}
+		if mapping.SemanticTargetPreserved != expectedTotal || mapping.SemanticTargetTotal != expectedTotal {
+			return "SEMANTIC_TARGET_CHANGED"
+		}
+		if len(mapping.RemovedIDs) != 0 || len(mapping.AddedIDs) != 0 || mapping.StableIdentityPreserved != expectedTotal || mapping.StableIdentityTotal != expectedTotal || len(mapping.BaselineIDs) != expectedTotal || len(mapping.AlternateIDs) != expectedTotal {
+			return "CLAIM_SET_CHANGED"
+		}
+		if mapping.RawEvidenceChanged != expectedTotal || mapping.RawEvidenceTotal != expectedTotal {
+			return "RAW_EVIDENCE_UNCHANGED"
+		}
+		if mapping.SemanticEvidencePreserved != expectedTotal || mapping.SemanticEvidenceTotal != expectedTotal {
+			return "SEMANTIC_EVIDENCE_CHANGED"
+		}
+		if mapping.EvidenceOnlyChanges != expectedTotal || mapping.EvidenceOnlyTotal != expectedTotal {
+			return "EVIDENCE_ONLY_INTERVENTION_UNPROVEN"
+		}
+		if mapping.ClaimRecreatedDueOnlyToRaw != 0 || mapping.ClaimRecreatedDueOnlyToRawTotal != expectedTotal {
+			return "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
+		}
+		if mapping.Decision != producer.DecisionFixedPoint || mapping.Resolution != producer.ResolutionExact {
+			if mapping.Reason != "" && mapping.Reason != "V3_CLAIM_IDENTITY_PERSISTED_ACROSS_RAW_INTERVENTION" {
+				return mapping.Reason
+			}
+			return "PERSISTENCE_DECISION_NOT_FIXED_POINT"
+		}
+	}
+	if !persistenceMappingsEqual(producerMapping, consumerMapping) {
+		return "INDEPENDENT_PERSISTENCE_MAPPING_MISMATCH"
+	}
+	return "CLAIM_IDENTITY_PERSISTENCE_UNKNOWN"
 }
 
 func persistenceMappingsEqual(left, right persistenceMapping) bool {

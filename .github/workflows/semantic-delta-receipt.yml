@@ -131,6 +131,15 @@ jobs:
           expectation_digest="sha256:$(sha256sum "$out/claim-transition-expectations.json" | awk '{print $1}')"
           go run ./cmd/semantic-delta-receipt-witness \
             --evolution --subject-sha "$HEAD_SHA" --old-expectation "$out/claim-transition-expectations-v2.json" --new-expectation "$out/claim-transition-expectations.json" --persistence-manifest "$root/claim-identity-persistence-manifest.json" --output "$out/claim-transition-expectation-evolution.json"
+          go run ./cmd/semantic-delta-receipt-witness \
+            --semantic-claim-manifest "$out/semantic-claim-delta-manifest.json" --subject-sha "$HEAD_SHA" --observed-checkout-sha "$(cat "$out/observed-checkout-sha.txt")" --output "$out/semantic-claim-delta-manifest-reconstruction.json"
+          semantic_manifest_digest="sha256:$(sha256sum "$out/semantic-claim-delta-manifest.json" | awk '{print $1}')"
+          jq -e --arg digest "$semantic_manifest_digest" '
+            .schema == "gooo/semantic-delta-claim-delta-fixtures/v1" and .manifest_digest == $digest and
+            .rows_reconstructed == 2 and .rows_total == 2 and .rows_exact == 2 and .decision == "PASS" and .resolution == "EXACT" and
+            ([.cases[].case_id] | sort) == ["claim-addition","claim-removal"] and
+            ([.cases[] | select(.producer_consumer_exact == true and .decision == "PASS" and .resolution == "EXACT" and .reason == "SEMANTIC_CLAIM_DELTA_MANIFEST_EXACT")] | length) == 2
+          ' "$out/semantic-claim-delta-manifest-reconstruction.json"
           persistence_digest="sha256:$(sha256sum "$root/claim-identity-persistence-manifest.json" | awk '{print $1}')"
           jq -e --slurpfile manifest "$root/claim-identity-persistence-manifest.json" --arg digest "$persistence_digest" '
             .persistence_manifest_digest == $digest and
@@ -238,6 +247,26 @@ jobs:
             ((.receipt.semantic_claim_delta.added | map(.id) | unique | length) == (.receipt.semantic_claim_delta.added | length)) and
             ((.receipt.semantic_claim_delta.removed | map(.id) | unique | length) == (.receipt.semantic_claim_delta.removed | length))
           ' "$out/claim-addition.json"
+          go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
+            --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
+            --persistence-alternate-before "$root/before.gooo" --persistence-alternate-after "$root/equivalent-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-identical-raw.json"
+          jq -e '
+            .reconstruction_exact == true and .persistence_satisfied == false and
+            .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .producer_persistence.reason == "RAW_EVIDENCE_UNCHANGED" and .consumer_persistence.reason == "RAW_EVIDENCE_UNCHANGED" and
+            .reason == "RAW_EVIDENCE_UNCHANGED" and .producer_persistence.raw_evidence_changed == 0 and .consumer_persistence.raw_evidence_changed == 0
+          ' "$out/persistence-identical-raw.json"
+          go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
+            --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
+            --persistence-alternate-before "$root/before.gooo" --persistence-alternate-after "$root/semantic-after.gooo" \
+            --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-semantic-target-drift.json"
+          jq -e '
+            .reconstruction_exact == true and .persistence_satisfied == false and
+            .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+            .producer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and .consumer_persistence.reason == "SEMANTIC_TARGET_CHANGED" and
+            .reason == "SEMANTIC_TARGET_CHANGED" and .producer_persistence.semantic_target_preserved < .producer_persistence.semantic_target_total
+          ' "$out/persistence-semantic-target-drift.json"
           jq -e '.receipt.decision == "FAIL_CLOSED" and .receipt.resolution == "LOWER_RESOLUTION" and .receipt.stage == "project-source" and .receipt.step == "parse-lower" and .receipt.reason == "SEMANTIC_TRANSLATION_VALIDATION_UNAVAILABLE" and .independent_verdict.passed == true' "$out/duplicate-stable-id.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
 

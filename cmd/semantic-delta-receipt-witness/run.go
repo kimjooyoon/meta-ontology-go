@@ -31,6 +31,24 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		return 0
 	}
+	if options.semanticClaimManifest != "" {
+		evidence, err := reconstructSemanticClaimDeltaManifest(options.semanticClaimManifest, options.subjectSHA, options.observedCheckoutSHA)
+		status := writeJSON(options.output, evidence, stdout, stderr)
+		if status != 0 {
+			return status
+		}
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 1
+		}
+		if evidence.Decision != "PASS" {
+			return 1
+		}
+		return 0
+	}
+	if options.persistenceProbe {
+		return writeJSON(options.output, runPersistenceProbe(options), stdout, stderr)
+	}
 	if options.tamperMatrix {
 		evidence, err := consumer.BuildTamperMatrix(options.subjectSHA, options.observedCheckoutSHA)
 		status := writeJSON(options.output, evidence, stdout, stderr)

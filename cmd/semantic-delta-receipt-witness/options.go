@@ -7,9 +7,10 @@ import (
 )
 
 type options struct {
-	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output string
-	oldExpectation, newExpectation, persistenceManifest                                         string
-	tamperMatrix, evolution                                                                     bool
+	caseID, subjectSHA, observedCheckoutSHA, before, after, effectsBefore, effectsAfter, output                       string
+	oldExpectation, newExpectation, persistenceManifest                                                               string
+	semanticClaimManifest, persistenceBefore, persistenceAfter, persistenceAlternateBefore, persistenceAlternateAfter string
+	tamperMatrix, evolution, persistenceProbe                                                                         bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -26,6 +27,12 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	set.StringVar(&result.output, "output", "", "JSON output path")
 	set.BoolVar(&result.tamperMatrix, "tamper-matrix", false, "write the fixed consumer tamper matrix evidence")
 	set.BoolVar(&result.evolution, "evolution", false, "reconstruct claim identity expectation evolution")
+	set.StringVar(&result.semanticClaimManifest, "semantic-claim-manifest", "", "reconstruct semantic claim delta fixtures from raw source")
+	set.BoolVar(&result.persistenceProbe, "persistence-probe", false, "compare two raw-source persistence observations")
+	set.StringVar(&result.persistenceBefore, "persistence-before", "", "persistence baseline before source")
+	set.StringVar(&result.persistenceAfter, "persistence-after", "", "persistence baseline after source")
+	set.StringVar(&result.persistenceAlternateBefore, "persistence-alternate-before", "", "persistence alternate before source")
+	set.StringVar(&result.persistenceAlternateAfter, "persistence-alternate-after", "", "persistence alternate after source")
 	set.StringVar(&result.oldExpectation, "old-expectation", "examples/semantic-delta-receipt/claim-transition-expectations-v2.json", "old claim identity artifact")
 	set.StringVar(&result.newExpectation, "new-expectation", "examples/semantic-delta-receipt/claim-transition-expectations.json", "new claim identity artifact")
 	set.StringVar(&result.persistenceManifest, "persistence-manifest", "examples/semantic-delta-receipt/claim-identity-persistence-manifest.json", "baseline/alternate source-pair manifest")
@@ -35,13 +42,28 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	if result.subjectSHA == "" || result.output == "" {
 		return options{}, fmt.Errorf("--subject-sha and --output are required")
 	}
-	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "" || result.evolution) {
-		return options{}, fmt.Errorf("--tamper-matrix cannot be combined with --case, --before, or --after")
+	if result.tamperMatrix && (result.caseID != "" || result.before != "" || result.after != "" || result.evolution || result.semanticClaimManifest != "" || result.persistenceProbe) {
+		return options{}, fmt.Errorf("--tamper-matrix cannot be combined with another witness mode")
 	}
-	if result.evolution && (result.caseID != "" || result.before != "" || result.after != "" || result.tamperMatrix) {
-		return options{}, fmt.Errorf("--evolution cannot be combined with --case, --before, --after, or --tamper-matrix")
+	if result.evolution && (result.caseID != "" || result.before != "" || result.after != "" || result.tamperMatrix || result.semanticClaimManifest != "" || result.persistenceProbe) {
+		return options{}, fmt.Errorf("--evolution cannot be combined with another witness mode")
+	}
+	if result.semanticClaimManifest != "" && (result.caseID != "" || result.before != "" || result.after != "" || result.persistenceProbe) {
+		return options{}, fmt.Errorf("--semantic-claim-manifest cannot be combined with another witness mode")
+	}
+	if result.persistenceProbe && (result.caseID != "" || result.before != "" || result.after != "" || result.semanticClaimManifest != "") {
+		return options{}, fmt.Errorf("--persistence-probe cannot be combined with another witness mode")
 	}
 	if result.evolution {
+		return result, nil
+	}
+	if result.semanticClaimManifest != "" {
+		return result, nil
+	}
+	if result.persistenceProbe {
+		if result.persistenceBefore == "" || result.persistenceAfter == "" || result.persistenceAlternateBefore == "" || result.persistenceAlternateAfter == "" {
+			return options{}, fmt.Errorf("--persistence-probe requires all four persistence source paths")
+		}
 		return result, nil
 	}
 	if result.caseID == "" && !result.tamperMatrix && (result.before == "" || result.after == "") {

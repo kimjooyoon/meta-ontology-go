@@ -21,6 +21,21 @@ func AdjudicateFiles(input Input, receipt Receipt) Verdict {
 	return Verdict{Decision: expected.Decision, Resolution: expected.Resolution, Classification: expected.Classification, Reason: expected.Reason, Passed: true, Producer: producerName, Consumer: consumerName, Stage: expected.Stage, Step: expected.Step}
 }
 
+// ReconstructReceiptFromFiles is the consumer-owned raw-source entry point.
+// It is used by validators that need the semantic claim delta itself rather
+// than only the final receipt comparison verdict.
+func ReconstructReceiptFromFiles(input Input) (Receipt, error) {
+	beforeRaw, err := os.ReadFile(input.BeforePath)
+	if err != nil {
+		return Receipt{}, err
+	}
+	afterRaw, err := os.ReadFile(input.AfterPath)
+	if err != nil {
+		return Receipt{}, err
+	}
+	return reconstructReceipt(input, beforeRaw, afterRaw), nil
+}
+
 func reconstructReceipt(input Input, beforeRaw, afterRaw []byte) Receipt {
 	beforeSource, beforeErr := projectSourceSide(input.BeforePath, beforeRaw, true)
 	afterSource, afterErr := projectSourceSide(input.AfterPath, afterRaw, false)

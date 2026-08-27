@@ -94,6 +94,8 @@ type ClaimIdentityPairComparison struct {
 	EvidenceOnlyTotal               int      `json:"evidence_only_total"`
 	RawEvidenceChanged              int      `json:"raw_evidence_changed"`
 	RawEvidenceTotal                int      `json:"raw_evidence_total"`
+	SemanticEvidencePreserved       int      `json:"semantic_evidence_preserved"`
+	SemanticEvidenceTotal           int      `json:"semantic_evidence_total"`
 	SemanticTargetPreserved         int      `json:"semantic_target_preserved"`
 	SemanticTargetTotal             int      `json:"semantic_target_total"`
 	ClaimRecreatedDueOnlyToRaw      int      `json:"claim_recreated_due_only_to_raw_digest"`
@@ -106,7 +108,7 @@ type ClaimIdentityPairComparison struct {
 }
 
 func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) ClaimIdentityPairComparison {
-	result := ClaimIdentityPairComparison{BaselineIDs: recordIDs(baseline), AlternateIDs: recordIDs(alternate), StableIdentityTotal: len(baseline), EvidenceOnlyTotal: len(baseline), RawEvidenceTotal: len(baseline), SemanticTargetTotal: len(baseline), ClaimRecreatedDueOnlyToRawTotal: len(baseline), Decision: DecisionFailClosed, Resolution: ResolutionLower, Stage: "claim-identity-persistence", Step: "compare-v3-observations", Reason: "CLAIM_IDENTITY_PERSISTENCE_UNKNOWN"}
+	result := ClaimIdentityPairComparison{BaselineIDs: recordIDs(baseline), AlternateIDs: recordIDs(alternate), StableIdentityTotal: len(baseline), EvidenceOnlyTotal: len(baseline), RawEvidenceTotal: len(baseline), SemanticEvidenceTotal: len(baseline), SemanticTargetTotal: len(baseline), ClaimRecreatedDueOnlyToRawTotal: len(baseline), Decision: DecisionFailClosed, Resolution: ResolutionLower, Stage: "claim-identity-persistence", Step: "compare-v3-observations", Reason: "CLAIM_IDENTITY_PERSISTENCE_UNKNOWN"}
 	if !uniqueRecords(baseline) || !uniqueRecords(alternate) {
 		result.Reason = "DUPLICATE_STABLE_CLAIM_ID"
 		return result
@@ -129,6 +131,9 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 		if ok && semanticTargetEqual(before, after) {
 			result.SemanticTargetPreserved++
 		}
+		if ok && semanticEvidenceEqual(before, after) {
+			result.SemanticEvidencePreserved++
+		}
 		if ok && rawDigestChanged(before, after) && semanticEvidenceEqual(before, after) && semanticTargetEqual(before, after) {
 			result.EvidenceOnlyChanges++
 		}
@@ -141,7 +146,21 @@ func CompareClaimIdentityRecords(baseline, alternate []ClaimIdentityRecord) Clai
 			}
 		}
 	}
-	if len(result.RemovedIDs) == 0 && len(result.AddedIDs) == 0 && result.StableIdentityPreserved == len(baseline) && result.StableIdentityPreserved == len(alternate) {
+	if len(baseline) == 0 || len(alternate) != len(baseline) {
+		result.Reason = "CLAIM_SET_CHANGED"
+	} else if result.SemanticTargetPreserved != len(baseline) {
+		result.Reason = "SEMANTIC_TARGET_CHANGED"
+	} else if result.RawEvidenceChanged != len(baseline) {
+		result.Reason = "RAW_EVIDENCE_UNCHANGED"
+	} else if result.SemanticEvidencePreserved != len(baseline) {
+		result.Reason = "SEMANTIC_EVIDENCE_CHANGED"
+	} else if result.EvidenceOnlyChanges != len(baseline) {
+		result.Reason = "EVIDENCE_ONLY_INTERVENTION_UNPROVEN"
+	} else if len(result.RemovedIDs) != 0 || len(result.AddedIDs) != 0 || result.StableIdentityPreserved != len(baseline) {
+		result.Reason = "CLAIM_SET_CHANGED"
+	} else if result.ClaimRecreatedDueOnlyToRaw != 0 {
+		result.Reason = "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST"
+	} else {
 		result.Decision, result.Resolution, result.Reason = DecisionFixedPoint, ResolutionExact, "V3_CLAIM_IDENTITY_PERSISTED_ACROSS_RAW_INTERVENTION"
 	}
 	return result
