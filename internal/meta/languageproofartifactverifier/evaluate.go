@@ -117,7 +117,7 @@ func Evaluate(input Input) Report {
 	report.Counterexamples = fixedCounterexamples(input, report)
 	indicatorsOK := allIndicatorsSatisfied(report.Indicators)
 	proofsOK := allProofsPassed(report.Proofs)
-	consumerGate := input.BundleDigest != "" && consumerReceiptOK(proofReport)
+	consumerGate := input.BundleDigest != "" && consumerReceiptOK(proofReport, input.UnauthorizedBundle)
 	// Final conformance is deliberately calculated last. A PASS therefore
 	// cannot survive an unsatisfied indicator, proof, binding, or consumer gate.
 	report.ConformanceDecision, report.ConformanceResolution, report.ConformanceReason = "FAIL_CLOSED", "LOWER_RESOLUTION", "BUNDLE_CONSUMPTION_NOT_OBSERVED"

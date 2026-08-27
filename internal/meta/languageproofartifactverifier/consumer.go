@@ -94,6 +94,35 @@ func consumerReceiptDigest(receipt ConsumerReceipt) string {
 	return digestValue(receipt)
 }
 
+// consumerReceiptOK is an independent consumer-boundary decision used while
+// Evaluate is assembling a report. It reconstructs the target bytes from the
+// validated bundle, derives the canonical preliminary projection, and compares
+// the complete receipt reconstructed by this verifier. It does not use the
+// producer's conformance decision as an authority input.
+func consumerReceiptOK(report Report, bundle Bundle) bool {
+	if ValidateBundle(bundle) != nil || report.BundleDigest == "" || report.BundleDigest != bundle.Digest {
+		return false
+	}
+	receipt := report.ConsumerReceipt
+	if receipt.Schema != ConsumerReceiptSchema || receipt.Version != 1 || receipt.Producer != report.Producer || receipt.Consumer != report.Consumer ||
+		receipt.TargetPath != "artifact.json" || !receipt.OutputExists || receipt.Authority != "READ_ONLY_CONSUMPTION" ||
+		!validDigest(receipt.PreliminaryDigest) || !validDigest(receipt.TargetDigest) || !validDigest(receipt.OutputDigest) ||
+		!validDigest(receipt.AttestationDigest) || !validDigest(receipt.Digest) {
+		return false
+	}
+	preliminary := canonicalPreliminaryProjection(report)
+	if receipt.PreliminaryDigest != preliminary.Digest {
+		return false
+	}
+	target, err := bundleTargetBytes(bundle, receipt.TargetPath)
+	if err != nil || digestBytes(target) != receipt.TargetDigest {
+		return false
+	}
+	attested := consumerAttestedReport(report)
+	expected := expectedConsumerReceipt(attested, preliminary.Digest, receipt.TargetPath, target)
+	return reflect.DeepEqual(expected, receipt)
+}
+
 // ConsumeBundle is the only downstream consumption API. It accepts a portable
 // bundle plus a verifier report; it does not accept raw artifact bytes. The
 // report is checked first, then the target is reconstructed from its bundle

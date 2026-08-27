@@ -113,7 +113,7 @@ func proofs(report Report, cases []CaseResult) []Proof {
 	}
 	exactBinding := valid.SourceDigest == report.Checkout.SourceDigest && valid.OperationAttachmentDigest == report.Checkout.OperationDigest &&
 		valid.RecipeAttachmentDigest == report.Checkout.RecipeDigest && report.ContractDigest == report.Checkout.ContractDigest
-	consumerReceiptOK := report.BundleDigest != "" && (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" && report.ConsumerReceipt.OutputExists &&
+	receiptFieldsOK := report.BundleDigest != "" && (report.ConsumerReceipt.TargetPath == "artifact.json" && report.ConsumerReceipt.Authority == "READ_ONLY_CONSUMPTION" && report.ConsumerReceipt.OutputExists &&
 		validDigest(report.ConsumerReceipt.TargetDigest) && validDigest(report.ConsumerReceipt.OutputDigest) && validDigest(report.ConsumerReceipt.AttestationDigest) &&
 		report.ConsumerReceipt.AttestationDigest == attestationDigest(report) && report.ConsumerReceipt.Digest == consumerReceiptDigest(report.ConsumerReceipt))
 	evidence := []string{}
@@ -122,8 +122,8 @@ func proofs(report Report, cases []CaseResult) []Proof {
 	}
 	return []Proof{
 		{Choice: "FOUNDATION", MetaOperation: "bind-source-bytes-and-projection", TargetDigest: valid.SourceDigest, Dependency: "checkout.source.gooo->source-bytes-bound", EvidenceDigests: append([]string(nil), valid.Claims[0].EvidenceDigests...), ReceiptDigest: valid.OperationDigest, Passed: valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && valid.SourceDigest != "" && valid.SemanticDigest != ""},
-		{Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal && consumerReceiptOK, ConsumerGateOpen: !consumerReceiptOK},
-		{Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1 && consumerReceiptOK, ConsumerGateOpen: !consumerReceiptOK},
+		{Choice: "COHERENCE", MetaOperation: "bind-operation-and-claim-relations", TargetDigest: valid.OperationDigest, Dependency: "source-bytes-bound->operation-receipt-bound->recipe-match->consumer-authority", EvidenceDigests: evidence, ReceiptDigest: valid.OperationDigest, Passed: valid.ObservedDecision == "PASS" && allClaimsDischarged && exactBinding && len(report.Transitions) == TransitionTotal && receiptFieldsOK, ConsumerGateOpen: !receiptFieldsOK},
+		{Choice: "REGRESSION", MetaOperation: "execute-negative-and-intervention-suite", TargetDigest: report.WriteSet.Digest, Dependency: "negative-case-inventory->claim-local-effects->authority-boundary", EvidenceDigests: regressionEvidence(cases, report.Interventions), ReceiptDigest: valid.OperationDigest, Passed: negativeCaseInventoryOK(cases) && report.Summary.CasesSatisfied == CaseTotal && report.Summary.CoherentClaimStructureRejections == 4 && report.Summary.SemanticInterventions == 1 && report.Summary.NonsemanticInterventions == 1 && report.Summary.UnauthorizedConsumerDenials == 1 && receiptFieldsOK, ConsumerGateOpen: !receiptFieldsOK},
 	}
 }
 
