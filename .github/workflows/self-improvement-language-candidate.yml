@@ -36,7 +36,7 @@ jobs:
       TOOLING_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
       SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || github.run_attempt }}
-      SOURCE_ARTIFACT_NAME: ${{ github.event_name == 'workflow_run' && 'self-improvement-language-observation' || format('self-improvement-language-observation-pr-witness-{0}', github.run_attempt) }}
+      SOURCE_ARTIFACT_NAME: self-improvement-language-observation
       EVENT_NAME: ${{ github.event_name }}
     steps:
       - uses: actions/checkout@v5
@@ -102,6 +102,7 @@ jobs:
           path: ${{ runner.temp }}/candidate/source-artifact
           if-no-files-found: error
           retention-days: 14
+          overwrite: true
       - name: Observe immutable artifact metadata
         shell: bash
         env:
