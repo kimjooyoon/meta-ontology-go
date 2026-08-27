@@ -28,6 +28,8 @@ func init() {
 		"scripts/language-operation-catalog",
 	}
 	branchScopeAllowlist["agent/gooo-operation-claim-transitions"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 		".github/workflows/language-operation-catalog.yml",
 		"examples/language-operation-catalog",
 		"examples/language-syntax-roundtrip/corpus.json",

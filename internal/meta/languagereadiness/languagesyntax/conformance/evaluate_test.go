@@ -46,7 +46,7 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 27 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 28 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}
