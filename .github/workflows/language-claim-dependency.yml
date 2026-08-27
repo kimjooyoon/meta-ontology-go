@@ -169,6 +169,8 @@ jobs:
               .accepted == true and
               .independent_replay == "RAW_GOOO_PARSE_LOWER_GRAPH_AND_TRANSITION_REDERIVED" and
               .source_reconstruction == "syntax.ParseFile->bidir.Lower->semantic.IR" and
+              .source_reconstruction_numerator == 1 and
+              .source_reconstruction_denominator == 1 and
               .producer_package_import_numerator == 0 and
               .producer_package_import_denominator == 1 and
               .read_only == true and .semantic_promotion_authorized == false

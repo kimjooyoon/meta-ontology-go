@@ -194,6 +194,8 @@ type Judgment struct {
 	ReadOnly                         bool    `json:"read_only"`
 	SemanticPromotionAuthorized      bool    `json:"semantic_promotion_authorized"`
 	SourceReconstruction             string  `json:"source_reconstruction"`
+	SourceReconstructionNumerator    int     `json:"source_reconstruction_numerator"`
+	SourceReconstructionDenominator  int     `json:"source_reconstruction_denominator"`
 	ProducerPackageImportNumerator   int     `json:"producer_package_import_numerator"`
 	ProducerPackageImportDenominator int     `json:"producer_package_import_denominator"`
 	AppendOnlyRecoveryChainTotal     int     `json:"append_only_recovery_chain_total"`
@@ -287,7 +289,7 @@ func Judge(source []byte, sourcePath string, priorBytes, observationBytes, recei
 		Decision: expectedDecision.Value, Resolution: expectedDecision.Resolution, Reason: expectedDecision.Reason,
 		Accepted: true, IndependentReplay: "RAW_GOOO_PARSE_LOWER_GRAPH_AND_TRANSITION_REDERIVED",
 		Metrics: expectedMetrics, ReadOnly: got.Subject.ReadOnly && got.Subject.RepositoryWrites == 0,
-		SemanticPromotionAuthorized: false, SourceReconstruction: "syntax.ParseFile->bidir.Lower->semantic.IR",
+		SemanticPromotionAuthorized: false, SourceReconstruction: "syntax.ParseFile->bidir.Lower->semantic.IR", SourceReconstructionNumerator: 1, SourceReconstructionDenominator: 1,
 		ProducerPackageImportNumerator: 0, ProducerPackageImportDenominator: 1,
 		AppendOnlyRecoveryChainTotal: boolInt(prior != nil),
 	}
