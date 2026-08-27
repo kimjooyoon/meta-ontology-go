@@ -35,7 +35,7 @@ func Judge(sourcePath, headSHA string, source []byte, receipt Receipt) Judgment 
 		}
 		byteStatus, byteReason := judgeEvidence(item.Byte.Reference, item.Byte.Candidate)
 		meaningStatus, meaningReason := judgeEvidence(item.Meaning.Expected, item.Meaning.Observed)
-		status, reason := compose(byteStatus, meaningStatus)
+		status, reason := judgeCompose(byteStatus, meaningStatus)
 		if byteStatus == StatusOpen {
 			byteReason = "BYTE_EVIDENCE_MISSING"
 		}
@@ -84,25 +84,41 @@ func validEvidenceDigest(value string) bool {
 }
 
 func validateReceiptProofs(receipt Receipt) string {
-	if receipt.Proofs[0].Choice != ProofByte || receipt.Proofs[0].MetaOperation != "compare-byte-digests" ||
+	if receipt.Proofs[0].Choice != ProofByte || receipt.Proofs[0].Claim != "byte equality is evidence only for byte reproducibility" || receipt.Proofs[0].MetaOperation != "compare-byte-digests" ||
 		receipt.Proofs[0].Stage != "proof" || receipt.Proofs[0].Step != "byte" ||
 		receipt.Proofs[0].Reason != "BYTE_CHANNEL_ONLY" || receipt.Proofs[0].Status != StatusDischarged ||
-		receipt.Proofs[0].EvidenceDigest != digestValue(byteEvidence(receipt.Cases)) {
+		receipt.Proofs[0].EvidenceDigest != digestValue(judgeByteEvidence(receipt.Cases)) {
 		return "BYTE_PROOF_INVALID"
 	}
-	if receipt.Proofs[1].Choice != ProofMeaning || receipt.Proofs[1].MetaOperation != "compare-meaning-oracle-digests" ||
+	if receipt.Proofs[1].Choice != ProofMeaning || receipt.Proofs[1].Claim != "meaning equality requires an independent meaning oracle" || receipt.Proofs[1].MetaOperation != "compare-meaning-oracle-digests" ||
 		receipt.Proofs[1].Stage != "proof" || receipt.Proofs[1].Step != "meaning" ||
 		receipt.Proofs[1].Reason != "MEANING_CHANNEL_ONLY" || receipt.Proofs[1].Status != StatusDischarged ||
-		receipt.Proofs[1].EvidenceDigest != digestValue(meaningEvidence(receipt.Cases)) {
+		receipt.Proofs[1].EvidenceDigest != digestValue(judgeMeaningEvidence(receipt.Cases)) {
 		return "MEANING_PROOF_INVALID"
 	}
-	if receipt.Proofs[2].Choice != ProofComposition || receipt.Proofs[2].MetaOperation != MetaOperation ||
+	if receipt.Proofs[2].Choice != ProofComposition || receipt.Proofs[2].Claim != "the two claims have distinct evidence and failure paths" || receipt.Proofs[2].MetaOperation != MetaOperation ||
 		receipt.Proofs[2].Stage != "proof" || receipt.Proofs[2].Step != "compose" ||
 		receipt.Proofs[2].Reason != "NON_IDENTITY_EXHIBITED" || receipt.Proofs[2].Status != StatusDischarged ||
 		receipt.Proofs[2].EvidenceDigest != digestValue(receipt.Cases) {
 		return "COMPOSITION_PROOF_INVALID"
 	}
 	return ""
+}
+
+func judgeByteEvidence(cases []Case) []Evidence {
+	result := make([]Evidence, len(cases))
+	for index, item := range cases {
+		result[index] = item.Byte
+	}
+	return result
+}
+
+func judgeMeaningEvidence(cases []Case) []MeaningEvidence {
+	result := make([]MeaningEvidence, len(cases))
+	for index, item := range cases {
+		result[index] = item.Meaning
+	}
+	return result
 }
 
 func receiptShape(sourcePath, headSHA string, source []byte, receipt Receipt) string {
@@ -150,11 +166,41 @@ func judgeEvidence(reference, candidate string) (string, string) {
 }
 
 func summarizeJudgment(cases []JudgmentCase) Summary {
-	converted := make([]Case, len(cases))
-	for index, item := range cases {
-		converted[index] = Case{Byte: Evidence{Status: item.ByteStatus}, Meaning: MeaningEvidence{Status: item.MeaningStatus}, Status: item.Status}
+	byteDischarged, meaningDischarged, jointDischarged, counterexamples, openCases := 0, 0, 0, 0, 0
+	for _, item := range cases {
+		if item.ByteStatus == StatusDischarged {
+			byteDischarged++
+		}
+		if item.MeaningStatus == StatusDischarged {
+			meaningDischarged++
+		}
+		if item.Status == StatusDischarged {
+			jointDischarged++
+		}
+		if item.Status == StatusRefuted {
+			counterexamples++
+		}
+		if item.Status == StatusOpen {
+			openCases++
+		}
 	}
-	return summarize(converted)
+	total := len(cases)
+	return Summary{CaseMatrix: coordinate(total, total), ByteClaim: coordinate(byteDischarged, total),
+		MeaningClaim: coordinate(meaningDischarged, total), JointClaim: coordinate(jointDischarged, total),
+		Counterexamples: coordinate(counterexamples, total), OpenCases: coordinate(openCases, total)}
+}
+
+func judgeCompose(byteStatus, meaningStatus string) (string, string) {
+	if byteStatus == StatusDischarged && meaningStatus == StatusDischarged {
+		return StatusDischarged, "BOTH_CLAIMS_DISCHARGED"
+	}
+	if byteStatus == StatusDischarged && meaningStatus == StatusRefuted {
+		return StatusRefuted, "REPRODUCIBLE_BUT_WRONG"
+	}
+	if byteStatus == StatusRefuted && meaningStatus == StatusDischarged {
+		return StatusRefuted, "MEANINGFUL_BUT_UNREPRODUCED"
+	}
+	return StatusOpen, "CLAIMS_OPEN"
 }
 
 func judgeProofs(receipt Receipt, judgment Judgment) []Proof {
