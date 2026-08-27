@@ -103,7 +103,10 @@ func evaluateCase(contract Contract, definition CaseDefinition, input Input, rec
 		}
 	}
 	result.Groups = groupResults(groups)
-	if result.ConflictGroups > 0 || hasMultipleValues(groups) {
+	if hasMultipleValues(groups) && result.ConflictGroups == 0 {
+		result.ConflictGroups = 1
+	}
+	if result.ConflictGroups > 0 {
 		return finishCase(result, definition, claim, StatusRefuted, ResolutionInvariant,
 			"QUORUM_CONFLICT", result.Groups, receiptDigests, "conflicting-values")
 	}
