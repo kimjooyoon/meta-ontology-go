@@ -1,19 +1,26 @@
 package nonmonotonicrefutation
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
-func TestCanonicalProducerKeepsThreeRevisionCases(t *testing.T) {
-	report := Produce("examples/nonmonotonic-refutation/main.gooo", []byte("package nonmonotonicrefutation\nactivity Observe\n"))
-	if report.Contract.FixedClaimTotal != 3 || report.Contract.FixedTransitionTotal != 6 {
+func TestSourceBackedProducerKeepsThreeClaimsAndSixObservations(t *testing.T) {
+	source, err := os.ReadFile("../../../examples/nonmonotonic-refutation/main.gooo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, err := Produce("examples/nonmonotonic-refutation/main.gooo", source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Contract.FixedClaimTotal != 3 || report.Contract.FixedObservationTotal != 6 || report.Contract.FixedTransitionTotal != 6 {
 		t.Fatalf("contract = %#v", report.Contract)
 	}
-	if len(report.Contract.Cases) != 3 || report.Effects.RepositoryWrites != 0 || report.Effects.MutationAuthority {
+	if len(report.Contract.Claims) != 3 || len(report.Contract.Observations) != 6 || report.Effects.RepositoryWrites != 0 || report.Effects.MutationAuthority {
 		t.Fatalf("producer report = %#v", report)
 	}
-	if len(report.Contract.Cases[1].Evidence) != 2 || report.Contract.Cases[1].ExpectedFinalStatus != StatusRefuted {
-		t.Fatalf("counterevidence case = %#v", report.Contract.Cases[1])
-	}
-	if len(report.Contract.Cases[2].Evidence) != 3 || report.Contract.Cases[2].ExpectedFinalStatus != StatusDischarged {
-		t.Fatalf("re-evaluation case = %#v", report.Contract.Cases[2])
+	if report.Contract.Observations[2].ObservedValue != "0" || report.Contract.Observations[5].RevisionPolicy != "REOPEN_IF_NEWER_ADMISSIBLE" {
+		t.Fatalf("source observations = %#v", report.Contract.Observations)
 	}
 }

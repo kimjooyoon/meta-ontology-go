@@ -5,8 +5,8 @@ on:
     branches: [dev]
     paths:
       - ".github/workflows/nonmonotonic-refutation.yml"
-      - "cmd/nonmonotonic-refutation-producer/**"
       - "cmd/nonmonotonic-refutation-consumer/**"
+      - "cmd/nonmonotonic-refutation-producer/**"
       - "examples/nonmonotonic-refutation/**"
       - "internal/meta/nonmonotonicrefutation/**"
       - "internal/meta/nonmonotonicrefutationoracle/**"
@@ -15,8 +15,8 @@ on:
     branches: [dev]
     paths:
       - ".github/workflows/nonmonotonic-refutation.yml"
-      - "cmd/nonmonotonic-refutation-producer/**"
       - "cmd/nonmonotonic-refutation-consumer/**"
+      - "cmd/nonmonotonic-refutation-producer/**"
       - "examples/nonmonotonic-refutation/**"
       - "internal/meta/nonmonotonicrefutation/**"
       - "internal/meta/nonmonotonicrefutationoracle/**"
@@ -35,7 +35,7 @@ env:
 
 jobs:
   producer:
-    name: Produce source-bound evidence
+    name: Produce source-derived evidence
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -51,27 +51,32 @@ jobs:
           cache: true
       - name: Require exact Go toolchain
         run: test "$(go env GOVERSION)" = "go1.27.0"
-      - name: Produce and replay source-bound evidence
+      - name: Produce source-derived evidence and observe repository writes
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/nonmonotonic-refutation/producer"
           mkdir -p "$output"
           source="examples/nonmonotonic-refutation/main.gooo"
-          for pass in first replay; do
-            go run ./cmd/nonmonotonic-refutation-producer \
-              -source "$source" -output "$output/$pass.json"
-          done
+          git status --porcelain=v1 --untracked-files=all > "$output/before.status"
+          go run ./cmd/nonmonotonic-refutation-producer \
+            -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/first.json"
+          git status --porcelain=v1 --untracked-files=all > "$output/after.status"
+          cmp "$output/before.status" "$output/after.status"
+          go run ./cmd/nonmonotonic-refutation-producer \
+            -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
           cmp "$output/first.json" "$output/replay.json"
           jq -e '
-            .schema == "gooo/meta-nonmonotonic-refutation-producer/v1" and
-            .contract.schema == "gooo/meta-nonmonotonic-refutation-contract/v1" and
+            .schema == "gooo/meta-nonmonotonic-refutation-producer/v2" and
+            .contract.schema == "gooo/meta-nonmonotonic-refutation-source/v1" and
             .contract.fixed_claim_total == 3 and
+            .contract.fixed_observation_total == 6 and
             .contract.fixed_transition_total == 6 and
-            (.contract.cases | length) == 3 and
+            (.contract.claims | length) == 3 and
+            (.contract.observations | length) == 6 and
+            (all(.contract.observations[]; has("kind") | not)) and
             .effects.repository_writes == 0 and
-            .effects.mutation_authority == false and
-            .source_path == "examples/nonmonotonic-refutation/main.gooo"
+            .effects.mutation_authority == false
           ' "$output/first.json"
       - name: Upload producer evidence
         uses: actions/upload-artifact@v6
@@ -104,7 +109,7 @@ jobs:
         with:
           name: nonmonotonic-refutation-producer-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/nonmonotonic-refutation/producer
-      - name: Run independent oracle regressions
+      - name: Run package regressions in Actions
         run: go test ./internal/meta/nonmonotonicrefutation ./internal/meta/nonmonotonicrefutationoracle
       - name: Require oracle independence
         shell: bash
@@ -112,30 +117,85 @@ jobs:
           set -euo pipefail
           if go list -deps ./internal/meta/nonmonotonicrefutationoracle | \
             grep -Fxq "github.com/kimjooyoon/meta-ontology-go/internal/meta/nonmonotonicrefutation"; then
-            echo "oracle imports the producer semantics" >&2
+            echo "oracle imports producer semantics" >&2
             exit 1
           fi
-      - name: Check the actual .gooo source
+      - name: Parse and lower the actual .gooo source
         run: go run ./cmd/gooo check examples/nonmonotonic-refutation/main.gooo
-      - name: Adjudicate and replay the evidence sequence
+      - name: Adjudicate baseline, interventions, and resealed tamper
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/nonmonotonic-refutation/consumer"
-          mkdir -p "$output"
+          variants="$RUNNER_TEMP/nonmonotonic-refutation/variants"
+          mkdir -p "$output" "$variants"
           source="examples/nonmonotonic-refutation/main.gooo"
           producer="$RUNNER_TEMP/nonmonotonic-refutation/producer/first.json"
-          for pass in first replay; do
-            go run ./cmd/nonmonotonic-refutation-consumer \
-              -producer "$producer" -source "$source" -output "$output/$pass.json"
+
+          git status --porcelain=v1 --untracked-files=all > "$output/before.status"
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/baseline.json"
+          git status --porcelain=v1 --untracked-files=all > "$output/after.status"
+          cmp "$output/before.status" "$output/after.status"
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$producer" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/replay.json"
+          cmp "$output/baseline.json" "$output/replay.json"
+
+          sed 's/claim=gamma;predicate=equality;expected=1;observed=1;provenance=observer-gamma-3/claim=gamma;predicate=equality;expected=1;observed=0;provenance=observer-gamma-3/' "$source" > "$variants/semantic.gooo"
+          sed 's/revision_policy=REOPEN_IF_NEWER_ADMISSIBLE/revision_policy=UNKNOWN/g' "$source" > "$variants/unknown-policy.gooo"
+          cp "$source" "$variants/comment.gooo"
+          printf '\n# comment-only intervention\n' >> "$variants/comment.gooo"
+          for variant in semantic unknown-policy comment; do
+            go run ./cmd/nonmonotonic-refutation-producer \
+              -source "$variants/$variant.gooo" -repository-root "$GITHUB_WORKSPACE" -output "$variants/$variant-producer.json"
           done
-          cmp "$output/first.json" "$output/replay.json"
+
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/comment-producer.json" -source "$variants/comment.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/comment.json"
+
+          set +e
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/semantic-producer.json" -source "$variants/semantic.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/semantic.json"
+          semantic_status=$?
+          set -e
+          test "$semantic_status" -ne 0
+
+          set +e
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$variants/unknown-policy-producer.json" -source "$variants/unknown-policy.gooo" \
+            -repository-root "$GITHUB_WORKSPACE" -output "$output/unknown-policy.json"
+          unknown_policy_status=$?
+          set -e
+          test "$unknown_policy_status" -ne 0
+
+          unsigned="$variants/tampered-unsigned.json"
+          tampered="$variants/tampered.json"
+          tampered_json="$(jq -c '
+            .contract.observations[0].observed_value = "9" |
+            .contract.observations[0].evidence_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000" |
+            .receipt_digest = ""
+          ' "$producer")"
+          tampered_digest="$(printf '%s' "$tampered_json" | sha256sum | awk '{print "sha256:" $1}')"
+          printf '%s\n' "$tampered_json" | jq --arg digest "$tampered_digest" '.receipt_digest = $digest' > "$tampered"
+          set +e
+          go run ./cmd/nonmonotonic-refutation-consumer \
+            -producer "$tampered" -source "$source" -repository-root "$GITHUB_WORKSPACE" -output "$output/tampered.json"
+          tampered_status=$?
+          set -e
+          test "$tampered_status" -ne 0
+
           jq -e '
-            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v1" and
+            .schema == "gooo/meta-nonmonotonic-refutation-receipt/v2" and
             .report.decision == "PASS" and
             .report.resolution == "EXACT" and
             .report.reason == "NONMONOTONIC_REFUTATION_OBSERVED" and
+            .report.conformance.decision == "PASS" and
+            .report.subject_resolution.resolution == "PARTIAL" and
             .report.metrics.fixed_claim_total == 3 and
+            .report.metrics.fixed_observation_total == 6 and
+            .report.metrics.fixed_transition_total == 6 and
             .report.metrics.transition_total == 6 and
             .report.metrics.open_to_discharged_total == 3 and
             .report.metrics.discharged_to_refuted_total == 2 and
@@ -151,14 +211,75 @@ jobs:
             .report.cases[1].status_history == ["OPEN", "DISCHARGED", "REFUTED"] and
             .report.cases[2].status_history == ["OPEN", "DISCHARGED", "REFUTED", "DISCHARGED"] and
             (all(.report.cases[]; .history_retained == true)) and
+            (all(.report.transitions[]; .accepted == true and .evidence_digest != "" and .evidence_provenance != "" and .coordinate.stage != "" and .coordinate.step != "" and .coordinate.reason != "")) and
             .repository_writes == 0 and
             .mutation_authority == false and
             .replay_verified == true
-          ' "$output/first.json"
-      - name: Upload consumer receipt
+          ' "$output/baseline.json"
+
+          jq -e --slurpfile baseline "$output/baseline.json" '
+            .report.decision == $baseline[0].report.decision and
+            .report.source_digest != $baseline[0].report.source_digest and
+            .report.source_semantic_digest == $baseline[0].report.source_semantic_digest and
+            ([.report.transitions[].transition_digest] == [$baseline[0].report.transitions[].transition_digest])
+          ' "$output/comment.json"
+
+          jq -e --slurpfile baseline "$output/baseline.json" '
+            .report.decision == "FAIL_CLOSED" and
+            .report.reason == "TRANSITION_NOT_ADMISSIBLE" and
+            .report.source_semantic_digest != $baseline[0].report.source_semantic_digest and
+            ([.report.transitions[].transition_digest] != [$baseline[0].report.transitions[].transition_digest])
+          ' "$output/semantic.json"
+
+          jq -e '
+            .report.reason == "REVISION_POLICY_UNKNOWN_OR_FORBIDS_REOPEN" and
+            .report.conformance.decision == "FAIL_CLOSED" and
+            .report.transitions[-1].before == "REFUTED" and
+            .report.transitions[-1].after == "REFUTED" and
+            .report.transitions[-1].accepted == false and
+            .report.transitions[-1].coordinate.stage != "" and
+            .report.transitions[-1].coordinate.step != "" and
+            .report.transitions[-1].coordinate.reason != ""
+          ' "$output/unknown-policy.json"
+
+          jq -e '.report.reason == "PRODUCER_SOURCE_MODEL_MISMATCH" and .report.conformance.decision == "FAIL_CLOSED"' "$output/tampered.json"
+
+          source_claims="$(jq '.report.metrics.fixed_claim_total' "$output/baseline.json")"
+          source_observations="$(jq '.report.metrics.fixed_observation_total' "$output/baseline.json")"
+          persistent_transitions="$(jq '.report.metrics.transition_total' "$output/baseline.json")"
+          semantic_causality=1
+          nonsemantic_preservation=1
+          coherent_tamper_rejected=1
+          jq -n \
+            --argjson source_claims "$source_claims" \
+            --argjson source_observations "$source_observations" \
+            --argjson persistent_transitions "$persistent_transitions" \
+            --argjson semantic_causality "$semantic_causality" \
+            --argjson nonsemantic_preservation "$nonsemantic_preservation" \
+            --argjson coherent_tamper_rejected "$coherent_tamper_rejected" '
+            {
+              source_claims: {observed: $source_claims, required: 3},
+              source_observations: {observed: $source_observations, required: 6},
+              producer_imports: {observed: 0, required: 0},
+              semantic_causality: {observed: $semantic_causality, required: 1},
+              nonsemantic_preservation: {observed: $nonsemantic_preservation, required: 1},
+              persistent_transitions: {observed: $persistent_transitions, required: 6},
+              coherent_tamper_rejected: {observed: $coherent_tamper_rejected, required: 1}
+            }
+          ' > "$output/denominators.json"
+          jq -e '
+            .source_claims == {observed: 3, required: 3} and
+            .source_observations == {observed: 6, required: 6} and
+            .producer_imports == {observed: 0, required: 0} and
+            .semantic_causality == {observed: 1, required: 1} and
+            .nonsemantic_preservation == {observed: 1, required: 1} and
+            .persistent_transitions == {observed: 6, required: 6} and
+            .coherent_tamper_rejected == {observed: 1, required: 1}
+          ' "$output/denominators.json"
+      - name: Upload consumer receipt and denominator proof
         uses: actions/upload-artifact@v6
         with:
           name: nonmonotonic-refutation-consumer-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/nonmonotonic-refutation/consumer/first.json
+          path: ${{ runner.temp }}/nonmonotonic-refutation/consumer
           if-no-files-found: error
           retention-days: 30
