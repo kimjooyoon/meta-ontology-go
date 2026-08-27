@@ -201,7 +201,7 @@ func finishCase(result CaseResult, definition CaseDefinition, claim ClaimDefinit
 	}
 	result.Claims = []ClaimResult{{ID: claim.ID, Producer: claim.Producer, Consumer: claim.Consumer,
 		MetaOperation: claim.MetaOperation, ProofChoice: claim.ProofChoice, Status: status,
-		Reason: reason, Coordinate: result.Coordinate, EvidenceDigests: append([]string{}, receipts),
+		Reason: reason, Coordinate: result.Coordinate, EvidenceDigests: append([]string{}, receipts...),
 		Transitions: []ClaimTransition{{From: "OPEN", To: status, Coordinate: result.Coordinate}}}}
 	if result.ObservedDecision == definition.ExpectedDecision && result.ObservedResolution == definition.ExpectedResolution &&
 		result.ObservedReason == definition.ExpectedReason && status == definition.ExpectedStatus {
@@ -240,7 +240,7 @@ func hasMultipleValues(groups map[string]*evidenceGroup) bool {
 func hasRequiredRoles(groups map[string]*evidenceGroup, required []string) bool {
 	roles := map[string]bool{}
 	for _, group := range groups {
-		for role := range group.roles {
+		for _, role := range group.roles {
 			roles[role] = true
 		}
 	}

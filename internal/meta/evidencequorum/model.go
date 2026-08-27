@@ -131,6 +131,8 @@ type CaseResult struct {
 	ID                 string        `json:"id"`
 	Status             string        `json:"status"`
 	ExpectedDecision   string        `json:"expected_decision"`
+	ExpectedResolution string        `json:"expected_resolution"`
+	ExpectedReason     string        `json:"expected_reason"`
 	ObservedDecision   string        `json:"observed_decision"`
 	ObservedResolution string        `json:"observed_resolution"`
 	ObservedReason     string        `json:"observed_reason"`
