@@ -1,0 +1,50 @@
+name: Workgraph vertical slice
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/workgraph-pilot.yml'
+      - 'cmd/workgraph-witness/**'
+      - 'examples/workgraph/**'
+      - 'internal/meta/workgraph/**'
+      - 'scripts/workgraph-pilot/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workgraph-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workgraph:
+    name: Gooo Workgraph 7-cell evidence
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXACT_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Bind exact pull request head
+        run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+      - name: Prove unknown to discharged Workgraph roundtrip
+        env:
+          WORKGRAPH_OUTPUT: ${{ runner.temp }}/workgraph-evidence
+        run: bash scripts/workgraph-pilot/main.sh
+      - name: Upload exact Workgraph evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: workgraph-evidence-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/workgraph-evidence
+          if-no-files-found: error
+          retention-days: 30
