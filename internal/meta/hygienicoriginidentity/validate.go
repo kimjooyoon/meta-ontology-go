@@ -24,11 +24,11 @@ func Validate(report Report, expectedUnknown bool, expectedHead string) error {
 		return fmt.Errorf("receipt denominator changed: cases %d/%d claims %d/%d or %d", len(report.Cases), ExpectedCaseTotal, len(report.Claims), ExpectedClaimTotal, ExpectedClaimTotal+1)
 	}
 	if report.Metrics.FixedCaseDenominator != ExpectedCaseTotal || report.Metrics.FixedClaimDenominator != ExpectedClaimTotal ||
-		report.Metrics.ObservedCaseTotal != ExpectedCaseTotal || report.Metrics.ObservedClaimTotal != ExpectedClaimTotal ||
+		report.Metrics.ObservedCaseTotal != ExpectedCaseTotal ||
 		report.Metrics.SameSpellingCaseTotal != ExpectedCaseTotal || report.Metrics.CapturedCaseTotal != 1 ||
 		report.Metrics.NonCapturedCaseTotal != 1 || report.Metrics.ClassifiedClaimTotal != ExpectedClaimTotal ||
 		report.Metrics.DischargedClaimTotal != 2 || report.Metrics.RefutedClaimTotal != 2 ||
-		report.Metrics.OpenClaimTotal != 0 || report.Metrics.ClassificationCoverageBPS != 10000 ||
+		report.Metrics.ClassificationCoverageBPS != 10000 ||
 		report.Metrics.PreservationSatisfactionBPS != 5000 {
 		return fmt.Errorf("receipt metrics do not match fixed denominator")
 	}
@@ -53,7 +53,7 @@ func Validate(report Report, expectedUnknown bool, expectedHead string) error {
 		if report.Claims[len(report.Claims)-1].ID != "unknown.scope-provenance" || report.Claims[len(report.Claims)-1].Status != StatusOpen {
 			return fmt.Errorf("UNKNOWN path lost its OPEN claim")
 		}
-	} else if report.Decision != DecisionPass || report.Resolution != ResolutionExact || len(report.Unknowns) != 0 || report.Metrics.UnknownPathTotal != 0 {
+	} else if report.Decision != DecisionPass || report.Resolution != ResolutionExact || len(report.Unknowns) != 0 || report.Metrics.UnknownPathTotal != 0 || report.Metrics.ObservedClaimTotal != ExpectedClaimTotal || report.Metrics.OpenClaimTotal != 0 {
 		return fmt.Errorf("expected exact PASS without unknown paths")
 	}
 	if digest := report.ReceiptDigest; digest == "" || digest != sealedDigest(report) {
