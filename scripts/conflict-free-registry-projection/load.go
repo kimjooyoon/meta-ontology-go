@@ -70,6 +70,22 @@ func loadManifests(root string) ([]LoadedManifest, error) {
 	return sortedLoaded(loaded), nil
 }
 
+func expectedManifestIDs(outputDir string) ([]string, *Diagnostic) {
+	raw, err := os.ReadFile(filepath.Join(outputDir, "manifest-digests.json"))
+	if err != nil {
+		return nil, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "REGRESSION", Step: "GENERATED_OUTPUT", Reason: "MISSING_GENERATED_PROJECTION"}
+	}
+	file := manifestDigestFile{}
+	if err := json.Unmarshal(raw, &file); err != nil || file.Schema != "gooo/conflict-free-registry-manifests/v1" || len(file.Manifests) == 0 {
+		return nil, &Diagnostic{Decision: "FAIL_CLOSED", Stage: "REGRESSION", Step: "GENERATED_OUTPUT", Reason: "MALFORMED_GENERATED_MANIFEST_INDEX"}
+	}
+	ids := make([]string, 0, len(file.Manifests))
+	for _, manifest := range file.Manifests {
+		ids = append(ids, manifest.StableID)
+	}
+	return sortedStrings(ids), nil
+}
+
 func loadManifest(root, path string) (LoadedManifest, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {

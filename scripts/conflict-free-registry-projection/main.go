@@ -61,6 +61,13 @@ func runCheck(root, outputDir string) {
 	if err != nil {
 		failError(err, "FOUNDATION", "LOAD_MANIFESTS", "MANIFEST_LOAD_FAILED")
 	}
+	expectedIDs, diagnostic := expectedManifestIDs(outputDir)
+	if diagnostic != nil {
+		fail(diagnostic)
+	}
+	if diagnostic := validateManifests(loaded, expectedIDs); diagnostic != nil {
+		fail(diagnostic)
+	}
 	expected, _, err := renderOutputs(root, outputDir, loaded)
 	if err != nil {
 		failError(err, "FOUNDATION", "BUILD_PROJECTION", "PROJECTION_BUILD_FAILED")
