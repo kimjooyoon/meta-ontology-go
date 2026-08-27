@@ -9,10 +9,10 @@ const (
 	ModeSuccess = "success"
 	ModeUnknown = "unknown"
 
-	ClaimTotal     = 9
-	EdgeTotal      = 11
+	ClaimTotal      = 9
+	EdgeTotal       = 11
 	TransitionTotal = 18
-	IndicatorTotal = 6
+	IndicatorTotal  = 6
 )
 
 type Coordinate struct {
@@ -29,25 +29,25 @@ type inputReport struct {
 }
 
 type inputTransition struct {
-	Sequence                     int        `json:"sequence"`
-	ClaimID                      string     `json:"claim_id"`
-	DeclarationDigest            string     `json:"declaration_digest"`
-	Event                        string     `json:"event"`
-	Before                       string     `json:"before"`
-	After                        string     `json:"after"`
-	Coordinate                   Coordinate `json:"coordinate"`
-	EvidenceDigest               string     `json:"evidence_digest"`
-	PreviousTransitionDigest     string     `json:"previous_transition_digest"`
-	TransitionDigest             string     `json:"transition_digest"`
+	Sequence                 int        `json:"sequence"`
+	ClaimID                  string     `json:"claim_id"`
+	DeclarationDigest        string     `json:"declaration_digest"`
+	Event                    string     `json:"event"`
+	Before                   string     `json:"before"`
+	After                    string     `json:"after"`
+	Coordinate               Coordinate `json:"coordinate"`
+	EvidenceDigest           string     `json:"evidence_digest"`
+	PreviousTransitionDigest string     `json:"previous_transition_digest"`
+	TransitionDigest         string     `json:"transition_digest"`
 }
 
 type Subject struct {
-	InputReportSchema       string   `json:"input_report_schema"`
-	InputReportDigest       string   `json:"input_report_digest"`
-	TransitionHeadDigest    string   `json:"transition_head_digest"`
-	GraphDigest             string   `json:"graph_digest"`
-	BindingStatus           string   `json:"binding_status"`
-	MissingBindingEvidence  []string `json:"missing_binding_evidence"`
+	InputReportSchema      string   `json:"input_report_schema"`
+	InputReportDigest      string   `json:"input_report_digest"`
+	TransitionHeadDigest   string   `json:"transition_head_digest"`
+	GraphDigest            string   `json:"graph_digest"`
+	BindingStatus          string   `json:"binding_status"`
+	MissingBindingEvidence []string `json:"missing_binding_evidence"`
 }
 
 type GraphNode struct {
@@ -64,29 +64,29 @@ type GraphEdge struct {
 }
 
 type GraphContract struct {
-	Schema                       string      `json:"schema"`
-	Authority                    string      `json:"authority"`
-	Completeness                 string      `json:"completeness"`
-	SemanticCorrectnessClaimed   bool        `json:"semantic_correctness_claimed"`
-	NodeTotal                    int         `json:"node_total"`
-	EdgeTotal                    int         `json:"edge_total"`
-	Nodes                        []GraphNode `json:"nodes"`
-	Edges                        []GraphEdge `json:"edges"`
-	Digest                       string      `json:"digest"`
+	Schema                     string      `json:"schema"`
+	Authority                  string      `json:"authority"`
+	Completeness               string      `json:"completeness"`
+	SemanticCorrectnessClaimed bool        `json:"semantic_correctness_claimed"`
+	NodeTotal                  int         `json:"node_total"`
+	EdgeTotal                  int         `json:"edge_total"`
+	Nodes                      []GraphNode `json:"nodes"`
+	Edges                      []GraphEdge `json:"edges"`
+	Digest                     string      `json:"digest"`
 }
 
 type Resolution struct {
-	ClaimID               string     `json:"claim_id"`
-	Axis                  string     `json:"axis"`
-	State                 string     `json:"state"`
-	Kind                  string     `json:"kind"`
-	ObservedEvent         string     `json:"observed_event"`
-	Coordinate            Coordinate `json:"coordinate"`
-	MissingEvidenceIDs    []string   `json:"missing_evidence_ids"`
-	BlockedByClaimIDs     []string   `json:"blocked_by_claim_ids"`
-	BlockedByEdgeIDs      []string   `json:"blocked_by_edge_ids"`
-	CausePath             []string   `json:"cause_path"`
-	CauseTransitionDigest string     `json:"cause_transition_digest,omitempty"`
+	ClaimID               string      `json:"claim_id"`
+	Axis                  string      `json:"axis"`
+	State                 string      `json:"state"`
+	Kind                  string      `json:"kind"`
+	ObservedEvent         string      `json:"observed_event"`
+	Coordinate            Coordinate  `json:"coordinate"`
+	MissingEvidenceIDs    []string    `json:"missing_evidence_ids"`
+	BlockedByClaimIDs     []string    `json:"blocked_by_claim_ids"`
+	BlockedByEdgeIDs      []string    `json:"blocked_by_edge_ids"`
+	CausePath             []string    `json:"cause_path"`
+	CauseTransitionDigest string      `json:"cause_transition_digest,omitempty"`
 	CauseCoordinate       *Coordinate `json:"cause_coordinate,omitempty"`
 }
 
@@ -100,8 +100,8 @@ type Metrics struct {
 	DependencyBlockedClaimTotal int `json:"dependency_blocked_claim_total"`
 	ObservedBlockingEdgeTotal   int `json:"observed_blocking_edge_total"`
 	MaximumCausePathDepth       int `json:"maximum_cause_path_depth"`
-	ClassificationBasisPoints  int `json:"classification_basis_points"`
-	DischargeBasisPoints       int `json:"discharge_basis_points"`
+	ClassificationBasisPoints   int `json:"classification_basis_points"`
+	DischargeBasisPoints        int `json:"discharge_basis_points"`
 }
 
 type Indicator struct {

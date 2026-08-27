@@ -123,9 +123,14 @@ jobs:
             internal/valuecatalog/causality/model.go \
             internal/valuecatalog/causality/contract.go \
             internal/valuecatalog/causality/evaluate.go \
+            internal/valuecatalog/causality/input.go \
+            internal/valuecatalog/causality/resolution.go \
+            internal/valuecatalog/causality/metrics.go \
             internal/valuecatalog/causality/validate.go \
             internal/valuecatalog/causality/discover.go \
             internal/valuecatalog/causality/causality_test.go \
+            internal/valuecatalog/causality/validate_test.go \
+            internal/valuecatalog/causality/fixture_test.go \
             scripts/language-operation-claim-causality/main.go)"
           if [[ -n "${format_diff}" ]]; then
             printf '%s\n' "${format_diff}"
