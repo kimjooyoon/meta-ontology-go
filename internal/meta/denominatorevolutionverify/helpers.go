@@ -5,6 +5,20 @@ import (
 	"strings"
 )
 
+func check(id, proof, operation string, coordinate Coordinate, state, expected, observed string) Check {
+	return Check{ID: id, Status: state, ProofChoice: proof, MetaOperation: operation, Coordinate: coordinate, Expected: expected, Observed: observed}
+}
+
+func receiptStatus(predKnown, receiptValid bool) string {
+	if receiptValid {
+		return "PASS"
+	}
+	if !predKnown {
+		return "UNKNOWN"
+	}
+	return "FAIL"
+}
+
 func verifyCheck(id, proof, operation, stage, step string, ok bool, expected, observed string) Check {
 	state := "FAIL"
 	if ok {

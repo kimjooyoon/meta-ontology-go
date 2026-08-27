@@ -381,22 +381,6 @@ func guardrailsConform(values []Guardrail) bool {
 	return values[0].PropositionPresent
 }
 
-func sameChangeSet(left, right []Change) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	leftCopy := append([]Change(nil), left...)
-	rightCopy := append([]Change(nil), right...)
-	sort.Slice(leftCopy, func(i, j int) bool { return leftCopy[i].ObligationID < leftCopy[j].ObligationID })
-	sort.Slice(rightCopy, func(i, j int) bool { return rightCopy[i].ObligationID < rightCopy[j].ObligationID })
-	for index := range leftCopy {
-		if leftCopy[index].ObligationID != rightCopy[index].ObligationID || leftCopy[index].Reason != rightCopy[index].Reason {
-			return false
-		}
-	}
-	return true
-}
-
 func sameChangeIDs(left, right []Change) bool {
 	if len(left) != len(right) {
 		return false
