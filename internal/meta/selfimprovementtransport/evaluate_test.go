@@ -10,6 +10,9 @@ import (
 const contractFixture = `package selfimprovementtransport
 namespace selfimprovementtransport
 entity TransportInput id "gooo://self-improvement/transport/entity/input"
+entity ArtifactMetadataEvidence id "gooo://self-improvement/transport/evidence/artifact-metadata"
+entity ArtifactValidationEvidence id "gooo://self-improvement/transport/evidence/artifact-validation"
+entity ArchiveDownloadEvidence id "gooo://self-improvement/transport/evidence/archive-download"
 entity SourceIdentityEvidence id "gooo://self-improvement/transport/evidence/source-identity"
 entity CheckoutBindingEvidence id "gooo://self-improvement/transport/evidence/checkout-binding"
 entity ProducerIdentityEvidence id "gooo://self-improvement/transport/evidence/producer-identity"
@@ -19,6 +22,11 @@ entity ArchiveDigestEvidence id "gooo://self-improvement/transport/evidence/arch
 entity ConsumerReplayEvidence id "gooo://self-improvement/transport/evidence/consumer-replay"
 entity ProducerAttestationEvidence id "gooo://self-improvement/transport/evidence/producer-attestation"
 entity TransportReceipt id "gooo://self-improvement/transport/entity/receipt"
+activity ReadArtifactMetadata(TransportInput) -> ArtifactMetadataEvidence computes "meta.artifact.lifecycle.read-metadata:v1"
+activity ResolveArtifact(ArtifactMetadataEvidence) -> ImmutableLocatorEvidence computes "meta.artifact.lifecycle.resolve-artifact:v1"
+activity ValidateArtifactMetadata(ImmutableLocatorEvidence) -> ArtifactValidationEvidence computes "meta.artifact.lifecycle.validate-metadata:v1"
+activity DownloadArtifactArchive(ArtifactValidationEvidence) -> ArchiveDownloadEvidence computes "meta.artifact.lifecycle.download-archive:v1"
+activity VerifyArtifactArchiveDigest(ArchiveDownloadEvidence) -> ArchiveDigestEvidence computes "meta.artifact.lifecycle.verify-archive-digest:v1"
 activity ObserveSourceIdentity(TransportInput) -> SourceIdentityEvidence
 activity ObserveCheckoutBinding(TransportInput) -> CheckoutBindingEvidence
 activity ObserveProducerIdentity(TransportInput) -> ProducerIdentityEvidence

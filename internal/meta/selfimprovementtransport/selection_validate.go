@@ -25,22 +25,48 @@ func validateSelectionRun(run workflowRunAPI, input ArtifactSelectionInput) erro
 
 func selectArtifact(artifacts []artifactAPI, run workflowRunAPI,
 	name string) (artifactAPI, error) {
-	matches := make([]artifactAPI, 0, 1)
-	for _, artifact := range artifacts {
-		if artifact.Name == name && !artifact.Expired &&
-			artifact.WorkflowRun.ID == run.ID && artifact.WorkflowRun.HeadSHA == run.HeadSHA {
-			matches = append(matches, artifact)
-		}
+	artifact, err := resolveArtifact(artifacts, run, name)
+	if err != nil {
+		return artifactAPI{}, err
 	}
-	if len(matches) == 0 {
-		return artifactAPI{}, fmt.Errorf("LOCATE/select-immutable-artifact/ARTIFACT_NOT_FOUND")
-	}
-	if len(matches) != 1 {
-		return artifactAPI{}, fmt.Errorf("LOCATE/select-immutable-artifact/ARTIFACT_SELECTION_AMBIGUOUS: got %d", len(matches))
-	}
-	artifact := matches[0]
-	if artifact.ID <= 0 || artifact.SizeInBytes <= 0 || !validDigest(artifact.Digest) {
-		return artifactAPI{}, fmt.Errorf("LOCATE/validate-immutable-artifact/ARTIFACT_IDENTITY_UNKNOWN")
+	if err := validateArtifact(artifact); err != nil {
+		return artifactAPI{}, err
 	}
 	return artifact, nil
+}
+
+func resolveArtifact(artifacts []artifactAPI, run workflowRunAPI,
+	name string) (artifactAPI, error) {
+	named := make([]artifactAPI, 0, 1)
+	bound := make([]artifactAPI, 0, 1)
+	for _, artifact := range artifacts {
+		if artifact.Name != name {
+			continue
+		}
+		named = append(named, artifact)
+		if artifact.WorkflowRun.ID == run.ID && artifact.WorkflowRun.HeadSHA == run.HeadSHA {
+			bound = append(bound, artifact)
+		}
+	}
+	if len(named) == 0 {
+		return artifactAPI{}, fmt.Errorf("LOCATE/select-immutable-artifact/ARTIFACT_NOT_FOUND")
+	}
+	if len(bound) == 0 {
+		return artifactAPI{}, fmt.Errorf("LOCATE/resolve-artifact/ARTIFACT_RUN_BINDING_MISMATCH")
+	}
+	if len(bound) != 1 {
+		return artifactAPI{}, fmt.Errorf(
+			"LOCATE/select-immutable-artifact/ARTIFACT_SELECTION_AMBIGUOUS: got %d", len(bound))
+	}
+	return bound[0], nil
+}
+
+func validateArtifact(artifact artifactAPI) error {
+	if artifact.Expired {
+		return fmt.Errorf("LOCATE/validate-artifact-metadata/ARTIFACT_EXPIRED")
+	}
+	if artifact.ID <= 0 || artifact.SizeInBytes <= 0 || !validDigest(artifact.Digest) {
+		return fmt.Errorf("LOCATE/validate-artifact-metadata/ARTIFACT_METADATA_INVALID")
+	}
+	return nil
 }

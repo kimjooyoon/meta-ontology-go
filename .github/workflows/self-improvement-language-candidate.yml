@@ -15,6 +15,7 @@ on:
       - internal/meta/languagereadiness/languagesyntax/**
       - scripts/self-improvement-candidate/**
       - scripts/self-improvement-transport/**
+      - scripts/self-improvement-transport-selector/**
   workflow_run:
     workflows: [Self-improvement language observation]
     types: [completed]
@@ -55,7 +56,7 @@ jobs:
           go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
           go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
-      - name: Locate and download immutable observation artifact
+      - name: Observe immutable artifact metadata
         if: github.event_name == 'workflow_run'
         shell: bash
         env:
@@ -65,26 +66,75 @@ jobs:
           transport="$RUNNER_TEMP/candidate/transport"
           input="$RUNNER_TEMP/candidate/input"
           mkdir -p "$transport" "$input"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$transport/run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$transport/artifacts.json"
+          run_exit=0
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" \
+            > "$transport/run.json" || run_exit=$?
+          artifacts_exit=0
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" \
+            > "$transport/artifacts.json" || artifacts_exit=$?
           "$RUNNER_TEMP/candidate/transport-tool/select-transport-artifact" \
+            -mode locate -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
             -run "$transport/run.json" -artifacts "$transport/artifacts.json" \
             -repository "$GITHUB_REPOSITORY" -expected-run-id "$SOURCE_RUN_ID" \
             -expected-run-attempt "$SOURCE_RUN_ATTEMPT" \
             -artifact-name self-improvement-language-observation \
-            -output "$transport/metadata.json"
-          artifact_id="$(jq -r '.artifact_id' "$transport/metadata.json")"
+            -run-lookup-exit "$run_exit" -artifacts-lookup-exit "$artifacts_exit" \
+            -output "$transport/metadata.json" -receipt "$transport/lifecycle.json"
+      - name: Download and seal artifact lifecycle
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          transport="$RUNNER_TEMP/candidate/transport"
           archive="$transport/observation.zip"
-          curl --fail --location --silent --show-error \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
-            -o "$archive"
-          printf 'sha256:%s\n' "$(sha256sum "$archive" | cut -d' ' -f1)" > "$transport/archive-digest.txt"
+          download_exit=125
+          if [ -f "$transport/metadata.json" ]; then
+            artifact_id="$(jq -r '.artifact_id' "$transport/metadata.json")"
+            download_exit=0
+            curl --fail --location --silent --show-error \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+              -o "$archive" || download_exit=$?
+          fi
+          "$RUNNER_TEMP/candidate/transport-tool/select-transport-artifact" \
+            -mode transport -receipt "$transport/lifecycle.json" \
+            -archive "$archive" -download-exit "$download_exit"
+          jq -r '"artifact lifecycle: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_step_total) (\(.metrics.coverage_basis_points) bps), unknown-path \(.metrics.unknown_path_count), \(.coordinate.stage)/\(.coordinate.step)/\(.reason)"' \
+            "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload artifact lifecycle receipt
+        if: always() && github.event_name == 'workflow_run'
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-artifact-lifecycle-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
+          path: ${{ runner.temp }}/candidate/transport/lifecycle.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require exact artifact lifecycle before consumption
+        if: github.event_name == 'workflow_run'
+        shell: bash
+        run: |
+          set -euo pipefail
+          transport="$RUNNER_TEMP/candidate/transport"
+          input="$RUNNER_TEMP/candidate/input"
+          jq -e '
+            .decision == "PASS" and .resolution == "EXACT" and
+            .enforcement_effect == "NO_EFFECT" and
+            .metrics.fixed_step_total == 5 and .metrics.verified_total == 5 and
+            .metrics.unknown_total == 0 and .metrics.unknown_path_count == 0 and
+            .authority.execution == false and .authority.mutation == false and
+            .authority.promotion == false and .authority.repository_writes == 0 and
+            all(.indicators[]; .status == "VERIFIED")
+          ' "$transport/lifecycle.json"
+          archive="$transport/observation.zip"
           unzip -q "$archive" -d "$input"
           test -f "$input/first.json"
           test -f "$input/producer.json"
+          jq -r '.actual_archive_digest' "$transport/lifecycle.json" \
+            > "$transport/archive-digest.txt"
       - name: Verify producer-declared subject and lower unsigned resolution
         id: verify-transport
         if: github.event_name == 'workflow_run'
@@ -163,5 +213,6 @@ jobs:
           path: |
             ${{ runner.temp }}/candidate/output/first.json
             ${{ runner.temp }}/candidate/transport/receipt.json
+            ${{ runner.temp }}/candidate/transport/lifecycle.json
           if-no-files-found: error
           retention-days: 14
