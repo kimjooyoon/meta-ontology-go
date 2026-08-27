@@ -126,7 +126,7 @@ func claimID(caseID string, rule Rule) string {
 func claimOutcome(rule Rule, result DecisionResult) (string, string) {
 	switch result.Decision {
 	case DecisionPass:
-		return ClaimDischarged, rule.Reason
+		return ClaimDischarged, result.Reason
 	case DecisionFailClosed:
 		if rule.Step == result.Step {
 			return ClaimRefuted, result.Reason
