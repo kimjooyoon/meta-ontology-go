@@ -355,11 +355,7 @@ func authorityCounters(observed receipt, decision string) error {
 			return fmt.Errorf("ALLOW authority counters are inconsistent")
 		}
 	case "DENY":
-		wantDenied := a.CapabilitiesRequested - a.CapabilitiesDeclared
-		if a.RequestedRepositoryWrites != 0 || a.RequestedMutationAuthority || a.RequestedPromotionAuthority {
-			wantDenied = a.CapabilitiesRequested
-		}
-		if a.CapabilitiesAuthorized != 0 || a.CapabilitiesUnknown != 0 || a.CapabilitiesDenied != wantDenied {
+		if a.CapabilitiesAuthorized != 0 || a.CapabilitiesUnknown != 0 || a.CapabilitiesDenied != a.CapabilitiesRequested {
 			return fmt.Errorf("DENY authority counters are inconsistent")
 		}
 	case "UNKNOWN":
