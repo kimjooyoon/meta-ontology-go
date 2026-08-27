@@ -48,6 +48,10 @@ jobs:
           set -euo pipefail
           test "$(go env GOVERSION)" = "go1.27.0"
           test -z "$(gofmt -l scripts/claim-lifecycle-calculus/main.go scripts/claim-lifecycle-calculus-judge/main.go scripts/claim-lifecycle-calculus-tamper/main.go)"
+          if rg -n 'claim-lifecycle-calculus-judge' scripts/claim-lifecycle-calculus/main.go; then
+            echo 'producer must not import or copy the independent judge' >&2
+            exit 1
+          fi
           go test ./scripts/claim-lifecycle-calculus ./scripts/claim-lifecycle-calculus-judge ./scripts/claim-lifecycle-calculus-tamper
       - name: Emit baseline and intervention receipts
         shell: bash

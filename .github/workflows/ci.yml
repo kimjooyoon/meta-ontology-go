@@ -1437,6 +1437,10 @@ jobs:
             printf '%s\n' "${format_diff}"
             exit 1
           fi
+          if rg -n 'claim-lifecycle-calculus-judge' scripts/claim-lifecycle-calculus/main.go; then
+            echo 'producer must not import or copy the independent judge' >&2
+            exit 1
+          fi
           go test ./scripts/claim-lifecycle-calculus ./scripts/claim-lifecycle-calculus-judge ./scripts/claim-lifecycle-calculus-tamper
       - name: Exercise source cases and semantic boundaries
         shell: bash
