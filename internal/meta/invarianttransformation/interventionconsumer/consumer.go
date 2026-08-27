@@ -251,13 +251,13 @@ type reportWire struct {
 	RepositoryMutationAuthorized      bool                 `json:"repository_mutation_authorized"`
 	TempArtifactWriteAuthorized       bool                 `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool                 `json:"repository_net_status_unchanged"`
-	RepositoryNetStatusObserved       bool                 `json:"repository_net_status_observed"`
 	RepositoryActualOrTransientWrites string               `json:"repository_actual_or_transient_writes"`
-	RepositoryPathAuthorization       bool                 `json:"repository_path_authorization"`
-	AmbientProcessAuthority           string               `json:"ambient_process_authority"`
+	RepositoryNetStatusObserved       bool                 `json:"repository_net_status_observed"`
 	ExecutedEffects                   int                  `json:"executed_effects"`
 	IndependentlyObservedEffects      int                  `json:"independently_observed_effects"`
 	UnknownEffectScopes               int                  `json:"unknown_effect_scopes"`
+	RepositoryPathAuthorization       bool                 `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string               `json:"ambient_process_authority"`
 	CorrectionCount                   int                  `json:"correction_count"`
 	CorrectionDenominator             int                  `json:"correction_denominator"`
 	Failure                           json.RawMessage      `json:"failure,omitempty"`
