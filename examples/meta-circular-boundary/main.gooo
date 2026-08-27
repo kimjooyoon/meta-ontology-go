@@ -1,5 +1,5 @@
 package metacircularboundary
-namespace meta.circular.boundary
+namespace metacircularboundary
 
 entity MetaOperation id "gooo://meta-circular-boundary/entity/meta-operation"
 entity SelfDescription id "gooo://meta-circular-boundary/entity/self-description"
