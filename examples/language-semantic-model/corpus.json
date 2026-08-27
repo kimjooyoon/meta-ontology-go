@@ -192,6 +192,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-reproducibility-semantics",
+      "kind": "SOURCE",
+      "path": "examples/reproducibility-semantics/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",
