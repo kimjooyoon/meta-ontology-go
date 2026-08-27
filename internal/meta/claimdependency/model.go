@@ -79,19 +79,33 @@ type ObservationReceipt struct {
 }
 
 type ObservationBundle struct {
-	Schema               string               `json:"schema"`
-	Provider             string               `json:"provider"`
-	SourcePath           string               `json:"source_path"`
-	SourceDigest         string               `json:"source_digest"`
-	ArtifactPath         string               `json:"artifact_path"`
-	ArtifactBytesDigest  string               `json:"artifact_bytes_digest"`
-	ContractPath         string               `json:"contract_path"`
-	ContractDigest       string               `json:"contract_digest"`
-	FailureReceiptPath   string               `json:"failure_receipt_path,omitempty"`
-	FailureReceiptDigest string               `json:"failure_receipt_digest,omitempty"`
-	Profile              string               `json:"profile"`
-	Observations         []ObservationReceipt `json:"observations"`
-	Digest               string               `json:"digest"`
+	Schema                   string                    `json:"schema"`
+	Provider                 string                    `json:"provider"`
+	SourcePath               string                    `json:"source_path"`
+	SourceDigest             string                    `json:"source_digest"`
+	ArtifactPath             string                    `json:"artifact_path"`
+	ArtifactBytesDigest      string                    `json:"artifact_bytes_digest"`
+	ContractPath             string                    `json:"contract_path"`
+	ContractDigest           string                    `json:"contract_digest"`
+	ContractRaw              []byte                    `json:"contract_raw"`
+	FailureReceiptPath       string                    `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest     string                    `json:"failure_receipt_digest,omitempty"`
+	FailureReceiptRaw        []byte                    `json:"failure_receipt_raw,omitempty"`
+	Profile                  string                    `json:"profile"`
+	Observations             []ObservationReceipt      `json:"observations"`
+	StructuralContradictions []StructuralContradiction `json:"structural_contradictions,omitempty"`
+	Digest                   string                    `json:"digest"`
+}
+
+// StructuralContradiction records a source/contract disagreement without
+// pretending that the target process was observed to fail.
+type StructuralContradiction struct {
+	ClaimID           string `json:"claim_id"`
+	PropositionDigest string `json:"proposition_digest"`
+	ExpectedValue     string `json:"expected_value"`
+	DeclaredValue     string `json:"declared_value"`
+	ProcedureID       string `json:"procedure_id"`
+	Digest            string `json:"digest"`
 }
 
 // ValidatorContract is external expected material. It contains no outcome,
@@ -106,34 +120,57 @@ type ValidatorContract struct {
 }
 
 type ValidatorClaim struct {
-	ActivityName          string        `json:"activity_name"`
-	ExpectedTarget        TargetAddress `json:"expected_target"`
-	ExpectedValueProgram  string        `json:"expected_value_program"`
-	AlternateValueProgram string        `json:"alternate_value_program,omitempty"`
+	ClaimID                string        `json:"claim_id"`
+	PropositionDigest      string        `json:"proposition_digest"`
+	ProcedureID            string        `json:"procedure_id"`
+	TargetRowDigest        string        `json:"target_row_digest"`
+	AlternateRowDigest     string        `json:"alternate_row_digest,omitempty"`
+	ExpectedMaterialDigest string        `json:"expected_material_digest"`
+	ActivityName           string        `json:"activity_name"`
+	ExpectedTarget         TargetAddress `json:"expected_target"`
+	ExpectedValueProgram   string        `json:"expected_value_program"`
+	AlternateValueProgram  string        `json:"alternate_value_program,omitempty"`
 }
 
 // FailureReceipt is made only after a CI process has actually returned a
 // non-zero exit. A caller-supplied label is never sufficient to construct it.
 type FailureReceipt struct {
-	Schema              string        `json:"schema"`
-	Provider            string        `json:"provider"`
-	SourcePath          string        `json:"source_path"`
-	SourceDigest        string        `json:"source_digest"`
-	ArtifactPath        string        `json:"artifact_path"`
-	ArtifactBytesDigest string        `json:"artifact_bytes_digest"`
-	EdgeID              string        `json:"edge_id"`
-	FromClaimID         string        `json:"from_claim_id"`
-	ToClaimID           string        `json:"to_claim_id"`
-	EdgeKind            EdgeKind      `json:"edge_kind"`
-	Target              TargetAddress `json:"target"`
-	Procedure           string        `json:"procedure"`
-	ProcedureDigest     string        `json:"procedure_digest"`
-	Output              string        `json:"output"`
-	OutputDigest        string        `json:"output_digest"`
-	ExitCode            int           `json:"exit_code"`
-	Result              string        `json:"result"`
-	Coordinate          Coordinate    `json:"coordinate"`
-	Digest              string        `json:"digest"`
+	Schema              string         `json:"schema"`
+	Provider            string         `json:"provider"`
+	SourcePath          string         `json:"source_path"`
+	SourceDigest        string         `json:"source_digest"`
+	ArtifactPath        string         `json:"artifact_path"`
+	ArtifactBytesDigest string         `json:"artifact_bytes_digest"`
+	EdgeID              string         `json:"edge_id"`
+	FromClaimID         string         `json:"from_claim_id"`
+	ToClaimID           string         `json:"to_claim_id"`
+	EdgeKind            EdgeKind       `json:"edge_kind"`
+	Target              TargetAddress  `json:"target"`
+	Procedure           string         `json:"procedure"`
+	ProcedureDigest     string         `json:"procedure_digest"`
+	Executable          string         `json:"executable"`
+	ExecutableDigest    string         `json:"executable_digest"`
+	ExecutableRaw       []byte         `json:"executable_raw"`
+	Argv                []string       `json:"argv"`
+	InputTargets        []FailureInput `json:"input_targets"`
+	Stdout              []byte         `json:"stdout"`
+	StdoutDigest        string         `json:"stdout_digest"`
+	Stderr              []byte         `json:"stderr"`
+	StderrDigest        string         `json:"stderr_digest"`
+	ObservedExitCode    int            `json:"observed_exit_code"`
+	Result              string         `json:"result"`
+	Coordinate          Coordinate     `json:"coordinate"`
+	Digest              string         `json:"digest"`
+}
+
+type FailureInput struct {
+	ClaimID            string        `json:"claim_id"`
+	PropositionDigest  string        `json:"proposition_digest"`
+	Target             TargetAddress `json:"target"`
+	TargetOutputDigest string        `json:"target_output_digest"`
+	ValueProgram       string        `json:"value_program"`
+	ArtifactPath       string        `json:"artifact_path"`
+	ArtifactDigest     string        `json:"artifact_digest"`
 }
 
 type Coordinate struct {
@@ -197,11 +234,17 @@ type EvidenceClaim struct {
 }
 
 type CapabilityEvidence struct {
-	Provider   string         `json:"provider"`
-	Permission string         `json:"permission"`
-	Status     EvidenceStatus `json:"status"`
-	Coordinate Coordinate     `json:"coordinate"`
-	Digest     string         `json:"digest"`
+	Provider   string            `json:"provider"`
+	Permission string            `json:"permission"`
+	Status     EvidenceStatus    `json:"status"`
+	Toolchain  ToolchainEvidence `json:"toolchain"`
+	Coordinate Coordinate        `json:"coordinate"`
+	Digest     string            `json:"digest"`
+}
+
+type ToolchainEvidence struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 type RepositorySnapshot struct {
@@ -229,6 +272,7 @@ type EvidenceReceipt struct {
 	Procedure               string               `json:"procedure"`
 	ObservationPath         string               `json:"observation_path,omitempty"`
 	ObservationBundleDigest string               `json:"observation_bundle_digest,omitempty"`
+	ObservationBundleRaw    []byte               `json:"observation_bundle_raw,omitempty"`
 	Observations            []ObservationReceipt `json:"observations"`
 	ObservedPredicate       ObservationPredicate `json:"observed_predicate"`
 	ObservedValue           string               `json:"observed_value"`

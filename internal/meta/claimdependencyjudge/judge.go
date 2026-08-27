@@ -4,10 +4,12 @@ package claimdependencyjudge
 // state algebra. It must remain import-independent from the producer so a
 // producer receipt is comparison evidence, not the judge's source of truth.
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -25,11 +27,11 @@ const producerID = "gooo://meta/claim-dependency/producer/v3"
 const consumerID = "gooo://meta/claim-dependency/independent-judge/v3"
 const operation, proof = "classify-claim-state-causality", "COHERENCE"
 const evidenceProcedure = "RAW_ARTIFACT_OBSERVATION_BINDING_V3"
-const observationSchema = "gooo.meta.claim-dependency-observation/v2"
-const observationBundleSchema = "gooo.meta.claim-dependency-observation-bundle/v1"
-const validatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v1"
-const failureReceiptSchema = "gooo.meta.claim-dependency-failure-receipt/v1"
-const failureProcedure = "CI_NONZERO_EXIT_FAILURE_ANTECEDENT_V1"
+const observationSchema = "gooo.meta.claim-dependency-observation/v3"
+const observationBundleSchema = "gooo.meta.claim-dependency-observation-bundle/v2"
+const validatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v2"
+const failureReceiptSchema = "gooo.meta.claim-dependency-failure-receipt/v2"
+const failureProcedure = "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR_V2"
 
 type edgeKind string
 
@@ -85,19 +87,30 @@ type observationReceipt struct {
 	Digest            string     `json:"digest"`
 }
 type observationBundle struct {
-	Schema               string               `json:"schema"`
-	Provider             string               `json:"provider"`
-	SourcePath           string               `json:"source_path"`
-	SourceDigest         string               `json:"source_digest"`
-	ArtifactPath         string               `json:"artifact_path"`
-	ArtifactBytesDigest  string               `json:"artifact_bytes_digest"`
-	ContractPath         string               `json:"contract_path"`
-	ContractDigest       string               `json:"contract_digest"`
-	FailureReceiptPath   string               `json:"failure_receipt_path,omitempty"`
-	FailureReceiptDigest string               `json:"failure_receipt_digest,omitempty"`
-	Profile              string               `json:"profile"`
-	Observations         []observationReceipt `json:"observations"`
-	Digest               string               `json:"digest"`
+	Schema                   string                    `json:"schema"`
+	Provider                 string                    `json:"provider"`
+	SourcePath               string                    `json:"source_path"`
+	SourceDigest             string                    `json:"source_digest"`
+	ArtifactPath             string                    `json:"artifact_path"`
+	ArtifactBytesDigest      string                    `json:"artifact_bytes_digest"`
+	ContractPath             string                    `json:"contract_path"`
+	ContractDigest           string                    `json:"contract_digest"`
+	ContractRaw              []byte                    `json:"contract_raw"`
+	FailureReceiptPath       string                    `json:"failure_receipt_path,omitempty"`
+	FailureReceiptDigest     string                    `json:"failure_receipt_digest,omitempty"`
+	FailureReceiptRaw        []byte                    `json:"failure_receipt_raw,omitempty"`
+	Profile                  string                    `json:"profile"`
+	Observations             []observationReceipt      `json:"observations"`
+	StructuralContradictions []structuralContradiction `json:"structural_contradictions,omitempty"`
+	Digest                   string                    `json:"digest"`
+}
+type structuralContradiction struct {
+	ClaimID           string `json:"claim_id"`
+	PropositionDigest string `json:"proposition_digest"`
+	ExpectedValue     string `json:"expected_value"`
+	DeclaredValue     string `json:"declared_value"`
+	ProcedureID       string `json:"procedure_id"`
+	Digest            string `json:"digest"`
 }
 type validatorContract struct {
 	Schema                 string           `json:"schema"`
@@ -107,31 +120,53 @@ type validatorContract struct {
 	Claims                 []validatorClaim `json:"claims"`
 }
 type validatorClaim struct {
-	ActivityName          string `json:"activity_name"`
-	ExpectedTarget        target `json:"expected_target"`
-	ExpectedValueProgram  string `json:"expected_value_program"`
-	AlternateValueProgram string `json:"alternate_value_program,omitempty"`
+	ClaimID                string `json:"claim_id"`
+	PropositionDigest      string `json:"proposition_digest"`
+	ProcedureID            string `json:"procedure_id"`
+	TargetRowDigest        string `json:"target_row_digest"`
+	AlternateRowDigest     string `json:"alternate_row_digest,omitempty"`
+	ExpectedMaterialDigest string `json:"expected_material_digest"`
+	ActivityName           string `json:"activity_name"`
+	ExpectedTarget         target `json:"expected_target"`
+	ExpectedValueProgram   string `json:"expected_value_program"`
+	AlternateValueProgram  string `json:"alternate_value_program,omitempty"`
 }
 type failureReceipt struct {
-	Schema              string     `json:"schema"`
-	Provider            string     `json:"provider"`
-	SourcePath          string     `json:"source_path"`
-	SourceDigest        string     `json:"source_digest"`
-	ArtifactPath        string     `json:"artifact_path"`
-	ArtifactBytesDigest string     `json:"artifact_bytes_digest"`
-	EdgeID              string     `json:"edge_id"`
-	FromClaimID         string     `json:"from_claim_id"`
-	ToClaimID           string     `json:"to_claim_id"`
-	EdgeKind            edgeKind   `json:"edge_kind"`
-	Target              target     `json:"target"`
-	Procedure           string     `json:"procedure"`
-	ProcedureDigest     string     `json:"procedure_digest"`
-	Output              string     `json:"output"`
-	OutputDigest        string     `json:"output_digest"`
-	ExitCode            int        `json:"exit_code"`
-	Result              string     `json:"result"`
-	Coordinate          coordinate `json:"coordinate"`
-	Digest              string     `json:"digest"`
+	Schema              string         `json:"schema"`
+	Provider            string         `json:"provider"`
+	SourcePath          string         `json:"source_path"`
+	SourceDigest        string         `json:"source_digest"`
+	ArtifactPath        string         `json:"artifact_path"`
+	ArtifactBytesDigest string         `json:"artifact_bytes_digest"`
+	EdgeID              string         `json:"edge_id"`
+	FromClaimID         string         `json:"from_claim_id"`
+	ToClaimID           string         `json:"to_claim_id"`
+	EdgeKind            edgeKind       `json:"edge_kind"`
+	Target              target         `json:"target"`
+	Procedure           string         `json:"procedure"`
+	ProcedureDigest     string         `json:"procedure_digest"`
+	Executable          string         `json:"executable"`
+	ExecutableDigest    string         `json:"executable_digest"`
+	ExecutableRaw       []byte         `json:"executable_raw"`
+	Argv                []string       `json:"argv"`
+	InputTargets        []failureInput `json:"input_targets"`
+	Stdout              []byte         `json:"stdout"`
+	StdoutDigest        string         `json:"stdout_digest"`
+	Stderr              []byte         `json:"stderr"`
+	StderrDigest        string         `json:"stderr_digest"`
+	ObservedExitCode    int            `json:"observed_exit_code"`
+	Result              string         `json:"result"`
+	Coordinate          coordinate     `json:"coordinate"`
+	Digest              string         `json:"digest"`
+}
+type failureInput struct {
+	ClaimID            string `json:"claim_id"`
+	PropositionDigest  string `json:"proposition_digest"`
+	Target             target `json:"target"`
+	TargetOutputDigest string `json:"target_output_digest"`
+	ValueProgram       string `json:"value_program"`
+	ArtifactPath       string `json:"artifact_path"`
+	ArtifactDigest     string `json:"artifact_digest"`
 }
 type claim struct {
 	Ordinal           int        `json:"ordinal"`
@@ -181,8 +216,13 @@ type capability struct {
 	Provider   string     `json:"provider"`
 	Permission string     `json:"permission"`
 	Status     string     `json:"status"`
+	Toolchain  toolchain  `json:"toolchain"`
 	Coordinate coordinate `json:"coordinate"`
 	Digest     string     `json:"digest"`
+}
+type toolchain struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 type authorityCase struct {
 	CaseID             string `json:"case_id"`
@@ -215,6 +255,7 @@ type evidenceReceipt struct {
 	Procedure               string               `json:"procedure"`
 	ObservationPath         string               `json:"observation_path,omitempty"`
 	ObservationBundleDigest string               `json:"observation_bundle_digest,omitempty"`
+	ObservationBundleRaw    []byte               `json:"observation_bundle_raw,omitempty"`
 	Observations            []observationReceipt `json:"observations"`
 	ObservedPredicate       predicate            `json:"observed_predicate"`
 	ObservedValue           string               `json:"observed_value"`
@@ -421,12 +462,11 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	}
 	sourceDigest := digestBytes(source)
 	if evidence.ObservationPath != "" {
-		data, err := os.ReadFile(evidence.ObservationPath)
-		if err != nil {
-			return Judgment{}, fmt.Errorf("judge cannot re-observe source-bound target bundle: %w", err)
+		if len(evidence.ObservationBundleRaw) == 0 || digestBytes(evidence.ObservationBundleRaw) != evidence.ObservationBundleDigest {
+			return Judgment{}, fmt.Errorf("judge lacks durable target observation bytes")
 		}
 		var bundle observationBundle
-		if err := json.Unmarshal(data, &bundle); err != nil {
+		if err := strictJSON(evidence.ObservationBundleRaw, &bundle); err != nil {
 			return Judgment{}, fmt.Errorf("source-bound target bundle decode: %w", err)
 		}
 		if bundle.SourcePath != sourcePath || bundle.SourceDigest != sourceDigest {
@@ -443,7 +483,7 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	var prior *receipt
 	if len(priorBytes) > 0 {
 		var value receipt
-		if err := json.Unmarshal(priorBytes, &value); err != nil {
+		if err := strictJSON(priorBytes, &value); err != nil {
 			return Judgment{}, err
 		}
 		if err := validatePrior(current, value); err != nil {
@@ -558,6 +598,7 @@ func reconstruct(source []byte, sourcePath string) (reconstructed, error) {
 		return reconstructed{}, fmt.Errorf("judge reconstructed %d claims", len(claims))
 	}
 	seen := map[string]bool{}
+	claimIDs := map[string]bool{}
 	for _, c := range claims {
 		seen[c.PropositionDigest] = true
 	}
@@ -714,7 +755,7 @@ func validateEvidence(value evidenceReceipt) error {
 	if evidenceDigest(value) != value.Digest {
 		return fmt.Errorf("raw evidence digest invalid")
 	}
-	if value.Snapshot.BeforeDigest == "" || value.Snapshot.AfterDigest == "" || value.Snapshot.OutputPath == "" || value.Snapshot.RepositoryWrites != 0 || value.Snapshot.BeforeDigest != value.Snapshot.AfterDigest || value.Capability.Status != "CURRENT_EVIDENCE" {
+	if value.Snapshot.BeforeDigest == "" || value.Snapshot.AfterDigest == "" || value.Snapshot.OutputPath == "" || value.Snapshot.RepositoryWrites != 0 || value.Snapshot.BeforeDigest != value.Snapshot.AfterDigest || value.Capability.Status != "CURRENT_EVIDENCE" || value.Capability.Toolchain.Name != "go" || value.Capability.Toolchain.Version != "go1.27.0" {
 		return fmt.Errorf("raw evidence effects or capability invalid")
 	}
 	if capabilityDigest(value.Capability) != value.Capability.Digest {
@@ -739,23 +780,22 @@ func validateEvidence(value evidenceReceipt) error {
 		return fmt.Errorf("raw evidence artifact bytes digest changed")
 	}
 	observations := []observationReceipt(nil)
+	var observedBundle observationBundle
 	if value.ObservationPath != "" {
-		data, err := os.ReadFile(value.ObservationPath)
-		if err != nil {
-			return fmt.Errorf("judge cannot re-observe target bundle: %w", err)
+		if len(value.ObservationBundleRaw) == 0 || digestBytes(value.ObservationBundleRaw) != value.ObservationBundleDigest {
+			return fmt.Errorf("raw evidence lacks durable target bundle")
 		}
-		var bundle observationBundle
-		if err := json.Unmarshal(data, &bundle); err != nil {
+		if err := strictJSON(value.ObservationBundleRaw, &observedBundle); err != nil {
 			return fmt.Errorf("target observation bundle decode: %w", err)
 		}
-		if err := validateObservationBundle(bundle, value.SourcePath, sourceBytes, value.ArtifactPath, artifactBytes, sourceGraph.Graph); err != nil {
+		if err := validateObservationBundle(observedBundle, value.SourcePath, sourceBytes, value.ArtifactPath, artifactBytes, sourceGraph.Graph); err != nil {
 			return err
 		}
-		if bundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(bundle.Observations, value.Observations) {
+		if observedBundle.Digest != value.ObservationBundleDigest || !reflect.DeepEqual(observedBundle.Observations, value.Observations) {
 			return fmt.Errorf("embedded target observation bundle differs from raw bundle")
 		}
-		observations = bundle.Observations
-	} else if len(value.Observations) != 0 || value.ObservationBundleDigest != "" {
+		observations = observedBundle.Observations
+	} else if len(value.Observations) != 0 || value.ObservationBundleDigest != "" || len(value.ObservationBundleRaw) != 0 {
 		return fmt.Errorf("raw evidence has observations without a raw bundle")
 	}
 	expectedStatus := "UNKNOWN"
@@ -767,12 +807,7 @@ func validateEvidence(value evidenceReceipt) error {
 	}
 	expectedValue := fmt.Sprintf("observation:ABSENT|stage:OBSERVE|step:current-evidence-provider|reason:EXTERNAL_TARGET_OBSERVATION_MISSING|artifact_path_digest:%s|artifact_bytes_digest:%s", digestBytes([]byte(value.ArtifactPath)), digestBytes(artifactBytes))
 	if value.ObservationPath != "" {
-		var bundle observationBundle
-		data, _ := os.ReadFile(value.ObservationPath)
-		if err := json.Unmarshal(data, &bundle); err != nil {
-			return fmt.Errorf("target observation bundle decode: %w", err)
-		}
-		expectedValue = observationBundleValue(bundle)
+		expectedValue = observationBundleValue(observedBundle)
 	}
 	if value.ObservedValue != expectedValue {
 		return fmt.Errorf("raw evidence value is not derived from target observations")
@@ -804,24 +839,31 @@ func validateEvidenceClaims(value evidenceReceipt, g graph, artifactBytes []byte
 }
 
 func validateObservationBundle(bundle observationBundle, sourcePath string, source []byte, artifactPath string, artifact []byte, g graph) error {
-	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != sourcePath || bundle.SourceDigest != digestBytes(source) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.ContractPath == "" || bundle.ContractDigest == "" || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
+	if bundle.Schema != observationBundleSchema || bundle.Provider == "" || bundle.SourcePath != sourcePath || bundle.SourceDigest != digestBytes(source) || bundle.ArtifactPath != artifactPath || bundle.ArtifactBytesDigest != digestBytes(artifact) || bundle.ContractPath == "" || bundle.ContractDigest == "" || len(bundle.ContractRaw) == 0 || bundle.Profile == "" || bundle.Digest == "" || len(bundle.Observations) == 0 {
 		return fmt.Errorf("target observation bundle identity or target binding is invalid")
 	}
-	contractBytes, err := os.ReadFile(bundle.ContractPath)
-	if err != nil || digestBytes(contractBytes) != bundle.ContractDigest {
+	if digestBytes(bundle.ContractRaw) != bundle.ContractDigest {
 		return fmt.Errorf("validator contract bytes changed")
 	}
-	contract, err := readValidatorContract(bundle.ContractPath)
-	if err != nil {
+	var contract validatorContract
+	if err := strictJSON(bundle.ContractRaw, &contract); err != nil {
+		return fmt.Errorf("embedded validator contract decode: %w", err)
+	}
+	if err := validateValidatorContract(contract); err != nil {
 		return err
+	}
+	for _, c := range g.Nodes {
+		material, ok := contractClaim(contract, c.ActivityName)
+		if !ok || !claimIdentityMatchesContract(c, material) {
+			return fmt.Errorf("embedded validator contract claim inventory does not match source graph")
+		}
 	}
 	failure := failureReceipt{}
 	if bundle.FailureReceiptPath != "" {
-		failureBytes, err := os.ReadFile(bundle.FailureReceiptPath)
-		if err != nil || digestBytes(failureBytes) != bundle.FailureReceiptDigest {
+		if len(bundle.FailureReceiptRaw) == 0 || digestBytes(bundle.FailureReceiptRaw) != bundle.FailureReceiptDigest {
 			return fmt.Errorf("failure receipt bytes changed")
 		}
-		if err := json.Unmarshal(failureBytes, &failure); err != nil {
+		if err := strictJSON(bundle.FailureReceiptRaw, &failure); err != nil {
 			return fmt.Errorf("failure receipt decode: %w", err)
 		}
 		if err := validateFailureReceipt(failure, sourcePath, source, artifactPath, artifact, g); err != nil {
@@ -841,6 +883,12 @@ func validateObservationBundle(bundle observationBundle, sourcePath string, sour
 			return fmt.Errorf("target observation bundle has duplicate binding %q", key)
 		}
 		seen[key] = true
+	}
+	for _, finding := range bundle.StructuralContradictions {
+		i := indexOf(finding.ClaimID, g)
+		if i < 0 || finding.PropositionDigest != g.Nodes[i].PropositionDigest || finding.ExpectedValue == finding.DeclaredValue || finding.ProcedureID == "" || finding.Digest != digestBytes([]byte(fmt.Sprintf("%s|%s|%s|%s", finding.ClaimID, finding.ExpectedValue, finding.DeclaredValue, finding.ProcedureID))) {
+			return fmt.Errorf("structural contradiction is not source-bound")
+		}
 	}
 	return nil
 }
@@ -862,7 +910,9 @@ func validateObservation(value observationReceipt, artifactPath string, artifact
 			return fmt.Errorf("claim-scoped target observation is not bound to its claim")
 		}
 		material, ok := contractClaim(contract, g.Nodes[i].ActivityName)
-		if !ok || !claimMatchesExpected(g.Nodes[i], material, contract, artifactPath, digestBytes(artifact)) || value.ExpectedValue != claimMaterial("contract", g.Nodes[i], material.ExpectedTarget, contract.ExpectedArtifactPath, contract.ExpectedArtifactDigest, material.ExpectedValueProgram) || value.ObservedValue != claimMaterial("observed", g.Nodes[i], g.Nodes[i].Target, artifactPath, digestBytes(artifact), g.Nodes[i].ValueProgram) || value.Output != value.ObservedValue {
+		row, rowDigest, rowOK := targetRow(artifact, g.Nodes[i].ActivityName)
+		expected := claimObservationMaterial(g.Nodes[i], material, artifactPath, digestBytes(artifact), rowDigest)
+		if !ok || !claimIdentityMatchesContract(g.Nodes[i], material) || g.Nodes[i].ValueProgram != material.ExpectedValueProgram || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || !rowOK || rowDigest != material.TargetRowDigest || value.ExpectedValue != expected || value.ObservedValue != expected || value.OutputDigest != digestBytes(row) {
 			return fmt.Errorf("claim observation does not match external validator material")
 		}
 	case "EDGE":
@@ -884,18 +934,23 @@ func validateObservation(value observationReceipt, artifactPath string, artifact
 		if !fromOK || !toOK || artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest {
 			return fmt.Errorf("edge observation does not match external validator material")
 		}
-		if ed.Kind == contradicts && (!claimMatchesExpected(g.Nodes[from], fromContract, contract, artifactPath, digestBytes(artifact)) || !claimMatchesAlternate(g.Nodes[to], toContract, contract, artifactPath, digestBytes(artifact))) {
+		_, fromRowDigest, fromRowOK := targetRow(artifact, g.Nodes[from].ActivityName)
+		_, toRowDigest, toRowOK := targetRow(artifact, g.Nodes[to].ActivityName)
+		if artifactPath != contract.ExpectedArtifactPath || digestBytes(artifact) != contract.ExpectedArtifactDigest || !fromRowOK || !toRowOK {
+			return fmt.Errorf("edge observation target rows are not externally bound")
+		}
+		if ed.Kind == contradicts && (fromRowDigest != fromContract.TargetRowDigest || toContract.AlternateRowDigest == "" || toRowDigest != toContract.AlternateRowDigest) {
 			return fmt.Errorf("contradiction edge observation has the wrong direction or value binding")
 		}
-		if ed.Kind == failureEntailment && (!claimMatchesAlternate(g.Nodes[from], fromContract, contract, artifactPath, digestBytes(artifact)) || !claimMatchesAlternate(g.Nodes[to], toContract, contract, artifactPath, digestBytes(artifact))) {
+		if ed.Kind == failureEntailment && (fromContract.AlternateRowDigest == "" || toContract.AlternateRowDigest == "" || fromRowDigest != fromContract.AlternateRowDigest || toRowDigest != toContract.AlternateRowDigest) {
 			return fmt.Errorf("failure edge observation has the wrong failure binding")
 		}
 		expected := edgeMaterial("contract", ed, g, contract, digestBytes(artifact), artifactPath, false)
-		observed := edgeMaterial("observed", ed, g, contract, digestBytes(artifact), artifactPath, true)
-		if ed.Kind == contradicts && (value.ExpectedValue != expected || value.ObservedValue != observed || value.Output != observed) {
+		observed := edgeTargetMaterial("observed", ed, g, fromRowDigest, toRowDigest, artifactPath, digestBytes(artifact))
+		if ed.Kind == contradicts && (value.ExpectedValue != expected || value.ObservedValue != observed || value.Output != "CONTRADICTS_TARGET_VALUE_OPPOSITE") {
 			return fmt.Errorf("contradiction edge observation is not a structured opposite-value comparison")
 		}
-		if ed.Kind == failureEntailment && (!hasFailure || failure.EdgeID != ed.EdgeID || failure.ExitCode == 0 || failure.Result != "NONZERO_EXIT" || value.ExpectedValue != expected || value.ObservedValue != observed+"|exit="+strconv.Itoa(failure.ExitCode)+"|result="+failure.Result || value.Output != failure.Output) {
+		if ed.Kind == failureEntailment && (!hasFailure || failure.EdgeID != ed.EdgeID || failure.ObservedExitCode != 1 || failure.Result != "NONZERO_EXIT" || value.ExpectedValue != expected || value.ObservedValue != observed+"|exit="+strconv.Itoa(failure.ObservedExitCode)+"|result="+failure.Result || value.Output != digestBytes(append(failure.Stdout, failure.Stderr...))) {
 			return fmt.Errorf("failure edge observation lacks an exact non-zero failure receipt")
 		}
 	case "UNRELATED_ARTIFACT":
@@ -917,7 +972,7 @@ func readValidatorContract(path string) (validatorContract, error) {
 		return validatorContract{}, fmt.Errorf("validator contract: %w", err)
 	}
 	var value validatorContract
-	if err := json.Unmarshal(data, &value); err != nil {
+	if err := strictJSON(data, &value); err != nil {
 		return validatorContract{}, fmt.Errorf("validator contract decode: %w", err)
 	}
 	if value.Schema != validatorContractSchema || value.ContractID == "" || value.ExpectedArtifactPath == "" || value.ExpectedArtifactDigest == "" || len(value.Claims) != claimTotal {
@@ -925,11 +980,19 @@ func readValidatorContract(path string) (validatorContract, error) {
 	}
 	seen := map[string]bool{}
 	targets := map[string]bool{}
+	procedures := map[string]bool{}
+	rowDigests := map[string]bool{}
 	for _, c := range value.Claims {
-		if c.ActivityName == "" || c.ExpectedValueProgram == "" || c.ExpectedTarget.Artifact == "" || c.ExpectedTarget.Output == "" || seen[c.ActivityName] {
+		if c.ClaimID == "" || c.PropositionDigest == "" || c.ProcedureID == "" || c.TargetRowDigest == "" || c.ExpectedMaterialDigest == "" || c.ActivityName == "" || c.ExpectedValueProgram == "" || c.ExpectedTarget.Artifact == "" || c.ExpectedTarget.Output == "" || seen[c.ActivityName] || claimIDs[c.ClaimID] || procedures[c.ProcedureID] {
 			return validatorContract{}, fmt.Errorf("validator contract claim material is invalid")
 		}
 		seen[c.ActivityName] = true
+		claimIDs[c.ClaimID] = true
+		procedures[c.ProcedureID] = true
+		if c.ProcedureID != validatorProcedureID(c.ActivityName) || c.ExpectedMaterialDigest != validatorExpectedMaterialDigest(c) || rowDigests[c.TargetRowDigest] {
+			return validatorContract{}, fmt.Errorf("validator contract expected material digest is invalid")
+		}
+		rowDigests[c.TargetRowDigest] = true
 		targetKey := strings.Join(c.ExpectedTarget.Inputs, ",") + "|" + c.ExpectedTarget.Output + "|" + c.ExpectedTarget.Artifact
 		if targets[targetKey] {
 			return validatorContract{}, fmt.Errorf("validator contract targets are not distinct")
@@ -937,6 +1000,53 @@ func readValidatorContract(path string) (validatorContract, error) {
 		targets[targetKey] = true
 	}
 	return value, nil
+}
+
+func validatorProcedureID(activity string) string {
+	return map[string]string{"Root": "CI_CLAIM_TARGET_ROW_ROOT_V1", "Derived": "CI_CLAIM_TARGET_ROW_DERIVED_V1", "SupportCheck": "CI_CLAIM_TARGET_ROW_SUPPORT_V1", "RequirementCheck": "CI_CLAIM_TARGET_ROW_REQUIREMENT_V1", "ContradictionCheck": "CI_CLAIM_TARGET_ROW_CONTRADICTION_V1", "FailureEntailmentCheck": "CI_CLAIM_TARGET_ROW_FAILURE_V1"}[activity]
+}
+
+func strictJSON(data []byte, value any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(value); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("trailing JSON value")
+		}
+		return fmt.Errorf("trailing JSON data: %w", err)
+	}
+	return nil
+}
+
+func validatorExpectedMaterialDigest(c validatorClaim) string {
+	return digestBytes([]byte(fmt.Sprintf("claim-contract|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_row_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|expected_value_program=%s", c.ClaimID, c.PropositionDigest, c.ProcedureID, c.TargetRowDigest, strings.Join(c.ExpectedTarget.Inputs, ","), c.ExpectedTarget.Output, c.ExpectedTarget.Artifact, c.ExpectedValueProgram)))
+}
+
+func claimIdentityMatchesContract(c claim, expected validatorClaim) bool {
+	return c.ClaimID == expected.ClaimID && c.PropositionDigest == expected.PropositionDigest && c.ActivityName == expected.ActivityName && reflect.DeepEqual(c.Target, expected.ExpectedTarget)
+}
+
+func claimObservationMaterial(c claim, expected validatorClaim, artifactPath, artifactDigest, rowDigest string) string {
+	return fmt.Sprintf("claim-observation|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_row_digest=%s|artifact_path=%s|artifact_digest=%s|expected_value_program=%s", c.ClaimID, c.PropositionDigest, expected.ProcedureID, rowDigest, artifactPath, artifactDigest, expected.ExpectedValueProgram)
+}
+
+func edgeTargetMaterial(prefix string, ed edge, g graph, fromRowDigest, toRowDigest, artifactPath, artifactDigest string) string {
+	return fmt.Sprintf("%s|edge=%s|kind=%s|from=%s|to=%s|from_target_row_digest=%s|to_target_row_digest=%s|artifact_path=%s|artifact_bytes_digest=%s", prefix, ed.EdgeID, ed.Kind, ed.FromClaimID, ed.ToClaimID, fromRowDigest, toRowDigest, artifactPath, artifactDigest)
+}
+
+func targetRow(artifact []byte, activity string) ([]byte, string, bool) {
+	prefix := []byte("activity " + activity + "(")
+	for _, line := range bytes.Split(artifact, []byte("\n")) {
+		trimmed := bytes.TrimSpace(line)
+		if bytes.HasPrefix(trimmed, prefix) {
+			return append([]byte(nil), trimmed...), digestBytes(trimmed), true
+		}
+	}
+	return nil, "", false
 }
 func contractClaim(value validatorContract, activity string) (validatorClaim, bool) {
 	for _, c := range value.Claims {
@@ -967,8 +1077,11 @@ func edgeMaterial(prefix string, ed edge, g graph, contract validatorContract, a
 	return fmt.Sprintf("%s|edge=%s|kind=%s|from=%s|to=%s|from_value_program=%s|to_value_program=%s|artifact_path=%s|artifact_bytes_digest=%s", prefix, ed.EdgeID, ed.Kind, ed.FromClaimID, ed.ToClaimID, fromProgram, toProgram, artifactPath, artifactDigest)
 }
 func validateFailureReceipt(value failureReceipt, sourcePath string, source []byte, artifactPath string, artifact []byte, g graph) error {
-	if value.Schema != failureReceiptSchema || value.Provider == "" || value.SourcePath != sourcePath || value.SourceDigest != digestBytes(source) || value.ArtifactPath != artifactPath || value.ArtifactBytesDigest != digestBytes(artifact) || value.EdgeKind != failureEntailment || value.ExitCode == 0 || value.Result != "NONZERO_EXIT" || value.Procedure != failureProcedure || value.ProcedureDigest != digestBytes([]byte(value.Procedure)) || value.OutputDigest != digestBytes([]byte(value.Output)) || value.Coordinate.Stage == "" || value.Digest == "" {
+	if value.Schema != failureReceiptSchema || value.Provider == "" || value.SourcePath != sourcePath || value.SourceDigest != digestBytes(source) || value.ArtifactPath != artifactPath || value.ArtifactBytesDigest != digestBytes(artifact) || value.EdgeKind != failureEntailment || value.ObservedExitCode != 1 || value.Result != "NONZERO_EXIT" || value.Procedure != failureProcedure || value.Executable != "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR" || value.ExecutableDigest == "" || digestBytes(value.ExecutableRaw) != value.ExecutableDigest || len(value.Argv) != 5 || value.Argv[0] != "-comparator" || value.Argv[1] != "-input" || value.Argv[3] != "-edge-id" || value.Argv[4] != value.EdgeID || value.StdoutDigest != digestBytes(value.Stdout) || value.StderrDigest != digestBytes(value.Stderr) || value.ProcedureDigest != failureProcedureDigest(value) || value.Coordinate.Stage == "" || value.Digest == "" {
 		return fmt.Errorf("failure receipt is not an observed non-zero process result")
+	}
+	if !bytes.Contains(value.ExecutableRaw, []byte("FAILURE_ANTECEDENT")) || !bytes.Contains(value.ExecutableRaw, []byte("EDGE_SPECIFIC")) || !bytes.Contains(value.Stdout, []byte("FAILURE_ANTECEDENT_OBSERVED")) || !bytes.Contains(value.Stdout, []byte("EDGE_SPECIFIC")) {
+		return fmt.Errorf("failure receipt executable is not the fixed edge comparator")
 	}
 	i := indexOfEdge(value.EdgeID, g)
 	if i < 0 {
@@ -976,13 +1089,37 @@ func validateFailureReceipt(value failureReceipt, sourcePath string, source []by
 	}
 	ed := g.Edges[i]
 	to := indexOf(ed.ToClaimID, g)
-	if to < 0 || ed.Kind != failureEntailment || value.FromClaimID != ed.FromClaimID || value.ToClaimID != ed.ToClaimID || !reflect.DeepEqual(value.Target, g.Nodes[to].Target) {
+	if to < 0 || ed.Kind != failureEntailment || value.FromClaimID != ed.FromClaimID || value.ToClaimID != ed.ToClaimID || !reflect.DeepEqual(value.Target, g.Nodes[to].Target) || len(value.InputTargets) != 2 {
 		return fmt.Errorf("failure receipt edge binding is invalid")
+	}
+	from := indexOf(ed.FromClaimID, g)
+	_, fromTargetDigest, fromTargetOK := targetRow(artifact, g.Nodes[from].ActivityName)
+	_, toTargetDigest, toTargetOK := targetRow(artifact, g.Nodes[to].ActivityName)
+	if from < 0 || !fromTargetOK || !toTargetOK || !failureInputMatches(value.InputTargets[0], g.Nodes[from], artifactPath, digestBytes(artifact), fromTargetDigest) || !failureInputMatches(value.InputTargets[1], g.Nodes[to], artifactPath, digestBytes(artifact), toTargetDigest) {
+		return fmt.Errorf("failure receipt input targets are not bound to edge claims")
+	}
+	fromRow, _, fromOK := targetRow(artifact, g.Nodes[from].ActivityName)
+	toRow, _, toOK := targetRow(artifact, g.Nodes[to].ActivityName)
+	if !fromOK || !toOK || !bytes.Contains(fromRow, []byte(g.Nodes[from].ValueProgram)) || !bytes.Contains(toRow, []byte(g.Nodes[to].ValueProgram)) {
+		return fmt.Errorf("failure receipt process did not consume edge target outputs")
 	}
 	if failureDigest(value) != value.Digest {
 		return fmt.Errorf("failure receipt digest is invalid")
 	}
 	return nil
+}
+
+func failureInputMatches(input failureInput, c claim, artifactPath, artifactDigest, targetOutputDigest string) bool {
+	return input.ClaimID == c.ClaimID && input.PropositionDigest == c.PropositionDigest && reflect.DeepEqual(input.Target, c.Target) && input.TargetOutputDigest == targetOutputDigest && input.ValueProgram == c.ValueProgram && input.ArtifactPath == artifactPath && input.ArtifactDigest == artifactDigest
+}
+
+func failureProcedureDigest(value failureReceipt) string {
+	parts := []string{value.Procedure, value.ExecutableDigest}
+	parts = append(parts, value.Argv...)
+	for _, input := range value.InputTargets {
+		parts = append(parts, input.ClaimID, input.PropositionDigest, input.ValueProgram, input.ArtifactPath, input.ArtifactDigest, input.Target.Output, input.Target.Artifact, strings.Join(input.Target.Inputs, ","))
+	}
+	return digestBytes([]byte(strings.Join(parts, "|")))
 }
 
 func claimObservationFor(c claim, observations []observationReceipt) (observationReceipt, bool) {

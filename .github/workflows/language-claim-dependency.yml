@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.HEAD_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           check-latest: false
@@ -78,29 +78,27 @@ jobs:
           output="$RUNNER_TEMP/claim-dependency"
           mkdir -p "$output/first" "$output/second" "$output/provider" "$output/observation"
           capability="$output/capability.json"
-          jq -n '{provider:"github-actions",permission:"contents:read",status:"CURRENT_EVIDENCE",coordinate:{stage:"AUTHORITY",step:"workflow-permissions",reason:"GITHUB_API_CONTENTS_READ_CAPABILITY"}}' > "$capability"
+          jq -n '{provider:"github-actions",permission:"contents:read",status:"CURRENT_EVIDENCE",toolchain:{name:"go",version:"go1.27.0"},coordinate:{stage:"AUTHORITY",step:"workflow-permissions",reason:"GITHUB_API_CONTENTS_READ_CAPABILITY"}}' > "$capability"
           contract=examples/language-claim-dependency/validator-contract.json
+          refuted_contract=examples/language-claim-dependency/validator-contract-refuted.json
+          cp "$contract" "$output/validator-contract.json"
+          cp "$refuted_contract" "$output/validator-contract-refuted.json"
           failure_output="$output/failure-process.txt"
-          set +e
-          bash -c 'printf "failure antecedent observed by CI process\n"; exit 1' > "$failure_output" 2>&1
-          failure_exit=$?
-          set -e
-          test "$failure_exit" -ne 0
-          go run ./scripts/language-claim-dependency-failure -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -edge-id E08 -output-text-file "$failure_output" -exit-code "$failure_exit" -output "$output/failure.json"
-          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/main.gooo -contract "$contract" -profile accepted-fixture -output "$output/observation/accepted.json"
-          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/main.gooo -contract "$contract" -profile relabelled-fixture -output "$output/observation/accepted-alt.json"
-          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -contract "$contract" -failure-receipt "$output/failure.json" -profile refuted-fixture -output "$output/observation/refuted.json"
-          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -contract "$contract" -profile no-failure-fixture -output "$output/observation/refuted-no-failure.json"
+          go run ./scripts/language-claim-dependency-failure -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -edge-id E08 -output "$output/failure.json" > "$failure_output" 2>&1
+          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -contract "$contract" -profile accepted-fixture -output "$output/observation/accepted.json"
+          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -contract "$contract" -profile relabelled-fixture -output "$output/observation/accepted-alt.json"
+          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -contract "$refuted_contract" -failure-receipt "$output/failure.json" -profile refuted-fixture -output "$output/observation/refuted.json"
+          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -contract "$refuted_contract" -profile no-failure-fixture -output "$output/observation/refuted-no-failure.json"
           go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/unrelated-target.txt -contract "$contract" -profile unrelated-fixture -output "$output/observation/unrelated.json"
-          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/value-intervention.gooo -artifact examples/language-claim-dependency/value-intervention.gooo -contract "$contract" -profile semantic-artifact-fixture -output "$output/observation/semantic-accepted.json"
-          go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -operation contradiction -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/marker-only.json"
+          go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/value-intervention.gooo -contract "$contract" -profile semantic-artifact-fixture -output "$output/observation/semantic-accepted.json"
+          go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -operation contradiction -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/marker-only.json"
           go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/unrelated-target.txt -operation contradiction -observation "$output/observation/unrelated.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/unrelated.json"
           for pass in first second; do
-            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/unknown.gooo -artifact examples/language-claim-dependency/main.gooo -operation availability -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/unknown.json"
-            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -operation contradiction -observation "$output/observation/refuted.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/refuted.json"
-            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -operation contradiction -observation "$output/observation/refuted-no-failure.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/refuted-no-failure.json"
-            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/main.gooo -operation acceptance -observation "$output/observation/accepted.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/accepted.json"
-            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/main.gooo -operation acceptance -observation "$output/observation/accepted-alt.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/accepted-alt.json"
+            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/unknown.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -operation availability -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/unknown.json"
+            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -operation contradiction -observation "$output/observation/refuted.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/refuted.json"
+            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -operation contradiction -observation "$output/observation/refuted-no-failure.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/refuted-no-failure.json"
+            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -operation acceptance -observation "$output/observation/accepted.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/accepted.json"
+            go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -operation acceptance -observation "$output/observation/accepted-alt.json" -capability "$capability" -repo-root "$GITHUB_WORKSPACE" -output "$output/provider/accepted-alt.json"
             go run ./scripts/language-claim-dependency -source examples/language-claim-dependency/unknown.gooo -evidence "$output/provider/unknown.json" -output "$output/$pass/unknown.json" -check
             go run ./scripts/language-claim-dependency -source examples/language-claim-dependency/refuted.gooo -evidence "$output/provider/refuted.json" -output "$output/$pass/refuted.json" -check
             go run ./scripts/language-claim-dependency -source examples/language-claim-dependency/refuted.gooo -evidence "$output/provider/refuted-no-failure.json" -output "$output/$pass/refuted-no-failure.json" -check
@@ -149,22 +147,31 @@ jobs:
           jq '.observations[0].proposition_digest = "sha256:tampered-proposition"' "$output/observation/accepted.json" > "$tamper/proposition.json"
           jq '.observations[0].target.artifact = "tampered-target"' "$output/observation/accepted.json" > "$tamper/target.json"
           jq '.observations[4].edge_kind = "SUPPORTS"' "$output/observation/refuted.json" > "$tamper/edge-kind.json"
-          jq '.exit_code = 0' "$output/failure.json" > "$tamper/success-labelled-failure.json"
+          jq '.observed_exit_code = 0' "$output/failure.json" > "$tamper/success-labelled-failure.json"
+          jq '.input_targets[0].artifact_digest = "sha256:wrong-edge-input"' "$output/failure.json" > "$tamper/wrong-edge-input.json"
           for case in claim proposition target; do
-            if go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/main.gooo -operation acceptance -observation "$tamper/$case.json" -capability "$output/capability.json" -repo-root "$GITHUB_WORKSPACE" -output "$tamper/$case-result.json"; then
+            if go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -operation acceptance -observation "$tamper/$case.json" -capability "$output/capability.json" -repo-root "$GITHUB_WORKSPACE" -output "$tamper/$case-result.json"; then
               echo "tampered observation accepted: $case" >&2
               exit 1
             fi
           done
-          if go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -operation contradiction -observation "$tamper/edge-kind.json" -capability "$output/capability.json" -repo-root "$GITHUB_WORKSPACE" -output "$tamper/edge-kind-result.json"; then
+          if go run ./scripts/language-claim-dependency-evidence -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -operation contradiction -observation "$tamper/edge-kind.json" -capability "$output/capability.json" -repo-root "$GITHUB_WORKSPACE" -output "$tamper/edge-kind-result.json"; then
             echo "tampered edge kind accepted" >&2
             exit 1
           fi
-          if go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/main.gooo -contract examples/language-claim-dependency/validator-contract.json -failure-receipt "$tamper/success-labelled-failure.json" -profile false-label -output "$tamper/false-label.json"; then
+          if go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -contract examples/language-claim-dependency/validator-contract-refuted.json -failure-receipt "$tamper/success-labelled-failure.json" -profile false-label -output "$tamper/false-label.json"; then
             echo "zero-exit failure label accepted" >&2
             exit 1
           fi
-          jq -n '[{case:"claim",accepted:false},{case:"proposition",accepted:false},{case:"target",accepted:false},{case:"edge-kind",accepted:false},{case:"zero-exit-failure-label",accepted:false}]' > "$output/first/observation-tamper.json"
+          if go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -contract examples/language-claim-dependency/validator-contract-refuted.json -failure-receipt "$tamper/wrong-edge-input.json" -profile wrong-input -output "$tamper/wrong-input.json"; then
+            echo "wrong edge input was accepted" >&2
+            exit 1
+          fi
+          if go run ./scripts/language-claim-dependency-failure -source examples/language-claim-dependency/refuted.gooo -artifact examples/language-claim-dependency/refuted-target.gooo -edge-id E07 -output "$tamper/unrelated-exit.json"; then
+            echo "unrelated exit was accepted as a failure antecedent" >&2
+            exit 1
+          fi
+          jq -n '[{case:"claim",accepted:false},{case:"proposition",accepted:false},{case:"target",accepted:false},{case:"edge-kind",accepted:false},{case:"zero-exit-failure-label",accepted:false},{case:"wrong-edge-input",accepted:false},{case:"unrelated-exit",accepted:false}]' > "$output/first/observation-tamper.json"
       - name: Assert source-bound observations, profile invariance, and causal algebra
         shell: bash
         run: |
@@ -176,12 +183,16 @@ jobs:
           jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 1 and .metrics.discharged_claim_total == 4 and .metrics.refuted_claim_total == 2 and .metrics.open_claim_total == 0 and .metrics.observed_causal_edge_total == 6 and .metrics.eligible_edge_total == 8 and .metrics.maximum_cause_path_depth == 2 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 4' "$output/refuted.json"
           jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 0 and .metrics.refuted_claim_total == 1 and .metrics.open_claim_total == 1 and .metrics.observed_refuting_edge_total == 2 and .decision.resolution == "CAUSAL_REFUTATION"' "$output/refuted-no-failure.json"
           jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and .metrics.discharged_claim_total == 6 and .metrics.refuted_claim_total == 0 and .decision.value == "PASS" and .metrics.current_evidence_total == 6 and .metrics.unknown_evidence_total == 0 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 6' "$output/recovered.json"
+          jq -e '.claims | length == 6 and (map(.claim_id) | unique | length) == 6 and (map(.proposition_digest) | unique | length) == 6 and (map(.procedure_id) | unique | length) == 6 and (map(.target_row_digest) | unique | length) == 6' "$RUNNER_TEMP/claim-dependency/validator-contract.json"
+          jq -e '.evidence.observation_bundle_raw != null and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure_digest] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .output_digest] | unique | length) == 6' "$output/accepted.json"
+          jq -e '.structural_contradictions | length == 1' "$RUNNER_TEMP/claim-dependency/observation/refuted.json"
+          jq -e '.observed_exit_code == 1 and .executable_digest != "" and (.argv | length) > 0 and (.input_targets | length) == 2 and .stdout != null and .stderr != null' "$RUNNER_TEMP/claim-dependency/failure.json"
           jq -e '.decision == "PASS" and .receipt_digest != "" and .metrics.fixed_claim_total == 6' "$output/accepted-alt-judgment.json"
           jq -e -s '.[0].digest == .[1].digest and (.[0].observations == .[1].observations)' "$RUNNER_TEMP/claim-dependency/observation/accepted.json" "$RUNNER_TEMP/claim-dependency/observation/accepted-alt.json"
           jq -e -s '.[0].decision == .[1].decision and .[0].resolution == .[1].resolution and .[0].metrics == .[1].metrics' "$output/accepted-judgment.json" "$output/accepted-alt-judgment.json"
           jq -e '.interventions | length == 4 and ([.[] | select(.name == "comment-only" and .semantic_digest_changed == false and .state_transition_changed == false and .decision_changed == false)] | length) == 1 and ([.[] | select(.name == "source-only" and .semantic_digest_changed == true)] | length) == 1 and ([.[] | select(.name == "edge-only" and .edge_type_changed == true)] | length) == 1' "$output/interventions.json"
           jq -e '.evidence_provenance_cases | length == 3 and ([.[] | select(.name == "caller-flag-only" and (.baseline_states == .intervention_states) and .decision_changed == false)] | length) == 1 and ([.[] | select(.name == "observation-artifact-changed" and .evidence_digest_changed == true and .state_transition_changed == true)] | length) == 1 and ([.[] | select(.name == "observation-absent" and .decision_changed == true)] | length) == 1' "$output/interventions.json"
-          jq -e 'length == 5 and all(.[]; .accepted == false)' "$output/observation-tamper.json"
+          jq -e 'length == 7 and all(.[]; .accepted == false)' "$output/observation-tamper.json"
           jq -e 'length == 3 and all(.[]; .accepted == false)' "$output/prior-tamper.json"
           for name in unknown refuted refuted-no-failure recovered; do jq -e '.accepted == true and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and .producer_package_import_numerator == 0 and .producer_package_import_denominator == 1 and .semantic_promotion_authorized == false' "$output/$name-judgment.json"; done
           {
@@ -194,12 +205,12 @@ jobs:
             echo "- causal edges: refuted 6/8 observed and 8 eligible, no-failure 5/8 observed and 8 eligible; edge depth is measured from CauseEdgeIDs"
             echo "- failure proof: CI captured actual non-zero exit 1; zero-exit labelled receipt rejected; unrelated mismatch and reversed/tampered bindings fail closed"
             echo "- interventions: source-only, observation-only, edge-only, comment-only; profile relabel does not alter decision; repository snapshot is tracked+untracked pre/post"
-            echo "- independence: source reconstruction 1/1; producer package import 0/1; prior tamper 3/3; observation negative cases 5/5; semantic promotion false"
+            echo "- independence: source reconstruction 1/1; producer package import 0/1; prior tamper 3/3; observation negative cases 7/7; semantic promotion false"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload claim dependency receipts and interventions
         uses: actions/upload-artifact@v4
         with:
           name: claim-dependency-causality-${{ github.sha }}
-          path: ${{ runner.temp }}/claim-dependency/first
+          path: ${{ runner.temp }}/claim-dependency
           if-no-files-found: error
           retention-days: 14

@@ -1,10 +1,12 @@
 package claimdependency
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -15,9 +17,9 @@ import (
 )
 
 const (
-	ValidatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v1"
-	FailureReceiptSchema    = "gooo.meta.claim-dependency-failure-receipt/v1"
-	failureProcedure        = "CI_NONZERO_EXIT_FAILURE_ANTECEDENT_V1"
+	ValidatorContractSchema = "gooo.meta.claim-dependency-validator-contract/v2"
+	FailureReceiptSchema    = "gooo.meta.claim-dependency-failure-receipt/v2"
+	failureProcedure        = "CI_EDGE_SPECIFIC_FAILURE_COMPARATOR_V2"
 )
 
 type sourceGraph struct {
@@ -285,7 +287,7 @@ func readValidatorContract(path string) (ValidatorContract, error) {
 		return ValidatorContract{}, fmt.Errorf("validator contract: %w", err)
 	}
 	var contract ValidatorContract
-	if err := json.Unmarshal(data, &contract); err != nil {
+	if err := decodeStrictJSON(data, &contract); err != nil {
 		return ValidatorContract{}, fmt.Errorf("validator contract decode: %w", err)
 	}
 	if err := validateValidatorContract(contract); err != nil {
@@ -293,17 +295,44 @@ func readValidatorContract(path string) (ValidatorContract, error) {
 	}
 	return contract, nil
 }
+
+func decodeStrictJSON(data []byte, value any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(value); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("trailing JSON value")
+		}
+		return fmt.Errorf("trailing JSON data: %w", err)
+	}
+	return nil
+}
+
+func decodeStrictJSONBytes(data []byte, value any) error { return decodeStrictJSON(data, value) }
 func validateValidatorContract(contract ValidatorContract) error {
 	if contract.Schema != ValidatorContractSchema || contract.ContractID == "" || contract.ExpectedArtifactPath == "" || contract.ExpectedArtifactDigest == "" || len(contract.Claims) != ClaimTotal {
 		return fmt.Errorf("validator contract identity or denominator is invalid")
 	}
 	seen := map[string]bool{}
+	claimIDs := map[string]bool{}
 	targets := map[string]bool{}
+	procedures := map[string]bool{}
+	rowDigests := map[string]bool{}
 	for _, claim := range contract.Claims {
-		if claim.ActivityName == "" || claim.ExpectedValueProgram == "" || claim.ExpectedTarget.Artifact == "" || claim.ExpectedTarget.Output == "" || seen[claim.ActivityName] {
+		if claim.ClaimID == "" || claim.PropositionDigest == "" || claim.ProcedureID == "" || claim.TargetRowDigest == "" || claim.ExpectedMaterialDigest == "" || claim.ActivityName == "" || claim.ExpectedValueProgram == "" || claim.ExpectedTarget.Artifact == "" || claim.ExpectedTarget.Output == "" || seen[claim.ActivityName] || claimIDs[claim.ClaimID] || procedures[claim.ProcedureID] {
 			return fmt.Errorf("validator contract claim material is invalid")
 		}
 		seen[claim.ActivityName] = true
+		claimIDs[claim.ClaimID] = true
+		procedures[claim.ProcedureID] = true
+		if claim.ProcedureID != validatorProcedureID(claim.ActivityName) || claim.ExpectedMaterialDigest != validatorExpectedMaterialDigest(claim) || rowDigests[claim.TargetRowDigest] {
+			return fmt.Errorf("validator contract expected material digest is invalid for %q", claim.ActivityName)
+		}
+		rowDigests[claim.TargetRowDigest] = true
 		targetKey := strings.Join(claim.ExpectedTarget.Inputs, ",") + "|" + claim.ExpectedTarget.Output + "|" + claim.ExpectedTarget.Artifact
 		if targets[targetKey] {
 			return fmt.Errorf("validator contract targets are not distinct")
@@ -314,6 +343,14 @@ func validateValidatorContract(contract ValidatorContract) error {
 		return fmt.Errorf("validator contract claims are not distinct")
 	}
 	return nil
+}
+
+func validatorProcedureID(activity string) string {
+	return map[string]string{"Root": "CI_CLAIM_TARGET_ROW_ROOT_V1", "Derived": "CI_CLAIM_TARGET_ROW_DERIVED_V1", "SupportCheck": "CI_CLAIM_TARGET_ROW_SUPPORT_V1", "RequirementCheck": "CI_CLAIM_TARGET_ROW_REQUIREMENT_V1", "ContradictionCheck": "CI_CLAIM_TARGET_ROW_CONTRADICTION_V1", "FailureEntailmentCheck": "CI_CLAIM_TARGET_ROW_FAILURE_V1"}[activity]
+}
+
+func validatorExpectedMaterialDigest(claim ValidatorClaim) string {
+	return digestBytes([]byte(fmt.Sprintf("claim-contract|claim_id=%s|proposition_digest=%s|procedure_id=%s|target_row_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|expected_value_program=%s", claim.ClaimID, claim.PropositionDigest, claim.ProcedureID, claim.TargetRowDigest, strings.Join(claim.ExpectedTarget.Inputs, ","), claim.ExpectedTarget.Output, claim.ExpectedTarget.Artifact, claim.ExpectedValueProgram)))
 }
 func contractClaim(contract ValidatorContract, activityName string) (ValidatorClaim, bool) {
 	for _, claim := range contract.Claims {

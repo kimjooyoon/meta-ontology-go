@@ -130,7 +130,7 @@ func provenanceCompare(name, baselineRequest, interventionRequest string, baseli
 func compare(name, kind string, baseline []byte, baselinePath string, changed []byte, changedPath, baseOperation, changedOperation, repoRoot, capability, observationDir string) intervention {
 	baseEvidence := evidence(baselinePath, baseOperation, repoRoot, capability, observationDir)
 	changedEvidence := baseEvidence
-	if changedOperation != "same" {
+	if changedOperation != "same" && name != "source-only" {
 		changedEvidence = evidence(changedPath, changedOperation, repoRoot, capability, observationDir)
 	}
 	baseReceipt, err := claimdependency.Evaluate(baseline, baselinePath, baseEvidence, nil)
@@ -167,8 +167,14 @@ func evidence(artifact, operation, repoRoot, capability, observationDir string) 
 func evidenceWithObservation(artifact, operation, repoRoot, capability, observationPath string) claimdependency.EvidenceReceipt {
 	output := filepath.Join(os.TempDir(), "gooo-claim-dependency-evidence-"+strings.ReplaceAll(filepath.Base(artifact), ".", "-")+"-"+operation+".json")
 	sourcePath, targetPath := artifact, artifact
+	if filepath.Base(artifact) == "main.gooo" || filepath.Base(artifact) == "unknown.gooo" {
+		targetPath = filepath.Join(filepath.Dir(artifact), "accepted-target.gooo")
+	}
 	if filepath.Base(artifact) == "refuted.gooo" {
-		targetPath = filepath.Join(filepath.Dir(artifact), "main.gooo")
+		targetPath = filepath.Join(filepath.Dir(artifact), "refuted-target.gooo")
+	}
+	if filepath.Base(artifact) == "value-intervention.gooo" {
+		sourcePath = filepath.Join(filepath.Dir(artifact), "main.gooo")
 	}
 	receipt, err := claimdependency.BuildCurrentEvidenceForSource(sourcePath, targetPath, operation, capability, repoRoot, output, observationPath)
 	if err != nil {

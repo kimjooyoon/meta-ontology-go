@@ -17,7 +17,8 @@ graph는 source marker가 아니라 syntax/IR에서 재구성된다.
 
 `.gooo`에는 claim topology와 observation recipe만 둔다.
 `validator-contract.json`은 source를 관찰 직전에 해시해 만든 값이 아니라 고정된
-외부 validator material이다. 여섯 activity의 expected target tuple과 value program,
+외부 validator material이다. `accepted-target.gooo`와 `refuted-target.gooo`는 source
+graph와 별도인 관찰 대상이며, 여섯 activity의 expected target tuple과 value program,
 반대 비교가 가능한 alternate value만 제공하고 status/outcome을 선언하지 않는다.
 따라서 contract의 expected bytes digest는 CI 관찰 대상에서 계산한 값이 아니다.
 
@@ -103,7 +104,7 @@ evidence가 없으면 authority는 `TRANSIENT_WRITE_AUTHORITY_UNKNOWN`으로 낮
 authorization은 false다.
 
 고정 CI 회귀 분모는 truth algebra 8, evidence provenance 3, authority 3, prior
-tamper 3, path metric 2, owner applicability 3, observation binding negative 5다.
+tamper 3, path metric 2, owner applicability 3, observation binding negative 7이다.
 
 ## Principles and limits
 

@@ -6,7 +6,7 @@
 | 입력 | 관측 | 상태 결과 | observed causal / eligible |
 | --- | --- | --- | ---: |
 | `unknown.gooo` | raw observation 없음 | direct 1 + blocked 5 OPEN | 5 / 8 |
-| `refuted.gooo` + `main.gooo` target | 외부 contract, claim 4개, `CONTRADICTS` 2개, 실제 non-zero failure 1개 | 4 DISCHARGED, 2 dependency REFUTED | 6 / 8 |
+| `refuted.gooo` + `refuted-target.gooo` | 외부 contract, claim 4개, `CONTRADICTS` 2개, 실제 edge-specific non-zero failure 1개 | 4 DISCHARGED, 2 dependency REFUTED | 6 / 8 |
 | `refuted.gooo` + failure receipt 없음 | 같은 source/target, failure edge 비활성 | 4 DISCHARGED, 1 REFUTED, 1 OPEN | 5 / 8 |
 | `main.gooo` + unknown receipt | append-only recovery | 6 DISCHARGED | 3 / 8 recovery |
 
