@@ -39,6 +39,14 @@ func validSHA(value string) bool {
 	return err == nil
 }
 
+func validDigest(value string) bool {
+	if len(value) != len("sha256:")+64 || !strings.HasPrefix(value, "sha256:") {
+		return false
+	}
+	_, err := hex.DecodeString(strings.TrimPrefix(value, "sha256:"))
+	return err == nil
+}
+
 func capabilityHandle(sourceDigest string) string {
 	return digestBytes([]byte("fixture-authority|" + sourceDigest + "|" + metaOperationID + "|" + scopeReadOnly))
 }
