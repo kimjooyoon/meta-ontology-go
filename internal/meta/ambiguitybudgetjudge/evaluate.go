@@ -66,7 +66,7 @@ func Evaluate(contractRaw, receiptRaw, source []byte) (Result, error) {
 				casePass = false
 				continue
 			}
-			want := caseReceipt(observed.Digest, program, budget.Counts)
+			want := makeCaseReceipt(observed.Digest, program, budget.Counts)
 			casePass = casePass && report.Cases[index] == want
 			wantClaims = append(wantClaims, want.Claim)
 			wantIndicators = append(wantIndicators, indicatorsFor(observed.Digest, program, budget.Counts)...)
@@ -250,7 +250,7 @@ func validCasePrograms(source sourceObservation, policy contract) bool {
 	return len(classes) == CaseTotal && classes["ZERO"] && classes["BOUNDARY"] && classes["OVER"] && classes["UNKNOWN"]
 }
 
-func caseReceipt(sourceDigest string, program programObservation, budget integerSet) caseReceipt {
+func makeCaseReceipt(sourceDigest string, program programObservation, budget integerSet) caseReceipt {
 	decision, resolution, reason, claimTo := subjectDecision(program, budget)
 	evidence := digestValue(struct {
 		SourceDigest string
@@ -334,8 +334,8 @@ func buildInterventions(specs []interventionContract, raw []byte, base sourceObs
 			result = append(result, interventionReceipt{ID: spec.ID, Kind: spec.Kind, TargetActivity: spec.TargetActivity})
 			continue
 		}
-		before := caseReceipt(base.Digest, beforeProgram, budget)
-		after := caseReceipt(next.Digest, afterProgram, budget)
+		before := makeCaseReceipt(base.Digest, beforeProgram, budget)
+		after := makeCaseReceipt(next.Digest, afterProgram, budget)
 		satisfied := interventionSatisfied(spec.Kind, before, after, base, next)
 		evidence := digestValue(struct {
 			ID     string
