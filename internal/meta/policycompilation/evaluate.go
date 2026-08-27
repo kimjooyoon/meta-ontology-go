@@ -7,6 +7,10 @@ func IndependentEvaluate(policy CompiledPolicy, input Case) DecisionResult {
 		CaseID: input.ID, PolicyDigest: policy.SourceDigest,
 		SemanticDigest: policy.SemanticDigest, Denominator: policy.Denominator,
 	}
+	if policy.Denominator != FixedDenominator || len(policy.Rules) != FixedDenominator {
+		result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "COMPILE", 3, "FIXED_DENOMINATOR_CHANGED"
+		return result
+	}
 	if !input.ProducerAvailable || !input.ConsumerAvailable {
 		result.Decision, result.Stage, result.Step, result.Reason = DecisionUnknown, "VERIFY", 4, "EVIDENCE_UNAVAILABLE"
 		return result

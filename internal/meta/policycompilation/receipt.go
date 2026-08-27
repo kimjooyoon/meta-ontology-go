@@ -41,7 +41,8 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 	prior := ""
 	for _, index := range order {
 		input, generatedResult, independentResult := cases[index], generated[index], independent[index]
-		caseReceipt := CaseReceipt{ID: input.ID, Expected: input.Expected, Generated: generatedResult, Independent: independentResult}
+		sourceResult := EvaluateSourcePolicy(policy, input)
+		caseReceipt := CaseReceipt{ID: input.ID, Expected: input.Expected, Source: sourceResult, Generated: generatedResult, Independent: independentResult}
 		caseReceipt.ClaimStartDigest = prior
 		for _, rule := range policy.Rules {
 			claimID := claimID(input.ID, rule)
@@ -58,9 +59,10 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 			}, prior)
 		}
 		caseReceipt.ClaimEndDigest = prior
+		caseReceipt.AllDecisionsEquivalent = sameDecision(sourceResult, generatedResult) && sameDecision(sourceResult, independentResult)
 		caseReceipt.DecisionsEquivalent = sameDecision(generatedResult, independentResult)
-		caseReceipt.ExpectedDecisionConfirmed = generatedResult.Decision == input.Expected && independentResult.Decision == input.Expected
-		if !caseReceipt.DecisionsEquivalent || !caseReceipt.ExpectedDecisionConfirmed {
+		caseReceipt.ExpectedDecisionConfirmed = sourceResult.Decision == input.Expected && generatedResult.Decision == input.Expected && independentResult.Decision == input.Expected
+		if !caseReceipt.AllDecisionsEquivalent || !caseReceipt.DecisionsEquivalent || !caseReceipt.ExpectedDecisionConfirmed {
 			receipt.Verification.Decision = VerificationFail
 		}
 		if generatedResult.Decision == DecisionPass {
@@ -76,11 +78,14 @@ func BuildReceipt(policy CompiledPolicy, artifact PolicyArtifact, judgeHash stri
 		if caseReceipt.ExpectedDecisionConfirmed {
 			receipt.Summary.ExpectedDecisionsConfirmed++
 		}
+		if caseReceipt.AllDecisionsEquivalent {
+			receipt.Summary.SourceAllEquivalent++
+		}
 		receipt.Cases = append(receipt.Cases, caseReceipt)
 	}
 	receipt.Claims.EventCount = len(receipt.Claims.Events)
 	receipt.Claims.HeadDigest = prior
-	if receipt.Summary.CaseCount != ExpectedCaseCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != ExpectedCaseCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
 		return Receipt{}, fmt.Errorf("case conformance is incomplete: %#v", receipt.Summary)
 	}
 	var err error

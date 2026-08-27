@@ -78,6 +78,9 @@ func TestReceiptCarriesFixedDenominatorAndAppendOnlyLedger(t *testing.T) {
 	if receipt.Claims.EventCount != ExpectedCaseCount*FixedDenominator*2 || receipt.Summary.PassCount != 1 || receipt.Summary.FailClosedCount != 1 || receipt.Summary.UnknownCount != 1 {
 		t.Fatalf("unexpected receipt summary: %#v", receipt)
 	}
+	if receipt.Summary.SourceAllEquivalent != ExpectedCaseCount || len(receipt.Cases) != ExpectedCaseCount || !receipt.Cases[0].AllDecisionsEquivalent {
+		t.Fatalf("source lineage is incomplete: %#v", receipt.Summary)
+	}
 	if err := VerifyReceipt(receipt, policy, artifact, judgeHash, cases); err != nil {
 		t.Fatal(err)
 	}

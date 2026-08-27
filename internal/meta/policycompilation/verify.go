@@ -63,8 +63,9 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 		if stored.ID != input.ID || stored.Expected != input.Expected {
 			return fmt.Errorf("case %q moved or changed its expected decision", input.ID)
 		}
+		source := EvaluateSourcePolicy(policy, input)
 		independent := IndependentEvaluate(policy, input)
-		if !sameDecision(stored.Independent, independent) || !sameDecision(stored.Generated, stored.Independent) || stored.Expected != stored.Independent.Decision || !stored.DecisionsEquivalent || !stored.ExpectedDecisionConfirmed {
+		if !sameDecision(stored.Source, source) || !sameDecision(stored.Independent, independent) || !sameDecision(stored.Source, stored.Generated) || !sameDecision(stored.Generated, stored.Independent) || stored.Expected != stored.Source.Decision || !stored.AllDecisionsEquivalent || !stored.DecisionsEquivalent || !stored.ExpectedDecisionConfirmed {
 			return fmt.Errorf("case %q is not independently equivalent", input.ID)
 		}
 		switch stored.Generated.Decision {
@@ -78,7 +79,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 			return fmt.Errorf("case %q has unsupported decision %q", input.ID, stored.Generated.Decision)
 		}
 	}
-	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
+	if receipt.Summary.CaseCount != len(cases) || receipt.Summary.PassCount != passCount || receipt.Summary.FailClosedCount != failClosedCount || receipt.Summary.UnknownCount != unknownCount || receipt.Summary.GeneratedIndependentEqual != len(cases) || receipt.Summary.SourceAllEquivalent != len(cases) || receipt.Summary.ExpectedDecisionsConfirmed != len(cases) {
 		return errors.New("case summary does not cover the fixed case denominator")
 	}
 	if receipt.Verification.Decision != VerificationPass || !receipt.Verification.IndependentReplayed || !receipt.Verification.GeneratedReplayed || !receipt.Verification.LedgerVerified || receipt.Verification.FixedDenominator != FixedDenominator || receipt.Verification.CaseDenominator != len(cases) {

@@ -2,9 +2,9 @@
 
 This experiment asks whether a policy declared in Gooo can be compiled into a
 deterministic decision kernel while retaining enough lineage to show that the
-source, compiled artifact, generated execution, and independent execution made
-the same decision. It is deliberately narrower than “support another policy
-DSL”.
+source policy, compiled artifact, generated execution, and independent
+execution made the same decision. It is deliberately narrower than “support
+another policy DSL”.
 
 ## Source, compiler, and proof boundary
 
@@ -16,18 +16,21 @@ checks those fields against the fixed experiment ontology, and sorts by `step`.
 Changing declaration order therefore cannot change the compiled meaning;
 changing an activity, metadata value, or stable source identity is rejected.
 
-The generated judge is a standalone Go program. It receives only structured
-evidence and returns `PASS`, `FAIL_CLOSED`, or `UNKNOWN` plus a stage/step/reason
-coordinate. The independent verifier is a separate implementation in the
-repository package. A consumer replays both and compares the full decision
-coordinate, not only the decision label.
+The source interpreter reads the compiled semantic contract and applies the
+decision table directly. The generated judge is a standalone Go program. It
+receives only structured evidence and returns `PASS`, `FAIL_CLOSED`, or
+`UNKNOWN` plus a stage/step/reason coordinate. The independent verifier is a
+separate implementation in the repository package. A consumer replays all
+three observations and compares the full decision coordinate, not only the
+decision label.
 
 The fixed denominator is eight policy obligations. The case denominator is
 three: one pass, one fail-closed source drift, and one unknown missing-consumer
 case. Every case gets eight `UNRECORDED -> OPEN` claim registrations followed
 by eight persistent outcome transitions. The receipt therefore contains exactly
 48 chained events, each carrying the previous event digest; no later event can
-silently rewrite an earlier assertion.
+silently rewrite an earlier assertion. The source, generated, and independent
+decisions must all agree for all three cases.
 
 ## Research basis and limits
 

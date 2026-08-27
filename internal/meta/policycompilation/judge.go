@@ -51,7 +51,9 @@ func main() {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&value); err != nil { os.Exit(2) }
 	output := result{CaseID: value.ID, PolicyDigest: policyDigest, SemanticDigest: semanticDigest, Denominator: policyDenominator}
-	if !value.ProducerAvailable || !value.ConsumerAvailable {
+	if policyDenominator != %d {
+		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "COMPILE", 3, "FIXED_DENOMINATOR_CHANGED"
+	} else if !value.ProducerAvailable || !value.ConsumerAvailable {
 		output.Decision, output.Stage, output.Step, output.Reason = "UNKNOWN", "VERIFY", 4, "EVIDENCE_UNAVAILABLE"
 	} else if value.ObservedSourceDigest == "" || value.ObservedArtifactSourceDigest == "" || value.ObservedIndependentDigest == "" {
 		output.Decision, output.Stage, output.Step, output.Reason = "UNKNOWN", "VERIFY", 4, "DIGEST_UNAVAILABLE"
@@ -61,8 +63,6 @@ func main() {
 		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "CONSUME", 2, "ARTIFACT_SOURCE_MISMATCH"
 	} else if value.ObservedIndependentDigest != policyDigest {
 		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "VERIFY", 4, "INDEPENDENT_SOURCE_MISMATCH"
-	} else if policyDenominator != %d {
-		output.Decision, output.Stage, output.Step, output.Reason = "FAIL_CLOSED", "COMPILE", 3, "FIXED_DENOMINATOR_CHANGED"
 	} else {
 		output.Decision, output.Stage, output.Step, output.Reason = "PASS", "REDUCE", 7, "SEMANTIC_EQUIVALENCE_PROVED"
 	}

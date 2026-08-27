@@ -94,8 +94,10 @@ type ConsumerEvidence struct {
 type CaseReceipt struct {
 	ID                        string         `json:"id"`
 	Expected                  string         `json:"expected"`
+	Source                    DecisionResult `json:"source"`
 	Generated                 DecisionResult `json:"generated"`
 	Independent               DecisionResult `json:"independent"`
+	AllDecisionsEquivalent    bool           `json:"all_decisions_equivalent"`
 	DecisionsEquivalent       bool           `json:"decisions_equivalent"`
 	ExpectedDecisionConfirmed bool           `json:"expected_decision_confirmed"`
 	ClaimStartDigest          string         `json:"claim_start_digest"`
@@ -109,6 +111,7 @@ type CaseSummary struct {
 	UnknownCount               int `json:"unknown_count"`
 	GeneratedIndependentEqual  int `json:"generated_independent_equivalent"`
 	ExpectedDecisionsConfirmed int `json:"expected_decisions_confirmed"`
+	SourceAllEquivalent        int `json:"source_all_equivalent"`
 }
 
 type Verification struct {

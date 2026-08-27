@@ -85,6 +85,7 @@ jobs:
             .summary.fail_closed_count == 1 and
             .summary.unknown_count == 1 and
             .summary.generated_independent_equivalent == 3 and
+            .summary.source_all_equivalent == 3 and
             .claims.event_count == 48
           ' "$root/first/receipt.json"
       - name: Upload producer boundary
@@ -131,5 +132,6 @@ jobs:
             "- fixed denominator: " + (.verification.fixed_denominator|tostring) + "\n" +
             "- case decisions: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n" +
             "- generated/independent equivalent: " + (.summary.generated_independent_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
+            "- source/generated/independent equivalent: " + (.summary.source_all_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
             "- claim ledger events: " + (.claims.event_count|tostring)
           ' "$RUNNER_TEMP/meta-policy-compilation/producer/receipt.json" >> "$GITHUB_STEP_SUMMARY"

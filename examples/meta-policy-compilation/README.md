@@ -16,11 +16,11 @@ The checked-in cases are intentionally small and fixed:
 
 The producer records the source digest, semantic IR digest, and fixed `8`
 obligations. The consumer re-reads the compiled artifact and binds its source
-digest and generated-judge digest. The generated judge is executed as a
-standalone Go program; an independent verifier re-derives the decision from the
-case and policy. The receipt requires all three expected decisions, equivalent
-generated/independent coordinates, and a `48`-event append-only claim ledger
-(`3 cases × 8 claims × 2 transitions`).
+digest and generated-judge digest. The source interpreter, generated judge, and
+independent verifier each re-derive the decision from the case and policy. The
+receipt requires all three expected decisions, source/generated/independent
+coordinate equivalence, and a `48`-event append-only claim ledger (`3 cases × 8
+claims × 2 transitions`).
 
 This experiment does not claim a general policy language, cryptographic
 attestation, deployment freshness, or equivalence outside the modeled digest
