@@ -540,7 +540,7 @@ func rawCapabilities(item caseSpec) []rawCapability {
 }
 
 func rawEvidenceFor(model sourceModel, provider providerObservation, item caseSpec) []rawEvidence {
-	evidence := make([]rawEvidence, 0, len(item.Requests))
+	var evidence []rawEvidence
 	for _, request := range item.Requests {
 		declaration, ok := findDeclaration(model.Declarations, request.ValueID)
 		if !ok || declaration.Kind != request.Kind || declaration.Operation != request.Operation || declaration.Target != request.Target {
