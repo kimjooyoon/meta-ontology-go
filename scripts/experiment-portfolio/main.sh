@@ -101,6 +101,32 @@ for candidate in "${sources[@]}"; do
 	cmp "$work/$candidate-nonsemantic-first.json" "$work/$candidate-nonsemantic-replay.json"
 done
 
+observer_comment_source="$work/source-observer-comment-prefix.gooo"
+observer_quoted_source="$work/source-observer-unrelated-quoted-prefix.gooo"
+cat > "$observer_comment_source" <<'EOF'
+package observercomment
+namespace observercomment
+
+// computes "fake-comment"
+entity Source id "gooo://observer/comment/source"
+entity Target id "gooo://observer/comment/target"
+activity Observe(Source) -> Target computes "observer.canonical.comment"
+EOF
+cat > "$observer_quoted_source" <<'EOF'
+package observerquoted
+namespace observerquoted
+
+entity Distractor id "gooo://observer/unrelated computes \"fake-string\""
+entity Source id "gooo://observer/quoted/source"
+entity Target id "gooo://observer/quoted/target"
+activity Observe(Source) -> Target computes "observer.canonical.string"
+EOF
+"$causal_source" -source "$observer_comment_source" -output "$work/source-observer-comment.json"
+"$causal_source" -source "$observer_quoted_source" -output "$work/source-observer-unrelated-quoted.json"
+jq -e '.semantic_value == "observer.canonical.comment" and (.source_digest | startswith("sha256:"))' "$work/source-observer-comment.json"
+jq -e '.semantic_value == "observer.canonical.string" and (.source_digest | startswith("sha256:"))' "$work/source-observer-unrelated-quoted.json"
+echo "source-observer conformance: 2/2"
+
 jq -n --arg subject "$HEAD_SHA" --slurpfile contract "$contract" \
 	--slurpfile derive "$work/derive-baseline-first.json" --slurpfile replay "$work/replay-baseline-first.json" \
 	--slurpfile reflect "$work/reflect-baseline-first.json" \
@@ -228,6 +254,82 @@ jq -e '
   .unknown_findings == [{candidate_id:"derive",case_id:"derive-nonsemantic",stage:"NON_SEMANTIC_INTERVENTION",step:"observe-source",reason:"NON_SEMANTIC_DIGEST_UNCHANGED"}]
 ' "$work/causality-unknown-report.json"
 
+jq '(.samples[0].semantic.observation.source_digest = .samples[0].baseline.observation.source_digest) | (.samples[0].semantic.receipt = .samples[0].baseline.receipt)' \
+	"$work/causality-input.json" > "$work/causality-semantic-only-unknown-input.json"
+if "$causal_evaluator" -input "$work/causality-semantic-only-unknown-input.json" -output "$work/causality-semantic-only-unknown-report.json"; then
+	echo "semantic-only unknown causality input unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '
+  .decision == "FAIL_CLOSED" and
+  .resolution == "LOWER_RESOLUTION" and
+  .reason == "CAUSALITY_INPUT_UNKNOWN" and
+  .summary.unknowns == 1 and
+  .transition_summary.fixed_denominator == 9 and
+  .transition_summary.refuted == {numerator:2,denominator:9} and
+  .transition_summary.discharged == {numerator:6,denominator:9} and
+  .transition_summary.open == {numerator:1,denominator:9} and
+  .unknown_findings == [{candidate_id:"derive",case_id:"derive-semantic",stage:"SEMANTIC_INTERVENTION",step:"observe-source",reason:"SEMANTIC_DIGEST_UNCHANGED"}] and
+  .samples[0].baseline.status == "DISCHARGED" and
+  .samples[0].baseline.claim_transitions[0].to == "DISCHARGED" and
+  .samples[0].semantic.status == "UNKNOWN" and
+  .samples[0].semantic.claim_transitions[0] == {id:"derive-semantic-claim",from:"OPEN",to:"OPEN",stage:"SEMANTIC_INTERVENTION",step:"observe-source",reason:"SEMANTIC_DIGEST_UNCHANGED"} and
+  .samples[0].nonsemantic.status == "DISCHARGED" and
+  .samples[0].nonsemantic.claim_transitions[0].to == "DISCHARGED" and
+  .samples[0].nonsemantic.claim_transitions[0].reason == "SEMANTIC_PROJECTION_PRESERVED"
+' "$work/causality-semantic-only-unknown-report.json"
+
+jq '(.samples[0].nonsemantic.observation.source_digest = .samples[0].baseline.observation.source_digest) | (.samples[0].nonsemantic.receipt = .samples[0].baseline.receipt)' \
+	"$work/causality-input.json" > "$work/causality-nonsemantic-only-unknown-input.json"
+if "$causal_evaluator" -input "$work/causality-nonsemantic-only-unknown-input.json" -output "$work/causality-nonsemantic-only-unknown-report.json"; then
+	echo "nonsemantic-only unknown causality input unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '
+  .decision == "FAIL_CLOSED" and
+  .resolution == "LOWER_RESOLUTION" and
+  .reason == "CAUSALITY_INPUT_UNKNOWN" and
+  .summary.unknowns == 1 and
+  .transition_summary.fixed_denominator == 9 and
+  .transition_summary.refuted == {numerator:3,denominator:9} and
+  .transition_summary.discharged == {numerator:5,denominator:9} and
+  .transition_summary.open == {numerator:1,denominator:9} and
+  .unknown_findings == [{candidate_id:"derive",case_id:"derive-nonsemantic",stage:"NON_SEMANTIC_INTERVENTION",step:"observe-source",reason:"NON_SEMANTIC_DIGEST_UNCHANGED"}] and
+  .samples[0].semantic.status == "REFUTED" and
+  .samples[0].semantic.claim_transitions[0].to == "REFUTED" and
+  .samples[0].semantic.claim_transitions[0].reason == "DIGEST_ONLY_BINDING" and
+  .samples[0].nonsemantic.status == "UNKNOWN" and
+  .samples[0].nonsemantic.claim_transitions[0] == {id:"derive-nonsemantic-claim",from:"OPEN",to:"OPEN",stage:"NON_SEMANTIC_INTERVENTION",step:"observe-source",reason:"NON_SEMANTIC_DIGEST_UNCHANGED"}
+' "$work/causality-nonsemantic-only-unknown-report.json"
+
+jq '(.samples[0].semantic.observation.source_digest = .samples[0].baseline.observation.source_digest) | (.samples[0].semantic.receipt = .samples[0].baseline.receipt) | (.samples[0].nonsemantic.observation.source_digest = .samples[0].baseline.observation.source_digest) | (.samples[0].nonsemantic.receipt = .samples[0].baseline.receipt)' \
+	"$work/causality-input.json" > "$work/causality-both-unknown-input.json"
+if "$causal_evaluator" -input "$work/causality-both-unknown-input.json" -output "$work/causality-both-unknown-report.json"; then
+	echo "both-unknown causality input unexpectedly passed" >&2
+	exit 1
+fi
+jq -e '
+  .decision == "FAIL_CLOSED" and
+  .resolution == "LOWER_RESOLUTION" and
+  .reason == "CAUSALITY_INPUT_UNKNOWN" and
+  .summary.unknowns == 2 and
+  .transition_summary.fixed_denominator == 9 and
+  .transition_summary.refuted == {numerator:2,denominator:9} and
+  .transition_summary.discharged == {numerator:5,denominator:9} and
+  .transition_summary.open == {numerator:2,denominator:9} and
+  .unknown_findings == [
+    {candidate_id:"derive",case_id:"derive-semantic",stage:"SEMANTIC_INTERVENTION",step:"observe-source",reason:"SEMANTIC_DIGEST_UNCHANGED"},
+    {candidate_id:"derive",case_id:"derive-nonsemantic",stage:"NON_SEMANTIC_INTERVENTION",step:"observe-source",reason:"NON_SEMANTIC_DIGEST_UNCHANGED"}
+  ] and
+  .samples[0].baseline.status == "DISCHARGED" and
+  .samples[0].semantic.status == "UNKNOWN" and
+  .samples[0].semantic.claim_transitions[0].to == "OPEN" and
+  .samples[0].semantic.claim_transitions[0].reason == "SEMANTIC_DIGEST_UNCHANGED" and
+  .samples[0].nonsemantic.status == "UNKNOWN" and
+  .samples[0].nonsemantic.claim_transitions[0].to == "OPEN" and
+  .samples[0].nonsemantic.claim_transitions[0].reason == "NON_SEMANTIC_DIGEST_UNCHANGED"
+' "$work/causality-both-unknown-report.json"
+
 jq '.manifest.cases[0].required_change_fields = ["decision"]' \
 	"$work/causality-input.json" > "$work/causality-subset-input.json"
 "$causal_evaluator" -input "$work/causality-subset-input.json" -output "$work/causality-subset-report.json"
@@ -292,6 +394,7 @@ jq -r '
 {
 	echo "- forbidden producer deps observed=0 allowed_max=0"
 	echo "- independence contract=1/1"
-	echo "- unknown regression: FAIL_CLOSED / LOWER_RESOLUTION with stage/step/reason preserved"
+	echo "- unknown regressions: semantic-only, nonsemantic-only, and both preserve independent claim transitions"
 	echo "- required_change_fields: non-empty arbitrary subset accepted; empty subset rejected"
+	echo "- source-observer conformance: 2/2 via parser/lowering semantic projection"
 } >> "$GITHUB_STEP_SUMMARY"

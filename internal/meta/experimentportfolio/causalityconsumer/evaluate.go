@@ -108,55 +108,31 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 	result.NonSemanticDecisionChanged = sample.Baseline.Receipt.Decision != sample.NonSemantic.Receipt.Decision
 	result.ChangedFields = changedReceiptFields(sample.Baseline.Receipt, sample.Semantic.Receipt)
 
-	unknowns := make([]CausalityUnknown, 0)
+	semanticUnknowns := make([]CausalityUnknown, 0)
 	if !result.SourceDigestChanged {
-		unknowns = append(unknowns, causalityUnknown(sample.CandidateID, sample.Semantic.CaseID, "SEMANTIC_INTERVENTION", "observe-source", "SEMANTIC_DIGEST_UNCHANGED"))
+		semanticUnknowns = append(semanticUnknowns, causalityUnknown(sample.CandidateID, sample.Semantic.CaseID, "SEMANTIC_INTERVENTION", "observe-source", "SEMANTIC_DIGEST_UNCHANGED"))
 	}
 	if !result.SourceSemanticValueChanged {
-		unknowns = append(unknowns, causalityUnknown(sample.CandidateID, sample.Semantic.CaseID, "SEMANTIC_INTERVENTION", "observe-source", "SEMANTIC_INTERVENTION_NOT_OBSERVED"))
+		semanticUnknowns = append(semanticUnknowns, causalityUnknown(sample.CandidateID, sample.Semantic.CaseID, "SEMANTIC_INTERVENTION", "observe-source", "SEMANTIC_INTERVENTION_NOT_OBSERVED"))
 	}
+	nonSemanticUnknowns := make([]CausalityUnknown, 0)
 	if !result.NonSemanticSourceDigestChanged {
-		unknowns = append(unknowns, causalityUnknown(sample.CandidateID, sample.NonSemantic.CaseID, "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_DIGEST_UNCHANGED"))
+		nonSemanticUnknowns = append(nonSemanticUnknowns, causalityUnknown(sample.CandidateID, sample.NonSemantic.CaseID, "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_DIGEST_UNCHANGED"))
 	}
 	if !result.NonSemanticSemanticValuePreserved {
-		unknowns = append(unknowns, causalityUnknown(sample.CandidateID, sample.NonSemantic.CaseID, "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_SEMANTIC_VALUE_CHANGED"))
+		nonSemanticUnknowns = append(nonSemanticUnknowns, causalityUnknown(sample.CandidateID, sample.NonSemantic.CaseID, "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_SEMANTIC_VALUE_CHANGED"))
 	}
-	if len(unknowns) > 0 {
-		result.Status = "UNKNOWN"
-		result.Stage = "CAUSALITY"
-		result.Step = "observe-source"
-		result.Reason = unknowns[0].Reason
+
+	if len(semanticUnknowns) > 0 {
 		result.Semantic.Status = "UNKNOWN"
-		result.Semantic.Stage = unknowns[0].Stage
-		result.Semantic.Step = unknowns[0].Step
-		result.Semantic.Reason = unknowns[0].Reason
-		setCausalTransition(&result.Semantic, "OPEN", unknowns[0].Stage, unknowns[0].Step, unknowns[0].Reason)
-		setCausalTransition(&result.NonSemantic, "OPEN", "NON_SEMANTIC_INTERVENTION", "observe-source", "NON_SEMANTIC_INTERVENTION_NOT_OBSERVED")
-		return result, unknowns
-	}
-	if result.NonSemanticProjectionChanged || result.NonSemanticDecisionChanged {
-		result.Status = "REFUTED"
-		result.Stage = "NON_SEMANTIC_INTERVENTION"
-		result.Step = "compare-receipt-projection"
-		result.Reason = "NON_SEMANTIC_SEMANTIC_DRIFT"
-		result.NonSemantic.Status = "REFUTED"
-		result.NonSemantic.Stage = result.Stage
-		result.NonSemantic.Step = result.Step
-		result.NonSemantic.Reason = result.Reason
-		setCausalTransition(&result.NonSemantic, "REFUTED", result.Stage, result.Step, result.Reason)
-		return result, nil
-	}
-	result.NonSemantic.Status = "DISCHARGED"
-	result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
-	result.NonSemantic.Step = "compare-receipt-projection"
-	result.NonSemantic.Reason = "SEMANTIC_PROJECTION_PRESERVED"
-	setCausalTransition(&result.NonSemantic, "DISCHARGED", result.NonSemantic.Stage, result.NonSemantic.Step, result.NonSemantic.Reason)
-	if !containsAll(result.ChangedFields, result.RequiredChangeFields) {
-		result.Status = "REFUTED"
-		result.Stage = "SEMANTIC_INTERVENTION"
-		result.Step = "compare-receipt-projection"
+		result.Semantic.Stage = semanticUnknowns[0].Stage
+		result.Semantic.Step = semanticUnknowns[0].Step
+		result.Semantic.Reason = semanticUnknowns[0].Reason
+		setCausalTransition(&result.Semantic, "OPEN", semanticUnknowns[0].Stage, semanticUnknowns[0].Step, semanticUnknowns[0].Reason)
+	} else if !containsAll(result.ChangedFields, result.RequiredChangeFields) {
 		result.Semantic.Status = "REFUTED"
-		result.Semantic.Stage = result.Stage
+		result.Semantic.Stage = "SEMANTIC_INTERVENTION"
+		result.Semantic.Step = "compare-receipt-projection"
 		if !result.SemanticProjectionChanged {
 			result.Reason = "DIGEST_ONLY_BINDING"
 			result.DigestOnlyBinding = true
@@ -165,15 +141,58 @@ func evaluateCausalitySample(sample CausalitySampleInput, manifest CausalityMani
 			result.Reason = "SEMANTIC_INTERVENTION_NOT_BOUND_TO_CONTRACTED_RECEIPT_FIELD"
 		}
 		result.Semantic.Reason = result.Reason
-		setCausalTransition(&result.Semantic, "REFUTED", result.Stage, result.Step, result.Reason)
-		return result, nil
+		setCausalTransition(&result.Semantic, "REFUTED", result.Semantic.Stage, result.Semantic.Step, result.Semantic.Reason)
+	} else {
+		result.Semantic.Status = "DISCHARGED"
+		result.Semantic.Stage = "SEMANTIC_INTERVENTION"
+		result.Semantic.Step = "compare-receipt-projection"
+		result.Semantic.Reason = "CONTRACTED_RECEIPT_FIELD_CHANGED"
+		setCausalTransition(&result.Semantic, "DISCHARGED", result.Semantic.Stage, result.Semantic.Step, result.Semantic.Reason)
 	}
-	result.Semantic.Status = "DISCHARGED"
-	result.Semantic.Stage = "SEMANTIC_INTERVENTION"
-	result.Semantic.Step = "compare-receipt-projection"
-	result.Semantic.Reason = "CONTRACTED_RECEIPT_FIELD_CHANGED"
-	setCausalTransition(&result.Semantic, "DISCHARGED", result.Semantic.Stage, result.Semantic.Step, result.Semantic.Reason)
-	return result, nil
+
+	if len(nonSemanticUnknowns) > 0 {
+		result.NonSemantic.Status = "UNKNOWN"
+		result.NonSemantic.Stage = nonSemanticUnknowns[0].Stage
+		result.NonSemantic.Step = nonSemanticUnknowns[0].Step
+		result.NonSemantic.Reason = nonSemanticUnknowns[0].Reason
+		setCausalTransition(&result.NonSemantic, "OPEN", nonSemanticUnknowns[0].Stage, nonSemanticUnknowns[0].Step, nonSemanticUnknowns[0].Reason)
+	} else if result.NonSemanticProjectionChanged || result.NonSemanticDecisionChanged {
+		result.NonSemantic.Status = "REFUTED"
+		result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
+		result.NonSemantic.Step = "compare-receipt-projection"
+		result.NonSemantic.Reason = "NON_SEMANTIC_SEMANTIC_DRIFT"
+		setCausalTransition(&result.NonSemantic, "REFUTED", result.NonSemantic.Stage, result.NonSemantic.Step, result.NonSemantic.Reason)
+	} else {
+		result.NonSemantic.Status = "DISCHARGED"
+		result.NonSemantic.Stage = "NON_SEMANTIC_INTERVENTION"
+		result.NonSemantic.Step = "compare-receipt-projection"
+		result.NonSemantic.Reason = "SEMANTIC_PROJECTION_PRESERVED"
+		setCausalTransition(&result.NonSemantic, "DISCHARGED", result.NonSemantic.Stage, result.NonSemantic.Step, result.NonSemantic.Reason)
+	}
+
+	unknowns := append(semanticUnknowns, nonSemanticUnknowns...)
+	if len(unknowns) > 0 {
+		result.Status = "UNKNOWN"
+		result.Stage = "CAUSALITY"
+		result.Step = "adjudicate-interventions"
+		result.Reason = "CAUSALITY_INPUT_UNKNOWN"
+	} else if result.Semantic.Status == "REFUTED" {
+		result.Status = "REFUTED"
+		result.Stage = result.Semantic.Stage
+		result.Step = result.Semantic.Step
+		result.Reason = result.Semantic.Reason
+	} else if result.NonSemantic.Status == "REFUTED" {
+		result.Status = "REFUTED"
+		result.Stage = result.NonSemantic.Stage
+		result.Step = result.NonSemantic.Step
+		result.Reason = result.NonSemantic.Reason
+	} else {
+		result.Status = "DISCHARGED"
+		result.Stage = "CAUSALITY"
+		result.Step = "preserve-intervention-boundary"
+		result.Reason = "SOURCE_SEMANTIC_CAUSALITY_DISCHARGED"
+	}
+	return result, unknowns
 }
 
 func makeCausalCaseResult(input CausalityCaseInput) CausalCaseResult {

@@ -34,11 +34,18 @@ axis from silently changing the meaning of the original denominator.
 
 Each candidate must provide the same fixed three-case contract: baseline,
 semantic intervention, and non-semantic intervention. The source observer
-reads the actual `computes` value from the `.gooo` source. A semantic
-intervention must change that value and change at least one contracted receipt
+uses the canonical `syntax.ParseFile -> bidir.Lower` semantic projection and
+reads `ValueProgram` from the lowered activity node; it does not scan raw
+bytes for a `computes` substring. CI's source-observer conformance denominator
+is `2/2`, including a comment prefix and an unrelated quoted-string prefix
+before the real clause. A semantic intervention must change that value and
+change at least one contracted receipt
 field (`semantic_value`, `decision`, or `claim_transitions`). A non-semantic
 intervention may change only whitespace/comments: its raw source digest must
 change while the receipt semantic projection and decision stay equal.
+If parsing, lowering, validation, or semantic projection cannot represent the
+source, the observer fails closed with its exact `SOURCE_OBSERVER` stage,
+step, and reason; it never falls back to text scanning.
 
 The causality source observer and evaluator live in the producer-free
 `internal/meta/experimentportfolio/causalityconsumer` package. The receipt
@@ -71,6 +78,12 @@ The numerator is an observed integer from the receipt. `OPEN`, `DISCHARGED`, and
 winner, estimated improvement, or weighted average. A refuted coordinate is
 useful evidence about a boundary; it is not a penalty that can be hidden by a
 different coordinate.
+
+Unknown adjudication is per claim, not per sample: an unknown semantic
+intervention leaves only that claim `OPEN` with its own candidate/case and
+stage/step/reason, while an observed non-semantic intervention may still be
+`DISCHARGED`, and conversely. Any unknown lowers the top report to
+`FAIL_CLOSED / LOWER_RESOLUTION`; it does not erase discharged evidence.
 
 ## External principles applied
 

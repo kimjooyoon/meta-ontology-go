@@ -235,6 +235,30 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "experiment-portfolio-derive",
+      "path": "examples/experiment-portfolio/alternatives/derive.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "experiment-portfolio-replay",
+      "path": "examples/experiment-portfolio/alternatives/replay.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "experiment-portfolio-reflect",
+      "path": "examples/experiment-portfolio/alternatives/reflect.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
     }
   ],
   "package_units": [

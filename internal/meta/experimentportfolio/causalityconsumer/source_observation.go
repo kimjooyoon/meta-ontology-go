@@ -5,47 +5,49 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func ObserveSource(sourcePath string, source []byte) (SourceObservation, error) {
-	value, err := computedValue(source)
+	file, diagnostics := syntax.ParseFile(sourcePath, string(source))
+	if file == nil || diagnostics.HasErrors() {
+		return SourceObservation{}, sourceObserverFailure("parse-gooo", "SOURCE_PARSE_DIAGNOSTICS", nil)
+	}
+	ir, err := bidir.Lower(file)
 	if err != nil {
-		return SourceObservation{}, err
+		return SourceObservation{}, sourceObserverFailure("lower-gooo", "SOURCE_SEMANTIC_LOWERING_UNAVAILABLE", err)
+	}
+	if err := ir.Validate(); err != nil {
+		return SourceObservation{}, sourceObserverFailure("validate-semantic-ir", "SOURCE_SEMANTIC_PROJECTION_INVALID", err)
+	}
+	values := make([]string, 0, 1)
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind == semantic.Activity && node.ValueProgram != "" {
+			values = append(values, node.ValueProgram)
+		}
+	}
+	if len(values) == 0 {
+		return SourceObservation{}, sourceObserverFailure("project-semantic-value", "SOURCE_SEMANTIC_VALUE_UNAVAILABLE", nil)
+	}
+	if len(values) != 1 {
+		return SourceObservation{}, sourceObserverFailure("project-semantic-value", "SOURCE_SEMANTIC_VALUE_AMBIGUOUS", nil)
 	}
 	return SourceObservation{
 		SourcePath:    canonicalSourcePath(sourcePath),
 		SourceDigest:  sha256Digest(source),
-		SemanticValue: value,
+		SemanticValue: values[0],
 	}, nil
 }
 
-func computedValue(source []byte) (string, error) {
-	text := string(source)
-	marker := "computes "
-	index := strings.Index(text, marker)
-	if index < 0 {
-		return "", fmt.Errorf("source does not declare a computes value")
+func sourceObserverFailure(step, reason string, cause error) error {
+	if cause == nil {
+		return fmt.Errorf("FAIL_CLOSED: stage=SOURCE_OBSERVER step=%s reason=%s", step, reason)
 	}
-	quoted := text[index+len(marker):]
-	if !strings.HasPrefix(quoted, "\"") {
-		return "", fmt.Errorf("computes value is not a quoted string")
-	}
-	for end := 1; end < len(quoted); end++ {
-		if quoted[end] != '"' || quoted[end-1] == '\\' {
-			continue
-		}
-		value, err := strconv.Unquote(quoted[:end+1])
-		if err != nil {
-			return "", fmt.Errorf("computes value: %w", err)
-		}
-		if value == "" {
-			return "", fmt.Errorf("computes value is empty")
-		}
-		return value, nil
-	}
-	return "", fmt.Errorf("computes value is unterminated")
+	return fmt.Errorf("FAIL_CLOSED: stage=SOURCE_OBSERVER step=%s reason=%s: %w", step, reason, cause)
 }
 
 func canonicalSourcePath(path string) string {

@@ -62,8 +62,16 @@ fixed three-case contract for every candidate:
 
 `baseline`, `semantic intervention`, `non-semantic intervention`.
 
-The source observer extracts the actual `computes` value from each `.gooo`
-file. An intervention is discharged only when the semantic source value and
+The source observer uses the canonical repository parser/lowering projection
+(`syntax.ParseFile -> bidir.Lower -> semantic activity ValueProgram`) rather
+than raw substring scanning. CI's source-observer conformance denominator is
+`2/2`: a comment containing fake `computes` text and an unrelated quoted string
+containing escaped fake `computes` text both precede the real clause, while the
+observer still returns the canonical program value. If parsing, lowering,
+validation, or projection cannot represent a source, it fails closed with the
+exact `SOURCE_OBSERVER` stage/step/reason.
+
+An intervention is discharged only when the semantic source value and
 raw source digest move as contracted, a contracted receipt field among
 `semantic_value`, `decision`, or `claim_transitions` changes, and the
 non-semantic source changes only its digest while preserving the receipt's
