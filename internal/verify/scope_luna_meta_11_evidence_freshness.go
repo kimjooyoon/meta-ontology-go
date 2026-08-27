@@ -4,7 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/luna-meta-11-evidence-freshness"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
-		".github/workflows/evidence-freshness.yml",
+		".github/workflows/transformation-effect.yml",
 		"cmd/evidence-freshness",
 		"cmd/evidence-freshness-decider",
 		"docs/language/evidence-freshness.md",
