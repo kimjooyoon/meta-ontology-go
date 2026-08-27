@@ -306,9 +306,15 @@ jobs:
             ([.contradiction.claim_transitions[] | select(.proposition == "selected check is sufficient/passed") | .after] | all(. != "REFUTED"))
           ' "$root/interventions.json"
           jq -e --arg source "$SOURCE_PATH" '.schema == "gooo/causal-ci-selection-plan-adjudication/v1" and .scope == "PLAN_RECONSTRUCTION_CONFORMANCE" and .decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and .source_plan_binding_numerator == 4 and .source_plan_binding_denominator == 4 and .source_reconstruction_numerator == 4 and .source_reconstruction_denominator == 4 and (.source_plan_binding | length == 4) and ([.source_plan_binding[].exact] | all) and ([.source_plan_binding[] | (.expected_source_raw_digest == .expected_source_bytes_digest and .expected_source_raw_digest == .actual_consumer_source_bytes_digest and .expected_source_object_id == .actual_consumer_source_object_id and .expected_object_format != "" and .logical_source_path == $source and .binding_mode == .expected_binding_mode)] | all) and .selected_check_execution_schema == "gooo/causal-ci-selection-selected-check-execution/v1" and .selected_check_execution == "UNKNOWN" and .selected_check_execution_numerator == 0 and .selected_check_execution_denominator == 1 and .observed_variant_ids == .expected_variant_ids and ([.adjudications[].result] | all(. == "PASS")) and ([.process_evidence[].observed_os_exit_code] | all(. == 0)) and ([.process_evidence[].observed_stderr_bytes] | all(. == 0)) and ([.process_evidence[] | .self_reported_exit_code == .observed_os_exit_code] | all)' "$root/intervention-adjudication.json"
-          if rg -n 'github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci"' internal/meta/causalci/consumer --glob '*.go'; then
+          if git grep -n 'github.com/kimjooyoon/meta-ontology-go/internal/meta/causalci"' -- 'internal/meta/causalci/consumer/*.go'; then
             echo 'consumer imports producer package'
             exit 1
+          else
+            import_audit_status="$?"
+            if test "$import_audit_status" -ne 1; then
+              echo "consumer import audit failed with status $import_audit_status"
+              exit "$import_audit_status"
+            fi
           fi
           jq -n '{schema:"gooo/causal-ci-selection-import-audit/v1", producer_import_numerator:0, producer_import_denominator:1, source:"CI static import audit"}' > "$root/producer-import-audit.json"
           go_package_count="$(jq -r '.go_runtime.package_universe_count' "$root/adjudication.json")"
