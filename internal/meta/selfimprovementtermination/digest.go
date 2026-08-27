@@ -8,13 +8,21 @@ import (
 	"strings"
 )
 
+func digestBytes(value []byte) string {
+	sum := sha256.Sum256(value)
+	return "sha256:" + hex.EncodeToString(sum[:])
+}
+
+func stateDigest(label string) string {
+	return digestBytes([]byte("self-improvement-state/v1:" + label))
+}
+
 func digestJSON(value any) string {
 	payload, err := json.Marshal(value)
 	if err != nil {
 		panic(err)
 	}
-	sum := sha256.Sum256(payload)
-	return "sha256:" + hex.EncodeToString(sum[:])
+	return digestBytes(payload)
 }
 
 func validDigest(value string) bool {
@@ -44,5 +52,5 @@ func encodeJSON(value any) ([]byte, error) {
 }
 
 func invalid(format string, args ...any) error {
-	return fmt.Errorf("termination input: "+format, args...)
+	return fmt.Errorf("termination source/input: "+format, args...)
 }

@@ -10,19 +10,18 @@ import (
 )
 
 func main() {
-	inputPath := flag.String("input", "", "self-improvement termination input JSON")
+	root := flag.String("root", ".", "repository root")
+	sourcePath := flag.String("source", termination.SourcePath, "executable Gooo source")
+	repository := flag.String("repository", "kimjooyoon/meta-ontology-go", "repository identity")
+	caseID := flag.String("case", "", "source-defined termination case")
 	outputPath := flag.String("output", "", "termination receipt path; stdout when empty")
 	check := flag.Bool("check", false, "require a bound receipt")
 	flag.Parse()
-	if *inputPath == "" {
-		fail(fmt.Errorf("input is required"))
+	if *caseID == "" {
+		fail(fmt.Errorf("case is required"))
 	}
-	data, err := os.ReadFile(*inputPath)
+	input, err := termination.BuildInput(*root, *repository, *sourcePath, *caseID)
 	if err != nil {
-		fail(err)
-	}
-	var input termination.Input
-	if err := json.Unmarshal(data, &input); err != nil {
 		fail(err)
 	}
 	receipt, err := termination.Evaluate(input)
@@ -47,8 +46,9 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	fmt.Fprintf(os.Stderr, "termination-witness: decision=%s reason=%s evidence=%d/%d\n",
-		receipt.Decision, receipt.Reason, receipt.Summary.Satisfied, receipt.Summary.Total)
+	fmt.Fprintf(os.Stderr, "termination-witness: case=%s decision=%s resolution=%s claim=%s conformance=%d/%d\n",
+		receipt.Source.CaseID, receipt.Decision, receipt.Resolution, receipt.Outcome.ClaimState,
+		receipt.Conformance.Satisfied, receipt.Conformance.Total)
 }
 
 func fail(err error) {

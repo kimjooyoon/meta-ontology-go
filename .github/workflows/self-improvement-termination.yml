@@ -35,39 +35,61 @@ jobs:
           go version
       - name: Check the Gooo termination contract
         run: go run ./cmd/gooo check examples/self-improvement-termination/main.gooo
+      - name: Check vertical-slice intervention corpus registration
+        run: |
+          jq -e '(.source_path == "examples/self-improvement-termination/main.gooo") and (.denominator_total == 2) and (.aggregation == "NONE") and (.cases | length == 2)' \
+            examples/vertical-slice-closure-shadow/termination-usecases.json
       - name: Produce, replay, and independently judge every case
         env:
-          CASE_DIR: examples/self-improvement-termination
+          SOURCE_PATH: examples/self-improvement-termination/main.gooo
+          REPOSITORY: kimjooyoon/meta-ontology-go
           OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
         run: |
           set -euo pipefail
           mkdir -p "$OUTPUT_DIR"
-          cases=(fixed-point cycle-2 in-progress divergence-possible)
-          expected=(FIXED_POINT CYCLE IN_PROGRESS DIVERGENCE_POSSIBLE)
+          cases=(fixed-point cycle-2 in-progress divergence-possible unknown-upstream)
+          expected_decisions=(FIXED_POINT CYCLE IN_PROGRESS DIVERGENCE_POSSIBLE FAIL_CLOSED)
+          expected_resolutions=(EXACT EXACT LOWER_RESOLUTION LOWER_RESOLUTION LOWER_RESOLUTION)
+          expected_statuses=(BOUND BOUND BOUND BOUND FAIL_CLOSED)
+          expected_claims=(DISCHARGED REFUTED OPEN OPEN OPEN)
+          expected_reasons=(NO_CHANGE_FIXED_POINT_OBSERVED REPEATED_STATE_CYCLE_OBSERVED TRACE_ENDED_BEFORE_TERMINATION STRICTLY_GROWING_BOUNDARY_NO_FIXED_POINT FEEDBACK_COVERAGE_DECISION_UNKNOWN)
           for index in "${!cases[@]}"; do
             name="${cases[$index]}"
-            input="$CASE_DIR/$name.json"
             receipt="$OUTPUT_DIR/$name-receipt.json"
             replay="$OUTPUT_DIR/$name-replay.json"
             judge="$OUTPUT_DIR/$name-judge.json"
-            go run ./cmd/self-improvement-termination-witness --input "$input" --output "$receipt" --check
-            go run ./cmd/self-improvement-termination-witness --input "$input" --output "$replay" --check
+            go run ./cmd/self-improvement-termination-witness --root "$GITHUB_WORKSPACE" --source "$SOURCE_PATH" --repository "$REPOSITORY" --case "$name" --output "$receipt" --check
+            go run ./cmd/self-improvement-termination-witness --root "$GITHUB_WORKSPACE" --source "$SOURCE_PATH" --repository "$REPOSITORY" --case "$name" --output "$replay" --check
             cmp -s "$receipt" "$replay"
-            go run ./cmd/self-improvement-termination-judge --input "$input" --receipt "$receipt" --output "$judge"
-            jq -e --arg want "${expected[$index]}" \
-              '.independent == true and .decision == $want and .satisfied == 10 and .total == 10 and .basis_points == 10000' \
+            go run ./cmd/self-improvement-termination-judge --root "$GITHUB_WORKSPACE" --source "$SOURCE_PATH" --repository "$REPOSITORY" --case "$name" --receipt "$receipt" --output "$judge"
+            jq -e --arg decision "${expected_decisions[$index]}" \
+              --arg resolution "${expected_resolutions[$index]}" \
+              --arg status "${expected_statuses[$index]}" \
+              --arg claim "${expected_claims[$index]}" \
+              --arg reason "${expected_reasons[$index]}" \
+              --arg source "$SOURCE_PATH" \
+              '(.source.path == $source) and (.resolution == $resolution) and (.decision == $decision) and (.status == $status) and (.reason == $reason) and (.outcome.claim_state == $claim) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and ((.outcome.termination_proven == true) == ($decision == "FIXED_POINT")) and (.interventions | length == 2) and (.interventions[0].semantic_changed == true) and (.interventions[1].semantic_changed == false) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step == (.observations | length)) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
+              "$receipt"
+            jq -e --arg decision "${expected_decisions[$index]}" \
+              --arg resolution "${expected_resolutions[$index]}" \
+              --arg status "${expected_statuses[$index]}" \
+              --arg claim "${expected_claims[$index]}" \
+              --arg reason "${expected_reasons[$index]}" \
+              '.independent == true and (.decision == $decision) and (.resolution == $resolution) and (.status == $status) and (.reason == $reason) and (.claim_state == $claim) and (.conformance.satisfied == 2) and (.conformance.total == 2) and (.conformance.basis_points == 10000) and ((.termination_proven == true) == ($decision == "FIXED_POINT")) and (.claim_transitions[0] == {stage:"CLAIM",step:0,from:"OPEN",to:"OPEN",reason:"TRACE_BOUND"}) and (.claim_transitions[1].step > 0) and (.claim_transitions[1].from == "OPEN") and (.claim_transitions[1].to == $claim) and (.claim_transitions[1].reason == $reason)' \
               "$judge"
-            jq -r '"- " + input_filename + ": " + .decision + " (" + .reason + "), " + (.satisfied|tostring) + "/" + (.total|tostring)' "$judge" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"- " + .case_id + ": " + .decision + "/" + .resolution + ", claim=" + .claim_state + ", conformance=" + (.conformance.satisfied|tostring) + "/" + (.conformance.total|tostring)' "$judge" >> "$GITHUB_STEP_SUMMARY"
           done
       - name: Reject a forged fixed-point promotion
         env:
-          CASE_DIR: examples/self-improvement-termination
           OUTPUT_DIR: ${{ runner.temp }}/self-improvement-termination
         run: |
           set -euo pipefail
           jq '.decision = "FIXED_POINT"' "$OUTPUT_DIR/cycle-2-receipt.json" > "$OUTPUT_DIR/forged-cycle.json"
           if go run ./cmd/self-improvement-termination-judge \
-            --input "$CASE_DIR/cycle-2.json" \
+            --root "$GITHUB_WORKSPACE" \
+            --source examples/self-improvement-termination/main.gooo \
+            --repository kimjooyoon/meta-ontology-go \
+            --case cycle-2 \
             --receipt "$OUTPUT_DIR/forged-cycle.json"; then
             echo "independent judge accepted a forged fixed point"
             exit 1

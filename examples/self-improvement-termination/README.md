@@ -1,30 +1,46 @@
 # Self-improvement termination witness
 
-This experiment observes repeated executions of the self-improvement
-metaprogram as a finite state trace. It proves only what the trace supports;
-it does not promote every completed observation to `FIXED_POINT` and it never
-writes the repository or authorizes promotion.
+This experiment is a source-backed proof experiment for a repeatedly executed
+self-improvement meta-operation. The bounded traces are executable
+`termination-case/v2` values in [`main.gooo`](main.gooo). The producer parses
+and lowers that Gooo source canonically; JSON files are generated receipts and
+judge outputs, never input authority.
 
-The input contract fixes the denominator at ten indicators and binds the
-producer, consumer, meta-operation, proof choice, stage, step, and reason.
-Each state is a content digest. A `NO_CHANGE` observation is a self-transition
-whose before and after digests are equal. A non-adjacent repeated digest is a
-cycle after stuttering no-change observations are removed.
+The source binds the producer `selfimprovementtermination.Evaluate`, consumer
+`self-improvement-cycle`, meta-operation `prove-self-improvement-termination`,
+proof choice `TERMINATION`, stage `META_RUN`, and every step/reason. Each state
+is a content digest. Adjacent no-change stuttering is removed before looking
+for a repeated state, but a final no-change observation is the only fixed-point
+witness.
 
-`state count` is the length of the state sequence after adjacent no-change
-stuttering is removed; it includes the repeated endpoint that proves a cycle.
+| source case | trace / budget | state count | repeated states / period | decision | resolution | claim transition | termination proven |
+| --- | ---: | ---: | ---: | --- | --- | --- | --- |
+| `fixed-point` | 1/4 | 1 | 0 / 0 | `FIXED_POINT` | `EXACT` | `OPEN -> DISCHARGED` | yes |
+| `cycle-2` | 2/4 | 3 | 1 / 2 | `CYCLE` | `EXACT` | `OPEN -> REFUTED` | no |
+| `in-progress` | 2/4 | 3 | 0 / 0 | `IN_PROGRESS` | `LOWER_RESOLUTION` | `OPEN -> OPEN` | no |
+| `divergence-possible` | 2/2 | 3 | 0 / 0 | `DIVERGENCE_POSSIBLE` | `LOWER_RESOLUTION` | `OPEN -> OPEN` | no |
+| `unknown-upstream` | 1/4 | 1 | 0 / 0 | `FAIL_CLOSED` | `LOWER_RESOLUTION` | `OPEN -> OPEN` | no |
 
-| case | observed trace | state count | repeated states | decision | termination claim |
-| --- | ---: | ---: | ---: | --- | --- |
-| `fixed-point.json` | 1/4 steps | 1 | 0 | `FIXED_POINT` | proven from the final no-change self-transition |
-| `cycle-2.json` | 2/4 steps | 3 | 1 (period 2) | `CYCLE` | refuted by a period-2 repeated state |
-| `in-progress.json` | 2/4 steps | 3 | 0 | `IN_PROGRESS` | no terminal or cycle evidence yet |
-| `divergence-possible.json` | 2/2 steps | 3 | 0 | `DIVERGENCE_POSSIBLE` | only a bounded strictly-growing prefix; not a proof of infinity |
+`CYCLE` is an exact witnessed cycle, not a successful termination result.
+`IN_PROGRESS` and `DIVERGENCE_POSSIBLE` preserve their bounded observation and
+exact coordinates while remaining open. An unrecognized upstream decision is
+localized as `FAIL_CLOSED` with reason
+`FEEDBACK_COVERAGE_DECISION_UNKNOWN`; it can never become a fixed point merely
+because a trace contains no change.
 
-Every valid receipt has `10/10 = 10000` basis points because the denominator
-measures whether the selected branch was observed and bound, not whether the
-branch was a fixed point. Only the fixed-point branch sets
-`summary.termination_proven` to `true`.
+The conformance section has a fixed denominator of two, without aggregation:
+one semantic trace intervention must change the semantic digest, and one
+comment-only intervention must preserve it. All five source cases therefore
+report `2/2 = 10000` conformance basis points. This is a source-causality
+check, not a termination score and never means “termination proven.” The
+receipt also binds the source digest, lowered semantic digest, selected
+computes-value digest, trace digest, producer/consumer/meta-operation/proof
+choice, and read-only authority.
+
+The independent judge owns a copied wire model and independently parses,
+lowers, recomputes, and seals the expected receipt. It imports zero packages
+from the producer implementation. A forged fixed-point receipt, an altered
+trace, a changed source digest, or a changed claim transition is rejected.
 
 ## Formal design choices
 
@@ -32,42 +48,48 @@ The experiment uses these sources:
 
 1. [Baader and Nipkow, *Term Rewriting and All That*, Chapter 5:
    Termination](https://www.cambridge.org/core/books/abs/term-rewriting-and-all-that/termination/36ACECF2B0D53A6933FA6EDAF7E219FF)
-   treats termination as a property of rewrite systems, notes its general
-   undecidability, and introduces reduction orders as a way to prove the
-   property.
+   motivates treating termination as a property of a rewrite relation and
+   using a well-founded reduction order rather than inferring termination from
+   a finite sample.
 2. [Lean 4 Reference, Recursive Definitions](https://lean-lang.org/doc/reference/latest/Definitions/Recursive-Definitions/)
-   defines well-founded recursion through a measure that decreases at every
-   recursive call and explains that a well-founded relation has no infinite
-   descending chain.
+   requires a well-founded recursion argument, such as a decreasing measure,
+   for recursive calls; a bounded trace here is therefore only evidence at a
+   boundary unless it contains an observed fixed point.
 3. [Cornell CS 4110, Fixed Points](https://www.cs.cornell.edu/courses/cs4110/2014fa/lectures/slides07.pdf)
-   defines a fixed point by `F(x) = x` and describes iterative approximation;
-   that equation alone is not an operational termination proof.
+   defines a fixed point by `F(x) = x`; this equality is adopted as the local
+   no-change witness but not confused with the claim that iteration reaches it.
 
 Adopted principles:
 
-- Accept `FIXED_POINT` only for the final `NO_CHANGE` self-transition after
-  cycle analysis. Equality is the local fixed-point witness.
-- Preserve a state chain and a fixed step budget. A strictly increasing rank at
-  the budget boundary yields `DIVERGENCE_POSSIBLE`, never `FIXED_POINT`.
-- Treat a non-adjacent repeated state as `CYCLE`, including a concrete 2-cycle.
-- Keep `IN_PROGRESS` when the finite prefix has neither terminal nor cycle
-  evidence. The receipt records an exact observation, not an infinite claim.
-- Emit a claim transition from `UNPROVEN` to `OBSERVED` and then to the exact
-  observed decision. The independent judge recomputes this transition.
+- Parse and lower the executable Gooo source before producing any case input;
+  generated JSON has no authority.
+- Accept `FIXED_POINT/EXACT` only for an explicit observed final `NO_CHANGE`
+  self-transition after cycle analysis.
+- Preserve a contiguous state chain, fixed step budget, rank coordinates, and
+  localized stage/step/reason evidence.
+- Treat a non-adjacent repeated state as an exact `CYCLE`; its fixed-point
+  claim is `REFUTED`, not discharged.
+- Keep bounded progress, possible divergence, and unknown upstream coverage
+  as `OPEN` with `LOWER_RESOLUTION`; only the explicit fixed point discharges.
+- Keep semantic trace and nonsemantic comment interventions in a fixed 2-case
+  conformance corpus, separate from the subject outcome.
 
 Rejected shortcuts:
 
-- A run limit is not a termination proof; it is only a boundary for a
-  `DIVERGENCE_POSSIBLE` observation.
-- A prior `FIXED_POINT` label is not trusted as evidence. The before/after
-  digests and `NO_CHANGE` reason must agree.
-- A repeated state is not automatically a fixed point: period two is a cycle,
-  and only adjacent no-change stuttering is ignored by the cycle scan.
-- A fixed-point theorem about a recursive functional does not establish that a
-  concrete self-improvement workflow reaches that point.
+- A run limit is not a proof of infinite divergence or termination.
+- An upstream `FIXED_POINT` label is not trusted without the observed digest
+  equality and no-change reason.
+- A repeated state is not automatically a fixed point; a period-2 witness is
+  a cycle.
+- A 10/10-style aggregate or a conformance score cannot be presented as a
+  termination proof.
+- Importing the producer package into the verifier is not independent
+  evidence, so the judge duplicates the wire model and computation.
+- A fixed-point theorem for an abstract recursive functional does not show
+  that this concrete self-improvement workflow reaches that point.
 
-The producer is `selfimprovementtermination.Evaluate`. The consumer is
-`self-improvement-cycle`, and the meta-operation is
-`prove-self-improvement-termination` under the `TERMINATION` proof choice. The
-independent command uses a separate verifier implementation and checks the
-receipt digest, fixed denominator, trace, branch, and claim transitions.
+The source is registered in the syntax, semantic, toolchain, and vertical-slice
+corpora. The workflow runs Go 1.27, produces receipts from the source, replays
+them, runs the independent judge, checks the exact transition matrix, and
+rejects a forged promotion. It performs no repository writes and does not
+merge or promote the claim.

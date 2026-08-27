@@ -1,8 +1,8 @@
 {
   "schema": "gooo/toolchain-conformance-corpus/v1",
   "surfaces": [
-    {"id": "language-syntax-roundtrip", "schema": "gooo/language-syntax-roundtrip/v1", "cases": 28, "indicators": 16, "proofs": 3},
-    {"id": "language-semantic-model", "schema": "gooo/language-semantic-model/v1", "cases": 30, "indicators": 19, "proofs": 3},
+    {"id": "language-syntax-roundtrip", "schema": "gooo/language-syntax-roundtrip/v1", "cases": 29, "indicators": 16, "proofs": 3},
+    {"id": "language-semantic-model", "schema": "gooo/language-semantic-model/v1", "cases": 31, "indicators": 19, "proofs": 3},
     {"id": "language-deterministic-query", "schema": "gooo/language-deterministic-query/v1", "cases": 32, "indicators": 18, "proofs": 3},
     {"id": "language-go-interoperation", "schema": "gooo/language-go-interoperation/v1", "cases": 24, "indicators": 18, "proofs": 3},
     {"id": "language-diagnostic-provenance", "schema": "gooo/language-diagnostic-provenance/v1", "cases": 18, "indicators": 18, "proofs": 3},
@@ -10,6 +10,9 @@
     {"id": "toolchain-cli", "schema": "gooo/toolchain-cli-report/v2", "cases": 12, "indicators": 18, "proofs": 3},
     {"id": "toolchain-format-fix", "schema": "gooo/toolchain-format-fix-report/v1", "cases": 12, "indicators": 18, "proofs": 3},
     {"id": "toolchain-executable-use-cases", "schema": "gooo/toolchain-executable-use-cases/v1", "cases": 3, "indicators": 8, "proofs": 3}
+  ],
+  "source_registrations": [
+    {"id": "self-improvement-termination", "path": "examples/self-improvement-termination/main.gooo", "purpose": "source-backed bounded meta-operation termination witness"}
   ],
   "tamper_cases": [
     {"id": "missing-surface", "mutation": "MISSING_SURFACE", "target": "language-syntax-roundtrip"},

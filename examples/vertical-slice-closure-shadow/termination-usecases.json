@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/vertical-slice-closure-shadow-self-improvement-termination-use-cases/v1",
+  "source_path": "examples/self-improvement-termination/main.gooo",
+  "denominator_total": 2,
+  "aggregation": "NONE",
+  "cases": [
+    {
+      "id": "semantic-trace-intervention",
+      "stage": "INTERVENTION",
+      "step": 1,
+      "reason": "SEMANTIC_TRACE_INTERVENTION_CHANGES_SEMANTIC_DIGEST",
+      "expected_source_changed": true,
+      "expected_semantic_changed": true
+    },
+    {
+      "id": "nonsemantic-comment-intervention",
+      "stage": "INTERVENTION",
+      "step": 2,
+      "reason": "NONSEMANTIC_COMMENT_INTERVENTION_PRESERVES_SEMANTIC_DIGEST",
+      "expected_source_changed": true,
+      "expected_semantic_changed": false
+    }
+  ]
+}

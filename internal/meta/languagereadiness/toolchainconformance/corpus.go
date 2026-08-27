@@ -7,8 +7,8 @@ import (
 )
 
 var fixedSurfaces = []SurfaceDefinition{
-	{"language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", 28, 16, 3},
-	{"language-semantic-model", "gooo/language-semantic-model/v1", 30, 19, 3},
+	{"language-syntax-roundtrip", "gooo/language-syntax-roundtrip/v1", 29, 16, 3},
+	{"language-semantic-model", "gooo/language-semantic-model/v1", 31, 19, 3},
 	{"language-deterministic-query", "gooo/language-deterministic-query/v1", 32, 18, 3},
 	{"language-go-interoperation", "gooo/language-go-interoperation/v1", 24, 18, 3},
 	{"language-diagnostic-provenance", "gooo/language-diagnostic-provenance/v1", 18, 18, 3},
@@ -16,6 +16,10 @@ var fixedSurfaces = []SurfaceDefinition{
 	{"toolchain-cli", "gooo/toolchain-cli-report/v2", 12, 18, 3},
 	{"toolchain-format-fix", "gooo/toolchain-format-fix-report/v1", 12, 18, 3},
 	{"toolchain-executable-use-cases", "gooo/toolchain-executable-use-cases/v1", 3, 8, 3},
+}
+
+var fixedSourceRegistrations = []SourceRegistration{
+	{"self-improvement-termination", "examples/self-improvement-termination/main.gooo", "source-backed bounded meta-operation termination witness"},
 }
 
 var fixedTamperCases = []TamperDefinition{
@@ -41,6 +45,7 @@ func parseCorpus(raw []byte) (Corpus, string, error) {
 	}
 	if corpus.Schema != CorpusSchema ||
 		!reflect.DeepEqual(corpus.Surfaces, fixedSurfaces) ||
+		!reflect.DeepEqual(corpus.SourceRegistrations, fixedSourceRegistrations) ||
 		!reflect.DeepEqual(corpus.TamperCases, fixedTamperCases) {
 		return corpus, "", fmt.Errorf("FAIL_CLOSED: conformance corpus drift")
 	}

@@ -227,6 +227,14 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
+    },
+    {
+      "id": "self-improvement-termination",
+      "path": "examples/self-improvement-termination/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
     }
   ],
   "package_units": [

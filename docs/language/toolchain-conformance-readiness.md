@@ -7,7 +7,7 @@ tools, or an unknown top-level decision is insufficient.
 Acceptance requires:
 
 - 9/9 conformant surfaces
-- 152/152 satisfied and executed source cases
+- 179/179 satisfied and executed source cases
 - 151/151 satisfied source indicators
 - 27/27 passed source proofs
 - 13/13 fail-closed in-memory mutations

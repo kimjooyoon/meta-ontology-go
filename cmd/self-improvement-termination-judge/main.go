@@ -6,27 +6,25 @@ import (
 	"fmt"
 	"os"
 
-	termination "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtermination"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementtermination/verify"
 )
 
 func main() {
-	inputPath := flag.String("input", "", "self-improvement termination input JSON")
+	root := flag.String("root", ".", "repository root")
+	sourcePath := flag.String("source", "examples/self-improvement-termination/main.gooo", "executable Gooo source")
+	repository := flag.String("repository", "kimjooyoon/meta-ontology-go", "repository identity")
+	caseID := flag.String("case", "", "source-defined termination case")
 	receiptPath := flag.String("receipt", "", "termination receipt JSON")
 	outputPath := flag.String("output", "", "judge report path; stdout when empty")
 	flag.Parse()
-	if *inputPath == "" || *receiptPath == "" {
-		fail(fmt.Errorf("input and receipt are required"))
+	if *caseID == "" || *receiptPath == "" {
+		fail(fmt.Errorf("case and receipt are required"))
 	}
-	var input termination.Input
-	if err := decode(*inputPath, &input); err != nil {
+	receipt, err := os.ReadFile(*receiptPath)
+	if err != nil {
 		fail(err)
 	}
-	var receipt termination.Receipt
-	if err := decode(*receiptPath, &receipt); err != nil {
-		fail(err)
-	}
-	report, err := verify.Verify(input, receipt)
+	report, err := verify.Verify(*root, *sourcePath, *repository, *caseID, receipt)
 	if err != nil {
 		fail(err)
 	}
@@ -43,14 +41,6 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-}
-
-func decode(path string, value any) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, value)
 }
 
 func fail(err error) {

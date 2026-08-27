@@ -178,6 +178,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-self-improvement-termination",
+      "kind": "SOURCE",
+      "path": "examples/self-improvement-termination/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

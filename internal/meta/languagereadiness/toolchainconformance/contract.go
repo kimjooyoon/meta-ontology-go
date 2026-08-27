@@ -10,7 +10,7 @@ const (
 	ExpectedConceptID      = "toolchain-conformance"
 	ExpectedMetaOperation  = "close-toolchain-conformance-ledger"
 	ExpectedSurfaceCount   = 9
-	ExpectedCaseCount      = 177
+	ExpectedCaseCount      = 179
 	ExpectedIndicatorCount = 151
 	ExpectedProofCount     = 27
 	ExpectedTamperCount    = 13
@@ -25,6 +25,12 @@ type SurfaceDefinition struct {
 	Proofs     int    `json:"proofs"`
 }
 
+type SourceRegistration struct {
+	ID      string `json:"id"`
+	Path    string `json:"path"`
+	Purpose string `json:"purpose"`
+}
+
 type TamperDefinition struct {
 	ID       string `json:"id"`
 	Mutation string `json:"mutation"`
@@ -32,9 +38,10 @@ type TamperDefinition struct {
 }
 
 type Corpus struct {
-	Schema      string              `json:"schema"`
-	Surfaces    []SurfaceDefinition `json:"surfaces"`
-	TamperCases []TamperDefinition  `json:"tamper_cases"`
+	Schema              string               `json:"schema"`
+	Surfaces            []SurfaceDefinition  `json:"surfaces"`
+	SourceRegistrations []SourceRegistration `json:"source_registrations"`
+	TamperCases         []TamperDefinition   `json:"tamper_cases"`
 }
 
 type Input struct {
