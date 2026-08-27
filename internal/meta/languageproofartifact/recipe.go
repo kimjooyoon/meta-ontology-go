@@ -74,7 +74,8 @@ func RecipeFromSource(raw []byte) (Recipe, error) {
 		if err != nil {
 			return Recipe{}, fmt.Errorf("recipe activity %q: %w", activity.Name, err)
 		}
-		switch strings.TrimPrefix(activity.ValueProgram, recipePrefix) {
+		kind := strings.TrimPrefix(strings.SplitN(activity.ValueProgram, ";", 2)[0], recipePrefix)
+		switch kind {
 		case "role":
 			role := RecipeRole{ID: fields["claim"], Proposition: fields["proposition"], Target: fields["target"], ProofChoice: fields["proof"], Step: fields["step"], MetaOperation: fields["operation"], Dependencies: splitCSV(fields["requires"])}
 			if role.ID == "" || role.Proposition == "" || role.Target == "" || role.ProofChoice == "" || role.Step == "" || role.MetaOperation == "" {
