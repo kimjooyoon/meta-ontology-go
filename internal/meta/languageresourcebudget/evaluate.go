@@ -10,6 +10,9 @@ func Evaluate(input Input, caseName string) Report {
 	if !positiveSHA(input.ExpectedHead) || !validContract(input.Contract) {
 		return closeReport(report, "EXACT", "CONTRACT_OR_SUBJECT_INVALID", "NO_CLAIM")
 	}
+	if !validRunner(input.Producer.Runner) {
+		return closeReport(report, "LOWER_RESOLUTION", "RUNNER_IDENTITY_UNKNOWN", "SEMANTIC_EXACT_RESOURCE_UNKNOWN")
+	}
 	report.Semantic, _ = verifyProducer(input)
 	if report.Semantic.Reason == "" {
 		report.Semantic.Reason = "SEMANTIC_PRODUCER_EVIDENCE_INVALID"
@@ -93,6 +96,7 @@ func summarizeResources(input Input) (bool, []ResourceSummary, int, bool) {
 	operationViolations := 0
 	summaries := make([]ResourceSummary, 0, len(input.Contract.Operations))
 	for _, spec := range input.Contract.Operations {
+		operationViolations := 0
 		group := make([]Observation, 0, input.Contract.SamplesPerOp)
 		for _, value := range values {
 			if value.Operation == spec.ID {

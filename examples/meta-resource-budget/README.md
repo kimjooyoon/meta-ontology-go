@@ -14,7 +14,8 @@ producer, consumer, meta-operation, proof choice, stage, step, and reason.
 The fixed denominator is 22 coordinates: 16 operation/resource coordinates
 and 6 source, semantic, effect, and sample-set coordinates.
 
-Resource observations are runner-scoped and non-deterministic. The reducer
+Resource observations include the Go version, OS, architecture, image, and
+image version so they are runner-scoped and non-deterministic. The reducer
 therefore treats them as evidence about one exact CI environment, while the
 source receipt and byte-identical artifact replay are deterministic semantic
 evidence. A complete over-budget sample is an exact, known refutation of the

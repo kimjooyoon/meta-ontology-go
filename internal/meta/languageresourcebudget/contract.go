@@ -46,6 +46,11 @@ func contentDigest(value string) bool {
 	return len(value) == 71 && value[:7] == "sha256:" && isHex(value[7:])
 }
 
+func validRunner(value Runner) bool {
+	return value.OS != "" && value.Architecture != "" && value.Image != "" &&
+		value.ImageVersion != "" && value.GoVersion == "go1.27.0"
+}
+
 func isHex(value string) bool {
 	for _, char := range value {
 		if !(char >= '0' && char <= '9') && !(char >= 'a' && char <= 'f') && !(char >= 'A' && char <= 'F') {

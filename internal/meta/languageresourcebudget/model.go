@@ -47,6 +47,14 @@ type Effects struct {
 	MutationAuthority bool `json:"mutation_authority"`
 }
 
+type Runner struct {
+	OS           string `json:"os"`
+	Architecture string `json:"architecture"`
+	Image        string `json:"image"`
+	ImageVersion string `json:"image_version"`
+	GoVersion    string `json:"go_version"`
+}
+
 type Observation struct {
 	Schema         string `json:"schema"`
 	SubjectSHA     string `json:"subject_sha"`
@@ -74,6 +82,7 @@ type ProducerEvidence struct {
 	SourceDigest        string  `json:"source_digest"`
 	SourceFiles         int     `json:"source_files"`
 	GoFiles             int     `json:"go_files"`
+	Runner              Runner  `json:"runner"`
 	Effects             Effects `json:"effects"`
 }
 
@@ -157,6 +166,7 @@ type Summary struct {
 	Effects     Effects           `json:"effects"`
 	SourceFiles int               `json:"source_files"`
 	GoFiles     int               `json:"go_files"`
+	Runner      Runner            `json:"runner"`
 	Unknowns    int               `json:"unknowns"`
 }
 

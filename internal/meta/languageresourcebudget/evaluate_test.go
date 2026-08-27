@@ -75,7 +75,7 @@ func fixtureInput() Input {
 				ReceiptBytes: receiptBytes, GeneratedBytes: generatedBytes, OutputDigest: outputDigest})
 		}
 	}
-	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:" + strings.Repeat("d", 64), SourceFiles: 2, GoFiles: 0, Effects: Effects{}}, Observations: observations}
+	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:" + strings.Repeat("d", 64), SourceFiles: 2, GoFiles: 0, Runner: Runner{OS: "Linux", Architecture: "x86_64", Image: "ubuntu-latest", ImageVersion: "20260827.1", GoVersion: "go1.27.0"}, Effects: Effects{}}, Observations: observations}
 }
 
 func sourceReceiptFixture(contract Contract) []byte {

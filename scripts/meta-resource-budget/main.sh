@@ -66,7 +66,9 @@ jq -n --arg schema "gooo/meta-resource-budget-input/v1" --arg head "$HEAD_SHA" \
   --slurpfile contract "$contract" --arg source_receipt_base64 "$(base64 -w0 "$source_receipt")" \
   --arg artifact_base64 "$(base64 -w0 "$artifact")" --arg replay_base64 "$(base64 -w0 "$replay")" \
   --arg source_digest "$source_digest" --argjson observations "$observed" \
-  '{schema:$schema,expected_head:$head,contract:$contract[0],producer:{source_receipt_base64:$source_receipt_base64,artifact_base64:$artifact_base64,replay_base64:$replay_base64,source_digest:$source_digest,source_files:2,go_files:0,effects:{repository_writes:0,mutation_authority:false}},observations:$observations}' \
+  --arg runner_os "$(uname -s)" --arg runner_architecture "$(uname -m)" --arg runner_image "ubuntu-latest" \
+  --arg runner_image_version "${ImageVersion:-unknown}" --arg runner_go_version "$(go env GOVERSION)" \
+  '{schema:$schema,expected_head:$head,contract:$contract[0],producer:{source_receipt_base64:$source_receipt_base64,artifact_base64:$artifact_base64,replay_base64:$replay_base64,source_digest:$source_digest,source_files:2,go_files:0,runner:{os:$runner_os,architecture:$runner_architecture,image:$runner_image,image_version:$runner_image_version,go_version:$runner_go_version},effects:{repository_writes:0,mutation_authority:false}},observations:$observations}' \
   > "$work/input.json"
 
 "$reducer" -input "$work/input.json" -output "$work/normal-report.json" -case normal
@@ -103,6 +105,7 @@ git diff --exit-code
   echo
   echo '**Fixed sample set:** 3 operations × 3 samples = 9 observations; 22 coordinates.'
   echo '**Limits:** wall 2,000 ms; peak RSS 131,072 KiB; receipt 8,192 bytes; generated 16,384 bytes.'
+  jq -r '"- runner: \(.summary.runner.os)/\(.summary.runner.architecture), image=\(.summary.runner.image) (\(.summary.runner.image_version)), Go=\(.summary.runner.go_version)"' "$work/normal-report.json"
   jq -r '.summary.resources[]|"- \(.operation): samples=\(.samples), wall max=\(.wall_max_ns) ns, peak RSS max=\(.peak_rss_max_kib) KiB, receipt max=\(.receipt_max_bytes) bytes, generated max=\(.generated_max_bytes) bytes"' "$work/normal-report.json"
   echo '- effects: repository writes=0, mutation authority=false'
   echo '- claims: over-budget refutes the resource claim only; missing sample leaves it OPEN and lowers resource resolution'
