@@ -3,6 +3,7 @@ package experimentpromotion
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -10,28 +11,40 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-var requiredEntities = []string{
-	"ExperimentPortfolio", "PromotionGate", "ObservationReceipt",
-}
+var requiredEntities = []string{"ExperimentPortfolio", "PromotionGate", "ObservationReceipt"}
 
-var requiredActivities = []string{
-	"DeclareExperimentPortfolio", "DeclarePromotionGates",
-}
-
-// parseSource is the producer's source authority. It consumes the raw .gooo,
-// lowers it through the canonical parser/lowerer, and then decodes only the
-// declared portfolio vocabulary. No outcome or claim label is accepted here.
+// parseSource is the producer's source authority. It consumes raw .gooo,
+// lowers it through the canonical parser/lowerer, and decodes only identity
+// material. It never reads a state, decision, or PASS label from source.
 func parseSource(raw []byte) (SourceProjection, error) {
+	projection, err := parseSourceMaterial(raw)
+	if err != nil {
+		return projection, err
+	}
+	if !projection.Exact {
+		return projection, fmt.Errorf("GOOO_SOURCE_VOCABULARY_NOT_EXACT")
+	}
+	if err := validateIdentityShape(projection.Experiments); err != nil {
+		return projection, err
+	}
+	return projection, nil
+}
+
+// parseSourceMaterial accepts a well-formed portfolio-shaped intervention as
+// well as the canonical portfolio. This lets semantic-causality compare real
+// source mutations rather than compare random digest metadata.
+func parseSourceMaterial(raw []byte) (SourceProjection, error) {
 	file, diagnostics := syntax.ParseFile(SourcePath, string(raw))
+	projection := SourceProjection{Path: SourcePath, RawDigest: DigestBytes(raw)}
 	if file == nil || diagnostics.HasErrors() {
-		return SourceProjection{Path: SourcePath, RawDigest: DigestBytes(raw)}, fmt.Errorf("GOOO_SOURCE_SYNTAX_INVALID")
+		return projection, fmt.Errorf("GOOO_SOURCE_SYNTAX_INVALID")
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return SourceProjection{Path: SourcePath, RawDigest: DigestBytes(raw)}, fmt.Errorf("GOOO_SOURCE_LOWER_INVALID: %w", err)
+		return projection, fmt.Errorf("GOOO_SOURCE_LOWER_INVALID: %w", err)
 	}
 	if err := ir.Validate(); err != nil {
-		return SourceProjection{Path: SourcePath, RawDigest: DigestBytes(raw)}, fmt.Errorf("GOOO_SOURCE_IR_INVALID: %w", err)
+		return projection, fmt.Errorf("GOOO_SOURCE_IR_INVALID: %w", err)
 	}
 
 	entities := make([]string, 0)
@@ -42,45 +55,71 @@ func parseSource(raw []byte) (SourceProjection, error) {
 			entities = append(entities, node.Name)
 		case semantic.Activity:
 			if _, exists := activities[node.Name]; exists {
-				return SourceProjection{}, fmt.Errorf("GOOO_SOURCE_DUPLICATE_ACTIVITY")
+				return projection, fmt.Errorf("GOOO_SOURCE_DUPLICATE_ACTIVITY")
 			}
 			activities[node.Name] = node.ValueProgram
 		}
 	}
 	sort.Strings(entities)
-	projection := SourceProjection{
-		Path:           SourcePath,
-		RawDigest:      DigestBytes(raw),
-		SemanticDigest: "",
-		Experiments:    nil,
-		Gates:          nil,
+	if !sameStrings(entities, sortedCopy(requiredEntities)) || len(activities) != 2 {
+		return projection, fmt.Errorf("GOOO_SOURCE_DECLARATION_SHAPE_INVALID")
 	}
-	projection.Exact = exactNames(entities, requiredEntities) && len(activities) == len(requiredActivities)
-	for _, name := range requiredActivities {
-		if _, ok := activities[name]; !ok {
-			return projection, fmt.Errorf("GOOO_SOURCE_ACTIVITY_MISSING: %s", name)
-		}
+	portfolio, ok := activities["DeclareExperimentPortfolio"]
+	if !ok {
+		return projection, fmt.Errorf("GOOO_SOURCE_ACTIVITY_MISSING: DeclareExperimentPortfolio")
 	}
-	var errExperiments, errGates error
-	projection.Experiments, errExperiments = decodeIDs(activities["DeclareExperimentPortfolio"], "experiments")
-	projection.Gates, errGates = decodeIDs(activities["DeclarePromotionGates"], "gates")
-	if errExperiments != nil {
-		return projection, errExperiments
+	gates, ok := activities["DeclarePromotionGates"]
+	if !ok {
+		return projection, fmt.Errorf("GOOO_SOURCE_ACTIVITY_MISSING: DeclarePromotionGates")
 	}
-	if errGates != nil {
-		return projection, errGates
+	projection.Experiments, err = decodeExperiments(portfolio)
+	if err != nil {
+		return projection, err
 	}
-	projection.Exact = projection.Exact && sameStrings(projection.Experiments, experimentIDs()) && sameStrings(projection.Gates, GateIDs)
-	if !projection.Exact {
+	projection.Gates, err = decodeIDs(gates, "gates")
+	if err != nil {
+		return projection, err
+	}
+	if len(projection.Experiments) != ExperimentCount || !sameStrings(projection.Gates, GateIDs) {
 		return projection, fmt.Errorf("GOOO_SOURCE_VOCABULARY_NOT_EXACT")
 	}
 	projection.SemanticDigest = semanticDigest(projection.Experiments, projection.Gates)
+	projection.Exact = true
 	return projection, nil
 }
 
-func semanticDigest(experiments, gates []string) string {
-	canonical := "experiment-promotion-semantic/v1|entities=ExperimentPortfolio,ObservationReceipt,PromotionGate|activity=DeclareExperimentPortfolio:" + strings.Join(experiments, ",") + "|activity=DeclarePromotionGates:" + strings.Join(gates, ",")
-	return DigestBytes([]byte(canonical))
+func decodeExperiments(value string) ([]ExperimentIdentity, error) {
+	parts := strings.Split(value, "|")
+	if len(parts) < 2 || parts[0] != "experiments" {
+		return nil, fmt.Errorf("GOOO_SOURCE_EXPERIMENT_PAYLOAD_INVALID")
+	}
+	result := make([]ExperimentIdentity, 0, len(parts)-1)
+	seenID := make(map[string]bool)
+	seenPR := make(map[int]bool)
+	for _, part := range parts[1:] {
+		fields := strings.Split(part, "^")
+		if len(fields) != 4 {
+			return nil, fmt.Errorf("GOOO_SOURCE_EXPERIMENT_ARITY_INVALID")
+		}
+		values := make(map[string]string)
+		for _, field := range fields {
+			key, value, ok := strings.Cut(field, "=")
+			if !ok || value == "" || values[key] != "" {
+				return nil, fmt.Errorf("GOOO_SOURCE_EXPERIMENT_FIELD_INVALID")
+			}
+			values[key] = value
+		}
+		if len(values) != 4 || values["id"] == "" || values["pr"] == "" || values["topic"] == "" || values["claim"] == "" {
+			return nil, fmt.Errorf("GOOO_SOURCE_EXPERIMENT_FIELDS_INCOMPLETE")
+		}
+		pr, err := strconv.Atoi(values["pr"])
+		if err != nil || pr <= 0 || seenID[values["id"]] || seenPR[pr] {
+			return nil, fmt.Errorf("GOOO_SOURCE_EXPERIMENT_IDENTITY_DUPLICATE")
+		}
+		seenID[values["id"]], seenPR[pr] = true, true
+		result = append(result, ExperimentIdentity{ID: values["id"], PRNumber: pr, Topic: values["topic"], ClaimAddress: values["claim"]})
+	}
+	return result, nil
 }
 
 func decodeIDs(value, expectedHead string) ([]string, error) {
@@ -101,19 +140,27 @@ func decodeIDs(value, expectedHead string) ([]string, error) {
 	return result, nil
 }
 
-func experimentIDs() []string {
-	result := make([]string, ExperimentCount)
-	for i := range result {
-		result[i] = fmt.Sprintf("experiment-%02d", i+1)
+func validateIdentityShape(values []ExperimentIdentity) error {
+	if len(values) != ExperimentCount {
+		return fmt.Errorf("GOOO_SOURCE_EXPERIMENT_COUNT_INVALID")
 	}
-	return result
+	seenPR := make(map[int]bool)
+	for index, value := range values {
+		if value.ID != fmt.Sprintf("experiment-%02d", index+1) || value.PRNumber <= 0 || value.Topic == "" || value.ClaimAddress == "" || seenPR[value.PRNumber] {
+			return fmt.Errorf("GOOO_SOURCE_EXPERIMENT_IDENTITY_INVALID: %s", value.ID)
+		}
+		seenPR[value.PRNumber] = true
+	}
+	return nil
 }
 
-func exactNames(observed, expected []string) bool {
-	if len(observed) != len(expected) {
-		return false
+func semanticDigest(experiments []ExperimentIdentity, gates []string) string {
+	parts := make([]string, 0, len(experiments))
+	for _, value := range experiments {
+		parts = append(parts, fmt.Sprintf("%s#%d#%s#%s", value.ID, value.PRNumber, value.Topic, value.ClaimAddress))
 	}
-	return sameStrings(observed, sortedCopy(expected))
+	canonical := "experiment-promotion-semantic/v2|experiments=" + strings.Join(parts, ",") + "|gates=" + strings.Join(gates, ",")
+	return DigestBytes([]byte(canonical))
 }
 
 func sameStrings(left, right []string) bool {

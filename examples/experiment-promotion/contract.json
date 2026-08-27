@@ -1,33 +1,54 @@
 {
-  "schema": "gooo/experiment-promotion-contract/v1",
-  "version": 1,
+  "schema": "gooo/experiment-promotion-contract/v2",
+  "version": 2,
   "source_path": "examples/experiment-promotion/main.gooo",
   "experiments": [
-    "experiment-01", "experiment-02", "experiment-03", "experiment-04", "experiment-05",
-    "experiment-06", "experiment-07", "experiment-08", "experiment-09", "experiment-10",
-    "experiment-11", "experiment-12", "experiment-13", "experiment-14", "experiment-15",
-    "experiment-16", "experiment-17", "experiment-18", "experiment-19", "experiment-20",
-    "experiment-21", "experiment-22", "experiment-23", "experiment-24", "experiment-25",
-    "experiment-26", "experiment-27", "experiment-28", "experiment-29", "experiment-30"
+    {"id":"experiment-01","pr_number":549,"topic":"claim-lifecycle","claim_address":"github://kimjooyoon/meta-ontology-go/pull/549#claim-lifecycle"},
+    {"id":"experiment-02","pr_number":548,"topic":"resolution-descent","claim_address":"github://kimjooyoon/meta-ontology-go/pull/548#resolution-descent"},
+    {"id":"experiment-03","pr_number":545,"topic":"provenance","claim_address":"github://kimjooyoon/meta-ontology-go/pull/545#provenance"},
+    {"id":"experiment-04","pr_number":555,"topic":"capability","claim_address":"github://kimjooyoon/meta-ontology-go/pull/555#capability"},
+    {"id":"experiment-05","pr_number":544,"topic":"phase-separation","claim_address":"github://kimjooyoon/meta-ontology-go/pull/544#phase-separation"},
+    {"id":"experiment-06","pr_number":543,"topic":"hygiene","claim_address":"github://kimjooyoon/meta-ontology-go/pull/543#hygiene"},
+    {"id":"experiment-07","pr_number":546,"topic":"proof-choice","claim_address":"github://kimjooyoon/meta-ontology-go/pull/546#proof-choice"},
+    {"id":"experiment-08","pr_number":559,"topic":"counterexample-first","claim_address":"github://kimjooyoon/meta-ontology-go/pull/559#counterexample-first"},
+    {"id":"experiment-09","pr_number":550,"topic":"causal-ci","claim_address":"github://kimjooyoon/meta-ontology-go/pull/550#causal-ci"},
+    {"id":"experiment-10","pr_number":552,"topic":"ambiguity","claim_address":"github://kimjooyoon/meta-ontology-go/pull/552#ambiguity"},
+    {"id":"experiment-11","pr_number":564,"topic":"freshness","claim_address":"github://kimjooyoon/meta-ontology-go/pull/564#freshness"},
+    {"id":"experiment-12","pr_number":547,"topic":"reproducibility","claim_address":"github://kimjooyoon/meta-ontology-go/pull/547#reproducibility"},
+    {"id":"experiment-13","pr_number":558,"topic":"observer","claim_address":"github://kimjooyoon/meta-ontology-go/pull/558#observer"},
+    {"id":"experiment-14","pr_number":542,"topic":"partial-knowledge","claim_address":"github://kimjooyoon/meta-ontology-go/pull/542#partial-knowledge"},
+    {"id":"experiment-15","pr_number":569,"topic":"proof-artifact","claim_address":"github://kimjooyoon/meta-ontology-go/pull/569#proof-artifact"},
+    {"id":"experiment-16","pr_number":567,"topic":"meta-circular","claim_address":"github://kimjooyoon/meta-ontology-go/pull/567#meta-circular"},
+    {"id":"experiment-17","pr_number":551,"topic":"reflective-sandbox","claim_address":"github://kimjooyoon/meta-ontology-go/pull/551#reflective-sandbox"},
+    {"id":"experiment-18","pr_number":560,"topic":"policy","claim_address":"github://kimjooyoon/meta-ontology-go/pull/560#policy"},
+    {"id":"experiment-19","pr_number":553,"topic":"invariant-transform","claim_address":"github://kimjooyoon/meta-ontology-go/pull/553#invariant-transform"},
+    {"id":"experiment-20","pr_number":562,"topic":"semantic-delta","claim_address":"github://kimjooyoon/meta-ontology-go/pull/562#semantic-delta"},
+    {"id":"experiment-21","pr_number":563,"topic":"audience","claim_address":"github://kimjooyoon/meta-ontology-go/pull/563#audience"},
+    {"id":"experiment-22","pr_number":566,"topic":"claim-dependency","claim_address":"github://kimjooyoon/meta-ontology-go/pull/566#claim-dependency"},
+    {"id":"experiment-23","pr_number":554,"topic":"refutation","claim_address":"github://kimjooyoon/meta-ontology-go/pull/554#refutation"},
+    {"id":"experiment-24","pr_number":570,"topic":"denominator","claim_address":"github://kimjooyoon/meta-ontology-go/pull/570#denominator"},
+    {"id":"experiment-25","pr_number":541,"topic":"external-oracle","claim_address":"github://kimjooyoon/meta-ontology-go/pull/541#external-oracle"},
+    {"id":"experiment-26","pr_number":556,"topic":"fixed-point","claim_address":"github://kimjooyoon/meta-ontology-go/pull/556#fixed-point"},
+    {"id":"experiment-27","pr_number":561,"topic":"resource","claim_address":"github://kimjooyoon/meta-ontology-go/pull/561#resource"},
+    {"id":"experiment-28","pr_number":568,"topic":"quorum","claim_address":"github://kimjooyoon/meta-ontology-go/pull/568#quorum"},
+    {"id":"experiment-29","pr_number":565,"topic":"causal-explanation","claim_address":"github://kimjooyoon/meta-ontology-go/pull/565#causal-explanation"},
+    {"id":"experiment-30","pr_number":557,"topic":"portfolio","claim_address":"github://kimjooyoon/meta-ontology-go/pull/557#portfolio"}
   ],
-  "gates": [
-    "source-bound", "semantic-causality", "independent-consumer",
-    "persistent-claim-transition", "exact-actions"
-  ],
+  "gates": ["source-bound", "semantic-causality", "independent-consumer", "persistent-claim-transition", "exact-actions"],
   "experiment_denominator": 30,
   "gate_slot_denominator": 150,
   "required_receipt_fields": [
-    "pr_number", "head_sha", "source_raw_digest", "source_semantic_digest",
-    "producer_id", "consumer_package", "consumer_imports", "claim_transition_digest",
-    "actions.run_url", "actions.job_url", "actions.conclusion",
-    "artifact.bytes", "artifact.path", "artifact.digest"
+    "pr_number", "claim_address", "evidence_class", "head_sha", "source_raw_digest", "source_semantic_digest",
+    "producer_id", "consumer_package", "consumer_imports", "claim_class", "claim_transition_digest",
+    "procedure_id", "procedure_source_path", "procedure_source_bytes", "procedure_source_digest",
+    "procedure_algorithm_id", "procedure_algorithm_digest", "target_address",
+    "actions.repository", "actions.pr_number", "actions.head_sha", "actions.workflow_id", "actions.workflow_name",
+    "actions.run_id", "actions.job_id", "actions.run_url", "actions.job_url", "actions.conclusion",
+    "actions.artifact_id", "actions.artifact_name", "actions.artifact_digest", "actions.raw", "actions.raw_digest",
+    "artifact.bytes", "artifact.path", "artifact.digest", "artifact.target_address", "artifact.artifact_id", "artifact.artifact_name", "artifact.raw"
   ],
   "not_claimed": [
-    "overall promotion score",
-    "weighted gate score",
-    "improvement rate",
-    "aggregate estimate",
-    "PR title or body as evidence",
-    "network conclusion cache"
+    "overall promotion score", "weighted gate score", "improvement rate", "aggregate estimate",
+    "PR title or body as evidence", "network conclusion cache", "fixture as current evidence"
   ]
 }

@@ -1,57 +1,42 @@
 # Experiment promotion ledger
 
-This is a separate measurement-governance experiment from denominator-evolution v1. The existing fixed denominator remains `5/5`; this portfolio has its own fixed denominators: `experiments=30/30` and `gate_slots=150/150`. They are never added or converted into a score.
+This is a separate measurement-governance experiment from denominator-evolution v1. The v1 fixed denominator remains `5/5`; this portfolio uses the independent fixed denominators `declared_experiments=30/30` and `materialized_claim_slots=150/150`. The denominators are not summed, scored, weighted, or converted into an improvement rate.
 
-## Authority boundary
+## Source authority
 
-`main.gooo` declares exactly the source vocabulary: `experiment-01` through `experiment-30`, and the five gates `source-bound`, `semantic-causality`, `independent-consumer`, `persistent-claim-transition`, and `exact-actions`. It declares no outcome, decision, resolution, expected reason, claim state, or final PASS.
+[`main.gooo`](./main.gooo) declares the fixed identity tuple `experiment_id + exact PR number + topic/claim address` for the actual portfolio: #549, #548, #545, #555, #544, #543, #546, #559, #550, #552, #564, #547, #558, #542, #569, #567, #551, #560, #553, #562, #563, #566, #554, #570, #541, #556, #561, #568, #565, and #557. It also declares the five gate IDs. It declares no decision, resolution, expected reason, claim state, or final PASS.
 
-The producer and the independent consumer each perform `syntax.ParseFile -> bidir.Lower` on the raw source and decode the two value programs themselves. The JSON contract is a validator expectation, not the authority for the portfolio. Observation input is also separate from deterministic replay so a later common observer (for example, #550) can supply raw GitHub observations without turning a cached network conclusion, PR title, or PR body into evidence.
+The producer and independent consumer each consume raw `.gooo` bytes through `syntax.ParseFile -> bidir.Lower`, then reconstruct the identity records and semantic digest in different procedures and data structures. The JSON contract is a validator expectation only. A duplicate PR, cross-gate head, reused observation/run/job/artifact/target relation, or contract/source mismatch fails closed.
 
-Each external receipt must bind:
+The five predicates are distinct. `source-bound` requires the actual candidate `.gooo` attachment bytes. `semantic-causality` lowers baseline, semantic, and comment-only source bytes and checks the derived semantic and claim digests. `independent-consumer` binds captured consumer procedure bytes, source path, algorithm ID, and import graph. `persistent-claim-transition` consumes a hashed append-only prior ledger. `exact-actions` reconstructs raw captured API bytes and binds repository, PR, exact head, workflow/job IDs, conclusion, and artifact identity.
 
-* PR number and exact 40-character head SHA;
-* raw-source and semantic-source digests;
-* producer ID and consumer package/import boundary;
-* claim-transition digest;
-* exact Actions run URL, job URL, and conclusion;
-* artifact byte count, path, and digest.
+## Evidence and states
 
-An absent receipt is `UNKNOWN`, never a pass. A receipt with malformed or contradictory evidence is `REFUTED`. `OPEN` is reserved for a valid observation whose Actions conclusion is still `in_progress` or `queued`. The persistent ledger retains one `OPEN -> DISCHARGED`, `OPEN -> OPEN`, or `OPEN -> REFUTED` transition for every one of the 150 slots.
+An observation receipt contains actual raw bytes, not only metadata: procedure bytes, Actions API bytes, artifact bytes, and their lengths/digests. A metadata-only artifact reseal fails. Actions URLs or conclusions copied into JSON without the corresponding captured API bytes do not prove anything. `CURRENT_EVIDENCE`, `HISTORICAL_FIXTURE`, and `UNKNOWN` are separate classes; fixture receipts never promote a current portfolio slot.
 
-## Fixture corpus
-
-The fixtures are a deterministic corpus, not a claim about the current GitHub portfolio:
-
-* `fully-proven.json`: one experiment has all five valid receipts, so it is `PROVEN` and the remaining 29 experiments are `UNKNOWN`;
-* `missing-common-gate.json`: a common `exact-actions` receipt is absent, and one separate slot is still `OPEN`;
-* `malformed-evidence.json`: an artifact digest is invalid and is calculated as `REFUTED`;
-* `contradictory-semantic.json`: the semantic intervention changes raw bytes but not semantic meaning and is calculated as `REFUTED`.
-
-No receipt is bound for the other 29 experiments. Therefore the fixtures do not assert that the current portfolio has generated `30/30`, passed a first audit `30/30`, has ten semantic candidates, has six dedicated Actions successes, or has any overall promotion. Those historical-looking numbers can appear only as separately bound observations in a later observer input.
-
-## Guardrails and exact output
-
-The report contains no aggregate metric. Guardrails expose direction, observation, allowed value, and conformance separately:
+The report exposes actual promotion states and fixture replay states separately:
 
 ```text
-experiments=30/30 gate_slots=150/150
-guardrail_forbidden_aggregate_claim observed=0 allowed_max=0 conformance=1/1
-guardrail_repository_writes observed=0 allowed_max=0 conformance=1/1
+declared_experiments=30/30
+materialized_claim_slots=150/150
+experiment_states PROVEN n/30 OPEN n/30 UNKNOWN n/30 REFUTED n/30
+gate_states PROVEN n/150 OPEN n/150 UNKNOWN n/150 REFUTED n/150
 ```
 
-The first observation is computed by scanning the emitted claim ledger for `ASSERTED` claims in forbidden aggregate classes. The second is computed from the CI wrapper's before/after repository snapshots. Neither zero is a hard-coded success label. `aggregate_metrics` must be an empty array and repository mutation authority must be false.
+Every gate retains an explicit `OPEN -> DISCHARGED`, `OPEN -> OPEN`, or `OPEN -> REFUTED` evidence transition. A missing receipt is `UNKNOWN` with `stage`, `step`, and `reason`; an observation ID is retained even when its fields are incomplete. A historical fixture's valid or refuted evidence appears in the fixture-only counts, while its promotion state remains `UNKNOWN`.
 
-## Design research and adoption rule
+The four checked-in fixtures are a deterministic corpus, not current portfolio progress: `fully-proven.json` has one complete historical experiment, `missing-common-gate.json` has a missing gate and one in-progress receipt, `malformed-evidence.json` contains a digest mismatch, and `contradictory-semantic.json` has a raw-changing but semantically unchanged intervention. Their results are not added to actual evidence counts.
 
-The design adopts the Apache Avro specification's schema-resolution discipline: a reader must have the writer schema and incompatible schema differences are errors. Here the source projection and receipt artifact are explicit writer-side inputs, and the consumer resolves them independently by digest rather than trusting a report. See [Apache Avro schema resolution](https://avro.apache.org/docs/++version++/specification/#schema-resolution).
+The fixed counterexample denominator is `9/9` slots: duplicate PR mapping, cross-gate head mismatch, fake import list, metadata-only artifact reseal, random semantic digests, stale ledger deletion/reset, fixture claiming current evidence, reused run/job/artifact relation, and forbidden aggregate injection. Each rejection records its stage, step, and reason.
 
-It also adopts JSON Schema's versioned dialect boundary: a schema identifier belongs at the document root and tells tooling which vocabulary applies. The contract therefore has an explicit schema/version and is validated before use. We reject the idea that a schema or contract should be the runtime authority: the `.gooo` source and raw observation receipts are independently reconstructed first. See [JSON Schema dialect and `$schema`](https://json-schema.org/understanding-json-schema/reference/schema).
+## Guardrails and research basis
 
-Finally, the ledger adopts NIST's measurement-traceability principle of a documented, unbroken chain to a reference. Predecessor/source/artifact/claim digests form that chain, with missing links failing closed into `UNKNOWN`. We reject replacing that chain with an improvement rate, weighted score, or uncertainty-free aggregate estimate; this experiment reports only exact numerators, denominators, and state counts. See [NIST metrological traceability](https://www.nist.gov/metrology/metrological-traceability).
+Forbidden aggregate claims are counted from emitted claim bytes and shown directionally as `observed`, `allowed_max`, and `conformance`; zero is not a hard-coded success. Repository writes are counted from separate before/after snapshot bytes and changed paths. A no-write observation does not prove broader mutation authority. `aggregate_metrics` is an empty array.
+
+The design adopts [Apache Avro schema resolution](https://avro.apache.org/docs/++version++/specification/#schema-resolution): writer-side bytes and reader-side resolution are explicit, and incompatible resolution fails. It adopts [JSON Schema's dialect/version boundary](https://json-schema.org/understanding-json-schema/reference/schema) for the versioned contract, while rejecting the contract as runtime authority. It adopts [NIST metrological traceability](https://www.nist.gov/metrology/metrological-traceability) for the documented predecessor/source/artifact/claim digest chain, while rejecting weighted scores and aggregate improvement estimates.
 
 ## Falsifiers
 
-The claim is falsified if a comment-only source edit changes the semantic digest, if a source ID or gate is accepted from the contract but not reconstructed from raw `.gooo`, if the consumer imports the producer package, if a missing receipt becomes `PROVEN`, if a coherent reseal with a changed source digest is accepted, if an intervention changes raw bytes without changing semantic digest but remains proven, if a claim transition is deleted, or if any aggregate score/rate is emitted.
+The experiment is falsified if a comment-only edit changes semantic meaning, a source identity is accepted from contract metadata instead of raw `.gooo`, a fake import list passes without matching captured procedure bytes, an artifact digest passes after its bytes change, a fixture promotes current evidence, a prior ledger is deleted/reset, the same run/job/artifact relation proves multiple gates, a forbidden aggregate claim is not counted, or any aggregate rate/score is emitted.
 
-The CI workflow checks Go 1.27, exact pull-request head checkout, producer/consumer replay, forbidden imports `0/0`, all four fixture states, the fixed denominators, persistent claims `150/150`, and the actual repository write-set. It does not merge the pull request.
+The workflow checks Go 1.27, exact pull-request head checkout, raw-source and observation replay, consumer producer-import `0/0`, the four fixture outcomes, exact denominators, persistent claims `150/150`, and the actual repository write-set. It never merges the pull request.

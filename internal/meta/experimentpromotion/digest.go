@@ -28,12 +28,18 @@ func ledgerDigest(entry ClaimLedgerEntry) string {
 }
 
 func claimTransitionDigest(experimentID, gateID, next string) string {
-	return DigestBytes([]byte(fmt.Sprintf("claim-transition/v1|%s|%s|OPEN|%s", experimentID, gateID, next)))
+	return DigestBytes([]byte(fmt.Sprintf("claim-transition/v2|%s|%s|OPEN|%s", experimentID, gateID, next)))
 }
 
-func artifactDigest(path string, bytes int) string {
-	return DigestBytes([]byte(fmt.Sprintf("artifact/v1|%s|%d", path, bytes)))
+func decisionDigest(experimentID, gateID, next string) string {
+	return DigestBytes([]byte(fmt.Sprintf("decision/v2|%s|%s|%s", experimentID, gateID, next)))
 }
+
+func contractedOutputDigest(semanticSourceDigest, commentSourceDigest string) string {
+	return DigestBytes([]byte(fmt.Sprintf("contracted-output/v2|%s|%s", semanticSourceDigest, commentSourceDigest)))
+}
+
+func artifactDigest(raw []byte) string { return DigestBytes(raw) }
 
 func validDigest(value string) bool {
 	if len(value) != len("sha256:")+64 || value[:len("sha256:")] != "sha256:" {

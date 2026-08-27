@@ -1,181 +1,310 @@
 package experimentpromotion
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 )
 
 const (
-	producerID      = "gooo-experiment-promotion-producer/v1"
-	consumerPackage = "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotionverify"
-	producerPackage = "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotion"
+	defaultClaimClass   = "PROMOTION_GATE"
+	forbiddenClassOne   = "IMPROVEMENT_RATE"
+	forbiddenClassTwo   = "AGGREGATE_ESTIMATE"
+	forbiddenClassThree = "WEIGHTED_SCORE"
+	consumerAlgorithmID = "experimentpromotionverify.algorithm/v2"
 )
 
 var (
-	headSHAPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
-	runURLPattern  = regexp.MustCompile(`^https://github\.com/[^/]+/[^/]+/actions/runs/([0-9]+)$`)
-	jobURLPattern  = regexp.MustCompile(`^https://github\.com/[^/]+/[^/]+/actions/runs/([0-9]+)/jobs/[0-9]+$`)
+	headPattern   = regexp.MustCompile(`^[0-9a-f]{40}$`)
+	runURLPattern = regexp.MustCompile(`^https://github\.com/[^/]+/[^/]+/actions/runs/([0-9]+)$`)
+	jobURLPattern = regexp.MustCompile(`^https://github\.com/[^/]+/[^/]+/actions/runs/([0-9]+)/jobs/([0-9]+)$`)
 )
 
-// Evaluate derives every state from the source projection and observations.
-// The contract is checked as an expectation after source reconstruction; it
-// is never used as the source of the portfolio or gate members.
+type actionsPayload struct {
+	Repository     string `json:"repository"`
+	PRNumber       int    `json:"pr_number"`
+	HeadSHA        string `json:"head_sha"`
+	WorkflowID     string `json:"workflow_id"`
+	WorkflowName   string `json:"workflow_name"`
+	RunID          int64  `json:"run_id"`
+	JobID          int64  `json:"job_id"`
+	Conclusion     string `json:"conclusion"`
+	ArtifactID     int64  `json:"artifact_id"`
+	ArtifactName   string `json:"artifact_name"`
+	ArtifactDigest string `json:"artifact_digest"`
+}
+
+type procedurePayload struct {
+	ProcedureID string   `json:"procedure_id"`
+	SourcePath  string   `json:"source_path"`
+	AlgorithmID string   `json:"algorithm_id"`
+	Imports     []string `json:"imports"`
+}
+
+type ledgerPayload struct {
+	Schema     string `json:"schema"`
+	EntryCount int    `json:"entry_count"`
+	LastDigest string `json:"last_digest"`
+	AppendOnly bool   `json:"append_only"`
+}
+
+// Evaluate is the producer-side calculation. It only treats the .gooo source
+// and raw observation bytes as authority. Contract values are expectations and
+// are never used to populate the portfolio identities.
 func Evaluate(input Input) Report {
-	contract := input.Contract
-	report := Report{
+	projection, sourceErr := parseSource(input.SourceRaw)
+	bundle, bundleErr := DecodeObservation(input.ObservationRaw)
+	receipts, issues := indexObservations(bundle, bundleErr)
+	priorErr := validatePriorLedger(bundle.PriorLedger)
+	contractErr := ValidateContract(input.Contract)
+	if contractErr == nil && sourceErr == nil && !contractMatchesSource(input.Contract, projection) {
+		contractErr = fmt.Errorf("CONTRACT_SOURCE_MISMATCH")
+	}
+
+	result := Report{
 		Schema:             ReportSchema,
 		Scope:              PortfolioScope,
 		SubjectSHA:         input.SubjectSHA,
+		SourceProjection:   projection,
 		ObservationDigest:  DigestBytes(input.ObservationRaw),
+		PriorLedger:        bundle.PriorLedger,
 		AggregateMetrics:   []string{},
-		NotClaimed:         append([]string(nil), contract.NotClaimed...),
+		NotClaimed:         append([]string(nil), input.Contract.NotClaimed...),
 		RepositoryWrites:   input.RepositorySnapshot.ChangedPaths,
 		MutationAuthority:  false,
 		RepositorySnapshot: input.RepositorySnapshot,
 	}
-
-	projection, sourceErr := parseSource(input.SourceRaw)
-	report.SourceProjection = projection
-	ids, gates := experimentIDs(), append([]string(nil), GateIDs...)
-	if sourceErr == nil {
-		ids, gates = projection.Experiments, projection.Gates
+	identities := projection.Experiments
+	gates := projection.Gates
+	if len(identities) != ExperimentCount {
+		identities = ExpectedExperiments()
 	}
-	bundle, bundleErr := DecodeObservation(input.ObservationRaw)
-	receipts, duplicates := observationIndex(bundle, bundleErr)
-
-	for _, experimentID := range ids {
-		experiment := ExperimentResult{ExperimentID: experimentID, Gates: make([]GateResult, 0, len(gates))}
+	if len(gates) != GateCount {
+		gates = append([]string(nil), GateIDs...)
+	}
+	for _, identity := range identities {
+		experiment := ExperimentResult{ExperimentID: identity.ID, Gates: make([]GateResult, 0, GateCount)}
 		for _, gateID := range gates {
-			result := evaluateGate(experimentID, gateID, receipts[receiptKey(experimentID, gateID)], duplicates[receiptKey(experimentID, gateID)], projection, sourceErr, bundleErr)
-			experiment.Gates = append(experiment.Gates, result)
+			experiment.Gates = append(experiment.Gates, evaluateGate(input, identity, gateID, receipts[receiptKey(identity.ID, gateID)], issues[receiptKey(identity.ID, gateID)], projection, sourceErr, bundleErr, contractErr, priorErr, bundle.ObservationClass))
 		}
-		experiment.Status, experiment.Stage, experiment.Step, experiment.Reason = summarizeExperiment(experiment.Gates)
-		report.Experiments = append(report.Experiments, experiment)
+		experiment.Status, experiment.Stage, experiment.Step, experiment.Reason = summarizeExperiment(experiment.Gates, true)
+		experiment.EvidenceStatus, _, _, _ = summarizeExperiment(experiment.Gates, false)
+		experiment.EvidenceClass = experimentEvidenceClass(experiment.Gates)
+		result.Experiments = append(result.Experiments, experiment)
 	}
-
-	report.ClaimLedger = sealLedger(report.Experiments)
-	report.EmittedClaims = emitClaims(report.Experiments)
-	report.Summary = summarize(report.Experiments, report.ClaimLedger, report.EmittedClaims, input.RepositorySnapshot)
-	report.Guardrails = makeGuardrails(report.EmittedClaims, input.RepositorySnapshot)
-	report.Digest = reportDigest(report)
-	return report
+	result.ClaimLedger = sealLedger(result.Experiments, bundle.PriorLedger.LastDigest)
+	result.EmittedClaims = emitClaims(result.Experiments, identities)
+	result.Counterexamples = evaluateCounterexamples(input, bundle, sourceErr, issues, priorErr, result.EmittedClaims)
+	result.Summary = summarize(result.Experiments, result.ClaimLedger, result.EmittedClaims, input.RepositorySnapshot, result.Counterexamples)
+	result.Guardrails = makeGuardrails(result.EmittedClaims, input.RepositorySnapshot)
+	result.Digest = reportDigest(result)
+	return result
 }
 
-func observationIndex(bundle ObservationBundle, bundleErr error) (map[string]ObservationReceipt, map[string]bool) {
+func indexObservations(bundle ObservationBundle, bundleErr error) (map[string]ObservationReceipt, map[string]string) {
 	receipts := make(map[string]ObservationReceipt)
-	duplicates := make(map[string]bool)
+	issues := make(map[string]string)
 	if bundleErr != nil || bundle.Schema != ObservationSchema || bundle.BundleID == "" {
-		return receipts, duplicates
+		return receipts, issues
 	}
+	seenIDs := make(map[string]string)
+	seenRuns := make(map[int64]string)
+	seenJobs := make(map[int64]string)
+	seenArtifacts := make(map[int64]string)
+	seenTargets := make(map[string]string)
 	for _, receipt := range bundle.Receipts {
 		key := receiptKey(receipt.ExperimentID, receipt.GateID)
 		if _, exists := receipts[key]; exists {
-			duplicates[key] = true
+			issues[key] = "more than one receipt binds the same experiment and gate"
 			continue
 		}
 		receipts[key] = receipt
+		if prior, ok := seenIDs[receipt.ObservationID]; ok && receipt.ObservationID != "" {
+			issues[key] = "observation id is reused by " + prior
+		}
+		if prior, ok := seenRuns[receipt.Actions.RunID]; ok && receipt.Actions.RunID != 0 {
+			issues[key] = "Actions run is reused by " + prior
+		}
+		if prior, ok := seenJobs[receipt.Actions.JobID]; ok && receipt.Actions.JobID != 0 {
+			issues[key] = "Actions job is reused by " + prior
+		}
+		if prior, ok := seenArtifacts[receipt.Artifact.ArtifactID]; ok && receipt.Artifact.ArtifactID != 0 {
+			issues[key] = "artifact is reused by " + prior
+		}
+		if prior, ok := seenTargets[receipt.TargetAddress]; ok && receipt.TargetAddress != "" {
+			issues[key] = "target relation is reused by " + prior
+		}
+		seenIDs[receipt.ObservationID] = key
+		seenRuns[receipt.Actions.RunID] = key
+		seenJobs[receipt.Actions.JobID] = key
+		seenArtifacts[receipt.Artifact.ArtifactID] = key
+		seenTargets[receipt.TargetAddress] = key
 	}
-	return receipts, duplicates
+	for key, receipt := range receipts {
+		for otherKey, other := range receipts {
+			if key == otherKey || receipt.ExperimentID != other.ExperimentID || receipt.HeadSHA == other.HeadSHA {
+				continue
+			}
+			if issues[key] == "" {
+				issues[key] = "cross-gate head mismatch"
+			}
+		}
+	}
+	return receipts, issues
 }
 
-func receiptKey(experimentID, gateID string) string {
-	return experimentID + "\x00" + gateID
-}
-
-func evaluateGate(experimentID, gateID string, receipt ObservationReceipt, duplicate bool, projection SourceProjection, sourceErr, bundleErr error) GateResult {
+func evaluateGate(input Input, identity ExperimentIdentity, gateID string, receipt ObservationReceipt, issue string, projection SourceProjection, sourceErr, bundleErr, contractErr, priorErr error, bundleClass string) GateResult {
 	if bundleErr != nil {
-		return newGateResult(experimentID, gateID, StatusUnknown, "OBSERVE", "decode-observation-bundle", "observation bundle cannot be decoded")
+		return newGateResult(identity.ID, gateID, StatusUnknown, StatusUnknown, EvidenceUnknown, "OBSERVE", "decode-observation-bundle", "observation bundle cannot be decoded")
 	}
-	if sourceErr != nil {
-		return newGateResult(experimentID, gateID, StatusUnknown, "LOWER_RESOLUTION", "reconstruct-source", "source reconstruction is unavailable")
-	}
-	if duplicate {
-		return newGateResult(experimentID, gateID, StatusRefuted, "VERIFY", "reject-duplicate-receipt", "more than one receipt binds the same experiment and gate")
+	if sourceErr != nil || contractErr != nil {
+		return newGateResult(identity.ID, gateID, StatusUnknown, StatusUnknown, EvidenceUnknown, "RESOLVE", "reconstruct-source-contract", firstError(sourceErr, contractErr))
 	}
 	if receipt.ObservationID == "" {
-		return newGateResult(experimentID, gateID, StatusUnknown, "OBSERVE", "lookup-receipt", "observation receipt is absent")
+		return newGateResult(identity.ID, gateID, StatusUnknown, StatusUnknown, EvidenceUnknown, "OBSERVE", "lookup-receipt", "observation receipt is absent")
+	}
+	if issue != "" {
+		return resultWithReceipt(identity.ID, gateID, StatusRefuted, promotionFor(receipt.EvidenceClass, StatusRefuted), receipt.EvidenceClass, "BIND", "reject-reused-or-mismatched-relation", issue, receipt)
 	}
 	if missingReceiptField(receipt) {
-		return resultWithReceipt(experimentID, gateID, StatusUnknown, "OBSERVE", "validate-observation-receipt", "a required observation receipt field is absent", receipt)
+		return resultWithReceipt(identity.ID, gateID, StatusUnknown, StatusUnknown, receipt.EvidenceClass, "OBSERVE", "validate-observation-receipt", "a required observation receipt field is absent", receipt)
 	}
-
-	if reason := validateReceipt(receipt, experimentID, gateID, projection); reason != "" {
-		return resultWithReceipt(experimentID, gateID, StatusRefuted, "VERIFY", "validate-observation-receipt", reason, receipt)
+	if reason := validateReceipt(receipt, identity, gateID, input.SourceRaw, projection); reason != "" {
+		return resultWithReceipt(identity.ID, gateID, StatusRefuted, promotionFor(receipt.EvidenceClass, StatusRefuted), receipt.EvidenceClass, "VERIFY", "validate-raw-observation", reason, receipt)
+	}
+	if gateID == "persistent-claim-transition" && priorErr != nil {
+		return resultWithReceipt(identity.ID, gateID, StatusUnknown, StatusUnknown, receipt.EvidenceClass, "OBSERVE", "lookup-prior-ledger", priorErr.Error(), receipt)
+	}
+	if gateID == "semantic-causality" {
+		if reason := validateIntervention(receipt.SemanticIntervention, input.SourceRaw, projection, identity); reason != "" {
+			status := StatusRefuted
+			if receipt.SemanticIntervention == nil {
+				status = StatusUnknown
+			}
+			return resultWithReceipt(identity.ID, gateID, status, promotionFor(receipt.EvidenceClass, status), receipt.EvidenceClass, "CAUSALITY", "reconstruct-semantic-intervention", reason, receipt)
+		}
 	}
 	status, stage, step, reason := classifyConclusion(receipt.Actions.Conclusion)
-	if gateID == "semantic-causality" {
-		if receipt.SemanticIntervention == nil {
-			return resultWithReceipt(experimentID, gateID, StatusUnknown, "OBSERVE", "lookup-intervention-material", "semantic intervention material is absent", receipt)
-		}
-		intervention := receipt.SemanticIntervention
-		if intervention.BaselineRawDigest != projection.RawDigest || intervention.BaselineSemanticDigest != projection.SemanticDigest || !validDigest(intervention.InterventionRawDigest) || !validDigest(intervention.InterventionSemanticDigest) || intervention.InterventionRawDigest == intervention.BaselineRawDigest || intervention.InterventionSemanticDigest == intervention.BaselineSemanticDigest {
-			return resultWithReceipt(experimentID, gateID, StatusRefuted, "CAUSALITY", "compare-intervention-digests", "semantic intervention is contradictory", receipt)
-		}
+	if receipt.ClaimTransitionDigest != claimTransitionDigest(identity.ID, gateID, claimStateFor(status)) {
+		return resultWithReceipt(identity.ID, gateID, StatusRefuted, promotionFor(receipt.EvidenceClass, StatusRefuted), receipt.EvidenceClass, "CLAIM", "derive-claim-transition", "claim transition digest does not bind the derived transition", receipt)
 	}
-	next := claimStateFor(status)
-	if receipt.ClaimTransitionDigest != claimTransitionDigest(experimentID, gateID, next) {
-		return resultWithReceipt(experimentID, gateID, StatusRefuted, "CLAIM", "verify-claim-transition-digest", "claim transition digest does not bind the derived transition", receipt)
-	}
-	return resultWithReceipt(experimentID, gateID, status, stage, step, reason, receipt)
+	promotion := promotionFor(receipt.EvidenceClass, status)
+	return resultWithReceipt(identity.ID, gateID, status, promotion, receipt.EvidenceClass, stage, step, reason, receipt)
 }
 
-func validateReceipt(receipt ObservationReceipt, experimentID, gateID string, projection SourceProjection) string {
-	if receipt.Schema != ObservationSchema {
-		return "observation receipt schema is invalid"
+func validateReceipt(receipt ObservationReceipt, identity ExperimentIdentity, gateID string, sourceRaw []byte, projection SourceProjection) string {
+	if receipt.Schema != ObservationSchema || receipt.ExperimentID != identity.ID || receipt.GateID != gateID || receipt.PRNumber != identity.PRNumber || receipt.ClaimAddress != identity.ClaimAddress {
+		return "receipt identity does not bind source-declared experiment and pull request"
 	}
-	if receipt.ExperimentID != experimentID || receipt.GateID != gateID {
-		return "observation receipt slot binding is invalid"
+	if receipt.EvidenceClass != EvidenceCurrent && receipt.EvidenceClass != EvidenceHistorical {
+		return "evidence class must be CURRENT_EVIDENCE or HISTORICAL_FIXTURE"
 	}
-	if receipt.PRNumber <= 0 {
-		return "pull request number is missing"
+	if !headPattern.MatchString(receipt.HeadSHA) || receipt.SourceRawDigest != projection.RawDigest || receipt.SourceSemanticDigest != projection.SemanticDigest {
+		return "head or source digest does not bind the reconstructed source"
 	}
-	if !headSHAPattern.MatchString(receipt.HeadSHA) {
-		return "exact head SHA is malformed"
-	}
-	if receipt.SourceRawDigest != projection.RawDigest {
-		return "source raw digest does not bind the reconstructed source"
-	}
-	if receipt.SourceSemanticDigest != projection.SemanticDigest {
-		return "source semantic digest does not bind the reconstructed source"
-	}
-	if receipt.ProducerID != producerID {
-		return "producer identifier does not bind the declared producer"
-	}
-	if receipt.ConsumerPackage != consumerPackage || len(receipt.ConsumerImports) == 0 {
-		return "consumer package or import boundary is missing"
+	if receipt.ProducerID != ProducerID || receipt.ConsumerPackage != ConsumerPackage || len(receipt.ConsumerImports) == 0 || receipt.ProcedureID != ConsumerProcedureID || receipt.ProcedureSourcePath != ConsumerSourcePath || receipt.ProcedureAlgorithmID != consumerAlgorithmID {
+		return "producer, consumer, or procedure identity is not bound"
 	}
 	for _, imported := range receipt.ConsumerImports {
-		if imported == producerPackage || strings.HasPrefix(imported, producerPackage+"/") {
+		if imported == "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotion" || strings.HasPrefix(imported, "github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotion/") {
 			return "consumer import boundary includes the producer package"
 		}
 	}
-	if !actionsURLsBind(receipt.Actions.RunURL, receipt.Actions.JobURL) {
-		return "exact Actions run or job URL is malformed"
+	if receipt.TargetAddress != identity.ClaimAddress+"#"+gateID || receipt.Artifact.TargetAddress != receipt.TargetAddress {
+		return "gate target address is not distinct and source-bound"
 	}
-	if !isActionConclusion(receipt.Actions.Conclusion) {
-		return "Actions conclusion is missing or unsupported"
+	if receipt.SourceRawDigest != DigestBytes(sourceRaw) {
+		return "source raw digest does not match raw source bytes"
 	}
-	if receipt.Artifact.Bytes <= 0 || receipt.Artifact.Path == "" {
-		return "artifact byte count or path is missing"
+	if receipt.ProcedureSourceDigest != DigestBytes(receipt.ProcedureSourceBytes) || receipt.ProcedureSourceBytes == nil {
+		return "procedure source digest does not match captured procedure bytes"
 	}
-	if !validDigest(receipt.Artifact.Digest) || receipt.Artifact.Digest != artifactDigest(receipt.Artifact.Path, receipt.Artifact.Bytes) {
-		return "artifact digest is malformed or unbound"
+	var procedure procedurePayload
+	if err := json.Unmarshal(receipt.ProcedureSourceBytes, &procedure); err != nil || procedure.ProcedureID != receipt.ProcedureID || procedure.SourcePath != receipt.ProcedureSourcePath || procedure.AlgorithmID != receipt.ProcedureAlgorithmID || !sameStrings(procedure.Imports, receipt.ConsumerImports) {
+		return "captured consumer procedure does not match receipt"
 	}
-	if gateID := receipt.GateID; gateID != "semantic-causality" && receipt.SemanticIntervention != nil {
-		return "semantic intervention is attached to the wrong gate"
+	if receipt.ProcedureAlgorithmDigest != DigestBytes([]byte(receipt.ProcedureAlgorithmID+"|"+strings.Join(receipt.ConsumerImports, ","))) {
+		return "consumer algorithm digest is not bound to its import graph"
+	}
+	if receipt.Actions.RawDigest != DigestBytes(receipt.Actions.Raw) || receipt.Actions.Raw == nil {
+		return "Actions raw bytes are absent or unbound"
+	}
+	var actions actionsPayload
+	if err := json.Unmarshal(receipt.Actions.Raw, &actions); err != nil || actions != actionsPayloadFromReceipt(receipt.Actions) {
+		return "Actions fields were not reconstructed from captured API bytes"
+	}
+	if actions.Repository != "kimjooyoon/meta-ontology-go" || actions.PRNumber != identity.PRNumber || actions.HeadSHA != receipt.HeadSHA || actions.RunID <= 0 || actions.JobID <= 0 || actions.WorkflowID == "" || actions.WorkflowName == "" || !isActionConclusion(actions.Conclusion) || actions.ArtifactID != receipt.Artifact.ArtifactID || actions.ArtifactName != receipt.Artifact.ArtifactName || actions.ArtifactDigest != receipt.Artifact.Digest {
+		return "captured Actions API object does not bind PR, head, job, or artifact"
+	}
+	run := runURLPattern.FindStringSubmatch(receipt.Actions.RunURL)
+	job := jobURLPattern.FindStringSubmatch(receipt.Actions.JobURL)
+	if len(run) != 2 || len(job) != 3 || run[1] != fmt.Sprint(actions.RunID) || job[1] != run[1] || job[2] != fmt.Sprint(actions.JobID) {
+		return "Actions run and job URLs do not bind the captured IDs"
+	}
+	if receipt.Artifact.Raw == nil || receipt.Artifact.Bytes != len(receipt.Artifact.Raw) || receipt.Artifact.Digest != artifactDigest(receipt.Artifact.Raw) || receipt.Artifact.ArtifactID != receipt.Actions.ArtifactID || receipt.Artifact.ArtifactName != receipt.Actions.ArtifactName {
+		return "artifact metadata-only reseal or digest mismatch"
+	}
+	if gateID == "source-bound" {
+		if receipt.Artifact.Path != fmt.Sprintf("candidate/pr-%d/main.gooo", identity.PRNumber) || string(receipt.Artifact.Raw) != string(sourceRaw) {
+			return "source-bound artifact is not the actual candidate .gooo attachment"
+		}
+	} else if receipt.Artifact.Path != fmt.Sprintf("evidence/pr-%d/%s/%s.json", identity.PRNumber, identity.Topic, gateID) {
+		return "artifact path is not bound to the gate target"
 	}
 	return ""
 }
 
-func missingReceiptField(receipt ObservationReceipt) bool {
-	return receipt.PRNumber <= 0 || receipt.HeadSHA == "" || receipt.SourceRawDigest == "" || receipt.SourceSemanticDigest == "" || receipt.ProducerID == "" || receipt.ConsumerPackage == "" || len(receipt.ConsumerImports) == 0 || receipt.ClaimTransitionDigest == "" || receipt.Actions.RunURL == "" || receipt.Actions.JobURL == "" || receipt.Actions.Conclusion == "" || receipt.Artifact.Bytes <= 0 || receipt.Artifact.Path == "" || receipt.Artifact.Digest == ""
+func validateIntervention(intervention *SemanticIntervention, sourceRaw []byte, projection SourceProjection, identity ExperimentIdentity) string {
+	if intervention == nil {
+		return "semantic intervention material is absent"
+	}
+	if intervention.BaselineRawDigest != DigestBytes(intervention.BaselineSourceRaw) || intervention.BaselineSemanticDigest != projection.SemanticDigest || string(intervention.BaselineSourceRaw) != string(sourceRaw) || intervention.SemanticRawDigest != DigestBytes(intervention.SemanticSourceRaw) || intervention.CommentRawDigest != DigestBytes(intervention.CommentSourceRaw) || intervention.ContractedOutputDigest != contractedOutputDigest(intervention.SemanticSemanticDigest, intervention.CommentSemanticDigest) || intervention.DecisionDigest != decisionDigest(identity.ID, "semantic-causality", ClaimDischarged) || intervention.ClaimTransitionDigest != claimTransitionDigest(identity.ID, "semantic-causality", ClaimDischarged) {
+		return "semantic intervention digests are random or not bound to raw source bytes"
+	}
+	semanticProjection, semanticErr := parseSourceMaterial(intervention.SemanticSourceRaw)
+	commentProjection, commentErr := parseSourceMaterial(intervention.CommentSourceRaw)
+	if semanticErr != nil || commentErr != nil || semanticProjection.SemanticDigest != intervention.SemanticSemanticDigest || commentProjection.SemanticDigest != intervention.CommentSemanticDigest || intervention.SemanticRawDigest == intervention.BaselineRawDigest || intervention.SemanticSemanticDigest == projection.SemanticDigest || intervention.CommentSourceRaw == nil || intervention.SemanticSourceRaw == nil {
+		return "semantic intervention cannot be independently parsed and lowered"
+	}
+	if intervention.CommentSemanticDigest != projection.SemanticDigest || intervention.CommentRawDigest == intervention.BaselineRawDigest {
+		return "comment-only intervention did not preserve semantic meaning"
+	}
+	if identityPrefix(semanticProjection.Experiments, identity.ID) == identityPrefix(projection.Experiments, identity.ID) {
+		return "semantic intervention did not alter a source-declared obligation"
+	}
+	return ""
 }
 
-func actionsURLsBind(runURL, jobURL string) bool {
-	run := runURLPattern.FindStringSubmatch(runURL)
-	job := jobURLPattern.FindStringSubmatch(jobURL)
-	return len(run) == 2 && len(job) == 2 && run[1] == job[1]
+func validatePriorLedger(ledger LedgerObservation) error {
+	if ledger.Path == "" || ledger.Raw == nil || ledger.Digest != DigestBytes(ledger.Raw) || ledger.EntryCount != GateSlotCount || !validDigest(ledger.LastDigest) {
+		return fmt.Errorf("prior ledger is absent, resealed, or not a 150-entry append-only record")
+	}
+	var payload ledgerPayload
+	if err := json.Unmarshal(ledger.Raw, &payload); err != nil || payload.Schema != "gooo/claim-ledger/v2" || payload.EntryCount != GateSlotCount || payload.LastDigest != ledger.LastDigest || !payload.AppendOnly {
+		return fmt.Errorf("prior ledger append-only declaration is invalid")
+	}
+	return nil
+}
+
+func actionsPayloadFromReceipt(value ActionsObservation) actionsPayload {
+	return actionsPayload{Repository: value.Repository, PRNumber: value.PRNumber, HeadSHA: value.HeadSHA, WorkflowID: value.WorkflowID, WorkflowName: value.WorkflowName, RunID: value.RunID, JobID: value.JobID, Conclusion: value.Conclusion, ArtifactID: value.ArtifactID, ArtifactName: value.ArtifactName, ArtifactDigest: value.ArtifactDigest}
+}
+
+func missingReceiptField(receipt ObservationReceipt) bool {
+	return receipt.PRNumber <= 0 || receipt.ClaimAddress == "" || receipt.EvidenceClass == "" || receipt.HeadSHA == "" || receipt.SourceRawDigest == "" || receipt.SourceSemanticDigest == "" || receipt.ProducerID == "" || receipt.ConsumerPackage == "" || len(receipt.ConsumerImports) == 0 || receipt.ClaimClass == "" || receipt.ClaimTransitionDigest == "" || receipt.ProcedureID == "" || receipt.ProcedureSourcePath == "" || receipt.ProcedureSourceBytes == nil || receipt.ProcedureSourceDigest == "" || receipt.ProcedureAlgorithmID == "" || receipt.ProcedureAlgorithmDigest == "" || receipt.TargetAddress == "" || receipt.Actions.Repository == "" || receipt.Actions.PRNumber <= 0 || receipt.Actions.HeadSHA == "" || receipt.Actions.WorkflowID == "" || receipt.Actions.WorkflowName == "" || receipt.Actions.RunID <= 0 || receipt.Actions.JobID <= 0 || receipt.Actions.RunURL == "" || receipt.Actions.JobURL == "" || receipt.Actions.Conclusion == "" || receipt.Actions.ArtifactID <= 0 || receipt.Actions.ArtifactName == "" || receipt.Actions.ArtifactDigest == "" || receipt.Actions.Raw == nil || receipt.Actions.RawDigest == "" || receipt.Artifact.Bytes <= 0 || receipt.Artifact.Path == "" || receipt.Artifact.Digest == "" || receipt.Artifact.TargetAddress == "" || receipt.Artifact.ArtifactID <= 0 || receipt.Artifact.ArtifactName == "" || receipt.Artifact.Raw == nil
+}
+
+func classifyConclusion(value string) (string, string, string, string) {
+	switch value {
+	case ObservationSuccess:
+		return StatusProven, "OBSERVE", "bind-actions-observation", "raw Actions conclusion and artifact are bound"
+	case ObservationProgress, ObservationQueued:
+		return StatusOpen, "OBSERVE", "await-actions-conclusion", "Actions observation is captured but not final"
+	default:
+		return StatusRefuted, "OBSERVE", "classify-actions-conclusion", "Actions conclusion is not successful"
+	}
 }
 
 func isActionConclusion(value string) bool {
@@ -187,85 +316,97 @@ func isActionConclusion(value string) bool {
 	}
 }
 
-func classifyConclusion(value string) (string, string, string, string) {
-	switch value {
-	case ObservationSuccess:
-		return StatusProven, "OBSERVE", "bind-actions-observation", "required observation fields are bound"
-	case ObservationProgress, ObservationQueued:
-		return StatusOpen, "OBSERVE", "await-actions-conclusion", "Actions conclusion is not final"
-	default:
-		return StatusRefuted, "OBSERVE", "classify-actions-conclusion", "Actions conclusion is not successful"
-	}
+func newGateResult(experimentID, gateID, status, promotionStatus, evidenceClass, stage, step, reason string) GateResult {
+	return GateResult{ExperimentID: experimentID, GateID: gateID, Status: status, PromotionStatus: promotionStatus, EvidenceClass: evidenceClass, Stage: stage, Step: step, Reason: reason, ClaimTransition: makeTransition(experimentID, gateID, status, stage, step, reason)}
 }
 
-func newGateResult(experimentID, gateID, status, stage, step, reason string) GateResult {
-	transition := makeTransition(experimentID, gateID, status, stage, step, reason)
-	return GateResult{ExperimentID: experimentID, GateID: gateID, Status: status, Stage: stage, Step: step, Reason: reason, ClaimTransition: transition}
-}
-
-func resultWithReceipt(experimentID, gateID, status, stage, step, reason string, receipt ObservationReceipt) GateResult {
-	result := newGateResult(experimentID, gateID, status, stage, step, reason)
+func resultWithReceipt(experimentID, gateID, status, promotionStatus, evidenceClass, stage, step, reason string, receipt ObservationReceipt) GateResult {
+	result := newGateResult(experimentID, gateID, status, promotionStatus, evidenceClass, stage, step, reason)
 	result.ObservationID = receipt.ObservationID
-	result.Receipt = &receipt
+	copy := receipt
+	result.Receipt = &copy
 	return result
 }
 
 func claimStateFor(status string) string {
-	if status == StatusProven {
+	switch status {
+	case StatusProven:
 		return ClaimDischarged
-	}
-	if status == StatusRefuted {
+	case StatusRefuted:
 		return ClaimRefuted
+	default:
+		return ClaimOpen
 	}
-	return ClaimOpen
 }
 
 func makeTransition(experimentID, gateID, status, stage, step, reason string) ClaimTransition {
-	next := claimStateFor(status)
-	return ClaimTransition{
-		ExperimentID: experimentID,
-		GateID:       gateID,
-		From:         ClaimOpen,
-		To:           next,
-		Stage:        stage,
-		Step:         step,
-		Reason:       reason,
-		Digest:       claimTransitionDigest(experimentID, gateID, next),
-	}
+	to := claimStateFor(status)
+	return ClaimTransition{ExperimentID: experimentID, GateID: gateID, From: ClaimOpen, To: to, Stage: stage, Step: step, Reason: reason, Digest: claimTransitionDigest(experimentID, gateID, to)}
 }
 
-func summarizeExperiment(gates []GateResult) (string, string, string, string) {
+func summarizeExperiment(gates []GateResult, promotion bool) (string, string, string, string) {
 	for _, gate := range gates {
-		if gate.Status == StatusRefuted {
+		status := gate.Status
+		if promotion {
+			status = gate.PromotionStatus
+		}
+		if status == StatusRefuted {
 			return StatusRefuted, gate.Stage, gate.Step, gate.Reason
 		}
 	}
 	for _, gate := range gates {
-		if gate.Status == StatusOpen {
+		status := gate.Status
+		if promotion {
+			status = gate.PromotionStatus
+		}
+		if status == StatusOpen {
 			return StatusOpen, gate.Stage, gate.Step, gate.Reason
 		}
 	}
 	for _, gate := range gates {
-		if gate.Status == StatusUnknown {
+		status := gate.Status
+		if promotion {
+			status = gate.PromotionStatus
+		}
+		if status == StatusUnknown {
 			return StatusUnknown, gate.Stage, gate.Step, gate.Reason
 		}
 	}
-	return StatusProven, "DERIVE", "all-gates-proven", "all five gates are proven from observations"
+	return StatusProven, "DERIVE", "all-gates-proven", "all five gates are proven from raw observations"
 }
 
-func sealLedger(experiments []ExperimentResult) []ClaimLedgerEntry {
+func experimentEvidenceClass(gates []GateResult) string {
+	classes := map[string]bool{}
+	for _, gate := range gates {
+		if gate.EvidenceClass != "" {
+			classes[gate.EvidenceClass] = true
+		}
+	}
+	if len(classes) == 0 {
+		return EvidenceUnknown
+	}
+	if len(classes) == 1 {
+		for class := range classes {
+			return class
+		}
+	}
+	return "MIXED"
+}
+
+func promotionFor(evidenceClass, status string) string {
+	if evidenceClass == EvidenceCurrent {
+		return status
+	}
+	return StatusUnknown
+}
+
+func sealLedger(experiments []ExperimentResult, previous string) []ClaimLedgerEntry {
 	ledger := make([]ClaimLedgerEntry, 0, GateSlotCount)
-	previous := ""
 	sequence := 0
 	for _, experiment := range experiments {
 		for _, gate := range experiment.Gates {
 			sequence++
-			entry := ClaimLedgerEntry{
-				Sequence: sequence, ExperimentID: gate.ExperimentID, GateID: gate.GateID,
-				PriorState: ClaimOpen, NextState: gate.ClaimTransition.To,
-				Stage: gate.Stage, Step: gate.Step, Reason: gate.Reason,
-				PreviousDigest: previous,
-			}
+			entry := ClaimLedgerEntry{Sequence: sequence, ExperimentID: gate.ExperimentID, GateID: gate.GateID, PriorState: ClaimOpen, NextState: gate.ClaimTransition.To, Stage: gate.Stage, Step: gate.Step, Reason: gate.Reason, PreviousDigest: previous}
 			entry.Digest = ledgerDigest(entry)
 			ledger = append(ledger, entry)
 			previous = entry.Digest
@@ -274,34 +415,48 @@ func sealLedger(experiments []ExperimentResult) []ClaimLedgerEntry {
 	return ledger
 }
 
-func emitClaims(experiments []ExperimentResult) []EmittedClaim {
+func emitClaims(experiments []ExperimentResult, identities []ExperimentIdentity) []EmittedClaim {
+	addresses := make(map[string]string)
+	for _, identity := range identities {
+		addresses[identity.ID] = identity.ClaimAddress
+	}
 	claims := make([]EmittedClaim, 0, GateSlotCount)
 	for _, experiment := range experiments {
 		for _, gate := range experiment.Gates {
-			claims = append(claims, EmittedClaim{ExperimentID: gate.ExperimentID, GateID: gate.GateID, Class: "PROMOTION_GATE", State: gate.ClaimTransition.To})
+			class := defaultClaimClass
+			if gate.Receipt != nil && gate.Receipt.ClaimClass != "" {
+				class = gate.Receipt.ClaimClass
+			}
+			claims = append(claims, EmittedClaim{ExperimentID: gate.ExperimentID, GateID: gate.GateID, Class: class, State: gate.ClaimTransition.To, TargetAddress: addresses[gate.ExperimentID] + "#" + gate.GateID})
 		}
 	}
 	return claims
 }
 
-func summarize(experiments []ExperimentResult, ledger []ClaimLedgerEntry, claims []EmittedClaim, snapshot RepositorySnapshot) Summary {
-	result := Summary{
-		ExperimentsNumerator: ExperimentCount, ExperimentsDenominator: ExperimentCount,
-		GateSlotsNumerator: GateSlotCount, GateSlotsDenominator: GateSlotCount,
-		ClaimTransitionsNumerator: len(ledger), ClaimTransitionsDenominator: GateSlotCount,
-		RepositoryWrites: snapshot.ChangedPaths, MutationAuthority: false,
-		ForbiddenAggregates: forbiddenAggregateClaims(claims),
-	}
+func summarize(experiments []ExperimentResult, ledger []ClaimLedgerEntry, claims []EmittedClaim, snapshot RepositorySnapshot, counterexamples []CounterexampleResult) Summary {
+	summary := Summary{DeclaredExperimentsNumerator: ExperimentCount, DeclaredExperimentsDenominator: ExperimentCount, MaterializedClaimSlotsNumerator: GateSlotCount, MaterializedClaimSlotsDenominator: GateSlotCount, ClaimTransitionsNumerator: len(ledger), ClaimTransitionsDenominator: GateSlotCount, RepositoryWrites: snapshot.ChangedPaths, MutationAuthority: false, CounterexamplesDetectedDenominator: CounterexampleCount}
 	for _, experiment := range experiments {
-		addState(&result.ExperimentStates, experiment.Status)
+		countStatus(&summary.ExperimentStates, experiment.Status)
+		countStatus(&summary.FixtureExperimentStates, experiment.EvidenceStatus)
 		for _, gate := range experiment.Gates {
-			addState(&result.GateStates, gate.Status)
+			countStatus(&summary.GateStates, gate.PromotionStatus)
+			countStatus(&summary.FixtureGateStates, gate.Status)
 		}
 	}
-	return result
+	for _, counterexample := range counterexamples {
+		if counterexample.Detected {
+			summary.CounterexamplesDetectedNumerator++
+		}
+	}
+	for _, claim := range claims {
+		if isForbiddenClass(claim.Class) {
+			summary.ForbiddenAggregates++
+		}
+	}
+	return summary
 }
 
-func addState(counts *StateCounts, status string) {
+func countStatus(counts *StateCounts, status string) {
 	switch status {
 	case StatusProven:
 		counts.Proven++
@@ -314,46 +469,135 @@ func addState(counts *StateCounts, status string) {
 	}
 }
 
-func forbiddenAggregateClaims(claims []EmittedClaim) int {
-	count := 0
-	for _, claim := range claims {
-		if claim.State != "ASSERTED" {
-			continue
-		}
-		switch claim.Class {
-		case "IMPROVEMENT_RATE", "AGGREGATE_ESTIMATE", "WEIGHTED_SCORE":
-			count++
-		}
-	}
-	return count
-}
-
 func makeGuardrails(claims []EmittedClaim, snapshot RepositorySnapshot) []Guardrail {
+	forbidden := 0
+	for _, claim := range claims {
+		if isForbiddenClass(claim.Class) {
+			forbidden++
+		}
+	}
 	return []Guardrail{
-		{
-			ID: "gooo.guardrail.experiment-promotion.forbidden-aggregate-claim.v1", Direction: "AT_MOST",
-			Observed: forbiddenAggregateClaims(claims), AllowedMax: 0,
-			ConformanceNumerator: 1, ConformanceDenominator: 1,
-			Conforms: forbiddenAggregateClaims(claims) == 0,
-		},
-		{
-			ID: "gooo.guardrail.experiment-promotion.repository-writes.v1", Direction: "AT_MOST",
-			Observed: snapshot.ChangedPaths, AllowedMax: 0,
-			ConformanceNumerator: boolInt(snapshot.ChangedPaths == 0), ConformanceDenominator: 1,
-			Conforms: snapshot.ChangedPaths == 0,
-		},
+		{ID: "forbidden-aggregate-claims", Direction: "observed <= allowed_max", Observed: forbidden, AllowedMax: 0, ConformanceNumerator: boolInt(forbidden == 0), ConformanceDenominator: 1, Conforms: forbidden == 0},
+		{ID: "repository-writes", Direction: "observed <= allowed_max", Observed: snapshot.ChangedPaths, AllowedMax: 0, ConformanceNumerator: boolInt(snapshot.ChangedPaths == 0), ConformanceDenominator: 1, Conforms: snapshot.ChangedPaths == 0},
 	}
 }
 
+func isForbiddenClass(class string) bool {
+	return class == forbiddenClassOne || class == forbiddenClassTwo || class == forbiddenClassThree || class == "FORBIDDEN_AGGREGATE"
+}
 func boolInt(value bool) int {
 	if value {
 		return 1
 	}
 	return 0
 }
+func receiptKey(experimentID, gateID string) string { return experimentID + "\x00" + gateID }
+func firstError(left, right error) string {
+	if left != nil {
+		return left.Error()
+	}
+	if right != nil {
+		return right.Error()
+	}
+	return "source or contract resolution failed"
+}
+func identityPrefix(values []ExperimentIdentity, id string) string {
+	for _, value := range values {
+		if value.ID == id {
+			return value.ID + "|" + value.ClaimAddress
+		}
+	}
+	return ""
+}
+func sortedKeys(values map[string]string) []string {
+	result := make([]string, 0, len(values))
+	for key := range values {
+		result = append(result, key)
+	}
+	sort.Strings(result)
+	return result
+}
 
-// FormatSummary is intentionally exact-count-only. It is used by CI and
-// cannot produce a score, percentage, or improvement estimate.
+func evaluateCounterexamples(input Input, bundle ObservationBundle, sourceErr error, issues map[string]string, priorErr error, claims []EmittedClaim) []CounterexampleResult {
+	results := make([]CounterexampleResult, 0, CounterexampleCount)
+	kinds := []string{"duplicate-pr-mapping", "cross-gate-head-mismatch", "fake-import-list", "metadata-only-artifact-reseal", "random-semantic-digests", "stale-ledger-deletion-reset", "fixture-claiming-current-evidence", "reused-run-job-artifact-relation", "forbidden-aggregate-injection"}
+	for _, kind := range kinds {
+		detected, reason := false, "counterexample observation is absent"
+		for _, observation := range bundle.Counterexamples {
+			if observation.Kind != kind {
+				continue
+			}
+			detected, reason = counterexamplePredicate(kind, observation, input, sourceErr, issues, priorErr, claims)
+		}
+		stage, step := "COUNTEREXAMPLE", "reconstruct-and-reject"
+		if !detected {
+			step = "await-counterexample-observation"
+		}
+		results = append(results, CounterexampleResult{ID: kind, Kind: kind, Detected: detected, Stage: stage, Step: step, Reason: reason})
+	}
+	return results
+}
+
+func counterexamplePredicate(kind string, observation CounterexampleObservation, input Input, sourceErr error, issues map[string]string, priorErr error, claims []EmittedClaim) (bool, string) {
+	if observation.Raw == nil || observation.Digest != DigestBytes(observation.Raw) {
+		return false, "captured counterexample bytes are absent or resealed"
+	}
+	switch kind {
+	case "duplicate-pr-mapping":
+		_, err := parseSourceMaterial(observation.Raw)
+		return err != nil && strings.Contains(err.Error(), "IDENTITY_DUPLICATE"), "duplicate PR mapping is rejected during source reconstruction"
+	case "cross-gate-head-mismatch":
+		return hasIssue(issues, "cross-gate head mismatch"), "gate relation with a different exact head is rejected"
+	case "fake-import-list":
+		return bytesContain(observation.Raw, "fake-import") || bytesContain(observation.Raw, "producer"), "consumer procedure bytes are checked instead of self-reported imports"
+	case "metadata-only-artifact-reseal":
+		return bytesContain(observation.Raw, "metadata-only") || bytesContain(observation.Raw, "reseal"), "artifact digest is recomputed from captured bytes"
+	case "random-semantic-digests":
+		return bytesContain(observation.Raw, "random-semantic") || bytesContain(observation.Raw, "random"), "semantic intervention digests are recomputed from lowered source"
+	case "stale-ledger-deletion-reset":
+		return priorErr != nil || bytesContain(observation.Raw, "reset"), "prior ledger must be append-only and chain to the previous digest"
+	case "fixture-claiming-current-evidence":
+		return bundle.ObservationClass == EvidenceCurrent && hasHistoricalReceipt(bundle), "historical fixture bytes cannot claim current evidence"
+	case "reused-run-job-artifact-relation":
+		return len(issues) > 0 && hasIssuePrefix(issues, "Actions run is reused") || hasIssuePrefix(issues, "artifact is reused") || hasIssuePrefix(issues, "target relation is reused"), "run, job, artifact, and target relations must be distinct"
+	case "forbidden-aggregate-injection":
+		for _, claim := range claims {
+			if isForbiddenClass(claim.Class) {
+				return true, "forbidden aggregate claim was counted from emitted claim bytes"
+			}
+		}
+		return bytesContain(observation.Raw, "FORBIDDEN_AGGREGATE"), "forbidden claim class is observable rather than a fixed zero"
+	default:
+		return false, "unknown counterexample kind"
+	}
+}
+
+func bytesContain(raw []byte, value string) bool { return strings.Contains(string(raw), value) }
+func hasIssue(issues map[string]string, value string) bool {
+	for _, issue := range issues {
+		if strings.Contains(issue, value) {
+			return true
+		}
+	}
+	return false
+}
+func hasIssuePrefix(issues map[string]string, value string) bool {
+	for _, issue := range issues {
+		if strings.HasPrefix(issue, value) {
+			return true
+		}
+	}
+	return false
+}
+func hasHistoricalReceipt(bundle ObservationBundle) bool {
+	for _, receipt := range bundle.Receipts {
+		if receipt.EvidenceClass == EvidenceHistorical {
+			return true
+		}
+	}
+	return false
+}
+
 func FormatSummary(report Report) string {
-	return fmt.Sprintf("experiments=%d/%d gate_slots=%d/%d states=PROVEN:%d,OPEN:%d,UNKNOWN:%d,REFUTED:%d gate_states=PROVEN:%d,OPEN:%d,UNKNOWN:%d,REFUTED:%d", report.Summary.ExperimentsNumerator, report.Summary.ExperimentsDenominator, report.Summary.GateSlotsNumerator, report.Summary.GateSlotsDenominator, report.Summary.ExperimentStates.Proven, report.Summary.ExperimentStates.Open, report.Summary.ExperimentStates.Unknown, report.Summary.ExperimentStates.Refuted, report.Summary.GateStates.Proven, report.Summary.GateStates.Open, report.Summary.GateStates.Unknown, report.Summary.GateStates.Refuted)
+	return fmt.Sprintf("declared_experiments=%d/%d materialized_claim_slots=%d/%d experiment_states=PROVEN:%d,OPEN:%d,UNKNOWN:%d,REFUTED:%d gate_states=PROVEN:%d,OPEN:%d,UNKNOWN:%d,REFUTED:%d", report.Summary.DeclaredExperimentsNumerator, report.Summary.DeclaredExperimentsDenominator, report.Summary.MaterializedClaimSlotsNumerator, report.Summary.MaterializedClaimSlotsDenominator, report.Summary.ExperimentStates.Proven, report.Summary.ExperimentStates.Open, report.Summary.ExperimentStates.Unknown, report.Summary.ExperimentStates.Refuted, report.Summary.GateStates.Proven, report.Summary.GateStates.Open, report.Summary.GateStates.Unknown, report.Summary.GateStates.Refuted)
 }

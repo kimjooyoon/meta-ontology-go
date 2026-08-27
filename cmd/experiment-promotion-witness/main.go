@@ -2,26 +2,25 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/experimentpromotion"
 )
 
 func main() {
 	sourcePath := flag.String("source", experimentpromotion.SourcePath, "raw Gooo source")
-	observationPath := flag.String("observations", "", "observation receipt bundle")
+	observationPath := flag.String("observations", "", "raw observation bundle")
 	contractPath := flag.String("contract", "examples/experiment-promotion/contract.json", "validator expectation contract")
 	outPath := flag.String("out", "experiment-promotion-report.json", "report output")
 	subjectSHA := flag.String("subject-sha", "", "workflow subject SHA")
-	beforeDigest := flag.String("before-digest", experimentpromotion.DigestBytes(nil), "repository snapshot before digest")
-	afterDigest := flag.String("after-digest", experimentpromotion.DigestBytes(nil), "repository snapshot after digest")
-	changedPaths := flag.Int("changed-paths", 0, "repository snapshot changed path count")
+	beforePath := flag.String("snapshot-before", "", "captured repository snapshot before replay")
+	afterPath := flag.String("snapshot-after", "", "captured repository snapshot after replay")
+	pathsPath := flag.String("snapshot-paths", "", "captured changed-path list")
 	flag.Parse()
-
-	if *observationPath == "" {
-		log.Fatal("-observations is required")
+	if *observationPath == "" || *beforePath == "" || *afterPath == "" || *pathsPath == "" {
+		log.Fatal("-observations, -snapshot-before, -snapshot-after, and -snapshot-paths are required")
 	}
 	source, err := os.ReadFile(*sourcePath)
 	if err != nil {
@@ -35,28 +34,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := validDigestFlag(*beforeDigest, *afterDigest); err != nil {
+	before, err := os.ReadFile(*beforePath)
+	if err != nil {
 		log.Fatal(err)
 	}
-	report := experimentpromotion.Evaluate(experimentpromotion.Input{
-		SubjectSHA: *subjectSHA, SourceRaw: source, ObservationRaw: observations, Contract: contract,
-		RepositorySnapshot: experimentpromotion.RepositorySnapshot{BeforeDigest: *beforeDigest, AfterDigest: *afterDigest, ChangedPaths: *changedPaths},
-	})
+	after, err := os.ReadFile(*afterPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pathRaw, err := os.ReadFile(*pathsPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	changed := make([]string, 0)
+	for _, path := range strings.Split(strings.TrimSpace(string(pathRaw)), "\n") {
+		if path != "" {
+			changed = append(changed, path)
+		}
+	}
+	report := experimentpromotion.Evaluate(experimentpromotion.Input{SubjectSHA: *subjectSHA, SourceRaw: source, ObservationRaw: observations, Contract: contract, RepositorySnapshot: experimentpromotion.RepositorySnapshot{BeforeRaw: before, BeforeDigest: experimentpromotion.DigestBytes(before), AfterRaw: after, AfterDigest: experimentpromotion.DigestBytes(after), ChangedPaths: len(changed), ChangedPathList: changed}})
 	if err := experimentpromotion.ValidateReport(report); err != nil {
 		log.Fatal(err)
 	}
 	if err := experimentpromotion.WriteReport(*outPath, report); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(experimentpromotion.FormatSummary(report))
-}
-
-func validDigestFlag(before, after string) error {
-	if before == "" || after == "" {
-		return fmt.Errorf("repository snapshot digests are required")
-	}
-	if len(before) != len(experimentpromotion.DigestBytes(nil)) || len(after) != len(experimentpromotion.DigestBytes(nil)) {
-		return fmt.Errorf("repository snapshot digest is malformed")
-	}
-	return nil
+	println(experimentpromotion.FormatSummary(report))
 }
