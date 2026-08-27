@@ -18,6 +18,9 @@ func run(options options) error {
 	if err := selfimprovementattestation.WriteReceipt(options.output, receipt); err != nil {
 		return err
 	}
+	if err := selfimprovementattestation.WriteSummary(options.summary, receipt); err != nil {
+		return err
+	}
 	if options.check {
 		if err := selfimprovementattestation.ValidateReceipt(receipt); err != nil {
 			return err
