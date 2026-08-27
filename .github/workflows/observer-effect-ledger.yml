@@ -1,0 +1,140 @@
+name: Observer effect ledger
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/observer-effect-ledger.yml'
+      - 'docs/research/observer-effect-ledger.md'
+      - 'examples/observer-effect-ledger/**'
+      - 'internal/meta/observereffect/**'
+      - 'internal/verify/scope_observer_effect_ledger.go'
+      - 'scripts/observer-effect-judge/**'
+      - 'scripts/observer-effect-ledger/**'
+  push:
+    branches: [dev, main]
+    paths:
+      - '**'
+      - '.github/workflows/observer-effect-ledger.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  observer-effect:
+    name: Observer effect ledger
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SOURCE_DATE_EPOCH: '0'
+    steps:
+      - name: Check out the immutable pull-request subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Observe, replay, and independently judge the effect ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/observer-effect-ledger"
+          source="$GITHUB_WORKSPACE/examples/observer-effect-ledger/main.gooo"
+          mkdir -p "$work/first" "$work/replay" "$work/unknown" "$work/violation" "$work/violation-root"
+
+          go run ./cmd/gooo check "$source"
+          common=(
+            -mode observe
+            -root "$GITHUB_WORKSPACE"
+            -source "$source"
+          )
+          for target in first replay; do
+            go run ./scripts/observer-effect-ledger "${common[@]}" \
+              -ledger "$work/$target/ledger.json" \
+              -observation-receipt "$work/$target/observation-receipt.json" \
+              -effect-receipt "$work/$target/effect-receipt.json"
+          done
+          for file in ledger.json observation-receipt.json effect-receipt.json; do
+            cmp -s "$work/first/$file" "$work/replay/$file"
+          done
+          go run ./scripts/observer-effect-judge \
+            -ledger "$work/first/ledger.json" \
+            -observation-receipt "$work/first/observation-receipt.json" \
+            -effect-receipt "$work/first/effect-receipt.json" \
+            -output "$work/first/judgment.json"
+          jq -e '
+            .schema == "gooo/observer-effect-ledger/v1" and
+            .decision == "OBSERVED" and .resolution == "EXACT" and
+            .repository_writes == 0 and .mutation_authority == false and
+            .promotion_authorized == false and
+            .observation.repository_storage.changed == false and
+            .observation.environment.changed == false and
+            .observation.logical_time.changed == false and
+            ([.effects[].domain] | sort) == ["ENVIRONMENT", "LOGICAL_TIME", "OUTPUT", "REPOSITORY_STORAGE"] and
+            ([.effects[] | select(.domain == "OUTPUT") | .write_count] | .[0]) == 3 and
+            .metrics.fixed_denominator == 12 and .metrics.satisfied == 12 and
+            .metrics.coverage_basis_points == 10000 and
+            .unknown.stage == "NONE" and .unknown.step == "NONE" and .unknown.reason == "NONE" and
+            .claim_transition.persistent == true and
+            .claim_transition.transition == "CLAIMED->SUPPORTED" and
+            ([.indicators[] | select(.status == "PASS")] | length) == 12
+          ' "$work/first/ledger.json"
+          jq -e '
+            .schema == "gooo/observer-effect-judgment/v1" and
+            .decision == "PASS" and .subject_decision == "OBSERVED" and
+            .metrics.fixed_denominator == 12 and .mutation_authority == false
+          ' "$work/first/judgment.json"
+
+          go run ./scripts/observer-effect-ledger \
+            -mode unknown -root "$GITHUB_WORKSPACE" -source "$source" \
+            -ledger "$work/unknown/ledger.json" \
+            -observation-receipt "$work/unknown/observation-receipt.json" \
+            -effect-receipt "$work/unknown/effect-receipt.json"
+          go run ./scripts/observer-effect-judge \
+            -ledger "$work/unknown/ledger.json" \
+            -observation-receipt "$work/unknown/observation-receipt.json" \
+            -effect-receipt "$work/unknown/effect-receipt.json" \
+            -output "$work/unknown/judgment.json"
+          jq -e '
+            .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+            .metrics.fixed_denominator == 12 and .unknown.stage == "OBSERVE" and
+            .unknown.step == "capture-environment" and
+            .unknown.reason == "DECLARED_ENVIRONMENT_NOT_AVAILABLE"
+          ' "$work/unknown/ledger.json"
+          jq -e '.decision == "PASS" and .subject_decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION"' "$work/unknown/judgment.json"
+
+          cp "$source" "$work/violation-root/main.gooo"
+          go run ./scripts/observer-effect-ledger \
+            -mode violate -allow-intentional-write \
+            -root "$work/violation-root" -source "$source" \
+            -ledger "$work/violation/ledger.json" \
+            -observation-receipt "$work/violation/observation-receipt.json" \
+            -effect-receipt "$work/violation/effect-receipt.json"
+          go run ./scripts/observer-effect-judge \
+            -ledger "$work/violation/ledger.json" \
+            -observation-receipt "$work/violation/observation-receipt.json" \
+            -effect-receipt "$work/violation/effect-receipt.json" \
+            -output "$work/violation/judgment.json"
+          jq -e '
+            .decision == "FAIL_CLOSED" and .resolution == "EXACT" and
+            .repository_writes == 1 and .metrics.fixed_denominator == 12 and
+            .metrics.satisfied == 11 and .claim_transition.current_state == "REFUTED" and
+            ([.effects[] | select(.domain == "REPOSITORY_STORAGE") | .mutation_attempted] | .[0]) == true
+          ' "$work/violation/ledger.json"
+          jq -e '.decision == "PASS" and .subject_decision == "FAIL_CLOSED" and .repository_writes == 1' "$work/violation/judgment.json"
+          test -z "$(git status --porcelain)"
+      - name: Upload observer-effect evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: observer-effect-ledger-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/observer-effect-ledger
+          if-no-files-found: error
+          retention-days: 30

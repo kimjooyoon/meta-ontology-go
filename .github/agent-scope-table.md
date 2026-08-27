@@ -72,6 +72,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/integration-governance-followup` | `docs/governance/integration-promotion.md` |
 | `agent/line-cap-detector` | `internal/detection/linecaps/**` |
 | `agent/linecaps` | `internal/detection/linecaps/**` |
+| `agent/luna-meta-13-observer-effect-ledger` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/observer-effect-ledger.yml`, `docs/research/observer-effect-ledger.md`, `examples/observer-effect-ledger/**`, `internal/meta/observereffect/**`, `internal/verify/scope_observer_effect_ledger.go`, `scripts/observer-effect-judge/**`, `scripts/observer-effect-ledger/**` |
 | `agent/lsp` | `internal/lsp/**` |
 | `agent/lsp-contracts` | `docs/research/lsp.md` |
 | `agent/lsp-experiments` | `docs/research/lsp.md` |

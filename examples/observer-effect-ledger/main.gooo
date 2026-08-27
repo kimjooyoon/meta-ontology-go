@@ -1,0 +1,23 @@
+package observereffectledger
+namespace observereffectledger
+
+entity RepositoryStorage id "gooo://observer-effect/entity/repository-storage"
+entity EnvironmentSnapshot id "gooo://observer-effect/entity/environment-snapshot"
+entity LogicalTimeSnapshot id "gooo://observer-effect/entity/logical-time-snapshot"
+entity ObservationResult id "gooo://observer-effect/entity/observation-result"
+entity ObserverEffect id "gooo://observer-effect/entity/observer-effect"
+entity EffectLedger id "gooo://observer-effect/entity/effect-ledger"
+entity ObservationReceipt id "gooo://observer-effect/entity/observation-receipt"
+entity EffectReceipt id "gooo://observer-effect/entity/effect-receipt"
+entity IndependentJudgment id "gooo://observer-effect/entity/independent-judgment"
+entity PersistentClaim id "gooo://observer-effect/entity/persistent-claim"
+
+activity ObserveRepository(RepositoryStorage) -> ObservationResult
+activity ObserveEnvironment(EnvironmentSnapshot) -> ObservationResult
+activity ObserveLogicalTime(LogicalTimeSnapshot) -> ObservationResult
+activity SeparateObservationFromEffect(ObservationResult) -> ObserverEffect
+activity RecordObserverOutputEffect(ObserverEffect) -> EffectLedger
+activity EmitObservationReceipt(EffectLedger) -> ObservationReceipt
+activity EmitEffectReceipt(EffectLedger) -> EffectReceipt
+activity IndependentlyJudge(EffectLedger, ObservationReceipt, EffectReceipt) -> IndependentJudgment
+activity PersistClaimTransition(IndependentJudgment) -> PersistentClaim
