@@ -18,8 +18,8 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 		MutationAllowed: false, ContractDigest: DigestValue(contract), SourceDigest: observation.SourceDigest,
 		GeneratedDigest: observation.GeneratedDigest, ReplayDigest: observation.ReplayDigest,
 		Cells: cells, Resource: observation.Resource, Summary: summary,
-	}
-	report.Claim = claimLifecycle(contract, observation, cells, summary, next)
+
+		Claim: claimLifecycle(contract, observation, cells, summary, next)}
 	report.Indicators = indicators(report)
 	return report, nil
 }
