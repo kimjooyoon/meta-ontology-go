@@ -409,7 +409,7 @@ func buildIndicators(source Source, observation Observation, effects []Effect, c
 	mutationEvidence := Unknown{Stage: "GUARD", Step: "deny-mutation-authority", Reason: "MUTATION_AND_PROMOTION_AUTHORITY_FALSE"}
 	claimEvidence := Unknown{Stage: "CLAIM", Step: "persist-claim-transition", Reason: "CLAIM_TRANSITION_PERSISTED"}
 	return []Indicator{
-		indicator("OEL-OBS-01", "OBSERVATION", "bind-gooo-source", "observer-effect-judge", "bind-gooo-source", "FOUNDATION", "canonical .gooo parse and lowering", fmt.Sprint(isCanonicalSource(source)), indicatorStatus(isCanonicalSource(source)), sourceEvidence),
+		indicator("OEL-OBS-01", "OBSERVATION", "bind-gooo-source", "observer-effect-judge", "bind-gooo-source", "FOUNDATION", "canonical .gooo parse and lowering", fmt.Sprint(isCanonicalSource(source)), indicatorStatus(boolStatus(isCanonicalSource(source))), sourceEvidence),
 		indicator("OEL-OBS-02", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "FOUNDATION", "before snapshot exists", fmt.Sprint(observation.RepositoryStorage.BeforeObserved), indicatorStatus(boolStatus(observation.RepositoryStorage.BeforeObserved)), snapshotUnknown(observation.RepositoryStorage)),
 		indicator("OEL-OBS-03", "OBSERVATION", "observe-repository", "observer-effect-judge", "observe-repository", "COHERENCE", "after snapshot exists", fmt.Sprint(observation.RepositoryStorage.AfterObserved), indicatorStatus(boolStatus(observation.RepositoryStorage.AfterObserved)), snapshotUnknown(observation.RepositoryStorage)),
 		indicator("OEL-OBS-04", "OBSERVATION", "observe-environment", "observer-effect-judge", "observe-environment", "FOUNDATION", "environment delta recorded", observation.Environment.Status, indicatorStatus(observation.Environment.Status), snapshotUnknown(observation.Environment)),
@@ -470,6 +470,15 @@ func effectWriteCount(effects []Effect, domain string) int {
 		}
 	}
 	return 0
+}
+
+func effectByDomain(effects []Effect, domain string) Effect {
+	for _, effect := range effects {
+		if effect.Domain == domain {
+			return effect
+		}
+	}
+	return Effect{}
 }
 
 func buildMetrics(indicators []Indicator) Metrics {
