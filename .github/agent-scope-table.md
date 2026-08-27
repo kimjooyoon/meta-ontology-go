@@ -76,7 +76,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/lsp-contracts` | `docs/research/lsp.md` |
 | `agent/lsp-experiments` | `docs/research/lsp.md` |
 | `agent/lsp-research` | `docs/research/lsp.md` |
-| `agent/luna-meta-08-counterexample-first-compiler` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/counterexample-first-compiler.yml`, `cmd/counterexample-first-compiler-witness`, `cmd/counterexample-first-judge-witness`, `docs/research/counterexample-first-meta-compilation.md`, `examples/counterexample-first-compiler`, `internal/meta/counterexamplefirst`, `internal/meta/counterexamplefirstcompiler`, `internal/meta/counterexamplefirstjudge`, `internal/verify/scope_counterexample_first_compiler.go`, `scripts/counterexample-first-compiler` |
 | `agent/performance` | `internal/detection/performance/**` |
 | `agent/performance-regression` | `internal/detection/performance/**` |
 | `agent/protected-regions` | `internal/detection/protectedregions/**` |
