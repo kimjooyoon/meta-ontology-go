@@ -3,6 +3,8 @@ package proposalpredecessor
 const (
 	Schema                             = "gooo/autonomous-change-proposal-predecessor-selection/v2"
 	ObservationSchema                  = "gooo/language-readiness-api-observation/v1"
+	ObservationMemberPath              = "language-readiness-proposal-observation.json"
+	ObservationRole                    = "proposal-predecessor-raw-observation"
 	ResolutionSchema                   = "gooo/autonomous-change-proposal-predecessor-resolution/v1"
 	ReasonSelected                     = "PROPOSAL_PREDECESSOR_SELECTED"
 	ReasonNotFound                     = "PROPOSAL_PREDECESSOR_NOT_FOUND"
@@ -83,10 +85,26 @@ type Report struct {
 type ObservationEvidence struct {
 	Schema           string `json:"schema"`
 	CachePath        string `json:"cache_path"`
+	CacheRole        string `json:"cache_role"`
 	CacheBytes       int    `json:"cache_bytes"`
 	CacheDigest      string `json:"cache_digest"`
 	ResponseTotal    int    `json:"response_total"`
 	ResponseConsumed int    `json:"response_consumed"`
+}
+
+type ObservationResponse struct {
+	Kind       string `json:"kind"`
+	URL        string `json:"url"`
+	StatusCode int    `json:"status_code"`
+	Body       []byte `json:"body"`
+	Link       string `json:"link,omitempty"`
+	Location   string `json:"location,omitempty"`
+	Failure    string `json:"failure,omitempty"`
+}
+
+type ObservationCache struct {
+	Schema    string                `json:"schema"`
+	Responses []ObservationResponse `json:"responses"`
 }
 
 func (report Report) Ready() bool {

@@ -31,11 +31,14 @@ func run(cfg config) error {
 	if cfg.check != "" {
 		target = cfg.check
 	}
-	if err := requireExternal(cfg.root, target); err != nil {
+	if err := requireExternal(cfg.root, target, cfg.observationCapture, cfg.observationReplay, cfg.observationCache); err != nil {
 		return err
 	}
 	if cfg.check != "" {
-		return checkReceipt(cfg.check, cfg.repository, cfg.currentHead, cfg.predecessorSHA)
+		if cfg.observationCache == "" {
+			return fmt.Errorf("observation-cache is required with check")
+		}
+		return checkReceipt(cfg)
 	}
 	store, err := openProposalObservationStore(cfg.observationCapture, cfg.observationReplay)
 	if err != nil {
@@ -146,8 +149,8 @@ func marshalResult(result buildResult) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-func checkReceipt(path, expectedRepository, expectedHead, expectedPredecessorSHA string) error {
-	data, err := os.ReadFile(path)
+func checkReceipt(cfg config) error {
+	data, err := os.ReadFile(cfg.check)
 	if err != nil {
 		return err
 	}
@@ -161,22 +164,65 @@ func checkReceipt(path, expectedRepository, expectedHead, expectedPredecessorSHA
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return fmt.Errorf("FAIL_CLOSED: proposal receipt has trailing content")
 	}
+	observationRaw, err := os.ReadFile(cfg.observationCache)
+	if err != nil {
+		return fmt.Errorf("FAIL_CLOSED: proposal observation cache unavailable: %w", err)
+	}
 	switch header.Schema {
 	case proposalpromotion.Schema:
 		var receipt proposalpromotion.Receipt
 		if err := decodeStrict(data, &receipt); err != nil {
 			return err
 		}
-		return proposalpromotion.Validate(receipt, expectedHead)
+		if err := proposalpredecessor.ValidateRawObservationCache(receipt.ObservationEvidence, observationRaw); err != nil {
+			return err
+		}
+		if err := proposalpromotion.Validate(receipt, cfg.repository, cfg.currentHead, cfg.predecessorSHA); err != nil {
+			return err
+		}
+		return replayReceipt(cfg, data)
 	case proposalpredecessor.ResolutionSchema:
 		var receipt proposalpredecessor.ResolutionReceipt
 		if err := decodeStrict(data, &receipt); err != nil {
 			return err
 		}
-		return proposalpredecessor.ValidateResolution(receipt, expectedRepository, expectedHead, expectedPredecessorSHA)
+		if err := proposalpredecessor.ValidateRawObservationCache(receipt.ObservationEvidence, observationRaw); err != nil {
+			return err
+		}
+		if err := proposalpredecessor.ValidateResolution(receipt, cfg.repository, cfg.currentHead, cfg.predecessorSHA); err != nil {
+			return err
+		}
+		return replayReceipt(cfg, data)
 	default:
 		return fmt.Errorf("FAIL_CLOSED: unknown proposal receipt schema %q", header.Schema)
 	}
+}
+
+func replayReceipt(cfg config, expected []byte) error {
+	store, err := openProposalObservationStore("", cfg.observationCache)
+	if err != nil {
+		return fmt.Errorf("FAIL_CLOSED: proposal observation replay cannot open: %w", err)
+	}
+	client, err := newProposalHTTPClient(cfg.apiURL, store)
+	if err != nil {
+		return fmt.Errorf("FAIL_CLOSED: proposal observation replay client: %w", err)
+	}
+	result, err := build(cfg, client, store)
+	if err != nil {
+		var replayErr *proposalObservationReplayError
+		if errors.As(err, &replayErr) {
+			return fmt.Errorf("FAIL_CLOSED: proposal predecessor observation replay: %w", err)
+		}
+		return err
+	}
+	replayed, err := marshalResult(result)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(expected, replayed) {
+		return fmt.Errorf("FAIL_CLOSED: proposal receipt replay mismatch")
+	}
+	return nil
 }
 
 func decodeStrict(data []byte, target any) error {

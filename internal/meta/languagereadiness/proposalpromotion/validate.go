@@ -11,12 +11,14 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
-func Validate(receipt Receipt, expectedCurrentHead string) error {
+func Validate(receipt Receipt, expectedRepository, expectedCurrentHead, expectedPredecessorSHA string) error {
 	switch {
 	case receipt.Schema != Schema:
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion schema %q", receipt.Schema)
-	case receipt.CurrentHeadSHA != expectedCurrentHead:
-		return fmt.Errorf("FAIL_CLOSED: proposal promotion current head mismatch")
+	case expectedRepository == "" || !validSHA(expectedCurrentHead) || !validSHA(expectedPredecessorSHA) ||
+		receipt.Repository != expectedRepository || receipt.CurrentHeadSHA != expectedCurrentHead ||
+		receipt.EvidenceHeadSHA != expectedPredecessorSHA:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion context mismatch")
 	case !validSHA(receipt.CurrentHeadSHA) || !validSHA(receipt.EvidenceHeadSHA):
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion sha is invalid")
 	case receipt.CurrentHeadSHA == receipt.EvidenceHeadSHA:

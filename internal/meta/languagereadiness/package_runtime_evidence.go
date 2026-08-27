@@ -10,7 +10,7 @@ import (
 func validateProposalPromotion(
 	promotion proposalpromotion.Receipt, expectedHeadSHA string,
 ) (string, error) {
-	if err := proposalpromotion.Validate(promotion, expectedHeadSHA); err != nil {
+	if err := proposalpromotion.Validate(promotion, promotion.Repository, expectedHeadSHA, promotion.EvidenceHeadSHA); err != nil {
 		return "", fmt.Errorf("verify autonomous proposal promotion: %w", err)
 	}
 	if promotion.Decision != proposalpromotion.DecisionPass {

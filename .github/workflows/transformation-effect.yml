@@ -449,6 +449,7 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
+            --observation-cache "$RUNNER_TEMP/language-readiness-proposal-observation.json" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
           proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
           if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
@@ -498,6 +499,8 @@ jobs:
           fi
       - name: Verify proposal observation evidence binding
         if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -505,28 +508,48 @@ jobs:
           receipt="$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
           test -s "$cache"
           test -s "$receipt"
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --observation-cache "$cache" \
+            --check "$receipt"
           cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"
           cache_digest="sha256:$(sha256sum "$cache" | awk '{print $1}')"
           response_total="$(jq -r '.responses | length' "$cache")"
-          jq -e --arg cache "$cache" --arg digest "$cache_digest" \
-            --argjson bytes "$cache_bytes" --argjson responses "$response_total" '
-            (.schema == "gooo/language-readiness-api-observation/v1" and
-              (.responses | type) == "array" and
-              (.responses | length) == $responses and
-              (has("decision") | not) and (has("selection") | not) and
-              (has("promotion") | not)) and
-            (.observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
-              .observation_evidence.cache_path == $cache and
-              .observation_evidence.cache_bytes == $bytes and
-              .observation_evidence.cache_digest == $digest and
-              .observation_evidence.response_total == $responses and
-              .observation_evidence.response_total > 0 and
-              .observation_evidence.response_consumed == .observation_evidence.response_total)
+          response_consumed="$(jq -r '.observation_evidence.response_consumed' "$receipt")"
+          jq -e --argjson responses "$response_total" '
+            .schema == "gooo/language-readiness-api-observation/v1" and
+            (.responses | type) == "array" and (.responses | length) == $responses and
+            (.responses | length) > 0 and
+            (has("decision") | not) and (has("selection") | not) and (has("promotion") | not)
+          ' "$cache"
+          jq -e --arg logical "language-readiness-proposal-observation.json" \
+            --arg role "proposal-predecessor-raw-observation" \
+            --argjson bytes "$cache_bytes" --arg digest "$cache_digest" \
+            --argjson responses "$response_total" '
+            .observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
+            .observation_evidence.cache_path == $logical and
+            .observation_evidence.cache_role == $role and
+            .observation_evidence.cache_bytes == $bytes and
+            .observation_evidence.cache_digest == $digest and
+            .observation_evidence.response_total == $responses and
+            .observation_evidence.response_consumed == $responses
           ' "$receipt"
+          evidence_bundle="$RUNNER_TEMP/language-readiness-proposal-evidence"
+          mkdir -p "$evidence_bundle"
+          cp "$cache" "$evidence_bundle/language-readiness-proposal-observation.json"
+          cp "$receipt" "$evidence_bundle/proposal-receipt.json"
           echo "### Proposal observation binding" >> "$GITHUB_STEP_SUMMARY"
           echo "- cache bytes: \`$cache_bytes\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- cache digest: \`$cache_digest\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- responses consumed: \`$response_total/$response_total\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- raw response total: \`$response_total\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- responses consumed at record/next boundary: \`$response_consumed/$response_total\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- capture/replay reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload proposal predecessor raw observation cache
         if: always()
@@ -542,6 +565,14 @@ jobs:
         with:
           name: language-readiness-proposal-predecessor-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload bound proposal observation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-evidence
           if-no-files-found: error
           retention-days: 14
       - name: Assert blocked proposal predecessor remains non-authorizing

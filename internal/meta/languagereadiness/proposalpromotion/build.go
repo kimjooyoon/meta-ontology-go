@@ -42,7 +42,7 @@ func Build(
 		return Receipt{}, err
 	}
 	receipt := evaluate(currentHead, evidenceHead, sourceFrom(selectionData, contractData, contractRaw), observationEvidence)
-	if err := Validate(receipt, currentHead); err != nil {
+	if err := Validate(receipt, receipt.Repository, currentHead, evidenceHead); err != nil {
 		return Receipt{}, err
 	}
 	return receipt, nil

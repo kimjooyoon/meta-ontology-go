@@ -12,7 +12,7 @@ func Build(raw []byte, expectedHead string) (Bundle, error) {
 	if err := json.Unmarshal(raw, &current); err != nil {
 		return Bundle{}, fmt.Errorf("decode v2 proposal promotion: %w", err)
 	}
-	if err := proposalpromotion.Validate(current, expectedHead); err != nil {
+	if err := proposalpromotion.Validate(current, current.Repository, expectedHead, current.EvidenceHeadSHA); err != nil {
 		return Bundle{}, err
 	}
 	legacy := sealLegacy(LegacyReceipt{Schema: LegacySchema,

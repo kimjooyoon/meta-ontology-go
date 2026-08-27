@@ -1,16 +1,21 @@
 package proposalpredecessor
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strings"
 	"testing"
 )
 
 func testResolutionEvidence() ObservationEvidence {
+	raw := []byte(`{"schema":"gooo/language-readiness-api-observation/v1","responses":[{"kind":"GET","url":"https://api.example.test/observed","status_code":200,"body":"eyJvayI6dHJ1ZX0="}]}`)
+	sum := sha256.Sum256(raw)
 	return ObservationEvidence{
 		Schema:           ObservationSchema,
-		CachePath:        "/tmp/proposal-observation.json",
-		CacheBytes:       1,
-		CacheDigest:      "sha256:" + strings.Repeat("0", 64),
+		CachePath:        ObservationMemberPath,
+		CacheRole:        ObservationRole,
+		CacheBytes:       len(raw),
+		CacheDigest:      "sha256:" + hex.EncodeToString(sum[:]),
 		ResponseTotal:    1,
 		ResponseConsumed: 1,
 	}

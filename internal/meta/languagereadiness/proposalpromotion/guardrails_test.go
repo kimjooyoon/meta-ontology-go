@@ -16,7 +16,7 @@ func TestGuardrailsFailClosed(t *testing.T) {
 		source := validSource()
 		test.mutate(&source)
 		receipt := evaluate(testCurrent, testEvidence, source, testObservationEvidence())
-		if receipt.Decision != DecisionFailClosed || Validate(receipt, testCurrent) == nil {
+		if receipt.Decision != DecisionFailClosed || Validate(receipt, receipt.Repository, testCurrent, testEvidence) == nil {
 			t.Fatalf("%s receipt = %+v", test.name, receipt)
 		}
 	}
@@ -25,7 +25,7 @@ func TestGuardrailsFailClosed(t *testing.T) {
 func TestDigestTamperFailsClosed(t *testing.T) {
 	receipt := evaluate(testCurrent, testEvidence, validSource(), testObservationEvidence())
 	receipt.Source.Selection.RunAttempt++
-	if Validate(receipt, testCurrent) == nil {
+	if Validate(receipt, receipt.Repository, testCurrent, testEvidence) == nil {
 		t.Fatal("tampered receipt accepted")
 	}
 }

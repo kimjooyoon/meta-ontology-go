@@ -17,20 +17,8 @@ const proposalObservationCacheSchema = proposalpredecessor.ObservationSchema
 
 // This cache contains only raw HTTP observations. It deliberately has no
 // selection, conclusion, or promotion fields.
-type proposalObservedResponse struct {
-	Kind       string `json:"kind"`
-	URL        string `json:"url"`
-	StatusCode int    `json:"status_code"`
-	Body       []byte `json:"body"`
-	Link       string `json:"link,omitempty"`
-	Location   string `json:"location,omitempty"`
-	Failure    string `json:"failure,omitempty"`
-}
-
-type proposalObservationCacheFile struct {
-	Schema    string                     `json:"schema"`
-	Responses []proposalObservedResponse `json:"responses"`
-}
+type proposalObservedResponse = proposalpredecessor.ObservationResponse
+type proposalObservationCacheFile = proposalpredecessor.ObservationCache
 
 type proposalObservationStore struct {
 	path         string
@@ -117,7 +105,7 @@ func (store *proposalObservationStore) finalize() (proposalpredecessor.Observati
 		if !bytes.Equal(currentRaw, store.canonicalRaw) {
 			return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation replay cache changed after first read")
 		}
-		return proposalObservationEvidence(store.path, store.canonicalRaw, store.cacheDigest, len(store.responses), store.position)
+		return proposalObservationEvidence(store.canonicalRaw, store.cacheDigest, len(store.responses), store.position)
 	}
 	file := proposalObservationCacheFile{Schema: proposalObservationCacheSchema, Responses: store.responses}
 	raw, err := json.MarshalIndent(file, "", "  ")
@@ -140,18 +128,19 @@ func (store *proposalObservationStore) finalize() (proposalpredecessor.Observati
 	}
 	store.canonicalRaw = canonicalRaw
 	store.cacheDigest = proposalObservationDigest(canonicalRaw)
-	return proposalObservationEvidence(store.path, canonicalRaw, store.cacheDigest, len(store.responses), store.consumed)
+	return proposalObservationEvidence(canonicalRaw, store.cacheDigest, len(store.responses), store.consumed)
 }
 
-func proposalObservationEvidence(path string, raw []byte, digest string, total, consumed int) (proposalpredecessor.ObservationEvidence, error) {
+func proposalObservationEvidence(raw []byte, digest string, total, consumed int) (proposalpredecessor.ObservationEvidence, error) {
 	if proposalObservationDigest(raw) != digest {
-		return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation cache digest changed during finalize")
+		return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("FAIL_CLOSED: proposal observation cache digest changed during finalize")
 	}
 	evidence := proposalpredecessor.ObservationEvidence{
-		Schema: proposalObservationCacheSchema, CachePath: path, CacheBytes: len(raw),
-		CacheDigest: digest, ResponseTotal: total, ResponseConsumed: consumed,
+		Schema: proposalObservationCacheSchema, CachePath: proposalpredecessor.ObservationMemberPath,
+		CacheRole: proposalpredecessor.ObservationRole, CacheBytes: len(raw), CacheDigest: digest,
+		ResponseTotal: total, ResponseConsumed: consumed,
 	}
-	if err := proposalpredecessor.ValidateObservationEvidence(evidence); err != nil {
+	if err := proposalpredecessor.ValidateRawObservationEvidence(evidence, raw, consumed); err != nil {
 		return proposalpredecessor.ObservationEvidence{}, err
 	}
 	return evidence, nil
