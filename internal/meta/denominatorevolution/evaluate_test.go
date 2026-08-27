@@ -9,6 +9,7 @@ import (
 
 func TestSourceDerivedContractProducesExactReadOnlyReport(t *testing.T) {
 	report := Evaluate(Input{Contract: testContract(t), HeadSHA: "0123456789012345678901234567890123456789", Source: testSource(t)})
+	t.Logf("decision=%s resolution=%s reason=%s projection=%+v summary=%+v cases=%+v", report.Decision, report.Resolution, report.Reason, report.SourceProjection, report.Summary, report.Cases)
 	if err := Validate(report); err != nil {
 		t.Fatal(err)
 	}
