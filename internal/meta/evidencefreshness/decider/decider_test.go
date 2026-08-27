@@ -84,12 +84,12 @@ freshness raw_material_policy raw_material_digest
 freshness semantic_policy comments_ignored
 freshness claim_ledger_policy open_discharge_or_preserve
 freshness effect_policy read_only_ci_before_after
-entity A id "a"
-entity B id "b"
-entity C id "c"
-entity D id "d"
-entity E id "e"
-entity F id "f"
+entity A id "gooo://evidence-freshness/test/a"
+entity B id "gooo://evidence-freshness/test/b"
+entity C id "gooo://evidence-freshness/test/c"
+entity D id "gooo://evidence-freshness/test/d"
+entity E id "gooo://evidence-freshness/test/e"
+entity F id "gooo://evidence-freshness/test/f"
 activity One(A) -> B
 activity Two(B) -> C
 activity Three(C) -> D
