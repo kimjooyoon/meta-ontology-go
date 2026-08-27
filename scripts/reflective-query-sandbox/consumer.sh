@@ -85,11 +85,13 @@ go run ./scripts/reflective-query-sandbox/consumer \
 	-producer-imports-maximum "$maximum_allowed" -output "$output/exact-mismatch-receipt.json"
 jq -e '
   .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
+  .subject_resolution == "UNKNOWN_SUBJECT_SHA" and
   .subject_binding.format.decision == "UNKNOWN" and
   .subject_binding.format.reason == "FORMAT_INVALID"
 ' "$output/invalid-unobserved-receipt.json" >/dev/null
 jq -e '
   .decision == "REFUTED" and .resolution == "EXACT" and
+  .subject_resolution == "REFUTED_SUBJECT_SHA_MISMATCH" and
   .subject_binding.format.decision == "PASS" and
   .subject_binding.checkout.decision == "REFUTED" and
   .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH"
@@ -100,6 +102,7 @@ go run ./scripts/reflective-query-sandbox/consumer \
 	-producer-imports-maximum "$maximum_allowed" -output "$output/mismatch-repository-unknown-receipt.json"
 jq -e '
   .decision == "REFUTED" and .resolution == "EXACT" and
+  .subject_resolution == "REFUTED_SUBJECT_SHA_MISMATCH" and
   .subject_binding.checkout.decision == "REFUTED" and
   .subject_binding.checkout.reason == "SUBJECT_SHA_CHECKOUT_MISMATCH" and
   .effects.repository_evidence_available == false and

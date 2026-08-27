@@ -1052,7 +1052,13 @@ func buildReceipt(value observation, verified verifiedObservation, sourceReconst
 	if verified.Contract.UnknownTargets > 0 {
 		subjectResolution = "MIXED_EXACT_AND_LOWER_RESOLUTION"
 	}
-	if value.SubjectBinding.Format.Decision != "PASS" || value.SubjectBinding.Checkout.Decision != "PASS" {
+	if value.SubjectBinding.Format.Decision != "PASS" {
+		subjectResolution = "UNKNOWN_SUBJECT_SHA"
+	} else if value.SubjectBinding.Checkout.Decision == "REFUTED" &&
+		value.SubjectBinding.Checkout.Resolution == "EXACT" &&
+		value.SubjectBinding.Checkout.Reason == "SUBJECT_SHA_CHECKOUT_MISMATCH" {
+		subjectResolution = "REFUTED_SUBJECT_SHA_MISMATCH"
+	} else if value.SubjectBinding.Checkout.Decision != "PASS" {
 		subjectResolution = "UNKNOWN_SUBJECT_SHA"
 	}
 	return receipt{Schema: receiptSchema, SubjectSHA: value.SubjectSHA, MetricID: metricID, Decision: verdict.Decision, Resolution: verdict.Resolution, SubjectResolution: subjectResolution, Reason: verdict.Reason, Producer: value.Producer, Consumer: consumerName, Contract: verified.Contract, Source: verified.Source, Attempts: verified.Attempts, Claims: verified.Claims, Coordinates: coordinates{Satisfied: countTransitions(verified.Claims, "DISCHARGED"), Total: len(verified.Model.Claims), BasisPoints: basisPoints(countTransitions(verified.Claims, "DISCHARGED"), len(verified.Model.Claims))}, Classes: scores(classTotals, classSatisfied), Proofs: scores(proofTotals, proofSatisfied), Effects: value.Effects, SubjectBinding: value.SubjectBinding, SourceReconstruction: sourceReconstruction, ProducerImports: producerImports, ImportBoundary: imports, PromotionCreditBPS: 0, ImmutableIDPatchAccepted: value.Effects.ImmutableIDPatchAccepted, DetachedGraphPatchCapability: value.Effects.DetachedGraphPatchCapability, OverallAuthority: value.Effects.OverallAuthority, ReceiptMaterialDigest: verified.Material, TransitionChainDigest: verified.TransitionChainDigest, Attestor: consumerName, NotClaimed: []string{"generic Go reflection API equivalence", "global mutation authority or repository event-level transient writes", "source completeness beyond declared claims", "mutation safety against a hostile process", "runtime memory and performance bounds"}}
