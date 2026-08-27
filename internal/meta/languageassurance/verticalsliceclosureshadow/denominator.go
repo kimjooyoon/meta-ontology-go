@@ -35,8 +35,8 @@ func decodeDenominator(raw []byte) (denominator, error) {
 func validateDenominator(value denominator) error {
 	expected := expectedBoundarySpecs()
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
-		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v9" ||
-		value.Version != 9 || len(value.Boundaries) != len(expected) {
+		value.DenominatorID != "gooo.denominator.capability.vertical-slice-closure.v11" ||
+		value.Version != 11 || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
 	}
 	links := 0

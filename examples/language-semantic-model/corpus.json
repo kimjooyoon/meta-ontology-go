@@ -1,6 +1,6 @@
 {
   "schema": "gooo/language-semantic-model-corpus/v1",
-  "version": "2026-08-26",
+  "version": "2026-08-27",
   "cases": [
     {
       "id": "semantic-billing",
@@ -160,6 +160,13 @@
       "id": "semantic-external-conformance-activation",
       "kind": "SOURCE",
       "path": "examples/external-conformance-activation/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-external-capability-authorization-policy",
+      "kind": "SOURCE",
+      "path": "examples/external-capability-execution/authorization/policy.gooo",
       "proof_choice": "FOUNDATION",
       "meta_operation": "lower-normalize-replay"
     },

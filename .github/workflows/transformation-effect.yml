@@ -1756,6 +1756,76 @@ jobs:
           jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
           jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
           jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
+      - name: Compile capability authorization meta-policy twice
+        working-directory: gooo
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          policy="examples/external-capability-execution/authorization/policy.gooo"
+          mkdir -p "$result/policy"
+          go run ./cmd/gooo check "$policy"
+          go run ./cmd/gooo generate "$policy" --out "$result/policy/first"
+          go run ./cmd/gooo generate "$policy" --out "$result/policy/replay"
+          cmp "$result/policy/first/semantic.gooo.go" "$result/policy/replay/semantic.gooo.go"
+          for pass in first replay; do
+            jq -S 'del(.generated_file)' "$result/policy/$pass/semantic.gooo.manifest.jsonl" \
+              > "$result/policy/$pass-manifest.normalized.json"
+          done
+          cmp "$result/policy/first-manifest.normalized.json" \
+            "$result/policy/replay-manifest.normalized.json"
+      - name: Issue and check default-deny authorization twice
+        working-directory: gooo
+        env:
+          AUTH_RUN_ID: ${{ github.run_id }}
+          AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          report="$RUNNER_TEMP/external-capability-execution/report.json"
+          policy="examples/external-capability-execution/authorization/policy.gooo"
+          command="./cmd/external-capability-execution-witness/authorization"
+          go run "$command" --mode issue --subject-sha "$SUBJECT_SHA" \
+            --run-id "$AUTH_RUN_ID" --run-attempt "$AUTH_RUN_ATTEMPT" \
+            --capability-report "$report" --policy-source "$policy" \
+            --policy-generated "$result/policy/first" --envelope "$result/envelope.json"
+          for pass in first replay; do
+            go run "$command" --mode check --subject-sha "$SUBJECT_SHA" \
+              --run-id "$AUTH_RUN_ID" --run-attempt "$AUTH_RUN_ATTEMPT" \
+              --capability-report "$report" --policy-source "$policy" \
+              --policy-generated "$result/policy/first" --envelope "$result/envelope.json" \
+              --receipt "$result/$pass-receipt.json" --suite "$result/$pass-suite.json" \
+              --summary "$result/$pass-summary.md" --expect-decision FAIL_CLOSED
+          done
+          cmp "$result/first-receipt.json" "$result/replay-receipt.json"
+          cmp "$result/first-suite.json" "$result/replay-suite.json"
+          cmp "$result/first-summary.md" "$result/replay-summary.md"
+          cat "$result/first-summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Assert explicit bootstrap resolution
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          receipt="$result/first-receipt.json"
+          suite="$result/first-suite.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .enforcement_effect == "BLOCK"' "$receipt"
+          jq -e '.completed == 9 and .total == 10 and .basis_points == 9000 and .unknown_indicators == 1' "$receipt"
+          jq -e '.open_claims == 1 and .discharged_claims == 9 and .rejected_claims == 0' "$receipt"
+          jq -e '.unknowns == [{"stage":"AUTHORIZE/policy-foundation","indicator_id":"gooo.metric.external-capability-authorization-policy-foundation.v1","reason":"POLICY_FOUNDATION_UNAVAILABLE"}]' "$receipt"
+          jq -e '.execution_authority == false and .repository_mutation_authority == false and .promotion_authority == false' "$receipt"
+          jq -e '.repository_writes == 0 and .official_mutation_count == 0 and .promotion_count == 0' "$receipt"
+          jq -e '([.reader_views[] | select(.reader == "LOCAL_EVIDENCE")][0] | .completed == 9 and .total == 9 and .resolution == "EXACT")' "$receipt"
+          jq -e '([.reader_views[] | select(.reader == "AUTHORIZATION")][0] | .completed == 9 and .total == 10 and .resolution == "UNKNOWN")' "$receipt"
+          jq -e '.decision == "PASS" and .passed == 20 and .total == 20 and .coverage_bps == 10000' "$suite"
+          jq -e '.authorized_cases == 1 and .unknown_cases == 7 and .denied_cases == 12' "$suite"
+      - name: Seal capability authorization evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-authorization"
+          sha256sum envelope.json first-receipt.json replay-receipt.json \
+            first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
+      - name: Upload capability authorization evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-authorization-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-authorization
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Evaluate external assurance eligibility twice
         working-directory: gooo
         run: |

@@ -42,6 +42,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "external-capability-authorization-policy",
+      "path": "examples/external-capability-execution/authorization/policy.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "meta-actionability",
       "path": "examples/meta-actionability/main.gooo",
       "kind": "VALID",
