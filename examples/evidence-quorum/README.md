@@ -15,9 +15,9 @@ digest, groups observations by `origin_group`, and counts each group once.
 The fixed cases are:
 
 1. Three supporting groups discharge the claim.
-2. The generated producer receipt plus two replicas from one producer and one
-   consumer contain three quorum observations, but only two independent
-   groups; the claim remains `OPEN`.
+2. The generated producer receipt, one same-origin producer replica, and one
+   consumer receipt contain three quorum observations, but only two
+   independent groups; the claim remains `OPEN`.
 3. Three supporting groups and one independently contradictory group refute the
    claim, even when the supporting confidence values are higher.
 4. Two supporting groups are insufficient and lower the resolution.
