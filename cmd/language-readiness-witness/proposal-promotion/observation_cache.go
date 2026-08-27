@@ -2,14 +2,18 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
-const proposalObservationCacheSchema = "gooo/language-readiness-api-observation/v1"
+const proposalObservationCacheSchema = proposalpredecessor.ObservationSchema
 
 // This cache contains only raw HTTP observations. It deliberately has no
 // selection, conclusion, or promotion fields.
@@ -29,10 +33,13 @@ type proposalObservationCacheFile struct {
 }
 
 type proposalObservationStore struct {
-	path      string
-	replay    bool
-	responses []proposalObservedResponse
-	position  int
+	path         string
+	replay       bool
+	responses    []proposalObservedResponse
+	position     int
+	consumed     int
+	canonicalRaw []byte
+	cacheDigest  string
 }
 
 func openProposalObservationStore(capture, replay string) (*proposalObservationStore, error) {
@@ -61,7 +68,10 @@ func openProposalObservationStore(capture, replay string) (*proposalObservationS
 	if file.Schema != proposalObservationCacheSchema {
 		return nil, fmt.Errorf("proposal observation cache schema mismatch")
 	}
-	return &proposalObservationStore{path: replay, replay: true, responses: file.Responses}, nil
+	return &proposalObservationStore{
+		path: replay, replay: true, responses: file.Responses,
+		canonicalRaw: append([]byte(nil), raw...), cacheDigest: proposalObservationDigest(raw),
+	}, nil
 }
 
 func (store *proposalObservationStore) record(response proposalObservedResponse) {
@@ -69,6 +79,7 @@ func (store *proposalObservationStore) record(response proposalObservedResponse)
 		return
 	}
 	store.responses = append(store.responses, response)
+	store.consumed++
 }
 
 type proposalObservationReplayError struct{ Err error }
@@ -91,24 +102,62 @@ func (store *proposalObservationStore) next(kind, targetURL string) (proposalObs
 	return response, nil
 }
 
-func (store *proposalObservationStore) close() error {
+func (store *proposalObservationStore) finalize() (proposalpredecessor.ObservationEvidence, error) {
 	if store == nil {
-		return nil
+		return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation evidence is unavailable")
 	}
 	if store.replay {
 		if store.position != len(store.responses) {
-			return &proposalObservationReplayError{Err: fmt.Errorf("proposal observation replay left %d responses unused", len(store.responses)-store.position)}
+			return proposalpredecessor.ObservationEvidence{}, &proposalObservationReplayError{Err: fmt.Errorf("proposal observation replay left %d responses unused", len(store.responses)-store.position)}
 		}
-		return nil
+		currentRaw, err := os.ReadFile(store.path)
+		if err != nil {
+			return proposalpredecessor.ObservationEvidence{}, err
+		}
+		if !bytes.Equal(currentRaw, store.canonicalRaw) {
+			return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation replay cache changed after first read")
+		}
+		return proposalObservationEvidence(store.path, store.canonicalRaw, store.cacheDigest, len(store.responses), store.position)
 	}
 	file := proposalObservationCacheFile{Schema: proposalObservationCacheSchema, Responses: store.responses}
 	raw, err := json.MarshalIndent(file, "", "  ")
 	if err != nil {
-		return err
+		return proposalpredecessor.ObservationEvidence{}, err
 	}
 	raw = append(raw, '\n')
 	if err := os.MkdirAll(filepath.Dir(store.path), 0o755); err != nil {
-		return err
+		return proposalpredecessor.ObservationEvidence{}, err
 	}
-	return os.WriteFile(store.path, raw, 0o600)
+	if err := os.WriteFile(store.path, raw, 0o600); err != nil {
+		return proposalpredecessor.ObservationEvidence{}, err
+	}
+	canonicalRaw, err := os.ReadFile(store.path)
+	if err != nil {
+		return proposalpredecessor.ObservationEvidence{}, err
+	}
+	if !bytes.Equal(canonicalRaw, raw) {
+		return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation cache changed during finalize")
+	}
+	store.canonicalRaw = canonicalRaw
+	store.cacheDigest = proposalObservationDigest(canonicalRaw)
+	return proposalObservationEvidence(store.path, canonicalRaw, store.cacheDigest, len(store.responses), store.consumed)
+}
+
+func proposalObservationEvidence(path string, raw []byte, digest string, total, consumed int) (proposalpredecessor.ObservationEvidence, error) {
+	if proposalObservationDigest(raw) != digest {
+		return proposalpredecessor.ObservationEvidence{}, fmt.Errorf("proposal observation cache digest changed during finalize")
+	}
+	evidence := proposalpredecessor.ObservationEvidence{
+		Schema: proposalObservationCacheSchema, CachePath: path, CacheBytes: len(raw),
+		CacheDigest: digest, ResponseTotal: total, ResponseConsumed: consumed,
+	}
+	if err := proposalpredecessor.ValidateObservationEvidence(evidence); err != nil {
+		return proposalpredecessor.ObservationEvidence{}, err
+	}
+	return evidence, nil
+}
+
+func proposalObservationDigest(raw []byte) string {
+	sum := sha256.Sum256(raw)
+	return "sha256:" + hex.EncodeToString(sum[:])
 }

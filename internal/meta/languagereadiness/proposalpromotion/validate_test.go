@@ -1,11 +1,24 @@
 package proposalpromotion
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
+)
 
 const (
 	testCurrent  = "2222222222222222222222222222222222222222"
 	testEvidence = "1111111111111111111111111111111111111111"
 )
+
+func testObservationEvidence() proposalpredecessor.ObservationEvidence {
+	return proposalpredecessor.ObservationEvidence{
+		Schema: proposalpredecessor.ObservationSchema, CachePath: "/tmp/proposal-observation.json",
+		CacheBytes: 1, CacheDigest: "sha256:" + strings.Repeat("0", 64),
+		ResponseTotal: 1, ResponseConsumed: 1,
+	}
+}
 
 func validSource() Source {
 	return Source{
@@ -37,14 +50,14 @@ func validSource() Source {
 func TestFailedWorkflowAcceptsSuccessfulSynthesisJob(t *testing.T) {
 	source := validSource()
 	source.Selection.Conclusion = "failure"
-	receipt := evaluate(testCurrent, testEvidence, source)
+	receipt := evaluate(testCurrent, testEvidence, source, testObservationEvidence())
 	if err := Validate(receipt, testCurrent); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestEvaluateProducesExactEightCoordinatePromotion(t *testing.T) {
-	receipt := evaluate(testCurrent, testEvidence, validSource())
+	receipt := evaluate(testCurrent, testEvidence, validSource(), testObservationEvidence())
 	if err := Validate(receipt, testCurrent); err != nil {
 		t.Fatal(err)
 	}

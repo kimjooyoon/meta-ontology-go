@@ -19,7 +19,7 @@ type buildResult struct {
 	resolution *proposalpredecessor.ResolutionReceipt
 }
 
-func run(cfg config) (runErr error) {
+func run(cfg config) error {
 	if cfg.root == "" || cfg.repository == "" || cfg.currentHead == "" ||
 		cfg.predecessorSHA == "" || cfg.token == "" {
 		return fmt.Errorf("root, repository, current-head, predecessor-sha, and GITHUB_TOKEN are required")
@@ -35,22 +35,20 @@ func run(cfg config) (runErr error) {
 		return err
 	}
 	if cfg.check != "" {
-		return checkReceipt(cfg.check, cfg.currentHead)
+		return checkReceipt(cfg.check, cfg.repository, cfg.currentHead, cfg.predecessorSHA)
 	}
 	store, err := openProposalObservationStore(cfg.observationCapture, cfg.observationReplay)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if closeErr := store.close(); runErr == nil && closeErr != nil {
-			runErr = closeErr
-		}
-	}()
+	if store == nil {
+		return fmt.Errorf("proposal observation capture or replay is required")
+	}
 	client, err := newProposalHTTPClient(cfg.apiURL, store)
 	if err != nil {
 		return err
 	}
-	result, err := build(cfg, client)
+	result, err := build(cfg, client, store)
 	if err != nil {
 		var replayErr *proposalObservationReplayError
 		if errors.As(err, &replayErr) {
@@ -79,7 +77,7 @@ func run(cfg config) (runErr error) {
 	return nil
 }
 
-func build(cfg config, client *http.Client) (buildResult, error) {
+func build(cfg config, client *http.Client, store *proposalObservationStore) (buildResult, error) {
 	collection, err := proposalpredecessor.Collect(
 		context.Background(), client, cfg.apiURL, cfg.token,
 		cfg.repository, cfg.predecessorSHA,
@@ -89,8 +87,12 @@ func build(cfg config, client *http.Client) (buildResult, error) {
 		if !proposalpredecessor.KnownFailureReason(reason) {
 			return buildResult{}, err
 		}
+		observationEvidence, evidenceErr := store.finalize()
+		if evidenceErr != nil {
+			return buildResult{}, evidenceErr
+		}
 		resolution, resolutionErr := proposalpredecessor.BuildResolution(
-			cfg.repository, cfg.currentHead, cfg.predecessorSHA, reason, nil,
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, reason, nil, observationEvidence,
 		)
 		if resolutionErr != nil {
 			return buildResult{}, resolutionErr
@@ -104,15 +106,23 @@ func build(cfg config, client *http.Client) (buildResult, error) {
 		if !proposalpredecessor.KnownFailureReason(selection.Reason) {
 			return buildResult{}, err
 		}
+		observationEvidence, evidenceErr := store.finalize()
+		if evidenceErr != nil {
+			return buildResult{}, evidenceErr
+		}
 		resolution, resolutionErr := proposalpredecessor.BuildResolution(
-			cfg.repository, cfg.currentHead, cfg.predecessorSHA, selection.Reason, &selection,
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, selection.Reason, &selection, observationEvidence,
 		)
 		if resolutionErr != nil {
 			return buildResult{}, resolutionErr
 		}
 		return buildResult{resolution: &resolution}, nil
 	}
-	receipt, err := proposalpromotion.Build(cfg.currentHead, cfg.predecessorSHA, selection, contract)
+	observationEvidence, err := store.finalize()
+	if err != nil {
+		return buildResult{}, err
+	}
+	receipt, err := proposalpromotion.Build(cfg.currentHead, cfg.predecessorSHA, selection, contract, observationEvidence)
 	if err != nil {
 		return buildResult{}, err
 	}
@@ -136,7 +146,7 @@ func marshalResult(result buildResult) ([]byte, error) {
 	return append(data, '\n'), nil
 }
 
-func checkReceipt(path, expectedHead string) error {
+func checkReceipt(path, expectedRepository, expectedHead, expectedPredecessorSHA string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -163,7 +173,7 @@ func checkReceipt(path, expectedHead string) error {
 		if err := decodeStrict(data, &receipt); err != nil {
 			return err
 		}
-		return proposalpredecessor.ValidateResolution(receipt)
+		return proposalpredecessor.ValidateResolution(receipt, expectedRepository, expectedHead, expectedPredecessorSHA)
 	default:
 		return fmt.Errorf("FAIL_CLOSED: unknown proposal receipt schema %q", header.Schema)
 	}

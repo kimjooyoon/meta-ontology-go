@@ -11,7 +11,11 @@ import (
 func Build(
 	currentHead, evidenceHead string,
 	selection proposalpredecessor.Report, contractRaw []byte,
+	observationEvidence proposalpredecessor.ObservationEvidence,
 ) (Receipt, error) {
+	if err := proposalpredecessor.ValidateObservationEvidence(observationEvidence); err != nil {
+		return Receipt{}, err
+	}
 	if err := proposalpredecessor.Validate(selection); err != nil {
 		return Receipt{}, fmt.Errorf("validate proposal predecessor: %w", err)
 	}
@@ -37,7 +41,7 @@ func Build(
 	if err := validateLinkage(currentHead, evidenceHead, selectionData, contractData, contractRaw); err != nil {
 		return Receipt{}, err
 	}
-	receipt := evaluate(currentHead, evidenceHead, sourceFrom(selectionData, contractData, contractRaw))
+	receipt := evaluate(currentHead, evidenceHead, sourceFrom(selectionData, contractData, contractRaw), observationEvidence)
 	if err := Validate(receipt, currentHead); err != nil {
 		return Receipt{}, err
 	}

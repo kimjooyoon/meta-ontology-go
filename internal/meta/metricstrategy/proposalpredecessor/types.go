@@ -2,6 +2,7 @@ package proposalpredecessor
 
 const (
 	Schema                             = "gooo/autonomous-change-proposal-predecessor-selection/v2"
+	ObservationSchema                  = "gooo/language-readiness-api-observation/v1"
 	ResolutionSchema                   = "gooo/autonomous-change-proposal-predecessor-resolution/v1"
 	ReasonSelected                     = "PROPOSAL_PREDECESSOR_SELECTED"
 	ReasonNotFound                     = "PROPOSAL_PREDECESSOR_NOT_FOUND"
@@ -79,23 +80,33 @@ type Report struct {
 	ReportDigest      string      `json:"report_digest"`
 }
 
+type ObservationEvidence struct {
+	Schema           string `json:"schema"`
+	CachePath        string `json:"cache_path"`
+	CacheBytes       int    `json:"cache_bytes"`
+	CacheDigest      string `json:"cache_digest"`
+	ResponseTotal    int    `json:"response_total"`
+	ResponseConsumed int    `json:"response_consumed"`
+}
+
 func (report Report) Ready() bool {
 	return report.Decision == "SELECTED" && report.Reason == ReasonSelected
 }
 
 type ResolutionReceipt struct {
-	Schema             string  `json:"schema"`
-	Repository         string  `json:"repository"`
-	CurrentHeadSHA     string  `json:"current_head_sha"`
-	PredecessorSHA     string  `json:"predecessor_sha"`
-	Conformance        string  `json:"conformance"`
-	Decision           string  `json:"decision"`
-	Reason             string  `json:"reason"`
-	Resolution         string  `json:"resolution"`
-	Stage              string  `json:"stage"`
-	Step               string  `json:"step"`
-	PromotionAuthority bool    `json:"promotion_authority"`
-	ReadinessDelta     *int    `json:"readiness_delta"`
-	Selection          *Report `json:"selection,omitempty"`
-	ReportDigest       string  `json:"report_digest"`
+	Schema              string              `json:"schema"`
+	Repository          string              `json:"repository"`
+	CurrentHeadSHA      string              `json:"current_head_sha"`
+	PredecessorSHA      string              `json:"predecessor_sha"`
+	Conformance         string              `json:"conformance"`
+	Decision            string              `json:"decision"`
+	Reason              string              `json:"reason"`
+	Resolution          string              `json:"resolution"`
+	Stage               string              `json:"stage"`
+	Step                string              `json:"step"`
+	PromotionAuthority  bool                `json:"promotion_authority"`
+	ReadinessDelta      *int                `json:"readiness_delta"`
+	Selection           *Report             `json:"selection,omitempty"`
+	ObservationEvidence ObservationEvidence `json:"observation_evidence"`
+	ReportDigest        string              `json:"report_digest"`
 }

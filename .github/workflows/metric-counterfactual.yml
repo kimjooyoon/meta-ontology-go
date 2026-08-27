@@ -445,10 +445,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Produce and replay proposal promotion evidence
+        id: proposal-predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
@@ -458,12 +459,32 @@ jobs:
           if [[ -z "$predecessor_sha" ]]; then
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
+          is_known_proposal_failure_reason() {
+            case "$1" in
+              PROPOSAL_PREDECESSOR_NOT_FOUND|PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN|\
+              PROPOSAL_PREDECESSOR_AMBIGUOUS|PROPOSAL_SYNTHESIS_JOB_CARDINALITY|\
+              PROPOSAL_RUN_PAGINATION_INCOMPLETE|PROPOSAL_JOB_PAGINATION_INCOMPLETE|\
+              PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE|PROPOSAL_API_UNAVAILABLE|\
+              PROPOSAL_API_PERMISSION_DENIED|PROPOSAL_RESPONSE_MALFORMED|\
+              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           for suffix in a b; do
+            observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            if [[ "$suffix" == "a" ]]; then
+              observation_args=(--observation-capture "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            fi
             go run ./cmd/language-readiness-witness/proposal-promotion \
               --root "$GITHUB_WORKSPACE" \
               --repository "$GITHUB_REPOSITORY" \
               --current-head "$HEAD_SHA" \
               --predecessor-sha "$predecessor_sha" \
+              "${observation_args[@]}" \
               --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
           done
           cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
@@ -474,7 +495,92 @@ jobs:
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+          if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
+            proposal_reason="$(jq -r '.reason // empty' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+            if ! is_known_proposal_failure_reason "$proposal_reason"; then
+              echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
+              exit 1
+            fi
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+              .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+              .repository == $repository and .current_head_sha == $head and .predecessor_sha == $predecessor and
+              .conformance == "PASS" and .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+              .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
+              .promotion_authority == false and .readiness_delta == null and
+              (.reason as $reason |
+                ["PROPOSAL_PREDECESSOR_NOT_FOUND", "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN",
+                "PROPOSAL_PREDECESSOR_AMBIGUOUS", "PROPOSAL_SYNTHESIS_JOB_CARDINALITY",
+                "PROPOSAL_RUN_PAGINATION_INCOMPLETE", "PROPOSAL_JOB_PAGINATION_INCOMPLETE",
+                "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE", "PROPOSAL_API_UNAVAILABLE",
+                "PROPOSAL_API_PERMISSION_DENIED", "PROPOSAL_RESPONSE_MALFORMED",
+                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE", "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null)
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+            echo "### Proposal predecessor conformance" >> "$GITHUB_STEP_SUMMARY"
+            echo "- conformance: PASS" >> "$GITHUB_STEP_SUMMARY"
+            echo "- proposal readiness decision: FAIL_CLOSED" >> "$GITHUB_STEP_SUMMARY"
+            echo "- resolution: LOWER_RESOLUTION" >> "$GITHUB_STEP_SUMMARY"
+            echo "- reason: $proposal_reason" >> "$GITHUB_STEP_SUMMARY"
+            echo "- promotion authority: false" >> "$GITHUB_STEP_SUMMARY"
+            echo "- readiness delta: UNKNOWN" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+              .schema == "gooo/autonomous-change-proposal-promotion/v2" and
+              .repository == $repository and .current_head_sha == $head and .evidence_head_sha == $predecessor and
+              .decision == "PASS" and .repository_mutation_authorized == false
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "FAIL_CLOSED: malformed proposal predecessor receipt" >&2
+            exit 1
+          fi
+      - name: Verify proposal observation evidence binding
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache="$RUNNER_TEMP/language-readiness-proposal-observation.json"
+          receipt="$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          test -s "$cache"
+          test -s "$receipt"
+          cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"
+          cache_digest="sha256:$(sha256sum "$cache" | awk '{print $1}')"
+          response_total="$(jq -r '.responses | length' "$cache")"
+          jq -e --arg cache "$cache" --arg digest "$cache_digest" \
+            --argjson bytes "$cache_bytes" --argjson responses "$response_total" '
+            .schema == "gooo/language-readiness-api-observation/v1" and
+            (.responses | type) == "array" and (.responses | length) == $responses and
+            (has("decision") | not) and (has("selection") | not) and (has("promotion") | not) and
+            .observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
+            .observation_evidence.cache_path == $cache and
+            .observation_evidence.cache_bytes == $bytes and
+            .observation_evidence.cache_digest == $digest and
+            .observation_evidence.response_total == $responses and
+            .observation_evidence.response_total > 0 and
+            .observation_evidence.response_consumed == .observation_evidence.response_total
+          ' "$receipt"
+          echo "### Proposal observation binding" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache bytes: $cache_bytes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache digest: $cache_digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "- responses consumed: $response_total/$response_total" >> "$GITHUB_STEP_SUMMARY"
+          echo "- capture/replay reconstruction: 2/2" >> "$GITHUB_STEP_SUMMARY"
+      - name: Assert blocked proposal predecessor remains non-authorizing
+        if: steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode == 'BLOCKED'
+        run: |
+          set -euo pipefail
+          test "${{ steps.proposal-predecessor.outputs.conformance-exit-code }}" = "0"
+          jq -e '
+            .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+            .resolution == "LOWER_RESOLUTION" and .promotion_authority == false and
+            .readiness_delta == null
+          ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          echo "proposal predecessor BLOCKED conformance exited 0; downstream projection and promotion are skipped"
       - name: Project v2 evidence to the unchanged v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         shell: bash
         run: |
           set -euo pipefail
@@ -498,6 +604,7 @@ jobs:
             --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
             --check
       - name: Upload v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
@@ -505,6 +612,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload v2 proposal evidence
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
@@ -512,12 +620,29 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload compatibility receipt
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
           if-no-files-found: error
           retention-days: 30
+      - name: Upload proposal predecessor raw observation cache
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-observation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload proposal predecessor receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
 
   program:
     needs: strategy

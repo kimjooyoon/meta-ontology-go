@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
 func Validate(receipt Receipt, expectedCurrentHead string) error {
@@ -24,7 +26,10 @@ func Validate(receipt Receipt, expectedCurrentHead string) error {
 	case receipt.Source.Selection.RunID <= 0 || receipt.Source.Selection.ArtifactID <= 0:
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion source identity is invalid")
 	}
-	expected := evaluate(receipt.CurrentHeadSHA, receipt.EvidenceHeadSHA, receipt.Source)
+	if err := proposalpredecessor.ValidateObservationEvidence(receipt.ObservationEvidence); err != nil {
+		return err
+	}
+	expected := evaluate(receipt.CurrentHeadSHA, receipt.EvidenceHeadSHA, receipt.Source, receipt.ObservationEvidence)
 	if !reflect.DeepEqual(receipt, expected) {
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion receipt mismatch")
 	}

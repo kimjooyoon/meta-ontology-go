@@ -6,9 +6,12 @@ import (
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 )
 
-func BuildResolution(repository, currentHead, predecessorSHA, reason string, selection *Report) (ResolutionReceipt, error) {
+func BuildResolution(repository, currentHead, predecessorSHA, reason string, selection *Report, observationEvidence ObservationEvidence) (ResolutionReceipt, error) {
 	if !KnownFailureReason(reason) || reason == ReasonSelected || !validSHA(currentHead) || !validSHA(predecessorSHA) || repository == "" {
 		return ResolutionReceipt{}, fmt.Errorf("proposal predecessor resolution identity is invalid")
+	}
+	if err := ValidateObservationEvidence(observationEvidence); err != nil {
+		return ResolutionReceipt{}, err
 	}
 	if selection != nil {
 		if err := Validate(*selection); err != nil {
@@ -23,7 +26,7 @@ func BuildResolution(repository, currentHead, predecessorSHA, reason string, sel
 		PredecessorSHA: predecessorSHA, Conformance: ResolutionConformancePass,
 		Decision: ResolutionFailClosed, Reason: reason, Resolution: ResolutionLower,
 		Stage: ResolutionStage, Step: ResolutionStep, PromotionAuthority: false,
-		Selection: selection,
+		Selection: selection, ObservationEvidence: observationEvidence,
 	}
 	return sealResolution(receipt)
 }
@@ -35,14 +38,21 @@ func sealResolution(receipt ResolutionReceipt) (ResolutionReceipt, error) {
 	return receipt, err
 }
 
-func ValidateResolution(receipt ResolutionReceipt) error {
+func ValidateResolution(receipt ResolutionReceipt, expectedRepository, expectedCurrentHead, expectedPredecessorSHA string) error {
 	if receipt.Schema != ResolutionSchema || receipt.Repository == "" || !validSHA(receipt.CurrentHeadSHA) || !validSHA(receipt.PredecessorSHA) {
 		return fmt.Errorf("proposal predecessor resolution identity is invalid")
+	}
+	if expectedRepository == "" || !validSHA(expectedCurrentHead) || !validSHA(expectedPredecessorSHA) ||
+		receipt.Repository != expectedRepository || receipt.CurrentHeadSHA != expectedCurrentHead || receipt.PredecessorSHA != expectedPredecessorSHA {
+		return fmt.Errorf("FAIL_CLOSED: proposal predecessor resolution context mismatch")
 	}
 	if receipt.Conformance != ResolutionConformancePass || receipt.Decision != ResolutionFailClosed ||
 		receipt.Resolution != ResolutionLower || receipt.Stage != ResolutionStage || receipt.Step != ResolutionStep ||
 		receipt.PromotionAuthority || receipt.ReadinessDelta != nil || !KnownFailureReason(receipt.Reason) || receipt.Reason == ReasonSelected {
 		return fmt.Errorf("proposal predecessor resolution is not fail-closed")
+	}
+	if err := ValidateObservationEvidence(receipt.ObservationEvidence); err != nil {
+		return err
 	}
 	if receipt.Selection != nil {
 		if err := Validate(*receipt.Selection); err != nil {

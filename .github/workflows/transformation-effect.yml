@@ -457,8 +457,9 @@ jobs:
               echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
               exit 1
             fi
-            jq -e '
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
               .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+              .repository == $repository and .current_head_sha == $head and .predecessor_sha == $predecessor and
               .conformance == "PASS" and .decision == "FAIL_CLOSED" and
               .resolution == "LOWER_RESOLUTION" and
               .stage == "proposal-predecessor" and
@@ -483,7 +484,11 @@ jobs:
             jq -r '"### Proposal predecessor conformance\n- conformance: `\(.conformance)`\n- proposal availability/readiness decision: `\(.decision)`\n- resolution: `\(.resolution)`\n- coordinate: `\(.stage)/\(.step)`\n- reason: `\(.reason)`\n- promotion authority: `\(.promotion_authority)`\n- readiness delta: `\(.readiness_delta // "UNKNOWN")`\n- receipt reconstruction: `2/2`"' \
               "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" >> "$GITHUB_STEP_SUMMARY"
           elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
-            jq -e '.schema == "gooo/autonomous-change-proposal-promotion/v2" and .decision == "PASS" and .repository_mutation_authorized == false' \
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+              .schema == "gooo/autonomous-change-proposal-promotion/v2" and
+              .repository == $repository and .current_head_sha == $head and .evidence_head_sha == $predecessor and
+              .decision == "PASS" and .repository_mutation_authorized == false
+            ' \
               "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
             echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
             echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
@@ -491,6 +496,38 @@ jobs:
             echo "FAIL_CLOSED: malformed proposal predecessor receipt" >&2
             exit 1
           fi
+      - name: Verify proposal observation evidence binding
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache="$RUNNER_TEMP/language-readiness-proposal-observation.json"
+          receipt="$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          test -s "$cache"
+          test -s "$receipt"
+          cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"
+          cache_digest="sha256:$(sha256sum "$cache" | awk '{print $1}')"
+          response_total="$(jq -r '.responses | length' "$cache")"
+          jq -e --arg cache "$cache" --arg digest "$cache_digest" \
+            --argjson bytes "$cache_bytes" --argjson responses "$response_total" '
+            (.schema == "gooo/language-readiness-api-observation/v1" and
+              (.responses | type) == "array" and
+              (.responses | length) == $responses and
+              (has("decision") | not) and (has("selection") | not) and
+              (has("promotion") | not)) and
+            (.observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
+              .observation_evidence.cache_path == $cache and
+              .observation_evidence.cache_bytes == $bytes and
+              .observation_evidence.cache_digest == $digest and
+              .observation_evidence.response_total == $responses and
+              .observation_evidence.response_total > 0 and
+              .observation_evidence.response_consumed == .observation_evidence.response_total)
+          ' "$receipt"
+          echo "### Proposal observation binding" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache bytes: \`$cache_bytes\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache digest: \`$cache_digest\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- responses consumed: \`$response_total/$response_total\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- capture/replay reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload proposal predecessor raw observation cache
         if: always()
         uses: actions/upload-artifact@v6
