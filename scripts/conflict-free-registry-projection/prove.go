@@ -120,6 +120,7 @@ func runProofBody(root, outputDir string) (Evidence, error) {
 	evidence.CommentPositionInvariant = commentPositionInvariant(root, loaded)
 	evidence.NewConceptFixture = passedScenario("new-local-concept-fixture", fmt.Sprintf("temporary local manifest changed %d/%d generated outputs and no existing source bytes", len(fixture.Changed), len(baseOutputs)))
 	evidence.DependencyGraphNegativeFixture = dependencyGraphNegativeFixture(root)
+	evidence.DependencyGraphMissingModuleFixture = dependencyGraphMissingModuleFixture(root)
 	evidence.FailureContracts = failureContracts(root, loaded, baseOutputs)
 	evidence.DenominatorMismatch, evidence.StaleDenominatorReceipt = denominatorMismatchContract(root, loaded)
 	negativePredicates, err := independentFailurePredicates(root)
@@ -439,8 +440,22 @@ type goListPackage struct {
 	Error      any    `json:"Error"`
 }
 
-func producerDependencyMetrics(root string) (RatioMetric, RatioMetric, DependencyGraphReceipt) {
-	module := modulePath(root)
+func producerDependencyMetrics(root string) (RatioMetric, CountMetric, DependencyGraphReceipt) {
+	address := "process://go-list-deps/consumer/stdout"
+	module, moduleErr := modulePath(root)
+	if moduleErr != nil {
+		receipt := DependencyGraphReceipt{
+			InventoryAddress: address, InventoryDigest: digestBytes(nil),
+			ProducerTargetDigest: digestBytes(nil), ExitCode: -1,
+			StdoutDigest: digestBytes(nil), StderrDigest: digestBytes(nil),
+			ReconstructionStatus: "UNKNOWN", AbsenceDecision: "UNKNOWN",
+			Stage: "FOUNDATION", Step: "MODULE_PATH", Reason: "MODULE_PATH_UNAVAILABLE",
+		}
+		absence := unknownRatioMetric("FOUNDATION", "MODULE_PATH", "MODULE_PATH_UNAVAILABLE")
+		absence.EvidenceAddress, absence.EvidenceDigest = address, receipt.InventoryDigest
+		count := unknownCountMetric("FOUNDATION", "MODULE_PATH", "MODULE_PATH_UNAVAILABLE", address, receipt.InventoryDigest)
+		return absence, count, receipt
+	}
 	producerTarget := module + "/scripts/conflict-free-registry-projection"
 	command := exec.Command("go", "list", "-deps", "-json", "./scripts/conflict-free-registry-projection-consumer")
 	command.Dir = root
@@ -468,11 +483,12 @@ func producerDependencyMetrics(root string) (RatioMetric, RatioMetric, Dependenc
 		packages = append(packages, item.ImportPath)
 	}
 	sort.Strings(packages)
-	address := "process://go-list-deps/consumer/stdout"
-	receipt := DependencyGraphReceipt{InventoryAddress: address, InventoryBytes: len(stdout.Bytes()), InventoryDigest: digestBytes(stdout.Bytes()), InventoryRaw: stdout.String(), Packages: packages, ProducerTargetAddress: producerTarget, ProducerTargetDigest: digestBytes([]byte(producerTarget)), ExitCode: exitCode, StdoutDigest: digestBytes(stdout.Bytes()), StderrDigest: digestBytes(stderr.Bytes()), Stage: "COHERENCE", Step: "TRANSITIVE_IMPORT_GRAPH"}
+	receipt := DependencyGraphReceipt{InventoryAddress: address, InventoryBytes: len(stdout.Bytes()), InventoryDigest: digestBytes(stdout.Bytes()), InventoryRaw: stdout.String(), Packages: packages, ProducerTargetAddress: producerTarget, ProducerTargetDigest: digestBytes([]byte(producerTarget)), ExitCode: exitCode, StdoutDigest: digestBytes(stdout.Bytes()), StderrDigest: digestBytes(stderr.Bytes()), ReconstructionStatus: "OBSERVED", AbsenceDecision: "UNKNOWN", Stage: "COHERENCE", Step: "TRANSITIVE_IMPORT_GRAPH"}
 	if err != nil || parseErr != nil {
-		receipt.Decision, receipt.Reason = "UNKNOWN", "TRANSITIVE_IMPORT_GRAPH_UNAVAILABLE"
-		return unknownRatioMetric("COHERENCE", "PRODUCER_DEPENDENCY_ABSENCE", receipt.Reason), unknownRatioMetric("COHERENCE", "OBSERVED_PRODUCER_IMPORT_COUNT", receipt.Reason), receipt
+		receipt.ReconstructionStatus, receipt.AbsenceDecision, receipt.Reason = "UNKNOWN", "UNKNOWN", "TRANSITIVE_IMPORT_GRAPH_UNAVAILABLE"
+		absence := unknownRatioMetric("COHERENCE", "TRANSITIVE_IMPORT_GRAPH", receipt.Reason)
+		absence.EvidenceAddress, absence.EvidenceDigest = address, receipt.InventoryDigest
+		return absence, unknownCountMetric("COHERENCE", "TRANSITIVE_IMPORT_GRAPH", receipt.Reason, address, receipt.InventoryDigest), receipt
 	}
 	observed := 0
 	for _, packagePath := range packages {
@@ -480,33 +496,46 @@ func producerDependencyMetrics(root string) (RatioMetric, RatioMetric, Dependenc
 			observed++
 		}
 	}
-	receipt.Decision = "PASS"
+	receipt.AbsenceDecision = "PASS"
 	receipt.Reason = "TRANSITIVE_PRODUCER_PACKAGE_ABSENCE_OBSERVED"
 	if observed > 0 {
+		receipt.AbsenceDecision = "FAIL_CLOSED"
 		receipt.Reason = "TRANSITIVE_PRODUCER_DEPENDENCY_OBSERVED"
 	}
 	receipt.ProducerTargetAddress = producerTarget
 	absence := contextualRatioMetric(boolInt(observed == 0), 1, "COHERENCE", "PRODUCER_DEPENDENCY_ABSENCE", "TRANSITIVE_IMPORT_GRAPH_RECONSTRUCTED")
 	absence.EvidenceAddress, absence.EvidenceDigest = address, receipt.InventoryDigest
-	importCount := RatioMetric{Numerator: observed, Denominator: 0, BasisPoints: 0, Decision: "PASS", Stage: "COHERENCE", Step: "OBSERVED_PRODUCER_IMPORT_COUNT", Reason: "TRANSITIVE_IMPORT_GRAPH_COUNT_OBSERVED", EvidenceAddress: address, EvidenceDigest: receipt.InventoryDigest}
-	if observed > 0 {
-		importCount.Decision = "FAIL_CLOSED"
-	}
+	importCount := observedCountMetric(observed, "COHERENCE", "OBSERVED_PRODUCER_IMPORT_COUNT", "TRANSITIVE_IMPORT_GRAPH_COUNT_OBSERVED", address, receipt.InventoryDigest)
 	return absence, importCount, receipt
 }
 
-func modulePath(root string) string {
+func observedCountMetric(value int, stage, step, reason, address, digest string) CountMetric {
+	return CountMetric{Value: value, Unit: "packages", ObservationStatus: "OBSERVED", Stage: stage, Step: step, Reason: reason, EvidenceAddress: address, EvidenceDigest: digest}
+}
+
+func unknownCountMetric(stage, step, reason, address, digest string) CountMetric {
+	return CountMetric{Value: 0, Unit: "packages", ObservationStatus: "OBSERVATION_UNKNOWN", Stage: stage, Step: step, Reason: reason, EvidenceAddress: address, EvidenceDigest: digest}
+}
+
+func modulePath(root string) (string, error) {
 	data, err := os.ReadFile(filepath.Join(root, "go.mod"))
 	if err != nil {
-		return "UNKNOWN_MODULE"
+		return "", fmt.Errorf("MODULE_PATH_UNAVAILABLE: %w", err)
 	}
+	found := ""
 	for _, line := range strings.Split(string(data), "\n") {
 		fields := strings.Fields(line)
-		if len(fields) == 2 && fields[0] == "module" {
-			return fields[1]
+		if len(fields) > 0 && fields[0] == "module" {
+			if len(fields) != 2 || fields[1] == "" || found != "" {
+				return "", fmt.Errorf("MODULE_PATH_UNAVAILABLE: invalid module directive")
+			}
+			found = fields[1]
 		}
 	}
-	return "UNKNOWN_MODULE"
+	if found == "" {
+		return "", fmt.Errorf("MODULE_PATH_UNAVAILABLE: missing module directive")
+	}
+	return found, nil
 }
 
 func dependencyGraphNegativeFixture(_ string) ScenarioResult {
@@ -530,12 +559,37 @@ func dependencyGraphNegativeFixture(_ string) ScenarioResult {
 			return failedScenario("transitive-helper-import", "PASS", err.Error())
 		}
 	}
-	absence, _, receipt := producerDependencyMetrics(temp)
+	absence, count, receipt := producerDependencyMetrics(temp)
 	target := receipt.ProducerTargetAddress
-	if absence.Decision != "FAIL_CLOSED" || absence.Numerator != 0 || receipt.Decision != "PASS" || !contains(receipt.Packages, target) {
+	if absence.Decision != "FAIL_CLOSED" || absence.Numerator != 0 || receipt.ReconstructionStatus != "OBSERVED" || receipt.AbsenceDecision != "FAIL_CLOSED" || count.Value != 1 || count.ObservationStatus != "OBSERVED" || !contains(receipt.Packages, target) {
 		return failedScenario("transitive-helper-import", "PASS", "transitive helper import was not observed in the dependency closure")
 	}
-	return passedScenario("transitive-helper-import", "go list -deps observed the producer package only through an imported helper and failed the absence predicate")
+	return passedScenario("transitive-helper-import", fmt.Sprintf("reconstruction=OBSERVED absence=FAIL_CLOSED observed_import_count=%d", count.Value))
+}
+
+func dependencyGraphMissingModuleFixture(_ string) ScenarioResult {
+	temp, err := os.MkdirTemp("", "gooo-module-path-negative-")
+	if err != nil {
+		return failedScenario("missing-invalid-module-path", "PASS", err.Error())
+	}
+	defer os.RemoveAll(temp)
+	check := func(label string) error {
+		absence, count, receipt := producerDependencyMetrics(temp)
+		if absence.Decision != "UNKNOWN" || absence.Stage != "FOUNDATION" || absence.Step != "MODULE_PATH" || absence.Reason != "MODULE_PATH_UNAVAILABLE" || count.ObservationStatus != "OBSERVATION_UNKNOWN" || count.Stage != "FOUNDATION" || count.Step != "MODULE_PATH" || count.Reason != "MODULE_PATH_UNAVAILABLE" || receipt.ReconstructionStatus != "UNKNOWN" || receipt.AbsenceDecision != "UNKNOWN" || receipt.Stage != "FOUNDATION" || receipt.Step != "MODULE_PATH" || receipt.Reason != "MODULE_PATH_UNAVAILABLE" {
+			return fmt.Errorf("%s module path failure was not fail closed", label)
+		}
+		return nil
+	}
+	if err := check("missing"); err != nil {
+		return failedScenario("missing-invalid-module-path", "PASS", err.Error())
+	}
+	if err := os.WriteFile(filepath.Join(temp, "go.mod"), []byte("module\n"), 0o644); err != nil {
+		return failedScenario("missing-invalid-module-path", "PASS", err.Error())
+	}
+	if err := check("invalid"); err != nil {
+		return failedScenario("missing-invalid-module-path", "PASS", err.Error())
+	}
+	return passedScenario("missing-invalid-module-path", "missing and invalid go.mod both produce reconstruction=UNKNOWN absence=UNKNOWN observed_import_count=OBSERVATION_UNKNOWN")
 }
 
 const consumerReceiptSchema = "gooo/manual-source-registration-edit-free-registry-consumer-receipt/v1"
@@ -1297,7 +1351,7 @@ func allProofsPass(evidence Evidence) bool {
 	if len(expectedConformancePredicateIDs) != expectedConformancePredicateCount || hasDuplicateStrings(expectedConformancePredicateIDs) || len(expectedFailurePredicateIDs) != expectedFailurePredicateCount || hasDuplicateStrings(expectedFailurePredicateIDs) {
 		return false
 	}
-	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.SemanticMetricChange, evidence.CommentInvariant, evidence.CommentPositionInvariant, evidence.NewConceptFixture, evidence.DependencyGraphNegativeFixture, evidence.DenominatorMismatch} {
+	for _, scenario := range []ScenarioResult{evidence.ProjectionReplay, evidence.ManifestOrderInvariant, evidence.SemanticCausality, evidence.SemanticMetricChange, evidence.CommentInvariant, evidence.CommentPositionInvariant, evidence.NewConceptFixture, evidence.DependencyGraphNegativeFixture, evidence.DependencyGraphMissingModuleFixture, evidence.DenominatorMismatch} {
 		if scenario.Decision != "PASS" {
 			return false
 		}
@@ -1325,10 +1379,10 @@ func allProofsPass(evidence Evidence) bool {
 	if len(evidence.BindingOutputReceipts) != expectedBindingReceiptCount || evidence.MetricOccurrences.Numerator != expectedBindingReceiptCount || evidence.MetricOccurrences.Denominator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Numerator != expectedBindingReceiptCount || evidence.UniqueSemanticRelationDigests.Denominator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Numerator != expectedBindingReceiptCount || evidence.OutputRowAddresses.Denominator != expectedBindingReceiptCount || evidence.ConsumerOutputArtifact.ObservedPath != embeddedOutputAddress || evidence.ConsumerOutputArtifact.Bytes <= 0 || len(evidence.ConsumerOutputArtifact.RawBytes) != evidence.ConsumerOutputArtifact.Bytes || evidence.ConsumerOutputArtifact.Digest != digestBytes([]byte(evidence.ConsumerOutputArtifact.RawBytes)) || evidence.ConsumerOutputArtifact.ManifestInventory.Path != "raw://manifest-inventory" || evidence.ConsumerOutputArtifact.ManifestInventory.Bytes <= 0 || evidence.ConsumerOutputArtifact.ManifestInventory.Digest == "" {
 		return false
 	}
-	if evidence.Metrics.ProducerDependencyAbsence.Numerator != 1 || evidence.Metrics.ProducerDependencyAbsence.Denominator != 1 || evidence.Metrics.ProducerDependencyAbsence.Decision != "PASS" || evidence.Metrics.ProducerDependencyAbsence.EvidenceAddress == "" || evidence.Metrics.ProducerDependencyAbsence.EvidenceDigest == "" || evidence.Metrics.ObservedProducerImportCount.Numerator != 0 || evidence.Metrics.ObservedProducerImportCount.Denominator != 0 || evidence.Metrics.ObservedProducerImportCount.Decision != "PASS" || evidence.Metrics.ObservedProducerImportCount.EvidenceAddress == "" || evidence.Metrics.ObservedProducerImportCount.EvidenceDigest == "" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.EvidenceAddress == "" || evidence.Metrics.RawSourceReconstruction.EvidenceDigest == "" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.SeparateExecutable.EvidenceAddress == "" || evidence.Metrics.SeparateExecutable.EvidenceDigest == "" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
+	if evidence.Metrics.ProducerDependencyAbsence.Numerator != 1 || evidence.Metrics.ProducerDependencyAbsence.Denominator != 1 || evidence.Metrics.ProducerDependencyAbsence.Decision != "PASS" || evidence.Metrics.ProducerDependencyAbsence.EvidenceAddress == "" || evidence.Metrics.ProducerDependencyAbsence.EvidenceDigest == "" || evidence.Metrics.ObservedProducerImportCount.Value != 0 || evidence.Metrics.ObservedProducerImportCount.Unit != "packages" || evidence.Metrics.ObservedProducerImportCount.ObservationStatus != "OBSERVED" || evidence.Metrics.ObservedProducerImportCount.Stage != "COHERENCE" || evidence.Metrics.ObservedProducerImportCount.Step != "OBSERVED_PRODUCER_IMPORT_COUNT" || evidence.Metrics.ObservedProducerImportCount.EvidenceAddress == "" || evidence.Metrics.ObservedProducerImportCount.EvidenceDigest == "" || evidence.Metrics.RawSourceReconstruction.Numerator != 1 || evidence.Metrics.RawSourceReconstruction.Denominator != 1 || evidence.Metrics.RawSourceReconstruction.Decision != "PASS" || evidence.Metrics.RawSourceReconstruction.EvidenceAddress == "" || evidence.Metrics.RawSourceReconstruction.EvidenceDigest == "" || evidence.Metrics.SeparateExecutable.Numerator != 1 || evidence.Metrics.SeparateExecutable.Denominator != 1 || evidence.Metrics.SeparateExecutable.Decision != "PASS" || evidence.Metrics.SeparateExecutable.EvidenceAddress == "" || evidence.Metrics.SeparateExecutable.EvidenceDigest == "" || evidence.Metrics.AlgorithmicIndependence.Numerator != 0 || evidence.Metrics.AlgorithmicIndependence.Denominator != 1 || evidence.Metrics.AlgorithmicIndependence.Decision != "UNKNOWN" {
 		return false
 	}
-	if evidence.IndependentConsumerProcess.ExitCode != 0 || evidence.IndependentConsumerProcess.Address == "" || evidence.IndependentConsumerProcess.CommandDigest == "" || evidence.IndependentConsumerProcess.StdoutDigest == "" || evidence.IndependentConsumerProcess.StderrDigest == "" || evidence.DependencyGraph.Decision != "PASS" || evidence.DependencyGraph.ExitCode != 0 || evidence.DependencyGraph.InventoryBytes <= 0 || evidence.DependencyGraph.InventoryDigest == "" || evidence.DependencyGraph.ProducerTargetAddress == "" || evidence.DependencyGraph.ProducerTargetDigest == "" {
+	if evidence.IndependentConsumerProcess.ExitCode != 0 || evidence.IndependentConsumerProcess.Address == "" || evidence.IndependentConsumerProcess.CommandDigest == "" || evidence.IndependentConsumerProcess.StdoutDigest == "" || evidence.IndependentConsumerProcess.StderrDigest == "" || evidence.DependencyGraph.ReconstructionStatus != "OBSERVED" || evidence.DependencyGraph.AbsenceDecision != "PASS" || evidence.DependencyGraph.ExitCode != 0 || evidence.DependencyGraph.InventoryBytes <= 0 || evidence.DependencyGraph.InventoryDigest == "" || evidence.DependencyGraph.ProducerTargetAddress == "" || evidence.DependencyGraph.ProducerTargetDigest == "" {
 		return false
 	}
 	for _, packagePath := range evidence.DependencyGraph.Packages {

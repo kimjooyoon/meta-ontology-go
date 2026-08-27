@@ -69,7 +69,8 @@ The fixed predicate inventory is 32 IDs: five conformance IDs
 `consumer-binding-unresolved-import`, `consumer-binding-unrelated-type-error`,
 `consumer-binding-metric-row-swap`, `consumer-binding-different-metric-literal`,
 `consumer-binding-unrelated-call`, six strict receipt-boundary corruption
-cases, and `classifier-success-exit-counterexample`). Claims are exactly 32;
+cases, `classifier-success-exit-counterexample`, the transitive helper-import
+negative, and missing/invalid module-path fixtures. Claims are exactly 32;
 failure and provenance predicates are exactly 27;
 static failure contracts are exactly 8; typed declaration/use object tuples,
 metric occurrences, semantic relation digests, and output row addresses are
@@ -77,12 +78,17 @@ each exactly 9. Each output receipt includes an exact row digest from the
 consumer's embedded raw output artifact.
 
 The conformance-consumer metric is decomposed into producer dependency
-absence (1/1 PASS), observed producer import count (0/0 PASS), raw-source
-reconstruction (1/1 PASS), separate executable (1/1 PASS), and algorithmic
-independence (0/1 UNKNOWN). Dependency absence is computed from the complete
+absence (1/1 PASS), observed producer import count (value 0 packages,
+OBSERVED), raw-source reconstruction (1/1 PASS), separate executable (1/1
+PASS), and algorithmic independence (0/1 UNKNOWN). The count is an observed
+scalar, not a compliance ratio; compliance is decided only by the separate
+dependency-absence predicate. Dependency absence is computed from the complete
 module-aware `go list -deps` closure, whose package inventory bytes and digest
-are retained with the producer target address and digest. Separate processes
-do not by themselves prove algorithmic diversity.
+are retained with the producer target address and digest. The dependency
+receipt separately reports `reconstruction_status` and `absence_decision`.
+Missing or invalid `go.mod` produces UNKNOWN at FOUNDATION/MODULE_PATH with
+reason `MODULE_PATH_UNAVAILABLE`, including an observation-unknown count.
+Separate processes do not by themselves prove algorithmic diversity.
 
 ## Meaning gates
 

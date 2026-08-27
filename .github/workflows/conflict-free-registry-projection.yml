@@ -106,9 +106,11 @@ jobs:
             .integration_metrics.producer_dependency_absence.decision == "PASS" and
             .integration_metrics.producer_dependency_absence.evidence_address != "" and
             .integration_metrics.producer_dependency_absence.evidence_digest != "" and
-            .integration_metrics.observed_producer_import_count.numerator == 0 and
-            .integration_metrics.observed_producer_import_count.denominator == 0 and
-            .integration_metrics.observed_producer_import_count.decision == "PASS" and
+            .integration_metrics.observed_producer_import_count.value == 0 and
+            .integration_metrics.observed_producer_import_count.unit == "packages" and
+            .integration_metrics.observed_producer_import_count.observation_status == "OBSERVED" and
+            .integration_metrics.observed_producer_import_count.stage == "COHERENCE" and
+            .integration_metrics.observed_producer_import_count.step == "OBSERVED_PRODUCER_IMPORT_COUNT" and
             .integration_metrics.observed_producer_import_count.evidence_address != "" and
             .integration_metrics.observed_producer_import_count.evidence_digest != "" and
             .integration_metrics.raw_source_reconstruction.numerator == 1 and
@@ -124,7 +126,8 @@ jobs:
             .integration_metrics.algorithmic_independence.numerator == 0 and
             .integration_metrics.algorithmic_independence.denominator == 1 and
             .integration_metrics.algorithmic_independence.decision == "UNKNOWN" and
-            .dependency_graph.decision == "PASS" and
+            .dependency_graph.reconstruction_status == "OBSERVED" and
+            .dependency_graph.absence_decision == "PASS" and
             .dependency_graph.exit_code == 0 and
             .dependency_graph.inventory_bytes > 0 and
             .dependency_graph.inventory_digest != "" and
@@ -167,6 +170,7 @@ jobs:
             .comment_position_invariant.decision == "PASS" and
             .new_concept_fixture.decision == "PASS" and
             .dependency_graph_negative_fixture.decision == "PASS" and
+            .dependency_graph_missing_module_fixture.decision == "PASS" and
             ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.step] | all(length > 0)) and
