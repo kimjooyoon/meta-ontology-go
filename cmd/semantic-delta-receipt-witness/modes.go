@@ -61,30 +61,28 @@ type semanticClaimDeltaManifestResult struct {
 }
 
 type persistenceProbeReport struct {
-	Schema                       string                      `json:"schema"`
-	ProducerBaseline             persistenceObservation      `json:"producer_baseline"`
-	ProducerAlternate            persistenceObservation      `json:"producer_alternate"`
-	ConsumerBaseline             persistenceObservation      `json:"consumer_baseline"`
-	ConsumerAlternate            persistenceObservation      `json:"consumer_alternate"`
-	IdentityFault                *identityFaultEvidence      `json:"identity_fault,omitempty"`
-	ProducerIdentityFaultGraph   *identityFaultGraphEvidence `json:"producer_identity_fault_graph,omitempty"`
-	ConsumerIdentityFaultGraph   *identityFaultGraphEvidence `json:"consumer_identity_fault_graph,omitempty"`
-	ProducerFaultedAlternate     *persistenceObservation     `json:"producer_faulted_alternate,omitempty"`
-	ConsumerFaultedAlternate     *persistenceObservation     `json:"consumer_faulted_alternate,omitempty"`
-	ProducerRawSemanticPreserved bool                        `json:"producer_raw_semantic_preserved"`
-	ConsumerRawSemanticPreserved bool                        `json:"consumer_raw_semantic_preserved"`
-	ProducerFaultGraphClosed     bool                        `json:"producer_fault_graph_closed"`
-	ConsumerFaultGraphClosed     bool                        `json:"consumer_fault_graph_closed"`
-	ProducerPersistence          persistenceMapping          `json:"producer_persistence"`
-	ConsumerPersistence          persistenceMapping          `json:"consumer_persistence"`
-	ExpectedClaimTotal           int                         `json:"expected_claim_total"`
-	ReconstructionExact          bool                        `json:"reconstruction_exact"`
-	PersistenceSatisfied         bool                        `json:"persistence_satisfied"`
-	Decision                     string                      `json:"decision"`
-	Resolution                   string                      `json:"resolution"`
-	Stage                        string                      `json:"stage"`
-	Step                         string                      `json:"step"`
-	Reason                       string                      `json:"reason"`
+	Schema                       string                 `json:"schema"`
+	ProducerBaseline             persistenceObservation `json:"producer_baseline"`
+	ProducerAlternate            persistenceObservation `json:"producer_alternate"`
+	ConsumerBaseline             persistenceObservation `json:"consumer_baseline"`
+	ConsumerAlternate            persistenceObservation `json:"consumer_alternate"`
+	ProducerIdentityFaultReceipt json.RawMessage        `json:"producer_identity_fault_receipt,omitempty"`
+	ConsumerIdentityFaultReceipt json.RawMessage        `json:"consumer_identity_fault_receipt,omitempty"`
+	IdentityFaultReceiptsExact   bool                   `json:"identity_fault_receipts_exact,omitempty"`
+	ProducerRawSemanticPreserved bool                   `json:"producer_raw_semantic_preserved"`
+	ConsumerRawSemanticPreserved bool                   `json:"consumer_raw_semantic_preserved"`
+	ProducerFaultGraphClosed     bool                   `json:"producer_fault_graph_closed"`
+	ConsumerFaultGraphClosed     bool                   `json:"consumer_fault_graph_closed"`
+	ProducerPersistence          persistenceMapping     `json:"producer_persistence"`
+	ConsumerPersistence          persistenceMapping     `json:"consumer_persistence"`
+	ExpectedClaimTotal           int                    `json:"expected_claim_total"`
+	ReconstructionExact          bool                   `json:"reconstruction_exact"`
+	PersistenceSatisfied         bool                   `json:"persistence_satisfied"`
+	Decision                     string                 `json:"decision"`
+	Resolution                   string                 `json:"resolution"`
+	Stage                        string                 `json:"stage"`
+	Step                         string                 `json:"step"`
+	Reason                       string                 `json:"reason"`
 }
 
 func decodeSemanticClaimDeltaManifest(raw []byte) (semanticClaimDeltaManifest, error) {
@@ -192,6 +190,9 @@ func uniqueIDs(ids []string) bool {
 }
 
 func runPersistenceProbe(options options) persistenceProbeReport {
+	if options.identityFault != "" {
+		return runOpaqueIdentityFaultProbe(options)
+	}
 	producerInput := producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA}
 	producerAlternateInput := producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA}
 	producerBaseline, producerBaselineErr := producer.ClaimIdentityObservationFromFiles(producerInput)
@@ -204,78 +205,49 @@ func runPersistenceProbe(options options) persistenceProbeReport {
 	consumerAlternateSourcePair := consumerSourcePair(consumerAlternatePair)
 	producerAlternateForComparison := producerAlternate.Records
 	consumerAlternateForComparison := consumerAlternate
-	var faultArtifact identityFaultArtifact
-	var faultEvidence *identityFaultEvidence
-	var producerFaulted producerIdentityFaultResult
-	var consumerFaulted consumerIdentityFaultResult
-	if options.identityFault != "" {
-		artifact, evidence, err := readIdentityFaultArtifact(options.identityFault)
-		if err != nil {
-			return persistenceProbeReport{Schema: "gooo/semantic-delta-claim-identity-persistence-probe/v1", ExpectedClaimTotal: len(producerBaseline.Records), Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "identity-fault", Step: "read-artifact", Reason: "IDENTITY_FAULT_ARTIFACT_UNAVAILABLE"}
-		}
-		faultArtifact, evidenceCopy := artifact, evidence
-		faultEvidence = &evidenceCopy
-		producerFaulted = mutateProducerIdentityFault(producerAlternate.Records, producerAlternatePair, faultArtifact)
-		consumerFaulted = mutateConsumerIdentityFault(consumerAlternate, consumerAlternateSourcePair, faultArtifact)
-		if producerFaulted.Valid {
-			producerAlternateForComparison = normalizeProducerFaultedReferences(producerFaulted.Records, producerFaulted.NewToOld)
-		} else {
-			producerAlternateForComparison = producerFaulted.Records
-		}
-		if consumerFaulted.Valid {
-			consumerAlternateForComparison = normalizeConsumerFaultedReferences(consumerFaulted.Records, consumerFaulted.NewToOld)
-		} else {
-			consumerAlternateForComparison = consumerFaulted.Records
-		}
-	}
 	producerMappingValue := producerMapping(producer.CompareClaimIdentityRecords(producerBaseline.Records, producerAlternateForComparison))
 	consumerMappingValue := consumerMapping(consumer.CompareClaimIdentityRecords(consumerBaseline, consumerAlternateForComparison))
-	if options.identityFault != "" {
-		if !producerFaulted.Valid {
-			producerMappingValue.Decision, producerMappingValue.Resolution, producerMappingValue.Reason = producer.DecisionFailClosed, producer.ResolutionLower, producerFaulted.FailReason
-		}
-		if !consumerFaulted.Valid {
-			consumerMappingValue.Decision, consumerMappingValue.Resolution, consumerMappingValue.Reason = producer.DecisionFailClosed, producer.ResolutionLower, consumerFaulted.FailReason
-		}
-	}
 	expectedTotal := len(producerBaseline.Records)
 	producerRawSemanticPreserved := sourcePairSemanticPreserved(producerBaselinePair, producerAlternatePair)
 	consumerRawSemanticPreserved := sourcePairSemanticPreserved(consumerBaselineSourcePair, consumerAlternateSourcePair)
-	producerFaultGraphClosed := options.identityFault != "" && producerFaulted.Valid
-	consumerFaultGraphClosed := options.identityFault != "" && consumerFaulted.Valid
 	// Reconstruction agreement is independent of whether the alternate claim
 	// set has additions or removals; that distinction belongs to adjudication.
 	reconstructionExact := producerBaselineErr == nil && producerAlternateErr == nil && consumerBaselineErr == nil && consumerAlternateErr == nil && producerRecordsEqual(producerBaseline.Records, consumerBaseline) && producerRecordsEqual(producerAlternate.Records, consumerAlternate)
-	if options.identityFault != "" {
-		reconstructionExact = reconstructionExact && producerFaultGraphClosed && consumerFaultGraphClosed && producerRecordsEqual(producerFaulted.Records, consumerFaulted.Records)
-	}
 	mappingExact := persistenceMappingsEqual(producerMappingValue, consumerMappingValue)
 	persistenceSatisfied := reconstructionExact && mappingExact && persistenceMappingSatisfies(producerMappingValue, expectedTotal) && persistenceMappingSatisfies(consumerMappingValue, expectedTotal)
-	report := persistenceProbeReport{Schema: "gooo/semantic-delta-claim-identity-persistence-probe/v1", ProducerBaseline: persistenceObservation{SourcePair: producerBaselinePair, Records: producerRecordSnapshots(producerBaseline.Records)}, ProducerAlternate: persistenceObservation{SourcePair: producerAlternatePair, Records: producerRecordSnapshots(producerAlternate.Records)}, ConsumerBaseline: persistenceObservation{SourcePair: consumerBaselineSourcePair, Records: consumerRecordSnapshots(consumerBaseline)}, ConsumerAlternate: persistenceObservation{SourcePair: consumerAlternateSourcePair, Records: consumerRecordSnapshots(consumerAlternate)}, IdentityFault: faultEvidence, ProducerPersistence: producerMappingValue, ConsumerPersistence: consumerMappingValue, ExpectedClaimTotal: expectedTotal, ReconstructionExact: reconstructionExact, PersistenceSatisfied: persistenceSatisfied, ProducerRawSemanticPreserved: producerRawSemanticPreserved, ConsumerRawSemanticPreserved: consumerRawSemanticPreserved, ProducerFaultGraphClosed: producerFaultGraphClosed, ConsumerFaultGraphClosed: consumerFaultGraphClosed, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "claim-identity-persistence", Step: "compare-v3-observations", Reason: "INDEPENDENT_RECONSTRUCTION_MISMATCH"}
-	if options.identityFault != "" {
-		report.ProducerIdentityFaultGraph = &producerFaulted.Graph
-		report.ConsumerIdentityFaultGraph = &consumerFaulted.Graph
-		report.ProducerFaultedAlternate = &persistenceObservation{SourcePair: producerAlternatePair, Records: producerRecordSnapshots(producerFaulted.Records)}
-		report.ConsumerFaultedAlternate = &persistenceObservation{SourcePair: consumerAlternateSourcePair, Records: consumerRecordSnapshots(consumerFaulted.Records)}
-	}
+	report := persistenceProbeReport{Schema: "gooo/semantic-delta-claim-identity-persistence-probe/v1", ProducerBaseline: persistenceObservation{SourcePair: producerBaselinePair, Records: producerRecordSnapshots(producerBaseline.Records)}, ProducerAlternate: persistenceObservation{SourcePair: producerAlternatePair, Records: producerRecordSnapshots(producerAlternate.Records)}, ConsumerBaseline: persistenceObservation{SourcePair: consumerBaselineSourcePair, Records: consumerRecordSnapshots(consumerBaseline)}, ConsumerAlternate: persistenceObservation{SourcePair: consumerAlternateSourcePair, Records: consumerRecordSnapshots(consumerAlternate)}, ProducerPersistence: producerMappingValue, ConsumerPersistence: consumerMappingValue, ExpectedClaimTotal: expectedTotal, ReconstructionExact: reconstructionExact, PersistenceSatisfied: persistenceSatisfied, ProducerRawSemanticPreserved: producerRawSemanticPreserved, ConsumerRawSemanticPreserved: consumerRawSemanticPreserved, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower, Stage: "claim-identity-persistence", Step: "compare-v3-observations", Reason: "INDEPENDENT_RECONSTRUCTION_MISMATCH"}
 	if reconstructionExact && persistenceSatisfied {
 		report.Decision, report.Resolution, report.Reason = producer.DecisionFixedPoint, producer.ResolutionExact, "V3_CLAIM_IDENTITY_PERSISTED_ACROSS_RAW_INTERVENTION"
 	} else if reconstructionExact {
 		report.Reason = persistenceFailureReason(producerMappingValue, consumerMappingValue, expectedTotal)
-	} else if options.identityFault != "" {
-		report.Reason = firstIdentityFaultFailureReason(producerFaulted.FailReason, consumerFaulted.FailReason)
 	}
 	return report
 }
 
-func firstIdentityFaultFailureReason(producerReason, consumerReason string) string {
-	if producerReason != "" {
-		return producerReason
+func runOpaqueIdentityFaultProbe(options options) persistenceProbeReport {
+	producerReceipt := producer.IdentityFaultReceiptFromFiles(producer.IdentityFaultInput{
+		Baseline:     producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		Alternate:    producer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		ArtifactPath: options.identityFault,
+	})
+	consumerReceipt := consumer.IdentityFaultReceiptFromFiles(consumer.IdentityFaultInput{
+		Baseline:     consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceBefore, AfterPath: options.persistenceAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		Alternate:    consumer.Input{CaseID: "persistence-probe", BeforePath: options.persistenceAlternateBefore, AfterPath: options.persistenceAlternateAfter, SubjectSHA: options.subjectSHA, ObservedCheckoutSHA: options.observedCheckoutSHA},
+		ArtifactPath: options.identityFault,
+	})
+	producerRaw, _ := json.Marshal(producerReceipt)
+	consumerRaw, _ := json.Marshal(consumerReceipt)
+	exact := bytes.Equal(producerRaw, consumerRaw)
+	reason := "INDEPENDENT_IDENTITY_FAULT_RECEIPT_MISMATCH"
+	if exact {
+		reason = "INDEPENDENT_IDENTITY_FAULT_RECEIPTS_EXACT"
 	}
-	if consumerReason != "" {
-		return consumerReason
+	return persistenceProbeReport{
+		Schema:                       "gooo/semantic-delta-claim-identity-persistence-probe/v1",
+		ProducerIdentityFaultReceipt: producerRaw, ConsumerIdentityFaultReceipt: consumerRaw,
+		IdentityFaultReceiptsExact: exact, Decision: producer.DecisionFailClosed, Resolution: producer.ResolutionLower,
+		Stage: "identity-fault", Step: "compare-opaque-receipts", Reason: reason,
 	}
-	return "IDENTITY_REFERENCE_CLOSURE_BROKEN"
 }
 
 func consumerSourcePair(observation consumer.SourcePairObservation) evolutionSourcePair {

@@ -68,21 +68,16 @@ Identical raw observations fail closed as `RAW_EVIDENCE_UNCHANGED`; semantic
 target drift fails closed as `SEMANTIC_TARGET_CHANGED`; ordinary added/removed
 claims fail closed as `CLAIM_SET_CHANGED`. The checked-in
 `claim-identity-fault.json` is a separate diagnostic artifact, not a Gooo
-source contract: CI reconstructs normal `.gooo` pairs first, then an explicit
-mutator rekeys alternate `StableID` values and closes all internal identity
-references through the artifact's raw digest-bound rule. The receipt binds the
-artifact path, byte count, digest, and rule, and both independent classifiers must report
-`FAIL_CLOSED / LOWER_RESOLUTION / CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`.
-Normal producer/consumer source projection never reads a marker to alter
-identity. The semantic claim delta manifest is consumed by both raw-source
-implementations in CI, while the v1-to-v3 migration remains separate
-accounting. The fault rekey is graph-closed: it binds a canonical old/new
-StableID bijection, rewrites `PreservationOf` through that mapping, and reports
-mapping digest, reference denominator, rewritten references, dangling
-references, and alpha-equivalent semantic graph status. Stale references fail
-closed as `IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped or duplicate mapping
-edges fail closed with distinct mapping reasons. The raw-only recreation result
-is allowed only when this graph proof succeeds.
+source contract: producer and independent consumer packages reconstruct the
+real `.gooo` pairs, read the artifact, and emit opaque receipts. The witness
+only compares those receipts. Each receipt binds the artifact path, byte count,
+digest, rule, old/new inventories, mapping digest, reference counts, dangling
+count, raw evidence count, and alpha-equivalent graph digests. Both
+implementations must report `FAIL_CLOSED / LOWER_RESOLUTION /
+CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST`; stale references, swapped edges, and
+duplicate edges have distinct fail-closed reasons. Normal source projection
+never reads a marker to alter identity. The consumer import boundary is checked
+as forbidden producer imports `0/0`.
 
 ## Research decisions
 

@@ -197,15 +197,19 @@ projection and cannot make a normal Gooo source marker alter identity.
 Historical v1-to-v3 migration remains separate accounting and cannot satisfy
 these predicates.
 
-The diagnostic rekey is graph-closed: it first records a canonical old-to-new
-StableID bijection, then rewrites `PreservationOf` and every other internal
-identity reference through that bijection. The receipt records both inventories,
-the mapping digest, reference denominator, rewritten-reference count, dangling
-count, and an alpha-equivalent semantic-graph digest. A stale reference is
-`FAIL_CLOSED / LOWER_RESOLUTION / IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped
-mapping edges are `IDENTITY_FAULT_MAPPING_RULE_MISMATCH`; duplicate edges are
-`IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE`. Raw-only recreation is admissible only
-after bijection, reference closure, and alpha-equivalence all pass.
+The diagnostic rekey is graph-closed: the producer package and independent
+consumer package each record a canonical old-to-new StableID bijection, rewrite
+`PreservationOf` and every other internal identity reference through that
+bijection, and emit an opaque receipt. The witness only compares the two
+receipts; it does not perform graph adjudication. Each receipt records both
+inventories, mapping digest, reference denominator, rewritten-reference count,
+dangling count, raw evidence count, and alpha-equivalent semantic-graph
+digests. A stale reference is `FAIL_CLOSED / LOWER_RESOLUTION /
+IDENTITY_REFERENCE_CLOSURE_BROKEN`; swapped mapping edges are
+`IDENTITY_FAULT_MAPPING_RULE_MISMATCH`; duplicate edges are
+`IDENTITY_FAULT_MAPPING_DUPLICATE_EDGE`. Raw-only recreation is admissible
+only after both independent graph proofs pass. CI records the forbidden
+producer-import contract as `0/0`.
 
 The receipt also exposes the sorted `claim_id_inventory` and a versioned
 `claim_transition_identity_digest`. Version `v2` is the digest of canonical

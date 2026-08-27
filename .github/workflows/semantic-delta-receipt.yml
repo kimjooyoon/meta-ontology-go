@@ -105,7 +105,11 @@ jobs:
           jq -n --argjson exit "$fix_status" --argjson empty "$fix_empty" '{command:"go fix -diff", exit_code:$exit, empty_stdout:$empty, pass:($exit == 0 and $empty == 1)}' > "$out/go-fix-attestation.json"
           test "$fix_status" -eq 0
           test "$fix_empty" -eq 1
-          test -z "$(grep -R -n --include='*.go' 'internal/meta/languageassurance/semanticdeltareceipt"' internal/meta/languageassurance/semanticdeltareceiptconsumer || true)"
+          forbidden_imports="$(rg -n --glob '*.go' 'github.com/kimjooyoon/meta-ontology-go/internal/meta/languageassurance/semanticdeltareceipt"' internal/meta/languageassurance/semanticdeltareceiptconsumer || true)"
+          forbidden_import_count=0
+          if [ -n "$forbidden_imports" ]; then forbidden_import_count="$(printf '%s\n' "$forbidden_imports" | wc -l | tr -d ' ')"; fi
+          jq -n --argjson forbidden "$forbidden_import_count" '{forbidden_import_numerator:$forbidden, forbidden_import_denominator:0, allowed_import_count:0, contract:"FORBIDDEN_PRODUCER_IMPORTS=0/0", decision:(if $forbidden == 0 then "PASS" else "FAIL_CLOSED" end), resolution:(if $forbidden == 0 then "EXACT" else "LOWER_RESOLUTION" end), stage:"independent-consumer", step:"import-boundary", reason:(if $forbidden == 0 then "PRODUCER_IMPORT_FORBIDDEN_NONE" else "PRODUCER_IMPORT_FORBIDDEN" end)}' > "$out/consumer-import-boundary.json"
+          test "$forbidden_import_count" -eq 0
           go test ./internal/meta/languageassurance/semanticdeltareceipt ./internal/meta/languageassurance/semanticdeltareceiptconsumer ./cmd/semantic-delta-receipt-witness
           workspace_content_snapshot > "$out/workspace-after.tsv"
           awk -F '\t' 'NR==FNR { b[$1]=$2; next } { a[$1]=$2 } END { for (p in b) if (!(p in a) || b[p] != a[p]) print p "\t" b[p] "\t" a[p]; for (p in a) if (!(p in b)) print p "\tMISSING\t" a[p] }' "$out/workspace-before.tsv" "$out/workspace-after.tsv" | sort > "$out/workspace-write-set.tsv"
@@ -276,59 +280,64 @@ jobs:
             --persistence-alternate-before "$root/persistence-equivalent-before.gooo" --persistence-alternate-after "$root/persistence-equivalent-after.gooo" \
             --subject-sha "$HEAD_SHA" --observed-checkout-sha "$observed_checkout_sha" --output "$out/persistence-identity-fault.json"
           jq -e --arg fault_path "$out/claim-identity-fault.json" --arg fault_digest "$fault_digest" --argjson fault_bytes "$fault_bytes" '
-            .reconstruction_exact == true and .persistence_satisfied == false and
-            .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
-            .producer_persistence.decision == "FAIL_CLOSED" and .producer_persistence.resolution == "LOWER_RESOLUTION" and
-            .consumer_persistence.decision == "FAIL_CLOSED" and .consumer_persistence.resolution == "LOWER_RESOLUTION" and
-            .producer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
-            .consumer_persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
-            .reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
-            .identity_fault.artifact_path == $fault_path and .identity_fault.artifact_bytes == $fault_bytes and
-            .identity_fault.artifact_digest == $fault_digest and
-            .identity_fault.fault_id == "raw-only-stable-id-recreation" and
-            .identity_fault.target == "alternate-observation" and .identity_fault.mutation == "stable_identity_rekey_with_reference_closure" and
-            .producer_raw_semantic_preserved == true and .consumer_raw_semantic_preserved == true and
-            .producer_fault_graph_closed == true and .consumer_fault_graph_closed == true and
-            .producer_identity_fault_graph.decision == "PASS" and .producer_identity_fault_graph.resolution == "EXACT" and
-            .consumer_identity_fault_graph.decision == "PASS" and .consumer_identity_fault_graph.resolution == "EXACT" and
-            .producer_identity_fault_graph.reason == "IDENTITY_FAULT_GRAPH_EXACT" and
-            .consumer_identity_fault_graph.reason == "IDENTITY_FAULT_GRAPH_EXACT" and
-            .producer_identity_fault_graph.bijection == true and .consumer_identity_fault_graph.bijection == true and
-            .producer_identity_fault_graph.mapping_total == 7 and .consumer_identity_fault_graph.mapping_total == 7 and
-            (.producer_identity_fault_graph.old_stable_ids | length) == 7 and (.producer_identity_fault_graph.new_stable_ids | length) == 7 and
-            (.consumer_identity_fault_graph.old_stable_ids | length) == 7 and (.consumer_identity_fault_graph.new_stable_ids | length) == 7 and
-            (.producer_identity_fault_graph.mapping | length) == 7 and (.consumer_identity_fault_graph.mapping | length) == 7 and
-            ((.producer_identity_fault_graph.old_stable_ids | unique | length) == 7) and ((.producer_identity_fault_graph.new_stable_ids | unique | length) == 7) and
-            ((.consumer_identity_fault_graph.old_stable_ids | unique | length) == 7) and ((.consumer_identity_fault_graph.new_stable_ids | unique | length) == 7) and
-            .producer_identity_fault_graph.old_stable_ids == .consumer_identity_fault_graph.old_stable_ids and
-            .producer_identity_fault_graph.new_stable_ids == .consumer_identity_fault_graph.new_stable_ids and
-            .producer_identity_fault_graph.mapping == .consumer_identity_fault_graph.mapping and
-            (.producer_identity_fault_graph.mapping_digest | test("^sha256:[0-9a-f]{64}$")) and
-            (.consumer_identity_fault_graph.mapping_digest | test("^sha256:[0-9a-f]{64}$")) and
-            .producer_identity_fault_graph.mapping_digest == .consumer_identity_fault_graph.mapping_digest and
-            .producer_identity_fault_graph.reference_denominator == .producer_identity_fault_graph.rewritten_reference_count and
-            .consumer_identity_fault_graph.reference_denominator == .consumer_identity_fault_graph.rewritten_reference_count and
-            .producer_identity_fault_graph.reference_denominator > 0 and .consumer_identity_fault_graph.reference_denominator > 0 and
-            .producer_identity_fault_graph.dangling_reference_count == 0 and .consumer_identity_fault_graph.dangling_reference_count == 0 and
-            .producer_identity_fault_graph.alpha_equivalent_semantic_graph == true and .consumer_identity_fault_graph.alpha_equivalent_semantic_graph == true and
-            .expected_claim_total == 7 and
-            .producer_persistence.claim_recreated_due_only_to_raw_digest == 7 and
-            .consumer_persistence.claim_recreated_due_only_to_raw_digest == 7 and
-            .producer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
-            .consumer_persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
-            .producer_persistence.semantic_target_preserved == 7 and
-            .consumer_persistence.semantic_target_preserved == 7 and
-            .producer_persistence.semantic_evidence_preserved == 7 and
-            .consumer_persistence.semantic_evidence_preserved == 7 and
-            .producer_persistence.raw_evidence_changed == 7 and
-            .consumer_persistence.raw_evidence_changed == 7 and
-            .producer_persistence.evidence_only_changes == 7 and
-            .consumer_persistence.evidence_only_changes == 7 and
-            ((.producer_baseline.records | map(.stable_id) | sort) == (.producer_alternate.records | map(.stable_id) | sort)) and
-            ((.consumer_baseline.records | map(.stable_id) | sort) == (.consumer_alternate.records | map(.stable_id) | sort)) and
-            ((.producer_faulted_alternate.records | length) == 7) and ((.consumer_faulted_alternate.records | length) == 7) and
-            ((.producer_persistence.removed_ids | length) == 7) and ((.producer_persistence.added_ids | length) == 7) and
-            ((.consumer_persistence.removed_ids | length) == 7) and ((.consumer_persistence.added_ids | length) == 7)
+            .identity_fault_receipts_exact == true and
+            .producer_identity_fault_receipt.reconstruction_exact == true and .consumer_identity_fault_receipt.reconstruction_exact == true and
+            .producer_identity_fault_receipt.decision == "FAIL_CLOSED" and .producer_identity_fault_receipt.resolution == "LOWER_RESOLUTION" and
+            .consumer_identity_fault_receipt.decision == "FAIL_CLOSED" and .consumer_identity_fault_receipt.resolution == "LOWER_RESOLUTION" and
+            .producer_identity_fault_receipt.persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .consumer_identity_fault_receipt.persistence.reason == "CLAIM_RECREATED_DUE_ONLY_TO_RAW_DIGEST" and
+            .reason == "INDEPENDENT_IDENTITY_FAULT_RECEIPTS_EXACT" and
+            .producer_identity_fault_receipt.artifact.artifact_path == $fault_path and .producer_identity_fault_receipt.artifact.artifact_bytes == $fault_bytes and
+            .consumer_identity_fault_receipt.artifact.artifact_path == $fault_path and .consumer_identity_fault_receipt.artifact.artifact_bytes == $fault_bytes and
+            .producer_identity_fault_receipt.artifact.artifact_digest == $fault_digest and .consumer_identity_fault_receipt.artifact.artifact_digest == $fault_digest and
+            .producer_identity_fault_receipt.artifact.fault_id == "raw-only-stable-id-recreation" and
+            .producer_identity_fault_receipt.artifact.target == "alternate-observation" and .producer_identity_fault_receipt.artifact.mutation == "stable_identity_rekey_with_reference_closure" and
+            .producer_identity_fault_receipt.artifact == .consumer_identity_fault_receipt.artifact and
+            .producer_identity_fault_receipt.raw_semantic_preserved == true and .consumer_identity_fault_receipt.raw_semantic_preserved == true and
+            .producer_identity_fault_receipt.fault_graph_closed == true and .consumer_identity_fault_receipt.fault_graph_closed == true and
+            .producer_identity_fault_receipt.graph.decision == "PASS" and .producer_identity_fault_receipt.graph.resolution == "EXACT" and
+            .consumer_identity_fault_receipt.graph.decision == "PASS" and .consumer_identity_fault_receipt.graph.resolution == "EXACT" and
+            .producer_identity_fault_receipt.graph.reason == "IDENTITY_FAULT_GRAPH_EXACT" and
+            .consumer_identity_fault_receipt.graph.reason == "IDENTITY_FAULT_GRAPH_EXACT" and
+            .producer_identity_fault_receipt.graph.bijection == true and .consumer_identity_fault_receipt.graph.bijection == true and
+            .producer_identity_fault_receipt.graph.mapping_total == 7 and .consumer_identity_fault_receipt.graph.mapping_total == 7 and
+            (.producer_identity_fault_receipt.graph.old_stable_ids | length) == 7 and (.producer_identity_fault_receipt.graph.new_stable_ids | length) == 7 and
+            (.consumer_identity_fault_receipt.graph.old_stable_ids | length) == 7 and (.consumer_identity_fault_receipt.graph.new_stable_ids | length) == 7 and
+            (.producer_identity_fault_receipt.graph.mapping | length) == 7 and (.consumer_identity_fault_receipt.graph.mapping | length) == 7 and
+            ((.producer_identity_fault_receipt.graph.old_stable_ids | unique | length) == 7) and ((.producer_identity_fault_receipt.graph.new_stable_ids | unique | length) == 7) and
+            ((.consumer_identity_fault_receipt.graph.old_stable_ids | unique | length) == 7) and ((.consumer_identity_fault_receipt.graph.new_stable_ids | unique | length) == 7) and
+            .producer_identity_fault_receipt.graph.old_stable_ids == .consumer_identity_fault_receipt.graph.old_stable_ids and
+            .producer_identity_fault_receipt.graph.new_stable_ids == .consumer_identity_fault_receipt.graph.new_stable_ids and
+            .producer_identity_fault_receipt.graph.mapping == .consumer_identity_fault_receipt.graph.mapping and
+            (.producer_identity_fault_receipt.graph.mapping_digest | test("^sha256:[0-9a-f]{64}$")) and
+            (.consumer_identity_fault_receipt.graph.mapping_digest | test("^sha256:[0-9a-f]{64}$")) and
+            .producer_identity_fault_receipt.graph.mapping_digest == .consumer_identity_fault_receipt.graph.mapping_digest and
+            .producer_identity_fault_receipt.graph.reference_denominator == .producer_identity_fault_receipt.graph.rewritten_reference_count and
+            .consumer_identity_fault_receipt.graph.reference_denominator == .consumer_identity_fault_receipt.graph.rewritten_reference_count and
+            .producer_identity_fault_receipt.graph.reference_denominator > 0 and .consumer_identity_fault_receipt.graph.reference_denominator > 0 and
+            .producer_identity_fault_receipt.graph.dangling_reference_count == 0 and .consumer_identity_fault_receipt.graph.dangling_reference_count == 0 and
+            .producer_identity_fault_receipt.graph.alpha_equivalent_semantic_graph == true and .consumer_identity_fault_receipt.graph.alpha_equivalent_semantic_graph == true and
+            .producer_identity_fault_receipt.graph.original_semantic_graph_digest == .producer_identity_fault_receipt.graph.normalized_semantic_graph_digest and
+            .consumer_identity_fault_receipt.graph.original_semantic_graph_digest == .consumer_identity_fault_receipt.graph.normalized_semantic_graph_digest and
+            .producer_identity_fault_receipt.graph.raw_evidence_changed == 7 and .producer_identity_fault_receipt.graph.raw_evidence_total == 7 and
+            .consumer_identity_fault_receipt.graph.raw_evidence_changed == 7 and .consumer_identity_fault_receipt.graph.raw_evidence_total == 7 and
+            .producer_identity_fault_receipt.persistence.claim_recreated_due_only_to_raw_digest == 7 and
+            .consumer_identity_fault_receipt.persistence.claim_recreated_due_only_to_raw_digest == 7 and
+            .producer_identity_fault_receipt.persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
+            .consumer_identity_fault_receipt.persistence.claim_recreated_due_only_to_raw_digest_total == 7 and
+            .producer_identity_fault_receipt.persistence.semantic_target_preserved == 7 and
+            .consumer_identity_fault_receipt.persistence.semantic_target_preserved == 7 and
+            .producer_identity_fault_receipt.persistence.semantic_evidence_preserved == 7 and
+            .consumer_identity_fault_receipt.persistence.semantic_evidence_preserved == 7 and
+            .producer_identity_fault_receipt.persistence.raw_evidence_changed == 7 and
+            .consumer_identity_fault_receipt.persistence.raw_evidence_changed == 7 and
+            .producer_identity_fault_receipt.persistence.evidence_only_changes == 7 and
+            .consumer_identity_fault_receipt.persistence.evidence_only_changes == 7 and
+            ((.producer_identity_fault_receipt.baseline.records | map(.stable_id) | sort) == (.producer_identity_fault_receipt.alternate.records | map(.stable_id) | sort)) and
+            ((.consumer_identity_fault_receipt.baseline.records | map(.stable_id) | sort) == (.consumer_identity_fault_receipt.alternate.records | map(.stable_id) | sort)) and
+            ((.producer_identity_fault_receipt.faulted_alternate.records | length) == 7) and ((.consumer_identity_fault_receipt.faulted_alternate.records | length) == 7) and
+            ((.producer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.producer_identity_fault_receipt.persistence.added_ids | length) == 7) and
+            ((.consumer_identity_fault_receipt.persistence.removed_ids | length) == 7) and ((.consumer_identity_fault_receipt.persistence.added_ids | length) == 7)
           ' "$out/persistence-identity-fault.json"
           go run ./cmd/semantic-delta-receipt-witness --persistence-probe \
             --persistence-before "$root/before.gooo" --persistence-after "$root/equivalent-after.gooo" \
@@ -379,6 +388,7 @@ jobs:
           out="$RUNNER_TEMP/semantic-delta-receipt"
           test -s "$out/workspace-before.tsv"
           test -s "$out/workspace-after.tsv"
+          jq -e '.forbidden_import_numerator == 0 and .forbidden_import_denominator == 0 and .allowed_import_count == 0 and .contract == "FORBIDDEN_PRODUCER_IMPORTS=0/0" and .decision == "PASS" and .resolution == "EXACT" and .stage == "independent-consumer" and .step == "import-boundary"' "$out/consumer-import-boundary.json"
           test "$(jq -r '.net_repository_state' "$out/workspace-attestation.json")" = "NET_REPOSITORY_STATE_UNCHANGED"
           test "$(jq -r '.changed_path_or_content_count' "$out/workspace-attestation.json")" = "0"
 
