@@ -21,7 +21,7 @@ func Emit(receipt model.Receipt, judgment model.Judgment, subjectSHA, path strin
 		judgment.AuthorizationDigest == "" || receipt.AuthorizationDigest != judgment.AuthorizationDigest ||
 		model.AuthorizationDigest(receipt) != receipt.AuthorizationDigest || receipt.Phase != model.ReceiptProvisional ||
 		receipt.HeadSHA != subjectSHA || receipt.Evidence.EffectIntent != "approved-artifact" || len(receipt.Effects) != 0 ||
-		!model.ValidHead(subjectSHA) || receipt.Digest == "" || receipt.Digest != model.SealReceipt(receipt).Digest || tempRoot == "" || relativePath == "" {
+		!model.ValidHead(subjectSHA) || !model.ValidExecutionID(subjectSHA, receipt.ExecutionID) || receipt.Digest == "" || receipt.Digest != model.SealReceipt(receipt).Digest || tempRoot == "" || relativePath == "" {
 		return model.Effect{}, fmt.Errorf("effect authorization is not exact or is stale")
 	}
 	data := ArtifactBytes(receipt)
@@ -44,14 +44,14 @@ func Emit(receipt model.Receipt, judgment model.Judgment, subjectSHA, path strin
 	artifact := model.ArtifactEvidence{
 		Path: path, ContentDigest: model.DigestBytes(data), Size: len(data), CaseID: receipt.CaseID, ExecutionID: receipt.ExecutionID, SubjectSHA: subjectSHA,
 		AuthorizationDigest: receipt.AuthorizationDigest, Producer: receipt.Producer, Executor: model.ExecutorID,
-		Consumer: receipt.Consumer, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown,
+		Consumer: receipt.Consumer, RepositoryNetContentObserved: false, RepositoryNetContentUnchanged: false, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown,
 	}
 	effect := model.Effect{
 		Kind: model.EffectApproved, ArtifactID: "gooo://invariant-transformation/artifact/approved", ArtifactDigest: artifact.ContentDigest,
 		ArtifactPath: artifact.Path, ArtifactSize: artifact.Size, Artifact: artifact, CaseID: receipt.CaseID, ExecutionID: receipt.ExecutionID, SubjectSHA: subjectSHA,
 		Intent: receipt.Evidence.EffectIntent, AuthorizationDigest: receipt.AuthorizationDigest, Producer: receipt.Producer,
 		Executor: model.ExecutorID, Consumer: receipt.Consumer, MetaOperation: "execute-authorized-temp-artifact",
-		TempArtifactWriteAuthorized: true, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope,
+		TempArtifactWriteAuthorized: true, RepositoryNetContentObserved: false, RepositoryNetContentUnchanged: false, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope,
 		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
 	}
 	executionDigest := model.EffectExecutionDigest(effect)

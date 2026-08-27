@@ -23,6 +23,10 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	if err != nil {
 		return model.Receipt{}, err
 	}
+	executionID := headSHA + "::" + caseID
+	if !model.ValidExecutionID(headSHA, executionID) {
+		return model.Receipt{}, fmt.Errorf("invalid execution id for case %q", caseID)
+	}
 
 	sourceDigest := model.DigestBytes(source)
 	semanticBefore := model.SemanticDigest(fixture.Input)
@@ -100,12 +104,13 @@ func Build(source []byte, headSHA, caseID string) (model.Receipt, error) {
 	}
 	decision, resolution, reason := deriveDecision(claims)
 	receipt := model.Receipt{
-		Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.ActivityID, HeadSHA: headSHA,
+		Schema: model.ReceiptSchema, CaseID: fixture.CaseID, ExecutionID: executionID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.ActivityID, HeadSHA: headSHA,
 		SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest,
 		ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID,
 		Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims,
 		Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional,
-		Effects: []model.Effect{}, TempArtifactWriteAuthorized: false, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		Effects: []model.Effect{}, TempArtifactWriteAuthorized: false, RepositoryNetContentObserved: false, RepositoryNetContentUnchanged: false,
+		RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
 		RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, RepositoryMutationAuthorized: false,
 		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope,
 		AuthorityScope: model.AuthorityScope,

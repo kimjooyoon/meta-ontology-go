@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -50,6 +51,7 @@ const (
 
 var digestPattern = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
 var headPattern = regexp.MustCompile(`^[0-9a-f]{40}$`)
+var executionPattern = regexp.MustCompile(`^[0-9a-f]{40}::[A-Za-z0-9._-]{1,64}$`)
 
 type Coordinate struct {
 	Stage  string `json:"stage"`
@@ -168,85 +170,97 @@ type CandidateComputation struct {
 }
 
 type ArtifactEvidence struct {
-	Path                         string `json:"path"`
-	ContentDigest                string `json:"content_digest"`
-	Size                         int    `json:"size"`
-	CaseID                       string `json:"case_id"`
-	ExecutionID                  string `json:"execution_id"`
-	SubjectSHA                   string `json:"subject_sha"`
-	AuthorizationDigest          string `json:"authorization_digest"`
-	Producer                     string `json:"producer"`
-	Executor                     string `json:"executor"`
-	Consumer                     string `json:"consumer"`
-	EffectReceiptDigest          string `json:"effect_receipt_digest"`
+	Path                string `json:"path"`
+	ContentDigest       string `json:"content_digest"`
+	Size                int    `json:"size"`
+	CaseID              string `json:"case_id"`
+	ExecutionID         string `json:"execution_id"`
+	SubjectSHA          string `json:"subject_sha"`
+	AuthorizationDigest string `json:"authorization_digest"`
+	Producer            string `json:"producer"`
+	Executor            string `json:"executor"`
+	Consumer            string `json:"consumer"`
+	EffectReceiptDigest string `json:"effect_receipt_digest"`
+	// RepositoryNetContent* describe path+content observation, not git status.
+	RepositoryNetContentObserved  bool `json:"repository_net_content_observed"`
+	RepositoryNetContentUnchanged bool `json:"repository_net_content_unchanged"`
+	// Deprecated: these fields imply git-status observation and are not used for decisions.
 	RepositoryNetStatusObserved  bool   `json:"repository_net_status_observed"`
 	RepositoryNetStatusUnchanged bool   `json:"repository_net_status_unchanged"`
 	RepositoryNetState           string `json:"repository_net_state"`
 }
 
 type Effect struct {
-	Kind                              string           `json:"kind"`
-	ArtifactID                        string           `json:"artifact_id,omitempty"`
-	ArtifactDigest                    string           `json:"artifact_digest,omitempty"`
-	ArtifactPath                      string           `json:"artifact_path,omitempty"`
-	ArtifactSize                      int              `json:"artifact_size,omitempty"`
-	Artifact                          ArtifactEvidence `json:"artifact,omitempty"`
-	CaseID                            string           `json:"case_id"`
-	ExecutionID                       string           `json:"execution_id"`
-	SubjectSHA                        string           `json:"subject_sha"`
-	Intent                            string           `json:"intent"`
-	AuthorizationDigest               string           `json:"authorization_digest"`
-	ExecutionReceiptDigest            string           `json:"execution_receipt_digest"`
-	Producer                          string           `json:"producer"`
-	Executor                          string           `json:"executor"`
-	Consumer                          string           `json:"consumer"`
-	MetaOperation                     string           `json:"meta_operation"`
-	TempArtifactWriteAuthorized       bool             `json:"temp_artifact_write_authorized"`
-	RepositoryNetStatusObserved       bool             `json:"repository_net_status_observed"`
-	RepositoryNetStatusUnchanged      bool             `json:"repository_net_status_unchanged"`
-	RepositoryNetState                string           `json:"repository_net_state"`
-	RepositoryActualOrTransientWrites string           `json:"repository_actual_or_transient_writes"`
-	RepositoryPathAuthorization       bool             `json:"repository_path_authorization"`
-	AmbientProcessAuthority           string           `json:"ambient_process_authority"`
+	Kind                        string           `json:"kind"`
+	ArtifactID                  string           `json:"artifact_id,omitempty"`
+	ArtifactDigest              string           `json:"artifact_digest,omitempty"`
+	ArtifactPath                string           `json:"artifact_path,omitempty"`
+	ArtifactSize                int              `json:"artifact_size,omitempty"`
+	Artifact                    ArtifactEvidence `json:"artifact,omitempty"`
+	CaseID                      string           `json:"case_id"`
+	ExecutionID                 string           `json:"execution_id"`
+	SubjectSHA                  string           `json:"subject_sha"`
+	Intent                      string           `json:"intent"`
+	AuthorizationDigest         string           `json:"authorization_digest"`
+	ExecutionReceiptDigest      string           `json:"execution_receipt_digest"`
+	Producer                    string           `json:"producer"`
+	Executor                    string           `json:"executor"`
+	Consumer                    string           `json:"consumer"`
+	MetaOperation               string           `json:"meta_operation"`
+	TempArtifactWriteAuthorized bool             `json:"temp_artifact_write_authorized"`
+	// RepositoryNetContent* describe path+content observation, not git status.
+	RepositoryNetContentObserved  bool `json:"repository_net_content_observed"`
+	RepositoryNetContentUnchanged bool `json:"repository_net_content_unchanged"`
+	// Deprecated: these fields imply git-status observation and are not used for decisions.
+	RepositoryNetStatusObserved       bool   `json:"repository_net_status_observed"`
+	RepositoryNetStatusUnchanged      bool   `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string `json:"repository_net_state"`
+	RepositoryActualOrTransientWrites string `json:"repository_actual_or_transient_writes"`
+	RepositoryPathAuthorization       bool   `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string `json:"ambient_process_authority"`
 }
 
 type Receipt struct {
-	Schema                            string                 `json:"schema"`
-	CaseID                            string                 `json:"case_id"`
-	ExecutionID                       string                 `json:"execution_id"`
-	CaseKind                          string                 `json:"case_kind"`
-	ActivityStableID                  string                 `json:"activity_stable_id"`
-	HeadSHA                           string                 `json:"head_sha"`
-	SourcePath                        string                 `json:"source_path"`
-	SourceDigest                      string                 `json:"source_digest"`
-	SemanticSourceDigest              string                 `json:"semantic_source_digest"`
-	ContractDigest                    string                 `json:"contract_digest"`
-	ValidatorContractDigest           string                 `json:"validator_contract_digest"`
-	Producer                          string                 `json:"producer"`
-	Consumer                          string                 `json:"consumer"`
-	MetaOperation                     string                 `json:"meta_operation"`
-	ProofChoice                       string                 `json:"proof_choice"`
-	Values                            []MetaValue            `json:"values"`
-	Claims                            []Claim                `json:"claims"`
-	Evidence                          TransformationEvidence `json:"evidence"`
-	Decision                          string                 `json:"decision"`
-	Resolution                        string                 `json:"resolution"`
-	Reason                            string                 `json:"reason"`
-	Phase                             string                 `json:"phase"`
-	Effects                           []Effect               `json:"effects"`
-	AuthorizationDigest               string                 `json:"authorization_digest"`
-	TempArtifactWriteAuthorized       bool                   `json:"temp_artifact_write_authorized"`
-	RepositoryNetStatusObserved       bool                   `json:"repository_net_status_observed"`
-	RepositoryNetStatusUnchanged      bool                   `json:"repository_net_status_unchanged"`
-	RepositoryNetState                string                 `json:"repository_net_state"`
-	RepositoryActualOrTransientWrites string                 `json:"repository_actual_or_transient_writes"`
-	RepositoryWritesObserved          bool                   `json:"repository_writes_observed"`
-	RepositoryWrites                  int                    `json:"repository_writes"`
-	RepositoryMutationAuthorized      bool                   `json:"repository_mutation_authorized"`
-	RepositoryPathAuthorization       bool                   `json:"repository_path_authorization"`
-	AmbientProcessAuthority           string                 `json:"ambient_process_authority"`
-	AuthorityScope                    string                 `json:"authority_scope"`
-	Digest                            string                 `json:"digest"`
+	Schema                      string                 `json:"schema"`
+	CaseID                      string                 `json:"case_id"`
+	ExecutionID                 string                 `json:"execution_id"`
+	CaseKind                    string                 `json:"case_kind"`
+	ActivityStableID            string                 `json:"activity_stable_id"`
+	HeadSHA                     string                 `json:"head_sha"`
+	SourcePath                  string                 `json:"source_path"`
+	SourceDigest                string                 `json:"source_digest"`
+	SemanticSourceDigest        string                 `json:"semantic_source_digest"`
+	ContractDigest              string                 `json:"contract_digest"`
+	ValidatorContractDigest     string                 `json:"validator_contract_digest"`
+	Producer                    string                 `json:"producer"`
+	Consumer                    string                 `json:"consumer"`
+	MetaOperation               string                 `json:"meta_operation"`
+	ProofChoice                 string                 `json:"proof_choice"`
+	Values                      []MetaValue            `json:"values"`
+	Claims                      []Claim                `json:"claims"`
+	Evidence                    TransformationEvidence `json:"evidence"`
+	Decision                    string                 `json:"decision"`
+	Resolution                  string                 `json:"resolution"`
+	Reason                      string                 `json:"reason"`
+	Phase                       string                 `json:"phase"`
+	Effects                     []Effect               `json:"effects"`
+	AuthorizationDigest         string                 `json:"authorization_digest"`
+	TempArtifactWriteAuthorized bool                   `json:"temp_artifact_write_authorized"`
+	// RepositoryNetContent* describe path+content observation, not git status.
+	RepositoryNetContentObserved  bool `json:"repository_net_content_observed"`
+	RepositoryNetContentUnchanged bool `json:"repository_net_content_unchanged"`
+	// Deprecated: the following fields imply git-status observation and are not used for decisions.
+	RepositoryNetStatusObserved       bool   `json:"repository_net_status_observed"`
+	RepositoryNetStatusUnchanged      bool   `json:"repository_net_status_unchanged"`
+	RepositoryNetState                string `json:"repository_net_state"`
+	RepositoryActualOrTransientWrites string `json:"repository_actual_or_transient_writes"`
+	RepositoryWritesObserved          bool   `json:"repository_writes_observed"`
+	RepositoryWrites                  int    `json:"repository_writes"`
+	RepositoryMutationAuthorized      bool   `json:"repository_mutation_authorized"`
+	RepositoryPathAuthorization       bool   `json:"repository_path_authorization"`
+	AmbientProcessAuthority           string `json:"ambient_process_authority"`
+	AuthorityScope                    string `json:"authority_scope"`
+	Digest                            string `json:"digest"`
 }
 
 type Judgment struct {
@@ -275,34 +289,38 @@ type CaseResult struct {
 }
 
 type Summary struct {
-	CasesTotal                        int    `json:"cases_total"`
-	CasesSatisfied                    int    `json:"cases_satisfied"`
-	AuthorizedCases                   int    `json:"authorized_cases"`
-	RefutedCases                      int    `json:"refuted_cases"`
-	OpenCases                         int    `json:"open_cases"`
-	ClaimsTotal                       int    `json:"claims_total"`
-	UniqueClaimInstances              int    `json:"unique_claim_instances"`
-	ClaimTemplates                    int    `json:"claim_templates"`
-	DischargedClaims                  int    `json:"discharged_claims"`
-	RefutedClaims                     int    `json:"refuted_claims"`
-	OpenClaims                        int    `json:"open_claims"`
-	TransitionEvents                  int    `json:"transition_events"`
-	AcceptedTransitions               int    `json:"accepted_transitions"`
-	SourceDerivedCases                int    `json:"source_derived_cases"`
-	BoundedInputDomainObservations    int    `json:"bounded_input_domain_observations"`
-	BoundedInputDomainDenominator     int    `json:"bounded_input_domain_denominator"`
-	InputDomainCoverageBPS            int    `json:"input_domain_coverage_bps"`
-	ProvisionalReceipts               int    `json:"provisional_receipts"`
-	AuthorizationReceipts             int    `json:"authorization_receipts"`
-	ExecutedEffects                   int    `json:"executed_effects"`
-	IndependentlyObservedEffects      int    `json:"independently_observed_effects"`
-	UnknownEffectScopes               int    `json:"unknown_effect_scopes"`
-	ApprovedArtifactEffects           int    `json:"approved_artifact_effects"`
-	RepositoryWrites                  int    `json:"repository_writes"`
-	RepositoryMutationAuthorized      int    `json:"repository_mutation_authorized"`
-	CoverageBPS                       int    `json:"coverage_bps"`
-	CorrectionCount                   int    `json:"correction_count"`
-	CorrectionDenominator             int    `json:"correction_denominator"`
+	CasesTotal                     int `json:"cases_total"`
+	CasesSatisfied                 int `json:"cases_satisfied"`
+	AuthorizedCases                int `json:"authorized_cases"`
+	RefutedCases                   int `json:"refuted_cases"`
+	OpenCases                      int `json:"open_cases"`
+	ClaimsTotal                    int `json:"claims_total"`
+	UniqueClaimInstances           int `json:"unique_claim_instances"`
+	ClaimTemplates                 int `json:"claim_templates"`
+	DischargedClaims               int `json:"discharged_claims"`
+	RefutedClaims                  int `json:"refuted_claims"`
+	OpenClaims                     int `json:"open_claims"`
+	TransitionEvents               int `json:"transition_events"`
+	AcceptedTransitions            int `json:"accepted_transitions"`
+	SourceDerivedCases             int `json:"source_derived_cases"`
+	BoundedInputDomainObservations int `json:"bounded_input_domain_observations"`
+	BoundedInputDomainDenominator  int `json:"bounded_input_domain_denominator"`
+	InputDomainCoverageBPS         int `json:"input_domain_coverage_bps"`
+	ProvisionalReceipts            int `json:"provisional_receipts"`
+	AuthorizationReceipts          int `json:"authorization_receipts"`
+	ExecutedEffects                int `json:"executed_effects"`
+	IndependentlyObservedEffects   int `json:"independently_observed_effects"`
+	UnknownEffectScopes            int `json:"unknown_effect_scopes"`
+	ApprovedArtifactEffects        int `json:"approved_artifact_effects"`
+	RepositoryWrites               int `json:"repository_writes"`
+	RepositoryMutationAuthorized   int `json:"repository_mutation_authorized"`
+	CoverageBPS                    int `json:"coverage_bps"`
+	CorrectionCount                int `json:"correction_count"`
+	CorrectionDenominator          int `json:"correction_denominator"`
+	// RepositoryNetContent* describe path+content observation, not git status.
+	RepositoryNetContentObserved  bool `json:"repository_net_content_observed"`
+	RepositoryNetContentUnchanged bool `json:"repository_net_content_unchanged"`
+	// Deprecated: the following fields imply git-status observation and are not used for decisions.
 	RepositoryNetStatusUnchanged      bool   `json:"repository_net_status_unchanged"`
 	RepositoryNetStatusObserved       bool   `json:"repository_net_status_observed"`
 	RepositoryNetContentState         string `json:"repository_net_content_state"`
@@ -481,6 +499,14 @@ func SealReport(report Report) Report {
 
 func ValidDigest(value string) bool { return digestPattern.MatchString(value) }
 func ValidHead(value string) bool   { return headPattern.MatchString(value) }
+
+func ValidExecutionID(headSHA, executionID string) bool {
+	if !ValidHead(headSHA) || !executionPattern.MatchString(executionID) || !strings.HasPrefix(executionID, headSHA+"::") {
+		return false
+	}
+	suffix := strings.TrimPrefix(executionID, headSHA+"::")
+	return !strings.Contains(suffix, "..") && strings.IndexFunc(suffix, func(r rune) bool { return r < 0x20 || r == 0x7f }) < 0
+}
 
 func ValidateContract(contract Contract) error {
 	if Digest(contract) != Digest(CanonicalContract()) {

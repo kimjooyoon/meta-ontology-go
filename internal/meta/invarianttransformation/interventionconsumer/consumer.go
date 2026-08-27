@@ -436,7 +436,10 @@ func verifyArtifact(artifact model.ArtifactEvidence, headSHA string, source []by
 	if err != nil {
 		return fmt.Errorf("artifact source reconstruction failed: %w", err)
 	}
-	receipt := reconstructReceipt(fixture, source, headSHA)
+	if !model.ValidExecutionID(headSHA, artifact.ExecutionID) {
+		return fmt.Errorf("artifact execution id is invalid")
+	}
+	receipt := reconstructReceiptForExecution(fixture, source, headSHA, artifact.ExecutionID)
 	if artifact.Path == "" || !allowedTempPath(artifact.Path) || !model.ValidDigest(artifact.ContentDigest) || artifact.Size <= 0 || artifact.CaseID != "approved-artifact" || artifact.ExecutionID != receipt.ExecutionID || artifact.SubjectSHA != headSHA || !model.ValidDigest(artifact.AuthorizationDigest) || !model.ValidDigest(artifact.EffectReceiptDigest) || artifact.Producer != model.ProducerID || artifact.Executor != model.ExecutorID || artifact.Consumer != model.ConsumerID || artifact.RepositoryNetStatusObserved || artifact.RepositoryNetStatusUnchanged || artifact.RepositoryNetState != model.RepositoryNetStateUnknown {
 		return fmt.Errorf("artifact evidence is incomplete")
 	}
@@ -702,6 +705,10 @@ func executeReplay(recipe string, input int64) (int64, error) {
 }
 
 func reconstructReceipt(fixture sourceFixture, source []byte, headSHA string) model.Receipt {
+	return reconstructReceiptForExecution(fixture, source, headSHA, headSHA+"::"+fixture.CaseID)
+}
+
+func reconstructReceiptForExecution(fixture sourceFixture, source []byte, headSHA, executionID string) model.Receipt {
 	sourceDigest := model.DigestBytes(source)
 	candidateDigest := model.CandidateDigest(fixture.CandidateOperation, fixture.Input, fixture.CandidateResult)
 	before := model.SemanticDigest(fixture.Input)
@@ -750,7 +757,7 @@ func reconstructReceipt(fixture sourceFixture, source []byte, headSHA string) mo
 		values = append(values, model.MetaValue{ID: spec.ID, Kind: spec.Kind, Value: statuses[spec.ID], EvidenceDigest: evidenceDigest, Producer: spec.Producer, Consumer: spec.Consumer, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice, VerificationCheck: spec.VerificationCheck, Coordinate: coordinate})
 	}
 	decision, resolution, reason := derive(claims)
-	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, RepositoryMutationAuthorized: false, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope, AuthorityScope: model.AuthorityScope}
+	receipt := model.Receipt{Schema: model.ReceiptSchema, CaseID: fixture.CaseID, ExecutionID: executionID, CaseKind: fixture.CaseKind, ActivityStableID: fixture.Activity, HeadSHA: headSHA, SourcePath: model.SourcePath, SourceDigest: sourceDigest, SemanticSourceDigest: fixture.SemanticSourceDigest, ContractDigest: model.ValueContractDigest(), ValidatorContractDigest: model.ValidatorContractDigest(), Producer: model.ProducerID, Consumer: model.ConsumerID, MetaOperation: model.AuthorityOp, ProofChoice: model.ProofRegression, Values: values, Claims: claims, Evidence: evidence, Decision: decision, Resolution: resolution, Reason: reason, Phase: model.ReceiptProvisional, Effects: []model.Effect{}, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetState: model.RepositoryNetStateUnknown, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWritesObserved: false, RepositoryWrites: -1, RepositoryMutationAuthorized: false, RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope, AuthorityScope: model.AuthorityScope}
 	receipt.AuthorizationDigest = model.AuthorizationDigest(receipt)
 	return model.SealReceipt(receipt)
 }

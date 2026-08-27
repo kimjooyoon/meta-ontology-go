@@ -2231,6 +2231,75 @@ jobs:
               -output "$pass_output/report.json"
           done
 
+      - name: Compare normalized semantic report projections
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/invariant-transformation"
+          for pass in first second; do
+            jq -S '
+              del(
+                .execution_id,
+
+                .digest,
+
+                .cases[].provisional_receipt_digest,
+
+                .cases[].authorization_receipt_digest,
+
+                .cases[].receipt.execution_id,
+
+                .cases[].receipt.authorization_digest,
+
+                .cases[].receipt.digest,
+
+                .cases[].judgment.authorization_digest,
+
+                .cases[].receipt.effects[].execution_id,
+
+                .cases[].receipt.effects[].artifact_path,
+
+                .cases[].receipt.effects[].artifact_digest,
+
+                .cases[].receipt.effects[].artifact_size,
+
+                .cases[].receipt.effects[].authorization_digest,
+
+                .cases[].receipt.effects[].execution_receipt_digest,
+
+                .cases[].receipt.effects[].artifact.path,
+
+                .cases[].receipt.effects[].artifact.content_digest,
+
+                .cases[].receipt.effects[].artifact.execution_id,
+
+                .cases[].receipt.effects[].artifact.authorization_digest,
+
+                .cases[].receipt.effects[].artifact.effect_receipt_digest,
+
+                .repository_observation.execution_id,
+
+                .repository_observation.witness_report_digest,
+
+                .repository_observation.witness_receipt_digests,
+
+                .repository_observation.witness_effect_digests,
+
+                .repository_observation.witness_artifact_digests,
+
+                .repository_observation.before.execution_id,
+
+                .repository_observation.before.entries_path,
+
+                .repository_observation.after.execution_id,
+
+                .repository_observation.after.entries_path
+              )
+            ' "$root/$pass/report.json" > "$root/$pass/semantic-projection.json"
+          done
+          cmp -s "$root/first/semantic-projection.json" "$root/second/semantic-projection.json"
+          echo 'semantic report projection deterministic replay: 1/1' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Reject forged repository observations
         shell: bash
         run: |
@@ -2299,6 +2368,14 @@ jobs:
           report_consumer_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/reportconsumer'
           producer_intervention_package='github.com/kimjooyoon/meta-ontology-go/internal/meta/invarianttransformation/intervention'
           test "$(cat "$RUNNER_TEMP/invariant-transformation-observed-head.txt")" = "$HEAD_SHA"
+          for pass in first second; do
+            execution_id="$(jq -r '.execution_id' "$RUNNER_TEMP/invariant-transformation/$pass/report.json")"
+            [[ "$execution_id" == "$HEAD_SHA::"* ]]
+            execution_suffix="${execution_id#"$HEAD_SHA::"}"
+            [[ "$execution_suffix" =~ ^[A-Za-z0-9._-]{1,64}$ ]]
+            [[ "$execution_suffix" != *..* ]]
+            [[ "$execution_id" != *"/"* && "$execution_id" != *$'\n'* && "$execution_id" != *$'\r'* ]]
+          done
           test "$(jq -r '.head_sha' "$RUNNER_TEMP/invariant-transformation/first/report.json")" = "$HEAD_SHA"
           test "$(jq -r '.execution_id' "$RUNNER_TEMP/invariant-transformation/first/report.json")" = "$HEAD_SHA::first"
           dependencies="$(go list -deps ./internal/meta/invarianttransformation/judge)"
@@ -2317,6 +2394,7 @@ jobs:
           unknown_effect_scopes="$(jq '.summary.unknown_effect_scopes' "$RUNNER_TEMP/invariant-transformation/first/report.json")"
           allowed_forbidden_imports=0
           allowed_producer_dependency_imports=0
+          allowed_report_consumer_producer_imports=0
           dependency_output="$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           mkdir -p "$(dirname "$dependency_output")"
           jq -n \
@@ -2330,6 +2408,7 @@ jobs:
             --argjson producer_dependency_imports "$producer_dependency_imports" \
             --argjson allowed_producer_dependency_imports "$allowed_producer_dependency_imports" \
             --argjson report_consumer_producer_imports "$report_consumer_producer_imports" \
+            --argjson allowed_report_consumer_producer_imports "$allowed_report_consumer_producer_imports" \
             --argjson artifact_evidence "$artifact_evidence" \
             --argjson unknown_effect_scopes "$unknown_effect_scopes" \
             '{schema: $schema, production_judge_package: $package, forbidden_package: $forbidden_package,
@@ -2339,18 +2418,21 @@ jobs:
               producer_dependency_imports: $producer_dependency_imports,
               allowed_producer_dependency_imports: $allowed_producer_dependency_imports,
               report_consumer_producer_imports: $report_consumer_producer_imports,
-              allowed_report_consumer_producer_imports: 0,
+              allowed_report_consumer_producer_imports: $allowed_report_consumer_producer_imports,
               artifact_evidence: $artifact_evidence,
               artifact_observed: true,
               unknown_effect_scopes: $unknown_effect_scopes,
               production_only: true, test_imports_excluded: true,
               decision: (if $forbidden_imports == $allowed_forbidden_imports and
-                  $producer_dependency_imports == $allowed_producer_dependency_imports then "PASS" else "FAIL" end),
+                  $producer_dependency_imports == $allowed_producer_dependency_imports and
+                  $report_consumer_producer_imports == $allowed_report_consumer_producer_imports then "PASS" else "FAIL" end),
+              repository_net_content_observed: false, repository_net_content_unchanged: false,
               repository_net_status_observed: false, repository_net_status_unchanged: false, repository_net_content_state: "UNKNOWN",
               repository_actual_or_transient_writes: "UNKNOWN"}' > "$dependency_output"
           test "$forbidden_imports" -eq "$allowed_forbidden_imports"
           test "$producer_dependency_imports" -eq "$allowed_producer_dependency_imports"
-          test "$report_consumer_producer_imports" -eq 0
+          test "$report_consumer_producer_imports" -eq "$allowed_report_consumer_producer_imports"
+          test "$(jq -r '.decision' "$dependency_output")" = "PASS"
           test "$(jq -r '.artifact_observed' "$dependency_output")" = true
           test "$(jq -r '.artifact_evidence.content_digest' "$dependency_output")" = "$observed_artifact_digest"
           test "$(jq -r '.artifact_evidence.subject_sha' "$dependency_output")" = "$HEAD_SHA"
@@ -2448,7 +2530,8 @@ jobs:
             .report_consumer_producer_imports == 0 and .allowed_report_consumer_producer_imports == 0 and
             .artifact_observed == true and (.artifact_evidence.path | length) > 0 and
             (.artifact_evidence.content_digest | startswith("sha256:")) and .artifact_evidence.size > 0 and
-            .unknown_effect_scopes == 1 and .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_content_state == "UNKNOWN" and
+            .unknown_effect_scopes == 1 and .repository_net_content_observed == false and .repository_net_content_unchanged == false and
+            .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_content_state == "UNKNOWN" and
             .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN" and .repository_actual_or_transient_writes == "UNKNOWN"
           ' "$RUNNER_TEMP/invariant-transformation/first/dependency-boundary.json"
           jq -e '
@@ -2494,7 +2577,9 @@ jobs:
             .summary.executed_effects == 1 and .summary.independently_observed_effects == 1 and .summary.unknown_effect_scopes == 1 and
             .summary.approved_artifact_effects == 1 and
             .summary.repository_writes == -1 and .summary.repository_mutation_authorized == 0 and
-            .summary.repository_net_status_observed == true and .summary.repository_net_status_unchanged == true and .summary.repository_net_content_state == "NET_REPOSITORY_CONTENT_STATE_UNCHANGED" and
+            .summary.repository_net_content_observed == true and .summary.repository_net_content_unchanged == true and
+            .summary.repository_net_status_observed == false and .summary.repository_net_status_unchanged == false and
+            .summary.repository_net_content_state == "NET_REPOSITORY_CONTENT_STATE_UNCHANGED" and
             .summary.repository_net_snapshot_observations == 1 and .summary.repository_net_snapshot_denominator == 1 and
             .summary.repository_path_authorization == false and .summary.ambient_process_authority == "UNKNOWN" and .summary.temp_artifact_write_authorized == true and
             .summary.repository_actual_or_transient_writes == "UNKNOWN" and
@@ -2520,6 +2605,8 @@ jobs:
             ([.cases[].receipt.effects[]?.execution_id] | all(. == $execution)) and
             ([.cases[].receipt.effects[]?.artifact.execution_id] | all(. == $execution)) and
             ([.cases[].receipt.repository_mutation_authorized] | any) == false and
+            ([.cases[].receipt.repository_net_content_observed] | any) == false and
+            ([.cases[].receipt.repository_net_content_unchanged] | any) == false and
             ([.cases[].receipt.repository_net_status_observed] | any) == false and
             ([.cases[].receipt.repository_net_status_unchanged] | any) == false and
             ([.cases[].receipt.repository_net_state] | all(. == "UNKNOWN")) and
@@ -2539,6 +2626,7 @@ jobs:
               (.artifact.path | length) > 0 and (.artifact.content_digest | startswith("sha256:")) and .artifact.size > 0 and
               .execution_id == $execution and .artifact.execution_id == $execution and
               .artifact.subject_sha == .subject_sha and .artifact.authorization_digest == .authorization_digest and
+              .artifact.repository_net_content_observed == false and .artifact.repository_net_content_unchanged == false and
               .artifact.repository_net_status_observed == false and .artifact.repository_net_status_unchanged == false and .artifact.repository_net_state == "UNKNOWN" and
               .repository_net_status_observed == false and .repository_net_status_unchanged == false and .repository_net_state == "UNKNOWN" and
               .repository_path_authorization == false and .ambient_process_authority == "UNKNOWN"] | all) and
@@ -2551,7 +2639,7 @@ jobs:
             jq -r '"- claim ledger: unique=\(.summary.unique_claim_instances), templates=\(.summary.claim_templates), accepted-transitions=\(.summary.accepted_transitions)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
             jq -r '"- bounded domain/effects: domain=\(.summary.bounded_input_domain_observations)/\(.summary.bounded_input_domain_denominator), provisional=\(.summary.provisional_receipts), authorization=\(.summary.authorization_receipts), executed=\(.summary.executed_effects), observed=\(.summary.independently_observed_effects), unknown=\(.summary.unknown_effect_scopes)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
             jq -r '"- repository net content snapshot: \(.summary.repository_net_snapshot_observations)/\(.summary.repository_net_snapshot_denominator), state=\(.summary.repository_net_content_state)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
-            jq -r '"- effect boundary: temp-authorized=\(.summary.temp_artifact_write_authorized), repository-net-unchanged=\(.summary.repository_net_status_unchanged), actual-or-transient=\(.summary.repository_actual_or_transient_writes)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
+            jq -r '"- effect boundary: temp-authorized=\(.summary.temp_artifact_write_authorized), repository-net-content-unchanged=\(.summary.repository_net_content_unchanged), actual-or-transient=\(.summary.repository_actual_or_transient_writes)"' "$RUNNER_TEMP/invariant-transformation/first/report.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact-head receipts

@@ -45,7 +45,7 @@ func ValidateReport(report model.Report, source []byte) error {
 	if err != nil {
 		return err
 	}
-	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || report.ExecutionID == "" || report.SourcePath != model.SourcePath ||
+	if report.Schema != model.ReportSchema || !model.ValidHead(report.HeadSHA) || !model.ValidExecutionID(report.HeadSHA, report.ExecutionID) || report.SourcePath != model.SourcePath ||
 		report.SourceDigest != model.DigestBytes(source) || report.SemanticSourceDigest != semanticDigest || report.ContractDigest != model.ValueContractDigest() ||
 		report.ValidatorContractDigest != model.ValidatorContractDigest() || report.DenominatorID != model.DenominatorID || report.DenominatorTotal != len(report.Cases) ||
 		report.Digest == "" || report.Digest != model.SealReport(report).Digest {
@@ -109,7 +109,7 @@ func ValidateReport(report model.Report, source []byte) error {
 }
 
 func summarizeReport(cases []model.CaseResult, observation model.RepositoryObservation) model.Summary {
-	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: observation.Observed, RepositoryNetStatusUnchanged: observation.State == model.RepositoryNetContentStateUnchanged, RepositoryNetContentState: observation.State, RepositoryNetSnapshotObservations: boolInt(observation.Observed), RepositoryNetSnapshotDenominator: 1, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1, AmbientProcessAuthority: model.UnknownEffectScope}
+	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainObservations: len(cases), BoundedInputDomainDenominator: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()), CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetContentObserved: observation.Observed, RepositoryNetContentUnchanged: observation.State == model.RepositoryNetContentStateUnchanged, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false, RepositoryNetContentState: observation.State, RepositoryNetSnapshotObservations: boolInt(observation.Observed), RepositoryNetSnapshotDenominator: 1, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1, AmbientProcessAuthority: model.UnknownEffectScope}
 	claimIDs := map[string]bool{}
 	for _, item := range cases {
 		if item.Satisfied {
@@ -172,7 +172,7 @@ type repositoryEntry struct {
 
 func validRepositoryObservation(report model.Report) bool {
 	observation := report.RepositoryObservation
-	if !observation.Observed || observation.State != model.RepositoryNetContentStateUnchanged || observation.ExecutionID == "" || observation.ExecutionID != report.ExecutionID || !model.ValidDigest(observation.WitnessReportDigest) || report.Summary.RepositoryNetSnapshotDenominator != 1 || report.Summary.RepositoryNetSnapshotObservations != 1 {
+	if !observation.Observed || observation.State != model.RepositoryNetContentStateUnchanged || observation.ExecutionID == "" || observation.ExecutionID != report.ExecutionID || !model.ValidDigest(observation.WitnessReportDigest) || !report.Summary.RepositoryNetContentObserved || !report.Summary.RepositoryNetContentUnchanged || report.Summary.RepositoryNetStatusObserved || report.Summary.RepositoryNetStatusUnchanged || report.Summary.RepositoryNetSnapshotDenominator != 1 || report.Summary.RepositoryNetSnapshotObservations != 1 {
 		return false
 	}
 	before, beforeEntries, ok := validRepositorySnapshot(observation.Before, report.HeadSHA)
@@ -208,6 +208,8 @@ func validRepositoryObservation(report model.Report) bool {
 func unboundReportDigest(report model.Report) string {
 	unbound := report
 	unbound.RepositoryObservation = model.RepositoryObservation{}
+	unbound.Summary.RepositoryNetContentObserved = false
+	unbound.Summary.RepositoryNetContentUnchanged = false
 	unbound.Summary.RepositoryNetStatusObserved = false
 	unbound.Summary.RepositoryNetStatusUnchanged = false
 	unbound.Summary.RepositoryNetContentState = model.RepositoryNetContentStateUnknown
@@ -222,7 +224,7 @@ func unboundReportDigest(report model.Report) string {
 }
 
 func validRepositorySnapshot(snapshot model.RepositorySnapshot, headSHA string) (model.RepositorySnapshot, []repositoryEntry, bool) {
-	if snapshot.Schema != model.RepositorySnapshotSchema || snapshot.HeadSHA != headSHA || snapshot.ExecutionID == "" || !filepath.IsAbs(snapshot.EntriesPath) || !allowedSnapshotPath(snapshot.EntriesPath) || !model.ValidDigest(snapshot.EntriesDigest) || !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {
+	if snapshot.Schema != model.RepositorySnapshotSchema || snapshot.HeadSHA != headSHA || !model.ValidExecutionID(headSHA, snapshot.ExecutionID) || !filepath.IsAbs(snapshot.EntriesPath) || !allowedSnapshotPath(snapshot.EntriesPath) || !model.ValidDigest(snapshot.EntriesDigest) || !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {
 		return model.RepositorySnapshot{}, nil, false
 	}
 	raw, err := os.ReadFile(snapshot.EntriesPath)

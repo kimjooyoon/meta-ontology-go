@@ -28,8 +28,8 @@ func main() {
 	if *root == "" || *headSHA == "" || *executionID == "" || *entriesPath == "" || *outputPath == "" {
 		fail("-root, -head-sha, -execution-id, -entries, and -output are required")
 	}
-	if !model.ValidHead(*headSHA) {
-		fail("invalid expected head sha")
+	if !model.ValidHead(*headSHA) || !model.ValidExecutionID(*headSHA, *executionID) {
+		fail("invalid expected head sha or execution id")
 	}
 	rootAbsolute, err := filepath.Abs(*root)
 	if err != nil {

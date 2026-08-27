@@ -44,8 +44,12 @@ raw tracked+untracked `path,digest` artifact immediately before and after each
 witness execution. The independent report consumer checks that artifact's
 address, byte digest, entry count, sorted entry projection, exact execution ID,
 and exact HEAD before deriving `NET_REPOSITORY_CONTENT_STATE_UNCHANGED`.
+The raw snapshot bytes are observation evidence supplied by the snapshot
+producer, not a signed statement of repository truth; the consumer claims only
+the independently reconstructed content comparison at this boundary.
 `repository_actual_or_transient_writes=UNKNOWN` remains separate from that
-content observation. `AUTHORIZED` is scoped to the bounded transformation
+content observation. Legacy `repository_net_status_*` fields are retained only
+for compatibility, remain false, and are not decision inputs. `AUTHORIZED` is scoped to the bounded transformation
 receipt or temporary artifact emission; it does not grant repository edit or
 promotion authority.
 

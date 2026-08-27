@@ -68,6 +68,9 @@ func buildReport(source []byte, headSHA, executionID string) (model.Report, erro
 	if !model.ValidHead(headSHA) {
 		return model.Report{}, fmt.Errorf("invalid head sha %q", headSHA)
 	}
+	if !model.ValidExecutionID(headSHA, executionID) {
+		return model.Report{}, fmt.Errorf("invalid execution id %q", executionID)
+	}
 	sourceCases, err := producer.Discover(source)
 	if err != nil {
 		return model.Report{}, err
@@ -141,7 +144,8 @@ func buildReport(source []byte, headSHA, executionID string) (model.Report, erro
 func summarize(cases []model.CaseResult) model.Summary {
 	summary := model.Summary{CasesTotal: len(cases), SourceDerivedCases: len(cases), BoundedInputDomainDenominator: len(cases),
 		BoundedInputDomainObservations: len(cases), ClaimTemplates: len(model.CanonicalValueSpecs()),
-		CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
+		CorrectionCount: 12, CorrectionDenominator: 12, RepositoryNetContentObserved: false, RepositoryNetContentUnchanged: false,
+		RepositoryNetStatusObserved: false, RepositoryNetStatusUnchanged: false,
 		RepositoryNetContentState: model.RepositoryNetContentStateUnknown, RepositoryNetSnapshotDenominator: 1, RepositoryActualOrTransientWrites: model.UnknownEffectScope, RepositoryWrites: -1,
 		RepositoryPathAuthorization: false, AmbientProcessAuthority: model.UnknownEffectScope}
 	for _, item := range cases {
@@ -182,7 +186,7 @@ func summarize(cases []model.CaseResult) model.Summary {
 				summary.UnknownEffectScopes++
 			}
 		}
-		summary.RepositoryNetStatusUnchanged = summary.RepositoryNetStatusUnchanged && item.Receipt.RepositoryNetStatusUnchanged
+		summary.RepositoryNetContentUnchanged = summary.RepositoryNetContentUnchanged && item.Receipt.RepositoryNetContentUnchanged
 		summary.RepositoryMutationAuthorized |= boolInt(item.Receipt.RepositoryMutationAuthorized)
 		if item.Receipt.RepositoryWritesObserved {
 			if summary.RepositoryWrites < 0 {

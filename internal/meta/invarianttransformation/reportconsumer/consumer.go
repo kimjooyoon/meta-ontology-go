@@ -27,7 +27,7 @@ func Bind(reportRaw, beforeRaw, afterRaw, source []byte, headSHA string) (model.
 	if err := json.Unmarshal(reportRaw, &report); err != nil {
 		return model.Report{}, fmt.Errorf("REPORT_BINDING/parse-report/REPORT_JSON_INVALID: %w", err)
 	}
-	if report.HeadSHA != headSHA || !model.ValidHead(headSHA) || report.ExecutionID == "" {
+	if report.HeadSHA != headSHA || !model.ValidHead(headSHA) || !model.ValidExecutionID(headSHA, report.ExecutionID) {
 		return model.Report{}, fmt.Errorf("REPORT_BINDING/bind-execution-id/EXECUTION_ID_OR_HEAD_MISMATCH")
 	}
 	if report.Digest == "" || report.Digest != model.SealReport(report).Digest {
@@ -63,8 +63,10 @@ func Bind(reportRaw, beforeRaw, afterRaw, source []byte, headSHA string) (model.
 		}
 	}
 	report.RepositoryObservation = observation
-	report.Summary.RepositoryNetStatusObserved = true
-	report.Summary.RepositoryNetStatusUnchanged = true
+	report.Summary.RepositoryNetContentObserved = true
+	report.Summary.RepositoryNetContentUnchanged = true
+	report.Summary.RepositoryNetStatusObserved = false
+	report.Summary.RepositoryNetStatusUnchanged = false
 	report.Summary.RepositoryNetContentState = model.RepositoryNetContentStateUnchanged
 	report.Summary.RepositoryNetSnapshotObservations = 1
 	report.Summary.RepositoryNetSnapshotDenominator = 1
@@ -85,7 +87,7 @@ func readSnapshot(raw []byte, headSHA, executionID, label string) (model.Reposit
 	if err := json.Unmarshal(raw, &snapshot); err != nil {
 		return model.RepositorySnapshot{}, nil, fmt.Errorf("REPOSITORY_SNAPSHOT/%s/parse-metadata/SNAPSHOT_JSON_INVALID: %w", label, err)
 	}
-	if snapshot.Schema != model.RepositorySnapshotSchema || snapshot.HeadSHA != headSHA || snapshot.ExecutionID != executionID {
+	if snapshot.Schema != model.RepositorySnapshotSchema || snapshot.HeadSHA != headSHA || !model.ValidExecutionID(headSHA, snapshot.ExecutionID) || snapshot.ExecutionID != executionID {
 		return model.RepositorySnapshot{}, nil, fmt.Errorf("REPOSITORY_BINDING/compare-execution-id/EXECUTION_ID_MISMATCH")
 	}
 	if !filepath.IsAbs(snapshot.EntriesPath) || snapshot.EntriesPath == "" || !allowedSnapshotPath(snapshot.EntriesPath) || !model.ValidDigest(snapshot.EntriesDigest) || !model.ValidDigest(snapshot.PathDigest) || snapshot.EntryCount < 0 {

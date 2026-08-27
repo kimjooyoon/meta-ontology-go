@@ -18,10 +18,10 @@ const (
 // Judge independently reconstructs the source recipe and validates a receipt.
 // It does not import producer or intervention code and never creates files.
 func Judge(receipt model.Receipt, source []byte) model.Judgment {
-	if receipt.Schema != model.ReceiptSchema || !model.ValidHead(receipt.HeadSHA) || receipt.SourcePath != model.SourcePath ||
+	if receipt.Schema != model.ReceiptSchema || !model.ValidHead(receipt.HeadSHA) || !model.ValidExecutionID(receipt.HeadSHA, receipt.ExecutionID) || receipt.SourcePath != model.SourcePath ||
 		!model.ValidDigest(receipt.SourceDigest) || receipt.SourceDigest != model.DigestBytes(source) ||
 		receipt.ContractDigest != model.ValueContractDigest() || receipt.ValidatorContractDigest != model.ValidatorContractDigest() ||
-		receipt.AuthorityScope != model.AuthorityScope || receipt.RepositoryNetStatusObserved || receipt.RepositoryNetStatusUnchanged ||
+		receipt.AuthorityScope != model.AuthorityScope || receipt.RepositoryNetContentObserved || receipt.RepositoryNetContentUnchanged || receipt.RepositoryNetStatusObserved || receipt.RepositoryNetStatusUnchanged ||
 		receipt.RepositoryNetState != model.RepositoryNetStateUnknown || receipt.RepositoryActualOrTransientWrites != model.UnknownEffectScope || receipt.RepositoryWritesObserved || receipt.RepositoryWrites != -1 || receipt.RepositoryMutationAuthorized || receipt.RepositoryPathAuthorization || receipt.AmbientProcessAuthority != model.UnknownEffectScope {
 		return invalid("RECEIPT_IDENTITY_INVALID")
 	}
@@ -147,14 +147,14 @@ func validTransformationEvidence(receipt model.Receipt, semantics sourceSemantic
 }
 
 func validApprovedEffect(effect model.Effect, receipt model.Receipt, semantics sourceSemantics) bool {
-	if effect.Kind != model.EffectApproved || effect.CaseID != receipt.CaseID || effect.ExecutionID != receipt.ExecutionID || effect.SubjectSHA != receipt.HeadSHA || effect.Intent != semantics.EffectIntent ||
+	if effect.Kind != model.EffectApproved || effect.CaseID != receipt.CaseID || !model.ValidExecutionID(receipt.HeadSHA, effect.ExecutionID) || effect.ExecutionID != receipt.ExecutionID || effect.SubjectSHA != receipt.HeadSHA || effect.Intent != semantics.EffectIntent ||
 		effect.AuthorizationDigest != receipt.AuthorizationDigest || effect.Producer != receipt.Producer || effect.Executor != model.ExecutorID || effect.Consumer != receipt.Consumer ||
-		effect.MetaOperation != "execute-authorized-temp-artifact" || !effect.TempArtifactWriteAuthorized || effect.RepositoryNetStatusObserved || effect.RepositoryNetStatusUnchanged || effect.RepositoryNetState != model.RepositoryNetStateUnknown ||
+		effect.MetaOperation != "execute-authorized-temp-artifact" || !effect.TempArtifactWriteAuthorized || effect.RepositoryNetContentObserved || effect.RepositoryNetContentUnchanged || effect.RepositoryNetStatusObserved || effect.RepositoryNetStatusUnchanged || effect.RepositoryNetState != model.RepositoryNetStateUnknown ||
 		effect.RepositoryActualOrTransientWrites != model.UnknownEffectScope || effect.RepositoryPathAuthorization || effect.AmbientProcessAuthority != model.UnknownEffectScope || !model.ValidDigest(effect.ArtifactDigest) || !allowedTempPath(effect.Artifact.Path) ||
 		effect.Artifact.Path != effect.ArtifactPath || effect.Artifact.ContentDigest != effect.ArtifactDigest || effect.Artifact.Size != effect.ArtifactSize ||
 		effect.Artifact.CaseID != receipt.CaseID || effect.Artifact.ExecutionID != receipt.ExecutionID || effect.Artifact.SubjectSHA != receipt.HeadSHA || effect.Artifact.AuthorizationDigest != receipt.AuthorizationDigest ||
 		effect.Artifact.Producer != receipt.Producer || effect.Artifact.Executor != model.ExecutorID || effect.Artifact.Consumer != receipt.Consumer ||
-		effect.Artifact.RepositoryNetStatusObserved || effect.Artifact.RepositoryNetStatusUnchanged || effect.Artifact.RepositoryNetState != model.RepositoryNetStateUnknown || model.EffectExecutionDigest(effect) != effect.ExecutionReceiptDigest || effect.Artifact.EffectReceiptDigest != effect.ExecutionReceiptDigest {
+		effect.Artifact.RepositoryNetContentObserved || effect.Artifact.RepositoryNetContentUnchanged || effect.Artifact.RepositoryNetStatusObserved || effect.Artifact.RepositoryNetStatusUnchanged || effect.Artifact.RepositoryNetState != model.RepositoryNetStateUnknown || model.EffectExecutionDigest(effect) != effect.ExecutionReceiptDigest || effect.Artifact.EffectReceiptDigest != effect.ExecutionReceiptDigest {
 		return false
 	}
 	data, err := os.ReadFile(effect.Artifact.Path)
