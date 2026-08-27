@@ -185,6 +185,27 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-experiment-portfolio-derive",
+      "kind": "SOURCE",
+      "path": "examples/experiment-portfolio/alternatives/derive.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-experiment-portfolio-replay",
+      "kind": "SOURCE",
+      "path": "examples/experiment-portfolio/alternatives/replay.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-experiment-portfolio-reflect",
+      "kind": "SOURCE",
+      "path": "examples/experiment-portfolio/alternatives/reflect.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

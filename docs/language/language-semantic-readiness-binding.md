@@ -8,8 +8,9 @@ The fixed contract remains 24 obligations. The accepted transition is
 14/24 (5833 BPS) to 15/24 (6250 BPS): +1 obligation and +417 BPS.
 
 The binding has 12 required coordinates. They cover the fixed readiness
-registry, concept artifact chain, semantic report, 22/22 corpus, 19 semantic
-indicators, and three Munchhausen proof choices. Unknown coordinates fail
+registry, concept artifact chain, semantic report, 32/32 upstream syntax, 29
+source models, 34 semantic cases, 19 semantic indicators, and three Munchhausen
+proof choices. Unknown coordinates fail
 closed instead of inheriting `FIXED_POINT`.
 
 The staged expansion shape is informed by
