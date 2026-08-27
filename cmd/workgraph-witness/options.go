@@ -28,7 +28,9 @@ func parseOptions(args []string) (options, error) {
 	set.StringVar(&value.head, "head", "", "exact head SHA")
 	set.StringVar(&value.output, "out", "", "report path")
 	set.StringVar(&value.expect, "expect", "", "expected decision")
-	if err := set.Parse(args); err != nil { return value, err }
+	if err := set.Parse(args); err != nil {
+		return value, err
+	}
 	if value.contract == "" || value.source == "" || value.checkReceipt == "" || value.head == "" || value.output == "" || value.expect == "" {
 		return value, fmt.Errorf("contract, source, check-receipt, head, out, and expect are required")
 	}

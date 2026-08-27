@@ -20,9 +20,13 @@ func claimSnapshot(cells []Cell, summary Summary, next string) ClaimSnapshot {
 		}
 	}
 	for _, cell := range cells {
-		if cell.State == "CLOSED" { continue }
+		if cell.State == "CLOSED" {
+			continue
+		}
 		status := "ACTIVE"
-		if cell.State == "REFUTED" { status = "CONTESTED" }
+		if cell.State == "REFUTED" {
+			status = "CONTESTED"
+		}
 		return ClaimSnapshot{
 			Status: status, State: cell.State, Resolution: cell.Resolution,
 			Stage: cell.Stage, Step: cell.Step, Reason: cell.Reason, NextOperation: next,

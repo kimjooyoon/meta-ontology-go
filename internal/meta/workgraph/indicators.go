@@ -7,7 +7,9 @@ func indicators(report Report) []Indicator {
 	resource := indicatorCellValue(report.Cells, "RESOURCE_OBSERVED")
 	roundtrip := indicatorCellValue(report.Cells, "USER_ROUNDTRIP")
 	trace := int64(0)
-	if report.Claim.TraceRetained && report.Claim.Before.State == "UNKNOWN" { trace = 1 }
+	if report.Claim.TraceRetained && report.Claim.Before.State == "UNKNOWN" {
+		trace = 1
+	}
 	return []Indicator{
 		indicator("gooo.metric.workgraph.closed-gates.v1", "OUTCOME", closed, total, "cells", ">=", total, "CloseProjectClaim", "COHERENCE"),
 		indicator("gooo.metric.workgraph.replay.v1", "DRIVER", replay, 1, "replays", ">=", 1, "ReplayProjectGeneration", "REGRESSION"),
@@ -20,11 +22,17 @@ func indicators(report Report) []Indicator {
 
 func indicator(id, class string, value, total int64, unit, relation string, target int64, activity, proof string) Indicator {
 	state := "GAP"
-	if relation == ">=" && value >= target || relation == "<=" && value <= target { state = "SATISFIED" }
+	if relation == ">=" && value >= target || relation == "<=" && value <= target {
+		state = "SATISFIED"
+	}
 	return Indicator{ID: id, Class: class, Value: value, Total: total, Unit: unit, Relation: relation, Target: target, Activity: activity, ProofChoice: proof, State: state}
 }
 
 func indicatorCellValue(cells []Cell, id string) int64 {
-	for _, cell := range cells { if cell.ID == id && cell.State == "CLOSED" { return 1 } }
+	for _, cell := range cells {
+		if cell.ID == id && cell.State == "CLOSED" {
+			return 1
+		}
+	}
 	return 0
 }

@@ -24,8 +24,8 @@ type Contract struct {
 }
 
 type ResourceSample struct {
-	Samples          int    `json:"samples"`
-	WallNanoseconds  int64  `json:"wall_nanoseconds"`
-	HeapSysBytes     uint64 `json:"heap_sys_bytes"`
-	TotalAllocBytes  uint64 `json:"total_alloc_bytes"`
+	Samples         int    `json:"samples"`
+	WallNanoseconds int64  `json:"wall_nanoseconds"`
+	HeapSysBytes    uint64 `json:"heap_sys_bytes"`
+	TotalAllocBytes uint64 `json:"total_alloc_bytes"`
 }

@@ -40,6 +40,10 @@ func validatePredecessor(contract Contract, observation Observation) error {
 
 func allClosed(cells []Cell) bool { return !hasState(cells, "UNKNOWN") && !hasState(cells, "REFUTED") }
 func hasState(cells []Cell, state string) bool {
-	for _, cell := range cells { if cell.State == state { return true } }
+	for _, cell := range cells {
+		if cell.State == state {
+			return true
+		}
+	}
 	return false
 }
