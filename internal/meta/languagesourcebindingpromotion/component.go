@@ -1,11 +1,11 @@
 package languagesourcebindingpromotion
 
 type component struct {
-	Status       string
-	UnknownClass string
-	Reason       string
-	Coordinate   Coordinate
-	Evidence     []string
+	Status         string
+	UnknownClass   string
+	Reason         string
+	Coordinate     Coordinate
+	Evidence       []string
 	ArtifactDigest string
 }
 
