@@ -2,18 +2,19 @@ package partialknowledgecomposition
 
 import "slices"
 
-// Compose combines knowledge causes without allowing a less precise input to
-// become a more precise output. The mixed state keeps both unresolved causes.
-func Compose(left, right Operand) Value {
+// Compose combines source-derived evidence without manufacturing a more
+// precise claim. Its output retains every unresolved cause and every known
+// invariant.
+func Compose(left, right Evidence) Value {
 	value := Value{Contributors: []string{left.Operation, right.Operation}}
-	for _, operand := range []Operand{left, right} {
-		switch operand.State {
+	for _, evidence := range []Evidence{left, right} {
+		switch deriveState(evidence) {
 		case StateDirectUnknown:
-			value.DirectUnknowns = appendUnique(value.DirectUnknowns, operand.Operation)
+			value.DirectUnknowns = appendUnique(value.DirectUnknowns, evidence.Operation)
 		case StateDependencyBlocked:
-			value.BlockedDependencies = appendUnique(value.BlockedDependencies, operand.BlockedDependency)
+			value.BlockedDependencies = appendUnique(value.BlockedDependencies, evidence.DependencyClaimID)
 		case StateInvariantOnly:
-			value.PreservedInvariants = appendUnique(value.PreservedInvariants, operand.Invariants...)
+			value.PreservedInvariants = appendUnique(value.PreservedInvariants, evidence.InvariantEvidence)
 		}
 	}
 	value.DirectUnknowns = sortedUnique(value.DirectUnknowns)
@@ -50,19 +51,26 @@ func sortedUnique(values []string) []string {
 	return values
 }
 
-func classify(value Value) (string, string, bool) {
+func classify(value Value) (decision, resolution, reason string, topSuccess bool) {
 	switch value.State {
 	case StateExact:
-		return "PASS", "ALL_OPERATIONS_EXACT", true
+		return "PASS", "EXACT", "ALL_OBSERVATIONS_EXACT", true
 	case StateDirectUnknown:
-		return "FAIL_CLOSED", "DIRECT_UNKNOWN_NOT_PROMOTED", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "DIRECT_UNKNOWN_PRESERVED", false
 	case StateDependencyBlocked:
-		return "FAIL_CLOSED", "DEPENDENCY_BLOCKED_NOT_PROMOTED", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "DEPENDENCY_BLOCKED_PRESERVED", false
 	case StateInvariantOnly:
-		return "HOLD", "KNOWN_INVARIANT_PRESERVED", false
+		return "HOLD", "INVARIANT_ONLY", "KNOWN_INVARIANT_PRESERVED", false
 	case StateMixedUnresolved:
-		return "FAIL_CLOSED", "MIXED_UNRESOLVED_KNOWLEDGE", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "MIXED_UNRESOLVED_PRESERVED", false
 	default:
-		return "FAIL_CLOSED", "UNKNOWN_COMPOSITION_STATE", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "UNKNOWN_COMPOSITION_STATE", false
 	}
+}
+
+func transitionState(state State) string {
+	if state == StateExact {
+		return "DISCHARGED"
+	}
+	return "OPEN"
 }

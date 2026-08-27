@@ -16,17 +16,21 @@ func digestValue(value any) string {
 	return digestBytes(raw)
 }
 
-func transitionDigest(value claimTransition) string {
-	value.Digest = ""
-	return digestValue(value)
+func receiptDigest(receipt Receipt) string {
+	receipt.Digest = ""
+	return digestValue(receipt)
 }
 
-func receiptDigest(value receipt) string {
-	value.Digest = ""
-	return digestValue(value)
+func transitionDigest(transition ClaimTransition) string {
+	transition.Digest = ""
+	return digestValue(transition)
 }
 
-func reportDigest(value Report) string {
-	value.Digest = ""
-	return digestValue(value)
+func semanticProjectionDigest(receipt Receipt) string {
+	return digestValue(struct {
+		SemanticIRDigest string            `json:"semantic_ir_digest"`
+		Cases            []CaseResult      `json:"cases"`
+		Claims           []ClaimTransition `json:"claims"`
+		Summary          Summary           `json:"summary"`
+	}{receipt.SemanticIRDigest, receipt.Cases, receipt.Claims, receipt.Summary})
 }

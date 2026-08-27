@@ -1,0 +1,54 @@
+name: Partial knowledge composition
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/partial-knowledge-composition.yml'
+      - 'cmd/partial-knowledge-composition-verifier/**'
+      - 'cmd/partial-knowledge-composition-witness/**'
+      - 'docs/research/partial-knowledge-composition.md'
+      - 'examples/partial-knowledge-composition/**'
+      - 'internal/meta/partialknowledgecomposition/**'
+      - 'internal/verify/scope_partial_knowledge_composition.go'
+      - 'scripts/partial-knowledge-composition/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composition:
+    name: source-backed composition calculus
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Bind Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Verify source-backed composition and interventions
+        run: bash scripts/partial-knowledge-composition/main.sh
+
+      - name: Upload human-readable exact-head evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: partial-knowledge-composition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/partial-knowledge-composition
+          if-no-files-found: error
+          retention-days: 30

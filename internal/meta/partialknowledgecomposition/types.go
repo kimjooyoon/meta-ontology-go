@@ -1,38 +1,33 @@
 package partialknowledgecomposition
 
 type Input struct {
-	Repository string  `json:"repository"`
-	HeadSHA    string  `json:"head_sha"`
-	SourcePath string  `json:"source_path"`
-	Source     []byte  `json:"-"`
-	Fixture    Fixture `json:"fixture"`
+	Repository   string           `json:"repository"`
+	HeadSHA      string           `json:"head_sha"`
+	SourcePath   string           `json:"source_path"`
+	Source       []byte           `json:"-"`
+	Intervention InterventionMode `json:"intervention"`
 }
 
-type Fixture struct {
-	Schema           string `json:"schema"`
-	SourcePath       string `json:"source_path"`
-	FixedDenominator int    `json:"fixed_denominator"`
-	Cases            []Case `json:"cases"`
+type Evidence struct {
+	Operation         string `json:"operation"`
+	Required          string `json:"required"`
+	Observed          string `json:"observed"`
+	ObservedAvailable bool   `json:"observed_available"`
+	DependencyClaimID string `json:"dependency_claim_id,omitempty"`
+	PriorState        string `json:"prior_state"`
+	InvariantEvidence string `json:"invariant_evidence,omitempty"`
 }
 
 type Case struct {
 	ID               string      `json:"id"`
+	SourceActivity   string      `json:"source_activity"`
+	SourceActivityID string      `json:"source_activity_id"`
 	Producer         string      `json:"producer"`
 	Consumer         string      `json:"consumer"`
 	MetaOperation    string      `json:"meta_operation"`
 	ProofChoice      ProofChoice `json:"proof_choice"`
-	Left             Operand     `json:"left"`
-	Right            Operand     `json:"right"`
-	ExpectedState    State       `json:"expected_state"`
-	ExpectedDecision string      `json:"expected_decision"`
-	ExpectedReason   string      `json:"expected_reason"`
-}
-
-type Operand struct {
-	Operation         string   `json:"operation"`
-	State             State    `json:"state"`
-	BlockedDependency string   `json:"blocked_dependency,omitempty"`
-	Invariants        []string `json:"invariants,omitempty"`
+	Left             Evidence    `json:"left"`
+	Right            Evidence    `json:"right"`
 }
 
 type Value struct {
@@ -43,19 +38,36 @@ type Value struct {
 	PreservedInvariants []string `json:"preserved_invariants,omitempty"`
 }
 
+type Provenance struct {
+	SourcePath        string      `json:"source_path"`
+	SourceActivity    string      `json:"source_activity"`
+	Producer          string      `json:"producer"`
+	Consumer          string      `json:"consumer"`
+	MetaOperation     string      `json:"meta_operation"`
+	ProofChoice       ProofChoice `json:"proof_choice"`
+	SemanticIRDigest  string      `json:"semantic_ir_digest"`
+	ObservationDigest string      `json:"observation_digest"`
+}
+
 type CaseResult struct {
-	ID             string      `json:"id"`
-	Producer       string      `json:"producer"`
-	Consumer       string      `json:"consumer"`
-	MetaOperation  string      `json:"meta_operation"`
-	ProofChoice    ProofChoice `json:"proof_choice"`
-	Left           Operand     `json:"left"`
-	Right          Operand     `json:"right"`
-	Result         Value       `json:"result"`
-	Decision       string      `json:"decision"`
-	Reason         string      `json:"reason"`
-	TopSuccess     bool        `json:"top_success"`
-	EvidenceDigest string      `json:"evidence_digest"`
+	ID               string      `json:"id"`
+	SourceActivity   string      `json:"source_activity"`
+	SourceActivityID string      `json:"source_activity_id"`
+	Producer         string      `json:"producer"`
+	Consumer         string      `json:"consumer"`
+	MetaOperation    string      `json:"meta_operation"`
+	ProofChoice      ProofChoice `json:"proof_choice"`
+	Left             Evidence    `json:"left"`
+	Right            Evidence    `json:"right"`
+	Result           Value       `json:"result"`
+	Decision         string      `json:"decision"`
+	Resolution       string      `json:"resolution"`
+	Stage            string      `json:"stage"`
+	Step             string      `json:"step"`
+	Reason           string      `json:"reason"`
+	TopSuccess       bool        `json:"top_success"`
+	Provenance       Provenance  `json:"provenance"`
+	EvidenceDigest   string      `json:"evidence_digest"`
 }
 
 type Summary struct {
@@ -69,6 +81,8 @@ type Summary struct {
 	TopSuccessCases        int `json:"top_success_cases"`
 	NonExactCases          int `json:"non_exact_cases"`
 	NonExactNotPromoted    int `json:"non_exact_not_promoted"`
+	OpenClaims             int `json:"open_claims"`
+	DischargedClaims       int `json:"discharged_claims"`
 	ClaimTransitionTotal   int `json:"claim_transition_total"`
 	RepositoryWrites       int `json:"repository_writes"`
 }
@@ -88,37 +102,53 @@ type Indicator struct {
 }
 
 type ClaimTransition struct {
-	Sequence       int         `json:"sequence"`
-	ClaimID        string      `json:"claim_id"`
-	From           string      `json:"from"`
-	To             string      `json:"to"`
-	MetaOperation  string      `json:"meta_operation"`
-	ProofChoice    ProofChoice `json:"proof_choice"`
-	EvidenceDigest string      `json:"evidence_digest"`
-	PreviousDigest string      `json:"previous_digest,omitempty"`
-	Digest         string      `json:"digest"`
+	Sequence       int        `json:"sequence"`
+	ClaimID        string     `json:"claim_id"`
+	From           string     `json:"from"`
+	To             string     `json:"to"`
+	Stage          string     `json:"stage"`
+	Step           string     `json:"step"`
+	Reason         string     `json:"reason"`
+	Provenance     Provenance `json:"provenance"`
+	EvidenceDigest string     `json:"evidence_digest"`
+	PreviousDigest string     `json:"previous_digest,omitempty"`
+	Digest         string     `json:"digest"`
+}
+
+type Intervention struct {
+	Mode     InterventionMode `json:"mode"`
+	Semantic bool             `json:"semantic"`
+	Target   string           `json:"target,omitempty"`
+	From     string           `json:"from,omitempty"`
+	To       string           `json:"to,omitempty"`
+	Comment  string           `json:"comment,omitempty"`
 }
 
 type Receipt struct {
-	Schema              string            `json:"schema"`
-	Repository          string            `json:"repository"`
-	HeadSHA             string            `json:"head_sha"`
-	SourcePath          string            `json:"source_path"`
-	SourceDigest        string            `json:"source_digest"`
-	Producer            string            `json:"producer"`
-	Consumer            string            `json:"consumer"`
-	MetaOperation       string            `json:"meta_operation"`
-	ProofChoice         ProofChoice       `json:"proof_choice"`
-	Resolution          string            `json:"resolution"`
-	Decision            string            `json:"decision"`
-	Reason              string            `json:"reason"`
-	FixedDenominator    int               `json:"fixed_denominator"`
-	DenominatorDigest   string            `json:"denominator_digest"`
-	Cases               []CaseResult      `json:"cases"`
-	Claims              []ClaimTransition `json:"claims"`
-	Indicators          []Indicator       `json:"indicators"`
-	Summary             Summary           `json:"summary"`
-	RepositoryWrites    int               `json:"repository_writes"`
-	PromotionAuthorized bool              `json:"promotion_authorized"`
-	Digest              string            `json:"digest"`
+	Schema                   string            `json:"schema"`
+	Repository               string            `json:"repository"`
+	HeadSHA                  string            `json:"head_sha"`
+	SourcePath               string            `json:"source_path"`
+	SourceDigest             string            `json:"source_digest"`
+	SemanticIRDigest         string            `json:"semantic_ir_digest"`
+	SourceCases              int               `json:"source_cases"`
+	SourceCasesTotal         int               `json:"source_cases_total"`
+	Producer                 string            `json:"producer"`
+	Consumer                 string            `json:"consumer"`
+	MetaOperation            string            `json:"meta_operation"`
+	ProofChoice              ProofChoice       `json:"proof_choice"`
+	Resolution               string            `json:"resolution"`
+	SubjectResolution        string            `json:"subject_resolution"`
+	Decision                 string            `json:"decision"`
+	Reason                   string            `json:"reason"`
+	FixedDenominator         int               `json:"fixed_denominator"`
+	Cases                    []CaseResult      `json:"cases"`
+	Claims                   []ClaimTransition `json:"claims"`
+	Indicators               []Indicator       `json:"indicators"`
+	Summary                  Summary           `json:"summary"`
+	Intervention             Intervention      `json:"intervention"`
+	RepositoryWrites         int               `json:"repository_writes"`
+	PromotionAuthorized      bool              `json:"promotion_authorized"`
+	SemanticProjectionDigest string            `json:"semantic_projection_digest"`
+	Digest                   string            `json:"digest"`
 }

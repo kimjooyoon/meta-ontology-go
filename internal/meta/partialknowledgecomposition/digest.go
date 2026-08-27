@@ -25,3 +25,12 @@ func transitionDigest(transition ClaimTransition) string {
 	transition.Digest = ""
 	return digestValue(transition)
 }
+
+func semanticProjectionDigest(receipt Receipt) string {
+	return digestValue(struct {
+		SemanticIRDigest string            `json:"semantic_ir_digest"`
+		Cases            []CaseResult      `json:"cases"`
+		Claims           []ClaimTransition `json:"claims"`
+		Summary          Summary           `json:"summary"`
+	}{receipt.SemanticIRDigest, receipt.Cases, receipt.Claims, receipt.Summary})
+}

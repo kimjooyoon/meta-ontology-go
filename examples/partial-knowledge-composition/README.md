@@ -1,41 +1,35 @@
 # Partial-knowledge composition
 
-This is a read-only Gooo meta-value experiment. It composes two operation
-observations while preserving knowledge resolution:
+This read-only experiment treats the five `computes` strings in
+[`main.gooo`](main.gooo) as the source of truth. Each string is a structured
+upstream observation receipt containing `required`, `observed`,
+`observed_available`, `dependency_claim_id`, `prior_state`, and invariant
+evidence. No conclusion state is supplied by a JSON fixture.
 
-| Case | Composition result | Case decision | Claim transition |
-| --- | --- | --- | --- |
-| exact pair | `EXACT` | `PASS` | `OPEN -> DISCHARGED` |
-| direct unknown | `DIRECT_UNKNOWN` | `FAIL_CLOSED` | `OPEN -> UNKNOWN` |
-| dependency block | `DEPENDENCY_BLOCKED` | `FAIL_CLOSED` | `OPEN -> BLOCKED` |
-| invariant preservation | `INVARIANT_ONLY` | `HOLD` | `OPEN -> INVARIANT_PRESERVED` |
-| mixed unknown + block | `MIXED_UNRESOLVED` | `FAIL_CLOSED` | `OPEN -> UNRESOLVED` |
+The producer and independent verifier both execute:
 
-The only top-success value is `EXACT`. The four non-exact cases remain
-non-promotable, including the known `repository-writes-zero` invariant. The
-mixed case retains both its direct-unknown operation and its blocked
-dependency, so composition does not erase causal resolution.
-
-The fixed denominator is 5. The receipt exposes 10 indicators, 5 case
-results, and 5 digest-linked claim transitions. Its producer is
-`partial-knowledge-producer`, its consumer is
-`partial-knowledge-composition-consumer`, and its central meta-operation is
-`compose-partial-knowledge`. Proof choices are explicit per case and at the
-receipt boundary. Repository writes and promotion authority are both zero.
-
-The producer and independent verifier are runnable from CI:
-
-```sh
-go run ./cmd/partial-knowledge-composition-witness \
-  --head-sha "$HEAD_SHA" \
-  --output "$RUNNER_TEMP/partial-knowledge-receipt.json"
-go run ./cmd/partial-knowledge-composition-verifier \
-  --head-sha "$HEAD_SHA" \
-  --receipt "$RUNNER_TEMP/partial-knowledge-receipt.json" \
-  --output "$RUNNER_TEMP/partial-knowledge-verification.json"
+```text
+syntax.ParseFile -> bidir.Lower -> observation receipt reconstruction
 ```
 
-The independent verifier reconstructs the source vocabulary, fixture, result
-states, indicators, claim chain, and receipt digest without importing the
-producer package. Research decisions and the falsification boundary are in
-[`docs/research/partial-knowledge-composition.md`](../../docs/research/partial-knowledge-composition.md).
+The calculus derives `EXACT`, `DIRECT_UNKNOWN`, `DEPENDENCY_BLOCKED`,
+`INVARIANT_ONLY`, or `MIXED_UNRESOLVED` from those fields. The outcomes are:
+
+| Case | Resolution | Decision | Claim transition |
+|---|---|---|---|
+| exact-pair | `EXACT` | `PASS` | `OPEN -> DISCHARGED` |
+| direct-unknown | `LOWER_RESOLUTION` | `UNKNOWN` | `OPEN -> OPEN` |
+| dependency-blocked | `LOWER_RESOLUTION` | `UNKNOWN` | `OPEN -> OPEN` |
+| invariant-preservation | `INVARIANT_ONLY` | `HOLD` | `OPEN -> OPEN` |
+| mixed-unknown-and-blocked | `LOWER_RESOLUTION` | `UNKNOWN` | `OPEN -> OPEN` |
+
+The receipt-level decision is `CALCULUS_PROVEN`; it is separate from the
+subject resolution and does not promote non-exact cases. The fixed denominator
+is 5, with 1 exact case, 4 open claims, 10 indicators, 0 repository writes,
+and `promotion_authorized=false`.
+
+GitHub Actions also runs a semantic intervention that makes the direct
+observation available and must change its result and claim transition. A
+comment-only source intervention must preserve the semantic IR and semantic
+projection while changing only the source digest. Its human-readable report
+and JSON evidence are uploaded under the exact head SHA.

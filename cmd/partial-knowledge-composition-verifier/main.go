@@ -6,17 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	independent "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition/verify"
 )
 
 type options struct {
-	repository string
-	headSHA    string
-	source     string
-	cases      string
-	receipt    string
-	output     string
+	repository, headSHA, sourceFile, sourcePath, receipt, output, intervention string
 }
 
 func main() {
@@ -30,10 +26,11 @@ func parseOptions() options {
 	value := options{}
 	flag.StringVar(&value.repository, "repository", "kimjooyoon/meta-ontology-go", "repository identity")
 	flag.StringVar(&value.headSHA, "head-sha", "", "exact checked-out head")
-	flag.StringVar(&value.source, "source", "examples/partial-knowledge-composition/main.gooo", "Gooo source")
-	flag.StringVar(&value.cases, "cases", "examples/partial-knowledge-composition/cases.json", "fixed case fixture")
+	flag.StringVar(&value.sourceFile, "source-file", "examples/partial-knowledge-composition/main.gooo", "physical Gooo source file")
+	flag.StringVar(&value.sourcePath, "source-path", "examples/partial-knowledge-composition/main.gooo", "logical Gooo source path")
 	flag.StringVar(&value.receipt, "receipt", "", "producer receipt")
 	flag.StringVar(&value.output, "output", "", "verification output")
+	flag.StringVar(&value.intervention, "intervention", "none", "none, semantic, or comment-only")
 	flag.Parse()
 	return value
 }
@@ -42,22 +39,15 @@ func run(value options) error {
 	if value.headSHA == "" || value.receipt == "" || value.output == "" {
 		return errors.New("-head-sha, -receipt, and -output are required")
 	}
-	source, err := os.ReadFile(value.source)
+	source, err := os.ReadFile(value.sourceFile)
 	if err != nil {
 		return fmt.Errorf("read source: %w", err)
-	}
-	fixture, err := os.ReadFile(value.cases)
-	if err != nil {
-		return fmt.Errorf("read cases: %w", err)
 	}
 	receipt, err := os.ReadFile(value.receipt)
 	if err != nil {
 		return fmt.Errorf("read receipt: %w", err)
 	}
-	report, err := independent.Verify(independent.Input{
-		Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.source,
-		Source: source, Fixture: fixture, Receipt: receipt,
-	})
+	report, err := independent.Verify(independent.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, InterventionMode: value.intervention, Receipt: receipt})
 	if err != nil {
 		return fmt.Errorf("independent verification: %w", err)
 	}
@@ -65,9 +55,11 @@ func run(value options) error {
 	if err != nil {
 		return fmt.Errorf("encode verification: %w", err)
 	}
-	raw = append(raw, '\n')
-	if err := os.WriteFile(value.output, raw, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", value.output, err)
+	if err := os.MkdirAll(filepath.Dir(value.output), 0o755); err != nil {
+		return fmt.Errorf("create output directory: %w", err)
+	}
+	if err := os.WriteFile(value.output, append(raw, '\n'), 0o644); err != nil {
+		return fmt.Errorf("write verification: %w", err)
 	}
 	return nil
 }

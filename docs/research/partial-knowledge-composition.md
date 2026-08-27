@@ -1,26 +1,36 @@
 # Partial-knowledge composition calculus
 
-This experiment asks a narrow question: when several meta-operations are
-composed, can a receipt preserve the difference between an operation that is
-directly unknown, an operation blocked by an unresolved dependency, and a
-known invariant that does not establish the target claim?
+This experiment asks whether a receipt can compose several meta-operation
+observations without confusing unknown knowledge, dependency blockage, and a
+known invariant. The source of truth is `main.gooo`: five upstream observation
+receipts are encoded in `activity ... computes` programs. The JSON output is a
+derived artifact, not a case fixture.
+
+## Source and reconstruction boundary
+
+Each observation contains `required`, `observed`, `observed_available`,
+`dependency_claim_id`, `prior_state`, and `invariant_evidence`. Neither the
+source nor the input model contains a final `state`, `decision`, or
+`resolution`. Both the producer and the independent verifier call
+`syntax.ParseFile` followed by `bidir.Lower`, check the lowered activity
+`ValueProgram`, and derive the five cases from the lowered source. The
+verifier has its own parser, lowering, composition, digest, and receipt
+reconstruction path and does not import the producer package.
 
 ## Research basis
 
 The adopted abstract-interpretation principle comes from P. Cousot and R.
 Cousot, “Abstract interpretation: a unified lattice model for static analysis
-of programs by construction or approximation of fixpoints,” POPL 1977. Their
-model represents program properties in a complete semilattice and requires
-order-preserving interpretations, so an approximation may lose precision but
-must not manufacture a more precise fact. This experiment adopts that
-non-invention rule for composition.
+of programs by construction or approximation of fixpoints,” POPL 1977. Its
+complete-semilattice and order-preserving viewpoint supports an approximation
+that loses precision without manufacturing a more precise fact. This
+experiment adopts that non-invention rule for composition.
 
 The adopted three-valued principle is the strong Kleene treatment documented
-in the Yale/Stanford account of Peirce’s three-valued logic: an unknown input
-remains unknown under negation, conjunction, and disjunction when no classical
-value is forced. This experiment adopts the analogous rule that direct
-`UNKNOWN` remains a non-promotable meta value. It does not treat unknown as
-false, true, or a transport error.
+in the Stanford Encyclopedia account of Peirce’s three-valued logic: an
+unknown value is not silently converted into true or false by the connective.
+This experiment analogously keeps a directly unavailable observation as an
+open claim at lower resolution.
 
 The formal sources are:
 
@@ -28,51 +38,51 @@ The formal sources are:
 - [Peirce’s three-valued logic, Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/archives/sum2018/entries/peirce-logic/three-valued-logic.html)
 - [Truth versus information in logic programming, Cambridge Core](https://www.cambridge.org/core/journals/theory-and-practice-of-logic-programming/article/truth-versus-information-in-logic-programming/FCE4AEFF496594C839719E2EC2A0DEDE)
 
-Rejected principles are equally important. Generic optional/error propagation
-is rejected because it collapses knowledge cause into transport mechanics.
+Rejected principles are also explicit. Generic optional/error propagation is
+rejected because it describes transport rather than knowledge resolution.
 “Any non-error is success” is rejected because an invariant can be known while
 the target claim remains unproved. A dependency block is not rewritten as a
-direct unknown: its receipt preserves the dependency edge and lets a later
-consumer locate the missing proof.
+direct unknown: its dependency edge remains available to a later consumer.
 
-## Calculus
+## Calculus and claim semantics
 
-The input domain has four atomic values: `EXACT`, `DIRECT_UNKNOWN`,
-`DEPENDENCY_BLOCKED`, and `INVARIANT_ONLY`. Composition is a strict product of
-knowledge causes:
+The atomic evidence rules are:
 
-| left/right evidence | result |
-| --- | --- |
-| all `EXACT` | `EXACT` |
-| any direct unknown, no dependency block | `DIRECT_UNKNOWN` |
-| any dependency block, no direct unknown | `DEPENDENCY_BLOCKED` |
-| no unknown/block and any invariant | `INVARIANT_ONLY` |
-| both direct unknown and dependency block | `MIXED_UNRESOLVED` |
+| Evidence | Derived state | Outcome | Claim transition |
+|---|---|---|---|
+| observations available and equal to required | `EXACT` | `PASS` / `EXACT` | `OPEN -> DISCHARGED` |
+| observation unavailable without dependency | `DIRECT_UNKNOWN` | `UNKNOWN` / `LOWER_RESOLUTION` | `OPEN -> OPEN` |
+| observation unavailable with dependency claim | `DEPENDENCY_BLOCKED` | `UNKNOWN` / `LOWER_RESOLUTION` | `OPEN -> OPEN` |
+| available observation with invariant evidence | `INVARIANT_ONLY` | `HOLD` / `INVARIANT_ONLY` | `OPEN -> OPEN` |
+| both direct unknown and dependency block | `MIXED_UNRESOLVED` | `UNKNOWN` / `LOWER_RESOLUTION` | `OPEN -> OPEN` |
 
-Only `EXACT` is a top-success case. The receipt-level decision is named
-`CALCULUS_PROVEN` to mean that the rule replay succeeded, not that every case
-was promoted. `INVARIANT_ONLY` is retained as useful knowledge but is `HOLD`;
-every unresolved state is `FAIL_CLOSED`. The mixed
-case carries both cause sets instead of choosing one and hiding the other.
+Only `EXACT` is a case-level top-success value. The receipt-level decision is
+`CALCULUS_PROVEN`, with `resolution=CALCULUS` and
+`subject_resolution=PARTIAL_KNOWLEDGE`; these fields make the proof of the
+rule replay separate from the subject-case result counts. The fixed corpus is
+5/5 source-derived cases: one of each row above. It yields 1 exact case, 4
+non-exact cases, 4/4 non-exact cases not promoted, 1 discharged claim, 4 open
+claims, and 5 digest-linked transitions.
 
-The fixed corpus has five pairwise compositions: one exact result, one direct
-unknown, one dependency block, one invariant-preservation result, and one
-mixed result. The producer is `partial-knowledge-producer`; the consumer is
-`partial-knowledge-composition-consumer`; the operation is named in every
-case, and proof choice is one of `FOUNDATION`, `COHERENCE`, or `REGRESSION`.
+Every case and claim records producer `partial-knowledge-producer`, consumer
+`partial-knowledge-composition-consumer`, a meta-operation, proof choice,
+stage, step, reason, source activity, semantic IR digest, observation digest,
+and evidence digest.
 
-## Evidence boundary and falsification
+## Interventions and falsifiability
 
-The Go producer emits a digest-bound receipt from the checked-in Gooo source
-and fixture. A separate verifier re-parses the source and fixture, recomputes
-the composition states, recomputes the append-only claim-transition chain,
-and checks the producer receipt without importing its evaluator. A changed
-case order, expected state, cause, denominator, source, or receipt digest must
-fail verification.
+The semantic intervention changes `direct-unknown.left.observed_available`
+from `false` to `true` and supplies the required observation. It must change
+that case from `UNKNOWN` / `LOWER_RESOLUTION` with `OPEN -> OPEN` to
+`PASS` / `EXACT` with `OPEN -> DISCHARGED`; this is semantic causality 1/1.
+A comment-only source intervention changes the raw source digest but must keep
+the lowered semantic IR digest and semantic projection identical; this is
+nonsemantic preservation 1/1.
 
-The denominator is exactly 5 cases. The expected result is 1/1 exact,
-1/1 direct-unknown classification, 1/1 dependency-block classification,
-1/1 invariant-preservation classification, 1/1 mixed-cause classification,
-and 4/4 non-exact cases not promoted. The repository write count is 0 and
-promotion authority is false. This is a read-only proof of the calculus, not a
-grant of semantic or repository authority.
+The Action wrapper exposes the following fixed metrics: producer imports
+0/0, source cases 5/5, semantic causality 1/1, nonsemantic preservation 1/1,
+and open claims preserved 4/4. It uploads both JSON and a human-readable
+Markdown artifact. Any changed computes field, source activity, lowering
+result, case order, dependency edge, claim transition, digest, denominator,
+or authority field must make the verifier fail. Repository writes remain 0 and
+promotion authority remains false.

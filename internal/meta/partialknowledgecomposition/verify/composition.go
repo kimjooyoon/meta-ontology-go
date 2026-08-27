@@ -2,43 +2,35 @@ package verify
 
 import "sort"
 
-const (
-	exact             = "EXACT"
-	directUnknown     = "DIRECT_UNKNOWN"
-	dependencyBlocked = "DEPENDENCY_BLOCKED"
-	invariantOnly     = "INVARIANT_ONLY"
-	mixedUnresolved   = "MIXED_UNRESOLVED"
-)
-
-func compose(left, right operand) value {
-	result := value{Contributors: []string{left.Operation, right.Operation}}
-	for _, current := range []operand{left, right} {
-		switch current.State {
+func compose(left, right Evidence) Value {
+	value := Value{Contributors: []string{left.Operation, right.Operation}}
+	for _, evidence := range []Evidence{left, right} {
+		switch deriveState(evidence) {
 		case directUnknown:
-			result.DirectUnknowns = unique(result.DirectUnknowns, current.Operation)
+			value.DirectUnknowns = unique(value.DirectUnknowns, evidence.Operation)
 		case dependencyBlocked:
-			result.BlockedDependencies = unique(result.BlockedDependencies, current.BlockedDependency)
+			value.BlockedDependencies = unique(value.BlockedDependencies, evidence.DependencyClaimID)
 		case invariantOnly:
-			result.PreservedInvariants = unique(result.PreservedInvariants, current.Invariants...)
+			value.PreservedInvariants = unique(value.PreservedInvariants, evidence.InvariantEvidence)
 		}
 	}
-	sort.Strings(result.DirectUnknowns)
-	sort.Strings(result.BlockedDependencies)
-	sort.Strings(result.PreservedInvariants)
-	sort.Strings(result.Contributors)
+	sort.Strings(value.Contributors)
+	sort.Strings(value.DirectUnknowns)
+	sort.Strings(value.BlockedDependencies)
+	sort.Strings(value.PreservedInvariants)
 	switch {
-	case len(result.DirectUnknowns) != 0 && len(result.BlockedDependencies) != 0:
-		result.State = mixedUnresolved
-	case len(result.DirectUnknowns) != 0:
-		result.State = directUnknown
-	case len(result.BlockedDependencies) != 0:
-		result.State = dependencyBlocked
-	case len(result.PreservedInvariants) != 0:
-		result.State = invariantOnly
+	case len(value.DirectUnknowns) > 0 && len(value.BlockedDependencies) > 0:
+		value.State = mixedUnresolved
+	case len(value.DirectUnknowns) > 0:
+		value.State = directUnknown
+	case len(value.BlockedDependencies) > 0:
+		value.State = dependencyBlocked
+	case len(value.PreservedInvariants) > 0:
+		value.State = invariantOnly
 	default:
-		result.State = exact
+		value.State = exact
 	}
-	return result
+	return value
 }
 
 func unique(values []string, additions ...string) []string {
@@ -60,34 +52,26 @@ func contains(values []string, target string) bool {
 	return false
 }
 
-func classify(value value) (string, string, bool) {
+func classify(value Value) (decision, resolution, reason string, topSuccess bool) {
 	switch value.State {
 	case exact:
-		return "PASS", "ALL_OPERATIONS_EXACT", true
+		return "PASS", "EXACT", "ALL_OBSERVATIONS_EXACT", true
 	case directUnknown:
-		return "FAIL_CLOSED", "DIRECT_UNKNOWN_NOT_PROMOTED", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "DIRECT_UNKNOWN_PRESERVED", false
 	case dependencyBlocked:
-		return "FAIL_CLOSED", "DEPENDENCY_BLOCKED_NOT_PROMOTED", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "DEPENDENCY_BLOCKED_PRESERVED", false
 	case invariantOnly:
-		return "HOLD", "KNOWN_INVARIANT_PRESERVED", false
+		return "HOLD", "INVARIANT_ONLY", "KNOWN_INVARIANT_PRESERVED", false
 	case mixedUnresolved:
-		return "FAIL_CLOSED", "MIXED_UNRESOLVED_KNOWLEDGE", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "MIXED_UNRESOLVED_PRESERVED", false
 	default:
-		return "FAIL_CLOSED", "UNKNOWN_COMPOSITION_STATE", false
+		return "UNKNOWN", "LOWER_RESOLUTION", "UNKNOWN_COMPOSITION_STATE", false
 	}
 }
 
 func transitionState(state string) string {
-	switch state {
-	case exact:
+	if state == exact {
 		return "DISCHARGED"
-	case directUnknown:
-		return "UNKNOWN"
-	case dependencyBlocked:
-		return "BLOCKED"
-	case invariantOnly:
-		return "INVARIANT_PRESERVED"
-	default:
-		return "UNRESOLVED"
 	}
+	return "OPEN"
 }

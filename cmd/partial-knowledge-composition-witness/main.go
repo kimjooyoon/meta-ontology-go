@@ -6,16 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	meta "github.com/kimjooyoon/meta-ontology-go/internal/meta/partialknowledgecomposition"
 )
 
 type options struct {
-	repository string
-	headSHA    string
-	source     string
-	cases      string
-	output     string
+	repository, headSHA, sourceFile, sourcePath, output, intervention string
 }
 
 func main() {
@@ -29,9 +26,10 @@ func parseOptions() options {
 	value := options{}
 	flag.StringVar(&value.repository, "repository", "kimjooyoon/meta-ontology-go", "repository identity")
 	flag.StringVar(&value.headSHA, "head-sha", "", "exact checked-out head")
-	flag.StringVar(&value.source, "source", meta.SourcePath, "Gooo source")
-	flag.StringVar(&value.cases, "cases", "examples/partial-knowledge-composition/cases.json", "fixed case fixture")
-	flag.StringVar(&value.output, "output", "", "receipt output")
+	flag.StringVar(&value.sourceFile, "source-file", meta.SourcePath, "physical Gooo source file")
+	flag.StringVar(&value.sourcePath, "source-path", meta.SourcePath, "logical Gooo source path")
+	flag.StringVar(&value.output, "output", "", "receipt output path")
+	flag.StringVar(&value.intervention, "intervention", string(meta.InterventionNone), "none, semantic, or comment-only")
 	flag.Parse()
 	return value
 }
@@ -40,39 +38,23 @@ func run(value options) error {
 	if value.headSHA == "" || value.output == "" {
 		return errors.New("-head-sha and -output are required")
 	}
-	source, err := os.ReadFile(value.source)
+	source, err := os.ReadFile(value.sourceFile)
 	if err != nil {
 		return fmt.Errorf("read source: %w", err)
 	}
-	fixtureBytes, err := os.ReadFile(value.cases)
+	receipt, err := meta.Evaluate(meta.Input{Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.sourcePath, Source: source, Intervention: meta.InterventionMode(value.intervention)})
 	if err != nil {
-		return fmt.Errorf("read cases: %w", err)
+		return fmt.Errorf("produce partial-knowledge receipt: %w", err)
 	}
-	var fixture meta.Fixture
-	if err := json.Unmarshal(fixtureBytes, &fixture); err != nil {
-		return fmt.Errorf("decode cases: %w", err)
-	}
-	receipt, err := meta.Evaluate(meta.Input{
-		Repository: value.repository, HeadSHA: value.headSHA, SourcePath: value.source,
-		Source: source, Fixture: fixture,
-	})
+	raw, err := json.MarshalIndent(receipt, "", "  ")
 	if err != nil {
-		return fmt.Errorf("evaluate composition: %w", err)
+		return fmt.Errorf("encode receipt: %w", err)
 	}
-	if err := writeJSON(value.output, receipt); err != nil {
-		return err
+	if err := os.MkdirAll(filepath.Dir(value.output), 0o755); err != nil {
+		return fmt.Errorf("create output directory: %w", err)
 	}
-	return nil
-}
-
-func writeJSON(filename string, value any) error {
-	raw, err := json.MarshalIndent(value, "", "  ")
-	if err != nil {
-		return fmt.Errorf("encode JSON: %w", err)
-	}
-	raw = append(raw, '\n')
-	if err := os.WriteFile(filename, raw, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", filename, err)
+	if err := os.WriteFile(value.output, append(raw, '\n'), 0o644); err != nil {
+		return fmt.Errorf("write receipt: %w", err)
 	}
 	return nil
 }

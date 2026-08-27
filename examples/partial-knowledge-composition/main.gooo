@@ -2,21 +2,27 @@ package partialknowledgecomposition
 namespace partialknowledgecomposition
 
 entity MetaValue id "gooo://partial-knowledge-composition/entity/meta-value"
+entity ObservationReceipt id "gooo://partial-knowledge-composition/entity/observation-receipt"
+entity ClaimTransition id "gooo://partial-knowledge-composition/entity/claim-transition"
+entity Producer id "gooo://partial-knowledge-composition/entity/producer"
+entity Consumer id "gooo://partial-knowledge-composition/entity/consumer"
+entity ProofChoice id "gooo://partial-knowledge-composition/entity/proof-choice"
 entity ExactKnowledge id "gooo://partial-knowledge-composition/value/exact"
 entity DirectUnknown id "gooo://partial-knowledge-composition/value/direct-unknown"
 entity DependencyBlocked id "gooo://partial-knowledge-composition/value/dependency-blocked"
 entity InvariantOnly id "gooo://partial-knowledge-composition/value/invariant-only"
 entity MixedUnresolved id "gooo://partial-knowledge-composition/value/mixed-unresolved"
 entity CompositionReceipt id "gooo://partial-knowledge-composition/entity/composition-receipt"
-entity ClaimTransition id "gooo://partial-knowledge-composition/entity/claim-transition"
-entity Producer id "gooo://partial-knowledge-composition/entity/producer"
-entity Consumer id "gooo://partial-knowledge-composition/entity/consumer"
-entity ProofChoice id "gooo://partial-knowledge-composition/entity/proof-choice"
 entity Foundation id "gooo://partial-knowledge-composition/proof/foundation"
 entity Coherence id "gooo://partial-knowledge-composition/proof/coherence"
 entity Regression id "gooo://partial-knowledge-composition/proof/regression"
 
-activity Observe(MetaValue) -> MetaValue
+activity ObserveExactPair(MetaValue) -> ObservationReceipt computes "gooo.partial-knowledge.observation/v2|case=exact-pair|producer=partial-knowledge-producer|consumer=partial-knowledge-composition-consumer|meta_operation=compose-partial-knowledge|proof_choice=COHERENCE|left.operation=observe-source-shape|left.required=source-shape|left.observed=source-shape|left.observed_available=true|left.dependency_claim_id=|left.prior_state=OPEN|left.invariant_evidence=|right.operation=observe-receipt-shape|right.required=receipt-shape|right.observed=receipt-shape|right.observed_available=true|right.dependency_claim_id=|right.prior_state=OPEN|right.invariant_evidence="
+activity ObserveDirectUnknown(MetaValue) -> ObservationReceipt computes "gooo.partial-knowledge.observation/v2|case=direct-unknown|producer=partial-knowledge-producer|consumer=partial-knowledge-composition-consumer|meta_operation=compose-partial-knowledge|proof_choice=FOUNDATION|left.operation=observe-source-shape|left.required=source-shape|left.observed=|left.observed_available=false|left.dependency_claim_id=|left.prior_state=OPEN|left.invariant_evidence=|right.operation=observe-receipt-shape|right.required=receipt-shape|right.observed=receipt-shape|right.observed_available=true|right.dependency_claim_id=|right.prior_state=OPEN|right.invariant_evidence="
+activity ObserveDependencyBlock(MetaValue) -> ObservationReceipt computes "gooo.partial-knowledge.observation/v2|case=dependency-blocked|producer=partial-knowledge-producer|consumer=partial-knowledge-composition-consumer|meta_operation=compose-partial-knowledge|proof_choice=COHERENCE|left.operation=observe-source-shape|left.required=source-shape|left.observed=source-shape|left.observed_available=true|left.dependency_claim_id=|left.prior_state=OPEN|left.invariant_evidence=|right.operation=bind-receipt-shape|right.required=receipt-shape|right.observed=|right.observed_available=false|right.dependency_claim_id=observe-receipt-shape|right.prior_state=OPEN|right.invariant_evidence="
+activity ObserveInvariant(MetaValue) -> ObservationReceipt computes "gooo.partial-knowledge.observation/v2|case=invariant-preservation|producer=partial-knowledge-producer|consumer=partial-knowledge-composition-consumer|meta_operation=preserve-known-invariant|proof_choice=FOUNDATION|left.operation=observe-source-shape|left.required=source-shape|left.observed=source-shape|left.observed_available=true|left.dependency_claim_id=|left.prior_state=OPEN|left.invariant_evidence=|right.operation=preserve-read-only-boundary|right.required=read-only-boundary|right.observed=read-only-boundary|right.observed_available=true|right.dependency_claim_id=|right.prior_state=OPEN|right.invariant_evidence=repository-writes-zero"
+activity ObserveMixedUnresolved(MetaValue) -> ObservationReceipt computes "gooo.partial-knowledge.observation/v2|case=mixed-unknown-and-blocked|producer=partial-knowledge-producer|consumer=partial-knowledge-composition-consumer|meta_operation=compose-partial-knowledge|proof_choice=REGRESSION|left.operation=observe-source-shape|left.required=source-shape|left.observed=|left.observed_available=false|left.dependency_claim_id=|left.prior_state=OPEN|left.invariant_evidence=|right.operation=bind-receipt-shape|right.required=receipt-shape|right.observed=|right.observed_available=false|right.dependency_claim_id=observe-receipt-shape|right.prior_state=OPEN|right.invariant_evidence="
+
 activity Compose(MetaValue, MetaValue) -> MetaValue
 activity PreserveInvariant(MetaValue) -> InvariantOnly
 activity EmitReceipt(CompositionReceipt) -> ClaimTransition
