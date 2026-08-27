@@ -19,10 +19,10 @@ entity CapturedScopeClaim id "gooo://hygienic-origin-identity/entity/captured-sc
 entity HygienicOriginClaim id "gooo://hygienic-origin-identity/entity/hygienic-origin-claim"
 entity HygienicScopeClaim id "gooo://hygienic-origin-identity/entity/hygienic-scope-claim"
 entity ProofReceipt id "gooo://hygienic-origin-identity/entity/proof-receipt"
-activity ProduceCapturedName(OriginIdentity) -> GeneratedName computes "hoi.produce case=captured spelling=tmp origin=consumer-binding scope=consumer-call-site"
-activity ProduceHygienicName(OriginIdentity) -> GeneratedName computes "hoi.produce case=hygienic spelling=tmp origin=producer-expansion-1 scope=fresh-producer-expansion-1"
-activity ConsumeCapturedName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=captured binding=consumer-binding"
-activity ConsumeHygienicName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=hygienic binding=producer-expansion-1"
+activity ProduceCapturedName(OriginIdentity) -> GeneratedName computes "hoi.produce case=captured spelling=tmp origin=consumer-binding definition-scope=consumer-call-site use-scope=consumer-call-site"
+activity ProduceHygienicName(OriginIdentity) -> GeneratedName computes "hoi.produce case=hygienic spelling=tmp origin=producer-expansion-1 definition-scope=fresh-producer-expansion-1 use-scope=fresh-producer-expansion-1"
+activity ConsumeCapturedName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=captured binding=consumer-binding use-scope=consumer-call-site"
+activity ConsumeHygienicName(GeneratedName) -> ConsumerBinding computes "hoi.resolve case=hygienic binding=producer-expansion-1 use-scope=fresh-producer-expansion-1"
 activity ObserveCapturedResult(ConsumerBinding) -> CapturedResult
 activity ObserveHygienicResult(ConsumerBinding) -> HygienicResult
 activity PreserveOriginIdentity(GeneratedName) -> OriginIdentity
@@ -50,7 +50,7 @@ func TestCommentOnlyChangePreservesSemanticReport(t *testing.T) {
 }
 
 func TestUnknownComesFromSemanticValue(t *testing.T) {
-	source := strings.Replace(semanticSource, "hoi.resolve case=hygienic binding=producer-expansion-1", "hoi.resolve case=hygienic provenance=missing", 1) + "# misleading stage=scope-resolution step=ignored reason=ignored\n"
+	source := strings.Replace(semanticSource, "hoi.resolve case=hygienic binding=producer-expansion-1 use-scope=fresh-producer-expansion-1", "hoi.resolve case=hygienic provenance=missing", 1) + "# misleading stage=scope-resolution step=ignored reason=ignored\n"
 	report, err := Evaluate(fstest.MapFS{"unknown.gooo": {Data: []byte(source)}}, "unknown.gooo", strings.Repeat("b", 40), SnapshotPair{})
 	if err != nil {
 		t.Fatal(err)

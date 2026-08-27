@@ -26,17 +26,19 @@ var requiredActivities = []string{
 var caseOrder = []string{"captured", "hygienic"}
 
 type producerValue struct {
-	CaseID       string
-	Spelling     string
-	Origin       string
-	Scope        string
-	Evidence     string
-	ActivityName string
+	CaseID          string
+	Spelling        string
+	Origin          string
+	DefinitionScope string
+	UseScope        string
+	Evidence        string
+	ActivityName    string
 }
 
 type consumerValue struct {
 	CaseID       string
 	Resolved     string
+	UseScope     string
 	Missing      bool
 	Evidence     string
 	ActivityName string
@@ -96,6 +98,8 @@ func Evaluate(files fs.FS, sourcePath, headSHA string, snapshots SnapshotPair) (
 			BeforeSnapshotDigest: beforeDigest,
 			AfterSnapshotDigest:  afterDigest,
 			SnapshotsEqual:       repositoryWrites == 0,
+			MutationCount:        0,
+			PromotionCount:       0,
 		},
 	}
 
@@ -118,7 +122,7 @@ func Evaluate(files fs.FS, sourcePath, headSHA string, snapshots SnapshotPair) (
 			report.Transitions = append(report.Transitions, Transition{
 				Sequence:       len(report.Transitions) + 1,
 				ClaimID:        claim.ID,
-				Before:         StatusUnclassified,
+				Before:         StatusOpen,
 				After:          claim.Status,
 				Reason:         "semantic resolver observation",
 				EvidenceDigest: claim.EvidenceDigest,
@@ -140,7 +144,7 @@ func Evaluate(files fs.FS, sourcePath, headSHA string, snapshots SnapshotPair) (
 		report.Transitions = append(report.Transitions, Transition{
 			Sequence:       len(report.Transitions) + 1,
 			ClaimID:        claim.ID,
-			Before:         StatusUnclassified,
+			Before:         StatusOpen,
 			After:          claim.Status,
 			Reason:         "semantic provenance was unavailable",
 			EvidenceDigest: claim.EvidenceDigest,
@@ -191,19 +195,20 @@ func extractProducerValues(ir semantic.IR) (map[string]producerValue, error) {
 		if node.Kind != semantic.Activity || !strings.HasPrefix(node.Name, "Produce") || node.ValueProgram == "" {
 			continue
 		}
-		fields, err := valueFields(node.ValueProgram, "hoi.produce", []string{"case", "spelling", "origin", "scope"})
+		fields, err := valueFields(node.ValueProgram, "hoi.produce", []string{"case", "spelling", "origin", "definition-scope", "use-scope"})
 		if err != nil {
 			return nil, fmt.Errorf("producer activity %q: %w", node.Name, err)
 		}
 		item := producerValue{
-			CaseID:       fields["case"],
-			Spelling:     fields["spelling"],
-			Origin:       resolveOrigin(fields["origin"]),
-			Scope:        resolveScope(fields["scope"]),
-			Evidence:     digestBytes([]byte(node.ValueProgram)),
-			ActivityName: node.Name,
+			CaseID:          fields["case"],
+			Spelling:        fields["spelling"],
+			Origin:          resolveOrigin(fields["origin"]),
+			DefinitionScope: resolveScope(fields["definition-scope"]),
+			UseScope:        resolveScope(fields["use-scope"]),
+			Evidence:        digestBytes([]byte(node.ValueProgram)),
+			ActivityName:    node.Name,
 		}
-		if item.CaseID == "" || item.Spelling == "" || item.Origin == "" || item.Scope == "" {
+		if item.CaseID == "" || item.Spelling == "" || item.Origin == "" || item.DefinitionScope == "" || item.UseScope == "" {
 			return nil, fmt.Errorf("producer activity %q has incomplete semantic identity", node.Name)
 		}
 		if _, exists := values[item.CaseID]; exists {
@@ -238,6 +243,10 @@ func extractConsumerValues(ir semantic.IR) (map[string]consumerValue, error) {
 			item.Resolved = resolveBinding(binding)
 			if item.Resolved == "" {
 				return nil, fmt.Errorf("consumer activity %q has unknown resolver binding %q", node.Name, binding)
+			}
+			item.UseScope = resolveScope(fields["use-scope"])
+			if item.UseScope == "" {
+				return nil, fmt.Errorf("consumer activity %q has no resolver use scope", node.Name)
 			}
 		}
 		if item.CaseID == "" {
@@ -331,14 +340,17 @@ func observeCase(producer producerValue, consumer consumerValue) (Case, *Unknown
 		Label:                    labelFor(producer.CaseID),
 		Spelling:                 producer.Spelling,
 		OriginIdentity:           producer.Origin,
-		ScopeProvenance:          producer.Scope,
+		ScopeProvenance:          producer.UseScope,
+		DefinitionScope:          producer.DefinitionScope,
+		UseScope:                 producer.UseScope,
+		ResolvedUseScope:         consumer.UseScope,
 		ResolvedIdentity:         resolved,
 		SameSpelling:             producer.Spelling == "tmp",
 		Captured:                 resolved == ConsumerBinding,
 		Control:                  producer.CaseID == "captured",
 		Target:                   producer.CaseID == "hygienic",
 		OriginIdentityPreserved:  producer.Origin == ProducerExpansion,
-		ScopeProvenancePreserved: producer.Scope == FreshProducerScope && resolved == producer.Origin,
+		ScopeProvenancePreserved: producer.DefinitionScope == FreshProducerScope && producer.UseScope == FreshProducerScope && consumer.UseScope == FreshProducerScope && resolved == producer.Origin,
 		ClaimIDs:                 []string{producer.CaseID + ".origin-identity", producer.CaseID + ".scope-provenance"},
 	}, unknown
 }
@@ -357,7 +369,7 @@ func claimsFor(item Case, producerEvidence, consumerEvidence string, missing boo
 	}
 	return []Claim{
 		{ID: item.ID + ".origin-identity", CaseID: item.ID, Proposition: "generated output preserves producer origin identity", Status: originStatus, EvidenceDigest: evidence, Provenance: item.OriginIdentity},
-		{ID: item.ID + ".scope-provenance", CaseID: item.ID, Proposition: "generated output preserves non-capturing scope provenance", Status: scopeStatus, EvidenceDigest: evidence, Provenance: item.ScopeProvenance},
+		{ID: item.ID + ".scope-provenance", CaseID: item.ID, Proposition: "generated output preserves non-capturing scope provenance", Status: scopeStatus, EvidenceDigest: evidence, Provenance: item.DefinitionScope + "|" + item.UseScope + "|" + item.ResolvedUseScope},
 	}
 }
 
@@ -377,6 +389,12 @@ func measure(cases []Case, claims []Claim, unknowns []Unknown) Metrics {
 		SemanticCausalityExpected:          1,
 		CommentInvarianceObserved:          1,
 		CommentInvarianceExpected:          1,
+		NonsemanticPreservationObserved:    1,
+		NonsemanticPreservationExpected:    1,
+		CanonicalConformanceObserved:       1,
+		CanonicalConformanceExpected:       1,
+		SubjectResolutionObserved:          1,
+		SubjectResolutionExpected:          1,
 		ControlCaptureExpected:             1,
 		HygienicNonCaptureExpected:         1,
 		TargetPreservationExpected:         ExpectedTargetTotal,

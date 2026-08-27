@@ -57,6 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -z "$(rg -n 'hygienicoriginidentity/(producer|evaluator)' internal/meta/hygienicoriginidentity/consumer --glob '*.go' || true)"
           go test ./internal/meta/hygienicoriginidentity/... ./scripts/language-hygienic-origin-identity
           output="$RUNNER_TEMP/language-hygienic-origin-identity"
           mkdir -p "$output"
@@ -115,7 +116,7 @@ jobs:
           cmp "$output/intervention-first.json" "$output/intervention-second.json"
 
           jq -e '
-            .schema == "gooo/hygienic-origin-identity/v2" and
+            .schema == "gooo/hygienic-origin-identity/v3" and
             .decision == "PASS" and .resolution == "EXACT" and
             .producer == "gooo://hygienic-origin-identity/producer/name-generator" and
             .consumer == "gooo://hygienic-origin-identity/consumer/binding-site" and
@@ -128,6 +129,9 @@ jobs:
             .metrics.producer_imports_observed == 0 and .metrics.producer_imports_expected == 0 and
             .metrics.semantic_causality_observed == 1 and .metrics.semantic_causality_expected == 1 and
             .metrics.comment_invariance_observed == 1 and .metrics.comment_invariance_expected == 1 and
+            .metrics.nonsemantic_preservation_observed == 1 and .metrics.nonsemantic_preservation_expected == 1 and
+            .metrics.canonical_conformance_observed == 1 and .metrics.canonical_conformance_expected == 1 and
+            .metrics.subject_resolution_observed == 1 and .metrics.subject_resolution_expected == 1 and
             .metrics.control_capture_observed == 1 and .metrics.control_capture_expected == 1 and
             .metrics.hygienic_noncapture_observed == 1 and .metrics.hygienic_noncapture_expected == 1 and
             .metrics.target_preservation_observed == 2 and .metrics.target_preservation_expected == 2 and
@@ -143,20 +147,23 @@ jobs:
             .authority.repository_writes == 0 and
             .authority.repository_mutation_authorized == false and
             .authority.snapshots_equal == true and
+            .authority.mutation_count == 0 and .authority.promotion_count == 0 and
             (.claim_transitions | length) == 4 and
-            ([.claim_transitions[] | select(.before == "UNCLASSIFIED")] | length) == 4 and
+            ([.claim_transitions[] | select(.before == "OPEN")] | length) == 4 and
             ([.cases[] | select(.same_spelling == true)] | length) == 2 and
             ([.cases[] | select(.captured == true)] | length) == 1 and
             ([.claims[] | select(.status == "DISCHARGED")] | length) == 2 and
             ([.claims[] | select(.status == "REFUTED")] | length) == 2
           ' "$output/main-first.json"
           jq -e '
-            .schema == "gooo/hygienic-origin-identity/v2" and
+            .schema == "gooo/hygienic-origin-identity/v3" and
             .decision == "UNKNOWN" and .resolution == "LOWER_RESOLUTION" and
             .metrics.fixed_case_denominator == 2 and .metrics.fixed_claim_denominator == 4 and
             .metrics.fixed_target_preservation_denominator == 2 and
             .metrics.source_cases_observed == 2 and .metrics.producer_imports_observed == 0 and
             .metrics.semantic_causality_observed == 1 and .metrics.comment_invariance_observed == 1 and
+            .metrics.nonsemantic_preservation_observed == 1 and .metrics.canonical_conformance_observed == 1 and
+            .metrics.subject_resolution_observed == 1 and
             .metrics.control_capture_observed == 1 and .metrics.hygienic_noncapture_expected == 1 and
             .metrics.target_preservation_observed == 2 and
             .metrics.target_preservation_discharged == 1 and
@@ -179,7 +186,7 @@ jobs:
           {
             echo '### Gooo hygienic origin identity'
             jq -r '"- baseline: `\(.decision)`; target preservation `\(.metrics.target_preservation_discharged)/\(.metrics.target_preservation_expected)`; controls refuted `\(.metrics.refuted_claim_total)`"' "$output/main-first.json"
-            jq -r '"- fixed denominators: source cases `\(.metrics.source_cases_observed)/\(.metrics.source_cases_expected)`, producer imports `\(.metrics.producer_imports_observed)/\(.metrics.producer_imports_expected)`, semantic causality `\(.metrics.semantic_causality_observed)/\(.metrics.semantic_causality_expected)`, comment invariance `\(.metrics.comment_invariance_observed)/\(.metrics.comment_invariance_expected)`"' "$output/main-first.json"
+            jq -r '"- fixed denominators: source cases `\(.metrics.source_cases_observed)/\(.metrics.source_cases_expected)`, producer imports `\(.metrics.producer_imports_observed)/\(.metrics.producer_imports_expected)`, semantic causality `\(.metrics.semantic_causality_observed)/\(.metrics.semantic_causality_expected)`, nonsemantic preservation `\(.metrics.nonsemantic_preservation_observed)/\(.metrics.nonsemantic_preservation_expected)`, subject resolution `\(.metrics.subject_resolution_observed)/\(.metrics.subject_resolution_expected)`"' "$output/main-first.json"
             jq -r '"- UNKNOWN: `\(.unknowns[0].stage)/\(.unknowns[0].step)/\(.unknowns[0].reason)`; open claims `\(.metrics.open_claim_total)`"' "$output/unknown-first.json"
             jq -r '"- intervention: `\(.decision)`; target preservation `\(.metrics.target_preservation_discharged)/\(.metrics.target_preservation_expected)`; receipt `\(.receipt_digest)`"' "$output/intervention-first.json"
             jq -r '"- read-only snapshots: writes `\(.authority.repository_writes)`; equal `\(.authority.snapshots_equal)`"' "$output/main-first.json"

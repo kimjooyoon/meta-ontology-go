@@ -11,11 +11,13 @@ grammar or claim to implement a Racket or Rust expander.
 parsed by `syntax.ParseFile` and lowered by `bidir.Lower`. The consumer judge
 reads only activity `computes` values from the lowered semantic IR:
 
-- producer activities emit `case`, `spelling`, `origin`, and `scope`;
-- consumer activities invoke a resolver that derives `resolved identity` or
-  reports `provenance=missing`;
+- producer activities emit `case`, `spelling`, `origin`, `definition-scope`,
+  and `use-scope`;
+- consumer activities invoke a resolver that derives `resolved identity` and
+  use scope, or reports `provenance=missing`;
+- the producer computes capture/non-capture from those canonical values;
 - the consumer package has its own wire model and judgment and imports no
-  producer or evaluator package.
+  producer or evaluator package. It reparses and lowers the raw source itself.
 
 The `# experiment...` lines are intentionally misleading, non-authoritative
 comments. A comment-only edit changes `raw_digest` but preserves the semantic
@@ -25,10 +27,10 @@ that impossible by construction and checks it in CI.
 
 ## Cases and separated metrics
 
-| case | spelling | producer origin | producer scope | resolver result | role |
-| --- | --- | --- | --- | --- | --- |
-| captured | `tmp` | consumer binding | consumer call site | consumer binding | negative control |
-| hygienic | `tmp` | producer expansion 1 | fresh producer expansion 1 | producer expansion 1 | target |
+| case | spelling | producer origin | definition scope | use scope | resolved identity | role |
+| --- | --- | --- | --- | --- | --- | --- |
+| captured | `tmp` | consumer binding | consumer call site | consumer call site | consumer binding | negative control |
+| hygienic | `tmp` | producer expansion 1 | fresh producer expansion 1 | fresh producer expansion 1 | producer expansion 1 | target |
 
 The captured case intentionally produces two `REFUTED` control claims. They
 are not mixed into target preservation. The hygienic target has two separate
@@ -42,6 +44,9 @@ The fixed CI denominators are:
 | producer imports | 0 / 0 |
 | semantic causality | 1 / 1 |
 | comment invariance | 1 / 1 |
+| nonsemantic preservation | 1 / 1 |
+| canonical conformance | 1 / 1 |
+| subject resolution | 1 / 1 |
 | control capture | 1 / 1 |
 | hygienic non-capture | 1 / 1 |
 | target preservation claims | 2 / 2 |
@@ -59,7 +64,7 @@ and 4-claim denominators, and records one unknown path with non-empty
 `stage`, `step`, `reason`, `evidence_digest`, and `provenance`. The hygienic
 scope claim and the explicit unknown guardrail claim remain `OPEN`.
 
-Every claim also has an append-only transition from `UNCLASSIFIED` to its
+Every claim starts `OPEN` and has an append-only transition from `OPEN` to its
 final `OPEN`, `DISCHARGED`, or `REFUTED` status. The receipt retains the
 transition evidence and provenance instead of only reporting final status.
 

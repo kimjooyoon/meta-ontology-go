@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SchemaVersion       = "gooo/hygienic-origin-identity/v2"
+	SchemaVersion       = "gooo/hygienic-origin-identity/v3"
 	Producer            = "gooo://hygienic-origin-identity/producer/name-generator"
 	Consumer            = "gooo://hygienic-origin-identity/consumer/binding-site"
 	MetaOperation       = "generate-name-preserving-origin-and-scope"
@@ -20,7 +20,6 @@ const (
 	StatusOpen          = "OPEN"
 	StatusDischarged    = "DISCHARGED"
 	StatusRefuted       = "REFUTED"
-	StatusUnclassified  = "UNCLASSIFIED"
 	ConsumerBinding     = "gooo://hygienic-origin-identity/consumer/binding-site"
 	ProducerExpansion   = "gooo://hygienic-origin-identity/producer/expansion-1"
 	ConsumerCallSite    = "gooo://hygienic-origin-identity/scope/consumer-call-site"
@@ -61,6 +60,9 @@ type Case struct {
 	Spelling                 string   `json:"spelling"`
 	OriginIdentity           string   `json:"origin_identity"`
 	ScopeProvenance          string   `json:"scope_provenance"`
+	DefinitionScope          string   `json:"definition_scope"`
+	UseScope                 string   `json:"use_scope"`
+	ResolvedUseScope         string   `json:"resolved_use_scope"`
 	ResolvedIdentity         string   `json:"resolved_identity"`
 	SameSpelling             bool     `json:"same_spelling"`
 	Captured                 bool     `json:"captured"`
@@ -115,24 +117,30 @@ type Metrics struct {
 	PreservationSatisfactionBPS        int `json:"preservation_satisfaction_bps"`
 	UnknownPathTotal                   int `json:"unknown_path_total"`
 
-	SourceCasesObserved          int `json:"source_cases_observed"`
-	SourceCasesExpected          int `json:"source_cases_expected"`
-	ProducerImportsObserved      int `json:"producer_imports_observed"`
-	ProducerImportsExpected      int `json:"producer_imports_expected"`
-	SemanticCausalityObserved    int `json:"semantic_causality_observed"`
-	SemanticCausalityExpected    int `json:"semantic_causality_expected"`
-	CommentInvarianceObserved    int `json:"comment_invariance_observed"`
-	CommentInvarianceExpected    int `json:"comment_invariance_expected"`
-	ControlCaptureObserved       int `json:"control_capture_observed"`
-	ControlCaptureExpected       int `json:"control_capture_expected"`
-	HygienicNonCaptureObserved   int `json:"hygienic_noncapture_observed"`
-	HygienicNonCaptureExpected   int `json:"hygienic_noncapture_expected"`
-	TargetPreservationObserved   int `json:"target_preservation_observed"`
-	TargetPreservationExpected   int `json:"target_preservation_expected"`
-	TargetPreservationDischarged int `json:"target_preservation_discharged"`
-	TargetPreservationRefuted    int `json:"target_preservation_refuted"`
-	TargetPreservationOpen       int `json:"target_preservation_open"`
-	TargetPreservationBPS        int `json:"target_preservation_bps"`
+	SourceCasesObserved             int `json:"source_cases_observed"`
+	SourceCasesExpected             int `json:"source_cases_expected"`
+	ProducerImportsObserved         int `json:"producer_imports_observed"`
+	ProducerImportsExpected         int `json:"producer_imports_expected"`
+	SemanticCausalityObserved       int `json:"semantic_causality_observed"`
+	SemanticCausalityExpected       int `json:"semantic_causality_expected"`
+	CommentInvarianceObserved       int `json:"comment_invariance_observed"`
+	CommentInvarianceExpected       int `json:"comment_invariance_expected"`
+	NonsemanticPreservationObserved int `json:"nonsemantic_preservation_observed"`
+	NonsemanticPreservationExpected int `json:"nonsemantic_preservation_expected"`
+	CanonicalConformanceObserved    int `json:"canonical_conformance_observed"`
+	CanonicalConformanceExpected    int `json:"canonical_conformance_expected"`
+	SubjectResolutionObserved       int `json:"subject_resolution_observed"`
+	SubjectResolutionExpected       int `json:"subject_resolution_expected"`
+	ControlCaptureObserved          int `json:"control_capture_observed"`
+	ControlCaptureExpected          int `json:"control_capture_expected"`
+	HygienicNonCaptureObserved      int `json:"hygienic_noncapture_observed"`
+	HygienicNonCaptureExpected      int `json:"hygienic_noncapture_expected"`
+	TargetPreservationObserved      int `json:"target_preservation_observed"`
+	TargetPreservationExpected      int `json:"target_preservation_expected"`
+	TargetPreservationDischarged    int `json:"target_preservation_discharged"`
+	TargetPreservationRefuted       int `json:"target_preservation_refuted"`
+	TargetPreservationOpen          int `json:"target_preservation_open"`
+	TargetPreservationBPS           int `json:"target_preservation_bps"`
 }
 
 type Authority struct {
@@ -141,6 +149,8 @@ type Authority struct {
 	BeforeSnapshotDigest         string `json:"before_snapshot_digest"`
 	AfterSnapshotDigest          string `json:"after_snapshot_digest"`
 	SnapshotsEqual               bool   `json:"snapshots_equal"`
+	MutationCount                int    `json:"mutation_count"`
+	PromotionCount               int    `json:"promotion_count"`
 }
 
 type SnapshotPair struct {

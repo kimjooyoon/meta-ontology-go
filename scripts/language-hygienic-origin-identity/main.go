@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/hygienicoriginidentity/consumer"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/hygienicoriginidentity/producer"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/hygienicoriginidentity/verify"
 )
 
@@ -33,7 +35,7 @@ func run(source, head, output, beforePath, afterPath, expectation, compare strin
 	if err != nil {
 		return err
 	}
-	report, err := consumer.Evaluate(files, source, head, snapshots)
+	report, err := evaluatePair(files, source, head, snapshots)
 	if err != nil {
 		return err
 	}
@@ -44,7 +46,7 @@ func run(source, head, output, beforePath, afterPath, expectation, compare strin
 				return err
 			}
 		case "refuted":
-			baseline, err := consumer.Evaluate(files, baselineSource, head, snapshots)
+			baseline, err := evaluatePair(files, baselineSource, head, snapshots)
 			if err != nil {
 				return fmt.Errorf("evaluate baseline: %w", err)
 			}
@@ -56,7 +58,7 @@ func run(source, head, output, beforePath, afterPath, expectation, compare strin
 		}
 	}
 	if compare != "" {
-		variant, err := consumer.Evaluate(files, compare, head, snapshots)
+		variant, err := evaluatePair(files, compare, head, snapshots)
 		if err != nil {
 			return fmt.Errorf("evaluate comparison source: %w", err)
 		}
@@ -77,6 +79,34 @@ func run(source, head, output, beforePath, afterPath, expectation, compare strin
 		}
 	}
 	fmt.Printf("hygienic origin identity: %s %d/%d classified, target %d/%d preserved, %d open, %d unknown\n", report.Decision, report.Metrics.ClassifiedClaimTotal, report.Metrics.FixedClaimDenominator, report.Metrics.TargetPreservationDischarged, report.Metrics.TargetPreservationExpected, report.Metrics.OpenClaimTotal, report.Metrics.UnknownPathTotal)
+	return nil
+}
+
+func evaluatePair(files fs.FS, source, head string, snapshots consumer.SnapshotPair) (consumer.Report, error) {
+	producerReport, err := producer.Evaluate(files, source)
+	if err != nil {
+		return consumer.Report{}, err
+	}
+	consumerReport, err := consumer.Evaluate(files, source, head, snapshots)
+	if err != nil {
+		return consumer.Report{}, err
+	}
+	if err := compareProducerReport(producerReport, consumerReport); err != nil {
+		return consumer.Report{}, err
+	}
+	return consumerReport, nil
+}
+
+func compareProducerReport(producerReport producer.Report, consumerReport consumer.Report) error {
+	if producerReport.RawDigest != consumerReport.Source.RawDigest || producerReport.SemanticDigest != consumerReport.Source.SemanticDigest || len(producerReport.Records) != len(consumerReport.Cases) {
+		return fmt.Errorf("producer and consumer canonical digests or case counts diverged")
+	}
+	for index, record := range producerReport.Records {
+		item := consumerReport.Cases[index]
+		if record.CaseID != item.ID || record.Spelling != item.Spelling || record.OriginIdentity != item.OriginIdentity || record.DefinitionScope != item.DefinitionScope || record.UseScope != item.UseScope || record.ResolvedUseScope != item.ResolvedUseScope || record.ResolvedIdentity != item.ResolvedIdentity || record.Captured != item.Captured {
+			return fmt.Errorf("producer/consumer record %q diverged", record.CaseID)
+		}
+	}
 	return nil
 }
 
