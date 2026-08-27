@@ -41,6 +41,7 @@ bash scripts/language-source-execution/main.sh
 bash scripts/language-example-experiment/main.sh
 EXACT_SHA="$HEAD_SHA" bash scripts/language-package-execution/main.sh "$out/package"
 
+phase="EVIDENCE_COPY"
 cp "${RUNNER_TEMP:-/tmp}/gooo-ci-plan/scorecard.json" "$out/evidence/ci-plan.json"
 cp source-execution-output/artifact.json "$out/evidence/source-execution.json"
 cp "${RUNNER_TEMP:-/tmp}/language-example-experiment/report.json" "$out/evidence/artifact-emission.json"
@@ -50,6 +51,7 @@ cp "$out/package/report.json" "$out/evidence/package-execution.json"
 
 digest() { printf 'sha256:%s' "$(sha256sum "$1" | cut -d' ' -f1)"; }
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
+phase="OBSERVATION"
 jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-language-utility-v1' \
   --arg head "$HEAD_SHA" --argjson stages "$stages" \
   --arg ci "$(digest "$out/evidence/ci-plan.json")" \
@@ -79,10 +81,14 @@ jq -n --arg schema 'gooo/language-utility-observation/v1' --arg contract 'gooo-l
 ' > "$out/observation.json"
 
 args=(-contract examples/language-utility/contract.json -observation "$out/observation.json" -report "$out/report.json" -program "$out/program.gooo")
+phase="REDUCE"
 go run ./cmd/language-utility-witness "${args[@]}"
 go run ./cmd/language-utility-witness "${args[@]}" -check
+phase="PROGRAM_PARSE"
 go run ./cmd/gooo check "$out/program.gooo"
+phase="ASSERT"
 jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.closed_cells==39 and .summary.cells_total==42 and .summary.complete_use_cases==4 and .summary.use_cases_total==6 and .summary.remaining_cells==3 and .summary.unknown_cells==0 and .summary.refuted_cells==0' "$out/report.json"
+phase="SUMMARY"
 {
   echo '## Gooo language utility portfolio'
   jq -r '"- progress: \(.summary.closed_cells)/\(.summary.cells_total) cells (\(.summary.progress_basis_points) bps)\n- complete use cases: \(.summary.complete_use_cases)/\(.summary.use_cases_total)\n- remaining: \(.summary.remaining_cells)\n- observation/utility/promotion complete: \(.summary.observation_complete)/\(.summary.utility_complete)/\(.summary.promotion_complete)\n- decision: \(.decision) / \(.resolution)\n- receipt: \(.digest)"' "$out/report.json"

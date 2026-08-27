@@ -11,6 +11,7 @@ func GenerateProgram(contract Contract) (string, error) {
 		return "", err
 	}
 	var source strings.Builder
+	source.WriteString("package languageutility\nnamespace languageutility\n\n")
 	source.WriteString("entity LanguageUtilityCell id \"gooo://meta/language-utility/entity/cell\"\n")
 	source.WriteString("entity LanguageUtilityEvidence id \"gooo://meta/language-utility/entity/evidence\"\n")
 	source.WriteString("entity LanguageUtilityReport id \"gooo://meta/language-utility/entity/report\"\n\n")
