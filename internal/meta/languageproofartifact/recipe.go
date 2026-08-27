@@ -99,7 +99,7 @@ func RecipeFromSource(raw []byte) (Recipe, error) {
 	for _, role := range result.Roles {
 		result.Steps = append(result.Steps, RecipeStep{ID: role.Step, Input: role.Target, MetaOperation: role.MetaOperation, ProofChoice: role.ProofChoice, Role: role.ID})
 	}
-	if result.Version == 0 || result.ID == "" || result.Consumer != ConsumerID || result.SourceEntry == "" || len(result.Roles) != 5 || len(result.Dependencies) != 4 || result.Authority.Capability != "READ_ONLY_CONSUMPTION" {
+	if result.Schema != RecipeSchema || result.Version != 3 || result.ID != "gooo://recipe/language-proof-carrying-artifact/v3" || result.Consumer != ConsumerID || result.SourceEntry == "" || len(result.Roles) != 6 || len(result.Steps) != 6 || len(result.Dependencies) != 5 || result.Authority.Capability != "READ_ONLY_CONSUMPTION" || len(result.Authority.Requires) != 5 {
 		return Recipe{}, fmt.Errorf("proof recipe source is incomplete")
 	}
 	return result, nil

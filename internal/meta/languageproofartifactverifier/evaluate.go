@@ -85,7 +85,7 @@ func Evaluate(input Input) Report {
 			report.UnauthorizedConsumerErrorDigest = item.ConsumerErrorDigest
 		}
 	}
-	structuralGate := report.Summary.CasesSatisfied == CaseTotal && report.Summary.ValidArtifacts == 1 && report.Summary.PreservedTransitions == EvidenceTotal+1 &&
+	structuralGate := report.Summary.CasesSatisfied == CaseTotal && report.Summary.ValidArtifacts == 1 && report.Summary.PreservedTransitions == ClaimTemplateTotal-1 &&
 		report.Summary.TamperedRejections == 1 && report.Summary.CoherentTamperRejections == 1 && report.Summary.MissingEvidenceRejections == 1 &&
 		report.Summary.ByteOnlyDenials == 1 && report.Summary.RecipeRejections == 1 && report.Summary.RecipeOnlyRejections == 1 &&
 		report.Summary.MissingAttachmentRejections == 1 && report.Summary.WrongAttachmentRejections == 1 && report.Summary.UnrelatedEvidenceRejections == 1 &&

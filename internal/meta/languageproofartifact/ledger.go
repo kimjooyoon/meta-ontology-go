@@ -1,9 +1,9 @@
 package languageproofartifact
 
-const LedgerSchema = "gooo/proof-evidence-ledger/v2"
+const LedgerSchema = "gooo/proof-evidence-ledger/v3"
 
 func openLedger(claims []ClaimStatement) ClaimLedger {
-	ledger := ClaimLedger{Schema: LedgerSchema, Version: 2, Entries: []LedgerEntry{}}
+	ledger := ClaimLedger{Schema: LedgerSchema, Version: 3, Entries: []LedgerEntry{}}
 	for _, item := range claims {
 		entry := LedgerEntry{ClaimID: item.ID, Proposition: item.Proposition, TargetDigest: item.TargetDigest, Dependencies: append([]string(nil), item.Dependencies...), Status: "OPEN", Resolution: "LOWER_RESOLUTION",
 			Producer: ProducerID, Consumer: ConsumerID, ProofChoice: item.ProofChoice, MetaOperation: item.MetaOperation, Coordinate: item.Coordinate,

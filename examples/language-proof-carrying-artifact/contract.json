@@ -1,6 +1,6 @@
 {
-  "schema": "gooo/language-proof-carrying-artifact-contract/v2",
-  "version": 2,
+  "schema": "gooo/language-proof-carrying-artifact-contract/v3",
+  "version": 3,
   "cases": [
     {"id":"valid-proof-carrying-artifact","input_kind":"VALID","expected_decision":"PASS","expected_resolution":"EXACT","expected_reason":"PROOF_CARRYING_ARTIFACT_AUTHORIZED","proof_choice":"COHERENCE","meta_operation":"grant-read-only-consumption"},
     {"id":"tampered-evidence","input_kind":"TAMPERED","expected_decision":"FAIL_CLOSED","expected_resolution":"INVARIANT_ONLY","expected_reason":"PROOF_EVIDENCE_DIGEST_MISMATCH","proof_choice":"REGRESSION","meta_operation":"reject-tampered-evidence"},

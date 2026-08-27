@@ -17,7 +17,7 @@ func summarize(cases []CaseResult, independence IndependenceEvidence, writeSet W
 				summary.EvidenceKindsCarried = EvidenceTotal
 				summary.ExactEvidenceLinks = EvidenceTotal
 				summary.RecipeMatches = 1
-				summary.PreservedTransitions = EvidenceTotal + 1
+				summary.PreservedTransitions = ClaimTemplateTotal - 1
 				summary.AcceptedTransitions = TransitionTotal
 				summary.ReadOnlyAuthorities = 1
 			}
@@ -122,4 +122,13 @@ func claimTransitions(claims []ClaimResult) []ClaimTransition {
 		previous = transition.Digest
 	}
 	return result
+}
+
+func policyClaimTransitionDigest(claims []ClaimResult) string {
+	for _, transition := range claimTransitions(claims) {
+		if transition.ClaimID == "case-envelope-policy-bound" {
+			return transition.Digest
+		}
+	}
+	return ""
 }

@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-const BundleSchema = "gooo/proof-carrying-artifact-bundle/v1"
+const BundleSchema = "gooo/proof-carrying-artifact-bundle/v2"
 
 var requiredBundlePaths = []string{
 	"artifact.json", "tampered.json", "coherent-tamper.json", "missing-operation.json", "byte-only.json", "wrong-recipe.json",
@@ -17,6 +17,7 @@ var requiredBundlePaths = []string{
 	"claim-proposition-tamper.json", "claim-dependency-tamper.json", "claim-proof-choice-tamper.json", "claim-target-tamper.json",
 	"source.gooo", "operation-receipt.json", "recipe.json", "contract.json", "independence.json", "write-set.json", "coherent-operation-receipt.json", "checkout.json",
 	"semantic-intervention-artifact.json", "semantic-intervention.gooo", "semantic-operation-receipt.json", "comment-only-intervention-artifact.json", "comment-only-intervention.gooo", "comment-operation-receipt.json",
+	"policy-missing.gooo", "policy-malformed-rank.gooo", "policy-duplicate-rank.gooo", "policy-unknown-issue.gooo",
 }
 
 func RequiredBundlePaths() []string { return append([]string(nil), requiredBundlePaths...) }
@@ -54,7 +55,7 @@ func PackBundle(head string, checkout CheckoutEvidence, inputs []BundleInput) (B
 		}
 	}
 	sortBundleFiles(files, manifest)
-	bundle := Bundle{Schema: BundleSchema, Version: 1, HeadSHA: head, Checkout: checkout, Manifest: manifest, Files: files}
+	bundle := Bundle{Schema: BundleSchema, Version: 2, HeadSHA: head, Checkout: checkout, Manifest: manifest, Files: files}
 	bundle.Digest = bundleDigest(bundle)
 	return bundle, nil
 }
@@ -71,7 +72,7 @@ func DecodeBundle(raw []byte) (Bundle, error) {
 }
 
 func ValidateBundle(bundle Bundle) error {
-	if bundle.Schema != BundleSchema || bundle.Version != 1 || !validHead(bundle.HeadSHA) || len(bundle.Manifest) != len(requiredBundlePaths) || len(bundle.Files) != len(requiredBundlePaths) || bundle.Digest != bundleDigest(bundle) {
+	if bundle.Schema != BundleSchema || bundle.Version != 2 || !validHead(bundle.HeadSHA) || len(bundle.Manifest) != len(requiredBundlePaths) || len(bundle.Files) != len(requiredBundlePaths) || bundle.Digest != bundleDigest(bundle) {
 		return fmt.Errorf("bundle identity mismatch")
 	}
 	wanted := map[string]bool{}
@@ -165,4 +166,15 @@ func InputFromBundle(bundle Bundle) (Input, error) {
 		{ID: "comment-only-intervention", Kind: "NONSEMANTIC", Before: SubjectInput{Artifact: content["artifact.json"], Source: content["source.gooo"], Operation: content["operation-receipt.json"], Recipe: content["recipe.json"], Checkout: bundle.Checkout}, After: SubjectInput{Artifact: content["comment-only-intervention-artifact.json"], Source: content["comment-only-intervention.gooo"], Operation: content["comment-operation-receipt.json"], Recipe: content["recipe.json"], Checkout: bundle.Checkout}, PolicyBefore: SubjectInput{Artifact: content["tampered.json"], Source: content["source.gooo"], Operation: content["operation-receipt.json"], Recipe: content["recipe.json"], Checkout: bundle.Checkout}, PolicyAfter: SubjectInput{Artifact: content["tampered.json"], Source: content["comment-only-intervention.gooo"], Operation: content["operation-receipt.json"], Recipe: content["recipe.json"], Checkout: bundle.Checkout}},
 	}
 	return Input{Contract: contract, ContractBytes: content["contract.json"], HeadSHA: bundle.HeadSHA, ValidArtifact: content["artifact.json"], TamperedArtifact: content["tampered.json"], CoherentTamperedArtifact: content["coherent-tamper.json"], MissingArtifact: content["missing-operation.json"], ByteOnlyArtifact: content["byte-only.json"], WrongRecipe: content["wrong-recipe.json"], RecipeOnlyArtifact: content["recipe-only.json"], MissingAttachment: content["missing-attachment.json"], WrongAttachmentDigest: content["wrong-attachment-digest.json"], UnrelatedTamperedArtifact: content["unrelated-tamper.json"], StaleHeadArtifact: content["stale-head.json"], ClaimPropositionArtifact: content["claim-proposition-tamper.json"], ClaimDependencyArtifact: content["claim-dependency-tamper.json"], ClaimProofChoiceArtifact: content["claim-proof-choice-tamper.json"], ClaimTargetArtifact: content["claim-target-tamper.json"], UnauthorizedConsumer: content["unauthorized-consumer.json"], UnauthorizedBundle: bundle, Source: content["source.gooo"], Operation: content["operation-receipt.json"], Recipe: content["recipe.json"], Independence: independence, WriteSet: writeSet, CoherentOperation: content["coherent-operation-receipt.json"], Interventions: interventions, Checkout: bundle.Checkout, BundleDigest: bundle.Digest}, nil
+}
+
+// BundleFileBytes reconstructs one content-addressed attachment after the
+// complete bundle inventory has been validated. Consumers use this boundary
+// for policy fixtures and target consumption so paths are never read from a
+// repository checkout.
+func BundleFileBytes(bundle Bundle, path string) ([]byte, error) {
+	if err := ValidateBundle(bundle); err != nil {
+		return nil, err
+	}
+	return bundleTargetBytes(bundle, path)
 }

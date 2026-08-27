@@ -46,6 +46,16 @@ func parseCaseEnvelopePolicy(raw []byte) (caseEnvelopePolicy, error) {
 		return policy, &caseEnvelopePolicyError{Step: "lower-policy", Reason: "CASE_ENVELOPE_POLICY_MALFORMED", Detail: err.Error()}
 	}
 	var operation string
+	declarations := file.Decls
+	if declarations == nil {
+		declarations = file.Declarations
+	}
+	policyOutputs := map[string]string{}
+	for _, declaration := range declarations {
+		if activity, ok := declaration.(*syntax.ActivityDecl); ok {
+			policyOutputs[activity.Name] = activity.Output
+		}
+	}
 	rows := make([]PolicyIssueRow, 0, 11)
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity {
@@ -53,6 +63,9 @@ func parseCaseEnvelopePolicy(raw []byte) (caseEnvelopePolicy, error) {
 		}
 		switch {
 		case strings.HasPrefix(node.ValueProgram, "proof.case-envelope.issue;"):
+			if policyOutputs[node.Name] != "CaseEnvelopePolicy" {
+				return policy, &caseEnvelopePolicyError{Step: "validate-policy", Reason: "CASE_ENVELOPE_POLICY_ROLE_MISMATCH", Detail: node.Name}
+			}
 			fields, fieldErr := parseCaseEnvelopeFields(node.ValueProgram, "issue", []string{"kind", "rank"})
 			if fieldErr != nil {
 				return policy, fieldErr
@@ -61,8 +74,14 @@ func parseCaseEnvelopePolicy(raw []byte) (caseEnvelopePolicy, error) {
 			if parseErr != nil || rank < 1 {
 				return policy, &caseEnvelopePolicyError{Step: "parse-policy", Reason: "CASE_ENVELOPE_POLICY_MALFORMED", Detail: "issue rank is not a positive integer"}
 			}
+			if !knownCaseEnvelopeIssueKind(fields["kind"]) {
+				return policy, &caseEnvelopePolicyError{Step: "validate-policy", Reason: "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE", Detail: fields["kind"]}
+			}
 			rows = append(rows, PolicyIssueRow{Kind: fields["kind"], Rank: rank})
 		case strings.HasPrefix(node.ValueProgram, "proof.case-envelope.reduction;"):
+			if policyOutputs[node.Name] != "CaseEnvelopePolicy" {
+				return policy, &caseEnvelopePolicyError{Step: "validate-policy", Reason: "CASE_ENVELOPE_POLICY_ROLE_MISMATCH", Detail: node.Name}
+			}
 			fields, fieldErr := parseCaseEnvelopeFields(node.ValueProgram, "reduction", []string{"operation", "missing", "duplicate", "unknown"})
 			if fieldErr != nil {
 				return policy, fieldErr
@@ -125,6 +144,15 @@ func parseCaseEnvelopePolicy(raw []byte) (caseEnvelopePolicy, error) {
 	return policy, nil
 }
 
+func knownCaseEnvelopeIssueKind(kind string) bool {
+	switch kind {
+	case "EXTERNAL_EVIDENCE_ABSENT", "OPERATION_EVIDENCE_MISSING", "OPERATION_ATTACHMENT_MISSING", "EVIDENCE_DIGEST_MISMATCH", "LEDGER_MISMATCH", "CLAIM_STRUCTURE_MISMATCH", "SOURCE_RECONSTRUCTION_MISMATCH", "OPERATION_ATTACHMENT_DIGEST_MISMATCH", "OPERATION_RECONSTRUCTION_MISMATCH", "INVARIANT_EVIDENCE_NOT_PRESERVED", "RECIPE_MISMATCH":
+		return true
+	default:
+		return false
+	}
+}
+
 func parseCaseEnvelopeFields(program, kind string, required []string) (map[string]string, error) {
 	parts := strings.SplitN(program, ";", 2)
 	if len(parts) != 2 || parts[0] != "proof.case-envelope."+kind {
@@ -146,11 +174,21 @@ func parseCaseEnvelopeFields(program, kind string, required []string) (map[strin
 			return nil, &caseEnvelopePolicyError{Step: "parse-policy", Reason: "CASE_ENVELOPE_POLICY_MISSING_FIELD", Detail: key}
 		}
 	}
+	allowed := map[string]bool{}
+	for _, key := range required {
+		allowed[key] = true
+	}
+	for key := range fields {
+		if !allowed[key] {
+			return nil, &caseEnvelopePolicyError{Step: "validate-policy", Reason: "CASE_ENVELOPE_POLICY_EXTRA_FIELD", Detail: key}
+		}
+	}
 	return fields, nil
 }
 
 func policyObservation(policy caseEnvelopePolicy, issues []caseEnvelopeIssue, selected caseEnvelopeIssue) CaseEnvelopePolicyObservation {
 	result := policy.Observation
+	result.ObservedIssueSet = make([]string, 0, len(issues))
 	seen := map[string]bool{}
 	for _, issue := range issues {
 		if issue.Kind != "" && !seen[issue.Kind] {
@@ -158,17 +196,9 @@ func policyObservation(policy caseEnvelopePolicy, issues []caseEnvelopeIssue, se
 			seen[issue.Kind] = true
 		}
 	}
-	sort.Slice(result.ObservedIssueSet, func(left, right int) bool {
-		leftRank, leftKnown := policy.ranks[result.ObservedIssueSet[left]]
-		rightRank, rightKnown := policy.ranks[result.ObservedIssueSet[right]]
-		if leftKnown && rightKnown {
-			return leftRank < rightRank
-		}
-		if leftKnown != rightKnown {
-			return leftKnown
-		}
-		return result.ObservedIssueSet[left] < result.ObservedIssueSet[right]
-	})
+	sort.Strings(result.ObservedIssueSet)
+	result.ObservedIssueMembershipDigest = digestValue(result.ObservedIssueSet)
+	result.ObservedIssueCount = len(result.ObservedIssueSet)
 	if selected.Kind == "" || selected.Kind == "NO_CASE_ENVELOPE_ISSUE" {
 		result.SelectedIssue = "NONE"
 		result.SelectedRank = 0
@@ -184,7 +214,8 @@ func policyFailureObservation(raw []byte) CaseEnvelopePolicyObservation {
 }
 
 func policyObservationShapeOK(observation CaseEnvelopePolicyObservation, sourceDigest string) bool {
-	return policyRowsShapeOK(observation, sourceDigest) && observation.SelectedIssue == "NONE" && observation.SelectedRank == 0 && len(observation.ObservedIssueSet) == 0
+	return policyRowsShapeOK(observation, sourceDigest) && observation.SelectedIssue == "NONE" && observation.SelectedRank == 0 &&
+		len(observation.ObservedIssueSet) == 0 && observation.ObservedIssueCount == 0 && observation.ObservedIssueMembershipDigest == digestValue([]string{})
 }
 
 func policyRowsShapeOK(observation CaseEnvelopePolicyObservation, sourceDigest string) bool {
@@ -232,4 +263,50 @@ func CheckCaseEnvelopePolicy(raw []byte, observedIssue string) (CaseEnvelopePoli
 		return policyObservation(policy, []caseEnvelopeIssue{issue}, issue), Coordinate{}, nil
 	}
 	return policyObservation(policy, nil, caseEnvelopeIssue{}), Coordinate{}, nil
+}
+
+// PolicyFixtureObservation is emitted by the CI-only fixture path. It is
+// produced by the same artifact verifier kernel as normal cases, with an
+// optional synthetic observed issue used only to exercise the unknown-issue
+// reduction boundary.
+type PolicyFixtureObservation struct {
+	Decision              string                        `json:"decision"`
+	Resolution            string                        `json:"resolution"`
+	Reason                string                        `json:"reason"`
+	Coordinate            Coordinate                    `json:"coordinate"`
+	ArtifactDigest        string                        `json:"artifact_digest"`
+	Policy                CaseEnvelopePolicyObservation `json:"policy"`
+	PolicyClaimStatus     string                        `json:"policy_claim_status"`
+	PolicyClaimResolution string                        `json:"policy_claim_resolution"`
+	PolicyClaimReason     string                        `json:"policy_claim_reason"`
+	PolicyClaimCoordinate Coordinate                    `json:"policy_claim_coordinate"`
+	PolicyClaimEvidence   []string                      `json:"policy_claim_evidence_digests"`
+	ReceiptDigest         string                        `json:"receipt_digest"`
+}
+
+func policyFixtureReceiptDigest(receipt PolicyFixtureObservation) string {
+	receipt.ReceiptDigest = ""
+	return digestValue(receipt)
+}
+
+// VerifyCaseEnvelopePolicyFixture runs the complete verifyArtifact path so a
+// malformed policy cannot be accepted by a detached parser probe. The
+// observedIssue parameter is only for the unknown-observed-issue fixture and
+// is injected before the same policy reducer used by production verification.
+func VerifyCaseEnvelopePolicyFixture(raw, source, operation, recipe []byte, head, observedIssue string) PolicyFixtureObservation {
+	result := verifyArtifactWithObservedIssue(raw, source, operation, recipe, head, ProofPhasePreliminary, observedIssue)
+	fixture := PolicyFixtureObservation{Decision: result.Decision, Resolution: result.Resolution, Reason: result.Reason,
+		Coordinate: result.Coordinate, ArtifactDigest: result.ArtifactDigest, Policy: result.Policy}
+	for _, claim := range result.Claims {
+		if claim.ID == "case-envelope-policy-bound" {
+			fixture.PolicyClaimStatus = claim.Status
+			fixture.PolicyClaimResolution = claim.Resolution
+			fixture.PolicyClaimReason = claim.Reason
+			fixture.PolicyClaimCoordinate = claim.Coordinate
+			fixture.PolicyClaimEvidence = append([]string(nil), claim.EvidenceDigests...)
+			break
+		}
+	}
+	fixture.ReceiptDigest = policyFixtureReceiptDigest(fixture)
+	return fixture
 }

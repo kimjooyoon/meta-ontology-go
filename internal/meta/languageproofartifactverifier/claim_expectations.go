@@ -14,7 +14,7 @@ type ClaimStateExpectation struct {
 	States []string `json:"states"`
 }
 
-// ClaimStateExpectationPhase is one complete, phase-indexed 16 x 5 contract.
+// ClaimStateExpectationPhase is one complete, phase-indexed 16 x 6 contract.
 // The denominator is deliberately carried with the table so a missing case
 // cannot silently shrink the measurement.
 type ClaimStateExpectationPhase struct {
@@ -100,6 +100,7 @@ func fixedClaimAdjudicationTable(phase string) []ClaimAdjudicationExpectation {
 		return nil
 	}
 	return []ClaimAdjudicationExpectation{
+		{Phase: phase, CaseID: "valid-proof-carrying-artifact", ClaimID: "case-envelope-policy-bound", Status: "DISCHARGED", Resolution: "EXACT", Reason: "CLAIM_DISCHARGED", Coordinate: Coordinate{"GENERATE", "policy-evidence", "CASE_ENVELOPE_POLICY_SOURCE_CARRIED"}, EvidenceDigestCount: 1},
 		{Phase: phase, CaseID: "missing-operation-evidence", ClaimID: "operation-receipt-bound", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_EVIDENCE", "operation-evidence", "PROOF_EVIDENCE_MISSING"}, EvidenceDigestCount: 1},
 		{Phase: phase, CaseID: "missing-operation-evidence", ClaimID: "recipe-match", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_RECIPE", "recipe-evidence", "RECIPE_OPERATION_EVIDENCE_MISSING"}, EvidenceDigestCount: 3},
 		{Phase: phase, CaseID: "unrelated-evidence-tamper", ClaimID: "no-byte-authority", Status: "REFUTED", Resolution: "INVARIANT_ONLY", Reason: "CLAIM_REFUTED", Coordinate: Coordinate{"CONSUME_INVARIANT", "invariant-evidence", "INVARIANT_EVIDENCE_NOT_PRESERVED"}, EvidenceDigestCount: 1},
@@ -121,46 +122,46 @@ type claimStateTotalsJSON struct {
 	Refuted    int `json:"refuted"`
 }
 
-// The FINAL table is the fixed 80-instance contract used after the
+// The FINAL table is the fixed 96-instance contract used after the
 // independent consumer recheck. The PRELIMINARY table is independently
 // enumerated rather than derived from observed totals; it differs only at
 // the declared evidence-time transition above.
 var fixedClaimStateExpectationsFinal = []ClaimStateExpectation{
-	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
-	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "missing-operation-evidence", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "bytes-only-no-authority", States: []string{"OPEN", "OPEN", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "independent-recipe-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "recipe-only-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "missing-attachment", States: []string{"DISCHARGED", "OPEN", "DISCHARGED", "OPEN", "OPEN"}},
-	{CaseID: "wrong-attachment-digest", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "unrelated-evidence-tamper", States: []string{"DISCHARGED", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
-	{CaseID: "stale-head", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
-	{CaseID: "unauthorized-consumer", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
-	{CaseID: "coherent-claim-proposition-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-dependency-tamper", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-proof-choice-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
+	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "missing-operation-evidence", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "bytes-only-no-authority", States: []string{"OPEN", "OPEN", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
+	{CaseID: "independent-recipe-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "recipe-only-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "missing-attachment", States: []string{"DISCHARGED", "OPEN", "DISCHARGED", "OPEN", "DISCHARGED", "OPEN"}},
+	{CaseID: "wrong-attachment-digest", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "unrelated-evidence-tamper", States: []string{"DISCHARGED", "DISCHARGED", "REFUTED", "OPEN", "DISCHARGED", "OPEN"}},
+	{CaseID: "stale-head", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "unauthorized-consumer", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "coherent-claim-proposition-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-claim-dependency-tamper", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "coherent-claim-proof-choice-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
 }
 
 var fixedClaimStateExpectationsPreliminary = []ClaimStateExpectation{
-	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
-	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "missing-operation-evidence", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "bytes-only-no-authority", States: []string{"OPEN", "OPEN", "DISCHARGED", "OPEN", "OPEN"}},
-	{CaseID: "independent-recipe-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "recipe-only-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "OPEN"}},
-	{CaseID: "missing-attachment", States: []string{"DISCHARGED", "OPEN", "DISCHARGED", "OPEN", "OPEN"}},
-	{CaseID: "wrong-attachment-digest", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "unrelated-evidence-tamper", States: []string{"DISCHARGED", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
-	{CaseID: "stale-head", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
-	{CaseID: "unauthorized-consumer", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
-	{CaseID: "coherent-claim-proposition-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-dependency-tamper", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-proof-choice-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
-	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "valid-proof-carrying-artifact", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED"}},
+	{CaseID: "tampered-evidence", States: []string{"REFUTED", "OPEN", "DISCHARGED", "REFUTED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-tamper-reconstruction", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "missing-operation-evidence", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "bytes-only-no-authority", States: []string{"OPEN", "OPEN", "DISCHARGED", "OPEN", "OPEN", "OPEN"}},
+	{CaseID: "independent-recipe-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "recipe-only-mismatch", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED", "DISCHARGED", "OPEN"}},
+	{CaseID: "missing-attachment", States: []string{"DISCHARGED", "OPEN", "DISCHARGED", "OPEN", "DISCHARGED", "OPEN"}},
+	{CaseID: "wrong-attachment-digest", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "unrelated-evidence-tamper", States: []string{"DISCHARGED", "DISCHARGED", "REFUTED", "OPEN", "DISCHARGED", "OPEN"}},
+	{CaseID: "stale-head", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "unauthorized-consumer", States: []string{"DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "REFUTED"}},
+	{CaseID: "coherent-claim-proposition-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-claim-dependency-tamper", States: []string{"DISCHARGED", "REFUTED", "DISCHARGED", "DISCHARGED", "DISCHARGED", "OPEN"}},
+	{CaseID: "coherent-claim-proof-choice-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
+	{CaseID: "coherent-claim-target-tamper", States: []string{"REFUTED", "OPEN", "DISCHARGED", "DISCHARGED", "OPEN", "OPEN"}},
 }
 
 func fixedClaimStateTable(phase string) []ClaimStateExpectation {
@@ -200,7 +201,7 @@ func ClaimStateExpectations() ClaimStateExpectationDocument {
 		phases[phase] = ClaimStateExpectationPhase{FixedDenominator: CaseTotal * ClaimTemplateTotal, Cases: table, Totals: claimStateTotalsJSON{Discharged: totals.Discharged, Open: totals.Open, Refuted: totals.Refuted}}
 		claimAdjudications = append(claimAdjudications, fixedClaimAdjudicationTable(phase)...)
 	}
-	return ClaimStateExpectationDocument{Schema: "gooo/language-proof-carrying-artifact-claim-state-expectations/v1", Version: 1, FixedDenominator: CaseTotal * ClaimTemplateTotal, Phases: phases, PhaseTransitions: phaseClaimStateTransitions(), ClaimAdjudications: claimAdjudications}
+	return ClaimStateExpectationDocument{Schema: "gooo/language-proof-carrying-artifact-claim-state-expectations/v2", Version: 2, FixedDenominator: CaseTotal * ClaimTemplateTotal, Phases: phases, PhaseTransitions: phaseClaimStateTransitions(), ClaimAdjudications: claimAdjudications}
 }
 
 func fixedClaimStateTotals(phase string) claimStateTotals {
@@ -386,7 +387,7 @@ func projectCasesForPhase(cases []CaseResult, phase string) []CaseResult {
 
 func validatePhaseTransitionPair(preliminary, final []CaseResult) error {
 	if len(preliminary) != CaseTotal || len(final) != CaseTotal {
-		return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: "phase transition comparison requires 80 claim instances in each phase"}
+		return &ValidationError{Coordinate: Coordinate{"VERIFY_CLAIM_STATES", "phase-transition", "CLAIM_PHASE_TRANSITION_MISMATCH"}, Detail: fmt.Sprintf("phase transition comparison requires %d claim instances in each phase", CaseTotal*ClaimTemplateTotal)}
 	}
 	transitions := phaseClaimStateTransitions()
 	if len(transitions) != 1 {

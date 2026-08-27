@@ -1,8 +1,8 @@
 package languageproofartifact
 
 const (
-	ArtifactSchema     = "gooo/language-proof-carrying-artifact/v1"
-	RecipeSchema       = "gooo/language-proof-carrying-recipe/v1"
+	ArtifactSchema     = "gooo/language-proof-carrying-artifact/v2"
+	RecipeSchema       = "gooo/language-proof-carrying-recipe/v2"
 	ProducerID         = "gooo://producer/language-proof-carrying-artifact"
 	ConsumerID         = "gooo://consumer/language-proof-carrying-artifact-verifier"
 	ArtifactDecision   = "CARRIED"

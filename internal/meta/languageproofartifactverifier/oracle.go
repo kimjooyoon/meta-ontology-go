@@ -74,6 +74,14 @@ func caseEnvelopePolicyIssue(err error) caseEnvelopeIssue {
 // verifyArtifact is the independent consumer kernel. It evaluates each
 // proposition separately and propagates failure only over declared edges.
 func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) observation {
+	return verifyArtifactWithObservedIssue(raw, source, operation, recipe, head, phase, "")
+}
+
+// verifyArtifactWithObservedIssue is the same production kernel with one
+// explicit fixture-only observation hook. It is used to exercise the
+// fail-closed unknown-observed-issue boundary without replacing the parser,
+// source binding, or reducer with a detached expected result.
+func verifyArtifactWithObservedIssue(raw, source, operation, recipe []byte, head, phase, observedIssue string) observation {
 	artifact, err := decodeStrict[Artifact](raw)
 	if err != nil {
 		return failure("INVARIANT_ONLY", "PROOF_CARRYING_ARTIFACT_INVALID", "CONSUME_DECODE", "artifact")
@@ -129,7 +137,7 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 	projection, projectionErr := projectSource(source, activityFrom(artifact))
 	var policy caseEnvelopePolicy
 	var policyErr error
-	if len(source) > 0 {
+	if len(source) > 0 || len(operation) > 0 || len(recipe) > 0 {
 		policy, policyErr = parseCaseEnvelopePolicy(source)
 	}
 	sourceClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "source-bytes-bound")
@@ -228,19 +236,6 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "recipe-match", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"}, "consumer-observation"))
 	}
 
-	allPrerequisites := claimsStructureOK && priorLedgerOK && claimStatus(adjudications, "source-bytes-bound") == "DISCHARGED" && claimStatus(adjudications, "operation-receipt-bound") == "DISCHARGED" && claimStatus(adjudications, "no-byte-authority") == "DISCHARGED" && claimStatus(adjudications, "recipe-match") == "DISCHARGED"
-	authorityClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "consumer-authority")
-	authorityGood := allPrerequisites && authorityClaimOK && len(raw) > 0
-	if authorityGood {
-		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "consumer-authority"), "consumer-canonical-recipe-v2"))
-	} else if !allPrerequisites {
-		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_DEPENDENCY_OPEN"}, "consumer-observation"))
-	} else if !authorityClaimOK {
-		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
-	} else {
-		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_ATTESTATION_NOT_PRESERVED"}, "consumer-observation"))
-	}
-
 	issues := make([]caseEnvelopeIssue, 0, CaseEnvelopePolicyRowTotal)
 	if len(source) == 0 && len(operation) == 0 && len(recipe) == 0 {
 		issues = append(issues, caseEnvelopeIssue{"EXTERNAL_EVIDENCE_ABSENT", "LOWER_RESOLUTION", "ARTIFACT_BYTES_NOT_AUTHORITY", Coordinate{"CONSUME_INPUT", "external-evidence", "ARTIFACT_BYTES_NOT_AUTHORITY"}})
@@ -279,9 +274,12 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 	if !recipeGood {
 		issues = append(issues, caseEnvelopeIssue{"RECIPE_MISMATCH", "INVARIANT_ONLY", "INDEPENDENT_RECIPE_MISMATCH", Coordinate{"CONSUME_RECIPE", "recipe", "INDEPENDENT_RECIPE_MISMATCH"}})
 	}
+	if observedIssue != "" {
+		issues = append(issues, caseEnvelopeIssue{Kind: observedIssue, Resolution: "LOWER_RESOLUTION", Reason: "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE", Coordinate: Coordinate{"CONSUME_POLICY", "observed-issue", "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE"}})
+	}
 	var envelope caseEnvelopeIssue
 	policyObservationValue := CaseEnvelopePolicyObservation{}
-	if len(source) == 0 {
+	if len(source) == 0 && len(operation) == 0 && len(recipe) == 0 {
 		envelope = reduceCaseEnvelopeWithoutPolicy(issues)
 	} else if policyErr != nil {
 		envelope = caseEnvelopePolicyIssue(policyErr)
@@ -289,6 +287,47 @@ func verifyArtifact(raw, source, operation, recipe []byte, head, phase string) o
 	} else {
 		envelope = reduceCaseEnvelope(issues, policy)
 		policyObservationValue = policyObservation(policy, issues, envelope)
+	}
+	policyStatementOK := claimStatementOK(artifact.Claims, artifact, "case-envelope-policy-bound")
+	policyClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "case-envelope-policy-bound")
+	policySelectionUnknown := envelope.Kind == "CASE_ENVELOPE_POLICY_UNKNOWN_ISSUE"
+	policyGood := policyErr == nil && len(source) > 0 && sourceGood && policyStatementOK && policyClaimOK && !policySelectionUnknown
+	if policyGood {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "case-envelope-policy-bound"), "consumer-canonical-recipe-v2"))
+	} else if policyErr != nil {
+		coordinate := Coordinate{"CONSUME_POLICY", "parse-policy", "CASE_ENVELOPE_POLICY_MISSING"}
+		var policyFailure *caseEnvelopePolicyError
+		if errors.As(policyErr, &policyFailure) {
+			coordinate = Coordinate{"CONSUME_POLICY", policyFailure.Step, policyFailure.Reason}
+		}
+		status, resolution, reason := "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED"
+		if len(source) == 0 {
+			status, resolution, reason = "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING"
+		}
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", status, resolution, reason, coordinate, "consumer-observation"))
+	} else if policySelectionUnknown {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", envelope.Coordinate, "consumer-observation"))
+	} else if !sourceGood {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_POLICY", "source-dependency", "CASE_ENVELOPE_POLICY_SOURCE_NOT_DISCHARGED"}, "consumer-observation"))
+	} else if !policyStatementOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else if !policyClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_POLICY", "policy-evidence", "CASE_ENVELOPE_POLICY_EVIDENCE_NOT_PRESERVED"}, "consumer-observation"))
+	} else {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "case-envelope-policy-bound", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_POLICY", "policy-evidence", "CASE_ENVELOPE_POLICY_NOT_DISCHARGED"}, "consumer-observation"))
+	}
+
+	allPrerequisites := claimsStructureOK && priorLedgerOK && claimStatus(adjudications, "source-bytes-bound") == "DISCHARGED" && claimStatus(adjudications, "operation-receipt-bound") == "DISCHARGED" && claimStatus(adjudications, "no-byte-authority") == "DISCHARGED" && claimStatus(adjudications, "recipe-match") == "DISCHARGED" && claimStatus(adjudications, "case-envelope-policy-bound") == "DISCHARGED"
+	authorityClaimOK := claimOK(artifact.Claims, artifact.Evidence, artifact, "consumer-authority")
+	authorityGood := allPrerequisites && authorityClaimOK && len(raw) > 0
+	if authorityGood {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "DISCHARGED", "EXACT", "CLAIM_DISCHARGED", claimStatementCoordinate(artifact.Claims, "consumer-authority"), "consumer-canonical-recipe-v2"))
+	} else if !allPrerequisites {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "OPEN", "LOWER_RESOLUTION", "CLAIM_PENDING", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_DEPENDENCY_OPEN"}, "consumer-observation"))
+	} else if !authorityClaimOK {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_CLAIMS", "claim-statement", "PROOF_CLAIM_STATEMENT_MISMATCH"}, "consumer-observation"))
+	} else {
+		adjudications = append(adjudications, claimAdjudication(artifact.Claims, "consumer-authority", "REFUTED", "INVARIANT_ONLY", "CLAIM_REFUTED", Coordinate{"CONSUME_AUTHORITY", "authority-evidence", "AUTHORITY_ATTESTATION_NOT_PRESERVED"}, "consumer-observation"))
 	}
 	if authorityGood {
 		claims := exactClaims(artifact.Claims)
@@ -324,11 +363,12 @@ func validateClaimStatements(claims []ClaimStatement, evidence []Evidence, artif
 		byID[claim.ID] = claim
 	}
 	wantTargets := map[string]string{
-		"source-bytes-bound":      artifact.SourceDigest,
-		"operation-receipt-bound": artifact.OperationDigest,
-		"no-byte-authority":       "READ_ONLY_CONSUMPTION",
-		"recipe-match":            artifact.RecipeDigest,
-		"consumer-authority":      "READ_ONLY_CONSUMPTION",
+		"source-bytes-bound":         artifact.SourceDigest,
+		"operation-receipt-bound":    artifact.OperationDigest,
+		"no-byte-authority":          "READ_ONLY_CONSUMPTION",
+		"recipe-match":               artifact.RecipeDigest,
+		"case-envelope-policy-bound": artifact.SourceDigest,
+		"consumer-authority":         "READ_ONLY_CONSUMPTION",
 	}
 	for _, spec := range claimSpecs() {
 		claim, ok := byID[spec.ID]
@@ -354,6 +394,8 @@ func claimStatementMatches(claim ClaimStatement, artifact Artifact, spec claimSp
 		target = artifact.OperationDigest
 	case "recipe-match":
 		target = artifact.RecipeDigest
+	case "case-envelope-policy-bound":
+		target = artifact.SourceDigest
 	}
 	return claim.ID == spec.ID && claim.Digest == claimStatementDigest(claim) && claim.Proposition == spec.Proposition && claim.TargetDigest == target &&
 		reflect.DeepEqual(claim.Dependencies, spec.Dependencies) && claim.ProofChoice == spec.ProofChoice && claim.MetaOperation == spec.MetaOperation &&

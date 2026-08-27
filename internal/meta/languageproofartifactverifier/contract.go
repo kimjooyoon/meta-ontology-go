@@ -7,7 +7,7 @@ import (
 )
 
 func CanonicalContract() Contract {
-	return Contract{Schema: ContractSchema, Version: 2, Cases: []CaseSpec{
+	return Contract{Schema: ContractSchema, Version: 3, Cases: []CaseSpec{
 		{ID: "valid-proof-carrying-artifact", InputKind: "VALID", ExpectedDecision: "PASS", ExpectedResolution: "EXACT", ExpectedReason: "PROOF_CARRYING_ARTIFACT_AUTHORIZED", ProofChoice: "COHERENCE", MetaOperation: "grant-read-only-consumption"},
 		{ID: "tampered-evidence", InputKind: "TAMPERED", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "PROOF_EVIDENCE_DIGEST_MISMATCH", ProofChoice: "REGRESSION", MetaOperation: "reject-tampered-evidence"},
 		{ID: "coherent-tamper-reconstruction", InputKind: "COHERENT_TAMPER", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "OPERATION_RECONSTRUCTION_MISMATCH", ProofChoice: "REGRESSION", MetaOperation: "reject-coherent-tamper"},
@@ -74,28 +74,31 @@ func negativeCaseInventoryOK(cases []CaseResult) bool {
 }
 
 func CanonicalRecipe() Recipe {
-	return Recipe{Schema: RecipeSchema, Version: 2,
-		ID: "gooo://recipe/language-proof-carrying-artifact/v2", Consumer: ConsumerID, SourceEntry: "GenerateProofCarryingArtifact",
+	return Recipe{Schema: RecipeSchema, Version: 3,
+		ID: "gooo://recipe/language-proof-carrying-artifact/v3", Consumer: ConsumerID, SourceEntry: "GenerateProofCarryingArtifact",
 		Roles: []RecipeRole{
 			{ID: "source-bytes-bound", Proposition: "source-bytes-match", Target: "raw-source-digest", ProofChoice: "FOUNDATION", Step: "verify-source", MetaOperation: "bind-source-bytes", Dependencies: []string{}},
 			{ID: "operation-receipt-bound", Proposition: "operation-receipt-match", Target: "operation-receipt-digest", ProofChoice: "COHERENCE", Step: "verify-operation", MetaOperation: "bind-operation-receipt", Dependencies: []string{"source-bytes-bound"}},
 			{ID: "no-byte-authority", Proposition: "generated-bytes-do-not-grant-authority", Target: "read-only-capability-boundary", ProofChoice: "REGRESSION", Step: "verify-invariant", MetaOperation: "preserve-no-byte-authority", Dependencies: []string{}},
 			{ID: "recipe-match", Proposition: "consumer-recipe-matches-source-recipe", Target: "recipe-digest", ProofChoice: "COHERENCE", Step: "verify-recipe", MetaOperation: "match-independent-recipe", Dependencies: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority"}},
-			{ID: "consumer-authority", Proposition: "verified-consumer-may-read-only-consume", Target: "READ_ONLY_CONSUMPTION", ProofChoice: "COHERENCE", Step: "grant-read-only-consumption", MetaOperation: "grant-read-only-consumption", Dependencies: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match"}},
+			{ID: "case-envelope-policy-bound", Proposition: "case-envelope-policy-matches-source", Target: "raw-source-digest", ProofChoice: "FOUNDATION", Step: "verify-case-envelope-policy", MetaOperation: "bind-case-envelope-policy", Dependencies: []string{"source-bytes-bound"}},
+			{ID: "consumer-authority", Proposition: "verified-consumer-may-read-only-consume", Target: "READ_ONLY_CONSUMPTION", ProofChoice: "COHERENCE", Step: "grant-read-only-consumption", MetaOperation: "grant-read-only-consumption", Dependencies: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match", "case-envelope-policy-bound"}},
 		},
 		Steps: []RecipeStep{
 			{ID: "verify-source", Input: "raw-source-digest", MetaOperation: "bind-source-bytes", ProofChoice: "FOUNDATION", Role: "source-bytes-bound"},
 			{ID: "verify-operation", Input: "operation-receipt-digest", MetaOperation: "bind-operation-receipt", ProofChoice: "COHERENCE", Role: "operation-receipt-bound"},
 			{ID: "verify-invariant", Input: "read-only-capability-boundary", MetaOperation: "preserve-no-byte-authority", ProofChoice: "REGRESSION", Role: "no-byte-authority"},
 			{ID: "verify-recipe", Input: "recipe-digest", MetaOperation: "match-independent-recipe", ProofChoice: "COHERENCE", Role: "recipe-match"},
+			{ID: "verify-case-envelope-policy", Input: "raw-source-digest", MetaOperation: "bind-case-envelope-policy", ProofChoice: "FOUNDATION", Role: "case-envelope-policy-bound"},
 			{ID: "grant-read-only-consumption", Input: "READ_ONLY_CONSUMPTION", MetaOperation: "grant-read-only-consumption", ProofChoice: "COHERENCE", Role: "consumer-authority"},
 		},
 		Dependencies: []RecipeDependency{
 			{From: "source-bytes-bound", To: "operation-receipt-bound", Relation: "requires"},
 			{From: "operation-receipt-bound", To: "no-byte-authority", Relation: "requires"},
 			{From: "source-bytes-bound,operation-receipt-bound,no-byte-authority", To: "recipe-match", Relation: "requires"},
-			{From: "source-bytes-bound,operation-receipt-bound,no-byte-authority,recipe-match", To: "consumer-authority", Relation: "requires"},
+			{From: "source-bytes-bound", To: "case-envelope-policy-bound", Relation: "requires"},
+			{From: "source-bytes-bound,operation-receipt-bound,no-byte-authority,recipe-match,case-envelope-policy-bound", To: "consumer-authority", Relation: "requires"},
 		},
-		Authority: RecipeAuthority{Capability: "READ_ONLY_CONSUMPTION", Requires: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match"}},
+		Authority: RecipeAuthority{Capability: "READ_ONLY_CONSUMPTION", Requires: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match", "case-envelope-policy-bound"}},
 	}
 }

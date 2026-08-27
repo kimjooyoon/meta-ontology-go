@@ -80,7 +80,7 @@ func indicatorRows(summary Summary, expectedStates claimStateTotals) []Indicator
 		{"OUTCOME", "COHERENCE", "recheck-evidence-links", summary.ExactEvidenceLinks, EvidenceTotal},
 		{"OUTCOME", "FOUNDATION", "match-independent-recipe", summary.RecipeMatches, 1},
 		{"DRIVER", "COHERENCE", "accept-digested-claim-transitions", summary.AcceptedTransitions, TransitionTotal},
-		{"DRIVER", "COHERENCE", "preserve-transport-transitions", summary.PreservedTransitions, EvidenceTotal + 1},
+		{"DRIVER", "COHERENCE", "preserve-transport-transitions", summary.PreservedTransitions, ClaimTemplateTotal - 1},
 		{"DRIVER", "COHERENCE", "count-case-discharged-claims", summary.CaseDischargedClaims, expectedStates.Discharged},
 		{"GUARDRAIL", "FOUNDATION", "count-case-open-claims", summary.CaseOpenClaims, expectedStates.Open},
 		{"GUARDRAIL", "REGRESSION", "count-case-refuted-claims", summary.CaseRefutedClaims, expectedStates.Refuted},

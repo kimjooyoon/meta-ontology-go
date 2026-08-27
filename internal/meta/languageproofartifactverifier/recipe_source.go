@@ -47,7 +47,7 @@ func recipeFromSource(raw []byte) (Recipe, error) {
 	for _, role := range result.Roles {
 		result.Steps = append(result.Steps, RecipeStep{ID: role.Step, Input: role.Target, MetaOperation: role.MetaOperation, ProofChoice: role.ProofChoice, Role: role.ID})
 	}
-	if result.Version == 0 || result.ID == "" || result.Consumer != ConsumerID || result.SourceEntry == "" || len(result.Roles) != ClaimTemplateTotal || len(result.Steps) != ClaimTemplateTotal || len(result.Dependencies) != 4 {
+	if result.Schema != RecipeSchema || result.Version != 3 || result.ID != "gooo://recipe/language-proof-carrying-artifact/v3" || result.Consumer != ConsumerID || result.SourceEntry == "" || len(result.Roles) != ClaimTemplateTotal || len(result.Steps) != ClaimTemplateTotal || len(result.Dependencies) != 5 || len(result.Authority.Requires) != ClaimTemplateTotal-1 {
 		return Recipe{}, fmt.Errorf("recipe meta-code is incomplete")
 	}
 	return result, nil

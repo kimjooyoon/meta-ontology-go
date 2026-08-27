@@ -1,16 +1,16 @@
 package languageproofartifactverifier
 
 const (
-	ReportSchema               = "gooo/language-proof-carrying-artifact-verifier/v1"
-	ContractSchema             = "gooo/language-proof-carrying-artifact-contract/v2"
-	RecipeSchema               = "gooo/language-proof-carrying-recipe/v1"
-	ArtifactSchema             = "gooo/language-proof-carrying-artifact/v1"
+	ReportSchema               = "gooo/language-proof-carrying-artifact-verifier/v2"
+	ContractSchema             = "gooo/language-proof-carrying-artifact-contract/v3"
+	RecipeSchema               = "gooo/language-proof-carrying-recipe/v2"
+	ArtifactSchema             = "gooo/language-proof-carrying-artifact/v2"
 	ProducerID                 = "gooo://producer/language-proof-carrying-artifact"
 	ConsumerID                 = "gooo://consumer/language-proof-carrying-artifact-verifier"
 	CaseTotal                  = 16
 	EvidenceTotal              = 3
-	ClaimTemplateTotal         = 5
-	TransitionTotal            = 5
+	ClaimTemplateTotal         = 6
+	TransitionTotal            = 6
 	CounterexampleTotal        = 7
 	CaseEnvelopePolicyRowTotal = 11
 )
@@ -197,15 +197,17 @@ type PolicyIssueRow struct {
 }
 
 type CaseEnvelopePolicyObservation struct {
-	RawSourceDigest    string           `json:"raw_source_digest"`
-	SemanticDigest     string           `json:"semantic_digest"`
-	IssueRows          []PolicyIssueRow `json:"issue_rows"`
-	UniqueIssueRows    int              `json:"unique_issue_rows"`
-	UniqueRankRows     int              `json:"unique_rank_rows"`
-	SelectionOperation string           `json:"selection_operation"`
-	ObservedIssueSet   []string         `json:"observed_issue_set"`
-	SelectedIssue      string           `json:"selected_issue"`
-	SelectedRank       int              `json:"selected_rank"`
+	RawSourceDigest               string           `json:"raw_source_digest"`
+	SemanticDigest                string           `json:"semantic_digest"`
+	IssueRows                     []PolicyIssueRow `json:"issue_rows"`
+	UniqueIssueRows               int              `json:"unique_issue_rows"`
+	UniqueRankRows                int              `json:"unique_rank_rows"`
+	SelectionOperation            string           `json:"selection_operation"`
+	ObservedIssueSet              []string         `json:"observed_issue_set"`
+	ObservedIssueMembershipDigest string           `json:"observed_issue_membership_digest"`
+	ObservedIssueCount            int              `json:"observed_issue_count"`
+	SelectedIssue                 string           `json:"selected_issue"`
+	SelectedRank                  int              `json:"selected_rank"`
 }
 
 type Contract struct {
@@ -291,37 +293,42 @@ type InterventionInput struct {
 }
 
 type InterventionResult struct {
-	ID                           string `json:"id"`
-	Kind                         string `json:"kind"`
-	Status                       string `json:"status"`
-	Reason                       string `json:"reason"`
-	RawSourceDigestBefore        string `json:"raw_source_digest_before"`
-	RawSourceDigestAfter         string `json:"raw_source_digest_after"`
-	SemanticDigestBefore         string `json:"semantic_digest_before"`
-	SemanticDigestAfter          string `json:"semantic_digest_after"`
-	OperationReceiptDigestBefore string `json:"operation_receipt_digest_before"`
-	OperationReceiptDigestAfter  string `json:"operation_receipt_digest_after"`
-	EvidenceLinkDigestBefore     string `json:"evidence_link_digest_before"`
-	EvidenceLinkDigestAfter      string `json:"evidence_link_digest_after"`
-	ClaimTransitionDigestBefore  string `json:"claim_transition_digest_before"`
-	ClaimTransitionDigestAfter   string `json:"claim_transition_digest_after"`
-	ConsumerDecisionBefore       string `json:"consumer_decision_before"`
-	ConsumerDecisionAfter        string `json:"consumer_decision_after"`
-	RawDigestChanged             bool   `json:"raw_digest_changed"`
-	SemanticDigestChanged        bool   `json:"semantic_digest_changed"`
-	OperationReceiptChanged      bool   `json:"operation_receipt_changed"`
-	EvidenceLinksChanged         bool   `json:"evidence_links_changed"`
-	ClaimTransitionsChanged      bool   `json:"claim_transitions_changed"`
-	SemanticDigestPreserved      bool   `json:"semantic_digest_preserved"`
-	ConsumerDecisionPreserved    bool   `json:"consumer_decision_preserved"`
-	PolicySemanticDigestBefore   string `json:"policy_semantic_digest_before"`
-	PolicySemanticDigestAfter    string `json:"policy_semantic_digest_after"`
-	PolicySelectionBefore        string `json:"policy_selection_before"`
-	PolicySelectionAfter         string `json:"policy_selection_after"`
-	PolicySelectionRankBefore    int    `json:"policy_selection_rank_before"`
-	PolicySelectionRankAfter     int    `json:"policy_selection_rank_after"`
-	PolicySelectionChanged       bool   `json:"policy_selection_changed"`
-	PolicySelectionPreserved     bool   `json:"policy_selection_preserved"`
+	ID                             string `json:"id"`
+	Kind                           string `json:"kind"`
+	Status                         string `json:"status"`
+	Reason                         string `json:"reason"`
+	RawSourceDigestBefore          string `json:"raw_source_digest_before"`
+	RawSourceDigestAfter           string `json:"raw_source_digest_after"`
+	SemanticDigestBefore           string `json:"semantic_digest_before"`
+	SemanticDigestAfter            string `json:"semantic_digest_after"`
+	OperationReceiptDigestBefore   string `json:"operation_receipt_digest_before"`
+	OperationReceiptDigestAfter    string `json:"operation_receipt_digest_after"`
+	EvidenceLinkDigestBefore       string `json:"evidence_link_digest_before"`
+	EvidenceLinkDigestAfter        string `json:"evidence_link_digest_after"`
+	ClaimTransitionDigestBefore    string `json:"claim_transition_digest_before"`
+	ClaimTransitionDigestAfter     string `json:"claim_transition_digest_after"`
+	ConsumerDecisionBefore         string `json:"consumer_decision_before"`
+	ConsumerDecisionAfter          string `json:"consumer_decision_after"`
+	RawDigestChanged               bool   `json:"raw_digest_changed"`
+	SemanticDigestChanged          bool   `json:"semantic_digest_changed"`
+	OperationReceiptChanged        bool   `json:"operation_receipt_changed"`
+	EvidenceLinksChanged           bool   `json:"evidence_links_changed"`
+	ClaimTransitionsChanged        bool   `json:"claim_transitions_changed"`
+	SemanticDigestPreserved        bool   `json:"semantic_digest_preserved"`
+	ConsumerDecisionPreserved      bool   `json:"consumer_decision_preserved"`
+	PolicySemanticDigestBefore     string `json:"policy_semantic_digest_before"`
+	PolicySemanticDigestAfter      string `json:"policy_semantic_digest_after"`
+	PolicySelectionBefore          string `json:"policy_selection_before"`
+	PolicySelectionAfter           string `json:"policy_selection_after"`
+	PolicySelectionRankBefore      int    `json:"policy_selection_rank_before"`
+	PolicySelectionRankAfter       int    `json:"policy_selection_rank_after"`
+	PolicySelectionChanged         bool   `json:"policy_selection_changed"`
+	PolicySelectionPreserved       bool   `json:"policy_selection_preserved"`
+	PolicyMembershipDigestBefore   string `json:"policy_membership_digest_before"`
+	PolicyMembershipDigestAfter    string `json:"policy_membership_digest_after"`
+	PolicyObservedIssueCountBefore int    `json:"policy_observed_issue_count_before"`
+	PolicyObservedIssueCountAfter  int    `json:"policy_observed_issue_count_after"`
+	PolicyMembershipPreserved      bool   `json:"policy_membership_preserved"`
 }
 
 type ClaimTransition struct {
@@ -356,28 +363,31 @@ type CheckoutEvidence struct {
 }
 
 type ConsumerReceipt struct {
-	Schema                   string   `json:"schema"`
-	Version                  int      `json:"version"`
-	PreliminaryDigest        string   `json:"preliminary_digest"`
-	Producer                 string   `json:"producer"`
-	Consumer                 string   `json:"consumer"`
-	TargetPath               string   `json:"target_path"`
-	TargetDigest             string   `json:"target_digest"`
-	OutputDigest             string   `json:"output_digest"`
-	OutputExists             bool     `json:"output_exists"`
-	Authority                string   `json:"authority"`
-	PolicyRawSourceDigest    string   `json:"policy_raw_source_digest"`
-	PolicySemanticDigest     string   `json:"policy_semantic_digest"`
-	PolicyUniqueIssueRows    int      `json:"policy_unique_issue_rows"`
-	PolicyUniqueRankRows     int      `json:"policy_unique_rank_rows"`
-	PolicyRowTotal           int      `json:"policy_row_total"`
-	PolicySelectionOperation string   `json:"policy_selection_operation"`
-	PolicyObservedIssueSet   []string `json:"policy_observed_issue_set"`
-	PolicySelectedIssue      string   `json:"policy_selected_issue"`
-	PolicySelectedRank       int      `json:"policy_selected_rank"`
-	CaseEnvelopeDigest       string   `json:"case_envelope_digest"`
-	AttestationDigest        string   `json:"attestation_digest"`
-	Digest                   string   `json:"digest"`
+	Schema                      string   `json:"schema"`
+	Version                     int      `json:"version"`
+	PreliminaryDigest           string   `json:"preliminary_digest"`
+	Producer                    string   `json:"producer"`
+	Consumer                    string   `json:"consumer"`
+	TargetPath                  string   `json:"target_path"`
+	TargetDigest                string   `json:"target_digest"`
+	OutputDigest                string   `json:"output_digest"`
+	OutputExists                bool     `json:"output_exists"`
+	Authority                   string   `json:"authority"`
+	PolicyRawSourceDigest       string   `json:"policy_raw_source_digest"`
+	PolicySemanticDigest        string   `json:"policy_semantic_digest"`
+	PolicyUniqueIssueRows       int      `json:"policy_unique_issue_rows"`
+	PolicyUniqueRankRows        int      `json:"policy_unique_rank_rows"`
+	PolicyRowTotal              int      `json:"policy_row_total"`
+	PolicySelectionOperation    string   `json:"policy_selection_operation"`
+	PolicyObservedIssueSet      []string `json:"policy_observed_issue_set"`
+	PolicySelectedIssue         string   `json:"policy_selected_issue"`
+	PolicySelectedRank          int      `json:"policy_selected_rank"`
+	PolicyMembershipDigest      string   `json:"policy_membership_digest"`
+	PolicyObservedIssueCount    int      `json:"policy_observed_issue_count"`
+	PolicyClaimTransitionDigest string   `json:"policy_claim_transition_digest"`
+	CaseEnvelopeDigest          string   `json:"case_envelope_digest"`
+	AttestationDigest           string   `json:"attestation_digest"`
+	Digest                      string   `json:"digest"`
 }
 
 // Counterexample is a fixed semantic guard. It is not part of the conformance

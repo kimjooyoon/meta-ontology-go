@@ -7,10 +7,17 @@ import (
 	"reflect"
 )
 
-const ConsumerReceiptSchema = "gooo/read-only-consumption-receipt/v1"
+const ConsumerReceiptSchema = "gooo/read-only-consumption-receipt/v2"
 
 func DecodeConsumerReceipt(raw []byte) (ConsumerReceipt, error) {
 	return decodeStrict[ConsumerReceipt](raw)
+}
+
+// ConsumerReceiptEmpty is the zero check used at the CLI and verifier phase
+// boundary. ConsumerReceipt carries an observed issue slice, so comparing the
+// struct directly is not a valid Go operation.
+func ConsumerReceiptEmpty(receipt ConsumerReceipt) bool {
+	return reflect.DeepEqual(receipt, ConsumerReceipt{})
 }
 
 type ConsumerErrorClass string
@@ -44,27 +51,30 @@ func consumerError(class ConsumerErrorClass, detail string) *ConsumerError {
 }
 
 type consumerAttestation struct {
-	Decision                 string   `json:"decision"`
-	Resolution               string   `json:"resolution"`
-	Reason                   string   `json:"reason"`
-	Authority                string   `json:"authority"`
-	SubjectDecision          string   `json:"subject_decision"`
-	BundleDigest             string   `json:"bundle_digest"`
-	PreliminaryDigest        string   `json:"preliminary_digest"`
-	Producer                 string   `json:"producer"`
-	Consumer                 string   `json:"consumer"`
-	TargetPath               string   `json:"target_path"`
-	TargetDigest             string   `json:"target_digest"`
-	PolicyRawSourceDigest    string   `json:"policy_raw_source_digest"`
-	PolicySemanticDigest     string   `json:"policy_semantic_digest"`
-	PolicyUniqueIssueRows    int      `json:"policy_unique_issue_rows"`
-	PolicyUniqueRankRows     int      `json:"policy_unique_rank_rows"`
-	PolicyRowTotal           int      `json:"policy_row_total"`
-	PolicySelectionOperation string   `json:"policy_selection_operation"`
-	PolicyObservedIssueSet   []string `json:"policy_observed_issue_set"`
-	PolicySelectedIssue      string   `json:"policy_selected_issue"`
-	PolicySelectedRank       int      `json:"policy_selected_rank"`
-	CaseEnvelopeDigest       string   `json:"case_envelope_digest"`
+	Decision                    string   `json:"decision"`
+	Resolution                  string   `json:"resolution"`
+	Reason                      string   `json:"reason"`
+	Authority                   string   `json:"authority"`
+	SubjectDecision             string   `json:"subject_decision"`
+	BundleDigest                string   `json:"bundle_digest"`
+	PreliminaryDigest           string   `json:"preliminary_digest"`
+	Producer                    string   `json:"producer"`
+	Consumer                    string   `json:"consumer"`
+	TargetPath                  string   `json:"target_path"`
+	TargetDigest                string   `json:"target_digest"`
+	PolicyRawSourceDigest       string   `json:"policy_raw_source_digest"`
+	PolicySemanticDigest        string   `json:"policy_semantic_digest"`
+	PolicyUniqueIssueRows       int      `json:"policy_unique_issue_rows"`
+	PolicyUniqueRankRows        int      `json:"policy_unique_rank_rows"`
+	PolicyRowTotal              int      `json:"policy_row_total"`
+	PolicySelectionOperation    string   `json:"policy_selection_operation"`
+	PolicyObservedIssueSet      []string `json:"policy_observed_issue_set"`
+	PolicySelectedIssue         string   `json:"policy_selected_issue"`
+	PolicySelectedRank          int      `json:"policy_selected_rank"`
+	PolicyMembershipDigest      string   `json:"policy_membership_digest"`
+	PolicyObservedIssueCount    int      `json:"policy_observed_issue_count"`
+	PolicyClaimTransitionDigest string   `json:"policy_claim_transition_digest"`
+	CaseEnvelopeDigest          string   `json:"case_envelope_digest"`
 }
 
 func attestationDigest(report Report) string {
@@ -77,7 +87,8 @@ func attestationDigestFor(report Report, receipt ConsumerReceipt) string {
 		PreliminaryDigest: receipt.PreliminaryDigest, Producer: report.Producer, Consumer: report.Consumer, TargetPath: receipt.TargetPath, TargetDigest: receipt.TargetDigest,
 		PolicyRawSourceDigest: receipt.PolicyRawSourceDigest, PolicySemanticDigest: receipt.PolicySemanticDigest, PolicyUniqueIssueRows: receipt.PolicyUniqueIssueRows,
 		PolicyUniqueRankRows: receipt.PolicyUniqueRankRows, PolicyRowTotal: receipt.PolicyRowTotal, PolicySelectionOperation: receipt.PolicySelectionOperation, PolicyObservedIssueSet: receipt.PolicyObservedIssueSet,
-		PolicySelectedIssue: receipt.PolicySelectedIssue, PolicySelectedRank: receipt.PolicySelectedRank, CaseEnvelopeDigest: receipt.CaseEnvelopeDigest})
+		PolicySelectedIssue: receipt.PolicySelectedIssue, PolicySelectedRank: receipt.PolicySelectedRank, PolicyMembershipDigest: receipt.PolicyMembershipDigest,
+		PolicyObservedIssueCount: receipt.PolicyObservedIssueCount, PolicyClaimTransitionDigest: receipt.PolicyClaimTransitionDigest, CaseEnvelopeDigest: receipt.CaseEnvelopeDigest})
 }
 
 func consumerAttestedReport(report Report) Report {
@@ -102,11 +113,14 @@ func expectedConsumerReceipt(report Report, preliminaryDigest, targetPath string
 		policy = valid.Policy
 		caseDigest = valid.EnvelopeDigest
 	}
-	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 1, PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer,
+	receipt := ConsumerReceipt{Schema: ConsumerReceiptSchema, Version: 2, PreliminaryDigest: preliminaryDigest, Producer: report.Producer, Consumer: report.Consumer,
 		TargetPath: targetPath, TargetDigest: targetDigest, OutputDigest: outputDigest, OutputExists: true, Authority: "READ_ONLY_CONSUMPTION",
 		PolicyRawSourceDigest: policy.RawSourceDigest, PolicySemanticDigest: policy.SemanticDigest, PolicyUniqueIssueRows: policy.UniqueIssueRows, PolicyUniqueRankRows: policy.UniqueRankRows, PolicyRowTotal: CaseEnvelopePolicyRowTotal,
 		PolicySelectionOperation: policy.SelectionOperation, PolicyObservedIssueSet: append([]string(nil), policy.ObservedIssueSet...), PolicySelectedIssue: policy.SelectedIssue,
-		PolicySelectedRank: policy.SelectedRank, CaseEnvelopeDigest: caseDigest}
+		PolicySelectedRank: policy.SelectedRank, PolicyMembershipDigest: policy.ObservedIssueMembershipDigest, PolicyObservedIssueCount: policy.ObservedIssueCount}
+	if valid := validCase(report.Cases); valid != nil {
+		receipt.PolicyClaimTransitionDigest = policyClaimTransitionDigest(valid.Claims)
+	}
 	receipt.AttestationDigest = attestationDigestFor(report, receipt)
 	receipt.Digest = consumerReceiptDigest(receipt)
 	return receipt
@@ -127,7 +141,7 @@ func consumerReceiptOK(report Report, bundle Bundle) bool {
 		return false
 	}
 	receipt := report.ConsumerReceipt
-	if receipt.Schema != ConsumerReceiptSchema || receipt.Version != 1 || receipt.Producer != report.Producer || receipt.Consumer != report.Consumer ||
+	if receipt.Schema != ConsumerReceiptSchema || receipt.Version != 2 || receipt.Producer != report.Producer || receipt.Consumer != report.Consumer ||
 		receipt.TargetPath != "artifact.json" || !receipt.OutputExists || receipt.Authority != "READ_ONLY_CONSUMPTION" ||
 		!validDigest(receipt.PreliminaryDigest) || !validDigest(receipt.TargetDigest) || !validDigest(receipt.OutputDigest) ||
 		!validDigest(receipt.AttestationDigest) || !validDigest(receipt.Digest) {
@@ -180,7 +194,7 @@ func ConsumeBundle(bundle Bundle, report Report, targetPath string) (ConsumerRec
 		// intended as FINAL. Preserve its final validation coordinate instead
 		// of hiding a semantic final-state failure behind the preliminary
 		// authority-present error.
-		if report.ConsumerReceipt != (ConsumerReceipt{}) || report.ConformanceDecision == "PASS" || report.ArtifactUseAuthority != "" {
+		if !ConsumerReceiptEmpty(report.ConsumerReceipt) || report.ConformanceDecision == "PASS" || report.ArtifactUseAuthority != "" {
 			return ConsumerReceipt{}, consumerError(ConsumerErrorAttestationMismatch, finalErr.Error())
 		}
 		var typed *ValidationError

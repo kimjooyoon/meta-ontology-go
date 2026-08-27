@@ -19,7 +19,9 @@ func evaluateInterventions(inputs []InterventionInput, head, phase string) []Int
 			ConsumerDecisionBefore: before.Decision, ConsumerDecisionAfter: after.Decision,
 			PolicySemanticDigestBefore: beforePolicy.Policy.SemanticDigest, PolicySemanticDigestAfter: afterPolicy.Policy.SemanticDigest,
 			PolicySelectionBefore: beforePolicy.Policy.SelectedIssue, PolicySelectionAfter: afterPolicy.Policy.SelectedIssue,
-			PolicySelectionRankBefore: beforePolicy.Policy.SelectedRank, PolicySelectionRankAfter: afterPolicy.Policy.SelectedRank}
+			PolicySelectionRankBefore: beforePolicy.Policy.SelectedRank, PolicySelectionRankAfter: afterPolicy.Policy.SelectedRank,
+			PolicyMembershipDigestBefore: beforePolicy.Policy.ObservedIssueMembershipDigest, PolicyMembershipDigestAfter: afterPolicy.Policy.ObservedIssueMembershipDigest,
+			PolicyObservedIssueCountBefore: beforePolicy.Policy.ObservedIssueCount, PolicyObservedIssueCountAfter: afterPolicy.Policy.ObservedIssueCount}
 		item.RawDigestChanged = nonEmptyDifferent(item.RawSourceDigestBefore, item.RawSourceDigestAfter)
 		item.SemanticDigestChanged = nonEmptyDifferent(item.SemanticDigestBefore, item.SemanticDigestAfter)
 		item.OperationReceiptChanged = nonEmptyDifferent(item.OperationReceiptDigestBefore, item.OperationReceiptDigestAfter)
@@ -31,16 +33,18 @@ func evaluateInterventions(inputs []InterventionInput, head, phase string) []Int
 			(item.PolicySelectionBefore != item.PolicySelectionAfter || item.PolicySelectionRankBefore != item.PolicySelectionRankAfter)
 		item.PolicySelectionPreserved = equalNonEmpty(item.PolicySemanticDigestBefore, item.PolicySemanticDigestAfter) &&
 			item.PolicySelectionBefore != "" && item.PolicySelectionBefore == item.PolicySelectionAfter && item.PolicySelectionRankBefore == item.PolicySelectionRankAfter
+		item.PolicyMembershipPreserved = equalNonEmpty(item.PolicyMembershipDigestBefore, item.PolicyMembershipDigestAfter) &&
+			item.PolicyObservedIssueCountBefore == item.PolicyObservedIssueCountAfter
 		item.Status, item.Reason = "NOT_SATISFIED", "INTERVENTION_CONTRACT_VIOLATED"
 		switch input.Kind {
 		case "SEMANTIC":
 			if before.Decision == "PASS" && after.Decision == "PASS" && item.RawDigestChanged && item.SemanticDigestChanged &&
-				item.OperationReceiptChanged && item.EvidenceLinksChanged && item.ClaimTransitionsChanged && item.ConsumerDecisionPreserved && item.PolicySelectionChanged {
+				item.OperationReceiptChanged && item.EvidenceLinksChanged && item.ClaimTransitionsChanged && item.ConsumerDecisionPreserved && item.PolicyMembershipPreserved && item.PolicySelectionChanged {
 				item.Status, item.Reason = "SATISFIED", "SEMANTIC_INTERVENTION_CHANGED_OPERATION_EVIDENCE_AND_TRANSITION"
 			}
 		case "NONSEMANTIC":
 			if before.Decision == "PASS" && after.Decision == "PASS" && item.RawDigestChanged && item.SemanticDigestPreserved && item.ConsumerDecisionPreserved {
-				if item.PolicySelectionPreserved {
+				if item.PolicyMembershipPreserved && item.PolicySelectionPreserved {
 					item.Status, item.Reason = "SATISFIED", "COMMENT_ONLY_INTERVENTION_PRESERVED_SEMANTICS"
 				}
 			}

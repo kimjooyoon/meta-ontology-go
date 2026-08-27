@@ -2,7 +2,7 @@ package languageproofartifactverifier
 
 import "reflect"
 
-const LedgerSchema = "gooo/proof-evidence-ledger/v2"
+const LedgerSchema = "gooo/proof-evidence-ledger/v3"
 
 func validatePriorLedger(ledger ClaimLedger, claims []ClaimStatement) error {
 	if err := validateOpenLedger(ledger); err != nil || len(claims) != ClaimTemplateTotal {
@@ -24,7 +24,7 @@ func validatePriorLedger(ledger ClaimLedger, claims []ClaimStatement) error {
 }
 
 func validateOpenLedger(ledger ClaimLedger) error {
-	if ledger.Schema != LedgerSchema || ledger.Version != 2 || len(ledger.Entries) != ClaimTemplateTotal || ledger.Digest != claimLedgerDigest(ledger) {
+	if ledger.Schema != LedgerSchema || ledger.Version != 3 || len(ledger.Entries) != ClaimTemplateTotal || ledger.Digest != claimLedgerDigest(ledger) {
 		return errLedger("open ledger identity")
 	}
 	previous := ""
@@ -38,7 +38,7 @@ func validateOpenLedger(ledger ClaimLedger) error {
 }
 
 func validateFinalLedger(ledger, prior ClaimLedger) error {
-	if ledger.Schema != LedgerSchema || ledger.Version != 2 || len(ledger.Entries) != ClaimTemplateTotal*2 || ledger.Digest != claimLedgerDigest(ledger) {
+	if ledger.Schema != LedgerSchema || ledger.Version != 3 || len(ledger.Entries) != ClaimTemplateTotal*2 || ledger.Digest != claimLedgerDigest(ledger) {
 		return errLedger("final ledger identity")
 	}
 	if err := validateOpenLedger(prior); err != nil {

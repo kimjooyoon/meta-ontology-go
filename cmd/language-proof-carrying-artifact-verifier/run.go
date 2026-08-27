@@ -36,6 +36,7 @@ type options struct {
 	claimAdjudicationTamper, claimAdjudicationCase, claimAdjudicationID, claimAdjudicationOtherCase, claimAdjudicationOtherID string
 	caseEnvelopeTamper, caseEnvelopeCase                                                                                      string
 	claimStateExpectations, policyCheck, policyObservedIssue, policyOutput                                                    string
+	policyFixtureBundle, policyArtifactPath, policySourcePath, policyOperationPath, policyRecipePath, policyHead              string
 }
 
 func run(args []string) int {
@@ -97,6 +98,12 @@ func run(args []string) int {
 	flags.StringVar(&value.policyCheck, "policy-check", "", "check a source-derived case-envelope policy")
 	flags.StringVar(&value.policyObservedIssue, "policy-observed-issue", "", "observed issue for case-envelope policy selection")
 	flags.StringVar(&value.policyOutput, "policy-output", "", "policy check result output")
+	flags.StringVar(&value.policyFixtureBundle, "policy-fixture-bundle", "", "bundle used by the complete policy fixture verifier")
+	flags.StringVar(&value.policyArtifactPath, "policy-artifact-path", "artifact.json", "artifact path inside the policy fixture bundle")
+	flags.StringVar(&value.policySourcePath, "policy-source-path", "source.gooo", "policy source path inside the policy fixture bundle")
+	flags.StringVar(&value.policyOperationPath, "policy-operation-path", "operation-receipt.json", "operation receipt path inside the policy fixture bundle")
+	flags.StringVar(&value.policyRecipePath, "policy-recipe-path", "recipe.json", "recipe path inside the policy fixture bundle")
+	flags.StringVar(&value.policyHead, "policy-head", "", "head used by the policy fixture verifier")
 	if flags.Parse(args) != nil {
 		return 2
 	}
@@ -117,6 +124,40 @@ func run(args []string) int {
 	writePreliminaryReport := func(path string, report verifier.Report) int {
 		if err := verifier.WritePreliminaryReport(path, report); err != nil {
 			fmt.Fprintf(os.Stderr, "preliminary proof report rejected: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+	if value.policyFixtureBundle != "" {
+		if value.policyOutput == "" {
+			return 2
+		}
+		raw, err := os.ReadFile(value.policyFixtureBundle)
+		if err != nil {
+			return 2
+		}
+		bundle, err := verifier.DecodeBundle(raw)
+		if err != nil {
+			return 1
+		}
+		head := value.policyHead
+		if head == "" {
+			head = bundle.HeadSHA
+		}
+		artifact, artifactErr := verifier.BundleFileBytes(bundle, value.policyArtifactPath)
+		source, sourceErr := verifier.BundleFileBytes(bundle, value.policySourcePath)
+		operation, operationErr := verifier.BundleFileBytes(bundle, value.policyOperationPath)
+		recipe, recipeErr := verifier.BundleFileBytes(bundle, value.policyRecipePath)
+		if artifactErr != nil || sourceErr != nil || operationErr != nil || recipeErr != nil {
+			return 1
+		}
+		result := verifier.VerifyCaseEnvelopePolicyFixture(artifact, source, operation, recipe, head, value.policyObservedIssue)
+		encoded, encodeErr := json.MarshalIndent(result, "", "  ")
+		if encodeErr != nil || os.WriteFile(value.policyOutput, append(encoded, '\n'), 0o644) != nil {
+			return 1
+		}
+		if result.Decision != "PASS" {
+			fmt.Fprintf(os.Stderr, "policy fixture rejected: stage=%s step=%s reason=%s\n", result.Coordinate.Stage, result.Coordinate.Step, result.Coordinate.Reason)
 			return 1
 		}
 		return 0
@@ -204,7 +245,7 @@ func run(args []string) int {
 			fmt.Fprintf(os.Stderr, "proof report rejected: %v\n", err)
 			return 1
 		}
-		preliminaryCandidate := report.ConsumerReceipt == (verifier.ConsumerReceipt{}) && report.PreliminaryDecision == "FAIL_CLOSED"
+		preliminaryCandidate := verifier.ConsumerReceiptEmpty(report.ConsumerReceipt) && report.PreliminaryDecision == "FAIL_CLOSED"
 		if preliminaryCandidate {
 			if preliminaryErr := verifier.ValidatePreliminary(report); preliminaryErr == nil {
 				return 0

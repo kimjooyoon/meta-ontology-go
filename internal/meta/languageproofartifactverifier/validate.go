@@ -28,7 +28,7 @@ func Validate(report Report) error {
 		len(report.Transitions) != TransitionTotal || len(report.Interventions) != 2 || report.NetChangedPaths != report.WriteSet.NetChangedPaths || report.CapabilityMutationGranted || report.PromotionAuthority || report.SemanticAuthority {
 		return fmt.Errorf("proof-carrying report shape mismatch")
 	}
-	if report.ConsumerReceipt == (ConsumerReceipt{}) {
+	if ConsumerReceiptEmpty(report.ConsumerReceipt) {
 		return &ValidationError{Coordinate: Coordinate{"CONSUME_BUNDLE", "consumer-receipt", "CONSUMER_RECEIPT_MISSING"}, Detail: "final report has no consumer receipt"}
 	}
 	if report.Checkout.HeadSHA != report.HeadSHA || report.Checkout.ActualHeadSHA != report.HeadSHA || !validHead(report.Checkout.HeadSHA) || !validDigest(report.Checkout.TreeDigest) ||
@@ -95,7 +95,7 @@ func Validate(report Report) error {
 		if report.ConsumerReceipt.PreliminaryDigest != preliminary.Digest {
 			return &ValidationError{Coordinate: Coordinate{"CONSUME_BUNDLE", "consumer-receipt", "PRELIMINARY_BINDING_MISMATCH"}, Detail: "consumer receipt preliminary digest does not match the canonical projection"}
 		}
-		if report.ConsumerReceipt.Schema != ConsumerReceiptSchema || report.ConsumerReceipt.Version != 1 || report.ConsumerReceipt.Authority != "READ_ONLY_CONSUMPTION" ||
+		if report.ConsumerReceipt.Schema != ConsumerReceiptSchema || report.ConsumerReceipt.Version != 2 || report.ConsumerReceipt.Authority != "READ_ONLY_CONSUMPTION" ||
 			report.ConsumerReceipt.Producer != ProducerID || report.ConsumerReceipt.Consumer != ConsumerID || !validDigest(report.ConsumerReceipt.PreliminaryDigest) || report.ConsumerReceipt.TargetPath != "artifact.json" ||
 			!report.ConsumerReceipt.OutputExists || !validDigest(report.ConsumerReceipt.TargetDigest) || !validDigest(report.ConsumerReceipt.OutputDigest) || !validDigest(report.ConsumerReceipt.AttestationDigest) ||
 			report.ConsumerReceipt.AttestationDigest != attestationDigest(report) || report.ConsumerReceipt.Digest != consumerReceiptDigest(report.ConsumerReceipt) {
@@ -125,12 +125,12 @@ func ValidatePreliminary(report Report) error {
 		wantBundleMetric = 1
 		wantReason = "CONSUMER_RECHECK_NOT_OBSERVED"
 	}
-	if report.ConformanceDecision == "PASS" || report.ConformanceResolution == "EXACT" || report.ArtifactUseAuthority != "" || report.ConsumerReceipt != (ConsumerReceipt{}) {
+	if report.ConformanceDecision == "PASS" || report.ConformanceResolution == "EXACT" || report.ArtifactUseAuthority != "" || !ConsumerReceiptEmpty(report.ConsumerReceipt) {
 		return preliminaryValidationError(Coordinate{"CONSUME_AUTHORITY", "preliminary-report", "PRELIMINARY_FINAL_AUTHORITY_PRESENT"}, fmt.Errorf("preliminary report contains final consumer authority or receipt"))
 	}
 	if report.Schema != ReportSchema || report.Producer != ProducerID || report.Consumer != ConsumerID || report.ValidationFailure != nil || !validHead(report.HeadSHA) ||
 		report.ContractDigest != digestValue(CanonicalContract()) || report.RecipeDigest != digestValue(CanonicalRecipe()) || report.RecipeVersion != CanonicalRecipe().Version ||
-		!validDigest(report.IndependenceDigest) || report.AuthorityObservation != "UNKNOWN_GLOBAL_TRANSIENT_SCOPE" || report.ArtifactUseAuthority != "" || report.ConsumerReceipt != (ConsumerReceipt{}) ||
+		!validDigest(report.IndependenceDigest) || report.AuthorityObservation != "UNKNOWN_GLOBAL_TRANSIENT_SCOPE" || report.ArtifactUseAuthority != "" || !ConsumerReceiptEmpty(report.ConsumerReceipt) ||
 		(bundleMode && !validDigest(report.BundleDigest)) || report.CheckoutBindingScope != wantScope ||
 		report.ConformanceDecision != "FAIL_CLOSED" || report.ConformanceResolution != "LOWER_RESOLUTION" || report.ConformanceReason != wantReason ||
 		report.ConformanceCoordinate != (Coordinate{"CONSUME_BUNDLE", "consumer-recheck", report.ConformanceReason}) ||
@@ -371,7 +371,7 @@ func expectedSummary(phase string, denominator, bundleMetric, consumerMetric int
 	return Summary{
 		CasesSatisfied: CaseTotal, CasesTotal: CaseTotal, ValidArtifacts: 1,
 		EvidenceKindsCarried: EvidenceTotal, ExactEvidenceLinks: EvidenceTotal,
-		RecipeMatches: 1, PreservedTransitions: EvidenceTotal + 1,
+		RecipeMatches: 1, PreservedTransitions: ClaimTemplateTotal - 1,
 		TransitionTotal: TransitionTotal, ClaimTemplates: ClaimTemplateTotal,
 		ClaimInstances: CaseTotal * ClaimTemplateTotal, AcceptedTransitions: TransitionTotal,
 		CaseDischargedClaims: claimStateTotals.Discharged, CaseOpenClaims: claimStateTotals.Open, CaseRefutedClaims: claimStateTotals.Refuted,
@@ -503,7 +503,8 @@ func validateCaseEnvelopePolicy(report Report) error {
 	}
 	if policy.RawSourceDigest != report.Checkout.SourceDigest || !validDigest(policy.RawSourceDigest) || !validDigest(policy.SemanticDigest) ||
 		policy.UniqueIssueRows != CaseEnvelopePolicyRowTotal || policy.UniqueRankRows != CaseEnvelopePolicyRowTotal || policy.SelectionOperation != caseEnvelopePolicyOperation ||
-		!reflect.DeepEqual(policy.IssueRows, wantRows) || policy.SelectedIssue != "NONE" || policy.SelectedRank != 0 || len(policy.ObservedIssueSet) != 0 {
+		!reflect.DeepEqual(policy.IssueRows, wantRows) || policy.SelectedIssue != "NONE" || policy.SelectedRank != 0 || len(policy.ObservedIssueSet) != 0 ||
+		policy.ObservedIssueCount != 0 || policy.ObservedIssueMembershipDigest != digestValue([]string{}) {
 		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "validate-policy", "CASE_ENVELOPE_POLICY_CONFORMANCE_MISMATCH"}, Detail: policyMismatchDetail(policy, wantRows)}
 	}
 	return nil
@@ -530,7 +531,9 @@ func validateConsumerReceiptPolicy(report Report) error {
 	receipt := report.ConsumerReceipt
 	if receipt.PolicyRawSourceDigest != policy.RawSourceDigest || receipt.PolicySemanticDigest != policy.SemanticDigest ||
 		receipt.PolicyUniqueIssueRows != policy.UniqueIssueRows || receipt.PolicyUniqueRankRows != policy.UniqueRankRows || receipt.PolicyRowTotal != CaseEnvelopePolicyRowTotal || receipt.PolicySelectionOperation != policy.SelectionOperation ||
-		!reflect.DeepEqual(receipt.PolicyObservedIssueSet, policy.ObservedIssueSet) || receipt.PolicySelectedIssue != policy.SelectedIssue || receipt.PolicySelectedRank != policy.SelectedRank || receipt.CaseEnvelopeDigest != valid.EnvelopeDigest {
+		!reflect.DeepEqual(receipt.PolicyObservedIssueSet, policy.ObservedIssueSet) || receipt.PolicySelectedIssue != policy.SelectedIssue || receipt.PolicySelectedRank != policy.SelectedRank ||
+		receipt.PolicyMembershipDigest != policy.ObservedIssueMembershipDigest || receipt.PolicyObservedIssueCount != policy.ObservedIssueCount ||
+		receipt.PolicyClaimTransitionDigest != policyClaimTransitionDigest(valid.Claims) || receipt.CaseEnvelopeDigest != valid.EnvelopeDigest {
 		return &ValidationError{Coordinate: Coordinate{"CONSUME_POLICY", "consumer-receipt", "CASE_ENVELOPE_POLICY_RECEIPT_MISMATCH"}, Detail: "consumer receipt is not bound to the source-derived policy and case envelope"}
 	}
 	return nil
@@ -665,7 +668,8 @@ func validateInterventions(interventions []InterventionResult) error {
 			!validDigest(item.RawSourceDigestBefore) || !validDigest(item.RawSourceDigestAfter) || !validDigest(item.SemanticDigestBefore) || !validDigest(item.SemanticDigestAfter) ||
 			!validDigest(item.OperationReceiptDigestBefore) || !validDigest(item.OperationReceiptDigestAfter) || !validDigest(item.EvidenceLinkDigestBefore) || !validDigest(item.EvidenceLinkDigestAfter) ||
 			!validDigest(item.ClaimTransitionDigestBefore) || !validDigest(item.ClaimTransitionDigestAfter) || item.ConsumerDecisionBefore != "PASS" || item.ConsumerDecisionAfter != "PASS" ||
-			!item.RawDigestChanged || !item.ConsumerDecisionPreserved {
+			!item.RawDigestChanged || !item.ConsumerDecisionPreserved || !validDigest(item.PolicyMembershipDigestBefore) || !validDigest(item.PolicyMembershipDigestAfter) ||
+			item.PolicyObservedIssueCountBefore != item.PolicyObservedIssueCountAfter || !item.PolicyMembershipPreserved {
 			return fmt.Errorf("proof-carrying intervention mismatch: %s", item.ID)
 		}
 		if index == 0 {
@@ -760,6 +764,8 @@ func validCaseClaims(item CaseResult, report Report) bool {
 			target = item.OperationDigest
 		case "recipe-match":
 			target = report.RecipeDigest
+		case "case-envelope-policy-bound":
+			target = item.SourceDigest
 		}
 		if claim.ID != spec.ID || claim.Proposition != spec.Proposition || claim.TargetDigest != target || !equalStrings(claim.Dependencies, spec.Dependencies) ||
 			claim.ProofChoice != spec.ProofChoice || claim.MetaOperation != spec.MetaOperation || claim.Status != "DISCHARGED" || claim.Resolution != "EXACT" || len(claim.EvidenceDigests) == 0 || claim.EvidenceDigest != claim.EvidenceDigests[0] {
@@ -783,7 +789,10 @@ func equalStrings(left, right []string) bool {
 
 func validateTransitions(transitions []ClaimTransition) error {
 	previous := ""
-	claimIDs := []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match", "consumer-authority"}
+	claimIDs := []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match", "case-envelope-policy-bound", "consumer-authority"}
+	if len(transitions) != len(claimIDs) {
+		return fmt.Errorf("proof-carrying transition inventory mismatch")
+	}
 	for index, transition := range transitions {
 		if transition.ClaimID != claimIDs[index] || transition.ClaimID == "" || transition.Proposition == "" || transition.StateDigest == "" || !validDigest(transition.PriorStateDigest) || (!validDigest(transition.TargetDigest) && transition.TargetDigest != "READ_ONLY_CONSUMPTION") ||
 			len(transition.EvidenceDigest) == 0 || transition.PreviousDigest != previous || transition.Digest != transitionDigest(transition) {
@@ -794,11 +803,12 @@ func validateTransitions(transitions []ClaimTransition) error {
 				return fmt.Errorf("proof-carrying transition evidence mismatch")
 			}
 		}
-		if index < EvidenceTotal && (transition.Capability != "ARTIFACT_TRANSPORT" || transition.From != "CARRIED" || transition.To != "PRESERVED") {
+		if transition.ClaimID == "consumer-authority" {
+			if transition.Capability != "ARTIFACT_USE" || transition.From != "NONE" || transition.To != "READ_ONLY_CONSUMPTION" {
+				return fmt.Errorf("proof-carrying authority transition mismatch")
+			}
+		} else if transition.Capability != "ARTIFACT_TRANSPORT" || transition.From != "CARRIED" || transition.To != "PRESERVED" {
 			return fmt.Errorf("proof-carrying transport transition mismatch")
-		}
-		if index == EvidenceTotal && (transition.ClaimID != "consumer-authority" || transition.Capability != "ARTIFACT_USE" || transition.From != "NONE" || transition.To != "READ_ONLY_CONSUMPTION") {
-			return fmt.Errorf("proof-carrying authority transition mismatch")
 		}
 		previous = transition.Digest
 	}
