@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/artifact/predecessorselection"
@@ -120,6 +119,9 @@ func collectPaged[T any](ctx context.Context, client *githubClient, endpoint, en
 		page, err := client.getPage(ctx, next)
 		pages = append(pages, pageObservation(page, endpointClass, pageNumber))
 		if err != nil {
+			if reason := pageURLFailureReason(err, endpointClass); reason != "" {
+				return values, pages, reason
+			}
 			return values, pages, predecessorReason(endpointClass, "HTTP_FAILURE")
 		}
 		if _, exists := seenURLs[page.URL]; exists {
@@ -154,20 +156,17 @@ func collectPaged[T any](ctx context.Context, client *githubClient, endpoint, en
 		if pageNumber == paginationPageCap {
 			return values, pages, predecessorReason(endpointClass, "PAGE_CAP_EXCEEDED")
 		}
-		if _, exists := seenURLs[link]; exists {
+		next, err = client.resolvePageURL(page.URL, link)
+		if err != nil {
+			if reason := pageURLFailureReason(err, endpointClass); reason != "" {
+				return values, pages, reason
+			}
+			return values, pages, predecessorReason(endpointClass, "LINK_MALFORMED")
+		}
+		if _, exists := seenURLs[next]; exists {
 			return values, pages, predecessorReason(endpointClass, "NEXT_LINK_REPEATED")
 		}
-		next = resolveNextURL(page.URL, link)
 	}
-}
-
-func resolveNextURL(base, next string) string {
-	baseURL, baseErr := url.Parse(base)
-	nextURL, nextErr := url.Parse(next)
-	if baseErr != nil || nextErr != nil || baseURL == nil || nextURL == nil {
-		return next
-	}
-	return baseURL.ResolveReference(nextURL).String()
 }
 
 func predecessorReason(endpointClass, suffix string) string {

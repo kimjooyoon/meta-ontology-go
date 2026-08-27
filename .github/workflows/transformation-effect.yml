@@ -498,17 +498,37 @@ jobs:
             if [[ "$selection_status" -eq 0 ]]; then
               observed_mode="RESOLVED"
             else
+              receipt="$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+              selection_reason="$(jq -r '.attempts[-1].selection.reason // empty' "$receipt")"
+              resolution_reason="$(jq -r '.reason // empty' "$receipt")"
+              if [[ "$selection_reason" != "READINESS_PREDECESSOR_NOT_FOUND" || "$resolution_reason" != "READINESS_ANCESTOR_SEARCH_EXHAUSTED" ]]; then
+                echo "predecessor selection fail-closed: stage=readiness-predecessor step=select-exact-predecessor reason=$selection_reason resolution=LOWER_RESOLUTION" >&2
+                exit "$selection_status"
+              fi
+              jq -e '
+                .decision == "FAIL_CLOSED" and
+                .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
+                .selected == null and
+                .summary.observed_attempts == .summary.search_limit and
+                .summary.missing_attempts == .summary.search_limit and
+                .summary.selected_ancestors == 0 and
+                (.attempts | length) == .summary.search_limit and
+                ([.attempts[] | .selection.reason] | all(. == "READINESS_PREDECESSOR_NOT_FOUND")) and
+                ([.attempts[].selection.pagination.complete] | all) and
+                ([.attempts[].selection.pagination.failure_reason] | all(. == null or . == ""))
+              ' "$receipt"
               set +e
               go run ./cmd/language-readiness-witness/foundation-seed \
                 --root "$GITHUB_WORKSPACE" \
-                --input "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json" \
+                --input "$receipt" \
                 --expected-head "$HEAD_SHA" \
                 --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
                 --check
               foundation_status=$?
               set -e
               if [[ "$foundation_status" -ne 0 ]]; then
-                echo "foundation seed fail-closed: status=$foundation_status" >&2
+                echo "foundation seed fail-closed: stage=readiness-foundation step=seed-foundation reason=FOUNDATION_EVIDENCE_UNKNOWN resolution=LOWER_RESOLUTION" >&2
+                exit "$foundation_status"
               fi
               observed_mode="FOUNDATION"
             fi
@@ -521,6 +541,11 @@ jobs:
           cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
           if [[ "$mode" == "RESOLVED" ]]; then
+            for suffix in a b; do
+              test -f "$RUNNER_TEMP/language-readiness-baseline-$suffix/artifact.json"
+              test -f "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json"
+              test -f "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json"
+            done
             cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
               "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
             cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
@@ -528,27 +553,57 @@ jobs:
             cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
               "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
           else
+            for suffix in a b; do
+              test -f "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json"
+              test -f "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-baseline-$suffix/artifact.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json"
+            done
             cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
               "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
             test ! -e "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
             test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
             test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-a.json"
-            jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- repository writes: `\(.source.repository_writes)`\n- authority: denied"' \
+            jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- observed repository effects: `\(.source.repository_writes)`\n- authority: denied"' \
               "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" >> "$GITHUB_STEP_SUMMARY"
             jq -r '"- predecessor evidence coordinate: `\(.attempts[-1].selection.reason // .reason)`"' \
               "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
-      - name: Upload exact-head readiness predecessor selection
-        if: always()
+      - name: Upload resolved exact-head readiness predecessor selection
+        if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
             ${{ runner.temp }}/language-readiness-baseline-reference-a.json
             ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-baseline-a/artifact.json
+            ${{ runner.temp }}/language-readiness-binding-baseline-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload foundation exact-head readiness predecessor selection
+        if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'FOUNDATION'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
             ${{ runner.temp }}/language-readiness-foundation-seed-a.json
-          if-no-files-found: warn
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload readiness predecessor diagnostic evidence
+        if: always() && steps.readiness-predecessor.outcome != 'success'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-predecessor-selection-b.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-a.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-b.json
+          if-no-files-found: ignore
           retention-days: 14
       - name: Prove guarded promotion capability foundation
         env:

@@ -24,6 +24,9 @@ func validateInput(input Input) error {
 	if !input.Pagination.Complete && input.Pagination.FailureReason == "" {
 		return fmt.Errorf("incomplete pagination requires a failure reason")
 	}
+	if input.Pagination.FailureReason != "" && !knownPaginationFailureReason(input.Pagination.FailureReason) {
+		return fmt.Errorf("unknown pagination failure reason %q", input.Pagination.FailureReason)
+	}
 	for _, candidate := range input.Candidates {
 		if candidate.RunID <= 0 || candidate.RunAttempt <= 0 ||
 			candidate.ReadinessArtifactID <= 0 || candidate.BindingArtifactID <= 0 ||
@@ -38,6 +41,20 @@ func validateInput(input Input) error {
 		}
 	}
 	return nil
+}
+
+func knownPaginationFailureReason(reason string) bool {
+	if reason == ReasonArtifactPayload {
+		return true
+	}
+	for _, prefix := range []string{"WORKFLOW_RUN", "ARTIFACT", "JOB"} {
+		for _, suffix := range []string{"HTTP_FAILURE", "PAGINATION_INCOMPLETE", "NEXT_LINK_REPEATED", "PAGE_CAP_EXCEEDED", "LINK_MALFORMED", "LINK_ORIGIN_MISMATCH", "DUPLICATE_ID", "RESPONSE_MALFORMED"} {
+			if reason == prefix+"_"+suffix {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func producerConformant(candidate Candidate) bool {

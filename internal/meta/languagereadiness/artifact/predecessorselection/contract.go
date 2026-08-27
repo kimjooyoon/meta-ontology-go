@@ -22,6 +22,8 @@ const (
 	ReasonPaginationRepeated   = "WORKFLOW_RUN_NEXT_LINK_REPEATED"
 	ReasonPaginationCap        = "WORKFLOW_RUN_PAGE_CAP_EXCEEDED"
 	ReasonPaginationMalformed  = "WORKFLOW_RUN_LINK_MALFORMED"
+	ReasonPaginationOrigin     = "WORKFLOW_RUN_LINK_ORIGIN_MISMATCH"
 	ReasonPaginationDuplicate  = "WORKFLOW_RUN_DUPLICATE_ID"
 	ReasonResponseMalformed    = "WORKFLOW_RUN_RESPONSE_MALFORMED"
+	ReasonArtifactPayload      = "ARTIFACT_PAYLOAD_UNAVAILABLE"
 )

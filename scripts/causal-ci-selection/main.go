@@ -401,7 +401,7 @@ func ciEvidence(directory, actualCaseID, outputPath string) error {
 			break
 		}
 	}
-	fmt.Printf("CI causal evidence: cases=%d/%d actual=%s outcome=%s resolution=%s root_cause=%d/%d downstream_missing=%d/%d\n", len(result.ObservedCaseIDs), len(result.ExpectedCaseIDs), result.ActualCaseID, actualOutcome, result.ActualResolution, result.ActualRootCauseNumerator, result.ActualRootCauseDenominator, result.DownstreamMissingNumerator, result.DownstreamMissingDenominator)
+	fmt.Printf("CI causal evidence: cases=%d/%d actual=%s outcome=%s resolution=%s root_cause=%d/%d downstream_missing=%d/%d source_class=current:%d/%d historical:%d/%d synthetic:%d/%d current_permission_denial=%d/%d historical_permission_denial=%d/%d\n", len(result.ObservedCaseIDs), len(result.ExpectedCaseIDs), result.ActualCaseID, actualOutcome, result.ActualResolution, result.ActualRootCauseNumerator, result.ActualRootCauseDenominator, result.DownstreamMissingNumerator, result.DownstreamMissingDenominator, result.CurrentSourceNumerator, result.CurrentSourceDenominator, result.HistoricalSourceNumerator, result.HistoricalSourceDenominator, result.SyntheticSourceNumerator, result.SyntheticSourceDenominator, result.CurrentPermissionNumerator, result.CurrentPermissionDenominator, result.HistoricalPermissionNumerator, result.HistoricalPermissionDenominator)
 	return nil
 }
 

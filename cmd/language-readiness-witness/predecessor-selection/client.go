@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -51,10 +52,61 @@ type githubPage struct {
 	Link       string
 }
 
+type pageURLFailure string
+
+const (
+	pageURLMalformed      pageURLFailure = "LINK_MALFORMED"
+	pageURLOriginMismatch pageURLFailure = "LINK_ORIGIN_MISMATCH"
+)
+
+func (failure pageURLFailure) Error() string { return string(failure) }
+
+func (client *githubClient) resolvePageURL(reference, endpoint string) (string, error) {
+	base, err := url.Parse(client.baseURL)
+	if err != nil || base == nil || base.Scheme == "" || base.Host == "" || base.User != nil || base.Fragment != "" {
+		return "", pageURLFailure(pageURLMalformed)
+	}
+	target, err := url.Parse(strings.TrimSpace(endpoint))
+	if err != nil || target == nil {
+		return "", pageURLFailure(pageURLMalformed)
+	}
+	if reference == "" {
+		reference = base.String()
+	}
+	ref, err := url.Parse(reference)
+	if err != nil || ref == nil || ref.Scheme == "" || ref.Host == "" {
+		return "", pageURLFailure(pageURLMalformed)
+	}
+	resolved := ref.ResolveReference(target)
+	if resolved == nil || resolved.Scheme == "" || resolved.Host == "" {
+		return "", pageURLFailure(pageURLMalformed)
+	}
+	if resolved.User != nil || resolved.Fragment != "" ||
+		!strings.EqualFold(resolved.Scheme, base.Scheme) || !strings.EqualFold(resolved.Host, base.Host) {
+		return "", pageURLFailure(pageURLOriginMismatch)
+	}
+	return resolved.String(), nil
+}
+
+func pageURLFailureReason(err error, endpointClass string) string {
+	failure, ok := err.(pageURLFailure)
+	if !ok {
+		return ""
+	}
+	switch failure {
+	case pageURLMalformed:
+		return predecessorReason(endpointClass, "LINK_MALFORMED")
+	case pageURLOriginMismatch:
+		return predecessorReason(endpointClass, "LINK_ORIGIN_MISMATCH")
+	default:
+		return ""
+	}
+}
+
 func (client *githubClient) getPage(ctx context.Context, endpoint string) (githubPage, error) {
-	target := endpoint
-	if strings.HasPrefix(target, "/") {
-		target = client.baseURL + target
+	target, resolveErr := client.resolvePageURL("", endpoint)
+	if resolveErr != nil {
+		return githubPage{URL: endpoint}, resolveErr
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
 	if err != nil {

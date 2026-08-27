@@ -35,12 +35,12 @@ func collectRun(ctx context.Context, client *githubClient, cfg config, predecess
 	producer, producerMatches := findProducerJob(jobs, predecessorselection.ProducerJobName)
 	readinessPayload, err := encodedPayload(ctx, client, cfg.repository, readiness, "artifact.json")
 	if err != nil {
-		return predecessorselection.Candidate{}, false, pages, "ARTIFACT_PAYLOAD_UNAVAILABLE"
+		return predecessorselection.Candidate{}, false, pages, predecessorselection.ReasonArtifactPayload
 	}
 	bindingPayload, err := encodedPayload(ctx, client, cfg.repository, binding,
 		"language-readiness-predecessor-binding-a.json")
 	if err != nil {
-		return predecessorselection.Candidate{}, false, pages, "ARTIFACT_PAYLOAD_UNAVAILABLE"
+		return predecessorselection.Candidate{}, false, pages, predecessorselection.ReasonArtifactPayload
 	}
 	return predecessorselection.Candidate{RunID: run.ID, RunAttempt: run.RunAttempt,
 		Workflow: run.Name, HeadBranch: run.HeadBranch, HeadSHA: run.HeadSHA,

@@ -158,6 +158,12 @@ type CIEvidenceAdjudication struct {
 	CurrentPermissionNumerator      int                             `json:"current_permission_denial_numerator"`
 	HistoricalPermissionDenominator int                             `json:"historical_permission_denial_denominator"`
 	HistoricalPermissionNumerator   int                             `json:"historical_permission_denial_numerator"`
+	CurrentSourceNumerator          int                             `json:"current_source_numerator"`
+	CurrentSourceDenominator        int                             `json:"current_source_denominator"`
+	HistoricalSourceNumerator       int                             `json:"historical_source_numerator"`
+	HistoricalSourceDenominator     int                             `json:"historical_source_denominator"`
+	SyntheticSourceNumerator        int                             `json:"synthetic_source_numerator"`
+	SyntheticSourceDenominator      int                             `json:"synthetic_source_denominator"`
 	CurrentPageCount                int                             `json:"current_page_count"`
 	CurrentPageInventoryComplete    bool                            `json:"current_page_inventory_complete"`
 	Digest                          string                          `json:"digest"`
@@ -184,7 +190,7 @@ func ValidateCIEvidenceAdjudication(value CIEvidenceAdjudication) error {
 // contradiction or fixed point, and child artifact absence cannot become a
 // second root cause.
 func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID string) (CIEvidenceAdjudication, error) {
-	expected := []string{"malformed-http-200", "missing-artifact", "normal-http-200", "permission-denied-403"}
+	expected := []string{"current-pagination-incomplete", "malformed-http-200", "missing-artifact", "normal-http-200", "permission-denied-403"}
 	cases := make([]CIEvidenceCase, 0, len(observations))
 	var current *CIEvidenceCase
 	var observationRaw []byte
@@ -194,7 +200,7 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 		}
 		value := observation.Cases[0]
 		expectedRunID, expectedJobID, expectedJobName := int64(33088310894), int64(98574425650), "language-concept-artifact"
-		if observation.SourceClass == CIEvidenceSourceCurrent {
+		if observation.SourceClass == CIEvidenceSourceCurrent || (observation.SourceClass == CIEvidenceSourceHistorical && value.ID == "current-pagination-incomplete") {
 			expectedRunID, expectedJobID = 33098087709, 98608698224
 		}
 		if observation.RunID != expectedRunID || observation.JobID != expectedJobID || observation.JobName != expectedJobName || observation.RunID != value.RunID || observation.JobID != value.JobID || observation.JobName != value.JobName || observation.SourceClass != value.SourceClass {
@@ -266,7 +272,15 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 		}
 	}
 	historicalPermission := 0
+	historicalSources := 0
+	syntheticSources := 0
 	for _, row := range rows {
+		switch row.SourceClass {
+		case CIEvidenceSourceHistorical:
+			historicalSources++
+		case CIEvidenceSourceSynthetic:
+			syntheticSources++
+		}
 		if row.SourceClass == CIEvidenceSourceHistorical && row.ObservedHTTPStatus == 403 && row.Coordinate.Reason == CIEvidenceReasonPermission {
 			historicalPermission++
 		}
@@ -288,6 +302,9 @@ func AdjudicateCIEvidence(observations []CIEvidenceObservation, actualCaseID str
 		ActualDecision: actual.Decision, ActualCoordinate: actual.Coordinate,
 		CurrentOutcome: actual.Outcome, CurrentPermissionDenominator: 1,
 		HistoricalPermissionNumerator: historicalPermission, HistoricalPermissionDenominator: 1,
+		CurrentSourceNumerator: boolInt(current != nil), CurrentSourceDenominator: 1,
+		HistoricalSourceNumerator: historicalSources, HistoricalSourceDenominator: 2,
+		SyntheticSourceNumerator: syntheticSources, SyntheticSourceDenominator: 3,
 	}
 	if current != nil {
 		result.ActualCaseID = current.ID
@@ -304,15 +321,32 @@ func validateCIEvidenceCase(value CIEvidenceCase) error {
 	if value.RunID < 1 || value.JobID < 1 || value.JobName == "" || value.ID == "" || value.Endpoint == "" || value.RequiredPermission != "actions: read" || value.HTTPStatus < 100 || value.HTTPStatus > 599 || value.ProcessStatus != CIEvidenceProcessExited || value.ProcessExitCode < 0 || value.Provenance == "" {
 		return fmt.Errorf("malformed CI evidence case %q", value.ID)
 	}
-	if value.SourceClass == CIEvidenceSourceHistorical &&
-		(value.RunID != 33088310894 || value.JobID != 98574425650 || value.JobName != "language-concept-artifact") {
-		return fmt.Errorf("historical CI evidence identity mismatch for %q", value.ID)
+	if value.SourceClass == CIEvidenceSourceHistorical {
+		if value.ID == "current-pagination-incomplete" {
+			if value.RunID != 33098087709 || value.JobID != 98608698224 || value.JobName != "language-concept-artifact" {
+				return fmt.Errorf("historical CI evidence identity mismatch for %q", value.ID)
+			}
+		} else if value.RunID != 33088310894 || value.JobID != 98574425650 || value.JobName != "language-concept-artifact" {
+			return fmt.Errorf("historical CI evidence identity mismatch for %q", value.ID)
+		}
 	}
 	if value.SourceClass == CIEvidenceSourceCurrent &&
 		(value.RunID != 33098087709 || value.JobID != 98608698224 || value.JobName != "language-concept-artifact" || value.ID != "current-pagination-incomplete") {
 		return fmt.Errorf("current CI evidence identity mismatch for %q", value.ID)
 	}
-	if value.SourceClass == CIEvidenceSourceHistorical && value.ID != "permission-denied-403" {
+	if value.SourceClass == CIEvidenceSourceCurrent &&
+		(!strings.HasPrefix(value.Provenance, "CURRENT_GITHUB_ACTIONS_OBSERVATION ") ||
+			!strings.Contains(value.Provenance, "run=33098087709") ||
+			!strings.Contains(value.Provenance, "job=98608698224") || !currentPagesComplete(value)) {
+		return fmt.Errorf("current CI evidence is not an observed API/process capture for %q", value.ID)
+	}
+	if value.SourceClass == CIEvidenceSourceHistorical && !strings.HasPrefix(value.Provenance, "HISTORICAL_") {
+		return fmt.Errorf("historical CI evidence provenance mismatch for %q", value.ID)
+	}
+	if value.SourceClass == CIEvidenceSourceSynthetic && !strings.HasPrefix(value.Provenance, "FIXED_") && !strings.HasPrefix(value.Provenance, "SYNTHETIC_") {
+		return fmt.Errorf("synthetic CI evidence provenance mismatch for %q", value.ID)
+	}
+	if value.SourceClass == CIEvidenceSourceHistorical && value.ID != "permission-denied-403" && value.ID != "current-pagination-incomplete" {
 		return fmt.Errorf("historical CI evidence case mismatch for %q", value.ID)
 	}
 	if value.SourceClass == CIEvidenceSourceSynthetic && value.ID == "permission-denied-403" {
@@ -346,8 +380,11 @@ func validateCurrentCIEvidenceCase(value CIEvidenceCase) error {
 func deriveCIEvidenceRow(value CIEvidenceCase) CIEvidenceRow {
 	pageInventory := append([]CIEvidencePage(nil), value.Pages...)
 	row := CIEvidenceRow{RunID: value.RunID, JobID: value.JobID, JobName: value.JobName, CaseID: value.ID, Endpoint: value.Endpoint, EndpointClass: value.EndpointClass, SourceClass: value.SourceClass, RequiredPermission: value.RequiredPermission, ObservedHTTPStatus: value.HTTPStatus, ObservedProcessExit: value.ProcessExitCode, ObservedProcessStatus: value.ProcessStatus, ResponseDigest: digestBytes([]byte(value.ResponseBody)), ResponseBytes: len([]byte(value.ResponseBody)), ObservedStdoutDigest: digestBytes([]byte(value.Stdout)), ObservedStdoutBytes: len([]byte(value.Stdout)), ObservedStderrDigest: digestBytes([]byte(value.Stderr)), ObservedStderrBytes: len([]byte(value.Stderr)), Provenance: value.Provenance, PageCount: len(pageInventory), PageInventory: pageInventory, PageInventoryComplete: currentPagesComplete(value)}
-	if value.SourceClass == CIEvidenceSourceCurrent && strings.Contains(value.Stderr, "workflow run pagination incomplete") {
+	if strings.Contains(value.Stderr, "workflow run pagination incomplete") {
 		row.Outcome = CIEvidenceOutcomeOpen
+		if value.SourceClass != CIEvidenceSourceCurrent {
+			row.Outcome = ExecutionUnknown
+		}
 		row.Decision = CIEvidenceDecisionFailClosed
 		row.Resolution = CIEvidenceResolutionLowered
 		row.Coordinate = Coordinate{Stage: "proposal-promotion", Step: "fetch-github-evidence", Reason: CIEvidenceReasonPaginationIncomplete}
@@ -409,9 +446,9 @@ func deriveCIEvidenceArtifact(value CIEvidenceCase, artifact CIEvidenceArtifact)
 	relation := CIEvidenceFixtureScenario
 	if value.SourceClass == CIEvidenceSourceCurrent {
 		relation = CIEvidenceCausalRelationUnknown
-		if artifact.DependencyObserved && artifact.DependencyEvidence != "" {
-			relation = CIEvidenceCausalChild
-		}
+	}
+	if artifact.DependencyObserved && artifact.DependencyEvidence != "" {
+		relation = CIEvidenceCausalChild
 	}
 	child := CIEvidenceArtifactObservation{ArtifactID: artifact.ID, Path: artifact.Path, Kind: artifact.Kind, Expected: artifact.Expected, Present: artifact.Present, ParentCaseID: value.ID, CausalRelation: relation, DependencyObserved: artifact.DependencyObserved, DependencyEvidence: artifact.DependencyEvidence, ObservedProcessExit: value.ProcessExitCode, ObservedProcessStatus: value.ProcessStatus, Provenance: value.Provenance}
 	child.EvidenceDigest, _ = digestJSON(child)
