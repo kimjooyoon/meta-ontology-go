@@ -24,6 +24,11 @@ func evidenceDigest(evidence Evidence) string {
 	return digestValue(evidence)
 }
 
+func claimStatementDigest(claim ClaimStatement) string {
+	claim.Digest = ""
+	return digestValue(claim)
+}
+
 func artifactDigest(artifact Artifact) string {
 	artifact.Digest = ""
 	return digestValue(artifact)

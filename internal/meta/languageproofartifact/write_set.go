@@ -32,6 +32,14 @@ func normalizeWriteSet(observation WriteSetObservation) (WriteSetObservation, er
 	}
 	observation.Changed = want
 	observation.RepositoryWrites = len(want)
+	if observation.ObservedScope == "" {
+		observation.ObservedScope = "NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED"
+	}
+	if observation.AuthorityBasis == "" {
+		observation.AuthorityBasis = "DECLARATION_ONLY"
+	}
+	observation.NetUnchanged = len(want) == 0
+	observation.TransientUnknown = true
 	if observation.MutationAuthority {
 		return WriteSetObservation{}, fmt.Errorf("repository write-set mutation authority is not allowed")
 	}

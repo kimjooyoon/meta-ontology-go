@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/language-proof-carrying-artifact.yml",
 		"cmd/language-proof-carrying-artifact",
 		"cmd/language-proof-carrying-artifact-verifier",
+		"cmd/language-proof-carrying-artifact-consumer",
 		"examples/language-proof-carrying-artifact",
 		"internal/meta/languageconcept",
 		"internal/meta/languageproofartifact",

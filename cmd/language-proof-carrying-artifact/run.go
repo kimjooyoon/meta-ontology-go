@@ -18,8 +18,30 @@ func run(args []string) int {
 	recipe := flags.String("recipe", "", "canonical verification recipe")
 	writeSet := flags.String("write-set", "", "repository write-set observation")
 	out := flags.String("out", "", "artifact output")
+	deriveRecipe := flags.String("derive-recipe", "", "derive recipe projection from this Gooo source")
 	if flags.Parse(args) != nil || *head == "" || *sourcePath == "" || *source == "" || *operation == "" || *recipe == "" || *writeSet == "" || *out == "" {
-		return 2
+		if *deriveRecipe == "" {
+			return 2
+		}
+	}
+	if *deriveRecipe != "" {
+		sourceBytes, err := os.ReadFile(*deriveRecipe)
+		if err != nil {
+			return 2
+		}
+		recipeValue, err := producer.RecipeFromSource(sourceBytes)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		raw, err := json.MarshalIndent(recipeValue, "", "  ")
+		if err != nil {
+			return 1
+		}
+		if err := os.WriteFile(*out, append(raw, '\n'), 0o644); err != nil {
+			return 1
+		}
+		return 0
 	}
 	sourceBytes, err := os.ReadFile(*source)
 	if err != nil {

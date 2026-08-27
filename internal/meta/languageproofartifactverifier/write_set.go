@@ -38,6 +38,9 @@ func validateWriteSet(observation WriteSetObservation) error {
 	if !reflect.DeepEqual(want, observation.Changed) || observation.RepositoryWrites != len(want) || observation.MutationAuthority {
 		return fmt.Errorf("repository write-set observation mismatch")
 	}
+	if observation.ObservedScope != "NET_BEFORE_AFTER_TRACKED_AND_UNTRACKED" || !observation.TransientUnknown || observation.NetUnchanged != (len(want) == 0) || observation.AuthorityBasis == "" {
+		return fmt.Errorf("repository write-set observation scope mismatch")
+	}
 	if observation.Digest != writeSetDigest(observation) {
 		return fmt.Errorf("repository write-set digest mismatch")
 	}

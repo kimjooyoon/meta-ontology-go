@@ -33,5 +33,20 @@ func artifactDigest(artifact Artifact) string {
 	return digestValue(artifact)
 }
 
+func claimStatementDigest(claim ClaimStatement) string {
+	claim.Digest = ""
+	return digestValue(claim)
+}
+
+func claimStateDigest(claim ClaimResult) string {
+	claim.StateDigest = ""
+	return digestValue(claim)
+}
+
+func transitionDigest(transition ClaimTransition) string {
+	transition.Digest = ""
+	return digestValue(transition)
+}
+
 func validDigest(value string) bool { return digestPattern.MatchString(value) }
 func validHead(value string) bool   { return headPattern.MatchString(value) }

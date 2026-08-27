@@ -46,6 +46,19 @@ type Evidence struct {
 	EvidenceDigest                  string     `json:"evidence_digest"`
 }
 
+type ClaimStatement struct {
+	ID             string     `json:"id"`
+	Proposition    string     `json:"proposition"`
+	TargetDigest   string     `json:"target_digest"`
+	Dependencies   []string   `json:"dependencies"`
+	ProofChoice    string     `json:"proof_choice"`
+	MetaOperation  string     `json:"meta_operation"`
+	Coordinate     Coordinate `json:"coordinate"`
+	EvidenceDigest []string   `json:"evidence_digests"`
+	State          string     `json:"state"`
+	Digest         string     `json:"digest"`
+}
+
 type WriteSetEntry struct {
 	Kind   string `json:"kind"`
 	Path   string `json:"path"`
@@ -70,11 +83,18 @@ type WriteSetObservation struct {
 	AfterDigest       string           `json:"after_digest"`
 	RepositoryWrites  int              `json:"repository_writes"`
 	MutationAuthority bool             `json:"mutation_authority"`
+	ObservedScope     string           `json:"observed_scope"`
+	NetUnchanged      bool             `json:"net_repository_state_unchanged"`
+	TransientUnknown  bool             `json:"transient_writes_unknown"`
+	AuthorityBasis    string           `json:"authority_observation"`
 	Digest            string           `json:"digest"`
 }
 
 type LedgerEntry struct {
 	ClaimID        string     `json:"claim_id"`
+	Proposition    string     `json:"proposition"`
+	TargetDigest   string     `json:"target_digest"`
+	Dependencies   []string   `json:"dependencies"`
 	Status         string     `json:"status"`
 	Resolution     string     `json:"resolution"`
 	Producer       string     `json:"producer"`
@@ -131,6 +151,8 @@ type Artifact struct {
 	Authority      Authority           `json:"authority"`
 	Effects        Effects             `json:"effects"`
 	NotClaimed     []string            `json:"not_claimed"`
+	Claims         []ClaimStatement    `json:"claims"`
+	BundleDigest   string              `json:"bundle_digest"`
 	Digest         string              `json:"digest"`
 }
 

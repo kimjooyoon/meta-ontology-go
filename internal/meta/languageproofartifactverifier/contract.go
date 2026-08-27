@@ -14,6 +14,12 @@ func CanonicalContract() Contract {
 		{ID: "missing-operation-evidence", InputKind: "MISSING", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "LOWER_RESOLUTION", ExpectedReason: "PROOF_EVIDENCE_MISSING", ProofChoice: "FOUNDATION", MetaOperation: "lower-missing-evidence"},
 		{ID: "bytes-only-no-authority", InputKind: "BYTE_ONLY", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "LOWER_RESOLUTION", ExpectedReason: "ARTIFACT_BYTES_NOT_AUTHORITY", ProofChoice: "REGRESSION", MetaOperation: "deny-byte-only-authority"},
 		{ID: "independent-recipe-mismatch", InputKind: "WRONG_RECIPE", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "INDEPENDENT_RECIPE_MISMATCH", ProofChoice: "REGRESSION", MetaOperation: "reject-recipe-drift"},
+		{ID: "recipe-only-mismatch", InputKind: "RECIPE_ONLY", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "RECIPE_CLAIM_ONLY_MISMATCH", ProofChoice: "COHERENCE", MetaOperation: "reject-recipe-only-drift"},
+		{ID: "missing-attachment", InputKind: "MISSING_ATTACHMENT", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "LOWER_RESOLUTION", ExpectedReason: "ARTIFACT_ATTACHMENT_MISSING", ProofChoice: "FOUNDATION", MetaOperation: "lower-missing-attachment"},
+		{ID: "wrong-attachment-digest", InputKind: "WRONG_ATTACHMENT_DIGEST", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "OPERATION_ATTACHMENT_DIGEST_MISMATCH", ProofChoice: "COHERENCE", MetaOperation: "reject-wrong-attachment"},
+		{ID: "unrelated-evidence-tamper", InputKind: "UNRELATED_TAMPER", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "INVARIANT_EVIDENCE_NOT_PRESERVED", ProofChoice: "REGRESSION", MetaOperation: "reject-unrelated-evidence-tamper"},
+		{ID: "stale-head", InputKind: "STALE_HEAD", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "HEAD_BINDING_MISMATCH", ProofChoice: "FOUNDATION", MetaOperation: "reject-stale-head"},
+		{ID: "unauthorized-consumer", InputKind: "UNAUTHORIZED_CONSUMER", ExpectedDecision: "FAIL_CLOSED", ExpectedResolution: "INVARIANT_ONLY", ExpectedReason: "UNAUTHORIZED_CONSUMER_NOT_ATTESTED", ProofChoice: "REGRESSION", MetaOperation: "deny-unauthorized-consumer"},
 	}}
 }
 
@@ -29,13 +35,28 @@ func DecodeContract(raw []byte) (Contract, error) {
 }
 
 func CanonicalRecipe() Recipe {
-	return Recipe{Schema: RecipeSchema, Version: 1,
-		ID: "gooo://recipe/language-proof-carrying-artifact/v1", Consumer: ConsumerID,
-		Steps: []RecipeStep{
-			{ID: "verify-source", Input: "source-bytes", MetaOperation: "recheck-source-digest", ProofChoice: "FOUNDATION"},
-			{ID: "verify-operation", Input: "operation-receipt", MetaOperation: "recheck-operation-receipt", ProofChoice: "COHERENCE"},
-			{ID: "verify-invariant", Input: "invariant-evidence", MetaOperation: "recheck-no-byte-authority", ProofChoice: "REGRESSION"},
-			{ID: "grant-read-only-consumption", Input: "consumer-read-only-verdict", MetaOperation: "grant-read-only-consumption", ProofChoice: "COHERENCE"},
+	return Recipe{Schema: RecipeSchema, Version: 2,
+		ID: "gooo://recipe/language-proof-carrying-artifact/v2", Consumer: ConsumerID, SourceEntry: "GenerateProofCarryingArtifact",
+		Roles: []RecipeRole{
+			{ID: "source-bytes-bound", Proposition: "source-bytes-match", Target: "raw-source-digest", ProofChoice: "FOUNDATION", Step: "verify-source", MetaOperation: "bind-source-bytes", Dependencies: []string{}},
+			{ID: "operation-receipt-bound", Proposition: "operation-receipt-match", Target: "operation-receipt-digest", ProofChoice: "COHERENCE", Step: "verify-operation", MetaOperation: "bind-operation-receipt", Dependencies: []string{"source-bytes-bound"}},
+			{ID: "no-byte-authority", Proposition: "generated-bytes-do-not-grant-authority", Target: "read-only-capability-boundary", ProofChoice: "REGRESSION", Step: "verify-invariant", MetaOperation: "preserve-no-byte-authority", Dependencies: []string{}},
+			{ID: "recipe-match", Proposition: "consumer-recipe-matches-source-recipe", Target: "recipe-digest", ProofChoice: "COHERENCE", Step: "verify-recipe", MetaOperation: "match-independent-recipe", Dependencies: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority"}},
+			{ID: "consumer-authority", Proposition: "verified-consumer-may-read-only-consume", Target: "READ_ONLY_CONSUMPTION", ProofChoice: "COHERENCE", Step: "grant-read-only-consumption", MetaOperation: "grant-read-only-consumption", Dependencies: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match"}},
 		},
+		Steps: []RecipeStep{
+			{ID: "verify-source", Input: "raw-source-digest", MetaOperation: "bind-source-bytes", ProofChoice: "FOUNDATION", Role: "source-bytes-bound"},
+			{ID: "verify-operation", Input: "operation-receipt-digest", MetaOperation: "bind-operation-receipt", ProofChoice: "COHERENCE", Role: "operation-receipt-bound"},
+			{ID: "verify-invariant", Input: "read-only-capability-boundary", MetaOperation: "preserve-no-byte-authority", ProofChoice: "REGRESSION", Role: "no-byte-authority"},
+			{ID: "verify-recipe", Input: "recipe-digest", MetaOperation: "match-independent-recipe", ProofChoice: "COHERENCE", Role: "recipe-match"},
+			{ID: "grant-read-only-consumption", Input: "READ_ONLY_CONSUMPTION", MetaOperation: "grant-read-only-consumption", ProofChoice: "COHERENCE", Role: "consumer-authority"},
+		},
+		Dependencies: []RecipeDependency{
+			{From: "source-bytes-bound", To: "operation-receipt-bound", Relation: "requires"},
+			{From: "operation-receipt-bound", To: "no-byte-authority", Relation: "requires"},
+			{From: "source-bytes-bound,operation-receipt-bound,no-byte-authority", To: "recipe-match", Relation: "requires"},
+			{From: "source-bytes-bound,operation-receipt-bound,no-byte-authority,recipe-match", To: "consumer-authority", Relation: "requires"},
+		},
+		Authority: RecipeAuthority{Capability: "READ_ONLY_CONSUMPTION", Requires: []string{"source-bytes-bound", "operation-receipt-bound", "no-byte-authority", "recipe-match"}},
 	}
 }

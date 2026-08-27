@@ -1,12 +1,28 @@
 {
   "schema": "gooo/language-proof-carrying-recipe/v1",
-  "version": 1,
-  "id": "gooo://recipe/language-proof-carrying-artifact/v1",
+  "version": 2,
+  "id": "gooo://recipe/language-proof-carrying-artifact/v2",
   "consumer": "gooo://consumer/language-proof-carrying-artifact-verifier",
+  "source_entry": "GenerateProofCarryingArtifact",
+  "roles": [
+    {"id":"source-bytes-bound","proposition":"source-bytes-match","target":"raw-source-digest","proof_choice":"FOUNDATION","step":"verify-source","meta_operation":"bind-source-bytes","dependencies":[]},
+    {"id":"operation-receipt-bound","proposition":"operation-receipt-match","target":"operation-receipt-digest","proof_choice":"COHERENCE","step":"verify-operation","meta_operation":"bind-operation-receipt","dependencies":["source-bytes-bound"]},
+    {"id":"no-byte-authority","proposition":"generated-bytes-do-not-grant-authority","target":"read-only-capability-boundary","proof_choice":"REGRESSION","step":"verify-invariant","meta_operation":"preserve-no-byte-authority","dependencies":[]},
+    {"id":"recipe-match","proposition":"consumer-recipe-matches-source-recipe","target":"recipe-digest","proof_choice":"COHERENCE","step":"verify-recipe","meta_operation":"match-independent-recipe","dependencies":["source-bytes-bound","operation-receipt-bound","no-byte-authority"]},
+    {"id":"consumer-authority","proposition":"verified-consumer-may-read-only-consume","target":"READ_ONLY_CONSUMPTION","proof_choice":"COHERENCE","step":"grant-read-only-consumption","meta_operation":"grant-read-only-consumption","dependencies":["source-bytes-bound","operation-receipt-bound","no-byte-authority","recipe-match"]}
+  ],
   "steps": [
-    {"id":"verify-source","input":"source-bytes","meta_operation":"recheck-source-digest","proof_choice":"FOUNDATION"},
-    {"id":"verify-operation","input":"operation-receipt","meta_operation":"recheck-operation-receipt","proof_choice":"COHERENCE"},
-    {"id":"verify-invariant","input":"invariant-evidence","meta_operation":"recheck-no-byte-authority","proof_choice":"REGRESSION"},
-    {"id":"grant-read-only-consumption","input":"consumer-read-only-verdict","meta_operation":"grant-read-only-consumption","proof_choice":"COHERENCE"}
-  ]
+    {"id":"verify-source","input":"raw-source-digest","meta_operation":"bind-source-bytes","proof_choice":"FOUNDATION","role":"source-bytes-bound"},
+    {"id":"verify-operation","input":"operation-receipt-digest","meta_operation":"bind-operation-receipt","proof_choice":"COHERENCE","role":"operation-receipt-bound"},
+    {"id":"verify-invariant","input":"read-only-capability-boundary","meta_operation":"preserve-no-byte-authority","proof_choice":"REGRESSION","role":"no-byte-authority"},
+    {"id":"verify-recipe","input":"recipe-digest","meta_operation":"match-independent-recipe","proof_choice":"COHERENCE","role":"recipe-match"},
+    {"id":"grant-read-only-consumption","input":"READ_ONLY_CONSUMPTION","meta_operation":"grant-read-only-consumption","proof_choice":"COHERENCE","role":"consumer-authority"}
+  ],
+  "dependencies": [
+    {"from":"source-bytes-bound","to":"operation-receipt-bound","relation":"requires"},
+    {"from":"operation-receipt-bound","to":"no-byte-authority","relation":"requires"},
+    {"from":"source-bytes-bound,operation-receipt-bound,no-byte-authority","to":"recipe-match","relation":"requires"},
+    {"from":"source-bytes-bound,operation-receipt-bound,no-byte-authority,recipe-match","to":"consumer-authority","relation":"requires"}
+  ],
+  "authority": {"capability":"READ_ONLY_CONSUMPTION","requires":["source-bytes-bound","operation-receipt-bound","no-byte-authority","recipe-match"],"mutation":false,"promotion":false,"semantic":false}
 }

@@ -1,14 +1,13 @@
 package languageproofartifact
 
-const LedgerSchema = "gooo/proof-evidence-ledger/v1"
+const LedgerSchema = "gooo/proof-evidence-ledger/v2"
 
-func openLedger(evidence []Evidence) ClaimLedger {
-	ledger := ClaimLedger{Schema: LedgerSchema, Version: 1, Entries: []LedgerEntry{}}
-	for _, item := range evidence {
-		entry := LedgerEntry{ClaimID: item.ClaimID, Status: "OPEN", Resolution: "LOWER_RESOLUTION",
-			Producer: ProducerID, Consumer: ConsumerID, ProofChoice: item.ProofChoice,
-			MetaOperation: item.MetaOperation, Coordinate: item.Coordinate,
-			Reason: "AWAITING_INDEPENDENT_RECHECK", EvidenceDigest: []string{item.EvidenceDigest},
+func openLedger(claims []ClaimStatement) ClaimLedger {
+	ledger := ClaimLedger{Schema: LedgerSchema, Version: 2, Entries: []LedgerEntry{}}
+	for _, item := range claims {
+		entry := LedgerEntry{ClaimID: item.ID, Proposition: item.Proposition, TargetDigest: item.TargetDigest, Dependencies: append([]string(nil), item.Dependencies...), Status: "OPEN", Resolution: "LOWER_RESOLUTION",
+			Producer: ProducerID, Consumer: ConsumerID, ProofChoice: item.ProofChoice, MetaOperation: item.MetaOperation, Coordinate: item.Coordinate,
+			Reason: "AWAITING_INDEPENDENT_RECHECK", EvidenceDigest: append([]string(nil), item.EvidenceDigest...),
 			Provenance: "producer-carried-prior-ledger", PreviousDigest: lastDigest(ledger.Entries)}
 		entry.Digest = ledgerEntryDigest(entry)
 		ledger.Entries = append(ledger.Entries, entry)
