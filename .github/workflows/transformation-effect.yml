@@ -2364,6 +2364,7 @@ jobs:
             .summary.coverage_bps == 10000 and
             ([.cases[].receipt.repository_writes] | add) == 0 and
             ([.cases[].receipt.mutation_authority] | any) == false and
+            ([.cases[].receipt.authority_scope] | all(. == "SEMANTIC_TRANSFORMATION_RECEIPT_OR_TEMP_ARTIFACT_EMISSION")) and
             ([.cases[] | select(.receipt.case_id == "preserved-translation" or .receipt.case_id == "semantic-violation" or .receipt.case_id == "approved-artifact") | .receipt.evidence.replay_count] | all(. == 2)) and
             ([.cases[] | select(.receipt.case_id == "missing-regression-witness") | .receipt.evidence.replay_count == 1 and
               .receipt.evidence.replay_failure_stage == "REGRESSION" and
