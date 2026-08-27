@@ -2537,7 +2537,7 @@ jobs:
                   $closure_verifier_cli_producer_imports == $allowed_closure_verifier_cli_producer_imports then "PASS" else "FAIL" end),
               repository_net_content_observed: false, repository_net_content_unchanged: false,
               repository_net_status_observed: false, repository_net_status_unchanged: false, repository_net_content_state: "UNKNOWN",
-              repository_actual_or_transient_writes: "UNKNOWN"}' > "$dependency_output"
+              repository_path_authorization: false, ambient_process_authority: "UNKNOWN", repository_actual_or_transient_writes: "UNKNOWN"}' > "$dependency_output"
           test "$forbidden_imports" -eq "$allowed_forbidden_imports"
           test "$producer_dependency_imports" -eq "$allowed_producer_dependency_imports"
           test "$report_consumer_producer_imports" -eq "$allowed_report_consumer_producer_imports"
