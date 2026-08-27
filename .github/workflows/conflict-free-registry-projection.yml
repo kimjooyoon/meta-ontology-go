@@ -106,6 +106,7 @@ jobs:
             .integration_metrics.producer_dependency_absence.decision == "PASS" and
             .integration_metrics.producer_dependency_absence.evidence_address != "" and
             .integration_metrics.producer_dependency_absence.evidence_digest != "" and
+            .integration_metrics.observed_producer_import_count.value_present == true and
             .integration_metrics.observed_producer_import_count.value == 0 and
             .integration_metrics.observed_producer_import_count.unit == "packages" and
             .integration_metrics.observed_producer_import_count.observation_status == "OBSERVED" and
@@ -128,6 +129,7 @@ jobs:
             .integration_metrics.algorithmic_independence.decision == "UNKNOWN" and
             .dependency_graph.reconstruction_status == "OBSERVED" and
             .dependency_graph.absence_decision == "PASS" and
+            .dependency_graph.inventory_present == true and
             .dependency_graph.exit_code == 0 and
             .dependency_graph.inventory_bytes > 0 and
             .dependency_graph.inventory_digest != "" and
@@ -171,6 +173,11 @@ jobs:
             .new_concept_fixture.decision == "PASS" and
             .dependency_graph_negative_fixture.decision == "PASS" and
             .dependency_graph_missing_module_fixture.decision == "PASS" and
+            ([.module_path_observations[] | select(.status == "VALID" and .available == true and .bytes > 0 and .raw_digest != "")] | length) == 1 and
+            ([.module_path_observations[] | select(.status == "MISSING" and .available == false and (.raw_digest // "") == "")] | length) == 1 and
+            ([.module_path_observations[] | select(.status == "INVALID" and .available == true and .bytes > 0 and .raw_digest != "")] | length) == 1 and
+            ([.module_path_failure_contracts[] | select(.kind == "missing" and .observed_import_count.observation_status == "OBSERVATION_UNKNOWN" and .observed_import_count.value_present == false and ((.observed_import_count | has("value")) | not) and .graph_inventory_present == false)] | length) == 1 and
+            ([.module_path_failure_contracts[] | select(.kind == "invalid" and .observed_import_count.observation_status == "OBSERVATION_UNKNOWN" and .observed_import_count.value_present == false and ((.observed_import_count | has("value")) | not) and .graph_inventory_present == false)] | length) == 1 and
             ([.failure_contracts[].diagnostic.decision] | all(. == "FAIL_CLOSED")) and
             ([.failure_contracts[].diagnostic.stage] | all(length > 0)) and
             ([.failure_contracts[].diagnostic.step] | all(length > 0)) and

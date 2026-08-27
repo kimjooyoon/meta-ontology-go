@@ -81,13 +81,17 @@ The conformance-consumer metric is decomposed into producer dependency
 absence (1/1 PASS), observed producer import count (value 0 packages,
 OBSERVED), raw-source reconstruction (1/1 PASS), separate executable (1/1
 PASS), and algorithmic independence (0/1 UNKNOWN). The count is an observed
-scalar, not a compliance ratio; compliance is decided only by the separate
+scalar, not a compliance ratio; UNKNOWN never means observed zero, and the
+value field is absent when the count is UNKNOWN. Compliance is decided only by the separate
 dependency-absence predicate. Dependency absence is computed from the complete
 module-aware `go list -deps` closure, whose package inventory bytes and digest
 are retained with the producer target address and digest. The dependency
 receipt separately reports `reconstruction_status` and `absence_decision`.
 Missing or invalid `go.mod` produces UNKNOWN at FOUNDATION/MODULE_PATH with
-reason `MODULE_PATH_UNAVAILABLE`, including an observation-unknown count.
+reason `MODULE_PATH_UNAVAILABLE`, including an observation-unknown count with
+no graph inventory artifact; its JSON omits `value`, so UNKNOWN is never
+encoded as zero. A separate `ModulePathObservation` records
+`source://go.mod` availability; invalid module bytes retain their raw digest.
 Separate processes do not by themselves prove algorithmic diversity.
 
 ## Meaning gates

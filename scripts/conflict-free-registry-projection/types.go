@@ -173,14 +173,15 @@ type RatioMetric struct {
 }
 
 type CountMetric struct {
-	Value             int    `json:"value"`
+	Value             *int   `json:"value,omitempty"`
+	ValuePresent      bool   `json:"value_present"`
 	Unit              string `json:"unit"`
 	ObservationStatus string `json:"observation_status"`
 	Stage             string `json:"stage"`
 	Step              string `json:"step"`
 	Reason            string `json:"reason"`
-	EvidenceAddress   string `json:"evidence_address"`
-	EvidenceDigest    string `json:"evidence_digest"`
+	EvidenceAddress   string `json:"evidence_address,omitempty"`
+	EvidenceDigest    string `json:"evidence_digest,omitempty"`
 }
 
 type MetricDelta struct {
@@ -371,21 +372,37 @@ type ProcessObservation struct {
 }
 
 type DependencyGraphReceipt struct {
-	InventoryAddress      string   `json:"inventory_address"`
-	InventoryBytes        int      `json:"inventory_bytes"`
-	InventoryDigest       string   `json:"inventory_digest"`
-	InventoryRaw          string   `json:"inventory_raw"`
-	Packages              []string `json:"packages"`
-	ProducerTargetAddress string   `json:"producer_target_address"`
-	ProducerTargetDigest  string   `json:"producer_target_digest"`
-	ExitCode              int      `json:"exit_code"`
-	StdoutDigest          string   `json:"stdout_digest"`
-	StderrDigest          string   `json:"stderr_digest"`
+	InventoryPresent      bool     `json:"inventory_present"`
+	InventoryAddress      string   `json:"inventory_address,omitempty"`
+	InventoryBytes        int      `json:"inventory_bytes,omitempty"`
+	InventoryDigest       string   `json:"inventory_digest,omitempty"`
+	InventoryRaw          string   `json:"inventory_raw,omitempty"`
+	Packages              []string `json:"packages,omitempty"`
+	ProducerTargetAddress string   `json:"producer_target_address,omitempty"`
+	ProducerTargetDigest  string   `json:"producer_target_digest,omitempty"`
+	ExitCode              *int     `json:"exit_code,omitempty"`
+	StdoutDigest          string   `json:"stdout_digest,omitempty"`
+	StderrDigest          string   `json:"stderr_digest,omitempty"`
 	ReconstructionStatus  string   `json:"reconstruction_status"`
 	AbsenceDecision       string   `json:"absence_decision"`
 	Stage                 string   `json:"stage"`
 	Step                  string   `json:"step"`
 	Reason                string   `json:"reason"`
+}
+
+type ModulePathObservation struct {
+	Address   string `json:"address"`
+	Available bool   `json:"available"`
+	Bytes     int    `json:"bytes,omitempty"`
+	RawDigest string `json:"raw_digest,omitempty"`
+	Status    string `json:"status"`
+	Reason    string `json:"reason"`
+}
+
+type ModulePathFailureContract struct {
+	Kind                  string      `json:"kind"`
+	ObservedImportCount   CountMetric `json:"observed_import_count"`
+	GraphInventoryPresent bool        `json:"graph_inventory_present"`
 }
 
 type BindingOutputReceipt struct {
@@ -443,6 +460,8 @@ type Evidence struct {
 	RepositoryNetState                  RepositoryObservation       `json:"repository_net_state"`
 	IndependentConsumerProcess          ProcessObservation          `json:"independent_consumer_process"`
 	DependencyGraph                     DependencyGraphReceipt      `json:"dependency_graph"`
+	ModulePathObservations              []ModulePathObservation     `json:"module_path_observations"`
+	ModulePathFailureContracts          []ModulePathFailureContract `json:"module_path_failure_contracts"`
 	GeneratedOutputs                    []OutputMetadata            `json:"generated_outputs"`
 	FixtureGeneratedOutputs             []OutputMetadata            `json:"fixture_generated_outputs"`
 	PredicateInventory                  InventoryReceipt            `json:"predicate_inventory"`
