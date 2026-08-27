@@ -1,0 +1,12 @@
+package ambiguitybudget
+namespace ambiguitybudget
+
+entity InterpretationCandidate id "gooo://ambiguity-budget/entity/interpretation-candidate"
+entity UnresolvedBranch id "gooo://ambiguity-budget/entity/unresolved-branch"
+entity EvidencePath id "gooo://ambiguity-budget/entity/evidence-path"
+entity AmbiguityReceipt id "gooo://ambiguity-budget/entity/ambiguity-receipt"
+
+activity MeasureIntegerSet(InterpretationCandidate, UnresolvedBranch, EvidencePath) -> AmbiguityReceipt
+activity ApplyBudget(InterpretationCandidate, UnresolvedBranch) -> AmbiguityReceipt
+activity LowerResolution(AmbiguityReceipt) -> AmbiguityReceipt
+activity PreserveClaimTransition(AmbiguityReceipt) -> AmbiguityReceipt

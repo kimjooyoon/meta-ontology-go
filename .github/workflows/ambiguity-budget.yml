@@ -1,0 +1,68 @@
+name: Deterministic ambiguity budget
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - ".github/workflows/ambiguity-budget.yml"
+      - "cmd/ambiguity-budget-witness/**"
+      - "cmd/ambiguity-budget-verifier/**"
+      - "internal/meta/ambiguitybudget/**"
+      - "internal/meta/ambiguitybudgetjudge/**"
+      - "examples/ambiguity-budget/**"
+      - "docs/language/deterministic-ambiguity-budget.md"
+      - "scripts/ambiguity-budget/**"
+      - "go.mod"
+  push:
+    branches: [dev]
+    paths:
+      - ".github/workflows/ambiguity-budget.yml"
+      - "cmd/ambiguity-budget-witness/**"
+      - "cmd/ambiguity-budget-verifier/**"
+      - "internal/meta/ambiguitybudget/**"
+      - "internal/meta/ambiguitybudgetjudge/**"
+      - "examples/ambiguity-budget/**"
+      - "docs/language/deterministic-ambiguity-budget.md"
+      - "scripts/ambiguity-budget/**"
+      - "go.mod"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ambiguity-budget-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  experiment:
+    name: ambiguity-budget
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Run deterministic producer and independent verifier
+        run: bash scripts/ambiguity-budget/main.sh
+      - name: Upload ambiguity budget receipts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ambiguity-budget-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/ambiguity-budget
+          if-no-files-found: error
+          retention-days: 30
+
