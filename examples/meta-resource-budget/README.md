@@ -14,6 +14,14 @@ producer, consumer, meta-operation, proof choice, stage, step, and reason.
 The fixed denominator is 22 coordinates: 16 operation/resource coordinates
 and 10 source, semantic, effect, binding, and sample-set coordinates.
 
+The contract contains only the measurement schema, fixed operation denominator,
+and budgets. It does not assert the source entry. The independent consumer
+reconstructs the entry and operation from the two raw `.gooo` files with
+`syntax.ParseFile` followed by `bidir.Lower`, then compares that meaning with
+the raw CLI artifact. The producer and reducer implementations are not
+imports of `internal/meta/languageresourcebudgetconsumer`; CI records the
+independent import boundary as 2/2 forbidden implementation imports absent.
+
 Resource observations include the Go version, OS, architecture, image, and
 image version so they are runner-scoped and non-deterministic. The reducer
 therefore treats them as evidence about one exact CI environment, while the
@@ -24,10 +32,27 @@ sample lowers the resource resolution to `LOWER_RESOLUTION` and leaves the
 resource claim `OPEN`; it does not erase the exact semantic verdict.
 
 The normal, over-budget, and missing-sample cases are generated in CI and
-reduced by `cmd/meta-resource-budget-reducer`. The reducer is a separate
-consumer from the shell producer. Its append-only claim transitions retain
+reduced by `cmd/meta-resource-budget-reducer`. The normal nine samples are
+`CURRENT_EVIDENCE`; the jq-derived over-budget and missing-sample inputs are
+`SYNTHETIC_COUNTEREXAMPLE` and are never counted as current runner samples.
+The independent `cmd/meta-resource-budget-consumer` consumes raw source,
+raw outputs, and raw resource observations without importing the reducer.
+Both consumers retain append-only claim transitions with
 `OPEN -> DISCHARGED`, `OPEN -> REFUTED`, or `OPEN -> OPEN` with stage, step,
-reason, evidence digest, and a chained digest.
+reason, evidence/provenance digest, and a chained digest. The read-only claim
+is discharged only by the structured before/after tree observation, empty
+write-set digest, `git diff --exit-code=0`, and false mutation authority; a
+missing observation leaves it `OPEN` at `LOWER_RESOLUTION`, while any observed
+write or authority violation makes it `REFUTED`.
+
+CI also emits a semantic intervention (renaming `PayOrder`) and a nonsemantic
+intervention (comment-only source change). The semantic intervention changes
+the source-derived activity, semantic digest, measurement target, and claim
+transition digest. The comment-only intervention changes the raw source
+digest while preserving the semantic digest, operation meaning, sample count,
+and runner-scoped resource resolution. Resource values are not expected to
+match across interventions because they are runner observations, not semantic
+identities.
 
 The budget is intentionally a useful envelope, not a host guarantee:
 

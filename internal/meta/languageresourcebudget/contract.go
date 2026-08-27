@@ -4,14 +4,14 @@ import "reflect"
 
 const (
 	Producer = "scripts/meta-resource-budget"
-	Consumer = "cmd/meta-resource-budget-reducer"
+	Consumer = "cmd/meta-resource-budget-consumer"
 )
 
 func CanonicalContract() Contract {
 	return Contract{
 		Schema: ContractSchema, ID: "meta-resource-budget-v1",
-		SourcePaths: []string{"examples/meta-resource-budget/activity.gooo", "examples/meta-resource-budget/entities.gooo"},
-		Entry:       "PayOrder", SamplesPerOp: 3, Indicators: ExpectedIndicators,
+		SourcePaths:  []string{"examples/meta-resource-budget/activity.gooo", "examples/meta-resource-budget/entities.gooo"},
+		SamplesPerOp: 3, Indicators: ExpectedIndicators,
 		Operations: []Operation{
 			{ID: "source-check", Stage: "LOWER", Step: "parse-source", MetaOperation: "observe-source-receipt", ProofChoice: "FOUNDATION", Output: "RECEIPT"},
 			{ID: "project-manifest", Stage: "PROJECT", Step: "project-operation-manifest", MetaOperation: "project-generated-operation", ProofChoice: "COHERENCE", Output: "GENERATED"},

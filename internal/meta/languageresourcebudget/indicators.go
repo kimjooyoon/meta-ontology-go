@@ -13,13 +13,13 @@ func buildIndicators(input Input, summaries []ResourceSummary, complete, semanti
 		)
 	}
 	values = append(values,
-		metaIndicator("semantic.source-files", "DRIVER", "FOUNDATION", "observe-source-file-set", "INPUT", "source-identity", int64(input.Producer.SourceFiles), int64(len(input.Contract.SourcePaths)), input.Producer.SourceFiles == len(input.Contract.SourcePaths)),
+		metaIndicator("semantic.source-files", "DRIVER", "FOUNDATION", "observe-source-file-set", "INPUT", "source-identity", int64(input.Producer.SourceFileCount), int64(len(input.Contract.SourcePaths)), input.Producer.SourceFileCount == len(input.Contract.SourcePaths)),
 		metaIndicator("semantic.go-files", "DRIVER", "FOUNDATION", "exclude-go-definition-files", "INPUT", "go-source-boundary", int64(input.Producer.GoFiles), 0, input.Producer.GoFiles == 0),
 		metaIndicator("semantic.source-digest", "DRIVER", "FOUNDATION", "bind-source-content-digest", "INPUT", "source-digest", boolInt(contentDigest(input.Producer.SourceDigest)), 1, contentDigest(input.Producer.SourceDigest)),
 		metaIndicator("semantic.source-receipt", "OUTCOME", "FOUNDATION", "verify-source-receipt", "REDUCE", "source-receipt", boolInt(!semanticErr), 1, !semanticErr),
 		metaIndicator("semantic.artifact-replay", "OUTCOME", "COHERENCE", "compare-semantic-artifact-replay", "REDUCE", "artifact-replay", boolInt(!semanticErr), 1, !semanticErr),
 		metaIndicator("semantic.artifact-digest", "DRIVER", "COHERENCE", "bind-artifact-content-digest", "REDUCE", "artifact-digest", boolInt(!semanticErr), 1, !semanticErr),
-		metaIndicator("guardrail.effects", "GUARDRAIL", "REGRESSION", "deny-resource-observer-effects", "REDUCE", "effect-boundary", int64(input.Producer.Effects.RepositoryWrites)+int64(boolInt(input.Producer.Effects.MutationAuthority)), 0, input.Producer.Effects.RepositoryWrites == 0 && !input.Producer.Effects.MutationAuthority),
+		metaIndicator("guardrail.effects", "GUARDRAIL", "REGRESSION", "verify-structured-write-set", "REDUCE", "effect-boundary", boolInt(writeSetTransitionOnly(input) == "DISCHARGED"), 1, writeSetTransitionOnly(input) == "DISCHARGED"),
 		metaIndicator("guardrail.producer-binding", "GUARDRAIL", "FOUNDATION", "bind-producer-consumer-metadata", "REDUCE", "producer-consumer-binding", boolInt(complete), 1, complete),
 		metaIndicator("guardrail.fixed-sample-set", "GUARDRAIL", "REGRESSION", "require-fixed-resource-sample-set", "REDUCE", "sample-cardinality", int64(len(input.Observations)), int64(len(input.Contract.Operations)*input.Contract.SamplesPerOp), complete),
 		metaIndicator("guardrail.claim-chain", "GUARDRAIL", "REGRESSION", "preserve-claim-transition-chain", "REDUCE", "claim-transition", boolInt(complete && !semanticErr), 1, complete && !semanticErr),

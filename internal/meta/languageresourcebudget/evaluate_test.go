@@ -22,8 +22,30 @@ func TestEvaluateSeparatesSemanticMeaningFromRunnerBudget(t *testing.T) {
 	limited := Evaluate(overbudget, "over-budget")
 	if limited.Decision != "FAIL_CLOSED" || limited.Resolution != "EXACT" || limited.Reason != "RESOURCE_BUDGET_EXCEEDED" ||
 		limited.Semantic.Decision != "PASS" || limited.Semantic.Resolution != "EXACT" || limited.Interpretation != "SEMANTIC_EXACT_RESOURCE_CLAIM_REFUTED" ||
-		limited.Transitions[1].To != "REFUTED" {
+		limited.Transitions[1].To != "REFUTED" || limited.Transitions[2].To != "DISCHARGED" {
 		t.Fatalf("overbudget=%#v", limited)
+	}
+}
+
+func TestEffectsBoundaryRequiresStructuredWriteSetObservation(t *testing.T) {
+	input := fixtureInput()
+	input.Producer.WriteSet.RepositoryWrites = 1
+	violated := Evaluate(input, "write-set-violation")
+	if violated.Decision != "FAIL_CLOSED" || violated.Resolution != "EXACT" || violated.ReadOnlyResolution != "EXACT" || violated.Transitions[2].To != "REFUTED" || violated.Transitions[2].Reason != "EFFECT_BOUNDARY_VIOLATED" {
+		t.Fatalf("violated=%#v", violated)
+	}
+	input = fixtureInput()
+	input.Producer.WriteSet.MutationAuthority = true
+	authorized := Evaluate(input, "authority-violation")
+	if authorized.Transitions[2].To != "REFUTED" || authorized.ReadOnlyResolution != "EXACT" {
+		t.Fatalf("authorized=%#v", authorized)
+	}
+
+	input = fixtureInput()
+	input.Producer.WriteSet = WriteSetObservation{}
+	unknown := Evaluate(input, "write-set-missing")
+	if unknown.Decision != "FAIL_CLOSED" || unknown.Resolution != "LOWER_RESOLUTION" || unknown.ReadOnlyResolution != "LOWER_RESOLUTION" || unknown.Transitions[2].To != "OPEN" || unknown.Transitions[2].Reason != "EFFECT_OBSERVATION_MISSING" {
+		t.Fatalf("unknown=%#v", unknown)
 	}
 }
 
@@ -51,6 +73,9 @@ func TestEvaluateAndValidateReportAreDeterministic(t *testing.T) {
 
 func fixtureInput() Input {
 	contract := CanonicalContract()
+	activitySource := []byte("package resourcebudget\nnamespace resourcebudget\n\nactivity PayOrder(Order) -> Receipt\n")
+	entitySource := []byte("package resourcebudget\nnamespace resourcebudget\n\nentity Order id \"gooo://resource-budget/order\"\nentity Receipt id \"gooo://resource-budget/receipt\"\n")
+	sources := []RawSource{{Filename: contract.SourcePaths[0], ContentBase64: base64.StdEncoding.EncodeToString(activitySource)}, {Filename: contract.SourcePaths[1], ContentBase64: base64.StdEncoding.EncodeToString(entitySource)}}
 	source := sourceReceiptFixture(contract)
 	artifact := artifactFixture()
 	observations := make([]Observation, 0, 9)
@@ -75,7 +100,7 @@ func fixtureInput() Input {
 				ReceiptBytes: receiptBytes, GeneratedBytes: generatedBytes, OutputDigest: outputDigest})
 		}
 	}
-	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: "sha256:" + strings.Repeat("d", 64), SourceFiles: 2, GoFiles: 0, Runner: Runner{OS: "Linux", Architecture: "x86_64", Image: "ubuntu-latest", ImageVersion: "20260827.1", GoVersion: "go1.27.0"}, Effects: Effects{}}, Observations: observations}
+	return Input{Schema: InputSchema, ExpectedHead: strings.Repeat("a", 40), Contract: contract, Producer: ProducerEvidence{SourceReceiptBase64: base64.StdEncoding.EncodeToString(source), ArtifactBase64: base64.StdEncoding.EncodeToString(artifact), ReplayBase64: base64.StdEncoding.EncodeToString(artifact), SourceDigest: sourceSetDigest(sources), SourceFiles: sources, SourceFileCount: 2, GoFiles: 0, Runner: Runner{OS: "Linux", Architecture: "x86_64", Image: "ubuntu-latest", ImageVersion: "20260827.1", GoVersion: "go1.27.0"}, Effects: Effects{}, WriteSet: WriteSetObservation{Schema: "gooo/meta-resource-budget-write-set/v1", Producer: Producer, Consumer: Consumer, BeforeTreeDigest: strings.Repeat("a", 40), AfterTreeDigest: strings.Repeat("a", 40), WriteSetDigest: "sha256:" + strings.Repeat("b", 64), ChangedPaths: []string{}, Reason: "GIT_DIFF_EXIT_0_AND_WRITE_SET_EMPTY"}}, Observations: observations}
 }
 
 func sourceReceiptFixture(contract Contract) []byte {
@@ -84,6 +109,6 @@ func sourceReceiptFixture(contract Contract) []byte {
 }
 
 func artifactFixture() []byte {
-	value, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:" + strings.Repeat("e", 64), "operation": map[string]string{"activity": "PayOrder"}, "effects": Effects{}, "digest": "sha256:" + strings.Repeat("f", 64)})
+	value, _ := json.Marshal(map[string]any{"schema": "gooo/operation-manifest/v1", "decision": "PASS", "resolution": "EXACT", "reason": "OPERATION_MANIFEST_EMITTED", "kind": "operation-manifest", "subject_digest": "sha256:" + strings.Repeat("e", 64), "package": map[string]string{"name": "resourcebudget", "namespace": "resourcebudget"}, "operation": map[string]any{"activity": "PayOrder", "inputs": []map[string]string{{"name": "Order", "id": "gooo://resource-budget/order"}}, "output": map[string]string{"name": "Receipt", "id": "gooo://resource-budget/receipt"}}, "effects": Effects{}, "digest": "sha256:" + strings.Repeat("f", 64)})
 	return value
 }

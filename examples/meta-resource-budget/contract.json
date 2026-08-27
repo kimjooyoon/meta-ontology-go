@@ -5,7 +5,6 @@
     "examples/meta-resource-budget/activity.gooo",
     "examples/meta-resource-budget/entities.gooo"
   ],
-  "entry": "PayOrder",
   "samples_per_operation": 3,
   "indicators": 22,
   "operations": [

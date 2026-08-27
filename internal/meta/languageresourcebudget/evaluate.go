@@ -13,6 +13,13 @@ func Evaluate(input Input, caseName string) Report {
 	if !validRunner(input.Producer.Runner) {
 		return closeReport(report, "LOWER_RESOLUTION", "RUNNER_IDENTITY_UNKNOWN", "SEMANTIC_EXACT_RESOURCE_UNKNOWN")
 	}
+	report.WriteSet = input.Producer.WriteSet
+	report.Summary.WriteSet = input.Producer.WriteSet
+	writeSetTo, writeSetReason := writeSetTransition(input)
+	report.ReadOnlyResolution = "EXACT"
+	if writeSetTo == "OPEN" {
+		report.ReadOnlyResolution = "LOWER_RESOLUTION"
+	}
 	report.Semantic, _ = verifyProducer(input)
 	if report.Semantic.Reason == "" {
 		report.Semantic.Reason = "SEMANTIC_PRODUCER_EVIDENCE_INVALID"
@@ -22,19 +29,25 @@ func Evaluate(input Input, caseName string) Report {
 	report.Summary.Resources = summaries
 	report.Summary.Operations = len(input.Contract.Operations)
 	report.Summary.Samples = len(input.Observations)
-	report.Summary.SourceFiles = input.Producer.SourceFiles
+	report.Summary.SourceFiles = input.Producer.SourceFileCount
 	report.Summary.GoFiles = input.Producer.GoFiles
+	report.Summary.Runner = input.Producer.Runner
 	report.Summary.Effects = input.Producer.Effects
 	report.Summary.Semantic = report.Semantic
 	report.Effects = input.Producer.Effects
 	report.Indicators = buildIndicators(input, summaries, complete, semanticErr, budgetViolations)
 	report.Summary.Coordinates = coordinates(report.Indicators)
 	report.Cases = []CaseResult{caseResult(caseName, complete, missing, budgetViolations, semanticErr)}
-	report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr)
 	report.NotClaimed = append([]string(nil), input.Contract.NotClaimed...)
-	if input.Producer.Effects.RepositoryWrites != 0 || input.Producer.Effects.MutationAuthority {
+	if writeSetTo == "REFUTED" {
+		report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
 		return finish(report, "EXACT", "EFFECT_BOUNDARY_VIOLATED", "NO_CLAIM")
 	}
+	if writeSetTo == "OPEN" {
+		report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
+		return finish(report, "LOWER_RESOLUTION", "EFFECT_OBSERVATION_MISSING", "SEMANTIC_EXACT_RESOURCE_UNKNOWN")
+	}
+	report.Transitions = buildTransitions(report.Semantic, complete, budgetViolations, semanticErr, writeSetTo, writeSetReason)
 	if semanticErr {
 		return finish(report, "EXACT", report.Semantic.Reason, "NO_SEMANTIC_CLAIM")
 	}
@@ -51,8 +64,8 @@ func Evaluate(input Input, caseName string) Report {
 }
 
 func baseReport(input Input, caseName string) Report {
-	return Report{Schema: ReportSchema, Case: caseName, Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION",
-		Interpretation: "NO_CLAIM", ResourceResolution: "LOWER_RESOLUTION", Summary: Summary{Resources: []ResourceSummary{}},
+	return Report{Schema: ReportSchema, Case: caseName, EvidenceClass: input.EvidenceClass, Decision: "FAIL_CLOSED", Resolution: "LOWER_RESOLUTION",
+		Interpretation: "NO_CLAIM", ResourceResolution: "LOWER_RESOLUTION", ReadOnlyResolution: "LOWER_RESOLUTION", Summary: Summary{Resources: []ResourceSummary{}},
 		Effects: input.Producer.Effects}
 }
 
@@ -64,11 +77,17 @@ func finish(report Report, resolution, reason, interpretation string) Report {
 	if report.Semantic.Decision == "PASS" && !hasMissing(report) {
 		report.ResourceResolution = "RUNNER_SCOPED"
 	}
+	if len(report.Transitions) >= 3 && report.Transitions[2].To == "OPEN" {
+		report.ReadOnlyResolution = "LOWER_RESOLUTION"
+	} else {
+		report.ReadOnlyResolution = "EXACT"
+	}
 	report.FactsDigest = digestValue(struct {
 		Semantic   Semantic
 		Summary    Summary
 		Indicators []Indicator
 	}{report.Semantic, report.Summary, report.Indicators})
+	report.ProvenanceDigest = report.FactsDigest
 	previous := ""
 	for index := range report.Transitions {
 		report.Transitions[index].Evidence = report.FactsDigest
@@ -82,6 +101,26 @@ func finish(report Report, resolution, reason, interpretation string) Report {
 func closeReport(report Report, resolution, reason, interpretation string) Report {
 	return finish(report, resolution, reason, interpretation)
 }
+
+func writeSetTransition(input Input) (string, string) {
+	value := input.Producer.WriteSet
+	if input.Producer.Effects.RepositoryWrites != 0 || input.Producer.Effects.MutationAuthority || value.RepositoryWrites != 0 || value.MutationAuthority || value.DiffExitCode != 0 || len(value.ChangedPaths) != 0 || value.UntrackedFileCount != 0 {
+		return "REFUTED", "EFFECT_BOUNDARY_VIOLATED"
+	}
+	if value.Schema != "gooo/meta-resource-budget-write-set/v1" || value.Producer != Producer || value.Consumer != Consumer ||
+		!gitDigest(value.BeforeTreeDigest) || !gitDigest(value.AfterTreeDigest) || !contentDigest(value.WriteSetDigest) ||
+		value.BeforeTreeDigest != value.AfterTreeDigest || value.Reason != "GIT_DIFF_EXIT_0_AND_WRITE_SET_EMPTY" {
+		return "OPEN", "EFFECT_OBSERVATION_MISSING"
+	}
+	return "DISCHARGED", "EFFECT_BOUNDARY_VERIFIED"
+}
+
+func writeSetTransitionOnly(input Input) string {
+	value, _ := writeSetTransition(input)
+	return value
+}
+
+func gitDigest(value string) bool { return len(value) == 40 && isHex(value) }
 
 func summarizeResources(input Input) (bool, []ResourceSummary, int, bool) {
 	values := append([]Observation(nil), input.Observations...)

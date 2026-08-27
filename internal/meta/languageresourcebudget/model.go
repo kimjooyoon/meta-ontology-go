@@ -24,6 +24,11 @@ type Operation struct {
 	Output        string `json:"output"`
 }
 
+type RawSource struct {
+	Filename      string `json:"filename"`
+	ContentBase64 string `json:"content_base64"`
+}
+
 type Reference struct {
 	ID  string `json:"id"`
 	URL string `json:"url"`
@@ -45,6 +50,21 @@ type Contract struct {
 type Effects struct {
 	RepositoryWrites  int  `json:"repository_writes"`
 	MutationAuthority bool `json:"mutation_authority"`
+}
+
+type WriteSetObservation struct {
+	Schema             string   `json:"schema"`
+	Producer           string   `json:"producer"`
+	Consumer           string   `json:"consumer"`
+	BeforeTreeDigest   string   `json:"before_tree_digest"`
+	AfterTreeDigest    string   `json:"after_tree_digest"`
+	WriteSetDigest     string   `json:"write_set_digest"`
+	ChangedPaths       []string `json:"changed_paths"`
+	DiffExitCode       int      `json:"diff_exit_code"`
+	UntrackedFileCount int      `json:"untracked_file_count"`
+	RepositoryWrites   int      `json:"repository_writes"`
+	MutationAuthority  bool     `json:"mutation_authority"`
+	Reason             string   `json:"reason"`
 }
 
 type Runner struct {
@@ -76,22 +96,25 @@ type Observation struct {
 }
 
 type ProducerEvidence struct {
-	SourceReceiptBase64 string  `json:"source_receipt_base64"`
-	ArtifactBase64      string  `json:"artifact_base64"`
-	ReplayBase64        string  `json:"replay_base64"`
-	SourceDigest        string  `json:"source_digest"`
-	SourceFiles         int     `json:"source_files"`
-	GoFiles             int     `json:"go_files"`
-	Runner              Runner  `json:"runner"`
-	Effects             Effects `json:"effects"`
+	SourceReceiptBase64 string              `json:"source_receipt_base64"`
+	ArtifactBase64      string              `json:"artifact_base64"`
+	ReplayBase64        string              `json:"replay_base64"`
+	SourceDigest        string              `json:"source_digest"`
+	SourceFiles         []RawSource         `json:"source_files"`
+	SourceFileCount     int                 `json:"source_file_count"`
+	GoFiles             int                 `json:"go_files"`
+	Runner              Runner              `json:"runner"`
+	Effects             Effects             `json:"effects"`
+	WriteSet            WriteSetObservation `json:"write_set"`
 }
 
 type Input struct {
-	Schema       string           `json:"schema"`
-	ExpectedHead string           `json:"expected_head"`
-	Contract     Contract         `json:"contract"`
-	Producer     ProducerEvidence `json:"producer"`
-	Observations []Observation    `json:"observations"`
+	Schema        string           `json:"schema"`
+	ExpectedHead  string           `json:"expected_head"`
+	EvidenceClass string           `json:"evidence_class"`
+	Contract      Contract         `json:"contract"`
+	Producer      ProducerEvidence `json:"producer"`
+	Observations  []Observation    `json:"observations"`
 }
 
 type Semantic struct {
@@ -99,6 +122,7 @@ type Semantic struct {
 	Resolution     string `json:"resolution"`
 	Reason         string `json:"reason"`
 	SourceDigest   string `json:"source_digest"`
+	SemanticDigest string `json:"semantic_digest"`
 	ArtifactDigest string `json:"artifact_digest"`
 	ReplayDigest   string `json:"replay_digest"`
 }
@@ -158,33 +182,38 @@ type CaseResult struct {
 }
 
 type Summary struct {
-	Coordinates Counter           `json:"coordinates"`
-	Operations  int               `json:"operations"`
-	Samples     int               `json:"samples"`
-	Resources   []ResourceSummary `json:"resources"`
-	Semantic    Semantic          `json:"semantic"`
-	Effects     Effects           `json:"effects"`
-	SourceFiles int               `json:"source_files"`
-	GoFiles     int               `json:"go_files"`
-	Runner      Runner            `json:"runner"`
-	Unknowns    int               `json:"unknowns"`
+	Coordinates Counter             `json:"coordinates"`
+	Operations  int                 `json:"operations"`
+	Samples     int                 `json:"samples"`
+	Resources   []ResourceSummary   `json:"resources"`
+	Semantic    Semantic            `json:"semantic"`
+	Effects     Effects             `json:"effects"`
+	SourceFiles int                 `json:"source_files"`
+	GoFiles     int                 `json:"go_files"`
+	Runner      Runner              `json:"runner"`
+	WriteSet    WriteSetObservation `json:"write_set"`
+	Unknowns    int                 `json:"unknowns"`
 }
 
 type Report struct {
-	Schema             string            `json:"schema"`
-	Case               string            `json:"case"`
-	Decision           string            `json:"decision"`
-	Resolution         string            `json:"resolution"`
-	Reason             string            `json:"reason"`
-	Interpretation     string            `json:"interpretation"`
-	ResourceResolution string            `json:"resource_resolution"`
-	Semantic           Semantic          `json:"semantic"`
-	Summary            Summary           `json:"summary"`
-	Indicators         []Indicator       `json:"indicators"`
-	Cases              []CaseResult      `json:"cases"`
-	Transitions        []ClaimTransition `json:"claim_transitions"`
-	NotClaimed         []string          `json:"not_claimed"`
-	Effects            Effects           `json:"effects"`
-	FactsDigest        string            `json:"facts_digest"`
-	Digest             string            `json:"digest"`
+	Schema             string              `json:"schema"`
+	Case               string              `json:"case"`
+	EvidenceClass      string              `json:"evidence_class"`
+	Decision           string              `json:"decision"`
+	Resolution         string              `json:"resolution"`
+	Reason             string              `json:"reason"`
+	Interpretation     string              `json:"interpretation"`
+	ResourceResolution string              `json:"resource_resolution"`
+	ReadOnlyResolution string              `json:"read_only_resolution"`
+	Semantic           Semantic            `json:"semantic"`
+	Summary            Summary             `json:"summary"`
+	Indicators         []Indicator         `json:"indicators"`
+	Cases              []CaseResult        `json:"cases"`
+	Transitions        []ClaimTransition   `json:"claim_transitions"`
+	NotClaimed         []string            `json:"not_claimed"`
+	Effects            Effects             `json:"effects"`
+	WriteSet           WriteSetObservation `json:"write_set"`
+	FactsDigest        string              `json:"facts_digest"`
+	ProvenanceDigest   string              `json:"provenance_digest"`
+	Digest             string              `json:"digest"`
 }
