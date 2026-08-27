@@ -5,6 +5,6 @@ const (
 	syntaxValidSourceDenominator = 26
 	syntaxInvalidCaseDenominator = 3
 	syntaxGoooLineDenominator    = 412
-	semanticCaseDenominator      = 30
-	semanticSourceDenominator    = 25
+	semanticCaseDenominator      = 31
+	semanticSourceDenominator    = 26
 )
