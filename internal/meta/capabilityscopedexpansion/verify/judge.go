@@ -92,6 +92,8 @@ type claim struct {
 	Status string `json:"status"`
 }
 type indicator struct {
+	ID            string `json:"id"`
+	Class         string `json:"class"`
 	Producer      string `json:"producer"`
 	Consumer      string `json:"consumer"`
 	MetaOperation string `json:"meta_operation"`
@@ -113,6 +115,9 @@ func Judge(source, raw []byte) Verdict {
 	if observed.Decision != expectedDecision || observed.Resolution != expectedResolution {
 		return invalid(fmt.Sprintf("producer decision disagrees with independent expectation: %s/%s", expectedDecision, expectedResolution))
 	}
+	if observed.Reason != reason {
+		return invalid("producer reason disagrees with independent expectation")
+	}
 	if observed.ReportDigest == "" || canonicalDigest(raw) != observed.ReportDigest {
 		return invalid("receipt digest does not bind raw evidence")
 	}
@@ -122,6 +127,13 @@ func Judge(source, raw []byte) Verdict {
 		}
 	} else if observed.Unknown != nil {
 		return invalid("known receipt carries UNKNOWN evidence")
+	}
+	wantEffect := "BLOCK"
+	if expectedDecision == "ALLOW" {
+		wantEffect = "NONE"
+	}
+	if observed.EnforcementEffect != wantEffect {
+		return invalid("enforcement effect does not match independent decision")
 	}
 	if err := authorityCounters(observed, expectedDecision); err != nil {
 		return invalid(err.Error())
@@ -151,10 +163,32 @@ func shape(source []byte, observed receipt) error {
 		observed.RepositoryWrites != 0 || observed.MutationAuthority || observed.PromotionAuthority {
 		return fmt.Errorf("receipt exceeds the zero-effect ceiling")
 	}
+	wantIndicators := map[string]string{
+		"CSE-authority-ceiling":               "GUARDRAIL/REGRESSION",
+		"CSE-default-deny":                    "GUARDRAIL/REGRESSION",
+		"CSE-environment-capability-declared": "DRIVER/FOUNDATION",
+		"CSE-expansion-stage-order":           "OUTCOME/COHERENCE",
+		"CSE-file-capability-declared":        "DRIVER/FOUNDATION",
+		"CSE-network-capability-declared":     "DRIVER/FOUNDATION",
+		"CSE-receipt-seal":                    "DRIVER/COHERENCE",
+		"CSE-source-binding":                  "OUTCOME/COHERENCE",
+		"CSE-source-shape":                    "DRIVER/FOUNDATION",
+		"CSE-time-capability-declared":        "DRIVER/FOUNDATION",
+		"CSE-toolchain-1.27":                  "DRIVER/FOUNDATION",
+		"CSE-value-evidence-relation":         "OUTCOME/COHERENCE",
+	}
+	indicatorIDs := make(map[string]bool, len(observed.Indicators))
 	for _, item := range observed.Indicators {
 		if item.Producer != validProducer || item.Consumer != validConsumer || item.MetaOperation != validMetaOperation || item.ProofChoice == "" {
 			return fmt.Errorf("indicator provenance is incomplete")
 		}
+		if indicatorIDs[item.ID] || wantIndicators[item.ID] != item.Class+"/"+item.ProofChoice {
+			return fmt.Errorf("indicator denominator is duplicated or malformed")
+		}
+		indicatorIDs[item.ID] = true
+	}
+	if len(indicatorIDs) != len(wantIndicators) {
+		return fmt.Errorf("indicator denominator is incomplete")
 	}
 	if observed.Authority.CapabilitiesRequested != len(observed.Capabilities) {
 		return fmt.Errorf("capability request count is inconsistent")

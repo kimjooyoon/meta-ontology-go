@@ -94,13 +94,13 @@ func Evaluate(source []byte, request Request) Receipt {
 		}
 	}
 	if request.Stage != StageExpand {
-		return finishDeny(receipt, "EXPANSION_STAGE_REJECTED")
+		return finishDeny(receipt, "EXPANSION_BOUNDARY_REJECTED")
 	}
 	if request.Step != StepAuthorize {
-		return finishDeny(receipt, "EXPANSION_STEP_REJECTED")
+		return finishDeny(receipt, "EXPANSION_BOUNDARY_REJECTED")
 	}
 	if request.Toolchain != GoVersion {
-		return finishDeny(receipt, "TOOLCHAIN_NOT_PINNED")
+		return finishDeny(receipt, "EXPANSION_BOUNDARY_REJECTED")
 	}
 
 	declared := 0
