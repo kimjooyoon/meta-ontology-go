@@ -134,7 +134,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          trap 'status=$?; echo "::error title=nonmonotonic adjudication::failed at shell line ${LINENO} with status ${status}"; exit "$status"' ERR
           output="$RUNNER_TEMP/nonmonotonic-refutation/consumer"
           variants="$RUNNER_TEMP/nonmonotonic-refutation/variants"
           mkdir -p "$output" "$variants"
