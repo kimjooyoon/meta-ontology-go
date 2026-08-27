@@ -1026,6 +1026,15 @@
       ]
     },
     {
+      "branch": "agent/gooo-producer-attestation",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-language-observation.yml",
+        "internal/verify/scope_gooo_producer_attestation.go"
+      ]
+    },
+    {
       "branch": "agent/language-package-runtime",
       "paths": [
         ".github/agent-scope-table.md",
