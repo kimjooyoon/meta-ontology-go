@@ -24,9 +24,10 @@ graph와 별도인 관찰 대상이며, 여섯 activity의 expected target tuple
 
 ## Current evidence and state algebra
 
-CI observer는 source graph와 분리된 raw target artifact를 실제로 읽어 claim별
-target path, raw bytes digest, target-specific input/output material,
-procedure/output digest, comparison result를 계산한다. 하나의 whole-file digest
+CI observer는 source graph와 분리된 raw target artifact를 실제로 읽은 뒤
+`syntax.ParseFile → bidir.Lower`로 정확히 하나의 activity occurrence를 재구성한다.
+AST span은 raw row digest에만 쓰고, occurrence address/target/proposition/value와
+lowered semantic digest를 별도로 receipt에 넣는다. 하나의 whole-file digest
 match로 여섯 claim을 discharge하지 않는다. process exit가 필요한
 `FAILURE_ENTAILMENT`는 CI가 실제 non-zero process를 실행해 stdout/stderr와 exit
 code를 보존한 `FailureReceipt`가 추가로 있을 때만 관측된다. zero/success exit에
@@ -61,6 +62,14 @@ unknown activation 포함).
 provenance, upstream edge IDs와 upstream transition digest chain, 이전 head를
 보존한다. resolution cause는 root digest 하나가 아니라 경로의 transition
 digest 목록이다. `MaximumCausePathDepth`는 `CauseEdgeIDs`의 edge depth다.
+
+구조적 inventory는 graph+external contract의 불일치를 claim별로 전부 기록한다.
+accepted target은 structural contradiction `0/0`, refuted target은
+`2/2`(ContradictionCheck, FailureEntailmentCheck)이며 이는 runtime edge
+observation이나 claim state가 아니다. inventory row는 claim/proposition,
+procedure ID, target occurrence/address, expected/declared value program, raw row
+digest와 semantic digest를 모두 결속하고 producer와 judge가 각자 다시 만든다.
+missing/duplicate/additional/replacement는 각각 다른 fail-closed reason이다.
 
 UNKNOWN은 5/8 eligible blocking edge, REFUTED는 6/8 observed causal edge와
 8 eligible edge, failure receipt 부재 REFUTED는 5/8 observed edge와 8 eligible
@@ -104,7 +113,9 @@ evidence가 없으면 authority는 `TRANSIENT_WRITE_AUTHORITY_UNKNOWN`으로 낮
 authorization은 false다.
 
 고정 CI 회귀 분모는 truth algebra 8, evidence provenance 3, authority 3, prior
-tamper 3, path metric 2, owner applicability 3, observation binding negative 7이다.
+tamper 3, path metric 2, owner applicability 3, observation binding negative 7,
+structural inventory negative 4(누락/중복/추가/치환)이다. invalid/duplicate/
+comment-like `.gooo` target은 canonical parse/lower 실패로 evidence가 되지 않는다.
 
 ## Principles and limits
 

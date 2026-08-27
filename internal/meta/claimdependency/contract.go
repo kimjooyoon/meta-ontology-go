@@ -66,11 +66,16 @@ func graphFromSource(source []byte, sourcePath string) (sourceGraph, error) {
 		}
 	}
 	claims, activityIndex := make([]Claim, 0, ClaimTotal), map[string]int{}
+	activityNames := map[string]bool{}
 	for _, declaration := range file.Declarations {
 		activity, ok := declaration.(*syntax.ActivityDecl)
 		if !ok {
 			continue
 		}
+		if activityNames[activity.Name] {
+			return sourceGraph{}, fmt.Errorf("duplicate activity %q is not a unique semantic occurrence", activity.Name)
+		}
+		activityNames[activity.Name] = true
 		node, ok := activities[activity.Name]
 		if !ok || node.ValueProgram == "" {
 			return sourceGraph{}, fmt.Errorf("activity %q is not a semantic value claim", activity.Name)
@@ -329,7 +334,10 @@ func validateValidatorContract(contract ValidatorContract) error {
 		seen[claim.ActivityName] = true
 		claimIDs[claim.ClaimID] = true
 		procedures[claim.ProcedureID] = true
-		if claim.ProcedureID != validatorProcedureID(claim.ActivityName) || claim.ExpectedMaterialDigest != validatorExpectedMaterialDigest(claim) || rowDigests[claim.TargetRowDigest] {
+		if claim.ProcedureID != validatorProcedureID(claim.ActivityName) {
+			return fmt.Errorf("VALIDATOR_CONTRACT_PROCEDURE_RELABEL: activity=%s", claim.ActivityName)
+		}
+		if claim.ExpectedMaterialDigest != validatorExpectedMaterialDigest(claim) || rowDigests[claim.TargetRowDigest] {
 			return fmt.Errorf("validator contract expected material digest is invalid for %q", claim.ActivityName)
 		}
 		rowDigests[claim.TargetRowDigest] = true
@@ -360,6 +368,124 @@ func contractClaim(contract ValidatorContract, activityName string) (ValidatorCl
 	}
 	return ValidatorClaim{}, false
 }
+
+// canonicalTargetOccurrence identifies an activity in the target by the
+// syntax AST and lowered semantic graph.  The AST span is used only to hash
+// the raw declaration; it is never used to decide which activity exists.
+func canonicalTargetOccurrence(artifact []byte, artifactPath string, sourceClaim Claim) (TargetOccurrence, []byte, error) {
+	file, diagnostics := syntax.ParseFile(artifactPath, string(artifact))
+	if file == nil || diagnostics.HasErrors() {
+		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_SYNTAX_OR_LOWER_INVALID: %s", diagnostics.Error())
+	}
+	var activities []*syntax.ActivityDecl
+	for _, declaration := range file.Declarations {
+		activity, ok := declaration.(*syntax.ActivityDecl)
+		if ok && activity.Name == sourceClaim.ActivityName {
+			activities = append(activities, activity)
+		}
+	}
+	if len(activities) != 1 {
+		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_ACTIVITY_OCCURRENCE_CARDINALITY: activity=%s count=%d", sourceClaim.ActivityName, len(activities))
+	}
+	target, err := graphFromSource(artifact, artifactPath)
+	if err != nil {
+		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_SYNTAX_OR_LOWER_INVALID: %w", err)
+	}
+	var targetClaim *Claim
+	for i := range target.Graph.Nodes {
+		if target.Graph.Nodes[i].ActivityName == sourceClaim.ActivityName {
+			if targetClaim != nil {
+				return TargetOccurrence{}, nil, fmt.Errorf("TARGET_ACTIVITY_OCCURRENCE_CARDINALITY: activity=%s semantic_count>1", sourceClaim.ActivityName)
+			}
+			targetClaim = &target.Graph.Nodes[i]
+		}
+	}
+	if targetClaim == nil || targetClaim.ClaimID != sourceClaim.ClaimID || !reflect.DeepEqual(targetClaim.Target, sourceClaim.Target) {
+		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_OCCURRENCE_SEMANTIC_ADDRESS_MISMATCH: activity=%s", sourceClaim.ActivityName)
+	}
+	span := activities[0].Span
+	if span.Start.Offset < 0 || span.End.Offset < span.Start.Offset || span.End.Offset > len(artifact) {
+		return TargetOccurrence{}, nil, fmt.Errorf("TARGET_ACTIVITY_OCCURRENCE_SPAN_INVALID: activity=%s", sourceClaim.ActivityName)
+	}
+	raw := append([]byte(nil), artifact[span.Start.Offset:span.End.Offset]...)
+	occurrence := TargetOccurrence{
+		Address:           fmt.Sprintf("activity:%s@%d:%d", targetClaim.ClaimID, span.Start.Offset, span.End.Offset),
+		ActivityName:      targetClaim.ActivityName,
+		ClaimID:           targetClaim.ClaimID,
+		PropositionDigest: targetClaim.PropositionDigest,
+		Target:            targetClaim.Target,
+		ValueProgram:      targetClaim.ValueProgram,
+		RowDigest:         digestBytes(raw),
+		SemanticDigest:    target.Graph.CanonicalIRDigest,
+	}
+	return occurrence, raw, nil
+}
+
+func targetOccurrenceMaterial(value TargetOccurrence) string {
+	return fmt.Sprintf("address=%s|activity=%s|claim_id=%s|proposition_digest=%s|target_inputs=%s|target_output=%s|target_artifact=%s|value_program=%s|row_digest=%s|semantic_digest=%s", value.Address, value.ActivityName, value.ClaimID, value.PropositionDigest, strings.Join(value.Target.Inputs, ","), value.Target.Output, value.Target.Artifact, value.ValueProgram, value.RowDigest, value.SemanticDigest)
+}
+
+func observationProcedureDigest(procedure, claimID, propositionDigest, edgeID string, occurrence TargetOccurrence, artifactDigest string) string {
+	payload := fmt.Sprintf("procedure|procedure_id=%s|claim_id=%s|proposition_digest=%s|edge_id=%s|%s|artifact_digest=%s", procedure, claimID, propositionDigest, edgeID, targetOccurrenceMaterial(occurrence), artifactDigest)
+	return digestBytes([]byte(payload))
+}
+
+func structuralContradictionDigest(value StructuralContradiction) (string, error) {
+	value.Digest = ""
+	return digestJSON(value)
+}
+
+func deriveStructuralInventory(graph Graph, contract ValidatorContract, artifact []byte, artifactPath string) ([]StructuralContradiction, error) {
+	result := []StructuralContradiction{}
+	for _, claim := range graph.Nodes {
+		material, ok := contractClaim(contract, claim.ActivityName)
+		if !ok {
+			return nil, fmt.Errorf("STRUCTURAL_INVENTORY_CONTRACT_CLAIM_MISSING: %s", claim.ActivityName)
+		}
+		if claim.ValueProgram == material.ExpectedValueProgram {
+			continue
+		}
+		occurrence, _, err := canonicalTargetOccurrence(artifact, artifactPath, claim)
+		if err != nil {
+			return nil, err
+		}
+		finding := StructuralContradiction{ClaimID: claim.ClaimID, PropositionDigest: claim.PropositionDigest, ExpectedValue: material.ExpectedValueProgram, DeclaredValue: claim.ValueProgram, ProcedureID: material.ProcedureID, Occurrence: occurrence}
+		finding.Digest, err = structuralContradictionDigest(finding)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, finding)
+	}
+	return result, nil
+}
+
+func validateStructuralInventory(observed, expected []StructuralContradiction) error {
+	expectedByClaim := map[string]StructuralContradiction{}
+	for _, finding := range expected {
+		expectedByClaim[finding.ClaimID] = finding
+	}
+	seen := map[string]bool{}
+	for _, finding := range observed {
+		if seen[finding.ClaimID] {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_DUPLICATE: claim=%s", finding.ClaimID)
+		}
+		seen[finding.ClaimID] = true
+	}
+	if len(observed) < len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_MISSING: observed=%d expected=%d", len(observed), len(expected))
+	}
+	if len(observed) > len(expected) {
+		return fmt.Errorf("STRUCTURAL_INVENTORY_ADDITIONAL: observed=%d expected=%d", len(observed), len(expected))
+	}
+	for _, finding := range observed {
+		want, ok := expectedByClaim[finding.ClaimID]
+		if !ok || !reflect.DeepEqual(finding, want) {
+			return fmt.Errorf("STRUCTURAL_INVENTORY_REPLACEMENT: claim=%s", finding.ClaimID)
+		}
+	}
+	return nil
+}
+
 func claimEvidenceDigest(value EvidenceClaim) (string, error) {
 	value.Digest = ""
 	return digestJSON(value)

@@ -172,6 +172,60 @@ jobs:
             exit 1
           fi
           jq -n '[{case:"claim",accepted:false},{case:"proposition",accepted:false},{case:"target",accepted:false},{case:"edge-kind",accepted:false},{case:"zero-exit-failure-label",accepted:false},{case:"wrong-edge-input",accepted:false},{case:"unrelated-exit",accepted:false}]' > "$output/first/observation-tamper.json"
+      - name: Reject resealed structural inventory mutations
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/claim-dependency"
+          tamper="$output/structural-tamper"
+          mkdir -p "$tamper"
+          for case in missing duplicate additional replacement; do
+            go run ./scripts/language-claim-dependency-structural-fixtures -evidence "$output/provider/refuted.json" -case "$case" -output "$tamper/$case.json"
+            if go run ./scripts/language-claim-dependency -source examples/language-claim-dependency/refuted.gooo -evidence "$tamper/$case.json" -output "$tamper/$case-producer.json" 2>"$tamper/$case-producer.err"; then
+              echo "resealed structural inventory accepted by producer: $case" >&2
+              exit 1
+            fi
+            if ! rg -q "STRUCTURAL_INVENTORY_${case^^}" "$tamper/$case-producer.err"; then
+              echo "producer did not report typed structural inventory reason: $case" >&2
+              cat "$tamper/$case-producer.err" >&2
+              exit 1
+            fi
+            if go run ./scripts/language-claim-dependency-judge -source examples/language-claim-dependency/refuted.gooo -evidence "$tamper/$case.json" -receipt "$output/first/refuted.json" -output "$tamper/$case-judge.json" 2>"$tamper/$case-judge.err"; then
+              echo "resealed structural inventory accepted by judge: $case" >&2
+              exit 1
+            fi
+            if ! rg -q "STRUCTURAL_INVENTORY_${case^^}" "$tamper/$case-judge.err"; then
+              echo "judge did not report typed structural inventory reason: $case" >&2
+              cat "$tamper/$case-judge.err" >&2
+              exit 1
+            fi
+          done
+          jq -n '[{case:"missing",producer:false,judge:false},{case:"duplicate",producer:false,judge:false},{case:"additional",producer:false,judge:false},{case:"replacement",producer:false,judge:false}]' > "$output/first/structural-inventory-tamper.json"
+      - name: Reject nonsemantic and relabelled target fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/claim-dependency"
+          tamper="$output/canonical-target-tamper"
+          mkdir -p "$tamper"
+          for fixture in negative-duplicate-target negative-comment-only-target negative-invalid-target; do
+            if go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact "examples/language-claim-dependency/negative/$fixture.gooo" -contract examples/language-claim-dependency/validator-contract.json -profile negative-fixture -output "$tamper/$fixture.json" 2>"$tamper/$fixture.err"; then
+              echo "nonsemantic target fixture accepted: $fixture" >&2
+              exit 1
+            fi
+            if ! rg -q 'TARGET_SYNTAX_OR_LOWER_INVALID|TARGET_ACTIVITY_OCCURRENCE_CARDINALITY' "$tamper/$fixture.err"; then
+              echo "target fixture did not fail at canonical parse/lower boundary: $fixture" >&2
+              cat "$tamper/$fixture.err" >&2
+              exit 1
+            fi
+          done
+          jq '.claims[0].procedure_id = "CI_CLAIM_TARGET_ROW_RELABELLED_V1"' examples/language-claim-dependency/validator-contract.json > "$tamper/procedure-relabel.json"
+          if go run ./scripts/language-claim-dependency-observation -source examples/language-claim-dependency/main.gooo -artifact examples/language-claim-dependency/accepted-target.gooo -contract "$tamper/procedure-relabel.json" -profile procedure-relabel -output "$tamper/procedure-relabel-observation.json" 2>"$tamper/procedure-relabel.err"; then
+            echo "relabelled procedure contract accepted" >&2
+            exit 1
+          fi
+          rg -q 'VALIDATOR_CONTRACT_PROCEDURE_RELABEL' "$tamper/procedure-relabel.err"
+          jq -n '[{case:"duplicate-target",accepted:false},{case:"comment-only-target",accepted:false},{case:"invalid-target",accepted:false},{case:"procedure-relabel",accepted:false}]' > "$output/first/canonical-target-tamper.json"
       - name: Assert source-bound observations, profile invariance, and causal algebra
         shell: bash
         run: |
@@ -179,20 +233,22 @@ jobs:
           output="$RUNNER_TEMP/claim-dependency/first"
           jq -e '.status == "UNKNOWN" and .observed_predicate == "UNKNOWN" and (.claims | length) == 6 and ([.claims[] | select(.status == "UNKNOWN")] | length) == 6' "$RUNNER_TEMP/claim-dependency/provider/marker-only.json"
           jq -e '.status == "UNKNOWN" and (.observations | length) == 1 and ([.claims[] | select(.status == "UNKNOWN")] | length) == 6' "$RUNNER_TEMP/claim-dependency/provider/unrelated.json"
-          jq -e '.evidence.status == "UNKNOWN" and .metrics.open_claim_total == 6 and .metrics.direct_unknown_claim_total == 1 and .metrics.dependency_blocked_claim_total == 5 and .metrics.fixed_claim_total == 6 and .metrics.distinct_proposition_total == 6 and .metrics.fixed_edge_total == 8 and .metrics.eligible_edge_total == 8 and .metrics.truth_table_case_total == 8 and .metrics.authority_case_total == 3' "$output/unknown.json"
-          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 1 and .metrics.discharged_claim_total == 4 and .metrics.refuted_claim_total == 2 and .metrics.open_claim_total == 0 and .metrics.observed_causal_edge_total == 6 and .metrics.eligible_edge_total == 8 and .metrics.maximum_cause_path_depth == 2 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 4' "$output/refuted.json"
-          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 0 and .metrics.refuted_claim_total == 1 and .metrics.open_claim_total == 1 and .metrics.observed_refuting_edge_total == 2 and .decision.resolution == "CAUSAL_REFUTATION"' "$output/refuted-no-failure.json"
-          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and .metrics.discharged_claim_total == 6 and .metrics.refuted_claim_total == 0 and .decision.value == "PASS" and .metrics.current_evidence_total == 6 and .metrics.unknown_evidence_total == 0 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 6' "$output/recovered.json"
+          jq -e '.evidence.status == "UNKNOWN" and .metrics.open_claim_total == 6 and .metrics.direct_unknown_claim_total == 1 and .metrics.dependency_blocked_claim_total == 5 and .metrics.fixed_claim_total == 6 and .metrics.distinct_proposition_total == 6 and .metrics.structural_contradiction_numerator == 0 and .metrics.structural_contradiction_denominator == 0 and .metrics.fixed_edge_total == 8 and .metrics.eligible_edge_total == 8 and .metrics.truth_table_case_total == 8 and .metrics.authority_case_total == 3' "$output/unknown.json"
+          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 1 and (.evidence.structural_contradictions | length) == 2 and .metrics.structural_contradiction_numerator == 2 and .metrics.structural_contradiction_denominator == 2 and .metrics.discharged_claim_total == 4 and .metrics.refuted_claim_total == 2 and .metrics.open_claim_total == 0 and .metrics.observed_causal_edge_total == 6 and .metrics.eligible_edge_total == 8 and .metrics.maximum_cause_path_depth == 2 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 4' "$output/refuted.json"
+          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 4 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "CONTRADICTS")) | length) == 2 and (.evidence.observations | map(select(.binding == "EDGE" and .edge_kind == "FAILURE_ENTAILMENT")) | length) == 0 and (.evidence.structural_contradictions | length) == 2 and .metrics.structural_contradiction_numerator == 2 and .metrics.structural_contradiction_denominator == 2 and .metrics.refuted_claim_total == 1 and .metrics.open_claim_total == 1 and .metrics.observed_refuting_edge_total == 2 and .decision.resolution == "CAUSAL_REFUTATION"' "$output/refuted-no-failure.json"
+          jq -e '.evidence.status == "CURRENT_EVIDENCE" and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and (.evidence.structural_contradictions | length) == 0 and .metrics.structural_contradiction_numerator == 0 and .metrics.structural_contradiction_denominator == 0 and .metrics.discharged_claim_total == 6 and .metrics.refuted_claim_total == 0 and .decision.value == "PASS" and .metrics.current_evidence_total == 6 and .metrics.unknown_evidence_total == 0 and ([.resolutions[] | select(.state == "DISCHARGED" and .failure_responsibility == "N/A" and .failure_owner_claim_id == "")] | length) == 6' "$output/recovered.json"
           jq -e '.claims | length == 6 and (map(.claim_id) | unique | length) == 6 and (map(.proposition_digest) | unique | length) == 6 and (map(.procedure_id) | unique | length) == 6 and (map(.target_row_digest) | unique | length) == 6' "$RUNNER_TEMP/claim-dependency/validator-contract.json"
-          jq -e '.evidence.observation_bundle_raw != null and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure_digest] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .output_digest] | unique | length) == 6' "$output/accepted.json"
-          jq -e '.structural_contradictions | length == 1' "$RUNNER_TEMP/claim-dependency/observation/refuted.json"
-          jq -e '.observed_exit_code == 1 and .executable_digest != "" and (.argv | length) > 0 and (.input_targets | length) == 2 and .stdout != null and .stderr != null' "$RUNNER_TEMP/claim-dependency/failure.json"
+          jq -e '.evidence.observation_bundle_raw != null and (.evidence.observations | map(select(.binding == "CLAIM")) | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .procedure_digest] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .output_digest] | unique | length) == 6 and ([.evidence.observations[] | select(.binding == "CLAIM") | .target_occurrence.address] | unique | length) == 6 and all(.evidence.observations[]; .target_occurrence.semantic_digest != "")' "$output/accepted.json"
+          jq -e '(.structural_contradictions | length) == 2 and ((.structural_contradictions | map(.claim_id) | sort) == ["claimdependency://activity/contradictioncheck","claimdependency://activity/failureentailmentcheck"]) and all(.structural_contradictions[]; .proposition_digest != "" and .procedure_id != "" and .target_occurrence.address != "" and .target_occurrence.row_digest != "" and .target_occurrence.semantic_digest != "" and .expected_value != .declared_value)' "$RUNNER_TEMP/claim-dependency/observation/refuted.json"
+          jq -e '.observed_exit_code == 1 and .executable_digest != "" and (.argv | length) > 0 and (.input_targets | length) == 2 and all(.input_targets[]; .target_occurrence.address != "" and .target_occurrence.semantic_digest != "" and .target_output_digest == .target_occurrence.row_digest) and .stdout != null and .stderr != null' "$RUNNER_TEMP/claim-dependency/failure.json"
           jq -e '.decision == "PASS" and .receipt_digest != "" and .metrics.fixed_claim_total == 6' "$output/accepted-alt-judgment.json"
           jq -e -s '.[0].digest == .[1].digest and (.[0].observations == .[1].observations)' "$RUNNER_TEMP/claim-dependency/observation/accepted.json" "$RUNNER_TEMP/claim-dependency/observation/accepted-alt.json"
           jq -e -s '.[0].decision == .[1].decision and .[0].resolution == .[1].resolution and .[0].metrics == .[1].metrics' "$output/accepted-judgment.json" "$output/accepted-alt-judgment.json"
           jq -e '.interventions | length == 4 and ([.[] | select(.name == "comment-only" and .semantic_digest_changed == false and .state_transition_changed == false and .decision_changed == false)] | length) == 1 and ([.[] | select(.name == "source-only" and .semantic_digest_changed == true)] | length) == 1 and ([.[] | select(.name == "edge-only" and .edge_type_changed == true)] | length) == 1' "$output/interventions.json"
           jq -e '.evidence_provenance_cases | length == 3 and ([.[] | select(.name == "caller-flag-only" and (.baseline_states == .intervention_states) and .decision_changed == false)] | length) == 1 and ([.[] | select(.name == "observation-artifact-changed" and .evidence_digest_changed == true and .state_transition_changed == true)] | length) == 1 and ([.[] | select(.name == "observation-absent" and .decision_changed == true)] | length) == 1' "$output/interventions.json"
           jq -e 'length == 7 and all(.[]; .accepted == false)' "$output/observation-tamper.json"
+          jq -e 'length == 4 and all(.[]; .producer == false and .judge == false)' "$output/structural-inventory-tamper.json"
+          jq -e 'length == 4 and all(.[]; .accepted == false)' "$output/canonical-target-tamper.json"
           jq -e 'length == 3 and all(.[]; .accepted == false)' "$output/prior-tamper.json"
           for name in unknown refuted refuted-no-failure recovered; do jq -e '.accepted == true and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and .producer_package_import_numerator == 0 and .producer_package_import_denominator == 1 and .semantic_promotion_authorized == false' "$output/$name-judgment.json"; done
           {
@@ -200,12 +256,12 @@ jobs:
             echo ""
             echo "- external validator contract: fixed target material, no status/outcome; source graph and raw artifact are separately re-observed"
             echo "- propositions: distinct 6/6; typed edges 8/8; truth-table executed 8/8 (2 per edge kind)"
-            echo "- evidence provenance: CURRENT accepted 6/6, refuted 4/6 claims + 3 edge receipts, no-failure 4/6 + 2 edge receipts, unrelated 0/6; HISTORICAL_FIXTURE 0"
+            echo "- evidence provenance: CURRENT accepted 6/6 claims + structural contradictions 0/0, refuted 4/6 claims + structural contradictions 2/2 + 3 edge receipts, no-failure 4/6 + structural contradictions 2/2 + 2 edge receipts, unrelated 0/6; HISTORICAL_FIXTURE 0"
             echo "- states: unknown 1 direct + 5 blocked OPEN; refuted 4 DISCHARGED + 2 dependency REFUTED; no-failure 4 DISCHARGED + 1 dependency REFUTED + 1 OPEN; recovery 6 DISCHARGED"
             echo "- causal edges: refuted 6/8 observed and 8 eligible, no-failure 5/8 observed and 8 eligible; edge depth is measured from CauseEdgeIDs"
             echo "- failure proof: CI captured actual non-zero exit 1; zero-exit labelled receipt rejected; unrelated mismatch and reversed/tampered bindings fail closed"
             echo "- interventions: source-only, observation-only, edge-only, comment-only; profile relabel does not alter decision; repository snapshot is tracked+untracked pre/post"
-            echo "- independence: source reconstruction 1/1; producer package import 0/1; prior tamper 3/3; observation negative cases 7/7; semantic promotion false"
+            echo "- independence: source reconstruction 1/1; producer package import 0/1; prior tamper 3/3; observation negative cases 7/7; structural inventory negatives 4/4 producer+judge; canonical target negatives 4/4; semantic promotion false"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload claim dependency receipts and interventions
         uses: actions/upload-artifact@v4
