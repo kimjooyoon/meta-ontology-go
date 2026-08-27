@@ -51,7 +51,7 @@ const (
 	claimGenerated       = "generated-execution"
 	claimIndependent     = "independent-replay"
 	claimProof           = "proof-selection"
-	claimLedger          = "ledger-chain"
+	claimLedgerPredicate = "ledger-chain"
 	claimReduction       = "decision-reduction"
 	claimLineage         = "lineage-seal"
 )
@@ -462,7 +462,7 @@ func parseRawPolicy(source []byte) (policy, error) {
 }
 
 func validateClaims(rules []rule) error {
-	want := []string{claimSourceBound, claimArtifactBound, claimGenerated, claimIndependent, claimProof, claimLedger, claimReduction, claimLineage}
+	want := []string{claimSourceBound, claimArtifactBound, claimGenerated, claimIndependent, claimProof, claimLedgerPredicate, claimReduction, claimLineage}
 	seen := make(map[string]bool, len(want))
 	for _, value := range rules {
 		if seen[value.Claim] {
@@ -484,6 +484,9 @@ type activityValues struct {
 }
 
 var safeToken = regexp.MustCompile(`^[A-Za-z0-9_.:/-]+$`)
+var digestToken = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)
+
+func validDigest(value string) bool { return digestToken.MatchString(value) }
 
 func parseActivity(value string) (activityValues, error) {
 	parts := strings.Split(value, "|")
@@ -803,7 +806,7 @@ func assessPredicate(rule rule, policy policy, artifact artifact, input input, s
 			}
 		}
 		return predicateAssessment{outcome: "OPEN", stage: rule.Stage, step: rule.Step, reason: "PROOF_SELECTION_MISSING"}
-	case claimLedger:
+	case claimLedgerPredicate:
 		return predicateAssessment{outcome: "DISCHARGED", observed: true, stage: rule.Stage, step: rule.Step, reason: "LEDGER_CHAIN_APPENDED"}
 	case claimReduction:
 		if !input.ProducerAvailable {

@@ -193,7 +193,7 @@ jobs:
           path: ${{ runner.temp }}/meta-policy-compilation/producer
       - name: Independently reconstruct raw policy and observations
         run: |
-          if rg -n 'internal/meta/policycompilation|GenerateJudge|IndependentEvaluate' cmd/meta-policy-compilation-consumer; then
+          if git grep -n -E 'internal/meta/policycompilation|GenerateJudge|IndependentEvaluate' -- cmd/meta-policy-compilation-consumer; then
             echo 'consumer imports or names producer-only implementation' >&2
             exit 1
           fi
