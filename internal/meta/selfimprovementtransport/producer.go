@@ -19,12 +19,12 @@ func Produce(repository fs.FS, contractPath string, input ProducerInput, observa
 	receipt := ProducerReceipt{
 		Schema: ProducerSchema, Contract: contract,
 		RepositoryURI: "https://github.com/" + input.Repository,
-		SubjectSHA: input.SubjectSHA, CheckoutSHA: input.CheckoutSHA,
+		SubjectSHA:    input.SubjectSHA, CheckoutSHA: input.CheckoutSHA,
 		WorkflowRef: input.WorkflowRef, WorkflowSHA: input.WorkflowSHA,
 		RunID: input.RunID, RunAttempt: input.RunAttempt, Job: input.Job,
 		ArtifactName: input.ArtifactName,
-		Subject: LogicalSubject{Name: "first.json", Digest: digestBytes(observation), Bytes: len(observation)},
-		Decision: "BOUND", Resolution: ResolutionExact, Reason: "PRODUCER_SUBJECT_BOUND",
+		Subject:      LogicalSubject{Name: "first.json", Digest: digestBytes(observation), Bytes: len(observation)},
+		Decision:     "BOUND", Resolution: ResolutionExact, Reason: "PRODUCER_SUBJECT_BOUND",
 	}
 	receipt.Digest = producerDigest(receipt)
 	if err := ValidateProducer(receipt, source, observation, contract); err != nil {
