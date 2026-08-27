@@ -20,6 +20,12 @@ func digestBytes(value []byte) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
+func sealReceipt(receipt *Receipt) {
+	copy := *receipt
+	copy.ReceiptDigest = ""
+	receipt.ReceiptDigest = digestValue(copy)
+}
+
 func receiptDigestValid(receipt Receipt) bool {
 	digest := receipt.ReceiptDigest
 	copy := receipt

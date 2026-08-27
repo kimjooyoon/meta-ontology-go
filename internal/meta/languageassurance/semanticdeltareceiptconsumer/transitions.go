@@ -23,7 +23,7 @@ func claimLedger(before, after projectedSource, class string, reasons ...string)
 		ledger = append(ledger, observed)
 		transitions = append(transitions, objectObservationTransition(observed))
 	}
-	left, right := claimsBySlot(before.claims), claimsBySlot(after.claims)
+	right := claimsBySlot(after.claims)
 	for _, claim := range before.claims {
 		matches := right[claim.Subject+"\x00"+claim.Predicate]
 		status, preservationReason := statusRefuted, "BEFORE_CLAIM_NOT_PRESERVED"
