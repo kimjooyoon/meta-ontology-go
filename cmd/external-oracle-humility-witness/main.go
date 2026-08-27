@@ -39,12 +39,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
-	effectsRaw, err := read(opts.effects)
+	effectsRaw, err := readOptional(opts.effects)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
-	independenceRaw, err := read(opts.independence)
+	independenceRaw, err := readOptional(opts.independence)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 2
@@ -182,6 +182,13 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func read(path string) ([]byte, error) { return os.ReadFile(path) }
 
+func readOptional(path string) ([]byte, error) {
+	if path == "" {
+		return nil, nil
+	}
+	return read(path)
+}
+
 func parseOptions(args []string, stderr io.Writer) (options, error) {
 	var result options
 	flags := flag.NewFlagSet("external-oracle-humility-witness", flag.ContinueOnError)
@@ -201,8 +208,8 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	if err := flags.Parse(args); err != nil {
 		return options{}, err
 	}
-	if result.head == "" || result.source == "" || result.contract == "" || result.references == "" || result.current == "" || result.mismatchCapsule == "" || result.absenceCapsule == "" || result.interventionSource == "" || result.commentSource == "" || result.effects == "" || result.independence == "" || result.output == "" {
-		return options{}, fmt.Errorf("all source, capsule, observation, snapshot, and output flags are required")
+	if result.head == "" || result.source == "" || result.contract == "" || result.references == "" || result.current == "" || result.mismatchCapsule == "" || result.absenceCapsule == "" || result.interventionSource == "" || result.commentSource == "" || result.output == "" {
+		return options{}, fmt.Errorf("source, capsule, observation, intervention, and output flags are required")
 	}
 	return result, nil
 }

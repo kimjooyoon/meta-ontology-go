@@ -56,10 +56,6 @@ jq -n --argjson producer "$producer_to_consumer" --argjson consumer "$consumer_t
 test "$producer_to_consumer" -eq 0
 test "$consumer_to_producer" -eq 0
 
-jq -n --arg before "$(cat "$output_root/snapshots/before.status")" --arg head_before "$head_before" \
-  --arg head_after "$head_before" \
-  '{before_status:$before,after_status:$before,head_before:$head_before,head_after:$head_after,official_mutations:0,repository_writes:0,promotion_count:0}' > "$effects_path"
-
 args=(
   --head "$HEAD_SHA"
   --source "$source_path"
@@ -70,8 +66,6 @@ args=(
   --absence-capsule "$absence_path"
   --intervention-source "$intervention_path"
   --comment-source "$comment_path"
-  --effects "$effects_path"
-  --independence "$independence_path"
 )
 go run ./cmd/external-oracle-humility-witness "${args[@]}" --output "$output_root/first"
 
@@ -91,6 +85,7 @@ jq -n --arg before "$(cat "$output_root/snapshots/before.status")" --arg after "
   --argjson official "$official_mutations" --argjson writes "$repository_writes" --argjson promotion "$promotion_count" \
   '{before_status:$before,after_status:$after,head_before:$head_before,head_after:$head_after,official_mutations:$official,repository_writes:$writes,promotion_count:$promotion}' > "$effects_path"
 
+args+=(--effects "$effects_path" --independence "$independence_path")
 go run ./cmd/external-oracle-humility-witness "${args[@]}" --output "$output_root/first"
 go run ./cmd/external-oracle-humility-witness "${args[@]}" --output "$output_root/replay"
 for name in source-receipt.json agreement-report.json mismatch-report.json absence-report.json intervention-report.json comment-report.json suite.json; do
