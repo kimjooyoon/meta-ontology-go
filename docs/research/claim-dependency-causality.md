@@ -27,7 +27,10 @@ failure” 방향이다. edge 이름만으로 `REFUTED`를 만들지 않는다.
 ## Current evidence and algebra
 
 `.gooo`에는 observation recipe/capability와 topology만 선언된다. CI provider가
-실제 artifact bytes와 operation을 읽어 `CURRENT_EVIDENCE` receipt를 만든다.
+실제 artifact path/bytes/digest와 관측 절차를 실행해 `CURRENT_EVIDENCE` receipt를
+만든다. `-operation`은 `CLAIMED_INPUT/REQUEST`일 뿐이며, 그 문자열 자체는
+predicate가 아니다. 외부 target 관측이 없는 `availability` 요청은 predicate를
+`UNKNOWN`으로 낮춘다.
 receipt는 provider, artifact path, bytes digest, observed predicate/value,
 status, stage/step/reason, per-claim proposition digest, tracked/untracked
 repository snapshot, output path, capability evidence를 가진다. provider와
@@ -41,8 +44,8 @@ state 대수는 다음과 같다.
 | 직접 observation `UNKNOWN` | root `OPEN/DIRECT_UNKNOWN` |
 | upstream `UNKNOWN` | dependent `OPEN/DEPENDENCY_BLOCKED` |
 | upstream `REFUTED` on `SUPPORTS` or `REQUIRES` | dependent `OPEN/BLOCKED` |
-| upstream `REFUTED` on explicit `CONTRADICTS` | target `REFUTED` |
-| upstream `REFUTED` on explicit `FAILURE_ENTAILMENT` | target failure `REFUTED` |
+| upstream `REFUTED` on direction-matching `CONTRADICTS` | target `REFUTED` (local child may be `UNKNOWN`) |
+| upstream `REFUTED` on direction-matching `FAILURE_ENTAILMENT` | target failure `REFUTED` (local child may be `UNKNOWN`) |
 | matching local `EVIDENCE_ACCEPTED` and all incoming `REQUIRES` discharged | `DISCHARGED` |
 | `SUPPORTS` only | standalone discharge 금지 |
 
@@ -52,9 +55,10 @@ provenance, upstream edge IDs와 upstream transition digest 목록, 이전 head�
 보존한다. resolution의 cause도 root digest 하나가 아니라 경로의 transition
 digest 목록이다.
 
-UNKNOWN fixture의 관측 인과 edge는 `5/8`(최소 경로 `3/8`), REFUTED fixture는
-`7/8`(최소 경로 `5/8`), recovery는 실제 discharge에 사용된 `3/8`(최소 경로
-`2/8`)이다. local evidence만으로 discharge된 downstream은 direct local
+UNKNOWN fixture의 관측 인과 edge는 `5/8`(claim별 허용 shortest-path edge union
+`3/8`), REFUTED fixture는 `7/8`(union `5/8`), recovery는 실제 discharge에
+사용된 `3/8`(union `2/8`)이다. 이 union은 결정론적 경로들의 합집합이지 전역
+cardinality-minimum 증명이 아니다. local evidence만으로 discharge된 downstream은 direct local
 evidence로 분류하고, `REQUIRES` upstream이 실제 사용된 경우에만 dependency
 discharge로 분류한다. recovery edge를 destination이 DISCHARGED라는 이유만으로 세지
 않는다. 최대 cause path는 node 수가 아니라 edge depth이며 이 fixture에서는
@@ -67,8 +71,10 @@ FAILURE_ENTAILMENT는 명시된 방향의 positive case만 refute한다.
 
 ## Append-only recovery
 
-recovery는 이전 UNKNOWN receipt의 digest, transition head, 여섯 claim state,
-graph/proposition digest를 입력으로 검증한다. 새 ledger를 만들지 않고 기존
+recovery는 이전 UNKNOWN receipt가 가리키는 raw source와 raw artifact/evidence를
+다시 관측하고 graph, transitions, resolutions, metrics, decision 전체를 재생한
+뒤 digest, transition head, 여섯 claim state, graph/proposition digest를 검증한다.
+새 ledger를 만들지 않고 기존
 12 transition을 byte-for-byte 보존한 뒤 6개 transition을 append한다.
 각 recovery transition은 해당 claim의 local evidence digest와 필요한 upstream
 transition digest chain을 결합한다. 따라서 회복 결과는 `12 preserved + 6
@@ -81,7 +87,7 @@ appended`, append-only chain `1`, 실제 causal recovery edge `3/8`이다.
 state, transitions, metrics, decision을 재구성한다. CI에서 source
 reconstruction은 `1/1`, producer import은 `0/1`이다.
 
-네 개의 개입은 원인을 분리한다.
+네 개의 semantic 개입은 원인을 분리한다.
 
 * source-only: 같은 accepted raw evidence를 고정하고 `VALUE_PROGRAM`만 바꾼다.
   semantic digest, claim transitions, decision이 바뀐다.
@@ -96,9 +102,19 @@ reconstruction은 `1/1`, producer import은 `0/1`이다.
 authority resolution을 함께 기록한다. tracked+untracked pre/post snapshot이
 같고 output path가 repository 밖이어야 `RepositoryWrites=0`이다. 무변경만으로
 권한 부재를 증명할 수 없으므로 독립 capability/permission evidence가 없으면
-authority는 `UNKNOWN`이며 stage/step/reason을 남기고 fail closed한다. 현재 CI는
-`contents:read` capability receipt를 가지고 `READ_ONLY_VERIFIED`를 판정하며,
+authority는 `TRANSIENT_WRITE_AUTHORITY_UNKNOWN`이며 stage/step/reason을 남기고
+fail closed한다. 현재 관측 범위는 `NET_REPOSITORY_STATE_UNCHANGED`이고, 별도
+회귀 분모에서 `NET_REPOSITORY_STATE_CHANGED`와 transient unknown도 실행한다.
+`contents:read`는 GitHub API capability일 뿐 로컬 write 불가 증명이 아니다.
 semantic promotion authorization은 항상 false다.
+
+증거 provenance 회귀는 `3/3`(caller flag only, observation artifact changed,
+observation absent), authority 회귀는 `3/3`(net same, net changed, transient
+unknown), prior tamper 거부는 `3/3`, path metric은 `2/2`(UNKNOWN/REFUTED), owner
+applicability는 `3/3`(direct, dependency, discharged N/A)로 고정한다. DISCHARGED
+resolution의 failure responsibility/owner는 `N/A`/empty이고, direct unknown은
+자기 claim, dependency blocked/refuted는 실제 shortest path의 첫 claim을 owner로
+기록한다.
 
 ## Principles and limits
 
@@ -107,7 +123,7 @@ activity, agent, influence 어휘를 참고했다. declared graph와 observed ru
 event를 분리하는 방식은 [OpenLineage object model](https://openlineage.io/docs/spec/object-model/),
 [run cycle](https://openlineage.io/docs/spec/run-cycle/),
 [producer identity](https://openlineage.io/docs/spec/producers/)를 참고했다.
-방향성 있는 최소 경로와 개입 보고의 한계는
+방향성 있는 shortest path와 개입 보고의 한계는
 [Stanford causal models](https://plato.stanford.edu/entries/causal-models/)의
 구조적 관점과만 연결되며, 이 실험은 통계적 인과나 외부 세계의 truth를
 주장하지 않는다.

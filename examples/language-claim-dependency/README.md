@@ -9,11 +9,12 @@
 | `refuted.gooo` | contradiction → root explicit, 5 UNKNOWN | direct 1 REFUTED, dependency 2 REFUTED, 3 OPEN | 7 / 8 |
 | `main.gooo` + unknown receipt | acceptance → 6 current | direct local 4 + dependency 2 `DISCHARGED` | 3 / 8 recovery |
 
-최소 cause edge 수는 각각 3, 5, 2이며 최대 edge depth는 2다. `SUPPORTS 2`,
+claim별 허용 shortest-path edge union은 각각 3, 5, 2이며 이는 cardinality-minimum
+증명이 아니다. 최대 edge depth는 2다. `SUPPORTS 2`,
 `REQUIRES 3`, `CONTRADICTS 2`, `FAILURE_ENTAILMENT 1`은 모두 artifact의 edge
 metric에 표시된다. truth table은 edge kind마다 positive/negative 2건, 총 8건이다.
 
-CI provider가 raw artifact bytes, operation, per-claim proposition digest,
+CI provider가 raw artifact path/bytes/digest, operation request, 관측 절차, per-claim proposition digest,
 repository pre/post snapshot, output path, `contents:read` capability를 담은
 `CURRENT_EVIDENCE` receipt를 생성한다. HISTORICAL_FIXTURE와 임의 문자열은
 PASS 근거가 아니다. 별도 judge는 raw `.gooo`와 evidence artifact를 직접

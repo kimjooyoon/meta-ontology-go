@@ -101,6 +101,13 @@ type capability struct {
 	Coordinate coordinate `json:"coordinate"`
 	Digest     string     `json:"digest"`
 }
+type authorityCase struct {
+	CaseID             string `json:"case_id"`
+	NetworkState       string `json:"network_state"`
+	CapabilityStatus   string `json:"capability_status"`
+	ExpectedResolution string `json:"expected_resolution"`
+	ObservedResolution string `json:"observed_resolution"`
+}
 type snapshot struct {
 	RepositoryRoot   string     `json:"repository_root"`
 	TrackedDigest    string     `json:"tracked_digest"`
@@ -118,6 +125,8 @@ type evidenceReceipt struct {
 	ArtifactPath        string          `json:"artifact_path"`
 	ArtifactBytesDigest string          `json:"artifact_bytes_digest"`
 	Operation           string          `json:"operation"`
+	RequestStatus       string          `json:"request_status"`
+	Procedure           string          `json:"procedure"`
 	ObservedPredicate   predicate       `json:"observed_predicate"`
 	ObservedValue       string          `json:"observed_value"`
 	Status              string          `json:"status"`
@@ -200,7 +209,7 @@ type metrics struct {
 	FixedEdgeTotal              int          `json:"fixed_edge_total"`
 	EligibleEdgeTotal           int          `json:"eligible_edge_total"`
 	ObservedCausalEdgeTotal     int          `json:"observed_causal_edge_total"`
-	MinimumCausalEdgeTotal      int          `json:"minimum_causal_edge_total"`
+	ShortestPathEdgeUnionTotal  int          `json:"shortest_path_edge_union_total"`
 	ClassifiedClaimTotal        int          `json:"classified_claim_total"`
 	OpenClaimTotal              int          `json:"open_claim_total"`
 	DischargedClaimTotal        int          `json:"discharged_claim_total"`
@@ -222,6 +231,7 @@ type metrics struct {
 	AppendOnlyTransitionTotal   int          `json:"append_only_transition_total"`
 	ClassificationBasisPoints   int          `json:"classification_basis_points"`
 	TruthTableCaseTotal         int          `json:"truth_table_case_total"`
+	AuthorityCaseTotal          int          `json:"authority_case_total"`
 	EdgeMetrics                 []edgeMetric `json:"edge_metrics"`
 }
 type decision struct {
@@ -237,6 +247,7 @@ type receipt struct {
 	Evidence                 evidenceReceipt `json:"evidence"`
 	Graph                    graph           `json:"graph"`
 	TruthTable               []truthCase     `json:"truth_table"`
+	AuthorityCases           []authorityCase `json:"authority_cases"`
 	PriorReceiptDigest       string          `json:"prior_receipt_digest,omitempty"`
 	PreviousTransitionDigest string          `json:"previous_transition_digest,omitempty"`
 	PriorClaimStates         []string        `json:"prior_claim_states,omitempty"`
@@ -298,7 +309,7 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	if err != nil {
 		return Judgment{}, err
 	}
-	if err := validateEvidenceClaims(evidence, artifactGraph.Graph); err != nil {
+	if err := validateEvidenceClaims(evidence, artifactGraph.Graph, artifactGraph, artifact); err != nil {
 		return Judgment{}, err
 	}
 	if err := validateSourceObservation(current, evidence); err != nil {
@@ -317,6 +328,10 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	sourceDigest := digestBytes(source)
 	if got.Subject.SourceDigest != sourceDigest || got.Subject.SourcePath != sourcePath || got.Subject.SemanticDigest != current.Graph.CanonicalIRDigest || got.Subject.Producer != producerID || got.Subject.Consumer != consumerID || got.Subject.MetaOperation != operation || got.Subject.ProofChoice != proof {
 		return Judgment{}, fmt.Errorf("receipt subject provenance is invalid")
+	}
+	expectedAuthority := authorityResolution(evidence)
+	if got.Subject.AuthorityResolution != expectedAuthority || got.Subject.ReadOnly != (expectedAuthority == "NET_REPOSITORY_STATE_UNCHANGED") || got.Subject.RepositoryWrites != evidence.Snapshot.RepositoryWrites || !reflect.DeepEqual(got.Subject.AuthorityCoordinate, evidence.Capability.Coordinate) {
+		return Judgment{}, fmt.Errorf("receipt subject authority is not independently reproduced")
 	}
 	var prior *receipt
 	if len(priorBytes) > 0 {
@@ -363,6 +378,12 @@ func Judge(source []byte, sourcePath string, priorBytes, evidenceBytes, receiptB
 	}
 	if got.TruthTable == nil || !reflect.DeepEqual(got.TruthTable, truthTable()) {
 		return Judgment{}, fmt.Errorf("truth table is not independently reproduced")
+	}
+	if got.AuthorityCases == nil || !reflect.DeepEqual(got.AuthorityCases, authorityCases()) {
+		return Judgment{}, fmt.Errorf("authority resolution cases are not independently reproduced")
+	}
+	if err := validateAuthorityCases(got.AuthorityCases); err != nil {
+		return Judgment{}, err
 	}
 	if err := validateTruthTable(got.TruthTable); err != nil {
 		return Judgment{}, err
@@ -504,7 +525,34 @@ func edgeKind(program string) (edgeKind, bool) {
 	return "", false
 }
 func truthTable() []truthCase {
-	return []truthCase{{"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-POSITIVE", supports, "established supports target", "DISCHARGED", "EVIDENCE_ACCEPTED", "OPEN", true, "support never discharges by itself"}, {"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-NEGATIVE", supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-POSITIVE", requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-NEGATIVE", requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-POSITIVE", contradicts, "established contradiction of target", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "direction is from established contradiction to target"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-NEGATIVE", contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-POSITIVE", failureEntailment, "failure entails target failure", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "failure entailment is directional"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-NEGATIVE", failureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"}}
+	return []truthCase{{"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-POSITIVE", supports, "established supports target", "DISCHARGED", "EVIDENCE_ACCEPTED", "OPEN", true, "support never discharges by itself"}, {"gooo.meta.claim-dependency-truth-table/v1", "SUPPORTS-NEGATIVE", supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-POSITIVE", requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"}, {"gooo.meta.claim-dependency-truth-table/v1", "REQUIRES-NEGATIVE", requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-POSITIVE", contradicts, "established contradiction of target", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed contradiction edge"}, {"gooo.meta.claim-dependency-truth-table/v1", "CONTRADICTS-NEGATIVE", contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-POSITIVE", failureEntailment, "failure entails target failure", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed failure-entailment edge"}, {"gooo.meta.claim-dependency-truth-table/v1", "FAILURE_ENTAILMENT-NEGATIVE", failureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"}}
+}
+
+type relationOutcome string
+
+const (
+	relationOpen       relationOutcome = "OPEN"
+	relationDischarged relationOutcome = "DISCHARGED"
+	relationRefuted    relationOutcome = "REFUTED"
+)
+
+func edgeRelation(kind edgeKind, upstreamState string, local predicate, directionMatches bool) relationOutcome {
+	if !directionMatches {
+		return relationOpen
+	}
+	switch kind {
+	case requires:
+		if upstreamState == "DISCHARGED" && local == accepted {
+			return relationDischarged
+		}
+	case contradicts, failureEntailment:
+		if upstreamState == "REFUTED" {
+			return relationRefuted
+		}
+	case supports:
+		// SUPPORTS blocks unresolved claims but never discharges or refutes.
+	}
+	return relationOpen
 }
 
 func validateTruthTable(cases []truthCase) error {
@@ -513,21 +561,8 @@ func validateTruthTable(cases []truthCase) error {
 	}
 	seen := map[edgeKind]int{}
 	for _, test := range cases {
-		actual := "OPEN"
-		switch test.Kind {
-		case requires:
-			if test.UpstreamState == "DISCHARGED" && test.LocalPredicate == string(accepted) {
-				actual = "DISCHARGED"
-			}
-		case contradicts, failureEntailment:
-			if test.UpstreamState == "REFUTED" && test.LocalPredicate == string(explicitContradiction) {
-				actual = "REFUTED"
-			}
-		case supports:
-		default:
-			return fmt.Errorf("truth table contains unknown edge kind %q", test.Kind)
-		}
-		if actual != test.ExpectedState {
+		actual := edgeRelation(test.Kind, test.UpstreamState, predicate(test.LocalPredicate), test.Positive)
+		if string(actual) != test.ExpectedState {
 			return fmt.Errorf("truth table case %q computed %s, expected %s", test.CaseID, actual, test.ExpectedState)
 		}
 		seen[test.Kind]++
@@ -540,7 +575,7 @@ func validateTruthTable(cases []truthCase) error {
 	return nil
 }
 func validateEvidence(value evidenceReceipt) error {
-	if value.Schema != "gooo.meta.claim-dependency-evidence/v2" || value.Status != "CURRENT_EVIDENCE" || value.ArtifactPath == "" || value.Digest == "" {
+	if value.Schema != "gooo.meta.claim-dependency-evidence/v2" || value.Status != "CURRENT_EVIDENCE" || value.ArtifactPath == "" || value.Digest == "" || value.RequestStatus != "CLAIMED_INPUT" || value.Procedure != "RAW_ARTIFACT_SOURCE_DERIVED_PREDICATE_V1" {
 		return fmt.Errorf("raw evidence identity invalid")
 	}
 	if evidenceDigest(value) != value.Digest {
@@ -554,16 +589,40 @@ func validateEvidence(value evidenceReceipt) error {
 	}
 	return nil
 }
-func validateEvidenceClaims(value evidenceReceipt, g graph) error {
+func validateEvidenceClaims(value evidenceReceipt, g graph, artifact reconstructed, artifactBytes []byte) error {
 	if len(value.Claims) != g.NodeTotal {
 		return fmt.Errorf("raw evidence claim denominator mismatch")
 	}
+	expected, observedValue := observedPredicateForArtifact(artifact, value.Operation, value.ArtifactPath, artifactBytes)
+	if value.ObservedPredicate != expected || value.ObservedValue != observedValue {
+		return fmt.Errorf("raw evidence predicate is not procedure-derived")
+	}
 	for i, c := range value.Claims {
-		if c.Status == "HISTORICAL_FIXTURE" || c.ClaimID != g.Nodes[i].ClaimID || c.PropositionDigest != g.Nodes[i].PropositionDigest || c.Digest == "" || evidenceClaimDigest(c) != c.Digest {
+		if c.Status != "CURRENT_EVIDENCE" || c.ClaimID != g.Nodes[i].ClaimID || c.PropositionDigest != g.Nodes[i].PropositionDigest || c.Digest == "" || evidenceClaimDigest(c) != c.Digest {
 			return fmt.Errorf("raw evidence claim %d is invalid", i+1)
+		}
+		claimPredicate := expected
+		if expected == explicitContradiction && i != 0 {
+			claimPredicate = unknown
+		}
+		claimValue := observedValue + "|claim:" + c.ClaimID + "|proposition_digest:" + c.PropositionDigest + "|predicate:" + string(claimPredicate)
+		if c.ObservedPredicate != claimPredicate || c.ObservedValue != claimValue {
+			return fmt.Errorf("raw evidence claim %d predicate is not source-derived", i+1)
 		}
 	}
 	return nil
+}
+
+func observedPredicateForArtifact(artifact reconstructed, requestedOperation, artifactPath string, artifactBytes []byte) (predicate, string) {
+	value := unknown
+	complete := artifact.Graph.NodeTotal == claimTotal && artifact.Graph.EdgeTotal == edgeTotal && distinct(artifact.Graph) == claimTotal && len(artifact.Graph.Nodes) == claimTotal && len(artifact.Graph.Edges) == edgeTotal
+	if complete && requestedOperation == "acceptance" && strings.HasPrefix(artifact.RootProgram, "claim.observe:recoverable") {
+		value = accepted
+	}
+	if complete && requestedOperation == "contradiction" && strings.HasPrefix(artifact.RootProgram, "claim.observe:contradiction") {
+		value = explicitContradiction
+	}
+	return value, fmt.Sprintf("procedure:RAW_ARTIFACT_SOURCE_DERIVED_PREDICATE_V1|artifact_path_digest:%s|artifact_bytes_digest:%s|predicate:%s", digestBytes([]byte(artifactPath)), digestBytes(artifactBytes), value)
 }
 
 func validateSourceObservation(current reconstructed, value evidenceReceipt) error {
@@ -589,6 +648,13 @@ func validatePrior(current reconstructed, value receipt) error {
 	if value.Schema != "gooo.meta.claim-dependency-receipt/v3" || value.Scope != "CLAIM_STATE_PROPAGATION_ONLY" || value.Evidence.ObservedPredicate != unknown || value.Graph.Digest != current.Graph.Digest || len(value.Resolutions) != claimTotal || len(value.PriorClaimStates) != 0 || receiptDigest(value) != value.Digest {
 		return fmt.Errorf("prior UNKNOWN ledger invalid")
 	}
+	replayed, err := replayReceipt(value)
+	if err != nil {
+		return fmt.Errorf("prior receipt replay failed: %w", err)
+	}
+	if !reflect.DeepEqual(replayed, value) {
+		return fmt.Errorf("prior receipt is not a complete replay of raw source and evidence")
+	}
 	if err := validateChain(value.Transitions, value.TransitionHeadDigest); err != nil {
 		return err
 	}
@@ -598,6 +664,48 @@ func validatePrior(current reconstructed, value receipt) error {
 		}
 	}
 	return nil
+}
+
+func replayReceipt(value receipt) (receipt, error) {
+	source, err := os.ReadFile(value.Subject.SourcePath)
+	if err != nil {
+		return receipt{}, fmt.Errorf("prior source cannot be re-observed: %w", err)
+	}
+	parsed, err := reconstruct(source, value.Subject.SourcePath)
+	if err != nil {
+		return receipt{}, err
+	}
+	artifact, err := os.ReadFile(value.Evidence.ArtifactPath)
+	if err != nil {
+		return receipt{}, fmt.Errorf("prior artifact cannot be re-observed: %w", err)
+	}
+	artifactGraph, err := reconstruct(artifact, value.Evidence.ArtifactPath)
+	if err != nil {
+		return receipt{}, err
+	}
+	if err := validateEvidence(value.Evidence); err != nil {
+		return receipt{}, err
+	}
+	if digestBytes(artifact) != value.Evidence.ArtifactBytesDigest {
+		return receipt{}, fmt.Errorf("prior artifact bytes digest mismatch")
+	}
+	if err := validateEvidenceClaims(value.Evidence, artifactGraph.Graph, artifactGraph, artifact); err != nil {
+		return receipt{}, err
+	}
+	if err := validateSourceObservation(parsed, value.Evidence); err != nil {
+		return receipt{}, err
+	}
+	states, outcomes := classify(parsed.Graph, value.Evidence)
+	sourceDigest := digestBytes(source)
+	provenance := fmt.Sprintf("source:%s|ir:%s|evidence:%s|producer:%s|consumer:%s", sourceDigest, parsed.Graph.CanonicalIRDigest, value.Evidence.Digest, producerID, consumerID)
+	transitions := transitionsFor(parsed.Graph, outcomes, provenance, nil)
+	resolutions := buildResolutions(parsed.Graph, states, outcomes, provenance)
+	metrics := deriveMetrics(parsed.Graph, states, resolutions, outcomes, value.Evidence, false)
+	decision := decisionFor(states, value.Evidence, false)
+	authority := authorityResolution(value.Evidence)
+	result := receipt{Schema: "gooo.meta.claim-dependency-receipt/v3", Scope: "CLAIM_STATE_PROPAGATION_ONLY", Subject: subject{SourcePath: value.Subject.SourcePath, SourceDigest: sourceDigest, SemanticDigest: parsed.Graph.CanonicalIRDigest, Producer: producerID, Consumer: consumerID, MetaOperation: operation, ProofChoice: proof, ReadOnly: authority == "NET_REPOSITORY_STATE_UNCHANGED", RepositoryWrites: value.Evidence.Snapshot.RepositoryWrites, AuthorityResolution: authority, AuthorityCoordinate: value.Evidence.Capability.Coordinate}, Evidence: value.Evidence, Graph: parsed.Graph, TruthTable: truthTable(), AuthorityCases: authorityCases(), EvidenceDigest: value.Evidence.Digest, Transitions: transitions, TransitionHeadDigest: transitions[len(transitions)-1].TransitionDigest, Resolutions: resolutions, Metrics: metrics, Decision: decision}
+	result.Digest = receiptDigest(result)
+	return result, nil
 }
 
 type local struct {
@@ -620,10 +728,21 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 		state, event, reason := "OPEN", "DEPENDENCY_BLOCKED", "UPSTREAM_UNKNOWN_OR_NON_REFUTING"
 		incoming := incomingEdges(i, g)
 		refuting := []string{}
+		hasRequires, allRequires := false, true
 		for _, ed := range incoming {
 			from := indexOf(ed.FromClaimID, g)
-			if from >= 0 && states[from] == "REFUTED" && (ed.Kind == contradicts || ed.Kind == failureEntailment) {
+			if from < 0 {
+				continue
+			}
+			relation := edgeRelation(ed.Kind, states[from], locals[i].predicate, true)
+			if relation == relationRefuted {
 				refuting = append(refuting, ed.EdgeID)
+			}
+			if ed.Kind == requires {
+				hasRequires = true
+				if relation != relationDischarged {
+					allRequires = false
+				}
 			}
 		}
 		if i == 0 && locals[i].available && locals[i].predicate == explicitContradiction {
@@ -631,26 +750,15 @@ func classify(g graph, e evidenceReceipt) ([]string, []transition) {
 		} else if len(refuting) > 0 {
 			state, event, reason = "REFUTED", "DEPENDENCY_REFUTED", "EXPLICIT_TYPED_REFUTING_EDGE"
 		} else if locals[i].available && locals[i].predicate == accepted {
-			all := true
-			has := false
-			for _, ed := range incoming {
-				if ed.Kind == requires {
-					has = true
-					from := indexOf(ed.FromClaimID, g)
-					if from < 0 || states[from] != "DISCHARGED" {
-						all = false
-					}
-				}
-			}
-			if !has || all {
+			if !hasRequires || allRequires {
 				state, event, reason = "DISCHARGED", "EVIDENCE_ACCEPTED", "LOCAL_CLAIM_EVIDENCE_PREDICATE"
-				if has {
+				if hasRequires {
 					event, reason = "DEPENDENCY_DISCHARGED", "ALL_REQUIRES_UPSTREAM_AND_LOCAL_EVIDENCE"
 				}
 			}
 		}
 		states[i] = state
-		outcomes[i] = transition{0, g.Nodes[i].ClaimID, event, "OPEN", state, coordinate{stage(i), g.Nodes[i].ActivityName, reason}, locals[i].digest, transitionEdges(i, g, states, state, refuting), nil, "pending", "", ""}
+		outcomes[i] = transition{0, g.Nodes[i].ClaimID, event, "OPEN", state, coordinate{stage(i), g.Nodes[i].ActivityName, reason}, locals[i].digest, transitionEdges(i, g, states, state, refuting, locals[i].predicate), nil, "pending", "", ""}
 	}
 	return states, outcomes
 }
@@ -669,14 +777,15 @@ func incomingEdges(i int, g graph) []edge {
 	}
 	return result
 }
-func transitionEdges(i int, g graph, states []string, state string, refuting []string) []string {
+func transitionEdges(i int, g graph, states []string, state string, refuting []string, local predicate) []string {
 	if len(refuting) > 0 {
 		return refuting
 	}
 	if state == "DISCHARGED" {
 		var result []string
 		for _, e := range incomingEdges(i, g) {
-			if e.Kind == requires {
+			from := indexOf(e.FromClaimID, g)
+			if e.Kind == requires && from >= 0 && edgeRelation(e.Kind, states[from], local, true) == relationDischarged {
 				result = append(result, e.EdgeID)
 			}
 		}
@@ -688,7 +797,7 @@ func transitionEdges(i int, g graph, states []string, state string, refuting []s
 	var result []string
 	for _, e := range incomingEdges(i, g) {
 		from := indexOf(e.FromClaimID, g)
-		if from >= 0 && (states[from] == "OPEN" || states[from] == "REFUTED") && (e.Kind == supports || e.Kind == requires) {
+		if from >= 0 && (e.Kind == supports || e.Kind == requires) && edgeRelation(e.Kind, states[from], local, true) == relationOpen && (states[from] == "OPEN" || states[from] == "REFUTED") {
 			result = append(result, e.EdgeID)
 		}
 	}
@@ -739,7 +848,6 @@ func upstreamDigests(ids []string, g graph, transitions []transition) []string {
 }
 func buildResolutions(g graph, states []string, outcomes []transition, provenance string) []resolution {
 	result := make([]resolution, len(g.Nodes))
-	root := g.Nodes[0].ClaimID
 	for i, c := range g.Nodes {
 		path, ids, kinds := shortestPath(i, g, states[i])
 		digests := []string{}
@@ -750,10 +858,9 @@ func buildResolutions(g graph, states []string, outcomes []transition, provenanc
 				}
 			}
 		}
-		value := resolution{ClaimID: c.ClaimID, Axis: c.Axis, PropositionDigest: c.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i], outcomes[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: "LOCAL_PRODUCER", FailureOwnerClaimID: root, CausePath: idsForPath(path, g), CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigests: digests, CauseCoordinate: &outcomes[i].Coordinate}
-		if i != 0 {
-			value.FailureResponsibility = "UPSTREAM_CLAIM"
-		}
+		causePath := idsForPath(path, g)
+		responsibility, owner := failureAttribution(i, states[i], causePath)
+		value := resolution{ClaimID: c.ClaimID, Axis: c.Axis, PropositionDigest: c.PropositionDigest, State: states[i], Kind: resolutionKind(i, states[i], outcomes[i]), ObservedEvent: outcomes[i].Event, Coordinate: outcomes[i].Coordinate, EvidenceDigest: outcomes[i].EvidenceDigest, Provenance: provenance, FailureResponsibility: responsibility, FailureOwnerClaimID: owner, CausePath: causePath, CauseEdgeIDs: ids, CauseEdgeKinds: kinds, CauseTransitionDigests: digests, CauseCoordinate: &outcomes[i].Coordinate}
 		if states[i] == "OPEN" {
 			value.MissingEvidenceIDs = []string{"evidence:" + c.ClaimID}
 			value.BlockedByClaimIDs, value.BlockedByEdgeIDs = blockedFrontier(i, g, states)
@@ -761,6 +868,18 @@ func buildResolutions(g graph, states []string, outcomes []transition, provenanc
 		result[i] = value
 	}
 	return result
+}
+func failureAttribution(index int, state string, path []string) (string, string) {
+	if state == "DISCHARGED" {
+		return "N/A", ""
+	}
+	if len(path) <= 1 {
+		if len(path) == 1 {
+			return "DIRECT_CLAIM", path[0]
+		}
+		return "DIRECT_CLAIM", ""
+	}
+	return "UPSTREAM_CLAIM", path[0]
 }
 func resolutionKind(i int, state string, outcome transition) string {
 	if i == 0 {
@@ -859,11 +978,11 @@ func blockedFrontier(i int, g graph, states []string) ([]string, []string) {
 }
 
 func deriveMetrics(g graph, states []string, resolutions []resolution, outcomes []transition, e evidenceReceipt, recovered bool) metrics {
-	result := metrics{FixedClaimTotal: claimTotal, DistinctPropositionTotal: distinct(g), FixedEdgeTotal: edgeTotal, EligibleEdgeTotal: len(g.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: initialTransitions, CurrentEvidenceTotal: len(e.Claims), TruthTableCaseTotal: len(truthTable())}
+	result := metrics{FixedClaimTotal: claimTotal, DistinctPropositionTotal: distinct(g), FixedEdgeTotal: edgeTotal, EligibleEdgeTotal: len(g.Edges), ClassifiedClaimTotal: len(states), ClassificationBasisPoints: 10000, TransitionTotal: initialTransitions, CurrentEvidenceTotal: len(e.Claims), TruthTableCaseTotal: len(truthTable()), AuthorityCaseTotal: len(authorityCases())}
 	if recovered {
 		result.TransitionTotal += claimTotal
 	}
-	observed, minimum := map[string]bool{}, map[string]bool{}
+	observed, shortestUnion := map[string]bool{}, map[string]bool{}
 	for _, ec := range e.Claims {
 		if ec.Status == "HISTORICAL_FIXTURE" {
 			result.HistoricalEvidenceTotal++
@@ -901,13 +1020,13 @@ func deriveMetrics(g graph, states []string, resolutions []resolution, outcomes 
 			observed[id] = true
 		}
 		for _, id := range r.CauseEdgeIDs {
-			minimum[id] = true
+			shortestUnion[id] = true
 		}
 		if len(r.CauseEdgeIDs) > result.MaximumCausePathDepth {
 			result.MaximumCausePathDepth = len(r.CauseEdgeIDs)
 		}
 	}
-	result.ObservedCausalEdgeTotal, result.MinimumCausalEdgeTotal = len(observed), len(minimum)
+	result.ObservedCausalEdgeTotal, result.ShortestPathEdgeUnionTotal = len(observed), len(shortestUnion)
 	for _, kind := range []edgeKind{supports, requires, contradicts, failureEntailment} {
 		m := edgeMetric{Kind: kind}
 		for _, e := range g.Edges {
@@ -955,8 +1074,11 @@ func contains(values []string, target string) bool {
 	return false
 }
 func decisionFor(states []string, e evidenceReceipt, recovered bool) decision {
-	if e.Capability.Status != "CURRENT_EVIDENCE" || e.Snapshot.RepositoryWrites != 0 || e.Snapshot.BeforeDigest != e.Snapshot.AfterDigest {
-		return decision{"FAIL_CLOSED", "AUTHORITY_UNKNOWN", "AUTHORITY/WORKFLOW_PERMISSIONS/INDEPENDENT_CAPABILITY_REQUIRED", false}
+	switch authorityResolution(e) {
+	case "NET_REPOSITORY_STATE_CHANGED":
+		return decision{"FAIL_CLOSED", "AUTHORITY_CHANGED", "AUTHORITY/REPOSITORY_SNAPSHOT/NET_REPOSITORY_STATE_CHANGED", false}
+	case "TRANSIENT_WRITE_AUTHORITY_UNKNOWN":
+		return decision{"FAIL_CLOSED", "AUTHORITY_UNKNOWN", "AUTHORITY/WORKFLOW_PERMISSIONS/TRANSIENT_WRITE_AUTHORITY_UNKNOWN", false}
 	}
 	if all(states, "DISCHARGED") {
 		if recovered {
@@ -971,6 +1093,39 @@ func decisionFor(states []string, e evidenceReceipt, recovered bool) decision {
 		return decision{"FAIL_CLOSED", "CAUSAL_REFUTATION", "EXPLICIT_CONTRADICTION_OR_FAILURE_ENTAILMENT", false}
 	}
 	return decision{"FAIL_CLOSED", "UNRESOLVED_CLAIM", "UNKNOWN_REMAINS_OPEN", false}
+}
+func authorityResolution(e evidenceReceipt) string {
+	if e.Snapshot.RepositoryWrites != 0 || e.Snapshot.BeforeDigest != e.Snapshot.AfterDigest {
+		return "NET_REPOSITORY_STATE_CHANGED"
+	}
+	if e.Capability.Status != "CURRENT_EVIDENCE" || e.Capability.Provider == "" {
+		return "TRANSIENT_WRITE_AUTHORITY_UNKNOWN"
+	}
+	return "NET_REPOSITORY_STATE_UNCHANGED"
+}
+func authorityCases() []authorityCase {
+	result := []authorityCase{{"NET-SAME-CURRENT", "NET_SAME", "CURRENT_EVIDENCE", "NET_REPOSITORY_STATE_UNCHANGED", ""}, {"NET-CHANGED-CURRENT", "NET_CHANGED", "CURRENT_EVIDENCE", "NET_REPOSITORY_STATE_CHANGED", ""}, {"TRANSIENT-UNKNOWN", "TRANSIENT_UNKNOWN", "UNKNOWN", "TRANSIENT_WRITE_AUTHORITY_UNKNOWN", ""}}
+	for i := range result {
+		if result[i].NetworkState == "NET_CHANGED" {
+			result[i].ObservedResolution = "NET_REPOSITORY_STATE_CHANGED"
+		} else if result[i].NetworkState == "TRANSIENT_UNKNOWN" || result[i].CapabilityStatus != "CURRENT_EVIDENCE" {
+			result[i].ObservedResolution = "TRANSIENT_WRITE_AUTHORITY_UNKNOWN"
+		} else {
+			result[i].ObservedResolution = "NET_REPOSITORY_STATE_UNCHANGED"
+		}
+	}
+	return result
+}
+func validateAuthorityCases(values []authorityCase) error {
+	if len(values) != 3 {
+		return fmt.Errorf("authority cases have %d cases, want 3", len(values))
+	}
+	for _, value := range values {
+		if value.ExpectedResolution == "" || value.ExpectedResolution != value.ObservedResolution {
+			return fmt.Errorf("authority case %q did not execute its expected resolution", value.CaseID)
+		}
+	}
+	return nil
 }
 func all(values []string, target string) bool {
 	for _, v := range values {

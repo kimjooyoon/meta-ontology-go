@@ -173,11 +173,42 @@ func TruthTableCases() []TruthTableCase {
 		{TruthTableSchema, "SUPPORTS-NEGATIVE", Supports, "refuted supports target", "REFUTED", "UNKNOWN", "OPEN", false, "support does not refute"},
 		{TruthTableSchema, "REQUIRES-POSITIVE", Requires, "required proposition established", "DISCHARGED", "EVIDENCE_ACCEPTED", "DISCHARGED", true, "upstream and local requirement hold"},
 		{TruthTableSchema, "REQUIRES-NEGATIVE", Requires, "required proposition established", "DISCHARGED", "UNKNOWN", "OPEN", false, "local requirement missing"},
-		{TruthTableSchema, "CONTRADICTS-POSITIVE", Contradicts, "established contradiction of target", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "direction is from established contradiction to target"},
+		{TruthTableSchema, "CONTRADICTS-POSITIVE", Contradicts, "established contradiction of target", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed contradiction edge"},
 		{TruthTableSchema, "CONTRADICTS-NEGATIVE", Contradicts, "ordinary support direction", "REFUTED", "UNKNOWN", "OPEN", false, "name alone cannot refute"},
-		{TruthTableSchema, "FAILURE_ENTAILMENT-POSITIVE", FailureEntailment, "failure entails target failure", "REFUTED", "EXPLICIT_CONTRADICTION", "REFUTED", true, "failure entailment is directional"},
+		{TruthTableSchema, "FAILURE_ENTAILMENT-POSITIVE", FailureEntailment, "failure entails target failure", "REFUTED", "UNKNOWN", "REFUTED", true, "upstream refutation is sufficient on a typed failure-entailment edge"},
 		{TruthTableSchema, "FAILURE_ENTAILMENT-NEGATIVE", FailureEntailment, "success or ordinary dependency", "REFUTED", "UNKNOWN", "OPEN", false, "failure evidence is absent"},
 	}
+}
+
+type relationOutcome string
+
+const (
+	relationOpen       relationOutcome = "OPEN"
+	relationDischarged relationOutcome = "DISCHARGED"
+	relationRefuted    relationOutcome = "REFUTED"
+)
+
+// edgeRelation is the single state relation used by both the executable
+// truth-table cases and the graph classifier. directionMatches is explicit so
+// the negative cases exercise the same relation with a reversed edge.
+func edgeRelation(kind EdgeKind, upstreamState string, local ObservationPredicate, directionMatches bool) relationOutcome {
+	if !directionMatches {
+		return relationOpen
+	}
+	switch kind {
+	case Requires:
+		if upstreamState == "DISCHARGED" && local == ObservationEvidence {
+			return relationDischarged
+		}
+	case Contradicts, FailureEntailment:
+		if upstreamState == "REFUTED" {
+			return relationRefuted
+		}
+	case Supports:
+		// SUPPORTS can block an OPEN claim when its upstream is unresolved,
+		// but it can never discharge or refute the target by itself.
+	}
+	return relationOpen
 }
 
 // validateTruthTable executes the closed edge algebra over each positive and
@@ -189,22 +220,8 @@ func validateTruthTable(cases []TruthTableCase) error {
 	}
 	seen := map[EdgeKind]int{}
 	for _, test := range cases {
-		actual := "OPEN"
-		switch test.Kind {
-		case Requires:
-			if test.UpstreamState == "DISCHARGED" && test.LocalPredicate == string(ObservationEvidence) {
-				actual = "DISCHARGED"
-			}
-		case Contradicts, FailureEntailment:
-			if test.UpstreamState == "REFUTED" && test.LocalPredicate == string(ObservationContradiction) {
-				actual = "REFUTED"
-			}
-		case Supports:
-			// SUPPORTS is never a discharge or refutation entailment.
-		default:
-			return fmt.Errorf("truth table contains unknown edge kind %q", test.Kind)
-		}
-		if actual != test.ExpectedState {
+		actual := edgeRelation(test.Kind, test.UpstreamState, ObservationPredicate(test.LocalPredicate), test.Positive)
+		if string(actual) != test.ExpectedState {
 			return fmt.Errorf("truth table case %q computed %s, expected %s", test.CaseID, actual, test.ExpectedState)
 		}
 		seen[test.Kind]++

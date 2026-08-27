@@ -43,6 +43,14 @@ const (
 	UnknownEvidence   EvidenceStatus = "UNKNOWN"
 )
 
+type AuthorityCase struct {
+	CaseID             string         `json:"case_id"`
+	NetworkState       string         `json:"network_state"`
+	CapabilityStatus   EvidenceStatus `json:"capability_status"`
+	ExpectedResolution string         `json:"expected_resolution"`
+	ObservedResolution string         `json:"observed_resolution"`
+}
+
 type Coordinate struct {
 	Stage  string `json:"stage"`
 	Step   string `json:"step"`
@@ -128,6 +136,8 @@ type EvidenceReceipt struct {
 	ArtifactPath        string               `json:"artifact_path"`
 	ArtifactBytesDigest string               `json:"artifact_bytes_digest"`
 	Operation           string               `json:"operation"`
+	RequestStatus       string               `json:"request_status"`
+	Procedure           string               `json:"procedure"`
 	ObservedPredicate   ObservationPredicate `json:"observed_predicate"`
 	ObservedValue       string               `json:"observed_value"`
 	Status              EvidenceStatus       `json:"status"`
@@ -216,7 +226,7 @@ type Metrics struct {
 	FixedEdgeTotal              int          `json:"fixed_edge_total"`
 	EligibleEdgeTotal           int          `json:"eligible_edge_total"`
 	ObservedCausalEdgeTotal     int          `json:"observed_causal_edge_total"`
-	MinimumCausalEdgeTotal      int          `json:"minimum_causal_edge_total"`
+	ShortestPathEdgeUnionTotal  int          `json:"shortest_path_edge_union_total"`
 	ClassifiedClaimTotal        int          `json:"classified_claim_total"`
 	OpenClaimTotal              int          `json:"open_claim_total"`
 	DischargedClaimTotal        int          `json:"discharged_claim_total"`
@@ -238,6 +248,7 @@ type Metrics struct {
 	AppendOnlyTransitionTotal   int          `json:"append_only_transition_total"`
 	ClassificationBasisPoints   int          `json:"classification_basis_points"`
 	TruthTableCaseTotal         int          `json:"truth_table_case_total"`
+	AuthorityCaseTotal          int          `json:"authority_case_total"`
 	EdgeMetrics                 []EdgeMetric `json:"edge_metrics"`
 }
 
@@ -255,6 +266,7 @@ type Receipt struct {
 	Evidence                 EvidenceReceipt  `json:"evidence"`
 	Graph                    Graph            `json:"graph"`
 	TruthTable               []TruthTableCase `json:"truth_table"`
+	AuthorityCases           []AuthorityCase  `json:"authority_cases"`
 	PriorReceiptDigest       string           `json:"prior_receipt_digest,omitempty"`
 	PreviousTransitionDigest string           `json:"previous_transition_digest,omitempty"`
 	PriorClaimStates         []string         `json:"prior_claim_states,omitempty"`

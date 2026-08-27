@@ -47,8 +47,30 @@ type intervention struct {
 }
 
 type report struct {
-	Schema        string         `json:"schema"`
-	Interventions []intervention `json:"interventions"`
+	Schema                  string                   `json:"schema"`
+	Interventions           []intervention           `json:"interventions"`
+	EvidenceProvenanceCases []evidenceProvenanceCase `json:"evidence_provenance_cases"`
+}
+
+type evidenceProvenanceCase struct {
+	Name                            string   `json:"name"`
+	BaselineRequest                 string   `json:"baseline_request"`
+	InterventionRequest             string   `json:"intervention_request"`
+	BaselineArtifactPath            string   `json:"baseline_artifact_path"`
+	InterventionArtifactPath        string   `json:"intervention_artifact_path"`
+	BaselineArtifactBytesDigest     string   `json:"baseline_artifact_bytes_digest"`
+	InterventionArtifactBytesDigest string   `json:"intervention_artifact_bytes_digest"`
+	BaselineEvidenceDigest          string   `json:"baseline_evidence_digest"`
+	InterventionEvidenceDigest      string   `json:"intervention_evidence_digest"`
+	BaselineDecision                string   `json:"baseline_decision"`
+	InterventionDecision            string   `json:"intervention_decision"`
+	BaselineStates                  []string `json:"baseline_states"`
+	InterventionStates              []string `json:"intervention_states"`
+	BaselineTransitionDigests       []string `json:"baseline_transition_digests"`
+	InterventionTransitionDigests   []string `json:"intervention_transition_digests"`
+	EvidenceDigestChanged           bool     `json:"evidence_digest_changed"`
+	StateTransitionChanged          bool     `json:"state_transition_changed"`
+	DecisionChanged                 bool     `json:"decision_changed"`
 }
 
 func main() {
@@ -72,10 +94,34 @@ func main() {
 		compare("edge-only", "EDGE_KIND", read(refutedPath), refutedPath, edgeSource, *edgePath, "contradiction", "same", *repoRoot, *capability),
 		compare("comment-only", "COMMENT_ONLY", baseline, *baselinePath, commentSource, *commentPath, "availability", "same", *repoRoot, *capability),
 	}
-	writeJSON(*outputPath, report{Schema: "gooo.meta.claim-dependency-intervention/v2", Interventions: items})
+	provenance := []evidenceProvenanceCase{
+		provenanceCompare("caller-flag-only", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, true),
+		provenanceCompare("observation-artifact-changed", "acceptance", "acceptance", read(mainPath), mainPath, semanticSource, *semanticPath, *repoRoot, *capability, false),
+		provenanceCompare("observation-absent", "acceptance", "availability", read(mainPath), mainPath, read(mainPath), mainPath, *repoRoot, *capability, false),
+	}
+	writeJSON(*outputPath, report{Schema: "gooo.meta.claim-dependency-intervention/v2", Interventions: items, EvidenceProvenanceCases: provenance})
 	for _, item := range items {
 		fmt.Printf("intervention=%s semantic_digest_changed=%t evidence_digest_changed=%t state_transition_changed=%t decision_changed=%t edge_type_changed=%t authority=%s/%s writes=%d/%d\n", item.Name, item.SemanticDigestChanged, item.EvidenceDigestChanged, item.StateTransitionChanged, item.DecisionChanged, item.EdgeTypeChanged, item.BaselineAuthorityResolution, item.InterventionAuthorityResolution, item.BaselineRepositoryWrites, item.InterventionRepositoryWrites)
 	}
+}
+
+func provenanceCompare(name, baselineRequest, interventionRequest string, baselineSource []byte, baselinePath string, interventionSource []byte, interventionPath, repoRoot, capability string, reuseEvidence bool) evidenceProvenanceCase {
+	baselineEvidence := evidence(baselinePath, baselineRequest, repoRoot, capability)
+	interventionEvidence := baselineEvidence
+	if !reuseEvidence {
+		interventionEvidence = evidence(interventionPath, interventionRequest, repoRoot, capability)
+	}
+	baselineReceipt, err := claimdependency.Evaluate(baselineSource, baselinePath, baselineEvidence, nil)
+	if err != nil {
+		fail(err.Error())
+	}
+	interventionReceipt, err := claimdependency.Evaluate(interventionSource, interventionPath, interventionEvidence, nil)
+	if err != nil {
+		fail(err.Error())
+	}
+	baseStates, interventionStates := states(baselineReceipt), states(interventionReceipt)
+	baseTransitions, interventionTransitions := transitionDigests(baselineReceipt), transitionDigests(interventionReceipt)
+	return evidenceProvenanceCase{Name: name, BaselineRequest: baselineRequest, InterventionRequest: interventionRequest, BaselineArtifactPath: baselineEvidence.ArtifactPath, InterventionArtifactPath: interventionEvidence.ArtifactPath, BaselineArtifactBytesDigest: baselineEvidence.ArtifactBytesDigest, InterventionArtifactBytesDigest: interventionEvidence.ArtifactBytesDigest, BaselineEvidenceDigest: baselineEvidence.Digest, InterventionEvidenceDigest: interventionEvidence.Digest, BaselineDecision: baselineReceipt.Decision.Value + ":" + baselineReceipt.Decision.Resolution, InterventionDecision: interventionReceipt.Decision.Value + ":" + interventionReceipt.Decision.Resolution, BaselineStates: baseStates, InterventionStates: interventionStates, BaselineTransitionDigests: baseTransitions, InterventionTransitionDigests: interventionTransitions, EvidenceDigestChanged: baselineEvidence.Digest != interventionEvidence.Digest, StateTransitionChanged: !reflect.DeepEqual(baseStates, interventionStates) || !reflect.DeepEqual(baseTransitions, interventionTransitions), DecisionChanged: baselineReceipt.Decision != interventionReceipt.Decision}
 }
 
 func compare(name, kind string, baseline []byte, baselinePath string, changed []byte, changedPath, baseOperation, changedOperation, repoRoot, capability string) intervention {
