@@ -1828,6 +1828,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
       - name: Download immutable authorization foundation
+        working-directory: gooo
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -1842,6 +1843,7 @@ jobs:
           unzip -q "$result/foundation.zip" -d "$result/prior"
 
       - name: Close capability authorization foundation twice
+        working-directory: gooo
         run: |
           result="$RUNNER_TEMP/external-capability-authorization-foundation"
           current="$RUNNER_TEMP/external-capability-authorization/first-receipt.json"
