@@ -66,7 +66,7 @@ func independentProject(raw []byte) (projectedSource, error) {
 		}
 		if len(line) >= 7 && line[:7] == "entity " {
 			name, id, ok := independentEntity(line)
-			if !ok {
+			if !ok || hasEntity(entities, name) {
 				return projectedSource{}, errIndependentSource
 			}
 			entities[name] = id
@@ -112,4 +112,9 @@ func independentProject(raw []byte) (projectedSource, error) {
 	}
 	sortProjected(&result)
 	return result, nil
+}
+
+func hasEntity(entities map[string]string, name string) bool {
+	_, exists := entities[name]
+	return exists
 }
