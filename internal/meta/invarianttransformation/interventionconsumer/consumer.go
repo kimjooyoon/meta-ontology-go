@@ -252,7 +252,6 @@ type reportWire struct {
 	TempArtifactWriteAuthorized       bool                 `json:"temp_artifact_write_authorized"`
 	RepositoryNetStatusUnchanged      bool                 `json:"repository_net_status_unchanged"`
 	RepositoryNetStatusObserved       bool                 `json:"repository_net_status_observed"`
-	RepositoryNetState                string               `json:"repository_net_state"`
 	RepositoryActualOrTransientWrites string               `json:"repository_actual_or_transient_writes"`
 	RepositoryPathAuthorization       bool                 `json:"repository_path_authorization"`
 	AmbientProcessAuthority           string               `json:"ambient_process_authority"`
@@ -353,7 +352,7 @@ func independentlyVerify(report reportWire, source []byte, headSHA string, depen
 	if report.Schema != reportSchema || report.HeadSHA != headSHA || report.SourcePath != model.SourcePath || report.SourceDigest != model.DigestBytes(source) || report.CaseCount != 3 || len(report.Cases) != 3 || report.Digest == "" || report.Digest != reseal(report).Digest {
 		return fmt.Errorf("intervention report identity or digest is invalid")
 	}
-	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || report.EffectGateDenominator != 8 || report.EffectGateSatisfied != 8 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 || report.RepositoryWrites != -1 || report.RepositoryMutationAuthorized || report.RepositoryNetStatusObserved || report.RepositoryNetStatusUnchanged || report.RepositoryNetState != model.RepositoryNetStateUnknown || report.RepositoryActualOrTransientWrites != model.UnknownEffectScope || report.RepositoryPathAuthorization || report.AmbientProcessAuthority != model.UnknownEffectScope || report.ExecutedEffects != 1 || report.IndependentlyObservedEffects != 1 || report.UnknownEffectScopes != 1 {
+	if report.Decision != "PASS" || report.Resolution != model.ResolutionExact || report.Reason != "ALL_INTERVENTION_OBSERVATIONS_SATISFIED" || report.EffectGateDenominator != 8 || report.EffectGateSatisfied != 8 || report.CorrectionCount != 12 || report.CorrectionDenominator != 12 || report.RepositoryWrites != -1 || report.RepositoryMutationAuthorized || report.RepositoryNetStatusObserved || report.RepositoryNetStatusUnchanged || report.RepositoryActualOrTransientWrites != model.UnknownEffectScope || report.RepositoryPathAuthorization || report.AmbientProcessAuthority != model.UnknownEffectScope || report.ExecutedEffects != 1 || report.IndependentlyObservedEffects != 1 || report.UnknownEffectScopes != 1 {
 		return fmt.Errorf("intervention report top result or gate denominator is invalid")
 	}
 	if report.Denominator.ID != "gooo/invariant-transformation-intervention-denominator/v2" || report.Denominator.CasesTotal != 3 || report.Denominator.SemanticExpectedChange.CasesSatisfied != 1 || report.Denominator.SemanticOperationChange.CasesSatisfied != 1 || report.Denominator.NonSemantic.CasesSatisfied != 1 {

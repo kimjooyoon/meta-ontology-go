@@ -1470,16 +1470,9 @@ func ResealSemanticCaseFixture(interventionRaw []byte) ([]byte, error) {
 		if report.Cases[index].ID != semanticExpectedID {
 			continue
 		}
-		var projection fixtureProjection
-		if err := decodeStrict(report.Cases[index].MutatedProjection, &projection); err != nil {
-			return nil, err
-		}
+		projection := report.Cases[index].MutatedProjection
 		projection.Expected++
-		rewritten, err := json.Marshal(projection)
-		if err != nil {
-			return nil, err
-		}
-		report.Cases[index].MutatedProjection = rewritten
+		report.Cases[index].MutatedProjection = projection
 		report.Cases[index].MutatedProjectionDigest = model.Digest(projection)
 		item := &report.Cases[index]
 		transitionEvidence := model.Digest([]any{item.BaselineProjectionDigest, item.MutatedProjectionDigest, item.BaselineJudgment.Decision, item.MutatedJudgment.Decision, item.BaselineJudgment.Resolution, item.MutatedJudgment.Resolution, item.BaselineJudgment.Reason, item.MutatedJudgment.Reason, item.BaselineSourceDigest, item.MutatedSourceDigest, item.BaselineProvenanceDigest, item.MutatedProvenanceDigest})
