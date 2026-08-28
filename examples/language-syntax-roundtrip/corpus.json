@@ -186,6 +186,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "claim-resolution-tuple",
+      "path": "cmd/gooo/testdata/claim-resolution/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",

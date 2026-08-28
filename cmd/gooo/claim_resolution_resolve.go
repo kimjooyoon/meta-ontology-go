@@ -1,11 +1,6 @@
 package main
 
-import (
-	"crypto/sha256"
-	"encoding/hex"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 
 func resolveClaimTuple(sourceFile string, source []byte, file *syntax.File, activityName string) claimResolutionReport {
 	report := newClaimResolutionReport(sourceFile, source, activityName)
@@ -75,9 +70,4 @@ func buildClaimResolutionIndicators(report claimResolutionReport, observed bool)
 		{ID: "gooo.metric.claim-resolution.observed.v1", Value: resolved, Total: 1, Unit: "resolutions", Class: "OUTCOME", Activity: report.Subject.Activity},
 		{ID: "gooo.metric.claim-resolution.repository-writes.v1", Value: 0, Total: 0, Unit: "writes", Class: "GUARDRAIL", Activity: report.Subject.Activity},
 	}
-}
-
-func claimResolutionDigest(value []byte) string {
-	sum := sha256.Sum256(value)
-	return "sha256:" + hex.EncodeToString(sum[:])
 }
