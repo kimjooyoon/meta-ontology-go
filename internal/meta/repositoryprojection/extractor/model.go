@@ -9,8 +9,8 @@ import (
 
 type Failure struct {
 	Stage, Step, Reason, UnknownClass, NextOperation string
-	BlockedBy []string
-	Diagnostics []string
+	BlockedBy                                        []string
+	Diagnostics                                      []string
 }
 
 func (e Failure) Error() string {
@@ -26,19 +26,22 @@ func failWithDiagnostics(stage, step, reason, class, next string, diagnostics []
 }
 
 type declaration struct {
-	node ast.Decl
+	node              ast.Decl
 	start, end, order int
-	identity string
+	identity          string
 }
 
 type importSpec struct {
-	group *ast.GenDecl
-	spec *ast.ImportSpec
+	group      *ast.GenDecl
+	spec       *ast.ImportSpec
 	path, name string
 }
 
 type rendered struct{ source, helper []byte }
-type edit struct{ start, end int; replacement []byte }
+type edit struct {
+	start, end  int
+	replacement []byte
+}
 
 func applyEdits(source []byte, edits []edit) ([]byte, error) {
 	sort.SliceStable(edits, func(i, j int) bool { return edits[i].start < edits[j].start })
