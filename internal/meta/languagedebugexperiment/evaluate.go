@@ -51,8 +51,8 @@ func summarize(value facts, executable string, indicators []Indicator) Summary {
 		CurrentEvents: value.CurrentEvents, RemainingEvents: value.RemainingEvents,
 		UnknownBreakpointRejections: value.UnknownBreakpointRejections, Unknowns: value.Unknowns,
 		RefutedCases: len(value.RefutedCases),
-		Compiler: Compiler{ExecutableDigest: executable, Go127Runtimes: value.Go127Runtimes},
-		Effects:  Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
+		Compiler:     Compiler{ExecutableDigest: executable, Go127Runtimes: value.Go127Runtimes},
+		Effects:      Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
 	}
 }
 

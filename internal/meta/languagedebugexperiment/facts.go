@@ -89,7 +89,7 @@ func validGraph(graph GraphObservation) bool {
 func validDebugGraph(graph GraphObservation) bool {
 	expectedActivities := map[string]bool{
 		"languageutility://activity/observe-debugging-deterministic-replay": true,
-		"languageutility://activity/observe-debugging-resource-observed":     true,
+		"languageutility://activity/observe-debugging-resource-observed":    true,
 	}
 	if len(graph.DebugActivityIDs) != len(expectedActivities) {
 		return false
@@ -102,10 +102,10 @@ func validDebugGraph(graph GraphObservation) bool {
 		seenActivities[activity] = true
 	}
 	expectedEdges := map[string]bool{
-		"used\x00languageutility://activity/observe-debugging-deterministic-replay\x00gooo://meta/language-utility/entity/cell": true,
+		"used\x00languageutility://activity/observe-debugging-deterministic-replay\x00gooo://meta/language-utility/entity/cell":               true,
 		"wasGeneratedBy\x00gooo://meta/language-utility/entity/evidence\x00languageutility://activity/observe-debugging-deterministic-replay": true,
-		"used\x00languageutility://activity/observe-debugging-resource-observed\x00gooo://meta/language-utility/entity/cell": true,
-		"wasGeneratedBy\x00gooo://meta/language-utility/entity/evidence\x00languageutility://activity/observe-debugging-resource-observed": true,
+		"used\x00languageutility://activity/observe-debugging-resource-observed\x00gooo://meta/language-utility/entity/cell":                  true,
+		"wasGeneratedBy\x00gooo://meta/language-utility/entity/evidence\x00languageutility://activity/observe-debugging-resource-observed":    true,
 	}
 	if len(graph.DebugCausalEdges) != len(expectedEdges) {
 		return false

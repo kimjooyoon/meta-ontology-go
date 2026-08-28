@@ -37,12 +37,12 @@ type Refutation struct {
 }
 
 type ReplayEvidence struct {
-	RuntimeReceiptSchema string `json:"runtime_receipt_schema"`
-	Schema         string   `json:"schema"`
-	FirstDigest    string   `json:"first_digest"`
-	SecondDigest   string   `json:"second_digest"`
-	Equal          bool     `json:"equal"`
-	ExcludedFields []string `json:"excluded_fields"`
+	RuntimeReceiptSchema string   `json:"runtime_receipt_schema"`
+	Schema               string   `json:"schema"`
+	FirstDigest          string   `json:"first_digest"`
+	SecondDigest         string   `json:"second_digest"`
+	Equal                bool     `json:"equal"`
+	ExcludedFields       []string `json:"excluded_fields"`
 }
 
 type Summary struct {
@@ -53,7 +53,7 @@ type Summary struct {
 	TraceEvents                 int      `json:"trace_events"`
 	ExecutionDigestVariants     int      `json:"execution_digest_variants"`
 	ReplayMatches               int      `json:"replay_matches"`
-	ResourceObservations       int      `json:"resource_observations"`
+	ResourceObservations        int      `json:"resource_observations"`
 	CurrentEvents               int      `json:"current_events"`
 	RemainingEvents             int      `json:"remaining_events"`
 	UnknownBreakpointRejections int      `json:"unknown_breakpoint_rejections"`

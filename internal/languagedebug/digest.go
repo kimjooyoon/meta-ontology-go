@@ -19,15 +19,15 @@ const DeterministicPayloadSchema = "gooo/language-debug-deterministic-payload/v1
 // DeterministicPayload is the semantic part of a debug receipt. Breakpoint
 // projection and runtime fields intentionally do not participate in it.
 type DeterministicPayload struct {
-	Schema           string            `json:"schema"`
-	Filename         string            `json:"filename"`
-	SourceDigest     string            `json:"source_digest"`
-	SemanticDigest   string            `json:"semantic_digest"`
-	ExecutionDigest  string            `json:"execution_digest"`
-	Entry            json.RawMessage   `json:"entry"`
-	Diagnostics      []json.RawMessage `json:"diagnostics"`
-	Effects          Effects           `json:"effects"`
-	NonClaims        []string          `json:"non_claims"`
+	Schema          string            `json:"schema"`
+	Filename        string            `json:"filename"`
+	SourceDigest    string            `json:"source_digest"`
+	SemanticDigest  string            `json:"semantic_digest"`
+	ExecutionDigest string            `json:"execution_digest"`
+	Entry           json.RawMessage   `json:"entry"`
+	Diagnostics     []json.RawMessage `json:"diagnostics"`
+	Effects         Effects           `json:"effects"`
+	NonClaims       []string          `json:"non_claims"`
 }
 
 func (receipt Receipt) DeterministicPayload() DeterministicPayload {

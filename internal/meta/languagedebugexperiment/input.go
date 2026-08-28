@@ -50,15 +50,15 @@ type GraphEdge struct {
 }
 
 type GraphObservation struct {
-	Schema                  string `json:"schema"`
-	ProgramDigest           string `json:"program_digest"`
-	GraphHash               string `json:"graph_hash"`
-	ActivityCount           int    `json:"activity_count"`
-	EdgeCount               int    `json:"edge_count"`
-	DebugActivityCount      int    `json:"debug_activity_count"`
-	DebugOutputCount        int    `json:"debug_output_count"`
-	DebugUsedEdgeCount      int    `json:"debug_used_edge_count"`
-	DebugGeneratedEdgeCount int    `json:"debug_generated_edge_count"`
+	Schema                  string      `json:"schema"`
+	ProgramDigest           string      `json:"program_digest"`
+	GraphHash               string      `json:"graph_hash"`
+	ActivityCount           int         `json:"activity_count"`
+	EdgeCount               int         `json:"edge_count"`
+	DebugActivityCount      int         `json:"debug_activity_count"`
+	DebugOutputCount        int         `json:"debug_output_count"`
+	DebugUsedEdgeCount      int         `json:"debug_used_edge_count"`
+	DebugGeneratedEdgeCount int         `json:"debug_generated_edge_count"`
 	DebugActivityIDs        []string    `json:"debug_activity_ids"`
 	DebugCausalEdges        []GraphEdge `json:"debug_causal_edges"`
 }
