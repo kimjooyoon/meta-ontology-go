@@ -28,7 +28,7 @@ func candidates(fset *token.FileSet, file *ast.File) ([]declaration, error) {
 func identityOf(fset *token.FileSet, node ast.Decl) (string, bool) {
 	switch d := node.(type) {
 	case *ast.FuncDecl:
-		if d.Name == nil || d.Name.Name == "init" || d.Body == nil { return "", false }
+		if d.Name == nil || d.Name.Name == "init" { return "", false }
 		if d.Recv == nil { return "func:" + d.Name.Name, true }
 		var receiver bytes.Buffer
 		if format.Node(&receiver, fset, d.Recv) != nil { return "", false }
