@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-set -x
 
 : "${HEAD_SHA:?HEAD_SHA is required}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY is required}"
@@ -16,12 +15,7 @@ mkdir -p "$work" "$build"
 cd "$root"
 
 gofmt -l cmd/gooo cmd/language-debug-experiment internal/languagedebug internal/meta/languagedebugexperiment > "$work/unformatted.txt"
-if [[ -s "$work/unformatted.txt" ]]; then
-  while IFS= read -r unformatted; do
-    gofmt -d "$unformatted"
-  done < "$work/unformatted.txt"
-  exit 1
-fi
+test ! -s "$work/unformatted.txt"
 
 measure_command() {
   local name="$1" output="$2" stdout_file="$3" stderr_file="$4"
@@ -48,10 +42,6 @@ measure_command() {
     --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$peak_rss" \
     --arg cache_state "GOCACHE=$(go env GOCACHE);GOMODCACHE=$(go env GOMODCACHE);setup-go-cache=false" \
     '{name:$name,executed:$executed,wall_ns:$wall_ns,wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib,cache_state:$cache_state}' > "$output"
-  if ((status != 0)); then
-    echo "measured command failed: $name (exit $status)" >&2
-    cat "$stdout_file" "$stderr_file" >&2
-  fi
   return "$status"
 }
 
