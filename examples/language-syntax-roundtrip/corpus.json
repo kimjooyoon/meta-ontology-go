@@ -226,6 +226,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "repository-projection-repair",
+      "path": "examples/repository-projection-repair/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "unknown-keyword",
       "path": "examples/language-syntax-roundtrip/unknown-keyword.txt",
       "kind": "INVALID",
