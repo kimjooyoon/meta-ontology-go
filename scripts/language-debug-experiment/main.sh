@@ -15,7 +15,12 @@ mkdir -p "$work" "$build"
 cd "$root"
 
 gofmt -l cmd/gooo cmd/language-debug-experiment internal/languagedebug internal/meta/languagedebugexperiment > "$work/unformatted.txt"
-test ! -s "$work/unformatted.txt"
+if [[ -s "$work/unformatted.txt" ]]; then
+  while IFS= read -r unformatted; do
+    gofmt -d "$unformatted"
+  done < "$work/unformatted.txt"
+  exit 1
+fi
 
 measure_command() {
   local name="$1" output="$2" stdout_file="$3" stderr_file="$4"
