@@ -23,10 +23,21 @@ func Evaluate(input Input) (Report, error) {
 		UnknownCases: value.UnknownCases, RefutedCases: value.RefutedCases,
 		Summary: summarize(value, input.ExecutableDigest, indicators)}
 	if reason != "" {
-		report.Decision = "FAIL_CLOSED"
 		report.Reason = reason
-		if value.Unknowns > 0 {
+		if len(value.RefutedCases) > 0 {
+			report.Decision = "REFUTED"
+			report.Resolution = "EXACT"
+		} else if value.Unknowns > 0 {
+			report.Decision = "UNKNOWN"
 			report.Resolution = "LOWER_RESOLUTION"
+			for _, unknown := range value.UnknownCases {
+				if unknown.UnknownClass == "UNKNOWN_DECISION" || unknown.UnknownClass == "MALFORMED_EVIDENCE" {
+					report.Decision = "FAIL_CLOSED"
+					break
+				}
+			}
+		} else {
+			report.Decision = "FAIL_CLOSED"
 		}
 	} else if report.Summary.Coordinates.Satisfied != report.Summary.Coordinates.Total {
 		report.Decision = "FAIL_CLOSED"
