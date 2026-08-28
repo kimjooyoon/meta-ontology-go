@@ -6,7 +6,7 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/gooo-release-publish.yml",
 		"docs/external/gooo-release-publication-v1.md",
-		"examples/gooo-release-publication/**",
+		"examples/gooo-release-publication",
 		"internal/verify/scope_gooo_experimental_release.go",
 	}
 }
