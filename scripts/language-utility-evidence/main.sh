@@ -60,6 +60,12 @@ github_curl() {
       return 0
     fi
   fi
+  checkout_header="$(git config --local --get-all http.https://github.com/.extraheader 2>/dev/null | head -n 1 || true)"
+  if test -n "$checkout_header"; then
+    if curl -fsSL -H "$checkout_header" -H "Accept: application/vnd.github+json" "$@"; then
+      return 0
+    fi
+  fi
   curl -fsSL -H "Accept: application/vnd.github+json" "$@"
 }
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
