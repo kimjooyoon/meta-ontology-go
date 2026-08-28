@@ -62,7 +62,8 @@ toolchain="$(go version)"
 runner="${RUNNER_NAME:-unknown}/${RUNNER_OS:-unknown}/${RUNNER_ARCH:-unknown}"
 
 run_debug() {
-  local run="$1" breakpoint="$2" output="$work/$run.json" rss="$work/$run.rss"
+  local run="$1" breakpoint="$2"
+  local output="$work/$run.json" rss="$work/$run.rss"
   local run_number=1 start_ns end_ns wall_ns wall_ms peak_rss status
   test "$run" = "first" || run_number=2
   local -a args=(debug --json --entry PayOrder --break-event "$breakpoint" "$source")
