@@ -8,7 +8,7 @@ func TestEvaluateFixedDebugContract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != "PASS" || report.Summary.Coordinates.Satisfied != 12 {
+	if report.Decision != "PASS" || report.Summary.Coordinates.Satisfied != 13 {
 		t.Fatalf("report = %#v", report)
 	}
 }

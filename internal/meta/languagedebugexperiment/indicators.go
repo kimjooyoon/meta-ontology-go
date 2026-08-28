@@ -8,6 +8,7 @@ func buildIndicators(contract Contract, value facts) []Indicator {
 		indicator("debug.trace-events", "OPERATION", "FOUNDATION", "sum-visible-trace-events", value.TraceEvents, contract.ExpectedTraceEvents),
 		indicator("debug.subject-coherence", "COHERENCE", "COHERENCE", "compare-debug-subjects", value.SubjectCoherence, contract.ExpectedSubjectCoherence),
 		indicator("debug.execution-digest-variants", "REGRESSION", "REGRESSION", "count-execution-digest-variants", value.ExecutionDigestVariants, contract.ExpectedExecutionDigestVariants),
+		indicator("debug.resource-observations", "OUTCOME", "REGRESSION", "observe-debug-runtime-resources", value.ResourceObservations, contract.ExpectedResourceObservations),
 		indicator("debug.current-events", "OPERATION", "COHERENCE", "count-current-events", value.CurrentEvents, contract.ExpectedCurrentEvents),
 		indicator("debug.remaining-events", "OPERATION", "COHERENCE", "sum-hidden-future-events", value.RemainingEvents, contract.ExpectedRemainingEvents),
 		indicator("compiler.go127-executable", "FOUNDATION", "FOUNDATION", "bind-go127-debugger", value.Go127Runtimes, contract.ExpectedGo127Runtimes),

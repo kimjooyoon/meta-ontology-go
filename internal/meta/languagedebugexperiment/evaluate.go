@@ -1,12 +1,14 @@
 package languagedebugexperiment
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug"
+
 func Evaluate(input Input) (Report, error) {
 	if err := input.Contract.Validate(); err != nil {
 		return Report{}, err
 	}
 	value, reason := collectFacts(input)
 	indicators := buildIndicators(input.Contract, value)
-	if value.Unknowns > 0 {
+	if value.Unknowns > 0 || len(value.RefutedCases) > 0 {
 		for index := range indicators {
 			indicators[index].Satisfied = false
 		}
@@ -16,7 +18,9 @@ func Evaluate(input Input) (Report, error) {
 		Decision: "PASS", Reason: "DEBUG_EXPERIMENT_SATISFIED", Resolution: "EXACT",
 		Indicators: indicators, Views: buildViews(indicators),
 		RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority,
-
+		Replay: replayEvidence(input), RuntimeObservations: input.RuntimeObservations,
+		Build: input.Build, EvaluatorBuild: input.EvaluatorBuild, Test: input.Test, Graph: input.Graph,
+		UnknownCases: value.UnknownCases, RefutedCases: value.RefutedCases,
 		Summary: summarize(value, input.ExecutableDigest, indicators)}
 	if reason != "" {
 		report.Decision = "FAIL_CLOSED"
@@ -31,13 +35,22 @@ func Evaluate(input Input) (Report, error) {
 	return sealReport(report), nil
 }
 
+func replayEvidence(input Input) ReplayEvidence {
+	first, second := input.First.DeterministicDigest(), input.Second.DeterministicDigest()
+	return ReplayEvidence{Schema: languagedebug.DeterministicPayloadSchema, RuntimeReceiptSchema: RuntimeReceiptSchema, FirstDigest: first,
+		SecondDigest: second, Equal: first == second,
+		ExcludedFields: languagedebug.DeterministicExcludedFields()}
+}
+
 func summarize(value facts, executable string, indicators []Indicator) Summary {
 	return Summary{
 		Coordinates: coordinates(indicators), DebugReceipts: value.DebugReceipts,
 		PausedSessions: value.PausedSessions, BreakpointsReached: value.BreakpointsReached,
 		TraceEvents: value.TraceEvents, ExecutionDigestVariants: value.ExecutionDigestVariants,
+		ReplayMatches: value.ReplayMatches, ResourceObservations: value.ResourceObservations,
 		CurrentEvents: value.CurrentEvents, RemainingEvents: value.RemainingEvents,
 		UnknownBreakpointRejections: value.UnknownBreakpointRejections, Unknowns: value.Unknowns,
+		RefutedCases: len(value.RefutedCases),
 		Compiler: Compiler{ExecutableDigest: executable, Go127Runtimes: value.Go127Runtimes},
 		Effects:  Effects{RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority},
 	}

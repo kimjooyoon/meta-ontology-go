@@ -26,6 +26,7 @@ type Report struct {
 	Resolution        string           `json:"resolution"`
 	Reason            string           `json:"reason"`
 	Summary           Summary          `json:"summary"`
+	Graph             GraphObservation `json:"graph"`
 	UseCases          []UseCaseSummary `json:"use_cases"`
 	Cells             []CellResult     `json:"cells"`
 	Indicators        []Indicator      `json:"indicators"`
