@@ -8,15 +8,16 @@ import (
 	"go/token"
 )
 
-func candidates(fset *token.FileSet, file *ast.File) ([]declaration, error) {
+func candidates(fset *token.FileSet, file *ast.File) ([]declaration, bool, error) {
 	seen := map[string]bool{}
 	var out []declaration
+	fallbackUsed := false
 	for order, node := range file.Decls {
 		identity, movable := identityOf(fset, node)
-		if !movable { identity, movable = fallbackIdentity(node) }
+		if !movable { identity, movable = fallbackIdentity(node); fallbackUsed = fallbackUsed || movable }
 		if !movable { continue }
 		if seen[identity] {
-			return nil, fail("validate-ast", "identity", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{identity})
+			return nil, false, fail("validate-ast", "identity", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{identity})
 		}
 		seen[identity] = true
 		start := node.Pos()
@@ -24,7 +25,7 @@ func candidates(fset *token.FileSet, file *ast.File) ([]declaration, error) {
 		if d, ok := node.(*ast.GenDecl); ok && d.Doc != nil { start = d.Doc.Pos() }
 		out = append(out, declaration{node, fset.Position(start).Offset, fset.Position(node.End()).Offset, order, identity})
 	}
-	return out, nil
+	return out, fallbackUsed, nil
 }
 
 func fallbackIdentity(node ast.Decl) (string, bool) {

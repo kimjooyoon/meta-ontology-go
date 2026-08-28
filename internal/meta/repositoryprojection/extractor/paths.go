@@ -7,6 +7,7 @@ import (
 	"go/build/constraint"
 	pathpkg "path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -32,11 +33,12 @@ func validateBuildHeader(header []byte) error {
 var goos = map[string]bool{"aix": true, "android": true, "darwin": true, "dragonfly": true, "freebsd": true, "illumos": true, "ios": true, "js": true, "linux": true, "netbsd": true, "openbsd": true, "plan9": true, "solaris": true, "wasip1": true, "windows": true}
 var goarch = map[string]bool{"386": true, "amd64": true, "arm": true, "arm64": true, "loong64": true, "mips": true, "mips64": true, "mips64le": true, "mipsle": true, "ppc64": true, "ppc64le": true, "riscv64": true, "s390x": true, "wasm": true}
 
-func helperPath(logical string) string {
+func helperPath(logical string, index, total int) string {
 	dir, base := pathpkg.Split(logical); stem := strings.TrimSuffix(base, ".go"); test := ""
 	if strings.HasSuffix(stem, "_test") { stem, test = strings.TrimSuffix(stem, "_test"), "_test" }
 	parts := strings.Split(stem, "_"); var suffix []string
 	for len(parts) > 1 { last := parts[len(parts)-1]; if !goos[last] && !goarch[last] { break }; suffix = append([]string{last}, suffix...); parts = parts[:len(parts)-1] }
 	name := strings.Join(parts, "_") + "_extracted"; if len(suffix) > 0 { name += "_" + strings.Join(suffix, "_") }
+	if total > 1 { name += "_" + strconv.Itoa(index+1) }
 	return dir + name + test + ".go"
 }
