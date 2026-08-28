@@ -21,6 +21,7 @@ jobs:
     timeout-minutes: 45
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v5
         with:
