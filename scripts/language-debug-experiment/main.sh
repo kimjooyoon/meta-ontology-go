@@ -42,6 +42,10 @@ measure_command() {
     --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$peak_rss" \
     --arg cache_state "GOCACHE=$(go env GOCACHE);GOMODCACHE=$(go env GOMODCACHE);setup-go-cache=false" \
     '{name:$name,executed:$executed,wall_ns:$wall_ns,wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib,cache_state:$cache_state}' > "$output"
+  if ((status != 0)); then
+    echo "measured command failed: $name (exit $status)" >&2
+    cat "$stdout_file" "$stderr_file" >&2
+  fi
   return "$status"
 }
 
