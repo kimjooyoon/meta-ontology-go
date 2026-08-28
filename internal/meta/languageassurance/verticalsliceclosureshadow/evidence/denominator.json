@@ -1,7 +1,7 @@
 {
   "schema": "gooo/vertical-slice-boundary-denominator/v1",
-  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v19",
-  "version": 19,
+  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v20",
+  "version": 20,
   "boundaries": [
     {
       "id": "syntax",
