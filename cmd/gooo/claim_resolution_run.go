@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"time"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/claimresolution"
 )
 
 func runClaimResolution(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
@@ -29,7 +27,7 @@ func runClaimResolution(args []string, reader SourceReader, parser SourceParser,
 	if !reportDiagnostics(diagnostics, stderr) || diagnostics.HasErrors() {
 		return exitFailure
 	}
-	report := claimresolution.Resolve(options.filename, source, file, options.activity)
+	report := resolveClaimTuple(options.filename, source, file, options.activity)
 	payload, err := json.Marshal(report)
 	if err != nil || len(payload)+1 > maxGraphDumpBytes {
 		fmt.Fprintf(stderr, "gooo: %s: claim resolution output failed\n", options.filename)
@@ -39,7 +37,7 @@ func runClaimResolution(args []string, reader SourceReader, parser SourceParser,
 		fmt.Fprintf(stderr, "gooo: claim resolution output: %v\n", err)
 		return exitFailure
 	}
-	if report.Decision != claimresolution.DecisionObserved {
+	if report.Decision != claimDecisionObserved {
 		return exitFailure
 	}
 	return exitOK
