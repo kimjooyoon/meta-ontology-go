@@ -1,0 +1,305 @@
+name: Gooo release readiness
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gooo-release-readiness-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  platform:
+    name: Gooo release platform (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+          - platform: darwin-amd64
+            runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+          - platform: windows-amd64
+            runner: windows-2025
+            goos: windows
+            goarch: amd64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOTOOLCHAIN: go1.27.0
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXACT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: true
+      - name: Bind exact candidate head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+      - name: Build, execute, and replay native candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./cmd/toolchain-release-platform-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --output-dir "$RUNNER_TEMP/platform-${{ matrix.platform }}" \
+            --expected-head "$EXACT_SHA" \
+            --platform-id "${{ matrix.platform }}" \
+            --runner "${{ matrix.runner }}" \
+            --expected-goos "${{ matrix.goos }}" \
+            --expected-goarch "${{ matrix.goarch }}"
+      - name: Upload exact platform receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: gooo-release-platform-${{ matrix.platform }}-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/platform-${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    name: Gooo release evidence aggregate
+    needs: [platform]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOTOOLCHAIN: go1.27.0
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXACT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: true
+      - name: Bind exact candidate head
+        run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+      - name: Download all three exact-head receipts
+        uses: actions/download-artifact@v6
+        with:
+          pattern: gooo-release-platform-*-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/gooo-release-evidence/receipts
+          merge-multiple: true
+      - name: Evaluate and replay the Gooo meta release model
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/gooo-release-evidence"
+          concept="$evidence/concept"
+          first="$evidence/first"
+          replay="$evidence/replay"
+          mkdir -p "$concept" "$first" "$replay"
+
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -output "$concept/artifact.json"
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -check "$concept/artifact.json"
+
+          for target in "$first" "$replay"; do
+            go run ./cmd/toolchain-release-witness \
+              --root "$GITHUB_WORKSPACE" \
+              --expected-head "$EXACT_SHA" \
+              --concept "$concept/artifact.json" \
+              --corpus "$GITHUB_WORKSPACE/examples/toolchain-cross-platform-release/corpus.json" \
+              --receipts "$evidence/receipts" \
+              --output "$target/artifact.json" \
+              --bundle "$target/bundle"
+          done
+          diff -qr "$first" "$replay"
+          go run ./cmd/toolchain-release-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$EXACT_SHA" \
+            --concept "$concept/artifact.json" \
+            --corpus "$GITHUB_WORKSPACE/examples/toolchain-cross-platform-release/corpus.json" \
+            --receipts "$evidence/receipts" \
+            --check "$first/artifact.json" \
+            --bundle "$first/bundle"
+      - name: Project exact evidence into seven human cells
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/gooo-release-evidence"
+          report="$evidence/first/artifact.json"
+
+          jq -e --arg sha "$EXACT_SHA" '
+            .schema == "gooo/toolchain-cross-platform-release-report/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .head_sha == $sha and
+            .summary.platform_receipts == 3 and
+            .summary.cases_satisfied == 20 and .summary.cases_total == 20 and
+            .summary.metric_bindings == 39 and
+            .summary.unresolved == 0 and
+            .summary.mutation_authorities == 0 and
+            .summary.repository_writes == 0 and .repository_writes == 0 and
+            ([.indicators[]] | length) == 39 and
+            ([.indicators[] | select(.satisfied == true)] | length) == 39 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 3 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 16 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 20 and
+            ([.proofs[]] | length) == 3 and
+            ([.proofs[].proof_choice] | sort) == ["COHERENCE", "FOUNDATION", "REGRESSION"]
+          ' "$report"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            next_operation="MERGE_VALIDATED_CANDIDATE"
+          else
+            next_operation="PUBLISH_GOOO_EXPERIMENTAL_RELEASE"
+          fi
+
+          jq --arg next "$next_operation" '{
+            schema: "gooo/release-eligibility/v1",
+            head_sha: .head_sha,
+            source_report_schema: .schema,
+            source_report_digest: .report_digest,
+            concept_digest: .concept_digest,
+            meta_operation: "assemble-exact-cross-platform-release",
+            decision: "EVIDENCE_CLOSED",
+            resolution: "EXACT",
+            reason: "GOOO_RELEASE_CANDIDATE_EVIDENCE_CLOSED",
+            next_operation: $next,
+            mutation_allowed: false,
+            cells: [
+              {id:"EXACT_HEAD_BOUND",state:"CLOSED",resolution:"EXACT",proof_choice:"FOUNDATION",numerator:1,denominator:1},
+              {id:"PLATFORM_RECEIPTS",state:"CLOSED",resolution:"EXACT",proof_choice:"FOUNDATION",numerator:.summary.platform_receipts,denominator:3},
+              {id:"AGGREGATE_REPORT",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:1,denominator:1},
+              {id:"RELEASE_CASES",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:.summary.cases_satisfied,denominator:.summary.cases_total},
+              {id:"META_INDICATORS",state:"CLOSED",resolution:"EXACT",proof_choice:"COHERENCE",numerator:([.indicators[]|select(.satisfied)]|length),denominator:39},
+              {id:"MUNCHAUSEN_PROOFS",state:"CLOSED",resolution:"EXACT",proof_choice:"REGRESSION",numerator:(.proofs|length),denominator:3},
+              {id:"REPOSITORY_ZERO_WRITE",state:"CLOSED",resolution:"EXACT",proof_choice:"REGRESSION",numerator:1,denominator:1}
+            ],
+            claim: {
+              id: "release://gooo/experimental-candidate-evidence",
+              entity: "GoooExperimentalReleaseCandidateEvidence",
+              status: "DISCHARGED",
+              state: "CLOSED"
+            },
+            summary: {total_work:7,closed:7,unknown:0,refuted:0,repository_writes:.repository_writes},
+            indicators: [
+              {metric_id:"gooo.metric.release.exact-head.v1",value:1,target:1,satisfied:true},
+              {metric_id:"gooo.metric.release.platform-receipts.v1",value:.summary.platform_receipts,target:3,satisfied:true},
+              {metric_id:"gooo.metric.release.aggregate-report.v1",value:1,target:1,satisfied:true},
+              {metric_id:"gooo.metric.release.cases.v1",value:.summary.cases_satisfied,target:.summary.cases_total,satisfied:true},
+              {metric_id:"gooo.metric.release.meta-indicators.v1",value:([.indicators[]|select(.satisfied)]|length),target:39,satisfied:true},
+              {metric_id:"gooo.metric.release.proof-choices.v1",value:(.proofs|length),target:3,satisfied:true},
+              {metric_id:"gooo.metric.release.zero-write-run.v1",value:1,target:1,satisfied:true}
+            ]
+          }' "$report" > "$evidence/eligibility.json"
+
+          git diff --quiet
+          test -z "$(git ls-files --others --exclude-standard)"
+          sha256sum "$report" "$evidence/eligibility.json" > "$evidence/manifest.sha256"
+      - name: Publish exact candidate evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: gooo-release-evidence-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/gooo-release-evidence
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish exact eligibility projection
+        uses: actions/upload-artifact@v6
+        with:
+          name: gooo-release-eligibility-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/gooo-release-evidence/eligibility.json
+          if-no-files-found: error
+          retention-days: 30
+
+  eligibility:
+    name: Gooo release eligibility
+    if: always()
+    needs: [platform, aggregate]
+    runs-on: ubuntu-24.04
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PLATFORM_RESULT: ${{ needs.platform.result }}
+      AGGREGATE_RESULT: ${{ needs.aggregate.result }}
+    steps:
+      - name: Record fail-closed upstream state
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/final" "$RUNNER_TEMP/downloaded"
+          jq -n \
+            --arg sha "$EXACT_SHA" \
+            --arg platform "$PLATFORM_RESULT" \
+            --arg aggregate "$AGGREGATE_RESULT" \
+            '{
+              schema:"gooo/release-eligibility/v1",
+              head_sha:$sha,
+              decision:"FAIL_CLOSED",
+              resolution:"OPERATION_CLASS",
+              reason:"RELEASE_READINESS_UPSTREAM_NOT_SUCCESS",
+              next_operation:"RERUN_GOOO_RELEASE_READINESS",
+              mutation_allowed:false,
+              upstream:{platform:$platform,aggregate:$aggregate},
+              claim:{
+                id:"release://gooo/experimental-candidate-evidence",
+                entity:"GoooExperimentalReleaseCandidateEvidence",
+                status:"ACTIVE",
+                state:"UNKNOWN",
+                resolution:"OPERATION_CLASS",
+                stage:"CI",
+                step:"AGGREGATE_RELEASE_EVIDENCE",
+                reason:"RELEASE_READINESS_UPSTREAM_NOT_SUCCESS",
+                next_operation:"RERUN_GOOO_RELEASE_READINESS"
+              },
+              summary:{total_work:7,closed:0,unknown:7,refuted:0,repository_writes:null}
+            }' > "$RUNNER_TEMP/final/eligibility.json"
+      - name: Download closed eligibility evidence
+        if: needs.platform.result == 'success' && needs.aggregate.result == 'success'
+        uses: actions/download-artifact@v6
+        with:
+          name: gooo-release-eligibility-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/downloaded
+      - name: Select authoritative eligibility evidence
+        if: always()
+        shell: bash
+        run: |
+          if [[ "$PLATFORM_RESULT" == "success" && "$AGGREGATE_RESULT" == "success" && -f "$RUNNER_TEMP/downloaded/eligibility.json" ]]; then
+            cp "$RUNNER_TEMP/downloaded/eligibility.json" "$RUNNER_TEMP/final/eligibility.json"
+          fi
+      - name: Upload final fail-closed eligibility receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: gooo-release-final-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/final/eligibility.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce exact release eligibility
+        if: always()
+        shell: bash
+        run: |
+          test "$PLATFORM_RESULT" = "success"
+          test "$AGGREGATE_RESULT" = "success"
+          jq -e --arg sha "$EXACT_SHA" '
+            .schema == "gooo/release-eligibility/v1" and
+            .head_sha == $sha and
+            .decision == "EVIDENCE_CLOSED" and
+            .resolution == "EXACT" and
+            .summary.total_work == 7 and .summary.closed == 7 and
+            .summary.unknown == 0 and .summary.refuted == 0 and
+            .summary.repository_writes == 0 and
+            ([.cells[] | select(.state == "CLOSED")] | length) == 7
+          ' "$RUNNER_TEMP/final/eligibility.json"
