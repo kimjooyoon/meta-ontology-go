@@ -2050,6 +2050,15 @@
       ]
     },
     {
+      "branch": "agent/workgraph-cli-contract",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/gooo-release-readiness.yml",
+        "docs/external/gooo-release-evidence-v1.md"
+      ]
+    },
+    {
       "branch": "agent/toolchain-executable-usecases",
       "paths": [
         ".github/agent-scope-table.md",
