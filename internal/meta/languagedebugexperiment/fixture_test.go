@@ -53,7 +53,7 @@ func executionFixture(t *testing.T) []byte {
 }
 
 func fixedContract() Contract {
-	return Contract{"gooo/language-debug-experiment-contract/v1", 1, 2, 2, 2, 4, 2, 1, 2, 2, 2, 2, 1, 3}
+	return Contract{"gooo/language-debug-experiment-contract/v1", 1, 2, 2, 2, 4, 2, 1, 2, 4, 2, 2, 1, 3}
 }
 
 func digest(value byte) string { return "sha256:" + string(makeHex(value, 64)) }

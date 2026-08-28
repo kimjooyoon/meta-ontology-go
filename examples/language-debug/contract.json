@@ -8,7 +8,7 @@
   "expected_subject_coherence": 2,
   "expected_execution_digest_variants": 1,
   "expected_current_events": 2,
-  "expected_remaining_events": 2,
+  "expected_remaining_events": 4,
   "expected_go127_runtimes": 2,
   "expected_resource_observations": 2,
   "expected_unknown_breakpoint_rejections": 1,
