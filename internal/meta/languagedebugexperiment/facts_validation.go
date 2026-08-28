@@ -9,8 +9,11 @@ func validateInput(input Input) (facts, string) {
 	if !validGraph(input.Graph) {
 		return refutedFacts("GRAPH_BINDING", "VERIFY_GOOO_GRAPH", "GOOO_GRAPH_ACTIVITY_OR_EDGE_CONTRADICTION")
 	}
-	if missingReceipt(input.First) || missingReceipt(input.Second) {
+	if missingReceipt(input.Second) {
 		return unknownFacts("DEBUG_RECEIPT_MISSING", "DEBUGGING", "READ_SECOND_RECEIPT", "DIRECT_MISSING", "REEXECUTE_DEBUG_PATH_TWICE", "SECOND_RECEIPT")
+	}
+	if missingReceipt(input.First) {
+		return unknownFacts("DEBUG_RECEIPT_INVALID", "DEBUGGING", "VALIDATE_RECEIPTS", "MALFORMED_EVIDENCE", "REEXECUTE_DEBUG_PATH", "RECEIPT_SCHEMA_OR_DIGEST")
 	}
 	if input.First.DeterministicDigest() != input.Second.DeterministicDigest() {
 		return refutedFacts("DETERMINISTIC_REPLAY", "COMPARE_SEMANTIC_RECEIPT_DIGESTS", "DEBUG_DETERMINISTIC_DIGEST_CONTRADICTION")
