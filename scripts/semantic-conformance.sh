@@ -37,6 +37,7 @@ if [[ ! -s "$projection_evidence" ]]; then
   exit 1
 fi
 head_sha="$(git rev-parse HEAD)"
+export METRICS_COMMIT_SHA="$head_sha"
 mkdir -p "$projection_work"
 go run ./scripts/line-metrics \
   -root "$repo_root" \
