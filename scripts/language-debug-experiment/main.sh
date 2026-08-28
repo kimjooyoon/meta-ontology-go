@@ -92,10 +92,10 @@ run_debug() {
 }
 
 # These are two real debug invocations over the same checked-in Gooo source.
-# Different breakpoints retain the existing trace-prefix evidence; replay is
-# proven below by comparing the semantic payload of both actual receipts.
+# Re-run the same real debug invocation so the semantic receipt comparison is
+# based on identical arguments; runtime observations remain separate fields.
 run_debug first SOURCE_PARSED
-run_debug second ACTIVITY_INVOKED
+run_debug second SOURCE_PARSED
 if "$binary" debug --json --entry PayOrder --break-event MISSING "$source" > "$work/unknown-breakpoint.json" 2>"$work/unknown-breakpoint.stderr"; then
   echo "unknown debug breakpoint unexpectedly passed" >&2
   exit 1

@@ -22,11 +22,11 @@ type Effects struct {
 }
 
 type Uncertainty struct {
-	Stage         string `json:"stage"`
-	Step          string `json:"step"`
-	Reason        string `json:"reason"`
-	UnknownClass  string `json:"unknown_class"`
-	NextOperation string `json:"next_operation"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
 	BlockedBy     []string `json:"blocked_by"`
 }
 
