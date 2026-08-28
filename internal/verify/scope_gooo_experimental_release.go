@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/gooo-release-publish.yml",
 		"docs/external/gooo-release-publication-v1.md",
 		"examples/gooo-release-publication",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/model.go",
