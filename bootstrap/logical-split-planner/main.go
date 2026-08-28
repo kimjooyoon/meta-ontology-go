@@ -11,6 +11,7 @@ import (
 func main() {
 	root := flag.String("root", "", "restored logical repository")
 	evidence := flag.String("evidence", "", "exact projection evidence")
+	metrics := flag.String("metrics", "", "exact current line metrics")
 	expected := flag.String("expected-sha", "", "required source SHA")
 	output := flag.String("output", "", "split plan output")
 	packageRecipe := flag.String("package-partition-recipe", "", "exact Go package partition recipe")
@@ -18,12 +19,52 @@ func main() {
 	var err error
 	if *packageRecipe != "" {
 		err = runPackagePartition(*root, *packageRecipe, *expected, *output)
+	} else if *metrics != "" {
+		err = runMetrics(*root, *metrics, *expected, *output)
 	} else {
 		err = run(*root, *evidence, *expected, *output)
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func runMetrics(root, metrics, expected, output string) error {
+	if root == "" || metrics == "" || expected == "" || output == "" {
+		return fmt.Errorf("root, metrics, expected-sha, and output are required")
+	}
+	absolute, err := filepath.Abs(root)
+	if err != nil {
+		return err
+	}
+	inputs, err := loadMetricSubjects(metrics, expected)
+	if err != nil {
+		return err
+	}
+	plans := make([]planSubject, 0, len(inputs))
+	for _, input := range inputs {
+		name, pathErr := sourcePath(absolute, input.Logical)
+		if pathErr != nil {
+			return pathErr
+		}
+		data, readErr := os.ReadFile(name)
+		if readErr != nil {
+			return readErr
+		}
+		if lines := physicalLines(data); lines != input.Value {
+			return fmt.Errorf("line evidence drift for %s: %d != %d", input.Logical, lines, input.Value)
+		}
+		atoms, parseErr := declarationAtoms(name, data)
+		if parseErr != nil {
+			return parseErr
+		}
+		plans = append(plans, classify(input, atoms))
+	}
+	report := buildReport(expected, plans)
+	if err := writeReport(output, report); err != nil {
+		return err
+	}
+	return requireClassified(report)
 }
 
 func run(root, evidence, expected, output string) error {
