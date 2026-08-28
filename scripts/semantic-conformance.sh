@@ -65,12 +65,103 @@ go run ./bootstrap/line-density-rewriter \
   --plan "$projection_work/split-plan.json" \
   --expected-sha "$head_sha" \
   --output "$projection_work/density-report.json"
-go run ./bootstrap/function-extractor \
-  --root "$repo_root" \
-  --plan "$projection_work/split-plan.json" \
-  --density-report "$projection_work/density-report.json" \
-  --expected-sha "$head_sha" \
-  --output "$projection_work/extraction-report.json"
+
+EXTRACTION_PARTIAL=0
+
+write_extraction_result() {
+  local report="$1"
+  local output="$2"
+  local fallback_reason="$3"
+  if [[ -s "$report" ]]; then
+    jq --arg source_sha "$head_sha" --arg reason "$fallback_reason" '
+      ([.failures[]? | select(.decision == "REFUTED")]) as $refuted |
+      ($refuted | length) as $refuted_count |
+      {
+        schema: "gooo.semantic-conformance-extraction-result/v1",
+        source_sha: $source_sha,
+        decision: (if $refuted_count > 0 then "REFUTED" else "UNKNOWN" end),
+        stage: "semantic-conformance",
+        step: "extractor-observe",
+        reason: (if $refuted_count > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
+        unknown_class: (if $refuted_count > 0 then "KNOWN_CONTRADICTION" else "DIRECT_MISSING" end),
+        next_operation: "restore-decomposition-evidence",
+        blocked_by: ([.failures[]?.blocked_by[]?] | unique | sort),
+        blocker_ids: [
+          .failures[]? | select(.decision == "REFUTED") |
+          .logical as $logical |
+          ((.diagnostics // []) | map(select(startswith("declaration="))) | .[0] // "declaration=unknown") as $declaration |
+          ($declaration | sub("^declaration="; "")) as $identity |
+          ($logical + "#" + $identity)
+        ] | unique | sort,
+        counterexamples: (.failures // []),
+        extraction: {
+          observed: ([.indicators[]? | select(.id == "extraction.observed") | .value] | first // 0),
+          applied: ([.indicators[]? | select(.id == "extraction.applied") | .value] | first // 0),
+          created: ([.indicators[]? | select(.id == "extraction.created") | .value] | first // 0),
+          unhandled: ([.indicators[]? | select(.id == "extraction.unhandled") | .value] | first // 0)
+        }
+      }' "$report" > "$output"
+    return
+  fi
+  jq -n --arg source_sha "$head_sha" --arg reason "$fallback_reason" \
+    '{schema:"gooo.semantic-conformance-extraction-result/v1", source_sha:$source_sha,
+      decision:"UNKNOWN", stage:"semantic-conformance", step:"extractor-observe",
+      reason:$reason, unknown_class:"DIRECT_MISSING",
+      next_operation:"restore-decomposition-evidence", blocked_by:[], blocker_ids:[],
+      counterexamples:[], extraction:{observed:0, applied:0, created:0, unhandled:null}}' > "$output"
+}
+
+run_extraction_pass() {
+  local output="$1"
+  local fixed_point="$2"
+  local plan_path="$3"
+  local density_path="$4"
+  EXTRACTION_PARTIAL=0
+  set +e
+  if [[ "$fixed_point" == true ]]; then
+    go run ./bootstrap/function-extractor \
+      --root "$repo_root" \
+      --plan "$plan_path" \
+      --density-report "$density_path" \
+      --expected-sha "$head_sha" \
+      --output "$output" \
+      --fixed-point
+  else
+    go run ./bootstrap/function-extractor \
+      --root "$repo_root" \
+      --plan "$plan_path" \
+      --density-report "$density_path" \
+      --expected-sha "$head_sha" \
+      --output "$output"
+  fi
+  local status=$?
+  set -e
+  if [[ "$status" -eq 0 ]]; then
+    return 0
+  fi
+  if [[ ! -s "$output" ]]; then
+    write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_REPORT_UNAVAILABLE"
+    cat "$projection_work/extraction-counterexample.json"
+    return "$status"
+  fi
+  cat "$output"
+  if jq -e '.indicators | any(.[]; .id == "extraction.applied" and .value > 0)' "$output" >/dev/null; then
+    EXTRACTION_PARTIAL=1
+    return 0
+  fi
+  write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_APPLIED_ZERO"
+  cat "$projection_work/extraction-counterexample.json"
+  return "$status"
+}
+
+set +e
+run_extraction_pass "$projection_work/extraction-report.json" false \
+  "$projection_work/split-plan.json" "$projection_work/density-report.json"
+extraction_status=$?
+set -e
+if [[ "$extraction_status" -ne 0 ]]; then
+  exit "$extraction_status"
+fi
 go run ./scripts/source-splitter \
   -root "$repo_root" \
   -metrics "$projection_work/split-source-metrics.json" \
@@ -84,6 +175,7 @@ go run ./scripts/source-splitter \
 # unknown rather than an authorization to repeat names forever.
 previous_blocking=-1
 fixed_point_closed=false
+last_extraction="$projection_work/extraction-report.json"
 for iteration in 1 2 3 4 5 6 7 8; do
   pass_work="$projection_work/fixed-point-$iteration"
   mkdir -p "$pass_work"
@@ -102,17 +194,12 @@ for iteration in 1 2 3 4 5 6 7 8; do
     break
   fi
   if [[ "$previous_blocking" -ge 0 && "$blocking" -ge "$previous_blocking" ]]; then
-    jq -n \
-      --arg stage "semantic-conformance" \
-      --arg step "fixed-point-observe" \
-      --arg reason "NO_PROGRESS_FIXED_POINT" \
-      --arg unknown_class "DIRECT_MISSING" \
-      --arg next_operation "restore-decomposition-evidence" \
-      --arg blocking "$blocking" \
-      '{decision:"UNKNOWN", stage:$stage, step:$step, reason:$reason,
-        unknown_class:$unknown_class, next_operation:$next_operation,
-        blocked_by:[], diagnostics:{blocking_residual:($blocking|tonumber)}}' \
-      > "$projection_work/fixed-point-unknown.json"
+    write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "NO_PROGRESS_FIXED_POINT"
+    jq --arg blocking "$blocking" --arg iteration "$iteration" \
+      '. + {diagnostics:{blocking_residual:($blocking|tonumber), iteration:($iteration|tonumber)}}' \
+      "$projection_work/fixed-point-unknown.json" \
+      > "$projection_work/fixed-point-unknown.sealed.json"
+    mv "$projection_work/fixed-point-unknown.sealed.json" "$projection_work/fixed-point-unknown.json"
     cat "$projection_work/fixed-point-unknown.json"
     exit 1
   fi
@@ -134,23 +221,15 @@ for iteration in 1 2 3 4 5 6 7 8; do
     --expected-sha "$head_sha" \
     --output "$density"
   set +e
-  go run ./bootstrap/function-extractor \
-    --root "$repo_root" \
-    --plan "$plan" \
-    --density-report "$density" \
-    --expected-sha "$head_sha" \
-    --output "$extraction" \
-    --fixed-point
+  run_extraction_pass "$extraction" true "$plan" "$density"
   extraction_status=$?
   set -e
   if [[ "$extraction_status" -ne 0 ]]; then
-    if [[ -s "$extraction" ]]; then
-      cat "$extraction"
-      if jq -e '.indicators | any(.[]; .id == "extraction.applied" and .value > 0)' "$extraction" >/dev/null; then
-        continue
-      fi
-    fi
     exit "$extraction_status"
+  fi
+  last_extraction="$extraction"
+  if [[ "$EXTRACTION_PARTIAL" -eq 1 ]]; then
+    continue
   fi
   go run ./scripts/source-splitter \
     -root "$repo_root" \
@@ -161,16 +240,12 @@ for iteration in 1 2 3 4 5 6 7 8; do
 done
 
 if [[ "$fixed_point_closed" != true ]]; then
-  jq -n \
-    --arg stage "semantic-conformance" \
-    --arg step "fixed-point-observe" \
-    --arg reason "FIXED_POINT_ITERATION_BOUND" \
-    --arg unknown_class "DIRECT_MISSING" \
-    --arg next_operation "restore-decomposition-evidence" \
-    '{decision:"UNKNOWN", stage:$stage, step:$step, reason:$reason,
-      unknown_class:$unknown_class, next_operation:$next_operation,
-      blocked_by:[], diagnostics:{iteration_limit:8}}' \
-    > "$projection_work/fixed-point-unknown.json"
+  write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "FIXED_POINT_ITERATION_BOUND"
+  jq --arg iteration "8" \
+    '. + {diagnostics:{iteration_limit:($iteration|tonumber)}}' \
+    "$projection_work/fixed-point-unknown.json" \
+    > "$projection_work/fixed-point-unknown.sealed.json"
+  mv "$projection_work/fixed-point-unknown.sealed.json" "$projection_work/fixed-point-unknown.json"
   cat "$projection_work/fixed-point-unknown.json"
   exit 1
 fi
