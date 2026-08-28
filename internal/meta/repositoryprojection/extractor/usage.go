@@ -3,7 +3,6 @@ package extractor
 import (
 	"go/ast"
 	"os"
-	pathpkg "path"
 	"sort"
 	"strings"
 )

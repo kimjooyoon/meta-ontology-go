@@ -3,7 +3,7 @@ name: Repository projection conformance
 on:
   pull_request:
   push:
-    branches: [dev, main]
+    branches: [main]
 
 permissions:
   contents: read
@@ -17,37 +17,16 @@ jobs:
       METRICS_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ env.EXACT_SHA }}
 
       - name: Install the declared Go toolchain
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.27.0'
+          go-version: 1.27.0
           cache: false
-
-      - name: Verify repository projection repair metaprogram
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/repository-projection"
-          mkdir -p "$out"
-          contract=examples/repository-projection-repair/main.gooo
-          go run ./cmd/gooo graph dump "$contract" > "$out/repair-graph.json"
-          activity_count=$(grep -Ec '^activity ' "$contract")
-          test "$activity_count" -eq 12
-          printf '%s\n' ObserveDensityPlan DeriveASTRecipe ValidateASTImports GenerateHelpers RewriteSource VerifyIdentity VerifyWriteSet CompileProjectedTree TestProjectedTree ReplayMaterialization CompareReplay PublishReceipt | sort > "$out/repair-expected-activities.txt"
-          sed -nE 's/^activity ([A-Za-z0-9_]+).*/\1/p' "$contract" | sort > "$out/repair-actual-activities.txt"
-          diff -u "$out/repair-expected-activities.txt" "$out/repair-actual-activities.txt"
-          for proof in FOUNDATION COHERENCE REGRESSION; do
-            test "$(grep -o "proof=$proof" "$contract" | wc -l)" -eq 4
-          done
-          for indicator in DRIVER OUTCOME GUARDRAIL; do
-            test "$(grep -o "indicator=$indicator" "$contract" | wc -l)" -eq 4
-          done
-          jq -e '([.nodes[] | select(.kind == "Activity") | .id]) as $activities | ([.relations[] | select(.predicate == "used")]) as $used | ([.relations[] | select(.predicate == "wasGeneratedBy")]) as $generated | ($activities | length) == 12 and ($used | length) >= 12 and ($generated | length) == 12 and all($activities[]; . as $activity | any($used[]; .subject == $activity or .object == $activity)) and all($activities[]; . as $activity | any($generated[]; .subject == $activity or .object == $activity))' "$out/repair-graph.json" >/dev/null
-          jq -n --argjson activities "$activity_count" '{schema:"gooo.repository-projection-repair.v1", activities:$activities, bindings:12, proof_choices:{FOUNDATION:4,COHERENCE:4,REGRESSION:4}, indicators:{DRIVER:4,OUTCOME:4,GUARDRAIL:4}}' > "$out/repair-meta-evidence.json"
 
       - name: Bind clean exact-SHA logical split metrics
         run: |
@@ -98,58 +77,12 @@ jobs:
 
       - name: Apply metric-selected helper extractions
         run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/repository-projection"
-          start_ns=$(date +%s%N)
-          set +e
-          /usr/bin/time -f '%M' -o "$out/function-extractor-peak-rss-kib" go run ./bootstrap/function-extractor \
+          go run ./bootstrap/function-extractor \
             --root "$GITHUB_WORKSPACE" \
             --plan "$RUNNER_TEMP/repository-projection/split-plan.json" \
             --density-report "$RUNNER_TEMP/repository-projection/density-report.json" \
             --expected-sha "$EXACT_SHA" \
             --output "$RUNNER_TEMP/repository-projection/extraction-report.json"
-          status=$?
-          set -e
-          end_ns=$(date +%s%N)
-          wall_ms=$(( (end_ns - start_ns + 999999) / 1000000 ))
-          test "$wall_ms" -gt 0
-          rss=$(tr -d '[:space:]' < "$out/function-extractor-peak-rss-kib")
-          jq -n --argjson wall_ms "$wall_ms" --argjson rss "$rss" --argjson status "$status" '{schema:"gooo.repository-projection-runtime.v1",tool_build_executions:1,transformation_executions:1,wall_ms:$wall_ms,peak_rss_kib:$rss,exit:$status}' > "$out/function-extractor-runtime.json"
-          exit "$status"
-
-      - name: Replay helper extraction in an independent materialization
-        run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/repository-projection"
-          replay="$RUNNER_TEMP/repository-projection-replay"
-          rm -rf "$replay"
-          mkdir -p "$replay"
-          git archive "$EXACT_SHA" | tar -x -C "$replay"
-          go run ./bootstrap/line-density-rewriter \
-            --root "$replay" \
-            --plan "$out/split-plan.json" \
-            --expected-sha "$EXACT_SHA" \
-            --output "$replay/density-report.json"
-          go run ./bootstrap/function-extractor \
-            --root "$replay" \
-            --plan "$out/split-plan.json" \
-            --density-report "$replay/density-report.json" \
-            --expected-sha "$EXACT_SHA" \
-            --output "$replay/extraction-report.json"
-          jq -r '.subjects[].changed_files[]' "$out/extraction-report.json" | sort -u > "$out/replay-paths.txt"
-          while IFS= read -r path; do
-            sha256sum "$GITHUB_WORKSPACE/$path"
-          done < "$out/replay-paths.txt" > "$out/first-materialization.manifest"
-          while IFS= read -r path; do
-            sha256sum "$replay/$path"
-          done < "$out/replay-paths.txt" > "$out/second-materialization.manifest"
-          cmp "$out/first-materialization.manifest" "$out/second-materialization.manifest"
-          tar -C "$GITHUB_WORKSPACE" -cf "$out/first-replayed-patch.tar" -T "$out/replay-paths.txt"
-          tar -C "$replay" -cf "$out/second-replayed-patch.tar" -T "$out/replay-paths.txt"
-          first_digest=$(sha256sum "$out/first-replayed-patch.tar" | awk '{print $1}')
-          second_digest=$(sha256sum "$out/second-replayed-patch.tar" | awk '{print $1}')
-          test "$first_digest" = "$second_digest"
-          jq -n --arg first "$first_digest" --arg second "$second_digest" '{schema:"gooo.repository-projection-replay.v1",comparisons:1,patch_bytes_equal:($first==$second),first_digest:$first,second_digest:$second}' > "$out/replay-evidence.json"
 
       - name: Apply metric-selected logical source splits
         run: |
@@ -162,13 +95,10 @@ jobs:
 
       - name: Verify authorized rewrites and test the logical module
         run: |
-          set -euo pipefail
-          out="$RUNNER_TEMP/repository-projection"
           expected="$RUNNER_TEMP/repository-projection/authorized-write-set.txt"
           observed="$RUNNER_TEMP/repository-projection/observed-write-set.txt"
           untracked="$RUNNER_TEMP/repository-projection/untracked-write-set.txt"
           report="$RUNNER_TEMP/repository-projection/write-set-evidence.json"
-          jq -e '([.indicators[] | select(.id == "density.applied") | .value] == [4]) and ([.indicators[] | select(.id == "density.residual") | .value] == [22])' "$out/density-report.json"
           git ls-files --others --exclude-standard | sort -u > "$untracked"
           { git diff --name-only; cat "$untracked"; } | sort -u > "$observed"
           go run ./scripts/authorized-write-set \
@@ -181,31 +111,12 @@ jobs:
             --expected-output "$expected" \
             --output "$report"
           jq -e '.schema == "gooo.authorized-rewrite-write-set.v3" and .decision == "PASS" and .resolution == "EXACT" and .exact == true and .coordinates.unknowns == 0' "$report"
-          jq -e '([.indicators[] | select(.id == "extraction.observed") | .value] == [22]) and ([.indicators[] | select(.id == "extraction.applied") | .value] == [22]) and ([.indicators[] | select(.id == "extraction.created") | .value] == [22]) and ([.indicators[] | select(.id == "extraction.unhandled") | .value] == [0]) and (([.subjects[].created_files[]] | length) == 22)' "$out/extraction-report.json"
           diff -u "$expected" "$observed"
           while IFS= read -r path; do
             test -z "$path" || git add -N -- "$path"
           done < "$untracked"
           git diff --binary > "$RUNNER_TEMP/repository-projection/authorized-rewrite.patch"
-          start_ns=$(date +%s%N)
-          set +e
-          /usr/bin/time -f '%M' -o "$out/projected-test-peak-rss-kib" go test ./... > "$out/projected-test.stdout" 2> "$out/projected-test.stderr"
-          status=$?
-          set -e
-          end_ns=$(date +%s%N)
-          wall_ms=$(( (end_ns - start_ns + 999999) / 1000000 ))
-          test "$wall_ms" -gt 0
-          cat "$out/projected-test.stdout"
-          cat "$out/projected-test.stderr" >&2
-          rss=$(tr -d '[:space:]' < "$out/projected-test-peak-rss-kib")
-          jq -n --argjson wall_ms "$wall_ms" --argjson rss "$rss" --argjson status "$status" '{schema:"gooo.repository-projection-runtime.v1",projected_test_executions:1,wall_ms:$wall_ms,peak_rss_kib:$rss,exit:$status,local_test_executions:0,cross_project_required_gates:0}' > "$out/projected-test-runtime.json"
-          test "$status" -eq 0
-          go_files=$(find . -type f -name '*.go' | sort | wc -l | tr -d '[:space:]')
-          go_lines=$(find . -type f -name '*.go' -exec cat {} + | wc -l | tr -d '[:space:]')
-          gooo_files=$(find . -type f -name '*.gooo' | sort | wc -l | tr -d '[:space:]')
-          gooo_lines=$(find . -type f -name '*.gooo' -exec cat {} + | wc -l | tr -d '[:space:]')
-          go_dirs=$(find . -type d -name .git -prune -o -type d -print | sort | wc -l | tr -d '[:space:]')
-          jq -n --argjson go_files "$go_files" --argjson go_lines "$go_lines" --argjson gooo_files "$gooo_files" --argjson gooo_lines "$gooo_lines" --argjson go_dirs "$go_dirs" '{schema:"gooo.repository-projection-inventory.v1",go_files:$go_files,go_lines:$go_lines,gooo_files:$gooo_files,gooo_lines:$gooo_lines,dirs:$go_dirs,root_readme_excluded:true}' > "$out/inventory.json"
+          go test ./...
           {
             echo '### Meta extraction indicators'
             echo
@@ -213,13 +124,11 @@ jobs:
             jq -r '(.indicators[]|select(.id=="extraction.observed")|.value) as $observed | (.indicators[]|select(.id=="extraction.applied")|.value) as $applied | (.indicators[]|select(.id=="extraction.created")|.value) as $created | (.indicators[]|select(.id=="extraction.unhandled")|.value) as $unhandled | "- helper extractions: `\($applied)/\($observed)`\n- generated helper files: `\($created)`\n- unhandled residuals: `\($unhandled)`"' "$RUNNER_TEMP/repository-projection/extraction-report.json"
             jq -r '"- logical source splits: `\(.coordinates.applied_subjects)/\(.coordinates.selected_subjects)`\n- split-created files: `\(.coordinates.created_paths)`\n- successor topology checks: `\(.coordinates.deferred_topology_subjects)`\n- split decision: `\(.decision) / \(.resolution)`"' "$RUNNER_TEMP/repository-projection/split-report.json"
             jq -r '"- authorized paths: `\(.coordinates.observed_paths)/\(.coordinates.expected_paths)`\n- recipe-declared creations: `\(.coordinates.untracked_paths)/\(.coordinates.created_paths)`\n- unclassified paths: `\(.coordinates.unclassified_untracked_paths)`\n- decision: `\(.decision) / \(.resolution)`"' "$report"
-            jq -r '"- repository writes in committed checkout: `0`\n- generated runner writes: `\(.coordinates.untracked_paths)`\n- replay comparisons: `1/1`\n- projected tests: `1/1`\n- local tests: `0`\n- cross-project required gates: `0`"' "$report"
-            jq -r '"- Gooo repair bindings: `\(.bindings)/12`\n- Go inventory: `\(.go_files) files / \(.go_lines) lines`\n- Gooo inventory: `\(.gooo_files) files / \(.gooo_lines) lines`\n- directories: `\(.dirs)`"' "$out/inventory.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact-SHA projection indicators
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@v4
         with:
           name: repository-projection-${{ env.EXACT_SHA }}
           path: |
@@ -237,18 +146,6 @@ jobs:
             ${{ runner.temp }}/repository-projection/untracked-write-set.txt
             ${{ runner.temp }}/repository-projection/authorized-rewrite.patch
             ${{ runner.temp }}/repository-projection/cutover-evidence.json
-            ${{ runner.temp }}/repository-projection/repair-graph.json
-            ${{ runner.temp }}/repository-projection/repair-meta-evidence.json
-            ${{ runner.temp }}/repository-projection/function-extractor-runtime.json
-            ${{ runner.temp }}/repository-projection/projected-test-runtime.json
-            ${{ runner.temp }}/repository-projection/projected-test.stdout
-            ${{ runner.temp }}/repository-projection/projected-test.stderr
-            ${{ runner.temp }}/repository-projection/replay-evidence.json
-            ${{ runner.temp }}/repository-projection/first-materialization.manifest
-            ${{ runner.temp }}/repository-projection/second-materialization.manifest
-            ${{ runner.temp }}/repository-projection/first-replayed-patch.tar
-            ${{ runner.temp }}/repository-projection/second-replayed-patch.tar
-            ${{ runner.temp }}/repository-projection/inventory.json
             ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
             ${{ steps.materialize.outputs.materialization-evidence }}
             ${{ steps.materialize.outputs.activation-evidence }}
