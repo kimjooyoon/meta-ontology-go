@@ -38,7 +38,7 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 	}
 	report := Report{Schema: ReportSchema, ContractID: contract.ID, SubjectSHA: observation.SubjectSHA,
 		Summary: summary, UseCases: useCases, Cells: cells, NotClaimed: contract.NotClaimed,
-		Graph: observation.Graph,
+		Graph:          observation.Graph,
 		ContractDigest: contractDigest, ObservationDigest: observationDigest, ProgramDigest: digestBytes([]byte(program))}
 	report.Decision, report.Resolution, report.Reason = decide(summary)
 	report.Indicators = buildIndicators(summary)

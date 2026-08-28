@@ -1,15 +1,15 @@
 package languageutility
 
 type CellObservation struct {
-	UseCaseID      string `json:"use_case_id"`
-	StageID        string `json:"stage_id"`
-	State          string `json:"state"`
-	Producer       string `json:"producer"`
-	Step           string `json:"step"`
-	Reason         string `json:"reason"`
-	EvidenceKey    string `json:"evidence_key,omitempty"`
-	EvidencePath   string `json:"evidence_path,omitempty"`
-	EvidenceDigest string `json:"evidence_digest,omitempty"`
+	UseCaseID            string       `json:"use_case_id"`
+	StageID              string       `json:"stage_id"`
+	State                string       `json:"state"`
+	Producer             string       `json:"producer"`
+	Step                 string       `json:"step"`
+	Reason               string       `json:"reason"`
+	EvidenceKey          string       `json:"evidence_key,omitempty"`
+	EvidencePath         string       `json:"evidence_path,omitempty"`
+	EvidenceDigest       string       `json:"evidence_digest,omitempty"`
 	MetaActivityID       string       `json:"meta_activity_id,omitempty"`
 	MetaInputID          string       `json:"meta_input_id,omitempty"`
 	MetaOutputID         string       `json:"meta_output_id,omitempty"`
@@ -27,16 +27,16 @@ type CausalEdge struct {
 }
 
 type GraphObservation struct {
-	Schema                  string `json:"schema"`
-	ProgramDigest           string `json:"program_digest"`
-	GraphHash               string `json:"graph_hash"`
-	ActivityCount           int    `json:"activity_count"`
-	EdgeCount               int    `json:"edge_count"`
-	DebugActivityCount      int    `json:"debug_activity_count"`
-	DebugOutputCount        int    `json:"debug_output_count"`
-	DebugUsedEdgeCount      int    `json:"debug_used_edge_count"`
-	DebugGeneratedEdgeCount int    `json:"debug_generated_edge_count"`
-	DebugActivityIDs        []string    `json:"debug_activity_ids"`
+	Schema                  string       `json:"schema"`
+	ProgramDigest           string       `json:"program_digest"`
+	GraphHash               string       `json:"graph_hash"`
+	ActivityCount           int          `json:"activity_count"`
+	EdgeCount               int          `json:"edge_count"`
+	DebugActivityCount      int          `json:"debug_activity_count"`
+	DebugOutputCount        int          `json:"debug_output_count"`
+	DebugUsedEdgeCount      int          `json:"debug_used_edge_count"`
+	DebugGeneratedEdgeCount int          `json:"debug_generated_edge_count"`
+	DebugActivityIDs        []string     `json:"debug_activity_ids"`
 	DebugCausalEdges        []CausalEdge `json:"debug_causal_edges"`
 }
 
@@ -45,7 +45,7 @@ type Observation struct {
 	ContractID       string            `json:"contract_id"`
 	SubjectSHA       string            `json:"subject_sha"`
 	RepositoryWrites int               `json:"repository_writes"`
-	Graph            GraphObservation `json:"graph"`
+	Graph            GraphObservation  `json:"graph"`
 	Cells            []CellObservation `json:"cells"`
 }
 
