@@ -23,14 +23,18 @@ measure_command() {
   local rss_file="$output.rss" start_ns end_ns wall_ns wall_ms peak_rss status
   start_ns="$(date +%s%N)"
   set +e
-  /usr/bin/time -f '%M' -o "$rss_file" "$@" >"$stdout_file" 2>"$stderr_file"
+  /usr/bin/time -q -f '%M' -o "$rss_file" "$@" >"$stdout_file" 2>"$stderr_file"
   status=$?
   set -e
   end_ns="$(date +%s%N)"
   wall_ns=$((end_ns - start_ns))
   wall_ms=$(((wall_ns + 999999) / 1000000))
   if ((wall_ns > 0 && wall_ms == 0)); then wall_ms=1; fi
-  peak_rss="$(tr -d '[:space:]' <"$rss_file")"
+  peak_rss="$(tail -n 1 "$rss_file")"
+  if [[ ! "$peak_rss" =~ ^[0-9]+$ ]]; then
+    echo "invalid peak RSS measurement: $rss_file" >&2
+    return 1
+  fi
   test "$wall_ns" -gt 0
   test "$wall_ms" -gt 0
   test "$peak_rss" -gt 0
@@ -60,7 +64,7 @@ run_debug() {
   local -a args=(debug --json --entry PayOrder --break-event "$breakpoint" "$source")
   start_ns="$(date +%s%N)"
   set +e
-  /usr/bin/time -f '%M' -o "$rss" "$binary" "${args[@]}" >"$output" 2>"$work/$run.stderr"
+  /usr/bin/time -q -f '%M' -o "$rss" "$binary" "${args[@]}" >"$output" 2>"$work/$run.stderr"
   status=$?
   set -e
   end_ns="$(date +%s%N)"
@@ -68,7 +72,11 @@ run_debug() {
   wall_ns=$((end_ns - start_ns))
   wall_ms=$(((wall_ns + 999999) / 1000000))
   if ((wall_ns > 0 && wall_ms == 0)); then wall_ms=1; fi
-  peak_rss="$(tr -d '[:space:]' <"$rss")"
+  peak_rss="$(tail -n 1 "$rss")"
+  if [[ ! "$peak_rss" =~ ^[0-9]+$ ]]; then
+    echo "invalid peak RSS measurement: $rss" >&2
+    return 1
+  fi
   test "$wall_ns" -gt 0
   test "$wall_ms" -gt 0
   test "$peak_rss" -gt 0
@@ -193,11 +201,11 @@ expect_failure "$work/malformed-input.json" "$work/malformed-report.json"
 jq '.graph.debug_used_edge_count=1' "$positive_input" > "$work/graph-edge-removal-input.json"
 expect_failure "$work/graph-edge-removal-input.json" "$work/graph-edge-removal-report.json"
 
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and (.unknown_cases[0] | [.stage,.step,.reason,.unknown_class,.next_operation,.blocked_by] | all(. != ""))' "$work/missing-second-report.json"
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and (.unknown_cases[0] | [.stage,.step,.reason,.unknown_class,.next_operation,.blocked_by] | all(. != ""))' "$work/missing-resource-report.json"
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and (.unknown_cases[0] | [.stage,.step,.reason,.unknown_class,.next_operation] | all(. != "")) and (.unknown_cases[0].blocked_by|type)=="array" and (.unknown_cases[0].unknown_class=="DIRECT_MISSING" and (.unknown_cases[0].blocked_by|length)==0)' "$work/missing-second-report.json"
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and (.unknown_cases[0] | [.stage,.step,.reason,.unknown_class,.next_operation] | all(. != "")) and (.unknown_cases[0].blocked_by|type)=="array" and (.unknown_cases[0].unknown_class=="DIRECT_MISSING" and (.unknown_cases[0].blocked_by|length)==0)' "$work/missing-resource-report.json"
 jq -e '.decision=="FAIL_CLOSED" and .resolution=="EXACT" and (.unknown_cases|length)==0 and (.refuted_cases[0].reason=="DEBUG_DETERMINISTIC_DIGEST_CONTRADICTION")' "$work/digest-contradiction-report.json"
-jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1' "$work/unknown-top-report.json"
-jq -e '.decision=="FAIL_CLOSED" and (.unknown_cases|length)==1' "$work/malformed-report.json"
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and .unknown_cases[0].unknown_class=="UNKNOWN_DECISION" and (.unknown_cases[0].blocked_by|type)=="array" and (.unknown_cases[0].blocked_by|length)==0' "$work/unknown-top-report.json"
+jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and (.unknown_cases|length)==1 and (.unknown_cases[0].blocked_by|type)=="array" and (.unknown_cases[0].blocked_by|length)==0' "$work/malformed-report.json"
 jq -e '.decision=="FAIL_CLOSED" and .resolution=="EXACT" and (.refuted_cases[0].reason=="GOOO_GRAPH_ACTIVITY_OR_EDGE_CONTRADICTION") and (.unknown_cases|length)==0' "$work/graph-edge-removal-report.json"
 
 jq -n --slurpfile missing_second "$work/missing-second-report.json" --slurpfile missing_resource "$work/missing-resource-report.json" \

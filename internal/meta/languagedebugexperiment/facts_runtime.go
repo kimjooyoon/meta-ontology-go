@@ -12,11 +12,11 @@ func validMeasurement(value Measurement, expectedName string) bool {
 
 func runtimeUncertainty(input Input) *Uncertainty {
 	if len(input.RuntimeObservations) != input.Contract.ExpectedResourceObservations {
-		value := unknownCase("RESOURCE_OBSERVED", "READ_RUNTIME_OBSERVATION", "RUNTIME_OBSERVATION_MISSING", "MISSING_EVIDENCE", "REEXECUTE_DEBUG_PATH_WITH_RESOURCES", "RUNTIME_OBSERVATIONS")
+		value := unknownCase("RESOURCE_OBSERVED", "READ_RUNTIME_OBSERVATION", "RUNTIME_OBSERVATION_MISSING", "DIRECT_MISSING", "REEXECUTE_DEBUG_PATH_WITH_RESOURCES", "RUNTIME_OBSERVATIONS")
 		return &value
 	}
 	if !validMeasurement(input.Build, "debug-producer-build") || !validMeasurement(input.EvaluatorBuild, "debug-evaluator-build") || !validMeasurement(input.Test, "debug-relevant-tests") {
-		value := unknownCase("RESOURCE_OBSERVED", "READ_BUILD_TEST_MEASUREMENTS", "BUILD_OR_TEST_RESOURCE_MISSING", "MISSING_EVIDENCE", "RECORD_CI_MEASUREMENTS", "BUILD_TEST_RECEIPTS")
+		value := unknownCase("RESOURCE_OBSERVED", "READ_BUILD_TEST_MEASUREMENTS", "BUILD_OR_TEST_RESOURCE_MISSING", "DIRECT_MISSING", "RECORD_CI_MEASUREMENTS", "BUILD_TEST_RECEIPTS")
 		return &value
 	}
 	positive := []languagedebug.Receipt{input.First, input.Second}

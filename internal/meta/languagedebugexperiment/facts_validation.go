@@ -4,13 +4,13 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug"
 
 func validateInput(input Input) (facts, string) {
 	if !validSHA(input.SubjectSHA) || !validDigest(input.ExecutableDigest) {
-		return unknownFacts("DEBUG_SUBJECT_UNKNOWN", "DEBUGGING", "READ_SUBJECT", "MISSING_IDENTITY", "BIND_EXACT_HEAD_AND_BINARY", "SUBJECT_OR_BINARY_DIGEST")
+		return unknownFacts("DEBUG_SUBJECT_UNKNOWN", "DEBUGGING", "READ_SUBJECT", "DIRECT_MISSING", "BIND_EXACT_HEAD_AND_BINARY", "SUBJECT_OR_BINARY_DIGEST")
 	}
 	if !validGraph(input.Graph) {
 		return refutedFacts("GRAPH_BINDING", "VERIFY_GOOO_GRAPH", "GOOO_GRAPH_ACTIVITY_OR_EDGE_CONTRADICTION")
 	}
 	if missingReceipt(input.First) || missingReceipt(input.Second) {
-		return unknownFacts("DEBUG_RECEIPT_MISSING", "DEBUGGING", "READ_SECOND_RECEIPT", "MISSING_EVIDENCE", "REEXECUTE_DEBUG_PATH_TWICE", "SECOND_RECEIPT")
+		return unknownFacts("DEBUG_RECEIPT_MISSING", "DEBUGGING", "READ_SECOND_RECEIPT", "DIRECT_MISSING", "REEXECUTE_DEBUG_PATH_TWICE", "SECOND_RECEIPT")
 	}
 	if input.First.DeterministicDigest() != input.Second.DeterministicDigest() {
 		return refutedFacts("DETERMINISTIC_REPLAY", "COMPARE_SEMANTIC_RECEIPT_DIGESTS", "DEBUG_DETERMINISTIC_DIGEST_CONTRADICTION")
@@ -36,7 +36,11 @@ func refutedFacts(stage, step, reason string) (facts, string) {
 }
 
 func unknownCase(stage, step, reason, class, next, blocked string) Uncertainty {
-	return Uncertainty{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: blocked}
+	frontier := []string{}
+	if class == "DEPENDENCY_BLOCKED" && blocked != "" {
+		frontier = []string{blocked}
+	}
+	return Uncertainty{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: frontier}
 }
 
 func missingReceipt(receipt languagedebug.Receipt) bool {

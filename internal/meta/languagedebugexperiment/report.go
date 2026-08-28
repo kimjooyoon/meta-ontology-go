@@ -27,7 +27,7 @@ type Uncertainty struct {
 	Reason        string `json:"reason"`
 	UnknownClass  string `json:"unknown_class"`
 	NextOperation string `json:"next_operation"`
-	BlockedBy     string `json:"blocked_by"`
+	BlockedBy     []string `json:"blocked_by"`
 }
 
 type Refutation struct {
