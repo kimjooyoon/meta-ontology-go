@@ -1,13 +1,13 @@
 {
   "schema": "gooo/vertical-slice-boundary-denominator/v1",
-  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v17",
-  "version": 17,
+  "denominator_id": "gooo.denominator.capability.vertical-slice-closure.v18",
+  "version": 18,
   "boundaries": [
     {
       "id": "syntax",
       "schema": "gooo/language-syntax-roundtrip/v1",
       "meta_operation": "prove-language-syntax-roundtrip",
-      "target": 35,
+      "target": 36,
       "link_target": 1
     },
     {
