@@ -72,8 +72,11 @@ write_extraction_result() {
   local report="$1"
   local output="$2"
   local fallback_reason="$3"
+  local projected_metrics="$4"
   if [[ -s "$report" ]]; then
-    jq --arg source_sha "$head_sha" --arg reason "$fallback_reason" '
+    jq --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
+      --slurpfile projected_metrics "$projected_metrics" \
+      --arg source_sha "$head_sha" --arg reason "$fallback_reason" '
       ([.failures[]? | select(.decision == "REFUTED")]) as $refuted |
       ($refuted | length) as $refuted_count |
       {
@@ -94,6 +97,15 @@ write_extraction_result() {
           ($logical + "#" + $identity)
         ] | unique | sort,
         counterexamples: (.failures // []),
+        partial_subjects: (.subjects // []),
+        partial_writes: {
+          changed: ([.subjects[]?.changed_files[]?] | unique | sort),
+          created: ([.subjects[]?.created_files[]?] | unique | sort)
+        },
+        raw_projected_progress: {
+          raw_blocking: ([$raw_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length),
+          projected_blocking: ([$projected_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length)
+        },
         extraction: {
           observed: ([.indicators[]? | select(.id == "extraction.observed") | .value] | first // 0),
           applied: ([.indicators[]? | select(.id == "extraction.applied") | .value] | first // 0),
@@ -103,12 +115,17 @@ write_extraction_result() {
       }' "$report" > "$output"
     return
   fi
-  jq -n --arg source_sha "$head_sha" --arg reason "$fallback_reason" \
+  jq -n --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
+    --slurpfile projected_metrics "$projected_metrics" \
+    --arg source_sha "$head_sha" --arg reason "$fallback_reason" \
     '{schema:"gooo.semantic-conformance-extraction-result/v1", source_sha:$source_sha,
       decision:"UNKNOWN", stage:"semantic-conformance", step:"extractor-observe",
       reason:$reason, unknown_class:"DIRECT_MISSING",
       next_operation:"restore-decomposition-evidence", blocked_by:[], blocker_ids:[],
-      counterexamples:[], extraction:{observed:0, applied:0, created:0, unhandled:null}}' > "$output"
+      counterexamples:[], partial_subjects:[], partial_writes:{changed:[], created:[]},
+      raw_projected_progress:{raw_blocking:([$raw_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length),
+        projected_blocking:([$projected_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length)},
+      extraction:{observed:0, applied:0, created:0, unhandled:null}}' > "$output"
 }
 
 run_extraction_pass() {
@@ -140,7 +157,7 @@ run_extraction_pass() {
     return 0
   fi
   if [[ ! -s "$output" ]]; then
-    write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_REPORT_UNAVAILABLE"
+    write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_REPORT_UNAVAILABLE" "$projection_work/split-source-metrics-raw.json"
     cat "$projection_work/extraction-counterexample.json"
     return "$status"
   fi
@@ -149,7 +166,7 @@ run_extraction_pass() {
     EXTRACTION_PARTIAL=1
     return 0
   fi
-  write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_APPLIED_ZERO"
+  write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_APPLIED_ZERO" "$projection_work/split-source-metrics-raw.json"
   cat "$projection_work/extraction-counterexample.json"
   return "$status"
 }
@@ -176,6 +193,7 @@ go run ./scripts/source-splitter \
 previous_blocking=-1
 fixed_point_closed=false
 last_extraction="$projection_work/extraction-report.json"
+last_metrics="$projection_work/split-source-metrics-raw.json"
 for iteration in 1 2 3 4 5 6 7 8; do
   pass_work="$projection_work/fixed-point-$iteration"
   mkdir -p "$pass_work"
@@ -189,12 +207,13 @@ for iteration in 1 2 3 4 5 6 7 8; do
     -storage-root "$storage_root" \
     -json > "$metrics"
   blocking="$(jq -r '[.meta.indicators[] | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  last_metrics="$metrics"
   if [[ "$blocking" -eq 0 ]]; then
     fixed_point_closed=true
     break
   fi
   if [[ "$previous_blocking" -ge 0 && "$blocking" -ge "$previous_blocking" ]]; then
-    write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "NO_PROGRESS_FIXED_POINT"
+    write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "NO_PROGRESS_FIXED_POINT" "$last_metrics"
     jq --arg blocking "$blocking" --arg iteration "$iteration" \
       '. + {diagnostics:{blocking_residual:($blocking|tonumber), iteration:($iteration|tonumber)}}' \
       "$projection_work/fixed-point-unknown.json" \
@@ -240,7 +259,7 @@ for iteration in 1 2 3 4 5 6 7 8; do
 done
 
 if [[ "$fixed_point_closed" != true ]]; then
-  write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "FIXED_POINT_ITERATION_BOUND"
+  write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "FIXED_POINT_ITERATION_BOUND" "$last_metrics"
   jq --arg iteration "8" \
     '. + {diagnostics:{iteration_limit:($iteration|tonumber)}}' \
     "$projection_work/fixed-point-unknown.json" \
