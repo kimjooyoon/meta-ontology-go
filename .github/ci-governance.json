@@ -2078,6 +2078,15 @@
       ]
     },
     {
+      "branch": "agent/gooo-release-asset-set",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/gooo-release-publish.yml",
+        "internal/verify/scope_gooo_experimental_release.go"
+      ]
+    },
+    {
       "branch": "agent/toolchain-executable-usecases",
       "paths": [
         ".github/agent-scope-table.md",
