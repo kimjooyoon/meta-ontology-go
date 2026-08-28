@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set -x
 
 : "${HEAD_SHA:?HEAD_SHA is required}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY is required}"
