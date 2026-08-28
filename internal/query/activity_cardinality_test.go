@@ -7,7 +7,7 @@ func TestResolveActivityCardinalityStatesAndPreservesGraph(t *testing.T) {
 	for _, node := range []Node{
 		{ID: ID("urn:activity:z"), Kind: ActivityNodeKind, Namespace: "two", Name: "Run"},
 		{ID: ID("urn:activity:a"), Kind: ActivityNodeKind, Namespace: "one", Name: "Run"},
-		{ID: ID("urn:entity:a"), Kind: EntityNodeKind, Namespace: "one", Name: "Run"},
+		{ID: ID("urn:entity:a"), Kind: EntityNodeKind, Namespace: "one", Name: "Record"},
 	} {
 		if err := graph.AddNode(node); err != nil {
 			t.Fatal(err)

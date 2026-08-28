@@ -17,10 +17,10 @@ activity ResolveOther(Input) -> Output
 
 func TestRunGraphActivityResolutionExposesZeroOneMany(t *testing.T) {
 	cases := []struct {
-		name string
-		args []string
-		code int
-		want queryengine.ActivityResolutionDecision
+		name  string
+		args  []string
+		code  int
+		want  queryengine.ActivityResolutionDecision
 		count int
 	}{
 		{"one", []string{"fixture.gooo", "--namespace", "activitycardinality", "--name", "ResolveOne"}, exitOK, queryengine.ActivityResolutionClosed, 1},
