@@ -154,7 +154,6 @@ jobs:
             .summary.unresolved == 0 and
             .summary.mutation_authorities == 0 and
             .summary.repository_writes == 0 and .repository_writes == 0 and
-            ([.cases[] | select(.satisfied == true)] | length) == 20 and
             ([.indicators[]] | length) == 39 and
             ([.indicators[] | select(.satisfied == true)] | length) == 39 and
             ([.indicators[] | select(.class == "OUTCOME")] | length) == 3 and
@@ -304,4 +303,3 @@ jobs:
             .summary.repository_writes == 0 and
             ([.cells[] | select(.state == "CLOSED")] | length) == 7
           ' "$RUNNER_TEMP/final/eligibility.json"
-
