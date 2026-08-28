@@ -9,6 +9,7 @@ type splitPlan struct {
 type planSubject struct {
 	Logical string `json:"logical"`
 	Lines   int    `json:"lines"`
+	Reason  string `json:"reason"`
 }
 
 type densityReport struct {
