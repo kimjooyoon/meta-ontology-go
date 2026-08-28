@@ -2,7 +2,7 @@ package claimresolutiontuple
 namespace claimresolutiontuple
 
 entity ClaimInput id "gooo://claim-resolution/input"
-entity ClaimResolutionPrimitive id "gooo.primitive.claim-resolution-tuple.v1"
+entity ClaimResolutionPrimitive id "gooo://claim-resolution/gooo.primitive.claim-resolution-tuple.v1"
 
 activity ClosedClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=CLOSED;stage=NONE;step=NONE;reason=CLAIM_EVIDENCE_CLOSED;unknown_class=NONE;next_operation=NONE"
 activity UnknownDirectClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=UNKNOWN;stage=SOURCE;step=OBSERVE_INPUT;reason=INPUT_UNAVAILABLE;unknown_class=DIRECT_MISSING;next_operation=PROVIDE_INPUT"
