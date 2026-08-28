@@ -61,10 +61,11 @@ func stageGenericExtraction(root, logical string, buffers map[string][]byte, cre
 }
 
 func extractionFailure(logical string, err error) extractionFailureRecord {
-	var failure projectionextractor.Failure
-	if errors.As(err, &failure) {
+	if failure, ok := errors.AsType[projectionextractor.Failure](err); ok {
 		decision := "UNKNOWN"
-		if failure.UnknownClass == "KNOWN_CONTRADICTION" { decision = "REFUTED" }
+		if failure.UnknownClass == "KNOWN_CONTRADICTION" {
+			decision = "REFUTED"
+		}
 		return extractionFailureRecord{Logical: logical, Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
 	}
 	return extractionFailureRecord{Logical: logical, Decision: "UNKNOWN", Stage: "apply-extraction", Step: "generic", Reason: "EXTRACTION_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-parser-evidence", BlockedBy: []string{}, Diagnostics: []string{}}
