@@ -46,7 +46,7 @@ jobs:
           for indicator in DRIVER OUTCOME GUARDRAIL; do
             test "$(grep -o "indicator=$indicator" "$contract" | wc -l)" -eq 4
           done
-          jq -e '([.nodes[] | select(.kind == "Activity") | .id]) as $activities | ([.relations[] | select(.predicate == "prov:used")]) as $used | ([.relations[] | select(.predicate == "prov:wasGeneratedBy")]) as $generated | ($activities | length) == 12 and ($used | length) >= 12 and ($generated | length) == 12 and all($activities[]; . as $activity | any($used[]; .subject == $activity or .object == $activity)) and all($activities[]; . as $activity | any($generated[]; .subject == $activity or .object == $activity))' "$out/repair-graph.json" >/dev/null
+          jq -e '([.nodes[] | select(.kind == "Activity") | .id]) as $activities | ([.relations[] | select(.predicate == "used")]) as $used | ([.relations[] | select(.predicate == "wasGeneratedBy")]) as $generated | ($activities | length) == 12 and ($used | length) >= 12 and ($generated | length) == 12 and all($activities[]; . as $activity | any($used[]; .subject == $activity or .object == $activity)) and all($activities[]; . as $activity | any($generated[]; .subject == $activity or .object == $activity))' "$out/repair-graph.json" >/dev/null
           jq -n --argjson activities "$activity_count" '{schema:"gooo.repository-projection-repair.v1", activities:$activities, bindings:12, proof_choices:{FOUNDATION:4,COHERENCE:4,REGRESSION:4}, indicators:{DRIVER:4,OUTCOME:4,GUARDRAIL:4}}' > "$out/repair-meta-evidence.json"
 
       - name: Bind clean exact-SHA logical split metrics
