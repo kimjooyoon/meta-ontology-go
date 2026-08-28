@@ -9,6 +9,7 @@ func init() {
 		"examples/gooo-release-publication",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/verify/scope_gooo_experimental_release.go",
 	}
 }
