@@ -9,8 +9,8 @@ import (
 
 func testInput(t *testing.T) Input {
 	t.Helper()
-	first := languagedebug.Observe(executionFixture(t), "SOURCE_PARSED")
-	second := languagedebug.Observe(executionFixture(t), "ACTIVITY_INVOKED")
+	first := languagedebug.Observe(executionFixture(t), "SEMANTIC_LOWERED")
+	second := languagedebug.Observe(executionFixture(t), "SEMANTIC_LOWERED")
 	return Input{
 		SubjectSHA: string(makeHex('a', 40)), ExecutableDigest: digest('d'),
 		Contract: fixedContract(),
@@ -53,7 +53,7 @@ func executionFixture(t *testing.T) []byte {
 }
 
 func fixedContract() Contract {
-	return Contract{"gooo/language-debug-experiment-contract/v1", 1, 2, 2, 2, 4, 2, 1, 2, 4, 2, 2, 1, 3}
+	return Contract{"gooo/language-debug-experiment-contract/v1", 1, 2, 2, 2, 4, 2, 1, 2, 2, 2, 2, 1, 3}
 }
 
 func digest(value byte) string { return "sha256:" + string(makeHex(value, 64)) }
