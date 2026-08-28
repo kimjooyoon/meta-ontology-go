@@ -138,11 +138,11 @@ test "$baseline_zip_digest" = "sha256:d491d53556bebbde810fe83ce63aff292c9820474a
 baseline_extract="$out/baseline-extract"
 mkdir -p "$baseline_extract"
 unzip -q "$out/baseline-artifact.zip" -d "$baseline_extract"
-mapfile -t baseline_reports < <(find "$baseline_extract" -type f -name report.json -print | sort)
-test "${#baseline_reports[@]}" -eq 1
+baseline_report="$baseline_extract/report.json"
+test -f "$baseline_report"
 jq -e '.summary.closed_cells==39 and .summary.open_cells==3 and .summary.unknown_cells==0 and .summary.refuted_cells==0 and .summary.cells_total==42 and .summary.complete_use_cases==4 and .summary.use_cases_total==6 and .summary.remaining_cells==3' \
-  "${baseline_reports[0]}"
-jq -n --slurpfile before "${baseline_reports[0]}" --slurpfile after "$out/report.json" \
+  "$baseline_report"
+jq -n --slurpfile before "$baseline_report" --slurpfile after "$out/report.json" \
   --arg artifact_id "9690576734" --arg artifact_name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
   --arg artifact_digest "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" \
   --argjson artifact_size 6987602 --arg zip_digest "$baseline_zip_digest" '
