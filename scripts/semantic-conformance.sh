@@ -24,10 +24,16 @@ esac
 # materialization that closes the selected density residuals, rather than on
 # the unprojected checkout. Missing projection inputs are fail-closed.
 projection_work="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/gooo-semantic-projection"
-projection_evidence="${GOOO_PROJECTION_EVIDENCE:-}"
 storage_root="${GOOO_STORAGE_ROOT:-}"
-if [[ -z "$projection_evidence" || -z "$storage_root" ]]; then
-  echo "semantic conformance: exact projection evidence and storage root are required" >&2
+runner_temp="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
+job_id="${GITHUB_JOB:-semantic}"
+projection_evidence="$runner_temp/repository-materialize-$job_id/projector/evidence.json"
+if [[ -z "$storage_root" ]]; then
+  echo "semantic conformance: exact materialized storage root is required" >&2
+  exit 1
+fi
+if [[ ! -s "$projection_evidence" ]]; then
+  echo "semantic conformance: exact materialization projection evidence is unavailable" >&2
   exit 1
 fi
 head_sha="$(git rev-parse HEAD)"

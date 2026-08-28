@@ -56,10 +56,10 @@ type extractionIndicator struct {
 }
 
 type extractionReport struct {
-	Schema     string                   `json:"schema"`
-	SourceSHA  string                   `json:"source_sha"`
-	Subjects   []extractionSubject      `json:"subjects"`
-	Unhandled  []string                 `json:"unhandled"`
+	Schema     string                    `json:"schema"`
+	SourceSHA  string                    `json:"source_sha"`
+	Subjects   []extractionSubject       `json:"subjects"`
+	Unhandled  []string                  `json:"unhandled"`
 	Failures   []extractionFailureRecord `json:"failures,omitempty"`
-	Indicators []extractionIndicator    `json:"indicators"`
+	Indicators []extractionIndicator     `json:"indicators"`
 }

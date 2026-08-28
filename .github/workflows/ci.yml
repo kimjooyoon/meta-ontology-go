@@ -148,7 +148,6 @@ jobs:
           # deterministic CI-authorized governance change documented in .github/conformance-plan.md.
           GOOO_CONFORMANCE_STAGE: "0"
           GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-          GOOO_PROJECTION_EVIDENCE: ${{ steps.materialize.outputs.projection-evidence }}
         run: ./scripts/semantic-conformance.sh
 
   policy:
