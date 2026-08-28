@@ -19,6 +19,58 @@ case "$conformance_stage" in
     ;;
 esac
 
+# The semantic verifier consumes the same deterministic projected workspace as
+# repository-projection. This keeps its source policy observation on the CI
+# materialization that closes the selected density residuals, rather than on
+# the unprojected checkout. Missing projection inputs are fail-closed.
+projection_work="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/gooo-semantic-projection"
+projection_evidence="${GOOO_PROJECTION_EVIDENCE:-}"
+storage_root="${GOOO_STORAGE_ROOT:-}"
+if [[ -z "$projection_evidence" || -z "$storage_root" ]]; then
+  echo "semantic conformance: exact projection evidence and storage root are required" >&2
+  exit 1
+fi
+head_sha="$(git rev-parse HEAD)"
+mkdir -p "$projection_work"
+go run ./scripts/line-metrics \
+  -root "$repo_root" \
+  -storage-root "$repo_root" \
+  -json > "$projection_work/split-source-metrics-raw.json"
+go run ./bootstrap/meta-binding-witness \
+  -root "$repo_root" \
+  -metrics "$projection_work/split-source-metrics-raw.json" \
+  -bound-metrics "$projection_work/split-source-metrics.json" \
+  -report "$projection_work/split-binding-report.json" \
+  -check
+go run ./bootstrap/repository-cutover \
+  --root "$repo_root" \
+  --physical-root "$storage_root" \
+  --authority-manifest "$storage_root/projection/catalog/manifest.json" \
+  --expected-sha "$head_sha" \
+  --evidence "$projection_work/cutover-evidence.json"
+go run ./bootstrap/logical-split-planner \
+  --root "$repo_root" \
+  --evidence "$projection_evidence" \
+  --expected-sha "$head_sha" \
+  --output "$projection_work/split-plan.json"
+go run ./bootstrap/line-density-rewriter \
+  --root "$repo_root" \
+  --plan "$projection_work/split-plan.json" \
+  --expected-sha "$head_sha" \
+  --output "$projection_work/density-report.json"
+go run ./bootstrap/function-extractor \
+  --root "$repo_root" \
+  --plan "$projection_work/split-plan.json" \
+  --density-report "$projection_work/density-report.json" \
+  --expected-sha "$head_sha" \
+  --output "$projection_work/extraction-report.json"
+go run ./scripts/source-splitter \
+  -root "$repo_root" \
+  -metrics "$projection_work/split-source-metrics.json" \
+  -sha "$head_sha" \
+  -plan "$projection_work/split-plan.json" \
+  -output "$projection_work/split-report.json"
+
 # Stage 0 keeps the deterministic Go verifier as the baseline while gooo is
 # bootstrapped. The policy job adds the full changed-path scope check.
 go run ./scripts/verify

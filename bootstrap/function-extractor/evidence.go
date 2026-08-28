@@ -34,15 +34,15 @@ type extractionSubject struct {
 }
 
 type extractionFailureRecord struct {
-	Logical string `json:"logical"`
-	Decision string `json:"decision"`
-	Stage string `json:"stage"`
-	Step string `json:"step"`
-	Reason string `json:"reason"`
-	UnknownClass string `json:"unknown_class"`
-	NextOperation string `json:"next_operation"`
-	BlockedBy []string `json:"blocked_by"`
-	Diagnostics []string `json:"diagnostics,omitempty"`
+	Logical       string   `json:"logical"`
+	Decision      string   `json:"decision"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+	Diagnostics   []string `json:"diagnostics,omitempty"`
 }
 
 type extractionIndicator struct {
@@ -56,10 +56,10 @@ type extractionIndicator struct {
 }
 
 type extractionReport struct {
-	Schema     string                `json:"schema"`
-	SourceSHA  string                `json:"source_sha"`
-	Subjects   []extractionSubject   `json:"subjects"`
-	Unhandled  []string              `json:"unhandled"`
+	Schema     string                   `json:"schema"`
+	SourceSHA  string                   `json:"source_sha"`
+	Subjects   []extractionSubject      `json:"subjects"`
+	Unhandled  []string                 `json:"unhandled"`
 	Failures   []extractionFailureRecord `json:"failures,omitempty"`
-	Indicators []extractionIndicator `json:"indicators"`
+	Indicators []extractionIndicator    `json:"indicators"`
 }

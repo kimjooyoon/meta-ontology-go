@@ -11,11 +11,20 @@ func extractionSubjects(plans map[string]planSubject, residual []string, recipes
 	result := make([]extractionSubject, 0, len(residual))
 	for _, logical := range residual {
 		files := changed[logical]
-		if len(files) == 0 { continue }
-		sort.Strings(files); createdFiles := created[logical]; sort.Strings(createdFiles)
-		source, exists := staged[logical]; if !exists { return nil, fmt.Errorf("recipe did not rewrite subject %s", logical) }
+		if len(files) == 0 {
+			continue
+		}
+		sort.Strings(files)
+		createdFiles := created[logical]
+		sort.Strings(createdFiles)
+		source, exists := staged[logical]
+		if !exists {
+			return nil, fmt.Errorf("recipe did not rewrite subject %s", logical)
+		}
 		operation, proof := "move-complete-declarations", "coherent-system"
-		if recipe, exists := recipes[logical]; exists { operation, proof = recipe.Operation, "axiomatic-foundation" }
+		if recipe, exists := recipes[logical]; exists {
+			operation, proof = recipe.Operation, "axiomatic-foundation"
+		}
 		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: operation, Proof: proof})
 	}
 	return result, nil

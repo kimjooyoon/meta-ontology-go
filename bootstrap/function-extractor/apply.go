@@ -62,6 +62,8 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 		return nil, nil, nil, nil, err
 	}
 	subjects, err := extractionSubjects(plans, residual, bySubject, changedBySubject, createdBySubject, staged)
-	if err != nil { return nil, nil, nil, nil, err }
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	return staged, subjects, unhandled, failures, nil
 }
