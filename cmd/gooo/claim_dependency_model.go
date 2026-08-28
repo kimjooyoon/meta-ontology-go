@@ -33,12 +33,12 @@ type claimDependencyContract struct {
 }
 
 type claimDependencyNode struct {
-	Ordinal           int    `json:"ordinal"`
-	Activity          string `json:"activity"`
-	OutputEntity      string `json:"output_entity"`
-	Role              string `json:"role"`
-	Label             string `json:"label"`
-	ProofChoice       string `json:"proof_choice"`
+	Ordinal            int    `json:"ordinal"`
+	Activity           string `json:"activity"`
+	OutputEntity       string `json:"output_entity"`
+	Role               string `json:"role"`
+	Label              string `json:"label"`
+	ProofChoice        string `json:"proof_choice"`
 	ValueProgramDigest string `json:"value_program_digest"`
 }
 
@@ -53,33 +53,33 @@ type claimDependencyEdge struct {
 }
 
 type claimDependencyGap struct {
-	Activity     string `json:"activity"`
-	InputEntity  string `json:"input_entity"`
-	Stage        string `json:"stage"`
-	Step         string `json:"step"`
-	Reason       string `json:"reason"`
-	UnknownClass string `json:"unknown_class"`
+	Activity      string `json:"activity"`
+	InputEntity   string `json:"input_entity"`
+	Stage         string `json:"stage"`
+	Step          string `json:"step"`
+	Reason        string `json:"reason"`
+	UnknownClass  string `json:"unknown_class"`
 	NextOperation string `json:"next_operation"`
 }
 
 type claimDependencyKindCounts struct {
-	Requires           int `json:"requires"`
-	Supports           int `json:"supports"`
-	Contradicts        int `json:"contradicts"`
-	FailureEntailment  int `json:"failure_entailment"`
+	Requires          int `json:"requires"`
+	Supports          int `json:"supports"`
+	Contradicts       int `json:"contradicts"`
+	FailureEntailment int `json:"failure_entailment"`
 }
 
 type claimDependencySummary struct {
-	ActivitiesTotal          int `json:"activities_total"`
-	ActivitiesObserved       int `json:"activities_observed"`
-	RecoverableRoots         int `json:"recoverable_roots"`
-	TypedDeclarations        int `json:"typed_declarations"`
-	DependencyInputs         int `json:"dependency_inputs"`
-	TypedEdges               int `json:"typed_edges"`
-	EdgeKindsObserved        int `json:"edge_kinds_observed"`
-	UnresolvedInputs         int `json:"unresolved_inputs"`
-	CyclicActivities         int `json:"cyclic_activities"`
-	RepositoryWrites         int `json:"repository_writes"`
+	ActivitiesTotal    int `json:"activities_total"`
+	ActivitiesObserved int `json:"activities_observed"`
+	RecoverableRoots   int `json:"recoverable_roots"`
+	TypedDeclarations  int `json:"typed_declarations"`
+	DependencyInputs   int `json:"dependency_inputs"`
+	TypedEdges         int `json:"typed_edges"`
+	EdgeKindsObserved  int `json:"edge_kinds_observed"`
+	UnresolvedInputs   int `json:"unresolved_inputs"`
+	CyclicActivities   int `json:"cyclic_activities"`
+	RepositoryWrites   int `json:"repository_writes"`
 }
 
 type claimDependencyResolution struct {
@@ -105,26 +105,26 @@ type claimDependencyIndicator struct {
 }
 
 type claimDependencyAuthority struct {
-	Source                      string `json:"source"`
-	SemanticTruthClaimed        bool   `json:"semantic_truth_claimed"`
-	StatePropagationAuthorized  bool   `json:"state_propagation_authorized"`
-	CoreMutationAuthorized      bool   `json:"core_mutation_authorized"`
-	AutomaticMergeAllowed       bool   `json:"automatic_merge_allowed"`
-	RepositoryWrites            int    `json:"repository_writes"`
+	Source                     string `json:"source"`
+	SemanticTruthClaimed       bool   `json:"semantic_truth_claimed"`
+	StatePropagationAuthorized bool   `json:"state_propagation_authorized"`
+	CoreMutationAuthorized     bool   `json:"core_mutation_authorized"`
+	AutomaticMergeAllowed      bool   `json:"automatic_merge_allowed"`
+	RepositoryWrites           int    `json:"repository_writes"`
 }
 
 type claimDependencyReport struct {
-	Schema       string                       `json:"schema"`
-	Candidate    string                       `json:"candidate_id"`
-	Decision     string                       `json:"decision"`
-	Subject      claimDependencySubject       `json:"subject"`
-	Contract     claimDependencyContract      `json:"contract"`
-	Resolution   claimDependencyResolution    `json:"resolution"`
-	Summary      claimDependencySummary       `json:"summary"`
-	KindCounts   claimDependencyKindCounts    `json:"kind_counts"`
-	Nodes        []claimDependencyNode         `json:"nodes"`
-	Edges        []claimDependencyEdge         `json:"edges"`
-	Gaps         []claimDependencyGap          `json:"gaps"`
-	Indicators   []claimDependencyIndicator    `json:"indicators"`
-	Authority    claimDependencyAuthority      `json:"authority"`
+	Schema     string                     `json:"schema"`
+	Candidate  string                     `json:"candidate_id"`
+	Decision   string                     `json:"decision"`
+	Subject    claimDependencySubject     `json:"subject"`
+	Contract   claimDependencyContract    `json:"contract"`
+	Resolution claimDependencyResolution  `json:"resolution"`
+	Summary    claimDependencySummary     `json:"summary"`
+	KindCounts claimDependencyKindCounts  `json:"kind_counts"`
+	Nodes      []claimDependencyNode      `json:"nodes"`
+	Edges      []claimDependencyEdge      `json:"edges"`
+	Gaps       []claimDependencyGap       `json:"gaps"`
+	Indicators []claimDependencyIndicator `json:"indicators"`
+	Authority  claimDependencyAuthority   `json:"authority"`
 }
