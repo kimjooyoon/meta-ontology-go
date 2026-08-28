@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -65,4 +66,43 @@ func render(fset *token.FileSet, file *ast.File, source []byte, selected []decla
 		return rendered{}, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
 	return rendered{formattedSource, formattedHelper}, nil
+}
+
+func capacityRender(fset *token.FileSet, file *ast.File, source []byte, all []declaration, list []importSpec, limit int) (rendered, [][]declaration, error) {
+	output, err := render(fset, file, source, all, list)
+	if err != nil {
+		return rendered{}, nil, err
+	}
+	if physicalLines(output.source) > limit {
+		return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("remaining_lines=%d", physicalLines(output.source))})
+	}
+	partitions := make([][]declaration, 0, len(all))
+	current := make([]declaration, 0)
+	for _, candidate := range all {
+		trial := append(append([]declaration{}, current...), candidate)
+		trialRendered, trialErr := render(fset, file, source, trial, list)
+		if trialErr != nil {
+			return rendered{}, nil, trialErr
+		}
+		if physicalLines(trialRendered.helper) <= limit {
+			current = trial
+			continue
+		}
+		if len(current) == 0 {
+			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(trialRendered.helper))})
+		}
+		partitions = append(partitions, current)
+		current = []declaration{candidate}
+		single, singleErr := render(fset, file, source, current, list)
+		if singleErr != nil {
+			return rendered{}, nil, singleErr
+		}
+		if physicalLines(single.helper) > limit {
+			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(single.helper))})
+		}
+	}
+	if len(current) > 0 {
+		partitions = append(partitions, current)
+	}
+	return output, partitions, nil
 }

@@ -78,9 +78,106 @@ go run ./scripts/source-splitter \
   -plan "$projection_work/split-plan.json" \
   -output "$projection_work/split-report.json"
 
+# Re-observe the active materialized workspace after each projection pass.
+# The fixed point is a bounded metaprogram operation: generated helpers are
+# ordinary source subjects, and a non-decreasing residual is an explicit
+# unknown rather than an authorization to repeat names forever.
+previous_blocking=-1
+fixed_point_closed=false
+for iteration in 1 2 3 4 5 6 7 8; do
+  pass_work="$projection_work/fixed-point-$iteration"
+  mkdir -p "$pass_work"
+  metrics="$pass_work/source-metrics.json"
+  plan="$pass_work/split-plan.json"
+  density="$pass_work/density-report.json"
+  extraction="$pass_work/extraction-report.json"
+  split="$pass_work/split-report.json"
+  go run ./scripts/line-metrics \
+    -root "$repo_root" \
+    -storage-root "$storage_root" \
+    -json > "$metrics"
+  blocking="$(jq -r '[.meta.indicators[] | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  if [[ "$blocking" -eq 0 ]]; then
+    fixed_point_closed=true
+    break
+  fi
+  if [[ "$previous_blocking" -ge 0 && "$blocking" -ge "$previous_blocking" ]]; then
+    jq -n \
+      --arg stage "semantic-conformance" \
+      --arg step "fixed-point-observe" \
+      --arg reason "NO_PROGRESS_FIXED_POINT" \
+      --arg unknown_class "DIRECT_MISSING" \
+      --arg next_operation "restore-decomposition-evidence" \
+      --arg blocking "$blocking" \
+      '{decision:"UNKNOWN", stage:$stage, step:$step, reason:$reason,
+        unknown_class:$unknown_class, next_operation:$next_operation,
+        blocked_by:[], diagnostics:{blocking_residual:($blocking|tonumber)}}' \
+      > "$projection_work/fixed-point-unknown.json"
+    cat "$projection_work/fixed-point-unknown.json"
+    exit 1
+  fi
+  previous_blocking="$blocking"
+  go run ./bootstrap/meta-binding-witness \
+    -root "$repo_root" \
+    -metrics "$metrics" \
+    -bound-metrics "$pass_work/bound-metrics.json" \
+    -report "$pass_work/binding-report.json" \
+    -check
+  go run ./bootstrap/logical-split-planner \
+    --root "$repo_root" \
+    --metrics "$metrics" \
+    --expected-sha "$head_sha" \
+    --output "$plan"
+  go run ./bootstrap/line-density-rewriter \
+    --root "$repo_root" \
+    --plan "$plan" \
+    --expected-sha "$head_sha" \
+    --output "$density"
+  set +e
+  go run ./bootstrap/function-extractor \
+    --root "$repo_root" \
+    --plan "$plan" \
+    --density-report "$density" \
+    --expected-sha "$head_sha" \
+    --output "$extraction" \
+    --fixed-point
+  extraction_status=$?
+  set -e
+  if [[ "$extraction_status" -ne 0 ]]; then
+    if [[ -s "$extraction" ]]; then
+      cat "$extraction"
+      if jq -e '.indicators | any(.[]; .id == "extraction.applied" and .value > 0)' "$extraction" >/dev/null; then
+        continue
+      fi
+    fi
+    exit "$extraction_status"
+  fi
+  go run ./scripts/source-splitter \
+    -root "$repo_root" \
+    -metrics "$metrics" \
+    -sha "$head_sha" \
+    -plan "$plan" \
+    -output "$split"
+done
+
+if [[ "$fixed_point_closed" != true ]]; then
+  jq -n \
+    --arg stage "semantic-conformance" \
+    --arg step "fixed-point-observe" \
+    --arg reason "FIXED_POINT_ITERATION_BOUND" \
+    --arg unknown_class "DIRECT_MISSING" \
+    --arg next_operation "restore-decomposition-evidence" \
+    '{decision:"UNKNOWN", stage:$stage, step:$step, reason:$reason,
+      unknown_class:$unknown_class, next_operation:$next_operation,
+      blocked_by:[], diagnostics:{iteration_limit:8}}' \
+    > "$projection_work/fixed-point-unknown.json"
+  cat "$projection_work/fixed-point-unknown.json"
+  exit 1
+fi
+
 # Stage 0 keeps the deterministic Go verifier as the baseline while gooo is
 # bootstrapped. The policy job adds the full changed-path scope check.
-go run ./scripts/verify
+go run ./scripts/verify --root "$repo_root" --storage-root "$storage_root"
 
 if [[ ! -f cmd/gooo/main.go ]]; then
   echo "semantic conformance deferred: cmd/gooo is not present in this baseline"

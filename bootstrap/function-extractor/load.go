@@ -19,7 +19,7 @@ func decodeJSONFile(name string, target any) error {
 }
 
 func loadExtractionInputs(planName, densityName,
-	expected string) (map[string]planSubject, []string, error) {
+	expected string, fixedPoint bool) (map[string]planSubject, []string, error) {
 	var plan splitPlan
 	if err := decodeJSONFile(planName, &plan); err != nil {
 		return nil, nil, err
@@ -56,6 +56,18 @@ func loadExtractionInputs(planName, densityName,
 		}
 		seen[subject.Logical] = true
 		residual = append(residual, subject.Logical)
+	}
+	if fixedPoint {
+		for _, subject := range plan.Subjects {
+			switch subject.Reason {
+			case "no-movable-declaration", "fixed-declaration-capacity", "movable-declaration-capacity":
+				if seen[subject.Logical] {
+					continue
+				}
+				seen[subject.Logical] = true
+				residual = append(residual, subject.Logical)
+			}
+		}
 	}
 	return plans, residual, nil
 }

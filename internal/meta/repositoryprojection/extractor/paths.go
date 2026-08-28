@@ -77,3 +77,14 @@ func helperPath(logical string, index, total int) string {
 	}
 	return dir + name + test + ".go"
 }
+
+func physicalLines(source []byte) int {
+	if len(source) == 0 {
+		return 0
+	}
+	lines := bytes.Count(source, []byte{'\n'})
+	if source[len(source)-1] != '\n' {
+		lines++
+	}
+	return lines
+}

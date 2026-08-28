@@ -1,12 +1,10 @@
 package extractor
 
 import (
-	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
 	"os"
-	"strings"
 )
 
 func Extract(root, logical string) (map[string][]byte, []string, error) {
@@ -33,29 +31,16 @@ func Extract(root, logical string) (map[string][]byte, []string, error) {
 	if err := validateImports(root, list); err != nil {
 		return nil, nil, err
 	}
-	all, fallbackUsed, err := candidates(fset, file)
+	all, _, err := candidates(fset, file)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(all) == 0 {
 		return nil, nil, fail("derive-recipe", "select-declaration", "UNSUPPORTED_DECLARATION", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 	}
-	output, err := render(fset, file, source, all, list)
+	output, partitions, err := capacityRender(fset, file, source, all, list, 75)
 	if err != nil {
 		return nil, nil, err
-	}
-	remainingLines := bytes.Count(output.source, []byte{'\n'})
-	if remainingLines > 75 {
-		ids := make([]string, 0, len(all))
-		for _, item := range all {
-			ids = append(ids, item.identity)
-		}
-		return nil, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("candidate_count=%d", len(all)), fmt.Sprintf("remaining_lines=%d", remainingLines), strings.Join(ids, ",")})
-	}
-	partitions := [][]declaration{all}
-	if fallbackUsed && len(all) > 1 {
-		midpoint := len(all) / 2
-		partitions = [][]declaration{all[:midpoint], all[midpoint:]}
 	}
 	generated := map[string][]byte{logical: output.source}
 	paths := []string{logical}
@@ -71,6 +56,9 @@ func Extract(root, logical string) (map[string][]byte, []string, error) {
 		}
 		if _, statErr := os.Lstat(helperName); statErr == nil {
 			return nil, nil, fail("generate-helpers", "resolve-helper", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{helper})
+		}
+		if physicalLines(renderedHelper.helper) > 75 {
+			return nil, nil, failWithDiagnostics("generate-helpers", "render-helper", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("helper=%s", helper), fmt.Sprintf("helper_lines=%d", physicalLines(renderedHelper.helper))})
 		}
 		generated[helper] = renderedHelper.helper
 		paths = append(paths, helper)
