@@ -1,4 +1,4 @@
-name: Language utility evidence
+name: Language utility debugging evidence
 
 on:
   pull_request:
@@ -8,35 +8,37 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: language-utility-${{ github.workflow }}-${{ github.ref }}
+  group: language-utility-debugging-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   evidence:
-    name: language-utility-evidence
+    name: language-utility-debugging-evidence
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version: 1.27.0
           cache: false
       - name: Measure fixed language utility portfolio
         run: bash scripts/language-utility-evidence/main.sh
-      - name: Upload exact-head utility evidence
+      - name: Upload exact-head debugging utility evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: language-utility-evidence-${{ env.HEAD_SHA }}
+          name: language-utility-evidence-observed-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-utility-evidence
           if-no-files-found: warn
           retention-days: 30

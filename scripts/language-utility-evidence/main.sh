@@ -3,7 +3,6 @@ set -euo pipefail
 
 : "${HEAD_SHA:?HEAD_SHA is required}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY is required}"
-: "${GITHUB_TOKEN:?GITHUB_TOKEN is required}"
 root="${GITHUB_WORKSPACE:-$(pwd)}"
 out="${RUNNER_TEMP:-/tmp}/language-utility-evidence"
 mkdir -p "$out/evidence" "$out/package"
@@ -55,6 +54,13 @@ cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/graph-observation.json" "$out
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/program.gooo" "$out/program.gooo"
 
 digest() { printf 'sha256:%s' "$(sha256sum "$1" | cut -d' ' -f1)"; }
+github_curl() {
+  if test -n "${GITHUB_TOKEN:-}"; then
+    curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "$@"
+  else
+    curl -fsSL -H "Accept: application/vnd.github+json" "$@"
+  fi
+}
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
 phase="OBSERVATION"
 debug_report_digest="$(digest "$out/evidence/debugging.json")"
@@ -121,13 +127,11 @@ jq -e '.decision=="PROGRESS_OBSERVED" and .resolution=="EXACT" and .summary.clos
 
 phase="BASELINE_RECEIPT"
 baseline_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/9690576734"
-curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
-  "$baseline_api" > "$out/baseline-artifact.json"
+github_curl "$baseline_api" > "$out/baseline-artifact.json"
 jq -e --arg name "language-utility-evidence-57ac9ec486bbca69e447a8eba94e0ce3cd03ced0" \
   '.id==9690576734 and .name==$name and .digest=="sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5" and .size_in_bytes==6987602' \
   "$out/baseline-artifact.json"
-curl -fsSL -L -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" \
-  "$baseline_api/zip" -o "$out/baseline-artifact.zip"
+github_curl -L "$baseline_api/zip" -o "$out/baseline-artifact.zip"
 baseline_zip_digest="$(digest "$out/baseline-artifact.zip")"
 test "$baseline_zip_digest" = "sha256:d491d53556bebbde810fe83ce63aff292c9820474a177677d096c0e8f625ebf5"
 baseline_extract="$out/baseline-extract"
