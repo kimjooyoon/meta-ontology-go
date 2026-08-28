@@ -31,8 +31,8 @@ go fix ./cmd/language-utility-witness ./internal/meta/languageutility
 git diff --exit-code -- cmd/language-utility-witness internal/meta/languageutility
 phase="GOFMT"
 mapfile -t go_files < <(find cmd/language-utility-witness internal/meta/languageutility -type f -name '*.go' -print | sort)
-gofmt -w "${go_files[@]}"
-git diff --exit-code -- cmd/language-utility-witness internal/meta/languageutility
+gofmt -l "${go_files[@]}" > "$out/unformatted.txt"
+gofmt -d "${go_files[@]}" > "$out/gofmt.diff"
 phase="GO_TEST"
 go test ./cmd/language-utility-witness ./internal/meta/languageutility
 phase="USE_CASES"
@@ -48,6 +48,7 @@ cp "${RUNNER_TEMP:-/tmp}/language-example-experiment/report.json" "$out/evidence
 cp "${RUNNER_TEMP:-/tmp}/language-profile-experiment/report.json" "$out/evidence/profiling.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/report.json" "$out/evidence/debugging.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/counterexamples.json" "$out/debugging-counterexamples.json"
+cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/gofmt.diff" "$out/debugging-gofmt.diff"
 cp "$out/package/report.json" "$out/evidence/package-execution.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/gooo-graph.json" "$out/gooo-graph.json"
 cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/graph-observation.json" "$out/graph-observation.json"

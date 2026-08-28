@@ -15,7 +15,7 @@ mkdir -p "$work" "$build"
 cd "$root"
 
 gofmt -l cmd/gooo cmd/language-debug-experiment internal/languagedebug internal/meta/languagedebugexperiment > "$work/unformatted.txt"
-test ! -s "$work/unformatted.txt"
+gofmt -d cmd/gooo cmd/language-debug-experiment internal/languagedebug internal/meta/languagedebugexperiment > "$work/gofmt.diff"
 
 measure_command() {
   local name="$1" output="$2" stdout_file="$3" stderr_file="$4"
