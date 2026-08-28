@@ -4,8 +4,8 @@ This contract publishes the first Gooo CLI prerelease without treating a pull
 request artifact as a release. The only allowed identity is:
 
 ```text
-tag      = v0.1.0-dev
-version  = 0.1.0-dev
+tag      = v0.2.0-dev
+version  = 0.2.0-dev
 status   = development
 release  = prerelease
 latest   = false

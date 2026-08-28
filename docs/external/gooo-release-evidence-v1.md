@@ -2,7 +2,7 @@
 
 This contract separates a release candidate from a published release. Passing it
 does not create a tag or a GitHub Release. It proves that one exact commit has the
-finite evidence required for the later `v0.1.0-dev` prerelease operation.
+finite evidence required for the later `v0.2.0-dev` prerelease operation.
 
 ## Authority
 
@@ -83,9 +83,9 @@ After a pull request run, the next operation is
 operation is `PUBLISH_GOOO_EXPERIMENTAL_RELEASE`.
 
 Publication remains a separate operation. It must verify the successful
-merge-SHA receipt, create an annotated `v0.1.0-dev` tag at that same SHA, build
+merge-SHA receipt, create an annotated `v0.2.0-dev` tag at that same SHA, build
 the fixed assets, and publish a GitHub prerelease. Stable `v0.1.0` remains
-invalid while `gooo version --json` reports version `0.1.0-dev` and status
+invalid while `gooo version --json` reports version `0.2.0-dev` and status
 `development`.
 
 The public Workgraph project consumes only a released CLI, checksums, and
