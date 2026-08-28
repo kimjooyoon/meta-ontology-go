@@ -56,10 +56,11 @@ cp "${RUNNER_TEMP:-/tmp}/language-debug-experiment/program.gooo" "$out/program.g
 digest() { printf 'sha256:%s' "$(sha256sum "$1" | cut -d' ' -f1)"; }
 github_curl() {
   if test -n "${GITHUB_TOKEN:-}"; then
-    curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "$@"
-  else
-    curl -fsSL -H "Accept: application/vnd.github+json" "$@"
+    if curl -fsSL -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "$@"; then
+      return 0
+    fi
   fi
+  curl -fsSL -H "Accept: application/vnd.github+json" "$@"
 }
 stages='["SOURCE_PRESENT","SYNTAX_ACCEPTED","SEMANTIC_ACCEPTED","OUTCOME_OBSERVED","DETERMINISTIC_REPLAY","RESOURCE_OBSERVED","USER_ARTIFACT_VERIFIED"]'
 phase="OBSERVATION"

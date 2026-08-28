@@ -42,10 +42,6 @@ measure_command() {
     --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$peak_rss" \
     --arg cache_state "GOCACHE=$(go env GOCACHE);GOMODCACHE=$(go env GOMODCACHE);setup-go-cache=false" \
     '{name:$name,executed:$executed,wall_ns:$wall_ns,wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib,cache_state:$cache_state}' > "$output"
-  if ((status != 0)); then
-    echo "measured command failed: $name (exit $status)" >&2
-    cat "$stdout_file" "$stderr_file" >&2
-  fi
   return "$status"
 }
 
@@ -181,12 +177,7 @@ jq -n --arg subject "$HEAD_SHA" --arg executable "$binary_digest" --slurpfile co
   '{subject_sha:$subject,executable_digest:$executable,contract:$contract[0],first:$first[0],second:$second[0],unknown_breakpoint:$unknown[0],runtime_observations:[$runtime1[0],$runtime2[0]],build:$build[0],evaluator_build:$evaluator_build[0],test:$test[0],graph:$graph[0]}' > "$positive_input"
 cp "$positive_input" "$work/input.json"
 
-set +e
 "$reducer" -input "$positive_input" -output "$work/report.json"
-reducer_status=$?
-set -e
-jq . "$work/report.json"
-test "$reducer_status" -eq 0
 "$reducer" -input "$positive_input" -check "$work/report.json"
 jq -e '.decision=="PASS" and .resolution=="EXACT" and .summary.coordinates.satisfied==13 and .summary.coordinates.total==13 and .summary.replay_matches==1 and .summary.resource_observations==2 and .summary.compiler.go127_runtimes==2 and .summary.unknowns==0 and .summary.refuted_cases==0 and .summary.effects.repository_writes==0 and .summary.effects.mutation_authority==false and .replay.equal==true and (.replay.excluded_fields|length)>0 and (.views[]|select(.audience=="USER")|.satisfied==4 and .total==4) and (.views[]|select(.audience=="TOOL_AUTHOR")|.satisfied==9 and .total==9) and (.views[]|select(.audience=="GOVERNOR")|.satisfied==13 and .total==13)' "$work/report.json"
 
