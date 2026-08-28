@@ -34,7 +34,7 @@ func identityOf(fset *token.FileSet, node ast.Decl) (string, bool) {
 		if format.Node(&receiver, fset, d.Recv) != nil { return "", false }
 		return "method:" + receiver.String() + ":" + d.Name.Name, true
 	case *ast.GenDecl:
-		if d.Tok != token.CONST && d.Tok != token.TYPE { return "", false }
+		if d.Tok == token.IMPORT { return "", false }
 		for _, raw := range d.Specs {
 			name := ""
 			switch spec := raw.(type) {
