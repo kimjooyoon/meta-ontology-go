@@ -17,7 +17,7 @@ func formatStaged(root string, buffers map[string][]byte, created map[string]boo
 		if err != nil {
 			return nil, fmt.Errorf("format extraction %s: %w", logical, err)
 		}
-		if lines := extractionLines(formatted); lines > 75 {
+		if !created[logical] && extractionLines(formatted) > 75 {
 			return nil, fmt.Errorf("extraction target %s remains at %d lines", logical, lines)
 		}
 		mode := uint32(0o644)

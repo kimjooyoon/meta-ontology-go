@@ -1514,6 +1514,17 @@
       ]
     },
     {
+      "branch": "agent/base-repair-repository-projection",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
+        "bootstrap/function-extractor",
+        "examples/repository-projection-repair",
+        "internal/verify/scope_base_repair_repository_projection.go"
+      ]
+    },
+    {
       "branch": "agent/promotion-authorized-continuity",
       "paths": [
         ".github/agent-scope-table.md",

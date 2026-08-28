@@ -7,12 +7,12 @@ import (
 )
 
 func extractionEvidence(sha string, subjects []extractionSubject,
-	unhandled []string) extractionReport {
+	unhandled []string, failures []extractionFailureRecord) extractionReport {
 	observed := len(subjects) + len(unhandled)
 	created := createdCount(subjects)
 	return extractionReport{
 		Schema: "gooo.function-extraction.v1", SourceSHA: sha,
-		Subjects: subjects, Unhandled: unhandled,
+		Subjects: subjects, Unhandled: unhandled, Failures: failures,
 		Indicators: []extractionIndicator{
 			{ID: "extraction.observed", Value: observed, Limit: -1,
 				Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},
