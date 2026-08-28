@@ -13,7 +13,7 @@ func renderImports(fset *token.FileSet, file *ast.File, decls []ast.Decl, list [
 	for _, node := range file.Decls {
 		group, ok := node.(*ast.GenDecl); if !ok || group.Tok != token.IMPORT || len(selected[group]) == 0 { continue }
 		data, err := formatImport(fset, group, selected[group]); if err != nil { return nil, nil, err }
-		replacements[group] = data; helper.Write(data)
+		replacements[group] = data; helper.Write(data); helper.WriteByte('\n')
 	}
 	return replacements, helper.Bytes(), nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -57,4 +58,14 @@ func stageGenericExtraction(root, logical string, buffers map[string][]byte, cre
 		}
 	}
 	return nil
+}
+
+func extractionFailure(logical string, err error) extractionFailureRecord {
+	var failure projectionextractor.Failure
+	if errors.As(err, &failure) {
+		decision := "UNKNOWN"
+		if failure.UnknownClass == "KNOWN_CONTRADICTION" { decision = "REFUTED" }
+		return extractionFailureRecord{logical, decision, failure.Stage, failure.Step, failure.Reason, failure.UnknownClass, failure.NextOperation, failure.BlockedBy}
+	}
+	return extractionFailureRecord{logical, "UNKNOWN", "apply-extraction", "generic", "EXTRACTION_FAILED", "DIRECT_MISSING", "restore-parser-evidence", []string{}}
 }
