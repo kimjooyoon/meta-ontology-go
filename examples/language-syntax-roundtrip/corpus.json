@@ -193,8 +193,16 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax"
     },
-    {
-      "id": "roundtrip-minimal",
+{
+  "id": "claim-dependency-causality",
+  "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
+  "kind": "VALID",
+  "expected_decision": "PASS",
+  "proof_choice": "COHERENCE",
+  "meta_operation": "replay-language-syntax"
+},
+{
+  "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
