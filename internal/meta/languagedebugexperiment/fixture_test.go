@@ -20,7 +20,7 @@ func testInput(t *testing.T) Input {
 		Build:               Measurement{Name: "debug-producer-build", Executed: true, WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1, CacheState: "fixture"},
 		EvaluatorBuild:      Measurement{Name: "debug-evaluator-build", Executed: true, WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1, CacheState: "fixture"},
 		Test:                Measurement{Name: "debug-relevant-tests", Executed: true, WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1, CacheState: "fixture"},
-		Graph: GraphObservation{Schema: "gooo-graph/v1", ProgramDigest: digest('p'), GraphHash: string(makeHex('a', 64)), ActivityCount: 44, EdgeCount: 88, DebugActivityCount: 2, DebugOutputCount: 2, DebugUsedEdgeCount: 2, DebugGeneratedEdgeCount: 2,
+		Graph: GraphObservation{Schema: "gooo-graph/v1", ProgramDigest: digest('a'), GraphHash: string(makeHex('a', 64)), ActivityCount: 44, EdgeCount: 88, DebugActivityCount: 2, DebugOutputCount: 2, DebugUsedEdgeCount: 2, DebugGeneratedEdgeCount: 2,
 			DebugActivityIDs: []string{"languageutility://activity/observe-debugging-deterministic-replay", "languageutility://activity/observe-debugging-resource-observed"},
 			DebugCausalEdges: []GraphEdge{{Relation: "used", Subject: "languageutility://activity/observe-debugging-deterministic-replay", Object: "gooo://meta/language-utility/entity/cell"}, {Relation: "wasGeneratedBy", Subject: "gooo://meta/language-utility/entity/evidence", Object: "languageutility://activity/observe-debugging-deterministic-replay"}, {Relation: "used", Subject: "languageutility://activity/observe-debugging-resource-observed", Object: "gooo://meta/language-utility/entity/cell"}, {Relation: "wasGeneratedBy", Subject: "gooo://meta/language-utility/entity/evidence", Object: "languageutility://activity/observe-debugging-resource-observed"}}},
 	}
@@ -30,7 +30,7 @@ func runtimeFixture(run int, receipt languagedebug.Receipt) RuntimeObservation {
 	return RuntimeObservation{Run: run, RuntimeReceiptSchema: RuntimeReceiptSchema, Runner: "fixture", Toolchain: "go version go1.27.0 fixture",
 		SourceRawDigest: receipt.SourceDigest, SourceSemanticDigest: receipt.SemanticDigest,
 		BinaryDigest: digest('d'), Arguments: []string{"debug"}, SubjectSHA: string(makeHex('a', 40)),
-		OutputDigest: digest('o'), WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1}
+		OutputDigest: digest('c'), WallNS: 1000000, WallMS: 1, PeakRSSKiB: 1}
 }
 
 func executionFixture(t *testing.T) []byte {
