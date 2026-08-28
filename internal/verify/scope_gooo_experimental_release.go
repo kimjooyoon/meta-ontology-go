@@ -16,4 +16,10 @@ func init() {
 		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/verify/scope_gooo_experimental_release.go",
 	}
+	branchScopeAllowlist["agent/gooo-release-asset-set"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/gooo-release-publish.yml",
+		"internal/verify/scope_gooo_experimental_release.go",
+	}
 }

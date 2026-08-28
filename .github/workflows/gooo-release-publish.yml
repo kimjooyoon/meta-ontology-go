@@ -274,7 +274,9 @@ jobs:
             sha256sum "${payloads[@]}" release-manifest.json | sort -k2 > SHA256SUMS
             test "$(wc -l < SHA256SUMS | tr -d ' ')" -eq 7
             sha256sum -c SHA256SUMS
-            find . -maxdepth 1 -type f -printf '%f\n' | sort > observed-assets.txt
+            observed_assets="$RUNNER_TEMP/observed-release-assets.txt"
+            expected_assets="$RUNNER_TEMP/expected-release-assets.txt"
+            find . -maxdepth 1 -type f -printf '%f\n' | sort > "$observed_assets"
             printf '%s\n' \
               SHA256SUMS \
               gooo-darwin-amd64.tar.gz \
@@ -283,9 +285,8 @@ jobs:
               release-eligibility.json \
               release-manifest.json \
               release-report.json \
-              version.json > expected-assets.txt
-            cmp expected-assets.txt observed-assets.txt
-            rm expected-assets.txt observed-assets.txt
+              version.json > "$expected_assets"
+            cmp "$expected_assets" "$observed_assets"
             test "$(find . -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 8
           )
           git diff --quiet
