@@ -7,6 +7,7 @@ allowed repository prefix and do not create additional branch aliases.
 
 | Branch | Allowed path prefix |
 | --- | --- |
+| `agent/minimal-claim-resolution-contract` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/claim-resolution-tuple.yml`, `cmd/gooo`, `docs/language/claim-resolution-tuple.md`, `examples/claim-resolution-tuple`, `internal/claimresolution`, `internal/verify/scope_claim_resolution_tuple.go` |
 | `agent/luna-meta-09-causal-ci-selection` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/causal-ci-selection.yml`, `cmd/causal-ci-selection-consumer`, `docs/causal-ci-selection.md`, `examples/causal-ci-selection`, `internal/meta/causalci`, `internal/verify/scope_luna_meta_09.go`, `scripts/causal-ci-selection` |
 | `agent/analyzer` | `internal/analyzer/**` |
 | `agent/analyzer-contract` | `internal/analyzer/**` |
