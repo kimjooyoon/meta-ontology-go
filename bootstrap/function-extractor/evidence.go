@@ -42,6 +42,7 @@ type extractionFailureRecord struct {
 	UnknownClass string `json:"unknown_class"`
 	NextOperation string `json:"next_operation"`
 	BlockedBy []string `json:"blocked_by"`
+	Diagnostics []string `json:"diagnostics,omitempty"`
 }
 
 type extractionIndicator struct {

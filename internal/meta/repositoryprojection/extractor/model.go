@@ -10,6 +10,7 @@ import (
 type Failure struct {
 	Stage, Step, Reason, UnknownClass, NextOperation string
 	BlockedBy []string
+	Diagnostics []string
 }
 
 func (e Failure) Error() string {
@@ -17,7 +18,11 @@ func (e Failure) Error() string {
 }
 
 func fail(stage, step, reason, class, next string, blocked []string) error {
-	return Failure{stage, step, reason, class, next, append([]string(nil), blocked...)}
+	return Failure{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: append([]string{}, blocked...)}
+}
+
+func failWithDiagnostics(stage, step, reason, class, next string, diagnostics []string) error {
+	return Failure{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: []string{}, Diagnostics: append([]string{}, diagnostics...)}
 }
 
 type declaration struct {

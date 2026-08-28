@@ -65,7 +65,7 @@ func extractionFailure(logical string, err error) extractionFailureRecord {
 	if errors.As(err, &failure) {
 		decision := "UNKNOWN"
 		if failure.UnknownClass == "KNOWN_CONTRADICTION" { decision = "REFUTED" }
-		return extractionFailureRecord{logical, decision, failure.Stage, failure.Step, failure.Reason, failure.UnknownClass, failure.NextOperation, failure.BlockedBy}
+		return extractionFailureRecord{Logical: logical, Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
 	}
-	return extractionFailureRecord{logical, "UNKNOWN", "apply-extraction", "generic", "EXTRACTION_FAILED", "DIRECT_MISSING", "restore-parser-evidence", []string{}}
+	return extractionFailureRecord{Logical: logical, Decision: "UNKNOWN", Stage: "apply-extraction", Step: "generic", Reason: "EXTRACTION_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-parser-evidence", BlockedBy: []string{}, Diagnostics: []string{}}
 }

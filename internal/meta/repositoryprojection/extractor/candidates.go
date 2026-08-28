@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -12,6 +13,7 @@ func candidates(fset *token.FileSet, file *ast.File) ([]declaration, error) {
 	var out []declaration
 	for order, node := range file.Decls {
 		identity, movable := identityOf(fset, node)
+		if !movable { identity, movable = fallbackIdentity(node) }
 		if !movable { continue }
 		if seen[identity] {
 			return nil, fail("validate-ast", "identity", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{identity})
@@ -23,6 +25,19 @@ func candidates(fset *token.FileSet, file *ast.File) ([]declaration, error) {
 		out = append(out, declaration{node, fset.Position(start).Offset, fset.Position(node.End()).Offset, order, identity})
 	}
 	return out, nil
+}
+
+func fallbackIdentity(node ast.Decl) (string, bool) {
+	switch d := node.(type) {
+	case *ast.FuncDecl:
+		if d.Name == nil || d.Name.Name == "init" { return "", false }
+		return fmt.Sprintf("func-at:%d", d.Pos()), true
+	case *ast.GenDecl:
+		if d.Tok == token.IMPORT { return "", false }
+		return fmt.Sprintf("group-at:%d", d.Pos()), true
+	default:
+		return "", false
+	}
 }
 
 func identityOf(fset *token.FileSet, node ast.Decl) (string, bool) {
