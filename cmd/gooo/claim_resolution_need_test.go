@@ -32,15 +32,15 @@ func TestClaimResolutionNeedIsDigestLocked(t *testing.T) {
 	}
 	var observed struct {
 		Decision string `json:"decision"`
-		Summary struct {
-			Closed              int `json:"closed"`
-			ConsumerReleases    int `json:"consumer_releases"`
-			CommonEnvelopes     int `json:"common_envelopes"`
-			ClaimStates         int `json:"claim_states"`
-			UnknownProducers    int `json:"unknown_producers"`
-			TypedUnknownRoles   int `json:"typed_unknown_roles"`
-			CompatibilityGaps   int `json:"compatibility_gaps"`
-			DirectMappings      int `json:"direct_mappings"`
+		Summary  struct {
+			Closed            int `json:"closed"`
+			ConsumerReleases  int `json:"consumer_releases"`
+			CommonEnvelopes   int `json:"common_envelopes"`
+			ClaimStates       int `json:"claim_states"`
+			UnknownProducers  int `json:"unknown_producers"`
+			TypedUnknownRoles int `json:"typed_unknown_roles"`
+			CompatibilityGaps int `json:"compatibility_gaps"`
+			DirectMappings    int `json:"direct_mappings"`
 		} `json:"summary"`
 		Candidate struct {
 			ID                   string `json:"id"`
