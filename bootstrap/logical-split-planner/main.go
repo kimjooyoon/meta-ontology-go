@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	metricinputs "github.com/kimjooyoon/meta-ontology-go/bootstrap/logical-split-planner/metrics"
 )
 
 func main() {
@@ -37,7 +39,7 @@ func runMetrics(root, metrics, expected, output string) error {
 	if err != nil {
 		return err
 	}
-	inputs, err := loadMetricSubjects(metrics, expected)
+	inputs, err := metricinputs.Load(metrics, expected)
 	if err != nil {
 		return err
 	}
@@ -58,7 +60,10 @@ func runMetrics(root, metrics, expected, output string) error {
 		if parseErr != nil {
 			return parseErr
 		}
-		plans = append(plans, classify(input, atoms))
+		plans = append(plans, classify(inputSubject{
+			Indicator: input.Indicator, Logical: input.Logical, Value: input.Value,
+			Limit: input.Limit, Consumer: input.Consumer, Operation: input.Operation,
+		}, atoms))
 	}
 	report := buildReport(expected, plans)
 	if err := writeReport(output, report); err != nil {

@@ -1,4 +1,4 @@
-package main
+package metrics
 
 import (
 	"encoding/json"
@@ -10,7 +10,16 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-func loadMetricSubjects(name, expectedSHA string) ([]inputSubject, error) {
+type Subject struct {
+	Indicator string
+	Logical   string
+	Value     int
+	Limit     int
+	Consumer  string
+	Operation string
+}
+
+func Load(name, expectedSHA string) ([]Subject, error) {
 	data, err := os.ReadFile(name)
 	if err != nil {
 		return nil, err
@@ -22,7 +31,7 @@ func loadMetricSubjects(name, expectedSHA string) ([]inputSubject, error) {
 	if report.CommitSHA != expectedSHA {
 		return nil, fmt.Errorf("metrics SHA %s does not match %s", report.CommitSHA, expectedSHA)
 	}
-	selected := make([]inputSubject, 0)
+	selected := make([]Subject, 0)
 	seen := make(map[string]bool)
 	for _, indicator := range report.Meta.Indicators {
 		if indicator.MetricID != sourcepolicy.DimensionGoFileLines ||
@@ -38,7 +47,7 @@ func loadMetricSubjects(name, expectedSHA string) ([]inputSubject, error) {
 			return nil, fmt.Errorf("duplicate metric subject %s", indicator.Subject)
 		}
 		seen[indicator.Subject] = true
-		selected = append(selected, inputSubject{
+		selected = append(selected, Subject{
 			Indicator: string(indicator.MetricID), Logical: indicator.Subject,
 			Value: indicator.Value, Limit: indicator.Limit,
 			Consumer: string(indicator.Consumer), Operation: string(indicator.Operation),
