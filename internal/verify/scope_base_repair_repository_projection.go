@@ -7,6 +7,7 @@ func init() {
 		".github/workflows/repository-projection.yml",
 		"bootstrap/function-extractor",
 		"examples/repository-projection-repair",
+		"internal/meta/repositoryprojection/extractor",
 		"internal/verify/scope_base_repair_repository_projection.go",
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 )
 
 func extractionPath(root, logical string) (string, error) {
@@ -39,4 +41,20 @@ func appendUnique(values []string, value string) []string {
 		return values
 	}
 	return append(values, value)
+}
+
+func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) error {
+	generated, _, err := projectionextractor.Extract(root, logical)
+	if err != nil {
+		return err
+	}
+	for path, data := range generated {
+		buffers[path] = data
+		changed[logical] = appendUnique(changed[logical], path)
+		if path != logical {
+			created[path] = true
+			made[logical] = appendUnique(made[logical], path)
+		}
+	}
+	return nil
 }

@@ -28,21 +28,9 @@ type extractionSubject struct {
 	After        int      `json:"after_lines"`
 	Files        []string `json:"changed_files"`
 	CreatedFiles []string `json:"created_files,omitempty"`
-	Strategy     string   `json:"strategy"`
 	Consumer     string   `json:"consumer"`
 	Operation    string   `json:"meta_operation"`
 	Proof        string   `json:"proof_choice"`
-}
-
-type extractionFailureRecord struct {
-	Logical       string   `json:"logical"`
-	Decision      string   `json:"decision"`
-	Stage         string   `json:"stage"`
-	Step          string   `json:"step"`
-	Reason        string   `json:"reason"`
-	UnknownClass  string   `json:"unknown_class"`
-	NextOperation string   `json:"next_operation"`
-	BlockedBy     []string `json:"blocked_by"`
 }
 
 type extractionIndicator struct {
@@ -60,6 +48,5 @@ type extractionReport struct {
 	SourceSHA  string                `json:"source_sha"`
 	Subjects   []extractionSubject   `json:"subjects"`
 	Unhandled  []string              `json:"unhandled"`
-	Failures   []extractionFailureRecord `json:"failures,omitempty"`
 	Indicators []extractionIndicator `json:"indicators"`
 }

@@ -4,15 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 )
 
+func extractionSubjects(plans map[string]planSubject, residual []string, recipes map[string]extractionRecipe, changed, created map[string][]string, staged map[string]stagedFile) ([]extractionSubject, error) {
+	result := make([]extractionSubject, 0, len(residual))
+	for _, logical := range residual {
+		files := changed[logical]
+		if len(files) == 0 { continue }
+		sort.Strings(files); createdFiles := created[logical]; sort.Strings(createdFiles)
+		source, exists := staged[logical]; if !exists { return nil, fmt.Errorf("recipe did not rewrite subject %s", logical) }
+		operation, proof := "move-complete-declarations", "coherent-system"
+		if recipe, exists := recipes[logical]; exists { operation, proof = recipe.Operation, "axiomatic-foundation" }
+		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: operation, Proof: proof})
+	}
+	return result, nil
+}
+
 func extractionEvidence(sha string, subjects []extractionSubject,
-	unhandled []string, failures []extractionFailureRecord) extractionReport {
+	unhandled []string) extractionReport {
 	observed := len(subjects) + len(unhandled)
 	created := createdCount(subjects)
 	return extractionReport{
 		Schema: "gooo.function-extraction.v1", SourceSHA: sha,
-		Subjects: subjects, Unhandled: unhandled, Failures: failures,
+		Subjects: subjects, Unhandled: unhandled,
 		Indicators: []extractionIndicator{
 			{ID: "extraction.observed", Value: observed, Limit: -1,
 				Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},

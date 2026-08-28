@@ -31,11 +31,11 @@ func run(root, plan, density, expected, output string) error {
 	if err != nil {
 		return err
 	}
-	staged, subjects, unhandled, failures, err := stageExtractions(root, plans, residual, recipes)
+	staged, subjects, unhandled, err := stageExtractions(root, plans, residual, recipes)
 	if err != nil {
 		return err
 	}
-	report := extractionEvidence(expected, subjects, unhandled, failures)
+	report := extractionEvidence(expected, subjects, unhandled)
 	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
 		return err
 	}
