@@ -15,7 +15,7 @@ func TestExtractionCounterexamples(t *testing.T) {
 		{"build conflict", "x.go", "//go:build linux\n// +build windows\n\npackage p\nfunc F() {}\n", "BUILD_TAG_CONFLICT"},
 		{"identity collision", "x.go", "package p\nfunc F() {}\nfunc F() {}\n", "DECLARATION_IDENTITY_COLLISION"},
 	}
-	for _, tc := range cases { t.Run(tc.name, func(t *testing.T) { root := t.TempDir(); if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil { t.Fatal(err) }; if tc.logical == "x.go" { if err := os.WriteFile(filepath.Join(root, tc.logical), []byte(tc.source), 0o644); err != nil { t.Fatal(err) } }; _, _, err := Extract(root, tc.logical); var got failure; if !errors.As(err, &got) || got.Reason != tc.reason { t.Fatalf("reason=%v want %s", err, tc.reason) } }) }
+	for _, tc := range cases { t.Run(tc.name, func(t *testing.T) { root := t.TempDir(); if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil { t.Fatal(err) }; if tc.logical == "x.go" { if err := os.WriteFile(filepath.Join(root, tc.logical), []byte(tc.source), 0o644); err != nil { t.Fatal(err) } }; _, _, err := Extract(root, tc.logical); var got Failure; if !errors.As(err, &got) || got.Reason != tc.reason { t.Fatalf("reason=%v want %s", err, tc.reason) } }) }
 }
 
 func TestExtractionReplayIsByteIdentical(t *testing.T) {

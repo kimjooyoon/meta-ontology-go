@@ -33,6 +33,17 @@ type extractionSubject struct {
 	Proof        string   `json:"proof_choice"`
 }
 
+type extractionFailureRecord struct {
+	Logical string `json:"logical"`
+	Decision string `json:"decision"`
+	Stage string `json:"stage"`
+	Step string `json:"step"`
+	Reason string `json:"reason"`
+	UnknownClass string `json:"unknown_class"`
+	NextOperation string `json:"next_operation"`
+	BlockedBy []string `json:"blocked_by"`
+}
+
 type extractionIndicator struct {
 	ID        string `json:"id"`
 	Value     int    `json:"value"`
@@ -48,5 +59,6 @@ type extractionReport struct {
 	SourceSHA  string                `json:"source_sha"`
 	Subjects   []extractionSubject   `json:"subjects"`
 	Unhandled  []string              `json:"unhandled"`
+	Failures   []extractionFailureRecord `json:"failures,omitempty"`
 	Indicators []extractionIndicator `json:"indicators"`
 }

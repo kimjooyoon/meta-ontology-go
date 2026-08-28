@@ -7,17 +7,17 @@ import (
 	"sort"
 )
 
-type failure struct {
+type Failure struct {
 	Stage, Step, Reason, UnknownClass, NextOperation string
 	BlockedBy []string
 }
 
-func (e failure) Error() string {
+func (e Failure) Error() string {
 	return fmt.Sprintf("%s/%s/%s unknown_class=%s next=%s blocked_by=%v", e.Stage, e.Step, e.Reason, e.UnknownClass, e.NextOperation, e.BlockedBy)
 }
 
 func fail(stage, step, reason, class, next string, blocked []string) error {
-	return failure{stage, step, reason, class, next, append([]string(nil), blocked...)}
+	return Failure{stage, step, reason, class, next, append([]string(nil), blocked...)}
 }
 
 type declaration struct {
