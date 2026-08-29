@@ -163,27 +163,27 @@ type Counterexample struct {
 }
 
 type Observation struct {
-	Schema                  string             `json:"schema"`
-	ContractID              string             `json:"contract_id"`
-	SubjectSHA              string             `json:"subject_sha"`
-	UserPaths               []string           `json:"user_paths"`
-	Release                 ReleaseObservation `json:"release"`
-	FixtureDigest           string             `json:"fixture_digest"`
-	FixtureFiles            []string           `json:"fixture_files"`
-	FixturePhysicalLines    int                `json:"fixture_physical_lines"`
-	Executions              []ExecutionRun     `json:"executions"`
-	Reuse                   ReuseAccounting    `json:"reuse"`
-	Runtime                 RuntimeSummary     `json:"runtime"`
-	Inventory               Inventory          `json:"inventory"`
-	ObserverGoVersion       string             `json:"observer_go_version"`
-	ObserverGOVERSION       string             `json:"observer_go_env_goversion"`
-	ObserverToolchainDigest string             `json:"observer_toolchain_digest"`
-	CellEvidenceProjections map[string]string  `json:"cell_evidence_projections"`
-	CellEvidenceDigests     map[string]string  `json:"cell_evidence_digests"`
-	Graph                   GraphObservation   `json:"graph"`
-	RepositoryWrites        int                `json:"repository_writes"`
-	LocalTestExecutions     int                `json:"local_test_executions"`
-	ReleaseBinaryBuilds     int                `json:"release_binary_builds"`
-	ReleaseBinaryBuildReason string            `json:"release_binary_build_reason"`
+	Schema                   string             `json:"schema"`
+	ContractID               string             `json:"contract_id"`
+	SubjectSHA               string             `json:"subject_sha"`
+	UserPaths                []string           `json:"user_paths"`
+	Release                  ReleaseObservation `json:"release"`
+	FixtureDigest            string             `json:"fixture_digest"`
+	FixtureFiles             []string           `json:"fixture_files"`
+	FixturePhysicalLines     int                `json:"fixture_physical_lines"`
+	Executions               []ExecutionRun     `json:"executions"`
+	Reuse                    ReuseAccounting    `json:"reuse"`
+	Runtime                  RuntimeSummary     `json:"runtime"`
+	Inventory                Inventory          `json:"inventory"`
+	ObserverGoVersion        string             `json:"observer_go_version"`
+	ObserverGOVERSION        string             `json:"observer_go_env_goversion"`
+	ObserverToolchainDigest  string             `json:"observer_toolchain_digest"`
+	CellEvidenceProjections  map[string]string  `json:"cell_evidence_projections"`
+	CellEvidenceDigests      map[string]string  `json:"cell_evidence_digests"`
+	Graph                    GraphObservation   `json:"graph"`
+	RepositoryWrites         int                `json:"repository_writes"`
+	LocalTestExecutions      int                `json:"local_test_executions"`
+	ReleaseBinaryBuilds      int                `json:"release_binary_builds"`
+	ReleaseBinaryBuildReason string             `json:"release_binary_build_reason"`
 	HumanReportReady        bool               `json:"human_report_ready"`
 }
