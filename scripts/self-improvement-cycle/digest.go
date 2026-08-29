@@ -61,7 +61,8 @@ func validFileDigests(in inputs) bool {
 }
 
 func validContractCoverage(contract contractDocument) bool {
-	if len(contract.ExecutorCoverage) != 3 {
+	registry := registrySnapshot()
+	if len(contract.ExecutorCoverage) != len(registry) {
 		return false
 	}
 	for _, coverage := range contract.ExecutorCoverage {

@@ -69,6 +69,6 @@ func metricsFixture(head string) metricsDocument {
 
 func contractFixture(head, digest string) contractDocument {
 	indicators := []contractIndicator{{"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"REGRESSION", "PASS"}}
-	coverage := []contractCoverage{{true}, {true}, {true}}
+	coverage := []contractCoverage{{true}, {true}, {true}, {true}}
 	return contractDocument{Schema: "gooo/self-improvement-contract/v1", CommitSHA: head, SourceSHA256: digest, SemanticHash: digest, RegistryDigest: digest, Status: "PASS", Indicators: indicators, ExecutorCoverage: coverage}
 }
