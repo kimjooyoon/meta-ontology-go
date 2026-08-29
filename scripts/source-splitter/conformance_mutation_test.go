@@ -37,6 +37,11 @@ func mutateConformanceEvidence(value *conformance.SplitGoEvidence, mutation stri
 		value.Candidates[1].Data = bytes.Replace(value.Candidates[1].Data,
 			[]byte("func first() string {\n\treturn fmt.Sprint(\"a\")\n}"),
 			[]byte("func second() int {\n\treturn 2\n}"), 1)
+	case "DUPLICATE_ORDINAL":
+		value.Candidates[1].DeclarationOrder[0].Ordinal = value.Candidates[0].DeclarationOrder[0].Ordinal
+	case "ORDINAL_EXCHANGE":
+		value.Candidates[0].DeclarationOrder[0].Ordinal, value.Candidates[1].DeclarationOrder[0].Ordinal =
+			value.Candidates[1].DeclarationOrder[0].Ordinal, value.Candidates[0].DeclarationOrder[0].Ordinal
 	case "PACKAGE":
 		value.Candidates[0].Data = bytes.Replace(value.Candidates[0].Data, []byte("package fixture"), []byte("package other"), 1)
 	case "EVIDENCE_MISSING":

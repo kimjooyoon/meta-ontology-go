@@ -106,7 +106,7 @@ func validMixedRefutation(plan generation.Plan, report generation.ReceiptReport)
 	if failure.ActionIndicatorID != extract.IndicatorID || failure.Decision != "REFUTED" ||
 		failure.Stage != "derive-recipe" || failure.Step != "select-declaration" ||
 		failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" || failure.NextOperation != "report-counterexample" ||
-		failure.BlockedBy == nil || !validRefutedIndicatorLinks(failure, extract) {
+		failure.BlockedBy == nil || len(failure.BlockedBy) != 0 || !validRefutedIndicatorLinks(failure, extract) {
 		return false
 	}
 	if len(report.UnknownIndicatorIDs) != 1 ||
@@ -138,6 +138,10 @@ func validRefutedIndicatorLinks(failure generation.ObservationFailure, action ge
 	if len(failure.FailureEvidence) != len(action.RequiredIndicatorIDs) {
 		return false
 	}
+	expectedCounterexample := extractionCounterexample(action.Subject)
+	if expectedCounterexample == "" {
+		return false
+	}
 	allowed := make(map[string]bool, len(action.RequiredIndicatorIDs))
 	var counterexample string
 	for _, identifier := range action.RequiredIndicatorIDs {
@@ -145,7 +149,8 @@ func validRefutedIndicatorLinks(failure generation.ObservationFailure, action ge
 	}
 	for _, evidence := range failure.FailureEvidence {
 		if !allowed[evidence.IndicatorID] || evidence.Decision != "UNKNOWN" ||
-			evidence.Observed != 0 || evidence.Expected != 1 || evidence.Counterexample == "" {
+			evidence.Observed != 0 || evidence.Expected != 1 ||
+			evidence.Counterexample != expectedCounterexample {
 			return false
 		}
 		if counterexample == "" {
@@ -158,8 +163,17 @@ func validRefutedIndicatorLinks(failure generation.ObservationFailure, action ge
 	return len(allowed) == 0
 }
 
+func extractionCounterexample(subject string) string {
+	parsed, err := sourcepolicy.ParseSourceSubject(subject)
+	if err != nil {
+		return ""
+	}
+	return parsed.Path + "#func:" + parsed.Name
+}
+
 func validDependencyUnknowns(unknowns []generation.ReceiptUnknown, failure generation.ObservationFailure, action generation.Action) bool {
 	allowed := make(map[string]bool, len(action.RequiredIndicatorIDs))
+	rootBlocker := "operation-failure:" + action.IndicatorID
 	for _, identifier := range action.RequiredIndicatorIDs {
 		allowed[identifier] = true
 	}
@@ -168,7 +182,8 @@ func validDependencyUnknowns(unknowns []generation.ReceiptUnknown, failure gener
 			unknown.Stage != failure.Stage || unknown.Step != failure.Step ||
 			unknown.Reason != generation.ReceiptReason(failure.Reason) ||
 			unknown.UnknownClass != generation.ReceiptUnknownClassDependencyBlocked ||
-			unknown.NextOperation != failure.NextOperation || len(unknown.BlockedBy) == 0 {
+			unknown.NextOperation != failure.NextOperation || len(unknown.BlockedBy) != 1 ||
+			unknown.BlockedBy[0] != rootBlocker {
 			return false
 		}
 		delete(allowed, unknown.RequiredIndicatorID)
