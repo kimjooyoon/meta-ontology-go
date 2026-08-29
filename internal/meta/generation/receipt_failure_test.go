@@ -16,8 +16,8 @@ func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) 
 		{
 			ActionIndicatorID: plan.Selected[0].IndicatorID, Decision: "UNKNOWN",
 			Stage: "execute-operation", Step: "run-selected-operation",
-			Reason: "INSTANCE_EVIDENCE_UNAVAILABLE",
-			UnknownClass: ReceiptUnknownClassDirectMissing,
+			Reason:        "INSTANCE_EVIDENCE_UNAVAILABLE",
+			UnknownClass:  ReceiptUnknownClassDirectMissing,
 			NextOperation: "restore-operation-evidence", BlockedBy: []string{}, Executor: process,
 		},
 		{
@@ -50,8 +50,8 @@ func TestVerifyReceiptsRejectsUnknownFailureWithoutSixFields(t *testing.T) {
 	process := ProcessObservation{Command: []string{"<not-executed>"}, ExitCode: -1,
 		StdoutDigest: "sha256:" + strings.Repeat("0", 64), StderrDigest: "sha256:" + strings.Repeat("0", 64)}
 	failure := ObservationFailure{ActionIndicatorID: plan.Selected[0].IndicatorID, Decision: "UNKNOWN",
-		UnknownClass: ReceiptUnknownClassDirectMissing, NextOperation: "restore"}
-	failure.Executor = process
+		UnknownClass: ReceiptUnknownClassDirectMissing, NextOperation: "restore",
+		Executor: process}
 	report := VerifyReceiptsWithFailures(plan, nil, []ObservationFailure{failure})
 	if report.Decision != ReceiptDecisionUnknown || report.Reason != ReceiptReasonUnknownIndicator || len(report.Failures) != 1 {
 		t.Fatalf("incomplete unknown failure was accepted: %+v", report)

@@ -467,20 +467,17 @@ func containsString(values []string, value string) bool {
 
 func extractValidationErrorReason(err error) string {
 	reason := "INSTANCE_CONFORMANCE_FAILED"
-	var replacementErr *namespaceReplacementError
-	if errors.As(err, &replacementErr) {
+	if replacementErr, ok := errors.AsType[*namespaceReplacementError](err); ok {
 		reason = replacementErr.reason
 	}
-	var unavailable *extractValidationUnknown
-	if errors.As(err, &unavailable) {
+	if unavailable, ok := errors.AsType[*extractValidationUnknown](err); ok {
 		reason = unavailable.reason
 	}
 	return reason
 }
 
 func extractValidationErrorClass(err error) string {
-	var unavailable *extractValidationUnknown
-	if errors.As(err, &unavailable) {
+	if _, ok := errors.AsType[*extractValidationUnknown](err); ok {
 		return "DIRECT_MISSING"
 	}
 	return "KNOWN_CONTRADICTION"
