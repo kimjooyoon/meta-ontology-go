@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
 	"path"
 	"path/filepath"
 )
@@ -17,6 +18,10 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 		return plan, err
 	}
 	declarations := sourceDeclarations(file)
+	positions := make(map[ast.Decl]int, len(declarations))
+	for index, declaration := range declarations {
+		positions[declaration] = index
+	}
 	groups, err := partitionDeclarations(fset, file, declarations, limit)
 	if err != nil {
 		return plan, fmt.Errorf("%w: %s", errSplitBlocked, err)
@@ -35,7 +40,15 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 			return splitPlan{}, renderErr
 		}
 		partPath := filepath.Join(filepath.Dir(target), filepath.Base(filepath.FromSlash(partSubject)))
-		plan.Parts[index] = splitPart{Path: partPath, Subject: partSubject, Data: data}
+		order := make([]string, 0, len(group))
+		for _, declaration := range group {
+			identity, identityErr := declarationIdentity(fset, declaration, positions[declaration])
+			if identityErr != nil {
+				return splitPlan{}, identityErr
+			}
+			order = append(order, identity)
+		}
+		plan.Parts[index] = splitPart{Path: partPath, Subject: partSubject, Data: data, DeclarationOrder: order}
 	}
 	return plan, nil
 }

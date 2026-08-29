@@ -178,7 +178,7 @@ func generationActions(plan generation.Plan) []generation.Action {
 type operationError struct {
 	stage, step, reason, class, next string
 	blockedBy                        []string
-	evidence                          []generation.ObservationFailureEvidence
+	evidence                         []generation.ObservationFailureEvidence
 }
 
 func newOperationError(stage, step, reason, class, next string) *operationError {
@@ -322,7 +322,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	actual := []string{"go", "run", "./bootstrap/function-extractor", "-root", temporary, "-plan", planPath, "-density-report", densityPath, "-expected-sha", plan.HeadSHA, "-output", filepath.Join(temporary, reportName)}
 	result, runErr := runProcess(temporary, environment, command, actual)
 	if runErr != nil || result.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation}, failedExtractionError(temporary, reportName, plan)
+		return operationMaterialization{Executor: result.Observation}, failedExtractionError(temporary, reportName, plan, action)
 	}
 	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName)
 }

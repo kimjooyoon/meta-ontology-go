@@ -23,9 +23,10 @@ func verifyRepositorySHA(root, expected string) error {
 var errSplitBlocked = errors.New("split blocked")
 
 type splitPart struct {
-	Path    string
-	Subject string
-	Data    []byte
+	Path             string
+	Subject          string
+	Data             []byte
+	DeclarationOrder []string
 }
 
 type splitPlan struct {

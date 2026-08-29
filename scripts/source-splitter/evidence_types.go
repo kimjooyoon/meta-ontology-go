@@ -11,8 +11,9 @@ type splitEvidence struct {
 }
 
 type splitEvidenceFile struct {
-	Path string `json:"path"`
-	Data []byte `json:"data"`
+	Path             string   `json:"path"`
+	Data             []byte   `json:"data"`
+	DeclarationOrder []string `json:"declaration_order,omitempty"`
 }
 
 type splitEvidenceContext struct {

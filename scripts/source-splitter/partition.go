@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/token"
 )
 
@@ -14,6 +17,9 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	if physicalLines(all) <= limit {
 		return [][]ast.Decl{declarations}, nil
 	}
+	if groups, ok := middleDeclarationPartition(fset, file, declarations, limit); ok {
+		return groups, nil
+	}
 	if groups, ok := orderedDeclarationPartition(fset, file, declarations, limit); ok {
 		return groups, nil
 	}
@@ -21,6 +27,15 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 		return groups, nil
 	}
 	return nil, fmt.Errorf("declarations cannot preserve source order within %d lines", limit)
+}
+
+func declarationIdentity(fset *token.FileSet, declaration ast.Decl, _ int) (string, error) {
+	var output bytes.Buffer
+	if err := format.Node(&output, fset, declaration); err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(output.Bytes())
+	return fmt.Sprintf("%x", sum), nil
 }
 
 func orderedGreedyDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {

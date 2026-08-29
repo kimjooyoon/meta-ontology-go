@@ -60,7 +60,8 @@ func run(configuration options) error {
 		report.ReplayDigest,
 	)
 	if report.Decision != generation.ReceiptDecisionFixedPoint &&
-		report.Decision != generation.ReceiptDecisionConformant {
+		report.Decision != generation.ReceiptDecisionConformant &&
+		report.Decision != generation.ReceiptDecisionRefuted {
 		return fmt.Errorf(
 			"receipt verification failed: %s/%s",
 			report.Decision,

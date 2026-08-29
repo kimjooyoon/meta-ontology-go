@@ -41,7 +41,7 @@ func applySplitEvidence(cfg config, plan splitPlan) (splitEvidence, error) {
 	targets := make([]string, len(plan.Parts))
 	for index, part := range plan.Parts {
 		targets[index] = part.Subject
-		candidates[index] = splitEvidenceFile{Path: part.Subject, Data: part.Data}
+		candidates[index] = splitEvidenceFile{Path: part.Subject, Data: part.Data, DeclarationOrder: append([]string{}, part.DeclarationOrder...)}
 	}
 	return splitEvidence{
 		OperationID: splitGoEvidenceOperationID, ExpectedHeadSHA: cfg.sha,

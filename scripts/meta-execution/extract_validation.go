@@ -90,7 +90,7 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	return raw, report, nil
 }
 
-func failedExtractionError(root, reportName string, plan generation.Plan) *operationError {
+func failedExtractionError(root, reportName string, plan generation.Plan, action generation.Action) *operationError {
 	path := filepath.Join(root, reportName)
 	_, report, err := decodeExtractorReport(path, plan.HeadSHA)
 	if err != nil {
@@ -100,6 +100,7 @@ func failedExtractionError(root, reportName string, plan generation.Plan) *opera
 		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if failure := adjudicateExtractorReport(report); failure != nil {
+		failure.evidence = extractionFailureEvidence(report, action)
 		return failure
 	}
 	if validationErr := validateBackupCleanup(report.BackupCleanup, report.NamespaceReplacements); validationErr != nil {
@@ -109,6 +110,27 @@ func failedExtractionError(root, reportName string, plan generation.Plan) *opera
 		return newOperationError("evaluate-operation", "validate-function-extraction", reason, class, next)
 	}
 	return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
+}
+
+func extractionFailureEvidence(report extractorReport, action generation.Action) []generation.ObservationFailureEvidence {
+	counterexample := "extractor-report"
+	for _, failure := range report.Failures {
+		if failure.Decision == "REFUTED" {
+			counterexample = failure.BlockerID
+			if counterexample == "" {
+				counterexample = failure.Logical + "#" + failure.Reason
+			}
+			break
+		}
+	}
+	result := make([]generation.ObservationFailureEvidence, 0, len(action.RequiredIndicatorIDs))
+	for _, identifier := range action.RequiredIndicatorIDs {
+		result = append(result, generation.ObservationFailureEvidence{
+			IndicatorID: identifier, Observed: 0, Expected: 1,
+			Decision: "REFUTED", Counterexample: counterexample,
+		})
+	}
+	return result
 }
 
 func adjudicateExtractorReport(report extractorReport) *operationError {
