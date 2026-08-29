@@ -18,9 +18,9 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 		return typeEvidence{}, err
 	}
 	info := &types.Info{
-		Defs:   map[*ast.Ident]types.Object{},
-		Uses:   map[*ast.Ident]types.Object{},
-		Scopes: map[ast.Node]*types.Scope{},
+		Defs:       map[*ast.Ident]types.Object{},
+		Uses:       map[*ast.Ident]types.Object{},
+		Scopes:     map[ast.Node]*types.Scope{},
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}

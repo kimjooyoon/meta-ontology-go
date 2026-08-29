@@ -14,13 +14,35 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	if physicalLines(all) <= limit {
 		return [][]ast.Decl{declarations}, nil
 	}
+	if groups, ok := orderedDeclarationPartition(fset, file, declarations, limit); ok {
+		return groups, nil
+	}
 	if groups, ok := middleDeclarationPartition(fset, file, declarations, limit); ok {
 		return groups, nil
 	}
 	return greedyDeclarationPartition(fset, file, declarations, limit)
 }
 
+func orderedDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {
+	for start := 1; start < len(declarations); start++ {
+		prefix := append([]ast.Decl{}, declarations[:start]...)
+		suffix := append([]ast.Decl{}, declarations[start:]...)
+		if !allMovableDeclarations(suffix) {
+			continue
+		}
+		prefixData, prefixErr := renderPart(fset, file, prefix)
+		suffixData, suffixErr := renderPart(fset, file, suffix)
+		if prefixErr == nil && suffixErr == nil && physicalLines(prefixData) <= limit && physicalLines(suffixData) <= limit {
+			return [][]ast.Decl{prefix, suffix}, true
+		}
+	}
+	return nil, false
+}
+
 func middleDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {
+	if !allMovableDeclarations(declarations) {
+		return nil, false
+	}
 	for start := 0; start < len(declarations)-1; start++ {
 		for end := start + 1; end < len(declarations); end++ {
 			if !movableDeclaration(declarations[end-1]) {
