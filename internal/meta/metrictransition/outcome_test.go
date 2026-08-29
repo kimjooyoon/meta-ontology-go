@@ -120,6 +120,7 @@ func TestClosedOutcomeUsesExactNonPromotingTuple(t *testing.T) {
 	inputs := mixedOutcomeInput()
 	inputs.effectLedger.Effects = inputs.effectLedger.Effects[:1]
 	inputs.effectLedger.SelectedPlanOperations = 1
+	inputs.effectLedger.BoundExecutorOperations = 1
 	inputs.effectLedger.Effects[0].Status = "APPLIED"
 	inputs.effectLedger.OperationOutcome = effectOutcomeClosed
 	inputs.effectLedger.ReceiptDecision = string(generation.ReceiptDecisionConformant)
