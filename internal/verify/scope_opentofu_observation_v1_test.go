@@ -4,7 +4,7 @@ import "testing"
 
 func TestOpenTofuObservationScope(t *testing.T) {
 	paths, ok := BranchScope(opentofuObservationBranch)
-	if !ok || len(paths) != 16 {
+	if !ok || len(paths) != 17 {
 		t.Fatalf("OpenTofu branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{

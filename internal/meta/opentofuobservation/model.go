@@ -126,6 +126,24 @@ type GraphObservation struct {
 	Bindings      []GraphBinding  `json:"bindings"`
 }
 
+type GraphValidationDiagnostic struct {
+	SchemaObserved                 string `json:"schema_observed"`
+	SchemaExpected                 string `json:"schema_expected"`
+	NodeCountObserved              int    `json:"node_count_observed"`
+	NodeCountExpected              int    `json:"node_count_expected"`
+	ActivityCountObserved          int    `json:"activity_count_observed"`
+	ActivityCountExpected          int    `json:"activity_count_expected"`
+	RelationCountObserved          int    `json:"relation_count_observed"`
+	RelationCountExpected          int    `json:"relation_count_expected"`
+	BindingCountObserved           int    `json:"binding_count_observed"`
+	BindingCountExpected           int    `json:"binding_count_expected"`
+	DeclaredActivityCountObserved  int    `json:"declared_activity_count_observed"`
+	DeclaredEdgeCountObserved      int    `json:"declared_edge_count_observed"`
+	FirstMissingNode               string `json:"first_missing_node"`
+	FirstMissingEdge               string `json:"first_missing_edge"`
+	FirstDuplicate                 string `json:"first_duplicate"`
+}
+
 type Unknown struct {
 	Stage         string   `json:"stage"`
 	Step          string   `json:"step"`

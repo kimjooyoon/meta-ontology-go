@@ -3,9 +3,10 @@ package opentofuobservation
 import "sort"
 
 type ValidationError struct {
-	Decision   string
-	Resolution string
-	Reason     string
+	Decision         string
+	Resolution       string
+	Reason           string
+	GraphDiagnostic  *GraphValidationDiagnostic
 }
 
 func (err *ValidationError) Error() string { return err.Reason }
@@ -21,6 +22,8 @@ func unavailable(reason string) error {
 func malformed(reason string) error {
 	return &ValidationError{Decision: DecisionFailClosed, Resolution: ResolutionLower, Reason: reason}
 }
+
+const graphSchema = "gooo-graph/v1"
 
 func ValidateObservation(observation Observation) error {
 	if observation.Schema != ObservationSchema || observation.ContractID == "" || len(observation.SubjectSHA) != 40 {
@@ -145,18 +148,97 @@ func validateReuse(observation Observation) error {
 }
 
 func validateGraph(graph GraphObservation) error {
-	if graph.Schema != "gooo/opentofu-observation-graph/v1" || graph.ActivityCount != 12 || graph.EdgeCount <= 0 || len(graph.Bindings) != 12 || !validDigest(graph.ProgramDigest) || graph.GraphHash == "" {
-		return malformed("GOOO_GRAPH_DENOMINATOR_INVALID")
+	diagnostic := graphValidationDiagnostic(graph)
+	if !validGraphDenominator(graph, diagnostic) {
+		return graphValidationError(DecisionFailClosed, ResolutionLower, "GOOO_GRAPH_DENOMINATOR_INVALID", diagnostic)
 	}
-	seen, activities := map[string]bool{}, map[string]bool{}
+	nodes, duplicate := graphNodes(graph.Nodes)
+	if duplicate != "" {
+		diagnostic.FirstDuplicate = duplicate
+		return graphValidationError(DecisionRefuted, ResolutionExact, "GOOO_GRAPH_EDGE_BINDING_CONTRADICTION", diagnostic)
+	}
+	seenCells, seenActivities := map[string]bool{}, map[string]bool{}
 	for _, binding := range graph.Bindings {
-		if seen[binding.CellID] || activities[binding.ActivityID] || binding.ActivityID == "" || binding.InputID == "" || binding.OutputID == "" || binding.UsedEdgeCount != 1 || binding.GeneratedCount != 1 {
-			return refuted("GOOO_GRAPH_EDGE_BINDING_CONTRADICTION")
+		if seenCells[binding.CellID] || seenActivities[binding.ActivityID] {
+			diagnostic.FirstDuplicate = binding.CellID
+			return graphValidationError(DecisionRefuted, ResolutionExact, "GOOO_GRAPH_EDGE_BINDING_CONTRADICTION", diagnostic)
 		}
-		seen[binding.CellID] = true
-		activities[binding.ActivityID] = true
+		seenCells[binding.CellID], seenActivities[binding.ActivityID] = true, true
+		missingNode, missingEdge := graphBindingGaps(graph, nodes, binding)
+		if missingNode != "" || missingEdge != "" {
+			diagnostic.FirstMissingNode, diagnostic.FirstMissingEdge = missingNode, missingEdge
+			return graphValidationError(DecisionRefuted, ResolutionExact, "GOOO_GRAPH_EDGE_BINDING_CONTRADICTION", diagnostic)
+		}
 	}
 	return nil
+}
+
+func graphValidationDiagnostic(graph GraphObservation) *GraphValidationDiagnostic {
+	activityCount := 0
+	for _, node := range graph.Nodes {
+		if node.Kind == "Activity" {
+			activityCount++
+		}
+	}
+	return &GraphValidationDiagnostic{SchemaObserved: graph.Schema, SchemaExpected: graphSchema,
+		NodeCountObserved: len(graph.Nodes), NodeCountExpected: 36, ActivityCountObserved: activityCount, ActivityCountExpected: 12,
+		RelationCountObserved: len(graph.Relations), RelationCountExpected: 24, BindingCountObserved: len(graph.Bindings), BindingCountExpected: 12,
+		DeclaredActivityCountObserved: graph.ActivityCount, DeclaredEdgeCountObserved: graph.EdgeCount}
+}
+
+func validGraphDenominator(graph GraphObservation, diagnostic *GraphValidationDiagnostic) bool {
+	return graph.Schema == graphSchema && graph.ActivityCount == diagnostic.ActivityCountExpected && graph.EdgeCount == diagnostic.RelationCountExpected &&
+		len(graph.Nodes) == diagnostic.NodeCountExpected && diagnostic.ActivityCountObserved == diagnostic.ActivityCountExpected &&
+		len(graph.Relations) == diagnostic.RelationCountExpected && len(graph.Bindings) == diagnostic.BindingCountExpected &&
+		validDigest(graph.ProgramDigest) && graph.GraphHash != ""
+}
+
+func graphNodes(nodes []GraphNode) (map[string]GraphNode, string) {
+	byID := make(map[string]GraphNode, len(nodes))
+	for _, node := range nodes {
+		if node.ID == "" {
+			return byID, "empty-node-id"
+		}
+		if _, exists := byID[node.ID]; exists {
+			return byID, node.ID
+		}
+		byID[node.ID] = node
+	}
+	return byID, ""
+}
+
+func graphBindingGaps(graph GraphObservation, nodes map[string]GraphNode, binding GraphBinding) (string, string) {
+	for _, id := range []string{binding.ActivityID, binding.InputID, binding.OutputID} {
+		if id == "" {
+			return "empty-binding-node", ""
+		}
+		if _, ok := nodes[id]; !ok {
+			return id, ""
+		}
+	}
+	used := graphRelationCount(graph.Relations, binding.ActivityID, "used", binding.InputID)
+	generated := graphRelationCount(graph.Relations, binding.OutputID, "wasGeneratedBy", binding.ActivityID)
+	if binding.UsedEdgeCount != 1 || used != 1 {
+		return "", "used:" + binding.ActivityID + "->" + binding.InputID
+	}
+	if binding.GeneratedCount != 1 || generated != 1 {
+		return "", "wasGeneratedBy:" + binding.OutputID + "->" + binding.ActivityID
+	}
+	return "", ""
+}
+
+func graphRelationCount(relations []GraphRelation, subject, predicate, object string) int {
+	count := 0
+	for _, relation := range relations {
+		if relation.Status == "deterministic" && relation.Subject == subject && relation.Predicate == predicate && relation.Object == object {
+			count++
+		}
+	}
+	return count
+}
+
+func graphValidationError(decision, resolution, reason string, diagnostic *GraphValidationDiagnostic) error {
+	return &ValidationError{Decision: decision, Resolution: resolution, Reason: reason, GraphDiagnostic: diagnostic}
 }
 
 func validateRuntime(observation Observation) error {

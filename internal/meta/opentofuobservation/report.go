@@ -62,6 +62,7 @@ type Report struct {
 	ObserverGoVersion        string             `json:"observer_go_version"`
 	ObserverGOVERSION        string             `json:"observer_go_env_goversion"`
 	ObserverToolchainDigest  string             `json:"observer_toolchain_digest"`
+	GraphValidation          *GraphValidationDiagnostic `json:"graph_validation,omitempty"`
 	HumanReportReady         bool               `json:"human_report_ready"`
 	PromotionAuthorized      bool               `json:"promotion_authorized"`
 	ReportDigest             string             `json:"report_digest"`
