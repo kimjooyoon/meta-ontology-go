@@ -41,6 +41,7 @@ func mixedEvidence() (string, GuardEvidence, RecoveryEvidence) {
 		GuardSatisfied: 10, GuardTotal: 12, GuardUnresolved: 2,
 		TransformationHeadSHA: head, TransformationDecision: "APPLIED",
 		TransformationReason: "SANDBOX_EFFECTS_VERIFIED", TransformationWorkspaceMode: "DISPOSABLE_WORKTREE",
+		WriteBoundary: "SANDBOX_ONLY", SourceWorkspaceUnchanged: true,
 		TransformationEffects: 2, TransformationAppliedEffects: 1, TransformationRefutedEffects: 1,
 		TransformationOperationOutcome: "MIXED_CLOSED_REFUTED", TransformationReceiptDecision: "REFUTED",
 		TransformationReceiptCount: 1, TransformationFailureCount: 1, TransformationUnknownCount: 5,
