@@ -69,7 +69,7 @@ func parseConfig() Config {
 	flag.StringVar(&config.MarkdownPath, "markdown", "", "human-readable report path")
 	flag.BoolVar(&config.Check, "check", false, "require PASS/EXACT")
 	flag.Parse()
-	for _, path := range strings.Split(dependencies, ",") {
+	for path := range strings.SplitSeq(dependencies, ",") {
 		if strings.TrimSpace(path) != "" {
 			config.DependencyFiles = append(config.DependencyFiles, strings.TrimSpace(path))
 		}

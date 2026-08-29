@@ -22,13 +22,13 @@ func bindWorkflowCommand(source []byte, path string, spec OperationSpec) (string
 	}
 	evidence := struct {
 		Path, SourceDigest, Job, Step, Run string
-		Command                          []string
+		Command                            []string
 	}{path, digestBytes(source), spec.JobName, spec.StepName, run, spec.Command}
 	return digestJSON(evidence), nil
 }
 
 func unnamedWorkflowRun(job string, command []string) (string, bool) {
-	for _, line := range strings.Split(job, "\n") {
+	for line := range strings.SplitSeq(job, "\n") {
 		value := strings.TrimSpace(line)
 		if indentation(line) != 6 || !strings.HasPrefix(value, "- run:") {
 			continue
@@ -92,7 +92,7 @@ func workflowRunText(step string) (string, bool) {
 
 func commandMatches(run string, expected []string) bool {
 	want := append([]string(nil), expected...)
-	for _, line := range strings.Split(run, "\n") {
+	for line := range strings.SplitSeq(run, "\n") {
 		got := commandTokens(line)
 		if len(got) < len(want) {
 			continue

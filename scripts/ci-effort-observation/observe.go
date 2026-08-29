@@ -109,11 +109,10 @@ func buildReport(config Config) (Report, error) {
 		Window: window, Jobs: observedJobs, Operations: operations,
 		Accounting: accounting, Reuse: reuse, OpenTofu: openTofu,
 		OperationManifestDigest: digestBytes(manifestBytes),
-		Graph: graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
+		Graph:                   graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
 		CrossProjectRequiredGates: 0, Improvement: "UNKNOWN",
 		Counterexamples: fixedCounterexamples(),
-	}
-	report.UnknownEvidence = firstUnknownEvidence(observedJobs, operations, openTofu)
+		UnknownEvidence: firstUnknownEvidence(observedJobs, operations, openTofu)}
 	report.Cells = buildCells(contract, report)
 	report.Decision, report.Resolution, report.Reason = classifyReport(report)
 	report.HumanReport = humanReport(report)
