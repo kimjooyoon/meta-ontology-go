@@ -17,8 +17,16 @@ func canonicalRegistry() []Binding {
 			ProofChoice: normalizeProof(operation.ProofChoice), Registry: "metric-program",
 		})
 	}
+	source := sourceBindings()
+	sourceOperations := make(map[string]struct{}, len(source))
+	for _, binding := range source {
+		sourceOperations[binding.Operation] = struct{}{}
+	}
 	for _, binding := range generation.DefaultRegistry() {
 		operation := string(binding.Operation)
+		if _, exists := sourceOperations[operation]; exists {
+			continue
+		}
 		activity := map[string]string{
 			"collapse-assign-return": "CollapseAssignReturn",
 			"split-go-declarations":  "SplitGoDeclarations",
@@ -33,7 +41,7 @@ func canonicalRegistry() []Binding {
 			Executor: binding.Executor, Evaluator: binding.Evaluator,
 		})
 	}
-	bindings = append(bindings, sourceBindings()...)
+	bindings = append(bindings, source...)
 	sort.Slice(bindings, func(left, right int) bool { return bindings[left].Operation < bindings[right].Operation })
 	return bindings
 }

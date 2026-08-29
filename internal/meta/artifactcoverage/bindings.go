@@ -16,6 +16,8 @@ func CanonicalBindings() []ArtifactBinding {
 			"generation", "scripts/source-splitter", "self-improvement-generation", "operation.split-go-declarations"),
 		binding("split-gooo-sections", "SplitGoooSections", ProofFoundation,
 			"generation", "bootstrap/source-repacker", "self-improvement-generation", "operation.split-gooo-sections"),
+		binding("extract-function", "ExtractFunction", ProofFoundation,
+			"repository-projection", "bootstrap/function-extractor", "self-improvement-generation", "operation.extract-function"),
 	}
 }
 

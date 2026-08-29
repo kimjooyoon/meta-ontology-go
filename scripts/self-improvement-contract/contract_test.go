@@ -19,12 +19,12 @@ func TestContractClosesLanguageSelfImprovementLoop(t *testing.T) {
 	if report.Status != "PASS" {
 		t.Fatalf("status = %s, errors = %v", report.Status, report.Errors)
 	}
-	if report.EntityCount != 18 || report.ActivityCount != 9 {
+	if report.EntityCount != 19 || report.ActivityCount != 9 {
 		t.Fatalf("model = %d entities/%d activities",
 			report.EntityCount, report.ActivityCount)
 	}
-	if len(report.ExecutorCoverage) != 3 {
-		t.Fatalf("executor coverage = %d, want 3", len(report.ExecutorCoverage))
+	if len(report.ExecutorCoverage) != 4 {
+		t.Fatalf("executor coverage = %d, want 4", len(report.ExecutorCoverage))
 	}
 	for _, indicator := range report.Indicators {
 		if indicator.Verdict != "PASS" {

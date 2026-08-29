@@ -16,7 +16,7 @@ func partitionIndicators(indicators []sourcepolicy.Indicator) ([]sourcepolicy.In
 	actionable, unknown := make([]sourcepolicy.Indicator, 0), make([]string, 0)
 	for _, indicator := range indicators {
 		if indicator.Applicability == sourcepolicy.ApplicabilityNotApplicable ||
-			indicator.Satisfied || indicator.Blocking {
+			indicator.Satisfied {
 			continue
 		}
 		if indicator.Operation == "" {

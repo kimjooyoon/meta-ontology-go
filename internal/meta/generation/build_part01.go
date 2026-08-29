@@ -33,7 +33,7 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonInvalidInput
 		return finish(plan)
 	}
-	if failures := floorFailures(floors); len(failures) != 0 {
+	if failures := floorFailures(floors, registry); len(failures) != 0 {
 		plan.Decision, plan.Reason = DecisionRejected, ReasonFloorRegression
 		plan.UnknownIndicatorIDs = failures
 		return finish(plan)
@@ -57,10 +57,17 @@ func blockingIndicators(indicators []sourcepolicy.Indicator) []sourcepolicy.Indi
 	return result
 }
 
-func floorFailures(floors []sourcepolicy.Indicator) []string {
+func floorFailures(floors []sourcepolicy.Indicator, registry []Binding) []string {
+	index, valid := registryIndex(registry)
+	if !valid {
+		return []string{"registry"}
+	}
 	result := make([]string, 0)
 	for _, indicator := range floors {
 		if !indicator.Satisfied {
+			if _, routable := index[indicator.Operation]; routable {
+				continue
+			}
 			result = append(result, indicatorID(indicator))
 		}
 	}
