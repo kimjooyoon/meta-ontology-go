@@ -99,6 +99,17 @@
       ]
     },
     {
+      "branch": "agent/source-subject-witness-producer-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_source_subject_witness_producer_v1.go",
+        "internal/verify/scope_source_subject_witness_producer_v1_test.go",
+        "scripts/source-subject-witness/indicator_state.go",
+        "scripts/source-subject-witness/indicator_state_test.go"
+      ]
+    },
+    {
       "branch": "agent/luna-meta-09-causal-ci-selection",
       "paths": [
         ".github/agent-scope-table.md",
