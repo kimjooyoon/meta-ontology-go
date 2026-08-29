@@ -8,21 +8,8 @@ import (
 
 func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	if !skipCaps {
-		if storageRoot == "" {
-			storageRoot = root
-		}
-		if err := printSourceMetrics(root, storageRoot); err != nil {
+		if err := checkSourcePolicyForRun(root, storageRoot, from, to); err != nil {
 			return err
-		}
-		policy := verify.DefaultLinePolicy()
-		var policyErr error
-		if validRevision(from) && validRevision(to) && from != to {
-			policyErr = verify.CheckProjectedSourcePolicyRevision(root, storageRoot, nil, policy, from, to)
-		} else {
-			policyErr = verify.CheckProjectedSourcePolicy(root, storageRoot, nil, policy)
-		}
-		if policyErr != nil {
-			return policyErr
 		}
 	}
 	if capsOnly {

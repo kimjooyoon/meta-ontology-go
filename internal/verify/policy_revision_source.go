@@ -13,7 +13,7 @@ func changedSourceFiles(root, base, head string) ([]string, error) {
 		return nil, fmt.Errorf("read source policy changed paths: %w", err)
 	}
 	paths := make([]string, 0)
-	for _, path := range strings.Split(string(output), "\x00") {
+	for path := range strings.SplitSeq(string(output), "\x00") {
 		if strings.HasSuffix(path, ".go") || strings.HasSuffix(path, ".gooo") {
 			paths = append(paths, path)
 		}
@@ -41,21 +41,4 @@ func revisionPath(root, base, path string) (bool, error) {
 		return false, fmt.Errorf("read source policy baseline path %s: %w", path, err)
 	}
 	return strings.TrimSpace(string(output)) != "", nil
-}
-
-func policyViolationRegressed(current Violation, previous []Violation) bool {
-	for _, candidate := range previous {
-		if candidate.Path == current.Path && candidate.Rule == current.Rule && candidate.Detail == current.Detail {
-			return current.Actual > candidate.Actual
-		}
-	}
-	return true
-}
-
-// ValidatePolicyClosure keeps a CLOSED claim separate from its receipt fact.
-func ValidatePolicyClosure(closedClaimed, receiptObserved bool) error {
-	if closedClaimed && !receiptObserved {
-		return fmt.Errorf("closed policy claim has no receipt")
-	}
-	return nil
 }
