@@ -26,6 +26,7 @@ func replayConceptOperations(value languageconcept.Artifact, source []strategy.B
 		byOperation[current.subject] = current
 	}
 	byOperation["terminate-at-fixed-point"] = replayConceptOperation{"terminate-at-fixed-point", "replay-counterfactual", "REGRESSION", "REGRESS"}
+	byOperation["preserve-non-promoting-terminal"] = replayConceptOperation{"preserve-non-promoting-terminal", "preserve-non-promoting-terminal", "REGRESSION", "REGRESS"}
 	keys := make([]string, 0, len(byOperation))
 	for operation := range byOperation {
 		keys = append(keys, operation)

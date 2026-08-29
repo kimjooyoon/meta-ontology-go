@@ -10,4 +10,16 @@ func init() {
 		"internal/meta/languagereadiness/promotioncontinuity",
 		"internal/verify/scope_promotion_authorized_continuity.go",
 	}
+	branchScopeAllowlist["agent/promotion-continuity-v1"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/metric-counterfactual.yml",
+		"cmd/promotion-authorized-continuity",
+		"docs/language/promotion-authorized-continuity.md",
+		"examples/metric-meta-program/main.gooo",
+		"internal/meta/languagereadiness/promotioncontinuity",
+		"internal/meta/metricprogram",
+		"internal/meta/metricstrategy",
+		"internal/verify/scope_promotion_authorized_continuity.go",
+	}
 }

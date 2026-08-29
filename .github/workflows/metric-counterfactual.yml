@@ -325,10 +325,10 @@ jobs:
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
             .policy.choices == ["FOUNDATION", "COHERENCE", "REGRESSION"] and
             ([.candidates[].proof_choice] == ["FOUNDATION", "COHERENCE", "REGRESSION"]) and
-            (.bindings | length) == 30 and
+            (.bindings | length) == 31 and
             all(.bindings[]; .status == "SATISFIED" and (.meta_operation | length) > 0) and
             ([.bindings[] | select(.indicator_id | startswith("gooo.strategy.concept."))] | length) == 7 and
-            ([.bindings[] | select(.indicator_id | startswith("gooo.concept.operation."))] | length) == 8 and
+            ([.bindings[] | select(.indicator_id | startswith("gooo.concept.operation."))] | length) == 9 and
             all(.bindings[]; if ((.indicator_id | startswith("gooo.strategy.concept.")) or (.indicator_id | startswith("gooo.concept.operation."))) then .expected == .actual else true end) and
             .selection.proof_choice == "REGRESSION" and
             .selection.decision == "HOLD_FIXED_POINT" and
@@ -337,7 +337,7 @@ jobs:
           jq -e '
             .schema == "gooo/metric-meta-strategy-verification/v1" and
             .status == "VERIFIED" and
-            .binding_count == 30 and
+            .binding_count == 31 and
             .candidate_count == 3 and
             .selected_proof_choice == "REGRESSION" and
             .repository_workspace_writes == false and
@@ -756,8 +756,8 @@ jobs:
             .root_policy.counts_applicability == "OBSERVED" and
             .root_policy.topology_applicability == "NOT_APPLICABLE" and
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
-            (.operations | length) == 8 and
-            (.bindings | length) == 30 and
+            (.operations | length) == 9 and
+            (.bindings | length) == 31 and
             ([.steps[].activity] == [
               "ObserveCounterfactualBoundary",
               "PreserveRepositoryWorkspace",
@@ -768,8 +768,8 @@ jobs:
           jq -e '
             .schema == "gooo/metric-meta-program-verification/v1" and
             .status == "VERIFIED" and
-            .operation_count == 8 and
-            .binding_count == 30 and
+            .operation_count == 9 and
+            .binding_count == 31 and
             .step_count == 4 and
             .repository_workspace_writes == false and
             .promotion_authorized == false

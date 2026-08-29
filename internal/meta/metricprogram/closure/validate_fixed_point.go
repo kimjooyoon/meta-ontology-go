@@ -17,7 +17,7 @@ func validateProgramFixedPoint(program programDocument) error {
 	}
 	coverage := program.Coverage
 	if coverage.BindingCount != canonicalBindingCount || coverage.ResolvedBindingCount != canonicalBindingCount ||
-		coverage.RegistryOperationCount != 8 || coverage.ReferencedOperationCount != 8 ||
+		coverage.RegistryOperationCount != 9 || coverage.ReferencedOperationCount != 9 ||
 		!coverage.SelectionOperationResolved || coverage.Status != "COMPLETE" {
 		return fmt.Errorf("program coverage is incomplete")
 	}

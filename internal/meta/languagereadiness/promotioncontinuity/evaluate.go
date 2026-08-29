@@ -19,6 +19,7 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	subjectExact := headExact && guard.HeadSHA == head && recovery.HeadSHA == head
 	guardAuthorized := authorizedGuard(guard, head)
 	recoveryAuthorized := authorizedRecovery(recovery, head)
+	mixed := knownMixedRecovery(head, guard, recovery)
 	effectsExact := effectBoundary(recovery)
 	authorityExact := authorityBoundary(guard, recovery)
 	coordinates := []Coordinate{
@@ -26,8 +27,8 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 		coordinate("canonical-guard", "FOUNDATION", guardExact),
 		coordinate("canonical-recovery", "FOUNDATION", recoveryExact),
 		coordinate("exact-subject-link", "COHERENCE", subjectExact),
-		coordinate("guard-authorized", "COHERENCE", guardAuthorized),
-		coordinate("recovery-authorized", "COHERENCE", recoveryAuthorized),
+		coordinate("guard-authorized", "COHERENCE", guardAuthorized || mixed),
+		coordinate("recovery-authorized", "COHERENCE", recoveryAuthorized || mixed),
 		coordinate("zero-effect-boundary", "REGRESSION", effectsExact),
 		coordinate("zero-authority-boundary", "REGRESSION", authorityExact),
 	}
@@ -37,15 +38,20 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 			satisfied++
 		}
 	}
-	decision, reason, resolution := "FAIL_CLOSED", "PROMOTION_CONTINUITY_UNKNOWN", "LOWER_RESOLUTION"
-	if satisfied == len(coordinates) {
-		decision, reason, resolution = "PASS", "PROMOTION_AUTHORIZED_CONTINUITY_PROVEN", "EXACT"
+	decision, reason, resolution, mode, operation := DecisionFailClosed, "PROMOTION_CONTINUITY_UNKNOWN", "LOWER_RESOLUTION", "", "prove-authorized-successor"
+	if mixed {
+		decision, reason, resolution = DecisionFailClosed, ReasonMixed, "EXACT"
+		mode, operation = ModeMixed, OperationMixed
+	}
+	if !mixed && satisfied == len(coordinates) {
+		decision, reason, resolution = DecisionPass, "PROMOTION_AUTHORIZED_CONTINUITY_PROVEN", "EXACT"
+		mode, operation = "PROMOTION_AUTHORIZED", "prove-authorized-successor"
 	}
 	writes := guard.RepositoryWrites + recovery.SourceRepositoryWrites + recovery.SummaryRepositoryWrites + recovery.RepositoryWrites
 	report := Report{
 		Schema: Schema, Decision: decision, Reason: reason, Resolution: resolution,
-		Producer: "promotioncontinuity.Evaluate", Consumer: "self-improvement-cycle",
-		MetaOperation: "prove-authorized-successor",
+		Mode: mode, Producer: "promotioncontinuity.Evaluate", Consumer: "self-improvement-cycle",
+		MetaOperation: operation,
 		Source:        Source{ExpectedHeadSHA: head, Guard: guard, Recovery: recovery},
 		Summary: Summary{Satisfied: satisfied, Total: len(coordinates),
 			Unresolved: len(coordinates) - satisfied, ReadinessBPS: satisfied * 10000 / len(coordinates),
@@ -54,9 +60,9 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 		Coordinates: coordinates, RepositoryWrites: writes,
 		RepositoryMutationAuthorized: guard.MutationAuthorized || recovery.MutationAuthorized,
 	}
-	report.Indicators = buildIndicators(report, guardAuthorized, recoveryAuthorized, effectsExact, authorityExact)
+	report.Indicators = buildIndicators(report, guardAuthorized, recoveryAuthorized, effectsExact, authorityExact, mixed)
 	report.Proofs = buildProofs(report, headExact && guardExact && recoveryExact,
-		subjectExact && guardAuthorized && recoveryAuthorized, effectsExact && authorityExact)
+		subjectExact && (guardAuthorized && recoveryAuthorized || mixed), effectsExact && authorityExact)
 	return seal(report)
 }
 

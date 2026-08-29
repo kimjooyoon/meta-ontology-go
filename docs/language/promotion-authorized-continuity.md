@@ -38,9 +38,12 @@ remains the authority for `storage.direct-entry = 0`.
 | GUARDRAIL | `gooo.metric.language.promotion-continuity-writes.guardrail.v1` | 0 |
 | GUARDRAIL | `gooo.metric.language.promotion-continuity-authority.guardrail.v1` | 0 |
 | GUARDRAIL | `gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1` | 0 |
+| OUTCOME | `gooo.metric.language.promotion-continuity-terminal-preserved.v1` | 1 when the mixed terminal is applicable |
 
-All eight definitions are emitted by `promotioncontinuity.Evaluate` and consumed
-by `self-improvement-cycle` through `prove-authorized-successor`. Unknown schema,
+All nine definitions are emitted by `promotioncontinuity.Evaluate` and consumed
+by `self-improvement-cycle`. The ninth cell is bound to the released
+`PreserveNonPromotingTerminal` activity and is applicable only to the exact mixed
+terminal; it never grants promotion. Unknown schema,
 subject, decision, resolution, effect, write, or authority evidence produces
 `FAIL_CLOSED / LOWER_RESOLUTION`; default zero values cannot authorize a route.
 

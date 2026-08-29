@@ -28,7 +28,7 @@ func TestLanguageConceptsGovernStrategyBindings(t *testing.T) {
 			}
 		}
 	}
-	if len(bindings) != 22 || counts["outcome"] != 1 || counts["driver"] != 3 || counts["guardrail"] != 3 || counts["operation"] != 8 {
+	if len(bindings) != 23 || counts["outcome"] != 1 || counts["driver"] != 3 || counts["guardrail"] != 3 || counts["operation"] != 9 {
 		t.Fatalf("concept governance counts=%v bindings=%d", counts, len(bindings))
 	}
 }

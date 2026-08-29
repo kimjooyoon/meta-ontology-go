@@ -9,6 +9,7 @@ var operations = []operationSpec{
 	{ID: "preserve-repository-workspace", Activity: "PreserveRepositoryWorkspace", ProofChoice: "REGRESSION", InputEntity: "CounterfactualBoundary", OutputEntity: "WorkspaceReceipt", Mode: "ASSERT_NO_WRITE", Ordinal: 60},
 	{ID: "replay-counterfactual", Activity: "ReplayCounterfactual", ProofChoice: "REGRESSION", InputEntity: "WorkspaceReceipt", OutputEntity: "VerificationEvidence", Mode: "REPLAY", Ordinal: 70},
 	{ID: "terminate-at-fixed-point", Activity: "TerminateAtFixedPoint", ProofChoice: "REGRESSION", InputEntity: "VerificationEvidence", OutputEntity: "FixedPointReceipt", Mode: "TERMINATE", Ordinal: 80},
+	{ID: "preserve-non-promoting-terminal", Activity: "PreserveNonPromotingTerminal", ProofChoice: "REGRESSION", InputEntity: "VerificationEvidence", OutputEntity: "FixedPointReceipt", Mode: "PRESERVE_NON_PROMOTING", Ordinal: 90},
 }
 
 func findOperation(id string) (operationSpec, bool) {

@@ -19,3 +19,4 @@ activity ObserveCounterfactualBoundary(ProjectedMetrics) -> CounterfactualBounda
 activity PreserveRepositoryWorkspace(CounterfactualBoundary) -> WorkspaceReceipt
 activity ReplayCounterfactual(WorkspaceReceipt) -> VerificationEvidence
 activity TerminateAtFixedPoint(VerificationEvidence) -> FixedPointReceipt
+activity PreserveNonPromotingTerminal(VerificationEvidence) -> FixedPointReceipt

@@ -1,3 +1,3 @@
 package verify
 
-const canonicalBindingCount = 30
+const canonicalBindingCount = 31

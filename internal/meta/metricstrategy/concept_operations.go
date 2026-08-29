@@ -25,6 +25,7 @@ func conceptOperationBindings(value languageconcept.Artifact, source []Binding) 
 		byOperation[current.subject] = current
 	}
 	byOperation["terminate-at-fixed-point"] = conceptOperation{"terminate-at-fixed-point", "replay-counterfactual", "REGRESSION", "REGRESS"}
+	byOperation["preserve-non-promoting-terminal"] = conceptOperation{"preserve-non-promoting-terminal", "preserve-non-promoting-terminal", "REGRESSION", "REGRESS"}
 	keys := make([]string, 0, len(byOperation))
 	for operation := range byOperation {
 		keys = append(keys, operation)

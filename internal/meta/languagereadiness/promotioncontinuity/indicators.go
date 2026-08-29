@@ -1,28 +1,38 @@
 package promotioncontinuity
 
-func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK bool) []Indicator {
+func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK, mixed bool) []Indicator {
 	resolution := report.Resolution
 	producer, consumer, operation := report.Producer, report.Consumer, report.MetaOperation
 	values := []struct {
 		id, class, choice string
+		applicability     string
 		value, target     int
 		satisfied         bool
 	}{
-		{"gooo.metric.language.promotion-continuity-readiness-bps.v1", "OUTCOME", "COHERENCE", report.Summary.ReadinessBPS, 10000, report.Decision == "PASS"},
-		{"gooo.metric.language.promotion-continuity-authorized-guards.v1", "DRIVER", "FOUNDATION", report.Summary.AuthorizedGuardReceipts, 1, guardOK},
-		{"gooo.metric.language.promotion-continuity-authorized-routes.v1", "DRIVER", "COHERENCE", report.Summary.AuthorizedRecoveryRoutes, 1, recoveryOK},
-		{"gooo.metric.language.promotion-continuity-unresolved.guardrail.v1", "GUARDRAIL", "FOUNDATION", report.Summary.Unresolved, 0, report.Summary.Unresolved == 0},
-		{"gooo.metric.language.promotion-continuity-effects.guardrail.v1", "GUARDRAIL", "REGRESSION", report.Source.Recovery.TransformationEffects, 0, effectsOK},
-		{"gooo.metric.language.promotion-continuity-writes.guardrail.v1", "GUARDRAIL", "REGRESSION", report.RepositoryWrites, 0, authorityOK},
-		{"gooo.metric.language.promotion-continuity-authority.guardrail.v1", "GUARDRAIL", "REGRESSION", boolInt(report.RepositoryMutationAuthorized), 0, authorityOK},
-		{"gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1", "GUARDRAIL", "REGRESSION", boolInt(!report.Source.Recovery.SourceWorkspaceUnchanged), 0, effectsOK},
+		{"gooo.metric.language.promotion-continuity-readiness-bps.v1", "OUTCOME", "COHERENCE", "APPLICABLE", report.Summary.ReadinessBPS, 10000, report.Decision == "PASS"},
+		{"gooo.metric.language.promotion-continuity-authorized-guards.v1", "DRIVER", "FOUNDATION", "APPLICABLE", report.Summary.AuthorizedGuardReceipts, 1, guardOK},
+		{"gooo.metric.language.promotion-continuity-authorized-routes.v1", "DRIVER", "COHERENCE", "APPLICABLE", report.Summary.AuthorizedRecoveryRoutes, 1, recoveryOK},
+		{"gooo.metric.language.promotion-continuity-unresolved.guardrail.v1", "GUARDRAIL", "FOUNDATION", "APPLICABLE", report.Summary.Unresolved, 0, report.Summary.Unresolved == 0},
+		{"gooo.metric.language.promotion-continuity-effects.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", report.Source.Recovery.TransformationEffects, 0, effectsOK},
+		{"gooo.metric.language.promotion-continuity-writes.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", report.RepositoryWrites, 0, authorityOK},
+		{"gooo.metric.language.promotion-continuity-authority.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", boolInt(report.RepositoryMutationAuthorized), 0, authorityOK},
+		{"gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", boolInt(!report.Source.Recovery.SourceWorkspaceUnchanged), 0, effectsOK},
+		{"gooo.metric.language.promotion-continuity-terminal-preserved.v1", "OUTCOME", "REGRESSION", "APPLICABLE", boolInt(mixed), 1, mixed},
+	}
+	if mixed {
+		values = append(values, struct {
+			id, class, choice string
+			value, target     int
+			satisfied         bool
+		}{"gooo.metric.language.promotion-continuity-terminal-preserved.v1", "OUTCOME", "REGRESSION", 1, 1, true})
 	}
 	indicators := make([]Indicator, 0, len(values))
 	for _, value := range values {
 		indicators = append(indicators, Indicator{
 			MetricID: value.id, Class: value.class, ProofChoice: value.choice,
 			Producer: producer, Consumer: consumer, MetaOperation: operation,
-			Resolution: resolution, Value: value.value, Target: value.target,
+			Applicability: value.applicability, Resolution: resolution,
+			Value: value.value, Target: value.target,
 			Satisfied: value.satisfied,
 		})
 	}

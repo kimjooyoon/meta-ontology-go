@@ -24,6 +24,7 @@ var operationConceptIDs = map[string]string{
 	"lower-semantic-resolution":       "monotone-semantic-resolution",
 	"observe-counterfactual-boundary": "effect-bounded-observation",
 	"preserve-repository-workspace":   "effect-bounded-observation",
+	"preserve-non-promoting-terminal": "rollback-fixed-point-recovery",
 	"project-algebraic-root-state":    "metric-meta-program",
 	"replay-counterfactual":           "causal-feedback-chain",
 	"terminate-at-fixed-point":        "concept-governed-refactoring",

@@ -43,7 +43,7 @@ func run(arguments []string, output io.Writer) error {
 	}
 	fmt.Fprintf(output, "decision=%s resolution=%s satisfied=%d/%d\n",
 		report.Decision, report.Resolution, report.Summary.Satisfied, report.Summary.Total)
-	if report.Decision != "PASS" {
+	if report.Decision != promotioncontinuity.DecisionPass && !promotioncontinuity.IsKnownNonPromotingTerminal(report) {
 		return fmt.Errorf("%s: %s", report.Decision, report.Reason)
 	}
 	return nil

@@ -22,7 +22,7 @@ func TestCompileBindsEveryIndicatorToVerifiedGoooMetaCode(t *testing.T) {
 	if !bytes.Equal(source, fixture) {
 		t.Fatal("compiled meta source differs from the checked-in Gooo fixed point")
 	}
-	if program.Coverage.Status != "COMPLETE" || program.Coverage.BindingCount != 15 || program.Coverage.ResolvedBindingCount != 15 || program.Coverage.RegistryOperationCount != 8 || program.Coverage.ReferencedOperationCount != 8 {
+	if program.Coverage.Status != "COMPLETE" || program.Coverage.BindingCount != 16 || program.Coverage.ResolvedBindingCount != 16 || program.Coverage.RegistryOperationCount != 9 || program.Coverage.ReferencedOperationCount != 9 {
 		t.Fatalf("coverage = %#v", program.Coverage)
 	}
 	if len(program.Steps) != 4 || program.Steps[0].OperationID != "observe-counterfactual-boundary" || program.Steps[3].OperationID != "terminate-at-fixed-point" {
@@ -33,7 +33,7 @@ func TestCompileBindsEveryIndicatorToVerifiedGoooMetaCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Status != "VERIFIED" || report.BindingCount != 15 || report.OperationCount != 8 || report.StepCount != 4 || report.RepositoryWorkspaceWrites || report.PromotionAuthorized {
+	if report.Status != "VERIFIED" || report.BindingCount != 16 || report.OperationCount != 9 || report.StepCount != 4 || report.RepositoryWorkspaceWrites || report.PromotionAuthorized {
 		t.Fatalf("verification = %#v", report)
 	}
 }
