@@ -164,14 +164,15 @@ func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 	for _, step := range input {
 		wall := int64(0)
 		var unknown *Unknown
-		if step.StartedAt != "" || step.CompletedAt != "" {
+		if step.Conclusion == "skipped" {
+			// A skipped step has no execution interval to observe.
+		} else if step.StartedAt == "" || step.CompletedAt == "" {
+			unknown = stepRuntimeUnknown()
+		} else {
 			var err error
 			wall, err = durationMS(step.StartedAt, step.CompletedAt)
 			if err != nil {
-				if step.StartedAt != "" && step.CompletedAt != "" {
-					return nil, 0, fmt.Errorf("step %q: %w", step.Name, err)
-				}
-				unknown = stepRuntimeUnknown()
+				return nil, 0, fmt.Errorf("step %q: %w", step.Name, err)
 			}
 			total += wall
 		}

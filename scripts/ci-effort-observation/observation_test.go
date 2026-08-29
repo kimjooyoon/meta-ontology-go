@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 )
@@ -72,6 +74,32 @@ func TestMissingOpenTofuEvidenceIsTypedUnknown(t *testing.T) {
 	value, err := observeOpenTofu("", "", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	if err != nil || value.ArtifactID != 0 || !validUnknown(value.Unknown) {
 		t.Fatalf("missing OpenTofu evidence = %+v, err = %v", value, err)
+	}
+}
+
+func TestExactPriorReceiptAloneDischargesReuseObligation(t *testing.T) {
+	digest := digestString("evidence")
+	key := ReuseKey{HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", InputDigest: digest,
+		ToolchainDigest: digest, CommandContextDigest: digest, EnvironmentAllowlistDigest: digest,
+		DependencyGraphDigest: digest, ExpectedResultDigest: digest, OpenTofuReleaseDigest: digest}
+	prior := PriorRecord{Schema: reportSchema, Decision: "PASS", Resolution: "EXACT", HeadSHA: key.HeadSHA,
+		Key: key, EvidenceDigest: digest, ResultDigest: digest, RepositoryWrites: 0}
+	data, err := json.Marshal(prior)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := t.TempDir() + "/prior.json"
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	reuse, err := buildReuse(path, key)
+	if err != nil || reuse.Decision != "REUSED" || reuse.Reused != 1 || reuse.RequiresExecution {
+		t.Fatalf("exact prior reuse = %+v, err = %v", reuse, err)
+	}
+	key.InputDigest = digestString("changed")
+	reuse, err = buildReuse(path, key)
+	if err != nil || reuse.Decision != "REFUTED" || reuse.Reason != "REUSE_INPUT_DIGEST_MISMATCH" || reuse.RequiresExecution != true {
+		t.Fatalf("mismatched prior reuse = %+v, err = %v", reuse, err)
 	}
 }
 
