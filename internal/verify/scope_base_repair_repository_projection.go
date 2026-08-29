@@ -33,6 +33,9 @@ func init() {
 		"scripts/semantic-conformance.sh",
 		"scripts/source-splitter",
 		"scripts/verify",
-		"internal/verify/scope_base_repair_repository_projection",
+		"internal/verify/scope_base_repair_repository_projection.go",
+		"internal/verify/scope_base_repair_repository_projection_test.go",
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 	}
 }

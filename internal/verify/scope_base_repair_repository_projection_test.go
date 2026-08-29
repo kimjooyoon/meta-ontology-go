@@ -4,16 +4,19 @@ import "testing"
 
 func TestBaseRepairRepositoryProjectionScope(t *testing.T) {
 	paths, ok := BranchScope(baseRepairRepositoryProjectionBranch)
-	if !ok || len(paths) != 30 {
+	if !ok || len(paths) != 33 {
 		t.Fatalf("base repair branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
 		".github/workflows/ci.yml",
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 		"bootstrap/function-extractor/apply.go",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/sourcepolicy/indicator.go",
 		"scripts/meta-summary/render.go",
 		"internal/verify/scope_base_repair_repository_projection.go",
+		"internal/verify/scope_base_repair_repository_projection_test.go",
 	}
 	if err := CheckPathScopeForBranch(allowed, baseRepairRepositoryProjectionBranch); err != nil {
 		t.Fatalf("representative owned paths were rejected: %v", err)
