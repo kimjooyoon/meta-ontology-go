@@ -146,12 +146,29 @@ func validateExtractorReport(report extractorReport) bool {
 	if len(failures) != len(report.Unhandled) {
 		return true
 	}
+	seenSubjects := make(map[string]bool, len(report.Subjects))
+	seenChanged := make(map[string]bool)
+	seenCreated := make(map[string]bool)
 	for _, subject := range report.Subjects {
-		if subject.Logical == "" || subject.State == "" {
+		if subject.Logical == "" || seenSubjects[subject.Logical] || subject.Before <= 0 || subject.After <= 0 ||
+			(subject.State != "STAGED_NOT_COMMITTED" && subject.State != "COMMITTED_APPLIED") {
 			return true
 		}
+		seenSubjects[subject.Logical] = true
 		if _, exists := seenUnhandled[subject.Logical]; exists {
 			return true
+		}
+		for _, path := range subject.Files {
+			if path == "" || seenChanged[path] {
+				return true
+			}
+			seenChanged[path] = true
+		}
+		for _, path := range subject.CreatedFiles {
+			if path == "" || seenCreated[path] {
+				return true
+			}
+			seenCreated[path] = true
 		}
 	}
 	values, ok := extractorIndicatorValues(report.Indicators)
@@ -194,6 +211,13 @@ func trueIfNoFailureBinding(unhandled []string, failures map[string]extractorFai
 }
 
 func extractorIndicatorValues(raw []json.RawMessage) (map[string]int, bool) {
+	expected := map[string]extractorIndicatorRecord{
+		"extraction.observed": {Limit: -1, Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},
+		"extraction.staged":   {Limit: -1, Consumer: "function-extractor", Operation: "stage-helper-extraction", Proof: "coherent-system"},
+		"extraction.applied":  {Limit: -1, Consumer: "logical-materializer", Operation: "accept-helper-extraction", Proof: "coherent-system"},
+		"extraction.created":  {Limit: -1, Consumer: "authorized-write-set", Operation: "authorize-declared-file-creation", Proof: "axiomatic-foundation"},
+		"extraction.unhandled": {Limit: 0, Blocking: true, Consumer: "function-extractor", Operation: "define-extraction-recipe", Proof: "infinite-regress"},
+	}
 	values := make(map[string]int, len(raw))
 	seen := make(map[string]bool, len(raw))
 	for _, encoded := range raw {
@@ -201,10 +225,18 @@ func extractorIndicatorValues(raw []json.RawMessage) (map[string]int, bool) {
 		if decodeStrictBytes(encoded, &indicator) != nil || indicator.ID == "" || indicator.Value < 0 || seen[indicator.ID] {
 			return nil, false
 		}
+		required, exists := expected[indicator.ID]
+		if !exists || indicator.Limit != required.Limit || indicator.Blocking != required.Blocking ||
+			indicator.Consumer != required.Consumer || indicator.Operation != required.Operation || indicator.Proof != required.Proof {
+			return nil, false
+		}
 		seen[indicator.ID] = true
 		values[indicator.ID] = indicator.Value
 	}
-	for _, id := range []string{"extraction.observed", "extraction.staged", "extraction.applied", "extraction.created", "extraction.unhandled"} {
+	if len(seen) != len(expected) {
+		return nil, false
+	}
+	for id := range expected {
 		if _, ok := values[id]; !ok {
 			return nil, false
 		}
