@@ -244,6 +244,10 @@ func TestMissingPriorReceiptIsTypedUnknown(t *testing.T) {
 	if report.Decision != DecisionUnknown || len(report.Unknowns) != 1 || report.Unknowns[0].BlockedBy == nil {
 		t.Fatalf("missing prior report=%s unknowns=%d", report.Decision, len(report.Unknowns))
 	}
+	unknown := report.Unknowns[0]
+	if unknown.Stage != "REUSE" || unknown.Step != "READ_PRIOR_RECEIPT" || unknown.Reason != "PRIOR_RECEIPT_MISSING" || unknown.UnknownClass != "DIRECT_MISSING" || unknown.NextOperation != "RESTORE_PRIOR_RECEIPT" || unknown.BlockedBy == nil || len(unknown.BlockedBy) != 0 {
+		t.Fatalf("prior-missing coordinate=%+v", unknown)
+	}
 }
 
 func TestMalformedPriorReceiptFailsClosed(t *testing.T) {
