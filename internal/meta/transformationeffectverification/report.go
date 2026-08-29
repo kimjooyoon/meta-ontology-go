@@ -13,8 +13,7 @@ func failureReport(cause error) Report {
 		Stage: "verify-bundle", Step: "validate-input", Reason: "UNKNOWN_CAUSE_UNCATALOGED",
 		UnknownClass: "UNCATALOGED_CAUSE", NextOperation: "restore-transformation-evidence", BlockedBy: []string{},
 		Improvement: "UNKNOWN", OperationOutcome: "UNKNOWN", PromotionAuthorized: false}
-	var failure *validationFailure
-	if errors.As(cause, &failure) {
+	if failure, ok := errors.AsType[*validationFailure](cause); ok {
 		report.Decision, report.Resolution = failure.Decision, failure.Resolution
 		report.Stage, report.Step, report.Reason = failure.Stage, failure.Step, failure.Reason
 		report.UnknownClass, report.NextOperation, report.BlockedBy = failure.Unknown, failure.Next, failure.Blocked
