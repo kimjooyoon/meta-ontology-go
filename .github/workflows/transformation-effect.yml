@@ -412,6 +412,7 @@ jobs:
           stage=initialize
           trap 'status=$?; jq -n --arg stage "$stage" --arg step "focused-transformation" --arg reason "FOCUSED_JOB_COMMAND_FAILED" --arg command "$BASH_COMMAND" --argjson exit_code "$status" --argjson line "${BASH_LINENO[0]:-0}" "{schema:\"gooo/transformation-effect-focused-diagnostic/v1\",decision:\"UNKNOWN\",resolution:\"LOWER_RESOLUTION\",stage:\$stage,step:\$step,reason:\$reason,unknown_class:\"DIRECT_MISSING\",next_operation:\"restore-transformation-evidence\",blocked_by:[],command:\$command,exit_code:\$exit_code,line:\$line}" > "$root/diagnostic.json"' ERR
           before="$(git status --porcelain=v1 --untracked-files=all)"
+          export METRICS_COMMIT_SHA="$HEAD_SHA"
           export METRICS_DIR="$input"
           stage=source-metrics
           go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$STORAGE_ROOT" -json > "$input/source-metrics-raw.json"
