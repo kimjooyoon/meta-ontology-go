@@ -61,11 +61,11 @@ type planIndicator struct {
 }
 
 type planReport struct {
-	Schema          string              `json:"schema"`
-	SourceSHA       string              `json:"source_sha"`
-	Subjects        []planSubject       `json:"subjects"`
+	Schema          string               `json:"schema"`
+	SourceSHA       string               `json:"source_sha"`
+	Subjects        []planSubject        `json:"subjects"`
 	Counterexamples []planCounterexample `json:"counterexamples"`
-	Indicators      []planIndicator     `json:"indicators"`
+	Indicators      []planIndicator      `json:"indicators"`
 }
 
 type packageShape struct {

@@ -4,9 +4,12 @@ import "strconv"
 
 func classify(subject inputSubject, atoms []declarationAtom) (planSubject, []planCounterexample) {
 	result := planSubject{
-		Logical: subject.Logical, Lines: subject.Value,
+		Logical:      subject.Logical,
+		Lines:        subject.Value,
 		RequiredSave: subject.Value - subject.Limit,
-		Consumer: "logical-source-splitter", Proof: "axiomatic-foundation", Executable: true,
+		Consumer:     "logical-source-splitter",
+		Proof:        "axiomatic-foundation",
+		Executable:   true,
 	}
 	counterexamples := capacityCounterexamples(subject, atoms)
 	if len(counterexamples) > 0 {
@@ -68,16 +71,20 @@ func capacityCounterexamples(subject inputSubject, atoms []declarationAtom) []pl
 			continue
 		}
 		result = append(result, planCounterexample{
-			Logical: subject.Logical,
-			BlockerID: subject.Logical + "#" + atom.identity,
-			Decision: "REFUTED",
-			Stage: "derive-recipe",
-			Step: "select-declaration",
-			Reason: "NO_SAFE_DECLARATION_CAPACITY",
-			UnknownClass: "KNOWN_CONTRADICTION",
+			Logical:       subject.Logical,
+			BlockerID:     subject.Logical + "#" + atom.identity,
+			Decision:      "REFUTED",
+			Stage:         "derive-recipe",
+			Step:          "select-declaration",
+			Reason:        "NO_SAFE_DECLARATION_CAPACITY",
+			UnknownClass:  "KNOWN_CONTRADICTION",
 			NextOperation: "report-contradiction",
-			BlockedBy: []string{},
-			Diagnostics: []string{"declaration=" + atom.identity, "declaration_lines=" + strconv.Itoa(atom.lines), "minimum_helper_lines=" + strconv.Itoa(atom.lines+3)},
+			BlockedBy:     []string{},
+			Diagnostics:   []string{
+				"declaration=" + atom.identity,
+				"declaration_lines=" + strconv.Itoa(atom.lines),
+				"minimum_helper_lines=" + strconv.Itoa(atom.lines+3),
+			},
 		})
 	}
 	return result

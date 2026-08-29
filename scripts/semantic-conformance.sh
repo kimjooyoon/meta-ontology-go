@@ -125,6 +125,12 @@ write_extraction_result() {
         schema: "gooo.semantic-conformance-extraction-result/v1",
         source_sha: $source_sha,
         decision: (if $refuted_count > 0 then "REFUTED" else "UNKNOWN" end),
+        subject_decision: (if $refuted_count > 0 then "REFUTED" else "UNKNOWN" end),
+        subject_resolution: (if $refuted_count > 0 then "LOWER_RESOLUTION" else "UNKNOWN" end),
+        subject_reason: (if $refuted_count > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
+        conformance_decision: "FAIL_CLOSED",
+        conformance_resolution: "UNKNOWN",
+        conformance_reason: "CONFORMANCE_NOT_YET_ADJUDICATED",
         stage: "semantic-conformance",
         step: "extractor-observe",
         reason: (if $refuted_count > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
@@ -180,6 +186,11 @@ write_extraction_result() {
      (metric_blockers($projected_metrics[0]; "gooo.metric.source.function-lines.v1")) as $projected_function_line_blockers |
      {schema:"gooo.semantic-conformance-extraction-result/v1", source_sha:$source_sha,
       decision:(if ($refuted | length) > 0 then "REFUTED" else "UNKNOWN" end),
+      subject_decision:(if ($refuted | length) > 0 then "REFUTED" else "UNKNOWN" end),
+      subject_resolution:(if ($refuted | length) > 0 then "LOWER_RESOLUTION" else "UNKNOWN" end),
+      subject_reason:(if ($refuted | length) > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
+      conformance_decision:"FAIL_CLOSED", conformance_resolution:"UNKNOWN",
+      conformance_reason:"CONFORMANCE_NOT_YET_ADJUDICATED",
       stage:"semantic-conformance", step:"extractor-observe",
       reason:(if ($refuted | length) > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
       unknown_class:(if ($refuted | length) > 0 then "KNOWN_CONTRADICTION" else "DIRECT_MISSING" end),
@@ -252,6 +263,7 @@ run_extraction_pass() {
   local status=$?
   set -e
   if [[ "$status" -eq 0 ]]; then
+    record_extraction_report "$output"
     return 0
   fi
   if [[ ! -s "$output" ]]; then
@@ -268,6 +280,126 @@ run_extraction_pass() {
   write_extraction_result "$output" "$projection_work/extraction-counterexample.json" "EXTRACTION_APPLIED_ZERO" "$projection_work/split-source-metrics-raw.json"
   cat "$projection_work/extraction-counterexample.json"
   return "$status"
+}
+
+adjudicate_partial_progress() {
+  local receipt="$1"
+  local iteration="$2"
+  local blocking="$3"
+  local first_observation="$projection_work/fixed-point-1/source-metrics.json"
+  local second_observation="$projection_work/fixed-point-$iteration/source-metrics.json"
+  local initial_extraction="$projection_work/extraction-report.json"
+  local first_digest
+  local second_digest
+  local initial_subjects
+  local initial_applied
+  local initial_created
+  local initial_changed_paths
+  local initial_created_paths
+
+  if [[ "$iteration" -le 1 || ! -s "$receipt" || ! -s "$first_observation" || ! -s "$second_observation" || ! -s "$initial_extraction" ]]; then
+    return 1
+  fi
+  if ! cmp -s "$first_observation" "$second_observation"; then
+    return 1
+  fi
+  first_digest="sha256:$(sha256sum "$first_observation" | cut -d' ' -f1)"
+  second_digest="sha256:$(sha256sum "$second_observation" | cut -d' ' -f1)"
+  initial_subjects="$(jq -er '.subjects | length' "$initial_extraction")"
+  initial_applied="$(jq -er '[.indicators[] | select(.id == "extraction.applied") | .value] | if length == 1 then .[0] else error("missing extraction.applied") end' "$initial_extraction")"
+  initial_created="$(jq -er '[.indicators[] | select(.id == "extraction.created") | .value] | if length == 1 then .[0] else error("missing extraction.created") end' "$initial_extraction")"
+  initial_changed_paths="$(jq -er '[.subjects[]?.changed_files[]?] | unique | length' "$initial_extraction")"
+  initial_created_paths="$(jq -er '[.subjects[]?.created_files[]?] | unique | length' "$initial_extraction")"
+  jq -e \
+    --arg source_sha "$head_sha" \
+    --argjson initial_subjects "$initial_subjects" \
+    --argjson initial_applied "$initial_applied" \
+    --argjson initial_created "$initial_created" \
+    --argjson initial_changed_paths "$initial_changed_paths" \
+    --argjson initial_created_paths "$initial_created_paths" \
+    --argjson residual_before "$previous_blocking" \
+    --argjson blocking "$blocking" \
+    '.source_sha == $source_sha and
+     .decision == "REFUTED" and
+     .reason == "KNOWN_CONTRADICTION_PERSISTED" and
+     .unknown_class == "KNOWN_CONTRADICTION" and
+     (.counterexamples | length) > 0 and
+     (.counterexamples | all(.[]; .decision == "REFUTED" and .unknown_class == "KNOWN_CONTRADICTION" and (.blocker_id // "") != "" and ((.blocked_by // []) | length) == 0)) and
+     (.blocker_ids | length) == ((.blocker_ids | unique) | length) and
+     (.counterexamples | length) == ((.counterexamples | map(.blocker_id) | unique) | length) and
+     (.blocker_ids | length) == ((.counterexamples | map(.blocker_id) | unique) | length) and
+     ((.blocker_ids | sort) == (.counterexamples | map(.blocker_id) | unique | sort)) and
+     (.blocker_ids | all(.[]; type == "string" and contains("#"))) and
+     .projected_compile.observed == true and
+     .projected_compile.exit_code == 0 and
+     .extraction.unhandled == 0 and
+     (.raw_projected_progress.raw_go_file_line_blockers >= .raw_projected_progress.projected_go_file_line_blockers) and
+     (.raw_projected_progress.raw_function_line_blockers >= .raw_projected_progress.projected_function_line_blockers) and
+     $initial_subjects == $initial_applied and
+     $initial_applied > 0 and
+     $initial_created >= 0 and
+     $initial_created == $initial_created_paths and
+     (.partial_writes.changed | length) == $initial_changed_paths and
+     (.partial_writes.created | length) == $initial_created_paths and
+     $residual_before == $blocking and
+     $blocking > 0' \
+    "$receipt" >/dev/null
+  jq --arg first_digest "$first_digest" \
+    --arg second_digest "$second_digest" \
+    --arg first_path "fixed-point-1/source-metrics.json" \
+    --arg second_path "fixed-point-$iteration/source-metrics.json" \
+    --argjson iteration "$iteration" \
+    --argjson residual_before "$previous_blocking" \
+    --argjson residual_after "$blocking" \
+    --argjson initial_subjects "$initial_subjects" \
+    --argjson initial_applied "$initial_applied" \
+    --argjson initial_created "$initial_created" \
+    --argjson initial_changed_paths "$initial_changed_paths" \
+    --argjson initial_created_paths "$initial_created_paths" \
+    '. + {
+      subject_decision: "REFUTED",
+      subject_resolution: "LOWER_RESOLUTION",
+      subject_reason: "KNOWN_CONTRADICTION_PERSISTED",
+      conformance_decision: "PASS",
+      conformance_resolution: "PARTIAL_PROGRESS_CONFORMANT",
+      conformance_reason: "EXACT_REFUTED_RECEIPT_WITH_PROJECTED_EVIDENCE",
+      fixed_point_replay: {
+        observation_count: 2,
+        iteration: $iteration,
+        first_observation: $first_path,
+        second_observation: $second_path,
+        first_digest: $first_digest,
+        second_digest: $second_digest,
+        byte_identical: true,
+        residual_before: $residual_before,
+        residual_after: $residual_after
+      },
+      safe_applied_writes: {
+        source_subjects: $initial_subjects,
+        applied: $initial_applied,
+        created: $initial_created,
+        changed_paths: $initial_changed_paths,
+        created_paths: $initial_created_paths
+      }
+    }' "$receipt" > "$receipt.sealed"
+  mv "$receipt.sealed" "$receipt"
+  jq -e \
+    --arg source_sha "$head_sha" \
+    --argjson blocking "$blocking" \
+    '.source_sha == $source_sha and
+     .decision == "REFUTED" and .subject_decision == "REFUTED" and
+     .subject_resolution == "LOWER_RESOLUTION" and
+     .conformance_decision == "PASS" and
+     .conformance_resolution == "PARTIAL_PROGRESS_CONFORMANT" and
+     .fixed_point_replay.byte_identical == true and
+     .fixed_point_replay.observation_count == 2 and
+     .fixed_point_replay.residual_before == $blocking and
+     .fixed_point_replay.residual_after == $blocking and
+     .safe_applied_writes.applied > 0 and
+     .safe_applied_writes.created >= 0 and
+     .projected_compile.observed == true and
+     .extraction.unhandled == 0' \
+     "$receipt" >/dev/null
 }
 
 set +e
@@ -307,6 +439,9 @@ fi
 # unknown rather than an authorization to repeat names forever.
 previous_blocking=-1
 fixed_point_closed=false
+partial_progress_receipt=""
+partial_progress_iteration=0
+partial_progress_blocking=0
 last_metrics="$projection_work/split-source-metrics-raw.json"
 for iteration in 1 2 3 4 5 6 7 8; do
   pass_work="$projection_work/fixed-point-$iteration"
@@ -335,8 +470,10 @@ for iteration in 1 2 3 4 5 6 7 8; do
       "$projection_work/fixed-point-unknown.json" \
       > "$projection_work/fixed-point-unknown.sealed.json"
     mv "$projection_work/fixed-point-unknown.sealed.json" "$projection_work/fixed-point-unknown.json"
-    cat "$projection_work/fixed-point-unknown.json"
-    exit 1
+    partial_progress_receipt="$projection_work/fixed-point-unknown.json"
+    partial_progress_iteration="$iteration"
+    partial_progress_blocking="$blocking"
+    break
   fi
   previous_blocking="$blocking"
   go run ./bootstrap/meta-binding-witness \
@@ -374,7 +511,7 @@ for iteration in 1 2 3 4 5 6 7 8; do
     -output "$split"
 done
 
-if [[ "$fixed_point_closed" != true ]]; then
+if [[ "$fixed_point_closed" != true && -z "$partial_progress_receipt" ]]; then
   write_extraction_result "$last_extraction" "$projection_work/fixed-point-unknown.json" "FIXED_POINT_ITERATION_BOUND" "$last_metrics"
   jq --arg iteration "8" \
     '. + {diagnostics:{iteration_limit:($iteration|tonumber)}}' \
@@ -386,8 +523,20 @@ if [[ "$fixed_point_closed" != true ]]; then
 fi
 
 # Stage 0 keeps the deterministic Go verifier as the baseline while gooo is
-# bootstrapped. The policy job adds the full changed-path scope check.
-go run ./scripts/verify --root "$repo_root" --storage-root "$storage_root"
+# bootstrapped. A known subject contradiction is evaluated separately from the
+# source-policy outcome: its receipt must prove exact projected evidence before
+# the conformance evaluator can pass. The policy job remains authoritative for
+# the unresolved source-cap outcome.
+if [[ -n "$partial_progress_receipt" ]]; then
+  go run ./scripts/verify --root "$repo_root" --storage-root "$storage_root" --skip-caps
+  if ! adjudicate_partial_progress "$partial_progress_receipt" "$partial_progress_iteration" "$partial_progress_blocking"; then
+    cat "$partial_progress_receipt"
+    exit 1
+  fi
+  cat "$partial_progress_receipt"
+else
+  go run ./scripts/verify --root "$repo_root" --storage-root "$storage_root"
+fi
 
 if [[ ! -f cmd/gooo/main.go ]]; then
   echo "semantic conformance deferred: cmd/gooo is not present in this baseline"
