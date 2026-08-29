@@ -70,6 +70,13 @@ type namespaceReplacementReceipt struct {
 	FinalDigest           string `json:"final_digest"`
 }
 
+type backupCleanupObservation struct {
+	Status    string `json:"status"`
+	Attempted int    `json:"attempted"`
+	Removed   int    `json:"removed"`
+	Failures  int    `json:"failures"`
+}
+
 type extractionReport struct {
 	Schema                string                         `json:"schema"`
 	SourceSHA             string                         `json:"source_sha"`
@@ -78,4 +85,5 @@ type extractionReport struct {
 	Failures              []extractionFailureRecord      `json:"failures,omitempty"`
 	Indicators            []extractionIndicator          `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
+	BackupCleanup         backupCleanupObservation       `json:"backup_cleanup"`
 }

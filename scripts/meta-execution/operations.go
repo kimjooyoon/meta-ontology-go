@@ -7,15 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"sort"
 	"strings"
 
@@ -49,6 +44,7 @@ type extractorReport struct {
 	Failures              []json.RawMessage             `json:"failures,omitempty"`
 	Indicators            []json.RawMessage              `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
+	BackupCleanup         backupCleanupObservation       `json:"backup_cleanup"`
 }
 
 type extractorSubject struct {
@@ -84,18 +80,6 @@ type extractorDensity struct {
 type extractorDensitySubject struct {
 	Logical string `json:"logical"`
 	Status  string `json:"status"`
-}
-
-type extractValidation struct {
-	BeforeFunctionLines  int
-	AfterFunctionLines   int
-	TransformedSubject   string
-	AtomicReplacement    bool
-	FormatFixedPoint     bool
-	HeaderPreserved      bool
-	ImportIdentity       bool
-	PackageConformance   bool
-	ProjectedTestsPassed bool
 }
 
 const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
@@ -333,11 +317,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements)
 	if err != nil {
-		reason := "INSTANCE_CONFORMANCE_FAILED"
-		var replacementErr *namespaceReplacementError
-		if errors.As(err, &replacementErr) {
-			reason = replacementErr.reason
-		}
+		reason := extractValidationErrorReason(err)
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, "KNOWN_CONTRADICTION", "report-counterexample"}
 	}
 	evaluatorRaw, _ := json.Marshal(report)
@@ -464,69 +444,6 @@ func findExtractorSubject(subjects []extractorSubject, logical string) (extracto
 	return extractorSubject{}, false
 }
 
-func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, before []byte, observed extractorSubject, replacements []namespaceReplacementReceipt) (extractValidation, error) {
-	beforeSet, beforeFile, err := parseGoFile(subject.Path, before)
-	if err != nil {
-		return extractValidation{}, err
-	}
-	beforePackage := beforeFile.Name.Name
-	beforeImports := importIdentity(beforeFile)
-	beforeHeader := sourceHeader(before, beforeSet, beforeFile)
-	beforeFunction, exists := functionInFile(beforeFile, subject.Path, subject)
-	if !exists {
-		return extractValidation{}, fmt.Errorf("function %s is absent before extraction", subject.Name)
-	}
-	found := 0
-	afterLines := 0
-	seen := make(map[string]bool, len(observed.Files))
-	for _, logical := range observed.Files {
-		if seen[logical] {
-			return extractValidation{}, fmt.Errorf("changed output %s is duplicated", logical)
-		}
-		seen[logical] = true
-		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(logical)))
-		if err != nil || physicalLineCount(data) == 0 {
-			return extractValidation{}, fmt.Errorf("changed output %s is unavailable", logical)
-		}
-		set, file, err := parseGoFile(logical, data)
-		if err != nil || file.Name.Name != beforePackage || !bytes.Equal(data, mustFormat(data)) {
-			return extractValidation{}, fmt.Errorf("changed output %s is not canonical", logical)
-		}
-		if !bytes.Equal(sourceHeader(data, set, file), beforeHeader) {
-			return extractValidation{}, fmt.Errorf("changed output %s lost build header", logical)
-		}
-		for _, item := range importIdentity(file) {
-			if !containsString(beforeImports, item) {
-				return extractValidation{}, fmt.Errorf("changed output %s introduced import %s", logical, item)
-			}
-		}
-		if function, ok := functionInFile(file, logical, subject); ok {
-			if declarationLinesFor(set, function) > 75 {
-				return extractValidation{}, fmt.Errorf("function %s remains oversized", subject.Name)
-			}
-			afterLines = declarationLinesFor(set, function)
-			found++
-		}
-	}
-	if found != 1 || !seen[subject.Path] {
-		return extractValidation{}, fmt.Errorf("function %s found in %d outputs", subject.Name, found)
-	}
-	atomicReplacement, err := validateNamespaceReplacements(root, observed, replacements)
-	if err != nil {
-		return extractValidation{}, err
-	}
-	return extractValidation{
-		BeforeFunctionLines: declarationLinesFor(beforeSet, beforeFunction),
-		AfterFunctionLines:  afterLines,
-		TransformedSubject:  subject.Path + "#" + subject.Name + "=>" + strings.Join(sortedKeys(seen), ","),
-		AtomicReplacement:   atomicReplacement,
-		FormatFixedPoint:    true,
-		HeaderPreserved:     true,
-		ImportIdentity:      true,
-		PackageConformance:  true,
-	}, nil
-}
-
 func sortedKeys(values map[string]bool) []string {
 	result := make([]string, 0, len(values))
 	for value := range values {
@@ -546,74 +463,6 @@ func outputBytes(root string, observed extractorSubject) (map[string][]byte, err
 		result[logical] = data
 	}
 	return result, nil
-}
-
-func functionInFile(file *ast.File, logical string, subject sourcepolicy.SourceSubject) (*ast.FuncDecl, bool) {
-	for _, declaration := range file.Decls {
-		function, ok := declaration.(*ast.FuncDecl)
-		if !ok || function.Name == nil || function.Name.Name != subject.Name {
-			continue
-		}
-		if logical == subject.Path || function.Recv == nil {
-			return function, true
-		}
-	}
-	return nil, false
-}
-
-func parseGoFile(logical string, data []byte) (*token.FileSet, *ast.File, error) {
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, logical, data, parser.ParseComments)
-	if err != nil {
-		return nil, nil, err
-	}
-	return fset, file, nil
-}
-
-func declarationLinesFor(fset *token.FileSet, node ast.Node) int {
-	start := fset.Position(node.Pos()).Line
-	end := fset.Position(node.End()).Line
-	return end - start + 1
-}
-
-func importIdentity(file *ast.File) []string {
-	result := make([]string, 0)
-	for _, declaration := range file.Decls {
-		group, ok := declaration.(*ast.GenDecl)
-		if !ok || group.Tok.String() != "import" {
-			continue
-		}
-		for _, raw := range group.Specs {
-			item := raw.(*ast.ImportSpec)
-			name := ""
-			if item.Name != nil {
-				name = item.Name.Name
-			}
-			result = append(result, name+":"+item.Path.Value)
-		}
-	}
-	sort.Strings(result)
-	return result
-}
-
-func sourceHeader(data []byte, fset *token.FileSet, file *ast.File) []byte {
-	position := fset.Position(file.Package)
-	if position.Offset <= 0 || position.Offset > len(data) {
-		return nil
-	}
-	return data[:position.Offset]
-}
-
-func mustFormat(data []byte) []byte {
-	formatted, err := format.Source(data)
-	if err != nil {
-		return nil
-	}
-	return formatted
-}
-
-func containsString(values []string, value string) bool {
-	return slices.Contains(values, value)
 }
 
 func runGoTest(root string, environment []string) processResult {

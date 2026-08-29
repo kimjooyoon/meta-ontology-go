@@ -45,12 +45,18 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 		return err
 	}
 	report.NamespaceReplacements = transaction.receipts
+	report.BackupCleanup = backupCleanupObservation{Status: "PENDING", Attempted: len(transaction.files)}
 	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
 		rollbackTransactions(transaction.files, len(transaction.files))
 		return err
 	}
-	if err := removeTransactionBackups(transaction.files); err != nil {
+	report.BackupCleanup = removeTransactionBackups(transaction.files)
+	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
+		rollbackTransactions(transaction.files, len(transaction.files))
 		return err
+	}
+	if report.BackupCleanup.Status != "PASS" {
+		return fmt.Errorf("backup cleanup incomplete: %d/%d removed", report.BackupCleanup.Removed, report.BackupCleanup.Attempted)
 	}
 	fmt.Printf("function-extractor: residual=%d applied=%d created=%d\n",
 		len(residual), len(subjects), createdCount(subjects))

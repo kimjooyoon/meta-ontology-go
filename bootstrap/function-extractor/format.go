@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -54,6 +55,7 @@ func installTransaction(file *transactionFile) (namespaceReplacementReceipt, err
 		}
 		return namespaceReplacementReceipt{}, err
 	}
+	file.tempCreated = false
 	file.replaced = true
 	final, err := os.ReadFile(file.name)
 	if err != nil {
@@ -88,8 +90,34 @@ func restoreTransaction(file transactionFile) {
 	}
 	if file.replaced {
 		_ = os.Remove(file.name)
-		_ = os.Rename(file.backup, file.name)
+		if err := os.Rename(file.backup, file.name); err != nil {
+			restoreOriginal(file)
+		}
 		return
 	}
 	_ = os.Remove(file.backup)
+}
+
+func restoreOriginal(file transactionFile) {
+	if file.original == nil {
+		return
+	}
+	restored, err := os.CreateTemp(filepath.Dir(file.name), ".extract-restore-*")
+	if err != nil {
+		return
+	}
+	path := restored.Name()
+	defer os.Remove(path)
+	if err := restored.Chmod(file.originalMode); err != nil {
+		_ = restored.Close()
+		return
+	}
+	if _, err := restored.Write(file.original); err != nil {
+		_ = restored.Close()
+		return
+	}
+	if err := restored.Close(); err != nil {
+		return
+	}
+	_ = os.Rename(path, file.name)
 }

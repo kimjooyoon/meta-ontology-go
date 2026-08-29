@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -18,6 +19,9 @@ type transactionFile struct {
 	destinationPreexisted bool
 	tempDigest            string
 	replaced              bool
+	tempCreated           bool
+	original              []byte
+	originalMode          os.FileMode
 }
 
 type stagedTransaction struct {
@@ -61,15 +65,14 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 		} else if _, err := os.Lstat(file.name); err == nil || !os.IsNotExist(err) {
 			return cleanupAndFail(fmt.Errorf("creation target exists: %s", file.logical))
 		}
-		if err := os.WriteFile(file.temp, stage.data, os.FileMode(stage.mode)); err != nil {
+		if err := writeTransactionTemp(&files[len(files)-1], stage.data, stage.mode); err != nil {
 			return cleanupAndFail(err)
 		}
-		temp, err := os.ReadFile(file.temp)
+		temp, err := os.ReadFile(files[len(files)-1].temp)
 		if err != nil {
 			return cleanupAndFail(err)
 		}
-		file.tempDigest = digestFileBytes(temp)
-		files[len(files)-1] = file
+		files[len(files)-1].tempDigest = digestFileBytes(temp)
 	}
 	receipts := make([]namespaceReplacementReceipt, 0, len(files))
 	for index := range files {
@@ -83,13 +86,18 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 	return stagedTransaction{files: files, receipts: receipts}, nil
 }
 
-func removeTransactionBackups(files []transactionFile) error {
+
+func removeTransactionBackups(files []transactionFile) backupCleanupObservation {
+	result := backupCleanupObservation{Status: "PASS", Attempted: len(files)}
 	for index := range files {
 		if err := removeTransactionBackup(files[index]); err != nil {
-			return err
+			result.Failures++
+			result.Status = "UNKNOWN"
+			continue
 		}
+		result.Removed++
 	}
-	return nil
+	return result
 }
 
 func rollbackTransactions(files []transactionFile, committed int) {
@@ -101,8 +109,27 @@ func rollbackTransactions(files []transactionFile, committed int) {
 
 func cleanupTransactions(files []transactionFile) {
 	for _, file := range files {
-		_ = os.Remove(file.temp)
+		if file.tempCreated {
+			_ = os.Remove(file.temp)
+		}
 	}
+}
+
+func writeTransactionTemp(file *transactionFile, data []byte, mode uint32) error {
+	temporary, err := os.OpenFile(file.temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, os.FileMode(mode))
+	if err != nil {
+		return err
+	}
+	file.tempCreated = true
+	written, writeErr := temporary.Write(data)
+	closeErr := temporary.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	if written != len(data) {
+		return io.ErrShortWrite
+	}
+	return closeErr
 }
 
 func preserveDestination(file *transactionFile) error {
@@ -114,6 +141,8 @@ func preserveDestination(file *transactionFile) error {
 	if err != nil {
 		return err
 	}
+	file.original = append([]byte(nil), data...)
+	file.originalMode = info.Mode().Perm()
 	backup, err := os.OpenFile(file.backup, os.O_WRONLY|os.O_CREATE|os.O_EXCL, info.Mode().Perm())
 	if err != nil {
 		return err

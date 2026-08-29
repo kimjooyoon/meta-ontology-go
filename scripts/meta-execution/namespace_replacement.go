@@ -9,6 +9,13 @@ import (
 
 const linuxNamespaceReplacementContract = "same-directory-temp-over-destination/linux-v1"
 
+type backupCleanupObservation struct {
+	Status    string `json:"status"`
+	Attempted int    `json:"attempted"`
+	Removed   int    `json:"removed"`
+	Failures  int    `json:"failures"`
+}
+
 type namespaceReplacementError struct {
 	reason string
 }
