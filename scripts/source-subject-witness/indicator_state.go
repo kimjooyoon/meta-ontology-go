@@ -73,8 +73,8 @@ func isLineCapMetric(metric string) bool {
 }
 
 func validateLineCapIndicator(row sourceIndicator) error {
-	kind, family, operation, consumer := lineCapContract(row.MetricID)
-	valid := row.Applicability == "APPLICABLE" && row.SubjectKind == kind && row.Family == family && row.ApplicabilityRuleID == defaultApplicabilityRule && row.ApplicabilityReason == "CATALOG_APPLICABLE" && row.Relation == "less_or_equal" && row.Role == "DRIVER" && !row.Blocking && row.Producer == "linecaps.Analyze" && row.Consumer == consumer && row.MetaOperation == operation && row.ProofChoice == "foundation" && row.EvaluationState == "EVALUATED" && row.EnforcementEffect == "NO_EFFECT" && row.Satisfied == (row.Value <= row.Limit)
+	contract, known := lineCapContract(row.MetricID)
+	valid := known && row.Applicability == "APPLICABLE" && row.SubjectKind == contract.kind && row.Family == contract.family && row.ApplicabilityRuleID == defaultApplicabilityRule && row.ApplicabilityReason == "CATALOG_APPLICABLE" && row.Relation == "less_or_equal" && row.Role == "DRIVER" && !row.Blocking && row.Producer == contract.producer && row.Consumer == contract.consumer && row.MetaOperation == contract.operation && row.ProofChoice == "foundation" && row.EvaluationState == "EVALUATED" && row.EnforcementEffect == "NO_EFFECT" && row.Satisfied == (row.Value <= row.Limit)
 	if !valid {
 		return sourceValidationFailure("SOURCE_LINE_CAP_DRIVER_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
@@ -90,13 +90,23 @@ func validateLineCapIndicator(row sourceIndicator) error {
 	return nil
 }
 
-func lineCapContract(metric string) (string, string, string, string) {
+type lineCapSpec struct {
+	kind      string
+	family    string
+	operation string
+	consumer  string
+	producer  string
+}
+
+func lineCapContract(metric string) (lineCapSpec, bool) {
 	switch metric {
 	case "gooo.metric.source.function-lines.v1":
-		return "FUNCTION", "duplication", "extract-function", "function-extractor"
+		return lineCapSpec{kind: "FUNCTION", family: "duplication", operation: "extract-function", consumer: "function-extractor", producer: "linecaps.Analyze"}, true
 	case "gooo.metric.source.gooo-file-lines.v1":
-		return "FILE", "volume", "split-gooo-sections", "source-splitter"
+		return lineCapSpec{kind: "FILE", family: "volume", operation: "split-gooo-sections", consumer: "source-splitter", producer: "linecaps.AnalyzeLineMetrics"}, true
+	case "gooo.metric.source.go-file-lines.v1":
+		return lineCapSpec{kind: "FILE", family: "volume", operation: "split-go-declarations", consumer: "source-splitter", producer: "linecaps.AnalyzeLineMetrics"}, true
 	default:
-		return "FILE", "volume", "split-go-declarations", "source-splitter"
+		return lineCapSpec{}, false
 	}
 }
