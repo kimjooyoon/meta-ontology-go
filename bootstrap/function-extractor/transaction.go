@@ -45,9 +45,9 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 	}
 	for _, path := range paths {
 		stage := staged[path]
-		file := transactionFile{logical: path, name: stage.name,
-			temp: stage.name + ".extract.tmp", backup: stage.name + ".extract.bak", created: stage.created}
-		files = append(files, file)
+		files = append(files, transactionFile{logical: path, name: stage.name,
+			temp: stage.name + ".extract.tmp", backup: stage.name + ".extract.bak", created: stage.created})
+		file := &files[len(files)-1]
 		if _, err := os.Lstat(file.temp); !os.IsNotExist(err) {
 			return cleanupAndFail(fmt.Errorf("temporary extraction path exists: %s", file.temp))
 		}
@@ -66,7 +66,7 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 		} else if _, err := os.Lstat(file.name); err == nil || !os.IsNotExist(err) {
 			return cleanupAndFail(fmt.Errorf("creation target exists: %s", file.logical))
 		}
-		if err := writeTransactionTemp(&files[len(files)-1], stage.data, stage.mode); err != nil {
+		if err := writeTransactionTemp(file, stage.data, stage.mode); err != nil {
 			return cleanupAndFail(err)
 		}
 		temp, err := os.ReadFile(files[len(files)-1].temp)
