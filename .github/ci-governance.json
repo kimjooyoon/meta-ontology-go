@@ -1517,6 +1517,7 @@
       "branch": "agent/base-repair-repository-projection",
       "paths": [
         ".github/workflows/ci.yml",
+        ".github/workflows/causal-ci-selection.yml",
         "bootstrap/function-extractor",
         "bootstrap/line-density-rewriter",
         "bootstrap/logical-split-planner",

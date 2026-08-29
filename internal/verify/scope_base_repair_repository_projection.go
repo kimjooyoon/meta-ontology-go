@@ -5,6 +5,7 @@ const baseRepairRepositoryProjectionBranch = "agent/base-repair-repository-proje
 func init() {
 	branchScopeAllowlist[baseRepairRepositoryProjectionBranch] = []string{
 		".github/workflows/ci.yml",
+		".github/workflows/causal-ci-selection.yml",
 		"bootstrap/function-extractor",
 		"bootstrap/line-density-rewriter",
 		"bootstrap/logical-split-planner",

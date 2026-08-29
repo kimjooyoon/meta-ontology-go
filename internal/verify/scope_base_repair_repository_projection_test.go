@@ -4,11 +4,12 @@ import "testing"
 
 func TestBaseRepairRepositoryProjectionScope(t *testing.T) {
 	paths, ok := BranchScope(baseRepairRepositoryProjectionBranch)
-	if !ok || len(paths) != 33 {
+	if !ok || len(paths) != 34 {
 		t.Fatalf("base repair branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
 		".github/workflows/ci.yml",
+		".github/workflows/causal-ci-selection.yml",
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		"bootstrap/function-extractor/apply.go",
