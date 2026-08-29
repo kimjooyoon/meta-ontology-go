@@ -117,6 +117,14 @@ func failedExtractionError(root, reportName string, plan generation.Plan, action
 	return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 }
 
+func extractionCounterexample(subject string) string {
+	parsed, err := sourcepolicy.ParseSourceSubject(subject)
+	if err != nil {
+		return ""
+	}
+	return parsed.Path + "#func:" + parsed.Name
+}
+
 func extractionFailureEvidence(report extractorReport, action generation.Action) []generation.ObservationFailureEvidence {
 	counterexample := "extractor-report"
 	if relations := extractorDerivedRelations(report, action); len(relations) != 0 {
