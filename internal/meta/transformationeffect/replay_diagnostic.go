@@ -137,8 +137,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 	diagnostic := ReplayDiagnostic{Schema: replayDiagnosticSchema, Decision: "UNKNOWN",
 		Resolution: "LOWER_RESOLUTION", Stage: "validate-inputs",
 		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_FAILED"}
-	var divergence *replayDivergence
-	if errors.As(cause, &divergence) {
+	if divergence, ok := errors.AsType[*replayDivergence](cause); ok {
 		diagnostic.Decision = "REFUTED"
 		diagnostic.Resolution = "FAIL_CLOSED"
 		diagnostic.Step = divergence.Step
