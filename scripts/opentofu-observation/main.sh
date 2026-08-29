@@ -116,7 +116,7 @@ show_descriptor='["tofu","show","-json","-plan=plan.bin"]'
 test_descriptor='["tofu","test","-json-into=test-events.jsonl","-no-color","-test-directory","tests"]'
 
 run_once() {
-  local number="$1" directory="$work/run-$1"; shift 2
+  local number="$1" directory="$work/run-$1"
   cp -R "$fixture" "$directory"
   phase="fixture-run-$number"
   printf 'observation_stage=fixture-run-%s\n' "$number"
