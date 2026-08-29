@@ -74,7 +74,7 @@ type RecoveryEvidence struct {
 	TransformationDirectUnknownCount            int    `json:"transformation_direct_unknown_count"`
 	TransformationDependencyBlockedUnknownCount int    `json:"transformation_dependency_blocked_unknown_count"`
 	TransformationUnknownCausalDigest           string `json:"transformation_unknown_causal_digest"`
-	TransformationCausalBindingDigest            string `json:"transformation_causal_binding_digest"`
+	TransformationCausalBindingDigest           string `json:"transformation_causal_binding_digest"`
 	WriteBoundary                               string `json:"write_boundary"`
 	SourceWorkspaceUnchanged                    bool   `json:"source_workspace_unchanged"`
 	TransformationAuthorization                 bool   `json:"transformation_authorization"`
