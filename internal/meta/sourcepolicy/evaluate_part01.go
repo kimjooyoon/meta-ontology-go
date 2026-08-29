@@ -50,5 +50,5 @@ func evaluateObservation(policy Policy, observation Observation) (Indicator, err
 	if applicability == ApplicabilityNotApplicable {
 		satisfied = true
 	}
-	return Indicator{MetricID: observation.Dimension, Family: definition.family, Subject: observation.Subject, SubjectKind: indicatorSubjectKind(observation), Value: observation.Value, Limit: definition.limit, Relation: definition.relation, Applicability: applicability, ApplicabilityRule: applicabilityRule, ApplicabilityReason: applicabilityReason, Blocking: definition.blocking, Satisfied: satisfied, Proof: definition.proof, Producer: producer, Consumer: definition.consumer, Operation: definition.operation, Detail: observation.Detail}, nil
+	return Indicator{MetricID: observation.Dimension, Family: definition.family, Subject: observation.Subject, SubjectKind: indicatorSubjectKind(observation), Value: observation.Value, Limit: definition.limit, Relation: definition.relation, Applicability: applicability, ApplicabilityRule: applicabilityRule, ApplicabilityReason: applicabilityReason, Blocking: definition.blocking, Satisfied: satisfied, Role: definition.role, Proof: definition.proof, Producer: producer, Consumer: definition.consumer, Operation: definition.operation, Detail: observation.Detail}, nil
 }

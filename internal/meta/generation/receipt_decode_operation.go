@@ -22,6 +22,10 @@ func (receipt *OperationReceipt) UnmarshalJSON(data []byte) error {
 	if candidate.SchemaVersion != OperationReceiptSchemaVersion {
 		return fmt.Errorf("unsupported operation receipt schema %q", candidate.SchemaVersion)
 	}
+	if candidate.Operation == "" || candidate.Activity == "" || candidate.Output == "" ||
+		candidate.Executor == "" || candidate.Evaluator == "" {
+		return fmt.Errorf("operation receipt is missing operation binding")
+	}
 	if !validIndicatorDecisionLedgerDigest(candidate.IndicatorDecisionLedgerDigest) ||
 		candidate.IndicatorDecisionLedgerCount < 1 {
 		return fmt.Errorf("invalid operation receipt indicator ledger provenance")

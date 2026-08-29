@@ -9,6 +9,7 @@ type IndicatorDecisionSummary struct {
 	UnselectedFailClosedCount int    `json:"unselected_fail_closed_count"`
 	NotApplicableCount        int    `json:"not_applicable_count"`
 	UnknownCount              int    `json:"unknown_count"`
+	RefutedCount              int    `json:"refuted_count"`
 }
 
 func (plan Plan) indicatorDecisionSummary() IndicatorDecisionSummary {
@@ -19,6 +20,7 @@ func (plan Plan) indicatorDecisionSummary() IndicatorDecisionSummary {
 		UnselectedFailClosedCount: len(plan.UnselectedIndicatorIDs),
 		NotApplicableCount:        len(plan.NotApplicableIndicatorIDs),
 		UnknownCount:              len(plan.UnknownIndicatorIDs),
+		RefutedCount:              len(plan.RefutedIndicatorIDs),
 	}
 }
 

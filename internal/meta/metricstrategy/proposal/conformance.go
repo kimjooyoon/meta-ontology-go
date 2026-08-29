@@ -9,7 +9,7 @@ import (
 
 func conformancePlan() generation.Plan {
 	indicator := func(metric sourcepolicy.Dimension, family sourcepolicy.Family, subject string, kind sourcepolicy.SubjectKind, value, limit int, proof sourcepolicy.ProofChoice, operation sourcepolicy.Operation) sourcepolicy.Indicator {
-		return sourcepolicy.Indicator{MetricID: metric, Family: family, Subject: subject, SubjectKind: kind, Value: value, Limit: limit, Relation: sourcepolicy.RelationLessOrEqual, Applicability: sourcepolicy.ApplicabilityApplicable, ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault, ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable, Satisfied: false, Blocking: false, Proof: proof, Producer: "proposal-contract-conformance", Consumer: "generation.Build", Operation: operation}
+		return sourcepolicy.Indicator{MetricID: metric, Family: family, Subject: subject, SubjectKind: kind, Value: value, Limit: limit, Relation: sourcepolicy.RelationLessOrEqual, Applicability: sourcepolicy.ApplicabilityApplicable, ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault, ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable, Satisfied: false, Blocking: false, Role: sourcepolicy.IndicatorRoleDriver, Proof: proof, Producer: "proposal-contract-conformance", Consumer: "generation.Build", Operation: operation}
 	}
 	report := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		indicator(sourcepolicy.DimensionRefactorAssign, sourcepolicy.FamilyRefactor, "fixture/expression.go:1:assignment", sourcepolicy.SubjectKindFunction, 2, 1, sourcepolicy.ProofRegression, sourcepolicy.OperationCollapseAssign),

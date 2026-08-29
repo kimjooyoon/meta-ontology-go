@@ -33,11 +33,11 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 		observe.family = FamilyTopology
 		return observe, nil
 	case DimensionGoFileLines:
-		return capDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGo, "source-splitter"), nil
+		return driverCapDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGo, "source-splitter"), nil
 	case DimensionGoooFileLines:
-		return capDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGooo, "source-splitter"), nil
+		return driverCapDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGooo, "source-splitter"), nil
 	case DimensionFunctionLines:
-		return capDefinition(FamilyDuplication, policy.MaxFunctionLines, OperationExtractFunction, "function-extractor"), nil
+		return driverCapDefinition(FamilyDuplication, policy.MaxFunctionLines, OperationExtractFunction, "function-extractor"), nil
 	case DimensionDirectEntries:
 		if policy.MaxDirectDirectoryIn == 0 {
 			observe.family = FamilyTopology
@@ -67,6 +67,10 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 
 func capDefinition(family Family, limit int, operation Operation, consumer string) definition {
 	return definition{family: family, limit: limit, relation: RelationLessOrEqual, blocking: true, proof: ProofFoundation, operation: operation, consumer: consumer}
+}
+
+func driverCapDefinition(family Family, limit int, operation Operation, consumer string) definition {
+	return definition{family: family, limit: limit, relation: RelationLessOrEqual, role: IndicatorRoleDriver, proof: ProofFoundation, operation: operation, consumer: consumer}
 }
 
 func candidateDefinition(operation Operation) definition {

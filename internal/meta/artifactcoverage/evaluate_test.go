@@ -12,7 +12,7 @@ func TestEvaluateSelectsCanonicalGapDeterministically(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Decision != "FIXED_POINT" || report.Summary.CanonicalOperations != 7 ||
+	if report.Decision != "FIXED_POINT" || report.Summary.CanonicalOperations != 8 ||
 		report.Summary.CanonicalCoverageBasisPoints != 10000 {
 		t.Fatalf("fixed point report = %#v", report)
 	}

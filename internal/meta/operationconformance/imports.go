@@ -19,7 +19,7 @@ func observeImports(evidence SplitGoEvidence) Decision {
 		}
 		after = append(after, items...)
 	}
-	sort.Strings(after)
+	after = uniqueSorted(after)
 	if !sameStrings(before, after) {
 		return DecisionFail
 	}
@@ -43,6 +43,18 @@ func importSignature(file FileEvidence) ([]string, error) {
 		}
 		result = append(result, fmt.Sprintf("%s\x00%s", alias, path))
 	}
+	return uniqueSorted(result), nil
+}
+
+func uniqueSorted(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		seen[value] = struct{}{}
+	}
+	result := make([]string, 0, len(seen))
+	for value := range seen {
+		result = append(result, value)
+	}
 	sort.Strings(result)
-	return result, nil
+	return result
 }

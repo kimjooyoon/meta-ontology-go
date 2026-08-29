@@ -40,6 +40,29 @@ func TestVerifyReceiptsFailsClosed(t *testing.T) {
 	}
 }
 
+func TestVerifyReceiptsCarriesMissingOperationBindings(t *testing.T) {
+	plan := actionableReceiptPlan()
+	report := VerifyReceipts(plan, nil)
+	want := 0
+	for _, action := range plan.Selected {
+		want += len(action.RequiredIndicatorIDs)
+	}
+	if report.Decision != ReceiptDecisionUnknown ||
+		report.Reason != ReceiptReasonMissingIndicator || len(report.Unknowns) != want {
+		t.Fatalf("missing receipt evidence = %+v, want %d unknown bindings", report, want)
+	}
+	for _, unknown := range report.Unknowns {
+		if unknown.ActionIndicatorID == "" || unknown.RequiredIndicatorID == "" ||
+			unknown.Operation == "" || unknown.Activity == "" || unknown.Output == "" ||
+			unknown.Executor == "" || unknown.Evaluator == "" ||
+			unknown.Reason != ReceiptReasonMissingIndicator ||
+			unknown.UnknownClass != ReceiptUnknownClassDirectMissing ||
+			unknown.NextOperation != unknown.Executor || len(unknown.BlockedBy) != 0 {
+			t.Fatalf("missing receipt binding is not typed: %+v", unknown)
+		}
+	}
+}
+
 func TestVerifyReceiptsRecognizesExactFixedPoint(t *testing.T) {
 	report := sourcepolicy.Report{
 		Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),

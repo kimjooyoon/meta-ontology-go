@@ -192,6 +192,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-repository-projection-repair",
+      "kind": "SOURCE",
+      "path": "examples/repository-projection-repair/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "presentation-invariance",
       "kind": "LAW",
       "law": "PRESENTATION_INVARIANCE",

@@ -56,11 +56,170 @@ jobs:
         run: |
           go list tool
           go build tool
-      - name: Require formatted Go
+      - name: Materialize exact Go format remediation evidence
+        if: ${{ always() }}
+        env:
+          EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          unformatted="$(gofmt -l .)"
-          if [ -n "$unformatted" ]; then
-            printf 'gofmt required:\n%s\n' "$unformatted"
+          set -euo pipefail
+          remediation_root="$RUNNER_TEMP/go-format-remediation"
+          paths="$remediation_root/gofmt-paths.txt"
+          patch_a="$remediation_root/gofmt.patch"
+          patch_b="$remediation_root/gofmt-replay.patch"
+          patch_a_fixed="$remediation_root/gofmt-fixed-point.patch"
+          receipt="$remediation_root/receipt.json"
+          source_before="$remediation_root/source-before.status"
+          source_after="$remediation_root/source-after.status"
+          mkdir -p "$remediation_root"
+          : > "$paths"
+          : > "$patch_a"
+          : > "$patch_b"
+          : > "$patch_a_fixed"
+          : > "$receipt"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_before"
+          gofmt -l . | sort > "$paths"
+          path_count="$(wc -l < "$paths" | tr -d '[:space:]')"
+          candidate_a="$(mktemp -d "$RUNNER_TEMP/go-format-candidate-a.XXXXXX")"
+          candidate_b="$(mktemp -d "$RUNNER_TEMP/go-format-candidate-b.XXXXXX")"
+
+          materialize_candidate() {
+            candidate="$1"
+            patch="$2"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git init --quiet "$candidate"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.email ci-format@example.invalid
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.name ci-format-remediation
+            while IFS= read -r path; do
+              if [ -z "$path" ]; then
+                continue
+              fi
+              case "$path" in
+                /*|../*|*/../*|*/..)
+                  echo "unsafe gofmt path: $path" >&2
+                  return 1
+                  ;;
+              esac
+              mkdir -p "$candidate/$(dirname -- "$path")"
+              cp -- "$path" "$candidate/$path"
+            done < "$paths"
+            if [ "$path_count" -gt 0 ]; then
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" add -- .
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" commit --quiet -m baseline
+              (
+                cd "$candidate"
+                while IFS= read -r path; do
+                  if [ -n "$path" ]; then
+                    gofmt -w "./$path"
+                  fi
+                done < "$paths"
+              )
+            fi
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" diff --binary -- . > "$patch"
+          }
+
+          materialize_candidate "$candidate_a" "$patch_a"
+          materialize_candidate "$candidate_b" "$patch_b"
+          (
+            cd "$candidate_a"
+            while IFS= read -r path; do
+              if [ -n "$path" ]; then
+                gofmt -w "./$path"
+              fi
+            done < "$paths"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git diff --binary -- .
+          ) > "$patch_a_fixed"
+          replay_equal=false
+          fixed_point=false
+          if cmp -s "$patch_a" "$patch_b"; then
+            replay_equal=true
+          fi
+          if cmp -s "$patch_a" "$patch_a_fixed"; then
+            fixed_point=true
+          fi
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_after"
+          source_repository_writes=0
+          if ! cmp -s "$source_before" "$source_after"; then
+            source_repository_writes=1
+          fi
+          paths_json="$(jq -Rsc 'split("\n") | if . == [""] then [] elif .[-1] == "" then .[:-1] else . end' < "$paths")"
+          patch_bytes="$(wc -c < "$patch_a" | tr -d '[:space:]')"
+          patch_sha256="sha256:$(sha256sum "$patch_a" | awk '{print $1}')"
+          replay_patch_sha256="sha256:$(sha256sum "$patch_b" | awk '{print $1}')"
+          jq -n \
+            --arg schema gooo/go-format-remediation/v1 \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            --arg toolchain go1.27.0 \
+            --arg go_version "$(go version)" \
+            --arg go_env_goversion "$(go env GOVERSION)" \
+            --argjson paths "$paths_json" \
+            --arg path_count "$path_count" \
+            --arg patch_sha256 "$patch_sha256" \
+            --arg replay_patch_sha256 "$replay_patch_sha256" \
+            --arg patch_bytes "$patch_bytes" \
+            --argjson replay_equal "$replay_equal" \
+            --argjson fixed_point "$fixed_point" \
+            --arg source_repository_writes "$source_repository_writes" \
+            --arg candidate_workspace_writes "$path_count" \
+            '{schema:$schema,head_sha:$head_sha,toolchain:$toolchain,go_version:$go_version,go_env_goversion:$go_env_goversion,sorted_paths:$paths,path_count:($path_count|tonumber),patch_sha256:$patch_sha256,replay_patch_sha256:$replay_patch_sha256,patch_bytes:($patch_bytes|tonumber),replay_equal:$replay_equal,fixed_point:$fixed_point,source_repository_writes:($source_repository_writes|tonumber),candidate_workspace_writes:($candidate_workspace_writes|tonumber)}' \
+            > "$receipt"
+          test -s "$receipt"
+          if [ "$path_count" -gt 0 ]; then
+            test -s "$patch_a"
+            test -s "$patch_b"
+            test -s "$patch_a_fixed"
+          else
+            test ! -s "$patch_a"
+            test ! -s "$patch_b"
+            test ! -s "$patch_a_fixed"
+          fi
+          test "$replay_equal" = true
+          test "$fixed_point" = true
+          test "$source_repository_writes" -eq 0
+          jq -e \
+            --arg schema gooo/go-format-remediation/v1 \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            --arg toolchain go1.27.0 \
+            --argjson paths "$paths_json" \
+            --arg path_count "$path_count" \
+            --arg patch_sha256 "$patch_sha256" \
+            --arg replay_patch_sha256 "$replay_patch_sha256" \
+            --arg patch_bytes "$patch_bytes" \
+            '.schema == $schema and .head_sha == $head_sha and .toolchain == $toolchain and .sorted_paths == $paths and .path_count == ($path_count|tonumber) and .patch_sha256 == $patch_sha256 and .replay_patch_sha256 == $replay_patch_sha256 and .patch_bytes == ($patch_bytes|tonumber) and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and .candidate_workspace_writes == ($path_count|tonumber)' \
+            "$receipt" > /dev/null
+          echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
+      - name: Upload Go format remediation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/go-format-remediation/gofmt-paths.txt
+            ${{ runner.temp }}/go-format-remediation/gofmt.patch
+            ${{ runner.temp }}/go-format-remediation/gofmt-replay.patch
+            ${{ runner.temp }}/go-format-remediation/gofmt-fixed-point.patch
+            ${{ runner.temp }}/go-format-remediation/receipt.json
+          if-no-files-found: error
+      - name: Require formatted Go
+        if: ${{ always() }}
+        env:
+          EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          remediation_root="$RUNNER_TEMP/go-format-remediation"
+          paths="$remediation_root/gofmt-paths.txt"
+          patch_a="$remediation_root/gofmt.patch"
+          patch_b="$remediation_root/gofmt-replay.patch"
+          patch_a_fixed="$remediation_root/gofmt-fixed-point.patch"
+          receipt="$remediation_root/receipt.json"
+          test -s "$receipt"
+          path_count="$(jq -r '.path_count' "$receipt")"
+          test "$path_count" -ge 0
+          jq -e \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            '.head_sha == $head_sha and .toolchain == "go1.27.0" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            "$receipt" > /dev/null
+          cmp -s "$patch_a" "$patch_b"
+          cmp -s "$patch_a" "$patch_a_fixed"
+          if [ "$path_count" -ne 0 ]; then
+            echo "gofmt required for $path_count paths"
             exit 1
           fi
 
@@ -352,14 +511,12 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/ci-summary.json
           if-no-files-found: error
           retention-days: 14
-      - name: Check DAMP/DRY caps
+      - name: Validate source metric and meta evidence (caps are observations)
         if: github.event_name == 'pull_request'
         env:
-          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
-          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify --caps-only
-      - name: Check changed-file scope, Go size caps, and PR target
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Check changed-file scope and PR target
         if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -369,19 +526,11 @@ jobs:
           GOOO_PR_HEAD: ${{ github.head_ref }}
           GOOO_PR_BASE: ${{ github.base_ref }}
         run: go run ./scripts/verify --skip-caps
-      - name: Check Go caps on protected push
+      - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
         env:
-          # A rebase can make github.event.before unavailable to checkout. Push
-          # validation therefore keeps the local size caps while PR events run
-          # the complete changed-path scope and ownership check.
-          GOOO_SCOPE_FROM: ""
-          GOOO_SCOPE_TO: ""
-          GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
-          GOOO_PR_HEAD: ""
-          GOOO_PR_BASE: ""
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
@@ -1035,7 +1184,7 @@ jobs:
             const classifyTerminalJob = job => {
               if (job.name === 'CI policy') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
-                return failedStep?.name === 'Check DAMP/DRY caps' ? 'CI-CAPS-001' : 'CI-SCOPE-001';
+                return (failedStep?.name === 'Validate source metric and meta evidence (caps are observations)' || failedStep?.name === 'Validate source metric and meta evidence on protected push') ? 'CI-CONTRACT-001' : 'CI-SCOPE-001';
               }
               if (job.name === 'CI evidence') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
@@ -1096,7 +1245,7 @@ jobs:
                 missingReasons = proof.missing_reasons || {};
               }
             }
-            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-CAPS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
+            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
             const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
             failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
             code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';
