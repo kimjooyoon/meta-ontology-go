@@ -72,6 +72,12 @@ partial_subjects="$projection_work/partial-subjects.json"
 printf '{}\n' > "$projection_work/projected-compile.json"
 printf '[]\n' > "$refuted_failures"
 printf '[]\n' > "$partial_subjects"
+jq '[.counterexamples[]? | select(.decision == "REFUTED")]' \
+  "$projection_work/split-plan.json" > "$projection_work/planner-refuted.json"
+jq -s 'add | unique_by(tojson) | sort_by(tojson)' \
+  "$refuted_failures" "$projection_work/planner-refuted.json" \
+  > "$projection_work/planner-refuted-merged.json"
+mv "$projection_work/planner-refuted-merged.json" "$refuted_failures"
 
 record_extraction_report() {
   local report="$1"

@@ -16,6 +16,7 @@ type inputSubject struct {
 }
 
 type declarationAtom struct {
+	identity    string
 	kind        string
 	lines       int
 	movable     bool
@@ -33,6 +34,20 @@ type planSubject struct {
 	Consumer     string `json:"consumer"`
 	Operation    string `json:"meta_operation"`
 	Proof        string `json:"proof_choice"`
+	Executable   bool   `json:"executable"`
+}
+
+type planCounterexample struct {
+	Logical       string   `json:"logical"`
+	BlockerID     string   `json:"blocker_id"`
+	Decision      string   `json:"decision"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+	Diagnostics   []string `json:"diagnostics"`
 }
 
 type planIndicator struct {
@@ -46,10 +61,11 @@ type planIndicator struct {
 }
 
 type planReport struct {
-	Schema     string          `json:"schema"`
-	SourceSHA  string          `json:"source_sha"`
-	Subjects   []planSubject   `json:"subjects"`
-	Indicators []planIndicator `json:"indicators"`
+	Schema          string              `json:"schema"`
+	SourceSHA       string              `json:"source_sha"`
+	Subjects        []planSubject       `json:"subjects"`
+	Counterexamples []planCounterexample `json:"counterexamples"`
+	Indicators      []planIndicator     `json:"indicators"`
 }
 
 type packageShape struct {

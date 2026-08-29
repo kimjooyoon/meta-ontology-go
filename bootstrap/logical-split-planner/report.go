@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 )
 
-func buildReport(sha string, subjects []planSubject) planReport {
+func buildReport(sha string, subjects []planSubject, counterexamples []planCounterexample) planReport {
 	counts := indicatorCounts(subjects)
 	proof := "axiomatic-foundation"
 	metrics := []planIndicator{
@@ -24,12 +25,18 @@ func buildReport(sha string, subjects []planSubject) planReport {
 			Consumer: "source-extractor", Operation: "extract-fixed-declaration", Proof: proof},
 		{ID: "logical-split.movable-capacity", Value: counts["movable-declaration-capacity"], Limit: -1,
 			Consumer: "source-extractor", Operation: "extract-movable-declaration", Proof: proof},
+		{ID: "logical-split.declaration-capacity-contradiction", Value: counts["declaration-capacity-contradiction"], Limit: -1,
+			Consumer: "source-extractor", Operation: "report-contradiction", Proof: proof},
 		{ID: "logical-split.unclassified", Value: counts["unclassified"], Limit: 0,
 			Blocking: true, Consumer: "logical-split-planner",
 			Operation: "inspect-parse-domain", Proof: proof},
 	}
+	sortedCounterexamples := append([]planCounterexample(nil), counterexamples...)
+	sort.SliceStable(sortedCounterexamples, func(i, j int) bool {
+		return sortedCounterexamples[i].BlockerID < sortedCounterexamples[j].BlockerID
+	})
 	return planReport{Schema: "gooo.logical-split-plan.v1", SourceSHA: sha,
-		Subjects: subjects, Indicators: metrics}
+		Subjects: subjects, Counterexamples: sortedCounterexamples, Indicators: metrics}
 }
 
 func writeReport(name string, report planReport) error {

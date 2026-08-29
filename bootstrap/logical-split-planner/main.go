@@ -42,6 +42,7 @@ func runMetrics(root, metrics, expected, output string) error {
 		return err
 	}
 	plans := make([]planSubject, 0, len(inputs))
+	counterexamples := make([]planCounterexample, 0)
 	for _, input := range inputs {
 		name, pathErr := sourcePath(absolute, input.Logical)
 		if pathErr != nil {
@@ -58,9 +59,11 @@ func runMetrics(root, metrics, expected, output string) error {
 		if parseErr != nil {
 			return parseErr
 		}
-		plans = append(plans, classify(input, atoms))
+		plan, failures := classify(input, atoms)
+		plans = append(plans, plan)
+		counterexamples = append(counterexamples, failures...)
 	}
-	report := buildReport(expected, plans)
+	report := buildReport(expected, plans, counterexamples)
 	if err := writeReport(output, report); err != nil {
 		return err
 	}
@@ -80,6 +83,7 @@ func run(root, evidence, expected, output string) error {
 		return err
 	}
 	plans := make([]planSubject, 0, len(inputs))
+	counterexamples := make([]planCounterexample, 0)
 	for _, input := range inputs {
 		name, pathErr := sourcePath(absolute, input.Logical)
 		if pathErr != nil {
@@ -97,17 +101,20 @@ func run(root, evidence, expected, output string) error {
 		if parseErr != nil {
 			return parseErr
 		}
-		plans = append(plans, classify(input, atoms))
+		plan, failures := classify(input, atoms)
+		plans = append(plans, plan)
+		counterexamples = append(counterexamples, failures...)
 	}
-	report := buildReport(expected, plans)
+	report := buildReport(expected, plans, counterexamples)
 	if err := writeReport(output, report); err != nil {
 		return err
 	}
 	counts := indicatorCounts(plans)
 	density := counts["density-rewrite"] + counts["static-density-rewrite"] +
 		counts["large-density-rewrite"]
-	extraction := len(plans) - counts["projectable"] - density
-	fmt.Printf("logical-split-planner: subjects=%d projectable=%d density=%d extraction=%d\n",
-		len(plans), counts["projectable"], density, extraction)
+	extraction := counts["no-movable-declaration"] + counts["fixed-declaration-capacity"] +
+		counts["movable-declaration-capacity"]
+	fmt.Printf("logical-split-planner: subjects=%d projectable=%d density=%d extraction=%d known_contradictions=%d\n",
+		len(plans), counts["projectable"], density, extraction, counts["declaration-capacity-contradiction"])
 	return requireClassified(report)
 }
