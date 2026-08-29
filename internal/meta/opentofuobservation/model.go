@@ -35,20 +35,20 @@ type ExecutionRun struct {
 	PlanCanonicalizer       string           `json:"plan_canonicalizer"`
 	PlanCanonicalizerDigest string           `json:"plan_canonicalizer_digest"`
 	PlanVolatileFields      []string         `json:"plan_volatile_fields"`
-	PlanJSONBytes            int              `json:"plan_json_bytes"`
-	PlanSchemaValid          bool             `json:"plan_schema_valid"`
-	TestEventDigest          string           `json:"test_event_digest"`
-	TestRawDigest            string           `json:"test_raw_digest"`
-	TestEventCount           int              `json:"test_event_count"`
-	TestTypeCounts           map[string]int   `json:"test_type_counts"`
-	TestAbstractDiscovered   int              `json:"test_abstract_discovered"`
-	TestRunExecuted          int              `json:"test_run_executed"`
-	TestSummaryPassed        int              `json:"test_summary_passed"`
-	TestSummaryFailed        int              `json:"test_summary_failed"`
-	TestSummaryErrored       int              `json:"test_summary_errored"`
-	TestSummarySkipped       int              `json:"test_summary_skipped"`
-	TestEventsValid          bool             `json:"test_events_valid"`
-	Commands                 []CommandReceipt `json:"commands"`
+	PlanJSONBytes           int              `json:"plan_json_bytes"`
+	PlanSchemaValid         bool             `json:"plan_schema_valid"`
+	TestEventDigest         string           `json:"test_event_digest"`
+	TestRawDigest           string           `json:"test_raw_digest"`
+	TestEventCount          int              `json:"test_event_count"`
+	TestTypeCounts          map[string]int   `json:"test_type_counts"`
+	TestAbstractDiscovered  int              `json:"test_abstract_discovered"`
+	TestRunExecuted         int              `json:"test_run_executed"`
+	TestSummaryPassed       int              `json:"test_summary_passed"`
+	TestSummaryFailed       int              `json:"test_summary_failed"`
+	TestSummaryErrored      int              `json:"test_summary_errored"`
+	TestSummarySkipped      int              `json:"test_summary_skipped"`
+	TestEventsValid         bool             `json:"test_events_valid"`
+	Commands                []CommandReceipt `json:"commands"`
 }
 
 type ReuseAccounting struct {
@@ -72,19 +72,19 @@ type ReuseAccounting struct {
 }
 
 type RuntimeSummary struct {
-	ConsumerBuildMS       int `json:"consumer_build_ms"`
-	ConsumerBuildPeakRSS  int `json:"consumer_build_peak_rss_kib"`
-	TofuInitMS             int `json:"tofu_init_ms"`
-	TofuInitPeakRSS        int `json:"tofu_init_peak_rss_kib"`
-	TofuPlanMS             int `json:"tofu_plan_ms"`
-	TofuPlanPeakRSS        int `json:"tofu_plan_peak_rss_kib"`
-	TofuShowMS             int `json:"tofu_show_ms"`
-	TofuShowPeakRSS        int `json:"tofu_show_peak_rss_kib"`
-	TofuTestMS             int `json:"tofu_test_ms"`
-	TofuTestPeakRSS        int `json:"tofu_test_peak_rss_kib"`
-	TofuTestExecutions     int `json:"tofu_test_executions"`
-	TotalWallMS            int `json:"total_wall_ms"`
-	MaxPeakRSSKiB          int `json:"max_peak_rss_kib"`
+	ConsumerBuildMS      int `json:"consumer_build_ms"`
+	ConsumerBuildPeakRSS int `json:"consumer_build_peak_rss_kib"`
+	TofuInitMS           int `json:"tofu_init_ms"`
+	TofuInitPeakRSS      int `json:"tofu_init_peak_rss_kib"`
+	TofuPlanMS           int `json:"tofu_plan_ms"`
+	TofuPlanPeakRSS      int `json:"tofu_plan_peak_rss_kib"`
+	TofuShowMS           int `json:"tofu_show_ms"`
+	TofuShowPeakRSS      int `json:"tofu_show_peak_rss_kib"`
+	TofuTestMS           int `json:"tofu_test_ms"`
+	TofuTestPeakRSS      int `json:"tofu_test_peak_rss_kib"`
+	TofuTestExecutions   int `json:"tofu_test_executions"`
+	TotalWallMS          int `json:"total_wall_ms"`
+	MaxPeakRSSKiB        int `json:"max_peak_rss_kib"`
 }
 
 type Inventory struct {
@@ -127,21 +127,21 @@ type GraphObservation struct {
 }
 
 type GraphValidationDiagnostic struct {
-	SchemaObserved                 string `json:"schema_observed"`
-	SchemaExpected                 string `json:"schema_expected"`
-	NodeCountObserved              int    `json:"node_count_observed"`
-	NodeCountExpected              int    `json:"node_count_expected"`
-	ActivityCountObserved          int    `json:"activity_count_observed"`
-	ActivityCountExpected          int    `json:"activity_count_expected"`
-	RelationCountObserved          int    `json:"relation_count_observed"`
-	RelationCountExpected          int    `json:"relation_count_expected"`
-	BindingCountObserved           int    `json:"binding_count_observed"`
-	BindingCountExpected           int    `json:"binding_count_expected"`
-	DeclaredActivityCountObserved  int    `json:"declared_activity_count_observed"`
-	DeclaredEdgeCountObserved      int    `json:"declared_edge_count_observed"`
-	FirstMissingNode               string `json:"first_missing_node"`
-	FirstMissingEdge               string `json:"first_missing_edge"`
-	FirstDuplicate                 string `json:"first_duplicate"`
+	SchemaObserved                string `json:"schema_observed"`
+	SchemaExpected                string `json:"schema_expected"`
+	NodeCountObserved             int    `json:"node_count_observed"`
+	NodeCountExpected             int    `json:"node_count_expected"`
+	ActivityCountObserved         int    `json:"activity_count_observed"`
+	ActivityCountExpected         int    `json:"activity_count_expected"`
+	RelationCountObserved         int    `json:"relation_count_observed"`
+	RelationCountExpected         int    `json:"relation_count_expected"`
+	BindingCountObserved          int    `json:"binding_count_observed"`
+	BindingCountExpected          int    `json:"binding_count_expected"`
+	DeclaredActivityCountObserved int    `json:"declared_activity_count_observed"`
+	DeclaredEdgeCountObserved     int    `json:"declared_edge_count_observed"`
+	FirstMissingNode              string `json:"first_missing_node"`
+	FirstMissingEdge              string `json:"first_missing_edge"`
+	FirstDuplicate                string `json:"first_duplicate"`
 }
 
 type Unknown struct {
@@ -154,11 +154,11 @@ type Unknown struct {
 }
 
 type Counterexample struct {
-	ID         string  `json:"id"`
-	Expected   string  `json:"expected"`
-	Decision   string  `json:"decision"`
-	Resolution string  `json:"resolution"`
-	Reason     string  `json:"reason"`
+	ID         string   `json:"id"`
+	Expected   string   `json:"expected"`
+	Decision   string   `json:"decision"`
+	Resolution string   `json:"resolution"`
+	Reason     string   `json:"reason"`
 	Unknown    *Unknown `json:"unknown,omitempty"`
 }
 

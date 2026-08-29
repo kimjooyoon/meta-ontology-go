@@ -3,10 +3,10 @@ package opentofuobservation
 import "sort"
 
 type ValidationError struct {
-	Decision         string
-	Resolution       string
-	Reason           string
-	GraphDiagnostic  *GraphValidationDiagnostic
+	Decision        string
+	Resolution      string
+	Reason          string
+	GraphDiagnostic *GraphValidationDiagnostic
 }
 
 func (err *ValidationError) Error() string { return err.Reason }

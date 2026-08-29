@@ -18,7 +18,7 @@ func testRun(index int, fixture, plan, rawPlan, events, rawEvents string) Execut
 	return ExecutionRun{Index: index, FixtureDigest: fixture, PlanJSONDigest: plan, PlanRawDigest: rawPlan,
 		PlanCanonicalizer: "opentofu-plan-json/v1", PlanCanonicalizerDigest: DigestBytes([]byte("opentofu-plan-json/v1")), PlanVolatileFields: []string{"timestamp"}, PlanJSONBytes: 1,
 		PlanSchemaValid: true, TestEventDigest: events, TestRawDigest: rawEvents, TestEventCount: 5,
-		TestTypeCounts: map[string]int{"version": 1, "test_abstract": 1, "test_file": 1, "test_run": 1, "test_summary": 1},
+		TestTypeCounts:         map[string]int{"version": 1, "test_abstract": 1, "test_file": 1, "test_run": 1, "test_summary": 1},
 		TestAbstractDiscovered: 1, TestRunExecuted: 1, TestSummaryPassed: 1, TestSummaryFailed: 0,
 		TestSummaryErrored: 0, TestSummarySkipped: 0, TestEventsValid: true,
 		Commands: []CommandReceipt{testCommand("init"), testCommand("plan"), testCommand("show"), testCommand("test")}}
@@ -59,8 +59,8 @@ func testObservation() Observation {
 		FixtureDigest: fixture, FixtureFiles: []string{"main.tf"}, FixturePhysicalLines: 1,
 		Executions: []ExecutionRun{testRun(1, fixture, plan, DigestBytes([]byte("plan-raw-1")), DigestBytes([]byte("events")), DigestBytes([]byte("raw-1"))),
 			testRun(2, fixture, plan, DigestBytes([]byte("plan-raw-2")), DigestBytes([]byte("events")), DigestBytes([]byte("raw-2")))},
-		Reuse: ReuseAccounting{Discovered: 1, Executed: 1, Reused: 0, Skipped: 0, PriorCandidates: 0, Invalidated: 0, Decision: "NOT_REUSED_FIRST_RUN", Reason: "NO_PRIOR_RECEIPT", SourceDigest: digest, FixtureDigest: digest, ArgumentDigest: digest, EnvironmentDigest: digest, ReleaseDigest: digest, ToolchainDigest: digest, DependencyGraphDigest: digest, ExpectedResultDigest: digest},
-		Runtime: RuntimeSummary{ConsumerBuildMS: 1, ConsumerBuildPeakRSS: 1, TofuInitMS: 1, TofuInitPeakRSS: 1, TofuPlanMS: 1, TofuPlanPeakRSS: 1, TofuShowMS: 1, TofuShowPeakRSS: 1, TofuTestMS: 1, TofuTestPeakRSS: 1, TofuTestExecutions: 2, TotalWallMS: 1, MaxPeakRSSKiB: 1},
+		Reuse:     ReuseAccounting{Discovered: 1, Executed: 1, Reused: 0, Skipped: 0, PriorCandidates: 0, Invalidated: 0, Decision: "NOT_REUSED_FIRST_RUN", Reason: "NO_PRIOR_RECEIPT", SourceDigest: digest, FixtureDigest: digest, ArgumentDigest: digest, EnvironmentDigest: digest, ReleaseDigest: digest, ToolchainDigest: digest, DependencyGraphDigest: digest, ExpectedResultDigest: digest},
+		Runtime:   RuntimeSummary{ConsumerBuildMS: 1, ConsumerBuildPeakRSS: 1, TofuInitMS: 1, TofuInitPeakRSS: 1, TofuPlanMS: 1, TofuPlanPeakRSS: 1, TofuShowMS: 1, TofuShowPeakRSS: 1, TofuTestMS: 1, TofuTestPeakRSS: 1, TofuTestExecutions: 2, TotalWallMS: 1, MaxPeakRSSKiB: 1},
 		Inventory: Inventory{InputRegularFiles: 1, InputPhysicalLines: 1, OutputArtifactFiles: 1}, ObserverGoVersion: "go version go1.27.0 linux/amd64", ObserverGOVERSION: ExpectedGo, ObserverToolchainDigest: digest,
 		CellEvidenceProjections: cellProjections, CellEvidenceDigests: cellEvidence, Graph: testGraph(digest), RepositoryWrites: 0, LocalTestExecutions: 0, ReleaseBinaryBuilds: 0, ReleaseBinaryBuildReason: "NOT_EXECUTED_RELEASE_BINARY_BOUNDARY", HumanReportReady: true}
 }
