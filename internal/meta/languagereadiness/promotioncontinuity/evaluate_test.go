@@ -25,39 +25,30 @@ func exactEvidence() (string, GuardEvidence, RecoveryEvidence) {
 }
 
 func mixedEvidence() (string, GuardEvidence, RecoveryEvidence) {
-	head, guard, recovery := exactEvidence()
-	guard.Decision = DecisionFailClosed
-	guard.Reason = "GUARDED_PROMOTION_EVIDENCE_UNKNOWN"
-	guard.Resolution = "LOWER_RESOLUTION"
-	guard.Satisfied, guard.Total, guard.Unresolved = 10, 12, 2
-	guard.PromotionAuthorized = false
-	recovery.Decision = DecisionFailClosed
-	recovery.Reason = "MIXED_REFUTED_NON_PROMOTABLE"
-	recovery.Resolution = "EXACT"
-	recovery.Mode = "MIXED_REFUTED_NON_PROMOTABLE"
-	recovery.GuardDecision = DecisionFailClosed
-	recovery.GuardReason = guard.Reason
-	recovery.GuardResolution = guard.Resolution
-	recovery.GuardSatisfied, recovery.GuardTotal, recovery.GuardUnresolved = 10, 12, 2
-	recovery.TransformationHeadSHA = head
-	recovery.TransformationDecision = "APPLIED"
-	recovery.TransformationReason = "SANDBOX_EFFECTS_VERIFIED"
-	recovery.TransformationWorkspaceMode = "DISPOSABLE_WORKTREE"
-	recovery.TransformationEffects = 2
-	recovery.TransformationAppliedEffects = 1
-	recovery.TransformationRefutedEffects = 1
-	recovery.TransformationOperationOutcome = "MIXED_CLOSED_REFUTED"
-	recovery.TransformationReceiptDecision = "REFUTED"
-	recovery.TransformationReceiptCount = 1
-	recovery.TransformationFailureCount = 1
-	recovery.TransformationUnknownCount = 5
-	recovery.TransformationDirectUnknownCount = 0
-	recovery.TransformationDependencyBlockedUnknownCount = 5
-	recovery.TransformationUnknownCausalDigest = "sha256:" + strings.Repeat("c", 64)
+	head := "ab1274a1fd704328c06e4684554715003683a316"
+	guard := GuardEvidence{
+		Schema: guardSchema, FileSHA256: "sha256:f2f772943e57e74cc95a6e4caadee7b5b1c3175a423574876c07255703f91d29",
+		ReportDigest: "sha256:9a70a19d2c4d05bf667e97dbd6209e2f54b2bd1abb45400880ecfd26c7b77012", HeadSHA: head,
+		Decision: DecisionFailClosed, Reason: "GUARDED_PROMOTION_EVIDENCE_UNKNOWN", Resolution: "LOWER_RESOLUTION",
+		Satisfied: 10, Total: 12, Unresolved: 2,
+	}
+	recovery := RecoveryEvidence{
+		Schema: recoverySchema, FileSHA256: "sha256:8017ce469a71b796f096e67ec8c0f797076771d3305e75e5f9e440feff4a3483",
+		ReportDigest: "sha256:e31daaef9bdda39981409595372b931a9c0427adfc8bf6b88bba6e2104fe8e6f", HeadSHA: head,
+		Decision: DecisionFailClosed, Reason: "MIXED_REFUTED_NON_PROMOTABLE", Resolution: "EXACT",
+		Mode: "MIXED_REFUTED_NON_PROMOTABLE", GuardDecision: DecisionFailClosed,
+		GuardReason: "GUARDED_PROMOTION_EVIDENCE_UNKNOWN", GuardResolution: "LOWER_RESOLUTION",
+		GuardSatisfied: 10, GuardTotal: 12, GuardUnresolved: 2,
+		TransformationHeadSHA: head, TransformationDecision: "APPLIED",
+		TransformationReason: "SANDBOX_EFFECTS_VERIFIED", TransformationWorkspaceMode: "DISPOSABLE_WORKTREE",
+		TransformationEffects: 2, TransformationAppliedEffects: 1, TransformationRefutedEffects: 1,
+		TransformationOperationOutcome: "MIXED_CLOSED_REFUTED", TransformationReceiptDecision: "REFUTED",
+		TransformationReceiptCount: 1, TransformationFailureCount: 1, TransformationUnknownCount: 5,
+		TransformationDirectUnknownCount: 0, TransformationDependencyBlockedUnknownCount: 5,
+		TransformationUnknownCausalDigest: "003671c624aef06c7921c4032052c50a10ca1aaaa39304eb9953cc14ec4ecc40",
+		Satisfied: 8, Total: 10, Unresolved: 0, ReadinessBPS: 8000,
+	}
 	recovery.TransformationCausalBindingDigest = causalBindingDigest(recovery)
-	recovery.Satisfied, recovery.Total, recovery.Unresolved = 8, 10, 0
-	recovery.ReadinessBPS = 8000
-	recovery.RecoveredFixedPoints, recovery.AuthorizedPromotions = 0, 0
 	return head, guard, recovery
 }
 
@@ -150,6 +141,15 @@ func TestEvaluateRejectsUnknownTopLevelMixedDecision(t *testing.T) {
 }
 
 func TestEvaluateRejectsMixedCausalDigestMismatch(t *testing.T) {
+	head, guard, recovery := mixedEvidence()
+	recovery.TransformationUnknownCausalDigest = strings.Repeat("d", 64)
+	report := Evaluate(head, guard, recovery)
+	if report.Resolution != "LOWER_RESOLUTION" || IsKnownNonPromotingTerminal(report) {
+		t.Fatalf("report=%+v", report)
+	}
+}
+
+func TestEvaluateRejectsCausalDigestPrefixDrift(t *testing.T) {
 	head, guard, recovery := mixedEvidence()
 	recovery.TransformationUnknownCausalDigest = "sha256:" + strings.Repeat("d", 64)
 	report := Evaluate(head, guard, recovery)

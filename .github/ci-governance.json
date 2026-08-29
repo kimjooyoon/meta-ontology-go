@@ -1669,6 +1669,15 @@
       ]
     },
     {
+      "branch": "agent/promotion-continuity-recovery-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/promotioncontinuity/**",
+        "internal/verify/scope_promotion_authorized_continuity.go"
+      ]
+    },
+    {
       "branch": "agent/proof-route-v9",
       "paths": [
         ".github/agent-scope-table.md",
