@@ -17,6 +17,7 @@ func mixedOutcomeInput() inputSet {
 		Effects: []transformationeffect.Effect{{ActionIndicatorID: "action-a", Status: "APPLIED"},
 			{ActionIndicatorID: "action-b", Status: "REFUTED"}}}
 	report := generation.ReceiptReport{Decision: generation.ReceiptDecisionRefuted,
+		Reason: generation.ReceiptReasonRefutedOperation,
 		ReportDigest: "sha256:report", Receipts: []generation.OperationReceipt{{ActionIndicatorID: "action-a"}},
 		Failures: []generation.ObservationFailure{{ActionIndicatorID: "action-b", Decision: "REFUTED"}}}
 	return inputSet{effectLedger: ledger, receiptReport: report,
@@ -37,6 +38,57 @@ func TestUnknownOutcomeDoesNotBecomeFixedPoint(t *testing.T) {
 	inputs.receiptReport.Decision = generation.ReceiptDecisionUnknown
 	if _, err := validateEffectOutcome(inputs); err == nil {
 		t.Fatal("unknown top-level outcome was accepted")
+	}
+}
+
+func TestUnknownLedgerDecisionOrReasonDoesNotBecomeKnownOutcome(t *testing.T) {
+	for _, mutate := range []func(*inputSet){
+		func(inputs *inputSet) { inputs.effectLedger.Decision = "UNRECOGNIZED" },
+		func(inputs *inputSet) { inputs.effectLedger.Reason = "UNRECOGNIZED" },
+	} {
+		inputs := mixedOutcomeInput()
+		mutate(&inputs)
+		if _, err := validateEffectOutcome(inputs); err == nil {
+			t.Fatal("unknown ledger tuple was accepted")
+		}
+	}
+}
+
+func TestMixedOutcomeRejectsCrossKindDuplicateIdentity(t *testing.T) {
+	inputs := mixedOutcomeInput()
+	inputs.effectLedger.Effects[1].Status = "APPLIED"
+	inputs.receiptReport.Receipts[0].ActionIndicatorID = "action-b"
+	if _, err := validateEffectOutcome(inputs); err == nil {
+		t.Fatal("receipt/failure duplicate identity was accepted")
+	}
+}
+
+func TestClosedOutcomeUsesExactNonPromotingTuple(t *testing.T) {
+	inputs := mixedOutcomeInput()
+	inputs.effectLedger.Effects = inputs.effectLedger.Effects[:1]
+	inputs.effectLedger.SelectedPlanOperations = 1
+	inputs.effectLedger.Effects[0].Status = "APPLIED"
+	inputs.effectLedger.OperationOutcome = effectOutcomeClosed
+	inputs.effectLedger.ReceiptDecision = string(generation.ReceiptDecisionConformant)
+	inputs.effectLedger.ReceiptCount = 1
+	inputs.effectLedger.FailureCount = 0
+	inputs.receiptReport.Decision = generation.ReceiptDecisionConformant
+	inputs.receiptReport.Reason = generation.ReceiptReasonVerified
+	inputs.receiptReport.Failures = nil
+	if outcome, err := validateEffectOutcome(inputs); err != nil || outcome != effectOutcomeClosed {
+		t.Fatalf("outcome=%q err=%v, want closed", outcome, err)
+	}
+}
+
+func TestClosedOutcomeDoesNotUseFixedPointMetaOperation(t *testing.T) {
+	effect := EffectEvidence{Outcome: effectOutcomeClosed,
+		Artifacts: []ArtifactEvidence{{Role: "effect-ledger", Digest: "sha256:effect"}},
+		SetDigest: "sha256:set"}
+	indicators := transitionIndicators(RepositoryState{}, effect, "head")
+	for _, indicator := range indicators {
+		if indicator.MetaOperation == "terminate-at-fixed-point" || indicator.ID == "regression.zero-metric-delta" {
+			t.Fatalf("closed outcome used fixed-point indicator: %#v", indicator)
+		}
 	}
 }
 

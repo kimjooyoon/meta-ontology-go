@@ -87,6 +87,23 @@ func TestMalformedMixedOutcomeIsNotKnownTerminal(t *testing.T) {
 	}
 }
 
+func TestMixedOutcomeWithUnknownIsNotKnownTerminal(t *testing.T) {
+	source := fixtureSource()
+	source.Transformation.Decision = "APPLIED"
+	source.Transformation.Reason = "SANDBOX_EFFECTS_VERIFIED"
+	source.Transformation.Effects = 2
+	source.Transformation.AppliedEffects = 1
+	source.Transformation.RefutedEffects = 1
+	source.Transformation.OperationOutcome = "MIXED_CLOSED_REFUTED"
+	source.Transformation.ReceiptDecision = "REFUTED"
+	source.Transformation.ReceiptCount = 1
+	source.Transformation.FailureCount = 1
+	source.Transformation.UnknownCount = 1
+	if IsKnownMixedTerminal(Build(source)) {
+		t.Fatal("mixed evidence with unknown effects was accepted as known")
+	}
+}
+
 func TestAuthorizedPromotionIsTerminal(t *testing.T) {
 	source := fixtureSource()
 	source.Guard.Decision = guardedpromotion.DecisionAuthorized

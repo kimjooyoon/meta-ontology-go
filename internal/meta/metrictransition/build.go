@@ -29,6 +29,8 @@ func Build(options Options) (Result, error) {
 	if outcome == effectOutcomeFixedPoint {
 		decision, reason = "FIXED_POINT_ZERO_DELTA", "VERIFIED_EFFECT_TREE_IDENTITY"
 		after.Materialization = "ALIAS_OF_BEFORE"
+	} else if outcome == effectOutcomeClosed {
+		decision, reason = "CLOSED", "VERIFIED_CLOSED_NON_PROMOTING"
 	}
 	ledger := TransitionLedger{
 		Schema: LedgerSchema, Status: "BOUND", Decision: decision, Reason: reason,
@@ -46,8 +48,14 @@ func Build(options Options) (Result, error) {
 
 func transitionIndicators(state RepositoryState, effect EffectEvidence, sha string) []Indicator {
 	terminalID, terminalOperation, terminalDigest := "coherence.fixed-point-alias", "derive-after-from-tree-identity", effect.Artifacts[0].Digest
-	if effect.Outcome != effectOutcomeFixedPoint {
+	if effect.Outcome == effectOutcomeClosed {
+		terminalID, terminalOperation, terminalDigest = "coherence.closed-non-promoting-terminal", "preserve-closed-non-promoting-terminal", effect.SetDigest
+	} else if effect.Outcome != effectOutcomeFixedPoint {
 		terminalID, terminalOperation, terminalDigest = "coherence.non-promoting-effect-boundary", "preserve-non-promoting-terminal", effect.SetDigest
+	}
+	regressionID, regressionOperation := "regression.zero-metric-delta", "terminate-at-fixed-point"
+	if effect.Outcome != effectOutcomeFixedPoint {
+		regressionID, regressionOperation = "regression.no-state-advance", "preserve-non-promoting-terminal"
 	}
 	return []Indicator{
 		{ID: "foundation.metric-state-schema", Family: "foundation", ProofChoice: "FOUNDATION", Satisfied: true, MetaOperation: "canonicalize-repository-state", EvidenceDigest: state.Digest},
@@ -55,6 +63,6 @@ func transitionIndicators(state RepositoryState, effect EffectEvidence, sha stri
 		{ID: "coherence.verified-effect-set", Family: "coherence", ProofChoice: "COHERENCE", Satisfied: true, MetaOperation: "bind-transformation-effect", EvidenceDigest: effect.SetDigest},
 		{ID: "coherence.exact-head", Family: "coherence", ProofChoice: "COHERENCE", Satisfied: true, MetaOperation: "bind-exact-head", EvidenceDigest: digestBytes([]byte(sha))},
 		{ID: terminalID, Family: "coherence", ProofChoice: "COHERENCE", Satisfied: true, MetaOperation: terminalOperation, EvidenceDigest: terminalDigest},
-		{ID: "regression.zero-metric-delta", Family: "regression", ProofChoice: "REGRESSION", Satisfied: true, MetaOperation: "terminate-at-fixed-point", EvidenceDigest: state.Digest},
+		{ID: regressionID, Family: "regression", ProofChoice: "REGRESSION", Satisfied: true, MetaOperation: regressionOperation, EvidenceDigest: state.Digest},
 	}
 }

@@ -15,7 +15,7 @@ const (
 
 func validateEffectOutcome(inputs inputSet) (string, error) {
 	ledger := inputs.effectLedger
-	if ledger.Status != "BOUND" || ledger.Decision == "" || !ledger.SourceWorkspaceUnchanged ||
+	if ledger.Status != "BOUND" || !ledger.SourceWorkspaceUnchanged ||
 		ledger.PromotionAuthorized || ledger.UnboundExecutorOperations != 0 {
 		return "", fmt.Errorf("metric transition effect binding is not non-promoting")
 	}
@@ -33,27 +33,29 @@ func validateEffectOutcome(inputs inputSet) (string, error) {
 		}
 		effects[effect.ActionIndicatorID] = effect
 	}
-	receipts := make(map[string]bool, len(inputs.receiptReport.Receipts))
+	consumed := make(map[string]string, len(ledger.Effects))
 	for _, receipt := range inputs.receiptReport.Receipts {
-		if receipt.ActionIndicatorID == "" || receipts[receipt.ActionIndicatorID] {
-			return "", fmt.Errorf("metric transition receipt identity is not unique")
+		if receipt.ActionIndicatorID == "" || consumed[receipt.ActionIndicatorID] != "" {
+			return "", fmt.Errorf("metric transition receipt identity is not disjoint")
 		}
 		if effect, ok := effects[receipt.ActionIndicatorID]; !ok || effect.Status != "APPLIED" {
 			return "", fmt.Errorf("metric transition receipt is not bound to an applied effect")
 		}
-		receipts[receipt.ActionIndicatorID] = true
+		consumed[receipt.ActionIndicatorID] = "receipt"
 	}
-	failures := make(map[string]bool, len(inputs.receiptReport.Failures))
 	for _, failure := range inputs.receiptReport.Failures {
-		if failure.ActionIndicatorID == "" || failures[failure.ActionIndicatorID] {
-			return "", fmt.Errorf("metric transition failure identity is not unique")
+		if failure.ActionIndicatorID == "" || consumed[failure.ActionIndicatorID] != "" {
+			return "", fmt.Errorf("metric transition failure identity is not disjoint")
 		}
-		if effect, ok := effects[failure.ActionIndicatorID]; !ok || effect.Status != failure.Decision {
+		if failure.Decision != "REFUTED" {
+			return "", fmt.Errorf("metric transition failure decision is not typed REFUTED")
+		}
+		if effect, ok := effects[failure.ActionIndicatorID]; !ok || effect.Status != "REFUTED" {
 			return "", fmt.Errorf("metric transition failure is not bound to its effect")
 		}
-		failures[failure.ActionIndicatorID] = true
+		consumed[failure.ActionIndicatorID] = "failure"
 	}
-	if len(receipts)+len(failures) != len(effects) {
+	if len(consumed) != len(effects) {
 		return "", fmt.Errorf("metric transition effect identities are not fully consumed")
 	}
 	outcome := classifyEffectOutcome(ledger, inputs.receiptReport)
@@ -75,13 +77,30 @@ func validateEffectOutcome(inputs inputSet) (string, error) {
 }
 
 func classifyEffectOutcome(ledger transformationeffect.Ledger, report generation.ReceiptReport) string {
-	if len(ledger.Effects) == 0 && report.Decision == generation.ReceiptDecisionFixedPoint {
+	if len(ledger.Effects) == 0 && ledger.Decision == "FIXED_POINT" &&
+		ledger.Reason == "EXACT_FIXED_POINT" &&
+		ledger.OperationOutcome == effectOutcomeFixedPoint &&
+		ledger.ReceiptDecision == string(generation.ReceiptDecisionFixedPoint) &&
+		ledger.ReceiptCount == 0 && ledger.FailureCount == 0 && ledger.UnknownCount == 0 &&
+		report.Decision == generation.ReceiptDecisionFixedPoint &&
+		report.Reason == generation.ReceiptReasonExactFixedPoint &&
+		len(report.Receipts) == 0 && len(report.Failures) == 0 && len(report.Unknowns) == 0 {
 		return effectOutcomeFixedPoint
 	}
-	if report.Decision == generation.ReceiptDecisionConformant && len(report.Failures) == 0 {
+	if ledger.Decision == "APPLIED" && ledger.Reason == "SANDBOX_EFFECTS_VERIFIED" &&
+		ledger.OperationOutcome == effectOutcomeClosed &&
+		ledger.ReceiptDecision == string(generation.ReceiptDecisionConformant) &&
+		report.Decision == generation.ReceiptDecisionConformant &&
+		report.Reason == generation.ReceiptReasonVerified && len(report.Failures) == 0 &&
+		len(report.Unknowns) == 0 {
 		return effectOutcomeClosed
 	}
-	if report.Decision == generation.ReceiptDecisionRefuted && len(report.Receipts) > 0 && len(report.Failures) > 0 {
+	if ledger.Decision == "APPLIED" && ledger.Reason == "SANDBOX_EFFECTS_VERIFIED" &&
+		ledger.OperationOutcome == effectOutcomeMixedRefuted &&
+		ledger.ReceiptDecision == string(generation.ReceiptDecisionRefuted) &&
+		report.Decision == generation.ReceiptDecisionRefuted &&
+		report.Reason == generation.ReceiptReasonRefutedOperation &&
+		len(report.Receipts) > 0 && len(report.Failures) > 0 {
 		return effectOutcomeMixedRefuted
 	}
 	return ""
