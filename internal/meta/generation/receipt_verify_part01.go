@@ -1,11 +1,16 @@
 package generation
 
 func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
+	return VerifyReceiptsWithFailures(plan, receipts, nil)
+}
+
+func VerifyReceiptsWithFailures(plan Plan, receipts []OperationReceipt, failures []ObservationFailure) ReceiptReport {
 	normalized := normalizeOperationReceipts(receipts)
 	report := ReceiptReport{
 		SchemaVersion: ReceiptReportSchemaVersion,
-		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
+		BaseSHA: plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest, Receipts: normalized,
+		Failures: normalizeObservationFailures(failures),
 	}
 	if !receiptPlanKnown(plan) || validatePlanIndicatorDecisionLedger(plan) != nil {
 		report.Decision, report.Reason = ReceiptDecisionUnknown, ReceiptReasonInvalidPlan
@@ -14,7 +19,7 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 	report.IndicatorDecisionLedgerDigest,
 		report.IndicatorDecisionLedgerCount = planIndicatorDecisionLedgerProvenance(plan)
 	if plan.Decision == DecisionFixedPoint {
-		if len(normalized) != 0 {
+		if len(normalized) != 0 || len(report.Failures) != 0 {
 			report.Decision, report.Reason = ReceiptDecisionUnknown, ReceiptReasonSetMismatch
 		} else {
 			report.Decision = ReceiptDecisionFixedPoint
@@ -25,6 +30,10 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 	if plan.Decision != DecisionPlan {
 		report.Decision = ReceiptDecisionUnknown
 		report.Reason = ReceiptReasonPlanNotExecutable
+		return finishReceiptReport(report)
+	}
+	if !validReceiptFailureList(report.Failures) || !receiptFailuresMatchPlan(plan, report.Failures) {
+		report.Decision, report.Reason = ReceiptDecisionUnknown, ReceiptReasonUnknownIndicator
 		return finishReceiptReport(report)
 	}
 	actions, _ := selectedActionIndex(plan)
@@ -53,6 +62,9 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 		}
 	}
 	switch {
+	case hasRefutedFailure(report.Failures):
+		report.Decision = ReceiptDecisionRefuted
+		report.Reason = ReceiptReasonRefutedOperation
 	case len(report.RejectedIndicatorIDs) != 0:
 		report.Decision = ReceiptDecisionRejected
 		report.Reason = ReceiptReasonRejectedIndicator
@@ -67,4 +79,31 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 		report.Reason = ReceiptReasonVerified
 	}
 	return finishReceiptReport(report)
+}
+
+func receiptFailuresMatchPlan(plan Plan, failures []ObservationFailure) bool {
+	actions, valid := selectedActionIndex(plan)
+	if !valid {
+		return false
+	}
+	seen := make(map[string]bool, len(failures))
+	for _, failure := range failures {
+		if seen[failure.ActionIndicatorID] {
+			return false
+		}
+		if _, exists := actions[failure.ActionIndicatorID]; !exists {
+			return false
+		}
+		seen[failure.ActionIndicatorID] = true
+	}
+	return true
+}
+
+func hasRefutedFailure(failures []ObservationFailure) bool {
+	for _, failure := range failures {
+		if failure.Decision == "REFUTED" {
+			return true
+		}
+	}
+	return false
 }

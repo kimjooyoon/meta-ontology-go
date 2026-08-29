@@ -3,10 +3,10 @@ package generation
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 type IndicatorReceipt struct {
-	ID             string           `json:"id"`
-	Verdict        IndicatorVerdict `json:"verdict"`
-	EvidenceDigest string           `json:"evidence_digest"`
-	ProofChoice    ProofChoice      `json:"proof_choice"`
+	ID             string                `json:"id"`
+	Verdict        IndicatorVerdict      `json:"verdict"`
+	EvidenceDigest string                `json:"evidence_digest"`
+	ProofChoice    ProofChoice           `json:"proof_choice"`
 	Observation    *IndicatorObservation `json:"observation,omitempty"`
 }
 
@@ -95,14 +95,15 @@ type ReceiptReport struct {
 	InputDigest                   string             `json:"input_digest"`
 	Decision                      ReceiptDecision    `json:"decision"`
 	Reason                        ReceiptReason      `json:"reason"`
-	Receipts                      []OperationReceipt `json:"receipts"`
-	MissingIndicatorIDs           []string           `json:"missing_indicator_ids"`
-	UnknownIndicatorIDs           []string           `json:"unknown_indicator_ids"`
-	RejectedIndicatorIDs          []string           `json:"rejected_indicator_ids"`
-	Unknowns                      []ReceiptUnknown   `json:"unknowns"`
-	PromotionAuthorized           bool               `json:"promotion_authorized"`
-	ReportDigest                  string             `json:"report_digest"`
-	ReplayDigest                  string             `json:"replay_digest"`
+	Receipts                      []OperationReceipt   `json:"receipts"`
+	Failures                      []ObservationFailure `json:"failures"`
+	MissingIndicatorIDs           []string             `json:"missing_indicator_ids"`
+	UnknownIndicatorIDs           []string             `json:"unknown_indicator_ids"`
+	RejectedIndicatorIDs          []string             `json:"rejected_indicator_ids"`
+	Unknowns                      []ReceiptUnknown     `json:"unknowns"`
+	PromotionAuthorized           bool                 `json:"promotion_authorized"`
+	ReportDigest                  string               `json:"report_digest"`
+	ReplayDigest                  string               `json:"replay_digest"`
 }
 
 // PromotionAuthorizedByReceipts is always false: CI remains the authority.

@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -30,7 +31,7 @@ type processResult struct {
 }
 
 type operationMaterialization struct {
-	OperationID  string
+	OperationID    string
 	InstanceDigest string
 	ContractDigest string
 	Executor       generation.ProcessObservation
@@ -41,12 +42,12 @@ type operationMaterialization struct {
 }
 
 type extractorReport struct {
-	Schema     string              `json:"schema"`
-	SourceSHA  string              `json:"source_sha"`
-	Subjects   []extractorSubject   `json:"subjects"`
-	Unhandled  []string            `json:"unhandled"`
-	Failures   []json.RawMessage   `json:"failures,omitempty"`
-	Indicators []json.RawMessage   `json:"indicators"`
+	Schema     string             `json:"schema"`
+	SourceSHA  string             `json:"source_sha"`
+	Subjects   []extractorSubject `json:"subjects"`
+	Unhandled  []string           `json:"unhandled"`
+	Failures   []json.RawMessage  `json:"failures,omitempty"`
+	Indicators []json.RawMessage  `json:"indicators"`
 }
 
 type extractorSubject struct {
@@ -62,8 +63,8 @@ type extractorSubject struct {
 }
 
 type extractorPlan struct {
-	Schema    string          `json:"schema"`
-	SourceSHA string          `json:"source_sha"`
+	Schema    string                 `json:"schema"`
+	SourceSHA string                 `json:"source_sha"`
 	Subjects  []extractorPlanSubject `json:"subjects"`
 }
 
@@ -74,8 +75,8 @@ type extractorPlanSubject struct {
 }
 
 type extractorDensity struct {
-	Schema    string             `json:"schema"`
-	SourceSHA string             `json:"source_sha"`
+	Schema    string                    `json:"schema"`
+	SourceSHA string                    `json:"source_sha"`
 	Subjects  []extractorDensitySubject `json:"subjects"`
 }
 
@@ -392,8 +393,13 @@ func extractIndicatorReceipts(action generation.Action, validation extractValida
 			return nil, false
 		}
 		verdict := generation.IndicatorVerdictFail
-		if actual == 1 {
-			verdict = generation.IndicatorVerdictPass
+		if id == "filesystem.atomic-replacement/v1" && !validation.AtomicReplacement {
+			verdict = generation.IndicatorVerdictUnknown
+		} else {
+			verdict = generation.IndicatorVerdictFail
+			if actual == 1 {
+				verdict = generation.IndicatorVerdictPass
+			}
 		}
 		result = append(result, makeIndicatorReceipt(id, action.Subject, headSHA, extractFunctionOperationID, actual, 1, validation.BeforeFunctionLines, validation.AfterFunctionLines, validation.TransformedSubject, verdict, action.ProofChoice))
 	}
@@ -503,7 +509,7 @@ func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, bef
 		BeforeFunctionLines: declarationLinesFor(beforeSet, beforeFunction),
 		AfterFunctionLines:  afterLines,
 		TransformedSubject:  subject.Path + "#" + subject.Name + "=>" + strings.Join(sortedKeys(seen), ","),
-		AtomicReplacement:   len(seen) > 0 && seen[subject.Path],
+		AtomicReplacement:   false,
 		FormatFixedPoint:    true,
 		HeaderPreserved:     true,
 		ImportIdentity:      true,
@@ -597,12 +603,7 @@ func mustFormat(data []byte) []byte {
 }
 
 func containsString(values []string, value string) bool {
-	for _, candidate := range values {
-		if candidate == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, value)
 }
 
 func runGoTest(root string, environment []string) processResult {
@@ -625,8 +626,7 @@ func runProcess(root string, environment, descriptor, actual []string) (processR
 	exitCode := 0
 	if err != nil {
 		exitCode = 1
-		var exitError *exec.ExitError
-		if errors.As(err, &exitError) {
+		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 			exitCode = exitError.ExitCode()
 		}
 	}

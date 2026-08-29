@@ -22,6 +22,7 @@ func run(configuration options) error {
 		return err
 	}
 	receipts := []generation.OperationReceipt{}
+	failures := []generation.ObservationFailure{}
 	if configuration.receiptsPath != "" {
 		if err := decodeJSON(configuration.receiptsPath, &receipts); err != nil {
 			return err
@@ -41,8 +42,9 @@ func run(configuration options) error {
 			return fmt.Errorf("operation observation binding failed: %w", err)
 		}
 		receipts = bundle.Receipts
+		failures = bundle.Failures
 	}
-	report := generation.VerifyReceipts(plan, receipts)
+	report := generation.VerifyReceiptsWithFailures(plan, receipts, failures)
 	payload, err := generation.EncodeReceiptReport(report)
 	if err != nil {
 		return fmt.Errorf("encode receipt report: %w", err)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
@@ -135,6 +136,26 @@ func validObservationFailureDecision(failure ObservationFailure) bool {
 	}
 }
 
+func validReceiptFailureList(failures []ObservationFailure) bool {
+	canonical := normalizeObservationFailures(failures)
+	if len(canonical) != len(failures) {
+		return false
+	}
+	for index, failure := range failures {
+		if failure.ActionIndicatorID == "" || failure.Stage == "" || failure.Step == "" ||
+			failure.Reason == "" || failure.NextOperation == "" || failure.BlockedBy == nil ||
+			!validObservationFailureDecision(failure) || !validProcessObservation(failure.Executor) {
+			return false
+		}
+		left, _ := json.Marshal(canonical[index])
+		right, _ := json.Marshal(failure)
+		if string(left) != string(right) {
+			return false
+		}
+	}
+	return true
+}
+
 func validIndicatorObservations(receipt OperationReceipt, action Action, evidence OperationInstanceEvidence) bool {
 	indicators, valid := indicatorReceiptIndex(receipt.Indicators)
 	if !valid || len(indicators) != len(action.RequiredIndicatorIDs) {
@@ -154,17 +175,34 @@ func validIndicatorObservations(receipt OperationReceipt, action Action, evidenc
 			observation.Observation.ExpectedBound != 1 ||
 			(observation.Verdict == IndicatorVerdictPass && observation.Observation.ActualValue != 1) ||
 			(observation.Verdict == IndicatorVerdictFail && observation.Observation.ActualValue == 1) ||
+			(observation.Verdict == IndicatorVerdictUnknown && observation.Observation.ActualValue != 0) ||
 			observation.Observation.TransformedSubject == "" ||
 			observation.EvidenceDigest != digestJSON(observation.Observation) {
 			return false
 		}
 		if action.Operation == sourcepolicy.OperationExtractFunction &&
-			(observation.Observation.BeforeFunctionLines <= 0 ||
-				observation.Observation.AfterFunctionLines <= 0) {
+			!validExtractFunctionObservation(*observation.Observation, action) {
 			return false
 		}
 	}
 	return true
+}
+
+func validExtractFunctionObservation(observation IndicatorObservation, action Action) bool {
+	subject, err := sourcepolicy.ParseSourceSubject(action.Subject)
+	if err != nil {
+		return false
+	}
+	if action.SourceIndicator.Value <= action.SourceIndicator.Limit ||
+		observation.BeforeFunctionLines != action.SourceIndicator.Value ||
+		observation.BeforeFunctionLines <= action.SourceIndicator.Limit ||
+		observation.AfterFunctionLines <= 0 ||
+		observation.AfterFunctionLines > action.SourceIndicator.Limit ||
+		observation.AfterFunctionLines >= observation.BeforeFunctionLines {
+		return false
+	}
+	prefix := subject.Path + "#" + subject.Name + "=>"
+	return strings.HasPrefix(observation.TransformedSubject, prefix)
 }
 
 func actionsExist(actions map[string]Action, identifier string) bool {

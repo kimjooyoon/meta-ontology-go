@@ -9,6 +9,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -104,7 +105,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		return nil, err
 	}
 	existing := functionNames(file)
-	for index := len(function.Body.List) - 1; index >= 0; index-- {
+	for index := range slices.Backward(function.Body.List) {
 		candidate, candidateErr := buildSuffixCandidate(source, fset, file, function, index, evidence, existing)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
@@ -117,7 +118,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		}
 	}
 	return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{
-			"declaration=" + functionIdentity(fset, function),
+		"declaration=" + functionIdentity(fset, function),
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
 	})
 }

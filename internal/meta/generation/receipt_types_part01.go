@@ -9,6 +9,7 @@ const ReceiptDecisionConformant ReceiptDecision = "CONFORMANT"
 const ReceiptDecisionFixedPoint ReceiptDecision = "FIXED_POINT"
 const ReceiptDecisionUnknown ReceiptDecision = "UNKNOWN"
 const ReceiptDecisionRejected ReceiptDecision = "REJECTED"
+const ReceiptDecisionRefuted ReceiptDecision = "REFUTED"
 
 type ReceiptReason string
 
@@ -20,6 +21,7 @@ const ReceiptReasonSetMismatch ReceiptReason = "RECEIPT_SET_MISMATCH"
 const ReceiptReasonMissingIndicator ReceiptReason = "MISSING_REQUIRED_INDICATOR"
 const ReceiptReasonUnknownIndicator ReceiptReason = "UNKNOWN_INDICATOR_EVIDENCE"
 const ReceiptReasonRejectedIndicator ReceiptReason = "INDICATOR_REJECTED"
+const ReceiptReasonRefutedOperation ReceiptReason = "REFUTED_OPERATION_OBSERVATION"
 
 const ReceiptUnknownClassDirectMissing = "DIRECT_MISSING"
 const ReceiptUnknownClassMalformedEvidence = "MALFORMED_EVIDENCE"
