@@ -153,10 +153,18 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"nonpositive-lines", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			func() extractorSubject { subject := validExtractionSubjectFixture("a.go"); subject.Before = 0; return subject }(),
+			func() extractorSubject {
+				subject := validExtractionSubjectFixture("a.go")
+				subject.Before = 0
+				return subject
+			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"after-zero", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			func() extractorSubject { subject := validExtractionSubjectFixture("a.go"); subject.After = 0; return subject }(),
+			func() extractorSubject {
+				subject := validExtractionSubjectFixture("a.go")
+				subject.After = 0
+				return subject
+			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"no-line-reduction", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
