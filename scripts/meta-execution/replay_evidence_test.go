@@ -80,7 +80,7 @@ func TestStructuredExtractorFailureCanonicalTupleBindsDerivedBlocker(t *testing.
 		stage: "derive-recipe", step: "select-declaration", reason: "NO_SAFE_DECLARATION_CAPACITY",
 		class: "KNOWN_CONTRADICTION", derivedRelations: []generation.CounterexampleRelation{{
 			Counterexample: "fixture.go#func:SelectedExtractedSuffix08",
-			DerivedFrom: "fixture.go#func:Selected", Relation: "DERIVED_FROM",
+			DerivedFrom:    "fixture.go#func:Selected", Relation: "DERIVED_FROM",
 		}},
 	}
 	process := generation.ProcessObservation{ExitCode: 1, StdoutBytes: 7, StderrBytes: 9}

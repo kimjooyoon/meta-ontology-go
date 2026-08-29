@@ -69,7 +69,7 @@ func sourceMetricsFixture(t *testing.T) []byte {
 	document := map[string]any{
 		"root": ".", "files": []map[string]any{{"path": "fixture.go", "language": "go", "lines": 76}},
 		"directories": []map[string]any{{"path": ".", "recursive_files": 1, "recursive_folders": 0, "go_files": 1, "go_lines": 76, "gooo_files": 0, "gooo_lines": 0}},
-		"meta": meta,
+		"meta":        meta,
 	}
 	data, err := json.Marshal(document)
 	if err != nil {

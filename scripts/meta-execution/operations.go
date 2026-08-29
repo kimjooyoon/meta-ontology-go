@@ -458,9 +458,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "read-generated-output", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	canonicalValue := struct {
-		Report  json.RawMessage   `json:"report"`
-		Before  []byte            `json:"before"`
-		Outputs map[string][]byte `json:"outputs"`
+		Report  json.RawMessage         `json:"report"`
+		Before  []byte                  `json:"before"`
+		Outputs map[string][]byte       `json:"outputs"`
 		Process operationReplayEvidence `json:"process"`
 	}{Report: reportRaw, Before: before, Outputs: outputs,
 		Process: operationReplayEvidenceFrom(result.Observation, evaluator, verifier.Observation)}

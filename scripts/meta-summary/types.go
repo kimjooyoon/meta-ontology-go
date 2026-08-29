@@ -33,9 +33,9 @@ type metricIndicator struct {
 }
 
 type sourceThresholds struct {
-	GoFile     int `json:"go_file"`
-	GoooFile   int `json:"gooo_file"`
-	Function   int `json:"function"`
+	GoFile   int `json:"go_file"`
+	GoooFile int `json:"gooo_file"`
+	Function int `json:"function"`
 }
 
 type sourceCandidate struct {
@@ -60,8 +60,8 @@ type selectedSubject struct {
 
 type sourceInventory struct {
 	RegularFiles             int                     `json:"regular_files"`
-	DirectoriesIncludingRoot int                    `json:"directories_including_root"`
-	DescendantDirectories    int                    `json:"descendant_directories"`
+	DirectoriesIncludingRoot int                     `json:"directories_including_root"`
+	DescendantDirectories    int                     `json:"descendant_directories"`
 	GoFiles                  int                     `json:"go_files"`
 	GoLines                  int                     `json:"go_lines"`
 	GoooFiles                int                     `json:"gooo_files"`

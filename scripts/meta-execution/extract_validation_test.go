@@ -276,9 +276,9 @@ func TestFailedExtractionMalformedReportIsRefuted(t *testing.T) {
 func TestFailedExtractionBindsActionRootToDerivedBlocker(t *testing.T) {
 	root := t.TempDir()
 	report := extractorReport{
-		Schema:         functionExtractionReportSchema,
-		SourceSHA:      "head",
-		Unhandled:      []string{"blocked.go"},
+		Schema:    functionExtractionReportSchema,
+		SourceSHA: "head",
+		Unhandled: []string{"blocked.go"},
 		Failures: []extractorFailureRecord{{
 			Logical: "blocked.go", BlockerID: "blocked.go#func:SelectedExtractedSuffix08",
 			Decision: "REFUTED", Stage: "derive-recipe", Step: "select-declaration",

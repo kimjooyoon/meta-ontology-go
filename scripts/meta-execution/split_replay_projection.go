@@ -8,9 +8,9 @@ import (
 )
 
 type splitReplayFile struct {
-	Path             string                                    `json:"path"`
-	Data             []byte                                    `json:"data"`
-	DeclarationOrder []operationconformance.DeclarationOrder   `json:"declaration_order,omitempty"`
+	Path             string                                  `json:"path"`
+	Data             []byte                                  `json:"data"`
+	DeclarationOrder []operationconformance.DeclarationOrder `json:"declaration_order,omitempty"`
 }
 
 type splitReplayEvent struct {
@@ -35,16 +35,16 @@ type splitReplayProcess struct {
 }
 
 type splitReplayProjection struct {
-	ExpectedHeadSHA  string                                   `json:"expected_head_sha"`
-	OperationID      string                                   `json:"operation_id"`
-	EvidenceComplete bool                                     `json:"evidence_complete"`
-	Source           splitReplayFile                          `json:"source"`
-	Candidates       []splitReplayFile                        `json:"candidates"`
-	BuildContexts    []operationconformance.BuildContext      `json:"build_contexts"`
-	Write            splitReplayWrite                         `json:"write_receipt"`
-	Executor         splitReplayProcess                       `json:"executor"`
-	Evaluator        splitReplayProcess                       `json:"evaluator"`
-	Verifier         splitReplayProcess                       `json:"verifier"`
+	ExpectedHeadSHA  string                              `json:"expected_head_sha"`
+	OperationID      string                              `json:"operation_id"`
+	EvidenceComplete bool                                `json:"evidence_complete"`
+	Source           splitReplayFile                     `json:"source"`
+	Candidates       []splitReplayFile                   `json:"candidates"`
+	BuildContexts    []operationconformance.BuildContext `json:"build_contexts"`
+	Write            splitReplayWrite                    `json:"write_receipt"`
+	Executor         splitReplayProcess                  `json:"executor"`
+	Evaluator        splitReplayProcess                  `json:"evaluator"`
+	Verifier         splitReplayProcess                  `json:"verifier"`
 }
 
 func splitReplayProjectionFrom(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) splitReplayProjection {

@@ -35,8 +35,8 @@ type sourceMetricsEvidence struct {
 	Directories []sourceDirectoryEvidence `json:"directories"`
 	Meta        struct {
 		Schema     string                    `json:"schema"`
-		Policy     sourcePolicyEvidence       `json:"policy"`
-		Indicators []sourceIndicatorEvidence  `json:"indicators"`
+		Policy     sourcePolicyEvidence      `json:"policy"`
+		Indicators []sourceIndicatorEvidence `json:"indicators"`
 	} `json:"meta"`
 }
 

@@ -166,14 +166,14 @@ func canonicalStructuredExtractorFailure(subject string, failure *operationError
 		return nil
 	}
 	value := struct {
-		ActionSubject   string `json:"action_subject"`
-		Stage           string `json:"stage"`
-		Step            string `json:"step"`
-		Reason          string `json:"reason"`
-		DerivedBlocker  string `json:"derived_blocker"`
-		ExitCode        int    `json:"exit_code"`
-		StdoutBytes     int    `json:"stdout_bytes"`
-		StderrBytes     int    `json:"stderr_bytes"`
+		ActionSubject  string `json:"action_subject"`
+		Stage          string `json:"stage"`
+		Step           string `json:"step"`
+		Reason         string `json:"reason"`
+		DerivedBlocker string `json:"derived_blocker"`
+		ExitCode       int    `json:"exit_code"`
+		StdoutBytes    int    `json:"stdout_bytes"`
+		StderrBytes    int    `json:"stderr_bytes"`
 	}{
 		ActionSubject:  subject,
 		Stage:          failure.stage,

@@ -43,7 +43,7 @@ func newReport(limit int, artifacts []artifactEvidence, provenance provenanceEnv
 			LedgerCount:  provenance.IndicatorDecisionLedgerCount, Pass: provenance.Summary.Pass,
 			Envelope: provenance.EnvelopeDigest, Replay: provenance.ReplayDigest,
 		},
-		Artifacts: artifacts,
+		Artifacts:     artifacts,
 		SourceMetrics: inventory,
 		Indicators: []metricIndicator{
 			{ID: "foundation.artifact-coverage", Route: "FOUNDATION", Verdict: "PASS", Relation: "=", Value: strconv.Itoa(len(artifacts)), Limit: "5"},

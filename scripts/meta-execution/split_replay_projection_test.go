@@ -98,13 +98,13 @@ func splitReplayEvidenceFixture() operationconformance.SplitGoEvidence {
 
 func splitReplayProcessFixture() generation.ProcessObservation {
 	return generation.ProcessObservation{
-		Command:          []string{"go", "run", "<workspace>"},
-		ExitCode:         0,
-		StdoutBytes:      100,
-		StdoutDigest:     "sha256:stdout",
-		StderrBytes:      0,
-		StderrDigest:     "sha256:stderr",
-		RawStdoutDigest:  "sha256:raw-stdout",
-		RawStderrDigest:  "sha256:raw-stderr",
+		Command:         []string{"go", "run", "<workspace>"},
+		ExitCode:        0,
+		StdoutBytes:     100,
+		StdoutDigest:    "sha256:stdout",
+		StderrBytes:     0,
+		StderrDigest:    "sha256:stderr",
+		RawStdoutDigest: "sha256:raw-stdout",
+		RawStderrDigest: "sha256:raw-stderr",
 	}
 }
