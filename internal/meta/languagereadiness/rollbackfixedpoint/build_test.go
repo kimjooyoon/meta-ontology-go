@@ -61,6 +61,9 @@ func TestMixedRefutedOutcomeIsExactNonPromotingTerminal(t *testing.T) {
 	source.Transformation.ReceiptDecision = "REFUTED"
 	source.Transformation.ReceiptCount = 1
 	source.Transformation.FailureCount = 1
+	source.Transformation.UnknownCount = 5
+	source.Transformation.DependencyBlockedUnknownCount = 5
+	source.Transformation.UnknownCausalDigest = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	report := Build(source)
 	if !IsKnownMixedTerminal(report) || report.Decision != DecisionFailClosed ||
 		report.Resolution != ResolutionExact || report.Mode != ModeMixedTerminal {
@@ -87,7 +90,7 @@ func TestMalformedMixedOutcomeIsNotKnownTerminal(t *testing.T) {
 	}
 }
 
-func TestMixedOutcomeWithUnknownIsNotKnownTerminal(t *testing.T) {
+func TestMixedOutcomeWithDirectUnknownIsNotKnownTerminal(t *testing.T) {
 	source := fixtureSource()
 	source.Transformation.Decision = "APPLIED"
 	source.Transformation.Reason = "SANDBOX_EFFECTS_VERIFIED"
@@ -98,7 +101,10 @@ func TestMixedOutcomeWithUnknownIsNotKnownTerminal(t *testing.T) {
 	source.Transformation.ReceiptDecision = "REFUTED"
 	source.Transformation.ReceiptCount = 1
 	source.Transformation.FailureCount = 1
-	source.Transformation.UnknownCount = 1
+	source.Transformation.UnknownCount = 5
+	source.Transformation.DirectUnknownCount = 1
+	source.Transformation.DependencyBlockedUnknownCount = 4
+	source.Transformation.UnknownCausalDigest = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	if IsKnownMixedTerminal(Build(source)) {
 		t.Fatal("mixed evidence with unknown effects was accepted as known")
 	}

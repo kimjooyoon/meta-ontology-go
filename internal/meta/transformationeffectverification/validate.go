@@ -233,7 +233,7 @@ func validateEffectOutcomes(plan generation.Plan, ledger ledger, report generati
 		ledger.OperationOutcome != operationOutcome(report.Receipts, report.Failures) {
 		return bindingFailure("ledger.operation_outcome", "receipt/failure outcome projection", "ledger outcome counters diverged")
 	}
-	return nil
+	return validateCausalUnknownProjection(plan, ledger, report)
 }
 
 func validateReceipts(plan generation.Plan, report generation.ReceiptReport) error {

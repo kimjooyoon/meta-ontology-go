@@ -50,6 +50,10 @@ func buildEffectEvidence(inputs inputSet, outcome string) (EffectEvidence, error
 	if err != nil {
 		return EffectEvidence{}, err
 	}
+	causal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil {
+		return EffectEvidence{}, err
+	}
 	operations := make([]OperationEffectEvidence, 0, len(inputs.effectLedger.Effects))
 	for _, effect := range inputs.effectLedger.Effects {
 		operations = append(operations, OperationEffectEvidence{
@@ -62,5 +66,7 @@ func buildEffectEvidence(inputs inputSet, outcome string) (EffectEvidence, error
 		ReceiptDecision: string(inputs.receiptReport.Decision),
 		ReceiptCount:    len(inputs.receiptReport.Receipts),
 		FailureCount:    len(inputs.receiptReport.Failures),
-		UnknownCount:    len(inputs.receiptReport.Unknowns), OperationEvidence: operations}, nil
+		UnknownCount: len(inputs.receiptReport.Unknowns), DirectUnknownCount: causal.DirectUnknownCount,
+		DependencyBlockedUnknownCount: causal.DependencyBlockedUnknownCount,
+		UnknownCausalDigest: causal.Digest, OperationEvidence: operations}, nil
 }

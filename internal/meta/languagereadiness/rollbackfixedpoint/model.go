@@ -30,6 +30,9 @@ type TransformationEvidence struct {
 	ReceiptCount             int    `json:"receipt_count"`
 	FailureCount             int    `json:"failure_count"`
 	UnknownCount             int    `json:"unknown_count"`
+	DirectUnknownCount           int    `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int   `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest          string `json:"unknown_causal_digest"`
 	SourceWorkspaceUnchanged bool   `json:"source_workspace_unchanged"`
 	PromotionAuthorized      bool   `json:"promotion_authorized"`
 }

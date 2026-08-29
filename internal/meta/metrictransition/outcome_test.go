@@ -9,17 +9,38 @@ import (
 )
 
 func mixedOutcomeInput() inputSet {
+	unknowns := make([]generation.ReceiptUnknown, 0, 5)
+	for _, required := range []string{"indicator-1", "indicator-2", "indicator-3", "indicator-4", "indicator-5"} {
+		unknowns = append(unknowns, generation.ReceiptUnknown{
+			ActionIndicatorID: "action-b", RequiredIndicatorID: required,
+			Operation: "extract-function", Activity: "extract", Output: "receipt",
+			Executor: "bootstrap/function-extractor", Evaluator: "extract-evaluator",
+			Stage: "derive-recipe", Step: "select-declaration",
+			Reason: "NO_SAFE_DECLARATION_CAPACITY",
+			UnknownClass: generation.ReceiptUnknownClassDependencyBlocked,
+			NextOperation: "report-counterexample", BlockedBy: []string{"operation-failure:action-b"}})
+	}
+	failure := generation.ObservationFailure{ActionIndicatorID: "action-b", Decision: "REFUTED",
+		Stage: "derive-recipe", Step: "select-declaration", Reason: "NO_SAFE_DECLARATION_CAPACITY",
+		NextOperation: "report-counterexample", BlockedBy: []string{}}
 	ledger := transformationeffect.Ledger{Status: "BOUND", Decision: "APPLIED",
 		Reason: "SANDBOX_EFFECTS_VERIFIED", HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		SourceWorkspaceUnchanged: true, SelectedPlanOperations: 2,
 		BoundExecutorOperations: 2, OperationOutcome: "MIXED_CLOSED_REFUTED",
-		ReceiptDecision: "REFUTED", ReceiptCount: 1, FailureCount: 1,
+		ReceiptDecision: "REFUTED", ReceiptCount: 1, FailureCount: 1, UnknownCount: 5,
 		Effects: []transformationeffect.Effect{{ActionIndicatorID: "action-a", Status: "APPLIED"},
 			{ActionIndicatorID: "action-b", Status: "REFUTED"}}}
 	report := generation.ReceiptReport{Decision: generation.ReceiptDecisionRefuted,
 		Reason:       generation.ReceiptReasonRefutedOperation,
 		ReportDigest: "sha256:report", Receipts: []generation.OperationReceipt{{ActionIndicatorID: "action-a"}},
-		Failures: []generation.ObservationFailure{{ActionIndicatorID: "action-b", Decision: "REFUTED"}}}
+		Failures: []generation.ObservationFailure{failure}, Unknowns: unknowns}
+	causal, err := deriveCausalUnknowns(report)
+	if err != nil {
+		panic(err)
+	}
+	ledger.DirectUnknownCount = causal.DirectUnknownCount
+	ledger.DependencyBlockedUnknownCount = causal.DependencyBlockedUnknownCount
+	ledger.UnknownCausalDigest = causal.Digest
 	return inputSet{effectLedger: ledger, receiptReport: report,
 		provenanceReport: generation.ArtifactProvenance{Decision: generation.ArtifactProvenanceDecisionBound,
 			HeadSHA: ledger.HeadSHA, ReceiptReportDigest: report.ReportDigest}}
@@ -63,6 +84,22 @@ func TestMixedOutcomeRejectsCrossKindDuplicateIdentity(t *testing.T) {
 	}
 }
 
+func TestMixedOutcomeRejectsMalformedDependencyFrontier(t *testing.T) {
+	inputs := mixedOutcomeInput()
+	inputs.receiptReport.Unknowns[0].BlockedBy = []string{"operation-failure:other"}
+	if _, err := validateEffectOutcome(inputs); err == nil {
+		t.Fatal("malformed dependency frontier was accepted")
+	}
+}
+
+func TestMixedOutcomeRequiresAllSelectedExecutorsBound(t *testing.T) {
+	inputs := mixedOutcomeInput()
+	inputs.effectLedger.BoundExecutorOperations = 1
+	if _, err := validateEffectOutcome(inputs); err == nil {
+		t.Fatal("partially bound selected operations were accepted")
+	}
+}
+
 func TestClosedOutcomeUsesExactNonPromotingTuple(t *testing.T) {
 	inputs := mixedOutcomeInput()
 	inputs.effectLedger.Effects = inputs.effectLedger.Effects[:1]
@@ -75,6 +112,15 @@ func TestClosedOutcomeUsesExactNonPromotingTuple(t *testing.T) {
 	inputs.receiptReport.Decision = generation.ReceiptDecisionConformant
 	inputs.receiptReport.Reason = generation.ReceiptReasonVerified
 	inputs.receiptReport.Failures = nil
+	inputs.receiptReport.Unknowns = nil
+	inputs.effectLedger.UnknownCount = 0
+	inputs.effectLedger.DirectUnknownCount = 0
+	inputs.effectLedger.DependencyBlockedUnknownCount = 0
+	causal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inputs.effectLedger.UnknownCausalDigest = causal.Digest
 	if outcome, err := validateEffectOutcome(inputs); err != nil || outcome != effectOutcomeClosed {
 		t.Fatalf("outcome=%q err=%v, want closed", outcome, err)
 	}
@@ -102,6 +148,14 @@ func TestMixedOutcomeRejectsIdentityDrift(t *testing.T) {
 
 func TestMixedEffectProjectionIsDeterministic(t *testing.T) {
 	inputs := mixedOutcomeInput()
+	firstCausal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondCausal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil || !reflect.DeepEqual(firstCausal, secondCausal) {
+		t.Fatalf("causal projection was not deterministic: %#v %#v", firstCausal, secondCausal)
+	}
 	first, err := buildEffectEvidence(inputs, effectOutcomeMixedRefuted)
 	if err != nil {
 		t.Fatal(err)

@@ -23,6 +23,9 @@ type EffectEvidence struct {
 	ReceiptCount      int                       `json:"receipt_count"`
 	FailureCount      int                       `json:"failure_count"`
 	UnknownCount      int                       `json:"unknown_count"`
+	DirectUnknownCount           int                   `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int                  `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest          string                `json:"unknown_causal_digest"`
 	OperationEvidence []OperationEffectEvidence `json:"operation_evidence"`
 }
 

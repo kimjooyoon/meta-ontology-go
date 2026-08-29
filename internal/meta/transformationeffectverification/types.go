@@ -139,6 +139,9 @@ type ledger struct {
 	ReceiptCount                 int               `json:"receipt_count"`
 	FailureCount                 int               `json:"failure_count"`
 	UnknownCount                 int               `json:"unknown_count"`
+	DirectUnknownCount           int               `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int              `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest           string           `json:"unknown_causal_digest"`
 	Status                       string            `json:"status"`
 	Indicators                   []json.RawMessage `json:"indicators"`
 	SemanticDigest               string            `json:"semantic_digest"`

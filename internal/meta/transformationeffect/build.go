@@ -33,6 +33,10 @@ func Build(opts Options) (Result, error) {
 	} else if !validExecutionOutcome(executed.receipts, len(in.plan.Selected)) || len(executed.effects) != len(in.plan.Selected) {
 		return Result{}, fmt.Errorf("planned effects are not conformant")
 	}
+	causal, err := BuildCausalUnknownProjection(executed.receipts)
+	if err != nil {
+		return Result{}, fmt.Errorf("causal unknown projection: %w", err)
+	}
 	ledger := Ledger{Schema: ledgerSchema, Metaprogram: "scripts/transformation-effect",
 		BaseSHA: in.plan.BaseSHA, HeadSHA: in.plan.HeadSHA, SourceSchema: in.metrics.Meta.Schema,
 		RootTopologyExempt: true, Artifacts: in.digests, InputDigest: hashJSON(in.digests),
@@ -54,7 +58,10 @@ func Build(opts Options) (Result, error) {
 		ReceiptDecision:           string(executed.receipts.Decision),
 		ReceiptCount:              len(executed.receipts.Receipts),
 		FailureCount:              len(executed.receipts.Failures),
-		UnknownCount:              len(executed.receipts.Unknowns)}
+		UnknownCount:              len(executed.receipts.Unknowns),
+		DirectUnknownCount:        causal.DirectUnknownCount,
+		DependencyBlockedUnknownCount: causal.DependencyBlockedUnknownCount,
+		UnknownCausalDigest:       causal.Digest}
 	ledger.Indicators = effectIndicators(ledger, len(in.plan.Selected), executed.receipts.Decision)
 	ledger = sealLedger(ledger)
 	if err := validateLedger(ledger); err != nil {

@@ -16,7 +16,8 @@ const (
 func validateEffectOutcome(inputs inputSet) (string, error) {
 	ledger := inputs.effectLedger
 	if ledger.Status != "BOUND" || !ledger.SourceWorkspaceUnchanged ||
-		ledger.PromotionAuthorized || ledger.UnboundExecutorOperations != 0 {
+		ledger.PromotionAuthorized || ledger.UnboundExecutorOperations != 0 ||
+		ledger.BoundExecutorOperations != ledger.SelectedPlanOperations {
 		return "", fmt.Errorf("metric transition effect binding is not non-promoting")
 	}
 	if len(ledger.Effects) != ledger.SelectedPlanOperations ||
@@ -67,6 +68,9 @@ func validateEffectOutcome(inputs inputSet) (string, error) {
 		ledger.FailureCount != len(inputs.receiptReport.Failures) ||
 		ledger.UnknownCount != len(inputs.receiptReport.Unknowns) {
 		return "", fmt.Errorf("metric transition operation outcome evidence diverged")
+	}
+	if err := validateCausalUnknowns(ledger, inputs.receiptReport); err != nil {
+		return "", err
 	}
 	if inputs.provenanceReport.Decision != generation.ArtifactProvenanceDecisionBound ||
 		inputs.provenanceReport.HeadSHA != ledger.HeadSHA ||
