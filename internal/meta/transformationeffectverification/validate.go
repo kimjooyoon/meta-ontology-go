@@ -313,7 +313,7 @@ func validateObservationFailure(failure generation.ObservationFailure, action ge
 		return bindingFailure("receipts.failures["+action.IndicatorID+"].executor.command", action.Executor, strings.Join(failure.Executor.Command, " "))
 	}
 	if failure.Decision == "REFUTED" &&
-		(failure.Counterexample != action.Subject ||
+		(!failureSubjectBinding(failure, action) ||
 			action.Operation == sourcepolicy.OperationExtractFunction && failure.Executor.ExitCode == 0) {
 		return bindingFailure("receipts.failures["+action.IndicatorID+"].counterexample", action.Subject, failure.Counterexample)
 	}
@@ -322,6 +322,18 @@ func validateObservationFailure(failure generation.ObservationFailure, action ge
 	}
 	_ = head
 	return nil
+}
+
+func failureSubjectBinding(failure generation.ObservationFailure, action generation.Action) bool {
+	if failure.Counterexample == action.Subject {
+		return true
+	}
+	for _, relation := range failure.DerivedRelations {
+		if relation.Relation == "DERIVED_FROM" && relation.Counterexample == failure.Counterexample && relation.DerivedFrom == action.Subject {
+			return true
+		}
+	}
+	return false
 }
 
 func validFailureUnknownClass(failure generation.ObservationFailure) bool {
