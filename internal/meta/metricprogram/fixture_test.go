@@ -26,8 +26,8 @@ func fixturePayloads(t *testing.T) ([]byte, []byte) {
 		fixtureBinding("MIV-REGRESSION-BOUNDARY-002", "REGRESSION", "REGRESS", "preserve-repository-workspace"),
 		fixtureBinding("MIV-REGRESSION-CHANGED-DIRECTORIES", "REGRESSION", "REGRESS", "observe-counterfactual-boundary"),
 		fixtureBinding("MIV-REGRESSION-CHANGED-FILES", "REGRESSION", "REGRESS", "observe-counterfactual-boundary"),
-		fixtureBinding("MIV-REGRESSION-REPLAY-001", "REGRESSION", "REGRESS", "replay-counterfactual"),
 		fixtureBinding("MIV-REGRESSION-NON-PROMOTING-TERMINAL", "REGRESSION", "REGRESS", "preserve-non-promoting-terminal"),
+		fixtureBinding("MIV-REGRESSION-REPLAY-001", "REGRESSION", "REGRESS", "replay-counterfactual"),
 	}
 	foundationDigest := fixtureDigest("foundation")
 	coherenceDigest := fixtureDigest("coherence")
