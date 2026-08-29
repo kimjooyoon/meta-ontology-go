@@ -350,7 +350,7 @@ jobs:
             .base.plan_digest == .nonsemantic.plan_digest and
             ([.base.plan_gate, .semantic.plan_gate, .nonsemantic.plan_gate, .contradiction.plan_gate] | all(.observed == 1 and .denominator == 1 and .decision == "PLAN_FINAL_GATE_PASS")) and
             ([.base.subjects[] | select(.path == $source)] | length) == 1 and
-            ([.base.subjects[] | select(.path == $source)][0] | .resolution == "SELECTED" and ([.selected_checks | map(.check_id)] == ["go-test"])) and
+            ([.base.subjects[] | select(.path == $source)][0] | .resolution == "SELECTED" and ((.selected_checks | map(.check_id)) == ["go-test"])) and
             ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")] | length) == 1 and
             ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")] | .[0].after) == "DISCHARGED" and
             ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")] | length) == 1 and
