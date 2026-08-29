@@ -103,6 +103,7 @@ func removeTransactionBackups(files []transactionFile) backupCleanupObservation 
 			continue
 		}
 		result.Removed++
+		files[index].backupCreated = false
 	}
 	return result
 }

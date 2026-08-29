@@ -316,10 +316,11 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_MISSING", "DIRECT_MISSING", "restore-operation-evidence"}
 	}
-	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements)
+	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements, report.BackupCleanup)
 	if err != nil {
 		reason := extractValidationErrorReason(err)
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, "KNOWN_CONTRADICTION", "report-counterexample"}
+		class := extractValidationErrorClass(err)
+		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, class, "report-counterexample"}
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"bootstrap/function-extractor:independent-evaluator", subject.Path, subject.Name}, evaluatorRaw, nil)

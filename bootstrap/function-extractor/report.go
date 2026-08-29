@@ -91,17 +91,28 @@ func writeExtractionReport(name string, report extractionReport) error {
 	return nil
 }
 
-func createProvisionalReportPath(name string) (string, error) {
+func createProvisionalReportPath(name string, report extractionReport) (string, error) {
+	encoded, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return "", err
+	}
 	file, err := os.CreateTemp(filepath.Dir(name), ".extract-report-provisional-*")
 	if err != nil {
 		return "", err
 	}
 	path := file.Name()
-	if err := file.Close(); err != nil {
+	payload := append(encoded, '\n')
+	written, err := file.Write(payload)
+	if err != nil || written != len(payload) {
+		_ = file.Close()
 		_ = os.Remove(path)
+		if err == nil {
+			err = fmt.Errorf("short provisional report write: %d/%d", written, len(payload))
+		}
 		return "", err
 	}
-	if err := os.Remove(path); err != nil {
+	if err := file.Close(); err != nil {
+		_ = os.Remove(path)
 		return "", err
 	}
 	return path, nil

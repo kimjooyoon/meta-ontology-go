@@ -78,11 +78,7 @@ func removeTransactionBackup(file transactionFile) error {
 	if file.created || !file.backupCreated {
 		return nil
 	}
-	err := os.Remove(file.backup)
-	if os.IsNotExist(err) {
-		return nil
-	}
-	return err
+	return os.Remove(file.backup)
 }
 
 func restoreTransaction(file transactionFile) error {
@@ -100,12 +96,23 @@ func restoreTransaction(file transactionFile) error {
 			if restoreErr := restoreOriginal(file); restoreErr != nil {
 				return fmt.Errorf("restore backup: %w; restore original: %v", err, restoreErr)
 			}
-			return removeTransactionBackup(file)
+			return removeBackupDuringRollback(file)
 		}
 		file.backupCreated = false
 		return nil
 	}
-	return removeTransactionBackup(file)
+	return removeBackupDuringRollback(file)
+}
+
+func removeBackupDuringRollback(file transactionFile) error {
+	if file.created || !file.backupCreated {
+		return nil
+	}
+	err := os.Remove(file.backup)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
 
 func restoreOriginal(file transactionFile) error {

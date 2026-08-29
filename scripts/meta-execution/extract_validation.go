@@ -29,7 +29,18 @@ type extractValidation struct {
 	ProjectedTestsPassed bool
 }
 
-func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, before []byte, observed extractorSubject, replacements []namespaceReplacementReceipt) (extractValidation, error) {
+type extractValidationUnknown struct {
+	reason string
+}
+
+func (err *extractValidationUnknown) Error() string {
+	return err.reason
+}
+
+func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, before []byte, observed extractorSubject, replacements []namespaceReplacementReceipt, backup backupCleanupObservation) (extractValidation, error) {
+	if err := validateBackupCleanup(backup, replacements); err != nil {
+		return extractValidation{}, err
+	}
 	beforeSet, beforeFile, err := parseGoFile(subject.Path, before)
 	if err != nil {
 		return extractValidation{}, err
@@ -67,6 +78,7 @@ func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, bef
 func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packageName string, imports []string, header []byte, observed extractorSubject) (int, int, map[string]bool, error) {
 	found, afterLines := 0, 0
 	seen := make(map[string]bool, len(observed.Files))
+	observedImports := make(map[string]bool)
 	for _, logical := range observed.Files {
 		if seen[logical] {
 			return 0, 0, nil, fmt.Errorf("changed output %s is duplicated", logical)
@@ -83,7 +95,7 @@ func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packag
 		if !bytes.Equal(sourceHeader(data, set, file), header) {
 			return 0, 0, nil, fmt.Errorf("changed output %s lost build header", logical)
 		}
-		if err := validateImports(logical, file, imports); err != nil {
+		if err := validateImports(logical, file, imports, observedImports); err != nil {
 			return 0, 0, nil, err
 		}
 		if function, ok := functionInFile(file, logical, subject); ok {
@@ -94,14 +106,47 @@ func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packag
 			found++
 		}
 	}
+	if !importSetEqual(imports, observedImports) {
+		return 0, 0, nil, fmt.Errorf("changed outputs lost import identity")
+	}
 	return found, afterLines, seen, nil
 }
 
-func validateImports(logical string, file *ast.File, imports []string) error {
+func validateImports(logical string, file *ast.File, imports []string, observed map[string]bool) error {
 	for _, item := range importIdentity(file) {
 		if !containsString(imports, item) {
 			return fmt.Errorf("changed output %s introduced import %s", logical, item)
 		}
+		observed[item] = true
+	}
+	return nil
+}
+
+func importSetEqual(expected []string, observed map[string]bool) bool {
+	if len(expected) != len(observed) {
+		return false
+	}
+	for _, item := range expected {
+		if !observed[item] {
+			return false
+		}
+	}
+	return true
+}
+
+func validateBackupCleanup(observation backupCleanupObservation, replacements []namespaceReplacementReceipt) error {
+	expected := 0
+	for _, replacement := range replacements {
+		if replacement.DestinationPreexisted {
+			expected++
+		}
+	}
+	if observation.Status == "" || observation.Status == "PENDING" || observation.Status == "UNKNOWN" {
+		return &extractValidationUnknown{reason: "BACKUP_CLEANUP_UNAVAILABLE"}
+	}
+	if observation.Status != "PASS" || observation.Attempted != expected ||
+		observation.Removed != observation.Attempted || observation.Failures != 0 {
+		return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 	}
 	return nil
 }
@@ -180,5 +225,17 @@ func extractValidationErrorReason(err error) string {
 	if errors.As(err, &replacementErr) {
 		reason = replacementErr.reason
 	}
+	var unavailable *extractValidationUnknown
+	if errors.As(err, &unavailable) {
+		reason = unavailable.reason
+	}
 	return reason
+}
+
+func extractValidationErrorClass(err error) string {
+	var unavailable *extractValidationUnknown
+	if errors.As(err, &unavailable) {
+		return "DIRECT_MISSING"
+	}
+	return "KNOWN_CONTRADICTION"
 }
