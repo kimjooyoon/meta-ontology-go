@@ -152,6 +152,12 @@ func validCommands(commands []CommandReceipt) bool {
 
 func validateReuse(observation Observation) error {
 	reuse := observation.Reuse
+	if reuse.RequestMode == "REUSE" && reuse.Invalidated == 1 {
+		if reuse.Discovered != reuse.Executed+reuse.Reused+reuse.Skipped+reuse.Invalidated || reuse.PriorCandidates != reuse.Reused+reuse.Invalidated {
+			return refuted("REUSE_ACCOUNTING_CONTRADICTION")
+		}
+		return validateInvalidatedReuse(reuse, observation)
+	}
 	if reuse.Discovered != reuse.Executed+reuse.Reused+reuse.Skipped || reuse.PriorCandidates != reuse.Reused+reuse.Invalidated {
 		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
 	}
@@ -193,7 +199,7 @@ func validateReuseRequest(reuse ReuseAccounting, observation Observation) error 
 		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
 	}
 	if observation.PriorReceipt == nil {
-		if reuse.Decision == "REUSED" || reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" || len(reuse.ReusedArtifactFiles) > 0 {
+		if reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" || len(reuse.ReusedArtifactFiles) > 0 {
 			return refuted("CACHE_MARKER_WITHOUT_EXACT_DIGESTS")
 		}
 		return unavailable("PRIOR_RECEIPT_MISSING")
