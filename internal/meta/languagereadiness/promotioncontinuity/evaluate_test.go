@@ -46,7 +46,7 @@ func mixedEvidence() (string, GuardEvidence, RecoveryEvidence) {
 		TransformationReceiptCount: 1, TransformationFailureCount: 1, TransformationUnknownCount: 5,
 		TransformationDirectUnknownCount: 0, TransformationDependencyBlockedUnknownCount: 5,
 		TransformationUnknownCausalDigest: "003671c624aef06c7921c4032052c50a10ca1aaaa39304eb9953cc14ec4ecc40",
-		Satisfied: 8, Total: 10, Unresolved: 0, ReadinessBPS: 8000,
+		Satisfied:                         8, Total: 10, Unresolved: 0, ReadinessBPS: 8000,
 	}
 	recovery.TransformationCausalBindingDigest = causalBindingDigest(recovery)
 	return head, guard, recovery
