@@ -319,12 +319,8 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	canonicalValue := struct {
-		Evidence operationconformance.SplitGoEvidence `json:"evidence"`
-		Process  operationReplayEvidence              `json:"process"`
-	}{Evidence: evidence, Process: operationReplayEvidenceFrom(result.Observation, evaluator, verifier.Observation)}
-	canonical, _ := json.Marshal(canonicalValue)
-	instance := digestBytes(canonical)
+	canonical := splitReplayProjectionBytes(evidence, result.Observation, evaluator, verifier.Observation)
+	instance := splitReplayDigest(evidence, result.Observation, evaluator, verifier.Observation)
 	indicators, ok := splitIndicatorReceipts(report, action, plan.HeadSHA)
 	if !ok {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
