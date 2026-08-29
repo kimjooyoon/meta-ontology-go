@@ -10,6 +10,8 @@ work="${RUNNER_TEMP:-/tmp}/opentofu-observation-work"
 fixture="$root/examples/opentofu-observation/fixture"
 mkdir -p "$out/evidence" "$work"
 cd "$root"
+phase="release-download"
+trap 'status=$?; printf "observation_failure phase=%s line=%s status=%s\n" "$phase" "$LINENO" "$status" >&2; exit "$status"' ERR
 
 asset_url="https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
 asset_sha="sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
@@ -89,6 +91,7 @@ printf 'release_observation version=%s platform=%s\n' "$version" "$platform"
 test "$version" = "1.12.6"
 test "$platform" = "linux_amd64"
 
+phase="fixture-input"
 fixture_digest="$(manifest_digest "$fixture" "$work/fixture.manifest")"
 mapfile -t fixture_files < <(find "$fixture" -type f -printf '%P\n' | sort)
 input_files="$(find "$fixture" -type f | wc -l | tr -d ' ')"
@@ -105,6 +108,7 @@ test_descriptor='["tofu","test","-json-into=test-events.jsonl","-no-color","-tes
 run_once() {
   local number="$1" directory="$work/run-$1"; shift 2
   cp -R "$fixture" "$directory"
+  phase="fixture-run-$number"
   printf 'observation_stage=fixture-run-%s\n' "$number"
   run_timed "tofu-init" "fixture-run-$number" "$directory" "$directory/init.stdout" "$directory/init.stderr" "$directory/init.json" "$init_descriptor" "$tofu" init -backend=false
   run_timed "tofu-plan" "fixture-run-$number" "$directory" "$directory/plan.stdout" "$directory/plan.stderr" "$directory/plan.json" "$plan_descriptor" "$tofu" plan -refresh=false -input=false -out=plan.bin -json
