@@ -2,6 +2,7 @@ package transformationeffectverification
 
 import (
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -337,6 +338,52 @@ func validFailureUnknownClass(failure generation.ObservationFailure) bool {
 	}
 }
 
+func validProcessObservation(observation generation.ProcessObservation) bool {
+	return validCanonicalCommand(observation.Command) && observation.StdoutBytes >= 0 &&
+		observation.StderrBytes >= 0 && validEvidenceDigest(observation.RawStdoutDigest) &&
+		validEvidenceDigest(observation.StdoutDigest) && validEvidenceDigest(observation.RawStderrDigest) &&
+		validEvidenceDigest(observation.StderrDigest)
+}
+
+func validCanonicalCommand(command []string) bool {
+	if len(command) == 0 {
+		return false
+	}
+	for _, argument := range command {
+		if argument == "" || absoluteCommandArgument(argument) {
+			return false
+		}
+	}
+	return true
+}
+
+func absoluteCommandArgument(argument string) bool {
+	if filepath.IsAbs(argument) || strings.HasPrefix(argument, "//") || strings.HasPrefix(argument, `\\`) {
+		return true
+	}
+	if len(argument) >= 3 && argument[1] == ':' &&
+		((argument[0] >= 'a' && argument[0] <= 'z') || (argument[0] >= 'A' && argument[0] <= 'Z')) &&
+		(argument[2] == '/' || argument[2] == '\\') {
+		return true
+	}
+	if _, after, ok := strings.Cut(argument, "="); ok {
+		return absoluteCommandArgument(after)
+	}
+	return false
+}
+
+func validCounterexampleRelations(relations []generation.CounterexampleRelation) bool {
+	seen := make(map[string]bool, len(relations))
+	for _, relation := range relations {
+		if relation.Counterexample == "" || relation.DerivedFrom == "" ||
+			relation.Relation != "DERIVED_FROM" || seen[relation.Counterexample] {
+			return false
+		}
+		seen[relation.Counterexample] = true
+	}
+	return true
+}
+
 func validateFailureEvidence(failure generation.ObservationFailure, action generation.Action) error {
 	allowed := map[string]bool{}
 	for _, id := range action.RequiredIndicatorIDs {
@@ -492,6 +539,19 @@ func validEvidenceReuse(evidence generation.OperationInstanceEvidence) bool {
 		validEvidenceDigest(evidence.SourceReceiptDigest)
 }
 
+func validEvidenceDigest(value string) bool {
+	const prefix = "sha256:"
+	if !strings.HasPrefix(value, prefix) || len(value) != len(prefix)+64 {
+		return false
+	}
+	for _, character := range value[len(prefix):] {
+		if !strings.ContainsRune("0123456789abcdef", character) {
+			return false
+		}
+	}
+	return true
+}
+
 func validateProvenance(plan generation.Plan, execution generation.ExecutionManifest, receipts generation.ReceiptReport, provenance provenance) error {
 	if provenance.Schema != generation.ArtifactProvenanceSchemaVersion || provenance.BaseSHA != plan.BaseSHA ||
 		provenance.HeadSHA != plan.HeadSHA || provenance.PlanDigest != plan.PlanDigest ||
@@ -528,7 +588,7 @@ func validateRuntime(runtime Runtime) error {
 
 func successReport(bundle bundle) Report {
 	commands, tests, evidenceReuse := processCounts(bundle.Receipts)
-	outcome := operationOutcome(bundle.Receipts, bundle.Failures)
+	outcome := operationOutcome(bundle.Receipts.Receipts, bundle.Receipts.Failures)
 	return Report{Schema: verifierSchema, Decision: "PASS", Resolution: "EXACT", Stage: "verify-bundle",
 		Step: "adjudicate-mixed-operation", Reason: "TRANSFORMATION_EXECUTOR_BINDINGS_VERIFIED", NextOperation: "none",
 		BlockedBy: []string{}, SelectedPlanOperations: len(bundle.Plan.Selected), BoundExecutorOperations: bundle.Ledger.BoundExecutorOperations,
