@@ -46,6 +46,32 @@ func validateLedger(ledger witnessLedger) error {
 	if digestValues(ledger.Indicators) != ledger.IndicatorDigest {
 		return fmt.Errorf("ledger indicator digest mismatch")
 	}
+	if ledger.SourceObservationDigest != digestValues(ledger.SourceObservations) {
+		return fmt.Errorf("ledger source observation digest mismatch")
+	}
+	if len(ledger.SourceObservations) == 0 {
+		if ledger.ObservationState != "" || ledger.ClaimState != "" {
+			return fmt.Errorf("empty source observations have a non-empty state")
+		}
+	} else {
+		if ledger.ObservationState != "OBSERVED" || ledger.ClaimState != "OPEN" {
+			return fmt.Errorf("unsatisfied source observations are not OPEN/OBSERVED")
+		}
+		seen := make(map[string]bool, len(ledger.SourceObservations))
+		for _, observation := range ledger.SourceObservations {
+			if observation.Satisfied || observation.Value <= observation.Limit {
+				return fmt.Errorf("source observation %q is not an unsatisfied driver", observation.Subject)
+			}
+			if err := validateLineCapIndicator(observation); err != nil {
+				return err
+			}
+			key := observation.MetricID + "\x00" + observation.Subject
+			if seen[key] {
+				return fmt.Errorf("source observation %q is duplicated", observation.Subject)
+			}
+			seen[key] = true
+		}
+	}
 	for _, indicator := range ledger.Indicators {
 		if indicator.Verdict != "PASS" {
 			return fmt.Errorf("ledger indicator %q did not pass", indicator.ID)

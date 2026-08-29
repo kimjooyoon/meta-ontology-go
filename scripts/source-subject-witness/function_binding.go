@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-const functionMetric = "gooo.metric.refactor.single-return.v1"
+const (
+	functionMetric       = "gooo.metric.refactor.single-return.v1"
+	functionLinesMetric  = "gooo.metric.source.function-lines.v1"
+)
 
 func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, error) {
 	witnesses, seen := make([]subjectWitness, 0), make(map[string]bool)
@@ -13,8 +16,17 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 		if row.SubjectKind != "FUNCTION" {
 			continue
 		}
-		if err := validateFunctionIndicator(row); err != nil {
-			return nil, err
+		switch row.MetricID {
+		case functionMetric:
+			if err := validateFunctionIndicator(row); err != nil {
+				return nil, err
+			}
+		case functionLinesMetric:
+			if err := validateLineCapIndicator(row); err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("function indicator %q is outside the exact catalog", row.MetricID)
 		}
 		if seen[row.Subject] {
 			return nil, fmt.Errorf("function subject %q is duplicated", row.Subject)

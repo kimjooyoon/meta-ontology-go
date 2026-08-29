@@ -35,6 +35,10 @@ type witnessLedger struct {
 	IndicatorDigest      string            `json:"indicator_digest"`
 	SemanticDigest       string            `json:"semantic_digest"`
 	Status               string            `json:"status"`
+	ObservationState     string            `json:"observation_state,omitempty"`
+	ClaimState           string            `json:"claim_state,omitempty"`
+	SourceObservations   []sourceIndicator `json:"source_observations,omitempty"`
+	SourceObservationDigest string          `json:"source_observation_digest,omitempty"`
 	Indicators           []ledgerIndicator `json:"indicators"`
 	Witnesses            []subjectWitness  `json:"witnesses"`
 }
