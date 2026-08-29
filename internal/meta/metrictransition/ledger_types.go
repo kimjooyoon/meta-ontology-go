@@ -15,9 +15,27 @@ type ArtifactEvidence struct {
 }
 
 type EffectEvidence struct {
-	Verifier  string             `json:"verifier"`
-	Artifacts []ArtifactEvidence `json:"artifacts"`
-	SetDigest string             `json:"set_digest"`
+	Verifier                      string                    `json:"verifier"`
+	Artifacts                     []ArtifactEvidence        `json:"artifacts"`
+	SetDigest                     string                    `json:"set_digest"`
+	Outcome                       string                    `json:"outcome"`
+	ReceiptDecision               string                    `json:"receipt_decision"`
+	ReceiptCount                  int                       `json:"receipt_count"`
+	FailureCount                  int                       `json:"failure_count"`
+	UnknownCount                  int                       `json:"unknown_count"`
+	DirectUnknownCount            int                       `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int                       `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest           string                    `json:"unknown_causal_digest"`
+	OperationEvidence             []OperationEffectEvidence `json:"operation_evidence"`
+}
+
+type OperationEffectEvidence struct {
+	ActionIndicatorID string `json:"action_indicator_id"`
+	Operation         string `json:"operation"`
+	Subject           string `json:"subject"`
+	Executor          string `json:"executor"`
+	Evaluator         string `json:"evaluator"`
+	Status            string `json:"status"`
 }
 
 type MetricDelta struct {

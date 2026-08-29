@@ -228,7 +228,12 @@ func validateEffectOutcomes(plan generation.Plan, ledger ledger, report generati
 	if len(statuses) != len(plan.Selected) {
 		return bindingFailure("ledger.effects", fmt.Sprintf("%d operation outcomes", len(plan.Selected)), fmt.Sprintf("%d", len(statuses)))
 	}
-	return nil
+	if ledger.ReceiptCount != len(report.Receipts) || ledger.FailureCount != len(report.Failures) ||
+		ledger.UnknownCount != len(report.Unknowns) || ledger.ReceiptDecision != string(report.Decision) ||
+		ledger.OperationOutcome != operationOutcome(report.Receipts, report.Failures) {
+		return bindingFailure("ledger.operation_outcome", "receipt/failure outcome projection", "ledger outcome counters diverged")
+	}
+	return validateCausalUnknownProjection(plan, ledger, report)
 }
 
 func validateReceipts(plan generation.Plan, report generation.ReceiptReport) error {

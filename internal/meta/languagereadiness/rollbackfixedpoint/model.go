@@ -15,16 +15,26 @@ type GuardEvidence struct {
 }
 
 type TransformationEvidence struct {
-	FileSHA256               string `json:"file_sha256"`
-	LedgerDigest             string `json:"ledger_digest"`
-	HeadSHA                  string `json:"head_sha"`
-	Decision                 string `json:"decision"`
-	Reason                   string `json:"reason"`
-	WorkspaceMode            string `json:"workspace_mode"`
-	WriteBoundary            string `json:"write_boundary"`
-	Effects                  int    `json:"effects"`
-	SourceWorkspaceUnchanged bool   `json:"source_workspace_unchanged"`
-	PromotionAuthorized      bool   `json:"promotion_authorized"`
+	FileSHA256                    string `json:"file_sha256"`
+	LedgerDigest                  string `json:"ledger_digest"`
+	HeadSHA                       string `json:"head_sha"`
+	Decision                      string `json:"decision"`
+	Reason                        string `json:"reason"`
+	WorkspaceMode                 string `json:"workspace_mode"`
+	WriteBoundary                 string `json:"write_boundary"`
+	Effects                       int    `json:"effects"`
+	AppliedEffects                int    `json:"applied_effects"`
+	RefutedEffects                int    `json:"refuted_effects"`
+	OperationOutcome              string `json:"operation_outcome"`
+	ReceiptDecision               string `json:"receipt_decision"`
+	ReceiptCount                  int    `json:"receipt_count"`
+	FailureCount                  int    `json:"failure_count"`
+	UnknownCount                  int    `json:"unknown_count"`
+	DirectUnknownCount            int    `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int    `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest           string `json:"unknown_causal_digest"`
+	SourceWorkspaceUnchanged      bool   `json:"source_workspace_unchanged"`
+	PromotionAuthorized           bool   `json:"promotion_authorized"`
 }
 
 type Source struct {

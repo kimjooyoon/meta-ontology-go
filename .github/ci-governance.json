@@ -2320,6 +2320,20 @@
       ]
     },
     {
+      "branch": "agent/mixed-outcome-terminal-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/language-readiness-witness/rollback-fixed-point/**",
+        "internal/meta/languagereadiness/rollbackfixedpoint/**",
+        "internal/meta/metrictransition/**",
+        "internal/meta/transformationeffect/**",
+        "internal/meta/transformationeffectverification/**",
+        "internal/verify/scope_mixed_outcome_terminal_v1.go",
+        "internal/verify/scope_mixed_outcome_terminal_v1_test.go"
+      ]
+    },
+    {
       "branch": "agent/user-journey-scorecard",
       "paths": [
         ".github/agent-scope-table.md",

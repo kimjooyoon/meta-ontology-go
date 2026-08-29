@@ -3,6 +3,13 @@ package transformationeffect
 const ledgerSchema = "gooo/transformation-effect-ledger/v1"
 const patchSchema = "gooo/transformation-content-patch/v1"
 
+const (
+	OperationOutcomeFixedPoint         = "FIXED_POINT"
+	OperationOutcomeClosed             = "CLOSED"
+	OperationOutcomeMixedClosedRefuted = "MIXED_CLOSED_REFUTED"
+	OperationOutcomeRefuted            = "REFUTED"
+)
+
 type Indicator struct {
 	ID       string `json:"id"`
 	Route    string `json:"route"`
@@ -35,39 +42,47 @@ type Effect struct {
 }
 
 type Ledger struct {
-	Schema                       string          `json:"schema"`
-	Metaprogram                  string          `json:"metaprogram"`
-	BaseSHA                      string          `json:"base_sha"`
-	HeadSHA                      string          `json:"head_sha"`
-	SourceSchema                 string          `json:"source_schema"`
-	RootTopologyExempt           bool            `json:"root_topology_exempt"`
-	Artifacts                    ArtifactDigests `json:"artifacts"`
-	InputDigest                  string          `json:"input_digest"`
-	IndicatorLedgerDigest        string          `json:"indicator_ledger_digest"`
-	IndicatorLedgerCount         int             `json:"indicator_ledger_count"`
-	Decision                     string          `json:"decision"`
-	Reason                       string          `json:"reason"`
-	WorkspaceMode                string          `json:"workspace_mode"`
-	WriteBoundary                string          `json:"write_boundary"`
-	SourceTreeBefore             string          `json:"source_tree_before"`
-	SourceTreeAfter              string          `json:"source_tree_after"`
-	SourceWorkspaceUnchanged     bool            `json:"source_workspace_unchanged"`
-	SandboxTreeBefore            string          `json:"sandbox_tree_before"`
-	SandboxTreeAfter             string          `json:"sandbox_tree_after"`
-	Effects                      []Effect        `json:"effects"`
-	EffectDigest                 string          `json:"effect_digest"`
-	PatchDigest                  string          `json:"patch_digest"`
-	InputReceiptReportDigest     string          `json:"input_receipt_report_digest"`
-	GeneratedReceiptReportDigest string          `json:"generated_receipt_report_digest"`
-	InputProvenanceDigest        string          `json:"input_provenance_digest"`
-	ExecutedProvenanceDigest     string          `json:"executed_provenance_digest"`
-	SelectedPlanOperations       int             `json:"selected_plan_operations"`
-	BoundExecutorOperations      int             `json:"bound_executor_operations"`
-	UnboundExecutorOperations    int             `json:"unbound_executor_operations"`
-	Status                       string          `json:"status"`
-	Indicators                   []Indicator     `json:"indicators"`
-	SemanticDigest               string          `json:"semantic_digest"`
-	LedgerDigest                 string          `json:"ledger_digest"`
-	ReplayDigest                 string          `json:"replay_digest"`
-	PromotionAuthorized          bool            `json:"promotion_authorized"`
+	Schema                        string          `json:"schema"`
+	Metaprogram                   string          `json:"metaprogram"`
+	BaseSHA                       string          `json:"base_sha"`
+	HeadSHA                       string          `json:"head_sha"`
+	SourceSchema                  string          `json:"source_schema"`
+	RootTopologyExempt            bool            `json:"root_topology_exempt"`
+	Artifacts                     ArtifactDigests `json:"artifacts"`
+	InputDigest                   string          `json:"input_digest"`
+	IndicatorLedgerDigest         string          `json:"indicator_ledger_digest"`
+	IndicatorLedgerCount          int             `json:"indicator_ledger_count"`
+	Decision                      string          `json:"decision"`
+	Reason                        string          `json:"reason"`
+	WorkspaceMode                 string          `json:"workspace_mode"`
+	WriteBoundary                 string          `json:"write_boundary"`
+	SourceTreeBefore              string          `json:"source_tree_before"`
+	SourceTreeAfter               string          `json:"source_tree_after"`
+	SourceWorkspaceUnchanged      bool            `json:"source_workspace_unchanged"`
+	SandboxTreeBefore             string          `json:"sandbox_tree_before"`
+	SandboxTreeAfter              string          `json:"sandbox_tree_after"`
+	Effects                       []Effect        `json:"effects"`
+	EffectDigest                  string          `json:"effect_digest"`
+	PatchDigest                   string          `json:"patch_digest"`
+	InputReceiptReportDigest      string          `json:"input_receipt_report_digest"`
+	GeneratedReceiptReportDigest  string          `json:"generated_receipt_report_digest"`
+	InputProvenanceDigest         string          `json:"input_provenance_digest"`
+	ExecutedProvenanceDigest      string          `json:"executed_provenance_digest"`
+	SelectedPlanOperations        int             `json:"selected_plan_operations"`
+	BoundExecutorOperations       int             `json:"bound_executor_operations"`
+	UnboundExecutorOperations     int             `json:"unbound_executor_operations"`
+	OperationOutcome              string          `json:"operation_outcome"`
+	ReceiptDecision               string          `json:"receipt_decision"`
+	ReceiptCount                  int             `json:"receipt_count"`
+	FailureCount                  int             `json:"failure_count"`
+	UnknownCount                  int             `json:"unknown_count"`
+	DirectUnknownCount            int             `json:"direct_unknown_count"`
+	DependencyBlockedUnknownCount int             `json:"dependency_blocked_unknown_count"`
+	UnknownCausalDigest           string          `json:"unknown_causal_digest"`
+	Status                        string          `json:"status"`
+	Indicators                    []Indicator     `json:"indicators"`
+	SemanticDigest                string          `json:"semantic_digest"`
+	LedgerDigest                  string          `json:"ledger_digest"`
+	ReplayDigest                  string          `json:"replay_digest"`
+	PromotionAuthorized           bool            `json:"promotion_authorized"`
 }

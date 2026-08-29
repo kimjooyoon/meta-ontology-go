@@ -7,6 +7,7 @@ func Coordinates(source Source) []Coordinate {
 	transformation := source.Transformation
 	authorized := authorized(guard)
 	recoverable := recoverable(guard)
+	mixed := mixedTerminal(source)
 	terminalKnown := guard.Decision == guardedpromotion.DecisionAuthorized ||
 		guard.Decision == guardedpromotion.DecisionFailClosed ||
 		guard.Decision == guardedpromotion.DecisionDenied
@@ -24,7 +25,7 @@ func Coordinates(source Source) []Coordinate {
 		coordinate("exact-subject-link", "COHERENCE", guard.HeadSHA != "" &&
 			transformation.HeadSHA != "", guard.HeadSHA == source.ExpectedHeadSHA &&
 			transformation.HeadSHA == source.ExpectedHeadSHA),
-		coordinate("accepted-terminal-path", "COHERENCE", terminalKnown, authorized || recoverable),
+		coordinate("accepted-terminal-path", "COHERENCE", terminalKnown, authorized || recoverable || mixed),
 		coordinate("recovery-fixed-point", "COHERENCE", terminalKnown,
 			authorized || recoverable && fixedPoint),
 		coordinate("recovery-effect-boundary", "REGRESSION", terminalKnown,
