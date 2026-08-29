@@ -88,7 +88,7 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 			evidence.OperationID == "" ||
 			!validEvidenceDigest(evidence.ContractEvidenceDigest) ||
 			!validEvidenceDigest(evidence.InstanceEvidenceDigest) ||
-			!validEvidenceOrigin(evidence) ||
+			!validEvidenceOrigin(*evidence) ||
 			evidence.ReplayComparisons < 1 || !evidence.ReplayMatch ||
 			evidence.ExecutorObservation.ExitCode != 0 ||
 			evidence.EvaluatorObservation.ExitCode != 0 ||
