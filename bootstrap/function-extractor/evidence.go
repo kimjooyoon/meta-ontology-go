@@ -58,11 +58,23 @@ type extractionIndicator struct {
 	Proof     string `json:"proof_choice"`
 }
 
+type namespaceReplacementReceipt struct {
+	LogicalPath           string `json:"logical_path"`
+	Primitive             string `json:"primitive"`
+	Contract              string `json:"contract"`
+	SameDirectory         bool   `json:"same_directory"`
+	DestinationPreexisted bool   `json:"destination_preexisted"`
+	TempDigest            string `json:"temp_digest"`
+	ReplacementSuccess    bool   `json:"replacement_success"`
+	FinalDigest           string `json:"final_digest"`
+}
+
 type extractionReport struct {
-	Schema     string                    `json:"schema"`
-	SourceSHA  string                    `json:"source_sha"`
-	Subjects   []extractionSubject       `json:"subjects"`
-	Unhandled  []string                  `json:"unhandled"`
-	Failures   []extractionFailureRecord `json:"failures,omitempty"`
-	Indicators []extractionIndicator     `json:"indicators"`
+	Schema                string                         `json:"schema"`
+	SourceSHA             string                         `json:"source_sha"`
+	Subjects              []extractionSubject            `json:"subjects"`
+	Unhandled             []string                       `json:"unhandled"`
+	Failures              []extractionFailureRecord      `json:"failures,omitempty"`
+	Indicators            []extractionIndicator          `json:"indicators"`
+	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
 }

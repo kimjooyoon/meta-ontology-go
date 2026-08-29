@@ -33,21 +33,38 @@ func formatStaged(root string, buffers map[string][]byte, created map[string]boo
 	return staged, nil
 }
 
-func installTransaction(file transactionFile) error {
+func installTransaction(file *transactionFile) (namespaceReplacementReceipt, error) {
+	if !sameDirectory(file.name, file.temp) {
+		return namespaceReplacementReceipt{}, fmt.Errorf("replacement paths are not same-directory: %s", file.logical)
+	}
 	if file.created {
 		if _, err := os.Lstat(file.name); err == nil || !os.IsNotExist(err) {
-			return fmt.Errorf("creation target exists: %s", file.name)
+			return namespaceReplacementReceipt{}, fmt.Errorf("creation target exists: %s", file.name)
 		}
-		return os.Rename(file.temp, file.name)
-	}
-	if err := os.Rename(file.name, file.backup); err != nil {
-		return err
+	} else if err := preserveDestination(file); err != nil {
+		return namespaceReplacementReceipt{}, err
 	}
 	if err := os.Rename(file.temp, file.name); err != nil {
-		_ = os.Rename(file.backup, file.name)
-		return err
+		if !file.created {
+			_ = os.Remove(file.backup)
+		}
+		return namespaceReplacementReceipt{}, err
 	}
-	return nil
+	file.replaced = true
+	final, err := os.ReadFile(file.name)
+	if err != nil {
+		return namespaceReplacementReceipt{}, err
+	}
+	finalDigest := digestFileBytes(final)
+	if finalDigest != file.tempDigest {
+		return namespaceReplacementReceipt{}, fmt.Errorf("replacement changed staged bytes: %s", file.logical)
+	}
+	return namespaceReplacementReceipt{
+		LogicalPath: file.logical, Primitive: "os.Rename",
+		Contract: "same-directory-temp-over-destination-v1",
+		SameDirectory: true, DestinationPreexisted: file.destinationPreexisted,
+		TempDigest: file.tempDigest, ReplacementSuccess: true, FinalDigest: finalDigest,
+	}, nil
 }
 
 func removeTransactionBackup(file transactionFile) error {
@@ -59,9 +76,15 @@ func removeTransactionBackup(file transactionFile) error {
 
 func restoreTransaction(file transactionFile) {
 	if file.created {
-		_ = os.Remove(file.name)
+		if file.replaced {
+			_ = os.Remove(file.name)
+		}
 		return
 	}
-	_ = os.Remove(file.name)
-	_ = os.Rename(file.backup, file.name)
+	if file.replaced {
+		_ = os.Remove(file.name)
+		_ = os.Rename(file.backup, file.name)
+		return
+	}
+	_ = os.Remove(file.backup)
 }

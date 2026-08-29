@@ -37,10 +37,12 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 		return err
 	}
 	report := extractionEvidence(expected, subjects, unhandled, failures)
-	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
+	replacements, err := commitStaged(staged)
+	if err != nil {
 		return err
 	}
-	if err := commitStaged(staged); err != nil {
+	report.NamespaceReplacements = replacements
+	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
 		return err
 	}
 	if err := requireHandled(report); err != nil {
