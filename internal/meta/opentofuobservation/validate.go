@@ -79,6 +79,9 @@ func ValidateObservation(observation Observation) error {
 	if err := validateReuse(observation); err != nil {
 		return err
 	}
+	if !validCellEvidenceDigests(observation.CellEvidenceProjections, observation.CellEvidenceDigests) {
+		return malformed("CELL_EVIDENCE_DIGEST_BINDING_INVALID")
+	}
 	if err := validateGraph(observation.Graph); err != nil {
 		return err
 	}
@@ -101,7 +104,7 @@ func validateExecutions(runs []ExecutionRun, fixtureDigest string) error {
 		if !validDigest(run.PlanJSONDigest) || !validDigest(run.TestEventDigest) {
 			return malformed("EXECUTION_DIGEST_MALFORMED")
 		}
-		if run.PlanJSONBytes <= 0 || run.TestEventCount <= 0 || !run.PlanSchemaValid || !run.TestEventsValid {
+		if run.PlanJSONBytes <= 0 || !run.PlanSchemaValid || !run.TestEventsValid || !validTestInventory(run) {
 			return unavailable("OPENTOFU_JSON_EVIDENCE_INCOMPLETE")
 		}
 		if len(run.Commands) != 4 || !validCommands(run.Commands) {
@@ -112,6 +115,19 @@ func validateExecutions(runs []ExecutionRun, fixtureDigest string) error {
 		return malformed("EXECUTION_INDEX_SET_MISMATCH")
 	}
 	return nil
+}
+
+func validTestInventory(run ExecutionRun) bool {
+	if run.TestEventCount != 5 || len(run.TestTypeCounts) != 5 || run.TestAbstractDiscovered != 1 || run.TestRunExecuted != 1 ||
+		run.TestSummaryPassed != 1 || run.TestSummaryFailed != 0 || run.TestSummaryErrored != 0 || run.TestSummarySkipped != 0 {
+		return false
+	}
+	for _, eventType := range []string{"version", "test_abstract", "test_file", "test_run", "test_summary"} {
+		if run.TestTypeCounts[eventType] != 1 {
+			return false
+		}
+	}
+	return true
 }
 
 func validCommands(commands []CommandReceipt) bool {

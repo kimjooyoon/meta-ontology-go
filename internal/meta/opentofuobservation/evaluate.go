@@ -2,6 +2,8 @@ package opentofuobservation
 
 import "errors"
 
+import "maps"
+
 func Evaluate(contract Contract, observation Observation) (Report, error) {
 	if err := ValidateContract(contract); err != nil {
 		return Report{}, err
@@ -10,9 +12,11 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 	if err := ValidateObservation(observation); err != nil {
 		var typed *ValidationError
 		if errors.As(err, &typed) && typed.Decision == DecisionRefuted {
+			report.GraphValidation = typed.GraphDiagnostic
 			return failRefuted(report, typed.Reason)
 		}
 		if errors.As(err, &typed) && typed.Decision == DecisionFailClosed {
+			report.GraphValidation = typed.GraphDiagnostic
 			return failClosed(report, typed.Reason)
 		}
 		return failUnknown(report, "OBSERVATION", "VALIDATE_INPUT", "OBSERVATION_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "RECAPTURE_OPENTOFU_OBSERVATION", nil, err)
@@ -36,8 +40,8 @@ func baseReport(contract Contract, observation Observation) Report {
 		FixturePhysicalLines: observation.FixturePhysicalLines, Executions: observation.Executions,
 		Reuse: observation.Reuse, Runtime: observation.Runtime, Inventory: observation.Inventory,
 		CellEvidenceProjections: copyEvidenceDigests(observation.CellEvidenceProjections),
-		CellEvidenceDigests: copyEvidenceDigests(observation.CellEvidenceDigests),
-		Graph: observation.Graph, RepositoryWrites: observation.RepositoryWrites,
+		CellEvidenceDigests:     copyEvidenceDigests(observation.CellEvidenceDigests),
+		Graph:                   observation.Graph, RepositoryWrites: observation.RepositoryWrites,
 		LocalTestExecutions: observation.LocalTestExecutions, ReleaseBinaryBuilds: observation.ReleaseBinaryBuilds,
 		ReleaseBinaryBuildReason: observation.ReleaseBinaryBuildReason, ObserverGoVersion: observation.ObserverGoVersion,
 		ObserverGOVERSION: observation.ObserverGOVERSION, ObserverToolchainDigest: observation.ObserverToolchainDigest,
@@ -46,9 +50,7 @@ func baseReport(contract Contract, observation Observation) Report {
 
 func copyEvidenceDigests(source map[string]string) map[string]string {
 	copy := make(map[string]string, len(source))
-	for key, value := range source {
-		copy[key] = value
-	}
+	maps.Copy(copy, source)
 	return copy
 }
 
@@ -134,7 +136,7 @@ func evaluateCells(observation Observation) []CellResult {
 type cellValue struct {
 	observed, expected int
 	ok                 bool
-	reason            string
+	reason             string
 }
 
 func boolInt(value bool) int {
