@@ -29,7 +29,8 @@ func run(cfg config) error {
 	if err != nil {
 		return err
 	}
-	if report.Decision != rollbackfixedpoint.DecisionPass {
+	if report.Decision != rollbackfixedpoint.DecisionPass &&
+		!rollbackfixedpoint.IsKnownMixedTerminal(report) {
 		return fmt.Errorf("rollback fixed-point decision = %s reason = %s",
 			report.Decision, report.Reason)
 	}

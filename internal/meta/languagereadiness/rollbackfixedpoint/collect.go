@@ -47,12 +47,36 @@ func collectTransformation(source Source, path string) Source {
 		source.CollectionError = fmt.Sprintf("transformation: %v", err)
 		return source
 	}
+	applied, refuted, valid := effectStatusCounts(ledger)
+	if !valid {
+		source.CollectionError = "transformation: operation effect status is unknown"
+		return source
+	}
 	source.Transformation = TransformationEvidence{FileSHA256: digestBytes(raw),
 		LedgerDigest: ledger.LedgerDigest, HeadSHA: ledger.HeadSHA,
 		Decision: ledger.Decision, Reason: ledger.Reason, WorkspaceMode: ledger.WorkspaceMode,
 		WriteBoundary: ledger.WriteBoundary, Effects: len(ledger.Effects),
+		AppliedEffects: applied, RefutedEffects: refuted,
+		OperationOutcome: ledger.OperationOutcome, ReceiptDecision: ledger.ReceiptDecision,
+		ReceiptCount: ledger.ReceiptCount, FailureCount: ledger.FailureCount,
+		UnknownCount: ledger.UnknownCount,
 		SourceWorkspaceUnchanged: ledger.SourceWorkspaceUnchanged,
 		PromotionAuthorized:      ledger.PromotionAuthorized}
 	source.RepositoryWrites = source.Guard.RepositoryWrites
 	return source
+}
+
+func effectStatusCounts(ledger transformationeffect.Ledger) (int, int, bool) {
+	applied, refuted := 0, 0
+	for _, effect := range ledger.Effects {
+		switch effect.Status {
+		case "APPLIED":
+			applied++
+		case "REFUTED":
+			refuted++
+		default:
+			return 0, 0, false
+		}
+	}
+	return applied, refuted, true
 }

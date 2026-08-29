@@ -9,7 +9,9 @@ func Build(source Source) Report {
 		Source: source, Summary: summary, Coordinates: coordinates,
 		Indicators: indicators(source, summary), Proofs: proofs(coordinates),
 		RepositoryWrites: source.RepositoryWrites}
-	if summary.Unresolved > 0 {
+	if mixedTerminal(source) && summary.Unresolved == 0 {
+		report.Reason, report.Mode = ReasonMixed, ModeMixedTerminal
+	} else if summary.Unresolved > 0 {
 		report.Reason, report.Resolution = ReasonUnknown, ResolutionLower
 	} else if summary.Satisfied == totalCoordinates {
 		report.Decision = DecisionPass
@@ -20,6 +22,22 @@ func Build(source Source) Report {
 		}
 	}
 	return seal(report)
+}
+
+func mixedTerminal(source Source) bool {
+	t := source.Transformation
+	return source.CollectionError == "" && t.Decision == "APPLIED" &&
+		t.Reason == "SANDBOX_EFFECTS_VERIFIED" && t.OperationOutcome == "MIXED_CLOSED_REFUTED" &&
+		t.ReceiptDecision == "REFUTED" && t.Effects == t.AppliedEffects+t.RefutedEffects &&
+		t.AppliedEffects > 0 && t.RefutedEffects > 0 &&
+		t.ReceiptCount == t.AppliedEffects && t.FailureCount == t.RefutedEffects &&
+		t.SourceWorkspaceUnchanged && t.WriteBoundary == "SANDBOX_ONLY" &&
+		!t.PromotionAuthorized
+}
+
+func IsKnownMixedTerminal(report Report) bool {
+	return report.Decision == DecisionFailClosed && report.Resolution == ResolutionExact &&
+		report.Reason == ReasonMixed && report.Mode == ModeMixedTerminal && mixedTerminal(report.Source)
 }
 
 func summarize(values []Coordinate, source Source) Summary {

@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 func hashBytes(payload []byte) string {
@@ -48,6 +50,23 @@ func validateLedger(ledger Ledger) error {
 		ledger.SelectedPlanOperations < 0 || ledger.BoundExecutorOperations != ledger.SelectedPlanOperations ||
 		ledger.UnboundExecutorOperations != 0 || len(ledger.Effects) != ledger.SelectedPlanOperations {
 		return fmt.Errorf("transformation ledger is not bound")
+	}
+	if ledger.ReceiptCount < 0 || ledger.FailureCount < 0 || ledger.UnknownCount < 0 ||
+		ledger.ReceiptCount+ledger.FailureCount != ledger.SelectedPlanOperations ||
+		ledger.ReceiptDecision == "" || ledger.OperationOutcome == "" {
+		return fmt.Errorf("transformation ledger operation outcome is incomplete")
+	}
+	if ledger.Decision == "FIXED_POINT" {
+		if ledger.OperationOutcome != OperationOutcomeFixedPoint ||
+			ledger.ReceiptDecision != string(generation.ReceiptDecisionFixedPoint) ||
+			ledger.ReceiptCount != 0 || ledger.FailureCount != 0 {
+			return fmt.Errorf("fixed point operation outcome is inconsistent")
+		}
+	}
+	if ledger.Decision == "APPLIED" && ledger.OperationOutcome != OperationOutcomeClosed &&
+		ledger.OperationOutcome != OperationOutcomeMixedClosedRefuted &&
+		ledger.OperationOutcome != OperationOutcomeRefuted {
+		return fmt.Errorf("applied operation outcome is inconsistent")
 	}
 	for _, indicator := range ledger.Indicators {
 		if indicator.Verdict != "PASS" {

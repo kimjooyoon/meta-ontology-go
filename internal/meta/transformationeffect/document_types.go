@@ -3,6 +3,13 @@ package transformationeffect
 const ledgerSchema = "gooo/transformation-effect-ledger/v1"
 const patchSchema = "gooo/transformation-content-patch/v1"
 
+const (
+	OperationOutcomeFixedPoint        = "FIXED_POINT"
+	OperationOutcomeClosed            = "CLOSED"
+	OperationOutcomeMixedClosedRefuted = "MIXED_CLOSED_REFUTED"
+	OperationOutcomeRefuted           = "REFUTED"
+)
+
 type Indicator struct {
 	ID       string `json:"id"`
 	Route    string `json:"route"`
@@ -64,6 +71,11 @@ type Ledger struct {
 	SelectedPlanOperations       int             `json:"selected_plan_operations"`
 	BoundExecutorOperations      int             `json:"bound_executor_operations"`
 	UnboundExecutorOperations    int             `json:"unbound_executor_operations"`
+	OperationOutcome             string          `json:"operation_outcome"`
+	ReceiptDecision              string          `json:"receipt_decision"`
+	ReceiptCount                 int             `json:"receipt_count"`
+	FailureCount                 int             `json:"failure_count"`
+	UnknownCount                 int             `json:"unknown_count"`
 	Status                       string          `json:"status"`
 	Indicators                   []Indicator     `json:"indicators"`
 	SemanticDigest               string          `json:"semantic_digest"`

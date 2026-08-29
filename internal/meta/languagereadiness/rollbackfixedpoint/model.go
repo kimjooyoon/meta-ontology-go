@@ -23,6 +23,13 @@ type TransformationEvidence struct {
 	WorkspaceMode            string `json:"workspace_mode"`
 	WriteBoundary            string `json:"write_boundary"`
 	Effects                  int    `json:"effects"`
+	AppliedEffects           int    `json:"applied_effects"`
+	RefutedEffects           int    `json:"refuted_effects"`
+	OperationOutcome         string `json:"operation_outcome"`
+	ReceiptDecision          string `json:"receipt_decision"`
+	ReceiptCount             int    `json:"receipt_count"`
+	FailureCount             int    `json:"failure_count"`
+	UnknownCount             int    `json:"unknown_count"`
 	SourceWorkspaceUnchanged bool   `json:"source_workspace_unchanged"`
 	PromotionAuthorized      bool   `json:"promotion_authorized"`
 }

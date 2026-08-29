@@ -49,7 +49,12 @@ func Build(opts Options) (Result, error) {
 		ExecutedProvenanceDigest:     executed.provenance.EnvelopeDigest, Status: "BOUND",
 		SelectedPlanOperations:    executed.selectedPlanOperations,
 		BoundExecutorOperations:   executed.boundExecutorOperations,
-		UnboundExecutorOperations: executed.unboundExecutorOperations}
+		UnboundExecutorOperations: executed.unboundExecutorOperations,
+		OperationOutcome:          operationOutcome(executed.receipts),
+		ReceiptDecision:           string(executed.receipts.Decision),
+		ReceiptCount:              len(executed.receipts.Receipts),
+		FailureCount:              len(executed.receipts.Failures),
+		UnknownCount:              len(executed.receipts.Unknowns)}
 	ledger.Indicators = effectIndicators(ledger, len(in.plan.Selected), executed.receipts.Decision)
 	ledger = sealLedger(ledger)
 	if err := validateLedger(ledger); err != nil {
@@ -59,6 +64,20 @@ func Build(opts Options) (Result, error) {
 		return Result{}, err
 	}
 	return Result{ledger, executed.patch, executed.receipts, executed.provenance}, nil
+}
+
+func operationOutcome(report generation.ReceiptReport) string {
+	if report.Decision == generation.ReceiptDecisionFixedPoint {
+		return OperationOutcomeFixedPoint
+	}
+	if report.Decision == generation.ReceiptDecisionConformant {
+		return OperationOutcomeClosed
+	}
+	if report.Decision == generation.ReceiptDecisionRefuted &&
+		len(report.Receipts) > 0 && len(report.Failures) > 0 {
+		return OperationOutcomeMixedClosedRefuted
+	}
+	return string(report.Decision)
 }
 
 func validExecutionOutcome(report generation.ReceiptReport, selected int) bool {
