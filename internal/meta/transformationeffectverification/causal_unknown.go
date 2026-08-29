@@ -1,11 +1,6 @@
 package transformationeffectverification
 
-import (
-	"fmt"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect"
-)
+import "github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 
 func validateCausalUnknownProjection(plan generation.Plan, ledger ledger, report generation.ReceiptReport) error {
 	projection, err := deriveCausalUnknownProjection(report)
