@@ -13,13 +13,15 @@ func TestMixedRefutationRejectsUnboundCounterexampleAndFrontier(t *testing.T) {
 		Subject:              "fixture.go:10:Selected",
 		RequiredIndicatorIDs: []string{"indicator"},
 	}
-	failure := generation.ObservationFailure{
-		ActionIndicatorID: action.IndicatorID,
-		FailureEvidence:   []generation.ObservationFailureEvidence{{
-			IndicatorID: "indicator", Observed: 0, Expected: 1,
-			Decision: "UNKNOWN", Counterexample: "fixture.go#func:Selected",
-		}},
-	}
+	evidence := generation.ObservationFailureEvidence{}
+	evidence.IndicatorID = "indicator"
+	evidence.Observed = 0
+	evidence.Expected = 1
+	evidence.Decision = "UNKNOWN"
+	evidence.Counterexample = "fixture.go#func:Selected"
+	failure := generation.ObservationFailure{}
+	failure.ActionIndicatorID = action.IndicatorID
+	failure.FailureEvidence = []generation.ObservationFailureEvidence{evidence}
 	if !validRefutedIndicatorLinks(failure, action) {
 		t.Fatal("stable extraction counterexample was rejected")
 	}
@@ -29,14 +31,19 @@ func TestMixedRefutationRejectsUnboundCounterexampleAndFrontier(t *testing.T) {
 	}
 
 	failure.FailureEvidence[0].Counterexample = "fixture.go#func:Selected"
-	failure.Stage, failure.Step, failure.Reason, failure.NextOperation =
-		"derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "report-counterexample"
-	unknown := generation.ReceiptUnknown{
-		ActionIndicatorID: action.IndicatorID, RequiredIndicatorID: "indicator",
-		Stage: failure.Stage, Step: failure.Step, Reason: generation.ReceiptReason(failure.Reason),
-		UnknownClass: generation.ReceiptUnknownClassDependencyBlocked,
-		NextOperation: failure.NextOperation, BlockedBy: []string{"operation-failure:" + action.IndicatorID},
-	}
+	failure.Stage = "derive-recipe"
+	failure.Step = "select-declaration"
+	failure.Reason = "NO_SAFE_DECLARATION_CAPACITY"
+	failure.NextOperation = "report-counterexample"
+	unknown := generation.ReceiptUnknown{}
+	unknown.ActionIndicatorID = action.IndicatorID
+	unknown.RequiredIndicatorID = "indicator"
+	unknown.Stage = failure.Stage
+	unknown.Step = failure.Step
+	unknown.Reason = generation.ReceiptReason(failure.Reason)
+	unknown.UnknownClass = generation.ReceiptUnknownClassDependencyBlocked
+	unknown.NextOperation = failure.NextOperation
+	unknown.BlockedBy = []string{"operation-failure:" + action.IndicatorID}
 	if !validDependencyUnknowns([]generation.ReceiptUnknown{unknown}, failure, action) {
 		t.Fatal("stable dependency frontier was rejected")
 	}

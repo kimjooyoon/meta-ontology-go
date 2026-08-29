@@ -564,7 +564,19 @@ func canonicalProcessBytes(root string, data []byte) []byte {
 	if err != nil || absolute == "" {
 		return append([]byte{}, data...)
 	}
-	return bytes.ReplaceAll(data, []byte(absolute), []byte("<workspace>"))
+	roots := []string{filepath.Clean(absolute)}
+	if resolved, resolveErr := filepath.EvalSymlinks(absolute); resolveErr == nil && resolved != "" {
+		resolved = filepath.Clean(resolved)
+		if resolved != roots[0] {
+			roots = append(roots, resolved)
+		}
+	}
+	sort.Slice(roots, func(left, right int) bool { return len(roots[left]) > len(roots[right]) })
+	canonical := append([]byte{}, data...)
+	for _, workspaceRoot := range roots {
+		canonical = bytes.ReplaceAll(canonical, []byte(workspaceRoot), []byte("<workspace>"))
+	}
+	return canonical
 }
 
 func descriptorObservation(command []string, stdout, stderr []byte, exit ...int) generation.ProcessObservation {
