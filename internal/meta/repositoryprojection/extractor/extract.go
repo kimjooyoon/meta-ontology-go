@@ -1,7 +1,6 @@
 package extractor
 
 import (
-	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -22,17 +21,9 @@ func Extract(root, logical string) (map[string][]byte, []string, error) {
 	if err != nil {
 		return nil, nil, fail("observe-plan", "parse-source", "PARSER_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
-	prepared, err := prepareOversizedFunctions(root, logical, source, fset, file)
+	source, fset, file, err = prepareParsedSource(root, logical, source, fset, file)
 	if err != nil {
 		return nil, nil, err
-	}
-	if !bytes.Equal(prepared, source) {
-		source = prepared
-		fset = token.NewFileSet()
-		file, err = parser.ParseFile(fset, logical, source, parser.ParseComments)
-		if err != nil {
-			return nil, nil, fail("rewrite-source", "parse-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
-		}
 	}
 	if err := validateBuildHeader(source[:fset.Position(file.Package).Offset]); err != nil {
 		return nil, nil, err

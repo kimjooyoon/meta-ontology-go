@@ -255,24 +255,35 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	if err != nil {
 		return operationMaterialization{}, &operationError{"observe-plan", "read-function-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source"}
 	}
-	lineCount := physicalLineCount(before)
-	planName := "meta-execution-function-plan.json"
-	densityName := "meta-execution-function-density.json"
-	planPath := filepath.Join(temporary, planName)
-	densityPath := filepath.Join(temporary, densityName)
-	if err := writeJSON(planPath, extractorPlan{Schema: "gooo.logical-split-plan.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorPlanSubject{{Logical: subject.Path, Lines: lineCount, Reason: "fixed-declaration-capacity"}}}); err != nil {
-		return operationMaterialization{}, &operationError{"observe-plan", "write-extraction-plan", "PLAN_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-extraction-plan"}
+	planPath, densityPath, prepErr := writeExtractorInputs(temporary, plan, subject, physicalLineCount(before))
+	if prepErr != nil {
+		return operationMaterialization{}, prepErr
 	}
-	if err := writeJSON(densityPath, extractorDensity{Schema: "gooo.line-density-rewrite.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorDensitySubject{{Logical: subject.Path, Status: "blocked"}}}); err != nil {
-		return operationMaterialization{}, &operationError{"observe-plan", "write-density-observation", "DENSITY_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-density-observation"}
-	}
-	command := []string{"go", "run", "./bootstrap/function-extractor", "-root", "<workspace>", "-plan", planName, "-density-report", densityName, "-expected-sha", plan.HeadSHA, "-output", "<extraction-report>"}
+	command := []string{"go", "run", "./bootstrap/function-extractor", "-root", "<workspace>", "-plan", "meta-execution-function-plan.json", "-density-report", "meta-execution-function-density.json", "-expected-sha", plan.HeadSHA, "-output", "<extraction-report>"}
 	reportName := "meta-execution-extraction-report.json"
 	actual := []string{"go", "run", "./bootstrap/function-extractor", "-root", temporary, "-plan", planPath, "-density-report", densityPath, "-expected-sha", plan.HeadSHA, "-output", filepath.Join(temporary, reportName)}
 	result, runErr := runProcess(temporary, environment, command, actual)
 	if runErr != nil || result.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
 	}
+	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName)
+}
+
+func writeExtractorInputs(root string, plan generation.Plan, subject sourcepolicy.SourceSubject, lines int) (string, string, *operationError) {
+	planName := "meta-execution-function-plan.json"
+	densityName := "meta-execution-function-density.json"
+	planPath := filepath.Join(root, planName)
+	densityPath := filepath.Join(root, densityName)
+	if err := writeJSON(planPath, extractorPlan{Schema: "gooo.logical-split-plan.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorPlanSubject{{Logical: subject.Path, Lines: lines, Reason: "fixed-declaration-capacity"}}}); err != nil {
+		return "", "", &operationError{"observe-plan", "write-extraction-plan", "PLAN_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-extraction-plan"}
+	}
+	if err := writeJSON(densityPath, extractorDensity{Schema: "gooo.line-density-rewrite.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorDensitySubject{{Logical: subject.Path, Status: "blocked"}}}); err != nil {
+		return "", "", &operationError{"observe-plan", "write-density-observation", "DENSITY_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-density-observation"}
+	}
+	return planPath, densityPath, nil
+}
+
+func evaluateExtractMaterialization(temporary string, environment []string, before []byte, result processResult, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, reportName string) (operationMaterialization, *operationError) {
 	reportRaw, err := os.ReadFile(filepath.Join(temporary, reportName))
 	if err != nil {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence"}
@@ -285,7 +296,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_MISSING", "DIRECT_MISSING", "restore-operation-evidence"}
 	}
-		if err := validateExtractedFiles(temporary, subject, before, observed); err != nil {
+	if err := validateExtractedFiles(temporary, subject, before, observed); err != nil {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample"}
 	}
 	evaluatorRaw, _ := json.Marshal(report)
