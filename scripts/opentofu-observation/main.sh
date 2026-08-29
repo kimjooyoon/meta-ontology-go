@@ -67,7 +67,7 @@ manifest_digest() {
   : > "$manifest"
 	while IFS= read -r -d '' file; do
 		printf '%s\t' "${file#"$directory"/}" >> "$manifest"
-		digest "$file" >> "$manifest"
+		printf '%s\n' "$(digest "$file")" >> "$manifest"
 	done < <(find "$directory" -type f -print0 | sort -z)
   digest "$manifest"
 }
