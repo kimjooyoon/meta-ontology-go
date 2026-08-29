@@ -96,7 +96,7 @@ func readRecovery(file string) (RecoveryEvidence, error) {
 		TransformationUnknownCount:                  e.Source.Transformation.UnknownCount,
 		TransformationDirectUnknownCount:            e.Source.Transformation.DirectUnknownCount,
 		TransformationDependencyBlockedUnknownCount: e.Source.Transformation.DependencyBlockedUnknownCount,
-		TransformationUnknownCausalDigest: e.Source.Transformation.UnknownCausalDigest,
+		TransformationUnknownCausalDigest:           e.Source.Transformation.UnknownCausalDigest,
 		WriteBoundary:                               e.Source.Transformation.WriteBoundary,
 		SourceWorkspaceUnchanged:                    e.Source.Transformation.SourceWorkspaceUnchanged,
 		TransformationAuthorization:                 e.Source.Transformation.PromotionAuthorized,
