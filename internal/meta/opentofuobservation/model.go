@@ -52,32 +52,32 @@ type ExecutionRun struct {
 }
 
 type ReuseAccounting struct {
-	RequestMode           string   `json:"request_mode"`
-	Requests              int      `json:"requests"`
-	Discovered            int    `json:"discovered"`
-	Executed              int    `json:"executed"`
-	Reused                int    `json:"reused"`
-	Skipped               int    `json:"skipped"`
-	PriorCandidates       int    `json:"prior_candidates"`
-	Invalidated           int    `json:"invalidated"`
-	Decision              string `json:"decision"`
-	Reason                string `json:"reason"`
-	SourceDigest          string `json:"source_digest"`
-	FixtureDigest         string `json:"fixture_digest"`
-	ArgumentDigest        string `json:"argument_digest"`
-	EnvironmentDigest     string `json:"environment_allowlist_digest"`
-	ReleaseDigest         string `json:"release_digest"`
-	ToolchainDigest       string `json:"observer_toolchain_digest"`
-	DependencyGraphDigest string `json:"dependency_graph_digest"`
-	ExpectedResultDigest  string `json:"expected_result_digest"`
-	PriorReceiptDigest    string `json:"prior_receipt_digest"`
-	PriorReceiptFileDigest string   `json:"prior_receipt_file_digest"`
-	PriorArtifactManifestDigest string `json:"prior_artifact_manifest_digest"`
-	BaselinePhysicalCommandExecutions int `json:"baseline_physical_command_executions"`
-	BaselinePhysicalTestExecutions    int `json:"baseline_physical_test_executions"`
-	ReusePhysicalCommandExecutions    int `json:"reuse_physical_command_executions"`
-	ReusePhysicalTestExecutions       int `json:"reuse_physical_test_executions"`
-	PriorReceiptsValid                int `json:"prior_receipts_valid"`
+	RequestMode                       string   `json:"request_mode"`
+	Requests                          int      `json:"requests"`
+	Discovered                        int      `json:"discovered"`
+	Executed                          int      `json:"executed"`
+	Reused                            int      `json:"reused"`
+	Skipped                           int      `json:"skipped"`
+	PriorCandidates                   int      `json:"prior_candidates"`
+	Invalidated                       int      `json:"invalidated"`
+	Decision                          string   `json:"decision"`
+	Reason                            string   `json:"reason"`
+	SourceDigest                      string   `json:"source_digest"`
+	FixtureDigest                     string   `json:"fixture_digest"`
+	ArgumentDigest                    string   `json:"argument_digest"`
+	EnvironmentDigest                 string   `json:"environment_allowlist_digest"`
+	ReleaseDigest                     string   `json:"release_digest"`
+	ToolchainDigest                   string   `json:"observer_toolchain_digest"`
+	DependencyGraphDigest             string   `json:"dependency_graph_digest"`
+	ExpectedResultDigest              string   `json:"expected_result_digest"`
+	PriorReceiptDigest                string   `json:"prior_receipt_digest"`
+	PriorReceiptFileDigest            string   `json:"prior_receipt_file_digest"`
+	PriorArtifactManifestDigest       string   `json:"prior_artifact_manifest_digest"`
+	BaselinePhysicalCommandExecutions int      `json:"baseline_physical_command_executions"`
+	BaselinePhysicalTestExecutions    int      `json:"baseline_physical_test_executions"`
+	ReusePhysicalCommandExecutions    int      `json:"reuse_physical_command_executions"`
+	ReusePhysicalTestExecutions       int      `json:"reuse_physical_test_executions"`
+	PriorReceiptsValid                int      `json:"prior_receipts_valid"`
 	ReusedArtifactFiles               []string `json:"reused_artifact_files"`
 	DecisionWallMS                    int      `json:"decision_wall_ms"`
 	DecisionPeakRSSKiB                int      `json:"decision_peak_rss_kib"`
@@ -207,5 +207,5 @@ type Observation struct {
 	ReleaseBinaryBuilds      int                `json:"release_binary_builds"`
 	ReleaseBinaryBuildReason string             `json:"release_binary_build_reason"`
 	HumanReportReady         bool               `json:"human_report_ready"`
-	PriorReceipt             *PriorReceipt     `json:"prior_receipt,omitempty"`
+	PriorReceipt             *PriorReceipt      `json:"prior_receipt,omitempty"`
 }
