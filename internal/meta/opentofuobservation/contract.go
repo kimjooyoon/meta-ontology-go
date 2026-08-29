@@ -3,22 +3,22 @@ package opentofuobservation
 import "fmt"
 
 const (
-	ContractSchema    = "gooo/opentofu-observation-contract/v1"
-	ObservationSchema = "gooo/opentofu-observation/v1"
-	ReportSchema      = "gooo/opentofu-observation-report/v1"
-	MetaOperation     = "observe-released-opentofu-cli"
-	ExpectedReleaseID = "opentofu-v1.12.6"
-	ExpectedAssetURL  = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
-	ExpectedAssetSHA  = "sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
-	ExpectedAssetSize = 34646566
-	ExpectedSumsSHA   = "sha256:6988e0cb8f4e9ebfa3b0999e44841549741b22d9b38873cb5b89074f1cddcb1c"
-	ExpectedGo        = "go1.27.0"
-	DecisionPass      = "PASS"
-	DecisionUnknown   = "UNKNOWN"
-	DecisionRefuted   = "REFUTED"
+	ContractSchema     = "gooo/opentofu-observation-contract/v1"
+	ObservationSchema  = "gooo/opentofu-observation/v1"
+	ReportSchema       = "gooo/opentofu-observation-report/v1"
+	MetaOperation      = "observe-released-opentofu-cli"
+	ExpectedReleaseID  = "opentofu-v1.12.6"
+	ExpectedAssetURL   = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
+	ExpectedAssetSHA   = "sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
+	ExpectedAssetSize  = 34646566
+	ExpectedSumsSHA    = "sha256:6988e0cb8f4e9ebfa3b0999e44841549741b22d9b38873cb5b89074f1cddcb1c"
+	ExpectedGo         = "go1.27.0"
+	DecisionPass       = "PASS"
+	DecisionUnknown    = "UNKNOWN"
+	DecisionRefuted    = "REFUTED"
 	DecisionFailClosed = "FAIL_CLOSED"
-	ResolutionExact   = "EXACT"
-	ResolutionLower   = "LOWER_RESOLUTION"
+	ResolutionExact    = "EXACT"
+	ResolutionLower    = "LOWER_RESOLUTION"
 )
 
 type CellSpec struct {

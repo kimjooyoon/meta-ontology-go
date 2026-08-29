@@ -31,10 +31,25 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 
 func baseReport(contract Contract, observation Observation) Report {
 	return Report{Schema: ReportSchema, ContractID: contract.ID, SubjectSHA: observation.SubjectSHA,
-		MetaOperation: MetaOperation, UserPaths: observation.UserPaths, Release: observation.Release, Executions: observation.Executions,
+		MetaOperation: MetaOperation, UserPaths: observation.UserPaths, Release: observation.Release,
+		FixtureDigest: observation.FixtureDigest, FixtureFiles: observation.FixtureFiles,
+		FixturePhysicalLines: observation.FixturePhysicalLines, Executions: observation.Executions,
 		Reuse: observation.Reuse, Runtime: observation.Runtime, Inventory: observation.Inventory,
+		CellEvidenceProjections: copyEvidenceDigests(observation.CellEvidenceProjections),
+		CellEvidenceDigests: copyEvidenceDigests(observation.CellEvidenceDigests),
 		Graph: observation.Graph, RepositoryWrites: observation.RepositoryWrites,
-		LocalTestExecutions: observation.LocalTestExecutions, PromotionAuthorized: false}
+		LocalTestExecutions: observation.LocalTestExecutions, ReleaseBinaryBuilds: observation.ReleaseBinaryBuilds,
+		ReleaseBinaryBuildReason: observation.ReleaseBinaryBuildReason, ObserverGoVersion: observation.ObserverGoVersion,
+		ObserverGOVERSION: observation.ObserverGOVERSION, ObserverToolchainDigest: observation.ObserverToolchainDigest,
+		HumanReportReady: observation.HumanReportReady, PromotionAuthorized: false}
+}
+
+func copyEvidenceDigests(source map[string]string) map[string]string {
+	copy := make(map[string]string, len(source))
+	for key, value := range source {
+		copy[key] = value
+	}
+	return copy
 }
 
 func failUnknown(report Report, stage, step, reason, class, next string, blocked []string, cause error) (Report, error) {
@@ -111,33 +126,63 @@ func evaluateCells(observation Observation) []CellResult {
 		result = append(result, CellResult{ID: spec.ID, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
 			Indicator: spec.Indicator, Producer: "opentofuobservation.Evaluate", Consumer: "opentofu-released-cli-verifier",
 			Decision: decision, State: state, Observed: value.observed, Expected: value.expected, Reason: value.reason,
-			EvidenceDigest: observation.FixtureDigest})
+			EvidenceDigest: observation.CellEvidenceDigests[spec.ID]})
 	}
 	return result
 }
 
-type cellValue struct { observed, expected int; ok bool; reason string }
+type cellValue struct {
+	observed, expected int
+	ok                 bool
+	reason            string
+}
 
-func boolInt(value bool) int { if value { return 1 }; return 0 }
+func boolInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
 
 func runtimeReady(observation Observation) int {
-	if err := validateRuntime(observation); err != nil { return 0 }
+	if err := validateRuntime(observation); err != nil {
+		return 0
+	}
 	return 1
 }
 
-func positiveRSS(observation Observation) int { return boolInt(observation.Runtime.MaxPeakRSSKiB > 0) }
+func positiveRSS(observation Observation) int {
+	return boolInt(observation.Runtime.MaxPeakRSSKiB > 0)
+}
 
-func reuseReady(observation Observation) bool { return validateReuse(observation) == nil }
+func reuseReady(observation Observation) bool {
+	return validateReuse(observation) == nil
+}
 
 func summarize(cells []CellResult, observation Observation) Summary {
 	summary := Summary{CellsTotal: len(cells), ThreePaths: len(observation.UserPaths), Executions: len(observation.Executions), RepositoryWrites: observation.RepositoryWrites, LocalTests: observation.LocalTestExecutions}
 	for _, cell := range cells {
-		if cell.State == "CLOSED" { summary.ClosedCells++ }
-		if cell.Decision == DecisionUnknown { summary.UnknownCells++ }
-		if cell.Decision == DecisionRefuted { summary.RefutedCells++ }
-		switch cell.ProofChoice { case "FOUNDATION": summary.FoundationClosed++; case "COHERENCE": summary.CoherenceClosed++; case "REGRESSION": summary.RegressionClosed++ }
+		if cell.State == "CLOSED" {
+			summary.ClosedCells++
+			switch cell.ProofChoice {
+			case "FOUNDATION":
+				summary.FoundationClosed++
+			case "COHERENCE":
+				summary.CoherenceClosed++
+			case "REGRESSION":
+				summary.RegressionClosed++
+			}
+		}
+		if cell.Decision == DecisionUnknown {
+			summary.UnknownCells++
+		}
+		if cell.Decision == DecisionRefuted {
+			summary.RefutedCells++
+		}
 	}
 	summary.OpenCells = summary.CellsTotal - summary.ClosedCells - summary.UnknownCells - summary.RefutedCells
-	if len(observation.Executions) == 2 && observation.Executions[0].PlanJSONDigest == observation.Executions[1].PlanJSONDigest && observation.Executions[0].TestEventDigest == observation.Executions[1].TestEventDigest { summary.ReplayMatches = 1 }
+	if len(observation.Executions) == 2 && observation.Executions[0].PlanJSONDigest == observation.Executions[1].PlanJSONDigest && observation.Executions[0].TestEventDigest == observation.Executions[1].TestEventDigest {
+		summary.ReplayMatches = 1
+	}
 	return summary
 }

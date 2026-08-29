@@ -17,9 +17,22 @@ func TestFixedCounterexamplesHaveTypedUnknowns(t *testing.T) {
 }
 
 func TestFixedCellsHaveExactProofAndIndicatorDenominators(t *testing.T) {
-	if len(fixedCells) != 12 { t.Fatal("cell denominator drift") }
+	if len(fixedCells) != 12 {
+		t.Fatal("cell denominator drift")
+	}
 	proofs, indicators := map[string]int{}, map[string]int{}
-	for _, cell := range fixedCells { proofs[cell.ProofChoice]++; indicators[cell.Indicator]++ }
-	for _, value := range []string{"FOUNDATION", "COHERENCE", "REGRESSION"} { if proofs[value] != 4 { t.Fatalf("proof %s=%d", value, proofs[value]) } }
-	for _, value := range []string{"DRIVER", "OUTCOME", "GUARDRAIL"} { if indicators[value] != 4 { t.Fatalf("indicator %s=%d", value, indicators[value]) } }
+	for _, cell := range fixedCells {
+		proofs[cell.ProofChoice]++
+		indicators[cell.Indicator]++
+	}
+	for _, value := range []string{"FOUNDATION", "COHERENCE", "REGRESSION"} {
+		if proofs[value] != 4 {
+			t.Fatalf("proof %s=%d", value, proofs[value])
+		}
+	}
+	for _, value := range []string{"DRIVER", "OUTCOME", "GUARDRAIL"} {
+		if indicators[value] != 4 {
+			t.Fatalf("indicator %s=%d", value, indicators[value])
+		}
+	}
 }
