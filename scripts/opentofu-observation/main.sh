@@ -99,33 +99,35 @@ test "$input_lines" -gt 0
 
 init_descriptor='["tofu","init","-backend=false"]'
 plan_descriptor='["tofu","plan","-refresh=false","-input=false","-out=plan.bin","-json"]'
-show_descriptor='["tofu","show","-json","plan.bin"]'
-test_descriptor='["tofu","test","-json","-no-color","-test-directory","tests"]'
+show_descriptor='["tofu","show","-json","-plan=plan.bin"]'
+test_descriptor='["tofu","test","-json-into=test-events.jsonl","-no-color","-test-directory","tests"]'
 
 run_once() {
   local number="$1" directory="$work/run-$1"; shift 2
   cp -R "$fixture" "$directory"
+  printf 'observation_stage=fixture-run-%s\n' "$number"
   run_timed "tofu-init" "fixture-run-$number" "$directory" "$directory/init.stdout" "$directory/init.stderr" "$directory/init.json" "$init_descriptor" "$tofu" init -backend=false
   run_timed "tofu-plan" "fixture-run-$number" "$directory" "$directory/plan.stdout" "$directory/plan.stderr" "$directory/plan.json" "$plan_descriptor" "$tofu" plan -refresh=false -input=false -out=plan.bin -json
-  run_timed "tofu-show" "fixture-run-$number" "$directory" "$directory/show.stdout" "$directory/show.stderr" "$directory/show.json" "$show_descriptor" "$tofu" show -json plan.bin
-  run_timed "tofu-test" "fixture-run-$number" "$directory" "$directory/test.stdout" "$directory/test.stderr" "$directory/test.json" "$test_descriptor" "$tofu" test -json -no-color -test-directory tests
+  run_timed "tofu-show" "fixture-run-$number" "$directory" "$directory/show.stdout" "$directory/show.stderr" "$directory/show.json" "$show_descriptor" "$tofu" show -json -plan=plan.bin
+  run_timed "tofu-test" "fixture-run-$number" "$directory" "$directory/test.stdout" "$directory/test.stderr" "$directory/test.json" "$test_descriptor" "$tofu" test -json-into=test-events.jsonl -no-color -test-directory tests
   for receipt in init plan show test; do jq -e '.exit_code == 0' "$directory/$receipt.json"; done
   jq -e 'type == "object" and (.format_version | type) == "string" and has("planned_values")' "$directory/show.stdout"
+  test -s "$directory/test-events.jsonl"
   : > "$directory/test.normalized"
   while IFS= read -r line; do
     jq -c 'if type == "object" then del(."@timestamp",.timestamp,.elapsed_seconds) else error end' <<<"$line" >> "$directory/test.normalized"
-  done < "$directory/test.stdout"
+  done < "$directory/test-events.jsonl"
   sort "$directory/test.normalized" -o "$directory/test.normalized"
   test -s "$directory/test.normalized"
   jq -n --argjson index "$number" --arg fixture "$fixture_digest" \
     --arg plan "$(digest "$directory/show.stdout")" --argjson plan_bytes "$(wc -c <"$directory/show.stdout" | tr -d ' ')" \
     --argjson plan_valid true --arg test_events "$(digest "$directory/test.normalized")" \
-    --arg test_raw "$(digest "$directory/test.stdout")" --argjson test_count "$(wc -l <"$directory/test.normalized" | tr -d ' ')" \
+    --arg test_raw "$(digest "$directory/test-events.jsonl")" --argjson test_count "$(wc -l <"$directory/test.normalized" | tr -d ' ')" \
     --argjson test_valid true --slurpfile init "$directory/init.json" --slurpfile plan_command "$directory/plan.json" \
     --slurpfile show "$directory/show.json" --slurpfile test "$directory/test.json" \
     '{index:$index,fixture_digest:$fixture,plan_json_digest:$plan,plan_json_bytes:$plan_bytes,plan_schema_valid:$plan_valid,test_event_digest:$test_events,test_raw_digest:$test_raw,test_event_count:$test_count,test_events_valid:$test_valid,commands:[$init[0],$plan_command[0],$show[0],$test[0]]}' > "$directory/run.json"
   cp "$directory/show.stdout" "$out/evidence/plan-$number.json"
-  cp "$directory/test.stdout" "$out/evidence/test-$number.ndjson"
+  cp "$directory/test-events.jsonl" "$out/evidence/test-$number.ndjson"
 }
 
 run_once 1
