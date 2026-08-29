@@ -2,6 +2,7 @@ package metricprogram_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"testing"
 
