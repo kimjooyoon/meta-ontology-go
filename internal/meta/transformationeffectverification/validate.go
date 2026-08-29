@@ -108,7 +108,7 @@ func actionBinding(action generation.Action) generation.Binding {
 		IndependenceGroupID: action.IndependenceGroupID, ProofChoice: action.ProofChoice,
 		Executor: action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
-		ReceiptRequired: action.ReceiptRequired, Priority: action.Priority,
+		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,
 	}
 }
 
@@ -189,7 +189,6 @@ func validateLedger(plan generation.Plan, ledger ledger) error {
 	}
 	return nil
 }
-
 
 func validateEffectEntry(effect effect, action generation.Action) error {
 	if effect.MetricID != string(action.MetricID) || effect.Subject != action.Subject ||

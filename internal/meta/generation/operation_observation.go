@@ -392,10 +392,10 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 			HeadSHA: evidence.HeadSHA, OperationID: evidence.OperationID,
 			ContractEvidenceDigest: evidence.ContractEvidenceDigest,
 			InstanceEvidenceDigest: evidence.InstanceEvidenceDigest,
-			EvidenceOrigin: evidence.EvidenceOrigin, SourceReceiptDigest: evidence.SourceReceiptDigest,
-			Indicators:             receipt.Indicators,
-			Executor:               replayProcess(evidence.ExecutorObservation),
-			Evaluator:              replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
+			EvidenceOrigin:         evidence.EvidenceOrigin, SourceReceiptDigest: evidence.SourceReceiptDigest,
+			Indicators: receipt.Indicators,
+			Executor:   replayProcess(evidence.ExecutorObservation),
+			Evaluator:  replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
 		})
 	}
 	failures := make([]replayFailureProjection, 0, len(bundle.Failures))
