@@ -342,7 +342,7 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 		evidence := receipt.InstanceEvidence
 		var verifier *replayProcessProjection
 		if evidence.VerifierObservation != nil {
-			value := replayProcess(evidence.VerifierObservation)
+			value := replayProcess(*evidence.VerifierObservation)
 			verifier = &value
 		}
 		receipts = append(receipts, replayReceiptProjection{
