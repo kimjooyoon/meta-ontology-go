@@ -37,24 +37,24 @@ type OperationInstanceEvidence struct {
 }
 
 type ObservationFailureEvidence struct {
-	IndicatorID   string `json:"indicator_id"`
-	Observed      int    `json:"observed"`
-	Expected      int    `json:"expected"`
-	Decision      string `json:"decision"`
+	IndicatorID    string `json:"indicator_id"`
+	Observed       int    `json:"observed"`
+	Expected       int    `json:"expected"`
+	Decision       string `json:"decision"`
 	Counterexample string `json:"counterexample"`
 }
 
 type ObservationFailure struct {
-	ActionIndicatorID string                         `json:"action_indicator_id"`
-	Decision          string                         `json:"decision"`
-	Stage             string                         `json:"stage"`
-	Step              string                         `json:"step"`
-	Reason            string                         `json:"reason"`
-	UnknownClass      string                         `json:"unknown_class,omitempty"`
-	NextOperation     string                         `json:"next_operation"`
-	BlockedBy         []string                       `json:"blocked_by"`
-	FailureEvidence   []ObservationFailureEvidence  `json:"failure_evidence,omitempty"`
-	Executor          ProcessObservation             `json:"executor_observation"`
+	ActionIndicatorID string                       `json:"action_indicator_id"`
+	Decision          string                       `json:"decision"`
+	Stage             string                       `json:"stage"`
+	Step              string                       `json:"step"`
+	Reason            string                       `json:"reason"`
+	UnknownClass      string                       `json:"unknown_class,omitempty"`
+	NextOperation     string                       `json:"next_operation"`
+	BlockedBy         []string                     `json:"blocked_by"`
+	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
+	Executor          ProcessObservation           `json:"executor_observation"`
 }
 
 type OperationReceipt struct {

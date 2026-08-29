@@ -30,12 +30,12 @@ type Proof struct {
 }
 
 type IndicatorCounterexample struct {
-	IndicatorID   string   `json:"indicator_id"`
-	RuleID        string   `json:"rule_id"`
-	Observed      int      `json:"observed"`
-	Expected      int      `json:"expected"`
-	Decision      Decision `json:"decision"`
-	EvidenceDigest string  `json:"evidence_digest"`
+	IndicatorID    string   `json:"indicator_id"`
+	RuleID         string   `json:"rule_id"`
+	Observed       int      `json:"observed"`
+	Expected       int      `json:"expected"`
+	Decision       Decision `json:"decision"`
+	EvidenceDigest string   `json:"evidence_digest"`
 }
 
 type Report struct {
