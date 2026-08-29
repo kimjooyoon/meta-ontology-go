@@ -93,9 +93,9 @@ func capacityCounterexamples(subject inputSubject, atoms []declarationAtom) []pl
 func indicatorCounts(subjects []planSubject) map[string]int {
 	counts := map[string]int{
 		"projectable": 0, "density-rewrite": 0, "static-density-rewrite": 0,
-		"large-density-rewrite":      0,
-		"no-movable-declaration":     0,
-		"fixed-declaration-capacity": 0, "movable-declaration-capacity": 0,
+		"large-density-rewrite":             0,
+		"no-movable-declaration":            0,
+		"fixed-declaration-capacity":        0, "movable-declaration-capacity": 0,
 		"declaration-capacity-contradiction": 0, "unclassified": 0,
 	}
 	for _, subject := range subjects {
