@@ -56,13 +56,6 @@ jobs:
         run: |
           go list tool
           go build tool
-      - name: Require formatted Go
-        run: |
-          unformatted="$(gofmt -l .)"
-          if [ -n "$unformatted" ]; then
-            printf 'gofmt required:\n%s\n' "$unformatted"
-            exit 1
-          fi
       - name: Materialize exact Go format remediation evidence
         if: ${{ always() }}
         env:
@@ -83,7 +76,7 @@ jobs:
           : > "$patch_b"
           : > "$patch_a_fixed"
           : > "$receipt"
-          git status --porcelain=v1 --untracked-files=all > "$source_before"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_before"
           gofmt -l . | sort > "$paths"
           path_count="$(wc -l < "$paths" | tr -d '[:space:]')"
           candidate_a="$(mktemp -d "$RUNNER_TEMP/go-format-candidate-a.XXXXXX")"
@@ -92,9 +85,9 @@ jobs:
           materialize_candidate() {
             candidate="$1"
             patch="$2"
-            git init --quiet "$candidate"
-            git -C "$candidate" config user.email ci-format@example.invalid
-            git -C "$candidate" config user.name ci-format-remediation
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git init --quiet "$candidate"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.email ci-format@example.invalid
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.name ci-format-remediation
             while IFS= read -r path; do
               if [ -z "$path" ]; then
                 continue
@@ -109,8 +102,8 @@ jobs:
               cp -- "$path" "$candidate/$path"
             done < "$paths"
             if [ "$path_count" -gt 0 ]; then
-              git -C "$candidate" add -- .
-              git -C "$candidate" commit --quiet -m baseline
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" add -- .
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" commit --quiet -m baseline
               (
                 cd "$candidate"
                 while IFS= read -r path; do
@@ -120,7 +113,7 @@ jobs:
                 done < "$paths"
               )
             fi
-            git -C "$candidate" diff --binary -- . > "$patch"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" diff --binary -- . > "$patch"
           }
 
           materialize_candidate "$candidate_a" "$patch_a"
@@ -132,7 +125,7 @@ jobs:
                 gofmt -w "./$path"
               fi
             done < "$paths"
-            git diff --binary -- .
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git diff --binary -- .
           ) > "$patch_a_fixed"
           replay_equal=false
           fixed_point=false
@@ -142,7 +135,7 @@ jobs:
           if cmp -s "$patch_a" "$patch_a_fixed"; then
             fixed_point=true
           fi
-          git status --porcelain=v1 --untracked-files=all > "$source_after"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_after"
           source_repository_writes=0
           if ! cmp -s "$source_before" "$source_after"; then
             source_repository_writes=1
@@ -168,12 +161,32 @@ jobs:
             --arg candidate_workspace_writes "$path_count" \
             '{schema:$schema,head_sha:$head_sha,toolchain:$toolchain,go_version:$go_version,go_env_goversion:$go_env_goversion,sorted_paths:$paths,path_count:($path_count|tonumber),patch_sha256:$patch_sha256,replay_patch_sha256:$replay_patch_sha256,patch_bytes:($patch_bytes|tonumber),replay_equal:$replay_equal,fixed_point:$fixed_point,source_repository_writes:($source_repository_writes|tonumber),candidate_workspace_writes:($candidate_workspace_writes|tonumber)}' \
             > "$receipt"
-          echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
-          if [ "$source_repository_writes" -ne 0 ] || [ "$replay_equal" != true ] || [ "$fixed_point" != true ] || [ "$path_count" -ne 0 ]; then
-            exit 1
+          test -s "$receipt"
+          if [ "$path_count" -gt 0 ]; then
+            test -s "$patch_a"
+            test -s "$patch_b"
+            test -s "$patch_a_fixed"
+          else
+            test ! -s "$patch_a"
+            test ! -s "$patch_b"
+            test ! -s "$patch_a_fixed"
           fi
+          test "$replay_equal" = true
+          test "$fixed_point" = true
+          test "$source_repository_writes" -eq 0
+          jq -e \
+            --arg schema gooo/go-format-remediation/v1 \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            --arg toolchain go1.27.0 \
+            --argjson paths "$paths_json" \
+            --arg path_count "$path_count" \
+            --arg patch_sha256 "$patch_sha256" \
+            --arg replay_patch_sha256 "$replay_patch_sha256" \
+            --arg patch_bytes "$patch_bytes" \
+            '.schema == $schema and .head_sha == $head_sha and .toolchain == $toolchain and .sorted_paths == $paths and .path_count == ($path_count|tonumber) and .patch_sha256 == $patch_sha256 and .replay_patch_sha256 == $replay_patch_sha256 and .patch_bytes == ($patch_bytes|tonumber) and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and .candidate_workspace_writes == ($path_count|tonumber)' \
+            "$receipt" > /dev/null
+          echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
       - name: Upload Go format remediation artifact
-        if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
           name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
@@ -184,6 +197,31 @@ jobs:
             ${{ runner.temp }}/go-format-remediation/gofmt-fixed-point.patch
             ${{ runner.temp }}/go-format-remediation/receipt.json
           if-no-files-found: error
+      - name: Require formatted Go
+        if: ${{ always() }}
+        env:
+          EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          remediation_root="$RUNNER_TEMP/go-format-remediation"
+          paths="$remediation_root/gofmt-paths.txt"
+          patch_a="$remediation_root/gofmt.patch"
+          patch_b="$remediation_root/gofmt-replay.patch"
+          patch_a_fixed="$remediation_root/gofmt-fixed-point.patch"
+          receipt="$remediation_root/receipt.json"
+          test -s "$receipt"
+          path_count="$(jq -r '.path_count' "$receipt")"
+          test "$path_count" -ge 0
+          jq -e \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            '.head_sha == $head_sha and .toolchain == "go1.27.0" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            "$receipt" > /dev/null
+          cmp -s "$patch_a" "$patch_b"
+          cmp -s "$patch_a" "$patch_a_fixed"
+          if [ "$path_count" -ne 0 ]; then
+            echo "gofmt required for $path_count paths"
+            exit 1
+          fi
 
   vet:
     name: go vet
