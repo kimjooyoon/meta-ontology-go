@@ -134,8 +134,8 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 		report extractorReport
 	}{
 		{"duplicate-subject", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
-			validExtractionSubject("a.go"),
-			validExtractionSubject("a.go"),
+			validExtractionSubjectFixture("a.go"),
+			validExtractionSubjectFixture("a.go"),
 		}, Indicators: validIndicators}},
 		{"duplicate-changed-file", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
 			{Logical: "a.go", State: "COMMITTED_APPLIED", Before: 90, After: 70, Files: []string{"same.go", "a.go"}, Consumer: "function-extractor", Operation: "extract-function", Operations: []string{"extract-function"}, Proof: "coherent-system"},
@@ -143,24 +143,24 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 		}, Indicators: validIndicators}},
 		{"duplicate-created-file", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
 			{Logical: "a.go", State: "COMMITTED_APPLIED", Before: 90, After: 70, Files: []string{"a.go", "helper.go"}, CreatedFiles: []string{"helper.go", "helper.go"}, Consumer: "function-extractor", Operation: "extract-function", Operations: []string{"extract-function"}, Proof: "coherent-system"},
-			validExtractionSubject("b.go"),
+			validExtractionSubjectFixture("b.go"),
 		}, Indicators: validIndicators}},
 		{"invalid-state", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.State = "UNKNOWN"
 				return subject
 			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"nonpositive-lines", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			func() extractorSubject { subject := validExtractionSubject("a.go"); subject.Before = 0; return subject }(),
+			func() extractorSubject { subject := validExtractionSubjectFixture("a.go"); subject.Before = 0; return subject }(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"after-zero", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			func() extractorSubject { subject := validExtractionSubject("a.go"); subject.After = 0; return subject }(),
+			func() extractorSubject { subject := validExtractionSubjectFixture("a.go"); subject.After = 0; return subject }(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"no-line-reduction", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.Before = 75
 				subject.After = 75
 				return subject
@@ -168,28 +168,28 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"logical-not-listed", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.Files = []string{"b.go"}
 				return subject
 			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"created-not-subset", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.CreatedFiles = []string{"helper.go"}
 				return subject
 			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"duplicate-operations", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.Operations = []string{"extract-function", "extract-function"}
 				return subject
 			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"unsupported-proof", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
-				subject := validExtractionSubject("a.go")
+				subject := validExtractionSubjectFixture("a.go")
 				subject.Proof = "unsupported-proof"
 				return subject
 			}(),
@@ -202,7 +202,7 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 	}
 }
 
-func validExtractionSubject(logical string) extractorSubject {
+func validExtractionSubjectFixture(logical string) extractorSubject {
 	return extractorSubject{
 		Logical: logical, State: "COMMITTED_APPLIED", Before: 90, After: 70,
 		Files: []string{logical}, Consumer: "function-extractor", Operation: "extract-function",
@@ -213,7 +213,7 @@ func validExtractionSubject(logical string) extractorSubject {
 func TestExtractorReportAcceptsExactSubjectContract(t *testing.T) {
 	report := extractorReport{
 		StagedSubjects: 1,
-		Subjects:       []extractorSubject{validExtractionSubject("a.go")},
+		Subjects:       []extractorSubject{validExtractionSubjectFixture("a.go")},
 		Indicators:     extractionTestIndicatorsWithValues(1, 1, 1, 0, 0),
 	}
 	if validateExtractorReport(report) {
@@ -225,7 +225,7 @@ func TestAdjudicateStagedRefutedFailureKeepsAppliedZero(t *testing.T) {
 	report := extractorReport{
 		StagedSubjects: 1,
 		Subjects: []extractorSubject{func() extractorSubject {
-			subject := validExtractionSubject("staged.go")
+			subject := validExtractionSubjectFixture("staged.go")
 			subject.State = "STAGED_NOT_COMMITTED"
 			return subject
 		}()},
