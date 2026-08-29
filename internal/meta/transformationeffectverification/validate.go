@@ -338,12 +338,12 @@ func failureSubjectBinding(failure generation.ObservationFailure, action generat
 
 func sameSubjectIdentity(blocker, subject string) bool {
 	const marker = "#func:"
-	markerIndex := strings.Index(blocker, marker)
-	if markerIndex < 0 {
+	before, after, ok := strings.Cut(blocker, marker)
+	if !ok {
 		return false
 	}
-	blockerPath := blocker[:markerIndex]
-	blockerName := blocker[markerIndex+len(marker):]
+	blockerPath := before
+	blockerName := after
 	separator := strings.LastIndex(subject, ":")
 	if separator < 0 {
 		return blocker == subject
