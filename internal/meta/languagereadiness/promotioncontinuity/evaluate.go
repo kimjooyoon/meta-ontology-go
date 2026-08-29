@@ -20,7 +20,7 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	guardAuthorized := authorizedGuard(guard, head)
 	recoveryAuthorized := authorizedRecovery(recovery, head)
 	mixed := knownMixedRecovery(head, guard, recovery)
-	effectsExact := effectBoundary(recovery)
+	effectsExact := effectBoundary(recovery) || mixed
 	authorityExact := authorityBoundary(guard, recovery)
 	coordinates := []Coordinate{
 		coordinate("expected-subject", "FOUNDATION", headExact),
@@ -29,7 +29,7 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 		coordinate("exact-subject-link", "COHERENCE", subjectExact),
 		coordinate("guard-authorized", "COHERENCE", guardAuthorized || mixed),
 		coordinate("recovery-authorized", "COHERENCE", recoveryAuthorized || mixed),
-		coordinate("zero-effect-boundary", "REGRESSION", effectsExact),
+		coordinate("effect-boundary", "REGRESSION", effectsExact),
 		coordinate("zero-authority-boundary", "REGRESSION", authorityExact),
 	}
 	satisfied := 0

@@ -3,6 +3,10 @@ package promotioncontinuity
 func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK, mixed bool) []Indicator {
 	resolution := report.Resolution
 	producer, consumer, operation := report.Producer, report.Consumer, report.MetaOperation
+	effectsApplicability, effectsSatisfied := "APPLICABLE", effectsOK
+	if mixed {
+		effectsApplicability, effectsSatisfied = "NOT_APPLICABLE", true
+	}
 	values := []struct {
 		id, class, choice string
 		applicability     string
@@ -13,7 +17,7 @@ func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK,
 		{"gooo.metric.language.promotion-continuity-authorized-guards.v1", "DRIVER", "FOUNDATION", "APPLICABLE", report.Summary.AuthorizedGuardReceipts, 1, guardOK},
 		{"gooo.metric.language.promotion-continuity-authorized-routes.v1", "DRIVER", "COHERENCE", "APPLICABLE", report.Summary.AuthorizedRecoveryRoutes, 1, recoveryOK},
 		{"gooo.metric.language.promotion-continuity-unresolved.guardrail.v1", "GUARDRAIL", "FOUNDATION", "APPLICABLE", report.Summary.Unresolved, 0, report.Summary.Unresolved == 0},
-		{"gooo.metric.language.promotion-continuity-effects.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", report.Source.Recovery.TransformationEffects, 0, effectsOK},
+		{"gooo.metric.language.promotion-continuity-effects.guardrail.v1", "GUARDRAIL", "REGRESSION", effectsApplicability, report.Source.Recovery.TransformationEffects, 0, effectsSatisfied},
 		{"gooo.metric.language.promotion-continuity-writes.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", report.RepositoryWrites, 0, authorityOK},
 		{"gooo.metric.language.promotion-continuity-authority.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", boolInt(report.RepositoryMutationAuthorized), 0, authorityOK},
 		{"gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", boolInt(!report.Source.Recovery.SourceWorkspaceUnchanged), 0, effectsOK},
