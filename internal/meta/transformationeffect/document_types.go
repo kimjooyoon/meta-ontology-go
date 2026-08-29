@@ -18,6 +18,8 @@ type Effect struct {
 	Subject            string                     `json:"subject"`
 	SubjectKind        string                     `json:"subject_kind"`
 	Operation          string                     `json:"operation"`
+	Activity           string                     `json:"activity"`
+	Output             string                     `json:"output"`
 	Executor           string                     `json:"executor"`
 	Evaluator          string                     `json:"evaluator"`
 	ProofChoice        string                     `json:"proof_choice"`
@@ -59,6 +61,9 @@ type Ledger struct {
 	GeneratedReceiptReportDigest string          `json:"generated_receipt_report_digest"`
 	InputProvenanceDigest        string          `json:"input_provenance_digest"`
 	ExecutedProvenanceDigest     string          `json:"executed_provenance_digest"`
+	SelectedPlanOperations       int             `json:"selected_plan_operations"`
+	BoundExecutorOperations      int             `json:"bound_executor_operations"`
+	UnboundExecutorOperations    int             `json:"unbound_executor_operations"`
 	Status                       string          `json:"status"`
 	Indicators                   []Indicator     `json:"indicators"`
 	SemanticDigest               string          `json:"semantic_digest"`

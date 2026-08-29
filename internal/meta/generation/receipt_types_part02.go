@@ -31,6 +31,8 @@ type OperationInstanceEvidence struct {
 	OperationID            string              `json:"operation_id"`
 	ContractEvidenceDigest string              `json:"contract_evidence_digest"`
 	InstanceEvidenceDigest string              `json:"instance_evidence_digest"`
+	EvidenceOrigin         string              `json:"evidence_origin,omitempty"`
+	SourceReceiptDigest    string              `json:"source_receipt_digest,omitempty"`
 	ExecutorObservation    ProcessObservation  `json:"executor_observation"`
 	EvaluatorObservation   ProcessObservation  `json:"evaluator_observation"`
 	ReplayComparisons      int                 `json:"replay_comparisons"`

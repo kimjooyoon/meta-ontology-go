@@ -88,6 +88,7 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 			evidence.OperationID == "" ||
 			!validEvidenceDigest(evidence.ContractEvidenceDigest) ||
 			!validEvidenceDigest(evidence.InstanceEvidenceDigest) ||
+			!validEvidenceOrigin(*evidence) ||
 			evidence.ReplayComparisons < 1 || !evidence.ReplayMatch ||
 			evidence.ExecutorObservation.ExitCode != 0 ||
 			evidence.EvaluatorObservation.ExitCode != 0 ||
@@ -222,6 +223,16 @@ func validProcessObservation(observation ProcessObservation) bool {
 		validEvidenceDigest(observation.StderrDigest)
 }
 
+const EvidenceOriginInputReceipt = "INPUT_RECEIPT"
+
+func validEvidenceOrigin(evidence OperationInstanceEvidence) bool {
+	if evidence.EvidenceOrigin == "" && evidence.SourceReceiptDigest == "" {
+		return true
+	}
+	return evidence.EvidenceOrigin == EvidenceOriginInputReceipt &&
+		validEvidenceDigest(evidence.SourceReceiptDigest)
+}
+
 func validCanonicalCommand(command []string) bool {
 	if len(command) == 0 {
 		return false
@@ -341,6 +352,8 @@ type replayReceiptProjection struct {
 	OperationID            string                   `json:"operation_id"`
 	ContractEvidenceDigest string                   `json:"contract_evidence_digest"`
 	InstanceEvidenceDigest string                   `json:"instance_evidence_digest"`
+	EvidenceOrigin         string                   `json:"evidence_origin,omitempty"`
+	SourceReceiptDigest    string                   `json:"source_receipt_digest,omitempty"`
 	Indicators             []IndicatorReceipt       `json:"indicators"`
 	Executor               replayProcessProjection  `json:"executor"`
 	Evaluator              replayProcessProjection  `json:"evaluator"`
@@ -379,9 +392,10 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 			HeadSHA: evidence.HeadSHA, OperationID: evidence.OperationID,
 			ContractEvidenceDigest: evidence.ContractEvidenceDigest,
 			InstanceEvidenceDigest: evidence.InstanceEvidenceDigest,
-			Indicators:             receipt.Indicators,
-			Executor:               replayProcess(evidence.ExecutorObservation),
-			Evaluator:              replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
+			EvidenceOrigin:         evidence.EvidenceOrigin, SourceReceiptDigest: evidence.SourceReceiptDigest,
+			Indicators: receipt.Indicators,
+			Executor:   replayProcess(evidence.ExecutorObservation),
+			Evaluator:  replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
 		})
 	}
 	failures := make([]replayFailureProjection, 0, len(bundle.Failures))
