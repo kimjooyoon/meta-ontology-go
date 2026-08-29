@@ -4,7 +4,7 @@ import "testing"
 
 func TestOpenTofuExactReuseScope(t *testing.T) {
 	paths, ok := BranchScope(opentofuExactReuseBranch)
-	if !ok || len(paths) != 6 {
+	if !ok || len(paths) != 13 {
 		t.Fatalf("exact reuse branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
