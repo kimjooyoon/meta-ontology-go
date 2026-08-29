@@ -4,6 +4,22 @@ import "errors"
 
 import "maps"
 
+var unknownReasonCatalog = map[string]Unknown{
+	"ASSET_CHECKSUM_EVIDENCE_UNAVAILABLE":   {Stage: "FOUNDATION", Step: "VERIFY_ASSET_CHECKSUM", Reason: "ASSET_CHECKSUM_EVIDENCE_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_RELEASE_CHECKSUM", BlockedBy: []string{}},
+	"RELEASE_IDENTITY_EVIDENCE_UNAVAILABLE": {Stage: "FOUNDATION", Step: "VERIFY_RELEASE_IDENTITY", Reason: "RELEASE_IDENTITY_EVIDENCE_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_RELEASE_IDENTITY", BlockedBy: []string{}},
+	"CLI_VERSION_JSON_UNAVAILABLE":          {Stage: "FOUNDATION", Step: "OBSERVE_CLI_VERSION", Reason: "CLI_VERSION_JSON_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "REEXECUTE_VERSION_COMMAND", BlockedBy: []string{}},
+	"CLI_VERSION_COMMAND_RECEIPT_MISSING":   {Stage: "FOUNDATION", Step: "READ_VERSION_RECEIPT", Reason: "CLI_VERSION_COMMAND_RECEIPT_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "REEXECUTE_VERSION_COMMAND", BlockedBy: []string{}},
+	"OBSERVER_GO_TOOLCHAIN_UNAVAILABLE":     {Stage: "FOUNDATION", Step: "READ_OBSERVER_TOOLCHAIN", Reason: "OBSERVER_GO_TOOLCHAIN_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OBSERVER_TOOLCHAIN", BlockedBy: []string{}},
+	"FIXTURE_INPUT_UNAVAILABLE":             {Stage: "FOUNDATION", Step: "READ_FIXTURE_INPUT", Reason: "FIXTURE_INPUT_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPENTOFU_FIXTURE", BlockedBy: []string{}},
+	"EXECUTION_RECEIPT_MISSING":             {Stage: "COHERENCE", Step: "READ_EXECUTION_RECEIPT", Reason: "EXECUTION_RECEIPT_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "REEXECUTE_OPENTOFU_COMMAND", BlockedBy: []string{}},
+	"EXECUTION_DIGEST_EVIDENCE_UNAVAILABLE": {Stage: "COHERENCE", Step: "READ_EXECUTION_DIGEST", Reason: "EXECUTION_DIGEST_EVIDENCE_UNAVAILABLE", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_EXECUTION_RECEIPT", BlockedBy: []string{}},
+	"OPENTOFU_JSON_EVIDENCE_INCOMPLETE":     {Stage: "COHERENCE", Step: "VALIDATE_OPENTOFU_JSON", Reason: "OPENTOFU_JSON_EVIDENCE_INCOMPLETE", UnknownClass: "DIRECT_MISSING", NextOperation: "RECAPTURE_OPENTOFU_JSON", BlockedBy: []string{}},
+	"COMMAND_RUNTIME_RECEIPT_MISSING":       {Stage: "COHERENCE", Step: "READ_COMMAND_RUNTIME", Reason: "COMMAND_RUNTIME_RECEIPT_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RECAPTURE_COMMAND_RECEIPTS", BlockedBy: []string{}},
+	"REUSE_ELIGIBILITY_EVIDENCE_MISSING":    {Stage: "REGRESSION", Step: "VALIDATE_REUSE_ELIGIBILITY", Reason: "REUSE_ELIGIBILITY_EVIDENCE_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_REUSE_DIGESTS", BlockedBy: []string{}},
+	"PRIOR_RECEIPT_MISSING":                 {Stage: "REUSE", Step: "READ_PRIOR_RECEIPT", Reason: "PRIOR_RECEIPT_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_PRIOR_RECEIPT", BlockedBy: []string{}},
+	"RUNTIME_OBSERVATION_MISSING":           {Stage: "COHERENCE", Step: "READ_RUNTIME_OBSERVATION", Reason: "RUNTIME_OBSERVATION_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RECAPTURE_RUNTIME_OBSERVATION", BlockedBy: []string{}},
+}
+
 func Evaluate(contract Contract, observation Observation) (Report, error) {
 	if err := ValidateContract(contract); err != nil {
 		return Report{}, err
@@ -19,7 +35,14 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 			report.GraphValidation = typed.GraphDiagnostic
 			return failClosed(report, typed.Reason)
 		}
-		return failUnknown(report, "OBSERVATION", "VALIDATE_INPUT", "OBSERVATION_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "RECAPTURE_OPENTOFU_OBSERVATION", nil, err)
+		if errors.As(err, &typed) && typed.Decision == DecisionUnknown {
+			context, ok := unknownReasonContext(typed.Reason)
+			if !ok {
+				return failClosed(report, "UNKNOWN_CAUSE_UNCATALOGED")
+			}
+			return failUnknown(report, context)
+		}
+		return failClosed(report, "UNKNOWN_CAUSE_UNCATALOGED")
 	}
 	report.Cells = evaluateCells(observation)
 	report.Summary = summarize(report.Cells, observation)
@@ -45,7 +68,7 @@ func baseReport(contract Contract, observation Observation) Report {
 		LocalTestExecutions: observation.LocalTestExecutions, ReleaseBinaryBuilds: observation.ReleaseBinaryBuilds,
 		ReleaseBinaryBuildReason: observation.ReleaseBinaryBuildReason, ObserverGoVersion: observation.ObserverGoVersion,
 		ObserverGOVERSION: observation.ObserverGOVERSION, ObserverToolchainDigest: observation.ObserverToolchainDigest,
-		HumanReportReady: observation.HumanReportReady, PromotionAuthorized: false}
+		HumanReportReady: observation.HumanReportReady, PromotionAuthorized: false, PriorReceipt: observation.PriorReceipt}
 }
 
 func copyEvidenceDigests(source map[string]string) map[string]string {
@@ -54,12 +77,19 @@ func copyEvidenceDigests(source map[string]string) map[string]string {
 	return copy
 }
 
-func failUnknown(report Report, stage, step, reason, class, next string, blocked []string, cause error) (Report, error) {
-	if blocked == nil {
-		blocked = []string{}
+func unknownReasonContext(reason string) (Unknown, bool) {
+	context, ok := unknownReasonCatalog[reason]
+	if !ok {
+		return Unknown{}, false
 	}
-	report.Decision, report.Resolution, report.Reason = DecisionUnknown, ResolutionLower, reason
-	report.Unknowns = []Unknown{{Stage: stage, Step: step, Reason: cause.Error(), UnknownClass: class, NextOperation: next, BlockedBy: blocked}}
+	context.BlockedBy = append([]string{}, context.BlockedBy...)
+	return context, true
+}
+
+func failUnknown(report Report, context Unknown) (Report, error) {
+	report.Decision, report.Resolution, report.Reason = DecisionUnknown, ResolutionLower, context.Reason
+	report.Unknowns = []Unknown{context}
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err
@@ -70,6 +100,7 @@ func failUnknown(report Report, stage, step, reason, class, next string, blocked
 
 func failRefuted(report Report, reason string) (Report, error) {
 	report.Decision, report.Resolution, report.Reason = DecisionRefuted, ResolutionExact, reason
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err
@@ -81,6 +112,7 @@ func failRefuted(report Report, reason string) (Report, error) {
 func failClosed(report Report, reason string) (Report, error) {
 	report.Decision, report.Resolution, report.Reason = DecisionFailClosed, ResolutionLower, reason
 	report.Unknowns = []Unknown{{Stage: "OBSERVATION", Step: "VALIDATE_INPUT", Reason: reason, UnknownClass: "MALFORMED_EVIDENCE", NextOperation: "RECAPTURE_OPENTOFU_OBSERVATION", BlockedBy: []string{}}}
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err

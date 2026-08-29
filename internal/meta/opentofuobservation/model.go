@@ -2,6 +2,7 @@ package opentofuobservation
 
 type CommandReceipt struct {
 	Name         string   `json:"name"`
+	Phase        string   `json:"phase"`
 	Command      []string `json:"command"`
 	CwdRole      string   `json:"cwd_role"`
 	ExitCode     int      `json:"exit_code"`
@@ -52,23 +53,44 @@ type ExecutionRun struct {
 }
 
 type ReuseAccounting struct {
-	Discovered            int    `json:"discovered"`
-	Executed              int    `json:"executed"`
-	Reused                int    `json:"reused"`
-	Skipped               int    `json:"skipped"`
-	PriorCandidates       int    `json:"prior_candidates"`
-	Invalidated           int    `json:"invalidated"`
-	Decision              string `json:"decision"`
-	Reason                string `json:"reason"`
-	SourceDigest          string `json:"source_digest"`
-	FixtureDigest         string `json:"fixture_digest"`
-	ArgumentDigest        string `json:"argument_digest"`
-	EnvironmentDigest     string `json:"environment_allowlist_digest"`
-	ReleaseDigest         string `json:"release_digest"`
-	ToolchainDigest       string `json:"observer_toolchain_digest"`
-	DependencyGraphDigest string `json:"dependency_graph_digest"`
-	ExpectedResultDigest  string `json:"expected_result_digest"`
-	PriorReceiptDigest    string `json:"prior_receipt_digest"`
+	RequestMode                       string   `json:"request_mode"`
+	Requests                          int      `json:"requests"`
+	Discovered                        int      `json:"discovered"`
+	Executed                          int      `json:"executed"`
+	Reused                            int      `json:"reused"`
+	Skipped                           int      `json:"skipped"`
+	PriorCandidates                   int      `json:"prior_candidates"`
+	Invalidated                       int      `json:"invalidated"`
+	Decision                          string   `json:"decision"`
+	Reason                            string   `json:"reason"`
+	SourceDigest                      string   `json:"source_digest"`
+	FixtureDigest                     string   `json:"fixture_digest"`
+	ArgumentDigest                    string   `json:"argument_digest"`
+	EnvironmentDigest                 string   `json:"environment_allowlist_digest"`
+	ReleaseDigest                     string   `json:"release_digest"`
+	ToolchainDigest                   string   `json:"observer_toolchain_digest"`
+	DependencyGraphDigest             string   `json:"dependency_graph_digest"`
+	ExpectedResultDigest              string   `json:"expected_result_digest"`
+	PriorReceiptDigest                string   `json:"prior_receipt_digest"`
+	PriorReceiptFileDigest            string   `json:"prior_receipt_file_digest"`
+	PriorArtifactManifestDigest       string   `json:"prior_artifact_manifest_digest"`
+	BaselinePhysicalCommandExecutions int      `json:"baseline_physical_command_executions"`
+	BaselinePhysicalTestExecutions    int      `json:"baseline_physical_test_executions"`
+	ReusePhysicalCommandExecutions    int      `json:"reuse_physical_command_executions"`
+	ReusePhysicalTestExecutions       int      `json:"reuse_physical_test_executions"`
+	PriorReceiptsValid                int      `json:"prior_receipts_valid"`
+	ReusedArtifactFiles               []string `json:"reused_artifact_files"`
+	DecisionWallMS                    int      `json:"decision_wall_ms"`
+	DecisionPeakRSSKiB                int      `json:"decision_peak_rss_kib"`
+	RequiresExecution                 bool     `json:"requires_execution"`
+}
+
+type PriorReceipt struct {
+	Report                 Report            `json:"report"`
+	ReceiptFileDigest      string            `json:"receipt_file_digest"`
+	ArtifactFiles          []string          `json:"artifact_files"`
+	ArtifactDigests        map[string]string `json:"artifact_digests"`
+	ArtifactManifestDigest string            `json:"artifact_manifest_digest"`
 }
 
 type RuntimeSummary struct {
@@ -88,9 +110,10 @@ type RuntimeSummary struct {
 }
 
 type Inventory struct {
-	InputRegularFiles   int `json:"input_regular_files"`
-	InputPhysicalLines  int `json:"input_physical_lines"`
-	OutputArtifactFiles int `json:"output_artifact_files"`
+	InputRegularFiles     int `json:"input_regular_files"`
+	InputPhysicalLines    int `json:"input_physical_lines"`
+	OutputArtifactFiles   int `json:"output_artifact_files"`
+	ReusableArtifactFiles int `json:"reusable_artifact_files"`
 }
 
 type GraphBinding struct {
@@ -186,4 +209,5 @@ type Observation struct {
 	ReleaseBinaryBuilds      int                `json:"release_binary_builds"`
 	ReleaseBinaryBuildReason string             `json:"release_binary_build_reason"`
 	HumanReportReady         bool               `json:"human_report_ready"`
+	PriorReceipt             *PriorReceipt      `json:"prior_receipt,omitempty"`
 }
