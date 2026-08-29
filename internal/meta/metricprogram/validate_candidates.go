@@ -44,8 +44,19 @@ func validateCandidates(plan StrategyPlan, verification StrategyVerification, bi
 
 func validateSelection(plan StrategyPlan, verification StrategyVerification) error {
 	selection := plan.Selection
-	if selection.ProofChoice != "REGRESSION" || selection.Decision != "HOLD_FIXED_POINT" || selection.MetaOperation != "terminate-at-fixed-point" || selection.Reason != "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO" {
-		return fmt.Errorf("only the verified fixed-point strategy is compilable")
+	if selection.ProofChoice != "REGRESSION" {
+		return fmt.Errorf("only regression terminal strategies are compilable")
+	}
+	if selection.MetaOperation == "terminate-at-fixed-point" {
+		if selection.Decision != "HOLD_FIXED_POINT" || selection.Reason != "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO" {
+			return fmt.Errorf("fixed-point selection is not canonical")
+		}
+	} else if selection.MetaOperation == "preserve-non-promoting-terminal" {
+		if selection.Decision != "PRESERVE_NON_PROMOTING_TERMINAL" || selection.Reason != "NON_PROMOTING_TERMINAL_PRESERVED" {
+			return fmt.Errorf("non-promoting selection is not canonical")
+		}
+	} else {
+		return fmt.Errorf("selected regression operation is unsupported")
 	}
 	if verification.SelectedProofChoice != selection.ProofChoice || !validDigest(selection.CandidateDigest) {
 		return fmt.Errorf("selected proof is not verification-bound")

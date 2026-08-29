@@ -1,3 +1,3 @@
 package closure
 
-const canonicalBindingCount = 30
+const canonicalBindingCount = 31

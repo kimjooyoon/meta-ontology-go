@@ -24,16 +24,34 @@ func reconstructBindings(bindings []strategyBinding) ([]resolvedBinding, map[str
 }
 
 func reconstructSteps(selection strategySelection) ([]programStep, error) {
-	ids := append([]string(nil), selection.SourceMetaOperations...)
-	ids = append(ids, selection.MetaOperation)
+	excluded := ""
+	switch selection.MetaOperation {
+	case "terminate-at-fixed-point":
+		excluded = "preserve-non-promoting-terminal"
+	case "preserve-non-promoting-terminal":
+		excluded = "terminate-at-fixed-point"
+	}
+	ids := make([]string, 0, len(selection.SourceMetaOperations)+1)
+	seenIDs := make(map[string]bool)
+	for _, id := range selection.SourceMetaOperations {
+		if id == excluded {
+			continue
+		}
+		if seenIDs[id] {
+			return nil, fmt.Errorf("selected operation %q is duplicated", id)
+		}
+		seenIDs[id] = true
+		ids = append(ids, id)
+	}
+	if !seenIDs[selection.MetaOperation] {
+		ids = append(ids, selection.MetaOperation)
+	}
 	selected := make([]operationSpec, 0, len(ids))
-	seen := make(map[string]bool)
 	for _, id := range ids {
 		operation, ok := findOperation(id)
-		if !ok || seen[id] {
+		if !ok {
 			return nil, fmt.Errorf("selected operation %q is invalid", id)
 		}
-		seen[id] = true
 		selected = append(selected, operation)
 	}
 	sort.Slice(selected, func(left, right int) bool { return selected[left].Ordinal < selected[right].Ordinal })

@@ -6,16 +6,16 @@ import (
 )
 
 func buildSteps(plan StrategyPlan) ([]ProgramStep, error) {
-	operationIDs := append([]string(nil), plan.Selection.SourceMetaOperations...)
-	operationIDs = append(operationIDs, plan.Selection.MetaOperation)
+	operationIDs, err := operationIDsForSelection(plan.Selection)
+	if err != nil {
+		return nil, err
+	}
 	operations := make([]OperationSpec, 0, len(operationIDs))
-	seen := make(map[string]bool)
 	for _, id := range operationIDs {
 		operation, ok := findOperation(id)
-		if !ok || seen[id] {
+		if !ok {
 			return nil, fmt.Errorf("selected operation %q is invalid", id)
 		}
-		seen[id] = true
 		operations = append(operations, operation)
 	}
 	sort.Slice(operations, func(left, right int) bool { return operations[left].Ordinal < operations[right].Ordinal })
@@ -35,4 +35,30 @@ func buildSteps(plan StrategyPlan) ([]ProgramStep, error) {
 		})
 	}
 	return steps, nil
+}
+
+func operationIDsForSelection(selection StrategySelection) ([]string, error) {
+	excluded := ""
+	switch selection.MetaOperation {
+	case "terminate-at-fixed-point":
+		excluded = "preserve-non-promoting-terminal"
+	case "preserve-non-promoting-terminal":
+		excluded = "terminate-at-fixed-point"
+	}
+	ids := make([]string, 0, len(selection.SourceMetaOperations)+1)
+	seen := make(map[string]bool)
+	for _, id := range selection.SourceMetaOperations {
+		if id == excluded {
+			continue
+		}
+		if seen[id] {
+			return nil, fmt.Errorf("selected operation %q is duplicated", id)
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+	if !seen[selection.MetaOperation] {
+		ids = append(ids, selection.MetaOperation)
+	}
+	return ids, nil
 }

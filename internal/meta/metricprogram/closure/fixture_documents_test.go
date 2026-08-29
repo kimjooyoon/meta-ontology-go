@@ -21,7 +21,7 @@ func fixtureProgram(source []byte) map[string]any {
 		},
 		"coverage": map[string]any{
 			"binding_count": fixtureBindingCount, "resolved_binding_count": fixtureBindingCount,
-			"registry_operation_count": 8, "referenced_operation_count": 8,
+			"registry_operation_count": 9, "referenced_operation_count": 9,
 			"selection_operation_resolved": true, "status": "COMPLETE",
 		},
 		"repository_workspace_writes": false, "promotion_authorized": false,
@@ -35,7 +35,7 @@ func fixtureVerification(program map[string]any) map[string]any {
 		"subject_sha": fixtureSHA, "strategy_digest": program["strategy_digest"],
 		"program_digest": program["digest"], "registry_digest": program["registry_digest"],
 		"source_digest": program["source_digest"], "semantic_digest": program["semantic_digest"],
-		"binding_count": fixtureBindingCount, "operation_count": 8, "step_count": 4,
+		"binding_count": fixtureBindingCount, "operation_count": 9, "step_count": 4,
 		"status": "VERIFIED", "repository_workspace_writes": false,
 		"promotion_authorized": false, "digest": fixtureDigest("9"),
 	}
