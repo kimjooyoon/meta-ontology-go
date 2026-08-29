@@ -45,15 +45,20 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 		return err
 	}
 	report.NamespaceReplacements = transaction.receipts
-	report.BackupCleanup = backupCleanupObservation{Status: "PENDING", Attempted: len(transaction.files)}
-	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
-		rollbackTransactions(transaction.files, len(transaction.files))
-		return err
+	provisional, err := createProvisionalReportPath(filepath.Clean(output))
+	if err != nil {
+		return rollbackReportTransaction(transaction, "", err)
+	}
+	report.BackupCleanup = backupCleanupObservation{Status: "PENDING", Attempted: transactionBackupCount(transaction.files)}
+	if err := writeExtractionReport(provisional, report); err != nil {
+		return rollbackReportTransaction(transaction, provisional, err)
 	}
 	report.BackupCleanup = removeTransactionBackups(transaction.files)
+	if err := removeReport(provisional); err != nil {
+		return rollbackReportTransaction(transaction, provisional, err)
+	}
 	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
-		rollbackTransactions(transaction.files, len(transaction.files))
-		return err
+		return rollbackReportTransaction(transaction, provisional, err)
 	}
 	if report.BackupCleanup.Status != "PASS" {
 		return fmt.Errorf("backup cleanup incomplete: %d/%d removed", report.BackupCleanup.Removed, report.BackupCleanup.Attempted)
@@ -61,4 +66,16 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 	fmt.Printf("function-extractor: residual=%d applied=%d created=%d\n",
 		len(residual), len(subjects), createdCount(subjects))
 	return nil
+}
+
+func rollbackReportTransaction(transaction stagedTransaction, provisional string, cause error) error {
+	cleanupErr := removeReport(provisional)
+	rollbackErr := rollbackTransactions(transaction.files, len(transaction.files))
+	if cleanupErr != nil {
+		return fmt.Errorf("%w; provisional cleanup failed: %v", cause, cleanupErr)
+	}
+	if rollbackErr != nil {
+		return fmt.Errorf("%w; rollback failed: %v", cause, rollbackErr)
+	}
+	return cause
 }

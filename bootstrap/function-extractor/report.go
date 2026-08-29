@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -38,7 +39,7 @@ func extractionEvidence(sha string, subjects []extractionSubject,
 	observed := len(subjects) + len(unhandled)
 	created := createdCount(subjects)
 	return extractionReport{
-		Schema: "gooo.function-extraction.v1", SourceSHA: sha,
+		Schema: "gooo.function-extraction.v2", SourceSHA: sha,
 		Subjects: subjects, Unhandled: unhandled, Failures: failures,
 		Indicators: []extractionIndicator{
 			{ID: "extraction.observed", Value: observed, Limit: -1,
@@ -70,10 +71,17 @@ func writeExtractionReport(name string, report extractionReport) error {
 	if !sameDirectory(name, temp) {
 		return fmt.Errorf("report paths are not same-directory: %s", name)
 	}
-	if _, err := os.Lstat(temp); !os.IsNotExist(err) {
-		return fmt.Errorf("report temporary path exists: %s", temp)
+	file, err := os.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	if err != nil {
+		return err
 	}
-	if err := os.WriteFile(temp, append(encoded, '\n'), 0o644); err != nil {
+	if _, err := file.Write(append(encoded, '\n')); err != nil {
+		_ = file.Close()
+		_ = os.Remove(temp)
+		return err
+	}
+	if err := file.Close(); err != nil {
+		_ = os.Remove(temp)
 		return err
 	}
 	if err := os.Rename(temp, name); err != nil {
@@ -81,6 +89,33 @@ func writeExtractionReport(name string, report extractionReport) error {
 		return err
 	}
 	return nil
+}
+
+func createProvisionalReportPath(name string) (string, error) {
+	file, err := os.CreateTemp(filepath.Dir(name), ".extract-report-provisional-*")
+	if err != nil {
+		return "", err
+	}
+	path := file.Name()
+	if err := file.Close(); err != nil {
+		_ = os.Remove(path)
+		return "", err
+	}
+	if err := os.Remove(path); err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
+func removeReport(name string) error {
+	if name == "" {
+		return nil
+	}
+	err := os.Remove(name)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
 
 func requireHandled(report extractionReport) error {

@@ -85,5 +85,5 @@ type extractionReport struct {
 	Failures              []extractionFailureRecord      `json:"failures,omitempty"`
 	Indicators            []extractionIndicator          `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
-	BackupCleanup         backupCleanupObservation       `json:"backup_cleanup"`
+	BackupCleanup         backupCleanupObservation      `json:"backup_cleanup"`
 }

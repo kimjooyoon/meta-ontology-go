@@ -3,7 +3,7 @@ package main
 const (
 	evidenceSchema   = "gooo.authorized-rewrite-write-set.v3"
 	densitySchema    = "gooo.line-density-rewrite.v1"
-	extractionSchema = "gooo.function-extraction.v1"
+	extractionSchema = "gooo.function-extraction.v2"
 	splitSchema      = "gooo.logical-source-split.v1"
 	metaOperation    = "union-ci-selected-rewrite-receipts"
 )

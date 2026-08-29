@@ -62,7 +62,7 @@ func TestReportPublishFailureRollsBackTransaction(t *testing.T) {
 }
 
 func TestBackupCleanupFailureIsUnknown(t *testing.T) {
-	result := removeTransactionBackups([]transactionFile{{backup: filepath.Join(t.TempDir(), "missing.bak")}})
+	result := removeTransactionBackups([]transactionFile{{backup: filepath.Join(t.TempDir(), "missing.bak"), destinationPreexisted: true, backupCreated: true}})
 	if result.Status != "UNKNOWN" || result.Attempted != 1 || result.Removed != 0 || result.Failures != 1 {
 		t.Fatalf("unexpected cleanup observation: %#v", result)
 	}

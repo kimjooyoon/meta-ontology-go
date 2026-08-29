@@ -64,7 +64,7 @@ func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, bef
 	}, nil
 }
 
-func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packageName string, imports, header []byte, observed extractorSubject) (int, int, map[string]bool, error) {
+func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packageName string, imports []string, header []byte, observed extractorSubject) (int, int, map[string]bool, error) {
 	found, afterLines := 0, 0
 	seen := make(map[string]bool, len(observed.Files))
 	for _, logical := range observed.Files {

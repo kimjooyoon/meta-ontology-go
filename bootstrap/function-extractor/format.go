@@ -75,49 +75,59 @@ func installTransaction(file *transactionFile) (namespaceReplacementReceipt, err
 }
 
 func removeTransactionBackup(file transactionFile) error {
-	if file.created {
+	if file.created || !file.backupCreated {
 		return nil
 	}
-	return os.Remove(file.backup)
+	err := os.Remove(file.backup)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
 
-func restoreTransaction(file transactionFile) {
+func restoreTransaction(file transactionFile) error {
 	if file.created {
-		if file.replaced {
-			_ = os.Remove(file.name)
+		if !file.replaced {
+			return nil
 		}
-		return
+		if err := os.Remove(file.name); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		return nil
 	}
 	if file.replaced {
-		_ = os.Remove(file.name)
 		if err := os.Rename(file.backup, file.name); err != nil {
-			restoreOriginal(file)
+			if restoreErr := restoreOriginal(file); restoreErr != nil {
+				return fmt.Errorf("restore backup: %w; restore original: %v", err, restoreErr)
+			}
+			return removeTransactionBackup(file)
 		}
-		return
+		file.backupCreated = false
+		return nil
 	}
-	_ = os.Remove(file.backup)
+	return removeTransactionBackup(file)
 }
 
-func restoreOriginal(file transactionFile) {
+func restoreOriginal(file transactionFile) error {
 	if file.original == nil {
-		return
+		return fmt.Errorf("original bytes are unavailable for %s", file.logical)
 	}
 	restored, err := os.CreateTemp(filepath.Dir(file.name), ".extract-restore-*")
 	if err != nil {
-		return
+		return err
 	}
 	path := restored.Name()
 	defer os.Remove(path)
 	if err := restored.Chmod(file.originalMode); err != nil {
 		_ = restored.Close()
-		return
+		return err
 	}
 	if _, err := restored.Write(file.original); err != nil {
 		_ = restored.Close()
-		return
+		return err
 	}
 	if err := restored.Close(); err != nil {
-		return
+		return err
 	}
-	_ = os.Rename(path, file.name)
+	return os.Rename(path, file.name)
 }

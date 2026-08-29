@@ -83,6 +83,7 @@ type extractorDensitySubject struct {
 }
 
 const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
+const functionExtractionReportSchema = "gooo.function-extraction.v2"
 
 func executeSelectedOperations(plan generation.Plan, manifest generation.ExecutionManifest, workspace string) (generation.OperationObservationBundle, error) {
 	bundle := generation.OperationObservationBundle{
@@ -308,7 +309,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence"}
 	}
 	var report extractorReport
-	if err := decodeStrictBytes(reportRaw, &report); err != nil || report.Schema != "gooo.function-extraction.v1" || report.SourceSHA != plan.HeadSHA || len(report.Unhandled) != 0 {
+	if err := decodeStrictBytes(reportRaw, &report); err != nil || report.Schema != functionExtractionReportSchema || report.SourceSHA != plan.HeadSHA || len(report.Unhandled) != 0 {
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "adjudicate-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence"}
 	}
 	observed, found := findExtractorSubject(report.Subjects, subject.Path)

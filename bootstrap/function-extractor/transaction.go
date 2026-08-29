@@ -20,6 +20,7 @@ type transactionFile struct {
 	tempDigest            string
 	replaced              bool
 	tempCreated           bool
+	backupCreated         bool
 	original              []byte
 	originalMode          os.FileMode
 }
@@ -78,7 +79,9 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 	for index := range files {
 		receipt, err := installTransaction(&files[index])
 		if err != nil {
-			rollbackTransactions(files, index+1)
+			if rollbackErr := rollbackTransactions(files, index+1); rollbackErr != nil {
+				return stagedTransaction{}, fmt.Errorf("%w; rollback failed: %v", err, rollbackErr)
+			}
 			return stagedTransaction{}, err
 		}
 		receipts = append(receipts, receipt)
@@ -88,8 +91,12 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 
 
 func removeTransactionBackups(files []transactionFile) backupCleanupObservation {
-	result := backupCleanupObservation{Status: "PASS", Attempted: len(files)}
+	result := backupCleanupObservation{Status: "PASS"}
 	for index := range files {
+		if !files[index].destinationPreexisted || !files[index].backupCreated {
+			continue
+		}
+		result.Attempted++
 		if err := removeTransactionBackup(files[index]); err != nil {
 			result.Failures++
 			result.Status = "UNKNOWN"
@@ -100,11 +107,25 @@ func removeTransactionBackups(files []transactionFile) backupCleanupObservation 
 	return result
 }
 
-func rollbackTransactions(files []transactionFile, committed int) {
+func transactionBackupCount(files []transactionFile) int {
+	count := 0
+	for _, file := range files {
+		if file.destinationPreexisted {
+			count++
+		}
+	}
+	return count
+}
+
+func rollbackTransactions(files []transactionFile, committed int) error {
+	var first error
 	for index := committed - 1; index >= 0; index-- {
-		restoreTransaction(files[index])
+		if err := restoreTransaction(files[index]); err != nil && first == nil {
+			first = err
+		}
 	}
 	cleanupTransactions(files)
+	return first
 }
 
 func cleanupTransactions(files []transactionFile) {
@@ -156,6 +177,7 @@ func preserveDestination(file *transactionFile) error {
 		_ = os.Remove(file.backup)
 		return err
 	}
+	file.backupCreated = true
 	return nil
 }
 
