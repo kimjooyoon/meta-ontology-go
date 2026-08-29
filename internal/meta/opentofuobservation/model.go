@@ -110,9 +110,9 @@ type RuntimeSummary struct {
 }
 
 type Inventory struct {
-	InputRegularFiles    int `json:"input_regular_files"`
-	InputPhysicalLines   int `json:"input_physical_lines"`
-	OutputArtifactFiles  int `json:"output_artifact_files"`
+	InputRegularFiles     int `json:"input_regular_files"`
+	InputPhysicalLines    int `json:"input_physical_lines"`
+	OutputArtifactFiles   int `json:"output_artifact_files"`
 	ReusableArtifactFiles int `json:"reusable_artifact_files"`
 }
 
