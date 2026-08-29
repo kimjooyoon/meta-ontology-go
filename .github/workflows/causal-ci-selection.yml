@@ -107,6 +107,52 @@ jobs:
             -after-snapshot "$RUNNER_TEMP/causal-ci-selection/snapshot-before.json" \
             -prior-claims examples/causal-ci-selection/prior-claims.json \
             -output "$RUNNER_TEMP/causal-ci-selection/observation-provisional.json"
+      - name: Create explicit synthetic intervention observation
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/causal-ci-selection"
+          route_proposition="complete policy route reconstructed"
+          check_proposition="selected check is sufficient/passed"
+          route_template="$(jq -r --arg proposition "$route_proposition" '.claims[] | select(.proposition == $proposition) | .template_id' examples/causal-ci-selection/prior-claims.json)"
+          route_provenance="$(jq -r --arg proposition "$route_proposition" '.claims[] | select(.proposition == $proposition) | .provenance' examples/causal-ci-selection/prior-claims.json)"
+          check_template="$(jq -r --arg proposition "$check_proposition" '.claims[] | select(.proposition == $proposition) | .template_id' examples/causal-ci-selection/prior-claims.json)"
+          check_provenance="$(jq -r --arg proposition "$check_proposition" '.claims[] | select(.proposition == $proposition) | .provenance' examples/causal-ci-selection/prior-claims.json)"
+          claim_instance_id() {
+            template="$1"
+            proposition="$2"
+            payload="$(jq -cn --arg template_id "$template" --arg subject_path "$SOURCE_PATH" --arg proposition "$proposition" '{template_id:$template_id,subject_path:$subject_path,proposition:$proposition}')"
+            printf 'claim-instance:%s' "$(printf '%s' "$payload" | sha256sum | awk '{print $1}')"
+          }
+          route_instance="$(claim_instance_id "$route_template" "$route_proposition")"
+          check_instance="$(claim_instance_id "$check_template" "$check_proposition")"
+          source_object="$(jq -r '.head_path_object_id' "$root/observation-provisional.json")"
+          source_digest="$(jq -r '.source_bytes_digest' "$root/observation-provisional.json")"
+          jq \
+            --arg source "$SOURCE_PATH" \
+            --arg source_object "$source_object" \
+            --arg route_instance "$route_instance" \
+            --arg route_template "$route_template" \
+            --arg route_provenance "$route_provenance" \
+            --arg route_proposition "$route_proposition" \
+            --arg check_instance "$check_instance" \
+            --arg check_template "$check_template" \
+            --arg check_provenance "$check_provenance" \
+            --arg check_proposition "$check_proposition" \
+            '.changed_files = [{path:$source,status:"M",before_object:$source_object,after_object:$source_object}] |
+             .prior_claims = [
+               {template_id:$route_template,instance_id:$route_instance,subject_path:$source,proposition:$route_proposition,state:"OPEN",provenance:$route_provenance},
+               {template_id:$check_template,instance_id:$check_instance,subject_path:$source,proposition:$check_proposition,state:"OPEN",provenance:$check_provenance}
+             ]' \
+            "$root/observation-provisional.json" > "$root/intervention-observation.json"
+          jq -n \
+            --arg source "$SOURCE_PATH" \
+            --arg head "$HEAD_SHA" \
+            --arg object "$source_object" \
+            --arg digest "$source_digest" \
+            '{schema:"gooo/causal-ci-selection-fixture-authority/v1",source_class:"SYNTHETIC_FIXTURE",source_path:$source,observed_checkout_sha:$head,head_path_object_id:$object,source_bytes_digest:$digest,changed_file_count:1}' \
+            > "$root/intervention-fixture-authority.json"
+          test "$(jq '.changed_files | length' "$root/intervention-observation.json")" -eq 1
+          test "$(jq 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$root/intervention-observation.json")" = false
       - name: Produce plan and capture after-operation observation
         run: |
           set -euo pipefail
@@ -166,7 +212,7 @@ jobs:
         run: |
           set -euo pipefail
           go run ./scripts/causal-ci-selection \
-            -mode interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source "$SOURCE_PATH" \
+            -mode interventions -input "$RUNNER_TEMP/causal-ci-selection/intervention-observation.json" -source "$SOURCE_PATH" \
             -semantic-source examples/causal-ci-selection/semantic-intervention.gooo \
             -nonsemantic-source examples/causal-ci-selection/nonsemantic-intervention.gooo \
             -contradiction-source examples/causal-ci-selection/contradiction-intervention.gooo \
@@ -184,7 +230,7 @@ jobs:
             esac
             set +e
             go run ./cmd/causal-ci-selection-consumer \
-              -input "$RUNNER_TEMP/causal-ci-selection/observation.json" -source-file "$variant_source" \
+              -input "$RUNNER_TEMP/causal-ci-selection/intervention-observation.json" -source-file "$variant_source" \
               -logical-source "$SOURCE_PATH" -receipt "$RUNNER_TEMP/causal-ci-selection/intervention-plans/$variant-receipt.json" \
               -variant-id "$variant" "${consumer_mode[@]}" -adjudication "$RUNNER_TEMP/causal-ci-selection/adjudications/$variant.json" \
               > "$RUNNER_TEMP/causal-ci-selection/process/$variant.stdout" 2> "$RUNNER_TEMP/causal-ci-selection/process/$variant.stderr"
@@ -196,7 +242,7 @@ jobs:
         run: |
           set -euo pipefail
           go run ./scripts/causal-ci-selection \
-            -mode adjudicate -scope interventions -input "$RUNNER_TEMP/causal-ci-selection/observation.json" \
+            -mode adjudicate -scope interventions -input "$RUNNER_TEMP/causal-ci-selection/intervention-observation.json" \
             -plans-dir "$RUNNER_TEMP/causal-ci-selection/intervention-plans" -adjudication-dir "$RUNNER_TEMP/causal-ci-selection/adjudications" \
             -process-dir "$RUNNER_TEMP/causal-ci-selection/process" -source-files "base=$SOURCE_PATH,semantic=examples/causal-ci-selection/semantic-intervention.gooo,nonsemantic=examples/causal-ci-selection/nonsemantic-intervention.gooo,contradiction=examples/causal-ci-selection/contradiction-intervention.gooo" \
             -go-version "$RUNNER_TEMP/causal-ci-selection/go-version.txt" -go-env "$RUNNER_TEMP/causal-ci-selection/go-env-goversion.txt" \
@@ -217,12 +263,13 @@ jobs:
           observation="$root/observation.json"
           receipt="$root/plans/base-receipt.json"
           changed_count="$(jq '.changed_files | length' "$observation")"
+          changed_paths="$(jq -c '[.changed_files[].path] | sort' "$observation")"
           test "$changed_count" -gt 0
           test "$(jq -r '.observed_checkout_sha' "$observation")" = "$HEAD_SHA"
           test "$(jq -r '.head_path_object_id' "$observation")" != ""
           test "$(jq -r '.source_bytes_digest' "$observation")" != ""
           test "$(jq -r 'has("decision") or has("known") or has("selected_checks") or has("reason")' "$observation")" = "false"
-          jq -e --arg source "$SOURCE_PATH" --arg head "$HEAD_SHA" --argjson changed "$changed_count" '
+          jq -e --arg head "$HEAD_SHA" --argjson changed "$changed_count" --argjson changed_paths "$changed_paths" '
             .schema == "gooo/causal-ci-selection-receipt/v2" and .scope == "CAUSAL_SELECTION_PLAN" and .execution_mode == "PLAN_ONLY" and
             .execution.result == "UNKNOWN" and .execution.capability == "PLAN_ONLY" and
             .conformance.decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and
@@ -242,10 +289,9 @@ jobs:
             .indicator_inventory.expected_ids == ["semantic-policy-derived","changed-file-observation-bound","unknown-descends-to-full","claim-transition-append-only","isolation-state-observed","plan-only-no-execution-claim"] and
             .indicator_inventory.observed_ids == .indicator_inventory.expected_ids and
             ([.indicators[].satisfied] | all) and
-            ([.subjects[] | select(.path == $source)][0].resolution == "SELECTED") and
-            ([.subjects[] | select(.path == $source)][0].selected_checks[0].check_id == "go-test") and
-            ([.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")][0].after == "DISCHARGED") and
-            ([.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")][0].after == "OPEN") and
+            ((.subjects | length) == $changed) and
+            ([.subjects[].path] | sort) == $changed_paths and
+            ([.subjects[] | select(.resolution == "UNKNOWN")] | length) == $changed and
             ([.subjects[] | select(.resolution == "UNKNOWN") | .selected_checks | length] | all(. == 6))
           ' "$receipt"
           jq -e '
@@ -283,7 +329,16 @@ jobs:
             "### CI evidence source classes\n- current evidence: `\(.current_source_numerator)/\(.current_source_denominator)` (`\(.actual_coordinate.reason)`)\n- historical pagination observations: `([.rows[] | select(.source_class == \"HISTORICAL_FIXTURE\" and .coordinate.reason == \"WORKFLOW_RUN_PAGINATION_INCOMPLETE\")] | length)/1`\n- historical 403 cases: `\(.historical_permission_denial_numerator)/\(.historical_permission_denial_denominator)`\n- historical pagination downstream missing: `([.artifact_observations[] | select(.parent_case_id == \"historical-pagination-incomplete\" and .present == false)] | length)/3`\n- current permission denial: `\(.current_permission_denial_numerator)/\(.current_permission_denial_denominator)`\n- synthetic fixture cases: `\(.synthetic_source_numerator)/\(.synthetic_source_denominator)`"
           ' "$root/ci-evidence.json" >> "$GITHUB_STEP_SUMMARY"
           jq -e --arg head "$HEAD_SHA" --arg source "$SOURCE_PATH" '.schema == "gooo/causal-ci-selection-plan-adjudication/v1" and .scope == "PLAN_RECONSTRUCTION_CONFORMANCE" and .decision == "PLAN_RECONSTRUCTION_CONFORMANCE_PASS" and .source_plan_binding_numerator == 1 and .source_plan_binding_denominator == 1 and .source_reconstruction_numerator == 1 and .source_reconstruction_denominator == 1 and (.source_plan_binding | length == 1) and ([.source_plan_binding[].exact] | all) and ([.source_plan_binding[] | (.expected_source_raw_digest == .expected_source_bytes_digest and .expected_source_raw_digest == .actual_consumer_source_bytes_digest and .expected_source_object_id == .actual_consumer_source_object_id and .expected_object_format != "" and .logical_source_path == $source and .binding_mode == .expected_binding_mode and .binding_mode == "HEAD")] | all) and .selected_check_execution_schema == "gooo/causal-ci-selection-selected-check-execution/v1" and .selected_check_execution == "UNKNOWN" and .selected_check_execution_numerator == 0 and .selected_check_execution_denominator == 1 and .process_evidence[0].observed_os_exit_code == .adjudications[0].exit_code and .process_evidence[0].observed_stderr_bytes == 0 and .go_runtime.expected_version == "go1.27.0" and (.go_runtime.go_version | startswith("go version go1.27.0 ")) and .go_runtime.go_env_goversion == "go1.27.0" and .go_runtime.fix_help_command_argv == ["go","tool","fix","help"] and .go_runtime.fix_diff_command_argv == ["go","fix","-diff","./..."] and .go_runtime.package_list_command_argv == ["go","list","./..."] and .go_runtime.command_cwd != "" and .go_runtime.subject_head_sha == $head and .go_runtime.subject_tree_id != "" and .go_runtime.object_format != "" and .go_runtime.fix_diff_exit_code == 0 and .go_runtime.fix_diff_stdout_bytes == 0 and .go_runtime.fix_diff_stderr_allowed and .go_runtime.fix_help_stderr_bytes == 0 and .go_runtime.package_universe_count > 0 and .go_runtime.package_universe_numerator == .go_runtime.package_universe_denominator and .go_runtime.package_universe_numerator == .go_runtime.package_universe_count and .go_runtime.package_universe_digest != "" and ([.go_runtime.fixer_inventory[] | select(. == "atomictypes" or . == "embedlit" or . == "slicesbackward" or . == "unsafefuncs" or . == "waitgroupgo")] | length) == 5 and .go_runtime.required_fixers_satisfied == 5 and .go_runtime.required_fixers_denominator == 5 and .go_runtime.removed_fixer_id == "fmtappendf" and .go_runtime.removed_fixer_present == false and .go_runtime.removed_fixer_numerator == 0 and .go_runtime.removed_fixer_denominator == 1 and .go_runtime.active_fix_fixture.expected_diff and .go_runtime.active_fix_fixture.observed_diff and .go_runtime.active_fix_fixture.numerator == 1 and .go_runtime.active_fix_fixture.denominator == 1 and .go_runtime.active_fix_fixture.conformant == true and .go_runtime.conformant == true and .adjudications[0].consumer_identity == "gooo://consumer/causal-ci-selection/process"' "$root/adjudication.json"
-          jq -e --arg source "$SOURCE_PATH" --argjson changed "$changed_count" '
+          fixture_observation="$root/intervention-observation.json"
+          fixture_authority="$root/intervention-fixture-authority.json"
+          fixture_changed_count="$(jq '.changed_files | length' "$fixture_observation")"
+          test "$fixture_changed_count" -eq 1
+          test "$(jq -r '.source_class' "$fixture_authority")" = "SYNTHETIC_FIXTURE"
+          test "$(jq -r '.source_path' "$fixture_authority")" = "$SOURCE_PATH"
+          test "$(jq -r '.observed_checkout_sha' "$fixture_authority")" = "$HEAD_SHA"
+          test "$(jq -r '.head_path_object_id' "$fixture_authority")" = "$(jq -r '.head_path_object_id' "$fixture_observation")"
+          test "$(jq -r '.source_bytes_digest' "$fixture_authority")" = "$(jq -r '.source_bytes_digest' "$fixture_observation")"
+          jq -e --arg source "$SOURCE_PATH" --argjson changed "$fixture_changed_count" '
             .schema == "gooo/causal-ci-selection-intervention/v1" and
             .expected_variant_ids == ["base","semantic","nonsemantic","contradiction"] and
             .observed_variant_ids == .expected_variant_ids and
@@ -294,6 +349,12 @@ jobs:
             .base.source.parsed_digest == .nonsemantic.source.parsed_digest and .base.source.semantic_digest == .nonsemantic.source.semantic_digest and
             .base.plan_digest == .nonsemantic.plan_digest and
             ([.base.plan_gate, .semantic.plan_gate, .nonsemantic.plan_gate, .contradiction.plan_gate] | all(.observed == 1 and .denominator == 1 and .decision == "PLAN_FINAL_GATE_PASS")) and
+            ([.base.subjects[] | select(.path == $source)] | length) == 1 and
+            ([.base.subjects[] | select(.path == $source)][0] | .resolution == "SELECTED" and ((.selected_checks | map(.check_id)) == ["go-test"])) and
+            ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")] | length) == 1 and
+            ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "complete policy route reconstructed")] | .[0].after) == "DISCHARGED" and
+            ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")] | length) == 1 and
+            ([.base.claim_transitions[] | select(.subject_path == $source and .proposition == "selected check is sufficient/passed")] | .[0].after) == "OPEN" and
             .contradiction.conformance.decision == "FAIL_CLOSED" and .contradiction.conformance.root_contradiction_inventory == .contradiction.policy_contradictions and .contradiction.conformance.root_contradiction_inventory_digest != "" and
             ([.contradiction.policy_contradictions[] | select(.subject_path == $source)] | length) == 1 and
             ([.contradiction.policy_contradictions[] | .edges[]? | select(startswith("policy-edge:missing:"))] | length) == 0 and
@@ -327,7 +388,9 @@ jobs:
             echo '- fixed check inventory: `6` exact IDs; fixed indicator inventory: `6` exact IDs'
             echo '- repository state: `NET_REPOSITORY_STATE_UNCHANGED`, changed paths `0`, changed contents `0`, transient writes and global mutation authority `UNKNOWN`'
             echo '- source binding: checkout SHA, `HEAD:path` object ID, and source byte digest recorded'
-            echo '- claim transitions: exact route proposition can discharge; check sufficiency remains OPEN without execution evidence'
+            echo '- actual claim transitions: append-only and state-preserving; no fixed SOURCE_PATH discharge is assumed'
+            echo '- synthetic fixture claim transitions: route discharge and check sufficiency OPEN are verified separately'
+            echo '- actual PR subjects remain observation-only; four interventions use one explicitly bound SYNTHETIC_FIXTURE subject'
             echo '- semantic intervention changes semantic policy and plan; nonsemantic intervention preserves semantic policy and plan; scoped contradiction refutes only its linked route claim'
             echo '- selected check execution: `UNKNOWN` (`0/1`); process observations prove plan reconstruction only'
             echo '- Go 1.27: exact command argv, subject HEAD/tree, Git object format, go.mod/go.sum, package universe digest, fixer inventory, and active fixture evidence captured'
@@ -352,6 +415,8 @@ jobs:
             ${{ runner.temp }}/causal-ci-selection/interventions.json
             ${{ runner.temp }}/causal-ci-selection/adjudication.json
             ${{ runner.temp }}/causal-ci-selection/intervention-adjudication.json
+            ${{ runner.temp }}/causal-ci-selection/intervention-observation.json
+            ${{ runner.temp }}/causal-ci-selection/intervention-fixture-authority.json
             ${{ runner.temp }}/causal-ci-selection/ci-evidence.json
             examples/causal-ci-selection/ci-observations/*.json
             ${{ runner.temp }}/causal-ci-selection/adjudications/*.json

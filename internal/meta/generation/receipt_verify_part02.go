@@ -9,6 +9,9 @@ func receiptPlanKnown(plan Plan) bool {
 		!validDigest(plan.InputDigest) || !validDigest(plan.RegistryDigest) {
 		return false
 	}
+	if validatePlanRefutedEvidence(plan) != nil {
+		return false
+	}
 	unsigned := plan
 	unsigned.PlanDigest, unsigned.ReplayDigest = "", ""
 	if !validDigest(plan.PlanDigest) ||
@@ -59,6 +62,8 @@ func selectedActionIndex(plan Plan) (map[string]Action, bool) {
 
 func actionMatchesBinding(action Action, binding Binding) bool {
 	return action.IndependenceGroupID == binding.IndependenceGroupID &&
+		action.Activity == binding.Activity &&
+		action.Output == binding.Output &&
 		action.ProofChoice == binding.ProofChoice &&
 		action.Executor == binding.Executor &&
 		action.Evaluator == binding.Evaluator &&

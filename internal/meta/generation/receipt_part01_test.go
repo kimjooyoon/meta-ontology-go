@@ -30,6 +30,9 @@ func TestVerifyReceiptsIsDeterministicAndNonAuthorizing(t *testing.T) {
 		if !validDigest(receipt.ReceiptDigest) {
 			t.Fatalf("receipt is not sealed: %+v", receipt)
 		}
+		if receipt.Operation == "" || receipt.Activity == "" || receipt.Output == "" || receipt.Executor == "" || receipt.Evaluator == "" {
+			t.Fatalf("receipt lost operation binding: %+v", receipt)
+		}
 	}
 }
 

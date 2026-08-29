@@ -4,6 +4,8 @@ import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 type Binding struct {
 	Operation            sourcepolicy.Operation `json:"operation"`
+	Activity             string                 `json:"activity"`
+	Output               string                 `json:"output"`
 	IndependenceGroupID  string                 `json:"independence_group_id"`
 	ProofChoice          ProofChoice            `json:"proof_choice"`
 	Executor             string                 `json:"executor"`
@@ -28,6 +30,8 @@ type Action struct {
 	MetricProducer       string                           `json:"metric_producer"`
 	MetricConsumer       string                           `json:"metric_consumer"`
 	Operation            sourcepolicy.Operation           `json:"meta_operation"`
+	Activity             string                           `json:"activity"`
+	Output               string                           `json:"output"`
 	IndependenceGroupID  string                           `json:"independence_group_id"`
 	ProofChoice          ProofChoice                      `json:"proof_choice"`
 	Executor             string                           `json:"executor"`
@@ -35,6 +39,21 @@ type Action struct {
 	RequiredIndicatorIDs []string                         `json:"required_indicator_ids"`
 	ReceiptRequired      bool                             `json:"receipt_required"`
 	Priority             uint32                           `json:"priority"`
+}
+
+// Counterexample preserves a typed planner contradiction without turning it
+// into an executable or unknown operation. Its ID is stable for the exact
+// indicator and blocker coordinate.
+type Counterexample struct {
+	ID            string   `json:"id"`
+	IndicatorID   string   `json:"indicator_id"`
+	BlockerID     string   `json:"blocker_id"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
 }
 
 type Plan struct {
@@ -57,6 +76,8 @@ type Plan struct {
 	NotApplicableIndicatorIDs []string                 `json:"not_applicable_indicator_ids"`
 	UnselectedIndicatorIDs    []string                 `json:"unselected_indicator_ids"`
 	UnknownIndicatorIDs       []string                 `json:"unknown_indicator_ids"`
+	RefutedIndicatorIDs       []string                 `json:"refuted_indicator_ids"`
+	Counterexamples           []Counterexample         `json:"counterexamples"`
 	Shortfall                 []string                 `json:"shortfall"`
 	PromotionAuthorized       bool                     `json:"promotion_authorized"`
 	PlanDigest                string                   `json:"plan_digest"`

@@ -54,7 +54,10 @@ func second() int {
 			t.Fatalf("invalid split part %s:\n%s", part.Subject, part.Data)
 		}
 	}
-	if strings.Contains(string(plan.Parts[1].Data), `"fmt"`) {
-		t.Fatalf("unused import retained:\n%s", plan.Parts[1].Data)
+	for _, part := range plan.Parts {
+		data := string(part.Data)
+		if strings.Contains(data, `"fmt"`) != strings.Contains(data, "fmt.Sprint") {
+			t.Fatalf("import usage mismatch:\n%s", part.Data)
+		}
 	}
 }

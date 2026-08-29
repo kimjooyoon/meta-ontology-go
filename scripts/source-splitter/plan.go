@@ -18,31 +18,13 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 		return plan, err
 	}
 	declarations := sourceDeclarations(file)
-	groups := make([][]ast.Decl, 0)
-	current := make([]ast.Decl, 0)
-	for _, declaration := range declarations {
-		candidate := append(append([]ast.Decl(nil), current...), declaration)
-		data, renderErr := renderPart(fset, file, candidate)
-		if renderErr != nil {
-			return plan, renderErr
-		}
-		if physicalLines(data) <= limit {
-			current = candidate
-			continue
-		}
-		if len(current) == 0 {
-			position := fset.Position(declaration.Pos())
-			return plan, fmt.Errorf("%w: declaration at %s:%d exceeds %d lines", errSplitBlocked, subject, position.Line, limit)
-		}
-		groups = append(groups, current)
-		current = []ast.Decl{declaration}
-		data, renderErr = renderPart(fset, file, current)
-		if renderErr != nil || physicalLines(data) > limit {
-			return plan, fmt.Errorf("%w: declaration after line %d exceeds %d lines", errSplitBlocked, positionLine(fset, declaration), limit)
-		}
+	positions := make(map[ast.Decl]int, len(declarations))
+	for index, declaration := range declarations {
+		positions[declaration] = index
 	}
-	if len(current) != 0 {
-		groups = append(groups, current)
+	groups, err := partitionDeclarations(fset, file, declarations, limit)
+	if err != nil {
+		return plan, fmt.Errorf("%w: %s", errSplitBlocked, err)
 	}
 	if len(groups) < 2 {
 		return plan, fmt.Errorf("%w: %s does not require declaration splitting", errSplitBlocked, subject)
@@ -58,7 +40,15 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 			return splitPlan{}, renderErr
 		}
 		partPath := filepath.Join(filepath.Dir(target), filepath.Base(filepath.FromSlash(partSubject)))
-		plan.Parts[index] = splitPart{Path: partPath, Subject: partSubject, Data: data}
+		order := make([]declarationOrder, 0, len(group))
+		for _, declaration := range group {
+			identity, identityErr := declarationIdentity(fset, declaration, positions[declaration])
+			if identityErr != nil {
+				return splitPlan{}, identityErr
+			}
+			order = append(order, identity)
+		}
+		plan.Parts[index] = splitPart{Path: partPath, Subject: partSubject, Data: data, DeclarationOrder: order}
 	}
 	return plan, nil
 }

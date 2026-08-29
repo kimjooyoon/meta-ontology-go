@@ -15,8 +15,8 @@ func main() {
 	head := flag.String("head", os.Getenv("GOOO_PR_HEAD"), "pull-request head branch")
 	base := flag.String("base", os.Getenv("GOOO_PR_BASE"), "pull-request base branch")
 	expectedHead := flag.String("expected-head", os.Getenv("GOOO_EXPECTED_HEAD"), "expected checked-out pull-request head revision")
-	capsOnly := flag.Bool("caps-only", false, "run only DAMP/DRY caps")
-	skipCaps := flag.Bool("skip-caps", false, "skip DAMP/DRY caps and run scope checks")
+	capsOnly := flag.Bool("caps-only", false, "emit only source-cap observations")
+	skipCaps := flag.Bool("skip-caps", false, "skip source-cap observations and run scope checks")
 	flag.Parse()
 	if err := validateCapMode(*capsOnly, *skipCaps); err != nil {
 		fmt.Fprintln(os.Stderr, err)
