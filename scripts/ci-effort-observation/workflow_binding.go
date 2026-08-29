@@ -55,6 +55,9 @@ func namedYAMLBlock(source, marker string, indent int) (string, bool) {
 				break
 			}
 		}
+		if header == marker {
+			return strings.Join(lines[index:end], "\n"), true
+		}
 		for candidate := index + 1; candidate < end; candidate++ {
 			if strings.TrimSpace(lines[candidate]) == marker {
 				return strings.Join(lines[index:end], "\n"), true
