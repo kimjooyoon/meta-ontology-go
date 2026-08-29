@@ -40,6 +40,22 @@
   ],
   "ownership": [
     {
+      "branch": "agent/debugging-utility-observed-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/language-utility-evidence.yml",
+        "examples/language-debug/contract.json",
+        "internal/languagedebug/digest.go",
+        "internal/meta/languagedebugexperiment",
+        "internal/meta/languageutility",
+        "scripts/language-debug-experiment",
+        "scripts/language-utility-evidence",
+        "internal/verify/scope_debugging_utility_observed_v1.go",
+        "internal/verify/scope_debugging_utility_observed_v1_test.go"
+      ]
+    },
+    {
       "branch": "agent/luna-meta-09-causal-ci-selection",
       "paths": [
         ".github/agent-scope-table.md",

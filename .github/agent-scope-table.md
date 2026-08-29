@@ -7,6 +7,7 @@ allowed repository prefix and do not create additional branch aliases.
 
 | Branch | Allowed path prefix |
 | --- | --- |
+| `agent/debugging-utility-observed-v1` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/language-utility-evidence.yml`, `examples/language-debug/contract.json`, `internal/languagedebug/digest.go`, `internal/meta/languagedebugexperiment`, `internal/meta/languageutility`, `scripts/language-debug-experiment`, `scripts/language-utility-evidence`, `internal/verify/scope_debugging_utility_observed_v1.go`, `internal/verify/scope_debugging_utility_observed_v1_test.go` |
 | `agent/luna-meta-09-causal-ci-selection` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/causal-ci-selection.yml`, `cmd/causal-ci-selection-consumer`, `docs/causal-ci-selection.md`, `examples/causal-ci-selection`, `internal/meta/causalci`, `internal/verify/scope_luna_meta_09.go`, `scripts/causal-ci-selection` |
 | `agent/analyzer` | `internal/analyzer/**` |
 | `agent/analyzer-contract` | `internal/analyzer/**` |
