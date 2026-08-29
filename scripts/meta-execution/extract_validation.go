@@ -175,9 +175,14 @@ func canonicalStructuredExtractorFailure(subject string, failure *operationError
 		StdoutBytes     int    `json:"stdout_bytes"`
 		StderrBytes     int    `json:"stderr_bytes"`
 	}{
-		ActionSubject: subject, Stage: failure.stage, Step: failure.step,
-		Reason: failure.reason, DerivedBlocker: failure.derivedRelations[0].Counterexample,
-		ExitCode: process.ExitCode, StdoutBytes: process.StdoutBytes, StderrBytes: process.StderrBytes,
+		ActionSubject:  subject,
+		Stage:          failure.stage,
+		Step:           failure.step,
+		Reason:         failure.reason,
+		DerivedBlocker: failure.derivedRelations[0].Counterexample,
+		ExitCode:       process.ExitCode,
+		StdoutBytes:    process.StdoutBytes,
+		StderrBytes:    process.StderrBytes,
 	}
 	payload, err := json.Marshal(value)
 	if err != nil {

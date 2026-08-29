@@ -10,7 +10,7 @@ import (
 type splitReplayFile struct {
 	Path             string                                    `json:"path"`
 	Data             []byte                                    `json:"data"`
-	DeclarationOrder []operationconformance.DeclarationOrder `json:"declaration_order,omitempty"`
+	DeclarationOrder []operationconformance.DeclarationOrder   `json:"declaration_order,omitempty"`
 }
 
 type splitReplayEvent struct {
@@ -40,7 +40,7 @@ type splitReplayProjection struct {
 	EvidenceComplete bool                                     `json:"evidence_complete"`
 	Source           splitReplayFile                          `json:"source"`
 	Candidates       []splitReplayFile                        `json:"candidates"`
-	BuildContexts    []operationconformance.BuildContext `json:"build_contexts"`
+	BuildContexts    []operationconformance.BuildContext      `json:"build_contexts"`
 	Write            splitReplayWrite                         `json:"write_receipt"`
 	Executor         splitReplayProcess                       `json:"executor"`
 	Evaluator        splitReplayProcess                       `json:"evaluator"`
@@ -49,21 +49,25 @@ type splitReplayProjection struct {
 
 func splitReplayProjectionFrom(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) splitReplayProjection {
 	return splitReplayProjection{
-		ExpectedHeadSHA: evidence.ExpectedHeadSHA,
-		OperationID: evidence.OperationID,
+		ExpectedHeadSHA:  evidence.ExpectedHeadSHA,
+		OperationID:      evidence.OperationID,
 		EvidenceComplete: evidence.EvidenceComplete,
-		Source: splitReplayFileFrom(evidence.Source),
-		Candidates: splitReplayFilesFrom(evidence.Candidates),
-		BuildContexts: append([]operationconformance.BuildContext{}, evidence.BuildContexts...),
-		Write: splitReplayWriteFrom(evidence.Write),
-		Executor: splitReplayProcessFrom(executor),
-		Evaluator: splitReplayProcessFrom(evaluator),
-		Verifier: splitReplayProcessFrom(verifier),
+		Source:           splitReplayFileFrom(evidence.Source),
+		Candidates:       splitReplayFilesFrom(evidence.Candidates),
+		BuildContexts:    append([]operationconformance.BuildContext{}, evidence.BuildContexts...),
+		Write:            splitReplayWriteFrom(evidence.Write),
+		Executor:         splitReplayProcessFrom(executor),
+		Evaluator:        splitReplayProcessFrom(evaluator),
+		Verifier:         splitReplayProcessFrom(verifier),
 	}
 }
 
 func splitReplayFileFrom(file operationconformance.FileEvidence) splitReplayFile {
-	return splitReplayFile{Path: file.Path, Data: append([]byte{}, file.Data...), DeclarationOrder: append([]operationconformance.DeclarationOrder{}, file.DeclarationOrder...)}
+	return splitReplayFile{
+		Path:             file.Path,
+		Data:             append([]byte{}, file.Data...),
+		DeclarationOrder: append([]operationconformance.DeclarationOrder{}, file.DeclarationOrder...),
+	}
 }
 
 func splitReplayFilesFrom(files []operationconformance.FileEvidence) []splitReplayFile {
@@ -77,23 +81,42 @@ func splitReplayFilesFrom(files []operationconformance.FileEvidence) []splitRepl
 func splitReplayWriteFrom(write operationconformance.WriteReceipt) splitReplayWrite {
 	events := make([]splitReplayEvent, len(write.Events))
 	for index, event := range write.Events {
-		events[index] = splitReplayEvent{Sequence: event.Sequence, Kind: event.Kind, Target: event.Target, Success: event.Success}
+		events[index] = splitReplayEvent{
+			Sequence: event.Sequence,
+			Kind:     event.Kind,
+			Target:   event.Target,
+			Success:  event.Success,
+		}
 	}
-	return splitReplayWrite{Complete: write.Complete, ExecutionSucceeded: write.ExecutionSucceeded, DeclaredTargets: append([]string{}, write.DeclaredTargets...), Events: events, WritesOutsideDeclaredTargets: write.WritesOutsideDeclaredTargets, TemporaryFilesRemaining: write.TemporaryFilesRemaining}
+	return splitReplayWrite{
+		Complete:                     write.Complete,
+		ExecutionSucceeded:           write.ExecutionSucceeded,
+		DeclaredTargets:              append([]string{}, write.DeclaredTargets...),
+		Events:                       events,
+		WritesOutsideDeclaredTargets: write.WritesOutsideDeclaredTargets,
+		TemporaryFilesRemaining:      write.TemporaryFilesRemaining,
+	}
 }
 
 func splitReplayProcessFrom(observation generation.ProcessObservation) splitReplayProcess {
-	return splitReplayProcess{Command: append([]string{}, observation.Command...), ExitCode: observation.ExitCode}
-}
-
-func splitReplayProjectionBytes(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) []byte {
-	payload, err := json.Marshal(splitReplayProjectionFrom(evidence, executor, evaluator, verifier))
-	if err != nil {
-		return nil
+	return splitReplayProcess{
+		Command:  append([]string{}, observation.Command...),
+		ExitCode: observation.ExitCode,
 	}
-	return payload
 }
 
-func splitReplayDigest(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) string {
-	return digestBytes(splitReplayProjectionBytes(evidence, executor, evaluator, verifier))
+func splitReplayProjectionBytes(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) ([]byte, error) {
+	return splitReplayProjectionBytesWith(json.Marshal, evidence, executor, evaluator, verifier)
+}
+
+func splitReplayProjectionBytesWith(marshal func(any) ([]byte, error), evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) ([]byte, error) {
+	return marshal(splitReplayProjectionFrom(evidence, executor, evaluator, verifier))
+}
+
+func splitReplayDigest(evidence operationconformance.SplitGoEvidence, executor, evaluator, verifier generation.ProcessObservation) (string, error) {
+	payload, err := splitReplayProjectionBytes(evidence, executor, evaluator, verifier)
+	if err != nil {
+		return "", err
+	}
+	return digestBytes(payload), nil
 }

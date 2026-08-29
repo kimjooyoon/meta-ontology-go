@@ -15,8 +15,14 @@ func run(root, storageRoot, from, to, head, base, branch, expectedHead string, c
 			return err
 		}
 		policy := verify.DefaultLinePolicy()
-		if err := verify.CheckProjectedSourcePolicy(root, storageRoot, nil, policy); err != nil {
-			return err
+		var policyErr error
+		if validRevision(from) && validRevision(to) && from != to {
+			policyErr = verify.CheckProjectedSourcePolicyRevision(root, storageRoot, nil, policy, from, to)
+		} else {
+			policyErr = verify.CheckProjectedSourcePolicy(root, storageRoot, nil, policy)
+		}
+		if policyErr != nil {
+			return policyErr
 		}
 	}
 	if capsOnly {

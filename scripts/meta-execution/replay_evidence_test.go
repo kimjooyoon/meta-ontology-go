@@ -27,9 +27,12 @@ func TestCanonicalProcessReplayIgnoresWorkspaceAndRawDigest(t *testing.T) {
 
 func TestOperationReplayProjectionExcludesRawDigests(t *testing.T) {
 	process := generation.ProcessObservation{
-		Command:      []string{"go", "run", "<workspace>", "--plan", "meta-execution-function-plan.json"},
-		ExitCode: 1, StdoutBytes: 2, StdoutDigest: "sha256:" + strings.Repeat("1", 64),
-		StderrBytes: 3, StderrDigest: "sha256:" + strings.Repeat("2", 64),
+		Command:         []string{"go", "run", "<workspace>", "--plan", "meta-execution-function-plan.json"},
+		ExitCode:        1,
+		StdoutBytes:     2,
+		StdoutDigest:    "sha256:" + strings.Repeat("1", 64),
+		StderrBytes:     3,
+		StderrDigest:    "sha256:" + strings.Repeat("2", 64),
 		RawStdoutDigest: "sha256:" + strings.Repeat("3", 64),
 		RawStderrDigest: "sha256:" + strings.Repeat("4", 64),
 	}
@@ -52,8 +55,11 @@ func TestOperationReplayProjectionExcludesRawDigests(t *testing.T) {
 }
 
 func TestOperationReplayProjectionBindsCanonicalCommand(t *testing.T) {
-	first := generation.ProcessObservation{Command: []string{"go", "run", "<workspace>"},
-		StdoutDigest: "sha256:" + strings.Repeat("1", 64), StderrDigest: "sha256:" + strings.Repeat("2", 64)}
+	first := generation.ProcessObservation{
+		Command:      []string{"go", "run", "<workspace>"},
+		StdoutDigest: "sha256:" + strings.Repeat("1", 64),
+		StderrDigest: "sha256:" + strings.Repeat("2", 64),
+	}
 	second := first
 	second.Command = []string{"go", "run", "<workspace>", "--different-option"}
 	firstEncoded, err := json.Marshal(operationReplayEvidenceFrom(first, first, first))

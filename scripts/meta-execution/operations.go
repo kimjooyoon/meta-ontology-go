@@ -53,16 +53,19 @@ type operationReplayEvidence struct {
 
 func operationReplayEvidenceFrom(executor, evaluator, verifier generation.ProcessObservation) operationReplayEvidence {
 	return operationReplayEvidence{
-		Executor: replayProcess(executor), Evaluator: replayProcess(evaluator),
-		Verifier: replayProcess(verifier),
+		Executor:  replayProcess(executor),
+		Evaluator: replayProcess(evaluator),
+		Verifier:  replayProcess(verifier),
 	}
 }
 
 func replayProcess(observation generation.ProcessObservation) replayProcessObservation {
 	return replayProcessObservation{
 		Command:      append([]string{}, observation.Command...),
-		ExitCode:     observation.ExitCode, StdoutBytes: observation.StdoutBytes,
-		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
+		ExitCode:     observation.ExitCode,
+		StdoutBytes:  observation.StdoutBytes,
+		StdoutDigest: observation.StdoutDigest,
+		StderrBytes:  observation.StderrBytes,
 		StderrDigest: observation.StderrDigest,
 	}
 }
@@ -319,8 +322,11 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	canonical := splitReplayProjectionBytes(evidence, result.Observation, evaluator, verifier.Observation)
-	instance := splitReplayDigest(evidence, result.Observation, evaluator, verifier.Observation)
+	canonical, err := splitReplayProjectionBytes(evidence, result.Observation, evaluator, verifier.Observation)
+	if err != nil {
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("replay-operation", "encode-instance-evidence", "REPLAY_PROJECTION_ENCODING_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	instance := digestBytes(canonical)
 	indicators, ok := splitIndicatorReceipts(report, action, plan.HeadSHA)
 	if !ok {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
@@ -552,11 +558,18 @@ func extractIndicatorValue(id string, validation extractValidation) (int, bool) 
 
 func makeIndicatorReceipt(id, subject, headSHA, operationID string, actual, bound, beforeLines, afterLines int, transformed string, verdict generation.IndicatorVerdict, proof generation.ProofChoice) generation.IndicatorReceipt {
 	observation := generation.IndicatorObservation{
-		Schema: generation.IndicatorObservationSchema, IndicatorID: id, Subject: subject,
-		HeadSHA: headSHA, OperationID: operationID,
-		ValueKind: "integer", ActualValue: actual, ExpectedPredicate: "equal",
-		ExpectedBound: bound, BeforeFunctionLines: beforeLines, AfterFunctionLines: afterLines,
-		TransformedSubject: transformed,
+		Schema:              generation.IndicatorObservationSchema,
+		IndicatorID:         id,
+		Subject:             subject,
+		HeadSHA:             headSHA,
+		OperationID:         operationID,
+		ValueKind:           "integer",
+		ActualValue:         actual,
+		ExpectedPredicate:   "equal",
+		ExpectedBound:       bound,
+		BeforeFunctionLines: beforeLines,
+		AfterFunctionLines:  afterLines,
+		TransformedSubject:  transformed,
 	}
 	return generation.IndicatorReceipt{ID: id, Verdict: verdict, EvidenceDigest: digestObservation(observation), ProofChoice: proof, Observation: &observation}
 }
@@ -683,9 +696,16 @@ func descriptorObservation(command []string, stdout, stderr []byte, exit ...int)
 	if len(exit) > 0 {
 		code = exit[0]
 	}
-	return generation.ProcessObservation{Command: append([]string{}, command...), ExitCode: code,
-		StdoutBytes: len(stdout), RawStdoutDigest: digestBytes(stdout), StdoutDigest: digestBytes(stdout),
-		StderrBytes: len(stderr), RawStderrDigest: digestBytes(stderr), StderrDigest: digestBytes(stderr)}
+	return generation.ProcessObservation{
+		Command:         append([]string{}, command...),
+		ExitCode:        code,
+		StdoutBytes:     len(stdout),
+		RawStdoutDigest: digestBytes(stdout),
+		StdoutDigest:    digestBytes(stdout),
+		StderrBytes:     len(stderr),
+		RawStderrDigest: digestBytes(stderr),
+		StderrDigest:    digestBytes(stderr),
+	}
 }
 
 func sourceMetricsPath() (string, error) {
