@@ -16,8 +16,8 @@ func mixedOutcomeInput() inputSet {
 			Operation: "extract-function", Activity: "extract", Output: "receipt",
 			Executor: "bootstrap/function-extractor", Evaluator: "extract-evaluator",
 			Stage: "derive-recipe", Step: "select-declaration",
-			Reason: "NO_SAFE_DECLARATION_CAPACITY",
-			UnknownClass: generation.ReceiptUnknownClassDependencyBlocked,
+			Reason:        "NO_SAFE_DECLARATION_CAPACITY",
+			UnknownClass:  generation.ReceiptUnknownClassDependencyBlocked,
 			NextOperation: "report-counterexample", BlockedBy: []string{"operation-failure:action-b"}})
 	}
 	failure := generation.ObservationFailure{ActionIndicatorID: "action-b", Decision: "REFUTED",

@@ -25,7 +25,7 @@ type CausalUnknownRecord struct {
 // CausalUnknownProjection is the canonical aggregate consumed by downstream
 // verifiers. Digest is excluded from its own input by design.
 type CausalUnknownProjection struct {
-	DirectUnknownCount           int                   `json:"direct_unknown_count"`
+	DirectUnknownCount            int                   `json:"direct_unknown_count"`
 	DependencyBlockedUnknownCount int                  `json:"dependency_blocked_unknown_count"`
 	Records                      []CausalUnknownRecord `json:"records"`
 	Digest                       string                `json:"-"`

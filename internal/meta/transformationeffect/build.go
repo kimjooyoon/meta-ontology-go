@@ -51,17 +51,17 @@ func Build(opts Options) (Result, error) {
 		GeneratedReceiptReportDigest: executed.receipts.ReportDigest,
 		InputProvenanceDigest:        in.provenance.EnvelopeDigest,
 		ExecutedProvenanceDigest:     executed.provenance.EnvelopeDigest, Status: "BOUND",
-		SelectedPlanOperations:    executed.selectedPlanOperations,
-		BoundExecutorOperations:   executed.boundExecutorOperations,
-		UnboundExecutorOperations: executed.unboundExecutorOperations,
-		OperationOutcome:          operationOutcome(executed.receipts),
-		ReceiptDecision:           string(executed.receipts.Decision),
-		ReceiptCount:              len(executed.receipts.Receipts),
-		FailureCount:              len(executed.receipts.Failures),
-		UnknownCount:              len(executed.receipts.Unknowns),
-		DirectUnknownCount:        causal.DirectUnknownCount,
+		SelectedPlanOperations:        executed.selectedPlanOperations,
+		BoundExecutorOperations:       executed.boundExecutorOperations,
+		UnboundExecutorOperations:     executed.unboundExecutorOperations,
+		OperationOutcome:              operationOutcome(executed.receipts),
+		ReceiptDecision:               string(executed.receipts.Decision),
+		ReceiptCount:                  len(executed.receipts.Receipts),
+		FailureCount:                  len(executed.receipts.Failures),
+		UnknownCount:                  len(executed.receipts.Unknowns),
+		DirectUnknownCount:            causal.DirectUnknownCount,
 		DependencyBlockedUnknownCount: causal.DependencyBlockedUnknownCount,
-		UnknownCausalDigest:       causal.Digest}
+		UnknownCausalDigest:           causal.Digest}
 	ledger.Indicators = effectIndicators(ledger, len(in.plan.Selected), executed.receipts.Decision)
 	ledger = sealLedger(ledger)
 	if err := validateLedger(ledger); err != nil {

@@ -63,8 +63,8 @@ func collectTransformation(source Source, path string) Source {
 		DirectUnknownCount:            ledger.DirectUnknownCount,
 		DependencyBlockedUnknownCount: ledger.DependencyBlockedUnknownCount,
 		UnknownCausalDigest:           ledger.UnknownCausalDigest,
-		SourceWorkspaceUnchanged: ledger.SourceWorkspaceUnchanged,
-		PromotionAuthorized:      ledger.PromotionAuthorized}
+		SourceWorkspaceUnchanged:      ledger.SourceWorkspaceUnchanged,
+		PromotionAuthorized:           ledger.PromotionAuthorized}
 	source.RepositoryWrites = source.Guard.RepositoryWrites
 	return source
 }

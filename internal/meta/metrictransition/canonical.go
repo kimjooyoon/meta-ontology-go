@@ -66,7 +66,7 @@ func buildEffectEvidence(inputs inputSet, outcome string) (EffectEvidence, error
 		ReceiptDecision: string(inputs.receiptReport.Decision),
 		ReceiptCount:    len(inputs.receiptReport.Receipts),
 		FailureCount:    len(inputs.receiptReport.Failures),
-		UnknownCount: len(inputs.receiptReport.Unknowns), DirectUnknownCount: causal.DirectUnknownCount,
+		UnknownCount:    len(inputs.receiptReport.Unknowns), DirectUnknownCount: causal.DirectUnknownCount,
 		DependencyBlockedUnknownCount: causal.DependencyBlockedUnknownCount,
-		UnknownCausalDigest: causal.Digest, OperationEvidence: operations}, nil
+		UnknownCausalDigest:           causal.Digest, OperationEvidence: operations}, nil
 }
