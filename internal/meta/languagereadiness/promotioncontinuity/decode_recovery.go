@@ -1,9 +1,13 @@
 package promotioncontinuity
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/rollbackfixedpoint"
 )
 
 type recoveryEnvelope struct {
@@ -65,11 +69,24 @@ func readRecovery(file string) (RecoveryEvidence, error) {
 	if err != nil {
 		return RecoveryEvidence{}, fmt.Errorf("read recovery: %w", err)
 	}
+	var typed rollbackfixedpoint.Report
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&typed); err != nil {
+		return RecoveryEvidence{}, fmt.Errorf("decode recovery: %w", err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return RecoveryEvidence{}, fmt.Errorf("recovery has trailing data")
+	}
+	if err := rollbackfixedpoint.Validate(typed); err != nil {
+		return RecoveryEvidence{}, fmt.Errorf("validate recovery: %w", err)
+	}
 	var e recoveryEnvelope
 	if err := json.Unmarshal(data, &e); err != nil {
 		return RecoveryEvidence{}, fmt.Errorf("decode recovery: %w", err)
 	}
-	return RecoveryEvidence{
+	value := RecoveryEvidence{
 		Schema: e.Schema, FileSHA256: fileSHA256(data), ReportDigest: e.ReportDigest,
 		HeadSHA: e.Source.ExpectedHeadSHA, Decision: e.Decision, Reason: e.Reason,
 		Resolution: e.Resolution, Mode: e.Mode, GuardDecision: e.Source.Guard.Decision,
@@ -104,5 +121,7 @@ func readRecovery(file string) (RecoveryEvidence, error) {
 		SummaryRepositoryWrites:                     e.Summary.RepositoryWrites,
 		RepositoryWrites:                            e.RepositoryWrites,
 		MutationAuthorized:                          e.RepositoryMutationAuthorized,
-	}, nil
+	}
+	value.TransformationCausalBindingDigest = causalBindingDigest(value)
+	return value, nil
 }

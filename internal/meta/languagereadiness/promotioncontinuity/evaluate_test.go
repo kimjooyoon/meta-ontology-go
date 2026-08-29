@@ -54,6 +54,7 @@ func mixedEvidence() (string, GuardEvidence, RecoveryEvidence) {
 	recovery.TransformationDirectUnknownCount = 0
 	recovery.TransformationDependencyBlockedUnknownCount = 5
 	recovery.TransformationUnknownCausalDigest = "sha256:" + strings.Repeat("c", 64)
+	recovery.TransformationCausalBindingDigest = causalBindingDigest(recovery)
 	recovery.Satisfied, recovery.Total, recovery.Unresolved = 8, 10, 0
 	recovery.ReadinessBPS = 8000
 	recovery.RecoveredFixedPoints, recovery.AuthorizedPromotions = 0, 0

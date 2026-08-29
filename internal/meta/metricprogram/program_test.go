@@ -52,3 +52,32 @@ func TestCompileIsDeterministic(t *testing.T) {
 		t.Fatal("meta program compilation is not deterministic")
 	}
 }
+
+func TestCompileSeparatesNonPromotingTerminalPath(t *testing.T) {
+	strategy, verification := fixturePayloads(t)
+	var plan metricprogram.StrategyPlan
+	if err := json.Unmarshal(strategy, &plan); err != nil {
+		t.Fatal(err)
+	}
+	plan.Selection.Decision = "PRESERVE_NON_PROMOTING_TERMINAL"
+	plan.Selection.MetaOperation = "preserve-non-promoting-terminal"
+	plan.Selection.Reason = "NON_PROMOTING_TERMINAL_PRESERVED"
+	strategy = fixtureJSON(t, plan)
+	program, source, err := metricprogram.Compile(strategy, verification)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(program.Steps) != 4 || program.Steps[2].OperationID != "replay-counterfactual" ||
+		program.Steps[3].OperationID != "preserve-non-promoting-terminal" ||
+		program.Steps[3].OutputEntity != "NonPromotingTerminalReceipt" {
+		t.Fatalf("steps = %#v", program.Steps)
+	}
+	for _, step := range program.Steps {
+		if step.OperationID == "terminate-at-fixed-point" {
+			t.Fatalf("mixed path contains fixed-point terminator: %#v", program.Steps)
+		}
+	}
+	if _, err := programverify.Verify(strategy, verification, fixtureJSON(t, program), source); err != nil {
+		t.Fatal(err)
+	}
+}

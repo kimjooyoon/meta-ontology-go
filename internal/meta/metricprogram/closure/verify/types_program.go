@@ -29,5 +29,6 @@ type bindingDocument struct {
 }
 
 type stepDocument struct {
-	Activity string `json:"activity"`
+	Activity    string `json:"activity"`
+	OutputEntity string `json:"output_entity"`
 }
