@@ -63,7 +63,7 @@ func loadMetricSubjects(name, expectedSHA string) ([]inputSubject, error) {
 	for _, indicator := range report.Meta.Indicators {
 		if indicator.MetricID != sourcepolicy.DimensionGoFileLines ||
 			indicator.Applicability == sourcepolicy.ApplicabilityNotApplicable ||
-			indicator.Satisfied || !indicator.Blocking ||
+			!indicator.IsDriverCandidate() ||
 			indicator.Operation != sourcepolicy.OperationSplitGo {
 			continue
 		}

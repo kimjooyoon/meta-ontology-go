@@ -19,6 +19,10 @@ func partitionIndicators(indicators []sourcepolicy.Indicator) ([]sourcepolicy.In
 			indicator.Satisfied {
 			continue
 		}
+		if sourcepolicy.IsLineCapMetric(indicator.MetricID) && !indicator.IsDriverCandidate() {
+			unknown = append(unknown, indicatorID(indicator))
+			continue
+		}
 		if indicator.Operation == "" {
 			unknown = append(unknown, indicatorID(indicator))
 			continue

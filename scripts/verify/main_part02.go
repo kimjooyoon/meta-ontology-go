@@ -1,21 +1,10 @@
 package main
 
-import (
-	"fmt"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
-)
+import "fmt"
 
 func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	if !skipCaps {
-		if storageRoot == "" {
-			storageRoot = root
-		}
-		if err := printSourceMetrics(root, storageRoot); err != nil {
-			return err
-		}
-		policy := verify.DefaultLinePolicy()
-		if err := verify.CheckProjectedSourcePolicy(root, storageRoot, nil, policy); err != nil {
+		if err := checkSourcePolicyForRun(root, storageRoot); err != nil {
 			return err
 		}
 	}

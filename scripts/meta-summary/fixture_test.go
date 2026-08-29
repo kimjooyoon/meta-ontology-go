@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func fixtureOptions(t *testing.T, decision string) options {
@@ -19,7 +21,14 @@ func fixtureOptions(t *testing.T, decision string) options {
 		"provenance": filepath.Join(dir, "self-improvement-provenance.json"),
 	}
 	for id, path := range paths {
-		if id != "provenance" {
+		switch id {
+		case "metrics":
+			writeFixture(t, path, sourceMetricsFixture(t))
+		case "plan":
+			writeFixture(t, path, sourcePlanFixture(t))
+		case "provenance":
+			continue
+		default:
 			writeFixture(t, path, []byte("{}\n"))
 		}
 	}
@@ -49,6 +58,37 @@ func fixtureOptions(t *testing.T, decision string) options {
 		OutputPath: filepath.Join(dir, "summary.md"), ReportPath: filepath.Join(dir, "summary.json"),
 		LimitBytes: defaultLimitBytes,
 	}
+}
+
+func sourceMetricsFixture(t *testing.T) []byte {
+	t.Helper()
+	meta := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+		{MetricID: sourcepolicy.DimensionRootREADME, Family: sourcepolicy.FamilyDocumentation, Subject: ".", SubjectKind: sourcepolicy.SubjectKindProjectRoot, Applicability: sourcepolicy.ApplicabilityNotApplicable, ApplicabilityRule: sourcepolicy.ApplicabilityRuleProjectRootREADME, ApplicabilityReason: sourcepolicy.ApplicabilityReasonRootREADMEExempt, Satisfied: true, Proof: sourcepolicy.ProofFoundation, Producer: "fixture", Consumer: "metric-meta-program", Operation: sourcepolicy.OperationExemptRootREADME},
+		{MetricID: sourcepolicy.DimensionGoFileLines, Family: sourcepolicy.FamilyVolume, Subject: "fixture.go", SubjectKind: sourcepolicy.SubjectKindFile, Value: 76, Limit: 75, Relation: sourcepolicy.RelationLessOrEqual, Applicability: sourcepolicy.ApplicabilityApplicable, ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault, ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable, Blocking: false, Satisfied: false, Role: sourcepolicy.IndicatorRoleDriver, Proof: sourcepolicy.ProofFoundation, Producer: "fixture", Consumer: "source-splitter", Operation: sourcepolicy.OperationSplitGo},
+	}}
+	document := map[string]any{
+		"root": ".", "files": []map[string]any{{"path": "fixture.go", "language": "go", "lines": 76}},
+		"directories": []map[string]any{{"path": ".", "recursive_files": 1, "recursive_folders": 0, "go_files": 1, "go_lines": 76, "gooo_files": 0, "gooo_lines": 0}},
+		"meta": meta,
+	}
+	data, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return append(data, '\n')
+}
+
+func sourcePlanFixture(t *testing.T) []byte {
+	t.Helper()
+	document := map[string]any{"selected": []map[string]any{
+		{"operation": "split-go-declarations", "metric_id": string(sourcepolicy.DimensionGoFileLines), "subject": "fixture.go"},
+		{"operation": "extract-function", "metric_id": string(sourcepolicy.DimensionFunctionLines), "subject": "fixture.go:1:Fixture"},
+	}}
+	data, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return append(data, '\n')
 }
 
 func digestFixture(character string) string {

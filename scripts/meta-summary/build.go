@@ -12,11 +12,11 @@ func build(opts options) ([]byte, summaryReport, error) {
 	if opts.LimitBytes < 1 {
 		return nil, report, fmt.Errorf("summary byte limit must be positive")
 	}
-	artifacts, provenance, err := loadArtifacts(opts)
+	artifacts, provenance, inventory, err := loadArtifacts(opts)
 	if err != nil {
 		return nil, report, err
 	}
-	report = newReport(opts.LimitBytes, artifacts, provenance)
+	report = newReport(opts.LimitBytes, artifacts, provenance, inventory)
 	summary, err := stabilizeSummary(&report)
 	if err != nil {
 		return nil, report, err
@@ -32,7 +32,7 @@ func build(opts options) ([]byte, summaryReport, error) {
 	return summary, report, nil
 }
 
-func newReport(limit int, artifacts []artifactEvidence, provenance provenanceEnvelope) summaryReport {
+func newReport(limit int, artifacts []artifactEvidence, provenance provenanceEnvelope, inventory sourceInventory) summaryReport {
 	input := digestArtifacts(artifacts)
 	report := summaryReport{
 		SchemaVersion: summarySchema, Decision: "PASS", Reason: "SUMMARY_WITHIN_BUDGET",
@@ -44,6 +44,7 @@ func newReport(limit int, artifacts []artifactEvidence, provenance provenanceEnv
 			Envelope: provenance.EnvelopeDigest, Replay: provenance.ReplayDigest,
 		},
 		Artifacts: artifacts,
+		SourceMetrics: inventory,
 		Indicators: []metricIndicator{
 			{ID: "foundation.artifact-coverage", Route: "FOUNDATION", Verdict: "PASS", Relation: "=", Value: strconv.Itoa(len(artifacts)), Limit: "5"},
 			{ID: "coherence.provenance-binding", Route: "COHERENCE", Verdict: "PASS", Relation: "=", Value: provenance.Decision, Limit: "BOUND"},

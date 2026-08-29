@@ -5,6 +5,7 @@ type definition struct {
 	limit     int
 	relation  Relation
 	blocking  bool
+	role      IndicatorRole
 	proof     ProofChoice
 	operation Operation
 	consumer  string

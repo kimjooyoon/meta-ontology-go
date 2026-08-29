@@ -111,7 +111,7 @@ write_extraction_result() {
       def stable_unique: unique_by(tojson) | sort_by(tojson);
       def metric_blockers($report; $metric):
         [$report.meta.indicators[]? |
-          select(.metric_id == $metric and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length;
+          select(.metric_id == $metric and .applicability == "APPLICABLE" and .role == "DRIVER" and .value > .limit)] | length;
       (($historical_refuted[0] // []) + [.failures[]? | select(.decision == "REFUTED")] | stable_unique) as $refuted |
       ($refuted | length) as $refuted_count |
       (($historical_refuted[0] // []) + (.failures // []) | stable_unique) as $counterexamples |
@@ -177,7 +177,7 @@ write_extraction_result() {
     --arg source_sha "$head_sha" --arg reason "$fallback_reason" \
     'def metric_blockers($report; $metric):
        [$report.meta.indicators[]? |
-         select(.metric_id == $metric and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length;
+         select(.metric_id == $metric and .applicability == "APPLICABLE" and .role == "DRIVER" and .value > .limit)] | length;
      ([$historical_refuted[0][]?] | unique_by(tojson) | sort_by(tojson)) as $refuted |
      ([$historical_subjects[0][]?] | unique_by(tojson) | sort_by([(.logical // ""), tojson])) as $subjects |
      (metric_blockers($raw_metrics[0]; "gooo.metric.source.go-file-lines.v1")) as $raw_go_file_line_blockers |
@@ -455,8 +455,8 @@ for iteration in 1 2 3 4 5 6 7 8; do
     -root "$repo_root" \
     -storage-root "$storage_root" \
     -json > "$metrics"
-  go_file_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.go-file-lines.v1" and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
-  function_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.function-lines.v1" and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  go_file_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.go-file-lines.v1" and .applicability == "APPLICABLE" and .role == "DRIVER" and .value > .limit)] | length' "$metrics")"
+  function_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.function-lines.v1" and .applicability == "APPLICABLE" and .role == "DRIVER" and .value > .limit)] | length' "$metrics")"
   blocking=$((go_file_line_blockers + function_line_blockers))
   last_metrics="$metrics"
   if [[ "$blocking" -eq 0 ]]; then

@@ -62,6 +62,17 @@ func bindingReasons(indicator sourcepolicy.Indicator, index map[string]Binding) 
 	if exists && normalizeProof(fmt.Sprint(indicator.Proof)) != binding.ProofChoice {
 		reasons = append(reasons, "PROOF_CHOICE_MISMATCH")
 	}
+	if sourcepolicy.IsLineCapMetric(indicator.MetricID) {
+		if indicator.Role != sourcepolicy.IndicatorRoleDriver {
+			reasons = append(reasons, "MISSING_DRIVER_ROLE")
+		}
+		if indicator.Blocking {
+			reasons = append(reasons, "DRIVER_MUST_NOT_BLOCK")
+		}
+		if indicator.Relation != sourcepolicy.RelationLessOrEqual {
+			reasons = append(reasons, "DRIVER_PREDICATE_MISMATCH")
+		}
+	}
 	sort.Strings(reasons)
 	return reasons
 }
