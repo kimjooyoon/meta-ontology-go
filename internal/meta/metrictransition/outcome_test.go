@@ -17,7 +17,7 @@ func mixedOutcomeInput() inputSet {
 		Effects: []transformationeffect.Effect{{ActionIndicatorID: "action-a", Status: "APPLIED"},
 			{ActionIndicatorID: "action-b", Status: "REFUTED"}}}
 	report := generation.ReceiptReport{Decision: generation.ReceiptDecisionRefuted,
-		Reason: generation.ReceiptReasonRefutedOperation,
+		Reason:       generation.ReceiptReasonRefutedOperation,
 		ReportDigest: "sha256:report", Receipts: []generation.OperationReceipt{{ActionIndicatorID: "action-a"}},
 		Failures: []generation.ObservationFailure{{ActionIndicatorID: "action-b", Decision: "REFUTED"}}}
 	return inputSet{effectLedger: ledger, receiptReport: report,
