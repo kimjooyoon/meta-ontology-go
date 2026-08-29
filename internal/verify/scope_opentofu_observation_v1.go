@@ -2,8 +2,13 @@ package verify
 
 const opentofuObservationBranch = "agent/opentofu-observation-v1"
 
+var opentofuObservationDenominatorEvolutionPaths = []string{
+	"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+	"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
+}
+
 func init() {
-	branchScopeAllowlist[opentofuObservationBranch] = []string{
+	paths := []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/opentofu-observation.yml",
@@ -22,4 +27,5 @@ func init() {
 		"internal/verify/scope_opentofu_observation_v1_test.go",
 		"scripts/opentofu-observation",
 	}
+	branchScopeAllowlist[opentofuObservationBranch] = append(paths, opentofuObservationDenominatorEvolutionPaths...)
 }

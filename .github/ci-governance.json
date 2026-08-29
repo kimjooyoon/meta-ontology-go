@@ -58,7 +58,9 @@
         "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/verify/scope_opentofu_observation_v1.go",
         "internal/verify/scope_opentofu_observation_v1_test.go",
-        "scripts/opentofu-observation"
+        "scripts/opentofu-observation",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json"
       ]
     },
     {
