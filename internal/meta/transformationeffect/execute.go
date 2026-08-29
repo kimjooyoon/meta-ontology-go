@@ -21,11 +21,24 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 	result.baseline = baseline
 	actions := append([]generation.Action{}, in.plan.Selected...)
 	sort.Slice(actions, func(i, j int) bool { return actions[i].IndicatorID < actions[j].IndicatorID })
+	result.selectedPlanOperations = len(actions)
+	for _, action := range actions {
+		if _, err := resolveActionBinding(in.plan, action); err != nil {
+			result.unboundExecutorOperations = len(actions) - result.boundExecutorOperations
+			return result, err
+		}
+		result.boundExecutorOperations++
+	}
 	sealed := make([]generation.OperationReceipt, 0, len(actions))
+	result.failures = append(result.failures, in.receipts.Failures...)
 	for _, action := range actions {
 		before, err := workspace.Scan(box.Root)
 		if err != nil {
 			return result, err
+		}
+		if failure, found := inputFailureForAction(in.receipts.Failures, action); found {
+			result.effects = append(result.effects, effectForFailure(action, before, failure))
+			continue
 		}
 		preflight, err := runAction(box, opts, in.plan, action, true)
 		if err != nil {
@@ -65,10 +78,19 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		return result, err
 	}
 	result.patch = workspace.MakePatch(opts.ExpectedSHA, baseline, result.final)
-	result.receipts = generation.VerifyReceipts(in.plan, sealed)
+	result.receipts = generation.VerifyReceiptsWithFailures(in.plan, sealed, result.failures)
 	result.provenance = generation.BindArtifactProvenance(in.plan, in.execution, result.receipts)
 	if result.provenance.Decision != generation.ArtifactProvenanceDecisionBound {
 		return result, fmt.Errorf("executed provenance is not bound")
 	}
 	return result, nil
+}
+
+func inputFailureForAction(failures []generation.ObservationFailure, action generation.Action) (generation.ObservationFailure, bool) {
+	for _, failure := range failures {
+		if failure.ActionIndicatorID == action.IndicatorID {
+			return failure, true
+		}
+	}
+	return generation.ObservationFailure{}, false
 }

@@ -44,7 +44,9 @@ func sealLedger(ledger Ledger) Ledger {
 
 func validateLedger(ledger Ledger) error {
 	if ledger.Schema != ledgerSchema || ledger.Status != "BOUND" || !ledger.RootTopologyExempt ||
-		ledger.PromotionAuthorized || !validSHA(ledger.BaseSHA) || !validSHA(ledger.HeadSHA) {
+		ledger.PromotionAuthorized || !validSHA(ledger.BaseSHA) || !validSHA(ledger.HeadSHA) ||
+		ledger.SelectedPlanOperations < 0 || ledger.BoundExecutorOperations != ledger.SelectedPlanOperations ||
+		ledger.UnboundExecutorOperations != 0 || len(ledger.Effects) != ledger.SelectedPlanOperations {
 		return fmt.Errorf("transformation ledger is not bound")
 	}
 	for _, indicator := range ledger.Indicators {
