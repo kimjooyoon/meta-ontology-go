@@ -21,24 +21,24 @@ type ledgerCounts struct {
 }
 
 type witnessLedger struct {
-	Schema               string            `json:"schema"`
-	Repository           string            `json:"repository"`
-	CommitSHA            string            `json:"commit_sha"`
-	SourceSchema         string            `json:"source_schema"`
-	Policy               sourcePolicy      `json:"policy"`
-	PolicyDigest         string            `json:"policy_digest"`
-	RootTopologyExempt   bool              `json:"root_topology_exempt"`
-	RootREADMEExempt     bool              `json:"root_readme_exempt"`
-	Counts               ledgerCounts      `json:"counts"`
-	SubjectWitnessDigest string            `json:"subject_witness_digest"`
-	MetaIndicatorDigest  string            `json:"meta_indicator_digest"`
-	IndicatorDigest      string            `json:"indicator_digest"`
-	SemanticDigest       string            `json:"semantic_digest"`
-	Status               string            `json:"status"`
-	ObservationState     string            `json:"observation_state,omitempty"`
-	ClaimState           string            `json:"claim_state,omitempty"`
-	SourceObservations   []sourceIndicator `json:"source_observations,omitempty"`
-	SourceObservationDigest string          `json:"source_observation_digest,omitempty"`
-	Indicators           []ledgerIndicator `json:"indicators"`
-	Witnesses            []subjectWitness  `json:"witnesses"`
+	Schema                  string            `json:"schema"`
+	Repository              string            `json:"repository"`
+	CommitSHA               string            `json:"commit_sha"`
+	SourceSchema            string            `json:"source_schema"`
+	Policy                  sourcePolicy      `json:"policy"`
+	PolicyDigest            string            `json:"policy_digest"`
+	RootTopologyExempt      bool              `json:"root_topology_exempt"`
+	RootREADMEExempt        bool              `json:"root_readme_exempt"`
+	Counts                  ledgerCounts      `json:"counts"`
+	SubjectWitnessDigest    string            `json:"subject_witness_digest"`
+	MetaIndicatorDigest     string            `json:"meta_indicator_digest"`
+	IndicatorDigest         string            `json:"indicator_digest"`
+	SemanticDigest          string            `json:"semantic_digest"`
+	Status                  string            `json:"status"`
+	ObservationState        string            `json:"observation_state,omitempty"`
+	ClaimState              string            `json:"claim_state,omitempty"`
+	SourceObservations      []sourceIndicator `json:"source_observations,omitempty"`
+	SourceObservationDigest string            `json:"source_observation_digest,omitempty"`
+	Indicators              []ledgerIndicator `json:"indicators"`
+	Witnesses               []subjectWitness  `json:"witnesses"`
 }

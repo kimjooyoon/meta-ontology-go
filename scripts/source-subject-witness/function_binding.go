@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	functionMetric       = "gooo.metric.refactor.single-return.v1"
-	functionLinesMetric  = "gooo.metric.source.function-lines.v1"
+	functionMetric      = "gooo.metric.refactor.single-return.v1"
+	functionLinesMetric = "gooo.metric.source.function-lines.v1"
 )
 
 func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, error) {

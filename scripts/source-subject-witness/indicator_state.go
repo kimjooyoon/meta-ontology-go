@@ -6,14 +6,14 @@ import (
 )
 
 type sourceValidationError struct {
-	Decision     string
-	Resolution   string
-	Stage        string
-	Step         string
-	Reason       string
-	UnknownClass string
+	Decision      string
+	Resolution    string
+	Stage         string
+	Step          string
+	Reason        string
+	UnknownClass  string
 	NextOperation string
-	BlockedBy    []string
+	BlockedBy     []string
 }
 
 func (err *sourceValidationError) Error() string {
