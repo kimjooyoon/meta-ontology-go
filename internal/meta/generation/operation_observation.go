@@ -243,8 +243,8 @@ func absoluteCommandArgument(argument string) bool {
 		(argument[2] == '/' || argument[2] == '\\') {
 		return true
 	}
-	if separator := strings.IndexByte(argument, '='); separator >= 0 {
-		return absoluteCommandArgument(argument[separator+1:])
+	if _, after, ok := strings.Cut(argument, "="); ok {
+		return absoluteCommandArgument(after)
 	}
 	return false
 }
@@ -327,11 +327,11 @@ func normalizeObservationFailureEvidence(evidence []ObservationFailureEvidence) 
 
 type replayProcessProjection struct {
 	Command      []string `json:"command"`
-	ExitCode     int    `json:"exit_code"`
-	StdoutBytes  int    `json:"stdout_bytes"`
-	StdoutDigest string `json:"stdout_digest"`
-	StderrBytes  int    `json:"stderr_bytes"`
-	StderrDigest string `json:"stderr_digest"`
+	ExitCode     int      `json:"exit_code"`
+	StdoutBytes  int      `json:"stdout_bytes"`
+	StdoutDigest string   `json:"stdout_digest"`
+	StderrBytes  int      `json:"stderr_bytes"`
+	StderrDigest string   `json:"stderr_digest"`
 }
 
 type replayReceiptProjection struct {
@@ -413,7 +413,7 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 
 func replayProcess(observation ProcessObservation) replayProcessProjection {
 	return replayProcessProjection{Command: append([]string{}, observation.Command...), ExitCode: observation.ExitCode,
-		StdoutBytes: observation.StdoutBytes,
+		StdoutBytes:  observation.StdoutBytes,
 		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
 		StderrDigest: observation.StderrDigest}
 }

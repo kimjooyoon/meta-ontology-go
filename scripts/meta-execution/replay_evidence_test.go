@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -45,9 +46,8 @@ func TestOperationReplayProjectionExcludesRawDigests(t *testing.T) {
 		!bytes.Contains(encoded, []byte(strings.Repeat("2", 64))) {
 		t.Fatal("canonical process digests were omitted from replay projection")
 	}
-	if !bytes.Contains(encoded, []byte("<workspace>")) ||
-		bytes.Contains(encoded, []byte("/tmp/actual-workspace")) {
-		t.Fatal("replay projection did not retain only the canonical command descriptor")
+	if !reflect.DeepEqual(projection.Executor.Command, process.Command) {
+		t.Fatalf("replay projection changed canonical command descriptor: %v", projection.Executor.Command)
 	}
 }
 

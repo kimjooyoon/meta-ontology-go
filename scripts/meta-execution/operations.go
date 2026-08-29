@@ -38,11 +38,11 @@ type operationMaterialization struct {
 
 type replayProcessObservation struct {
 	Command      []string `json:"command"`
-	ExitCode     int    `json:"exit_code"`
-	StdoutBytes  int    `json:"stdout_bytes"`
-	StdoutDigest string `json:"stdout_digest"`
-	StderrBytes  int    `json:"stderr_bytes"`
-	StderrDigest string `json:"stderr_digest"`
+	ExitCode     int      `json:"exit_code"`
+	StdoutBytes  int      `json:"stdout_bytes"`
+	StdoutDigest string   `json:"stdout_digest"`
+	StderrBytes  int      `json:"stderr_bytes"`
+	StderrDigest string   `json:"stderr_digest"`
 }
 
 type operationReplayEvidence struct {
