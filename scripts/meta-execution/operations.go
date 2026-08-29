@@ -39,6 +39,7 @@ type operationMaterialization struct {
 type extractorReport struct {
 	Schema                string                         `json:"schema"`
 	SourceSHA             string                         `json:"source_sha"`
+	StagedSubjects        int                            `json:"staged_subjects"`
 	Subjects              []extractorSubject            `json:"subjects"`
 	Unhandled             []string                       `json:"unhandled"`
 	Failures              []extractorFailureRecord      `json:"failures,omitempty"`
@@ -49,6 +50,7 @@ type extractorReport struct {
 
 type extractorSubject struct {
 	Logical      string   `json:"logical"`
+	State        string   `json:"state"`
 	Before       int      `json:"before_lines"`
 	After        int      `json:"after_lines"`
 	Files        []string `json:"changed_files"`
@@ -93,6 +95,16 @@ type extractorFailureRecord struct {
 	NextOperation string   `json:"next_operation"`
 	BlockedBy     []string `json:"blocked_by"`
 	Diagnostics   []string `json:"diagnostics,omitempty"`
+}
+
+type extractorIndicatorRecord struct {
+	ID        string `json:"id"`
+	Value     int    `json:"value"`
+	Limit     int    `json:"limit"`
+	Blocking  bool   `json:"blocking"`
+	Consumer  string `json:"consumer"`
+	Operation string `json:"meta_operation"`
+	Proof     string `json:"proof_choice"`
 }
 
 const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
@@ -331,6 +343,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 			return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 		}
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
+	}
+	if failure := adjudicateExtractorReport(report); failure != nil {
+		return operationMaterialization{Executor: result.Observation}, failure
 	}
 	observed, found := findExtractorSubject(report.Subjects, subject.Path)
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {

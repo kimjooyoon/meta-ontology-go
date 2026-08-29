@@ -62,6 +62,7 @@ func TestFailedExtractionPreservesBackupUnknownCoordinate(t *testing.T) {
 	root := t.TempDir()
 	report := extractorReport{
 		Schema: functionExtractionReportSchema, SourceSHA: "head",
+		Indicators: extractionTestIndicators(),
 		NamespaceReplacements: []namespaceReplacementReceipt{{DestinationPreexisted: true}},
 		BackupCleanup: backupCleanupObservation{Status: "UNKNOWN", Attempted: 1, Failures: 1},
 	}
@@ -78,6 +79,22 @@ func TestFailedExtractionPreservesBackupUnknownCoordinate(t *testing.T) {
 		failure.next != "recover-backup-cleanup-evidence" {
 		t.Fatalf("backup unknown coordinate was not preserved: %+v", failure)
 	}
+}
+
+func extractionTestIndicators() []json.RawMessage {
+	values := []struct {
+		id    string
+		value int
+	}{
+		{"extraction.observed", 0}, {"extraction.staged", 0},
+		{"extraction.applied", 0}, {"extraction.created", 0}, {"extraction.unhandled", 0},
+	}
+	result := make([]json.RawMessage, 0, len(values))
+	for _, value := range values {
+		encoded, _ := json.Marshal(extractorIndicatorRecord{ID: value.id, Value: value.value})
+		result = append(result, encoded)
+	}
+	return result
 }
 
 func TestFailedExtractionMalformedReportIsRefuted(t *testing.T) {

@@ -3,8 +3,6 @@ package generation
 import (
 	"strings"
 	"testing"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) {
@@ -33,9 +31,16 @@ func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) 
 	if report.Decision != ReceiptDecisionRefuted || report.Reason != ReceiptReasonRefutedOperation {
 		t.Fatalf("refuted failure was not dominant: %+v", report)
 	}
-	if len(report.Failures) != 2 || report.Failures[0].Stage == "" || report.Failures[0].Step == "" ||
-		report.Failures[0].Reason == "" || report.Failures[0].UnknownClass == "" ||
-		report.Failures[0].NextOperation == "" || report.Failures[0].BlockedBy == nil {
+	var unknown ObservationFailure
+	foundUnknown := false
+	for _, failure := range report.Failures {
+		if failure.Decision == "UNKNOWN" {
+			unknown, foundUnknown = failure, true
+			break
+		}
+	}
+	if len(report.Failures) != 2 || !foundUnknown || unknown.Stage == "" || unknown.Step == "" ||
+		unknown.Reason == "" || unknown.UnknownClass == "" || unknown.NextOperation == "" || unknown.BlockedBy == nil {
 		t.Fatalf("unknown failure lost its six-field evidence: %+v", report.Failures)
 	}
 }
@@ -54,7 +59,5 @@ func TestVerifyReceiptsRejectsUnknownFailureWithoutSixFields(t *testing.T) {
 }
 
 func sourcepolicyPlanForFailureTest() Plan {
-	report := sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),
-		Indicators: []sourcepolicy.Indicator{metric("failure", sourcepolicy.OperationSplitGo, false, false)}}
-	return Build(strings.Repeat("7", 40), strings.Repeat("8", 40), report)
+	return actionableReceiptPlan()
 }

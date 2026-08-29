@@ -25,6 +25,7 @@ type densitySubject struct {
 
 type extractionSubject struct {
 	Logical      string   `json:"logical"`
+	State        string   `json:"state"`
 	Before       int      `json:"before_lines"`
 	After        int      `json:"after_lines"`
 	Files        []string `json:"changed_files"`
@@ -80,6 +81,7 @@ type backupCleanupObservation struct {
 type extractionReport struct {
 	Schema                string                         `json:"schema"`
 	SourceSHA             string                         `json:"source_sha"`
+	StagedSubjects        int                            `json:"staged_subjects"`
 	Subjects              []extractionSubject            `json:"subjects"`
 	Unhandled             []string                       `json:"unhandled"`
 	Failures              []extractionFailureRecord      `json:"failures,omitempty"`

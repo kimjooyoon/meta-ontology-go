@@ -37,20 +37,40 @@ func extractionSubjects(plans map[string]planSubject, residual []string, recipes
 func extractionEvidence(sha string, subjects []extractionSubject,
 	unhandled []string, failures []extractionFailureRecord) extractionReport {
 	observed := len(subjects) + len(unhandled)
-	created := createdCount(subjects)
+	markSubjectState(subjects, "STAGED_NOT_COMMITTED")
 	return extractionReport{
-		Schema: "gooo.function-extraction.v2", SourceSHA: sha,
+		Schema: "gooo.function-extraction.v2", SourceSHA: sha, StagedSubjects: len(subjects),
 		Subjects: subjects, Unhandled: unhandled, Failures: failures,
 		Indicators: []extractionIndicator{
 			{ID: "extraction.observed", Value: observed, Limit: -1,
 				Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},
-			{ID: "extraction.applied", Value: len(subjects), Limit: -1,
+			{ID: "extraction.staged", Value: len(subjects), Limit: -1,
+				Consumer: "function-extractor", Operation: "stage-helper-extraction", Proof: "coherent-system"},
+			{ID: "extraction.applied", Value: 0, Limit: -1,
 				Consumer: "logical-materializer", Operation: "accept-helper-extraction", Proof: "coherent-system"},
-			{ID: "extraction.created", Value: created, Limit: -1,
+			{ID: "extraction.created", Value: 0, Limit: -1,
 				Consumer: "authorized-write-set", Operation: "authorize-declared-file-creation", Proof: "axiomatic-foundation"},
 			{ID: "extraction.unhandled", Value: len(unhandled), Limit: 0, Blocking: true,
 				Consumer: "function-extractor", Operation: "define-extraction-recipe", Proof: "infinite-regress"},
 		},
+	}
+}
+
+func markSubjectState(subjects []extractionSubject, state string) {
+	for index := range subjects {
+		subjects[index].State = state
+	}
+}
+
+func markCommitted(report *extractionReport) {
+	markSubjectState(report.Subjects, "COMMITTED_APPLIED")
+	for index := range report.Indicators {
+		switch report.Indicators[index].ID {
+		case "extraction.applied":
+			report.Indicators[index].Value = len(report.Subjects)
+		case "extraction.created":
+			report.Indicators[index].Value = createdCount(report.Subjects)
+		}
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -98,7 +99,7 @@ func failedExtractionError(root, reportName string, plan generation.Plan) *opera
 		}
 		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	if failure, ok := reportFailureOperationError(report.Failures); ok {
+	if failure := adjudicateExtractorReport(report); failure != nil {
 		return failure
 	}
 	if validationErr := validateBackupCleanup(report.BackupCleanup, report.NamespaceReplacements); validationErr != nil {
@@ -108,6 +109,115 @@ func failedExtractionError(root, reportName string, plan generation.Plan) *opera
 		return newOperationError("evaluate-operation", "validate-function-extraction", reason, class, next)
 	}
 	return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
+}
+
+func adjudicateExtractorReport(report extractorReport) *operationError {
+	if malformed := validateExtractorReport(report); malformed {
+		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	if failure, ok := reportFailureOperationError(report.Failures); ok {
+		return failure
+	}
+	return nil
+}
+
+func validateExtractorReport(report extractorReport) bool {
+	failures := make(map[string]extractorFailureRecord, len(report.Failures))
+	blockers := make(map[string]bool, len(report.Failures))
+	for _, failure := range report.Failures {
+		if !validExtractorFailure(failure) || failures[failure.Logical].Logical != "" {
+			return true
+		}
+		if failure.BlockerID != "" && blockers[failure.BlockerID] {
+			return true
+		}
+		failures[failure.Logical] = failure
+		if failure.BlockerID != "" {
+			blockers[failure.BlockerID] = true
+		}
+	}
+	seenUnhandled := make(map[string]bool, len(report.Unhandled))
+	for _, logical := range report.Unhandled {
+		if logical == "" || seenUnhandled[logical] || failures[logical].Logical == "" {
+			return true
+		}
+		seenUnhandled[logical] = true
+	}
+	if len(failures) != len(report.Unhandled) {
+		return true
+	}
+	for _, subject := range report.Subjects {
+		if subject.Logical == "" || subject.State == "" {
+			return true
+		}
+		if _, exists := seenUnhandled[subject.Logical]; exists {
+			return true
+		}
+	}
+	values, ok := extractorIndicatorValues(report.Indicators)
+	if !ok || values["extraction.observed"] != len(report.Subjects)+len(report.Unhandled) ||
+		values["extraction.staged"] != report.StagedSubjects || report.StagedSubjects != len(report.Subjects) ||
+		values["extraction.unhandled"] != len(report.Unhandled) {
+		return true
+	}
+	failed := len(failures) != 0 || len(report.Unhandled) != 0
+	if failed {
+		if values["extraction.applied"] != 0 || values["extraction.created"] != 0 {
+			return true
+		}
+		for _, subject := range report.Subjects {
+			if subject.State != "STAGED_NOT_COMMITTED" {
+				return true
+			}
+		}
+		return trueIfNoFailureBinding(report.Unhandled, failures)
+	}
+	if values["extraction.applied"] != len(report.Subjects) ||
+		values["extraction.created"] != extractorCreatedCount(report.Subjects) {
+		return true
+	}
+	for _, subject := range report.Subjects {
+		if subject.State != "COMMITTED_APPLIED" {
+			return true
+		}
+	}
+	return false
+}
+
+func trueIfNoFailureBinding(unhandled []string, failures map[string]extractorFailureRecord) bool {
+	for _, logical := range unhandled {
+		if _, ok := failures[logical]; !ok {
+			return true
+		}
+	}
+	return false
+}
+
+func extractorIndicatorValues(raw []json.RawMessage) (map[string]int, bool) {
+	values := make(map[string]int, len(raw))
+	seen := make(map[string]bool, len(raw))
+	for _, encoded := range raw {
+		var indicator extractorIndicatorRecord
+		if decodeStrictBytes(encoded, &indicator) != nil || indicator.ID == "" || indicator.Value < 0 || seen[indicator.ID] {
+			return nil, false
+		}
+		seen[indicator.ID] = true
+		values[indicator.ID] = indicator.Value
+	}
+	for _, id := range []string{"extraction.observed", "extraction.staged", "extraction.applied", "extraction.created", "extraction.unhandled"} {
+		if _, ok := values[id]; !ok {
+			return nil, false
+		}
+	}
+	return values, true
+}
+
+func extractorCreatedCount(subjects []extractorSubject) int {
+	count := 0
+	for _, subject := range subjects {
+		count += len(subject.CreatedFiles)
+	}
+	return count
 }
 
 func reportFailureOperationError(failures []extractorFailureRecord) (*operationError, bool) {
@@ -234,6 +344,7 @@ func validateBackupCleanup(observation backupCleanupObservation, replacements []
 		if observation.Removed != observation.Attempted || observation.Failures != 0 {
 			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 		}
+		return nil
 	case "PENDING":
 		if observation.Removed != 0 || observation.Failures != 0 {
 			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}

@@ -48,6 +48,7 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 	if err != nil {
 		return err
 	}
+	markCommitted(&report)
 	report.NamespaceReplacements = transaction.receipts
 	report.BackupCleanup = backupCleanupObservation{Status: "PENDING", Attempted: transactionBackupCount(transaction.files)}
 	provisional, err := createProvisionalReportPath(filepath.Clean(output), report)
