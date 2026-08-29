@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run, jobs []byte, openTofu ExternalOpenTofu) (ReuseKey, error) {
+func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run, jobs []byte, openTofu ExternalOpenTofu, workflow []byte, operations []OperationObservation) (ReuseKey, error) {
 	summary, err := os.ReadFile(config.SummaryPath)
 	if err != nil {
 		return ReuseKey{}, fmt.Errorf("read CI summary: %w", err)
@@ -20,8 +20,9 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 	inputDigest := digestNamed(parts)
 	commandDigest := digestJSON(struct {
 		ManifestDigest string
-		Operations     []OperationSpec
-	}{digestBytes(manifest), mustManifest(manifest).Operations})
+		WorkflowDigest string
+		Operations     []commandContext
+	}{digestBytes(manifest), digestIfPresent(workflow), commandContexts(operations)})
 	environmentDigest := digestString(config.Environment)
 	dependencyParts := map[string][]byte{}
 	for _, path := range config.DependencyFiles {
@@ -41,8 +42,24 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		ToolchainDigest: digestString(goToolchain), CommandContextDigest: commandDigest,
 		EnvironmentAllowlistDigest: environmentDigest,
 		DependencyGraphDigest: digestNamed(dependencyParts), ExpectedResultDigest: expectedDigest,
-		OpenTofuReleaseDigest: digestString(openTofu.ReportDigest),
+		OpenTofuReleaseDigest: openTofu.ReleaseAssetDigest,
 	}, nil
+}
+
+type commandContext struct {
+	ID, ProofObligationID, JobName, StepName, WorkflowPath, WorkflowDigest, ContextDigest string
+	Command                                                                            []string
+}
+
+func commandContexts(operations []OperationObservation) []commandContext {
+	result := make([]commandContext, 0, len(operations))
+	for _, operation := range operations {
+		result = append(result, commandContext{ID: operation.ID, ProofObligationID: operation.ProofObligationID,
+			JobName: operation.JobName, StepName: operation.StepName, WorkflowPath: operation.WorkflowSourcePath,
+			WorkflowDigest: operation.WorkflowSourceDigest, ContextDigest: operation.CommandContextDigest,
+			Command: operation.Command})
+	}
+	return result
 }
 
 func mustManifest(data []byte) Manifest {
@@ -55,6 +72,7 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 	base := ReuseObservation{Requests: 1, Key: key, Cases: fixedReuseCases()}
 	if path == "" {
 		base.Decision, base.Resolution, base.Reason = "EXECUTE", "EXACT", "NO_PRIOR_RECEIPT"
+		base.RequiresExecution, base.NextOperation = true, "EXECUTE_VERIFIED_OPERATIONS"
 		return base, nil
 	}
 	data, err := os.ReadFile(path)
@@ -62,12 +80,14 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 		base.Decision, base.Resolution, base.Reason = "UNKNOWN", "LOWER", "PRIOR_RECEIPT_MISSING"
 		base.Unknown = 1
 		base.UnknownEvidence = priorMissingUnknown()
+		base.RequiresExecution, base.NextOperation = true, base.UnknownEvidence.NextOperation
 		return base, nil
 	}
 	base.PriorReceiptDigest = digestBytes(data)
 	var prior PriorRecord
 	if err := json.Unmarshal(data, &prior); err != nil {
 		base.Decision, base.Resolution, base.Reason = "FAIL_CLOSED", "LOWER", "PRIOR_RECEIPT_MALFORMED"
+		base.RequiresExecution, base.NextOperation = true, "REBUILD_PRIOR_RECEIPT"
 		return base, nil
 	}
 	base.PriorCandidates, base.PriorReceiptsValid = 1, 1
@@ -75,17 +95,20 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 	if prior.Decision == "REFUTED" || prior.Decision == "UNKNOWN" || prior.Decision == "FAIL_CLOSED" {
 		base.Decision, base.Resolution, base.Reason = "REFUTED", "EXACT", "PRIOR_RECEIPT_NOT_REUSABLE"
 		base.Rejected = 1
+		base.RequiresExecution, base.NextOperation = true, "EXECUTE_VERIFIED_OPERATIONS"
 		return base, nil
 	}
-	if prior.Decision != "PASS" || prior.Resolution != "EXACT" || prior.RepositoryWrites != 0 || !sameReuseKey(prior.Key, key) {
+	if prior.Schema != reportSchema || prior.HeadSHA != key.HeadSHA || !validDigest(prior.EvidenceDigest) || !validDigest(prior.ResultDigest) || prior.Decision != "PASS" || prior.Resolution != "EXACT" || prior.RepositoryWrites != 0 || !sameReuseKey(prior.Key, key) {
 		base.Decision, base.Resolution, base.Reason = "REFUTED", "EXACT", "REUSE_INPUT_DIGEST_MISMATCH"
 		base.Rejected = 1
+		base.RequiresExecution, base.NextOperation = true, "EXECUTE_VERIFIED_OPERATIONS"
 		return base, nil
 	}
 	base.Decision, base.Resolution, base.Reason = "REUSED", "EXACT", "EXACT_IMMUTABLE_RECEIPT"
 	base.Reused = 1
 	base.ReusedCommands = 0
 	base.ReusedTests = 0
+	base.RequiresExecution = false
 	return base, nil
 }
 
@@ -113,15 +136,15 @@ func priorMissingUnknown() *Unknown {
 
 func observeOpenTofu(reportPath, metaPath, expectedHead string) (ExternalOpenTofu, error) {
 	if reportPath == "" || metaPath == "" {
-		return ExternalOpenTofu{}, nil
+		return ExternalOpenTofu{Unknown: openTofuUnknown("OPENTOFU_EVIDENCE_MISSING")}, nil
 	}
 	reportData, err := os.ReadFile(reportPath)
 	if err != nil {
-		return ExternalOpenTofu{}, nil
+		return ExternalOpenTofu{Unknown: openTofuUnknown("OPENTOFU_REPORT_MISSING")}, nil
 	}
 	metaData, err := os.ReadFile(metaPath)
 	if err != nil {
-		return ExternalOpenTofu{}, nil
+		return ExternalOpenTofu{Unknown: openTofuUnknown("OPENTOFU_ARTIFACT_METADATA_MISSING")}, nil
 	}
 	var report OpenTofuReportInput
 	var meta ArtifactMeta
@@ -133,9 +156,15 @@ func observeOpenTofu(reportPath, metaPath, expectedHead string) (ExternalOpenTof
 	}
 	return ExternalOpenTofu{Workflow: "OpenTofu released-CLI observation", RunID: meta.RunID, ArtifactID: meta.ID,
 		ArtifactName: meta.Name, ArtifactDigest: meta.Digest, ArtifactSize: meta.Size,
-		ReportDigest: report.ReportDigest, ReportSchema: report.Schema, SubjectSHA: report.SubjectSHA,
+		ReportDigest: report.ReportDigest, ReleaseAssetDigest: report.Release.AssetSHA256,
+		ReportSchema: report.Schema, SubjectSHA: report.SubjectSHA,
 		Decision: report.Decision, Resolution: report.Resolution, CellsClosed: report.Summary.ClosedCells,
 		CellsTotal: report.Summary.CellsTotal, ReuseDecision: report.Reuse.Decision, ReuseCount: report.Reuse.Reused}, nil
 }
 
 func canonicalEnvironment(value string) string { return strings.TrimSpace(value) }
+
+func openTofuUnknown(reason string) *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_OPENTOFU_EVIDENCE", Reason: reason,
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RECAPTURE_OPENTOFU_OBSERVATION", BlockedBy: []string{}}
+}

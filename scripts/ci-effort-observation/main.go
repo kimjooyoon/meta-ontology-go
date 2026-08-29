@@ -42,7 +42,11 @@ func validateConfigReport(config Config, report Report) error {
 	if err != nil {
 		return err
 	}
-	return validateReport(report, manifest, contract, program)
+	workflow, err := os.ReadFile(manifest.WorkflowSource)
+	if err != nil {
+		workflow = nil
+	}
+	return validateReport(report, manifest, contract, program, workflow)
 }
 
 func parseConfig() Config {

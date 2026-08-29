@@ -69,6 +69,7 @@ func buildReport(config Config) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
+	workflowBytes, workflowErr := os.ReadFile(manifest.WorkflowSource)
 	if err := validateStaticInputs(manifest, contract, programBytes); err != nil {
 		return Report{}, err
 	}
@@ -86,12 +87,12 @@ func buildReport(config Config) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	operations, accounting := observeOperations(manifest.Operations, jobs.Jobs)
+	operations, accounting := observeOperations(manifest.Operations, jobs.Jobs, manifest.WorkflowSource, workflowBytes, workflowErr)
 	openTofu, err := observeOpenTofu(config.OpenTofuPath, config.OpenTofuMetaPath, source.HeadSHA)
 	if err != nil {
 		return Report{}, err
 	}
-	key, err := buildReuseKey(config, source, manifestBytes, contractBytes, sourceBytes, jobsBytes, openTofu)
+	key, err := buildReuseKey(config, source, manifestBytes, contractBytes, sourceBytes, jobsBytes, openTofu, workflowBytes, operations)
 	if err != nil {
 		return Report{}, err
 	}
@@ -104,13 +105,15 @@ func buildReport(config Config) (Report, error) {
 		Schema: reportSchema, ContractID: contract.ID, Repository: source.HeadRepository.FullName,
 		SourceWorkflow: manifest.Workflow, SourceEvent: source.Event, SourceRef: source.Ref,
 		HeadSHA: source.HeadSHA, SourceRunConclusion: source.Conclusion, SourceRunID: source.ID, SourceRunAttempt: source.RunAttempt,
-		SourceRunURL: source.HTMLURL, Window: window, Jobs: observedJobs, Operations: operations,
+		SourceRunURL: source.HTMLURL, WorkflowSourcePath: manifest.WorkflowSource, WorkflowSourceDigest: digestIfPresent(workflowBytes),
+		Window: window, Jobs: observedJobs, Operations: operations,
 		Accounting: accounting, Reuse: reuse, OpenTofu: openTofu,
 		OperationManifestDigest: digestBytes(manifestBytes),
 		Graph: graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
 		CrossProjectRequiredGates: 0, Improvement: "UNKNOWN",
 		Counterexamples: fixedCounterexamples(),
 	}
+	report.UnknownEvidence = firstUnknownEvidence(observedJobs, operations, openTofu)
 	report.Cells = buildCells(contract, report)
 	report.Decision, report.Resolution, report.Reason = classifyReport(report)
 	report.HumanReport = humanReport(report)
@@ -128,8 +131,12 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	var window WorkflowWindow
 	for index, job := range sorted {
 		wall, err := durationMS(job.StartedAt, job.CompletedAt)
+		var unknown *Unknown
 		if err != nil {
-			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
+			if job.StartedAt != "" && job.CompletedAt != "" {
+				return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
+			}
+			unknown = jobRuntimeUnknown()
 		}
 		steps, stepWall, err := observeSteps(job.Steps)
 		if err != nil {
@@ -137,11 +144,11 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 		}
 		result = append(result, JobObservation{ID: job.ID, Name: job.Name, Status: job.Status,
 			Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, StartedAt: job.StartedAt,
-			CompletedAt: job.CompletedAt, WallMS: wall, Steps: steps})
-		if index == 0 || job.StartedAt < window.StartAt {
+			CompletedAt: job.CompletedAt, WallMS: wall, Steps: steps, Unknown: unknown})
+		if job.StartedAt != "" && (index == 0 || window.StartAt == "" || job.StartedAt < window.StartAt) {
 			window.StartAt = job.StartedAt
 		}
-		if index == 0 || job.CompletedAt > window.EndAt {
+		if job.CompletedAt != "" && (index == 0 || window.EndAt == "" || job.CompletedAt > window.EndAt) {
 			window.EndAt = job.CompletedAt
 		}
 		window.JobWallMSSum += wall
@@ -156,17 +163,21 @@ func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 	var total int64
 	for _, step := range input {
 		wall := int64(0)
+		var unknown *Unknown
 		if step.StartedAt != "" || step.CompletedAt != "" {
 			var err error
 			wall, err = durationMS(step.StartedAt, step.CompletedAt)
 			if err != nil {
-				return nil, 0, fmt.Errorf("step %q: %w", step.Name, err)
+				if step.StartedAt != "" && step.CompletedAt != "" {
+					return nil, 0, fmt.Errorf("step %q: %w", step.Name, err)
+				}
+				unknown = stepRuntimeUnknown()
 			}
 			total += wall
 		}
 		result = append(result, StepObservation{Name: step.Name, Status: step.Status,
 			Conclusion: step.Conclusion, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt,
-			WallMS: wall})
+			WallMS: wall, Unknown: unknown})
 	}
 	return result, total, nil
 }
@@ -197,11 +208,11 @@ func durationMS(start, end string) (int64, error) {
 	return value, nil
 }
 
-func observeOperations(specs []OperationSpec, jobs []APIJob) ([]OperationObservation, Accounting) {
+func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error) ([]OperationObservation, Accounting) {
 	result := make([]OperationObservation, 0, len(specs))
 	accounting := Accounting{ManifestOperations: len(specs)}
 	for _, spec := range specs {
-		result = append(result, observeOperation(spec, jobs))
+		result = append(result, observeOperation(spec, jobs, workflowPath, workflow, workflowErr))
 		switch result[len(result)-1].State {
 		case "EXECUTED":
 			accounting.Executed++
@@ -226,9 +237,22 @@ func observeOperations(specs []OperationSpec, jobs []APIJob) ([]OperationObserva
 	return result, accounting
 }
 
-func observeOperation(spec OperationSpec, jobs []APIJob) OperationObservation {
-	base := OperationObservation{ID: spec.ID, Kind: spec.Kind, JobName: spec.JobName,
-		StepName: spec.StepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
+func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error) OperationObservation {
+	base := OperationObservation{ID: spec.ID, Kind: spec.Kind, ProofObligationID: spec.ProofObligationID,
+		JobName: spec.JobName, StepName: spec.StepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
+	if workflowErr != nil || len(workflow) == 0 {
+		base.Unknown = commandContextUnknown()
+		base.EvidenceDigest = operationDigest(base)
+		return base
+	}
+	contextDigest, err := bindWorkflowCommand(workflow, workflowPath, spec)
+	if err != nil {
+		base.Unknown = commandContextUnknown()
+		base.EvidenceDigest = operationDigest(base)
+		return base
+	}
+	base.WorkflowSourcePath, base.WorkflowSourceDigest = workflowPath, digestBytes(workflow)
+	base.CommandContextDigest, base.CommandBound = contextDigest, true
 	matchingJobs := make([]APIJob, 0, 1)
 	for _, job := range jobs {
 		if job.Name == spec.JobName {
@@ -238,6 +262,8 @@ func observeOperation(spec OperationSpec, jobs []APIJob) OperationObservation {
 	if len(matchingJobs) != 1 {
 		if len(matchingJobs) > 1 {
 			base.State = "REJECTED"
+		} else {
+			base.Unknown = operationEvidenceUnknown("JOB_OBSERVATION_MISSING")
 		}
 		base.EvidenceDigest = operationDigest(base)
 		return base
@@ -253,6 +279,8 @@ func observeOperation(spec OperationSpec, jobs []APIJob) OperationObservation {
 	if len(matches) != 1 {
 		if len(matches) > 1 {
 			base.State = "REJECTED"
+		} else {
+			base.Unknown = operationEvidenceUnknown("STEP_OBSERVATION_MISSING")
 		}
 		base.EvidenceDigest = operationDigest(base)
 		return base
@@ -265,9 +293,57 @@ func observeOperation(spec OperationSpec, jobs []APIJob) OperationObservation {
 	} else if step.Status == "completed" && step.Conclusion != "" && step.StartedAt != "" && step.CompletedAt != "" {
 		base.State = "EXECUTED"
 		base.WallMS, _ = durationMS(step.StartedAt, step.CompletedAt)
+	} else {
+		base.Unknown = operationEvidenceUnknown("OPERATION_TIMESTAMP_MISSING")
 	}
 	base.EvidenceDigest = operationDigest(base)
 	return base
+}
+
+func commandContextUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "BIND_WORKFLOW_COMMAND", Reason: "COMMAND_CONTEXT_MISSING",
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_WORKFLOW_COMMAND_EVIDENCE", BlockedBy: []string{}}
+}
+
+func jobRuntimeUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_JOB_RUNTIME", Reason: "JOB_TIMESTAMP_MISSING",
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_JOB_TIMESTAMPS", BlockedBy: []string{}}
+}
+
+func stepRuntimeUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_STEP_RUNTIME", Reason: "STEP_TIMESTAMP_MISSING",
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_STEP_TIMESTAMPS", BlockedBy: []string{}}
+}
+
+func operationEvidenceUnknown(reason string) *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RECEIPT", Reason: reason,
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_RECEIPT", BlockedBy: []string{}}
+}
+
+func digestIfPresent(value []byte) string {
+	if len(value) == 0 {
+		return ""
+	}
+	return digestBytes(value)
+}
+
+func firstUnknownEvidence(jobs []JobObservation, operations []OperationObservation, openTofu ExternalOpenTofu) *Unknown {
+	for _, job := range jobs {
+		if job.Unknown != nil {
+			return job.Unknown
+		}
+		for _, step := range job.Steps {
+			if step.Unknown != nil {
+				return step.Unknown
+			}
+		}
+	}
+	for _, operation := range operations {
+		if operation.Unknown != nil {
+			return operation.Unknown
+		}
+	}
+	return openTofu.Unknown
 }
 
 func graphObservation(path string, program []byte, contract Contract) GraphObservation {

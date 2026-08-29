@@ -24,12 +24,12 @@ func expectedCells() []expectedCell {
 }
 
 func validateStaticInputs(manifest Manifest, contract Contract, program []byte) error {
-	if manifest.Schema != manifestSchema || manifest.Workflow != "CI" || len(manifest.Operations) == 0 {
+	if manifest.Schema != manifestSchema || manifest.Workflow != "CI" || manifest.WorkflowSource == "" || len(manifest.Operations) == 0 {
 		return fmt.Errorf("operation manifest is malformed")
 	}
 	seen := map[string]bool{}
 	for _, operation := range manifest.Operations {
-		if operation.ID == "" || operation.JobName == "" || operation.StepName == "" || operation.Kind == "" || len(operation.Command) == 0 || seen[operation.ID] {
+		if operation.ID == "" || operation.JobName == "" || operation.StepName == "" || operation.Kind == "" || len(operation.Command) == 0 || operation.ProofObligationID == "" || seen[operation.ID] {
 			return fmt.Errorf("operation manifest identity is invalid")
 		}
 		seen[operation.ID] = true
@@ -67,35 +67,48 @@ func entityName(id string) string {
 	return strings.Join(words, "") + suffix
 }
 
-func validateReport(report Report, manifest Manifest, contract Contract, program []byte) error {
+func validateReport(report Report, manifest Manifest, contract Contract, program, workflow []byte) error {
 	if err := validateStaticInputs(manifest, contract, program); err != nil {
 		return err
 	}
-	if report.Schema != reportSchema || report.ContractID != contract.ID || !validSHA(report.HeadSHA) || report.SourceWorkflow != "CI" || !validDigest(report.OperationManifestDigest) || !validDigest(report.Graph.ProgramDigest) {
+	workflowDigestValid := validDigest(report.WorkflowSourceDigest) || report.UnknownEvidence != nil && report.WorkflowSourceDigest == ""
+	if report.Schema != reportSchema || report.ContractID != contract.ID || !validSHA(report.HeadSHA) || report.SourceWorkflow != "CI" || report.WorkflowSourcePath != manifest.WorkflowSource || !workflowDigestValid || !validDigest(report.OperationManifestDigest) || !validDigest(report.Graph.ProgramDigest) {
 		return fmt.Errorf("report identity is malformed")
+	}
+	if len(workflow) > 0 && report.WorkflowSourceDigest != digestBytes(workflow) {
+		return fmt.Errorf("workflow source digest is not bound")
 	}
 	if len(report.Operations) != len(manifest.Operations) || report.Accounting.ManifestOperations != len(manifest.Operations) {
 		return fmt.Errorf("operation denominator is invalid")
 	}
-	if report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum <= 0 {
+	if report.UnknownEvidence == nil && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum <= 0) {
 		return fmt.Errorf("workflow runtime is incomplete")
 	}
-	if report.RepositoryStatus.Writes != report.RepositoryWrites || report.RepositoryStatus.Before != "" || report.RepositoryStatus.After != "" || report.LocalTestExecutions != 0 || report.CrossProjectRequiredGates != 0 || report.Improvement != "UNKNOWN" {
+	if report.RepositoryStatus.Writes != report.RepositoryWrites || report.LocalTestExecutions != 0 || report.CrossProjectRequiredGates != 0 || report.Improvement != "UNKNOWN" {
 		return fmt.Errorf("authority or improvement boundary is invalid")
+	}
+	if report.UnknownEvidence != nil && !validUnknown(report.UnknownEvidence) {
+		return fmt.Errorf("report unknown evidence is incomplete")
+	}
+	if report.Accounting.Unknown > 0 && report.UnknownEvidence == nil {
+		return fmt.Errorf("unknown operation evidence has no causal context")
 	}
 	if err := validateJobs(report.Jobs, report.HeadSHA); err != nil {
 		return err
 	}
-	if err := validateOperations(report.Operations); err != nil {
+	if err := validateOperations(report.Operations, manifest.Operations, manifest.WorkflowSource, workflow); err != nil {
 		return err
 	}
 	if report.Accounting.Executed+report.Accounting.Skipped+report.Accounting.Unknown+report.Accounting.Rejected != report.Accounting.ManifestOperations {
 		return fmt.Errorf("operation accounting is inconsistent")
 	}
-	if !validSHA(report.Reuse.Key.HeadSHA) || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || !validDigest(report.Reuse.Key.OpenTofuReleaseDigest) {
+	if !validSHA(report.Reuse.Key.HeadSHA) || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
 		return fmt.Errorf("reuse key is incomplete")
 	}
 	if err := validateReuseCases(report.Reuse.Cases); err != nil {
+		return err
+	}
+	if err := validateReuseObservation(report.Reuse); err != nil {
 		return err
 	}
 	if report.Reuse.Decision == "UNKNOWN" && !validUnknown(report.Reuse.UnknownEvidence) {
@@ -118,8 +131,17 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.OpenTofu.ArtifactID != 0 && !validOpenTofu(report.OpenTofu, report.HeadSHA) {
 		return fmt.Errorf("OpenTofu evidence binding is invalid")
 	}
+	if report.OpenTofu.ArtifactID == 0 && report.OpenTofu.Unknown == nil {
+		return fmt.Errorf("missing OpenTofu evidence has no causal context")
+	}
 	if report.Decision != "PASS" && report.Decision != "UNKNOWN" && report.Decision != "REFUTED" {
 		return fmt.Errorf("unknown top-level decision")
+	}
+	if report.Decision == "PASS" && report.UnknownEvidence != nil {
+		return fmt.Errorf("PASS report carries unresolved evidence")
+	}
+	if report.Decision == "UNKNOWN" && report.UnknownEvidence == nil {
+		return fmt.Errorf("UNKNOWN report has no causal context")
 	}
 	if report.ReportDigest != sealReport(report) {
 		return fmt.Errorf("report digest is not sealed")
@@ -130,38 +152,76 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 func validateJobs(jobs []JobObservation, head string) error {
 	seen := map[int64]bool{}
 	for _, job := range jobs {
-		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 {
+		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil {
 			return fmt.Errorf("job evidence is invalid")
 		}
 		seen[job.ID] = true
+		if job.Unknown != nil && !validUnknown(job.Unknown) {
+			return fmt.Errorf("job unknown evidence is incomplete")
+		}
 		for _, step := range job.Steps {
 			if step.Name == "" || step.Conclusion == "skipped" {
 				continue
 			}
-			if step.Status == "completed" && step.WallMS <= 0 {
+			if step.Status == "completed" && step.WallMS <= 0 && step.Unknown == nil {
 				return fmt.Errorf("step runtime is invalid")
+			}
+			if step.Unknown != nil && !validUnknown(step.Unknown) {
+				return fmt.Errorf("step unknown evidence is incomplete")
 			}
 		}
 	}
 	return nil
 }
 
-func validateOperations(operations []OperationObservation) error {
+func validateOperations(operations []OperationObservation, specs []OperationSpec, workflowPath string, workflow []byte) error {
 	seen := map[string]bool{}
 	for _, operation := range operations {
 		if operation.ID == "" || seen[operation.ID] || len(operation.Command) == 0 || operation.EvidenceDigest != operationDigest(operation) {
 			return fmt.Errorf("operation evidence is invalid")
 		}
 		seen[operation.ID] = true
+		var spec *OperationSpec
+		for index := range specs {
+			if specs[index].ID == operation.ID {
+				spec = &specs[index]
+				break
+			}
+		}
+		if spec == nil || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != spec.StepName || !sameStrings(operation.Command, spec.Command) {
+			return fmt.Errorf("operation manifest binding is invalid")
+		}
 		if operation.State == "" || (operation.State != "EXECUTED" && operation.State != "SKIPPED" && operation.State != "UNKNOWN" && operation.State != "REJECTED") {
 			return fmt.Errorf("operation state is invalid")
+		}
+		if operation.State == "UNKNOWN" {
+			if !validUnknown(operation.Unknown) {
+				return fmt.Errorf("operation unknown evidence is incomplete")
+			}
+			continue
+		}
+		contextDigest, err := bindWorkflowCommand(workflow, workflowPath, *spec)
+		if err != nil || !operation.CommandBound || operation.WorkflowSourcePath != workflowPath || operation.WorkflowSourceDigest != digestBytes(workflow) || operation.CommandContextDigest != contextDigest {
+			return fmt.Errorf("operation command context is unbound")
 		}
 	}
 	return nil
 }
 
+func sameStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
 func validOpenTofu(value ExternalOpenTofu, head string) bool {
-	return value.Workflow == "OpenTofu released-CLI observation" && value.RunID > 0 && value.ArtifactName == "opentofu-observation-"+head && validDigest(value.ArtifactDigest) && value.ArtifactSize > 0 && value.ReportSchema == "gooo/opentofu-observation-report/v1" && value.SubjectSHA == head && value.Decision == "PASS" && value.Resolution == "EXACT" && value.CellsClosed == 12 && value.CellsTotal == 12 && value.ReportDigest != ""
+	return value.Workflow == "OpenTofu released-CLI observation" && value.RunID > 0 && value.ArtifactName == "opentofu-observation-"+head && validDigest(value.ArtifactDigest) && value.ArtifactSize > 0 && value.ReportSchema == "gooo/opentofu-observation-report/v1" && value.SubjectSHA == head && value.Decision == "PASS" && value.Resolution == "EXACT" && value.CellsClosed == 12 && value.CellsTotal == 12 && validDigest(value.ReleaseAssetDigest) && value.ReportDigest != ""
 }
 
 func validateReuseCases(cases []ReuseCase) error {
@@ -177,6 +237,33 @@ func validateReuseCases(cases []ReuseCase) error {
 		if value.Decision == "UNKNOWN" && !validUnknown(value.Unknown) {
 			return fmt.Errorf("reuse unknown counterexample is incomplete")
 		}
+	}
+	return nil
+}
+
+func validateReuseObservation(value ReuseObservation) error {
+	if value.Requests != 1 || value.PriorCandidates < 0 || value.PriorReceiptsValid < 0 || value.Reused < 0 || value.Rejected < 0 || value.Unknown < 0 || value.Skipped < 0 {
+		return fmt.Errorf("reuse accounting is invalid")
+	}
+	switch value.Decision {
+	case "EXECUTE":
+		if value.RequiresExecution != true || value.Reused != 0 || value.PriorCandidates != 0 || value.NextOperation == "" {
+			return fmt.Errorf("execute reuse decision is unbound")
+		}
+	case "REUSED":
+		if value.RequiresExecution || value.Reused != 1 || value.PriorCandidates != 1 || value.PriorReceiptsValid != 1 || value.NextOperation != "" {
+			return fmt.Errorf("reused decision is unbound")
+		}
+	case "REFUTED", "FAIL_CLOSED":
+		if !value.RequiresExecution || value.NextOperation == "" {
+			return fmt.Errorf("non-reusable decision is unbound")
+		}
+	case "UNKNOWN":
+		if !value.RequiresExecution || !validUnknown(value.UnknownEvidence) || value.NextOperation != value.UnknownEvidence.NextOperation {
+			return fmt.Errorf("unknown reuse decision is unbound")
+		}
+	default:
+		return fmt.Errorf("unknown reuse decision")
 	}
 	return nil
 }
@@ -222,10 +309,10 @@ func operationDigest(operation OperationObservation) string {
 }
 
 func classifyReport(report Report) (string, string, string) {
-	if report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.Reuse.Decision == "REFUTED" {
+	if report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.RepositoryWrites > 0 || report.Reuse.Decision == "REFUTED" || report.Reuse.Decision == "FAIL_CLOSED" {
 		return "REFUTED", "EXACT", "KNOWN_VERIFICATION_CONTRADICTION"
 	}
-	if report.Accounting.Unknown > 0 || report.Reuse.Decision == "UNKNOWN" || report.OpenTofu.ArtifactID == 0 {
+	if report.Accounting.Unknown > 0 || report.Reuse.Decision == "UNKNOWN" || report.OpenTofu.ArtifactID == 0 || report.UnknownEvidence != nil {
 		return "UNKNOWN", "LOWER", "OBSERVATION_EVIDENCE_UNAVAILABLE"
 	}
 	return "PASS", "EXACT", "CI_EFFORT_OBSERVED"
@@ -265,15 +352,19 @@ func humanReport(report Report) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "CI effort observation: %s / %s (%s)\n", report.Decision, report.Resolution, report.Reason)
 	fmt.Fprintf(&builder, "head=%s source_run=%d workflow=%s event=%s\n", report.HeadSHA, report.SourceRunID, report.SourceWorkflow, report.SourceEvent)
+	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
 	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s)\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
 	fmt.Fprintf(&builder, "job wall sum=%d ms; step wall sum=%d ms\n", report.Window.JobWallMSSum, report.Window.StepWallMSSum)
 	fmt.Fprintf(&builder, "operations manifest=%d executed=%d skipped=%d unknown=%d rejected=%d\n", report.Accounting.ManifestOperations, report.Accounting.Executed, report.Accounting.Skipped, report.Accounting.Unknown, report.Accounting.Rejected)
 	for _, operation := range report.Operations {
-		fmt.Fprintf(&builder, "operation %s kind=%s state=%s job=%q step=%q wall_ms=%d command=%q\n", operation.ID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.WallMS, operation.Command)
+		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)
 	}
 	fmt.Fprintf(&builder, "reuse decision=%s/%s reason=%s requests=%d prior_candidates=%d valid_prior=%d reused=%d rejected=%d unknown=%d skipped=%d reused_commands=%d reused_tests=%d\n", report.Reuse.Decision, report.Reuse.Resolution, report.Reuse.Reason, report.Reuse.Requests, report.Reuse.PriorCandidates, report.Reuse.PriorReceiptsValid, report.Reuse.Reused, report.Reuse.Rejected, report.Reuse.Unknown, report.Reuse.Skipped, report.Reuse.ReusedCommands, report.Reuse.ReusedTests)
-	fmt.Fprintf(&builder, "reuse key head=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)
-	fmt.Fprintf(&builder, "external OpenTofu workflow=%s run=%d artifact=%s/%d digest=%s report=%s cells=%d/%d reuse=%s/%d\n", report.OpenTofu.Workflow, report.OpenTofu.RunID, report.OpenTofu.ArtifactName, report.OpenTofu.ArtifactID, report.OpenTofu.ArtifactDigest, report.OpenTofu.ReportDigest, report.OpenTofu.CellsClosed, report.OpenTofu.CellsTotal, report.OpenTofu.ReuseDecision, report.OpenTofu.ReuseCount)
+	fmt.Fprintf(&builder, "reuse key head=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release_asset=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)
+	fmt.Fprintf(&builder, "external OpenTofu workflow=%s run=%d artifact=%s/%d digest=%s release_asset=%s report=%s cells=%d/%d reuse=%s/%d\n", report.OpenTofu.Workflow, report.OpenTofu.RunID, report.OpenTofu.ArtifactName, report.OpenTofu.ArtifactID, report.OpenTofu.ArtifactDigest, report.OpenTofu.ReleaseAssetDigest, report.OpenTofu.ReportDigest, report.OpenTofu.CellsClosed, report.OpenTofu.CellsTotal, report.OpenTofu.ReuseDecision, report.OpenTofu.ReuseCount)
+	if report.UnknownEvidence != nil {
+		fmt.Fprintf(&builder, "unknown stage=%s step=%s reason=%s class=%s next=%s blocked_by=%q\n", report.UnknownEvidence.Stage, report.UnknownEvidence.Step, report.UnknownEvidence.Reason, report.UnknownEvidence.UnknownClass, report.UnknownEvidence.NextOperation, report.UnknownEvidence.BlockedBy)
+	}
 	fmt.Fprintf(&builder, "repository_writes=%d local_test_executions=%d cross_project_required_gates=%d improvement=%s\n", report.RepositoryWrites, report.LocalTestExecutions, report.CrossProjectRequiredGates, report.Improvement)
 	return builder.String()
 }

@@ -70,18 +70,20 @@ type APIStep struct {
 }
 
 type Manifest struct {
-	Schema       string          `json:"schema"`
-	Workflow     string          `json:"workflow"`
-	Operations   []OperationSpec `json:"operations"`
-	ExcludedJobs []ExcludedJob   `json:"excluded_jobs"`
+	Schema         string          `json:"schema"`
+	Workflow       string          `json:"workflow"`
+	WorkflowSource string          `json:"workflow_source"`
+	Operations     []OperationSpec `json:"operations"`
+	ExcludedJobs   []ExcludedJob   `json:"excluded_jobs"`
 }
 
 type OperationSpec struct {
-	ID      string   `json:"id"`
-	JobName string   `json:"job_name"`
-	StepName string  `json:"step_name"`
-	Kind    string   `json:"kind"`
-	Command []string `json:"command"`
+	ID                string   `json:"id"`
+	JobName           string   `json:"job_name"`
+	StepName          string   `json:"step_name"`
+	Kind              string   `json:"kind"`
+	Command           []string `json:"command"`
+	ProofObligationID string   `json:"proof_obligation_id"`
 }
 
 type ExcludedJob struct {
@@ -117,6 +119,7 @@ type JobObservation struct {
 	CompletedAt string        `json:"completed_at"`
 	WallMS     int64          `json:"wall_ms"`
 	Steps      []StepObservation `json:"steps"`
+	Unknown    *Unknown          `json:"unknown,omitempty"`
 }
 
 type StepObservation struct {
@@ -125,7 +128,8 @@ type StepObservation struct {
 	Conclusion  string `json:"conclusion"`
 	StartedAt   string `json:"started_at"`
 	CompletedAt string `json:"completed_at"`
-	WallMS      int64  `json:"wall_ms"`
+	WallMS      int64    `json:"wall_ms"`
+	Unknown     *Unknown `json:"unknown,omitempty"`
 }
 
 type WorkflowWindow struct {
@@ -137,20 +141,26 @@ type WorkflowWindow struct {
 }
 
 type OperationObservation struct {
-	ID             string   `json:"id"`
-	Kind           string   `json:"kind"`
-	JobName        string   `json:"job_name"`
-	StepName       string   `json:"step_name"`
-	Command        []string `json:"command"`
-	JobID          int64    `json:"job_id"`
-	JobConclusion  string   `json:"job_conclusion"`
-	StepStatus     string   `json:"step_status"`
-	StepConclusion string   `json:"step_conclusion"`
-	State          string   `json:"state"`
-	StartedAt      string   `json:"started_at"`
-	CompletedAt    string   `json:"completed_at"`
-	WallMS         int64    `json:"wall_ms"`
-	EvidenceDigest string   `json:"evidence_digest"`
+	ID                   string   `json:"id"`
+	Kind                 string   `json:"kind"`
+	ProofObligationID    string   `json:"proof_obligation_id"`
+	JobName              string   `json:"job_name"`
+	StepName             string   `json:"step_name"`
+	Command              []string `json:"command"`
+	WorkflowSourcePath   string   `json:"workflow_source_path"`
+	WorkflowSourceDigest string   `json:"workflow_source_digest"`
+	CommandContextDigest string   `json:"command_context_digest"`
+	CommandBound         bool     `json:"command_bound"`
+	JobID                int64    `json:"job_id"`
+	JobConclusion        string   `json:"job_conclusion"`
+	StepStatus           string   `json:"step_status"`
+	StepConclusion       string   `json:"step_conclusion"`
+	State                string   `json:"state"`
+	StartedAt            string   `json:"started_at"`
+	CompletedAt          string   `json:"completed_at"`
+	WallMS               int64    `json:"wall_ms"`
+	Unknown              *Unknown `json:"unknown,omitempty"`
+	EvidenceDigest       string   `json:"evidence_digest"`
 }
 
 type Accounting struct {
@@ -195,6 +205,8 @@ type ReuseObservation struct {
 	Skipped        int      `json:"skipped"`
 	ReusedCommands int      `json:"reused_commands"`
 	ReusedTests    int      `json:"reused_tests"`
+	RequiresExecution bool   `json:"requires_execution"`
+	NextOperation   string   `json:"next_operation,omitempty"`
 	UnknownEvidence *Unknown `json:"unknown_evidence,omitempty"`
 	Key            ReuseKey `json:"key"`
 	PriorReceiptDigest string `json:"prior_receipt_digest"`
@@ -259,7 +271,8 @@ type ExternalOpenTofu struct {
 	ArtifactName   string `json:"artifact_name"`
 	ArtifactDigest string `json:"artifact_digest"`
 	ArtifactSize   int64  `json:"artifact_size"`
-	ReportDigest   string `json:"report_digest"`
+	ReportDigest      string `json:"report_digest"`
+	ReleaseAssetDigest string `json:"release_asset_digest"`
 	ReportSchema   string `json:"report_schema"`
 	SubjectSHA     string `json:"subject_sha"`
 	Decision       string `json:"decision"`
@@ -268,6 +281,7 @@ type ExternalOpenTofu struct {
 	CellsTotal     int    `json:"cells_total"`
 	ReuseDecision  string `json:"reuse_decision"`
 	ReuseCount     int    `json:"reuse_count"`
+	Unknown        *Unknown `json:"unknown,omitempty"`
 }
 
 type ArtifactMeta struct {
@@ -285,6 +299,9 @@ type OpenTofuReportInput struct {
 	Decision     string `json:"decision"`
 	Resolution   string `json:"resolution"`
 	ReportDigest string `json:"report_digest"`
+	Release     struct {
+		AssetSHA256 string `json:"asset_sha256"`
+	} `json:"release"`
 	Summary      struct {
 		CellsTotal       int `json:"cells_total"`
 		ClosedCells      int `json:"closed_cells"`
@@ -318,6 +335,8 @@ type Report struct {
 	SourceRunID              int64                  `json:"source_run_id"`
 	SourceRunAttempt         int64                  `json:"source_run_attempt"`
 	SourceRunURL             string                 `json:"source_run_url"`
+	WorkflowSourcePath       string                 `json:"workflow_source_path"`
+	WorkflowSourceDigest     string                 `json:"workflow_source_digest"`
 	Window                   WorkflowWindow         `json:"workflow_window"`
 	Jobs                     []JobObservation       `json:"jobs"`
 	Operations               []OperationObservation `json:"operations"`
@@ -335,6 +354,7 @@ type Report struct {
 	Decision                 string                 `json:"decision"`
 	Resolution               string                 `json:"resolution"`
 	Reason                   string                 `json:"reason"`
+	UnknownEvidence          *Unknown              `json:"unknown_evidence,omitempty"`
 	Counterexamples          []Counterexample       `json:"counterexamples"`
 	HumanReport              string                 `json:"human_report"`
 	ReportDigest             string                 `json:"report_digest"`

@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"errors"
+	"strings"
+	"testing"
+)
 
 func TestDurationUsesPositiveIntegerMilliseconds(t *testing.T) {
 	value, err := durationMS("2026-08-30T00:00:00.000000001Z", "2026-08-30T00:00:00.000000002Z")
@@ -41,5 +45,39 @@ func TestCounterexamplesPreserveReuseBoundary(t *testing.T) {
 	cases := fixedCounterexamples()
 	if len(cases) != 5 || cases[0].Decision != "REFUTED" || cases[2].Unknown == nil {
 		t.Fatalf("counterexamples = %+v", cases)
+	}
+}
+
+func TestWorkflowCommandBindingRejectsSourceCommandDrift(t *testing.T) {
+	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Command: []string{"go", "test", "./..."}}
+	if _, err := bindWorkflowCommand(source, ".github/workflows/ci.yml", spec); err != nil {
+		t.Fatalf("valid workflow command rejected: %v", err)
+	}
+	mutated := []byte(strings.ReplaceAll(string(source), "go test ./...", "go vet ./..."))
+	if _, err := bindWorkflowCommand(mutated, ".github/workflows/ci.yml", spec); err == nil {
+		t.Fatal("workflow command drift was accepted")
+	}
+}
+
+func TestMissingCommandContextIsTypedUnknown(t *testing.T) {
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
+	operation := observeOperation(spec, nil, ".github/workflows/ci.yml", nil, errors.New("workflow source unavailable"))
+	if operation.State != "UNKNOWN" || !validUnknown(operation.Unknown) || operation.Unknown.BlockedBy == nil {
+		t.Fatalf("unknown operation lost causal context: %+v", operation)
+	}
+}
+
+func TestMissingOpenTofuEvidenceIsTypedUnknown(t *testing.T) {
+	value, err := observeOpenTofu("", "", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	if err != nil || value.ArtifactID != 0 || !validUnknown(value.Unknown) {
+		t.Fatalf("missing OpenTofu evidence = %+v, err = %v", value, err)
+	}
+}
+
+func TestRepositoryMutationIsNotAValidObservation(t *testing.T) {
+	decision, resolution, reason := classifyReport(Report{SourceRunConclusion: "success", RepositoryWrites: 1})
+	if decision != "REFUTED" || resolution != "EXACT" || reason != "KNOWN_VERIFICATION_CONTRADICTION" {
+		t.Fatalf("repository mutation classified as %s/%s/%s", decision, resolution, reason)
 	}
 }
