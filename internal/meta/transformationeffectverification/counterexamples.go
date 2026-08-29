@@ -2,7 +2,6 @@ package transformationeffectverification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -33,14 +32,17 @@ func VerifyCounterexamples(opts Options) (Report, error) {
 	}
 	return Report{Schema: verifierSchema, Decision: "PASS", Resolution: "EXACT", Stage: "counterexamples",
 		Step: "verify-binding-mutations", Reason: "BINDING_COUNTEREXAMPLES_REFUTED", NextOperation: "none",
-		BlockedBy: []string{}, SelectedPlanOperations: 2, BoundExecutorOperations: 2,
+		BlockedBy: []string{}, SelectedPlanOperations: len(bundle.Plan.Selected), BoundExecutorOperations: len(bundle.Plan.Selected),
 		UnboundExecutorOperations: 0, Counterexamples: results}, nil
 }
 
 func mutatePlan(plan generation.Plan, kind string) generation.Plan {
 	mutated := plan
 	mutated.Registry = append([]generation.Binding{}, plan.Registry...)
-	operation := sourcepolicy.OperationSplitGo
+	if len(mutated.Selected) == 0 {
+		return mutated
+	}
+	operation := mutated.Selected[0].Operation
 	index := bindingIndex(mutated.Registry, operation)
 	if index < 0 {
 		return mutated
@@ -66,5 +68,5 @@ func bindingIndex(registry []generation.Binding, operation sourcepolicy.Operatio
 }
 
 func failureForCounterexample(kind string) error {
-	return fmt.Errorf("binding counterexample %s was accepted", strings.TrimSpace(kind))
+	return fmt.Errorf("binding counterexample %s was accepted", kind)
 }

@@ -48,7 +48,10 @@ func validateBundle(bundle bundle, expectedHead string) error {
 	if err := validateReceipts(bundle.Plan, bundle.Receipts); err != nil {
 		return err
 	}
-	if err := validateProvenance(bundle.Plan, bundle.Receipts, bundle.Provenance); err != nil {
+	if err := validateEffectOutcomes(bundle.Plan, bundle.Ledger, bundle.Receipts); err != nil {
+		return err
+	}
+	if err := validateProvenance(bundle.Plan, bundle.Execution, bundle.Receipts, bundle.Provenance); err != nil {
 		return err
 	}
 	if err := validatePatch(bundle.Plan, bundle.Patch); err != nil {
@@ -62,23 +65,18 @@ func validateBundle(bundle bundle, expectedHead string) error {
 
 func validatePlan(plan generation.Plan) error {
 	if plan.SchemaVersion != generation.SchemaVersion || plan.Decision != generation.DecisionPlan ||
-		len(plan.Selected) != 2 || len(plan.Registry) == 0 {
-		return bindingFailure("plan", "PLAN with two selected operations", "invalid plan shape")
+		len(plan.Selected) == 0 || len(plan.Registry) == 0 {
+		return bindingFailure("plan", "PLAN with selected operations", "invalid plan shape")
 	}
-	seenOperations := map[sourcepolicy.Operation]bool{}
 	seenIndicators := map[string]bool{}
 	for _, action := range plan.Selected {
-		if seenOperations[action.Operation] || seenIndicators[action.IndicatorID] {
-			return bindingFailure("plan.selected", "unique operation and indicator IDs", string(action.Operation))
+		if action.IndicatorID == "" || action.Operation == "" || seenIndicators[action.IndicatorID] {
+			return bindingFailure("plan.selected", "unique non-empty indicator IDs", action.IndicatorID)
 		}
-		seenOperations[action.Operation] = true
 		seenIndicators[action.IndicatorID] = true
 		if err := validateActionBinding(plan.Registry, action); err != nil {
 			return err
 		}
-	}
-	if !seenOperations[sourcepolicy.OperationSplitGo] || !seenOperations[sourcepolicy.OperationExtractFunction] {
-		return bindingFailure("plan.selected", "split-go-declarations and extract-function", "different operation set")
 	}
 	return nil
 }
@@ -97,32 +95,42 @@ func validateActionBinding(registry []generation.Binding, action generation.Acti
 	if !ok {
 		return bindingFailure(bindingPath(action.Operation), "registered operation", string(action.Operation))
 	}
-	if err := compareBinding(action, candidates[0]); err != nil {
+	if err := compareBinding(expected, candidates[0]); err != nil {
 		return err
 	}
-	return compareBinding(action, expected)
+	return compareBinding(expected, actionBinding(action))
 }
 
-func compareBinding(action generation.Action, binding generation.Binding) error {
-	if action.Operation != binding.Operation {
-		return bindingFailure(bindingPath(action.Operation)+".operation", string(binding.Operation), string(action.Operation))
+func actionBinding(action generation.Action) generation.Binding {
+	return generation.Binding{
+		Operation: action.Operation, Activity: action.Activity, Output: action.Output,
+		IndependenceGroupID: action.IndependenceGroupID, ProofChoice: action.ProofChoice,
+		Executor: action.Executor, Evaluator: action.Evaluator,
+		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
+		ReceiptRequired: action.ReceiptRequired, Priority: action.Priority,
+	}
+}
+
+func compareBinding(expected, observed generation.Binding) error {
+	if expected.Operation != observed.Operation {
+		return bindingFailure(bindingPath(expected.Operation)+".operation", string(expected.Operation), string(observed.Operation))
 	}
 	checks := []struct {
 		path, expected, observed string
 	}{
-		{"activity", binding.Activity, action.Activity}, {"output", binding.Output, action.Output},
-		{"executor", binding.Executor, action.Executor}, {"evaluator", binding.Evaluator, action.Evaluator},
-		{"independence_group_id", binding.IndependenceGroupID, action.IndependenceGroupID},
-		{"proof_choice", string(binding.ProofChoice), string(action.ProofChoice)},
+		{"activity", expected.Activity, observed.Activity}, {"output", expected.Output, observed.Output},
+		{"executor", expected.Executor, observed.Executor}, {"evaluator", expected.Evaluator, observed.Evaluator},
+		{"independence_group_id", expected.IndependenceGroupID, observed.IndependenceGroupID},
+		{"proof_choice", string(expected.ProofChoice), string(observed.ProofChoice)},
 	}
 	for _, check := range checks {
 		if check.expected != check.observed {
-			return bindingFailure(bindingPath(action.Operation)+"."+check.path, check.expected, check.observed)
+			return bindingFailure(bindingPath(expected.Operation)+"."+check.path, check.expected, check.observed)
 		}
 	}
-	if !reflect.DeepEqual(sorted(binding.RequiredIndicatorIDs), sorted(action.RequiredIndicatorIDs)) ||
-		!action.ReceiptRequired {
-		return bindingFailure(bindingPath(action.Operation)+".required_indicator_ids", strings.Join(sorted(binding.RequiredIndicatorIDs), ","), strings.Join(sorted(action.RequiredIndicatorIDs), ","))
+	if !reflect.DeepEqual(sorted(expected.RequiredIndicatorIDs), sorted(observed.RequiredIndicatorIDs)) ||
+		!observed.ReceiptRequired {
+		return bindingFailure(bindingPath(expected.Operation)+".required_indicator_ids", strings.Join(sorted(expected.RequiredIndicatorIDs), ","), strings.Join(sorted(observed.RequiredIndicatorIDs), ","))
 	}
 	return nil
 }
@@ -154,71 +162,115 @@ func validateExecution(plan generation.Plan, execution generation.ExecutionManif
 
 func validateLedger(plan generation.Plan, ledger ledger) error {
 	if ledger.Schema != "gooo/transformation-effect-ledger/v1" || ledger.BaseSHA != plan.BaseSHA ||
-		ledger.HeadSHA != plan.HeadSHA || ledger.SelectedPlanOperations != 2 ||
-		ledger.BoundExecutorOperations != 2 || ledger.UnboundExecutorOperations != 0 || len(ledger.Effects) != 2 {
-		return bindingFailure("ledger", "2 selected, 2 bound, 0 unbound", "ledger counters or context mismatch")
+		ledger.HeadSHA != plan.HeadSHA || ledger.SelectedPlanOperations != len(plan.Selected) ||
+		ledger.BoundExecutorOperations != len(plan.Selected) || ledger.UnboundExecutorOperations != 0 || len(ledger.Effects) != len(plan.Selected) {
+		return bindingFailure("ledger", "selected=bound, unbound=0, one effect per selected", "ledger counters or context mismatch")
+	}
+	actions := make(map[string]generation.Action, len(plan.Selected))
+	for _, action := range plan.Selected {
+		actions[action.IndicatorID] = action
+	}
+	seen := make(map[string]bool, len(ledger.Effects))
+	for _, effect := range ledger.Effects {
+		action, ok := actions[effect.ActionIndicatorID]
+		if !ok || seen[effect.ActionIndicatorID] {
+			return bindingFailure("ledger.effects["+effect.ActionIndicatorID+"]", "one selected action effect", "unknown or duplicate effect")
+		}
+		seen[effect.ActionIndicatorID] = true
+		if err := validateEffectEntry(effect, action); err != nil {
+			return err
+		}
 	}
 	for _, action := range plan.Selected {
-		if err := validateEffect(ledger.Effects, action); err != nil {
-			return err
+		if !seen[action.IndicatorID] {
+			return bindingFailure("ledger.effects["+action.IndicatorID+"]", "one selected action effect", "effect missing")
 		}
 	}
 	return nil
 }
 
-func validateEffect(effects []effect, action generation.Action) error {
-	found := 0
-	for _, effect := range effects {
-		if effect.ActionIndicatorID != action.IndicatorID {
-			continue
+
+func validateEffectEntry(effect effect, action generation.Action) error {
+	if effect.MetricID != string(action.MetricID) || effect.Subject != action.Subject ||
+		effect.Operation != string(action.Operation) || effect.Activity != action.Activity ||
+		effect.Output != action.Output || effect.Executor != action.Executor ||
+		effect.Evaluator != action.Evaluator || effect.ProofChoice != string(action.ProofChoice) ||
+		!validEffectStatus(effect.Status) {
+		return bindingFailure("ledger.effects["+action.IndicatorID+"]", "selected action effect binding", effect.Status)
+	}
+	return nil
+}
+
+func validEffectStatus(status string) bool {
+	return status == "APPLIED" || status == "REFUTED" || status == "UNKNOWN"
+}
+
+func validateEffectOutcomes(plan generation.Plan, ledger ledger, report generation.ReceiptReport) error {
+	statuses := make(map[string]string, len(report.Receipts)+len(report.Failures))
+	for _, receipt := range report.Receipts {
+		if _, exists := statuses[receipt.ActionIndicatorID]; exists {
+			return bindingFailure("ledger.effects["+receipt.ActionIndicatorID+"]", "one operation outcome", "duplicate receipt outcome")
 		}
-		found++
-		wantStatus := "APPLIED"
-		if action.Operation == sourcepolicy.OperationExtractFunction {
-			wantStatus = "REFUTED"
+		statuses[receipt.ActionIndicatorID] = "APPLIED"
+	}
+	for _, failure := range report.Failures {
+		if _, exists := statuses[failure.ActionIndicatorID]; exists {
+			return bindingFailure("ledger.effects["+failure.ActionIndicatorID+"]", "one operation outcome", "duplicate failure outcome")
 		}
-		if effect.MetricID != string(action.MetricID) || effect.Subject != action.Subject ||
-			effect.Operation != string(action.Operation) || effect.Activity != action.Activity ||
-			effect.Output != action.Output || effect.Executor != action.Executor ||
-			effect.Evaluator != action.Evaluator || effect.ProofChoice != string(action.ProofChoice) ||
-			effect.Status != wantStatus {
-			return bindingFailure("ledger.effects["+action.IndicatorID+"]", wantStatus, effect.Status)
+		statuses[failure.ActionIndicatorID] = failure.Decision
+	}
+	for _, effect := range ledger.Effects {
+		expected, exists := statuses[effect.ActionIndicatorID]
+		if !exists || effect.Status != expected {
+			return bindingFailure("ledger.effects["+effect.ActionIndicatorID+"]", expected, effect.Status)
 		}
 	}
-	if found != 1 {
-		return bindingFailure("ledger.effects["+action.IndicatorID+"]", "one effect", fmt.Sprintf("%d", found))
+	if len(statuses) != len(plan.Selected) {
+		return bindingFailure("ledger.effects", fmt.Sprintf("%d operation outcomes", len(plan.Selected)), fmt.Sprintf("%d", len(statuses)))
 	}
 	return nil
 }
 
 func validateReceipts(plan generation.Plan, report generation.ReceiptReport) error {
-	if report.SchemaVersion != generation.ReceiptReportSchemaVersion || report.PlanDigest != plan.PlanDigest ||
-		report.Decision != generation.ReceiptDecisionRefuted || report.Reason != generation.ReceiptReasonRefutedOperation ||
-		len(report.Receipts) != 1 || len(report.Failures) != 1 || report.PromotionAuthorized ||
-		len(report.MissingIndicatorIDs) != 0 || len(report.RejectedIndicatorIDs) != 0 || len(report.Unknowns) != 5 {
-		return bindingFailure("receipts", "one closed receipt and one refuted failure", "mixed receipt contract mismatch")
+	if report.SchemaVersion != generation.ReceiptReportSchemaVersion || report.PlanDigest != plan.PlanDigest || report.PromotionAuthorized ||
+		len(report.MissingIndicatorIDs) != 0 || len(report.RejectedIndicatorIDs) != 0 ||
+		len(report.Receipts)+len(report.Failures) != len(plan.Selected) {
+		return bindingFailure("receipts", "one observation per selected action", "receipt set or context mismatch")
 	}
-	split, extract, ok := selectedActions(plan.Selected)
-	if !ok {
-		return bindingFailure("receipts", "selected operation set", "missing split or extract action")
+	actions := make(map[string]generation.Action, len(plan.Selected))
+	for _, action := range plan.Selected {
+		actions[action.IndicatorID] = action
 	}
-	if err := validateClosedReceipt(report.Receipts[0], split, plan.HeadSHA); err != nil {
-		return err
-	}
-	return validateExtractFailure(report, extract)
-}
-
-func selectedActions(actions []generation.Action) (generation.Action, generation.Action, bool) {
-	var split, extract generation.Action
-	for _, action := range actions {
-		switch action.Operation {
-		case sourcepolicy.OperationSplitGo:
-			split = action
-		case sourcepolicy.OperationExtractFunction:
-			extract = action
+	seen := make(map[string]bool, len(plan.Selected))
+	for _, receipt := range report.Receipts {
+		action, ok := actions[receipt.ActionIndicatorID]
+		if !ok || seen[receipt.ActionIndicatorID] {
+			return bindingFailure("receipts.receipts["+receipt.ActionIndicatorID+"]", "one selected action", "unknown or duplicate receipt")
+		}
+		seen[receipt.ActionIndicatorID] = true
+		if err := validateClosedReceipt(receipt, action, plan.HeadSHA); err != nil {
+			return err
 		}
 	}
-	return split, extract, split.IndicatorID != "" && extract.IndicatorID != ""
+	for _, failure := range report.Failures {
+		action, ok := actions[failure.ActionIndicatorID]
+		if !ok || seen[failure.ActionIndicatorID] {
+			return bindingFailure("receipts.failures["+failure.ActionIndicatorID+"]", "one selected action", "unknown or duplicate failure")
+		}
+		seen[failure.ActionIndicatorID] = true
+		if err := validateObservationFailure(failure, action, plan.HeadSHA); err != nil {
+			return err
+		}
+	}
+	for _, action := range plan.Selected {
+		if !seen[action.IndicatorID] {
+			return bindingFailure("receipts["+action.IndicatorID+"]", "one receipt or failure", "observation missing")
+		}
+	}
+	if err := validateUnknownLinkage(plan, report); err != nil {
+		return err
+	}
+	return validateReceiptDecision(report, len(report.Failures) > 0)
 }
 
 func validateClosedReceipt(receipt generation.OperationReceipt, action generation.Action, head string) error {
@@ -228,7 +280,7 @@ func validateClosedReceipt(receipt generation.OperationReceipt, action generatio
 		len(receipt.Indicators) != len(action.RequiredIndicatorIDs) {
 		return bindingFailure("receipts.receipt", "closed selected action", "receipt binding mismatch")
 	}
-	if err := validateProcessEvidence(receipt.InstanceEvidence); err != nil {
+	if err := validateProcessEvidence(receipt.InstanceEvidence, action, head); err != nil {
 		return err
 	}
 	allowed := map[string]bool{}
@@ -249,21 +301,40 @@ func validateClosedReceipt(receipt generation.OperationReceipt, action generatio
 	return nil
 }
 
-func validateExtractFailure(report generation.ReceiptReport, action generation.Action) error {
-	failure := report.Failures[0]
-	if failure.ActionIndicatorID != action.IndicatorID || failure.Decision != "REFUTED" || failure.Stage != "derive-recipe" ||
-		failure.Step != "select-declaration" || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" ||
-		failure.NextOperation != "report-counterexample" || failure.BlockedBy == nil || len(failure.BlockedBy) != 0 ||
-		len(failure.FailureEvidence) != len(action.RequiredIndicatorIDs) || failure.Executor.Command == nil {
-		return bindingFailure("receipts.failures[0]", "typed NO_SAFE_DECLARATION_CAPACITY", failure.Reason)
+func validateObservationFailure(failure generation.ObservationFailure, action generation.Action, head string) error {
+	if failure.Decision != "REFUTED" && failure.Decision != "UNKNOWN" || failure.Stage == "" ||
+		failure.Step == "" || failure.Reason == "" || failure.NextOperation == "" || failure.BlockedBy == nil ||
+		!validFailureUnknownClass(failure) || !validProcessObservation(failure.Executor) ||
+		len(failure.FailureEvidence) != len(action.RequiredIndicatorIDs) ||
+		!validCounterexampleRelations(failure.DerivedRelations) {
+		return bindingFailure("receipts.failures["+action.IndicatorID+"]", "typed selected-action failure", failure.Reason)
 	}
-	if len(report.UnknownIndicatorIDs) != 1 || report.UnknownIndicatorIDs[0] != action.IndicatorID+"::dependency:"+failure.Reason {
-		return bindingFailure("receipts.unknown_indicator_ids", "one dependency obligation", "unknown linkage mismatch")
+	if failure.Decision == "REFUTED" && !commandMatchesExecutor(failure.Executor.Command, action.Executor) {
+		return bindingFailure("receipts.failures["+action.IndicatorID+"].executor.command", action.Executor, strings.Join(failure.Executor.Command, " "))
+	}
+	if failure.Decision == "REFUTED" &&
+		(!commandContainsSubject(failure.Executor.Command, action.Subject) ||
+			action.Operation == sourcepolicy.OperationExtractFunction && failure.Executor.ExitCode == 0) {
+		return bindingFailure("receipts.failures["+action.IndicatorID+"].executor", "failed command bound to selected subject", "failure process is not bound")
 	}
 	if err := validateFailureEvidence(failure, action); err != nil {
 		return err
 	}
-	return validateDependencyUnknowns(report.Unknowns, failure, action)
+	_ = head
+	return nil
+}
+
+func validFailureUnknownClass(failure generation.ObservationFailure) bool {
+	if failure.Decision == "REFUTED" {
+		return failure.UnknownClass == ""
+	}
+	switch failure.UnknownClass {
+	case generation.ReceiptUnknownClassDirectMissing, generation.ReceiptUnknownClassMalformedEvidence,
+		generation.ReceiptUnknownClassUnexpectedEvidence, generation.ReceiptUnknownClassDependencyBlocked:
+		return true
+	default:
+		return false
+	}
 }
 
 func validateFailureEvidence(failure generation.ObservationFailure, action generation.Action) error {
@@ -272,13 +343,37 @@ func validateFailureEvidence(failure generation.ObservationFailure, action gener
 		allowed[id] = true
 	}
 	for _, evidence := range failure.FailureEvidence {
-		if !allowed[evidence.IndicatorID] || evidence.Decision != "UNKNOWN" || evidence.Observed != 0 || evidence.Expected != 1 {
-			return bindingFailure("receipts.failures[0].failure_evidence", "dependency evidence", evidence.IndicatorID)
+		if !allowed[evidence.IndicatorID] || evidence.Decision == "PASS" || evidence.Decision == "" {
+			return bindingFailure("receipts.failure_evidence", "typed non-PASS evidence", evidence.IndicatorID)
 		}
 		delete(allowed, evidence.IndicatorID)
 	}
 	if len(allowed) != 0 {
-		return bindingFailure("receipts.failures[0].failure_evidence", "all required indicators", "indicator missing")
+		return bindingFailure("receipts.failure_evidence", "all required indicators", "indicator missing")
+	}
+	return nil
+}
+
+func validateUnknownLinkage(plan generation.Plan, report generation.ReceiptReport) error {
+	actions := make(map[string]generation.Action, len(plan.Selected))
+	for _, action := range plan.Selected {
+		actions[action.IndicatorID] = action
+	}
+	expectedIDs := make([]string, 0, len(report.Failures))
+	expectedUnknowns := 0
+	for _, failure := range report.Failures {
+		action := actions[failure.ActionIndicatorID]
+		expectedIDs = append(expectedIDs, action.IndicatorID+"::dependency:"+failure.Reason)
+		expectedUnknowns += len(action.RequiredIndicatorIDs)
+		if err := validateDependencyUnknowns(report.Unknowns, failure, action); err != nil {
+			return err
+		}
+	}
+	if len(report.Unknowns) != expectedUnknowns {
+		return bindingFailure("receipts.unknowns", fmt.Sprintf("%d dependency unknowns", expectedUnknowns), fmt.Sprintf("%d", len(report.Unknowns)))
+	}
+	if !reflect.DeepEqual(sorted(expectedIDs), sorted(report.UnknownIndicatorIDs)) {
+		return bindingFailure("receipts.unknown_indicator_ids", strings.Join(sorted(expectedIDs), ","), strings.Join(sorted(report.UnknownIndicatorIDs), ","))
 	}
 	return nil
 }
@@ -290,6 +385,9 @@ func validateDependencyUnknowns(unknowns []generation.ReceiptUnknown, failure ge
 	}
 	root := "operation-failure:" + action.IndicatorID
 	for _, unknown := range unknowns {
+		if unknown.ActionIndicatorID != action.IndicatorID {
+			continue
+		}
 		if unknown.ActionIndicatorID != action.IndicatorID || !allowed[unknown.RequiredIndicatorID] ||
 			unknown.Stage != failure.Stage || unknown.Step != failure.Step || unknown.Reason != generation.ReceiptReason(failure.Reason) ||
 			unknown.UnknownClass != generation.ReceiptUnknownClassDependencyBlocked || unknown.NextOperation != failure.NextOperation ||
@@ -299,24 +397,105 @@ func validateDependencyUnknowns(unknowns []generation.ReceiptUnknown, failure ge
 		delete(allowed, unknown.RequiredIndicatorID)
 	}
 	if len(allowed) != 0 {
-		return bindingFailure("receipts.unknowns", "five dependency unknowns", "unknown missing")
+		return bindingFailure("receipts.unknowns["+action.IndicatorID+"]", "one dependency unknown per required indicator", "unknown missing")
 	}
 	return nil
 }
 
-func validateProcessEvidence(evidence *generation.OperationInstanceEvidence) error {
+func validateReceiptDecision(report generation.ReceiptReport, hasFailures bool) error {
+	if hasFailures {
+		for _, failure := range report.Failures {
+			if failure.Decision == "REFUTED" {
+				if report.Decision != generation.ReceiptDecisionRefuted || report.Reason != generation.ReceiptReasonRefutedOperation {
+					return bindingFailure("receipts.decision", string(generation.ReceiptDecisionRefuted), string(report.Decision))
+				}
+				return nil
+			}
+		}
+		if report.Decision != generation.ReceiptDecisionUnknown {
+			return bindingFailure("receipts.decision", string(generation.ReceiptDecisionUnknown), string(report.Decision))
+		}
+		return nil
+	}
+	if report.Decision != generation.ReceiptDecisionConformant && report.Decision != generation.ReceiptDecisionFixedPoint {
+		return bindingFailure("receipts.decision", "CONFORMANT or FIXED_POINT", string(report.Decision))
+	}
+	return nil
+}
+
+func validateProcessEvidence(evidence *generation.OperationInstanceEvidence, action generation.Action, head string) error {
 	if evidence.Schema != generation.OperationInstanceEvidenceSchema || evidence.ActionIndicatorID == "" ||
-		evidence.Subject == "" || evidence.HeadSHA == "" || evidence.OperationID == "" || !evidence.ReplayMatch ||
+		evidence.ActionIndicatorID != action.IndicatorID || evidence.Subject != action.Subject ||
+		evidence.HeadSHA != head || evidence.OperationID == "" || !evidence.ReplayMatch ||
 		evidence.ReplayComparisons < 1 || evidence.ExecutorObservation.Command == nil ||
 		evidence.EvaluatorObservation.Command == nil || evidence.VerifierObservation == nil ||
-		evidence.VerifierObservation.Command == nil {
+		evidence.VerifierObservation.Command == nil ||
+		!commandMatchesExecutor(evidence.ExecutorObservation.Command, action.Executor) ||
+		!validEvidenceReuse(*evidence) {
 		return bindingFailure("receipts.instance_evidence", "complete process observations", "instance evidence missing")
+	}
+	if evidence.ExecutorObservation.ExitCode != 0 || evidence.EvaluatorObservation.ExitCode != 0 ||
+		evidence.VerifierObservation.ExitCode != 0 {
+		return bindingFailure("receipts.instance_evidence.process", "successful selected operation observations", "nonzero process exit")
+	}
+	if !validProcessObservation(evidence.ExecutorObservation) ||
+		!validProcessObservation(evidence.EvaluatorObservation) ||
+		!validProcessObservation(*evidence.VerifierObservation) ||
+		!commandMatchesEvaluator(evidence.EvaluatorObservation.Command, action.Evaluator) ||
+		!hasTestCommand(evidence.VerifierObservation.Command) {
+		return bindingFailure("receipts.instance_evidence.process", "canonical process observations", "invalid process observation")
 	}
 	return nil
 }
 
-func validateProvenance(plan generation.Plan, receipts generation.ReceiptReport, provenance provenance) error {
-	if provenance.Schema != generation.ArtifactProvenanceSchemaVersion || provenance.HeadSHA != plan.HeadSHA ||
+func commandMatchesExecutor(command []string, executor string) bool {
+	if executor == "" {
+		return false
+	}
+	for _, argument := range command {
+		if strings.Contains(strings.TrimPrefix(argument, "./"), executor) {
+			return true
+		}
+	}
+	return false
+}
+
+func commandMatchesEvaluator(command []string, evaluator string) bool {
+	if evaluator == "" {
+		return false
+	}
+	for _, argument := range command {
+		if strings.Contains(strings.TrimPrefix(argument, "./"), evaluator) {
+			return true
+		}
+	}
+	return false
+}
+
+func commandContainsSubject(command []string, subject string) bool {
+	if subject == "" {
+		return false
+	}
+	for index, argument := range command[:max(0, len(command)-1)] {
+		if argument == "-subject" && command[index+1] == subject {
+			return true
+		}
+	}
+	return false
+}
+
+func validEvidenceReuse(evidence generation.OperationInstanceEvidence) bool {
+	if evidence.EvidenceOrigin == "" && evidence.SourceReceiptDigest == "" {
+		return true
+	}
+	return evidence.EvidenceOrigin == generation.EvidenceOriginInputReceipt &&
+		validEvidenceDigest(evidence.SourceReceiptDigest)
+}
+
+func validateProvenance(plan generation.Plan, execution generation.ExecutionManifest, receipts generation.ReceiptReport, provenance provenance) error {
+	if provenance.Schema != generation.ArtifactProvenanceSchemaVersion || provenance.BaseSHA != plan.BaseSHA ||
+		provenance.HeadSHA != plan.HeadSHA || provenance.PlanDigest != plan.PlanDigest ||
+		provenance.ExecutionManifestDigest != execution.ManifestDigest ||
 		provenance.ReceiptReportDigest != receipts.ReportDigest || provenance.EnvelopeDigest == "" {
 		return bindingFailure("provenance", "bound receipt report", "provenance mismatch")
 	}
@@ -348,24 +527,33 @@ func validateRuntime(runtime Runtime) error {
 }
 
 func successReport(bundle bundle) Report {
-	commands, tests := processCounts(bundle.Receipts)
+	commands, tests, evidenceReuse := processCounts(bundle.Receipts)
+	outcome := operationOutcome(bundle.Receipts, bundle.Failures)
 	return Report{Schema: verifierSchema, Decision: "PASS", Resolution: "EXACT", Stage: "verify-bundle",
 		Step: "adjudicate-mixed-operation", Reason: "TRANSFORMATION_EXECUTOR_BINDINGS_VERIFIED", NextOperation: "none",
-		BlockedBy: []string{}, SelectedPlanOperations: 2, BoundExecutorOperations: 2, ReceiptCount: 1,
-		FailureCount: 1, PhysicalCommands: commands, PhysicalTests: tests, ReusedCommands: 0, ReusedTests: 0,
+		BlockedBy: []string{}, SelectedPlanOperations: len(bundle.Plan.Selected), BoundExecutorOperations: bundle.Ledger.BoundExecutorOperations,
+		UnboundExecutorOperations: bundle.Ledger.UnboundExecutorOperations, ReceiptCount: len(bundle.Receipts.Receipts),
+		FailureCount: len(bundle.Receipts.Failures), UnknownCount: len(bundle.Receipts.Unknowns), OperationExecutorCommands: commands,
+		OperationExecutorTests: tests, CommandScope: "operation-receipt-executors",
+		TestScope: "operation-receipt-verifiers", ReusedCommands: 0, ReusedTests: 0,
+		ReusedEvidenceRecords: evidenceReuse, EvidenceReuseScope: "input-receipt-instance-evidence",
 		RepositoryWrites: bundle.Runtime.RepositoryWrites, LocalTestExecutions: bundle.Runtime.LocalTestExecutions,
 		CrossProjectRequiredGates: bundle.Runtime.CrossProjectRequiredGates, Improvement: "UNKNOWN",
-		OperationOutcome: "MIXED_CLOSED_REFUTED", PromotionAuthorized: false, Runtime: bundle.Runtime}
+		OperationOutcome: outcome, PromotionAuthorized: false, Runtime: bundle.Runtime}
 }
 
-func processCounts(report generation.ReceiptReport) (int, int) {
+func processCounts(report generation.ReceiptReport) (int, int, int) {
 	commands := 0
 	tests := 0
+	evidenceReuse := 0
 	for _, receipt := range report.Receipts {
 		if receipt.InstanceEvidence == nil {
 			continue
 		}
 		commands++
+		if receipt.InstanceEvidence.EvidenceOrigin == generation.EvidenceOriginInputReceipt {
+			evidenceReuse++
+		}
 		if hasTestCommand(receipt.InstanceEvidence.VerifierObservation.Command) {
 			tests++
 		}
@@ -375,7 +563,25 @@ func processCounts(report generation.ReceiptReport) (int, int) {
 			commands++
 		}
 	}
-	return commands, tests
+	return commands, tests, evidenceReuse
+}
+
+func operationOutcome(receipts []generation.OperationReceipt, failures []generation.ObservationFailure) string {
+	if len(failures) == 0 {
+		return "CLOSED"
+	}
+	for _, failure := range failures {
+		if failure.Decision == "REFUTED" {
+			if len(receipts) != 0 {
+				return "MIXED_CLOSED_REFUTED"
+			}
+			return "REFUTED"
+		}
+	}
+	if len(receipts) != 0 {
+		return "MIXED_CLOSED_UNKNOWN"
+	}
+	return "UNKNOWN"
 }
 
 func hasTestCommand(command []string) bool {

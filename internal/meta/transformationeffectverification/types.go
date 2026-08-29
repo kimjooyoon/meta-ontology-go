@@ -63,10 +63,15 @@ type Report struct {
 	UnboundExecutorOperations int              `json:"unbound_executor_operations"`
 	ReceiptCount              int              `json:"receipt_count"`
 	FailureCount              int              `json:"failure_count"`
-	PhysicalCommands          int              `json:"physical_commands"`
-	PhysicalTests             int              `json:"physical_tests"`
+	UnknownCount              int              `json:"unknown_count"`
+	OperationExecutorCommands int              `json:"operation_executor_commands"`
+	OperationExecutorTests    int              `json:"operation_executor_tests"`
+	CommandScope              string           `json:"command_scope"`
+	TestScope                 string           `json:"test_scope"`
 	ReusedCommands            int              `json:"reused_commands"`
 	ReusedTests               int              `json:"reused_tests"`
+	ReusedEvidenceRecords     int              `json:"reused_evidence_records"`
+	EvidenceReuseScope        string           `json:"evidence_reuse_scope"`
 	RepositoryWrites          int              `json:"repository_writes"`
 	LocalTestExecutions       int              `json:"local_test_executions"`
 	CrossProjectRequiredGates int              `json:"cross_project_required_gates"`

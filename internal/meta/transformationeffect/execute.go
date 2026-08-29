@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
@@ -93,7 +94,13 @@ func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs [
 			continue
 		}
 		receipt.Indicators = append([]generation.IndicatorReceipt{}, input.Indicators...)
-		return generation.AttachInstanceEvidence(receipt, *input.InstanceEvidence)
+		evidence := *input.InstanceEvidence
+		evidence.EvidenceOrigin = generation.EvidenceOriginInputReceipt
+		evidence.SourceReceiptDigest = input.ReceiptDigest
+		if !strings.HasPrefix(evidence.SourceReceiptDigest, "sha256:") {
+			evidence.SourceReceiptDigest = "sha256:" + evidence.SourceReceiptDigest
+		}
+		return generation.AttachInstanceEvidence(receipt, evidence)
 	}
 	return receipt
 }

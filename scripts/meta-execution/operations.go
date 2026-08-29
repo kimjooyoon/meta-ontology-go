@@ -312,7 +312,7 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	}
 	report := operationconformance.Evaluate(contractRaw, evidence)
 	reportRaw, _ := json.Marshal(report)
-	evaluator := descriptorObservation([]string{"operationconformance.Evaluate", operationconformance.OperationID}, reportRaw, nil)
+	evaluator := descriptorObservation([]string{action.Evaluator, operationconformance.OperationID}, reportRaw, nil)
 	if err := operationconformance.Validate(report, contractRaw); err != nil || report.Decision != operationconformance.DecisionPass || report.Evidence.Source.Path != action.Subject {
 		failure := newOperationError("evaluate-operation", "adjudicate-source-splitter", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 		failure.evidence = splitFailureEvidence(report)
@@ -447,7 +447,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "validate-function-extraction", reason, class, next)
 	}
 	evaluatorRaw, _ := json.Marshal(report)
-	evaluator := descriptorObservation([]string{"bootstrap/function-extractor:independent-evaluator", subject.Path, subject.Name}, evaluatorRaw, nil)
+	evaluator := descriptorObservation([]string{action.Evaluator, subject.Path, subject.Name}, evaluatorRaw, nil)
 	verifier := runGoTest(temporary, environment)
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
