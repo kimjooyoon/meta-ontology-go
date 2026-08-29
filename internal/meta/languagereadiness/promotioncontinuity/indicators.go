@@ -36,13 +36,21 @@ func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK,
 	return indicators
 }
 
-func buildProofs(report Report, foundation, coherence, regression bool) []Proof {
+func buildProofs(report Report, foundation, coherence, regression, mixed bool) []Proof {
+	foundationOperation := "bind-authorized-cycle-receipts"
+	coherenceOperation := "cohere-successor-authorization"
+	regressionOperation := "reject-effects-writes-or-authority"
+	if mixed {
+		foundationOperation = "bind-non-promoting-cycle-receipts"
+		coherenceOperation = "cohere-non-promoting-terminal"
+		regressionOperation = "preserve-non-promoting-boundary"
+	}
 	return []Proof{
-		{Choice: "FOUNDATION", MetaOperation: "bind-authorized-cycle-receipts",
+		{Choice: "FOUNDATION", MetaOperation: foundationOperation,
 			EvidenceDigest: report.Source.Guard.FileSHA256, Passed: foundation},
-		{Choice: "COHERENCE", MetaOperation: "cohere-successor-authorization",
+		{Choice: "COHERENCE", MetaOperation: coherenceOperation,
 			EvidenceDigest: report.Source.Recovery.ReportDigest, Passed: coherence},
-		{Choice: "REGRESSION", MetaOperation: "reject-effects-writes-or-authority",
+		{Choice: "REGRESSION", MetaOperation: regressionOperation,
 			EvidenceDigest: report.Source.Recovery.FileSHA256, Passed: regression},
 	}
 }

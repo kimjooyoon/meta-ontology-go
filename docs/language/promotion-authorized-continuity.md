@@ -40,10 +40,13 @@ remains the authority for `storage.direct-entry = 0`.
 | GUARDRAIL | `gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1` | 0 |
 | OUTCOME | `gooo.metric.language.promotion-continuity-terminal-preserved.v1` | 1 when the mixed terminal is applicable |
 
-All nine definitions are emitted by `promotioncontinuity.Evaluate` and consumed
-by `self-improvement-cycle`. The ninth cell is bound to the released
-`PreserveNonPromotingTerminal` activity and is applicable only to the exact mixed
-terminal; it never grants promotion. Unknown schema,
+The evaluator's continuity summary has eight coordinates (`summary.total=8`).
+Separately, all nine indicator definitions are emitted by
+`promotioncontinuity.Evaluate` and consumed by `self-improvement-cycle`. The ninth
+indicator is bound to the released `PreserveNonPromotingTerminal` activity and is
+applicable only to the exact mixed terminal; it never grants promotion. Mixed
+terminal coordinates and proofs use terminal-neutral names, while the two
+authorization indicators remain unsatisfied. Unknown schema,
 subject, decision, resolution, effect, write, or authority evidence produces
 `FAIL_CLOSED / LOWER_RESOLUTION`; default zero values cannot authorize a route.
 

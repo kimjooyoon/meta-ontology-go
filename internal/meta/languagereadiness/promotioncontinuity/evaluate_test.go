@@ -108,6 +108,36 @@ func TestEvaluatePreservesExactMixedNonPromotingTerminal(t *testing.T) {
 	if err := Validate(report); err != nil {
 		t.Fatal(err)
 	}
+	if report.Summary.AuthorizedGuardReceipts != 0 || report.Summary.AuthorizedRecoveryRoutes != 0 {
+		t.Fatalf("mixed report authorized indicators=%+v", report.Summary)
+	}
+	terminalIndicator := false
+	authorizationIndicators := 0
+	for _, indicator := range report.Indicators {
+		switch indicator.MetricID {
+		case "gooo.metric.language.promotion-continuity-authorized-guards.v1",
+			"gooo.metric.language.promotion-continuity-authorized-routes.v1":
+			authorizationIndicators++
+			if indicator.Satisfied || indicator.Value != 0 {
+				t.Fatalf("mixed authorization indicator=%+v", indicator)
+			}
+		case "gooo.metric.language.promotion-continuity-terminal-preserved.v1":
+			terminalIndicator = indicator.Satisfied
+		}
+	}
+	if authorizationIndicators != 2 || !terminalIndicator {
+		t.Fatal("mixed terminal indicator is not satisfied")
+	}
+	for _, coordinate := range report.Coordinates {
+		if coordinate.Status == "SATISFIED" && strings.Contains(coordinate.ID, "authoriz") {
+			t.Fatalf("mixed report passed authorization coordinate %q", coordinate.ID)
+		}
+	}
+	for _, proof := range report.Proofs {
+		if proof.Passed && strings.Contains(proof.MetaOperation, "authoriz") {
+			t.Fatalf("mixed report passed authorization proof %q", proof.MetaOperation)
+		}
+	}
 }
 
 func TestEvaluateRejectsUnknownTopLevelMixedDecision(t *testing.T) {

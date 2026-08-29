@@ -22,13 +22,19 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	mixed := knownMixedRecovery(head, guard, recovery)
 	effectsExact := effectBoundary(recovery) || mixed
 	authorityExact := authorityBoundary(guard, recovery)
+	guardCoordinateID, recoveryCoordinateID := "guard-authorized", "recovery-authorized"
+	guardCoordinatePassed, recoveryCoordinatePassed := guardAuthorized, recoveryAuthorized
+	if mixed {
+		guardCoordinateID, recoveryCoordinateID = "guard-terminal-neutral", "recovery-terminal-neutral"
+		guardCoordinatePassed, recoveryCoordinatePassed = mixed, mixed
+	}
 	coordinates := []Coordinate{
 		coordinate("expected-subject", "FOUNDATION", headExact),
 		coordinate("canonical-guard", "FOUNDATION", guardExact),
 		coordinate("canonical-recovery", "FOUNDATION", recoveryExact),
 		coordinate("exact-subject-link", "COHERENCE", subjectExact),
-		coordinate("guard-authorized", "COHERENCE", guardAuthorized || mixed),
-		coordinate("recovery-authorized", "COHERENCE", recoveryAuthorized || mixed),
+		coordinate(guardCoordinateID, "COHERENCE", guardCoordinatePassed),
+		coordinate(recoveryCoordinateID, "COHERENCE", recoveryCoordinatePassed),
 		coordinate("effect-boundary", "REGRESSION", effectsExact),
 		coordinate("zero-authority-boundary", "REGRESSION", authorityExact),
 	}
@@ -62,7 +68,7 @@ func Evaluate(head string, guard GuardEvidence, recovery RecoveryEvidence) Repor
 	}
 	report.Indicators = buildIndicators(report, guardAuthorized, recoveryAuthorized, effectsExact, authorityExact, mixed)
 	report.Proofs = buildProofs(report, headExact && guardExact && recoveryExact,
-		subjectExact && (guardAuthorized && recoveryAuthorized || mixed), effectsExact && authorityExact)
+		subjectExact && (guardAuthorized && recoveryAuthorized || mixed), effectsExact && authorityExact, mixed)
 	return seal(report)
 }
 
