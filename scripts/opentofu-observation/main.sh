@@ -55,7 +55,7 @@ manifest_digest() {
 }
 
 curl -fsSL "$asset_url" -o "$work/tofu.tar.gz"
-curl -fsSL "${asset_url%/*}/SHA256SUMS" -o "$work/SHA256SUMS"
+curl -fsSL "${asset_url%/*}/tofu_1.12.6_SHA256SUMS" -o "$work/SHA256SUMS"
 test "$(digest "$work/tofu.tar.gz")" = "$asset_sha"
 test "$(digest "$work/SHA256SUMS")" = "$sums_sha"
 grep -F "50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec  tofu_1.12.6_linux_amd64.tar.gz" "$work/SHA256SUMS"
