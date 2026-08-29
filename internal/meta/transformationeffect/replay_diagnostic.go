@@ -167,7 +167,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		diagnostic.Step = divergence.Step
 		diagnostic.Reason = "META_ARTIFACT_REPLAY_DIVERGED"
 		diagnostic.UnknownClass = ""
-	diagnostic.NextOperation = "report-counterexample"
+		diagnostic.NextOperation = "report-counterexample"
 		diagnostic.FieldPath = divergence.Path
 		diagnostic.Expected = divergence.Expected
 		diagnostic.Observed = divergence.Observed
