@@ -23,6 +23,7 @@ var canonicalEntities = []entitySpec{
 	{Name: "WorkspaceReceipt", ID: "gooo://metric-meta-program/entity/workspace-receipt"},
 	{Name: "VerificationEvidence", ID: "gooo://metric-meta-program/entity/verification-evidence"},
 	{Name: "FixedPointReceipt", ID: "gooo://metric-meta-program/entity/fixed-point-receipt"},
+	{Name: "NonPromotingTerminalReceipt", ID: "gooo://metric-meta-program/entity/non-promoting-terminal-receipt"},
 }
 
 func CanonicalSource() []byte {

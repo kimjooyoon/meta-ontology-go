@@ -21,6 +21,7 @@ var entities = []struct {
 	{name: "WorkspaceReceipt", id: "gooo://metric-meta-program/entity/workspace-receipt"},
 	{name: "VerificationEvidence", id: "gooo://metric-meta-program/entity/verification-evidence"},
 	{name: "FixedPointReceipt", id: "gooo://metric-meta-program/entity/fixed-point-receipt"},
+	{name: "NonPromotingTerminalReceipt", id: "gooo://metric-meta-program/entity/non-promoting-terminal-receipt"},
 }
 
 func expectedSource() []byte {
