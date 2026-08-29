@@ -1,6 +1,9 @@
 name: CI effort observation
 
 on:
+  pull_request:
+    branches: [dev]
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_run:
     workflows: ["CI"]
     types: [completed]
@@ -13,14 +16,14 @@ jobs:
   observe:
     name: CI effort observation
     if: >-
-      github.event.workflow_run.repository.full_name == github.repository &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.repository.full_name == github.repository && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
-      SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
-      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || '' }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       GH_TOKEN: ${{ github.token }}
       GOWORK: off
       GOFLAGS: -mod=readonly
@@ -44,6 +47,24 @@ jobs:
           set -euo pipefail
           root="$RUNNER_TEMP/ci-effort-observation"
           mkdir -p "$root/source" "$root/ci-evidence" "$root/ci-summary" "$root/opentofu" "$root/first" "$root/second"
+          if [ -z "$SOURCE_RUN_ID" ]; then
+            for attempt in $(seq 1 80); do
+              candidate="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=100" | jq -er --arg head "$HEAD_SHA" '[.workflow_runs[] | select(.head_sha == $head)] | sort_by(.id) | last // empty | .id' || true)"
+              if [ -n "$candidate" ]; then
+                status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$candidate" | jq -r .status)"
+                if [ "$status" = completed ]; then
+                  SOURCE_RUN_ID="$candidate"
+                  SOURCE_RUN_ATTEMPT="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" | jq -r .run_attempt)"
+                  break
+                fi
+              fi
+              if [ "$attempt" -eq 80 ]; then
+                echo "exact CI source run did not complete for $HEAD_SHA" >&2
+                exit 1
+              fi
+              sleep 15
+            done
+          fi
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$root/source/run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$root/source/jobs.json"
           gh run download "$SOURCE_RUN_ID" --name "ci-evidence-$SOURCE_RUN_ID-$SOURCE_RUN_ATTEMPT" --dir "$root/ci-evidence"
