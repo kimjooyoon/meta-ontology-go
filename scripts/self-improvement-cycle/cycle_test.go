@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 func TestEnvelopeBindsTheCompleteCycle(t *testing.T) {
@@ -69,6 +71,9 @@ func metricsFixture(head string) metricsDocument {
 
 func contractFixture(head, digest string) contractDocument {
 	indicators := []contractIndicator{{"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"FOUNDATION", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"COHERENCE", "PASS"}, {"REGRESSION", "PASS"}}
-	coverage := []contractCoverage{{true}, {true}, {true}, {true}}
+	coverage := make([]contractCoverage, len(generation.DefaultRegistry()))
+	for index := range coverage {
+		coverage[index].Covered = true
+	}
 	return contractDocument{Schema: "gooo/self-improvement-contract/v1", CommitSHA: head, SourceSHA256: digest, SemanticHash: digest, RegistryDigest: digest, Status: "PASS", Indicators: indicators, ExecutorCoverage: coverage}
 }

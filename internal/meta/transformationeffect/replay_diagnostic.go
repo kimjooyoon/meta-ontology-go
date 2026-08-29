@@ -53,6 +53,16 @@ func compareReplay(step string, expected, observed any) error {
 }
 
 func firstReplayDifference(path string, expected, observed any) (string, string, string) {
+	return firstReplayDifferenceAt(path, expected, true, observed, true)
+}
+
+func firstReplayDifferenceAt(path string, expected any, expectedPresent bool, observed any, observedPresent bool) (string, string, string) {
+	if !expectedPresent || !observedPresent {
+		if !expectedPresent && !observedPresent {
+			return "", "", ""
+		}
+		return path, replayPresenceValue(expectedPresent, expected), replayPresenceValue(observedPresent, observed)
+	}
 	if expected == nil || observed == nil {
 		if expected == nil && observed == nil {
 			return "", "", ""
@@ -78,11 +88,13 @@ func firstReplayDifference(path string, expected, observed any) (string, string,
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			child, leftValue, rightValue := firstReplayDifference(
-				path+"."+key, left[key], right[key],
+			leftValue, leftPresent := left[key]
+			rightValue, rightPresent := right[key]
+			child, expectedValue, observedValue := firstReplayDifferenceAt(
+				path+"."+key, leftValue, leftPresent, rightValue, rightPresent,
 			)
 			if child != "" {
-				return child, leftValue, rightValue
+				return child, expectedValue, observedValue
 			}
 		}
 		return "", "", ""
@@ -92,11 +104,11 @@ func firstReplayDifference(path string, expected, observed any) (string, string,
 			return path, replayValue(expected), replayValue(observed)
 		}
 		for index := range left {
-			child, leftValue, rightValue := firstReplayDifference(
-				fmt.Sprintf("%s[%d]", path, index), left[index], right[index],
+			child, expectedValue, observedValue := firstReplayDifferenceAt(
+				fmt.Sprintf("%s[%d]", path, index), left[index], true, right[index], true,
 			)
 			if child != "" {
-				return child, leftValue, rightValue
+				return child, expectedValue, observedValue
 			}
 		}
 		return "", "", ""
@@ -108,6 +120,13 @@ func firstReplayDifference(path string, expected, observed any) (string, string,
 	}
 }
 
+func replayPresenceValue(present bool, value any) string {
+	if !present {
+		return "<missing>"
+	}
+	return replayValue(value)
+}
+
 func replayValue(value any) string {
 	payload, err := json.Marshal(value)
 	if err != nil {
@@ -117,17 +136,20 @@ func replayValue(value any) string {
 }
 
 type ReplayDiagnostic struct {
-	Schema       string `json:"schema"`
-	Decision     string `json:"decision"`
-	Resolution   string `json:"resolution"`
-	Stage        string `json:"stage"`
-	Step         string `json:"step"`
-	Reason       string `json:"reason"`
-	FieldPath    string `json:"field_path"`
-	Expected     string `json:"expected,omitempty"`
-	Observed     string `json:"observed,omitempty"`
-	ExpectedHash string `json:"expected_sha256,omitempty"`
-	ObservedHash string `json:"observed_sha256,omitempty"`
+	Schema        string   `json:"schema"`
+	Decision      string   `json:"decision"`
+	Resolution    string   `json:"resolution"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class,omitempty"`
+	NextOperation string   `json:"next_operation,omitempty"`
+	BlockedBy     []string `json:"blocked_by"`
+	FieldPath     string   `json:"field_path"`
+	Expected      string   `json:"expected,omitempty"`
+	Observed      string   `json:"observed,omitempty"`
+	ExpectedHash  string   `json:"expected_sha256,omitempty"`
+	ObservedHash  string   `json:"observed_sha256,omitempty"`
 }
 
 func WriteReplayDiagnostic(outputPath string, cause error) error {
@@ -136,12 +158,16 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 	}
 	diagnostic := ReplayDiagnostic{Schema: replayDiagnosticSchema, Decision: "UNKNOWN",
 		Resolution: "LOWER_RESOLUTION", Stage: "validate-inputs",
-		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_FAILED"}
+		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_UNCATALOGED",
+		UnknownClass: "UNCATALOGED_CAUSE", NextOperation: "report-counterexample",
+		BlockedBy: []string{}}
 	if divergence, ok := errors.AsType[*replayDivergence](cause); ok {
 		diagnostic.Decision = "REFUTED"
-		diagnostic.Resolution = "FAIL_CLOSED"
+		diagnostic.Resolution = "EXACT"
 		diagnostic.Step = divergence.Step
 		diagnostic.Reason = "META_ARTIFACT_REPLAY_DIVERGED"
+		diagnostic.UnknownClass = ""
+	diagnostic.NextOperation = "report-counterexample"
 		diagnostic.FieldPath = divergence.Path
 		diagnostic.Expected = divergence.Expected
 		diagnostic.Observed = divergence.Observed

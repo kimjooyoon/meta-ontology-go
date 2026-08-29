@@ -364,6 +364,7 @@ jobs:
             -executed-provenance "$first/provenance.json" \
             -patch "$first/patch.json"
       - name: Upload exact-head transformation effects
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: transformation-effect-${{ github.event.workflow_run.head_sha }}
