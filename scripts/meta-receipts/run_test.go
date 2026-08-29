@@ -15,7 +15,7 @@ func TestMixedRefutationRejectsUnboundCounterexampleAndFrontier(t *testing.T) {
 	}
 	failure := generation.ObservationFailure{
 		ActionIndicatorID: action.IndicatorID,
-		FailureEvidence: []generation.ObservationFailureEvidence{{
+		FailureEvidence:   []generation.ObservationFailureEvidence{{
 			IndicatorID: "indicator", Observed: 0, Expected: 1,
 			Decision: "UNKNOWN", Counterexample: "fixture.go#func:Selected",
 		}},

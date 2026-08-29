@@ -30,7 +30,13 @@ func mutateConformanceEvidence(value *conformance.SplitGoEvidence, mutation stri
 	case "HEADER":
 		value.Candidates[0].Data = bytes.Replace(value.Candidates[0].Data, []byte("linux && amd64"), []byte("windows"), 1)
 	case "IMPORT":
-		value.Candidates[0].Data = bytes.Replace(value.Candidates[0].Data, []byte(`"fmt"`), []byte(`"strings"`), 1)
+		for index := range value.Candidates {
+			if !bytes.Contains(value.Candidates[index].Data, []byte("fmt.Sprint")) {
+				continue
+			}
+			value.Candidates[index].Data = bytes.Replace(value.Candidates[index].Data, []byte(`"fmt"`), []byte(`"strings"`), 1)
+			break
+		}
 	case "ORDER":
 		value.Candidates[0].Data, value.Candidates[1].Data = value.Candidates[1].Data, value.Candidates[0].Data
 	case "DUPLICATE_BODY":

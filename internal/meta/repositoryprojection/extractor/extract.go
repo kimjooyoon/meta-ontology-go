@@ -102,7 +102,7 @@ func renderHelperFiles(root, logical string, source []byte, fset *token.FileSet,
 			return nil, nil, fail("generate-helpers", "resolve-helper", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{helper})
 		}
 		if physicalLines(renderedHelper.helper) > 75 {
-			return nil, nil, failWithDiagnostics("generate-helpers", "render-helper", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("helper=%s", helper), fmt.Sprintf("helper_lines=%d", physicalLines(renderedHelper.helper))})
+			return nil, nil, failWithDiagnostics("generate-helpers", "render-helper", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{fmt.Sprintf("helper=%s", helper), fmt.Sprintf("helper_lines=%d", physicalLines(renderedHelper.helper))})
 		}
 		generated[helper] = renderedHelper.helper
 		paths = append(paths, helper)

@@ -74,7 +74,7 @@ func capacityRender(fset *token.FileSet, file *ast.File, source []byte, all []de
 		return rendered{}, nil, err
 	}
 	if physicalLines(output.source) > limit {
-		return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("remaining_lines=%d", physicalLines(output.source))})
+		return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{fmt.Sprintf("remaining_lines=%d", physicalLines(output.source))})
 	}
 	partitions := make([][]declaration, 0, len(all))
 	current := make([]declaration, 0)
@@ -89,7 +89,7 @@ func capacityRender(fset *token.FileSet, file *ast.File, source []byte, all []de
 			continue
 		}
 		if len(current) == 0 {
-			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(trialRendered.helper))})
+			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(trialRendered.helper))})
 		}
 		partitions = append(partitions, current)
 		current = []declaration{candidate}
@@ -98,7 +98,7 @@ func capacityRender(fset *token.FileSet, file *ast.File, source []byte, all []de
 			return rendered{}, nil, singleErr
 		}
 		if physicalLines(single.helper) > limit {
-			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(single.helper))})
+			return rendered{}, nil, failWithDiagnostics("derive-recipe", "select-declaration", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{fmt.Sprintf("declaration=%s", candidate.identity), fmt.Sprintf("helper_lines=%d", physicalLines(single.helper))})
 		}
 	}
 	if len(current) > 0 {

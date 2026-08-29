@@ -48,7 +48,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 			return nil, err
 		}
 		if bytes.Equal(prepared, current) {
-			return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{
+			return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
 				"declaration=" + functionIdentity(currentSet, function),
 				fmt.Sprintf("function_lines=%d", declarationLines(currentSet, function)),
 			})
@@ -116,7 +116,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			return candidate.result, nil
 		}
 	}
-	return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-contradiction", []string{
+	return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
 		"declaration=" + functionIdentity(fset, function),
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
 	})

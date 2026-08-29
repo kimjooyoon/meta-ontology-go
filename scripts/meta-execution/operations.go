@@ -553,7 +553,18 @@ func runProcess(root string, environment, descriptor, actual []string) (processR
 			exitCode = exitError.ExitCode()
 		}
 	}
-	return processResult{Observation: descriptorObservation(descriptor, stdout.Bytes(), stderr.Bytes(), exitCode), Stdout: stdout.Bytes(), Stderr: stderr.Bytes()}, err
+	observation := descriptorObservation(descriptor, stdout.Bytes(), stderr.Bytes(), exitCode)
+	observation.StdoutDigest = digestBytes(canonicalProcessBytes(root, stdout.Bytes()))
+	observation.StderrDigest = digestBytes(canonicalProcessBytes(root, stderr.Bytes()))
+	return processResult{Observation: observation, Stdout: stdout.Bytes(), Stderr: stderr.Bytes()}, err
+}
+
+func canonicalProcessBytes(root string, data []byte) []byte {
+	absolute, err := filepath.Abs(root)
+	if err != nil || absolute == "" {
+		return append([]byte{}, data...)
+	}
+	return bytes.ReplaceAll(data, []byte(absolute), []byte("<workspace>"))
 }
 
 func descriptorObservation(command []string, stdout, stderr []byte, exit ...int) generation.ProcessObservation {
