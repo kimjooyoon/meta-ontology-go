@@ -10,7 +10,7 @@ func testContract() Contract {
 }
 
 func testCommand(name string) CommandReceipt {
-	return CommandReceipt{Name: name, Command: []string{"tofu", name}, CwdRole: "fixture-run", ExitCode: 0,
+	return CommandReceipt{Name: "tofu-" + name, Phase: "fixture-run", Command: []string{"tofu", name}, CwdRole: "fixture-run", ExitCode: 0,
 		StdoutBytes: 1, StdoutDigest: DigestBytes([]byte(name)), StderrDigest: DigestBytes(nil), WallMS: 1, PeakRSSKiB: 1, Executed: true}
 }
 
@@ -55,7 +55,7 @@ func testObservation() Observation {
 	}
 	return Observation{Schema: ObservationSchema, ContractID: "test-contract", SubjectSHA: "0123456789012345678901234567890123456789", UserPaths: Paths(),
 		Release: ReleaseObservation{ReleaseID: ExpectedReleaseID, AssetURL: ExpectedAssetURL, AssetSHA256: ExpectedAssetSHA, AssetBytes: ExpectedAssetSize, ChecksumsSHA256: ExpectedSumsSHA,
-			VersionJSON: versionJSON, VersionJSONSHA: versionDigest, Version: "1.12.6", Platform: "linux_amd64", Command: CommandReceipt{Name: "tofu-version", Command: []string{"tofu", "version", "-json"}, CwdRole: "release", ExitCode: 0, StdoutBytes: 1, StdoutDigest: digest, StderrDigest: DigestBytes(nil), WallMS: 1, PeakRSSKiB: 1, Executed: true}},
+			VersionJSON: versionJSON, VersionJSONSHA: versionDigest, Version: "1.12.6", Platform: "linux_amd64", Command: CommandReceipt{Name: "tofu-version", Phase: "release-identity", Command: []string{"tofu", "version", "-json"}, CwdRole: "release", ExitCode: 0, StdoutBytes: 1, StdoutDigest: digest, StderrDigest: DigestBytes(nil), WallMS: 1, PeakRSSKiB: 1, Executed: true}},
 		FixtureDigest: fixture, FixtureFiles: []string{"main.tf"}, FixturePhysicalLines: 1,
 		Executions: []ExecutionRun{testRun(1, fixture, plan, DigestBytes([]byte("plan-raw-1")), DigestBytes([]byte("events")), DigestBytes([]byte("raw-1"))),
 			testRun(2, fixture, plan, DigestBytes([]byte("plan-raw-2")), DigestBytes([]byte("events")), DigestBytes([]byte("raw-2")))},
@@ -181,6 +181,7 @@ func exactReuseObservation(t *testing.T) Observation {
 	observation.Reuse.PriorReceiptFileDigest = prior.ReceiptFileDigest
 	observation.Reuse.PriorArtifactManifestDigest = prior.ArtifactManifestDigest
 	observation.Reuse.RequiresExecution = false
+	observation.Inventory.ReusableArtifactFiles = len(files)
 	return observation
 }
 
@@ -237,6 +238,7 @@ func TestMissingPriorReceiptIsTypedUnknown(t *testing.T) {
 	observation.Reuse.PriorReceiptFileDigest = ""
 	observation.Reuse.PriorArtifactManifestDigest = ""
 	observation.Reuse.ReusedArtifactFiles = nil
+	observation.Inventory.ReusableArtifactFiles = 0
 	report, err := Evaluate(testContract(), observation)
 	if err != nil {
 		t.Fatal(err)

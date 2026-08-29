@@ -2,6 +2,7 @@ package opentofuobservation
 
 type CommandReceipt struct {
 	Name         string   `json:"name"`
+	Phase        string   `json:"phase"`
 	Command      []string `json:"command"`
 	CwdRole      string   `json:"cwd_role"`
 	ExitCode     int      `json:"exit_code"`
@@ -109,9 +110,10 @@ type RuntimeSummary struct {
 }
 
 type Inventory struct {
-	InputRegularFiles   int `json:"input_regular_files"`
-	InputPhysicalLines  int `json:"input_physical_lines"`
-	OutputArtifactFiles int `json:"output_artifact_files"`
+	InputRegularFiles    int `json:"input_regular_files"`
+	InputPhysicalLines   int `json:"input_physical_lines"`
+	OutputArtifactFiles  int `json:"output_artifact_files"`
+	ReusableArtifactFiles int `json:"reusable_artifact_files"`
 }
 
 type GraphBinding struct {

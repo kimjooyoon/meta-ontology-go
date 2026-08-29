@@ -49,7 +49,7 @@ func ValidateReport(report Report, expectedSubject, expectedContract string) err
 	if err := validateExecutions(report.Executions, report.Executions[0].FixtureDigest); err != nil {
 		return fmt.Errorf("report executions are invalid: %w", err)
 	}
-	if err := validateReuse(Observation{SubjectSHA: report.SubjectSHA, ContractID: report.ContractID, Reuse: report.Reuse, PriorReceipt: report.PriorReceipt}); err != nil {
+	if err := validateReuse(observationFromReport(report)); err != nil {
 		return fmt.Errorf("report reuse is invalid: %w", err)
 	}
 	if err := validateGraph(report.Graph); err != nil {

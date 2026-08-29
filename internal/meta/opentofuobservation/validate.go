@@ -58,7 +58,7 @@ func ValidateObservation(observation Observation) error {
 	if observation.Release.Version != "1.12.6" || observation.Release.Platform != "linux_amd64" {
 		return refuted("CLI_VERSION_JSON_MISMATCH")
 	}
-	if observation.Release.Command.ExitCode != 0 || !observation.Release.Command.Executed || observation.Release.Command.StdoutBytes <= 0 {
+	if observation.Release.Command.ExitCode != 0 || !observation.Release.Command.Executed || observation.Release.Command.Phase == "" || observation.Release.Command.StdoutBytes <= 0 {
 		return unavailable("CLI_VERSION_COMMAND_RECEIPT_MISSING")
 	}
 	if observation.ObserverGoVersion == "" || observation.ObserverGOVERSION == "" {
@@ -72,6 +72,9 @@ func ValidateObservation(observation Observation) error {
 	}
 	if observation.RepositoryWrites != 0 || observation.LocalTestExecutions != 0 {
 		return refuted("READ_ONLY_OR_LOCAL_TEST_BOUNDARY_VIOLATED")
+	}
+	if observation.Inventory.InputRegularFiles <= 0 || observation.Inventory.InputPhysicalLines <= 0 || observation.Inventory.OutputArtifactFiles <= 0 || observation.Inventory.ReusableArtifactFiles < 0 {
+		return malformed("ARTIFACT_INVENTORY_MALFORMED")
 	}
 	if len(observation.Executions) != 2 {
 		return unavailable("EXECUTION_RECEIPT_MISSING")
@@ -135,7 +138,7 @@ func validTestInventory(run ExecutionRun) bool {
 
 func validCommands(commands []CommandReceipt) bool {
 	for _, command := range commands {
-		if !command.Executed || command.ExitCode != 0 || command.WallMS <= 0 || command.PeakRSSKiB <= 0 || command.CwdRole == "" || len(command.Command) == 0 {
+		if !command.Executed || command.ExitCode != 0 || command.WallMS <= 0 || command.PeakRSSKiB <= 0 || command.CwdRole == "" || command.Phase == "" || len(command.Command) == 0 {
 			return false
 		}
 		if !validDigest(command.StdoutDigest) || !validDigest(command.StderrDigest) || command.StdoutBytes < 0 || command.StderrBytes < 0 {
@@ -152,6 +155,9 @@ func validCommands(commands []CommandReceipt) bool {
 
 func validateReuse(observation Observation) error {
 	reuse := observation.Reuse
+	if !physicalReuseAccountingMatches(reuse, observation) {
+		return refuted("REUSE_PHYSICAL_ACCOUNTING_MISMATCH")
+	}
 	if reuse.RequestMode == "REUSE" && reuse.Invalidated == 1 {
 		if reuse.Discovered != reuse.Executed+reuse.Reused+reuse.Skipped+reuse.Invalidated || reuse.PriorCandidates != reuse.Reused+reuse.Invalidated {
 			return refuted("REUSE_ACCOUNTING_CONTRADICTION")
@@ -181,6 +187,46 @@ func reuseDigests(reuse ReuseAccounting) []string {
 		reuse.ReleaseDigest, reuse.ToolchainDigest, reuse.DependencyGraphDigest, reuse.ExpectedResultDigest}
 }
 
+func physicalReuseAccountingMatches(reuse ReuseAccounting, observation Observation) bool {
+	baselineCommands, baselineTests := countPhysicalOpenTofuCommands(observation)
+	reuseCommands, reuseTests := countPhysicalReuseCommands(observation)
+	return reuse.BaselinePhysicalCommandExecutions == baselineCommands &&
+		reuse.BaselinePhysicalTestExecutions == baselineTests &&
+		reuse.ReusePhysicalCommandExecutions == reuseCommands &&
+		reuse.ReusePhysicalTestExecutions == reuseTests
+}
+
+func countPhysicalOpenTofuCommands(observation Observation) (commands, tests int) {
+	if observation.Release.Command.Executed && strings.HasPrefix(observation.Release.Command.Name, "tofu-") && !strings.HasPrefix(observation.Release.Command.Phase, "reuse") {
+		commands++
+	}
+	for _, run := range observation.Executions {
+		for _, command := range run.Commands {
+			if command.Executed && strings.HasPrefix(command.Name, "tofu-") && !strings.HasPrefix(command.Phase, "reuse") {
+				commands++
+				if command.Name == "tofu-test" {
+					tests++
+				}
+			}
+		}
+	}
+	return commands, tests
+}
+
+func countPhysicalReuseCommands(observation Observation) (commands, tests int) {
+	for _, run := range observation.Executions {
+		for _, command := range run.Commands {
+			if command.Executed && strings.HasPrefix(command.Name, "tofu-") && strings.HasPrefix(command.Phase, "reuse") {
+				commands++
+				if command.Name == "tofu-test" {
+					tests++
+				}
+			}
+		}
+	}
+	return commands, tests
+}
+
 func validateBaselineReuse(reuse ReuseAccounting, prior *PriorReceipt) error {
 	if prior != nil || reuse.Requests != 1 || reuse.Discovered != 1 || reuse.Executed != 1 || reuse.Reused != 0 || reuse.Skipped != 0 || reuse.PriorCandidates != 0 || reuse.Invalidated != 0 || reuse.Decision != "EXECUTE" || reuse.Reason != "NO_PRIOR_RECEIPT" || !reuse.RequiresExecution || reuse.PriorReceiptsValid != 0 || len(reuse.ReusedArtifactFiles) != 0 || reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" {
 		return refuted("REUSE_FIRST_RUN_CLAIM_INVALID")
@@ -195,11 +241,14 @@ func validateReuseRequest(reuse ReuseAccounting, observation Observation) error 
 	if reuse.Invalidated == 1 {
 		return validateInvalidatedReuse(reuse, observation)
 	}
-	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 1 || reuse.Reused != 1 || reuse.Skipped != 0 || reuse.PriorCandidates != 1 || reuse.Invalidated != 0 || reuse.Decision != "REUSED" || reuse.Reason != "EXACT_PRIOR_RECEIPT" || reuse.RequiresExecution || reuse.PriorReceiptsValid != 1 || reuse.BaselinePhysicalCommandExecutions != 9 || reuse.BaselinePhysicalTestExecutions != 2 || reuse.ReusePhysicalCommandExecutions != 0 || reuse.ReusePhysicalTestExecutions != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 {
+	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 1 || reuse.Reused != 1 || reuse.Skipped != 0 || reuse.PriorCandidates != 1 || reuse.Invalidated != 0 || reuse.Decision != "REUSED" || reuse.Reason != "EXACT_PRIOR_RECEIPT" || reuse.RequiresExecution || reuse.PriorReceiptsValid != 1 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 {
 		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
 	}
+	if !physicalReuseAccountingMatches(reuse, observation) {
+		return refuted("REUSE_PHYSICAL_ACCOUNTING_MISMATCH")
+	}
 	if observation.PriorReceipt == nil {
-		if reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" || len(reuse.ReusedArtifactFiles) > 0 {
+		if reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" || len(reuse.ReusedArtifactFiles) > 0 || observation.Inventory.ReusableArtifactFiles != 0 {
 			return refuted("CACHE_MARKER_WITHOUT_EXACT_DIGESTS")
 		}
 		return unavailable("PRIOR_RECEIPT_MISSING")
@@ -208,6 +257,9 @@ func validateReuseRequest(reuse ReuseAccounting, observation Observation) error 
 		return err
 	}
 	prior := observation.PriorReceipt
+	if observation.Inventory.ReusableArtifactFiles != len(prior.ArtifactFiles) {
+		return refuted("REUSABLE_ARTIFACT_COUNT_MISMATCH")
+	}
 	if reuse.PriorReceiptDigest != prior.Report.ReportDigest || reuse.PriorReceiptFileDigest != prior.ReceiptFileDigest || reuse.PriorArtifactManifestDigest != prior.ArtifactManifestDigest || !sameStrings(reuse.ReusedArtifactFiles, prior.ArtifactFiles) {
 		return refuted("REUSE_INPUT_DIGEST_MISMATCH")
 	}
@@ -218,7 +270,7 @@ func validateReuseRequest(reuse ReuseAccounting, observation Observation) error 
 }
 
 func validateInvalidatedReuse(reuse ReuseAccounting, observation Observation) error {
-	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 0 || reuse.Reused != 0 || reuse.Skipped != 1 || reuse.PriorCandidates != 1 || reuse.Invalidated != 1 || reuse.Decision != "REQUIRES_EXECUTION" || reuse.Reason != "REUSE_INPUT_DIGEST_MISMATCH" || !reuse.RequiresExecution || reuse.PriorReceiptsValid != 0 || reuse.BaselinePhysicalCommandExecutions != 9 || reuse.BaselinePhysicalTestExecutions != 2 || reuse.ReusePhysicalCommandExecutions != 0 || reuse.ReusePhysicalTestExecutions != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 || observation.PriorReceipt == nil {
+	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 0 || reuse.Reused != 0 || reuse.Skipped != 1 || reuse.PriorCandidates != 1 || reuse.Invalidated != 1 || reuse.Decision != "REQUIRES_EXECUTION" || reuse.Reason != "REUSE_INPUT_DIGEST_MISMATCH" || !reuse.RequiresExecution || reuse.PriorReceiptsValid != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 || observation.PriorReceipt == nil {
 		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
 	}
 	if err := validatePriorReceipt(observation.SubjectSHA, observation.ContractID, observation.PriorReceipt); err != nil {
