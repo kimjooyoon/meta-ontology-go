@@ -46,10 +46,10 @@ func Build(opts Options) (Result, error) {
 		InputReceiptReportDigest:     in.receipts.ReportDigest,
 		GeneratedReceiptReportDigest: executed.receipts.ReportDigest,
 		InputProvenanceDigest:        in.provenance.EnvelopeDigest,
-		ExecutedProvenanceDigest:     executed.provenance.EnvelopeDigest, Status: "BOUND"}
-	ledger.SelectedPlanOperations = executed.selectedPlanOperations
-	ledger.BoundExecutorOperations = executed.boundExecutorOperations
-	ledger.UnboundExecutorOperations = executed.unboundExecutorOperations
+		ExecutedProvenanceDigest:     executed.provenance.EnvelopeDigest, Status: "BOUND",
+		SelectedPlanOperations:    executed.selectedPlanOperations,
+		BoundExecutorOperations:   executed.boundExecutorOperations,
+		UnboundExecutorOperations: executed.unboundExecutorOperations}
 	ledger.Indicators = effectIndicators(ledger, len(in.plan.Selected), executed.receipts.Decision)
 	ledger = sealLedger(ledger)
 	if err := validateLedger(ledger); err != nil {
