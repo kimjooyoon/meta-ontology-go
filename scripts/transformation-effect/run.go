@@ -26,6 +26,9 @@ func run(args []string) error {
 		ReceiptsPath: cfg.receipts, ProvenancePath: cfg.provenance, ExpectedSHA: cfg.expected,
 	})
 	if err != nil {
+		if diagnosticErr := transformationeffect.WriteReplayDiagnostic(cfg.output, err); diagnosticErr != nil {
+			return fmt.Errorf("%w; write replay diagnostic: %v", err, diagnosticErr)
+		}
 		return err
 	}
 	if err := transformationeffect.WriteResult(result, cfg.output, cfg.generatedReceipts, cfg.executedProvenance, cfg.patch); err != nil {

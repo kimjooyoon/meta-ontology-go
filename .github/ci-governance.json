@@ -2292,6 +2292,18 @@
       ]
     },
     {
+      "branch": "agent/transformation-replay-envelope-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "internal/meta/transformationeffect/**",
+        "internal/verify/scope_transformation_replay_envelope_v1.go",
+        "scripts/self-improvement-cycle/**",
+        "scripts/transformation-effect/**"
+      ]
+    },
+    {
       "branch": "agent/user-journey-scorecard",
       "paths": [
         ".github/agent-scope-table.md",
