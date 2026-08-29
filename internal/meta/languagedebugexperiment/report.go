@@ -21,6 +21,30 @@ type Effects struct {
 	MutationAuthority bool `json:"mutation_authority"`
 }
 
+type Uncertainty struct {
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+}
+
+type Refutation struct {
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Reason string `json:"reason"`
+}
+
+type ReplayEvidence struct {
+	RuntimeReceiptSchema string   `json:"runtime_receipt_schema"`
+	Schema               string   `json:"schema"`
+	FirstDigest          string   `json:"first_digest"`
+	SecondDigest         string   `json:"second_digest"`
+	Equal                bool     `json:"equal"`
+	ExcludedFields       []string `json:"excluded_fields"`
+}
+
 type Summary struct {
 	Coordinates                 Counter  `json:"coordinates"`
 	DebugReceipts               int      `json:"debug_receipts"`
@@ -28,10 +52,13 @@ type Summary struct {
 	BreakpointsReached          int      `json:"breakpoints_reached"`
 	TraceEvents                 int      `json:"trace_events"`
 	ExecutionDigestVariants     int      `json:"execution_digest_variants"`
+	ReplayMatches               int      `json:"replay_matches"`
+	ResourceObservations        int      `json:"resource_observations"`
 	CurrentEvents               int      `json:"current_events"`
 	RemainingEvents             int      `json:"remaining_events"`
 	UnknownBreakpointRejections int      `json:"unknown_breakpoint_rejections"`
 	Unknowns                    int      `json:"unknowns"`
+	RefutedCases                int      `json:"refuted_cases"`
 	Compiler                    Compiler `json:"compiler"`
 	Effects                     Effects  `json:"effects"`
 }

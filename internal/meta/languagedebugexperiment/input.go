@@ -2,28 +2,18 @@ package languagedebugexperiment
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/languagedebug"
 
-type Input struct {
-	SubjectSHA        string                `json:"subject_sha"`
-	ExecutableDigest  string                `json:"executable_digest"`
-	Contract          Contract              `json:"contract"`
-	First             languagedebug.Receipt `json:"first"`
-	Second            languagedebug.Receipt `json:"second"`
-	UnknownBreakpoint languagedebug.Receipt `json:"unknown_breakpoint"`
-}
+const RuntimeReceiptSchema = "gooo/language-debug-runtime-receipt/v1"
 
-type facts struct {
-	DebugReceipts               int
-	PausedSessions              int
-	BreakpointsReached          int
-	TraceEvents                 int
-	SubjectCoherence            int
-	ExecutionDigestVariants     int
-	CurrentEvents               int
-	RemainingEvents             int
-	Go127Runtimes               int
-	UnknownBreakpointRejections int
-	NonClaims                   int
-	Unknowns                    int
-	RepositoryWrites            int
-	MutationAuthority           bool
+type Input struct {
+	SubjectSHA          string                `json:"subject_sha"`
+	ExecutableDigest    string                `json:"executable_digest"`
+	Contract            Contract              `json:"contract"`
+	First               languagedebug.Receipt `json:"first"`
+	Second              languagedebug.Receipt `json:"second"`
+	UnknownBreakpoint   languagedebug.Receipt `json:"unknown_breakpoint"`
+	RuntimeObservations []RuntimeObservation  `json:"runtime_observations"`
+	Build               Measurement           `json:"build"`
+	EvaluatorBuild      Measurement           `json:"evaluator_build"`
+	Test                Measurement           `json:"test"`
+	Graph               GraphObservation      `json:"graph"`
 }

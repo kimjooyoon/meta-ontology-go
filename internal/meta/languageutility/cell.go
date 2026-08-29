@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func classifyCell(useCase UseCaseSpec, stage StageSpec, observed *CellObservation, duplicate bool) CellResult {
+func classifyCell(useCase UseCaseSpec, stage StageSpec, observed *CellObservation, duplicate bool, graph GraphObservation) CellResult {
 	result := CellResult{UseCaseID: useCase.ID, StageID: stage.ID, ProofChoice: stage.ProofChoice}
 	if duplicate {
 		return unknownResult(result, "INDEX_EVIDENCE", "DUPLICATE_CELL_OBSERVATION")
@@ -14,12 +14,16 @@ func classifyCell(useCase UseCaseSpec, stage StageSpec, observed *CellObservatio
 		return unknownResult(result, "LOCATE_EVIDENCE", "CELL_NOT_OBSERVED")
 	}
 	result.Producer, result.Step, result.Reason = observed.Producer, observed.Step, observed.Reason
-	result.EvidenceKey, result.EvidencePath = observed.EvidenceKey, observed.EvidencePath
-	result.EvidenceDigest = observed.EvidenceDigest
+	result.EvidenceKey, result.EvidencePath, result.EvidenceDigest = observed.EvidenceKey, observed.EvidencePath, observed.EvidenceDigest
 	switch observed.State {
 	case StateClosed:
 		if !validReference(*observed) {
 			return unknownResult(result, "VALIDATE_EVIDENCE", "EVIDENCE_REFERENCE_INVALID")
+		}
+		if useCase.ID == "debugging" && (stage.ID == "DETERMINISTIC_REPLAY" || stage.ID == "RESOURCE_OBSERVED") {
+			if reason := validateDebugBinding(*observed, graph, stage.ID); reason != "" {
+				return refutedResult(result, "VERIFY_GOOO_GRAPH", reason)
+			}
 		}
 		result.State, result.ClaimStatus, result.Resolution = StateClosed, "DISCHARGED", "EXACT"
 	case StateOpen:
@@ -33,8 +37,7 @@ func classifyCell(useCase UseCaseSpec, stage StageSpec, observed *CellObservatio
 		}
 		result.State, result.ClaimStatus, result.Resolution = StateRefuted, "REFUTED", "EXACT"
 	case StateUnknown:
-		return unknownResult(result, fallback(observed.Step, "CLASSIFY_EVIDENCE"),
-			fallback(observed.Reason, "EVIDENCE_STATE_UNKNOWN"))
+		return unknownResult(result, fallback(observed.Step, "CLASSIFY_EVIDENCE"), fallback(observed.Reason, "EVIDENCE_STATE_UNKNOWN"))
 	default:
 		return unknownResult(result, "CLASSIFY_EVIDENCE", "EVIDENCE_STATE_UNKNOWN")
 	}
@@ -48,9 +51,7 @@ func unknownResult(result CellResult, step, reason string) CellResult {
 }
 
 func validReference(value CellObservation) bool {
-	if value.Producer == "" || value.Step == "" || value.Reason == "" ||
-		value.EvidenceKey == "" || value.EvidencePath == "" || len(value.EvidenceDigest) != 71 ||
-		!strings.HasPrefix(value.EvidenceDigest, "sha256:") {
+	if value.Producer == "" || value.Step == "" || value.Reason == "" || value.EvidenceKey == "" || value.EvidencePath == "" || len(value.EvidenceDigest) != 71 || !strings.HasPrefix(value.EvidenceDigest, "sha256:") {
 		return false
 	}
 	_, err := hex.DecodeString(strings.TrimPrefix(value.EvidenceDigest, "sha256:"))

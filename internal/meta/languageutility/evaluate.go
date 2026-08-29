@@ -17,10 +17,10 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 			key := cellKey(useCase.ID, stage.ID)
 			observed, exists := index.cells[key]
 			if !exists {
-				cells = append(cells, classifyCell(useCase, stage, nil, false))
+				cells = append(cells, classifyCell(useCase, stage, nil, false, observation.Graph))
 				continue
 			}
-			cells = append(cells, classifyCell(useCase, stage, &observed, index.duplicates[key]))
+			cells = append(cells, classifyCell(useCase, stage, &observed, index.duplicates[key], observation.Graph))
 		}
 	}
 	summary, useCases := summarize(contract, observation, cells, index.issues)
@@ -38,6 +38,7 @@ func Evaluate(contract Contract, observation Observation) (Report, error) {
 	}
 	report := Report{Schema: ReportSchema, ContractID: contract.ID, SubjectSHA: observation.SubjectSHA,
 		Summary: summary, UseCases: useCases, Cells: cells, NotClaimed: contract.NotClaimed,
+		Graph:          observation.Graph,
 		ContractDigest: contractDigest, ObservationDigest: observationDigest, ProgramDigest: digestBytes([]byte(program))}
 	report.Decision, report.Resolution, report.Reason = decide(summary)
 	report.Indicators = buildIndicators(summary)

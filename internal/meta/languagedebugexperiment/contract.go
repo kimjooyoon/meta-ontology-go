@@ -14,6 +14,7 @@ type Contract struct {
 	ExpectedCurrentEvents               int    `json:"expected_current_events"`
 	ExpectedRemainingEvents             int    `json:"expected_remaining_events"`
 	ExpectedGo127Runtimes               int    `json:"expected_go127_runtimes"`
+	ExpectedResourceObservations        int    `json:"expected_resource_observations"`
 	ExpectedUnknownBreakpointRejections int    `json:"expected_unknown_breakpoint_rejections"`
 	ExpectedNonClaims                   int    `json:"expected_non_claims"`
 }
@@ -26,7 +27,8 @@ func (contract Contract) Validate() error {
 		contract.ExpectedBreakpointsReached, contract.ExpectedTraceEvents,
 		contract.ExpectedSubjectCoherence, contract.ExpectedExecutionDigestVariants,
 		contract.ExpectedCurrentEvents, contract.ExpectedRemainingEvents,
-		contract.ExpectedGo127Runtimes, contract.ExpectedUnknownBreakpointRejections,
+		contract.ExpectedGo127Runtimes, contract.ExpectedResourceObservations,
+		contract.ExpectedUnknownBreakpointRejections,
 		contract.ExpectedNonClaims}
 	for _, value := range values {
 		if value < 1 {
