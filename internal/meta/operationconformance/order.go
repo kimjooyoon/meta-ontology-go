@@ -10,7 +10,7 @@ import (
 )
 
 func observeOrder(evidence SplitGoEvidence) Decision {
-	before, err := declarationDigests(evidence.Source)
+	before, err := initializationUnits(evidence.Source)
 	if err != nil || len(evidence.Candidates) == 0 {
 		return DecisionFail
 	}
@@ -21,80 +21,97 @@ func observeOrder(evidence SplitGoEvidence) Decision {
 			break
 		}
 	}
-	if metadata {
-		return observePartitionOrder(evidence)
+	candidates := evidence.Candidates
+	if !metadata {
+		candidates = sortedCandidates(candidates)
 	}
-	after := make([]string, 0)
-	for _, candidate := range sortedCandidates(evidence.Candidates) {
-		items, signatureErr := declarationDigests(candidate)
-		if signatureErr != nil {
+	after := make([]initializationUnit, 0)
+	for _, candidate := range candidates {
+		items, candidateErr := initializationUnits(candidate)
+		if candidateErr != nil {
 			return DecisionFail
 		}
 		after = append(after, items...)
 	}
-	if !sameStringsInOrder(before, after) {
+	if !sameInitializationUnits(before, after) {
 		return DecisionFail
 	}
 	return DecisionPass
 }
 
-func observePartitionOrder(evidence SplitGoEvidence) Decision {
-	before, err := declarationOrders(evidence.Source)
+type initializationUnit struct {
+	Ordinal    int
+	Digest     string
+	HasOrdinal bool
+}
+
+func initializationUnits(file FileEvidence) ([]initializationUnit, error) {
+	fset, parsed, err := parseEvidence(file)
 	if err != nil {
-		return DecisionFail
+		return nil, err
 	}
-	type partition struct {
-		first int
-		items []DeclarationOrder
+	units := make([]initializationUnit, 0)
+	declarationIndex := 0
+	for _, declaration := range parsed.Decls {
+		general, isImport := declaration.(*ast.GenDecl)
+		if isImport && general.Tok == token.IMPORT {
+			continue
+		}
+		digest, digestErr := digestDeclaration(fset, declaration)
+		if digestErr != nil {
+			return nil, digestErr
+		}
+		if isInitializationDeclaration(declaration) {
+			unit := initializationUnit{Ordinal: declarationIndex, Digest: digest}
+			if len(file.DeclarationOrder) != 0 {
+				if declarationIndex >= len(file.DeclarationOrder) {
+					return nil, fmt.Errorf("initialization declaration metadata is incomplete")
+				}
+				entry := file.DeclarationOrder[declarationIndex]
+				if entry.Digest != digest || entry.Ordinal < 0 {
+					return nil, fmt.Errorf("initialization declaration metadata mismatch")
+				}
+				unit.Ordinal, unit.HasOrdinal = entry.Ordinal, true
+			}
+			units = append(units, unit)
+		}
+		declarationIndex++
 	}
-	partitions := make([]partition, 0, len(evidence.Candidates))
-	seen := make(map[int]bool, len(before))
-	for _, candidate := range evidence.Candidates {
-		actual, err := declarationDigests(candidate)
-		if err != nil || len(candidate.DeclarationOrder) != len(actual) || len(actual) == 0 {
-			return DecisionFail
+	return units, nil
+}
+
+func isInitializationDeclaration(declaration ast.Decl) bool {
+	if general, ok := declaration.(*ast.GenDecl); ok && general.Tok == token.VAR {
+		for _, specification := range general.Specs {
+			if value, ok := specification.(*ast.ValueSpec); ok && len(value.Values) != 0 {
+				return true
+			}
 		}
-		first := len(before)
-		for index, digest := range actual {
-			entry := candidate.DeclarationOrder[index]
-			if entry.Ordinal < 0 || entry.Ordinal >= len(before) || entry.Digest != digest || seen[entry.Ordinal] {
-				return DecisionFail
-			}
-			if before[entry.Ordinal].Digest != digest {
-				return DecisionFail
-			}
-			if entry.Ordinal < first {
-				first = entry.Ordinal
-			}
-			seen[entry.Ordinal] = true
-		}
-		partitions = append(partitions, partition{first: first, items: append([]DeclarationOrder{}, candidate.DeclarationOrder...)})
+	}
+	function, ok := declaration.(*ast.FuncDecl)
+	return ok && function.Recv == nil && function.Name != nil && function.Name.Name == "init"
+}
+
+func digestDeclaration(fset *token.FileSet, declaration ast.Decl) (string, error) {
+	var output bytes.Buffer
+	if err := format.Node(&output, fset, declaration); err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(output.Bytes())
+	return fmt.Sprintf("%x", sum), nil
+}
+
+func sameInitializationUnits(before, after []initializationUnit) bool {
+	if len(before) != len(after) {
+		return false
 	}
 	for index := range before {
-		if !seen[index] {
-			return DecisionFail
+		if before[index].Digest != after[index].Digest ||
+			after[index].HasOrdinal && before[index].Ordinal != after[index].Ordinal {
+			return false
 		}
 	}
-	for index := 0; index < len(partitions); index++ {
-		for next := index + 1; next < len(partitions); next++ {
-			if partitions[next].first < partitions[index].first {
-				partitions[index], partitions[next] = partitions[next], partitions[index]
-			}
-		}
-	}
-	after := make([]DeclarationOrder, 0, len(before))
-	for _, item := range partitions {
-		after = append(after, item.items...)
-	}
-	if len(after) != len(before) {
-		return DecisionFail
-	}
-	for index, entry := range after {
-		if entry.Ordinal != before[index].Ordinal || entry.Digest != before[index].Digest {
-			return DecisionFail
-		}
-	}
-	return DecisionPass
+	return true
 }
 
 func declarationSignature(file FileEvidence) ([]string, error) {

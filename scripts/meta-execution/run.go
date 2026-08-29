@@ -71,7 +71,7 @@ func printObservationSummary(bundle generation.OperationObservationBundle) {
 	)
 	for _, failure := range bundle.Failures {
 		fmt.Printf(
-			"operation observation failure: action=%s decision=%s stage=%s step=%s reason=%s unknown_class=%s next_operation=%s blocked_by=%v exit=%d stdout_bytes=%d stdout_digest=%s stderr_bytes=%d stderr_digest=%s\n",
+			"operation observation failure: action=%s decision=%s stage=%s step=%s reason=%s unknown_class=%s next_operation=%s blocked_by=%v exit=%d stdout_bytes=%d raw_stdout_digest=%s stdout_digest=%s stderr_bytes=%d raw_stderr_digest=%s stderr_digest=%s\n",
 			failure.ActionIndicatorID,
 			failure.Decision,
 			failure.Stage,
@@ -82,8 +82,10 @@ func printObservationSummary(bundle generation.OperationObservationBundle) {
 			failure.BlockedBy,
 			failure.Executor.ExitCode,
 			failure.Executor.StdoutBytes,
+			failure.Executor.RawStdoutDigest,
 			failure.Executor.StdoutDigest,
 			failure.Executor.StderrBytes,
+			failure.Executor.RawStderrDigest,
 			failure.Executor.StderrDigest,
 		)
 		for _, evidence := range failure.FailureEvidence {

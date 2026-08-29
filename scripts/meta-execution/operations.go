@@ -560,23 +560,46 @@ func runProcess(root string, environment, descriptor, actual []string) (processR
 }
 
 func canonicalProcessBytes(root string, data []byte) []byte {
-	absolute, err := filepath.Abs(root)
-	if err != nil || absolute == "" {
-		return append([]byte{}, data...)
-	}
-	roots := []string{filepath.Clean(absolute)}
-	if resolved, resolveErr := filepath.EvalSymlinks(absolute); resolveErr == nil && resolved != "" {
-		resolved = filepath.Clean(resolved)
-		if resolved != roots[0] {
-			roots = append(roots, resolved)
-		}
-	}
-	sort.Slice(roots, func(left, right int) bool { return len(roots[left]) > len(roots[right]) })
+	replacements := canonicalProcessReplacements(root)
+	sort.Slice(replacements, func(left, right int) bool {
+		return len(replacements[left].path) > len(replacements[right].path)
+	})
 	canonical := append([]byte{}, data...)
-	for _, workspaceRoot := range roots {
-		canonical = bytes.ReplaceAll(canonical, []byte(workspaceRoot), []byte("<workspace>"))
+	for _, replacement := range replacements {
+		canonical = bytes.ReplaceAll(canonical, []byte(replacement.path), []byte(replacement.token))
 	}
 	return canonical
+}
+
+type canonicalProcessReplacement struct {
+	path  string
+	token string
+}
+
+func canonicalProcessReplacements(root string) []canonicalProcessReplacement {
+	replacements := make([]canonicalProcessReplacement, 0, 12)
+	addCanonicalProcessPath(&replacements, root, "<workspace>")
+	addCanonicalProcessPath(&replacements, os.Getenv("LOGICAL_WORKSPACE"), "<workspace>")
+	addCanonicalProcessPath(&replacements, os.Getenv("GITHUB_WORKSPACE"), "<workspace>")
+	addCanonicalProcessPath(&replacements, os.Getenv("RUNNER_TEMP"), "<temp-workspace>")
+	addCanonicalProcessPath(&replacements, os.TempDir(), "<temp-workspace>")
+	return replacements
+}
+
+func addCanonicalProcessPath(replacements *[]canonicalProcessReplacement, value, token string) {
+	if value == "" {
+		return
+	}
+	absolute, err := filepath.Abs(value)
+	if err != nil || absolute == "" {
+		return
+	}
+	pathValue := filepath.Clean(absolute)
+	*replacements = append(*replacements, canonicalProcessReplacement{path: pathValue, token: token})
+	resolved, err := filepath.EvalSymlinks(pathValue)
+	if err == nil && resolved != "" && filepath.Clean(resolved) != pathValue {
+		*replacements = append(*replacements, canonicalProcessReplacement{path: filepath.Clean(resolved), token: token})
+	}
 }
 
 func descriptorObservation(command []string, stdout, stderr []byte, exit ...int) generation.ProcessObservation {
@@ -584,7 +607,9 @@ func descriptorObservation(command []string, stdout, stderr []byte, exit ...int)
 	if len(exit) > 0 {
 		code = exit[0]
 	}
-	return generation.ProcessObservation{Command: append([]string{}, command...), ExitCode: code, StdoutBytes: len(stdout), StdoutDigest: digestBytes(stdout), StderrBytes: len(stderr), StderrDigest: digestBytes(stderr)}
+	return generation.ProcessObservation{Command: append([]string{}, command...), ExitCode: code,
+		StdoutBytes: len(stdout), RawStdoutDigest: digestBytes(stdout), StdoutDigest: digestBytes(stdout),
+		StderrBytes: len(stderr), RawStderrDigest: digestBytes(stderr), StderrDigest: digestBytes(stderr)}
 }
 
 func sourceMetricsPath() (string, error) {

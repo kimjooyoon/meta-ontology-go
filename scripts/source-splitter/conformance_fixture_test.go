@@ -22,6 +22,10 @@ func first() string {
 func second() int {
 	return 2
 }
+
+func init() { println(1) }
+
+func init() { println(1) }
 `
 
 func conformanceEvidence(t *testing.T) ([]byte, conformance.SplitGoEvidence) {

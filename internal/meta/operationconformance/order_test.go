@@ -23,3 +23,25 @@ func TestDuplicateInitBodiesUseDistinctOriginalOrdinals(t *testing.T) {
 		t.Fatal("duplicate original ordinal was accepted")
 	}
 }
+
+func TestNormalDeclarationReorderingDoesNotChangeInitializationOrder(t *testing.T) {
+	source := FileEvidence{Path: "normal.go", Data: []byte("package fixture\n\nfunc first() {}\n\nfunc second() {}\n")}
+	candidates := []FileEvidence{
+		{Path: "normal_split01.go", Data: []byte("package fixture\n\nfunc second() {}\n")},
+		{Path: "normal_split02.go", Data: []byte("package fixture\n\nfunc first() {}\n")},
+	}
+	if observeOrder(SplitGoEvidence{Source: source, Candidates: candidates}) != DecisionPass {
+		t.Fatal("ordinary function reordering changed initialization order")
+	}
+}
+
+func TestInitializationUnitReorderingIsRejected(t *testing.T) {
+	source := FileEvidence{Path: "init.go", Data: []byte("package fixture\n\nvar first = len(\"first\")\n\nvar second = len(\"second\")\n")}
+	candidates := []FileEvidence{
+		{Path: "init_split01.go", Data: []byte("package fixture\n\nvar second = len(\"second\")\n")},
+		{Path: "init_split02.go", Data: []byte("package fixture\n\nvar first = len(\"first\")\n")},
+	}
+	if observeOrder(SplitGoEvidence{Source: source, Candidates: candidates}) != DecisionFail {
+		t.Fatal("initialization unit reordering was accepted")
+	}
+}

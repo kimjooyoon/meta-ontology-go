@@ -214,7 +214,8 @@ func actionsExist(actions map[string]Action, identifier string) bool {
 
 func validProcessObservation(observation ProcessObservation) bool {
 	return len(observation.Command) != 0 && observation.StdoutBytes >= 0 &&
-		observation.StderrBytes >= 0 && validEvidenceDigest(observation.StdoutDigest) &&
+		observation.StderrBytes >= 0 && validEvidenceDigest(observation.RawStdoutDigest) &&
+		validEvidenceDigest(observation.StdoutDigest) && validEvidenceDigest(observation.RawStderrDigest) &&
 		validEvidenceDigest(observation.StderrDigest)
 }
 
