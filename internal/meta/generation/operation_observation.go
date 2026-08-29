@@ -306,16 +306,16 @@ type replayProcessProjection struct {
 }
 
 type replayReceiptProjection struct {
-	ActionIndicatorID      string                    `json:"action_indicator_id"`
-	Subject                string                    `json:"subject"`
-	HeadSHA                string                    `json:"head_sha"`
-	OperationID            string                    `json:"operation_id"`
-	ContractEvidenceDigest string                    `json:"contract_evidence_digest"`
-	InstanceEvidenceDigest string                    `json:"instance_evidence_digest"`
-	Indicators             []IndicatorReceipt        `json:"indicators"`
-	Executor               replayProcessProjection   `json:"executor"`
-	Evaluator              replayProcessProjection   `json:"evaluator"`
-	Verifier               *replayProcessProjection  `json:"verifier,omitempty"`
+	ActionIndicatorID      string                   `json:"action_indicator_id"`
+	Subject                string                   `json:"subject"`
+	HeadSHA                string                   `json:"head_sha"`
+	OperationID            string                   `json:"operation_id"`
+	ContractEvidenceDigest string                   `json:"contract_evidence_digest"`
+	InstanceEvidenceDigest string                   `json:"instance_evidence_digest"`
+	Indicators             []IndicatorReceipt       `json:"indicators"`
+	Executor               replayProcessProjection  `json:"executor"`
+	Evaluator              replayProcessProjection  `json:"evaluator"`
+	Verifier               *replayProcessProjection `json:"verifier,omitempty"`
 }
 
 type replayFailureProjection struct {
@@ -350,9 +350,9 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 			HeadSHA: evidence.HeadSHA, OperationID: evidence.OperationID,
 			ContractEvidenceDigest: evidence.ContractEvidenceDigest,
 			InstanceEvidenceDigest: evidence.InstanceEvidenceDigest,
-			Indicators: receipt.Indicators,
-			Executor: replayProcess(evidence.ExecutorObservation),
-			Evaluator: replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
+			Indicators:             receipt.Indicators,
+			Executor:               replayProcess(evidence.ExecutorObservation),
+			Evaluator:              replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
 		})
 	}
 	failures := make([]replayFailureProjection, 0, len(bundle.Failures))
