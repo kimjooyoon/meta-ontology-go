@@ -3,7 +3,6 @@ package extractor
 import (
 	"go/ast"
 	"go/build"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -20,10 +19,11 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 	info := &types.Info{
 		Defs:       map[*ast.Ident]types.Object{},
 		Uses:       map[*ast.Ident]types.Object{},
+		Types:      map[ast.Expr]types.TypeAndValue{},
 		Scopes:     map[ast.Node]*types.Scope{},
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
-	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}
+	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
 	_, err = configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, info)
 	if err != nil && !sufficientFunctionTypeEvidence(function, info) {
 		return typeEvidence{}, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
@@ -42,7 +42,9 @@ func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bo
 		if !ok {
 			return true
 		}
-		_, packageSelectors[selector.Sel] = info.Uses[identifier].(*types.PkgName)
+		if _, ok := info.Uses[identifier].(*types.PkgName); ok {
+			packageSelectors[identifier] = true
+		}
 		return true
 	})
 	sufficient := true

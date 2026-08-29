@@ -17,10 +17,15 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	if groups, ok := orderedDeclarationPartition(fset, file, declarations, limit); ok {
 		return groups, nil
 	}
-	if groups, ok := middleDeclarationPartition(fset, file, declarations, limit); ok {
+	if groups, ok := orderedGreedyDeclarationPartition(fset, file, declarations, limit); ok {
 		return groups, nil
 	}
-	return greedyDeclarationPartition(fset, file, declarations, limit)
+	return nil, fmt.Errorf("declarations cannot preserve source order within %d lines", limit)
+}
+
+func orderedGreedyDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {
+	groups, err := greedyDeclarationPartition(fset, file, declarations, limit)
+	return groups, err == nil && len(groups) > 1
 }
 
 func orderedDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {

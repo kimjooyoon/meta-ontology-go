@@ -142,7 +142,9 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 	for _, action := range generationActions(plan) {
 		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action)
 		if runErr != nil {
-			bundle.Failures = append(bundle.Failures, observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, runErr.blockedBy, materialized.Executor))
+			failure := observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, runErr.blockedBy, materialized.Executor)
+			failure.FailureEvidence = append([]generation.ObservationFailureEvidence{}, runErr.evidence...)
+			bundle.Failures = append(bundle.Failures, failure)
 			continue
 		}
 		receipt := generation.SealReceipt(plan, action, materialized.Indicators)
@@ -176,6 +178,7 @@ func generationActions(plan generation.Plan) []generation.Action {
 type operationError struct {
 	stage, step, reason, class, next string
 	blockedBy                        []string
+	evidence                          []generation.ObservationFailureEvidence
 }
 
 func newOperationError(stage, step, reason, class, next string) *operationError {
@@ -254,11 +257,13 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-operation-contract", "CONTRACT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-contract")
 	}
 	report := operationconformance.Evaluate(contractRaw, evidence)
-	if err := operationconformance.Validate(report, contractRaw); err != nil || report.Decision != operationconformance.DecisionPass || report.Evidence.Source.Path != action.Subject {
-		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "adjudicate-source-splitter", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
-	}
 	reportRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"operationconformance.Evaluate", operationconformance.OperationID}, reportRaw, nil)
+	if err := operationconformance.Validate(report, contractRaw); err != nil || report.Decision != operationconformance.DecisionPass || report.Evidence.Source.Path != action.Subject {
+		failure := newOperationError("evaluate-operation", "adjudicate-source-splitter", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+		failure.evidence = splitFailureEvidence(report)
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator}, failure
+	}
 	verifier := runGoTest(temporary, environment)
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
@@ -416,6 +421,18 @@ func splitIndicatorReceipts(report operationconformance.Report, action generatio
 		result = append(result, makeIndicatorReceipt(identifier, action.Subject, headSHA, operationconformance.OperationID, actual, indicator.Target, 0, 0, transformed, verdict, action.ProofChoice))
 	}
 	return result, true
+}
+
+func splitFailureEvidence(report operationconformance.Report) []generation.ObservationFailureEvidence {
+	result := make([]generation.ObservationFailureEvidence, 0, len(report.Counterexamples))
+	for _, counterexample := range report.Counterexamples {
+		result = append(result, generation.ObservationFailureEvidence{
+			IndicatorID: counterexample.IndicatorID, Observed: counterexample.Observed,
+			Expected: counterexample.Expected, Decision: string(counterexample.Decision),
+			Counterexample: counterexample.RuleID,
+		})
+	}
+	return result
 }
 
 func extractIndicatorReceipts(action generation.Action, validation extractValidation, headSHA string) ([]generation.IndicatorReceipt, bool) {

@@ -109,7 +109,8 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 			!actionsExist(actions, failure.ActionIndicatorID) ||
 			failure.Decision == "" || failure.Stage == "" || failure.Step == "" || failure.Reason == "" ||
 			!validObservationFailureDecision(failure) || failure.NextOperation == "" ||
-			failure.BlockedBy == nil || !validProcessObservation(failure.Executor) {
+			failure.BlockedBy == nil || !validProcessObservation(failure.Executor) ||
+			!validObservationFailureEvidence(failure.FailureEvidence) {
 			return fmt.Errorf("invalid operation observation failure")
 		}
 		seen[failure.ActionIndicatorID] = true
@@ -144,7 +145,8 @@ func validReceiptFailureList(failures []ObservationFailure) bool {
 	for index, failure := range failures {
 		if failure.ActionIndicatorID == "" || failure.Stage == "" || failure.Step == "" ||
 			failure.Reason == "" || failure.NextOperation == "" || failure.BlockedBy == nil ||
-			!validObservationFailureDecision(failure) || !validProcessObservation(failure.Executor) {
+			!validObservationFailureDecision(failure) || !validProcessObservation(failure.Executor) ||
+			!validObservationFailureEvidence(failure.FailureEvidence) {
 			return false
 		}
 		left, _ := json.Marshal(canonical[index])
@@ -216,6 +218,18 @@ func validProcessObservation(observation ProcessObservation) bool {
 		validEvidenceDigest(observation.StderrDigest)
 }
 
+func validObservationFailureEvidence(evidence []ObservationFailureEvidence) bool {
+	seen := make(map[string]bool, len(evidence))
+	for _, item := range evidence {
+		if item.IndicatorID == "" || seen[item.IndicatorID] || item.Counterexample == "" ||
+			item.Observed < 0 || item.Expected < 0 || item.Decision == "PASS" || item.Decision == "" {
+			return false
+		}
+		seen[item.IndicatorID] = true
+	}
+	return true
+}
+
 func validEvidenceDigest(value string) bool {
 	return len(value) == len("sha256:")+64 && value[:len("sha256:")] == "sha256:" &&
 		validDigest(value[len("sha256:"):])
@@ -240,10 +254,21 @@ func NormalizeObservationBundle(bundle OperationObservationBundle) OperationObse
 
 func normalizeObservationFailures(failures []ObservationFailure) []ObservationFailure {
 	result := append([]ObservationFailure{}, failures...)
+	for index := range result {
+		result[index].FailureEvidence = normalizeObservationFailureEvidence(result[index].FailureEvidence)
+	}
 	sort.SliceStable(result, func(left, right int) bool {
 		leftKey, _ := json.Marshal(result[left])
 		rightKey, _ := json.Marshal(result[right])
 		return string(leftKey) < string(rightKey)
+	})
+	return result
+}
+
+func normalizeObservationFailureEvidence(evidence []ObservationFailureEvidence) []ObservationFailureEvidence {
+	result := append([]ObservationFailureEvidence{}, evidence...)
+	sort.Slice(result, func(left, right int) bool {
+		return result[left].IndicatorID < result[right].IndicatorID
 	})
 	return result
 }

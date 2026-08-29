@@ -34,10 +34,23 @@ func Evaluate(contractRaw []byte, evidence SplitGoEvidence) Report {
 		Decision: decision, Reason: reason, Resolution: resolution,
 		AssuranceGrade: "E1_SEPARATE_JUDGE_SAME_REPOSITORY", MetaOperation: "evaluate-split-go-behavior",
 		Contract: contract, Evidence: evidence, EvidenceDigest: evidenceDigest,
-		Summary: summary, Indicators: observations, RepositoryWrites: 0,
+		Summary: summary, Indicators: observations, Counterexamples: counterexamples(observations), RepositoryWrites: 0,
 		RepositoryMutationAuthorized: false}
 	report.Proofs = buildProofs(report)
 	return seal(report)
+}
+
+func counterexamples(observations []IndicatorObservation) []IndicatorCounterexample {
+	result := make([]IndicatorCounterexample, 0)
+	for _, observation := range observations {
+		if observation.Decision == DecisionPass {
+			continue
+		}
+		result = append(result, IndicatorCounterexample{IndicatorID: observation.ID,
+			RuleID: observation.RuleID, Observed: observation.Value, Expected: observation.Target,
+			Decision: observation.Decision, EvidenceDigest: observation.ObservationDigest})
+	}
+	return result
 }
 
 func validSubject(value SplitGoEvidence) bool {
