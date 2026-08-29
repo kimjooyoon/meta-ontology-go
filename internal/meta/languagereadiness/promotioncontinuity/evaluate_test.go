@@ -32,8 +32,10 @@ func mixedEvidence() (string, GuardEvidence, RecoveryEvidence) {
 		Decision: DecisionFailClosed, Reason: "GUARDED_PROMOTION_EVIDENCE_UNKNOWN", Resolution: "LOWER_RESOLUTION",
 		Satisfied: 10, Total: 12, Unresolved: 2,
 	}
+	// FileSHA256 is the downloaded rollback-fixed-point-a.json file digest;
+	// TransformationUnknownCausalDigest below is the nested causal-contract digest.
 	recovery := RecoveryEvidence{
-		Schema: recoverySchema, FileSHA256: "sha256:8017ce469a71b796f096e67ec8c0f797076771d3305e75e5f9e440feff4a3483",
+		Schema: recoverySchema, FileSHA256: "sha256:7b0e224cca6cfbeb0fe0922f1fcd14ebec1ac0d0da5e7824f6a0596cc07cfd47",
 		ReportDigest: "sha256:e31daaef9bdda39981409595372b931a9c0427adfc8bf6b88bba6e2104fe8e6f", HeadSHA: head,
 		Decision: DecisionFailClosed, Reason: "MIXED_REFUTED_NON_PROMOTABLE", Resolution: "EXACT",
 		Mode: "MIXED_REFUTED_NON_PROMOTABLE", GuardDecision: DecisionFailClosed,
