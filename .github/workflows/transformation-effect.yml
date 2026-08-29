@@ -497,8 +497,8 @@ jobs:
             (.decision == "REFUTED" and .promotion_authorized == false and
              (.receipts | length) == 1 and (.failures | length) == 1 and
              (.unknowns | length) == 5 and
-             ($plan[0].selected | map(select(.operation == "split-go-declarations")) | length) == 1 and
-             ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .operation == "extract-function")) | length) == 1 and
+             ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
+             ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
              $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
              $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
              $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
