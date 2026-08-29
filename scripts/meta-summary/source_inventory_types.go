@@ -42,6 +42,5 @@ type sourceMetricsEvidence struct {
 
 type planSelectionEvidence struct {
 	SchemaVersion string            `json:"schema_version"`
-	SelectedCount int               `json:"selected_count"`
 	Selected      []selectedSubject `json:"selected"`
 }

@@ -43,9 +43,6 @@ func decodeSelectedSubjects(data []byte) ([]selectedSubject, error) {
 	if plan.SchemaVersion != "gooo/self-improvement-generation/v6" {
 		return nil, fmt.Errorf("self-improvement plan schema is not v6")
 	}
-	if plan.SelectedCount != len(plan.Selected) {
-		return nil, fmt.Errorf("self-improvement selected count is inconsistent")
-	}
 	for index := range plan.Selected {
 		if plan.Selected[index].MetaOperation == "" || plan.Selected[index].MetricID == "" || plan.Selected[index].Subject == "" {
 			return nil, fmt.Errorf("selected plan subject %d is incomplete", index)
