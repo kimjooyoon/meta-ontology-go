@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 const OperationObservationBundleSchema = "gooo/meta-operation-observation-bundle/v1"
@@ -34,6 +36,7 @@ func AttachInstanceEvidence(receipt OperationReceipt, evidence OperationInstance
 func SealObservationBundle(bundle OperationObservationBundle) OperationObservationBundle {
 	bundle.Schema = OperationObservationBundleSchema
 	bundle.Receipts = normalizeOperationReceipts(bundle.Receipts)
+	bundle.Failures = normalizeObservationFailures(bundle.Failures)
 	bundle.BundleDigest, bundle.ReplayDigest = "", ""
 	bundle.BundleDigest = operationObservationBundleDigest(bundle)
 	bundle.ReplayDigest = digestPair(bundle.PlanDigest, bundle.BundleDigest)
@@ -92,6 +95,9 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 			!validProcessObservation(*evidence.VerifierObservation) {
 			return fmt.Errorf("operation observation is incomplete for %s", receipt.ActionIndicatorID)
 		}
+		if !validIndicatorObservations(receipt, action, *evidence) {
+			return fmt.Errorf("operation indicator observations are incomplete for %s", receipt.ActionIndicatorID)
+		}
 		if seen[receipt.ActionIndicatorID] {
 			return fmt.Errorf("operation observation duplicate for %s", receipt.ActionIndicatorID)
 		}
@@ -100,8 +106,8 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 	for _, failure := range bundle.Failures {
 		if failure.ActionIndicatorID == "" || seen[failure.ActionIndicatorID] ||
 			!actionsExist(actions, failure.ActionIndicatorID) ||
-			failure.Stage == "" || failure.Step == "" || failure.Reason == "" ||
-			failure.UnknownClass == "" || failure.NextOperation == "" ||
+			failure.Decision == "" || failure.Stage == "" || failure.Step == "" || failure.Reason == "" ||
+			!validObservationFailureDecision(failure) || failure.NextOperation == "" ||
 			failure.BlockedBy == nil || !validProcessObservation(failure.Executor) {
 			return fmt.Errorf("invalid operation observation failure")
 		}
@@ -111,6 +117,54 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 		return fmt.Errorf("operation observation subject coverage mismatch")
 	}
 	return nil
+}
+
+func validObservationFailureDecision(failure ObservationFailure) bool {
+	if failure.Decision == "REFUTED" {
+		return failure.UnknownClass == ""
+	}
+	if failure.Decision != "UNKNOWN" {
+		return false
+	}
+	switch failure.UnknownClass {
+	case ReceiptUnknownClassDirectMissing, ReceiptUnknownClassMalformedEvidence,
+		ReceiptUnknownClassUnexpectedEvidence, "DEPENDENCY_BLOCKED":
+		return true
+	default:
+		return false
+	}
+}
+
+func validIndicatorObservations(receipt OperationReceipt, action Action, evidence OperationInstanceEvidence) bool {
+	indicators, valid := indicatorReceiptIndex(receipt.Indicators)
+	if !valid || len(indicators) != len(action.RequiredIndicatorIDs) {
+		return false
+	}
+	for _, identifier := range action.RequiredIndicatorIDs {
+		observation, exists := indicators[identifier]
+		if !exists || observation.Observation == nil ||
+			observation.Observation.Schema != IndicatorObservationSchema ||
+			observation.Observation.IndicatorID != identifier ||
+			observation.Observation.Subject != action.Subject ||
+			observation.Observation.HeadSHA != evidence.HeadSHA ||
+			observation.Observation.OperationID != evidence.OperationID ||
+			observation.Observation.ValueKind != "integer" ||
+			observation.Observation.ActualValue < 0 || observation.Observation.ActualValue > 1 ||
+			observation.Observation.ExpectedPredicate != "equal" ||
+			observation.Observation.ExpectedBound != 1 ||
+			(observation.Verdict == IndicatorVerdictPass && observation.Observation.ActualValue != 1) ||
+			(observation.Verdict == IndicatorVerdictFail && observation.Observation.ActualValue == 1) ||
+			observation.Observation.TransformedSubject == "" ||
+			observation.EvidenceDigest != digestJSON(observation.Observation) {
+			return false
+		}
+		if action.Operation == sourcepolicy.OperationExtractFunction &&
+			(observation.Observation.BeforeFunctionLines <= 0 ||
+				observation.Observation.AfterFunctionLines <= 0) {
+			return false
+		}
+	}
+	return true
 }
 
 func actionsExist(actions map[string]Action, identifier string) bool {
@@ -139,8 +193,19 @@ func operationObservationBundleDigest(bundle OperationObservationBundle) string 
 
 func NormalizeObservationBundle(bundle OperationObservationBundle) OperationObservationBundle {
 	bundle.Receipts = normalizeOperationReceipts(bundle.Receipts)
+	bundle.Failures = normalizeObservationFailures(bundle.Failures)
 	sort.Slice(bundle.Receipts, func(left, right int) bool {
 		return bundle.Receipts[left].ActionIndicatorID < bundle.Receipts[right].ActionIndicatorID
 	})
 	return bundle
+}
+
+func normalizeObservationFailures(failures []ObservationFailure) []ObservationFailure {
+	result := append([]ObservationFailure{}, failures...)
+	sort.SliceStable(result, func(left, right int) bool {
+		leftKey, _ := json.Marshal(result[left])
+		rightKey, _ := json.Marshal(result[right])
+		return string(leftKey) < string(rightKey)
+	})
+	return result
 }

@@ -44,12 +44,15 @@ func appendUnique(values []string, value string) []string {
 	return append(values, value)
 }
 
-func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) error {
-	generated, _, err := projectionextractor.Extract(root, logical)
+func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) ([]string, error) {
+	result, err := projectionextractor.ExtractWithResult(root, logical)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for path, data := range generated {
+	if len(result.Operations) == 0 {
+		return nil, fmt.Errorf("generic extraction performed no operation")
+	}
+	for path, data := range result.Generated {
 		buffers[path] = data
 		changed[logical] = appendUnique(changed[logical], path)
 		if path != logical {
@@ -57,16 +60,17 @@ func stageGenericExtraction(root, logical string, buffers map[string][]byte, cre
 			made[logical] = appendUnique(made[logical], path)
 		}
 	}
-	return nil
+	return append([]string{}, result.Operations...), nil
 }
 
 func extractionFailure(logical string, err error) extractionFailureRecord {
 	if failure, ok := errors.AsType[projectionextractor.Failure](err); ok {
 		decision := "UNKNOWN"
+		unknownClass := failure.UnknownClass
 		if failure.UnknownClass == "KNOWN_CONTRADICTION" {
-			decision = "REFUTED"
+			decision, unknownClass = "REFUTED", ""
 		}
-		return extractionFailureRecord{Logical: logical, BlockerID: stableBlockerID(logical, failure.Diagnostics), Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
+		return extractionFailureRecord{Logical: logical, BlockerID: stableBlockerID(logical, failure.Diagnostics), Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: unknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
 	}
 	return extractionFailureRecord{Logical: logical, Decision: "UNKNOWN", Stage: "apply-extraction", Step: "generic", Reason: "EXTRACTION_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-parser-evidence", BlockedBy: []string{}, Diagnostics: []string{}}
 }

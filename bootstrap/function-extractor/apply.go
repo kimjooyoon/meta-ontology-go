@@ -16,17 +16,20 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 	created := make(map[string]bool)
 	changedBySubject := make(map[string][]string)
 	createdBySubject := make(map[string][]string)
+	operationsBySubject := make(map[string][]string)
 	unhandled := make([]string, 0)
 	failures := make([]extractionFailureRecord, 0)
 	for _, logical := range residual {
 		recipe, exists := bySubject[logical]
 		if !exists {
-			if err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject); err != nil {
+			operations, err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject)
+			if err != nil {
 				unhandled = append(unhandled, logical)
 				failures = append(failures, extractionFailure(logical, err))
 				fmt.Printf("function-extractor: unhandled=%s %v\n", logical, err)
 				continue
 			}
+			operationsBySubject[logical] = operations
 			continue
 		}
 		for _, edit := range recipe.Edits {
@@ -61,7 +64,7 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	subjects, err := extractionSubjects(plans, residual, bySubject, changedBySubject, createdBySubject, staged)
+	subjects, err := extractionSubjects(plans, residual, bySubject, operationsBySubject, changedBySubject, createdBySubject, staged)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

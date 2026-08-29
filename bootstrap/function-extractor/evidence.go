@@ -31,6 +31,7 @@ type extractionSubject struct {
 	CreatedFiles []string `json:"created_files,omitempty"`
 	Consumer     string   `json:"consumer"`
 	Operation    string   `json:"meta_operation"`
+	Operations   []string `json:"meta_operations,omitempty"`
 	Proof        string   `json:"proof_choice"`
 }
 
@@ -41,7 +42,7 @@ type extractionFailureRecord struct {
 	Stage         string   `json:"stage"`
 	Step          string   `json:"step"`
 	Reason        string   `json:"reason"`
-	UnknownClass  string   `json:"unknown_class"`
+	UnknownClass  string   `json:"unknown_class,omitempty"`
 	NextOperation string   `json:"next_operation"`
 	BlockedBy     []string `json:"blocked_by"`
 	Diagnostics   []string `json:"diagnostics,omitempty"`

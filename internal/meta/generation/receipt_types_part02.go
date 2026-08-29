@@ -7,6 +7,7 @@ type IndicatorReceipt struct {
 	Verdict        IndicatorVerdict `json:"verdict"`
 	EvidenceDigest string           `json:"evidence_digest"`
 	ProofChoice    ProofChoice      `json:"proof_choice"`
+	Observation    *IndicatorObservation `json:"observation,omitempty"`
 }
 
 const OperationInstanceEvidenceSchema = "gooo/meta-operation-instance-evidence/v1"
@@ -37,10 +38,11 @@ type OperationInstanceEvidence struct {
 
 type ObservationFailure struct {
 	ActionIndicatorID string             `json:"action_indicator_id"`
+	Decision          string             `json:"decision"`
 	Stage             string             `json:"stage"`
 	Step              string             `json:"step"`
 	Reason            string             `json:"reason"`
-	UnknownClass      string             `json:"unknown_class"`
+	UnknownClass      string             `json:"unknown_class,omitempty"`
 	NextOperation     string             `json:"next_operation"`
 	BlockedBy         []string           `json:"blocked_by"`
 	Executor          ProcessObservation `json:"executor_observation"`
