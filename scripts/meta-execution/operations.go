@@ -351,6 +351,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
 	}
+	if !singleExtractorSubject(report, observed, subject) {
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_CARDINALITY_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
 	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements, report.BackupCleanup)
 	if err != nil {
 		reason := extractValidationErrorReason(err)
@@ -382,6 +385,12 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	return operationMaterialization{OperationID: extractFunctionOperationID, InstanceDigest: instance, ContractDigest: contract, Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation, Indicators: indicators, Canonical: canonical}, nil
+}
+
+func singleExtractorSubject(report extractorReport, observed extractorSubject, subject sourcepolicy.SourceSubject) bool {
+	values, ok := extractorIndicatorValues(report.Indicators)
+	return ok && len(report.Subjects) == 1 && len(report.Unhandled) == 0 &&
+		values["extraction.observed"] == 1 && observed.Logical == subject.Path
 }
 
 func splitIndicatorReceipts(report operationconformance.Report, action generation.Action, headSHA string) ([]generation.IndicatorReceipt, bool) {

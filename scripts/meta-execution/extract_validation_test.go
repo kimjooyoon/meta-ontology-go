@@ -107,15 +107,26 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 	if _, ok := extractorIndicatorValues(indicators); ok {
 		t.Fatal("extra indicator was accepted")
 	}
+	wrongOperation := extractionTestIndicators()
 	var wrong extractorIndicatorRecord
-	if err := json.Unmarshal(extractionTestIndicators()[0], &wrong); err != nil {
+	if err := json.Unmarshal(wrongOperation[0], &wrong); err != nil {
 		t.Fatal(err)
 	}
 	wrong.Operation = "wrong-operation"
 	encoded, _ := json.Marshal(wrong)
-	indicators[0] = encoded
-	if _, ok := extractorIndicatorValues(indicators); ok {
+	wrongOperation[0] = encoded
+	if _, ok := extractorIndicatorValues(wrongOperation); ok {
 		t.Fatal("wrong indicator operation was accepted")
+	}
+	wrongProof := extractionTestIndicators()
+	if err := json.Unmarshal(wrongProof[1], &wrong); err != nil {
+		t.Fatal(err)
+	}
+	wrong.Proof = "wrong-proof"
+	encoded, _ = json.Marshal(wrong)
+	wrongProof[1] = encoded
+	if _, ok := extractorIndicatorValues(wrongProof); ok {
+		t.Fatal("wrong indicator proof was accepted")
 	}
 	validIndicators := extractionTestIndicatorsWithValues(2, 2, 2, 2, 0)
 	cases := []struct {
@@ -143,6 +154,9 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"nonpositive-lines", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject { subject := validExtractionSubject("a.go"); subject.Before = 0; return subject }(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"after-zero", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject { subject := validExtractionSubject("a.go"); subject.After = 0; return subject }(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"no-line-reduction", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
 			func() extractorSubject {
