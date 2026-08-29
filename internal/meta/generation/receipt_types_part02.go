@@ -13,14 +13,14 @@ type IndicatorReceipt struct {
 const OperationInstanceEvidenceSchema = "gooo/meta-operation-instance-evidence/v1"
 
 type ProcessObservation struct {
-	Command          []string `json:"command"`
-	ExitCode         int      `json:"exit_code"`
-	StdoutBytes      int      `json:"stdout_bytes"`
-	RawStdoutDigest  string   `json:"raw_stdout_digest"`
-	StdoutDigest     string   `json:"stdout_digest"`
-	StderrBytes      int      `json:"stderr_bytes"`
-	RawStderrDigest  string   `json:"raw_stderr_digest"`
-	StderrDigest     string   `json:"stderr_digest"`
+	Command         []string `json:"command"`
+	ExitCode        int      `json:"exit_code"`
+	StdoutBytes     int      `json:"stdout_bytes"`
+	RawStdoutDigest string   `json:"raw_stdout_digest"`
+	StdoutDigest    string   `json:"stdout_digest"`
+	StderrBytes     int      `json:"stderr_bytes"`
+	RawStderrDigest string   `json:"raw_stderr_digest"`
+	StderrDigest    string   `json:"stderr_digest"`
 }
 
 type OperationInstanceEvidence struct {

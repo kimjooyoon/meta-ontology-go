@@ -10,9 +10,9 @@ func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) 
 	process := ProcessObservation{
 		Command: []string{"<not-executed>", "extract-function"}, ExitCode: -1,
 		RawStdoutDigest: "sha256:" + strings.Repeat("0", 64),
-		StdoutDigest: "sha256:" + strings.Repeat("0", 64),
+		StdoutDigest:    "sha256:" + strings.Repeat("0", 64),
 		RawStderrDigest: "sha256:" + strings.Repeat("0", 64),
-		StderrDigest: "sha256:" + strings.Repeat("0", 64),
+		StderrDigest:    "sha256:" + strings.Repeat("0", 64),
 	}
 	failures := []ObservationFailure{
 		{
