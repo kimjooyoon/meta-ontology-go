@@ -1,8 +1,8 @@
 package transformationeffectverification
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
