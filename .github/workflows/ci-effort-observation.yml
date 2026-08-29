@@ -1,0 +1,105 @@
+name: CI effort observation
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  observe:
+    name: CI effort observation
+    if: >-
+      github.event.workflow_run.repository.full_name == github.repository &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+      GOWORK: off
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go 1.27 observer
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Collect exact source and OpenTofu inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          mkdir -p "$root/source" "$root/ci-evidence" "$root/ci-summary" "$root/opentofu" "$root/first" "$root/second"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$root/source/run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$root/source/jobs.json"
+          gh run download "$SOURCE_RUN_ID" --name "ci-evidence-$SOURCE_RUN_ID-$SOURCE_RUN_ATTEMPT" --dir "$root/ci-evidence"
+          gh run download "$SOURCE_RUN_ID" --name "ci-summary-$HEAD_SHA" --dir "$root/ci-summary"
+          test -s "$root/ci-evidence/ci-evidence.json"
+          test -s "$root/ci-summary/ci-summary.json"
+          tofu_runs="$root/opentofu-runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/opentofu-observation.yml/runs?head_sha=$HEAD_SHA&per_page=100" > "$tofu_runs"
+          tofu_run_id="$(jq -er --arg head "$HEAD_SHA" '[.workflow_runs[] | select(.head_sha == $head and .conclusion == "success")] | sort_by(.id) | last | .id' "$tofu_runs")"
+          tofu_name="opentofu-observation-$HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$tofu_run_id/artifacts?per_page=100" |
+            jq -e --arg name "$tofu_name" --argjson run "$tofu_run_id" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0] + {run_id:$run} else error("exact OpenTofu artifact missing or duplicated") end' > "$root/opentofu/artifact.json"
+          gh run download "$tofu_run_id" --name "$tofu_name" --dir "$root/opentofu/report"
+          test -s "$root/opentofu/report/report.json"
+          jq -e --arg head "$HEAD_SHA" '.run_id > 0 and .name == ("opentofu-observation-" + $head) and .digest and (.size_in_bytes > 0) and (.expired == false)' "$root/opentofu/artifact.json" > /dev/null
+          before="$(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all)"
+          after="$before"
+          jq -n --arg before "$before" --arg after "$after" '{before:$before,after:$after,writes:(if $before == $after and $after == "" then 0 else 1 end)}' > "$root/repository-status.json"
+
+      - name: Validate observer package in CI
+        run: go test ./scripts/ci-effort-observation
+
+      - name: Produce exact CI effort receipt and replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          source_event="$(jq -r .event "$root/source/run.json")"
+          source_ref="$(jq -r .ref "$root/source/run.json")"
+          environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=go1.27.0;permissions=contents:read,actions:read;workspace=<workspace>"
+          args=(
+            --run "$root/source/run.json"
+            --jobs "$root/source/jobs.json"
+            --manifest examples/ci-effort-observation/operations.json
+            --contract examples/ci-effort-observation/contract.json
+            --program examples/ci-effort-observation/main.gooo
+            --ci-summary "$root/ci-summary/ci-summary.json"
+            --ci-evidence "$root/ci-evidence/ci-evidence.json"
+            --opentofu-report "$root/opentofu/report/report.json"
+            --opentofu-artifact "$root/opentofu/artifact.json"
+            --repository-status "$root/repository-status.json"
+            --dependency-files go.mod,go.sum
+            --environment "$environment"
+          )
+          go run ./scripts/ci-effort-observation "${args[@]}" --output "$root/first/report.json" --markdown "$root/first/report.md" --check
+          go run ./scripts/ci-effort-observation "${args[@]}" --output "$root/second/report.json" --markdown "$root/second/report.md" --check
+          cmp -s "$root/first/report.json" "$root/second/report.json"
+          cmp -s "$root/first/report.md" "$root/second/report.md"
+          jq -e --arg head "$HEAD_SHA" '.schema == "gooo/ci-effort-observation/v1" and .head_sha == $head and .decision == "PASS" and .resolution == "EXACT" and .accounting.unknown == 0 and .accounting.rejected == 0 and .reuse.reused == 0 and .reuse.prior_candidates == 0 and .repository_writes == 0 and .local_test_executions == 0 and .cross_project_required_gates == 0 and .improvement == "UNKNOWN" and (.cells | length) == 8 and .graph.activity_count == 8 and .graph.binding_count == 8' "$root/first/report.json" > /dev/null
+          cat "$root/first/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload exact CI effort receipt
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: ci-effort-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/ci-effort-observation
+          if-no-files-found: error
+          retention-days: 30
