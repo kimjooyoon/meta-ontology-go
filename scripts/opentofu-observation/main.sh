@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 : "${HEAD_SHA:?HEAD_SHA is required}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY is required}"
@@ -11,7 +11,17 @@ fixture="$root/examples/opentofu-observation/fixture"
 mkdir -p "$out/evidence" "$work"
 cd "$root"
 phase="release-download"
-trap 'status=$?; printf "observation_failure phase=%s line=%s status=%s\n" "$phase" "$LINENO" "$status" >&2; exit "$status"' ERR
+record_failure() {
+  local status="$1" line="$2" command="$3"
+  trap - ERR
+  mkdir -p "$out/evidence"
+  jq -n --arg phase "$phase" --arg step "$phase" --arg line "$line" --arg command "$command" --argjson exit_code "$status" \
+    '{schema:"gooo/opentofu-observation-failure/v1",stage:"observe-released-cli",step:$step,phase:$phase,line:($line|tonumber),command:$command,reason:"OBSERVATION_COMMAND_FAILED",exit_code:$exit_code}' \
+    > "$out/evidence/failure.json"
+  printf 'observation_failure phase=%s line=%s command=%s status=%s\n' "$phase" "$line" "$command" "$status" >&2
+  return "$status"
+}
+trap 'record_failure "$?" "$LINENO" "$BASH_COMMAND"' ERR
 
 asset_url="https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
 asset_sha="sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
