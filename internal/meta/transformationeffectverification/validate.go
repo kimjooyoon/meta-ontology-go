@@ -313,9 +313,9 @@ func validateObservationFailure(failure generation.ObservationFailure, action ge
 		return bindingFailure("receipts.failures["+action.IndicatorID+"].executor.command", action.Executor, strings.Join(failure.Executor.Command, " "))
 	}
 	if failure.Decision == "REFUTED" &&
-		(!commandContainsSubject(failure.Executor.Command, action.Subject) ||
+		(failure.Counterexample != action.Subject ||
 			action.Operation == sourcepolicy.OperationExtractFunction && failure.Executor.ExitCode == 0) {
-		return bindingFailure("receipts.failures["+action.IndicatorID+"].executor", "failed command bound to selected subject", "failure process is not bound")
+		return bindingFailure("receipts.failures["+action.IndicatorID+"].counterexample", action.Subject, failure.Counterexample)
 	}
 	if err := validateFailureEvidence(failure, action); err != nil {
 		return err
