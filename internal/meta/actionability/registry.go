@@ -12,7 +12,7 @@ func canonicalExecutors() []Executor {
 	result := make([]Executor, 0, len(generation.DefaultRegistry())+2)
 	for _, binding := range generation.DefaultRegistry() {
 		operation := string(binding.Operation)
-		result = append(result, Executor{Operation: operation, Activity: operation,
+		result = append(result, Executor{Operation: operation, Activity: binding.Activity,
 			ProofChoice: normalizeProof(string(binding.ProofChoice)), Registry: "generation",
 			Executor: binding.Executor, Evaluator: binding.Evaluator})
 	}

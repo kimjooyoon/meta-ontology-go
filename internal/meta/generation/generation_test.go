@@ -36,7 +36,7 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 	}
 	for _, action := range planned.Selected {
 		if !action.ReceiptRequired || action.Evaluator == "" || len(action.RequiredIndicatorIDs) == 0 ||
-			!validActionApplicability(action) {
+			action.Activity == "" || action.Output == "" || !validActionApplicability(action) {
 			t.Fatalf("action lacks conformance obligations: %+v", action)
 		}
 	}

@@ -62,6 +62,8 @@ func selectedActionIndex(plan Plan) (map[string]Action, bool) {
 
 func actionMatchesBinding(action Action, binding Binding) bool {
 	return action.IndependenceGroupID == binding.IndependenceGroupID &&
+		action.Activity == binding.Activity &&
+		action.Output == binding.Output &&
 		action.ProofChoice == binding.ProofChoice &&
 		action.Executor == binding.Executor &&
 		action.Evaluator == binding.Evaluator &&

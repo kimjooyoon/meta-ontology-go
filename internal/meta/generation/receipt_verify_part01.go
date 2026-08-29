@@ -39,6 +39,9 @@ func VerifyReceipts(plan Plan, receipts []OperationReceipt) ReceiptReport {
 		if !exists {
 			report.MissingIndicatorIDs = append(
 				report.MissingIndicatorIDs, actionObligationID(action.IndicatorID, "receipt"))
+			for _, required := range action.RequiredIndicatorIDs {
+				report.Unknowns = append(report.Unknowns, missingReceiptUnknown(action, required))
+			}
 			continue
 		}
 		classifyOperationReceipt(plan, action, receipt, &report)

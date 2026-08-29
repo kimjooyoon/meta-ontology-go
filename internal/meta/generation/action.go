@@ -14,7 +14,8 @@ func actionFor(candidate candidate, id string) Action {
 		IndicatorOutcome:  candidate.indicator.Outcome(),
 		MetricProofChoice: candidate.indicator.Proof, MetricProducer: candidate.indicator.Producer,
 		MetricConsumer: candidate.indicator.Consumer,
-		Operation:      candidate.binding.Operation, IndependenceGroupID: candidate.binding.IndependenceGroupID,
+		Operation:      candidate.binding.Operation, Activity: candidate.binding.Activity, Output: candidate.binding.Output,
+		IndependenceGroupID: candidate.binding.IndependenceGroupID,
 		ProofChoice: candidate.binding.ProofChoice, Executor: candidate.binding.Executor, Evaluator: candidate.binding.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, candidate.binding.RequiredIndicatorIDs...), ReceiptRequired: candidate.binding.ReceiptRequired,
 		Priority: candidate.binding.Priority}

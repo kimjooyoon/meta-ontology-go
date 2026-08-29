@@ -44,6 +44,7 @@ func executionStepFor(action Action) ExecutionStep {
 		MetricProofChoice: action.MetricProofChoice, MetricProducer: action.MetricProducer,
 		MetricConsumer:      action.MetricConsumer,
 		Operation:           action.Operation,
+		Activity:            action.Activity, Output: action.Output,
 		IndependenceGroupID: action.IndependenceGroupID,
 		ProofChoice:         action.ProofChoice,
 		Executor:            action.Executor, Evaluator: action.Evaluator,

@@ -36,9 +36,10 @@ func run(configuration options) error {
 		return err
 	}
 	fmt.Printf(
-		"receipt verification: decision=%s reason=%s replay=%s\n",
+		"receipt verification: decision=%s reason=%s unknown=%d replay=%s\n",
 		report.Decision,
 		report.Reason,
+		len(report.Unknowns),
 		report.ReplayDigest,
 	)
 	if report.Decision != generation.ReceiptDecisionFixedPoint &&

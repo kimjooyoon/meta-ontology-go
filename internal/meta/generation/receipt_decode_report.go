@@ -26,6 +26,9 @@ func (report *ReceiptReport) UnmarshalJSON(data []byte) error {
 		candidate.IndicatorDecisionLedgerCount) {
 		return fmt.Errorf("invalid receipt report indicator ledger provenance")
 	}
+	if !validReceiptUnknowns(candidate.Unknowns) {
+		return fmt.Errorf("invalid receipt report unknown evidence")
+	}
 	canonical := candidate
 	canonical.InputDigest, canonical.ReportDigest, canonical.ReplayDigest = "", "", ""
 	canonical = finishReceiptReport(canonical)

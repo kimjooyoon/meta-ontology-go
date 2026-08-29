@@ -21,6 +21,13 @@ const ReceiptReasonMissingIndicator ReceiptReason = "MISSING_REQUIRED_INDICATOR"
 const ReceiptReasonUnknownIndicator ReceiptReason = "UNKNOWN_INDICATOR_EVIDENCE"
 const ReceiptReasonRejectedIndicator ReceiptReason = "INDICATOR_REJECTED"
 
+const ReceiptUnknownClassDirectMissing = "DIRECT_MISSING"
+const ReceiptUnknownClassMalformedEvidence = "MALFORMED_EVIDENCE"
+const ReceiptUnknownClassUnexpectedEvidence = "UNEXPECTED_EVIDENCE"
+
+const ReceiptUnknownStage = "receipt-verification"
+const ReceiptUnknownStep = "verify-required-indicator"
+
 type IndicatorVerdict string
 
 const IndicatorVerdictPass IndicatorVerdict = "PASS"

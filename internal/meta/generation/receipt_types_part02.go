@@ -18,10 +18,31 @@ type OperationReceipt struct {
 	IndicatorDecisionLedgerCount  int                    `json:"indicator_decision_ledger_count"`
 	ActionIndicatorID             string                 `json:"action_indicator_id"`
 	Operation                     sourcepolicy.Operation `json:"operation"`
+	Activity                      string                 `json:"activity"`
+	Output                        string                 `json:"output"`
+	Executor                      string                 `json:"executor"`
 	Evaluator                     string                 `json:"evaluator"`
 	ProofChoice                   ProofChoice            `json:"proof_choice"`
 	Indicators                    []IndicatorReceipt     `json:"indicators"`
 	ReceiptDigest                 string                 `json:"receipt_digest"`
+}
+
+// ReceiptUnknown preserves an unavailable or malformed execution observation
+// together with the operation contract it was meant to discharge.
+type ReceiptUnknown struct {
+	ActionIndicatorID   string                 `json:"action_indicator_id"`
+	RequiredIndicatorID string                 `json:"required_indicator_id"`
+	Operation           sourcepolicy.Operation `json:"operation"`
+	Activity            string                 `json:"activity"`
+	Output              string                 `json:"output"`
+	Executor            string                 `json:"executor"`
+	Evaluator           string                 `json:"evaluator"`
+	Stage               string                 `json:"stage"`
+	Step                string                 `json:"step"`
+	Reason              ReceiptReason          `json:"reason"`
+	UnknownClass        string                 `json:"unknown_class"`
+	NextOperation       string                 `json:"next_operation"`
+	BlockedBy           []string               `json:"blocked_by"`
 }
 
 type ReceiptReport struct {
@@ -38,6 +59,7 @@ type ReceiptReport struct {
 	MissingIndicatorIDs           []string           `json:"missing_indicator_ids"`
 	UnknownIndicatorIDs           []string           `json:"unknown_indicator_ids"`
 	RejectedIndicatorIDs          []string           `json:"rejected_indicator_ids"`
+	Unknowns                      []ReceiptUnknown   `json:"unknowns"`
 	PromotionAuthorized           bool               `json:"promotion_authorized"`
 	ReportDigest                  string             `json:"report_digest"`
 	ReplayDigest                  string             `json:"replay_digest"`

@@ -10,6 +10,7 @@ type receiptInput struct {
 	IndicatorDecisionLedgerDigest string             `json:"indicator_decision_ledger_digest,omitempty"`
 	IndicatorDecisionLedgerCount  int                `json:"indicator_decision_ledger_count"`
 	Receipts                      []OperationReceipt `json:"receipts"`
+	Unknowns                      []ReceiptUnknown   `json:"unknowns"`
 }
 
 func finishReceiptReport(report ReceiptReport) ReceiptReport {
@@ -25,6 +26,7 @@ func finishReceiptReport(report ReceiptReport) ReceiptReport {
 	if report.RejectedIndicatorIDs == nil {
 		report.RejectedIndicatorIDs = []string{}
 	}
+	report.Unknowns = normalizeReceiptUnknowns(report.Unknowns)
 	sort.Strings(report.MissingIndicatorIDs)
 	sort.Strings(report.UnknownIndicatorIDs)
 	sort.Strings(report.RejectedIndicatorIDs)
@@ -32,7 +34,7 @@ func finishReceiptReport(report ReceiptReport) ReceiptReport {
 		PlanDigest:                    report.PlanDigest,
 		IndicatorDecisionLedgerDigest: report.IndicatorDecisionLedgerDigest,
 		IndicatorDecisionLedgerCount:  report.IndicatorDecisionLedgerCount,
-		Receipts:                      report.Receipts,
+		Receipts:                      report.Receipts, Unknowns: report.Unknowns,
 	})
 	report.ReportDigest, report.ReplayDigest = "", ""
 	report.ReportDigest = digestJSON(report)

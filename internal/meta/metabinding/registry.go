@@ -27,16 +27,8 @@ func canonicalRegistry() []Binding {
 		if _, exists := sourceOperations[operation]; exists {
 			continue
 		}
-		activity := map[string]string{
-			"collapse-assign-return": "CollapseAssignReturn",
-			"split-go-declarations":  "SplitGoDeclarations",
-			"split-gooo-sections":    "SplitGoooSections",
-		}[operation]
-		if activity == "" {
-			activity = operation
-		}
 		bindings = append(bindings, Binding{
-			Operation: operation, Activity: activity,
+			Operation: operation, Activity: binding.Activity,
 			ProofChoice: normalizeProof(fmt.Sprint(binding.ProofChoice)), Registry: "generation",
 			Executor: binding.Executor, Evaluator: binding.Evaluator,
 		})
