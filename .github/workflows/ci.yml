@@ -352,14 +352,12 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/ci-summary.json
           if-no-files-found: error
           retention-days: 14
-      - name: Check DAMP/DRY caps
+      - name: Validate source metric and meta evidence (caps are observations)
         if: github.event_name == 'pull_request'
         env:
-          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
-          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify --caps-only
-      - name: Check changed-file scope, Go size caps, and PR target
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Check changed-file scope and PR target
         if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -369,19 +367,11 @@ jobs:
           GOOO_PR_HEAD: ${{ github.head_ref }}
           GOOO_PR_BASE: ${{ github.base_ref }}
         run: go run ./scripts/verify --skip-caps
-      - name: Check Go caps on protected push
+      - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
         env:
-          # A rebase can make github.event.before unavailable to checkout. Push
-          # validation therefore keeps the local size caps while PR events run
-          # the complete changed-path scope and ownership check.
-          GOOO_SCOPE_FROM: ""
-          GOOO_SCOPE_TO: ""
-          GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
-          GOOO_PR_HEAD: ""
-          GOOO_PR_BASE: ""
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
@@ -1035,7 +1025,7 @@ jobs:
             const classifyTerminalJob = job => {
               if (job.name === 'CI policy') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
-                return failedStep?.name === 'Check DAMP/DRY caps' ? 'CI-CAPS-001' : 'CI-SCOPE-001';
+                return (failedStep?.name === 'Validate source metric and meta evidence (caps are observations)' || failedStep?.name === 'Validate source metric and meta evidence on protected push') ? 'CI-CONTRACT-001' : 'CI-SCOPE-001';
               }
               if (job.name === 'CI evidence') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
@@ -1096,7 +1086,7 @@ jobs:
                 missingReasons = proof.missing_reasons || {};
               }
             }
-            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-CAPS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
+            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
             const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
             failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
             code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';

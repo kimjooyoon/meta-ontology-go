@@ -17,10 +17,6 @@ func checkSourceFile(root, path string, policy LinePolicy) []Violation {
 	if err != nil {
 		return []Violation{{Path: path, Rule: "read-gooo-file", Detail: err.Error()}}
 	}
-	return checkSourceBytes(path, source, policy)
-}
-
-func checkSourceBytes(path string, source []byte, policy LinePolicy) []Violation {
 	violations := make([]Violation, 0)
 	if lines := lineCount(source); lines > policy.MaxFileLines {
 		rule := "DAMP file lines"
