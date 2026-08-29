@@ -531,7 +531,7 @@ func commandMatchesExecutor(command []string, executor string) bool {
 		return false
 	}
 	for _, argument := range command {
-		if strings.Contains(strings.TrimPrefix(argument, "./"), executor) {
+		if argument == executor || strings.TrimPrefix(argument, "./") == executor {
 			return true
 		}
 	}
@@ -539,15 +539,10 @@ func commandMatchesExecutor(command []string, executor string) bool {
 }
 
 func commandMatchesEvaluator(command []string, evaluator string) bool {
-	if evaluator == "" {
+	if evaluator == "" || len(command) == 0 {
 		return false
 	}
-	for _, argument := range command {
-		if strings.Contains(strings.TrimPrefix(argument, "./"), evaluator) {
-			return true
-		}
-	}
-	return false
+	return command[0] == evaluator
 }
 
 func commandContainsSubject(command []string, subject string) bool {
