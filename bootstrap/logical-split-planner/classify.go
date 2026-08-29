@@ -80,7 +80,7 @@ func capacityCounterexamples(subject inputSubject, atoms []declarationAtom) []pl
 			UnknownClass:  "KNOWN_CONTRADICTION",
 			NextOperation: "report-contradiction",
 			BlockedBy:     []string{},
-			Diagnostics:   []string{
+			Diagnostics: []string{
 				"declaration=" + atom.identity,
 				"declaration_lines=" + strconv.Itoa(atom.lines),
 				"minimum_helper_lines=" + strconv.Itoa(atom.lines+3),
