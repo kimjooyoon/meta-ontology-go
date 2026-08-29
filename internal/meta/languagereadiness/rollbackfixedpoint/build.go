@@ -31,6 +31,7 @@ func mixedTerminal(source Source) bool {
 		t.ReceiptDecision == "REFUTED" && t.Effects == t.AppliedEffects+t.RefutedEffects &&
 		t.AppliedEffects > 0 && t.RefutedEffects > 0 &&
 		t.ReceiptCount == t.AppliedEffects && t.FailureCount == t.RefutedEffects &&
+		t.UnknownCount >= 0 && t.DependencyBlockedUnknownCount >= 0 &&
 		t.DirectUnknownCount == 0 && t.DependencyBlockedUnknownCount == t.UnknownCount &&
 		validDigest(t.UnknownCausalDigest) &&
 		t.SourceWorkspaceUnchanged && t.WriteBoundary == "SANDBOX_ONLY" &&

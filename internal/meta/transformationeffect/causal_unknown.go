@@ -3,33 +3,9 @@ package transformationeffect
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
-
-// CausalUnknownRecord is the stable, receipt-derived identity of one unknown
-// obligation.  It deliberately retains the failure context that caused a
-// dependency-blocked obligation.
-type CausalUnknownRecord struct {
-	ActionIndicatorID   string   `json:"action_indicator_id"`
-	RequiredIndicatorID string   `json:"required_indicator_id"`
-	Stage               string   `json:"stage"`
-	Step                string   `json:"step"`
-	Reason              string   `json:"reason"`
-	UnknownClass        string   `json:"unknown_class"`
-	NextOperation       string   `json:"next_operation"`
-	BlockedBy           []string `json:"blocked_by"`
-}
-
-// CausalUnknownProjection is the canonical aggregate consumed by downstream
-// verifiers. Digest is excluded from its own input by design.
-type CausalUnknownProjection struct {
-	DirectUnknownCount            int                   `json:"direct_unknown_count"`
-	DependencyBlockedUnknownCount int                  `json:"dependency_blocked_unknown_count"`
-	Records                      []CausalUnknownRecord `json:"records"`
-	Digest                       string                `json:"-"`
-}
 
 func BuildCausalUnknownProjection(report generation.ReceiptReport) (CausalUnknownProjection, error) {
 	projection := CausalUnknownProjection{Records: []CausalUnknownRecord{}}
@@ -87,20 +63,4 @@ func BuildCausalUnknownProjection(report generation.ReceiptReport) (CausalUnknow
 	})
 	projection.Digest = hashJSON(projection)
 	return projection, nil
-}
-
-func validateCausalUnknown(unknown generation.ReceiptUnknown) error {
-	if unknown.ActionIndicatorID == "" || unknown.RequiredIndicatorID == "" || unknown.Operation == "" ||
-		unknown.Activity == "" || unknown.Output == "" || unknown.Executor == "" || unknown.Evaluator == "" ||
-		unknown.Stage == "" || unknown.Step == "" || unknown.Reason == "" || unknown.NextOperation == "" ||
-		unknown.BlockedBy == nil {
-		return fmt.Errorf("causal unknown is missing required fields")
-	}
-	return nil
-}
-
-func causalUnknownKey(record CausalUnknownRecord) string {
-	return strings.Join([]string{record.ActionIndicatorID, record.RequiredIndicatorID,
-		record.Stage, record.Step, record.Reason, record.UnknownClass, record.NextOperation,
-		strings.Join(record.BlockedBy, "\x00")}, "\x00")
 }

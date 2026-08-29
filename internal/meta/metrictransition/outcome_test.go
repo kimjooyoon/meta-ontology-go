@@ -92,6 +92,22 @@ func TestMixedOutcomeRejectsMalformedDependencyFrontier(t *testing.T) {
 	}
 }
 
+func TestMixedOutcomeRejectsDirectUnknownAfterProjection(t *testing.T) {
+	inputs := mixedOutcomeInput()
+	inputs.receiptReport.Unknowns[0].UnknownClass = generation.ReceiptUnknownClassDirectMissing
+	inputs.receiptReport.Unknowns[0].BlockedBy = []string{}
+	causal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inputs.effectLedger.DirectUnknownCount = causal.DirectUnknownCount
+	inputs.effectLedger.DependencyBlockedUnknownCount = causal.DependencyBlockedUnknownCount
+	inputs.effectLedger.UnknownCausalDigest = causal.Digest
+	if _, err := validateEffectOutcome(inputs); err == nil {
+		t.Fatal("direct unknown was accepted as a known mixed terminal")
+	}
+}
+
 func TestMixedOutcomeRequiresAllSelectedExecutorsBound(t *testing.T) {
 	inputs := mixedOutcomeInput()
 	inputs.effectLedger.BoundExecutorOperations = 1
