@@ -26,6 +26,7 @@ func TestCanonicalProcessReplayIgnoresWorkspaceAndRawDigest(t *testing.T) {
 
 func TestOperationReplayProjectionExcludesRawDigests(t *testing.T) {
 	process := generation.ProcessObservation{
+		Command:      []string{"go", "run", "<workspace>", "--plan", "meta-execution-function-plan.json"},
 		ExitCode: 1, StdoutBytes: 2, StdoutDigest: "sha256:" + strings.Repeat("1", 64),
 		StderrBytes: 3, StderrDigest: "sha256:" + strings.Repeat("2", 64),
 		RawStdoutDigest: "sha256:" + strings.Repeat("3", 64),
@@ -43,6 +44,28 @@ func TestOperationReplayProjectionExcludesRawDigests(t *testing.T) {
 	if !bytes.Contains(encoded, []byte(strings.Repeat("1", 64))) ||
 		!bytes.Contains(encoded, []byte(strings.Repeat("2", 64))) {
 		t.Fatal("canonical process digests were omitted from replay projection")
+	}
+	if !bytes.Contains(encoded, []byte("<workspace>")) ||
+		bytes.Contains(encoded, []byte("/tmp/actual-workspace")) {
+		t.Fatal("replay projection did not retain only the canonical command descriptor")
+	}
+}
+
+func TestOperationReplayProjectionBindsCanonicalCommand(t *testing.T) {
+	first := generation.ProcessObservation{Command: []string{"go", "run", "<workspace>"},
+		StdoutDigest: "sha256:" + strings.Repeat("1", 64), StderrDigest: "sha256:" + strings.Repeat("2", 64)}
+	second := first
+	second.Command = []string{"go", "run", "<workspace>", "--different-option"}
+	firstEncoded, err := json.Marshal(operationReplayEvidenceFrom(first, first, first))
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondEncoded, err := json.Marshal(operationReplayEvidenceFrom(second, second, second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Equal(firstEncoded, secondEncoded) {
+		t.Fatal("command descriptor drift was omitted from replay projection")
 	}
 }
 

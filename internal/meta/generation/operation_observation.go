@@ -298,6 +298,7 @@ func normalizeObservationFailureEvidence(evidence []ObservationFailureEvidence) 
 }
 
 type replayProcessProjection struct {
+	Command      []string `json:"command"`
 	ExitCode     int    `json:"exit_code"`
 	StdoutBytes  int    `json:"stdout_bytes"`
 	StdoutDigest string `json:"stdout_digest"`
@@ -383,7 +384,8 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 }
 
 func replayProcess(observation ProcessObservation) replayProcessProjection {
-	return replayProcessProjection{ExitCode: observation.ExitCode, StdoutBytes: observation.StdoutBytes,
+	return replayProcessProjection{Command: append([]string{}, observation.Command...), ExitCode: observation.ExitCode,
+		StdoutBytes: observation.StdoutBytes,
 		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
 		StderrDigest: observation.StderrDigest}
 }

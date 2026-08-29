@@ -37,6 +37,7 @@ type operationMaterialization struct {
 }
 
 type replayProcessObservation struct {
+	Command      []string `json:"command"`
 	ExitCode     int    `json:"exit_code"`
 	StdoutBytes  int    `json:"stdout_bytes"`
 	StdoutDigest string `json:"stdout_digest"`
@@ -59,7 +60,8 @@ func operationReplayEvidenceFrom(executor, evaluator, verifier generation.Proces
 
 func replayProcess(observation generation.ProcessObservation) replayProcessObservation {
 	return replayProcessObservation{
-		ExitCode: observation.ExitCode, StdoutBytes: observation.StdoutBytes,
+		Command:      append([]string{}, observation.Command...),
+		ExitCode:     observation.ExitCode, StdoutBytes: observation.StdoutBytes,
 		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
 		StderrDigest: observation.StderrDigest,
 	}
