@@ -254,14 +254,17 @@ func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.F
 	}
 	result := make([]suffixBinding, 0, len(objects))
 	for object := range objects {
-		text := types.TypeString(object.Type(), func(packagePath string) string {
+		text := types.TypeString(object.Type(), func(imported *types.Package) string {
+			if imported == nil {
+				return ""
+			}
 			for identifier, used := range evidence.info.Uses {
 				packageName, ok := used.(*types.PkgName)
-				if ok && packageName.Imported().Path() == packagePath {
+				if ok && packageName.Imported() == imported {
 					return identifier.Name
 				}
 			}
-			return packagePath
+			return imported.Name()
 		})
 		typeExpr, err := parser.ParseExpr(text)
 		if err != nil {
@@ -350,7 +353,7 @@ func hasUnsafeOuterScope(statements []ast.Stmt) bool {
 				return false
 			}
 			switch node.(type) {
-			case *ast.DeferStmt, *ast.GoStmt, *ast.GotoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
+			case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
 				unsafe = true
 			}
 			if branch, ok := node.(*ast.BranchStmt); ok && branch.Tok != token.FALLTHROUGH {
@@ -393,7 +396,7 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 	switch value := node.(type) {
 	case *ast.ForStmt, *ast.RangeStmt, *ast.SwitchStmt, *ast.TypeSwitchStmt, *ast.SelectStmt:
 		return hazardVisitor{hazards: visitor.hazards, loopDepth: visitor.loopDepth + 1}
-	case *ast.DeferStmt, *ast.GoStmt, *ast.GotoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
+	case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
 		visitor.hazards.unsafe = true
 	case *ast.BranchStmt:
 		if visitor.loopDepth == 0 && value.Tok != token.FALLTHROUGH {
