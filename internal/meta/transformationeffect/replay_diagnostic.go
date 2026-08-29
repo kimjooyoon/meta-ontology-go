@@ -173,6 +173,18 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		diagnostic.Observed = divergence.Observed
 		diagnostic.ExpectedHash = replayDigest(divergence.Expected)
 		diagnostic.ObservedHash = replayDigest(divergence.Observed)
+	} else if binding, ok := errors.AsType[*executorBindingError](cause); ok {
+		diagnostic.Decision = "REFUTED"
+		diagnostic.Resolution = "EXACT"
+		diagnostic.Step = "bind-executor"
+		diagnostic.Reason = "META_OPERATION_EXECUTOR_UNBOUND"
+		diagnostic.UnknownClass = ""
+		diagnostic.NextOperation = "report-counterexample"
+		diagnostic.FieldPath = binding.FieldPath
+		diagnostic.Expected = binding.Expected
+		diagnostic.Observed = binding.Observed
+		diagnostic.ExpectedHash = replayDigest(binding.Expected)
+		diagnostic.ObservedHash = replayDigest(binding.Observed)
 	}
 	payload, err := json.MarshalIndent(diagnostic, "", "  ")
 	if err != nil {

@@ -15,6 +15,26 @@ func DefaultRegistry() []Binding {
 	}
 }
 
+// BindingForOperation resolves one operation from the plan's registry. The
+// registry is the authority shared by planning and execution consumers.
+func BindingForOperation(bindings []Binding, operation sourcepolicy.Operation) (Binding, bool) {
+	var result Binding
+	found := false
+	for _, binding := range bindings {
+		if binding.Operation != operation {
+			continue
+		}
+		if found {
+			return Binding{}, false
+		}
+		result, found = binding, true
+	}
+	if !found || !bindingKnown(result) {
+		return Binding{}, false
+	}
+	return result, true
+}
+
 func normalizeRegistry(bindings []Binding) []Binding {
 	result := append([]Binding{}, bindings...)
 	for index := range result {

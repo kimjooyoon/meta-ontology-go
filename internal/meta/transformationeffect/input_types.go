@@ -42,6 +42,7 @@ type Result struct {
 
 type executionResult struct {
 	effects    []Effect
+	failures   []generation.ObservationFailure
 	receipts   generation.ReceiptReport
 	provenance generation.ArtifactProvenance
 	baseline   workspace.State
