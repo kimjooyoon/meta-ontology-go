@@ -41,6 +41,8 @@ run_timed() {
     --arg stdout_digest "$(digest "$stdout")" --argjson stderr_bytes "$(wc -c <"$stderr" | tr -d ' ')" \
     --arg stderr_digest "$(digest "$stderr")" --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$peak_rss" \
     '{name:$name,command:$command,cwd_role:$cwd_role,exit_code:$exit_code,stdout_bytes:$stdout_bytes,stdout_digest:$stdout_digest,stderr_bytes:$stderr_bytes,stderr_digest:$stderr_digest,wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib,executed:true}' >"$receipt"
+  printf 'command_observation name=%s exit_code=%s stdout_bytes=%s stderr_bytes=%s\n' \
+    "$name" "$status" "$(wc -c <"$stdout" | tr -d ' ')" "$(wc -c <"$stderr" | tr -d ' ')"
   rm -f "$rss"
 }
 
@@ -83,6 +85,7 @@ jq -e '.exit_code == 0' "$work/version.json"
 version_json="$(jq -c . "$work/version.stdout")"
 version="$(jq -er '.terraform_version' "$work/version.stdout")"
 platform="$(jq -er '.platform' "$work/version.stdout")"
+printf 'release_observation version=%s platform=%s\n' "$version" "$platform"
 test "$version" = "1.12.6"
 test "$platform" = "linux_amd64"
 
