@@ -85,22 +85,22 @@ func validationFailureBundle(command []string) (OperationObservationBundle, Plan
 		})
 	}
 	bundle := OperationObservationBundle{
-		BaseSHA:           plan.BaseSHA,
-		HeadSHA:           plan.HeadSHA,
-		PlanDigest:        plan.PlanDigest,
-		ManifestDigest:    manifest.ManifestDigest,
-		Failures:          failures,
-		ObservationTotal:  len(failures),
+		BaseSHA:          plan.BaseSHA,
+		HeadSHA:          plan.HeadSHA,
+		PlanDigest:       plan.PlanDigest,
+		ManifestDigest:   manifest.ManifestDigest,
+		Failures:         failures,
+		ObservationTotal: len(failures),
 	}
 	return SealObservationBundle(bundle), plan, manifest
 }
 
 func sealReplayFailure(plan Plan, process ProcessObservation) OperationObservationBundle {
 	bundle := OperationObservationBundle{
-		BaseSHA:           plan.BaseSHA,
-		HeadSHA:           plan.HeadSHA,
-		PlanDigest:        plan.PlanDigest,
-		ManifestDigest:    "sha256:" + strings.Repeat("6", 64),
+		BaseSHA:        plan.BaseSHA,
+		HeadSHA:        plan.HeadSHA,
+		PlanDigest:     plan.PlanDigest,
+		ManifestDigest: "sha256:" + strings.Repeat("6", 64),
 		Failures: []ObservationFailure{{
 			ActionIndicatorID: plan.Selected[0].IndicatorID,
 			Decision:          "UNKNOWN",
