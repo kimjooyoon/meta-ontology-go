@@ -289,7 +289,7 @@ jobs:
             .indicator_inventory.expected_ids == ["semantic-policy-derived","changed-file-observation-bound","unknown-descends-to-full","claim-transition-append-only","isolation-state-observed","plan-only-no-execution-claim"] and
             .indicator_inventory.observed_ids == .indicator_inventory.expected_ids and
             ([.indicators[].satisfied] | all) and
-            ([.subjects | length] == $changed) and
+            ((.subjects | length) == $changed) and
             ([.subjects[].path] | sort) == $changed_paths and
             ([.subjects[] | select(.resolution == "UNKNOWN")] | length) == $changed and
             ([.subjects[] | select(.resolution == "UNKNOWN") | .selected_checks | length] | all(. == 6))
