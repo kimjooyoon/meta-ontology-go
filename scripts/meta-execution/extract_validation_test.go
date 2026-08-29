@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -30,7 +32,7 @@ func TestValidationRejectsMissingImportFromOutputUnion(t *testing.T) {
 
 func TestValidationSeparatesBackupUnknownFromContradiction(t *testing.T) {
 	replacements := []namespaceReplacementReceipt{{DestinationPreexisted: true}}
-	unknown := validateBackupCleanup(backupCleanupObservation{Status: "PENDING"}, replacements)
+	unknown := validateBackupCleanup(backupCleanupObservation{Status: "PENDING", Attempted: 1}, replacements)
 	var unavailable *extractValidationUnknown
 	if !errors.As(unknown, &unavailable) || unavailable.reason != "BACKUP_CLEANUP_UNAVAILABLE" {
 		t.Fatalf("pending cleanup was not unknown: %v", unknown)
@@ -39,5 +41,54 @@ func TestValidationSeparatesBackupUnknownFromContradiction(t *testing.T) {
 	var replacementErr *namespaceReplacementError
 	if !errors.As(contradiction, &replacementErr) || replacementErr.reason != "BACKUP_CLEANUP_INCONSISTENT" {
 		t.Fatalf("inconsistent cleanup was not refuted: %v", contradiction)
+	}
+}
+
+func TestValidationRejectsCleanupCountContradictionBeforeUnknown(t *testing.T) {
+	replacements := []namespaceReplacementReceipt{{DestinationPreexisted: true}}
+	for _, observation := range []backupCleanupObservation{
+		{Status: "UNKNOWN", Attempted: -1, Removed: 0, Failures: 1},
+		{Status: "UNKNOWN", Attempted: 1, Removed: 1, Failures: 1},
+	} {
+		err := validateBackupCleanup(observation, replacements)
+		var replacementErr *namespaceReplacementError
+		if !errors.As(err, &replacementErr) || replacementErr.reason != "BACKUP_CLEANUP_INCONSISTENT" {
+			t.Fatalf("cleanup contradiction was not refuted: %v", err)
+		}
+	}
+}
+
+func TestFailedExtractionPreservesBackupUnknownCoordinate(t *testing.T) {
+	root := t.TempDir()
+	report := extractorReport{
+		Schema: functionExtractionReportSchema, SourceSHA: "head",
+		NamespaceReplacements: []namespaceReplacementReceipt{{DestinationPreexisted: true}},
+		BackupCleanup: backupCleanupObservation{Status: "UNKNOWN", Attempted: 1, Failures: 1},
+	}
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "report.json"), payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"})
+	if failure.stage != "evaluate-operation" || failure.step != "validate-function-extraction" ||
+		failure.reason != "BACKUP_CLEANUP_UNAVAILABLE" || failure.class != "DIRECT_MISSING" ||
+		failure.next != "recover-backup-cleanup-evidence" {
+		t.Fatalf("backup unknown coordinate was not preserved: %+v", failure)
+	}
+}
+
+func TestFailedExtractionMalformedReportIsRefuted(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "report.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"})
+	if failure.stage != "evaluate-operation" || failure.step != "decode-function-extraction-report" ||
+		failure.reason != "INSTANCE_EVIDENCE_MALFORMED" || failure.class != "KNOWN_CONTRADICTION" ||
+		failure.next != "report-counterexample" {
+		t.Fatalf("malformed report was not refuted: %+v", failure)
 	}
 }

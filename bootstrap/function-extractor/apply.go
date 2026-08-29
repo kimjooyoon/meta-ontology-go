@@ -4,7 +4,20 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor/recipe"
 )
+
+type stagedFile struct {
+	name    string
+	data    []byte
+	mode    uint32
+	created bool
+}
+
+func indexRecipes(recipes []extractionRecipe) (map[string]extractionRecipe, error) {
+	return recipeauthority.Index(recipes)
+}
 
 func stageExtractions(root string, plans map[string]planSubject, residual []string,
 	recipes []extractionRecipe) (map[string]stagedFile, []extractionSubject, []string, []extractionFailureRecord, error) {
@@ -69,4 +82,25 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 		return nil, nil, nil, nil, err
 	}
 	return staged, subjects, unhandled, failures, nil
+}
+
+func stageCreations(root string, recipe extractionRecipe, buffers map[string][]byte,
+	created map[string]bool) ([]string, error) {
+	paths := make([]string, 0, len(recipe.Creates))
+	for _, creation := range recipe.Creates {
+		name, err := extractionPath(root, creation.Path)
+		if err != nil {
+			return nil, err
+		}
+		if len(creation.Lines) == 0 || buffers[creation.Path] != nil {
+			return nil, fmt.Errorf("invalid creation %s", creation.Path)
+		}
+		if _, err := os.Lstat(name); err == nil || !os.IsNotExist(err) {
+			return nil, fmt.Errorf("creation target exists: %s", creation.Path)
+		}
+		buffers[creation.Path] = editText(creation.Lines)
+		created[creation.Path] = true
+		paths = append(paths, creation.Path)
+	}
+	return paths, nil
 }

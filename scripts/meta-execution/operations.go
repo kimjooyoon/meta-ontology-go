@@ -284,7 +284,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	actual := []string{"go", "run", "./bootstrap/function-extractor", "-root", temporary, "-plan", planPath, "-density-report", densityPath, "-expected-sha", plan.HeadSHA, "-output", filepath.Join(temporary, reportName)}
 	result, runErr := runProcess(temporary, environment, command, actual)
 	if runErr != nil || result.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation}, failedExtractionError(temporary, reportName, plan)
 	}
 	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName)
 }
@@ -304,13 +304,12 @@ func writeExtractorInputs(root string, plan generation.Plan, subject sourcepolic
 }
 
 func evaluateExtractMaterialization(temporary string, environment []string, before []byte, result processResult, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, reportName string) (operationMaterialization, *operationError) {
-	reportRaw, err := os.ReadFile(filepath.Join(temporary, reportName))
+	reportRaw, report, err := decodeExtractorReport(filepath.Join(temporary, reportName), plan.HeadSHA)
 	if err != nil {
+		if !os.IsNotExist(err) {
+			return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		}
 		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence"}
-	}
-	var report extractorReport
-	if err := decodeStrictBytes(reportRaw, &report); err != nil || report.Schema != functionExtractionReportSchema || report.SourceSHA != plan.HeadSHA || len(report.Unhandled) != 0 {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "adjudicate-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence"}
 	}
 	observed, found := findExtractorSubject(report.Subjects, subject.Path)
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
@@ -320,7 +319,8 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	if err != nil {
 		reason := extractValidationErrorReason(err)
 		class := extractValidationErrorClass(err)
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, class, "report-counterexample"}
+		next := extractValidationNextOperation(err)
+		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, class, next}
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"bootstrap/function-extractor:independent-evaluator", subject.Path, subject.Name}, evaluatorRaw, nil)

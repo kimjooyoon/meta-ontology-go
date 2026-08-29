@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -73,6 +74,38 @@ func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, bef
 		ImportIdentity:      true,
 		PackageConformance:  true,
 	}, nil
+}
+
+func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, extractorReport{}, err
+	}
+	var report extractorReport
+	if err := decodeStrictBytes(raw, &report); err != nil ||
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
+		len(report.Unhandled) != 0 {
+		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
+	}
+	return raw, report, nil
+}
+
+func failedExtractionError(root, reportName string, plan generation.Plan) *operationError {
+	path := filepath.Join(root, reportName)
+	_, report, err := decodeExtractorReport(path, plan.HeadSHA)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
+		}
+		return &operationError{"evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"}
+	}
+	if validationErr := validateBackupCleanup(report.BackupCleanup, report.NamespaceReplacements); validationErr != nil {
+		reason := extractValidationErrorReason(validationErr)
+		class := extractValidationErrorClass(validationErr)
+		next := extractValidationNextOperation(validationErr)
+		return &operationError{"evaluate-operation", "validate-function-extraction", reason, class, next}
+	}
+	return &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
 }
 
 func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packageName string, imports []string, header []byte, observed extractorSubject) (int, int, map[string]bool, error) {
@@ -141,11 +174,26 @@ func validateBackupCleanup(observation backupCleanupObservation, replacements []
 			expected++
 		}
 	}
-	if observation.Status == "" || observation.Status == "PENDING" || observation.Status == "UNKNOWN" {
-		return &extractValidationUnknown{reason: "BACKUP_CLEANUP_UNAVAILABLE"}
+	if observation.Attempted < 0 || observation.Removed < 0 || observation.Failures < 0 ||
+		observation.Attempted != expected || observation.Removed > observation.Attempted ||
+		observation.Failures > observation.Attempted ||
+		observation.Removed+observation.Failures > observation.Attempted {
+		return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 	}
-	if observation.Status != "PASS" || observation.Attempted != expected ||
-		observation.Removed != observation.Attempted || observation.Failures != 0 {
+	switch observation.Status {
+	case "PASS":
+		if observation.Removed != observation.Attempted || observation.Failures != 0 {
+			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
+		}
+	case "PENDING":
+		if observation.Removed != 0 || observation.Failures != 0 {
+			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
+		}
+	case "UNKNOWN":
+		if observation.Failures == 0 || observation.Removed+observation.Failures != observation.Attempted {
+			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
+		}
+	default:
 		return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 	}
 	return nil
@@ -238,4 +286,11 @@ func extractValidationErrorClass(err error) string {
 		return "DIRECT_MISSING"
 	}
 	return "KNOWN_CONTRADICTION"
+}
+
+func extractValidationNextOperation(err error) string {
+	if extractValidationErrorClass(err) == "DIRECT_MISSING" {
+		return "recover-backup-cleanup-evidence"
+	}
+	return "report-counterexample"
 }

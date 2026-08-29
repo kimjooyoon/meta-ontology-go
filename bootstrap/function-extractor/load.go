@@ -1,14 +1,15 @@
 package main
 
 import (
-	_ "embed"
 	"encoding/json"
-	"fmt"
 	"os"
+
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor/recipe"
 )
 
-//go:embed recipes.json
-var embeddedRecipes []byte
+type extractionRecipe = recipeauthority.ExtractionRecipe
+type textEdit = recipeauthority.TextEdit
+type fileCreation = recipeauthority.FileCreation
 
 func decodeJSONFile(name string, target any) error {
 	data, err := os.ReadFile(name)
@@ -73,12 +74,5 @@ func loadExtractionInputs(planName, densityName,
 }
 
 func loadRecipes() ([]extractionRecipe, error) {
-	var manifest recipeManifest
-	if err := json.Unmarshal(embeddedRecipes, &manifest); err != nil {
-		return nil, err
-	}
-	if manifest.Schema != "gooo.function-extraction-recipes.v1" {
-		return nil, fmt.Errorf("unsupported recipe manifest %q", manifest.Schema)
-	}
-	return manifest.Recipes, nil
+	return recipeauthority.Load()
 }
