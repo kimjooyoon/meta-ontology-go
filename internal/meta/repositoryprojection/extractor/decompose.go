@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
-	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -100,7 +99,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			"declaration=" + functionIdentity(fset, function),
 		})
 	}
-	evidence, err := checkTypes(fset, file)
+	evidence, err := checkTypes(root, logical, fset, file)
 	if err != nil {
 		return nil, err
 	}
@@ -121,20 +120,6 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		"declaration=" + functionIdentity(fset, function),
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
 	})
-}
-
-func checkTypes(fset *token.FileSet, file *ast.File) (typeEvidence, error) {
-	info := &types.Info{
-		Defs:   map[*ast.Ident]types.Object{},
-		Uses:   map[*ast.Ident]types.Object{},
-		Scopes: map[ast.Node]*types.Scope{},
-	}
-	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}
-	_, err := configuration.Check("gooo/oversized-function", fset, []*ast.File{file}, info)
-	if err != nil {
-		return typeEvidence{}, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
-	}
-	return typeEvidence{info: info}, nil
 }
 
 func functionNames(file *ast.File) map[string]bool {

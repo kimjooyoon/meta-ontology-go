@@ -129,7 +129,7 @@ func validObservationFailureDecision(failure ObservationFailure) bool {
 	}
 	switch failure.UnknownClass {
 	case ReceiptUnknownClassDirectMissing, ReceiptUnknownClassMalformedEvidence,
-		ReceiptUnknownClassUnexpectedEvidence, "DEPENDENCY_BLOCKED":
+		ReceiptUnknownClassUnexpectedEvidence, ReceiptUnknownClassDependencyBlocked:
 		return true
 	default:
 		return false

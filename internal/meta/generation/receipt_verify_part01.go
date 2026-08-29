@@ -37,6 +37,7 @@ func VerifyReceiptsWithFailures(plan Plan, receipts []OperationReceipt, failures
 		return finishReceiptReport(report)
 	}
 	actions, _ := selectedActionIndex(plan)
+	failureIndex := observationFailureIndex(report.Failures)
 	receiptIndex, valid := operationReceiptIndex(normalized)
 	if !valid {
 		report.UnknownIndicatorIDs = []string{"receipt-set"}
@@ -46,10 +47,20 @@ func VerifyReceiptsWithFailures(plan Plan, receipts []OperationReceipt, failures
 	for _, action := range sortedSelectedActions(plan.Selected) {
 		receipt, exists := receiptIndex[action.IndicatorID]
 		if !exists {
-			report.MissingIndicatorIDs = append(
-				report.MissingIndicatorIDs, actionObligationID(action.IndicatorID, "receipt"))
+			failure, blocked := failureIndex[action.IndicatorID]
+			if blocked {
+				report.UnknownIndicatorIDs = append(report.UnknownIndicatorIDs,
+					actionObligationID(action.IndicatorID, "dependency:"+failure.Reason))
+			} else {
+				report.MissingIndicatorIDs = append(report.MissingIndicatorIDs,
+					actionObligationID(action.IndicatorID, "receipt"))
+			}
 			for _, required := range action.RequiredIndicatorIDs {
-				report.Unknowns = append(report.Unknowns, missingReceiptUnknown(action, required))
+				if blocked {
+					report.Unknowns = append(report.Unknowns, dependencyReceiptUnknown(action, required, failure))
+				} else {
+					report.Unknowns = append(report.Unknowns, missingReceiptUnknown(action, required))
+				}
 			}
 			continue
 		}
@@ -79,6 +90,14 @@ func VerifyReceiptsWithFailures(plan Plan, receipts []OperationReceipt, failures
 		report.Reason = ReceiptReasonVerified
 	}
 	return finishReceiptReport(report)
+}
+
+func observationFailureIndex(failures []ObservationFailure) map[string]ObservationFailure {
+	result := make(map[string]ObservationFailure, len(failures))
+	for _, failure := range failures {
+		result[failure.ActionIndicatorID] = failure
+	}
+	return result
 }
 
 func receiptFailuresMatchPlan(plan Plan, failures []ObservationFailure) bool {

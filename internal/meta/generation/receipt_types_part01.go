@@ -26,6 +26,7 @@ const ReceiptReasonRefutedOperation ReceiptReason = "REFUTED_OPERATION_OBSERVATI
 const ReceiptUnknownClassDirectMissing = "DIRECT_MISSING"
 const ReceiptUnknownClassMalformedEvidence = "MALFORMED_EVIDENCE"
 const ReceiptUnknownClassUnexpectedEvidence = "UNEXPECTED_EVIDENCE"
+const ReceiptUnknownClassDependencyBlocked = "DEPENDENCY_BLOCKED"
 
 const ReceiptUnknownStage = "receipt-verification"
 const ReceiptUnknownStep = "verify-required-indicator"

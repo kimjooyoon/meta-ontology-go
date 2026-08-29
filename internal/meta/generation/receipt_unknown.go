@@ -16,6 +16,21 @@ func missingReceiptUnknown(action Action, required string) ReceiptUnknown {
 	}
 }
 
+func dependencyReceiptUnknown(action Action, required string, failure ObservationFailure) ReceiptUnknown {
+	blockedBy := append([]string{}, failure.BlockedBy...)
+	if len(blockedBy) == 0 {
+		blockedBy = []string{"operation-failure:" + failure.ActionIndicatorID}
+	}
+	return ReceiptUnknown{
+		ActionIndicatorID: action.IndicatorID, RequiredIndicatorID: required,
+		Operation: action.Operation, Activity: action.Activity, Output: action.Output,
+		Executor: action.Executor, Evaluator: action.Evaluator,
+		Stage: failure.Stage, Step: failure.Step,
+		Reason: ReceiptReason(failure.Reason), UnknownClass: ReceiptUnknownClassDependencyBlocked,
+		NextOperation: failure.NextOperation, BlockedBy: blockedBy,
+	}
+}
+
 func malformedReceiptUnknown(action Action, required, class string) ReceiptUnknown {
 	return ReceiptUnknown{
 		ActionIndicatorID: action.IndicatorID, RequiredIndicatorID: required,
@@ -56,20 +71,23 @@ func validReceiptUnknowns(unknowns []ReceiptUnknown) bool {
 		if unknown.ActionIndicatorID == "" || unknown.RequiredIndicatorID == "" ||
 			unknown.Operation == "" || unknown.Activity == "" || unknown.Output == "" ||
 			unknown.Executor == "" || unknown.Evaluator == "" ||
-			unknown.Stage != ReceiptUnknownStage || unknown.Step != ReceiptUnknownStep ||
 			unknown.NextOperation == "" || !validActionIndicatorID(unknown.ActionIndicatorID) ||
 			unknown.BlockedBy == nil ||
 			(index > 0 && receiptUnknownKey(unknowns[index-1]) >= receiptUnknownKey(unknown)) {
 			return false
 		}
-		switch unknown.Reason {
-		case ReceiptReasonMissingIndicator, ReceiptReasonUnknownIndicator:
-		default:
-			return false
-		}
 		switch unknown.UnknownClass {
 		case ReceiptUnknownClassDirectMissing, ReceiptUnknownClassMalformedEvidence,
 			ReceiptUnknownClassUnexpectedEvidence:
+			if unknown.Stage != ReceiptUnknownStage || unknown.Step != ReceiptUnknownStep ||
+				(unknown.Reason != ReceiptReasonMissingIndicator && unknown.Reason != ReceiptReasonUnknownIndicator) {
+				return false
+			}
+		case ReceiptUnknownClassDependencyBlocked:
+			if unknown.Stage == "" || unknown.Step == "" || unknown.Reason == "" ||
+				len(unknown.BlockedBy) == 0 {
+				return false
+			}
 		default:
 			return false
 		}
