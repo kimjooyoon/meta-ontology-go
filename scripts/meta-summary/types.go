@@ -53,9 +53,9 @@ type sourceReadmeObservation struct {
 }
 
 type selectedSubject struct {
-	Operation string `json:"operation"`
-	MetricID  string `json:"metric_id"`
-	Subject   string `json:"subject"`
+	MetaOperation string `json:"meta_operation"`
+	MetricID      string `json:"metric_id"`
+	Subject       string `json:"subject"`
 }
 
 type sourceInventory struct {

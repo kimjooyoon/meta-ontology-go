@@ -23,7 +23,7 @@ func renderSummary(report summaryReport) []byte {
 	fmt.Fprintf(&output, "- over-threshold candidates: Go=`%d`, Gooo=`%d`, function=`%d`, total=`%d`\n", sourceCandidateCount(report.SourceMetrics.Candidates, "gooo.metric.source.go-file-lines.v1"), sourceCandidateCount(report.SourceMetrics.Candidates, "gooo.metric.source.gooo-file-lines.v1"), sourceCandidateCount(report.SourceMetrics.Candidates, "gooo.metric.source.function-lines.v1"), len(report.SourceMetrics.Candidates))
 	fmt.Fprintf(&output, "- selected operations: `%d`\n", report.SourceMetrics.SelectedOperations)
 	for _, selected := range report.SourceMetrics.SelectedSubjects {
-		fmt.Fprintf(&output, "  - `%s`: `%s`\n", selected.Operation, selected.Subject)
+		fmt.Fprintf(&output, "  - `%s`: `%s`\n", selected.MetaOperation, selected.Subject)
 	}
 	fmt.Fprintf(&output, "\n")
 	fmt.Fprintf(&output, "### Munchhausen indicator routes\n\n")

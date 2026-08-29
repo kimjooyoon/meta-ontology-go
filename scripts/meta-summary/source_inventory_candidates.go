@@ -40,8 +40,14 @@ func decodeSelectedSubjects(data []byte) ([]selectedSubject, error) {
 	if err := json.Unmarshal(data, &plan); err != nil {
 		return nil, fmt.Errorf("decode self-improvement plan: %w", err)
 	}
+	if plan.SchemaVersion != "gooo/self-improvement-generation/v6" {
+		return nil, fmt.Errorf("self-improvement plan schema is not v6")
+	}
+	if plan.SelectedCount != len(plan.Selected) {
+		return nil, fmt.Errorf("self-improvement selected count is inconsistent")
+	}
 	for index := range plan.Selected {
-		if plan.Selected[index].Operation == "" || plan.Selected[index].Subject == "" {
+		if plan.Selected[index].MetaOperation == "" || plan.Selected[index].MetricID == "" || plan.Selected[index].Subject == "" {
 			return nil, fmt.Errorf("selected plan subject %d is incomplete", index)
 		}
 	}

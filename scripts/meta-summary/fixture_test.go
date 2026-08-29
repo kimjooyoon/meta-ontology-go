@@ -80,10 +80,14 @@ func sourceMetricsFixture(t *testing.T) []byte {
 
 func sourcePlanFixture(t *testing.T) []byte {
 	t.Helper()
-	document := map[string]any{"selected": []map[string]any{
-		{"operation": "split-go-declarations", "metric_id": string(sourcepolicy.DimensionGoFileLines), "subject": "fixture.go"},
-		{"operation": "extract-function", "metric_id": string(sourcepolicy.DimensionFunctionLines), "subject": "fixture.go:1:Fixture"},
-	}}
+	document := map[string]any{
+		"schema_version": "gooo/self-improvement-generation/v6",
+		"selected_count": 2,
+		"selected": []map[string]any{
+			{"meta_operation": "split-go-declarations", "metric_id": string(sourcepolicy.DimensionGoFileLines), "subject": "fixture.go"},
+			{"meta_operation": "extract-function", "metric_id": string(sourcepolicy.DimensionFunctionLines), "subject": "fixture.go:1:Fixture"},
+		},
+	}
 	data, err := json.Marshal(document)
 	if err != nil {
 		t.Fatal(err)
