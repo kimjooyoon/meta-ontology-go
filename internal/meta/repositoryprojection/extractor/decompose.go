@@ -99,7 +99,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			"declaration=" + functionIdentity(fset, function),
 		})
 	}
-	evidence, err := checkTypes(root, logical, fset, file)
+	evidence, err := checkTypes(root, logical, fset, file, function)
 	if err != nil {
 		return nil, err
 	}

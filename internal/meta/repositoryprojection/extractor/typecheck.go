@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func checkTypes(root, logical string, fset *token.FileSet, file *ast.File) (typeEvidence, error) {
+func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, function *ast.FuncDecl) (typeEvidence, error) {
 	files, err := packageTypeFiles(root, logical, fset, file)
 	if err != nil {
 		return typeEvidence{}, err
@@ -21,13 +21,41 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File) (type
 		Defs:   map[*ast.Ident]types.Object{},
 		Uses:   map[*ast.Ident]types.Object{},
 		Scopes: map[ast.Node]*types.Scope{},
+		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	configuration := types.Config{Importer: importer.Default(), Error: func(error) {}}
 	_, err = configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, info)
-	if err != nil {
+	if err != nil && !sufficientFunctionTypeEvidence(function, info) {
 		return typeEvidence{}, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
 	}
 	return typeEvidence{info: info}, nil
+}
+
+func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bool {
+	packageSelectors := make(map[*ast.Ident]bool)
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		selector, ok := node.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		identifier, ok := selector.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		_, packageSelectors[selector.Sel] = info.Uses[identifier].(*types.PkgName)
+		return true
+	})
+	sufficient := true
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		identifier, ok := node.(*ast.Ident)
+		if !ok || identifier.Name == "_" || packageSelectors[identifier] ||
+			info.Defs[identifier] != nil || info.Uses[identifier] != nil {
+			return true
+		}
+		sufficient = false
+		return false
+	})
+	return sufficient
 }
 
 func packageTypeFiles(root, logical string, fset *token.FileSet, target *ast.File) ([]*ast.File, error) {
@@ -58,11 +86,11 @@ func packageTypeFiles(root, logical string, fset *token.FileSet, target *ast.Fil
 	return files, nil
 }
 
-func isPackageTypeFile(name string, testPackage bool) bool {
+func isPackageTypeFile(name string, includeTests bool) bool {
 	if !strings.HasSuffix(name, ".go") {
 		return false
 	}
-	return strings.HasSuffix(name, "_test.go") == testPackage
+	return includeTests || !strings.HasSuffix(name, "_test.go")
 }
 
 func buildFileMatches(directory, name string) bool {
