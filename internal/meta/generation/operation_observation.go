@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -215,10 +216,37 @@ func actionsExist(actions map[string]Action, identifier string) bool {
 }
 
 func validProcessObservation(observation ProcessObservation) bool {
-	return len(observation.Command) != 0 && observation.StdoutBytes >= 0 &&
+	return validCanonicalCommand(observation.Command) && observation.StdoutBytes >= 0 &&
 		observation.StderrBytes >= 0 && validEvidenceDigest(observation.RawStdoutDigest) &&
 		validEvidenceDigest(observation.StdoutDigest) && validEvidenceDigest(observation.RawStderrDigest) &&
 		validEvidenceDigest(observation.StderrDigest)
+}
+
+func validCanonicalCommand(command []string) bool {
+	if len(command) == 0 {
+		return false
+	}
+	for _, argument := range command {
+		if argument == "" || absoluteCommandArgument(argument) {
+			return false
+		}
+	}
+	return true
+}
+
+func absoluteCommandArgument(argument string) bool {
+	if filepath.IsAbs(argument) || strings.HasPrefix(argument, "//") || strings.HasPrefix(argument, `\\`) {
+		return true
+	}
+	if len(argument) >= 3 && argument[1] == ':' &&
+		((argument[0] >= 'a' && argument[0] <= 'z') || (argument[0] >= 'A' && argument[0] <= 'Z')) &&
+		(argument[2] == '/' || argument[2] == '\\') {
+		return true
+	}
+	if separator := strings.IndexByte(argument, '='); separator >= 0 {
+		return absoluteCommandArgument(argument[separator+1:])
+	}
+	return false
 }
 
 func validObservationFailureEvidence(evidence []ObservationFailureEvidence) bool {

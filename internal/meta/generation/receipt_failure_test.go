@@ -8,7 +8,7 @@ import (
 func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) {
 	plan := actionableReceiptPlan()
 	process := ProcessObservation{
-		Command: []string{"<not-executed>", "extract-function"}, ExitCode: -1,
+		Command: []string{"<workspace>", "not-executed", "extract-function"}, ExitCode: -1,
 		RawStdoutDigest: "sha256:" + strings.Repeat("0", 64),
 		StdoutDigest:    "sha256:" + strings.Repeat("0", 64),
 		RawStderrDigest: "sha256:" + strings.Repeat("0", 64),
@@ -49,7 +49,7 @@ func TestVerifyReceiptsPreservesRefutedPrecedenceAndUnknownFields(t *testing.T) 
 
 func TestVerifyReceiptsRejectsUnknownFailureWithoutSixFields(t *testing.T) {
 	plan := sourcepolicyPlanForFailureTest()
-	process := ProcessObservation{Command: []string{"<not-executed>"}, ExitCode: -1,
+	process := ProcessObservation{Command: []string{"<workspace>", "not-executed"}, ExitCode: -1,
 		RawStdoutDigest: "sha256:" + strings.Repeat("0", 64), StdoutDigest: "sha256:" + strings.Repeat("0", 64),
 		RawStderrDigest: "sha256:" + strings.Repeat("0", 64), StderrDigest: "sha256:" + strings.Repeat("0", 64)}
 	failure := ObservationFailure{ActionIndicatorID: plan.Selected[0].IndicatorID, Decision: "UNKNOWN",

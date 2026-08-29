@@ -242,7 +242,7 @@ func (err *operationError) evidenceCounterexamples() []string {
 
 func observationFailure(action generation.Action, stage, step, reason, class, next string, blockedBy []string, process generation.ProcessObservation) generation.ObservationFailure {
 	if len(process.Command) == 0 {
-		process = descriptorObservation([]string{"<not-executed>", string(action.Operation)}, nil, nil, -1)
+		process = descriptorObservation([]string{"<workspace>", "not-executed", string(action.Operation)}, nil, nil, -1)
 	}
 	decision := "UNKNOWN"
 	unknownClass := class
