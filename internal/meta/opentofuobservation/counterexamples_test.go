@@ -4,7 +4,7 @@ import "testing"
 
 func TestFixedCounterexamplesHaveTypedUnknowns(t *testing.T) {
 	items := FixedCounterexamples()
-	if len(items) != 9 {
+	if len(items) != 14 {
 		t.Fatalf("counterexamples=%d", len(items))
 	}
 	for _, item := range items {

@@ -52,6 +52,8 @@ type ExecutionRun struct {
 }
 
 type ReuseAccounting struct {
+	RequestMode           string   `json:"request_mode"`
+	Requests              int      `json:"requests"`
 	Discovered            int    `json:"discovered"`
 	Executed              int    `json:"executed"`
 	Reused                int    `json:"reused"`
@@ -69,6 +71,25 @@ type ReuseAccounting struct {
 	DependencyGraphDigest string `json:"dependency_graph_digest"`
 	ExpectedResultDigest  string `json:"expected_result_digest"`
 	PriorReceiptDigest    string `json:"prior_receipt_digest"`
+	PriorReceiptFileDigest string   `json:"prior_receipt_file_digest"`
+	PriorArtifactManifestDigest string `json:"prior_artifact_manifest_digest"`
+	BaselinePhysicalCommandExecutions int `json:"baseline_physical_command_executions"`
+	BaselinePhysicalTestExecutions    int `json:"baseline_physical_test_executions"`
+	ReusePhysicalCommandExecutions    int `json:"reuse_physical_command_executions"`
+	ReusePhysicalTestExecutions       int `json:"reuse_physical_test_executions"`
+	PriorReceiptsValid                int `json:"prior_receipts_valid"`
+	ReusedArtifactFiles               []string `json:"reused_artifact_files"`
+	DecisionWallMS                    int      `json:"decision_wall_ms"`
+	DecisionPeakRSSKiB                int      `json:"decision_peak_rss_kib"`
+	RequiresExecution                 bool     `json:"requires_execution"`
+}
+
+type PriorReceipt struct {
+	Report                 Report            `json:"report"`
+	ReceiptFileDigest      string            `json:"receipt_file_digest"`
+	ArtifactFiles          []string          `json:"artifact_files"`
+	ArtifactDigests        map[string]string `json:"artifact_digests"`
+	ArtifactManifestDigest string            `json:"artifact_manifest_digest"`
 }
 
 type RuntimeSummary struct {
@@ -186,4 +207,5 @@ type Observation struct {
 	ReleaseBinaryBuilds      int                `json:"release_binary_builds"`
 	ReleaseBinaryBuildReason string             `json:"release_binary_build_reason"`
 	HumanReportReady         bool               `json:"human_report_ready"`
+	PriorReceipt             *PriorReceipt     `json:"prior_receipt,omitempty"`
 }

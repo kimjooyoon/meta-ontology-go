@@ -65,5 +65,6 @@ type Report struct {
 	GraphValidation          *GraphValidationDiagnostic `json:"graph_validation,omitempty"`
 	HumanReportReady         bool                       `json:"human_report_ready"`
 	PromotionAuthorized      bool                       `json:"promotion_authorized"`
+	PriorReceipt             *PriorReceipt             `json:"prior_receipt,omitempty"`
 	ReportDigest             string                     `json:"report_digest"`
 }

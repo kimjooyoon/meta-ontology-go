@@ -1,6 +1,9 @@
 package opentofuobservation
 
-import "sort"
+import (
+	"sort"
+	"strings"
+)
 
 type ValidationError struct {
 	Decision        string
@@ -152,15 +155,149 @@ func validateReuse(observation Observation) error {
 	if reuse.Discovered != reuse.Executed+reuse.Reused+reuse.Skipped || reuse.PriorCandidates != reuse.Reused+reuse.Invalidated {
 		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
 	}
-	if reuse.Decision != "NOT_REUSED_FIRST_RUN" || reuse.Reason != "NO_PRIOR_RECEIPT" || reuse.Reused != 0 || reuse.PriorReceiptDigest != "" {
-		return refuted("REUSE_FIRST_RUN_CLAIM_INVALID")
-	}
-	for _, digest := range []string{reuse.SourceDigest, reuse.FixtureDigest, reuse.ArgumentDigest, reuse.EnvironmentDigest, reuse.ReleaseDigest, reuse.ToolchainDigest, reuse.DependencyGraphDigest, reuse.ExpectedResultDigest} {
+	for _, digest := range reuseDigests(reuse) {
 		if !validDigest(digest) {
 			return unavailable("REUSE_ELIGIBILITY_EVIDENCE_MISSING")
 		}
 	}
+	switch reuse.RequestMode {
+	case "BASELINE":
+		return validateBaselineReuse(reuse, observation.PriorReceipt)
+	case "REUSE":
+		return validateReuseRequest(reuse, observation)
+	default:
+		return malformed("REUSE_REQUEST_MODE_MALFORMED")
+	}
+}
+
+func reuseDigests(reuse ReuseAccounting) []string {
+	return []string{reuse.SourceDigest, reuse.FixtureDigest, reuse.ArgumentDigest, reuse.EnvironmentDigest,
+		reuse.ReleaseDigest, reuse.ToolchainDigest, reuse.DependencyGraphDigest, reuse.ExpectedResultDigest}
+}
+
+func validateBaselineReuse(reuse ReuseAccounting, prior *PriorReceipt) error {
+	if prior != nil || reuse.Requests != 1 || reuse.Discovered != 1 || reuse.Executed != 1 || reuse.Reused != 0 || reuse.Skipped != 0 || reuse.PriorCandidates != 0 || reuse.Invalidated != 0 || reuse.Decision != "EXECUTE" || reuse.Reason != "NO_PRIOR_RECEIPT" || !reuse.RequiresExecution || reuse.PriorReceiptsValid != 0 || len(reuse.ReusedArtifactFiles) != 0 || reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" {
+		return refuted("REUSE_FIRST_RUN_CLAIM_INVALID")
+	}
+	if reuse.BaselinePhysicalCommandExecutions <= 0 || reuse.BaselinePhysicalTestExecutions <= 0 || reuse.ReusePhysicalCommandExecutions != 0 || reuse.ReusePhysicalTestExecutions != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 {
+		return malformed("REUSE_BASELINE_ACCOUNTING_MALFORMED")
+	}
 	return nil
+}
+
+func validateReuseRequest(reuse ReuseAccounting, observation Observation) error {
+	if reuse.Invalidated == 1 {
+		return validateInvalidatedReuse(reuse, observation)
+	}
+	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 1 || reuse.Reused != 1 || reuse.Skipped != 0 || reuse.PriorCandidates != 1 || reuse.Invalidated != 0 || reuse.Decision != "REUSED" || reuse.Reason != "EXACT_PRIOR_RECEIPT" || reuse.RequiresExecution || reuse.PriorReceiptsValid != 1 || reuse.BaselinePhysicalCommandExecutions != 9 || reuse.BaselinePhysicalTestExecutions != 2 || reuse.ReusePhysicalCommandExecutions != 0 || reuse.ReusePhysicalTestExecutions != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 {
+		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
+	}
+	if observation.PriorReceipt == nil {
+		if reuse.Decision == "REUSED" || reuse.PriorReceiptDigest != "" || reuse.PriorReceiptFileDigest != "" || reuse.PriorArtifactManifestDigest != "" || len(reuse.ReusedArtifactFiles) > 0 {
+			return refuted("CACHE_MARKER_WITHOUT_EXACT_DIGESTS")
+		}
+		return unavailable("PRIOR_RECEIPT_MISSING")
+	}
+	if err := validatePriorReceipt(observation.SubjectSHA, observation.ContractID, observation.PriorReceipt); err != nil {
+		return err
+	}
+	prior := observation.PriorReceipt
+	if reuse.PriorReceiptDigest != prior.Report.ReportDigest || reuse.PriorReceiptFileDigest != prior.ReceiptFileDigest || reuse.PriorArtifactManifestDigest != prior.ArtifactManifestDigest || !sameStrings(reuse.ReusedArtifactFiles, prior.ArtifactFiles) {
+		return refuted("REUSE_INPUT_DIGEST_MISMATCH")
+	}
+	if !sameReuseDigests(reuse, prior.Report.Reuse) {
+		return refuted("REUSE_INPUT_DIGEST_MISMATCH")
+	}
+	return nil
+}
+
+func validateInvalidatedReuse(reuse ReuseAccounting, observation Observation) error {
+	if reuse.Requests != 2 || reuse.Discovered != 2 || reuse.Executed != 0 || reuse.Reused != 0 || reuse.Skipped != 1 || reuse.PriorCandidates != 1 || reuse.Invalidated != 1 || reuse.Decision != "REQUIRES_EXECUTION" || reuse.Reason != "REUSE_INPUT_DIGEST_MISMATCH" || !reuse.RequiresExecution || reuse.PriorReceiptsValid != 0 || reuse.BaselinePhysicalCommandExecutions != 9 || reuse.BaselinePhysicalTestExecutions != 2 || reuse.ReusePhysicalCommandExecutions != 0 || reuse.ReusePhysicalTestExecutions != 0 || reuse.DecisionWallMS <= 0 || reuse.DecisionPeakRSSKiB <= 0 || observation.PriorReceipt == nil {
+		return refuted("REUSE_ACCOUNTING_CONTRADICTION")
+	}
+	if err := validatePriorReceipt(observation.SubjectSHA, observation.ContractID, observation.PriorReceipt); err != nil {
+		return err
+	}
+	if sameReuseDigests(reuse, observation.PriorReceipt.Report.Reuse) {
+		return refuted("REUSE_ELIGIBILITY_DIGEST_MISMATCH")
+	}
+	return refuted("REUSE_INPUT_DIGEST_MISMATCH")
+}
+
+func validatePriorReceipt(subject, contract string, prior *PriorReceipt) error {
+	if prior.Report.Decision == DecisionRefuted || prior.Report.Decision == DecisionFailClosed {
+		return refuted("PRIOR_RECEIPT_NOT_REUSABLE")
+	}
+	if prior.Report.Decision != DecisionPass || prior.Report.Resolution != ResolutionExact {
+		return malformed("PRIOR_RECEIPT_TOP_DECISION_INVALID")
+	}
+	if err := ValidateReport(prior.Report, subject, contract); err != nil {
+		return malformed("PRIOR_RECEIPT_MALFORMED")
+	}
+	if prior.Report.Summary.ClosedCells != len(fixedCells) || prior.Report.Summary.ReplayMatches != 1 || prior.Report.Release.AssetSHA256 != ExpectedAssetSHA || prior.Report.Release.ChecksumsSHA256 != ExpectedSumsSHA || prior.Report.RepositoryWrites != 0 || !allTestsPassed(prior.Report.Executions) {
+		return refuted("PRIOR_RECEIPT_RESULT_NOT_REUSABLE")
+	}
+	if !validDigest(prior.ReceiptFileDigest) || !validArtifactManifest(prior.ArtifactFiles, prior.ArtifactDigests, prior.ArtifactManifestDigest) {
+		return malformed("PRIOR_RECEIPT_ARTIFACT_MANIFEST_MALFORMED")
+	}
+	if prior.Report.Reuse.RequestMode != "BASELINE" || prior.Report.Reuse.Decision != "EXECUTE" {
+		return refuted("PRIOR_RECEIPT_RESULT_NOT_REUSABLE")
+	}
+	return nil
+}
+
+func allTestsPassed(runs []ExecutionRun) bool {
+	for _, run := range runs {
+		if !run.TestEventsValid || run.TestSummaryPassed != 1 || run.TestSummaryFailed != 0 || run.TestSummaryErrored != 0 || run.TestSummarySkipped != 0 {
+			return false
+		}
+	}
+	return len(runs) == 2
+}
+
+func validArtifactManifest(files []string, digests map[string]string, manifest string) bool {
+	if len(files) != 13 || len(digests) != len(files) || !sort.StringsAreSorted(files) || !validDigest(manifest) {
+		return false
+	}
+	for index, file := range files {
+		if file == "" || strings.HasPrefix(file, "/") || strings.Contains(file, "..") || (index > 0 && files[index-1] == file) || !validDigest(digests[file]) {
+			return false
+		}
+	}
+	return artifactManifestDigest(files, digests) == manifest
+}
+
+func artifactManifestDigest(files []string, digests map[string]string) string {
+	var builder strings.Builder
+	for _, file := range files {
+		builder.WriteString(file)
+		builder.WriteByte('\t')
+		builder.WriteString(digests[file])
+		builder.WriteByte('\n')
+	}
+	return DigestBytes([]byte(builder.String()))
+}
+
+func sameStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
+}
+
+func sameReuseDigests(left, right ReuseAccounting) bool {
+	leftDigests, rightDigests := reuseDigests(left), reuseDigests(right)
+	for index := range leftDigests {
+		if leftDigests[index] != rightDigests[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func validateGraph(graph GraphObservation) error {

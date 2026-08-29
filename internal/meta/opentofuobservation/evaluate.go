@@ -45,7 +45,7 @@ func baseReport(contract Contract, observation Observation) Report {
 		LocalTestExecutions: observation.LocalTestExecutions, ReleaseBinaryBuilds: observation.ReleaseBinaryBuilds,
 		ReleaseBinaryBuildReason: observation.ReleaseBinaryBuildReason, ObserverGoVersion: observation.ObserverGoVersion,
 		ObserverGOVERSION: observation.ObserverGOVERSION, ObserverToolchainDigest: observation.ObserverToolchainDigest,
-		HumanReportReady: observation.HumanReportReady, PromotionAuthorized: false}
+		HumanReportReady: observation.HumanReportReady, PromotionAuthorized: false, PriorReceipt: observation.PriorReceipt}
 }
 
 func copyEvidenceDigests(source map[string]string) map[string]string {
@@ -60,6 +60,7 @@ func failUnknown(report Report, stage, step, reason, class, next string, blocked
 	}
 	report.Decision, report.Resolution, report.Reason = DecisionUnknown, ResolutionLower, reason
 	report.Unknowns = []Unknown{{Stage: stage, Step: step, Reason: cause.Error(), UnknownClass: class, NextOperation: next, BlockedBy: blocked}}
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err
@@ -70,6 +71,7 @@ func failUnknown(report Report, stage, step, reason, class, next string, blocked
 
 func failRefuted(report Report, reason string) (Report, error) {
 	report.Decision, report.Resolution, report.Reason = DecisionRefuted, ResolutionExact, reason
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err
@@ -81,6 +83,7 @@ func failRefuted(report Report, reason string) (Report, error) {
 func failClosed(report Report, reason string) (Report, error) {
 	report.Decision, report.Resolution, report.Reason = DecisionFailClosed, ResolutionLower, reason
 	report.Unknowns = []Unknown{{Stage: "OBSERVATION", Step: "VALIDATE_INPUT", Reason: reason, UnknownClass: "MALFORMED_EVIDENCE", NextOperation: "RECAPTURE_OPENTOFU_OBSERVATION", BlockedBy: []string{}}}
+	report.Counterexamples = FixedCounterexamples()
 	sealed, err := sealedReportDigest(report)
 	if err != nil {
 		return Report{}, err
