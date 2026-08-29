@@ -67,6 +67,28 @@ go run ./bootstrap/line-density-rewriter \
   --output "$projection_work/density-report.json"
 
 EXTRACTION_PARTIAL=0
+refuted_failures="$projection_work/refuted-failures.json"
+partial_subjects="$projection_work/partial-subjects.json"
+printf '{}\n' > "$projection_work/projected-compile.json"
+printf '[]\n' > "$refuted_failures"
+printf '[]\n' > "$partial_subjects"
+
+record_extraction_report() {
+  local report="$1"
+  if [[ ! -s "$report" ]]; then
+    return
+  fi
+  jq '[.failures[]? | select(.decision == "REFUTED")]' "$report" > "$projection_work/refuted-current.json"
+  jq -s 'add | unique_by(tojson) | sort_by(tojson)' \
+    "$refuted_failures" "$projection_work/refuted-current.json" \
+    > "$projection_work/refuted-merged.json"
+  mv "$projection_work/refuted-merged.json" "$refuted_failures"
+  jq '(.subjects // [])' "$report" > "$projection_work/subjects-current.json"
+  jq -s 'add | unique_by(tojson) | sort_by([(.logical // ""), tojson])' \
+    "$partial_subjects" "$projection_work/subjects-current.json" \
+    > "$projection_work/subjects-merged.json"
+  mv "$projection_work/subjects-merged.json" "$partial_subjects"
+}
 
 write_extraction_result() {
   local report="$1"
@@ -74,11 +96,25 @@ write_extraction_result() {
   local fallback_reason="$3"
   local projected_metrics="$4"
   if [[ -s "$report" ]]; then
-    jq --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
+    jq --slurpfile historical_refuted "$refuted_failures" \
+      --slurpfile historical_subjects "$partial_subjects" \
+      --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
       --slurpfile projected_metrics "$projected_metrics" \
+      --slurpfile compile_observation "$projection_work/projected-compile.json" \
       --arg source_sha "$head_sha" --arg reason "$fallback_reason" '
-      ([.failures[]? | select(.decision == "REFUTED")]) as $refuted |
+      def stable_unique: unique_by(tojson) | sort_by(tojson);
+      def metric_blockers($report; $metric):
+        [$report.meta.indicators[]? |
+          select(.metric_id == $metric and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length;
+      (($historical_refuted[0] // []) + [.failures[]? | select(.decision == "REFUTED")] | stable_unique) as $refuted |
       ($refuted | length) as $refuted_count |
+      (($historical_refuted[0] // []) + (.failures // []) | stable_unique) as $counterexamples |
+      (($historical_subjects[0] // []) + (.subjects // []) |
+        unique_by(tojson) | sort_by([(.logical // ""), tojson])) as $subjects |
+      (metric_blockers($raw_metrics[0]; "gooo.metric.source.go-file-lines.v1")) as $raw_go_file_line_blockers |
+      (metric_blockers($raw_metrics[0]; "gooo.metric.source.function-lines.v1")) as $raw_function_line_blockers |
+      (metric_blockers($projected_metrics[0]; "gooo.metric.source.go-file-lines.v1")) as $projected_go_file_line_blockers |
+      (metric_blockers($projected_metrics[0]; "gooo.metric.source.function-lines.v1")) as $projected_function_line_blockers |
       {
         schema: "gooo.semantic-conformance-extraction-result/v1",
         source_sha: $source_sha,
@@ -88,24 +124,30 @@ write_extraction_result() {
         reason: (if $refuted_count > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
         unknown_class: (if $refuted_count > 0 then "KNOWN_CONTRADICTION" else "DIRECT_MISSING" end),
         next_operation: "restore-decomposition-evidence",
-        blocked_by: ([.failures[]?.blocked_by[]?] | unique | sort),
-        blocker_ids: [
-          .failures[]? | select(.decision == "REFUTED") |
+        blocked_by: ([$counterexamples[]?.blocked_by[]?] | unique | sort),
+        blocker_ids: ([
+          $refuted[] |
           .logical as $logical |
-          ((.diagnostics // []) | map(select(startswith("declaration="))) | .[0] // "declaration=unknown") as $declaration |
-          ($declaration | sub("^declaration="; "")) as $identity |
-          ($logical + "#" + $identity)
-        ] | unique | sort,
-        counterexamples: (.failures // []),
-        partial_subjects: (.subjects // []),
+          (.blocker_id // "") as $blocker_id |
+          if $blocker_id != "" then $blocker_id else
+            ((.diagnostics // []) | map(select(startswith("declaration="))) | .[0] // "declaration=unknown") as $declaration |
+            ($declaration | sub("^declaration="; "")) as $identity |
+            ($logical + "#" + $identity)
+          end
+        ] | unique | sort),
+        counterexamples: $counterexamples,
+        partial_subjects: $subjects,
         partial_writes: {
-          changed: ([.subjects[]?.changed_files[]?] | unique | sort),
-          created: ([.subjects[]?.created_files[]?] | unique | sort)
+          changed: ([$subjects[]?.changed_files[]?] | unique | sort),
+          created: ([$subjects[]?.created_files[]?] | unique | sort)
         },
         raw_projected_progress: {
-          raw_blocking: ([$raw_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length),
-          projected_blocking: ([$projected_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length)
+          raw_go_file_line_blockers: $raw_go_file_line_blockers,
+          projected_go_file_line_blockers: $projected_go_file_line_blockers,
+          raw_function_line_blockers: $raw_function_line_blockers,
+          projected_function_line_blockers: $projected_function_line_blockers
         },
+        projected_compile: (if (($compile_observation[0].schema // "") != "") then $compile_observation[0] else null end),
         extraction: {
           observed: ([.indicators[]? | select(.id == "extraction.observed") | .value] | first // 0),
           applied: ([.indicators[]? | select(.id == "extraction.applied") | .value] | first // 0),
@@ -115,17 +157,67 @@ write_extraction_result() {
       }' "$report" > "$output"
     return
   fi
-  jq -n --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
+  jq -n --slurpfile historical_refuted "$refuted_failures" \
+    --slurpfile historical_subjects "$partial_subjects" \
+    --slurpfile raw_metrics "$projection_work/split-source-metrics-raw.json" \
     --slurpfile projected_metrics "$projected_metrics" \
+    --slurpfile compile_observation "$projection_work/projected-compile.json" \
     --arg source_sha "$head_sha" --arg reason "$fallback_reason" \
-    '{schema:"gooo.semantic-conformance-extraction-result/v1", source_sha:$source_sha,
-      decision:"UNKNOWN", stage:"semantic-conformance", step:"extractor-observe",
-      reason:$reason, unknown_class:"DIRECT_MISSING",
-      next_operation:"restore-decomposition-evidence", blocked_by:[], blocker_ids:[],
-      counterexamples:[], partial_subjects:[], partial_writes:{changed:[], created:[]},
-      raw_projected_progress:{raw_blocking:([$raw_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length),
-        projected_blocking:([$projected_metrics[0].meta.indicators[]? | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length)},
+    'def metric_blockers($report; $metric):
+       [$report.meta.indicators[]? |
+         select(.metric_id == $metric and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length;
+     ([$historical_refuted[0][]?] | unique_by(tojson) | sort_by(tojson)) as $refuted |
+     ([$historical_subjects[0][]?] | unique_by(tojson) | sort_by([(.logical // ""), tojson])) as $subjects |
+     (metric_blockers($raw_metrics[0]; "gooo.metric.source.go-file-lines.v1")) as $raw_go_file_line_blockers |
+     (metric_blockers($raw_metrics[0]; "gooo.metric.source.function-lines.v1")) as $raw_function_line_blockers |
+     (metric_blockers($projected_metrics[0]; "gooo.metric.source.go-file-lines.v1")) as $projected_go_file_line_blockers |
+     (metric_blockers($projected_metrics[0]; "gooo.metric.source.function-lines.v1")) as $projected_function_line_blockers |
+     {schema:"gooo.semantic-conformance-extraction-result/v1", source_sha:$source_sha,
+      decision:(if ($refuted | length) > 0 then "REFUTED" else "UNKNOWN" end),
+      stage:"semantic-conformance", step:"extractor-observe",
+      reason:(if ($refuted | length) > 0 then "KNOWN_CONTRADICTION_PERSISTED" else $reason end),
+      unknown_class:(if ($refuted | length) > 0 then "KNOWN_CONTRADICTION" else "DIRECT_MISSING" end),
+      next_operation:"restore-decomposition-evidence",
+      blocked_by:([$refuted[]?.blocked_by[]?] | unique | sort),
+      blocker_ids:([$refuted[]?.blocker_id // empty] | unique | sort),
+      counterexamples:$refuted, partial_subjects:$subjects,
+      partial_writes:{changed:([$subjects[]?.changed_files[]?] | unique | sort),
+        created:([$subjects[]?.created_files[]?] | unique | sort)},
+      raw_projected_progress:{raw_go_file_line_blockers:$raw_go_file_line_blockers,
+        projected_go_file_line_blockers:$projected_go_file_line_blockers,
+        raw_function_line_blockers:$raw_function_line_blockers,
+        projected_function_line_blockers:$projected_function_line_blockers},
+      projected_compile:(if (($compile_observation[0].schema // "") != "") then $compile_observation[0] else null end),
       extraction:{observed:0, applied:0, created:0, unhandled:null}}' > "$output"
+}
+
+run_projected_compile() {
+  local stdout="$projection_work/projected-compile.stdout"
+  local stderr="$projection_work/projected-compile.stderr"
+  set +e
+  go test ./... > "$stdout" 2> "$stderr"
+  local status=$?
+  set -e
+  local stdout_bytes
+  local stderr_bytes
+  local stdout_digest
+  local stderr_digest
+  stdout_bytes="$(wc -c < "$stdout" | tr -d ' ')"
+  stderr_bytes="$(wc -c < "$stderr" | tr -d ' ')"
+  stdout_digest="sha256:$(sha256sum "$stdout" | cut -d' ' -f1)"
+  stderr_digest="sha256:$(sha256sum "$stderr" | cut -d' ' -f1)"
+  jq -n \
+    --arg cwd "$repo_root" \
+    --arg stdout_digest "$stdout_digest" \
+    --arg stderr_digest "$stderr_digest" \
+    --argjson exit_code "$status" \
+    --argjson stdout_bytes "$stdout_bytes" \
+    --argjson stderr_bytes "$stderr_bytes" \
+    '{schema:"gooo.projected-compile-observation/v1", command:["go","test","./..."], cwd:$cwd,
+      exit_code:$exit_code, stdout_bytes:$stdout_bytes, stdout_digest:$stdout_digest,
+      stderr_bytes:$stderr_bytes, stderr_digest:$stderr_digest, observed:($exit_code == 0)}' \
+    > "$projection_work/projected-compile.json"
+  return "$status"
 }
 
 run_extraction_pass() {
@@ -161,6 +253,7 @@ run_extraction_pass() {
     cat "$projection_work/extraction-counterexample.json"
     return "$status"
   fi
+  record_extraction_report "$output"
   cat "$output"
   if jq -e '.indicators | any(.[]; .id == "extraction.applied" and .value > 0)' "$output" >/dev/null; then
     EXTRACTION_PARTIAL=1
@@ -186,13 +279,28 @@ go run ./scripts/source-splitter \
   -plan "$projection_work/split-plan.json" \
   -output "$projection_work/split-report.json"
 
+last_extraction="$projection_work/extraction-report.json"
+post_split_metrics="$projection_work/split-source-metrics-projected.json"
+go run ./scripts/line-metrics \
+  -root "$repo_root" \
+  -storage-root "$storage_root" \
+  -json > "$post_split_metrics"
+set +e
+run_projected_compile
+compile_status=$?
+set -e
+if [[ "$compile_status" -ne 0 ]]; then
+  write_extraction_result "$last_extraction" "$projection_work/projected-compile-failure.json" "PROJECTED_COMPILE_FAILED" "$post_split_metrics"
+  cat "$projection_work/projected-compile-failure.json"
+  exit "$compile_status"
+fi
+
 # Re-observe the active materialized workspace after each projection pass.
 # The fixed point is a bounded metaprogram operation: generated helpers are
 # ordinary source subjects, and a non-decreasing residual is an explicit
 # unknown rather than an authorization to repeat names forever.
 previous_blocking=-1
 fixed_point_closed=false
-last_extraction="$projection_work/extraction-report.json"
 last_metrics="$projection_work/split-source-metrics-raw.json"
 for iteration in 1 2 3 4 5 6 7 8; do
   pass_work="$projection_work/fixed-point-$iteration"
@@ -206,7 +314,9 @@ for iteration in 1 2 3 4 5 6 7 8; do
     -root "$repo_root" \
     -storage-root "$storage_root" \
     -json > "$metrics"
-  blocking="$(jq -r '[.meta.indicators[] | select(.blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  go_file_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.go-file-lines.v1" and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  function_line_blockers="$(jq -r '[.meta.indicators[]? | select(.metric_id == "gooo.metric.source.function-lines.v1" and .blocking == true and .satisfied == false and .applicability != "NOT_APPLICABLE")] | length' "$metrics")"
+  blocking=$((go_file_line_blockers + function_line_blockers))
   last_metrics="$metrics"
   if [[ "$blocking" -eq 0 ]]; then
     fixed_point_closed=true

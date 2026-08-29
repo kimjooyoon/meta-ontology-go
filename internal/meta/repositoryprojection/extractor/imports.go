@@ -23,6 +23,9 @@ func imports(file *ast.File) ([]importSpec, error) {
 			if err != nil || value == "" || strings.HasPrefix(value, "/") || strings.Contains(value, "\\") || strings.Contains(value, "..") {
 				return nil, fail("validate-ast-imports", "parse-import", "UNSAFE_IMPORT_PATH", "KNOWN_CONTRADICTION", "report-contradiction", nil)
 			}
+			if value == "C" {
+				return nil, fail("validate-ast-imports", "parse-import", "CGO_IMPORT_RELOCATION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", nil)
+			}
 			name := ""
 			if spec.Name != nil {
 				name = spec.Name.Name

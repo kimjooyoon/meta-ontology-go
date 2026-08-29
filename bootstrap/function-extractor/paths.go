@@ -66,7 +66,16 @@ func extractionFailure(logical string, err error) extractionFailureRecord {
 		if failure.UnknownClass == "KNOWN_CONTRADICTION" {
 			decision = "REFUTED"
 		}
-		return extractionFailureRecord{Logical: logical, Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
+		return extractionFailureRecord{Logical: logical, BlockerID: stableBlockerID(logical, failure.Diagnostics), Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
 	}
 	return extractionFailureRecord{Logical: logical, Decision: "UNKNOWN", Stage: "apply-extraction", Step: "generic", Reason: "EXTRACTION_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-parser-evidence", BlockedBy: []string{}, Diagnostics: []string{}}
+}
+
+func stableBlockerID(logical string, diagnostics []string) string {
+	for _, diagnostic := range diagnostics {
+		if strings.HasPrefix(diagnostic, "declaration=") {
+			return logical + "#" + strings.TrimPrefix(diagnostic, "declaration=")
+		}
+	}
+	return ""
 }

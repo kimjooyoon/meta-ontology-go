@@ -36,6 +36,7 @@ type extractionSubject struct {
 
 type extractionFailureRecord struct {
 	Logical       string   `json:"logical"`
+	BlockerID     string   `json:"blocker_id,omitempty"`
 	Decision      string   `json:"decision"`
 	Stage         string   `json:"stage"`
 	Step          string   `json:"step"`
