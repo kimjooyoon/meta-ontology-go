@@ -68,6 +68,7 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 			return result, err
 		}
 		receipt := generation.SealReceipt(in.plan, action, observations)
+		receipt = preserveInputInstanceEvidence(receipt, in.receipts.Receipts)
 		sealed = append(sealed, receipt)
 		effect := effectFor(action, before, after, changes, evidence, receipt.ReceiptDigest)
 		effect.SplitGoEvaluation = splitGoEvaluation
@@ -84,6 +85,17 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		return result, fmt.Errorf("executed provenance is not bound")
 	}
 	return result, nil
+}
+
+func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs []generation.OperationReceipt) generation.OperationReceipt {
+	for _, input := range inputs {
+		if input.ActionIndicatorID != receipt.ActionIndicatorID || input.InstanceEvidence == nil {
+			continue
+		}
+		receipt.Indicators = append([]generation.IndicatorReceipt{}, input.Indicators...)
+		return generation.AttachInstanceEvidence(receipt, *input.InstanceEvidence)
+	}
+	return receipt
 }
 
 func inputFailureForAction(failures []generation.ObservationFailure, action generation.Action) (generation.ObservationFailure, bool) {

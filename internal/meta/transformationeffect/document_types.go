@@ -18,6 +18,8 @@ type Effect struct {
 	Subject            string                     `json:"subject"`
 	SubjectKind        string                     `json:"subject_kind"`
 	Operation          string                     `json:"operation"`
+	Activity           string                     `json:"activity"`
+	Output             string                     `json:"output"`
 	Executor           string                     `json:"executor"`
 	Evaluator          string                     `json:"evaluator"`
 	ProofChoice        string                     `json:"proof_choice"`
