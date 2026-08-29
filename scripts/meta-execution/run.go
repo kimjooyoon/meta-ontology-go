@@ -43,6 +43,7 @@ func run(configuration options) error {
 	if err := writeAtomic(bundlePath, bundlePayload); err != nil {
 		return fmt.Errorf("write operation observations: %w", err)
 	}
+	printObservationSummary(bundle)
 	fmt.Printf(
 		"execution manifest: decision=%s reason=%s replay=%s\n",
 		manifest.Decision,
@@ -58,6 +59,29 @@ func run(configuration options) error {
 		)
 	}
 	return nil
+}
+
+func printObservationSummary(bundle generation.OperationObservationBundle) {
+	fmt.Printf(
+		"operation observations: receipts=%d failures=%d total=%d replay=%d\n",
+		len(bundle.Receipts),
+		len(bundle.Failures),
+		bundle.ObservationTotal,
+		bundle.ReplayComparisons,
+	)
+	for _, failure := range bundle.Failures {
+		fmt.Printf(
+			"operation observation failure: action=%s decision=%s stage=%s step=%s reason=%s unknown_class=%s next_operation=%s blocked_by=%v\n",
+			failure.ActionIndicatorID,
+			failure.Decision,
+			failure.Stage,
+			failure.Step,
+			failure.Reason,
+			failure.UnknownClass,
+			failure.NextOperation,
+			failure.BlockedBy,
+		)
+	}
 }
 
 func workspaceRoot() string {
