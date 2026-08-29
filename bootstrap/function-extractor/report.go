@@ -66,10 +66,29 @@ func writeExtractionReport(name string, report extractionReport) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(name, append(encoded, '\n'), 0o644)
+	temp := name + ".extract.tmp"
+	if !sameDirectory(name, temp) {
+		return fmt.Errorf("report paths are not same-directory: %s", name)
+	}
+	if _, err := os.Lstat(temp); !os.IsNotExist(err) {
+		return fmt.Errorf("report temporary path exists: %s", temp)
+	}
+	if err := os.WriteFile(temp, append(encoded, '\n'), 0o644); err != nil {
+		return err
+	}
+	if err := os.Rename(temp, name); err != nil {
+		_ = os.Remove(temp)
+		return err
+	}
+	return nil
 }
 
 func requireHandled(report extractionReport) error {
+	for _, failure := range report.Failures {
+		if failure.Decision == "REFUTED" {
+			return fmt.Errorf("refuted extraction %s: %s", failure.Logical, failure.Reason)
+		}
+	}
 	for _, metric := range report.Indicators {
 		if metric.Blocking && metric.Value > metric.Limit {
 			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)

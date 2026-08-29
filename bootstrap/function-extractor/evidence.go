@@ -62,6 +62,7 @@ type namespaceReplacementReceipt struct {
 	LogicalPath           string `json:"logical_path"`
 	Primitive             string `json:"primitive"`
 	Contract              string `json:"contract"`
+	GOOS                  string `json:"goos"`
 	SameDirectory         bool   `json:"same_directory"`
 	DestinationPreexisted bool   `json:"destination_preexisted"`
 	TempDigest            string `json:"temp_digest"`

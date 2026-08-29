@@ -63,17 +63,6 @@ type extractorSubject struct {
 	Proof        string   `json:"proof_choice"`
 }
 
-type namespaceReplacementReceipt struct {
-	LogicalPath           string `json:"logical_path"`
-	Primitive             string `json:"primitive"`
-	Contract              string `json:"contract"`
-	SameDirectory         bool   `json:"same_directory"`
-	DestinationPreexisted bool   `json:"destination_preexisted"`
-	TempDigest            string `json:"temp_digest"`
-	ReplacementSuccess    bool   `json:"replacement_success"`
-	FinalDigest           string `json:"final_digest"`
-}
-
 type extractorPlan struct {
 	Schema    string                 `json:"schema"`
 	SourceSHA string                 `json:"source_sha"`
@@ -344,7 +333,12 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements)
 	if err != nil {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		reason := "INSTANCE_CONFORMANCE_FAILED"
+		var replacementErr *namespaceReplacementError
+		if errors.As(err, &replacementErr) {
+			reason = replacementErr.reason
+		}
+		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, "KNOWN_CONTRADICTION", "report-counterexample"}
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"bootstrap/function-extractor:independent-evaluator", subject.Path, subject.Name}, evaluatorRaw, nil)
@@ -531,45 +525,6 @@ func validateExtractedFiles(root string, subject sourcepolicy.SourceSubject, bef
 		ImportIdentity:      true,
 		PackageConformance:  true,
 	}, nil
-}
-
-func validateNamespaceReplacements(root string, observed extractorSubject, replacements []namespaceReplacementReceipt) (bool, error) {
-	if len(replacements) == 0 {
-		return false, nil
-	}
-	expected := make(map[string]bool, len(observed.Files))
-	for _, logical := range observed.Files {
-		expected[logical] = true
-	}
-	seen := make(map[string]bool, len(replacements))
-	for _, replacement := range replacements {
-		if !expected[replacement.LogicalPath] || seen[replacement.LogicalPath] {
-			return false, fmt.Errorf("namespace replacement is not bound to a unique output: %s", replacement.LogicalPath)
-		}
-		seen[replacement.LogicalPath] = true
-		if !validNamespaceReplacement(replacement, observed) {
-			return false, fmt.Errorf("namespace replacement receipt is invalid: %s", replacement.LogicalPath)
-		}
-		data, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(replacement.LogicalPath)))
-		if err != nil || digestBytes(data) != replacement.FinalDigest || replacement.TempDigest != replacement.FinalDigest {
-			return false, fmt.Errorf("namespace replacement digest mismatch: %s", replacement.LogicalPath)
-		}
-	}
-	if len(seen) != len(expected) || !seen[observed.Logical] {
-		return false, nil
-	}
-	return true, nil
-}
-
-func validNamespaceReplacement(replacement namespaceReplacementReceipt, observed extractorSubject) bool {
-	if replacement.Primitive != "os.Rename" || replacement.Contract != "same-directory-temp-over-destination-v1" || !replacement.SameDirectory || !replacement.ReplacementSuccess {
-		return false
-	}
-	if !strings.HasPrefix(replacement.TempDigest, "sha256:") || !strings.HasPrefix(replacement.FinalDigest, "sha256:") {
-		return false
-	}
-	created := containsString(observed.CreatedFiles, replacement.LogicalPath)
-	return replacement.DestinationPreexisted == !created
 }
 
 func sortedKeys(values map[string]bool) []string {

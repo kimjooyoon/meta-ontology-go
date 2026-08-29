@@ -6,12 +6,12 @@ import (
 )
 
 type receiptInput struct {
-	PlanDigest                    string             `json:"plan_digest"`
-	IndicatorDecisionLedgerDigest string             `json:"indicator_decision_ledger_digest,omitempty"`
-	IndicatorDecisionLedgerCount  int                `json:"indicator_decision_ledger_count"`
-	Receipts                      []OperationReceipt `json:"receipts"`
-	Failures                      []ObservationFailure  `json:"failures"`
-	Unknowns                      []ReceiptUnknown   `json:"unknowns"`
+	PlanDigest                    string               `json:"plan_digest"`
+	IndicatorDecisionLedgerDigest string               `json:"indicator_decision_ledger_digest,omitempty"`
+	IndicatorDecisionLedgerCount  int                  `json:"indicator_decision_ledger_count"`
+	Receipts                      []OperationReceipt   `json:"receipts"`
+	Failures                      []ObservationFailure `json:"failures"`
+	Unknowns                      []ReceiptUnknown     `json:"unknowns"`
 }
 
 func finishReceiptReport(report ReceiptReport) ReceiptReport {

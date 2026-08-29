@@ -14,17 +14,17 @@ import (
 const OperationObservationBundleSchema = "gooo/meta-operation-observation-bundle/v1"
 
 type OperationObservationBundle struct {
-	Schema              string             `json:"schema"`
-	BaseSHA             string             `json:"base_sha"`
-	HeadSHA             string             `json:"head_sha"`
-	PlanDigest          string             `json:"plan_digest"`
-	ManifestDigest      string             `json:"manifest_digest"`
-	Receipts            []OperationReceipt `json:"receipts"`
-	Failures            []ObservationFailure `json:"failures"`
-	ObservationTotal    int                `json:"observation_total"`
-	ReplayComparisons   int                `json:"replay_comparisons"`
-	BundleDigest        string             `json:"bundle_digest"`
-	ReplayDigest        string             `json:"replay_digest"`
+	Schema            string               `json:"schema"`
+	BaseSHA           string               `json:"base_sha"`
+	HeadSHA           string               `json:"head_sha"`
+	PlanDigest        string               `json:"plan_digest"`
+	ManifestDigest    string               `json:"manifest_digest"`
+	Receipts          []OperationReceipt   `json:"receipts"`
+	Failures          []ObservationFailure `json:"failures"`
+	ObservationTotal  int                  `json:"observation_total"`
+	ReplayComparisons int                  `json:"replay_comparisons"`
+	BundleDigest      string               `json:"bundle_digest"`
+	ReplayDigest      string               `json:"replay_digest"`
 }
 
 func AttachInstanceEvidence(receipt OperationReceipt, evidence OperationInstanceEvidence) OperationReceipt {

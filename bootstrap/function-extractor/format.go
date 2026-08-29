@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"runtime"
 )
 
 func formatStaged(root string, buffers map[string][]byte, created map[string]bool) (map[string]stagedFile, error) {
@@ -37,6 +38,9 @@ func installTransaction(file *transactionFile) (namespaceReplacementReceipt, err
 	if !sameDirectory(file.name, file.temp) {
 		return namespaceReplacementReceipt{}, fmt.Errorf("replacement paths are not same-directory: %s", file.logical)
 	}
+	if runtime.GOOS != "linux" {
+		return namespaceReplacementReceipt{}, fmt.Errorf("namespace replacement unsupported on GOOS %s: %s", runtime.GOOS, file.logical)
+	}
 	if file.created {
 		if _, err := os.Lstat(file.name); err == nil || !os.IsNotExist(err) {
 			return namespaceReplacementReceipt{}, fmt.Errorf("creation target exists: %s", file.name)
@@ -61,7 +65,8 @@ func installTransaction(file *transactionFile) (namespaceReplacementReceipt, err
 	}
 	return namespaceReplacementReceipt{
 		LogicalPath: file.logical, Primitive: "os.Rename",
-		Contract: "same-directory-temp-over-destination-v1",
+		Contract: linuxNamespaceReplacementContract,
+		GOOS: runtime.GOOS,
 		SameDirectory: true, DestinationPreexisted: file.destinationPreexisted,
 		TempDigest: file.tempDigest, ReplacementSuccess: true, FinalDigest: finalDigest,
 	}, nil

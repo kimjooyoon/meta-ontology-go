@@ -37,15 +37,19 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 		return err
 	}
 	report := extractionEvidence(expected, subjects, unhandled, failures)
-	replacements, err := commitStaged(staged)
+	if err := requireHandled(report); err != nil {
+		return err
+	}
+	transaction, err := commitStaged(staged)
 	if err != nil {
 		return err
 	}
-	report.NamespaceReplacements = replacements
+	report.NamespaceReplacements = transaction.receipts
 	if err := writeExtractionReport(filepath.Clean(output), report); err != nil {
+		rollbackTransactions(transaction.files, len(transaction.files))
 		return err
 	}
-	if err := requireHandled(report); err != nil {
+	if err := removeTransactionBackups(transaction.files); err != nil {
 		return err
 	}
 	fmt.Printf("function-extractor: residual=%d applied=%d created=%d\n",

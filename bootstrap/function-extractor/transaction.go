@@ -20,62 +20,76 @@ type transactionFile struct {
 	replaced              bool
 }
 
-func commitStaged(staged map[string]stagedFile) ([]namespaceReplacementReceipt, error) {
+type stagedTransaction struct {
+	files    []transactionFile
+	receipts []namespaceReplacementReceipt
+}
+
+const linuxNamespaceReplacementContract = "same-directory-temp-over-destination/linux-v1"
+
+func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 	paths := make([]string, 0, len(staged))
 	for path := range staged {
 		paths = append(paths, path)
 	}
 	sort.Strings(paths)
 	files := make([]transactionFile, 0, len(paths))
+	cleanupAndFail := func(err error) (stagedTransaction, error) {
+		cleanupTransactions(files)
+		return stagedTransaction{}, err
+	}
 	for _, path := range paths {
 		stage := staged[path]
 		file := transactionFile{logical: path, name: stage.name,
 			temp: stage.name + ".extract.tmp", backup: stage.name + ".extract.bak", created: stage.created}
+		files = append(files, file)
 		if _, err := os.Lstat(file.temp); !os.IsNotExist(err) {
-			return nil, fmt.Errorf("temporary extraction path exists: %s", file.temp)
+			return cleanupAndFail(fmt.Errorf("temporary extraction path exists: %s", file.temp))
 		}
 		if _, err := os.Lstat(file.backup); !os.IsNotExist(err) {
-			return nil, fmt.Errorf("backup extraction path exists: %s", file.backup)
+			return cleanupAndFail(fmt.Errorf("backup extraction path exists: %s", file.backup))
 		}
 		if !file.created {
 			info, err := os.Lstat(file.name)
 			if err != nil {
-				return nil, err
+				return cleanupAndFail(err)
 			}
 			if !info.Mode().IsRegular() {
-				return nil, fmt.Errorf("replacement target is not a regular file: %s", file.logical)
+				return cleanupAndFail(fmt.Errorf("replacement target is not a regular file: %s", file.logical))
 			}
 			file.destinationPreexisted = true
 		} else if _, err := os.Lstat(file.name); err == nil || !os.IsNotExist(err) {
-			return nil, fmt.Errorf("creation target exists: %s", file.logical)
+			return cleanupAndFail(fmt.Errorf("creation target exists: %s", file.logical))
 		}
 		if err := os.WriteFile(file.temp, stage.data, os.FileMode(stage.mode)); err != nil {
-			cleanupTransactions(files)
-			return nil, err
+			return cleanupAndFail(err)
 		}
 		temp, err := os.ReadFile(file.temp)
 		if err != nil {
-			cleanupTransactions(files)
-			return nil, err
+			return cleanupAndFail(err)
 		}
 		file.tempDigest = digestFileBytes(temp)
-		files = append(files, file)
+		files[len(files)-1] = file
 	}
 	receipts := make([]namespaceReplacementReceipt, 0, len(files))
 	for index := range files {
 		receipt, err := installTransaction(&files[index])
 		if err != nil {
 			rollbackTransactions(files, index+1)
-			return nil, err
+			return stagedTransaction{}, err
 		}
 		receipts = append(receipts, receipt)
 	}
+	return stagedTransaction{files: files, receipts: receipts}, nil
+}
+
+func removeTransactionBackups(files []transactionFile) error {
 	for index := range files {
 		if err := removeTransactionBackup(files[index]); err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return receipts, nil
+	return nil
 }
 
 func rollbackTransactions(files []transactionFile, committed int) {

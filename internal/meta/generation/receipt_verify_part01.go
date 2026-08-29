@@ -8,7 +8,7 @@ func VerifyReceiptsWithFailures(plan Plan, receipts []OperationReceipt, failures
 	normalized := normalizeOperationReceipts(receipts)
 	report := ReceiptReport{
 		SchemaVersion: ReceiptReportSchemaVersion,
-		BaseSHA: plan.BaseSHA, HeadSHA: plan.HeadSHA,
+		BaseSHA:       plan.BaseSHA, HeadSHA: plan.HeadSHA,
 		PlanDigest: plan.PlanDigest, Receipts: normalized,
 		Failures: normalizeObservationFailures(failures),
 	}

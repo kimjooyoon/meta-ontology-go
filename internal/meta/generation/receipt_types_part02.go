@@ -13,25 +13,25 @@ type IndicatorReceipt struct {
 const OperationInstanceEvidenceSchema = "gooo/meta-operation-instance-evidence/v1"
 
 type ProcessObservation struct {
-	Command       []string `json:"command"`
-	ExitCode      int      `json:"exit_code"`
-	StdoutBytes   int      `json:"stdout_bytes"`
-	StdoutDigest  string   `json:"stdout_digest"`
-	StderrBytes   int      `json:"stderr_bytes"`
-	StderrDigest  string   `json:"stderr_digest"`
+	Command      []string `json:"command"`
+	ExitCode     int      `json:"exit_code"`
+	StdoutBytes  int      `json:"stdout_bytes"`
+	StdoutDigest string   `json:"stdout_digest"`
+	StderrBytes  int      `json:"stderr_bytes"`
+	StderrDigest string   `json:"stderr_digest"`
 }
 
 type OperationInstanceEvidence struct {
-	Schema                  string             `json:"schema"`
-	ActionIndicatorID       string             `json:"action_indicator_id"`
-	Subject                 string             `json:"subject"`
-	HeadSHA                 string             `json:"head_sha"`
-	OperationID             string             `json:"operation_id"`
-	ContractEvidenceDigest  string             `json:"contract_evidence_digest"`
-	InstanceEvidenceDigest  string             `json:"instance_evidence_digest"`
-	ExecutorObservation    ProcessObservation `json:"executor_observation"`
-	EvaluatorObservation   ProcessObservation `json:"evaluator_observation"`
-	ReplayComparisons      int                `json:"replay_comparisons"`
+	Schema                 string              `json:"schema"`
+	ActionIndicatorID      string              `json:"action_indicator_id"`
+	Subject                string              `json:"subject"`
+	HeadSHA                string              `json:"head_sha"`
+	OperationID            string              `json:"operation_id"`
+	ContractEvidenceDigest string              `json:"contract_evidence_digest"`
+	InstanceEvidenceDigest string              `json:"instance_evidence_digest"`
+	ExecutorObservation    ProcessObservation  `json:"executor_observation"`
+	EvaluatorObservation   ProcessObservation  `json:"evaluator_observation"`
+	ReplayComparisons      int                 `json:"replay_comparisons"`
 	ReplayMatch             bool               `json:"replay_match"`
 	VerifierObservation    *ProcessObservation `json:"verifier_observation,omitempty"`
 }
@@ -49,22 +49,22 @@ type ObservationFailure struct {
 }
 
 type OperationReceipt struct {
-	SchemaVersion                 string                 `json:"schema_version"`
-	BaseSHA                       string                 `json:"base_sha"`
-	HeadSHA                       string                 `json:"head_sha"`
-	PlanDigest                    string                 `json:"plan_digest"`
-	IndicatorDecisionLedgerDigest string                 `json:"indicator_decision_ledger_digest"`
-	IndicatorDecisionLedgerCount  int                    `json:"indicator_decision_ledger_count"`
-	ActionIndicatorID             string                 `json:"action_indicator_id"`
-	Operation                     sourcepolicy.Operation `json:"operation"`
-	Activity                      string                 `json:"activity"`
-	Output                        string                 `json:"output"`
-	Executor                      string                 `json:"executor"`
-	Evaluator                     string                 `json:"evaluator"`
-	ProofChoice                   ProofChoice            `json:"proof_choice"`
-	Indicators                    []IndicatorReceipt     `json:"indicators"`
+	SchemaVersion                 string                     `json:"schema_version"`
+	BaseSHA                       string                     `json:"base_sha"`
+	HeadSHA                       string                     `json:"head_sha"`
+	PlanDigest                    string                     `json:"plan_digest"`
+	IndicatorDecisionLedgerDigest string                     `json:"indicator_decision_ledger_digest"`
+	IndicatorDecisionLedgerCount  int                        `json:"indicator_decision_ledger_count"`
+	ActionIndicatorID             string                     `json:"action_indicator_id"`
+	Operation                     sourcepolicy.Operation     `json:"operation"`
+	Activity                      string                     `json:"activity"`
+	Output                        string                     `json:"output"`
+	Executor                      string                     `json:"executor"`
+	Evaluator                     string                     `json:"evaluator"`
+	ProofChoice                   ProofChoice                `json:"proof_choice"`
+	Indicators                    []IndicatorReceipt         `json:"indicators"`
 	InstanceEvidence              *OperationInstanceEvidence `json:"instance_evidence,omitempty"`
-	ReceiptDigest                 string                 `json:"receipt_digest"`
+	ReceiptDigest                 string                     `json:"receipt_digest"`
 }
 
 // ReceiptUnknown preserves an unavailable or malformed execution observation
@@ -86,15 +86,15 @@ type ReceiptUnknown struct {
 }
 
 type ReceiptReport struct {
-	SchemaVersion                 string             `json:"schema_version"`
-	BaseSHA                       string             `json:"base_sha"`
-	HeadSHA                       string             `json:"head_sha"`
-	PlanDigest                    string             `json:"plan_digest"`
-	IndicatorDecisionLedgerDigest string             `json:"indicator_decision_ledger_digest,omitempty"`
-	IndicatorDecisionLedgerCount  int                `json:"indicator_decision_ledger_count"`
-	InputDigest                   string             `json:"input_digest"`
-	Decision                      ReceiptDecision    `json:"decision"`
-	Reason                        ReceiptReason      `json:"reason"`
+	SchemaVersion                 string               `json:"schema_version"`
+	BaseSHA                       string               `json:"base_sha"`
+	HeadSHA                       string               `json:"head_sha"`
+	PlanDigest                    string               `json:"plan_digest"`
+	IndicatorDecisionLedgerDigest string               `json:"indicator_decision_ledger_digest,omitempty"`
+	IndicatorDecisionLedgerCount  int                  `json:"indicator_decision_ledger_count"`
+	InputDigest                   string               `json:"input_digest"`
+	Decision                      ReceiptDecision      `json:"decision"`
+	Reason                        ReceiptReason        `json:"reason"`
 	Receipts                      []OperationReceipt   `json:"receipts"`
 	Failures                      []ObservationFailure `json:"failures"`
 	MissingIndicatorIDs           []string             `json:"missing_indicator_ids"`
