@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"maps"
 	"os"
 )
 
@@ -79,9 +80,7 @@ func buildExtractionResult(root, logical string, original, source []byte, fset *
 		return Result{}, err
 	}
 	generated := map[string][]byte{logical: output.source}
-	for path, data := range helpers {
-		generated[path] = data
-	}
+	maps.Copy(generated, helpers)
 	paths = append([]string{logical}, paths...)
 	return Result{Generated: generated, Paths: paths, Operations: extractionOperations(original, source, partitions)}, nil
 }

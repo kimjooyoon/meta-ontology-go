@@ -220,19 +220,28 @@ func includeLeadingComments(fset *token.FileSet, file *ast.File, first ast.Stmt,
 }
 
 func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.FileSet, evidence typeEvidence) ([]suffixBinding, error) {
+	inside := suffixDefinedObjects(statements, evidence.info)
+	objects := suffixFreeObjects(statements, function, inside, evidence.info)
+	return renderSuffixBindings(objects, fset, evidence.info)
+}
+
+func suffixDefinedObjects(statements []ast.Stmt, info *types.Info) map[types.Object]bool {
 	inside := map[types.Object]bool{}
 	for _, statement := range statements {
 		ast.Inspect(statement, func(node ast.Node) bool {
 			identifier, ok := node.(*ast.Ident)
-			if !ok {
-				return true
-			}
-			if object := evidence.info.Defs[identifier]; object != nil {
-				inside[object] = true
+			if ok {
+				if object := info.Defs[identifier]; object != nil {
+					inside[object] = true
+				}
 			}
 			return true
 		})
 	}
+	return inside
+}
+
+func suffixFreeObjects(statements []ast.Stmt, function *ast.FuncDecl, inside map[types.Object]bool, info *types.Info) map[types.Object]bool {
 	objects := map[types.Object]bool{}
 	for _, statement := range statements {
 		ast.Inspect(statement, func(node ast.Node) bool {
@@ -240,7 +249,7 @@ func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.F
 			if !ok {
 				return true
 			}
-			object := evidence.info.Uses[identifier]
+			object := info.Uses[identifier]
 			if object == nil || inside[object] || object.Pos() == token.NoPos ||
 				object.Pos() >= statements[0].Pos() ||
 				object.Pos() < function.Pos() || object.Pos() >= function.End() {
@@ -253,19 +262,14 @@ func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.F
 			return true
 		})
 	}
+	return objects
+}
+
+func renderSuffixBindings(objects map[types.Object]bool, fset *token.FileSet, info *types.Info) ([]suffixBinding, error) {
 	result := make([]suffixBinding, 0, len(objects))
 	for object := range objects {
 		text := types.TypeString(object.Type(), func(imported *types.Package) string {
-			if imported == nil {
-				return ""
-			}
-			for identifier, used := range evidence.info.Uses {
-				packageName, ok := used.(*types.PkgName)
-				if ok && packageName.Imported() == imported {
-					return identifier.Name
-				}
-			}
-			return imported.Name()
+			return packageAlias(info, imported)
 		})
 		typeExpr, err := parser.ParseExpr(text)
 		if err != nil {
@@ -282,6 +286,24 @@ func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.F
 		return result[left].name < result[right].name
 	})
 	return result, nil
+}
+
+func packageAlias(info *types.Info, imported *types.Package) string {
+	if imported == nil {
+		return ""
+	}
+	aliases := make([]string, 0)
+	for identifier, used := range info.Uses {
+		packageName, ok := used.(*types.PkgName)
+		if ok && packageName.Imported() == imported {
+			aliases = append(aliases, identifier.Name)
+		}
+	}
+	sort.Strings(aliases)
+	if len(aliases) > 0 {
+		return aliases[0]
+	}
+	return imported.Name()
 }
 
 func bindingArguments(bindings []suffixBinding) string {
