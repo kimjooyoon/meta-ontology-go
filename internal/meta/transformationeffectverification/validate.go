@@ -325,15 +325,35 @@ func validateObservationFailure(failure generation.ObservationFailure, action ge
 }
 
 func failureSubjectBinding(failure generation.ObservationFailure, action generation.Action) bool {
-	if failure.Counterexample == action.Subject {
-		return true
+	if !sameSubjectIdentity(failure.Counterexample, action.Subject) {
+		return false
 	}
 	for _, relation := range failure.DerivedRelations {
-		if relation.Relation == "DERIVED_FROM" && relation.Counterexample == failure.Counterexample && relation.DerivedFrom == action.Subject {
+		if relation.Relation == "DERIVED_FROM" && relation.DerivedFrom == failure.Counterexample {
 			return true
 		}
 	}
 	return false
+}
+
+func sameSubjectIdentity(blocker, subject string) bool {
+	const marker = "#func:"
+	markerIndex := strings.Index(blocker, marker)
+	if markerIndex < 0 {
+		return false
+	}
+	blockerPath := blocker[:markerIndex]
+	blockerName := blocker[markerIndex+len(marker):]
+	separator := strings.LastIndex(subject, ":")
+	if separator < 0 {
+		return blocker == subject
+	}
+	functionName := subject[separator+1:]
+	lineSeparator := strings.LastIndex(subject[:separator], ":")
+	if lineSeparator < 0 || functionName == "" {
+		return false
+	}
+	return blockerPath == subject[:lineSeparator] && blockerName == functionName
 }
 
 func validFailureUnknownClass(failure generation.ObservationFailure) bool {
