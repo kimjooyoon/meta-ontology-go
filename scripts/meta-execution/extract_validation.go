@@ -192,7 +192,10 @@ func validateExtractorReport(report extractorReport) bool {
 }
 
 func validExtractionSubject(subject extractorSubject) bool {
-	if subject.Logical == "" || subject.Before <= 75 || subject.After <= 0 || subject.After > 75 || subject.After >= subject.Before ||
+	if subject.After <= 0 {
+		return false
+	}
+	if subject.Logical == "" || subject.Before <= 75 || subject.After > 75 || subject.After >= subject.Before ||
 		(subject.State != "STAGED_NOT_COMMITTED" && subject.State != "COMMITTED_APPLIED") || subject.Consumer != "function-extractor" ||
 		subject.Operation == "" || subject.Proof == "" || len(subject.Files) == 0 || len(subject.Operations) == 0 {
 		return false
