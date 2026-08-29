@@ -47,7 +47,7 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 	report.NamespaceReplacements = transaction.receipts
 	provisional, err := createProvisionalReportPath(filepath.Clean(output))
 	if err != nil {
-		return rollbackReportTransaction(transaction, "", err)
+		return rollbackReportTransaction(transaction, provisional, err)
 	}
 	report.BackupCleanup = backupCleanupObservation{Status: "PENDING", Attempted: transactionBackupCount(transaction.files)}
 	if err := writeExtractionReport(provisional, report); err != nil {
@@ -72,6 +72,9 @@ func rollbackReportTransaction(transaction stagedTransaction, provisional string
 	cleanupErr := removeReport(provisional)
 	rollbackErr := rollbackTransactions(transaction.files, len(transaction.files))
 	if cleanupErr != nil {
+		if rollbackErr != nil {
+			return fmt.Errorf("%w; provisional cleanup failed: %v; rollback failed: %v", cause, cleanupErr, rollbackErr)
+		}
 		return fmt.Errorf("%w; provisional cleanup failed: %v", cause, cleanupErr)
 	}
 	if rollbackErr != nil {
