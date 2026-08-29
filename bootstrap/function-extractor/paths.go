@@ -73,8 +73,8 @@ func extractionFailure(logical string, err error) extractionFailureRecord {
 
 func stableBlockerID(logical string, diagnostics []string) string {
 	for _, diagnostic := range diagnostics {
-		if strings.HasPrefix(diagnostic, "declaration=") {
-			return logical + "#" + strings.TrimPrefix(diagnostic, "declaration=")
+		if after, ok := strings.CutPrefix(diagnostic, "declaration="); ok {
+			return logical + "#" + after
 		}
 	}
 	return ""
