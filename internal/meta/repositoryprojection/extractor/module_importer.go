@@ -97,7 +97,7 @@ func readModulePath(root string) string {
 	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) >= 2 && fields[0] == "module" {
 			return fields[1]
