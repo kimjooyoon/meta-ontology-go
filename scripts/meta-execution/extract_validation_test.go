@@ -272,3 +272,37 @@ func TestFailedExtractionMalformedReportIsRefuted(t *testing.T) {
 		t.Fatalf("malformed report was not refuted: %+v", failure)
 	}
 }
+
+func TestFailedExtractionBindsActionRootToDerivedBlocker(t *testing.T) {
+	root := t.TempDir()
+	report := extractorReport{
+		Schema:         functionExtractionReportSchema,
+		SourceSHA:      "head",
+		Unhandled:      []string{"blocked.go"},
+		Failures: []extractorFailureRecord{{
+			Logical: "blocked.go", BlockerID: "blocked.go#func:SelectedExtractedSuffix08",
+			Decision: "REFUTED", Stage: "derive-recipe", Step: "select-declaration",
+			Reason: "NO_SAFE_DECLARATION_CAPACITY", NextOperation: "report-counterexample",
+			BlockedBy: []string{},
+		}},
+		Indicators: extractionTestIndicatorsWithValues(1, 0, 0, 0, 1),
+	}
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "report.json"), payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	action := generation.Action{Subject: "blocked.go:10:Selected", RequiredIndicatorIDs: []string{"indicator"}}
+	process := generation.ProcessObservation{ExitCode: 1, StdoutBytes: 2, StderrBytes: 3}
+	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"}, action, process)
+	expectedRoot := "blocked.go#func:Selected"
+	if failure.counterexample != expectedRoot || len(failure.derivedRelations) != 1 ||
+		failure.derivedRelations[0].Counterexample != "blocked.go#func:SelectedExtractedSuffix08" ||
+		failure.derivedRelations[0].DerivedFrom != expectedRoot ||
+		failure.derivedRelations[0].Relation != "DERIVED_FROM" || len(failure.canonical) == 0 ||
+		failure.evidence[0].Counterexample != failure.derivedRelations[0].Counterexample {
+		t.Fatalf("action and derived blocker binding was not preserved: %+v", failure)
+	}
+}

@@ -46,6 +46,14 @@ type ObservationFailureEvidence struct {
 	Counterexample string `json:"counterexample"`
 }
 
+// CounterexampleRelation keeps a precise structural blocker separate from the
+// action-level counterexample that owns the failed operation.
+type CounterexampleRelation struct {
+	Counterexample string `json:"counterexample"`
+	DerivedFrom    string `json:"derived_from"`
+	Relation       string `json:"relation"`
+}
+
 type ObservationFailure struct {
 	ActionIndicatorID string                       `json:"action_indicator_id"`
 	Decision          string                       `json:"decision"`
@@ -56,6 +64,8 @@ type ObservationFailure struct {
 	NextOperation     string                       `json:"next_operation"`
 	BlockedBy         []string                     `json:"blocked_by"`
 	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
+	Counterexample    string                       `json:"counterexample,omitempty"`
+	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
 	Executor          ProcessObservation           `json:"executor_observation"`
 }
 

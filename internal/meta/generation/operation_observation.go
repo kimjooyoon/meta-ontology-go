@@ -40,7 +40,7 @@ func SealObservationBundle(bundle OperationObservationBundle) OperationObservati
 	bundle.Failures = normalizeObservationFailures(bundle.Failures)
 	bundle.BundleDigest, bundle.ReplayDigest = "", ""
 	bundle.BundleDigest = operationObservationBundleDigest(bundle)
-	bundle.ReplayDigest = digestPair(bundle.PlanDigest, bundle.BundleDigest)
+	bundle.ReplayDigest = digestPair(bundle.PlanDigest, operationObservationReplayDigest(bundle))
 	return bundle
 }
 
@@ -60,7 +60,7 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 		!validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) ||
 		!validDigest(bundle.BundleDigest) ||
 		bundle.BundleDigest != operationObservationBundleDigest(bundle) ||
-		bundle.ReplayDigest != digestPair(bundle.PlanDigest, bundle.BundleDigest) {
+		bundle.ReplayDigest != digestPair(bundle.PlanDigest, operationObservationReplayDigest(bundle)) {
 		return fmt.Errorf("operation observation bundle context or digest mismatch")
 	}
 	if len(bundle.Receipts)+len(bundle.Failures) != len(plan.Selected) ||
@@ -110,7 +110,8 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 			failure.Decision == "" || failure.Stage == "" || failure.Step == "" || failure.Reason == "" ||
 			!validObservationFailureDecision(failure) || failure.NextOperation == "" ||
 			failure.BlockedBy == nil || !validProcessObservation(failure.Executor) ||
-			!validObservationFailureEvidence(failure.FailureEvidence) {
+			!validObservationFailureEvidence(failure.FailureEvidence) ||
+			!validCounterexampleRelations(failure.DerivedRelations) {
 			return fmt.Errorf("invalid operation observation failure")
 		}
 		seen[failure.ActionIndicatorID] = true
@@ -146,7 +147,8 @@ func validReceiptFailureList(failures []ObservationFailure) bool {
 		if failure.ActionIndicatorID == "" || failure.Stage == "" || failure.Step == "" ||
 			failure.Reason == "" || failure.NextOperation == "" || failure.BlockedBy == nil ||
 			!validObservationFailureDecision(failure) || !validProcessObservation(failure.Executor) ||
-			!validObservationFailureEvidence(failure.FailureEvidence) {
+			!validObservationFailureEvidence(failure.FailureEvidence) ||
+			!validCounterexampleRelations(failure.DerivedRelations) {
 			return false
 		}
 		left, _ := json.Marshal(canonical[index])
@@ -231,6 +233,18 @@ func validObservationFailureEvidence(evidence []ObservationFailureEvidence) bool
 	return true
 }
 
+func validCounterexampleRelations(relations []CounterexampleRelation) bool {
+	seen := make(map[string]bool, len(relations))
+	for _, relation := range relations {
+		if relation.Counterexample == "" || relation.DerivedFrom == "" ||
+			relation.Relation != "DERIVED_FROM" || seen[relation.Counterexample] {
+			return false
+		}
+		seen[relation.Counterexample] = true
+	}
+	return true
+}
+
 func validEvidenceDigest(value string) bool {
 	return len(value) == len("sha256:")+64 && value[:len("sha256:")] == "sha256:" &&
 		validDigest(value[len("sha256:"):])
@@ -257,11 +271,20 @@ func normalizeObservationFailures(failures []ObservationFailure) []ObservationFa
 	result := append([]ObservationFailure{}, failures...)
 	for index := range result {
 		result[index].FailureEvidence = normalizeObservationFailureEvidence(result[index].FailureEvidence)
+		result[index].DerivedRelations = normalizeCounterexampleRelations(result[index].DerivedRelations)
 	}
 	sort.SliceStable(result, func(left, right int) bool {
 		leftKey, _ := json.Marshal(result[left])
 		rightKey, _ := json.Marshal(result[right])
 		return string(leftKey) < string(rightKey)
+	})
+	return result
+}
+
+func normalizeCounterexampleRelations(relations []CounterexampleRelation) []CounterexampleRelation {
+	result := append([]CounterexampleRelation{}, relations...)
+	sort.Slice(result, func(left, right int) bool {
+		return result[left].Counterexample < result[right].Counterexample
 	})
 	return result
 }
@@ -272,4 +295,95 @@ func normalizeObservationFailureEvidence(evidence []ObservationFailureEvidence) 
 		return result[left].IndicatorID < result[right].IndicatorID
 	})
 	return result
+}
+
+type replayProcessProjection struct {
+	ExitCode     int    `json:"exit_code"`
+	StdoutBytes  int    `json:"stdout_bytes"`
+	StdoutDigest string `json:"stdout_digest"`
+	StderrBytes  int    `json:"stderr_bytes"`
+	StderrDigest string `json:"stderr_digest"`
+}
+
+type replayReceiptProjection struct {
+	ActionIndicatorID      string                    `json:"action_indicator_id"`
+	Subject                string                    `json:"subject"`
+	HeadSHA                string                    `json:"head_sha"`
+	OperationID            string                    `json:"operation_id"`
+	ContractEvidenceDigest string                    `json:"contract_evidence_digest"`
+	InstanceEvidenceDigest string                    `json:"instance_evidence_digest"`
+	Indicators             []IndicatorReceipt        `json:"indicators"`
+	Executor               replayProcessProjection   `json:"executor"`
+	Evaluator              replayProcessProjection   `json:"evaluator"`
+	Verifier               *replayProcessProjection  `json:"verifier,omitempty"`
+}
+
+type replayFailureProjection struct {
+	ActionIndicatorID string                       `json:"action_indicator_id"`
+	Decision          string                       `json:"decision"`
+	Stage             string                       `json:"stage"`
+	Step              string                       `json:"step"`
+	Reason            string                       `json:"reason"`
+	UnknownClass      string                       `json:"unknown_class,omitempty"`
+	NextOperation     string                       `json:"next_operation"`
+	BlockedBy         []string                     `json:"blocked_by"`
+	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
+	Counterexample    string                       `json:"counterexample,omitempty"`
+	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
+	Executor          replayProcessProjection      `json:"executor"`
+}
+
+func operationObservationReplayDigest(bundle OperationObservationBundle) string {
+	receipts := make([]replayReceiptProjection, 0, len(bundle.Receipts))
+	for _, receipt := range bundle.Receipts {
+		if receipt.InstanceEvidence == nil {
+			continue
+		}
+		evidence := receipt.InstanceEvidence
+		var verifier *replayProcessProjection
+		if evidence.VerifierObservation != nil {
+			value := replayProcess(evidence.VerifierObservation)
+			verifier = &value
+		}
+		receipts = append(receipts, replayReceiptProjection{
+			ActionIndicatorID: receipt.ActionIndicatorID, Subject: evidence.Subject,
+			HeadSHA: evidence.HeadSHA, OperationID: evidence.OperationID,
+			ContractEvidenceDigest: evidence.ContractEvidenceDigest,
+			InstanceEvidenceDigest: evidence.InstanceEvidenceDigest,
+			Indicators: receipt.Indicators,
+			Executor: replayProcess(evidence.ExecutorObservation),
+			Evaluator: replayProcess(evidence.EvaluatorObservation), Verifier: verifier,
+		})
+	}
+	failures := make([]replayFailureProjection, 0, len(bundle.Failures))
+	for _, failure := range bundle.Failures {
+		failures = append(failures, replayFailureProjection{
+			ActionIndicatorID: failure.ActionIndicatorID, Decision: failure.Decision,
+			Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason,
+			UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation,
+			BlockedBy: failure.BlockedBy, FailureEvidence: failure.FailureEvidence,
+			Counterexample: failure.Counterexample, DerivedRelations: failure.DerivedRelations,
+			Executor: replayProcess(failure.Executor),
+		})
+	}
+	return digestJSON(struct {
+		Schema            string                    `json:"schema"`
+		BaseSHA           string                    `json:"base_sha"`
+		HeadSHA           string                    `json:"head_sha"`
+		PlanDigest        string                    `json:"plan_digest"`
+		ManifestDigest    string                    `json:"manifest_digest"`
+		Receipts          []replayReceiptProjection `json:"receipts"`
+		Failures          []replayFailureProjection `json:"failures"`
+		ObservationTotal  int                       `json:"observation_total"`
+		ReplayComparisons int                       `json:"replay_comparisons"`
+	}{Schema: bundle.Schema, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA,
+		PlanDigest: bundle.PlanDigest, ManifestDigest: bundle.ManifestDigest,
+		Receipts: receipts, Failures: failures, ObservationTotal: bundle.ObservationTotal,
+		ReplayComparisons: bundle.ReplayComparisons})
+}
+
+func replayProcess(observation ProcessObservation) replayProcessProjection {
+	return replayProcessProjection{ExitCode: observation.ExitCode, StdoutBytes: observation.StdoutBytes,
+		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
+		StderrDigest: observation.StderrDigest}
 }

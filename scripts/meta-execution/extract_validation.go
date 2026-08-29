@@ -90,7 +90,7 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	return raw, report, nil
 }
 
-func failedExtractionError(root, reportName string, plan generation.Plan, action generation.Action) *operationError {
+func failedExtractionError(root, reportName string, plan generation.Plan, action generation.Action, observed ...generation.ProcessObservation) *operationError {
 	path := filepath.Join(root, reportName)
 	_, report, err := decodeExtractorReport(path, plan.HeadSHA)
 	if err != nil {
@@ -100,7 +100,12 @@ func failedExtractionError(root, reportName string, plan generation.Plan, action
 		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if failure := adjudicateExtractorReport(report); failure != nil {
+		failure.counterexample = extractionCounterexample(action.Subject)
+		failure.derivedRelations = extractorDerivedRelations(report, action)
 		failure.evidence = extractionFailureEvidence(report, action)
+		if len(observed) != 0 {
+			failure.canonical = canonicalStructuredExtractorFailure(action.Subject, failure, observed[0])
+		}
 		return failure
 	}
 	if validationErr := validateBackupCleanup(report.BackupCleanup, report.NamespaceReplacements); validationErr != nil {
@@ -114,14 +119,8 @@ func failedExtractionError(root, reportName string, plan generation.Plan, action
 
 func extractionFailureEvidence(report extractorReport, action generation.Action) []generation.ObservationFailureEvidence {
 	counterexample := "extractor-report"
-	for _, failure := range report.Failures {
-		if failure.Decision == "REFUTED" {
-			counterexample = failure.BlockerID
-			if counterexample == "" {
-				counterexample = failure.Logical + "#" + failure.Reason
-			}
-			break
-		}
+	if relations := extractorDerivedRelations(report, action); len(relations) != 0 {
+		counterexample = relations[0].Counterexample
 	}
 	result := make([]generation.ObservationFailureEvidence, 0, len(action.RequiredIndicatorIDs))
 	for _, identifier := range action.RequiredIndicatorIDs {
@@ -131,6 +130,52 @@ func extractionFailureEvidence(report extractorReport, action generation.Action)
 		})
 	}
 	return result
+}
+
+func extractorDerivedRelations(report extractorReport, action generation.Action) []generation.CounterexampleRelation {
+	root := extractionCounterexample(action.Subject)
+	seen := make(map[string]bool)
+	result := make([]generation.CounterexampleRelation, 0, len(report.Failures))
+	for _, failure := range report.Failures {
+		if failure.Decision != "REFUTED" || failure.BlockerID == "" || seen[failure.BlockerID] {
+			continue
+		}
+		seen[failure.BlockerID] = true
+		result = append(result, generation.CounterexampleRelation{
+			Counterexample: failure.BlockerID, DerivedFrom: root, Relation: "DERIVED_FROM",
+		})
+	}
+	sort.Slice(result, func(left, right int) bool {
+		return result[left].Counterexample < result[right].Counterexample
+	})
+	return result
+}
+
+func canonicalStructuredExtractorFailure(subject string, failure *operationError, process generation.ProcessObservation) []byte {
+	if failure == nil || failure.class != "KNOWN_CONTRADICTION" ||
+		failure.stage != "derive-recipe" || failure.step != "select-declaration" ||
+		failure.reason != "NO_SAFE_DECLARATION_CAPACITY" || len(failure.derivedRelations) != 1 {
+		return nil
+	}
+	value := struct {
+		ActionSubject   string `json:"action_subject"`
+		Stage           string `json:"stage"`
+		Step            string `json:"step"`
+		Reason          string `json:"reason"`
+		DerivedBlocker  string `json:"derived_blocker"`
+		ExitCode        int    `json:"exit_code"`
+		StdoutBytes     int    `json:"stdout_bytes"`
+		StderrBytes     int    `json:"stderr_bytes"`
+	}{
+		ActionSubject: subject, Stage: failure.stage, Step: failure.step,
+		Reason: failure.reason, DerivedBlocker: failure.derivedRelations[0].Counterexample,
+		ExitCode: process.ExitCode, StdoutBytes: process.StdoutBytes, StderrBytes: process.StderrBytes,
+	}
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return nil
+	}
+	return payload
 }
 
 func adjudicateExtractorReport(report extractorReport) *operationError {
@@ -346,7 +391,7 @@ func validExtractorFailure(failure extractorFailureRecord) bool {
 	}
 	switch failure.Decision {
 	case "REFUTED":
-		return failure.UnknownClass == ""
+		return failure.UnknownClass == "" && failure.BlockerID != ""
 	case "UNKNOWN":
 		return failure.UnknownClass == "DIRECT_MISSING" ||
 			failure.UnknownClass == "MALFORMED_EVIDENCE" ||

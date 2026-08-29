@@ -14,16 +14,15 @@ func observeOrder(evidence SplitGoEvidence) Decision {
 	if err != nil || len(evidence.Candidates) == 0 {
 		return DecisionFail
 	}
-	metadata := false
-	for _, candidate := range evidence.Candidates {
-		if len(candidate.DeclarationOrder) != 0 {
-			metadata = true
-			break
+	candidates := sortedCandidates(evidence.Candidates)
+	metadata := hasDeclarationMetadata(candidates)
+	if metadata {
+		for _, candidate := range candidates {
+			count, countErr := nonImportDeclarationCount(candidate)
+			if countErr != nil || len(candidate.DeclarationOrder) != count {
+				return DecisionFail
+			}
 		}
-	}
-	candidates := evidence.Candidates
-	if !metadata {
-		candidates = sortedCandidates(candidates)
 	}
 	after := make([]initializationUnit, 0)
 	for _, candidate := range candidates {
@@ -37,6 +36,31 @@ func observeOrder(evidence SplitGoEvidence) Decision {
 		return DecisionFail
 	}
 	return DecisionPass
+}
+
+func hasDeclarationMetadata(candidates []FileEvidence) bool {
+	for _, candidate := range candidates {
+		if len(candidate.DeclarationOrder) != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func nonImportDeclarationCount(file FileEvidence) (int, error) {
+	_, parsed, err := parseEvidence(file)
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, declaration := range parsed.Decls {
+		general, isImport := declaration.(*ast.GenDecl)
+		if isImport && general.Tok == token.IMPORT {
+			continue
+		}
+		count++
+	}
+	return count, nil
 }
 
 type initializationUnit struct {
@@ -76,6 +100,9 @@ func initializationUnits(file FileEvidence) ([]initializationUnit, error) {
 			units = append(units, unit)
 		}
 		declarationIndex++
+	}
+	if len(file.DeclarationOrder) != 0 && len(file.DeclarationOrder) != declarationIndex {
+		return nil, fmt.Errorf("declaration metadata length mismatch")
 	}
 	return units, nil
 }

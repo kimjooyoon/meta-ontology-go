@@ -36,6 +36,35 @@ type operationMaterialization struct {
 	Canonical      []byte
 }
 
+type replayProcessObservation struct {
+	ExitCode     int    `json:"exit_code"`
+	StdoutBytes  int    `json:"stdout_bytes"`
+	StdoutDigest string `json:"stdout_digest"`
+	StderrBytes  int    `json:"stderr_bytes"`
+	StderrDigest string `json:"stderr_digest"`
+}
+
+type operationReplayEvidence struct {
+	Executor  replayProcessObservation `json:"executor"`
+	Evaluator replayProcessObservation `json:"evaluator"`
+	Verifier  replayProcessObservation `json:"verifier"`
+}
+
+func operationReplayEvidenceFrom(executor, evaluator, verifier generation.ProcessObservation) operationReplayEvidence {
+	return operationReplayEvidence{
+		Executor: replayProcess(executor), Evaluator: replayProcess(evaluator),
+		Verifier: replayProcess(verifier),
+	}
+}
+
+func replayProcess(observation generation.ProcessObservation) replayProcessObservation {
+	return replayProcessObservation{
+		ExitCode: observation.ExitCode, StdoutBytes: observation.StdoutBytes,
+		StdoutDigest: observation.StdoutDigest, StderrBytes: observation.StderrBytes,
+		StderrDigest: observation.StderrDigest,
+	}
+}
+
 type extractorReport struct {
 	Schema                string                        `json:"schema"`
 	SourceSHA             string                        `json:"source_sha"`
@@ -144,6 +173,8 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		if runErr != nil {
 			failure := observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, runErr.blockedBy, materialized.Executor)
 			failure.FailureEvidence = append([]generation.ObservationFailureEvidence{}, runErr.evidence...)
+			failure.Counterexample = runErr.counterexample
+			failure.DerivedRelations = append([]generation.CounterexampleRelation{}, runErr.derivedRelations...)
 			bundle.Failures = append(bundle.Failures, failure)
 			continue
 		}
@@ -179,6 +210,9 @@ type operationError struct {
 	stage, step, reason, class, next string
 	blockedBy                        []string
 	evidence                         []generation.ObservationFailureEvidence
+	counterexample                   string
+	derivedRelations                 []generation.CounterexampleRelation
+	canonical                        []byte
 }
 
 func newOperationError(stage, step, reason, class, next string) *operationError {
@@ -187,6 +221,21 @@ func newOperationError(stage, step, reason, class, next string) *operationError 
 
 func (err *operationError) Error() string {
 	return strings.Join([]string{err.stage, err.step, err.reason, err.class, err.next}, "/")
+}
+
+func sameOperationError(left, right *operationError) bool {
+	return left != nil && right != nil && left.stage == right.stage && left.step == right.step &&
+		left.reason == right.reason && left.class == right.class && left.next == right.next &&
+		strings.Join(left.blockedBy, "\x00") == strings.Join(right.blockedBy, "\x00") &&
+		strings.Join(left.evidenceCounterexamples(), "\x00") == strings.Join(right.evidenceCounterexamples(), "\x00")
+}
+
+func (err *operationError) evidenceCounterexamples() []string {
+	result := make([]string, 0, len(err.evidence))
+	for _, evidence := range err.evidence {
+		result = append(result, evidence.Counterexample)
+	}
+	return result
 }
 
 func observationFailure(action generation.Action, stage, step, reason, class, next string, blockedBy []string, process generation.ProcessObservation) generation.ObservationFailure {
@@ -268,7 +317,11 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	canonical, _ := json.Marshal(evidence)
+	canonicalValue := struct {
+		Evidence operationconformance.SplitGoEvidence `json:"evidence"`
+		Process  operationReplayEvidence              `json:"process"`
+	}{Evidence: evidence, Process: operationReplayEvidenceFrom(result.Observation, evaluator, verifier.Observation)}
+	canonical, _ := json.Marshal(canonicalValue)
 	instance := digestBytes(canonical)
 	indicators, ok := splitIndicatorReceipts(report, action, plan.HeadSHA)
 	if !ok {
@@ -284,6 +337,14 @@ func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan,
 	}
 	first, firstErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
 	if firstErr != nil {
+		second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
+		if len(first.Canonical) == 0 || secondErr == nil || len(second.Canonical) == 0 {
+			return first, firstErr
+		}
+		if !sameOperationError(firstErr, secondErr) || !bytes.Equal(first.Canonical, second.Canonical) ||
+			first.InstanceDigest != second.InstanceDigest {
+			return first, newOperationError("replay-operation", "compare-process-evidence", "REPLAY_EVIDENCE_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		}
 		return first, firstErr
 	}
 	second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
@@ -322,7 +383,13 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	actual := []string{"go", "run", "./bootstrap/function-extractor", "-root", temporary, "-plan", planPath, "-density-report", densityPath, "-expected-sha", plan.HeadSHA, "-output", filepath.Join(temporary, reportName)}
 	result, runErr := runProcess(temporary, environment, command, actual)
 	if runErr != nil || result.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation}, failedExtractionError(temporary, reportName, plan, action)
+		failure := failedExtractionError(temporary, reportName, plan, action, result.Observation)
+		materialized := operationMaterialization{Executor: result.Observation, Canonical: failure.canonical}
+		if len(failure.canonical) != 0 {
+			materialized.InstanceDigest = digestBytes(failure.canonical)
+			materialized.Executor.StderrDigest = digestBytes(failure.canonical)
+		}
+		return materialized, failure
 	}
 	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName)
 }
@@ -350,7 +417,16 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	if failure := adjudicateExtractorReport(report); failure != nil {
-		return operationMaterialization{Executor: result.Observation}, failure
+		failure.counterexample = extractionCounterexample(action.Subject)
+		failure.derivedRelations = extractorDerivedRelations(report, action)
+		failure.evidence = extractionFailureEvidence(report, action)
+		failure.canonical = canonicalStructuredExtractorFailure(action.Subject, failure, result.Observation)
+		materialized := operationMaterialization{Executor: result.Observation, Canonical: failure.canonical}
+		if len(failure.canonical) != 0 {
+			materialized.InstanceDigest = digestBytes(failure.canonical)
+			materialized.Executor.StderrDigest = digestBytes(failure.canonical)
+		}
+		return materialized, failure
 	}
 	observed, found := findExtractorSubject(report.Subjects, subject.Path)
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
@@ -381,7 +457,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		Report  json.RawMessage   `json:"report"`
 		Before  []byte            `json:"before"`
 		Outputs map[string][]byte `json:"outputs"`
-	}{Report: reportRaw, Before: before, Outputs: outputs}
+		Process operationReplayEvidence `json:"process"`
+	}{Report: reportRaw, Before: before, Outputs: outputs,
+		Process: operationReplayEvidenceFrom(result.Observation, evaluator, verifier.Observation)}
 	canonical, _ := json.Marshal(canonicalValue)
 	instance := digestBytes(canonical)
 	contract := digestBytes([]byte("gooo/function-extraction/suffix-decomposition-contract/v1"))

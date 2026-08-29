@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -138,29 +139,45 @@ func validRefutedIndicatorLinks(failure generation.ObservationFailure, action ge
 	if len(failure.FailureEvidence) != len(action.RequiredIndicatorIDs) {
 		return false
 	}
-	expectedCounterexample := extractionCounterexample(action.Subject)
-	if expectedCounterexample == "" {
+	expectedRoot := extractionCounterexample(action.Subject)
+	if expectedRoot == "" || failure.Counterexample != expectedRoot || len(failure.DerivedRelations) != 1 {
+		return false
+	}
+	derived := failure.DerivedRelations[0]
+	if derived.Relation != "DERIVED_FROM" || derived.DerivedFrom != expectedRoot ||
+		!validDerivedCounterexample(expectedRoot, derived.Counterexample) {
 		return false
 	}
 	allowed := make(map[string]bool, len(action.RequiredIndicatorIDs))
-	var counterexample string
 	for _, identifier := range action.RequiredIndicatorIDs {
 		allowed[identifier] = true
 	}
 	for _, evidence := range failure.FailureEvidence {
 		if !allowed[evidence.IndicatorID] || evidence.Decision != "UNKNOWN" ||
 			evidence.Observed != 0 || evidence.Expected != 1 ||
-			evidence.Counterexample != expectedCounterexample {
-			return false
-		}
-		if counterexample == "" {
-			counterexample = evidence.Counterexample
-		} else if counterexample != evidence.Counterexample {
+			evidence.Counterexample != derived.Counterexample {
 			return false
 		}
 		delete(allowed, evidence.IndicatorID)
 	}
 	return len(allowed) == 0
+}
+
+func validDerivedCounterexample(root, derived string) bool {
+	prefix := root + "ExtractedSuffix"
+	if !strings.HasPrefix(derived, prefix) {
+		return false
+	}
+	suffix := strings.TrimPrefix(derived, prefix)
+	if len(suffix) < 2 {
+		return false
+	}
+	for _, digit := range suffix {
+		if digit < '0' || digit > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func extractionCounterexample(subject string) string {
