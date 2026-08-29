@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
+)
 
 func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
 	if !skipCaps {
