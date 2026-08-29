@@ -62,9 +62,9 @@ func TestFailedExtractionPreservesBackupUnknownCoordinate(t *testing.T) {
 	root := t.TempDir()
 	report := extractorReport{
 		Schema: functionExtractionReportSchema, SourceSHA: "head",
-		Indicators: extractionTestIndicators(),
+		Indicators:            extractionTestIndicators(),
 		NamespaceReplacements: []namespaceReplacementReceipt{{DestinationPreexisted: true}},
-		BackupCleanup: backupCleanupObservation{Status: "UNKNOWN", Attempted: 1, Failures: 1},
+		BackupCleanup:         backupCleanupObservation{Status: "UNKNOWN", Attempted: 1, Failures: 1},
 	}
 	payload, err := json.Marshal(report)
 	if err != nil {
@@ -113,37 +113,128 @@ func TestExtractorReportRejectsIndicatorAndAggregateDrift(t *testing.T) {
 	}
 	wrong.Operation = "wrong-operation"
 	encoded, _ := json.Marshal(wrong)
-	if _, ok := extractorIndicatorValues([]json.RawMessage{encoded}); ok {
+	indicators[0] = encoded
+	if _, ok := extractorIndicatorValues(indicators); ok {
 		t.Fatal("wrong indicator operation was accepted")
 	}
 	validIndicators := extractionTestIndicatorsWithValues(2, 2, 2, 2, 0)
 	cases := []struct {
-		name     string
-		report   extractorReport
+		name   string
+		report extractorReport
 	}{
 		{"duplicate-subject", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
-			{Logical: "a", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"a.go"}},
-			{Logical: "a", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"b.go"}},
+			validExtractionSubject("a.go"),
+			validExtractionSubject("a.go"),
 		}, Indicators: validIndicators}},
 		{"duplicate-changed-file", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
-			{Logical: "a", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"same.go"}},
-			{Logical: "b", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"same.go"}},
+			{Logical: "a.go", State: "COMMITTED_APPLIED", Before: 90, After: 70, Files: []string{"same.go", "a.go"}, Consumer: "function-extractor", Operation: "extract-function", Operations: []string{"extract-function"}, Proof: "coherent-system"},
+			{Logical: "b.go", State: "COMMITTED_APPLIED", Before: 90, After: 70, Files: []string{"same.go", "b.go"}, Consumer: "function-extractor", Operation: "extract-function", Operations: []string{"extract-function"}, Proof: "coherent-system"},
 		}, Indicators: validIndicators}},
 		{"duplicate-created-file", extractorReport{StagedSubjects: 2, Subjects: []extractorSubject{
-			{Logical: "a", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"a.go"}, CreatedFiles: []string{"helper.go"}},
-			{Logical: "b", State: "COMMITTED_APPLIED", Before: 1, After: 1, Files: []string{"b.go"}, CreatedFiles: []string{"helper.go"}},
+			{Logical: "a.go", State: "COMMITTED_APPLIED", Before: 90, After: 70, Files: []string{"a.go", "helper.go"}, CreatedFiles: []string{"helper.go", "helper.go"}, Consumer: "function-extractor", Operation: "extract-function", Operations: []string{"extract-function"}, Proof: "coherent-system"},
+			validExtractionSubject("b.go"),
 		}, Indicators: validIndicators}},
 		{"invalid-state", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			{Logical: "a", State: "UNKNOWN", Before: 1, After: 1, Files: []string{"a.go"}},
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.State = "UNKNOWN"
+				return subject
+			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 		{"nonpositive-lines", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
-			{Logical: "a", State: "COMMITTED_APPLIED", Before: 0, After: 1, Files: []string{"a.go"}},
+			func() extractorSubject { subject := validExtractionSubject("a.go"); subject.Before = 0; return subject }(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"no-line-reduction", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.Before = 75
+				subject.After = 75
+				return subject
+			}(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"logical-not-listed", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.Files = []string{"b.go"}
+				return subject
+			}(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"created-not-subset", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.CreatedFiles = []string{"helper.go"}
+				return subject
+			}(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"duplicate-operations", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.Operations = []string{"extract-function", "extract-function"}
+				return subject
+			}(),
+		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
+		{"unsupported-proof", extractorReport{StagedSubjects: 1, Subjects: []extractorSubject{
+			func() extractorSubject {
+				subject := validExtractionSubject("a.go")
+				subject.Proof = "unsupported-proof"
+				return subject
+			}(),
 		}, Indicators: extractionTestIndicatorsWithValues(1, 1, 1, 0, 0)}},
 	}
 	for _, test := range cases {
 		if !validateExtractorReport(test.report) {
 			t.Errorf("%s aggregate contradiction was accepted", test.name)
 		}
+	}
+}
+
+func validExtractionSubject(logical string) extractorSubject {
+	return extractorSubject{
+		Logical: logical, State: "COMMITTED_APPLIED", Before: 90, After: 70,
+		Files: []string{logical}, Consumer: "function-extractor", Operation: "extract-function",
+		Operations: []string{"extract-function"}, Proof: "coherent-system",
+	}
+}
+
+func TestExtractorReportAcceptsExactSubjectContract(t *testing.T) {
+	report := extractorReport{
+		StagedSubjects: 1,
+		Subjects:       []extractorSubject{validExtractionSubject("a.go")},
+		Indicators:     extractionTestIndicatorsWithValues(1, 1, 1, 0, 0),
+	}
+	if validateExtractorReport(report) {
+		t.Fatal("valid extraction subject contract was rejected")
+	}
+}
+
+func TestAdjudicateStagedRefutedFailureKeepsAppliedZero(t *testing.T) {
+	report := extractorReport{
+		StagedSubjects: 1,
+		Subjects: []extractorSubject{func() extractorSubject {
+			subject := validExtractionSubject("staged.go")
+			subject.State = "STAGED_NOT_COMMITTED"
+			return subject
+		}()},
+		Unhandled: []string{"blocked.go"},
+		Failures: []extractorFailureRecord{{
+			Logical: "blocked.go", BlockerID: "blocked.go#declaration", Decision: "REFUTED",
+			Stage: "derive-recipe", Step: "select-declaration", Reason: "NO_SAFE_DECLARATION_CAPACITY",
+			NextOperation: "report-counterexample", BlockedBy: []string{},
+		}},
+		Indicators: extractionTestIndicatorsWithValues(2, 1, 0, 0, 1),
+	}
+	if validateExtractorReport(report) {
+		t.Fatal("valid staged refuted report was treated as malformed")
+	}
+	failure := adjudicateExtractorReport(report)
+	if failure == nil || failure.class != "KNOWN_CONTRADICTION" || failure.stage != "derive-recipe" ||
+		failure.step != "select-declaration" || failure.reason != "NO_SAFE_DECLARATION_CAPACITY" ||
+		failure.next != "report-counterexample" {
+		t.Fatalf("staged refuted failure was not preserved: %+v", failure)
+	}
+	values, ok := extractorIndicatorValues(report.Indicators)
+	if !ok || values["extraction.applied"] != 0 {
+		t.Fatalf("staged refuted report did not preserve applied=0: %#v", values)
 	}
 }
 

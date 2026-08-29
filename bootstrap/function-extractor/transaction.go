@@ -89,7 +89,6 @@ func commitStaged(staged map[string]stagedFile) (stagedTransaction, error) {
 	return stagedTransaction{files: files, receipts: receipts}, nil
 }
 
-
 func removeTransactionBackups(files []transactionFile) backupCleanupObservation {
 	result := backupCleanupObservation{Status: "PASS"}
 	for index := range files {

@@ -32,7 +32,7 @@ type OperationInstanceEvidence struct {
 	ExecutorObservation    ProcessObservation  `json:"executor_observation"`
 	EvaluatorObservation   ProcessObservation  `json:"evaluator_observation"`
 	ReplayComparisons      int                 `json:"replay_comparisons"`
-	ReplayMatch             bool               `json:"replay_match"`
+	ReplayMatch            bool                `json:"replay_match"`
 	VerifierObservation    *ProcessObservation `json:"verifier_observation,omitempty"`
 }
 

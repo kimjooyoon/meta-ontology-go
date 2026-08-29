@@ -79,13 +79,13 @@ type backupCleanupObservation struct {
 }
 
 type extractionReport struct {
-	Schema                string                         `json:"schema"`
-	SourceSHA             string                         `json:"source_sha"`
-	StagedSubjects        int                            `json:"staged_subjects"`
-	Subjects              []extractionSubject            `json:"subjects"`
-	Unhandled             []string                       `json:"unhandled"`
-	Failures              []extractionFailureRecord      `json:"failures,omitempty"`
-	Indicators            []extractionIndicator          `json:"indicators"`
+	Schema                string                        `json:"schema"`
+	SourceSHA             string                        `json:"source_sha"`
+	StagedSubjects        int                           `json:"staged_subjects"`
+	Subjects              []extractionSubject           `json:"subjects"`
+	Unhandled             []string                      `json:"unhandled"`
+	Failures              []extractionFailureRecord     `json:"failures,omitempty"`
+	Indicators            []extractionIndicator         `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
 	BackupCleanup         backupCleanupObservation      `json:"backup_cleanup"`
 }

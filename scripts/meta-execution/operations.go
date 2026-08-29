@@ -37,15 +37,15 @@ type operationMaterialization struct {
 }
 
 type extractorReport struct {
-	Schema                string                         `json:"schema"`
-	SourceSHA             string                         `json:"source_sha"`
-	StagedSubjects        int                            `json:"staged_subjects"`
+	Schema                string                        `json:"schema"`
+	SourceSHA             string                        `json:"source_sha"`
+	StagedSubjects        int                           `json:"staged_subjects"`
 	Subjects              []extractorSubject            `json:"subjects"`
-	Unhandled             []string                       `json:"unhandled"`
+	Unhandled             []string                      `json:"unhandled"`
 	Failures              []extractorFailureRecord      `json:"failures,omitempty"`
-	Indicators            []json.RawMessage              `json:"indicators"`
+	Indicators            []json.RawMessage             `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
-	BackupCleanup         backupCleanupObservation       `json:"backup_cleanup"`
+	BackupCleanup         backupCleanupObservation      `json:"backup_cleanup"`
 }
 
 type extractorSubject struct {
@@ -370,9 +370,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "read-generated-output", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	canonicalValue := struct {
-		Report  json.RawMessage       `json:"report"`
-		Before  []byte                `json:"before"`
-		Outputs map[string][]byte     `json:"outputs"`
+		Report  json.RawMessage   `json:"report"`
+		Before  []byte            `json:"before"`
+		Outputs map[string][]byte `json:"outputs"`
 	}{Report: reportRaw, Before: before, Outputs: outputs}
 	canonical, _ := json.Marshal(canonicalValue)
 	instance := digestBytes(canonical)

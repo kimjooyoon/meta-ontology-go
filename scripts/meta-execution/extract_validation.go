@@ -150,25 +150,15 @@ func validateExtractorReport(report extractorReport) bool {
 	seenChanged := make(map[string]bool)
 	seenCreated := make(map[string]bool)
 	for _, subject := range report.Subjects {
-		if subject.Logical == "" || seenSubjects[subject.Logical] || subject.Before <= 0 || subject.After <= 0 ||
-			(subject.State != "STAGED_NOT_COMMITTED" && subject.State != "COMMITTED_APPLIED") {
+		if !validExtractionSubject(subject) || seenSubjects[subject.Logical] {
 			return true
 		}
 		seenSubjects[subject.Logical] = true
 		if _, exists := seenUnhandled[subject.Logical]; exists {
 			return true
 		}
-		for _, path := range subject.Files {
-			if path == "" || seenChanged[path] {
-				return true
-			}
-			seenChanged[path] = true
-		}
-		for _, path := range subject.CreatedFiles {
-			if path == "" || seenCreated[path] {
-				return true
-			}
-			seenCreated[path] = true
+		if !recordExtractionSubjectFiles(subject, seenChanged, seenCreated) {
+			return true
 		}
 	}
 	values, ok := extractorIndicatorValues(report.Indicators)
@@ -201,6 +191,56 @@ func validateExtractorReport(report extractorReport) bool {
 	return false
 }
 
+func validExtractionSubject(subject extractorSubject) bool {
+	if subject.Logical == "" || subject.Before <= 75 || subject.After <= 0 || subject.After > 75 || subject.After >= subject.Before ||
+		(subject.State != "STAGED_NOT_COMMITTED" && subject.State != "COMMITTED_APPLIED") || subject.Consumer != "function-extractor" ||
+		subject.Operation == "" || subject.Proof == "" || len(subject.Files) == 0 || len(subject.Operations) == 0 {
+		return false
+	}
+	if subject.Proof != "axiomatic-foundation" && subject.Proof != "coherent-system" {
+		return false
+	}
+	seen := make(map[string]bool, len(subject.Operations))
+	found := false
+	for _, operation := range subject.Operations {
+		if operation == "" || seen[operation] {
+			return false
+		}
+		seen[operation] = true
+		if operation == subject.Operation {
+			found = true
+		}
+	}
+	return found
+}
+
+func recordExtractionSubjectFiles(subject extractorSubject, seenChanged, seenCreated map[string]bool) bool {
+	files := make(map[string]bool, len(subject.Files))
+	logicalCount := 0
+	for _, path := range subject.Files {
+		if path == "" || files[path] || seenChanged[path] {
+			return false
+		}
+		files[path] = true
+		seenChanged[path] = true
+		if path == subject.Logical {
+			logicalCount++
+		}
+	}
+	if logicalCount != 1 {
+		return false
+	}
+	created := make(map[string]bool, len(subject.CreatedFiles))
+	for _, path := range subject.CreatedFiles {
+		if path == "" || created[path] || !files[path] || seenCreated[path] {
+			return false
+		}
+		created[path] = true
+		seenCreated[path] = true
+	}
+	return true
+}
+
 func trueIfNoFailureBinding(unhandled []string, failures map[string]extractorFailureRecord) bool {
 	for _, logical := range unhandled {
 		if _, ok := failures[logical]; !ok {
@@ -212,10 +252,10 @@ func trueIfNoFailureBinding(unhandled []string, failures map[string]extractorFai
 
 func extractorIndicatorValues(raw []json.RawMessage) (map[string]int, bool) {
 	expected := map[string]extractorIndicatorRecord{
-		"extraction.observed": {Limit: -1, Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},
-		"extraction.staged":   {Limit: -1, Consumer: "function-extractor", Operation: "stage-helper-extraction", Proof: "coherent-system"},
-		"extraction.applied":  {Limit: -1, Consumer: "logical-materializer", Operation: "accept-helper-extraction", Proof: "coherent-system"},
-		"extraction.created":  {Limit: -1, Consumer: "authorized-write-set", Operation: "authorize-declared-file-creation", Proof: "axiomatic-foundation"},
+		"extraction.observed":  {Limit: -1, Consumer: "function-extractor", Operation: "observe-density-residual", Proof: "axiomatic-foundation"},
+		"extraction.staged":    {Limit: -1, Consumer: "function-extractor", Operation: "stage-helper-extraction", Proof: "coherent-system"},
+		"extraction.applied":   {Limit: -1, Consumer: "logical-materializer", Operation: "accept-helper-extraction", Proof: "coherent-system"},
+		"extraction.created":   {Limit: -1, Consumer: "authorized-write-set", Operation: "authorize-declared-file-creation", Proof: "axiomatic-foundation"},
 		"extraction.unhandled": {Limit: 0, Blocking: true, Consumer: "function-extractor", Operation: "define-extraction-recipe", Proof: "infinite-regress"},
 	}
 	values := make(map[string]int, len(raw))

@@ -67,8 +67,8 @@ func installTransaction(file *transactionFile) (namespaceReplacementReceipt, err
 	}
 	return namespaceReplacementReceipt{
 		LogicalPath: file.logical, Primitive: "os.Rename",
-		Contract: linuxNamespaceReplacementContract,
-		GOOS: runtime.GOOS,
+		Contract:      linuxNamespaceReplacementContract,
+		GOOS:          runtime.GOOS,
 		SameDirectory: true, DestinationPreexisted: file.destinationPreexisted,
 		TempDigest: file.tempDigest, ReplacementSuccess: true, FinalDigest: finalDigest,
 	}, nil
