@@ -10,6 +10,7 @@ func init() {
 		"internal/meta/languagereadiness/rollbackfixedpoint",
 		"internal/meta/metrictransition",
 		"internal/meta/transformationeffect",
+		"internal/meta/transformationeffectverification",
 		"internal/verify/scope_mixed_outcome_terminal_v1.go",
 		"internal/verify/scope_mixed_outcome_terminal_v1_test.go",
 	}

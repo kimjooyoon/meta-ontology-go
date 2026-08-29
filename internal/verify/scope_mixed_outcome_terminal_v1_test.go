@@ -4,7 +4,7 @@ import "testing"
 
 func TestMixedOutcomeTerminalScope(t *testing.T) {
 	paths, ok := BranchScope(mixedOutcomeTerminalBranch)
-	if !ok || len(paths) != 8 {
+	if !ok || len(paths) != 9 {
 		t.Fatalf("mixed outcome branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{

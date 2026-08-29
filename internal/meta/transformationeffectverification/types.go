@@ -134,6 +134,11 @@ type ledger struct {
 	SelectedPlanOperations       int               `json:"selected_plan_operations"`
 	BoundExecutorOperations      int               `json:"bound_executor_operations"`
 	UnboundExecutorOperations    int               `json:"unbound_executor_operations"`
+	OperationOutcome             string            `json:"operation_outcome"`
+	ReceiptDecision              string            `json:"receipt_decision"`
+	ReceiptCount                 int               `json:"receipt_count"`
+	FailureCount                 int               `json:"failure_count"`
+	UnknownCount                 int               `json:"unknown_count"`
 	Status                       string            `json:"status"`
 	Indicators                   []json.RawMessage `json:"indicators"`
 	SemanticDigest               string            `json:"semantic_digest"`
