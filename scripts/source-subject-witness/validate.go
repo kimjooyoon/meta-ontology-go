@@ -1,16 +1,17 @@
 package main
 
-import "fmt"
-
 func validateSource(report sourceReport, expectedSHA string) error {
-	if report.Repository == "" || report.CommitSHA != expectedSHA || len(report.CommitSHA) != 40 {
-		return fmt.Errorf("source identity is missing or not exact-head bound")
+	if report.Repository == "" || report.CommitSHA != expectedSHA || !validCommitSHA(report.CommitSHA) {
+		return sourceValidationFailure("SOURCE_IDENTITY_MALFORMED", "MALFORMED_EVIDENCE", "restore-source-metrics")
 	}
 	if report.Meta.Schema != "gooo/indicator-report/v3" || report.Meta.Policy.Schema != "gooo/source-policy/v1" {
-		return fmt.Errorf("source metric schema is unsupported")
+		return sourceValidationFailure("SOURCE_SCHEMA_UNSUPPORTED", "MALFORMED_EVIDENCE", "restore-source-metrics")
 	}
 	if !report.Meta.Policy.ExemptProjectRootTopology || !report.Meta.Policy.ExemptProjectRootREADME {
-		return fmt.Errorf("project root topology and README exemptions are required")
+		return sourceValidationFailure("SOURCE_POLICY_INCOMPLETE", "MALFORMED_EVIDENCE", "restore-source-policy")
+	}
+	if report.Meta.Policy.MaxFileLines <= 0 || report.Meta.Policy.MaxFunctionLines <= 0 || report.Meta.Policy.MaxDirectDirectoryEntries < 0 {
+		return sourceValidationFailure("SOURCE_POLICY_LIMITS_INVALID", "MALFORMED_EVIDENCE", "restore-source-policy")
 	}
 	for _, check := range []func() error{
 		func() error { return validateFiles(report.Files) },
@@ -22,26 +23,35 @@ func validateSource(report sourceReport, expectedSHA string) error {
 		}
 	}
 	if len(report.Meta.Indicators) == 0 {
-		return fmt.Errorf("source meta indicator ledger is empty")
+		return sourceValidationFailure("SOURCE_INDICATORS_MISSING", "DIRECT_MISSING", "restore-source-metrics")
 	}
+	seenIndicators := make(map[string]bool, len(report.Meta.Indicators))
 	for _, indicator := range report.Meta.Indicators {
-		validApplicability := indicator.Applicability == "APPLICABLE" || indicator.Applicability == "NOT_APPLICABLE"
-		validDecision := indicator.Decision == "PASS" || indicator.Decision == "NOT_APPLICABLE"
-		consistentApplicability := (indicator.Applicability == "NOT_APPLICABLE") == (indicator.Decision == "NOT_APPLICABLE")
-		if indicator.Subject == "" || indicator.MetricID == "" || !indicator.Satisfied || !validApplicability || !validDecision || !consistentApplicability {
-			return fmt.Errorf("source indicator %q is incomplete or unsatisfied", indicator.MetricID)
+		if err := validateIndicatorShape(indicator); err != nil {
+			return err
+		}
+		key := indicatorKey(indicator.SubjectKind, indicator.Subject, indicator.MetricID)
+		if seenIndicators[key] {
+			return sourceValidationFailure("SOURCE_INDICATOR_DUPLICATE", "MALFORMED_EVIDENCE", "restore-source-metrics")
+		}
+		seenIndicators[key] = true
+		if err := validateIndicatorState(indicator); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
 func validateFiles(files []fileMetric) error {
+	if len(files) == 0 {
+		return sourceValidationFailure("SOURCE_FILES_MISSING", "DIRECT_MISSING", "restore-source-metrics")
+	}
 	seen := make(map[string]bool)
 	languages := map[string]bool{"go": true, "gooo": true, "other": true}
 	for _, file := range files {
 		invalidOther := file.Language == "other" && file.Lines != 0
 		if !validPath(file.Path, false) || seen[file.Path] || file.Lines < 0 || !languages[file.Language] || invalidOther {
-			return fmt.Errorf("file observation %q is invalid or duplicated", file.Path)
+			return sourceValidationFailure("SOURCE_FILE_OBSERVATION_INVALID", "MALFORMED_EVIDENCE", "restore-source-metrics")
 		}
 		seen[file.Path] = true
 	}
@@ -60,12 +70,12 @@ func validateDirectories(directories []directoryMetric) error {
 			directory.RecursiveFolders, directory.RecursiveFiles, directory.GoFiles,
 			directory.GoooFiles, directory.GoLines, directory.GoooLines)
 		if !validPath(directory.Path, true) || seen[directory.Path] || directory.SubjectKind != kind || !metricsValid {
-			return fmt.Errorf("directory observation %q is invalid or duplicated", directory.Path)
+			return sourceValidationFailure("SOURCE_DIRECTORY_OBSERVATION_INVALID", "MALFORMED_EVIDENCE", "restore-source-metrics")
 		}
 		seen[directory.Path] = true
 	}
 	if roots != 1 {
-		return fmt.Errorf("directory set has %d project roots", roots)
+		return sourceValidationFailure("SOURCE_DIRECTORY_ROOT_INVALID", "MALFORMED_EVIDENCE", "restore-source-metrics")
 	}
 	return nil
 }

@@ -47,3 +47,33 @@ func operationSet(rows []sourceIndicator) string {
 	sort.Strings(operations)
 	return strings.Join(operations, "+")
 }
+
+func unsatisfiedLineDrivers(values []sourceIndicator) []sourceIndicator {
+	observations := make([]sourceIndicator, 0)
+	for _, value := range values {
+		if !value.Satisfied && isLineCapMetric(value.MetricID) {
+			observations = append(observations, value)
+		}
+	}
+	sort.Slice(observations, func(i, j int) bool {
+		if observations[i].MetricID != observations[j].MetricID {
+			return observations[i].MetricID < observations[j].MetricID
+		}
+		return observations[i].Subject < observations[j].Subject
+	})
+	return observations
+}
+
+func observationState(observations []sourceIndicator) string {
+	if len(observations) > 0 {
+		return "OBSERVED"
+	}
+	return ""
+}
+
+func claimState(observations []sourceIndicator) string {
+	if len(observations) > 0 {
+		return "OPEN"
+	}
+	return ""
+}
