@@ -234,6 +234,14 @@
       "meta_operation": "replay-language-syntax"
     },
     {
+      "id": "opentofu-observation",
+      "path": "examples/opentofu-observation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax"
+    },
+    {
       "id": "unknown-keyword",
       "path": "examples/language-syntax-roundtrip/unknown-keyword.txt",
       "kind": "INVALID",

@@ -7,14 +7,14 @@
       "id": "syntax",
       "schema": "gooo/language-syntax-roundtrip/v1",
       "meta_operation": "prove-language-syntax-roundtrip",
-      "target": 40,
+      "target": 41,
       "link_target": 1
     },
     {
       "id": "semantics",
       "schema": "gooo/language-semantic-model/v1",
       "meta_operation": "prove-staged-semantic-model",
-      "target": 32,
+      "target": 34,
       "link_target": 2
     },
     {
