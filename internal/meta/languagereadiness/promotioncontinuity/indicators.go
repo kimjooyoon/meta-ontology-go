@@ -19,13 +19,6 @@ func buildIndicators(report Report, guardOK, recoveryOK, effectsOK, authorityOK,
 		{"gooo.metric.language.promotion-continuity-source-mutations.guardrail.v1", "GUARDRAIL", "REGRESSION", "APPLICABLE", boolInt(!report.Source.Recovery.SourceWorkspaceUnchanged), 0, effectsOK},
 		{"gooo.metric.language.promotion-continuity-terminal-preserved.v1", "OUTCOME", "REGRESSION", "APPLICABLE", boolInt(mixed), 1, mixed},
 	}
-	if mixed {
-		values = append(values, struct {
-			id, class, choice string
-			value, target     int
-			satisfied         bool
-		}{"gooo.metric.language.promotion-continuity-terminal-preserved.v1", "OUTCOME", "REGRESSION", 1, 1, true})
-	}
 	indicators := make([]Indicator, 0, len(values))
 	for _, value := range values {
 		indicators = append(indicators, Indicator{
