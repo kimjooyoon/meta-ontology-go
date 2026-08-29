@@ -9,6 +9,43 @@ type IndicatorReceipt struct {
 	ProofChoice    ProofChoice      `json:"proof_choice"`
 }
 
+const OperationInstanceEvidenceSchema = "gooo/meta-operation-instance-evidence/v1"
+
+type ProcessObservation struct {
+	Command       []string `json:"command"`
+	ExitCode      int      `json:"exit_code"`
+	StdoutBytes   int      `json:"stdout_bytes"`
+	StdoutDigest  string   `json:"stdout_digest"`
+	StderrBytes   int      `json:"stderr_bytes"`
+	StderrDigest  string   `json:"stderr_digest"`
+}
+
+type OperationInstanceEvidence struct {
+	Schema                  string             `json:"schema"`
+	ActionIndicatorID       string             `json:"action_indicator_id"`
+	Subject                 string             `json:"subject"`
+	HeadSHA                 string             `json:"head_sha"`
+	OperationID             string             `json:"operation_id"`
+	ContractEvidenceDigest  string             `json:"contract_evidence_digest"`
+	InstanceEvidenceDigest  string             `json:"instance_evidence_digest"`
+	ExecutorObservation    ProcessObservation `json:"executor_observation"`
+	EvaluatorObservation   ProcessObservation `json:"evaluator_observation"`
+	ReplayComparisons      int                `json:"replay_comparisons"`
+	ReplayMatch             bool               `json:"replay_match"`
+	VerifierObservation    *ProcessObservation `json:"verifier_observation,omitempty"`
+}
+
+type ObservationFailure struct {
+	ActionIndicatorID string             `json:"action_indicator_id"`
+	Stage             string             `json:"stage"`
+	Step              string             `json:"step"`
+	Reason            string             `json:"reason"`
+	UnknownClass      string             `json:"unknown_class"`
+	NextOperation     string             `json:"next_operation"`
+	BlockedBy         []string           `json:"blocked_by"`
+	Executor          ProcessObservation `json:"executor_observation"`
+}
+
 type OperationReceipt struct {
 	SchemaVersion                 string                 `json:"schema_version"`
 	BaseSHA                       string                 `json:"base_sha"`
@@ -24,6 +61,7 @@ type OperationReceipt struct {
 	Evaluator                     string                 `json:"evaluator"`
 	ProofChoice                   ProofChoice            `json:"proof_choice"`
 	Indicators                    []IndicatorReceipt     `json:"indicators"`
+	InstanceEvidence              *OperationInstanceEvidence `json:"instance_evidence,omitempty"`
 	ReceiptDigest                 string                 `json:"receipt_digest"`
 }
 

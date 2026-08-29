@@ -21,7 +21,7 @@ func extractionSubjects(plans map[string]planSubject, residual []string, recipes
 		if !exists {
 			return nil, fmt.Errorf("recipe did not rewrite subject %s", logical)
 		}
-		operation, proof := "move-complete-declarations", "coherent-system"
+		operation, proof := "extract-function", "coherent-system"
 		if recipe, exists := recipes[logical]; exists {
 			operation, proof = recipe.Operation, "axiomatic-foundation"
 		}

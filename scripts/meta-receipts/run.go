@@ -26,6 +26,21 @@ func run(configuration options) error {
 		if err := decodeJSON(configuration.receiptsPath, &receipts); err != nil {
 			return err
 		}
+	} else {
+		manifestPath := filepath.Join(filepath.Dir(configuration.planPath), "self-improvement-execution.json")
+		manifest := generation.ExecutionManifest{}
+		if err := decodeJSON(manifestPath, &manifest); err != nil {
+			return fmt.Errorf("read execution manifest: %w", err)
+		}
+		bundlePath := filepath.Join(filepath.Dir(configuration.planPath), "meta-operation-observations.json")
+		bundle := generation.OperationObservationBundle{}
+		if err := decodeJSON(bundlePath, &bundle); err != nil {
+			return fmt.Errorf("read operation observations: %w", err)
+		}
+		if err := generation.ValidateObservationBundle(bundle, plan, manifest); err != nil {
+			return fmt.Errorf("operation observation binding failed: %w", err)
+		}
+		receipts = bundle.Receipts
 	}
 	report := generation.VerifyReceipts(plan, receipts)
 	payload, err := generation.EncodeReceiptReport(report)

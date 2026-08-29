@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
@@ -30,6 +31,18 @@ func run(configuration options) error {
 	if err := writeAtomic(configuration.outputPath, payload); err != nil {
 		return err
 	}
+	bundle, bundleErr := executeSelectedOperations(plan, manifest, workspaceRoot())
+	if bundleErr != nil {
+		return fmt.Errorf("execute selected operations: %w", bundleErr)
+	}
+	bundlePath := filepath.Join(filepath.Dir(configuration.planPath), "meta-operation-observations.json")
+	bundlePayload, err := generation.EncodeObservationBundle(bundle)
+	if err != nil {
+		return fmt.Errorf("encode operation observations: %w", err)
+	}
+	if err := writeAtomic(bundlePath, bundlePayload); err != nil {
+		return fmt.Errorf("write operation observations: %w", err)
+	}
 	fmt.Printf(
 		"execution manifest: decision=%s reason=%s replay=%s\n",
 		manifest.Decision,
@@ -45,4 +58,17 @@ func run(configuration options) error {
 		)
 	}
 	return nil
+}
+
+func workspaceRoot() string {
+	for _, name := range []string{"LOGICAL_WORKSPACE", "GITHUB_WORKSPACE"} {
+		if value := os.Getenv(name); value != "" {
+			return value
+		}
+	}
+	working, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	return working
 }
