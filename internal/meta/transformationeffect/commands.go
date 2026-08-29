@@ -9,6 +9,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
 )
 
