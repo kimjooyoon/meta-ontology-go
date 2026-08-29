@@ -73,7 +73,7 @@ func TestFailedExtractionPreservesBackupUnknownCoordinate(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "report.json"), payload, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"})
+	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"}, generation.Action{})
 	if failure.stage != "evaluate-operation" || failure.step != "validate-function-extraction" ||
 		failure.reason != "BACKUP_CLEANUP_UNAVAILABLE" || failure.class != "DIRECT_MISSING" ||
 		failure.next != "recover-backup-cleanup-evidence" {
@@ -265,7 +265,7 @@ func TestFailedExtractionMalformedReportIsRefuted(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "report.json"), []byte("{}"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"})
+	failure := failedExtractionError(root, "report.json", generation.Plan{HeadSHA: "head"}, generation.Action{})
 	if failure.stage != "evaluate-operation" || failure.step != "decode-function-extraction-report" ||
 		failure.reason != "INSTANCE_EVIDENCE_MALFORMED" || failure.class != "KNOWN_CONTRADICTION" ||
 		failure.next != "report-counterexample" {

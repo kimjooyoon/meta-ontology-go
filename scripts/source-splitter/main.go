@@ -26,7 +26,12 @@ type splitPart struct {
 	Path             string
 	Subject          string
 	Data             []byte
-	DeclarationOrder []string
+	DeclarationOrder []declarationOrder
+}
+
+type declarationOrder struct {
+	Ordinal int    `json:"ordinal"`
+	Digest  string `json:"digest"`
 }
 
 type splitPlan struct {

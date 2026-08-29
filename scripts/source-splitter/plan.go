@@ -40,7 +40,7 @@ func planSource(root, subject string, limit int) (splitPlan, error) {
 			return splitPlan{}, renderErr
 		}
 		partPath := filepath.Join(filepath.Dir(target), filepath.Base(filepath.FromSlash(partSubject)))
-		order := make([]string, 0, len(group))
+		order := make([]declarationOrder, 0, len(group))
 		for _, declaration := range group {
 			identity, identityErr := declarationIdentity(fset, declaration, positions[declaration])
 			if identityErr != nil {

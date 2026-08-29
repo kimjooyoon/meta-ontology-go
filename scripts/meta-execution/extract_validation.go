@@ -127,7 +127,7 @@ func extractionFailureEvidence(report extractorReport, action generation.Action)
 	for _, identifier := range action.RequiredIndicatorIDs {
 		result = append(result, generation.ObservationFailureEvidence{
 			IndicatorID: identifier, Observed: 0, Expected: 1,
-			Decision: "REFUTED", Counterexample: counterexample,
+			Decision: "UNKNOWN", Counterexample: counterexample,
 		})
 	}
 	return result

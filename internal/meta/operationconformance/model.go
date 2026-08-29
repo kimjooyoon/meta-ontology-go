@@ -27,9 +27,14 @@ type BuildContext struct {
 }
 
 type FileEvidence struct {
-	Path             string   `json:"path"`
-	Data             []byte   `json:"data"`
-	DeclarationOrder []string `json:"declaration_order,omitempty"`
+	Path             string             `json:"path"`
+	Data             []byte             `json:"data"`
+	DeclarationOrder []DeclarationOrder `json:"declaration_order,omitempty"`
+}
+
+type DeclarationOrder struct {
+	Ordinal int    `json:"ordinal"`
+	Digest  string `json:"digest"`
 }
 
 type WriteEvent struct {

@@ -29,13 +29,13 @@ func partitionDeclarations(fset *token.FileSet, file *ast.File, declarations []a
 	return nil, fmt.Errorf("declarations cannot preserve source order within %d lines", limit)
 }
 
-func declarationIdentity(fset *token.FileSet, declaration ast.Decl, _ int) (string, error) {
+func declarationIdentity(fset *token.FileSet, declaration ast.Decl, ordinal int) (declarationOrder, error) {
 	var output bytes.Buffer
 	if err := format.Node(&output, fset, declaration); err != nil {
-		return "", err
+		return declarationOrder{}, err
 	}
 	sum := sha256.Sum256(output.Bytes())
-	return fmt.Sprintf("%x", sum), nil
+	return declarationOrder{Ordinal: ordinal, Digest: fmt.Sprintf("%x", sum)}, nil
 }
 
 func orderedGreedyDeclarationPartition(fset *token.FileSet, file *ast.File, declarations []ast.Decl, limit int) ([][]ast.Decl, bool) {

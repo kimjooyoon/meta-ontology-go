@@ -2,7 +2,7 @@
   "schema": "gooo/split-go-behavioral-corpus/v1",
   "contract_id": "gooo/source-splitter/split-go-conformance/v1",
   "version": "split-go-behavior-cases/v1",
-  "case_count": 8,
+  "case_count": 9,
   "cases": [
     {"id":"baseline-pass","mutation":"NONE","expected_decision":"PASS"},
     {"id":"atomic-direct-write","mutation":"DIRECT_WRITE","expected_decision":"BLOCK","expected_indicator":"filesystem.atomic-replacement/v1","expected_indicator_decision":"FAIL"},
@@ -10,6 +10,7 @@
     {"id":"header-byte-drift","mutation":"HEADER","expected_decision":"BLOCK","expected_indicator":"go.header.preserved/v1","expected_indicator_decision":"FAIL"},
     {"id":"import-identity-drift","mutation":"IMPORT","expected_decision":"BLOCK","expected_indicator":"go.import.identity/v1","expected_indicator_decision":"FAIL"},
     {"id":"initialization-order-drift","mutation":"ORDER","expected_decision":"BLOCK","expected_indicator":"go.initialization.order/v1","expected_indicator_decision":"FAIL"},
+    {"id":"duplicate-body-identity","mutation":"DUPLICATE_BODY","expected_decision":"BLOCK","expected_indicator":"go.initialization.order/v1","expected_indicator_decision":"FAIL"},
     {"id":"package-name-drift","mutation":"PACKAGE","expected_decision":"BLOCK","expected_indicator":"go.package.conformance/v1","expected_indicator_decision":"FAIL"},
     {"id":"incomplete-evidence","mutation":"EVIDENCE_MISSING","expected_decision":"BLOCK","expected_indicator":"filesystem.atomic-replacement/v1","expected_indicator_decision":"UNKNOWN"}
   ]
