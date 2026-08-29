@@ -41,7 +41,7 @@ type extractorReport struct {
 	SourceSHA             string                         `json:"source_sha"`
 	Subjects              []extractorSubject            `json:"subjects"`
 	Unhandled             []string                       `json:"unhandled"`
-	Failures              []json.RawMessage             `json:"failures,omitempty"`
+	Failures              []extractorFailureRecord      `json:"failures,omitempty"`
 	Indicators            []json.RawMessage              `json:"indicators"`
 	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
 	BackupCleanup         backupCleanupObservation       `json:"backup_cleanup"`
@@ -82,6 +82,19 @@ type extractorDensitySubject struct {
 	Status  string `json:"status"`
 }
 
+type extractorFailureRecord struct {
+	Logical       string   `json:"logical"`
+	BlockerID     string   `json:"blocker_id,omitempty"`
+	Decision      string   `json:"decision"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class,omitempty"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+	Diagnostics   []string `json:"diagnostics,omitempty"`
+}
+
 const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
 const functionExtractionReportSchema = "gooo.function-extraction.v2"
 
@@ -101,7 +114,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 	gitDir, err := gitDirectory(workspace)
 	if err != nil {
 		for _, action := range generationActions(plan) {
-			bundle.Failures = append(bundle.Failures, observationFailure(action, "prepare-workspace", "resolve-git-directory", "GIT_CONTEXT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context", generation.ProcessObservation{}))
+			bundle.Failures = append(bundle.Failures, observationFailure(action, "prepare-workspace", "resolve-git-directory", "GIT_CONTEXT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context", []string{}, generation.ProcessObservation{}))
 		}
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
@@ -109,7 +122,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 	metricsPath, err := sourceMetricsPath()
 	if err != nil {
 		for _, action := range generationActions(plan) {
-			bundle.Failures = append(bundle.Failures, observationFailure(action, "observe-metrics", "resolve-source-metrics", "SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics", generation.ProcessObservation{}))
+			bundle.Failures = append(bundle.Failures, observationFailure(action, "observe-metrics", "resolve-source-metrics", "SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics", []string{}, generation.ProcessObservation{}))
 		}
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
@@ -117,7 +130,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 	for _, action := range generationActions(plan) {
 		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action)
 		if runErr != nil {
-			bundle.Failures = append(bundle.Failures, observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, materialized.Executor))
+			bundle.Failures = append(bundle.Failures, observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, runErr.blockedBy, materialized.Executor))
 			continue
 		}
 		receipt := generation.SealReceipt(plan, action, materialized.Indicators)
@@ -150,13 +163,18 @@ func generationActions(plan generation.Plan) []generation.Action {
 
 type operationError struct {
 	stage, step, reason, class, next string
+	blockedBy                        []string
+}
+
+func newOperationError(stage, step, reason, class, next string) *operationError {
+	return &operationError{stage: stage, step: step, reason: reason, class: class, next: next}
 }
 
 func (err *operationError) Error() string {
 	return strings.Join([]string{err.stage, err.step, err.reason, err.class, err.next}, "/")
 }
 
-func observationFailure(action generation.Action, stage, step, reason, class, next string, process generation.ProcessObservation) generation.ObservationFailure {
+func observationFailure(action generation.Action, stage, step, reason, class, next string, blockedBy []string, process generation.ProcessObservation) generation.ObservationFailure {
 	if len(process.Command) == 0 {
 		process = descriptorObservation([]string{"<not-executed>", string(action.Operation)}, nil, nil, -1)
 	}
@@ -165,7 +183,10 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 	if class == "KNOWN_CONTRADICTION" {
 		decision, unknownClass = "REFUTED", ""
 	}
-	return generation.ObservationFailure{ActionIndicatorID: action.IndicatorID, Decision: decision, Stage: stage, Step: step, Reason: reason, UnknownClass: unknownClass, NextOperation: next, BlockedBy: []string{}, Executor: process}
+	if blockedBy == nil {
+		blockedBy = []string{}
+	}
+	return generation.ObservationFailure{ActionIndicatorID: action.IndicatorID, Decision: decision, Stage: stage, Step: step, Reason: reason, UnknownClass: unknownClass, NextOperation: next, BlockedBy: append([]string{}, blockedBy...), Executor: process}
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
@@ -175,7 +196,7 @@ func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, 
 	if action.Operation == sourcepolicy.OperationExtractFunction {
 		return executeExtract(workspace, gitDir, metricsPath, plan, action)
 	}
-	return operationMaterialization{}, &operationError{"execute-operation", "select-executor", "UNSUPPORTED_SELECTED_OPERATION", "KNOWN_CONTRADICTION", "report-counterexample"}
+	return operationMaterialization{}, newOperationError("execute-operation", "select-executor", "UNSUPPORTED_SELECTED_OPERATION", "KNOWN_CONTRADICTION", "report-counterexample")
 }
 
 func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
@@ -188,7 +209,7 @@ func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, a
 		return second, secondErr
 	}
 	if !bytes.Equal(first.Canonical, second.Canonical) || first.InstanceDigest != second.InstanceDigest {
-		return first, &operationError{"replay-operation", "compare-instance-evidence", "REPLAY_EVIDENCE_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return first, newOperationError("replay-operation", "compare-instance-evidence", "REPLAY_EVIDENCE_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	first.Verifier = second.Verifier
 	return first, nil
@@ -197,44 +218,44 @@ func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, a
 func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
 	temporary, err := copyWorkspace(workspace)
 	if err != nil {
-		return operationMaterialization{}, &operationError{"prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace"}
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
 	}
 	defer os.RemoveAll(temporary)
 	snapshot, snapshotErr := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if snapshotErr != nil {
-		return operationMaterialization{}, &operationError{"prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context"}
+		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
 	}
 	defer os.RemoveAll(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	command := []string{"go", "run", "./scripts/source-splitter", "-root", "<workspace>", "-metrics", "<source-metrics>", "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"}
 	result, runErr := runProcess(temporary, environment, command, []string{"go", "run", "./scripts/source-splitter", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"})
 	if runErr != nil || result.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"execute-operation", "run-source-splitter", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("execute-operation", "run-source-splitter", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	var evidence operationconformance.SplitGoEvidence
 	if err := decodeStrictBytes(result.Stdout, &evidence); err != nil || evidence.ExpectedHeadSHA != plan.HeadSHA || evidence.Source.Path != action.Subject || evidence.OperationID != operationconformance.OperationID {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "decode-source-splitter-evidence", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-source-splitter-evidence", "INSTANCE_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence")
 	}
 	contractPath := filepath.Join(temporary, "examples", "source-splitter-conformance", "contract.json")
 	contractRaw, err := os.ReadFile(contractPath)
 	if err != nil {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "read-operation-contract", "CONTRACT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-contract"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-operation-contract", "CONTRACT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-contract")
 	}
 	report := operationconformance.Evaluate(contractRaw, evidence)
 	if err := operationconformance.Validate(report, contractRaw); err != nil || report.Decision != operationconformance.DecisionPass || report.Evidence.Source.Path != action.Subject {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "adjudicate-source-splitter", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "adjudicate-source-splitter", "INSTANCE_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	reportRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"operationconformance.Evaluate", operationconformance.OperationID}, reportRaw, nil)
 	verifier := runGoTest(temporary, environment)
 	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, &operationError{"verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	canonical, _ := json.Marshal(evidence)
 	instance := digestBytes(canonical)
 	indicators, ok := splitIndicatorReceipts(report, action, plan.HeadSHA)
 	if !ok {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, &operationError{"evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	return operationMaterialization{OperationID: operationconformance.OperationID, InstanceDigest: instance, ContractDigest: digestBytes(contractRaw), Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation, Indicators: indicators, Canonical: canonical}, nil
 }
@@ -242,7 +263,7 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
 	subject, err := sourcepolicy.ParseSourceSubject(action.Subject)
 	if err != nil {
-		return operationMaterialization{}, &operationError{"observe-plan", "parse-function-subject", "SUBJECT_COORDINATE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return operationMaterialization{}, newOperationError("observe-plan", "parse-function-subject", "SUBJECT_COORDINATE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	first, firstErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
 	if firstErr != nil {
@@ -253,7 +274,7 @@ func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan,
 		return second, secondErr
 	}
 	if !bytes.Equal(first.Canonical, second.Canonical) || first.InstanceDigest != second.InstanceDigest {
-		return first, &operationError{"replay-operation", "compare-instance-evidence", "REPLAY_EVIDENCE_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return first, newOperationError("replay-operation", "compare-instance-evidence", "REPLAY_EVIDENCE_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	return first, nil
 }
@@ -261,19 +282,19 @@ func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan,
 func materializeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject) (operationMaterialization, *operationError) {
 	temporary, err := copyWorkspace(workspace)
 	if err != nil {
-		return operationMaterialization{}, &operationError{"prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace"}
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
 	}
 	defer os.RemoveAll(temporary)
 	snapshot, snapshotErr := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if snapshotErr != nil {
-		return operationMaterialization{}, &operationError{"prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context"}
+		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
 	}
 	defer os.RemoveAll(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	sourcePath := filepath.Join(temporary, filepath.FromSlash(subject.Path))
 	before, err := os.ReadFile(sourcePath)
 	if err != nil {
-		return operationMaterialization{}, &operationError{"observe-plan", "read-function-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source"}
+		return operationMaterialization{}, newOperationError("observe-plan", "read-function-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source")
 	}
 	planPath, densityPath, prepErr := writeExtractorInputs(temporary, plan, subject, physicalLineCount(before))
 	if prepErr != nil {
@@ -295,10 +316,10 @@ func writeExtractorInputs(root string, plan generation.Plan, subject sourcepolic
 	planPath := filepath.Join(root, planName)
 	densityPath := filepath.Join(root, densityName)
 	if err := writeJSON(planPath, extractorPlan{Schema: "gooo.logical-split-plan.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorPlanSubject{{Logical: subject.Path, Lines: lines, Reason: "fixed-declaration-capacity"}}}); err != nil {
-		return "", "", &operationError{"observe-plan", "write-extraction-plan", "PLAN_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-extraction-plan"}
+		return "", "", newOperationError("observe-plan", "write-extraction-plan", "PLAN_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-extraction-plan")
 	}
 	if err := writeJSON(densityPath, extractorDensity{Schema: "gooo.line-density-rewrite.v1", SourceSHA: plan.HeadSHA, Subjects: []extractorDensitySubject{{Logical: subject.Path, Status: "blocked"}}}); err != nil {
-		return "", "", &operationError{"observe-plan", "write-density-observation", "DENSITY_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-density-observation"}
+		return "", "", newOperationError("observe-plan", "write-density-observation", "DENSITY_OBSERVATION_UNAVAILABLE", "DIRECT_MISSING", "restore-density-observation")
 	}
 	return planPath, densityPath, nil
 }
@@ -307,31 +328,31 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	reportRaw, report, err := decodeExtractorReport(filepath.Join(temporary, reportName), plan.HeadSHA)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"}
+			return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 		}
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "read-function-extraction-report", "INSTANCE_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	observed, found := findExtractorSubject(report.Subjects, subject.Path)
 	if !found || observed.Operation != string(sourcepolicy.OperationExtractFunction) || !containsString(observed.Operations, string(sourcepolicy.OperationExtractFunction)) || observed.Consumer != "function-extractor" || len(observed.Files) == 0 {
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_MISSING", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "bind-function-extraction-subject", "INSTANCE_SUBJECT_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	validation, err := validateExtractedFiles(temporary, subject, before, observed, report.NamespaceReplacements, report.BackupCleanup)
 	if err != nil {
 		reason := extractValidationErrorReason(err)
 		class := extractValidationErrorClass(err)
 		next := extractValidationNextOperation(err)
-		return operationMaterialization{Executor: result.Observation}, &operationError{"evaluate-operation", "validate-function-extraction", reason, class, next}
+		return operationMaterialization{Executor: result.Observation}, newOperationError("evaluate-operation", "validate-function-extraction", reason, class, next)
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{"bootstrap/function-extractor:independent-evaluator", subject.Path, subject.Name}, evaluatorRaw, nil)
 	verifier := runGoTest(temporary, environment)
 	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, &operationError{"verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	validation.ProjectedTestsPassed = true
 	outputs, err := outputBytes(temporary, observed)
 	if err != nil {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, &operationError{"evaluate-operation", "read-generated-output", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "read-generated-output", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	canonicalValue := struct {
 		Report  json.RawMessage       `json:"report"`
@@ -343,7 +364,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	contract := digestBytes([]byte("gooo/function-extraction/suffix-decomposition-contract/v1"))
 	indicators, ok := extractIndicatorReceipts(action, validation, plan.HeadSHA)
 	if !ok {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, &operationError{"evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence"}
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("evaluate-operation", "bind-indicator-observations", "INSTANCE_INDICATOR_MISSING", "DIRECT_MISSING", "restore-operation-evidence")
 	}
 	return operationMaterialization{OperationID: extractFunctionOperationID, InstanceDigest: instance, ContractDigest: contract, Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation, Indicators: indicators, Canonical: canonical}, nil
 }

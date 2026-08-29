@@ -1,3 +1,4 @@
+// Package recipe owns the generic extraction recipe authority.
 package recipe
 
 import (

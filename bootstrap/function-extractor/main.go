@@ -38,6 +38,10 @@ func run(root, plan, density, expected, output string, fixedPoint bool) error {
 	}
 	report := extractionEvidence(expected, subjects, unhandled, failures)
 	if err := requireHandled(report); err != nil {
+		report.BackupCleanup = backupCleanupObservation{Status: "NOT_APPLICABLE"}
+		if publishErr := writeExtractionReport(filepath.Clean(output), report); publishErr != nil {
+			return fmt.Errorf("publish failure extraction report: %w; extraction failure: %v", publishErr, err)
+		}
 		return err
 	}
 	transaction, err := commitStaged(staged)

@@ -83,8 +83,7 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	}
 	var report extractorReport
 	if err := decodeStrictBytes(raw, &report); err != nil ||
-		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
-		len(report.Unhandled) != 0 {
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA {
 		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
 	}
 	return raw, report, nil
@@ -95,17 +94,67 @@ func failedExtractionError(root, reportName string, plan generation.Plan) *opera
 	_, report, err := decodeExtractorReport(path, plan.HeadSHA)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
+			return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 		}
-		return &operationError{"evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"}
+		return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	if failure, ok := reportFailureOperationError(report.Failures); ok {
+		return failure
 	}
 	if validationErr := validateBackupCleanup(report.BackupCleanup, report.NamespaceReplacements); validationErr != nil {
 		reason := extractValidationErrorReason(validationErr)
 		class := extractValidationErrorClass(validationErr)
 		next := extractValidationNextOperation(validationErr)
-		return &operationError{"evaluate-operation", "validate-function-extraction", reason, class, next}
+		return newOperationError("evaluate-operation", "validate-function-extraction", reason, class, next)
 	}
-	return &operationError{"execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence"}
+	return newOperationError("execute-operation", "run-function-extractor", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
+}
+
+func reportFailureOperationError(failures []extractorFailureRecord) (*operationError, bool) {
+	var unknown *operationError
+	for _, failure := range failures {
+		if !validExtractorFailure(failure) {
+			return newOperationError("evaluate-operation", "decode-function-extraction-report", "INSTANCE_EVIDENCE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample"), true
+		}
+		candidate := newOperationError(failure.Stage, failure.Step, failure.Reason, failureClass(failure), failure.NextOperation)
+		candidate.blockedBy = append([]string{}, failure.BlockedBy...)
+		if failure.Decision == "REFUTED" {
+			return candidate, true
+		}
+		if unknown == nil {
+			unknown = candidate
+		}
+	}
+	if unknown != nil {
+		return unknown, true
+	}
+	return nil, false
+}
+
+func validExtractorFailure(failure extractorFailureRecord) bool {
+	if failure.Logical == "" || failure.Decision == "" || failure.Stage == "" ||
+		failure.Step == "" || failure.Reason == "" || failure.NextOperation == "" ||
+		failure.BlockedBy == nil {
+		return false
+	}
+	switch failure.Decision {
+	case "REFUTED":
+		return failure.UnknownClass == ""
+	case "UNKNOWN":
+		return failure.UnknownClass == "DIRECT_MISSING" ||
+			failure.UnknownClass == "MALFORMED_EVIDENCE" ||
+			failure.UnknownClass == "UNEXPECTED_EVIDENCE" ||
+			failure.UnknownClass == "DEPENDENCY_BLOCKED"
+	default:
+		return false
+	}
+}
+
+func failureClass(failure extractorFailureRecord) string {
+	if failure.Decision == "REFUTED" {
+		return "KNOWN_CONTRADICTION"
+	}
+	return failure.UnknownClass
 }
 
 func validateOutputFiles(root string, subject sourcepolicy.SourceSubject, packageName string, imports []string, header []byte, observed extractorSubject) (int, int, map[string]bool, error) {
@@ -189,14 +238,20 @@ func validateBackupCleanup(observation backupCleanupObservation, replacements []
 		if observation.Removed != 0 || observation.Failures != 0 {
 			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 		}
+		return &extractValidationUnknown{reason: "BACKUP_CLEANUP_UNAVAILABLE"}
 	case "UNKNOWN":
 		if observation.Failures == 0 || observation.Removed+observation.Failures != observation.Attempted {
 			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 		}
+		return &extractValidationUnknown{reason: "BACKUP_CLEANUP_UNAVAILABLE"}
+	case "NOT_APPLICABLE":
+		if len(replacements) != 0 || observation.Attempted != 0 || observation.Removed != 0 || observation.Failures != 0 {
+			return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
+		}
+		return &extractValidationUnknown{reason: "BACKUP_CLEANUP_NOT_APPLICABLE"}
 	default:
 		return &namespaceReplacementError{reason: "BACKUP_CLEANUP_INCONSISTENT"}
 	}
-	return nil
 }
 
 func functionInFile(file *ast.File, logical string, subject sourcepolicy.SourceSubject) (*ast.FuncDecl, bool) {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	recipeauthority "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor/recipe"
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"
 )
 
 type extractionRecipe = recipeauthority.ExtractionRecipe

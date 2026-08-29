@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	recipeauthority "github.com/kimjooyoon/meta-ontology-go/bootstrap/function-extractor/recipe"
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"
 )
 
 type stagedFile struct {
