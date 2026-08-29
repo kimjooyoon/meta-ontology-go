@@ -37,8 +37,8 @@ func causalBindingDigest(value RecoveryEvidence) string {
 		ReceiptCount: value.TransformationReceiptCount, FailureCount: value.TransformationFailureCount,
 		UnknownCount: value.TransformationUnknownCount, DirectUnknownCount: value.TransformationDirectUnknownCount,
 		DependencyBlockedUnknownCount: value.TransformationDependencyBlockedUnknownCount,
-		UnknownCausalDigest: value.TransformationUnknownCausalDigest,
-		SourceWorkspaceUnchanged: value.SourceWorkspaceUnchanged, PromotionAuthorized: value.TransformationAuthorization,
+		UnknownCausalDigest:           value.TransformationUnknownCausalDigest,
+		SourceWorkspaceUnchanged:      value.SourceWorkspaceUnchanged, PromotionAuthorized: value.TransformationAuthorization,
 	}
 	payload, _ := json.Marshal(projection)
 	digest := sha256.Sum256(payload)
