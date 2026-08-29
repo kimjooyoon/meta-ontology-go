@@ -66,7 +66,7 @@ func knownMixedRecovery(head string, guard GuardEvidence, recovery RecoveryEvide
 		t.TransformationReceiptCount == 1 && t.TransformationFailureCount == 1 &&
 		t.TransformationUnknownCount == 5 && t.TransformationDirectUnknownCount == 0 &&
 		t.TransformationDependencyBlockedUnknownCount == 5 &&
-		validDigest(t.TransformationUnknownCausalDigest) &&
+		validCausalDigest(t.TransformationUnknownCausalDigest) &&
 		validDigest(t.TransformationCausalBindingDigest) &&
 		t.TransformationCausalBindingDigest == causalBindingDigest(t) &&
 		t.WriteBoundary == "SANDBOX_ONLY" && t.SourceWorkspaceUnchanged &&

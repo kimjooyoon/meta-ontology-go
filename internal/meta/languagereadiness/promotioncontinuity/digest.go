@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"strings"
 )
 
 func fileSHA256(data []byte) string {
@@ -24,6 +25,14 @@ func validDigest(value string) bool {
 		return false
 	}
 	_, err := hex.DecodeString(value[7:])
+	return err == nil
+}
+
+func validCausalDigest(value string) bool {
+	if len(value) != 64 || value != strings.ToLower(value) {
+		return false
+	}
+	_, err := hex.DecodeString(value)
 	return err == nil
 }
 

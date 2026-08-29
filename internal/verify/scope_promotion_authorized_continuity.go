@@ -23,4 +23,10 @@ func init() {
 		"internal/meta/metricstrategy",
 		"internal/verify/scope_promotion_authorized_continuity.go",
 	}
+	branchScopeAllowlist["agent/promotion-continuity-recovery-v1"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"internal/meta/languagereadiness/promotioncontinuity",
+		"internal/verify/scope_promotion_authorized_continuity.go",
+	}
 }
