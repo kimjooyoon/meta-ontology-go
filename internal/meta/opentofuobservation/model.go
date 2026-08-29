@@ -177,13 +177,13 @@ type Observation struct {
 	Inventory                Inventory          `json:"inventory"`
 	ObserverGoVersion        string             `json:"observer_go_version"`
 	ObserverGOVERSION        string             `json:"observer_go_env_goversion"`
-	ObserverToolchainDigest  string             `json:"observer_toolchain_digest"`
-	CellEvidenceProjections  map[string]string  `json:"cell_evidence_projections"`
-	CellEvidenceDigests      map[string]string  `json:"cell_evidence_digests"`
-	Graph                    GraphObservation   `json:"graph"`
-	RepositoryWrites         int                `json:"repository_writes"`
-	LocalTestExecutions      int                `json:"local_test_executions"`
-	ReleaseBinaryBuilds      int                `json:"release_binary_builds"`
-	ReleaseBinaryBuildReason string             `json:"release_binary_build_reason"`
+	ObserverToolchainDigest   string             `json:"observer_toolchain_digest"`
+	CellEvidenceProjections   map[string]string  `json:"cell_evidence_projections"`
+	CellEvidenceDigests       map[string]string  `json:"cell_evidence_digests"`
+	Graph                     GraphObservation   `json:"graph"`
+	RepositoryWrites          int                `json:"repository_writes"`
+	LocalTestExecutions       int                `json:"local_test_executions"`
+	ReleaseBinaryBuilds       int                `json:"release_binary_builds"`
+	ReleaseBinaryBuildReason  string             `json:"release_binary_build_reason"`
 	HumanReportReady        bool               `json:"human_report_ready"`
 }
