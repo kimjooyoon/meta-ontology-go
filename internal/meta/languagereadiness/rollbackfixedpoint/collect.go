@@ -59,7 +59,7 @@ func collectTransformation(source Source, path string) Source {
 		AppliedEffects: applied, RefutedEffects: refuted,
 		OperationOutcome: ledger.OperationOutcome, ReceiptDecision: ledger.ReceiptDecision,
 		ReceiptCount: ledger.ReceiptCount, FailureCount: ledger.FailureCount,
-		UnknownCount: ledger.UnknownCount,
+		UnknownCount:             ledger.UnknownCount,
 		SourceWorkspaceUnchanged: ledger.SourceWorkspaceUnchanged,
 		PromotionAuthorized:      ledger.PromotionAuthorized}
 	source.RepositoryWrites = source.Guard.RepositoryWrites

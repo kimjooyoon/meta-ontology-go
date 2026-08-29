@@ -4,10 +4,10 @@ const ledgerSchema = "gooo/transformation-effect-ledger/v1"
 const patchSchema = "gooo/transformation-content-patch/v1"
 
 const (
-	OperationOutcomeFixedPoint        = "FIXED_POINT"
-	OperationOutcomeClosed            = "CLOSED"
+	OperationOutcomeFixedPoint         = "FIXED_POINT"
+	OperationOutcomeClosed             = "CLOSED"
 	OperationOutcomeMixedClosedRefuted = "MIXED_CLOSED_REFUTED"
-	OperationOutcomeRefuted           = "REFUTED"
+	OperationOutcomeRefuted            = "REFUTED"
 )
 
 type Indicator struct {

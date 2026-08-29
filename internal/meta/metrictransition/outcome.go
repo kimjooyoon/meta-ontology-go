@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	effectOutcomeFixedPoint = "FIXED_POINT"
-	effectOutcomeClosed = "CLOSED"
+	effectOutcomeFixedPoint   = "FIXED_POINT"
+	effectOutcomeClosed       = "CLOSED"
 	effectOutcomeMixedRefuted = "MIXED_CLOSED_REFUTED"
 )
 

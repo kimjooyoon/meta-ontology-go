@@ -60,7 +60,7 @@ func buildEffectEvidence(inputs inputSet, outcome string) (EffectEvidence, error
 	return EffectEvidence{Verifier: "transformationeffect.VerifyFiles", Artifacts: artifacts,
 		SetDigest: setDigest, Outcome: outcome,
 		ReceiptDecision: string(inputs.receiptReport.Decision),
-		ReceiptCount: len(inputs.receiptReport.Receipts),
-		FailureCount: len(inputs.receiptReport.Failures),
-		UnknownCount: len(inputs.receiptReport.Unknowns), OperationEvidence: operations}, nil
+		ReceiptCount:    len(inputs.receiptReport.Receipts),
+		FailureCount:    len(inputs.receiptReport.Failures),
+		UnknownCount:    len(inputs.receiptReport.Unknowns), OperationEvidence: operations}, nil
 }
