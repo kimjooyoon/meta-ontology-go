@@ -21,4 +21,6 @@ type Summary struct {
 	ReplayMismatches    int `json:"replay_mismatches"`
 	RepositoryWrites    int `json:"repository_writes"`
 	RegistryDrift       int `json:"registry_drift"`
+	PeakRSSKiB           int64 `json:"peak_rss_kib"`
+	ResourceObservations int   `json:"resource_observations"`
 }

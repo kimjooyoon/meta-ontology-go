@@ -1,5 +1,7 @@
 package toolchaincli
 
+import cliruntime "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
+
 func summarize(source Source, cases []CaseResult, registryDrift int) Summary {
 	summary := Summary{Total: FixedTotal, RegistryDrift: registryDrift}
 	if validDigest(source.ExecutableDigest) {
@@ -40,6 +42,14 @@ func summarize(source Source, cases []CaseResult, registryDrift int) Summary {
 		}
 		if !result.StderrMatched {
 			summary.StderrMismatches++
+		}
+		for _, observation := range []cliruntime.Observation{result.First, result.Replay} {
+			if observation.PeakRSSKiB > summary.PeakRSSKiB {
+				summary.PeakRSSKiB = observation.PeakRSSKiB
+			}
+			if observation.PeakRSSKiB > 0 {
+				summary.ResourceObservations++
+			}
 		}
 	}
 	summary.ReadinessBPS = summary.Satisfied * 10000 / FixedTotal

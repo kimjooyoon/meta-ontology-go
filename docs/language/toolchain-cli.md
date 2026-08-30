@@ -18,6 +18,9 @@ with a five-second deadline and a 64 KiB output bound.
 - Syntax, semantic, and bidirectional language operations cross the real CLI.
 - Exit code, stdout, stderr, and repository tree state are independently
   measured rather than summarized as one green result.
+- Each invocation records a positive integer `peak_rss_kib` observation from the
+  runner. This value is `RUNNER_SCOPED_NONDETERMINISTIC`: it is visible evidence,
+  not replay authority and not a memory or performance improvement claim.
 - Unknown observations lower resolution and cannot become readiness credit.
 
 The [gomacro project](https://github.com/cosmos72/gomacro) is used only as a

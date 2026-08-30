@@ -18,6 +18,8 @@ func digestBytes(value []byte) string {
 }
 
 func caseDigest(result CaseResult) string {
+	result.First.PeakRSSKiB = 0
+	result.Replay.PeakRSSKiB = 0
 	result.EvidenceDigest = ""
 	return digestJSON(result)
 }

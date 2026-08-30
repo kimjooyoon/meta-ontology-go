@@ -11,6 +11,10 @@ func Validate(report Report, expectedHead string) error {
 		report.ReportDigest == "" || report.ReportDigest != reportDigest(report) || !validHead(expectedHead) {
 		return fmt.Errorf("toolchain CLI report binding invalid")
 	}
+	if report.ResourceObservationMode != "RUNNER_SCOPED_NONDETERMINISTIC" ||
+		report.ResourceMeasurementReplayAuthority || report.PerformanceImprovement != "UNKNOWN" {
+		return fmt.Errorf("toolchain CLI resource boundary invalid")
+	}
 	if report.Decision != DecisionPass && report.Decision != DecisionClosed {
 		return fmt.Errorf("toolchain CLI decision unknown")
 	}
@@ -28,7 +32,8 @@ func Validate(report Report, expectedHead string) error {
 	}
 	if report.Decision == DecisionPass && (report.Resolution != ResolutionExact ||
 		report.Summary.Satisfied != FixedTotal || report.Summary.Unresolved != 0 ||
-		report.RepositoryWrites != 0 || !allIndicators(report.Indicators) || !allProofs(report.Proofs)) {
+		report.RepositoryWrites != 0 || report.Summary.ResourceObservations != ExpectedRuns ||
+		report.Summary.PeakRSSKiB <= 0 || !allIndicators(report.Indicators) || !allProofs(report.Proofs)) {
 		return fmt.Errorf("toolchain CLI exact evidence incomplete")
 	}
 	if report.Resolution == ResolutionLower && (report.Decision != DecisionClosed || report.Summary.Unresolved == 0) {
