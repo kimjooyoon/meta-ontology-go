@@ -104,7 +104,7 @@ jobs:
             --opentofu-report "$root/opentofu/report/report.json"
             --opentofu-artifact "$root/opentofu/artifact.json"
             --repository-status "$root/repository-status.json"
-            --dependency-files go.mod
+            --dependency-files go.mod,go.sum
             --environment "$environment"
           )
           before="$(cat "$root/repository-status-before.txt")"
