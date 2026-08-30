@@ -13,6 +13,7 @@ func init() {
 		"internal/meta/sourcepolicy",
 		"internal/verify/foundation_discovery_recovery_scope.go",
 		"internal/verify/foundation_promotion.go",
+		"internal/verify/governance_part01.go",
 		"scripts/ci-proof",
 		"scripts/feedback-predecessor-ci",
 		"scripts/verify",
