@@ -21,6 +21,7 @@ type GovernanceMatrix struct {
 	Ownership             []GovernanceOwnership `json:"ownership"`
 	ProtectedKernel       []string              `json:"protected_kernel_paths"`
 	Promotion             GovernancePromotion   `json:"promotion"`
+	FoundationPromotion   map[string]any        `json:"foundation_promotion"`
 }
 type GovernanceContexts struct {
 	Dev  []string `json:"dev"`

@@ -9,6 +9,17 @@ func Select(input Input) (Report, error) {
 	summary, eligible := summarize(input)
 	report := Report{Schema: Schema, Repository: input.Repository,
 		PredecessorSHA: input.PredecessorSHA, Summary: summary}
+	if input.Foundation != nil {
+		report.ProofChoice, report.Foundation = FoundationProofChoice, input.Foundation
+		if err := validateFoundation(input); err != nil {
+			report.Decision, report.Reason = DecisionRefuted, ReasonFoundationRefuted
+		} else {
+			report.Decision, report.Reason = DecisionFoundation, ReasonFoundationRegression
+		}
+		report.Indicators = indicators(report)
+		report.ReportDigest = digestJSON(report)
+		return report, nil
+	}
 	report.Decision, report.Reason = DecisionFailClosed, failureReason(summary)
 	if report.Reason == "" {
 		candidate := eligible[0]
