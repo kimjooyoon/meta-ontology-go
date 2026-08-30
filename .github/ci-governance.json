@@ -2719,6 +2719,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/entity-fields-v1.yml",
+        ".github/workflows/transformation-effect.yml",
         "cmd/entity-fields-witness",
         "docs/language/language-syntax-roundtrip.md",
         "examples/entity-fields-v1",
