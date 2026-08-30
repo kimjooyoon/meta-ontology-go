@@ -120,7 +120,6 @@ jobs:
           curl --fail --location --silent --show-error \
             -H 'Accept: application/octet-stream' \
             -H 'X-GitHub-Api-Version: 2022-11-28' \
-            -H "Authorization: Bearer $GH_TOKEN" \
             "$asset_url" -o "$archive"
           printf '%s  %s\n' "$expected_digest_bare" "$archive" | sha256sum -c -
           tar -xzf "$archive" -C "$RUNNER_TEMP"
