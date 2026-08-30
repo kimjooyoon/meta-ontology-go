@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func topologyFailures(root string) (int, int, error) {
@@ -16,7 +17,12 @@ func topologyFailures(root string) (int, int, error) {
 		if err != nil {
 			return err
 		}
-		if len(children) > 10 {
+		relative, err := filepath.Rel(root, name)
+		if err != nil {
+			return err
+		}
+		physical := filepath.ToSlash(relative)
+		if len(children) > 10 && !workflowDiscoveryRoot(physical, children) {
 			direct++
 		}
 		hasDirectory, hasFile := false, false
@@ -31,6 +37,20 @@ func topologyFailures(root string) (int, int, error) {
 	})
 	return direct, mixed, err
 }
+
+func workflowDiscoveryRoot(physical string, children []os.DirEntry) bool {
+	if physical != ".github/workflows" || len(children) == 0 {
+		return false
+	}
+	for _, child := range children {
+		extension := strings.ToLower(filepath.Ext(child.Name()))
+		if child.IsDir() || child.Type()&os.ModeSymlink != 0 || (extension != ".yml" && extension != ".yaml") {
+			return false
+		}
+	}
+	return true
+}
+
 func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int) evidence {
 	unbound, lineDebt := 0, 0
 	subjects := make([]subject, 0)
