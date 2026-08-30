@@ -7,11 +7,14 @@ on:
       - .github/agent-scope-table.md
       - .github/ci-governance.json
       - .github/workflows/causal-ci-selection.yml
+      - .github/workflows/live-governance-snapshot.yml
       - cmd/causal-ci-selection-consumer/**
       - cmd/language-readiness-witness/predecessor-selection/**
       - docs/causal-ci-selection.md
       - examples/causal-ci-selection/**
+      - examples/live-governance-snapshot/**
       - internal/meta/causalci/**
+      - internal/meta/governancesnapshot/**
       - internal/verify/scope_luna_meta_09.go
       - scripts/causal-ci-selection/**
   push:
@@ -20,11 +23,14 @@ on:
       - .github/agent-scope-table.md
       - .github/ci-governance.json
       - .github/workflows/causal-ci-selection.yml
+      - .github/workflows/live-governance-snapshot.yml
       - cmd/causal-ci-selection-consumer/**
       - cmd/language-readiness-witness/predecessor-selection/**
       - docs/causal-ci-selection.md
       - examples/causal-ci-selection/**
+      - examples/live-governance-snapshot/**
       - internal/meta/causalci/**
+      - internal/meta/governancesnapshot/**
       - internal/verify/scope_luna_meta_09.go
       - scripts/causal-ci-selection/**
   workflow_dispatch:

@@ -7,7 +7,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "language-test-pass",
@@ -15,7 +16,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "language-test-failing-assertion",
@@ -23,7 +25,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "bootstrap",
@@ -31,7 +34,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "conformance",
@@ -39,7 +43,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "causal-ci-selection",
@@ -47,7 +52,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "causal-ci-selection-semantic-intervention",
@@ -55,7 +61,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "causal-ci-selection-nonsemantic-intervention",
@@ -63,7 +70,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "causal-ci-selection-contradiction-intervention",
@@ -71,7 +79,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "external-capability-authorization-policy",
@@ -79,7 +88,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "activity-cardinality-resolution",
@@ -87,7 +97,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "meta-actionability",
@@ -95,7 +106,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "meta-binding-coverage",
@@ -103,7 +115,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "meta-operation-artifact-coverage",
@@ -111,7 +124,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "metric-meta-program-closure",
@@ -119,7 +133,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "metric-meta-program",
@@ -127,7 +142,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "root-readme-indicator",
@@ -135,7 +151,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "self-improvement",
@@ -143,7 +160,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "self-improvement-candidate",
@@ -151,7 +169,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "self-improvement-transport",
@@ -159,7 +178,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "language-value-witness",
@@ -167,7 +187,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "language-operation-catalog",
@@ -175,7 +196,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "language-operation-catalog-unknown",
@@ -183,7 +205,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "claim-resolution-tuple",
@@ -191,7 +214,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
 {
   "id": "claim-dependency-causality",
@@ -199,7 +223,8 @@
   "kind": "VALID",
   "expected_decision": "PASS",
   "proof_choice": "COHERENCE",
-  "meta_operation": "replay-language-syntax"
+  "meta_operation": "replay-language-syntax",
+  "scope": "LANGUAGE_CAPABILITY"
 },
 {
   "id": "roundtrip-minimal",
@@ -207,7 +232,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "directory-kind-ontology",
@@ -215,7 +241,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "directory-partition-ontology",
@@ -223,7 +250,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "repository-projection-repair",
@@ -231,7 +259,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "opentofu-observation",
@@ -239,7 +268,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "unknown-keyword",
@@ -248,7 +278,8 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_diagnostic": "parse.unexpected-token",
       "proof_choice": "REGRESSION",
-      "meta_operation": "reject-invalid-syntax"
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "unterminated-string",
@@ -257,7 +288,8 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_diagnostic": "lex.unterminated-string",
       "proof_choice": "REGRESSION",
-      "meta_operation": "reject-invalid-syntax"
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "source-execution-invalid",
@@ -266,7 +298,8 @@
       "expected_decision": "FAIL_CLOSED",
       "expected_diagnostic": "parse.unexpected-token",
       "proof_choice": "REGRESSION",
-      "meta_operation": "reject-invalid-syntax"
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "source-splitter-conformance",
@@ -274,7 +307,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "rollback-integrity-activation",
@@ -282,7 +316,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "vertical-slice-closure-activation",
@@ -290,7 +325,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "workgraph",
@@ -298,7 +334,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "external-conformance-activation",
@@ -306,7 +343,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "gooo-release-publication",
@@ -314,7 +352,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "ci-plan",
@@ -322,7 +361,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "ci-effort-observation",
@@ -330,7 +370,8 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
     },
     {
       "id": "reproducibility-semantics",
@@ -338,7 +379,17 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax"
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "live-governance-snapshot",
+      "path": "examples/live-governance-snapshot/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [
