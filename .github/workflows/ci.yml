@@ -1283,3 +1283,76 @@ jobs:
             ${{ runner.temp }}/predecessor-semantic-a.json
           if-no-files-found: error
           retention-days: 30
+
+  coherence-boundary-probe:
+    name: COHERENCE boundary probe
+    needs: [feedback-predecessor]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.feedback-predecessor.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Re-consume exact predecessor artifact in caller-owned temp space
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_ARTIFACT_NAME: feedback-predecessor-${{ github.sha }}
+        run: |
+          probe_root="$(mktemp -d "$RUNNER_TEMP/coherence-boundary-probe.XXXXXX")"
+          artifact_index="$probe_root/artifacts.json"
+          artifact_zip="$probe_root/predecessor-artifact.zip"
+          extracted="$probe_root/extracted"
+          curl --fail --silent --show-error --location \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            > "$artifact_index"
+          match_count="$(jq --arg name "$EXPECTED_ARTIFACT_NAME" '[.artifacts[] | select(.name == $name and .expired == false)] | length' "$artifact_index")"
+          test "$match_count" = 1
+          artifact_id="$(jq -r --arg name "$EXPECTED_ARTIFACT_NAME" '.artifacts[] | select(.name == $name and .expired == false) | .id' "$artifact_index")"
+          expected_zip_digest="$(jq -r --arg name "$EXPECTED_ARTIFACT_NAME" '.artifacts[] | select(.name == $name and .expired == false) | .digest' "$artifact_index")"
+          test "$artifact_id" != null
+          test "$expected_zip_digest" != null
+          curl --fail --silent --show-error --location \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            --output "$artifact_zip"
+          actual_zip_digest="sha256:$(sha256sum "$artifact_zip" | awk '{print $1}')"
+          test "$actual_zip_digest" = "$expected_zip_digest"
+          mkdir -p "$extracted"
+          unzip -q "$artifact_zip" -d "$extracted"
+          test -s "$extracted/predecessor-input-a.json"
+          test -s "$extracted/predecessor-receipt-a.json"
+          decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
+          test "$decision" = FOUNDATION
+          expected_report_digest="$(jq -r '.report.report_digest' "$extracted/predecessor-receipt-a.json")"
+          test "$expected_report_digest" != null
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$extracted/predecessor-input-a.json" \
+            --report "$probe_root/probe-receipt.json" \
+            --expected-digest "$expected_report_digest" \
+            --check
+          cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
+          jq -n \
+            --arg artifact_name "$EXPECTED_ARTIFACT_NAME" \
+            --arg artifact_digest "$actual_zip_digest" \
+            --arg report_digest "$expected_report_digest" \
+            --arg head_sha "$GITHUB_SHA" \
+            '{status: "PASS", boundary: "COHERENCE evaluator", decision: "FOUNDATION", coherence_successor_commit: "UNKNOWN", reason: "dev divergence", head_sha: $head_sha, predecessor_artifact: {name: $artifact_name, digest: $artifact_digest}, predecessor_report_digest: $report_digest}' \
+            > coherence-boundary-probe.json
+          jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: coherence-boundary-probe-${{ github.sha }}
+          path: coherence-boundary-probe.json
+          if-no-files-found: error
+          retention-days: 30
