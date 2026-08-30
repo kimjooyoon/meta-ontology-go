@@ -12,6 +12,8 @@ func init() {
 		"examples/temporal-transition-ticket",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"fixtures/temporal-transition-ticket",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
