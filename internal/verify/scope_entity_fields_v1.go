@@ -30,6 +30,8 @@ func init() {
 		"internal/lsp/entity_fields_references.go",
 		"internal/lsp/parser_part02.go",
 		"internal/meta/entityfields",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/corpus_paths.go",
 		"internal/meta/languagereadiness/languagesyntax/evaluate.go",
