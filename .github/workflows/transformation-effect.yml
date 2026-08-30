@@ -1731,6 +1731,9 @@ jobs:
               source_report_digest: .report_digest,
               reused_existing_artifact: true, existing_replay_verified: $replay_equal,
               replay_equal: $replay_equal,
+              repository_writes: 0, branch_setting_writes: 0,
+              local_test_executions: 0, cross_project_required_gates: 0,
+              generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY",
               additional_compile_executions: 0, additional_test_executions: 0,
               overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
               language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
@@ -1742,7 +1745,8 @@ jobs:
           echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- source: existing language-concept-artifact first output; additional compile/test executions: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source: existing language-syntax-roundtrip first/replay outputs produced in the language-concept-artifact job; replay: \`$replay_equal\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authority: \`CALLER_OWNED_TEMP_OUTPUT_ONLY\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`; additional compile/test executions: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head language syntax scope partition
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
