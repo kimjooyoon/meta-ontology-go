@@ -3,6 +3,7 @@ package governancesnapshot
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 )
@@ -65,9 +66,9 @@ func evaluateCore(input LoadedSnapshot, contract Contract) Report {
 		HeadSHA: input.HeadSHA, DefaultBranch: parsed.DefaultBranch, Source: sourceEvidence(input, contract),
 		RepositoryWrites: input.RepositoryWrites, BranchSettingWrites: input.BranchSettingWrites,
 		LocalTestExecutions: input.LocalTestExecutions, CrossProjectGates: input.CrossProjectGates,
-		Improvement: "UNKNOWN", PromotionAuthorized: false}
-	report.Branches = orderedBranches(parsed.Branches)
-	report.Rulesets = append([]RulesetEvidence(nil), parsed.Rulesets...)
+		Improvement: "UNKNOWN", PromotionAuthorized: false,
+		Branches: orderedBranches(parsed.Branches),
+		Rulesets: append([]RulesetEvidence(nil), parsed.Rulesets...)}
 	report.Cells = evaluateCells(report, parsed, contract)
 	return report
 }
@@ -146,7 +147,7 @@ func parseBranch(input LoadedSnapshot, branch string, parsed *parsedSnapshot) (B
 
 type protectionObservation struct {
 	enforcement string
-	contexts   []string
+	contexts    []string
 }
 
 func parseBranchStatus(input LoadedSnapshot, branch string, protected bool, inline *protectionPayload, parsed *parsedSnapshot) (protectionObservation, string, string) {
@@ -218,9 +219,7 @@ func orderedBranches(branches map[string]BranchEvidence) []BranchEvidence {
 
 func cloneMap(values map[string]string) map[string]string {
 	result := make(map[string]string, len(values))
-	for key, value := range values {
-		result[key] = value
-	}
+	maps.Copy(result, values)
 	return result
 }
 

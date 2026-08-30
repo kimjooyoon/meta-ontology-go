@@ -51,8 +51,8 @@ func caseFromReport(id string, report Report) CanonicalCase {
 }
 
 func fixtureSnapshot(contract Contract, mode string) LoadedSnapshot {
-	result := LoadedSnapshot{Snapshot: Snapshot{Schema: SnapshotSchema, Repository: contract.Expected.Repository,
-		HeadSHA: "fixture-head"}, Payloads: map[string][]byte{}}
+	result := LoadedSnapshot{Schema: SnapshotSchema, Repository: contract.Expected.Repository,
+		HeadSHA: "fixture-head", Payloads: map[string][]byte{}}
 	for _, endpoint := range contract.Source.Endpoints {
 		request := RequestObservation{ID: endpoint.ID, Method: endpoint.Method, URL: endpoint.Path,
 			APIVersion: endpoint.API, PayloadPath: endpoint.Payload, State: "PRESENT"}
