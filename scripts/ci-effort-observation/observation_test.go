@@ -34,6 +34,36 @@ func TestEqualNonOperationStepIsBoundedNotMissing(t *testing.T) {
 	}
 }
 
+func TestSourceSecondBoundsRemainNonEmptyForEqualTimestamps(t *testing.T) {
+	jobs, window, err := observeJobs([]APIJob{{ID: 1, Name: "check", Status: "completed", Conclusion: "success",
+		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z", Steps: []APIStep{{Name: "Verify",
+			Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}}}})
+	if err != nil || len(jobs) != 1 || window.JobIntervalCount != 1 || window.StepIntervalCount != 1 ||
+		window.JobWallMSLowerBound >= window.JobWallMSUpperExclusive || window.StepWallMSLowerBound >= window.StepWallMSUpperExclusive || runtimeResolution(window) != "BOUNDED/SOURCE_SECOND" {
+		t.Fatalf("equal timestamp bounds were not observed: jobs=%+v window=%+v err=%v", jobs, window, err)
+	}
+}
+
+func TestRuntimeBoundsRejectEmptyAndReversedIntervals(t *testing.T) {
+	cases := []WorkflowWindow{
+		{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
+			JobWallMSUpperExclusive: 0, StepWallMSUpperExclusive: 0},
+		{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
+			JobWallMSLowerBound: 10, JobWallMSUpperExclusive: 9, JobWallMSSum: 10,
+			StepWallMSLowerBound: 10, StepWallMSUpperExclusive: 1010, StepWallMSSum: 10},
+	}
+	for index, window := range cases {
+		if runtimeBoundsValid(window) {
+			t.Fatalf("invalid interval case %d was accepted: %+v", index, window)
+		}
+	}
+	valid := WorkflowWindow{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
+		JobWallMSUpperExclusive: 1000, StepWallMSUpperExclusive: 1000}
+	if !runtimeBoundsValid(valid) {
+		t.Fatalf("equal-timestamp source bounds were rejected: %+v", valid)
+	}
+}
+
 func TestOperationBindsEvidenceAndGuardSteps(t *testing.T) {
 	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Evidence\n        run: gofmt -l .\n      - name: Guard\n        run: test -s receipt.json\n")
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Guard", EvidenceStepName: "Evidence",

@@ -148,6 +148,8 @@ type WorkflowWindow struct {
 	TimestampResolutionMS      int64    `json:"timestamp_resolution_ms"`
 	BelowSourceResolutionJobs  int      `json:"below_source_resolution_jobs"`
 	BelowSourceResolutionSteps int      `json:"below_source_resolution_steps"`
+	JobIntervalCount           int      `json:"job_interval_count"`
+	StepIntervalCount          int      `json:"step_interval_count"`
 	StepWallMSLowerBound       int64    `json:"step_wall_ms_lower_bound"`
 	StepWallMSUpperExclusive   int64    `json:"step_wall_ms_upper_bound_exclusive"`
 	JobWallMSLowerBound        int64    `json:"job_wall_ms_lower_bound"`

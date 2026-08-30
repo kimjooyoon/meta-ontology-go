@@ -138,6 +138,7 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 		if err != nil {
 			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
 		}
+		window.StepIntervalCount += observedStepIntervalCount(steps)
 		result = append(result, JobObservation{ID: job.ID, Name: job.Name, Status: job.Status,
 			Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, StartedAt: job.StartedAt,
 			CompletedAt: job.CompletedAt, WallMS: duration.wall, BelowSourceResolution: duration.below,
@@ -150,6 +151,9 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 		}
 		window.JobWallMSSum += duration.wall
 		window.StepWallMSSum += stepWall
+		if !duration.missing && duration.rejection == "" {
+			window.JobIntervalCount++
+		}
 		if duration.below {
 			window.BelowSourceResolutionJobs++
 		}
@@ -164,9 +168,9 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	window.WallMS = observeTimestamp(window.StartAt, window.EndAt).wall
 	window.TimestampResolutionMS = 1000
 	window.StepWallMSLowerBound = window.StepWallMSSum
-	window.StepWallMSUpperExclusive = window.StepWallMSSum + int64(window.BelowSourceResolutionSteps)*window.TimestampResolutionMS
+	window.StepWallMSUpperExclusive = runtimeUpperBoundExclusive(window.StepWallMSLowerBound, window.StepIntervalCount, window.TimestampResolutionMS)
 	window.JobWallMSLowerBound = window.JobWallMSSum
-	window.JobWallMSUpperExclusive = window.JobWallMSSum + int64(window.BelowSourceResolutionJobs)*window.TimestampResolutionMS
+	window.JobWallMSUpperExclusive = runtimeUpperBoundExclusive(window.JobWallMSLowerBound, window.JobIntervalCount, window.TimestampResolutionMS)
 	sort.Strings(window.RuntimeRejectionReasons)
 	return result, window, nil
 }
@@ -174,6 +178,16 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 	steps, total, _, _, _, err := observeStepsWithResolution(input)
 	return steps, total, err
+}
+
+func observedStepIntervalCount(steps []StepObservation) int {
+	count := 0
+	for _, step := range steps {
+		if step.Conclusion != "skipped" && step.Unknown == nil && step.RejectionReason == "" && step.StartedAt != "" && step.CompletedAt != "" {
+			count++
+		}
+	}
+	return count
 }
 
 func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, int, []string, error) {
@@ -265,10 +279,17 @@ func observeTimestamp(start, end string) timestampObservation {
 }
 
 func runtimeResolution(window WorkflowWindow) string {
-	if window.BelowSourceResolutionJobs > 0 || window.BelowSourceResolutionSteps > 0 {
+	if window.TimestampResolutionMS > 0 {
 		return "BOUNDED/SOURCE_SECOND"
 	}
 	return "EXACT"
+}
+
+func runtimeUpperBoundExclusive(lower int64, intervals int, resolution int64) int64 {
+	if intervals < 1 {
+		intervals = 1
+	}
+	return lower + int64(intervals)*resolution
 }
 
 func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error, sourceEvent string) ([]OperationObservation, Accounting) {
