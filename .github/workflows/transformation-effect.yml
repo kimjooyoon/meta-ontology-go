@@ -1700,7 +1700,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          syntax="$RUNNER_TEMP/language-syntax-roundtrip/first/artifact.json"
+          syntax_first="$RUNNER_TEMP/language-syntax-roundtrip/first/artifact.json"
+          syntax_replay="$RUNNER_TEMP/language-syntax-roundtrip/replay/artifact.json"
           scope_root="$RUNNER_TEMP/language-syntax-scope-partition"
           mkdir -p "$scope_root"
           jq -e '.decision == "PASS" and .resolution == "EXACT" and
@@ -1709,19 +1710,34 @@ jobs:
             .summary.capability_satisfied == 42 and .summary.capability_total == 42 and
             .summary.capability_executed == 42 and .summary.capability_unresolved == 0 and
             .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
-            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' "$syntax"
-          artifact_digest="sha256:$(sha256sum "$syntax" | awk '{print $1}')"
-          jq --arg head "$HEAD_SHA" --arg digest "$artifact_digest" \
+            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' "$syntax_first"
+          test -s "$syntax_first"
+          test -s "$syntax_replay"
+          cmp -s "$syntax_first" "$syntax_replay"
+          first_digest="sha256:$(sha256sum "$syntax_first" | awk '{print $1}')"
+          replay_digest="sha256:$(sha256sum "$syntax_replay" | awk '{print $1}')"
+          replay_equal=true
+          jq --arg head "$HEAD_SHA" \
+            --arg first_digest "$first_digest" \
+            --arg replay_digest "$replay_digest" \
+            --argjson replay_equal "$replay_equal" \
             '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
-              source_artifact: "language-concept-artifact/first/artifact.json",
-              source_artifact_digest: $digest, source_report_digest: .report_digest,
-              reused_existing_artifact: true, existing_replay_verified: true,
+              producer_job: "language-concept-artifact",
+              source_artifact: "language-syntax-roundtrip/first/artifact.json",
+              source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
+              source_concept_artifact: "language-concept-artifact/first/artifact.json",
+              source_artifact_digest: $first_digest,
+              source_replay_artifact_digest: $replay_digest,
+              source_report_digest: .report_digest,
+              reused_existing_artifact: true, existing_replay_verified: $replay_equal,
+              replay_equal: $replay_equal,
               additional_compile_executions: 0, additional_test_executions: 0,
               overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
               language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
               governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
-            "$syntax" > "$scope_root/scope-partition.json"
-          cp "$syntax" "$scope_root/language-syntax-roundtrip-artifact.json"
+            "$syntax_first" > "$scope_root/scope-partition.json"
+          cp "$syntax_first" "$scope_root/language-syntax-roundtrip-first.json"
+          cp "$syntax_replay" "$scope_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
           echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
@@ -1729,7 +1745,7 @@ jobs:
           echo "- source: existing language-concept-artifact first output; additional compile/test executions: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head language syntax scope partition
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-scope-partition
