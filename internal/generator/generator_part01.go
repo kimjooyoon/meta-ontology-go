@@ -1,5 +1,7 @@
 package generator
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+
 // Project is the convenience entry point for a projection with optional
 // previous source.  It is the strongly typed API used by compiler adapters.
 func Project(ir SemanticIR, previous []byte) (Result, error) {
@@ -9,6 +11,17 @@ func Project(ir SemanticIR, previous []byte) (Result, error) {
 // Generate projects a local SemanticIR with optional previous source.
 func Generate(ir SemanticIR, previous []byte) (Result, error) {
 	return New(Options{}).Generate(ir, previous)
+}
+
+// GenerateWithEntityFieldsSupport is the explicit profile-bound projection
+// entry point. It never falls back to the deferred default.
+func GenerateWithEntityFieldsSupport(ir SemanticIR, previous []byte, support syntax.EntityFieldsSupport) (Result, error) {
+	return New(Options{}).generateWithEntityFieldsSupport(ir, previous, support)
+}
+
+// GenerateEntityFieldsV1 projects the exact supported EntityFields profile.
+func GenerateEntityFieldsV1(ir SemanticIR, previous []byte) (Result, error) {
+	return GenerateWithEntityFieldsSupport(ir, previous, syntax.EntityFieldsV1Support())
 }
 
 // GenerateFrom is a compatibility-friendly one-shot API. Inputs may be a

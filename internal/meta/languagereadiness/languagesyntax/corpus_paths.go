@@ -12,5 +12,6 @@ func registryPaths(registry Registry) []string {
 	for _, unit := range registry.PackageUnits {
 		paths = append(paths, unit.Members...)
 	}
+	paths = append(paths, registry.MetaSources...)
 	return paths
 }

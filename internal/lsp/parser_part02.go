@@ -11,6 +11,7 @@ const (
 	SymbolPackage   SymbolKind = 4
 	SymbolClass     SymbolKind = 5
 	SymbolFunction  SymbolKind = 12
+	SymbolField     SymbolKind = 8
 	SymbolKeyword   SymbolKind = 14
 	SymbolText      SymbolKind = 1
 )
@@ -22,6 +23,8 @@ type Symbol struct {
 	Detail         string
 	Range          Range
 	SelectionRange Range
+	IdentityRange  Range
+	HasIdentity    bool
 
 	// identityRange preserves the canonical syntax span of an explicit
 	// semantic identity literal for local navigation. Activity identities are

@@ -383,6 +383,16 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "entity-fields-v1",
+      "path": "examples/entity-fields-v1/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields": true
+    },
+    {
       "id": "live-governance-snapshot",
       "path": "examples/live-governance-snapshot/main.gooo",
       "kind": "VALID",
@@ -420,5 +430,8 @@
       "source_files_indicator": "PACKAGE_SOURCE_FILES",
       "execution_indicator": "PACKAGE_EXECUTIONS"
     }
+  ],
+  "meta_sources": [
+    "internal/meta/entityfields/entity-fields-meta.gooo"
   ]
 }

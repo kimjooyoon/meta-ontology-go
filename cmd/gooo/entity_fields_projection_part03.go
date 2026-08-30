@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"sort"
 )
 
 func validateCLIProjectedFields(model generator.SemanticIR) error {
@@ -65,6 +66,9 @@ func validateCLIFieldSpans(entity generator.Entity, field generator.Field, sourc
 			return fmt.Errorf("GOOO-EF-V1-UNREPRESENTABLE: field %q has an invalid source subspan", field.ID)
 		}
 	}
+	sort.SliceStable(spans, func(left, right int) bool {
+		return spans[left].Start.Offset < spans[right].Start.Offset
+	})
 	for index := 1; index < len(spans); index++ {
 		if spans[index-1].End.Offset > spans[index].Start.Offset {
 			return fmt.Errorf("GOOO-EF-V1-ILLEGAL-REORDER: field %q source subspans overlap", field.ID)

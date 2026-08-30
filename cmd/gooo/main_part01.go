@@ -32,9 +32,9 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	case "test":
 		return runLanguageTest(args[1:], OSFileReader{}, stdout, stderr)
 	case "check":
-		return runCheck(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+		return runCheck(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "generate":
-		return runGenerate(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "roundtrip":
 		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "query":

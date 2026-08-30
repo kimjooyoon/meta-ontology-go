@@ -13,11 +13,11 @@ const (
 	KindInvalid                = "INVALID"
 	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
 	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
-	totalCases                 = 43
-	validCases                 = 40
+	totalCases                 = 44
+	validCases                 = 41
 	invalidCases               = 3
 	FixedTotal                 = totalCases
-	FixedCapabilityTotal       = 42
+	FixedCapabilityTotal       = 43
 	FixedGovernanceTotal       = 1
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
@@ -26,6 +26,7 @@ type Registry struct {
 	Schema       string              `json:"schema"`
 	Cases        []CaseDefinition    `json:"cases"`
 	PackageUnits []PackageDefinition `json:"package_units"`
+	MetaSources  []string            `json:"meta_sources"`
 }
 
 type CaseDefinition struct {
@@ -37,6 +38,7 @@ type CaseDefinition struct {
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
 	Scope              string `json:"scope"`
+	EntityFields       bool   `json:"entity_fields,omitempty"`
 }
 
 type PackageDefinition struct {
