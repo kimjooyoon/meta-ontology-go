@@ -183,15 +183,15 @@ type RepositoryStatus struct {
 }
 
 type ReuseKey struct {
-	HeadSHA                    string `json:"head_sha"`
-	InputDigest                string `json:"input_digest"`
-	ToolchainDigest            string `json:"toolchain_digest"`
-	CommandContextDigest       string `json:"command_context_digest"`
-	EnvironmentAllowlistDigest string `json:"environment_allowlist_digest"`
-	DependencyGraphDigest      string `json:"dependency_graph_digest"`
+	HeadSHA                    string            `json:"head_sha"`
+	InputDigest                string            `json:"input_digest"`
+	ToolchainDigest            string            `json:"toolchain_digest"`
+	CommandContextDigest       string            `json:"command_context_digest"`
+	EnvironmentAllowlistDigest string            `json:"environment_allowlist_digest"`
+	DependencyGraphDigest      string            `json:"dependency_graph_digest"`
 	DependencyInputs           []DependencyInput `json:"dependency_inputs"`
-	ExpectedResultDigest       string `json:"expected_result_digest"`
-	OpenTofuReleaseDigest      string `json:"opentofu_release_digest"`
+	ExpectedResultDigest       string            `json:"expected_result_digest"`
+	OpenTofuReleaseDigest      string            `json:"opentofu_release_digest"`
 }
 
 type DependencyInput struct {
