@@ -31,10 +31,17 @@ func verifyFoundationArtifact(ctx context.Context, client *githubClient, reposit
 	}
 	decoded := decodeReceipt(archive)
 	if decoded.Receipt.ReceiptDigest != expected.LastKnownGoodReceiptDigest ||
-		decoded.Receipt.RepositoryWrites != 0 || decoded.Receipt.Decision != "FIXED_POINT" ||
-		decoded.Receipt.Report.Decision != "FIXED_POINT" ||
+		decoded.Receipt.RepositoryWrites != 0 || decoded.Receipt.Schema != "gooo/meta-artifact-feedback-resolution-receipt/v1" ||
+		decoded.Receipt.Report.Schema != "gooo/meta-artifact-feedback-resolution/v1" ||
+		decoded.Receipt.Report.SourceDecision != "FIXED_POINT" || decoded.Receipt.Report.Decision != "FIXED_POINT" ||
+		decoded.Receipt.Report.Reason != expected.LastKnownGoodFeedbackReason ||
+		decoded.Receipt.Report.ReportDigest != expected.LastKnownGoodResolutionReportDigest ||
+		decoded.Receipt.Report.Feedback.Schema != "gooo/meta-operation-artifact-feedback-report/v1" ||
 		decoded.Receipt.Report.Feedback.CommitSHA != expected.LastKnownGoodSHA ||
-		decoded.Receipt.Report.Feedback.Decision != "FIXED_POINT" {
+		decoded.Receipt.Report.Feedback.Repository != repository ||
+		decoded.Receipt.Report.Feedback.Decision != "FIXED_POINT" ||
+		decoded.Receipt.Report.Feedback.Reason != expected.LastKnownGoodFeedbackReason ||
+		decoded.Receipt.Report.Feedback.ReportDigest != expected.LastKnownGoodFeedbackReportDigest {
 		return fmt.Errorf("last-known-good receipt is not bound to a fixed point")
 	}
 	return nil

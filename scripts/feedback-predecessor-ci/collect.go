@@ -62,17 +62,10 @@ func collect(ctx context.Context, client *githubClient, cfg config) (collection,
 			})
 		}
 	}
-	sort.Slice(input.Candidates, func(i, j int) bool {
-		left, right := input.Candidates[i], input.Candidates[j]
-		return left.RunID < right.RunID ||
-			left.RunID == right.RunID && left.ArtifactID < right.ArtifactID
-	})
-	if len(input.Candidates) == 0 && cfg.branch == "main" &&
-		cfg.predecessorSHA == feedbackpredecessor.FoundationMissingPredecessorSHA {
-		foundation, err := verifyFoundation(ctx, client, cfg)
-		if err != nil {
-			return collection{}, err
-		}
+	sortCandidates(input.Candidates)
+	if foundation, ok, err := confirmedFoundation(ctx, client, cfg, len(input.Candidates)); err != nil {
+		return collection{}, err
+	} else if ok {
 		input.Foundation = &foundation
 	}
 	return collection{Input: input}, nil

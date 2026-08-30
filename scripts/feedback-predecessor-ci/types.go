@@ -42,12 +42,21 @@ type artifact struct {
 type archivedReceipt struct {
 	ReceiptDigest    string `json:"receipt_digest"`
 	RepositoryWrites int    `json:"repository_writes"`
+	Schema           string `json:"schema"`
 	Decision         string `json:"decision"`
 	Report           struct {
-		Decision string `json:"decision"`
-		Feedback struct {
-			CommitSHA string `json:"commit_sha"`
-			Decision  string `json:"decision"`
+		Schema         string `json:"schema"`
+		SourceDecision string `json:"source_decision"`
+		Decision       string `json:"decision"`
+		Reason         string `json:"reason"`
+		ReportDigest   string `json:"report_digest"`
+		Feedback       struct {
+			Schema       string `json:"schema"`
+			CommitSHA    string `json:"commit_sha"`
+			Repository   string `json:"repository"`
+			Decision     string `json:"decision"`
+			Reason       string `json:"reason"`
+			ReportDigest string `json:"report_digest"`
 		} `json:"feedback"`
 	} `json:"report"`
 }

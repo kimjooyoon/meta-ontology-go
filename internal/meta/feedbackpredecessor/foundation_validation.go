@@ -19,6 +19,9 @@ func validateFoundation(input Input) error {
 		foundation.LastKnownGoodArtifactName != expected.LastKnownGoodArtifactName ||
 		foundation.LastKnownGoodArtifactDigest != expected.LastKnownGoodArtifactDigest ||
 		foundation.LastKnownGoodReceiptDigest != expected.LastKnownGoodReceiptDigest ||
+		foundation.LastKnownGoodFeedbackReportDigest != expected.LastKnownGoodFeedbackReportDigest ||
+		foundation.LastKnownGoodResolutionReportDigest != expected.LastKnownGoodResolutionReportDigest ||
+		foundation.LastKnownGoodFeedbackReason != expected.LastKnownGoodFeedbackReason ||
 		!foundation.LastKnownGoodIsAncestor || foundation.NextOperation != expected.NextOperation ||
 		foundation.UseCount != expected.UseCount || len(input.Candidates) != 0 {
 		return fmt.Errorf("foundation evidence contradicts the confirmed gap")
