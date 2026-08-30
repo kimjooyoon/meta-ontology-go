@@ -112,10 +112,11 @@ func Observe(filename, source string) (Observation, error) {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Get/Put changed source document")
 	}
 	putGetInput := model.Clone()
-	if len(putGetInput.Nodes) == 0 || len(putGetInput.Nodes[0].Fields) == 0 {
+	fieldNode := entityFieldNodeIndex(putGetInput)
+	if fieldNode < 0 {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Put/Get mutation has no field")
 	}
-	putGetInput.Nodes[0].Fields[0].Name += "Changed"
+	putGetInput.Nodes[fieldNode].Fields[0].Name += "Changed"
 	putGetDocument, err := bidir.PutWithEntityFieldsSupport(document, putGetInput, support)
 	if err != nil {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Put/Get: %w", err)
@@ -138,6 +139,15 @@ func Observe(filename, source string) (Observation, error) {
 	}
 	navigation := navigation(filename, formatted)
 	return buildObservation(source, file, formatted, semanticIR, generated, navigation, model, document, getPutDocument, putGetInput, putGetObserved), nil
+}
+
+func entityFieldNodeIndex(model bidir.Model) int {
+	for index, node := range model.Nodes {
+		if node.Kind == bidir.EntityKind && len(node.Fields) > 0 {
+			return index
+		}
+	}
+	return -1
 }
 
 func projection(ir semantic.IR, model bidir.Model, source *syntax.File) (generator.SemanticIR, error) {
