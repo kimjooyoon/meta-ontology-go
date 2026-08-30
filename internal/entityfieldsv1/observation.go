@@ -8,7 +8,6 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
-	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -115,7 +114,11 @@ func projection(ir semantic.IR, model bidir.Model, source *syntax.File) (generat
 			if !ok || node.Kind != semantic.Activity {
 				return generator.SemanticIR{}, fmt.Errorf("missing semantic activity %q", id)
 			}
-			result.Activities = append(result.Activities, generator.Activity{ID: id, Name: node.Name, GoName: node.Name, Source: span(node.Span)})
+			sourceNode, ok := byID[id]
+			if !ok {
+				return generator.SemanticIR{}, fmt.Errorf("missing BX source activity %q", id)
+			}
+			result.Activities = append(result.Activities, generator.Activity{ID: id, Name: node.Name, GoName: node.Name, Source: span(sourceNode.Span)})
 		}
 	}
 	if len(result.Entities)+len(result.Activities) != len(ir.Graph.Nodes()) {

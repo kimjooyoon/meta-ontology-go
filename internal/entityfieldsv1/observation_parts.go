@@ -1,7 +1,6 @@
 package entityfieldsv1
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
