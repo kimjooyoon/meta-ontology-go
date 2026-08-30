@@ -384,7 +384,7 @@ func buildCells(contract Contract, report Report) []CellObservation {
 		value := values[index]
 		cell := CellObservation{ID: spec.ID, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
 			Indicator: spec.Indicator, Activity: spec.Activity, InputID: spec.InputID, OutputID: spec.OutputID,
-		Observed: value.observed, Expected: value.expected, Decision: "PASS"}
+			Observed: value.observed, Expected: value.expected, Decision: "PASS"}
 		if index == 2 && report.Window.RuntimeRejectionCount > 0 {
 			cell.Decision = "REFUTED"
 		} else if !value.ok {

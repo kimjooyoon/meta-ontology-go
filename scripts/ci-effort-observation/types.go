@@ -140,19 +140,19 @@ type StepObservation struct {
 }
 
 type WorkflowWindow struct {
-	StartAt                    string `json:"start_at"`
-	EndAt                      string `json:"end_at"`
-	WallMS                     int64  `json:"wall_ms"`
-	JobWallMSSum               int64  `json:"job_wall_ms_sum"`
-	StepWallMSSum              int64  `json:"step_wall_ms_sum"`
-	TimestampResolutionMS      int64  `json:"timestamp_resolution_ms"`
-	BelowSourceResolutionJobs  int    `json:"below_source_resolution_jobs"`
-	BelowSourceResolutionSteps int    `json:"below_source_resolution_steps"`
-	StepWallMSLowerBound       int64  `json:"step_wall_ms_lower_bound"`
-	StepWallMSUpperExclusive   int64  `json:"step_wall_ms_upper_bound_exclusive"`
-	JobWallMSLowerBound        int64  `json:"job_wall_ms_lower_bound"`
-	JobWallMSUpperExclusive    int64  `json:"job_wall_ms_upper_bound_exclusive"`
-	RuntimeRejectionCount      int    `json:"runtime_rejection_count"`
+	StartAt                    string   `json:"start_at"`
+	EndAt                      string   `json:"end_at"`
+	WallMS                     int64    `json:"wall_ms"`
+	JobWallMSSum               int64    `json:"job_wall_ms_sum"`
+	StepWallMSSum              int64    `json:"step_wall_ms_sum"`
+	TimestampResolutionMS      int64    `json:"timestamp_resolution_ms"`
+	BelowSourceResolutionJobs  int      `json:"below_source_resolution_jobs"`
+	BelowSourceResolutionSteps int      `json:"below_source_resolution_steps"`
+	StepWallMSLowerBound       int64    `json:"step_wall_ms_lower_bound"`
+	StepWallMSUpperExclusive   int64    `json:"step_wall_ms_upper_bound_exclusive"`
+	JobWallMSLowerBound        int64    `json:"job_wall_ms_lower_bound"`
+	JobWallMSUpperExclusive    int64    `json:"job_wall_ms_upper_bound_exclusive"`
+	RuntimeRejectionCount      int      `json:"runtime_rejection_count"`
 	RuntimeRejectionReasons    []string `json:"runtime_rejection_reasons"`
 }
 
