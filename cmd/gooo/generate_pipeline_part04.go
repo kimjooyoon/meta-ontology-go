@@ -42,7 +42,12 @@ func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Durat
 				return
 			}
 		}
-		generated, err := generator.Generate(model, previous)
+		var generated generator.Result
+		if semanticIRHasFields(ir) {
+			generated, err = generator.GenerateWithEntityFieldsSupport(model, previous, syntax.EntityFieldsV1Support())
+		} else {
+			generated, err = generator.Generate(model, previous)
+		}
 		result <- generationResult{ir: ir, result: generated, err: err}
 	}()
 	timer := time.NewTimer(timeout)
