@@ -4,7 +4,7 @@ import "testing"
 
 func TestTemporalTransitionTicketV1ScopeIsExplicit(t *testing.T) {
 	paths, ok := BranchScope(temporalTransitionTicketV1Branch)
-	if !ok || len(paths) != 17 {
+	if !ok || len(paths) != 16 {
 		t.Fatalf("temporal transition ticket scope: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
