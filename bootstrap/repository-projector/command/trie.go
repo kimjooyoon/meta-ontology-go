@@ -63,12 +63,3 @@ func assignGroup(group []*storedObject, prefix []string, depth int) error {
 	}
 	return nil
 }
-
-func requireBlockingZero(report evidence) error {
-	for _, metric := range report.Indicators {
-		if metric.Blocking && metric.Value > metric.Limit {
-			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)
-		}
-	}
-	return nil
-}
