@@ -13,13 +13,10 @@ import (
 
 func expectedRegistry() Registry {
 	valid := func(id, path string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability}
+		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax"}
 	}
 	invalid := func(id, path, diagnostic string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed, ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax", Scope: ScopeLanguageCapability}
-	}
-	governance := func(id, path string) CaseDefinition {
-		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeGovernanceObservation}
+		return CaseDefinition{ID: id, Path: path, Kind: KindInvalid, ExpectedDecision: DecisionClosed, ExpectedDiagnostic: diagnostic, ProofChoice: "REGRESSION", MetaOperation: "reject-invalid-syntax"}
 	}
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
@@ -66,7 +63,7 @@ func expectedRegistry() Registry {
 		valid("ci-plan", "examples/ci-plan/main.gooo"),
 		valid("ci-effort-observation", "examples/ci-effort-observation/main.gooo"),
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
-		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
+		valid("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}}
 }
 
@@ -80,25 +77,10 @@ func decodeRegistry(raw []byte) (Registry, error) {
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return registry, fmt.Errorf("decode language syntax registry: trailing content")
 	}
-	for index := range registry.Cases {
-		if registry.Cases[index].Scope == "" {
-			registry.Cases[index].Scope = ScopeLanguageCapability
-		}
-	}
 	if !reflect.DeepEqual(registry, expectedRegistry()) {
 		return registry, fmt.Errorf("language syntax registry mismatch")
 	}
 	return registry, nil
-}
-
-func CapabilityCaseTotal() int {
-	total := 0
-	for _, definition := range expectedRegistry().Cases {
-		if definition.Scope == ScopeLanguageCapability {
-			total++
-		}
-	}
-	return total
 }
 
 func unresolvedCases(source Source) []CaseResult {

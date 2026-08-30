@@ -10,10 +10,7 @@ func observeBoundary(id string, artifact artifactEnvelope) (int, string) {
 	summary := artifact.Summary
 	switch id {
 	case "syntax":
-		return summary.CapabilitySatisfied, status(summary.CapabilitySatisfied == languagesyntax.CapabilityCaseTotal() &&
-			summary.CapabilityTotal == languagesyntax.CapabilityCaseTotal() &&
-			summary.CapabilityExecuted == languagesyntax.CapabilityCaseTotal() && summary.CapabilityUnresolved == 0 &&
-			summary.Satisfied == languagesyntax.FixedTotal && summary.Total == languagesyntax.FixedTotal &&
+		return summary.Satisfied, status(summary.Satisfied == languagesyntax.FixedTotal && summary.Total == languagesyntax.FixedTotal &&
 			summary.Executed == languagesyntax.FixedTotal && summary.NotSatisfied == 0 && summary.Unresolved == 0 &&
 			summary.ReadinessBPS == 10000)
 	case "semantics":

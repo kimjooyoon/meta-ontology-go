@@ -6,10 +6,6 @@ type artifactSummary struct {
 	Executed             int `json:"executed"`
 	NotSatisfied         int `json:"not_satisfied"`
 	Unresolved           int `json:"unresolved"`
-	CapabilitySatisfied  int `json:"capability_satisfied"`
-	CapabilityTotal      int `json:"capability_total"`
-	CapabilityExecuted   int `json:"capability_executed"`
-	CapabilityUnresolved int `json:"capability_unresolved"`
 	ReadinessBPS         int `json:"readiness_bps"`
 	Coordinates          int `json:"coordinates"`
 	BoundCoordinates     int `json:"bound_coordinates"`

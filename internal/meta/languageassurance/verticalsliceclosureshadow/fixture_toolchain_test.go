@@ -10,7 +10,7 @@ import (
 
 func toolchainFixture(head string) []byte {
 	surfaces := []any{
-		surfaceFixture("language-syntax-roundtrip", languagesyntax.ReportSchema, head, languagesyntax.CapabilityCaseTotal()),
+		surfaceFixture("language-syntax-roundtrip", languagesyntax.ReportSchema, head, languagesyntax.FixedTotal),
 		surfaceFixture("language-semantic-model", languagesemantic.ReportSchema, head, languagesemantic.FixedTotal),
 		surfaceFixture("toolchain-executable-use-cases", "gooo/toolchain-executable-use-cases/v1", head, 3),
 	}

@@ -11,8 +11,6 @@ const (
 	ResolutionLower            = "LOWER_RESOLUTION"
 	KindValid                  = "VALID"
 	KindInvalid                = "INVALID"
-	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
-	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
 	totalCases                 = 43
 	validCases                 = 40
 	invalidCases               = 3
@@ -34,7 +32,6 @@ type CaseDefinition struct {
 	ExpectedDiagnostic string `json:"expected_diagnostic,omitempty"`
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
-	Scope              string `json:"scope"`
 }
 
 type PackageDefinition struct {

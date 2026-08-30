@@ -4,7 +4,7 @@ import "testing"
 
 func TestLiveGovernanceSnapshotScope(t *testing.T) {
 	paths, ok := BranchScope(liveGovernanceSnapshotBranch)
-	if !ok || len(paths) != 22 {
+	if !ok || len(paths) != 14 {
 		t.Fatalf("live governance branch registration: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
@@ -14,7 +14,6 @@ func TestLiveGovernanceSnapshotScope(t *testing.T) {
 		"examples/live-governance-snapshot/contract.json",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/governancesnapshot/evaluate.go",
-		"internal/meta/languageassurance/verticalsliceclosureshadow/artifact_values.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/verify/scope_live_governance_snapshot_v1.go",
 		"scripts/live-governance-snapshot/main.go",

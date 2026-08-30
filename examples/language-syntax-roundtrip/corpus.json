@@ -346,8 +346,7 @@
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax",
-      "scope": "GOVERNANCE_OBSERVATION"
+      "meta_operation": "replay-language-syntax"
     }
   ],
   "package_units": [
