@@ -2,6 +2,7 @@ package entityfields
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1"
@@ -50,18 +51,38 @@ func unknownCell(spec CellSpec, reason string) CellObservation {
 func summarize(cells []CellObservation) Summary {
 	summary := Summary{CellsTotal: len(cells)}
 	for _, cell := range cells {
-		if cell.Decision == DecisionPass { summary.ClosedCells++ }
-		if cell.Decision == "UNKNOWN" { summary.UnknownCells++ }
-		if cell.Decision == DecisionRefuted { summary.RefutedCells++ }
-		switch cell.ProofChoice { case "FOUNDATION": summary.FoundationCells++; case "COHERENCE": summary.CoherenceCells++; case "REGRESSION": summary.RegressionCells++ }
-		switch cell.IndicatorClass { case "DRIVER": summary.DriverCells++; case "OUTCOME": summary.OutcomeCells++; case "GUARDRAIL": summary.GuardrailCells++ }
+		if cell.Decision == DecisionPass {
+			summary.ClosedCells++
+		}
+		if cell.Decision == "UNKNOWN" {
+			summary.UnknownCells++
+		}
+		if cell.Decision == DecisionRefuted {
+			summary.RefutedCells++
+		}
+		switch cell.ProofChoice {
+		case "FOUNDATION":
+			summary.FoundationCells++
+		case "COHERENCE":
+			summary.CoherenceCells++
+		case "REGRESSION":
+			summary.RegressionCells++
+		}
+		switch cell.IndicatorClass {
+		case "DRIVER":
+			summary.DriverCells++
+		case "OUTCOME":
+			summary.OutcomeCells++
+		case "GUARDRAIL":
+			summary.GuardrailCells++
+		}
 	}
 	return summary
 }
 
 func cloneDigests(values map[string]string) map[string]string {
 	copy := make(map[string]string, len(values))
-	for key, value := range values { copy[key] = value }
+	maps.Copy(copy, values)
 	return copy
 }
 
@@ -85,12 +106,16 @@ func FixedCounterexamples() []Counterexample {
 }
 
 func cellEvidenceContract(cell CellObservation, observation entityfieldsv1.Observation) error {
-	if cell.EvidenceDigest == "" || observation.EvidenceDigests[cell.EvidenceKey] != cell.EvidenceDigest { return fmt.Errorf("cell %s evidence is not bound", cell.ID) }
+	if cell.EvidenceDigest == "" || observation.EvidenceDigests[cell.EvidenceKey] != cell.EvidenceDigest {
+		return fmt.Errorf("cell %s evidence is not bound", cell.ID)
+	}
 	return nil
 }
 
 func validateProfile(report Report) error {
 	profile := syntax.EntityFieldsV1Support().Profile
-	if report.ProfileID != profile.ID || report.ProfileVersion != profile.Version || report.ProfileDigest != profile.Digest { return fmt.Errorf("EntityFields profile mismatch") }
+	if report.ProfileID != profile.ID || report.ProfileVersion != profile.Version || report.ProfileDigest != profile.Digest {
+		return fmt.Errorf("EntityFields profile mismatch")
+	}
 	return nil
 }
