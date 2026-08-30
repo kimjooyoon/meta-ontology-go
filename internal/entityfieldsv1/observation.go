@@ -136,7 +136,11 @@ func generatorEntity(node bidir.Node) generator.Entity {
 }
 
 func generatorField(field bidir.Field) generator.Field {
-	return generator.Field{ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, TypeRefID: string(field.TypeRef.ID), Presence: string(field.Presence), Cardinality: string(field.Cardinality), Source: span(field.Span), IDSpan: span(field.IDSpan), NameSpan: span(field.NameSpan), TypeRefSpan: span(field.TypeRefSpan), PresenceSpan: span(field.PresenceSpan), CardinalitySpan: span(field.CardinalitySpan), NameSource: span(field.NameSpan)}
+	typeID := string(field.TypeRef.ID)
+	if typeID == "" {
+		typeID = string(field.TypeRefUse.ResolvedID)
+	}
+	return generator.Field{ID: string(field.ID), Parent: string(field.Parent), Name: field.Name, TypeRefID: typeID, Presence: string(field.Presence), Cardinality: string(field.Cardinality), Source: span(field.Span), IDSpan: span(field.IDSpan), NameSpan: span(field.NameSpan), TypeRefSpan: span(field.TypeRefSpan), PresenceSpan: span(field.PresenceSpan), CardinalitySpan: span(field.CardinalitySpan), NameSource: span(field.NameSpan)}
 }
 
 func span(value bidir.SourceSpan) generator.SourceSpan {
