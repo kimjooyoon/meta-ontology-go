@@ -652,6 +652,7 @@ jobs:
             --argjson syntax_build_ms "$syntax_build_ms" \
             --argjson syntax_peak_rss_kib "$syntax_peak_rss_kib" \
             '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
+              decision: .decision, resolution: .resolution,
               producer_job: "language-syntax-scope-partition",
               source_artifact: "language-syntax-roundtrip/first/artifact.json",
               source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
