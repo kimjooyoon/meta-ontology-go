@@ -31,8 +31,28 @@ func TestBoundZeroDurationRequiredStepIsTypedUnknown(t *testing.T) {
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
 	jobs := []APIJob{{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}}}}
 	operation := observeOperation(spec, jobs, ".github/workflows/ci.yml", source, nil)
-	if operation.State != "UNKNOWN" || !validUnknown(operation.Unknown) || operation.Unknown.Reason != "OPERATION_DURATION_NON_POSITIVE" {
+	if operation.State != "UNKNOWN" || !validUnknown(operation.Unknown) || operation.Unknown.Reason != "OPERATION_DURATION_BELOW_SOURCE_RESOLUTION" || operation.Unknown.NextOperation != "OBSERVE_WITH_HIGHER_RESOLUTION_OR_REPEAT" {
 		t.Fatalf("zero-duration bound step was not typed unknown: %+v", operation)
+	}
+}
+
+func TestBoundMalformedTimestampIsRejected(t *testing.T) {
+	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
+	jobs := []APIJob{{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success", StartedAt: "not-a-timestamp", CompletedAt: "2026-08-30T00:00:01Z"}}}}
+	operation := observeOperation(spec, jobs, ".github/workflows/ci.yml", source, nil)
+	if operation.State != "REJECTED" || operation.RejectionReason != "OPERATION_TIMESTAMP_MALFORMED" {
+		t.Fatalf("malformed bound timestamp was not rejected: %+v", operation)
+	}
+}
+
+func TestBoundNegativeDurationIsRejected(t *testing.T) {
+	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
+	jobs := []APIJob{{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:02Z", CompletedAt: "2026-08-30T00:00:01Z"}}}}
+	operation := observeOperation(spec, jobs, ".github/workflows/ci.yml", source, nil)
+	if operation.State != "REJECTED" || operation.RejectionReason != "OPERATION_DURATION_NEGATIVE" {
+		t.Fatalf("negative bound duration was not rejected: %+v", operation)
 	}
 }
 

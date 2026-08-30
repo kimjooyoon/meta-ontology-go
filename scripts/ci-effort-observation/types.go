@@ -156,6 +156,7 @@ type OperationObservation struct {
 	StepStatus           string   `json:"step_status"`
 	StepConclusion       string   `json:"step_conclusion"`
 	State                string   `json:"state"`
+	RejectionReason      string   `json:"rejection_reason,omitempty"`
 	StartedAt            string   `json:"started_at"`
 	CompletedAt          string   `json:"completed_at"`
 	WallMS               int64    `json:"wall_ms"`

@@ -269,7 +269,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	}
 	if len(matchingJobs) != 1 {
 		if len(matchingJobs) > 1 {
-			base.State = "REJECTED"
+			base.State, base.RejectionReason = "REJECTED", "DUPLICATE_JOB_OBSERVATION"
 		} else {
 			base.Unknown = operationEvidenceUnknown("JOB_OBSERVATION_MISSING")
 		}
@@ -286,7 +286,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	}
 	if len(matches) != 1 {
 		if len(matches) > 1 {
-			base.State = "REJECTED"
+			base.State, base.RejectionReason = "REJECTED", "DUPLICATE_STEP_OBSERVATION"
 		} else {
 			base.Unknown = operationEvidenceUnknown("STEP_OBSERVATION_MISSING")
 		}
@@ -303,16 +303,19 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 		if durationErr != nil {
 			started, startErr := time.Parse(time.RFC3339Nano, step.StartedAt)
 			completed, endErr := time.Parse(time.RFC3339Nano, step.CompletedAt)
-			if startErr == nil && endErr == nil && completed.Before(started) {
-				base.State = "REJECTED"
-			} else {
+			switch {
+			case startErr != nil || endErr != nil:
+				base.State, base.RejectionReason = "REJECTED", "OPERATION_TIMESTAMP_MALFORMED"
+			case completed.Before(started):
+				base.State, base.RejectionReason = "REJECTED", "OPERATION_DURATION_NEGATIVE"
+			default:
 				base.Unknown = operationDurationUnknown()
 			}
 		} else {
 			base.State, base.WallMS = "EXECUTED", wall
 		}
 	} else {
-		base.Unknown = operationEvidenceUnknown("OPERATION_TIMESTAMP_MISSING")
+		base.Unknown = operationTimestampMissingUnknown()
 	}
 	base.EvidenceDigest = operationDigest(base)
 	return base
@@ -338,9 +341,14 @@ func operationEvidenceUnknown(reason string) *Unknown {
 		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_RECEIPT", BlockedBy: []string{}}
 }
 
+func operationTimestampMissingUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_TIMESTAMP_MISSING",
+		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_TIMESTAMPS", BlockedBy: []string{}}
+}
+
 func operationDurationUnknown() *Unknown {
-	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_DURATION_NON_POSITIVE",
-		UnknownClass: "AMBIGUOUS", NextOperation: "RESTORE_OPERATION_TIMESTAMPS", BlockedBy: []string{}}
+	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_DURATION_BELOW_SOURCE_RESOLUTION",
+		UnknownClass: "AMBIGUOUS", NextOperation: "OBSERVE_WITH_HIGHER_RESOLUTION_OR_REPEAT", BlockedBy: []string{}}
 }
 
 func digestIfPresent(value []byte) string {

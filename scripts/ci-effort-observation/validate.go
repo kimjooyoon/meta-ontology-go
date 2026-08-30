@@ -192,6 +192,9 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 			}
 			continue
 		}
+		if operation.State == "REJECTED" && !validRejectionReason(operation.RejectionReason) {
+			return fmt.Errorf("operation rejection evidence is incomplete")
+		}
 		contextDigest, err := bindWorkflowCommand(workflow, workflowPath, *spec)
 		if err != nil || !operation.CommandBound || operation.WorkflowSourcePath != workflowPath || operation.WorkflowSourceDigest != digestBytes(workflow) || operation.CommandContextDigest != contextDigest {
 			return fmt.Errorf("operation command context is unbound")
@@ -262,6 +265,15 @@ func validateReuseObservation(value ReuseObservation) error {
 
 func validUnknown(value *Unknown) bool {
 	return value != nil && value.Stage != "" && value.Step != "" && value.Reason != "" && value.UnknownClass != "" && value.NextOperation != "" && value.BlockedBy != nil
+}
+
+func validRejectionReason(value string) bool {
+	switch value {
+	case "DUPLICATE_JOB_OBSERVATION", "DUPLICATE_STEP_OBSERVATION", "OPERATION_TIMESTAMP_MALFORMED", "OPERATION_DURATION_NEGATIVE":
+		return true
+	default:
+		return false
+	}
 }
 
 func buildCells(contract Contract, report Report) []CellObservation {
