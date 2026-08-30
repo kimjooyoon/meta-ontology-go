@@ -8,6 +8,7 @@ func init() {
 		"cmd/feedback-predecessor-witness",
 		"internal/detection/linecaps",
 		"internal/meta/feedbackpredecessor",
+		"internal/meta/generation",
 		"internal/meta/metabinding/registry.go",
 		"internal/meta/sourcepolicy",
 		"internal/verify/foundation_discovery_recovery_scope.go",
