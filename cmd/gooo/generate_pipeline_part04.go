@@ -26,17 +26,17 @@ func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Durat
 			return
 		}
 		if semanticIRHasFields(ir) {
-				document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
+			document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX document adaptation failed: %w", err)}
 				return
 			}
-				sourceModel, err := bidir.GetWithEntityFieldsSupport(document, syntax.EntityFieldsV1Support())
+			sourceModel, err := bidir.GetWithEntityFieldsSupport(document, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX model projection failed: %w", err)}
 				return
 			}
-				model, err = projectionIRFromBidirModelWithSupport(ir, sourceModel, syntax.EntityFieldsV1Support())
+			model, err = projectionIRFromBidirModelWithSupport(ir, sourceModel, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("generator field adapter failed: %w", err)}
 				return

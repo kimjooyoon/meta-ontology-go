@@ -48,29 +48,29 @@ type Counterexample struct {
 }
 
 type Authority struct {
-	RepositoryWrites       int `json:"repository_writes"`
-	BranchSettingWrites    int `json:"branch_setting_writes"`
-	LocalTestExecutions    int `json:"local_test_executions"`
-	CrossProjectGates      int `json:"cross_project_required_gates"`
-	PromotionAuthorized    bool `json:"promotion_authorized"`
+	RepositoryWrites    int  `json:"repository_writes"`
+	BranchSettingWrites int  `json:"branch_setting_writes"`
+	LocalTestExecutions int  `json:"local_test_executions"`
+	CrossProjectGates   int  `json:"cross_project_required_gates"`
+	PromotionAuthorized bool `json:"promotion_authorized"`
 }
 
 type Report struct {
-	Schema             string             `json:"schema"`
-	ProfileID          string             `json:"profile_id"`
-	ProfileVersion     int                `json:"profile_version"`
-	ProfileDigest      string             `json:"profile_digest"`
-	Decision           string             `json:"decision"`
-	Resolution         string             `json:"resolution"`
-	Reason             string             `json:"reason"`
-	Cells              []CellObservation  `json:"cells"`
-	Summary            Summary            `json:"summary"`
-	Counterexamples    []Counterexample   `json:"counterexamples"`
-	Activities         []string           `json:"activities"`
-	ActivityCount      int                `json:"activity_count"`
-	BindingCount       int                `json:"binding_count"`
-	EvidenceDigests    map[string]string  `json:"evidence_digests"`
-	Authority          Authority          `json:"authority"`
-	Improvement        string             `json:"improvement"`
-	HumanReport        string             `json:"human_report"`
+	Schema          string            `json:"schema"`
+	ProfileID       string            `json:"profile_id"`
+	ProfileVersion  int               `json:"profile_version"`
+	ProfileDigest   string            `json:"profile_digest"`
+	Decision        string            `json:"decision"`
+	Resolution      string            `json:"resolution"`
+	Reason          string            `json:"reason"`
+	Cells           []CellObservation `json:"cells"`
+	Summary         Summary           `json:"summary"`
+	Counterexamples []Counterexample  `json:"counterexamples"`
+	Activities      []string          `json:"activities"`
+	ActivityCount   int               `json:"activity_count"`
+	BindingCount    int               `json:"binding_count"`
+	EvidenceDigests map[string]string `json:"evidence_digests"`
+	Authority       Authority         `json:"authority"`
+	Improvement     string            `json:"improvement"`
+	HumanReport     string            `json:"human_report"`
 }

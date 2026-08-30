@@ -4,11 +4,17 @@ import "testing"
 
 func TestEntityFieldsV1ScopeIsExplicit(t *testing.T) {
 	paths, ok := BranchScope(entityFieldsV1Branch)
-	if !ok || len(paths) != 36 { t.Fatalf("EntityFields scope: known=%t paths=%d", ok, len(paths)) }
+	if !ok || len(paths) != 36 {
+		t.Fatalf("EntityFields scope: known=%t paths=%d", ok, len(paths))
+	}
 	allowed := []string{
 		".github/workflows/entity-fields-v1.yml", ".github/workflows/transformation-effect.yml", "cmd/entity-fields-witness/main.go", "examples/entity-fields-v1/main.gooo",
 		"cmd/gooo/check_part01.go", "cmd/gooo/entity_fields_projection_part03.go", "cmd/gooo/entity_fields_projection_part04.go", "cmd/gooo/generate_pipeline_part04.go", "internal/entityfieldsv1/observation.go", "internal/lsp/entity_fields_references.go", "internal/meta/entityfields/evaluate.go", "internal/meta/languagereadiness/languagesyntax/corpus_paths.go", "internal/syntax/entity_fields_support.go",
 	}
-	if err := CheckPathScopeForBranch(allowed, entityFieldsV1Branch); err != nil { t.Fatalf("representative paths rejected: %v", err) }
-	if err := CheckPathScopeForBranch([]string{".github/workflows/ci.yml"}, entityFieldsV1Branch); err == nil { t.Fatal("unrelated workflow accepted") }
+	if err := CheckPathScopeForBranch(allowed, entityFieldsV1Branch); err != nil {
+		t.Fatalf("representative paths rejected: %v", err)
+	}
+	if err := CheckPathScopeForBranch([]string{".github/workflows/ci.yml"}, entityFieldsV1Branch); err == nil {
+		t.Fatal("unrelated workflow accepted")
+	}
 }

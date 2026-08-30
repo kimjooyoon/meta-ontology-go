@@ -31,15 +31,15 @@ type NavigationReference struct {
 }
 
 type CounterexampleEvidence struct {
-	ID            string `json:"id"`
-	Decision      string `json:"decision"`
-	Resolution    string `json:"resolution"`
-	Reason        string `json:"reason"`
-	InputDigest   string `json:"input_digest"`
-	OutputDigest  string `json:"output_digest"`
-	EvidenceDigest string `json:"evidence_digest"`
-	PartialOutput bool   `json:"partial_output"`
-	Unknown       *UnknownEvidence `json:"unknown,omitempty"`
+	ID             string           `json:"id"`
+	Decision       string           `json:"decision"`
+	Resolution     string           `json:"resolution"`
+	Reason         string           `json:"reason"`
+	InputDigest    string           `json:"input_digest"`
+	OutputDigest   string           `json:"output_digest"`
+	EvidenceDigest string           `json:"evidence_digest"`
+	PartialOutput  bool             `json:"partial_output"`
+	Unknown        *UnknownEvidence `json:"unknown,omitempty"`
 }
 
 type UnknownEvidence struct {
@@ -52,31 +52,31 @@ type UnknownEvidence struct {
 }
 
 type Observation struct {
-	Schema           string                         `json:"schema"`
-	Profile          syntax.EntityFieldsProfile     `json:"profile"`
-	Source           string                         `json:"source"`
-	Formatted        string                         `json:"formatted"`
-	DeclarationOrder []string                       `json:"declaration_order"`
-	StableIDs        []string                       `json:"stable_ids"`
-	Semantic         generator.SemanticIR           `json:"semantic_ir"`
-	Generated        []byte                         `json:"generated_go"`
-	SourceMap        generator.SourceMap            `json:"source_map"`
-	Symbols          []NavigationSymbol             `json:"symbols"`
-	References       []NavigationReference          `json:"references"`
-	SourceDigest     string                         `json:"source_digest"`
-	FormattedDigest  string                         `json:"formatted_digest"`
-	SemanticDigest   string                         `json:"semantic_digest"`
-	GeneratedDigest  string                         `json:"generated_digest"`
-	SourceMapDigest  string                         `json:"source_map_digest"`
-	NavigationDigest string                         `json:"navigation_digest"`
-	EvidenceDigests  map[string]string              `json:"evidence_digests"`
-	GetPutRoundTrip       bool                         `json:"get_put_roundtrip"`
-	PutGetRoundTrip       bool                         `json:"put_get_roundtrip"`
-	GetPutOriginalDigest  string                       `json:"get_put_original_digest"`
-	GetPutWrittenDigest   string                       `json:"get_put_written_digest"`
-	PutGetInputDigest     string                       `json:"put_get_input_digest"`
-	PutGetObservedDigest  string                       `json:"put_get_observed_digest"`
-	Counterexamples       []CounterexampleEvidence     `json:"counterexamples"`
+	Schema               string                     `json:"schema"`
+	Profile              syntax.EntityFieldsProfile `json:"profile"`
+	Source               string                     `json:"source"`
+	Formatted            string                     `json:"formatted"`
+	DeclarationOrder     []string                   `json:"declaration_order"`
+	StableIDs            []string                   `json:"stable_ids"`
+	Semantic             generator.SemanticIR       `json:"semantic_ir"`
+	Generated            []byte                     `json:"generated_go"`
+	SourceMap            generator.SourceMap        `json:"source_map"`
+	Symbols              []NavigationSymbol         `json:"symbols"`
+	References           []NavigationReference      `json:"references"`
+	SourceDigest         string                     `json:"source_digest"`
+	FormattedDigest      string                     `json:"formatted_digest"`
+	SemanticDigest       string                     `json:"semantic_digest"`
+	GeneratedDigest      string                     `json:"generated_digest"`
+	SourceMapDigest      string                     `json:"source_map_digest"`
+	NavigationDigest     string                     `json:"navigation_digest"`
+	EvidenceDigests      map[string]string          `json:"evidence_digests"`
+	GetPutRoundTrip      bool                       `json:"get_put_roundtrip"`
+	PutGetRoundTrip      bool                       `json:"put_get_roundtrip"`
+	GetPutOriginalDigest string                     `json:"get_put_original_digest"`
+	GetPutWrittenDigest  string                     `json:"get_put_written_digest"`
+	PutGetInputDigest    string                     `json:"put_get_input_digest"`
+	PutGetObservedDigest string                     `json:"put_get_observed_digest"`
+	Counterexamples      []CounterexampleEvidence   `json:"counterexamples"`
 }
 
 func Observe(filename, source string) (Observation, error) {

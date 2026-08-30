@@ -3,9 +3,9 @@ package entityfieldsv1
 import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 
 const (
-	Schema   = "gooo/entity-fields/v1"
-	SourceID = "billing://entity/order"
-	FieldID  = "billing://field/order-number"
+	Schema        = "gooo/entity-fields/v1"
+	SourceID      = "billing://entity/order"
+	FieldID       = "billing://field/order-number"
 	SecondFieldID = "billing://field/customer-name"
 )
 

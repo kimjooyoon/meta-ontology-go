@@ -1,8 +1,8 @@
 package entityfields
 
 const (
-	ReportSchema = "gooo/entity-fields-observation/v1"
-	DecisionPass = "PASS"
+	ReportSchema    = "gooo/entity-fields-observation/v1"
+	DecisionPass    = "PASS"
 	DecisionRefuted = "REFUTED"
 	ResolutionExact = "EXACT"
 	ResolutionLower = "LOWER_RESOLUTION"

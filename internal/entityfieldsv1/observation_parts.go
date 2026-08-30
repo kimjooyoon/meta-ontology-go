@@ -38,7 +38,10 @@ func buildObservation(source string, file *syntax.File, formatted string, semant
 		references = append(references, NavigationReference{Name: value.Name, ID: value.ID, Range: value.Range})
 	}
 	modelDigest := digest(model)
-	navigationDigest := digest(struct{ Symbols []NavigationSymbol; References []NavigationReference }{symbols, references})
+	navigationDigest := digest(struct {
+		Symbols    []NavigationSymbol
+		References []NavigationReference
+	}{symbols, references})
 	evidence := map[string]string{
 		"OBSERVATION_SOURCE_PIN": boundDigest("OBSERVATION_SOURCE_PIN", digest(source)),
 		"CONTRACT_PROFILE_PIN":   boundDigest("CONTRACT_PROFILE_PIN", digest(syntax.EntityFieldsV1Support().Profile)),
@@ -47,11 +50,14 @@ func buildObservation(source string, file *syntax.File, formatted string, semant
 		"GLOBAL_ID_VALIDATION":   boundDigest("GLOBAL_ID_VALIDATION", modelDigest),
 		"DECLARATION_ORDER":      boundDigest("DECLARATION_ORDER", digest(order)),
 		"BX_GET_ROUNDTRIP":       boundDigest("BX_GET_ROUNDTRIP", modelDigest),
-		"BX_PUT_ROUNDTRIP":       boundDigest("BX_PUT_ROUNDTRIP", digest(struct{ Model bidir.Model; Source string }{model, formatted})),
-		"GO_STRUCT_PROJECTION":   boundDigest("GO_STRUCT_PROJECTION", digest(generated.Source)),
-		"SOURCE_MAP_PROJECTION":  boundDigest("SOURCE_MAP_PROJECTION", digest(generated.SourceMap)),
-		"LSP_NAVIGATION":         boundDigest("LSP_NAVIGATION", navigationDigest),
-		"ENTITY_FIELDS_RECEIPT":  boundDigest("ENTITY_FIELDS_RECEIPT", digest(struct{ Source, Formatted, Generated string }{digestBytes([]byte(source)), digestBytes([]byte(formatted)), digestBytes(generated.Source)})),
+		"BX_PUT_ROUNDTRIP": boundDigest("BX_PUT_ROUNDTRIP", digest(struct {
+			Model  bidir.Model
+			Source string
+		}{model, formatted})),
+		"GO_STRUCT_PROJECTION":  boundDigest("GO_STRUCT_PROJECTION", digest(generated.Source)),
+		"SOURCE_MAP_PROJECTION": boundDigest("SOURCE_MAP_PROJECTION", digest(generated.SourceMap)),
+		"LSP_NAVIGATION":        boundDigest("LSP_NAVIGATION", navigationDigest),
+		"ENTITY_FIELDS_RECEIPT": boundDigest("ENTITY_FIELDS_RECEIPT", digest(struct{ Source, Formatted, Generated string }{digestBytes([]byte(source)), digestBytes([]byte(formatted)), digestBytes(generated.Source)})),
 	}
 	getPutDigest := digest(getPutDocument)
 	putGetInputDigest := digest(putGetInput)

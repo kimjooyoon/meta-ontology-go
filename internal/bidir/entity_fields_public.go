@@ -87,23 +87,23 @@ type declarationEvidence struct {
 }
 
 type fieldEvidence struct {
-	ID, Parent                ID
-	Name                      string
-	TypeRef                   TypeRef
-	TypeRefPresentation       TypeRefUse
-	Origin                    FieldOrigin
-	Presence                  FieldPresence
-	Cardinality               FieldCardinality
-	Span, IDSpan              SourceSpan
-	NameSpan, TypeRefSpan     SourceSpan
+	ID, Parent                    ID
+	Name                          string
+	TypeRef                       TypeRef
+	TypeRefPresentation           TypeRefUse
+	Origin                        FieldOrigin
+	Presence                      FieldPresence
+	Cardinality                   FieldCardinality
+	Span, IDSpan                  SourceSpan
+	NameSpan, TypeRefSpan         SourceSpan
 	PresenceSpan, CardinalitySpan SourceSpan
 }
 
 type referenceEvidence struct {
 	ID        ID
 	Namespace string
-	Name          string
-	Span          SourceSpan
+	Name      string
+	Span      SourceSpan
 }
 
 func documentEvidence(document Document) canonicalDocumentEvidence {
@@ -119,8 +119,12 @@ func documentEvidence(document Document) canonicalDocumentEvidence {
 		for _, field := range declaration.Fields {
 			item.Fields = append(item.Fields, fieldEvidence{ID: field.ID, Parent: field.Parent, Name: field.Name, TypeRef: field.TypeRef, TypeRefPresentation: canonicalTypeRefPresentation(field.TypeRefUse), Origin: field.Origin, Presence: field.Presence, Cardinality: field.Cardinality, Span: field.Span, IDSpan: field.IDSpan, NameSpan: field.NameSpan, TypeRefSpan: field.TypeRefSpan, PresenceSpan: field.PresenceSpan, CardinalitySpan: field.CardinalitySpan})
 		}
-		for _, reference := range declaration.Inputs { item.Inputs = append(item.Inputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace)) }
-		for _, reference := range declaration.Outputs { item.Outputs = append(item.Outputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace)) }
+		for _, reference := range declaration.Inputs {
+			item.Inputs = append(item.Inputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace))
+		}
+		for _, reference := range declaration.Outputs {
+			item.Outputs = append(item.Outputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace))
+		}
 		result.Declarations = append(result.Declarations, item)
 	}
 	return result
@@ -128,8 +132,12 @@ func documentEvidence(document Document) canonicalDocumentEvidence {
 
 func canonicalReferenceEvidence(reference Reference, idsByName map[string]ID, namespace string) referenceEvidence {
 	id := reference.ID
-	if id == "" { id = idsByName[reference.Name] }
-	if reference.Namespace == "" { reference.Namespace = namespace }
+	if id == "" {
+		id = idsByName[reference.Name]
+	}
+	if reference.Namespace == "" {
+		reference.Namespace = namespace
+	}
 	return referenceEvidence{ID: id, Name: reference.Name, Namespace: reference.Namespace, Span: reference.Span}
 }
 

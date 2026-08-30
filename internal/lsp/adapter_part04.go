@@ -43,11 +43,11 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl,
 		if err != nil {
 			return err
 		}
-			result.Symbols = append(result.Symbols, Symbol{
-				Name: field.Name, ID: field.ID, Kind: SymbolField,
-				Detail: "field " + field.Name, Range: fieldRange, SelectionRange: fieldSelection,
-				IdentityRange: fieldIdentity, HasIdentity: true,
-				identityRange: fieldIdentity, hasIdentity: true,
+		result.Symbols = append(result.Symbols, Symbol{
+			Name: field.Name, ID: field.ID, Kind: SymbolField,
+			Detail: "field " + field.Name, Range: fieldRange, SelectionRange: fieldSelection,
+			IdentityRange: fieldIdentity, HasIdentity: true,
+			identityRange: fieldIdentity, hasIdentity: true,
 		})
 	}
 	return nil

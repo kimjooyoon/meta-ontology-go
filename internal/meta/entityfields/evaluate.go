@@ -102,7 +102,9 @@ func counterexampleReports(evidence entityfieldsv1.Observation) []Counterexample
 	result := make([]Counterexample, 0, len(evidence.Counterexamples))
 	for _, value := range evidence.Counterexamples {
 		var unknown *Unknown
-		if value.Unknown != nil { unknown = &Unknown{Stage: value.Unknown.Stage, Step: value.Unknown.Step, Reason: value.Unknown.Reason, UnknownClass: value.Unknown.UnknownClass, NextOperation: value.Unknown.NextOperation, BlockedBy: append([]string{}, value.Unknown.BlockedBy...)} }
+		if value.Unknown != nil {
+			unknown = &Unknown{Stage: value.Unknown.Stage, Step: value.Unknown.Step, Reason: value.Unknown.Reason, UnknownClass: value.Unknown.UnknownClass, NextOperation: value.Unknown.NextOperation, BlockedBy: append([]string{}, value.Unknown.BlockedBy...)}
+		}
 		result = append(result, Counterexample{ID: value.ID, Decision: value.Decision, Resolution: value.Resolution, Reason: value.Reason, InputDigest: value.InputDigest, OutputDigest: value.OutputDigest, EvidenceDigest: value.EvidenceDigest, PartialOutput: value.PartialOutput, Unknown: unknown})
 	}
 	return result

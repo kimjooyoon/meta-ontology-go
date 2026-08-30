@@ -29,7 +29,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-			report.Summary.Satisfied != 44 || report.Summary.ValidCases != 41 ||
+		report.Summary.Satisfied != 44 || report.Summary.ValidCases != 41 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
@@ -38,8 +38,8 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceSatisfied != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
-			report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 794 ||
-			len(report.Source.GoooFiles) != 48 || len(report.Source.PackageUnits) != 2 ||
+		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 794 ||
+		len(report.Source.GoooFiles) != 48 || len(report.Source.PackageUnits) != 2 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 {
 		t.Fatalf("report = %#v", report)
 	}
