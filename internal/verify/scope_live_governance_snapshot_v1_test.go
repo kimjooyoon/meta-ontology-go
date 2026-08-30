@@ -4,12 +4,14 @@ import "testing"
 
 func TestLiveGovernanceSnapshotScope(t *testing.T) {
 	paths, ok := BranchScope(liveGovernanceSnapshotBranch)
-	if !ok || len(paths) != 22 {
+	if !ok || len(paths) != 24 {
 		t.Fatalf("live governance branch registration: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
 		".github/workflows/causal-ci-selection.yml",
 		".github/workflows/live-governance-snapshot.yml",
+		".github/workflows/transformation-effect.yml",
+		"docs/language/language-syntax-roundtrip.md",
 		"docs/external/live-governance-snapshot-v1.md",
 		"examples/live-governance-snapshot/contract.json",
 		"examples/language-syntax-roundtrip/corpus.json",

@@ -8,6 +8,8 @@ func init() {
 		".github/ci-governance.json",
 		".github/workflows/causal-ci-selection.yml",
 		".github/workflows/live-governance-snapshot.yml",
+		".github/workflows/transformation-effect.yml",
+		"docs/language/language-syntax-roundtrip.md",
 		"docs/external/live-governance-snapshot-v1.md",
 		"examples/live-governance-snapshot",
 		"examples/language-syntax-roundtrip/corpus.json",

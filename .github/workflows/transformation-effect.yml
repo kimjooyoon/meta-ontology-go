@@ -1695,6 +1695,46 @@ jobs:
               sha256sum artifact.json > artifact.json.sha256
             )
           fi
+      - name: Assert and publish language syntax scope partition
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        shell: bash
+        run: |
+          set -euo pipefail
+          syntax="$RUNNER_TEMP/language-syntax-roundtrip/first/artifact.json"
+          scope_root="$RUNNER_TEMP/language-syntax-scope-partition"
+          mkdir -p "$scope_root"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and
+            .summary.satisfied == 43 and .summary.total == 43 and
+            .summary.executed == 43 and .summary.unresolved == 0 and
+            .summary.capability_satisfied == 42 and .summary.capability_total == 42 and
+            .summary.capability_executed == 42 and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
+            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' "$syntax"
+          artifact_digest="sha256:$(sha256sum "$syntax" | awk '{print $1}')"
+          jq --arg head "$HEAD_SHA" --arg digest "$artifact_digest" \
+            '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
+              source_artifact: "language-concept-artifact/first/artifact.json",
+              source_artifact_digest: $digest, source_report_digest: .report_digest,
+              reused_existing_artifact: true, existing_replay_verified: true,
+              additional_compile_executions: 0, additional_test_executions: 0,
+              overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
+              language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
+              governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
+            "$syntax" > "$scope_root/scope-partition.json"
+          cp "$syntax" "$scope_root/language-syntax-roundtrip-artifact.json"
+          echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source: existing language-concept-artifact first output; additional compile/test executions: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head language syntax scope partition
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-syntax-scope-partition
+          if-no-files-found: error
+          retention-days: 30
       - name: Measure exact predecessor bindings
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         run: |
