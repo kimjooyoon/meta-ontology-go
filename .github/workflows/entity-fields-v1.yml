@@ -150,9 +150,17 @@ jobs:
           regular_files=$(find . -type f ! -path './.git/*' | wc -l | tr -d ' ')
           descendant_dirs=$(find . -mindepth 1 -type d ! -path './.git*' | wc -l | tr -d ' ')
           go_files=$(find . -type f -name '*.go' ! -path './.git/*' | wc -l | tr -d ' ')
-          go_lines=$(find . -type f -name '*.go' ! -path './.git/*' -print0 | xargs -0 awk 'END { print NR + 0 }')
+          count_physical_lines() {
+            local pattern="$1" total=0 file count
+            while IFS= read -r -d '' file; do
+              count=$(wc -l < "$file" | tr -d ' ')
+              total=$((total + count))
+            done < <(find . -type f -name "$pattern" ! -path './.git/*' -print0)
+            printf '%s\n' "$total"
+          }
+          go_lines=$(count_physical_lines '*.go')
           gooo_files=$(find . -type f -name '*.gooo' ! -path './.git/*' | wc -l | tr -d ' ')
-          gooo_lines=$(find . -type f -name '*.gooo' ! -path './.git/*' -print0 | xargs -0 awk 'END { print NR + 0 }')
+          gooo_lines=$(count_physical_lines '*.gooo')
           jq -n --arg head "$HEAD_SHA" --arg first_report "$first_report_digest" --arg replay_report "$replay_report_digest" \
             --arg first_source "$first_source_digest" --arg replay_source "$replay_source_digest" \
             '{schema:"gooo/entity-fields-v1-manifest/v1",head_sha:$head,first_report_digest:$first_report,replay_report_digest:$replay_report,first_source_digest:$first_source,replay_source_digest:$replay_source,replay_equal:true,output_artifact_files:13,files:["entity-fields-source.gooo","entity-fields-formatted.gooo","entity-fields-semantic-ir.json","entity-fields-generated.go","entity-fields-source-map.json","entity-fields-lsp.json","entity-fields-counterexamples.json","entity-fields-report.json","entity-fields-report.md","entity-fields-replay-source.gooo","entity-fields-replay-report.json","entity-fields-manifest.json","entity-fields-receipt.json"]}' \
