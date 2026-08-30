@@ -2,11 +2,12 @@ package sourcepolicy
 
 // Observation is a raw fact produced by a scanner or CI observer.
 type Observation struct {
-	Subject   string
-	Dimension Dimension
-	Value     int
-	Detail    string
-	Producer  string
+	Subject      string
+	Dimension    Dimension
+	Value        int
+	Detail       string
+	Producer     string
+	SemanticRole string
 }
 
 // Indicator joins a metric fact to policy, proof choice, and meta operation.

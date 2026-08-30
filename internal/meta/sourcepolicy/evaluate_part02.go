@@ -26,6 +26,9 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 				consumer: "repository-projector"}, nil
 		}
 	}
+	if definition, ok := workflowRootDefinition(policy, observation); ok {
+		return definition, nil
+	}
 	switch observation.Dimension {
 	case DimensionGoFiles, DimensionGoooFiles, DimensionGoLines, DimensionGoooLines:
 		return observe, nil

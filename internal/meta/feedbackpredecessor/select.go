@@ -9,6 +9,19 @@ func Select(input Input) (Report, error) {
 	summary, eligible := summarize(input)
 	report := Report{Schema: Schema, Repository: input.Repository,
 		PredecessorSHA: input.PredecessorSHA, Summary: summary}
+	if input.Foundation != nil {
+		report.ProofChoice, report.Foundation = FoundationProofChoice, input.Foundation
+		if err := validateFoundation(input); err != nil {
+			report.Decision, report.Reason = DecisionRefuted, ReasonFoundationRefuted
+			report.Resolution, report.NextOperation = ResolutionInvariant, OperationHalt
+		} else {
+			report.Decision, report.Reason = DecisionFoundation, ReasonFoundationRegression
+			report.Resolution, report.NextOperation = ResolutionClass, FoundationNextOperation
+		}
+		report.Indicators = indicators(report)
+		report.ReportDigest = digestJSON(report)
+		return report, nil
+	}
 	decide(&report, eligible)
 	report.Indicators = indicators(report)
 	report.ReportDigest = digestJSON(report)

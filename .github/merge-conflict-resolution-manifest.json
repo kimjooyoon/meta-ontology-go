@@ -1,0 +1,250 @@
+{
+  "schema": "gooo/meta-merge-conflict-resolution/v1",
+  "gooo_meta_activity": {
+    "source": "examples/self-improvement-minimal-loop/main.gooo",
+    "activity": "CAPTURE_RECEIPT",
+    "meta_operation": "capture-merge-conflict-resolution-manifest",
+    "proof_choice": "COHERENCE",
+    "input": "gooo://meta/self-improvement-loop/entity/receipt-input",
+    "output": "gooo://meta/self-improvement-loop/entity/receipt"
+  },
+  "conflict_count": 13,
+  "merge": {
+    "repository": "kimjooyoon/meta-ontology-go",
+    "base_commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "dev_commit": "7879cfea762d986a4ad9b0dc027b41593914388a",
+    "main_commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9",
+    "sync_branch": "agent/dev-main-sync-20260831",
+    "non_destructive": true,
+    "whole_side_selection": false,
+    "conflict_count": 13
+  },
+  "conflicts": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "foundation recovery is explicit and fail-closed",
+        "foundation receipts use the exact fixed-point route",
+        "coherence-boundary proof remains available on protected main pushes"
+      ],
+      "retained_dev_claims": [
+        "language-package runtime execution remains in CI",
+        "source and workflow observations remain prospective"
+      ],
+      "resolution_reason": "Keep main's foundation and historical fail-closed proof branches while retaining dev's observation and package-execution jobs."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "670cee5c4b2842594e9edd630953fc5a1573904d"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "fd407332badc99772ab7d55e94b91d217268db8b"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "36a02902e7da325c458673f1ca63f5bc772b2da2"}
+      }
+    },
+    {
+      "path": "bootstrap/repository-projector/evidence.go",
+      "conflict_kind": "modify_delete",
+      "retained_main_claims": [
+        "workflow discovery root semantics remain enforced by the replacement evidence package"
+      ],
+      "retained_dev_claims": [
+        "projector evidence is split into a dedicated package with direct observation and guard evidence"
+      ],
+      "resolution_reason": "Remove the obsolete root-level file because dev moved the implementation into bootstrap/repository-projector/evidence while preserving the main workflow-root semantics there."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "25a8658594edc0694b5439ff7d68784fde69be3b"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": null},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "de90837333a46e26698d3606cf6ad37c6948c1b2"}
+      }
+    },
+    {
+      "path": "cmd/feedback-predecessor-witness/run.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "foundation is an explicit accepted recovery decision",
+        "refuted and fail-closed outcomes remain rejected"
+      ],
+      "retained_dev_claims": [
+        "historical lower resolution remains check-compatible without promotion"
+      ],
+      "resolution_reason": "Accept selected, lower, and foundation reports for witness checking, while leaving refuted and fail-closed reports as failures and preserving promotion gating."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "ea855817620dc366d92149d677470996ce694772"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "4d7d77d3d84ffa4fdafa5ac99a40940c4513e283"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "db53faa101ba973ff6451fb3328b774495111d9b"}
+      }
+    },
+    {
+      "path": "internal/detection/linecaps/stats_part05.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "workflow discovery roots receive the main semantic classification"
+      ],
+      "retained_dev_claims": [
+        "directory metrics are prospective observations"
+      ],
+      "resolution_reason": "Use dev's observation signature and feed it the main workflow-root classification so measurement stays observational without losing the semantic distinction."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "4546e5394aec93528086ca18fcbd267334606cb1"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "17b79af2a515da6ff761f25388e9168838c13285"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "70e2567706c20b8d0095617706cbf6a44f5ec8d9"}
+      }
+    },
+    {
+      "path": "internal/detection/linecaps/stats_part06.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "the legacy helper is not retained as a second semantic implementation"
+      ],
+      "retained_dev_claims": [
+        "the observation helper lives in the new split observations file"
+      ],
+      "resolution_reason": "Drop the conflicting legacy helper body and use dev's split observations implementation to avoid duplicate or divergent metric semantics."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "614e2784befd4654d725f74f6ddc4c5a20a1d4a4"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "5983704fe6e3f2cc87392895e3341af67baa6953"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "ce6cde37d746e75d8c0b4011f3d16b612b0f444d"}
+      }
+    },
+    {
+      "path": "internal/meta/feedbackpredecessor/contract.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "foundation evidence and exact fixed-point constants are immutable",
+        "unsuccessful and refuted reasons remain represented"
+      ],
+      "retained_dev_claims": [
+        "v2 resolution fields and historical lower semantics remain represented"
+      ],
+      "resolution_reason": "Combine the v2 decision contract with main's foundation constants and fail-closed reason vocabulary without weakening fixed-point validation."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "ec7eac05dd0f1af2753d6de8808569bf69d41a29"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "dd85bd81336f72b191cba1cfe908c9e143887103"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "bef52743c301af5d06dbee7a1e383c8623292ea0"}
+      }
+    },
+    {
+      "path": "internal/meta/feedbackpredecessor/select.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "foundation evidence is validated before acceptance",
+        "invalid foundation evidence is refuted and halted"
+      ],
+      "retained_dev_claims": [
+        "normal and lower historical decisions retain their existing resolution behavior"
+      ],
+      "resolution_reason": "Add an explicit foundation branch ahead of the existing decision function, preserving the dev historical path and main's validation and halt behavior."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "3c7ea715d1e5ee392758eb25628925debb9470a9"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "25f41c86221f63d11842c24a1415dc59243f46fb2"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "15af012a48856a5cb519bde293eb9f4ede556d65"}
+      }
+    },
+    {
+      "path": "internal/meta/feedbackpredecessor/types.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "foundation evidence is carried in the report"
+      ],
+      "retained_dev_claims": [
+        "resolution, promotion, summary, and indicator fields remain available"
+      ],
+      "resolution_reason": "Retain both the structured foundation payload and the v2 report fields needed for historical, prospective, and promotion-aware decisions."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "8f2e4b7697967a6a04648852d826d5602f77b4b2"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "e7deea57a8694822aa9450c17a3f9463b0d63879"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "dd2b27b45415633fce3b88363056c311f41c45cf"}
+      }
+    },
+    {
+      "path": "internal/meta/generation/applicability_part01.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "workflow-root exemption remains an explicit applicability rule",
+        "root and README exemptions remain explicit"
+      ],
+      "retained_dev_claims": [
+        "linecap-driven preservation remains an observation path"
+      ],
+      "resolution_reason": "Keep dev's linecap observation driver and preserve-workflow rule, then retain main's explicit workflow-root, root, and README applicability branches."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "c43dd7fbdba298685f98bb5e78acc9e6d45a6964"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "d04be4e66d3be08247b785756b2e898a7f7804b6"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "592dffe593f96d2107d8dcfeefce9f66b59240e7"}
+      }
+    },
+    {
+      "path": "internal/meta/metabinding/registry.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "explicit source bindings include workflow discovery and exemption semantics"
+      ],
+      "retained_dev_claims": [
+        "the canonical registry remains the single binding merge point"
+      ],
+      "resolution_reason": "Use main's complete source-binding declarations and preserve dev's canonical registry behavior so new and existing operations resolve through one registry."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "c5cd2dc8f494b14f808fc6082ec0f6ef9e8a1801"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "e354f5e576bd05c57718c3b81a6411af9f1df340"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "3817ba4afd720ca06e2a5476751fdebcfff32a7c"}
+      }
+    },
+    {
+      "path": "internal/meta/sourcepolicy/evaluate_part02.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "source-policy evaluation retains the main policy roots"
+      ],
+      "retained_dev_claims": [
+        "driver and candidate definitions remain available for prospective evaluation"
+      ],
+      "resolution_reason": "Preserve the dev driver and candidate definitions while retaining the main source-policy evaluation structure."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "c8fc9df50b6326706debe699a48f87f4bb3a3640"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "d9c007b3c4a1d31c12919c738eaf87f69c7290a2"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "fc1315e5c0077ec53a1022ba219776d8137fb48a"}
+      }
+    },
+    {
+      "path": "internal/meta/sourcepolicy/indicator_domain.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "workflow discovery root and workflow discovery rules are distinct"
+      ],
+      "retained_dev_claims": [
+        "existing operation semantic roles remain available"
+      ],
+      "resolution_reason": "Retain both main applicability-rule identifiers and dev operation roles so root discovery and workflow observation cannot collapse into one semantic claim."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "25a42a8599190b7481f1ba5c07497382e3274218"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "649c34f041e0af2f9455b31614630dcf325aa0bd"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "86bfe95438ac29c9183f27164ccb093676adf783"}
+      }
+    },
+    {
+      "path": "internal/meta/sourcepolicy/vocabulary_part01.go",
+      "conflict_kind": "content",
+      "retained_main_claims": [
+        "workflow-root exemption is explicit in the operation vocabulary"
+      ],
+      "retained_dev_claims": [
+        "observation, preservation, modernization, and toolchain operations remain in the vocabulary"
+      ],
+      "resolution_reason": "Use the union of the operation vocabulary, including main's workflow-root exemption and dev's prospective observation and preservation operations."
+      ,"source_commits": {
+        "base": {"commit": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc", "blob_digest": "c9c18012298901bc93520d9d41b59e3e6b55743e"},
+        "dev": {"commit": "7879cfea762d986a4ad9b0dc027b41593914388a", "blob_digest": "103191c4e1d04d75cb645c3938b10a4dede9b05b"},
+        "main": {"commit": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9", "blob_digest": "25f8eb79d70d5ed97d82bd8981cd4a62223d0c6c"}
+      }
+    }
+  ],
+  "contract": {
+    "historical_states_preserved": [
+      "PREDECESSOR_CANONICAL_RUN_UNSUCCESSFUL",
+      "FAIL_CLOSED",
+      "UNKNOWN"
+    ],
+    "fixed_point_acceptance": "explicit FIXED_POINT only",
+    "denominator_unchanged": true,
+    "guardian_unchanged": true,
+    "history_mutation": false
+  }
+}

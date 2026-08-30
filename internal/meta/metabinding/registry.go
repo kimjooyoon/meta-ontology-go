@@ -38,6 +38,17 @@ func canonicalRegistry() []Binding {
 	return bindings
 }
 
+func sourceBindings() []Binding {
+	return []Binding{
+		{Operation: "bind-indicator-meta-program", Activity: "BindIndicatorMetaProgram", ProofChoice: "coherence", Registry: "meta-binding"},
+		{Operation: "exempt-project-root-readme", Activity: "BindRootREADMEExemption", ProofChoice: "foundation", Registry: "source-policy"},
+		{Operation: "exempt-workflow-discovery-root", Activity: "ExemptWorkflowDiscoveryRoot", ProofChoice: "foundation", Registry: "source-policy"},
+		{Operation: "inspect-wrapper", Activity: "InspectWrapper", ProofChoice: "coherence", Registry: "source-policy"},
+		{Operation: "observe", Activity: "ObserveMetric", ProofChoice: "coherence", Registry: "source-policy"},
+		{Operation: "partition-directory", Activity: "PartitionDirectory", ProofChoice: "foundation", Registry: "source-policy", Executor: "cmd/directory-partition-witness", Evaluator: "cmd/directory-partition-witness:check"},
+		{Operation: "separate-directory-kinds", Activity: "SeparateDirectoryKinds", ProofChoice: "foundation", Registry: "source-policy", Executor: "cmd/directory-kind-witness", Evaluator: "cmd/directory-kind-witness:check"},
+	}
+}
 func normalizeProof(value string) string {
 	value = strings.ToLower(strings.TrimSpace(value))
 	if value == "regress" {

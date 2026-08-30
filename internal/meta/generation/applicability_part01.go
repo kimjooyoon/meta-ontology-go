@@ -53,10 +53,21 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 			return false
 		}
 		switch indicator.Operation {
+		case sourcepolicy.OperationExemptWorkflowRoot:
+			return indicator.Subject == ".github/workflows" &&
+				indicator.SubjectKind == sourcepolicy.SubjectKindDirectory &&
+				indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleWorkflowDiscoveryRoot &&
+				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonWorkflowRootExempt
 		case sourcepolicy.OperationExemptRoot:
+			if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot {
+				return false
+			}
 			return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleProjectRootTopology &&
 				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonRootTopologyExempt
 		case sourcepolicy.OperationExemptRootREADME:
+			if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot {
+				return false
+			}
 			return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleProjectRootREADME &&
 				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonRootREADMEExempt
 		default:
