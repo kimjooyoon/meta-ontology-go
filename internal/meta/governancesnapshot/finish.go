@@ -113,6 +113,10 @@ func humanReport(report Report, contract Contract) string {
 	for _, item := range report.Cases {
 		fmt.Fprintf(&b, "case %s: %s/%s %s\n", item.ID, item.Decision, item.Resolution, item.Reason)
 	}
+	for _, unknown := range report.Unknowns {
+		fmt.Fprintf(&b, "unknown stage=%s step=%s reason=%s class=%s next=%s blocked_by=%v\n",
+			unknown.Stage, unknown.Step, unknown.Reason, unknown.UnknownClass, unknown.NextOperation, unknown.BlockedBy)
+	}
 	return b.String()
 }
 

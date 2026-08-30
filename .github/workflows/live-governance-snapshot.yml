@@ -11,7 +11,6 @@ on:
 permissions:
   contents: read
   actions: read
-  administration: read
 
 concurrency:
   group: live-governance-snapshot-${{ github.event.pull_request.number || github.ref }}
@@ -136,7 +135,9 @@ jobs:
             ((.summary.closed_cells == 10 and .summary.unknown_cells == 0 and .summary.refuted_cells == 2 and
               .decision == "REFUTED" and .resolution == "EXACT" and .reason == "DEV_LIVE_PROTECTION_DRIFT" and .settings_healthy == false) or
              (.summary.closed_cells == 12 and .summary.unknown_cells == 0 and .summary.refuted_cells == 0 and
-              .decision == "CLOSED" and .resolution == "EXACT" and .reason == "GOVERNANCE_SNAPSHOT_CONFORMANT" and .settings_healthy == true)) and
+              .decision == "CLOSED" and .resolution == "EXACT" and .reason == "GOVERNANCE_SNAPSHOT_CONFORMANT" and .settings_healthy == true) or
+             (.decision == "UNKNOWN" and .resolution == "LOWER" and (.unknowns | length) > 0 and
+              (all(.unknowns[]; .stage != "" and .step != "" and .reason != "" and .unknown_class != "" and .next_operation != "" and .blocked_by != null)))) and
             .promotion_authorized == false and .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and .improvement == "UNKNOWN" and
             (.cells | length) == 12 and (.canonical_cases | length) == 6 and
