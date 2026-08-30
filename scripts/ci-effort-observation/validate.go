@@ -274,7 +274,9 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 		if spec != nil {
 			expectedEvidenceStep = operationEvidenceStep(*spec, sourceEvent)
 		}
-		if spec == nil || operation.SourceEvent != sourceEvent || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != expectedEvidenceStep || operation.BoundStepName != expectedEvidenceStep || operation.EvidenceStepName != expectedEvidenceStep || !sameStrings(operation.DeclaredStepCandidates, declaredStepCandidates(*spec)) || operation.GuardStepName != spec.GuardStepName || !sameStrings(operation.Command, spec.Command) {
+		stepBinding := operation.StepName == expectedEvidenceStep && operation.BoundStepName == expectedEvidenceStep && operation.EvidenceStepName == expectedEvidenceStep
+		noStepBinding := operation.StepName == "" && operation.BoundStepName == "" && operation.EvidenceStepName == ""
+		if spec == nil || operation.SourceEvent != sourceEvent || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || !sameStrings(operation.DeclaredStepCandidates, declaredStepCandidates(*spec)) || operation.GuardStepName != spec.GuardStepName || !sameStrings(operation.Command, spec.Command) || !stepBinding && !(operation.State == "UNKNOWN" && noStepBinding) {
 			return fmt.Errorf("operation manifest binding is invalid")
 		}
 		if operation.State == "" || (operation.State != "EXECUTED" && operation.State != "SKIPPED" && operation.State != "UNKNOWN" && operation.State != "REJECTED") {

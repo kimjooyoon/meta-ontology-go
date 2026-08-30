@@ -349,8 +349,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	}
 	evidenceStep := operationEvidenceStep(spec, sourceEvent)
 	base := OperationObservation{ID: spec.ID, Kind: spec.Kind, ProofObligationID: spec.ProofObligationID,
-		SourceEvent: sourceEvent, JobName: spec.JobName, StepName: evidenceStep, BoundStepName: evidenceStep,
-		DeclaredStepCandidates: declaredStepCandidates(spec), EvidenceStepName: evidenceStep,
+		SourceEvent: sourceEvent, JobName: spec.JobName, DeclaredStepCandidates: declaredStepCandidates(spec),
 		GuardStepName: spec.GuardStepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
 	if evidenceStep == "" {
 		base.Unknown = operationEventUnknown()
@@ -368,6 +367,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 		base.EvidenceDigest = operationDigest(base)
 		return base
 	}
+	base.StepName, base.BoundStepName, base.EvidenceStepName = evidenceStep, evidenceStep, evidenceStep
 	base.WorkflowSourcePath, base.WorkflowSourceDigest = workflowPath, digestBytes(workflow)
 	base.CommandContextDigest, base.CommandBound = contextDigest, true
 	matchingJobs := make([]APIJob, 0, 1)
