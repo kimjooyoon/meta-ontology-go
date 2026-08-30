@@ -189,8 +189,15 @@ type ReuseKey struct {
 	CommandContextDigest       string `json:"command_context_digest"`
 	EnvironmentAllowlistDigest string `json:"environment_allowlist_digest"`
 	DependencyGraphDigest      string `json:"dependency_graph_digest"`
+	DependencyInputs           []DependencyInput `json:"dependency_inputs"`
 	ExpectedResultDigest       string `json:"expected_result_digest"`
 	OpenTofuReleaseDigest      string `json:"opentofu_release_digest"`
+}
+
+type DependencyInput struct {
+	Path   string `json:"path"`
+	State  string `json:"state"`
+	Digest string `json:"digest"`
 }
 
 type ReuseObservation struct {

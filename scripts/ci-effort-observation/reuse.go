@@ -24,13 +24,9 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		Operations     []commandContext
 	}{digestBytes(manifest), digestIfPresent(workflow), commandContexts(operations)})
 	environmentDigest := digestString(config.Environment)
-	dependencyParts := map[string][]byte{}
-	for _, path := range config.DependencyFiles {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return ReuseKey{}, fmt.Errorf("read dependency %s: %w", path, err)
-		}
-		dependencyParts[path] = data
+	dependencyInputs, err := readDependencyInputs(config.DependencyFiles)
+	if err != nil {
+		return ReuseKey{}, err
 	}
 	expectedDigest := digestJSON(struct {
 		Workflow   string
@@ -41,9 +37,34 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		HeadSHA: source.HeadSHA, InputDigest: inputDigest,
 		ToolchainDigest: digestString(goToolchain), CommandContextDigest: commandDigest,
 		EnvironmentAllowlistDigest: environmentDigest,
-		DependencyGraphDigest:      digestNamed(dependencyParts), ExpectedResultDigest: expectedDigest,
+		DependencyGraphDigest:      digestJSON(dependencyInputs), DependencyInputs: dependencyInputs, ExpectedResultDigest: expectedDigest,
 		OpenTofuReleaseDigest: openTofu.ReleaseAssetDigest,
 	}, nil
+}
+
+func readDependencyInputs(paths []string) ([]DependencyInput, error) {
+	result := make([]DependencyInput, 0, len(paths))
+	seen := make(map[string]bool, len(paths))
+	for _, path := range paths {
+		if path == "" || seen[path] {
+			return nil, fmt.Errorf("dependency path is empty or duplicated")
+		}
+		seen[path] = true
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			result = append(result, DependencyInput{Path: path, State: "ABSENT", Digest: "ABSENT"})
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("inspect dependency %s: %w", path, err)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read dependency %s: %w", path, err)
+		}
+		result = append(result, DependencyInput{Path: path, State: "PRESENT", Digest: digestBytes(data)})
+	}
+	return result, nil
 }
 
 type commandContext struct {
@@ -116,7 +137,20 @@ func sameReuseKey(left, right ReuseKey) bool {
 	return left.HeadSHA == right.HeadSHA && left.InputDigest == right.InputDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.CommandContextDigest == right.CommandContextDigest &&
 		left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
+		sameDependencyInputs(left.DependencyInputs, right.DependencyInputs) &&
 		left.ExpectedResultDigest == right.ExpectedResultDigest && left.OpenTofuReleaseDigest == right.OpenTofuReleaseDigest
+}
+
+func sameDependencyInputs(left, right []DependencyInput) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func fixedReuseCases() []ReuseCase {

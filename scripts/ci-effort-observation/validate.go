@@ -97,6 +97,9 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if !validSHA(report.Reuse.Key.HeadSHA) || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
 		return fmt.Errorf("reuse key is incomplete")
 	}
+	if err := validateDependencyInputs(report.Reuse.Key); err != nil {
+		return err
+	}
 	if err := validateReuseCases(report.Reuse.Cases); err != nil {
 		return err
 	}
@@ -276,6 +279,32 @@ func validRejectionReason(value string) bool {
 	}
 }
 
+func validateDependencyInputs(key ReuseKey) error {
+	seen := make(map[string]bool, len(key.DependencyInputs))
+	for _, input := range key.DependencyInputs {
+		if input.Path == "" || seen[input.Path] {
+			return fmt.Errorf("dependency evidence identity is invalid")
+		}
+		seen[input.Path] = true
+		switch input.State {
+		case "ABSENT":
+			if input.Digest != "ABSENT" {
+				return fmt.Errorf("absent dependency evidence is invalid")
+			}
+		case "PRESENT":
+			if !validDigest(input.Digest) {
+				return fmt.Errorf("present dependency evidence is invalid")
+			}
+		default:
+			return fmt.Errorf("dependency evidence state is invalid")
+		}
+	}
+	if len(key.DependencyInputs) > 0 && key.DependencyGraphDigest != digestJSON(key.DependencyInputs) {
+		return fmt.Errorf("dependency evidence digest is not sealed")
+	}
+	return nil
+}
+
 func buildCells(contract Contract, report Report) []CellObservation {
 	values := []struct {
 		observed, expected string
@@ -370,6 +399,9 @@ func humanReport(report Report) string {
 	}
 	fmt.Fprintf(&builder, "reuse decision=%s/%s reason=%s requests=%d prior_candidates=%d valid_prior=%d reused=%d rejected=%d unknown=%d skipped=%d reused_commands=%d reused_tests=%d\n", report.Reuse.Decision, report.Reuse.Resolution, report.Reuse.Reason, report.Reuse.Requests, report.Reuse.PriorCandidates, report.Reuse.PriorReceiptsValid, report.Reuse.Reused, report.Reuse.Rejected, report.Reuse.Unknown, report.Reuse.Skipped, report.Reuse.ReusedCommands, report.Reuse.ReusedTests)
 	fmt.Fprintf(&builder, "reuse key head=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release_asset=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)
+	for _, dependency := range report.Reuse.Key.DependencyInputs {
+		fmt.Fprintf(&builder, "dependency path=%s state=%s digest=%s\n", dependency.Path, dependency.State, dependency.Digest)
+	}
 	fmt.Fprintf(&builder, "external OpenTofu workflow=%s run=%d artifact=%s/%d digest=%s release_asset=%s report=%s cells=%d/%d reuse=%s/%d\n", report.OpenTofu.Workflow, report.OpenTofu.RunID, report.OpenTofu.ArtifactName, report.OpenTofu.ArtifactID, report.OpenTofu.ArtifactDigest, report.OpenTofu.ReleaseAssetDigest, report.OpenTofu.ReportDigest, report.OpenTofu.CellsClosed, report.OpenTofu.CellsTotal, report.OpenTofu.ReuseDecision, report.OpenTofu.ReuseCount)
 	if report.UnknownEvidence != nil {
 		fmt.Fprintf(&builder, "unknown stage=%s step=%s reason=%s class=%s next=%s blocked_by=%q\n", report.UnknownEvidence.Stage, report.UnknownEvidence.Step, report.UnknownEvidence.Reason, report.UnknownEvidence.UnknownClass, report.UnknownEvidence.NextOperation, report.UnknownEvidence.BlockedBy)

@@ -77,6 +77,35 @@ func TestReuseRequiresEveryContextDigest(t *testing.T) {
 	}
 }
 
+func TestDependencyAbsenceIsStableAndDigestBound(t *testing.T) {
+	missing := t.TempDir() + "/go.sum"
+	first, err := readDependencyInputs([]string{missing})
+	if err != nil || len(first) != 1 || first[0].State != "ABSENT" || first[0].Digest != "ABSENT" {
+		t.Fatalf("missing dependency evidence = %+v, err = %v", first, err)
+	}
+	second, err := readDependencyInputs([]string{missing})
+	if err != nil || digestJSON(first) != digestJSON(second) {
+		t.Fatalf("repeated absence was not stable: first=%+v second=%+v err=%v", first, second, err)
+	}
+	if err := os.WriteFile(missing, []byte("module example\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	present, err := readDependencyInputs([]string{missing})
+	if err != nil || present[0].State != "PRESENT" || digestJSON(first) == digestJSON(present) {
+		t.Fatalf("present dependency did not change evidence: absent=%+v present=%+v err=%v", first, present, err)
+	}
+}
+
+func TestUnreadableDependencyIsNotAbsence(t *testing.T) {
+	directory := t.TempDir() + "/dependency"
+	if err := os.Mkdir(directory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readDependencyInputs([]string{directory}); err == nil {
+		t.Fatal("unreadable dependency was treated as absent")
+	}
+}
+
 func TestMissingPriorHasCompleteUnknownContext(t *testing.T) {
 	unknown := priorMissingUnknown()
 	if !validUnknown(unknown) || unknown.UnknownClass != "DIRECT_MISSING" || len(unknown.BlockedBy) != 0 {
