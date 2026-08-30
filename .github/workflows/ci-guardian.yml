@@ -106,6 +106,10 @@ jobs:
             let devBranchProtection = null;
             let observerEnvironmentSnapshot = null;
             let installationRepositoryScope = null;
+            let baseCommit = null;
+            let baseKernelBlobs = null;
+            let preCorrectionKernelBlobs = null;
+            let correctionChangedPaths = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -153,9 +157,52 @@ jobs:
               });
               const route = guardian.routeForPull(observedPull);
               if (route === guardian.FOUNDATION_ROUTE) {
-                const foundation = guardian.foundationBootstrapDecision({pull: observedPull, result, liveBefore, liveAfter});
+                const baseCommitResponse = await github.rest.repos.getCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: observedPull.base.sha,
+                });
+                if (!baseCommitResponse || !baseCommitResponse.data || !Array.isArray(baseCommitResponse.data.parents)) {
+                  throw guardian.guardianFailure('foundation correction base commit attestation is unavailable or malformed');
+                }
+                baseCommit = baseCommitResponse.data;
+                const correctionCompareResponse = await github.rest.repos.compareCommits({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  base: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  head: observedPull.base.sha,
+                });
+                if (!correctionCompareResponse || !correctionCompareResponse.data || !Array.isArray(correctionCompareResponse.data.files)) {
+                  throw guardian.guardianFailure('foundation correction changed-path attestation is unavailable or malformed');
+                }
+                correctionChangedPaths = [...new Set(correctionCompareResponse.data.files
+                  .flatMap((file) => [file && file.filename, file && file.previous_filename])
+                  .filter((path) => path && guardian.isProtectedKernelPath(path)))].sort();
+                const currentBaseKernelBlobs = {};
+                preCorrectionKernelBlobs = {};
+                for (const path of guardian.FOUNDATION_BOOTSTRAP.baseDriftKernelPaths) {
+                  const currentResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: observedPull.base.sha,
+                  });
+                  const preCorrectionResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  });
+                  if (!currentResponse || !currentResponse.data || Array.isArray(currentResponse.data) || currentResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(currentResponse.data.sha || '') || !preCorrectionResponse || !preCorrectionResponse.data || Array.isArray(preCorrectionResponse.data) || preCorrectionResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(preCorrectionResponse.data.sha || '')) {
+                    throw guardian.guardianFailure(`foundation bootstrap base-drift blob attestation is unavailable or malformed: ${path}`);
+                  }
+                  currentBaseKernelBlobs[path] = currentResponse.data.sha;
+                  preCorrectionKernelBlobs[path] = preCorrectionResponse.data.sha;
+                }
+                baseKernelBlobs = Object.fromEntries(guardian.FOUNDATION_BOOTSTRAP.remainingBaseSatisfiedKernelPaths.map((path) => [path, currentBaseKernelBlobs[path]]));
+                const foundation = guardian.foundationBootstrapDecision({pull: observedPull, result, liveBefore, liveAfter, baseCommit, baseKernelBlobs, preCorrectionKernelBlobs, correctionChangedPaths});
                 if (foundation.decision === 'FOUNDATION') {
-                  result = {...result, decision: 'PASS', code: null, reason: 'FOUNDATION_OVERRIDE_USED=1', foundationBootstrap: foundation};
+                  result = {...result, decision: 'PASS', code: null, reason: guardian.FOUNDATION_BOOTSTRAP.foundationOverrideMarker, foundationBootstrap: foundation};
                 } else {
                   result = {...result, foundationBootstrap: foundation};
                 }

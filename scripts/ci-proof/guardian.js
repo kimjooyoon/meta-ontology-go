@@ -707,7 +707,7 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
   if (foundationRoute && result.decision !== 'PASS') {
     return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route was not explicitly authorized'};
   }
-  if (foundationRoute && result.reason !== 'FOUNDATION_OVERRIDE_USED=1') {
+  if (foundationRoute && result.reason !== foundationBootstrap.FOUNDATION_OVERRIDE_MARKER) {
     return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route lacks the explicit one-time override marker'};
   }
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
@@ -838,6 +838,27 @@ function validateExpectedArtifactTuple(manifest, expected) {
   }
 }
 
+function exactJsonArray(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function foundationArtifactScopeIsExact(manifest) {
+  const foundation = manifest && manifest.foundation_bootstrap;
+  return Boolean(
+    foundation
+      && foundation.baseCommitParentSha === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
+      && foundation.preCorrectionBaseSnapshot === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
+      && exactJsonArray(foundation.correctionChangedPaths, foundationBootstrap.CORRECTION_CHANGED_KERNEL_PATHS)
+      && exactJsonArray(foundation.correctionChangedAuthorizedKernelPaths, foundationBootstrap.CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS)
+      && exactJsonArray(foundation.pullKernelPaths, manifest.kernel_paths)
+      && exactJsonArray(manifest.kernel_paths, foundationBootstrap.AUTHORIZED_KERNEL_PATHS)
+      && exactJsonArray(foundation.observedKernelPaths, foundationBootstrap.EXPECTED_LIVE_KERNEL_PATHS)
+      && exactJsonArray(foundation.alreadySatisfiedByBase, foundationBootstrap.REMAINING_BASE_SATISFIED_KERNEL_PATHS)
+      && foundationBootstrap.exactBaseDriftBlobSHAs(foundation.preCorrectionKernelBlobs)
+      && foundationBootstrap.exactBaseDriftBlobSHAs(foundation.baseKernelBlobs, foundationBootstrap.REMAINING_BASE_SATISFIED_KERNEL_PATHS),
+  );
+}
+
 function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main', foundationBootstrap.FOUNDATION_ROUTE].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
@@ -916,7 +937,7 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     if (featureRoute && manifest.base_sha !== manifest.workflow_sha) {
       throw guardianFailure('guardian artifact PASS feature base SHA is not the exact workflow SHA');
     }
-    if (foundationRoute && (!foundationBootstrap.foundationArtifactIdentity(manifest) || manifest.check_name !== 'CI guardian shadow' || manifest.reason !== 'FOUNDATION_OVERRIDE_USED=1' || !manifest.foundation_bootstrap || manifest.foundation_bootstrap.decision !== 'FOUNDATION' || manifest.foundation_bootstrap.consumed !== false || JSON.stringify(manifest.foundation_bootstrap.authorization) !== JSON.stringify(foundationBootstrap.FOUNDATION_BOOTSTRAP) || JSON.stringify(manifest.foundation_bootstrap.observedKernelPaths) !== JSON.stringify(manifest.kernel_paths) || JSON.stringify(manifest.kernel_paths) !== JSON.stringify(foundationBootstrap.ALLOWED_KERNEL_PATHS))) {
+    if (foundationRoute && (!foundationBootstrap.foundationArtifactIdentity(manifest) || manifest.check_name !== 'CI guardian shadow' || manifest.reason !== foundationBootstrap.FOUNDATION_OVERRIDE_MARKER || !manifest.foundation_bootstrap || manifest.foundation_bootstrap.decision !== 'FOUNDATION' || manifest.foundation_bootstrap.consumed !== false || JSON.stringify(manifest.foundation_bootstrap.authorization) !== JSON.stringify(foundationBootstrap.FOUNDATION_BOOTSTRAP) || !foundationArtifactScopeIsExact(manifest))) {
       throw guardianFailure('guardian artifact FOUNDATION identity or receipt is not exact', FOUNDATION_BOOTSTRAP_CODE);
     }
     if (manifest.kernel_paths.length > 0 && ((!trustedPromotion && !foundationRoute) || (!foundationRoute && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)))) {
