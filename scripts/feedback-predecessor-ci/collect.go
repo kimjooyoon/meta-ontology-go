@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/feedbackpredecessor"
 )

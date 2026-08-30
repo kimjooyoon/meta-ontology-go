@@ -4,8 +4,6 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func directoryDepth(path string) int {
