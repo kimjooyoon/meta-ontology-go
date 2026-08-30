@@ -152,6 +152,14 @@ jobs:
                 repo: context.repo.repo,
               });
               const route = guardian.routeForPull(observedPull);
+              if (route === guardian.FOUNDATION_ROUTE) {
+                const foundation = guardian.foundationBootstrapDecision({pull: observedPull, result, liveBefore, liveAfter});
+                if (foundation.decision === 'FOUNDATION') {
+                  result = {...result, decision: 'PASS', code: null, reason: 'FOUNDATION_OVERRIDE_USED=1', foundationBootstrap: foundation};
+                } else {
+                  result = {...result, foundationBootstrap: foundation};
+                }
+              }
               if (route === 'promotion_main') {
                 try {
                   observerEnvironmentSnapshot = JSON.parse(fs.readFileSync('ci-guardian-environment.json', 'utf8'));

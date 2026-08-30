@@ -1,0 +1,74 @@
+{
+  "schema": "gooo/meta-foundation-bootstrap/v1",
+  "decision": "FOUNDATION",
+  "reason": "NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE",
+  "authorization": {
+    "repository": "kimjooyoon/meta-ontology-go",
+    "pull_request": 606,
+    "head_branch": "agent/dev-main-sync-20260831",
+    "head_sha": "f681f555254785d1cba2b58d4185c04a6fcd895c",
+    "base_branch": "dev",
+    "source_main_sha": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9",
+    "source_dev_sha": "7879cfea762d986a4ad9b0dc027b41593914388a",
+    "conflict_manifest_sha256": "9d63ca1e020e21cf43ccb671c505264c5ddebffa0265cb6939f06d0f17e1da7d",
+    "merge_resolution_commit": "d357b7c5456805669235135a3ca79e145127bd15",
+    "proof_choice": "FOUNDATION"
+  },
+  "allowed_scope": {
+    "authorized_kernel_paths": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
+      ".github/workflows/ci.yml",
+      ".github/workflows/self-improvement-minimal-loop.yml",
+      "internal/verify/foundation_discovery_recovery_scope.go",
+      "internal/verify/foundation_promotion.go",
+      "internal/verify/governance_part01.go",
+      "internal/verify/scope_dev_main_sync_20260831.go",
+      "internal/verify/self_improvement_minimal_loop_scope.go",
+      "scripts/ci-proof/build_part01.go",
+      "scripts/ci-proof/build_part02.go",
+      "scripts/ci-proof/build_part03.go",
+      "scripts/ci-proof/foundation.go",
+      "scripts/ci-proof/foundation_route_test.go",
+      "scripts/ci-proof/foundation_types.go",
+      "scripts/ci-proof/foundation_validate.go",
+      "scripts/ci-proof/proof_types_part01.go",
+      "scripts/ci-proof/route.go",
+      "scripts/ci-proof/route.js",
+      "scripts/ci-proof/route_test.js",
+      "scripts/ci-proof/types_part02.go",
+      "scripts/ci-proof/types_part05.go",
+      "scripts/ci-proof/validate_part01.go",
+      "scripts/verify/foundation_promotion.go",
+      "scripts/verify/main_part02.go"
+    ],
+    "base_drift_kernel_paths": [
+      ".github/workflows/ci-guardian.yml",
+      "internal/verify/scope_foundation_bootstrap_dev_sync_20260831.go",
+      "scripts/ci-proof/foundation_bootstrap.js",
+      "scripts/ci-proof/guardian.js"
+    ],
+    "comparison": "exact union of authorized PR #606 kernel paths and governance-base drift paths; no wildcard"
+  },
+  "consumption": {
+    "mode": "single-use",
+    "condition": "one successful merge of exact PR #606 head",
+    "reuse_decision": "REFUTED",
+    "consumed_by": "pull_request:606",
+    "consumed": false
+  },
+  "prior_guardian_failures": [
+    {"run_id": 33336066336, "head_sha": "d357b7c5456805669235135a3ca79e145127bd15", "code": "CI-ROOT-OF-TRUST-001"},
+    {"run_id": 33336219219, "head_sha": "195fe1b1", "code": "CI-ROOT-OF-TRUST-001"},
+    {"run_id": 33336436629, "head_sha": "f681f555254785d1cba2b58d4185c04a6fcd895c", "code": "CI-ROOT-OF-TRUST-001"}
+  ],
+  "gooo_meta_activity": {
+    "source": "examples/self-improvement-minimal-loop/main.gooo",
+    "activity": "CAPTURE_RECEIPT",
+    "input": "gooo://meta/self-improvement-loop/entity/receipt-input",
+    "output": "gooo://meta/self-improvement-loop/entity/receipt"
+  },
+  "fixed_point": "explicit FIXED_POINT only",
+  "denominator_unchanged": true,
+  "guardian_unchanged": true
+}
