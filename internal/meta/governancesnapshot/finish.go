@@ -35,6 +35,14 @@ func summarize(cells []CellObservation) Summary {
 		case "REGRESSION":
 			result.RegressionCells++
 		}
+		switch cell.Indicator {
+		case "DRIVER":
+			result.DriverCells++
+		case "OUTCOME":
+			result.OutcomeCells++
+		case "GUARDRAIL":
+			result.GuardrailCells++
+		}
 	}
 	return result
 }
@@ -94,6 +102,7 @@ func humanReport(report Report, contract Contract) string {
 	fmt.Fprintf(&b, "Cells=%d closed=%d unknown=%d refuted=%d; proof FOUNDATION/COHERENCE/REGRESSION=%d/%d/%d\n",
 		report.Summary.CellsTotal, report.Summary.ClosedCells, report.Summary.UnknownCells, report.Summary.RefutedCells,
 		report.Summary.FoundationCells, report.Summary.CoherenceCells, report.Summary.RegressionCells)
+	fmt.Fprintf(&b, "Indicators DRIVER/OUTCOME/GUARDRAIL=%d/%d/%d\n", report.Summary.DriverCells, report.Summary.OutcomeCells, report.Summary.GuardrailCells)
 	for _, branch := range report.Branches {
 		fmt.Fprintf(&b, "%s protected=%t enforcement=%s contexts=%d\n", branch.Branch, branch.Protected, branch.Enforcement, len(branch.Contexts))
 	}

@@ -44,7 +44,7 @@ func TestCurrentDriftIsRefuted(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != DecisionRefuted || report.Resolution != ResolutionExact || report.Reason != "DEV_LIVE_PROTECTION_DRIFT" ||
-		report.Summary != (Summary{CellsTotal: 12, ClosedCells: 10, RefutedCells: 2, FoundationCells: 4, CoherenceCells: 4, RegressionCells: 4}) ||
+		report.Summary != (Summary{CellsTotal: 12, ClosedCells: 10, RefutedCells: 2, FoundationCells: 4, CoherenceCells: 4, RegressionCells: 4, DriverCells: 4, OutcomeCells: 4, GuardrailCells: 4}) ||
 		report.SettingsHealthy || report.PromotionAuthorized {
 		t.Fatalf("drift report = %#v", report)
 	}

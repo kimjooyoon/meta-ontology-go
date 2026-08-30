@@ -133,6 +133,9 @@ type Summary struct {
 	FoundationCells  int `json:"foundation_cells"`
 	CoherenceCells   int `json:"coherence_cells"`
 	RegressionCells  int `json:"regression_cells"`
+	DriverCells      int `json:"driver_cells"`
+	OutcomeCells     int `json:"outcome_cells"`
+	GuardrailCells   int `json:"guardrail_cells"`
 }
 
 type SourceEvidence struct {

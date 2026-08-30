@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   actions: read
+  administration: read
 
 concurrency:
   group: live-governance-snapshot-${{ github.event.pull_request.number || github.ref }}
@@ -131,6 +132,7 @@ jobs:
             .schema == "gooo/live-governance-snapshot/v1" and .head_sha == $head and
             .summary.cells_total == 12 and .summary.foundation_cells == 4 and
             .summary.coherence_cells == 4 and .summary.regression_cells == 4 and
+            .summary.driver_cells == 4 and .summary.outcome_cells == 4 and .summary.guardrail_cells == 4 and
             ((.summary.closed_cells == 10 and .summary.unknown_cells == 0 and .summary.refuted_cells == 2 and
               .decision == "REFUTED" and .resolution == "EXACT" and .reason == "DEV_LIVE_PROTECTION_DRIFT" and .settings_healthy == false) or
              (.summary.closed_cells == 12 and .summary.unknown_cells == 0 and .summary.refuted_cells == 0 and
