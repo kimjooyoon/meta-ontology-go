@@ -113,15 +113,15 @@ jobs:
           gh api -H 'Accept: application/vnd.github+json' "repos/kimjooyoon/meta-ontology-go/releases/tags/$tag" > "$RUNNER_TEMP/release.json"
           jq -e --arg name "$asset_name" '([.assets[]|select(.name==$name)]|length)==1' "$RUNNER_TEMP/release.json" >/dev/null
           asset_id=$(jq -r --arg name "$asset_name" '.assets[]|select(.name==$name)|.id' "$RUNNER_TEMP/release.json")
-          asset_url=$(jq -r --arg name "$asset_name" '.assets[]|select(.name==$name)|.browser_download_url' "$RUNNER_TEMP/release.json")
           test "$asset_id" -gt 0
-          test -n "$asset_url"
           echo "core release asset selected"
           archive="$RUNNER_TEMP/$asset_name"
+          asset_endpoint="https://api.github.com/repos/kimjooyoon/meta-ontology-go/releases/assets/$asset_id"
           curl --fail --location --silent --show-error \
             -H 'Accept: application/octet-stream' \
             -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "$asset_url" -o "$archive"
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "$asset_endpoint" -o "$archive"
           echo "core release asset downloaded"
           printf '%s  %s\n' "$expected_digest_bare" "$archive" | sha256sum -c -
           echo "core release asset verified"
