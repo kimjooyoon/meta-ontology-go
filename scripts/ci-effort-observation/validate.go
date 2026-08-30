@@ -59,24 +59,6 @@ func hasEntityBinding(program []byte, id string) bool {
 	return false
 }
 
-func entityName(id string) string {
-	parts := strings.Split(id, "/")
-	if len(parts) == 0 {
-		return ""
-	}
-	value := parts[len(parts)-1]
-	value = strings.ReplaceAll(value, "-", " ")
-	words := strings.Fields(value)
-	for index := range words {
-		words[index] = strings.ToUpper(words[index][:1]) + words[index][1:]
-	}
-	suffix := "Input"
-	if strings.Contains(id, "/output/") {
-		suffix = "Output"
-	}
-	return strings.Join(words, "") + suffix
-}
-
 func validateReport(report Report, manifest Manifest, contract Contract, program, workflow []byte) error {
 	if err := validateStaticInputs(manifest, contract, program); err != nil {
 		return err

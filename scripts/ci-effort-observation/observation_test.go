@@ -62,6 +62,16 @@ func TestWorkflowCommandBindingRejectsSourceCommandDrift(t *testing.T) {
 	}
 }
 
+func TestEntityBindingPreservesOpenTofuAcronym(t *testing.T) {
+	program := []byte("entity OpenTofuObservationInput id \"gooo://ci-effort-observation/input/opentofu-observation\"\n")
+	if !hasEntityBinding(program, "gooo://ci-effort-observation/input/opentofu-observation") {
+		t.Fatal("OpenTofu entity binding was rejected")
+	}
+	if hasEntityBinding(program, "gooo://ci-effort-observation/input/other") {
+		t.Fatal("unrelated entity binding was accepted")
+	}
+}
+
 func TestMissingCommandContextIsTypedUnknown(t *testing.T) {
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
 	operation := observeOperation(spec, nil, ".github/workflows/ci.yml", nil, errors.New("workflow source unavailable"))
