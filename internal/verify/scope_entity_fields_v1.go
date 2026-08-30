@@ -11,6 +11,7 @@ func init() {
 		"cmd/entity-fields-witness",
 		"cmd/gooo/check_part01.go",
 		"cmd/gooo/check_part03_part01.go",
+		"cmd/gooo/entity_fields_projection_part03.go",
 		"cmd/gooo/entity_fields_projection_part04.go",
 		"cmd/gooo/generate_pipeline_part04.go",
 		"cmd/gooo/main_part01.go",
