@@ -31,10 +31,14 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
 		report.Summary.Satisfied != 43 || report.Summary.ValidCases != 40 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
-		report.Summary.CapabilitySatisfied != languagesyntax.CapabilityCaseTotal() ||
-		report.Summary.CapabilityTotal != languagesyntax.CapabilityCaseTotal() ||
-		report.Summary.CapabilityExecuted != languagesyntax.CapabilityCaseTotal() ||
-		report.Summary.CapabilityUnresolved != 0 || report.Summary.GoooLines != 766 ||
+		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
+		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
+		report.Summary.CapabilityExecuted != languagesyntax.FixedCapabilityTotal ||
+		report.Summary.CapabilityUnresolved != 0 ||
+		report.Summary.GovernanceSatisfied != languagesyntax.FixedGovernanceTotal ||
+		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
+		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
+		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 766 ||
 		len(report.Source.GoooFiles) != 46 || len(report.Source.PackageUnits) != 2 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 {
 		t.Fatalf("report = %#v", report)
@@ -53,5 +57,31 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			report.Summary.Executed != 0 || report.Summary.Unresolved != 43 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
+	}
+}
+
+func TestScopePartitionUsesFixedDenominatorsAndRejectsDrift(t *testing.T) {
+	if languagesyntax.FixedTotal != 43 || languagesyntax.FixedCapabilityTotal != 42 ||
+		languagesyntax.FixedGovernanceTotal != 1 ||
+		languagesyntax.FixedCapabilityTotal+languagesyntax.FixedGovernanceTotal != languagesyntax.FixedTotal {
+		t.Fatalf("scope denominators drifted: total=%d capability=%d governance=%d", languagesyntax.FixedTotal,
+			languagesyntax.FixedCapabilityTotal, languagesyntax.FixedGovernanceTotal)
+	}
+	repository, canonical := fixture(t)
+	cases := []struct {
+		name string
+		raw  []byte
+	}{
+		{"missing scope", bytes.Replace(canonical, []byte("      \"scope\": \"LANGUAGE_CAPABILITY\"\n"), nil, 1)},
+		{"unknown scope", bytes.Replace(canonical, []byte(`"scope": "GOVERNANCE_OBSERVATION"`), []byte(`"scope": "UNKNOWN"`), 1)},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			report := languagesyntax.Evaluate(repository, testHead, testCase.raw, languageconcept.BuildArtifact(repository))
+			if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
+				report.Summary.Unresolved != languagesyntax.FixedTotal {
+				t.Fatalf("scope drift was not rejected: %#v", report)
+			}
+		})
 	}
 }

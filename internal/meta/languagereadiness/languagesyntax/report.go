@@ -22,6 +22,10 @@ type Summary struct {
 	CapabilityTotal      int `json:"capability_total"`
 	CapabilityExecuted   int `json:"capability_executed"`
 	CapabilityUnresolved int `json:"capability_unresolved"`
+	GovernanceSatisfied  int `json:"governance_satisfied"`
+	GovernanceTotal      int `json:"governance_total"`
+	GovernanceExecuted   int `json:"governance_executed"`
+	GovernanceUnresolved int `json:"governance_unresolved"`
 }
 
 type Indicator struct {

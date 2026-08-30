@@ -34,7 +34,7 @@ func toolchainLinks(surfaces []artifactSurface, head string) int {
 		schema string
 		cases  int
 	}{
-		"language-syntax-roundtrip":      {languagesyntax.ReportSchema, languagesyntax.CapabilityCaseTotal()},
+		"language-syntax-roundtrip":      {languagesyntax.ReportSchema, languagesyntax.FixedCapabilityTotal},
 		"language-semantic-model":        {languagesemantic.ReportSchema, languagesemantic.FixedTotal},
 		"toolchain-executable-use-cases": {"gooo/toolchain-executable-use-cases/v1", 3},
 	}

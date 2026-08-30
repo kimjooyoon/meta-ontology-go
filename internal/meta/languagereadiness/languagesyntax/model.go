@@ -17,6 +17,8 @@ const (
 	validCases                 = 40
 	invalidCases               = 3
 	FixedTotal                 = totalCases
+	FixedCapabilityTotal       = 42
+	FixedGovernanceTotal       = 1
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
 

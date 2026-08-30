@@ -80,10 +80,8 @@ func decodeRegistry(raw []byte) (Registry, error) {
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return registry, fmt.Errorf("decode language syntax registry: trailing content")
 	}
-	for index := range registry.Cases {
-		if registry.Cases[index].Scope == "" {
-			registry.Cases[index].Scope = ScopeLanguageCapability
-		}
+	if err := validateCaseScopes(registry); err != nil {
+		return registry, err
 	}
 	if !reflect.DeepEqual(registry, expectedRegistry()) {
 		return registry, fmt.Errorf("language syntax registry mismatch")
@@ -92,13 +90,33 @@ func decodeRegistry(raw []byte) (Registry, error) {
 }
 
 func CapabilityCaseTotal() int {
-	total := 0
-	for _, definition := range expectedRegistry().Cases {
-		if definition.Scope == ScopeLanguageCapability {
-			total++
+	return FixedCapabilityTotal
+}
+
+func validateCaseScopes(registry Registry) error {
+	if len(registry.Cases) != FixedTotal || FixedCapabilityTotal+FixedGovernanceTotal != FixedTotal {
+		return fmt.Errorf("language syntax scope denominator mismatch")
+	}
+	capability, governance := 0, 0
+	governanceIDs, governancePaths := []string{}, []string{}
+	for _, definition := range registry.Cases {
+		switch definition.Scope {
+		case ScopeLanguageCapability:
+			capability++
+		case ScopeGovernanceObservation:
+			governance++
+			governanceIDs = append(governanceIDs, definition.ID)
+			governancePaths = append(governancePaths, definition.Path)
+		default:
+			return fmt.Errorf("language syntax case %q has missing or unknown scope", definition.ID)
 		}
 	}
-	return total
+	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
+		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
+		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		return fmt.Errorf("language syntax scope partition mismatch")
+	}
+	return nil
 }
 
 func unresolvedCases(source Source) []CaseResult {
