@@ -85,12 +85,19 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Window.TimestampResolutionMS != 1000 {
 		return fmt.Errorf("timestamp resolution is invalid")
 	}
-	if !runtimeBoundsValid(report.Window) {
+	if report.Window.IntervalModel != runtimeIntervalModel || report.Window.IntervalModelDigest != runtimeIntervalModelDigest() {
+		return fmt.Errorf("runtime interval model is not sealed")
+	}
+	if !runtimeBoundsConsistent(report.Window) {
 		return fmt.Errorf("runtime bounds are inconsistent")
 	}
 	jobIntervals, stepIntervals := runtimeIntervalCounts(report.Jobs)
 	if report.Window.JobIntervalCount != jobIntervals || report.Window.StepIntervalCount != stepIntervals {
 		return fmt.Errorf("runtime interval counts are inconsistent")
+	}
+	expectedJobLower, expectedJobUpper, expectedStepLower, expectedStepUpper := runtimeBoundsForJobs(report.Jobs, report.Window.TimestampResolutionMS)
+	if report.Window.JobWallMSLowerBound != expectedJobLower || report.Window.JobWallMSUpperExclusive != expectedJobUpper || report.Window.StepWallMSLowerBound != expectedStepLower || report.Window.StepWallMSUpperExclusive != expectedStepUpper {
+		return fmt.Errorf("runtime bounds are not derived from observations")
 	}
 	if count, reasons := runtimeRejectionEvidence(report.Jobs); report.Window.RuntimeRejectionCount != count || !sameStrings(report.Window.RuntimeRejectionReasons, reasons) {
 		return fmt.Errorf("runtime rejection evidence is inconsistent")
@@ -101,6 +108,9 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	}
 	if report.UnknownEvidence == nil && report.Window.RuntimeRejectionCount == 0 && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum < 0 || report.Window.StepWallMSSum == 0 && report.Window.BelowSourceResolutionSteps == 0) {
 		return fmt.Errorf("workflow runtime is incomplete")
+	}
+	if report.Decision == "PASS" && !runtimeBoundsValid(report.Window) {
+		return fmt.Errorf("PASS report has incomplete runtime bounds")
 	}
 	if report.RepositoryStatus.Writes != report.RepositoryWrites || report.LocalTestExecutions != 0 || report.CrossProjectRequiredGates != 0 || report.Improvement != "UNKNOWN" {
 		return fmt.Errorf("authority or improvement boundary is invalid")
@@ -155,6 +165,9 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.OpenTofu.ArtifactID == 0 && report.OpenTofu.Unknown == nil {
 		return fmt.Errorf("missing OpenTofu evidence has no causal context")
 	}
+	if err := validateRuntimeCases(report.RuntimeCases); err != nil {
+		return err
+	}
 	if report.Decision != "PASS" && report.Decision != "UNKNOWN" && report.Decision != "REFUTED" {
 		return fmt.Errorf("unknown top-level decision")
 	}
@@ -198,16 +211,21 @@ func runtimeIntervalCounts(jobs []JobObservation) (int, int) {
 	return jobCount, stepCount
 }
 
+func runtimeBoundsConsistent(window WorkflowWindow) bool {
+	if window.TimestampResolutionMS <= 0 || window.JobIntervalCount < 0 || window.StepIntervalCount < 0 || window.JobWallMSLowerBound < 0 || window.StepWallMSLowerBound < 0 || window.JobWallMSUpperExclusive < 0 || window.StepWallMSUpperExclusive < 0 {
+		return false
+	}
+	if window.JobIntervalCount == 0 && (window.JobWallMSLowerBound != 0 || window.JobWallMSUpperExclusive != 0) || window.StepIntervalCount == 0 && (window.StepWallMSLowerBound != 0 || window.StepWallMSUpperExclusive != 0) {
+		return false
+	}
+	if window.JobIntervalCount > 0 && window.JobWallMSUpperExclusive <= window.JobWallMSLowerBound || window.StepIntervalCount > 0 && window.StepWallMSUpperExclusive <= window.StepWallMSLowerBound {
+		return false
+	}
+	return true
+}
+
 func runtimeBoundsValid(window WorkflowWindow) bool {
-	if window.TimestampResolutionMS <= 0 || window.JobIntervalCount < 0 || window.StepIntervalCount < 0 || window.JobWallMSLowerBound < 0 || window.StepWallMSLowerBound < 0 {
-		return false
-	}
-	if window.JobWallMSLowerBound != window.JobWallMSSum || window.StepWallMSLowerBound != window.StepWallMSSum {
-		return false
-	}
-	return window.JobWallMSUpperExclusive == runtimeUpperBoundExclusive(window.JobWallMSLowerBound, window.JobIntervalCount, window.TimestampResolutionMS) &&
-		window.StepWallMSUpperExclusive == runtimeUpperBoundExclusive(window.StepWallMSLowerBound, window.StepIntervalCount, window.TimestampResolutionMS) &&
-		window.JobWallMSUpperExclusive > window.JobWallMSLowerBound && window.StepWallMSUpperExclusive > window.StepWallMSLowerBound
+	return runtimeBoundsConsistent(window) && window.JobIntervalCount > 0 && window.StepIntervalCount > 0
 }
 
 func validateJobs(jobs []JobObservation, head string) error {
@@ -397,7 +415,7 @@ func buildCells(contract Contract, report Report) []CellObservation {
 	}{
 		{fmt.Sprint(report.Window.WallMS), ">0", report.Window.WallMS > 0},
 		{report.OperationManifestDigest, "checked-in manifest digest", report.OperationManifestDigest != ""},
-		{fmt.Sprintf("runtime=%s;job_ms=[%d,%d);step_ms=[%d,%d)", report.RuntimeResolution, report.Window.JobWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSLowerBound, report.Window.StepWallMSUpperExclusive), "observed job and step lower/upper bounds", runtimeBoundsValid(report.Window) && report.Window.RuntimeRejectionCount == 0},
+		{fmt.Sprintf("runtime=%s;model=%s;job_ms=[%d,%d);step_ms=[%d,%d)", report.RuntimeResolution, report.Window.IntervalModel, report.Window.JobWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSLowerBound, report.Window.StepWallMSUpperExclusive), "observed job and step lower/upper bounds", runtimeBoundsValid(report.Window) && report.Window.RuntimeRejectionCount == 0},
 		{fmt.Sprintf("executed=%d;unknown=%d;rejected=%d", report.Accounting.Executed, report.Accounting.Unknown, report.Accounting.Rejected), "complete operation accounting", report.Accounting.Unknown == 0 && report.Accounting.Rejected == 0},
 		{fmt.Sprint(report.Accounting.Skipped), "observed skipped operations", report.Accounting.Skipped >= 0},
 		{report.Reuse.Decision, "EXECUTE or REUSED with exact key", report.Reuse.Decision == "EXECUTE" || report.Reuse.Decision == "REUSED"},
@@ -432,10 +450,10 @@ func operationDigest(operation OperationObservation) string {
 }
 
 func classifyReport(report Report) (string, string, string) {
-	if !runtimeBoundsValid(report.Window) || report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.Window.RuntimeRejectionCount > 0 || report.RepositoryWrites > 0 || report.Reuse.Decision == "REFUTED" || report.Reuse.Decision == "FAIL_CLOSED" {
+	if !runtimeBoundsConsistent(report.Window) || report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.Window.RuntimeRejectionCount > 0 || report.RepositoryWrites > 0 || report.Reuse.Decision == "REFUTED" || report.Reuse.Decision == "FAIL_CLOSED" {
 		return "REFUTED", "EXACT", "KNOWN_VERIFICATION_CONTRADICTION"
 	}
-	if report.Accounting.Unknown > 0 || report.Reuse.Decision == "UNKNOWN" || report.OpenTofu.ArtifactID == 0 || report.UnknownEvidence != nil {
+	if !runtimeBoundsValid(report.Window) || report.Accounting.Unknown > 0 || report.Reuse.Decision == "UNKNOWN" || report.OpenTofu.ArtifactID == 0 || report.UnknownEvidence != nil {
 		return "UNKNOWN", "LOWER", "OBSERVATION_EVIDENCE_UNAVAILABLE"
 	}
 	return "PASS", "EXACT", "CI_EFFORT_OBSERVED"
@@ -473,13 +491,41 @@ func fixedCounterexamples() []Counterexample {
 	}
 }
 
+func runtimeCases() []RuntimeCase {
+	return []RuntimeCase{
+		{ID: "equal-timestamp-coarse", Decision: "PASS", Resolution: "BOUNDED/SOURCE_SECOND", Reason: "EQUAL_TIMESTAMP_BELOW_SOURCE_RESOLUTION"},
+		{ID: "empty-synthetic-interval", Decision: "REFUTED", Resolution: "EXACT", Reason: "RUNTIME_INTERVAL_EMPTY"},
+		{ID: "reversed-interval", Decision: "REFUTED", Resolution: "EXACT", Reason: "RUNTIME_INTERVAL_REVERSED"},
+		{ID: "malformed-timestamp", Decision: "REFUTED", Resolution: "EXACT", Reason: "OPERATION_TIMESTAMP_MALFORMED"},
+		{ID: "negative-duration", Decision: "REFUTED", Resolution: "EXACT", Reason: "OPERATION_DURATION_NEGATIVE"},
+	}
+}
+
+func validateRuntimeCases(cases []RuntimeCase) error {
+	expected := runtimeCases()
+	if len(cases) != len(expected) {
+		return fmt.Errorf("runtime case denominator is invalid")
+	}
+	for index, value := range cases {
+		want := expected[index]
+		if value != want {
+			return fmt.Errorf("runtime case %d is not canonical", index)
+		}
+	}
+	return nil
+}
+
 func humanReport(report Report) string {
 	var builder strings.Builder
 	fmt.Fprintf(&builder, "CI effort observation: %s / %s (%s)\n", report.Decision, report.Resolution, report.Reason)
 	fmt.Fprintf(&builder, "head=%s source_run=%d workflow=%s event=%s\n", report.HeadSHA, report.SourceRunID, report.SourceWorkflow, report.SourceEvent)
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
-	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s)\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
-	fmt.Fprintf(&builder, "reported lower bounds job_ms=%d step_ms=%d; upper bounds job_ms<%d step_ms<%d; interval counts jobs=%d steps=%d; formula=lower+max(1,valid_intervals)*timestamp_resolution_ms; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d runtime_rejections=%d reasons=%q\n", report.Window.JobWallMSLowerBound, report.Window.StepWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSUpperExclusive, report.Window.JobIntervalCount, report.Window.StepIntervalCount, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps, report.Window.RuntimeRejectionCount, report.Window.RuntimeRejectionReasons)
+	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s); parallel job/step sums are not a critical-path claim\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
+	fmt.Fprintf(&builder, "runtime bounds model=%s digest=%s definition=%s\n", report.Window.IntervalModel, report.Window.IntervalModelDigest, runtimeIntervalModelDefinition)
+	fmt.Fprintf(&builder, "nominal source sums job_ms=%d step_ms=%d; sound bounds job_ms=[%d,%d) step_ms=[%d,%d); interval counts jobs=%d steps=%d; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d runtime_rejections=%d reasons=%q\n", report.Window.JobWallMSSum, report.Window.StepWallMSSum, report.Window.JobWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSLowerBound, report.Window.StepWallMSUpperExclusive, report.Window.JobIntervalCount, report.Window.StepIntervalCount, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps, report.Window.RuntimeRejectionCount, report.Window.RuntimeRejectionReasons)
+	for _, runtimeCase := range report.RuntimeCases {
+		fmt.Fprintf(&builder, "runtime_case id=%s decision=%s resolution=%s reason=%s\n", runtimeCase.ID, runtimeCase.Decision, runtimeCase.Resolution, runtimeCase.Reason)
+	}
 	fmt.Fprintf(&builder, "operations manifest=%d executed=%d skipped=%d unknown=%d rejected=%d\n", report.Accounting.ManifestOperations, report.Accounting.Executed, report.Accounting.Skipped, report.Accounting.Unknown, report.Accounting.Rejected)
 	for _, operation := range report.Operations {
 		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q evidence_step=%q guard_step=%q guard_bound=%t guard_status=%q/%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.EvidenceStepName, operation.GuardStepName, operation.GuardBound, operation.GuardStepStatus, operation.GuardStepConclusion, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)

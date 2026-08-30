@@ -64,6 +64,24 @@ func TestRuntimeBoundsRejectEmptyAndReversedIntervals(t *testing.T) {
 	}
 }
 
+func TestSourceSecondIntervalModelIncludesEndpointUncertainty(t *testing.T) {
+	duration := observeTimestamp("2026-08-30T00:00:00Z", "2026-08-30T00:00:01Z")
+	lower, upper, ok := runtimeIntervalBounds(duration, 1000)
+	if !ok || lower != 0 || upper != 2000 {
+		t.Fatalf("endpoint uncertainty was not included: lower=%d upper=%d ok=%t", lower, upper, ok)
+	}
+}
+
+func TestRuntimeCasesAreTypedAndFixed(t *testing.T) {
+	cases := runtimeCases()
+	if err := validateRuntimeCases(cases); err != nil || len(cases) != 5 {
+		t.Fatalf("runtime cases are not canonical: cases=%+v err=%v", cases, err)
+	}
+	if cases[0].Decision != "PASS" || cases[1].Decision != "REFUTED" || cases[2].Reason != "RUNTIME_INTERVAL_REVERSED" {
+		t.Fatalf("runtime case decisions lost precedence: %+v", cases)
+	}
+}
+
 func TestOperationBindsEvidenceAndGuardSteps(t *testing.T) {
 	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Evidence\n        run: gofmt -l .\n      - name: Guard\n        run: test -s receipt.json\n")
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Guard", EvidenceStepName: "Evidence",

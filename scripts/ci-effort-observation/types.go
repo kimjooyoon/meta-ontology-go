@@ -146,6 +146,8 @@ type WorkflowWindow struct {
 	JobWallMSSum               int64    `json:"job_wall_ms_sum"`
 	StepWallMSSum              int64    `json:"step_wall_ms_sum"`
 	TimestampResolutionMS      int64    `json:"timestamp_resolution_ms"`
+	IntervalModel              string   `json:"interval_model"`
+	IntervalModelDigest        string   `json:"interval_model_digest"`
 	BelowSourceResolutionJobs  int      `json:"below_source_resolution_jobs"`
 	BelowSourceResolutionSteps int      `json:"below_source_resolution_steps"`
 	JobIntervalCount           int      `json:"job_interval_count"`
@@ -156,6 +158,13 @@ type WorkflowWindow struct {
 	JobWallMSUpperExclusive    int64    `json:"job_wall_ms_upper_bound_exclusive"`
 	RuntimeRejectionCount      int      `json:"runtime_rejection_count"`
 	RuntimeRejectionReasons    []string `json:"runtime_rejection_reasons"`
+}
+
+type RuntimeCase struct {
+	ID         string `json:"id"`
+	Decision   string `json:"decision"`
+	Resolution string `json:"resolution"`
+	Reason     string `json:"reason"`
 }
 
 type OperationObservation struct {
@@ -370,6 +379,7 @@ type Report struct {
 	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
 	Window                    WorkflowWindow         `json:"workflow_window"`
 	RuntimeResolution         string                 `json:"runtime_resolution"`
+	RuntimeCases               []RuntimeCase         `json:"runtime_cases"`
 	Jobs                      []JobObservation       `json:"jobs"`
 	Operations                []OperationObservation `json:"operations"`
 	Accounting                Accounting             `json:"accounting"`

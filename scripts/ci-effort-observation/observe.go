@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+const runtimeIntervalModel = "github-actions-second-floor-bin-v1"
+
+const runtimeIntervalModelDefinition = "endpoint uncertainty=[0,R); interval=[max(0,D-R),D+R); aggregate=sum(interval bounds)"
+
 type sourceRunInput struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
@@ -112,6 +116,7 @@ func buildReport(config Config) (Report, error) {
 		Graph:                   graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
 		CrossProjectRequiredGates: 0, Improvement: "UNKNOWN",
 		Counterexamples: fixedCounterexamples(),
+		RuntimeCases: runtimeCases(),
 		UnknownEvidence: firstUnknownEvidence(observedJobs, operations, openTofu)}
 	report.Cells = buildCells(contract, report)
 	report.Decision, report.Resolution, report.Reason = classifyReport(report)
@@ -167,10 +172,9 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	}
 	window.WallMS = observeTimestamp(window.StartAt, window.EndAt).wall
 	window.TimestampResolutionMS = 1000
-	window.StepWallMSLowerBound = window.StepWallMSSum
-	window.StepWallMSUpperExclusive = runtimeUpperBoundExclusive(window.StepWallMSLowerBound, window.StepIntervalCount, window.TimestampResolutionMS)
-	window.JobWallMSLowerBound = window.JobWallMSSum
-	window.JobWallMSUpperExclusive = runtimeUpperBoundExclusive(window.JobWallMSLowerBound, window.JobIntervalCount, window.TimestampResolutionMS)
+	window.IntervalModel = runtimeIntervalModel
+	window.IntervalModelDigest = runtimeIntervalModelDigest()
+	window.JobWallMSLowerBound, window.JobWallMSUpperExclusive, window.StepWallMSLowerBound, window.StepWallMSUpperExclusive = runtimeBoundsForJobs(result, window.TimestampResolutionMS)
 	sort.Strings(window.RuntimeRejectionReasons)
 	return result, window, nil
 }
@@ -188,6 +192,41 @@ func observedStepIntervalCount(steps []StepObservation) int {
 		}
 	}
 	return count
+}
+
+func runtimeIntervalModelDigest() string {
+	return digestString(runtimeIntervalModel + ":" + runtimeIntervalModelDefinition)
+}
+
+func runtimeIntervalBounds(duration timestampObservation, resolution int64) (int64, int64, bool) {
+	if resolution <= 0 || duration.missing || duration.rejection != "" {
+		return 0, 0, false
+	}
+	lower := duration.wall - resolution
+	if lower < 0 {
+		lower = 0
+	}
+	return lower, duration.wall + resolution, true
+}
+
+func runtimeBoundsForJobs(jobs []JobObservation, resolution int64) (int64, int64, int64, int64) {
+	var jobLower, jobUpper, stepLower, stepUpper int64
+	for _, job := range jobs {
+		if lower, upper, ok := runtimeIntervalBounds(observeTimestamp(job.StartedAt, job.CompletedAt), resolution); ok {
+			jobLower += lower
+			jobUpper += upper
+		}
+		for _, step := range job.Steps {
+			if step.Conclusion == "skipped" || step.Unknown != nil || step.RejectionReason != "" {
+				continue
+			}
+			if lower, upper, ok := runtimeIntervalBounds(observeTimestamp(step.StartedAt, step.CompletedAt), resolution); ok {
+				stepLower += lower
+				stepUpper += upper
+			}
+		}
+	}
+	return jobLower, jobUpper, stepLower, stepUpper
 }
 
 func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, int, []string, error) {
@@ -283,13 +322,6 @@ func runtimeResolution(window WorkflowWindow) string {
 		return "BOUNDED/SOURCE_SECOND"
 	}
 	return "EXACT"
-}
-
-func runtimeUpperBoundExclusive(lower int64, intervals int, resolution int64) int64 {
-	if intervals < 1 {
-		intervals = 1
-	}
-	return lower + int64(intervals)*resolution
 }
 
 func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error, sourceEvent string) ([]OperationObservation, Accounting) {
