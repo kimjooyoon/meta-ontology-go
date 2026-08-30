@@ -26,7 +26,7 @@ func TestObserveStepsIgnoresActionCleanupSteps(t *testing.T) {
 	}
 }
 
-func TestEqualNonOperationStepIsBoundedNotMissing(t *testing.T) {
+func TestEqualNonOperationStepIsLowerResolutionNotMissing(t *testing.T) {
 	steps, total, err := observeSteps([]APIStep{{Name: "Complete job", Status: "completed", Conclusion: "success",
 		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}})
 	if err != nil || total != 0 || len(steps) != 1 || steps[0].Unknown != nil || !steps[0].BelowSourceResolution {
@@ -34,41 +34,20 @@ func TestEqualNonOperationStepIsBoundedNotMissing(t *testing.T) {
 	}
 }
 
-func TestSourceSecondBoundsRemainNonEmptyForEqualTimestamps(t *testing.T) {
+func TestSourceSecondNominalValuePreservesEqualTimestamps(t *testing.T) {
 	jobs, window, err := observeJobs([]APIJob{{ID: 1, Name: "check", Status: "completed", Conclusion: "success",
 		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z", Steps: []APIStep{{Name: "Verify",
 			Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}}}})
 	if err != nil || len(jobs) != 1 || window.JobIntervalCount != 1 || window.StepIntervalCount != 1 ||
-		window.JobWallMSLowerBound >= window.JobWallMSUpperExclusive || window.StepWallMSLowerBound >= window.StepWallMSUpperExclusive || runtimeResolution(window) != "BOUNDED/SOURCE_SECOND" {
-		t.Fatalf("equal timestamp bounds were not observed: jobs=%+v window=%+v err=%v", jobs, window, err)
+		window.JobWallMSNominal != 0 || window.StepWallMSNominal != 0 || window.BelowSourceResolutionJobs != 1 || window.BelowSourceResolutionSteps != 1 || runtimeResolution(window) != "LOWER/SOURCE_SECOND" {
+		t.Fatalf("equal timestamp nominal observation was not preserved: jobs=%+v window=%+v err=%v", jobs, window, err)
 	}
 }
 
-func TestRuntimeBoundsRejectEmptyAndReversedIntervals(t *testing.T) {
-	cases := []WorkflowWindow{
-		{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
-			JobWallMSUpperExclusive: 0, StepWallMSUpperExclusive: 0},
-		{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
-			JobWallMSLowerBound: 10, JobWallMSUpperExclusive: 9, JobWallMSSum: 10,
-			StepWallMSLowerBound: 10, StepWallMSUpperExclusive: 1010, StepWallMSSum: 10},
-	}
-	for index, window := range cases {
-		if runtimeBoundsValid(window) {
-			t.Fatalf("invalid interval case %d was accepted: %+v", index, window)
-		}
-	}
-	valid := WorkflowWindow{TimestampResolutionMS: 1000, JobIntervalCount: 1, StepIntervalCount: 1,
-		JobWallMSUpperExclusive: 1000, StepWallMSUpperExclusive: 1000}
-	if !runtimeBoundsValid(valid) {
-		t.Fatalf("equal-timestamp source bounds were rejected: %+v", valid)
-	}
-}
-
-func TestSourceSecondIntervalModelIncludesEndpointUncertainty(t *testing.T) {
+func TestSourceSecondModelDoesNotClaimPhysicalBounds(t *testing.T) {
 	duration := observeTimestamp("2026-08-30T00:00:00Z", "2026-08-30T00:00:01Z")
-	lower, upper, ok := runtimeIntervalBounds(duration, 1000)
-	if !ok || lower != 0 || upper != 2000 {
-		t.Fatalf("endpoint uncertainty was not included: lower=%d upper=%d ok=%t", lower, upper, ok)
+	if duration.wall != 1000 || duration.below || duration.missing || duration.rejection != "" || runtimeIntervalModel != "github-rest-iso8601-second-value-v1" {
+		t.Fatalf("source value observation was not preserved: duration=%+v model=%s", duration, runtimeIntervalModel)
 	}
 }
 
@@ -77,7 +56,7 @@ func TestRuntimeCasesAreTypedAndFixed(t *testing.T) {
 	if err := validateRuntimeCases(cases); err != nil || len(cases) != 5 {
 		t.Fatalf("runtime cases are not canonical: cases=%+v err=%v", cases, err)
 	}
-	if cases[0].Decision != "PASS" || cases[1].Decision != "REFUTED" || cases[2].Reason != "RUNTIME_INTERVAL_REVERSED" {
+	if cases[0].Decision != "PASS" || cases[0].Resolution != "LOWER/SOURCE_SECOND" || cases[1].Decision != "REFUTED" || cases[2].Reason != "RUNTIME_INTERVAL_REVERSED" {
 		t.Fatalf("runtime case decisions lost precedence: %+v", cases)
 	}
 }
@@ -163,13 +142,13 @@ func TestStepTimestampContradictionsRefuteRuntime(t *testing.T) {
 	}
 }
 
-func TestBoundZeroDurationRequiredStepIsTypedUnknown(t *testing.T) {
+func TestBoundZeroDurationRequiredStepIsExecutedWithLowerResolution(t *testing.T) {
 	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
 	jobs := []APIJob{{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}}}}
 	operation := observeOperation(spec, jobs, ".github/workflows/ci.yml", source, nil)
-	if operation.State != "UNKNOWN" || !validUnknown(operation.Unknown) || operation.Unknown.Reason != "OPERATION_DURATION_BELOW_SOURCE_RESOLUTION" || operation.Unknown.NextOperation != "OBSERVE_WITH_HIGHER_RESOLUTION_OR_REPEAT" {
-		t.Fatalf("zero-duration bound step was not typed unknown: %+v", operation)
+	if operation.State != "EXECUTED" || operation.Unknown != nil || !operation.BelowSourceResolution || operation.WallMS != 0 {
+		t.Fatalf("zero-duration bound step was not executed with lower resolution: %+v", operation)
 	}
 }
 

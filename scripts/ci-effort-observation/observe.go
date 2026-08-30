@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-const runtimeIntervalModel = "github-actions-second-floor-bin-v1"
+const runtimeIntervalModel = "github-rest-iso8601-second-value-v1"
 
-const runtimeIntervalModelDefinition = "endpoint uncertainty=[0,R); interval=[max(0,D-R),D+R); aggregate=sum(interval bounds)"
+const runtimeIntervalModelDefinition = "timestamp values=UTC ISO-8601 second values; wall_ms=reported endpoint delta; physical elapsed bounds=not established; parallel sums are not critical-path claims"
 
 type sourceRunInput struct {
 	ID             int64  `json:"id"`
@@ -174,7 +174,7 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	window.TimestampResolutionMS = 1000
 	window.IntervalModel = runtimeIntervalModel
 	window.IntervalModelDigest = runtimeIntervalModelDigest()
-	window.JobWallMSLowerBound, window.JobWallMSUpperExclusive, window.StepWallMSLowerBound, window.StepWallMSUpperExclusive = runtimeBoundsForJobs(result, window.TimestampResolutionMS)
+	window.JobWallMSNominal, window.StepWallMSNominal = runtimeNominalForJobs(result)
 	sort.Strings(window.RuntimeRejectionReasons)
 	return result, window, nil
 }
@@ -198,32 +198,24 @@ func runtimeIntervalModelDigest() string {
 	return digestString(runtimeIntervalModel + ":" + runtimeIntervalModelDefinition)
 }
 
-func runtimeIntervalBounds(duration timestampObservation, resolution int64) (int64, int64, bool) {
-	if resolution <= 0 || duration.missing || duration.rejection != "" {
-		return 0, 0, false
-	}
-	lower := max(duration.wall-resolution, 0)
-	return lower, duration.wall + resolution, true
-}
-
-func runtimeBoundsForJobs(jobs []JobObservation, resolution int64) (int64, int64, int64, int64) {
-	var jobLower, jobUpper, stepLower, stepUpper int64
+func runtimeNominalForJobs(jobs []JobObservation) (int64, int64) {
+	var jobNominal, stepNominal int64
 	for _, job := range jobs {
-		if lower, upper, ok := runtimeIntervalBounds(observeTimestamp(job.StartedAt, job.CompletedAt), resolution); ok {
-			jobLower += lower
-			jobUpper += upper
+		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
+		if !duration.missing && duration.rejection == "" {
+			jobNominal += duration.wall
 		}
 		for _, step := range job.Steps {
 			if step.Conclusion == "skipped" || step.Unknown != nil || step.RejectionReason != "" {
 				continue
 			}
-			if lower, upper, ok := runtimeIntervalBounds(observeTimestamp(step.StartedAt, step.CompletedAt), resolution); ok {
-				stepLower += lower
-				stepUpper += upper
+			duration := observeTimestamp(step.StartedAt, step.CompletedAt)
+			if !duration.missing && duration.rejection == "" {
+				stepNominal += duration.wall
 			}
 		}
 	}
-	return jobLower, jobUpper, stepLower, stepUpper
+	return jobNominal, stepNominal
 }
 
 func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, int, []string, error) {
@@ -273,7 +265,7 @@ func durationMS(start, end string) (int64, error) {
 		return 0, fmt.Errorf("%s", duration.rejection)
 	}
 	if duration.below {
-		return 0, fmt.Errorf("non-positive duration")
+		return 0, nil
 	}
 	return duration.wall, nil
 }
@@ -316,7 +308,7 @@ func observeTimestamp(start, end string) timestampObservation {
 
 func runtimeResolution(window WorkflowWindow) string {
 	if window.TimestampResolutionMS > 0 {
-		return "BOUNDED/SOURCE_SECOND"
+		return "LOWER/SOURCE_SECOND"
 	}
 	return "EXACT"
 }
@@ -440,7 +432,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 		case duration.rejection != "":
 			base.State, base.RejectionReason = "REJECTED", duration.rejection
 		case duration.below:
-			base.Unknown = operationDurationUnknown()
+			base.State, base.BelowSourceResolution = "EXECUTED", true
 		default:
 			base.State, base.WallMS = "EXECUTED", duration.wall
 		}
@@ -489,11 +481,6 @@ func operationEventUnknown() *Unknown {
 func operationTimestampMissingUnknown() *Unknown {
 	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_TIMESTAMP_MISSING",
 		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_TIMESTAMPS", BlockedBy: []string{}}
-}
-
-func operationDurationUnknown() *Unknown {
-	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_DURATION_BELOW_SOURCE_RESOLUTION",
-		UnknownClass: "AMBIGUOUS", NextOperation: "OBSERVE_WITH_HIGHER_RESOLUTION_OR_REPEAT", BlockedBy: []string{}}
 }
 
 func digestIfPresent(value []byte) string {

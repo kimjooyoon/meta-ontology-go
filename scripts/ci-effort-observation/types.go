@@ -152,10 +152,8 @@ type WorkflowWindow struct {
 	BelowSourceResolutionSteps int      `json:"below_source_resolution_steps"`
 	JobIntervalCount           int      `json:"job_interval_count"`
 	StepIntervalCount          int      `json:"step_interval_count"`
-	StepWallMSLowerBound       int64    `json:"step_wall_ms_lower_bound"`
-	StepWallMSUpperExclusive   int64    `json:"step_wall_ms_upper_bound_exclusive"`
-	JobWallMSLowerBound        int64    `json:"job_wall_ms_lower_bound"`
-	JobWallMSUpperExclusive    int64    `json:"job_wall_ms_upper_bound_exclusive"`
+	JobWallMSNominal            int64    `json:"job_wall_ms_nominal"`
+	StepWallMSNominal           int64    `json:"step_wall_ms_nominal"`
 	RuntimeRejectionCount      int      `json:"runtime_rejection_count"`
 	RuntimeRejectionReasons    []string `json:"runtime_rejection_reasons"`
 }
