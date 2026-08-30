@@ -9,15 +9,13 @@
     ],
     "api_versions": {
       "branches": "2026-03-10",
-      "branch_protection": "2022-11-28",
       "rulesets": "2026-03-10"
     },
+    "payload_digest_model": "canonical-json-v1",
     "endpoints": [
       {"id":"repository","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go","api_version":"2026-03-10","payload":"inputs/repository.json"},
       {"id":"dev-branch","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/dev","api_version":"2026-03-10","payload":"inputs/dev-branch.json"},
-      {"id":"dev-protection","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/dev/protection","api_version":"2022-11-28","payload":"inputs/dev-protection.json"},
       {"id":"main-branch","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/main","api_version":"2026-03-10","payload":"inputs/main-branch.json"},
-      {"id":"main-protection","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/main/protection","api_version":"2022-11-28","payload":"inputs/main-protection.json"},
       {"id":"rulesets","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/rulesets?includes_parents=true","api_version":"2026-03-10","payload":"inputs/rulesets.json"}
     ]
   },

@@ -52,7 +52,7 @@ func sourcePinCell(cell CellObservation, parsed parsedSnapshot) CellObservation 
 	if parsed.SourceUnknown != nil {
 		return unknownCell(cell, parsed.SourceUnknown, "public snapshot unavailable", "complete public REST snapshot")
 	}
-	return closeCell(cell, "requests=6;normalized-digests=checked", "six exact public REST requests")
+	return closeCell(cell, "requests=4;normalized-digests=checked;model=canonical-json-v1", "four exact public REST requests")
 }
 
 func branchProtectedCell(cell CellObservation, branch BranchEvidence) CellObservation {

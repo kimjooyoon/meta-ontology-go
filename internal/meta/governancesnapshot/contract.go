@@ -64,7 +64,7 @@ func ValidateContract(contract Contract) error {
 			return fmt.Errorf("governance snapshot ruleset expectation is invalid")
 		}
 	}
-	if len(contract.Source.Documentation) != 3 || len(contract.Source.APIVersions) != 3 || len(contract.Source.Endpoints) != 6 {
+	if len(contract.Source.Documentation) != 3 || len(contract.Source.APIVersions) != 2 || contract.Source.PayloadDigestModel != "canonical-json-v1" || len(contract.Source.Endpoints) != 4 {
 		return fmt.Errorf("governance snapshot source authority is incomplete")
 	}
 	return nil

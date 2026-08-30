@@ -69,9 +69,7 @@ jobs:
           api_root="https://api.github.com/repos/$GITHUB_REPOSITORY"
           capture repository "repos/$GITHUB_REPOSITORY" "$api_root" 2026-03-10 inputs/repository.json
           capture dev-branch "repos/$GITHUB_REPOSITORY/branches/dev" "$api_root/branches/dev" 2026-03-10 inputs/dev-branch.json
-          capture dev-protection "repos/$GITHUB_REPOSITORY/branches/dev/protection" "$api_root/branches/dev/protection" 2022-11-28 inputs/dev-protection.json
           capture main-branch "repos/$GITHUB_REPOSITORY/branches/main" "$api_root/branches/main" 2026-03-10 inputs/main-branch.json
-          capture main-protection "repos/$GITHUB_REPOSITORY/branches/main/protection" "$api_root/branches/main/protection" 2022-11-28 inputs/main-protection.json
           capture rulesets "repos/$GITHUB_REPOSITORY/rulesets?includes_parents=true" "$api_root/rulesets?includes_parents=true" 2026-03-10 inputs/rulesets.json
           jq -n --arg schema 'gooo/live-governance-snapshot-input/v1' --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" \
             --argjson requests "$(jq -c . "$root/requests.json")" \
@@ -129,6 +127,9 @@ jobs:
           test "$(cat "$root/second/exit.txt")" -eq 0
           jq -e --arg head "$HEAD_SHA" '
             .schema == "gooo/live-governance-snapshot/v1" and .head_sha == $head and
+            .source.payload_digest_model == "canonical-json-v1" and (.source.requests | length) == 4 and
+            ([.source.requests[].id] == ["repository","dev-branch","main-branch","rulesets"]) and
+            (all(.source.requests[]; .api_version == "2026-03-10" and .payload_digest != "")) and
             .summary.cells_total == 12 and .summary.foundation_cells == 4 and
             .summary.coherence_cells == 4 and .summary.regression_cells == 4 and
             .summary.driver_cells == 4 and .summary.outcome_cells == 4 and .summary.guardrail_cells == 4 and
@@ -145,6 +146,9 @@ jobs:
             .graph.schema == "gooo-graph/v1" and .graph.node_count == 36 and .graph.relation_count == 24 and
             .graph.activity_count == 12 and .graph.binding_count == 12 and
             (all(.graph.bindings[]; .used_edge_count == 1 and .generated_edge_count == 1)) and
+            .branches[0].protected == true and .branches[0].status_enforcement == "off" and (.branches[0].required_contexts | length) == 0 and
+            .branches[1].protected == true and .branches[1].status_enforcement == "everyone" and (.branches[1].required_contexts | length) == 7 and
+            (.rulesets | length) == 2 and (all(.rulesets[]; .enforcement == "disabled")) and
             .replay.replay_equal == true and .replay.input_digest != "" and .replay.projection_digest != ""
           ' "$root/first/report.json" > /dev/null
           jq -e '

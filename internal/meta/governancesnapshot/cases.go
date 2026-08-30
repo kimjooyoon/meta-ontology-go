@@ -59,19 +59,17 @@ func fixtureSnapshot(contract Contract, mode string) LoadedSnapshot {
 		if mode == "missing" {
 			request.State = "MISSING"
 		}
-		if mode == "dependency" && request.ID == "main-protection" {
-			request.State = "MISSING"
-		}
 		result.Requests = append(result.Requests, request)
 	}
 	result.Payloads["repository"] = []byte(`{"default_branch":"dev"}`)
-	result.Payloads["dev-branch"] = []byte(`{"name":"dev","protected":true,"commit":{"sha":"dev-fixture"}}`)
-	result.Payloads["main-branch"] = []byte(`{"name":"main","protected":true,"commit":{"sha":"main-fixture"}}`)
-	result.Payloads["dev-protection"] = protectionFixture()
-	result.Payloads["main-protection"] = protectionFixture()
+	result.Payloads["dev-branch"] = branchFixture("dev", "dev-fixture", protectionFixture())
+	result.Payloads["main-branch"] = branchFixture("main", "main-fixture", protectionFixture())
 	result.Payloads["rulesets"] = rulesetsFixture(contract, false)
 	if mode == "drift" {
-		result.Payloads["dev-protection"] = []byte(`{"required_status_checks":null}`)
+		result.Payloads["dev-branch"] = branchFixture("dev", "dev-fixture", []byte(`{"required_status_checks":null}`))
+	}
+	if mode == "dependency" {
+		result.Payloads["main-branch"] = branchFixture("main", "main-fixture", nil)
 	}
 	if mode == "malformed" {
 		result.Payloads["main-branch"] = []byte("{")
@@ -90,6 +88,17 @@ func fixtureSnapshot(contract Contract, mode string) LoadedSnapshot {
 
 func protectionFixture() []byte {
 	data := map[string]any{"required_status_checks": map[string]any{"enforcement_level": "everyone", "contexts": ExpectedContexts(), "checks": []any{}}}
+	raw, _ := json.Marshal(data)
+	return raw
+}
+
+func branchFixture(name, sha string, protection []byte) []byte {
+	data := map[string]any{"name": name, "protected": true, "commit": map[string]string{"sha": sha}}
+	if protection != nil {
+		var value map[string]any
+		_ = json.Unmarshal(protection, &value)
+		data["protection"] = value
+	}
 	raw, _ := json.Marshal(data)
 	return raw
 }

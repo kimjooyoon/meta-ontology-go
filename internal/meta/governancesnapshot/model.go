@@ -24,9 +24,10 @@ type Contract struct {
 }
 
 type SourceContract struct {
-	Documentation []string       `json:"documentation"`
-	APIVersions  map[string]string `json:"api_versions"`
-	Endpoints    []EndpointSpec `json:"endpoints"`
+	Documentation      []string          `json:"documentation"`
+	APIVersions       map[string]string `json:"api_versions"`
+	PayloadDigestModel string            `json:"payload_digest_model"`
+	Endpoints          []EndpointSpec    `json:"endpoints"`
 }
 
 type EndpointSpec struct {
@@ -139,10 +140,11 @@ type Summary struct {
 }
 
 type SourceEvidence struct {
-	Documentation []string              `json:"documentation"`
-	APIVersions  map[string]string      `json:"api_versions"`
-	Requests     []RequestObservation   `json:"requests"`
-	Payloads     []PayloadEvidence      `json:"payloads"`
+	Documentation      []string              `json:"documentation"`
+	APIVersions       map[string]string      `json:"api_versions"`
+	PayloadDigestModel string                `json:"payload_digest_model"`
+	Requests          []RequestObservation   `json:"requests"`
+	Payloads          []PayloadEvidence     `json:"payloads"`
 }
 
 type PayloadEvidence struct {

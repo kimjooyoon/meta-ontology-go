@@ -66,7 +66,7 @@ func validateCells(cells []CellObservation, specs []CellSpec) error {
 }
 
 func validateSource(observed SourceEvidence, expected SourceContract, repository string) error {
-	if !reflect.DeepEqual(observed.Documentation, expected.Documentation) || !reflect.DeepEqual(observed.APIVersions, expected.APIVersions) || len(observed.Requests) != len(expected.Endpoints) || len(observed.Payloads) != len(expected.Endpoints) {
+	if !reflect.DeepEqual(observed.Documentation, expected.Documentation) || !reflect.DeepEqual(observed.APIVersions, expected.APIVersions) || observed.PayloadDigestModel != expected.PayloadDigestModel || len(observed.Requests) != len(expected.Endpoints) || len(observed.Payloads) != len(expected.Endpoints) {
 		return fmt.Errorf("source authority is not preserved")
 	}
 	for index, endpoint := range expected.Endpoints {

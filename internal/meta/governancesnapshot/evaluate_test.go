@@ -63,8 +63,22 @@ func TestCanonicalCasesPreserveUnknownFrontiers(t *testing.T) {
 	if report.Cases[2].Unknown.UnknownClass != "DIRECT_MISSING" || len(report.Cases[2].Unknown.BlockedBy) != 0 {
 		t.Fatalf("missing case = %#v", report.Cases[2])
 	}
-	if report.Cases[3].Unknown.UnknownClass != "DEPENDENCY_BLOCKED" || len(report.Cases[3].Unknown.BlockedBy) != 1 {
+	if report.Cases[3].Unknown.UnknownClass != "DEPENDENCY_BLOCKED" || report.Cases[3].Unknown.Reason != "BRANCH_PUBLIC_PROTECTION_FIELDS_UNAVAILABLE" || report.Cases[3].Unknown.NextOperation != "CAPTURE_BRANCH_PUBLIC_SNAPSHOT" || len(report.Cases[3].Unknown.BlockedBy) != 1 || report.Cases[3].Unknown.BlockedBy[0] != "live-governance-snapshot:main-branch" {
 		t.Fatalf("dependency case = %#v", report.Cases[3])
+	}
+}
+
+func TestPublicBranchPayloadIsTheOnlyProtectionRequest(t *testing.T) {
+	contract := contractFixture(t)
+	if len(contract.Source.Endpoints) != 4 || len(contract.Source.APIVersions) != 2 || contract.Source.PayloadDigestModel != "canonical-json-v1" {
+		t.Fatalf("source contract = %#v", contract.Source)
+	}
+	report := Evaluate(fixtureSnapshot(contract, "normal"), contract, graphFixture(contract))
+	if len(report.Source.Requests) != 4 || report.Source.Requests[1].ID != "dev-branch" || report.Source.Requests[2].ID != "main-branch" || report.Source.PayloadDigestModel != "canonical-json-v1" {
+		t.Fatalf("source evidence = %#v", report.Source)
+	}
+	if report.Branches[0].StatusSource != "branch-summary" || report.Branches[1].StatusSource != "branch-summary" {
+		t.Fatalf("branch protection source = %#v", report.Branches)
 	}
 }
 

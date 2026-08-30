@@ -107,7 +107,7 @@ func humanReport(report Report, contract Contract) string {
 		fmt.Fprintf(&b, "%s protected=%t enforcement=%s contexts=%d\n", branch.Branch, branch.Protected, branch.Enforcement, len(branch.Contexts))
 	}
 	fmt.Fprintf(&b, "Rulesets=%d disabled_authority_rejected=true\n", len(report.Rulesets))
-	fmt.Fprintf(&b, "Requests=%d normalized_payloads=%d graph_activities=%d bindings=%d\n", len(report.Source.Requests), len(report.Source.Payloads), report.Graph.ActivityCount, report.Graph.BindingCount)
+	fmt.Fprintf(&b, "Requests=%d normalized_payloads=%d payload_digest_model=%s graph_activities=%d bindings=%d\n", len(report.Source.Requests), len(report.Source.Payloads), report.Source.PayloadDigestModel, report.Graph.ActivityCount, report.Graph.BindingCount)
 	fmt.Fprintf(&b, "repository_writes=%d branch_setting_writes=%d local_test_executions=%d cross_project_required_gates=%d improvement=%s\n",
 		report.RepositoryWrites, report.BranchSettingWrites, report.LocalTestExecutions, report.CrossProjectGates, report.Improvement)
 	for _, item := range report.Cases {

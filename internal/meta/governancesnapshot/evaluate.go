@@ -74,7 +74,8 @@ func evaluateCore(input LoadedSnapshot, contract Contract) Report {
 
 func sourceEvidence(input LoadedSnapshot, contract Contract) SourceEvidence {
 	evidence := SourceEvidence{Documentation: append([]string(nil), contract.Source.Documentation...),
-		APIVersions: cloneMap(contract.Source.APIVersions), Requests: append([]RequestObservation(nil), input.Requests...)}
+		APIVersions: cloneMap(contract.Source.APIVersions), PayloadDigestModel: contract.Source.PayloadDigestModel,
+		Requests: append([]RequestObservation(nil), input.Requests...)}
 	for _, request := range input.Requests {
 		evidence.Payloads = append(evidence.Payloads, PayloadEvidence{ID: request.ID, State: request.State, Digest: request.PayloadDigest})
 	}
@@ -149,27 +150,12 @@ type protectionObservation struct {
 }
 
 func parseBranchStatus(input LoadedSnapshot, branch string, protected bool, inline *protectionPayload, parsed *parsedSnapshot) (protectionObservation, string, string) {
-	_, state := payload(input, branch+"-protection")
-	if state != "PRESENT" && inline != nil {
-		status, reason := parseProtectionValue(protected, inline)
-		return status, reason, "branch-summary"
-	}
-	status, reason := parseProtection(input, branch, protected, parsed)
-	return status, reason, "branch-protection"
-}
-
-func parseProtection(input LoadedSnapshot, branch string, protected bool, parsed *parsedSnapshot) (protectionObservation, string) {
-	raw, state := payload(input, branch+"-protection")
-	if state != "PRESENT" {
+	if inline == nil {
 		parsed.SourceUnknown = dependencyBlocked(branch)
-		return protectionObservation{}, ""
+		return protectionObservation{}, "", "branch-summary"
 	}
-	var value protectionPayload
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return protectionObservation{}, "MALFORMED_PUBLIC_PAYLOAD"
-	}
-	status, reason := parseProtectionValue(protected, &value)
-	return status, reason
+	status, reason := parseProtectionValue(protected, inline)
+	return status, reason, "branch-summary"
 }
 
 func parseProtectionValue(protected bool, value *protectionPayload) (protectionObservation, string) {
@@ -255,9 +241,9 @@ func directMissing(reason string) *Unknown {
 }
 
 func dependencyBlocked(branch string) *Unknown {
-	return &Unknown{Stage: "evaluate-governance", Step: "compare-required-contexts", Reason: "BRANCH_PROTECTION_UNAVAILABLE",
-		UnknownClass: "DEPENDENCY_BLOCKED", NextOperation: "RESTORE_BRANCH_PROTECTION_OBSERVATION",
-		BlockedBy: []string{"live-governance-snapshot:" + branch + "-branch-protection"}}
+	return &Unknown{Stage: "evaluate-governance", Step: "compare-required-contexts", Reason: "BRANCH_PUBLIC_PROTECTION_FIELDS_UNAVAILABLE",
+		UnknownClass: "DEPENDENCY_BLOCKED", NextOperation: "CAPTURE_BRANCH_PUBLIC_SNAPSHOT",
+		BlockedBy: []string{"live-governance-snapshot:" + branch + "-branch"}}
 }
 
 func formatContexts(values []string) string {
