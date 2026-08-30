@@ -648,6 +648,7 @@ jobs:
           jq --arg head "$HEAD_SHA" \
             --arg first_digest "$first_digest" \
             --arg replay_digest "$replay_digest" \
+            --arg concept_digest "$concept_digest" \
             --argjson replay_equal true \
             --argjson concept_build_ms "$concept_build_ms" \
             --argjson concept_peak_rss_kib "$concept_peak_rss_kib" \
