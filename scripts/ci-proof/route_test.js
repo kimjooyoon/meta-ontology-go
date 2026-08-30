@@ -111,3 +111,22 @@ const reusedPullDecision = foundation.foundationBootstrapDecision({
   correctionChangedPaths: foundation.CORRECTION_CHANGED_KERNEL_PATHS,
 });
 assert.equal(reusedPullDecision.decision, 'REFUTED');
+
+const foundationInput = {
+  event: 'pull_request',
+  eventRef: 'refs/pull/602/merge',
+  baseRef: 'main',
+  baseSha: route.foundationPromotion.baseSha,
+  headSha: 'b'.repeat(40),
+  repository: route.foundationPromotion.repository,
+  prNumber: route.foundationPromotion.pullRequest,
+  headRef: route.foundationPromotion.headRef,
+};
+const foundationEvidence = route.buildProofRouteEvidence(foundationInput);
+assert.equal(foundationEvidence.route, 'foundation_promotion');
+assert.equal(foundationEvidence.guardian_required, false);
+assert.doesNotThrow(() => route.validateProofRouteEvidence(foundationEvidence, foundationInput));
+assert.equal(route.classifyProofRoute('pull_request', 'main', {
+  ...foundationInput,
+  prNumber: 601,
+}), 'promotion_main');

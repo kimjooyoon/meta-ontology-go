@@ -1,0 +1,83 @@
+name: Self-improvement minimal loop
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  loop:
+    name: Self-improvement minimal loop
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact Go toolchain
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+
+      - name: Check the authoritative Gooo program
+        run: go run ./cmd/gooo check --semantic examples/self-improvement-minimal-loop/main.gooo
+
+      - name: Materialize the released semantic graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/self-improvement-minimal-loop"
+          mkdir -p "$output"
+          go run ./cmd/gooo graph dump examples/self-improvement-minimal-loop/main.gooo > "$output/released-semantic-graph.json"
+          test "$(jq -r .schema_version "$output/released-semantic-graph.json")" = "gooo-graph/v1"
+          test "$(jq '[.nodes[] | select(.kind == "Activity")] | length' "$output/released-semantic-graph.json")" -eq 12
+
+      - name: Run all semantic cases into caller-owned temporary output
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/self-improvement-minimal-loop"
+          for scenario in normal unknown refuted; do
+            mkdir -p "$output/$scenario"
+            go run ./scripts/self-improvement-minimal-loop \
+              -graph "$output/released-semantic-graph.json" \
+              -case "examples/self-improvement-minimal-loop/$scenario.json" \
+              -output "$output/$scenario"
+          done
+
+      - name: Assert per-cell semantic decisions and preserved evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/self-improvement-minimal-loop"
+          test "$(jq -r .decision "$output/normal/report.json")" = CLOSED
+          test "$(jq -r .pair_matched "$output/normal/report.json")" = true
+          test "$(jq '.cells | length' "$output/normal/report.json")" -eq 12
+          test "$(jq '[.cells[].cell] | unique | length' "$output/normal/report.json")" -eq 12
+          test "$(jq -r .decision "$output/unknown/report.json")" = UNKNOWN
+          jq -e '(.unknowns | length) > 0 and all(.unknowns[]; .stage != "" and .step != "" and .reason != "" and .unknown_class != "" and .next_operation != "" and .blocked_by != "")' "$output/unknown/report.json" >/dev/null
+          test "$(jq -r .decision "$output/refuted/report.json")" = REFUTED
+          test "$(jq -r .reason "$output/refuted/report.json")" = REFUTED_TAKES_PRIORITY_OVER_UNKNOWN
+          jq -e '.repository_mutation == false and .output_mode == "caller-owned-temporary-output"' "$output/normal/patch-proposal.json" >/dev/null
+          if rg -n '"(score|aggregate|coverage|denominator)"' "$output"; then
+            echo "aggregate or denominator closure is forbidden"
+            exit 1
+          fi
+
+      - name: Upload exact-head loop artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-minimal-loop-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-minimal-loop
+          if-no-files-found: error

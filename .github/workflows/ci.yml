@@ -525,6 +525,11 @@ jobs:
           GOOO_SCOPE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           GOOO_PR_HEAD: ${{ github.head_ref }}
           GOOO_PR_BASE: ${{ github.base_ref }}
+          GOOO_REPOSITORY: ${{ github.repository }}
+          GOOO_PR_NUMBER: ${{ github.event.pull_request.number || 0 }}
+          GOOO_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GOOO_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
+          GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
       - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
@@ -651,7 +656,7 @@ jobs:
 
   proof:
     name: CI proof bundle
-    needs: [format, vet, test, race, semantic, policy, evidence]
+    needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
     if: ${{ always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
@@ -795,12 +800,15 @@ jobs:
             const route = require('./scripts/ci-proof/route');
             const baseRef = normalizeBaseRef(context.eventName, context.ref, pull);
             const headSha = pull ? pull.head.sha : context.sha;
+            const baseSha = pull ? pull.base.sha : context.payload.before;
             const evidence = route.buildProofRouteEvidence({
-              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+              event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha,
+              repository: context.payload.repository.full_name, prNumber: pull ? pull.number : 0,
+              headRef: pull ? pull.head.ref : '',
             });
             fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Select exact Guardian promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
         uses: actions/github-script@v8
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -869,7 +877,7 @@ jobs:
             if (sameName.length !== 1 || sameName[0].expired || sameName[0].id <= 0 || sameName[0].size_in_bytes <= 0 || !/^sha256:[0-9a-f]{64}$/.test(sameName[0].digest || '')) throw new Error('selected Guardian run does not have exactly one current digest-bound artifact');
             fs.writeFileSync('ci-guardian-selection.json', JSON.stringify({repository: context.payload.repository.full_name, pr_number: pull.number, action: context.payload.action, base_repo: pull.base.repo.full_name, base_ref: pull.base.ref, base_sha: pull.base.sha, head_repo: pull.head.repo.full_name, head_ref: pull.head.ref, head_sha: pull.head.sha, run_id: selected.id, run_attempt: attempt, workflow_id: selected.workflow_id, workflow_path: workflow.data.path, run_event: selected.event, run_status: selected.status, run_conclusion: selected.conclusion, run_created_at: selected.created_at, run_number: selected.run_number, job: {id: guardianJobs[0].id, name: guardianJobs[0].name, status: guardianJobs[0].status, conclusion: guardianJobs[0].conclusion, head_sha: guardianJobs[0].head_sha}, check: {id: check.id, name: check.name, app_id: check.app.id, status: check.status, conclusion: check.conclusion, head_sha: check.head_sha, suite_id: check.check_suite && check.check_suite.id}, artifact: {id: sameName[0].id, name: sameName[0].name, size: sameName[0].size_in_bytes, expired: sameName[0].expired, digest: sameName[0].digest}, expected_head_sha: expectedHead}, null, 2) + '\n');
       - name: Download selected Guardian artifact
-        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -887,7 +895,7 @@ jobs:
           unzip -oq ci-guardian-artifact.zip -d ci-guardian-input
           test -s ci-guardian-input/ci-guardian.json
       - name: Validate Guardian promotion evidence
-        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
         uses: actions/github-script@v8
         with:
           github-token: ${{ github.token }}
@@ -916,6 +924,59 @@ jobs:
             if (manifest.decision !== 'PASS' || manifest.code !== null || manifest.check_name !== 'CI guardian' || selection.job.id <= 0 || selection.artifact.id <= 0 || selection.artifact.name !== `ci-guardian-${selection.run_id}-${selection.run_attempt}` || `sha256:${zipDigest}` !== selection.artifact.digest) throw new Error('Guardian promotion evidence is not exact PASS/check/artifact identity');
             const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
+      - name: Download exact Foundation predecessor artifact
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
+        uses: actions/download-artifact@v7
+        with:
+          name: feedback-predecessor-${{ github.event.pull_request.head.sha }}
+          path: foundation-predecessor
+      - name: Bind exact Foundation promotion evidence
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
+        uses: actions/github-script@v8
+        env:
+          FOUNDATION_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const eventPull = context.payload.pull_request;
+            const input = JSON.parse(fs.readFileSync('foundation-predecessor/predecessor-input-a.json', 'utf8'));
+            const receipt = JSON.parse(fs.readFileSync('foundation-predecessor/predecessor-receipt-a.json', 'utf8'));
+            if (input.repository !== context.payload.repository.full_name || input.predecessor_sha !== 'cd9727af80f5118405290d3be96890c18e1529c0' || input.canonical_branch !== 'main' || input.canonical_workflow !== 'CI [push full]' || receipt.report?.decision !== 'FOUNDATION' || receipt.replay_verified !== true) throw new Error('Foundation predecessor artifact is not the exact confirmed recovery input');
+            const jobsFromAPI = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listJobsForWorkflowRun({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.jobs)) throw new Error('Foundation job API returned malformed data');
+              jobsFromAPI.push(...response.data.jobs);
+              if (response.data.jobs.length < 100) break;
+              if (page === 1000) throw new Error('Foundation job API pagination exceeded the fail-closed page limit');
+            }
+            const names = ['gofmt', 'go vet', 'go test', 'go test -race', 'Semantic conformance', 'CI policy', 'CI evidence'];
+            const byName = new Map();
+            for (const job of jobsFromAPI) {
+              if (!names.includes(job.name)) continue;
+              if (byName.has(job.name)) throw new Error(`duplicate Foundation non-route job ${job.name}`);
+              byName.set(job.name, job);
+            }
+            const attempt = Number(process.env.GITHUB_RUN_ATTEMPT || 1);
+            const jobs = names.map(name => {
+              const job = byName.get(name);
+              if (!job || job.status !== 'completed' || job.conclusion !== 'success' || job.head_sha !== eventPull.head.sha || job.id <= 0 || job.run_id !== context.runId) throw new Error(`non-route job ${name} is not a successful exact-head result`);
+              return {id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: context.runId, run_attempt: attempt};
+            });
+            if (new Set(jobs.map(job => job.id)).size !== jobs.length) throw new Error('Foundation non-route job IDs are not unique');
+            const artifacts = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data.artifacts)) throw new Error('Foundation artifact API returned malformed data');
+              artifacts.push(...response.data.artifacts);
+              if (response.data.artifacts.length < 100) break;
+              if (page === 1000) throw new Error('Foundation artifact API pagination exceeded the fail-closed page limit');
+            }
+            const artifactName = `feedback-predecessor-${eventPull.head.sha}`;
+            const matches = artifacts.filter(artifact => artifact.name === artifactName);
+            if (matches.length !== 1 || matches[0].id <= 0 || matches[0].size_in_bytes <= 0 || matches[0].expired || !/^sha256:[0-9a-f]{64}$/.test(matches[0].digest || '')) throw new Error('Foundation predecessor artifact metadata is not unique, current, and digest-bound');
+            fs.writeFileSync('foundation-promotion-evidence.json', JSON.stringify({schema: 'gooo/foundation-promotion-evidence/v1', decision: 'PASS', human_decision: process.env.FOUNDATION_HUMAN_DECISION, repository: context.payload.repository.full_name, pr_number: eventPull.number, base_ref: eventPull.base.ref, base_sha: eventPull.base.sha, head_ref: eventPull.head.ref, head_sha: eventPull.head.sha, artifact_id: matches[0].id, artifact_name: matches[0].name, artifact_size_bytes: matches[0].size_in_bytes, artifact_digest: matches[0].digest, artifact_run_id: context.runId, artifact_run_attempt: attempt, input, receipt, non_route_jobs: jobs}, null, 2) + '\n');
       - name: Collect proof context
         uses: actions/github-script@v8
         env:
@@ -932,11 +993,16 @@ jobs:
             const headSha = pull ? pull.head.sha : context.sha;
             const routePolicy = require('./scripts/ci-proof/route');
             const routeEvidence = JSON.parse(fs.readFileSync('ci-proof-route.json', 'utf8'));
+            const foundationIdentity = {
+              repository: context.payload.repository.full_name, prNumber: pull ? pull.number : 0,
+              headRef: pull ? pull.head.ref : '', baseRef, baseSha,
+            };
             routePolicy.validateProofRouteEvidence(routeEvidence, {
-              event: context.eventName, eventRef: context.ref, baseRef, headSha,
+              event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha, ...foundationIdentity,
             });
             const proofRoute = routeEvidence.route;
             const isPromotion = proofRoute === 'promotion_main';
+            const isFoundation = proofRoute === 'foundation_promotion';
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
             const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
             let guardianEvidence = null;
@@ -946,6 +1012,7 @@ jobs:
               guardianEvidence = JSON.parse(fs.readFileSync('ci-guardian-evidence.json', 'utf8'));
               if (fs.existsSync('ci-promotion-observation.json')) promotionObservation = JSON.parse(fs.readFileSync('ci-promotion-observation.json', 'utf8'));
             }
+            const foundationPromotion = isFoundation ? JSON.parse(fs.readFileSync('foundation-promotion-evidence.json', 'utf8')) : null;
             let protection = {
               repository: `${context.repo.owner}/${context.repo.repo}`,
               branch: baseRef,
@@ -1013,7 +1080,7 @@ jobs:
               branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
               provenance_status: 'verified', artifacts_status: artifactsVerified ? 'verified' : 'missing',
               write_effect: 'none', no_write_outside_generated: true, artifacts, fixture_paths: ['examples/billing/main.gooo'],
-              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, guardian_evidence: guardianEvidence, promotion_observation: promotionObservation
+              cache: {cache_key: 'none', outcome: 'not_run', status: 'not_applicable'}, diagnostic_ids: [], repair_ids: [], predecessors: [], missing_reasons: domainEvidence.missing_reasons, domain_evidence: domainEvidence, guardian_evidence: guardianEvidence, promotion_observation: promotionObservation, foundation_promotion: foundationPromotion
             };
             fs.writeFileSync('ci-proof-context.json', JSON.stringify(contextData));
       - name: Build deterministic proof and append receipt
@@ -1039,6 +1106,14 @@ jobs:
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
+      - name: Upload Foundation promotion evidence
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
+        uses: actions/upload-artifact@v6
+        with:
+          name: foundation-promotion-${{ github.run_id }}-${{ github.run_attempt }}
+          path: foundation-promotion-evidence.json
+          if-no-files-found: error
+          retention-days: 30
 
   failure-report:
     name: CI failure summary
@@ -1396,6 +1471,11 @@ jobs:
               --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json"
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+          if jq -e '.report.decision == "FOUNDATION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            echo "emitted=false" >> "$GITHUB_OUTPUT"
+            jq -r '"### Predecessor foundation recovery\n- proof choice: `\(.report.proof_choice)`\n- reason: `\(.report.reason)`\n- missing predecessor: `\(.report.foundation.missing_predecessor_sha)`\n- last known good: `\(.report.foundation.last_known_good_sha)` run `\(.report.foundation.last_known_good_run_id)` artifact `\(.report.foundation.last_known_good_artifact_digest)`\n- next: `\(.report.foundation.next_operation)`"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           jq -e '
             (.report.decision == "SELECTED" and .report.resolution == "exact_operation" and
               .report.next_operation == "consume-predecessor-semantic-state" and
@@ -1464,3 +1544,75 @@ jobs:
           path: ${{ runner.temp }}/language-package-execution
           if-no-files-found: error
           retention-days: 14
+
+  coherence-boundary-probe:
+    name: COHERENCE boundary probe
+    needs: [feedback-predecessor]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.feedback-predecessor.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Re-consume exact predecessor artifact in caller-owned temp space
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_ARTIFACT_NAME: feedback-predecessor-${{ github.sha }}
+        run: |
+          probe_root="$(mktemp -d "$RUNNER_TEMP/coherence-boundary-probe.XXXXXX")"
+          artifact_index="$probe_root/artifacts.json"
+          artifact_zip="$probe_root/predecessor-artifact.zip"
+          extracted="$probe_root/extracted"
+          curl --fail --silent --show-error --location \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            > "$artifact_index"
+          match_count="$(jq --arg name "$EXPECTED_ARTIFACT_NAME" '[.artifacts[] | select(.name == $name and .expired == false)] | length' "$artifact_index")"
+          test "$match_count" = 1
+          artifact_id="$(jq -r --arg name "$EXPECTED_ARTIFACT_NAME" '.artifacts[] | select(.name == $name and .expired == false) | .id' "$artifact_index")"
+          expected_zip_digest="$(jq -r --arg name "$EXPECTED_ARTIFACT_NAME" '.artifacts[] | select(.name == $name and .expired == false) | .digest' "$artifact_index")"
+          test "$artifact_id" != null
+          test "$expected_zip_digest" != null
+          curl --fail --silent --show-error --location \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            --output "$artifact_zip"
+          actual_zip_digest="sha256:$(sha256sum "$artifact_zip" | awk '{print $1}')"
+          test "$actual_zip_digest" = "$expected_zip_digest"
+          mkdir -p "$extracted"
+          unzip -q "$artifact_zip" -d "$extracted"
+          test -s "$extracted/predecessor-input-a.json"
+          test -s "$extracted/predecessor-receipt-a.json"
+          decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
+          test "$decision" = FOUNDATION
+          expected_report_digest="$(jq -r '.report.report_digest' "$extracted/predecessor-receipt-a.json")"
+          test "$expected_report_digest" != null
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$extracted/predecessor-input-a.json" \
+            --report "$probe_root/probe-receipt.json" \
+            --check
+          cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
+          jq -n \
+            --arg artifact_name "$EXPECTED_ARTIFACT_NAME" \
+            --arg artifact_digest "$actual_zip_digest" \
+            --arg report_digest "$expected_report_digest" \
+            --arg head_sha "$GITHUB_SHA" \
+            '{status: "PASS", boundary: "COHERENCE evaluator", decision: "FOUNDATION", coherence_successor_commit: "UNKNOWN", reason: "dev divergence", head_sha: $head_sha, predecessor_artifact: {name: $artifact_name, digest: $artifact_digest}, predecessor_report_digest: $report_digest}' \
+            > coherence-boundary-probe.json
+          jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: coherence-boundary-probe-${{ github.sha }}
+          path: coherence-boundary-probe.json
+          if-no-files-found: error
+          retention-days: 30

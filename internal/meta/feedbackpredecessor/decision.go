@@ -34,5 +34,7 @@ func Consumable(report Report) bool {
 	lower := report.Decision == DecisionLower && report.Reason == ReasonUnsuccessful &&
 		report.Resolution == ResolutionClass && report.NextOperation == OperationReevaluate &&
 		!report.PromotionAuthorized && report.Selected == nil
-	return exact || lower
+	foundation := report.Decision == DecisionFoundation && report.Reason == ReasonFoundationRegression &&
+		report.Foundation != nil && !report.PromotionAuthorized && report.Selected == nil
+	return exact || lower || foundation
 }
