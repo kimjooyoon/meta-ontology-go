@@ -2,6 +2,9 @@ package entityfields
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/entityfieldsv1"
@@ -29,11 +32,33 @@ func Verify(observation entityfieldsv1.Observation, report Report) error {
 	}
 	if len(observation.Source) == 0 || len(observation.Formatted) == 0 || len(observation.Generated) == 0 || len(observation.SourceMap.Mappings) == 0 || !observation.GetPutRoundTrip { return fmt.Errorf("EntityFields output evidence incomplete") }
 	generated := string(observation.Generated)
-	if !strings.Contains(generated, "type Order struct") || !strings.Contains(generated, "OrderNumber string") { return fmt.Errorf("Go struct projection is incomplete") }
+	if !hasOrderStruct(observation.Generated) { return fmt.Errorf("Go struct projection is incomplete") }
 	for _, spec := range cellSpecs {
 		if strings.Contains(generated, spec.Activity) { return fmt.Errorf("user Go projection contains meta activity %s", spec.Activity) }
 	}
 	return nil
+}
+
+func hasOrderStruct(source []byte) bool {
+	file, err := parser.ParseFile(token.NewFileSet(), "entity-fields.generated.go", source, 0)
+	if err != nil { return false }
+	for _, declaration := range file.Decls {
+		group, ok := declaration.(*ast.GenDecl)
+		if !ok || group.Tok.String() != "type" { continue }
+		for _, spec := range group.Specs {
+			typeSpec, ok := spec.(*ast.TypeSpec)
+			if !ok || typeSpec.Name.Name != "Order" { continue }
+			structType, ok := typeSpec.Type.(*ast.StructType)
+			if !ok || len(structType.Fields.List) != 2 { return false }
+			want := []string{"OrderNumber", "CustomerName"}
+			for index, field := range structType.Fields.List {
+				fieldType, ok := field.Type.(*ast.Ident)
+				if !ok || len(field.Names) != 1 || field.Names[0].Name != want[index] || fieldType.Name != "string" { return false }
+			}
+			return true
+		}
+	}
+	return false
 }
 
 func verifyObservation(observation entityfieldsv1.Observation) error {
