@@ -379,7 +379,7 @@ type Report struct {
 	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
 	Window                    WorkflowWindow         `json:"workflow_window"`
 	RuntimeResolution         string                 `json:"runtime_resolution"`
-	RuntimeCases               []RuntimeCase         `json:"runtime_cases"`
+	RuntimeCases              []RuntimeCase          `json:"runtime_cases"`
 	Jobs                      []JobObservation       `json:"jobs"`
 	Operations                []OperationObservation `json:"operations"`
 	Accounting                Accounting             `json:"accounting"`
