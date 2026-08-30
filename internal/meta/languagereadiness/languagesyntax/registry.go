@@ -69,6 +69,7 @@ func expectedRegistry() Registry {
 		valid("ci-effort-observation", "examples/ci-effort-observation/main.gooo"),
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
 		entityFields,
+		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo"}}
 }

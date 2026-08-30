@@ -4,12 +4,14 @@ import "testing"
 
 func TestTemporalTransitionTicketV1ScopeIsExplicit(t *testing.T) {
 	paths, ok := BranchScope(temporalTransitionTicketV1Branch)
-	if !ok || len(paths) != 12 {
+	if !ok || len(paths) != 17 {
 		t.Fatalf("temporal transition ticket scope: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
 		".github/workflows/temporal-transition-ticket-v1.yml",
+		".github/workflows/transformation-effect.yml",
 		"contracts/temporal-transition-ticket-v1.json",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/temporal-transition-ticket/main.gooo",
 		"fixtures/temporal-transition-ticket/evidence.json",
 		"scripts/evaluate-temporal-transition-ticket-v1.sh",

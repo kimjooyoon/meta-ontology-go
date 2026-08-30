@@ -728,8 +728,8 @@ jobs:
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
-            .overall == {satisfied: 44, total: 44, executed: 44, unresolved: 0} and
-            .language_capability == {satisfied: 43, total: 43, executed: 43, unresolved: 0} and
+            .overall == {satisfied: 45, total: 45, executed: 45, unresolved: 0} and
+            .language_capability == {satisfied: 44, total: 44, executed: 44, unresolved: 0} and
             .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
             "$report"
   language-concept-artifact:
