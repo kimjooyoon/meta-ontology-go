@@ -11,7 +11,7 @@ import (
 // parser/lens boundary as the live observation. The digests make the cases
 // durable evidence rather than documentation-only labels.
 func executeCounterexamples(source, formatted string) []CounterexampleEvidence {
-	result := []CounterexampleEvidence{
+	return []CounterexampleEvidence{
 		fieldMutationCase("unsupported-type", source, "type string required one", "type number required one", "ENTITY_FIELDS_UNSUPPORTED_TYPE"),
 		fieldMutationCase("unsupported-presence", source, "type string required one", "type string optional one", "ENTITY_FIELDS_UNSUPPORTED_PRESENCE"),
 		fieldMutationCase("unsupported-cardinality", source, "type string required one", "type string required many", "ENTITY_FIELDS_UNSUPPORTED_CARDINALITY"),
@@ -19,7 +19,6 @@ func executeCounterexamples(source, formatted string) []CounterexampleEvidence {
 		replayMismatchCase(formatted),
 		{ID: "missing-source", Decision: "UNKNOWN", Resolution: "LOWER_RESOLUTION", Reason: "ENTITY_FIELDS_SOURCE_MISSING", InputDigest: digestBytes(nil), OutputDigest: digestBytes(nil), EvidenceDigest: boundDigest("missing-source", digestBytes(nil)), PartialOutput: false, Unknown: &UnknownEvidence{Stage: "observe-entity-fields", Step: "read-source", Reason: "ENTITY_FIELDS_SOURCE_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_ENTITY_FIELDS_SOURCE", BlockedBy: []string{}}},
 	}
-	return result
 }
 
 func fieldMutationCase(id, source, old, replacement, reason string) CounterexampleEvidence {
