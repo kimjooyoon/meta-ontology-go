@@ -54,7 +54,7 @@ func validateDenominator(value denominator) error {
 
 func expectedBoundarySpecs() []boundarySpec {
 	return []boundarySpec{
-		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", languagesyntax.FixedTotal, 1},
+		{"syntax", languagesyntax.ReportSchema, "prove-language-syntax-roundtrip", languagesyntax.CapabilityCaseTotal(), 1},
 		{"semantics", languagesemantic.ReportSchema, "prove-staged-semantic-model", languagesemantic.FixedTotal, 2},
 		{"binding", "gooo/language-semantic-readiness-binding/v2", "bind-semantic-readiness-evidence", 12, 2},
 		{"use-cases", toolchainusecases.ReportSchema, "execute-versioned-use-cases", 3, 1},

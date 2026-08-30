@@ -16,6 +16,7 @@ func syntaxFixture(head string) []byte {
 		"source": map[string]any{"expected_head_sha": head,
 			"concept_artifact_digest": fixtureDigest("1")},
 		"summary": map[string]any{"satisfied": languagesyntax.FixedTotal, "total": languagesyntax.FixedTotal, "executed": languagesyntax.FixedTotal,
+			"capability_satisfied": languagesyntax.CapabilityCaseTotal(), "capability_total": languagesyntax.CapabilityCaseTotal(), "capability_executed": languagesyntax.CapabilityCaseTotal(), "capability_unresolved": 0,
 			"not_satisfied": 0, "unresolved": 0, "readiness_bps": 10000}})
 }
 
