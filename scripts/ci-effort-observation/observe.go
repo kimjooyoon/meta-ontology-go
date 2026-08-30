@@ -161,6 +161,9 @@ func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 	result := make([]StepObservation, 0, len(input))
 	var total int64
 	for _, step := range input {
+		if isCleanupStep(step.Name) {
+			continue
+		}
 		wall := int64(0)
 		var unknown *Unknown
 		if step.Conclusion == "skipped" {
@@ -171,15 +174,20 @@ func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 			var err error
 			wall, err = durationMS(step.StartedAt, step.CompletedAt)
 			if err != nil {
-				return nil, 0, fmt.Errorf("step %q: %w", step.Name, err)
+				unknown = stepRuntimeUnknown()
+			} else {
+				total += wall
 			}
-			total += wall
 		}
 		result = append(result, StepObservation{Name: step.Name, Status: step.Status,
 			Conclusion: step.Conclusion, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt,
 			WallMS: wall, Unknown: unknown})
 	}
 	return result, total, nil
+}
+
+func isCleanupStep(name string) bool {
+	return strings.HasPrefix(strings.TrimSpace(name), "Post Run ")
 }
 
 func durationMS(start, end string) (int64, error) {
@@ -291,8 +299,18 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	if step.Conclusion == "skipped" {
 		base.State = "SKIPPED"
 	} else if step.Status == "completed" && step.Conclusion != "" && step.StartedAt != "" && step.CompletedAt != "" {
-		base.State = "EXECUTED"
-		base.WallMS, _ = durationMS(step.StartedAt, step.CompletedAt)
+		wall, durationErr := durationMS(step.StartedAt, step.CompletedAt)
+		if durationErr != nil {
+			started, startErr := time.Parse(time.RFC3339Nano, step.StartedAt)
+			completed, endErr := time.Parse(time.RFC3339Nano, step.CompletedAt)
+			if startErr == nil && endErr == nil && completed.Before(started) {
+				base.State = "REJECTED"
+			} else {
+				base.Unknown = operationDurationUnknown()
+			}
+		} else {
+			base.State, base.WallMS = "EXECUTED", wall
+		}
 	} else {
 		base.Unknown = operationEvidenceUnknown("OPERATION_TIMESTAMP_MISSING")
 	}
@@ -318,6 +336,11 @@ func stepRuntimeUnknown() *Unknown {
 func operationEvidenceUnknown(reason string) *Unknown {
 	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RECEIPT", Reason: reason,
 		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_RECEIPT", BlockedBy: []string{}}
+}
+
+func operationDurationUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RUNTIME", Reason: "OPERATION_DURATION_NON_POSITIVE",
+		UnknownClass: "AMBIGUOUS", NextOperation: "RESTORE_OPERATION_TIMESTAMPS", BlockedBy: []string{}}
 }
 
 func digestIfPresent(value []byte) string {

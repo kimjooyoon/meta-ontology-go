@@ -15,6 +15,27 @@ func TestDurationUsesPositiveIntegerMilliseconds(t *testing.T) {
 	}
 }
 
+func TestObserveStepsIgnoresActionCleanupSteps(t *testing.T) {
+	steps := []APIStep{
+		{Name: "Run verification", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z"},
+		{Name: "Post Run actions/setup-go@v6", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:01Z", CompletedAt: "2026-08-30T00:00:01Z"},
+	}
+	observed, total, err := observeSteps(steps)
+	if err != nil || len(observed) != 1 || observed[0].Name != "Run verification" || total != 1000 {
+		t.Fatalf("cleanup step was not excluded: steps=%+v total=%d err=%v", observed, total, err)
+	}
+}
+
+func TestBoundZeroDurationRequiredStepIsTypedUnknown(t *testing.T) {
+	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}
+	jobs := []APIJob{{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}}}}
+	operation := observeOperation(spec, jobs, ".github/workflows/ci.yml", source, nil)
+	if operation.State != "UNKNOWN" || !validUnknown(operation.Unknown) || operation.Unknown.Reason != "OPERATION_DURATION_NON_POSITIVE" {
+		t.Fatalf("zero-duration bound step was not typed unknown: %+v", operation)
+	}
+}
+
 func TestReuseRequiresEveryContextDigest(t *testing.T) {
 	base := ReuseKey{HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", InputDigest: "input", ToolchainDigest: "toolchain", CommandContextDigest: "command", EnvironmentAllowlistDigest: "environment", DependencyGraphDigest: "dependency", ExpectedResultDigest: "expected", OpenTofuReleaseDigest: "release"}
 	mutations := []func(*ReuseKey){
