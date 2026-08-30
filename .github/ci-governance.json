@@ -40,6 +40,17 @@
   ],
   "ownership": [
     {
+      "branch": "agent/dev-main-sync-20260831-rerun",
+      "paths": [
+        ".github",
+        "bootstrap",
+        "cmd",
+        "examples",
+        "internal",
+        "scripts"
+      ]
+    },
+    {
       "branch": "agent/foundation-bootstrap-dev-sync-20260831",
       "paths": [
         ".github/agent-scope-table.md",
