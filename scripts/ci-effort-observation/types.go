@@ -190,6 +190,7 @@ type OperationObservation struct {
 	StartedAt            string   `json:"started_at"`
 	CompletedAt          string   `json:"completed_at"`
 	WallMS               int64    `json:"wall_ms"`
+	BelowSourceResolution bool     `json:"below_source_resolution,omitempty"`
 	Unknown              *Unknown `json:"unknown,omitempty"`
 	EvidenceDigest       string   `json:"evidence_digest"`
 }
