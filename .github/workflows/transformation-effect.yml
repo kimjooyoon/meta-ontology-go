@@ -557,8 +557,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          scope_root="$RUNNER_TEMP/language-syntax-scope-partition"
-          mkdir -p "$scope_root"
+          work_root="$RUNNER_TEMP/language-syntax-scope-partition-work"
+          publish_root="$RUNNER_TEMP/language-syntax-scope-partition-publish"
+          mkdir -p "$work_root" "$publish_root"
           stage="initialize"
           step="create-caller-owned-output"
           on_error() {
@@ -578,16 +579,16 @@ jobs:
                   unknown_class: "UNCATALOGED_CAUSE", next_operation: "RESTORE_SCOPE_PARTITION_EVIDENCE", blocked_by: []},
                 repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
                 cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
-              > "$scope_root/scope-partition.json"
+              > "$publish_root/scope-partition.json"
             printf 'scope partition observation failed: stage=%s step=%s command=%s exit=%s\n' \
               "$stage" "$step" "$failed_command" "$exit_code" >&2
             return "$exit_code"
           }
           trap on_error ERR
-          concept_bin="$scope_root/language-concept-artifact-witness"
-          syntax_bin="$scope_root/language-syntax-witness"
-          concept_time="$scope_root/concept-build.time"
-          syntax_time="$scope_root/syntax-build.time"
+          concept_bin="$work_root/language-concept-artifact-witness"
+          syntax_bin="$work_root/language-syntax-witness"
+          concept_time="$work_root/concept-build.time"
+          syntax_time="$work_root/syntax-build.time"
           stage="build"
           step="build-language-concept-artifact-witness"
           /usr/bin/time -f '%e %M' -o "$concept_time" \
@@ -596,9 +597,9 @@ jobs:
           step="build-language-syntax-witness"
           /usr/bin/time -f '%e %M' -o "$syntax_time" \
             go build -o "$syntax_bin" ./cmd/language-syntax-witness
-          concept_first="$scope_root/language-concept-artifact/first"
-          syntax_first="$scope_root/language-syntax-roundtrip/first"
-          syntax_replay="$scope_root/language-syntax-roundtrip/replay"
+          concept_first="$work_root/language-concept-artifact/first"
+          syntax_first="$work_root/language-syntax-roundtrip/first"
+          syntax_replay="$work_root/language-syntax-roundtrip/replay"
           mkdir -p "$concept_first" "$syntax_first" "$syntax_replay"
           stage="execute"
           step="produce-language-concept-artifact"
@@ -629,6 +630,7 @@ jobs:
             --check "$syntax_first/artifact.json"
           first_digest="sha256:$(sha256sum "$syntax_first/artifact.json" | awk '{print $1}')"
           replay_digest="sha256:$(sha256sum "$syntax_replay/artifact.json" | awk '{print $1}')"
+          concept_digest="sha256:$(sha256sum "$concept_first/artifact.json" | awk '{print $1}')"
           read -r concept_seconds concept_peak_rss_kib < "$concept_time"
           read -r syntax_seconds syntax_peak_rss_kib < "$syntax_time"
           concept_build_ms="$(awk -v seconds="$concept_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
@@ -652,12 +654,13 @@ jobs:
             --argjson syntax_build_ms "$syntax_build_ms" \
             --argjson syntax_peak_rss_kib "$syntax_peak_rss_kib" \
             '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
-              decision: .decision, resolution: .resolution,
+              decision: "PASS", resolution: "EXACT", reason: "SCOPE_PARTITION_OBSERVED",
               producer_job: "language-syntax-scope-partition",
               source_artifact: "language-syntax-roundtrip/first/artifact.json",
               source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
               source_concept_artifact: "language-concept-artifact/first/artifact.json",
               source_artifact_digest: $first_digest, source_replay_artifact_digest: $replay_digest,
+              source_concept_artifact_digest: $concept_digest,
               source_report_digest: .report_digest, replay_equal: $replay_equal,
               reused_existing_artifact: false, generated_in_this_job: true,
               compile_executions: 2, test_executions: 0,
@@ -666,12 +669,13 @@ jobs:
                 syntax_witness: {wall_ms: $syntax_build_ms, peak_rss_kib: $syntax_peak_rss_kib}},
               repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
               cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY",
+              output_artifact_files: 3,
               overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
               language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
               governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
-            "$syntax_first/artifact.json" > "$scope_root/scope-partition.json"
-          cp "$syntax_first/artifact.json" "$scope_root/language-syntax-roundtrip-first.json"
-          cp "$syntax_replay/artifact.json" "$scope_root/language-syntax-roundtrip-replay.json"
+            "$syntax_first/artifact.json" > "$publish_root/scope-partition.json"
+          cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
+          cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
           echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
@@ -683,7 +687,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-syntax-scope-partition
+          path: ${{ runner.temp }}/language-syntax-scope-partition-publish
           if-no-files-found: error
           retention-days: 30
       - name: Require language syntax scope partition
@@ -691,11 +695,33 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          report="$RUNNER_TEMP/language-syntax-scope-partition/scope-partition.json"
+          publish_root="$RUNNER_TEMP/language-syntax-scope-partition-publish"
+          work_root="$RUNNER_TEMP/language-syntax-scope-partition-work"
+          report="$publish_root/scope-partition.json"
+          first="$publish_root/language-syntax-roundtrip-first.json"
+          replay="$publish_root/language-syntax-roundtrip-replay.json"
           test -s "$report"
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .head_sha == env.HEAD_SHA and .replay_equal == true and
+          test -s "$first"
+          test -s "$replay"
+          cmp -s "$first" "$replay"
+          first_digest="sha256:$(sha256sum "$first" | awk '{print $1}')"
+          replay_digest="sha256:$(sha256sum "$replay" | awk '{print $1}')"
+          concept_digest="sha256:$(sha256sum "$work_root/language-concept-artifact/first/artifact.json" | awk '{print $1}')"
+          report_digest="$(jq -er '.report_digest' "$first")"
+          jq -e \
+            --arg head "$HEAD_SHA" \
+            --arg first_digest "$first_digest" \
+            --arg replay_digest "$replay_digest" \
+            --arg concept_digest "$concept_digest" \
+            --arg report_digest "$report_digest" \
+            '.decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
+            .head_sha == $head and .replay_equal == true and
             .compile_executions == 2 and .test_executions == 0 and
+            .output_artifact_files == 3 and
+            .source_artifact_digest == $first_digest and
+            .source_replay_artifact_digest == $replay_digest and
+            .source_concept_artifact_digest == $concept_digest and
+            .source_report_digest == $report_digest and
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
