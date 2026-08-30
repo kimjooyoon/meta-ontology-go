@@ -3,19 +3,21 @@ package languagesyntax
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 
 const (
-	RegistrySchema  = "gooo/language-syntax-roundtrip-corpus/v2"
-	ReportSchema    = "gooo/language-syntax-roundtrip/v1"
-	DecisionPass    = "PASS"
-	DecisionClosed  = "FAIL_CLOSED"
-	ResolutionExact = "EXACT"
-	ResolutionLower = "LOWER_RESOLUTION"
-	KindValid       = "VALID"
-	KindInvalid     = "INVALID"
-	totalCases      = 43
-	validCases      = 40
-	invalidCases    = 3
-	FixedTotal      = totalCases
-	invalidDigest   = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+	RegistrySchema             = "gooo/language-syntax-roundtrip-corpus/v2"
+	ReportSchema               = "gooo/language-syntax-roundtrip/v1"
+	DecisionPass               = "PASS"
+	DecisionClosed             = "FAIL_CLOSED"
+	ResolutionExact            = "EXACT"
+	ResolutionLower            = "LOWER_RESOLUTION"
+	KindValid                  = "VALID"
+	KindInvalid                = "INVALID"
+	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
+	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
+	totalCases                 = 43
+	validCases                 = 40
+	invalidCases               = 3
+	FixedTotal                 = totalCases
+	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
 
 type Registry struct {
@@ -32,6 +34,7 @@ type CaseDefinition struct {
 	ExpectedDiagnostic string `json:"expected_diagnostic,omitempty"`
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
+	Scope              string `json:"scope"`
 }
 
 type PackageDefinition struct {
