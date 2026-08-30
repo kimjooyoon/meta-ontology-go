@@ -1,0 +1,164 @@
+name: Live governance snapshot
+
+on:
+  pull_request:
+    branches: [dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: live-governance-snapshot-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  observe:
+    name: Live governance snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOWORK: off
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Go 1.27 observer
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Capture public governance snapshot once
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/live-governance-snapshot"
+          mkdir -p "$root/inputs" "$root/output"
+          printf '[]\n' > "$root/requests.json"
+          capture() {
+            local id="$1" api_path="$2" public_url="$3" api_version="$4" payload_path="$5"
+            local destination="$root/$payload_path" state digest
+            mkdir -p "$(dirname "$destination")"
+            if gh api -H 'Accept: application/vnd.github+json' -H "X-GitHub-Api-Version: $api_version" "$api_path" > "$destination" 2>"$destination.error"; then
+              state=PRESENT
+              digest="sha256:$(jq -cS . "$destination" | sha256sum | awk '{print $1}')"
+            else
+              state=UNAVAILABLE
+              digest=
+              : > "$destination"
+            fi
+            jq -n --arg id "$id" --arg method GET --arg url "$public_url" --arg api "$api_version" \
+              --arg payload "$payload_path" --arg state "$state" --arg digest "$digest" \
+              '{id:$id,method:$method,url:$url,api_version:$api,payload_path:$payload,state:$state,payload_digest:$digest}' \
+              > "$root/request.json"
+            jq --slurpfile item "$root/request.json" '. + $item' "$root/requests.json" > "$root/requests.next.json"
+            mv "$root/requests.next.json" "$root/requests.json"
+          }
+          api_root="https://api.github.com/repos/$GITHUB_REPOSITORY"
+          capture repository "repos/$GITHUB_REPOSITORY" "$api_root" 2026-03-10 inputs/repository.json
+          capture dev-branch "repos/$GITHUB_REPOSITORY/branches/dev" "$api_root/branches/dev" 2026-03-10 inputs/dev-branch.json
+          capture dev-protection "repos/$GITHUB_REPOSITORY/branches/dev/protection" "$api_root/branches/dev/protection" 2022-11-28 inputs/dev-protection.json
+          capture main-branch "repos/$GITHUB_REPOSITORY/branches/main" "$api_root/branches/main" 2026-03-10 inputs/main-branch.json
+          capture main-protection "repos/$GITHUB_REPOSITORY/branches/main/protection" "$api_root/branches/main/protection" 2022-11-28 inputs/main-protection.json
+          capture rulesets "repos/$GITHUB_REPOSITORY/rulesets?includes_parents=true" "$api_root/rulesets?includes_parents=true" 2026-03-10 inputs/rulesets.json
+          jq -n --arg schema 'gooo/live-governance-snapshot-input/v1' --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" \
+            --argjson requests "$(jq -c . "$root/requests.json")" \
+            '{schema:$schema,repository:$repository,head_sha:$head,requests:$requests,repository_writes:0,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0}' \
+            > "$root/snapshot.json"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$root/status-before.txt"
+
+      - name: Materialize and check the Gooo governance graph
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/live-governance-snapshot"
+          go run ./cmd/gooo check examples/live-governance-snapshot/main.gooo > "$root/gooo-check.txt"
+          go run ./cmd/gooo graph dump examples/live-governance-snapshot/main.gooo > "$root/gooo-graph.json"
+          test -s "$root/gooo-graph.json"
+
+      - name: Check governance snapshot evaluator in CI
+        run: go test ./internal/meta/governancesnapshot
+
+      - name: Run independent governance evaluator and replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/live-governance-snapshot"
+          run_observer() {
+            local destination="$1"
+            set +e
+            go run ./scripts/live-governance-snapshot \
+              -snapshot "$root/snapshot.json" -root "$root" \
+              -contract examples/live-governance-snapshot/contract.json \
+              -graph "$root/gooo-graph.json" -head "$HEAD_SHA" \
+              -output "$root/$destination/report.json" -markdown "$root/$destination/report.md" -check \
+              > "$root/$destination/observer.log" 2>&1
+            local status=$?
+            set -e
+            echo "$status" > "$root/$destination/exit.txt"
+          }
+          mkdir -p "$root/first" "$root/second"
+          run_observer first
+          run_observer second
+          before="$(cat "$root/status-before.txt")"
+          after="$(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all)"
+          if [ "$before" != "$after" ]; then
+            jq --argjson writes 1 '.repository_writes=$writes' "$root/snapshot.json" > "$root/snapshot.next.json"
+            mv "$root/snapshot.next.json" "$root/snapshot.json"
+            run_observer first
+            run_observer second
+          fi
+          printf '%s\n' "$after" > "$root/status-after.txt"
+          jq -n --arg before "$before" --arg after "$after" --argjson writes "$(test "$before" = "$after" && echo 0 || echo 1)" \
+            '{before:$before,after:$after,repository_writes:$writes}' > "$root/repository-status.json"
+          test -s "$root/first/report.json" -a -s "$root/second/report.json"
+          cmp -s "$root/first/report.json" "$root/second/report.json"
+          cmp -s "$root/first/report.md" "$root/second/report.md"
+          test "$(cat "$root/first/exit.txt")" -eq 0
+          test "$(cat "$root/second/exit.txt")" -eq 0
+          jq -e --arg head "$HEAD_SHA" '
+            .schema == "gooo/live-governance-snapshot/v1" and .head_sha == $head and
+            .summary.cells_total == 12 and .summary.foundation_cells == 4 and
+            .summary.coherence_cells == 4 and .summary.regression_cells == 4 and
+            ((.summary.closed_cells == 10 and .summary.unknown_cells == 0 and .summary.refuted_cells == 2 and
+              .decision == "REFUTED" and .resolution == "EXACT" and .reason == "DEV_LIVE_PROTECTION_DRIFT" and .settings_healthy == false) or
+             (.summary.closed_cells == 12 and .summary.unknown_cells == 0 and .summary.refuted_cells == 0 and
+              .decision == "CLOSED" and .resolution == "EXACT" and .reason == "GOVERNANCE_SNAPSHOT_CONFORMANT" and .settings_healthy == true)) and
+            .promotion_authorized == false and .repository_writes == 0 and .branch_setting_writes == 0 and
+            .local_test_executions == 0 and .cross_project_required_gates == 0 and .improvement == "UNKNOWN" and
+            (.cells | length) == 12 and (.canonical_cases | length) == 6 and
+            ([.canonical_cases[].id] == ["normal-main-match","current-dev-drift","missing-public-snapshot","dependency-blocked-context-comparison","malformed-payload","disabled-ruleset-authority"]) and
+            .graph.schema == "gooo-graph/v1" and .graph.node_count == 36 and .graph.relation_count == 24 and
+            .graph.activity_count == 12 and .graph.binding_count == 12 and
+            (all(.graph.bindings[]; .used_edge_count == 1 and .generated_edge_count == 1)) and
+            .replay.replay_equal == true and .replay.input_digest != "" and .replay.projection_digest != ""
+          ' "$root/first/report.json" > /dev/null
+          jq -e '
+            .canonical_cases[2].decision == "UNKNOWN" and .canonical_cases[2].resolution == "LOWER" and
+            .canonical_cases[2].unknown.unknown_class == "DIRECT_MISSING" and (.canonical_cases[2].unknown.blocked_by | length) == 0 and
+            .canonical_cases[3].decision == "UNKNOWN" and .canonical_cases[3].resolution == "LOWER" and
+            .canonical_cases[3].unknown.unknown_class == "DEPENDENCY_BLOCKED" and (.canonical_cases[3].unknown.blocked_by | length) == 1 and
+            .canonical_cases[4].decision == "REFUTED" and .canonical_cases[4].reason == "MALFORMED_PUBLIC_PAYLOAD" and
+            .canonical_cases[5].decision == "REFUTED" and .canonical_cases[5].reason == "DISABLED_RULESET_AUTHORITY"
+          ' "$root/first/report.json" > /dev/null
+          cat "$root/first/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload live governance evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: live-governance-snapshot-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/live-governance-snapshot
+          if-no-files-found: error
+          retention-days: 30
