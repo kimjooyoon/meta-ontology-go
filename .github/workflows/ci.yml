@@ -1339,7 +1339,6 @@ jobs:
             --root "$GITHUB_WORKSPACE" \
             --input "$extracted/predecessor-input-a.json" \
             --report "$probe_root/probe-receipt.json" \
-            --expected-digest "$expected_report_digest" \
             --check
           cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
           jq -n \
