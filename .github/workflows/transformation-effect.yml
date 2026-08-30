@@ -522,6 +522,186 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  language-syntax-scope-partition:
+    name: language syntax scope partition
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Build and observe language syntax scope partition
+        id: observe
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          scope_root="$RUNNER_TEMP/language-syntax-scope-partition"
+          mkdir -p "$scope_root"
+          stage="initialize"
+          step="create-caller-owned-output"
+          on_error() {
+            local exit_code=$?
+            local failed_command="$BASH_COMMAND"
+            trap - ERR
+            jq -n \
+              --arg schema "gooo/language-syntax-scope-partition/v1" \
+              --arg head "$HEAD_SHA" \
+              --arg stage "$stage" \
+              --arg step "$step" \
+              --arg command "$failed_command" \
+              --argjson exit_code "$exit_code" \
+              '{schema: $schema, head_sha: $head, decision: "FAIL_CLOSED", resolution: "LOWER_RESOLUTION",
+                reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE", failed_command: $command, exit_code: $exit_code,
+                unknown: {stage: $stage, step: $step, reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE",
+                  unknown_class: "UNCATALOGED_CAUSE", next_operation: "RESTORE_SCOPE_PARTITION_EVIDENCE", blocked_by: []},
+                repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
+                cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
+              > "$scope_root/scope-partition.json"
+            printf 'scope partition observation failed: stage=%s step=%s command=%s exit=%s\n' \
+              "$stage" "$step" "$failed_command" "$exit_code" >&2
+            return "$exit_code"
+          }
+          trap on_error ERR
+          concept_bin="$scope_root/language-concept-artifact-witness"
+          syntax_bin="$scope_root/language-syntax-witness"
+          concept_time="$scope_root/concept-build.time"
+          syntax_time="$scope_root/syntax-build.time"
+          stage="build"
+          step="build-language-concept-artifact-witness"
+          /usr/bin/time -f '%e %M' -o "$concept_time" \
+            go build -o "$concept_bin" ./cmd/language-concept-artifact-witness
+          stage="build"
+          step="build-language-syntax-witness"
+          /usr/bin/time -f '%e %M' -o "$syntax_time" \
+            go build -o "$syntax_bin" ./cmd/language-syntax-witness
+          concept_first="$scope_root/language-concept-artifact/first"
+          syntax_first="$scope_root/language-syntax-roundtrip/first"
+          syntax_replay="$scope_root/language-syntax-roundtrip/replay"
+          mkdir -p "$concept_first" "$syntax_first" "$syntax_replay"
+          stage="execute"
+          step="produce-language-concept-artifact"
+          "$concept_bin" \
+            --root "$GITHUB_WORKSPACE" \
+            --output "$concept_first/artifact.json"
+          syntax_registry="$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json"
+          stage="execute"
+          step="produce-language-syntax-first-and-replay"
+          for target in "$syntax_first" "$syntax_replay"; do
+            "$syntax_bin" \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$syntax_registry" \
+              --concept-artifact "$concept_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          stage="replay"
+          step="compare-language-syntax-first-and-replay"
+          cmp -s "$syntax_first/artifact.json" "$syntax_replay/artifact.json"
+          stage="validate"
+          step="check-language-syntax-first-artifact"
+          "$syntax_bin" \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$syntax_registry" \
+            --concept-artifact "$concept_first/artifact.json" \
+            --check "$syntax_first/artifact.json"
+          first_digest="sha256:$(sha256sum "$syntax_first/artifact.json" | awk '{print $1}')"
+          replay_digest="sha256:$(sha256sum "$syntax_replay/artifact.json" | awk '{print $1}')"
+          read -r concept_seconds concept_peak_rss_kib < "$concept_time"
+          read -r syntax_seconds syntax_peak_rss_kib < "$syntax_time"
+          concept_build_ms="$(awk -v seconds="$concept_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
+          syntax_build_ms="$(awk -v seconds="$syntax_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
+          stage="validate"
+          step="validate-language-syntax-scope-partition"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and
+            .summary.satisfied == 43 and .summary.total == 43 and
+            .summary.executed == 43 and .summary.unresolved == 0 and
+            .summary.capability_satisfied == 42 and .summary.capability_total == 42 and
+            .summary.capability_executed == 42 and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
+            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
+            "$syntax_first/artifact.json"
+          jq --arg head "$HEAD_SHA" \
+            --arg first_digest "$first_digest" \
+            --arg replay_digest "$replay_digest" \
+            --argjson replay_equal true \
+            --argjson concept_build_ms "$concept_build_ms" \
+            --argjson concept_peak_rss_kib "$concept_peak_rss_kib" \
+            --argjson syntax_build_ms "$syntax_build_ms" \
+            --argjson syntax_peak_rss_kib "$syntax_peak_rss_kib" \
+            '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
+              producer_job: "language-syntax-scope-partition",
+              source_artifact: "language-syntax-roundtrip/first/artifact.json",
+              source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
+              source_concept_artifact: "language-concept-artifact/first/artifact.json",
+              source_artifact_digest: $first_digest, source_replay_artifact_digest: $replay_digest,
+              source_report_digest: .report_digest, replay_equal: $replay_equal,
+              reused_existing_artifact: false, generated_in_this_job: true,
+              compile_executions: 2, test_executions: 0,
+              build_observations: {
+                concept_witness: {wall_ms: $concept_build_ms, peak_rss_kib: $concept_peak_rss_kib},
+                syntax_witness: {wall_ms: $syntax_build_ms, peak_rss_kib: $syntax_peak_rss_kib}},
+              repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
+              cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY",
+              overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
+              language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
+              governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
+            "$syntax_first/artifact.json" > "$scope_root/scope-partition.json"
+          cp "$syntax_first/artifact.json" "$scope_root/language-syntax-roundtrip-first.json"
+          cp "$syntax_replay/artifact.json" "$scope_root/language-syntax-roundtrip-replay.json"
+          echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload language syntax scope partition evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-syntax-scope-partition
+          if-no-files-found: error
+          retention-days: 30
+      - name: Require language syntax scope partition
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$RUNNER_TEMP/language-syntax-scope-partition/scope-partition.json"
+          test -s "$report"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and
+            .head_sha == env.HEAD_SHA and .replay_equal == true and
+            .compile_executions == 2 and .test_executions == 0 and
+            .repository_writes == 0 and .branch_setting_writes == 0 and
+            .local_test_executions == 0 and .cross_project_required_gates == 0 and
+            .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
+            .overall == {satisfied: 43, total: 43, executed: 43, unresolved: 0} and
+            .language_capability == {satisfied: 42, total: 42, executed: 42, unresolved: 0} and
+            .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
+            "$report"
   language-concept-artifact:
     needs: [cross-platform-release]
     outputs:
@@ -1695,66 +1875,6 @@ jobs:
               sha256sum artifact.json > artifact.json.sha256
             )
           fi
-      - name: Assert and publish language syntax scope partition
-        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        shell: bash
-        run: |
-          set -euo pipefail
-          syntax_first="$RUNNER_TEMP/language-syntax-roundtrip/first/artifact.json"
-          syntax_replay="$RUNNER_TEMP/language-syntax-roundtrip/replay/artifact.json"
-          scope_root="$RUNNER_TEMP/language-syntax-scope-partition"
-          mkdir -p "$scope_root"
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .summary.satisfied == 43 and .summary.total == 43 and
-            .summary.executed == 43 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 42 and .summary.capability_total == 42 and
-            .summary.capability_executed == 42 and .summary.capability_unresolved == 0 and
-            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
-            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' "$syntax_first"
-          test -s "$syntax_first"
-          test -s "$syntax_replay"
-          cmp -s "$syntax_first" "$syntax_replay"
-          first_digest="sha256:$(sha256sum "$syntax_first" | awk '{print $1}')"
-          replay_digest="sha256:$(sha256sum "$syntax_replay" | awk '{print $1}')"
-          replay_equal=true
-          jq --arg head "$HEAD_SHA" \
-            --arg first_digest "$first_digest" \
-            --arg replay_digest "$replay_digest" \
-            --argjson replay_equal "$replay_equal" \
-            '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
-              producer_job: "language-concept-artifact",
-              source_artifact: "language-syntax-roundtrip/first/artifact.json",
-              source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
-              source_concept_artifact: "language-concept-artifact/first/artifact.json",
-              source_artifact_digest: $first_digest,
-              source_replay_artifact_digest: $replay_digest,
-              source_report_digest: .report_digest,
-              reused_existing_artifact: true, existing_replay_verified: $replay_equal,
-              replay_equal: $replay_equal,
-              repository_writes: 0, branch_setting_writes: 0,
-              local_test_executions: 0, cross_project_required_gates: 0,
-              generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY",
-              additional_compile_executions: 0, additional_test_executions: 0,
-              overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
-              language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
-              governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
-            "$syntax_first" > "$scope_root/scope-partition.json"
-          cp "$syntax_first" "$scope_root/language-syntax-roundtrip-first.json"
-          cp "$syntax_replay" "$scope_root/language-syntax-roundtrip-replay.json"
-          echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
-          echo "- overall: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- source: existing language-syntax-roundtrip first/replay outputs produced in the language-concept-artifact job; replay: \`$replay_equal\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- authority: \`CALLER_OWNED_TEMP_OUTPUT_ONLY\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`; additional compile/test executions: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload exact-head language syntax scope partition
-        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-syntax-scope-partition
-          if-no-files-found: error
-          retention-days: 30
       - name: Measure exact predecessor bindings
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         run: |
