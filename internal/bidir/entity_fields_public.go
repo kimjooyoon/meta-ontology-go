@@ -69,7 +69,7 @@ func DocumentEquivalent(left, right Document) bool {
 	return reflect.DeepEqual(documentEvidence(left), documentEvidence(right))
 }
 
-type documentEvidence struct {
+type canonicalDocumentEvidence struct {
 	Package      string
 	Namespace    string
 	Declarations []declarationEvidence
@@ -100,13 +100,14 @@ type fieldEvidence struct {
 }
 
 type referenceEvidence struct {
-	ID, Namespace ID
+	ID        ID
+	Namespace string
 	Name          string
 	Span          SourceSpan
 }
 
-func documentEvidence(document Document) documentEvidence {
-	result := documentEvidence{Package: document.Package, Namespace: document.Namespace}
+func documentEvidence(document Document) canonicalDocumentEvidence {
+	result := canonicalDocumentEvidence{Package: document.Package, Namespace: document.Namespace}
 	idsByName := make(map[string]ID, len(document.Declarations))
 	for _, declaration := range document.Declarations {
 		id, _ := declarationIdentity(document.Namespace, declaration)
