@@ -70,7 +70,7 @@ func TestOperationBindsEvidenceAndGuardSteps(t *testing.T) {
 		{Name: "Guard", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:01Z", CompletedAt: "2026-08-30T00:00:01Z"},
 	}}
 	operation := observeOperation(spec, []APIJob{j}, ".github/workflows/ci.yml", source, nil)
-	if operation.State != "EXECUTED" || operation.EvidenceStepName != "Evidence" || !operation.GuardBound || operation.GuardStepName != "Guard" {
+	if operation.State != "EXECUTED" || operation.StepName != "Evidence" || operation.BoundStepName != "Evidence" || operation.EvidenceStepName != "Evidence" || !operation.GuardBound || operation.GuardStepName != "Guard" {
 		t.Fatalf("evidence/guard binding was not preserved: %+v", operation)
 	}
 }
@@ -83,7 +83,7 @@ func TestEventSpecificOperationUsesMatchingPolicyStep(t *testing.T) {
 	job := APIJob{ID: 1, Name: "policy", Conclusion: "success", Steps: []APIStep{{Name: "Pull request policy", Status: "completed", Conclusion: "success",
 		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z"}}}
 	operation := observeOperation(spec, []APIJob{job}, ".github/workflows/ci.yml", source, nil, "pull_request")
-	if operation.State != "EXECUTED" || operation.EvidenceStepName != "Pull request policy" {
+	if operation.State != "EXECUTED" || operation.SourceEvent != "pull_request" || operation.StepName != "Pull request policy" || operation.BoundStepName != "Pull request policy" || operation.EvidenceStepName != "Pull request policy" || len(operation.DeclaredStepCandidates) != 2 || operation.DeclaredStepCandidates[0] != "Pull request policy" || operation.DeclaredStepCandidates[1] != "Push policy" {
 		t.Fatalf("event-specific policy step was not selected: %+v", operation)
 	}
 }
@@ -93,8 +93,33 @@ func TestUnknownEventDoesNotUseDeclaredFallbackStep(t *testing.T) {
 		"pull_request": "Pull request policy", "push": "Push policy",
 	}, Kind: "VERIFICATION", Command: []string{"bash", "check"}, ProofObligationID: "ci-effort/policy"}
 	operation := observeOperation(spec, nil, ".github/workflows/ci.yml", []byte("jobs:\n"), nil, "workflow_dispatch")
-	if operation.State != "UNKNOWN" || operation.EvidenceStepName != "" || operation.Unknown == nil || operation.Unknown.Reason != "EVENT_OPERATION_STEP_MISSING" {
+	if operation.State != "UNKNOWN" || operation.SourceEvent != "workflow_dispatch" || operation.StepName != "" || operation.BoundStepName != "" || operation.EvidenceStepName != "" || operation.Unknown == nil || operation.Unknown.Reason != "EVENT_OPERATION_STEP_MISSING" {
 		t.Fatalf("unknown event used a fallback step: %+v", operation)
+	}
+}
+
+func TestPushEventUsesProtectedPolicyStep(t *testing.T) {
+	source := []byte("jobs:\n  policy:\n    name: policy\n    steps:\n      - name: Pull request policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n      - name: Push policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n")
+	spec := OperationSpec{ID: "policy", JobName: "policy", StepName: "Push policy", EventStepNames: map[string]string{
+		"pull_request": "Pull request policy", "push": "Push policy",
+	}, Kind: "VERIFICATION", Command: []string{"bash", "./scripts/verify/validate-source-observations.sh", "$METRICS_DIR"}, ProofObligationID: "ci-effort/policy"}
+	job := APIJob{ID: 1, Name: "policy", Conclusion: "success", Steps: []APIStep{{Name: "Push policy", Status: "completed", Conclusion: "success",
+		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z"}}}
+	operation := observeOperation(spec, []APIJob{job}, ".github/workflows/ci.yml", source, nil, "push")
+	if operation.State != "EXECUTED" || operation.SourceEvent != "push" || operation.StepName != "Push policy" || operation.BoundStepName != "Push policy" {
+		t.Fatalf("push event did not bind protected policy step: %+v", operation)
+	}
+}
+
+func TestEventSelectorBindsReuseContext(t *testing.T) {
+	source := []byte("jobs:\n  policy:\n    name: policy\n    steps:\n      - name: Pull request policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n      - name: Push policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n")
+	spec := OperationSpec{ID: "policy", JobName: "policy", StepName: "Push policy", EventStepNames: map[string]string{
+		"pull_request": "Pull request policy", "push": "Push policy",
+	}, Kind: "VERIFICATION", Command: []string{"bash", "./scripts/verify/validate-source-observations.sh", "$METRICS_DIR"}, ProofObligationID: "ci-effort/policy"}
+	pull := observeOperation(spec, nil, ".github/workflows/ci.yml", source, nil, "pull_request")
+	push := observeOperation(spec, nil, ".github/workflows/ci.yml", source, nil, "push")
+	if pull.SourceEvent != "pull_request" || push.SourceEvent != "push" || digestJSON(commandContexts([]OperationObservation{pull})) == digestJSON(commandContexts([]OperationObservation{push})) {
+		t.Fatalf("event selector did not bind reuse context: pull=%+v push=%+v", pull, push)
 	}
 }
 

@@ -169,8 +169,11 @@ type OperationObservation struct {
 	ID                    string   `json:"id"`
 	Kind                  string   `json:"kind"`
 	ProofObligationID     string   `json:"proof_obligation_id"`
+	SourceEvent           string   `json:"source_event"`
 	JobName               string   `json:"job_name"`
 	StepName              string   `json:"step_name"`
+	BoundStepName         string   `json:"bound_step_name"`
+	DeclaredStepCandidates []string `json:"declared_step_candidates"`
 	EvidenceStepName      string   `json:"evidence_step"`
 	GuardStepName         string   `json:"guard_step,omitempty"`
 	Command               []string `json:"command"`
@@ -215,6 +218,7 @@ type RepositoryStatus struct {
 
 type ReuseKey struct {
 	HeadSHA                    string            `json:"head_sha"`
+	SourceEvent                string            `json:"source_event"`
 	InputDigest                string            `json:"input_digest"`
 	ToolchainDigest            string            `json:"toolchain_digest"`
 	CommandContextDigest       string            `json:"command_context_digest"`

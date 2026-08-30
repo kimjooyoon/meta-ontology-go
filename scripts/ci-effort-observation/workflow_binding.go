@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -43,6 +44,30 @@ func operationEvidenceStep(spec OperationSpec, event string) string {
 		return spec.EvidenceStepName
 	}
 	return spec.StepName
+}
+
+func declaredStepCandidates(spec OperationSpec) []string {
+	seen := map[string]bool{}
+	result := make([]string, 0, len(spec.EventStepNames)+3)
+	add := func(value string) {
+		if value != "" && !seen[value] {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	add(spec.StepName)
+	add(spec.EvidenceStepName)
+	add(spec.GuardStepName)
+	events := make([]string, 0, len(spec.EventStepNames))
+	for event := range spec.EventStepNames {
+		events = append(events, event)
+	}
+	sort.Strings(events)
+	for _, event := range events {
+		add(spec.EventStepNames[event])
+	}
+	sort.Strings(result)
+	return result
 }
 
 func unnamedWorkflowRun(job string, command []string) (string, bool) {

@@ -34,7 +34,7 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		Operations []OperationSpec
 	}{"CI", source.Conclusion, mustManifest(manifest).Operations})
 	return ReuseKey{
-		HeadSHA: source.HeadSHA, InputDigest: inputDigest,
+		HeadSHA: source.HeadSHA, SourceEvent: source.Event, InputDigest: inputDigest,
 		ToolchainDigest: digestString(goToolchain), CommandContextDigest: commandDigest,
 		EnvironmentAllowlistDigest: environmentDigest,
 		DependencyGraphDigest:      digestJSON(dependencyInputs), DependencyInputs: dependencyInputs, ExpectedResultDigest: expectedDigest,
@@ -68,14 +68,14 @@ func readDependencyInputs(paths []string) ([]DependencyInput, error) {
 }
 
 type commandContext struct {
-	ID, ProofObligationID, JobName, StepName, WorkflowPath, WorkflowDigest, ContextDigest string
-	Command                                                                               []string
+	ID, ProofObligationID, SourceEvent, JobName, StepName, WorkflowPath, WorkflowDigest, ContextDigest string
+	Command                                                                                          []string
 }
 
 func commandContexts(operations []OperationObservation) []commandContext {
 	result := make([]commandContext, 0, len(operations))
 	for _, operation := range operations {
-		result = append(result, commandContext{ID: operation.ID, ProofObligationID: operation.ProofObligationID,
+		result = append(result, commandContext{ID: operation.ID, ProofObligationID: operation.ProofObligationID, SourceEvent: operation.SourceEvent,
 			JobName: operation.JobName, StepName: operation.StepName, WorkflowPath: operation.WorkflowSourcePath,
 			WorkflowDigest: operation.WorkflowSourceDigest, ContextDigest: operation.CommandContextDigest,
 			Command: operation.Command})
@@ -134,7 +134,7 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 }
 
 func sameReuseKey(left, right ReuseKey) bool {
-	return left.HeadSHA == right.HeadSHA && left.InputDigest == right.InputDigest &&
+	return left.HeadSHA == right.HeadSHA && left.SourceEvent == right.SourceEvent && left.InputDigest == right.InputDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.CommandContextDigest == right.CommandContextDigest &&
 		left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
 		sameDependencyInputs(left.DependencyInputs, right.DependencyInputs) &&

@@ -130,7 +130,7 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Accounting.Executed+report.Accounting.Skipped+report.Accounting.Unknown+report.Accounting.Rejected != report.Accounting.ManifestOperations {
 		return fmt.Errorf("operation accounting is inconsistent")
 	}
-	if !validSHA(report.Reuse.Key.HeadSHA) || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
+	if !validSHA(report.Reuse.Key.HeadSHA) || report.Reuse.Key.SourceEvent != report.SourceEvent || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
 		return fmt.Errorf("reuse key is incomplete")
 	}
 	if err := validateDependencyInputs(report.Reuse.Key); err != nil {
@@ -274,7 +274,7 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 		if spec != nil {
 			expectedEvidenceStep = operationEvidenceStep(*spec, sourceEvent)
 		}
-		if spec == nil || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != spec.StepName || operation.EvidenceStepName != expectedEvidenceStep || operation.GuardStepName != spec.GuardStepName || !sameStrings(operation.Command, spec.Command) {
+		if spec == nil || operation.SourceEvent != sourceEvent || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != expectedEvidenceStep || operation.BoundStepName != expectedEvidenceStep || operation.EvidenceStepName != expectedEvidenceStep || !sameStrings(operation.DeclaredStepCandidates, declaredStepCandidates(*spec)) || operation.GuardStepName != spec.GuardStepName || !sameStrings(operation.Command, spec.Command) {
 			return fmt.Errorf("operation manifest binding is invalid")
 		}
 		if operation.State == "" || (operation.State != "EXECUTED" && operation.State != "SKIPPED" && operation.State != "UNKNOWN" && operation.State != "REJECTED") {
@@ -519,10 +519,10 @@ func humanReport(report Report) string {
 	}
 	fmt.Fprintf(&builder, "operations manifest=%d executed=%d skipped=%d unknown=%d rejected=%d\n", report.Accounting.ManifestOperations, report.Accounting.Executed, report.Accounting.Skipped, report.Accounting.Unknown, report.Accounting.Rejected)
 	for _, operation := range report.Operations {
-		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q evidence_step=%q guard_step=%q guard_bound=%t guard_status=%q/%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.EvidenceStepName, operation.GuardStepName, operation.GuardBound, operation.GuardStepStatus, operation.GuardStepConclusion, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)
+		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s event=%s job=%q step=%q bound_step=%q declared_step_candidates=%q evidence_step=%q guard_step=%q guard_bound=%t guard_status=%q/%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.SourceEvent, operation.JobName, operation.StepName, operation.BoundStepName, operation.DeclaredStepCandidates, operation.EvidenceStepName, operation.GuardStepName, operation.GuardBound, operation.GuardStepStatus, operation.GuardStepConclusion, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)
 	}
 	fmt.Fprintf(&builder, "reuse decision=%s/%s reason=%s requests=%d prior_candidates=%d valid_prior=%d reused=%d rejected=%d unknown=%d skipped=%d reused_commands=%d reused_tests=%d\n", report.Reuse.Decision, report.Reuse.Resolution, report.Reuse.Reason, report.Reuse.Requests, report.Reuse.PriorCandidates, report.Reuse.PriorReceiptsValid, report.Reuse.Reused, report.Reuse.Rejected, report.Reuse.Unknown, report.Reuse.Skipped, report.Reuse.ReusedCommands, report.Reuse.ReusedTests)
-	fmt.Fprintf(&builder, "reuse key head=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release_asset=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)
+	fmt.Fprintf(&builder, "reuse key head=%s event=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release_asset=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.SourceEvent, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)
 	for _, dependency := range report.Reuse.Key.DependencyInputs {
 		fmt.Fprintf(&builder, "dependency path=%s state=%s digest=%s\n", dependency.Path, dependency.State, dependency.Digest)
 	}

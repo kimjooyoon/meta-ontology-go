@@ -349,7 +349,8 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	}
 	evidenceStep := operationEvidenceStep(spec, sourceEvent)
 	base := OperationObservation{ID: spec.ID, Kind: spec.Kind, ProofObligationID: spec.ProofObligationID,
-		JobName: spec.JobName, StepName: spec.StepName, EvidenceStepName: evidenceStep,
+		SourceEvent: sourceEvent, JobName: spec.JobName, StepName: evidenceStep, BoundStepName: evidenceStep,
+		DeclaredStepCandidates: declaredStepCandidates(spec), EvidenceStepName: evidenceStep,
 		GuardStepName: spec.GuardStepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
 	if evidenceStep == "" {
 		base.Unknown = operationEventUnknown()
