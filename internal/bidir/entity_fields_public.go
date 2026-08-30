@@ -63,7 +63,79 @@ func CheckGetPutWithEntityFieldsSupport(document Document, support EntityFieldsS
 // DocumentEquivalent is the strict source-preserving comparison for the
 // profile-bound Get-Put law. It includes declaration order, stable IDs, and
 // every source span instead of comparing only normalized semantic nodes.
-func DocumentEquivalent(left, right Document) bool { return reflect.DeepEqual(left, right) }
+// Derived activity IDs and resolved type IDs are canonicalized because Put
+// fills those values when reconstructing the parser-neutral carrier.
+func DocumentEquivalent(left, right Document) bool {
+	return reflect.DeepEqual(documentEvidence(left), documentEvidence(right))
+}
+
+type documentEvidence struct {
+	Package      string
+	Namespace    string
+	Declarations []declarationEvidence
+}
+
+type declarationEvidence struct {
+	Kind       Kind
+	ID         ID
+	Name       string
+	Fields     []fieldEvidence
+	Inputs     []referenceEvidence
+	Outputs    []referenceEvidence
+	Attributes map[string]string
+	Span       SourceSpan
+}
+
+type fieldEvidence struct {
+	ID, Parent                ID
+	Name                      string
+	TypeRef                   TypeRef
+	TypeRefPresentation       TypeRefUse
+	Origin                    FieldOrigin
+	Presence                  FieldPresence
+	Cardinality               FieldCardinality
+	Span, IDSpan              SourceSpan
+	NameSpan, TypeRefSpan     SourceSpan
+	PresenceSpan, CardinalitySpan SourceSpan
+}
+
+type referenceEvidence struct {
+	ID, Namespace ID
+	Name          string
+	Span          SourceSpan
+}
+
+func documentEvidence(document Document) documentEvidence {
+	result := documentEvidence{Package: document.Package, Namespace: document.Namespace}
+	idsByName := make(map[string]ID, len(document.Declarations))
+	for _, declaration := range document.Declarations {
+		id, _ := declarationIdentity(document.Namespace, declaration)
+		idsByName[declaration.Name] = id
+	}
+	for _, declaration := range document.Declarations {
+		id, _ := declarationIdentity(document.Namespace, declaration)
+		item := declarationEvidence{Kind: declaration.Kind, ID: id, Name: declaration.Name, Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span}
+		for _, field := range declaration.Fields {
+			item.Fields = append(item.Fields, fieldEvidence{ID: field.ID, Parent: field.Parent, Name: field.Name, TypeRef: field.TypeRef, TypeRefPresentation: canonicalTypeRefPresentation(field.TypeRefUse), Origin: field.Origin, Presence: field.Presence, Cardinality: field.Cardinality, Span: field.Span, IDSpan: field.IDSpan, NameSpan: field.NameSpan, TypeRefSpan: field.TypeRefSpan, PresenceSpan: field.PresenceSpan, CardinalitySpan: field.CardinalitySpan})
+		}
+		for _, reference := range declaration.Inputs { item.Inputs = append(item.Inputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace)) }
+		for _, reference := range declaration.Outputs { item.Outputs = append(item.Outputs, canonicalReferenceEvidence(reference, idsByName, document.Namespace)) }
+		result.Declarations = append(result.Declarations, item)
+	}
+	return result
+}
+
+func canonicalReferenceEvidence(reference Reference, idsByName map[string]ID, namespace string) referenceEvidence {
+	id := reference.ID
+	if id == "" { id = idsByName[reference.Name] }
+	if reference.Namespace == "" { reference.Namespace = namespace }
+	return referenceEvidence{ID: id, Name: reference.Name, Namespace: reference.Namespace, Span: reference.Span}
+}
+
+func canonicalTypeRefPresentation(use TypeRefUse) TypeRefUse {
+	use.ResolvedID = ""
+	return use
+}
 
 func CheckPutGetWithEntityFieldsSupport(document Document, model Model, support EntityFieldsSupport) error {
 	written, err := PutWithEntityFieldsSupport(document, model, support)
