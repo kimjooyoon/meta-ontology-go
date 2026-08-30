@@ -12,9 +12,6 @@ func validateProof(bundle proofBundle) error {
 		return fmt.Errorf("proof revisions are invalid or identical")
 	}
 	if err := validateFoundationPromotionBundle(bundle); err != nil {
-		if isFoundationPromotionBundle(bundle) {
-			return fmt.Errorf("foundation promotion evidence is invalid: %w", err)
-		}
 		return err
 	}
 	if len(bundle.Jobs) != len(proofJobs) || len(bundle.Artifacts) == 0 {
