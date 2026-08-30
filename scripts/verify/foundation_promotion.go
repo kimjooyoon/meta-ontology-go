@@ -18,7 +18,7 @@ func checkPullRequestRoute(head, base string) error {
 		return fmt.Errorf("foundation promotion PR number is malformed")
 	}
 	results := make(map[string]string)
-	for _, pair := range strings.Split(os.Getenv("GOOO_NON_ROUTE_RESULTS"), ",") {
+	for pair := range strings.SplitSeq(os.Getenv("GOOO_NON_ROUTE_RESULTS"), ",") {
 		parts := strings.SplitN(pair, "=", 2)
 		if len(parts) == 2 {
 			results[parts[0]] = parts[1]
