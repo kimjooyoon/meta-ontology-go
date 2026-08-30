@@ -29,7 +29,7 @@ func validateExactFieldSpans(field Field) error {
 	if field.Span.File != field.IDSpan.File || field.Span.File != field.NameSpan.File || field.Span.File != field.TypeRefSpan.File || field.Span.File != field.PresenceSpan.File || field.Span.File != field.CardinalitySpan.File {
 		return errors.New("field subspans cross source snapshots")
 	}
-	ordered := []SourceSpan{field.IDSpan, field.NameSpan, field.TypeRefSpan, field.PresenceSpan, field.CardinalitySpan}
+	ordered := []SourceSpan{field.NameSpan, field.IDSpan, field.TypeRefSpan, field.PresenceSpan, field.CardinalitySpan}
 	for index, span := range ordered {
 		if span.Start < field.Span.Start || span.End > field.Span.End {
 			return errors.New("field subspan is outside the aggregate field span")

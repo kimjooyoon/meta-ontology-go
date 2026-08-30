@@ -12,6 +12,7 @@ func init() {
 		"examples/entity-fields-v1",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/bidir/entity_fields_public.go",
+		"internal/bidir/field_span_validation.go",
 		"internal/entityfieldsv1",
 		"internal/generator/generator_part01.go",
 		"internal/lsp/adapter_part01.go",
