@@ -42,11 +42,21 @@ func validateStaticInputs(manifest Manifest, contract Contract, program []byte) 
 		if cell.ID != expected.ID || cell.MetaOperation != expected.Operation || cell.ProofChoice != expected.Proof || cell.Indicator != expected.Indicator || cell.Activity != expected.Activity || cell.InputID != expected.Input || cell.OutputID != expected.Output {
 			return fmt.Errorf("cell %d is not canonical", index)
 		}
-		if !strings.Contains(string(program), "activity "+cell.Activity+"(") || !strings.Contains(string(program), "entity "+entityName(cell.InputID)+" id \""+cell.InputID+"\"") || !strings.Contains(string(program), "entity "+entityName(cell.OutputID)+" id \""+cell.OutputID+"\"") {
+		if !strings.Contains(string(program), "activity "+cell.Activity+"(") || !hasEntityBinding(program, cell.InputID) || !hasEntityBinding(program, cell.OutputID) {
 			return fmt.Errorf("Gooo activity binding is incomplete for %s", cell.ID)
 		}
 	}
 	return nil
+}
+
+func hasEntityBinding(program []byte, id string) bool {
+	marker := ` id "` + id + `"`
+	for line := range strings.SplitSeq(string(program), "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "entity ") && strings.Contains(line, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func entityName(id string) string {
