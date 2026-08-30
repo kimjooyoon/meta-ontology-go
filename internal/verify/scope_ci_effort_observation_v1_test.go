@@ -4,12 +4,18 @@ import "testing"
 
 func TestCIEffortObservationScope(t *testing.T) {
 	paths, ok := BranchScope(ciEffortObservationBranch)
-	if !ok || len(paths) != 7 {
+	if !ok || len(paths) != 13 {
 		t.Fatalf("CI effort branch registration: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{
 		".github/workflows/ci-effort-observation.yml",
 		"examples/ci-effort-observation/contract.json",
+		"examples/language-syntax-roundtrip/corpus.json",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/model.go",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/verify/scope_ci_effort_observation_v1.go",
 		"scripts/ci-effort-observation/main.go",
 	}
