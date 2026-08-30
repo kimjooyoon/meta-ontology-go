@@ -640,10 +640,10 @@ jobs:
           jq -e '.decision == "PASS" and .resolution == "EXACT" and
             .summary.satisfied == 44 and .summary.total == 44 and
             .summary.executed == 44 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 42 and .summary.capability_total == 42 and
-            .summary.capability_executed == 42 and .summary.capability_unresolved == 0 and
-            .summary.governance_satisfied == 2 and .summary.governance_total == 2 and
-            .summary.governance_executed == 2 and .summary.governance_unresolved == 0' \
+            .summary.capability_satisfied == 43 and .summary.capability_total == 43 and
+            .summary.capability_executed == 43 and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
+            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
           stage="publish"
           step="assemble-scope-partition-receipt"
@@ -681,8 +681,8 @@ jobs:
           cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
           echo "- overall: \`44/44 satisfied, 44 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- language capability: \`42/42 satisfied, 42 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- governance observation: \`2/2 satisfied, 2 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- language capability: \`43/43 satisfied, 43 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload language syntax scope partition evidence
@@ -729,8 +729,8 @@ jobs:
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
             .overall == {satisfied: 44, total: 44, executed: 44, unresolved: 0} and
-            .language_capability == {satisfied: 42, total: 42, executed: 42, unresolved: 0} and
-            .governance_observation == {satisfied: 2, total: 2, executed: 2, unresolved: 0}' \
+            .language_capability == {satisfied: 43, total: 43, executed: 43, unresolved: 0} and
+            .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
             "$report"
   language-concept-artifact:
     needs: [cross-platform-release]
