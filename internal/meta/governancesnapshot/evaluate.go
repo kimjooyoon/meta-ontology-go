@@ -137,7 +137,7 @@ func parseBranch(input LoadedSnapshot, branch string, parsed *parsedSnapshot) (B
 	if statusReason != "" {
 		return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Protected: protected}, statusReason
 	}
-	return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Protected: protected,
+	return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Available: true, Protected: protected,
 		Enforcement: status.enforcement, Contexts: status.contexts}, ""
 }
 

@@ -58,7 +58,7 @@ func sourcePinCell(cell CellObservation, parsed parsedSnapshot) CellObservation 
 func branchProtectedCell(cell CellObservation, branch BranchEvidence) CellObservation {
 	cell.Observed = fmt.Sprintf("%s protected=%t", branch.Branch, branch.Protected)
 	cell.Expected = "protected=true"
-	if branch.Branch == "" {
+	if !branch.Available || branch.Branch == "" {
 		return unknownCell(cell, directMissing("PUBLIC_SNAPSHOT_FIELD_MISSING"), cell.Observed, cell.Expected)
 	}
 	if !branch.Protected {

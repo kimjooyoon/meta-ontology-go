@@ -151,6 +151,7 @@ type PayloadEvidence struct {
 type BranchEvidence struct {
 	Branch       string   `json:"branch"`
 	CommitSHA    string   `json:"commit_sha"`
+	Available    bool     `json:"available"`
 	Protected    bool     `json:"protected"`
 	Enforcement  string   `json:"status_enforcement"`
 	Contexts     []string `json:"required_contexts"`
