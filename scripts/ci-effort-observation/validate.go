@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -84,7 +85,20 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Window.TimestampResolutionMS != 1000 {
 		return fmt.Errorf("timestamp resolution is invalid")
 	}
-	if report.UnknownEvidence == nil && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum < 0 || report.Window.StepWallMSSum == 0 && report.Window.BelowSourceResolutionSteps == 0) {
+	if report.Window.StepWallMSLowerBound != report.Window.StepWallMSSum || report.Window.StepWallMSUpperExclusive != report.Window.StepWallMSSum+int64(report.Window.BelowSourceResolutionSteps)*report.Window.TimestampResolutionMS || report.Window.JobWallMSLowerBound != report.Window.JobWallMSSum || report.Window.JobWallMSUpperExclusive != report.Window.JobWallMSSum+int64(report.Window.BelowSourceResolutionJobs)*report.Window.TimestampResolutionMS {
+		return fmt.Errorf("runtime bounds are inconsistent")
+	}
+	if count, reasons := runtimeRejectionEvidence(report.Jobs); report.Window.RuntimeRejectionCount != count || !sameStrings(report.Window.RuntimeRejectionReasons, reasons) {
+		return fmt.Errorf("runtime rejection evidence is inconsistent")
+	}
+	expectedRuntimeResolution := "EXACT"
+	if report.Window.BelowSourceResolutionJobs > 0 || report.Window.BelowSourceResolutionSteps > 0 {
+		expectedRuntimeResolution = "BOUNDED/SOURCE_SECOND"
+	}
+	if report.RuntimeResolution != expectedRuntimeResolution {
+		return fmt.Errorf("runtime resolution does not match observations")
+	}
+	if report.UnknownEvidence == nil && report.Window.RuntimeRejectionCount == 0 && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum < 0 || report.Window.StepWallMSSum == 0 && report.Window.BelowSourceResolutionSteps == 0) {
 		return fmt.Errorf("workflow runtime is incomplete")
 	}
 	if report.RepositoryStatus.Writes != report.RepositoryWrites || report.LocalTestExecutions != 0 || report.CrossProjectRequiredGates != 0 || report.Improvement != "UNKNOWN" {
@@ -155,14 +169,33 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	return nil
 }
 
+func runtimeRejectionEvidence(jobs []JobObservation) (int, []string) {
+	var reasons []string
+	for _, job := range jobs {
+		if job.RejectionReason != "" {
+			reasons = append(reasons, job.RejectionReason)
+		}
+		for _, step := range job.Steps {
+			if step.RejectionReason != "" {
+				reasons = append(reasons, step.RejectionReason)
+			}
+		}
+	}
+	sort.Strings(reasons)
+	return len(reasons), reasons
+}
+
 func validateJobs(jobs []JobObservation, head string) error {
 	seen := map[int64]bool{}
 	for _, job := range jobs {
-		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil && !job.BelowSourceResolution {
+		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil && !job.BelowSourceResolution && job.RejectionReason == "" {
 			return fmt.Errorf("job evidence is invalid")
 		}
-		if job.BelowSourceResolution && job.StartedAt == "" || job.BelowSourceResolution && job.StartedAt != job.CompletedAt {
+		if job.BelowSourceResolution && (job.StartedAt == "" || job.StartedAt != job.CompletedAt) {
 			return fmt.Errorf("job bounded runtime is invalid")
+		}
+		if job.RejectionReason != "" && !validRejectionReason(job.RejectionReason) {
+			return fmt.Errorf("job rejection evidence is incomplete")
 		}
 		seen[job.ID] = true
 		if job.Unknown != nil && !validUnknown(job.Unknown) {
@@ -175,7 +208,7 @@ func validateJobs(jobs []JobObservation, head string) error {
 			if step.Status == "completed" && step.WallMS <= 0 && step.Unknown == nil && !step.BelowSourceResolution && step.RejectionReason == "" {
 				return fmt.Errorf("step runtime is invalid")
 			}
-			if step.BelowSourceResolution && step.StartedAt == "" || step.BelowSourceResolution && step.StartedAt != step.CompletedAt {
+			if step.BelowSourceResolution && (step.StartedAt == "" || step.StartedAt != step.CompletedAt) {
 				return fmt.Errorf("step bounded runtime is invalid")
 			}
 			if step.RejectionReason != "" && !validRejectionReason(step.RejectionReason) {
@@ -339,7 +372,7 @@ func buildCells(contract Contract, report Report) []CellObservation {
 	}{
 		{fmt.Sprint(report.Window.WallMS), ">0", report.Window.WallMS > 0},
 		{report.OperationManifestDigest, "checked-in manifest digest", report.OperationManifestDigest != ""},
-		{fmt.Sprintf("jobs=%d;steps=%d", report.Window.JobWallMSSum, report.Window.StepWallMSSum), "observed job and step sums", report.Window.JobWallMSSum > 0 && report.Window.StepWallMSSum > 0},
+		{fmt.Sprintf("runtime=%s;job_ms=[%d,%d);step_ms=[%d,%d)", report.RuntimeResolution, report.Window.JobWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSLowerBound, report.Window.StepWallMSUpperExclusive), "observed job and step lower/upper bounds", report.Window.JobWallMSLowerBound > 0 && report.Window.StepWallMSLowerBound >= 0 && report.Window.RuntimeRejectionCount == 0},
 		{fmt.Sprintf("executed=%d;unknown=%d;rejected=%d", report.Accounting.Executed, report.Accounting.Unknown, report.Accounting.Rejected), "complete operation accounting", report.Accounting.Unknown == 0 && report.Accounting.Rejected == 0},
 		{fmt.Sprint(report.Accounting.Skipped), "observed skipped operations", report.Accounting.Skipped >= 0},
 		{report.Reuse.Decision, "EXECUTE or REUSED with exact key", report.Reuse.Decision == "EXECUTE" || report.Reuse.Decision == "REUSED"},
@@ -351,8 +384,10 @@ func buildCells(contract Contract, report Report) []CellObservation {
 		value := values[index]
 		cell := CellObservation{ID: spec.ID, MetaOperation: spec.MetaOperation, ProofChoice: spec.ProofChoice,
 			Indicator: spec.Indicator, Activity: spec.Activity, InputID: spec.InputID, OutputID: spec.OutputID,
-			Observed: value.observed, Expected: value.expected, Decision: "PASS"}
-		if !value.ok {
+		Observed: value.observed, Expected: value.expected, Decision: "PASS"}
+		if index == 2 && report.Window.RuntimeRejectionCount > 0 {
+			cell.Decision = "REFUTED"
+		} else if !value.ok {
 			cell.Decision = "UNKNOWN"
 		}
 		cell.EvidenceDigest = cellDigest(cell)
@@ -372,7 +407,7 @@ func operationDigest(operation OperationObservation) string {
 }
 
 func classifyReport(report Report) (string, string, string) {
-	if report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.RepositoryWrites > 0 || report.Reuse.Decision == "REFUTED" || report.Reuse.Decision == "FAIL_CLOSED" {
+	if report.SourceRunConclusion != "success" || report.Accounting.Rejected > 0 || report.Window.RuntimeRejectionCount > 0 || report.RepositoryWrites > 0 || report.Reuse.Decision == "REFUTED" || report.Reuse.Decision == "FAIL_CLOSED" {
 		return "REFUTED", "EXACT", "KNOWN_VERIFICATION_CONTRADICTION"
 	}
 	if report.Accounting.Unknown > 0 || report.Reuse.Decision == "UNKNOWN" || report.OpenTofu.ArtifactID == 0 || report.UnknownEvidence != nil {
@@ -419,7 +454,7 @@ func humanReport(report Report) string {
 	fmt.Fprintf(&builder, "head=%s source_run=%d workflow=%s event=%s\n", report.HeadSHA, report.SourceRunID, report.SourceWorkflow, report.SourceEvent)
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
 	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s)\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
-	fmt.Fprintf(&builder, "job wall sum=%d ms; step wall sum=%d ms; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d\n", report.Window.JobWallMSSum, report.Window.StepWallMSSum, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps)
+	fmt.Fprintf(&builder, "reported lower bounds job_ms=%d step_ms=%d; upper bounds job_ms<%d step_ms<%d; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d runtime_rejections=%d reasons=%q\n", report.Window.JobWallMSLowerBound, report.Window.StepWallMSLowerBound, report.Window.JobWallMSUpperExclusive, report.Window.StepWallMSUpperExclusive, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps, report.Window.RuntimeRejectionCount, report.Window.RuntimeRejectionReasons)
 	fmt.Fprintf(&builder, "operations manifest=%d executed=%d skipped=%d unknown=%d rejected=%d\n", report.Accounting.ManifestOperations, report.Accounting.Executed, report.Accounting.Skipped, report.Accounting.Unknown, report.Accounting.Rejected)
 	for _, operation := range report.Operations {
 		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q evidence_step=%q guard_step=%q guard_bound=%t guard_status=%q/%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.EvidenceStepName, operation.GuardStepName, operation.GuardBound, operation.GuardStepStatus, operation.GuardStepConclusion, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)

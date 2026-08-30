@@ -131,20 +131,17 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	for index, job := range sorted {
 		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
 		var unknown *Unknown
-		switch {
-		case duration.missing:
+		if duration.missing {
 			unknown = jobRuntimeUnknown()
-		case duration.rejection != "":
-			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %s", job.ID, duration.rejection)
 		}
-		steps, stepWall, belowSteps, err := observeStepsWithResolution(job.Steps)
+		steps, stepWall, belowSteps, stepRejections, stepReasons, err := observeStepsWithResolution(job.Steps)
 		if err != nil {
 			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
 		}
 		result = append(result, JobObservation{ID: job.ID, Name: job.Name, Status: job.Status,
 			Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, StartedAt: job.StartedAt,
 			CompletedAt: job.CompletedAt, WallMS: duration.wall, BelowSourceResolution: duration.below,
-			Steps: steps, Unknown: unknown})
+			RejectionReason: duration.rejection, Steps: steps, Unknown: unknown})
 		if job.StartedAt != "" && (index == 0 || window.StartAt == "" || job.StartedAt < window.StartAt) {
 			window.StartAt = job.StartedAt
 		}
@@ -157,21 +154,34 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 			window.BelowSourceResolutionJobs++
 		}
 		window.BelowSourceResolutionSteps += belowSteps
+		if duration.rejection != "" {
+			window.RuntimeRejectionCount++
+			window.RuntimeRejectionReasons = append(window.RuntimeRejectionReasons, duration.rejection)
+		}
+		window.RuntimeRejectionCount += stepRejections
+		window.RuntimeRejectionReasons = append(window.RuntimeRejectionReasons, stepReasons...)
 	}
 	window.WallMS = observeTimestamp(window.StartAt, window.EndAt).wall
 	window.TimestampResolutionMS = 1000
+	window.StepWallMSLowerBound = window.StepWallMSSum
+	window.StepWallMSUpperExclusive = window.StepWallMSSum + int64(window.BelowSourceResolutionSteps)*window.TimestampResolutionMS
+	window.JobWallMSLowerBound = window.JobWallMSSum
+	window.JobWallMSUpperExclusive = window.JobWallMSSum + int64(window.BelowSourceResolutionJobs)*window.TimestampResolutionMS
+	sort.Strings(window.RuntimeRejectionReasons)
 	return result, window, nil
 }
 
 func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
-	steps, total, _, err := observeStepsWithResolution(input)
+	steps, total, _, _, _, err := observeStepsWithResolution(input)
 	return steps, total, err
 }
 
-func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, error) {
+func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, int, []string, error) {
 	result := make([]StepObservation, 0, len(input))
 	var total int64
 	belowCount := 0
+	rejectionCount := 0
+	var rejectionReasons []string
 	for _, step := range input {
 		if isCleanupStep(step.Name) {
 			continue
@@ -187,13 +197,17 @@ func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int,
 			if duration.below {
 				belowCount++
 			}
+			if duration.rejection != "" {
+				rejectionCount++
+				rejectionReasons = append(rejectionReasons, duration.rejection)
+			}
 		}
 		result = append(result, StepObservation{Name: step.Name, Status: step.Status,
 			Conclusion: step.Conclusion, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt,
 			WallMS: duration.wall, BelowSourceResolution: duration.below,
 			RejectionReason: duration.rejection, Unknown: unknown})
 	}
-	return result, total, belowCount, nil
+	return result, total, belowCount, rejectionCount, rejectionReasons, nil
 }
 
 func isCleanupStep(name string) bool {

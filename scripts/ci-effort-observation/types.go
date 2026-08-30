@@ -78,15 +78,15 @@ type Manifest struct {
 }
 
 type OperationSpec struct {
-	ID                string   `json:"id"`
-	JobName           string   `json:"job_name"`
-	StepName          string   `json:"step_name"`
-	EvidenceStepName  string   `json:"evidence_step,omitempty"`
-	GuardStepName     string   `json:"guard_step,omitempty"`
+	ID                string            `json:"id"`
+	JobName           string            `json:"job_name"`
+	StepName          string            `json:"step_name"`
+	EvidenceStepName  string            `json:"evidence_step,omitempty"`
+	GuardStepName     string            `json:"guard_step,omitempty"`
 	EventStepNames    map[string]string `json:"event_step_names,omitempty"`
-	Kind              string   `json:"kind"`
-	Command           []string `json:"command"`
-	ProofObligationID string   `json:"proof_obligation_id"`
+	Kind              string            `json:"kind"`
+	Command           []string          `json:"command"`
+	ProofObligationID string            `json:"proof_obligation_id"`
 }
 
 type ExcludedJob struct {
@@ -122,6 +122,7 @@ type JobObservation struct {
 	CompletedAt           string            `json:"completed_at"`
 	WallMS                int64             `json:"wall_ms"`
 	BelowSourceResolution bool              `json:"below_source_resolution,omitempty"`
+	RejectionReason       string            `json:"rejection_reason,omitempty"`
 	Steps                 []StepObservation `json:"steps"`
 	Unknown               *Unknown          `json:"unknown,omitempty"`
 }
@@ -147,6 +148,12 @@ type WorkflowWindow struct {
 	TimestampResolutionMS      int64  `json:"timestamp_resolution_ms"`
 	BelowSourceResolutionJobs  int    `json:"below_source_resolution_jobs"`
 	BelowSourceResolutionSteps int    `json:"below_source_resolution_steps"`
+	StepWallMSLowerBound       int64  `json:"step_wall_ms_lower_bound"`
+	StepWallMSUpperExclusive   int64  `json:"step_wall_ms_upper_bound_exclusive"`
+	JobWallMSLowerBound        int64  `json:"job_wall_ms_lower_bound"`
+	JobWallMSUpperExclusive    int64  `json:"job_wall_ms_upper_bound_exclusive"`
+	RuntimeRejectionCount      int    `json:"runtime_rejection_count"`
+	RuntimeRejectionReasons    []string `json:"runtime_rejection_reasons"`
 }
 
 type OperationObservation struct {

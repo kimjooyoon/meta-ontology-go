@@ -61,6 +61,60 @@ func TestEventSpecificOperationUsesMatchingPolicyStep(t *testing.T) {
 	}
 }
 
+func TestUnknownEventDoesNotUseDeclaredFallbackStep(t *testing.T) {
+	spec := OperationSpec{ID: "policy", JobName: "policy", StepName: "Push policy", EventStepNames: map[string]string{
+		"pull_request": "Pull request policy", "push": "Push policy",
+	}, Kind: "VERIFICATION", Command: []string{"bash", "check"}, ProofObligationID: "ci-effort/policy"}
+	operation := observeOperation(spec, nil, ".github/workflows/ci.yml", []byte("jobs:\n"), nil, "workflow_dispatch")
+	if operation.State != "UNKNOWN" || operation.EvidenceStepName != "" || operation.Unknown == nil || operation.Unknown.Reason != "EVENT_OPERATION_STEP_MISSING" {
+		t.Fatalf("unknown event used a fallback step: %+v", operation)
+	}
+}
+
+func TestMissingStepTimestampRemainsDirectUnknown(t *testing.T) {
+	steps, _, err := observeSteps([]APIStep{{Name: "Verify", Status: "completed", Conclusion: "success"}})
+	if err != nil || len(steps) != 1 || steps[0].Unknown == nil || steps[0].Unknown.Reason != "STEP_TIMESTAMP_MISSING" || steps[0].BelowSourceResolution {
+		t.Fatalf("missing step timestamp was not direct unknown: steps=%+v err=%v", steps, err)
+	}
+}
+
+func TestJobTimestampContradictionsAreRecorded(t *testing.T) {
+	cases := []struct {
+		name, started, completed, reason string
+	}{
+		{"malformed", "not-a-timestamp", "2026-08-30T00:00:01Z", "OPERATION_TIMESTAMP_MALFORMED"},
+		{"negative", "2026-08-30T00:00:02Z", "2026-08-30T00:00:01Z", "OPERATION_DURATION_NEGATIVE"},
+	}
+	for _, test := range cases {
+		observed, window, err := observeJobs([]APIJob{{ID: 1, Name: test.name, StartedAt: test.started, CompletedAt: test.completed}})
+		if err != nil || len(observed) != 1 || observed[0].RejectionReason != test.reason || window.RuntimeRejectionCount != 1 || len(window.RuntimeRejectionReasons) != 1 || window.RuntimeRejectionReasons[0] != test.reason {
+			t.Fatalf("%s timestamp contradiction was not recorded: jobs=%+v window=%+v err=%v", test.name, observed, window, err)
+		}
+	}
+}
+
+func TestStepTimestampContradictionsRefuteRuntime(t *testing.T) {
+	cases := []struct {
+		name, started, completed, reason string
+	}{
+		{"malformed", "not-a-timestamp", "2026-08-30T00:00:01Z", "OPERATION_TIMESTAMP_MALFORMED"},
+		{"negative", "2026-08-30T00:00:02Z", "2026-08-30T00:00:01Z", "OPERATION_DURATION_NEGATIVE"},
+	}
+	for _, test := range cases {
+		observed, window, err := observeJobs([]APIJob{{ID: 1, Name: test.name,
+			StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z",
+			Steps: []APIStep{{Name: "Verify", Status: "completed", Conclusion: "success",
+				StartedAt: test.started, CompletedAt: test.completed}}}})
+		if err != nil || len(observed) != 1 || window.RuntimeRejectionCount != 1 || len(window.RuntimeRejectionReasons) != 1 || window.RuntimeRejectionReasons[0] != test.reason || observed[0].Steps[0].RejectionReason != test.reason {
+			t.Fatalf("%s step timestamp contradiction was not recorded: jobs=%+v window=%+v err=%v", test.name, observed, window, err)
+		}
+		decision, resolution, reason := classifyReport(Report{SourceRunConclusion: "success", Window: window})
+		if decision != "REFUTED" || resolution != "EXACT" || reason != "KNOWN_VERIFICATION_CONTRADICTION" {
+			t.Fatalf("%s step timestamp contradiction was not refuted: %s/%s/%s", test.name, decision, resolution, reason)
+		}
+	}
+}
+
 func TestBoundZeroDurationRequiredStepIsTypedUnknown(t *testing.T) {
 	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}

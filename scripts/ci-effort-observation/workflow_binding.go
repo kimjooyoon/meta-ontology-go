@@ -30,13 +30,13 @@ func bindWorkflowCommandForEvent(source []byte, path string, spec OperationSpec,
 	}
 	evidence := struct {
 		Path, SourceDigest, Job, Step, Guard, Event, Run string
-		Command                                      []string
+		Command                                          []string
 	}{path, digestBytes(source), spec.JobName, stepName, spec.GuardStepName, event, run, spec.Command}
 	return digestJSON(evidence), nil
 }
 
 func operationEvidenceStep(spec OperationSpec, event string) string {
-	if spec.EventStepNames != nil && spec.EventStepNames[event] != "" {
+	if spec.EventStepNames != nil {
 		return spec.EventStepNames[event]
 	}
 	if spec.EvidenceStepName != "" {
