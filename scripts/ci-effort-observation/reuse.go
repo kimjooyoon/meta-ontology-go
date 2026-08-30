@@ -41,14 +41,14 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		HeadSHA: source.HeadSHA, InputDigest: inputDigest,
 		ToolchainDigest: digestString(goToolchain), CommandContextDigest: commandDigest,
 		EnvironmentAllowlistDigest: environmentDigest,
-		DependencyGraphDigest: digestNamed(dependencyParts), ExpectedResultDigest: expectedDigest,
+		DependencyGraphDigest:      digestNamed(dependencyParts), ExpectedResultDigest: expectedDigest,
 		OpenTofuReleaseDigest: openTofu.ReleaseAssetDigest,
 	}, nil
 }
 
 type commandContext struct {
 	ID, ProofObligationID, JobName, StepName, WorkflowPath, WorkflowDigest, ContextDigest string
-	Command                                                                            []string
+	Command                                                                               []string
 }
 
 func commandContexts(operations []OperationObservation) []commandContext {

@@ -8,22 +8,22 @@ const (
 )
 
 type Config struct {
-	RunPath          string
-	JobsPath         string
-	ManifestPath     string
-	ContractPath     string
-	ProgramPath      string
-	SummaryPath      string
-	EvidencePath     string
+	RunPath              string
+	JobsPath             string
+	ManifestPath         string
+	ContractPath         string
+	ProgramPath          string
+	SummaryPath          string
+	EvidencePath         string
 	RepositoryStatusPath string
-	OpenTofuPath     string
-	OpenTofuMetaPath string
-	PriorPath        string
-	DependencyFiles  []string
-	Environment      string
-	OutputPath       string
-	MarkdownPath     string
-	Check            bool
+	OpenTofuPath         string
+	OpenTofuMetaPath     string
+	PriorPath            string
+	DependencyFiles      []string
+	Environment          string
+	OutputPath           string
+	MarkdownPath         string
+	Check                bool
 }
 
 type SourceRun struct {
@@ -49,16 +49,16 @@ type JobsInput struct {
 }
 
 type APIJob struct {
-	ID         int64     `json:"id"`
-	Name       string    `json:"name"`
-	Status     string    `json:"status"`
-	Conclusion string    `json:"conclusion"`
-	HeadSHA    string    `json:"head_sha"`
-	RunID      int64     `json:"run_id"`
-	StartedAt  string    `json:"started_at"`
-	CompletedAt string   `json:"completed_at"`
-	HTMLURL    string    `json:"html_url"`
-	Steps      []APIStep `json:"steps"`
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Status      string    `json:"status"`
+	Conclusion  string    `json:"conclusion"`
+	HeadSHA     string    `json:"head_sha"`
+	RunID       int64     `json:"run_id"`
+	StartedAt   string    `json:"started_at"`
+	CompletedAt string    `json:"completed_at"`
+	HTMLURL     string    `json:"html_url"`
+	Steps       []APIStep `json:"steps"`
 }
 
 type APIStep struct {
@@ -92,42 +92,42 @@ type ExcludedJob struct {
 }
 
 type Contract struct {
-	Schema      string     `json:"schema"`
-	ID          string     `json:"id"`
-	Cells       []CellSpec `json:"cells"`
-	GraphProgram string    `json:"graph_program"`
-	NotClaimed  []string   `json:"not_claimed"`
+	Schema       string     `json:"schema"`
+	ID           string     `json:"id"`
+	Cells        []CellSpec `json:"cells"`
+	GraphProgram string     `json:"graph_program"`
+	NotClaimed   []string   `json:"not_claimed"`
 }
 
 type CellSpec struct {
-	ID          string `json:"id"`
+	ID            string `json:"id"`
 	MetaOperation string `json:"meta_operation"`
-	ProofChoice string `json:"proof_choice"`
-	Indicator   string `json:"indicator"`
-	Activity    string `json:"activity"`
-	InputID     string `json:"input_id"`
-	OutputID    string `json:"output_id"`
+	ProofChoice   string `json:"proof_choice"`
+	Indicator     string `json:"indicator"`
+	Activity      string `json:"activity"`
+	InputID       string `json:"input_id"`
+	OutputID      string `json:"output_id"`
 }
 
 type JobObservation struct {
-	ID         int64          `json:"id"`
-	Name       string         `json:"name"`
-	Status     string         `json:"status"`
-	Conclusion string         `json:"conclusion"`
-	HeadSHA    string         `json:"head_sha"`
-	StartedAt  string         `json:"started_at"`
-	CompletedAt string        `json:"completed_at"`
-	WallMS     int64          `json:"wall_ms"`
-	Steps      []StepObservation `json:"steps"`
-	Unknown    *Unknown          `json:"unknown,omitempty"`
+	ID          int64             `json:"id"`
+	Name        string            `json:"name"`
+	Status      string            `json:"status"`
+	Conclusion  string            `json:"conclusion"`
+	HeadSHA     string            `json:"head_sha"`
+	StartedAt   string            `json:"started_at"`
+	CompletedAt string            `json:"completed_at"`
+	WallMS      int64             `json:"wall_ms"`
+	Steps       []StepObservation `json:"steps"`
+	Unknown     *Unknown          `json:"unknown,omitempty"`
 }
 
 type StepObservation struct {
-	Name        string `json:"name"`
-	Status      string `json:"status"`
-	Conclusion  string `json:"conclusion"`
-	StartedAt   string `json:"started_at"`
-	CompletedAt string `json:"completed_at"`
+	Name        string   `json:"name"`
+	Status      string   `json:"status"`
+	Conclusion  string   `json:"conclusion"`
+	StartedAt   string   `json:"started_at"`
+	CompletedAt string   `json:"completed_at"`
 	WallMS      int64    `json:"wall_ms"`
 	Unknown     *Unknown `json:"unknown,omitempty"`
 }
@@ -193,25 +193,25 @@ type ReuseKey struct {
 }
 
 type ReuseObservation struct {
-	Decision        string   `json:"decision"`
-	Resolution     string   `json:"resolution"`
-	Reason         string   `json:"reason"`
-	Requests       int      `json:"requests"`
-	PriorCandidates int     `json:"prior_candidates"`
-	PriorReceiptsValid int  `json:"prior_receipts_valid"`
-	Reused         int      `json:"reused"`
-	Rejected       int      `json:"rejected"`
-	Unknown        int      `json:"unknown"`
-	Skipped        int      `json:"skipped"`
-	ReusedCommands int      `json:"reused_commands"`
-	ReusedTests    int      `json:"reused_tests"`
-	RequiresExecution bool   `json:"requires_execution"`
-	NextOperation   string   `json:"next_operation,omitempty"`
-	UnknownEvidence *Unknown `json:"unknown_evidence,omitempty"`
-	Key            ReuseKey `json:"key"`
-	PriorReceiptDigest string `json:"prior_receipt_digest"`
-	PriorEvidenceDigest string `json:"prior_evidence_digest"`
-	Cases          []ReuseCase `json:"cases"`
+	Decision            string      `json:"decision"`
+	Resolution          string      `json:"resolution"`
+	Reason              string      `json:"reason"`
+	Requests            int         `json:"requests"`
+	PriorCandidates     int         `json:"prior_candidates"`
+	PriorReceiptsValid  int         `json:"prior_receipts_valid"`
+	Reused              int         `json:"reused"`
+	Rejected            int         `json:"rejected"`
+	Unknown             int         `json:"unknown"`
+	Skipped             int         `json:"skipped"`
+	ReusedCommands      int         `json:"reused_commands"`
+	ReusedTests         int         `json:"reused_tests"`
+	RequiresExecution   bool        `json:"requires_execution"`
+	NextOperation       string      `json:"next_operation,omitempty"`
+	UnknownEvidence     *Unknown    `json:"unknown_evidence,omitempty"`
+	Key                 ReuseKey    `json:"key"`
+	PriorReceiptDigest  string      `json:"prior_receipt_digest"`
+	PriorEvidenceDigest string      `json:"prior_evidence_digest"`
+	Cases               []ReuseCase `json:"cases"`
 }
 
 type PriorRecord struct {
@@ -226,11 +226,11 @@ type PriorRecord struct {
 }
 
 type ReuseCase struct {
-	ID            string   `json:"id"`
-	Decision      string   `json:"decision"`
-	Resolution    string   `json:"resolution"`
-	Reason        string   `json:"reason"`
-	Unknown       *Unknown `json:"unknown,omitempty"`
+	ID         string   `json:"id"`
+	Decision   string   `json:"decision"`
+	Resolution string   `json:"resolution"`
+	Reason     string   `json:"reason"`
+	Unknown    *Unknown `json:"unknown,omitempty"`
 }
 
 type Unknown struct {
@@ -265,23 +265,23 @@ type CellObservation struct {
 }
 
 type ExternalOpenTofu struct {
-	Workflow       string `json:"workflow"`
-	RunID          int64  `json:"run_id"`
-	ArtifactID     int64  `json:"artifact_id"`
-	ArtifactName   string `json:"artifact_name"`
-	ArtifactDigest string `json:"artifact_digest"`
-	ArtifactSize   int64  `json:"artifact_size"`
-	ReportDigest      string `json:"report_digest"`
-	ReleaseAssetDigest string `json:"release_asset_digest"`
-	ReportSchema   string `json:"report_schema"`
-	SubjectSHA     string `json:"subject_sha"`
-	Decision       string `json:"decision"`
-	Resolution     string `json:"resolution"`
-	CellsClosed    int    `json:"cells_closed"`
-	CellsTotal     int    `json:"cells_total"`
-	ReuseDecision  string `json:"reuse_decision"`
-	ReuseCount     int    `json:"reuse_count"`
-	Unknown        *Unknown `json:"unknown,omitempty"`
+	Workflow           string   `json:"workflow"`
+	RunID              int64    `json:"run_id"`
+	ArtifactID         int64    `json:"artifact_id"`
+	ArtifactName       string   `json:"artifact_name"`
+	ArtifactDigest     string   `json:"artifact_digest"`
+	ArtifactSize       int64    `json:"artifact_size"`
+	ReportDigest       string   `json:"report_digest"`
+	ReleaseAssetDigest string   `json:"release_asset_digest"`
+	ReportSchema       string   `json:"report_schema"`
+	SubjectSHA         string   `json:"subject_sha"`
+	Decision           string   `json:"decision"`
+	Resolution         string   `json:"resolution"`
+	CellsClosed        int      `json:"cells_closed"`
+	CellsTotal         int      `json:"cells_total"`
+	ReuseDecision      string   `json:"reuse_decision"`
+	ReuseCount         int      `json:"reuse_count"`
+	Unknown            *Unknown `json:"unknown,omitempty"`
 }
 
 type ArtifactMeta struct {
@@ -299,10 +299,10 @@ type OpenTofuReportInput struct {
 	Decision     string `json:"decision"`
 	Resolution   string `json:"resolution"`
 	ReportDigest string `json:"report_digest"`
-	Release     struct {
+	Release      struct {
 		AssetSHA256 string `json:"asset_sha256"`
 	} `json:"release"`
-	Summary      struct {
+	Summary struct {
 		CellsTotal       int `json:"cells_total"`
 		ClosedCells      int `json:"closed_cells"`
 		ReplayMatches    int `json:"replay_matches"`
@@ -324,38 +324,38 @@ type GraphObservation struct {
 }
 
 type Report struct {
-	Schema                   string                 `json:"schema"`
-	ContractID               string                 `json:"contract_id"`
-	Repository               string                 `json:"repository"`
-	SourceWorkflow           string                 `json:"source_workflow"`
-	SourceEvent              string                 `json:"source_event"`
-	SourceRef                string                 `json:"source_ref"`
-	HeadSHA                  string                 `json:"head_sha"`
-	SourceRunConclusion      string                 `json:"source_run_conclusion"`
-	SourceRunID              int64                  `json:"source_run_id"`
-	SourceRunAttempt         int64                  `json:"source_run_attempt"`
-	SourceRunURL             string                 `json:"source_run_url"`
-	WorkflowSourcePath       string                 `json:"workflow_source_path"`
-	WorkflowSourceDigest     string                 `json:"workflow_source_digest"`
-	Window                   WorkflowWindow         `json:"workflow_window"`
-	Jobs                     []JobObservation       `json:"jobs"`
-	Operations               []OperationObservation `json:"operations"`
-	Accounting               Accounting             `json:"accounting"`
-	OperationManifestDigest  string                 `json:"operation_manifest_digest"`
-	Reuse                    ReuseObservation      `json:"reuse"`
-	OpenTofu                 ExternalOpenTofu       `json:"external_opentofu"`
-	Cells                    []CellObservation      `json:"cells"`
-	Graph                    GraphObservation       `json:"graph"`
-	RepositoryStatus         RepositoryStatus       `json:"repository_status"`
-	RepositoryWrites         int                    `json:"repository_writes"`
-	LocalTestExecutions      int                    `json:"local_test_executions"`
-	CrossProjectRequiredGates int                   `json:"cross_project_required_gates"`
-	Improvement              string                 `json:"improvement"`
-	Decision                 string                 `json:"decision"`
-	Resolution               string                 `json:"resolution"`
-	Reason                   string                 `json:"reason"`
-	UnknownEvidence          *Unknown              `json:"unknown_evidence,omitempty"`
-	Counterexamples          []Counterexample       `json:"counterexamples"`
-	HumanReport              string                 `json:"human_report"`
-	ReportDigest             string                 `json:"report_digest"`
+	Schema                    string                 `json:"schema"`
+	ContractID                string                 `json:"contract_id"`
+	Repository                string                 `json:"repository"`
+	SourceWorkflow            string                 `json:"source_workflow"`
+	SourceEvent               string                 `json:"source_event"`
+	SourceRef                 string                 `json:"source_ref"`
+	HeadSHA                   string                 `json:"head_sha"`
+	SourceRunConclusion       string                 `json:"source_run_conclusion"`
+	SourceRunID               int64                  `json:"source_run_id"`
+	SourceRunAttempt          int64                  `json:"source_run_attempt"`
+	SourceRunURL              string                 `json:"source_run_url"`
+	WorkflowSourcePath        string                 `json:"workflow_source_path"`
+	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
+	Window                    WorkflowWindow         `json:"workflow_window"`
+	Jobs                      []JobObservation       `json:"jobs"`
+	Operations                []OperationObservation `json:"operations"`
+	Accounting                Accounting             `json:"accounting"`
+	OperationManifestDigest   string                 `json:"operation_manifest_digest"`
+	Reuse                     ReuseObservation       `json:"reuse"`
+	OpenTofu                  ExternalOpenTofu       `json:"external_opentofu"`
+	Cells                     []CellObservation      `json:"cells"`
+	Graph                     GraphObservation       `json:"graph"`
+	RepositoryStatus          RepositoryStatus       `json:"repository_status"`
+	RepositoryWrites          int                    `json:"repository_writes"`
+	LocalTestExecutions       int                    `json:"local_test_executions"`
+	CrossProjectRequiredGates int                    `json:"cross_project_required_gates"`
+	Improvement               string                 `json:"improvement"`
+	Decision                  string                 `json:"decision"`
+	Resolution                string                 `json:"resolution"`
+	Reason                    string                 `json:"reason"`
+	UnknownEvidence           *Unknown               `json:"unknown_evidence,omitempty"`
+	Counterexamples           []Counterexample       `json:"counterexamples"`
+	HumanReport               string                 `json:"human_report"`
+	ReportDigest              string                 `json:"report_digest"`
 }

@@ -273,7 +273,10 @@ func validUnknown(value *Unknown) bool {
 }
 
 func buildCells(contract Contract, report Report) []CellObservation {
-	values := []struct{ observed, expected string; ok bool }{
+	values := []struct {
+		observed, expected string
+		ok                 bool
+	}{
 		{fmt.Sprint(report.Window.WallMS), ">0", report.Window.WallMS > 0},
 		{report.OperationManifestDigest, "checked-in manifest digest", report.OperationManifestDigest != ""},
 		{fmt.Sprintf("jobs=%d;steps=%d", report.Window.JobWallMSSum, report.Window.StepWallMSSum), "observed job and step sums", report.Window.JobWallMSSum > 0 && report.Window.StepWallMSSum > 0},
@@ -325,7 +328,9 @@ func sealReport(report Report) string {
 }
 
 func validSHA(value string) bool { return len(value) == 40 && validHex(value) }
-func validDigest(value string) bool { return strings.HasPrefix(value, "sha256:") && len(value) == 71 && validHex(value[7:]) }
+func validDigest(value string) bool {
+	return strings.HasPrefix(value, "sha256:") && len(value) == 71 && validHex(value[7:])
+}
 func validHex(value string) bool {
 	if value == "" {
 		return false
