@@ -19,9 +19,9 @@ type branchPayload struct {
 
 type protectionPayload struct {
 	RequiredStatusChecks *struct {
-		EnforcementLevel string `json:"enforcement_level"`
-		Contexts []string `json:"contexts"`
-		Checks   []struct {
+		EnforcementLevel string   `json:"enforcement_level"`
+		Contexts         []string `json:"contexts"`
+		Checks           []struct {
 			Context string `json:"context"`
 		} `json:"checks"`
 	} `json:"required_status_checks"`

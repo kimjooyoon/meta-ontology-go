@@ -2,14 +2,18 @@ package languagesyntax
 
 func finish(report Report) Report {
 	summary := Summary{Total: totalCases, UnregisteredGooo: len(report.Source.UnregisteredGooo),
-		MissingRegistered: len(report.Source.MissingRegistered)}
+		MissingRegistered: len(report.Source.MissingRegistered), CapabilityTotal: CapabilityCaseTotal()}
 	for _, file := range report.Source.GoooFiles {
 		summary.GoooLines += file.GoooLines
 	}
 	for _, item := range report.Cases {
+		capability := item.Definition.Scope == ScopeLanguageCapability
 		switch item.Status {
 		case "SATISFIED":
 			summary.Satisfied++
+			if capability {
+				summary.CapabilitySatisfied++
+			}
 			if item.Definition.Kind == KindValid {
 				summary.ValidCases++
 			} else {
@@ -17,6 +21,9 @@ func finish(report Report) Report {
 			}
 		case "UNRESOLVED":
 			summary.Unresolved++
+			if capability {
+				summary.CapabilityUnresolved++
+			}
 		default:
 			summary.NotSatisfied++
 		}
@@ -28,6 +35,7 @@ func finish(report Report) Report {
 		summary.DiagnosticRejections += boolInt(item.Evidence.DiagnosticRejected)
 	}
 	summary.Executed = summary.Total - summary.Unresolved
+	summary.CapabilityExecuted = summary.CapabilityTotal - summary.CapabilityUnresolved
 	summary.ReadinessBPS = summary.Satisfied * 10_000 / totalCases
 	report.Summary = summary
 	registryDrift := boolInt(report.Source.RegistryDigest != registryDigest())
