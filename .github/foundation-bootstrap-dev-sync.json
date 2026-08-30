@@ -90,9 +90,18 @@
     "disjoint": true,
     "union_count": 29,
     "correction_changed_kernel_paths": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
       ".github/workflows/ci-guardian.yml",
+      "internal/verify/governance_part01.go",
       "scripts/ci-proof/foundation_bootstrap.js",
       "scripts/ci-proof/guardian.js",
+      "scripts/ci-proof/route_test.js"
+    ],
+    "correction_changed_authorized_kernel_paths": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
+      "internal/verify/governance_part01.go",
       "scripts/ci-proof/route_test.js"
     ],
     "remaining_base_satisfied_kernel_paths": [

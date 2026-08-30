@@ -849,6 +849,7 @@ function foundationArtifactScopeIsExact(manifest) {
       && foundation.baseCommitParentSha === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
       && foundation.preCorrectionBaseSnapshot === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
       && exactJsonArray(foundation.correctionChangedPaths, foundationBootstrap.CORRECTION_CHANGED_KERNEL_PATHS)
+      && exactJsonArray(foundation.correctionChangedAuthorizedKernelPaths, foundationBootstrap.CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS)
       && exactJsonArray(foundation.pullKernelPaths, manifest.kernel_paths)
       && exactJsonArray(manifest.kernel_paths, foundationBootstrap.AUTHORIZED_KERNEL_PATHS)
       && exactJsonArray(foundation.observedKernelPaths, foundationBootstrap.EXPECTED_LIVE_KERNEL_PATHS)

@@ -41,11 +41,15 @@ const BASE_DRIFT_KERNEL_PATHS = Object.freeze([
 const ALLOWED_KERNEL_PATHS = Object.freeze([...AUTHORIZED_KERNEL_PATHS, ...BASE_DRIFT_KERNEL_PATHS].sort());
 const PRE_CORRECTION_BASE_SNAPSHOT = '2b1d331c560a58c30def1bb8a5be3f66740bf954';
 const CORRECTION_CHANGED_KERNEL_PATHS = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/ci-governance.json',
   '.github/workflows/ci-guardian.yml',
+  'internal/verify/governance_part01.go',
   'scripts/ci-proof/foundation_bootstrap.js',
   'scripts/ci-proof/guardian.js',
   'scripts/ci-proof/route_test.js',
 ].sort());
+const CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS = Object.freeze(CORRECTION_CHANGED_KERNEL_PATHS.filter((path) => AUTHORIZED_KERNEL_PATHS.includes(path)).sort());
 const CORRECTION_CHANGED_BASE_DRIFT_KERNEL_PATHS = Object.freeze(CORRECTION_CHANGED_KERNEL_PATHS.filter((path) => BASE_DRIFT_KERNEL_PATHS.includes(path)));
 const REMAINING_BASE_SATISFIED_KERNEL_PATHS = Object.freeze(BASE_DRIFT_KERNEL_PATHS.filter((path) => !CORRECTION_CHANGED_BASE_DRIFT_KERNEL_PATHS.includes(path)));
 const EXPECTED_LIVE_KERNEL_PATHS = Object.freeze([...new Set([...AUTHORIZED_KERNEL_PATHS, ...CORRECTION_CHANGED_BASE_DRIFT_KERNEL_PATHS])].sort());
@@ -77,6 +81,7 @@ const FOUNDATION_BOOTSTRAP = Object.freeze({
   authorizedKernelPaths: AUTHORIZED_KERNEL_PATHS,
   baseDriftKernelPaths: BASE_DRIFT_KERNEL_PATHS,
   correctionChangedKernelPaths: CORRECTION_CHANGED_KERNEL_PATHS,
+  correctionChangedAuthorizedKernelPaths: CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS,
   correctionChangedBaseDriftKernelPaths: CORRECTION_CHANGED_BASE_DRIFT_KERNEL_PATHS,
   remainingBaseSatisfiedKernelPaths: REMAINING_BASE_SATISFIED_KERNEL_PATHS,
   expectedLiveKernelPaths: EXPECTED_LIVE_KERNEL_PATHS,
@@ -201,6 +206,7 @@ function foundationBootstrapDecision({pull, result, liveBefore, liveAfter, baseC
     preCorrectionBaseSnapshot: PRE_CORRECTION_BASE_SNAPSHOT,
     baseKernelBlobs,
     preCorrectionKernelBlobs,
+    correctionChangedAuthorizedKernelPaths: CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS,
   };
 }
 
@@ -220,6 +226,7 @@ module.exports = {
   ALLOWED_KERNEL_PATHS,
   AUTHORIZED_KERNEL_PATHS,
   BASE_DRIFT_KERNEL_PATHS,
+  CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS,
   CORRECTION_CHANGED_BASE_DRIFT_KERNEL_PATHS,
   CORRECTION_CHANGED_KERNEL_PATHS,
   EXPECTED_BASE_DRIFT_BLOB_SHAS,

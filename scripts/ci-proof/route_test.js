@@ -71,6 +71,7 @@ assert.equal(normalFoundation.reason, 'FOUNDATION_OVERRIDE_USED=2');
 assert.deepEqual(normalFoundation.observedKernelPaths, foundation.EXPECTED_LIVE_KERNEL_PATHS);
 assert.deepEqual(normalFoundation.pullKernelPaths, foundation.AUTHORIZED_KERNEL_PATHS);
 assert.deepEqual(normalFoundation.alreadySatisfiedByBase, foundation.REMAINING_BASE_SATISFIED_KERNEL_PATHS);
+assert.deepEqual(normalFoundation.correctionChangedAuthorizedKernelPaths, foundation.CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS);
 
 const missingLive = foundationDecision(foundation.AUTHORIZED_KERNEL_PATHS.slice(1));
 assert.equal(missingLive.decision, 'REFUTED');

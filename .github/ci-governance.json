@@ -52,6 +52,19 @@
       ]
     },
     {
+      "branch": "agent/foundation-correction-dev-20260831",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/foundation-bootstrap-dev-sync.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/governance_part01.go",
+        "scripts/ci-proof/foundation_bootstrap.js",
+        "scripts/ci-proof/guardian.js",
+        "scripts/ci-proof/route_test.js"
+      ]
+    },
+    {
       "branch": "agent/live-governance-snapshot-v1",
       "paths": [
         ".github/agent-scope-table.md",
