@@ -29,7 +29,7 @@ func projectionSemanticFields(node semantic.Node) ([]generator.Field, error) {
 	return fields, nil
 }
 func projectionBidirField(field bidir.Field) (generator.Field, error) {
-	typeRefID := field.TypeRef.ID
+	typeRefID := string(field.TypeRef.ID)
 	if typeRefID == "" && field.TypeRef.Name != "" && field.TypeRefUse.ResolvedID != "" {
 		typeRefID = string(field.TypeRefUse.ResolvedID)
 	}
