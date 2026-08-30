@@ -1,0 +1,70 @@
+{
+  "schema": "gooo/evidence-generator/temporal-transition-ticket/vendor-lock/v1",
+  "provenance": {
+    "classification": "GENERATED_VENDOR_IMMUTABLE_INPUT",
+    "repository": "kimjooyoon/gooo-evidence-generator",
+    "tag": "v0.6.1-dev",
+    "release_id": 379352973,
+    "immutable": true,
+    "tag_object_sha": "b11ac2dfb05ef4c7d85bf1fc60c000b2189b2416",
+    "target_commit_sha": "a4d33bc64828a5a8b21838ce4a9976fd34f3f4aa",
+    "spec_checkout_count": 0,
+    "spec_copy_count": 0,
+    "product_evaluator_ownership": 0,
+    "core_evaluator_ownership": 0
+  },
+  "assets": [
+    {
+      "id": 536873848,
+      "name": "gooo-evidence-generator-temporal-transition-v0.6.1-dev.zip",
+      "sha256": "b3c9a1fc09194c9a7e3df662ae9a74589b30749191aa5afd45538e48f24930c5"
+    },
+    {
+      "id": 536873847,
+      "name": "SHA256SUMS",
+      "sha256": "55915a434cd680b236fed1fdb8a3857eb05c3651ecf8835585f5f5ba6cce642a"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "scripts/evaluate-temporal-transition-ticket-v1.sh",
+      "blob_sha": "ad2adb7606763df4a0e9738e2cbcb6e8859daae4",
+      "byte_sha256": "b948fe655d6b4cb40dcdfbd642fff1926c84bf4e0f466644ff5870220f9a09ee"
+    },
+    {
+      "path": "scripts/conform-temporal-transition-ticket-v1.sh",
+      "blob_sha": "be8fdb8aeafb0c013aa9a0b63eba26a6f26b8e51",
+      "byte_sha256": "743d943fb98cdf9e9fe146e99e7eadd231c58912029ae71e53efb8c982af0337"
+    },
+    {
+      "path": "scripts/bind-activity-resolutions.sh",
+      "blob_sha": "014a9c0b2c417620473586277abdcf8b37a25a54",
+      "byte_sha256": "849c8f216ede6badbd3f6e65295ddace10bd2f1f0ea58aaa1242136bb4da11a2"
+    },
+    {
+      "path": "contracts/core-release-lock-v1.json",
+      "blob_sha": "10c9360a1809845c7f7e8453339173db10eccef2",
+      "byte_sha256": "93569020aa98a30bfdfd82430303df4e814ff315cbe6d063683a3e9c1f3a7fc0"
+    },
+    {
+      "path": "contracts/temporal-transition-ticket-v1.json",
+      "blob_sha": "7e05dcb25bf33e0f933cd195f696781f131ca8e0",
+      "byte_sha256": "36dde88b0f1cd89e2198338951100455efcdbdc7009a64ee93b3113f44d99a66"
+    },
+    {
+      "path": "contracts/temporal-transition-ticket-denominator-v1.json",
+      "blob_sha": "4c0439ef7fd6bb18899fb844e8a4deed39a95ded",
+      "byte_sha256": "0d4e6bd525a8cf26b0d1cbd9943ac1de2c0f095511bdf836227b68a953548c6e"
+    },
+    {
+      "path": "fixtures/temporal-transition-ticket/evidence.json",
+      "blob_sha": "84f3a5ab522e15c4b6f425b174d000c0406acd30",
+      "byte_sha256": "1b244af9d56347f628654749f51782810329c0674da5d5233fbb197ea4157898"
+    },
+    {
+      "path": "examples/temporal-transition-ticket/main.gooo",
+      "blob_sha": "f279d2644836f09558994c895302ad4198dfa19c",
+      "byte_sha256": "695764bc9ee743ad06414489bc626000ce1233aa99c9d1af4b0719bdfbbecdec"
+    }
+  ]
+}
