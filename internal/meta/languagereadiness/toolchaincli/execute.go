@@ -1,8 +1,6 @@
 package toolchaincli
 
 import (
-	"reflect"
-
 	cliruntime "github.com/kimjooyoon/meta-ontology-go/internal/toolchaincli"
 )
 
@@ -29,7 +27,7 @@ func executeCase(executor cliruntime.Executor, definition Definition) CaseResult
 	result.ExitMatched = first.ExitCode == definition.ExpectedExit && replay.ExitCode == definition.ExpectedExit
 	result.StdoutMatched = firstOutput.stdoutOK && replayOutput.stdoutOK
 	result.StderrMatched = firstOutput.stderrOK && replayOutput.stderrOK
-	result.ReplayMatched = reflect.DeepEqual(first, replay)
+	result.ReplayMatched = deterministicReplayEqual(first, replay)
 	result.StructuredOutputs = firstOutput.structuredOutputs
 	result.LanguageOperations = firstOutput.languageOperations
 	result.DeclaredCommands = firstOutput.declaredCommands

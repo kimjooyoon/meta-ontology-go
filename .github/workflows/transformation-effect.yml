@@ -1530,7 +1530,6 @@ jobs:
                 exit 1
               }
           done
-          cmp -s "$cli_first/artifact.json" "$cli_replay/artifact.json"
           go run ./cmd/toolchain-cli-witness \
             --root "$GITHUB_WORKSPACE" \
             --executable "$cli_binary" \

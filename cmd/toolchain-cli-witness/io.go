@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	metacli "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli"
 )
 
 func readJSON[T any](filename string) (T, error) {
@@ -32,7 +34,15 @@ func writeOrCheck(output, check string, value any) error {
 		if err != nil {
 			return err
 		}
-		if !bytes.Equal(existing, raw) {
+		canonicalExisting, err := canonicalReplayJSON(existing)
+		if err != nil {
+			return err
+		}
+		canonicalRaw, err := canonicalReplayJSON(raw)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(canonicalExisting, canonicalRaw) {
 			return fmt.Errorf("FAIL_CLOSED: toolchain CLI replay mismatch")
 		}
 		return nil
@@ -41,6 +51,24 @@ func writeOrCheck(output, check string, value any) error {
 		return err
 	}
 	return os.WriteFile(output, raw, 0o644)
+}
+
+func canonicalReplayJSON(raw []byte) ([]byte, error) {
+	var report metacli.Report
+	if err := json.Unmarshal(raw, &report); err != nil {
+		return nil, err
+	}
+	report.Summary.PeakRSSKiB = 0
+	report.ReportDigest = ""
+	for index := range report.Cases {
+		report.Cases[index].First.PeakRSSKiB = 0
+		report.Cases[index].Replay.PeakRSSKiB = 0
+	}
+	canonical, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(canonical, '\n'), nil
 }
 
 func requireExternal(root string, paths ...string) error {

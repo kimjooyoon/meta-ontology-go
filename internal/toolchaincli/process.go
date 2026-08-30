@@ -20,10 +20,14 @@ func invoke(executable, root string, arguments []string) (Observation, error) {
 	err := command.Run()
 	result := Observation{Arguments: append([]string(nil), arguments...), ExitCode: 0,
 		Stdout: stdout.String(), Stderr: stderr.String()}
+	var resourceErr error
+	result.PeakRSSKiB, resourceErr = peakRSSKiB(command.ProcessState)
 	if ctx.Err() != nil {
 		result.ExitCode, result.Failure = -1, "INVOCATION_DEADLINE"
 	} else if stdout.overflow || stderr.overflow {
 		result.ExitCode, result.Failure = -1, "INVOCATION_OUTPUT_LIMIT"
+	} else if resourceErr != nil {
+		result.ExitCode, result.Failure = -1, "INVOCATION_RESOURCE_UNKNOWN"
 	} else if err != nil {
 		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 			result.ExitCode = exitError.ExitCode()

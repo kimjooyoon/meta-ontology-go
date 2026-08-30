@@ -2,6 +2,9 @@ package toolchaincli
 
 func finish(report Report, registryDrift int, unknownReason string) Report {
 	report.Summary = summarize(report.Source, report.Cases, registryDrift)
+	report.ResourceObservationMode = "RUNNER_SCOPED_NONDETERMINISTIC"
+	report.ResourceMeasurementReplayAuthority = false
+	report.PerformanceImprovement = "UNKNOWN"
 	report.RepositoryWrites = report.Summary.RepositoryWrites
 	report.Decision, report.Resolution = DecisionClosed, ResolutionExact
 	report.ReasonCode = "TOOLCHAIN_CLI_CASE_NOT_SATISFIED"

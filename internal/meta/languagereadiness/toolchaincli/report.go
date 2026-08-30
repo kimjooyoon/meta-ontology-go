@@ -10,17 +10,20 @@ type Source struct {
 }
 
 type Report struct {
-	Schema             string       `json:"schema"`
-	Decision           Decision     `json:"decision"`
-	Resolution         Resolution   `json:"resolution"`
-	ReasonCode         string       `json:"reason_code"`
-	Source             Source       `json:"source"`
-	Summary            Summary      `json:"summary"`
-	Cases              []CaseResult `json:"cases"`
-	Indicators         []Indicator  `json:"indicators"`
-	Proofs             []Proof      `json:"proofs"`
-	Stages             []Stage      `json:"stages"`
-	RepositoryWrites   int          `json:"repository_writes"`
-	MutationAuthorized bool         `json:"mutation_authorized"`
-	ReportDigest       string       `json:"report_digest"`
+	Schema                             string       `json:"schema"`
+	Decision                           Decision     `json:"decision"`
+	Resolution                         Resolution   `json:"resolution"`
+	ReasonCode                         string       `json:"reason_code"`
+	Source                             Source       `json:"source"`
+	Summary                            Summary      `json:"summary"`
+	Cases                              []CaseResult `json:"cases"`
+	Indicators                         []Indicator  `json:"indicators"`
+	Proofs                             []Proof      `json:"proofs"`
+	Stages                             []Stage      `json:"stages"`
+	ResourceObservationMode            string       `json:"resource_observation_mode"`
+	ResourceMeasurementReplayAuthority bool         `json:"resource_measurement_replay_authority"`
+	PerformanceImprovement             string       `json:"performance_improvement"`
+	RepositoryWrites                   int          `json:"repository_writes"`
+	MutationAuthorized                 bool         `json:"mutation_authorized"`
+	ReportDigest                       string       `json:"report_digest"`
 }

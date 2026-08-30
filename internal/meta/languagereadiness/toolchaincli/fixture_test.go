@@ -35,7 +35,7 @@ func registryFixture(t interface{ Fatal(...any) }) []byte {
 
 func fakeObservation(arguments []string) cliruntime.Observation {
 	result := cliruntime.Observation{Arguments: append([]string(nil), arguments...),
-		TreeBeforeDigest: testDigest, TreeAfterDigest: testDigest}
+		PeakRSSKiB: 1, TreeBeforeDigest: testDigest, TreeAfterDigest: testDigest}
 	result.ExitCode, result.Stdout, result.Stderr = fakeOutput(strings.Join(arguments, "\x00"))
 	return result
 }
