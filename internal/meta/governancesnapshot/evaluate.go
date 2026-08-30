@@ -13,6 +13,7 @@ type branchPayload struct {
 	Commit    struct {
 		SHA string `json:"sha"`
 	} `json:"commit"`
+	Protection *protectionPayload `json:"protection"`
 }
 
 type protectionPayload struct {
@@ -133,17 +134,27 @@ func parseBranch(input LoadedSnapshot, branch string, parsed *parsedSnapshot) (B
 		return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA}, ""
 	}
 	protected := *value.Protected
-	status, statusReason := parseProtection(input, branch, protected, parsed)
+	status, statusReason, statusSource := parseBranchStatus(input, branch, protected, value.Protection, parsed)
 	if statusReason != "" {
 		return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Protected: protected}, statusReason
 	}
-	return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Available: true, Protected: protected,
+	return BranchEvidence{Branch: branch, CommitSHA: value.Commit.SHA, Available: true, Protected: protected, StatusSource: statusSource,
 		Enforcement: status.enforcement, Contexts: status.contexts}, ""
 }
 
 type protectionObservation struct {
 	enforcement string
 	contexts   []string
+}
+
+func parseBranchStatus(input LoadedSnapshot, branch string, protected bool, inline *protectionPayload, parsed *parsedSnapshot) (protectionObservation, string, string) {
+	_, state := payload(input, branch+"-protection")
+	if state != "PRESENT" && inline != nil {
+		status, reason := parseProtectionValue(protected, inline)
+		return status, reason, "branch-summary"
+	}
+	status, reason := parseProtection(input, branch, protected, parsed)
+	return status, reason, "branch-protection"
 }
 
 func parseProtection(input LoadedSnapshot, branch string, protected bool, parsed *parsedSnapshot) (protectionObservation, string) {
@@ -156,10 +167,15 @@ func parseProtection(input LoadedSnapshot, branch string, protected bool, parsed
 	if err := json.Unmarshal(raw, &value); err != nil {
 		return protectionObservation{}, "MALFORMED_PUBLIC_PAYLOAD"
 	}
+	status, reason := parseProtectionValue(protected, &value)
+	return status, reason
+}
+
+func parseProtectionValue(protected bool, value *protectionPayload) (protectionObservation, string) {
 	if !protected {
 		return protectionObservation{enforcement: "off"}, ""
 	}
-	if value.RequiredStatusChecks == nil {
+	if value == nil || value.RequiredStatusChecks == nil {
 		return protectionObservation{enforcement: "off", contexts: []string{}}, ""
 	}
 	contexts := append([]string(nil), value.RequiredStatusChecks.Contexts...)

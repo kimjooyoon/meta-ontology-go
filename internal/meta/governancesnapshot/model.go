@@ -156,6 +156,7 @@ type BranchEvidence struct {
 	CommitSHA    string   `json:"commit_sha"`
 	Available    bool     `json:"available"`
 	Protected    bool     `json:"protected"`
+	StatusSource string   `json:"status_source"`
 	Enforcement  string   `json:"status_enforcement"`
 	Contexts     []string `json:"required_contexts"`
 }

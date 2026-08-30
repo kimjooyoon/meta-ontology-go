@@ -64,12 +64,22 @@ func normalizedDigest(raw []byte) (string, error) {
 	if err := ensureEOF(decoder); err != nil {
 		return "", err
 	}
-	normalized, err := json.Marshal(value)
+	normalized, err := marshalNormalizedJSON(value)
 	if err != nil {
 		return "", err
 	}
 	sum := sha256.Sum256(normalized)
 	return "sha256:" + hex.EncodeToString(sum[:]), nil
+}
+
+func marshalNormalizedJSON(value any) ([]byte, error) {
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(value); err != nil {
+		return nil, err
+	}
+	return bytes.TrimSuffix(buffer.Bytes(), []byte("\n")), nil
 }
 
 func digestJSON(value any) string {
