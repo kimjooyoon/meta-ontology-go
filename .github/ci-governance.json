@@ -51,6 +51,38 @@
       ]
     },
     {
+      "branch": "agent/foundation-discovery-recovery-20260830",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/feedback-predecessor-witness",
+        "internal/detection/linecaps",
+        "internal/meta/feedbackpredecessor",
+        "internal/meta/generation",
+        "internal/meta/metabinding/registry.go",
+        "internal/meta/sourcepolicy",
+        "internal/verify/foundation_discovery_recovery_scope.go",
+        "internal/verify/foundation_promotion.go",
+        "internal/verify/governance_part01.go",
+        "scripts/ci-proof",
+        "scripts/feedback-predecessor-ci",
+        "scripts/verify"
+      ]
+    },
+    {
+      "branch": "agent/self-improvement-minimal-loop",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-minimal-loop.yml",
+        "examples/self-improvement-minimal-loop",
+        "internal/meta/selfimprovementloop",
+        "internal/verify/self_improvement_minimal_loop_scope.go",
+        "scripts/self-improvement-minimal-loop"
+      ]
+    },
+    {
       "branch": "agent/foundation-bootstrap-dev-sync-20260831",
       "paths": [
         ".github/agent-scope-table.md",

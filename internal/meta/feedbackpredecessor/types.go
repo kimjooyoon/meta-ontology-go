@@ -60,18 +60,18 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema              string      `json:"schema"`
-	Repository          string      `json:"repository"`
-	PredecessorSHA      string      `json:"predecessor_sha"`
-	Decision            string      `json:"decision"`
-	Reason              string      `json:"reason"`
-	Resolution          string      `json:"resolution"`
-	NextOperation       string      `json:"next_operation"`
-	PromotionAuthorized bool        `json:"promotion_authorized"`
-	ProofChoice         string      `json:"proof_choice,omitempty"`
+	Schema              string              `json:"schema"`
+	Repository          string              `json:"repository"`
+	PredecessorSHA      string              `json:"predecessor_sha"`
+	Decision            string              `json:"decision"`
+	Reason              string              `json:"reason"`
+	Resolution          string              `json:"resolution"`
+	NextOperation       string              `json:"next_operation"`
+	PromotionAuthorized bool                `json:"promotion_authorized"`
+	ProofChoice         string              `json:"proof_choice,omitempty"`
 	Foundation          *FoundationEvidence `json:"foundation,omitempty"`
-	Selected            *Selection  `json:"selected,omitempty"`
-	Summary             Summary     `json:"summary"`
-	Indicators          []Indicator `json:"indicators"`
-	ReportDigest        string      `json:"report_digest"`
+	Selected            *Selection          `json:"selected,omitempty"`
+	Summary             Summary             `json:"summary"`
+	Indicators          []Indicator         `json:"indicators"`
+	ReportDigest        string              `json:"report_digest"`
 }
