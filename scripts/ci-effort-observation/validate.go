@@ -32,6 +32,11 @@ func validateStaticInputs(manifest Manifest, contract Contract, program []byte) 
 		if operation.ID == "" || operation.JobName == "" || operation.StepName == "" || operation.Kind == "" || len(operation.Command) == 0 || operation.ProofObligationID == "" || seen[operation.ID] {
 			return fmt.Errorf("operation manifest identity is invalid")
 		}
+		for event, step := range operation.EventStepNames {
+			if event == "" || step == "" {
+				return fmt.Errorf("operation event step binding is invalid")
+			}
+		}
 		seen[operation.ID] = true
 	}
 	if contract.Schema != contractSchema || contract.ID == "" || len(contract.Cells) != len(expectedCells()) || contract.GraphProgram == "" {
@@ -73,7 +78,13 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if len(report.Operations) != len(manifest.Operations) || report.Accounting.ManifestOperations != len(manifest.Operations) {
 		return fmt.Errorf("operation denominator is invalid")
 	}
-	if report.UnknownEvidence == nil && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum <= 0) {
+	if report.RuntimeResolution != "EXACT" && report.RuntimeResolution != "BOUNDED/SOURCE_SECOND" {
+		return fmt.Errorf("runtime resolution is invalid")
+	}
+	if report.Window.TimestampResolutionMS != 1000 {
+		return fmt.Errorf("timestamp resolution is invalid")
+	}
+	if report.UnknownEvidence == nil && (report.Window.WallMS <= 0 || report.Window.JobWallMSSum <= 0 || report.Window.StepWallMSSum < 0 || report.Window.StepWallMSSum == 0 && report.Window.BelowSourceResolutionSteps == 0) {
 		return fmt.Errorf("workflow runtime is incomplete")
 	}
 	if report.RepositoryStatus.Writes != report.RepositoryWrites || report.LocalTestExecutions != 0 || report.CrossProjectRequiredGates != 0 || report.Improvement != "UNKNOWN" {
@@ -88,7 +99,7 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if err := validateJobs(report.Jobs, report.HeadSHA); err != nil {
 		return err
 	}
-	if err := validateOperations(report.Operations, manifest.Operations, manifest.WorkflowSource, workflow); err != nil {
+	if err := validateOperations(report.Operations, manifest.Operations, manifest.WorkflowSource, workflow, report.SourceEvent); err != nil {
 		return err
 	}
 	if report.Accounting.Executed+report.Accounting.Skipped+report.Accounting.Unknown+report.Accounting.Rejected != report.Accounting.ManifestOperations {
@@ -147,8 +158,11 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 func validateJobs(jobs []JobObservation, head string) error {
 	seen := map[int64]bool{}
 	for _, job := range jobs {
-		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil {
+		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil && !job.BelowSourceResolution {
 			return fmt.Errorf("job evidence is invalid")
+		}
+		if job.BelowSourceResolution && job.StartedAt == "" || job.BelowSourceResolution && job.StartedAt != job.CompletedAt {
+			return fmt.Errorf("job bounded runtime is invalid")
 		}
 		seen[job.ID] = true
 		if job.Unknown != nil && !validUnknown(job.Unknown) {
@@ -158,8 +172,14 @@ func validateJobs(jobs []JobObservation, head string) error {
 			if step.Name == "" || step.Conclusion == "skipped" {
 				continue
 			}
-			if step.Status == "completed" && step.WallMS <= 0 && step.Unknown == nil {
+			if step.Status == "completed" && step.WallMS <= 0 && step.Unknown == nil && !step.BelowSourceResolution && step.RejectionReason == "" {
 				return fmt.Errorf("step runtime is invalid")
+			}
+			if step.BelowSourceResolution && step.StartedAt == "" || step.BelowSourceResolution && step.StartedAt != step.CompletedAt {
+				return fmt.Errorf("step bounded runtime is invalid")
+			}
+			if step.RejectionReason != "" && !validRejectionReason(step.RejectionReason) {
+				return fmt.Errorf("step rejection evidence is incomplete")
 			}
 			if step.Unknown != nil && !validUnknown(step.Unknown) {
 				return fmt.Errorf("step unknown evidence is incomplete")
@@ -169,7 +189,7 @@ func validateJobs(jobs []JobObservation, head string) error {
 	return nil
 }
 
-func validateOperations(operations []OperationObservation, specs []OperationSpec, workflowPath string, workflow []byte) error {
+func validateOperations(operations []OperationObservation, specs []OperationSpec, workflowPath string, workflow []byte, sourceEvent string) error {
 	seen := map[string]bool{}
 	for _, operation := range operations {
 		if operation.ID == "" || seen[operation.ID] || len(operation.Command) == 0 || operation.EvidenceDigest != operationDigest(operation) {
@@ -183,7 +203,11 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 				break
 			}
 		}
-		if spec == nil || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != spec.StepName || !sameStrings(operation.Command, spec.Command) {
+		expectedEvidenceStep := ""
+		if spec != nil {
+			expectedEvidenceStep = operationEvidenceStep(*spec, sourceEvent)
+		}
+		if spec == nil || operation.ProofObligationID != spec.ProofObligationID || operation.JobName != spec.JobName || operation.StepName != spec.StepName || operation.EvidenceStepName != expectedEvidenceStep || operation.GuardStepName != spec.GuardStepName || !sameStrings(operation.Command, spec.Command) {
 			return fmt.Errorf("operation manifest binding is invalid")
 		}
 		if operation.State == "" || (operation.State != "EXECUTED" && operation.State != "SKIPPED" && operation.State != "UNKNOWN" && operation.State != "REJECTED") {
@@ -198,9 +222,12 @@ func validateOperations(operations []OperationObservation, specs []OperationSpec
 		if operation.State == "REJECTED" && !validRejectionReason(operation.RejectionReason) {
 			return fmt.Errorf("operation rejection evidence is incomplete")
 		}
-		contextDigest, err := bindWorkflowCommand(workflow, workflowPath, *spec)
+		contextDigest, err := bindWorkflowCommandForEvent(workflow, workflowPath, *spec, sourceEvent)
 		if err != nil || !operation.CommandBound || operation.WorkflowSourcePath != workflowPath || operation.WorkflowSourceDigest != digestBytes(workflow) || operation.CommandContextDigest != contextDigest {
 			return fmt.Errorf("operation command context is unbound")
+		}
+		if spec.GuardStepName != "" && (!operation.GuardBound || operation.GuardStepStatus != "completed" || operation.GuardStepConclusion != "success") {
+			return fmt.Errorf("operation guard binding is incomplete")
 		}
 	}
 	return nil
@@ -272,7 +299,7 @@ func validUnknown(value *Unknown) bool {
 
 func validRejectionReason(value string) bool {
 	switch value {
-	case "DUPLICATE_JOB_OBSERVATION", "DUPLICATE_STEP_OBSERVATION", "OPERATION_TIMESTAMP_MALFORMED", "OPERATION_DURATION_NEGATIVE":
+	case "DUPLICATE_JOB_OBSERVATION", "DUPLICATE_STEP_OBSERVATION", "DUPLICATE_GUARD_STEP_OBSERVATION", "GUARD_STEP_NOT_SUCCESSFUL", "OPERATION_TIMESTAMP_MALFORMED", "OPERATION_DURATION_NEGATIVE":
 		return true
 	default:
 		return false
@@ -392,10 +419,10 @@ func humanReport(report Report) string {
 	fmt.Fprintf(&builder, "head=%s source_run=%d workflow=%s event=%s\n", report.HeadSHA, report.SourceRunID, report.SourceWorkflow, report.SourceEvent)
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
 	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s)\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
-	fmt.Fprintf(&builder, "job wall sum=%d ms; step wall sum=%d ms\n", report.Window.JobWallMSSum, report.Window.StepWallMSSum)
+	fmt.Fprintf(&builder, "job wall sum=%d ms; step wall sum=%d ms; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d\n", report.Window.JobWallMSSum, report.Window.StepWallMSSum, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps)
 	fmt.Fprintf(&builder, "operations manifest=%d executed=%d skipped=%d unknown=%d rejected=%d\n", report.Accounting.ManifestOperations, report.Accounting.Executed, report.Accounting.Skipped, report.Accounting.Unknown, report.Accounting.Rejected)
 	for _, operation := range report.Operations {
-		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)
+		fmt.Fprintf(&builder, "operation %s proof=%s kind=%s state=%s job=%q step=%q evidence_step=%q guard_step=%q guard_bound=%t guard_status=%q/%q wall_ms=%d command_bound=%t command_context=%s command=%q\n", operation.ID, operation.ProofObligationID, operation.Kind, operation.State, operation.JobName, operation.StepName, operation.EvidenceStepName, operation.GuardStepName, operation.GuardBound, operation.GuardStepStatus, operation.GuardStepConclusion, operation.WallMS, operation.CommandBound, operation.CommandContextDigest, operation.Command)
 	}
 	fmt.Fprintf(&builder, "reuse decision=%s/%s reason=%s requests=%d prior_candidates=%d valid_prior=%d reused=%d rejected=%d unknown=%d skipped=%d reused_commands=%d reused_tests=%d\n", report.Reuse.Decision, report.Reuse.Resolution, report.Reuse.Reason, report.Reuse.Requests, report.Reuse.PriorCandidates, report.Reuse.PriorReceiptsValid, report.Reuse.Reused, report.Reuse.Rejected, report.Reuse.Unknown, report.Reuse.Skipped, report.Reuse.ReusedCommands, report.Reuse.ReusedTests)
 	fmt.Fprintf(&builder, "reuse key head=%s input=%s toolchain=%s command_context=%s environment=%s dependency_graph=%s expected_result=%s opentofu_release_asset=%s\n", report.Reuse.Key.HeadSHA, report.Reuse.Key.InputDigest, report.Reuse.Key.ToolchainDigest, report.Reuse.Key.CommandContextDigest, report.Reuse.Key.EnvironmentAllowlistDigest, report.Reuse.Key.DependencyGraphDigest, report.Reuse.Key.ExpectedResultDigest, report.Reuse.Key.OpenTofuReleaseDigest)

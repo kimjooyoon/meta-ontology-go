@@ -127,7 +127,7 @@ jobs:
           fi
           cmp -s "$root/first/report.json" "$root/second/report.json"
           cmp -s "$root/first/report.md" "$root/second/report.md"
-          jq -e --arg head "$HEAD_SHA" '.schema == "gooo/ci-effort-observation/v1" and .head_sha == $head and .decision == "PASS" and .resolution == "EXACT" and .accounting.unknown == 0 and .accounting.rejected == 0 and .reuse.reused == 0 and .reuse.prior_candidates == 0 and .repository_writes == 0 and .local_test_executions == 0 and .cross_project_required_gates == 0 and .improvement == "UNKNOWN" and (.cells | length) == 8 and .graph.activity_count == 8 and .graph.binding_count == 8' "$root/first/report.json" > /dev/null
+          jq -e --arg head "$HEAD_SHA" '.schema == "gooo/ci-effort-observation/v1" and .head_sha == $head and .decision == "PASS" and .resolution == "EXACT" and (.runtime_resolution == "EXACT" or .runtime_resolution == "BOUNDED/SOURCE_SECOND") and .accounting.unknown == 0 and .accounting.rejected == 0 and .reuse.reused == 0 and .reuse.prior_candidates == 0 and .repository_writes == 0 and .local_test_executions == 0 and .cross_project_required_gates == 0 and .improvement == "UNKNOWN" and (.cells | length) == 8 and .graph.activity_count == 8 and .graph.binding_count == 8' "$root/first/report.json" > /dev/null
           cat "$root/first/report.md" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact CI effort receipt

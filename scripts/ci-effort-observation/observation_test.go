@@ -26,6 +26,41 @@ func TestObserveStepsIgnoresActionCleanupSteps(t *testing.T) {
 	}
 }
 
+func TestEqualNonOperationStepIsBoundedNotMissing(t *testing.T) {
+	steps, total, err := observeSteps([]APIStep{{Name: "Complete job", Status: "completed", Conclusion: "success",
+		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:00Z"}})
+	if err != nil || total != 0 || len(steps) != 1 || steps[0].Unknown != nil || !steps[0].BelowSourceResolution {
+		t.Fatalf("equal timestamp was not bounded: steps=%+v total=%d err=%v", steps, total, err)
+	}
+}
+
+func TestOperationBindsEvidenceAndGuardSteps(t *testing.T) {
+	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Evidence\n        run: gofmt -l .\n      - name: Guard\n        run: test -s receipt.json\n")
+	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Guard", EvidenceStepName: "Evidence",
+		GuardStepName: "Guard", Kind: "VERIFICATION", Command: []string{"gofmt", "-l", "."}, ProofObligationID: "ci-effort/check"}
+	j := APIJob{ID: 1, Name: "check", Conclusion: "success", Steps: []APIStep{
+		{Name: "Evidence", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z"},
+		{Name: "Guard", Status: "completed", Conclusion: "success", StartedAt: "2026-08-30T00:00:01Z", CompletedAt: "2026-08-30T00:00:01Z"},
+	}}
+	operation := observeOperation(spec, []APIJob{j}, ".github/workflows/ci.yml", source, nil)
+	if operation.State != "EXECUTED" || operation.EvidenceStepName != "Evidence" || !operation.GuardBound || operation.GuardStepName != "Guard" {
+		t.Fatalf("evidence/guard binding was not preserved: %+v", operation)
+	}
+}
+
+func TestEventSpecificOperationUsesMatchingPolicyStep(t *testing.T) {
+	source := []byte("jobs:\n  policy:\n    name: policy\n    steps:\n      - name: Pull request policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n      - name: Push policy\n        run: bash ./scripts/verify/validate-source-observations.sh $METRICS_DIR\n")
+	spec := OperationSpec{ID: "policy", JobName: "policy", StepName: "Push policy", EventStepNames: map[string]string{
+		"pull_request": "Pull request policy", "push": "Push policy",
+	}, Kind: "VERIFICATION", Command: []string{"bash", "./scripts/verify/validate-source-observations.sh", "$METRICS_DIR"}, ProofObligationID: "ci-effort/policy"}
+	job := APIJob{ID: 1, Name: "policy", Conclusion: "success", Steps: []APIStep{{Name: "Pull request policy", Status: "completed", Conclusion: "success",
+		StartedAt: "2026-08-30T00:00:00Z", CompletedAt: "2026-08-30T00:00:01Z"}}}
+	operation := observeOperation(spec, []APIJob{job}, ".github/workflows/ci.yml", source, nil, "pull_request")
+	if operation.State != "EXECUTED" || operation.EvidenceStepName != "Pull request policy" {
+		t.Fatalf("event-specific policy step was not selected: %+v", operation)
+	}
+}
+
 func TestBoundZeroDurationRequiredStepIsTypedUnknown(t *testing.T) {
 	source := []byte("jobs:\n  check:\n    name: check\n    steps:\n      - name: Verify\n        run: go test ./...\n")
 	spec := OperationSpec{ID: "check", JobName: "check", StepName: "Verify", Kind: "VERIFICATION", Command: []string{"go", "test", "./..."}, ProofObligationID: "ci-effort/check"}

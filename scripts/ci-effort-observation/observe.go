@@ -87,7 +87,7 @@ func buildReport(config Config) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	operations, accounting := observeOperations(manifest.Operations, jobs.Jobs, manifest.WorkflowSource, workflowBytes, workflowErr)
+	operations, accounting := observeOperations(manifest.Operations, jobs.Jobs, manifest.WorkflowSource, workflowBytes, workflowErr, source.Event)
 	openTofu, err := observeOpenTofu(config.OpenTofuPath, config.OpenTofuMetaPath, source.HeadSHA)
 	if err != nil {
 		return Report{}, err
@@ -106,7 +106,7 @@ func buildReport(config Config) (Report, error) {
 		SourceWorkflow: manifest.Workflow, SourceEvent: source.Event, SourceRef: source.Ref,
 		HeadSHA: source.HeadSHA, SourceRunConclusion: source.Conclusion, SourceRunID: source.ID, SourceRunAttempt: source.RunAttempt,
 		SourceRunURL: source.HTMLURL, WorkflowSourcePath: manifest.WorkflowSource, WorkflowSourceDigest: digestIfPresent(workflowBytes),
-		Window: window, Jobs: observedJobs, Operations: operations,
+		Window: window, RuntimeResolution: runtimeResolution(window), Jobs: observedJobs, Operations: operations,
 		Accounting: accounting, Reuse: reuse, OpenTofu: openTofu,
 		OperationManifestDigest: digestBytes(manifestBytes),
 		Graph:                   graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
@@ -129,61 +129,71 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 	result := make([]JobObservation, 0, len(sorted))
 	var window WorkflowWindow
 	for index, job := range sorted {
-		wall, err := durationMS(job.StartedAt, job.CompletedAt)
+		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
 		var unknown *Unknown
-		if err != nil {
-			if job.StartedAt != "" && job.CompletedAt != "" {
-				return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
-			}
+		switch {
+		case duration.missing:
 			unknown = jobRuntimeUnknown()
+		case duration.rejection != "":
+			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %s", job.ID, duration.rejection)
 		}
-		steps, stepWall, err := observeSteps(job.Steps)
+		steps, stepWall, belowSteps, err := observeStepsWithResolution(job.Steps)
 		if err != nil {
 			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
 		}
 		result = append(result, JobObservation{ID: job.ID, Name: job.Name, Status: job.Status,
 			Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, StartedAt: job.StartedAt,
-			CompletedAt: job.CompletedAt, WallMS: wall, Steps: steps, Unknown: unknown})
+			CompletedAt: job.CompletedAt, WallMS: duration.wall, BelowSourceResolution: duration.below,
+			Steps: steps, Unknown: unknown})
 		if job.StartedAt != "" && (index == 0 || window.StartAt == "" || job.StartedAt < window.StartAt) {
 			window.StartAt = job.StartedAt
 		}
 		if job.CompletedAt != "" && (index == 0 || window.EndAt == "" || job.CompletedAt > window.EndAt) {
 			window.EndAt = job.CompletedAt
 		}
-		window.JobWallMSSum += wall
+		window.JobWallMSSum += duration.wall
 		window.StepWallMSSum += stepWall
+		if duration.below {
+			window.BelowSourceResolutionJobs++
+		}
+		window.BelowSourceResolutionSteps += belowSteps
 	}
-	window.WallMS, _ = durationMS(window.StartAt, window.EndAt)
+	window.WallMS = observeTimestamp(window.StartAt, window.EndAt).wall
+	window.TimestampResolutionMS = 1000
 	return result, window, nil
 }
 
 func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
+	steps, total, _, err := observeStepsWithResolution(input)
+	return steps, total, err
+}
+
+func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, error) {
 	result := make([]StepObservation, 0, len(input))
 	var total int64
+	belowCount := 0
 	for _, step := range input {
 		if isCleanupStep(step.Name) {
 			continue
 		}
-		wall := int64(0)
+		duration := observeTimestamp(step.StartedAt, step.CompletedAt)
 		var unknown *Unknown
 		if step.Conclusion == "skipped" {
 			// A skipped step has no execution interval to observe.
-		} else if step.StartedAt == "" || step.CompletedAt == "" {
+		} else if duration.missing {
 			unknown = stepRuntimeUnknown()
 		} else {
-			var err error
-			wall, err = durationMS(step.StartedAt, step.CompletedAt)
-			if err != nil {
-				unknown = stepRuntimeUnknown()
-			} else {
-				total += wall
+			total += duration.wall
+			if duration.below {
+				belowCount++
 			}
 		}
 		result = append(result, StepObservation{Name: step.Name, Status: step.Status,
 			Conclusion: step.Conclusion, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt,
-			WallMS: wall, Unknown: unknown})
+			WallMS: duration.wall, BelowSourceResolution: duration.below,
+			RejectionReason: duration.rejection, Unknown: unknown})
 	}
-	return result, total, nil
+	return result, total, belowCount, nil
 }
 
 func isCleanupStep(name string) bool {
@@ -191,36 +201,67 @@ func isCleanupStep(name string) bool {
 }
 
 func durationMS(start, end string) (int64, error) {
-	if start == "" || end == "" {
+	duration := observeTimestamp(start, end)
+	if duration.missing {
 		return 0, fmt.Errorf("missing timestamp")
+	}
+	if duration.rejection != "" {
+		return 0, fmt.Errorf("%s", duration.rejection)
+	}
+	if duration.below {
+		return 0, fmt.Errorf("non-positive duration")
+	}
+	return duration.wall, nil
+}
+
+type timestampObservation struct {
+	wall      int64
+	below     bool
+	missing   bool
+	rejection string
+}
+
+func observeTimestamp(start, end string) timestampObservation {
+	if start == "" || end == "" {
+		return timestampObservation{missing: true}
 	}
 	begin, err := time.Parse(time.RFC3339Nano, start)
 	if err != nil {
-		return 0, fmt.Errorf("invalid start timestamp: %w", err)
+		return timestampObservation{rejection: "OPERATION_TIMESTAMP_MALFORMED"}
 	}
 	finish, err := time.Parse(time.RFC3339Nano, end)
 	if err != nil {
-		return 0, fmt.Errorf("invalid end timestamp: %w", err)
+		return timestampObservation{rejection: "OPERATION_TIMESTAMP_MALFORMED"}
+	}
+	if finish.Before(begin) {
+		return timestampObservation{rejection: "OPERATION_DURATION_NEGATIVE"}
+	}
+	if finish.Equal(begin) {
+		return timestampObservation{below: true}
 	}
 	delta := finish.Sub(begin)
-	if delta <= 0 {
-		return 0, fmt.Errorf("non-positive duration")
-	}
-	value := int64(delta / time.Millisecond)
+	wall := int64(delta / time.Millisecond)
 	if delta%time.Millisecond != 0 {
-		value++
+		wall++
 	}
-	if value == 0 {
-		value = 1
+	if wall == 0 {
+		wall = 1
 	}
-	return value, nil
+	return timestampObservation{wall: wall}
 }
 
-func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error) ([]OperationObservation, Accounting) {
+func runtimeResolution(window WorkflowWindow) string {
+	if window.BelowSourceResolutionJobs > 0 || window.BelowSourceResolutionSteps > 0 {
+		return "BOUNDED/SOURCE_SECOND"
+	}
+	return "EXACT"
+}
+
+func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error, sourceEvent string) ([]OperationObservation, Accounting) {
 	result := make([]OperationObservation, 0, len(specs))
 	accounting := Accounting{ManifestOperations: len(specs)}
 	for _, spec := range specs {
-		result = append(result, observeOperation(spec, jobs, workflowPath, workflow, workflowErr))
+		result = append(result, observeOperation(spec, jobs, workflowPath, workflow, workflowErr, sourceEvent))
 		switch result[len(result)-1].State {
 		case "EXECUTED":
 			accounting.Executed++
@@ -245,15 +286,26 @@ func observeOperations(specs []OperationSpec, jobs []APIJob, workflowPath string
 	return result, accounting
 }
 
-func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error) OperationObservation {
+func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, workflow []byte, workflowErr error, sourceEvents ...string) OperationObservation {
+	sourceEvent := ""
+	if len(sourceEvents) > 0 {
+		sourceEvent = sourceEvents[0]
+	}
+	evidenceStep := operationEvidenceStep(spec, sourceEvent)
 	base := OperationObservation{ID: spec.ID, Kind: spec.Kind, ProofObligationID: spec.ProofObligationID,
-		JobName: spec.JobName, StepName: spec.StepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
+		JobName: spec.JobName, StepName: spec.StepName, EvidenceStepName: evidenceStep,
+		GuardStepName: spec.GuardStepName, Command: append([]string(nil), spec.Command...), State: "UNKNOWN"}
+	if evidenceStep == "" {
+		base.Unknown = operationEventUnknown()
+		base.EvidenceDigest = operationDigest(base)
+		return base
+	}
 	if workflowErr != nil || len(workflow) == 0 {
 		base.Unknown = commandContextUnknown()
 		base.EvidenceDigest = operationDigest(base)
 		return base
 	}
-	contextDigest, err := bindWorkflowCommand(workflow, workflowPath, spec)
+	contextDigest, err := bindWorkflowCommandForEvent(workflow, workflowPath, spec, sourceEvent)
 	if err != nil {
 		base.Unknown = commandContextUnknown()
 		base.EvidenceDigest = operationDigest(base)
@@ -280,7 +332,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	base.JobID, base.JobConclusion = job.ID, job.Conclusion
 	matches := make([]APIStep, 0, 1)
 	for _, step := range job.Steps {
-		if step.Name == spec.StepName {
+		if step.Name == evidenceStep {
 			matches = append(matches, step)
 		}
 	}
@@ -296,29 +348,53 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	step := matches[0]
 	base.StepStatus, base.StepConclusion = step.Status, step.Conclusion
 	base.StartedAt, base.CompletedAt = step.StartedAt, step.CompletedAt
+	if spec.GuardStepName != "" {
+		guards := namedSteps(job.Steps, spec.GuardStepName)
+		if len(guards) != 1 {
+			if len(guards) > 1 {
+				base.State, base.RejectionReason = "REJECTED", "DUPLICATE_GUARD_STEP_OBSERVATION"
+			} else {
+				base.Unknown = operationEvidenceUnknown("GUARD_STEP_OBSERVATION_MISSING")
+			}
+			base.EvidenceDigest = operationDigest(base)
+			return base
+		}
+		guard := guards[0]
+		base.GuardStepStatus, base.GuardStepConclusion = guard.Status, guard.Conclusion
+		if guard.Status != "completed" || guard.Conclusion != "success" {
+			base.State, base.RejectionReason = "REJECTED", "GUARD_STEP_NOT_SUCCESSFUL"
+			base.EvidenceDigest = operationDigest(base)
+			return base
+		}
+		base.GuardBound = true
+	}
 	if step.Conclusion == "skipped" {
 		base.State = "SKIPPED"
 	} else if step.Status == "completed" && step.Conclusion != "" && step.StartedAt != "" && step.CompletedAt != "" {
-		wall, durationErr := durationMS(step.StartedAt, step.CompletedAt)
-		if durationErr != nil {
-			started, startErr := time.Parse(time.RFC3339Nano, step.StartedAt)
-			completed, endErr := time.Parse(time.RFC3339Nano, step.CompletedAt)
-			switch {
-			case startErr != nil || endErr != nil:
-				base.State, base.RejectionReason = "REJECTED", "OPERATION_TIMESTAMP_MALFORMED"
-			case completed.Before(started):
-				base.State, base.RejectionReason = "REJECTED", "OPERATION_DURATION_NEGATIVE"
-			default:
-				base.Unknown = operationDurationUnknown()
-			}
-		} else {
-			base.State, base.WallMS = "EXECUTED", wall
+		duration := observeTimestamp(step.StartedAt, step.CompletedAt)
+		switch {
+		case duration.rejection != "":
+			base.State, base.RejectionReason = "REJECTED", duration.rejection
+		case duration.below:
+			base.Unknown = operationDurationUnknown()
+		default:
+			base.State, base.WallMS = "EXECUTED", duration.wall
 		}
 	} else {
 		base.Unknown = operationTimestampMissingUnknown()
 	}
 	base.EvidenceDigest = operationDigest(base)
 	return base
+}
+
+func namedSteps(steps []APIStep, name string) []APIStep {
+	result := make([]APIStep, 0, 1)
+	for _, step := range steps {
+		if step.Name == name {
+			result = append(result, step)
+		}
+	}
+	return result
 }
 
 func commandContextUnknown() *Unknown {
@@ -339,6 +415,11 @@ func stepRuntimeUnknown() *Unknown {
 func operationEvidenceUnknown(reason string) *Unknown {
 	return &Unknown{Stage: "OBSERVE", Step: "READ_OPERATION_RECEIPT", Reason: reason,
 		UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_OPERATION_RECEIPT", BlockedBy: []string{}}
+}
+
+func operationEventUnknown() *Unknown {
+	return &Unknown{Stage: "OBSERVE", Step: "BIND_EVENT_OPERATION", Reason: "EVENT_OPERATION_STEP_MISSING",
+		UnknownClass: "AMBIGUOUS", NextOperation: "RESTORE_EVENT_OPERATION_BINDING", BlockedBy: []string{}}
 }
 
 func operationTimestampMissingUnknown() *Unknown {

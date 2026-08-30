@@ -6,11 +6,19 @@ import (
 )
 
 func bindWorkflowCommand(source []byte, path string, spec OperationSpec) (string, error) {
+	return bindWorkflowCommandForEvent(source, path, spec, "")
+}
+
+func bindWorkflowCommandForEvent(source []byte, path string, spec OperationSpec, event string) (string, error) {
 	job, ok := namedYAMLBlock(string(source), "name: "+spec.JobName, 2)
 	if !ok {
 		return "", fmt.Errorf("workflow job binding is missing for %s", spec.ID)
 	}
-	step, ok := namedYAMLBlock(job, "- name: "+spec.StepName, 6)
+	stepName := operationEvidenceStep(spec, event)
+	if stepName == "" {
+		return "", fmt.Errorf("workflow event step binding is missing for %s", spec.ID)
+	}
+	step, ok := namedYAMLBlock(job, "- name: "+stepName, 6)
 	run := ""
 	if ok {
 		run, ok = workflowRunText(step)
@@ -21,10 +29,20 @@ func bindWorkflowCommand(source []byte, path string, spec OperationSpec) (string
 		return "", fmt.Errorf("workflow command binding is missing for %s", spec.ID)
 	}
 	evidence := struct {
-		Path, SourceDigest, Job, Step, Run string
-		Command                            []string
-	}{path, digestBytes(source), spec.JobName, spec.StepName, run, spec.Command}
+		Path, SourceDigest, Job, Step, Guard, Event, Run string
+		Command                                      []string
+	}{path, digestBytes(source), spec.JobName, stepName, spec.GuardStepName, event, run, spec.Command}
 	return digestJSON(evidence), nil
+}
+
+func operationEvidenceStep(spec OperationSpec, event string) string {
+	if spec.EventStepNames != nil && spec.EventStepNames[event] != "" {
+		return spec.EventStepNames[event]
+	}
+	if spec.EvidenceStepName != "" {
+		return spec.EvidenceStepName
+	}
+	return spec.StepName
 }
 
 func unnamedWorkflowRun(job string, command []string) (string, bool) {

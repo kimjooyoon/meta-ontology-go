@@ -81,6 +81,9 @@ type OperationSpec struct {
 	ID                string   `json:"id"`
 	JobName           string   `json:"job_name"`
 	StepName          string   `json:"step_name"`
+	EvidenceStepName  string   `json:"evidence_step,omitempty"`
+	GuardStepName     string   `json:"guard_step,omitempty"`
+	EventStepNames    map[string]string `json:"event_step_names,omitempty"`
 	Kind              string   `json:"kind"`
 	Command           []string `json:"command"`
 	ProofObligationID string   `json:"proof_obligation_id"`
@@ -110,34 +113,40 @@ type CellSpec struct {
 }
 
 type JobObservation struct {
-	ID          int64             `json:"id"`
-	Name        string            `json:"name"`
-	Status      string            `json:"status"`
-	Conclusion  string            `json:"conclusion"`
-	HeadSHA     string            `json:"head_sha"`
-	StartedAt   string            `json:"started_at"`
-	CompletedAt string            `json:"completed_at"`
-	WallMS      int64             `json:"wall_ms"`
-	Steps       []StepObservation `json:"steps"`
-	Unknown     *Unknown          `json:"unknown,omitempty"`
+	ID                    int64             `json:"id"`
+	Name                  string            `json:"name"`
+	Status                string            `json:"status"`
+	Conclusion            string            `json:"conclusion"`
+	HeadSHA               string            `json:"head_sha"`
+	StartedAt             string            `json:"started_at"`
+	CompletedAt           string            `json:"completed_at"`
+	WallMS                int64             `json:"wall_ms"`
+	BelowSourceResolution bool              `json:"below_source_resolution,omitempty"`
+	Steps                 []StepObservation `json:"steps"`
+	Unknown               *Unknown          `json:"unknown,omitempty"`
 }
 
 type StepObservation struct {
-	Name        string   `json:"name"`
-	Status      string   `json:"status"`
-	Conclusion  string   `json:"conclusion"`
-	StartedAt   string   `json:"started_at"`
-	CompletedAt string   `json:"completed_at"`
-	WallMS      int64    `json:"wall_ms"`
-	Unknown     *Unknown `json:"unknown,omitempty"`
+	Name                  string   `json:"name"`
+	Status                string   `json:"status"`
+	Conclusion            string   `json:"conclusion"`
+	StartedAt             string   `json:"started_at"`
+	CompletedAt           string   `json:"completed_at"`
+	WallMS                int64    `json:"wall_ms"`
+	BelowSourceResolution bool     `json:"below_source_resolution,omitempty"`
+	RejectionReason       string   `json:"rejection_reason,omitempty"`
+	Unknown               *Unknown `json:"unknown,omitempty"`
 }
 
 type WorkflowWindow struct {
-	StartAt       string `json:"start_at"`
-	EndAt         string `json:"end_at"`
-	WallMS        int64  `json:"wall_ms"`
-	JobWallMSSum  int64  `json:"job_wall_ms_sum"`
-	StepWallMSSum int64  `json:"step_wall_ms_sum"`
+	StartAt                    string `json:"start_at"`
+	EndAt                      string `json:"end_at"`
+	WallMS                     int64  `json:"wall_ms"`
+	JobWallMSSum               int64  `json:"job_wall_ms_sum"`
+	StepWallMSSum              int64  `json:"step_wall_ms_sum"`
+	TimestampResolutionMS      int64  `json:"timestamp_resolution_ms"`
+	BelowSourceResolutionJobs  int    `json:"below_source_resolution_jobs"`
+	BelowSourceResolutionSteps int    `json:"below_source_resolution_steps"`
 }
 
 type OperationObservation struct {
@@ -146,6 +155,8 @@ type OperationObservation struct {
 	ProofObligationID    string   `json:"proof_obligation_id"`
 	JobName              string   `json:"job_name"`
 	StepName             string   `json:"step_name"`
+	EvidenceStepName     string   `json:"evidence_step"`
+	GuardStepName        string   `json:"guard_step,omitempty"`
 	Command              []string `json:"command"`
 	WorkflowSourcePath   string   `json:"workflow_source_path"`
 	WorkflowSourceDigest string   `json:"workflow_source_digest"`
@@ -155,6 +166,9 @@ type OperationObservation struct {
 	JobConclusion        string   `json:"job_conclusion"`
 	StepStatus           string   `json:"step_status"`
 	StepConclusion       string   `json:"step_conclusion"`
+	GuardStepStatus      string   `json:"guard_step_status,omitempty"`
+	GuardStepConclusion  string   `json:"guard_step_conclusion,omitempty"`
+	GuardBound           bool     `json:"guard_bound,omitempty"`
 	State                string   `json:"state"`
 	RejectionReason      string   `json:"rejection_reason,omitempty"`
 	StartedAt            string   `json:"started_at"`
@@ -346,6 +360,7 @@ type Report struct {
 	WorkflowSourcePath        string                 `json:"workflow_source_path"`
 	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
 	Window                    WorkflowWindow         `json:"workflow_window"`
+	RuntimeResolution         string                 `json:"runtime_resolution"`
 	Jobs                      []JobObservation       `json:"jobs"`
 	Operations                []OperationObservation `json:"operations"`
 	Accounting                Accounting             `json:"accounting"`
