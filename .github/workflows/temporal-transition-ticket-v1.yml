@@ -108,10 +108,14 @@ jobs:
 
           gh api -H 'Accept: application/vnd.github+json' "repos/kimjooyoon/meta-ontology-go/git/ref/tags/$tag" > "$RUNNER_TEMP/tag-ref.json"
           jq -e --arg sha "$expected_tag_object" '.object.type=="tag" and .object.sha==$sha' "$RUNNER_TEMP/tag-ref.json" >/dev/null
+          echo "core release tag ref verified"
           gh api -H 'Accept: application/vnd.github+json' "repos/kimjooyoon/meta-ontology-go/git/tags/$expected_tag_object" > "$RUNNER_TEMP/tag-object.json"
           jq -e --arg sha "$expected_target" '.object.type=="commit" and .object.sha==$sha' "$RUNNER_TEMP/tag-object.json" >/dev/null
+          echo "core release tag object verified"
           gh api -H 'Accept: application/vnd.github+json' "repos/kimjooyoon/meta-ontology-go/releases/tags/$tag" > "$RUNNER_TEMP/release.json"
+          echo "core release metadata fetched"
           jq -e --arg name "$asset_name" '([.assets[]|select(.name==$name)]|length)==1' "$RUNNER_TEMP/release.json" >/dev/null
+          echo "core release asset cardinality verified"
           asset_id=$(jq -r --arg name "$asset_name" '.assets[]|select(.name==$name)|.id' "$RUNNER_TEMP/release.json")
           test "$asset_id" -gt 0
           echo "core release asset selected"
