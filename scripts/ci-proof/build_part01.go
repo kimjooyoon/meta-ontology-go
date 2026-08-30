@@ -33,11 +33,7 @@ func gateRejections(inputs proofInputs) []string {
 	if !validContextProofRoute(c) {
 		failures = append(failures, "proof_route_invalid")
 	}
-	if isFoundationPromotionContext(c) {
-		if err := validateFoundationPromotionEvidence(c.FoundationPromotion, c); err != nil {
-			failures = append(failures, "foundation_promotion_"+err.Error())
-		}
-	}
+	failures = append(failures, foundationPromotionRejections(c)...)
 	if isPromotionContext(c) {
 		if c.GuardianEvidence == nil || c.BranchProtection.ReadStatus != "verified" || !branchProtectionReadyFor(c.BranchProtection, "main") || c.DevBranchProtection.ReadStatus != "verified" || !branchProtectionReadyFor(c.DevBranchProtection, "dev") {
 			failures = append(failures, "main_protection_not_verified")

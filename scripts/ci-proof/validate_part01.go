@@ -11,12 +11,11 @@ func validateProof(bundle proofBundle) error {
 	if !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || !validSHA(bundle.WorkflowSHA) || bundle.BaseSHA == bundle.HeadSHA {
 		return fmt.Errorf("proof revisions are invalid or identical")
 	}
-	if isFoundationPromotionBundle(bundle) {
-		if err := validateFoundationPromotionEvidence(bundle.FoundationPromotion, contextInput{Repository: bundle.Repository, Event: bundle.Event, Route: proofRouteFoundationPromotion, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt}); err != nil {
+	if err := validateFoundationPromotionBundle(bundle); err != nil {
+		if isFoundationPromotionBundle(bundle) {
 			return fmt.Errorf("foundation promotion evidence is invalid: %w", err)
 		}
-	} else if bundle.FoundationPromotion != nil {
-		return fmt.Errorf("foundation promotion evidence is not allowed on an ordinary proof")
+		return err
 	}
 	if len(bundle.Jobs) != len(proofJobs) || len(bundle.Artifacts) == 0 {
 		return fmt.Errorf("proof requires six jobs and a non-empty artifact inventory")
