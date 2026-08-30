@@ -116,7 +116,7 @@ func buildReport(config Config) (Report, error) {
 		Graph:                   graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
 		CrossProjectRequiredGates: 0, Improvement: "UNKNOWN",
 		Counterexamples: fixedCounterexamples(),
-		RuntimeCases: runtimeCases(),
+		RuntimeCases:    runtimeCases(),
 		UnknownEvidence: firstUnknownEvidence(observedJobs, operations, openTofu)}
 	report.Cells = buildCells(contract, report)
 	report.Decision, report.Resolution, report.Reason = classifyReport(report)
@@ -202,10 +202,7 @@ func runtimeIntervalBounds(duration timestampObservation, resolution int64) (int
 	if resolution <= 0 || duration.missing || duration.rejection != "" {
 		return 0, 0, false
 	}
-	lower := duration.wall - resolution
-	if lower < 0 {
-		lower = 0
-	}
+	lower := max(duration.wall-resolution, 0)
 	return lower, duration.wall + resolution, true
 }
 
