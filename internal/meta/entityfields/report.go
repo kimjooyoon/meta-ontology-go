@@ -40,6 +40,9 @@ type Counterexample struct {
 	Reason         string   `json:"reason"`
 	Expected       string   `json:"expected,omitempty"`
 	Observed       string   `json:"observed,omitempty"`
+	InputDigest    string   `json:"input_digest,omitempty"`
+	OutputDigest   string   `json:"output_digest,omitempty"`
+	EvidenceDigest string   `json:"evidence_digest,omitempty"`
 	PartialOutput  bool     `json:"partial_output"`
 	Unknown        *Unknown `json:"unknown,omitempty"`
 }

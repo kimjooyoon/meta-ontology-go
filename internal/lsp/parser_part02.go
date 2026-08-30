@@ -23,6 +23,8 @@ type Symbol struct {
 	Detail         string
 	Range          Range
 	SelectionRange Range
+	IdentityRange  Range
+	HasIdentity    bool
 
 	// identityRange preserves the canonical syntax span of an explicit
 	// semantic identity literal for local navigation. Activity identities are

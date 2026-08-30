@@ -13,7 +13,7 @@ func navigation(filename, source string) lsp.ParseResult {
 	return (lsp.EntityFieldsSyntaxParser{}).Parse(filename, source)
 }
 
-func buildObservation(source string, file *syntax.File, formatted string, semanticIR generator.SemanticIR, generated generator.Result, parsed lsp.ParseResult, model bidir.Model) Observation {
+func buildObservation(source string, file *syntax.File, formatted string, semanticIR generator.SemanticIR, generated generator.Result, parsed lsp.ParseResult, model bidir.Model, document, getPutDocument bidir.Document, putGetInput, putGetObserved bidir.Model) Observation {
 	order := []string{}
 	stableIDs := []string{}
 	for _, declaration := range declarations(file) {
@@ -31,11 +31,11 @@ func buildObservation(source string, file *syntax.File, formatted string, semant
 	}
 	symbols := []NavigationSymbol{}
 	for _, value := range append(append([]lsp.Symbol{}, parsed.Headers...), parsed.Symbols...) {
-		symbols = append(symbols, NavigationSymbol{Name: value.Name, ID: value.ID, Kind: int(value.Kind)})
+		symbols = append(symbols, NavigationSymbol{Name: value.Name, ID: value.ID, Kind: int(value.Kind), Range: value.Range, SelectionRange: value.SelectionRange, IdentityRange: value.IdentityRange, HasIdentity: value.HasIdentity})
 	}
 	references := []NavigationReference{}
 	for _, value := range parsed.References {
-		references = append(references, NavigationReference{Name: value.Name, ID: value.ID})
+		references = append(references, NavigationReference{Name: value.Name, ID: value.ID, Range: value.Range})
 	}
 	modelDigest := digest(model)
 	navigationDigest := digest(struct{ Symbols []NavigationSymbol; References []NavigationReference }{symbols, references})
@@ -53,7 +53,10 @@ func buildObservation(source string, file *syntax.File, formatted string, semant
 		"LSP_NAVIGATION":         boundDigest("LSP_NAVIGATION", navigationDigest),
 		"ENTITY_FIELDS_RECEIPT":  boundDigest("ENTITY_FIELDS_RECEIPT", digest(struct{ Source, Formatted, Generated string }{digestBytes([]byte(source)), digestBytes([]byte(formatted)), digestBytes(generated.Source)})),
 	}
-	return Observation{Schema: Schema, Profile: syntax.EntityFieldsV1Support().Profile, Source: source, Formatted: formatted, DeclarationOrder: order, StableIDs: stableIDs, Semantic: semanticIR, Generated: generated.Source, SourceMap: generated.SourceMap, Symbols: symbols, References: references, SourceDigest: digestBytes([]byte(source)), FormattedDigest: digestBytes([]byte(formatted)), SemanticDigest: digest(semanticIR), GeneratedDigest: digestBytes(generated.Source), SourceMapDigest: digest(generated.SourceMap), NavigationDigest: navigationDigest, EvidenceDigests: evidence, GetPutRoundTrip: true}
+	getPutDigest := digest(getPutDocument)
+	putGetInputDigest := digest(putGetInput)
+	putGetObservedDigest := digest(putGetObserved)
+	return Observation{Schema: Schema, Profile: syntax.EntityFieldsV1Support().Profile, Source: source, Formatted: formatted, DeclarationOrder: order, StableIDs: stableIDs, Semantic: semanticIR, Generated: generated.Source, SourceMap: generated.SourceMap, Symbols: symbols, References: references, SourceDigest: digestBytes([]byte(source)), FormattedDigest: digestBytes([]byte(formatted)), SemanticDigest: digest(semanticIR), GeneratedDigest: digestBytes(generated.Source), SourceMapDigest: digest(generated.SourceMap), NavigationDigest: navigationDigest, EvidenceDigests: evidence, GetPutRoundTrip: bidir.DocumentEquivalent(document, getPutDocument), PutGetRoundTrip: bidir.SemanticEquivalent(putGetInput, putGetObserved), GetPutOriginalDigest: digest(document), GetPutWrittenDigest: getPutDigest, PutGetInputDigest: putGetInputDigest, PutGetObservedDigest: putGetObservedDigest, Counterexamples: executeCounterexamples(source, formatted)}
 }
 
 func fieldIDs(model bidir.Model, entityID string) []string {

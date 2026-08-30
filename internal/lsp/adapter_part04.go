@@ -27,6 +27,7 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl,
 	result.Symbols = append(result.Symbols, Symbol{
 		Name: entity.Name, ID: id, Kind: SymbolClass,
 		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
+		IdentityRange: identityRange, HasIdentity: hasIdentity,
 		identityRange: identityRange, hasIdentity: hasIdentity,
 	})
 	for _, field := range entity.Fields {
@@ -42,10 +43,11 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl,
 		if err != nil {
 			return err
 		}
-		result.Symbols = append(result.Symbols, Symbol{
-			Name: field.Name, ID: field.ID, Kind: SymbolField,
-			Detail: "field " + field.Name, Range: fieldRange, SelectionRange: fieldSelection,
-			identityRange: fieldIdentity, hasIdentity: true,
+			result.Symbols = append(result.Symbols, Symbol{
+				Name: field.Name, ID: field.ID, Kind: SymbolField,
+				Detail: "field " + field.Name, Range: fieldRange, SelectionRange: fieldSelection,
+				IdentityRange: fieldIdentity, HasIdentity: true,
+				identityRange: fieldIdentity, hasIdentity: true,
 		})
 	}
 	return nil
@@ -68,6 +70,9 @@ func appendActivity(result *ParseResult, source string, activity *syntax.Activit
 		if err := appendReference(result, source, input.Name, input.Span, names[input.Name]); err != nil {
 			return err
 		}
+	}
+	if err := appendValueProgramFieldReference(result, source, activity); err != nil {
+		return err
 	}
 	output := canonicalActivityOutput(source, activity)
 	return appendReference(result, source, output.Name, output.Span, names[output.Name])

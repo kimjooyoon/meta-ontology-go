@@ -29,7 +29,7 @@ func Evaluate(observation entityfieldsv1.Observation) Report {
 		report.Resolution = ResolutionExact
 		report.Reason = "ENTITY_FIELDS_V1_CLOSED"
 	}
-	report.Counterexamples = FixedCounterexamples()
+	report.Counterexamples = counterexampleReports(observation)
 	report.HumanReport = humanReport(report)
 	return report
 }
@@ -91,7 +91,21 @@ func humanReport(report Report) string {
 }
 
 func FailureReport(reason string) Report {
+	if strings.Contains(reason, "ENTITY_FIELDS_SOURCE_MISSING") {
+		unknown := &Unknown{Stage: "observe-entity-fields", Step: "read-source", Reason: "ENTITY_FIELDS_SOURCE_MISSING", UnknownClass: "DIRECT_MISSING", NextOperation: "RESTORE_ENTITY_FIELDS_SOURCE", BlockedBy: []string{}}
+		return Report{Schema: ReportSchema, Decision: "UNKNOWN", Resolution: ResolutionLower, Reason: unknown.Reason, Counterexamples: []Counterexample{{ID: "entity-fields-source-missing", Decision: "UNKNOWN", Resolution: ResolutionLower, Reason: unknown.Reason, PartialOutput: false, Unknown: unknown}}, Authority: Authority{PromotionAuthorized: false}, Improvement: "UNKNOWN", HumanReport: "EntityFields V1 unavailable: " + unknown.Reason}
+	}
 	return Report{Schema: ReportSchema, Decision: DecisionRefuted, Resolution: ResolutionExact, Reason: reason, Counterexamples: []Counterexample{{ID: "entity-fields-observation-failure", Decision: DecisionRefuted, Resolution: ResolutionExact, Reason: reason, PartialOutput: false}}, Authority: Authority{PromotionAuthorized: false}, Improvement: "UNKNOWN", HumanReport: "EntityFields V1 rejected input: " + strings.TrimSpace(reason)}
+}
+
+func counterexampleReports(evidence entityfieldsv1.Observation) []Counterexample {
+	result := make([]Counterexample, 0, len(evidence.Counterexamples))
+	for _, value := range evidence.Counterexamples {
+		var unknown *Unknown
+		if value.Unknown != nil { unknown = &Unknown{Stage: value.Unknown.Stage, Step: value.Unknown.Step, Reason: value.Unknown.Reason, UnknownClass: value.Unknown.UnknownClass, NextOperation: value.Unknown.NextOperation, BlockedBy: append([]string(nil), value.Unknown.BlockedBy...)} }
+		result = append(result, Counterexample{ID: value.ID, Decision: value.Decision, Resolution: value.Resolution, Reason: value.Reason, InputDigest: value.InputDigest, OutputDigest: value.OutputDigest, EvidenceDigest: value.EvidenceDigest, PartialOutput: value.PartialOutput, Unknown: unknown})
+	}
+	return result
 }
 
 func FixedCounterexamples() []Counterexample {

@@ -17,8 +17,8 @@ const (
 	validCases                 = 41
 	invalidCases               = 3
 	FixedTotal                 = totalCases
-	FixedCapabilityTotal       = 42
-	FixedGovernanceTotal       = 2
+	FixedCapabilityTotal       = 43
+	FixedGovernanceTotal       = 1
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
 
@@ -26,6 +26,7 @@ type Registry struct {
 	Schema       string              `json:"schema"`
 	Cases        []CaseDefinition    `json:"cases"`
 	PackageUnits []PackageDefinition `json:"package_units"`
+	MetaSources  []string            `json:"meta_sources"`
 }
 
 type CaseDefinition struct {

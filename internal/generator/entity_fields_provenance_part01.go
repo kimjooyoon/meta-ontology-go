@@ -50,7 +50,7 @@ func requiredEntityFieldSourceSpans(field Field) []entityFieldSourceSpan {
 	}
 }
 func sourceSpansAreOrdered(spans []entityFieldSourceSpan) bool {
-	for left := 0; left < len(spans); left++ {
+	for left := range spans {
 		for right := left + 1; right < len(spans); right++ {
 			first, second := spans[left].span, spans[right].span
 			if sourceSpanIsZero(first) || sourceSpanIsZero(second) {

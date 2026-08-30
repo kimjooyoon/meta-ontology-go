@@ -389,7 +389,7 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
-      "scope": "GOVERNANCE_OBSERVATION",
+      "scope": "LANGUAGE_CAPABILITY",
       "entity_fields": true
     },
     {
@@ -430,5 +430,8 @@
       "source_files_indicator": "PACKAGE_SOURCE_FILES",
       "execution_indicator": "PACKAGE_EXECUTIONS"
     }
+  ],
+  "meta_sources": [
+    "internal/meta/entityfields/entity-fields-meta.gooo"
   ]
 }

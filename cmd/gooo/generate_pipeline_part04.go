@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
@@ -14,13 +15,9 @@ func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Durat
 	}
 	result := make(chan generationResult, 1)
 	go func() {
-		ir, err := bidir.Lower(file)
+		ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV1Support())
 		if err != nil {
 			result <- generationResult{err: fmt.Errorf("semantic lowering failed: %w", err)}
-			return
-		}
-		if err := rejectCLIEntityFieldsIR(ir); err != nil {
-			result <- generationResult{err: err}
 			return
 		}
 		model, err := projectionIR(ir)
@@ -29,17 +26,17 @@ func generateWithDeadline(file *syntax.File, previous []byte, timeout time.Durat
 			return
 		}
 		if semanticIRHasFields(ir) {
-			document, err := bidir.DocumentFromSyntax(file)
+				document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX document adaptation failed: %w", err)}
 				return
 			}
-			sourceModel, err := bidir.Get(document)
+				sourceModel, err := bidir.GetWithEntityFieldsSupport(document, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("BX model projection failed: %w", err)}
 				return
 			}
-			model, err = projectionIRFromBidirModel(ir, sourceModel)
+				model, err = projectionIRFromBidirModelWithSupport(ir, sourceModel, syntax.EntityFieldsV1Support())
 			if err != nil {
 				result <- generationResult{err: fmt.Errorf("generator field adapter failed: %w", err)}
 				return

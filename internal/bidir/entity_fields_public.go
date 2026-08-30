@@ -2,6 +2,8 @@ package bidir
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -49,11 +51,19 @@ func CheckGetPutWithEntityFieldsSupport(document Document, support EntityFieldsS
 	if err != nil {
 		return err
 	}
+	if !DocumentEquivalent(document, written) {
+		return fmt.Errorf("Get-Put violated: source document changed after unchanged write-back")
+	}
 	if !SemanticEquivalent(model, observed) {
-		return ErrInvalidField
+		return fmt.Errorf("Get-Put violated: semantic model changed after unchanged write-back")
 	}
 	return nil
 }
+
+// DocumentEquivalent is the strict source-preserving comparison for the
+// profile-bound Get-Put law. It includes declaration order, stable IDs, and
+// every source span instead of comparing only normalized semantic nodes.
+func DocumentEquivalent(left, right Document) bool { return reflect.DeepEqual(left, right) }
 
 func CheckPutGetWithEntityFieldsSupport(document Document, model Model, support EntityFieldsSupport) error {
 	written, err := PutWithEntityFieldsSupport(document, model, support)

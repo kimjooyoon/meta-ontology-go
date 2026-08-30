@@ -8,20 +8,47 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 type NavigationSymbol struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
-		Kind int    `json:"kind"`
-	}
+	Name           string    `json:"name"`
+	ID             string    `json:"id"`
+	Kind           int       `json:"kind"`
+	Range          lsp.Range `json:"range"`
+	SelectionRange lsp.Range `json:"selection_range"`
+	IdentityRange  lsp.Range `json:"identity_range"`
+	HasIdentity    bool      `json:"has_identity"`
+}
 
 type NavigationReference struct {
-		Name string `json:"name"`
-		ID   string `json:"id"`
-	}
+	Name  string    `json:"name"`
+	ID    string    `json:"id"`
+	Range lsp.Range `json:"range"`
+}
+
+type CounterexampleEvidence struct {
+	ID            string `json:"id"`
+	Decision      string `json:"decision"`
+	Resolution    string `json:"resolution"`
+	Reason        string `json:"reason"`
+	InputDigest   string `json:"input_digest"`
+	OutputDigest  string `json:"output_digest"`
+	EvidenceDigest string `json:"evidence_digest"`
+	PartialOutput bool   `json:"partial_output"`
+	Unknown       *UnknownEvidence `json:"unknown,omitempty"`
+}
+
+type UnknownEvidence struct {
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+}
 
 type Observation struct {
 	Schema           string                         `json:"schema"`
@@ -42,7 +69,13 @@ type Observation struct {
 	SourceMapDigest  string                         `json:"source_map_digest"`
 	NavigationDigest string                         `json:"navigation_digest"`
 	EvidenceDigests  map[string]string              `json:"evidence_digests"`
-	GetPutRoundTrip  bool                           `json:"get_put_roundtrip"`
+	GetPutRoundTrip       bool                         `json:"get_put_roundtrip"`
+	PutGetRoundTrip       bool                         `json:"put_get_roundtrip"`
+	GetPutOriginalDigest  string                       `json:"get_put_original_digest"`
+	GetPutWrittenDigest   string                       `json:"get_put_written_digest"`
+	PutGetInputDigest     string                       `json:"put_get_input_digest"`
+	PutGetObservedDigest  string                       `json:"put_get_observed_digest"`
+	Counterexamples       []CounterexampleEvidence     `json:"counterexamples"`
 }
 
 func Observe(filename, source string) (Observation, error) {
@@ -70,8 +103,25 @@ func Observe(filename, source string) (Observation, error) {
 	if err := validateStableIdentityDomain(model); err != nil {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: stable identity domain: %w", err)
 	}
-	if err := bidir.CheckGetPutWithEntityFieldsSupport(document, support); err != nil {
+	getPutDocument, err := bidir.PutWithEntityFieldsSupport(document, model, support)
+	if err != nil {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Get/Put: %w", err)
+	}
+	if !bidir.DocumentEquivalent(document, getPutDocument) {
+		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Get/Put changed source document")
+	}
+	putGetInput := model.Clone()
+	if len(putGetInput.Nodes) == 0 || len(putGetInput.Nodes[0].Fields) == 0 {
+		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Put/Get mutation has no field")
+	}
+	putGetInput.Nodes[0].Fields[0].Name += "Changed"
+	putGetDocument, err := bidir.PutWithEntityFieldsSupport(document, putGetInput, support)
+	if err != nil {
+		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Put/Get: %w", err)
+	}
+	putGetObserved, err := bidir.GetWithEntityFieldsSupport(putGetDocument, support)
+	if err != nil || !bidir.SemanticEquivalent(putGetInput, putGetObserved) {
+		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Put/Get semantic mutation was not observed")
 	}
 	ir, err := bidir.LowerContextWithEntityFieldsSupport(nil, replayed, support)
 	if err != nil {
@@ -86,7 +136,7 @@ func Observe(filename, source string) (Observation, error) {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: Go projection: %w", err)
 	}
 	navigation := navigation(filename, formatted)
-	return buildObservation(source, file, formatted, semanticIR, generated, navigation, model), nil
+	return buildObservation(source, file, formatted, semanticIR, generated, navigation, model, document, getPutDocument, putGetInput, putGetObserved), nil
 }
 
 func projection(ir semantic.IR, model bidir.Model, source *syntax.File) (generator.SemanticIR, error) {
