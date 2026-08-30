@@ -2,17 +2,29 @@
   "schema": "gooo/meta-foundation-bootstrap/v1",
   "decision": "FOUNDATION",
   "reason": "NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE",
+  "foundation_override_count": 2,
+  "prior_foundation_override_count": 1,
+  "foundation_override_marker": "FOUNDATION_OVERRIDE_USED=2",
   "authorization": {
     "repository": "kimjooyoon/meta-ontology-go",
     "pull_request": 606,
     "head_branch": "agent/dev-main-sync-20260831",
     "head_sha": "f681f555254785d1cba2b58d4185c04a6fcd895c",
     "base_branch": "dev",
+    "pre_correction_base_snapshot": "2b1d331c560a58c30def1bb8a5be3f66740bf954",
     "source_main_sha": "a0962dd1ac8376b9e88bb629c66e3a7f710b96a9",
     "source_dev_sha": "7879cfea762d986a4ad9b0dc027b41593914388a",
     "conflict_manifest_sha256": "9d63ca1e020e21cf43ccb671c505264c5ddebffa0265cb6939f06d0f17e1da7d",
     "merge_resolution_commit": "d357b7c5456805669235135a3ca79e145127bd15",
-    "proof_choice": "FOUNDATION"
+    "proof_choice": "FOUNDATION",
+    "foundation_override_count": 2,
+    "foundation_override_marker": "FOUNDATION_OVERRIDE_USED=2",
+    "base_drift_blob_shas": {
+      ".github/workflows/ci-guardian.yml": "d402078c1bb0c97c08755b7c65c814e15e34d567",
+      "internal/verify/scope_foundation_bootstrap_dev_sync_20260831.go": "4b31c2e52d2d3e6d4c22881c520db08fc05d1431",
+      "scripts/ci-proof/foundation_bootstrap.js": "c2afa1e03e0c6e3098ddb09971d0c1384b47607a",
+      "scripts/ci-proof/guardian.js": "6e4a4a8189971ad0409dab5f8dec869fd1022763"
+    }
   },
   "allowed_scope": {
     "authorized_kernel_paths": [
@@ -70,5 +82,23 @@
   },
   "fixed_point": "explicit FIXED_POINT only",
   "denominator_unchanged": true,
-  "guardian_unchanged": true
+  "guardian_unchanged": true,
+  "scope_correction": {
+    "pre_correction_base_snapshot": "2b1d331c560a58c30def1bb8a5be3f66740bf954",
+    "live_kernel_count": 28,
+    "already_satisfied_by_base_count": 1,
+    "disjoint": true,
+    "union_count": 29,
+    "correction_changed_kernel_paths": [
+      ".github/workflows/ci-guardian.yml",
+      "scripts/ci-proof/foundation_bootstrap.js",
+      "scripts/ci-proof/guardian.js",
+      "scripts/ci-proof/route_test.js"
+    ],
+    "remaining_base_satisfied_kernel_paths": [
+      "internal/verify/scope_foundation_bootstrap_dev_sync_20260831.go"
+    ],
+    "foundation_override_count": 2,
+    "foundation_override_marker": "FOUNDATION_OVERRIDE_USED=2"
+  }
 }
