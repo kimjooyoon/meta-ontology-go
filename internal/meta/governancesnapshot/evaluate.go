@@ -46,7 +46,8 @@ type parsedSnapshot struct {
 
 func Evaluate(input LoadedSnapshot, contract Contract, graph RawGraph) Report {
 	report := evaluateCore(input, contract)
-	report.Graph, graphReason := graphEvidence(graph, contract)
+	graphValue, graphReason := graphEvidence(graph, contract)
+	report.Graph = graphValue
 	if graphReason != "" {
 		report.Cells = appendGraphRefutation(report.Cells, contract, graphReason)
 	}
@@ -91,7 +92,8 @@ func parseSnapshot(input LoadedSnapshot, contract Contract) parsedSnapshot {
 		}
 		parsed.Branches[branch] = observed
 	}
-	parsed.Rulesets, rulesetReason := parseRulesets(input, &parsed)
+	rulesets, rulesetReason := parseRulesets(input, &parsed)
+	parsed.Rulesets = rulesets
 	if rulesetReason != "" && parsed.SourceReason == "" {
 		parsed.SourceReason = rulesetReason
 	}
