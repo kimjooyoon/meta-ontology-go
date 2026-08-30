@@ -166,36 +166,36 @@ type RuntimeCase struct {
 }
 
 type OperationObservation struct {
-	ID                    string   `json:"id"`
-	Kind                  string   `json:"kind"`
-	ProofObligationID     string   `json:"proof_obligation_id"`
-	SourceEvent           string   `json:"source_event"`
-	JobName               string   `json:"job_name"`
-	StepName              string   `json:"step_name"`
-	BoundStepName         string   `json:"bound_step_name"`
+	ID                     string   `json:"id"`
+	Kind                   string   `json:"kind"`
+	ProofObligationID      string   `json:"proof_obligation_id"`
+	SourceEvent            string   `json:"source_event"`
+	JobName                string   `json:"job_name"`
+	StepName               string   `json:"step_name"`
+	BoundStepName          string   `json:"bound_step_name"`
 	DeclaredStepCandidates []string `json:"declared_step_candidates"`
-	EvidenceStepName      string   `json:"evidence_step"`
-	GuardStepName         string   `json:"guard_step,omitempty"`
-	Command               []string `json:"command"`
-	WorkflowSourcePath    string   `json:"workflow_source_path"`
-	WorkflowSourceDigest  string   `json:"workflow_source_digest"`
-	CommandContextDigest  string   `json:"command_context_digest"`
-	CommandBound          bool     `json:"command_bound"`
-	JobID                 int64    `json:"job_id"`
-	JobConclusion         string   `json:"job_conclusion"`
-	StepStatus            string   `json:"step_status"`
-	StepConclusion        string   `json:"step_conclusion"`
-	GuardStepStatus       string   `json:"guard_step_status,omitempty"`
-	GuardStepConclusion   string   `json:"guard_step_conclusion,omitempty"`
-	GuardBound            bool     `json:"guard_bound,omitempty"`
-	State                 string   `json:"state"`
-	RejectionReason       string   `json:"rejection_reason,omitempty"`
-	StartedAt             string   `json:"started_at"`
-	CompletedAt           string   `json:"completed_at"`
-	WallMS                int64    `json:"wall_ms"`
-	BelowSourceResolution bool     `json:"below_source_resolution,omitempty"`
-	Unknown               *Unknown `json:"unknown,omitempty"`
-	EvidenceDigest        string   `json:"evidence_digest"`
+	EvidenceStepName       string   `json:"evidence_step"`
+	GuardStepName          string   `json:"guard_step,omitempty"`
+	Command                []string `json:"command"`
+	WorkflowSourcePath     string   `json:"workflow_source_path"`
+	WorkflowSourceDigest   string   `json:"workflow_source_digest"`
+	CommandContextDigest   string   `json:"command_context_digest"`
+	CommandBound           bool     `json:"command_bound"`
+	JobID                  int64    `json:"job_id"`
+	JobConclusion          string   `json:"job_conclusion"`
+	StepStatus             string   `json:"step_status"`
+	StepConclusion         string   `json:"step_conclusion"`
+	GuardStepStatus        string   `json:"guard_step_status,omitempty"`
+	GuardStepConclusion    string   `json:"guard_step_conclusion,omitempty"`
+	GuardBound             bool     `json:"guard_bound,omitempty"`
+	State                  string   `json:"state"`
+	RejectionReason        string   `json:"rejection_reason,omitempty"`
+	StartedAt              string   `json:"started_at"`
+	CompletedAt            string   `json:"completed_at"`
+	WallMS                 int64    `json:"wall_ms"`
+	BelowSourceResolution  bool     `json:"below_source_resolution,omitempty"`
+	Unknown                *Unknown `json:"unknown,omitempty"`
+	EvidenceDigest         string   `json:"evidence_digest"`
 }
 
 type Accounting struct {

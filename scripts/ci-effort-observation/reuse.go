@@ -69,7 +69,7 @@ func readDependencyInputs(paths []string) ([]DependencyInput, error) {
 
 type commandContext struct {
 	ID, ProofObligationID, SourceEvent, JobName, StepName, WorkflowPath, WorkflowDigest, ContextDigest string
-	Command                                                                                          []string
+	Command                                                                                            []string
 }
 
 func commandContexts(operations []OperationObservation) []commandContext {
