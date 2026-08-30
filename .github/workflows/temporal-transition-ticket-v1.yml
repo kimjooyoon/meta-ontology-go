@@ -116,13 +116,17 @@ jobs:
           asset_url=$(jq -r --arg name "$asset_name" '.assets[]|select(.name==$name)|.browser_download_url' "$RUNNER_TEMP/release.json")
           test "$asset_id" -gt 0
           test -n "$asset_url"
+          echo "core release asset selected"
           archive="$RUNNER_TEMP/$asset_name"
           curl --fail --location --silent --show-error \
             -H 'Accept: application/octet-stream' \
             -H 'X-GitHub-Api-Version: 2022-11-28' \
             "$asset_url" -o "$archive"
+          echo "core release asset downloaded"
           printf '%s  %s\n' "$expected_digest_bare" "$archive" | sha256sum -c -
+          echo "core release asset verified"
           tar -xzf "$archive" -C "$RUNNER_TEMP"
+          echo "core release asset extracted"
           chmod +x "$RUNNER_TEMP/gooo"
           echo "GOOO_BIN=$RUNNER_TEMP/gooo" >> "$GITHUB_ENV"
 
