@@ -7,7 +7,7 @@
       "id": "syntax",
       "schema": "gooo/language-syntax-roundtrip/v1",
       "meta_operation": "prove-language-syntax-roundtrip",
-      "target": 41,
+      "target": 42,
       "link_target": 1
     },
     {
