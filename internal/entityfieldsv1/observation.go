@@ -11,6 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"strings"
 )
 
 type NavigationSymbol struct {
@@ -174,7 +175,39 @@ func projection(ir semantic.IR, model bidir.Model, source *syntax.File) (generat
 	if len(result.Entities)+len(result.Activities) != len(ir.Graph.Nodes()) {
 		return generator.SemanticIR{}, fmt.Errorf("source declaration order does not cover semantic graph")
 	}
+	appendFactPorts(&result, ir)
 	return result, nil
+}
+
+func appendFactPorts(model *generator.SemanticIR, ir semantic.IR) {
+	entities := make(map[string]int, len(model.Entities))
+	activities := make(map[string]int, len(model.Activities))
+	for index, entity := range model.Entities {
+		entities[entity.ID] = index
+	}
+	for index, activity := range model.Activities {
+		activities[activity.ID] = index
+	}
+	for _, fact := range ir.Graph.DeterministicFacts() {
+		key := fact.Key()
+		entityIndex, entityOK := entities[string(key.Object)]
+		activityIndex, activityOK := activities[string(key.Subject)]
+		if fact.Predicate == semantic.Used && entityOK && activityOK {
+			model.Activities[activityIndex].Inputs = append(model.Activities[activityIndex].Inputs, portForEntity(model.Entities[entityIndex]))
+		}
+		if fact.Predicate == semantic.WasGeneratedBy {
+			entityIndex, entityOK = entities[string(key.Subject)]
+			activityIndex, activityOK = activities[string(key.Object)]
+			if entityOK && activityOK {
+				model.Activities[activityIndex].Outputs = append(model.Activities[activityIndex].Outputs, portForEntity(model.Entities[entityIndex]))
+			}
+		}
+	}
+}
+
+func portForEntity(entity generator.Entity) generator.Port {
+	name := strings.ToLower(entity.Name[:1]) + entity.Name[1:]
+	return generator.Port{ID: entity.ID, Name: name, GoName: name, EntityID: entity.ID, GoType: entity.GoName, Source: entity.Source}
 }
 
 func generatorEntity(node bidir.Node) generator.Entity {
