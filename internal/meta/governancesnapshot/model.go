@@ -177,7 +177,7 @@ type CellObservation struct {
 	Indicator      string   `json:"indicator"`
 	Activity       string   `json:"activity"`
 	InputID        string   `json:"input_id"`
-	OutputID        string   `json:"output_id"`
+	OutputID       string   `json:"output_id"`
 	Observed       string   `json:"observed"`
 	Expected       string   `json:"expected"`
 	Decision       string   `json:"decision"`
