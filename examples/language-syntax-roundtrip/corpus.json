@@ -383,6 +383,16 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "entity-fields-v1",
+      "path": "examples/entity-fields-v1/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION",
+      "entity_fields": true
+    },
+    {
       "id": "live-governance-snapshot",
       "path": "examples/live-governance-snapshot/main.gooo",
       "kind": "VALID",

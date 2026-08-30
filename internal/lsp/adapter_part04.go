@@ -29,6 +29,25 @@ func appendEntity(result *ParseResult, source string, entity *syntax.EntityDecl,
 		Detail: "entity " + entity.Name, Range: rangeValue, SelectionRange: selection,
 		identityRange: identityRange, hasIdentity: hasIdentity,
 	})
+	for _, field := range entity.Fields {
+		fieldRange, err := syntaxRange(source, field.Span)
+		if err != nil {
+			return err
+		}
+		fieldSelection, err := syntaxRange(source, field.NameSpan)
+		if err != nil {
+			return err
+		}
+		fieldIdentity, err := syntaxRange(source, field.IDSpan)
+		if err != nil {
+			return err
+		}
+		result.Symbols = append(result.Symbols, Symbol{
+			Name: field.Name, ID: field.ID, Kind: SymbolField,
+			Detail: "field " + field.Name, Range: fieldRange, SelectionRange: fieldSelection,
+			identityRange: fieldIdentity, hasIdentity: true,
+		})
+	}
 	return nil
 }
 func appendActivity(result *ParseResult, source string, activity *syntax.ActivityDecl, ids map[loweredSymbolKey]string, names map[string]string) error {

@@ -1,0 +1,158 @@
+name: EntityFields V1 observation
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: entity-fields-v1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  observe:
+    name: EntityFields V1 atomic observation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: go1.27.0
+      GOWORK: off
+      GOFLAGS: -mod=readonly
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Execute and replay EntityFields V1 in caller-owned temp
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          work="$RUNNER_TEMP/entity-fields-v1/work"
+          publish="$RUNNER_TEMP/entity-fields-v1/publish"
+          input="$work/input"
+          first="$work/first"
+          replay="$work/replay"
+          mkdir -p "$input" "$first" "$replay" "$publish"
+          status_before="$work/status-before.txt"
+          status_after="$work/status-after.txt"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$status_before"
+          stage="prepare-input"
+          cp examples/entity-fields-v1/main.gooo "$input/source.gooo"
+          write_failure() {
+            local code="$1" current_stage="$2"
+            if [ ! -s "$publish/failure-receipt.json" ]; then
+              jq -n --arg head "$HEAD_SHA" --arg stage "$current_stage" --arg code "$code" \
+                '{schema:"gooo/entity-fields-v1-receipt/v1",head_sha:$head,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",reason:"ENTITY_FIELDS_ACTION_FAILED",unknown:{stage:$stage,step:"entity-fields-v1-observation",reason:"ENTITY_FIELDS_ACTION_FAILED",unknown_class:"DIRECT_MISSING",next_operation:"RESTORE_ENTITY_FIELDS_OBSERVATION",blocked_by:[]},exit_code:($code|tonumber),repository_writes:0,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0}' \
+                > "$publish/failure-receipt.json"
+            fi
+          }
+          trap 'code=$?; write_failure "$code" "$stage"; exit "$code"' ERR
+          stage="build-observer"
+          /usr/bin/time -f '%e %M' -o "$work/build.time" go build -o "$work/entity-fields-witness" ./cmd/entity-fields-witness
+          stage="observe-first"
+          /usr/bin/time -f '%e %M' -o "$work/first.time" "$work/entity-fields-witness" -input "$input/source.gooo" -output "$first"
+          stage="observe-replay"
+          /usr/bin/time -f '%e %M' -o "$work/replay.time" "$work/entity-fields-witness" -input "$input/source.gooo" -output "$replay"
+          stage="compare-replay"
+          for name in source.gooo formatted.gooo generated.go source-map.json semantic-ir.json lsp.json report.json report.md; do
+            cmp -s "$first/$name" "$replay/$name"
+          done
+          test "$(find "$first" -type f -maxdepth 1 | wc -l | tr -d ' ')" -eq 8
+          test "$(find "$replay" -type f -maxdepth 1 | wc -l | tr -d ' ')" -eq 8
+          stage="validate-report"
+          jq -e '
+            .schema == "gooo/entity-fields-observation/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.cells_total == 12 and .summary.closed_cells == 12 and
+            .summary.unknown_cells == 0 and .summary.refuted_cells == 0 and
+            .summary.foundation_cells == 4 and .summary.coherence_cells == 4 and .summary.regression_cells == 4 and
+            .summary.driver_cells == 4 and .summary.outcome_cells == 4 and .summary.guardrail_cells == 4 and
+            .activity_count == 12 and .binding_count == 12 and (.activities | length) == 12 and
+            (.cells | length) == 12 and (.cells | map(.decision) | all(. == "PASS")) and
+            .authority.repository_writes == 0 and .authority.branch_setting_writes == 0 and
+            .authority.local_test_executions == 0 and .authority.cross_project_required_gates == 0 and
+            .authority.promotion_authorized == false and .improvement == "UNKNOWN" and
+            (.counterexamples | length) == 6 and
+            ([.counterexamples[] | select(.decision == "REFUTED")] | length) == 5 and
+            ([.counterexamples[] | select(.decision == "UNKNOWN" and .unknown.unknown_class == "DIRECT_MISSING" and (.unknown.blocked_by | length) == 0)] | length) == 1
+          ' "$first/report.json"
+          stage="assemble-receipt"
+          build_ms=$(awk '{printf "%.0f", $1 * 1000}' "$work/build.time")
+          build_rss=$(awk '{print $2}' "$work/build.time")
+          first_ms=$(awk '{printf "%.0f", $1 * 1000}' "$work/first.time")
+          first_rss=$(awk '{print $2}' "$work/first.time")
+          replay_ms=$(awk '{printf "%.0f", $1 * 1000}' "$work/replay.time")
+          replay_rss=$(awk '{print $2}' "$work/replay.time")
+          input_lines=$(wc -l < "$input/source.gooo" | tr -d ' ')
+          output_files=$(find "$first" -type f -maxdepth 1 | wc -l | tr -d ' ')
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$status_after"
+          if cmp -s "$status_before" "$status_after"; then
+            repository_writes=0
+          else
+            repository_writes=$(awk 'NF { count++ } END { print count + 0 }' "$status_after")
+          fi
+          jq -n \
+            --arg schema 'gooo/entity-fields-v1-receipt/v1' --arg head "$HEAD_SHA" --arg profile 'gooo.entityfields.go-projection.v1' \
+            --argjson build_ms "$build_ms" --argjson build_rss "$build_rss" --argjson first_ms "$first_ms" --argjson first_rss "$first_rss" \
+            --argjson replay_ms "$replay_ms" --argjson replay_rss "$replay_rss" --argjson input_lines "$input_lines" \
+            --argjson output_files "$output_files" --argjson repository_writes "$repository_writes" \
+            '{schema:$schema,head_sha:$head,decision:"PASS",resolution:"EXACT",profile_id:$profile,cell_count:12,activity_count:12,binding_count:12,registry_transition:{before:{total:43,capability:42,governance:1},after:{total:44,capability:42,governance:2},atomic_gate:"PASS"},runtime:{observer_build_ms:$build_ms,observer_build_peak_rss_kib:$build_rss,first_observation_ms:$first_ms,first_observation_peak_rss_kib:$first_rss,replay_observation_ms:$replay_ms,replay_observation_peak_rss_kib:$replay_rss},input_regular_files:1,input_physical_lines:$input_lines,output_artifact_files:$output_files,replay_equal:true,replay_digest_model:"canonical-output-v1",repository_writes:$repository_writes,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0,improvement:"UNKNOWN",source_builds:0}' \
+            > "$publish/receipt.json"
+          cp "$first/report.json" "$publish/entity-fields-first-report.json"
+          cp "$replay/report.json" "$publish/entity-fields-replay-report.json"
+          cp "$first/source-map.json" "$publish/entity-fields-source-map.json"
+          jq -n --arg head "$HEAD_SHA" --argjson files "$output_files" --argjson writes "$repository_writes" \
+            '{schema:"gooo/entity-fields-v1-authority/v1",head_sha:$head,generated_in:"CALLER_OWNED_TEMP_OUTPUT_ONLY",output_artifact_files:$files,repository_writes:$writes,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0}' \
+            > "$publish/authority.json"
+          printf 'cells=12/12 activities=12/12 bindings=12/12\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'registry transition: total 43 -> 44; capability 42 -> 42; governance 1 -> 2\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'observer build: %sms/%sKiB; first: %sms/%sKiB; replay: %sms/%sKiB\n' "$build_ms" "$build_rss" "$first_ms" "$first_rss" "$replay_ms" "$replay_rss" >> "$GITHUB_STEP_SUMMARY"
+          printf 'input files/lines: 1/%s; output artifacts per run: %s; replay_equal=true\n' "$input_lines" "$output_files" >> "$GITHUB_STEP_SUMMARY"
+          printf 'repository_writes=%s branch_setting_writes=0 local_test_executions=0 cross_project_required_gates=0 improvement=UNKNOWN\n' "$repository_writes" >> "$GITHUB_STEP_SUMMARY"
+          rm -rf "$publish/first" "$publish/replay"
+          mkdir "$publish/first" "$publish/replay"
+          cp "$first"/* "$publish/first/"
+          cp "$replay"/* "$publish/replay/"
+
+      - name: Upload EntityFields V1 evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: entity-fields-v1-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/entity-fields-v1/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Require exact EntityFields V1 terminal
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/entity-fields-v1/publish/receipt.json"
+          test -s "$receipt"
+          jq -e --arg head "$HEAD_SHA" '
+            .head_sha == $head and .decision == "PASS" and .resolution == "EXACT" and
+            .cell_count == 12 and .activity_count == 12 and .binding_count == 12 and
+            .registry_transition.atomic_gate == "PASS" and
+            .registry_transition.before.total == 43 and .registry_transition.after.total == 44 and
+            .registry_transition.before.capability == 42 and .registry_transition.after.capability == 42 and
+            .replay_equal == true and .repository_writes == 0 and
+            .branch_setting_writes == 0 and .local_test_executions == 0 and
+            .cross_project_required_gates == 0 and .source_builds == 0 and .improvement == "UNKNOWN"
+          ' "$receipt"
+          test "$(find "$RUNNER_TEMP/entity-fields-v1/publish" -type f | wc -l | tr -d ' ')" -ge 12

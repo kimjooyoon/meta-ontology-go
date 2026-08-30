@@ -21,6 +21,8 @@ func expectedRegistry() Registry {
 	governance := func(id, path string) CaseDefinition {
 		return CaseDefinition{ID: id, Path: path, Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeGovernanceObservation}
 	}
+	entityFields := governance("entity-fields-v1", "examples/entity-fields-v1/main.gooo")
+	entityFields.EntityFields = true
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
@@ -66,6 +68,7 @@ func expectedRegistry() Registry {
 		valid("ci-plan", "examples/ci-plan/main.gooo"),
 		valid("ci-effort-observation", "examples/ci-effort-observation/main.gooo"),
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
+		entityFields,
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}}
 }
@@ -112,8 +115,8 @@ func validateCaseScopes(registry Registry) error {
 		}
 	}
 	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
-		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
-		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		len(governanceIDs) != 2 || governanceIDs[0] != "entity-fields-v1" || governanceIDs[1] != "live-governance-snapshot" ||
+		len(governancePaths) != 2 || governancePaths[0] != "examples/entity-fields-v1/main.gooo" || governancePaths[1] != "examples/live-governance-snapshot/main.gooo" {
 		return fmt.Errorf("language syntax scope partition mismatch")
 	}
 	return nil

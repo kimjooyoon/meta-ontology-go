@@ -13,12 +13,12 @@ const (
 	KindInvalid                = "INVALID"
 	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
 	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
-	totalCases                 = 43
-	validCases                 = 40
+	totalCases                 = 44
+	validCases                 = 41
 	invalidCases               = 3
 	FixedTotal                 = totalCases
 	FixedCapabilityTotal       = 42
-	FixedGovernanceTotal       = 1
+	FixedGovernanceTotal       = 2
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )
 
@@ -37,6 +37,7 @@ type CaseDefinition struct {
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
 	Scope              string `json:"scope"`
+	EntityFields       bool   `json:"entity_fields,omitempty"`
 }
 
 type PackageDefinition struct {

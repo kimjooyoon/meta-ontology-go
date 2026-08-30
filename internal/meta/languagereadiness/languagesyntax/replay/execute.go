@@ -7,9 +7,17 @@ import (
 )
 
 func Execute(repository fs.FS, path, kind, expectedDiagnostic string) Result {
+	return executeWithSupport(repository, path, kind, expectedDiagnostic, syntax.CurrentEntityFieldsSupport())
+}
+
+func ExecuteWithEntityFieldsSupport(repository fs.FS, path, kind, expectedDiagnostic string) Result {
+	return executeWithSupport(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV1Support())
+}
+
+func executeWithSupport(repository fs.FS, path, kind, expectedDiagnostic string, support syntax.EntityFieldsSupport) Result {
 	switch kind {
 	case "VALID":
-		return executeValid(repository, path)
+		return executeValidWithSupport(repository, path, support)
 	case "INVALID":
 		return executeInvalid(repository, path, expectedDiagnostic)
 	default:
@@ -18,6 +26,10 @@ func Execute(repository fs.FS, path, kind, expectedDiagnostic string) Result {
 }
 
 func executeValid(repository fs.FS, path string) Result {
+	return executeValidWithSupport(repository, path, syntax.CurrentEntityFieldsSupport())
+}
+
+func executeValidWithSupport(repository fs.FS, path string, support syntax.EntityFieldsSupport) Result {
 	result := Result{ObservedDecision: DecisionClosed}
 	raw, err := fs.ReadFile(repository, path)
 	if err != nil {
@@ -25,19 +37,19 @@ func executeValid(repository fs.FS, path string) Result {
 		return result
 	}
 	result.SourceLines, result.SourceDigest = sourceLines(raw), digestBytes(raw)
-	file, diagnostics := syntax.ParseFile(path, string(raw))
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport(path, string(raw), support)
 	if diagnostics.HasErrors() {
 		return reject(result, diagnostics.Error().Error())
 	}
-	canonical, err := syntax.Format(file)
+	canonical, err := syntax.FormatWithEntityFieldsSupport(file, support)
 	if err != nil {
 		return reject(result, "format: "+err.Error())
 	}
-	replayed, replayDiagnostics := syntax.ParseFile(path, canonical)
+	replayed, replayDiagnostics := syntax.ParseFileWithEntityFieldsSupport(path, canonical, support)
 	if replayDiagnostics.HasErrors() {
 		return reject(result, replayDiagnostics.Error().Error())
 	}
-	replayCanonical, err := syntax.Format(replayed)
+	replayCanonical, err := syntax.FormatWithEntityFieldsSupport(replayed, support)
 	if err != nil {
 		return reject(result, "replay format: "+err.Error())
 	}
@@ -51,7 +63,7 @@ func executeValid(repository fs.FS, path string) Result {
 	}
 	result.ASTDigest, result.CanonicalDigest = digestBytes([]byte(leftShape)), digestBytes([]byte(canonical))
 	result.ASTReplayed, result.ByteReplayed = leftShape == rightShape, canonical == replayCanonical
-	return executeSemantic(result, file, replayed)
+	return executeSemanticWithSupport(result, file, replayed, support)
 }
 
 func reject(result Result, diagnostic string) Result {

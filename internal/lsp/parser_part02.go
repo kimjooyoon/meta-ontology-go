@@ -11,6 +11,7 @@ const (
 	SymbolPackage   SymbolKind = 4
 	SymbolClass     SymbolKind = 5
 	SymbolFunction  SymbolKind = 12
+	SymbolField     SymbolKind = 8
 	SymbolKeyword   SymbolKind = 14
 	SymbolText      SymbolKind = 1
 )

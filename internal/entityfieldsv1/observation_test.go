@@ -1,0 +1,39 @@
+package entityfieldsv1
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestObserveCanonicalEntityFieldsV1(t *testing.T) {
+	observation, err := Observe("fixture.gooo", CanonicalSource)
+	if err != nil { t.Fatal(err) }
+	if observation.SourceDigest == "" || observation.FormattedDigest == "" || observation.GeneratedDigest == "" || observation.SourceMapDigest == "" { t.Fatal("missing source-backed digests") }
+	if len(observation.Semantic.Entities) != 1 || len(observation.Semantic.Entities[0].Fields) != 1 || len(observation.Semantic.Activities) != 12 { t.Fatalf("semantic shape = %#v", observation.Semantic) }
+	if len(observation.DeclarationOrder) != 13 || observation.DeclarationOrder[0] != SourceID { t.Fatalf("declaration order = %#v", observation.DeclarationOrder) }
+	if observation.Semantic.Activities[0].Name != "ParseEntityFields" || observation.Semantic.Activities[11].Name != "PublishEntityFieldsReceipt" { t.Fatalf("semantic activity order = %#v", observation.Semantic.Activities) }
+	field := observation.Semantic.Entities[0].Fields[0]
+	if field.IDSpan.Start.Offset == 0 || field.NameSpan.Start.Offset == 0 || field.TypeRefSpan.Start.Offset == 0 || field.PresenceSpan.Start.Offset == 0 || field.CardinalitySpan.Start.Offset == 0 { t.Fatalf("field source spans = %#v", field) }
+	if !observation.GetPutRoundTrip || len(observation.SourceMap.Mappings) == 0 { t.Fatal("atomic BX or source-map evidence missing") }
+	if !hasNavigationSymbol(observation.Symbols, "OrderNumber", FieldID) { t.Fatalf("field symbol missing: %#v", observation.Symbols) }
+	if len(observation.StableIDs) != 14 { t.Fatalf("stable identity count = %d", len(observation.StableIDs)) }
+}
+
+func hasNavigationSymbol(symbols []NavigationSymbol, name, id string) bool {
+	for _, symbol := range symbols {
+		if symbol.Name == name && symbol.ID == id { return true }
+	}
+	return false
+}
+
+func TestUnsupportedEntityFieldShapeProducesNoProjection(t *testing.T) {
+	for _, testCase := range []struct{ name, replacement string }{
+		{"type", "type number required one"}, {"presence", "type string optional one"}, {"cardinality", "type string required many"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			source := strings.Replace(CanonicalSource, "type string required one", testCase.replacement, 1)
+			observation, err := Observe("fixture.gooo", source)
+			if err == nil || len(observation.Generated) != 0 || len(observation.SourceMap.Mappings) != 0 { t.Fatalf("unsupported field was partially projected: err=%v observation=%#v", err, observation) }
+		})
+	}
+}

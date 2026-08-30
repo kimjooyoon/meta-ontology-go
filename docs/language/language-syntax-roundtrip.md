@@ -10,12 +10,13 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry contains exactly 43 cases: 40 valid sources and three invalid
-fixtures. The current registry observation contains 43 cases, while the
-independent repository observation contains 46 `.gooo` files and 766 physical
+The `v2` registry contains exactly 44 cases: 41 valid sources and three invalid
+fixtures. The current registry observation contains 44 cases, while the
+independent repository observation contains 47 `.gooo` files and 785 physical
 Gooo lines. Each observed file carries its individual line count and source
-digest. Of the 43 cases, 42 are
-`LANGUAGE_CAPABILITY` and one (`live-governance-snapshot`) is the separate
+digest. Of the 44 cases, 42 are
+`LANGUAGE_CAPABILITY` and two (`entity-fields-v1` and
+`live-governance-snapshot`) are separate
 `GOVERNANCE_OBSERVATION` case. These are fixed observation denominators, not a
 quality score.
 
@@ -37,7 +38,7 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 40 valid cases satisfy all five preservation laws |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 41 valid cases satisfy all five preservation laws |
 | REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority
