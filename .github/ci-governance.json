@@ -2727,6 +2727,7 @@
         "internal/bidir/field_span_validation.go",
         "internal/entityfieldsv1",
         "internal/generator/generator_part01.go",
+        "internal/generator/entity_fields_provenance_part01.go",
         "internal/lsp/adapter_part01.go",
         "internal/lsp/adapter_part04.go",
         "internal/lsp/entity_fields_parser.go",

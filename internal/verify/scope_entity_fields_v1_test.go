@@ -4,7 +4,7 @@ import "testing"
 
 func TestEntityFieldsV1ScopeIsExplicit(t *testing.T) {
 	paths, ok := BranchScope(entityFieldsV1Branch)
-	if !ok || len(paths) != 25 { t.Fatalf("EntityFields scope: known=%t paths=%d", ok, len(paths)) }
+	if !ok || len(paths) != 26 { t.Fatalf("EntityFields scope: known=%t paths=%d", ok, len(paths)) }
 	allowed := []string{
 		".github/workflows/entity-fields-v1.yml", "cmd/entity-fields-witness/main.go", "examples/entity-fields-v1/main.gooo",
 		"internal/entityfieldsv1/observation.go", "internal/meta/entityfields/evaluate.go", "internal/syntax/entity_fields_support.go",

@@ -42,8 +42,8 @@ func validateFieldSource(entity Entity, field Field, sourceURI string, previousS
 }
 func requiredEntityFieldSourceSpans(field Field) []entityFieldSourceSpan {
 	return []entityFieldSourceSpan{
-		{name: "ID", span: field.IDSpan},
 		{name: "name", span: field.NameSpan},
+		{name: "ID", span: field.IDSpan},
 		{name: "type", span: field.TypeRefSpan},
 		{name: "presence", span: field.PresenceSpan},
 		{name: "cardinality", span: field.CardinalitySpan},
