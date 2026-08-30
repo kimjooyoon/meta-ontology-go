@@ -129,5 +129,6 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/partition-directory-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/meta/directorypartition`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-executor-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `cmd/directory-partition-witness`, `internal/meta/actionability`, `internal/meta/directorypartition`, `internal/meta/metabinding/registry.go`, `internal/verify/scope_part01.go` |
 | `agent/partition-directory-ci-v19` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_part01.go` |
+| `agent/self-improvement-minimal-loop` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/self-improvement-minimal-loop.yml`, `examples/self-improvement-minimal-loop`, `internal/meta/selfimprovementloop`, `internal/verify/self_improvement_minimal_loop_scope.go`, `scripts/self-improvement-minimal-loop` |
 | `agent/zerolang-experiments` | `docs/research/zerolang.md` |
 | `agent/zerolang-research` | `docs/research/zerolang.md` |

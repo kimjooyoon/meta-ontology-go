@@ -992,6 +992,18 @@
         ".github/workflows/ci.yml",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/self-improvement-minimal-loop",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-minimal-loop.yml",
+        "examples/self-improvement-minimal-loop/**",
+        "internal/meta/selfimprovementloop/**",
+        "internal/verify/self_improvement_minimal_loop_scope.go",
+        "scripts/self-improvement-minimal-loop/**"
+      ]
     }
   ],
   "protected_kernel_paths": [
