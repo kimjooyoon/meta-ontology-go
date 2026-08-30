@@ -89,7 +89,7 @@ func fixtureSnapshot(contract Contract, mode string) LoadedSnapshot {
 }
 
 func protectionFixture() []byte {
-	data := map[string]any{"required_status_checks": map[string]any{"contexts": ExpectedContexts(), "checks": []any{}}}
+	data := map[string]any{"required_status_checks": map[string]any{"enforcement_level": "everyone", "contexts": ExpectedContexts(), "checks": []any{}}}
 	raw, _ := json.Marshal(data)
 	return raw
 }

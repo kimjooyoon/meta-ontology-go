@@ -53,7 +53,7 @@ jobs:
             mkdir -p "$(dirname "$destination")"
             if gh api -H 'Accept: application/vnd.github+json' -H "X-GitHub-Api-Version: $api_version" "$api_path" > "$destination" 2>"$destination.error"; then
               state=PRESENT
-              digest="sha256:$(jq -cS . "$destination" | sha256sum | awk '{print $1}')"
+              digest="sha256:$(jq -cSj . "$destination" | sha256sum | awk '{print $1}')"
             else
               state=UNAVAILABLE
               digest=

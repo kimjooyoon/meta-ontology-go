@@ -18,6 +18,7 @@ type branchPayload struct {
 
 type protectionPayload struct {
 	RequiredStatusChecks *struct {
+		EnforcementLevel string `json:"enforcement_level"`
 		Contexts []string `json:"contexts"`
 		Checks   []struct {
 			Context string `json:"context"`
@@ -178,12 +179,16 @@ func parseProtectionValue(protected bool, value *protectionPayload) (protectionO
 	if value == nil || value.RequiredStatusChecks == nil {
 		return protectionObservation{enforcement: "off", contexts: []string{}}, ""
 	}
-	contexts := append([]string(nil), value.RequiredStatusChecks.Contexts...)
+	enforcement := value.RequiredStatusChecks.EnforcementLevel
+	if enforcement == "" {
+		return protectionObservation{}, "MALFORMED_PUBLIC_PAYLOAD"
+	}
+	contexts := append([]string{}, value.RequiredStatusChecks.Contexts...)
 	if hasDuplicate(contexts) {
 		return protectionObservation{}, "DUPLICATE_REQUIRED_CONTEXT"
 	}
 	sort.Strings(contexts)
-	return protectionObservation{enforcement: "everyone", contexts: contexts}, ""
+	return protectionObservation{enforcement: enforcement, contexts: contexts}, ""
 }
 
 func parseRulesets(input LoadedSnapshot, parsed *parsedSnapshot) ([]RulesetEvidence, string) {
