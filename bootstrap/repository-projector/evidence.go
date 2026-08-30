@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func topologyFailures(root string) (int, int, error) {
@@ -36,19 +35,6 @@ func topologyFailures(root string) (int, int, error) {
 		return nil
 	})
 	return direct, mixed, err
-}
-
-func workflowDiscoveryRoot(physical string, children []os.DirEntry) bool {
-	if physical != ".github/workflows" || len(children) == 0 {
-		return false
-	}
-	for _, child := range children {
-		extension := strings.ToLower(filepath.Ext(child.Name()))
-		if child.IsDir() || child.Type()&os.ModeSymlink != 0 || (extension != ".yml" && extension != ".yaml") {
-			return false
-		}
-	}
-	return true
 }
 
 func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int) evidence {
@@ -84,12 +70,4 @@ func buildEvidence(sha string, model manifest, objects, loss, direct, mixed int)
 				Consumer: "logical-source-splitter", Operation: "split-before-storage", Proof: proof},
 		},
 	}
-}
-func requireBlockingZero(report evidence) error {
-	for _, metric := range report.Indicators {
-		if metric.Blocking && metric.Value > metric.Limit {
-			return fmt.Errorf("blocking indicator %s=%d", metric.ID, metric.Value)
-		}
-	}
-	return nil
 }
