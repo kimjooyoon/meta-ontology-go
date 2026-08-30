@@ -576,7 +576,7 @@ jobs:
               '{schema: $schema, head_sha: $head, decision: "FAIL_CLOSED", resolution: "LOWER_RESOLUTION",
                 reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE", failed_command: $command, exit_code: $exit_code,
                 unknown: {stage: $stage, step: $step, reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE",
-                  unknown_class: "UNCATALOGED_CAUSE", next_operation: "RESTORE_SCOPE_PARTITION_EVIDENCE", blocked_by: []},
+                  unknown_class: "DIRECT_MISSING", next_operation: "RESTORE_SCOPE_PARTITION_EVIDENCE", blocked_by: []},
                 repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
                 cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
               > "$publish_root/scope-partition.json"
@@ -645,6 +645,8 @@ jobs:
             .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
             .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
+          stage="publish"
+          step="assemble-scope-partition-receipt"
           jq --arg head "$HEAD_SHA" \
             --arg first_digest "$first_digest" \
             --arg replay_digest "$replay_digest" \
