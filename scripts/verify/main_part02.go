@@ -63,7 +63,7 @@ func run(root, storageRoot, from, to, head, base, branch, expectedHead string, c
 		}
 	}
 	if base != "" || head != "" {
-		if err := verify.CheckPullRequestPolicy(head, base); err != nil {
+		if err := checkPullRequestRoute(head, base); err != nil {
 			return err
 		}
 	}

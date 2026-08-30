@@ -11,6 +11,13 @@ func validateProof(bundle proofBundle) error {
 	if !validSHA(bundle.BaseSHA) || !validSHA(bundle.HeadSHA) || !validSHA(bundle.WorkflowSHA) || bundle.BaseSHA == bundle.HeadSHA {
 		return fmt.Errorf("proof revisions are invalid or identical")
 	}
+	if isFoundationPromotionBundle(bundle) {
+		if err := validateFoundationPromotionEvidence(bundle.FoundationPromotion, contextInput{Repository: bundle.Repository, Event: bundle.Event, Route: proofRouteFoundationPromotion, BaseRef: bundle.BaseRef, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, PRNumber: bundle.PRNumber, RunID: bundle.RunID, RunAttempt: bundle.RunAttempt}); err != nil {
+			return fmt.Errorf("foundation promotion evidence is invalid: %w", err)
+		}
+	} else if bundle.FoundationPromotion != nil {
+		return fmt.Errorf("foundation promotion evidence is not allowed on an ordinary proof")
+	}
 	if len(bundle.Jobs) != len(proofJobs) || len(bundle.Artifacts) == 0 {
 		return fmt.Errorf("proof requires six jobs and a non-empty artifact inventory")
 	}
@@ -24,7 +31,11 @@ func validateProof(bundle proofBundle) error {
 	if bundle.Actors.Actor == "" || bundle.Actors.Builder == "" || bundle.Actors.Gate == "" || bundle.Actors.Builder != bundle.Actors.Actor {
 		return fmt.Errorf("proof actor roles are incomplete")
 	}
-	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{Event: bundle.Event, BaseRef: bundle.BaseRef, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
+	branchProtectionRoute := ""
+	if isFoundationPromotionBundle(bundle) {
+		branchProtectionRoute = proofRouteFoundationPromotion
+	}
+	if err := validateBranchProtection(bundle.BranchProtection, evidenceInput{Repository: bundle.Repository, BaseSHA: bundle.BaseSHA, HeadSHA: bundle.HeadSHA, RunID: bundle.RunID, Attempt: bundle.RunAttempt, WorkflowSHA: bundle.WorkflowSHA, Digests: evidenceDigests{Policy: bundle.Digests.Policy}}, contextInput{Event: bundle.Event, Route: branchProtectionRoute, BaseRef: bundle.BaseRef, EventRef: bundle.EventRef, CheckoutRef: bundle.CheckoutRef}); err != nil {
 		return err
 	}
 	if err := validateGuardianEvidence(bundle.GuardianEvidence, bundle); err != nil {

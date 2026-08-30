@@ -12,6 +12,9 @@ func init() {
 		"internal/meta/metabinding/registry.go",
 		"internal/meta/sourcepolicy",
 		"internal/verify/foundation_discovery_recovery_scope.go",
+		"internal/verify/foundation_promotion.go",
+		"scripts/ci-proof",
 		"scripts/feedback-predecessor-ci",
+		"scripts/verify",
 	}
 }
