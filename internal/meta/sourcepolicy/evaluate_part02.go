@@ -75,7 +75,3 @@ func capDefinition(family Family, limit int, operation Operation, consumer strin
 func driverCapDefinition(family Family, limit int, operation Operation, consumer string) definition {
 	return definition{family: family, limit: limit, relation: RelationLessOrEqual, role: IndicatorRoleDriver, proof: ProofFoundation, operation: operation, consumer: consumer}
 }
-
-func candidateDefinition(operation Operation) definition {
-	return definition{family: FamilyRefactor, relation: RelationEqual, blocking: false, proof: ProofRegression, operation: operation, consumer: "refactor-planner"}
-}
