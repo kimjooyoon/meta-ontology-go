@@ -67,5 +67,13 @@ func collect(ctx context.Context, client *githubClient, cfg config) (collection,
 		return left.RunID < right.RunID ||
 			left.RunID == right.RunID && left.ArtifactID < right.ArtifactID
 	})
+	if len(input.Candidates) == 0 && cfg.branch == "main" &&
+		cfg.predecessorSHA == feedbackpredecessor.FoundationMissingPredecessorSHA {
+		foundation, err := verifyFoundation(ctx, client, cfg)
+		if err != nil {
+			return collection{}, err
+		}
+		input.Foundation = &foundation
+	}
 	return collection{Input: input}, nil
 }

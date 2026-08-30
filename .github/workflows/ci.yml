@@ -1171,8 +1171,15 @@ jobs:
               --check
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
-      - name: Consume deterministic predecessor semantic state
+      - id: semantic
+        name: Consume deterministic predecessor semantic state
         run: |
+          if jq -e '.report.decision == "FOUNDATION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            echo "emitted=false" >> "$GITHUB_OUTPUT"
+            jq -r '"### Predecessor foundation recovery\n- proof choice: `\(.report.proof_choice)`\n- reason: `\(.report.reason)`\n- missing predecessor: `\(.report.foundation.missing_predecessor_sha)`\n- last known good: `\(.report.foundation.last_known_good_sha)` run `\(.report.foundation.last_known_good_run_id)` artifact `\(.report.foundation.last_known_good_artifact_digest)`\n- next: `\(.report.foundation.next_operation)`"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "emitted=true" >> "$GITHUB_OUTPUT"
           for suffix in a b; do
             go run ./cmd/feedback-semantic-state-witness \
               --root "$GITHUB_WORKSPACE" \
@@ -1192,6 +1199,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v6
+        if: steps.semantic.outputs.emitted == 'true'
         with:
           name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |

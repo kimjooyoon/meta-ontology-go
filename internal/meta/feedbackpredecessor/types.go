@@ -18,11 +18,12 @@ type Candidate struct {
 }
 
 type Input struct {
-	Repository        string      `json:"repository"`
-	PredecessorSHA    string      `json:"predecessor_sha"`
-	CanonicalBranch   string      `json:"canonical_branch"`
-	CanonicalWorkflow string      `json:"canonical_workflow"`
-	Candidates        []Candidate `json:"candidates"`
+	Repository        string              `json:"repository"`
+	PredecessorSHA    string              `json:"predecessor_sha"`
+	CanonicalBranch   string              `json:"canonical_branch"`
+	CanonicalWorkflow string              `json:"canonical_workflow"`
+	Candidates        []Candidate         `json:"candidates"`
+	Foundation        *FoundationEvidence `json:"foundation,omitempty"`
 }
 
 type Selection struct {
@@ -59,13 +60,15 @@ type Indicator struct {
 }
 
 type Report struct {
-	Schema         string      `json:"schema"`
-	Repository     string      `json:"repository"`
-	PredecessorSHA string      `json:"predecessor_sha"`
-	Decision       string      `json:"decision"`
-	Reason         string      `json:"reason"`
-	Selected       *Selection  `json:"selected,omitempty"`
-	Summary        Summary     `json:"summary"`
-	Indicators     []Indicator `json:"indicators"`
-	ReportDigest   string      `json:"report_digest"`
+	Schema         string              `json:"schema"`
+	Repository     string              `json:"repository"`
+	PredecessorSHA string              `json:"predecessor_sha"`
+	Decision       string              `json:"decision"`
+	Reason         string              `json:"reason"`
+	ProofChoice    string              `json:"proof_choice,omitempty"`
+	Foundation     *FoundationEvidence `json:"foundation,omitempty"`
+	Selected       *Selection          `json:"selected,omitempty"`
+	Summary        Summary             `json:"summary"`
+	Indicators     []Indicator         `json:"indicators"`
+	ReportDigest   string              `json:"report_digest"`
 }

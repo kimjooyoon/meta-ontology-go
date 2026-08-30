@@ -32,14 +32,24 @@ type artifactList struct {
 }
 
 type artifact struct {
-	ID      int64  `json:"id"`
-	Name    string `json:"name"`
-	Expired bool   `json:"expired"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Expired     bool   `json:"expired"`
+	SizeInBytes int64  `json:"size_in_bytes"`
+	Digest      string `json:"digest"`
 }
 
 type archivedReceipt struct {
 	ReceiptDigest    string `json:"receipt_digest"`
 	RepositoryWrites int    `json:"repository_writes"`
+	Decision         string `json:"decision"`
+	Report           struct {
+		Decision string `json:"decision"`
+		Feedback struct {
+			CommitSHA string `json:"commit_sha"`
+			Decision  string `json:"decision"`
+		} `json:"feedback"`
+	} `json:"report"`
 }
 
 type collection struct {

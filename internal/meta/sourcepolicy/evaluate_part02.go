@@ -25,6 +25,15 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 				consumer: "repository-projector"}, nil
 		}
 	}
+	if policy.ExemptWorkflowDiscoveryRoot &&
+		observation.SemanticRole == SemanticRoleWorkflowDiscoveryRoot {
+		switch observation.Dimension {
+		case DimensionDirectEntries, DimensionDirectoryKinds:
+			return definition{family: FamilyTopology, relation: RelationObserve,
+				proof: ProofFoundation, operation: OperationExemptWorkflowRoot,
+				consumer: "github-actions"}, nil
+		}
+	}
 	switch observation.Dimension {
 	case DimensionGoFiles, DimensionGoooFiles, DimensionGoLines, DimensionGoooLines:
 		return observe, nil
