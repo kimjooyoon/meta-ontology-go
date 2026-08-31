@@ -125,7 +125,7 @@ async function testBoundChangedPathAuthority() {
   });
   assert.deepEqual(exactFiles, [
     file('docs/new.md', 'renamed', 'docs/old.md'),
-    file('docs/readme.md', 'modified'),
+    {filename: 'docs/readme.md', previous_filename: null, status: 'modified'},
   ]);
   const result = await inspectChangedFiles({
     owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 2,
