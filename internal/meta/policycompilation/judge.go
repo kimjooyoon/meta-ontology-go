@@ -159,9 +159,9 @@ func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (Deci
 	command.Dir = work
 	command.Stdin = bytes.NewReader(payload)
 	command.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.0")
-	output, err := command.Output()
+	output, err := command.CombinedOutput()
 	if err != nil {
-		return DecisionResult{}, fmt.Errorf("execute generated judge: %w", err)
+		return DecisionResult{}, fmt.Errorf("execute generated judge: %w: %s", err, strings.TrimSpace(string(output)))
 	}
 	decoder := json.NewDecoder(bytes.NewReader(output))
 	decoder.DisallowUnknownFields()
