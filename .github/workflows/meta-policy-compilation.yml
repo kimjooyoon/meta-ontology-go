@@ -1,0 +1,270 @@
+name: Gooo meta-policy compilation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-consumer/**'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-consumer/**'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: meta-policy-compilation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: producer / source-owned policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: true
+      - name: Assert toolchain authority
+        run: test "$(go env GOVERSION)" = "go1.27.0"
+      - name: Build, test, and run conformance twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/meta-policy-compilation"
+          mkdir -p "$root"
+          snapshot_repository() {
+            local list="$1"
+            find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -print0 |
+              sort -z |
+              while IFS= read -r -d '' file; do
+                relative="${file#"$GITHUB_WORKSPACE/"}"
+                mode=$(stat -c '%a' "$file")
+                size=$(stat -c '%s' "$file")
+                digest=$(sha256sum "$file" | awk '{print $1}')
+                printf '%s\t%s\t%s\t%s\n' "$relative" "$mode" "$size" "$digest"
+              done > "$list"
+            sha256sum "$list" | awk '{print $1}'
+          }
+          before_snapshot="$root/repository-before.list"
+          before_digest=$(snapshot_repository "$before_snapshot")
+          before_count=$(wc -l < "$before_snapshot" | tr -d ' ')
+
+          build_start=$(date +%s%3N)
+          /usr/bin/time -f '%M' -o "$root/build-rss" go build ./cmd/gooo ./cmd/meta-policy-compilation-witness ./cmd/meta-policy-compilation-consumer
+          build_end=$(date +%s%3N)
+          build_wall_ms=$((build_end-build_start))
+          build_peak_rss_kb=$(cat "$root/build-rss")
+
+          test_start=$(date +%s%3N)
+          set +e
+          go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo > "$root/test.json"
+          test_exit=$?
+          set -e
+          test_end=$(date +%s%3N)
+          test_wall_ms=$((test_end-test_start))
+          test_peak_rss_kb=0
+          test_total=$(jq '[.[] | select(.Action == "run")] | length' "$root/test.json")
+          test_executed="$test_total"
+          test_reused=$(jq '[.[] | select(.Action == "output" and ((.Output // "") | contains("cached")))] | length' "$root/test.json")
+          test_skipped=$(jq '[.[] | select(.Action == "skip")] | length' "$root/test.json")
+          test_not_observed=0
+          test "$test_exit" -eq 0
+
+          conformance_start=$(date +%s%3N)
+          /usr/bin/time -f '%M' -o "$root/conformance-rss" go run ./cmd/meta-policy-compilation-witness \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$root/first"
+          conformance_end=$(date +%s%3N)
+          conformance_wall_ms=$((conformance_end-conformance_start))
+          conformance_peak_rss_kb=$(cat "$root/conformance-rss")
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$root/replay"
+
+          cmp "$root/first/policy.json" "$root/replay/policy.json"
+          cmp "$root/first/artifact.json" "$root/replay/artifact.json"
+          cmp "$root/first/judge.go" "$root/replay/judge.go"
+          cmp "$root/first/generated-results.json" "$root/replay/generated-results.json"
+          cmp "$root/first/independent-results.json" "$root/replay/independent-results.json"
+          cmp "$root/first/receipt.json" "$root/replay/receipt.json"
+          jq -e '
+            .verification.decision == "PASS" and
+            .verification.conformance_decision == "PASS" and
+            .verification.fixed_denominator == 8 and
+            .verification.case_denominator == 3 and
+            .summary.canonical_case_denominator == 3 and
+            .summary.case_count == 3 and
+            .summary.pass_count == 1 and
+            .summary.fail_closed_count == 1 and
+            .summary.unknown_count == 1 and
+            .summary.generated_independent_equivalent == 3 and
+            .summary.source_all_equivalent == 3 and
+            .summary.validator_expectations_confirmed == 3 and
+            .claims.event_count == 48 and
+            (.evidence | length) == 3 and
+            all(.evidence[]; .class == "SYNTHETIC_FIXTURE" and .observation_digest != "" and .provenance != "") and
+            .current_evidence.class == "CURRENT_EVIDENCE" and
+            .public_cli.path == "gooo" and
+            .public_cli.check_observed and .public_cli.generate_observed and
+            .write_set.repository_before_count == .write_set.repository_after_count and
+            .write_set.repository_before_digest == .write_set.repository_after_digest and
+            .write_set.repository_net_change_observed == false and
+            .write_set.mutation_authority == 0 and .write_set.promotion_authority == 0 and
+            all(.cases[]; (.claim_predicates | length) == 8 and ([.claim_predicates[].predicate] | unique | length) == 8) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "REFUTED")) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "OPEN")) and
+            any(.cases[]; .generated.decision == "UNKNOWN" and .generated.stage != "FIXED_POINT" and .generated.unknown_class != "" and .generated.next_operation != "" and (.generated.blocked_by | length) > 0)
+          ' "$root/first/receipt.json"
+
+          mkdir -p "$root/intervention"
+          cp examples/meta-policy-compilation/policy.gooo "$root/intervention/comment.gooo"
+          printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$root/intervention/comment.gooo"
+          sed 's/SEMANTIC_EQUIVALENCE_PROVED/SEMANTIC_EQUIVALENCE_INTERVENED/' examples/meta-policy-compilation/policy.gooo > "$root/intervention/semantic.gooo"
+          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/comment.gooo" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/comment"
+          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/semantic.gooo" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/semantic"
+          for variant in base comment semantic; do
+            case "$variant" in
+              base) receipt="$root/first/receipt.json" ;;
+              comment) receipt="$root/intervention/comment/receipt.json" ;;
+              semantic) receipt="$root/intervention/semantic/receipt.json" ;;
+            esac
+            jq '[.cases[] | {id:.id, source:.source, generated:.generated, independent:.independent}]' "$receipt" > "$root/intervention/$variant-behavior.json"
+            jq '[.claims.events[] | {claim_id, predicate, from, to, decision, stage, step, reason}]' "$receipt" > "$root/intervention/$variant-claims.json"
+          done
+          cmp "$root/intervention/base-behavior.json" "$root/intervention/comment-behavior.json"
+          cmp "$root/intervention/base-claims.json" "$root/intervention/comment-claims.json"
+          if cmp "$root/intervention/base-behavior.json" "$root/intervention/semantic-behavior.json"; then
+            echo 'semantic intervention did not change behavior' >&2
+            exit 1
+          fi
+          if cmp "$root/intervention/base-claims.json" "$root/intervention/semantic-claims.json"; then
+            echo 'semantic intervention did not change claim transitions' >&2
+            exit 1
+          fi
+
+          after_snapshot="$root/repository-after.list"
+          after_digest=$(snapshot_repository "$after_snapshot")
+          after_count=$(wc -l < "$after_snapshot" | tr -d ' ')
+          if [ "$before_digest" = "$after_digest" ]; then repository_writes=0; repository_net_change_observed=false; else repository_writes=1; repository_net_change_observed=true; fi
+          regular_files=$(wc -l < "$after_snapshot" | tr -d ' ')
+          descendant_directories=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -mindepth 1 -type d -print | wc -l | tr -d ' ')
+          go_files=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -name '*.go' -print | wc -l | tr -d ' ')
+          gooo_files=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -name '*.gooo' -print | wc -l | tr -d ' ')
+          physical_lines=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -print0 | xargs -0 cat | wc -l | tr -d ' ')
+          go_lines=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -name '*.go' -print0 | xargs -0 -r cat | wc -l | tr -d ' ')
+          gooo_lines=$(find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -name '*.gooo' -print0 | xargs -0 -r cat | wc -l | tr -d ' ')
+          jq -n \
+            --arg subject_sha "$SUBJECT_SHA" \
+            --argjson build_wall_ms "$build_wall_ms" --argjson build_peak_rss_kb "$build_peak_rss_kb" \
+            --argjson test_wall_ms "$test_wall_ms" --argjson test_peak_rss_kb "$test_peak_rss_kb" \
+            --argjson conformance_wall_ms "$conformance_wall_ms" --argjson conformance_peak_rss_kb "$conformance_peak_rss_kb" \
+            --argjson test_total "$test_total" --argjson test_executed "$test_executed" --argjson test_reused "$test_reused" --argjson test_skipped "$test_skipped" --argjson test_not_observed "$test_not_observed" \
+            --argjson repository_before_file_count "$before_count" --argjson repository_after_file_count "$after_count" \
+            --argjson repository_files "$regular_files" --argjson repository_directories "$descendant_directories" \
+            --argjson go_files "$go_files" --argjson gooo_files "$gooo_files" --argjson physical_lines "$physical_lines" --argjson go_lines "$go_lines" --argjson gooo_lines "$gooo_lines" \
+            --argjson repository_writes "$repository_writes" --argjson repository_net_change_observed "$repository_net_change_observed" \
+            '{schema:"gooo/meta-policy-compilation-runtime/v1", subject_sha:$subject_sha, build:{wall_ms:$build_wall_ms, peak_rss_kb:$build_peak_rss_kb}, test:{wall_ms:$test_wall_ms, peak_rss_kb:$test_peak_rss_kb, total:$test_total, executed:$test_executed, reused:$test_reused, skipped:$test_skipped, not_observed:$test_not_observed}, conformance:{wall_ms:$conformance_wall_ms, peak_rss_kb:$conformance_peak_rss_kb}, inventory:{repository_files:$repository_files, repository_directories:$repository_directories, physical_lines:$physical_lines, go_files:$go_files, go_lines:$go_lines, gooo_files:$gooo_files, gooo_lines:$gooo_lines}, repository:{before_file_count:$repository_before_file_count, after_file_count:$repository_after_file_count, writes:$repository_writes, net_change_observed:$repository_net_change_observed}}' > "$root/runtime-metrics.json"
+          jq -e '.repository.before_file_count == .repository.after_file_count and .repository.writes == 0 and .repository.net_change_observed == false and (.build.wall_ms|type)=="number" and (.test.wall_ms|type)=="number" and (.conformance.wall_ms|type)=="number"' "$root/runtime-metrics.json"
+      - name: Publish producer summary
+        shell: bash
+        run: |
+          root="$RUNNER_TEMP/meta-policy-compilation"
+          jq -r '"### Gooo meta-policy compilation\n- policy: " + .verification.decision + "\n- fixed denominator: " + (.verification.fixed_denominator|tostring) + "\n- canonical cases source/generated/independent: 3/3/3\n- cases: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n- predicates: discharged=" + (.summary.claim_predicates_discharged|tostring) + ", refuted=" + (.summary.claim_predicates_refuted|tostring) + ", open=" + (.summary.claim_predicates_open|tostring) + "\n- synthetic evidence: " + ((.evidence|length)|tostring) + ", current evidence: " + .current_evidence.class + "\n- repository net change: " + (.write_set.repository_net_change_observed|tostring)' "$root/first/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"- build wall_ms/peak_rss_kb: " + (.build.wall_ms|tostring) + "/" + (.build.peak_rss_kb|tostring) + "\n- test wall_ms/peak_rss_kb: " + (.test.wall_ms|tostring) + "/" + (.test.peak_rss_kb|tostring) + "\n- conformance wall_ms/peak_rss_kb: " + (.conformance.wall_ms|tostring) + "/" + (.conformance.peak_rss_kb|tostring) + "\n- tests total/executed/reused/skipped/not_observed: " + ([.test.total,.test.executed,.test.reused,.test.skipped,.test.not_observed] | map(tostring) | join("/")) + "\n- Go files/lines: " + ([.inventory.go_files,.inventory.go_lines] | map(tostring) | join("/")) + ", Gooo files/lines: " + ([.inventory.gooo_files,.inventory.gooo_lines] | map(tostring) | join("/")) + "\n- files/subfolders: " + ([.inventory.repository_files,.inventory.repository_directories] | map(tostring) | join("/")) + "\n- repository writes: " + (.repository.writes|tostring)' "$root/runtime-metrics.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload producer evidence and runtime artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation
+          if-no-files-found: error
+          retention-days: 30
+
+  consumer:
+    name: independent consumer / raw Gooo reconstruction
+    needs: producer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: true
+      - name: Download producer boundary
+        uses: actions/download-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation
+      - name: Parse raw Gooo independently and verify 3/3/3
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n -E 'internal/meta/policycompilation|IndependentEvaluate' -- cmd/meta-policy-compilation-consumer; then
+            echo 'consumer imports or names producer-only implementation' >&2
+            exit 1
+          fi
+          go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$RUNNER_TEMP/meta-policy-compilation/first" \
+            -output "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          jq -e '
+            .schema == "gooo/meta-policy-compilation-consumer/v3" and
+            .raw_policy_parsed and .raw_cases_parsed and
+            .gooo_derived_rule_numerator == 8 and .gooo_derived_rule_denominator == 8 and
+            .source_executions_numerator == 3 and .source_executions_denominator == 3 and
+            .generated_executions_numerator == 3 and .generated_executions_denominator == 3 and
+            .independent_reconstructions_numerator == 3 and .independent_reconstructions_denominator == 3 and
+            .contract_digest_match and
+            .import_boundary.producer_compiler_imports == "0/1" and
+            .import_boundary.generated_template_imports == "0/1" and
+            .import_boundary.independent_evaluator_imports == "0/1" and
+            (.synthetic_evidence|length) == 3 and all(.synthetic_evidence[]; .class == "SYNTHETIC_FIXTURE") and
+            .current_evidence.class == "CURRENT_EVIDENCE" and
+            .subject_resolution == "RESOLVED" and .subject_decision.decision == "PASS"
+          ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          jq -r '"### Independent Gooo consumer\n- raw Gooo parse: " + (.raw_policy_parsed|tostring) + "\n- source/generated/independent: 3/3/3\n- import boundary: producer compiler " + .import_boundary.producer_compiler_imports + "\n- synthetic evidence/current evidence: " + ((.synthetic_evidence|length)|tostring) + "/" + .current_evidence.class + "\n- subject: " + .subject_resolution + " / " + .subject_decision.decision' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload independent consumer report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-consumer-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/consumer-report.json
+          if-no-files-found: error
+          retention-days: 30
+
