@@ -1,5 +1,5 @@
 {
-  "schema": "gooo/meta-foundation-authorization/v1",
+  "schema": "gooo/meta-foundation-authorization/v2",
   "decision": "FOUNDATION",
   "reason": "NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE",
   "repository": "kimjooyoon/meta-ontology-go",
@@ -9,52 +9,19 @@
     "pull_request": 609,
     "branch": "agent/dev-main-sync-20260831-rerun",
     "base_branch": "dev",
-    "base_sha": "9db2989b9c32e096f05750cb94c801d496fa5689",
-    "head_sha": "a647236b984348899d98c4b40611fad230581251",
-    "manifest_path": ".github/merge-conflict-resolution-manifest.json",
-    "manifest_sha256": "sha256:d172a1e93e6ccf803e47127347ace82ec6119da9f37cd85a0850f0cb7cfa784a",
-    "changed_path_count": 91,
-    "changed_paths_sha256": "sha256:25ac523e5904c7fd75e92f061de1c204bd6e347c94749614b30f617b2b934809",
-    "patch_sha256_excluding_authorization_paths": "sha256:110cd25ebddda15ab994ae73b426e0ce5299119e13dd665bd5e6db22e2fe6edf",
-    "tree_sha256_excluding_authorization_paths": "sha256:493d0aa315d470ce267599e0cb79a8371dc5a2087e9d55d3275a013f28bd5043"
+    "base_sha": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_sha": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base_sha": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "changed_file_count": 92,
+    "changed_paths_sha256": "sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac",
+    "protected_intersection_count": 26,
+    "protected_intersection_sha256": "sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf"
   },
-  "authorization": {
-    "pull_request": 610,
-    "branch": "agent/foundation-authorization-dev-sync-20260831",
-    "base_branch": "dev",
-    "changed_paths": [
-      ".github/agent-scope-table.md",
-      ".github/ci-governance.json",
-      ".github/foundation-authorization.json",
-      ".github/workflows/ci-guardian.yml",
-      ".github/workflows/ci.yml",
-      "internal/verify/foundation_authorization.go",
-      "internal/verify/scope_foundation_authorization_dev_sync_20260831.go",
-      "scripts/ci-proof/foundation_authorization.js",
-      "scripts/ci-proof/foundation_authorization_test.js",
-      "scripts/ci-proof/guardian.js"
-    ],
+  "dispatch": {
+    "receipt_path": ".github/governance-denominator-v6-foundation-authorization-dispatch.json",
+    "receipt_sha256": "sha256:79f47fe9b8ef19cd7b21a6f6caca6b8130d62d25a9827a66fc3e631eb81a1229",
     "mode": "single-use",
     "consumed": false,
     "replay_decision": "REFUTED"
-  },
-  "auth_policy_paths": [
-    ".github/agent-scope-table.md",
-    ".github/ci-governance.json",
-    ".github/foundation-authorization.json",
-    ".github/workflows/ci-guardian.yml",
-    ".github/workflows/ci.yml",
-    "internal/verify/foundation_authorization.go",
-    "internal/verify/scope_foundation_authorization_dev_sync_20260831.go",
-    "scripts/ci-proof/foundation_authorization.js",
-    "scripts/ci-proof/foundation_authorization_test.js",
-    "scripts/ci-proof/guardian.js"
-  ],
-  "base_attestation": {
-    "commit": "9db2989b9c32e096f05750cb94c801d496fa5689",
-    "tree_sha": "f6e2ff822c5f7c4548fe86d1cebdc939d36bd8d9",
-    "parents": [
-      "2b1d331c560a58c30def1bb8a5be3f66740bf954"
-    ]
   }
 }

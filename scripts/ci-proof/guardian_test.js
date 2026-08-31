@@ -118,19 +118,24 @@ async function testKernelStatusesAndRenames() {
       owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
       listFiles: async () => ({status: 200, data: [file('.github/workflows/ci.yml', status)]}),
     });
-    assert.equal(result.code, ROOT_FAILURE_CODE);
-    assert.equal(result.decision, 'FAIL_CLOSED');
+    assert.equal(result.code, null);
+    assert.equal(result.decision, 'AUTHORIZATION_REQUIRED');
+    assert.equal(result.authorizationRequired, true);
   }
   const renamed = await inspectChangedFiles({
     owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [file('docs/new.md', 'renamed', '.github/ci-governance.json')]}),
   });
-  assert.equal(renamed.code, ROOT_FAILURE_CODE);
+  assert.equal(renamed.code, null);
+  assert.equal(renamed.decision, 'AUTHORIZATION_REQUIRED');
+  assert.equal(renamed.authorizationRequired, true);
   const inert = await inspectChangedFiles({
     owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [{...file('.github/workflows/ci.yml'), patch: '# name: CI guardian'}]}),
   });
-  assert.equal(inert.code, ROOT_FAILURE_CODE);
+  assert.equal(inert.code, null);
+  assert.equal(inert.decision, 'AUTHORIZATION_REQUIRED');
+  assert.equal(inert.authorizationRequired, true);
 }
 
 async function testForkAndMalformedAPI() {
@@ -607,6 +612,10 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /const authorizedFoundationFeature/);
   assert.match(workflow, /result\.foundationAuthorization\.decision === 'PASS'/);
   assert.match(workflow, /trustedPromotion \|\| authorizedFoundationFeature/);
+  assert.match(workflow, /result\.authorizationRequired === true/);
+  const dispatchIndex = workflow.indexOf('guardian.observeFoundationAuthorization');
+  const kernelAssignmentIndex = workflow.indexOf('beforeDigest = await guardian.kernelTreeDigest');
+  assert(dispatchIndex >= 0 && kernelAssignmentIndex >= 0 && dispatchIndex < kernelAssignmentIndex, 'Foundation authorization must be dispatched before kernel digest attestation');
   assert.match(workflow, /guardian\.validateKernelDigestAttestation/);
   assert.match(workflow, /computedBeforeDigest: beforeDigest/);
   assert.match(workflow, /artifactBeforeDigest: artifact\.kernel_before_sha256/);

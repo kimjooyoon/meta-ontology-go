@@ -1,0 +1,382 @@
+{
+  "schema": "gooo/ci-governance-denominator-migration/v6",
+  "migration_version": "v3",
+  "receipt_path": ".github/governance-denominator-v6-foundation-authorization-dispatch.json",
+  "parent_receipt": {
+    "schema": "gooo/ci-governance-denominator-migration/v5",
+    "path": ".github/governance-denominator-v5-executable-guardian-scope.json",
+    "sha256": "sha256:ba2f25fd18cf161eaf973f2d570e87d161fb452686e3840f7a1b694e30f35f52"
+  },
+  "source_release": {
+    "repository": "kimjooyoon/gooo-receipt-schema-migration",
+    "version": "v0.3.1",
+    "release_id": 379540253,
+    "immutable": true,
+    "tag_object_sha": "d98ea5f2a88bbc3e3bafa573a94a2058aba96e54",
+    "target_commit": "7f651f45f548fb38357649578d9984fd77c5a451",
+    "asset": {
+      "id": 537539263,
+      "name": "gooo-receipt-schema-migration-v0.3.1-conformance.tar.gz",
+      "size_bytes": 36114,
+      "sha256": "sha256:fe00e049fcf4c946fef1a6bc3a7c5295d3e3fa2aed630edcae0039dfcee81a76"
+    },
+    "main_run": {
+      "run_id": 33362658147,
+      "conclusion": "success"
+    }
+  },
+  "adoption_proposal": {
+    "path": "examples/receipt-schema-migration-v3/adoption-proposal.json",
+    "file_sha256": "sha256:578562ec738484c67d70581622981471f4a0eba86b35a726bc73714805fabb55",
+    "declared_sha256": "sha256:42ae271ea27226bbbf0086ec1fed230e51787b8f44dc68468eafa5607c5a6c7e"
+  },
+  "semantic_ir": {
+    "path": "examples/receipt-schema-migration-v3/semantic-ir.json",
+    "source_digest": "sha256:ab3543bd805a53b6fa8a8e3fb6f10697e3b6f0db8658e471a14906718a137ed3",
+    "contract_digest": "sha256:4384eb0f553e83b69c82ef25fa946f50a5b6c8782b400c7993173caaf876acb7",
+    "file_sha256": "sha256:fc3e7442c4eb9c2b0298d7db0982ef8cb6ee26fe683f459783c0197466a62f5f"
+  },
+  "generated_evaluator": {
+    "validator_path": "examples/receipt-schema-migration-v3/generated/validator.json",
+    "validator_sha256": "sha256:f45978d7ffb5cbbb6a8fe9af5122ff10d989a8105219679078f1ad5acdf066a2",
+    "harness_path": "examples/receipt-schema-migration-v3/generated/guardian-harness-cases.json",
+    "harness_sha256": "sha256:d954abca510f9a7e99c70226d3673db89acb995dc40839973f6202447f7082f3"
+  },
+  "guardian_harness": {
+    "schema": "gooo/receipt-schema-migration/guardian-harness/v2",
+    "migration_version": "v3",
+    "summary": {
+      "closed_count": 2,
+      "unknown_count": 0,
+      "refuted_count": 9,
+      "foundation_authorization_count": 8,
+      "foundation_receipt_count": 8
+    }
+  },
+  "denominator": {
+    "previous_cell_count": 16,
+    "cell_count": 20,
+    "added": 4,
+    "retired": 0,
+    "split": 0,
+    "added_cell_ids": [
+      "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "FOUNDATION_RECEIPT_EVALUATION",
+      "CHANGED_PATH_TUPLE_BINDING",
+      "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED"
+    ],
+    "stage_counts": {
+      "FOUNDATION": 8,
+      "COHERENCE": 6,
+      "REGRESSION": 6
+    },
+    "role_counts": {
+      "DRIVER": 6,
+      "OUTCOME": 6,
+      "GUARDRAIL": 8
+    }
+  },
+  "precedence": [
+    "REFUTED",
+    "UNKNOWN",
+    "CLOSED"
+  ],
+  "unknown_fields": [
+    "stage",
+    "step",
+    "reason",
+    "unknown_class",
+    "next_operation",
+    "blocked_by"
+  ],
+  "lineage": [
+    {
+      "version": "v0.1.0",
+      "preserved": true,
+      "immutable": false,
+      "decision": "REFUTED"
+    },
+    {
+      "version": "v0.1.1",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.0",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.1",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.2.2",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED"
+    },
+    {
+      "version": "v0.3.0",
+      "preserved": true,
+      "immutable": true,
+      "decision": "CLOSED",
+      "release_id": 379538725,
+      "tag_object_sha": "4731fd84d3273ecb04e981066e9add9e6c6ff25b",
+      "target_commit": "41fd8cb827b88069b13caf271e2972a35d8ad1d4",
+      "asset": {
+        "id": 537535145,
+        "name": "gooo-receipt-schema-migration-v0.3.0-conformance-proper.tar.gz",
+        "size_bytes": 35456,
+        "sha256": "sha256:ca7c03961c74f10d16d6369e6900b7bc681bfd1cbb04523156d3f372bf2eb39a"
+      }
+    }
+  ],
+  "fixture_v3": {
+    "repository": "kimjooyoon/meta-ontology-go",
+    "ref": "dev",
+    "base_commit": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_commit": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "manifest_path": "fixtures/guardian-v3-pr609.json",
+    "changed_files_count": 92,
+    "changed_paths_sha256": "sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac",
+    "protected_intersection_count": 26,
+    "protected_intersection_sha256": "sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf",
+    "protected_intersection_paths": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
+      ".github/workflows/ci-guardian.yml",
+      ".github/workflows/ci.yml",
+      ".github/workflows/self-improvement-minimal-loop.yml",
+      ".github/workflows/transformation-effect.yml",
+      "internal/verify/foundation_discovery_recovery_scope.go",
+      "internal/verify/foundation_promotion.go",
+      "internal/verify/scope_dev_main_sync_20260831_rerun.go",
+      "internal/verify/self_improvement_minimal_loop_scope.go",
+      "scripts/ci-proof/build_part01.go",
+      "scripts/ci-proof/build_part02.go",
+      "scripts/ci-proof/build_part03.go",
+      "scripts/ci-proof/foundation.go",
+      "scripts/ci-proof/foundation_route_test.go",
+      "scripts/ci-proof/foundation_types.go",
+      "scripts/ci-proof/foundation_validate.go",
+      "scripts/ci-proof/proof_types_part01.go",
+      "scripts/ci-proof/route.go",
+      "scripts/ci-proof/route.js",
+      "scripts/ci-proof/route_test.js",
+      "scripts/ci-proof/types_part02.go",
+      "scripts/ci-proof/types_part05.go",
+      "scripts/ci-proof/validate_part01.go",
+      "scripts/verify/foundation_promotion.go",
+      "scripts/verify/main_part02.go"
+    ],
+    "changed_path_tuples": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
+      ".github/merge-conflict-resolution-manifest.json",
+      ".github/workflows/ci-guardian.yml",
+      ".github/workflows/ci.yml",
+      ".github/workflows/self-improvement-minimal-loop.yml",
+      ".github/workflows/transformation-effect.yml",
+      "bootstrap/repository-projector/command/store.go",
+      "cmd/feedback-predecessor-witness/io.go",
+      "cmd/feedback-predecessor-witness/types.go",
+      "examples/language-syntax-roundtrip/corpus.json",
+      "examples/self-improvement-minimal-loop/main.gooo",
+      "examples/self-improvement-minimal-loop/normal.json",
+      "examples/self-improvement-minimal-loop/refuted.json",
+      "examples/self-improvement-minimal-loop/unknown.json",
+      "internal/detection/linecaps/observations.go",
+      "internal/detection/linecaps/stats_part05.go",
+      "internal/detection/linecaps/stats_part06.go",
+      "internal/detection/linecaps/workflow_root.go",
+      "internal/meta/feedbackpredecessor/contract.go",
+      "internal/meta/feedbackpredecessor/decision.go",
+      "internal/meta/feedbackpredecessor/foundation.go",
+      "internal/meta/feedbackpredecessor/foundation_validation.go",
+      "internal/meta/feedbackpredecessor/select.go",
+      "internal/meta/feedbackpredecessor/types.go",
+      "internal/meta/generation/applicability_part01.go",
+      "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+      "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
+      "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+      "internal/meta/languagereadiness/languagesyntax/model.go",
+      "internal/meta/languagereadiness/languagesyntax/registry.go",
+      "internal/meta/metabinding/source_bindings.go",
+      "internal/meta/selfimprovementloop/artifact_digest.go",
+      "internal/meta/selfimprovementloop/artifact_io.go",
+      "internal/meta/selfimprovementloop/artifact_types.go",
+      "internal/meta/selfimprovementloop/artifacts.go",
+      "internal/meta/selfimprovementloop/constants.go",
+      "internal/meta/selfimprovementloop/evaluate.go",
+      "internal/meta/selfimprovementloop/evaluate_cells.go",
+      "internal/meta/selfimprovementloop/evaluate_pair.go",
+      "internal/meta/selfimprovementloop/evaluate_result.go",
+      "internal/meta/selfimprovementloop/evaluate_rules.go",
+      "internal/meta/selfimprovementloop/evaluate_support.go",
+      "internal/meta/selfimprovementloop/evaluate_tail.go",
+      "internal/meta/selfimprovementloop/graph.go",
+      "internal/meta/selfimprovementloop/graph_support.go",
+      "internal/meta/selfimprovementloop/graph_types.go",
+      "internal/meta/selfimprovementloop/input_evidence_types.go",
+      "internal/meta/selfimprovementloop/input_types.go",
+      "internal/meta/selfimprovementloop/loop_cases_test.go",
+      "internal/meta/selfimprovementloop/loop_fixtures_test.go",
+      "internal/meta/selfimprovementloop/loop_graph_test.go",
+      "internal/meta/selfimprovementloop/loop_refutation_test.go",
+      "internal/meta/selfimprovementloop/report_types.go",
+      "internal/meta/selfimprovementloop/run.go",
+      "internal/meta/selfimprovementloop/state_types.go",
+      "internal/meta/sourcepolicy/candidate.go",
+      "internal/meta/sourcepolicy/evaluate_part02.go",
+      "internal/meta/sourcepolicy/indicator.go",
+      "internal/meta/sourcepolicy/indicator_domain.go",
+      "internal/meta/sourcepolicy/policy.go",
+      "internal/meta/sourcepolicy/vocabulary_part01.go",
+      "internal/meta/sourcepolicy/workflow_root.go",
+      "internal/verify/foundation_discovery_recovery_scope.go",
+      "internal/verify/foundation_promotion.go",
+      "internal/verify/scope_dev_main_sync_20260831_rerun.go",
+      "internal/verify/self_improvement_minimal_loop_scope.go",
+      "scripts/ci-proof/build_part01.go",
+      "scripts/ci-proof/build_part02.go",
+      "scripts/ci-proof/build_part03.go",
+      "scripts/ci-proof/foundation.go",
+      "scripts/ci-proof/foundation_route_test.go",
+      "scripts/ci-proof/foundation_types.go",
+      "scripts/ci-proof/foundation_validate.go",
+      "scripts/ci-proof/proof_types_part01.go",
+      "scripts/ci-proof/route.go",
+      "scripts/ci-proof/route.js",
+      "scripts/ci-proof/route_test.js",
+      "scripts/ci-proof/types_part02.go",
+      "scripts/ci-proof/types_part05.go",
+      "scripts/ci-proof/validate_part01.go",
+      "scripts/feedback-predecessor-ci/collect.go",
+      "scripts/feedback-predecessor-ci/foundation.go",
+      "scripts/feedback-predecessor-ci/foundation_artifact.go",
+      "scripts/feedback-predecessor-ci/foundation_collect.go",
+      "scripts/feedback-predecessor-ci/foundation_history.go",
+      "scripts/feedback-predecessor-ci/foundation_types.go",
+      "scripts/feedback-predecessor-ci/sort.go",
+      "scripts/feedback-predecessor-ci/types.go",
+      "scripts/self-improvement-minimal-loop/main.go",
+      "scripts/verify/foundation_promotion.go",
+      "scripts/verify/main_part02.go"
+    ],
+    "kernel_before_tree_sha": "169fe96d8e1e9b50702b0f2fb2d2cf2e83d467e6",
+    "kernel_after_tree_sha": "d8e8f5b9064c8ef7d14daf9f96c8c1df9156e0a6",
+    "kernel_before_entry_count": 321,
+    "kernel_after_entry_count": 327,
+    "kernel_before_sha256": "sha256:e3b0cd0fd2d95a0113b9a6755ebe318e856225630106fa00ccf24572fdfb69f6",
+    "kernel_after_sha256": "sha256:b1e865e5c2f48735dc693b94807b8a8439819985353503ccffceecedac88d582",
+    "guardian_run_id": 33359548617,
+    "guardian_job_id": 99388126433,
+    "artifact_id": 9746232159,
+    "artifact_name": "ci-guardian-33359548617-1",
+    "artifact_size_bytes": 2144,
+    "artifact_sha256": "sha256:41ae5d2398a001b16ecd72dba937924897234dd748fdcb5374caee7e70f026a8"
+  },
+  "tuple_encoding": "sorted_canonical_path_names_join_newline_with_terminal_newline",
+  "authorization_consumption": {
+    "mode": "single-use",
+    "consumed": false,
+    "replay_decision": "REFUTED",
+    "valid_authorization_required_before_kernel_attestation": true
+  },
+  "cells": [
+    {
+      "ordinal": 17,
+      "id": "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "stage": "FOUNDATION",
+      "role": "DRIVER",
+      "outcome": "CLOSED",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED"
+    },
+    {
+      "ordinal": 18,
+      "id": "FOUNDATION_RECEIPT_EVALUATION",
+      "stage": "FOUNDATION",
+      "role": "GUARDRAIL",
+      "outcome": "CLOSED",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED"
+    },
+    {
+      "ordinal": 19,
+      "id": "CHANGED_PATH_TUPLE_BINDING",
+      "stage": "COHERENCE",
+      "role": "OUTCOME",
+      "outcome": "CLOSED",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED"
+    },
+    {
+      "ordinal": 20,
+      "id": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "stage": "REGRESSION",
+      "role": "GUARDRAIL",
+      "outcome": "CLOSED",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED"
+    }
+  ],
+  "provenance": {
+    "development_local_go_commands": {
+      "build": 0,
+      "gofmt": 0,
+      "test": 0,
+      "vet": 0
+    },
+    "development_local_node_commands": 1,
+    "node_command_count": 1,
+    "node_command_class": "NODE_DIGEST_DERIVATION",
+    "node_command_purpose": "VERIFY_EXTERNAL_GUARDIAN_CHANGED_PATH_AND_PROTECTED_INTERSECTION_DIGESTS",
+    "local_guardian_harness_executions": 0,
+    "local_conformance_executions": 0,
+    "upstream_development_local_vm_harness_executions": 1,
+    "upstream_failed_packaging_attempts": 1,
+    "upstream_failed_packaging_reason": "ARCHIVE_RECURSIVE_SELF_INCLUSION_AND_WRONG_TEMP_PATH",
+    "upstream_final_archive_source": "POST_MAIN_ACTIONS_ARTIFACT_ONLY",
+    "upstream_final_size_bytes": 35456,
+    "upstream_final_sha256": "sha256:ca7c03961c74f10d16d6369e6900b7bc681bfd1cbb04523156d3f372bf2eb39a",
+    "product_runtime_authority": {
+      "repository_writes": 0,
+      "local_test_executions": 0,
+      "cross_project_required_gates": 0,
+      "product_generation_authorized": false
+    },
+    "event_mutation_policy": "APPEND_ONLY_NO_RESET_DELETE_REWRITE",
+    "remaining_validation_policy": "GITHUB_ACTIONS_ONLY_AFTER_THIS_RECORD"
+  },
+  "prior_guardian_failure": {
+    "run_id": 33359548617,
+    "job_id": 99388126433,
+    "artifact_id": 9746232159,
+    "artifact_name": "ci-guardian-33359548617-1",
+    "artifact_size_bytes": 2144,
+    "artifact_sha256": "sha256:41ae5d2398a001b16ecd72dba937924897234dd748fdcb5374caee7e70f026a8",
+    "decision": "FAIL_CLOSED",
+    "code": "CI-ROOT-OF-TRUST-001",
+    "route": "feature_dev",
+    "base_sha": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_sha": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "changed_files_count": 92,
+    "protected_intersection_count": 26,
+    "foundation_bootstrap": null,
+    "foundation_authorization": null,
+    "kernel_before_sha256": null,
+    "kernel_after_sha256": null
+  }
+}

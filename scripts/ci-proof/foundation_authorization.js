@@ -145,6 +145,72 @@ const EXECUTABLE_GUARDIAN_SCOPE_PRIOR_FAILURE = Object.freeze({
   code: 'CI-ROOT-OF-TRUST-001',
   message: 'ReferenceError: beforeDigest is not defined',
 });
+const GUARDIAN_DISPATCH_POLICY_SCHEMA = 'gooo/meta-foundation-authorization/v2';
+const GUARDIAN_DISPATCH_SCHEMA = 'gooo/ci-governance-denominator-migration/v6';
+const GUARDIAN_DISPATCH_PATH = '.github/governance-denominator-v6-foundation-authorization-dispatch.json';
+const GUARDIAN_DISPATCH_POLICY_PATH = '.github/foundation-authorization.json';
+const GUARDIAN_DISPATCH_BRANCH = 'agent/dev-main-sync-20260831-rerun';
+const GUARDIAN_DISPATCH_PULL_REQUEST = 609;
+const GUARDIAN_DISPATCH_BASE_SHA = 'e440cbc99f24ceb8385f1b89c70f8cdada10cdbb';
+const GUARDIAN_DISPATCH_HEAD_SHA = '8b47db349315c02933296423b0ae7fa80ffeb1dc';
+const GUARDIAN_DISPATCH_MERGE_BASE_SHA = 'bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc';
+const GUARDIAN_DISPATCH_CHANGED_FILE_COUNT = 92;
+const GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256 = 'sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac';
+const GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_COUNT = 26;
+const GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256 = 'sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf';
+const GUARDIAN_DISPATCH_PROTECTED_PATHS = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/ci-governance.json',
+  '.github/workflows/ci-guardian.yml',
+  '.github/workflows/ci.yml',
+  '.github/workflows/self-improvement-minimal-loop.yml',
+  '.github/workflows/transformation-effect.yml',
+  'internal/verify/foundation_discovery_recovery_scope.go',
+  'internal/verify/foundation_promotion.go',
+  'internal/verify/scope_dev_main_sync_20260831_rerun.go',
+  'internal/verify/self_improvement_minimal_loop_scope.go',
+  'scripts/ci-proof/build_part01.go',
+  'scripts/ci-proof/build_part02.go',
+  'scripts/ci-proof/build_part03.go',
+  'scripts/ci-proof/foundation.go',
+  'scripts/ci-proof/foundation_route_test.go',
+  'scripts/ci-proof/foundation_types.go',
+  'scripts/ci-proof/foundation_validate.go',
+  'scripts/ci-proof/proof_types_part01.go',
+  'scripts/ci-proof/route.go',
+  'scripts/ci-proof/route.js',
+  'scripts/ci-proof/route_test.js',
+  'scripts/ci-proof/types_part02.go',
+  'scripts/ci-proof/types_part05.go',
+  'scripts/ci-proof/validate_part01.go',
+  'scripts/verify/foundation_promotion.go',
+  'scripts/verify/main_part02.go',
+].sort());
+const GUARDIAN_DISPATCH_KERNEL_BEFORE_SHA256 = 'sha256:e3b0cd0fd2d95a0113b9a6755ebe318e856225630106fa00ccf24572fdfb69f6';
+const GUARDIAN_DISPATCH_KERNEL_AFTER_SHA256 = 'sha256:b1e865e5c2f48735dc693b94807b8a8439819985353503ccffceecedac88d582';
+const GUARDIAN_DISPATCH_PARENT_RECEIPT_SHA256 = 'sha256:ba2f25fd18cf161eaf973f2d570e87d161fb452686e3840f7a1b694e30f35f52';
+const GUARDIAN_DISPATCH_SOURCE_DIGEST = 'sha256:ab3543bd805a53b6fa8a8e3fb6f10697e3b6f0db8658e471a14906718a137ed3';
+const GUARDIAN_DISPATCH_CONTRACT_DIGEST = 'sha256:4384eb0f553e83b69c82ef25fa946f50a5b6c8782b400c7993173caaf876acb7';
+const GUARDIAN_DISPATCH_SEMANTIC_IR_DIGEST = 'sha256:fc3e7442c4eb9c2b0298d7db0982ef8cb6ee26fe683f459783c0197466a62f5f';
+const GUARDIAN_DISPATCH_VALIDATOR_DIGEST = 'sha256:f45978d7ffb5cbbb6a8fe9af5122ff10d989a8105219679078f1ad5acdf066a2';
+const GUARDIAN_DISPATCH_HARNESS_DIGEST = 'sha256:d954abca510f9a7e99c70226d3673db89acb995dc40839973f6202447f7082f3';
+const GUARDIAN_DISPATCH_PROPOSAL_FILE_DIGEST = 'sha256:578562ec738484c67d70581622981471f4a0eba86b35a726bc73714805fabb55';
+const GUARDIAN_DISPATCH_PROPOSAL_DECLARED_DIGEST = 'sha256:42ae271ea27226bbbf0086ec1fed230e51787b8f44dc68468eafa5607c5a6c7e';
+const GUARDIAN_DISPATCH_MARKER = 'FOUNDATION_AUTHORIZATION_DISPATCHED_BEFORE_KERNEL_ATTESTATION';
+const GUARDIAN_DISPATCH_CELL_IDS = Object.freeze([
+  'PROTECTED_PATH_AUTHORIZATION_DISPATCH',
+  'FOUNDATION_RECEIPT_EVALUATION',
+  'CHANGED_PATH_TUPLE_BINDING',
+  'UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED',
+]);
+const GUARDIAN_DISPATCH_LINEAGE = Object.freeze([
+  Object.freeze({version: 'v0.1.0', preserved: true, immutable: false, decision: 'REFUTED'}),
+  Object.freeze({version: 'v0.1.1', preserved: true, immutable: true, decision: 'CLOSED'}),
+  Object.freeze({version: 'v0.2.0', preserved: true, immutable: true, decision: 'CLOSED'}),
+  Object.freeze({version: 'v0.2.1', preserved: true, immutable: true, decision: 'CLOSED'}),
+  Object.freeze({version: 'v0.2.2', preserved: true, immutable: true, decision: 'CLOSED'}),
+  Object.freeze({version: 'v0.3.0', preserved: true, immutable: true, decision: 'CLOSED'}),
+]);
 const AUTHORIZATION_PATHS = Object.freeze([
   '.github/agent-scope-table.md',
   '.github/ci-governance.json',
@@ -187,6 +253,22 @@ function digestChangedPaths(files) {
   return sha256(paths.length === 0 ? '' : `${paths.join('\n')}\n`);
 }
 
+function canonicalProtectedIntersection(files) {
+  const protectedPaths = new Set(GUARDIAN_DISPATCH_PROTECTED_PATHS);
+  const names = (Array.isArray(files) ? files : []).flatMap((file) => {
+    if (typeof file === 'string') return [file];
+    return [file && file.filename, file && file.previous_filename];
+  }).filter((value) => typeof value === 'string' && protectedPaths.has(value));
+  return [...new Set(names)].sort();
+}
+
+function digestProtectedIntersection(files) {
+  const paths = Array.isArray(files) && files.every((file) => typeof file === 'string')
+    ? [...new Set(files)].sort()
+    : canonicalProtectedIntersection(files);
+  return sha256(paths.length === 0 ? '' : `${paths.join('\n')}\n`);
+}
+
 function canonicalTreeEntries(entries, excludedPaths = []) {
   const excluded = new Set(excludedPaths);
   return (Array.isArray(entries) ? entries : [])
@@ -212,7 +294,63 @@ function requireExact(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function validateGuardianDispatchPolicy(policy) {
+  requireExact(policy && policy.schema === GUARDIAN_DISPATCH_POLICY_SCHEMA, 'Guardian dispatch policy schema is not exact');
+  requireExact(policy.decision === 'FOUNDATION' && policy.reason === 'NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE', 'Guardian dispatch policy decision is not exact');
+  requireExact(policy.repository === REPOSITORY, 'Guardian dispatch policy repository is not exact');
+  requireExact(policy.foundation_override_success_count === FOUNDATION_OVERRIDE_SUCCESS_COUNT && policy.foundation_override_marker === FOUNDATION_OVERRIDE_MARKER, 'Guardian dispatch policy Foundation count is not exact');
+  const candidate = policy.candidate;
+  requireExact(candidate && candidate.pull_request === GUARDIAN_DISPATCH_PULL_REQUEST && candidate.branch === GUARDIAN_DISPATCH_BRANCH && candidate.base_branch === 'dev', 'Guardian dispatch candidate identity is not exact');
+  requireExact(candidate.base_sha === GUARDIAN_DISPATCH_BASE_SHA && candidate.head_sha === GUARDIAN_DISPATCH_HEAD_SHA && candidate.merge_base_sha === GUARDIAN_DISPATCH_MERGE_BASE_SHA, 'Guardian dispatch candidate SHAs are not exact');
+  requireExact(candidate.changed_file_count === GUARDIAN_DISPATCH_CHANGED_FILE_COUNT && candidate.changed_paths_sha256 === GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256, 'Guardian dispatch changed-path binding is not exact');
+  requireExact(candidate.protected_intersection_count === GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_COUNT && candidate.protected_intersection_sha256 === GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256, 'Guardian dispatch protected intersection binding is not exact');
+  const dispatch = policy.dispatch;
+  requireExact(dispatch && dispatch.receipt_path === GUARDIAN_DISPATCH_PATH && dispatch.receipt_sha256 && validDigest(dispatch.receipt_sha256), 'Guardian dispatch receipt binding is malformed');
+  requireExact(dispatch.mode === 'single-use' && dispatch.consumed === false && dispatch.replay_decision === 'REFUTED', 'Guardian dispatch receipt consumption is not exact');
+  return policy;
+}
+
+function validateGuardianDispatchReceipt(receipt, {candidatePull, changedFiles, kernelPaths, mergeBaseSHA} = {}) {
+  requireExact(receipt && receipt.schema === GUARDIAN_DISPATCH_SCHEMA && receipt.migration_version === 'v3', 'Guardian dispatch receipt schema is not exact');
+  requireExact(receipt.receipt_path === GUARDIAN_DISPATCH_PATH, 'Guardian dispatch receipt path is not exact');
+  requireExact(receipt.parent_receipt && receipt.parent_receipt.schema === EXECUTABLE_GUARDIAN_SCOPE_SCHEMA && receipt.parent_receipt.path === EXECUTABLE_GUARDIAN_SCOPE_PATH && receipt.parent_receipt.sha256 === GUARDIAN_DISPATCH_PARENT_RECEIPT_SHA256, 'Guardian dispatch v5 parent lineage is not exact');
+  requireExact(receipt.source_release && receipt.source_release.repository === 'kimjooyoon/gooo-receipt-schema-migration' && receipt.source_release.version === 'v0.3.1' && receipt.source_release.release_id === 379540253 && receipt.source_release.immutable === true && receipt.source_release.tag_object_sha === 'd98ea5f2a88bbc3e3bafa573a94a2058aba96e54' && receipt.source_release.target_commit === '7f651f45f548fb38357649578d9984fd77c5a451', 'Guardian dispatch source release is not exact');
+  requireExact(receipt.source_release.asset && receipt.source_release.asset.name === 'gooo-receipt-schema-migration-v0.3.1-conformance.tar.gz' && receipt.source_release.asset.id === 537539263 && receipt.source_release.asset.size_bytes === 36114 && receipt.source_release.asset.sha256 === 'sha256:fe00e049fcf4c946fef1a6bc3a7c5295d3e3fa2aed630edcae0039dfcee81a76', 'Guardian dispatch source asset is not exact');
+  requireExact(receipt.source_release.main_run && receipt.source_release.main_run.run_id === 33362658147 && receipt.source_release.main_run.conclusion === 'success', 'Guardian dispatch source run is not exact');
+  requireExact(receipt.adoption_proposal && receipt.adoption_proposal.path === 'examples/receipt-schema-migration-v3/adoption-proposal.json' && receipt.adoption_proposal.file_sha256 === GUARDIAN_DISPATCH_PROPOSAL_FILE_DIGEST && receipt.adoption_proposal.declared_sha256 === GUARDIAN_DISPATCH_PROPOSAL_DECLARED_DIGEST, 'Guardian dispatch adoption proposal input is not exact');
+  requireExact(receipt.semantic_ir && receipt.semantic_ir.path === 'examples/receipt-schema-migration-v3/semantic-ir.json' && receipt.semantic_ir.source_digest === GUARDIAN_DISPATCH_SOURCE_DIGEST && receipt.semantic_ir.contract_digest === GUARDIAN_DISPATCH_CONTRACT_DIGEST && receipt.semantic_ir.file_sha256 === GUARDIAN_DISPATCH_SEMANTIC_IR_DIGEST, 'Guardian dispatch semantic IR binding is not exact');
+  requireExact(receipt.generated_evaluator && receipt.generated_evaluator.validator_path === 'examples/receipt-schema-migration-v3/generated/validator.json' && receipt.generated_evaluator.validator_sha256 === GUARDIAN_DISPATCH_VALIDATOR_DIGEST && receipt.generated_evaluator.harness_path === 'examples/receipt-schema-migration-v3/generated/guardian-harness-cases.json' && receipt.generated_evaluator.harness_sha256 === GUARDIAN_DISPATCH_HARNESS_DIGEST, 'Guardian dispatch generated evaluator binding is not exact');
+  requireExact(receipt.guardian_harness && receipt.guardian_harness.schema === 'gooo/receipt-schema-migration/guardian-harness/v2' && receipt.guardian_harness.migration_version === 'v3' && receipt.guardian_harness.summary && receipt.guardian_harness.summary.closed_count === 2 && receipt.guardian_harness.summary.unknown_count === 0 && receipt.guardian_harness.summary.refuted_count === 9 && receipt.guardian_harness.summary.foundation_authorization_count === 8 && receipt.guardian_harness.summary.foundation_receipt_count === 8, 'Guardian dispatch harness summary is not exact');
+  requireExact(receipt.denominator && receipt.denominator.previous_cell_count === 16 && receipt.denominator.cell_count === 20 && receipt.denominator.added === 4 && receipt.denominator.retired === 0 && receipt.denominator.split === 0 && exactArray(receipt.denominator.added_cell_ids, GUARDIAN_DISPATCH_CELL_IDS), 'Guardian dispatch denominator migration is not exact');
+  requireExact(receipt.denominator.stage_counts && JSON.stringify(receipt.denominator.stage_counts) === JSON.stringify({FOUNDATION: 8, COHERENCE: 6, REGRESSION: 6}), 'Guardian dispatch stage counts are not exact');
+  requireExact(receipt.denominator.role_counts && JSON.stringify(receipt.denominator.role_counts) === JSON.stringify({DRIVER: 6, OUTCOME: 6, GUARDRAIL: 8}), 'Guardian dispatch role counts are not exact');
+  requireExact(Array.isArray(receipt.lineage) && exactArray(receipt.lineage, GUARDIAN_DISPATCH_LINEAGE), 'Guardian dispatch release lineage is not preserved');
+  requireExact(receipt.fixture_v3 && receipt.fixture_v3.repository === REPOSITORY && receipt.fixture_v3.ref === 'dev' && receipt.fixture_v3.base_commit === GUARDIAN_DISPATCH_BASE_SHA && receipt.fixture_v3.head_commit === GUARDIAN_DISPATCH_HEAD_SHA && receipt.fixture_v3.merge_base === GUARDIAN_DISPATCH_MERGE_BASE_SHA, 'Guardian dispatch fixture identity is not exact');
+  requireExact(receipt.fixture_v3.manifest_path === 'fixtures/guardian-v3-pr609.json' && receipt.fixture_v3.changed_files_count === GUARDIAN_DISPATCH_CHANGED_FILE_COUNT && receipt.fixture_v3.changed_paths_sha256 === GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256 && receipt.fixture_v3.protected_intersection_count === GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_COUNT && receipt.fixture_v3.protected_intersection_sha256 === GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256, 'Guardian dispatch fixture path tuple evidence is not exact');
+  requireExact(Array.isArray(receipt.fixture_v3.changed_path_tuples) && receipt.fixture_v3.changed_path_tuples.length === GUARDIAN_DISPATCH_CHANGED_FILE_COUNT && exactArray(receipt.fixture_v3.changed_path_tuples, [...receipt.fixture_v3.changed_path_tuples].sort()) && digestChangedPaths(receipt.fixture_v3.changed_path_tuples) === GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256, 'Guardian dispatch changed-path tuple list is not exact');
+  requireExact(exactArray(receipt.fixture_v3.protected_intersection_paths, GUARDIAN_DISPATCH_PROTECTED_PATHS), 'Guardian dispatch protected intersection paths are not exact');
+  requireExact(receipt.fixture_v3.kernel_before_sha256 === GUARDIAN_DISPATCH_KERNEL_BEFORE_SHA256 && receipt.fixture_v3.kernel_after_sha256 === GUARDIAN_DISPATCH_KERNEL_AFTER_SHA256, 'Guardian dispatch kernel digest evidence is not exact');
+  requireExact(receipt.fixture_v3.guardian_run_id === 33359548617 && receipt.fixture_v3.guardian_job_id === 99388126433 && receipt.fixture_v3.artifact_id === 9746232159 && receipt.fixture_v3.artifact_sha256 === 'sha256:41ae5d2398a001b16ecd72dba937924897234dd748fdcb5374caee7e70f026a8', 'Guardian dispatch live failure evidence is not exact');
+  requireExact(receipt.provenance && receipt.provenance.development_local_go_commands && receipt.provenance.development_local_go_commands.build === 0 && receipt.provenance.development_local_go_commands.gofmt === 0 && receipt.provenance.development_local_go_commands.test === 0 && receipt.provenance.development_local_go_commands.vet === 0 && receipt.provenance.development_local_node_commands === 1 && receipt.provenance.local_guardian_harness_executions === 0 && receipt.provenance.local_conformance_executions === 0 && receipt.provenance.node_command_class === 'NODE_DIGEST_DERIVATION' && receipt.provenance.node_command_count === 1 && receipt.provenance.event_mutation_policy === 'APPEND_ONLY_NO_RESET_DELETE_REWRITE', 'Guardian dispatch current development provenance is not exact');
+  const cells = receipt.cells;
+  requireExact(Array.isArray(cells) && cells.length === GUARDIAN_DISPATCH_CELL_IDS.length && cells.every((cell, index) => cell && cell.id === GUARDIAN_DISPATCH_CELL_IDS[index] && cell.allowed === 1 && cell.consumed === 1 && cell.replay_decision === 'REFUTED' && cell.outcome === 'CLOSED'), 'Guardian dispatch cells are not exact');
+  if (candidatePull !== undefined) {
+    requireExact(candidatePull && candidatePull.number === GUARDIAN_DISPATCH_PULL_REQUEST && candidatePull.base && candidatePull.base.repo && candidatePull.base.repo.full_name === REPOSITORY && candidatePull.base.ref === 'dev' && candidatePull.base.sha === GUARDIAN_DISPATCH_BASE_SHA && candidatePull.head && candidatePull.head.repo && candidatePull.head.repo.full_name === REPOSITORY && candidatePull.head.ref === GUARDIAN_DISPATCH_BRANCH && candidatePull.head.sha === GUARDIAN_DISPATCH_HEAD_SHA, 'Guardian dispatch live candidate tuple is not exact');
+  }
+  if (mergeBaseSHA !== undefined) requireExact(mergeBaseSHA === GUARDIAN_DISPATCH_MERGE_BASE_SHA, 'Guardian dispatch live merge base is not exact');
+  if (changedFiles !== undefined) requireExact(Array.isArray(changedFiles) && changedFiles.length === GUARDIAN_DISPATCH_CHANGED_FILE_COUNT && digestChangedPaths(changedFiles) === GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256, 'Guardian dispatch live changed-path tuple digest is not exact');
+  if (kernelPaths !== undefined) requireExact(Array.isArray(kernelPaths) && exactArray([...new Set(kernelPaths)].sort(), GUARDIAN_DISPATCH_PROTECTED_PATHS) && digestProtectedIntersection(kernelPaths) === GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256, 'Guardian dispatch live protected intersection is not exact');
+  return receipt;
+}
+
+function validateGuardianDispatchAuthorization(result) {
+  validateGuardianDispatchReceipt(result);
+  requireExact(result.decision === 'PASS' && result.code === null && result.reason === GUARDIAN_DISPATCH_MARKER && result.single_use === true && result.consumed === false && result.replay_decision === 'REFUTED', 'Guardian dispatch authorization result is not exact');
+  return result;
+}
+
 function validatePolicy(policy) {
+  if (policy && policy.schema === GUARDIAN_DISPATCH_POLICY_SCHEMA) return validateGuardianDispatchPolicy(policy);
   requireExact(policy && policy.schema === AUTHORIZATION_SCHEMA, 'foundation authorization schema is not exact');
   requireExact(policy.decision === 'FOUNDATION', 'foundation authorization decision is not FOUNDATION');
   requireExact(policy.reason === 'NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE', 'foundation authorization reason is not exact');
@@ -633,8 +771,10 @@ module.exports = {
   FOUNDATION_OVERRIDE_SUCCESS_COUNT,
   REPOSITORY,
   canonicalPathNames,
+  canonicalProtectedIntersection,
   canonicalTreeEntries,
   digestChangedPaths,
+  digestProtectedIntersection,
   digestTreeEntries,
   sha256,
   validDigest,
@@ -642,6 +782,9 @@ module.exports = {
   validateAuthorizationMerge,
   validateCandidateEvidence,
   validateCandidateIdentity,
+  validateGuardianDispatchAuthorization,
+  validateGuardianDispatchPolicy,
+  validateGuardianDispatchReceipt,
   validatePolicy,
   validateCorrectionChild,
   validateCorrectionChildReceipt,
@@ -705,4 +848,31 @@ module.exports = {
   EXECUTABLE_GUARDIAN_SCOPE_REASON,
   EXECUTABLE_GUARDIAN_SCOPE_SCHEMA,
   EXECUTABLE_GUARDIAN_SCOPE_LINEAGE,
+  GUARDIAN_DISPATCH_BASE_SHA,
+  GUARDIAN_DISPATCH_BRANCH,
+  GUARDIAN_DISPATCH_CELL_IDS,
+  GUARDIAN_DISPATCH_CHANGED_FILE_COUNT,
+  GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256,
+  GUARDIAN_DISPATCH_CONTRACT_DIGEST,
+  GUARDIAN_DISPATCH_MARKER,
+  GUARDIAN_DISPATCH_HARNESS_DIGEST,
+  GUARDIAN_DISPATCH_HEAD_SHA,
+  GUARDIAN_DISPATCH_KERNEL_AFTER_SHA256,
+  GUARDIAN_DISPATCH_KERNEL_BEFORE_SHA256,
+  GUARDIAN_DISPATCH_LINEAGE,
+  GUARDIAN_DISPATCH_MERGE_BASE_SHA,
+  GUARDIAN_DISPATCH_PARENT_RECEIPT_SHA256,
+  GUARDIAN_DISPATCH_PATH,
+  GUARDIAN_DISPATCH_POLICY_PATH,
+  GUARDIAN_DISPATCH_POLICY_SCHEMA,
+  GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_COUNT,
+  GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256,
+  GUARDIAN_DISPATCH_PROTECTED_PATHS,
+  GUARDIAN_DISPATCH_PROPOSAL_DECLARED_DIGEST,
+  GUARDIAN_DISPATCH_PROPOSAL_FILE_DIGEST,
+  GUARDIAN_DISPATCH_PULL_REQUEST,
+  GUARDIAN_DISPATCH_SCHEMA,
+  GUARDIAN_DISPATCH_SEMANTIC_IR_DIGEST,
+  GUARDIAN_DISPATCH_SOURCE_DIGEST,
+  GUARDIAN_DISPATCH_VALIDATOR_DIGEST,
 };
