@@ -6,7 +6,7 @@ const (
 	MetaOperation     = "close-vertical-slice"
 	PredecessorSHA    = "145b81c8bb8e4b1eb46cb10af0ea21a6b6be51b5"
 	AssuranceDigest   = "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969"
-	DenominatorDigest = "sha256:b8d336e45d0bc3aaf8e23b33e5f168d73ecd721596b47bd95489ee6a96e41709"
+	DenominatorDigest = "sha256:e2b7fbb7ce65d1813fdf75103fd8d66df72eca72610e1ce288dfcfa6370d37b9"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
