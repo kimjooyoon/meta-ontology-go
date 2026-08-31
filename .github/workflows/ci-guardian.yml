@@ -373,6 +373,18 @@ jobs:
             } catch (error) {
               validationError = error;
             }
+            if (artifact.decision === 'PASS') {
+              const kernelAttestation = guardian.validateKernelDigestAttestation({
+                kernelPaths: artifact.kernel_paths,
+                computedBeforeDigest: beforeDigest,
+                computedAfterDigest: afterDigest,
+                artifactBeforeDigest: artifact.kernel_before_sha256,
+                artifactAfterDigest: artifact.kernel_after_sha256,
+              });
+              if (kernelAttestation.decision !== 'PASS' && !validationError) {
+                validationError = guardian.guardianFailure(kernelAttestation.reason);
+              }
+            }
             await core.summary
               .addHeading(artifact.check_name || 'CI guardian shadow')
               .addRaw(`schema=${artifact.schema}\n`)
@@ -383,6 +395,7 @@ jobs:
               .addRaw(`head_binding=${artifact.head_binding_status}\n`)
               .addRaw(`base=${artifact.base_ref}@${artifact.base_sha}\n`)
               .addRaw(`head=${artifact.head_ref}@${artifact.head_sha}\n`)
+              .addRaw(`kernel_attestation=${artifact.decision === 'PASS' ? guardian.validateKernelDigestAttestation({kernelPaths: artifact.kernel_paths, computedBeforeDigest: beforeDigest, computedAfterDigest: afterDigest, artifactBeforeDigest: artifact.kernel_before_sha256, artifactAfterDigest: artifact.kernel_after_sha256}).decision : 'NOT_APPLICABLE'}\n`)
               .addRaw(`bundle=${artifact.bundle_sha256}\n`)
               .write();
             if (validationError) {

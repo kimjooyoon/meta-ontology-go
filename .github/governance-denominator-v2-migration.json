@@ -19,6 +19,7 @@
   "changed_paths_sha256": "sha256:84c9c3c7f1aa07df3a4b49250118f7e62485f57a06d9bcae86c14f0e46dd24c7",
   "patch_sha256_excluding_receipt": "sha256:956c2cd8ac76cf1e08e4b1a38c1d8ebe72c587bf1a289258c4ebb80c06e8c541",
   "tree_sha256_excluding_receipt": "sha256:301d4eb5f7bb1c258d06f5df768e3ab431151ef5a23d399ae0306df031cfcc6b",
+  "outcome": "REFUTED_INCOMPLETE_PROPAGATION",
   "old_guardian_failure": {
     "run_id": 33348091926,
     "code": "CI-ROOT-OF-TRUST-001",
@@ -33,6 +34,7 @@
       "indicator": "GUARDRAIL",
       "allowed": 1,
       "consumed": 1,
+      "outcome": "REFUTED_INCOMPLETE_PROPAGATION",
       "replay_decision": "REFUTED",
       "reason": "BASE_GUARDIAN_DIGEST_NULL_FOR_AUTHORIZED_FEATURE_PATH",
       "pull_request": 611,

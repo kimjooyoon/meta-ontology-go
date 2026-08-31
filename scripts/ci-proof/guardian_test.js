@@ -21,6 +21,7 @@ const {
   buildGuardianArtifact,
   classifyGuardianDecision,
   digestGuardianArtifact,
+  validateKernelDigestAttestation,
   inspectChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
@@ -467,15 +468,36 @@ async function testPromotionAndKernelDigests() {
   });
   assert.equal(kernel.decision, 'PASS');
   assert.equal(kernel.kernelBeforeDigest, 'sha256:' + '1'.repeat(64));
+  const featurePull = pull('dev');
+  featurePull.base.sha = sha('d');
+  const identicalLive = {refs: {dev_sha: sha('d'), main_sha: sha('d')}, topology: {status: 'identical', ahead_by: 0, behind_by: 0, merge_base_sha: sha('d')}};
+  const featureKernelBefore = 'sha256:' + '3'.repeat(64);
+  const featureKernelAfter = 'sha256:' + '4'.repeat(64);
+  const featureWithKernel = classifyGuardianDecision({
+    pull: featurePull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', liveBefore: identicalLive, liveAfter: identicalLive,
+    kernelBeforeDigest: featureKernelBefore, kernelAfterDigest: featureKernelAfter,
+    result: {decision: 'PASS', code: null, reason: 'authorized feature', foundationAuthorization: {decision: 'PASS'}, kernelPaths: ['.github/workflows/ci.yml']},
+  });
+  assert.equal(featureWithKernel.decision, 'PASS');
+  assert.equal(featureWithKernel.kernelBeforeDigest, featureKernelBefore);
+  assert.equal(featureWithKernel.kernelAfterDigest, featureKernelAfter);
+  const featureKernelArtifact = buildGuardianArtifact({
+    pull: featurePull, repository: 'owner/repo', action: 'reopened', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 109, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: identicalLive, liveAfter: identicalLive, checkName: 'CI guardian shadow', result: featureWithKernel,
+  });
+  assert.equal(featureKernelArtifact.kernel_before_sha256, featureKernelBefore);
+  assert.equal(featureKernelArtifact.kernel_after_sha256, featureKernelAfter);
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: featureKernelArtifact.kernel_before_sha256, artifactAfterDigest: featureKernelArtifact.kernel_after_sha256}).decision, 'PASS');
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: featureKernelBefore, artifactAfterDigest: featureKernelBefore}).decision, 'REFUTED');
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: null, artifactAfterDigest: featureKernelAfter}).decision, 'REFUTED');
   assert.equal(DEFAULT_BRANCH_CODE, 'CI-GUARDIAN-DEFAULT-BRANCH-001');
   const missingLive = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(missingLive.code, 'CI-GUARDIAN-LIVE-REF-001');
-  const featurePull = pull('dev');
-  featurePull.base.sha = sha('d');
-  const identicalLive = {refs: {dev_sha: sha('d'), main_sha: sha('d')}, topology: {status: 'identical', ahead_by: 0, behind_by: 0, merge_base_sha: sha('d')}};
   const stableFeature = classifyGuardianDecision({
     pull: featurePull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', liveBefore: identicalLive, liveAfter: identicalLive,
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
@@ -585,6 +607,9 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /const authorizedFoundationFeature/);
   assert.match(workflow, /result\.foundationAuthorization\.decision === 'PASS'/);
   assert.match(workflow, /trustedPromotion \|\| authorizedFoundationFeature/);
+  assert.match(workflow, /guardian\.validateKernelDigestAttestation/);
+  assert.match(workflow, /computedBeforeDigest: beforeDigest/);
+  assert.match(workflow, /artifactBeforeDigest: artifact\.kernel_before_sha256/);
   const writeIndex = workflow.indexOf('writeFileSync');
   const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact,');
   const setFailedIndex = workflow.indexOf('core.setFailed');
@@ -616,7 +641,14 @@ function testKernelSetIsMonotonic() {
 function testRegressionRepairReceipt() {
   const receipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v2-migration.json'), 'utf8'));
   assert.doesNotThrow(() => foundationAuthorization.validateRegressionRepairReceipt(receipt));
+  assert.doesNotThrow(() => foundationAuthorization.validateIncompletePropagationOutcome(receipt));
   assert.equal(receipt.foundation_override_success_count, foundationAuthorization.FOUNDATION_OVERRIDE_SUCCESS_COUNT);
+  assert.equal(receipt.outcome, 'REFUTED_INCOMPLETE_PROPAGATION');
+  const correction = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v3-correction.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateCorrectionChildReceipt(correction));
+  assert.equal(correction.cells.length, 1);
+  assert.equal(correction.cells[0].id, 'CORRECTION_CHILD');
+  assert.equal(correction.cells[0].parent_repair_receipt, foundationAuthorization.CORRECTION_CHILD_PARENT_RECEIPT_SHA256);
 }
 
 (async () => {

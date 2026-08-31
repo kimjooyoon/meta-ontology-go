@@ -57,6 +57,10 @@ function validSHA(value) {
   return typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
 }
 
+function validDigest(value) {
+  return typeof value === 'string' && /^sha256:[0-9a-f]{64}$/.test(value);
+}
+
 function validRepository(value) {
   return typeof value === 'string' && /^[^/\s]+\/[^/\s]+$/.test(value);
 }
@@ -674,6 +678,19 @@ function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, work
   return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && checkName === 'CI guardian' && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha) && identity.base_sha === liveBefore?.refs.main_sha && identity.head_sha === liveBefore?.refs.dev_sha && identity.head_sha === liveAfter?.refs.dev_sha && identity.base_sha === liveAfter?.refs.main_sha && liveMatches && promotionTopology;
 }
 
+function validateKernelDigestAttestation({kernelPaths = [], computedBeforeDigest, computedAfterDigest, artifactBeforeDigest, artifactAfterDigest}) {
+  if (!Array.isArray(kernelPaths) || kernelPaths.length === 0) {
+    return {decision: 'PASS', reason: 'no protected kernel paths require digest propagation'};
+  }
+  if (!validDigest(computedBeforeDigest) || !validDigest(computedAfterDigest) || !validDigest(artifactBeforeDigest) || !validDigest(artifactAfterDigest)) {
+    return {decision: 'REFUTED', reason: 'kernel digest evidence is null, empty, or malformed'};
+  }
+  if (computedBeforeDigest !== artifactBeforeDigest || computedAfterDigest !== artifactAfterDigest) {
+    return {decision: 'REFUTED', reason: 'computed kernel digests do not exactly match the PASS artifact'};
+  }
+  return {decision: 'PASS', reason: 'computed kernel digests exactly match the PASS artifact'};
+}
+
 function validLiveSnapshot(snapshot) {
   return Boolean(snapshot && snapshot.refs && validSHA(snapshot.refs.dev_sha) && validSHA(snapshot.refs.main_sha) && snapshot.topology && ['ahead', 'behind', 'identical', 'diverged'].includes(snapshot.topology.status) && Number.isInteger(snapshot.topology.ahead_by) && snapshot.topology.ahead_by >= 0 && Number.isInteger(snapshot.topology.behind_by) && snapshot.topology.behind_by >= 0 && validSHA(snapshot.topology.merge_base_sha));
 }
@@ -697,33 +714,84 @@ async function observeFoundationAuthorization({policy, pull, getPull, compareCom
     const candidateDiffResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: policy.candidate.base_sha, head: policy.candidate.head_sha});
     let regressionRepair = null;
     if (pull && pull.base && pull.base.sha !== authorizationMergeSHA) {
-      const receiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
-      const receiptData = receiptResponse && receiptResponse.data;
-      const receipt = receiptData && !Array.isArray(receiptData) && receiptData.content
-        ? JSON.parse(Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
-        : null;
-      foundationAuthorization.validateRegressionRepairReceipt(receipt);
-      const repairPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: receipt.cells[0].pull_request});
-      const repairPull = repairPullResponse && repairPullResponse.data;
-      const repairCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.merge_commit_sha});
-      const repairCommit = repairCommitResponse && repairCommitResponse.data;
-      const repairHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.head && repairPull.head.sha});
-      const repairHeadCommit = repairHeadCommitResponse && repairHeadCommitResponse.data;
-      const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
-      const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
-      const repairCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.REGRESSION_REPAIR_BASE_SHA, head: repairPull && repairPull.head && repairPull.head.sha});
-      const repairHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: repairHeadCommit && repairHeadCommit.commit && repairHeadCommit.commit.tree && repairHeadCommit.commit.tree.sha, recursive: '1'});
-      const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
-      regressionRepair = foundationAuthorization.validateRegressionRepair({
-        receipt,
-        candidateBaseSHA: pull.base.sha,
-        candidateBaseCommit: currentBaseCommit,
-        candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
-        repairPull,
-        repairCommit,
-        repairCompare: repairCompareResponse && repairCompareResponse.data,
-        repairTreeEntries: repairHeadTreeResponse && repairHeadTreeResponse.data && repairHeadTreeResponse.data.tree,
-      });
+      const parseJSONContent = (response) => {
+        const data = response && response.data;
+        if (Array.isArray(data) || !data || !data.content) return {bytes: null, value: null};
+        const bytes = Buffer.from(data.content.replace(/\s/g, ''), 'base64');
+        return {bytes, value: JSON.parse(bytes.toString('utf8'))};
+      };
+      let correctionReceiptResponse = null;
+      try {
+        correctionReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.CORRECTION_CHILD_PATH, ref: pull.base.sha});
+      } catch (error) {
+        correctionReceiptResponse = null;
+      }
+      const correctionReceipt = parseJSONContent(correctionReceiptResponse);
+      if (correctionReceipt.value) {
+        foundationAuthorization.validateCorrectionChildReceipt(correctionReceipt.value);
+        const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse).value;
+        foundationAuthorization.validateIncompletePropagationOutcome(currentRepairReceipt);
+        const parentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: foundationAuthorization.CORRECTION_CHILD_BASE_SHA});
+        const parentRepairReceipt = parseJSONContent(parentRepairReceiptResponse);
+        foundationAuthorization.validateRegressionRepairReceipt(parentRepairReceipt.value);
+        const correctionPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.CORRECTION_CHILD_PULL_REQUEST});
+        const correctionPull = correctionPullResponse && correctionPullResponse.data;
+        const correctionCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: correctionPull && correctionPull.merge_commit_sha});
+        const correctionCommit = correctionCommitResponse && correctionCommitResponse.data;
+        const correctionHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: correctionPull && correctionPull.head && correctionPull.head.sha});
+        const correctionHeadCommit = correctionHeadCommitResponse && correctionHeadCommitResponse.data;
+        const parentRepairBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: foundationAuthorization.CORRECTION_CHILD_BASE_SHA});
+        const parentRepairBaseCommit = parentRepairBaseCommitResponse && parentRepairBaseCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const correctionCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.CORRECTION_CHILD_BASE_SHA, head: correctionPull && correctionPull.head && correctionPull.head.sha});
+        const correctionHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: correctionHeadCommit && correctionHeadCommit.commit && correctionHeadCommit.commit.tree && correctionHeadCommit.commit.tree.sha, recursive: '1'});
+        const parentRepairBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: parentRepairBaseCommit && parentRepairBaseCommit.commit && parentRepairBaseCommit.commit.tree && parentRepairBaseCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateCorrectionChild({
+          receipt: correctionReceipt.value,
+          parentRepairReceipt: parentRepairReceipt.value,
+          parentRepairReceiptBytes: parentRepairReceipt.bytes,
+          parentRepairBaseCommit,
+          parentRepairBaseTreeEntries: parentRepairBaseTreeResponse && parentRepairBaseTreeResponse.data && parentRepairBaseTreeResponse.data.tree,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          correctionPull,
+          correctionCommit,
+          correctionCompare: correctionCompareResponse && correctionCompareResponse.data,
+          correctionTreeEntries: correctionHeadTreeResponse && correctionHeadTreeResponse.data && correctionHeadTreeResponse.data.tree,
+        });
+        regressionRepair.parent_receipt_outcome = currentRepairReceipt.outcome;
+      } else {
+        const receiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const receiptData = receiptResponse && receiptResponse.data;
+        const receipt = receiptData && !Array.isArray(receiptData) && receiptData.content
+          ? JSON.parse(Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+          : null;
+        foundationAuthorization.validateRegressionRepairReceipt(receipt);
+        const repairPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: receipt.cells[0].pull_request});
+        const repairPull = repairPullResponse && repairPullResponse.data;
+        const repairCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.merge_commit_sha});
+        const repairCommit = repairCommitResponse && repairCommitResponse.data;
+        const repairHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.head && repairPull.head.sha});
+        const repairHeadCommit = repairHeadCommitResponse && repairHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const repairCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.REGRESSION_REPAIR_BASE_SHA, head: repairPull && repairPull.head && repairPull.head.sha});
+        const repairHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: repairHeadCommit && repairHeadCommit.commit && repairHeadCommit.commit.tree && repairHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateRegressionRepair({
+          receipt,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseCommit: currentBaseCommit,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          repairPull,
+          repairCommit,
+          repairCompare: repairCompareResponse && repairCompareResponse.data,
+          repairTreeEntries: repairHeadTreeResponse && repairHeadTreeResponse.data && repairHeadTreeResponse.data.tree,
+        });
+      }
     }
     const manifestResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
     const manifestData = manifestResponse && manifestResponse.data;
@@ -802,14 +870,20 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
     }
     return {...result, decision: 'PASS', code: null, reason: 'exact dev-to-main kernel propagation', kernelBeforeDigest, kernelAfterDigest};
   }
+  const digestBoundResult = {
+    ...result,
+    kernelBeforeDigest: kernelBeforeDigest === undefined ? (result.kernelBeforeDigest || null) : kernelBeforeDigest,
+    kernelAfterDigest: kernelAfterDigest === undefined ? (result.kernelAfterDigest || null) : kernelAfterDigest,
+  };
   if (result.decision === 'PASS') {
     const activation = defaultBranchDecision(defaultBranch, eventRef);
     if (activation.decision !== 'PASS') {
-      return {...result, ...activation};
+      return {...digestBoundResult, ...activation};
     }
     if (workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || !validSHA(runtimeSha)) {
-      return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
+      return {...digestBoundResult, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
     }
+    return digestBoundResult;
   }
   return result;
 }
@@ -1095,6 +1169,7 @@ module.exports = {
   routeForPull,
   checkNameForRoute,
   guardianFailure,
+  validateKernelDigestAttestation,
   buildGuardianArtifact,
   classifyGuardianDecision,
   defaultBranchDecision,
