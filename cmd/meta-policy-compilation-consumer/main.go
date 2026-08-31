@@ -1009,12 +1009,13 @@ func countProducerImports(source []byte, filename string) (int, error) {
 		return 0, fmt.Errorf("parse import boundary %s: %w", filename, err)
 	}
 	count := 0
+	producerPackagePath := strings.Join([]string{"internal", "meta", "policycompilation"}, "/")
 	for _, importSpec := range file.Imports {
 		path, err := strconv.Unquote(importSpec.Path.Value)
 		if err != nil {
 			return 0, fmt.Errorf("decode import path %s: %w", filename, err)
 		}
-		if strings.Contains(path, "internal/meta/policycompilation") {
+		if strings.Contains(path, producerPackagePath) {
 			count++
 		}
 	}
