@@ -99,6 +99,7 @@ func VerifyReceipt(receipt Receipt, policy CompiledPolicy, artifact PolicyArtifa
 			return fmt.Errorf("case %q observation provenance is not bound", input.ID)
 		}
 		source := EvaluateSourcePolicy(policy, input)
+		independent := stored.Independent
 		if !sameDecision(stored.Source, source) || !sameDecision(stored.Source, stored.Generated) || !sameDecision(stored.Generated, stored.Independent) || stored.ValidatorExpectation != stored.Source.Decision || !stored.AllDecisionsEquivalent || !stored.DecisionsEquivalent || !stored.ValidatorExpectationConfirmed {
 			return fmt.Errorf("case %q is not independently equivalent", input.ID)
 		}
