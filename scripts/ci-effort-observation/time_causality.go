@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	githubActionsProvider       = "github-actions"
-	githubActionsRunClockDomain = "github.actions.run.api.v1"
-	githubActionsJobClockDomain = "github.actions.job.api.v1"
-	timeCausalitySchema         = "gooo/ci-time-causality/v0.1.1"
-	timeCausalityContract       = "ci-time-causality-v1"
-	timeCausalitySourceDigest   = "sha256:a45675079c7e80c8324578ed999e73ccdb6f553f2c1ce35cac223e2809fb4fc1"
-	timeCausalityFixtureDigest  = "sha256:d41f4c6fdc33a5442339d83fdc1f4e68f8fcb317393188aa6b0fe67004d662cd"
-	timeCausalityIRDigest       = "sha256:1292a28d338696ff8245a309ca7abcf18ed01991b9eaebba0a4c1ba18c43e5f0"
+	githubActionsProvider        = "github-actions"
+	githubActionsRunClockDomain  = "github.actions.run.api.v1"
+	githubActionsJobClockDomain  = "github.actions.job.api.v1"
+	timeCausalitySchema          = "gooo/ci-time-causality/v0.1.1"
+	timeCausalityContract        = "ci-time-causality-v1"
+	timeCausalitySourceDigest    = "sha256:a45675079c7e80c8324578ed999e73ccdb6f553f2c1ce35cac223e2809fb4fc1"
+	timeCausalityFixtureDigest   = "sha256:d41f4c6fdc33a5442339d83fdc1f4e68f8fcb317393188aa6b0fe67004d662cd"
+	timeCausalityIRDigest        = "sha256:1292a28d338696ff8245a309ca7abcf18ed01991b9eaebba0a4c1ba18c43e5f0"
 	timeCausalityEvaluatorDigest = "sha256:cd837bed10b30d0d42d5990d39535c168904f3ce261f03787574666d6be12d6f"
 	timeCausalityAggregationRule = "Only same operation_id, run_id, job_id, provider, and clock_domain may form one duration; source-ci and opentofu remain separate observations."
 	timeCausalityNegativeReason  = "REFUTED_CLOCK_ORDER"
@@ -100,73 +100,73 @@ type TimeCausalityAsset struct {
 }
 
 type TimeCausalitySummary struct {
-	Total    int `json:"total"`
-	Closed   int `json:"closed"`
-	Unknown  int `json:"unknown"`
-	Refuted  int `json:"refuted"`
-	Cells    int `json:"cells"`
+	Total      int `json:"total"`
+	Closed     int `json:"closed"`
+	Unknown    int `json:"unknown"`
+	Refuted    int `json:"refuted"`
+	Cells      int `json:"cells"`
 	Activities int `json:"activities"`
 }
 
 type TimeAuditFailure struct {
-	Sequence             int    `json:"sequence"`
-	Audit                string `json:"audit"`
-	Attempt              int    `json:"attempt"`
-	FailureCode          string `json:"failure_code"`
-	Failure              string `json:"failure"`
-	SuccessCounted       bool   `json:"success_counted"`
-	ProductVerification  bool   `json:"product_verification"`
-	LocalTestExecution   int    `json:"local_test_execution"`
+	Sequence            int    `json:"sequence"`
+	Audit               string `json:"audit"`
+	Attempt             int    `json:"attempt"`
+	FailureCode         string `json:"failure_code"`
+	Failure             string `json:"failure"`
+	SuccessCounted      bool   `json:"success_counted"`
+	ProductVerification bool   `json:"product_verification"`
+	LocalTestExecution  int    `json:"local_test_execution"`
 }
 
 type TimeCausalityBinding struct {
-	Schema                    string              `json:"schema"`
-	ContractID                string              `json:"contract_id"`
-	Release                   TimeCausalityRelease `json:"release"`
-	SourcePath                string              `json:"source_path"`
-	SourceInputPath           string              `json:"source_input_path"`
-	SourceDigest              string              `json:"source_digest"`
-	ImmutableFixtureDigest    string              `json:"immutable_fixture_digest"`
-	SemanticIRDigest          string              `json:"semantic_ir_digest"`
-	GeneratedEvaluatorDigest  string              `json:"generated_evaluator_digest"`
-	ManifestDigest            string              `json:"manifest_digest"`
-	OutputAssets              []TimeCausalityAsset `json:"output_assets"`
-	Summary                   TimeCausalitySummary `json:"summary"`
-	RetryAttempts             []int               `json:"retry_attempts"`
-	AggregationRule           string              `json:"aggregation_rule"`
-	NegativeDurationReason    string              `json:"negative_duration_reason"`
-	ClampToZeroPolicy         string              `json:"clamp_to_zero_policy"`
-	SourceOpenTofuSeparate    bool                `json:"source_ci_opentofu_separate"`
-	AuditPath                 string              `json:"audit_path"`
-	AuditDigest               string              `json:"audit_digest"`
-	AuditRecordCount          int                 `json:"audit_record_count"`
-	AuditFailureCount         int                 `json:"audit_failure_count"`
-	AuditFailures             []TimeAuditFailure  `json:"audit_failures"`
-	V010Preserved             bool                `json:"v0_1_0_preserved"`
-	FailedAttemptsCountedAsSuccess bool            `json:"failed_attempts_counted_as_success"`
-	GeneratedBindingPath      string              `json:"generated_binding_path"`
-	GeneratedBindingDigest    string              `json:"generated_binding_digest"`
-	BindingDigest             string              `json:"binding_digest"`
+	Schema                         string               `json:"schema"`
+	ContractID                     string               `json:"contract_id"`
+	Release                        TimeCausalityRelease `json:"release"`
+	SourcePath                     string               `json:"source_path"`
+	SourceInputPath                string               `json:"source_input_path"`
+	SourceDigest                   string               `json:"source_digest"`
+	ImmutableFixtureDigest         string               `json:"immutable_fixture_digest"`
+	SemanticIRDigest               string               `json:"semantic_ir_digest"`
+	GeneratedEvaluatorDigest       string               `json:"generated_evaluator_digest"`
+	ManifestDigest                 string               `json:"manifest_digest"`
+	OutputAssets                   []TimeCausalityAsset `json:"output_assets"`
+	Summary                        TimeCausalitySummary `json:"summary"`
+	RetryAttempts                  []int                `json:"retry_attempts"`
+	AggregationRule                string               `json:"aggregation_rule"`
+	NegativeDurationReason         string               `json:"negative_duration_reason"`
+	ClampToZeroPolicy              string               `json:"clamp_to_zero_policy"`
+	SourceOpenTofuSeparate         bool                 `json:"source_ci_opentofu_separate"`
+	AuditPath                      string               `json:"audit_path"`
+	AuditDigest                    string               `json:"audit_digest"`
+	AuditRecordCount               int                  `json:"audit_record_count"`
+	AuditFailureCount              int                  `json:"audit_failure_count"`
+	AuditFailures                  []TimeAuditFailure   `json:"audit_failures"`
+	V010Preserved                  bool                 `json:"v0_1_0_preserved"`
+	FailedAttemptsCountedAsSuccess bool                 `json:"failed_attempts_counted_as_success"`
+	GeneratedBindingPath           string               `json:"generated_binding_path"`
+	GeneratedBindingDigest         string               `json:"generated_binding_digest"`
+	BindingDigest                  string               `json:"binding_digest"`
 }
 
 type timeManifestInput struct {
-	Schema                  string `json:"schema"`
-	ContractID              string `json:"contract_id"`
-	SourcePath              string `json:"source_path"`
-	SourceDigest            string `json:"source_digest"`
-	ImmutableFixtureDigest  string `json:"immutable_fixture_digest"`
-	IRDigest                string `json:"ir_digest"`
-	GeneratedEvaluatorDigest string `json:"generated_evaluator_digest"`
-	ActivityCount           int    `json:"activity_count"`
-	CellCount               int    `json:"cell_count"`
-	ActivityCellOneToOne    bool   `json:"activity_cell_one_to_one"`
-	ArtifactCount           int    `json:"artifact_count"`
-	Summary                 struct { Total, Closed, Unknown, Refuted int } `json:"summary"`
-	RetryAttempts           []int  `json:"retry_attempts"`
-	RepositoryWrites         int    `json:"repository_writes"`
-	LocalTestExecutions      int    `json:"local_test_executions"`
-	CrossProjectRequiredGates int   `json:"cross_project_required_gates"`
-	VerificationAuthority    string `json:"verification_authority"`
+	Schema                    string                                        `json:"schema"`
+	ContractID                string                                        `json:"contract_id"`
+	SourcePath                string                                        `json:"source_path"`
+	SourceDigest              string                                        `json:"source_digest"`
+	ImmutableFixtureDigest    string                                        `json:"immutable_fixture_digest"`
+	IRDigest                  string                                        `json:"ir_digest"`
+	GeneratedEvaluatorDigest  string                                        `json:"generated_evaluator_digest"`
+	ActivityCount             int                                           `json:"activity_count"`
+	CellCount                 int                                           `json:"cell_count"`
+	ActivityCellOneToOne      bool                                          `json:"activity_cell_one_to_one"`
+	ArtifactCount             int                                           `json:"artifact_count"`
+	Summary                   struct{ Total, Closed, Unknown, Refuted int } `json:"summary"`
+	RetryAttempts             []int                                         `json:"retry_attempts"`
+	RepositoryWrites          int                                           `json:"repository_writes"`
+	LocalTestExecutions       int                                           `json:"local_test_executions"`
+	CrossProjectRequiredGates int                                           `json:"cross_project_required_gates"`
+	VerificationAuthority     string                                        `json:"verification_authority"`
 }
 
 type timeDurationResult struct {
@@ -176,26 +176,29 @@ type timeDurationResult struct {
 }
 
 type timeDurationInput struct {
-	Schema          string `json:"schema"`
-	ContractID      string `json:"contract_id"`
-	Summary         struct { Total, Closed, Unknown, Refuted int } `json:"summary"`
-	Results         []timeDurationResult `json:"results"`
-	AggregationRule string `json:"aggregation_rule"`
-	RetryAttempts   []int `json:"retry_attempts"`
+	Schema          string                                        `json:"schema"`
+	ContractID      string                                        `json:"contract_id"`
+	Summary         struct{ Total, Closed, Unknown, Refuted int } `json:"summary"`
+	Results         []timeDurationResult                          `json:"results"`
+	AggregationRule string                                        `json:"aggregation_rule"`
+	RetryAttempts   []int                                         `json:"retry_attempts"`
 }
 
 type timeClockInput struct {
-	Schema string `json:"schema"`
-	Rule   string `json:"rule"`
-	Domains []struct { ID, Source, Comparable string; ResolutionMS int `json:"resolution_ms"` } `json:"domains"`
+	Schema  string `json:"schema"`
+	Rule    string `json:"rule"`
+	Domains []struct {
+		ID, Source, Comparable string
+		ResolutionMS           int `json:"resolution_ms"`
+	} `json:"domains"`
 }
 
 type timeReplayInput struct {
-	Schema       string `json:"schema"`
-	ContractID   string `json:"contract_id"`
-	Deterministic bool  `json:"deterministic"`
-	ReplayCount  int    `json:"replay_count"`
-	Decision     string `json:"decision"`
+	Schema        string `json:"schema"`
+	ContractID    string `json:"contract_id"`
+	Deterministic bool   `json:"deterministic"`
+	ReplayCount   int    `json:"replay_count"`
+	Decision      string `json:"decision"`
 }
 
 type timeGeneratedBindingInput struct {
@@ -212,19 +215,19 @@ type timeGeneratedBindingInput struct {
 }
 
 type timeOperationRecord struct {
-	RecordType    string `json:"record_type"`
-	CaseID        string `json:"case_id"`
-	ObservationID string `json:"observation_id"`
-	OperationID   string `json:"operation_id"`
-	RunID         string `json:"run_id"`
-	JobID         string `json:"job_id"`
-	Provider      string `json:"provider"`
-	Scope         string `json:"scope"`
-	ClockDomain   string `json:"clock_domain"`
-	ArtifactID    string `json:"artifact_id"`
-	ArtifactDigest string `json:"artifact_digest"`
-	Attempt       int    `json:"attempt"`
-	Decision      string `json:"decision"`
+	RecordType        string `json:"record_type"`
+	CaseID            string `json:"case_id"`
+	ObservationID     string `json:"observation_id"`
+	OperationID       string `json:"operation_id"`
+	RunID             string `json:"run_id"`
+	JobID             string `json:"job_id"`
+	Provider          string `json:"provider"`
+	Scope             string `json:"scope"`
+	ClockDomain       string `json:"clock_domain"`
+	ArtifactID        string `json:"artifact_id"`
+	ArtifactDigest    string `json:"artifact_digest"`
+	Attempt            int    `json:"attempt"`
+	Decision           string `json:"decision"`
 	ArtifactCreatedAt string `json:"artifact_created_at"`
 	ArtifactUpdatedAt string `json:"artifact_updated_at"`
 }
@@ -315,14 +318,13 @@ func loadTimeCausality(root string) (TimeCausalityBinding, error) {
 		return TimeCausalityBinding{}, fmt.Errorf("time generated evaluator binding is not exact")
 	}
 	binding := TimeCausalityBinding{Schema: timeCausalitySchema, ContractID: timeCausalityContract,
-		Release: TimeCausalityRelease{Repository: "kimjooyoon/gooo-ci-time-causality", Version: "v0.1.1", ReleaseID: 379586518, Immutable: true, TagObjectSHA: "bdea52f17b0bfe01f5b448c7d4ceffedc7e13540", TargetCommit: "59b72a990b473199af81b8714b107798ab0533aa", MainRunID: 33370026257, TagRunID: 33370074218},
+		Release:    TimeCausalityRelease{Repository: "kimjooyoon/gooo-ci-time-causality", Version: "v0.1.1", ReleaseID: 379586518, Immutable: true, TagObjectSHA: "bdea52f17b0bfe01f5b448c7d4ceffedc7e13540", TargetCommit: "59b72a990b473199af81b8714b107798ab0533aa", MainRunID: 33370026257, TagRunID: 33370074218},
 		SourcePath: manifest.SourcePath, SourceInputPath: filepath.ToSlash(sourcePath), SourceDigest: manifest.SourceDigest, ImmutableFixtureDigest: manifest.ImmutableFixtureDigest,
 		SemanticIRDigest: manifest.IRDigest, GeneratedEvaluatorDigest: manifest.GeneratedEvaluatorDigest, ManifestDigest: digestBytes(files["time-manifest.json"]), OutputAssets: expected,
 		Summary: TimeCausalitySummary{Total: 12, Closed: 3, Unknown: 4, Refuted: 5, Cells: 12, Activities: 12}, RetryAttempts: retryAttempts,
 		AggregationRule: timeCausalityAggregationRule, NegativeDurationReason: timeCausalityNegativeReason, ClampToZeroPolicy: timeCausalityClampPolicy, SourceOpenTofuSeparate: true,
 		AuditPath: filepath.ToSlash(auditPath), AuditDigest: digestBytes(auditData), AuditRecordCount: auditCount, AuditFailureCount: len(auditFailures), AuditFailures: auditFailures, V010Preserved: preserved, FailedAttemptsCountedAsSuccess: failedAsSuccess,
-		GeneratedBindingPath: filepath.ToSlash(generationPath), GeneratedBindingDigest: digestBytes(generationData)}
-	binding.BindingDigest = digestNamed(files)
+		GeneratedBindingPath: filepath.ToSlash(generationPath), GeneratedBindingDigest: digestBytes(generationData), BindingDigest: digestNamed(files)}
 	if err := validateTimeCausalityBinding(binding); err != nil {
 		return TimeCausalityBinding{}, err
 	}
@@ -397,18 +399,18 @@ func decodeTimeAudit(data []byte) ([]TimeAuditFailure, int, bool, bool, error) {
 	for scanner.Scan() {
 		count++
 		var record struct {
-			Sequence int `json:"sequence"`
-			RecordType string `json:"record_type"`
-			Audit string `json:"audit"`
-			Attempt int `json:"attempt"`
-			Status string `json:"status"`
-			SuccessCounted bool `json:"success_counted"`
-			ProductVerification bool `json:"product_verification"`
-			LocalTestExecution int `json:"local_test_execution"`
-			FailureCode string `json:"failure_code"`
-			Failure string `json:"failure"`
-			V010Preserved bool `json:"v0_1_0_deleted_or_recreated"`
-			FailedAttemptsCountedAsSuccess bool `json:"failed_attempts_counted_as_success"`
+			Sequence                       int    `json:"sequence"`
+			RecordType                     string `json:"record_type"`
+			Audit                          string `json:"audit"`
+			Attempt                        int    `json:"attempt"`
+			Status                         string `json:"status"`
+			SuccessCounted                 bool   `json:"success_counted"`
+			ProductVerification            bool   `json:"product_verification"`
+			LocalTestExecution             int    `json:"local_test_execution"`
+			FailureCode                    string `json:"failure_code"`
+			Failure                        string `json:"failure"`
+			V010Preserved                  bool   `json:"v0_1_0_deleted_or_recreated"`
+			FailedAttemptsCountedAsSuccess bool   `json:"failed_attempts_counted_as_success"`
 		}
 		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
 			return nil, 0, false, false, fmt.Errorf("decode time audit: %w", err)
@@ -457,7 +459,13 @@ func timeCausalityExpectedAsset(index int) TimeCausalityAsset {
 }
 
 func sameInts(left, right []int) bool {
-	if len(left) != len(right) { return false }
-	for index := range left { if left[index] != right[index] { return false } }
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
 	return true
 }

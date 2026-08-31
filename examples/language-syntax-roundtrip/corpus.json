@@ -374,6 +374,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "ci-time-causality",
+      "path": "examples/ci-time-causality/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "reproducibility-semantics",
       "path": "examples/reproducibility-semantics/main.gooo",
       "kind": "VALID",
