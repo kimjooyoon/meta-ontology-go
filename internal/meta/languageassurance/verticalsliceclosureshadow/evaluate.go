@@ -1,7 +1,7 @@
 package verticalsliceclosureshadow
 
 func Evaluate(input Input) Report {
-	return evaluate(input, embeddedDenominator)
+	return evaluate(input, activeDenominator())
 }
 
 func evaluate(input Input, denominatorRaw []byte) Report {

@@ -7,6 +7,9 @@ const (
 	PredecessorSHA    = "145b81c8bb8e4b1eb46cb10af0ea21a6b6be51b5"
 	AssuranceDigest   = "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969"
 	DenominatorDigest = "sha256:b8d336e45d0bc3aaf8e23b33e5f168d73ecd721596b47bd95489ee6a96e41709"
+	// DenominatorMigrationDigest is the append-only v22 contract used when the
+	// language-syntax corpus exposes the additional capability case.
+	DenominatorMigrationDigest = "sha256:ea4821d2b632319b29ffe43276c0b36f1b825fe29c8617c16680cd41b3d5f822"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
