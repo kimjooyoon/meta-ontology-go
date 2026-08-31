@@ -87,7 +87,11 @@ func buildReport(config Config) (Report, error) {
 	if repositoryStatus.Writes < 0 {
 		return Report{}, fmt.Errorf("repository status writes is negative")
 	}
-	observedJobs, window, err := observeJobs(jobs.Jobs)
+	timeCausality, err := loadTimeCausality(config.TimeCausalityRoot)
+	if err != nil {
+		return Report{}, err
+	}
+	observedJobs, window, err := observeJobsWithSource(jobs.Jobs, source)
 	if err != nil {
 		return Report{}, err
 	}
@@ -96,7 +100,7 @@ func buildReport(config Config) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	key, err := buildReuseKey(config, source, manifestBytes, contractBytes, sourceBytes, jobsBytes, openTofu, workflowBytes, operations)
+	key, err := buildReuseKey(config, source, manifestBytes, contractBytes, sourceBytes, jobsBytes, openTofu, timeCausality, workflowBytes, operations)
 	if err != nil {
 		return Report{}, err
 	}
@@ -113,7 +117,7 @@ func buildReport(config Config) (Report, error) {
 		Window: window, RuntimeResolution: runtimeResolution(window), Jobs: observedJobs, Operations: operations,
 		Accounting: accounting, Reuse: reuse, OpenTofu: openTofu,
 		OperationManifestDigest: digestBytes(manifestBytes),
-		Graph:                   graph, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
+		Graph:                   graph, TimeCausality: timeCausality, RepositoryStatus: repositoryStatus, RepositoryWrites: repositoryStatus.Writes, LocalTestExecutions: 0,
 		CrossProjectRequiredGates: 0, Improvement: "UNKNOWN",
 		Counterexamples: fixedCounterexamples(),
 		RuntimeCases:    runtimeCases(),
@@ -126,37 +130,48 @@ func buildReport(config Config) (Report, error) {
 }
 
 func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
+	return observeJobsWithSource(input, sourceRunInput{})
+}
+
+func observeJobsWithSource(input []APIJob, source sourceRunInput) ([]JobObservation, WorkflowWindow, error) {
 	if len(input) == 0 {
 		return nil, WorkflowWindow{}, fmt.Errorf("source run has no jobs")
 	}
 	sorted := append([]APIJob(nil), input...)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].ID < sorted[j].ID })
 	result := make([]JobObservation, 0, len(sorted))
-	var window WorkflowWindow
-	for index, job := range sorted {
-		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
+	window := WorkflowWindow{OperationID: sourceRunOperationID(source), RunID: source.ID, Provider: githubActionsProvider, ClockDomain: githubActionsRunClockDomain}
+	window.StartAt = firstNonEmpty(source.RunStartedAt, source.CreatedAt)
+	window.EndAt = source.UpdatedAt
+	for _, job := range sorted {
+		skipped := job.Status == "skipped" || job.Conclusion == "skipped"
+		duration := timestampObservation{}
+		if !skipped {
+			duration = observeOperationInterval(operationIntervalForJob(job))
+		}
 		var unknown *Unknown
-		if duration.missing {
+		if !skipped && duration.missing {
 			unknown = jobRuntimeUnknown()
 		}
-		steps, stepWall, belowSteps, stepRejections, stepReasons, err := observeStepsWithResolution(job.Steps)
+		steps, stepWall, belowSteps, stepRejections, stepReasons, err := observeStepsWithResolutionForJob(job.Steps, job)
 		if err != nil {
 			return nil, WorkflowWindow{}, fmt.Errorf("job %d: %w", job.ID, err)
 		}
 		window.StepIntervalCount += observedStepIntervalCount(steps)
-		result = append(result, JobObservation{ID: job.ID, Name: job.Name, Status: job.Status,
+		result = append(result, JobObservation{ID: job.ID, OperationID: jobOperationID(job), RunID: job.RunID, Provider: githubActionsProvider, ClockDomain: githubActionsJobClockDomain,
+			Name: job.Name, Status: job.Status,
 			Conclusion: job.Conclusion, HeadSHA: job.HeadSHA, StartedAt: job.StartedAt,
 			CompletedAt: job.CompletedAt, WallMS: duration.wall, BelowSourceResolution: duration.below,
-			RejectionReason: duration.rejection, Steps: steps, Unknown: unknown})
-		if job.StartedAt != "" && (index == 0 || window.StartAt == "" || job.StartedAt < window.StartAt) {
+			RejectionReason: duration.rejection, Skipped: skipped, Steps: steps, Unknown: unknown})
+		if source.ID == 0 && !skipped && job.StartedAt != "" && (window.StartAt == "" || job.StartedAt < window.StartAt) {
 			window.StartAt = job.StartedAt
 		}
-		if job.CompletedAt != "" && (index == 0 || window.EndAt == "" || job.CompletedAt > window.EndAt) {
+		if source.ID == 0 && !skipped && job.CompletedAt != "" && (window.EndAt == "" || job.CompletedAt > window.EndAt) {
 			window.EndAt = job.CompletedAt
 		}
 		window.JobWallMSSum += duration.wall
 		window.StepWallMSSum += stepWall
-		if !duration.missing && duration.rejection == "" {
+		if !skipped && !duration.missing && duration.rejection == "" {
 			window.JobIntervalCount++
 		}
 		if duration.below {
@@ -170,7 +185,20 @@ func observeJobs(input []APIJob) ([]JobObservation, WorkflowWindow, error) {
 		window.RuntimeRejectionCount += stepRejections
 		window.RuntimeRejectionReasons = append(window.RuntimeRejectionReasons, stepReasons...)
 	}
-	window.WallMS = observeTimestamp(window.StartAt, window.EndAt).wall
+	if source.ID > 0 && window.StartAt != "" && window.EndAt != "" {
+		windowDuration := observeOperationInterval(operationInterval{OperationID: window.OperationID, RunID: source.ID, Provider: githubActionsProvider, ClockDomain: githubActionsRunClockDomain, StartedAt: window.StartAt, CompletedAt: window.EndAt})
+		window.WallMS = windowDuration.wall
+		if windowDuration.rejection != "" {
+			window.RuntimeRejectionCount++
+			window.RuntimeRejectionReasons = append(window.RuntimeRejectionReasons, windowDuration.rejection)
+		}
+	} else if len(result) == 1 && !result[0].Skipped {
+		window.OperationID = result[0].OperationID
+		window.RunID = result[0].RunID
+		window.Provider = result[0].Provider
+		window.ClockDomain = result[0].ClockDomain
+		window.WallMS = observeOperationInterval(operationInterval{OperationID: result[0].OperationID, RunID: result[0].RunID, JobID: result[0].ID, Provider: result[0].Provider, ClockDomain: result[0].ClockDomain, StartedAt: result[0].StartedAt, CompletedAt: result[0].CompletedAt}).wall
+	}
 	window.TimestampResolutionMS = 1000
 	window.IntervalModel = runtimeIntervalModel
 	window.IntervalModelDigest = runtimeIntervalModelDigest()
@@ -187,7 +215,7 @@ func observeSteps(input []APIStep) ([]StepObservation, int64, error) {
 func observedStepIntervalCount(steps []StepObservation) int {
 	count := 0
 	for _, step := range steps {
-		if step.Conclusion != "skipped" && step.Unknown == nil && step.RejectionReason == "" && step.StartedAt != "" && step.CompletedAt != "" {
+		if !step.Skipped && step.Status != "skipped" && step.Conclusion != "skipped" && step.Unknown == nil && step.RejectionReason == "" && step.StartedAt != "" && step.CompletedAt != "" {
 			count++
 		}
 	}
@@ -201,15 +229,18 @@ func runtimeIntervalModelDigest() string {
 func runtimeNominalForJobs(jobs []JobObservation) (int64, int64) {
 	var jobNominal, stepNominal int64
 	for _, job := range jobs {
-		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
+		if job.Skipped {
+			continue
+		}
+		duration := observeOperationInterval(operationInterval{OperationID: job.OperationID, RunID: job.RunID, Provider: job.Provider, ClockDomain: job.ClockDomain, StartedAt: job.StartedAt, CompletedAt: job.CompletedAt})
 		if !duration.missing && duration.rejection == "" {
 			jobNominal += duration.wall
 		}
 		for _, step := range job.Steps {
-			if step.Conclusion == "skipped" || step.Unknown != nil || step.RejectionReason != "" {
+			if step.Skipped || step.Conclusion == "skipped" || step.Unknown != nil || step.RejectionReason != "" {
 				continue
 			}
-			duration := observeTimestamp(step.StartedAt, step.CompletedAt)
+			duration := observeOperationInterval(operationInterval{OperationID: step.OperationID, RunID: step.RunID, Provider: step.Provider, ClockDomain: step.ClockDomain, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt})
 			if !duration.missing && duration.rejection == "" {
 				stepNominal += duration.wall
 			}
@@ -219,6 +250,10 @@ func runtimeNominalForJobs(jobs []JobObservation) (int64, int64) {
 }
 
 func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int, int, []string, error) {
+	return observeStepsWithResolutionForJob(input, APIJob{ID: 1, RunID: 1})
+}
+
+func observeStepsWithResolutionForJob(input []APIStep, job APIJob) ([]StepObservation, int64, int, int, []string, error) {
 	result := make([]StepObservation, 0, len(input))
 	var total int64
 	belowCount := 0
@@ -228,9 +263,13 @@ func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int,
 		if isCleanupStep(step.Name) {
 			continue
 		}
-		duration := observeTimestamp(step.StartedAt, step.CompletedAt)
+		skipped := step.Status == "skipped" || step.Conclusion == "skipped"
+		duration := timestampObservation{}
+		if !skipped {
+			duration = observeOperationInterval(operationIntervalForStep(job, step))
+		}
 		var unknown *Unknown
-		if step.Conclusion == "skipped" {
+		if skipped {
 			// A skipped step has no execution interval to observe.
 		} else if duration.missing {
 			unknown = stepRuntimeUnknown()
@@ -244,10 +283,11 @@ func observeStepsWithResolution(input []APIStep) ([]StepObservation, int64, int,
 				rejectionReasons = append(rejectionReasons, duration.rejection)
 			}
 		}
-		result = append(result, StepObservation{Name: step.Name, Status: step.Status,
+		result = append(result, StepObservation{OperationID: stepOperationID(job, step.Name), RunID: job.RunID, Provider: githubActionsProvider, ClockDomain: githubActionsJobClockDomain,
+			Name: step.Name, Status: step.Status,
 			Conclusion: step.Conclusion, StartedAt: step.StartedAt, CompletedAt: step.CompletedAt,
 			WallMS: duration.wall, BelowSourceResolution: duration.below,
-			RejectionReason: duration.rejection, Unknown: unknown})
+			RejectionReason: duration.rejection, Skipped: skipped, Unknown: unknown})
 	}
 	return result, total, belowCount, rejectionCount, rejectionReasons, nil
 }
@@ -387,6 +427,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 	}
 	job := matchingJobs[0]
 	base.JobID, base.JobConclusion = job.ID, job.Conclusion
+	base.RunID, base.Provider, base.ClockDomain = job.RunID, githubActionsProvider, githubActionsJobClockDomain
 	matches := make([]APIStep, 0, 1)
 	for _, step := range job.Steps {
 		if step.Name == evidenceStep {
@@ -403,6 +444,7 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 		return base
 	}
 	step := matches[0]
+	base.OperationID = stepOperationID(job, step.Name)
 	base.StepStatus, base.StepConclusion = step.Status, step.Conclusion
 	base.StartedAt, base.CompletedAt = step.StartedAt, step.CompletedAt
 	if spec.GuardStepName != "" {
@@ -425,10 +467,10 @@ func observeOperation(spec OperationSpec, jobs []APIJob, workflowPath string, wo
 		}
 		base.GuardBound = true
 	}
-	if step.Conclusion == "skipped" {
-		base.State = "SKIPPED"
+	if step.Status == "skipped" || step.Conclusion == "skipped" {
+		base.State, base.Skipped = "SKIPPED", true
 	} else if step.Status == "completed" && step.Conclusion != "" && step.StartedAt != "" && step.CompletedAt != "" {
-		duration := observeTimestamp(step.StartedAt, step.CompletedAt)
+		duration := observeOperationInterval(operationIntervalForStep(job, step))
 		switch {
 		case duration.rejection != "":
 			base.State, base.RejectionReason = "REJECTED", duration.rejection

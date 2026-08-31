@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run, jobs []byte, openTofu ExternalOpenTofu, workflow []byte, operations []OperationObservation) (ReuseKey, error) {
+func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run, jobs []byte, openTofu ExternalOpenTofu, timeCausality TimeCausalityBinding, workflow []byte, operations []OperationObservation) (ReuseKey, error) {
 	summary, err := os.ReadFile(config.SummaryPath)
 	if err != nil {
 		return ReuseKey{}, fmt.Errorf("read CI summary: %w", err)
@@ -38,7 +38,7 @@ func buildReuseKey(config Config, source sourceRunInput, manifest, contract, run
 		ToolchainDigest: digestString(goToolchain), CommandContextDigest: commandDigest,
 		EnvironmentAllowlistDigest: environmentDigest,
 		DependencyGraphDigest:      digestJSON(dependencyInputs), DependencyInputs: dependencyInputs, ExpectedResultDigest: expectedDigest,
-		OpenTofuReleaseDigest: openTofu.ReleaseAssetDigest,
+		OpenTofuReleaseDigest: openTofu.ReleaseAssetDigest, TimeCausalityDigest: timeCausality.BindingDigest,
 	}, nil
 }
 
@@ -136,9 +136,9 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 func sameReuseKey(left, right ReuseKey) bool {
 	return left.HeadSHA == right.HeadSHA && left.SourceEvent == right.SourceEvent && left.InputDigest == right.InputDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.CommandContextDigest == right.CommandContextDigest &&
-		left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
+	left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
 		sameDependencyInputs(left.DependencyInputs, right.DependencyInputs) &&
-		left.ExpectedResultDigest == right.ExpectedResultDigest && left.OpenTofuReleaseDigest == right.OpenTofuReleaseDigest
+		left.ExpectedResultDigest == right.ExpectedResultDigest && left.OpenTofuReleaseDigest == right.OpenTofuReleaseDigest && left.TimeCausalityDigest == right.TimeCausalityDigest
 }
 
 func sameDependencyInputs(left, right []DependencyInput) bool {

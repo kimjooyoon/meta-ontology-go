@@ -130,6 +130,25 @@ func TestMissingStepTimestampRemainsDirectUnknown(t *testing.T) {
 	}
 }
 
+func TestSkippedJobTimestampIsNotAnOperationDuration(t *testing.T) {
+	observed, window, err := observeJobs([]APIJob{{ID: 99, RunID: 7, Name: "FOUNDATION authorization", Status: "completed", Conclusion: "skipped",
+		StartedAt: "2026-08-31T06:59:49Z", CompletedAt: "2026-08-31T06:59:48Z"}})
+	if err != nil || len(observed) != 1 || !observed[0].Skipped || observed[0].WallMS != 0 || observed[0].RejectionReason != "" || window.JobIntervalCount != 0 || window.RuntimeRejectionCount != 0 {
+		t.Fatalf("skipped job timestamp was treated as duration evidence: jobs=%+v window=%+v err=%v", observed, window, err)
+	}
+}
+
+func TestOperationIntervalBindsIdentityAndClockDomain(t *testing.T) {
+	job := APIJob{ID: 9, RunID: 10, StartedAt: "2026-08-31T00:00:00Z", CompletedAt: "2026-08-31T00:00:01Z"}
+	interval := operationIntervalForJob(job)
+	if interval.OperationID != "github-actions:source-ci:run:10:job:9" || interval.RunID != 10 || interval.JobID != 9 || interval.Provider != githubActionsProvider || interval.ClockDomain != githubActionsJobClockDomain {
+		t.Fatalf("operation interval identity was not bound: %+v", interval)
+	}
+	if observed := observeOperationInterval(interval); observed.rejection != "" || observed.wall != 1000 {
+		t.Fatalf("same-operation interval was not derived: %+v", observed)
+	}
+}
+
 func TestJobTimestampContradictionsAreRecorded(t *testing.T) {
 	cases := []struct {
 		name, started, completed, reason string
@@ -198,7 +217,7 @@ func TestBoundNegativeDurationIsRejected(t *testing.T) {
 }
 
 func TestReuseRequiresEveryContextDigest(t *testing.T) {
-	base := ReuseKey{HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", InputDigest: "input", ToolchainDigest: "toolchain", CommandContextDigest: "command", EnvironmentAllowlistDigest: "environment", DependencyGraphDigest: "dependency", ExpectedResultDigest: "expected", OpenTofuReleaseDigest: "release"}
+	base := ReuseKey{HeadSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", InputDigest: "input", ToolchainDigest: "toolchain", CommandContextDigest: "command", EnvironmentAllowlistDigest: "environment", DependencyGraphDigest: "dependency", ExpectedResultDigest: "expected", OpenTofuReleaseDigest: "release", TimeCausalityDigest: "time-causality"}
 	mutations := []func(*ReuseKey){
 		func(key *ReuseKey) { key.HeadSHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
 		func(key *ReuseKey) { key.InputDigest = "changed" },
@@ -208,6 +227,7 @@ func TestReuseRequiresEveryContextDigest(t *testing.T) {
 		func(key *ReuseKey) { key.DependencyGraphDigest = "changed" },
 		func(key *ReuseKey) { key.ExpectedResultDigest = "changed" },
 		func(key *ReuseKey) { key.OpenTofuReleaseDigest = "changed" },
+		func(key *ReuseKey) { key.TimeCausalityDigest = "changed" },
 	}
 	for index, mutate := range mutations {
 		candidate := base
