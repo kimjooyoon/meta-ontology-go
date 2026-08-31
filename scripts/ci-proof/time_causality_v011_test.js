@@ -75,8 +75,8 @@ assert.equal(replay.replay_count, 2);
 assert.equal(replay.decision, 'CLOSED');
 
 const operations = read('examples/ci-time-causality/operations.ndjson').trimEnd().split('\n').map((line) => JSON.parse(line));
-assert.equal(operations.length, 16);
-assert.equal(operations.filter((item) => item.record_type === 'observation').length, 12);
+assert.equal(operations.length, 17);
+assert.equal(operations.filter((item) => item.record_type === 'observation').length, 15);
 const retries = operations.filter((item) => item.record_type === 'retry_lineage').sort((left, right) => left.attempt - right.attempt);
 assert.deepEqual(retries.map((item) => item.attempt), [1, 2]);
 assert.deepEqual(retries.map((item) => item.job_id), ['99405870188', '99408612206']);
