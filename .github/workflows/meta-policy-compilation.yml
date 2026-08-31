@@ -156,11 +156,14 @@ jobs:
               comment) receipt="$root/intervention/comment/receipt.json" ;;
               semantic) receipt="$root/intervention/semantic/receipt.json" ;;
             esac
-            jq '[.cases[] | {id:.id, source:.source, generated:.generated, independent:.independent}]' "$receipt" > "$root/intervention/$variant-behavior.json"
+            jq '[.cases[] | {id:.id, source:(.source | {decision, stage, step, reason, unknown_class, next_operation, blocked_by}), generated:(.generated | {decision, stage, step, reason, unknown_class, next_operation, blocked_by}), independent:(.independent | {decision, stage, step, reason, unknown_class, next_operation, blocked_by})}]' "$receipt" > "$root/intervention/$variant-behavior.json"
             jq '[.claims.events[] | {claim_id, predicate, from, to, decision, stage, step, reason}]' "$receipt" > "$root/intervention/$variant-claims.json"
           done
           cmp "$root/intervention/base-behavior.json" "$root/intervention/comment-behavior.json"
           cmp "$root/intervention/base-claims.json" "$root/intervention/comment-claims.json"
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.source_digest != $comment[0].policy.source_digest' >/dev/null
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.semantic_digest == $comment[0].policy.semantic_digest' >/dev/null
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile semantic "$root/intervention/semantic/receipt.json" '$base[0].policy.semantic_digest != $semantic[0].policy.semantic_digest' >/dev/null
           if cmp "$root/intervention/base-behavior.json" "$root/intervention/semantic-behavior.json"; then
             echo 'semantic intervention did not change behavior' >&2
             exit 1
