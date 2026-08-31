@@ -42,7 +42,7 @@ func implicitEntityDeclarations(declarations []Declaration, namespace string) []
 				continue
 			}
 			seen[key] = struct{}{}
-			result = append(result, Declaration{Kind: EntityKind, Name: reference.Name})
+			result = append(result, Declaration{Kind: EntityKind, Name: reference.Name, Span: reference.Span})
 		}
 	}
 	return result
