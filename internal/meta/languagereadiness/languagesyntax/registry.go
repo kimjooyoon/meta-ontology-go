@@ -23,6 +23,8 @@ func expectedRegistry() Registry {
 	}
 	entityFields := valid("entity-fields-v1", "examples/entity-fields-v1/main.gooo")
 	entityFields.EntityFields = true
+	ciTimeCausality := valid("ci-time-causality", "examples/ci-time-causality/main.gooo")
+	ciTimeCausality.ImplicitActivityPorts = true
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
@@ -67,7 +69,7 @@ func expectedRegistry() Registry {
 		valid("gooo-release-publication", "examples/gooo-release-publication/main.gooo"),
 		valid("ci-plan", "examples/ci-plan/main.gooo"),
 		valid("ci-effort-observation", "examples/ci-effort-observation/main.gooo"),
-		valid("ci-time-causality", "examples/ci-time-causality/main.gooo"),
+		ciTimeCausality,
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),

@@ -380,7 +380,8 @@
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
-      "scope": "LANGUAGE_CAPABILITY"
+      "scope": "LANGUAGE_CAPABILITY",
+      "implicit_activity_ports": true
     },
     {
       "id": "reproducibility-semantics",

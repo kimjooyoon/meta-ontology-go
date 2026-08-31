@@ -1,7 +1,9 @@
 package replay
 
 import (
+	"context"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -10,15 +12,31 @@ func executeSemantic(result Result, file, replayed *syntax.File) Result {
 }
 
 func executeSemanticWithSupport(result Result, file, replayed *syntax.File, support syntax.EntityFieldsSupport) Result {
-	original, err := bidir.LowerContextWithEntityFieldsSupport(nil, file, support)
+	return executeSemanticWithImplicitActivityPorts(result, file, replayed, support, false)
+}
+
+func executeSemanticWithImplicitActivityPorts(result Result, file, replayed *syntax.File, support syntax.EntityFieldsSupport, allowImplicitActivityPorts bool) Result {
+	lower := func(source *syntax.File) (semantic.IR, error) {
+		if allowImplicitActivityPorts {
+			return bidir.LowerContextWithImplicitActivityPorts(context.Background(), source, support)
+		}
+		return bidir.LowerContextWithEntityFieldsSupport(context.Background(), source, support)
+	}
+	adapt := func(source *syntax.File) (bidir.Document, error) {
+		if allowImplicitActivityPorts {
+			return bidir.DocumentFromSyntaxWithImplicitActivityPorts(source, support)
+		}
+		return bidir.DocumentFromSyntaxWithEntityFieldsSupport(source, support)
+	}
+	original, err := lower(file)
 	if err != nil {
 		return reject(result, "lower: "+err.Error())
 	}
-	replayIR, err := bidir.LowerContextWithEntityFieldsSupport(nil, replayed, support)
+	replayIR, err := lower(replayed)
 	if err != nil {
 		return reject(result, "replay lower: "+err.Error())
 	}
-	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, support)
+	document, err := adapt(file)
 	if err != nil {
 		return reject(result, "document: "+err.Error())
 	}

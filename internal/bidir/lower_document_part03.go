@@ -9,7 +9,10 @@ import (
 func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document, namespace semantic.Namespace) (map[string]semantic.ID, map[ID]semantic.ID, error) {
 	names := make(map[string]semantic.ID)
 	ids := make(map[ID]semantic.ID, len(document.Declarations))
-	declarations := append(append([]Declaration(nil), document.Declarations...), implicitEntityDeclarations(document.Declarations, namespace.String())...)
+	declarations := append([]Declaration(nil), document.Declarations...)
+	if document.ImplicitActivityPorts {
+		declarations = append(declarations, implicitEntityDeclarations(document.Declarations, namespace.String())...)
+	}
 	for _, declaration := range declarations {
 		if err := checkLowerContext(ctx); err != nil {
 			return nil, nil, err

@@ -46,7 +46,7 @@ func getWithTypesAndEntityFieldsSupport(document Document, registry semantic.Typ
 	if strings.TrimSpace(model.Namespace) == "" {
 		model.Namespace = "gooo"
 	}
-	names, ids, err := collectDeclarations(&model, document.Declarations)
+	names, ids, err := collectDeclarations(&model, document.Declarations, document.ImplicitActivityPorts)
 	if err != nil {
 		return Model{}, err
 	}
