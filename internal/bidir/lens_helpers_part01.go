@@ -16,7 +16,7 @@ func declarationIdentity(namespace string, declaration Declaration) (ID, error) 
 	if derived == "" {
 		return "", fmt.Errorf("declaration %q cannot derive a stable ID", declaration.Name)
 	}
-	return ID(namespace + "://" + strings.ToLower(string(declaration.Kind)) + "/" + derived), nil
+	return ID(strings.ReplaceAll(namespace, "_", "-") + "://" + strings.ToLower(string(declaration.Kind)) + "/" + derived), nil
 }
 func validateDocumentSpans(document Document) error {
 	for index, declaration := range document.Declarations {
