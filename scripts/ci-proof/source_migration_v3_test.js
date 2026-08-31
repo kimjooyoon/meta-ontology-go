@@ -10,7 +10,7 @@ const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
 const readJSON = (relative) => JSON.parse(read(relative));
 const digest = (bytes) => `sha256:${crypto.createHash('sha256').update(bytes).digest('hex')}`;
 
-const sourcePath = 'examples/receipt-schema-migration-v3/migration.gooo';
+const sourcePath = 'examples/receipt-schema-migration-v3/migration.gooo.txt';
 const proposalPath = 'examples/receipt-schema-migration-v3/adoption-proposal.json';
 const irPath = 'examples/receipt-schema-migration-v3/semantic-ir.json';
 const validatorPath = 'examples/receipt-schema-migration-v3/generated/validator.json';
