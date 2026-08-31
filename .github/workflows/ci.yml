@@ -1065,7 +1065,9 @@ jobs:
             authorization.validatePolicy(policy);
             const currentPull = context.payload.pull_request;
             const repository = context.payload.repository.full_name;
-            if (currentPull.base.ref !== 'dev' || currentPull.base.repo.full_name !== repository || currentPull.head.ref !== authorization.AUTHORIZATION_BRANCH || currentPull.head.repo.full_name !== repository || currentPull.number !== policy.authorization.pull_request || currentPull.head.sha !== context.sha) {
+            const livePullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number});
+            const livePull = livePullResponse.data;
+            if (livePull.head.sha !== currentPull.head.sha || currentPull.base.ref !== 'dev' || currentPull.base.repo.full_name !== repository || currentPull.head.ref !== authorization.AUTHORIZATION_BRANCH || currentPull.head.repo.full_name !== repository || currentPull.number !== policy.authorization.pull_request) {
               throw new Error('FOUNDATION authorization PR identity is not exact');
             }
             const changedFiles = [];
