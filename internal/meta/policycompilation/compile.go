@@ -19,18 +19,38 @@ const policyID = "gooo://meta-policy-compilation/policy/v2"
 // declared activity metadata to the experiment's meaning. The output is
 // canonical and independent of declaration order.
 func Compile(source []byte) (CompiledPolicy, error) {
+	ir, err := lowerPolicy(source)
+	if err != nil {
+		return CompiledPolicy{}, err
+	}
+	rules, reduction, err := compileRules(ir)
+	if err != nil {
+		return CompiledPolicy{}, err
+	}
+	return CompiledPolicy{
+		Schema: SchemaVersion, PolicyID: policyID,
+		Package: ir.Package, Namespace: ir.Namespace.String(),
+		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
+		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
+	}, nil
+}
+
+func lowerPolicy(source []byte) (semantic.IR, error) {
 	file, diagnostics := syntax.ParseFile("policy.gooo", string(source))
 	if diagnostics.HasErrors() {
-		return CompiledPolicy{}, errors.New(diagnostics.Error().Error())
+		return semantic.IR{}, errors.New(diagnostics.Error().Error())
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return CompiledPolicy{}, fmt.Errorf("lower policy: %w", err)
+		return semantic.IR{}, fmt.Errorf("lower policy: %w", err)
 	}
 	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
-		return CompiledPolicy{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
+		return semantic.IR{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
 	}
+	return ir, nil
+}
 
+func compileRules(ir semantic.IR) ([]Rule, DecisionReduction, error) {
 	rules := make([]Rule, 0, FixedDenominator)
 	var reduction DecisionReduction
 	reductionCount := 0
@@ -40,16 +60,16 @@ func Compile(source []byte) (CompiledPolicy, error) {
 		}
 		values, err := parseActivityProgram(node.ValueProgram)
 		if err != nil {
-			return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+			return nil, DecisionReduction{}, fmt.Errorf("activity %q: %w", node.Name, err)
 		}
 		if values.Reduction != "" {
 			reductionCount++
 			if reductionCount > 1 {
-				return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+				return nil, DecisionReduction{}, errors.New("decision reduction must be declared exactly once")
 			}
 			reduction, err = parseDecisionReduction(values.Reduction)
 			if err != nil {
-				return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+				return nil, DecisionReduction{}, fmt.Errorf("activity %q: %w", node.Name, err)
 			}
 		}
 		rules = append(rules, Rule{
@@ -60,26 +80,21 @@ func Compile(source []byte) (CompiledPolicy, error) {
 		})
 	}
 	if len(rules) != FixedDenominator {
-		return CompiledPolicy{}, fmt.Errorf("fixed denominator changed: got %d want %d", len(rules), FixedDenominator)
+		return nil, DecisionReduction{}, fmt.Errorf("fixed denominator changed: got %d want %d", len(rules), FixedDenominator)
 	}
 	sort.Slice(rules, func(i, j int) bool { return rules[i].Step < rules[j].Step })
 	for index, rule := range rules {
 		if rule.Step != index+1 {
-			return CompiledPolicy{}, fmt.Errorf("policy step %d is not present exactly once", index+1)
+			return nil, DecisionReduction{}, fmt.Errorf("policy step %d is not present exactly once", index+1)
 		}
 	}
 	if err := validateClaimPredicates(rules); err != nil {
-		return CompiledPolicy{}, err
+		return nil, DecisionReduction{}, err
 	}
 	if reductionCount != 1 {
-		return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+		return nil, DecisionReduction{}, errors.New("decision reduction must be declared exactly once")
 	}
-	return CompiledPolicy{
-		Schema: SchemaVersion, PolicyID: policyID,
-		Package: ir.Package, Namespace: ir.Namespace.String(),
-		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
-		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
-	}, nil
+	return rules, reduction, nil
 }
 
 func validateClaimPredicates(rules []Rule) error {
