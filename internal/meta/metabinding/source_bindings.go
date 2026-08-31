@@ -4,6 +4,7 @@ func sourceBindings() []Binding {
 	return []Binding{
 		{Operation: "bind-indicator-meta-program", Activity: "BindIndicatorMetaProgram", ProofChoice: "coherence", Registry: "meta-binding"},
 		{Operation: "exempt-project-root-readme", Activity: "BindRootREADMEExemption", ProofChoice: "foundation", Registry: "source-policy"},
+		{Operation: "exempt-workflow-discovery-root", Activity: "ExemptWorkflowDiscoveryRoot", ProofChoice: "foundation", Registry: "source-policy"},
 		{Operation: "extract-function", Activity: "ExtractFunction", ProofChoice: "foundation", Registry: "repository-projection", Executor: "bootstrap/function-extractor", Evaluator: ".github/workflows/repository-projection.yml"},
 		{Operation: "inspect-wrapper", Activity: "InspectWrapper", ProofChoice: "coherence", Registry: "source-policy"},
 		{Operation: "measure-integration-progress", Activity: "MeasureIntegrationProgress", ProofChoice: "foundation", Registry: "integration-progress", Executor: "cmd/integration-progress-witness", Evaluator: ".github/workflows/integration-progress-evidence.yml"},

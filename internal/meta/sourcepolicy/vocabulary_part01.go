@@ -69,7 +69,7 @@ const (
 	OperationRequireRootREADME  Operation = "require-project-root-readme"
 	OperationModernize          Operation = "apply-go-fix"
 	OperationSelectToolchain    Operation = "select-toolchain"
-	OperationPreserveWorkflow  Operation = "preserve-workflow-discovery"
-	OperationMeasureProgress   Operation = "measure-integration-progress"
-	OperationMeasureUtility    Operation = "measure-language-utility"
+	OperationPreserveWorkflow   Operation = "preserve-workflow-discovery"
+	OperationMeasureProgress    Operation = "measure-integration-progress"
+	OperationMeasureUtility     Operation = "measure-language-utility"
 )

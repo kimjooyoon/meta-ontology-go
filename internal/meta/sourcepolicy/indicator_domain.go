@@ -5,7 +5,7 @@ const (
 	ApplicabilityRuleProjectRootTopology   = "gooo.catalog.source-policy.project-root-topology.v1"
 	ApplicabilityRuleWorkflowDiscoveryRoot = "gooo.catalog.source-policy.workflow-discovery-root.v1"
 	ApplicabilityRuleProjectRootREADME     = "gooo.catalog.source-policy.project-root-readme.v1"
-	ApplicabilityRuleWorkflowDiscovery   = "gooo.catalog.source-policy.github-workflow-discovery.v1"
+	ApplicabilityRuleWorkflowDiscovery     = "gooo.catalog.source-policy.github-workflow-discovery.v1"
 )
 
 const SemanticRoleWorkflowDiscoveryRoot = "workflow-discovery-root"
