@@ -324,7 +324,8 @@ func loadTimeCausality(root string) (TimeCausalityBinding, error) {
 		Summary: TimeCausalitySummary{Total: 12, Closed: 3, Unknown: 4, Refuted: 5, Cells: 12, Activities: 12}, RetryAttempts: retryAttempts,
 		AggregationRule: timeCausalityAggregationRule, NegativeDurationReason: timeCausalityNegativeReason, ClampToZeroPolicy: timeCausalityClampPolicy, SourceOpenTofuSeparate: true,
 		AuditPath: filepath.ToSlash(auditPath), AuditDigest: digestBytes(auditData), AuditRecordCount: auditCount, AuditFailureCount: len(auditFailures), AuditFailures: auditFailures, V010Preserved: preserved, FailedAttemptsCountedAsSuccess: failedAsSuccess,
-		GeneratedBindingPath: filepath.ToSlash(generationPath), GeneratedBindingDigest: digestBytes(generationData), BindingDigest: digestNamed(files)}
+		GeneratedBindingPath: filepath.ToSlash(generationPath), GeneratedBindingDigest: digestBytes(generationData),
+		BindingDigest: digestNamed(files)}
 	if err := validateTimeCausalityBinding(binding); err != nil {
 		return TimeCausalityBinding{}, err
 	}

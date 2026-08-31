@@ -11,6 +11,7 @@ func init() {
 		".github/workflows/ci-guardian.yml",
 		".github/workflows/ci-effort-observation.yml",
 		".github/workflows/ci.yml",
+		".github/workflows/transformation-effect.yml",
 		"examples/ci-time-causality",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/receipt-schema-migration-v3",
