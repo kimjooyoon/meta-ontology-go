@@ -181,6 +181,7 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("read generated judge: %w", err)
 	}
+	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, producerArtifact.GeneratedJudgeHash)
 	if producerArtifact.Policy.SourceDigest == "" || producerPolicy.SourceDigest == "" || producerArtifact.GeneratedJudgeHash != digestBytes(judge) {
 		return errors.New("producer artifact is not bound to its generated judge")
 	}

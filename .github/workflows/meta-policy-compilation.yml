@@ -83,16 +83,16 @@ jobs:
 
           test_start=$(date +%s%3N)
           set +e
-          go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo > "$root/test.json"
+          /usr/bin/time -f '%M' -o "$root/test-rss" go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo > "$root/test.json"
           test_exit=$?
           set -e
           test_end=$(date +%s%3N)
           test_wall_ms=$((test_end-test_start))
-          test_peak_rss_kb=0
-          test_total=$(jq '[.[] | select(.Action == "run")] | length' "$root/test.json")
+          test_peak_rss_kb=$(cat "$root/test-rss")
+          test_total=$(jq -s '[.[] | select(.Action == "run")] | length' "$root/test.json")
           test_executed="$test_total"
-          test_reused=$(jq '[.[] | select(.Action == "output" and ((.Output // "") | contains("cached")))] | length' "$root/test.json")
-          test_skipped=$(jq '[.[] | select(.Action == "skip")] | length' "$root/test.json")
+          test_reused=$(jq -s '[.[] | select(.Action == "output" and ((.Output // "") | contains("cached")))] | length' "$root/test.json")
+          test_skipped=$(jq -s '[.[] | select(.Action == "skip")] | length' "$root/test.json")
           test_not_observed=0
           test "$test_exit" -eq 0
 
@@ -267,4 +267,3 @@ jobs:
           path: ${{ runner.temp }}/meta-policy-compilation/consumer-report.json
           if-no-files-found: error
           retention-days: 30
-
