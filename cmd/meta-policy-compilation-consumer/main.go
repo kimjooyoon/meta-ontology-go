@@ -197,10 +197,18 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 			return fmt.Errorf("consumer reconstruction differs at case %q", current.ID)
 		}
 	}
-	producerPackagePath := "internal/meta/" + "policycompilation"
-	if !strings.Contains(string(judge), "type result struct") || strings.Contains(string(judge), producerPackagePath) {
+	if !standaloneJudge(judge) {
 		return errors.New("generated judge is not a standalone artifact")
 	}
+	return writeConsumerReport(outputPath, cases, compiled, producerArtifact, generated, judge)
+}
+
+func standaloneJudge(judge []byte) bool {
+	producerPackagePath := "internal/meta/" + "policycompilation"
+	return strings.Contains(string(judge), "type result struct") && !strings.Contains(string(judge), producerPackagePath)
+}
+
+func writeConsumerReport(outputPath string, cases []input, compiled policy, producerArtifact artifact, generated []result, judge []byte) error {
 	synthetic := make([]syntheticEvidence, 0, len(cases))
 	for _, current := range cases {
 		synthetic = append(synthetic, syntheticEvidence{Class: current.EvidenceClass, CaseID: current.ID, ObservationDigest: inputDigest(current), Provenance: current.Provenance})

@@ -23,16 +23,9 @@ func Compile(source []byte) (CompiledPolicy, error) {
 }
 
 func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
-	file, diagnostics := syntax.ParseFile(filename, string(source))
-	if diagnostics.HasErrors() {
-		return CompiledPolicy{}, errors.New(diagnostics.Error().Error())
-	}
-	ir, err := bidir.Lower(file)
+	ir, err := lowerPolicy(filename, source)
 	if err != nil {
 		return CompiledPolicy{}, fmt.Errorf("lower policy: %w", err)
-	}
-	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
-		return CompiledPolicy{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
 	}
 
 	rules := make([]Rule, 0, FixedDenominator)
@@ -87,6 +80,21 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
 		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
 	}, nil
+}
+
+func lowerPolicy(filename string, source []byte) (semantic.IR, error) {
+	file, diagnostics := syntax.ParseFile(filename, string(source))
+	if diagnostics.HasErrors() {
+		return semantic.IR{}, errors.New(diagnostics.Error().Error())
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return semantic.IR{}, err
+	}
+	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
+		return semantic.IR{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
+	}
+	return ir, nil
 }
 
 func validateClaimPredicates(rules []Rule) error {
