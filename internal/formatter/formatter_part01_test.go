@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -61,6 +62,16 @@ func TestFormatDocumentRejectsUnrepresentableActivityIdentity(t *testing.T) {
 	result := Format(&document)
 	if result.Source != "" || len(result.Diagnostics) != 1 || result.Diagnostics[0].Code != CodeUnsupportedIdentity {
 		t.Fatalf("unexpected activity identity result: %#v", result)
+	}
+}
+func TestFormatDocumentNormalizesUnderscoreNamespaceForActivityIdentity(t *testing.T) {
+	document := billingDocument()
+	document.Package = "ci_time_causality"
+	document.Namespace = "ci_time_causality"
+	document.Declarations[2].Name = "BindOperationIdentity"
+	result := Format(&document)
+	if result.HasErrors() || !strings.Contains(result.Source, "activity BindOperationIdentity(Order) -> Payment") {
+		t.Fatalf("underscore namespace was not formatted: %#v", result)
 	}
 }
 
