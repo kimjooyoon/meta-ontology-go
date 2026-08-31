@@ -638,10 +638,10 @@ jobs:
           stage="validate"
           step="validate-language-syntax-scope-partition"
           jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .summary.satisfied == 45 and .summary.total == 45 and
-            .summary.executed == 45 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 44 and .summary.capability_total == 44 and
-            .summary.capability_executed == 44 and .summary.capability_unresolved == 0 and
+            .summary.satisfied == 46 and .summary.total == 46 and
+            .summary.executed == 46 and .summary.unresolved == 0 and
+            .summary.capability_satisfied == 45 and .summary.capability_total == 45 and
+            .summary.capability_executed == 45 and .summary.capability_unresolved == 0 and
             .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
             .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
