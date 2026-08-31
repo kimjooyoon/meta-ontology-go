@@ -226,8 +226,8 @@ type timeOperationRecord struct {
 	ClockDomain       string `json:"clock_domain"`
 	ArtifactID        string `json:"artifact_id"`
 	ArtifactDigest    string `json:"artifact_digest"`
-	Attempt            int    `json:"attempt"`
-	Decision           string `json:"decision"`
+	Attempt           int    `json:"attempt"`
+	Decision          string `json:"decision"`
 	ArtifactCreatedAt string `json:"artifact_created_at"`
 	ArtifactUpdatedAt string `json:"artifact_updated_at"`
 }

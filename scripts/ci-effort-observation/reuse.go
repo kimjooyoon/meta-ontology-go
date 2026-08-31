@@ -136,7 +136,7 @@ func buildReuse(path string, key ReuseKey) (ReuseObservation, error) {
 func sameReuseKey(left, right ReuseKey) bool {
 	return left.HeadSHA == right.HeadSHA && left.SourceEvent == right.SourceEvent && left.InputDigest == right.InputDigest &&
 		left.ToolchainDigest == right.ToolchainDigest && left.CommandContextDigest == right.CommandContextDigest &&
-	left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
+		left.EnvironmentAllowlistDigest == right.EnvironmentAllowlistDigest && left.DependencyGraphDigest == right.DependencyGraphDigest &&
 		sameDependencyInputs(left.DependencyInputs, right.DependencyInputs) &&
 		left.ExpectedResultDigest == right.ExpectedResultDigest && left.OpenTofuReleaseDigest == right.OpenTofuReleaseDigest && left.TimeCausalityDigest == right.TimeCausalityDigest
 }
