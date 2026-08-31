@@ -13,6 +13,7 @@ type Config struct {
 	ManifestPath         string
 	ContractPath         string
 	ProgramPath          string
+	TimeCausalityRoot    string
 	SummaryPath          string
 	EvidencePath         string
 	RepositoryStatusPath string
@@ -114,6 +115,10 @@ type CellSpec struct {
 
 type JobObservation struct {
 	ID                    int64             `json:"id"`
+	OperationID           string            `json:"operation_id"`
+	RunID                 int64             `json:"run_id"`
+	Provider              string            `json:"provider"`
+	ClockDomain           string            `json:"clock_domain"`
 	Name                  string            `json:"name"`
 	Status                string            `json:"status"`
 	Conclusion            string            `json:"conclusion"`
@@ -123,11 +128,16 @@ type JobObservation struct {
 	WallMS                int64             `json:"wall_ms"`
 	BelowSourceResolution bool              `json:"below_source_resolution,omitempty"`
 	RejectionReason       string            `json:"rejection_reason,omitempty"`
+	Skipped               bool              `json:"skipped,omitempty"`
 	Steps                 []StepObservation `json:"steps"`
 	Unknown               *Unknown          `json:"unknown,omitempty"`
 }
 
 type StepObservation struct {
+	OperationID           string   `json:"operation_id"`
+	RunID                 int64    `json:"run_id"`
+	Provider              string   `json:"provider"`
+	ClockDomain           string   `json:"clock_domain"`
 	Name                  string   `json:"name"`
 	Status                string   `json:"status"`
 	Conclusion            string   `json:"conclusion"`
@@ -136,10 +146,15 @@ type StepObservation struct {
 	WallMS                int64    `json:"wall_ms"`
 	BelowSourceResolution bool     `json:"below_source_resolution,omitempty"`
 	RejectionReason       string   `json:"rejection_reason,omitempty"`
+	Skipped               bool     `json:"skipped,omitempty"`
 	Unknown               *Unknown `json:"unknown,omitempty"`
 }
 
 type WorkflowWindow struct {
+	OperationID                 string   `json:"operation_id"`
+	RunID                       int64    `json:"run_id"`
+	Provider                    string   `json:"provider"`
+	ClockDomain                 string   `json:"clock_domain"`
 	StartAt                    string   `json:"start_at"`
 	EndAt                      string   `json:"end_at"`
 	WallMS                     int64    `json:"wall_ms"`
@@ -167,6 +182,10 @@ type RuntimeCase struct {
 
 type OperationObservation struct {
 	ID                     string   `json:"id"`
+	OperationID            string   `json:"operation_id"`
+	RunID                  int64    `json:"run_id"`
+	Provider               string   `json:"provider"`
+	ClockDomain            string   `json:"clock_domain"`
 	Kind                   string   `json:"kind"`
 	ProofObligationID      string   `json:"proof_obligation_id"`
 	SourceEvent            string   `json:"source_event"`
@@ -190,6 +209,7 @@ type OperationObservation struct {
 	GuardBound             bool     `json:"guard_bound,omitempty"`
 	State                  string   `json:"state"`
 	RejectionReason        string   `json:"rejection_reason,omitempty"`
+	Skipped                bool     `json:"skipped,omitempty"`
 	StartedAt              string   `json:"started_at"`
 	CompletedAt            string   `json:"completed_at"`
 	WallMS                 int64    `json:"wall_ms"`
@@ -227,6 +247,7 @@ type ReuseKey struct {
 	DependencyInputs           []DependencyInput `json:"dependency_inputs"`
 	ExpectedResultDigest       string            `json:"expected_result_digest"`
 	OpenTofuReleaseDigest      string            `json:"opentofu_release_digest"`
+	TimeCausalityDigest        string            `json:"time_causality_digest"`
 }
 
 type DependencyInput struct {
@@ -391,6 +412,7 @@ type Report struct {
 	OpenTofu                  ExternalOpenTofu       `json:"external_opentofu"`
 	Cells                     []CellObservation      `json:"cells"`
 	Graph                     GraphObservation       `json:"graph"`
+	TimeCausality             TimeCausalityBinding   `json:"time_causality"`
 	RepositoryStatus          RepositoryStatus       `json:"repository_status"`
 	RepositoryWrites          int                    `json:"repository_writes"`
 	LocalTestExecutions       int                    `json:"local_test_executions"`

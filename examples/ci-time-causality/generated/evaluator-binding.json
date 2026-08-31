@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/ci-time-causality/generated-evaluator-binding/v1",
+  "source_path": "examples/time-causality/main.gooo",
+  "source_digest": "sha256:a45675079c7e80c8324578ed999e73ccdb6f553f2c1ce35cac223e2809fb4fc1",
+  "semantic_ir_digest": "sha256:1292a28d338696ff8245a309ca7abcf18ed01991b9eaebba0a4c1ba18c43e5f0",
+  "generated_evaluator_digest": "sha256:cd837bed10b30d0d42d5990d39535c168904f3ce261f03787574666d6be12d6f",
+  "ci_implementation_path": "scripts/ci-effort-observation/time_causality.go",
+  "duration_rule": "Duration subtraction requires equal operation identity and equal clock_domain; timestamps are normalized to UTC only after timezone validation.",
+  "aggregation_rule": "Only same operation_id, run_id, job_id, provider, and clock_domain may form one duration; source-ci and opentofu remain separate observations.",
+  "negative_duration_reason": "REFUTED_CLOCK_ORDER",
+  "clamp_to_zero_policy": "FORBIDDEN"
+}

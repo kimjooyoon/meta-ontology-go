@@ -57,6 +57,7 @@ func parseConfig() Config {
 	flag.StringVar(&config.ManifestPath, "manifest", "examples/ci-effort-observation/operations.json", "checked-in operation manifest")
 	flag.StringVar(&config.ContractPath, "contract", "examples/ci-effort-observation/contract.json", "checked-in Gooo contract")
 	flag.StringVar(&config.ProgramPath, "program", "examples/ci-effort-observation/main.gooo", "checked-in Gooo program")
+	flag.StringVar(&config.TimeCausalityRoot, "time-causality-root", "examples/ci-time-causality", "checked-in immutable time-causality input root")
 	flag.StringVar(&config.SummaryPath, "ci-summary", "", "source CI summary artifact")
 	flag.StringVar(&config.EvidencePath, "ci-evidence", "", "source CI evidence artifact")
 	flag.StringVar(&config.RepositoryStatusPath, "repository-status", "", "before/after repository status receipt")

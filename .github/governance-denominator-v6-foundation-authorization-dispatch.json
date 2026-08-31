@@ -331,6 +331,99 @@
       "replay_decision": "REFUTED"
     }
   ],
+  "time_causality": {
+    "schema": "gooo/ci-time-causality/v0.1.1",
+    "contract_id": "ci-time-causality-v1",
+    "release": {
+      "repository": "kimjooyoon/gooo-ci-time-causality",
+      "version": "v0.1.1",
+      "release_id": 379586518,
+      "immutable": true,
+      "tag_object_sha": "bdea52f17b0bfe01f5b448c7d4ceffedc7e13540",
+      "target_commit": "59b72a990b473199af81b8714b107798ab0533aa",
+      "main_run_id": 33370026257,
+      "main_job_id": 99418767346,
+      "main_conclusion": "success",
+      "tag_run_id": 33370074218,
+      "tag_conclusion": "success"
+    },
+    "source": {
+      "path": "examples/time-causality/main.gooo",
+      "sha256": "sha256:a45675079c7e80c8324578ed999e73ccdb6f553f2c1ce35cac223e2809fb4fc1"
+    },
+    "immutable_fixture_digest": "sha256:d41f4c6fdc33a5442339d83fdc1f4e68f8fcb317393188aa6b0fe67004d662cd",
+    "semantic_ir_digest": "sha256:1292a28d338696ff8245a309ca7abcf18ed01991b9eaebba0a4c1ba18c43e5f0",
+    "generated_evaluator": {
+      "path": "scripts/ci-effort-observation/time_causality.go",
+      "sha256": "sha256:cd837bed10b30d0d42d5990d39535c168904f3ce261f03787574666d6be12d6f",
+      "ci_implementation_sha256": "sha256:8fe1c345a7b6256acfb86ed4f23891a58bbf1b6e9ddf657bd9a72f1b75efcb6a",
+      "binding_file_sha256": "sha256:6e2a3918dc9a5341614eb770726912f1f9b5a62fed148a846b6692abbb582284"
+    },
+    "manifest": {
+      "path": "examples/ci-time-causality/time-manifest.json",
+      "sha256": "sha256:67ec377f670f925dbb346bd83eee233ab53a01b05be4b56368517e2fef7554a3"
+    },
+    "output_assets": [
+      {"id": 537649700, "name": "clock-domains.json", "size_bytes": 770, "sha256": "sha256:4d858df4758881a329b6e4c52d76c2d4d2e54f114419b873ba90659fc5c9988b"},
+      {"id": 537649697, "name": "duration-receipt.json", "size_bytes": 9519, "sha256": "sha256:58b2236d930da8f6fd8724f766b3ca0a26a4d90de51b163194ecc8350d765a67"},
+      {"id": 537649701, "name": "operations.ndjson", "size_bytes": 8742, "sha256": "sha256:c5e704fa5542a69f9e950982f4fdd492e469c900d3ace3ce0408e05113aa5707"},
+      {"id": 537649699, "name": "replay-receipt.json", "size_bytes": 505, "sha256": "sha256:ee2b19165fb9d56d2ddbd3f96416ed80c4642508321cf24db36fe2b510733a71"},
+      {"id": 537649698, "name": "time-manifest.json", "size_bytes": 4877, "sha256": "sha256:67ec377f670f925dbb346bd83eee233ab53a01b05be4b56368517e2fef7554a3"},
+      {"id": 537649709, "name": "time-report.md", "size_bytes": 3414, "sha256": "sha256:b44c42f2188747fff4dee88458ea04a2e2b54bff32367f24fe2af19226cecf17"}
+    ],
+    "summary": {"cells": 12, "activities": 12, "total": 12, "closed": 3, "unknown": 4, "refuted": 5},
+    "retry_attempts": [1, 2],
+    "aggregation_rule": "Only same operation_id, run_id, job_id, provider, and clock_domain may form one duration; source-ci and opentofu remain separate observations.",
+    "negative_duration_reason": "REFUTED_CLOCK_ORDER",
+    "clamp_to_zero_policy": "FORBIDDEN",
+    "source_ci_opentofu_separate": true,
+    "ci_effort_retry_history": [
+      {
+        "head_sha": "7087f0cb11840f0c0fead83b6d375e8478c7d902",
+        "run_id": 33365730015,
+        "run_attempt": 1,
+        "job_id": 99405870188,
+        "artifact_id": 9748462083,
+        "artifact_name": "ci-effort-observation-7087f0cb11840f0c0fead83b6d375e8478c7d902",
+        "artifact_size_bytes": 97110,
+        "artifact_sha256": "sha256:74b24a4c24acd853f5d661aa5ad88b64f56dd8186d98288f87981fd7b4bd3979",
+        "decision": "REFUTED",
+        "resolution": "EXACT",
+        "reason": "KNOWN_VERIFICATION_CONTRADICTION",
+        "runtime_rejection": "OPERATION_DURATION_NEGATIVE",
+        "runtime_rejection_count": 1
+      },
+      {
+        "head_sha": "7087f0cb11840f0c0fead83b6d375e8478c7d902",
+        "run_id": 33365730015,
+        "run_attempt": 2,
+        "job_id": 99408612206,
+        "artifact_id": 9748520364,
+        "artifact_name": "ci-effort-observation-7087f0cb11840f0c0fead83b6d375e8478c7d902",
+        "artifact_size_bytes": 97110,
+        "artifact_sha256": "sha256:1d0218ed0945ef76ea9cc396ad7a9e0916bc6243ebf6be0fe04efc8e9878b656",
+        "decision": "REFUTED",
+        "resolution": "EXACT",
+        "reason": "KNOWN_VERIFICATION_CONTRADICTION",
+        "runtime_rejection": "OPERATION_DURATION_NEGATIVE",
+        "runtime_rejection_count": 1
+      }
+    ],
+    "post_release_audit": {
+      "path": "examples/ci-time-causality/release-history/post-release-audit.ndjson",
+      "sha256": "sha256:e4b364496d755cba64419307beb81ed44ac3d4b56f637ce11382140b3e89f3f5",
+      "record_count": 6,
+      "failure_count": 2,
+      "failures": [
+        {"sequence": 2, "audit": "graphql_release_immutability", "attempt": 1, "status": "FAILED", "failure_code": "UNDEFINED_SCHEMA_FIELD", "success_counted": false},
+        {"sequence": 4, "audit": "release_asset_checksum_match", "attempt": 1, "status": "FAILED", "failure_code": "SHELL_VARIABLE_PATH_COLLISION", "success_counted": false}
+      ],
+      "failed_attempts_counted_as_success": false,
+      "v0_1_0_deleted_or_recreated": false,
+      "reclassification": "FORBIDDEN"
+    },
+    "append_only": true
+  },
   "provenance": {
     "development_local_go_commands": {
       "build": 0,

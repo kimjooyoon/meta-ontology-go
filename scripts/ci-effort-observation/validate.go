@@ -73,6 +73,9 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Schema != reportSchema || report.ContractID != contract.ID || !validSHA(report.HeadSHA) || report.SourceWorkflow != "CI" || report.WorkflowSourcePath != manifest.WorkflowSource || !workflowDigestValid || !validDigest(report.OperationManifestDigest) || !validDigest(report.Graph.ProgramDigest) {
 		return fmt.Errorf("report identity is malformed")
 	}
+	if err := validateTimeCausalityBinding(report.TimeCausality); err != nil {
+		return err
+	}
 	if len(workflow) > 0 && report.WorkflowSourceDigest != digestBytes(workflow) {
 		return fmt.Errorf("workflow source digest is not bound")
 	}
@@ -88,7 +91,7 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Window.IntervalModel != runtimeIntervalModel || report.Window.IntervalModelDigest != runtimeIntervalModelDigest() {
 		return fmt.Errorf("runtime interval model is not sealed")
 	}
-	if !runtimeNominalConsistent(report.Window) {
+	if report.Window.OperationID == "" || report.Window.Provider == "" || report.Window.ClockDomain == "" || !runtimeNominalConsistent(report.Window) {
 		return fmt.Errorf("runtime nominal values are inconsistent")
 	}
 	jobIntervals, stepIntervals := runtimeIntervalCounts(report.Jobs)
@@ -99,7 +102,7 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Window.JobWallMSNominal != expectedJobNominal || report.Window.StepWallMSNominal != expectedStepNominal || report.Window.JobWallMSSum != expectedJobNominal || report.Window.StepWallMSSum != expectedStepNominal {
 		return fmt.Errorf("runtime nominal values are not derived from observations")
 	}
-	if count, reasons := runtimeRejectionEvidence(report.Jobs); report.Window.RuntimeRejectionCount != count || !sameStrings(report.Window.RuntimeRejectionReasons, reasons) {
+	if count, reasons := runtimeRejectionEvidence(report.Window, report.Jobs); report.Window.RuntimeRejectionCount != count || !sameStrings(report.Window.RuntimeRejectionReasons, reasons) {
 		return fmt.Errorf("runtime rejection evidence is inconsistent")
 	}
 	expectedRuntimeResolution := runtimeResolution(report.Window)
@@ -130,7 +133,7 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	if report.Accounting.Executed+report.Accounting.Skipped+report.Accounting.Unknown+report.Accounting.Rejected != report.Accounting.ManifestOperations {
 		return fmt.Errorf("operation accounting is inconsistent")
 	}
-	if !validSHA(report.Reuse.Key.HeadSHA) || report.Reuse.Key.SourceEvent != report.SourceEvent || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
+	if !validSHA(report.Reuse.Key.HeadSHA) || report.Reuse.Key.SourceEvent != report.SourceEvent || !validDigest(report.Reuse.Key.InputDigest) || !validDigest(report.Reuse.Key.ToolchainDigest) || !validDigest(report.Reuse.Key.CommandContextDigest) || !validDigest(report.Reuse.Key.EnvironmentAllowlistDigest) || !validDigest(report.Reuse.Key.DependencyGraphDigest) || !validDigest(report.Reuse.Key.ExpectedResultDigest) || !validDigest(report.Reuse.Key.TimeCausalityDigest) || (report.OpenTofu.ArtifactID > 0 && !validDigest(report.Reuse.Key.OpenTofuReleaseDigest)) {
 		return fmt.Errorf("reuse key is incomplete")
 	}
 	if err := validateDependencyInputs(report.Reuse.Key); err != nil {
@@ -183,8 +186,12 @@ func validateReport(report Report, manifest Manifest, contract Contract, program
 	return nil
 }
 
-func runtimeRejectionEvidence(jobs []JobObservation) (int, []string) {
+func runtimeRejectionEvidence(window WorkflowWindow, jobs []JobObservation) (int, []string) {
 	var reasons []string
+	windowDuration := observeOperationInterval(operationInterval{OperationID: window.OperationID, RunID: window.RunID, Provider: window.Provider, ClockDomain: window.ClockDomain, StartedAt: window.StartAt, CompletedAt: window.EndAt})
+	if windowDuration.rejection != "" {
+		reasons = append(reasons, windowDuration.rejection)
+	}
 	for _, job := range jobs {
 		if job.RejectionReason != "" {
 			reasons = append(reasons, job.RejectionReason)
@@ -202,7 +209,10 @@ func runtimeRejectionEvidence(jobs []JobObservation) (int, []string) {
 func runtimeIntervalCounts(jobs []JobObservation) (int, int) {
 	jobCount, stepCount := 0, 0
 	for _, job := range jobs {
-		duration := observeTimestamp(job.StartedAt, job.CompletedAt)
+		if job.Skipped {
+			continue
+		}
+		duration := observeOperationInterval(operationInterval{OperationID: job.OperationID, RunID: job.RunID, Provider: job.Provider, ClockDomain: job.ClockDomain, StartedAt: job.StartedAt, CompletedAt: job.CompletedAt})
 		if !duration.missing && duration.rejection == "" {
 			jobCount++
 		}
@@ -222,7 +232,7 @@ func runtimeNominalValid(window WorkflowWindow) bool {
 func validateJobs(jobs []JobObservation, head string) error {
 	seen := map[int64]bool{}
 	for _, job := range jobs {
-		if job.ID <= 0 || seen[job.ID] || job.HeadSHA != "" && job.HeadSHA != head || job.WallMS <= 0 && job.Unknown == nil && !job.BelowSourceResolution && job.RejectionReason == "" {
+		if job.ID <= 0 || seen[job.ID] || job.OperationID == "" || job.Provider == "" || job.ClockDomain == "" || job.HeadSHA != "" && job.HeadSHA != head || !job.Skipped && job.WallMS <= 0 && job.Unknown == nil && !job.BelowSourceResolution && job.RejectionReason == "" {
 			return fmt.Errorf("job evidence is invalid")
 		}
 		if job.BelowSourceResolution && (job.StartedAt == "" || job.StartedAt != job.CompletedAt) {
@@ -232,12 +242,30 @@ func validateJobs(jobs []JobObservation, head string) error {
 			return fmt.Errorf("job rejection evidence is incomplete")
 		}
 		seen[job.ID] = true
+		if job.Skipped != (job.Status == "skipped" || job.Conclusion == "skipped") {
+			return fmt.Errorf("job skipped state is not bound")
+		}
+		if job.Skipped && (job.WallMS != 0 || job.BelowSourceResolution || job.RejectionReason != "" || job.Unknown != nil) {
+			return fmt.Errorf("skipped job has execution evidence")
+		}
 		if job.Unknown != nil && !validUnknown(job.Unknown) {
 			return fmt.Errorf("job unknown evidence is incomplete")
 		}
 		for _, step := range job.Steps {
-			if step.Name == "" || step.Conclusion == "skipped" {
+			if step.Name == "" {
 				continue
+			}
+			if step.Skipped != (step.Status == "skipped" || step.Conclusion == "skipped") {
+				return fmt.Errorf("step skipped state is not bound")
+			}
+			if step.Skipped {
+				if step.WallMS != 0 || step.BelowSourceResolution || step.RejectionReason != "" || step.Unknown != nil {
+					return fmt.Errorf("skipped step has execution evidence")
+				}
+				continue
+			}
+			if step.OperationID == "" || step.Provider == "" || step.ClockDomain == "" || step.RunID != job.RunID {
+				return fmt.Errorf("step operation identity is unbound")
 			}
 			if step.Status == "completed" && step.WallMS <= 0 && step.Unknown == nil && !step.BelowSourceResolution && step.RejectionReason == "" {
 				return fmt.Errorf("step runtime is invalid")
@@ -513,6 +541,7 @@ func humanReport(report Report) string {
 	fmt.Fprintf(&builder, "CI effort observation: %s / %s (%s)\n", report.Decision, report.Resolution, report.Reason)
 	fmt.Fprintf(&builder, "head=%s source_run=%d workflow=%s event=%s\n", report.HeadSHA, report.SourceRunID, report.SourceWorkflow, report.SourceEvent)
 	fmt.Fprintf(&builder, "workflow_source=%s digest=%s\n", report.WorkflowSourcePath, report.WorkflowSourceDigest)
+	fmt.Fprintf(&builder, "time_causality release=%s/%s immutable=%t target=%s source=%s ir=%s evaluator=%s assets=%d summary=%d/%d/%d/%d retries=%v binding=%s\n", report.TimeCausality.Release.Repository, report.TimeCausality.Release.Version, report.TimeCausality.Release.Immutable, report.TimeCausality.Release.TargetCommit, report.TimeCausality.SourceDigest, report.TimeCausality.SemanticIRDigest, report.TimeCausality.GeneratedEvaluatorDigest, len(report.TimeCausality.OutputAssets), report.TimeCausality.Summary.Total, report.TimeCausality.Summary.Closed, report.TimeCausality.Summary.Unknown, report.TimeCausality.Summary.Refuted, report.TimeCausality.RetryAttempts, report.TimeCausality.BindingDigest)
 	fmt.Fprintf(&builder, "observed workflow window=%d ms (%s -> %s); parallel job/step sums are not a critical-path claim\n", report.Window.WallMS, report.Window.StartAt, report.Window.EndAt)
 	fmt.Fprintf(&builder, "runtime source-value model=%s digest=%s definition=%s\n", report.Window.IntervalModel, report.Window.IntervalModelDigest, runtimeIntervalModelDefinition)
 	fmt.Fprintf(&builder, "nominal source deltas job_ms=%d step_ms=%d; physical elapsed bounds=NOT_ESTABLISHED; interval counts jobs=%d steps=%d; runtime_resolution=%s timestamp_resolution_ms=%d below_source_resolution_jobs=%d steps=%d runtime_rejections=%d reasons=%q\n", report.Window.JobWallMSNominal, report.Window.StepWallMSNominal, report.Window.JobIntervalCount, report.Window.StepIntervalCount, report.RuntimeResolution, report.Window.TimestampResolutionMS, report.Window.BelowSourceResolutionJobs, report.Window.BelowSourceResolutionSteps, report.Window.RuntimeRejectionCount, report.Window.RuntimeRejectionReasons)
