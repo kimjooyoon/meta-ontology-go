@@ -151,10 +151,10 @@ type StepObservation struct {
 }
 
 type WorkflowWindow struct {
-	OperationID                 string   `json:"operation_id"`
-	RunID                       int64    `json:"run_id"`
-	Provider                    string   `json:"provider"`
-	ClockDomain                 string   `json:"clock_domain"`
+	OperationID                string   `json:"operation_id"`
+	RunID                      int64    `json:"run_id"`
+	Provider                   string   `json:"provider"`
+	ClockDomain                string   `json:"clock_domain"`
 	StartAt                    string   `json:"start_at"`
 	EndAt                      string   `json:"end_at"`
 	WallMS                     int64    `json:"wall_ms"`
