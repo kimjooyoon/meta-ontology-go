@@ -1040,6 +1040,74 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  foundation-authorization:
+    name: FOUNDATION authorization
+    needs: [proof]
+    if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'agent/foundation-authorization-dev-sync-20260831' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact FOUNDATION authorization envelope
+        uses: actions/github-script@v8
+        env:
+          FOUNDATION_TOKEN: ${{ github.token }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const {execFileSync} = require('child_process');
+            const authorization = require('./scripts/ci-proof/foundation_authorization');
+            const policy = JSON.parse(fs.readFileSync('.github/foundation-authorization.json', 'utf8'));
+            authorization.validatePolicy(policy);
+            const currentPull = context.payload.pull_request;
+            const repository = context.payload.repository.full_name;
+            const livePullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number});
+            const livePull = livePullResponse.data;
+            if (livePull.state !== 'open' || livePull.merged === true || livePull.head.sha !== currentPull.head.sha || livePull.base.ref !== 'dev' || livePull.base.sha !== policy.candidate.base_sha || livePull.base.repo.full_name !== repository || livePull.head.ref !== authorization.AUTHORIZATION_BRANCH || livePull.head.repo.full_name !== repository || livePull.number !== policy.authorization.pull_request) {
+              throw new Error('FOUNDATION authorization PR identity is not exact');
+            }
+            const changedFiles = [];
+            for (let page = 1; page <= 1000; page += 1) {
+              const response = await github.rest.pulls.listFiles({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number, per_page: 100, page});
+              changedFiles.push(...response.data);
+              if (response.data.length < 100) break;
+              if (page === 1000) throw new Error('FOUNDATION authorization changed-file pagination exceeded the limit');
+            }
+            if (JSON.stringify(authorization.canonicalPathNames(changedFiles)) !== JSON.stringify(policy.authorization.changed_paths)) throw new Error('FOUNDATION authorization changed paths are not exact');
+            const candidateResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: policy.candidate.pull_request});
+            const candidate = candidateResponse.data;
+            if (candidate.base?.ref !== 'dev' || candidate.base?.sha !== policy.candidate.base_sha || candidate.head?.ref !== policy.candidate.branch || candidate.head?.sha !== policy.candidate.head_sha || candidate.head?.repo?.full_name !== repository || candidate.state !== 'closed' || candidate.merged === true) throw new Error('candidate PR is not the preserved exact pre-authorization tuple');
+            const baseCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.base_sha});
+            const baseCommit = baseCommitResponse.data;
+            if (baseCommit.sha !== policy.base_attestation.commit || baseCommit.commit.tree.sha !== policy.base_attestation.tree_sha || JSON.stringify(baseCommit.parents.map(parent => parent.sha)) !== JSON.stringify(policy.base_attestation.parents)) throw new Error('candidate base tree/parent attestation is not exact');
+            const diffResponse = await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: policy.candidate.base_sha, head: policy.candidate.head_sha});
+            const diff = diffResponse.data;
+            if (!diff || !Array.isArray(diff.files) || authorization.canonicalPathNames(diff.files).length !== policy.candidate.changed_path_count || authorization.digestChangedPaths(diff.files) !== policy.candidate.changed_paths_sha256) throw new Error('candidate changed-path digest P is not exact');
+            const manifestResponse = await github.rest.repos.getContent({owner: context.repo.owner, repo: context.repo.repo, path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
+            const manifestData = manifestResponse.data;
+            const manifestBytes = Buffer.from(manifestData.content.replace(/\s/g, ''), 'base64');
+            if (authorization.sha256(manifestBytes) !== policy.candidate.manifest_sha256) throw new Error('candidate manifest digest M is not exact');
+            const candidateCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.head_sha});
+            const treeResponse = await github.rest.git.getTree({owner: context.repo.owner, repo: context.repo.repo, tree_sha: candidateCommitResponse.data.commit.tree.sha, recursive: '1'});
+            if (authorization.digestTreeEntries(treeResponse.data.tree, policy.auth_policy_paths) !== policy.candidate.tree_sha256_excluding_authorization_paths) throw new Error('candidate tree digest T is not exact');
+            execFileSync('git', ['fetch', '--no-tags', `https://x-access-token:${process.env.FOUNDATION_TOKEN}@github.com/${repository}.git`, policy.candidate.branch], {stdio: 'ignore'});
+            const diffArgs = ['diff', '--binary', `${policy.candidate.base_sha}...${policy.candidate.head_sha}`, '--', '.', ...policy.auth_policy_paths.map(path => `:(exclude)${path}`)];
+            const patch = execFileSync('git', diffArgs);
+            if (authorization.sha256(patch) !== policy.candidate.patch_sha256_excluding_authorization_paths) throw new Error('candidate patch digest T is not exact');
+            await core.summary.addHeading('FOUNDATION authorization').addTable([
+              [{data: 'binding', header: true}, {data: 'value', header: true}],
+              ['candidate', `${policy.candidate.pull_request} ${policy.candidate.head_sha}`],
+              ['manifest M', policy.candidate.manifest_sha256],
+              ['changed paths P', policy.candidate.changed_paths_sha256],
+              ['patch T', policy.candidate.patch_sha256_excluding_authorization_paths],
+              ['tree T', policy.candidate.tree_sha256_excluding_authorization_paths],
+              ['replay', policy.authorization.replay_decision],
+            ]).write();
+
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
