@@ -19,8 +19,8 @@
     "scripts/ci-proof/guardian_test.js"
   ],
   "changed_paths_sha256": "sha256:cecc904f265dfcf370ff49dadcd503087ab459b42ebb2b91002d491ae92ce376",
-  "patch_sha256_excluding_receipt": "sha256:28e6ce5338e70d4a95812bc28a1501e726983a9677aba5ea4d3a60d3eb60d75f",
-  "tree_sha256_excluding_receipt": "sha256:373c6890d9916d8dc240851d64207f4dec077335d51c7efb4a5ce574e5adb795",
+  "patch_sha256_excluding_receipt": "sha256:e3b334fe60a7dc793f190223d94ac066bcaef2c946ca106a048827a279d5897f",
+  "tree_sha256_excluding_receipt": "sha256:ba1fde3e7e3ba26a7106597d101f852a242fa7921ebf9cc0e905a126eca71904",
   "prior_guardian_failure": {
     "run_id": 33349646371,
     "code": "CI-ROOT-OF-TRUST-001",

@@ -192,7 +192,7 @@ function validateCorrectionChildReceipt(receipt) {
 
 function validateCorrectionChild({receipt, parentRepairReceipt, parentRepairReceiptBytes, parentRepairBaseCommit, parentRepairBaseTreeEntries, candidateBaseSHA, candidateBaseTreeEntries, correctionPull, correctionCommit, correctionCompare, correctionTreeEntries}) {
   validateCorrectionChildReceipt(receipt);
-  validateIncompletePropagationOutcome(parentRepairReceipt);
+  validateRegressionRepairReceipt(parentRepairReceipt);
   requireExact(Buffer.isBuffer(parentRepairReceiptBytes) && sha256(parentRepairReceiptBytes) === CORRECTION_CHILD_PARENT_RECEIPT_SHA256, 'correction child parent receipt bytes do not match');
   requireExact(parentRepairBaseCommit && parentRepairBaseCommit.sha === CORRECTION_CHILD_BASE_SHA, 'correction child parent repair base SHA mismatch');
   requireExact(digestTreeEntries(parentRepairBaseTreeEntries, REGRESSION_REPAIR_EXCLUDED_PATHS) === parentRepairReceipt.tree_sha256_excluding_receipt, 'correction child parent repair tree does not match');
