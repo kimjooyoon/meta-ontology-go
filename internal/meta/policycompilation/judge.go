@@ -12,6 +12,17 @@ import (
 	"strings"
 )
 
+type generatedJudgeInput struct {
+	ID                           string `json:"id"`
+	ProducerAvailable            bool   `json:"producer_available"`
+	ConsumerAvailable            bool   `json:"consumer_available"`
+	ObservedSourceDigest         string `json:"observed_source_digest"`
+	ObservedArtifactSourceDigest string `json:"observed_artifact_source_digest"`
+	ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
+	ObservedIndependentDigest    string `json:"observed_independent_digest"`
+	UpperDecision                string `json:"upper_decision"`
+}
+
 // GenerateJudge emits a standalone Go program containing the reduction rows
 // read from Gooo. It has no import path into this repository, which makes its
 // execution boundary independently inspectable by the consumer.
@@ -151,7 +162,16 @@ func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (Deci
 	if err := os.WriteFile(path, judgeSource, 0o600); err != nil {
 		return DecisionResult{}, err
 	}
-	payload, err := json.Marshal(input)
+	payload, err := json.Marshal(generatedJudgeInput{
+		ID:                           input.ID,
+		ProducerAvailable:            input.ProducerAvailable,
+		ConsumerAvailable:            input.ConsumerAvailable,
+		ObservedSourceDigest:         input.ObservedSourceDigest,
+		ObservedArtifactSourceDigest: input.ObservedArtifactSourceDigest,
+		ObservedGeneratedJudgeDigest: input.ObservedGeneratedJudgeDigest,
+		ObservedIndependentDigest:    input.ObservedIndependentDigest,
+		UpperDecision:                input.UpperDecision,
+	})
 	if err != nil {
 		return DecisionResult{}, err
 	}
