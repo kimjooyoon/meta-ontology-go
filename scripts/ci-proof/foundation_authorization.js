@@ -209,7 +209,7 @@ const GUARDIAN_DISPATCH_LINEAGE = Object.freeze([
   Object.freeze({version: 'v0.2.0', preserved: true, immutable: true, decision: 'CLOSED'}),
   Object.freeze({version: 'v0.2.1', preserved: true, immutable: true, decision: 'CLOSED'}),
   Object.freeze({version: 'v0.2.2', preserved: true, immutable: true, decision: 'CLOSED'}),
-  Object.freeze({version: 'v0.3.0', preserved: true, immutable: true, decision: 'CLOSED'}),
+  Object.freeze({version: 'v0.3.0', preserved: true, immutable: true, decision: 'CLOSED', release_id: 379538725, tag_object_sha: '4731fd84d3273ecb04e981066e9add9e6c6ff25b', target_commit: '41fd8cb827b88069b13caf271e2972a35d8ad1d4', asset: Object.freeze({id: 537535145, name: 'gooo-receipt-schema-migration-v0.3.0-conformance-proper.tar.gz', size_bytes: 35456, sha256: 'sha256:ca7c03961c74f10d16d6369e6900b7bc681bfd1cbb04523156d3f372bf2eb39a'})}),
 ]);
 const AUTHORIZATION_PATHS = Object.freeze([
   '.github/agent-scope-table.md',
