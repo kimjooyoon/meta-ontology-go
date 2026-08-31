@@ -37,8 +37,9 @@ type CaseDefinition struct {
 	ExpectedDiagnostic string `json:"expected_diagnostic,omitempty"`
 	ProofChoice        string `json:"proof_choice"`
 	MetaOperation      string `json:"meta_operation"`
-	Scope              string `json:"scope"`
-	EntityFields       bool   `json:"entity_fields,omitempty"`
+	Scope                  string `json:"scope"`
+	EntityFields           bool   `json:"entity_fields,omitempty"`
+	ImplicitActivityPorts  bool   `json:"implicit_activity_ports,omitempty"`
 }
 
 type PackageDefinition struct {

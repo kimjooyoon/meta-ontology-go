@@ -47,10 +47,11 @@ type Declaration struct {
 
 // Document is the generic source view consumed by Get and Put.
 type Document struct {
-	Package      string
-	Namespace    string
-	Declarations []Declaration
-	Relations    []Relation
+	Package               string
+	Namespace             string
+	Declarations          []Declaration
+	Relations             []Relation
+	ImplicitActivityPorts bool
 }
 
 // Node is a semantic declaration. Display fields do not define identity.

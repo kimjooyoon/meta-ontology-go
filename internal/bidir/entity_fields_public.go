@@ -18,9 +18,26 @@ func DocumentFromSyntaxWithEntityFieldsSupport(file *syntax.File, support Entity
 	return documentFromSyntaxWithEntityFieldsSupport(file, support)
 }
 
+// DocumentFromSyntaxWithImplicitActivityPorts opts a source view into the
+// legacy surface where activity ports are declarations by reference.
+func DocumentFromSyntaxWithImplicitActivityPorts(file *syntax.File, support EntityFieldsSupport) (Document, error) {
+	document, err := documentFromSyntaxWithEntityFieldsSupport(file, support)
+	if err != nil {
+		return Document{}, err
+	}
+	document.ImplicitActivityPorts = true
+	return document, nil
+}
+
 // LowerContextWithEntityFieldsSupport lowers a profile-bound AST.
 func LowerContextWithEntityFieldsSupport(ctx context.Context, file *syntax.File, support EntityFieldsSupport) (semantic.IR, error) {
 	return lowerContextWithEntityFieldsSupport(ctx, file, support)
+}
+
+// LowerContextWithImplicitActivityPorts opts a source AST into the legacy
+// surface where activity ports are declarations by reference.
+func LowerContextWithImplicitActivityPorts(ctx context.Context, file *syntax.File, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerContextWithTypesAndEntityFieldsSupportAndImplicitActivityPorts(ctx, file, semantic.DefaultTypeRegistry(), support, true)
 }
 
 func LowerDocumentWithEntityFieldsSupport(document Document, support EntityFieldsSupport) (semantic.IR, error) {

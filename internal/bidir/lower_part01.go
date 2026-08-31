@@ -41,6 +41,9 @@ func lowerContextWithEntityFieldsSupport(ctx context.Context, file *syntax.File,
 	return lowerContextWithTypesAndEntityFieldsSupport(ctx, file, semantic.DefaultTypeRegistry(), support)
 }
 func lowerContextWithTypesAndEntityFieldsSupport(ctx context.Context, file *syntax.File, registry semantic.TypeRegistry, support EntityFieldsSupport) (semantic.IR, error) {
+	return lowerContextWithTypesAndEntityFieldsSupportAndImplicitActivityPorts(ctx, file, registry, support, false)
+}
+func lowerContextWithTypesAndEntityFieldsSupportAndImplicitActivityPorts(ctx context.Context, file *syntax.File, registry semantic.TypeRegistry, support EntityFieldsSupport, allowImplicitActivityPorts bool) (semantic.IR, error) {
 	ctx = nonNilLowerContext(ctx)
 	if err := checkLowerContext(ctx); err != nil {
 		return semantic.IR{}, err
@@ -49,6 +52,7 @@ func lowerContextWithTypesAndEntityFieldsSupport(ctx context.Context, file *synt
 	if err != nil {
 		return semantic.IR{}, err
 	}
+	document.ImplicitActivityPorts = allowImplicitActivityPorts
 	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, support)
 }
 func nonNilLowerContext(ctx context.Context) context.Context {

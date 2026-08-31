@@ -11,13 +11,21 @@ func Execute(repository fs.FS, path, kind, expectedDiagnostic string) Result {
 }
 
 func ExecuteWithEntityFieldsSupport(repository fs.FS, path, kind, expectedDiagnostic string) Result {
-	return executeWithSupport(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV1Support())
+	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, syntax.EntityFieldsV1Support(), false)
+}
+
+func ExecuteWithImplicitActivityPorts(repository fs.FS, path, kind, expectedDiagnostic string) Result {
+	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, syntax.CurrentEntityFieldsSupport(), true)
 }
 
 func executeWithSupport(repository fs.FS, path, kind, expectedDiagnostic string, support syntax.EntityFieldsSupport) Result {
+	return executeWithSupportAndImplicitActivityPorts(repository, path, kind, expectedDiagnostic, support, false)
+}
+
+func executeWithSupportAndImplicitActivityPorts(repository fs.FS, path, kind, expectedDiagnostic string, support syntax.EntityFieldsSupport, allowImplicitActivityPorts bool) Result {
 	switch kind {
 	case "VALID":
-		return executeValidWithSupport(repository, path, support)
+		return executeValidWithSupportAndImplicitActivityPorts(repository, path, support, allowImplicitActivityPorts)
 	case "INVALID":
 		return executeInvalid(repository, path, expectedDiagnostic)
 	default:
@@ -30,6 +38,10 @@ func executeValid(repository fs.FS, path string) Result {
 }
 
 func executeValidWithSupport(repository fs.FS, path string, support syntax.EntityFieldsSupport) Result {
+	return executeValidWithSupportAndImplicitActivityPorts(repository, path, support, false)
+}
+
+func executeValidWithSupportAndImplicitActivityPorts(repository fs.FS, path string, support syntax.EntityFieldsSupport, allowImplicitActivityPorts bool) Result {
 	result := Result{ObservedDecision: DecisionClosed}
 	raw, err := fs.ReadFile(repository, path)
 	if err != nil {
@@ -63,7 +75,7 @@ func executeValidWithSupport(repository fs.FS, path string, support syntax.Entit
 	}
 	result.ASTDigest, result.CanonicalDigest = digestBytes([]byte(leftShape)), digestBytes([]byte(canonical))
 	result.ASTReplayed, result.ByteReplayed = leftShape == rightShape, canonical == replayCanonical
-	return executeSemanticWithSupport(result, file, replayed, support)
+	return executeSemanticWithImplicitActivityPorts(result, file, replayed, support, allowImplicitActivityPorts)
 }
 
 func reject(result Result, diagnostic string) Result {
