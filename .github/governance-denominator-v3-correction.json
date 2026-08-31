@@ -1,0 +1,46 @@
+{
+  "schema": "gooo/ci-governance-denominator-migration/v3",
+  "foundation_override_success_count": 3,
+  "parent_repair_receipt": "sha256:bb94d6ff8ef5467f44affad7fb45639239a8dde09020581d706f367645bc5335",
+  "receipt_path": ".github/governance-denominator-v3-correction.json",
+  "digest_exclusions": [
+    ".github/governance-denominator-v3-correction.json"
+  ],
+  "changed_paths": [
+    ".github/agent-scope-table.md",
+    ".github/ci-governance.json",
+    ".github/governance-denominator-v2-migration.json",
+    ".github/governance-denominator-v3-correction.json",
+    ".github/workflows/ci-guardian.yml",
+    "internal/verify/scope_foundation_correction_child_20260831.go",
+    "scripts/ci-proof/foundation_authorization.js",
+    "scripts/ci-proof/foundation_authorization_test.js",
+    "scripts/ci-proof/guardian.js",
+    "scripts/ci-proof/guardian_test.js"
+  ],
+  "changed_paths_sha256": "sha256:cecc904f265dfcf370ff49dadcd503087ab459b42ebb2b91002d491ae92ce376",
+  "patch_sha256_excluding_receipt": "sha256:28e6ce5338e70d4a95812bc28a1501e726983a9677aba5ea4d3a60d3eb60d75f",
+  "tree_sha256_excluding_receipt": "sha256:373c6890d9916d8dc240851d64207f4dec077335d51c7efb4a5ce574e5adb795",
+  "prior_guardian_failure": {
+    "run_id": 33349646371,
+    "code": "CI-ROOT-OF-TRUST-001",
+    "message": "CI-ROOT-OF-TRUST-001: guardian artifact validation failed: CI-ROOT-OF-TRUST-001: guardian artifact kernel digest fields are inconsistent"
+  },
+  "replay_second_use": "REFUTED",
+  "cells": [
+    {
+      "id": "CORRECTION_CHILD",
+      "meta_operation": "PropagateKernelDigestToPassArtifact",
+      "proof_choice": "REGRESSION",
+      "indicator": "GUARDRAIL",
+      "parent_repair_receipt": "sha256:bb94d6ff8ef5467f44affad7fb45639239a8dde09020581d706f367645bc5335",
+      "reason": "COMPUTED_KERNEL_DIGEST_NOT_PROPAGATED_TO_PASS_ARTIFACT",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED",
+      "pull_request": 612,
+      "branch": "agent/foundation-correction-child-20260831",
+      "base_sha": "0a640a796c7bb39d81f411ecb5bbb3f223b4ed1f"
+    }
+  ]
+}

@@ -28,6 +28,27 @@ const REGRESSION_REPAIR_CHANGED_PATHS = Object.freeze([
 ].sort());
 const REGRESSION_REPAIR_EXCLUDED_PATHS = Object.freeze([REGRESSION_REPAIR_PATH]);
 const REGRESSION_REPAIR_OLD_FAILURE = 'CI-ROOT-OF-TRUST-001: guardian artifact validation failed: CI-ROOT-OF-TRUST-001: guardian artifact kernel digest fields are inconsistent';
+const CORRECTION_CHILD_SCHEMA = 'gooo/ci-governance-denominator-migration/v3';
+const CORRECTION_CHILD_PATH = '.github/governance-denominator-v3-correction.json';
+const CORRECTION_CHILD_BRANCH = 'agent/foundation-correction-child-20260831';
+const CORRECTION_CHILD_PULL_REQUEST = 612;
+const CORRECTION_CHILD_BASE_SHA = '0a640a796c7bb39d81f411ecb5bbb3f223b4ed1f';
+const CORRECTION_CHILD_PARENT_RECEIPT_SHA256 = 'sha256:bb94d6ff8ef5467f44affad7fb45639239a8dde09020581d706f367645bc5335';
+const CORRECTION_CHILD_REASON = 'COMPUTED_KERNEL_DIGEST_NOT_PROPAGATED_TO_PASS_ARTIFACT';
+const CORRECTION_CHILD_CHANGED_PATHS = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/ci-governance.json',
+  '.github/governance-denominator-v2-migration.json',
+  '.github/governance-denominator-v3-correction.json',
+  '.github/workflows/ci-guardian.yml',
+  'internal/verify/scope_foundation_correction_child_20260831.go',
+  'scripts/ci-proof/foundation_authorization.js',
+  'scripts/ci-proof/foundation_authorization_test.js',
+  'scripts/ci-proof/guardian.js',
+  'scripts/ci-proof/guardian_test.js',
+].sort());
+const CORRECTION_CHILD_EXCLUDED_PATHS = Object.freeze([CORRECTION_CHILD_PATH]);
+const CORRECTION_CHILD_OLD_FAILURE = REGRESSION_REPAIR_OLD_FAILURE;
 const AUTHORIZATION_PATHS = Object.freeze([
   '.github/agent-scope-table.md',
   '.github/ci-governance.json',
@@ -126,11 +147,13 @@ function validatePolicy(policy) {
 function validateRegressionRepairReceipt(receipt) {
   requireExact(receipt && receipt.schema === REGRESSION_REPAIR_SCHEMA, 'regression repair receipt schema is not exact');
   requireExact(receipt.foundation_override_success_count === FOUNDATION_OVERRIDE_SUCCESS_COUNT, 'regression repair receipt changed FOUNDATION count');
+  requireExact(receipt.outcome === undefined || receipt.outcome === 'REFUTED_INCOMPLETE_PROPAGATION', 'regression repair outcome is not exact');
   requireExact(Array.isArray(receipt.cells) && receipt.cells.length === 1, 'regression repair denominator must contain one cell');
   const cell = receipt.cells[0];
   requireExact(cell && cell.id === 'REGRESSION_REPAIR' && cell.meta_operation === 'RepairBaseGuardianDigestAttestation', 'regression repair cell identity is not exact');
   requireExact(cell.proof_choice === 'REGRESSION' && cell.indicator === 'GUARDRAIL', 'regression repair cell classification is not exact');
   requireExact(cell.allowed === 1 && cell.consumed === 1 && cell.replay_decision === 'REFUTED' && receipt.replay_second_use === 'REFUTED', 'regression repair consumption is not single-use');
+  requireExact(cell.outcome === undefined || cell.outcome === 'REFUTED_INCOMPLETE_PROPAGATION', 'regression repair cell outcome is not exact');
   requireExact(cell.reason === REGRESSION_REPAIR_REASON, 'regression repair reason is not exact');
   requireExact(cell.pull_request === REGRESSION_REPAIR_PULL_REQUEST && cell.branch === REGRESSION_REPAIR_BRANCH && cell.base_sha === REGRESSION_REPAIR_BASE_SHA, 'regression repair identity is not exact');
   requireExact(Array.isArray(receipt.changed_paths) && exactArray(receipt.changed_paths, REGRESSION_REPAIR_CHANGED_PATHS), 'regression repair changed paths are not exact');
@@ -139,6 +162,67 @@ function validateRegressionRepairReceipt(receipt) {
   requireExact(receipt.receipt_path === REGRESSION_REPAIR_PATH && exactArray(receipt.digest_exclusions, REGRESSION_REPAIR_EXCLUDED_PATHS), 'regression repair digest exclusions are not exact');
   requireExact(receipt.old_guardian_failure && receipt.old_guardian_failure.run_id === 33348091926 && receipt.old_guardian_failure.code === 'CI-ROOT-OF-TRUST-001' && receipt.old_guardian_failure.message === REGRESSION_REPAIR_OLD_FAILURE, 'regression repair old failure tuple is not exact');
   return receipt;
+}
+
+function validateIncompletePropagationOutcome(receipt) {
+  validateRegressionRepairReceipt(receipt);
+  requireExact(receipt.outcome === 'REFUTED_INCOMPLETE_PROPAGATION' && receipt.cells[0].outcome === 'REFUTED_INCOMPLETE_PROPAGATION', 'regression repair incomplete-propagation outcome is not recorded');
+  return receipt;
+}
+
+function validateCorrectionChildReceipt(receipt) {
+  requireExact(receipt && receipt.schema === CORRECTION_CHILD_SCHEMA, 'correction child receipt schema is not exact');
+  requireExact(receipt.foundation_override_success_count === FOUNDATION_OVERRIDE_SUCCESS_COUNT, 'correction child receipt changed FOUNDATION count');
+  requireExact(receipt.parent_repair_receipt === CORRECTION_CHILD_PARENT_RECEIPT_SHA256, 'correction child parent repair receipt is not exact');
+  requireExact(receipt.receipt_path === CORRECTION_CHILD_PATH && exactArray(receipt.digest_exclusions, CORRECTION_CHILD_EXCLUDED_PATHS), 'correction child receipt exclusion is not exact');
+  requireExact(Array.isArray(receipt.cells) && receipt.cells.length === 1, 'correction child denominator must contain one cell');
+  const cell = receipt.cells[0];
+  requireExact(cell && cell.id === 'CORRECTION_CHILD' && cell.meta_operation === 'PropagateKernelDigestToPassArtifact', 'correction child cell identity is not exact');
+  requireExact(cell.proof_choice === 'REGRESSION' && cell.indicator === 'GUARDRAIL', 'correction child classification is not exact');
+  requireExact(cell.parent_repair_receipt === CORRECTION_CHILD_PARENT_RECEIPT_SHA256, 'correction child cell parent repair receipt is not exact');
+  requireExact(cell.reason === CORRECTION_CHILD_REASON, 'correction child reason is not exact');
+  requireExact(cell.allowed === 1 && cell.consumed === 1 && cell.replay_decision === 'REFUTED' && receipt.replay_second_use === 'REFUTED', 'correction child consumption is not single-use');
+  requireExact(cell.pull_request === CORRECTION_CHILD_PULL_REQUEST && cell.branch === CORRECTION_CHILD_BRANCH && cell.base_sha === CORRECTION_CHILD_BASE_SHA, 'correction child identity is not exact');
+  requireExact(Array.isArray(receipt.changed_paths) && exactArray(receipt.changed_paths, CORRECTION_CHILD_CHANGED_PATHS), 'correction child changed paths are not exact');
+  requireExact(digestChangedPaths(receipt.changed_paths) === receipt.changed_paths_sha256 && validDigest(receipt.changed_paths_sha256), 'correction child changed-path digest is not exact');
+  requireExact(validDigest(receipt.patch_sha256_excluding_receipt) && validDigest(receipt.tree_sha256_excluding_receipt), 'correction child content digests are malformed');
+  requireExact(receipt.prior_guardian_failure && receipt.prior_guardian_failure.run_id === 33349646371 && receipt.prior_guardian_failure.code === 'CI-ROOT-OF-TRUST-001' && receipt.prior_guardian_failure.message === CORRECTION_CHILD_OLD_FAILURE, 'correction child prior failure tuple is not exact');
+  return receipt;
+}
+
+function validateCorrectionChild({receipt, parentRepairReceipt, parentRepairReceiptBytes, parentRepairBaseCommit, parentRepairBaseTreeEntries, candidateBaseSHA, candidateBaseTreeEntries, correctionPull, correctionCommit, correctionCompare, correctionTreeEntries}) {
+  validateCorrectionChildReceipt(receipt);
+  validateIncompletePropagationOutcome(parentRepairReceipt);
+  requireExact(Buffer.isBuffer(parentRepairReceiptBytes) && sha256(parentRepairReceiptBytes) === CORRECTION_CHILD_PARENT_RECEIPT_SHA256, 'correction child parent receipt bytes do not match');
+  requireExact(parentRepairBaseCommit && parentRepairBaseCommit.sha === CORRECTION_CHILD_BASE_SHA, 'correction child parent repair base SHA mismatch');
+  requireExact(digestTreeEntries(parentRepairBaseTreeEntries, REGRESSION_REPAIR_EXCLUDED_PATHS) === parentRepairReceipt.tree_sha256_excluding_receipt, 'correction child parent repair tree does not match');
+  requireExact(correctionPull && correctionPull.number === CORRECTION_CHILD_PULL_REQUEST, 'correction child pull request number mismatch');
+  requireExact(correctionPull.state === 'closed' && correctionPull.merged === true && validSHA(correctionPull.merge_commit_sha), 'correction child pull request is not merged exactly once');
+  requireExact(correctionPull.head && correctionPull.head.ref === CORRECTION_CHILD_BRANCH && correctionPull.head.repo && correctionPull.head.repo.full_name === REPOSITORY && validSHA(correctionPull.head.sha), 'correction child pull request head mismatch');
+  requireExact(candidateBaseSHA === correctionPull.merge_commit_sha, 'candidate base is not the correction child merge commit');
+  requireExact(correctionCommit && correctionCommit.sha === correctionPull.merge_commit_sha, 'correction child merge commit SHA mismatch');
+  const parents = Array.isArray(correctionCommit.parents) ? correctionCommit.parents.map((parent) => parent && parent.sha) : [];
+  requireExact(parents.length === 1 && parents[0] === CORRECTION_CHILD_BASE_SHA, 'correction child merge is not the exact single-parent squash from dev@B');
+  requireExact(correctionCompare && Array.isArray(correctionCompare.files) && exactArray(canonicalPathNames(correctionCompare.files), receipt.changed_paths), 'correction child changed paths do not match the receipt');
+  requireExact(digestChangedPaths(correctionCompare.files) === receipt.changed_paths_sha256, 'correction child changed-path evidence does not match the receipt');
+  requireExact(digestTreeEntries(correctionTreeEntries, CORRECTION_CHILD_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'correction child head tree does not match the receipt');
+  requireExact(digestTreeEntries(candidateBaseTreeEntries, CORRECTION_CHILD_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'candidate base tree does not match the correction child receipt');
+  return {
+    schema: CORRECTION_CHILD_SCHEMA,
+    cell: 'CORRECTION_CHILD',
+    proof_choice: 'REGRESSION',
+    indicator: 'GUARDRAIL',
+    pull_request: CORRECTION_CHILD_PULL_REQUEST,
+    branch: CORRECTION_CHILD_BRANCH,
+    base_sha: CORRECTION_CHILD_BASE_SHA,
+    merge_commit_sha: correctionPull.merge_commit_sha,
+    parent_repair_receipt: CORRECTION_CHILD_PARENT_RECEIPT_SHA256,
+    parent_repair_outcome: 'REFUTED_INCOMPLETE_PROPAGATION',
+    reason: CORRECTION_CHILD_REASON,
+    allowed: 1,
+    consumed: 1,
+    replay_decision: 'REFUTED',
+  };
 }
 
 function validateRegressionRepair({receipt, candidateBaseSHA, candidateBaseCommit, candidateBaseTreeEntries, repairPull, repairCommit, repairCompare, repairTreeEntries}) {
@@ -254,6 +338,9 @@ module.exports = {
   validateCandidateEvidence,
   validateCandidateIdentity,
   validatePolicy,
+  validateCorrectionChild,
+  validateCorrectionChildReceipt,
+  validateIncompletePropagationOutcome,
   validateRegressionRepair,
   validateRegressionRepairReceipt,
   REGRESSION_REPAIR_BASE_SHA,
@@ -264,4 +351,13 @@ module.exports = {
   REGRESSION_REPAIR_PULL_REQUEST,
   REGRESSION_REPAIR_REASON,
   REGRESSION_REPAIR_SCHEMA,
+  CORRECTION_CHILD_BASE_SHA,
+  CORRECTION_CHILD_BRANCH,
+  CORRECTION_CHILD_CHANGED_PATHS,
+  CORRECTION_CHILD_EXCLUDED_PATHS,
+  CORRECTION_CHILD_PARENT_RECEIPT_SHA256,
+  CORRECTION_CHILD_PATH,
+  CORRECTION_CHILD_PULL_REQUEST,
+  CORRECTION_CHILD_REASON,
+  CORRECTION_CHILD_SCHEMA,
 };
