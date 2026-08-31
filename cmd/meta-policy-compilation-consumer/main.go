@@ -197,7 +197,8 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 			return fmt.Errorf("consumer reconstruction differs at case %q", current.ID)
 		}
 	}
-	if !strings.Contains(string(judge), "type result struct") || strings.Contains(string(judge), "internal/meta/policycompilation") {
+	producerPackagePath := "internal/meta/" + "policycompilation"
+	if !strings.Contains(string(judge), "type result struct") || strings.Contains(string(judge), producerPackagePath) {
 		return errors.New("generated judge is not a standalone artifact")
 	}
 	synthetic := make([]syntheticEvidence, 0, len(cases))
