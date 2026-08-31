@@ -1,0 +1,60 @@
+{
+  "schema": "gooo/meta-foundation-authorization/v1",
+  "decision": "FOUNDATION",
+  "reason": "NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "foundation_override_success_count": 3,
+  "foundation_override_marker": "FOUNDATION_OVERRIDE_SUCCESS_COUNT=3",
+  "candidate": {
+    "pull_request": 609,
+    "branch": "agent/dev-main-sync-20260831-rerun",
+    "base_branch": "dev",
+    "base_sha": "9db2989b9c32e096f05750cb94c801d496fa5689",
+    "head_sha": "a647236b984348899d98c4b40611fad230581251",
+    "manifest_path": ".github/merge-conflict-resolution-manifest.json",
+    "manifest_sha256": "sha256:d172a1e93e6ccf803e47127347ace82ec6119da9f37cd85a0850f0cb7cfa784a",
+    "changed_path_count": 91,
+    "changed_paths_sha256": "sha256:25ac523e5904c7fd75e92f061de1c204bd6e347c94749614b30f617b2b934809",
+    "patch_sha256_excluding_authorization_paths": "sha256:110cd25ebddda15ab994ae73b426e0ce5299119e13dd665bd5e6db22e2fe6edf",
+    "tree_sha256_excluding_authorization_paths": "sha256:493d0aa315d470ce267599e0cb79a8371dc5a2087e9d55d3275a013f28bd5043"
+  },
+  "authorization": {
+    "pull_request": 0,
+    "branch": "agent/foundation-authorization-dev-sync-20260831",
+    "base_branch": "dev",
+    "changed_paths": [
+      ".github/agent-scope-table.md",
+      ".github/ci-governance.json",
+      ".github/foundation-authorization.json",
+      ".github/workflows/ci-guardian.yml",
+      ".github/workflows/ci.yml",
+      "internal/verify/foundation_authorization.go",
+      "internal/verify/scope_foundation_authorization_dev_sync_20260831.go",
+      "scripts/ci-proof/foundation_authorization.js",
+      "scripts/ci-proof/foundation_authorization_test.js",
+      "scripts/ci-proof/guardian.js"
+    ],
+    "mode": "single-use",
+    "consumed": false,
+    "replay_decision": "REFUTED"
+  },
+  "auth_policy_paths": [
+    ".github/agent-scope-table.md",
+    ".github/ci-governance.json",
+    ".github/foundation-authorization.json",
+    ".github/workflows/ci-guardian.yml",
+    ".github/workflows/ci.yml",
+    "internal/verify/foundation_authorization.go",
+    "internal/verify/scope_foundation_authorization_dev_sync_20260831.go",
+    "scripts/ci-proof/foundation_authorization.js",
+    "scripts/ci-proof/foundation_authorization_test.js",
+    "scripts/ci-proof/guardian.js"
+  ],
+  "base_attestation": {
+    "commit": "9db2989b9c32e096f05750cb94c801d496fa5689",
+    "tree_sha": "f6e2ff822c5f7c4548fe86d1cebdc939d36bd8d9",
+    "parents": [
+      "2b1d331c560a58c30def1bb8a5be3f66740bf954"
+    ]
+  }
+}
