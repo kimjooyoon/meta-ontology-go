@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
@@ -21,11 +22,24 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 	result.baseline = baseline
 	actions := append([]generation.Action{}, in.plan.Selected...)
 	sort.Slice(actions, func(i, j int) bool { return actions[i].IndicatorID < actions[j].IndicatorID })
+	result.selectedPlanOperations = len(actions)
+	for _, action := range actions {
+		if _, err := resolveActionBinding(in.plan, action); err != nil {
+			result.unboundExecutorOperations = len(actions) - result.boundExecutorOperations
+			return result, err
+		}
+		result.boundExecutorOperations++
+	}
 	sealed := make([]generation.OperationReceipt, 0, len(actions))
+	result.failures = append(result.failures, in.receipts.Failures...)
 	for _, action := range actions {
 		before, err := workspace.Scan(box.Root)
 		if err != nil {
 			return result, err
+		}
+		if failure, found := inputFailureForAction(in.receipts.Failures, action); found {
+			result.effects = append(result.effects, effectForFailure(action, before, failure))
+			continue
 		}
 		preflight, err := runAction(box, opts, in.plan, action, true)
 		if err != nil {
@@ -50,24 +64,52 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		}
 		evidence := hashJSON([]any{action.IndicatorID, hashBytes(preflight), hashBytes(applied),
 			before.Digest, after.Digest, hashJSON(changes), hashBytes(metricPayload), residual})
-		observations := make([]generation.IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
-		for _, id := range action.RequiredIndicatorIDs {
-			observations = append(observations, generation.IndicatorReceipt{ID: id,
-				Verdict: generation.IndicatorVerdictPass, EvidenceDigest: hashJSON([]string{evidence, id}), ProofChoice: action.ProofChoice})
+		observations, splitGoEvaluation, evidence, err := operationObservations(box.Root, action, applied, evidence)
+		if err != nil {
+			return result, err
 		}
 		receipt := generation.SealReceipt(in.plan, action, observations)
+		receipt = preserveInputInstanceEvidence(receipt, in.receipts.Receipts)
 		sealed = append(sealed, receipt)
-		result.effects = append(result.effects, effectFor(action, before, after, changes, evidence, receipt.ReceiptDigest))
+		effect := effectFor(action, before, after, changes, evidence, receipt.ReceiptDigest)
+		effect.SplitGoEvaluation = splitGoEvaluation
+		result.effects = append(result.effects, effect)
 	}
 	result.final, err = workspace.Scan(box.Root)
 	if err != nil {
 		return result, err
 	}
 	result.patch = workspace.MakePatch(opts.ExpectedSHA, baseline, result.final)
-	result.receipts = generation.VerifyReceipts(in.plan, sealed)
+	result.receipts = generation.VerifyReceiptsWithFailures(in.plan, sealed, result.failures)
 	result.provenance = generation.BindArtifactProvenance(in.plan, in.execution, result.receipts)
 	if result.provenance.Decision != generation.ArtifactProvenanceDecisionBound {
 		return result, fmt.Errorf("executed provenance is not bound")
 	}
 	return result, nil
+}
+
+func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs []generation.OperationReceipt) generation.OperationReceipt {
+	for _, input := range inputs {
+		if input.ActionIndicatorID != receipt.ActionIndicatorID || input.InstanceEvidence == nil {
+			continue
+		}
+		receipt.Indicators = append([]generation.IndicatorReceipt{}, input.Indicators...)
+		evidence := *input.InstanceEvidence
+		evidence.EvidenceOrigin = generation.EvidenceOriginInputReceipt
+		evidence.SourceReceiptDigest = input.ReceiptDigest
+		if !strings.HasPrefix(evidence.SourceReceiptDigest, "sha256:") {
+			evidence.SourceReceiptDigest = "sha256:" + evidence.SourceReceiptDigest
+		}
+		return generation.AttachInstanceEvidence(receipt, evidence)
+	}
+	return receipt
+}
+
+func inputFailureForAction(failures []generation.ObservationFailure, action generation.Action) (generation.ObservationFailure, bool) {
+	for _, failure := range failures {
+		if failure.ActionIndicatorID == action.IndicatorID {
+			return failure, true
+		}
+	}
+	return generation.ObservationFailure{}, false
 }

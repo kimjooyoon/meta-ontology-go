@@ -10,6 +10,11 @@ This catalog records useful concepts discovered while building Gooo. It does not
 | monotone semantic resolution | uncertainty can look like success | unknown meaning descends toward invariant-only reasoning | conformed |
 | causal feedback chain | any green run can be mistaken for the cause | one exact predecessor receipt becomes explicit state | conformed |
 | CI-selected refactoring | cleanup can be subjective or destructive | metrics choose bounded AST rewrites and demand replay | operating |
+| concept-governed refactoring | a selected operation may lack semantic authority | every candidate operation is digest-bound to a language concept | operating |
+| toolchain executable use cases | examples can exist without executing rejection paths | one canonical path and two tamper paths emit an exact replayed receipt | operating |
+| language syntax round-trip | syntax examples may not prove preservation | the complete registered corpus replays AST, canonical bytes, semantics, and lens laws | operating |
+| toolchain format/fix | repair tools can write before proving meaning | a data-only plan is applied in memory and replayed to an explicit fixed point | operating |
+| toolchain conformance | green tools can disagree on identity or authority | nine exact-head receipts close under one versioned meta ledger | operating |
 
 ## Executable meaning
 
@@ -24,6 +29,15 @@ The source of truth is `internal/meta/languageconcept.Catalog`. CI evaluates eve
 - no unverified novelty claim
 
 Missing meta code, missing use cases, missing metrics, unknown maturity, or novelty overclaim produces `FAIL_CLOSED`.
+The toolchain executable-use-case concept additionally requires its dynamic
+`3/3` receipt; a catalog row alone receives no readiness credit.
+The language syntax round-trip concept likewise requires its dynamic `15/15`
+receipt; static parser and formatter bindings alone receive no readiness credit.
+The toolchain format/fix concept requires its independent dynamic `12/12`
+receipt; a formatter implementation or command name alone receives no credit.
+The toolchain conformance concept requires its independent dynamic `9/9`
+surface receipt and `13/13` in-memory rejection paths; individual green tools
+alone receive no credit.
 
 ## Current interpretation
 

@@ -1,10 +1,12 @@
 package closure_test
 
+const fixtureBindingCount = 31
+
 func fixtureOperations() []map[string]any {
 	activities := []string{"BindExactSourceMetrics", "ExemptProjectRootTopology",
 		"InterpretDimensionRegistry", "ProjectAlgebraicRootState",
 		"ObserveCounterfactualBoundary", "PreserveRepositoryWorkspace",
-		"ReplayCounterfactual", "TerminateAtFixedPoint"}
+		"ReplayCounterfactual", "TerminateAtFixedPoint", "PreserveNonPromotingTerminal"}
 	values := make([]map[string]any, len(activities))
 	for index, activity := range activities {
 		values[index] = map[string]any{
@@ -16,11 +18,11 @@ func fixtureOperations() []map[string]any {
 }
 
 func fixtureBindings() []map[string]any {
-	values := make([]map[string]any, 15)
+	values := make([]map[string]any, fixtureBindingCount)
 	for index := range values {
 		values[index] = map[string]any{
 			"indicator_id": "indicator-" + string(rune('a'+index)),
-			"operation_id": "operation-" + string(rune('a'+index%8)),
+			"operation_id": "operation-" + string(rune('a'+index%9)),
 		}
 	}
 	return values

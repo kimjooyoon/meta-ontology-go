@@ -16,10 +16,9 @@ func summarize(input Input) (Summary, []Candidate) {
 		}
 		summary.CanonicalCandidates++
 		summary.RepositoryWrites += candidate.RepositoryWrites
-		if candidate.Conclusion != "success" {
-			continue
+		if candidate.Conclusion == "success" {
+			summary.SuccessfulCandidates++
 		}
-		summary.SuccessfulCandidates++
 		if candidate.Expired {
 			continue
 		}
@@ -28,10 +27,12 @@ func summarize(input Input) (Summary, []Candidate) {
 			continue
 		}
 		summary.ReceiptBoundCandidates++
-		eligible = append(eligible, candidate)
+		if candidate.Conclusion == "success" {
+			eligible = append(eligible, candidate)
+		}
 	}
-	if len(eligible) > 1 {
-		summary.AmbiguousCandidates = len(eligible) - 1
+	if summary.ReceiptBoundCandidates > 1 {
+		summary.AmbiguousCandidates = summary.ReceiptBoundCandidates - 1
 	}
 	return summary, eligible
 }

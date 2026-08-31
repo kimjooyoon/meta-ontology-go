@@ -1,0 +1,456 @@
+{
+  "schema": "gooo/language-syntax-roundtrip-corpus/v2",
+  "cases": [
+    {
+      "id": "billing",
+      "path": "examples/billing/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-test-pass",
+      "path": "examples/language-test/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-test-failing-assertion",
+      "path": "examples/language-test/failing.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "bootstrap",
+      "path": "examples/bootstrap/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "conformance",
+      "path": "examples/conformance/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "causal-ci-selection",
+      "path": "examples/causal-ci-selection/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "causal-ci-selection-semantic-intervention",
+      "path": "examples/causal-ci-selection/semantic-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "causal-ci-selection-nonsemantic-intervention",
+      "path": "examples/causal-ci-selection/nonsemantic-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "causal-ci-selection-contradiction-intervention",
+      "path": "examples/causal-ci-selection/contradiction-intervention.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "external-capability-authorization-policy",
+      "path": "examples/external-capability-execution/authorization/policy.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "activity-cardinality-resolution",
+      "path": "examples/activity-cardinality-resolution/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "meta-actionability",
+      "path": "examples/meta-actionability/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "meta-binding-coverage",
+      "path": "examples/meta-binding-coverage/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "meta-operation-artifact-coverage",
+      "path": "examples/meta-operation-artifact-coverage/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "metric-meta-program-closure",
+      "path": "examples/metric-meta-program-closure/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "metric-meta-program",
+      "path": "examples/metric-meta-program/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "root-readme-indicator",
+      "path": "examples/root-readme-indicator/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "self-improvement",
+      "path": "examples/self-improvement/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "self-improvement-candidate",
+      "path": "examples/self-improvement/candidate.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "self-improvement-transport",
+      "path": "examples/self-improvement/transport.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-value-witness",
+      "path": "examples/language-value-witness/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-operation-catalog",
+      "path": "examples/language-operation-catalog/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-operation-catalog-unknown",
+      "path": "examples/language-operation-catalog/unknown.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "claim-resolution-tuple",
+      "path": "cmd/gooo/testdata/claim-resolution/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+{
+  "id": "claim-dependency-causality",
+  "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
+  "kind": "VALID",
+  "expected_decision": "PASS",
+  "proof_choice": "COHERENCE",
+  "meta_operation": "replay-language-syntax",
+  "scope": "LANGUAGE_CAPABILITY"
+},
+{
+  "id": "roundtrip-minimal",
+      "path": "internal/detection/roundtrip/testdata/minimal.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "directory-kind-ontology",
+      "path": "internal/meta/directorykind/ontology.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "directory-partition-ontology",
+      "path": "internal/meta/directorypartition/ontology.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "repository-projection-repair",
+      "path": "examples/repository-projection-repair/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "opentofu-observation",
+      "path": "examples/opentofu-observation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "unknown-keyword",
+      "path": "examples/language-syntax-roundtrip/unknown-keyword.txt",
+      "kind": "INVALID",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_diagnostic": "parse.unexpected-token",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "unterminated-string",
+      "path": "examples/language-syntax-roundtrip/unterminated-string.txt",
+      "kind": "INVALID",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_diagnostic": "lex.unterminated-string",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "source-execution-invalid",
+      "path": "examples/language-source-execution/invalid.gooo",
+      "kind": "INVALID",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_diagnostic": "parse.unexpected-token",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "reject-invalid-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "source-splitter-conformance",
+      "path": "examples/source-splitter-conformance/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "rollback-integrity-activation",
+      "path": "examples/rollback-integrity-activation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "vertical-slice-closure-activation",
+      "path": "examples/vertical-slice-closure-activation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "workgraph",
+      "path": "examples/workgraph/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "external-conformance-activation",
+      "path": "examples/external-conformance-activation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "gooo-release-publication",
+      "path": "examples/gooo-release-publication/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "ci-plan",
+      "path": "examples/ci-plan/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "ci-effort-observation",
+      "path": "examples/ci-effort-observation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "ci-time-causality",
+      "path": "examples/ci-time-causality/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "implicit_activity_ports": true
+    },
+    {
+      "id": "reproducibility-semantics",
+      "path": "examples/reproducibility-semantics/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "entity-fields-v1",
+      "path": "examples/entity-fields-v1/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields": true
+    },
+    {
+      "id": "temporal-transition-ticket",
+      "path": "examples/temporal-transition-ticket/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "live-governance-snapshot",
+      "path": "examples/live-governance-snapshot/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
+    }
+  ],
+  "package_units": [
+    {
+      "id": "billing-package",
+      "path": "examples/billing-package",
+      "members": [
+        "examples/billing-package/activity.gooo",
+        "examples/billing-package/entities.gooo"
+      ],
+      "entry": "PayOrder",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
+    },
+    {
+      "id": "symbolic-invocation-schema",
+      "path": "examples/symbolic-invocation-schema",
+      "members": [
+        "examples/symbolic-invocation-schema/activity.gooo",
+        "examples/symbolic-invocation-schema/entities.gooo",
+        "examples/symbolic-invocation-schema/reader-request.gooo"
+      ],
+      "entry": "Checkout",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
+    }
+  ],
+  "meta_sources": [
+    "internal/meta/entityfields/entity-fields-meta.gooo"
+  ]
+}

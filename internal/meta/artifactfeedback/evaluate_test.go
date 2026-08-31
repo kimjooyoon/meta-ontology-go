@@ -12,7 +12,7 @@ func feedbackFixture(decision string) Input {
 	coverage := artifactcoverage.Report{
 		Schema: artifactcoverage.ReportSchema, CommitSHA: head,
 		Repository: "kimjooyoon/meta-ontology-go", Decision: decision,
-		Summary: artifactcoverage.Summary{RequiredOperations: 5, CanonicalOperations: 5},
+		Summary: artifactcoverage.Summary{RequiredOperations: 6, CanonicalOperations: 6},
 	}
 	if decision == "IMPROVE" {
 		coverage.SelectedOperation = "split-go-declarations"

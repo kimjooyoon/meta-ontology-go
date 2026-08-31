@@ -17,6 +17,8 @@ type ExecutionStep struct {
 	MetricProducer       string                           `json:"metric_producer"`
 	MetricConsumer       string                           `json:"metric_consumer"`
 	Operation            sourcepolicy.Operation           `json:"operation"`
+	Activity             string                           `json:"activity"`
+	Output               string                           `json:"output"`
 	IndependenceGroupID  string                           `json:"independence_group_id"`
 	ProofChoice          ProofChoice                      `json:"proof_choice"`
 	Executor             string                           `json:"executor"`

@@ -106,6 +106,12 @@ jobs:
             let devBranchProtection = null;
             let observerEnvironmentSnapshot = null;
             let installationRepositoryScope = null;
+            let baseCommit = null;
+            let baseKernelBlobs = null;
+            let preCorrectionKernelBlobs = null;
+            let correctionChangedPaths = null;
+            let beforeDigest = null;
+            let afterDigest = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -152,6 +158,63 @@ jobs:
                 repo: context.repo.repo,
               });
               const route = guardian.routeForPull(observedPull);
+              if (result.authorizationRequired === true && route === guardian.FOUNDATION_ROUTE) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
+              }
+              if (route === guardian.FOUNDATION_ROUTE) {
+                const baseCommitResponse = await github.rest.repos.getCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: observedPull.base.sha,
+                });
+                if (!baseCommitResponse || !baseCommitResponse.data || !Array.isArray(baseCommitResponse.data.parents)) {
+                  throw guardian.guardianFailure('foundation correction base commit attestation is unavailable or malformed');
+                }
+                baseCommit = baseCommitResponse.data;
+                const correctionCompareResponse = await github.rest.repos.compareCommits({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  base: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  head: observedPull.base.sha,
+                });
+                if (!correctionCompareResponse || !correctionCompareResponse.data || !Array.isArray(correctionCompareResponse.data.files)) {
+                  throw guardian.guardianFailure('foundation correction changed-path attestation is unavailable or malformed');
+                }
+                correctionChangedPaths = [...new Set(correctionCompareResponse.data.files
+                  .flatMap((file) => [file && file.filename, file && file.previous_filename])
+                  .filter((path) => path && guardian.isProtectedKernelPath(path)))].sort();
+                const currentBaseKernelBlobs = {};
+                preCorrectionKernelBlobs = {};
+                for (const path of guardian.FOUNDATION_BOOTSTRAP.baseDriftKernelPaths) {
+                  const currentResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: observedPull.base.sha,
+                  });
+                  const preCorrectionResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  });
+                  if (!currentResponse || !currentResponse.data || Array.isArray(currentResponse.data) || currentResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(currentResponse.data.sha || '') || !preCorrectionResponse || !preCorrectionResponse.data || Array.isArray(preCorrectionResponse.data) || preCorrectionResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(preCorrectionResponse.data.sha || '')) {
+                    throw guardian.guardianFailure(`foundation bootstrap base-drift blob attestation is unavailable or malformed: ${path}`);
+                  }
+                  currentBaseKernelBlobs[path] = currentResponse.data.sha;
+                  preCorrectionKernelBlobs[path] = preCorrectionResponse.data.sha;
+                }
+                baseKernelBlobs = Object.fromEntries(guardian.FOUNDATION_BOOTSTRAP.remainingBaseSatisfiedKernelPaths.map((path) => [path, currentBaseKernelBlobs[path]]));
+                const foundation = guardian.foundationBootstrapDecision({pull: observedPull, result, liveBefore, liveAfter, baseCommit, baseKernelBlobs, preCorrectionKernelBlobs, correctionChangedPaths});
+                if (foundation.decision === 'FOUNDATION') {
+                  result = {...result, decision: 'PASS', code: null, reason: guardian.FOUNDATION_BOOTSTRAP.foundationOverrideMarker, foundationBootstrap: foundation};
+                } else {
+                  result = {...result, foundationBootstrap: foundation};
+                }
+              }
+              if (route === 'promotion_main' && result.authorizationRequired === true) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
+              }
               if (route === 'promotion_main') {
                 try {
                   observerEnvironmentSnapshot = JSON.parse(fs.readFileSync('ci-guardian-environment.json', 'utf8'));
@@ -209,10 +272,48 @@ jobs:
                   appSlug,
                 });
               }
-              let beforeDigest = null;
-              let afterDigest = null;
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
-              if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName})) {
+              if (guardian.routeForPull(observedPull) === 'feature_dev' && result.authorizationRequired === true) {
+                try {
+                  const authorizationResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: '.github/foundation-authorization.json',
+                    ref: workflowSha,
+                  });
+                  const authorizationData = authorizationResponse && authorizationResponse.data;
+                  const policy = authorizationData && !Array.isArray(authorizationData) && authorizationData.content
+                    ? JSON.parse(Buffer.from(authorizationData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+                    : null;
+                  const authorization = await guardian.observeFoundationAuthorization({
+                    policy,
+                    pull: observedPull,
+                    changedFiles: result.files,
+                    kernelPaths: result.kernelPaths,
+                    workflowSha,
+                    getPull: (parameters) => github.rest.pulls.get(parameters),
+                    compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                    getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                    getContent: (parameters) => github.rest.repos.getContent(parameters),
+                    getTree: (parameters) => github.rest.git.getTree(parameters),
+                  });
+                  result = {...result, foundationAuthorization: authorization};
+                  if (authorization.decision === 'PASS') {
+                    result = {...result, decision: 'PASS', code: null, reason: authorization.reason, foundationAuthorization: authorization};
+                  } else {
+                    result = {...result, decision: 'FAIL_CLOSED', code: authorization.code || guardian.FOUNDATION_AUTHORIZATION_CODE, reason: authorization.reason};
+                  }
+                } catch (error) {
+                  const authorization = {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)};
+                  result = {...result, decision: 'FAIL_CLOSED', code: authorization.code, reason: authorization.reason, foundationAuthorization: authorization};
+                }
+              }
+              const trustedPromotion = guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName});
+              const authorizedFoundationFeature = guardian.routeForPull(observedPull) === 'feature_dev'
+                && result.decision === 'PASS'
+                && result.foundationAuthorization
+                && result.foundationAuthorization.decision === 'PASS';
+              if (result.kernelPaths.length > 0 && (trustedPromotion || authorizedFoundationFeature)) {
                 beforeDigest = await guardian.kernelTreeDigest({
                   getCommit: (parameters) => github.rest.repos.getCommit(parameters),
                   getTree: (parameters) => github.rest.git.getTree(parameters),
@@ -227,6 +328,9 @@ jobs:
                   repo: context.repo.repo,
                   ref: observedPull.head.sha,
                 });
+                if (authorizedFoundationFeature && (beforeDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_before_sha256) || afterDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_after_sha256))) {
+                  result = {...result, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest', foundationAuthorization: {...result.foundationAuthorization, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest'}};
+                }
               }
               result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
               if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
@@ -285,6 +389,18 @@ jobs:
             } catch (error) {
               validationError = error;
             }
+            if (artifact.decision === 'PASS') {
+              const kernelAttestation = guardian.validateKernelDigestAttestation({
+                kernelPaths: artifact.kernel_paths,
+                computedBeforeDigest: beforeDigest,
+                computedAfterDigest: afterDigest,
+                artifactBeforeDigest: artifact.kernel_before_sha256,
+                artifactAfterDigest: artifact.kernel_after_sha256,
+              });
+              if (kernelAttestation.decision !== 'PASS' && !validationError) {
+                validationError = guardian.guardianFailure(kernelAttestation.reason);
+              }
+            }
             await core.summary
               .addHeading(artifact.check_name || 'CI guardian shadow')
               .addRaw(`schema=${artifact.schema}\n`)
@@ -295,6 +411,7 @@ jobs:
               .addRaw(`head_binding=${artifact.head_binding_status}\n`)
               .addRaw(`base=${artifact.base_ref}@${artifact.base_sha}\n`)
               .addRaw(`head=${artifact.head_ref}@${artifact.head_sha}\n`)
+              .addRaw(`kernel_attestation=${artifact.decision === 'PASS' ? guardian.validateKernelDigestAttestation({kernelPaths: artifact.kernel_paths, computedBeforeDigest: beforeDigest, computedAfterDigest: afterDigest, artifactBeforeDigest: artifact.kernel_before_sha256, artifactAfterDigest: artifact.kernel_after_sha256}).decision : 'NOT_APPLICABLE'}\n`)
               .addRaw(`bundle=${artifact.bundle_sha256}\n`)
               .write();
             if (validationError) {

@@ -27,7 +27,7 @@ func TestBuildExecutionManifestIsDeterministicAndSandboxed(t *testing.T) {
 	for _, step := range first.Steps {
 		if step.WorkspaceMode != WorkspaceModeDisposable ||
 			step.WriteBoundary != WriteBoundarySandboxOnly ||
-			!step.ReceiptRequired ||
+			!step.ReceiptRequired || step.Activity == "" || step.Output == "" ||
 			len(step.RequiredIndicatorIDs) == 0 {
 			t.Fatalf("unsafe execution step: %+v", step)
 		}

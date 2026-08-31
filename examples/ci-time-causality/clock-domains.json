@@ -1,0 +1,24 @@
+{
+  "schema": "gooo/ci-time-causality/clock-domains/v1",
+  "rule": "Duration subtraction requires equal clock_domain and equal operation identity; wall-clock values are normalized to UTC only after timezone validation.",
+  "domains": [
+    {
+      "id": "fixture.utc.v1",
+      "source": "synthetic corpus",
+      "resolution_ms": 1,
+      "comparable": "only within the same operation"
+    },
+    {
+      "id": "github.actions.run.api.v1",
+      "source": "GitHub REST run timestamps",
+      "resolution_ms": 1000,
+      "comparable": "only within the same run operation"
+    },
+    {
+      "id": "github.actions.job.api.v1",
+      "source": "GitHub REST job timestamps",
+      "resolution_ms": 1000,
+      "comparable": "only within the same job operation"
+    }
+  ]
+}

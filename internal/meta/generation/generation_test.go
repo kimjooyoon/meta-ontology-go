@@ -31,12 +31,12 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 	if planned.PromotionAuthorized || planned.PromotionAuthorizedByPlan() || planned.ReplayProof != ProofCoherence {
 		t.Fatal("a generation plan acquired authority or lost its replay proof")
 	}
-	if len(planned.Registry) != 3 {
+	if len(planned.Registry) != 4 {
 		t.Fatalf("operation registry is not visible in the plan: %+v", planned.Registry)
 	}
 	for _, action := range planned.Selected {
 		if !action.ReceiptRequired || action.Evaluator == "" || len(action.RequiredIndicatorIDs) == 0 ||
-			!validActionApplicability(action) {
+			action.Activity == "" || action.Output == "" || !validActionApplicability(action) {
 			t.Fatalf("action lacks conformance obligations: %+v", action)
 		}
 	}

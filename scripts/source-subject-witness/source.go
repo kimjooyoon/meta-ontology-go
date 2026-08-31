@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
+	"io"
 	"os"
 )
 
 type sourceReport struct {
 	Repository         string            `json:"repository"`
 	CommitSHA          string            `json:"commit_sha"`
+	Root               string            `json:"root"`
+	StorageRoot        string            `json:"storage_root"`
 	Files              []fileMetric      `json:"files"`
 	Directories        []directoryMetric `json:"directories"`
 	StorageDirectories []directoryMetric `json:"storage_directories"`
@@ -54,10 +57,16 @@ func loadSource(path string) (sourceReport, error) {
 	var report sourceReport
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return report, fmt.Errorf("read source metrics: %w", err)
+		return report, sourceValidationFailure("SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics")
 	}
-	if err := json.Unmarshal(data, &report); err != nil {
-		return report, fmt.Errorf("decode source metrics: %w", err)
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&report); err != nil {
+		return report, sourceValidationFailure("SOURCE_JSON_MALFORMED", "MALFORMED_EVIDENCE", "restore-source-metrics")
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return report, sourceValidationFailure("SOURCE_JSON_TRAILING_DATA", "MALFORMED_EVIDENCE", "restore-source-metrics")
 	}
 	return report, nil
 }

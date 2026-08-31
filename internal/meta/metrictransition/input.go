@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect"
 )
 
 type Options struct {
@@ -16,14 +18,9 @@ type Options struct {
 type inputSet struct {
 	metrics, effect, receipts, provenance, patch []byte
 	report                                       linecaps.LineMetricsReport
-	effectDocument                               effectEnvelope
-}
-
-type effectEnvelope struct {
-	Status                   string `json:"status"`
-	Decision                 string `json:"decision"`
-	Reason                   string `json:"reason"`
-	SourceWorkspaceUnchanged bool   `json:"source_workspace_unchanged"`
+	effectLedger                                 transformationeffect.Ledger
+	receiptReport                                generation.ReceiptReport
+	provenanceReport                             generation.ArtifactProvenance
 }
 
 func loadInputs(options Options) (inputSet, error) {
@@ -43,8 +40,14 @@ func loadInputs(options Options) (inputSet, error) {
 	if err := json.Unmarshal(inputs.metrics, &inputs.report); err != nil {
 		return inputSet{}, fmt.Errorf("decode source metrics: %w", err)
 	}
-	if err := json.Unmarshal(inputs.effect, &inputs.effectDocument); err != nil {
+	if err := json.Unmarshal(inputs.effect, &inputs.effectLedger); err != nil {
 		return inputSet{}, fmt.Errorf("decode effect ledger: %w", err)
+	}
+	if err := json.Unmarshal(inputs.receipts, &inputs.receiptReport); err != nil {
+		return inputSet{}, fmt.Errorf("decode effect receipts: %w", err)
+	}
+	if err := json.Unmarshal(inputs.provenance, &inputs.provenanceReport); err != nil {
+		return inputSet{}, fmt.Errorf("decode effect provenance: %w", err)
 	}
 	return inputs, validateBinding(options, inputs)
 }
@@ -53,9 +56,6 @@ func validateBinding(options Options, inputs inputSet) error {
 	if options.ExpectedSHA == "" || options.CIRunID == "" || inputs.report.CommitSHA != options.ExpectedSHA {
 		return fmt.Errorf("metric transition exact-head binding is invalid")
 	}
-	effect := inputs.effectDocument
-	if effect.Status != "BOUND" || effect.Decision != "FIXED_POINT" || effect.Reason != "EXACT_FIXED_POINT" || !effect.SourceWorkspaceUnchanged {
-		return fmt.Errorf("metric transition requires a verified exact fixed point")
-	}
-	return nil
+	_, err := validateEffectOutcome(inputs)
+	return err
 }

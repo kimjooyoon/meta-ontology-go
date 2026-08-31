@@ -32,6 +32,47 @@ type metricIndicator struct {
 	Limit    string `json:"limit"`
 }
 
+type sourceThresholds struct {
+	GoFile   int `json:"go_file"`
+	GoooFile int `json:"gooo_file"`
+	Function int `json:"function"`
+}
+
+type sourceCandidate struct {
+	MetricID  string `json:"metric_id"`
+	Subject   string `json:"subject"`
+	Actual    int    `json:"actual"`
+	Threshold int    `json:"threshold"`
+	Role      string `json:"role"`
+}
+
+type sourceReadmeObservation struct {
+	Applicability string `json:"applicability"`
+	Reason        string `json:"reason"`
+	Blocking      bool   `json:"blocking"`
+}
+
+type selectedSubject struct {
+	MetaOperation string `json:"meta_operation"`
+	MetricID      string `json:"metric_id"`
+	Subject       string `json:"subject"`
+}
+
+type sourceInventory struct {
+	RegularFiles             int                     `json:"regular_files"`
+	DirectoriesIncludingRoot int                     `json:"directories_including_root"`
+	DescendantDirectories    int                     `json:"descendant_directories"`
+	GoFiles                  int                     `json:"go_files"`
+	GoLines                  int                     `json:"go_lines"`
+	GoooFiles                int                     `json:"gooo_files"`
+	GoooLines                int                     `json:"gooo_lines"`
+	RootReadme               sourceReadmeObservation `json:"root_readme"`
+	Thresholds               sourceThresholds        `json:"thresholds"`
+	Candidates               []sourceCandidate       `json:"over_threshold_candidates"`
+	SelectedOperations       int                     `json:"selected_operations"`
+	SelectedSubjects         []selectedSubject       `json:"selected_subjects"`
+}
+
 type summaryReport struct {
 	SchemaVersion    string             `json:"schema_version"`
 	Decision         string             `json:"decision"`
@@ -42,6 +83,7 @@ type summaryReport struct {
 	LimitBytes       int                `json:"limit_bytes"`
 	ProvenanceSchema string             `json:"provenance_schema"`
 	Provenance       provenanceEvidence `json:"provenance"`
+	SourceMetrics    sourceInventory    `json:"source_metrics_inventory"`
 	Indicators       []metricIndicator  `json:"indicators"`
 	Artifacts        []artifactEvidence `json:"artifacts"`
 }

@@ -42,3 +42,12 @@ func CurrentEntityFieldsSupport() EntityFieldsSupport {
 		},
 	}
 }
+
+// EntityFieldsV1Support returns the explicitly profile-bound V1 capability.
+// The ordinary parser remains deferred until a caller opts into this exact
+// contract, so older consumers cannot accidentally accept a partial shape.
+func EntityFieldsV1Support() EntityFieldsSupport {
+	support := CurrentEntityFieldsSupport()
+	support.State = EntityFieldsSupported
+	return support
+}

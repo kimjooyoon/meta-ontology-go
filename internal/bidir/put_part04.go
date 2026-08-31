@@ -8,9 +8,13 @@ import (
 )
 
 func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, existing map[ID]struct{}, registry semantic.TypeRegistry) error {
+	implicitIDs := implicitActivityPortIDs(result)
 	ids := make([]ID, 0, len(updated.Nodes))
 	for _, node := range updated.Nodes {
 		if _, exists := existing[node.ID]; !exists {
+			if _, implicit := implicitIDs[node.ID]; implicit {
+				continue
+			}
 			ids = append(ids, node.ID)
 		}
 	}
@@ -23,6 +27,20 @@ func appendNewDeclarations(result *Document, updated Model, nodes map[ID]Node, e
 		result.Declarations = append(result.Declarations, declaration)
 	}
 	return nil
+}
+
+func implicitActivityPortIDs(document *Document) map[ID]struct{} {
+	result := make(map[ID]struct{})
+	if document == nil || !document.ImplicitActivityPorts {
+		return result
+	}
+	for _, declaration := range implicitEntityDeclarations(document.Declarations, document.Namespace) {
+		id, err := declarationIdentity(document.Namespace, declaration)
+		if err == nil {
+			result[id] = struct{}{}
+		}
+	}
+	return result
 }
 func appendUpdatedRelations(result *Document, original []Relation, updated Model) {
 	implicit := implicitRelationKeys(result.Declarations, result.Namespace)

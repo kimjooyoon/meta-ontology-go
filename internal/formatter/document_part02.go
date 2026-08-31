@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -68,5 +69,5 @@ func isReservedKeyword(value string) bool {
 	}
 }
 func defaultActivityID(namespace, name string) string {
-	return namespace + "://activity/" + kebab(name)
+	return strings.ReplaceAll(namespace, "_", "-") + "://activity/" + kebab(name)
 }

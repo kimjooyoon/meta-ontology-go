@@ -1,0 +1,59 @@
+{
+  "schema": "gooo.go-package-partition-recipe.v1",
+  "subject": "bootstrap/repository-projector",
+  "moves": [
+    {"Source": "bootstrap/repository-projector/git.go", "Destination": "bootstrap/repository-projector/command/git.go"},
+    {"Source": "bootstrap/repository-projector/main.go", "Destination": "bootstrap/repository-projector/command/main.go"},
+    {"Source": "bootstrap/repository-projector/materialize.go", "Destination": "bootstrap/repository-projector/command/materialize.go"},
+    {"Source": "bootstrap/repository-projector/objects.go", "Destination": "bootstrap/repository-projector/command/objects.go"},
+    {"Source": "bootstrap/repository-projector/paths.go", "Destination": "bootstrap/repository-projector/command/paths.go"},
+    {"Source": "bootstrap/repository-projector/report.go", "Destination": "bootstrap/repository-projector/command/report.go"},
+    {"Source": "bootstrap/repository-projector/storage_types.go", "Destination": "bootstrap/repository-projector/command/storage_types.go"},
+    {"Source": "bootstrap/repository-projector/store.go", "Destination": "bootstrap/repository-projector/command/store.go"},
+    {"Source": "bootstrap/repository-projector/trie.go", "Destination": "bootstrap/repository-projector/command/trie.go"},
+    {"Source": "bootstrap/repository-projector/types.go", "Destination": "bootstrap/repository-projector/command/types.go"},
+    {"Source": "bootstrap/repository-projector/evidence.go", "Destination": "bootstrap/repository-projector/evidence/evidence.go", "Package": "evidence"},
+    {"Source": "bootstrap/repository-projector/evidence_guard.go", "Destination": "bootstrap/repository-projector/evidence/evidence_guard.go", "Package": "evidence"},
+    {"Source": "bootstrap/repository-projector/evidence_topology_scan.go", "Destination": "bootstrap/repository-projector/evidence/evidence_topology_scan.go", "Package": "evidence"},
+    {"Source": "bootstrap/repository-projector/evidence_topology_workflow.go", "Destination": "bootstrap/repository-projector/evidence/evidence_topology_workflow.go", "Package": "evidence"}
+  ],
+  "creates": [
+    {
+      "Path": "bootstrap/repository-projector/evidence/types.go",
+      "Content": "package evidence\n\ntype Entry struct {\n\tLogical string `json:\"logical\"`\n\tBacking string `json:\"backing\"`\n\tObjectSHA string `json:\"object_sha256\"`\n\tContentSHA string `json:\"content_sha256\"`\n\tKind string `json:\"kind\"`\n\tLanguage string `json:\"language,omitempty\"`\n\tMode uint32 `json:\"mode\"`\n\tLines int `json:\"lines,omitempty\"`\n}\n\ntype Indicator struct {\n\tID string `json:\"id\"`\n\tValue int `json:\"value\"`\n\tLimit int `json:\"limit\"`\n\tBlocking bool `json:\"blocking\"`\n\tConsumer string `json:\"consumer\"`\n\tOperation string `json:\"meta_operation\"`\n\tProof string `json:\"proof_choice\"`\n}\n\ntype Subject struct {\n\tIndicator string `json:\"indicator\"`\n\tLogical string `json:\"logical\"`\n\tPhysical string `json:\"physical,omitempty\"`\n\tValue int `json:\"value\"`\n\tLimit int `json:\"limit\"`\n\tConsumer string `json:\"consumer\"`\n\tOperation string `json:\"meta_operation\"`\n\tApplicability string `json:\"applicability,omitempty\"`\n\tApplicabilityReason string `json:\"applicability_reason,omitempty\"`\n}\n\ntype Topology struct {\n\tObservedDirect int\n\tDirect int\n\tExemptDirect int\n\tMixed int\n\tSubjects []Subject\n}\n\ntype Report struct {\n\tSchema string `json:\"schema\"`\n\tSourceSHA string `json:\"source_sha\"`\n\tTrackedFiles int `json:\"tracked_files\"`\n\tObjects int `json:\"stored_objects\"`\n\tIndicators []Indicator `json:\"indicators\"`\n\tSubjects []Subject `json:\"subjects\"`\n}\n\ntype indicator = Indicator\ntype subject = Subject\ntype topologyEvidence = Topology\ntype evidence = Report\n"
+    }
+  ],
+  "rewrites": [
+    {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "func buildEvidence(sha string, model manifest, objects, loss int, topology topologyEvidence) evidence {", "New": "func Build(sha string, entries []Entry, objects, loss int, topology Topology) Report {", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "for _, entry := range model.Entries {", "New": "for _, entry := range entries {", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/evidence/evidence.go", "Old": "TrackedFiles: len(model.Entries)", "New": "TrackedFiles: len(entries)", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/evidence/evidence_guard.go", "Old": "func requireBlockingZero(report evidence) error {", "New": "func RequireBlockingZero(report Report) error {", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/evidence/evidence_topology_scan.go", "Old": "func topologyFailures(root string) (topologyEvidence, error) {", "New": "func Scan(root string) (Topology, error) {", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/main.go", "Old": "\t\"log\"\n\t\"path/filepath\"", "New": "\t\"log\"\n\t\"path/filepath\"\n\n\tprojectionevidence \"github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence\"", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/main.go", "Old": "topologyFailures(stored)", "New": "projectionevidence.Scan(stored)", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/main.go", "Old": "buildEvidence(settings.expectedSHA, model, len(objects), loss, topology)", "New": "projectionevidence.Build(settings.expectedSHA, model.Entries, len(objects), loss, topology)", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/main.go", "Old": "requireBlockingZero(report)", "New": "projectionevidence.RequireBlockingZero(report)", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/types.go", "Old": "package main\n\n", "New": "package main\n\nimport projectionevidence \"github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence\"\n\n", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/report.go", "Old": "\t\"sort\"\n)", "New": "\t\"sort\"\n\n\tprojectionevidence \"github.com/kimjooyoon/meta-ontology-go/bootstrap/repository-projector/evidence\"\n)", "expected_count": 1},
+    {"Path": "bootstrap/repository-projector/command/report.go", "Old": "func writeEvidence(work string, report evidence) error {", "New": "func writeEvidence(work string, report projectionevidence.Report) error {", "expected_count": 1},
+    {"Path": ".github/actions/materialize/action.yml", "Old": "go run ./bootstrap/repository-projector \\", "New": "go run ./bootstrap/repository-projector/command \\", "expected_count": 2},
+    {"Path": ".github/workflows/repository-projection-diagnostics.yml", "Old": "go fix ./bootstrap/repository-projector", "New": "go fix ./bootstrap/repository-projector/...", "expected_count": 1},
+    {"Path": ".github/workflows/repository-projection-diagnostics.yml", "Old": "go test ./bootstrap/repository-projector", "New": "go test ./bootstrap/repository-projector/...", "expected_count": 1},
+    {"Path": ".github/workflows/repository-projection-diagnostics.yml", "Old": "go run ./bootstrap/repository-projector \\", "New": "go run ./bootstrap/repository-projector/command \\", "expected_count": 2},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/evidence.go", "New": "bootstrap/repository-projector/evidence/evidence.go", "expected_count": 5},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/evidence_guard.go", "New": "bootstrap/repository-projector/evidence/evidence_guard.go", "expected_count": 1},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/evidence_topology_scan.go", "New": "bootstrap/repository-projector/evidence/evidence_topology_scan.go", "expected_count": 1},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/evidence_topology_workflow.go", "New": "bootstrap/repository-projector/evidence/evidence_topology_workflow.go", "expected_count": 1},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/types.go", "New": "bootstrap/repository-projector/command/types.go", "expected_count": 2},
+    {"Path": "bootstrap/function-extractor/recipes.json", "Old": "bootstrap/repository-projector/storage_types.go", "New": "bootstrap/repository-projector/command/storage_types.go", "expected_count": 1}
+  ],
+  "ranges": [
+    {"Path": "bootstrap/repository-projector/command/types.go", "Start": "type manifestEntry struct {", "End": "type manifest struct {", "Replacement": "type manifestEntry = projectionevidence.Entry\n\n"},
+    {"Path": "bootstrap/repository-projector/command/types.go", "Start": "type indicator struct {", "End": "", "Replacement": ""}
+  ],
+  "expected_shape": {
+    "branch_entries": 2,
+    "max_entries": 10,
+    "leaves": {"command": 10, "evidence": 5}
+  }
+}

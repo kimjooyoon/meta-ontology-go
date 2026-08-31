@@ -1,0 +1,29 @@
+{
+  "schema": "gooo/rollback-integrity-activation-denominator/v1",
+  "cases": [
+    {
+      "id": "exact",
+      "expected_decision": "APPLIED",
+      "expected_resolution": "EXACT",
+      "expected_reason": "ROLLBACK_INTEGRITY_ACTIVATED"
+    },
+    {
+      "id": "unavailable",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "UNKNOWN",
+      "expected_reason": "ROLLBACK_INTEGRITY_ACTIVATION_EVIDENCE_UNAVAILABLE"
+    },
+    {
+      "id": "digest-mismatch",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "INVARIANT_ONLY",
+      "expected_reason": "ROLLBACK_INTEGRITY_ACTIVATION_CAPSULE_DIGEST_MISMATCH"
+    },
+    {
+      "id": "eligibility-unknown",
+      "expected_decision": "FAIL_CLOSED",
+      "expected_resolution": "UNKNOWN",
+      "expected_reason": "ROLLBACK_INTEGRITY_ACTIVATION_ELIGIBILITY_UNKNOWN"
+    }
+  ]
+}

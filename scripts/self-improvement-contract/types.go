@@ -41,9 +41,10 @@ type Report struct {
 }
 
 type analysis struct {
-	Report     Report
-	SemanticOK bool
-	LoopOK     bool
-	ExecutorOK bool
-	TrilemmaOK bool
+	Report        Report
+	SemanticOK    bool
+	LoopOK        bool
+	ExecutorOK    bool
+	TrilemmaOK    bool
+	ObservationOK bool
 }

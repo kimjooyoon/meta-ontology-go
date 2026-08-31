@@ -30,10 +30,26 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 	}
 	switch indicator.Applicability {
 	case sourcepolicy.ApplicabilityApplicable:
-		return indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleDefault &&
-			indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonCatalogApplicable
+		if indicator.ApplicabilityRule != sourcepolicy.ApplicabilityRuleDefault ||
+			indicator.ApplicabilityReason != sourcepolicy.ApplicabilityReasonCatalogApplicable {
+			return false
+		}
+		if sourcepolicy.IsLineCapMetric(indicator.MetricID) {
+			return indicator.Role == sourcepolicy.IndicatorRoleDriver && !indicator.Blocking &&
+				indicator.Relation == sourcepolicy.RelationLessOrEqual &&
+				indicator.Satisfied == (indicator.Value <= indicator.Limit)
+		}
+		return true
 	case sourcepolicy.ApplicabilityNotApplicable:
 		if !indicator.Satisfied || indicator.Blocking {
+			return false
+		}
+		if indicator.Operation == sourcepolicy.OperationPreserveWorkflow {
+			return indicator.Subject == ".github/workflows" && indicator.SubjectKind == sourcepolicy.SubjectKindDirectory &&
+				indicator.ApplicabilityRule == sourcepolicy.ApplicabilityRuleWorkflowDiscovery &&
+				indicator.ApplicabilityReason == sourcepolicy.ApplicabilityReasonWorkflowDiscovery
+		}
+		if indicator.Subject != "." || indicator.SubjectKind != sourcepolicy.SubjectKindProjectRoot {
 			return false
 		}
 		switch indicator.Operation {

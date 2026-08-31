@@ -1,0 +1,216 @@
+name: Language operation catalog
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-operation-catalog.yml
+      - examples/language-operation-catalog/**
+      - internal/valuecatalog/**
+      - internal/valueexecution/**
+      - scripts/language-operation-catalog/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/language-operation-catalog.yml
+      - examples/language-operation-catalog/**
+      - internal/valuecatalog/**
+      - internal/valueexecution/**
+      - scripts/language-operation-catalog/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe-source-only-extension:
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.x
+          check-latest: true
+      - name: Go 1.27 fix and format conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          go fix ./internal/valuecatalog ./internal/valueexecution ./scripts/language-operation-catalog
+          gofmt -w \
+            internal/valueexecution/registry.go \
+            internal/valueexecution/compile.go \
+            internal/valueexecution/compile_operation.go \
+            internal/valueexecution/operation_spec_model.go \
+            internal/valueexecution/operation_spec_validate.go \
+            internal/valueexecution/program.go \
+            internal/valueexecution/failure.go \
+            internal/valueexecution/measurement.go \
+            internal/valueexecution/evaluate_test.go \
+            internal/valuecatalog/model.go \
+            internal/valuecatalog/model_program.go \
+            internal/valuecatalog/model_evidence.go \
+            internal/valuecatalog/model_claim_transition.go \
+            internal/valuecatalog/operation_spec_checks.go \
+            internal/valuecatalog/operation_spec_claims.go \
+            internal/valuecatalog/operation_claim_transitions.go \
+            internal/valuecatalog/digest.go \
+            internal/valuecatalog/source_rewrite.go \
+            internal/valuecatalog/core.go \
+            internal/valuecatalog/execution.go \
+            internal/valuecatalog/observation.go \
+            internal/valuecatalog/evaluate.go \
+            internal/valuecatalog/indicators.go \
+            internal/valuecatalog/views.go \
+            internal/valuecatalog/proofs.go \
+            internal/valuecatalog/validate.go \
+            internal/valuecatalog/validate_operation_spec.go \
+            internal/valuecatalog/validate_claim_transitions.go \
+            internal/valuecatalog/validate_unknown.go \
+            internal/valuecatalog/validate_state.go \
+            internal/valuecatalog/evaluate_test.go \
+            internal/valuecatalog/claim_transition_test.go \
+            scripts/language-operation-catalog/main.go
+          git diff --exit-code -- internal/valuecatalog internal/valueexecution scripts/language-operation-catalog
+      - name: Compile baseline and future extension states
+        run: go test ./internal/valuecatalog ./internal/valueexecution
+      - name: Emit two byte-identical catalog receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-operation-catalog"
+          mkdir -p "$output"
+          for pass in first second; do
+            go run ./scripts/language-operation-catalog \
+              -source examples/language-operation-catalog/main.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/$pass.json" -check
+            go run ./scripts/language-operation-catalog \
+              -source examples/language-operation-catalog/unknown.gooo \
+              -head-sha "$HEAD_SHA" -output "$output/unknown-$pass.json" \
+              -check -expect-unknown
+          done
+          cmp "$output/first.json" "$output/second.json"
+          cmp "$output/unknown-first.json" "$output/unknown-second.json"
+          {
+            echo '### Gooo operation catalog'
+            jq -r '"- decision: `\(.decision)` at `\(.resolution)`"' "$output/first.json"
+            jq -r '"- extension coordinate: `\(.improvement.before.satisfied)/\(.improvement.before.total) -> \(.improvement.after.satisfied)/\(.improvement.after.total)`"' "$output/first.json"
+            jq -r '"- cases: baseline `\(.summary.baseline_cases_passed)/\(.summary.baseline_cases_total)`; extension `\(.summary.extension_cases_passed)/\(.summary.extension_cases_total)`"' "$output/first.json"
+            jq -r '"- reader views: `\(.views[0].satisfied)/\(.views[0].total)`, `\(.views[1].satisfied)/\(.views[1].total)`, `\(.views[2].satisfied)/\(.views[2].total)`"' "$output/first.json"
+            jq -r '"- OS9: `\(.operation_spec_metrics.verified_total)/\(.operation_spec_metrics.fixed_axis_total)`; open claims `\(.operation_spec_metrics.open_claims)`; unknown paths `\(.operation_spec_metrics.unknown_path_count)`"' "$output/first.json"
+            jq -r '"- claim ledger: `\(.operation_spec_metrics.transition_event_total)` events; registered `\(.operation_spec_metrics.registration_event_total)`; discharged `\(.operation_spec_metrics.evidence_accepted_event_total)`"' "$output/first.json"
+            jq -r '"- unknown ledger: `\(.operation_spec_metrics.evidence_unavailable_event_total)` unavailable at `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' "$output/unknown-first.json"
+            jq -r '"- process coordinate: `\(.coordinate.stage)/\(.coordinate.step)/\(.coordinate.reason)`"' "$output/first.json"
+            jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head catalog receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-operation-catalog-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-operation-catalog/first.json
+            ${{ runner.temp }}/language-operation-catalog/unknown-first.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Classify operation claim causality
+        shell: bash
+        run: |
+          set -euo pipefail
+          format_diff="$(gofmt -d \
+            internal/valuecatalog/causality/model.go \
+            internal/valuecatalog/causality/contract.go \
+            internal/valuecatalog/causality/evaluate.go \
+            internal/valuecatalog/causality/input.go \
+            internal/valuecatalog/causality/resolution.go \
+            internal/valuecatalog/causality/metrics.go \
+            internal/valuecatalog/causality/validate.go \
+            internal/valuecatalog/causality/discover.go \
+            internal/valuecatalog/causality/causality_test.go \
+            internal/valuecatalog/causality/validate_test.go \
+            internal/valuecatalog/causality/fixture_test.go \
+            scripts/language-operation-claim-causality/main.go)"
+          if [[ -n "${format_diff}" ]]; then
+            printf '%s\n' "${format_diff}"
+            exit 1
+          fi
+
+          go test ./internal/valuecatalog/causality
+
+          roots="${RUNNER_TEMP},${GITHUB_WORKSPACE}"
+          for run in a b; do
+            go run ./scripts/language-operation-claim-causality \
+              -discover-roots "${roots}" \
+              -mode success \
+              -output "${RUNNER_TEMP}/claim-causality-success-${run}.json" \
+              -check
+            go run ./scripts/language-operation-claim-causality \
+              -discover-roots "${roots}" \
+              -mode unknown \
+              -output "${RUNNER_TEMP}/claim-causality-unknown-${run}.json" \
+              -check
+          done
+
+          cmp -s "${RUNNER_TEMP}/claim-causality-success-a.json" "${RUNNER_TEMP}/claim-causality-success-b.json"
+          cmp -s "${RUNNER_TEMP}/claim-causality-unknown-a.json" "${RUNNER_TEMP}/claim-causality-unknown-b.json"
+
+          jq -e '
+            .schema == "gooo.language.operation-claim-causality/v1" and
+            .scope == "CAUSAL_CLASSIFICATION_ONLY" and
+            .graph.node_total == 9 and
+            .graph.edge_total == 11 and
+            .metrics.classified_claim_total == 9 and
+            .metrics.discharged_claim_total == 9 and
+            .metrics.direct_missing_claim_total == 0 and
+            .metrics.dependency_blocked_claim_total == 0 and
+            .subject.binding_status == "PARTIAL_UNKNOWN" and
+            .subject.source_digest != "" and
+            .subject.semantic_ir_digest != "" and
+            (.subject.missing_binding_evidence | length) == 1 and
+            .decision.value == "PASS" and
+            .decision.semantic_promotion_authorized == false
+          ' "${RUNNER_TEMP}/claim-causality-success-a.json"
+
+          jq -e '
+            .schema == "gooo.language.operation-claim-causality/v1" and
+            .scope == "CAUSAL_CLASSIFICATION_ONLY" and
+            .graph.node_total == 9 and
+            .graph.edge_total == 11 and
+            .metrics.classified_claim_total == 9 and
+            .metrics.discharged_claim_total == 0 and
+            .metrics.direct_missing_claim_total == 1 and
+            .metrics.dependency_blocked_claim_total == 8 and
+            .metrics.observed_blocking_edge_total == 11 and
+            .metrics.maximum_cause_path_depth == 4 and
+            .subject.binding_status == "PARTIAL_UNKNOWN" and
+            .subject.source_digest != "" and
+            .subject.semantic_ir_digest == "" and
+            (.subject.missing_binding_evidence | length) == 2 and
+            .decision.value == "FAIL_CLOSED" and
+            .decision.semantic_promotion_authorized == false
+          ' "${RUNNER_TEMP}/claim-causality-unknown-a.json"
+
+          {
+            echo "### Operation claim causality"
+            echo ""
+            echo "- scope: causal classification only"
+            echo "- declared graph contract: 9 claims / 11 edges"
+            echo "- success: discharged 9 / direct missing 0 / dependency blocked 0"
+            echo "- UNKNOWN: discharged 0 / direct missing 1 / dependency blocked 8"
+            echo "- UNKNOWN blocking edges: 11 / maximum cause depth: 4"
+            echo "- source-to-IR binding: PARTIAL_UNKNOWN (success missing 1, UNKNOWN missing 2)"
+            echo "- semantic promotion authority: 0"
+            echo "- deterministic receipts: success 2/2, UNKNOWN 2/2"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload operation claim causality receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: operation-claim-causality-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/claim-causality-success-a.json
+            ${{ runner.temp }}/claim-causality-unknown-a.json
+          if-no-files-found: error
+          retention-days: 14

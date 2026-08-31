@@ -25,7 +25,8 @@ func EvaluateLineMetricIndicators(report LineMetricsReport, policy sourcepolicy.
 	producer := metricTopologyProducer(report)
 	for _, directory := range topology {
 		metrics := directoryMetricObservations(directory,
-			isWorkflowDiscoveryRoot(report, directory))
+			isWorkflowDiscoveryRoot(report, directory),
+			workflowDiscoveryDetail(report.Root, directory))
 		for index := range metrics {
 			metrics[index].Producer = producer
 		}

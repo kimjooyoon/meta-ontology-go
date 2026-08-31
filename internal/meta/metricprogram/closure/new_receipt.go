@@ -13,7 +13,7 @@ func newReceipt(in Input, program programDocument, verification verificationDocu
 		ProgramDigest: program.Digest, VerificationDigest: verification.Digest,
 		StrategyDigest: program.StrategyDigest, RegistryDigest: program.RegistryDigest,
 		SourceDigest: program.SourceDigest, SemanticDigest: program.SemanticDigest,
-		BindingCount: 15, OperationCount: 8, StepCount: 4,
+		BindingCount: canonicalBindingCount, OperationCount: 9, StepCount: 4,
 		Status: StatusVerified, WriteEffect: WriteEffectNone,
 		RepositoryWorkspaceWrites: false, PromotionAuthorized: false,
 	}

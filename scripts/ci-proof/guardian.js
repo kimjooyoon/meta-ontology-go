@@ -1,8 +1,12 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const foundationBootstrap = require('./foundation_bootstrap');
+const foundationAuthorization = require('./foundation_authorization');
 
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
+const FOUNDATION_BOOTSTRAP_CODE = foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE;
+const FOUNDATION_AUTHORIZATION_CODE = 'CI-FOUNDATION-AUTHORIZATION-001';
 const HEAD_BINDING_STATUS = 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED';
 const HEAD_BINDING_VERIFIED = 'verified';
 const DEFAULT_BRANCH_CODE = 'CI-GUARDIAN-DEFAULT-BRANCH-001';
@@ -15,7 +19,7 @@ const OBSERVER_ENVIRONMENT = 'guardian-observer';
 const INSTALLATION_SCOPE_REPOSITORY = 'kimjooyoon/meta-ontology-go';
 const OBSERVER_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
-const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE, INSTALLATION_SCOPE_CODE]);
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, FOUNDATION_BOOTSTRAP_CODE, FOUNDATION_AUTHORIZATION_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE, INSTALLATION_SCOPE_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const PROOF_CONTEXTS = ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'];
@@ -27,6 +31,7 @@ const PROTECTED_FILES = new Set([
   '.github/agent-scope-table.md',
   '.github/branch-policy.md',
   '.github/conformance-plan.md',
+  '.github/foundation-authorization.json',
   'go.mod',
   'go.sum',
 ]);
@@ -50,6 +55,10 @@ function guardianFailure(reason, code = ROOT_FAILURE_CODE) {
 
 function validSHA(value) {
   return typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
+}
+
+function validDigest(value) {
+  return typeof value === 'string' && /^sha256:[0-9a-f]{64}$/.test(value);
 }
 
 function validRepository(value) {
@@ -412,12 +421,14 @@ async function observeBranchProtection({getProtection, branch = 'main', expected
 
 function routeForPull(pull) {
   const identity = pullIdentity(pull);
+  if (foundationBootstrap.exactIdentity(pull)) return foundationBootstrap.FOUNDATION_ROUTE;
   if (identity.base_ref === 'dev' && typeof identity.head_ref === 'string' && identity.head_ref.startsWith('agent/')) return 'feature_dev';
   if (identity.base_ref === 'main' && identity.head_ref === 'dev') return 'promotion_main';
   return null;
 }
 
 function checkNameForRoute(route) {
+  if (route === foundationBootstrap.FOUNDATION_ROUTE) return 'CI guardian shadow';
   if (route === 'feature_dev') return 'CI guardian shadow';
   if (route === 'promotion_main') return 'CI guardian';
   return null;
@@ -558,7 +569,15 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
         .flatMap((file) => [file.filename, file.previous_filename])
         .filter((path) => path && isProtectedKernelPath(path));
       if (kernelPaths.length > 0) {
-        return {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: `protected kernel path changed: ${kernelPaths.sort(canonicalStringCompare).join(', ')}`, files, kernelPaths: [...new Set(kernelPaths)].sort(canonicalStringCompare)};
+        const uniqueKernelPaths = [...new Set(kernelPaths)].sort(canonicalStringCompare);
+        return {
+          decision: 'AUTHORIZATION_REQUIRED',
+          code: null,
+          reason: `protected kernel path requires Foundation authorization before root decision: ${uniqueKernelPaths.join(', ')}`,
+          authorizationRequired: true,
+          files,
+          kernelPaths: uniqueKernelPaths,
+        };
       }
       return {decision: 'PASS', code: null, reason: null, files, kernelPaths: []};
     }
@@ -667,12 +686,258 @@ function trustedDevPromotion({pull, repository, defaultBranch, workflowRef, work
   return defaultBranch === 'dev' && workflowRef === expectedWorkflowRef(repository) && runtimeSha === workflowSha && checkName === 'CI guardian' && identity.base_repo === repository && identity.head_repo === repository && identity.base_ref === 'main' && identity.head_ref === 'dev' && identity.head_sha === workflowSha && validSHA(workflowSha) && identity.base_sha === liveBefore?.refs.main_sha && identity.head_sha === liveBefore?.refs.dev_sha && identity.head_sha === liveAfter?.refs.dev_sha && identity.base_sha === liveAfter?.refs.main_sha && liveMatches && promotionTopology;
 }
 
+function validateKernelDigestAttestation({kernelPaths = [], computedBeforeDigest, computedAfterDigest, artifactBeforeDigest, artifactAfterDigest}) {
+  if (!Array.isArray(kernelPaths) || kernelPaths.length === 0) {
+    return {decision: 'PASS', reason: 'no protected kernel paths require digest propagation'};
+  }
+  if (!validDigest(computedBeforeDigest) || !validDigest(computedAfterDigest) || !validDigest(artifactBeforeDigest) || !validDigest(artifactAfterDigest)) {
+    return {decision: 'REFUTED', reason: 'kernel digest evidence is null, empty, or malformed'};
+  }
+  if (computedBeforeDigest !== artifactBeforeDigest || computedAfterDigest !== artifactAfterDigest) {
+    return {decision: 'REFUTED', reason: 'computed kernel digests do not exactly match the PASS artifact'};
+  }
+  return {decision: 'PASS', reason: 'computed kernel digests exactly match the PASS artifact'};
+}
+
 function validLiveSnapshot(snapshot) {
   return Boolean(snapshot && snapshot.refs && validSHA(snapshot.refs.dev_sha) && validSHA(snapshot.refs.main_sha) && snapshot.topology && ['ahead', 'behind', 'identical', 'diverged'].includes(snapshot.topology.status) && Number.isInteger(snapshot.topology.ahead_by) && snapshot.topology.ahead_by >= 0 && Number.isInteger(snapshot.topology.behind_by) && snapshot.topology.behind_by >= 0 && validSHA(snapshot.topology.merge_base_sha));
 }
 
 function validPromotionTopology(snapshot) {
   return validLiveSnapshot(snapshot) && snapshot.topology.status === 'ahead' && snapshot.topology.ahead_by > 0 && snapshot.topology.behind_by === 0 && snapshot.topology.merge_base_sha === snapshot.refs.main_sha;
+}
+
+async function observeGuardianDispatchAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, compareCommits, getContent}) {
+  try {
+    foundationAuthorization.validateGuardianDispatchPolicy(policy);
+    const owner = foundationAuthorization.REPOSITORY.split('/')[0];
+    const repo = foundationAuthorization.REPOSITORY.split('/')[1];
+    const receiptResponse = await getContent({owner, repo, path: policy.dispatch.receipt_path, ref: workflowSha});
+    const receiptData = receiptResponse && receiptResponse.data;
+    if (Array.isArray(receiptData) || !receiptData || receiptData.type !== 'file' || typeof receiptData.content !== 'string') {
+      throw new Error('Foundation authorization dispatch receipt is unavailable');
+    }
+    const receiptBytes = Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64');
+    if (foundationAuthorization.sha256(receiptBytes) !== policy.dispatch.receipt_sha256) {
+      throw new Error('Foundation authorization dispatch receipt digest does not match policy');
+    }
+    const receipt = JSON.parse(receiptBytes.toString('utf8'));
+    const compareResponse = await compareCommits({owner, repo, base: pull && pull.base && pull.base.sha, head: pull && pull.head && pull.head.sha});
+    const compare = compareResponse && compareResponse.data;
+    const mergeBaseSHA = compare && compare.merge_base_commit && compare.merge_base_commit.sha;
+    foundationAuthorization.validateGuardianDispatchReceipt(receipt, {candidatePull: pull, changedFiles, kernelPaths, mergeBaseSHA});
+    return {
+      ...receipt,
+      decision: 'PASS',
+      code: null,
+      reason: foundationAuthorization.GUARDIAN_DISPATCH_MARKER,
+      single_use: true,
+      consumed: false,
+      replay_decision: 'REFUTED',
+    };
+  } catch (error) {
+    return {
+      decision: 'FAIL_CLOSED',
+      code: FOUNDATION_AUTHORIZATION_CODE,
+      reason: error && error.message ? error.message : String(error),
+    };
+  }
+}
+
+async function observeFoundationAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, getPull, compareCommits, getCommit, getContent, getTree}) {
+  if (policy && policy.schema === foundationAuthorization.GUARDIAN_DISPATCH_POLICY_SCHEMA) {
+    return observeGuardianDispatchAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, compareCommits, getContent});
+  }
+  try {
+    foundationAuthorization.validatePolicy(policy);
+    const authorizationResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: policy.authorization.pull_request});
+    const authorizationPull = authorizationResponse && authorizationResponse.data;
+    const authorizationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: authorizationPull && authorizationPull.merge_commit_sha});
+    const authorizationCommit = authorizationCommitResponse && authorizationCommitResponse.data;
+    const authorizationMergeSHA = authorizationPull && authorizationPull.merge_commit_sha;
+    const baseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: policy.candidate.base_sha});
+    const baseCommit = baseCommitResponse && baseCommitResponse.data;
+    const candidateCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: policy.candidate.head_sha, head: pull.head.sha});
+    const authorizationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: authorizationMergeSHA, head: pull.head.sha});
+    const candidateDiffResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: policy.candidate.base_sha, head: policy.candidate.head_sha});
+    let regressionRepair = null;
+    if (pull && pull.base && pull.base.sha !== authorizationMergeSHA) {
+      const parseJSONContent = (response) => {
+        const data = response && response.data;
+        if (Array.isArray(data) || !data || !data.content) return {bytes: null, value: null};
+        const bytes = Buffer.from(data.content.replace(/\s/g, ''), 'base64');
+        return {bytes, value: JSON.parse(bytes.toString('utf8'))};
+      };
+      let correctionReceiptResponse = null;
+      try {
+        correctionReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.CORRECTION_CHILD_PATH, ref: pull.base.sha});
+      } catch (error) {
+        correctionReceiptResponse = null;
+      }
+      const correctionReceipt = parseJSONContent(correctionReceiptResponse);
+      let schemaCoherenceReceiptResponse = null;
+      try {
+        schemaCoherenceReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PATH, ref: pull.base.sha});
+      } catch (error) {
+        schemaCoherenceReceiptResponse = null;
+      }
+      const schemaCoherenceReceipt = parseJSONContent(schemaCoherenceReceiptResponse);
+      let executableGuardianScopeReceiptResponse = null;
+      try {
+        executableGuardianScopeReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PATH, ref: pull.base.sha});
+      } catch (error) {
+        executableGuardianScopeReceiptResponse = null;
+      }
+      const executableGuardianScopeReceipt = parseJSONContent(executableGuardianScopeReceiptResponse);
+      if (executableGuardianScopeReceipt.value && pull.number === foundationAuthorization.CANDIDATE_PULL_REQUEST) {
+        const parentV4ReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PATH, ref: pull.base.sha});
+        const parentV4Receipt = parseJSONContent(parentV4ReceiptResponse);
+        const migrationPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST});
+        const migrationPull = migrationPullResponse && migrationPullResponse.data;
+        const migrationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.merge_commit_sha});
+        const migrationCommit = migrationCommitResponse && migrationCommitResponse.data;
+        const migrationHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadCommit = migrationHeadCommitResponse && migrationHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const migrationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA, head: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: migrationHeadCommit && migrationHeadCommit.commit && migrationHeadCommit.commit.tree && migrationHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateExecutableGuardianScope({
+          receipt: executableGuardianScopeReceipt.value,
+          parentReceiptBytes: parentV4Receipt.bytes,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          migrationPull,
+          migrationCommit,
+          migrationCompare: migrationCompareResponse && migrationCompareResponse.data,
+          migrationTreeEntries: migrationHeadTreeResponse && migrationHeadTreeResponse.data && migrationHeadTreeResponse.data.tree,
+        });
+      } else if (schemaCoherenceReceipt.value && pull.number === foundationAuthorization.CANDIDATE_PULL_REQUEST) {
+        const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse);
+        const parentCorrectionReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.CORRECTION_CHILD_PATH, ref: pull.base.sha});
+        const parentCorrectionReceipt = parseJSONContent(parentCorrectionReceiptResponse);
+        const migrationPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PULL_REQUEST});
+        const migrationPull = migrationPullResponse && migrationPullResponse.data;
+        const migrationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.merge_commit_sha});
+        const migrationCommit = migrationCommitResponse && migrationCommitResponse.data;
+        const migrationHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadCommit = migrationHeadCommitResponse && migrationHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const migrationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_BASE_SHA, head: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: migrationHeadCommit && migrationHeadCommit.commit && migrationHeadCommit.commit.tree && migrationHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateSchemaCoherenceMigration({
+          receipt: schemaCoherenceReceipt.value,
+          parentReceiptBytes: currentRepairReceipt.bytes,
+          correctionReceiptBytes: parentCorrectionReceipt.bytes,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          migrationPull,
+          migrationCommit,
+          migrationCompare: migrationCompareResponse && migrationCompareResponse.data,
+          migrationTreeEntries: migrationHeadTreeResponse && migrationHeadTreeResponse.data && migrationHeadTreeResponse.data.tree,
+        });
+      } else if (correctionReceipt.value) {
+        foundationAuthorization.validateCorrectionChildReceipt(correctionReceipt.value);
+        const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse).value;
+        foundationAuthorization.validateRegressionRepairReceipt(currentRepairReceipt);
+        const parentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: foundationAuthorization.CORRECTION_CHILD_BASE_SHA});
+        const parentRepairReceipt = parseJSONContent(parentRepairReceiptResponse);
+        foundationAuthorization.validateRegressionRepairReceipt(parentRepairReceipt.value);
+        const correctionPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.CORRECTION_CHILD_PULL_REQUEST});
+        const correctionPull = correctionPullResponse && correctionPullResponse.data;
+        const correctionCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: correctionPull && correctionPull.merge_commit_sha});
+        const correctionCommit = correctionCommitResponse && correctionCommitResponse.data;
+        const correctionHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: correctionPull && correctionPull.head && correctionPull.head.sha});
+        const correctionHeadCommit = correctionHeadCommitResponse && correctionHeadCommitResponse.data;
+        const parentRepairBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: foundationAuthorization.CORRECTION_CHILD_BASE_SHA});
+        const parentRepairBaseCommit = parentRepairBaseCommitResponse && parentRepairBaseCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const correctionCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.CORRECTION_CHILD_BASE_SHA, head: correctionPull && correctionPull.head && correctionPull.head.sha});
+        const correctionHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: correctionHeadCommit && correctionHeadCommit.commit && correctionHeadCommit.commit.tree && correctionHeadCommit.commit.tree.sha, recursive: '1'});
+        const parentRepairBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: parentRepairBaseCommit && parentRepairBaseCommit.commit && parentRepairBaseCommit.commit.tree && parentRepairBaseCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateCorrectionChild({
+          receipt: correctionReceipt.value,
+          parentRepairReceipt: parentRepairReceipt.value,
+          parentRepairReceiptBytes: parentRepairReceipt.bytes,
+          parentRepairBaseCommit,
+          parentRepairBaseTreeEntries: parentRepairBaseTreeResponse && parentRepairBaseTreeResponse.data && parentRepairBaseTreeResponse.data.tree,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          correctionPull,
+          correctionCommit,
+          correctionCompare: correctionCompareResponse && correctionCompareResponse.data,
+          correctionTreeEntries: correctionHeadTreeResponse && correctionHeadTreeResponse.data && correctionHeadTreeResponse.data.tree,
+        });
+        regressionRepair.parent_receipt_outcome = currentRepairReceipt.outcome;
+      } else {
+        const receiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const receiptData = receiptResponse && receiptResponse.data;
+        const receipt = receiptData && !Array.isArray(receiptData) && receiptData.content
+          ? JSON.parse(Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+          : null;
+        foundationAuthorization.validateRegressionRepairReceipt(receipt);
+        const repairPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: receipt.cells[0].pull_request});
+        const repairPull = repairPullResponse && repairPullResponse.data;
+        const repairCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.merge_commit_sha});
+        const repairCommit = repairCommitResponse && repairCommitResponse.data;
+        const repairHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.head && repairPull.head.sha});
+        const repairHeadCommit = repairHeadCommitResponse && repairHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const repairCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.REGRESSION_REPAIR_BASE_SHA, head: repairPull && repairPull.head && repairPull.head.sha});
+        const repairHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: repairHeadCommit && repairHeadCommit.commit && repairHeadCommit.commit.tree && repairHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateRegressionRepair({
+          receipt,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseCommit: currentBaseCommit,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          repairPull,
+          repairCommit,
+          repairCompare: repairCompareResponse && repairCompareResponse.data,
+          repairTreeEntries: repairHeadTreeResponse && repairHeadTreeResponse.data && repairHeadTreeResponse.data.tree,
+        });
+      }
+    }
+    const manifestResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
+    const manifestData = manifestResponse && manifestResponse.data;
+    const manifestBytes = manifestData && !Array.isArray(manifestData) && manifestData.content ? Buffer.from(manifestData.content.replace(/\s/g, ''), 'base64') : null;
+    const candidateCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: policy.candidate.head_sha});
+    const candidateTreeSHA = candidateCommitResponse && candidateCommitResponse.data && candidateCommitResponse.data.commit && candidateCommitResponse.data.commit.tree && candidateCommitResponse.data.commit.tree.sha;
+    const treeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: candidateTreeSHA, recursive: '1'});
+    const candidateCompare = candidateCompareResponse && candidateCompareResponse.data;
+    const authorizationCompare = authorizationCompareResponse && authorizationCompareResponse.data;
+    const candidateDiff = candidateDiffResponse && candidateDiffResponse.data;
+    if (!candidateDiff || !Array.isArray(candidateDiff.files) || !treeResponse || !treeResponse.data || !Array.isArray(treeResponse.data.tree)) {
+      throw new Error('candidate diff or tree attestation is unavailable');
+    }
+    return foundationAuthorization.validateCandidateEvidence({
+      policy,
+      candidatePull: pull,
+      authorizationPull,
+      authorizationCommit,
+      candidateCompare,
+      authorizationCompare,
+      baseCommit,
+      manifestBytes,
+      changedFiles: candidateDiff.files,
+      treeEntries: treeResponse.data.tree,
+      regressionRepair,
+    });
+  } catch (error) {
+    return {
+      decision: 'FAIL_CLOSED',
+      code: FOUNDATION_AUTHORIZATION_CODE,
+      reason: error && error.message ? error.message : String(error),
+    };
+  }
 }
 
 function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef, eventRef, workflowSha, runtimeSha, result, kernelBeforeDigest, kernelAfterDigest, liveBefore, liveAfter, checkName}) {
@@ -690,11 +955,24 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
   }
   const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName: expectedCheckName});
   const featureRoute = routeName === 'feature_dev';
+  const foundationRoute = routeName === foundationBootstrap.FOUNDATION_ROUTE;
   if (featureRoute && expectedCheckName !== 'CI guardian shadow') {
     return {...result, decision: 'FAIL_CLOSED', code: CHECK_IDENTITY_CODE, reason: 'feature route must emit the shadow guardian check'};
   }
   if (featureRoute && (route.base_sha !== workflowSha || route.base_sha !== liveBefore.refs.dev_sha || liveBefore.refs.dev_sha !== liveAfter.refs.dev_sha)) {
     return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base, workflow, and live dev SHAs are not identical'};
+  }
+  if (foundationRoute && (expectedCheckName !== 'CI guardian shadow' || route.base_ref !== 'dev' || !foundationBootstrap.exactIdentity(pull))) {
+    return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route identity is not exact'};
+  }
+  if (foundationRoute && result.decision !== 'PASS') {
+    return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route was not explicitly authorized'};
+  }
+  if (foundationRoute && result.reason !== foundationBootstrap.FOUNDATION_OVERRIDE_MARKER) {
+    return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route lacks the explicit one-time override marker'};
+  }
+  if (result.decision === 'AUTHORIZATION_REQUIRED') {
+    return {...result, decision: 'FAIL_CLOSED', code: FOUNDATION_AUTHORIZATION_CODE, reason: 'protected-path authorization was not dispatched before Guardian classification'};
   }
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
     return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
@@ -708,14 +986,20 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
     }
     return {...result, decision: 'PASS', code: null, reason: 'exact dev-to-main kernel propagation', kernelBeforeDigest, kernelAfterDigest};
   }
+  const digestBoundResult = {
+    ...result,
+    kernelBeforeDigest: kernelBeforeDigest === undefined ? (result.kernelBeforeDigest || null) : kernelBeforeDigest,
+    kernelAfterDigest: kernelAfterDigest === undefined ? (result.kernelAfterDigest || null) : kernelAfterDigest,
+  };
   if (result.decision === 'PASS') {
     const activation = defaultBranchDecision(defaultBranch, eventRef);
     if (activation.decision !== 'PASS') {
-      return {...result, ...activation};
+      return {...digestBoundResult, ...activation};
     }
     if (workflowRef !== expectedWorkflowRef(repository) || runtimeSha !== workflowSha || !validSHA(workflowSha) || !validSHA(runtimeSha)) {
-      return {...result, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
+      return {...digestBoundResult, decision: 'FAIL_CLOSED', code: DEFAULT_BRANCH_CODE, reason: 'runtime and default workflow identities are not exactly bound'};
     }
+    return digestBoundResult;
   }
   return result;
 }
@@ -760,6 +1044,8 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     observer_environment_snapshot: observerEnvironmentSnapshot,
     observer_environment_digest: observerEnvironmentSnapshot && observerEnvironmentSnapshot.digest_sha256 ? observerEnvironmentSnapshot.digest_sha256 : null,
     installation_repository_scope: installationRepositoryScope,
+    foundation_bootstrap: result && result.foundationBootstrap ? result.foundationBootstrap : null,
+    foundation_authorization: result && result.foundationAuthorization ? result.foundationAuthorization : null,
     head_binding_status: result && result.decision === 'PASS' ? HEAD_BINDING_VERIFIED : HEAD_BINDING_STATUS,
     route,
     check_name: checkName || checkNameForRoute(route),
@@ -823,13 +1109,40 @@ function validateExpectedArtifactTuple(manifest, expected) {
   }
 }
 
+function exactJsonArray(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function foundationArtifactScopeIsExact(manifest) {
+  const foundation = manifest && manifest.foundation_bootstrap;
+  return Boolean(
+    foundation
+      && foundation.baseCommitParentSha === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
+      && foundation.preCorrectionBaseSnapshot === foundationBootstrap.PRE_CORRECTION_BASE_SNAPSHOT
+      && exactJsonArray(foundation.correctionChangedPaths, foundationBootstrap.CORRECTION_CHANGED_KERNEL_PATHS)
+      && exactJsonArray(foundation.correctionChangedAuthorizedKernelPaths, foundationBootstrap.CORRECTION_CHANGED_AUTHORIZED_KERNEL_PATHS)
+      && exactJsonArray(foundation.pullKernelPaths, manifest.kernel_paths)
+      && exactJsonArray(manifest.kernel_paths, foundationBootstrap.AUTHORIZED_KERNEL_PATHS)
+      && exactJsonArray(foundation.observedKernelPaths, foundationBootstrap.EXPECTED_LIVE_KERNEL_PATHS)
+      && exactJsonArray(foundation.alreadySatisfiedByBase, foundationBootstrap.REMAINING_BASE_SATISFIED_KERNEL_PATHS)
+      && foundationBootstrap.exactBaseDriftBlobSHAs(foundation.preCorrectionKernelBlobs)
+      && foundationBootstrap.exactBaseDriftBlobSHAs(foundation.baseKernelBlobs, foundationBootstrap.REMAINING_BASE_SATISFIED_KERNEL_PATHS),
+  );
+}
+
 function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
-  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main'].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
+  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main', foundationBootstrap.FOUNDATION_ROUTE].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
   validateExpectedArtifactTuple(manifest, expected);
   if (manifest.check_name !== checkNameForRoute(manifest.route)) {
     throw guardianFailure('guardian artifact check identity does not match route', CHECK_IDENTITY_CODE);
+  }
+  if (manifest.route !== foundationBootstrap.FOUNDATION_ROUTE && manifest.foundation_bootstrap !== null) {
+    throw guardianFailure('non-FOUNDATION guardian artifact must not carry a FOUNDATION receipt', FOUNDATION_BOOTSTRAP_CODE);
+  }
+  if (manifest.route !== 'feature_dev' && manifest.foundation_authorization !== null) {
+    throw guardianFailure('non-feature guardian artifact must not carry a FOUNDATION authorization receipt', FOUNDATION_AUTHORIZATION_CODE);
   }
   if (manifest.route === 'promotion_main') {
     if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
@@ -891,18 +1204,38 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     }
     const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha;
     const featureRoute = manifest.base_ref === 'dev' && manifest.head_ref.startsWith('agent/');
-    if (!featureRoute && !trustedPromotion) {
+    const foundationRoute = manifest.route === foundationBootstrap.FOUNDATION_ROUTE;
+    const authorizedFoundationFeature = featureRoute && manifest.foundation_authorization !== null;
+    if (!featureRoute && !trustedPromotion && !foundationRoute) {
       throw guardianFailure('guardian artifact PASS route is neither an agent feature nor exact dev-to-main promotion');
     }
     if (featureRoute && manifest.base_sha !== manifest.workflow_sha) {
       throw guardianFailure('guardian artifact PASS feature base SHA is not the exact workflow SHA');
     }
-    if (manifest.kernel_paths.length > 0 && (!trustedPromotion || manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)) {
+    if (foundationRoute && (!foundationBootstrap.foundationArtifactIdentity(manifest) || manifest.check_name !== 'CI guardian shadow' || manifest.reason !== foundationBootstrap.FOUNDATION_OVERRIDE_MARKER || !manifest.foundation_bootstrap || manifest.foundation_bootstrap.decision !== 'FOUNDATION' || manifest.foundation_bootstrap.consumed !== false || JSON.stringify(manifest.foundation_bootstrap.authorization) !== JSON.stringify(foundationBootstrap.FOUNDATION_BOOTSTRAP) || !foundationArtifactScopeIsExact(manifest))) {
+      throw guardianFailure('guardian artifact FOUNDATION identity or receipt is not exact', FOUNDATION_BOOTSTRAP_CODE);
+    }
+    if (authorizedFoundationFeature) {
+      const receipt = manifest.foundation_authorization;
+      if (receipt.schema === foundationAuthorization.GUARDIAN_DISPATCH_SCHEMA) {
+        try {
+          foundationAuthorization.validateGuardianDispatchAuthorization(receipt);
+        } catch (error) {
+          throw guardianFailure(`guardian Foundation dispatch authorization receipt is not exact: ${error.message || error}`, FOUNDATION_AUTHORIZATION_CODE);
+        }
+      } else if (receipt.decision !== 'PASS' || receipt.reason !== foundationAuthorization.FOUNDATION_OVERRIDE_MARKER || receipt.candidate_pull_request !== foundationAuthorization.CANDIDATE_PULL_REQUEST || receipt.candidate_branch !== foundationAuthorization.CANDIDATE_BRANCH || !validSHA(receipt.candidate_head_sha) || !Number.isInteger(receipt.authorization_pull_request) || receipt.authorization_pull_request < 1 || !validSHA(receipt.authorization_merge_commit) || receipt.manifest_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.manifest_sha256) || receipt.changed_paths_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.changed_paths_sha256) || receipt.patch_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.patch_sha256_excluding_authorization_paths) || receipt.tree_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.tree_sha256_excluding_authorization_paths) || receipt.single_use !== true || receipt.consumed !== false || receipt.replay_decision !== 'REFUTED') {
+        throw guardianFailure('guardian FOUNDATION authorization receipt is not exact', FOUNDATION_AUTHORIZATION_CODE);
+      }
+    }
+    if (manifest.kernel_paths.length > 0 && ((!trustedPromotion && !foundationRoute && !authorizedFoundationFeature) || (!foundationRoute && !authorizedFoundationFeature && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)))) {
       throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
   }
   if (manifest.decision === 'PASS' && manifest.route === 'feature_dev' && (manifest.base_ref !== 'dev' || manifest.check_name !== 'CI guardian shadow' || manifest.base_sha !== manifest.workflow_sha || manifest.base_sha !== manifest.live_refs_before.dev_sha)) {
     throw guardianFailure('guardian feature route identity is not exact', LIVE_REF_CODE);
+  }
+  if (manifest.decision === 'PASS' && manifest.route === foundationBootstrap.FOUNDATION_ROUTE && (manifest.base_ref !== 'dev' || manifest.check_name !== 'CI guardian shadow' || !foundationBootstrap.foundationArtifactIdentity(manifest) || manifest.live_refs_before.main_sha !== foundationBootstrap.FOUNDATION_BOOTSTRAP.sourceMainSha || manifest.live_refs_after.main_sha !== foundationBootstrap.FOUNDATION_BOOTSTRAP.sourceMainSha || manifest.live_refs_before.dev_sha !== manifest.base_sha || manifest.live_refs_after.dev_sha !== manifest.base_sha)) {
+    throw guardianFailure('guardian FOUNDATION live topology is not exact', FOUNDATION_BOOTSTRAP_CODE);
   }
   if (manifest.decision === 'PASS' && manifest.route === 'promotion_main') {
     if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || manifest.head_ref !== 'dev' || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.head_sha || manifest.live_refs_after.dev_sha !== manifest.head_sha || !validPromotionTopology({refs: manifest.live_refs_before, topology: manifest.topology}) || !validPromotionTopology({refs: manifest.live_refs_after, topology: manifest.topology}) || manifest.branch_protection.read_status !== 'verified' || manifest.branch_protection.branch !== 'main' || manifest.branch_protection.base_sha !== manifest.base_sha || manifest.branch_protection.head_sha !== manifest.head_sha || manifest.branch_protection.workflow_sha !== manifest.workflow_sha || manifest.branch_protection.run_id !== manifest.run_id || manifest.branch_protection.run_attempt !== manifest.run_attempt || manifest.dev_branch_protection.read_status !== 'verified' || manifest.dev_branch_protection.branch !== 'dev' || manifest.dev_branch_protection.base_sha !== manifest.base_sha || manifest.dev_branch_protection.head_sha !== manifest.head_sha || manifest.dev_branch_protection.workflow_sha !== manifest.workflow_sha || manifest.dev_branch_protection.run_id !== manifest.run_id || manifest.dev_branch_protection.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.read_status !== 'verified' || manifest.observer_environment_snapshot.run_id !== manifest.run_id || manifest.observer_environment_snapshot.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.workflow_sha !== manifest.workflow_sha) {
@@ -935,6 +1268,10 @@ module.exports = {
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
   ROOT_FAILURE_CODE,
+  FOUNDATION_BOOTSTRAP_CODE,
+  FOUNDATION_AUTHORIZATION_CODE,
+  FOUNDATION_BOOTSTRAP: foundationBootstrap.FOUNDATION_BOOTSTRAP,
+  FOUNDATION_ROUTE: foundationBootstrap.FOUNDATION_ROUTE,
   readLiveTopology,
   digestBranchProtection,
   digestGuardianEnvironment,
@@ -954,6 +1291,7 @@ module.exports = {
   routeForPull,
   checkNameForRoute,
   guardianFailure,
+  validateKernelDigestAttestation,
   buildGuardianArtifact,
   classifyGuardianDecision,
   defaultBranchDecision,
@@ -967,4 +1305,6 @@ module.exports = {
   validateGuardianPullRequest,
   validatePromotionPullRequestState,
   trustedDevPromotion,
+  foundationBootstrapDecision: foundationBootstrap.foundationBootstrapDecision,
+  observeFoundationAuthorization,
 };

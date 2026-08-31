@@ -24,6 +24,7 @@ type Indicator struct {
 	ApplicabilityReason ApplicabilityReason `json:"applicability_reason"`
 	Blocking            bool                `json:"blocking"`
 	Satisfied           bool                `json:"satisfied"`
+	Role                IndicatorRole       `json:"role,omitempty"`
 	Proof               ProofChoice         `json:"proof_choice"`
 	Producer            string              `json:"producer"`
 	Consumer            string              `json:"consumer"`

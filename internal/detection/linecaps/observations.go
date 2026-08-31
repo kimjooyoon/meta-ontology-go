@@ -2,7 +2,7 @@ package linecaps
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
-func directoryMetricObservations(directory DirectoryMetric, workflowDiscoveryRoot bool) []sourcepolicy.Observation {
+func directoryMetricObservations(directory DirectoryMetric, workflowDiscoveryRoot bool, workflowDiscoveryDetail string) []sourcepolicy.Observation {
 	kinds := 0
 	if directory.DirectFiles > 0 {
 		kinds++
@@ -26,5 +26,6 @@ func directoryMetricObservations(directory DirectoryMetric, workflowDiscoveryRoo
 			}
 		}
 	}
+	observations[4].Detail = workflowDiscoveryDetail
 	return observations
 }

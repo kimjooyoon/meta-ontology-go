@@ -1,13 +1,22 @@
 name: Metric counterfactual conformance
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [dev]
     paths:
       - '.github/agent-scope-table.md'
       - '.github/ci-governance.json'
       - '.github/workflows/metric-counterfactual.yml'
+      - '.github/workflows/transformation-effect.yml'
+      - 'cmd/guarded-promotion-witness/**'
+      - 'cmd/language-readiness-witness/**'
+      - 'cmd/repository-topology-witness/**'
+      - 'docs/language/repository-topology-use-case.md'
+      - 'examples/meta-binding-coverage/main.gooo'
       - 'internal/detection/linecaps/**'
+      - 'internal/meta/languageconcept/**'
+      - 'internal/meta/languagereadiness/**'
       - 'internal/meta/metriccounterfactual/**'
       - 'internal/meta/metriccounterfactualio/**'
       - 'internal/meta/metriccounterfactualverify/**'
@@ -22,26 +31,22 @@ on:
       - 'scripts/metric-meta-program/**'
       - 'scripts/metric-strategy/**'
       - 'examples/metric-meta-program/**'
+      - 'examples/repository-topology-use-case/**'
+      - 'examples/root-readme-indicator/main.gooo'
+      - 'internal/meta/repositorytopology/**'
+      - 'internal/verify/scope_repository_topology_usecase.go'
   push:
     branches: [dev, main]
     paths:
-      - '.github/workflows/metric-counterfactual.yml'
-      - 'internal/detection/linecaps/**'
-      - 'internal/meta/metriccounterfactual/**'
-      - 'internal/meta/metriccounterfactualio/**'
-      - 'internal/meta/metriccounterfactualverify/**'
-      - 'internal/meta/metricprogram/**'
-      - 'internal/meta/metricstrategy/**'
-      - 'internal/meta/metrictransition/**'
-      - 'internal/meta/sourcepolicy/**'
-      - 'scripts/line-metrics/**'
-      - 'scripts/metric-counterfactual/**'
-      - 'scripts/metric-intervention/**'
-      - 'scripts/metric-meta-program/**'
-      - 'scripts/metric-strategy/**'
-      - 'examples/metric-meta-program/**'
-
+      - '**'
+      - '.github/workflows/transformation-effect.yml'
+      - 'cmd/guarded-promotion-witness/**'
+      - 'cmd/language-readiness-witness/**'
+      - 'cmd/repository-topology-witness/**'
+      - 'internal/meta/languageconcept/**'
+      - 'internal/meta/languagereadiness/**'
 permissions:
+  actions: read
   contents: read
 
 jobs:
@@ -54,9 +59,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Generate, replay, and independently constrain the counterfactual
         shell: bash
         run: |
@@ -109,6 +114,86 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  repository-topology-use-case:
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact repository subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Produce bound metrics and audience-specific topology views
+        shell: bash
+        env:
+          METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/repository-topology"
+          mkdir -p "$work/first" "$work/replay" "$work/negative"
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$GITHUB_WORKSPACE" -json > "$work/source-raw.json"
+          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$work/source-raw.json" -bound-metrics "$work/source.json" -report "$work/binding.json" -check
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -source-metrics "$work/source.json"
+            -root-ontology examples/root-readme-indicator/main.gooo
+            -binding-ontology examples/meta-binding-coverage/main.gooo
+            -repository "$GITHUB_REPOSITORY"
+            -expected-head "$SUBJECT_SHA"
+          )
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/first/report.json"
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/replay/report.json"
+          cmp -s "$work/first/report.json" "$work/replay/report.json"
+          go run ./cmd/repository-topology-witness "${common[@]}" -output "$work/first/report.json" -check
+          jq -e '
+            .schema == "gooo/repository-topology-receipt/v1" and
+            .status == "PASS" and .decision == "PASS" and .resolution == "EXACT" and
+            .summary.coordinates.satisfied == 10 and .summary.coordinates.total == 10 and
+            .summary.coordinates.basis_points == 10000 and
+            .summary.rows.files_exact == .summary.rows.files_observed and
+            .summary.rows.directories_exact == .summary.rows.directories_observed and
+            .summary.root.topology_exemptions == 2 and .summary.root.readme_exemptions == 1 and
+            .summary.meta.bound_indicators == .summary.meta.indicators and
+            .summary.meta.binding_witnesses == 1 and .summary.meta.unknown_decisions == 0 and
+            ([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and
+            ([.indicators[] | select(.class == "DRIVER")] | length) == 5 and
+            ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 4 and
+            (.views[] | select(.audience == "READER") | .satisfied == 4 and .total == 4) and
+            (.views[] | select(.audience == "IMPLEMENTER") | .satisfied == 7 and .total == 7) and
+            (.views[] | select(.audience == "GOVERNOR") | .satisfied == 10 and .total == 10) and
+            .repository_workspace_writes == 0 and .mutation_authority == false and .replay_verified == true
+          ' "$work/first/report.json"
+          known_fail_closed="$(jq '[.meta.indicators[] | select(.decision == "FAIL_CLOSED")] | length' "$work/source.json")"
+          jq -e --argjson expected "$known_fail_closed" '.summary.meta.known_fail_closed == $expected' "$work/first/report.json"
+          jq '(.directories[] | select(.path == ".") | .recursive_files) += 1' "$work/source.json" > "$work/negative/count.json"
+          jq '(.meta.indicators[0].applicability) = "UNKNOWN"' "$work/source.json" > "$work/negative/unknown.json"
+          for case in count unknown; do
+            changed=("${common[@]}")
+            changed[3]="$work/negative/$case.json"
+            go run ./cmd/repository-topology-witness "${changed[@]}" -output "$work/negative/$case-report.json"
+          done
+          go run ./cmd/repository-topology-witness "${common[@]}" -expected-head UNKNOWN -output "$work/negative/head-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY"' "$work/negative/count-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/unknown-report.json"
+          jq -e '.status == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION"' "$work/negative/head-report.json"
+          jq -r '"### Repository topology receipt\n- decision: \(.decision) / \(.resolution)\n- READER: \(.views[0].satisfied)/\(.views[0].total)\n- IMPLEMENTER: \(.views[1].satisfied)/\(.views[1].total)\n- GOVERNOR: \(.views[2].satisfied)/\(.views[2].total)\n- files/directories: \(.summary.rows.files_observed)/\(.summary.rows.directories_observed)\n- Go: \(.summary.languages.go_files) files, \(.summary.languages.go_lines) lines\n- Gooo: \(.summary.languages.gooo_files) files, \(.summary.languages.gooo_lines) lines\n- known fail-closed source indicators: \(.summary.meta.known_fail_closed)\n- root exceptions: topology \(.summary.root.topology_exemptions), README \(.summary.root.readme_exemptions)\n- digest: \(.digest)"' "$work/first/report.json" >> "$GITHUB_STEP_SUMMARY"
+          test -z "$(git status --porcelain)"
+      - name: Upload exact-head repository topology receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: repository-topology-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/repository-topology
+          if-no-files-found: error
+          retention-days: 30
+
   intervention:
     runs-on: ubuntu-latest
     env:
@@ -118,9 +203,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Compile the plan into dimensions and constrain every residual
         env:
           METRICS_COMMIT_SHA: ${{ env.SUBJECT_SHA }}
@@ -188,9 +273,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact intervention evidence
         uses: actions/download-artifact@v7
         with:
@@ -221,6 +306,15 @@ jobs:
             -mode verify \
             -plan "$first/plan.json" \
             -output "$first/verification.json"
+          go run ./scripts/metric-strategy \
+            -mode proposal-contract \
+            -plan "$first/plan.json" \
+            -replay-plan "$replay/plan.json" \
+            -strategy-verification "$first/verification.json" \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$SUBJECT_SHA" \
+            -output "$first/proposal-contract.json"
+          sha256sum "$first/proposal-contract.json" > "$first/proposal-contract.json.sha256"
           jq -e '
             .schema == "gooo/metric-meta-strategy/v1" and
             .execution_policy == "READ_ONLY_ARTIFACT_SYNTHESIS" and
@@ -231,8 +325,11 @@ jobs:
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
             .policy.choices == ["FOUNDATION", "COHERENCE", "REGRESSION"] and
             ([.candidates[].proof_choice] == ["FOUNDATION", "COHERENCE", "REGRESSION"]) and
-            (.bindings | length) == 15 and
+            (.bindings | length) == 31 and
             all(.bindings[]; .status == "SATISFIED" and (.meta_operation | length) > 0) and
+            ([.bindings[] | select(.indicator_id | startswith("gooo.strategy.concept."))] | length) == 7 and
+            ([.bindings[] | select(.indicator_id | startswith("gooo.concept.operation."))] | length) == 9 and
+            all(.bindings[]; if ((.indicator_id | startswith("gooo.strategy.concept.")) or (.indicator_id | startswith("gooo.concept.operation."))) then .expected == .actual else true end) and
             .selection.proof_choice == "REGRESSION" and
             .selection.decision == "HOLD_FIXED_POINT" and
             .selection.meta_operation == "terminate-at-fixed-point"
@@ -240,12 +337,29 @@ jobs:
           jq -e '
             .schema == "gooo/metric-meta-strategy-verification/v1" and
             .status == "VERIFIED" and
-            .binding_count == 15 and
+            .binding_count == 31 and
             .candidate_count == 3 and
             .selected_proof_choice == "REGRESSION" and
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$first/verification.json"
+          jq -e '
+            .schema == "gooo/autonomous-change-proposal-contract/v1" and
+            .decision == "PASS" and
+            .reason == "CHANGE_PROPOSAL_CONTRACT_READY" and
+            .strategy_decision == "HOLD_FIXED_POINT" and
+            .proposal_decision == "PLAN" and
+            .selected_actions == 2 and
+            .summary.satisfied == 8 and
+            .summary.total == 8 and
+            .summary.not_satisfied == 0 and
+            .summary.unresolved == 0 and
+            .summary.readiness_bps == 10000 and
+            ([.coordinates[].status] | all(. == "SATISFIED")) and
+            ([.proofs[] | select(.passed == true)] | length) == 3 and
+            .repository_writes == 0 and
+            .promotion_authorized == false
+          ' "$first/proposal-contract.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic metric strategy evidence
         uses: actions/upload-artifact@v6
@@ -254,6 +368,331 @@ jobs:
           path: ${{ runner.temp }}/metric-strategy/first
           if-no-files-found: error
           retention-days: 30
+
+  proposal-continuity:
+    needs: strategy
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Verify predecessor continuity independently
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/proposal-continuity"
+          mkdir -p "$out"
+          go run ./scripts/metric-strategy \
+            -mode proposal-predecessor \
+            -repository "$GITHUB_REPOSITORY" \
+            -subject-sha "$SUBJECT_SHA" \
+            -predecessor-sha "$PREDECESSOR_SHA" \
+            -output "$out/selection.json" \
+            -selected-proposal "$out/contract.json"
+          jq -e --arg predecessor "$PREDECESSOR_SHA" '
+            .schema == "gooo/autonomous-change-proposal-predecessor-selection/v2" and
+            .decision == "SELECTED" and
+            .predecessor_sha == $predecessor and
+            .selected.head_sha == $predecessor and
+            .selected.synthesis_job_name == "strategy" and
+            .selected.synthesis_job_status == "completed" and
+            .selected.synthesis_job_conclusion == "success" and
+            .summary.exact_jobs == 1 and
+            .summary.valid_candidates == 1 and
+            .summary.unresolved_candidates == 0 and
+            .summary.selection_bps == 10000 and
+            .summary.proofs_passed == 5 and
+            .summary.proofs_total == 5 and
+            .summary.repository_writes == 0
+          ' "$out/selection.json"
+          jq -e --arg predecessor "$PREDECESSOR_SHA" '
+            .subject_sha == $predecessor and
+            .decision == "PASS" and
+            .summary.satisfied == 8 and
+            .summary.total == 8 and
+            .summary.unresolved == 0 and
+            .repository_writes == 0 and
+            .promotion_authorized == false
+          ' "$out/contract.json"
+      - name: Upload proposal continuity evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: proposal-continuity-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/proposal-continuity
+          if-no-files-found: warn
+          retention-days: 30
+
+  proposal-promotion-evidence:
+    needs: strategy
+    runs-on: ubuntu-24.04
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact proposal subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Assert causal workflows use setup-go v7
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -En '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v[0-6]([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
+            echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
+      - name: Produce and replay proposal promotion evidence
+        id: proposal-predecessor
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          is_known_proposal_failure_reason() {
+            case "$1" in
+              PROPOSAL_PREDECESSOR_NOT_FOUND|PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN|\
+              PROPOSAL_PREDECESSOR_AMBIGUOUS|PROPOSAL_SYNTHESIS_JOB_CARDINALITY|\
+              PROPOSAL_RUN_PAGINATION_INCOMPLETE|PROPOSAL_JOB_PAGINATION_INCOMPLETE|\
+              PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE|PROPOSAL_API_UNAVAILABLE|\
+              PROPOSAL_API_PERMISSION_DENIED|PROPOSAL_RESPONSE_MALFORMED|\
+              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
+          for suffix in a b; do
+            observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            if [[ "$suffix" == "a" ]]; then
+              observation_args=(--observation-capture "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            fi
+            go run ./cmd/language-readiness-witness/proposal-promotion \
+              --root "$GITHUB_WORKSPACE" \
+              --repository "$GITHUB_REPOSITORY" \
+              --current-head "$HEAD_SHA" \
+              --predecessor-sha "$predecessor_sha" \
+              "${observation_args[@]}" \
+              --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-b.json"
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --observation-cache "$RUNNER_TEMP/language-readiness-proposal-observation.json" \
+            --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+          if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
+            proposal_reason="$(jq -r '.reason // empty' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+            if ! is_known_proposal_failure_reason "$proposal_reason"; then
+              echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
+              exit 1
+            fi
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+              .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+              .repository == $repository and .current_head_sha == $head and .predecessor_sha == $predecessor and
+              .conformance == "PASS" and .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
+              .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
+              .promotion_authority == false and .readiness_delta == null and
+              (.reason as $reason |
+                ["PROPOSAL_PREDECESSOR_NOT_FOUND", "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN",
+                "PROPOSAL_PREDECESSOR_AMBIGUOUS", "PROPOSAL_SYNTHESIS_JOB_CARDINALITY",
+                "PROPOSAL_RUN_PAGINATION_INCOMPLETE", "PROPOSAL_JOB_PAGINATION_INCOMPLETE",
+                "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE", "PROPOSAL_API_UNAVAILABLE",
+                "PROPOSAL_API_PERMISSION_DENIED", "PROPOSAL_RESPONSE_MALFORMED",
+                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE", "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+            echo "### Proposal predecessor conformance" >> "$GITHUB_STEP_SUMMARY"
+            echo "- conformance: PASS" >> "$GITHUB_STEP_SUMMARY"
+            echo "- proposal readiness decision: FAIL_CLOSED" >> "$GITHUB_STEP_SUMMARY"
+            echo "- resolution: LOWER_RESOLUTION" >> "$GITHUB_STEP_SUMMARY"
+            echo "- reason: $proposal_reason" >> "$GITHUB_STEP_SUMMARY"
+            echo "- promotion authority: false" >> "$GITHUB_STEP_SUMMARY"
+            echo "- readiness delta: UNKNOWN" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+              .schema == "gooo/autonomous-change-proposal-promotion/v2" and
+              .repository == $repository and .current_head_sha == $head and .evidence_head_sha == $predecessor and
+              .decision == "PASS" and .repository_mutation_authorized == false
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "FAIL_CLOSED: malformed proposal predecessor receipt" >&2
+            exit 1
+          fi
+      - name: Verify proposal observation evidence binding
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cache="$RUNNER_TEMP/language-readiness-proposal-observation.json"
+          receipt="$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          test -s "$cache"
+          test -s "$receipt"
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --observation-cache "$cache" \
+            --check "$receipt"
+          cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"
+          cache_digest="sha256:$(sha256sum "$cache" | awk '{print $1}')"
+          response_total="$(jq -r '.responses | length' "$cache")"
+          response_consumed="$(jq -r '.observation_evidence.response_consumed' "$receipt")"
+          jq -e --argjson responses "$response_total" '
+            .schema == "gooo/language-readiness-api-observation/v1" and
+            (.responses | type) == "array" and (.responses | length) == $responses and
+            (.responses | length) > 0 and
+            (has("decision") | not) and (has("selection") | not) and (has("promotion") | not)
+          ' "$cache"
+          jq -e --arg logical "language-readiness-proposal-observation.json" \
+            --arg role "proposal-predecessor-raw-observation" \
+            --argjson bytes "$cache_bytes" --arg digest "$cache_digest" \
+            --argjson responses "$response_total" '
+            .observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
+            .observation_evidence.cache_path == $logical and
+            .observation_evidence.cache_role == $role and
+            .observation_evidence.cache_bytes == $bytes and
+            .observation_evidence.cache_digest == $digest and
+            .observation_evidence.response_total == $responses and
+            .observation_evidence.response_consumed == $responses
+          ' "$receipt"
+          evidence_bundle="$RUNNER_TEMP/language-readiness-proposal-evidence"
+          mkdir -p "$evidence_bundle"
+          cp "$cache" "$evidence_bundle/language-readiness-proposal-observation.json"
+          cp "$receipt" "$evidence_bundle/proposal-receipt.json"
+          echo "### Proposal observation binding" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache bytes: $cache_bytes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache digest: $cache_digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "- raw response total: $response_total" >> "$GITHUB_STEP_SUMMARY"
+          echo "- responses consumed at record/next boundary: $response_consumed/$response_total" >> "$GITHUB_STEP_SUMMARY"
+          echo "- capture/replay reconstruction: 2/2" >> "$GITHUB_STEP_SUMMARY"
+      - name: Assert blocked proposal predecessor remains non-authorizing
+        if: steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode == 'BLOCKED'
+        run: |
+          set -euo pipefail
+          test "${{ steps.proposal-predecessor.outputs.conformance-exit-code }}" = "0"
+          jq -e '
+            .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+            .resolution == "LOWER_RESOLUTION" and .promotion_authority == false and
+            .readiness_delta == null
+          ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          echo "proposal predecessor BLOCKED conformance exited 0; downstream projection and promotion are skipped"
+      - name: Project v2 evidence to the unchanged v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          for suffix in a b; do
+            go run ./cmd/language-readiness-witness/proposal-compat \
+              --root "$GITHUB_WORKSPACE" \
+              --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-repository "$GITHUB_REPOSITORY" \
+              --expected-sha "$HEAD_SHA" \
+              --expected-predecessor-sha "$predecessor_sha" \
+              --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
+              --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
+          done
+          cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-b.json"
+          cmp "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            "$RUNNER_TEMP/language-readiness-proposal-compat-b.json"
+          go run ./cmd/language-readiness-witness/proposal-compat \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-repository "$GITHUB_REPOSITORY" \
+            --expected-sha "$HEAD_SHA" \
+            --expected-predecessor-sha "$predecessor_sha" \
+            --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
+            --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
+            --check
+      - name: Upload v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload v2 proposal evidence
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload compatibility receipt
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload proposal predecessor raw observation cache
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-observation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload proposal predecessor receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload bound proposal observation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-evidence
+          if-no-files-found: error
+          retention-days: 14
 
   program:
     needs: strategy
@@ -269,9 +708,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.SUBJECT_SHA }}
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact metric strategy evidence
         uses: actions/download-artifact@v7
         with:
@@ -317,8 +756,8 @@ jobs:
             .root_policy.counts_applicability == "OBSERVED" and
             .root_policy.topology_applicability == "NOT_APPLICABLE" and
             .root_policy.readme_requirement == "NOT_APPLICABLE" and
-            (.operations | length) == 8 and
-            (.bindings | length) == 15 and
+            (.operations | length) == 9 and
+            (.bindings | length) == 31 and
             ([.steps[].activity] == [
               "ObserveCounterfactualBoundary",
               "PreserveRepositoryWorkspace",
@@ -329,8 +768,8 @@ jobs:
           jq -e '
             .schema == "gooo/metric-meta-program-verification/v1" and
             .status == "VERIFIED" and
-            .operation_count == 8 and
-            .binding_count == 15 and
+            .operation_count == 9 and
+            .binding_count == 31 and
             .step_count == 4 and
             .repository_workspace_writes == false and
             .promotion_authorized == false
@@ -363,7 +802,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
       - name: Bind the declared Go 1.27 toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false

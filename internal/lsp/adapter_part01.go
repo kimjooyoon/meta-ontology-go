@@ -22,6 +22,9 @@ func adaptSyntaxResult(uri, source string, file *syntax.File, diagnostics syntax
 	return adaptSyntaxResultContext(context.Background(), uri, source, file, diagnostics)
 }
 func adaptSyntaxResultContext(ctx context.Context, uri, source string, file *syntax.File, diagnostics syntax.Diagnostics) (ParseResult, error) {
+	return adaptSyntaxResultContextWithSupport(ctx, uri, source, file, diagnostics, syntax.CurrentEntityFieldsSupport())
+}
+func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string, file *syntax.File, diagnostics syntax.Diagnostics, support syntax.EntityFieldsSupport) (ParseResult, error) {
 	result := ParseResult{File: file}
 	for _, diagnostic := range diagnostics.SortBySpan() {
 		mapped, err := syntaxDiagnostic(source, diagnostic)
@@ -35,7 +38,7 @@ func adaptSyntaxResultContext(ctx context.Context, uri, source string, file *syn
 	ids := make(map[loweredSymbolKey]string)
 	names := make(map[string]string)
 	if result.semanticChecked && !diagnostics.HasErrors() && file.Package != nil && file.Namespace != nil {
-		ir, err := bidir.LowerContext(ctx, canonicalSyntaxFile(file))
+		ir, err := bidir.LowerContextWithEntityFieldsSupport(ctx, canonicalSyntaxFile(file), support)
 		if err != nil {
 			if errors.Is(err, bidir.ErrLowerCanceled) {
 				return ParseResult{}, err

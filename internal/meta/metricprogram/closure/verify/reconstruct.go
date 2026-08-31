@@ -13,7 +13,7 @@ func reconstruct(in Input, program programDocument, verification verificationDoc
 		ProgramDigest: program.Digest, VerificationDigest: verification.Digest,
 		StrategyDigest: program.StrategyDigest, RegistryDigest: program.RegistryDigest,
 		SourceDigest: program.SourceDigest, SemanticDigest: program.SemanticDigest,
-		BindingCount: 15, OperationCount: 8, StepCount: 4,
+		BindingCount: canonicalBindingCount, OperationCount: 9, StepCount: 4,
 		Status: "VERIFIED", WriteEffect: "none",
 		RepositoryWorkspaceWrites: false, PromotionAuthorized: false,
 	}

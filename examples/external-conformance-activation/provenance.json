@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/external-conformance-activation-provenance/v1",
+  "predecessor_sha": "2104e3fcede21572951c266cd7b61fd38f386aef",
+  "eligibility_subject_sha": "0fa760bdcb9c90e386d85978bff1c6552e8b503a",
+  "artifacts": [
+    {"id": 9533711537, "run": 32763887778, "archive_digest": "sha256:b901dcc9827ee20c28fa268155bf0766347db08437c7d75bb7ee23c3b3e14eed", "capsule_digest": "sha256:b6d03b8905bc9d0ac2d1773d0b3dd273743244fa9366ed33bcb4e5d4c5e363ec", "semantic_digest": "sha256:9cf5725a2071f83fede528d2fc5bb45d3eaa0dd35bb43bc4622da64a7fe9ca42"},
+    {"id": 9533411143, "run": 32762969070, "archive_digest": "sha256:a147f4f4b124a927cb3e0679155af8b618e68088797dc9cd30bb250631456e5c", "capsule_digest": "sha256:f5e2d8f35c3f052adad9edc8e05612a3e0aa13f1c336e8e9bc86dafb3b675c10", "semantic_digest": "sha256:2fc3ccd5b9022d947dcb92281b13ca8363ea98106ca3a488319e5d02d091d888"},
+    {"id": 474, "source": "github-pull-request", "capsule_digest": "sha256:2972619d7bc2d42fc24e5b6557dfb781e3c84aa836e0dbe9b6c9f4e26be13295"}
+  ]
+}

@@ -11,6 +11,7 @@ func Select(input Input) (Report, error) {
 		PredecessorSHA: input.PredecessorSHA, Summary: summary}
 	if input.Foundation != nil {
 		report.ProofChoice, report.Foundation = FoundationProofChoice, input.Foundation
+		report.Resolution, report.NextOperation = ResolutionInvariant, input.Foundation.NextOperation
 		if err := validateFoundation(input); err != nil {
 			report.Decision, report.Reason = DecisionRefuted, ReasonFoundationRefuted
 		} else {
@@ -20,13 +21,7 @@ func Select(input Input) (Report, error) {
 		report.ReportDigest = digestJSON(report)
 		return report, nil
 	}
-	report.Decision, report.Reason = DecisionFailClosed, failureReason(summary)
-	if report.Reason == "" {
-		candidate := eligible[0]
-		report.Decision, report.Reason = DecisionSelected, ReasonSelected
-		report.Selected = &Selection{ArtifactID: candidate.ArtifactID, RunID: candidate.RunID,
-			RunAttempt: candidate.RunAttempt, ReceiptDigest: candidate.ReceiptDigest}
-	}
+	decide(&report, eligible)
 	report.Indicators = indicators(report)
 	report.ReportDigest = digestJSON(report)
 	return report, nil

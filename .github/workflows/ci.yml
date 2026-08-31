@@ -21,7 +21,7 @@ permissions:
   # administration: read must not be added here.
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
   cancel-in-progress: true
 
 jobs:
@@ -56,11 +56,170 @@ jobs:
         run: |
           go list tool
           go build tool
-      - name: Require formatted Go
+      - name: Materialize exact Go format remediation evidence
+        if: ${{ always() }}
+        env:
+          EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          unformatted="$(gofmt -l .)"
-          if [ -n "$unformatted" ]; then
-            printf 'gofmt required:\n%s\n' "$unformatted"
+          set -euo pipefail
+          remediation_root="$RUNNER_TEMP/go-format-remediation"
+          paths="$remediation_root/gofmt-paths.txt"
+          patch_a="$remediation_root/gofmt.patch"
+          patch_b="$remediation_root/gofmt-replay.patch"
+          patch_a_fixed="$remediation_root/gofmt-fixed-point.patch"
+          receipt="$remediation_root/receipt.json"
+          source_before="$remediation_root/source-before.status"
+          source_after="$remediation_root/source-after.status"
+          mkdir -p "$remediation_root"
+          : > "$paths"
+          : > "$patch_a"
+          : > "$patch_b"
+          : > "$patch_a_fixed"
+          : > "$receipt"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_before"
+          gofmt -l . | sort > "$paths"
+          path_count="$(wc -l < "$paths" | tr -d '[:space:]')"
+          candidate_a="$(mktemp -d "$RUNNER_TEMP/go-format-candidate-a.XXXXXX")"
+          candidate_b="$(mktemp -d "$RUNNER_TEMP/go-format-candidate-b.XXXXXX")"
+
+          materialize_candidate() {
+            candidate="$1"
+            patch="$2"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git init --quiet "$candidate"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.email ci-format@example.invalid
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" config user.name ci-format-remediation
+            while IFS= read -r path; do
+              if [ -z "$path" ]; then
+                continue
+              fi
+              case "$path" in
+                /*|../*|*/../*|*/..)
+                  echo "unsafe gofmt path: $path" >&2
+                  return 1
+                  ;;
+              esac
+              mkdir -p "$candidate/$(dirname -- "$path")"
+              cp -- "$path" "$candidate/$path"
+            done < "$paths"
+            if [ "$path_count" -gt 0 ]; then
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" add -- .
+              env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" commit --quiet -m baseline
+              (
+                cd "$candidate"
+                while IFS= read -r path; do
+                  if [ -n "$path" ]; then
+                    gofmt -w "./$path"
+                  fi
+                done < "$paths"
+              )
+            fi
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git -C "$candidate" diff --binary -- . > "$patch"
+          }
+
+          materialize_candidate "$candidate_a" "$patch_a"
+          materialize_candidate "$candidate_b" "$patch_b"
+          (
+            cd "$candidate_a"
+            while IFS= read -r path; do
+              if [ -n "$path" ]; then
+                gofmt -w "./$path"
+              fi
+            done < "$paths"
+            env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git diff --binary -- .
+          ) > "$patch_a_fixed"
+          replay_equal=false
+          fixed_point=false
+          if cmp -s "$patch_a" "$patch_b"; then
+            replay_equal=true
+          fi
+          if cmp -s "$patch_a" "$patch_a_fixed"; then
+            fixed_point=true
+          fi
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$source_after"
+          source_repository_writes=0
+          if ! cmp -s "$source_before" "$source_after"; then
+            source_repository_writes=1
+          fi
+          paths_json="$(jq -Rsc 'split("\n") | if . == [""] then [] elif .[-1] == "" then .[:-1] else . end' < "$paths")"
+          patch_bytes="$(wc -c < "$patch_a" | tr -d '[:space:]')"
+          patch_sha256="sha256:$(sha256sum "$patch_a" | awk '{print $1}')"
+          replay_patch_sha256="sha256:$(sha256sum "$patch_b" | awk '{print $1}')"
+          jq -n \
+            --arg schema gooo/go-format-remediation/v1 \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            --arg toolchain go1.27.0 \
+            --arg go_version "$(go version)" \
+            --arg go_env_goversion "$(go env GOVERSION)" \
+            --argjson paths "$paths_json" \
+            --arg path_count "$path_count" \
+            --arg patch_sha256 "$patch_sha256" \
+            --arg replay_patch_sha256 "$replay_patch_sha256" \
+            --arg patch_bytes "$patch_bytes" \
+            --argjson replay_equal "$replay_equal" \
+            --argjson fixed_point "$fixed_point" \
+            --arg source_repository_writes "$source_repository_writes" \
+            --arg candidate_workspace_writes "$path_count" \
+            '{schema:$schema,head_sha:$head_sha,toolchain:$toolchain,go_version:$go_version,go_env_goversion:$go_env_goversion,sorted_paths:$paths,path_count:($path_count|tonumber),patch_sha256:$patch_sha256,replay_patch_sha256:$replay_patch_sha256,patch_bytes:($patch_bytes|tonumber),replay_equal:$replay_equal,fixed_point:$fixed_point,source_repository_writes:($source_repository_writes|tonumber),candidate_workspace_writes:($candidate_workspace_writes|tonumber)}' \
+            > "$receipt"
+          test -s "$receipt"
+          if [ "$path_count" -gt 0 ]; then
+            test -s "$patch_a"
+            test -s "$patch_b"
+            test -s "$patch_a_fixed"
+          else
+            test ! -s "$patch_a"
+            test ! -s "$patch_b"
+            test ! -s "$patch_a_fixed"
+          fi
+          test "$replay_equal" = true
+          test "$fixed_point" = true
+          test "$source_repository_writes" -eq 0
+          jq -e \
+            --arg schema gooo/go-format-remediation/v1 \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            --arg toolchain go1.27.0 \
+            --argjson paths "$paths_json" \
+            --arg path_count "$path_count" \
+            --arg patch_sha256 "$patch_sha256" \
+            --arg replay_patch_sha256 "$replay_patch_sha256" \
+            --arg patch_bytes "$patch_bytes" \
+            '.schema == $schema and .head_sha == $head_sha and .toolchain == $toolchain and .sorted_paths == $paths and .path_count == ($path_count|tonumber) and .patch_sha256 == $patch_sha256 and .replay_patch_sha256 == $replay_patch_sha256 and .patch_bytes == ($patch_bytes|tonumber) and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and .candidate_workspace_writes == ($path_count|tonumber)' \
+            "$receipt" > /dev/null
+          echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
+      - name: Upload Go format remediation artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ${{ runner.temp }}/go-format-remediation/gofmt-paths.txt
+            ${{ runner.temp }}/go-format-remediation/gofmt.patch
+            ${{ runner.temp }}/go-format-remediation/gofmt-replay.patch
+            ${{ runner.temp }}/go-format-remediation/gofmt-fixed-point.patch
+            ${{ runner.temp }}/go-format-remediation/receipt.json
+          if-no-files-found: error
+      - name: Require formatted Go
+        if: ${{ always() }}
+        env:
+          EXACT_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          remediation_root="$RUNNER_TEMP/go-format-remediation"
+          paths="$remediation_root/gofmt-paths.txt"
+          patch_a="$remediation_root/gofmt.patch"
+          patch_b="$remediation_root/gofmt-replay.patch"
+          patch_a_fixed="$remediation_root/gofmt-fixed-point.patch"
+          receipt="$remediation_root/receipt.json"
+          test -s "$receipt"
+          path_count="$(jq -r '.path_count' "$receipt")"
+          test "$path_count" -ge 0
+          jq -e \
+            --arg head_sha "$EXACT_HEAD_SHA" \
+            '.head_sha == $head_sha and .toolchain == "go1.27.0" and .replay_equal == true and .fixed_point == true and .source_repository_writes == 0 and (.path_count|type) == "number" and .path_count >= 0' \
+            "$receipt" > /dev/null
+          cmp -s "$patch_a" "$patch_b"
+          cmp -s "$patch_a" "$patch_a_fixed"
+          if [ "$path_count" -ne 0 ]; then
+            echo "gofmt required for $path_count paths"
             exit 1
           fi
 
@@ -261,6 +420,7 @@ jobs:
           cmp -s "$METRICS_DIR/ci-summary.json" "$METRICS_DIR/ci-summary-replay.json"
           cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -268,6 +428,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-binding coverage artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -275,6 +436,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload meta-actionability artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -282,6 +444,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory partition plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
@@ -289,6 +452,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload directory kind separation plan artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
@@ -296,6 +460,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement generation artifact
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -346,14 +511,12 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/ci-summary.json
           if-no-files-found: error
           retention-days: 14
-      - name: Check DAMP/DRY caps
+      - name: Validate source metric and meta evidence (caps are observations)
         if: github.event_name == 'pull_request'
         env:
-          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
-          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify --caps-only
-      - name: Check changed-file scope, Go size caps, and PR target
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
+      - name: Check changed-file scope and PR target
         if: github.event_name == 'pull_request'
         env:
           GOOO_SCOPE_FROM: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
@@ -368,19 +531,11 @@ jobs:
           GOOO_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
           GOOO_NON_ROUTE_RESULTS: "format=${{ needs.format.result }},vet=${{ needs.vet.result }},test=${{ needs.test.result }},race=${{ needs.race.result }},semantic=${{ needs.semantic.result }}"
         run: go run ./scripts/verify --skip-caps
-      - name: Check Go caps on protected push
+      - name: Validate source metric and meta evidence on protected push
         if: github.event_name == 'push'
         env:
-          # A rebase can make github.event.before unavailable to checkout. Push
-          # validation therefore keeps the local size caps while PR events run
-          # the complete changed-path scope and ownership check.
-          GOOO_SCOPE_FROM: ""
-          GOOO_SCOPE_TO: ""
-          GOOO_SCOPE_BRANCH: ${{ github.ref_name }}
-          GOOO_PR_HEAD: ""
-          GOOO_PR_BASE: ""
-          GOOO_STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
-        run: go run ./scripts/verify
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: bash ./scripts/verify/validate-source-observations.sh "$METRICS_DIR"
   evidence:
     name: CI evidence
     needs: [format, vet, test, race, semantic, policy]
@@ -406,10 +561,15 @@ jobs:
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
-      - name: Test artifact paginator contract
+      - name: Test CI proof selector contracts
         run: |
           node scripts/ci-proof/artifacts_test.js
           node scripts/ci-proof/route_test.js
+          node scripts/ci-proof/concurrency_test.js
+          node scripts/ci-proof/foundation_authorization_test.js
+          node scripts/ci-proof/guardian_test.js
+          node scripts/ci-proof/source_migration_v3_test.js
+          node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v8
         with:
@@ -518,10 +678,77 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Resolve CI concurrency lane
+        id: concurrency-lane
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CI_WORKFLOW: ${{ github.workflow }}
+          CI_CONCURRENCY_SCOPE: ${{ github.event.pull_request.number || github.ref }}
+        with:
+          script: |
+            const fs = require('fs');
+            const {buildConcurrencyReceipt} = require('./scripts/ci-proof/concurrency');
+            const report = buildConcurrencyReceipt(fs.readFileSync('.github/workflows/ci.yml', 'utf8'), {
+              workflow: process.env.CI_WORKFLOW,
+              scope: process.env.CI_CONCURRENCY_SCOPE,
+              run_id: Number(context.runId),
+              run_attempt: Number(process.env.CI_RUN_ATTEMPT || 1),
+            });
+            fs.writeFileSync('ci-concurrency-lane.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI concurrency lane')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['lane class', report.lane_class],
+                ['resolved group', report.resolved_group],
+                ['head preemption risk', String(report.summary.head_preemption_risk)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.execution_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+            }
+      - name: Resolve canonical evidence lineage
+        id: evidence-lineage
+        uses: actions/github-script@v8
+        env:
+          CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const {listWorkflowArtifacts, selectArtifactLineage} = require('./scripts/ci-proof/artifacts');
+            const rows = await listWorkflowArtifacts(page => github.rest.actions.listWorkflowRunArtifacts({owner: context.repo.owner, repo: context.repo.repo, run_id: context.runId, per_page: 100, page}));
+            const attempt = Number(process.env.CI_RUN_ATTEMPT || 1);
+            const report = selectArtifactLineage(rows, 'ci-evidence', context.runId, attempt);
+            const replay = selectArtifactLineage(rows.slice().reverse(), 'ci-evidence', context.runId, attempt);
+            if (report.report_digest !== replay.report_digest) throw new Error('artifact lineage replay digest mismatch');
+            fs.writeFileSync('ci-artifact-lineage.json', JSON.stringify(report, null, 2) + '\n');
+            await core.summary
+              .addHeading('CI artifact lineage')
+              .addTable([
+                [{data: 'indicator', header: true}, {data: 'value', header: true}],
+                ['decision', report.decision],
+                ['reason', report.reason],
+                ['current attempt', String(report.current_attempt)],
+                ['selected attempt', String(report.summary.selected_attempt)],
+                ['fallback distance', String(report.summary.fallback_distance_attempts)],
+                ['ambiguity', String(report.summary.ambiguous_candidates)],
+                ['repository writes', String(report.summary.repository_writes)],
+              ])
+              .write();
+            if (report.decision !== 'EXACT' || !report.exact_consumption_authorized) {
+              core.setFailed(`${report.decision}: ${report.reason}; next=${report.next_operation}`);
+              return;
+            }
+            core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
         uses: actions/download-artifact@v7
         with:
-          name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
         uses: actions/github-script@v8
@@ -878,6 +1105,8 @@ jobs:
             provenance-receipt.jsonl
             ci-jobs.json
             ci-proof-route.json
+            ci-concurrency-lane.json
+            ci-artifact-lineage.json
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
@@ -889,6 +1118,74 @@ jobs:
           path: foundation-promotion-evidence.json
           if-no-files-found: error
           retention-days: 30
+
+  foundation-authorization:
+    name: FOUNDATION authorization
+    needs: [proof]
+    if: ${{ always() && github.event_name == 'pull_request' && github.head_ref == 'agent/foundation-authorization-dev-sync-20260831' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact FOUNDATION authorization envelope
+        uses: actions/github-script@v8
+        env:
+          FOUNDATION_TOKEN: ${{ github.token }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const {execFileSync} = require('child_process');
+            const authorization = require('./scripts/ci-proof/foundation_authorization');
+            const policy = JSON.parse(fs.readFileSync('.github/foundation-authorization.json', 'utf8'));
+            authorization.validatePolicy(policy);
+            const currentPull = context.payload.pull_request;
+            const repository = context.payload.repository.full_name;
+            const livePullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number});
+            const livePull = livePullResponse.data;
+            if (livePull.state !== 'open' || livePull.merged === true || livePull.head.sha !== currentPull.head.sha || livePull.base.ref !== 'dev' || livePull.base.sha !== policy.candidate.base_sha || livePull.base.repo.full_name !== repository || livePull.head.ref !== authorization.AUTHORIZATION_BRANCH || livePull.head.repo.full_name !== repository || livePull.number !== policy.authorization.pull_request) {
+              throw new Error('FOUNDATION authorization PR identity is not exact');
+            }
+            const changedFiles = [];
+            for (let page = 1; page <= 1000; page += 1) {
+              const response = await github.rest.pulls.listFiles({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number, per_page: 100, page});
+              changedFiles.push(...response.data);
+              if (response.data.length < 100) break;
+              if (page === 1000) throw new Error('FOUNDATION authorization changed-file pagination exceeded the limit');
+            }
+            if (JSON.stringify(authorization.canonicalPathNames(changedFiles)) !== JSON.stringify(policy.authorization.changed_paths)) throw new Error('FOUNDATION authorization changed paths are not exact');
+            const candidateResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: policy.candidate.pull_request});
+            const candidate = candidateResponse.data;
+            if (candidate.base?.ref !== 'dev' || candidate.base?.sha !== policy.candidate.base_sha || candidate.head?.ref !== policy.candidate.branch || candidate.head?.sha !== policy.candidate.head_sha || candidate.head?.repo?.full_name !== repository || candidate.state !== 'closed' || candidate.merged === true) throw new Error('candidate PR is not the preserved exact pre-authorization tuple');
+            const baseCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.base_sha});
+            const baseCommit = baseCommitResponse.data;
+            if (baseCommit.sha !== policy.base_attestation.commit || baseCommit.commit.tree.sha !== policy.base_attestation.tree_sha || JSON.stringify(baseCommit.parents.map(parent => parent.sha)) !== JSON.stringify(policy.base_attestation.parents)) throw new Error('candidate base tree/parent attestation is not exact');
+            const diffResponse = await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: policy.candidate.base_sha, head: policy.candidate.head_sha});
+            const diff = diffResponse.data;
+            if (!diff || !Array.isArray(diff.files) || authorization.canonicalPathNames(diff.files).length !== policy.candidate.changed_path_count || authorization.digestChangedPaths(diff.files) !== policy.candidate.changed_paths_sha256) throw new Error('candidate changed-path digest P is not exact');
+            const manifestResponse = await github.rest.repos.getContent({owner: context.repo.owner, repo: context.repo.repo, path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
+            const manifestData = manifestResponse.data;
+            const manifestBytes = Buffer.from(manifestData.content.replace(/\s/g, ''), 'base64');
+            if (authorization.sha256(manifestBytes) !== policy.candidate.manifest_sha256) throw new Error('candidate manifest digest M is not exact');
+            const candidateCommitResponse = await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: policy.candidate.head_sha});
+            const treeResponse = await github.rest.git.getTree({owner: context.repo.owner, repo: context.repo.repo, tree_sha: candidateCommitResponse.data.commit.tree.sha, recursive: '1'});
+            if (authorization.digestTreeEntries(treeResponse.data.tree, policy.auth_policy_paths) !== policy.candidate.tree_sha256_excluding_authorization_paths) throw new Error('candidate tree digest T is not exact');
+            execFileSync('git', ['fetch', '--no-tags', `https://x-access-token:${process.env.FOUNDATION_TOKEN}@github.com/${repository}.git`, policy.candidate.branch], {stdio: 'ignore'});
+            const diffArgs = ['diff', '--binary', `${policy.candidate.base_sha}...${policy.candidate.head_sha}`, '--', '.', ...policy.auth_policy_paths.map(path => `:(exclude)${path}`)];
+            const patch = execFileSync('git', diffArgs);
+            if (authorization.sha256(patch) !== policy.candidate.patch_sha256_excluding_authorization_paths) throw new Error('candidate patch digest T is not exact');
+            await core.summary.addHeading('FOUNDATION authorization').addTable([
+              [{data: 'binding', header: true}, {data: 'value', header: true}],
+              ['candidate', `${policy.candidate.pull_request} ${policy.candidate.head_sha}`],
+              ['manifest M', policy.candidate.manifest_sha256],
+              ['changed paths P', policy.candidate.changed_paths_sha256],
+              ['patch T', policy.candidate.patch_sha256_excluding_authorization_paths],
+              ['tree T', policy.candidate.tree_sha256_excluding_authorization_paths],
+              ['replay', policy.authorization.replay_decision],
+            ]).write();
 
   failure-report:
     name: CI failure summary
@@ -912,6 +1209,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact proof evidence
         if: ${{ always() }}
+        continue-on-error: true
         uses: actions/download-artifact@v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1033,7 +1331,7 @@ jobs:
             const classifyTerminalJob = job => {
               if (job.name === 'CI policy') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
-                return failedStep?.name === 'Check DAMP/DRY caps' ? 'CI-CAPS-001' : 'CI-SCOPE-001';
+                return (failedStep?.name === 'Validate source metric and meta evidence (caps are observations)' || failedStep?.name === 'Validate source metric and meta evidence on protected push') ? 'CI-CONTRACT-001' : 'CI-SCOPE-001';
               }
               if (job.name === 'CI evidence') {
                 const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
@@ -1094,7 +1392,7 @@ jobs:
                 missingReasons = proof.missing_reasons || {};
               }
             }
-            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-CAPS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
+            const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
             const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
             failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
             code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';
@@ -1242,19 +1540,35 @@ jobs:
             go run ./cmd/feedback-predecessor-witness \
               --root "$GITHUB_WORKSPACE" \
               --input "$RUNNER_TEMP/predecessor-input-a.json" \
-              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json" \
-              --check
+              --report "$RUNNER_TEMP/predecessor-receipt-$suffix.json"
           done
           cmp "$RUNNER_TEMP/predecessor-receipt-a.json" "$RUNNER_TEMP/predecessor-receipt-b.json"
+          if jq -e '.report.decision == "FOUNDATION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            jq -r '"### Predecessor foundation recovery\n- proof choice: `\(.report.proof_choice)`\n- reason: `\(.report.reason)`\n- missing predecessor: `\(.report.foundation.missing_predecessor_sha)`\n- last known good: `\(.report.foundation.last_known_good_sha)` run `\(.report.foundation.last_known_good_run_id)` artifact `\(.report.foundation.last_known_good_artifact_digest)`\n- next: `\(.report.foundation.next_operation)`"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+          else
+            jq -e '
+              (.report.decision == "SELECTED" and .report.resolution == "exact_operation" and
+                .report.next_operation == "consume-predecessor-semantic-state" and
+                .report.promotion_authorized == true and .report.selected != null) or
+              ((.report.decision == "FAIL_CLOSED" or .report.decision == "LOWER_RESOLUTION") and
+                .report.resolution == "operation_class" and
+                .report.next_operation == "re-evaluate-predecessor-at-exact-operation" and
+                .report.promotion_authorized == false and .report.selected == null)
+            ' "$RUNNER_TEMP/predecessor-receipt-a.json"
+            jq -r '"### Predecessor selection\n- decision: \(.report.decision) (\(.report.reason))\n- resolution: \(.report.resolution)\n- promotion authorized: \(.report.promotion_authorized)\n- next: \(.report.next_operation)\n- exact readiness: \(.report.indicators[0].value)/10000\n- continuity: \(.report.indicators[1].value)/10000"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - id: semantic
         name: Consume deterministic predecessor semantic state
         run: |
           if jq -e '.report.decision == "FOUNDATION"' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
             echo "emitted=false" >> "$GITHUB_OUTPUT"
-            jq -r '"### Predecessor foundation recovery\n- proof choice: `\(.report.proof_choice)`\n- reason: `\(.report.reason)`\n- missing predecessor: `\(.report.foundation.missing_predecessor_sha)`\n- last known good: `\(.report.foundation.last_known_good_sha)` run `\(.report.foundation.last_known_good_run_id)` artifact `\(.report.foundation.last_known_good_artifact_digest)`\n- next: `\(.report.foundation.next_operation)`"' "$RUNNER_TEMP/predecessor-receipt-a.json" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          echo "emitted=true" >> "$GITHUB_OUTPUT"
+          if jq -e '.report.resolution == "operation_class" and .report.next_operation == "re-evaluate-predecessor-at-exact-operation" and .report.promotion_authorized == false' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null; then
+            echo "emitted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          jq -e '.report.decision == "SELECTED" and .report.resolution == "exact_operation" and .report.promotion_authorized == true' "$RUNNER_TEMP/predecessor-receipt-a.json" >/dev/null
           for suffix in a b; do
             go run ./cmd/feedback-semantic-state-witness \
               --root "$GITHUB_WORKSPACE" \
@@ -1264,6 +1578,7 @@ jobs:
               --check
           done
           cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
+          echo "emitted=true" >> "$GITHUB_OUTPUT"
           jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:
@@ -1355,3 +1670,23 @@ jobs:
           path: coherence-boundary-probe.json
           if-no-files-found: error
           retention-days: 30
+  language-package-execution:
+    name: Language package execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Conform package execution through Go 1.27
+        env:
+          EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/language-package-execution
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,253 @@
+name: EntityFields V1 observation
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: entity-fields-v1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  observe:
+    name: EntityFields V1 atomic observation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: go1.27.0
+      GOWORK: off
+      GOFLAGS: -mod=readonly
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Execute and replay EntityFields V1 in caller-owned temp
+        id: evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          work="$RUNNER_TEMP/entity-fields-v1/work"
+          publish="$RUNNER_TEMP/entity-fields-v1/publish"
+          input="$work/input"
+          first="$work/first"
+          replay="$work/replay"
+          generated_module="$work/generated-module"
+          cli_generated="$work/cli-generated"
+          mkdir -p "$input" "$first" "$replay" "$generated_module" "$cli_generated" "$publish"
+          status_before="$work/status-before.txt"
+          status_after="$work/status-after.txt"
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$status_before"
+          stage="prepare-input"
+          cp examples/entity-fields-v1/main.gooo "$input/source.gooo"
+
+          write_failure() {
+            local code="$1" current_stage="$2"
+            if [ ! -s "$publish/failure-receipt.json" ] && [ ! -s "$publish/entity-fields-receipt.json" ]; then
+              jq -n --arg head "$HEAD_SHA" --arg stage "$current_stage" --arg code "$code" \
+                '{schema:"gooo/entity-fields-v1-receipt/v1",head_sha:$head,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",reason:"ENTITY_FIELDS_ACTION_FAILED",unknown:{stage:$stage,step:"entity-fields-v1-observation",reason:"ENTITY_FIELDS_ACTION_FAILED",unknown_class:"DIRECT_MISSING",next_operation:"RESTORE_ENTITY_FIELDS_OBSERVATION",blocked_by:[]},exit_code:($code|tonumber),repository_writes:0,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0,generated_in:"CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
+                > "$publish/failure-receipt.json"
+            fi
+          }
+          trap 'code=$?; trap - ERR; write_failure "$code" "$stage"; exit "$code"' ERR
+
+          stage="build-observer"
+          build_start=$(date +%s%N)
+          /usr/bin/time -f '%e %M' -o "$work/build.time" go build -trimpath -o "$work/entity-fields-witness" ./cmd/entity-fields-witness
+          build_end=$(date +%s%N)
+          stage="build-public-cli"
+          cli_build_start=$(date +%s%N)
+          /usr/bin/time -f '%e %M' -o "$work/cli-build.time" go build -trimpath -o "$work/gooo" ./cmd/gooo
+          cli_build_end=$(date +%s%N)
+
+          stage="observe-first"
+          first_start=$(date +%s%N)
+          /usr/bin/time -f '%e %M' -o "$work/first.time" "$work/entity-fields-witness" -input "$input/source.gooo" -output "$first"
+          first_end=$(date +%s%N)
+          stage="observe-replay"
+          replay_start=$(date +%s%N)
+          /usr/bin/time -f '%e %M' -o "$work/replay.time" "$work/entity-fields-witness" -input "$input/source.gooo" -output "$replay"
+          replay_end=$(date +%s%N)
+
+          stage="compare-replay"
+          for name in source.gooo formatted.gooo generated.go source-map.json semantic-ir.json lsp.json report.json report.md; do
+            cmp -s "$first/$name" "$replay/$name"
+          done
+          first_report_digest="sha256:$(sha256sum "$first/report.json" | awk '{print $1}')"
+          replay_report_digest="sha256:$(sha256sum "$replay/report.json" | awk '{print $1}')"
+          first_source_digest="sha256:$(sha256sum "$first/source.gooo" | awk '{print $1}')"
+          replay_source_digest="sha256:$(sha256sum "$replay/source.gooo" | awk '{print $1}')"
+          profile_digest=$(jq -r '.profile_digest' "$first/report.json")
+          test -n "$profile_digest"
+          test "$first_report_digest" = "$replay_report_digest"
+          test "$first_source_digest" = "$replay_source_digest"
+
+          stage="validate-report"
+          jq -e '
+            .schema == "gooo/entity-fields-observation/v1" and
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.cells_total == 12 and .summary.closed_cells == 12 and
+            .summary.unknown_cells == 0 and .summary.refuted_cells == 0 and
+            .summary.foundation_cells == 4 and .summary.coherence_cells == 4 and .summary.regression_cells == 4 and
+            .summary.driver_cells == 4 and .summary.outcome_cells == 4 and .summary.guardrail_cells == 4 and
+            .activity_count == 12 and .binding_count == 12 and (.activities | length) == 12 and
+            (.cells | length) == 12 and (.cells | map(.decision) | all(. == "PASS")) and
+            .authority.repository_writes == 0 and .authority.branch_setting_writes == 0 and
+            .authority.local_test_executions == 0 and .authority.cross_project_required_gates == 0 and
+            .authority.promotion_authorized == false and .improvement == "UNKNOWN" and
+            (.counterexamples | length) == 6 and
+            ([.counterexamples[] | select(.decision == "REFUTED")] | length) == 5 and
+            ([.counterexamples[] | select(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason == "ENTITY_FIELDS_SOURCE_MISSING" and .unknown.unknown_class == "DIRECT_MISSING" and (.unknown.blocked_by | length) == 0)] | length) == 1
+          ' "$first/report.json"
+
+          stage="public-cli"
+          "$work/gooo" check --semantic "$input/source.gooo" > "$work/public-check.txt"
+          "$work/gooo" generate "$input/source.gooo" --out "$cli_generated" > "$work/public-generate.txt"
+          cmp -s "$first/generated.go" "$cli_generated/semantic.gooo.go"
+          test -s "$cli_generated/semantic.gooo.manifest.jsonl"
+
+          stage="compile-generated-go"
+          cp "$first/generated.go" "$generated_module/generated.go"
+          printf 'module entityfields-generated\n\ngo 1.27\n' > "$generated_module/go.mod"
+          generated_test_start=$(date +%s%N)
+          (
+            cd "$generated_module"
+            /usr/bin/time -f '%e %M' -o "$work/generated-test.time" env -u GOWORK -u GOFLAGS go test ./... > "$work/generated-test.stdout" 2> "$work/generated-test.stderr"
+          )
+          generated_test_end=$(date +%s%N)
+
+          stage="assemble-publish"
+          cp "$first/source.gooo" "$publish/entity-fields-source.gooo"
+          cp "$first/formatted.gooo" "$publish/entity-fields-formatted.gooo"
+          cp "$first/semantic-ir.json" "$publish/entity-fields-semantic-ir.json"
+          cp "$first/generated.go" "$publish/entity-fields-generated.go"
+          cp "$first/source-map.json" "$publish/entity-fields-source-map.json"
+          cp "$first/lsp.json" "$publish/entity-fields-lsp.json"
+          jq '.counterexamples' "$first/report.json" > "$publish/entity-fields-counterexamples.json"
+          cp "$first/report.json" "$publish/entity-fields-report.json"
+          cp "$first/report.md" "$publish/entity-fields-report.md"
+          cp "$replay/source.gooo" "$publish/entity-fields-replay-source.gooo"
+          cp "$replay/report.json" "$publish/entity-fields-replay-report.json"
+          input_lines=$(wc -l < "$input/source.gooo" | tr -d ' ')
+          regular_files=$(find . -type f ! -path './.git/*' | wc -l | tr -d ' ')
+          descendant_dirs=$(find . -mindepth 1 -type d ! -path './.git*' | wc -l | tr -d ' ')
+          go_files=$(find . -type f -name '*.go' ! -path './.git/*' | wc -l | tr -d ' ')
+          count_physical_lines() {
+            local pattern="$1" total=0 file count
+            while IFS= read -r -d '' file; do
+              count=$(wc -l < "$file" | tr -d ' ')
+              total=$((total + count))
+            done < <(find . -type f -name "$pattern" ! -path './.git/*' -print0)
+            printf '%s\n' "$total"
+          }
+          go_lines=$(count_physical_lines '*.go')
+          gooo_files=$(find . -type f -name '*.gooo' ! -path './.git/*' | wc -l | tr -d ' ')
+          gooo_lines=$(count_physical_lines '*.gooo')
+          jq -n --arg head "$HEAD_SHA" --arg first_report "$first_report_digest" --arg replay_report "$replay_report_digest" \
+            --arg first_source "$first_source_digest" --arg replay_source "$replay_source_digest" \
+            '{schema:"gooo/entity-fields-v1-manifest/v1",head_sha:$head,first_report_digest:$first_report,replay_report_digest:$replay_report,first_source_digest:$first_source,replay_source_digest:$replay_source,replay_equal:true,output_artifact_files:13,files:["entity-fields-source.gooo","entity-fields-formatted.gooo","entity-fields-semantic-ir.json","entity-fields-generated.go","entity-fields-source-map.json","entity-fields-lsp.json","entity-fields-counterexamples.json","entity-fields-report.json","entity-fields-report.md","entity-fields-replay-source.gooo","entity-fields-replay-report.json","entity-fields-manifest.json","entity-fields-receipt.json"]}' \
+            > "$publish/entity-fields-manifest.json"
+          test "$(find "$publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 12
+
+          read _build_seconds build_rss < "$work/build.time"
+          read _cli_build_seconds cli_build_rss < "$work/cli-build.time"
+          read _first_seconds first_rss < "$work/first.time"
+          read _replay_seconds replay_rss < "$work/replay.time"
+          read _generated_seconds generated_rss < "$work/generated-test.time"
+          build_ms=$(( (build_end - build_start + 999999) / 1000000 ))
+          cli_build_ms=$(( (cli_build_end - cli_build_start + 999999) / 1000000 ))
+          first_ms=$(( (first_end - first_start + 999999) / 1000000 ))
+          replay_ms=$(( (replay_end - replay_start + 999999) / 1000000 ))
+          generated_test_ms=$(( (generated_test_end - generated_test_start + 999999) / 1000000 ))
+          env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$status_after"
+          if cmp -s "$status_before" "$status_after"; then
+            repository_writes=0
+          else
+            repository_writes=$(awk 'NF { count++ } END { print count + 0 }' "$status_after")
+          fi
+          stage="assemble-receipt"
+          jq -n \
+            --arg schema 'gooo/entity-fields-v1-receipt/v1' --arg head "$HEAD_SHA" --arg profile 'gooo.entityfields.go-projection.v1' \
+            --arg first_report "$first_report_digest" --arg replay_report "$replay_report_digest" --arg first_source "$first_source_digest" --arg replay_source "$replay_source_digest" --arg profile_digest "$profile_digest" \
+            --argjson build_ms "$build_ms" --argjson build_rss "$build_rss" --argjson cli_build_ms "$cli_build_ms" --argjson cli_build_rss "$cli_build_rss" \
+            --argjson first_ms "$first_ms" --argjson first_rss "$first_rss" --argjson replay_ms "$replay_ms" --argjson replay_rss "$replay_rss" \
+            --argjson generated_test_ms "$generated_test_ms" --argjson generated_test_rss "$generated_rss" --argjson input_lines "$input_lines" \
+            --argjson regular_files "$regular_files" --argjson descendant_dirs "$descendant_dirs" --argjson go_files "$go_files" --argjson go_lines "$go_lines" --argjson gooo_files "$gooo_files" --argjson gooo_lines "$gooo_lines" --argjson repository_writes "$repository_writes" \
+            '{schema:$schema,head_sha:$head,decision:"PASS",resolution:"EXACT",reason:"ENTITY_FIELDS_V1_CLOSED",profile_id:$profile,profile_digest:$profile_digest,cell_count:12,activity_count:12,binding_count:12,operations:{total:7,executed:7,unknown:0,names:["build-observer","build-public-cli","observe-first","observe-replay","public-check","public-generate","compile-generated-go"]},registry_transition:{before:{total:43,capability:42,governance:1},after:{total:44,capability:43,governance:1},atomic_gate:"PASS"},runtime:{observer_build_ms:$build_ms,observer_build_peak_rss_kib:($build_rss|tonumber),public_cli_build_ms:$cli_build_ms,public_cli_build_peak_rss_kib:($cli_build_rss|tonumber),first_observation_ms:$first_ms,first_observation_peak_rss_kib:($first_rss|tonumber),replay_observation_ms:$replay_ms,replay_observation_peak_rss_kib:($replay_rss|tonumber),generated_go_test_ms:$generated_test_ms,generated_go_test_peak_rss_kib:($generated_test_rss|tonumber),generated_go_test_executions:1},input_inventory:{regular_files:$regular_files,descendant_directories:$descendant_dirs,go_files:$go_files,go_physical_lines:$go_lines,gooo_files:$gooo_files,gooo_physical_lines:$gooo_lines,root_readme_exempt:true},input_regular_files:1,input_physical_lines:$input_lines,output_artifact_files:13,replay_equal:true,replay_digest_model:"canonical-output-v1",first_report_digest:$first_report,replay_report_digest:$replay_report,first_source_artifact_digest:$first_source,replay_source_artifact_digest:$replay_source,repository_writes:$repository_writes,branch_setting_writes:0,local_test_executions:0,cross_project_required_gates:0,promotion_authorized:false,improvement:"UNKNOWN",source_builds:0,public_cli:{check:true,generate:true,generated_output_compiled:true,generated_output_tested:true},evidence_origin:"CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
+            > "$publish/entity-fields-receipt.json"
+          test "$(find "$publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 13
+          printf 'cells=12/12 activities=12/12 bindings=12/12 operations=7/7\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'registry: overall 44/44; language capability 43/43; governance observation 1/1\n' >> "$GITHUB_STEP_SUMMARY"
+          printf 'first/replay reports: %s / %s; replay_equal=true\n' "$first_report_digest" "$replay_report_digest" >> "$GITHUB_STEP_SUMMARY"
+          printf 'observer build=%sms/%sKiB; public CLI build=%sms/%sKiB; generated Go test=%sms/%sKiB\n' "$build_ms" "$build_rss" "$cli_build_ms" "$cli_build_rss" "$generated_test_ms" "$generated_rss" >> "$GITHUB_STEP_SUMMARY"
+          printf 'inventory: regular_files=%s descendant_dirs=%s Go=%s/%s Gooo=%s/%s root_README=EXEMPT\n' "$regular_files" "$descendant_dirs" "$go_files" "$go_lines" "$gooo_files" "$gooo_lines" >> "$GITHUB_STEP_SUMMARY"
+          printf 'repository_writes=%s branch_setting_writes=0 local_test_executions=0 cross_project_required_gates=0 improvement=UNKNOWN\n' "$repository_writes" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload EntityFields V1 evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: entity-fields-v1-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/entity-fields-v1/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Require exact EntityFields V1 terminal
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/entity-fields-v1/publish"
+          receipt="$root/entity-fields-receipt.json"
+          manifest="$root/entity-fields-manifest.json"
+          test -s "$receipt"
+          test -s "$manifest"
+          jq -e --arg head "$HEAD_SHA" '
+            .head_sha == $head and .decision == "PASS" and .resolution == "EXACT" and
+            .cell_count == 12 and .activity_count == 12 and .binding_count == 12 and
+            (.profile_digest | type) == "string" and .profile_digest != "" and
+            .operations.total == 7 and .operations.executed == 7 and .operations.unknown == 0 and (.operations.names | length) == 7 and
+            .registry_transition.atomic_gate == "PASS" and
+            .registry_transition.before.total == 43 and .registry_transition.after.total == 44 and
+            .registry_transition.before.capability == 42 and .registry_transition.after.capability == 43 and
+            .registry_transition.before.governance == 1 and .registry_transition.after.governance == 1 and
+            .replay_equal == true and .runtime.generated_go_test_executions == 1 and
+            .output_artifact_files == 13 and .repository_writes == 0 and
+            .branch_setting_writes == 0 and .local_test_executions == 0 and
+            .cross_project_required_gates == 0 and .source_builds == 0 and
+            .promotion_authorized == false and .improvement == "UNKNOWN" and
+            .evidence_origin == "CALLER_OWNED_TEMP_OUTPUT_ONLY"
+          ' "$receipt"
+          source_digest="sha256:$(sha256sum "$root/entity-fields-source.gooo" | awk '{print $1}')"
+          replay_source_digest="sha256:$(sha256sum "$root/entity-fields-replay-source.gooo" | awk '{print $1}')"
+          first_report_digest="sha256:$(sha256sum "$root/entity-fields-report.json" | awk '{print $1}')"
+          replay_report_digest="sha256:$(sha256sum "$root/entity-fields-replay-report.json" | awk '{print $1}')"
+          test "$source_digest" = "$(jq -r .first_source_artifact_digest "$receipt")"
+          test "$replay_source_digest" = "$(jq -r .replay_source_artifact_digest "$receipt")"
+          test "$first_report_digest" = "$(jq -r .first_report_digest "$receipt")"
+          test "$replay_report_digest" = "$(jq -r .replay_report_digest "$receipt")"
+          cmp -s "$root/entity-fields-source.gooo" "$root/entity-fields-replay-source.gooo"
+          cmp -s "$root/entity-fields-report.json" "$root/entity-fields-replay-report.json"
+          jq -e --arg head "$HEAD_SHA" '
+            .head_sha == $head and .output_artifact_files == 13 and .replay_equal == true and
+            (.files | length) == 13 and .files[0] == "entity-fields-source.gooo" and
+            .files[12] == "entity-fields-receipt.json"
+          ' "$manifest"
+          test "$(find "$root" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 13

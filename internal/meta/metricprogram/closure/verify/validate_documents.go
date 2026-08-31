@@ -8,7 +8,7 @@ func validateDocuments(in Input, program programDocument, verification verificat
 		return fmt.Errorf("program identity or execution policy is invalid")
 	}
 	if program.RepositoryWorkspaceWrites || program.PromotionAuthorized ||
-		len(program.Operations) != 8 || len(program.Bindings) != 15 || len(program.Steps) != 4 {
+		len(program.Operations) != 9 || len(program.Bindings) != canonicalBindingCount || len(program.Steps) != 4 {
 		return fmt.Errorf("program cardinality or write policy is invalid")
 	}
 	root := program.RootPolicy

@@ -1,0 +1,20 @@
+{
+  "schema": "gooo/ci-effort-operation-manifest/v1",
+  "workflow": "CI",
+  "workflow_source": ".github/workflows/ci.yml",
+  "operations": [
+    {"id":"go-format","job_name":"gofmt","step_name":"Require formatted Go","evidence_step":"Materialize exact Go format remediation evidence","guard_step":"Require formatted Go","kind":"VERIFICATION","command":["gofmt","-l","."],"proof_obligation_id":"ci-effort/go-format"},
+    {"id":"meta-tools-build","job_name":"gofmt","step_name":"Compile module-declared meta tools","kind":"BUILD","command":["go","build","tool"],"proof_obligation_id":"ci-effort/meta-tools-build"},
+    {"id":"go-vet","job_name":"go vet","step_name":"Run go vet ./...","kind":"VERIFICATION","command":["go","vet","./..."],"proof_obligation_id":"ci-effort/go-vet"},
+    {"id":"go-test","job_name":"go test","step_name":"Run go test ./...","kind":"TEST","command":["go","test","./..."],"proof_obligation_id":"ci-effort/go-test"},
+    {"id":"go-test-race","job_name":"go test -race","step_name":"Run go test -race ./...","kind":"TEST","command":["go","test","-race","./..."],"proof_obligation_id":"ci-effort/go-test-race"},
+    {"id":"semantic-conformance","job_name":"Semantic conformance","step_name":"Semantic conformance (staged verifier promotion)","kind":"VERIFICATION","command":["./scripts/semantic-conformance.sh"],"proof_obligation_id":"ci-effort/semantic-conformance"},
+    {"id":"ci-policy","job_name":"CI policy","step_name":"Validate source metric and meta evidence on protected push","event_step_names":{"pull_request":"Validate source metric and meta evidence (caps are observations)","push":"Validate source metric and meta evidence on protected push"},"kind":"VERIFICATION","command":["bash","./scripts/verify/validate-source-observations.sh","$METRICS_DIR"],"proof_obligation_id":"ci-effort/ci-policy"}
+  ],
+  "excluded_jobs": [
+    {"name":"Language package execution","reason":"evidence_scope_not_verification"},
+    {"name":"CI evidence","reason":"evidence_scope_not_verification"},
+    {"name":"CI proof bundle","reason":"evidence_scope_not_verification"},
+    {"name":"CI failure summary","reason":"diagnostic_scope_not_verification"}
+  ]
+}

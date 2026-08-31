@@ -2,12 +2,13 @@ package metricstrategyverify
 
 import (
 	"fmt"
+	"io/fs"
 
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	strategy "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy"
 )
 
-func Replay(metricsPath, ledgerPath, interventionReceiptPath string, plan strategy.Plan) (Receipt, error) {
+func Replay(repository fs.FS, metricsPath, ledgerPath, interventionReceiptPath string, plan strategy.Plan) (Receipt, error) {
 	if !validPlan(plan) || plan.Schema != strategy.PlanSchema || plan.ExecutionPolicy != strategy.ExecutionPolicy || plan.RepositoryWorkspaceWrites || plan.PromotionAuthorized {
 		return Receipt{}, fmt.Errorf("metric strategy plan boundary is invalid")
 	}
@@ -16,6 +17,10 @@ func Replay(metricsPath, ledgerPath, interventionReceiptPath string, plan strate
 		return Receipt{}, err
 	}
 	bindings, err := replayBindings(inputs.ledger.Indicators)
+	if err != nil {
+		return Receipt{}, err
+	}
+	bindings, err = replayLanguageConceptBindings(repository, bindings)
 	if err != nil {
 		return Receipt{}, err
 	}

@@ -1,0 +1,140 @@
+{
+  "schema": "gooo/changed-surface-receipt-report/v1",
+  "subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+  "decision": "FIXED_POINT",
+  "resolution": "EXACT",
+  "enforcement_effect": "OBSERVE_ONLY",
+  "reason": "CHANGED_SURFACE_RECEIPTS_TOTAL",
+  "denominator_id": "gooo/changed-surface-receipt-denominator/v1",
+  "denominator_digest": "sha256:61982bc0b87ba06031219143a0a67e69ea0b297bed75ee626e16077495d28499",
+  "summary": {
+    "changed_surfaces": 2,
+    "receipts_observed": 2,
+    "bound_receipts": 2,
+    "missing_receipts": 0,
+    "orphan_receipts": 0,
+    "changed_duplicates": 0,
+    "receipt_duplicates": 0,
+    "unknown_receipts": 0,
+    "malformed_paths": 0,
+    "totality_bps": 10000,
+    "changed_set_bps": 10000,
+    "unique_binding_bps": 10000,
+    "unknown_paths": 0,
+    "blocked_paths": 0
+  },
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "totalize-changed-surface-receipts",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.changed-surface-set-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "observe-changed-surfaces",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.unique-surface-receipt-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "bind-surface-receipts",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.surface-receipt-unknown.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "preserve-receipt-unknown",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.semantic.surface-receipt-ambiguity.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "reject-ambiguous-receipts",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.surface-receipt-shadow-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipt.Evaluate",
+      "consumer": "changed-surface-receipt-shadow-gate",
+      "meta_operation": "observe-shadow-writes",
+      "unit": "writes",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "freeze-changed-surface-denominator",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "observe-changed-surfaces",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "bind-surface-receipts",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "totalize-changed-surface-receipts",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "preserve-receipt-unknown",
+      "proof_choice": "REGRESSION"
+    },
+    {
+      "id": "observe-shadow-writes",
+      "proof_choice": "FOUNDATION"
+    }
+  ],
+  "repository_writes": 0,
+  "report_digest": "sha256:28125644f29b9529b8d7419d94192afaf92c67257c5b0f4710fa16bccb233ed8"
+}

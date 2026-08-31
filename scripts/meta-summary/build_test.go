@@ -28,6 +28,10 @@ func TestBuildIsDeterministicAndBounded(t *testing.T) {
 	if len(firstReport.Indicators) != 4 || len(firstReport.Artifacts) != 5 {
 		t.Fatalf("incomplete indicator projection: %#v", firstReport)
 	}
+	if firstReport.SourceMetrics.RegularFiles != 1 || firstReport.SourceMetrics.DirectoriesIncludingRoot != 1 ||
+		firstReport.SourceMetrics.SelectedOperations != 2 || len(firstReport.SourceMetrics.Candidates) != 1 {
+		t.Fatalf("source metrics inventory was not projected: %#v", firstReport.SourceMetrics)
+	}
 }
 
 func TestBuildRejectsUnboundProvenance(t *testing.T) {

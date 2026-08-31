@@ -48,10 +48,18 @@ func validateInputs(in inputSet, expected string) error {
 		return fmt.Errorf("source indicator ledger is not bound")
 	}
 	wantExecution := generation.BuildExecutionManifest(in.plan)
-	wantReceipts := generation.VerifyReceipts(in.plan, in.receipts.Receipts)
+	if err := compareReplay("compare-execution", wantExecution, in.execution); err != nil {
+		return err
+	}
+	wantReceipts := generation.VerifyReceiptsWithFailures(
+		in.plan, in.receipts.Receipts, in.receipts.Failures,
+	)
+	if err := compareReplay("compare-receipts", wantReceipts, in.receipts); err != nil {
+		return err
+	}
 	wantProvenance := generation.BindArtifactProvenance(in.plan, in.execution, in.receipts)
-	if !reflect.DeepEqual(wantExecution, in.execution) || !reflect.DeepEqual(wantReceipts, in.receipts) || !reflect.DeepEqual(wantProvenance, in.provenance) {
-		return fmt.Errorf("meta artifact replay diverged")
+	if err := compareReplay("compare-provenance", wantProvenance, in.provenance); err != nil {
+		return err
 	}
 	return nil
 }

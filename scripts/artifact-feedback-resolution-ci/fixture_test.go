@@ -19,7 +19,7 @@ func writeSourceFixtures(t *testing.T, root string) (string, string) {
 		Schema: artifactcoverage.ReportSchema, CommitSHA: head,
 		Repository: "kimjooyoon/meta-ontology-go", Decision: "FIXED_POINT",
 		Summary: artifactcoverage.Summary{
-			RequiredOperations: 5, CanonicalOperations: 5,
+			RequiredOperations: 6, CanonicalOperations: 6,
 		},
 	}
 	coverage.ReportDigest = fixtureDigest(t, coverage)

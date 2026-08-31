@@ -14,7 +14,7 @@ type inputSpec struct {
 	path string
 }
 
-func loadArtifacts(opts options) ([]artifactEvidence, provenanceEnvelope, error) {
+func loadArtifacts(opts options) ([]artifactEvidence, provenanceEnvelope, sourceInventory, error) {
 	specs := []inputSpec{
 		{id: "source-metrics", path: opts.MetricsPath},
 		{id: "self-improvement-plan", path: opts.PlanPath},
@@ -24,13 +24,14 @@ func loadArtifacts(opts options) ([]artifactEvidence, provenanceEnvelope, error)
 	}
 	artifacts := make([]artifactEvidence, 0, len(specs))
 	var provenance provenanceEnvelope
+	var inventory sourceInventory
 	for _, spec := range specs {
 		data, err := os.ReadFile(spec.path)
 		if err != nil {
-			return nil, provenance, fmt.Errorf("read %s: %w", spec.id, err)
+			return nil, provenance, inventory, fmt.Errorf("read %s: %w", spec.id, err)
 		}
 		if len(data) == 0 {
-			return nil, provenance, fmt.Errorf("%s is empty", spec.id)
+			return nil, provenance, inventory, fmt.Errorf("%s is empty", spec.id)
 		}
 		sum := sha256.Sum256(data)
 		artifacts = append(artifacts, artifactEvidence{
@@ -39,11 +40,24 @@ func loadArtifacts(opts options) ([]artifactEvidence, provenanceEnvelope, error)
 		if spec.id == "artifact-provenance" {
 			provenance, err = decodeProvenance(data)
 			if err != nil {
-				return nil, provenance, err
+				return nil, provenance, inventory, err
 			}
 		}
+		if spec.id == "source-metrics" {
+			inventory, err = decodeSourceInventory(data)
+			if err != nil {
+				return nil, provenance, inventory, err
+			}
+		}
+		if spec.id == "self-improvement-plan" {
+			inventory.SelectedSubjects, err = decodeSelectedSubjects(data)
+			if err != nil {
+				return nil, provenance, inventory, err
+			}
+			inventory.SelectedOperations = len(inventory.SelectedSubjects)
+		}
 	}
-	return artifacts, provenance, nil
+	return artifacts, provenance, inventory, nil
 }
 
 func digestArtifacts(artifacts []artifactEvidence) string {

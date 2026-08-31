@@ -1,0 +1,244 @@
+{
+  "schema": "gooo/language-semantic-model-corpus/v1",
+  "version": "2026-08-27",
+  "cases": [
+    {
+      "id": "semantic-billing",
+      "kind": "SOURCE",
+      "path": "examples/billing/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-test-pass",
+      "kind": "SOURCE",
+      "path": "examples/language-test/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-test-failing-assertion",
+      "kind": "SOURCE",
+      "path": "examples/language-test/failing.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-bootstrap",
+      "kind": "SOURCE",
+      "path": "examples/bootstrap/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-conformance",
+      "kind": "SOURCE",
+      "path": "examples/conformance/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-meta-actionability",
+      "kind": "SOURCE",
+      "path": "examples/meta-actionability/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-meta-binding-coverage",
+      "kind": "SOURCE",
+      "path": "examples/meta-binding-coverage/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-meta-operation-artifact-coverage",
+      "kind": "SOURCE",
+      "path": "examples/meta-operation-artifact-coverage/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-metric-meta-program",
+      "kind": "SOURCE",
+      "path": "examples/metric-meta-program/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-metric-meta-program-closure",
+      "kind": "SOURCE",
+      "path": "examples/metric-meta-program-closure/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-root-readme-indicator",
+      "kind": "SOURCE",
+      "path": "examples/root-readme-indicator/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-self-improvement",
+      "kind": "SOURCE",
+      "path": "examples/self-improvement/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-self-improvement-candidate",
+      "kind": "SOURCE",
+      "path": "examples/self-improvement/candidate.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-self-improvement-transport",
+      "kind": "SOURCE",
+      "path": "examples/self-improvement/transport.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-value-witness",
+      "kind": "SOURCE",
+      "path": "examples/language-value-witness/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-operation-catalog",
+      "kind": "SOURCE",
+      "path": "examples/language-operation-catalog/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-operation-catalog-unknown",
+      "kind": "SOURCE",
+      "path": "examples/language-operation-catalog/unknown.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-roundtrip-minimal",
+      "kind": "SOURCE",
+      "path": "internal/detection/roundtrip/testdata/minimal.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-directory-kind-ontology",
+      "kind": "SOURCE",
+      "path": "internal/meta/directorykind/ontology.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-directory-partition-ontology",
+      "kind": "SOURCE",
+      "path": "internal/meta/directorypartition/ontology.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-source-splitter-conformance",
+      "kind": "SOURCE",
+      "path": "examples/source-splitter-conformance/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-rollback-integrity-activation",
+      "kind": "SOURCE",
+      "path": "examples/rollback-integrity-activation/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-vertical-slice-closure-activation",
+      "kind": "SOURCE",
+      "path": "examples/vertical-slice-closure-activation/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-external-conformance-activation",
+      "kind": "SOURCE",
+      "path": "examples/external-conformance-activation/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-external-capability-authorization-policy",
+      "kind": "SOURCE",
+      "path": "examples/external-capability-execution/authorization/policy.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-ci-plan",
+      "kind": "SOURCE",
+      "path": "examples/ci-plan/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-reproducibility-semantics",
+      "kind": "SOURCE",
+      "path": "examples/reproducibility-semantics/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-repository-projection-repair",
+      "kind": "SOURCE",
+      "path": "examples/repository-projection-repair/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-opentofu-observation",
+      "kind": "SOURCE",
+      "path": "examples/opentofu-observation/main.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "presentation-invariance",
+      "kind": "LAW",
+      "law": "PRESENTATION_INVARIANCE",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "prove-presentation-invariance"
+    },
+    {
+      "id": "candidate-non-authority",
+      "kind": "LAW",
+      "law": "CANDIDATE_NON_AUTHORITY",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "prove-candidate-non-authority"
+    },
+    {
+      "id": "deterministic-authority",
+      "kind": "LAW",
+      "law": "DETERMINISTIC_AUTHORITY",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "prove-deterministic-authority"
+    },
+    {
+      "id": "reject-unknown-keyword",
+      "kind": "UPSTREAM_REJECTION",
+      "upstream_case": "unknown-keyword",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "inherit-fail-closed-syntax"
+    },
+    {
+      "id": "reject-unterminated-string",
+      "kind": "UPSTREAM_REJECTION",
+      "upstream_case": "unterminated-string",
+      "proof_choice": "REGRESSION",
+      "meta_operation": "inherit-fail-closed-syntax"
+    }
+  ]
+}

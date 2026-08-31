@@ -50,12 +50,22 @@ func requiredEntityFieldSourceSpans(field Field) []entityFieldSourceSpan {
 	}
 }
 func sourceSpansAreOrdered(spans []entityFieldSourceSpan) bool {
-	var previous SourceSpan
-	for index, current := range spans {
-		if index > 0 && (!sourceSpanIsZero(current.span) && !sourceSpanIsZero(previous) && previous.End.Offset > current.span.Start.Offset) {
-			return false
+	for left := range spans {
+		for right := left + 1; right < len(spans); right++ {
+			first, second := spans[left].span, spans[right].span
+			if sourceSpanIsZero(first) || sourceSpanIsZero(second) {
+				continue
+			}
+			if first.Start.Offset == second.Start.Offset {
+				return false
+			}
+			if first.Start.Offset < second.Start.Offset && first.End.Offset > second.Start.Offset {
+				return false
+			}
+			if second.Start.Offset < first.Start.Offset && second.End.Offset > first.Start.Offset {
+				return false
+			}
 		}
-		previous = current.span
 	}
 	return true
 }

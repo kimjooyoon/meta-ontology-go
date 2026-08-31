@@ -28,6 +28,9 @@ func loadDensitySubjects(name, expectedSHA string) ([]splitSubject, error) {
 			subject.Reason != "large-density-rewrite" {
 			continue
 		}
+		if !subject.Executable {
+			continue
+		}
 		if seen[subject.Logical] || subject.RequiredSave < 1 ||
 			(subject.Reason == "density-rewrite" && subject.RequiredSave > 10) {
 			return nil, fmt.Errorf("invalid density subject %s", subject.Logical)

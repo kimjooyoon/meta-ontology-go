@@ -39,7 +39,7 @@ func sealLedger(ledger TransitionLedger) (TransitionLedger, error) {
 	return ledger, nil
 }
 
-func buildEffectEvidence(inputs inputSet) (EffectEvidence, error) {
+func buildEffectEvidence(inputs inputSet, outcome string) (EffectEvidence, error) {
 	artifacts := []ArtifactEvidence{
 		{Role: "effect-ledger", Digest: digestBytes(inputs.effect)},
 		{Role: "executed-receipts", Digest: digestBytes(inputs.receipts)},
@@ -50,5 +50,23 @@ func buildEffectEvidence(inputs inputSet) (EffectEvidence, error) {
 	if err != nil {
 		return EffectEvidence{}, err
 	}
-	return EffectEvidence{Verifier: "transformationeffect.VerifyFiles", Artifacts: artifacts, SetDigest: setDigest}, nil
+	causal, err := deriveCausalUnknowns(inputs.receiptReport)
+	if err != nil {
+		return EffectEvidence{}, err
+	}
+	operations := make([]OperationEffectEvidence, 0, len(inputs.effectLedger.Effects))
+	for _, effect := range inputs.effectLedger.Effects {
+		operations = append(operations, OperationEffectEvidence{
+			ActionIndicatorID: effect.ActionIndicatorID, Operation: effect.Operation,
+			Subject: effect.Subject, Executor: effect.Executor,
+			Evaluator: effect.Evaluator, Status: effect.Status})
+	}
+	return EffectEvidence{Verifier: "transformationeffect.VerifyFiles", Artifacts: artifacts,
+		SetDigest: setDigest, Outcome: outcome,
+		ReceiptDecision: string(inputs.receiptReport.Decision),
+		ReceiptCount:    len(inputs.receiptReport.Receipts),
+		FailureCount:    len(inputs.receiptReport.Failures),
+		UnknownCount:    len(inputs.receiptReport.Unknowns), DirectUnknownCount: causal.DirectUnknownCount,
+		DependencyBlockedUnknownCount: causal.DependencyBlockedUnknownCount,
+		UnknownCausalDigest:           causal.Digest, OperationEvidence: operations}, nil
 }

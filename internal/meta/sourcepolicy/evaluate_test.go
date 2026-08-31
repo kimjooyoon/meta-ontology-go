@@ -16,7 +16,7 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(report.Indicators) != 8 || len(report.Actionable()) != 3 || len(report.Failed()) != 2 {
+	if len(report.Indicators) != 8 || len(report.Actionable()) != 3 || len(report.Failed()) != 1 {
 		t.Fatalf("unexpected indicator report: %#v", report)
 	}
 	proofs := map[ProofChoice]bool{}
@@ -24,6 +24,10 @@ func TestEvaluateSelectsAllTrilemmaBranchesAndOperations(t *testing.T) {
 		proofs[indicator.Proof] = true
 		if indicator.Consumer == "" || indicator.Operation == "" {
 			t.Fatalf("metric is not connected to meta code: %#v", indicator)
+		}
+		if indicator.MetricID == DimensionGoFileLines &&
+			(!indicator.IsDriverCandidate() || indicator.Blocking || indicator.Outcome().EnforcementEffect != EnforcementEffectNone) {
+			t.Fatalf("line-cap observation is not a nonblocking driver candidate: %#v", indicator)
 		}
 		if indicator.MetricID == DimensionRefactorReturn && (!indicator.Satisfied || indicator.Operation != OperationInspectWrapper) {
 			t.Fatalf("wrapper observation lost its meta operation: %#v", indicator)

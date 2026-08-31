@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"regexp"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 var (
@@ -61,7 +63,7 @@ func validFileDigests(in inputs) bool {
 }
 
 func validContractCoverage(contract contractDocument) bool {
-	if len(contract.ExecutorCoverage) != 3 {
+	if len(contract.ExecutorCoverage) != len(generation.DefaultRegistry()) {
 		return false
 	}
 	for _, coverage := range contract.ExecutorCoverage {

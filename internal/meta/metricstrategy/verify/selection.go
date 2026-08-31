@@ -1,6 +1,8 @@
 package metricstrategyverify
 
 import (
+	"strings"
+
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
 	strategy "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy"
 )
@@ -8,6 +10,9 @@ import (
 func replaySelection(candidates []strategy.Candidate, projections []metric.Projection) strategy.Selection {
 	for _, candidate := range candidates {
 		if candidate.UnsatisfiedCount > 0 {
+			if replayUnresolvedConcept(candidate) {
+				return makeSelection(candidate, "LOWER_RESOLUTION", "lower-semantic-resolution", "CONCEPT_OPERATION_BINDING_UNKNOWN")
+			}
 			return makeSelection(candidate, "REPAIR", firstOperation(candidate), "FIRST_UNSATISFIED_CANONICAL_FAMILY")
 		}
 	}
@@ -15,6 +20,15 @@ func replaySelection(candidates []strategy.Candidate, projections []metric.Proje
 		return makeSelection(findCandidate(candidates, "REGRESSION"), "HOLD_FIXED_POINT", "terminate-at-fixed-point", "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO")
 	}
 	return makeSelection(findCandidate(candidates, "COHERENCE"), "RECONCILE", "reconcile-metric-state", "FIXED_POINT_NOT_EVIDENCED")
+}
+
+func replayUnresolvedConcept(candidate strategy.Candidate) bool {
+	for _, indicatorID := range candidate.IndicatorIDs {
+		if strings.HasPrefix(indicatorID, "gooo.concept.unresolved-") {
+			return true
+		}
+	}
+	return false
 }
 
 func findCandidate(candidates []strategy.Candidate, choice string) strategy.Candidate {

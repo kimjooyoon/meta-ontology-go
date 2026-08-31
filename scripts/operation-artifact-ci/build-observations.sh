@@ -47,6 +47,6 @@ jq -n --arg schema 'gooo/meta-operation-artifact-observations/v1' \
     observed("directory-kind-separation-" + $head; $kind; $kind_replay;
       ["directory-kind.report"]),
     observed("self-improvement-generation-" + $head; $generation; $generation_replay;
-      ["operation.split-go-declarations", "operation.split-gooo-sections"])
+      ["operation.extract-function", "operation.split-go-declarations", "operation.split-gooo-sections"])
    ]}
 ' >"$output_dir/observations.json"

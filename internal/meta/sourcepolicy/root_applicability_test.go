@@ -8,11 +8,13 @@ func TestProjectRootTopologyHasCatalogProvenApplicability(t *testing.T) {
 		{Subject: ".", Dimension: DimensionDirectoryKinds, Value: 2},
 		{Subject: ".", Dimension: DimensionRootREADME, Value: 0},
 		{Subject: "internal/meta", Dimension: DimensionDirectEntries, Value: 11},
+		{Subject: ".github/workflows", Dimension: DimensionDirectEntries, Value: 17, Detail: WorkflowDiscoveryObservationDetail},
+		{Subject: ".github/workflows", Dimension: DimensionDirectEntries, Value: 11},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if report.Schema != IndicatorSchema || len(report.Indicators) != 4 {
+	if report.Schema != IndicatorSchema || len(report.Indicators) != 6 {
 		t.Fatalf("unexpected report: %#v", report)
 	}
 	rootExemptions := 0
@@ -36,6 +38,15 @@ func TestProjectRootTopologyHasCatalogProvenApplicability(t *testing.T) {
 			}
 			continue
 		}
+		if indicator.Detail == WorkflowDiscoveryObservationDetail {
+			if indicator.Applicability != ApplicabilityNotApplicable || indicator.Blocking || !indicator.Satisfied ||
+				indicator.ApplicabilityRule != ApplicabilityRuleWorkflowDiscovery ||
+				indicator.ApplicabilityReason != ApplicabilityReasonWorkflowDiscovery ||
+				indicator.Operation != OperationPreserveWorkflow {
+				t.Fatalf("invalid workflow discovery exemption: %#v", indicator)
+			}
+			continue
+		}
 		if indicator.SubjectKind != SubjectKindDirectory ||
 			indicator.Applicability != ApplicabilityApplicable ||
 			indicator.ApplicabilityRule != ApplicabilityRuleDefault ||
@@ -44,7 +55,7 @@ func TestProjectRootTopologyHasCatalogProvenApplicability(t *testing.T) {
 			t.Fatalf("nested directory lost applicable policy: %#v", indicator)
 		}
 	}
-	if rootExemptions != 3 || len(report.Actionable()) != 1 || len(report.Failed()) != 1 {
+	if rootExemptions != 3 || len(report.Actionable()) != 2 || len(report.Failed()) != 2 {
 		t.Fatalf("unexpected applicability routing: %#v", report)
 	}
 }

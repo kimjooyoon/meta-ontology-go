@@ -19,12 +19,21 @@ func (report *ReceiptReport) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("decode receipt report: %w", err)
 	}
 	candidate := ReceiptReport(decoded)
+	if candidate.Failures == nil {
+		candidate.Failures = []ObservationFailure{}
+	}
 	if candidate.SchemaVersion != ReceiptReportSchemaVersion {
 		return fmt.Errorf("unsupported receipt report schema %q", candidate.SchemaVersion)
 	}
 	if !validReceiptLedgerProvenance(candidate.IndicatorDecisionLedgerDigest,
 		candidate.IndicatorDecisionLedgerCount) {
 		return fmt.Errorf("invalid receipt report indicator ledger provenance")
+	}
+	if !validReceiptUnknowns(candidate.Unknowns) {
+		return fmt.Errorf("invalid receipt report unknown evidence")
+	}
+	if !validReceiptFailureList(candidate.Failures) {
+		return fmt.Errorf("invalid receipt report failure evidence")
 	}
 	canonical := candidate
 	canonical.InputDigest, canonical.ReportDigest, canonical.ReplayDigest = "", "", ""

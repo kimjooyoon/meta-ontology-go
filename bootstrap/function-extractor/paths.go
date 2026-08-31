@@ -2,10 +2,13 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 )
 
 func extractionPath(root, logical string) (string, error) {
@@ -39,4 +42,44 @@ func appendUnique(values []string, value string) []string {
 		return values
 	}
 	return append(values, value)
+}
+
+func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) ([]string, error) {
+	result, err := projectionextractor.ExtractWithResult(root, logical)
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Operations) == 0 {
+		return nil, fmt.Errorf("generic extraction performed no operation")
+	}
+	for path, data := range result.Generated {
+		buffers[path] = data
+		changed[logical] = appendUnique(changed[logical], path)
+		if path != logical {
+			created[path] = true
+			made[logical] = appendUnique(made[logical], path)
+		}
+	}
+	return append([]string{}, result.Operations...), nil
+}
+
+func extractionFailure(logical string, err error) extractionFailureRecord {
+	if failure, ok := errors.AsType[projectionextractor.Failure](err); ok {
+		decision := "UNKNOWN"
+		unknownClass := failure.UnknownClass
+		if failure.UnknownClass == "KNOWN_CONTRADICTION" {
+			decision, unknownClass = "REFUTED", ""
+		}
+		return extractionFailureRecord{Logical: logical, BlockerID: stableBlockerID(logical, failure.Diagnostics), Decision: decision, Stage: failure.Stage, Step: failure.Step, Reason: failure.Reason, UnknownClass: unknownClass, NextOperation: failure.NextOperation, BlockedBy: failure.BlockedBy, Diagnostics: failure.Diagnostics}
+	}
+	return extractionFailureRecord{Logical: logical, Decision: "UNKNOWN", Stage: "apply-extraction", Step: "generic", Reason: "EXTRACTION_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-parser-evidence", BlockedBy: []string{}, Diagnostics: []string{}}
+}
+
+func stableBlockerID(logical string, diagnostics []string) string {
+	for _, diagnostic := range diagnostics {
+		if after, ok := strings.CutPrefix(diagnostic, "declaration="); ok {
+			return logical + "#" + after
+		}
+	}
+	return ""
 }
