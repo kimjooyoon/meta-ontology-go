@@ -18,6 +18,35 @@ func declarationIdentity(namespace string, declaration Declaration) (ID, error) 
 	}
 	return ID(strings.ReplaceAll(namespace, "_", "-") + "://" + strings.ToLower(string(declaration.Kind)) + "/" + derived), nil
 }
+func implicitEntityDeclarations(declarations []Declaration, namespace string) []Declaration {
+	seen := make(map[string]struct{}, len(declarations))
+	for _, declaration := range declarations {
+		seen[referenceKey(namespace, declaration.Name)] = struct{}{}
+	}
+	result := make([]Declaration, 0)
+	for _, declaration := range declarations {
+		if declaration.Kind != ActivityKind {
+			continue
+		}
+		references := append(append([]Reference(nil), declaration.Inputs...), declaration.Outputs...)
+		for _, reference := range references {
+			refNamespace := reference.Namespace
+			if refNamespace == "" {
+				refNamespace = namespace
+			}
+			if refNamespace != namespace || strings.TrimSpace(reference.Name) == "" {
+				continue
+			}
+			key := referenceKey(refNamespace, reference.Name)
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = struct{}{}
+			result = append(result, Declaration{Kind: EntityKind, Name: reference.Name})
+		}
+	}
+	return result
+}
 func validateDocumentSpans(document Document) error {
 	for index, declaration := range document.Declarations {
 		if err := declaration.Span.Validate(); err != nil {
