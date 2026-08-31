@@ -727,11 +727,45 @@ async function observeFoundationAuthorization({policy, pull, getPull, compareCom
         correctionReceiptResponse = null;
       }
       const correctionReceipt = parseJSONContent(correctionReceiptResponse);
-      if (correctionReceipt.value) {
+      let schemaCoherenceReceiptResponse = null;
+      try {
+        schemaCoherenceReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PATH, ref: pull.base.sha});
+      } catch (error) {
+        schemaCoherenceReceiptResponse = null;
+      }
+      const schemaCoherenceReceipt = parseJSONContent(schemaCoherenceReceiptResponse);
+      if (schemaCoherenceReceipt.value) {
+        const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+        const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse);
+        const parentCorrectionReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.CORRECTION_CHILD_PATH, ref: pull.base.sha});
+        const parentCorrectionReceipt = parseJSONContent(parentCorrectionReceiptResponse);
+        const migrationPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PULL_REQUEST});
+        const migrationPull = migrationPullResponse && migrationPullResponse.data;
+        const migrationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.merge_commit_sha});
+        const migrationCommit = migrationCommitResponse && migrationCommitResponse.data;
+        const migrationHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadCommit = migrationHeadCommitResponse && migrationHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const migrationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_BASE_SHA, head: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: migrationHeadCommit && migrationHeadCommit.commit && migrationHeadCommit.commit.tree && migrationHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateSchemaCoherenceMigration({
+          receipt: schemaCoherenceReceipt.value,
+          parentReceiptBytes: currentRepairReceipt.bytes,
+          correctionReceiptBytes: parentCorrectionReceipt.bytes,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          migrationPull,
+          migrationCommit,
+          migrationCompare: migrationCompareResponse && migrationCompareResponse.data,
+          migrationTreeEntries: migrationHeadTreeResponse && migrationHeadTreeResponse.data && migrationHeadTreeResponse.data.tree,
+        });
+      } else if (correctionReceipt.value) {
         foundationAuthorization.validateCorrectionChildReceipt(correctionReceipt.value);
         const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
         const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse).value;
-        foundationAuthorization.validateIncompletePropagationOutcome(currentRepairReceipt);
+        foundationAuthorization.validateRegressionRepairReceipt(currentRepairReceipt);
         const parentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: foundationAuthorization.CORRECTION_CHILD_BASE_SHA});
         const parentRepairReceipt = parseJSONContent(parentRepairReceiptResponse);
         foundationAuthorization.validateRegressionRepairReceipt(parentRepairReceipt.value);

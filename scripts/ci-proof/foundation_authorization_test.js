@@ -40,4 +40,25 @@ assert.equal(correction.cells[0].allowed, 1);
 assert.equal(correction.cells[0].consumed, 1);
 assert.equal(correction.cells[0].replay_decision, 'REFUTED');
 assert.equal(correction.parent_repair_receipt, authorization.CORRECTION_CHILD_PARENT_RECEIPT_SHA256);
+const correctionWithOwnedOutcome = {
+  ...correction,
+  parent_outcome: 'REFUTED_INCOMPLETE_PROPAGATION',
+  outcome: 'CLOSED',
+  causal: authorization.SCHEMA_COHERENCE_MIGRATION_REASON,
+};
+assert.doesNotThrow(() => authorization.validateCorrectionChildReceipt(correctionWithOwnedOutcome));
+const parentWithoutOutcome = JSON.parse(JSON.stringify(receipt));
+delete parentWithoutOutcome.outcome;
+delete parentWithoutOutcome.cells[0].outcome;
+assert.doesNotThrow(() => authorization.validateRegressionRepairReceipt(parentWithoutOutcome));
+const migration = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v4-schema-coherence.json'), 'utf8'));
+assert.doesNotThrow(() => authorization.validateSchemaCoherenceMigrationReceipt(migration));
+assert.deepEqual(authorization.schemaCoherenceInputFieldStates(authorization.SCHEMA_COHERENCE_MIGRATION_INPUT), Object.fromEntries(authorization.SCHEMA_COHERENCE_MIGRATION_INPUT_FIELDS.map((field) => [field, 'CLOSED'])));
+assert.equal(authorization.classifySchemaCoherenceInput(authorization.SCHEMA_COHERENCE_MIGRATION_INPUT).decision, 'CLOSED');
+assert.equal(authorization.classifySchemaCoherenceInput({schema: 'gooo/receipt-schema-migration/v0.1.2'}).unknown_count, 6);
+const staleInput = {...authorization.SCHEMA_COHERENCE_MIGRATION_INPUT, target_commit: '0'.repeat(40)};
+assert.equal(authorization.classifySchemaCoherenceInput(staleInput).decision, 'UNKNOWN');
+assert.equal(authorization.resolveSchemaCoherenceDecision(['CLOSED', 'UNKNOWN', 'REFUTED']), 'REFUTED');
+assert.equal(authorization.resolveSchemaCoherenceDecision(['CLOSED', 'UNKNOWN']), 'UNKNOWN');
+assert.equal(authorization.resolveSchemaCoherenceDecision(['CLOSED']), 'CLOSED');
 console.log('foundation authorization tests passed');
