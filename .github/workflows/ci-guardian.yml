@@ -110,6 +110,8 @@ jobs:
             let baseKernelBlobs = null;
             let preCorrectionKernelBlobs = null;
             let correctionChangedPaths = null;
+            let beforeDigest = null;
+            let afterDigest = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
@@ -264,8 +266,6 @@ jobs:
                   appSlug,
                 });
               }
-              let beforeDigest = null;
-              let afterDigest = null;
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
               if (guardian.routeForPull(observedPull) === 'feature_dev' && result.decision === 'FAIL_CLOSED' && result.kernelPaths.length > 0) {
                 try {

@@ -734,7 +734,38 @@ async function observeFoundationAuthorization({policy, pull, getPull, compareCom
         schemaCoherenceReceiptResponse = null;
       }
       const schemaCoherenceReceipt = parseJSONContent(schemaCoherenceReceiptResponse);
-      if (schemaCoherenceReceipt.value) {
+      let executableGuardianScopeReceiptResponse = null;
+      try {
+        executableGuardianScopeReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PATH, ref: pull.base.sha});
+      } catch (error) {
+        executableGuardianScopeReceiptResponse = null;
+      }
+      const executableGuardianScopeReceipt = parseJSONContent(executableGuardianScopeReceiptResponse);
+      if (executableGuardianScopeReceipt.value && pull.number === foundationAuthorization.CANDIDATE_PULL_REQUEST) {
+        const parentV4ReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.SCHEMA_COHERENCE_MIGRATION_PATH, ref: pull.base.sha});
+        const parentV4Receipt = parseJSONContent(parentV4ReceiptResponse);
+        const migrationPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST});
+        const migrationPull = migrationPullResponse && migrationPullResponse.data;
+        const migrationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.merge_commit_sha});
+        const migrationCommit = migrationCommitResponse && migrationCommitResponse.data;
+        const migrationHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadCommit = migrationHeadCommitResponse && migrationHeadCommitResponse.data;
+        const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+        const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+        const migrationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA, head: migrationPull && migrationPull.head && migrationPull.head.sha});
+        const migrationHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: migrationHeadCommit && migrationHeadCommit.commit && migrationHeadCommit.commit.tree && migrationHeadCommit.commit.tree.sha, recursive: '1'});
+        const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+        regressionRepair = foundationAuthorization.validateExecutableGuardianScope({
+          receipt: executableGuardianScopeReceipt.value,
+          parentReceiptBytes: parentV4Receipt.bytes,
+          candidateBaseSHA: pull.base.sha,
+          candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+          migrationPull,
+          migrationCommit,
+          migrationCompare: migrationCompareResponse && migrationCompareResponse.data,
+          migrationTreeEntries: migrationHeadTreeResponse && migrationHeadTreeResponse.data && migrationHeadTreeResponse.data.tree,
+        });
+      } else if (schemaCoherenceReceipt.value && pull.number === foundationAuthorization.CANDIDATE_PULL_REQUEST) {
         const currentRepairReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
         const currentRepairReceipt = parseJSONContent(currentRepairReceiptResponse);
         const parentCorrectionReceiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.CORRECTION_CHILD_PATH, ref: pull.base.sha});

@@ -624,6 +624,58 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.doesNotMatch(workflow, /agent\/ci-workflow/);
 }
 
+function testExecutableGuardianScopeAcceptanceHarness() {
+  const workflow = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci-guardian.yml'), 'utf8');
+  const receipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v5-executable-guardian-scope.json'), 'utf8'));
+  const acceptance = new Map([
+    ['SCOPE_INITIALIZED_BEFORE_POLICY_BRANCH', () => {
+      const declaration = workflow.indexOf('let beforeDigest = null;');
+      const policyBranch = workflow.indexOf('if (route === guardian.FOUNDATION_ROUTE)');
+      assert(declaration >= 0 && declaration < policyBranch, 'digest scope is not initialized before the policy branch');
+    }],
+    ['SCOPE_REUSED_WITHOUT_REDECLARATION', () => {
+      assert.equal((workflow.match(/let beforeDigest = null;/g) || []).length, 1);
+      assert.equal((workflow.match(/let afterDigest = null;/g) || []).length, 1);
+      assert.match(workflow, /beforeDigest = await guardian\.kernelTreeDigest/);
+      assert.match(workflow, /afterDigest = await guardian\.kernelTreeDigest/);
+    }],
+    ['WORKFLOW_AUTHORITY_PINNED_TO_GITHUB_WORKFLOW_SHA', () => {
+      assert.match(workflow, /ref: \$\{\{ github\.workflow_sha \}\}/);
+      assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
+    }],
+    ['LIVE_PR_CHANGED_PATHS_ATTESTED', () => {
+      assert.match(workflow, /github\.rest\.pulls\.get/);
+      assert.match(workflow, /listFiles/);
+      assert.match(workflow, /expectedChangedFiles = observedPull\.changed_files/);
+    }],
+    ['PASS_KERNEL_DIGESTS_NON_NULL_EXACT', () => {
+      const before = `sha256:${'a'.repeat(64)}`;
+      const after = `sha256:${'b'.repeat(64)}`;
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: before, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: after}).decision, 'PASS');
+    }],
+    ['NULL_STALE_MISMATCH_REFUTED', () => {
+      const before = `sha256:${'a'.repeat(64)}`;
+      const after = `sha256:${'b'.repeat(64)}`;
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: null, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: after}).decision, 'REFUTED');
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: before, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: before}).decision, 'REFUTED');
+    }],
+    ['FUTURE_SCHEMA_UNKNOWN_OVER_6_FIELDS', () => {
+      const classified = foundationAuthorization.classifyExecutableGuardianScopeInput({schema: 'gooo/receipt-schema-migration/v0.2.3'});
+      assert.equal(classified.decision, 'UNKNOWN');
+      assert.equal(classified.unknown_count, 6);
+    }],
+    ['REFERENCE_ERROR_REFUTED_SCOPE_CLOSED', () => {
+      assert.equal(receipt.prior_guardian_failure.message, 'ReferenceError: beforeDigest is not defined');
+      assert.equal(receipt.cells[0].parent_outcome, foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME);
+      assert.equal(receipt.cells[0].outcome, 'CLOSED');
+    }],
+  ]);
+  assert.deepEqual([...acceptance.keys()], foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_ACCEPTANCE_IDS);
+  for (const [id, execute] of acceptance) {
+    assert.doesNotThrow(execute, `acceptance case failed: ${id}`);
+  }
+}
+
 function testHeadBindingIsExplicitlyShadowOnly() {
   assert.equal(HEAD_BINDING_STATUS, 'CI-GUARDIAN-HEAD-BINDING-UNVERIFIED');
   assert.equal(HEAD_BINDING_VERIFIED, 'verified');
@@ -672,6 +724,7 @@ function testRegressionRepairReceipt() {
   await testProtectionObserverContracts();
   await testPaginationLimit();
   testWorkflowIsReadOnlyAndBasePinned();
+  testExecutableGuardianScopeAcceptanceHarness();
   testHeadBindingIsExplicitlyShadowOnly();
   testKernelSetIsMonotonic();
   testRegressionRepairReceipt();
