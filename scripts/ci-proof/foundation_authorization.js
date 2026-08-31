@@ -9,6 +9,25 @@ const AUTHORIZATION_BRANCH = 'agent/foundation-authorization-dev-sync-20260831';
 const CANDIDATE_BRANCH = 'agent/dev-main-sync-20260831-rerun';
 const CANDIDATE_PULL_REQUEST = 609;
 const REPOSITORY = 'kimjooyoon/meta-ontology-go';
+const REGRESSION_REPAIR_SCHEMA = 'gooo/ci-governance-denominator-migration/v2';
+const REGRESSION_REPAIR_PATH = '.github/governance-denominator-v2-migration.json';
+const REGRESSION_REPAIR_BRANCH = 'agent/foundation-regression-repair-20260831';
+const REGRESSION_REPAIR_PULL_REQUEST = 611;
+const REGRESSION_REPAIR_BASE_SHA = 'afa388a2d4f1a482c71f3dfdb1c5937a00d1eca3';
+const REGRESSION_REPAIR_REASON = 'BASE_GUARDIAN_DIGEST_NULL_FOR_AUTHORIZED_FEATURE_PATH';
+const REGRESSION_REPAIR_CHANGED_PATHS = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/ci-governance.json',
+  '.github/governance-denominator-v2-migration.json',
+  '.github/workflows/ci-guardian.yml',
+  'internal/verify/scope_foundation_regression_repair_20260831.go',
+  'scripts/ci-proof/foundation_authorization.js',
+  'scripts/ci-proof/foundation_authorization_test.js',
+  'scripts/ci-proof/guardian_test.js',
+  'scripts/ci-proof/guardian.js',
+].sort());
+const REGRESSION_REPAIR_EXCLUDED_PATHS = Object.freeze([REGRESSION_REPAIR_PATH]);
+const REGRESSION_REPAIR_OLD_FAILURE = 'CI-ROOT-OF-TRUST-001: guardian artifact validation failed: CI-ROOT-OF-TRUST-001: guardian artifact kernel digest fields are inconsistent';
 const AUTHORIZATION_PATHS = Object.freeze([
   '.github/agent-scope-table.md',
   '.github/ci-governance.json',
@@ -104,6 +123,53 @@ function validatePolicy(policy) {
   return policy;
 }
 
+function validateRegressionRepairReceipt(receipt) {
+  requireExact(receipt && receipt.schema === REGRESSION_REPAIR_SCHEMA, 'regression repair receipt schema is not exact');
+  requireExact(receipt.foundation_override_success_count === FOUNDATION_OVERRIDE_SUCCESS_COUNT, 'regression repair receipt changed FOUNDATION count');
+  requireExact(Array.isArray(receipt.cells) && receipt.cells.length === 1, 'regression repair denominator must contain one cell');
+  const cell = receipt.cells[0];
+  requireExact(cell && cell.id === 'REGRESSION_REPAIR' && cell.meta_operation === 'RepairBaseGuardianDigestAttestation', 'regression repair cell identity is not exact');
+  requireExact(cell.proof_choice === 'REGRESSION' && cell.indicator === 'GUARDRAIL', 'regression repair cell classification is not exact');
+  requireExact(cell.allowed === 1 && cell.consumed === 1 && cell.replay_decision === 'REFUTED' && receipt.replay_second_use === 'REFUTED', 'regression repair consumption is not single-use');
+  requireExact(cell.reason === REGRESSION_REPAIR_REASON, 'regression repair reason is not exact');
+  requireExact(cell.pull_request === REGRESSION_REPAIR_PULL_REQUEST && cell.branch === REGRESSION_REPAIR_BRANCH && cell.base_sha === REGRESSION_REPAIR_BASE_SHA, 'regression repair identity is not exact');
+  requireExact(Array.isArray(receipt.changed_paths) && exactArray(receipt.changed_paths, REGRESSION_REPAIR_CHANGED_PATHS), 'regression repair changed paths are not exact');
+  requireExact(digestChangedPaths(receipt.changed_paths) === receipt.changed_paths_sha256 && validDigest(receipt.changed_paths_sha256), 'regression repair changed-path digest is not exact');
+  requireExact(validDigest(receipt.patch_sha256_excluding_receipt) && validDigest(receipt.tree_sha256_excluding_receipt), 'regression repair content digests are malformed');
+  requireExact(receipt.receipt_path === REGRESSION_REPAIR_PATH && exactArray(receipt.digest_exclusions, REGRESSION_REPAIR_EXCLUDED_PATHS), 'regression repair digest exclusions are not exact');
+  requireExact(receipt.old_guardian_failure && receipt.old_guardian_failure.run_id === 33348091926 && receipt.old_guardian_failure.code === 'CI-ROOT-OF-TRUST-001' && receipt.old_guardian_failure.message === REGRESSION_REPAIR_OLD_FAILURE, 'regression repair old failure tuple is not exact');
+  return receipt;
+}
+
+function validateRegressionRepair({receipt, candidateBaseSHA, candidateBaseCommit, candidateBaseTreeEntries, repairPull, repairCommit, repairCompare, repairTreeEntries}) {
+  validateRegressionRepairReceipt(receipt);
+  requireExact(repairPull && repairPull.number === REGRESSION_REPAIR_PULL_REQUEST, 'regression repair pull request number mismatch');
+  requireExact(repairPull.state === 'closed' && repairPull.merged === true && validSHA(repairPull.merge_commit_sha), 'regression repair pull request is not merged exactly once');
+  requireExact(repairPull.head && repairPull.head.ref === REGRESSION_REPAIR_BRANCH && repairPull.head.repo && repairPull.head.repo.full_name === REPOSITORY && validSHA(repairPull.head.sha), 'regression repair pull request head mismatch');
+  requireExact(candidateBaseSHA === repairPull.merge_commit_sha, 'candidate base is not the regression repair merge commit');
+  requireExact(repairCommit && repairCommit.sha === repairPull.merge_commit_sha, 'regression repair merge commit SHA mismatch');
+  const parents = Array.isArray(repairCommit.parents) ? repairCommit.parents.map((parent) => parent && parent.sha) : [];
+  requireExact(parents.length === 1 && parents[0] === REGRESSION_REPAIR_BASE_SHA, 'regression repair merge is not the exact single-parent squash from dev@A');
+  requireExact(repairCompare && Array.isArray(repairCompare.files) && exactArray(canonicalPathNames(repairCompare.files), receipt.changed_paths), 'regression repair changed paths do not match the receipt');
+  requireExact(digestChangedPaths(repairCompare.files) === receipt.changed_paths_sha256, 'regression repair changed-path evidence does not match the receipt');
+  requireExact(digestTreeEntries(repairTreeEntries, REGRESSION_REPAIR_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'regression repair head tree does not match the receipt');
+  requireExact(digestTreeEntries(candidateBaseTreeEntries, REGRESSION_REPAIR_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'candidate base tree does not match the regression repair receipt');
+  return {
+    schema: REGRESSION_REPAIR_SCHEMA,
+    cell: 'REGRESSION_REPAIR',
+    proof_choice: 'REGRESSION',
+    indicator: 'GUARDRAIL',
+    pull_request: REGRESSION_REPAIR_PULL_REQUEST,
+    branch: REGRESSION_REPAIR_BRANCH,
+    base_sha: REGRESSION_REPAIR_BASE_SHA,
+    merge_commit_sha: repairPull.merge_commit_sha,
+    reason: REGRESSION_REPAIR_REASON,
+    allowed: 1,
+    consumed: 1,
+    replay_decision: 'REFUTED',
+  };
+}
+
 function validateBaseAttestation(policy, commit) {
   const expected = policy.base_attestation;
   requireExact(commit && commit.sha === expected.commit, 'candidate base commit SHA attestation mismatch');
@@ -135,14 +201,16 @@ function validateAncestry(compare, expectedAncestor, label) {
   requireExact(compare && compare.status === 'ahead' && compare.merge_base_commit && compare.merge_base_commit.sha === expectedAncestor, `${label} is not in candidate head ancestry`);
 }
 
-function validateCandidateEvidence({policy, candidatePull, authorizationPull, authorizationCommit, candidateCompare, authorizationCompare, baseCommit, manifestBytes, changedFiles, treeEntries, patchDigest}) {
+function validateCandidateEvidence({policy, candidatePull, authorizationPull, authorizationCommit, candidateCompare, authorizationCompare, baseCommit, manifestBytes, changedFiles, treeEntries, patchDigest, regressionRepair}) {
   validatePolicy(policy);
   validateCandidateIdentity(policy, candidatePull);
   validateBaseAttestation(policy, baseCommit);
   const authorizationMergeSHA = validateAuthorizationMerge(policy, authorizationPull, authorizationCommit);
   validateAncestry(candidateCompare, policy.candidate.head_sha, 'candidate S');
   validateAncestry(authorizationCompare, authorizationMergeSHA, 'authorization A');
-  requireExact(candidatePull.base.sha === authorizationMergeSHA, 'candidate base is not the authorization merge commit');
+  if (candidatePull.base.sha !== authorizationMergeSHA) {
+    requireExact(regressionRepair && candidatePull.base.sha === regressionRepair.merge_commit_sha, 'candidate base is neither the authorization merge nor the exact regression repair merge');
+  }
   requireExact(Buffer.isBuffer(manifestBytes) && sha256(manifestBytes) === policy.candidate.manifest_sha256, 'candidate manifest M does not match');
   requireExact(digestChangedPaths(changedFiles) === policy.candidate.changed_paths_sha256 && canonicalPathNames(changedFiles).length === policy.candidate.changed_path_count, 'candidate changed-path digest P does not match');
   requireExact(digestTreeEntries(treeEntries, policy.auth_policy_paths) === policy.candidate.tree_sha256_excluding_authorization_paths, 'candidate tree digest T does not match');
@@ -162,6 +230,7 @@ function validateCandidateEvidence({policy, candidatePull, authorizationPull, au
     single_use: true,
     consumed: false,
     replay_decision: 'REFUTED',
+    ...(regressionRepair ? {regression_repair: regressionRepair} : {}),
   };
 }
 
@@ -185,4 +254,14 @@ module.exports = {
   validateCandidateEvidence,
   validateCandidateIdentity,
   validatePolicy,
+  validateRegressionRepair,
+  validateRegressionRepairReceipt,
+  REGRESSION_REPAIR_BASE_SHA,
+  REGRESSION_REPAIR_BRANCH,
+  REGRESSION_REPAIR_CHANGED_PATHS,
+  REGRESSION_REPAIR_EXCLUDED_PATHS,
+  REGRESSION_REPAIR_PATH,
+  REGRESSION_REPAIR_PULL_REQUEST,
+  REGRESSION_REPAIR_REASON,
+  REGRESSION_REPAIR_SCHEMA,
 };

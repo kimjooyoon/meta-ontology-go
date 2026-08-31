@@ -1,0 +1,43 @@
+{
+  "schema": "gooo/ci-governance-denominator-migration/v2",
+  "foundation_override_success_count": 3,
+  "receipt_path": ".github/governance-denominator-v2-migration.json",
+  "digest_exclusions": [
+    ".github/governance-denominator-v2-migration.json"
+  ],
+  "changed_paths": [
+    ".github/agent-scope-table.md",
+    ".github/ci-governance.json",
+    ".github/governance-denominator-v2-migration.json",
+    ".github/workflows/ci-guardian.yml",
+    "internal/verify/scope_foundation_regression_repair_20260831.go",
+    "scripts/ci-proof/foundation_authorization.js",
+    "scripts/ci-proof/foundation_authorization_test.js",
+    "scripts/ci-proof/guardian.js",
+    "scripts/ci-proof/guardian_test.js"
+  ],
+  "changed_paths_sha256": "sha256:84c9c3c7f1aa07df3a4b49250118f7e62485f57a06d9bcae86c14f0e46dd24c7",
+  "patch_sha256_excluding_receipt": "sha256:956c2cd8ac76cf1e08e4b1a38c1d8ebe72c587bf1a289258c4ebb80c06e8c541",
+  "tree_sha256_excluding_receipt": "sha256:301d4eb5f7bb1c258d06f5df768e3ab431151ef5a23d399ae0306df031cfcc6b",
+  "old_guardian_failure": {
+    "run_id": 33348091926,
+    "code": "CI-ROOT-OF-TRUST-001",
+    "message": "CI-ROOT-OF-TRUST-001: guardian artifact validation failed: CI-ROOT-OF-TRUST-001: guardian artifact kernel digest fields are inconsistent"
+  },
+  "replay_second_use": "REFUTED",
+  "cells": [
+    {
+      "id": "REGRESSION_REPAIR",
+      "meta_operation": "RepairBaseGuardianDigestAttestation",
+      "proof_choice": "REGRESSION",
+      "indicator": "GUARDRAIL",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED",
+      "reason": "BASE_GUARDIAN_DIGEST_NULL_FOR_AUTHORIZED_FEATURE_PATH",
+      "pull_request": 611,
+      "branch": "agent/foundation-regression-repair-20260831",
+      "base_sha": "afa388a2d4f1a482c71f3dfdb1c5937a00d1eca3"
+    }
+  ]
+}

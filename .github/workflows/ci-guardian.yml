@@ -295,7 +295,12 @@ jobs:
                   result = {...result, foundationAuthorization: {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)}};
                 }
               }
-              if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName})) {
+              const trustedPromotion = guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName});
+              const authorizedFoundationFeature = guardian.routeForPull(observedPull) === 'feature_dev'
+                && result.decision === 'PASS'
+                && result.foundationAuthorization
+                && result.foundationAuthorization.decision === 'PASS';
+              if (result.kernelPaths.length > 0 && (trustedPromotion || authorizedFoundationFeature)) {
                 beforeDigest = await guardian.kernelTreeDigest({
                   getCommit: (parameters) => github.rest.repos.getCommit(parameters),
                   getTree: (parameters) => github.rest.git.getTree(parameters),
