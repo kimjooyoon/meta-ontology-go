@@ -689,12 +689,42 @@ async function observeFoundationAuthorization({policy, pull, getPull, compareCom
     const authorizationPull = authorizationResponse && authorizationResponse.data;
     const authorizationCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: authorizationPull && authorizationPull.merge_commit_sha});
     const authorizationCommit = authorizationCommitResponse && authorizationCommitResponse.data;
+    const authorizationMergeSHA = authorizationPull && authorizationPull.merge_commit_sha;
     const baseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: policy.candidate.base_sha});
     const baseCommit = baseCommitResponse && baseCommitResponse.data;
     const candidateCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: policy.candidate.head_sha, head: pull.head.sha});
-    const authorizationMergeSHA = authorizationPull && authorizationPull.merge_commit_sha;
     const authorizationCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: authorizationMergeSHA, head: pull.head.sha});
     const candidateDiffResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: policy.candidate.base_sha, head: policy.candidate.head_sha});
+    let regressionRepair = null;
+    if (pull && pull.base && pull.base.sha !== authorizationMergeSHA) {
+      const receiptResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: foundationAuthorization.REGRESSION_REPAIR_PATH, ref: pull.base.sha});
+      const receiptData = receiptResponse && receiptResponse.data;
+      const receipt = receiptData && !Array.isArray(receiptData) && receiptData.content
+        ? JSON.parse(Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+        : null;
+      foundationAuthorization.validateRegressionRepairReceipt(receipt);
+      const repairPullResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: receipt.cells[0].pull_request});
+      const repairPull = repairPullResponse && repairPullResponse.data;
+      const repairCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.merge_commit_sha});
+      const repairCommit = repairCommitResponse && repairCommitResponse.data;
+      const repairHeadCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: repairPull && repairPull.head && repairPull.head.sha});
+      const repairHeadCommit = repairHeadCommitResponse && repairHeadCommitResponse.data;
+      const currentBaseCommitResponse = await getCommit({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], ref: pull.base.sha});
+      const currentBaseCommit = currentBaseCommitResponse && currentBaseCommitResponse.data;
+      const repairCompareResponse = await compareCommits({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], base: foundationAuthorization.REGRESSION_REPAIR_BASE_SHA, head: repairPull && repairPull.head && repairPull.head.sha});
+      const repairHeadTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: repairHeadCommit && repairHeadCommit.commit && repairHeadCommit.commit.tree && repairHeadCommit.commit.tree.sha, recursive: '1'});
+      const currentBaseTreeResponse = await getTree({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], tree_sha: currentBaseCommit && currentBaseCommit.commit && currentBaseCommit.commit.tree && currentBaseCommit.commit.tree.sha, recursive: '1'});
+      regressionRepair = foundationAuthorization.validateRegressionRepair({
+        receipt,
+        candidateBaseSHA: pull.base.sha,
+        candidateBaseCommit: currentBaseCommit,
+        candidateBaseTreeEntries: currentBaseTreeResponse && currentBaseTreeResponse.data && currentBaseTreeResponse.data.tree,
+        repairPull,
+        repairCommit,
+        repairCompare: repairCompareResponse && repairCompareResponse.data,
+        repairTreeEntries: repairHeadTreeResponse && repairHeadTreeResponse.data && repairHeadTreeResponse.data.tree,
+      });
+    }
     const manifestResponse = await getContent({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], path: policy.candidate.manifest_path, ref: policy.candidate.head_sha});
     const manifestData = manifestResponse && manifestResponse.data;
     const manifestBytes = manifestData && !Array.isArray(manifestData) && manifestData.content ? Buffer.from(manifestData.content.replace(/\s/g, ''), 'base64') : null;
@@ -718,6 +748,7 @@ async function observeFoundationAuthorization({policy, pull, getPull, compareCom
       manifestBytes,
       changedFiles: candidateDiff.files,
       treeEntries: treeResponse.data.tree,
+      regressionRepair,
     });
   } catch (error) {
     return {

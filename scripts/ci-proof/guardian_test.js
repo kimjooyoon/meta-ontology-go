@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const foundationAuthorization = require('./foundation_authorization');
 const {
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
@@ -580,6 +581,10 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /ci-guardian\.json/);
   assert.match(workflow, /pull_request_number: observedPull && observedPull\.number/);
   assert.match(workflow, /runtime_sha: runtimeSha/);
+  assert.match(workflow, /const trustedPromotion = guardian\.trustedDevPromotion/);
+  assert.match(workflow, /const authorizedFoundationFeature/);
+  assert.match(workflow, /result\.foundationAuthorization\.decision === 'PASS'/);
+  assert.match(workflow, /trustedPromotion \|\| authorizedFoundationFeature/);
   const writeIndex = workflow.indexOf('writeFileSync');
   const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact,');
   const setFailedIndex = workflow.indexOf('core.setFailed');
@@ -608,6 +613,12 @@ function testKernelSetIsMonotonic() {
   }
 }
 
+function testRegressionRepairReceipt() {
+  const receipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v2-migration.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateRegressionRepairReceipt(receipt));
+  assert.equal(receipt.foundation_override_success_count, foundationAuthorization.FOUNDATION_OVERRIDE_SUCCESS_COUNT);
+}
+
 (async () => {
   await testPaginationAndNonKernelPass();
   await testKernelStatusesAndRenames();
@@ -622,6 +633,7 @@ function testKernelSetIsMonotonic() {
   testWorkflowIsReadOnlyAndBasePinned();
   testHeadBindingIsExplicitlyShadowOnly();
   testKernelSetIsMonotonic();
+  testRegressionRepairReceipt();
   await testLiveRefsAndRouteIdentity();
   console.log('guardian tests passed');
 })().catch((error) => {
