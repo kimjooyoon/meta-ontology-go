@@ -74,7 +74,10 @@ func expectedRegistry() Registry {
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo"}}
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}, MetaSources: []string{
+		"internal/meta/entityfields/entity-fields-meta.gooo",
+		"examples/meta-policy-compilation/policy.gooo",
+	}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
