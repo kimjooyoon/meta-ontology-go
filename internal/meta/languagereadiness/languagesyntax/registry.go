@@ -71,6 +71,7 @@ func expectedRegistry() Registry {
 		valid("ci-effort-observation", "examples/ci-effort-observation/main.gooo"),
 		ciTimeCausality,
 		valid("reproducibility-semantics", "examples/reproducibility-semantics/main.gooo"),
+		valid("self-improvement-minimal-loop", "examples/self-improvement-minimal-loop/main.gooo"),
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),

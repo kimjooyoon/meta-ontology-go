@@ -393,6 +393,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-minimal-loop",
+      "path": "examples/self-improvement-minimal-loop/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "entity-fields-v1",
       "path": "examples/entity-fields-v1/main.gooo",
       "kind": "VALID",

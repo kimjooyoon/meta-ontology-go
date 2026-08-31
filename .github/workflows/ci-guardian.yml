@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
       - name: Validate guardian observer environment
         id: observer-environment
@@ -84,10 +84,12 @@ jobs:
           GUARDIAN_APP_TOKEN: ${{ steps.guardian-app-token.outputs.token }}
           GUARDIAN_APP_INSTALLATION_ID: ${{ steps.guardian-app-token.outputs.installation-id }}
           GUARDIAN_APP_SLUG: ${{ steps.guardian-app-token.outputs.app-slug }}
+          GUARDIAN_GIT_TOKEN: ${{ github.token }}
         with:
           github-token: ${{ github.token }}
           script: |
             const fs = require('node:fs');
+            const {execFileSync} = require('node:child_process');
             const crypto = require('node:crypto');
             const guardian = require('./scripts/ci-proof/guardian');
             const eventPull = context.payload.pull_request;
@@ -133,12 +135,34 @@ jobs:
                 eventPull: pull,
               });
               const expectedChangedFiles = observedPull.changed_files;
+              const graphQLChangedFiles = await guardian.observeGraphQLChangedFiles({
+                graphql: (query, variables) => github.graphql(query, variables),
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pullNumber: observedPull.number,
+              });
+              if (graphQLChangedFiles !== expectedChangedFiles) {
+                throw guardian.guardianFailure('REST pull changed_files count does not match GraphQL changedFiles scalar');
+              }
+              execFileSync('git', [
+                'fetch',
+                '--no-tags',
+                `https://x-access-token:${process.env.GUARDIAN_GIT_TOKEN}@github.com/${repository}.git`,
+                observedPull.base.sha,
+                observedPull.head.sha,
+              ], {stdio: 'ignore'});
+              const exactChangedFiles = guardian.readGitChangedPaths({
+                execute: (args) => execFileSync('git', args, {maxBuffer: 16 * 1024 * 1024}),
+                baseSHA: observedPull.base.sha,
+                headSHA: observedPull.head.sha,
+              });
               result = await guardian.inspectChangedFiles({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 baseRepoFullName: observedPull.base.repo.full_name,
                 pullNumber: observedPull.number,
-                expectedCount: expectedChangedFiles,
+                expectedCount: graphQLChangedFiles,
+                exactFiles: exactChangedFiles,
                 listFiles: (parameters) => github.rest.pulls.listFiles(parameters),
               });
               observedPull = await guardian.revalidatePullRequest({
@@ -148,7 +172,13 @@ jobs:
                 pullNumber: pull.number,
                 eventPull: observedPull,
               });
-              if (observedPull.changed_files !== expectedChangedFiles) {
+              const afterGraphQLChangedFiles = await guardian.observeGraphQLChangedFiles({
+                graphql: (query, variables) => github.graphql(query, variables),
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pullNumber: observedPull.number,
+              });
+              if (observedPull.changed_files !== expectedChangedFiles || afterGraphQLChangedFiles !== expectedChangedFiles) {
                 throw guardian.guardianFailure('live pull changed_files count changed during guardian inspection');
               }
               liveAfter = await guardian.readLiveTopology({

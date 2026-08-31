@@ -23,6 +23,8 @@ const {
   digestGuardianArtifact,
   validateKernelDigestAttestation,
   inspectChangedFiles,
+  readGitChangedPaths,
+  observeGraphQLChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
   validateGuardianArtifact,
@@ -110,6 +112,44 @@ async function testPaginationAndNonKernelPass() {
   assert.equal(result.files.length, 101);
   assert.deepEqual(calls.map((call) => call.page), [1, 2]);
   assert.equal(calls[1].per_page, 100);
+}
+
+async function testBoundChangedPathAuthority() {
+  const exactFiles = readGitChangedPaths({
+    baseSHA: sha('b'),
+    headSHA: sha('a'),
+    execute: (args) => {
+      assert.deepEqual(args, ['diff', '--name-status', '-z', '--find-renames', '--find-copies', '--no-ext-diff', `${sha('b')}...${sha('a')}`]);
+      return Buffer.from(`M\0docs/readme.md\0R100\0docs/old.md\0docs/new.md\0`);
+    },
+  });
+  assert.deepEqual(exactFiles, [
+    file('docs/new.md', 'renamed', 'docs/old.md'),
+    file('docs/readme.md', 'modified'),
+  ]);
+  const result = await inspectChangedFiles({
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 2,
+    exactFiles,
+    listFiles: async () => ({status: 200, data: [file('docs/new.md', 'renamed', 'docs/old.md')]}),
+  });
+  assert.equal(result.decision, 'PASS');
+  assert.equal(result.changedFilesSource, 'git-diff');
+  assert.equal(result.apiChangedFilesCount, 1);
+  assert.equal(result.apiChangedFilesExpectedCount, 2);
+  assert.equal(result.apiChangedFilesComplete, false);
+  await rejectsRoot(() => inspectChangedFiles({
+    owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
+    exactFiles,
+    listFiles: async () => ({status: 200, data: []}),
+  }));
+  assert.equal(await observeGraphQLChangedFiles({
+    owner: 'owner', repo: 'repo', pullNumber: 108,
+    graphql: async () => ({repository: {pullRequest: {changedFiles: 2}}}),
+  }), 2);
+  await rejectsRoot(() => observeGraphQLChangedFiles({
+    owner: 'owner', repo: 'repo', pullNumber: 108,
+    graphql: async () => ({repository: {pullRequest: {changedFiles: '2'}}}),
+  }));
 }
 
 async function testKernelStatusesAndRenames() {
@@ -723,6 +763,7 @@ function testRegressionRepairReceipt() {
 
 (async () => {
   await testPaginationAndNonKernelPass();
+  await testBoundChangedPathAuthority();
   await testKernelStatusesAndRenames();
   await testForkAndMalformedAPI();
   await testStaleRaceAndArtifactDigest();

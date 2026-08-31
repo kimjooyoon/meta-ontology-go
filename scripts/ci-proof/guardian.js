@@ -542,11 +542,89 @@ function validateChangedFile(file) {
   return {filename, previous_filename: file.previous_filename || null, status: file.status};
 }
 
-async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pullNumber, expectedCount}) {
+function gitChangedFileStatus(status) {
+  switch (status) {
+    case 'A': return 'added';
+    case 'C': return 'copied';
+    case 'D': return 'removed';
+    case 'M': return 'modified';
+    case 'R': return 'renamed';
+    default: return null;
+  }
+}
+
+function changedFileKey(file) {
+  return [file.filename, file.previous_filename || '', file.status].join('\u0000');
+}
+
+function readGitChangedPaths({execute, baseSHA, headSHA}) {
+  if (typeof execute !== 'function' || !validSHA(baseSHA) || !validSHA(headSHA)) {
+    throw guardianFailure('bound git changed-path authority input is missing or malformed');
+  }
+  let output;
+  try {
+    output = execute(['diff', '--name-status', '-z', '--find-renames', '--find-copies', '--no-ext-diff', `${baseSHA}...${headSHA}`]);
+  } catch (error) {
+    throw guardianFailure(`bound git changed-path authority failed: ${error.message || error}`);
+  }
+  if (!Buffer.isBuffer(output)) output = Buffer.from(String(output || ''), 'utf8');
+  const tokens = output.toString('utf8').split('\u0000');
+  if (tokens.length > 0 && tokens[tokens.length - 1] === '') tokens.pop();
+  const files = [];
+  for (let index = 0; index < tokens.length;) {
+    const statusToken = tokens[index++];
+    const status = gitChangedFileStatus(statusToken && statusToken[0]);
+    if (!status) throw guardianFailure(`bound git changed-path authority returned unsupported status: ${statusToken}`);
+    const previousFilename = status === 'renamed' || status === 'copied' ? tokens[index++] : null;
+    const filename = tokens[index++];
+    files.push(validateChangedFile({filename, previous_filename: previousFilename, status}));
+  }
+  const sorted = sortedChangedFiles(files);
+  let previous = null;
+  for (const file of sorted) {
+    const key = changedFileKey(file);
+    if (previous !== null && canonicalStringCompare(key, previous) <= 0) {
+      throw guardianFailure('bound git changed-path authority returned duplicate paths');
+    }
+    previous = key;
+  }
+  return sorted;
+}
+
+async function observeGraphQLChangedFiles({graphql, owner, repo, pullNumber}) {
+  if (typeof graphql !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || !validPositiveInteger(pullNumber)) {
+    throw guardianFailure('GraphQL changed-file authority binding is missing or malformed');
+  }
+  let response;
+  try {
+    response = await graphql(`query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $number) { changedFiles }
+      }
+    }`, {owner, repo, number: pullNumber});
+  } catch (error) {
+    throw guardianFailure(`GraphQL changed-file authority failed: ${error.message || error}`);
+  }
+  const changedFiles = response && response.repository && response.repository.pullRequest && response.repository.pullRequest.changedFiles;
+  if (!Number.isInteger(changedFiles) || changedFiles < 0) {
+    throw guardianFailure('GraphQL changed-file authority returned malformed data');
+  }
+  return changedFiles;
+}
+
+async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pullNumber, expectedCount, exactFiles = null}) {
   if (typeof listFiles !== 'function' || typeof owner !== 'string' || typeof repo !== 'string' || baseRepoFullName !== `${owner}/${repo}` || !Number.isInteger(pullNumber) || pullNumber < 1 || !Number.isInteger(expectedCount) || expectedCount < 0) {
     throw guardianFailure('changed-file API binding is missing or malformed');
   }
-  const files = [];
+  if (exactFiles !== null && !Array.isArray(exactFiles)) {
+    throw guardianFailure('bound git changed-file authority is not an array');
+  }
+  const files = exactFiles === null ? null : exactFiles.map((file) => validateChangedFile(file));
+  if (files !== null && files.length !== expectedCount) {
+    throw guardianFailure(`bound git changed-file count ${files.length} does not match GraphQL pull count ${expectedCount}`);
+  }
+  const apiFiles = [];
+  let apiComplete = false;
   for (let page = 1; page <= 1000; page += 1) {
     let response;
     try {
@@ -559,13 +637,21 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
     }
     for (const file of response.data) {
       const validated = validateChangedFile(file);
-      files.push(validated);
+      apiFiles.push(validated);
     }
     if (response.data.length < 100) {
-      if (files.length !== expectedCount) {
-        throw guardianFailure(`changed-file API count ${files.length} does not match live pull count ${expectedCount}`);
+      apiComplete = apiFiles.length === expectedCount;
+      if (files === null && !apiComplete) {
+        throw guardianFailure(`changed-file API count ${apiFiles.length} does not match live pull count ${expectedCount}`);
       }
-      const kernelPaths = files
+      const authoritativeFiles = files === null ? apiFiles : files;
+      const authoritativeKeys = new Set(authoritativeFiles.map(changedFileKey));
+      for (const file of apiFiles) {
+        if (!authoritativeKeys.has(changedFileKey(file))) {
+          throw guardianFailure(`changed-file API disagrees with bound git diff: ${file.filename}`);
+        }
+      }
+      const kernelPaths = authoritativeFiles
         .flatMap((file) => [file.filename, file.previous_filename])
         .filter((path) => path && isProtectedKernelPath(path));
       if (kernelPaths.length > 0) {
@@ -575,11 +661,21 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
           code: null,
           reason: `protected kernel path requires Foundation authorization before root decision: ${uniqueKernelPaths.join(', ')}`,
           authorizationRequired: true,
-          files,
+          files: authoritativeFiles,
+          changedFilesSource: files === null ? 'api' : 'git-diff',
+          apiChangedFilesCount: apiFiles.length,
+          apiChangedFilesExpectedCount: expectedCount,
+          apiChangedFilesComplete: apiComplete,
           kernelPaths: uniqueKernelPaths,
         };
       }
-      return {decision: 'PASS', code: null, reason: null, files, kernelPaths: []};
+      return {
+        decision: 'PASS', code: null, reason: null, files: authoritativeFiles, kernelPaths: [],
+        changedFilesSource: files === null ? 'api' : 'git-diff',
+        apiChangedFilesCount: apiFiles.length,
+        apiChangedFilesExpectedCount: expectedCount,
+        apiChangedFilesComplete: apiComplete,
+      };
     }
   }
   throw guardianFailure('changed-file pagination exceeded the fail-closed page limit');
@@ -1058,6 +1154,10 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     kernel_after_sha256: result && result.kernelAfterDigest ? result.kernelAfterDigest : null,
     changed_files: sortedChangedFiles(result && result.files),
     changed_files_count: Array.isArray(result && result.files) ? result.files.length : 0,
+    changed_files_source: result && result.changedFilesSource ? result.changedFilesSource : 'api',
+    api_changed_files_count: Number.isInteger(result && result.apiChangedFilesCount) ? result.apiChangedFilesCount : Array.isArray(result && result.files) ? result.files.length : 0,
+    api_changed_files_expected_count: Number.isInteger(result && result.apiChangedFilesExpectedCount) ? result.apiChangedFilesExpectedCount : Array.isArray(result && result.files) ? result.files.length : 0,
+    api_changed_files_complete: typeof (result && result.apiChangedFilesComplete) === 'boolean' ? result.apiChangedFilesComplete : true,
     kernel_paths: [...new Set((result && result.kernelPaths) || [])].sort(canonicalStringCompare),
     decision: result && result.decision ? result.decision : 'FAIL_CLOSED',
     code: result ? result.code : ROOT_FAILURE_CODE,
@@ -1184,6 +1284,12 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   if (manifest.decision === 'FAIL_CLOSED' && manifest.head_binding_status !== HEAD_BINDING_STATUS) {
     throw guardianFailure('guardian FAIL_CLOSED head binding must remain unverified', CHECK_IDENTITY_CODE);
   }
+  if (!['api', 'git-diff'].includes(manifest.changed_files_source) || !Number.isInteger(manifest.api_changed_files_count) || manifest.api_changed_files_count < 0 || !Number.isInteger(manifest.api_changed_files_expected_count) || manifest.api_changed_files_expected_count < 0 || typeof manifest.api_changed_files_complete !== 'boolean') {
+    throw guardianFailure('guardian artifact changed-file authority metadata is malformed');
+  }
+  if (manifest.changed_files_source === 'git-diff' && manifest.api_changed_files_expected_count !== manifest.changed_files_count) {
+    throw guardianFailure('guardian artifact bound git changed-file count is not GraphQL-bound');
+  }
   if (!Number.isInteger(manifest.changed_files_count) || manifest.changed_files_count !== manifest.changed_files.length) {
     throw guardianFailure('guardian artifact changed-file count does not match collected files');
   }
@@ -1297,6 +1403,8 @@ module.exports = {
   defaultBranchDecision,
   digestGuardianArtifact,
   inspectChangedFiles,
+  readGitChangedPaths,
+  observeGraphQLChangedFiles,
   isProtectedKernelPath,
   kernelTreeDigest,
   normalizePath,
