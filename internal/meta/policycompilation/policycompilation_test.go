@@ -25,7 +25,7 @@ func TestCompilePolicyBindsEightMeaningfulObligations(t *testing.T) {
 }
 
 func TestCompileAcceptsSemanticMetadataIntervention(t *testing.T) {
-	source := strings.Replace(policyFixture(t), "reason=SOURCE_BOUND", "reason=SOURCE_LIED", 1)
+	source := strings.Replace(string(policyFixture(t)), "reason=SOURCE_BOUND", "reason=SOURCE_LIED", 1)
 	changed, err := Compile([]byte(source))
 	if err != nil {
 		t.Fatal(err)
