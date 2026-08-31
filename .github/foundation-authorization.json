@@ -19,7 +19,7 @@
   },
   "dispatch": {
     "receipt_path": ".github/governance-denominator-v6-foundation-authorization-dispatch.json",
-    "receipt_sha256": "sha256:f5979e558740d73dff3eaf7d866fd065cdea4b72e2a7e2043dfcdb4367efdfbe",
+    "receipt_sha256": "sha256:6c768fe3fb72341b7e9af7b735f19bf79af711726c341cbe6b64b048ef839859",
     "mode": "single-use",
     "consumed": false,
     "replay_decision": "REFUTED"

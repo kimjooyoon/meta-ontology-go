@@ -140,9 +140,9 @@ func observeJobsWithSource(input []APIJob, source sourceRunInput) ([]JobObservat
 	sorted := append([]APIJob(nil), input...)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].ID < sorted[j].ID })
 	result := make([]JobObservation, 0, len(sorted))
-	window := WorkflowWindow{OperationID: sourceRunOperationID(source), RunID: source.ID, Provider: githubActionsProvider, ClockDomain: githubActionsRunClockDomain}
-	window.StartAt = firstNonEmpty(source.RunStartedAt, source.CreatedAt)
-	window.EndAt = source.UpdatedAt
+	window := WorkflowWindow{OperationID: sourceRunOperationID(source), RunID: source.ID, Provider: githubActionsProvider, ClockDomain: githubActionsRunClockDomain,
+		StartAt: firstNonEmpty(source.RunStartedAt, source.CreatedAt),
+		EndAt:   source.UpdatedAt}
 	for _, job := range sorted {
 		skipped := job.Status == "skipped" || job.Conclusion == "skipped"
 		duration := timestampObservation{}
