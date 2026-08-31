@@ -19,7 +19,7 @@
     "tree_sha256_excluding_authorization_paths": "sha256:493d0aa315d470ce267599e0cb79a8371dc5a2087e9d55d3275a013f28bd5043"
   },
   "authorization": {
-    "pull_request": 0,
+    "pull_request": 610,
     "branch": "agent/foundation-authorization-dev-sync-20260831",
     "base_branch": "dev",
     "changed_paths": [
