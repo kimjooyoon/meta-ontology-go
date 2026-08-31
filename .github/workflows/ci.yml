@@ -1067,7 +1067,7 @@ jobs:
             const repository = context.payload.repository.full_name;
             const livePullResponse = await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: currentPull.number});
             const livePull = livePullResponse.data;
-            if (livePull.head.sha !== currentPull.head.sha || currentPull.base.ref !== 'dev' || currentPull.base.repo.full_name !== repository || currentPull.head.ref !== authorization.AUTHORIZATION_BRANCH || currentPull.head.repo.full_name !== repository || currentPull.number !== policy.authorization.pull_request) {
+            if (livePull.state !== 'open' || livePull.merged === true || livePull.head.sha !== currentPull.head.sha || livePull.base.ref !== 'dev' || livePull.base.sha !== policy.candidate.base_sha || livePull.base.repo.full_name !== repository || livePull.head.ref !== authorization.AUTHORIZATION_BRANCH || livePull.head.repo.full_name !== repository || livePull.number !== policy.authorization.pull_request) {
               throw new Error('FOUNDATION authorization PR identity is not exact');
             }
             const changedFiles = [];
