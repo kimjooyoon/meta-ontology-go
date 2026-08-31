@@ -175,7 +175,7 @@ func parseDecisionReduction(value string) (DecisionReduction, error) {
 		}
 		blocked := []string(nil)
 		if fields[7] != "NONE" {
-			for _, item := range strings.Split(fields[7], ",") {
+			for item := range strings.SplitSeq(fields[7], ",") {
 				if item == "" || !policyToken.MatchString(item) {
 					return DecisionReduction{}, fmt.Errorf("decision rule %q has unsafe blocked_by", encoded)
 				}

@@ -29,7 +29,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-		report.Summary.Satisfied != 46 || report.Summary.ValidCases != 43 ||
+		report.Summary.Satisfied != 47 || report.Summary.ValidCases != 44 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
@@ -54,14 +54,14 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 46 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 47 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}
 }
 
 func TestScopePartitionUsesFixedDenominatorsAndRejectsDrift(t *testing.T) {
-	if languagesyntax.FixedTotal != 46 || languagesyntax.FixedCapabilityTotal != 45 ||
+	if languagesyntax.FixedTotal != 47 || languagesyntax.FixedCapabilityTotal != 46 ||
 		languagesyntax.FixedGovernanceTotal != 1 ||
 		languagesyntax.FixedCapabilityTotal+languagesyntax.FixedGovernanceTotal != languagesyntax.FixedTotal {
 		t.Fatalf("scope denominators drifted: total=%d capability=%d governance=%d", languagesyntax.FixedTotal,
