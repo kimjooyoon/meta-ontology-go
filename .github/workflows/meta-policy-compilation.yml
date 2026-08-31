@@ -1,0 +1,307 @@
+name: Gooo meta-policy compilation
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'cmd/meta-policy-compilation-consumer/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+      - 'internal/verify/scope_policy_compilation.go'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/meta-policy-compilation.yml'
+      - 'cmd/meta-policy-compilation-witness/**'
+      - 'cmd/meta-policy-compilation-consumer/**'
+      - 'docs/language/meta-policy-compilation.md'
+      - 'examples/meta-policy-compilation/**'
+      - 'internal/meta/policycompilation/**'
+      - 'internal/verify/scope_policy_compilation.go'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: meta-policy-compilation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: go1.27.0
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  producer:
+    name: Produce policy compilation receipt
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Compile, execute, and replay the policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/meta-policy-compilation"
+          for pass in first replay; do
+            output="$root/$pass"
+            mkdir -p "$output"
+            if [ "$pass" = first ]; then
+              /usr/bin/time -f 'elapsed_seconds=%e\nmax_rss_kb=%M' -o "$root/producer-go-run.time" \
+                go run ./cmd/meta-policy-compilation-witness \
+                  -policy examples/meta-policy-compilation/policy.gooo \
+                  -cases examples/meta-policy-compilation/cases.json \
+                  -output "$output"
+            else
+              go run ./cmd/meta-policy-compilation-witness \
+                -policy examples/meta-policy-compilation/policy.gooo \
+                -cases examples/meta-policy-compilation/cases.json \
+                -output "$output"
+            fi
+          done
+          cmp "$root/first/policy.json" "$root/replay/policy.json"
+          cmp "$root/first/artifact.json" "$root/replay/artifact.json"
+          cmp "$root/first/judge.go" "$root/replay/judge.go"
+          cmp "$root/first/generated-results.json" "$root/replay/generated-results.json"
+          cmp "$root/first/independent-results.json" "$root/replay/independent-results.json"
+          cmp "$root/first/receipt.json" "$root/replay/receipt.json"
+          jq -e '
+            .verification.decision == "PASS" and
+            .verification.conformance_decision == "PASS" and
+            .verification.subject_resolution == "UNRESOLVED" and
+            .verification.fixed_denominator == 8 and
+            .verification.case_denominator == 4 and
+            .summary.pass_count == 1 and
+            .summary.fail_closed_count == 1 and
+            .summary.unknown_count == 2 and
+            .summary.generated_independent_equivalent == 4 and
+            .summary.source_all_equivalent == 4 and
+            .summary.validator_expectations_confirmed == 4 and
+            .claims.event_count == 64 and
+            all(.evidence[]; .class == "SYNTHETIC_FIXTURE" and .observation_digest != "" and .provenance != "") and
+            all(.cases[]; (.claim_predicates|length) == 8 and ([.claim_predicates[].predicate] | unique | length) == 8) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "REFUTED")) and
+            any(.cases[]; any(.claim_predicates[]; .outcome == "OPEN")) and
+            all(.claims.events[]; .observation_digest != "" and .provenance != "") and
+            .write_set.generated_root_class == "RUNNER_TEMP_ONLY" and
+            .write_set.repository_net_change_observed == false and
+            .write_set.mutation_authority == 0 and
+            .write_set.promotion_authority == 0
+          ' "$root/first/receipt.json"
+          intervention="$root/intervention"
+          mkdir -p "$intervention"
+          cp examples/meta-policy-compilation/policy.gooo "$intervention/comment.gooo"
+          printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$intervention/comment.gooo"
+          sed 's/SEMANTIC_EQUIVALENCE_PROVED/SEMANTIC_EQUIVALENCE_INTERVENED/' \
+            examples/meta-policy-compilation/policy.gooo > "$intervention/semantic.gooo"
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy "$intervention/comment.gooo" \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$intervention/comment"
+          go run ./cmd/meta-policy-compilation-witness \
+            -policy "$intervention/semantic.gooo" \
+            -cases examples/meta-policy-compilation/cases.json \
+            -output "$intervention/semantic"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$root/first/generated-results.json" > "$intervention/base-behavior.json"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$intervention/comment/generated-results.json" > "$intervention/comment-behavior.json"
+          cmp "$intervention/base-behavior.json" "$intervention/comment-behavior.json"
+          jq '[.[] | {case_id, decision, stage, step, reason}]' "$intervention/semantic/generated-results.json" > "$intervention/semantic-behavior.json"
+          if cmp "$intervention/base-behavior.json" "$intervention/semantic-behavior.json"; then
+            echo 'semantic intervention did not change generated behavior' >&2
+            exit 1
+          fi
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$root/first/receipt.json" > "$intervention/base-claims.json"
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$intervention/comment/receipt.json" > "$intervention/comment-claims.json"
+          cmp "$intervention/base-claims.json" "$intervention/comment-claims.json"
+          jq '.claims.events | map({claim_id, from, to, decision, stage, step, reason})' "$intervention/semantic/receipt.json" > "$intervention/semantic-claims.json"
+          if cmp "$intervention/base-claims.json" "$intervention/semantic-claims.json"; then
+            echo 'semantic intervention did not change claim transitions' >&2
+            exit 1
+          fi
+          jq '.claims.events | map(select(.predicate == "decision-reduction") | {claim_id, from, to, decision, stage, step, reason})' "$root/first/receipt.json" > "$intervention/base-decision-reduction.json"
+          jq '.claims.events | map(select(.predicate == "decision-reduction") | {claim_id, from, to, decision, stage, step, reason})' "$intervention/semantic/receipt.json" > "$intervention/semantic-decision-reduction.json"
+          if cmp "$intervention/base-decision-reduction.json" "$intervention/semantic-decision-reduction.json"; then
+            echo 'semantic intervention did not change the decision-reduction predicate' >&2
+            exit 1
+          fi
+          base_raw_digest=$(jq -r .source_digest "$root/first/policy.json")
+          comment_raw_digest=$(jq -r .source_digest "$intervention/comment/policy.json")
+          base_semantic_digest=$(jq -r .semantic_digest "$root/first/policy.json")
+          comment_semantic_digest=$(jq -r .semantic_digest "$intervention/comment/policy.json")
+          semantic_semantic_digest=$(jq -r .semantic_digest "$intervention/semantic/policy.json")
+          raw_digest_changed=false
+          semantic_digest_preserved=false
+          semantic_digest_changed=false
+          [ "$base_raw_digest" != "$comment_raw_digest" ] && raw_digest_changed=true
+          [ "$base_semantic_digest" = "$comment_semantic_digest" ] && semantic_digest_preserved=true
+          [ "$base_semantic_digest" != "$semantic_semantic_digest" ] && semantic_digest_changed=true
+          jq -n \
+            --argjson raw_digest_changed "$raw_digest_changed" \
+            --argjson semantic_digest_preserved "$semantic_digest_preserved" \
+            --argjson generated_behavior_preserved true \
+            --argjson claims_preserved true \
+            --argjson semantic_digest_changed "$semantic_digest_changed" \
+            --argjson generated_behavior_changed true \
+            --argjson claim_transitions_changed true \
+            --argjson semantic_claim_predicate_changed true \
+            '{raw_digest_changed:$raw_digest_changed, semantic_digest_preserved:$semantic_digest_preserved, generated_behavior_preserved:$generated_behavior_preserved, claims_preserved:$claims_preserved, semantic_digest_changed:$semantic_digest_changed, generated_behavior_changed:$generated_behavior_changed, claim_transitions_changed:$claim_transitions_changed, semantic_claim_predicate_changed:$semantic_claim_predicate_changed}' \
+            > "$intervention/intervention-summary.json"
+          jq -e '(.raw_digest_changed and .semantic_digest_preserved and .generated_behavior_preserved and .claims_preserved and .semantic_digest_changed and .generated_behavior_changed and .claim_transitions_changed and .semantic_claim_predicate_changed)' "$intervention/intervention-summary.json"
+          if git grep -n -E 'IndependentEvaluate|github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation' -- internal/meta/policycompilation/independent; then
+            echo 'independent replay imports or names the producer package' >&2
+            exit 1
+          fi
+          go_files=$(find cmd/meta-policy-compilation-witness cmd/meta-policy-compilation-consumer internal/meta/policycompilation internal/verify/scope_policy_compilation.go -type f -name '*.go' | sort)
+          gooo_files=$(find examples/meta-policy-compilation -type f -name '*.gooo' | sort)
+          go_file_count=$(printf '%s\n' "$go_files" | sed '/^$/d' | wc -l | tr -d ' ')
+          go_line_count=$(wc -l $go_files | tail -n 1 | awk '{print $1}')
+          gooo_file_count=$(printf '%s\n' "$gooo_files" | sed '/^$/d' | wc -l | tr -d ' ')
+          gooo_line_count=$(wc -l $gooo_files | tail -n 1 | awk '{print $1}')
+          elapsed_seconds=$(awk -F= '$1 == "elapsed_seconds" {print $2}' "$root/producer-go-run.time")
+          max_rss_kb=$(awk -F= '$1 == "max_rss_kb" {print $2}' "$root/producer-go-run.time")
+          jq -n \
+            --argjson go_files "$go_file_count" --argjson go_lines "$go_line_count" \
+            --argjson gooo_files "$gooo_file_count" --argjson gooo_lines "$gooo_line_count" \
+            --argjson producer_elapsed "$elapsed_seconds" --argjson producer_rss "$max_rss_kb" \
+            '{scope:"meta-policy-compilation",go_files:$go_files,go_lines:$go_lines,gooo_files:$gooo_files,gooo_lines:$gooo_lines,producer_go_run_build_execute_seconds:$producer_elapsed,producer_go_run_max_rss_kb:$producer_rss,tests_executed:0,tests_reused:0,tests_skipped:0,tests_not_observed:true}' \
+            > "$root/metrics.json"
+      - name: Upload producer boundary
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload semantic intervention artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-interventions-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/intervention
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload producer metrics
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-metrics-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/metrics.json
+          if-no-files-found: error
+          retention-days: 30
+
+  consumer:
+    name: Independently consume policy compilation receipt
+    needs: producer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: true
+      - name: Download producer boundary
+        uses: actions/download-artifact@v6
+        with:
+          name: meta-policy-compilation-producer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/producer
+      - name: Independently reconstruct raw policy and observations
+        run: |
+          if git grep -n -E 'internal/meta/policycompilation|GenerateJudge|IndependentEvaluate' -- cmd/meta-policy-compilation-consumer; then
+            echo 'consumer imports or names producer-only implementation' >&2
+            exit 1
+          fi
+          /usr/bin/time -f 'elapsed_seconds=%e\nmax_rss_kb=%M' -o "$RUNNER_TEMP/meta-policy-compilation/consumer-go-run.time" \
+            go run ./cmd/meta-policy-compilation-consumer \
+              -policy examples/meta-policy-compilation/policy.gooo \
+              -cases examples/meta-policy-compilation/cases.json \
+              -artifact "$RUNNER_TEMP/meta-policy-compilation/producer" \
+              -output "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          jq -e '
+            .schema == "gooo/meta-policy-compilation-consumer/v1" and
+            .raw_policy_parsed and
+            .raw_cases_parsed and
+            .gooo_derived_rule_numerator == 8 and
+            .gooo_derived_rule_denominator == 8 and
+            .generated_executions_numerator == 4 and
+            .generated_executions_denominator == 4 and
+            .independent_reconstructions_numerator == 4 and
+            .independent_reconstructions_denominator == 4 and
+            .contract_digest_match and
+            .import_boundary.producer_compiler_imports == "0/1" and
+            .import_boundary.generated_template_imports == "0/1" and
+            .import_boundary.independent_evaluator_imports == "0/1" and
+            .synthetic_evidence_count == 4 and
+            .current_evidence_count == 1 and
+            all(.synthetic_evidence[]; .class == "SYNTHETIC_FIXTURE") and
+            (.synthetic_evidence|length) == 4 and
+            .current_evidence.class == "CURRENT_EVIDENCE" and
+            .current_evidence.source_digest != "" and
+            .current_evidence.artifact_source_digest != "" and
+            .current_evidence.generated_judge_digest != "" and
+            .current_evidence.independent_reconstruction_digest != "" and
+            .current_evidence.independent_digest != "" and
+            .subject_resolution == "RESOLVED" and
+            .subject_decision.decision == "PASS"
+          ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
+          elapsed_seconds=$(awk -F= '$1 == "elapsed_seconds" {print $2}' "$RUNNER_TEMP/meta-policy-compilation/consumer-go-run.time")
+          max_rss_kb=$(awk -F= '$1 == "max_rss_kb" {print $2}' "$RUNNER_TEMP/meta-policy-compilation/consumer-go-run.time")
+          jq -n --argjson consumer_elapsed "$elapsed_seconds" --argjson consumer_rss "$max_rss_kb" \
+            '{scope:"meta-policy-compilation",consumer_go_run_build_execute_seconds:$consumer_elapsed,consumer_go_run_max_rss_kb:$consumer_rss,tests_executed:0,tests_reused:0,tests_skipped:0,tests_not_observed:true}' \
+            > "$RUNNER_TEMP/meta-policy-compilation/consumer-metrics.json"
+          cp "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" "$RUNNER_TEMP/meta-policy-compilation/producer/consumer-report.json"
+      - name: Upload independent consumer artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-consumer-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/consumer-report.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload consumer metrics
+        uses: actions/upload-artifact@v6
+        with:
+          name: meta-policy-compilation-consumer-metrics-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/meta-policy-compilation/consumer-metrics.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish consumer summary
+        run: |
+          jq -r '
+            "### Gooo meta-policy compilation\n" +
+            "- policy decision: " + .verification.decision + "\n" +
+            "- fixed denominator: " + (.verification.fixed_denominator|tostring) + "\n" +
+            "- case decisions: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n" +
+            "- generated/independent equivalent: " + (.summary.generated_independent_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
+            "- source/generated/independent equivalent: " + (.summary.source_all_equivalent|tostring) + "/" + (.summary.case_count|tostring) + "\n" +
+            "- claim ledger events: " + (.claims.event_count|tostring) + "\n" +
+            "- conformance decision: " + .verification.conformance_decision + "\n" +
+            "- subject resolution: " + .verification.subject_resolution
+          ' "$RUNNER_TEMP/meta-policy-compilation/producer/receipt.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '
+            "- current evidence: " + .current_evidence.class + " (" + .current_evidence.provenance + ")\n" +
+            "- subject decision: " + .subject_decision.decision + "\n" +
+            "- consumer reconstruction: generated=" + (.generated_executions_numerator|tostring) + "/" + (.generated_executions_denominator|tostring) + ", independent=" + (.independent_reconstructions_numerator|tostring) + "/" + (.independent_reconstructions_denominator|tostring) + "\n" +
+            "- prohibited producer imports: " + .import_boundary.producer_compiler_imports
+          ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" >> "$GITHUB_STEP_SUMMARY"

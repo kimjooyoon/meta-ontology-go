@@ -1,0 +1,50 @@
+[
+  {
+    "id": "pass-semantic-equivalence",
+    "validator_expectation": "PASS",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; digest placeholders are not producer authority",
+    "producer_available": true,
+    "consumer_available": true,
+    "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_generated_judge_digest": "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT",
+    "observed_independent_digest": "SEMANTIC_DIGEST_FROM_POLICY"
+  },
+  {
+    "id": "fail-closed-source-drift",
+    "validator_expectation": "FAIL_CLOSED",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; source drift is intentionally synthetic",
+    "producer_available": true,
+    "consumer_available": true,
+    "observed_source_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_generated_judge_digest": "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT",
+    "observed_independent_digest": "SEMANTIC_DIGEST_FROM_POLICY"
+  },
+  {
+    "id": "unknown-missing-consumer",
+    "validator_expectation": "UNKNOWN",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; missing consumer is intentionally synthetic",
+    "producer_available": true,
+    "consumer_available": false,
+    "observed_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_generated_judge_digest": "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT",
+    "observed_independent_digest": "SEMANTIC_DIGEST_FROM_POLICY"
+  },
+  {
+    "id": "unknown-malformed-source-digest",
+    "validator_expectation": "UNKNOWN",
+    "evidence_class": "SYNTHETIC_FIXTURE",
+    "provenance": "checked-in conformance fixture; malformed source digest requires lower-resolution handling",
+    "producer_available": true,
+    "consumer_available": true,
+    "observed_source_digest": "sha256:not-a-valid-content-digest",
+    "observed_artifact_source_digest": "SOURCE_DIGEST_FROM_POLICY",
+    "observed_generated_judge_digest": "GENERATED_JUDGE_DIGEST_FROM_ARTIFACT",
+    "observed_independent_digest": "SEMANTIC_DIGEST_FROM_POLICY"
+  }
+]
