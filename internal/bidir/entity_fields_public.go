@@ -152,10 +152,14 @@ func canonicalReferenceEvidence(reference Reference, idsByName map[string]ID, na
 	if id == "" {
 		id = idsByName[reference.Name]
 	}
-	if reference.Namespace == "" {
-		reference.Namespace = namespace
+	refNamespace := reference.Namespace
+	if refNamespace == "" {
+		refNamespace = namespace
 	}
-	return referenceEvidence{ID: id, Name: reference.Name, Namespace: reference.Namespace, Span: reference.Span}
+	if id == "" && refNamespace == namespace {
+		id, _ = declarationIdentity(refNamespace, Declaration{Kind: EntityKind, Name: reference.Name})
+	}
+	return referenceEvidence{ID: id, Name: reference.Name, Namespace: refNamespace, Span: reference.Span}
 }
 
 func canonicalTypeRefPresentation(use TypeRefUse) TypeRefUse {
