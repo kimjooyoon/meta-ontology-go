@@ -684,7 +684,7 @@ func verifyReceiptObservations(value receipt, cases []input, policy policy, arti
 	}
 	for _, input := range cases {
 		observed, ok := evidenceByID[input.ID]
-		if !ok || observed.Class != evidenceSynthetic || observed.ProducerAvailable != input.ProducerAvailable || observed.ConsumerAvailable != input.ConsumerAvailable || observed.SourceDigest != input.ObservedSourceDigest || observed.ArtifactSourceDigest != input.ObservedArtifactSourceDigest || observed.ArtifactDigest != digestJSONIndented(artifact) || observed.GeneratedJudgeDigest != input.ObservedGeneratedJudgeDigest || observed.IndependentDigest != input.ObservedIndependentDigest || observed.SemanticDigest != policy.SemanticDigest || observed.ObservationDigest != digestInput(input) || observed.Provenance != input.Provenance {
+		if !ok || observed.Class != evidenceSynthetic || observed.ProducerAvailable != input.ProducerAvailable || observed.ConsumerAvailable != input.ConsumerAvailable || observed.SourceDigest != input.ObservedSourceDigest || observed.ArtifactSourceDigest != input.ObservedArtifactSourceDigest || observed.ArtifactDigest != digestJSONIndented(artifact) || observed.GeneratedJudgeDigest != input.ObservedGeneratedJudgeDigest || observed.IndependentDigest != input.ObservedIndependentDigest || observed.IndependentReconstructionDigest != policy.SemanticDigest || observed.SemanticDigest != policy.SemanticDigest || observed.ObservationDigest != digestInput(input) || observed.Provenance != input.Provenance {
 			return fmt.Errorf("consumer rejected receipt evidence provenance for %q", input.ID)
 		}
 	}

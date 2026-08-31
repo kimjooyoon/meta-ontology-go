@@ -178,18 +178,19 @@ type WriteSetObservation struct {
 }
 
 type EvidenceObservation struct {
-	Class                string `json:"class"`
-	CaseID               string `json:"case_id"`
-	ProducerAvailable    bool   `json:"producer_available"`
-	ConsumerAvailable    bool   `json:"consumer_available"`
-	SourceDigest         string `json:"source_digest"`
-	ArtifactSourceDigest string `json:"artifact_source_digest"`
-	ArtifactDigest       string `json:"artifact_digest"`
-	GeneratedJudgeDigest string `json:"generated_judge_digest"`
-	IndependentDigest    string `json:"independent_digest"`
-	SemanticDigest       string `json:"semantic_digest"`
-	ObservationDigest    string `json:"observation_digest"`
-	Provenance           string `json:"provenance"`
+	Class                           string `json:"class"`
+	CaseID                          string `json:"case_id"`
+	ProducerAvailable               bool   `json:"producer_available"`
+	ConsumerAvailable               bool   `json:"consumer_available"`
+	SourceDigest                    string `json:"source_digest"`
+	ArtifactSourceDigest            string `json:"artifact_source_digest"`
+	ArtifactDigest                  string `json:"artifact_digest"`
+	GeneratedJudgeDigest            string `json:"generated_judge_digest"`
+	IndependentDigest               string `json:"independent_digest"`
+	IndependentReconstructionDigest string `json:"independent_reconstruction_digest"`
+	SemanticDigest                  string `json:"semantic_digest"`
+	ObservationDigest               string `json:"observation_digest"`
+	Provenance                      string `json:"provenance"`
 }
 
 type Receipt struct {

@@ -187,7 +187,8 @@ func evidenceForCase(input Case, artifact PolicyArtifact, policy CompiledPolicy)
 		ConsumerAvailable: input.ConsumerAvailable, SourceDigest: input.ObservedSourceDigest,
 		ArtifactSourceDigest: input.ObservedArtifactSourceDigest, ArtifactDigest: artifactDigest(artifact),
 		GeneratedJudgeDigest: input.ObservedGeneratedJudgeDigest, IndependentDigest: input.ObservedIndependentDigest,
-		SemanticDigest: policy.SemanticDigest, ObservationDigest: observationDigest(input), Provenance: input.Provenance,
+		IndependentReconstructionDigest: policy.SemanticDigest, SemanticDigest: policy.SemanticDigest,
+		ObservationDigest: observationDigest(input), Provenance: input.Provenance,
 	}
 }
 
