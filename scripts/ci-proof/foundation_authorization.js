@@ -82,6 +82,69 @@ const SCHEMA_COHERENCE_MIGRATION_CHANGED_PATHS = Object.freeze([
   'scripts/ci-proof/guardian_test.js',
 ].sort());
 const SCHEMA_COHERENCE_MIGRATION_EXCLUDED_PATHS = Object.freeze([SCHEMA_COHERENCE_MIGRATION_PATH]);
+const EXECUTABLE_GUARDIAN_SCOPE_SCHEMA = 'gooo/ci-governance-denominator-migration/v5';
+const EXECUTABLE_GUARDIAN_SCOPE_PATH = '.github/governance-denominator-v5-executable-guardian-scope.json';
+const EXECUTABLE_GUARDIAN_SCOPE_BRANCH = 'agent/executable-guardian-scope-adoption-20260831';
+const EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST = 614;
+const EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA = '7f45792e3c23100cbb10cca8b229132060982a7b';
+const EXECUTABLE_GUARDIAN_SCOPE_PARENT_V4_RECEIPT_SHA256 = 'sha256:13d14a8501938cc244b431d0c1a0b321cb610cfd14a09767f2e28d8c1652b370';
+const EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME = 'REFUTED_REFERENCE_ERROR_BEFORE_DIGEST_SCOPE';
+const EXECUTABLE_GUARDIAN_SCOPE_REASON = 'INITIALIZE_DIGESTS_BEFORE_POLICY_BRANCH';
+const EXECUTABLE_GUARDIAN_SCOPE_PROTECTED_FILES = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/branch-policy.md',
+  '.github/ci-governance.json',
+  '.github/conformance-plan.md',
+  '.github/foundation-authorization.json',
+  'go.mod',
+  'go.sum',
+]);
+const EXECUTABLE_GUARDIAN_SCOPE_ACCEPTANCE_IDS = Object.freeze([
+  'SCOPE_INITIALIZED_BEFORE_POLICY_BRANCH',
+  'SCOPE_REUSED_WITHOUT_REDECLARATION',
+  'WORKFLOW_AUTHORITY_PINNED_TO_GITHUB_WORKFLOW_SHA',
+  'LIVE_PR_CHANGED_PATHS_ATTESTED',
+  'PASS_KERNEL_DIGESTS_NON_NULL_EXACT',
+  'NULL_STALE_MISMATCH_REFUTED',
+  'FUTURE_SCHEMA_UNKNOWN_OVER_6_FIELDS',
+  'REFERENCE_ERROR_REFUTED_SCOPE_CLOSED',
+]);
+const EXECUTABLE_GUARDIAN_SCOPE_LINEAGE = Object.freeze([
+  Object.freeze({version: 'v0.2.0', preserved: true, adopted: false}),
+  Object.freeze({version: 'v0.2.1', preserved: true, adopted: false}),
+]);
+const EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS = Object.freeze(['target_commit', 'tag_object_sha', 'protocol', 'release_asset', 'main_run', 'proposal']);
+const EXECUTABLE_GUARDIAN_SCOPE_INPUT = Object.freeze({
+  schema: 'gooo/receipt-schema-migration/v0.2.2',
+  target_commit: '977e622db99c16fbe37db5912b07f403cd09cdb2',
+  tag_object_sha: 'c090f22191cd79a6d876ed26df084ac1d4720f3f',
+  protocol: Object.freeze({
+    rest: Object.freeze({immutable: true}),
+    graphql: Object.freeze({immutable: true}),
+    repository_setting: Object.freeze({enabled: true}),
+  }),
+  release_asset: Object.freeze({name: 'gooo-receipt-schema-migration-v0.2.2-conformance.tar.gz', size_bytes: 28877, sha256: 'sha256:e4a2cb8acd608141bdcdb66db6f6369a9480fc691d8a67b3572dd711d02dadf3'}),
+  main_run: Object.freeze({run_id: 33357554531, conclusion: 'success', artifact: Object.freeze({artifact_id: 9745614408, size_bytes: 41821, sha256: 'sha256:6e3989aaf21e760f57868a756847dbc9b75824f3b0b8c47ed984e53f12f40146'})}),
+  proposal: Object.freeze({file_sha256: 'sha256:f55a204da6e258f1345a52e5e9f164226eff4b6cafa8ba3a65daf97f2247e451', declared_sha256: 'sha256:54cde81ff704cc6afe10f3dfaf0d2dbca2bb29eb18d61a29efe9c9dc4d6d718e'}),
+});
+const EXECUTABLE_GUARDIAN_SCOPE_CHANGED_PATHS = Object.freeze([
+  '.github/agent-scope-table.md',
+  '.github/ci-governance.json',
+  EXECUTABLE_GUARDIAN_SCOPE_PATH,
+  '.github/workflows/ci-guardian.yml',
+  'internal/verify/scope_executable_guardian_scope_adoption_20260831.go',
+  'scripts/ci-proof/foundation_authorization.js',
+  'scripts/ci-proof/foundation_authorization_test.js',
+  'scripts/ci-proof/guardian.js',
+  'scripts/ci-proof/guardian_test.js',
+].sort());
+const EXECUTABLE_GUARDIAN_SCOPE_EXCLUDED_PATHS = Object.freeze([EXECUTABLE_GUARDIAN_SCOPE_PATH]);
+const EXECUTABLE_GUARDIAN_SCOPE_PRIOR_FAILURE = Object.freeze({
+  run_id: 33355380192,
+  job_id: 99376387819,
+  code: 'CI-ROOT-OF-TRUST-001',
+  message: 'ReferenceError: beforeDigest is not defined',
+});
 const AUTHORIZATION_PATHS = Object.freeze([
   '.github/agent-scope-table.md',
   '.github/ci-governance.json',
@@ -330,6 +393,108 @@ function validateSchemaCoherenceMigration({receipt, parentReceiptBytes, correcti
   };
 }
 
+function executableGuardianScopeInputFieldStates(input) {
+  const fields = {};
+  const expected = EXECUTABLE_GUARDIAN_SCOPE_INPUT;
+  for (const field of EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS) {
+    const present = input && Object.prototype.hasOwnProperty.call(input, field);
+    const exact = present && JSON.stringify(input[field]) === JSON.stringify(expected[field]);
+    fields[field] = exact ? 'CLOSED' : 'REFUTED';
+  }
+  return fields;
+}
+
+function resolveExecutableGuardianScopeDecision(decisions) {
+  const values = Array.isArray(decisions) ? decisions : [];
+  if (values.includes('REFUTED')) return 'REFUTED';
+  if (values.includes('UNKNOWN')) return 'UNKNOWN';
+  return values.length > 0 && values.every((value) => value === 'CLOSED') ? 'CLOSED' : 'UNKNOWN';
+}
+
+function classifyExecutableGuardianScopeInput(input) {
+  const schemaSupported = Boolean(input && input.schema === EXECUTABLE_GUARDIAN_SCOPE_INPUT.schema);
+  const fields = schemaSupported
+    ? executableGuardianScopeInputFieldStates(input)
+    : Object.fromEntries(EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS.map((field) => [field, 'UNKNOWN']));
+  return {
+    decision: resolveExecutableGuardianScopeDecision(Object.values(fields)),
+    schema: input && input.schema,
+    fields,
+    field_count: EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS.length,
+    unknown_count: Object.values(fields).filter((value) => value === 'UNKNOWN').length,
+  };
+}
+
+function validateExecutableGuardianScopeInput(input) {
+  const classification = classifyExecutableGuardianScopeInput(input);
+  requireExact(classification.decision === 'CLOSED', `immutable receipt-schema release input is ${classification.decision}`);
+  requireExact(JSON.stringify(input) === JSON.stringify(EXECUTABLE_GUARDIAN_SCOPE_INPUT), 'immutable receipt-schema release input is not exact');
+  return input;
+}
+
+function validateExecutableGuardianScopeReceipt(receipt) {
+  requireExact(receipt && receipt.schema === EXECUTABLE_GUARDIAN_SCOPE_SCHEMA, 'executable Guardian scope receipt schema is not exact');
+  requireExact(receipt.foundation_override_success_count === FOUNDATION_OVERRIDE_SUCCESS_COUNT, 'executable Guardian scope receipt changed FOUNDATION count');
+  requireExact(receipt.receipt_path === EXECUTABLE_GUARDIAN_SCOPE_PATH && exactArray(receipt.digest_exclusions, EXECUTABLE_GUARDIAN_SCOPE_EXCLUDED_PATHS), 'executable Guardian scope receipt exclusion is not exact');
+  requireExact(receipt.base_sha === EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA && receipt.merge_parent_sha === EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA, 'executable Guardian scope merge parent is not exact');
+  requireExact(receipt.parent_receipt && receipt.parent_receipt.schema === SCHEMA_COHERENCE_MIGRATION_SCHEMA && receipt.parent_receipt.path === SCHEMA_COHERENCE_MIGRATION_PATH && receipt.parent_receipt.sha256 === EXECUTABLE_GUARDIAN_SCOPE_PARENT_V4_RECEIPT_SHA256, 'executable Guardian scope v4 lineage is not exact');
+  requireExact(Array.isArray(receipt.lineage) && exactArray(receipt.lineage, EXECUTABLE_GUARDIAN_SCOPE_LINEAGE), 'executable Guardian scope v0.2 lineage is not preserved');
+  validateExecutableGuardianScopeInput(receipt.immutable_release_input);
+  requireExact(receipt.immutable_release_input.protocol.rest.immutable === true && receipt.immutable_release_input.protocol.graphql.immutable === true && receipt.immutable_release_input.protocol.repository_setting.enabled === true, 'executable Guardian scope release protocol is not immutable or enabled');
+  requireExact(receipt.input_field_count === EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS.length && receipt.missing_stale_future_schema_decision === 'UNKNOWN', 'executable Guardian scope input denominator is not exact');
+  requireExact(Array.isArray(receipt.acceptance_ids) && exactArray(receipt.acceptance_ids, EXECUTABLE_GUARDIAN_SCOPE_ACCEPTANCE_IDS), 'executable Guardian scope acceptance IDs are not exact');
+  requireExact(Array.isArray(receipt.protected_files) && exactArray(receipt.protected_files, EXECUTABLE_GUARDIAN_SCOPE_PROTECTED_FILES), 'executable Guardian scope protected-file lock is not exact');
+  requireExact(receipt.prior_guardian_failure && JSON.stringify(receipt.prior_guardian_failure) === JSON.stringify(EXECUTABLE_GUARDIAN_SCOPE_PRIOR_FAILURE), 'executable Guardian scope prior ReferenceError snapshot is not exact');
+  requireExact(Array.isArray(receipt.cells) && receipt.cells.length === 1, 'executable Guardian scope denominator must contain one cell');
+  const cell = receipt.cells[0];
+  requireExact(cell && cell.id === 'EXECUTABLE_GUARDIAN_SCOPE_ADOPTION' && cell.meta_operation === 'AdoptExecutableGuardianScope', 'executable Guardian scope cell identity is not exact');
+  requireExact(cell.proof_choice === 'REGRESSION' && cell.indicator === 'GUARDRAIL', 'executable Guardian scope cell classification is not exact');
+  requireExact(cell.allowed === 1 && cell.consumed === 1 && cell.replay_decision === 'REFUTED' && receipt.replay_second_use === 'REFUTED', 'executable Guardian scope consumption is not single-use');
+  requireExact(cell.parent_outcome === EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME && cell.outcome === 'CLOSED' && cell.causal === EXECUTABLE_GUARDIAN_SCOPE_REASON, 'executable Guardian scope child-owned outcome is not exact');
+  requireExact(cell.reason === EXECUTABLE_GUARDIAN_SCOPE_REASON, 'executable Guardian scope reason is not exact');
+  requireExact(cell.pull_request === EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST && cell.branch === EXECUTABLE_GUARDIAN_SCOPE_BRANCH && cell.base_sha === EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA, 'executable Guardian scope identity is not exact');
+  requireExact(receipt.repository_gates === 0 && receipt.local_go_gates === 0 && receipt.cross_project_gates === 0, 'executable Guardian scope gate counts are not zero');
+  requireExact(Array.isArray(receipt.changed_paths) && exactArray(receipt.changed_paths, EXECUTABLE_GUARDIAN_SCOPE_CHANGED_PATHS), 'executable Guardian scope changed paths are not exact');
+  requireExact(digestChangedPaths(receipt.changed_paths) === receipt.changed_paths_sha256 && validDigest(receipt.changed_paths_sha256), 'executable Guardian scope changed-path digest is not exact');
+  requireExact(validDigest(receipt.patch_sha256_excluding_receipt) && validDigest(receipt.tree_sha256_excluding_receipt), 'executable Guardian scope content digests are malformed');
+  requireExact(receipt.input_release_digests && receipt.input_release_digests.release_asset === EXECUTABLE_GUARDIAN_SCOPE_INPUT.release_asset.sha256 && receipt.input_release_digests.main_artifact === EXECUTABLE_GUARDIAN_SCOPE_INPUT.main_run.artifact.sha256 && receipt.input_release_digests.proposal_file === EXECUTABLE_GUARDIAN_SCOPE_INPUT.proposal.file_sha256 && receipt.input_release_digests.declared_proposal === EXECUTABLE_GUARDIAN_SCOPE_INPUT.proposal.declared_sha256, 'executable Guardian scope input release digests are not exact');
+  return receipt;
+}
+
+function validateExecutableGuardianScope({receipt, parentReceiptBytes, candidateBaseSHA, candidateBaseTreeEntries, migrationPull, migrationCommit, migrationCompare, migrationTreeEntries}) {
+  validateExecutableGuardianScopeReceipt(receipt);
+  requireExact(Buffer.isBuffer(parentReceiptBytes) && sha256(parentReceiptBytes) === EXECUTABLE_GUARDIAN_SCOPE_PARENT_V4_RECEIPT_SHA256, 'v4 parent receipt bytes were rewritten');
+  requireExact(migrationPull && migrationPull.number === EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST, 'executable Guardian scope pull request number mismatch');
+  requireExact(migrationPull.state === 'closed' && migrationPull.merged === true && validSHA(migrationPull.merge_commit_sha), 'executable Guardian scope pull request is not merged exactly once');
+  requireExact(migrationPull.head && migrationPull.head.ref === EXECUTABLE_GUARDIAN_SCOPE_BRANCH && migrationPull.head.repo && migrationPull.head.repo.full_name === REPOSITORY && validSHA(migrationPull.head.sha), 'executable Guardian scope pull request head mismatch');
+  requireExact(candidateBaseSHA === migrationPull.merge_commit_sha, 'candidate base is not the executable Guardian scope merge commit');
+  requireExact(migrationCommit && migrationCommit.sha === migrationPull.merge_commit_sha, 'executable Guardian scope merge commit SHA mismatch');
+  const parents = Array.isArray(migrationCommit.parents) ? migrationCommit.parents.map((parent) => parent && parent.sha) : [];
+  requireExact(parents.length === 1 && parents[0] === EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA, 'executable Guardian scope merge parent is not dev@7f45792');
+  requireExact(migrationCompare && Array.isArray(migrationCompare.files) && exactArray(canonicalPathNames(migrationCompare.files), receipt.changed_paths), 'executable Guardian scope changed paths do not match the receipt');
+  requireExact(digestChangedPaths(migrationCompare.files) === receipt.changed_paths_sha256, 'executable Guardian scope changed-path evidence does not match the receipt');
+  requireExact(digestTreeEntries(migrationTreeEntries, EXECUTABLE_GUARDIAN_SCOPE_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'executable Guardian scope head tree does not match the receipt');
+  requireExact(digestTreeEntries(candidateBaseTreeEntries, EXECUTABLE_GUARDIAN_SCOPE_EXCLUDED_PATHS) === receipt.tree_sha256_excluding_receipt, 'candidate base tree does not match executable Guardian scope receipt');
+  return {
+    schema: EXECUTABLE_GUARDIAN_SCOPE_SCHEMA,
+    cell: 'EXECUTABLE_GUARDIAN_SCOPE_ADOPTION',
+    proof_choice: 'REGRESSION',
+    indicator: 'GUARDRAIL',
+    pull_request: EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST,
+    branch: EXECUTABLE_GUARDIAN_SCOPE_BRANCH,
+    base_sha: EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA,
+    merge_commit_sha: migrationPull.merge_commit_sha,
+    merge_parent_sha: EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA,
+    parent_outcome: EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME,
+    outcome: 'CLOSED',
+    causal: EXECUTABLE_GUARDIAN_SCOPE_REASON,
+    reason: EXECUTABLE_GUARDIAN_SCOPE_REASON,
+    allowed: 1,
+    consumed: 1,
+    replay_decision: 'REFUTED',
+  };
+}
+
 function validateCorrectionChild({receipt, parentRepairReceipt, parentRepairReceiptBytes, parentRepairBaseCommit, parentRepairBaseTreeEntries, candidateBaseSHA, candidateBaseTreeEntries, correctionPull, correctionCommit, correctionCompare, correctionTreeEntries}) {
   validateCorrectionChildReceipt(receipt);
   validateIncompletePropagationOutcome(parentRepairReceipt);
@@ -507,6 +672,12 @@ module.exports = {
   validateImmutableReleaseInput,
   validateSchemaCoherenceMigration,
   validateSchemaCoherenceMigrationReceipt,
+  classifyExecutableGuardianScopeInput,
+  executableGuardianScopeInputFieldStates,
+  resolveExecutableGuardianScopeDecision,
+  validateExecutableGuardianScope,
+  validateExecutableGuardianScopeInput,
+  validateExecutableGuardianScopeReceipt,
   SCHEMA_COHERENCE_MIGRATION_BASE_SHA,
   SCHEMA_COHERENCE_MIGRATION_BRANCH,
   SCHEMA_COHERENCE_MIGRATION_CHANGED_PATHS,
@@ -518,4 +689,20 @@ module.exports = {
   SCHEMA_COHERENCE_MIGRATION_PULL_REQUEST,
   SCHEMA_COHERENCE_MIGRATION_REASON,
   SCHEMA_COHERENCE_MIGRATION_SCHEMA,
+  EXECUTABLE_GUARDIAN_SCOPE_ACCEPTANCE_IDS,
+  EXECUTABLE_GUARDIAN_SCOPE_BASE_SHA,
+  EXECUTABLE_GUARDIAN_SCOPE_BRANCH,
+  EXECUTABLE_GUARDIAN_SCOPE_CHANGED_PATHS,
+  EXECUTABLE_GUARDIAN_SCOPE_EXCLUDED_PATHS,
+  EXECUTABLE_GUARDIAN_SCOPE_INPUT,
+  EXECUTABLE_GUARDIAN_SCOPE_INPUT_FIELDS,
+  EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME,
+  EXECUTABLE_GUARDIAN_SCOPE_PARENT_V4_RECEIPT_SHA256,
+  EXECUTABLE_GUARDIAN_SCOPE_PRIOR_FAILURE,
+  EXECUTABLE_GUARDIAN_SCOPE_PATH,
+  EXECUTABLE_GUARDIAN_SCOPE_PROTECTED_FILES,
+  EXECUTABLE_GUARDIAN_SCOPE_PULL_REQUEST,
+  EXECUTABLE_GUARDIAN_SCOPE_REASON,
+  EXECUTABLE_GUARDIAN_SCOPE_SCHEMA,
+  EXECUTABLE_GUARDIAN_SCOPE_LINEAGE,
 };
