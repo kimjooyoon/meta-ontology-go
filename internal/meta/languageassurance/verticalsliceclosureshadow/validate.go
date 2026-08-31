@@ -34,7 +34,7 @@ func validateExact(report Report) error {
 	if report.Reason != ReasonShadowPass || report.Resolution != ResolutionExact ||
 		report.AssuranceSubjectSHA != PredecessorSHA ||
 		report.AssuranceDigest != AssuranceDigest ||
-		report.DenominatorDigest != DenominatorDigest ||
+		report.DenominatorDigest != activeDenominatorDigest() ||
 		summary.BeforeOperating != beforeOperating ||
 		summary.ProjectedOperating != projectedOperating ||
 		summary.BeforeCoverageBPS != beforeCoverageBPS ||
