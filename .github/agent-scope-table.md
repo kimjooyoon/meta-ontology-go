@@ -7,6 +7,7 @@ allowed repository prefix and do not create additional branch aliases.
 
 | Branch | Allowed path prefix |
 | --- | --- |
+| `agent/foundation-authorization-dev-sync-20260831` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/foundation-authorization.json`, `.github/workflows/ci-guardian.yml`, `.github/workflows/ci.yml`, `internal/verify/foundation_authorization.go`, `internal/verify/scope_foundation_authorization_dev_sync_20260831.go`, `scripts/ci-proof/foundation_authorization.js`, `scripts/ci-proof/foundation_authorization_test.js`, `scripts/ci-proof/guardian.js` |
 | `agent/foundation-correction-dev-20260831` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/foundation-bootstrap-dev-sync.json`, `.github/workflows/ci-guardian.yml`, `internal/verify/governance_part01.go`, `scripts/ci-proof/foundation_bootstrap.js`, `scripts/ci-proof/guardian.js`, `scripts/ci-proof/route_test.js` |
 | `agent/foundation-bootstrap-dev-sync-20260831` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/foundation-bootstrap-dev-sync.json`, `.github/workflows/ci-guardian.yml`, `internal/verify/scope_foundation_bootstrap_dev_sync_20260831.go`, `scripts/ci-proof/foundation_bootstrap.js`, `scripts/ci-proof/guardian.js` |
 | `agent/dev-main-sync-20260831-rerun` | `.github`, `bootstrap`, `cmd`, `examples`, `internal`, `scripts` |

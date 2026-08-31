@@ -267,6 +267,34 @@ jobs:
               let beforeDigest = null;
               let afterDigest = null;
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
+              if (guardian.routeForPull(observedPull) === 'feature_dev' && result.decision === 'FAIL_CLOSED' && result.kernelPaths.length > 0) {
+                try {
+                  const authorizationResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: '.github/foundation-authorization.json',
+                    ref: workflowSha,
+                  });
+                  const authorizationData = authorizationResponse && authorizationResponse.data;
+                  const policy = authorizationData && !Array.isArray(authorizationData) && authorizationData.content
+                    ? JSON.parse(Buffer.from(authorizationData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+                    : null;
+                  const authorization = await guardian.observeFoundationAuthorization({
+                    policy,
+                    pull: observedPull,
+                    getPull: (parameters) => github.rest.pulls.get(parameters),
+                    compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                    getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                    getContent: (parameters) => github.rest.repos.getContent(parameters),
+                    getTree: (parameters) => github.rest.git.getTree(parameters),
+                  });
+                  if (authorization.decision === 'PASS') {
+                    result = {...result, decision: 'PASS', code: null, reason: authorization.reason, foundationAuthorization: authorization};
+                  }
+                } catch (error) {
+                  result = {...result, foundationAuthorization: {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)}};
+                }
+              }
               if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName})) {
                 beforeDigest = await guardian.kernelTreeDigest({
                   getCommit: (parameters) => github.rest.repos.getCommit(parameters),
