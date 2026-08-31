@@ -20,7 +20,7 @@ const AUTHORIZATION_PATHS = Object.freeze([
   'scripts/ci-proof/foundation_authorization.js',
   'scripts/ci-proof/foundation_authorization_test.js',
   'scripts/ci-proof/guardian.js',
-].sort();
+]).sort();
 
 function validSHA(value) {
   return typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
