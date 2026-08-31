@@ -372,6 +372,38 @@
       {"id": 537649709, "name": "time-report.md", "size_bytes": 3414, "sha256": "sha256:b44c42f2188747fff4dee88458ea04a2e2b54bff32367f24fe2af19226cecf17"}
     ],
     "summary": {"cells": 12, "activities": 12, "total": 12, "closed": 3, "unknown": 4, "refuted": 5},
+    "scope_denominator_migration": {
+      "schema": "gooo/language-syntax-roundtrip/scope-denominator-migration/v1",
+      "reason": "CI_TIME_CAUSALITY_SOURCE_AND_SCOPE_REGISTRATION",
+      "append_only": true,
+      "previous": {
+        "total": 45,
+        "valid": 42,
+        "invalid": 3,
+        "capability": 44,
+        "governance": 1,
+        "registered_source_path": null
+      },
+      "current": {
+        "total": 46,
+        "valid": 43,
+        "invalid": 3,
+        "capability": 45,
+        "governance": 1,
+        "registered_source_path": "examples/ci-time-causality/main.gooo"
+      },
+      "delta": {"add": 1, "retire": 0, "split": 0},
+      "added_source_paths": ["examples/ci-time-causality/main.gooo"],
+      "added_workflow_paths": [".github/workflows/transformation-effect.yml"],
+      "source_registration_paths": [
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go"
+      ],
+      "workflow_path_ids": [".github/workflows/transformation-effect.yml"],
+      "lowered": false
+    },
     "retry_attempts": [1, 2],
     "aggregation_rule": "Only same operation_id, run_id, job_id, provider, and clock_domain may form one duration; source-ci and opentofu remain separate observations.",
     "negative_duration_reason": "REFUTED_CLOCK_ORDER",

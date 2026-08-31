@@ -115,6 +115,37 @@ assert.equal(binding.generated_evaluator.sha256, manifest.generated_evaluator_di
 assert.equal(binding.generated_evaluator.binding_file_sha256, digest(read('examples/ci-time-causality/generated/evaluator-binding.json')));
 assert.deepEqual(binding.output_assets, assets.map(([name, id, size, sha256]) => ({id, name, size_bytes: size, sha256})));
 assert.deepEqual(binding.summary, {cells: 12, activities: 12, total: 12, closed: 3, unknown: 4, refuted: 5});
+const migration = binding.scope_denominator_migration;
+assert.equal(migration.schema, 'gooo/language-syntax-roundtrip/scope-denominator-migration/v1');
+assert.equal(migration.reason, 'CI_TIME_CAUSALITY_SOURCE_AND_SCOPE_REGISTRATION');
+assert.equal(migration.append_only, true);
+assert.deepEqual(migration.previous, {
+  total: 45,
+  valid: 42,
+  invalid: 3,
+  capability: 44,
+  governance: 1,
+  registered_source_path: null,
+});
+assert.deepEqual(migration.current, {
+  total: 46,
+  valid: 43,
+  invalid: 3,
+  capability: 45,
+  governance: 1,
+  registered_source_path: 'examples/ci-time-causality/main.gooo',
+});
+assert.deepEqual(migration.delta, {add: 1, retire: 0, split: 0});
+assert.deepEqual(migration.added_source_paths, ['examples/ci-time-causality/main.gooo']);
+assert.deepEqual(migration.added_workflow_paths, ['.github/workflows/transformation-effect.yml']);
+assert.deepEqual(migration.source_registration_paths, [
+  'examples/language-syntax-roundtrip/corpus.json',
+  'internal/meta/languagereadiness/languagesyntax/registry.go',
+  'internal/meta/languagereadiness/languagesyntax/model.go',
+  'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go',
+]);
+assert.deepEqual(migration.workflow_path_ids, ['.github/workflows/transformation-effect.yml']);
+assert.equal(migration.lowered, false);
 assert.equal(binding.aggregation_rule, duration.aggregation_rule);
 assert.equal(binding.negative_duration_reason, 'REFUTED_CLOCK_ORDER');
 assert.equal(binding.clamp_to_zero_policy, 'FORBIDDEN');
