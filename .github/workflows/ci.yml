@@ -563,6 +563,7 @@ jobs:
           node scripts/ci-proof/concurrency_test.js
           node scripts/ci-proof/foundation_authorization_test.js
           node scripts/ci-proof/guardian_test.js
+          node scripts/ci-proof/source_migration_v3_test.js
       - name: Collect terminal canonical job evidence
         uses: actions/github-script@v8
         with:

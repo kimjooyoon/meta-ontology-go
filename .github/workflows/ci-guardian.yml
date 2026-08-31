@@ -158,6 +158,9 @@ jobs:
                 repo: context.repo.repo,
               });
               const route = guardian.routeForPull(observedPull);
+              if (result.authorizationRequired === true && route === guardian.FOUNDATION_ROUTE) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
+              }
               if (route === guardian.FOUNDATION_ROUTE) {
                 const baseCommitResponse = await github.rest.repos.getCommit({
                   owner: context.repo.owner,
@@ -208,6 +211,9 @@ jobs:
                 } else {
                   result = {...result, foundationBootstrap: foundation};
                 }
+              }
+              if (route === 'promotion_main' && result.authorizationRequired === true) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
               }
               if (route === 'promotion_main') {
                 try {
@@ -267,7 +273,7 @@ jobs:
                 });
               }
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
-              if (guardian.routeForPull(observedPull) === 'feature_dev' && result.decision === 'FAIL_CLOSED' && result.kernelPaths.length > 0) {
+              if (guardian.routeForPull(observedPull) === 'feature_dev' && result.authorizationRequired === true) {
                 try {
                   const authorizationResponse = await github.rest.repos.getContent({
                     owner: context.repo.owner,
@@ -282,17 +288,24 @@ jobs:
                   const authorization = await guardian.observeFoundationAuthorization({
                     policy,
                     pull: observedPull,
+                    changedFiles: result.files,
+                    kernelPaths: result.kernelPaths,
+                    workflowSha,
                     getPull: (parameters) => github.rest.pulls.get(parameters),
                     compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
                     getCommit: (parameters) => github.rest.repos.getCommit(parameters),
                     getContent: (parameters) => github.rest.repos.getContent(parameters),
                     getTree: (parameters) => github.rest.git.getTree(parameters),
                   });
+                  result = {...result, foundationAuthorization: authorization};
                   if (authorization.decision === 'PASS') {
                     result = {...result, decision: 'PASS', code: null, reason: authorization.reason, foundationAuthorization: authorization};
+                  } else {
+                    result = {...result, decision: 'FAIL_CLOSED', code: authorization.code || guardian.FOUNDATION_AUTHORIZATION_CODE, reason: authorization.reason};
                   }
                 } catch (error) {
-                  result = {...result, foundationAuthorization: {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)}};
+                  const authorization = {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)};
+                  result = {...result, decision: 'FAIL_CLOSED', code: authorization.code, reason: authorization.reason, foundationAuthorization: authorization};
                 }
               }
               const trustedPromotion = guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName});
@@ -315,6 +328,9 @@ jobs:
                   repo: context.repo.repo,
                   ref: observedPull.head.sha,
                 });
+                if (authorizedFoundationFeature && (beforeDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_before_sha256) || afterDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_after_sha256))) {
+                  result = {...result, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest', foundationAuthorization: {...result.foundationAuthorization, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest'}};
+                }
               }
               result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
               if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {

@@ -83,4 +83,33 @@ assert.equal(authorization.classifyExecutableGuardianScopeInput({...authorizatio
 assert.equal(authorization.resolveExecutableGuardianScopeDecision(['CLOSED', 'UNKNOWN', 'REFUTED']), 'REFUTED');
 assert.equal(authorization.resolveExecutableGuardianScopeDecision(['CLOSED', 'UNKNOWN']), 'UNKNOWN');
 assert.equal(authorization.resolveExecutableGuardianScopeDecision(['CLOSED']), 'CLOSED');
+const dispatchReceipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v6-foundation-authorization-dispatch.json'), 'utf8'));
+const dispatchPolicy = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'foundation-authorization.json'), 'utf8'));
+assert.doesNotThrow(() => authorization.validateGuardianDispatchPolicy(dispatchPolicy));
+assert.doesNotThrow(() => authorization.validateGuardianDispatchReceipt(dispatchReceipt));
+assert.equal(dispatchReceipt.denominator.previous_cell_count, 16);
+assert.equal(dispatchReceipt.denominator.cell_count, 20);
+assert.equal(dispatchReceipt.denominator.added, 4);
+assert.equal(dispatchReceipt.denominator.retired, 0);
+assert.equal(dispatchReceipt.denominator.split, 0);
+assert.deepEqual(dispatchReceipt.denominator.added_cell_ids, authorization.GUARDIAN_DISPATCH_CELL_IDS);
+assert.deepEqual(dispatchReceipt.lineage, authorization.GUARDIAN_DISPATCH_LINEAGE);
+assert.equal(authorization.digestChangedPaths(dispatchReceipt.fixture_v3.changed_path_tuples), authorization.GUARDIAN_DISPATCH_CHANGED_PATHS_SHA256);
+assert.equal(authorization.digestProtectedIntersection(dispatchReceipt.fixture_v3.protected_intersection_paths), authorization.GUARDIAN_DISPATCH_PROTECTED_INTERSECTION_SHA256);
+const dispatchPull = {
+  number: authorization.GUARDIAN_DISPATCH_PULL_REQUEST,
+  base: {ref: 'dev', sha: authorization.GUARDIAN_DISPATCH_BASE_SHA, repo: {full_name: authorization.REPOSITORY}},
+  head: {ref: authorization.GUARDIAN_DISPATCH_BRANCH, sha: authorization.GUARDIAN_DISPATCH_HEAD_SHA, repo: {full_name: authorization.REPOSITORY}},
+};
+assert.doesNotThrow(() => authorization.validateGuardianDispatchReceipt(dispatchReceipt, {
+  candidatePull: dispatchPull,
+  changedFiles: dispatchReceipt.fixture_v3.changed_path_tuples,
+  kernelPaths: dispatchReceipt.fixture_v3.protected_intersection_paths,
+  mergeBaseSHA: authorization.GUARDIAN_DISPATCH_MERGE_BASE_SHA,
+}));
+const dispatchAuthorization = {...dispatchReceipt, decision: 'PASS', code: null, reason: authorization.GUARDIAN_DISPATCH_MARKER, single_use: true, consumed: false, replay_decision: 'REFUTED'};
+assert.doesNotThrow(() => authorization.validateGuardianDispatchAuthorization(dispatchAuthorization));
+assert.throws(() => authorization.validateGuardianDispatchReceipt(dispatchReceipt, {candidatePull: {...dispatchPull, head: {...dispatchPull.head, sha: '0'.repeat(40)}}}), /live candidate tuple/);
+assert.throws(() => authorization.validateGuardianDispatchReceipt(dispatchReceipt, {changedFiles: [...dispatchReceipt.fixture_v3.changed_path_tuples, 'scripts/ci-proof/extra.js']}), /changed-path tuple digest/);
+assert.throws(() => authorization.validateGuardianDispatchReceipt(dispatchReceipt, {kernelPaths: [...dispatchReceipt.fixture_v3.protected_intersection_paths, 'go.mod']}), /protected intersection/);
 console.log('foundation authorization tests passed');

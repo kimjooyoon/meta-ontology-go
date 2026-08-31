@@ -569,7 +569,15 @@ async function inspectChangedFiles({listFiles, owner, repo, baseRepoFullName, pu
         .flatMap((file) => [file.filename, file.previous_filename])
         .filter((path) => path && isProtectedKernelPath(path));
       if (kernelPaths.length > 0) {
-        return {decision: 'FAIL_CLOSED', code: ROOT_FAILURE_CODE, reason: `protected kernel path changed: ${kernelPaths.sort(canonicalStringCompare).join(', ')}`, files, kernelPaths: [...new Set(kernelPaths)].sort(canonicalStringCompare)};
+        const uniqueKernelPaths = [...new Set(kernelPaths)].sort(canonicalStringCompare);
+        return {
+          decision: 'AUTHORIZATION_REQUIRED',
+          code: null,
+          reason: `protected kernel path requires Foundation authorization before root decision: ${uniqueKernelPaths.join(', ')}`,
+          authorizationRequired: true,
+          files,
+          kernelPaths: uniqueKernelPaths,
+        };
       }
       return {decision: 'PASS', code: null, reason: null, files, kernelPaths: []};
     }
@@ -699,7 +707,47 @@ function validPromotionTopology(snapshot) {
   return validLiveSnapshot(snapshot) && snapshot.topology.status === 'ahead' && snapshot.topology.ahead_by > 0 && snapshot.topology.behind_by === 0 && snapshot.topology.merge_base_sha === snapshot.refs.main_sha;
 }
 
-async function observeFoundationAuthorization({policy, pull, getPull, compareCommits, getCommit, getContent, getTree}) {
+async function observeGuardianDispatchAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, compareCommits, getContent}) {
+  try {
+    foundationAuthorization.validateGuardianDispatchPolicy(policy);
+    const owner = foundationAuthorization.REPOSITORY.split('/')[0];
+    const repo = foundationAuthorization.REPOSITORY.split('/')[1];
+    const receiptResponse = await getContent({owner, repo, path: policy.dispatch.receipt_path, ref: workflowSha});
+    const receiptData = receiptResponse && receiptResponse.data;
+    if (Array.isArray(receiptData) || !receiptData || receiptData.type !== 'file' || typeof receiptData.content !== 'string') {
+      throw new Error('Foundation authorization dispatch receipt is unavailable');
+    }
+    const receiptBytes = Buffer.from(receiptData.content.replace(/\s/g, ''), 'base64');
+    if (foundationAuthorization.sha256(receiptBytes) !== policy.dispatch.receipt_sha256) {
+      throw new Error('Foundation authorization dispatch receipt digest does not match policy');
+    }
+    const receipt = JSON.parse(receiptBytes.toString('utf8'));
+    const compareResponse = await compareCommits({owner, repo, base: pull && pull.base && pull.base.sha, head: pull && pull.head && pull.head.sha});
+    const compare = compareResponse && compareResponse.data;
+    const mergeBaseSHA = compare && compare.merge_base_commit && compare.merge_base_commit.sha;
+    foundationAuthorization.validateGuardianDispatchReceipt(receipt, {candidatePull: pull, changedFiles, kernelPaths, mergeBaseSHA});
+    return {
+      ...receipt,
+      decision: 'PASS',
+      code: null,
+      reason: foundationAuthorization.GUARDIAN_DISPATCH_MARKER,
+      single_use: true,
+      consumed: false,
+      replay_decision: 'REFUTED',
+    };
+  } catch (error) {
+    return {
+      decision: 'FAIL_CLOSED',
+      code: FOUNDATION_AUTHORIZATION_CODE,
+      reason: error && error.message ? error.message : String(error),
+    };
+  }
+}
+
+async function observeFoundationAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, getPull, compareCommits, getCommit, getContent, getTree}) {
+  if (policy && policy.schema === foundationAuthorization.GUARDIAN_DISPATCH_POLICY_SCHEMA) {
+    return observeGuardianDispatchAuthorization({policy, pull, changedFiles, kernelPaths, workflowSha, compareCommits, getContent});
+  }
   try {
     foundationAuthorization.validatePolicy(policy);
     const authorizationResponse = await getPull({owner: foundationAuthorization.REPOSITORY.split('/')[0], repo: foundationAuthorization.REPOSITORY.split('/')[1], pull_number: policy.authorization.pull_request});
@@ -922,6 +970,9 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
   }
   if (foundationRoute && result.reason !== foundationBootstrap.FOUNDATION_OVERRIDE_MARKER) {
     return {...result, decision: 'FAIL_CLOSED', code: foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE, reason: 'foundation bootstrap route lacks the explicit one-time override marker'};
+  }
+  if (result.decision === 'AUTHORIZATION_REQUIRED') {
+    return {...result, decision: 'FAIL_CLOSED', code: FOUNDATION_AUTHORIZATION_CODE, reason: 'protected-path authorization was not dispatched before Guardian classification'};
   }
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
     return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
@@ -1166,7 +1217,13 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     }
     if (authorizedFoundationFeature) {
       const receipt = manifest.foundation_authorization;
-      if (receipt.decision !== 'PASS' || receipt.reason !== foundationAuthorization.FOUNDATION_OVERRIDE_MARKER || receipt.candidate_pull_request !== foundationAuthorization.CANDIDATE_PULL_REQUEST || receipt.candidate_branch !== foundationAuthorization.CANDIDATE_BRANCH || !validSHA(receipt.candidate_head_sha) || !Number.isInteger(receipt.authorization_pull_request) || receipt.authorization_pull_request < 1 || !validSHA(receipt.authorization_merge_commit) || receipt.manifest_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.manifest_sha256) || receipt.changed_paths_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.changed_paths_sha256) || receipt.patch_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.patch_sha256_excluding_authorization_paths) || receipt.tree_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.tree_sha256_excluding_authorization_paths) || receipt.single_use !== true || receipt.consumed !== false || receipt.replay_decision !== 'REFUTED') {
+      if (receipt.schema === foundationAuthorization.GUARDIAN_DISPATCH_SCHEMA) {
+        try {
+          foundationAuthorization.validateGuardianDispatchAuthorization(receipt);
+        } catch (error) {
+          throw guardianFailure(`guardian Foundation dispatch authorization receipt is not exact: ${error.message || error}`, FOUNDATION_AUTHORIZATION_CODE);
+        }
+      } else if (receipt.decision !== 'PASS' || receipt.reason !== foundationAuthorization.FOUNDATION_OVERRIDE_MARKER || receipt.candidate_pull_request !== foundationAuthorization.CANDIDATE_PULL_REQUEST || receipt.candidate_branch !== foundationAuthorization.CANDIDATE_BRANCH || !validSHA(receipt.candidate_head_sha) || !Number.isInteger(receipt.authorization_pull_request) || receipt.authorization_pull_request < 1 || !validSHA(receipt.authorization_merge_commit) || receipt.manifest_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.manifest_sha256) || receipt.changed_paths_sha256 !== undefined && !foundationAuthorization.validDigest(receipt.changed_paths_sha256) || receipt.patch_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.patch_sha256_excluding_authorization_paths) || receipt.tree_sha256_excluding_authorization_paths !== undefined && !foundationAuthorization.validDigest(receipt.tree_sha256_excluding_authorization_paths) || receipt.single_use !== true || receipt.consumed !== false || receipt.replay_decision !== 'REFUTED') {
         throw guardianFailure('guardian FOUNDATION authorization receipt is not exact', FOUNDATION_AUTHORIZATION_CODE);
       }
     }
