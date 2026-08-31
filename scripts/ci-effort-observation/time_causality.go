@@ -353,7 +353,7 @@ func decodeTimeOperations(data []byte) ([]timeOperationRecord, error) {
 }
 
 func validateTimeOperations(records []timeOperationRecord) ([]int, error) {
-	if len(records) != 16 {
+	if len(records) != 17 {
 		return nil, fmt.Errorf("time operation denominator is invalid")
 	}
 	caseIDs := map[string]bool{}
