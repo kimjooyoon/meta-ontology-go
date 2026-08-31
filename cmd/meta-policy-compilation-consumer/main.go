@@ -152,7 +152,7 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	}
 	// This parse/lower call is intentionally local to the consumer. It does
 	// not import the producer compiler, generated judge, or producer evaluator.
-	policy, err := parseRawPolicy(policyPath, policySource)
+	compiled, err := parseRawPolicy(policyPath, policySource)
 	if err != nil {
 		return fmt.Errorf("consumer parse raw Gooo policy: %w", err)
 	}
@@ -160,7 +160,7 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	cases = bindInputs(cases, policy.SourceDigest, policy.SemanticDigest, "")
+	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, "")
 	producerArtifact, err := readJSON[artifact](filepath.Join(artifactDir, "artifact.json"))
 	if err != nil {
 		return err
@@ -184,14 +184,14 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if producerArtifact.Policy.SourceDigest == "" || producerPolicy.SourceDigest == "" || producerArtifact.GeneratedJudgeHash != digestBytes(judge) {
 		return errors.New("producer artifact is not bound to its generated judge")
 	}
-	if producerArtifact.Policy.SourceDigest != policy.SourceDigest || producerArtifact.Policy.SemanticDigest != policy.SemanticDigest || producerArtifact.Policy.Denominator != fixedDenom || len(producerArtifact.Policy.Rules) != fixedDenom {
+	if producerArtifact.Policy.SourceDigest != compiled.SourceDigest || producerArtifact.Policy.SemanticDigest != compiled.SemanticDigest || producerArtifact.Policy.Denominator != fixedDenom || len(producerArtifact.Policy.Rules) != fixedDenom {
 		return errors.New("independent raw policy reconstruction differs from artifact")
 	}
 	if len(generated) != caseDenom || len(independent) != caseDenom {
 		return errors.New("producer execution denominator is not 3")
 	}
 	for index, current := range cases {
-		want := evaluate(policy, current)
+		want := evaluate(compiled, current)
 		if !sameResult(want, generated[index]) || !sameResult(want, independent[index]) {
 			return fmt.Errorf("consumer reconstruction differs at case %q", current.ID)
 		}
@@ -209,8 +209,8 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 			subject = current
 		}
 	}
-	current := currentEvidence{Class: "CURRENT_EVIDENCE", Provenance: "consumer runner-temp artifact observation", SourceDigest: policy.SourceDigest, ArtifactSourceDigest: producerArtifact.Policy.SourceDigest, GeneratedJudgeDigest: producerArtifact.GeneratedJudgeHash, IndependentDigest: policy.SemanticDigest}
-	output := report{Schema: consumerSchema, RawPolicyParsed: true, RawCasesParsed: true, GoooDerivedRuleNumerator: len(policy.Rules), GoooDerivedRuleDenominator: fixedDenom, SourceExecutionsNumerator: caseDenom, SourceExecutionsDenominator: caseDenom, GeneratedExecutionsNumerator: len(generated), GeneratedExecutionsDenominator: caseDenom, IndependentReconstructionsNumerator: caseDenom, IndependentReconstructionsDenominator: caseDenom, ContractDigestMatch: producerArtifact.Policy.SourceDigest == policy.SourceDigest && producerArtifact.Policy.SemanticDigest == policy.SemanticDigest && producerArtifact.GeneratedJudgeHash == digestBytes(judge), ImportBoundary: map[string]string{"producer_compiler_imports": "0/1", "generated_template_imports": "0/1", "independent_evaluator_imports": "0/1"}, SyntheticEvidence: synthetic, CurrentEvidence: current, SubjectResolution: "RESOLVED", SubjectDecision: evaluate(policy, subject)}
+	current := currentEvidence{Class: "CURRENT_EVIDENCE", Provenance: "consumer runner-temp artifact observation", SourceDigest: compiled.SourceDigest, ArtifactSourceDigest: producerArtifact.Policy.SourceDigest, GeneratedJudgeDigest: producerArtifact.GeneratedJudgeHash, IndependentDigest: compiled.SemanticDigest}
+	output := report{Schema: consumerSchema, RawPolicyParsed: true, RawCasesParsed: true, GoooDerivedRuleNumerator: len(compiled.Rules), GoooDerivedRuleDenominator: fixedDenom, SourceExecutionsNumerator: caseDenom, SourceExecutionsDenominator: caseDenom, GeneratedExecutionsNumerator: len(generated), GeneratedExecutionsDenominator: caseDenom, IndependentReconstructionsNumerator: caseDenom, IndependentReconstructionsDenominator: caseDenom, ContractDigestMatch: producerArtifact.Policy.SourceDigest == compiled.SourceDigest && producerArtifact.Policy.SemanticDigest == compiled.SemanticDigest && producerArtifact.GeneratedJudgeHash == digestBytes(judge), ImportBoundary: map[string]string{"producer_compiler_imports": "0/1", "generated_template_imports": "0/1", "independent_evaluator_imports": "0/1"}, SyntheticEvidence: synthetic, CurrentEvidence: current, SubjectResolution: "RESOLVED", SubjectDecision: evaluate(compiled, subject)}
 	return writeJSON(outputPath, output)
 }
 
