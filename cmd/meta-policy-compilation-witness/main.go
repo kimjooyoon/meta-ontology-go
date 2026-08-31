@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation/independent"
+	independentpkg "github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation/independent"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	independentProgram, err := independent.Compile(source)
+	independentProgram, err := independentpkg.Compile(source)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func produce(policyPath, casesPath, outputDir string) error {
 	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
 }
 
-func executeAll(judge []byte, program independent.Program, cases []policycompilation.Case) ([]policycompilation.DecisionResult, []policycompilation.DecisionResult, error) {
+func executeAll(judge []byte, program independentpkg.Program, cases []policycompilation.Case) ([]policycompilation.DecisionResult, []policycompilation.DecisionResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	generated := make([]policycompilation.DecisionResult, 0, len(cases))
@@ -126,7 +126,7 @@ func executeAll(judge []byte, program independent.Program, cases []policycompila
 			return nil, nil, err
 		}
 		generated = append(generated, result)
-		independentInput := independent.Case{
+		independentInput := independentpkg.Case{
 			ID: input.ID, ProducerAvailable: input.ProducerAvailable, ConsumerAvailable: input.ConsumerAvailable,
 			ObservedSourceDigest: input.ObservedSourceDigest, ObservedArtifactSourceDigest: input.ObservedArtifactSourceDigest,
 			ObservedGeneratedJudgeDigest: input.ObservedGeneratedJudgeDigest, ObservedIndependentDigest: input.ObservedIndependentDigest,
