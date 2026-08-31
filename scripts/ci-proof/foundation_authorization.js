@@ -64,7 +64,12 @@ function canonicalTreeEntries(entries, excludedPaths = []) {
 }
 
 function digestTreeEntries(entries, excludedPaths = []) {
-  return sha256(JSON.stringify(canonicalTreeEntries(entries, excludedPaths)));
+  const excluded = new Set(excludedPaths);
+  const lines = (Array.isArray(entries) ? entries : [])
+    .filter((entry) => entry && entry.type === 'blob' && typeof entry.path === 'string' && !excluded.has(entry.path))
+    .map((entry) => `${entry.path}\t${entry.mode || null}\t${entry.sha}`)
+    .sort();
+  return sha256(lines.length === 0 ? '' : `${lines.join('\n')}\n`);
 }
 
 function requireExact(condition, message) {

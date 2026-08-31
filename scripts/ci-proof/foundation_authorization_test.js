@@ -15,8 +15,5 @@ assert.equal(authorization.digestTreeEntries([
   {path: 'z', type: 'blob', mode: '100644', sha: 'z'.repeat(40)},
   {path: 'a', type: 'blob', mode: '100644', sha: 'a'.repeat(40)},
   {path: 'excluded', type: 'blob', mode: '100644', sha: 'e'.repeat(40)},
-], ['excluded']), authorization.sha256(JSON.stringify([
-  {path: 'a', mode: '100644', sha: 'a'.repeat(40)},
-  {path: 'z', mode: '100644', sha: 'z'.repeat(40)},
-])));
+], ['excluded']), authorization.sha256(`a\t100644\t${'a'.repeat(40)}\nz\t100644\t${'z'.repeat(40)}\n`));
 console.log('foundation authorization tests passed');
