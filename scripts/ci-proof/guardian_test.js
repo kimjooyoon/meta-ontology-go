@@ -649,6 +649,15 @@ function testRegressionRepairReceipt() {
   assert.equal(correction.cells.length, 1);
   assert.equal(correction.cells[0].id, 'CORRECTION_CHILD');
   assert.equal(correction.cells[0].parent_repair_receipt, foundationAuthorization.CORRECTION_CHILD_PARENT_RECEIPT_SHA256);
+  const migration = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v4-schema-coherence.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateSchemaCoherenceMigrationReceipt(migration));
+  assert.equal(migration.cells.length, 1);
+  assert.equal(migration.cells[0].id, 'SCHEMA_COHERENCE_MIGRATION_ADOPTION');
+  assert.equal(migration.cells[0].proof_choice, 'COHERENCE');
+  assert.equal(migration.cells[0].indicator, 'GUARDRAIL');
+  assert.equal(migration.cells[0].allowed, 1);
+  assert.equal(migration.cells[0].consumed, 1);
+  assert.equal(migration.cells[0].replay_decision, 'REFUTED');
 }
 
 (async () => {

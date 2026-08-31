@@ -1,0 +1,120 @@
+{
+  "schema": "gooo/ci-governance-denominator-migration/v4",
+  "foundation_override_success_count": 3,
+  "receipt_path": ".github/governance-denominator-v4-schema-coherence.json",
+  "digest_exclusions": [
+    ".github/governance-denominator-v4-schema-coherence.json"
+  ],
+  "base_sha": "8bcb771b1d5cd84ee55900e42535d3c2d49545c4",
+  "merge_parent_sha": "8bcb771b1d5cd84ee55900e42535d3c2d49545c4",
+  "parent_receipts": [
+    {
+      "schema": "gooo/ci-governance-denominator-migration/v2",
+      "path": ".github/governance-denominator-v2-migration.json",
+      "sha256": "sha256:587f52d3917a2b0b54cbfb93859e7cbffa541b606ec792b6e68b1165f6cdf8db"
+    },
+    {
+      "schema": "gooo/ci-governance-denominator-migration/v3",
+      "path": ".github/governance-denominator-v3-correction.json",
+      "sha256": "sha256:36bae817572ead0a449930f23e36ea9cb0aa4ab2ef61ce64d329b61841977571"
+    }
+  ],
+  "parent_field_policy": {
+    "v2": {
+      "schema_owned_only": true,
+      "outcome_optional": true,
+      "raw_json_rewrite": "REFUTED",
+      "future_field_requirement": "REFUTED"
+    },
+    "v3": {
+      "child_owned_fields": [
+        "parent_outcome",
+        "outcome",
+        "causal"
+      ]
+    }
+  },
+  "previous_release": {
+    "version": "v0.1.0",
+    "immutable": false,
+    "decision": "REFUTED"
+  },
+  "immutable_release_input": {
+    "schema": "gooo/receipt-schema-migration/v0.1.1",
+    "target_commit": "69efc70d91dbd39420bbb214d4ae64887bf5e237",
+    "protocol": {
+      "rest": {
+        "immutable": true
+      },
+      "graphql": {
+        "immutable": true
+      }
+    },
+    "release_asset": {
+      "name": "gooo-receipt-schema-migration-v0.1.1-conformance.tar.gz",
+      "size_bytes": 18371,
+      "sha256": "sha256:5bb52a3da96e8aabad76c27cbc900c71a4fbd3346c0b330804cb55fa2a9d3dd5"
+    },
+    "main_run": {
+      "run_id": 33353396559,
+      "conclusion": "success",
+      "artifact": {
+        "artifact_id": 9744345755,
+        "size_bytes": 32262,
+        "sha256": "sha256:eddada2591a81c8480e12f2d508ba89642df4852ad9b76a0de0666aa79063e7c"
+      }
+    },
+    "adoption_proposal": {
+      "path": "adoption-proposal.json",
+      "sha256": "sha256:7f7edfd4e4e4a8622b20f15868e96d6707f3b44f1fab183f5c2e466f854be106"
+    },
+    "proposal": {
+      "sha256": "sha256:182d99c99985ad49e5a7365e1f975b9662cf020a44bd335f45cdf6629b7578b0"
+    }
+  },
+  "input_field_count": 6,
+  "missing_stale_future_schema_decision": "UNKNOWN",
+  "input_release_digests": {
+    "asset": "sha256:5bb52a3da96e8aabad76c27cbc900c71a4fbd3346c0b330804cb55fa2a9d3dd5",
+    "main_artifact": "sha256:eddada2591a81c8480e12f2d508ba89642df4852ad9b76a0de0666aa79063e7c",
+    "adoption_proposal": "sha256:7f7edfd4e4e4a8622b20f15868e96d6707f3b44f1fab183f5c2e466f854be106",
+    "proposal": "sha256:182d99c99985ad49e5a7365e1f975b9662cf020a44bd335f45cdf6629b7578b0"
+  },
+  "changed_paths": [
+    ".github/agent-scope-table.md",
+    ".github/ci-governance.json",
+    ".github/governance-denominator-v4-schema-coherence.json",
+    ".github/workflows/ci.yml",
+    "internal/verify/scope_schema_coherence_migration_adoption_20260831.go",
+    "scripts/ci-proof/foundation_authorization.js",
+    "scripts/ci-proof/foundation_authorization_test.js",
+    "scripts/ci-proof/guardian.js",
+    "scripts/ci-proof/guardian_test.js"
+  ],
+  "changed_paths_sha256": "sha256:bd2c7d107ae2b797fdc6008859c7c6a7e6548a9500e45a7c5bfe48014ca0cc71",
+  "patch_sha256_excluding_receipt": "sha256:57621d9e76ad52362f4f519c775d85ac7c1b5fa62c87b14a565e2fa3f07e651c",
+  "tree_sha256_excluding_receipt": "sha256:96819f02f7ee625700c5affe3239399613fb57debecdcad043045241eef8420c",
+  "repository_gates": 0,
+  "local_go_gates": 0,
+  "cross_project_gates": 0,
+  "replay_second_use": "REFUTED",
+  "cells": [
+    {
+      "id": "SCHEMA_COHERENCE_MIGRATION_ADOPTION",
+      "meta_operation": "AdoptVersionedReceiptSchema",
+      "proof_choice": "COHERENCE",
+      "indicator": "GUARDRAIL",
+      "parent_outcome": "REFUTED_INCOMPLETE_PROPAGATION",
+      "outcome": "CLOSED",
+      "causal": "VERSIONED_CHILD_OWNS_NEW_OUTCOME_FIELDS",
+      "reason": "VERSIONED_CHILD_OWNS_NEW_OUTCOME_FIELDS",
+      "allowed": 1,
+      "consumed": 1,
+      "replay_decision": "REFUTED",
+      "pull_request": 613,
+      "branch": "agent/schema-coherence-migration-adoption-20260831",
+      "base_sha": "8bcb771b1d5cd84ee55900e42535d3c2d49545c4",
+      "merge_parent_sha": "8bcb771b1d5cd84ee55900e42535d3c2d49545c4"
+    }
+  ]
+}
