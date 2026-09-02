@@ -30,21 +30,21 @@ type binding struct {
 }
 
 type manifestScene struct {
-	ID          string  `json:"id"`
-	Sequence    int     `json:"sequence"`
-	File        string  `json:"file"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Alt         string  `json:"alt"`
+	ID          string   `json:"id"`
+	Sequence    int      `json:"sequence"`
+	File        string   `json:"file"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Alt         string   `json:"alt"`
 	SourceRefs  []string `json:"source_refs"`
-	Binding     binding `json:"binding"`
+	Binding     binding  `json:"binding"`
 }
 
 type manifest struct {
-	Schema             string          `json:"schema"`
-	VisualDenominator  int             `json:"visual_denominator"`
-	Renderer           string          `json:"renderer"`
-	Scenes             []manifestScene `json:"scenes"`
+	Schema            string          `json:"schema"`
+	VisualDenominator int             `json:"visual_denominator"`
+	Renderer          string          `json:"renderer"`
+	Scenes            []manifestScene `json:"scenes"`
 }
 
 type assetRecord struct {
@@ -78,53 +78,53 @@ var sceneIDs = []string{
 
 var expectedBindings = map[string]binding{
 	"ontology.visual.intent-ir-lowering": {
-		Nodes: []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"},
-		Edges: []string{"lower", "normalize", "project", "record"},
+		Nodes:       []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"},
+		Edges:       []string{"lower", "normalize", "project", "record"},
 		Transitions: []string{"source", "ir", "structural-view", "proof"},
 	},
 	"ontology.visual.authority-boundary": {
-		Nodes: []string{"handwritten.authority", "generated.view", "evidence.view", "authority.boundary"},
-		Edges: []string{"intent-to-structure", "implementation-slot", "append-only", "forbidden-writeback"},
+		Nodes:       []string{"handwritten.authority", "generated.view", "evidence.view", "authority.boundary"},
+		Edges:       []string{"intent-to-structure", "implementation-slot", "append-only", "forbidden-writeback"},
 		Transitions: []string{"authoritative", "derived", "observed", "blocked"},
 	},
 	"ontology.visual.munchausen-proof-choice": {
-		Nodes: []string{"claim", "FOUNDATION", "COHERENCE", "REGRESSION"},
-		Edges: []string{"claim-to-proof-choice", "denominator", "receipt-chain", "replay-digest"},
+		Nodes:       []string{"claim", "FOUNDATION", "COHERENCE", "REGRESSION"},
+		Edges:       []string{"claim-to-proof-choice", "denominator", "receipt-chain", "replay-digest"},
 		Transitions: []string{"declare", "choose", "bind", "close"},
 	},
 	"ontology.visual.claim-evidence-lifecycle": {
-		Nodes: []string{"claim", "evidence", "CLOSED", "UNKNOWN", "REFUTED"},
-		Edges: []string{"claim-needs-evidence", "evidence-closes", "evidence-missing", "counterexample-refutes"},
+		Nodes:       []string{"claim", "evidence", "CLOSED", "UNKNOWN", "REFUTED"},
+		Edges:       []string{"claim-needs-evidence", "evidence-closes", "evidence-missing", "counterexample-refutes"},
 		Transitions: []string{"open", "observed", "closed", "unknown", "refuted"},
 	},
 	"ontology.visual.unknown-cause-descent": {
-		Nodes: []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"},
-		Edges: []string{"cause-descent", "stage-to-step", "step-to-reason", "reason-to-class", "class-to-operation", "operation-to-blocker"},
+		Nodes:       []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"},
+		Edges:       []string{"cause-descent", "stage-to-step", "step-to-reason", "reason-to-class", "class-to-operation", "operation-to-blocker"},
 		Transitions: []string{"locate", "explain", "classify", "repair", "retain-frontier"},
 	},
 	"ontology.visual.precedence-counterexample": {
-		Nodes: []string{"REFUTED", "UNKNOWN", "CLOSED", "counterexample", "priority"},
-		Edges: []string{"refuted-over-unknown", "unknown-over-closed", "counterexample-retained", "priority-selects"},
+		Nodes:       []string{"REFUTED", "UNKNOWN", "CLOSED", "counterexample", "priority"},
+		Edges:       []string{"refuted-over-unknown", "unknown-over-closed", "counterexample-retained", "priority-selects"},
 		Transitions: []string{"observe", "rank", "preserve", "fail-closed"},
 	},
 	"ontology.visual.package-resolution": {
-		Nodes: []string{"activity.gooo", "entities.gooo", "canonical-order", "package-unit", "entry.PayOrder"},
-		Edges: []string{"sort-by-relative-filename", "parse-each-file", "combine-package", "resolve-entry", "execute"},
+		Nodes:       []string{"activity.gooo", "entities.gooo", "canonical-order", "package-unit", "entry.PayOrder"},
+		Edges:       []string{"sort-by-relative-filename", "parse-each-file", "combine-package", "resolve-entry", "execute"},
 		Transitions: []string{"discover", "sort", "bind", "run", "receipt"},
 	},
 	"ontology.visual.incremental-conformance": {
-		Nodes: []string{"changed-surface", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"},
-		Edges: []string{"surface-to-operation", "fresh-input", "exact-replay", "missing-evidence", "counterexample"},
+		Nodes:       []string{"changed-surface", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"},
+		Edges:       []string{"surface-to-operation", "fresh-input", "exact-replay", "missing-evidence", "counterexample"},
 		Transitions: []string{"scope", "execute", "reuse", "lower-resolution", "retain-refutation"},
 	},
 	"ontology.visual.bootstrap-oracle": {
-		Nodes: []string{".gooo", "bounded.semantic.kernel", "independent.bootstrap.oracle", "parity-evidence", "promotion-gate"},
-		Edges: []string{"source-to-kernel", "source-to-oracle", "compare-digests", "parity-to-gate"},
+		Nodes:       []string{".gooo", "bounded.semantic.kernel", "independent.bootstrap.oracle", "parity-evidence", "promotion-gate"},
+		Edges:       []string{"source-to-kernel", "source-to-oracle", "compare-digests", "parity-to-gate"},
 		Transitions: []string{"bound", "observe", "compare", "not-promoted"},
 	},
 	"ontology.visual.promotion-lineage": {
-		Nodes: []string{"feature.PR", "exact-head.CI", "dev", "post-adoption.observation", "main.promotion"},
-		Edges: []string{"feature-to-ci", "exact-head-to-dev", "dev-to-observation", "observation-to-promotion", "dev-to-main"},
+		Nodes:       []string{"feature.PR", "exact-head.CI", "dev", "post-adoption.observation", "main.promotion"},
+		Edges:       []string{"feature-to-ci", "exact-head-to-dev", "dev-to-observation", "observation-to-promotion", "dev-to-main"},
 		Transitions: []string{"propose", "verify", "adopt", "observe", "promote"},
 	},
 }
