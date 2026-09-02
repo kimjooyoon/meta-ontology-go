@@ -38,6 +38,10 @@ type manifestScene struct {
 	Alt         string   `json:"alt"`
 	SourceRefs  []string `json:"source_refs"`
 	Binding     binding  `json:"binding"`
+	InitialRelation  string `json:"initial_relation"`
+	SemanticOperation string `json:"semantic_operation"`
+	TerminalRelation string `json:"terminal_relation"`
+	MotionEventKind  string `json:"motion_event_kind"`
 }
 
 type manifest struct {
@@ -129,6 +133,23 @@ var expectedBindings = map[string]binding{
 	},
 }
 
+type motionContract struct {
+	Initial, Operation, Terminal, Event string
+}
+
+var expectedMotion = map[string]motionContract{
+	"ontology.visual.intent-ir-lowering": {"intent.tokens", "lower-and-normalize", "derived.views", "token-merge-and-materialize"},
+	"ontology.visual.authority-boundary": {"derived.reverse-write", "enforce-authority-wall", "authority.preserved", "blocked-reverse-edge"},
+	"ontology.visual.munchausen-proof-choice": {"claim.open", "select-one-proof-choice", "proof.choice-bound", "radial-exclusive-selection"},
+	"ontology.visual.claim-evidence-lifecycle": {"evidence.unresolved", "route-through-decision-switch", "one-terminal-state", "exclusive-terminal-routing"},
+	"ontology.visual.unknown-cause-descent": {"unknown.coarse", "descend-causal-frontier", "unknown.actionable", "frontier-edge-expansion"},
+	"ontology.visual.precedence-counterexample": {"candidate.states", "rank-and-preserve-counterexample", "refuted.selected", "stack-insert-and-ledger-append"},
+	"ontology.visual.package-resolution": {"files.unsorted", "sort-parse-and-merge", "entry.receipt", "card-reorder-and-merge"},
+	"ontology.visual.incremental-conformance": {"changed.surface", "route-by-six-digest-identity", "one.operation-result", "router-branch-closure"},
+	"ontology.visual.bootstrap-oracle": {"candidate.and.oracle", "compare-digest-and-facts", "parity.review-gate", "dual-lane-comparison"},
+	"ontology.visual.promotion-lineage": {"feature.artifact", "acquire-exact-receipts-in-order", "main.gate-open", "gated-receipt-cascade"},
+}
+
 func main() {
 	outDir := flag.String("out-dir", defaultDir, "directory for generated visual assets")
 	manifestPath := flag.String("manifest", filepath.Join(defaultDir, "visual-manifest.json"), "visual source manifest")
@@ -190,6 +211,10 @@ func validateManifest(m manifest) error {
 		want, ok := expectedBindings[scene.ID]
 		if !ok || !sameBinding(scene.Binding, want) || len(scene.SourceRefs) == 0 {
 			return fmt.Errorf("semantic scene binding is not exact for %s", scene.ID)
+		}
+		motion, ok := expectedMotion[scene.ID]
+		if !ok || scene.InitialRelation != motion.Initial || scene.SemanticOperation != motion.Operation || scene.TerminalRelation != motion.Terminal || scene.MotionEventKind != motion.Event {
+			return fmt.Errorf("motion relation binding is not exact for %s", scene.ID)
 		}
 		if _, ok := renderers[scene.ID]; !ok {
 			return fmt.Errorf("scene %s has no renderer", scene.ID)

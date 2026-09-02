@@ -2,77 +2,77 @@
   "schema": "gooo/visual-asset-lock/v1",
   "visual_denominator": 10,
   "visual_asset_count": 10,
-  "visual_asset_bytes": 4270713,
+  "visual_asset_bytes": 3866204,
   "assets": [
     {
       "id": "ontology.visual.intent-ir-lowering",
       "sequence": 1,
       "file": "01-intent-ir-lowering.gif",
-      "size_bytes": 438537,
-      "sha256": "734ba8cfcc925b28b43c48fdc64314257a895bfac7a59d8eb303cefc9a7e06a1"
+      "size_bytes": 413657,
+      "sha256": "320e7919e49c0135c6b6bf59d528c9941313df2218a829c089b9dceb6baceeb6"
     },
     {
       "id": "ontology.visual.authority-boundary",
       "sequence": 2,
       "file": "02-authority-boundary.gif",
-      "size_bytes": 416332,
-      "sha256": "ee20be4db18d82e6c46b524b108e40aa577be1f65eae3691cc15efb379aaf66c"
+      "size_bytes": 381103,
+      "sha256": "e7496e8ae21a15f690ee7070c72809c8328252920bbbedc6fcaaab5cf4a62975"
     },
     {
       "id": "ontology.visual.munchausen-proof-choice",
       "sequence": 3,
       "file": "03-munchausen-proof-choice.gif",
-      "size_bytes": 404957,
-      "sha256": "fcb1df646b0eac26daf8e46a644e01784cd58a47aa82e9f93d1e2d65d0141e39"
+      "size_bytes": 352934,
+      "sha256": "132c19dc3bdfe69088cdb4aaf794bddfaa829acd4e05f7f49751d8401df6350e"
     },
     {
       "id": "ontology.visual.claim-evidence-lifecycle",
       "sequence": 4,
       "file": "04-claim-evidence-lifecycle.gif",
-      "size_bytes": 392852,
-      "sha256": "bb0547fa1d828fd86ce5305f7b8dd43dcc3b1d91c623edb1f2a923a76f96858c"
+      "size_bytes": 392035,
+      "sha256": "239e5a47dd7fbcdcc9502a847a47447882136c4450a2b2a736b2ec81ee841f6c"
     },
     {
       "id": "ontology.visual.unknown-cause-descent",
       "sequence": 5,
       "file": "05-unknown-cause-descent.gif",
-      "size_bytes": 343699,
-      "sha256": "17f6cf7e90964f44cd856dfb3cd9a4afee257bbf1ec4508ad62ef1c410ccbae2"
+      "size_bytes": 312702,
+      "sha256": "052caf80420303206e6679a1b7064d14a21bd6450386aed15e3e4a16182b6d45"
     },
     {
       "id": "ontology.visual.precedence-counterexample",
       "sequence": 6,
       "file": "06-precedence-counterexample.gif",
-      "size_bytes": 463011,
-      "sha256": "648d099ac44f56ed3fcae8778e6da2b5613fa6a9c5713e4c7d0f4fb39c51de45"
+      "size_bytes": 401466,
+      "sha256": "bd019786df4fedb32ba0f2bd32eb35c4b056285874388784273df6e9ad887b7f"
     },
     {
       "id": "ontology.visual.package-resolution",
       "sequence": 7,
       "file": "07-package-resolution.gif",
-      "size_bytes": 447641,
-      "sha256": "62dae4da4a9daa492177ca0560bb11de6a9c7610be2b4611b3df164807fcf17b"
+      "size_bytes": 361419,
+      "sha256": "10e75ea51251c44f2d8af6b132da97aabb0c8d03360d68826f7370734ee54935"
     },
     {
       "id": "ontology.visual.incremental-conformance",
       "sequence": 8,
       "file": "08-incremental-conformance.gif",
-      "size_bytes": 455049,
-      "sha256": "75e24b89538308b039b5029178b8c8bce0eba46f3ddddec542fb9cc8db15abe9"
+      "size_bytes": 402426,
+      "sha256": "b2539237834231e22691d34e958e635a10990821bc2363226a077df0c94db4cc"
     },
     {
       "id": "ontology.visual.bootstrap-oracle",
       "sequence": 9,
       "file": "09-bootstrap-oracle.gif",
-      "size_bytes": 460239,
-      "sha256": "26946802f78b744162b45c67452986259488d0292c8d0cbacbd3e80fd18960ef"
+      "size_bytes": 434130,
+      "sha256": "921808b3ef4d5ef3b89ab9c7c1242fe3f5f08a9693a32b5cc63b61e4963d0615"
     },
     {
       "id": "ontology.visual.promotion-lineage",
       "sequence": 10,
       "file": "10-promotion-lineage.gif",
-      "size_bytes": 448396,
-      "sha256": "977440e17524b7a5aaa4b0e2f087dbf3adb32fb75137383ad3c501d3cb5d70dc"
+      "size_bytes": 414332,
+      "sha256": "f99f2f0281d3f07cf55d08993241ab78fd62414000dbb6af6c568df585faa5a0"
     }
   ]
 }

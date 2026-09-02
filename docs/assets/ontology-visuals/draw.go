@@ -83,6 +83,11 @@ func arrow(img *image.Paletted, x, y int, c uint8) {
 	line(img, x, y, x-7, y-5, c)
 	line(img, x, y, x-7, y+5, c)
 }
+
+func arrowLeft(img *image.Paletted, x, y int, c uint8) {
+	line(img, x, y, x+7, y-5, c)
+	line(img, x, y, x+7, y+5, c)
+}
 func drawText(img *image.Paletted, x, y int, value string, scale int, c uint8) int {
 	value = strings.ToUpper(value)
 	start := x
@@ -139,6 +144,8 @@ func activeColor(frame, start, end int, base uint8) uint8 {
 	return border
 }
 
+func moveInt(a, b int, p float64) int { return a + int(float64(b-a)*clamp(p)) }
+
 func drawNode(img *image.Paletted, x, y, w, h int, title string, lines []string, c uint8, active bool) {
 	fillC := panel
 	if active {
@@ -158,6 +165,30 @@ func smallNode(img *image.Paletted, x, y, w, h int, title, value string, c uint8
 		stroke(img, x+2, y+2, x+w-2, y+h-2, c)
 	}
 }
+
+func stateCard(img *image.Paletted, x, y, w, h int, title string, lines []string, c uint8, active bool, shape byte) {
+	stateC := c
+	if !active {
+		stateC = border
+	}
+	fill(img, x, y, x+w, y+h, panel)
+	stroke(img, x, y, x+w, y+h, stateC)
+	if shape == 'd' {
+		diamond(img, x+22, y+35, 13, stateC)
+	} else if shape == 'x' {
+		cross(img, x+11, y+24, x+33, y+46, stateC)
+	} else if shape == 'o' {
+		circle(img, x+22, y+35, 11, stateC)
+	} else {
+		fill(img, x+11, y+24, x+33, y+46, stateC)
+	}
+	drawText(img, x+48, y+14, title, 2, stateC)
+	textLines(img, x+48, y+42, lines, 1, textPrimary)
+	if active {
+		stroke(img, x+2, y+2, x+w-2, y+h-2, c)
+	}
+}
+
 func flow(img *image.Paletted, x0, y0, x1, y1 int, c uint8, active bool) {
 	line(img, x0, y0, x1, y1, c)
 	if active {
