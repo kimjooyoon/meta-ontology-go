@@ -85,21 +85,21 @@ type Collection struct {
 }
 
 type Report struct {
-	Schema            string      `json:"schema"`
-	Repository        string      `json:"repository"`
-	CurrentSubjectSHA string      `json:"current_subject_sha"`
-	PredecessorSHA    string      `json:"predecessor_sha"`
-	RequestedRoute    string      `json:"requested_route"`
-	Decision          string      `json:"decision"`
-	Reason            string      `json:"reason"`
-	ObservationDecision    string  `json:"observation_decision"`
-	ObservationResolution string  `json:"observation_resolution"`
-	Unknown               *Unknown `json:"unknown,omitempty"`
-	Selected          *Selected   `json:"selected,omitempty"`
-	Summary           Summary     `json:"summary"`
-	Indicators        []Indicator `json:"indicators"`
-	Proofs            []Proof     `json:"proofs"`
-	ReportDigest      string      `json:"report_digest"`
+	Schema                string      `json:"schema"`
+	Repository            string      `json:"repository"`
+	CurrentSubjectSHA     string      `json:"current_subject_sha"`
+	PredecessorSHA        string      `json:"predecessor_sha"`
+	RequestedRoute        string      `json:"requested_route"`
+	Decision              string      `json:"decision"`
+	Reason                string      `json:"reason"`
+	ObservationDecision   string      `json:"observation_decision"`
+	ObservationResolution string      `json:"observation_resolution"`
+	Unknown               *Unknown    `json:"unknown,omitempty"`
+	Selected              *Selected   `json:"selected,omitempty"`
+	Summary               Summary     `json:"summary"`
+	Indicators            []Indicator `json:"indicators"`
+	Proofs                []Proof     `json:"proofs"`
+	ReportDigest          string      `json:"report_digest"`
 }
 
 type ObservationEvidence struct {
@@ -141,23 +141,23 @@ func (report Report) Ready() bool {
 }
 
 type ResolutionReceipt struct {
-	Schema              string              `json:"schema"`
-	Repository          string              `json:"repository"`
-	CurrentHeadSHA      string              `json:"current_head_sha"`
-	PredecessorSHA      string              `json:"predecessor_sha"`
-	RequestedRoute      string              `json:"requested_route"`
-	Conformance         string              `json:"conformance"`
-	Decision            string              `json:"decision"`
-	Reason              string              `json:"reason"`
-	Resolution          string              `json:"resolution"`
-	Stage               string              `json:"stage"`
-	Step                string              `json:"step"`
-	ObservationDecision    string            `json:"observation_decision"`
-	ObservationResolution string            `json:"observation_resolution"`
-	Unknown               *Unknown          `json:"unknown,omitempty"`
-	PromotionAuthority  bool                `json:"promotion_authority"`
-	ReadinessDelta      *int                `json:"readiness_delta"`
-	Selection           *Report             `json:"selection,omitempty"`
-	ObservationEvidence ObservationEvidence `json:"observation_evidence"`
-	ReportDigest        string              `json:"report_digest"`
+	Schema                string              `json:"schema"`
+	Repository            string              `json:"repository"`
+	CurrentHeadSHA        string              `json:"current_head_sha"`
+	PredecessorSHA        string              `json:"predecessor_sha"`
+	RequestedRoute        string              `json:"requested_route"`
+	Conformance           string              `json:"conformance"`
+	Decision              string              `json:"decision"`
+	Reason                string              `json:"reason"`
+	Resolution            string              `json:"resolution"`
+	Stage                 string              `json:"stage"`
+	Step                  string              `json:"step"`
+	ObservationDecision   string              `json:"observation_decision"`
+	ObservationResolution string              `json:"observation_resolution"`
+	Unknown               *Unknown            `json:"unknown,omitempty"`
+	PromotionAuthority    bool                `json:"promotion_authority"`
+	ReadinessDelta        *int                `json:"readiness_delta"`
+	Selection             *Report             `json:"selection,omitempty"`
+	ObservationEvidence   ObservationEvidence `json:"observation_evidence"`
+	ReportDigest          string              `json:"report_digest"`
 }

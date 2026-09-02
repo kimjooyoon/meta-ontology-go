@@ -73,7 +73,7 @@ func collectArtifact(ctx context.Context, client *http.Client, token, predecesso
 	selected := Selected{
 		RunID: run.ID, RunAttempt: run.RunAttempt, HeadSHA: run.HeadSHA,
 		HeadBranch: run.HeadBranch,
-		Event: run.Event, Status: run.Status, Conclusion: run.Conclusion, WorkflowName: run.Name,
+		Event:      run.Event, Status: run.Status, Conclusion: run.Conclusion, WorkflowName: run.Name,
 		SynthesisJobID: job.ID, SynthesisJobName: job.Name,
 		SynthesisJobStatus: job.Status, SynthesisJobConclusion: job.Conclusion,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name, ProposalFileSHA256: fileSHA,

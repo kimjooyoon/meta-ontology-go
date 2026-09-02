@@ -8,8 +8,8 @@ import (
 
 type config struct {
 	root, repository, currentHead, predecessorSHA, route string
-	output, check, observationCache, apiURL, token string
-	observationCapture, observationReplay          string
+	output, check, observationCache, apiURL, token       string
+	observationCapture, observationReplay                string
 }
 
 func main() {

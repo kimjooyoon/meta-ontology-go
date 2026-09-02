@@ -15,32 +15,32 @@ func TestRouteIdentityContractCases(t *testing.T) {
 	predecessor := strings.Repeat("a", 40)
 	current := strings.Repeat("b", 40)
 	cases := []struct {
-		id                 string
-		collection         Collection
-		decision           string
-		observation        string
-		resolution         string
-		reason             string
-		unknownClass       string
+		id           string
+		collection   Collection
+		decision     string
+		observation  string
+		resolution   string
+		reason       string
+		unknownClass string
 	}{
 		{
 			id: "normal-route-bound-closed",
 			collection: Collection{RequestedRoute: RouteDev, ObservedRuns: 2, ExactRuns: 1,
 				OtherRouteRuns: 1, ObservedJobs: 5, ExactJobs: 1, ObservedArtifacts: 4,
 				ExactArtifacts: 1, Candidates: []Candidate{readyCandidate(predecessor, 1)}},
-			decision: DecisionClosed, observation: DecisionClosed, resolution: ResolutionExact,
+			decision: "SELECTED", observation: DecisionClosed, resolution: ResolutionExact,
 			reason: ReasonSelected,
 		},
 		{
-			id: "other-route-only-unknown",
+			id:         "other-route-only-unknown",
 			collection: Collection{RequestedRoute: RouteDev, ObservedRuns: 1, OtherRouteRuns: 1},
-			decision: ResolutionFailClosed, observation: DecisionUnknown, resolution: ResolutionLower,
+			decision:   ResolutionFailClosed, observation: DecisionUnknown, resolution: ResolutionLower,
 			reason: ReasonNotFound, unknownClass: UnknownClassMissing,
 		},
 		{
-			id: "missing-route-identity-unknown",
+			id:         "missing-route-identity-unknown",
 			collection: Collection{RequestedRoute: RouteDev, ObservedRuns: 1, RouteUnknownRuns: 1, Unresolved: 1},
-			decision: ResolutionFailClosed, observation: DecisionUnknown, resolution: ResolutionLower,
+			decision:   ResolutionFailClosed, observation: DecisionUnknown, resolution: ResolutionLower,
 			reason: ReasonRouteUnknown, unknownClass: UnknownClassRoute,
 		},
 		{
@@ -94,16 +94,16 @@ func TestRouteIdentityContractCases(t *testing.T) {
 func TestCollectBindsSameSHAObservationToRequestedRoute(t *testing.T) {
 	predecessor := strings.Repeat("a", 40)
 	cases := []struct {
-		name              string
-		runs              []githubRun
-		exactRuns         int
-		otherRouteRuns    int
-		routeUnknownRuns  int
-		unresolved        int
+		name             string
+		runs             []githubRun
+		exactRuns        int
+		otherRouteRuns   int
+		routeUnknownRuns int
+		unresolved       int
 	}{
 		{
-			name: "other route is not a candidate",
-			runs: []githubRun{{ID: 1, RunAttempt: 1, HeadSHA: predecessor, HeadBranch: RouteMain, Event: "push", Status: "completed", Conclusion: "failure", Name: workflowName}},
+			name:           "other route is not a candidate",
+			runs:           []githubRun{{ID: 1, RunAttempt: 1, HeadSHA: predecessor, HeadBranch: RouteMain, Event: "push", Status: "completed", Conclusion: "failure", Name: workflowName}},
 			otherRouteRuns: 1,
 		},
 		{
