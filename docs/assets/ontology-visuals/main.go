@@ -290,7 +290,7 @@ func checkAssets(dir string, m manifest) error {
 	if !sameLock(gotLock, wantLock) {
 		return fmt.Errorf("generated asset lock is stale")
 	}
-	readme, err := os.ReadFile("README.md")
+	readme, err := os.ReadFile(filepath.Join(repositoryRoot(), "README.md"))
 	if err != nil {
 		return fmt.Errorf("read README: %w", err)
 	}
@@ -305,6 +305,23 @@ func checkAssets(dir string, m manifest) error {
 	fmt.Println("semantic scene binding: 10/10")
 	fmt.Printf("visual denominator: %d scenes, %d GIF bytes\n", wantLock.VisualAssetCount, wantLock.VisualAssetBytes)
 	return nil
+}
+
+func repositoryRoot() string {
+	directory, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(directory, "go.mod")); err == nil {
+			return directory
+		}
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return "."
+		}
+		directory = parent
+	}
 }
 
 func sameLock(a, b assetLock) bool {
