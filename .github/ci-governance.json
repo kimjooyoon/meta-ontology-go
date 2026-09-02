@@ -3015,6 +3015,14 @@
         "scripts/self-improvement-minimal-loop/**",
         "scripts/verify/**"
       ]
+    },
+    {
+      "branch": "agent/dev-main-topology-repair-20260902",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_dev_main_topology_repair_20260902.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
