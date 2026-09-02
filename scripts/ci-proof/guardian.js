@@ -1278,6 +1278,7 @@ module.exports = {
   observerFreshnessFromResponse,
   validObserverFreshness,
   emptyGuardianEnvironment,
+  emptyBranchProtection,
   observeBranchProtection,
   observeGuardianEnvironment,
   digestInstallationRepositoryScope,

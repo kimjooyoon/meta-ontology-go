@@ -119,6 +119,31 @@ jobs:
               if (!repository || !/^[0-9a-f]{40}$/i.test(workflowSha || '') || !/^[0-9a-f]{40}$/i.test(runtimeSha || '') || !workflowRef || !runtimeRef || !Number.isInteger(runId) || runId < 1 || !Number.isInteger(runAttempt) || runAttempt < 1) {
                 throw guardian.guardianFailure('runtime workflow/ref/run identity is missing or malformed');
               }
+              const route = guardian.routeForPull(pull);
+              const observerTokenSource = 'github_app_installation';
+              const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
+              const appSlug = process.env.GUARDIAN_APP_SLUG || '';
+              const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
+              if (route === 'promotion_main') {
+                branchProtection = guardian.emptyBranchProtection({
+                  branch: 'main', repository, policySHA, eventRef: runtimeRef, checkoutRef: runtimeSha,
+                  baseSHA: pull.base.sha, headSHA: pull.head.sha, runId, runAttempt, workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource, appInstallationId, appSlug, missingReason: 'guardian_observation_not_completed',
+                });
+                devBranchProtection = guardian.emptyBranchProtection({
+                  branch: 'dev', repository, policySHA, eventRef: runtimeRef, checkoutRef: runtimeSha,
+                  baseSHA: pull.base.sha, headSHA: pull.head.sha, runId, runAttempt, workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource, appInstallationId, appSlug, missingReason: 'guardian_observation_not_completed',
+                });
+                observerEnvironmentSnapshot = guardian.emptyGuardianEnvironment({
+                  repository, tokenSource: 'github.token', runId, runAttempt, workflowSHA: workflowSha,
+                  missingReason: 'guardian_observation_not_completed',
+                });
+                installationRepositoryScope = guardian.emptyInstallationRepositoryScope({
+                  repository, installationId: 0, tokenSource: observerTokenSource, runId, runAttempt,
+                  workflowSHA: workflowSha, missingReason: 'guardian_observation_not_completed',
+                });
+              }
               liveBefore = await guardian.readLiveTopology({
                 getRef: (parameters) => github.rest.git.getRef(parameters),
                 compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
@@ -157,7 +182,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
-              const route = guardian.routeForPull(observedPull);
               if (result.authorizationRequired === true && route === guardian.FOUNDATION_ROUTE) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
               }
@@ -223,9 +247,6 @@ jobs:
                 }
                 const observerToken = process.env.GUARDIAN_APP_TOKEN || '';
                 const observerClient = observerToken ? github.getOctokit(observerToken) : null;
-                const observerTokenSource = 'github_app_installation';
-                const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
-                const appSlug = process.env.GUARDIAN_APP_SLUG || '';
                 installationRepositoryScope = await guardian.observeInstallationRepositoryScope({
                   listRepositories: (parameters) => observerClient ? observerClient.request('GET /installation/repositories', parameters) : Promise.resolve({status: 403}),
                   repository,
@@ -236,7 +257,6 @@ jobs:
                   workflowSHA: workflowSha,
                 });
                 const getProtection = (parameters) => observerClient ? observerClient.rest.repos.getBranchProtection(parameters) : Promise.resolve({status: 403});
-                const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
                 branchProtection = await guardian.observeBranchProtection({
                   getProtection,
                   branch: 'main',
