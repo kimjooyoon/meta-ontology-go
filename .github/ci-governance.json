@@ -3068,6 +3068,16 @@
       ]
     },
     {
+      "branch": "agent/ontology-visuals",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "docs/assets/ontology-visuals",
+        "internal/verify/scope_ontology_visuals.go"
+      ]
+    },
+    {
       "branch": "agent/guardian-trusted-observer-recovery-20260903-rerun",
       "paths": [
         ".github/agent-scope-table.md",
