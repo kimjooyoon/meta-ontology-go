@@ -5,8 +5,8 @@ import "fmt"
 const (
 	workflowDiscoveryPath      = ".github/workflows"
 	workflowDiscoveryMetric    = "gooo.metric.layout.direct-entries.v1"
-	workflowDiscoveryRule      = "gooo.catalog.source-policy.github-workflow-discovery.v1"
-	workflowDiscoveryOperation = "preserve-workflow-discovery"
+	workflowDiscoveryRule      = "gooo.catalog.source-policy.workflow-discovery-root.v1"
+	workflowDiscoveryOperation = "exempt-workflow-discovery-root"
 )
 
 func validateDirectoryApplicability(directory directoryMetric, rows []sourceIndicator) error {
@@ -41,7 +41,7 @@ func notApplicableRows(rows []sourceIndicator) []sourceIndicator {
 
 func isWorkflowDiscoveryExemption(row sourceIndicator) bool {
 	return row.MetricID == workflowDiscoveryMetric && row.ApplicabilityRuleID == workflowDiscoveryRule &&
-		row.ApplicabilityReason == "GITHUB_WORKFLOW_DISCOVERY_ROOT" && row.MetaOperation == workflowDiscoveryOperation &&
+		row.ApplicabilityReason == "WORKFLOW_DISCOVERY_ROOT_EXEMPT" && row.MetaOperation == workflowDiscoveryOperation &&
 		row.ProofChoice == "foundation" && row.Consumer == "github-actions" && row.Decision == "NOT_APPLICABLE" &&
 		row.EvaluationState == "EVALUATED" && row.FailureReason == "CATALOG_NOT_APPLICABLE" &&
 		row.EnforcementEffect == "NO_EFFECT" && !row.Blocking

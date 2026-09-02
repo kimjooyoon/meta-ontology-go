@@ -17,7 +17,7 @@ func workflowDiscoveryFixture() (directoryMetric, []sourceIndicator) {
 	rows[3].MetaOperation = "separate-directory-kinds"
 	rows[0].Applicability = "NOT_APPLICABLE"
 	rows[0].ApplicabilityRuleID = workflowDiscoveryRule
-	rows[0].ApplicabilityReason = "GITHUB_WORKFLOW_DISCOVERY_ROOT"
+	rows[0].ApplicabilityReason = "WORKFLOW_DISCOVERY_ROOT_EXEMPT"
 	rows[0].MetaOperation = workflowDiscoveryOperation
 	rows[0].ProofChoice = "foundation"
 	rows[0].Consumer = "github-actions"
