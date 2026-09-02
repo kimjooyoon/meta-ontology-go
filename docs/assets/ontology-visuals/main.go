@@ -29,6 +29,13 @@ type binding struct {
 	Transitions []string `json:"transitions"`
 }
 
+type evidenceRef struct {
+	Path         string `json:"path"`
+	Digest       string `json:"digest"`
+	ReceiptPath  string `json:"receipt_path"`
+	ReceiptDigest string `json:"receipt_digest"`
+}
+
 type manifestScene struct {
 	ID          string   `json:"id"`
 	Sequence    int      `json:"sequence"`
@@ -38,10 +45,16 @@ type manifestScene struct {
 	Alt         string   `json:"alt"`
 	SourceRefs  []string `json:"source_refs"`
 	Binding     binding  `json:"binding"`
-	InitialRelation  string `json:"initial_relation"`
-	SemanticOperation string `json:"semantic_operation"`
-	TerminalRelation string `json:"terminal_relation"`
-	MotionEventKind  string `json:"motion_event_kind"`
+	InitialRelation      string        `json:"initial_relation"`
+	SemanticOperation    string        `json:"semantic_operation"`
+	TerminalRelation     string        `json:"terminal_relation"`
+	MotionEventKind      string        `json:"motion_event_kind"`
+	Maturity             string        `json:"maturity"`
+	InputArtifact        string        `json:"input_artifact"`
+	GeneratedArtifact    string        `json:"generated_or_changed_artifact"`
+	TerminalDecision     string        `json:"terminal_decision"`
+	NextConsumer         string        `json:"next_consumer"`
+	Evidence             []evidenceRef `json:"evidence"`
 }
 
 type manifest struct {
@@ -81,56 +94,16 @@ var sceneIDs = []string{
 }
 
 var expectedBindings = map[string]binding{
-	"ontology.visual.intent-ir-lowering": {
-		Nodes:       []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"},
-		Edges:       []string{"lower", "normalize", "project", "record"},
-		Transitions: []string{"source", "ir", "structural-view", "proof"},
-	},
-	"ontology.visual.authority-boundary": {
-		Nodes:       []string{"handwritten.authority", "generated.view", "evidence.view", "authority.boundary"},
-		Edges:       []string{"intent-to-structure", "implementation-slot", "append-only", "forbidden-writeback"},
-		Transitions: []string{"authoritative", "derived", "observed", "blocked"},
-	},
-	"ontology.visual.munchausen-proof-choice": {
-		Nodes:       []string{"claim", "FOUNDATION", "COHERENCE", "REGRESSION"},
-		Edges:       []string{"claim-to-proof-choice", "denominator", "receipt-chain", "replay-digest"},
-		Transitions: []string{"declare", "choose", "bind", "close"},
-	},
-	"ontology.visual.claim-evidence-lifecycle": {
-		Nodes:       []string{"claim", "evidence", "CLOSED", "UNKNOWN", "REFUTED"},
-		Edges:       []string{"claim-needs-evidence", "evidence-closes", "evidence-missing", "counterexample-refutes"},
-		Transitions: []string{"open", "observed", "closed", "unknown", "refuted"},
-	},
-	"ontology.visual.unknown-cause-descent": {
-		Nodes:       []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"},
-		Edges:       []string{"cause-descent", "stage-to-step", "step-to-reason", "reason-to-class", "class-to-operation", "operation-to-blocker"},
-		Transitions: []string{"locate", "explain", "classify", "repair", "retain-frontier"},
-	},
-	"ontology.visual.precedence-counterexample": {
-		Nodes:       []string{"REFUTED", "UNKNOWN", "CLOSED", "counterexample", "priority"},
-		Edges:       []string{"refuted-over-unknown", "unknown-over-closed", "counterexample-retained", "priority-selects"},
-		Transitions: []string{"observe", "rank", "preserve", "fail-closed"},
-	},
-	"ontology.visual.package-resolution": {
-		Nodes:       []string{"activity.gooo", "entities.gooo", "canonical-order", "package-unit", "entry.PayOrder"},
-		Edges:       []string{"sort-by-relative-filename", "parse-each-file", "combine-package", "resolve-entry", "execute"},
-		Transitions: []string{"discover", "sort", "bind", "run", "receipt"},
-	},
-	"ontology.visual.incremental-conformance": {
-		Nodes:       []string{"changed-surface", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"},
-		Edges:       []string{"surface-to-operation", "fresh-input", "exact-replay", "missing-evidence", "counterexample"},
-		Transitions: []string{"scope", "execute", "reuse", "lower-resolution", "retain-refutation"},
-	},
-	"ontology.visual.bootstrap-oracle": {
-		Nodes:       []string{".gooo", "bounded.semantic.kernel", "independent.bootstrap.oracle", "parity-evidence", "promotion-gate"},
-		Edges:       []string{"source-to-kernel", "source-to-oracle", "compare-digests", "parity-to-gate"},
-		Transitions: []string{"bound", "observe", "compare", "not-promoted"},
-	},
-	"ontology.visual.promotion-lineage": {
-		Nodes:       []string{"feature.PR", "exact-head.CI", "dev", "post-adoption.observation", "main.promotion"},
-		Edges:       []string{"feature-to-ci", "exact-head-to-dev", "dev-to-observation", "observation-to-promotion", "dev-to-main"},
-		Transitions: []string{"propose", "verify", "adopt", "observe", "promote"},
-	},
+	"ontology.visual.intent-ir-lowering": {Nodes: []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"}, Edges: []string{"lower", "normalize", "project", "record"}, Transitions: []string{"source", "ir", "structural-view", "proof"}},
+	"ontology.visual.authority-boundary": {Nodes: []string{"declaration", "semantic.ir", "typed.nodes", "backend"}, Edges: []string{"parse", "used", "wasGeneratedBy", "consume"}, Transitions: []string{"text", "node", "edge", "graph"}},
+	"ontology.visual.munchausen-proof-choice": {Nodes: []string{"activity.gooo", "entities.gooo", "canonical-order", "package-api", "entry.receipt"}, Edges: []string{"sort", "parse", "merge", "resolve", "execute"}, Transitions: []string{"unordered", "canonical", "bound", "entry", "receipt"}},
+	"ontology.visual.claim-evidence-lifecycle": {Nodes: []string{"author.agent", "intent", "compiler.agent", "generated.output", "reviewer.agent", "receipt"}, Edges: []string{"writes", "reads", "creates", "consumes", "authority-boundary"}, Transitions: []string{"intent", "handoff", "generated", "reviewed"}},
+	"ontology.visual.unknown-cause-descent": {Nodes: []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"}, Edges: []string{"cause-descent", "classify", "repair", "re-evaluate"}, Transitions: []string{"unknown", "actionable", "evidence", "closed"}},
+	"ontology.visual.precedence-counterexample": {Nodes: []string{"UNKNOWN", "counterexample", "REFUTED", "priority", "ledger"}, Edges: []string{"arrives", "outranks", "preserves", "appends"}, Transitions: []string{"partial", "contradiction", "refuted", "retained"}},
+	"ontology.visual.package-resolution": {Nodes: []string{"source.digest", "contract.digest", "toolchain.digest", "run.1", "run.2", "mismatch"}, Edges: []string{"pin", "replay", "compare", "block"}, Transitions: []string{"inputs", "identical", "changed-byte", "blocked"}},
+	"ontology.visual.incremental-conformance": {Nodes: []string{"changed-surface", "six-digest-identity", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"}, Edges: []string{"identify", "route", "reuse-receipt", "close-alternatives"}, Transitions: []string{"changed", "identified", "reused", "inactive"}},
+	"ontology.visual.bootstrap-oracle": {Nodes: []string{"observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"}, Edges: []string{"observe", "change", "verify", "adopt", "promote"}, Transitions: []string{"bug", "rule", "ci", "dev", "receipt", "eligible"}},
+	"ontology.visual.promotion-lineage": {Nodes: []string{"service.contract", "infra.facts", "proposed.gooo", "mismatch.dossier", "UNKNOWN"}, Edges: []string{"connect", "compare", "report", "hold"}, Transitions: []string{"experimental", "projected", "mismatch", "unknown"}},
 }
 
 type motionContract struct {
@@ -138,16 +111,16 @@ type motionContract struct {
 }
 
 var expectedMotion = map[string]motionContract{
-	"ontology.visual.intent-ir-lowering": {"intent.tokens", "lower-and-normalize", "derived.views", "token-merge-and-materialize"},
-	"ontology.visual.authority-boundary": {"derived.reverse-write", "enforce-authority-wall", "authority.preserved", "blocked-reverse-edge"},
-	"ontology.visual.munchausen-proof-choice": {"claim.unselected", "declare-proof-choice-token", "proof.choice-committed", "radial-exclusive-selection"},
-	"ontology.visual.claim-evidence-lifecycle": {"evidence.unresolved", "route-through-decision-switch", "one-terminal-state", "exclusive-terminal-routing"},
-	"ontology.visual.unknown-cause-descent": {"unknown.coarse", "descend-causal-frontier", "unknown.actionable", "frontier-edge-expansion"},
-	"ontology.visual.precedence-counterexample": {"candidate.states", "rank-and-preserve-counterexample", "refuted.selected", "stack-insert-and-ledger-append"},
-	"ontology.visual.package-resolution": {"files.unsorted", "sort-parse-and-merge", "entry.receipt", "card-reorder-and-merge"},
-	"ontology.visual.incremental-conformance": {"six-digest.identity", "route-to-reuse", "reuse.receipt", "identity-router-closure"},
-	"ontology.visual.bootstrap-oracle": {"candidate.and.oracle", "compare-digest-and-facts", "parity.review-gate", "dual-lane-comparison"},
-	"ontology.visual.promotion-lineage": {"feature.artifact", "acquire-exact-receipts-in-order", "main.gate-open", "gated-receipt-cascade"},
+	"ontology.visual.intent-ir-lowering": {"source.gooo", "parse-lower-emit", "pass.receipt", "artifact-materialization"},
+	"ontology.visual.authority-boundary": {"declaration.text", "type-and-relate-semantic-ir", "typed.graph", "node-edge-materialization"},
+	"ontology.visual.munchausen-proof-choice": {"unordered.files", "canonicalize-package", "entry.receipt", "file-reorder-and-api-emission"},
+	"ontology.visual.claim-evidence-lifecycle": {"agent.intent", "handoff-by-receipt", "review.receipt", "lane-artifact-transfer"},
+	"ontology.visual.unknown-cause-descent": {"missing.evidence", "resolve-and-re-evaluate", "claim.closed", "unknown-fields-then-evidence"},
+	"ontology.visual.precedence-counterexample": {"unknown.claim", "rank-counterexample", "refuted.ledger", "counterexample-precedence"},
+	"ontology.visual.package-resolution": {"pinned.digests", "replay-and-compare", "adoption.blocked", "byte-change-detection"},
+	"ontology.visual.incremental-conformance": {"changed.subject", "route-by-six-digests", "reuse.receipt", "identity-router"},
+	"ontology.visual.bootstrap-oracle": {"observed.bug", "change-rule-and-gate", "main.eligible", "gated-receipt-cascade"},
+	"ontology.visual.promotion-lineage": {"service-and-infra.contract", "project-and-diff", "unknown.dossier", "proposed-mismatch-dossier"},
 }
 
 func main() {
@@ -198,7 +171,7 @@ func loadManifest(path string) (manifest, error) {
 }
 
 func validateManifest(m manifest) error {
-	if m.Schema != "gooo/visual-source-manifest/v1" || m.VisualDenominator != 10 || len(m.Scenes) != 10 {
+	if m.Schema != "gooo/visual-story-manifest/v2" || m.VisualDenominator != 10 || len(m.Scenes) != 10 {
 		return fmt.Errorf("visual denominator must be exactly 10")
 	}
 	if m.Renderer != "docs/assets/ontology-visuals" {
@@ -212,6 +185,25 @@ func validateManifest(m manifest) error {
 		if !ok || !sameBinding(scene.Binding, want) || len(scene.SourceRefs) == 0 {
 			return fmt.Errorf("semantic scene binding is not exact for %s", scene.ID)
 		}
+		if scene.Maturity != "CURRENT" && scene.Maturity != "PROPOSED" || scene.InputArtifact == "" || scene.SemanticOperation == "" || scene.GeneratedArtifact == "" || scene.TerminalDecision == "" || scene.NextConsumer == "" || len(scene.Evidence) == 0 {
+			return fmt.Errorf("engineering narrative row is incomplete for %s", scene.ID)
+		}
+		for _, evidence := range scene.Evidence {
+			if evidence.Path == "" || !strings.HasPrefix(evidence.Digest, "sha256:") {
+				return fmt.Errorf("evidence path/digest is incomplete for %s", scene.ID)
+			}
+			if scene.Maturity == "CURRENT" && (evidence.ReceiptPath == "" || !strings.HasPrefix(evidence.ReceiptDigest, "sha256:")) {
+				return fmt.Errorf("current evidence receipt is incomplete for %s", scene.ID)
+			}
+			if err := validateEvidenceDigest(evidence.Path, evidence.Digest); err != nil {
+				return fmt.Errorf("evidence binding is not resolved for %s: %w", scene.ID, err)
+			}
+			if evidence.ReceiptPath != "" {
+				if err := validateEvidenceDigest(evidence.ReceiptPath, evidence.ReceiptDigest); err != nil {
+					return fmt.Errorf("receipt binding is not resolved for %s: %w", scene.ID, err)
+				}
+			}
+		}
 		motion, ok := expectedMotion[scene.ID]
 		if !ok || scene.InitialRelation != motion.Initial || scene.SemanticOperation != motion.Operation || scene.TerminalRelation != motion.Terminal || scene.MotionEventKind != motion.Event {
 			return fmt.Errorf("motion relation binding is not exact for %s", scene.ID)
@@ -219,6 +211,19 @@ func validateManifest(m manifest) error {
 		if _, ok := renderers[scene.ID]; !ok {
 			return fmt.Errorf("scene %s has no renderer", scene.ID)
 		}
+	}
+	return nil
+}
+
+func validateEvidenceDigest(path, expected string) error {
+	data, err := os.ReadFile(filepath.Join(repositoryRoot(), path))
+	if err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+	digest := sha256.Sum256(data)
+	actual := "sha256:" + hex.EncodeToString(digest[:])
+	if actual != expected {
+		return fmt.Errorf("digest mismatch for %s", path)
 	}
 	return nil
 }
@@ -327,7 +332,9 @@ func checkAssets(dir string, m manifest) error {
 	fmt.Println("reproducible generation: 10/10")
 	fmt.Println("README references: 10/10")
 	fmt.Println("asset existence and exact bytes: 10/10")
-	fmt.Println("semantic scene binding: 10/10")
+	fmt.Println("engineering narrative cells: 10/10")
+	fmt.Println("provenance path and digest bindings: 10/10")
+	fmt.Println("semantic motion bindings: 10/10")
 	fmt.Printf("visual denominator: %d scenes, %d GIF bytes\n", wantLock.VisualAssetCount, wantLock.VisualAssetBytes)
 	return nil
 }

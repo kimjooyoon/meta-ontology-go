@@ -208,3 +208,26 @@ func badge(img *image.Paletted, x, y int, label string, c uint8, shape byte) {
 	}
 	drawText(img, x+31, y+8, label, 1, textPrimary)
 }
+
+func codeBlock(img *image.Paletted, x, y, w, h int, title string, lines []string, c uint8, active bool) {
+	fillC := panel
+	borderC := border
+	if active {
+		fillC = panelRaised
+		borderC = c
+	}
+	box(img, x, y, x+w, y+h, fillC, borderC)
+	drawText(img, x+12, y+10, title, 1, c)
+	for i, value := range lines {
+		drawText(img, x+12, y+30+i*16, value, 1, textPrimary)
+	}
+}
+
+func lane(img *image.Paletted, y int, title string, c uint8) {
+	line(img, 32, y, 928, y, border)
+	drawText(img, 40, y-14, title, 1, c)
+}
+
+func labeledToken(img *image.Paletted, x, y int, label string, c uint8) {
+	circle(img, x, y, 8, c)
+}
