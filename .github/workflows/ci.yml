@@ -1664,23 +1664,261 @@ jobs:
           unzip -q "$artifact_zip" -d "$extracted"
           test -s "$extracted/predecessor-input-a.json"
           test -s "$extracted/predecessor-receipt-a.json"
-          decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
-          test "$decision" = FOUNDATION
           expected_report_digest="$(jq -r '.report.report_digest' "$extracted/predecessor-receipt-a.json")"
           test "$expected_report_digest" != null
+          test "$expected_report_digest" != ""
+          jq -e --arg repository "$GITHUB_REPOSITORY" '
+            .repository == $repository and
+            (.predecessor_sha | test("^[0-9a-f]{40}$")) and
+            .canonical_branch == "main" and
+            .canonical_workflow == "CI [push full]" and
+            (.candidates | length >= 1)
+          ' "$extracted/predecessor-input-a.json" > /dev/null
+          jq -e --arg repository "$GITHUB_REPOSITORY" --arg report_digest "$expected_report_digest" '
+            .schema == "gooo/meta-feedback-predecessor-receipt/v1" and
+            .report.schema == "gooo/meta-feedback-predecessor-selection/v2" and
+            .report.repository == $repository and
+            .report.report_digest == $report_digest and
+            .replay_report_digest == $report_digest and
+            .replay_verified == true and
+            .repository_writes == 0 and
+            .report.summary.repository_writes == 0 and
+            ([.report.indicators[] | [.metric_id, .producer, .consumer, .meta_operation, .activity, .proof_choice]] == [
+              ["gooo.metric.meta.predecessor-feedback-readiness.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "select-predecessor-feedback", "SelectPredecessorFeedback", "coherence"],
+              ["gooo.metric.meta.predecessor-cycle-continuity.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "emit-predecessor-continuity", "EmitPredecessorContinuity", "coherence"],
+              ["gooo.metric.meta.predecessor-exact-head.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "observe-predecessor-head", "ObservePredecessorHead", "foundation"],
+              ["gooo.metric.meta.predecessor-canonical-run.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "bind-predecessor-run", "BindPredecessorRun", "coherence"],
+              ["gooo.metric.meta.predecessor-successful-run.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "verify-predecessor-run", "VerifyPredecessorRun", "regression"],
+              ["gooo.metric.meta.predecessor-receipt-bound.coverage-bps.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "bind-predecessor-receipt", "BindPredecessorReceipt", "regression"],
+              ["gooo.metric.meta.predecessor-ambiguity.guardrail.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "reject-ambiguous-predecessor", "RejectAmbiguousPredecessor", "coherence"],
+              ["gooo.metric.meta.predecessor-observer-writes.guardrail.v1", "feedbackpredecessor.Select", "self-improvement-cycle", "preserve-read-only-selection", "PreserveReadOnlySelection", "foundation"]
+            ]) and
+            all(.report.indicators[];
+              .class != "" and .target >= 0 and .unit != "" and .relation != "" and
+              .value >= 0 and (.satisfied | type) == "boolean")
+          ' "$extracted/predecessor-receipt-a.json" > /dev/null
+          application_decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
+          application_reason="$(jq -r '.report.reason' "$extracted/predecessor-receipt-a.json")"
+          case "$application_decision" in
+            FOUNDATION|SELECTED)
+              boundary_decision=NORMAL
+              expected_check_status=0
+              unknown_class=""
+              ;;
+            LOWER_RESOLUTION)
+              boundary_decision=UNKNOWN
+              expected_check_status=0
+              unknown_class=DEPENDENCY_BLOCKED
+              ;;
+            FAIL_CLOSED)
+              boundary_decision=UNKNOWN
+              expected_check_status=1
+              unknown_class=DEPENDENCY_BLOCKED
+              ;;
+            REFUTED)
+              boundary_decision=REFUTED
+              expected_check_status=1
+              unknown_class=""
+              ;;
+            *)
+              echo "unsupported predecessor application decision: $application_decision" >&2
+              exit 1
+              ;;
+          esac
+          jq -e --arg decision "$application_decision" '
+            .report.decision == $decision and
+            .report.reason != "" and
+            (.report.resolution == "" or .report.resolution == "exact_operation" or .report.resolution == "operation_class" or .report.resolution == "invariant_only") and
+            (.report.next_operation == "" or .report.next_operation == "consume-predecessor-semantic-state" or .report.next_operation == "re-evaluate-predecessor-at-exact-operation" or .report.next_operation == "halt") and
+            ((.report.promotion_authorized == false) or ($decision == "SELECTED" and .report.promotion_authorized == true))
+          ' "$extracted/predecessor-receipt-a.json" > /dev/null
+          set +e
           go run ./cmd/feedback-predecessor-witness \
             --root "$GITHUB_WORKSPACE" \
             --input "$extracted/predecessor-input-a.json" \
             --report "$probe_root/probe-receipt.json" \
             --check
+          actual_check_status=$?
+          set -e
+          test "$actual_check_status" = "$expected_check_status"
           cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
+
+          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "success" | .candidates[0].receipt_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$extracted/predecessor-input-a.json" > "$probe_root/normal-input.json"
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/normal-input.json" \
+            --report "$probe_root/normal-receipt-a.json" \
+            --check
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/normal-input.json" \
+            --report "$probe_root/normal-receipt-b.json"
+          cmp "$probe_root/normal-receipt-a.json" "$probe_root/normal-receipt-b.json"
+          jq -e '
+            .report.decision == "SELECTED" and
+            .report.reason == "PREDECESSOR_FEEDBACK_SELECTED" and
+            .report.resolution == "exact_operation" and
+            .report.next_operation == "consume-predecessor-semantic-state" and
+            .report.promotion_authorized == true and
+            .report.selected != null and
+            .report.summary.repository_writes == 0 and
+            .replay_verified == true and
+            .report.report_digest == .replay_report_digest
+          ' "$probe_root/normal-receipt-a.json" > /dev/null
+
+          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "failure" | .candidates[0].receipt_digest = ""' \
+            "$extracted/predecessor-input-a.json" > "$probe_root/unknown-input.json"
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/unknown-input.json" \
+            --report "$probe_root/unknown-receipt-a.json" \
+            --check
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/unknown-input.json" \
+            --report "$probe_root/unknown-receipt-b.json"
+          cmp "$probe_root/unknown-receipt-a.json" "$probe_root/unknown-receipt-b.json"
+          jq -e '
+            .report.decision == "LOWER_RESOLUTION" and
+            .report.reason == "PREDECESSOR_CANONICAL_RUN_UNSUCCESSFUL" and
+            .report.resolution == "operation_class" and
+            .report.next_operation == "re-evaluate-predecessor-at-exact-operation" and
+            .report.promotion_authorized == false and
+            .report.selected == null and
+            .report.summary.repository_writes == 0 and
+            .replay_verified == true and
+            .report.report_digest == .replay_report_digest
+          ' "$probe_root/unknown-receipt-a.json" > /dev/null
+
+          jq '. + {foundation: {proof_choice: "FOUNDATION", missing_predecessor_sha: .predecessor_sha}}' \
+            "$extracted/predecessor-input-a.json" > "$probe_root/refuted-input.json"
+          set +e
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/refuted-input.json" \
+            --report "$probe_root/refuted-receipt-a.json" \
+            --check
+          refuted_check_status=$?
+          set -e
+          test "$refuted_check_status" = 1
+          go run ./cmd/feedback-predecessor-witness \
+            --root "$GITHUB_WORKSPACE" \
+            --input "$probe_root/refuted-input.json" \
+            --report "$probe_root/refuted-receipt-b.json"
+          cmp "$probe_root/refuted-receipt-a.json" "$probe_root/refuted-receipt-b.json"
+          jq -e '
+            .report.decision == "REFUTED" and
+            .report.reason == "FOUNDATION_RECOVERY_REFUTED" and
+            .report.proof_choice == "FOUNDATION" and
+            .report.foundation != null and
+            .report.promotion_authorized == false and
+            .report.selected == null and
+            .report.summary.repository_writes == 0 and
+            .replay_verified == true and
+            .report.report_digest == .replay_report_digest
+          ' "$probe_root/refuted-receipt-a.json" > /dev/null
+
           jq -n \
             --arg artifact_name "$EXPECTED_ARTIFACT_NAME" \
             --arg artifact_digest "$actual_zip_digest" \
             --arg report_digest "$expected_report_digest" \
             --arg head_sha "$GITHUB_SHA" \
-            '{status: "PASS", boundary: "COHERENCE evaluator", decision: "FOUNDATION", coherence_successor_commit: "UNKNOWN", reason: "dev divergence", head_sha: $head_sha, predecessor_artifact: {name: $artifact_name, digest: $artifact_digest}, predecessor_report_digest: $report_digest}' \
+            --arg boundary_decision "$boundary_decision" \
+            --arg application_decision "$application_decision" \
+            --arg application_reason "$application_reason" \
+            --arg unknown_class "$unknown_class" \
+            --slurpfile receipt "$probe_root/probe-receipt.json" \
+            --slurpfile normal_receipt "$probe_root/normal-receipt-a.json" \
+            --slurpfile unknown_receipt "$probe_root/unknown-receipt-a.json" \
+            --slurpfile refuted_receipt "$probe_root/refuted-receipt-a.json" \
+            '($receipt[0]) as $actual | ($normal_receipt[0]) as $normal | ($unknown_receipt[0]) as $unknown | ($refuted_receipt[0]) as $refuted |
+            {
+              schema: "gooo/coherence-boundary-probe/v2",
+              status: "PASS",
+              boundary: "COHERENCE evaluator",
+              decision: $boundary_decision,
+              application_result: {
+                schema: $actual.report.schema,
+                decision: $application_decision,
+                reason: $application_reason,
+                resolution: $actual.report.resolution,
+                next_operation: $actual.report.next_operation,
+                promotion_authorized: $actual.report.promotion_authorized,
+                report_digest: $actual.report.report_digest,
+                replay_report_digest: $actual.replay_report_digest,
+                replay_verified: $actual.replay_verified,
+                repository_writes: $actual.repository_writes
+              },
+              unknown: (if $boundary_decision == "UNKNOWN" then {
+                stage: "COHERENCE",
+                step: "RECONSUME_PREDECESSOR",
+                reason: $actual.report.reason,
+                unknown_class: $unknown_class,
+                next_operation: $actual.report.next_operation,
+                blocked_by: ["feedback-predecessor"]
+              } else null end),
+              coherence_successor_commit: "UNKNOWN",
+              head_sha: $head_sha,
+              predecessor_artifact: {name: $artifact_name, digest: $artifact_digest},
+              predecessor_report_digest: $report_digest,
+              meta_binding: {
+                report_schema: $actual.report.schema,
+                producer: "feedbackpredecessor.Select",
+                consumer: "self-improvement-cycle",
+                indicator_bindings: [$actual.report.indicators[] | {
+                  metric_id, producer, consumer, meta_operation, activity, proof_choice
+                }]
+              },
+              case_witnesses: {
+                normal: {
+                  decision: "NORMAL",
+                  application_decision: $normal.report.decision,
+                  report_digest: $normal.report.report_digest,
+                  replay_verified: $normal.replay_verified,
+                  check_exit: 0
+                },
+                unknown: {
+                  decision: "UNKNOWN",
+                  application_decision: $unknown.report.decision,
+                  reason: $unknown.report.reason,
+                  report_digest: $unknown.report.report_digest,
+                  replay_verified: $unknown.replay_verified,
+                  check_exit: 0,
+                  unknown_fields: ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]
+                },
+                refuted: {
+                  decision: "REFUTED",
+                  application_decision: $refuted.report.decision,
+                  reason: $refuted.report.reason,
+                  report_digest: $refuted.report.report_digest,
+                  replay_verified: $refuted.replay_verified,
+                  check_exit: 1
+                }
+              }
+            }' \
             > coherence-boundary-probe.json
+          jq -e --arg boundary_decision "$boundary_decision" '
+            .schema == "gooo/coherence-boundary-probe/v2" and
+            .status == "PASS" and
+            .boundary == "COHERENCE evaluator" and
+            .decision == $boundary_decision and
+            .application_result.replay_verified == true and
+            .application_result.report_digest == .application_result.replay_report_digest and
+            .application_result.repository_writes == 0 and
+            .meta_binding.report_schema == "gooo/meta-feedback-predecessor-selection/v2" and
+            .meta_binding.producer == "feedbackpredecessor.Select" and
+            .meta_binding.consumer == "self-improvement-cycle" and
+            (.case_witnesses.normal.decision == "NORMAL" and .case_witnesses.normal.application_decision == "SELECTED" and .case_witnesses.normal.replay_verified == true and .case_witnesses.normal.check_exit == 0) and
+            (.case_witnesses.unknown.decision == "UNKNOWN" and .case_witnesses.unknown.application_decision == "LOWER_RESOLUTION" and .case_witnesses.unknown.replay_verified == true and .case_witnesses.unknown.check_exit == 0 and .case_witnesses.unknown.unknown_fields == ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]) and
+            (.case_witnesses.refuted.decision == "REFUTED" and .case_witnesses.refuted.application_decision == "REFUTED" and .case_witnesses.refuted.reason == "FOUNDATION_RECOVERY_REFUTED" and .case_witnesses.refuted.replay_verified == true and .case_witnesses.refuted.check_exit == 1) and
+            (if .decision == "UNKNOWN" then
+              (.unknown | keys == ["blocked_by", "next_operation", "reason", "stage", "step", "unknown_class"] and
+                .stage == "COHERENCE" and .step == "RECONSUME_PREDECESSOR" and
+                .reason != "" and .unknown_class == "DEPENDENCY_BLOCKED" and
+                .next_operation != "" and .blocked_by == ["feedback-predecessor"])
+            else .unknown == null end)
+          ' coherence-boundary-probe.json > /dev/null
           jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:
