@@ -3069,6 +3069,15 @@
       ]
     },
     {
+      "branch": "agent/coherence-boundary-probe-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_coherence_boundary_probe_20260903.go"
+      ]
+    },
+    {
       "branch": "agent/guardian-trusted-observer-recovery-20260903-rerun",
       "paths": [
         ".github/agent-scope-table.md",
