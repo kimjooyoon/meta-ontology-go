@@ -14,7 +14,9 @@ func countWitnesses(witnesses []subjectWitness) ledgerCounts {
 			values["root-summary"] += witness.Meta.IndicatorCount
 		}
 		if witness.Space == "STORAGE_DIRECTORY" && witness.Path == workflowDiscoveryPath {
-			values["workflow-discovery"] += witness.Meta.NotApplicableIndicators
+			if witness.Meta.NotApplicableIndicators == workflowDiscoveryExemptionRows {
+				values["workflow-discovery"]++
+			}
 		}
 	}
 	return ledgerCounts{

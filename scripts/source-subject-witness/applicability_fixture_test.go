@@ -14,16 +14,17 @@ func workflowDiscoveryFixture() (directoryMetric, []sourceIndicator) {
 	for _, metric := range metrics {
 		rows = append(rows, sourceIndicator{Subject: directory.Path, SubjectKind: directory.SubjectKind, MetricID: metric.id, Value: metric.value, Applicability: "APPLICABLE", Decision: "PASS", Satisfied: true, MetaOperation: "observe"})
 	}
-	rows[3].MetaOperation = "separate-directory-kinds"
-	rows[0].Applicability = "NOT_APPLICABLE"
-	rows[0].ApplicabilityRuleID = workflowDiscoveryRule
-	rows[0].ApplicabilityReason = "WORKFLOW_DISCOVERY_ROOT_EXEMPT"
-	rows[0].MetaOperation = workflowDiscoveryOperation
-	rows[0].ProofChoice = "foundation"
-	rows[0].Consumer = "github-actions"
-	rows[0].Decision = "NOT_APPLICABLE"
-	rows[0].EvaluationState = "EVALUATED"
-	rows[0].FailureReason = "CATALOG_NOT_APPLICABLE"
-	rows[0].EnforcementEffect = "NO_EFFECT"
+	for _, index := range []int{0, 3} {
+		rows[index].Applicability = "NOT_APPLICABLE"
+		rows[index].ApplicabilityRuleID = workflowDiscoveryRule
+		rows[index].ApplicabilityReason = "WORKFLOW_DISCOVERY_ROOT_EXEMPT"
+		rows[index].MetaOperation = workflowDiscoveryOperation
+		rows[index].ProofChoice = "foundation"
+		rows[index].Consumer = "github-actions"
+		rows[index].Decision = "NOT_APPLICABLE"
+		rows[index].EvaluationState = "EVALUATED"
+		rows[index].FailureReason = "CATALOG_NOT_APPLICABLE"
+		rows[index].EnforcementEffect = "NO_EFFECT"
+	}
 	return directory, rows
 }
