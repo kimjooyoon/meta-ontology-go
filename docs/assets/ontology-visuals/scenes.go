@@ -61,11 +61,15 @@ func renderIntentIR(img *image.Paletted, _ manifestScene, frame int) {
 	flow(img, 272, 250, 360, 250, cyan, p1 > .2)
 	flow(img, 598, 250, 686, 174, violet, p2 > .2)
 	flow(img, 598, 250, 686, 324, violet, p2 > .6)
+	drawText(img, 278, 229, "LOWER", 1, cyan)
+	drawText(img, 608, 194, "PROJECT", 1, teal)
+	drawText(img, 608, 300, "RECORD", 1, amber)
 	drawText(img, 42, 388, "PARSE", 1, cyan)
 	drawText(img, 170, 388, "->", 1, textMuted)
 	drawText(img, 240, 388, "NORMALIZE", 1, violet)
 	drawText(img, 426, 388, "->", 1, textMuted)
 	drawText(img, 500, 388, "PROJECT + RECORD", 1, teal)
+	drawText(img, 42, 414, "PayOrder(Order) -> IR NODES -> GO + SPAN-BOUND EVIDENCE", 1, textPrimary)
 	caption(img, "One intent source lowers once; Go structure and proof are derived views.")
 }
 
@@ -84,6 +88,7 @@ func renderAuthorityBoundary(img *image.Paletted, _ manifestScene, frame int) {
 	drawText(img, 374, 374, "NO WRITE-BACK TO INTENT", 1, coral)
 	badge(img, 396, 224, "SOURCE OF BEHAVIOR", cyan, 'o')
 	badge(img, 396, 276, "DERIVED OBSERVATION", amber, 'd')
+	drawText(img, 42, 420, "DERIVE: IR -> GO     OBSERVE: SOURCE -> EVIDENCE", 1, textPrimary)
 	caption(img, "Handwritten Go owns irreducible behavior; generated and evidence views cannot become intent.")
 }
 
@@ -103,6 +108,7 @@ func renderProofChoice(img *image.Paletted, _ manifestScene, frame int) {
 	}
 	drawText(img, 48, 368, "MUNCHAUSEN QUESTION", 1, amber)
 	drawText(img, 48, 388, "WHAT JUSTIFIES THIS CLAIM?", 2, textPrimary)
+	drawText(img, 48, 420, "ONE EXPLICIT CHOICE PER CLAIM; NOT A SEQUENTIAL SCORE", 1, textPrimary)
 	drawText(img, 300, 395, "FOUNDATION = DENOMINATOR", 1, teal)
 	drawText(img, 530, 395, "COHERENCE = RECEIPT CHAIN", 1, violet)
 	drawText(img, 760, 395, "REGRESSION = REPLAY", 1, amber)
@@ -117,6 +123,9 @@ func renderClaimLifecycle(img *image.Paletted, _ manifestScene, frame int) {
 	flow(img, 580, 255, 690, 180, violet, p2 > .4)
 	flow(img, 580, 255, 690, 255, violet, p2 > .7)
 	flow(img, 580, 255, 690, 330, violet, p2 > .9)
+	box(img, 602, 226, 674, 284, panelRaised, amber)
+	drawText(img, 610, 238, "DECIDE", 1, amber)
+	drawText(img, 610, 254, "GATE", 1, amber)
 	stateCard(img, 690, 132, 230, 70, "CLOSED", []string{"proof complete"}, green, p3 > .55, 's')
 	stateCard(img, 690, 222, 230, 70, "UNKNOWN", []string{"evidence absent"}, unknown, p3 > .25 && p3 < .8, 'd')
 	stateCard(img, 690, 312, 230, 70, "REFUTED", []string{"counterexample"}, coral, p3 > .8, 'x')
@@ -158,12 +167,15 @@ func renderUnknownDescent(img *image.Paletted, _ manifestScene, frame int) {
 		active := frame >= i*6+4
 		fill(img, 42, y, 700, y+32, panel)
 		stroke(img, 42, y, 700, y+32, activeColor(1, 0, 1, v.c))
-		drawText(img, 58, y+10, v.title, 1, v.c)
+		drawText(img, 58, y+10, itoa(i+1), 1, v.c)
+		drawText(img, 78, y+10, v.title, 1, v.c)
 		drawText(img, 220, y+10, v.value, 1, textPrimary)
 		if i < len(fields)-1 {
-			flow(img, 720, y+16, 780, y+59, v.c, active)
+			flow(img, 720, y+16, 750, y+16, v.c, active)
 		}
 	}
+	line(img, 750, 176, 750, 370, unknown)
+	flow(img, 750, 370, 780, 256, unknown, frame > 26)
 	drawNode(img, 780, 206, 140, 100, "CAUSE", []string{"descend", "until repair"}, coral, frame > 24)
 	caption(img, "The reason is carried downward into class, next operation, and the exact blockers.")
 }
@@ -171,6 +183,7 @@ func renderUnknownDescent(img *image.Paletted, _ manifestScene, frame int) {
 func renderPrecedence(img *image.Paletted, _ manifestScene, frame int) {
 	drawText(img, 42, 110, "DECISION PRECEDENCE", 2, amber)
 	drawText(img, 42, 138, "REFUTED > UNKNOWN > CLOSED", 1, textPrimary)
+	drawText(img, 406, 138, "INPUT: {CLOSED, UNKNOWN, REFUTED}", 1, amber)
 	stateCard(img, 54, 182, 230, 70, "REFUTED", []string{"priority 130", "known contradiction"}, coral, frame > 9, 'x')
 	stateCard(img, 54, 272, 230, 70, "UNKNOWN", []string{"priority 60", "missing evidence"}, unknown, frame > 18, 'd')
 	stateCard(img, 54, 362, 230, 70, "CLOSED", []string{"priority 0", "only if no blocker"}, green, frame > 29, 's')
@@ -179,8 +192,9 @@ func renderPrecedence(img *image.Paletted, _ manifestScene, frame int) {
 	flow(img, 286, 397, 380, 397, green, frame > 30)
 	drawNode(img, 406, 172, 226, 250, "SELECTOR", []string{"highest blocker", "fail closed", "no averaging"}, violet, frame > 15)
 	flow(img, 632, 220, 710, 220, violet, frame > 24)
-	drawNode(img, 710, 172, 210, 112, "CLAIM", []string{"REFUTED", "returned"}, coral, frame > 24)
+	drawNode(img, 710, 172, 210, 112, "CLAIM", []string{"RESULT", "REFUTED"}, coral, frame > 24)
 	drawNode(img, 710, 318, 210, 104, "COUNTEREXAMPLE", []string{"append-only", "blocker preserved"}, amber, frame > 31)
+	drawText(img, 406, 420, "SELECTOR RESULT = REFUTED; OTHER STATES ARE NOT AVERAGED", 1, textPrimary)
 	caption(img, "A counterexample stays visible; state classes are ordered, never collapsed into a percentage.")
 }
 
@@ -188,7 +202,7 @@ func renderPackageResolution(img *image.Paletted, _ manifestScene, frame int) {
 	p := progress(frame, 2, 40)
 	drawNode(img, 42, 144, 196, 112, "activity.gooo", []string{"package billing", "activity PayOrder"}, cyan, p > .1)
 	drawNode(img, 42, 300, 196, 112, "entities.gooo", []string{"package billing", "Order + Receipt"}, cyan, p > .2)
-	drawNode(img, 318, 190, 210, 176, "CANONICAL ORDER", []string{"activity.gooo", "entities.gooo", "sort once"}, violet, p > .3)
+	drawNode(img, 318, 190, 210, 176, "CANONICAL ORDER", []string{"1 activity.gooo", "2 entities.gooo", "sort once"}, violet, p > .3)
 	drawNode(img, 608, 190, 174, 176, "PACKAGE UNIT", []string{"parse each", "combine", "one namespace"}, teal, p > .55)
 	drawNode(img, 826, 190, 100, 176, "ENTRY", []string{"PayOrder", "execute"}, amber, p > .75)
 	flow(img, 238, 200, 318, 230, cyan, p > .15)
@@ -197,11 +211,12 @@ func renderPackageResolution(img *image.Paletted, _ manifestScene, frame int) {
 	flow(img, 782, 278, 826, 278, teal, p > .7)
 	drawText(img, 320, 400, "PACKAGE_SOURCE_FILES 2/2", 1, teal)
 	drawText(img, 590, 400, "DETERMINISTIC RECEIPT", 1, amber)
+	drawText(img, 320, 420, "COLLISION OR NAMESPACE MISMATCH -> REJECT", 1, coral)
 	caption(img, "Immediate .gooo files sort by canonical relative filename before one package bind and entry execution.")
 }
 
 func renderIncremental(img *image.Paletted, _ manifestScene, frame int) {
-	drawNode(img, 42, 180, 190, 156, "CHANGED SURFACE", []string{"source span", "input digest", "scope"}, cyan, frame > 3)
+	drawNode(img, 42, 180, 190, 156, "CHANGED SURFACE", []string{"source span", "input digest", "policy scope"}, cyan, frame > 3)
 	ops := []struct {
 		y     int
 		title string
@@ -214,7 +229,7 @@ func renderIncremental(img *image.Paletted, _ manifestScene, frame int) {
 		stateCard(img, 330, v.y, 280, 70, v.title, v.lines, v.c, active, v.shape)
 		flow(img, 232, 258, 330, v.y+35, v.c, active)
 	}
-	drawNode(img, 700, 190, 220, 170, "CONFORMANCE", []string{"operation result", "evidence-bound", "not aggregate"}, amber, frame > 28)
+	drawNode(img, 700, 190, 220, 170, "CONFORMANCE", []string{"operation result", "PASS / FAIL-CLOSED", "not aggregate"}, amber, frame > 28)
 	flow(img, 610, 235, 700, 250, amber, frame > 28)
 	flow(img, 610, 315, 700, 300, coral, frame > 36)
 	caption(img, "Incremental conformance chooses EXECUTE, REUSE, UNKNOWN, or REFUTED per bound operation.")
@@ -224,7 +239,7 @@ func renderBootstrap(img *image.Paletted, _ manifestScene, frame int) {
 	p := progress(frame, 3, 39)
 	drawNode(img, 40, 190, 160, 108, ".GOOO", []string{"bounded input"}, cyan, p > .1)
 	drawNode(img, 292, 125, 230, 150, "BOUNDED KERNEL", []string{"semantic lowering", "candidate view", "not authority"}, violet, p > .25)
-	drawNode(img, 292, 300, 230, 150, "BOOTSTRAP ORACLE", []string{"independent verifier", "fallback witness"}, teal, p > .35)
+	drawNode(img, 292, 300, 230, 150, "BOOTSTRAP ORACLE", []string{"independent path", "fallback witness"}, teal, p > .35)
 	drawNode(img, 632, 210, 170, 150, "PARITY", []string{"compare digests", "same facts"}, amber, p > .58)
 	drawNode(img, 834, 210, 92, 150, "GATE", []string{"NOT", "PROMOTED"}, coral, p > .82)
 	flow(img, 200, 244, 292, 195, cyan, p > .15)
@@ -232,6 +247,10 @@ func renderBootstrap(img *image.Paletted, _ manifestScene, frame int) {
 	flow(img, 522, 195, 632, 252, violet, p > .48)
 	flow(img, 522, 354, 632, 318, teal, p > .6)
 	flow(img, 802, 285, 834, 285, amber, p > .8)
+	box(img, 632, 380, 730, 424, panelRaised, green)
+	drawText(img, 642, 390, "PARITY PASS", 1, green)
+	box(img, 742, 380, 840, 424, panelRaised, coral)
+	drawText(img, 752, 390, "MISMATCH", 1, coral)
 	drawText(img, 42, 410, "CANDIDATE PARITY EVIDENCE", 1, amber)
 	drawText(img, 440, 410, "EXTERNAL ORACLE REMAINS INDEPENDENT", 1, teal)
 	caption(img, "A bounded self-hosted candidate is compared with an independent bootstrap oracle; parity is evidence, not promotion.")
@@ -258,6 +277,9 @@ func renderPromotion(img *image.Paletted, _ manifestScene, frame int) {
 	drawText(img, 536, 382, "-> OBSERVE", 1, amber)
 	drawText(img, 682, 382, "->", 1, textMuted)
 	drawText(img, 742, 382, "MAIN", 1, green)
+	box(img, 596, 148, 772, 178, panelRaised, amber)
+	drawText(img, 606, 157, "FINAL EXACT-HEAD REREAD", 1, amber)
+	drawText(img, 500, 420, "OBSERVATION -> FINAL EXACT-HEAD -> DEV -> MAIN", 1, coral)
 	drawText(img, 42, 420, "NO SKIP: DEV REF MUST BE EXACT BEFORE PROMOTION", 1, coral)
-	caption(img, "Feature adoption and post-adoption evidence precede the exact-head dev-to-main promotion route.")
+	caption(img, "Post-adoption evidence is observed before the final exact-head dev-to-main gate.")
 }
