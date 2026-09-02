@@ -31,9 +31,10 @@ func validSource() Source {
 		Selection: SelectionSource{
 			Repository:        testRepository,
 			CurrentSubjectSHA: testCurrent, PredecessorSHA: testEvidence,
+			RequestedRoute:    proposalpredecessor.RouteDev,
 			Decision: "SELECTED", Reason: "PROPOSAL_PREDECESSOR_SELECTED",
 			ReportDigest: "sha256:selection", RunID: 1, RunAttempt: 1,
-			HeadSHA: testEvidence, Event: "push", Status: "completed",
+			HeadSHA: testEvidence, HeadBranch: proposalpredecessor.RouteDev, Event: "push", Status: "completed",
 			Conclusion: "success", WorkflowName: "Metric counterfactual conformance",
 			SynthesisJobID: 3, SynthesisJobName: "strategy",
 			SynthesisJobStatus: "completed", SynthesisJobConclusion: "success",

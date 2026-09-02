@@ -19,18 +19,30 @@ const (
 	ReasonResponseMalformed            = "PROPOSAL_RESPONSE_MALFORMED"
 	ReasonArtifactPayloadUnavailable   = "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE"
 	ReasonRedirectOriginMismatch       = "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"
+	ReasonRouteUnknown                 = "PROPOSAL_PREDECESSOR_ROUTE_UNKNOWN"
+	ReasonRouteContradiction           = "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION"
 
 	ResolutionConformancePass = "PASS"
 	ResolutionFailClosed      = "FAIL_CLOSED"
 	ResolutionLower           = "LOWER_RESOLUTION"
 	ResolutionStage           = "proposal-predecessor"
 	ResolutionStep            = "select-exact-predecessor"
+	DecisionClosed            = "CLOSED"
+	DecisionUnknown           = "UNKNOWN"
+	DecisionRefuted           = "REFUTED"
+	ResolutionExact           = "EXACT"
+	RouteDev                  = "dev"
+	RouteMain                 = "main"
+	UnknownClassRoute         = "ROUTE_IDENTITY_MISSING"
+	UnknownClassAmbiguous     = "MULTIPLE_EXACT_ROUTE_CANDIDATES"
+	UnknownClassMissing       = "DIRECT_MISSING"
 )
 
 type Selected struct {
 	RunID                  int64  `json:"run_id"`
 	RunAttempt             int    `json:"run_attempt"`
 	HeadSHA                string `json:"head_sha"`
+	HeadBranch             string `json:"head_branch"`
 	Event                  string `json:"event"`
 	Status                 string `json:"status"`
 	Conclusion             string `json:"conclusion"`
@@ -57,8 +69,12 @@ type Candidate struct {
 }
 
 type Collection struct {
+	RequestedRoute    string
 	ObservedRuns      int
 	ExactRuns         int
+	OtherRouteRuns    int
+	RouteUnknownRuns  int
+	Contradictions    int
 	ObservedArtifacts int
 	ExactArtifacts    int
 	ObservedJobs      int
@@ -73,8 +89,12 @@ type Report struct {
 	Repository        string      `json:"repository"`
 	CurrentSubjectSHA string      `json:"current_subject_sha"`
 	PredecessorSHA    string      `json:"predecessor_sha"`
+	RequestedRoute    string      `json:"requested_route"`
 	Decision          string      `json:"decision"`
 	Reason            string      `json:"reason"`
+	ObservationDecision    string  `json:"observation_decision"`
+	ObservationResolution string  `json:"observation_resolution"`
+	Unknown               *Unknown `json:"unknown,omitempty"`
 	Selected          *Selected   `json:"selected,omitempty"`
 	Summary           Summary     `json:"summary"`
 	Indicators        []Indicator `json:"indicators"`
@@ -107,6 +127,15 @@ type ObservationCache struct {
 	Responses []ObservationResponse `json:"responses"`
 }
 
+type Unknown struct {
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+}
+
 func (report Report) Ready() bool {
 	return report.Decision == "SELECTED" && report.Reason == ReasonSelected
 }
@@ -116,12 +145,16 @@ type ResolutionReceipt struct {
 	Repository          string              `json:"repository"`
 	CurrentHeadSHA      string              `json:"current_head_sha"`
 	PredecessorSHA      string              `json:"predecessor_sha"`
+	RequestedRoute      string              `json:"requested_route"`
 	Conformance         string              `json:"conformance"`
 	Decision            string              `json:"decision"`
 	Reason              string              `json:"reason"`
 	Resolution          string              `json:"resolution"`
 	Stage               string              `json:"stage"`
 	Step                string              `json:"step"`
+	ObservationDecision    string            `json:"observation_decision"`
+	ObservationResolution string            `json:"observation_resolution"`
+	Unknown               *Unknown          `json:"unknown,omitempty"`
 	PromotionAuthority  bool                `json:"promotion_authority"`
 	ReadinessDelta      *int                `json:"readiness_delta"`
 	Selection           *Report             `json:"selection,omitempty"`
