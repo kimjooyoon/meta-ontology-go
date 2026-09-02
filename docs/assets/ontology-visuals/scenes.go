@@ -125,7 +125,7 @@ func renderAuthorityBoundary(img *image.Paletted, _ manifestScene, frame int) {
 }
 
 func renderProofChoice(img *image.Paletted, _ manifestScene, frame int) {
-	choice := (frame / 12) % 3
+	choice := 0
 	claimP := progress(frame, 1, 9)
 	chooseP := progress(frame, 7, 19)
 	drawNode(img, 38, 190, 182, 116, "CLAIM", []string{"open", "needs proof"}, cyan, claimP > 0.1)
@@ -290,7 +290,7 @@ func renderPackageResolution(img *image.Paletted, _ manifestScene, frame int) {
 }
 
 func renderIncremental(img *image.Paletted, _ manifestScene, frame int) {
-	selected := (frame / 9) % 4
+	selected := 1
 	routeP := progress(frame, 2, 15)
 	branchP := progress(frame, 12, 23)
 	drawNode(img, 34, 194, 196, 124, "CHANGED NODE", []string{"surface", "six digests", "policy"}, cyan, frame > 2)
@@ -342,18 +342,13 @@ func renderBootstrap(img *image.Paletted, _ manifestScene, frame int) {
 	if compareP > 0.2 {
 		circle(img, moveInt(570, 680, compareP), 276, 8, amber)
 	}
-	equal := frame/8%2 == 0
 	if compareP > 0.6 {
-		if equal {
-			stateCard(img, 826, 130, 98, 70, "EQUAL", []string{"parity"}, green, true, 's')
-		} else {
-			stateCard(img, 826, 130, 98, 70, "MISMATCH", []string{"facts differ"}, coral, true, 'x')
-		}
-		flow(img, 800, 280, 826, 165, amber, true)
+		stateCard(img, 800, 112, 124, 70, "EQUAL", []string{"parity"}, green, true, 's')
+		flow(img, 800, 280, 800, 147, green, true)
 	}
-	stateCard(img, 826, 278, 98, 92, "REVIEW", []string{"NOT AUTO", "PROMOTED"}, coral, gateP > 0.2, 'd')
+	stateCard(img, 800, 298, 124, 92, "REVIEW", []string{"NOT AUTO", "PROMOTED"}, amber, gateP > 0.2, 'd')
 	if gateP > 0.2 {
-		flow(img, 875, 200, 875, 278, coral, true)
+		flow(img, 862, 182, 862, 298, amber, true)
 	}
 	drawText(img, 42, 382, "DIGEST + FACTS", 1, amber)
 	drawText(img, 42, 406, "EQUAL OR MISMATCH -> REVIEW GATE", 1, textPrimary)
@@ -390,9 +385,15 @@ func renderPromotion(img *image.Paletted, _ manifestScene, frame int) {
 	if frame > 32 {
 		box(img, 770, 342, 924, 396, panelRaised, green)
 		drawText(img, 783, 354, "GATE OPEN", 1, green)
+		circle(img, moveInt(742, 790, progress(frame, 28, 35)), 261, 7, amber)
+	} else if frame > 25 {
+		box(img, 770, 342, 924, 396, panelRaised, amber)
+		drawText(img, 783, 354, "FRESH RECEIPT", 1, amber)
 	} else {
 		box(img, 770, 342, 924, 396, panel, coral)
-		drawText(img, 783, 354, "MISSING -> STOP", 1, coral)
+		cross(img, 782, 348, 812, 378, coral)
+		drawText(img, 820, 352, "STOP", 1, coral)
+		drawText(img, 783, 370, "MISSING RECEIPT", 1, coral)
 	}
 	drawText(img, 38, 378, "RECEIPTS IN ORDER", 1, amber)
 	drawText(img, 38, 402, "FEATURE -> CI -> DEV -> OBSERVE -> MAIN", 1, textPrimary)
