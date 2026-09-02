@@ -42,6 +42,7 @@ func expectedRegistry() Registry {
 		valid("meta-actionability", "examples/meta-actionability/main.gooo"),
 		valid("meta-binding-coverage", "examples/meta-binding-coverage/main.gooo"),
 		valid("meta-operation-artifact-coverage", "examples/meta-operation-artifact-coverage/main.gooo"),
+		valid("meta-policy-compilation", "examples/meta-policy-compilation/policy.gooo"),
 		valid("metric-meta-program-closure", "examples/metric-meta-program-closure/main.gooo"),
 		valid("metric-meta-program", "examples/metric-meta-program/main.gooo"),
 		valid("root-readme-indicator", "examples/root-readme-indicator/main.gooo"),
