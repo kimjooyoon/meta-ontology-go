@@ -51,10 +51,10 @@ func TestWorkflowDiscoveryRootApplicabilityIsAccepted(t *testing.T) {
 		MetricID: sourcepolicy.DimensionDirectEntries, Family: sourcepolicy.FamilyTopology,
 		Subject: ".github/workflows", SubjectKind: sourcepolicy.SubjectKindDirectory,
 		Value: 36, Limit: 0, Relation: sourcepolicy.RelationObserve,
-		Applicability: sourcepolicy.ApplicabilityNotApplicable,
-		ApplicabilityRule: sourcepolicy.ApplicabilityRuleWorkflowDiscoveryRoot,
+		Applicability:       sourcepolicy.ApplicabilityNotApplicable,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleWorkflowDiscoveryRoot,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonWorkflowRootExempt,
-		Satisfied: true, Proof: sourcepolicy.ProofFoundation,
+		Satisfied:           true, Proof: sourcepolicy.ProofFoundation,
 		Producer: "repository-projector.topology", Consumer: "github-actions",
 		Operation: sourcepolicy.OperationExemptWorkflowRoot,
 	}
