@@ -15,6 +15,7 @@ func init() {
 		"internal/detection/linecaps",
 		"internal/meta/feedbackpredecessor",
 		"internal/meta/generation",
+		"internal/meta/languageassurance/verticalsliceclosureshadow",
 		"internal/meta/metabinding",
 		"internal/meta/selfimprovementloop",
 		"internal/meta/sourcepolicy",
