@@ -68,7 +68,6 @@ func TestRunSourceJSONUnsupportedPackageInvocationIsSealed(t *testing.T) {
 		t.Fatalf("unexpected unsupported invocation receipt: %#v", receipt)
 	}
 }
-
 func TestRunSourcePrintsHumanPackageSummary(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	directory := filepath.Join("..", "..", "examples", "billing-package")
