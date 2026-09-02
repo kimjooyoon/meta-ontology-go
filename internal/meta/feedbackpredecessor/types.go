@@ -18,11 +18,12 @@ type Candidate struct {
 }
 
 type Input struct {
-	Repository        string      `json:"repository"`
-	PredecessorSHA    string      `json:"predecessor_sha"`
-	CanonicalBranch   string      `json:"canonical_branch"`
-	CanonicalWorkflow string      `json:"canonical_workflow"`
-	Candidates        []Candidate `json:"candidates"`
+	Repository        string              `json:"repository"`
+	PredecessorSHA    string              `json:"predecessor_sha"`
+	CanonicalBranch   string              `json:"canonical_branch"`
+	CanonicalWorkflow string              `json:"canonical_workflow"`
+	Candidates        []Candidate         `json:"candidates"`
+	Foundation        *FoundationEvidence `json:"foundation,omitempty"`
 }
 
 type Selection struct {

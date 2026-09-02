@@ -26,6 +26,19 @@
     "dev_shadow": "CI guardian shadow",
     "main_required": "CI guardian"
   },
+  "foundation_promotion": {
+    "decision": "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED",
+    "repository": "kimjooyoon/meta-ontology-go",
+    "pull_request": 602,
+    "head_branch": "agent/foundation-discovery-recovery-20260830",
+    "base_branch": "main",
+    "base_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
+    "missing_predecessor_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
+    "last_known_good_sha": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "gap_pull_requests": [599, 600, 601],
+    "proof_choice": "FOUNDATION",
+    "human_decision": "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
+  },
   "proof_jobs": [
     "gofmt",
     "go vet",
@@ -2940,6 +2953,38 @@
         "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/policycompilation/**",
         "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
+      ]
+    },
+    {
+      "branch": "agent/self-improvement-minimal-loop",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-minimal-loop.yml",
+        "examples/self-improvement-minimal-loop/**",
+        "internal/meta/selfimprovementloop/**",
+        "internal/verify/self_improvement_minimal_loop_scope.go",
+        "scripts/self-improvement-minimal-loop/**"
+      ]
+    },
+    {
+      "branch": "agent/foundation-discovery-recovery-20260830",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/feedback-predecessor-witness/**",
+        "internal/detection/linecaps/**",
+        "internal/meta/feedbackpredecessor/**",
+        "internal/meta/generation/**",
+        "internal/meta/metabinding/registry.go",
+        "internal/meta/sourcepolicy/**",
+        "internal/verify/foundation_discovery_recovery_scope.go",
+        "internal/verify/foundation_promotion.go",
+        "internal/verify/governance_part01.go",
+        "scripts/ci-proof/**",
+        "scripts/feedback-predecessor-ci/**",
+        "scripts/verify/**"
       ]
     }
   ],
