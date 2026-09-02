@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -11,7 +12,7 @@ const (
 )
 
 func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, error) {
-	witnesses, seen := make([]subjectWitness, 0), make(map[string]bool)
+	bySubject := make(map[string][]sourceIndicator)
 	for _, row := range indicators {
 		if row.SubjectKind != "FUNCTION" {
 			continue
@@ -28,11 +29,29 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 		default:
 			return nil, fmt.Errorf("function indicator %q is outside the exact catalog", row.MetricID)
 		}
-		if seen[row.Subject] {
-			return nil, fmt.Errorf("function subject %q is duplicated", row.Subject)
+		rows := bySubject[row.Subject]
+		for _, existing := range rows {
+			if existing.MetricID == row.MetricID {
+				return nil, fmt.Errorf("function subject %q metric %q is duplicated", row.Subject, row.MetricID)
+			}
 		}
-		seen[row.Subject] = true
-		witness := subjectWitness{Space: "LOGICAL_FUNCTION", Path: row.Subject, SubjectKind: row.SubjectKind, Metrics: []metricValue{{ID: row.MetricID, Value: row.Value}}, Meta: sourceBinding([]sourceIndicator{row}, "COHERENCE")}
+		bySubject[row.Subject] = append(rows, row)
+	}
+
+	subjects := make([]string, 0, len(bySubject))
+	for subject := range bySubject {
+		subjects = append(subjects, subject)
+	}
+	sort.Strings(subjects)
+	witnesses := make([]subjectWitness, 0, len(subjects))
+	for _, subject := range subjects {
+		rows := bySubject[subject]
+		sort.Slice(rows, func(i, j int) bool { return rows[i].MetricID < rows[j].MetricID })
+		metrics := make([]metricValue, 0, len(rows))
+		for _, row := range rows {
+			metrics = append(metrics, metricValue{ID: row.MetricID, Value: row.Value})
+		}
+		witness := subjectWitness{Space: "LOGICAL_FUNCTION", Path: subject, SubjectKind: "FUNCTION", Metrics: metrics, Meta: sourceBinding(rows, "COHERENCE")}
 		witnesses = append(witnesses, sealWitness(witness))
 	}
 	return witnesses, nil
