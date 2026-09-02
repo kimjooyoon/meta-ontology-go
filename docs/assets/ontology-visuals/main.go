@@ -233,7 +233,7 @@ func encodedAssets(m manifest) (map[string][]byte, error) {
 	assets := make(map[string][]byte, len(m.Scenes))
 	for _, scene := range m.Scenes {
 		animation := &gif.GIF{LoopCount: 0, Image: make([]*image.Paletted, 0, frameCount), Delay: make([]int, 0, frameCount)}
-		for frame := 0; frame < frameCount; frame++ {
+		for frame := range frameCount {
 			animation.Image = append(animation.Image, renderFrame(scene, frame))
 			animation.Delay = append(animation.Delay, frameDelay)
 		}

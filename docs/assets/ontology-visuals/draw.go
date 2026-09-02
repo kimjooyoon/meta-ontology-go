@@ -91,8 +91,8 @@ func drawText(img *image.Paletted, x, y int, value string, scale int, c uint8) i
 		if glyph == "" {
 			glyph = glyphs[' ']
 		}
-		for row := 0; row < 7; row++ {
-			for col := 0; col < 5; col++ {
+		for row := range 7 {
+			for col := range 5 {
 				if glyph[row*5+col] == '1' {
 					fill(img, x+col*scale, y+row*scale, x+(col+1)*scale, y+(row+1)*scale, c)
 				}
