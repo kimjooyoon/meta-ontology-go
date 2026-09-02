@@ -1,0 +1,34 @@
+name: Ontology visuals
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/assets/ontology-visuals/**"
+      - ".github/workflows/ontology-visuals.yml"
+  push:
+    branches: [dev, main]
+    paths:
+      - "README.md"
+      - "docs/assets/ontology-visuals/**"
+      - ".github/workflows/ontology-visuals.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Visual source and asset contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact pull request head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Verify deterministic visual set
+        run: go run ./docs/assets/ontology-visuals -check

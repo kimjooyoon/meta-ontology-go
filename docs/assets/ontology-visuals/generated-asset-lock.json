@@ -1,0 +1,78 @@
+{
+  "schema": "gooo/visual-asset-lock/v1",
+  "visual_denominator": 10,
+  "visual_asset_count": 10,
+  "visual_asset_bytes": 4178216,
+  "assets": [
+    {
+      "id": "ontology.visual.intent-ir-lowering",
+      "sequence": 1,
+      "file": "01-intent-ir-lowering.gif",
+      "size_bytes": 410488,
+      "sha256": "8fb5133a218477d86fd2671a6fbd383d84d3e6e4bb12575d67bd8a47a6ee1009"
+    },
+    {
+      "id": "ontology.visual.authority-boundary",
+      "sequence": 2,
+      "file": "02-authority-boundary.gif",
+      "size_bytes": 400585,
+      "sha256": "2f57b44c1c8b1ba8c7e0919f6784ab059ae94f4c61c37fef0d63051a8a176786"
+    },
+    {
+      "id": "ontology.visual.munchausen-proof-choice",
+      "sequence": 3,
+      "file": "03-munchausen-proof-choice.gif",
+      "size_bytes": 442733,
+      "sha256": "a9eca508f182653fc88a935f3017abd618fa6f4be51675668335b2b65cfab321"
+    },
+    {
+      "id": "ontology.visual.claim-evidence-lifecycle",
+      "sequence": 4,
+      "file": "04-claim-evidence-lifecycle.gif",
+      "size_bytes": 380939,
+      "sha256": "a54b917b55172946a0007e48a172a53c402b8bdbc82d9b55c4c25bf8c8058d55"
+    },
+    {
+      "id": "ontology.visual.unknown-cause-descent",
+      "sequence": 5,
+      "file": "05-unknown-cause-descent.gif",
+      "size_bytes": 353067,
+      "sha256": "135412f7e36ca3581c30d3de8ddf6c435a604224ba9b6fb9201cfdf51ad3869f"
+    },
+    {
+      "id": "ontology.visual.precedence-counterexample",
+      "sequence": 6,
+      "file": "06-precedence-counterexample.gif",
+      "size_bytes": 441270,
+      "sha256": "c1c1090b41280a8df881225c768c984d8bd0496d16adcd6084c9487b681e8a55"
+    },
+    {
+      "id": "ontology.visual.package-resolution",
+      "sequence": 7,
+      "file": "07-package-resolution.gif",
+      "size_bytes": 435862,
+      "sha256": "79cf79d9d30969b65cc30309ca953b27267b2092ad670414591c1d5475351199"
+    },
+    {
+      "id": "ontology.visual.incremental-conformance",
+      "sequence": 8,
+      "file": "08-incremental-conformance.gif",
+      "size_bytes": 450903,
+      "sha256": "2499684a0c2c69338e793a9e43cb3c1f244a5c507f18cbc39f335316ae0c2e8b"
+    },
+    {
+      "id": "ontology.visual.bootstrap-oracle",
+      "sequence": 9,
+      "file": "09-bootstrap-oracle.gif",
+      "size_bytes": 433848,
+      "sha256": "4c12bd7c6f4c83ba102fb21130c496f3249a9a9fef6ba3805f5a41727e9c56a2"
+    },
+    {
+      "id": "ontology.visual.promotion-lineage",
+      "sequence": 10,
+      "file": "10-promotion-lineage.gif",
+      "size_bytes": 428521,
+      "sha256": "d6cd31e8fd169d3cfd1af1b94ed95cfd9aa2ec418656c0e313513ed5015ade34"
+    }
+  ]
+}

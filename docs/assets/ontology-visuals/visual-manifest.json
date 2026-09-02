@@ -1,0 +1,147 @@
+{
+  "schema": "gooo/visual-source-manifest/v1",
+  "visual_denominator": 10,
+  "renderer": "docs/assets/ontology-visuals",
+  "scenes": [
+    {
+      "id": "ontology.visual.intent-ir-lowering",
+      "sequence": 1,
+      "file": "01-intent-ir-lowering.gif",
+      "title": "INTENT -> IR -> LOWERED VIEWS",
+      "description": "One .gooo intent lowers to semantic IR and then to generated Go plus source-backed evidence.",
+      "alt": "Animated flow from .gooo intent through normalized semantic IR to generated Go and evidence, with parse, normalize, project, and record transitions.",
+      "source_refs": ["README.md", "docs/architecture.md", "docs/spec.md"],
+      "binding": {
+        "nodes": ["gooo.intent", "semantic.ir", "generated.go", "evidence"],
+        "edges": ["lower", "normalize", "project", "record"],
+        "transitions": ["source", "ir", "structural-view", "proof"]
+      }
+    },
+    {
+      "id": "ontology.visual.authority-boundary",
+      "sequence": 2,
+      "file": "02-authority-boundary.gif",
+      "title": "HANDWRITTEN AUTHORITY BOUNDARY",
+      "description": "Handwritten Go owns irreducible behavior while generated and evidence views remain derived.",
+      "alt": "Animated authority boundary separating handwritten implementation logic from generated Go and append-only evidence, with a blocked write-back arrow.",
+      "source_refs": ["AGENTS.md", "docs/architecture.md", "docs/governance.md"],
+      "binding": {
+        "nodes": ["handwritten.authority", "generated.view", "evidence.view", "authority.boundary"],
+        "edges": ["intent-to-structure", "implementation-slot", "append-only", "forbidden-writeback"],
+        "transitions": ["authoritative", "derived", "observed", "blocked"]
+      }
+    },
+    {
+      "id": "ontology.visual.munchausen-proof-choice",
+      "sequence": 3,
+      "file": "03-munchausen-proof-choice.gif",
+      "title": "MUNCHAUSEN PROOF CHOICE",
+      "description": "Each claim explicitly selects FOUNDATION, COHERENCE, or REGRESSION proof obligations.",
+      "alt": "Animated claim branching into FOUNDATION denominator proof, COHERENCE receipt-chain proof, and REGRESSION replay-digest proof with one choice highlighted.",
+      "source_refs": ["docs/language/language-package-execution.md", "scripts/evaluate-temporal-transition-ticket-v1.sh"],
+      "binding": {
+        "nodes": ["claim", "FOUNDATION", "COHERENCE", "REGRESSION"],
+        "edges": ["claim-to-proof-choice", "denominator", "receipt-chain", "replay-digest"],
+        "transitions": ["declare", "choose", "bind", "close"]
+      }
+    },
+    {
+      "id": "ontology.visual.claim-evidence-lifecycle",
+      "sequence": 4,
+      "file": "04-claim-evidence-lifecycle.gif",
+      "title": "CLAIM -> EVIDENCE -> DECISION",
+      "description": "A claim becomes CLOSED only with evidence; absent evidence is UNKNOWN and contradiction is REFUTED.",
+      "alt": "Animated claim-to-evidence flow splitting into labeled CLOSED, UNKNOWN, and REFUTED outcomes.",
+      "source_refs": ["docs/governance.md", "scripts/evaluate-temporal-transition-ticket-v1.sh", "scripts/semantic-conformance.sh"],
+      "binding": {
+        "nodes": ["claim", "evidence", "CLOSED", "UNKNOWN", "REFUTED"],
+        "edges": ["claim-needs-evidence", "evidence-closes", "evidence-missing", "counterexample-refutes"],
+        "transitions": ["open", "observed", "closed", "unknown", "refuted"]
+      }
+    },
+    {
+      "id": "ontology.visual.unknown-cause-descent",
+      "sequence": 5,
+      "file": "05-unknown-cause-descent.gif",
+      "title": "UNKNOWN CAUSE DESCENT",
+      "description": "UNKNOWN descends from stage and step into reason, class, next operation, and exact blockers.",
+      "alt": "Animated UNKNOWN causal frontier descending through stage, step, reason, class, next_operation, and blocked_by fields.",
+      "source_refs": ["scripts/evaluate-temporal-transition-ticket-v1.sh", "scripts/semantic-conformance.sh"],
+      "binding": {
+        "nodes": ["stage", "step", "reason", "class", "next_operation", "blocked_by"],
+        "edges": ["cause-descent", "stage-to-step", "step-to-reason", "reason-to-class", "class-to-operation", "operation-to-blocker"],
+        "transitions": ["locate", "explain", "classify", "repair", "retain-frontier"]
+      }
+    },
+    {
+      "id": "ontology.visual.precedence-counterexample",
+      "sequence": 6,
+      "file": "06-precedence-counterexample.gif",
+      "title": "PRECEDENCE + COUNTEREXAMPLE",
+      "description": "REFUTED outranks UNKNOWN and CLOSED while its counterexample remains append-only evidence.",
+      "alt": "Animated priority selector showing REFUTED above UNKNOWN above CLOSED and retaining a counterexample without averaging states.",
+      "source_refs": ["scripts/evaluate-temporal-transition-ticket-v1.sh", "scripts/semantic-conformance.sh"],
+      "binding": {
+        "nodes": ["REFUTED", "UNKNOWN", "CLOSED", "counterexample", "priority"],
+        "edges": ["refuted-over-unknown", "unknown-over-closed", "counterexample-retained", "priority-selects"],
+        "transitions": ["observe", "rank", "preserve", "fail-closed"]
+      }
+    },
+    {
+      "id": "ontology.visual.package-resolution",
+      "sequence": 7,
+      "file": "07-package-resolution.gif",
+      "title": "DETERMINISTIC PACKAGE RESOLUTION",
+      "description": "Multiple .gooo files sort, bind as one package unit, and resolve an entry before execution.",
+      "alt": "Animated activity.gooo and entities.gooo files entering canonical filename order, one package unit, and the PayOrder entry execution.",
+      "source_refs": ["docs/language/language-package-execution.md", "scripts/language-package-execution/main.sh"],
+      "binding": {
+        "nodes": ["activity.gooo", "entities.gooo", "canonical-order", "package-unit", "entry.PayOrder"],
+        "edges": ["sort-by-relative-filename", "parse-each-file", "combine-package", "resolve-entry", "execute"],
+        "transitions": ["discover", "sort", "bind", "run", "receipt"]
+      }
+    },
+    {
+      "id": "ontology.visual.incremental-conformance",
+      "sequence": 8,
+      "file": "08-incremental-conformance.gif",
+      "title": "INCREMENTAL CONFORMANCE",
+      "description": "Each changed operation is classified as EXECUTE, REUSE, UNKNOWN, or REFUTED.",
+      "alt": "Animated changed-surface input branching into EXECUTE, REUSE, UNKNOWN, and REFUTED operation outcomes with distinct labels and shapes.",
+      "source_refs": ["docs/conformance.md", "docs/deterministic-ci-evolution.md", "scripts/semantic-conformance.sh"],
+      "binding": {
+        "nodes": ["changed-surface", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"],
+        "edges": ["surface-to-operation", "fresh-input", "exact-replay", "missing-evidence", "counterexample"],
+        "transitions": ["scope", "execute", "reuse", "lower-resolution", "retain-refutation"]
+      }
+    },
+    {
+      "id": "ontology.visual.bootstrap-oracle",
+      "sequence": 9,
+      "file": "09-bootstrap-oracle.gif",
+      "title": "BOUNDED KERNEL + BOOTSTRAP ORACLE",
+      "description": "A bounded self-hosted semantic-kernel candidate is compared with an independent bootstrap oracle without promotion.",
+      "alt": "Animated .gooo input feeding a bounded semantic kernel and an independent bootstrap oracle, whose digests meet at parity evidence before a not-promoted gate.",
+      "source_refs": ["docs/bootstrap-evidence.md", "docs/architecture.md"],
+      "binding": {
+        "nodes": [".gooo", "bounded.semantic.kernel", "independent.bootstrap.oracle", "parity-evidence", "promotion-gate"],
+        "edges": ["source-to-kernel", "source-to-oracle", "compare-digests", "parity-to-gate"],
+        "transitions": ["bound", "observe", "compare", "not-promoted"]
+      }
+    },
+    {
+      "id": "ontology.visual.promotion-lineage",
+      "sequence": 10,
+      "file": "10-promotion-lineage.gif",
+      "title": "FEATURE TO MAIN LINEAGE",
+      "description": "A feature PR passes exact-head CI, lands in dev, gains post-adoption observation, and then reaches main promotion.",
+      "alt": "Animated lineage from feature PR through exact-head CI to dev, post-adoption observation, and the exact dev-to-main promotion gate.",
+      "source_refs": ["AGENTS.md", "CONTRIBUTING.md", "docs/architecture.md"],
+      "binding": {
+        "nodes": ["feature.PR", "exact-head.CI", "dev", "post-adoption.observation", "main.promotion"],
+        "edges": ["feature-to-ci", "exact-head-to-dev", "dev-to-observation", "observation-to-promotion", "dev-to-main"],
+        "transitions": ["propose", "verify", "adopt", "observe", "promote"]
+      }
+    }
+  ]
+}
