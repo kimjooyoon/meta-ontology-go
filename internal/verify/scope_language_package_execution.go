@@ -29,6 +29,7 @@ func init() {
 		"scripts/language-package-execution",
 		"scripts/source-subject-witness/applicability.go",
 		"scripts/source-subject-witness/applicability_fixture_test.go",
+		"scripts/source-subject-witness/applicability_test.go",
 		"scripts/source-subject-witness/catalog_binding_test.go",
 		"scripts/source-subject-witness/function_binding.go",
 		"scripts/source-subject-witness/validate.go",
