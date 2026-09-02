@@ -110,7 +110,7 @@ func TestCollectBindsSameSHAObservationToRequestedRoute(t *testing.T) {
 			name:             "missing route is unknown",
 			runs:             []githubRun{{ID: 2, RunAttempt: 1, HeadSHA: predecessor, Event: "push", Status: "completed", Conclusion: "failure", Name: workflowName}},
 			routeUnknownRuns: 1,
-		unresolved:       1,
+			unresolved:       1,
 		},
 	}
 	for _, test := range cases {
