@@ -95,23 +95,24 @@ func renderAuthorityBoundary(img *image.Paletted, _ manifestScene, frame int) {
 func renderProofChoice(img *image.Paletted, _ manifestScene, frame int) {
 	choice := (frame / 12) % 3
 	drawNode(img, 42, 184, 206, 150, "CLAIM", []string{"prove this transition", "choice is explicit"}, cyan, frame > 3)
+	drawText(img, 286, 116, "1 OF 3", 2, amber)
+	diamond(img, 320, 258, 31, amber)
+	drawText(img, 292, 250, "1", 2, dark)
+	drawText(img, 284, 275, "OF 3", 1, dark)
 	choices := []struct {
-		x    int
+		y    int
 		name string
 		sub  []string
 		c    uint8
-	}{{300, "FOUNDATION", []string{"fix denominator", "reject unknown"}, teal}, {530, "COHERENCE", []string{"bind receipts", "same facts"}, violet}, {760, "REGRESSION", []string{"replay digest", "compare exact"}, amber}}
+	}{{145, "FOUNDATION", []string{"fix denominator", "reject unknown"}, teal}, {240, "COHERENCE", []string{"bind receipts", "same facts"}, violet}, {335, "REGRESSION", []string{"replay digest", "compare exact"}, amber}}
 	for i, v := range choices {
 		active := choice == i && frame > 7
-		drawNode(img, v.x, 145, 170, 228, v.name, v.sub, v.c, active)
-		flow(img, 248, 258, v.x, 258, v.c, active)
+		stateCard(img, 430, v.y, 470, 70, v.name, v.sub, v.c, active, 's')
+		flow(img, 350, 258, 430, v.y+35, v.c, active)
 	}
 	drawText(img, 48, 368, "MUNCHAUSEN QUESTION", 1, amber)
 	drawText(img, 48, 388, "WHAT JUSTIFIES THIS CLAIM?", 2, textPrimary)
-	drawText(img, 48, 420, "ONE EXPLICIT CHOICE PER CLAIM; NOT A SEQUENTIAL SCORE", 1, textPrimary)
-	drawText(img, 300, 395, "FOUNDATION = DENOMINATOR", 1, teal)
-	drawText(img, 530, 395, "COHERENCE = RECEIPT CHAIN", 1, violet)
-	drawText(img, 760, 395, "REGRESSION = REPLAY", 1, amber)
+	drawText(img, 48, 420, "ALTERNATIVES, NOT A SERIAL PIPELINE", 1, textPrimary)
 	caption(img, "The proof choice is part of the claim; it never authorizes repository mutation.")
 }
 
@@ -156,27 +157,24 @@ func stateCard(img *image.Paletted, x, y, w, h int, title string, lines []string
 
 func renderUnknownDescent(img *image.Paletted, _ manifestScene, frame int) {
 	fields := []struct {
+		x, y, w int
 		title, value string
 		c            uint8
-	}{{"STAGE", "semantic-conformance", cyan}, {"STEP", "extractor-observe", violet}, {"REASON", "EVIDENCE ABSENT", amber}, {"CLASS", "DIRECT_MISSING", unknown}, {"NEXT_OPERATION", "restore-decomposition-evidence", teal}, {"BLOCKED_BY", "[split-source-metrics]", coral}}
+	}{{50, 145, 170, "STAGE", "semantic-conformance", cyan}, {185, 195, 170, "STEP", "extractor-observe", violet}, {320, 245, 170, "REASON", "EVIDENCE ABSENT", amber}, {455, 295, 170, "CLASS", "DIRECT_MISSING", unknown}, {590, 345, 190, "NEXT_OPERATION", "restore-evidence", teal}, {755, 395, 165, "BLOCKED_BY", "split-source", coral}}
 	drawText(img, 42, 110, "UNKNOWN = A CAUSAL FRONTIER, NOT A SCORE", 1, amber)
 	diamond(img, 886, 116, 15, unknown)
 	drawText(img, 848, 140, "UNKNOWN", 1, unknown)
 	for i, v := range fields {
-		y := 160 + i*43
 		active := frame >= i*6+4
-		fill(img, 42, y, 700, y+32, panel)
-		stroke(img, 42, y, 700, y+32, activeColor(1, 0, 1, v.c))
-		drawText(img, 58, y+10, itoa(i+1), 1, v.c)
-		drawText(img, 78, y+10, v.title, 1, v.c)
-		drawText(img, 220, y+10, v.value, 1, textPrimary)
+		smallNode(img, v.x, v.y, v.w, 48, itoa(i+1)+" "+v.title, v.value, v.c, active)
 		if i < len(fields)-1 {
-			flow(img, 720, y+16, 750, y+16, v.c, active)
+			next := fields[i+1]
+			flow(img, v.x+v.w, v.y+24, next.x, next.y+24, v.c, active)
 		}
 	}
-	line(img, 750, 176, 750, 370, unknown)
-	flow(img, 750, 370, 780, 256, unknown, frame > 26)
-	drawNode(img, 780, 206, 140, 100, "CAUSE", []string{"descend", "until repair"}, coral, frame > 24)
+	circle(img, 50+int(705*progress(frame, 4, 35)), 170+int(260*progress(frame, 4, 35)), 7, coral)
+	drawNode(img, 640, 145, 120, 92, "CAUSE", []string{"frontier", "repair"}, coral, frame > 24)
+	flow(img, 840, 395, 760, 237, coral, frame > 30)
 	caption(img, "The reason is carried downward into class, next operation, and the exact blockers.")
 }
 
@@ -229,7 +227,7 @@ func renderIncremental(img *image.Paletted, _ manifestScene, frame int) {
 		stateCard(img, 330, v.y, 280, 70, v.title, v.lines, v.c, active, v.shape)
 		flow(img, 232, 258, 330, v.y+35, v.c, active)
 	}
-	drawNode(img, 700, 190, 220, 170, "CONFORMANCE", []string{"operation result", "PASS / FAIL-CLOSED", "not aggregate"}, amber, frame > 28)
+	drawNode(img, 700, 190, 220, 170, "CONFORMANCE", []string{"operation result", "PASS IS TERMINAL", "UNKNOWN = FAIL-CLOSED"}, amber, frame > 28)
 	flow(img, 610, 235, 700, 250, amber, frame > 28)
 	flow(img, 610, 315, 700, 300, coral, frame > 36)
 	caption(img, "Incremental conformance chooses EXECUTE, REUSE, UNKNOWN, or REFUTED per bound operation.")
@@ -241,7 +239,7 @@ func renderBootstrap(img *image.Paletted, _ manifestScene, frame int) {
 	drawNode(img, 292, 125, 230, 150, "BOUNDED KERNEL", []string{"semantic lowering", "candidate view", "not authority"}, violet, p > .25)
 	drawNode(img, 292, 300, 230, 150, "BOOTSTRAP ORACLE", []string{"independent path", "fallback witness"}, teal, p > .35)
 	drawNode(img, 632, 210, 170, 150, "PARITY", []string{"compare digests", "same facts"}, amber, p > .58)
-	drawNode(img, 834, 210, 92, 150, "GATE", []string{"NOT", "PROMOTED"}, coral, p > .82)
+	drawNode(img, 834, 210, 92, 150, "GATE", []string{"NOT AUTO", "PROMOTED"}, coral, p > .82)
 	flow(img, 200, 244, 292, 195, cyan, p > .15)
 	flow(img, 200, 244, 292, 354, cyan, p > .28)
 	flow(img, 522, 195, 632, 252, violet, p > .48)
@@ -251,6 +249,8 @@ func renderBootstrap(img *image.Paletted, _ manifestScene, frame int) {
 	drawText(img, 642, 390, "PARITY PASS", 1, green)
 	box(img, 742, 380, 840, 424, panelRaised, coral)
 	drawText(img, 752, 390, "MISMATCH", 1, coral)
+	flow(img, 717, 360, 680, 380, green, p > .72)
+	flow(img, 717, 360, 790, 380, coral, p > .84)
 	drawText(img, 42, 410, "CANDIDATE PARITY EVIDENCE", 1, amber)
 	drawText(img, 440, 410, "EXTERNAL ORACLE REMAINS INDEPENDENT", 1, teal)
 	caption(img, "A bounded self-hosted candidate is compared with an independent bootstrap oracle; parity is evidence, not promotion.")
@@ -279,6 +279,8 @@ func renderPromotion(img *image.Paletted, _ manifestScene, frame int) {
 	drawText(img, 742, 382, "MAIN", 1, green)
 	box(img, 596, 148, 772, 178, panelRaised, amber)
 	drawText(img, 606, 157, "FINAL EXACT-HEAD REREAD", 1, amber)
+	flow(img, 671, 190, 684, 178, amber, frame > 28)
+	flow(img, 772, 163, 782, 190, amber, frame > 35)
 	drawText(img, 500, 420, "OBSERVATION -> FINAL EXACT-HEAD -> DEV -> MAIN", 1, coral)
 	drawText(img, 42, 420, "NO SKIP: DEV REF MUST BE EXACT BEFORE PROMOTION", 1, coral)
 	caption(img, "Post-adoption evidence is observed before the final exact-head dev-to-main gate.")

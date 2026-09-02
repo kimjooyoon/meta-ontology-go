@@ -2,7 +2,7 @@
   "schema": "gooo/visual-asset-lock/v1",
   "visual_denominator": 10,
   "visual_asset_count": 10,
-  "visual_asset_bytes": 4324777,
+  "visual_asset_bytes": 4270713,
   "assets": [
     {
       "id": "ontology.visual.intent-ir-lowering",
@@ -22,8 +22,8 @@
       "id": "ontology.visual.munchausen-proof-choice",
       "sequence": 3,
       "file": "03-munchausen-proof-choice.gif",
-      "size_bytes": 455029,
-      "sha256": "62e120e0978c84761ba14e4414ee631f48bc07fa03bc7009c4c5afdbeeff2899"
+      "size_bytes": 404957,
+      "sha256": "fcb1df646b0eac26daf8e46a644e01784cd58a47aa82e9f93d1e2d65d0141e39"
     },
     {
       "id": "ontology.visual.claim-evidence-lifecycle",
@@ -36,8 +36,8 @@
       "id": "ontology.visual.unknown-cause-descent",
       "sequence": 5,
       "file": "05-unknown-cause-descent.gif",
-      "size_bytes": 358871,
-      "sha256": "e7b35717927782410fbc833f96608c2c36134872d1cb9ac51737cac2a45c9f3d"
+      "size_bytes": 343699,
+      "sha256": "17f6cf7e90964f44cd856dfb3cd9a4afee257bbf1ec4508ad62ef1c410ccbae2"
     },
     {
       "id": "ontology.visual.precedence-counterexample",
@@ -57,22 +57,22 @@
       "id": "ontology.visual.incremental-conformance",
       "sequence": 8,
       "file": "08-incremental-conformance.gif",
-      "size_bytes": 452914,
-      "sha256": "bd2e33e55b7139e6238b8f9f24e585f7d571d4db590db5cd080a31524f34c1a6"
+      "size_bytes": 455049,
+      "sha256": "75e24b89538308b039b5029178b8c8bce0eba46f3ddddec542fb9cc8db15abe9"
     },
     {
       "id": "ontology.visual.bootstrap-oracle",
       "sequence": 9,
       "file": "09-bootstrap-oracle.gif",
-      "size_bytes": 453041,
-      "sha256": "094efb3b1d3f287b5e479822c6e285c11f0054eff41652b92e020480b205922b"
+      "size_bytes": 460239,
+      "sha256": "26946802f78b744162b45c67452986259488d0292c8d0cbacbd3e80fd18960ef"
     },
     {
       "id": "ontology.visual.promotion-lineage",
       "sequence": 10,
       "file": "10-promotion-lineage.gif",
-      "size_bytes": 446549,
-      "sha256": "8528675dca2864a7ae0f3d3494dc8bdddd9ee54654749747b08f7f32cc77b32d"
+      "size_bytes": 448396,
+      "sha256": "977440e17524b7a5aaa4b0e2f087dbf3adb32fb75137383ad3c501d3cb5d70dc"
     }
   ]
 }

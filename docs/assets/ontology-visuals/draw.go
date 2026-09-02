@@ -148,6 +148,16 @@ func drawNode(img *image.Paletted, x, y, w, h int, title string, lines []string,
 	drawText(img, x+14, y+14, title, 2, c)
 	textLines(img, x+14, y+45, lines, 1, textPrimary)
 }
+
+func smallNode(img *image.Paletted, x, y, w, h int, title, value string, c uint8, active bool) {
+	fill(img, x, y, x+w, y+h, panel)
+	stroke(img, x, y, x+w, y+h, c)
+	drawText(img, x+10, y+10, title, 1, c)
+	drawText(img, x+10, y+30, value, 1, textPrimary)
+	if active {
+		stroke(img, x+2, y+2, x+w-2, y+h-2, c)
+	}
+}
 func flow(img *image.Paletted, x0, y0, x1, y1 int, c uint8, active bool) {
 	line(img, x0, y0, x1, y1, c)
 	if active {
