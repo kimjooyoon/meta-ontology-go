@@ -13,7 +13,7 @@ var renderers = map[string]sceneRenderer{
 	"ontology.visual.precedence-counterexample": renderRefutationPrecedence,
 	"ontology.visual.package-resolution":        renderDeterministicReplay,
 	"ontology.visual.incremental-conformance":   renderIncrementalConformance,
-	"ontology.visual.bootstrap-oracle":           renderSelfImprovement,
+	"ontology.visual.bootstrap-oracle":          renderSelfImprovement,
 	"ontology.visual.promotion-lineage":         renderDomainProjection,
 }
 
@@ -195,7 +195,10 @@ func renderUnknownResolution(img *image.Paletted, _ manifestScene, frame int) {
 	codeBlock(img, 34, 146, 254, 154, "MISSING ARTIFACT", []string{"CLAIM C-17", "ARTIFACT ABSENT"}, unknown, frame > 1)
 	box(img, 326, 112, 610, 370, panel, amber)
 	drawText(img, 344, 126, "UNKNOWN FIELDS", 1, amber)
-	fields := []struct{ name, value string; c uint8 }{{"stage", "verify", cyan}, {"step", "observe", violet}, {"reason", "absent", amber}, {"class", "direct", unknown}, {"next_operation", "restore", teal}, {"blocked_by", "artifact", coral}}
+	fields := []struct {
+		name, value string
+		c           uint8
+	}{{"stage", "verify", cyan}, {"step", "observe", violet}, {"reason", "absent", amber}, {"class", "direct", unknown}, {"next_operation", "restore", teal}, {"blocked_by", "artifact", coral}}
 	for i, f := range fields {
 		y := 150 + i*36
 		active := fieldsP > float64(i)/6
@@ -294,7 +297,7 @@ func renderIncrementalConformance(img *image.Paletted, _ manifestScene, frame in
 	stateCard(img, 694, 380, 210, 68, "REFUTED", []string{"retain blocker"}, coral, false, 'x')
 	flow(img, 658, 246, 694, 254, violet, pRoute > 0.5)
 	if pRoute > 0.5 {
-	codeBlock(img, 350, 324, 224, 100, "SELECTED JOB", []string{"REUSE receipt", "count: 2"}, violet, true)
+		codeBlock(img, 350, 324, 224, 100, "SELECTED JOB", []string{"REUSE receipt", "count: 2"}, violet, true)
 	}
 	drawText(img, 42, 346, "AFFECTED CHECK", 1, amber)
 	drawText(img, 182, 346, "-> REUSE RECEIPT", 1, violet)

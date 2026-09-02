@@ -30,31 +30,31 @@ type binding struct {
 }
 
 type evidenceRef struct {
-	Path         string `json:"path"`
-	Digest       string `json:"digest"`
-	ReceiptPath  string `json:"receipt_path"`
+	Path          string `json:"path"`
+	Digest        string `json:"digest"`
+	ReceiptPath   string `json:"receipt_path"`
 	ReceiptDigest string `json:"receipt_digest"`
 }
 
 type manifestScene struct {
-	ID          string   `json:"id"`
-	Sequence    int      `json:"sequence"`
-	File        string   `json:"file"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Alt         string   `json:"alt"`
-	SourceRefs  []string `json:"source_refs"`
-	Binding     binding  `json:"binding"`
-	InitialRelation      string        `json:"initial_relation"`
-	SemanticOperation    string        `json:"semantic_operation"`
-	TerminalRelation     string        `json:"terminal_relation"`
-	MotionEventKind      string        `json:"motion_event_kind"`
-	Maturity             string        `json:"maturity"`
-	InputArtifact        string        `json:"input_artifact"`
-	GeneratedArtifact    string        `json:"generated_or_changed_artifact"`
-	TerminalDecision     string        `json:"terminal_decision"`
-	NextConsumer         string        `json:"next_consumer"`
-	Evidence             []evidenceRef `json:"evidence"`
+	ID                string        `json:"id"`
+	Sequence          int           `json:"sequence"`
+	File              string        `json:"file"`
+	Title             string        `json:"title"`
+	Description       string        `json:"description"`
+	Alt               string        `json:"alt"`
+	SourceRefs        []string      `json:"source_refs"`
+	Binding           binding       `json:"binding"`
+	InitialRelation   string        `json:"initial_relation"`
+	SemanticOperation string        `json:"semantic_operation"`
+	TerminalRelation  string        `json:"terminal_relation"`
+	MotionEventKind   string        `json:"motion_event_kind"`
+	Maturity          string        `json:"maturity"`
+	InputArtifact     string        `json:"input_artifact"`
+	GeneratedArtifact string        `json:"generated_or_changed_artifact"`
+	TerminalDecision  string        `json:"terminal_decision"`
+	NextConsumer      string        `json:"next_consumer"`
+	Evidence          []evidenceRef `json:"evidence"`
 }
 
 type manifest struct {
@@ -94,16 +94,16 @@ var sceneIDs = []string{
 }
 
 var expectedBindings = map[string]binding{
-	"ontology.visual.intent-ir-lowering": {Nodes: []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"}, Edges: []string{"lower", "normalize", "project", "record"}, Transitions: []string{"source", "ir", "structural-view", "proof"}},
-	"ontology.visual.authority-boundary": {Nodes: []string{"declaration", "semantic.ir", "typed.nodes", "backend"}, Edges: []string{"parse", "used", "wasGeneratedBy", "consume"}, Transitions: []string{"text", "node", "edge", "graph"}},
-	"ontology.visual.munchausen-proof-choice": {Nodes: []string{"activity.gooo", "entities.gooo", "canonical-order", "package-api", "entry.receipt"}, Edges: []string{"sort", "parse", "merge", "resolve", "execute"}, Transitions: []string{"unordered", "canonical", "bound", "entry", "receipt"}},
-	"ontology.visual.claim-evidence-lifecycle": {Nodes: []string{"author.agent", "intent", "compiler.agent", "generated.output", "reviewer.agent", "receipt"}, Edges: []string{"writes", "reads", "creates", "consumes", "authority-boundary"}, Transitions: []string{"intent", "handoff", "generated", "reviewed"}},
-	"ontology.visual.unknown-cause-descent": {Nodes: []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"}, Edges: []string{"cause-descent", "classify", "repair", "re-evaluate"}, Transitions: []string{"unknown", "actionable", "evidence", "closed"}},
+	"ontology.visual.intent-ir-lowering":        {Nodes: []string{"gooo.intent", "semantic.ir", "generated.go", "evidence"}, Edges: []string{"lower", "normalize", "project", "record"}, Transitions: []string{"source", "ir", "structural-view", "proof"}},
+	"ontology.visual.authority-boundary":        {Nodes: []string{"declaration", "semantic.ir", "typed.nodes", "backend"}, Edges: []string{"parse", "used", "wasGeneratedBy", "consume"}, Transitions: []string{"text", "node", "edge", "graph"}},
+	"ontology.visual.munchausen-proof-choice":   {Nodes: []string{"activity.gooo", "entities.gooo", "canonical-order", "package-api", "entry.receipt"}, Edges: []string{"sort", "parse", "merge", "resolve", "execute"}, Transitions: []string{"unordered", "canonical", "bound", "entry", "receipt"}},
+	"ontology.visual.claim-evidence-lifecycle":  {Nodes: []string{"author.agent", "intent", "compiler.agent", "generated.output", "reviewer.agent", "receipt"}, Edges: []string{"writes", "reads", "creates", "consumes", "authority-boundary"}, Transitions: []string{"intent", "handoff", "generated", "reviewed"}},
+	"ontology.visual.unknown-cause-descent":     {Nodes: []string{"stage", "step", "reason", "class", "next_operation", "blocked_by"}, Edges: []string{"cause-descent", "classify", "repair", "re-evaluate"}, Transitions: []string{"unknown", "actionable", "evidence", "closed"}},
 	"ontology.visual.precedence-counterexample": {Nodes: []string{"UNKNOWN", "counterexample", "REFUTED", "priority", "ledger"}, Edges: []string{"arrives", "outranks", "preserves", "appends"}, Transitions: []string{"partial", "contradiction", "refuted", "retained"}},
-	"ontology.visual.package-resolution": {Nodes: []string{"source.digest", "contract.digest", "toolchain.digest", "run.1", "run.2", "mismatch"}, Edges: []string{"pin", "replay", "compare", "block"}, Transitions: []string{"inputs", "identical", "changed-byte", "blocked"}},
-	"ontology.visual.incremental-conformance": {Nodes: []string{"changed-surface", "six-digest-identity", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"}, Edges: []string{"identify", "route", "reuse-receipt", "close-alternatives"}, Transitions: []string{"changed", "identified", "reused", "inactive"}},
-	"ontology.visual.bootstrap-oracle": {Nodes: []string{"observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"}, Edges: []string{"observe", "change", "verify", "adopt", "promote"}, Transitions: []string{"bug", "rule", "ci", "dev", "receipt", "eligible"}},
-	"ontology.visual.promotion-lineage": {Nodes: []string{"service.contract", "infra.facts", "proposed.gooo", "mismatch.dossier", "UNKNOWN"}, Edges: []string{"connect", "compare", "report", "hold"}, Transitions: []string{"experimental", "projected", "mismatch", "unknown"}},
+	"ontology.visual.package-resolution":        {Nodes: []string{"source.digest", "contract.digest", "toolchain.digest", "run.1", "run.2", "mismatch"}, Edges: []string{"pin", "replay", "compare", "block"}, Transitions: []string{"inputs", "identical", "changed-byte", "blocked"}},
+	"ontology.visual.incremental-conformance":   {Nodes: []string{"changed-surface", "six-digest-identity", "EXECUTE", "REUSE", "UNKNOWN", "REFUTED"}, Edges: []string{"identify", "route", "reuse-receipt", "close-alternatives"}, Transitions: []string{"changed", "identified", "reused", "inactive"}},
+	"ontology.visual.bootstrap-oracle":          {Nodes: []string{"observation", "meta-rule", "exact-head-ci", "dev", "post-adoption", "main-eligibility"}, Edges: []string{"observe", "change", "verify", "adopt", "promote"}, Transitions: []string{"bug", "rule", "ci", "dev", "receipt", "eligible"}},
+	"ontology.visual.promotion-lineage":         {Nodes: []string{"service.contract", "infra.facts", "proposed.gooo", "mismatch.dossier", "UNKNOWN"}, Edges: []string{"connect", "compare", "report", "hold"}, Transitions: []string{"experimental", "projected", "mismatch", "unknown"}},
 }
 
 type motionContract struct {
@@ -111,16 +111,16 @@ type motionContract struct {
 }
 
 var expectedMotion = map[string]motionContract{
-	"ontology.visual.intent-ir-lowering": {"source.gooo", "parse-lower-emit", "pass.receipt", "artifact-materialization"},
-	"ontology.visual.authority-boundary": {"declaration.text", "type-and-relate-semantic-ir", "typed.graph", "node-edge-materialization"},
-	"ontology.visual.munchausen-proof-choice": {"unordered.files", "canonicalize-package", "entry.receipt", "file-reorder-and-api-emission"},
-	"ontology.visual.claim-evidence-lifecycle": {"agent.intent", "handoff-by-receipt", "review.receipt", "lane-artifact-transfer"},
-	"ontology.visual.unknown-cause-descent": {"missing.evidence", "resolve-and-re-evaluate", "claim.closed", "unknown-fields-then-evidence"},
+	"ontology.visual.intent-ir-lowering":        {"source.gooo", "parse-lower-emit", "pass.receipt", "artifact-materialization"},
+	"ontology.visual.authority-boundary":        {"declaration.text", "type-and-relate-semantic-ir", "typed.graph", "node-edge-materialization"},
+	"ontology.visual.munchausen-proof-choice":   {"unordered.files", "canonicalize-package", "entry.receipt", "file-reorder-and-api-emission"},
+	"ontology.visual.claim-evidence-lifecycle":  {"agent.intent", "handoff-by-receipt", "review.receipt", "lane-artifact-transfer"},
+	"ontology.visual.unknown-cause-descent":     {"missing.evidence", "resolve-and-re-evaluate", "claim.closed", "unknown-fields-then-evidence"},
 	"ontology.visual.precedence-counterexample": {"unknown.claim", "rank-counterexample", "refuted.ledger", "counterexample-precedence"},
-	"ontology.visual.package-resolution": {"pinned.digests", "replay-and-compare", "adoption.blocked", "byte-change-detection"},
-	"ontology.visual.incremental-conformance": {"changed.subject", "route-by-six-digests", "reuse.receipt", "identity-router"},
-	"ontology.visual.bootstrap-oracle": {"observed.bug", "change-rule-and-gate", "main.eligible", "gated-receipt-cascade"},
-	"ontology.visual.promotion-lineage": {"service-and-infra.contract", "project-and-diff", "unknown.dossier", "proposed-mismatch-dossier"},
+	"ontology.visual.package-resolution":        {"pinned.digests", "replay-and-compare", "adoption.blocked", "byte-change-detection"},
+	"ontology.visual.incremental-conformance":   {"changed.subject", "route-by-six-digests", "reuse.receipt", "identity-router"},
+	"ontology.visual.bootstrap-oracle":          {"observed.bug", "change-rule-and-gate", "main.eligible", "gated-receipt-cascade"},
+	"ontology.visual.promotion-lineage":         {"service-and-infra.contract", "project-and-diff", "unknown.dossier", "proposed-mismatch-dossier"},
 }
 
 func main() {
