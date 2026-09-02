@@ -13,7 +13,7 @@ type options struct {
 }
 
 type strategyOptions struct {
-	strategyVerification, predecessorSHA, selectedProposal, githubAPI, output string
+	strategyVerification, predecessorSHA, requestedRoute, selectedProposal, githubAPI, output string
 }
 
 func main() {
@@ -29,6 +29,7 @@ func main() {
 	flag.StringVar(&value.replayPlan, "replay-plan", "", "independently replayed metric strategy plan")
 	flag.StringVar(&value.strategyVerification, "strategy-verification", "", "metric strategy verification receipt")
 	flag.StringVar(&value.predecessorSHA, "predecessor-sha", "", "merged predecessor commit")
+	flag.StringVar(&value.requestedRoute, "route", "", "requested branch route: dev or main")
 	flag.StringVar(&value.selectedProposal, "selected-proposal", "", "selected predecessor proposal contract")
 	flag.StringVar(&value.githubAPI, "github-api", os.Getenv("GITHUB_API_URL"), "GitHub API root")
 	flag.StringVar(&value.output, "output", "", "output JSON path")

@@ -9,12 +9,14 @@ type SelectionSource struct {
 	Repository                  string `json:"repository"`
 	CurrentSubjectSHA           string `json:"current_subject_sha"`
 	PredecessorSHA              string `json:"predecessor_sha"`
+	RequestedRoute              string `json:"requested_route"`
 	Decision                    string `json:"decision"`
 	Reason                      string `json:"reason"`
 	ReportDigest                string `json:"report_digest"`
 	RunID                       int64  `json:"run_id"`
 	RunAttempt                  int    `json:"run_attempt"`
 	HeadSHA                     string `json:"head_sha"`
+	HeadBranch                  string `json:"head_branch"`
 	Event                       string `json:"event"`
 	Status                      string `json:"status"`
 	Conclusion                  string `json:"conclusion"`
@@ -29,6 +31,9 @@ type SelectionSource struct {
 	ProposalReportDigest        string `json:"proposal_report_digest"`
 	ObservedRuns                int    `json:"observed_runs"`
 	ExactRuns                   int    `json:"exact_runs"`
+	OtherRouteRuns              int    `json:"other_route_runs"`
+	RouteUnknownRuns            int    `json:"route_unknown_runs"`
+	Contradictions              int    `json:"contradictions"`
 	ObservedArtifacts           int    `json:"observed_artifacts"`
 	ExactArtifacts              int    `json:"exact_artifacts"`
 	ObservedJobs                int    `json:"observed_jobs"`
