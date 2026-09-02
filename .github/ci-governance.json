@@ -3058,6 +3058,17 @@
         "scripts/metric-strategy/main.go",
         "scripts/metric-strategy/predecessor.go"
       ]
+    },
+    {
+      "branch": "agent/guardian-trusted-observer-recovery-20260903-rerun",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_trusted_observer_recovery_20260903.go",
+        "scripts/ci-proof/guardian.js",
+        "scripts/ci-proof/guardian_test.js"
+      ]
     }
   ],
   "protected_kernel_paths": [
