@@ -2,6 +2,12 @@ package packageexecution
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
 
+// Reject returns a sealed fail-closed receipt for an input or boundary error
+// discovered before package execution can begin.
+func Reject(request Request, reason string, diagnostics []Diagnostic) Receipt {
+	return reject(request, reason, "EXACT", diagnostics, nil, nil)
+}
+
 func baseReceipt(request Request, sources []SourceEvidence, events []Event) Receipt {
 	return Receipt{
 		Schema:      ReceiptSchema,

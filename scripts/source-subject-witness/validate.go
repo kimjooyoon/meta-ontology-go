@@ -7,7 +7,7 @@ func validateSource(report sourceReport, expectedSHA string) error {
 	if report.Meta.Schema != "gooo/indicator-report/v3" || report.Meta.Policy.Schema != "gooo/source-policy/v1" {
 		return sourceValidationFailure("SOURCE_SCHEMA_UNSUPPORTED", "MALFORMED_EVIDENCE", "restore-source-metrics")
 	}
-	if !report.Meta.Policy.ExemptProjectRootTopology || !report.Meta.Policy.ExemptProjectRootREADME {
+	if !report.Meta.Policy.ExemptProjectRootTopology || !report.Meta.Policy.ExemptWorkflowDiscoveryRoot || !report.Meta.Policy.ExemptProjectRootREADME {
 		return sourceValidationFailure("SOURCE_POLICY_INCOMPLETE", "MALFORMED_EVIDENCE", "restore-source-policy")
 	}
 	if report.Meta.Policy.MaxFileLines <= 0 || report.Meta.Policy.MaxFunctionLines <= 0 || report.Meta.Policy.MaxDirectDirectoryEntries < 0 {
