@@ -1638,6 +1638,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EXPECTED_ARTIFACT_NAME: feedback-predecessor-${{ github.event.pull_request.head.sha || github.sha }}
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EXPECTED_CANONICAL_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
         run: |
           probe_root="$(mktemp -d "$RUNNER_TEMP/coherence-boundary-probe.XXXXXX")"
           artifact_index="$probe_root/artifacts.json"
@@ -1668,10 +1669,10 @@ jobs:
           expected_report_digest="$(jq -r '.report.report_digest' "$extracted/predecessor-receipt-a.json")"
           test "$expected_report_digest" != null
           test "$expected_report_digest" != ""
-          jq -e --arg repository "$GITHUB_REPOSITORY" '
+          jq -e --arg repository "$GITHUB_REPOSITORY" --arg canonical_branch "$EXPECTED_CANONICAL_BRANCH" '
             .repository == $repository and
             (.predecessor_sha | test("^[0-9a-f]{40}$")) and
-            .canonical_branch == "main" and
+            .canonical_branch == $canonical_branch and
             .canonical_workflow == "CI [push full]" and
             (.candidates | length >= 1)
           ' "$extracted/predecessor-input-a.json" > /dev/null
