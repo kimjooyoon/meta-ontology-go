@@ -160,7 +160,7 @@ func smallNode(img *image.Paletted, x, y, w, h int, title, value string, c uint8
 	fill(img, x, y, x+w, y+h, panel)
 	stroke(img, x, y, x+w, y+h, c)
 	drawText(img, x+10, y+10, title, 1, c)
-	drawText(img, x+10, y+30, value, 1, textPrimary)
+	drawText(img, x+10, y+24, value, 1, textPrimary)
 	if active {
 		stroke(img, x+2, y+2, x+w-2, y+h-2, c)
 	}
@@ -218,8 +218,14 @@ func codeBlock(img *image.Paletted, x, y, w, h int, title string, lines []string
 	}
 	box(img, x, y, x+w, y+h, fillC, borderC)
 	drawText(img, x+12, y+10, title, 1, c)
+	lineScale := 1
+	lineStep := 16
+	if w >= 230 && len(lines) <= 2 {
+		lineScale = 2
+		lineStep = 22
+	}
 	for i, value := range lines {
-		drawText(img, x+12, y+30+i*16, value, 1, textPrimary)
+		drawText(img, x+12, y+30+i*lineStep, value, lineScale, textPrimary)
 	}
 }
 

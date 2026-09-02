@@ -58,9 +58,9 @@ func renderSourceToGo(img *image.Paletted, _ manifestScene, frame int) {
 	pIR := progress(frame, 5, 17)
 	pGo := progress(frame, 15, 28)
 	pReceipt := progress(frame, 26, 35)
-	codeBlock(img, 32, 150, 260, 132, "INPUT: ACTIVITY.GOOO", []string{"activity PayOrder(", "  Order) -> Receipt"}, cyan, frame > 1)
-	codeBlock(img, 350, 150, 246, 132, "LOWERED: SEMANTIC IR", []string{"activity=PayOrder", "in=Order", "out=Receipt"}, violet, pIR > 0.2)
-	codeBlock(img, 658, 112, 264, 150, "OUTPUT: GENERATED GO", []string{"// generated", "func PayOrder(", "  Order) Receipt {"}, teal, pGo > 0.2)
+	codeBlock(img, 32, 150, 260, 132, "INPUT: ACTIVITY.GOOO", []string{"activity PayOrder(", "Order -> Receipt"}, cyan, frame > 1)
+	codeBlock(img, 350, 150, 246, 132, "LOWERED: SEMANTIC IR", []string{"node PayOrder", "Order -> Receipt"}, violet, pIR > 0.2)
+	codeBlock(img, 658, 112, 264, 150, "OUTPUT: GENERATED GO", []string{"func PayOrder(", "Order) Receipt"}, teal, pGo > 0.2)
 	codeBlock(img, 658, 292, 264, 104, "RECEIPT.JSON", []string{"decision: PASS", "kind: interface", "writes: 0"}, amber, pReceipt > 0.2)
 	flow(img, 292, 216, 350, 216, cyan, pIR > 0.1)
 	flow(img, 596, 216, 658, 188, violet, pGo > 0.1)
@@ -91,7 +91,7 @@ func renderSemanticIR(img *image.Paletted, _ manifestScene, frame int) {
 	pNode := progress(frame, 3, 16)
 	pEdge := progress(frame, 12, 24)
 	pBackend := progress(frame, 22, 34)
-	codeBlock(img, 32, 178, 246, 136, "DECLARATION", []string{"entity Order", "activity PayOrder", "-> Receipt"}, cyan, frame > 2)
+	codeBlock(img, 32, 178, 246, 136, "DECLARATION", []string{"entity Order", "PayOrder -> Receipt"}, cyan, frame > 2)
 	box(img, 346, 120, 630, 356, panel, violet)
 	drawText(img, 364, 134, "INSPECTABLE SEMANTIC IR", 1, violet)
 	circle(img, 440, 212, 18, cyan)
@@ -110,8 +110,9 @@ func renderSemanticIR(img *image.Paletted, _ manifestScene, frame int) {
 	}
 	drawText(img, 548, 244, "used", 1, cyan)
 	drawText(img, 548, 346, "wasGeneratedBy", 1, teal)
-	codeBlock(img, 690, 172, 230, 142, "BACKEND", []string{"consume(IR)", "resolve IDs", "emit source map"}, teal, pBackend > 0.2)
+	codeBlock(img, 690, 172, 230, 142, "BACKEND", []string{"consume(IR)", "emit source map"}, teal, pBackend > 0.2)
 	flow(img, 630, 314, 690, 244, violet, pBackend > 0.1)
+	stateCard(img, 690, 332, 230, 78, "GRAPH READY", []string{"next: backend"}, teal, pBackend > 0.7, 's')
 	if pBackend > 0.1 {
 		labeledToken(img, moveInt(630, 690, pBackend), moveInt(314, 244, pBackend), "GRAPH", violet)
 	}
@@ -165,8 +166,8 @@ func renderAgentHandoff(img *image.Paletted, _ manifestScene, frame int) {
 	lane(img, 270, "COMPILER AGENT / OUTPUT WRITER", violet)
 	lane(img, 400, "REVIEWER AGENT / RECEIPT CONSUMER", amber)
 	codeBlock(img, 42, 154, 250, 92, "WRITES", []string{"main.gooo", "PayOrder(Order)"}, cyan, authorP > 0.2)
-	codeBlock(img, 354, 284, 250, 92, "CREATES", []string{"generated.go", "// generated", "func PayOrder"}, violet, compilerP > 0.2)
-	codeBlock(img, 674, 414-80, 250, 92, "READS", []string{"receipt.json", "subject SHA", "evidence digest"}, amber, reviewerP > 0.2)
+	codeBlock(img, 354, 284, 250, 92, "CREATES", []string{"generated.go", "func PayOrder"}, violet, compilerP > 0.2)
+	codeBlock(img, 674, 414-80, 250, 92, "READS", []string{"receipt.json", "subject SHA + digest"}, amber, reviewerP > 0.2)
 	line(img, 310, 200, 338, 330, cyan)
 	line(img, 622, 330, 658, 380, violet)
 	if authorP > 0.05 {
@@ -191,12 +192,12 @@ func renderUnknownResolution(img *image.Paletted, _ manifestScene, frame int) {
 	fieldsP := progress(frame, 2, 18)
 	resolverP := progress(frame, 16, 27)
 	evidenceP := progress(frame, 25, 35)
-	codeBlock(img, 34, 146, 254, 154, "MISSING ARTIFACT", []string{"claim_id: C-17", "artifact: absent", "decision: UNKNOWN"}, unknown, frame > 1)
-	box(img, 326, 112, 610, 356, panel, amber)
+	codeBlock(img, 34, 146, 254, 154, "MISSING ARTIFACT", []string{"CLAIM C-17", "ARTIFACT ABSENT"}, unknown, frame > 1)
+	box(img, 326, 112, 610, 370, panel, amber)
 	drawText(img, 344, 126, "UNKNOWN FIELDS", 1, amber)
 	fields := []struct{ name, value string; c uint8 }{{"stage", "verify", cyan}, {"step", "observe", violet}, {"reason", "absent", amber}, {"class", "direct", unknown}, {"next_operation", "restore", teal}, {"blocked_by", "artifact", coral}}
 	for i, f := range fields {
-		y := 164 + i*42
+		y := 150 + i*36
 		active := fieldsP > float64(i)/6
 		smallNode(img, 348, y, 248, 32, f.name, f.value, f.c, active)
 		if i < 5 && active {
@@ -221,8 +222,8 @@ func renderRefutationPrecedence(img *image.Paletted, _ manifestScene, frame int)
 	pRefuted := progress(frame, 9, 20)
 	pSelect := progress(frame, 18, 28)
 	pLedger := progress(frame, 26, 35)
-	codeBlock(img, 34, 158, 270, 126, "INCOMPLETE EVIDENCE", []string{"claim: C-17", "evidence: partial", "state: UNKNOWN"}, unknown, pUnknown > 0.2)
-	codeBlock(img, 34, 312, 270, 112, "COUNTEREXAMPLE", []string{"same claim: C-17", "clock order: invalid", "state: REFUTED"}, coral, pRefuted > 0.2)
+	codeBlock(img, 34, 158, 270, 126, "INCOMPLETE EVIDENCE", []string{"claim C-17", "partial -> UNKNOWN"}, unknown, pUnknown > 0.2)
+	codeBlock(img, 34, 312, 270, 112, "COUNTEREXAMPLE", []string{"claim C-17", "clock invalid -> REFUTED"}, coral, pRefuted > 0.2)
 	box(img, 350, 120, 608, 424, panel, violet)
 	drawText(img, 370, 136, "PRECEDENCE", 1, amber)
 	drawText(img, 370, 160, "REFUTED > UNKNOWN > CLOSED", 1, textPrimary)
@@ -245,7 +246,7 @@ func renderDeterministicReplay(img *image.Paletted, _ manifestScene, frame int) 
 	pRun := progress(frame, 10, 22)
 	pChange := progress(frame, 21, 29)
 	pBlock := progress(frame, 28, 35)
-	codeBlock(img, 32, 150, 254, 142, "PINNED INPUTS", []string{"source sha: aaa", "contract sha: bbb", "toolchain: ccc"}, cyan, pInputs > 0.2)
+	codeBlock(img, 32, 150, 254, 142, "PINNED INPUTS", []string{"source + contract SHA", "toolchain SHA"}, cyan, pInputs > 0.2)
 	codeBlock(img, 354, 126, 238, 132, "RUN 1", []string{"output.go sha: 111", "receipt sha: 222"}, violet, pRun > 0.2)
 	codeBlock(img, 354, 292, 238, 132, "RUN 2", []string{"output.go sha: 111", "receipt sha: 222"}, teal, pRun > 0.5)
 	box(img, 646, 126, 926, 424, panel, amber)
@@ -276,10 +277,10 @@ func renderDeterministicReplay(img *image.Paletted, _ manifestScene, frame int) 
 func renderIncrementalConformance(img *image.Paletted, _ manifestScene, frame int) {
 	pIdentity := progress(frame, 2, 13)
 	pRoute := progress(frame, 11, 23)
-	codeBlock(img, 32, 144, 258, 142, "CHANGED SURFACE", []string{"subject: C-17", "source sha: aaa", "contract sha: bbb"}, cyan, pIdentity > 0.2)
+	codeBlock(img, 32, 144, 258, 142, "CHANGED SURFACE", []string{"subject C-17", "source + contract SHA"}, cyan, pIdentity > 0.2)
 	box(img, 332, 126, 590, 430, panel, violet)
 	drawText(img, 350, 142, "SIX-DIGEST IDENTITY", 1, violet)
-	codeBlock(img, 350, 174, 224, 102, "REPLAY RECEIPT", []string{"replay_count: 2", "deterministic: true"}, teal, pIdentity > 0.4)
+	codeBlock(img, 350, 174, 224, 102, "REPLAY RECEIPT", []string{"replay count: 2", "deterministic"}, teal, pIdentity > 0.4)
 	diamond(img, 620, 246, 38, amber)
 	drawText(img, 594, 236, "ROUTE", 1, dark)
 	drawText(img, 596, 254, "CHECK", 1, dark)
@@ -293,7 +294,7 @@ func renderIncrementalConformance(img *image.Paletted, _ manifestScene, frame in
 	stateCard(img, 694, 380, 210, 68, "REFUTED", []string{"retain blocker"}, coral, false, 'x')
 	flow(img, 658, 246, 694, 254, violet, pRoute > 0.5)
 	if pRoute > 0.5 {
-		codeBlock(img, 350, 324, 224, 100, "SELECTED JOB", []string{"REUSE", "receipt: 222", "count: 2"}, violet, true)
+	codeBlock(img, 350, 324, 224, 100, "SELECTED JOB", []string{"REUSE receipt", "count: 2"}, violet, true)
 	}
 	drawText(img, 42, 346, "AFFECTED CHECK", 1, amber)
 	drawText(img, 182, 346, "-> REUSE RECEIPT", 1, violet)
@@ -336,8 +337,8 @@ func renderDomainProjection(img *image.Paletted, _ manifestScene, frame int) {
 	pDossier := progress(frame, 20, 31)
 	drawText(img, 40, 100, "EXPERIMENTAL / NOT YET CLOSED", 2, coral)
 	drawText(img, 42, 128, "PROPOSED DOMAIN PROJECTION", 1, amber)
-	codeBlock(img, 32, 164, 258, 126, "SERVICE CONTRACT", []string{"OpenAPI: /orders", "status: 200", "schema: Receipt"}, cyan, pInput > 0.2)
-	codeBlock(img, 32, 316, 258, 112, "INFRA FACTS", []string{"tofu show -json", "plan: present", "apply: forbidden"}, teal, pInput > 0.4)
+	codeBlock(img, 32, 164, 258, 126, "SERVICE CONTRACT", []string{"OpenAPI /orders", "Receipt schema"}, cyan, pInput > 0.2)
+	codeBlock(img, 32, 316, 258, 112, "INFRA FACTS", []string{"tofu show -json", "plan present"}, teal, pInput > 0.4)
 	box(img, 352, 148, 598, 426, panel, violet)
 	drawText(img, 372, 164, "PROPOSED GOOO CONTRACT", 1, violet)
 	drawText(img, 372, 192, "service Receipt", 2, cyan)
@@ -346,7 +347,7 @@ func renderDomainProjection(img *image.Paletted, _ manifestScene, frame int) {
 	line(img, 520, 208, 520, 244, amber)
 	arrow(img, 520, 244, amber)
 	if pContract > 0.2 {
-		codeBlock(img, 640, 198, 264, 116, "MISMATCH DOSSIER", []string{"service: Receipt.v2", "infra: Receipt.v1", "diff: schema"}, coral, true)
+		codeBlock(img, 640, 198, 264, 116, "MISMATCH DOSSIER", []string{"SERVICE V2", "INFRA V1 -> DIFF"}, coral, true)
 		flow(img, 598, 258, 640, 258, violet, true)
 	}
 	if pDossier > 0.2 {
