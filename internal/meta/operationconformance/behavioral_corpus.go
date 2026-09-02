@@ -29,6 +29,9 @@ var fixedBehavioralCases = []BehavioralCase{
 	{"header-byte-drift", "HEADER", DecisionBlock, fixedIndicators[2].ID, DecisionFail},
 	{"import-identity-drift", "IMPORT", DecisionBlock, fixedIndicators[3].ID, DecisionFail},
 	{"initialization-order-drift", "ORDER", DecisionBlock, fixedIndicators[4].ID, DecisionFail},
+	{"duplicate-body-identity", "DUPLICATE_BODY", DecisionBlock, fixedIndicators[4].ID, DecisionFail},
+	{"duplicate-original-ordinal", "DUPLICATE_ORDINAL", DecisionBlock, fixedIndicators[4].ID, DecisionFail},
+	{"exchanged-original-ordinal", "ORDINAL_EXCHANGE", DecisionBlock, fixedIndicators[4].ID, DecisionFail},
 	{"package-name-drift", "PACKAGE", DecisionBlock, fixedIndicators[5].ID, DecisionFail},
 	{"incomplete-evidence", "EVIDENCE_MISSING", DecisionBlock, fixedIndicators[0].ID, DecisionUnknown},
 }
@@ -39,7 +42,7 @@ func ParseBehavioralCorpus(raw []byte) (BehavioralCorpus, error) {
 		return corpus, err
 	}
 	if corpus.Schema != BehavioralCorpusSchema || corpus.ContractID != ContractID ||
-		corpus.Version != BehavioralCorpusVersion || corpus.CaseCount != 8 ||
+		corpus.Version != BehavioralCorpusVersion || corpus.CaseCount != 11 ||
 		!reflect.DeepEqual(corpus.Cases, fixedBehavioralCases) {
 		return corpus, fmt.Errorf("FAIL_CLOSED: SplitGo behavioral corpus drift")
 	}

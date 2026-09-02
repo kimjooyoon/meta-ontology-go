@@ -1,0 +1,22 @@
+package metapolicycompilation
+namespace metapolicycompilation
+
+entity PolicyInput id "gooo://meta-policy-compilation/entity/policy-input"
+entity ProducerEvidence id "gooo://meta-policy-compilation/entity/producer-evidence"
+entity ConsumerEvidence id "gooo://meta-policy-compilation/entity/consumer-evidence"
+entity GeneratedJudgeArtifact id "gooo://meta-policy-compilation/entity/generated-judge-artifact"
+entity IndependentVerification id "gooo://meta-policy-compilation/entity/independent-verification"
+entity ProofSelection id "gooo://meta-policy-compilation/entity/proof-selection"
+entity ClaimLedger id "gooo://meta-policy-compilation/entity/claim-ledger"
+entity DecisionReduction id "gooo://meta-policy-compilation/entity/decision-reduction"
+entity LineageReceipt id "gooo://meta-policy-compilation/entity/lineage-receipt"
+
+activity BindProducer(PolicyInput) -> ProducerEvidence computes "policy-compilation:v3|role=PRODUCER|meta-operation=bind-policy-source|proof-choice=source-ir-digest|stage=PRODUCE|step=1|reason=SOURCE_BOUND|claim=source-bound"
+activity BindConsumer(ProducerEvidence) -> ConsumerEvidence computes "policy-compilation:v3|role=CONSUMER|meta-operation=bind-compiled-artifact|proof-choice=artifact-source-equivalence|stage=CONSUME|step=2|reason=ARTIFACT_BOUND|claim=artifact-digest-bound"
+activity CompileGeneratedJudge(PolicyInput) -> GeneratedJudgeArtifact computes "policy-compilation:v3|role=META_OPERATION|meta-operation=compile-generated-judge|proof-choice=policy-semantic-preservation|stage=COMPILE|step=3|reason=JUDGE_COMPILED|claim=generated-execution"
+activity RunIndependentVerifier(ConsumerEvidence) -> IndependentVerification computes "policy-compilation:v3|role=CONSUMER|meta-operation=run-independent-verifier|proof-choice=independent-reexecution|stage=VERIFY|step=4|reason=INDEPENDENT_VERIFIED|claim=independent-replay"
+activity SelectSemanticProof(PolicyInput) -> ProofSelection computes "policy-compilation:v3|role=PROOF|meta-operation=select-semantic-equivalence|proof-choice=SEMANTIC_EQUIVALENCE_WITH_INDEPENDENT_EXECUTION|stage=PROVE|step=5|reason=PROOF_SELECTED|claim=proof-selection"
+activity RecordClaimTransition(PolicyInput) -> ClaimLedger computes "policy-compilation:v3|role=META_OPERATION|meta-operation=record-claim-transition|proof-choice=append-only-ledger|stage=LEDGER|step=6|reason=CLAIM_TRANSITION_RECORDED|claim=ledger-chain"
+activity ReduceDecision(GeneratedJudgeArtifact, IndependentVerification) -> DecisionReduction computes "policy-compilation:v3|role=META_OPERATION|meta-operation=reduce-decision|proof-choice=fail-closed-reconciliation|stage=REDUCE|step=7|reason=DECISION_REDUCED|claim=decision-reduction|decision-reduction=decision-reduction:v2;denominator=8;UNRECOGNIZED_TOP_LEVEL_DECISION:FAIL_CLOSED:REDUCE:7:FEEDBACK_COVERAGE_DECISION_UNKNOWN:NONE:NONE:NONE;SOURCE_DIGEST_MISMATCH:FAIL_CLOSED:REDUCE:7:SOURCE_DIGEST_MISMATCH:NONE:NONE:NONE;ARTIFACT_SOURCE_MISMATCH:FAIL_CLOSED:CONSUME:2:ARTIFACT_SOURCE_MISMATCH:NONE:NONE:NONE;INDEPENDENT_SOURCE_MISMATCH:FAIL_CLOSED:VERIFY:4:INDEPENDENT_SOURCE_MISMATCH:NONE:NONE:NONE;EVIDENCE_UNAVAILABLE:UNKNOWN:VERIFY:4:EVIDENCE_UNAVAILABLE:EVIDENCE_UNAVAILABLE:collect-policy-evidence:producer-evidence,consumer-evidence;DIGEST_UNAVAILABLE:UNKNOWN:LOWER_RESOLUTION:4:DIGEST_UNAVAILABLE:DIGEST_UNAVAILABLE:collect-policy-evidence:producer-evidence,consumer-evidence;MALFORMED_DIGEST:UNKNOWN:LOWER_RESOLUTION:4:MALFORMED_DIGEST:MALFORMED_INPUT:repair-digest-evidence:well-formed-sha256-digests;SEMANTIC_EQUIVALENCE:PASS:REDUCE:7:SEMANTIC_EQUIVALENCE_PROVED:NONE:NONE:NONE"
+activity BindLineage(DecisionReduction) -> LineageReceipt computes "policy-compilation:v3|role=CONSUMER|meta-operation=bind-lineage-receipt|proof-choice=lineage-receipt|stage=RECEIPT|step=8|reason=LINEAGE_BOUND|claim=lineage-seal"
+

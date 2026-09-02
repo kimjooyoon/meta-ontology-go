@@ -11,6 +11,8 @@ func classifyOperationReceipt(
 			report.UnknownIndicatorIDs,
 			actionObligationID(action.IndicatorID, "receipt"),
 		)
+		report.Unknowns = append(report.Unknowns,
+			malformedReceiptUnknown(action, "receipt", ReceiptUnknownClassMalformedEvidence))
 		return
 	}
 	indicators, valid := indicatorReceiptIndex(receipt.Indicators)
@@ -19,6 +21,8 @@ func classifyOperationReceipt(
 			report.UnknownIndicatorIDs,
 			actionObligationID(action.IndicatorID, "indicator-set"),
 		)
+		report.Unknowns = append(report.Unknowns,
+			malformedReceiptUnknown(action, "indicator-set", ReceiptUnknownClassMalformedEvidence))
 		return
 	}
 	required := make(map[string]struct{}, len(action.RequiredIndicatorIDs))
@@ -28,11 +32,14 @@ func classifyOperationReceipt(
 		obligation := actionObligationID(action.IndicatorID, identifier)
 		if !exists {
 			report.MissingIndicatorIDs = append(report.MissingIndicatorIDs, obligation)
+			report.Unknowns = append(report.Unknowns, missingReceiptUnknown(action, identifier))
 			continue
 		}
 		if observation.ProofChoice != action.ProofChoice ||
 			!validDigest(observation.EvidenceDigest) {
 			report.UnknownIndicatorIDs = append(report.UnknownIndicatorIDs, obligation)
+			report.Unknowns = append(report.Unknowns,
+				malformedReceiptUnknown(action, identifier, ReceiptUnknownClassMalformedEvidence))
 			continue
 		}
 		switch observation.Verdict {
@@ -41,8 +48,12 @@ func classifyOperationReceipt(
 			report.RejectedIndicatorIDs = append(report.RejectedIndicatorIDs, obligation)
 		case IndicatorVerdictUnknown:
 			report.UnknownIndicatorIDs = append(report.UnknownIndicatorIDs, obligation)
+			report.Unknowns = append(report.Unknowns,
+				malformedReceiptUnknown(action, identifier, ReceiptUnknownClassUnexpectedEvidence))
 		default:
 			report.UnknownIndicatorIDs = append(report.UnknownIndicatorIDs, obligation)
+			report.Unknowns = append(report.Unknowns,
+				malformedReceiptUnknown(action, identifier, ReceiptUnknownClassUnexpectedEvidence))
 		}
 	}
 	for identifier := range indicators {
@@ -64,6 +75,9 @@ func receiptMatchesAction(plan Plan, action Action, receipt OperationReceipt) bo
 		receipt.IndicatorDecisionLedgerCount == ledgerCount &&
 		receipt.ActionIndicatorID == action.IndicatorID &&
 		receipt.Operation == action.Operation &&
+		receipt.Activity == action.Activity &&
+		receipt.Output == action.Output &&
+		receipt.Executor == action.Executor &&
 		receipt.Evaluator == action.Evaluator &&
 		receipt.ProofChoice == action.ProofChoice &&
 		validDigest(receipt.ReceiptDigest) &&

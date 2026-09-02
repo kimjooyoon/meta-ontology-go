@@ -5,10 +5,14 @@ import (
 	"strings"
 )
 
-func collectDeclarations(model *Model, declarations []Declaration) (map[string]ID, map[ID]struct{}, error) {
+func collectDeclarations(model *Model, declarations []Declaration, allowImplicitActivityPorts bool) (map[string]ID, map[ID]struct{}, error) {
 	names := make(map[string]ID)
 	ids := make(map[ID]struct{}, len(declarations))
-	for _, declaration := range declarations {
+	allDeclarations := append([]Declaration(nil), declarations...)
+	if allowImplicitActivityPorts {
+		allDeclarations = append(allDeclarations, implicitEntityDeclarations(declarations, model.Namespace)...)
+	}
+	for _, declaration := range allDeclarations {
 		if declaration.Kind == "" || strings.TrimSpace(declaration.Name) == "" {
 			return nil, nil, fmt.Errorf("declaration %q has empty kind or name", declaration.Name)
 		}

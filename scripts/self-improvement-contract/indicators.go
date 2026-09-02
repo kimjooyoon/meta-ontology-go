@@ -52,6 +52,11 @@ func contractIndicators(result analysis, replay bool) []Indicator {
 			Value: fmt.Sprint(result.TrilemmaOK), Limit: "true",
 		},
 		{
+			ID: "coherence.read-only-language-observation", Route: "COHERENCE",
+			Verdict: verdict(result.ObservationOK), Relation: "=",
+			Value: fmt.Sprint(result.ObservationOK), Limit: "true",
+		},
+		{
 			ID: "regression.canonical-replay", Route: "REGRESSION",
 			Verdict: verdict(replay), Relation: "=",
 			Value: fmt.Sprint(replay), Limit: "true",

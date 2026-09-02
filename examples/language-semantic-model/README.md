@@ -2,11 +2,13 @@
 
 This use case produces a deterministic, read-only receipt for the staged Gooo semantic model.
 
-The fixed denominator is 22 cases:
+The fixed denominator is 32 cases:
 
-- 16 repository `.gooo` files lowered twice to normalized `semantic.IR`
+- 27 repository `.gooo` files lowered twice to normalized `semantic.IR`
 - 3 authority laws derived from an observed IR
 - 2 fail-closed syntax rejections inherited from the exact-head syntax receipt
+
+The accepted upstream coordinate is 30 syntax cases over 33 observed `.gooo` files, 428 physical lines, and 2 package units. Package members remain package inputs rather than additional standalone semantic models.
 
 The receipt exposes 19 indicators: 1 outcome, 10 drivers, and 8 guardrails. A static file or catalog row cannot satisfy the result. The producer is `languagesemantic.Evaluate`, the consumer is `self-improvement-cycle`, and every indicator names its meta-operation.
 

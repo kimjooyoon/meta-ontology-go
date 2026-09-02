@@ -9,13 +9,14 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 			return definition{}, fmt.Errorf("root README metric requires project-root subject")
 		}
 		if policy.ExemptProjectRootREADME {
-			return definition{family: FamilyDocumentation, relation: RelationObserve,
-				proof: ProofFoundation, operation: OperationExemptRootREADME,
-				consumer: "metric-meta-program"}, nil
+			return definition{family: FamilyDocumentation, relation: RelationObserve, proof: ProofFoundation, operation: OperationExemptRootREADME, consumer: "metric-meta-program"}, nil
 		}
 		return definition{family: FamilyDocumentation, limit: 1, relation: RelationEqual,
 			blocking: true, proof: ProofFoundation, operation: OperationRequireRootREADME,
 			consumer: "repository-documenter"}, nil
+	}
+	if observation.Subject == ".github/workflows" && observation.Dimension == DimensionDirectEntries && observation.Detail == WorkflowDiscoveryObservationDetail {
+		return definition{family: FamilyTopology, relation: RelationObserve, proof: ProofFoundation, operation: OperationPreserveWorkflow, consumer: "github-actions"}, nil
 	}
 	if policy.ExemptProjectRootTopology && observation.Subject == "." {
 		switch observation.Dimension {
@@ -25,6 +26,9 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 				consumer: "repository-projector"}, nil
 		}
 	}
+	if definition, ok := workflowRootDefinition(policy, observation); ok {
+		return definition, nil
+	}
 	switch observation.Dimension {
 	case DimensionGoFiles, DimensionGoooFiles, DimensionGoLines, DimensionGoooLines:
 		return observe, nil
@@ -32,11 +36,11 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 		observe.family = FamilyTopology
 		return observe, nil
 	case DimensionGoFileLines:
-		return capDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGo, "source-splitter"), nil
+		return driverCapDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGo, "source-splitter"), nil
 	case DimensionGoooFileLines:
-		return capDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGooo, "source-splitter"), nil
+		return driverCapDefinition(FamilyVolume, policy.MaxFileLines, OperationSplitGooo, "source-splitter"), nil
 	case DimensionFunctionLines:
-		return capDefinition(FamilyDuplication, policy.MaxFunctionLines, OperationExtractFunction, "function-extractor"), nil
+		return driverCapDefinition(FamilyDuplication, policy.MaxFunctionLines, OperationExtractFunction, "function-extractor"), nil
 	case DimensionDirectEntries:
 		if policy.MaxDirectDirectoryIn == 0 {
 			observe.family = FamilyTopology
@@ -67,7 +71,6 @@ func definitionFor(policy Policy, observation Observation) (definition, error) {
 func capDefinition(family Family, limit int, operation Operation, consumer string) definition {
 	return definition{family: family, limit: limit, relation: RelationLessOrEqual, blocking: true, proof: ProofFoundation, operation: operation, consumer: consumer}
 }
-
-func candidateDefinition(operation Operation) definition {
-	return definition{family: FamilyRefactor, relation: RelationEqual, blocking: false, proof: ProofRegression, operation: operation, consumer: "refactor-planner"}
+func driverCapDefinition(family Family, limit int, operation Operation, consumer string) definition {
+	return definition{family: family, limit: limit, relation: RelationLessOrEqual, role: IndicatorRoleDriver, proof: ProofFoundation, operation: operation, consumer: consumer}
 }

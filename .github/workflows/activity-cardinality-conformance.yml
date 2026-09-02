@@ -1,0 +1,123 @@
+name: Activity cardinality conformance
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: activity-cardinality-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify immutable selection evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          lock=examples/activity-cardinality-resolution/denominator.json
+          repository=$(jq -r '.selection_evidence.repository' "$lock")
+          tag=$(jq -r '.selection_evidence.tag' "$lock")
+          tag_object=$(jq -r '.selection_evidence.tag_object_sha' "$lock")
+          target=$(jq -r '.selection_evidence.target_commit_sha' "$lock")
+          asset_name=$(jq -r '.selection_evidence.asset_name' "$lock")
+          digest=$(jq -r '.selection_evidence.asset_sha256' "$lock")
+          gh api "repos/$repository/git/ref/tags/$tag" > "$RUNNER_TEMP/selection-ref.json"
+          jq -e --arg sha "$tag_object" '.object.type=="tag" and .object.sha==$sha' "$RUNNER_TEMP/selection-ref.json" >/dev/null
+          gh api "repos/$repository/git/tags/$tag_object" > "$RUNNER_TEMP/selection-tag.json"
+          jq -e --arg sha "$target" '.object.type=="commit" and .object.sha==$sha' "$RUNNER_TEMP/selection-tag.json" >/dev/null
+          gh api "repos/$repository/releases/tags/$tag" > "$RUNNER_TEMP/selection-release.json"
+          asset_id=$(jq -r --arg name "$asset_name" '.assets[]|select(.name==$name)|.id' "$RUNNER_TEMP/selection-release.json")
+          gh api -H 'Accept: application/octet-stream' "repos/$repository/releases/assets/$asset_id" > "$RUNNER_TEMP/selection-evidence.json"
+          printf '%s  %s\n' "$digest" "$RUNNER_TEMP/selection-evidence.json" | sha256sum -c -
+          jq -e --arg target "$target" '.decision=="CORE_IMPROVEMENT_SELECTED" and .subject.sha==$target and .candidate.id=="GOOO_CORE_ACTIVITY_CARDINALITY_RESOLUTION_V1" and .candidate.implementation_status=="NOT_IMPLEMENTED"' "$RUNNER_TEMP/selection-evidence.json" >/dev/null
+      - name: Build compiler and bind meta denominator
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go build -o "$RUNNER_TEMP/gooo" ./cmd/gooo
+          source=examples/activity-cardinality-resolution/main.gooo
+          denominator=examples/activity-cardinality-resolution/denominator.json
+          "$RUNNER_TEMP/gooo" check "$source"
+          "$RUNNER_TEMP/gooo" graph dump "$source" > "$RUNNER_TEMP/activity-graph.json"
+          jq -e --slurpfile denominator "$denominator" '
+            ([.nodes[]|select(.kind=="Activity")|.name]|sort) as $activities |
+            ($denominator[0].cells|map(.activity)|sort) as $declared |
+            $activities==$declared and ($activities|length)==12 and
+            ($denominator[0].summary.proof_choices=={"FOUNDATION":4,"COHERENCE":4,"REGRESSION":4}) and
+            ($denominator[0].summary.indicator_classes=={"OUTCOME":3,"DRIVER":5,"GUARDRAIL":4})
+          ' "$RUNNER_TEMP/activity-graph.json" >/dev/null
+      - name: Resolve zero one and many without repository writes
+        run: |
+          set -euo pipefail
+          source=examples/activity-cardinality-resolution/main.gooo
+          denominator=examples/activity-cardinality-resolution/denominator.json
+          out="$RUNNER_TEMP/activity-cardinality"
+          mkdir -p "$out/cells"
+          snapshot() {
+            find "$GITHUB_WORKSPACE" -path "$GITHUB_WORKSPACE/.git" -prune -o -type f -print0 |
+              sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}'
+          }
+          before=$(snapshot)
+          while IFS=$'\t' read -r id activity; do
+            "$RUNNER_TEMP/gooo" graph resolve-activity "$source" --namespace activitycardinalityresolution --name "$activity" > "$out/cells/$id.json"
+            jq -e --arg activity "$activity" '.decision=="CLOSED" and .occurrences==1 and .matches[0].name==$activity and .claim.stage=="RESOLUTION" and .claim.step=="RESOLVE_ACTIVITY_CARDINALITY" and .claim.reason=="ACTIVITY_UNIQUELY_RESOLVED" and .claim.proof_choice=="COHERENCE" and .subject.source_status=="bound"' "$out/cells/$id.json" >/dev/null
+          done < <(jq -r '.cells[]|[.id,.activity]|@tsv' "$denominator")
+          first="$out/cells/selector-contract.json"
+          start_ns=$(date +%s%N)
+          /usr/bin/time -f '%M' -o "$out/peak-rss-kib.txt" "$RUNNER_TEMP/gooo" graph resolve-activity "$source" --namespace activitycardinalityresolution --name ObserveSelectorContract > "$out/replay.json"
+          end_ns=$(date +%s%N)
+          echo $(( (end_ns-start_ns)/1000000 )) > "$out/wall-ms.txt"
+          cmp -s "$first" "$out/replay.json"
+          if "$RUNNER_TEMP/gooo" graph resolve-activity "$source" --name MissingActivity > "$out/zero.json"; then exit 1; fi
+          jq -e '.decision=="UNKNOWN" and .occurrences==0 and .claim.unknown_class=="DIRECT_MISSING" and .claim.reason=="ACTIVITY_NOT_FOUND" and .claim.proof_choice=="FOUNDATION"' "$out/zero.json" >/dev/null
+          if "$RUNNER_TEMP/gooo" graph resolve-activity "$source" --namespace activitycardinalityresolution > "$out/many.json"; then exit 1; fi
+          jq -e '.decision=="REFUTED" and .occurrences==12 and .claim.reason=="AMBIGUOUS_ACTIVITY_BINDING" and .claim.proof_choice=="REGRESSION" and ([.matches[].id]|sort)==[.matches[].id]' "$out/many.json" >/dev/null
+          after=$(snapshot)
+          if test "$before" = "$after"; then writes=0; else writes=1; fi
+          cp "$RUNNER_TEMP/selection-evidence.json" "$out/selected-candidate.json"
+          cp "$RUNNER_TEMP/activity-graph.json" "$out/activity-graph.json"
+          cp "$denominator" "$out/denominator.json"
+          jq -S -n --slurpfile denominator "$denominator" --slurpfile one "$first" --slurpfile zero "$out/zero.json" --slurpfile many "$out/many.json" \
+            --arg subject_sha "$SUBJECT_SHA" --arg before "$before" --arg after "$after" --argjson writes "$writes" \
+            --argjson peak_rss_kib "$(cat "$out/peak-rss-kib.txt")" --argjson wall_ms "$(cat "$out/wall-ms.txt")" '
+            {schema:"gooo/activity-cardinality-conformance/v1",decision:"CONFORMANT",subject_sha:$subject_sha,
+             candidate:{id:$denominator[0].selection_evidence.candidate_id,implementation_status:"IMPLEMENTED_FOR_CORE_EVALUATION"},
+             summary:{denominator_total:($denominator[0].cells|length),closed_selectors:12,unknown_selectors:1,refuted_selectors:1},
+             proof_choices:$denominator[0].summary.proof_choices,indicator_classes:$denominator[0].summary.indicator_classes,
+             states:{zero:{decision:$zero[0].decision,occurrences:$zero[0].occurrences,reason:$zero[0].claim.reason},one:{decision:$one[0].decision,occurrences:$one[0].occurrences,reason:$one[0].claim.reason},many:{decision:$many[0].decision,occurrences:$many[0].occurrences,reason:$many[0].claim.reason}},
+             runtime:{peak_rss_kib:$peak_rss_kib,wall_ms:$wall_ms},repository:{before_digest:$before,after_digest:$after,writes:$writes},deterministic_replay:true,local_tests_run:0}
+          ' > "$out/report.json"
+          jq -e '.decision=="CONFORMANT" and .summary=={denominator_total:12,closed_selectors:12,unknown_selectors:1,refuted_selectors:1} and .proof_choices=={"FOUNDATION":4,"COHERENCE":4,"REGRESSION":4} and .indicator_classes=={"OUTCOME":3,"DRIVER":5,"GUARDRAIL":4} and .repository.writes==0 and .deterministic_replay and .local_tests_run==0' "$out/report.json" >/dev/null
+          sha256sum "$out"/*.json "$out"/cells/*.json > "$out/manifest.sha256"
+          jq -r '"### Activity cardinality resolution\n- denominator: \(.summary.closed_selectors)/\(.summary.denominator_total) CLOSED\n- zero: \(.states.zero.decision) / \(.states.zero.reason)\n- one: \(.states.one.decision) / \(.states.one.reason)\n- many: \(.states.many.decision) / \(.states.many.reason)\n- peak RSS: \(.runtime.peak_rss_kib) KiB\n- wall: \(.runtime.wall_ms) ms\n- repository writes: \(.repository.writes)\n- local tests: \(.local_tests_run)"' "$out/report.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload cardinality evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: activity-cardinality-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/activity-cardinality
+          if-no-files-found: error

@@ -9,12 +9,13 @@ import (
 func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document, namespace semantic.Namespace) (map[string]semantic.ID, map[ID]semantic.ID, error) {
 	names := make(map[string]semantic.ID)
 	ids := make(map[ID]semantic.ID, len(document.Declarations))
-	for _, declaration := range document.Declarations {
+	declarations := append([]Declaration(nil), document.Declarations...)
+	if document.ImplicitActivityPorts {
+		declarations = append(declarations, implicitEntityDeclarations(document.Declarations, namespace.String())...)
+	}
+	for _, declaration := range declarations {
 		if err := checkLowerContext(ctx); err != nil {
 			return nil, nil, err
-		}
-		if len(declaration.Attributes) > 0 {
-			return nil, nil, fmt.Errorf("semantic IR does not support declaration attributes")
 		}
 		id, err := declarationIdentity(namespace.String(), declaration)
 		if err != nil {
@@ -30,6 +31,9 @@ func lowerDocumentNodes(ctx context.Context, ir *semantic.IR, document Document,
 		}
 		node, err := semantic.NewNode(kind, semanticID, namespace, declaration.Name)
 		if err != nil {
+			return nil, nil, err
+		}
+		if err := bindSemanticValueProgram(declaration, &node); err != nil {
 			return nil, nil, err
 		}
 		if len(declaration.Fields) > 0 {

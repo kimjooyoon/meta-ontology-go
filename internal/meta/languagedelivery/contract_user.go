@@ -13,6 +13,6 @@ func baseUserObligations() []Obligation {
 		obligation("USER-RUNTIME-FAILURE-DIAGNOSTIC", AudienceUser, ClassOutcome, "observe a fail-closed runtime error", rule(SourceExecution, EvidenceExecution, "", "diagnostic_rejections", 2), "reject-source-runtime-failure", ProofRegression),
 		obligation("USER-MULTI-FILE-EXECUTION", AudienceUser, ClassOutcome, "execute a multi-file package", missing(), "require-multi-file-execution", ProofCoherence),
 		obligation("USER-EXTERNAL-DEPENDENCY-EXECUTION", AudienceUser, ClassOutcome, "execute a program with an external dependency", missing(), "require-external-dependency-execution", ProofRegression),
-		obligation("USER-LANGUAGE-TEST", AudienceUser, ClassOutcome, "run a language-level test", missing(), "require-language-test-receipt", ProofRegression),
+		obligation("USER-LANGUAGE-TEST", AudienceUser, ClassOutcome, "run a language-level test", rule(SourceTest, EvidenceTest, "", "passed_tests", 2), "reduce-language-test-receipt", ProofRegression),
 	}
 }

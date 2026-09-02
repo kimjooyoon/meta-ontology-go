@@ -40,7 +40,7 @@ runs:
           physical_root="$GITHUB_WORKSPACE"
           physical_checkout=true
         else
-          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector/command \
             --root "$GITHUB_WORKSPACE" --work "$projector_work" \
             --expected-sha "${{ inputs.expected-sha }}")
           physical_root="$projector_work/physical"
@@ -57,7 +57,7 @@ runs:
           --evidence "$activation_evidence"
         if test "$physical_checkout" = true; then
           export GIT_DIR="$git_dir" GIT_WORK_TREE="$GITHUB_WORKSPACE" GIT_INDEX_FILE="$git_index"
-          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector \
+          (cd "$GITHUB_WORKSPACE" && go run ./bootstrap/repository-projector/command \
             --root "$GITHUB_WORKSPACE" --work "$projector_work" \
             --expected-sha "${{ inputs.expected-sha }}")
         fi

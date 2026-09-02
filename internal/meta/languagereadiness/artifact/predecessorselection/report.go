@@ -41,6 +41,7 @@ type Report struct {
 	PredecessorSHA string     `json:"predecessor_sha"`
 	Decision       string     `json:"decision"`
 	Reason         string     `json:"reason"`
+	Pagination     Pagination `json:"pagination"`
 	Selected       *Selection `json:"selected,omitempty"`
 	Summary        Summary    `json:"summary"`
 	Proofs         []Proof    `json:"proofs"`

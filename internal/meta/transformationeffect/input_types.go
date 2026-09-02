@@ -41,18 +41,34 @@ type Result struct {
 }
 
 type executionResult struct {
-	effects    []Effect
-	receipts   generation.ReceiptReport
-	provenance generation.ArtifactProvenance
-	baseline   workspace.State
-	final      workspace.State
-	patch      workspace.Patch
+	effects                   []Effect
+	failures                  []generation.ObservationFailure
+	receipts                  generation.ReceiptReport
+	provenance                generation.ArtifactProvenance
+	selectedPlanOperations    int
+	boundExecutorOperations   int
+	unboundExecutorOperations int
+	baseline                  workspace.State
+	final                     workspace.State
+	patch                     workspace.Patch
 }
 
 func effectFor(action generation.Action, before, after workspace.State, changes []workspace.Change, evidence, receipt string) Effect {
 	return Effect{ActionIndicatorID: action.IndicatorID, MetricID: string(action.MetricID), Subject: action.Subject,
-		SubjectKind: string(action.SubjectKind), Operation: string(action.Operation), Executor: action.Executor,
+		SubjectKind: string(action.SubjectKind), Operation: string(action.Operation), Activity: action.Activity,
+		Output: action.Output, Executor: action.Executor,
 		Evaluator: action.Evaluator, ProofChoice: string(action.ProofChoice), BeforeTreeDigest: before.Digest,
 		AfterTreeDigest: after.Digest, ChangedPathCount: len(changes), ChangedPathDigest: hashJSON(changes),
 		ResidualActionable: 0, EvaluatorEvidence: evidence, ReceiptDigest: receipt, Status: "APPLIED"}
+}
+
+func effectForFailure(action generation.Action, before workspace.State, failure generation.ObservationFailure) Effect {
+	changes := []workspace.Change{}
+	evidence := hashJSON(failure)
+	return Effect{ActionIndicatorID: action.IndicatorID, MetricID: string(action.MetricID), Subject: action.Subject,
+		SubjectKind: string(action.SubjectKind), Operation: string(action.Operation), Activity: action.Activity,
+		Output: action.Output, Executor: action.Executor,
+		Evaluator: action.Evaluator, ProofChoice: string(action.ProofChoice), BeforeTreeDigest: before.Digest,
+		AfterTreeDigest: before.Digest, ChangedPathDigest: hashJSON(changes), EvaluatorEvidence: evidence,
+		ReceiptDigest: evidence, Status: failure.Decision}
 }

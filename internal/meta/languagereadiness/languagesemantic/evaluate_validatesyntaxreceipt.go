@@ -2,6 +2,7 @@ package languagesemantic
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func validateSyntaxReceipt(receipt syntaxReceipt, expectedHead string) error {
@@ -40,17 +41,14 @@ func validateSyntaxReceipt(receipt syntaxReceipt, expectedHead string) error {
 }
 
 func validateSyntaxPackages(units []syntaxPackageUnit) error {
-	if len(units) != expectedPackageUnits {
-		return fmt.Errorf("syntax evidence contains %d package units, want %d", len(units), expectedPackageUnits)
+	expected := expectedSyntaxPackageUnits()
+	if len(units) != len(expected) {
+		return fmt.Errorf("syntax evidence contains %d package units, want %d", len(units), len(expected))
 	}
-	unit := units[0]
-	if unit.ID != "billing-package" || unit.Path != "examples/billing-package" || unit.Entry != "PayOrder" ||
-		unit.ReportSchema != "gooo/language-package-execution-report/v1" ||
-		unit.MetaReducer != "languagepackageexecution.Evaluate" ||
-		unit.SourceFilesIndicator != "PACKAGE_SOURCE_FILES" || unit.ExecutionIndicator != "PACKAGE_EXECUTIONS" ||
-		len(unit.Members) != expectedPackageFiles || unit.Members[0] != "examples/billing-package/activity.gooo" ||
-		unit.Members[1] != "examples/billing-package/entities.gooo" {
-		return fmt.Errorf("syntax evidence package-unit binding is not canonical")
+	for index := range expected {
+		if !reflect.DeepEqual(units[index], expected[index]) {
+			return fmt.Errorf("syntax evidence package-unit binding %d is not canonical", index)
+		}
 	}
 	return nil
 }

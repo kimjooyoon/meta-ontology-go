@@ -3,6 +3,7 @@ package bidir
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -30,6 +31,9 @@ func validateExactFieldSpans(field Field) error {
 		return errors.New("field subspans cross source snapshots")
 	}
 	ordered := []SourceSpan{field.IDSpan, field.NameSpan, field.TypeRefSpan, field.PresenceSpan, field.CardinalitySpan}
+	sort.SliceStable(ordered, func(left, right int) bool {
+		return ordered[left].Start < ordered[right].Start
+	})
 	for index, span := range ordered {
 		if span.Start < field.Span.Start || span.End > field.Span.End {
 			return errors.New("field subspan is outside the aggregate field span")

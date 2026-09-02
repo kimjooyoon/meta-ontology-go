@@ -1,0 +1,57 @@
+{
+  "schema": "gooo/live-governance-snapshot-contract/v1",
+  "id": "live-governance-snapshot-v1",
+  "source": {
+    "documentation": [
+      "https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2022-11-28",
+      "https://docs.github.com/en/rest/branches/branches?apiVersion=latest",
+      "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
+    ],
+    "api_versions": {
+      "branches": "2026-03-10",
+      "rulesets": "2026-03-10"
+    },
+    "payload_digest_model": "canonical-json-v1",
+    "endpoints": [
+      {"id":"repository","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go","api_version":"2026-03-10","payload":"inputs/repository.json"},
+      {"id":"dev-branch","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/dev","api_version":"2026-03-10","payload":"inputs/dev-branch.json"},
+      {"id":"main-branch","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/branches/main","api_version":"2026-03-10","payload":"inputs/main-branch.json"},
+      {"id":"rulesets","method":"GET","path":"https://api.github.com/repos/kimjooyoon/meta-ontology-go/rulesets?includes_parents=true","api_version":"2026-03-10","payload":"inputs/rulesets.json"}
+    ]
+  },
+  "expected": {
+    "default_branch": "dev",
+    "repository": "kimjooyoon/meta-ontology-go",
+    "status_checks": [
+      {"branch":"dev","protected":true,"enforcement":"everyone","contexts":["CI policy","Semantic conformance","gofmt","go vet","go test","go test -race","CI guardian"]},
+      {"branch":"main","protected":true,"enforcement":"everyone","contexts":["CI policy","Semantic conformance","gofmt","go vet","go test","go test -race","CI guardian"]}
+    ],
+    "rulesets": [
+      {"branch":"dev","id":21124689,"name":"dev","enforcement":"disabled"},
+      {"branch":"main","id":21124719,"name":"main","enforcement":"disabled"}
+    ],
+    "required_ruleset_state": "disabled"
+  },
+  "cells": [
+    {"id":"OBSERVATION_SOURCE_PIN","meta_operation":"PinGovernanceObservationSource","proof_choice":"FOUNDATION","indicator":"DRIVER","activity":"PinGovernanceObservationSource","input_id":"gooo://live-governance-snapshot/input/observation-source","output_id":"gooo://live-governance-snapshot/output/observation-source"},
+    {"id":"CONTRACT_MANIFEST_PIN","meta_operation":"PinGovernanceContractManifest","proof_choice":"FOUNDATION","indicator":"DRIVER","activity":"PinGovernanceContractManifest","input_id":"gooo://live-governance-snapshot/input/contract-manifest","output_id":"gooo://live-governance-snapshot/output/contract-manifest"},
+    {"id":"DEV_BRANCH_PROTECTED","meta_operation":"ObserveDevBranchProtection","proof_choice":"FOUNDATION","indicator":"OUTCOME","activity":"ObserveDevBranchProtection","input_id":"gooo://live-governance-snapshot/input/dev-branch","output_id":"gooo://live-governance-snapshot/output/dev-branch"},
+    {"id":"MAIN_BRANCH_PROTECTED","meta_operation":"ObserveMainBranchProtection","proof_choice":"FOUNDATION","indicator":"OUTCOME","activity":"ObserveMainBranchProtection","input_id":"gooo://live-governance-snapshot/input/main-branch","output_id":"gooo://live-governance-snapshot/output/main-branch"},
+    {"id":"DEV_STATUS_ENFORCEMENT","meta_operation":"CompareDevStatusEnforcement","proof_choice":"COHERENCE","indicator":"GUARDRAIL","activity":"CompareDevStatusEnforcement","input_id":"gooo://live-governance-snapshot/input/dev-status","output_id":"gooo://live-governance-snapshot/output/dev-status"},
+    {"id":"DEV_CONTEXT_SET","meta_operation":"CompareDevRequiredContexts","proof_choice":"COHERENCE","indicator":"OUTCOME","activity":"CompareDevRequiredContexts","input_id":"gooo://live-governance-snapshot/input/dev-contexts","output_id":"gooo://live-governance-snapshot/output/dev-contexts"},
+    {"id":"MAIN_STATUS_ENFORCEMENT","meta_operation":"CompareMainStatusEnforcement","proof_choice":"COHERENCE","indicator":"GUARDRAIL","activity":"CompareMainStatusEnforcement","input_id":"gooo://live-governance-snapshot/input/main-status","output_id":"gooo://live-governance-snapshot/output/main-status"},
+    {"id":"MAIN_CONTEXT_SET","meta_operation":"CompareMainRequiredContexts","proof_choice":"COHERENCE","indicator":"OUTCOME","activity":"CompareMainRequiredContexts","input_id":"gooo://live-governance-snapshot/input/main-contexts","output_id":"gooo://live-governance-snapshot/output/main-contexts"},
+    {"id":"RULESET_INVENTORY","meta_operation":"ObserveRepositoryRulesets","proof_choice":"REGRESSION","indicator":"DRIVER","activity":"ObserveRepositoryRulesets","input_id":"gooo://live-governance-snapshot/input/rulesets","output_id":"gooo://live-governance-snapshot/output/rulesets"},
+    {"id":"DISABLED_RULESET_AUTHORITY","meta_operation":"RejectDisabledRulesetAuthority","proof_choice":"REGRESSION","indicator":"GUARDRAIL","activity":"RejectDisabledRulesetAuthority","input_id":"gooo://live-governance-snapshot/input/ruleset-authority","output_id":"gooo://live-governance-snapshot/output/ruleset-authority"},
+    {"id":"UNKNOWN_CAUSALITY","meta_operation":"PreserveGovernanceUnknownCausality","proof_choice":"REGRESSION","indicator":"GUARDRAIL","activity":"PreserveGovernanceUnknownCausality","input_id":"gooo://live-governance-snapshot/input/unknown-causality","output_id":"gooo://live-governance-snapshot/output/unknown-causality"},
+    {"id":"HUMAN_DRIFT_REPORT","meta_operation":"PublishGovernanceDriftReport","proof_choice":"REGRESSION","indicator":"DRIVER","activity":"PublishGovernanceDriftReport","input_id":"gooo://live-governance-snapshot/input/human-report","output_id":"gooo://live-governance-snapshot/output/human-report"}
+  ],
+  "graph_program": "examples/live-governance-snapshot/main.gooo",
+  "not_claimed": [
+    "branch settings mutation",
+    "admin enforcement or privileged protection fields",
+    "disabled rulesets as active authority",
+    "performance or improvement",
+    "critical path or parallel job duration"
+  ]
+}

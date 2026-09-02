@@ -13,10 +13,13 @@ import (
 
 const workflowName = "Metric counterfactual conformance"
 
-func Collect(ctx context.Context, client *http.Client, apiURL, token, repository, predecessorSHA string) (Collection, error) {
-	collection := Collection{}
+func Collect(ctx context.Context, client *http.Client, apiURL, token, repository, predecessorSHA, requestedRoute string) (Collection, error) {
+	collection := Collection{RequestedRoute: requestedRoute}
 	if client == nil || apiURL == "" || token == "" || repository == "" || !validSHA(predecessorSHA) {
 		return collection, fmt.Errorf("proposal predecessor collector identity is invalid")
+	}
+	if !validRoute(requestedRoute) {
+		return collection, &Failure{Reason: ReasonRouteUnknown, Err: fmt.Errorf("requested route is not an allowed branch")}
 	}
 	runsURL := fmt.Sprintf("%s/repos/%s/actions/workflows/metric-counterfactual.yml/runs?head_sha=%s&event=push&status=completed&per_page=100", strings.TrimRight(apiURL, "/"), repository, url.QueryEscape(predecessorSHA))
 	var runs runsEnvelope
@@ -25,10 +28,19 @@ func Collect(ctx context.Context, client *http.Client, apiURL, token, repository
 	}
 	collection.ObservedRuns = len(runs.WorkflowRuns)
 	if runs.TotalCount != len(runs.WorkflowRuns) {
-		return collection, fmt.Errorf("proposal predecessor run pagination is unresolved")
+		return collection, &Failure{Reason: ReasonRunPaginationIncomplete}
 	}
 	for _, run := range runs.WorkflowRuns {
 		if run.HeadSHA != predecessorSHA {
+			continue
+		}
+		if run.HeadBranch == "" {
+			collection.RouteUnknownRuns++
+			collection.Unresolved++
+			continue
+		}
+		if run.HeadBranch != requestedRoute {
+			collection.OtherRouteRuns++
 			continue
 		}
 		collection.ExactRuns++
@@ -48,8 +60,16 @@ func getJSON(ctx context.Context, client *http.Client, targetURL, token string, 
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(payload, target); err != nil {
-		return fmt.Errorf("decode GitHub response: %w", err)
+	decoder := json.NewDecoder(strings.NewReader(string(payload)))
+	if err := decoder.Decode(target); err != nil {
+		return &Failure{Reason: ReasonResponseMalformed, Err: err}
+	}
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err == nil {
+			return &Failure{Reason: ReasonResponseMalformed, Err: fmt.Errorf("trailing JSON")}
+		}
+		return &Failure{Reason: ReasonResponseMalformed, Err: err}
 	}
 	return nil
 }

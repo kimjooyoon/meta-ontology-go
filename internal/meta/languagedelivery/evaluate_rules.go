@@ -26,7 +26,7 @@ func observeRule(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 				return 1, "READINESS_OBLIGATION_EXACT"
 			}
 		}
-	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease, EvidenceExecution:
+	case EvidenceLSPCounter, EvidenceConformance, EvidenceRelease, EvidenceExecution, EvidenceTest, EvidenceProfile, EvidenceDebug:
 		return observeCounter(rule, decoded)
 	}
 	return 0, "REQUIRED_EVIDENCE_NOT_SATISFIED"
@@ -56,6 +56,18 @@ func observeCounter(rule EvidenceRule, decoded decodedEvidence) (int, string) {
 			return decoded.Execution.Summary.DeterministicReplays, "SOURCE_EXECUTION_REPLAYS_OBSERVED"
 		case "diagnostic_rejections":
 			return decoded.Execution.Summary.DiagnosticRejections, "SOURCE_EXECUTION_DIAGNOSTICS_OBSERVED"
+		}
+	case EvidenceTest:
+		if rule.Counter == "passed_tests" {
+			return decoded.LanguageTest.Summary.PassedTests, "LANGUAGE_TESTS_PASSED"
+		}
+	case EvidenceProfile:
+		if rule.Counter == "profiles" {
+			return decoded.Profile.Summary.Profiles, "PROFILE_RECEIPTS_OBSERVED"
+		}
+	case EvidenceDebug:
+		if rule.Counter == "paused_sessions" {
+			return decoded.Debug.Summary.PausedSessions, "DEBUG_PAUSED_SESSIONS_OBSERVED"
 		}
 	}
 	return 0, "COUNTER_UNKNOWN"

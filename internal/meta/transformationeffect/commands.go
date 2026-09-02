@@ -13,15 +13,47 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
 )
 
-func runAction(box *workspace.Sandbox, opts Options, plan generation.Plan, action generation.Action, check bool) ([]byte, error) {
-	executor := map[sourcepolicy.Operation]string{
-		sourcepolicy.OperationCollapseAssign: "scripts/refactor-metrics",
-		sourcepolicy.OperationSplitGo:        "scripts/source-splitter",
-		sourcepolicy.OperationSplitGooo:      "bootstrap/source-repacker",
-	}[action.Operation]
-	if executor == "" || action.Executor != executor || action.Evaluator != executor+":check" {
-		return nil, fmt.Errorf("unbound executor for %s", action.Operation)
+type executorBindingError struct {
+	Operation string
+	FieldPath string
+	Expected  string
+	Observed  string
+}
+
+func (err *executorBindingError) Error() string {
+	return fmt.Sprintf("executor binding mismatch: operation=%s field=%s expected=%s observed=%s",
+		err.Operation, err.FieldPath, err.Expected, err.Observed)
+}
+
+func resolveActionBinding(plan generation.Plan, action generation.Action) (generation.Binding, error) {
+	binding, ok := generation.BindingForOperation(plan.Registry, action.Operation)
+	if !ok {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.registry",
+			Expected: "one valid operation binding", Observed: string(action.Operation),
+		}
 	}
+	if action.Executor != binding.Executor {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.executor",
+			Expected: binding.Executor, Observed: action.Executor,
+		}
+	}
+	if action.Evaluator != binding.Evaluator {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.evaluator",
+			Expected: binding.Evaluator, Observed: action.Evaluator,
+		}
+	}
+	return binding, nil
+}
+
+func runAction(box *workspace.Sandbox, opts Options, plan generation.Plan, action generation.Action, check bool) ([]byte, error) {
+	binding, err := resolveActionBinding(plan, action)
+	if err != nil {
+		return nil, err
+	}
+	executor := binding.Executor
 	args := actionArguments(executor, box.Root, opts, plan, action, check)
 	output, err := workspace.RunCombined(box.Root, os.Environ(), "go", args...)
 	if err != nil {

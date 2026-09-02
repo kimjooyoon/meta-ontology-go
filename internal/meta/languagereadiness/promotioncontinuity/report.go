@@ -22,6 +22,7 @@ type Indicator struct {
 	MetricID      string `json:"metric_id"`
 	Class         string `json:"class"`
 	ProofChoice   string `json:"proof_choice"`
+	Applicability string `json:"applicability"`
 	Producer      string `json:"producer"`
 	Consumer      string `json:"consumer"`
 	MetaOperation string `json:"meta_operation"`
@@ -43,6 +44,7 @@ type Report struct {
 	Decision                     string       `json:"decision"`
 	Reason                       string       `json:"reason"`
 	Resolution                   string       `json:"resolution"`
+	Mode                         string       `json:"mode"`
 	Producer                     string       `json:"producer"`
 	Consumer                     string       `json:"consumer"`
 	MetaOperation                string       `json:"meta_operation"`

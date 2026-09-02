@@ -6,7 +6,13 @@ const (
 	MetaOperation     = "close-vertical-slice"
 	PredecessorSHA    = "145b81c8bb8e4b1eb46cb10af0ea21a6b6be51b5"
 	AssuranceDigest   = "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969"
-	DenominatorDigest = "sha256:4d558cc7032224e053428e617c3fffcf84ccd6c9f9ce1f8d2f9b7981d2a6bc9d"
+	DenominatorDigest = "sha256:b8d336e45d0bc3aaf8e23b33e5f168d73ecd721596b47bd95489ee6a96e41709"
+	// DenominatorMigrationDigest is the append-only v22 contract used when the
+	// language-syntax corpus exposes the additional capability case.
+	DenominatorMigrationDigest = "sha256:ea4821d2b632319b29ffe43276c0b36f1b825fe29c8617c16680cd41b3d5f822"
+	// DenominatorMigrationV23Digest is the append-only v23 contract used when
+	// the inherited minimal-loop capability is registered in the corpus.
+	DenominatorMigrationV23Digest = "sha256:122db17eb5ff8236e6d7fdd6ba175429c70543def3af420240344aa65fe8ca0d"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

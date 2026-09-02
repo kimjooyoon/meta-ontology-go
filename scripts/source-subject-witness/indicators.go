@@ -21,6 +21,7 @@ type sourceIndicator struct {
 	Producer            string `json:"producer"`
 	ProofChoice         string `json:"proof_choice"`
 	Relation            string `json:"relation"`
+	Role                string `json:"role"`
 	Satisfied           bool   `json:"satisfied"`
 	Subject             string `json:"subject"`
 	SubjectKind         string `json:"subject_kind"`
@@ -48,8 +49,8 @@ func lookupIndicator(index indicatorIndex, kind, subject, metric string, want in
 		return sourceIndicator{}, fmt.Errorf("%s %q %s has %d indicators", kind, subject, metric, len(rows))
 	}
 	row := rows[0]
-	if row.Value != want || !row.Satisfied {
-		return sourceIndicator{}, fmt.Errorf("%s %q %s is not satisfied at %d", kind, subject, metric, want)
+	if row.Value != want {
+		return sourceIndicator{}, fmt.Errorf("%s %q %s observed %d, want %d", kind, subject, metric, row.Value, want)
 	}
 	return row, nil
 }

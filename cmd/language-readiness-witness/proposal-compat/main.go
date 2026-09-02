@@ -7,15 +7,17 @@ import (
 )
 
 type config struct {
-	root, input, expectedSHA, legacy, receipt string
-	check                                     bool
+	root, input, expectedRepository, expectedSHA, expectedPredecessorSHA, legacy, receipt string
+	check                                                                                 bool
 }
 
 func main() {
 	var cfg config
 	flag.StringVar(&cfg.root, "root", "", "repository root")
 	flag.StringVar(&cfg.input, "input", "", "v2 proposal promotion receipt")
+	flag.StringVar(&cfg.expectedRepository, "expected-repository", "", "exact external repository")
 	flag.StringVar(&cfg.expectedSHA, "expected-sha", "", "exact current subject sha")
+	flag.StringVar(&cfg.expectedPredecessorSHA, "expected-predecessor-sha", "", "exact external predecessor sha")
 	flag.StringVar(&cfg.legacy, "legacy", "", "v1 guard-compatible output")
 	flag.StringVar(&cfg.receipt, "receipt", "", "compatibility receipt output")
 	flag.BoolVar(&cfg.check, "check", false, "compare existing outputs")

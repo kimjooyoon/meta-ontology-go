@@ -29,22 +29,32 @@ type Proof struct {
 	EvidenceDigest string `json:"evidence_digest"`
 }
 
+type IndicatorCounterexample struct {
+	IndicatorID    string   `json:"indicator_id"`
+	RuleID         string   `json:"rule_id"`
+	Observed       int      `json:"observed"`
+	Expected       int      `json:"expected"`
+	Decision       Decision `json:"decision"`
+	EvidenceDigest string   `json:"evidence_digest"`
+}
+
 type Report struct {
-	Schema                       string                 `json:"schema"`
-	ContractID                   string                 `json:"contract_id"`
-	OperationID                  string                 `json:"operation_id"`
-	Decision                     Decision               `json:"decision"`
-	Reason                       string                 `json:"reason"`
-	Resolution                   string                 `json:"resolution"`
-	AssuranceGrade               string                 `json:"assurance_grade"`
-	MetaOperation                string                 `json:"meta_operation"`
-	Contract                     ContractReceipt        `json:"contract"`
-	Evidence                     SplitGoEvidence        `json:"evidence"`
-	EvidenceDigest               string                 `json:"evidence_digest"`
-	Summary                      Summary                `json:"summary"`
-	Indicators                   []IndicatorObservation `json:"indicators"`
-	Proofs                       []Proof                `json:"proofs"`
-	RepositoryWrites             int                    `json:"repository_writes"`
-	RepositoryMutationAuthorized bool                   `json:"repository_mutation_authorized"`
-	ReportDigest                 string                 `json:"report_digest"`
+	Schema                       string                    `json:"schema"`
+	ContractID                   string                    `json:"contract_id"`
+	OperationID                  string                    `json:"operation_id"`
+	Decision                     Decision                  `json:"decision"`
+	Reason                       string                    `json:"reason"`
+	Resolution                   string                    `json:"resolution"`
+	AssuranceGrade               string                    `json:"assurance_grade"`
+	MetaOperation                string                    `json:"meta_operation"`
+	Contract                     ContractReceipt           `json:"contract"`
+	Evidence                     SplitGoEvidence           `json:"evidence"`
+	EvidenceDigest               string                    `json:"evidence_digest"`
+	Summary                      Summary                   `json:"summary"`
+	Indicators                   []IndicatorObservation    `json:"indicators"`
+	Counterexamples              []IndicatorCounterexample `json:"counterexamples"`
+	Proofs                       []Proof                   `json:"proofs"`
+	RepositoryWrites             int                       `json:"repository_writes"`
+	RepositoryMutationAuthorized bool                      `json:"repository_mutation_authorized"`
+	ReportDigest                 string                    `json:"report_digest"`
 }

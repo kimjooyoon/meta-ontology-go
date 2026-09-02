@@ -10,11 +10,16 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v1` registry contains exactly 19 cases: 17 valid `.gooo` sources and two
-invalid text fixtures. CI also walks the repository and requires the observed
-`.gooo` path set to equal the 17 registered valid paths. The current fixed
-corpus contains exactly 262 physical Gooo lines, and each file carries its
-individual line count and source digest.
+The `v2` registry contains exactly 44 cases: 41 valid sources and three invalid
+fixtures. The current registry observation contains 44 cases, while the
+independent repository observation contains 48 `.gooo` files and 794 physical
+Gooo lines. Each observed file carries its individual line count and source
+digest. Of the 44 cases, 43 are
+`LANGUAGE_CAPABILITY` and one (`live-governance-snapshot`) is a separate
+`GOVERNANCE_OBSERVATION` case. EntityFields is a language capability case; its
+12 proof activities live in the separate `internal/meta/entityfields/entity-fields-meta.gooo`
+meta source and are not emitted into the user/domain Go projection. These are
+fixed observation denominators, not a quality score.
 
 ## Indicators
 
@@ -34,14 +39,15 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 | Choice | Meta-operation | Passing condition |
 | --- | --- | --- |
 | FOUNDATION | bind-versioned-complete-gooo-corpus | exact registry, exact commit, complete path set, bound concept artifact |
-| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 17 valid cases satisfy all five preservation laws |
-| REGRESSION | reject-invalid-syntax-with-zero-effects | both diagnostics reject and writes and authority remain zero |
+| COHERENCE | replay-ast-bytes-semantics-and-lens-laws | all 41 valid cases satisfy all five preservation laws |
+| REGRESSION | reject-invalid-syntax-with-zero-effects | all three diagnostics reject and writes and authority remain zero |
 
 ## CI authority
 
-GitHub Actions produces the receipt twice outside the repository, compares the
-bytes, consumes it again, and only then passes its digest into language
-readiness. Under the unchanged 24-obligation registry, a proven receipt makes
-the mechanically checkable candidate transition `13/24 = 5416 BPS` to
-`14/24 = 5833 BPS`, a delta of `+417 BPS`. This is not reported as achieved
-until the PR transition artifact proves it.
+GitHub Actions produces the EntityFields receipt twice outside the repository,
+compares the bytes, and consumes the exact first/replay artifacts again. The
+language registry transition is observed as overall `43/43` to `44/44`, with
+language capability `42/42` to `43/43` and governance observation `1/1` to
+`1/1`; this is a denominator observation, not an improvement score. The
+EntityFields operation has no exact before/after pair, so improvement remains
+`UNKNOWN`.

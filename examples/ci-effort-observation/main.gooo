@@ -1,0 +1,28 @@
+package cieffortobservation
+namespace cieffortobservation
+
+entity WorkflowWindowInput id "gooo://ci-effort-observation/input/workflow-window"
+entity WorkflowWindowOutput id "gooo://ci-effort-observation/output/workflow-window"
+entity OperationManifestInput id "gooo://ci-effort-observation/input/operation-manifest"
+entity OperationManifestOutput id "gooo://ci-effort-observation/output/operation-manifest"
+entity VerificationRuntimeInput id "gooo://ci-effort-observation/input/verification-runtime"
+entity VerificationRuntimeOutput id "gooo://ci-effort-observation/output/verification-runtime"
+entity ExecutedVerificationsInput id "gooo://ci-effort-observation/input/executed-verifications"
+entity ExecutedVerificationsOutput id "gooo://ci-effort-observation/output/executed-verifications"
+entity SkippedVerificationsInput id "gooo://ci-effort-observation/input/skipped-verifications"
+entity SkippedVerificationsOutput id "gooo://ci-effort-observation/output/skipped-verifications"
+entity ReuseDecisionInput id "gooo://ci-effort-observation/input/reuse-decision"
+entity ReuseDecisionOutput id "gooo://ci-effort-observation/output/reuse-decision"
+entity ReuseRejectionsUnknownInput id "gooo://ci-effort-observation/input/reuse-rejections-unknown"
+entity ReuseRejectionsUnknownOutput id "gooo://ci-effort-observation/output/reuse-rejections-unknown"
+entity OpenTofuObservationInput id "gooo://ci-effort-observation/input/opentofu-observation"
+entity OpenTofuObservationOutput id "gooo://ci-effort-observation/output/opentofu-observation"
+
+activity ObserveCIWorkflowWindow(WorkflowWindowInput) -> WorkflowWindowOutput computes "ci.workflow.window/v1"
+activity BindVerificationOperationManifest(OperationManifestInput) -> OperationManifestOutput computes "ci.operation.manifest/v1"
+activity ObserveVerificationRuntime(VerificationRuntimeInput) -> VerificationRuntimeOutput computes "ci.verification.runtime/v1"
+activity AccountExecutedVerifications(ExecutedVerificationsInput) -> ExecutedVerificationsOutput computes "ci.verification.executed/v1"
+activity AccountSkippedVerifications(SkippedVerificationsInput) -> SkippedVerificationsOutput computes "ci.verification.skipped/v1"
+activity EvaluateExactEvidenceReuse(ReuseDecisionInput) -> ReuseDecisionOutput computes "ci.evidence.reuse/v1"
+activity RecordReuseRejectionsAndUnknowns(ReuseRejectionsUnknownInput) -> ReuseRejectionsUnknownOutput computes "ci.evidence.rejections/v1"
+activity BindOpenTofuObservation(OpenTofuObservationInput) -> OpenTofuObservationOutput computes "ci.external.opentofu/v1"

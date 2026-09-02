@@ -8,7 +8,7 @@ import (
 func TestSelectsOneExactMergedProposal(t *testing.T) {
 	predecessor := strings.Repeat("a", 40)
 	candidate := readyCandidate(predecessor, 7)
-	collection := Collection{ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
+	collection := Collection{RequestedRoute: RouteDev, ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
 		ExactJobs: 1, ObservedArtifacts: 4, ExactArtifacts: 1,
 		Candidates: []Candidate{candidate}}
 	report, payload, err := Select("owner/repository", strings.Repeat("b", 40), predecessor, collection)
@@ -22,7 +22,7 @@ func TestSelectsOneExactMergedProposal(t *testing.T) {
 
 func TestAmbiguityFailsClosed(t *testing.T) {
 	predecessor := strings.Repeat("c", 40)
-	collection := Collection{ObservedRuns: 2, ExactRuns: 2, ObservedJobs: 10,
+	collection := Collection{RequestedRoute: RouteDev, ObservedRuns: 2, ExactRuns: 2, ObservedJobs: 10,
 		ExactJobs: 2, ObservedArtifacts: 2, ExactArtifacts: 2,
 		Candidates: []Candidate{readyCandidate(predecessor, 1), readyCandidate(predecessor, 2)}}
 	report, _, err := Select("owner/repository", strings.Repeat("d", 40), predecessor, collection)
@@ -33,7 +33,7 @@ func TestAmbiguityFailsClosed(t *testing.T) {
 
 func readyCandidate(predecessor string, runID int64) Candidate {
 	return Candidate{
-		RunID: runID, RunAttempt: 1, HeadSHA: predecessor, Event: "push", Status: "completed", Conclusion: "failure", WorkflowName: workflowName,
+		RunID: runID, RunAttempt: 1, HeadSHA: predecessor, HeadBranch: RouteDev, Event: "push", Status: "completed", Conclusion: "failure", WorkflowName: workflowName,
 		SynthesisJobID: runID + 50, SynthesisJobName: synthesisJobName,
 		SynthesisJobStatus: "completed", SynthesisJobConclusion: "success",
 		ArtifactID: runID + 100, ArtifactName: "metric-strategy-" + predecessor,

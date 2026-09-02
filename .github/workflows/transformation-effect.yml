@@ -50,9 +50,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Build, execute, and replay native release candidate
         shell: bash
@@ -99,7 +99,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: true
@@ -187,9 +187,9 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
 
       - name: Select expected boundary decision
@@ -268,9 +268,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - uses: actions/download-artifact@v7
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
@@ -321,9 +321,9 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact meta artifacts
         uses: actions/download-artifact@v7
         with:
@@ -364,6 +364,7 @@ jobs:
             -executed-provenance "$first/provenance.json" \
             -patch "$first/patch.json"
       - name: Upload exact-head transformation effects
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: transformation-effect-${{ github.event.workflow_run.head_sha }}
@@ -371,8 +372,370 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  transformation-effect-focused:
+    name: transformation-effect-focused
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Check out exact pull request head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Materialize exact logical workspace
+        id: materialize
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.HEAD_SHA }}
+      - name: Capture and verify focused transformation evidence
+        shell: bash
+        env:
+          STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/transformation-effect-focused"
+          input="$root/input"
+          first="$root/first"
+          replay="$root/replay"
+          mkdir -p "$input" "$first" "$replay"
+          stage=initialize
+          focused_error() {
+            status=$?
+            trap - ERR
+            if [[ -s "$root/counterexamples.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/counterexamples.json" >/dev/null 2>&1; then
+              cp "$root/counterexamples.json" "$root/diagnostic.json"
+            elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/verification.json" >/dev/null 2>&1; then
+              cp "$root/verification.json" "$root/diagnostic.json"
+            else
+              jq -n --arg stage "$stage" --arg step "focused-transformation" --arg reason "FOCUSED_JOB_COMMAND_FAILED" --arg command "$BASH_COMMAND" --argjson exit_code "$status" --argjson line "${BASH_LINENO[0]:-0}" '{schema:"gooo/transformation-effect-focused-diagnostic/v1",decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",stage:$stage,step:$step,reason:$reason,unknown_class:"UNCATALOGED_CAUSE",next_operation:"restore-transformation-evidence",blocked_by:[],command:$command,exit_code:$exit_code,line:$line}' > "$root/diagnostic.json"
+            fi
+            exit "$status"
+          }
+          trap focused_error ERR
+          snapshot_repository() {
+            git status --porcelain=v1 --untracked-files=all | LC_ALL=C sort
+          }
+          snapshot_repository > "$root/repository-before.txt"
+          test ! -s "$root/repository-before.txt"
+          before="$(cat "$root/repository-before.txt")"
+          export METRICS_COMMIT_SHA="$HEAD_SHA"
+          export METRICS_DIR="$input"
+          stage=source-metrics
+          go run ./scripts/line-metrics -root "$GITHUB_WORKSPACE" -storage-root "$STORAGE_ROOT" -json > "$input/source-metrics-raw.json"
+          go run ./bootstrap/meta-binding-witness -root "$GITHUB_WORKSPACE" -metrics "$input/source-metrics-raw.json" -bound-metrics "$input/source-metrics.json" -report "$input/meta-binding-report.json" -check
+          go run ./bootstrap/meta-actionability-witness -root "$GITHUB_WORKSPACE" -metrics "$input/source-metrics.json" -binding "$input/meta-binding-report.json" -report "$input/meta-actionability-report.json" -check
+          base_sha="${BASE_SHA:-}"
+          if [[ -z "$base_sha" ]]; then base_sha="$(git rev-parse "$HEAD_SHA^")"; fi
+          stage=plan
+          go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$input/source-metrics.json" -sha "$HEAD_SHA" -base-sha "$base_sha" -plan "$input/self-improvement-plan.json" -check
+          go run ./scripts/meta-execution -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-execution.json"
+          test -s "$input/meta-operation-observations.json"
+          go run ./scripts/meta-receipts -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-receipts.json"
+          go run ./scripts/meta-provenance -plan "$input/self-improvement-plan.json" -execution "$input/self-improvement-execution.json" -receipts "$input/self-improvement-receipts.json" -output "$input/self-improvement-provenance.json"
+          snapshot_repository > "$root/repository-after-inputs.txt"
+          cmp -s "$root/repository-before.txt" "$root/repository-after-inputs.txt"
+          stage=effect
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -metrics "$input/source-metrics.json"
+            -plan "$input/self-improvement-plan.json"
+            -execution "$input/self-improvement-execution.json"
+            -receipts "$input/self-improvement-receipts.json"
+            -provenance "$input/self-improvement-provenance.json"
+            -expected-sha "$HEAD_SHA"
+          )
+          for target in "$first" "$replay"; do
+            start_ns="$(date +%s%N)"
+            /usr/bin/time -f '%M' -o "$target/peak-rss-kib.txt" go run ./scripts/transformation-effect "${common[@]}" -output "$target/ledger.json" -generated-receipts "$target/receipts.json" -executed-provenance "$target/provenance.json" -patch "$target/patch.json"
+            end_ns="$(date +%s%N)"
+            elapsed_ms=$(( (end_ns - start_ns + 999999) / 1000000 ))
+            if (( elapsed_ms < 1 )); then elapsed_ms=1; fi
+            rss="$(tr -d '[:space:]' < "$target/peak-rss-kib.txt")"
+            test "$rss" -gt 0
+            jq -n --argjson wall_ms "$elapsed_ms" --argjson peak_rss_kib "$rss" '{wall_ms:$wall_ms,peak_rss_kib:$peak_rss_kib}' > "$target/runtime.json"
+          done
+          cmp -s "$first/ledger.json" "$replay/ledger.json"
+          cmp -s "$first/receipts.json" "$replay/receipts.json"
+          cmp -s "$first/provenance.json" "$replay/provenance.json"
+          cmp -s "$first/patch.json" "$replay/patch.json"
+          snapshot_repository > "$root/repository-before-verifiers.txt"
+          repository_writes="$(wc -l < "$root/repository-before-verifiers.txt" | tr -d '[:space:]')"
+          first_wall="$(jq -r '.wall_ms' "$first/runtime.json")"
+          first_rss="$(jq -r '.peak_rss_kib' "$first/runtime.json")"
+          replay_wall="$(jq -r '.wall_ms' "$replay/runtime.json")"
+          replay_rss="$(jq -r '.peak_rss_kib' "$replay/runtime.json")"
+          jq -n --argjson first_wall "$first_wall" --argjson first_rss "$first_rss" --argjson replay_wall "$replay_wall" --argjson replay_rss "$replay_rss" --argjson repository_writes "$repository_writes" '{first:{wall_ms:$first_wall,peak_rss_kib:$first_rss},replay:{wall_ms:$replay_wall,peak_rss_kib:$replay_rss},replay_equal:true,repository_writes:$repository_writes,local_test_executions:0,cross_project_required_gates:0}' > "$root/runtime.json"
+          stage=independent-verifier
+          go run ./scripts/transformation-effect-verify -plan "$input/self-improvement-plan.json" -execution "$input/self-improvement-execution.json" -ledger "$first/ledger.json" -receipts "$first/receipts.json" -provenance "$first/provenance.json" -patch "$first/patch.json" -runtime "$root/runtime.json" -expected-head "$HEAD_SHA" -output "$root/verification.json"
+          go run ./scripts/transformation-effect-verify -plan "$input/self-improvement-plan.json" -execution "$input/self-improvement-execution.json" -ledger "$first/ledger.json" -receipts "$first/receipts.json" -provenance "$first/provenance.json" -patch "$first/patch.json" -runtime "$root/runtime.json" -expected-head "$HEAD_SHA" -counterexample all -output "$root/counterexamples.json"
+          snapshot_repository > "$root/repository-after-verifiers.txt"
+          final_repository_writes="$(wc -l < "$root/repository-after-verifiers.txt" | tr -d '[:space:]')"
+          if [[ "$final_repository_writes" != "$repository_writes" ]]; then
+            repository_writes="$final_repository_writes"
+            jq --argjson repository_writes "$repository_writes" '.repository_writes = $repository_writes' "$root/runtime.json" > "$root/runtime.final.json"
+            mv "$root/runtime.final.json" "$root/runtime.json"
+            go run ./scripts/transformation-effect-verify -plan "$input/self-improvement-plan.json" -execution "$input/self-improvement-execution.json" -ledger "$first/ledger.json" -receipts "$first/receipts.json" -provenance "$first/provenance.json" -patch "$first/patch.json" -runtime "$root/runtime.json" -expected-head "$HEAD_SHA" -output "$root/verification.json"
+            snapshot_repository > "$root/repository-after-final-verifier.txt"
+            final_repository_writes="$(wc -l < "$root/repository-after-final-verifier.txt" | tr -d '[:space:]')"
+            test "$final_repository_writes" = "$repository_writes"
+          fi
+          test "$repository_writes" -eq 0
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and .selected_plan_operations == 2 and .bound_executor_operations == 2 and .unbound_executor_operations == 0 and .receipt_count == 1 and .failure_count == 1 and .unknown_count == 5 and .operation_outcome == "MIXED_CLOSED_REFUTED" and .operation_executor_commands == 2 and .operation_executor_tests == 1 and .reused_commands == 0 and .reused_tests == 0 and .command_scope == "operation-receipt-executors" and .test_scope == "operation-receipt-verifiers" and .reused_evidence_records == 1 and .evidence_reuse_scope == "input-receipt-instance-evidence" and .repository_writes == 0 and .runtime.repository_writes == 0 and .promotion_authorized == false and .runtime.replay_equal == true' "$root/verification.json"
+          jq -e --slurpfile plan "$input/self-improvement-plan.json" '
+            .failures[0] as $failure |
+            (.decision == "REFUTED" and .promotion_authorized == false and
+             (.receipts | length) == 1 and (.failures | length) == 1 and
+             (.unknowns | length) == 5 and
+             ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
+             ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
+             $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
+             $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
+             $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
+             ($failure.failure_evidence | length) == 5 and ($failure.derived_relations | length) == 1 and
+             $failure.derived_relations[0].relation == "DERIVED_FROM" and
+             $failure.derived_relations[0].derived_from == $failure.counterexample and
+             (all(.unknowns[]; .action_indicator_id == $failure.action_indicator_id and
+               .unknown_class == "DEPENDENCY_BLOCKED" and .stage == $failure.stage and
+               .step == $failure.step and .reason == $failure.reason and
+               .next_operation == $failure.next_operation and
+               .blocked_by == ["operation-failure:" + $failure.action_indicator_id])))
+          ' "$input/self-improvement-receipts.json"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and (.counterexamples | length) == 3 and (.counterexamples | all(.[]; .decision == "REFUTED" and .resolution == "EXACT" and .reason == "META_OPERATION_EXECUTOR_BINDING_MISMATCH")) and ([.counterexamples[] | select(.id == "executor-binding-stale")][0] | .expected == "scripts/source-splitter" and .observed == "stale-executor")' "$root/counterexamples.json"
+          jq -r '"### Focused transformation effect\n- selected/bound/unbound: \(.selected_plan_operations)/\(.bound_executor_operations)/\(.unbound_executor_operations)\n- receipts/failures/dependent-unknowns: \(.receipt_count)/\(.failure_count)/\(.unknown_count)\n- operation executor commands/tests (scoped): \(.operation_executor_commands)/\(.operation_executor_tests) [\(.command_scope)/\(.test_scope)]\n- reused evidence records: \(.reused_evidence_records) [\(.evidence_reuse_scope)]\n- replay: \(.runtime.replay_equal)\n- observed repository writes/local tests/cross-project gates: \(.repository_writes)/\(.local_test_executions)/\(.cross_project_required_gates)\n- operation outcome: \(.operation_outcome)\n- promotion authorized: \(.promotion_authorized)"' "$root/verification.json" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload focused transformation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: transformation-effect-focused-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/transformation-effect-focused
+          if-no-files-found: error
+          retention-days: 30
+
+  language-syntax-scope-partition:
+    name: language syntax scope partition
+    if: >-
+      github.event_name == 'pull_request' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository &&
+        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Build and observe language syntax scope partition
+        id: observe
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          work_root="$RUNNER_TEMP/language-syntax-scope-partition-work"
+          publish_root="$RUNNER_TEMP/language-syntax-scope-partition-publish"
+          mkdir -p "$work_root" "$publish_root"
+          stage="initialize"
+          step="create-caller-owned-output"
+          on_error() {
+            local exit_code=$?
+            local failed_command="$BASH_COMMAND"
+            trap - ERR
+            jq -n \
+              --arg schema "gooo/language-syntax-scope-partition/v1" \
+              --arg head "$HEAD_SHA" \
+              --arg stage "$stage" \
+              --arg step "$step" \
+              --arg command "$failed_command" \
+              --argjson exit_code "$exit_code" \
+              '{schema: $schema, head_sha: $head, decision: "FAIL_CLOSED", resolution: "LOWER_RESOLUTION",
+                reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE", failed_command: $command, exit_code: $exit_code,
+                unknown: {stage: $stage, step: $step, reason: "SCOPE_PARTITION_OBSERVATION_UNAVAILABLE",
+                  unknown_class: "DIRECT_MISSING", next_operation: "RESTORE_SCOPE_PARTITION_EVIDENCE", blocked_by: []},
+                repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
+                cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY"}' \
+              > "$publish_root/scope-partition.json"
+            printf 'scope partition observation failed: stage=%s step=%s command=%s exit=%s\n' \
+              "$stage" "$step" "$failed_command" "$exit_code" >&2
+            return "$exit_code"
+          }
+          trap on_error ERR
+          concept_bin="$work_root/language-concept-artifact-witness"
+          syntax_bin="$work_root/language-syntax-witness"
+          concept_time="$work_root/concept-build.time"
+          syntax_time="$work_root/syntax-build.time"
+          stage="build"
+          step="build-language-concept-artifact-witness"
+          /usr/bin/time -f '%e %M' -o "$concept_time" \
+            go build -o "$concept_bin" ./cmd/language-concept-artifact-witness
+          stage="build"
+          step="build-language-syntax-witness"
+          /usr/bin/time -f '%e %M' -o "$syntax_time" \
+            go build -o "$syntax_bin" ./cmd/language-syntax-witness
+          concept_first="$work_root/language-concept-artifact/first"
+          syntax_first="$work_root/language-syntax-roundtrip/first"
+          syntax_replay="$work_root/language-syntax-roundtrip/replay"
+          mkdir -p "$concept_first" "$syntax_first" "$syntax_replay"
+          stage="execute"
+          step="produce-language-concept-artifact"
+          "$concept_bin" \
+            --root "$GITHUB_WORKSPACE" \
+            --output "$concept_first/artifact.json"
+          syntax_registry="$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json"
+          stage="execute"
+          step="produce-language-syntax-first-and-replay"
+          for target in "$syntax_first" "$syntax_replay"; do
+            "$syntax_bin" \
+              --root "$GITHUB_WORKSPACE" \
+              --head "$HEAD_SHA" \
+              --registry "$syntax_registry" \
+              --concept-artifact "$concept_first/artifact.json" \
+              --output "$target/artifact.json"
+          done
+          stage="replay"
+          step="compare-language-syntax-first-and-replay"
+          cmp -s "$syntax_first/artifact.json" "$syntax_replay/artifact.json"
+          stage="validate"
+          step="check-language-syntax-first-artifact"
+          "$syntax_bin" \
+            --root "$GITHUB_WORKSPACE" \
+            --head "$HEAD_SHA" \
+            --registry "$syntax_registry" \
+            --concept-artifact "$concept_first/artifact.json" \
+            --check "$syntax_first/artifact.json"
+          first_digest="sha256:$(sha256sum "$syntax_first/artifact.json" | awk '{print $1}')"
+          replay_digest="sha256:$(sha256sum "$syntax_replay/artifact.json" | awk '{print $1}')"
+          concept_digest="sha256:$(sha256sum "$concept_first/artifact.json" | awk '{print $1}')"
+          read -r concept_seconds concept_peak_rss_kib < "$concept_time"
+          read -r syntax_seconds syntax_peak_rss_kib < "$syntax_time"
+          concept_build_ms="$(awk -v seconds="$concept_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
+          syntax_build_ms="$(awk -v seconds="$syntax_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
+          stage="validate"
+          step="validate-language-syntax-scope-partition"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and
+            .summary.satisfied == 48 and .summary.total == 48 and
+            .summary.executed == 48 and .summary.unresolved == 0 and
+            .summary.capability_satisfied == 47 and .summary.capability_total == 47 and
+            .summary.capability_executed == 47 and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
+            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
+            "$syntax_first/artifact.json"
+          stage="publish"
+          step="assemble-scope-partition-receipt"
+          jq --arg head "$HEAD_SHA" \
+            --arg first_digest "$first_digest" \
+            --arg replay_digest "$replay_digest" \
+            --arg concept_digest "$concept_digest" \
+            --argjson replay_equal true \
+            --argjson concept_build_ms "$concept_build_ms" \
+            --argjson concept_peak_rss_kib "$concept_peak_rss_kib" \
+            --argjson syntax_build_ms "$syntax_build_ms" \
+            --argjson syntax_peak_rss_kib "$syntax_peak_rss_kib" \
+            '{schema: "gooo/language-syntax-scope-partition/v1", head_sha: $head,
+              decision: "PASS", resolution: "EXACT", reason: "SCOPE_PARTITION_OBSERVED",
+              producer_job: "language-syntax-scope-partition",
+              source_artifact: "language-syntax-roundtrip/first/artifact.json",
+              source_replay_artifact: "language-syntax-roundtrip/replay/artifact.json",
+              source_concept_artifact: "language-concept-artifact/first/artifact.json",
+              source_artifact_digest: $first_digest, source_replay_artifact_digest: $replay_digest,
+              source_concept_artifact_digest: $concept_digest,
+              source_report_digest: .report_digest, replay_equal: $replay_equal,
+              reused_existing_artifact: false, generated_in_this_job: true,
+              compile_executions: 2, test_executions: 0,
+              build_observations: {
+                concept_witness: {wall_ms: $concept_build_ms, peak_rss_kib: $concept_peak_rss_kib},
+                syntax_witness: {wall_ms: $syntax_build_ms, peak_rss_kib: $syntax_peak_rss_kib}},
+              repository_writes: 0, branch_setting_writes: 0, local_test_executions: 0,
+              cross_project_required_gates: 0, generation_authority: "CALLER_OWNED_TEMP_OUTPUT_ONLY",
+              output_artifact_files: 3,
+              overall: {satisfied: .summary.satisfied, total: .summary.total, executed: .summary.executed, unresolved: .summary.unresolved},
+              language_capability: {satisfied: .summary.capability_satisfied, total: .summary.capability_total, executed: .summary.capability_executed, unresolved: .summary.capability_unresolved},
+              governance_observation: {satisfied: .summary.governance_satisfied, total: .summary.governance_total, executed: .summary.governance_executed, unresolved: .summary.governance_unresolved}}' \
+            "$syntax_first/artifact.json" > "$publish_root/scope-partition.json"
+          cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
+          cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
+          echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overall: \`48/48 satisfied, 48 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- language capability: \`47/47 satisfied, 47 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload language syntax scope partition evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-syntax-scope-partition-publish
+          if-no-files-found: error
+          retention-days: 30
+      - name: Require language syntax scope partition
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          publish_root="$RUNNER_TEMP/language-syntax-scope-partition-publish"
+          work_root="$RUNNER_TEMP/language-syntax-scope-partition-work"
+          report="$publish_root/scope-partition.json"
+          first="$publish_root/language-syntax-roundtrip-first.json"
+          replay="$publish_root/language-syntax-roundtrip-replay.json"
+          test -s "$report"
+          test -s "$first"
+          test -s "$replay"
+          cmp -s "$first" "$replay"
+          first_digest="sha256:$(sha256sum "$first" | awk '{print $1}')"
+          replay_digest="sha256:$(sha256sum "$replay" | awk '{print $1}')"
+          concept_digest="sha256:$(sha256sum "$work_root/language-concept-artifact/first/artifact.json" | awk '{print $1}')"
+          report_digest="$(jq -er '.report_digest' "$first")"
+          jq -e \
+            --arg head "$HEAD_SHA" \
+            --arg first_digest "$first_digest" \
+            --arg replay_digest "$replay_digest" \
+            --arg concept_digest "$concept_digest" \
+            --arg report_digest "$report_digest" \
+            '.decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
+            .head_sha == $head and .replay_equal == true and
+            .compile_executions == 2 and .test_executions == 0 and
+            .output_artifact_files == 3 and
+            .source_artifact_digest == $first_digest and
+            .source_replay_artifact_digest == $replay_digest and
+            .source_concept_artifact_digest == $concept_digest and
+            .source_report_digest == $report_digest and
+            .repository_writes == 0 and .branch_setting_writes == 0 and
+            .local_test_executions == 0 and .cross_project_required_gates == 0 and
+            .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
+            .overall == {satisfied: 48, total: 48, executed: 48, unresolved: 0} and
+            .language_capability == {satisfied: 47, total: 47, executed: 47, unresolved: 0} and
+            .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
+            "$report"
   language-concept-artifact:
     needs: [cross-platform-release]
+    outputs:
+      predecessor-mode: ${{ steps.readiness-predecessor.outputs.mode }}
     if: >-
       github.event_name == 'pull_request' ||
       (
@@ -386,22 +749,33 @@ jobs:
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
+      - name: Assert causal workflows use setup-go v7
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -En '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v[0-6]([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml; then
+            echo 'FAIL_CLOSED: unsupported setup-go action version' >&2
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
       - name: Download exact platform release receipts
         uses: actions/download-artifact@v7
         with:
           pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-platforms
           merge-multiple: true
-      - name: Prove merged autonomous change proposal
+      - name: Select exact proposal predecessor
+        id: proposal-predecessor
         env:
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
@@ -411,12 +785,34 @@ jobs:
           if [[ -z "$predecessor_sha" ]]; then
             predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
           fi
+          is_known_proposal_failure_reason() {
+            case "$1" in
+              PROPOSAL_PREDECESSOR_NOT_FOUND|PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN|\
+              PROPOSAL_PREDECESSOR_AMBIGUOUS|PROPOSAL_SYNTHESIS_JOB_CARDINALITY|\
+              PROPOSAL_RUN_PAGINATION_INCOMPLETE|PROPOSAL_JOB_PAGINATION_INCOMPLETE|\
+              PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE|PROPOSAL_API_UNAVAILABLE|\
+              PROPOSAL_API_PERMISSION_DENIED|PROPOSAL_RESPONSE_MALFORMED|\
+              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH|\
+              PROPOSAL_PREDECESSOR_ROUTE_UNKNOWN|PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           for suffix in a b; do
+            observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            if [[ "$suffix" == "a" ]]; then
+              observation_args=(--observation-capture "$RUNNER_TEMP/language-readiness-proposal-observation.json")
+            fi
             go run ./cmd/language-readiness-witness/proposal-promotion \
               --root "$GITHUB_WORKSPACE" \
               --repository "$GITHUB_REPOSITORY" \
               --current-head "$HEAD_SHA" \
               --predecessor-sha "$predecessor_sha" \
+              --route "$REQUESTED_ROUTE" \
+              "${observation_args[@]}" \
               --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
           done
           cmp "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
@@ -426,14 +822,169 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
+            --route "$REQUESTED_ROUTE" \
+            --observation-cache "$RUNNER_TEMP/language-readiness-proposal-observation.json" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
-      - name: Project v2 proposal evidence to the unchanged v1 guard contract
+          proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+          if [[ "$proposal_schema" == "gooo/autonomous-change-proposal-predecessor-resolution/v1" ]]; then
+            proposal_reason="$(jq -r '.reason // empty' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
+            if ! is_known_proposal_failure_reason "$proposal_reason"; then
+              echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
+              exit 1
+            fi
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" --arg route "$REQUESTED_ROUTE" '
+              .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+              .repository == $repository and .current_head_sha == $head and .predecessor_sha == $predecessor and .requested_route == $route and
+              .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+              .resolution == "LOWER_RESOLUTION" and
+              .stage == "proposal-predecessor" and
+              .step == "select-exact-predecessor" and
+              .promotion_authority == false and .readiness_delta == null and
+              ((.reason == "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "REFUTED" and .observation_resolution == "EXACT" and .unknown == null) or
+               (.reason != "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "UNKNOWN" and .observation_resolution == "LOWER_RESOLUTION" and
+                .unknown.stage == "proposal-predecessor" and .unknown.step == "select-exact-predecessor" and
+                .unknown.reason == .reason and .unknown.unknown_class != "" and .unknown.next_operation != "" and .unknown.blocked_by != null)) and
+              (.reason as $reason |
+                ["PROPOSAL_PREDECESSOR_NOT_FOUND",
+                "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN",
+                "PROPOSAL_PREDECESSOR_AMBIGUOUS",
+                "PROPOSAL_SYNTHESIS_JOB_CARDINALITY",
+                "PROPOSAL_RUN_PAGINATION_INCOMPLETE",
+                "PROPOSAL_JOB_PAGINATION_INCOMPLETE",
+                "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE",
+                "PROPOSAL_API_UNAVAILABLE",
+                "PROPOSAL_API_PERMISSION_DENIED",
+                "PROPOSAL_RESPONSE_MALFORMED",
+                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE",
+                "PROPOSAL_REDIRECT_ORIGIN_MISMATCH",
+                "PROPOSAL_PREDECESSOR_ROUTE_UNKNOWN",
+                "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION"] | index($reason)) != null
+            ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+            jq -r '"### Proposal predecessor conformance\n- conformance: `\(.conformance)`\n- proposal availability/readiness decision: `\(.decision)`\n- resolution: `\(.resolution)`\n- coordinate: `\(.stage)/\(.step)`\n- reason: `\(.reason)`\n- promotion authority: `\(.promotion_authority)`\n- readiness delta: `\(.readiness_delta // "UNKNOWN")`\n- receipt reconstruction: `2/2`"' \
+              "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" --arg route "$REQUESTED_ROUTE" '
+              .schema == "gooo/autonomous-change-proposal-promotion/v2" and
+              .repository == $repository and .current_head_sha == $head and .evidence_head_sha == $predecessor and
+              .source.selection.requested_route == $route and .source.selection.head_branch == $route and
+              .decision == "PASS" and .repository_mutation_authorized == false
+            ' \
+              "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+            echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "FAIL_CLOSED: malformed proposal predecessor receipt" >&2
+            exit 1
+          fi
+      - name: Verify proposal observation evidence binding
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          set -euo pipefail
+          cache="$RUNNER_TEMP/language-readiness-proposal-observation.json"
+          receipt="$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          test -s "$cache"
+          test -s "$receipt"
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
+          go run ./cmd/language-readiness-witness/proposal-promotion \
+            --root "$GITHUB_WORKSPACE" \
+            --repository "$GITHUB_REPOSITORY" \
+            --current-head "$HEAD_SHA" \
+            --predecessor-sha "$predecessor_sha" \
+            --route "$REQUESTED_ROUTE" \
+            --observation-cache "$cache" \
+            --check "$receipt"
+          cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"
+          cache_digest="sha256:$(sha256sum "$cache" | awk '{print $1}')"
+          response_total="$(jq -r '.responses | length' "$cache")"
+          response_consumed="$(jq -r '.observation_evidence.response_consumed' "$receipt")"
+          jq -e --argjson responses "$response_total" '
+            .schema == "gooo/language-readiness-api-observation/v1" and
+            (.responses | type) == "array" and (.responses | length) == $responses and
+            (.responses | length) > 0 and
+            (has("decision") | not) and (has("selection") | not) and (has("promotion") | not)
+          ' "$cache"
+          jq -e --arg logical "language-readiness-proposal-observation.json" \
+            --arg role "proposal-predecessor-raw-observation" \
+            --argjson bytes "$cache_bytes" --arg digest "$cache_digest" \
+            --argjson responses "$response_total" '
+            .observation_evidence.schema == "gooo/language-readiness-api-observation/v1" and
+            .observation_evidence.cache_path == $logical and
+            .observation_evidence.cache_role == $role and
+            .observation_evidence.cache_bytes == $bytes and
+            .observation_evidence.cache_digest == $digest and
+            .observation_evidence.response_total == $responses and
+            .observation_evidence.response_consumed == $responses
+          ' "$receipt"
+          evidence_bundle="$RUNNER_TEMP/language-readiness-proposal-evidence"
+          mkdir -p "$evidence_bundle"
+          cp "$cache" "$evidence_bundle/language-readiness-proposal-observation.json"
+          cp "$receipt" "$evidence_bundle/proposal-receipt.json"
+          echo "### Proposal observation binding" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache bytes: \`$cache_bytes\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cache digest: \`$cache_digest\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- raw response total: \`$response_total\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- responses consumed at record/next boundary: \`$response_consumed/$response_total\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- capture/replay reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload proposal predecessor raw observation cache
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-observation.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload proposal predecessor resolution receipt
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-predecessor-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload bound proposal observation evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-proposal-evidence
+          if-no-files-found: error
+          retention-days: 14
+      - name: Assert blocked proposal predecessor remains non-authorizing
+        if: steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode == 'BLOCKED'
+        run: |
+          set -euo pipefail
+          test "${{ steps.proposal-predecessor.outputs.conformance-exit-code }}" = "0"
+          jq -e '
+            .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
+            .conformance == "PASS" and .decision == "FAIL_CLOSED" and
+            .resolution == "LOWER_RESOLUTION" and
+            .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
+            .promotion_authority == false and .readiness_delta == null and
+            .selection.decision != "SELECTED"
+          ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
+          echo "proposal predecessor BLOCKED conformance exited 0; proposal projection, promotion, and readiness authority are skipped"
+      - name: Project v2 proposal evidence to the unchanged v1 guard contract
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
+        run: |
+          predecessor_sha="${{ github.event.pull_request.base.sha }}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/proposal-compat \
               --root "$GITHUB_WORKSPACE" \
               --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+              --expected-repository "$GITHUB_REPOSITORY" \
               --expected-sha "$HEAD_SHA" \
+              --expected-predecessor-sha "$predecessor_sha" \
               --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-$suffix.json" \
               --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-$suffix.json"
           done
@@ -444,11 +995,14 @@ jobs:
           go run ./cmd/language-readiness-witness/proposal-compat \
             --root "$GITHUB_WORKSPACE" \
             --input "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
+            --expected-repository "$GITHUB_REPOSITORY" \
             --expected-sha "$HEAD_SHA" \
+            --expected-predecessor-sha "$predecessor_sha" \
             --legacy "$RUNNER_TEMP/language-readiness-proposal-promotion-legacy-a.json" \
             --receipt "$RUNNER_TEMP/language-readiness-proposal-compat-a.json" \
             --check
       - name: Upload merged autonomous change proposal promotion
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
@@ -456,6 +1010,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload current v2 proposal evidence
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
@@ -463,6 +1018,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload proposal compatibility receipt
+        if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
@@ -470,12 +1026,49 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Select exact readiness predecessor
+        id: readiness-predecessor
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          mode=""
+          status_a=1
+          status_b=1
+          replay_mismatch=0
+          is_known_failure_reason() {
+            case "$1" in
+              ARTIFACT_PAYLOAD_UNAVAILABLE|\
+              WORKFLOW_RUN_HTTP_FAILURE|WORKFLOW_RUN_PAGINATION_INCOMPLETE|\
+              WORKFLOW_RUN_NEXT_LINK_REPEATED|WORKFLOW_RUN_PAGE_CAP_EXCEEDED|\
+              WORKFLOW_RUN_LINK_MALFORMED|WORKFLOW_RUN_LINK_ORIGIN_MISMATCH|\
+              WORKFLOW_RUN_REDIRECT_ORIGIN_MISMATCH|WORKFLOW_RUN_DUPLICATE_ID|\
+              WORKFLOW_RUN_RESPONSE_MALFORMED|\
+              ARTIFACT_HTTP_FAILURE|ARTIFACT_PAGINATION_INCOMPLETE|\
+              ARTIFACT_NEXT_LINK_REPEATED|ARTIFACT_PAGE_CAP_EXCEEDED|\
+              ARTIFACT_LINK_MALFORMED|ARTIFACT_LINK_ORIGIN_MISMATCH|\
+              ARTIFACT_REDIRECT_ORIGIN_MISMATCH|ARTIFACT_DUPLICATE_ID|\
+              ARTIFACT_RESPONSE_MALFORMED|\
+              JOB_HTTP_FAILURE|JOB_PAGINATION_INCOMPLETE|\
+              JOB_NEXT_LINK_REPEATED|JOB_PAGE_CAP_EXCEEDED|\
+              JOB_LINK_MALFORMED|JOB_LINK_ORIGIN_MISMATCH|\
+              JOB_REDIRECT_ORIGIN_MISMATCH|JOB_DUPLICATE_ID|\
+              JOB_RESPONSE_MALFORMED)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           for suffix in a b; do
             baseline_dir="$RUNNER_TEMP/language-readiness-baseline-$suffix"
             mkdir -p "$baseline_dir"
+            observation_args=(--observation-replay "$RUNNER_TEMP/language-readiness-predecessor-observation.json")
+            if [[ "$suffix" == "a" ]]; then
+              observation_args=(--observation-capture "$RUNNER_TEMP/language-readiness-predecessor-observation.json")
+            fi
+            set +e
             go run ./cmd/language-readiness-witness/predecessor-selection \
               --root "$GITHUB_WORKSPACE" \
               --repository "$GITHUB_REPOSITORY" \
@@ -486,27 +1079,220 @@ jobs:
               --baseline "$baseline_dir/artifact.json" \
               --reference "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json" \
               --binding-baseline "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json" \
-              --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+              --receipt "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json" \
+              "${observation_args[@]}"
+            selection_status=$?
+            set -e
+            effective_status="$selection_status"
+            observed_mode="BLOCKED"
+            if [[ "$selection_status" -eq 0 ]]; then
+              observed_mode="RESOLVED"
+            else
+              receipt="$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+              selection_reason="$(jq -r '.attempts[-1].selection.reason // empty' "$receipt" 2>/dev/null || true)"
+              resolution_reason="$(jq -r '.reason // empty' "$receipt" 2>/dev/null || true)"
+              if [[ "$selection_reason" == "READINESS_PREDECESSOR_NOT_FOUND" &&
+                "$resolution_reason" == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" ]]; then
+                if jq -e '
+                  .decision == "FAIL_CLOSED" and
+                  .conformance == "PASS" and
+                  .resolution == "LOWER_RESOLUTION" and
+                  .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
+                  .selected == null and
+                  .summary.observed_attempts == .summary.search_limit and
+                  .summary.missing_attempts == .summary.search_limit and
+                  .summary.selected_ancestors == 0 and
+                  (.attempts | length) == .summary.search_limit and
+                  ([.attempts[] | .selection.reason] | all(. == "READINESS_PREDECESSOR_NOT_FOUND")) and
+                  ([.attempts[].selection.pagination.complete] | all) and
+                  ([.attempts[].selection.pagination.failure_reason] | all(. == null or . == ""))
+                ' "$receipt"; then
+                  set +e
+                  go run ./cmd/language-readiness-witness/foundation-seed \
+                    --root "$GITHUB_WORKSPACE" \
+                    --input "$receipt" \
+                    --expected-head "$HEAD_SHA" \
+                    --output "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json" \
+                    --check
+                  foundation_status=$?
+                  set -e
+                  if [[ "$foundation_status" -eq 0 ]]; then
+                    effective_status=0
+                    observed_mode="FOUNDATION"
+                  else
+                    effective_status="$foundation_status"
+                    echo "foundation seed fail-closed: stage=readiness-foundation step=seed-foundation reason=FOUNDATION_EVIDENCE_UNKNOWN resolution=LOWER_RESOLUTION" >&2
+                  fi
+                else
+                  effective_status=1
+                  echo "malformed exhaustive predecessor receipt: stage=readiness-predecessor step=select-exact-predecessor reason=READINESS_ANCESTOR_SEARCH_EXHAUSTED resolution=LOWER_RESOLUTION" >&2
+                fi
+              elif is_known_failure_reason "$selection_reason" && jq -e \
+                --arg head "$HEAD_SHA" --arg reason "$selection_reason" '
+                  .current_head_sha == $head and
+                  .decision == "FAIL_CLOSED" and
+                  .conformance == "PASS" and
+                  .resolution == "LOWER_RESOLUTION" and
+                  .reason == "READINESS_ANCESTOR_EVIDENCE_BLOCKED" and
+                  .blocking_selection_reason == $reason and
+                  .summary.readiness_delta_claims == null and
+                  ([.attempts[] | .selection.reason] | index($reason)) != null
+                ' "$receipt"; then
+                effective_status="$selection_status"
+                observed_mode="BLOCKED"
+                echo "predecessor selection fail-closed: stage=readiness-predecessor step=select-exact-predecessor reason=$selection_reason resolution=LOWER_RESOLUTION conformance=PASS" >&2
+              else
+                effective_status=1
+                echo "malformed predecessor failure receipt: stage=readiness-predecessor step=select-exact-predecessor reason=${selection_reason:-UNKNOWN} resolution=LOWER_RESOLUTION" >&2
+              fi
+            fi
+            if [[ -n "$mode" && "$mode" != "$observed_mode" ]]; then
+              replay_mismatch=1
+            fi
+            mode="$observed_mode"
+            if [[ "$suffix" == "a" ]]; then
+              status_a="$effective_status"
+            else
+              status_b="$effective_status"
+            fi
           done
-          cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
-            "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
-          cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
-            "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
-          cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
-            "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
           cmp "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-selection-b.json"
-      - name: Upload exact-head readiness predecessor selection
-        if: always()
+          if [[ "$replay_mismatch" -ne 0 ]]; then
+            echo "predecessor mode replay mismatch" >&2
+            exit 1
+          fi
+          if [[ "$mode" == "BLOCKED" ]]; then
+            blocked_reason="$(jq -r '.blocking_selection_reason // empty' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json")"
+            if [[ -n "$blocked_reason" ]]; then
+              jq -e --arg head "$HEAD_SHA" --arg reason "$blocked_reason" '
+                .current_head_sha == $head and
+                .decision == "FAIL_CLOSED" and
+                .conformance == "PASS" and
+                .resolution == "LOWER_RESOLUTION" and
+                .reason == "READINESS_ANCESTOR_EVIDENCE_BLOCKED" and
+                .blocking_selection_reason == $reason and
+                .summary.readiness_delta_claims == null
+              ' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json"
+            else
+              jq -e '
+                .decision == "FAIL_CLOSED" and
+                .conformance == "PASS" and
+                .resolution == "LOWER_RESOLUTION" and
+                .reason == "READINESS_ANCESTOR_SEARCH_EXHAUSTED" and
+                .selected == null
+              ' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json"
+              if [[ -f "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" &&
+                -f "$RUNNER_TEMP/language-readiness-foundation-seed-b.json" ]]; then
+                cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
+                  "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
+              fi
+              blocked_reason="FOUNDATION_EVIDENCE_UNKNOWN"
+            fi
+            echo "### Readiness predecessor conformance" >> "$GITHUB_STEP_SUMMARY"
+            echo "- conformance: \`PASS\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- readiness decision: \`FAIL_CLOSED\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- resolution: \`LOWER_RESOLUTION\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- reason: \`$blocked_reason\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- receipt reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+            echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$status_a" -ne 0 || "$status_b" -ne 0 ]]; then
+            echo "predecessor replay failed: status_a=$status_a status_b=$status_b" >&2
+            exit "$status_a"
+          fi
+          if [[ "$mode" == "RESOLVED" ]]; then
+            for suffix in a b; do
+              test -f "$RUNNER_TEMP/language-readiness-baseline-$suffix/artifact.json"
+              test -f "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json"
+              test -f "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json"
+            done
+            cmp "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-b/artifact.json"
+            cmp "$RUNNER_TEMP/language-readiness-baseline-reference-a.json" \
+              "$RUNNER_TEMP/language-readiness-baseline-reference-b.json"
+            cmp "$RUNNER_TEMP/language-readiness-binding-baseline-a.json" \
+              "$RUNNER_TEMP/language-readiness-binding-baseline-b.json"
+          else
+            for suffix in a b; do
+              test -f "$RUNNER_TEMP/language-readiness-foundation-seed-$suffix.json"
+              test -f "$RUNNER_TEMP/language-readiness-predecessor-selection-$suffix.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-baseline-$suffix/artifact.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-$suffix.json"
+              test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-$suffix.json"
+            done
+            cmp "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-b.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            test ! -e "$RUNNER_TEMP/language-readiness-binding-baseline-a.json"
+            jq -r '"### Readiness foundation seed\n- decision: `\(.decision)`\n- coordinates: `\(.summary.satisfied)/\(.summary.total)`\n- ancestry exhaustion: `\(.source.missing_attempts)/\(.source.search_limit)`\n- readiness delta claims: `\(.source.readiness_delta_claims)`\n- observed repository effects: `\(.source.repository_writes)`\n- authority: denied"' \
+              "$RUNNER_TEMP/language-readiness-foundation-seed-a.json" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"- predecessor evidence coordinate: `\(.attempts[-1].selection.reason // .reason)`"' \
+              "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+      - name: Assert blocked readiness remains non-authorizing
+        if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'BLOCKED'
+        run: |
+          set -euo pipefail
+          test "${{ steps.readiness-predecessor.outputs.conformance-exit-code }}" = "0"
+          jq -e '
+            .conformance == "PASS" and
+            .decision == "FAIL_CLOSED" and
+            .resolution == "LOWER_RESOLUTION" and
+            .summary.readiness_delta_claims == null
+          ' "$RUNNER_TEMP/language-readiness-predecessor-selection-a.json"
+          echo "### Blocked readiness is non-authorizing" >> "$GITHUB_STEP_SUMMARY"
+          echo "- conformance step exit: \`0\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- readiness decision: \`FAIL_CLOSED\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- readiness resolution: \`LOWER_RESOLUTION\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload resolved exact-head readiness predecessor selection
+        if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
             ${{ runner.temp }}/language-readiness-baseline-reference-a.json
             ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-baseline-a/artifact.json
+            ${{ runner.temp }}/language-readiness-binding-baseline-a.json
           if-no-files-found: error
           retention-days: 14
+      - name: Upload foundation exact-head readiness predecessor selection
+        if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'FOUNDATION'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-predecessor-selection-a.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-a.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload readiness predecessor failure receipt
+        if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-readiness-predecessor-selection-*.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload optional readiness predecessor diagnostics
+        if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
+        uses: actions/upload-artifact@v6
+        with:
+          name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-readiness-predecessor-selection-b.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-a.json
+            ${{ runner.temp }}/language-readiness-foundation-seed-b.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Prove guarded promotion capability foundation
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
@@ -539,6 +1325,7 @@ jobs:
             "${archive_args[@]}" \
             --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
       - name: Upload guarded promotion capability
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
@@ -546,12 +1333,20 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Produce, replay, and consume exact-head concepts
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        env:
+          PREDECESSOR_MODE: ${{ steps.readiness-predecessor.outputs.mode }}
+          PULL_REQUEST_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         shell: bash
         run: |
           set -euo pipefail
           first="$RUNNER_TEMP/language-concept-artifact/first"
           replay="$RUNNER_TEMP/language-concept-artifact/replay"
           mkdir -p "$first" "$replay"
+          predecessor_sha="${PULL_REQUEST_BASE_SHA:-}"
+          if [[ -z "$predecessor_sha" ]]; then
+            predecessor_sha="$(git rev-parse "$HEAD_SHA^")"
+          fi
           for target in "$first" "$replay"; do
             go run ./cmd/language-concept-artifact-witness \
               -root "$GITHUB_WORKSPACE" \
@@ -660,7 +1455,11 @@ jobs:
               --head "$HEAD_SHA" \
               --registry "$semantic_registry" \
               --syntax-artifact "$syntax_first/artifact.json" \
-              --output "$target/artifact.json"
+              --output "$target/artifact.json" || {
+                printf '%s\n' 'language-semantic-model artifact:' >&2
+                cat "$target/artifact.json" >&2
+                exit 1
+              }
           done
           cmp -s "$semantic_first/artifact.json" "$semantic_replay/artifact.json"
           go run ./cmd/language-semantic-witness \
@@ -743,7 +1542,6 @@ jobs:
                 exit 1
               }
           done
-          cmp -s "$cli_first/artifact.json" "$cli_replay/artifact.json"
           go run ./cmd/toolchain-cli-witness \
             --root "$GITHUB_WORKSPACE" \
             --executable "$cli_binary" \
@@ -800,7 +1598,9 @@ jobs:
               -language-package-runtime "$runtime_first/artifact.json" \
               -toolchain-cli "$cli_first/artifact.json" \
               -toolchain-format-fix "$format_fix_first/artifact.json" \
+              -expected-repository "$GITHUB_REPOSITORY" \
               -expected-sha "$HEAD_SHA" \
+              -expected-predecessor-sha "$predecessor_sha" \
               -output "$target/artifact.json"
           done
           cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
@@ -815,7 +1615,9 @@ jobs:
             -language-package-runtime "$runtime_first/artifact.json" \
             -toolchain-cli "$cli_first/artifact.json" \
             -toolchain-format-fix "$format_fix_first/artifact.json" \
+            -expected-repository "$GITHUB_REPOSITORY" \
             -expected-sha "$HEAD_SHA" \
+            -expected-predecessor-sha "$predecessor_sha" \
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
@@ -1058,7 +1860,9 @@ jobs:
               -toolchain-lsp "$lsp_first/artifact.json" \
               -toolchain-conformance "$conformance_first/artifact.json" \
               -toolchain-cross-platform-release "$release_first/artifact.json" \
+              -expected-repository "$GITHUB_REPOSITORY" \
               -expected-sha "$HEAD_SHA" \
+              -expected-predecessor-sha "$predecessor_sha" \
               -output "$target/artifact.json"
           done
           cmp -s "$readiness_first/artifact.json" "$readiness_replay/artifact.json"
@@ -1076,39 +1880,44 @@ jobs:
             -toolchain-lsp "$lsp_first/artifact.json" \
             -toolchain-conformance "$conformance_first/artifact.json" \
             -toolchain-cross-platform-release "$release_first/artifact.json" \
+            -expected-repository "$GITHUB_REPOSITORY" \
             -expected-sha "$HEAD_SHA" \
+            -expected-predecessor-sha "$predecessor_sha" \
             -check "$readiness_first/artifact.json"
           (
             cd "$readiness_first"
             sha256sum artifact.json > artifact.json.sha256
           )
-          improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
-          improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
-          baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
-          baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
-          mkdir -p "$improvement_first" "$improvement_replay"
-          for target in "$improvement_first" "$improvement_replay"; do
+          if [[ "$PREDECESSOR_MODE" == "RESOLVED" ]]; then
+            improvement_first="$RUNNER_TEMP/language-readiness-improvement/first"
+            improvement_replay="$RUNNER_TEMP/language-readiness-improvement/replay"
+            baseline="$RUNNER_TEMP/language-readiness-baseline-a/artifact.json"
+            baseline_reference="$RUNNER_TEMP/language-readiness-baseline-reference-a.json"
+            mkdir -p "$improvement_first" "$improvement_replay"
+            for target in "$improvement_first" "$improvement_replay"; do
+              go run ./cmd/language-readiness-witness/transition \
+                -root "$GITHUB_WORKSPACE" \
+                -before "$baseline" \
+                -baseline-reference "$baseline_reference" \
+                -after "$readiness_first/artifact.json" \
+                -expected-sha "$HEAD_SHA" \
+                -output "$target/artifact.json"
+            done
+            cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
             go run ./cmd/language-readiness-witness/transition \
               -root "$GITHUB_WORKSPACE" \
               -before "$baseline" \
               -baseline-reference "$baseline_reference" \
               -after "$readiness_first/artifact.json" \
               -expected-sha "$HEAD_SHA" \
-              -output "$target/artifact.json"
-          done
-          cmp -s "$improvement_first/artifact.json" "$improvement_replay/artifact.json"
-          go run ./cmd/language-readiness-witness/transition \
-            -root "$GITHUB_WORKSPACE" \
-            -before "$baseline" \
-            -baseline-reference "$baseline_reference" \
-            -after "$readiness_first/artifact.json" \
-            -expected-sha "$HEAD_SHA" \
-            -check "$improvement_first/artifact.json"
-          (
-            cd "$improvement_first"
-            sha256sum artifact.json > artifact.json.sha256
-          )
+              -check "$improvement_first/artifact.json"
+            (
+              cd "$improvement_first"
+              sha256sum artifact.json > artifact.json.sha256
+            )
+          fi
       - name: Measure exact predecessor bindings
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         run: |
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/predecessor-binding \
@@ -1120,6 +1929,7 @@ jobs:
           cmp "$RUNNER_TEMP/language-readiness-predecessor-binding-a.json" \
             "$RUNNER_TEMP/language-readiness-predecessor-binding-b.json"
       - name: Prove exact predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         run: |
           for suffix in a b; do
             go run ./cmd/language-readiness-witness/predecessor-binding/transition \
@@ -1138,6 +1948,7 @@ jobs:
             --expected-sha "$HEAD_SHA" \
             --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
       - name: Upload exact-head predecessor binding transition
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
@@ -1145,6 +1956,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload exact-head predecessor bindings
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
@@ -1152,6 +1964,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload exact-head language concepts
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
@@ -1159,6 +1972,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language semantic model
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-semantic-model-${{ env.HEAD_SHA }}
@@ -1166,6 +1980,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head semantic readiness binding
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
@@ -1173,6 +1988,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head deterministic query
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-deterministic-query-${{ env.HEAD_SHA }}
@@ -1180,6 +1996,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head deterministic query readiness binding
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
@@ -1187,6 +2004,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head Go interoperation
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-go-interoperation-${{ env.HEAD_SHA }}
@@ -1194,6 +2012,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head Go interoperation readiness binding
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
@@ -1201,6 +2020,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head diagnostic provenance
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
@@ -1208,6 +2028,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head diagnostic provenance readiness binding
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
@@ -1215,6 +2036,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language package runtime
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-package-runtime-${{ env.HEAD_SHA }}
@@ -1222,6 +2044,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain CLI
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
@@ -1229,6 +2052,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain format/fix
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-format-fix-${{ env.HEAD_SHA }}
@@ -1236,6 +2060,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain conformance
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-conformance-${{ env.HEAD_SHA }}
@@ -1243,6 +2068,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head toolchain LSP
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-lsp-${{ env.HEAD_SHA }}
@@ -1250,6 +2076,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head cross-platform release
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
@@ -1257,6 +2084,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload exact-head language readiness
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-readiness-artifact-${{ env.HEAD_SHA }}
@@ -1264,6 +2092,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload exact-head executable use cases
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
@@ -1272,6 +2101,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head language syntax roundtrip
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v6
         with:
           name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
@@ -1280,6 +2110,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head vertical slice closure shadow
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         uses: actions/upload-artifact@v7
         with:
           name: vertical-slice-closure-shadow-${{ env.HEAD_SHA }}
@@ -1288,6 +2119,7 @@ jobs:
           retention-days: 30
 
       - name: Upload exact-head quantified improvement
+        if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
         uses: actions/upload-artifact@v7
         with:
           name: language-readiness-improvement-${{ env.HEAD_SHA }}
@@ -1299,13 +2131,16 @@ jobs:
     name: user-journey-scorecard
     needs: [language-concept-artifact]
     if: >-
-      github.event_name == 'pull_request' ||
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
       (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
       )
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1318,9 +2153,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Download exact functional CLI receipt
         uses: actions/download-artifact@v7
@@ -1412,9 +2247,9 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
       - name: Download exact guarded promotion receipt
         uses: actions/download-artifact@v7
         with:
@@ -1454,6 +2289,7 @@ jobs:
     name: vertical slice closure eligibility
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
     env:
       GOTOOLCHAIN: go1.27.0
@@ -1464,9 +2300,9 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Generate fixed eligibility receipts
         shell: bash
@@ -1529,9 +2365,9 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Fetch immutable external reference documents
         shell: bash
@@ -1609,9 +2445,9 @@ jobs:
           fetch-depth: 1
           path: gomacro
       - name: Set up exact Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: false
       - name: Allocate isolated caches
         run: |
@@ -1710,6 +2546,128 @@ jobs:
           jq -e '.passed == 15 and .total == 15 and .unknown_expected == 3 and .invariant_expected == 11' "$result/suite.json"
           jq -e '.available == true and .replay_exact == true and (.runs | length) == 2' "$result/observation.json"
           jq -e '([.runs[] | .status == "SATISFIED" and .arithmetic == "42" and .function == "55"] | all)' "$result/observation.json"
+      - name: Compile capability authorization meta-policy twice
+        working-directory: gooo
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          policy="examples/external-capability-execution/authorization/policy.gooo"
+          mkdir -p "$result/policy"
+          go run ./cmd/gooo check "$policy"
+          go run ./cmd/gooo generate "$policy" --out "$result/policy/first"
+          go run ./cmd/gooo generate "$policy" --out "$result/policy/replay"
+          cmp "$result/policy/first/semantic.gooo.go" "$result/policy/replay/semantic.gooo.go"
+          for pass in first replay; do
+            jq -S 'del(.generated_file)' "$result/policy/$pass/semantic.gooo.manifest.jsonl" \
+              > "$result/policy/$pass-manifest.normalized.json"
+          done
+          cmp "$result/policy/first-manifest.normalized.json" \
+            "$result/policy/replay-manifest.normalized.json"
+      - name: Issue and check default-deny authorization twice
+        working-directory: gooo
+        env:
+          AUTH_RUN_ID: ${{ github.run_id }}
+          AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          report="$RUNNER_TEMP/external-capability-execution/report.json"
+          policy="examples/external-capability-execution/authorization/policy.gooo"
+          command="./cmd/external-capability-execution-witness/authorization"
+          go run "$command" --mode issue --subject-sha "$SUBJECT_SHA" \
+            --run-id "$AUTH_RUN_ID" --run-attempt "$AUTH_RUN_ATTEMPT" \
+            --capability-report "$report" --policy-source "$policy" \
+            --policy-generated "$result/policy/first" --envelope "$result/envelope.json"
+          for pass in first replay; do
+            go run "$command" --mode check --subject-sha "$SUBJECT_SHA" \
+              --run-id "$AUTH_RUN_ID" --run-attempt "$AUTH_RUN_ATTEMPT" \
+              --capability-report "$report" --policy-source "$policy" \
+              --policy-generated "$result/policy/first" --envelope "$result/envelope.json" \
+              --receipt "$result/$pass-receipt.json" --suite "$result/$pass-suite.json" \
+              --summary "$result/$pass-summary.md" --expect-decision FAIL_CLOSED
+          done
+          cmp "$result/first-receipt.json" "$result/replay-receipt.json"
+          cmp "$result/first-suite.json" "$result/replay-suite.json"
+          cmp "$result/first-summary.md" "$result/replay-summary.md"
+          cat "$result/first-summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Assert explicit bootstrap resolution
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization"
+          receipt="$result/first-receipt.json"
+          suite="$result/first-suite.json"
+          jq -e '.decision == "FAIL_CLOSED" and .resolution == "UNKNOWN" and .enforcement_effect == "BLOCK"' "$receipt"
+          jq -e '.completed == 9 and .total == 10 and .basis_points == 9000 and .unknown_indicators == 1' "$receipt"
+          jq -e '.open_claims == 1 and .discharged_claims == 9 and .rejected_claims == 0' "$receipt"
+          jq -e '.unknowns == [{"stage":"AUTHORIZE/policy-foundation","indicator_id":"gooo.metric.external-capability-authorization-policy-foundation.v1","reason":"POLICY_FOUNDATION_UNAVAILABLE"}]' "$receipt"
+          jq -e '.execution_authority == false and .repository_mutation_authority == false and .promotion_authority == false' "$receipt"
+          jq -e '.repository_writes == 0 and .official_mutation_count == 0 and .promotion_count == 0' "$receipt"
+          jq -e '([.reader_views[] | select(.reader == "LOCAL_EVIDENCE")][0] | .completed == 9 and .total == 9 and .resolution == "EXACT")' "$receipt"
+          jq -e '([.reader_views[] | select(.reader == "AUTHORIZATION")][0] | .completed == 9 and .total == 10 and .resolution == "UNKNOWN")' "$receipt"
+          jq -e '.decision == "PASS" and .passed == 20 and .total == 20 and .coverage_bps == 10000' "$suite"
+          jq -e '.authorized_cases == 1 and .unknown_cases == 7 and .denied_cases == 12' "$suite"
+      - name: Seal capability authorization evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-authorization"
+          sha256sum envelope.json first-receipt.json replay-receipt.json \
+            first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
+      - name: Upload capability authorization evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-authorization-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-authorization
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Download immutable authorization foundation
+        working-directory: gooo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization-foundation"
+          foundation="examples/external-capability-execution/authorization/foundation.json"
+          mkdir -p "$result/prior"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149" > "$result/metadata.json"
+          jq -e '.id == 9631439149 and .expired == false' "$result/metadata.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/9631439149/zip" > "$result/foundation.zip"
+          digest=$(jq -r '.archive_digest | sub("^sha256:"; "")' "$foundation")
+          printf '%s  %s\n' "$digest" "$result/foundation.zip" | sha256sum -c -
+          unzip -q "$result/foundation.zip" -d "$result/prior"
+
+      - name: Close capability authorization foundation twice
+        working-directory: gooo
+        run: |
+          result="$RUNNER_TEMP/external-capability-authorization-foundation"
+          current="$RUNNER_TEMP/external-capability-authorization/first-receipt.json"
+          command="./cmd/external-capability-execution-witness/authorization-foundation"
+          for pass in first replay; do
+            go run "$command" --subject-sha "$SUBJECT_SHA" \
+              --foundation examples/external-capability-execution/authorization/foundation.json \
+              --artifact-metadata "$result/metadata.json" \
+              --prior-receipt "$result/prior/first-receipt.json" --current-receipt "$current" \
+              --receipt "$result/$pass-receipt.json" --suite "$result/$pass-suite.json" \
+              --summary "$result/$pass-summary.md"
+          done
+          cmp "$result/first-receipt.json" "$result/replay-receipt.json"
+          cmp "$result/first-suite.json" "$result/replay-suite.json"
+          cmp "$result/first-summary.md" "$result/replay-summary.md"
+          jq -e '.decision == "AUTHORIZED_SHADOW" and .resolution == "EXACT" and .enforcement_effect == "NO_EFFECT"' "$result/first-receipt.json"
+          jq -e '.completed == 10 and .total == 10 and .basis_points == 10000 and .unknown_indicators == 0' "$result/first-receipt.json"
+          jq -e '.open_claims == 0 and .discharged_claims == 10 and .rejected_claims == 0' "$result/first-receipt.json"
+          jq -e '.execution_authority == false and .repository_mutation_authority == false and .promotion_authority == false' "$result/first-receipt.json"
+          jq -e '.decision == "PASS" and .passed == 12 and .total == 12 and .coverage_bps == 10000' "$result/first-suite.json"
+          cat "$result/first-summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Seal capability authorization foundation evidence
+        run: |
+          cd "$RUNNER_TEMP/external-capability-authorization-foundation"
+          sha256sum metadata.json first-receipt.json replay-receipt.json \
+            first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
+
+      - name: Upload capability authorization foundation evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: external-capability-authorization-foundation-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/external-capability-authorization-foundation
+          retention-days: 30
+
       - name: Evaluate external assurance eligibility twice
         working-directory: gooo
         run: |
@@ -1792,6 +2750,7 @@ jobs:
       - language-concept-artifact
       - language-source-execution
       - user-journey-scorecard
+    if: needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -1807,9 +2766,9 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Reduce fixed language delivery contract
         shell: bash
@@ -1829,13 +2788,16 @@ jobs:
     name: language-source-execution
     needs: [language-concept-artifact]
     if: >-
-      github.event_name == 'pull_request' ||
+      needs.language-concept-artifact.outputs.predecessor-mode == 'RESOLVED' &&
       (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository &&
-        (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        github.event_name == 'pull_request' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository &&
+          (github.event.workflow_run.head_branch == 'dev' || github.event.workflow_run.head_branch == 'main')
+        )
       )
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -1847,9 +2809,9 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
-      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+      - uses: actions/setup-go@v7
         with:
-          go-version: 1.27.0
+          go-version: '1.27.0'
           cache: true
       - name: Execute Gooo source and reduce fixed receipts
         shell: bash
@@ -1860,5 +2822,83 @@ jobs:
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
+          if-no-files-found: error
+          retention-days: 30
+
+  language-artifact-oracle:
+    name: language-artifact-oracle
+    needs: [language-source-execution]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 1
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: true
+      - name: Download exact source execution artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: language-source-execution-${{ env.HEAD_SHA }}
+          path: source-execution-output
+      - name: Evaluate source artifacts with a dependency-separated oracle
+        shell: bash
+        run: bash scripts/language-artifact-oracle/main.sh
+      - name: Upload exact-head artifact oracle
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-artifact-oracle-${{ env.HEAD_SHA }}
+          path: artifact-oracle-output
+          if-no-files-found: error
+          retention-days: 30
+
+  language-source-binding-promotion:
+    name: language-source-binding-promotion
+    needs: [language-source-execution, language-artifact-oracle]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOTOOLCHAIN: go1.27.0
+      HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      SOURCE_EXECUTION_INPUT: source-execution-input
+      ARTIFACT_ORACLE_INPUT: artifact-oracle-input
+      PROMOTION_OUTPUT: source-binding-promotion-output
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - name: Bind the declared Go 1.27 toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Download structural source execution evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: language-source-execution-${{ env.HEAD_SHA }}
+          path: source-execution-input
+      - name: Download independent source binding evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: language-artifact-oracle-${{ env.HEAD_SHA }}
+          path: artifact-oracle-input
+      - name: Promote only the independently bound claim
+        shell: bash
+        run: bash scripts/language-source-binding-promotion/main.sh
+      - name: Upload append-only source binding promotion receipt
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: language-source-binding-promotion-${{ env.HEAD_SHA }}
+          path: source-binding-promotion-output
           if-no-files-found: error
           retention-days: 30

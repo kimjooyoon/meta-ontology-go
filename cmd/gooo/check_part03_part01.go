@@ -11,7 +11,7 @@ func runSemanticCheck(options checkOptions, jsonMode bool, source []byte, file *
 	if !options.semantic {
 		return "", nil, exitOK
 	}
-	ir, err := semanticCheckIR(file, remainingDeadline(deadline))
+	ir, err := semanticCheckIRWithEntityFieldsSupport(file, remainingDeadline(deadline))
 	if err != nil {
 		if jsonMode {
 			return "", nil, reportFailure(true, stdout, stderr, "check", options.filename, "semantic.lowering", err.Error(), syntaxFileSpan(file))

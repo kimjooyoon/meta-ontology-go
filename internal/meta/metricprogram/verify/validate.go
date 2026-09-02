@@ -23,8 +23,20 @@ func validateInputs(strategy strategyPlan, verification strategyVerification, so
 	if strategy.RootPolicy != canonicalRoot {
 		return fmt.Errorf("project root exception is not canonical")
 	}
-	if strategy.Selection.ProofChoice != "REGRESSION" || strategy.Selection.Decision != "HOLD_FIXED_POINT" || strategy.Selection.MetaOperation != "terminate-at-fixed-point" || strategy.Selection.Reason != "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO" {
-		return fmt.Errorf("strategy is not the verified fixed point")
+	selection := strategy.Selection
+	if selection.ProofChoice != "REGRESSION" {
+		return fmt.Errorf("strategy is not a regression terminal")
+	}
+	if selection.MetaOperation == "terminate-at-fixed-point" {
+		if selection.Decision != "HOLD_FIXED_POINT" || selection.Reason != "ALL_INDICATORS_SATISFIED_AND_RESIDUALS_ZERO" {
+			return fmt.Errorf("strategy is not the verified fixed point")
+		}
+	} else if selection.MetaOperation == "preserve-non-promoting-terminal" {
+		if selection.Decision != "PRESERVE_NON_PROMOTING_TERMINAL" || selection.Reason != "NON_PROMOTING_TERMINAL_PRESERVED" {
+			return fmt.Errorf("strategy is not the preserved non-promoting terminal")
+		}
+	} else {
+		return fmt.Errorf("strategy terminal operation is unsupported")
 	}
 	if verification.SelectedProofChoice != strategy.Selection.ProofChoice {
 		return fmt.Errorf("selected proof choice is not verification-bound")

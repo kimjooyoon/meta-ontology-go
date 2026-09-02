@@ -36,6 +36,42 @@ unknown_code=$?
 set -e
 [[ "$unknown_code" == "1" ]]
 jq -e '.decision=="FAIL_CLOSED" and .resolution=="LOWER_RESOLUTION" and .summary.unknowns>0' source-execution-output/unknown-artifact.json
+
+bash scripts/language-profile-experiment/main.sh
+profile_work="${RUNNER_TEMP:-/tmp}/language-profile-experiment"
+profile_build="${RUNNER_TEMP:-/tmp}/language-profile-build"
+mkdir -p source-execution-output/profile
+cp \
+  "$profile_work/preflight.json" \
+  "$profile_work/unformatted.txt" \
+  "$profile_work/first.json" \
+  "$profile_work/replay.json" \
+  "$profile_work/unknown-entry.json" \
+  "$profile_work/input.json" \
+  "$profile_work/report.json" \
+  "$profile_work/unknown-top-input.json" \
+  "$profile_work/unknown-top-report.json" \
+  source-execution-output/profile/
+cp "$profile_build/gooo" source-execution-output/profile/gooo
+cp "$profile_build/language-profile-experiment" source-execution-output/profile/language-profile-experiment
+
+bash scripts/language-debug-experiment/main.sh
+debug_work="${RUNNER_TEMP:-/tmp}/language-debug-experiment"
+debug_build="${RUNNER_TEMP:-/tmp}/language-debug-build"
+mkdir -p source-execution-output/debug
+cp \
+  "$debug_work/unformatted.txt" \
+  "$debug_work/first.json" \
+  "$debug_work/second.json" \
+  "$debug_work/unknown-breakpoint.json" \
+  "$debug_work/input.json" \
+  "$debug_work/report.json" \
+  "$debug_work/unknown-top-input.json" \
+  "$debug_work/unknown-top-report.json" \
+  source-execution-output/debug/
+cp "$debug_build/gooo" source-execution-output/debug/gooo
+cp "$debug_build/language-debug-experiment" source-execution-output/debug/language-debug-experiment
+
 git diff --exit-code
 
 {
@@ -43,3 +79,6 @@ git diff --exit-code
   echo
   jq -r '"- decision: \(.decision) / \(.resolution)\n- cases: \(.summary.cases_satisfied)/\(.summary.cases_total)\n- executions: \(.summary.source_executions)\n- deterministic replays: \(.summary.deterministic_replays)\n- diagnostic rejections: \(.summary.diagnostic_rejections)\n- repository writes: \(.summary.repository_writes)\n- receipt: \(.digest)"' source-execution-output/artifact.json
 } >> "$GITHUB_STEP_SUMMARY"
+
+language_test_output="${GITHUB_WORKSPACE:-$(pwd)}/source-execution-output/test"
+bash scripts/language-test-experiment/main.sh "$language_test_output"

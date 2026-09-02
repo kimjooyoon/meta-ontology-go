@@ -1,6 +1,10 @@
 package predecessorresolution
 
 func indicators(report Report, contiguous bool) []Indicator {
+	deltaValue, deltaKnown := 0, false
+	if report.Summary.ReadinessDeltaClaims != nil {
+		deltaValue, deltaKnown = *report.Summary.ReadinessDeltaClaims, true
+	}
 	selected := report.Selected != nil
 	depthBound := selected && report.Summary.SelectedDepth < SearchLimit
 	attemptCardinality := selected && report.Summary.ObservedAttempts ==
@@ -32,8 +36,8 @@ func indicators(report Report, contiguous bool) []Indicator {
 			report.Summary.RepositoryWrites, "EQ", 0,
 			report.Summary.RepositoryWrites == 0),
 		indicator("readiness-delta-claim-cardinality", "GUARDRAIL",
-			report.Summary.ReadinessDeltaClaims, "EQ", 0,
-			report.Summary.ReadinessDeltaClaims == 0),
+			deltaValue, "EQ", 0,
+			deltaKnown && deltaValue == 0),
 	}
 }
 

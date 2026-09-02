@@ -1,14 +1,16 @@
 package main
 
 import (
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
+
+	recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"
 )
 
-//go:embed recipes.json
-var embeddedRecipes []byte
+type extractionRecipe = recipeauthority.ExtractionRecipe
+type textEdit = recipeauthority.TextEdit
+type fileCreation = recipeauthority.FileCreation
 
 func decodeJSONFile(name string, target any) error {
 	data, err := os.ReadFile(name)
@@ -19,7 +21,7 @@ func decodeJSONFile(name string, target any) error {
 }
 
 func loadExtractionInputs(planName, densityName,
-	expected string) (map[string]planSubject, []string, error) {
+	expected string, fixedPoint bool) (map[string]planSubject, []string, error) {
 	var plan splitPlan
 	if err := decodeJSONFile(planName, &plan); err != nil {
 		return nil, nil, err
@@ -57,16 +59,21 @@ func loadExtractionInputs(planName, densityName,
 		seen[subject.Logical] = true
 		residual = append(residual, subject.Logical)
 	}
+	if fixedPoint {
+		for _, subject := range plan.Subjects {
+			switch subject.Reason {
+			case "no-movable-declaration", "fixed-declaration-capacity", "movable-declaration-capacity":
+				if seen[subject.Logical] {
+					continue
+				}
+				seen[subject.Logical] = true
+				residual = append(residual, subject.Logical)
+			}
+		}
+	}
 	return plans, residual, nil
 }
 
 func loadRecipes() ([]extractionRecipe, error) {
-	var manifest recipeManifest
-	if err := json.Unmarshal(embeddedRecipes, &manifest); err != nil {
-		return nil, err
-	}
-	if manifest.Schema != "gooo.function-extraction-recipes.v1" {
-		return nil, fmt.Errorf("unsupported recipe manifest %q", manifest.Schema)
-	}
-	return manifest.Recipes, nil
+	return recipeauthority.Load()
 }

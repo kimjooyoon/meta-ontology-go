@@ -15,7 +15,8 @@ import (
 
 func BuildWithPromotionEvidence(
 	conceptArtifact, promotionRaw, capabilityRaw, useCaseRaw, syntaxRaw,
-	diagnosticRaw []byte, headSHA string, packageRuntimeRaw ...[]byte,
+	diagnosticRaw []byte, expectedRepository, headSHA, expectedPredecessorSHA string,
+	packageRuntimeRaw ...[]byte,
 ) (Receipt, error) {
 	promotion := proposalpromotion.Receipt{}
 	if err := json.Unmarshal(promotionRaw, &promotion); err != nil {
@@ -43,7 +44,7 @@ func BuildWithPromotionEvidence(
 	}
 	snapshot, err := readiness.EvaluateWithPromotionEvidence(
 		conceptArtifact, promotion, capability, useCases, syntaxReport,
-		diagnosticReport, headSHA, packageRuntimeReports...,
+		diagnosticReport, expectedRepository, headSHA, expectedPredecessorSHA, packageRuntimeReports...,
 	)
 	if err != nil {
 		return Receipt{}, err

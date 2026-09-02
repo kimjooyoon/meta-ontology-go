@@ -12,6 +12,9 @@ func adaptSyntaxActivity(ctx context.Context, activity *syntax.ActivityDecl) (De
 		return Declaration{}, err
 	}
 	declaration := Declaration{Kind: ActivityKind, Name: activity.Name, Span: toSourceSpan(activity.Span)}
+	if activity.ValueProgramPresent || activity.ValueProgram != "" {
+		declaration.Attributes = map[string]string{ActivityValueProgramAttribute: activity.ValueProgram}
+	}
 	if len(activity.Inputs) == 0 && len(activity.Parameters) != 0 {
 		return Declaration{}, fmt.Errorf("activity %q uses unsupported legacy-only Parameters; canonical Inputs is required", activity.Name)
 	}

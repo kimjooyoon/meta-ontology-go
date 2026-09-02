@@ -20,7 +20,9 @@ func TestEvaluateExecutesExactCLIContract(t *testing.T) {
 		report.Summary.Satisfied != FixedTotal || report.Summary.PositivePaths != FixedPositive ||
 		report.Summary.GuardrailRejections != FixedGuardrails || report.Summary.Invocations != ExpectedRuns ||
 		report.Summary.DeclaredCommands != ExpectedCommands || report.Summary.StructuredOutputs != ExpectedStructured ||
-		report.Summary.LanguageOperations != ExpectedLanguageOps || report.RepositoryWrites != 0 {
+		report.Summary.LanguageOperations != ExpectedLanguageOps || report.Summary.ResourceObservations != ExpectedRuns ||
+		report.Summary.PeakRSSKiB <= 0 || report.ResourceObservationMode != "RUNNER_SCOPED_NONDETERMINISTIC" ||
+		report.ResourceMeasurementReplayAuthority || report.PerformanceImprovement != "UNKNOWN" || report.RepositoryWrites != 0 {
 		t.Fatalf("report = %#v", report)
 	}
 }

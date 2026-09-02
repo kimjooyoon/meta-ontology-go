@@ -7,14 +7,18 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
-func Validate(receipt Receipt, expectedCurrentHead string) error {
+func Validate(receipt Receipt, expectedRepository, expectedCurrentHead, expectedPredecessorSHA string) error {
 	switch {
 	case receipt.Schema != Schema:
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion schema %q", receipt.Schema)
-	case receipt.CurrentHeadSHA != expectedCurrentHead:
-		return fmt.Errorf("FAIL_CLOSED: proposal promotion current head mismatch")
+	case expectedRepository == "" || !validSHA(expectedCurrentHead) || !validSHA(expectedPredecessorSHA) ||
+		receipt.Repository != expectedRepository || receipt.CurrentHeadSHA != expectedCurrentHead ||
+		receipt.EvidenceHeadSHA != expectedPredecessorSHA:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion context mismatch")
 	case !validSHA(receipt.CurrentHeadSHA) || !validSHA(receipt.EvidenceHeadSHA):
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion sha is invalid")
 	case receipt.CurrentHeadSHA == receipt.EvidenceHeadSHA:
@@ -23,8 +27,15 @@ func Validate(receipt Receipt, expectedCurrentHead string) error {
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion repository is empty")
 	case receipt.Source.Selection.RunID <= 0 || receipt.Source.Selection.ArtifactID <= 0:
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion source identity is invalid")
+	case receipt.Source.Selection.RequestedRoute != proposalpredecessor.RouteDev && receipt.Source.Selection.RequestedRoute != proposalpredecessor.RouteMain:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion route identity is invalid")
+	case receipt.Source.Selection.HeadBranch != receipt.Source.Selection.RequestedRoute:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion route identity mismatch")
 	}
-	expected := evaluate(receipt.CurrentHeadSHA, receipt.EvidenceHeadSHA, receipt.Source)
+	if err := proposalpredecessor.ValidateObservationEvidence(receipt.ObservationEvidence); err != nil {
+		return err
+	}
+	expected := evaluate(receipt.CurrentHeadSHA, receipt.EvidenceHeadSHA, receipt.Source, receipt.ObservationEvidence)
 	if !reflect.DeepEqual(receipt, expected) {
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion receipt mismatch")
 	}

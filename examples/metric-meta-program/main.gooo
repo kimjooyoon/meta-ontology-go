@@ -10,6 +10,7 @@ entity CounterfactualBoundary id "gooo://metric-meta-program/entity/counterfactu
 entity WorkspaceReceipt id "gooo://metric-meta-program/entity/workspace-receipt"
 entity VerificationEvidence id "gooo://metric-meta-program/entity/verification-evidence"
 entity FixedPointReceipt id "gooo://metric-meta-program/entity/fixed-point-receipt"
+entity NonPromotingTerminalReceipt id "gooo://metric-meta-program/entity/non-promoting-terminal-receipt"
 
 activity BindExactSourceMetrics(SourceMetrics) -> BoundMetrics
 activity ExemptProjectRootTopology(BoundMetrics) -> RootPolicy
@@ -19,3 +20,4 @@ activity ObserveCounterfactualBoundary(ProjectedMetrics) -> CounterfactualBounda
 activity PreserveRepositoryWorkspace(CounterfactualBoundary) -> WorkspaceReceipt
 activity ReplayCounterfactual(WorkspaceReceipt) -> VerificationEvidence
 activity TerminateAtFixedPoint(VerificationEvidence) -> FixedPointReceipt
+activity PreserveNonPromotingTerminal(VerificationEvidence) -> NonPromotingTerminalReceipt

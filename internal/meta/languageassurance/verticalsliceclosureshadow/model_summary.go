@@ -6,6 +6,14 @@ type artifactSummary struct {
 	Executed             int `json:"executed"`
 	NotSatisfied         int `json:"not_satisfied"`
 	Unresolved           int `json:"unresolved"`
+	CapabilitySatisfied  int `json:"capability_satisfied"`
+	CapabilityTotal      int `json:"capability_total"`
+	CapabilityExecuted   int `json:"capability_executed"`
+	CapabilityUnresolved int `json:"capability_unresolved"`
+	GovernanceSatisfied  int `json:"governance_satisfied"`
+	GovernanceTotal      int `json:"governance_total"`
+	GovernanceExecuted   int `json:"governance_executed"`
+	GovernanceUnresolved int `json:"governance_unresolved"`
 	ReadinessBPS         int `json:"readiness_bps"`
 	Coordinates          int `json:"coordinates"`
 	BoundCoordinates     int `json:"bound_coordinates"`

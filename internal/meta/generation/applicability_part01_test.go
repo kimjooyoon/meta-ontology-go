@@ -12,6 +12,8 @@ func TestPlanAndExecutionBindMetricApplicability(t *testing.T) {
 		{Subject: ".", Dimension: sourcepolicy.DimensionDirectEntries, Value: 99},
 		{Subject: ".", Dimension: sourcepolicy.DimensionDirectoryKinds, Value: 2},
 		{Subject: ".", Dimension: sourcepolicy.DimensionRootREADME, Value: 0},
+		{Subject: ".github/workflows", Dimension: sourcepolicy.DimensionDirectEntries, Value: 17,
+			Detail: sourcepolicy.WorkflowDiscoveryObservationDetail},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -22,7 +24,7 @@ func TestPlanAndExecutionBindMetricApplicability(t *testing.T) {
 	)
 	plan := Build(strings.Repeat("7", 40), strings.Repeat("8", 40), report)
 	if plan.Decision != DecisionPlan || len(plan.Selected) != 2 ||
-		len(plan.NotApplicableIndicatorIDs) != 3 {
+		len(plan.NotApplicableIndicatorIDs) != 4 {
 		t.Fatalf("applicability was not represented in plan: %+v", plan)
 	}
 	for _, action := range plan.Selected {
@@ -32,7 +34,7 @@ func TestPlanAndExecutionBindMetricApplicability(t *testing.T) {
 	}
 	manifest := BuildExecutionManifest(plan)
 	if manifest.Decision != ExecutionDecisionProposed ||
-		len(manifest.NotApplicableIndicatorIDs) != 3 || len(manifest.Steps) != 2 {
+		len(manifest.NotApplicableIndicatorIDs) != 4 || len(manifest.Steps) != 2 {
 		t.Fatalf("execution lost applicability evidence: %+v", manifest)
 	}
 	for _, step := range manifest.Steps {
@@ -41,5 +43,22 @@ func TestPlanAndExecutionBindMetricApplicability(t *testing.T) {
 			step.MetricProofChoice == "" || step.MetricConsumer == "" {
 			t.Fatalf("execution step lost metric binding: %+v", step)
 		}
+	}
+}
+
+func TestWorkflowDiscoveryRootApplicabilityIsAccepted(t *testing.T) {
+	indicator := sourcepolicy.Indicator{
+		MetricID: sourcepolicy.DimensionDirectEntries, Family: sourcepolicy.FamilyTopology,
+		Subject: ".github/workflows", SubjectKind: sourcepolicy.SubjectKindDirectory,
+		Value: 36, Limit: 0, Relation: sourcepolicy.RelationObserve,
+		Applicability:       sourcepolicy.ApplicabilityNotApplicable,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleWorkflowDiscoveryRoot,
+		ApplicabilityReason: sourcepolicy.ApplicabilityReasonWorkflowRootExempt,
+		Satisfied:           true, Proof: sourcepolicy.ProofFoundation,
+		Producer: "repository-projector.topology", Consumer: "github-actions",
+		Operation: sourcepolicy.OperationExemptWorkflowRoot,
+	}
+	if !validIndicatorApplicability(indicator) {
+		t.Fatalf("workflow discovery root exemption was rejected: %+v", indicator)
 	}
 }

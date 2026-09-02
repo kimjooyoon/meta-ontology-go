@@ -12,6 +12,7 @@ type splitSubject struct {
 	RequiredSave int    `json:"required_savings"`
 	Reason       string `json:"reason"`
 	Operation    string `json:"meta_operation"`
+	Executable   bool   `json:"executable"`
 }
 
 type rewriteSubject struct {

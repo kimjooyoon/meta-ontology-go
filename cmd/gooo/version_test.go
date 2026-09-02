@@ -17,7 +17,7 @@ func TestRunVersionIsDeterministic(t *testing.T) {
 	if code := runVersion(nil, &second, &secondErr); code != exitOK {
 		t.Fatalf("second version code = %d, stderr=%q", code, secondErr.String())
 	}
-	if first.String() != "gooo 0.1.0-dev (development)\n" || first.String() != second.String() || firstErr.Len() != 0 || secondErr.Len() != 0 {
+	if first.String() != "gooo 0.2.0-dev (development)\n" || first.String() != second.String() || firstErr.Len() != 0 || secondErr.Len() != 0 {
 		t.Fatalf("version output = %q/%q, stderr=%q/%q", first.String(), second.String(), firstErr.String(), secondErr.String())
 	}
 }

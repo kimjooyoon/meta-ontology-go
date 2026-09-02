@@ -18,6 +18,9 @@ func (plan *Plan) UnmarshalJSON(payload []byte) error {
 		return err
 	}
 	candidate := Plan(wire.plainPlan)
+	if err := validatePlanRefutedEvidence(candidate); err != nil {
+		return err
+	}
 	if wire.Summary != candidate.indicatorDecisionSummary() {
 		return fmt.Errorf("indicator decision summary does not match plan")
 	}

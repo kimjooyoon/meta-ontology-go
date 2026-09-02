@@ -25,6 +25,7 @@ func readInput(path string) (feedbackpredecessor.Input, error) {
 func newReceipt(report feedbackpredecessor.Report, replayDigest, expected string) (receipt, error) {
 	output := receipt{
 		Schema: receiptSchema, Report: report, ReplayReportDigest: replayDigest,
+		ProofChoice: report.ProofChoice, Foundation: report.Foundation,
 		ExpectedDigest: expected, ReplayVerified: report.ReportDigest == replayDigest,
 		RepositoryWrites: report.Summary.RepositoryWrites,
 	}

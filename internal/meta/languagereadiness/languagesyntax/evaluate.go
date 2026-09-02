@@ -38,6 +38,11 @@ func Evaluate(repository fs.FS, headSHA string, registryRaw []byte,
 	}
 	for _, definition := range registry.Cases {
 		evidence := replay.Execute(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
+		if definition.ImplicitActivityPorts {
+			evidence = replay.ExecuteWithImplicitActivityPorts(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
+		} else if definition.EntityFields {
+			evidence = replay.ExecuteWithEntityFieldsSupport(repository, definition.Path, definition.Kind, definition.ExpectedDiagnostic)
+		}
 		item := CaseResult{Definition: definition, Evidence: evidence}
 		item.Status = caseStatus(item)
 		item.EvidenceDigest = caseDigest(item, report.Source)

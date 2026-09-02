@@ -1,0 +1,6 @@
+package checkout
+namespace checkout
+
+entity Cart id "urn:gooo:checkout:cart"
+entity PaymentMethod id "urn:gooo:checkout:payment-method"
+entity Receipt id "urn:gooo:checkout:receipt"

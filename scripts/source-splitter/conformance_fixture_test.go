@@ -22,6 +22,10 @@ func first() string {
 func second() int {
 	return 2
 }
+
+func init() { println(1) }
+
+func init() { println(1) }
 `
 
 func conformanceEvidence(t *testing.T) ([]byte, conformance.SplitGoEvidence) {
@@ -45,7 +49,11 @@ func conformanceEvidence(t *testing.T) ([]byte, conformance.SplitGoEvidence) {
 		if readErr != nil {
 			t.Fatal(readErr)
 		}
-		candidates[index] = conformance.FileEvidence{Path: part.Subject, Data: data}
+		order := make([]conformance.DeclarationOrder, len(part.DeclarationOrder))
+		for orderIndex, item := range part.DeclarationOrder {
+			order[orderIndex] = conformance.DeclarationOrder{Ordinal: item.Ordinal, Digest: item.Digest}
+		}
+		candidates[index] = conformance.FileEvidence{Path: part.Subject, Data: data, DeclarationOrder: order}
 	}
 	events := normalizeSplitEvents(t, root, observed)
 	targets := make([]string, len(candidates))

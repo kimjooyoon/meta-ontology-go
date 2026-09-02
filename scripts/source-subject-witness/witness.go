@@ -6,11 +6,13 @@ type metricValue struct {
 }
 
 type metaBinding struct {
-	Kind            string `json:"kind"`
-	Operation       string `json:"operation"`
-	Route           string `json:"route"`
-	IndicatorCount  int    `json:"indicator_count"`
-	IndicatorDigest string `json:"indicator_digest"`
+	Kind                    string `json:"kind"`
+	Operation               string `json:"operation"`
+	Route                   string `json:"route"`
+	IndicatorCount          int    `json:"indicator_count"`
+	ApplicableIndicators    int    `json:"applicable_indicators"`
+	NotApplicableIndicators int    `json:"not_applicable_indicators"`
+	IndicatorDigest         string `json:"indicator_digest"`
 }
 
 type subjectWitness struct {

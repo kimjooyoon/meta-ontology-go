@@ -53,22 +53,8 @@ func storageDirectoryBinding(directory directoryMetric, index indicatorIndex, re
 		}
 		rows = append(rows, row)
 	}
-	notApplicable := 0
-	for _, row := range rows {
-		if row.Applicability == "NOT_APPLICABLE" {
-			notApplicable++
-		}
-	}
-	if (directory.Path == "." && notApplicable != 3) || (directory.Path != "." && notApplicable != 0) {
-		return metaBinding{}, fmt.Errorf("directory %q has %d topology exemptions", directory.Path, notApplicable)
+	if err := validateDirectoryApplicability(directory, rows); err != nil {
+		return metaBinding{}, err
 	}
 	return sourceBinding(rows, "FOUNDATION"), nil
-}
-
-func sourceBinding(rows []sourceIndicator, route string) metaBinding {
-	return metaBinding{Kind: "SOURCE_INDICATORS", Operation: operationSet(rows), Route: route, IndicatorCount: len(rows), IndicatorDigest: digestValues(rows)}
-}
-
-func derivedBinding(kind, operation, route string) metaBinding {
-	return metaBinding{Kind: kind, Operation: operation, Route: route, IndicatorDigest: digestValues([]sourceIndicator{})}
 }

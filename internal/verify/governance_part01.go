@@ -9,6 +9,21 @@ import (
 
 const GovernanceSchemaVersion = "gooo/ci-governance/v2"
 
+const foundationCorrectionDevBranch = "agent/foundation-correction-dev-20260831"
+
+func init() {
+	branchScopeAllowlist[foundationCorrectionDevBranch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/foundation-bootstrap-dev-sync.json",
+		".github/workflows/ci-guardian.yml",
+		"internal/verify/governance_part01.go",
+		"scripts/ci-proof/foundation_bootstrap.js",
+		"scripts/ci-proof/guardian.js",
+		"scripts/ci-proof/route_test.js",
+	}
+}
+
 // GovernanceMatrix is the machine-readable CI trust and promotion contract.
 type GovernanceMatrix struct {
 	Schema                string                `json:"schema"`
@@ -21,6 +36,7 @@ type GovernanceMatrix struct {
 	Ownership             []GovernanceOwnership `json:"ownership"`
 	ProtectedKernel       []string              `json:"protected_kernel_paths"`
 	Promotion             GovernancePromotion   `json:"promotion"`
+	FoundationPromotion   map[string]any        `json:"foundation_promotion"`
 }
 type GovernanceContexts struct {
 	Dev  []string `json:"dev"`

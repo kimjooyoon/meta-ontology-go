@@ -18,6 +18,14 @@ type Summary struct {
 	GoooLines            int `json:"gooo_lines"`
 	UnregisteredGooo     int `json:"unregistered_gooo"`
 	MissingRegistered    int `json:"missing_registered"`
+	CapabilitySatisfied  int `json:"capability_satisfied"`
+	CapabilityTotal      int `json:"capability_total"`
+	CapabilityExecuted   int `json:"capability_executed"`
+	CapabilityUnresolved int `json:"capability_unresolved"`
+	GovernanceSatisfied  int `json:"governance_satisfied"`
+	GovernanceTotal      int `json:"governance_total"`
+	GovernanceExecuted   int `json:"governance_executed"`
+	GovernanceUnresolved int `json:"governance_unresolved"`
 }
 
 type Indicator struct {

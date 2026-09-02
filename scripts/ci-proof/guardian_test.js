@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const foundationAuthorization = require('./foundation_authorization');
 const {
   PROTECTED_FILES,
   PROTECTED_PREFIXES,
@@ -20,6 +21,7 @@ const {
   buildGuardianArtifact,
   classifyGuardianDecision,
   digestGuardianArtifact,
+  validateKernelDigestAttestation,
   inspectChangedFiles,
   kernelTreeDigest,
   revalidatePullRequest,
@@ -30,6 +32,8 @@ const {
   observeBranchProtection,
   observeGuardianEnvironment,
   observeInstallationRepositoryScope,
+  emptyGuardianEnvironment,
+  emptyBranchProtection,
   emptyInstallationRepositoryScope,
   digestInstallationRepositoryScope,
   OBSERVER_FRESHNESS_WINDOW_MS,
@@ -116,19 +120,24 @@ async function testKernelStatusesAndRenames() {
       owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
       listFiles: async () => ({status: 200, data: [file('.github/workflows/ci.yml', status)]}),
     });
-    assert.equal(result.code, ROOT_FAILURE_CODE);
-    assert.equal(result.decision, 'FAIL_CLOSED');
+    assert.equal(result.code, null);
+    assert.equal(result.decision, 'AUTHORIZATION_REQUIRED');
+    assert.equal(result.authorizationRequired, true);
   }
   const renamed = await inspectChangedFiles({
     owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [file('docs/new.md', 'renamed', '.github/ci-governance.json')]}),
   });
-  assert.equal(renamed.code, ROOT_FAILURE_CODE);
+  assert.equal(renamed.code, null);
+  assert.equal(renamed.decision, 'AUTHORIZATION_REQUIRED');
+  assert.equal(renamed.authorizationRequired, true);
   const inert = await inspectChangedFiles({
     owner: 'owner', repo: 'repo', baseRepoFullName: 'owner/repo', pullNumber: 108, expectedCount: 1,
     listFiles: async () => ({status: 200, data: [{...file('.github/workflows/ci.yml'), patch: '# name: CI guardian'}]}),
   });
-  assert.equal(inert.code, ROOT_FAILURE_CODE);
+  assert.equal(inert.code, null);
+  assert.equal(inert.decision, 'AUTHORIZATION_REQUIRED');
+  assert.equal(inert.authorizationRequired, true);
 }
 
 async function testForkAndMalformedAPI() {
@@ -385,6 +394,61 @@ async function testProtectionObserverContracts() {
   assert.match(responseDateMissing.missing_reason, /response_date/);
 }
 
+async function testPromotionFailurePreservesTypedObserverSnapshots() {
+  const promotion = pull('main');
+  promotion.head.ref = 'dev';
+  promotion.head.sha = sha('d');
+  const common = {
+    repository: 'owner/repo',
+    policySHA: '6'.repeat(64),
+    eventRef: 'refs/heads/dev',
+    checkoutRef: sha('d'),
+    baseSHA: sha('b'),
+    headSHA: sha('d'),
+    runId: 108,
+    runAttempt: 1,
+    workflowSHA: sha('d'),
+    tokenSource: 'github_app_installation',
+    appInstallationId: 0,
+    appSlug: '',
+    missingReason: 'guardian_observation_not_completed',
+  };
+  const artifact = buildGuardianArtifact({
+    pull: promotion,
+    repository: 'owner/repo',
+    action: 'synchronize',
+    defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev',
+    workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev',
+    runtimeSha: sha('d'),
+    runId: 108,
+    runAttempt: 1,
+    eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(),
+    liveAfter: liveFixture(),
+    checkName: 'CI guardian',
+    result: {decision: 'FAIL_CLOSED', code: PROTECTION_CODE, reason: 'guardian observer evidence is unavailable', files: [], kernelPaths: []},
+    branchProtection: emptyBranchProtection({...common, branch: 'main'}),
+    devBranchProtection: emptyBranchProtection({...common, branch: 'dev'}),
+    observerEnvironment: OBSERVER_ENVIRONMENT,
+    observerEnvironmentSnapshot: emptyGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), missingReason: 'guardian_observation_not_completed'}),
+    installationRepositoryScope: emptyInstallationRepositoryScope({repository: 'owner/repo', installationId: 0, tokenSource: 'github_app_installation', runId: 108, runAttempt: 1, workflowSHA: sha('d'), missingReason: 'guardian_observation_not_completed'}),
+  });
+  const expected = expectedFixtureTuple();
+  expected.base_ref = 'main';
+  expected.base_sha = sha('b');
+  expected.head_ref = 'dev';
+  expected.head_sha = sha('d');
+  expected.workflow_sha = sha('d');
+  expected.runtime_sha = sha('d');
+  assert.equal(artifact.branch_protection.read_status, 'unavailable');
+  assert.equal(artifact.dev_branch_protection.read_status, 'unavailable');
+  assert.equal(artifact.observer_environment_snapshot.read_status, 'unavailable');
+  assert.equal(artifact.installation_repository_scope.read_status, 'unavailable');
+  assert.doesNotThrow(() => validateGuardianArtifact(artifact, expected, {now: observerNow}));
+}
+
 async function testCanonicalOrdering() {
   const eventPull = pull('dev');
   eventPull.base.sha = sha('d');
@@ -466,15 +530,36 @@ async function testPromotionAndKernelDigests() {
   });
   assert.equal(kernel.decision, 'PASS');
   assert.equal(kernel.kernelBeforeDigest, 'sha256:' + '1'.repeat(64));
+  const featurePull = pull('dev');
+  featurePull.base.sha = sha('d');
+  const identicalLive = {refs: {dev_sha: sha('d'), main_sha: sha('d')}, topology: {status: 'identical', ahead_by: 0, behind_by: 0, merge_base_sha: sha('d')}};
+  const featureKernelBefore = 'sha256:' + '3'.repeat(64);
+  const featureKernelAfter = 'sha256:' + '4'.repeat(64);
+  const featureWithKernel = classifyGuardianDecision({
+    pull: featurePull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', liveBefore: identicalLive, liveAfter: identicalLive,
+    kernelBeforeDigest: featureKernelBefore, kernelAfterDigest: featureKernelAfter,
+    result: {decision: 'PASS', code: null, reason: 'authorized feature', foundationAuthorization: {decision: 'PASS'}, kernelPaths: ['.github/workflows/ci.yml']},
+  });
+  assert.equal(featureWithKernel.decision, 'PASS');
+  assert.equal(featureWithKernel.kernelBeforeDigest, featureKernelBefore);
+  assert.equal(featureWithKernel.kernelAfterDigest, featureKernelAfter);
+  const featureKernelArtifact = buildGuardianArtifact({
+    pull: featurePull, repository: 'owner/repo', action: 'reopened', defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev', runtimeSha: sha('d'), runId: 109, runAttempt: 1, eventRef: 'refs/heads/dev',
+    liveBefore: identicalLive, liveAfter: identicalLive, checkName: 'CI guardian shadow', result: featureWithKernel,
+  });
+  assert.equal(featureKernelArtifact.kernel_before_sha256, featureKernelBefore);
+  assert.equal(featureKernelArtifact.kernel_after_sha256, featureKernelAfter);
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: featureKernelArtifact.kernel_before_sha256, artifactAfterDigest: featureKernelArtifact.kernel_after_sha256}).decision, 'PASS');
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: featureKernelBefore, artifactAfterDigest: featureKernelBefore}).decision, 'REFUTED');
+  assert.equal(validateKernelDigestAttestation({kernelPaths: featureKernelArtifact.kernel_paths, computedBeforeDigest: featureKernelBefore, computedAfterDigest: featureKernelAfter, artifactBeforeDigest: null, artifactAfterDigest: featureKernelAfter}).decision, 'REFUTED');
   assert.equal(DEFAULT_BRANCH_CODE, 'CI-GUARDIAN-DEFAULT-BRANCH-001');
   const missingLive = classifyGuardianDecision({
     pull: promotionPull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian',
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
   });
   assert.equal(missingLive.code, 'CI-GUARDIAN-LIVE-REF-001');
-  const featurePull = pull('dev');
-  featurePull.base.sha = sha('d');
-  const identicalLive = {refs: {dev_sha: sha('d'), main_sha: sha('d')}, topology: {status: 'identical', ahead_by: 0, behind_by: 0, merge_base_sha: sha('d')}};
   const stableFeature = classifyGuardianDecision({
     pull: featurePull, repository: 'owner/repo', defaultBranch: 'dev', eventRef: 'refs/heads/dev', workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev', workflowSha: sha('d'), runtimeSha: sha('d'), checkName: 'CI guardian shadow', liveBefore: identicalLive, liveAfter: identicalLive,
     result: {decision: 'PASS', code: null, reason: null, kernelPaths: []},
@@ -561,6 +646,9 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /getBranchProtection/);
   assert.match(workflow, /GET \/installation\/repositories/);
   assert.match(workflow, /observeInstallationRepositoryScope/);
+  assert.match(workflow, /const route = guardian\.routeForPull\(pull\)/);
+  assert.match(workflow, /guardian\.emptyBranchProtection/);
+  assert.match(workflow, /guardian_observation_not_completed/);
   assert.match(ciWorkflow, /token_source: 'not_observed',\s+app_installation_id: 0,\s+app_slug: '',\s+read_status: 'unavailable'/);
   assert.match(workflow, /- dev\n      - main/);
   assert.doesNotMatch(workflow, /- integration/);
@@ -580,6 +668,17 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /ci-guardian\.json/);
   assert.match(workflow, /pull_request_number: observedPull && observedPull\.number/);
   assert.match(workflow, /runtime_sha: runtimeSha/);
+  assert.match(workflow, /const trustedPromotion = guardian\.trustedDevPromotion/);
+  assert.match(workflow, /const authorizedFoundationFeature/);
+  assert.match(workflow, /result\.foundationAuthorization\.decision === 'PASS'/);
+  assert.match(workflow, /trustedPromotion \|\| authorizedFoundationFeature/);
+  assert.match(workflow, /result\.authorizationRequired === true/);
+  const dispatchIndex = workflow.indexOf('guardian.observeFoundationAuthorization');
+  const kernelAssignmentIndex = workflow.indexOf('beforeDigest = await guardian.kernelTreeDigest');
+  assert(dispatchIndex >= 0 && kernelAssignmentIndex >= 0 && dispatchIndex < kernelAssignmentIndex, 'Foundation authorization must be dispatched before kernel digest attestation');
+  assert.match(workflow, /guardian\.validateKernelDigestAttestation/);
+  assert.match(workflow, /computedBeforeDigest: beforeDigest/);
+  assert.match(workflow, /artifactBeforeDigest: artifact\.kernel_before_sha256/);
   const writeIndex = workflow.indexOf('writeFileSync');
   const validateIndex = workflow.indexOf('guardian.validateGuardianArtifact(artifact,');
   const setFailedIndex = workflow.indexOf('core.setFailed');
@@ -592,6 +691,58 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.doesNotMatch(workflow, /^\s+run:/m);
   assert.doesNotMatch(workflow, /^\s+pull_request:/m);
   assert.doesNotMatch(workflow, /agent\/ci-workflow/);
+}
+
+function testExecutableGuardianScopeAcceptanceHarness() {
+  const workflow = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci-guardian.yml'), 'utf8');
+  const receipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v5-executable-guardian-scope.json'), 'utf8'));
+  const acceptance = new Map([
+    ['SCOPE_INITIALIZED_BEFORE_POLICY_BRANCH', () => {
+      const declaration = workflow.indexOf('let beforeDigest = null;');
+      const policyBranch = workflow.indexOf('if (route === guardian.FOUNDATION_ROUTE)');
+      assert(declaration >= 0 && declaration < policyBranch, 'digest scope is not initialized before the policy branch');
+    }],
+    ['SCOPE_REUSED_WITHOUT_REDECLARATION', () => {
+      assert.equal((workflow.match(/let beforeDigest = null;/g) || []).length, 1);
+      assert.equal((workflow.match(/let afterDigest = null;/g) || []).length, 1);
+      assert.match(workflow, /beforeDigest = await guardian\.kernelTreeDigest/);
+      assert.match(workflow, /afterDigest = await guardian\.kernelTreeDigest/);
+    }],
+    ['WORKFLOW_AUTHORITY_PINNED_TO_GITHUB_WORKFLOW_SHA', () => {
+      assert.match(workflow, /ref: \$\{\{ github\.workflow_sha \}\}/);
+      assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
+    }],
+    ['LIVE_PR_CHANGED_PATHS_ATTESTED', () => {
+      assert.match(workflow, /github\.rest\.pulls\.get/);
+      assert.match(workflow, /listFiles/);
+      assert.match(workflow, /expectedChangedFiles = observedPull\.changed_files/);
+    }],
+    ['PASS_KERNEL_DIGESTS_NON_NULL_EXACT', () => {
+      const before = `sha256:${'a'.repeat(64)}`;
+      const after = `sha256:${'b'.repeat(64)}`;
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: before, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: after}).decision, 'PASS');
+    }],
+    ['NULL_STALE_MISMATCH_REFUTED', () => {
+      const before = `sha256:${'a'.repeat(64)}`;
+      const after = `sha256:${'b'.repeat(64)}`;
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: null, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: after}).decision, 'REFUTED');
+      assert.equal(validateKernelDigestAttestation({kernelPaths: ['go.mod'], computedBeforeDigest: before, computedAfterDigest: after, artifactBeforeDigest: before, artifactAfterDigest: before}).decision, 'REFUTED');
+    }],
+    ['FUTURE_SCHEMA_UNKNOWN_OVER_6_FIELDS', () => {
+      const classified = foundationAuthorization.classifyExecutableGuardianScopeInput({schema: 'gooo/receipt-schema-migration/v0.2.3'});
+      assert.equal(classified.decision, 'UNKNOWN');
+      assert.equal(classified.unknown_count, 6);
+    }],
+    ['REFERENCE_ERROR_REFUTED_SCOPE_CLOSED', () => {
+      assert.equal(receipt.prior_guardian_failure.message, 'ReferenceError: beforeDigest is not defined');
+      assert.equal(receipt.cells[0].parent_outcome, foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_PARENT_OUTCOME);
+      assert.equal(receipt.cells[0].outcome, 'CLOSED');
+    }],
+  ]);
+  assert.deepEqual([...acceptance.keys()], foundationAuthorization.EXECUTABLE_GUARDIAN_SCOPE_ACCEPTANCE_IDS);
+  for (const [id, execute] of acceptance) {
+    assert.doesNotThrow(execute, `acceptance case failed: ${id}`);
+  }
 }
 
 function testHeadBindingIsExplicitlyShadowOnly() {
@@ -608,6 +759,28 @@ function testKernelSetIsMonotonic() {
   }
 }
 
+function testRegressionRepairReceipt() {
+  const receipt = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v2-migration.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateRegressionRepairReceipt(receipt));
+  assert.doesNotThrow(() => foundationAuthorization.validateIncompletePropagationOutcome(receipt));
+  assert.equal(receipt.foundation_override_success_count, foundationAuthorization.FOUNDATION_OVERRIDE_SUCCESS_COUNT);
+  assert.equal(receipt.outcome, 'REFUTED_INCOMPLETE_PROPAGATION');
+  const correction = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v3-correction.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateCorrectionChildReceipt(correction));
+  assert.equal(correction.cells.length, 1);
+  assert.equal(correction.cells[0].id, 'CORRECTION_CHILD');
+  assert.equal(correction.cells[0].parent_repair_receipt, foundationAuthorization.CORRECTION_CHILD_PARENT_RECEIPT_SHA256);
+  const migration = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'governance-denominator-v4-schema-coherence.json'), 'utf8'));
+  assert.doesNotThrow(() => foundationAuthorization.validateSchemaCoherenceMigrationReceipt(migration));
+  assert.equal(migration.cells.length, 1);
+  assert.equal(migration.cells[0].id, 'SCHEMA_COHERENCE_MIGRATION_ADOPTION');
+  assert.equal(migration.cells[0].proof_choice, 'COHERENCE');
+  assert.equal(migration.cells[0].indicator, 'GUARDRAIL');
+  assert.equal(migration.cells[0].allowed, 1);
+  assert.equal(migration.cells[0].consumed, 1);
+  assert.equal(migration.cells[0].replay_decision, 'REFUTED');
+}
+
 (async () => {
   await testPaginationAndNonKernelPass();
   await testKernelStatusesAndRenames();
@@ -618,10 +791,13 @@ function testKernelSetIsMonotonic() {
   await testCanonicalOrdering();
   await testPromotionAndKernelDigests();
   await testProtectionObserverContracts();
+  await testPromotionFailurePreservesTypedObserverSnapshots();
   await testPaginationLimit();
   testWorkflowIsReadOnlyAndBasePinned();
+  testExecutableGuardianScopeAcceptanceHarness();
   testHeadBindingIsExplicitlyShadowOnly();
   testKernelSetIsMonotonic();
+  testRegressionRepairReceipt();
   await testLiveRefsAndRouteIdentity();
   console.log('guardian tests passed');
 })().catch((error) => {

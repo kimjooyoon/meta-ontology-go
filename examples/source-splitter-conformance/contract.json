@@ -52,13 +52,13 @@
       "id": "go.import.identity/v1",
       "role": "OUTCOME",
       "route": "FOUNDATION",
-      "rule_id": "import-alias-path-multiset-v1"
+      "rule_id": "import-alias-path-set-union-v1"
     },
     {
       "id": "go.initialization.order/v1",
       "role": "OUTCOME",
       "route": "FOUNDATION",
-      "rule_id": "initialization-and-lexical-order-v1"
+      "rule_id": "initialization-units-order-v1"
     },
     {
       "id": "go.package.conformance/v1",
@@ -170,8 +170,8 @@
       "expected": "PASS",
       "observation": {
         "evidence_complete": true,
-        "import_multiset_digest_before": "sha256:imports-a",
-        "import_multiset_digest_after": "sha256:imports-a"
+        "import_set_union_digest_before": "sha256:imports-a",
+        "import_set_union_digest_after": "sha256:imports-a"
       }
     },
     {
@@ -180,8 +180,8 @@
       "expected": "FAIL",
       "observation": {
         "evidence_complete": true,
-        "import_multiset_digest_before": "sha256:imports-a",
-        "import_multiset_digest_after": "sha256:imports-b"
+        "import_set_union_digest_before": "sha256:imports-a",
+        "import_set_union_digest_after": "sha256:imports-b"
       }
     },
     {
@@ -190,8 +190,8 @@
       "expected": "UNKNOWN",
       "observation": {
         "evidence_complete": false,
-        "import_multiset_digest_before": "sha256:imports-a",
-        "import_multiset_digest_after": null
+        "import_set_union_digest_before": "sha256:imports-a",
+        "import_set_union_digest_after": null
       }
     },
     {
@@ -200,10 +200,8 @@
       "expected": "PASS",
       "observation": {
         "evidence_complete": true,
-        "initialization_graph_digest_before": "sha256:init-graph-a",
-        "initialization_graph_digest_after": "sha256:init-graph-a",
-        "lexical_order_digest_before": "sha256:lexical-a",
-        "lexical_order_digest_after": "sha256:lexical-a"
+        "initialization_units_digest_before": "sha256:init-units-a",
+        "initialization_units_digest_after": "sha256:init-units-a"
       }
     },
     {
@@ -212,10 +210,8 @@
       "expected": "FAIL",
       "observation": {
         "evidence_complete": true,
-        "initialization_graph_digest_before": "sha256:init-graph-a",
-        "initialization_graph_digest_after": "sha256:init-graph-a",
-        "lexical_order_digest_before": "sha256:lexical-a",
-        "lexical_order_digest_after": "sha256:lexical-b"
+        "initialization_units_digest_before": "sha256:init-units-a",
+        "initialization_units_digest_after": "sha256:init-units-b"
       }
     },
     {
@@ -224,10 +220,8 @@
       "expected": "UNKNOWN",
       "observation": {
         "evidence_complete": false,
-        "initialization_graph_digest_before": "sha256:init-graph-a",
-        "initialization_graph_digest_after": null,
-        "lexical_order_digest_before": "sha256:lexical-a",
-        "lexical_order_digest_after": null
+        "initialization_units_digest_before": "sha256:init-units-a",
+        "initialization_units_digest_after": null
       }
     },
     {

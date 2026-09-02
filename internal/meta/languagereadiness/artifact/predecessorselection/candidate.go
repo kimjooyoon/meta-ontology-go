@@ -6,7 +6,25 @@ type Input struct {
 	PredecessorSHA string      `json:"predecessor_sha"`
 	Branch         string      `json:"branch"`
 	Workflow       string      `json:"workflow"`
+	Pagination     Pagination  `json:"pagination"`
 	Candidates     []Candidate `json:"candidates"`
+}
+
+type PaginationPage struct {
+	EndpointClass  string `json:"endpoint_class"`
+	URL            string `json:"url"`
+	PageNumber     int    `json:"page_number"`
+	HTTPStatus     int    `json:"http_status"`
+	BodyDigest     string `json:"body_digest"`
+	BodyBytes      int    `json:"body_bytes"`
+	NextLinkDigest string `json:"next_link_digest"`
+}
+
+type Pagination struct {
+	Pages         []PaginationPage `json:"pages"`
+	PageCount     int              `json:"page_count"`
+	Complete      bool             `json:"complete"`
+	FailureReason string           `json:"failure_reason,omitempty"`
 }
 
 type Candidate struct {

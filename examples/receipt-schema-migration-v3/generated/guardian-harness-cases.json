@@ -1,0 +1,137 @@
+{
+  "schema": "gooo/receipt-schema-migration/guardian-harness/v2",
+  "migration_version": "v3",
+  "ir_digest": "sha256:66e5f20cb162fdfa9cefdad8b0509eaa1963c62536f7fb618f2a50bc594e32d9",
+  "fixture": {
+    "repository": "",
+    "ref": "",
+    "commit": "",
+    "manifest_path": ""
+  },
+  "fixture_v3": {
+    "repository": "kimjooyoon/meta-ontology-go",
+    "ref": "dev",
+    "base_commit": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_commit": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "manifest_path": "fixtures/guardian-v3-pr609.json",
+    "changed_files_count": 92,
+    "changed_paths_sha256": "sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac",
+    "protected_intersection_count": 26,
+    "protected_intersection_sha256": "sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf",
+    "kernel_before_tree_sha": "169fe96d8e1e9b50702b0f2fb2d2cf2e83d467e6",
+    "kernel_after_tree_sha": "d8e8f5b9064c8ef7d14daf9f96c8c1df9156e0a6",
+    "kernel_before_entry_count": 321,
+    "kernel_after_entry_count": 327,
+    "kernel_before_sha256": "sha256:e3b0cd0fd2d95a0113b9a6755ebe318e856225630106fa00ccf24572fdfb69f6",
+    "kernel_after_sha256": "sha256:b1e865e5c2f48735dc693b94807b8a8439819985353503ccffceecedac88d582",
+    "guardian_run_id": 33359548617,
+    "guardian_job_id": 99388126433,
+    "artifact_id": 9746232159,
+    "artifact_name": "ci-guardian-33359548617-1",
+    "artifact_size_bytes": 2144,
+    "artifact_sha256": "sha256:41ae5d2398a001b16ecd72dba937924897234dd748fdcb5374caee7e70f026a8"
+  },
+  "cases": [
+    {
+      "ordinal": 1,
+      "id": "GUARDIAN_PROTECTED26_VALID_FOUNDATION_AUTH_CLOSED",
+      "scenario_id": "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "cell": "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "expected": "CLOSED",
+      "mode": "VALID_FOUNDATION_AUTHORIZATION",
+      "operation": "execute_actual_guardian_with_exact_tuple"
+    },
+    {
+      "ordinal": 2,
+      "id": "GUARDIAN_MISSING_FOUNDATION_AUTH_REFUTED",
+      "scenario_id": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "cell": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "expected": "REFUTED",
+      "mode": "MISSING_FOUNDATION_AUTHORIZATION",
+      "operation": "fail_closed_before_kernel_attestation"
+    },
+    {
+      "ordinal": 3,
+      "id": "GUARDIAN_CHANGED_PATH_TUPLE_MISMATCH_REFUTED",
+      "scenario_id": "CHANGED_PATH_TUPLE_BINDING",
+      "cell": "CHANGED_PATH_TUPLE_BINDING",
+      "expected": "REFUTED",
+      "mode": "CHANGED_PATH_TUPLE_MISMATCH",
+      "operation": "refute_changed_path_digest"
+    },
+    {
+      "ordinal": 4,
+      "id": "GUARDIAN_EXTRA_PROTECTED_PATH_REFUTED",
+      "scenario_id": "CHANGED_PATH_TUPLE_BINDING",
+      "cell": "CHANGED_PATH_TUPLE_BINDING",
+      "expected": "REFUTED",
+      "mode": "EXTRA_PROTECTED_PATH",
+      "operation": "refute_protected_intersection_exactness"
+    },
+    {
+      "ordinal": 5,
+      "id": "GUARDIAN_STALE_FOUNDATION_AUTH_REFUTED",
+      "scenario_id": "FOUNDATION_RECEIPT_EVALUATION",
+      "cell": "FOUNDATION_RECEIPT_EVALUATION",
+      "expected": "REFUTED",
+      "mode": "STALE_FOUNDATION_AUTHORIZATION",
+      "operation": "refute_stale_candidate_identity"
+    },
+    {
+      "ordinal": 6,
+      "id": "GUARDIAN_MALFORMED_FOUNDATION_AUTH_REFUTED",
+      "scenario_id": "FOUNDATION_RECEIPT_EVALUATION",
+      "cell": "FOUNDATION_RECEIPT_EVALUATION",
+      "expected": "REFUTED",
+      "mode": "MALFORMED_FOUNDATION_AUTHORIZATION",
+      "operation": "refute_malformed_foundation_receipt"
+    },
+    {
+      "ordinal": 7,
+      "id": "GUARDIAN_UNPROTECTED_FEATURE_CLOSED",
+      "scenario_id": "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "cell": "PROTECTED_PATH_AUTHORIZATION_DISPATCH",
+      "expected": "CLOSED",
+      "mode": "UNPROTECTED_FEATURE",
+      "operation": "close_without_foundation_authorization"
+    },
+    {
+      "ordinal": 8,
+      "id": "GUARDIAN_PASS_NULL_DIGEST_REFUTED",
+      "scenario_id": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "cell": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "expected": "REFUTED",
+      "mode": "PASS_NULL_KERNEL_DIGEST",
+      "operation": "refute_null_kernel_attestation"
+    },
+    {
+      "ordinal": 9,
+      "id": "GUARDIAN_PASS_DIGEST_MISMATCH_REFUTED",
+      "scenario_id": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "cell": "UNAUTHORIZED_PROTECTED_PATH_FAIL_CLOSED",
+      "expected": "REFUTED",
+      "mode": "PASS_MISMATCH_KERNEL_DIGEST",
+      "operation": "refute_mismatched_kernel_attestation"
+    },
+    {
+      "ordinal": 10,
+      "id": "GUARDIAN_FOUNDATION_CARDINALITY_EXHAUSTED_REFUTED",
+      "scenario_id": "FOUNDATION_RECEIPT_EVALUATION",
+      "cell": "FOUNDATION_RECEIPT_EVALUATION",
+      "expected": "REFUTED",
+      "mode": "FOUNDATION_CARDINALITY_EXHAUSTED",
+      "operation": "refute_exhausted_foundation_receipt"
+    },
+    {
+      "ordinal": 11,
+      "id": "GUARDIAN_FOUNDATION_REPLAY_REFUTED",
+      "scenario_id": "FOUNDATION_RECEIPT_EVALUATION",
+      "cell": "FOUNDATION_RECEIPT_EVALUATION",
+      "expected": "REFUTED",
+      "mode": "FOUNDATION_REPLAY",
+      "operation": "refute_foundation_replay"
+    }
+  ],
+  "artifact_digest": "sha256:86f80b6a432ac122365cf47e47a8e072cf7a356d2f02402eff8e4a63f7adf8d6"
+}

@@ -3,6 +3,8 @@ package verticalsliceclosureshadow
 import (
 	_ "embed"
 	"encoding/json"
+
+	languagesyntax "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 )
 
 //go:embed evidence/assurance.json
@@ -11,12 +13,44 @@ var embeddedAssurance []byte
 //go:embed evidence/denominator.json
 var embeddedDenominator []byte
 
+//go:embed evidence/denominator-v22.json
+var embeddedDenominatorV22 []byte
+
+//go:embed evidence/denominator-v23.json
+var embeddedDenominatorV23 []byte
+
 func EmbeddedAssurance() []byte {
 	return append([]byte(nil), embeddedAssurance...)
 }
 
 func EmbeddedDenominator() []byte {
 	return append([]byte(nil), embeddedDenominator...)
+}
+
+func activeDenominator() []byte {
+	switch languagesyntax.FixedCapabilityTotal {
+	case 45:
+		return embeddedDenominator
+	case 46:
+		return embeddedDenominatorV22
+	case 47:
+		return embeddedDenominatorV23
+	default:
+		return nil
+	}
+}
+
+func activeDenominatorDigest() string {
+	switch languagesyntax.FixedCapabilityTotal {
+	case 45:
+		return DenominatorDigest
+	case 46:
+		return DenominatorMigrationDigest
+	case 47:
+		return DenominatorMigrationV23Digest
+	default:
+		return ""
+	}
 }
 
 type assuranceSummary struct {

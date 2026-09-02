@@ -4,8 +4,8 @@ var fixedIndicators = []IndicatorDefinition{
 	{"filesystem.atomic-replacement/v1", "GUARDRAIL", "COHERENCE", "atomic-replacement-v1"},
 	{"go.filename.build-semantics/v1", "DRIVER", "FOUNDATION", "build-selected-file-set-v1"},
 	{"go.header.preserved/v1", "GUARDRAIL", "REGRESSION", "header-byte-digest-v1"},
-	{"go.import.identity/v1", "OUTCOME", "FOUNDATION", "import-alias-path-multiset-v1"},
-	{"go.initialization.order/v1", "OUTCOME", "FOUNDATION", "initialization-and-lexical-order-v1"},
+	{"go.import.identity/v1", "OUTCOME", "FOUNDATION", "import-alias-path-set-union-v1"},
+	{"go.initialization.order/v1", "OUTCOME", "FOUNDATION", "initialization-units-order-v1"},
 	{"go.package.conformance/v1", "OUTCOME", "FOUNDATION", "selected-package-set-v1"},
 }
 

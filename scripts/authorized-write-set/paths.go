@@ -53,3 +53,18 @@ func equalPaths(left, right []string) bool {
 	}
 	return true
 }
+
+func mismatchCount(left, right map[string]bool) int {
+	count := 0
+	for value := range left {
+		if !right[value] {
+			count++
+		}
+	}
+	for value := range right {
+		if !left[value] {
+			count++
+		}
+	}
+	return count
+}

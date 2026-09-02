@@ -30,9 +30,12 @@ func (d EntityDecl) Clone() EntityDecl {
 
 // ActivityDecl declares an activity, its entity inputs, and its entity result.
 type ActivityDecl struct {
-	Span     Span
-	Name     string
-	NameSpan Span
+	ValueProgram        string
+	ValueProgramSpan    Span
+	ValueProgramPresent bool
+	Span                Span
+	Name                string
+	NameSpan            Span
 
 	// Inputs and Output are the compact grammar-facing names. Parameters and
 	// Result retain descriptive names for newer consumers.

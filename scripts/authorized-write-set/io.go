@@ -6,24 +6,37 @@ import (
 	"strings"
 )
 
-func loadInputs(densityName, extractionName, observedName string) (densityReport, extractionReport, []string, error) {
+func loadInputs(densityName, extractionName, splitName, observedName, untrackedName string) (densityReport, extractionReport, splitReport, []string, []string, error) {
 	var density densityReport
 	if err := readJSON(densityName, &density); err != nil {
-		return density, extractionReport{}, nil, err
+		return density, extractionReport{}, splitReport{}, nil, nil, err
 	}
 	var extraction extractionReport
 	if err := readJSON(extractionName, &extraction); err != nil {
-		return density, extraction, nil, err
+		return density, extraction, splitReport{}, nil, nil, err
 	}
-	data, err := os.ReadFile(observedName)
+	var split splitReport
+	if err := readJSON(splitName, &split); err != nil {
+		return density, extraction, split, nil, nil, err
+	}
+	observed, err := readPaths(observedName)
 	if err != nil {
-		return density, extraction, nil, err
+		return density, extraction, split, nil, nil, err
+	}
+	untracked, err := readPaths(untrackedName)
+	return density, extraction, split, observed, untracked, err
+}
+
+func readPaths(name string) ([]string, error) {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return nil, err
 	}
 	text := strings.TrimSpace(string(data))
 	if text == "" {
-		return density, extraction, nil, nil
+		return nil, nil
 	}
-	return density, extraction, strings.Split(text, "\n"), nil
+	return strings.Split(text, "\n"), nil
 }
 
 func readJSON(name string, target any) error {

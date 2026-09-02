@@ -6,8 +6,9 @@ import (
 )
 
 func EvaluateWithToolchainFormatFix(raw []byte, bundle PromotionEvidence,
-	cliReport metacli.Report, formatFixReport metaff.Report, expectedHeadSHA string) (Snapshot, error) {
-	evidence, err := validatePromotionEvidence(bundle, expectedHeadSHA)
+	cliReport metacli.Report, formatFixReport metaff.Report,
+	expectedRepository, expectedHeadSHA, expectedPredecessorSHA string) (Snapshot, error) {
+	evidence, err := validatePromotionEvidence(bundle, expectedRepository, expectedHeadSHA, expectedPredecessorSHA)
 	if err != nil {
 		return Snapshot{}, err
 	}

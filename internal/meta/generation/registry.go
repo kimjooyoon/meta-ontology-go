@@ -8,10 +8,31 @@ import (
 
 func DefaultRegistry() []Binding {
 	return []Binding{
-		{Operation: sourcepolicy.OperationCollapseAssign, IndependenceGroupID: "expression-shape", ProofChoice: ProofRegress, Executor: "scripts/refactor-metrics", Evaluator: "scripts/refactor-metrics:check", RequiredIndicatorIDs: []string{"go.ast.single-match/v1", "go.comments.preserved/v1", "go.format.fixed-point/v1"}, ReceiptRequired: true, Priority: 10},
-		{Operation: sourcepolicy.OperationSplitGo, IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "scripts/source-splitter", Evaluator: "scripts/source-splitter:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "go.filename.build-semantics/v1", "go.header.preserved/v1", "go.import.identity/v1", "go.initialization.order/v1", "go.package.conformance/v1"}, ReceiptRequired: true, Priority: 20},
-		{Operation: sourcepolicy.OperationSplitGooo, IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "bootstrap/source-repacker", Evaluator: "bootstrap/source-repacker:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "gooo.filename.semantics/v1", "gooo.parser-domain/v1"}, ReceiptRequired: true, Priority: 20},
+		{Operation: sourcepolicy.OperationCollapseAssign, Activity: "CollapseAssignReturn", Output: "operation.collapse-assign-return", IndependenceGroupID: "expression-shape", ProofChoice: ProofRegress, Executor: "scripts/refactor-metrics", Evaluator: "scripts/refactor-metrics:check", RequiredIndicatorIDs: []string{"go.ast.single-match/v1", "go.comments.preserved/v1", "go.format.fixed-point/v1"}, ReceiptRequired: true, Priority: 10},
+		{Operation: sourcepolicy.OperationSplitGo, Activity: "SplitGoDeclarations", Output: "operation.split-go-declarations", IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "scripts/source-splitter", Evaluator: "scripts/source-splitter:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "go.filename.build-semantics/v1", "go.header.preserved/v1", "go.import.identity/v1", "go.initialization.order/v1", "go.package.conformance/v1"}, ReceiptRequired: true, Priority: 20},
+		{Operation: sourcepolicy.OperationSplitGooo, Activity: "SplitGoooSections", Output: "operation.split-gooo-sections", IndependenceGroupID: "source-topology", ProofChoice: ProofFoundation, Executor: "bootstrap/source-repacker", Evaluator: "bootstrap/source-repacker:check", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "gooo.filename.semantics/v1", "gooo.parser-domain/v1"}, ReceiptRequired: true, Priority: 20},
+		{Operation: sourcepolicy.OperationExtractFunction, Activity: "ExtractFunction", Output: "operation.extract-function", IndependenceGroupID: "source-extraction", ProofChoice: ProofFoundation, Executor: "bootstrap/function-extractor", Evaluator: ".github/workflows/repository-projection.yml", RequiredIndicatorIDs: []string{"filesystem.atomic-replacement/v1", "go.header.preserved/v1", "go.import.identity/v1", "go.package.conformance/v1", "go.format.fixed-point/v1"}, ReceiptRequired: true, Priority: 30},
 	}
+}
+
+// BindingForOperation resolves one operation from the plan's registry. The
+// registry is the authority shared by planning and execution consumers.
+func BindingForOperation(bindings []Binding, operation sourcepolicy.Operation) (Binding, bool) {
+	var result Binding
+	found := false
+	for _, binding := range bindings {
+		if binding.Operation != operation {
+			continue
+		}
+		if found {
+			return Binding{}, false
+		}
+		result, found = binding, true
+	}
+	if !found || !bindingKnown(result) {
+		return Binding{}, false
+	}
+	return result, true
 }
 
 func normalizeRegistry(bindings []Binding) []Binding {
@@ -42,7 +63,7 @@ func registryIndex(bindings []Binding) (map[sourcepolicy.Operation]Binding, bool
 
 func bindingKnown(binding Binding) bool {
 	proof := binding.ProofChoice
-	return binding.Operation != "" && binding.IndependenceGroupID != "" && binding.Executor != "" && binding.Evaluator != "" &&
+	return binding.Operation != "" && binding.Activity != "" && binding.Output != "" && binding.IndependenceGroupID != "" && binding.Executor != "" && binding.Evaluator != "" &&
 		binding.ReceiptRequired && indicatorIDsKnown(binding.RequiredIndicatorIDs) &&
 		(proof == ProofFoundation || proof == ProofCoherence || proof == ProofRegress)
 }

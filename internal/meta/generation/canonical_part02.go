@@ -31,12 +31,22 @@ func finish(plan Plan) Plan {
 	if plan.UnknownIndicatorIDs == nil {
 		plan.UnknownIndicatorIDs = []string{}
 	}
+	if plan.RefutedIndicatorIDs == nil {
+		plan.RefutedIndicatorIDs = []string{}
+	}
+	if plan.Counterexamples == nil {
+		plan.Counterexamples = []Counterexample{}
+	}
 	if plan.Shortfall == nil {
 		plan.Shortfall = []string{}
 	}
 	sort.Strings(plan.UnselectedIndicatorIDs)
 	sort.Strings(plan.NotApplicableIndicatorIDs)
 	sort.Strings(plan.UnknownIndicatorIDs)
+	sort.Strings(plan.RefutedIndicatorIDs)
+	sort.Slice(plan.Counterexamples, func(left, right int) bool {
+		return plan.Counterexamples[left].ID < plan.Counterexamples[right].ID
+	})
 	sort.Strings(plan.Shortfall)
 	unsigned := plan
 	unsigned.PlanDigest, unsigned.ReplayDigest = "", ""

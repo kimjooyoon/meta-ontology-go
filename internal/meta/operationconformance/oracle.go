@@ -16,10 +16,9 @@ func resolveOracle(indicator string, observation map[string]any) Decision {
 	case fixedIndicators[2].ID:
 		return compare(equalFields(observation, "header_digest_before", "header_digest_after"))
 	case fixedIndicators[3].ID:
-		return compare(equalFields(observation, "import_multiset_digest_before", "import_multiset_digest_after"))
+		return compare(equalFields(observation, "import_set_union_digest_before", "import_set_union_digest_after"))
 	case fixedIndicators[4].ID:
-		return compare(equalFields(observation, "initialization_graph_digest_before", "initialization_graph_digest_after") &&
-			equalFields(observation, "lexical_order_digest_before", "lexical_order_digest_after"))
+		return compare(equalFields(observation, "initialization_units_digest_before", "initialization_units_digest_after"))
 	case fixedIndicators[5].ID:
 		selected, selectedOK := intValue(observation, "selected_file_count")
 		parsed, parsedOK := intValue(observation, "parsed_file_count")

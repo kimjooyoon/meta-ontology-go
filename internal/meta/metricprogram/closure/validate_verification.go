@@ -9,7 +9,7 @@ func validateVerification(in Input, program programDocument, verification verifi
 		return fmt.Errorf("program verification identity or status is invalid")
 	}
 	if verification.RepositoryWorkspaceWrites || verification.PromotionAuthorized ||
-		verification.BindingCount != canonicalBindingCount || verification.OperationCount != 8 ||
+		verification.BindingCount != canonicalBindingCount || verification.OperationCount != 9 ||
 		verification.StepCount != 4 {
 		return fmt.Errorf("program verification contract is invalid")
 	}

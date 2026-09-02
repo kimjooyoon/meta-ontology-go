@@ -33,7 +33,7 @@ func collectSynthesisJob(
 	}
 	collection.ObservedJobs += len(response.Jobs)
 	if response.TotalCount != len(response.Jobs) {
-		return githubJob{}, false, fmt.Errorf("proposal synthesis job pagination is unresolved")
+		return githubJob{}, false, &Failure{Reason: ReasonJobPaginationIncomplete}
 	}
 	matches := make([]githubJob, 0, 1)
 	for _, job := range response.Jobs {
