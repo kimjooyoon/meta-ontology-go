@@ -528,7 +528,7 @@ jobs:
               .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
               .promotion_authority == false and .readiness_delta == null and
               ((.reason == "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "REFUTED" and .observation_resolution == "EXACT" and .unknown == null) or
-               (.reason != "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "UNKNOWN" and .observation_resolution == "LOWER" and
+               (.reason != "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "UNKNOWN" and .observation_resolution == "LOWER_RESOLUTION" and
                 .unknown.stage == "proposal-predecessor" and .unknown.step == "select-exact-predecessor" and
                 .unknown.reason == .reason and .unknown.unknown_class != "" and .unknown.next_operation != "" and .unknown.blocked_by != null)) and
               (.reason as $reason |
