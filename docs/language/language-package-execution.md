@@ -1,6 +1,6 @@
 # Language package execution
 
-`gooo run --entry PayOrder examples/billing-package` treats the immediate `.gooo` files in the directory as one semantic package. Files are sorted by canonical relative filename, parsed independently, checked for one package and namespace, combined as syntax declarations, and then lowered through the existing single-source execution boundary.
+`gooo run --entry PayOrder examples/billing-package` treats the immediate `.gooo` files in the directory as one semantic package. Files are sorted by canonical relative filename, parsed independently, checked for one package and namespace, combined as syntax declarations, and then lowered through the existing single-source execution boundary. The human CLI prints the resolved operation summary, while `gooo run --json --entry PayOrder examples/billing-package` emits the complete package receipt for automation. Both paths use the same sealed receipt and zero-effect boundary.
 
 ## Fixed denominator
 

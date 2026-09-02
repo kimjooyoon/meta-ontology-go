@@ -20,7 +20,9 @@ go fix ./internal/packageruntime/packageexecution ./internal/meta/languagepackag
 git diff --exit-code -- internal/packageruntime/packageexecution internal/meta/languagepackageexecution cmd/language-package-execution-witness
 
 go build -o "$output/gooo" ./cmd/gooo
-"$output/gooo" run --entry PayOrder examples/billing-package > "$output/cli-receipt.json"
+"$output/gooo" run --entry PayOrder examples/billing-package > "$output/cli-human.txt"
+"$output/gooo" run --json --entry PayOrder examples/billing-package > "$output/cli-receipt.json"
+jq -e '.decision == "PASS" and .reason == "PACKAGE_EXECUTED" and (.sources | length) == 2 and .effects.repository_writes == 0 and .effects.mutation_authority == false' "$output/cli-receipt.json" >/dev/null
 go run ./cmd/language-package-execution-witness --head "${EXACT_SHA:-${GITHUB_SHA:-0000000000000000000000000000000000000000}}" --root "$root" --out "$output/report.json"
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
