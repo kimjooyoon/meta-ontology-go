@@ -1620,13 +1620,13 @@ jobs:
   coherence-boundary-probe:
     name: COHERENCE boundary probe
     needs: [feedback-predecessor]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.feedback-predecessor.result == 'success' }}
+    if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v6
@@ -1636,7 +1636,8 @@ jobs:
       - name: Re-consume exact predecessor artifact in caller-owned temp space
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          EXPECTED_ARTIFACT_NAME: feedback-predecessor-${{ github.sha }}
+          EXPECTED_ARTIFACT_NAME: feedback-predecessor-${{ github.event.pull_request.head.sha || github.sha }}
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           probe_root="$(mktemp -d "$RUNNER_TEMP/coherence-boundary-probe.XXXXXX")"
           artifact_index="$probe_root/artifacts.json"
@@ -1823,7 +1824,7 @@ jobs:
             --arg artifact_name "$EXPECTED_ARTIFACT_NAME" \
             --arg artifact_digest "$actual_zip_digest" \
             --arg report_digest "$expected_report_digest" \
-            --arg head_sha "$GITHUB_SHA" \
+            --arg head_sha "$EXPECTED_HEAD_SHA" \
             --arg boundary_decision "$boundary_decision" \
             --arg application_decision "$application_decision" \
             --arg application_reason "$application_reason" \
@@ -1922,7 +1923,7 @@ jobs:
           jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v6
         with:
-          name: coherence-boundary-probe-${{ github.sha }}
+          name: coherence-boundary-probe-${{ github.event.pull_request.head.sha || github.sha }}
           path: coherence-boundary-probe.json
           if-no-files-found: error
           retention-days: 30
