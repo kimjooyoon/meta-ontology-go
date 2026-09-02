@@ -10,6 +10,7 @@ func init() {
 		".github/workflows/self-improvement-minimal-loop.yml",
 		"bootstrap/repository-projector/command",
 		"cmd/feedback-predecessor-witness",
+		"examples/language-syntax-roundtrip",
 		"examples/self-improvement-minimal-loop",
 		"internal/detection/linecaps",
 		"internal/meta/feedbackpredecessor",
