@@ -137,8 +137,8 @@ jobs:
             deterministic_equal=false
           fi
 
-          baseline_copy="$(rg -F -c 'copyIR(input)' "$baseline_source" || true)"
-          baseline_canonicalize="$(rg -F -c 'canonicalizeIRCollections(&result)' "$baseline_source" || true)"
+          baseline_copy="$(rg -F -o 'copyIR(input)' "$baseline_source" 2>/dev/null | wc -l | tr -d ' ' || true)"
+          baseline_canonicalize="$(rg -F -o 'canonicalizeIRCollections(&result)' "$baseline_source" 2>/dev/null | wc -l | tr -d ' ' || true)"
           baseline_primary=$((baseline_copy + baseline_canonicalize))
           candidate_primary="$(jq -r '.candidate_collection_copy_passes' "$work/candidate-evidence.json")"
           baseline_metrics="$(jq -n --argjson p "$baseline_primary" --slurpfile m "$work/baseline/measurements.json" '{normalization_collection_copy_passes:$p,wall_ms:$m[0].generation.wall_ms,peak_rss_kib:$m[0].generation.peak_rss_kib,build_ms:$m[0].build.wall_ms,test_ms:$m[0].test.wall_ms,executed_tests:$m[0].executed_tests,reused_tests:$m[0].reused_tests}')"
