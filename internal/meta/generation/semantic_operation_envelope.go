@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -772,13 +773,7 @@ func independentlyClassifyEnvelope(manifest semanticOperationManifest, requests 
 
 func independentSubset(values, allowed []string) bool {
 	for _, value := range values {
-		found := false
-		for _, permitted := range allowed {
-			if value == permitted {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(allowed, value)
 		if !found {
 			return false
 		}
