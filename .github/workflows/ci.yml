@@ -1187,6 +1187,145 @@ jobs:
               ['replay', policy.authorization.replay_decision],
             ]).write();
 
+  foundation-authorization-protocol:
+    name: FOUNDATION authorization protocol
+    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'dev' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Execute exact-candidate protocol audit
+        uses: actions/github-script@v8
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          RUNTIME_REF: ${{ github.ref }}
+          RUNTIME_SHA: ${{ github.sha }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('node:fs');
+            const protocol = require('./scripts/ci-proof/foundation_authorization_protocol');
+            const eventPull = context.payload.pull_request;
+            const repositoryPayload = context.payload.repository;
+            const livePull = (await github.rest.pulls.get({owner: context.repo.owner, repo: context.repo.repo, pull_number: eventPull.number})).data;
+            if (!livePull || livePull.number !== eventPull.number || livePull.state !== 'open' || livePull.merged === true || livePull.base.ref !== 'dev' || livePull.base.sha !== process.env.EXPECTED_BASE_SHA || livePull.head.sha !== process.env.EXPECTED_HEAD_SHA || livePull.base.repo.full_name !== context.payload.repository.full_name || livePull.head.repo.full_name !== context.payload.repository.full_name) {
+              throw new Error('FOUNDATION authorization protocol PR identity is not exact');
+            }
+            const changedFiles = [];
+            for (let page = 1; page <= 1000; page += 1) {
+              const response = await github.rest.pulls.listFiles({owner: context.repo.owner, repo: context.repo.repo, pull_number: livePull.number, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data)) throw new Error('FOUNDATION authorization protocol changed-file API returned malformed data');
+              changedFiles.push(...response.data);
+              if (response.data.length < 100) break;
+              if (page === 1000) throw new Error('FOUNDATION authorization protocol changed-file pagination exceeded the limit');
+            }
+            const compare = (await github.rest.repos.compareCommits({owner: context.repo.owner, repo: context.repo.repo, base: livePull.base.sha, head: livePull.head.sha})).data;
+            if (!compare || !compare.merge_base_commit || !protocol.validSHA(compare.merge_base_commit.sha)) throw new Error('FOUNDATION authorization protocol merge-base evidence is unavailable');
+            const changedPaths = protocol.canonicalPathNames(changedFiles);
+            const protectedPaths = protocol.canonicalProtectedIntersection(changedFiles);
+            const candidate = {
+              pull_request: livePull.number,
+              base_repo: livePull.base.repo.full_name,
+              base_branch: livePull.base.ref,
+              base_sha: livePull.base.sha,
+              head_repo: livePull.head.repo.full_name,
+              head_branch: livePull.head.ref,
+              head_sha: livePull.head.sha,
+              merge_base_sha: compare.merge_base_commit.sha,
+              changed_paths: {paths: changedPaths, count: changedPaths.length, digest: protocol.digestPathList(changedPaths)},
+              protected_intersection: {paths: protectedPaths, count: protectedPaths.length, digest: protocol.digestPathList(protectedPaths)},
+            };
+            async function readKernelTree(ref) {
+              const commit = (await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref})).data;
+              const tree = (await github.rest.git.getTree({owner: context.repo.owner, repo: context.repo.repo, tree_sha: commit.commit.tree.sha, recursive: '1'})).data;
+              if (tree.truncated === true) throw new Error('kernel tree was truncated');
+              return tree.tree;
+            }
+            let kernel = {before_sha256: null, after_sha256: null};
+            try {
+              kernel.before_sha256 = protocol.digestKernelEntries(await readKernelTree(livePull.base.sha));
+              kernel.after_sha256 = protocol.digestKernelEntries(await readKernelTree(livePull.head.sha));
+            } catch (error) {
+              core.warning(`kernel digest observation unavailable: ${error.message || String(error)}`);
+            }
+            const runtime = {
+              workflow_ref: process.env.WORKFLOW_REF,
+              workflow_sha: process.env.WORKFLOW_SHA,
+              runtime_ref: process.env.RUNTIME_REF,
+              runtime_sha: process.env.RUNTIME_SHA,
+              check_name: 'FOUNDATION authorization protocol',
+              check_run_id: context.runId,
+              app_id: protocol.CI_APP_ID,
+            };
+            const ownerPayload = repositoryPayload.owner;
+            const sender = context.payload.sender || {};
+            const owner = {login: ownerPayload.login, id: ownerPayload.id, type: ownerPayload.type};
+            const actor = {login: context.actor, id: sender.id, type: sender.type || 'User'};
+            async function probe(operation, callback) {
+              try {
+                const response = await callback();
+                return {operation, read_status: 'verified', status: response.status || 200};
+              } catch (error) {
+                return {operation, read_status: 'unavailable', status: error.status || null, reason: error.message || String(error)};
+              }
+            }
+            const audit = {
+              authenticated_actor: {login: context.actor, id: sender.id, type: sender.type || 'User'},
+              installation: await probe('GET /repos/{owner}/{repo}/installation', () => github.request('GET /repos/{owner}/{repo}/installation', {owner: context.repo.owner, repo: context.repo.repo})),
+              rulesets: await probe('GET /repos/{owner}/{repo}/rulesets', () => github.request('GET /repos/{owner}/{repo}/rulesets', {owner: context.repo.owner, repo: context.repo.repo})),
+              environments: await probe('GET /repos/{owner}/{repo}/environments', () => github.request('GET /repos/{owner}/{repo}/environments', {owner: context.repo.owner, repo: context.repo.repo})),
+              owner_operation: {read_status: 'unavailable', reason: 'NO_SERVER_SIDE_OWNER_AUTHORIZATION_OPERATION', operation: 'OWNER_CREATE_ONE_USE_AUTHORIZATION_FOR_EXACT_CANDIDATE'},
+              no_protection_mutation: true,
+              no_check_bypass: true,
+            };
+            const root = protocol.buildRootAxiomReceipt({repository: repositoryPayload.full_name, owner, actor, pullRequest: livePull.number, baseBranch: livePull.base.ref, baseSha: livePull.base.sha, headSha: livePull.head.sha, audit});
+            protocol.validateRootAxiomReceipt(root);
+            const liveInput = {
+              repository: {full_name: repositoryPayload.full_name, owner_login: owner.login, owner_id: owner.id, owner_type: owner.type},
+              actor: {...actor, owner_match: actor.login === owner.login && actor.id === owner.id && actor.type === owner.type},
+              intent: 'Replace the historical one-tuple foundation authorization with a reusable one-use exact-candidate authorization protocol.',
+              proof_choice: 'FOUNDATION',
+              candidate,
+              runtime,
+              kernel,
+              authorization: {state: 'PENDING', owner_selection: null, nonce: null, issued_at: null, expires_at: null, stale: false, use_count: 0, reuse_attempts: 0, revoked: false, authorization_receipt: null},
+              consumption: null,
+              observed: {candidate, runtime, kernel},
+            };
+            const evaluation = protocol.evaluate(liveInput, {now: new Date().toISOString()});
+            if (!['UNKNOWN', 'REFUTED'].includes(evaluation.decision) || evaluation.repository_writes !== 0 || !evaluation.unknown && !evaluation.refuted) throw new Error('live protocol audit did not fail closed');
+            fs.writeFileSync('foundation-authorization-root-axiom.json', JSON.stringify(root, null, 2) + '\n');
+            fs.writeFileSync('foundation-authorization-protocol-live.json', JSON.stringify({schema: protocol.PROTOCOL_SCHEMA, repository: repositoryPayload.full_name, pull_request: livePull.number, candidate, runtime, kernel, evaluation, root_axiom: root}, null, 2) + '\n');
+            await core.summary.addHeading('FOUNDATION authorization protocol').addTable([
+              [{data: 'binding', header: true}, {data: 'value', header: true}],
+              ['candidate', `${candidate.pull_request} ${candidate.head_sha}`],
+              ['base', candidate.base_sha],
+              ['merge base', candidate.merge_base_sha],
+              ['changed paths', `${candidate.changed_paths.count} ${candidate.changed_paths.digest}`],
+              ['protected intersection', `${candidate.protected_intersection.count} ${candidate.protected_intersection.digest}`],
+              ['live decision', evaluation.decision],
+              ['root axiom', root.reason],
+              ['owner action', root.required_owner_action],
+            ]).write();
+      - name: Run exact protocol case witnesses
+        run: node scripts/ci-proof/foundation_authorization_protocol_test.js
+      - name: Upload protocol audit and root axiom
+        uses: actions/upload-artifact@v6
+        with:
+          name: foundation-authorization-protocol-${{ github.event.pull_request.head.sha }}
+          path: |
+            foundation-authorization-root-axiom.json
+            foundation-authorization-protocol-live.json
+          if-no-files-found: error
+          retention-days: 30
+
   failure-report:
     name: CI failure summary
     needs: [format, vet, test, race, semantic, policy, proof]
