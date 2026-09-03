@@ -117,7 +117,7 @@ jobs:
             measure_command "$root" "$work/cache-$side-replay" "$side-replay" go run ./cmd/gooo generate "$fixture" --out "$replay" >/dev/null
             build="$(measure_command "$root" "$work/cache-$side-build" "$side-build" go test ./internal/generator -run '^$' -count=1)"
             test="$(measure_command "$root" "$work/cache-$side-test" "$side-test" go test ./internal/generator -run '^TestGenerateIsDeterministicAndFormatted$' -count=1 -json)"
-            executed="$(jq '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/measurements/$side-test/stdout")"
+            executed="$(jq -s '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/measurements/$side-test/stdout")"
             jq -n --argjson generation "$generation" --argjson build "$build" --argjson test "$test" --argjson executed "$executed" \
               '{generation:$generation,build:$build,test:$test,executed_tests:$executed,reused_tests:0}' > "$work/$side/measurements.json"
           }
