@@ -39,64 +39,81 @@ func runRetentionConsume(args []string, reader SourceReader, parser SourceParser
 	if diagnostics.HasErrors() || !reportDiagnostics(diagnostics, stderr) {
 		return exitFailure
 	}
-	evidence, err := readRetentionEvidence(retentionEvidenceOptions{
-		observationFilename: options.observationFilename, proposalFilename: options.proposalFilename,
-		authorizationFilename: options.authorizationFilename, adoptionFilename: options.adoptionFilename,
-	}, reader)
+	context, err := prepareRetentionConsume(inputs, options, reader)
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: retention consume: %v\n", err)
 		return exitFailure
 	}
-	compilerDigest, err := generation.SemanticRetentionCompilerDigest(reader.ReadFile)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: retention consume: compiler binding: %v\n", err)
-		return exitFailure
-	}
-	verifierDigest, err := generation.SemanticRetentionVerifierDigest(reader.ReadFile)
-	if err != nil {
-		fmt.Fprintf(stderr, "gooo: retention consume: verifier binding: %v\n", err)
-		return exitFailure
-	}
-	base := retentionResultBase(inputs, evidence, compilerDigest, verifierDigest)
-	if err := validateRetentionEvidence(inputs, evidence); err != nil {
+	if err := validateRetentionEvidence(inputs, context.evidence); err != nil {
 		if _, isBindingMismatch := err.(retentionInputBindingError); isBindingMismatch {
-			return writeRetentionResult(options.outputDir, retentionRefutedResult(base, ""), stdout, stderr)
+			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, ""), stdout, stderr)
 		}
 		fmt.Fprintf(stderr, "gooo: retention consume: %v\n", err)
 		return exitFailure
 	}
 	if options.authorizationFilename == "" {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
 	}
-	if !evidence.authorization.Authorized {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
+	if !context.evidence.authorization.Authorized {
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
 	}
-	if err := validateRetentionAuthorization(evidence); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(base, ""), stdout, stderr)
+	if err := validateRetentionAuthorization(context.evidence); err != nil {
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, ""), stdout, stderr)
 	}
 	if options.certificateFilename == "" {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
 	}
 	certificateData, err := reader.ReadFile(options.certificateFilename)
 	if err != nil {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
 	}
 	certificateDigest := cache.HashBytes(certificateData).String()
 	var certificate generation.SemanticRetentionCertificate
 	if err := json.Unmarshal(certificateData, &certificate); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
 	}
-	expected := retentionBindings(inputs, evidence, compilerDigest, verifierDigest)
+	expected := retentionBindings(inputs, context.evidence, context.compilerDigest, context.verifierDigest)
 	if err := generation.VerifySemanticRetentionCertificate(certificate, expected); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
 	}
+	return consumeRetentionCertificate(options, context, certificate, certificateDigest, reader, stdout, stderr)
+}
+
+type retentionConsumeContext struct {
+	evidence       retentionEvidence
+	compilerDigest string
+	verifierDigest string
+	base           generation.SemanticRetentionResult
+}
+
+func prepareRetentionConsume(inputs observationInputs, options retentionConsumeOptions, reader SourceReader) (retentionConsumeContext, error) {
+	evidence, err := readRetentionEvidence(retentionEvidenceOptions{
+		observationFilename: options.observationFilename, proposalFilename: options.proposalFilename,
+		authorizationFilename: options.authorizationFilename, adoptionFilename: options.adoptionFilename,
+	}, reader)
+	if err != nil {
+		return retentionConsumeContext{}, err
+	}
+	compilerDigest, err := generation.SemanticRetentionCompilerDigest(reader.ReadFile)
+	if err != nil {
+		return retentionConsumeContext{}, fmt.Errorf("compiler binding: %w", err)
+	}
+	verifierDigest, err := generation.SemanticRetentionVerifierDigest(reader.ReadFile)
+	if err != nil {
+		return retentionConsumeContext{}, fmt.Errorf("verifier binding: %w", err)
+	}
+	return retentionConsumeContext{evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest,
+		base: retentionResultBase(inputs, evidence, compilerDigest, verifierDigest)}, nil
+}
+
+func consumeRetentionCertificate(options retentionConsumeOptions, context retentionConsumeContext, certificate generation.SemanticRetentionCertificate, certificateDigest string, reader SourceReader, stdout, stderr io.Writer) int {
 
 	started := time.Now()
 	var beforeMem, afterMem runtime.MemStats
 	runtime.ReadMemStats(&beforeMem)
 	baseline, err := readRetentionBaseline(options.baselineFilename, reader)
 	if err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
 	}
 	bytesEqual := false
 	semanticEqual := false
@@ -106,11 +123,11 @@ func runRetentionConsume(args []string, reader SourceReader, parser SourceParser
 		if baseline.Decision != "CLOSED" || baseline.Reason != generation.SemanticRetentionCertifiedReason ||
 			baseline.CertificateDigest != certificateDigest || baseline.Metrics.SemanticOperationCount != 1 || baseline.Metrics.CertificateMisses != 1 ||
 			!bytesEqual || !semanticEqual {
-			return writeRetentionResult(options.outputDir, retentionRefutedResult(base, certificateDigest), stdout, stderr)
+			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
 		}
 	}
 	runtime.ReadMemStats(&afterMem)
-	after := base
+	after := context.base
 	after.Lifecycle = "SEPARATE_INVOCATION_CONSUME"
 	after.Decision = "CLOSED"
 	after.Reason = generation.SemanticRetentionHitReason
