@@ -92,6 +92,7 @@ func run(contractPath, inputPath, certificatePath, observationPath, proposalPath
 		return err
 	}
 	certificateDigest := cache.HashBytes(certificateData).String()
+	sourceDigest := cache.HashBytes(input).String()
 	inputDigest, err := independentlyComputeInputDigest(inputPath, input)
 	if err != nil {
 		return err
@@ -108,7 +109,7 @@ func run(contractPath, inputPath, certificatePath, observationPath, proposalPath
 	if err != nil {
 		return fmt.Errorf("replay: %w", err)
 	}
-	if err := verifyClosedPublicResults(input, inputDigest, certificate, certificateDigest, baseline, applied, replay); err != nil {
+	if err := verifyClosedPublicResults(input, sourceDigest, inputDigest, certificate, certificateDigest, baseline, applied, replay); err != nil {
 		return err
 	}
 	caseReports, counts, artifacts, err := verifyPublicCases(casesRoot)
@@ -256,7 +257,7 @@ func verifyPublicEvidence(contract, input []byte, certificate generation.Semanti
 	return nil
 }
 
-func verifyClosedPublicResults(input []byte, inputDigest string, certificate generation.SemanticRetentionCertificate, certificateDigest string, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
+func verifyClosedPublicResults(input []byte, sourceDigest, normalizedDigest string, certificate generation.SemanticRetentionCertificate, certificateDigest string, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
 	if err := generation.ValidateSemanticPublicGenerationReport(baseline); err != nil {
 		return fmt.Errorf("baseline report: %w", err)
 	}
@@ -269,7 +270,7 @@ func verifyClosedPublicResults(input []byte, inputDigest string, certificate gen
 	if baseline.Reason != generation.SemanticPublicGenerationBaselineReason || applied.Reason != generation.SemanticPublicGenerationHitReason || replay.Reason != generation.SemanticPublicGenerationHitReason {
 		return errors.New("public generation reports do not identify baseline and retained paths")
 	}
-	if baseline.InputSourceDigest != inputDigest || applied.InputSourceDigest != inputDigest || replay.InputSourceDigest != inputDigest {
+	if baseline.InputSourceDigest != sourceDigest || applied.InputSourceDigest != sourceDigest || replay.InputSourceDigest != sourceDigest {
 		return errors.New("public generation reports are not bound to the exact input")
 	}
 	if applied.CertificateDigest != certificateDigest || replay.CertificateDigest != certificateDigest || applied.GeneratedOutputDigest != certificate.GeneratedOutputDigest || replay.GeneratedOutputDigest != certificate.GeneratedOutputDigest {
@@ -295,7 +296,7 @@ func verifyClosedPublicResults(input []byte, inputDigest string, certificate gen
 	if !bytes.Equal(baselineSource, certificate.GeneratedSource) || !bytes.Equal(baselineSource, appliedSource) || !bytes.Equal(appliedSource, replaySource) {
 		return errors.New("public compiler output bytes changed across baseline, certificate, and replay")
 	}
-	if baseline.NormalizedIRDigest != applied.NormalizedIRDigest || applied.NormalizedIRDigest != replay.NormalizedIRDigest || applied.NormalizedIRDigest != certificate.NormalizedIRDigest {
+	if baseline.NormalizedIRDigest != normalizedDigest || baseline.NormalizedIRDigest != applied.NormalizedIRDigest || applied.NormalizedIRDigest != replay.NormalizedIRDigest || applied.NormalizedIRDigest != certificate.NormalizedIRDigest {
 		return errors.New("public compiler normalized semantic identity changed across invocations")
 	}
 	if baseline.Metrics.SemanticOperationCount != 1 || applied.Metrics.SemanticOperationCount != 0 || replay.Metrics.SemanticOperationCount != 0 || applied.Metrics.CertificateHits != 1 || replay.Metrics.CertificateHits != 1 {
