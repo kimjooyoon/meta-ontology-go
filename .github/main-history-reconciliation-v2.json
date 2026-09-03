@@ -4,6 +4,7 @@
   "unknown_fields": ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"],
   "route": "reconciliation_main",
   "candidate_branch_prefix": "agent/main-history-reconciliation-",
+  "authorization_candidate_encoding": "COMPACT_TREE_DIGESTS_V1",
   "source": "dev",
   "target": "main",
   "merge_strategy": "squash_linear",
