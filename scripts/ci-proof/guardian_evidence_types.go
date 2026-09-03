@@ -1,5 +1,7 @@
 package main
 
+import "encoding/json"
+
 type guardianEvidence struct {
 	Schema                      string                    `json:"schema"`
 	Route                       string                    `json:"route"`
@@ -59,4 +61,5 @@ type guardianEvidence struct {
 	Code                        *string                   `json:"code"`
 	HeadBindingStatus           string                    `json:"head_binding_status"`
 	BundleSHA                   string                    `json:"bundle_sha256"`
+	ReconciliationProtocol      json.RawMessage           `json:"reconciliation_protocol"`
 }
