@@ -149,7 +149,7 @@ jobs:
             --arg toolchain_digest "$toolchain_digest" \
             --arg cache_state "$cache_state" \
             --arg primary_metric normalization_collection_copy_passes \
-            --arg authority_program generator.normalizeIR:fold-copy-and-canonicalize/v1 \
+            --arg authority_program generator.normalizeIR:fold-copy-with-empty-normalization/v1 \
             --arg graph_hash "$(jq -r .graph_hash "$work/authority.graph.json")" \
             --argjson before "$baseline_metrics" \
             --argjson after "$candidate_metrics" \
