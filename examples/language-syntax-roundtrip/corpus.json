@@ -191,6 +191,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-operation-envelope",
+      "path": "examples/self-improvement-minimal-loop/operation-envelope.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "self-improvement-candidate",
       "path": "examples/self-improvement/candidate.gooo",
       "kind": "VALID",
