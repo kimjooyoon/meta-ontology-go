@@ -6,7 +6,7 @@ const reconciliation = require('./linear_tree_reconciliation');
 
 const sha = (letter) => letter.repeat(40);
 const blob = (name, letter) => ({path: name, type: 'blob', mode: '100644', sha: sha(letter)});
-const tree = reconciliation.treeManifest([blob('readme.md', 'a'), blob('internal/verify/example.go', 'b')]);
+const tree = reconciliation.treeManifest([blob('README.md', 'a'), blob('internal/verify/example.go', 'b')]);
 const pull = {number: 99, base: {ref: 'main', sha: sha('c'), repo: {full_name: 'kimjooyoon/meta-ontology-go'}}, head: {ref: 'agent/main-history-reconciliation-fixture-20260903', sha: sha('d'), repo: {full_name: 'kimjooyoon/meta-ontology-go'}}};
 const workflow = {workflow_ref: 'kimjooyoon/meta-ontology-go/.github/workflows/ci-guardian.yml@refs/heads/dev', workflow_sha: sha('e'), runtime_ref: 'refs/heads/dev', runtime_sha: sha('e'), check_name: 'CI guardian', app_id: 15368};
 const candidate = reconciliation.candidateFromPull({pull, changedFiles: [{filename: '.github/ci-governance.json', status: 'modified'}], sourceDevSHA: sha('f'), mergeBaseSHA: sha('1'), sourceDevTree: tree, candidateTree: tree, workflow});
