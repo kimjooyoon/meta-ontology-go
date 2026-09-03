@@ -66,7 +66,6 @@ func canonicalizeIREmptyCollections(ir *SemanticIR) {
 		}
 	}
 }
-
 func copyIR(input SemanticIR) SemanticIR {
 	result := input
 	result.Imports = append([]Import(nil), input.Imports...)
