@@ -15,6 +15,13 @@ func collectRun(ctx context.Context, client *http.Client, apiURL, token, reposit
 		return err
 	}
 	if !ready {
+		if run.Conclusion == "success" && job.ID > 0 && job.Status == "completed" && job.Conclusion != "success" {
+			collection.Contradictions++
+			if collection.FailureReason == "" {
+				collection.FailureReason = ReasonRouteContradiction
+			}
+			return nil
+		}
 		collection.Unresolved++
 		return nil
 	}
@@ -65,7 +72,8 @@ func collectArtifact(ctx context.Context, client *http.Client, token, predecesso
 	}
 	selected := Selected{
 		RunID: run.ID, RunAttempt: run.RunAttempt, HeadSHA: run.HeadSHA,
-		Event: run.Event, Status: run.Status, Conclusion: run.Conclusion, WorkflowName: run.Name,
+		HeadBranch: run.HeadBranch,
+		Event:      run.Event, Status: run.Status, Conclusion: run.Conclusion, WorkflowName: run.Name,
 		SynthesisJobID: job.ID, SynthesisJobName: job.Name,
 		SynthesisJobStatus: job.Status, SynthesisJobConclusion: job.Conclusion,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name, ProposalFileSHA256: fileSHA,

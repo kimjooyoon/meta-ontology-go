@@ -39,7 +39,7 @@ func TestResealedResolutionContextMismatchFailsClosed(t *testing.T) {
 	for _, test := range mutations {
 		t.Run(test.name, func(t *testing.T) {
 			receipt, err := BuildResolution(
-				repository, current, predecessor, ReasonAPIUnavailable, nil, testResolutionEvidence(),
+				repository, current, predecessor, RouteDev, ReasonAPIUnavailable, nil, testResolutionEvidence(),
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -49,7 +49,7 @@ func TestResealedResolutionContextMismatchFailsClosed(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := ValidateResolution(receipt, repository, current, predecessor); err == nil ||
+			if err := ValidateResolution(receipt, repository, current, predecessor, RouteDev); err == nil ||
 				err.Error() != "FAIL_CLOSED: proposal predecessor resolution context mismatch" {
 				t.Fatalf("context mutation accepted or misclassified: %v", err)
 			}

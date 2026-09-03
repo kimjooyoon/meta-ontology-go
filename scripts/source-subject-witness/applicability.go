@@ -3,11 +3,14 @@ package main
 import "fmt"
 
 const (
-	workflowDiscoveryPath      = ".github/workflows"
-	workflowDiscoveryMetric    = "gooo.metric.layout.direct-entries.v1"
-	workflowDiscoveryRule      = "gooo.catalog.source-policy.github-workflow-discovery.v1"
-	workflowDiscoveryOperation = "preserve-workflow-discovery"
+	workflowDiscoveryPath          = ".github/workflows"
+	workflowDiscoveryEntriesMetric = "gooo.metric.layout.direct-entries.v1"
+	workflowDiscoveryKindsMetric   = "gooo.metric.layout.entry-kinds.v1"
+	workflowDiscoveryRule          = "gooo.catalog.source-policy.workflow-discovery-root.v1"
+	workflowDiscoveryOperation     = "exempt-workflow-discovery-root"
 )
+
+const workflowDiscoveryExemptionRows = 2
 
 func validateDirectoryApplicability(directory directoryMetric, rows []sourceIndicator) error {
 	exemptions := notApplicableRows(rows)
@@ -23,7 +26,17 @@ func validateDirectoryApplicability(directory directoryMetric, rows []sourceIndi
 		}
 		return nil
 	}
-	if len(exemptions) != 1 || !isWorkflowDiscoveryExemption(exemptions[0]) {
+	if len(exemptions) != workflowDiscoveryExemptionRows {
+		return fmt.Errorf("directory %q does not have the exact workflow discovery exemption", directory.Path)
+	}
+	seen := make(map[string]bool, len(exemptions))
+	for _, row := range exemptions {
+		if !isWorkflowDiscoveryExemption(row) || seen[row.MetricID] {
+			return fmt.Errorf("directory %q does not have the exact workflow discovery exemption", directory.Path)
+		}
+		seen[row.MetricID] = true
+	}
+	if !seen[workflowDiscoveryEntriesMetric] || !seen[workflowDiscoveryKindsMetric] {
 		return fmt.Errorf("directory %q does not have the exact workflow discovery exemption", directory.Path)
 	}
 	return nil
@@ -40,8 +53,8 @@ func notApplicableRows(rows []sourceIndicator) []sourceIndicator {
 }
 
 func isWorkflowDiscoveryExemption(row sourceIndicator) bool {
-	return row.MetricID == workflowDiscoveryMetric && row.ApplicabilityRuleID == workflowDiscoveryRule &&
-		row.ApplicabilityReason == "GITHUB_WORKFLOW_DISCOVERY_ROOT" && row.MetaOperation == workflowDiscoveryOperation &&
+	return (row.MetricID == workflowDiscoveryEntriesMetric || row.MetricID == workflowDiscoveryKindsMetric) && row.ApplicabilityRuleID == workflowDiscoveryRule &&
+		row.ApplicabilityReason == "WORKFLOW_DISCOVERY_ROOT_EXEMPT" && row.MetaOperation == workflowDiscoveryOperation &&
 		row.ProofChoice == "foundation" && row.Consumer == "github-actions" && row.Decision == "NOT_APPLICABLE" &&
 		row.EvaluationState == "EVALUATED" && row.FailureReason == "CATALOG_NOT_APPLICABLE" &&
 		row.EnforcementEffect == "NO_EFFECT" && !row.Blocking

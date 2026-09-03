@@ -32,6 +32,8 @@ const {
   observeBranchProtection,
   observeGuardianEnvironment,
   observeInstallationRepositoryScope,
+  emptyGuardianEnvironment,
+  emptyBranchProtection,
   emptyInstallationRepositoryScope,
   digestInstallationRepositoryScope,
   OBSERVER_FRESHNESS_WINDOW_MS,
@@ -392,6 +394,61 @@ async function testProtectionObserverContracts() {
   assert.match(responseDateMissing.missing_reason, /response_date/);
 }
 
+async function testPromotionFailurePreservesTypedObserverSnapshots() {
+  const promotion = pull('main');
+  promotion.head.ref = 'dev';
+  promotion.head.sha = sha('d');
+  const common = {
+    repository: 'owner/repo',
+    policySHA: '6'.repeat(64),
+    eventRef: 'refs/heads/dev',
+    checkoutRef: sha('d'),
+    baseSHA: sha('b'),
+    headSHA: sha('d'),
+    runId: 108,
+    runAttempt: 1,
+    workflowSHA: sha('d'),
+    tokenSource: 'github_app_installation',
+    appInstallationId: 0,
+    appSlug: '',
+    missingReason: 'guardian_observation_not_completed',
+  };
+  const artifact = buildGuardianArtifact({
+    pull: promotion,
+    repository: 'owner/repo',
+    action: 'synchronize',
+    defaultBranch: 'dev',
+    workflowRef: 'owner/repo/.github/workflows/ci-guardian.yml@refs/heads/dev',
+    workflowSha: sha('d'),
+    runtimeRef: 'refs/heads/dev',
+    runtimeSha: sha('d'),
+    runId: 108,
+    runAttempt: 1,
+    eventRef: 'refs/heads/dev',
+    liveBefore: liveFixture(),
+    liveAfter: liveFixture(),
+    checkName: 'CI guardian',
+    result: {decision: 'FAIL_CLOSED', code: PROTECTION_CODE, reason: 'guardian observer evidence is unavailable', files: [], kernelPaths: []},
+    branchProtection: emptyBranchProtection({...common, branch: 'main'}),
+    devBranchProtection: emptyBranchProtection({...common, branch: 'dev'}),
+    observerEnvironment: OBSERVER_ENVIRONMENT,
+    observerEnvironmentSnapshot: emptyGuardianEnvironment({repository: 'owner/repo', tokenSource: 'github.token', runId: 108, runAttempt: 1, workflowSHA: sha('d'), missingReason: 'guardian_observation_not_completed'}),
+    installationRepositoryScope: emptyInstallationRepositoryScope({repository: 'owner/repo', installationId: 0, tokenSource: 'github_app_installation', runId: 108, runAttempt: 1, workflowSHA: sha('d'), missingReason: 'guardian_observation_not_completed'}),
+  });
+  const expected = expectedFixtureTuple();
+  expected.base_ref = 'main';
+  expected.base_sha = sha('b');
+  expected.head_ref = 'dev';
+  expected.head_sha = sha('d');
+  expected.workflow_sha = sha('d');
+  expected.runtime_sha = sha('d');
+  assert.equal(artifact.branch_protection.read_status, 'unavailable');
+  assert.equal(artifact.dev_branch_protection.read_status, 'unavailable');
+  assert.equal(artifact.observer_environment_snapshot.read_status, 'unavailable');
+  assert.equal(artifact.installation_repository_scope.read_status, 'unavailable');
+  assert.doesNotThrow(() => validateGuardianArtifact(artifact, expected, {now: observerNow}));
+}
+
 async function testCanonicalOrdering() {
   const eventPull = pull('dev');
   eventPull.base.sha = sha('d');
@@ -589,6 +646,9 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /getBranchProtection/);
   assert.match(workflow, /GET \/installation\/repositories/);
   assert.match(workflow, /observeInstallationRepositoryScope/);
+  assert.match(workflow, /const route = guardian\.routeForPull\(pull\)/);
+  assert.match(workflow, /guardian\.emptyBranchProtection/);
+  assert.match(workflow, /guardian_observation_not_completed/);
   assert.match(ciWorkflow, /token_source: 'not_observed',\s+app_installation_id: 0,\s+app_slug: '',\s+read_status: 'unavailable'/);
   assert.match(workflow, /- dev\n      - main/);
   assert.doesNotMatch(workflow, /- integration/);
@@ -731,6 +791,7 @@ function testRegressionRepairReceipt() {
   await testCanonicalOrdering();
   await testPromotionAndKernelDigests();
   await testProtectionObserverContracts();
+  await testPromotionFailurePreservesTypedObserverSnapshots();
   await testPaginationLimit();
   testWorkflowIsReadOnlyAndBasePinned();
   testExecutableGuardianScopeAcceptanceHarness();

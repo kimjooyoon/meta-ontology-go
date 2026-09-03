@@ -376,6 +376,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+      REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -395,13 +396,16 @@ jobs:
             -repository "$GITHUB_REPOSITORY" \
             -subject-sha "$SUBJECT_SHA" \
             -predecessor-sha "$PREDECESSOR_SHA" \
+            -route "$REQUESTED_ROUTE" \
             -output "$out/selection.json" \
             -selected-proposal "$out/contract.json"
-          jq -e --arg predecessor "$PREDECESSOR_SHA" '
+          jq -e --arg predecessor "$PREDECESSOR_SHA" --arg route "$REQUESTED_ROUTE" '
             .schema == "gooo/autonomous-change-proposal-predecessor-selection/v2" and
             .decision == "SELECTED" and
             .predecessor_sha == $predecessor and
+            .requested_route == $route and
             .selected.head_sha == $predecessor and
+            .selected.head_branch == $route and
             .selected.synthesis_job_name == "strategy" and
             .selected.synthesis_job_status == "completed" and
             .selected.synthesis_job_conclusion == "success" and
@@ -437,6 +441,7 @@ jobs:
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
     steps:
       - name: Check out exact proposal subject
         uses: actions/checkout@v5
@@ -475,7 +480,8 @@ jobs:
               PROPOSAL_RUN_PAGINATION_INCOMPLETE|PROPOSAL_JOB_PAGINATION_INCOMPLETE|\
               PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE|PROPOSAL_API_UNAVAILABLE|\
               PROPOSAL_API_PERMISSION_DENIED|PROPOSAL_RESPONSE_MALFORMED|\
-              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH)
+              PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE|PROPOSAL_REDIRECT_ORIGIN_MISMATCH|\
+              PROPOSAL_PREDECESSOR_ROUTE_UNKNOWN|PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION)
                 return 0
                 ;;
               *)
@@ -493,6 +499,7 @@ jobs:
               --repository "$GITHUB_REPOSITORY" \
               --current-head "$HEAD_SHA" \
               --predecessor-sha "$predecessor_sha" \
+              --route "$REQUESTED_ROUTE" \
               "${observation_args[@]}" \
               --output "$RUNNER_TEMP/language-readiness-proposal-promotion-$suffix.json"
           done
@@ -503,6 +510,7 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
+            --route "$REQUESTED_ROUTE" \
             --observation-cache "$RUNNER_TEMP/language-readiness-proposal-observation.json" \
             --check "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
           proposal_schema="$(jq -r '.schema' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json")"
@@ -512,19 +520,25 @@ jobs:
               echo "FAIL_CLOSED: unknown proposal predecessor failure reason: ${proposal_reason:-EMPTY}" >&2
               exit 1
             fi
-            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" --arg route "$REQUESTED_ROUTE" '
               .schema == "gooo/autonomous-change-proposal-predecessor-resolution/v1" and
               .repository == $repository and .current_head_sha == $head and .predecessor_sha == $predecessor and
+              .requested_route == $route and
               .conformance == "PASS" and .decision == "FAIL_CLOSED" and .resolution == "LOWER_RESOLUTION" and
               .stage == "proposal-predecessor" and .step == "select-exact-predecessor" and
               .promotion_authority == false and .readiness_delta == null and
+              ((.reason == "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "REFUTED" and .observation_resolution == "EXACT" and .unknown == null) or
+               (.reason != "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION" and .observation_decision == "UNKNOWN" and .observation_resolution == "LOWER_RESOLUTION" and
+                .unknown.stage == "proposal-predecessor" and .unknown.step == "select-exact-predecessor" and
+                .unknown.reason == .reason and .unknown.unknown_class != "" and .unknown.next_operation != "" and .unknown.blocked_by != null)) and
               (.reason as $reason |
                 ["PROPOSAL_PREDECESSOR_NOT_FOUND", "PROPOSAL_PREDECESSOR_EVIDENCE_UNKNOWN",
                 "PROPOSAL_PREDECESSOR_AMBIGUOUS", "PROPOSAL_SYNTHESIS_JOB_CARDINALITY",
                 "PROPOSAL_RUN_PAGINATION_INCOMPLETE", "PROPOSAL_JOB_PAGINATION_INCOMPLETE",
                 "PROPOSAL_ARTIFACT_PAGINATION_INCOMPLETE", "PROPOSAL_API_UNAVAILABLE",
                 "PROPOSAL_API_PERMISSION_DENIED", "PROPOSAL_RESPONSE_MALFORMED",
-                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE", "PROPOSAL_REDIRECT_ORIGIN_MISMATCH"] | index($reason)) != null
+                "PROPOSAL_ARTIFACT_PAYLOAD_UNAVAILABLE", "PROPOSAL_REDIRECT_ORIGIN_MISMATCH",
+                "PROPOSAL_PREDECESSOR_ROUTE_UNKNOWN", "PROPOSAL_PREDECESSOR_ROUTE_CONTRADICTION"] | index($reason)) != null
             ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
             echo "mode=BLOCKED" >> "$GITHUB_OUTPUT"
             echo "conformance-exit-code=0" >> "$GITHUB_OUTPUT"
@@ -537,9 +551,10 @@ jobs:
             echo "- readiness delta: UNKNOWN" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           elif [[ "$proposal_schema" == "gooo/autonomous-change-proposal-promotion/v2" ]]; then
-            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" '
+            jq -e --arg repository "$GITHUB_REPOSITORY" --arg head "$HEAD_SHA" --arg predecessor "$predecessor_sha" --arg route "$REQUESTED_ROUTE" '
               .schema == "gooo/autonomous-change-proposal-promotion/v2" and
               .repository == $repository and .current_head_sha == $head and .evidence_head_sha == $predecessor and
+              .source.selection.requested_route == $route and .source.selection.head_branch == $route and
               .decision == "PASS" and .repository_mutation_authorized == false
             ' "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json"
             echo "mode=SELECTED" >> "$GITHUB_OUTPUT"
@@ -568,6 +583,7 @@ jobs:
             --repository "$GITHUB_REPOSITORY" \
             --current-head "$HEAD_SHA" \
             --predecessor-sha "$predecessor_sha" \
+            --route "$REQUESTED_ROUTE" \
             --observation-cache "$cache" \
             --check "$receipt"
           cache_bytes="$(wc -c < "$cache" | tr -d '[:space:]')"

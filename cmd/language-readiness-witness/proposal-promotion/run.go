@@ -21,8 +21,8 @@ type buildResult struct {
 
 func run(cfg config) error {
 	if cfg.root == "" || cfg.repository == "" || cfg.currentHead == "" ||
-		cfg.predecessorSHA == "" || cfg.token == "" {
-		return fmt.Errorf("root, repository, current-head, predecessor-sha, and GITHUB_TOKEN are required")
+		cfg.predecessorSHA == "" || cfg.route == "" || cfg.token == "" {
+		return fmt.Errorf("root, repository, current-head, predecessor-sha, route, and GITHUB_TOKEN are required")
 	}
 	if (cfg.output == "") == (cfg.check == "") {
 		return fmt.Errorf("exactly one of output or check is required")
@@ -83,6 +83,7 @@ func build(cfg config, client *http.Client, store *proposalObservationStore) (bu
 	collection, err := proposalpredecessor.Collect(
 		context.Background(), client, cfg.apiURL, cfg.token,
 		cfg.repository, cfg.predecessorSHA,
+		cfg.route,
 	)
 	if err != nil {
 		reason := proposalpredecessor.FailureReason(err)
@@ -94,7 +95,7 @@ func build(cfg config, client *http.Client, store *proposalObservationStore) (bu
 			return buildResult{}, evidenceErr
 		}
 		resolution, resolutionErr := proposalpredecessor.BuildResolution(
-			cfg.repository, cfg.currentHead, cfg.predecessorSHA, reason, nil, observationEvidence,
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, cfg.route, reason, nil, observationEvidence,
 		)
 		if resolutionErr != nil {
 			return buildResult{}, resolutionErr
@@ -113,7 +114,7 @@ func build(cfg config, client *http.Client, store *proposalObservationStore) (bu
 			return buildResult{}, evidenceErr
 		}
 		resolution, resolutionErr := proposalpredecessor.BuildResolution(
-			cfg.repository, cfg.currentHead, cfg.predecessorSHA, selection.Reason, &selection, observationEvidence,
+			cfg.repository, cfg.currentHead, cfg.predecessorSHA, cfg.route, selection.Reason, &selection, observationEvidence,
 		)
 		if resolutionErr != nil {
 			return buildResult{}, resolutionErr
@@ -188,7 +189,7 @@ func checkReceipt(cfg config) error {
 		if err := proposalpredecessor.ValidateRawObservationCache(receipt.ObservationEvidence, observationRaw); err != nil {
 			return err
 		}
-		if err := proposalpredecessor.ValidateResolution(receipt, cfg.repository, cfg.currentHead, cfg.predecessorSHA); err != nil {
+		if err := proposalpredecessor.ValidateResolution(receipt, cfg.repository, cfg.currentHead, cfg.predecessorSHA, cfg.route); err != nil {
 			return err
 		}
 		return replayReceipt(cfg, data)
