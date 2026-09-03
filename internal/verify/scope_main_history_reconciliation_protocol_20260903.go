@@ -37,4 +37,12 @@ func init() {
 		"AGENTS.md",
 		"CONTRIBUTING.md",
 	}
+	branchScopeAllowlist["agent/main-history-reconciliation-owner-authorization-20260903"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/main-history-reconciliation-v2.json",
+		"internal/verify/scope_main_history_reconciliation_protocol_20260903.go",
+		"scripts/ci-proof/linear_tree_reconciliation.js",
+		"scripts/ci-proof/linear_tree_reconciliation_test.js",
+	}
 }
