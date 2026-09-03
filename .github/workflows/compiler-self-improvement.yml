@@ -8,6 +8,7 @@ on:
       - 'examples/billing/**'
       - 'examples/compiler-self-improvement/**'
       - 'internal/generator/**'
+      - 'internal/meta/generation/**'
       - 'scripts/compiler-self-improvement/**'
       - 'go.mod'
       - 'go.sum'
@@ -18,6 +19,7 @@ on:
       - 'examples/billing/**'
       - 'examples/compiler-self-improvement/**'
       - 'internal/generator/**'
+      - 'internal/meta/generation/**'
       - 'scripts/compiler-self-improvement/**'
       - 'go.mod'
       - 'go.sum'
@@ -49,7 +51,7 @@ jobs:
           go-version: '1.27.0'
           cache: false
 
-      - name: Require exact Go toolchain and clean source worktree
+      - name: Require exact toolchain and clean source worktree
         shell: bash
         run: |
           set -euo pipefail
@@ -57,26 +59,29 @@ jobs:
           test -n "$BASE_SHA"
           test "$(git status --porcelain)" = ""
 
-      - name: Materialize the .gooo semantic authority and generated candidate
+      - name: Generate the envelope IR, operation artifacts, and candidate
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-self-improvement"
           mkdir -p "$work"
-          go run ./cmd/gooo check --semantic examples/compiler-self-improvement/main.gooo
-          go run ./cmd/gooo graph dump examples/compiler-self-improvement/main.gooo > "$work/authority.graph.json"
-          jq -e '.schema_version == "gooo-graph/v1" and (.nodes | map(select(.kind == "Activity")) | length) == 6' "$work/authority.graph.json" >/dev/null
-          git show "$BASE_SHA:internal/generator/normalize_part01.go" > "$work/baseline-normalize.go"
+          program=examples/compiler-self-improvement/operation-envelope.gooo
+          go run ./cmd/gooo check --semantic "$program"
+          go run ./cmd/gooo graph dump "$program" > "$work/authority.graph.json"
+          jq -e '.schema_version == "gooo-graph/v1" and (.nodes | map(select(.kind == "Activity")) | length) == 8' "$work/authority.graph.json" >/dev/null
+          git show "$BASE_SHA:internal/generator/types_part01.go" > "$work/baseline-types.go"
           go run ./scripts/compiler-self-improvement \
             -mode candidate \
-            -program examples/compiler-self-improvement/main.gooo \
+            -program "$program" \
             -graph "$work/authority.graph.json" \
-            -baseline "$work/baseline-normalize.go" \
-            -candidate "$work/candidate-normalize.go" \
-            -evidence "$work/candidate-evidence.json"
-          cmp -s "$work/candidate-normalize.go" internal/generator/normalize_part01.go
-          test -z "$(gofmt -d "$work/candidate-normalize.go")"
-          diff -u "$work/baseline-normalize.go" "$work/candidate-normalize.go" > "$work/candidate.patch" || test $? -eq 1
+            -baseline "$work/baseline-types.go" \
+            -candidate "$work/candidate-types.go" \
+            -evidence "$work/candidate-evidence.json" \
+            -envelope-dir "$work/operation-envelope"
+          cmp -s "$work/candidate-types.go" internal/generator/types_part01.go
+          test -z "$(gofmt -d "$work/candidate-types.go")"
+          diff -u "$work/baseline-types.go" "$work/candidate-types.go" > "$work/candidate.patch" || test $? -eq 1
+          test "$(find "$work/operation-envelope" -mindepth 2 -maxdepth 2 -type f | wc -l | tr -d ' ')" -eq 36
           test "$(git status --porcelain)" = ""
 
       - name: Execute identical baseline and candidate measurements
@@ -84,7 +89,8 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-self-improvement"
-          fixture="examples/billing/main.gooo"
+          program=examples/compiler-self-improvement/operation-envelope.gooo
+          fixture=examples/billing/main.gooo
           baseline_root="$work/baseline-worktree"
           candidate_root="$GITHUB_WORKSPACE"
           mkdir -p "$work/measurements" "$work/baseline" "$work/candidate"
@@ -92,9 +98,11 @@ jobs:
           trap 'git worktree remove --force "$baseline_root" >/dev/null 2>&1 || true' EXIT
 
           source_digest="sha256:$(sha256sum "$fixture" | awk '{print $1}')"
+          contract_digest="sha256:$(sha256sum "$program" | awk '{print $1}')"
           toolchain_digest="sha256:$(printf '%s\n' "$(go env GOVERSION)" "$(go env GOOS)" "$(go env GOARCH)" | sha256sum | awk '{print $1}')"
           cache_state="cold-per-measurement;setup-go-cache=false;GOCACHE-isolated;GOMODCACHE-shared-read-only"
           gomodcache="$(go env GOMODCACHE)"
+          benchmark_name="BenchmarkAcceptanceFixtureGeneration"
 
           measure_command() {
             local root="$1"
@@ -126,15 +134,35 @@ jobs:
             local generation
             local build
             local test
+            local benchmark
             local executed
+            local allocation_count
+            local allocation_bytes
+            local go_lines
+            local gooo_lines
             mkdir -p "$first" "$replay"
             generation="$(measure_command "$root" "$work/cache-$side-generation" "$side-generation" go run ./cmd/gooo generate "$fixture" --out "$first")"
             measure_command "$root" "$work/cache-$side-replay" "$side-replay" go run ./cmd/gooo generate "$fixture" --out "$replay" >/dev/null
             build="$(measure_command "$root" "$work/cache-$side-build" "$side-build" go test ./internal/generator -run '^$' -count=1)"
             test="$(measure_command "$root" "$work/cache-$side-test" "$side-test" go test ./internal/generator -run '^TestGenerateIsDeterministicAndFormatted$' -count=1 -json)"
+            benchmark="$(measure_command "$root" "$work/cache-$side-benchmark" "$side-benchmark" go test ./internal/generator -run '^$' -bench "^${benchmark_name}$" -benchmem -count=1)"
             executed="$(jq -s '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/measurements/$side-test/stdout")"
-            jq -n --argjson generation "$generation" --argjson build "$build" --argjson test "$test" --argjson executed "$executed" \
-              '{generation:$generation,build:$build,test:$test,executed_tests:$executed,reused_tests:0}' > "$work/$side/measurements.json"
+            allocation_count="$(awk -v name="$benchmark_name" '$1 ~ "^" name {for (i = 1; i <= NF; i++) if ($i == "allocs/op") {print $(i - 1); exit}}' "$work/measurements/$side-benchmark/stdout")"
+            allocation_bytes="$(awk -v name="$benchmark_name" '$1 ~ "^" name {for (i = 1; i <= NF; i++) if ($i == "B/op") {print $(i - 1); exit}}' "$work/measurements/$side-benchmark/stdout")"
+            go_lines="$(wc -l < "$root/internal/generator/types_part01.go" | tr -d ' ')"
+            gooo_lines="$(wc -l < "$root/$program" | tr -d ' ')"
+            test -n "$allocation_count"
+            test -n "$allocation_bytes"
+            jq -n \
+              --argjson generation "$generation" \
+              --argjson build "$build" \
+              --argjson test "$test" \
+              --argjson executed "$executed" \
+              --argjson allocation_count "$allocation_count" \
+              --argjson allocation_bytes "$allocation_bytes" \
+              --argjson go_lines "$go_lines" \
+              --argjson gooo_lines "$gooo_lines" \
+              '{generation:$generation,build:$build,test:$test,executed_tests:$executed,reused_tests:0,allocation_count:$allocation_count,allocation_bytes:$allocation_bytes,go_lines:$go_lines,gooo_lines:$gooo_lines}' > "$work/$side/measurements.json"
           }
 
           run_side baseline "$baseline_root"
@@ -152,20 +180,23 @@ jobs:
             deterministic_equal=false
           fi
 
-          baseline_primary="$(jq -r '.baseline_collection_copy_passes' "$work/candidate-evidence.json")"
-          candidate_primary="$(jq -r '.candidate_collection_copy_passes' "$work/candidate-evidence.json")"
-          baseline_metrics="$(jq -n --argjson p "$baseline_primary" --slurpfile m "$work/baseline/measurements.json" '{normalization_collection_copy_passes:$p,wall_ms:$m[0].generation.wall_ms,peak_rss_kib:$m[0].generation.peak_rss_kib,build_ms:$m[0].build.wall_ms,test_ms:$m[0].test.wall_ms,executed_tests:$m[0].executed_tests,reused_tests:$m[0].reused_tests}')"
-          candidate_metrics="$(jq -n --argjson p "$candidate_primary" --slurpfile m "$work/candidate/measurements.json" '{normalization_collection_copy_passes:$p,wall_ms:$m[0].generation.wall_ms,peak_rss_kib:$m[0].generation.peak_rss_kib,build_ms:$m[0].build.wall_ms,test_ms:$m[0].test.wall_ms,executed_tests:$m[0].executed_tests,reused_tests:$m[0].reused_tests}')"
+          baseline_primary="$(jq -r '.baseline_materialization_count' "$work/candidate-evidence.json")"
+          candidate_primary="$(jq -r '.candidate_materialization_count' "$work/candidate-evidence.json")"
+          baseline_transformation="$(jq -r '.baseline_transformation_count' "$work/candidate-evidence.json")"
+          candidate_transformation="$(jq -r '.candidate_transformation_count' "$work/candidate-evidence.json")"
+          baseline_metrics="$(jq -n --argjson p "$baseline_primary" --argjson transformation "$baseline_transformation" --slurpfile m "$work/baseline/measurements.json" '{transformation_count:$transformation,materialization_count:$p,allocation_count:$m[0].allocation_count,allocation_bytes:$m[0].allocation_bytes,wall_ms:$m[0].generation.wall_ms,peak_rss_kib:$m[0].generation.peak_rss_kib,build_ms:$m[0].build.wall_ms,test_ms:$m[0].test.wall_ms,executed_tests:$m[0].executed_tests,reused_tests:$m[0].reused_tests,input_descendant_dirs:0,input_regular_files:1,input_go_physical_lines:$m[0].go_lines,input_gooo_physical_lines:$m[0].gooo_lines,output_artifact_files:6}')"
+          candidate_metrics="$(jq -n --argjson p "$candidate_primary" --argjson transformation "$candidate_transformation" --slurpfile m "$work/candidate/measurements.json" '{transformation_count:$transformation,materialization_count:$p,allocation_count:$m[0].allocation_count,allocation_bytes:$m[0].allocation_bytes,wall_ms:$m[0].generation.wall_ms,peak_rss_kib:$m[0].generation.peak_rss_kib,build_ms:$m[0].build.wall_ms,test_ms:$m[0].test.wall_ms,executed_tests:$m[0].executed_tests,reused_tests:$m[0].reused_tests,input_descendant_dirs:0,input_regular_files:1,input_go_physical_lines:$m[0].go_lines,input_gooo_physical_lines:$m[0].gooo_lines,output_artifact_files:6}')"
           memory_guardrail="$(jq -n --argjson b "$baseline_metrics" --argjson c "$candidate_metrics" '($b.peak_rss_kib > 0 and $c.peak_rss_kib > 0 and $b.peak_rss_kib <= 1048576 and $c.peak_rss_kib <= 1048576)')"
           time_guardrail="$(jq -n --argjson b "$baseline_metrics" --argjson c "$candidate_metrics" '($b.wall_ms > 0 and $c.wall_ms > 0 and $b.wall_ms <= 120000 and $c.wall_ms <= 120000 and $b.build_ms > 0 and $c.build_ms > 0 and $b.test_ms > 0 and $c.test_ms > 0)')"
 
           jq -n \
             --arg scenario_id NORMAL \
             --arg source_digest "$source_digest" \
+            --arg contract_digest "$contract_digest" \
             --arg toolchain_digest "$toolchain_digest" \
             --arg cache_state "$cache_state" \
-            --arg primary_metric normalization_collection_copy_passes \
-            --arg authority_program generator.normalizeIR:fold-copy-with-empty-normalization/v1 \
+            --arg primary_metric port_validation_materializations \
+            --arg authority_program generator.validateGoTypes:reuse-port-slices/v1 \
             --arg graph_hash "$(jq -r .graph_hash "$work/authority.graph.json")" \
             --argjson before "$baseline_metrics" \
             --argjson after "$candidate_metrics" \
@@ -173,91 +204,92 @@ jobs:
             --argjson deterministic_equal "$deterministic_equal" \
             --argjson memory_guardrail "$memory_guardrail" \
             --argjson time_guardrail "$time_guardrail" \
-            '{scenario_id:$scenario_id,source_digest:$source_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,primary_metric:$primary_metric,before_context:{scenario_id:$scenario_id,source_digest:$source_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,metric:$primary_metric},after_context:{scenario_id:$scenario_id,source_digest:$source_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,metric:$primary_metric},before:$before,after:$after,semantic_guard:{behavior_equal:$behavior_equal,deterministic_equal:$deterministic_equal,memory_guardrail:$memory_guardrail,time_guardrail:$time_guardrail,ci_passed:true},repository_writes:0,local_test_executions:0,ci_passed:true,authority_program:$authority_program,graph_hash:$graph_hash}' > "$work/normal.json"
+            '{scenario_id:$scenario_id,source_digest:$source_digest,contract_digest:$contract_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,primary_metric:$primary_metric,before_context:{scenario_id:$scenario_id,source_digest:$source_digest,contract_digest:$contract_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,metric:$primary_metric},after_context:{scenario_id:$scenario_id,source_digest:$source_digest,contract_digest:$contract_digest,toolchain_digest:$toolchain_digest,cache_state:$cache_state,metric:$primary_metric},before:$before,after:$after,semantic_guard:{behavior_equal:$behavior_equal,deterministic_equal:$deterministic_equal,memory_guardrail:$memory_guardrail,time_guardrail:$time_guardrail,ci_passed:true},repository_writes:0,local_test_executions:0,ci_passed:true,authority_program:$authority_program,graph_hash:$graph_hash}' > "$work/normal.json"
           test "$(git status --porcelain)" = ""
 
-      - name: Resolve the fixed decision scenarios and verify the evidence contract
+      - name: Independently recompute operation and compiler decisions
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-self-improvement"
+          program=examples/compiler-self-improvement/operation-envelope.gooo
           go run ./scripts/compiler-self-improvement \
             -mode decide \
-            -program examples/compiler-self-improvement/main.gooo \
+            -program "$program" \
             -graph "$work/authority.graph.json" \
             -normal "$work/normal.json" \
             -candidate-evidence "$work/candidate-evidence.json" \
+            -envelope-dir "$work/operation-envelope" \
             -output "$work/report.json"
           go run ./scripts/compiler-self-improvement \
             -mode decide \
-            -program examples/compiler-self-improvement/main.gooo \
+            -program "$program" \
             -graph "$work/authority.graph.json" \
             -normal "$work/normal.json" \
             -candidate-evidence "$work/candidate-evidence.json" \
+            -envelope-dir "$work/operation-envelope" \
             -output "$work/report-replay.json"
           cmp -s "$work/report.json" "$work/report-replay.json"
-          jq '{candidate_decision,scenario_suite_decision,counts,scenarios:[.scenarios[]|{id,decision,reason,before,after,semantic_guard}]}' "$work/report.json"
-          jq -e '.candidate_decision == "CLOSED" and .scenario_suite_decision == "REFUTED" and .scenario_denominator == 3 and .counts == {CLOSED:1,UNKNOWN:1,REFUTED:1} and .primary_metric == "normalization_collection_copy_passes" and .repository_writes == 0 and .local_test_executions == 0 and (has("score") | not) and (has("aggregate") | not)' "$work/report.json" >/dev/null
-          jq -e '.scenarios[] | select(.id == "NORMAL") | .decision == "CLOSED" and .before.normalization_collection_copy_passes == 2 and .after.normalization_collection_copy_passes == 1 and .semantic_guard.behavior_equal and .semantic_guard.deterministic_equal and .semantic_guard.memory_guardrail and .semantic_guard.time_guardrail and .semantic_guard.ci_passed' "$work/report.json" >/dev/null
+          jq '{candidate_decision,scenario_suite_decision,envelope_suite_decision,counts,envelope_counts,scenarios:[.scenarios[]|{id,decision,reason,before,after,semantic_guard}]}' "$work/report.json"
+          jq -e '.candidate_decision == "CLOSED" and .scenario_suite_decision == "REFUTED" and .envelope_suite_decision == "REFUTED" and .scenario_denominator == 3 and .envelope_scenario_denominator == 6 and .counts == {CLOSED:1,UNKNOWN:1,REFUTED:1} and .envelope_counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .primary_metric == "port_validation_materializations" and .repository_writes == 0 and .local_test_executions == 0 and (has("score") | not) and (has("aggregate") | not)' "$work/report.json" >/dev/null
+          jq -e '.scenarios[] | select(.id == "NORMAL") | .decision == "CLOSED" and .before.materialization_count == 1 and .after.materialization_count == 0 and .before.wall_ms > 0 and .after.wall_ms > 0 and .before.peak_rss_kib > 0 and .after.peak_rss_kib > 0 and .before.allocation_count >= 0 and .after.allocation_count >= 0 and .semantic_guard.behavior_equal and .semantic_guard.deterministic_equal and .semantic_guard.memory_guardrail and .semantic_guard.time_guardrail and .semantic_guard.ci_passed' "$work/report.json" >/dev/null
           jq -e '.scenarios[] | select(.id == "UNKNOWN") | .decision == "UNKNOWN" and (.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and .unknown.stage == "COHERENCE" and .unknown.step == "COMPARE_EXACT_PAIR" and .unknown.reason == "MISSING_EXACT_INTEGER_PAIR" and .unknown.unknown_class == "INCOMPLETE_EVIDENCE" and .unknown.next_operation == "CAPTURE_EXACT_BEFORE_AFTER" and .unknown.blocked_by == ["before_after_pair"]' "$work/report.json" >/dev/null
           jq -e '.scenarios[] | select(.id == "REFUTED") | .decision == "REFUTED" and (.semantic_guard.memory_guardrail | not) and .reason == "SEMANTIC_OR_GUARDRAIL_NON_REGRESSION_FAILED"' "$work/report.json" >/dev/null
 
-      - name: Write the post-adoption receipt in caller-owned output
+      - name: Write the caller-owned adoption receipt
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-self-improvement"
           artifact="$work/artifact"
           mkdir -p "$artifact"
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            lifecycle="POST_ADOPTION"
-          else
-            lifecycle="PRE_ADOPTION"
-          fi
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then lifecycle=POST_ADOPTION; else lifecycle=PRE_ADOPTION; fi
           report_digest="sha256:$(sha256sum "$work/report.json" | awk '{print $1}')"
           candidate_digest="$(jq -r '.candidate_source_digest' "$work/candidate-evidence.json")"
           graph_hash="$(jq -r '.graph_hash' "$work/authority.graph.json")"
+          before="$(jq -c '.scenarios[] | select(.id == "NORMAL") | .before' "$work/report.json")"
+          after="$(jq -c '.scenarios[] | select(.id == "NORMAL") | .after' "$work/report.json")"
           jq -S -n \
-            --arg schema gooo/compiler-self-improvement-receipt/v1 \
+            --arg schema gooo/compiler-self-improvement-receipt/v2 \
             --arg lifecycle "$lifecycle" \
             --arg subject_sha "$HEAD_SHA" \
             --arg base_sha "$BASE_SHA" \
-            --arg authority_program examples/compiler-self-improvement/main.gooo \
-            --arg generated_code_path "$work/candidate-normalize.go" \
-            --arg adopted_target_path internal/generator/normalize_part01.go \
+            --arg authority_program examples/compiler-self-improvement/operation-envelope.gooo \
+            --arg target internal/generator/types_part01.go \
             --arg candidate_digest "$candidate_digest" \
             --arg graph_hash "$graph_hash" \
             --arg report_digest "$report_digest" \
+            --argjson before "$before" \
+            --argjson after "$after" \
             --argjson repository_writes 0 \
             --argjson local_test_executions 0 \
-            --argjson before_after '{"normalization_collection_copy_passes":{"before":2,"after":1}}' \
-            '{schema:$schema,lifecycle:$lifecycle,subject_sha:$subject_sha,base_sha:$base_sha,authority_program:$authority_program,generated_code_path:$generated_code_path,adopted_target_path:$adopted_target_path,candidate_digest:$candidate_digest,graph_hash:$graph_hash,report_digest:$report_digest,before_after:$before_after,repository_writes:$repository_writes,local_test_executions:$local_test_executions}' > "$work/receipt-payload.json"
+            '{schema:$schema,lifecycle:$lifecycle,subject_sha:$subject_sha,base_sha:$base_sha,authority_program:$authority_program,target:$target,candidate_digest:$candidate_digest,graph_hash:$graph_hash,report_digest:$report_digest,before:$before,after:$after,repository_writes:$repository_writes,local_test_executions:$local_test_executions}' > "$work/receipt-payload.json"
           receipt_payload_digest="sha256:$(sha256sum "$work/receipt-payload.json" | awk '{print $1}')"
           jq --arg digest "$receipt_payload_digest" '. + {receipt_payload_digest:$digest}' "$work/receipt-payload.json" > "$work/post-adoption-receipt.json"
           test "$(git status --porcelain)" = ""
           cp "$work/authority.graph.json" "$artifact/authority.graph.json"
           cp "$work/candidate-evidence.json" "$artifact/candidate-evidence.json"
-          cp "$work/candidate-normalize.go" "$artifact/generated-candidate-normalize.go"
+          cp "$work/candidate-types.go" "$artifact/generated-candidate-types.go"
           cp "$work/candidate.patch" "$artifact/generated-candidate.patch"
           cp "$work/normal.json" "$artifact/normal-observation.json"
           cp "$work/report.json" "$artifact/decision-report.json"
           cp "$work/post-adoption-receipt.json" "$artifact/post-adoption-receipt.json"
           cp "$work/baseline/measurements.json" "$artifact/baseline-measurements.json"
           cp "$work/candidate/measurements.json" "$artifact/candidate-measurements.json"
-          cp "$work/baseline/generate-first/semantic.gooo.go" "$artifact/baseline-generated-semantic.gooo.go"
-          cp "$work/candidate/generate-first/semantic.gooo.go" "$artifact/candidate-generated-semantic.gooo.go"
+          cp -R "$work/operation-envelope" "$artifact/operation-envelope"
           {
             echo "### Compiler self-improvement"
-            jq -r '"- lifecycle: \(.lifecycle // "see receipt")"' "$work/post-adoption-receipt.json"
-            jq -r '"- candidate decision: \(.candidate_decision); fixed scenarios: \(.counts.NORMAL // 0) NORMAL, \(.counts.UNKNOWN // 0) UNKNOWN, \(.counts.REFUTED // 0) REFUTED"' "$work/report.json"
-            jq -r '"- exact primary count: \(.scenarios[] | select(.id=="NORMAL") | .before.normalization_collection_copy_passes) -> \(.after.normalization_collection_copy_passes)"' "$work/report.json"
-            jq -r '"- graph: \(.graph_hash); report: \(.report_digest)"' "$work/post-adoption-receipt.json"
+            jq -r '"- lifecycle: \(.lifecycle)"' "$work/post-adoption-receipt.json"
+            jq -r '"- candidate decision: \(.candidate_decision); envelope: \(.envelope_suite_decision); counts: \(.envelope_counts.CLOSED)/\(.envelope_counts.UNKNOWN)/\(.envelope_counts.REFUTED)"' "$work/report.json"
+            jq -r '"- exact materialization count: \(.scenarios[] | select(.id=="NORMAL") | .before.materialization_count) -> \(.after.materialization_count)"' "$work/report.json"
+            jq -r '"- report digest: \(.report_digest)"' "$work/post-adoption-receipt.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload caller-owned compiler evidence
+      - name: Upload exact-head compiler evidence
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: compiler-self-improvement-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/compiler-self-improvement/artifact
+          path: ${{ runner.temp }}/compiler-self-improvement
           if-no-files-found: error
           retention-days: 30
