@@ -232,9 +232,9 @@ jobs:
           cp "$work/candidate/generate-first/semantic.gooo.go" "$artifact/candidate-generated-semantic.gooo.go"
           {
             echo "### Compiler self-improvement"
-            jq -r '"- lifecycle: \(.lifecycle // \"see receipt\")"' "$work/post-adoption-receipt.json"
+            jq -r '"- lifecycle: \(.lifecycle // "see receipt")"' "$work/post-adoption-receipt.json"
             jq -r '"- candidate decision: \(.candidate_decision); fixed scenarios: \(.counts.NORMAL // 0) NORMAL, \(.counts.UNKNOWN // 0) UNKNOWN, \(.counts.REFUTED // 0) REFUTED"' "$work/report.json"
-            jq -r '"- exact primary count: \(.scenarios[] | select(.id==\"NORMAL\") | .before.normalization_collection_copy_passes) -> \(.after.normalization_collection_copy_passes)"' "$work/report.json"
+            jq -r '"- exact primary count: \(.scenarios[] | select(.id=="NORMAL") | .before.normalization_collection_copy_passes) -> \(.after.normalization_collection_copy_passes)"' "$work/report.json"
             jq -r '"- graph: \(.graph_hash); report: \(.report_digest)"' "$work/post-adoption-receipt.json"
           } >> "$GITHUB_STEP_SUMMARY"
 
