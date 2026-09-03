@@ -266,3 +266,4 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/guardian-kernel-digest-alignment-20260903` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_guardian_kernel_digest_alignment_20260903.go`, `scripts/ci-proof/guardian.js` |
 | `agent/guardian-proof-check-suite-authority-20260903` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_guardian_proof_check_suite_authority_20260903.go` |
 | `agent/guardian-preserve-promotion-observers-20260903` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci-guardian.yml`, `internal/verify/scope_guardian_preserve_promotion_observers_20260903.go` |
+| `agent/guardian-validate-preserved-observers-20260903` | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_guardian_validate_preserved_observers_20260903.go`, `scripts/ci-proof/guardian.js` |
