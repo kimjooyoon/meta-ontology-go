@@ -96,6 +96,18 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 		return generation.SemanticAdoptionReport{}, fmt.Errorf("independent verification: %w", err)
 	}
 	evidence.Decision, evidence.Reason, evidence.Unknown = decision, reason, unknown
+	boundObservation := bindAdoptionObservation(observation, evidence, decision)
+	return generation.SemanticAdoptionReport{
+		Schema: generation.SemanticAdoptionReportSchema, Lifecycle: adoptionLifecycle(authorization.Authorized),
+		ObservationDigest: cache.HashBytes(observationData).String(), ProposalDigest: proposalDigest,
+		AuthorizationDigest: authorizationDigest, Proposal: proposal, Authorization: authorization,
+		Evidence: evidence, Observation: boundObservation, BeforeRuntimeMetrics: before.metrics,
+		AfterRuntimeMetrics: adopted.metrics, IndependentDecision: decision, IndependentReason: reason,
+		RepositoryWrites: 0, LocalTestExecutions: 0,
+	}, nil
+}
+
+func bindAdoptionObservation(observation generation.SemanticObservation, evidence generation.SemanticAdoptionEvidence, decision string) generation.SemanticObservation {
 	boundObservation := observation
 	if decision == "CLOSED" {
 		boundObservation.PairEvidence = generation.SemanticObservationPairEvidence{
@@ -124,14 +136,7 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 		}
 		boundObservation.Adoption = &evidence
 	}
-	return generation.SemanticAdoptionReport{
-		Schema: generation.SemanticAdoptionReportSchema, Lifecycle: adoptionLifecycle(authorization.Authorized),
-		ObservationDigest: cache.HashBytes(observationData).String(), ProposalDigest: proposalDigest,
-		AuthorizationDigest: authorizationDigest, Proposal: proposal, Authorization: authorization,
-		Evidence: evidence, Observation: boundObservation, BeforeRuntimeMetrics: before.metrics,
-		AfterRuntimeMetrics: adopted.metrics, IndependentDecision: decision, IndependentReason: reason,
-		RepositoryWrites: 0, LocalTestExecutions: 0,
-	}, nil
+	return boundObservation
 }
 
 func writeAdoptionReport(outputDir string, report generation.SemanticAdoptionReport, stdout, stderr io.Writer) int {
