@@ -39,7 +39,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 941 ||
-		len(report.Source.GoooFiles) != 53 || len(report.Source.PackageUnits) != 2 ||
+		len(report.Source.GoooFiles) != 54 || len(report.Source.PackageUnits) != 2 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 {
 		t.Fatalf("report = %#v", report)
 	}
