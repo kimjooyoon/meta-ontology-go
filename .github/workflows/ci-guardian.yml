@@ -395,6 +395,10 @@ jobs:
                     kernelBeforeDigest: successorProtocol.kernel.before_sha256,
                     kernelAfterDigest: successorProtocol.kernel.after_sha256,
                   };
+                  branchProtection = null;
+                  devBranchProtection = null;
+                  observerEnvironmentSnapshot = null;
+                  installationRepositoryScope = null;
                 } else {
                   result = {...result, decision: 'FAIL_CLOSED', code: successorProtocol.code, reason: successorProtocol.reason, successorProtocol};
                 }

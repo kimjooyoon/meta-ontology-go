@@ -1153,11 +1153,9 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   if (manifest.route === 'promotion_main') {
     if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
     if (successorProtocol !== null && manifest.decision === 'PASS') {
-      validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: true, expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
-      validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: true, expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
-      validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: true, now});
-      if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
-      validateInstallationRepositoryScope(manifest.installation_repository_scope, {requireVerified: true, expectedRepository: manifest.repository, now});
+      if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null || manifest.installation_repository_scope !== null) {
+        throw guardianFailure('successor promotion artifact must not carry unavailable privileged observer snapshots', guardianSuccessor.SUCCESSOR_CODE);
+      }
     } else {
       validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
       validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});

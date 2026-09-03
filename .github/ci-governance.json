@@ -3167,6 +3167,16 @@
         "internal/verify/scope_guardian_validate_preserved_observers_20260903.go",
         "scripts/ci-proof/guardian.js"
       ]
+    },
+    {
+      "branch": "agent/guardian-successor-fail-closed-observers-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_successor_fail_closed_observers_20260903.go",
+        "scripts/ci-proof/guardian.js"
+      ]
     }
   ],
   "protected_kernel_paths": [
