@@ -484,8 +484,8 @@ func validMetrics(value metrics) bool {
 }
 
 func validDigest(value string) bool {
-	if strings.HasPrefix(value, "sha256:") {
-		value = strings.TrimPrefix(value, "sha256:")
+	if after, ok := strings.CutPrefix(value, "sha256:"); ok {
+		value = after
 	}
 	if len(value) != 64 {
 		return false
