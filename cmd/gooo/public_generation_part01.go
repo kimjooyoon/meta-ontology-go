@@ -33,34 +33,34 @@ func (options generateOptions) publicRetentionRequested() bool {
 
 func runPublicGenerate(options generateOptions, input generateInput, reader SourceReader, parser SourceParser, jsonMode bool, stdout, stderr io.Writer, deadline time.Time) int {
 	started := time.Now()
-	context, err := loadPublicRetentionContext(options, input, reader, parser, deadline)
+	retainedContext, err := loadPublicRetentionContext(options, input, reader, parser, deadline)
 	if err != nil {
 		var bindingError retentionInputBindingError
-		if errors.As(err, &bindingError) && context.inputs.inputSource != nil {
-			return writePublicRefuted(options, context, "", started, jsonMode, stdout, stderr)
+		if errors.As(err, &bindingError) && retainedContext.inputs.inputSource != nil {
+			return writePublicRefuted(options, retainedContext, "", started, jsonMode, stdout, stderr)
 		}
 		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
 		return exitFailure
 	}
-	if len(context.evidence.authorizationData) == 0 || !context.evidence.authorization.Authorized {
-		return writePublicUnknown(options, context, generation.SemanticRetentionUnknownAuthorizationReason, started, jsonMode, stdout, stderr)
+	if len(retainedContext.evidence.authorizationData) == 0 || !retainedContext.evidence.authorization.Authorized {
+		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownAuthorizationReason, started, jsonMode, stdout, stderr)
 	}
 	if options.retainedCertificateFilename == "" {
-		return writePublicUnknown(options, context, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
+		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
 	}
 	certificateData, err := reader.ReadFile(options.retainedCertificateFilename)
 	if err != nil {
-		return writePublicUnknown(options, context, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
+		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
 	}
 	certificateDigest := cache.HashBytes(certificateData).String()
 	var certificate generation.SemanticRetentionCertificate
 	if err := json.Unmarshal(certificateData, &certificate); err != nil {
-		return writePublicRefuted(options, context, certificateDigest, started, jsonMode, stdout, stderr)
+		return writePublicRefuted(options, retainedContext, certificateDigest, started, jsonMode, stdout, stderr)
 	}
-	if options.previousGo != "" || !publicCertificateMatches(certificate, context) {
-		return writePublicRefuted(options, context, certificateDigest, started, jsonMode, stdout, stderr)
+	if options.previousGo != "" || !publicCertificateMatches(certificate, retainedContext) {
+		return writePublicRefuted(options, retainedContext, certificateDigest, started, jsonMode, stdout, stderr)
 	}
-	return writePublicCertificate(options, context, certificate, certificateDigest, started, jsonMode, stdout, stderr)
+	return writePublicCertificate(options, retainedContext, certificate, certificateDigest, started, jsonMode, stdout, stderr)
 }
 
 func loadPublicRetentionContext(options generateOptions, input generateInput, reader SourceReader, parser SourceParser, deadline time.Time) (publicRetentionContext, error) {
@@ -101,11 +101,11 @@ func loadPublicRetentionContext(options generateOptions, input generateInput, re
 	if err != nil {
 		return publicRetentionContext{}, fmt.Errorf("verifier binding: %w", err)
 	}
-	context := publicRetentionContext{inputs: inputs, evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest}
+	retainedContext := publicRetentionContext{inputs: inputs, evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest}
 	if err := validateRetentionEvidence(inputs, evidence); err != nil {
-		return context, err
+		return retainedContext, err
 	}
-	return context, nil
+	return retainedContext, nil
 }
 
 func validatePublicRetentionPolicy(file *syntax.File) error {
@@ -131,24 +131,24 @@ func validatePublicRetentionPolicy(file *syntax.File) error {
 	return errors.New("retention policy activity is missing")
 }
 
-func publicCertificateMatches(certificate generation.SemanticRetentionCertificate, context publicRetentionContext) bool {
-	expected := retentionBindings(context.inputs, context.evidence, context.compilerDigest, context.verifierDigest)
+func publicCertificateMatches(certificate generation.SemanticRetentionCertificate, retainedContext publicRetentionContext) bool {
+	expected := retentionBindings(retainedContext.inputs, retainedContext.evidence, retainedContext.compilerDigest, retainedContext.verifierDigest)
 	return generation.VerifySemanticRetentionCertificate(certificate, expected) == nil
 }
 
-func writePublicCertificate(options generateOptions, context publicRetentionContext, certificate generation.SemanticRetentionCertificate, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+func writePublicCertificate(options generateOptions, retainedContext publicRetentionContext, certificate generation.SemanticRetentionCertificate, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
 	output, manifest, err := publicGeneratePaths(options)
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
 		return exitFailure
 	}
-	report := publicRetentionReport(context, certificate, certificateDigest, output, manifest)
+	report := publicRetentionReport(retainedContext, certificate, certificateDigest, output, manifest)
 	writes := []atomicWrite{{path: output, data: certificate.GeneratedSource}, {path: manifest, data: certificate.GeneratedManifest}}
 	return writePublicReportAndArtifacts(options.outputDir, writes, report, started, jsonMode, stdout, stderr)
 }
 
-func writePublicUnknown(options generateOptions, context publicRetentionContext, reason string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
-	report := publicReportBase(context)
+func writePublicUnknown(options generateOptions, retainedContext publicRetentionContext, reason string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+	report := publicReportBase(retainedContext)
 	report.Lifecycle = generation.SemanticPublicGenerationFailClosed
 	report.Decision = "UNKNOWN"
 	report.Reason = reason
@@ -156,8 +156,8 @@ func writePublicUnknown(options generateOptions, context publicRetentionContext,
 	return writePublicReportAndArtifacts(options.outputDir, nil, report, started, jsonMode, stdout, stderr)
 }
 
-func writePublicRefuted(options generateOptions, context publicRetentionContext, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
-	report := publicReportBase(context)
+func writePublicRefuted(options generateOptions, retainedContext publicRetentionContext, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+	report := publicReportBase(retainedContext)
 	report.Lifecycle = generation.SemanticPublicGenerationFailClosed
 	report.Decision = generation.SemanticRetentionRefuted
 	report.Reason = generation.SemanticRetentionRefutedReason
@@ -166,8 +166,8 @@ func writePublicRefuted(options generateOptions, context publicRetentionContext,
 	return writePublicReportAndArtifacts(options.outputDir, nil, report, started, jsonMode, stdout, stderr)
 }
 
-func publicReportBase(context publicRetentionContext) generation.SemanticPublicGenerationReport {
-	bindings := retentionBindings(context.inputs, context.evidence, context.compilerDigest, context.verifierDigest)
+func publicReportBase(retainedContext publicRetentionContext) generation.SemanticPublicGenerationReport {
+	bindings := retentionBindings(retainedContext.inputs, retainedContext.evidence, retainedContext.compilerDigest, retainedContext.verifierDigest)
 	return generation.SemanticPublicGenerationReport{
 		Schema: generation.SemanticPublicGenerationReportSchema, AdoptionReportDigest: bindings.AdoptionReportDigest,
 		ObservationDigest: bindings.ObservationDigest, ProposalDigest: bindings.ProposalDigest,
@@ -179,8 +179,8 @@ func publicReportBase(context publicRetentionContext) generation.SemanticPublicG
 	}
 }
 
-func publicRetentionReport(context publicRetentionContext, certificate generation.SemanticRetentionCertificate, certificateDigest, output, manifest string) generation.SemanticPublicGenerationReport {
-	report := publicReportBase(context)
+func publicRetentionReport(retainedContext publicRetentionContext, certificate generation.SemanticRetentionCertificate, certificateDigest, output, manifest string) generation.SemanticPublicGenerationReport {
+	report := publicReportBase(retainedContext)
 	report.Lifecycle = generation.SemanticPublicGenerationRetainedLifecycle
 	report.Decision = "CLOSED"
 	report.Reason = generation.SemanticPublicGenerationHitReason
