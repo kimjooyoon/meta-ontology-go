@@ -3099,6 +3099,16 @@
         "scripts/ci-proof/foundation_authorization_protocol.js",
         "scripts/ci-proof/foundation_authorization_protocol_test.js"
       ]
+    },
+    {
+      "branch": "agent/ontology-visuals",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "docs/assets/ontology-visuals",
+        "internal/verify/scope_ontology_visuals.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
