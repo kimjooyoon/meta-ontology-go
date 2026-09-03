@@ -42,13 +42,19 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 		ReplayIdentity:   ir.Replay.Identity,
 		ExpectedDecision: ir.Decision.Decision,
 	}
-	requestBytes, err := encodeEnvelopeLines(ir.Request)
-	if err != nil {
-		return run, err
+	requestBytes := []byte{}
+	if ir.Request != nil {
+		requestBytes, err = encodeEnvelopeLines(*ir.Request)
+		if err != nil {
+			return run, err
+		}
 	}
-	resultBytes, err := encodeEnvelopeLines(ir.Result)
-	if err != nil {
-		return run, err
+	resultBytes := []byte{}
+	if ir.Result != nil {
+		resultBytes, err = encodeEnvelopeLines(*ir.Result)
+		if err != nil {
+			return run, err
+		}
 	}
 	manifestBytes, err := encodeEnvelopeJSON(manifest)
 	if err != nil {
