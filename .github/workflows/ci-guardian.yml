@@ -58,9 +58,12 @@ jobs:
             fs.writeFileSync('ci-guardian-environment.json', JSON.stringify(snapshot, null, 2) + '\n');
             core.setOutput('verified', snapshot.read_status === 'verified' ? 'true' : 'false');
       - name: Run successor protocol witnesses
-        run: |
-          node scripts/ci-proof/foundation_authorization_protocol_test.js
-          node scripts/ci-proof/guardian_successor_test.js
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            require('./scripts/ci-proof/foundation_authorization_protocol_test');
+            require('./scripts/ci-proof/guardian_successor_test');
       - name: Mint current-repository Guardian App token
         id: guardian-app-token
         if: github.base_ref == 'main' && steps.observer-environment.outputs.verified == 'true'
