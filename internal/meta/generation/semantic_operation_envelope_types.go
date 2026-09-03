@@ -291,6 +291,7 @@ type SemanticObservation struct {
 	Reason               string                          `json:"reason"`
 	Unknown              *EnvelopeUnknownState           `json:"unknown"`
 	PairEvidence         SemanticObservationPairEvidence `json:"pair_evidence"`
+	Adoption             *SemanticAdoptionEvidence       `json:"adoption,omitempty"`
 	Metrics              SemanticObservationMetrics      `json:"metrics"`
 }
 

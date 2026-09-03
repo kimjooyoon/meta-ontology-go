@@ -37,6 +37,10 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "observe":
 		return runObserve(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
+	case "propose":
+		return runAdoptionProposal(args[1:], OSFileReader{}, stdout, stderr)
+	case "adopt":
+		return runAdoption(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "roundtrip":
 		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "query":
