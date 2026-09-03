@@ -3,6 +3,7 @@
 const crypto = require('node:crypto');
 const foundationBootstrap = require('./foundation_bootstrap');
 const foundationAuthorization = require('./foundation_authorization');
+const foundationAuthorizationProtocol = require('./foundation_authorization_protocol');
 const guardianSuccessor = require('./guardian_successor');
 
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
@@ -669,8 +670,7 @@ async function kernelTreeDigest({getCommit, getTree, owner, repo, ref}) {
   if (entries.length === 0) {
     throw guardianFailure('kernel tree response contains no protected entries');
   }
-  entries.sort((left, right) => canonicalStringCompare([left.path, left.type, left.sha].join('\u0000'), [right.path, right.type, right.sha].join('\u0000')));
-  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex')}`;
+  return foundationAuthorizationProtocol.digestKernelEntries(entries);
 }
 
 function defaultBranchDecision(defaultBranch, eventRef) {
