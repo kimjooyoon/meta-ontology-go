@@ -43,6 +43,10 @@ function exactArray(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function codepointCompare(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function canonicalPathList(paths) {
   return [...new Set((Array.isArray(paths) ? paths : []).filter((value) => typeof value === 'string' && value.length > 0))].sort();
 }
@@ -86,7 +90,7 @@ function canonicalTreeEntries(entries) {
     seen.add(entry.path);
     result.push({path: entry.path, mode: entry.mode || null, sha: entry.sha});
   }
-  return result.sort((left, right) => left.path.localeCompare(right.path) || String(left.mode).localeCompare(String(right.mode)) || left.sha.localeCompare(right.sha));
+  return result.sort((left, right) => codepointCompare(left.path, right.path) || codepointCompare(String(left.mode), String(right.mode)) || codepointCompare(left.sha, right.sha));
 }
 
 function treeManifest(entries) {
