@@ -680,7 +680,7 @@ jobs:
           cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
           cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
-          echo "- overall: \`48/48 satisfied, 48 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overall: \`49/49 satisfied, 49 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- language capability: \`48/48 satisfied, 48 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
@@ -728,7 +728,7 @@ jobs:
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
-            .overall == {satisfied: 48, total: 48, executed: 48, unresolved: 0} and
+            .overall == {satisfied: 49, total: 49, executed: 49, unresolved: 0} and
             .language_capability == {satisfied: 48, total: 48, executed: 48, unresolved: 0} and
             .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
             "$report"
