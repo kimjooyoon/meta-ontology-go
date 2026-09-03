@@ -40,3 +40,20 @@ artifacts, exactly 36 total. Wall time and peak RSS are reported as measured
 integers, but no performance superiority claim is made when those process
 measurements are not comparable. No repository source is rewritten and no
 local tests are executed.
+
+The seventh iteration promotes that certificate into the ordinary compiler
+path. After the evidence is certified, a caller can run one normal generation
+command with `--certificate`, `--contract`, `--observation`, `--proposal`,
+`--authorization`, and `--adoption`. The command verifies the `.gooo`
+`PublishOperationReceipt` policy and every source, semantic, compiler,
+toolchain, verifier, proposal, authorization, policy, and certificate digest
+before writing the exact retained `semantic.gooo.go` bytes. It also writes a
+JSON report and a human-readable `generation-report.md`; missing, stale,
+mismatched, or unauthorized evidence writes report-only `UNKNOWN` or
+`REFUTED` output and never falls back to baseline generation.
+
+The ordinary command without those explicit certificate flags remains the
+baseline compiler path. A caller that wants a measured baseline report may
+add `--retention-report`; the report records the operation count, certificate
+hit/miss counts, output file count and bytes, wall time, and peak RSS without
+claiming superiority from noisy process measurements.

@@ -65,6 +65,7 @@ func runRetentionCertify(args []string, reader SourceReader, parser SourceParser
 
 type retentionCertifyContext struct {
 	inputs         observationInputs
+	inputFilename  string
 	evidence       retentionEvidence
 	compilerDigest string
 	verifierDigest string
@@ -75,6 +76,7 @@ type retentionCertification struct {
 	normalizedDigest  string
 	outputDigest      string
 	generatedSource   []byte
+	generatedManifest []byte
 	certificateDigest string
 	metrics           generation.SemanticRetentionRuntimeMetrics
 }
@@ -104,7 +106,7 @@ func prepareRetentionCertify(inputs observationInputs, options retentionCertifyO
 	if err != nil {
 		return retentionCertifyContext{}, fmt.Errorf("verifier binding: %w", err)
 	}
-	return retentionCertifyContext{inputs: inputs, evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest}, nil
+	return retentionCertifyContext{inputs: inputs, inputFilename: options.inputFilename, evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest}, nil
 }
 
 func executeRetentionCertification(context retentionCertifyContext) (retentionCertification, error) {
@@ -126,7 +128,15 @@ func executeRetentionCertification(context retentionCertifyContext) (retentionCe
 		normalizedDigest.String() != context.evidence.adoption.Evidence.BeforeSemanticDigest {
 		return retentionCertification{}, fmt.Errorf("compiler result contradicts the authorized adoption evidence")
 	}
-	certificate, err := buildRetentionCertificate(context, normalizedDigest.String(), outputDigest, generated.result.Source)
+	manifest, err := buildProjectionManifest(context.inputFilename, generatedFileName, context.inputs.inputSource, nil, generated.ir, generated.result)
+	if err != nil {
+		return retentionCertification{}, fmt.Errorf("generated manifest: %w", err)
+	}
+	manifestData, err := jsonManifestBytes(manifest)
+	if err != nil {
+		return retentionCertification{}, fmt.Errorf("encode generated manifest: %w", err)
+	}
+	certificate, err := buildRetentionCertificate(context, normalizedDigest.String(), outputDigest, generated.result.Source, manifestData)
 	if err != nil {
 		return retentionCertification{}, err
 	}
@@ -137,12 +147,12 @@ func executeRetentionCertification(context retentionCertifyContext) (retentionCe
 	certificateData = append(certificateData, '\n')
 	return retentionCertification{
 		certificateData: certificateData, normalizedDigest: normalizedDigest.String(), outputDigest: outputDigest,
-		generatedSource: append([]byte(nil), generated.result.Source...), certificateDigest: cache.HashBytes(certificateData).String(),
+		generatedSource: append([]byte(nil), generated.result.Source...), generatedManifest: append([]byte(nil), manifestData...), certificateDigest: cache.HashBytes(certificateData).String(),
 		metrics: retentionRuntimeMetrics(started, beforeMem, afterMem),
 	}, nil
 }
 
-func buildRetentionCertificate(context retentionCertifyContext, normalizedDigest, outputDigest string, source []byte) (generation.SemanticRetentionCertificate, error) {
+func buildRetentionCertificate(context retentionCertifyContext, normalizedDigest, outputDigest string, source, manifest []byte) (generation.SemanticRetentionCertificate, error) {
 	bindings := retentionBindings(context.inputs, context.evidence, context.compilerDigest, context.verifierDigest)
 	certificate := generation.SemanticRetentionCertificate{
 		Schema: generation.SemanticRetentionCertificateSchema, AdoptionReportDigest: bindings.AdoptionReportDigest,
@@ -153,7 +163,8 @@ func buildRetentionCertificate(context retentionCertifyContext, normalizedDigest
 		NormalizedIRDigest: normalizedDigest, GeneratedOutputDigest: outputDigest,
 		CompilerDigest: bindings.CompilerDigest, ToolchainDigest: bindings.ToolchainDigest,
 		VerifierDigest: bindings.VerifierDigest, PolicyDigest: bindings.PolicyDigest,
-		GeneratedSource: append([]byte(nil), source...), RepositoryWrites: 0, LocalTestExecutions: 0,
+		GeneratedSource: append([]byte(nil), source...), GeneratedManifest: append([]byte(nil), manifest...),
+		GeneratedManifestDigest: cache.HashBytes(manifest).String(), RepositoryWrites: 0, LocalTestExecutions: 0,
 	}
 	var err error
 	certificate.CertificateID, err = generation.SemanticRetentionCertificateContentDigest(certificate)
