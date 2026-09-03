@@ -12,7 +12,7 @@ import (
 
 const (
 	schema               = "gooo/compiler-self-improvement/v1"
-	programRule          = "generator.normalizeIR:fold-copy-and-canonicalize/v1"
+	programRule          = "generator.normalizeIR:fold-copy-with-empty-normalization/v1"
 	targetPath           = "internal/generator/normalize_part01.go"
 	fixturePath          = "examples/billing/main.gooo"
 	graphSchema          = "gooo-graph/v1"
@@ -370,7 +370,7 @@ func transformBaseline(source string) (string, error) {
 	if strings.Count(source, oldCall) != 1 {
 		return "", fmt.Errorf("baseline does not contain exactly one redundant normalization pass")
 	}
-	result := strings.Replace(source, oldCall, "\tresult := copyIR(input)", 1)
+	result := strings.Replace(source, "\tcanonicalizeIRCollections(&result)", "\tcanonicalizeIREmptyCollections(&result)", 1)
 	oldFunction := `// canonicalizeIRCollections gives semantically equivalent nil and empty
 // collections one wire representation without changing caller-owned input.
 // This keeps generated metadata digests independent of how an adapter
@@ -392,27 +392,40 @@ func canonicalizeIRCollections(ir *SemanticIR) {
 	if strings.Count(result, oldFunction) != 1 {
 		return "", fmt.Errorf("baseline canonicalization function is not the expected exact implementation")
 	}
-	result = strings.Replace(result, oldFunction, "", 1)
-	copyHeader := "\tresult := input\n\t// Copying with a non-nil zero-length seed preserves the canonical empty\n\t// collection representation while folding canonicalization into the only\n\t// collection copy pass.\n"
-	if strings.Count(result, "\tresult := input\n") != 1 {
-		return "", fmt.Errorf("baseline copyIR header is not the expected exact implementation")
+	newFunction := `// canonicalizeIREmptyCollections gives semantically equivalent nil and empty
+// collections one wire representation without allocating replacement slices.
+// This keeps generated metadata digests independent of how an adapter
+// materializes absent optional declarations after the single deep-copy pass.
+func canonicalizeIREmptyCollections(ir *SemanticIR) {
+	if len(ir.Imports) == 0 {
+		ir.Imports = []Import{}
 	}
-	result = strings.Replace(result, "\tresult := input\n", copyHeader, 1)
-	for _, replacement := range []struct{ old, new string }{
-		{"append([]Import(nil), input.Imports...)", "append([]Import{}, input.Imports...)"},
-		{"append([]Entity(nil), input.Entities...)", "append([]Entity{}, input.Entities...)"},
-		{"append([]Activity(nil), input.Activities...)", "append([]Activity{}, input.Activities...)"},
-		{"append([]Field(nil), input.Entities[index].Fields...)", "append([]Field{}, input.Entities[index].Fields...)"},
-		{"append([]Port(nil), input.Activities[index].Inputs...)", "append([]Port{}, input.Activities[index].Inputs...)"},
-		{"append([]Port(nil), input.Activities[index].Outputs...)", "append([]Port{}, input.Activities[index].Outputs...)"},
-		{"append([]Slot(nil), input.Activities[index].Slots...)", "append([]Slot{}, input.Activities[index].Slots...)"},
-	} {
-		if strings.Count(result, replacement.old) != 1 {
-			return "", fmt.Errorf("baseline copyIR is missing exact collection %q", replacement.old)
+	if len(ir.Entities) == 0 {
+		ir.Entities = []Entity{}
+	}
+	for index := range ir.Entities {
+		if len(ir.Entities[index].Fields) == 0 {
+			ir.Entities[index].Fields = []Field{}
 		}
-		result = strings.Replace(result, replacement.old, replacement.new, 1)
 	}
-	if strings.Contains(result, "canonicalizeIRCollections") || !strings.Contains(result, "func copyIR(input SemanticIR)") {
+	if len(ir.Activities) == 0 {
+		ir.Activities = []Activity{}
+	}
+	for index := range ir.Activities {
+		if len(ir.Activities[index].Inputs) == 0 {
+			ir.Activities[index].Inputs = []Port{}
+		}
+		if len(ir.Activities[index].Outputs) == 0 {
+			ir.Activities[index].Outputs = []Port{}
+		}
+		if len(ir.Activities[index].Slots) == 0 {
+			ir.Activities[index].Slots = []Slot{}
+		}
+	}
+}
+`
+	result = strings.Replace(result, oldFunction, newFunction, 1)
+	if strings.Contains(result, "canonicalizeIRCollections") || !strings.Contains(result, "canonicalizeIREmptyCollections") || !strings.Contains(result, "func copyIR(input SemanticIR)") {
 		return "", fmt.Errorf("generated candidate failed the single-pass normalization invariant")
 	}
 	return result, nil

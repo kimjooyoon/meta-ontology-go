@@ -8,7 +8,7 @@ entity ExactObservation id "gooo://compiler-self-improvement/entity/exact-observ
 entity Decision id "gooo://compiler-self-improvement/entity/decision"
 
 activity ObserveSource(SourceProgram) -> SemanticGraph computes "gooo.semantic.graph:v1"
-activity GenerateCandidate(SemanticGraph) -> GeneratedCandidate computes "generator.normalizeIR:fold-copy-and-canonicalize/v1;target=internal/generator/normalize_part01.go;fixture=examples/billing/main.gooo"
+activity GenerateCandidate(SemanticGraph) -> GeneratedCandidate computes "generator.normalizeIR:fold-copy-with-empty-normalization/v1;target=internal/generator/normalize_part01.go;fixture=examples/billing/main.gooo"
 activity ExecuteBaseline(SourceProgram) -> ExactObservation computes "compiler.measure:baseline:v1"
 activity ExecuteCandidate(GeneratedCandidate) -> ExactObservation computes "compiler.measure:candidate:v1"
 activity GuardSemantics(ExactObservation) -> Decision computes "compiler.guard:behavior-determinism-memory-time:v1"
