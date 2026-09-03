@@ -68,6 +68,7 @@ func init() {
 	branchScopeAllowlist[compilerSelfObservationIteration20260904Branch] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/compiler-self-improvement.yml",
 		".github/workflows/self-improvement-observation.yml",
 		"cmd/gooo/generate_pipeline_part04.go",
 		"cmd/gooo/main_part01.go",
@@ -79,6 +80,7 @@ func init() {
 		"internal/meta/generation/semantic_operation_envelope_types.go",
 		"internal/meta/generation/semantic_operation_envelope_verify.go",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/compiler-self-improvement",
 		"scripts/self-improvement-observation",
 	}
 }

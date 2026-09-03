@@ -1,5 +1,5 @@
 package selfimprovementobservation
-namespace self-improvement-observation
+namespace self_improvement_observation
 
 entity OperationIntentInput id "gooo://self-improvement-observation/entity/intent-input"
 entity OperationIntent id "gooo://self-improvement-observation/entity/intent"

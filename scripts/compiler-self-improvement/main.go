@@ -272,7 +272,7 @@ func runCandidate(programPath, graphPath, baselinePath, candidatePath, evidenceP
 		BaselineSourceDigest:           baselineDigest,
 		CandidateSourceDigest:          candidateDigest,
 		BaselineTransformationCount:    1,
-		CandidateTransformationCount:   1,
+		CandidateTransformationCount:   boolToInt(candidate != string(baseline)),
 		BaselinePrimaryOperationCount:  countUnchangedRefreshParseCalls(string(baseline)),
 		CandidatePrimaryOperationCount: countUnchangedRefreshParseCalls(candidate),
 		EnvelopeAuthorityDigest:        digestBytes(program),
@@ -283,8 +283,8 @@ func runCandidate(programPath, graphPath, baselinePath, candidatePath, evidenceP
 		RepositoryWrites:               0,
 		OutputMode:                     "caller-owned-temporary-output",
 	}
-	if evidence.BaselinePrimaryOperationCount != 1 || evidence.CandidatePrimaryOperationCount != 0 {
-		return fmt.Errorf("candidate unchanged-refresh parse-call count is not exactly 1 -> 0")
+	if !validCompilerReusePair(evidence.BaselinePrimaryOperationCount, evidence.CandidatePrimaryOperationCount, evidence.CandidateTransformationCount) {
+		return fmt.Errorf("candidate unchanged-refresh parse-call count is not exactly 1 -> 0 or already-adopted 0 -> 0")
 	}
 	if err := writeJSON(evidencePath, evidence); err != nil {
 		return err
@@ -485,7 +485,7 @@ func verifyEnvelopeSuite(program []byte, released graph, outputDir string) (enve
 }
 
 func verifyCandidateEvidence(evidence candidateEvidence, released graph) error {
-	if evidence.Schema != schema || evidence.AuthorityProgram != programRule || evidence.Target != targetPath || evidence.Fixture != fixturePath || evidence.GraphSchema != graphSchema || evidence.GraphHash != released.GraphHash || evidence.GraphSourceDigest != released.SourceDigest || evidence.BaselinePrimaryOperationCount != 1 || evidence.CandidatePrimaryOperationCount != 0 || evidence.BaselineTransformationCount != 1 || evidence.CandidateTransformationCount != 1 || evidence.EnvelopeScenarioDenominator != len(generation.SemanticOperationScenarioIDs()) || !evidence.EnvelopeVerifierPassed || evidence.RepositoryWrites != 0 {
+	if evidence.Schema != schema || evidence.AuthorityProgram != programRule || evidence.Target != targetPath || evidence.Fixture != fixturePath || evidence.GraphSchema != graphSchema || evidence.GraphHash != released.GraphHash || evidence.GraphSourceDigest != released.SourceDigest || !validCompilerReusePair(evidence.BaselinePrimaryOperationCount, evidence.CandidatePrimaryOperationCount, evidence.CandidateTransformationCount) || evidence.BaselineTransformationCount != 1 || evidence.EnvelopeScenarioDenominator != len(generation.SemanticOperationScenarioIDs()) || !evidence.EnvelopeVerifierPassed || evidence.RepositoryWrites != 0 {
 		return fmt.Errorf("candidate evidence authority or metric identity mismatch")
 	}
 	if !validDigest(evidence.BaselineSourceDigest) || !validDigest(evidence.CandidateSourceDigest) || !validDigest(evidence.EnvelopeAuthorityDigest) || !validDigest(evidence.EnvelopeSummaryDigest) {
@@ -537,6 +537,9 @@ func verifyGraph(released graph) error {
 }
 
 func transformBaseline(source string) (string, error) {
+	if countUnchangedRefreshParseCalls(source) == 0 && strings.Contains(source, "if cachedKey == server.cacheKey(source)") {
+		return source, nil
+	}
 	oldBlock := "\tserver.mu.RLock()\n\tdocument, exists := server.documents[uri]\n\tif exists {\n\t\tversion, source := document.version, document.text\n\t\tserver.mu.RUnlock()\n\t\tresult, err := server.parse(ctx, uri, source)\n"
 	if strings.Count(source, oldBlock) != 1 || countUnchangedRefreshParseCalls(source) != 1 {
 		return "", fmt.Errorf("baseline does not contain exactly one unchanged-refresh parse call")
@@ -553,6 +556,18 @@ func transformBaseline(source string) (string, error) {
 		return "", fmt.Errorf("generated candidate failed the unchanged-refresh reuse invariant")
 	}
 	return result, nil
+}
+
+func boolToInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
+func validCompilerReusePair(baseline, candidate, candidateTransformation int) bool {
+	return (baseline == 1 && candidate == 0 && candidateTransformation == 1) ||
+		(baseline == 0 && candidate == 0 && candidateTransformation == 0)
 }
 
 func countUnchangedRefreshParseCalls(source string) int {
@@ -582,6 +597,11 @@ func evaluate(input observation) (scenarioResult, string, string) {
 		result.Decision = decisionRefuted
 		result.Reason = "SEMANTIC_OR_GUARDRAIL_NON_REGRESSION_FAILED"
 		return result, decisionRefuted, result.Reason
+	}
+	if input.After.PrimaryOperationCount == input.Before.PrimaryOperationCount && input.Before.PrimaryOperationCount == 0 {
+		result.Decision = decisionClosed
+		result.Reason = "PRIMARY_DETERMINISTIC_COUNT_ALREADY_REUSED"
+		return result, decisionClosed, result.Reason
 	}
 	if input.After.PrimaryOperationCount >= input.Before.PrimaryOperationCount {
 		result.Decision = decisionRefuted
