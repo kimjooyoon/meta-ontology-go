@@ -7,6 +7,12 @@
   "source": "dev",
   "target": "main",
   "merge_strategy": "squash_linear",
+  "owner_authorization": {
+    "schema": "gooo/linear-tree-reconciliation-owner-record/v2",
+    "binding": "CANDIDATE_DIGEST_PLUS_EXACT_IDENTITY_AND_TREE_DIGESTS",
+    "one_use": true,
+    "full_candidate_evidence": "ci-guardian-artifact"
+  },
   "required_checks": ["CI policy", "Semantic conformance", "go test", "go test -race", "go vet", "gofmt", "CI guardian"],
   "cells": [
     {"id": "ROUTE_AUTHORITY", "stage": "FOUNDATION", "indicator": "DRIVER", "proof_choice": "FOUNDATION", "step": "ROUTE_AUTHORITY", "producer": "linear-tree-reconciliation", "consumer": "ci-guardian"},

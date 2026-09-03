@@ -14,7 +14,8 @@ const CI_APP_ID = 15368;
 const REQUIRED_CHECKS = Object.freeze(['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt', 'CI guardian']);
 const UNKNOWN_FIELDS = Object.freeze(['stage', 'step', 'reason', 'unknown_class', 'next_operation', 'blocked_by']);
 const DECISION_PRECEDENCE = Object.freeze(['REFUTED', 'UNKNOWN', 'CLOSED']);
-const AUTHORIZATION_SCHEMA = 'gooo/linear-tree-reconciliation-owner-record/v1';
+const AUTHORIZATION_SCHEMA = 'gooo/linear-tree-reconciliation-owner-record/v2';
+const AUTHORIZATION_BINDING = 'CANDIDATE_DIGEST_PLUS_EXACT_IDENTITY_AND_TREE_DIGESTS';
 const RECONCILIATION_CODE = 'CI-GUARDIAN-RECONCILIATION-001';
 
 const definition = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', PROTOCOL_DEFINITION_PATH), 'utf8'));
@@ -107,7 +108,12 @@ function treeManifest(entries) {
 }
 
 function validateProtocolDefinition(candidate = definition) {
-  if (!candidate || candidate.schema !== SCHEMA || !exactArray(candidate.decision_precedence, DECISION_PRECEDENCE) || !exactArray(candidate.unknown_fields, UNKNOWN_FIELDS) || !Array.isArray(candidate.cells) || candidate.cells.length !== 12) {
+  if (!candidate || candidate.schema !== SCHEMA || !exactArray(candidate.decision_precedence, DECISION_PRECEDENCE) || !exactArray(candidate.unknown_fields, UNKNOWN_FIELDS) || !exactObject(candidate.owner_authorization, {
+    schema: AUTHORIZATION_SCHEMA,
+    binding: AUTHORIZATION_BINDING,
+    one_use: true,
+    full_candidate_evidence: 'ci-guardian-artifact',
+  }) || !Array.isArray(candidate.cells) || candidate.cells.length !== 12) {
     throw new Error('linear-tree reconciliation protocol definition is not exact');
   }
   const ids = new Set();
@@ -184,14 +190,50 @@ function isReconciliationBranch(value) {
   return typeof value === 'string' && value.startsWith(BRANCH_PREFIX) && value.length > BRANCH_PREFIX.length;
 }
 
+function treeAuthorizationBinding(binding) {
+  return {
+    tree_sha: binding && binding.tree_sha,
+    count: binding && binding.count,
+    paths_digest: binding && binding.paths_digest,
+    tree_digest: binding && binding.tree_digest,
+    manifest_digest: binding && binding.manifest_digest,
+  };
+}
+
+function authorizationCandidateBinding(candidate) {
+  return {
+    pull_request: candidate && candidate.pull_request,
+    base_repo: candidate && candidate.base_repo,
+    base_branch: candidate && candidate.base_branch,
+    base_sha: candidate && candidate.base_sha,
+    head_repo: candidate && candidate.head_repo,
+    head_branch: candidate && candidate.head_branch,
+    head_sha: candidate && candidate.head_sha,
+    source_dev_sha: candidate && candidate.source_dev_sha,
+    merge_base_sha: candidate && candidate.merge_base_sha,
+    changed_paths: candidate && candidate.changed_paths,
+    protected_intersection: candidate && candidate.protected_intersection,
+    source_dev_tree: treeAuthorizationBinding(candidate && candidate.source_dev_tree),
+    candidate_tree: treeAuthorizationBinding(candidate && candidate.candidate_tree),
+    workflow: candidate && candidate.workflow,
+  };
+}
+
 function validateOwnerAuthorization(record, {candidate, repository = REPOSITORY, now = new Date()} = {}) {
   const expired = !record || typeof record.expires_at !== 'string' || !Number.isFinite(Date.parse(record.expires_at)) || Date.parse(now) >= Date.parse(record.expires_at);
-  if (!record || record.schema !== AUTHORIZATION_SCHEMA || record.state !== 'AUTHORIZED' || record.proof_choice !== 'FOUNDATION' || record.intent !== 'AUTHORIZE_LINEAR_TREE_EQUIVALENT_RECONCILIATION_FOR_EXACT_CANDIDATE' || record.required_operation !== 'OWNER_CREATE_ONE_USE_LINEAR_TREE_RECONCILIATION_AUTHORIZATION' || record.reusable !== false || record.one_use !== true || typeof record.nonce !== 'string' || record.nonce.length < 16 || typeof record.issued_at !== 'string' || !Number.isFinite(Date.parse(record.issued_at)) || expired || record.use_count !== 0 || record.reuse_attempts !== 0 || record.stale !== false || record.revoked !== false || !exactObject(record.owner_selection, OWNER) || !exactObject(record.actor, OWNER) || !exactObject(record.candidate, candidate) || record.candidate_digest !== candidateDigest(candidate) || record.source_dev_sha_at_authorization !== candidate.source_dev_sha || record.base_snapshot_sha !== candidate.base_sha || record.candidate_tree_digest !== candidate.candidate_tree.tree_digest || record.source_dev_tree_digest !== candidate.source_dev_tree.tree_digest || !record.authorization_receipt || record.authorization_receipt.nonce !== record.nonce || record.authorization_receipt.candidate_digest !== record.candidate_digest || !exactObject(record.authorization_receipt.owner, OWNER) || record.no_protection_mutation !== true || record.no_check_bypass !== true || record.no_force_push !== true || record.repository_writes_before_authorization !== 0 || repository !== REPOSITORY) {
+  if (!record || record.schema !== AUTHORIZATION_SCHEMA || record.binding !== AUTHORIZATION_BINDING || record.state !== 'AUTHORIZED' || record.proof_choice !== 'FOUNDATION' || record.intent !== 'AUTHORIZE_LINEAR_TREE_EQUIVALENT_RECONCILIATION_FOR_EXACT_CANDIDATE' || record.required_operation !== 'OWNER_CREATE_ONE_USE_LINEAR_TREE_RECONCILIATION_AUTHORIZATION' || record.reusable !== false || record.one_use !== true || typeof record.nonce !== 'string' || record.nonce.length < 16 || typeof record.issued_at !== 'string' || !Number.isFinite(Date.parse(record.issued_at)) || expired || record.use_count !== 0 || record.reuse_attempts !== 0 || record.stale !== false || record.revoked !== false || !exactObject(record.owner_selection, OWNER) || !exactObject(record.actor, OWNER) || !exactObject(record.candidate_binding, authorizationCandidateBinding(candidate)) || record.candidate_digest !== candidateDigest(candidate) || record.source_dev_sha_at_authorization !== candidate.source_dev_sha || record.base_snapshot_sha !== candidate.base_sha || record.candidate_tree_digest !== candidate.candidate_tree.tree_digest || record.source_dev_tree_digest !== candidate.source_dev_tree.tree_digest || !record.authorization_receipt || record.authorization_receipt.nonce !== record.nonce || record.authorization_receipt.candidate_digest !== record.candidate_digest || !exactObject(record.authorization_receipt.owner, OWNER) || record.no_protection_mutation !== true || record.no_check_bypass !== true || record.no_force_push !== true || record.repository_writes_before_authorization !== 0 || repository !== REPOSITORY) {
     throw new Error(expired || record?.stale === true ? 'linear-tree reconciliation authorization is stale or expired' : 'linear-tree reconciliation owner authorization is missing or not exact');
   }
   return {
     schema: record.schema,
+    binding: record.binding,
     state: record.state,
+    candidate_binding: record.candidate_binding,
+    candidate_digest: record.candidate_digest,
+    source_dev_sha_at_authorization: record.source_dev_sha_at_authorization,
+    base_snapshot_sha: record.base_snapshot_sha,
+    candidate_tree_digest: record.candidate_tree_digest,
+    source_dev_tree_digest: record.source_dev_tree_digest,
     owner_selection: record.owner_selection,
     actor: record.actor,
     nonce: record.nonce,
@@ -397,6 +439,7 @@ function replayReceipt(receipt) {
 validateProtocolDefinition();
 
 module.exports = {
+  AUTHORIZATION_BINDING,
   AUTHORIZATION_SCHEMA,
   BRANCH_PREFIX,
   CI_APP_ID,
@@ -409,6 +452,7 @@ module.exports = {
   UNKNOWN_FIELDS,
   candidateDigest,
   candidateFromPull,
+  authorizationCandidateBinding,
   canonicalPathNames,
   canonicalPathList,
   canonicalProtectedIntersection,
