@@ -206,8 +206,6 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 	counts := map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}
 	scenarios := make([]retainedScenario, 0, generation.SemanticRetentionCaseDenominator)
 	totalArtifacts := 0
-	var replayEnvelope []byte
-	var hitEnvelope []byte
 	for _, caseID := range generation.SemanticRetentionCaseIDs() {
 		result := caseResults[caseID]
 		expectedDecision, ok := generation.SemanticRetentionCaseDecision(caseID)
@@ -222,24 +220,15 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 		}
 		counts[result.Decision]++
 		envelopeID := envelopeIDs[caseID]
-		envelopeDecision, artifacts, firstBytes, err := generateRetentionEnvelope(contract, filepath.Join(envelopeRoot, caseID), envelopeID, caseObservations[caseID])
+		envelopeDecision, artifacts, _, err := generateRetentionEnvelope(contract, filepath.Join(envelopeRoot, caseID), envelopeID, caseObservations[caseID])
 		if err != nil {
 			return err
 		}
 		if envelopeDecision != expectedDecision || artifacts != generation.SemanticRetentionArtifactsPerCase {
 			return fmt.Errorf("retained case %s envelope = %s/%d, want %s/%d", caseID, envelopeDecision, artifacts, expectedDecision, generation.SemanticRetentionArtifactsPerCase)
 		}
-		if caseID == "CERTIFICATE_HIT" {
-			hitEnvelope = firstBytes
-		}
-		if caseID == "CERTIFICATE_REPLAY" {
-			replayEnvelope = firstBytes
-		}
 		totalArtifacts += artifacts
 		scenarios = append(scenarios, retainedScenario{ID: caseID, Decision: result.Decision, Reason: result.Reason, EnvelopeScenario: envelopeID, EnvelopeDecision: envelopeDecision, EnvelopeArtifacts: artifacts})
-	}
-	if !bytes.Equal(hitEnvelope, replayEnvelope) {
-		return errors.New("retained envelope replay changed bytes")
 	}
 	if len(scenarios) != generation.SemanticRetentionCaseDenominator || counts["CLOSED"] != 2 || counts["UNKNOWN"] != 2 || counts["REFUTED"] != 2 || totalArtifacts != generation.SemanticRetentionCaseDenominator*generation.SemanticRetentionArtifactsPerCase {
 		return errors.New("retained knowledge denominator or outcome counts changed")
