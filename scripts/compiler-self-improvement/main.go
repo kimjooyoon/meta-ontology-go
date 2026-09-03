@@ -15,11 +15,11 @@ import (
 
 const (
 	schema                 = "gooo/compiler-self-improvement/v2"
-	programRule            = "generator.normalizeImports:reuse-import-path-set/v1"
-	targetPath             = "internal/generator/normalize_part02.go"
+	programRule            = "lsp.refresh:reuse-exact-document-cache/v1"
+	targetPath             = "internal/lsp/features_part03.go"
 	fixturePath            = "examples/billing/main.gooo"
 	graphSchema            = "gooo-graph/v1"
-	primaryMetric          = "import_duplicate_key_materializations"
+	primaryMetric          = "lsp_refresh_parse_calls"
 	decisionClosed         = "CLOSED"
 	decisionUnknown        = "UNKNOWN"
 	decisionRefuted        = "REFUTED"
@@ -42,26 +42,26 @@ type graphNode struct {
 }
 
 type candidateEvidence struct {
-	Schema                        string         `json:"schema"`
-	AuthorityProgram              string         `json:"authority_program"`
-	Target                        string         `json:"target"`
-	Fixture                       string         `json:"fixture"`
-	GraphSchema                   string         `json:"graph_schema"`
-	GraphHash                     string         `json:"graph_hash"`
-	GraphSourceDigest             string         `json:"graph_source_digest"`
-	BaselineSourceDigest          string         `json:"baseline_source_digest"`
-	CandidateSourceDigest         string         `json:"candidate_source_digest"`
-	BaselineTransformationCount   int            `json:"baseline_transformation_count"`
-	CandidateTransformationCount  int            `json:"candidate_transformation_count"`
-	BaselineMaterializationCount  int            `json:"baseline_materialization_count"`
-	CandidateMaterializationCount int            `json:"candidate_materialization_count"`
-	EnvelopeAuthorityDigest       string         `json:"envelope_authority_digest"`
-	EnvelopeSummaryDigest         string         `json:"envelope_summary_digest"`
-	EnvelopeScenarioDenominator   int            `json:"envelope_scenario_denominator"`
-	EnvelopeCounts                map[string]int `json:"envelope_counts"`
-	EnvelopeVerifierPassed        bool           `json:"envelope_verifier_passed"`
-	RepositoryWrites              int            `json:"repository_writes"`
-	OutputMode                    string         `json:"output_mode"`
+	Schema                         string         `json:"schema"`
+	AuthorityProgram               string         `json:"authority_program"`
+	Target                         string         `json:"target"`
+	Fixture                        string         `json:"fixture"`
+	GraphSchema                    string         `json:"graph_schema"`
+	GraphHash                      string         `json:"graph_hash"`
+	GraphSourceDigest              string         `json:"graph_source_digest"`
+	BaselineSourceDigest           string         `json:"baseline_source_digest"`
+	CandidateSourceDigest          string         `json:"candidate_source_digest"`
+	BaselineTransformationCount    int            `json:"baseline_transformation_count"`
+	CandidateTransformationCount   int            `json:"candidate_transformation_count"`
+	BaselinePrimaryOperationCount  int            `json:"baseline_primary_operation_count"`
+	CandidatePrimaryOperationCount int            `json:"candidate_primary_operation_count"`
+	EnvelopeAuthorityDigest        string         `json:"envelope_authority_digest"`
+	EnvelopeSummaryDigest          string         `json:"envelope_summary_digest"`
+	EnvelopeScenarioDenominator    int            `json:"envelope_scenario_denominator"`
+	EnvelopeCounts                 map[string]int `json:"envelope_counts"`
+	EnvelopeVerifierPassed         bool           `json:"envelope_verifier_passed"`
+	RepositoryWrites               int            `json:"repository_writes"`
+	OutputMode                     string         `json:"output_mode"`
 }
 
 type envelopeScenario struct {
@@ -93,21 +93,21 @@ type envelopeVerification struct {
 }
 
 type metrics struct {
-	TransformationCount  int64 `json:"transformation_count"`
-	MaterializationCount int64 `json:"materialization_count"`
-	AllocationCount      int64 `json:"allocation_count"`
-	AllocationBytes      int64 `json:"allocation_bytes"`
-	WallMS               int64 `json:"wall_ms"`
-	PeakRSSKiB           int64 `json:"peak_rss_kib"`
-	BuildMS              int64 `json:"build_ms"`
-	TestMS               int64 `json:"test_ms"`
-	ExecutedTests        int64 `json:"executed_tests"`
-	ReusedTests          int64 `json:"reused_tests"`
-	InputDescendantDirs  int64 `json:"input_descendant_dirs"`
-	InputRegularFiles    int64 `json:"input_regular_files"`
-	InputGoPhysicalLines int64 `json:"input_go_physical_lines"`
-	InputGoooLines       int64 `json:"input_gooo_physical_lines"`
-	OutputArtifactFiles  int64 `json:"output_artifact_files"`
+	TransformationCount   int64 `json:"transformation_count"`
+	PrimaryOperationCount int64 `json:"primary_operation_count"`
+	AllocationCount       int64 `json:"allocation_count"`
+	AllocationBytes       int64 `json:"allocation_bytes"`
+	WallMS                int64 `json:"wall_ms"`
+	PeakRSSKiB            int64 `json:"peak_rss_kib"`
+	BuildMS               int64 `json:"build_ms"`
+	TestMS                int64 `json:"test_ms"`
+	ExecutedTests         int64 `json:"executed_tests"`
+	ReusedTests           int64 `json:"reused_tests"`
+	InputDescendantDirs   int64 `json:"input_descendant_dirs"`
+	InputRegularFiles     int64 `json:"input_regular_files"`
+	InputGoPhysicalLines  int64 `json:"input_go_physical_lines"`
+	InputGoooLines        int64 `json:"input_gooo_physical_lines"`
+	OutputArtifactFiles   int64 `json:"output_artifact_files"`
 }
 
 type semanticGuard struct {
@@ -121,6 +121,7 @@ type semanticGuard struct {
 type measurementContext struct {
 	ScenarioID      string `json:"scenario_id"`
 	SourceDigest    string `json:"source_digest"`
+	ProfileDigest   string `json:"profile_digest"`
 	ContractDigest  string `json:"contract_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
 	CacheState      string `json:"cache_state"`
@@ -130,6 +131,7 @@ type measurementContext struct {
 type observation struct {
 	ScenarioID          string             `json:"scenario_id"`
 	SourceDigest        string             `json:"source_digest"`
+	ProfileDigest       string             `json:"profile_digest"`
 	ContractDigest      string             `json:"contract_digest"`
 	ToolchainDigest     string             `json:"toolchain_digest"`
 	CacheState          string             `json:"cache_state"`
@@ -160,6 +162,7 @@ type scenarioResult struct {
 	Decision        string             `json:"decision"`
 	Reason          string             `json:"reason"`
 	SourceDigest    string             `json:"source_digest"`
+	ProfileDigest   string             `json:"profile_digest"`
 	ContractDigest  string             `json:"contract_digest"`
 	ToolchainDigest string             `json:"toolchain_digest"`
 	CacheState      string             `json:"cache_state"`
@@ -259,34 +262,34 @@ func runCandidate(programPath, graphPath, baselinePath, candidatePath, evidenceP
 	baselineDigest := digestBytes(baseline)
 	candidateDigest := digestBytes([]byte(candidate))
 	evidence := candidateEvidence{
-		Schema:                        schema,
-		AuthorityProgram:              programRule,
-		Target:                        targetPath,
-		Fixture:                       fixturePath,
-		GraphSchema:                   released.SchemaVersion,
-		GraphHash:                     released.GraphHash,
-		GraphSourceDigest:             released.SourceDigest,
-		BaselineSourceDigest:          baselineDigest,
-		CandidateSourceDigest:         candidateDigest,
-		BaselineTransformationCount:   1,
-		CandidateTransformationCount:  1,
-		BaselineMaterializationCount:  countImportDuplicateKeyMaterializations(string(baseline)),
-		CandidateMaterializationCount: countImportDuplicateKeyMaterializations(candidate),
-		EnvelopeAuthorityDigest:       digestBytes(program),
-		EnvelopeSummaryDigest:         summaryDigest,
-		EnvelopeScenarioDenominator:   summary.ScenarioDenominator,
-		EnvelopeCounts:                summary.Counts,
-		EnvelopeVerifierPassed:        true,
-		RepositoryWrites:              0,
-		OutputMode:                    "caller-owned-temporary-output",
+		Schema:                         schema,
+		AuthorityProgram:               programRule,
+		Target:                         targetPath,
+		Fixture:                        fixturePath,
+		GraphSchema:                    released.SchemaVersion,
+		GraphHash:                      released.GraphHash,
+		GraphSourceDigest:              released.SourceDigest,
+		BaselineSourceDigest:           baselineDigest,
+		CandidateSourceDigest:          candidateDigest,
+		BaselineTransformationCount:    1,
+		CandidateTransformationCount:   1,
+		BaselinePrimaryOperationCount:  countUnchangedRefreshParseCalls(string(baseline)),
+		CandidatePrimaryOperationCount: countUnchangedRefreshParseCalls(candidate),
+		EnvelopeAuthorityDigest:        digestBytes(program),
+		EnvelopeSummaryDigest:          summaryDigest,
+		EnvelopeScenarioDenominator:    summary.ScenarioDenominator,
+		EnvelopeCounts:                 summary.Counts,
+		EnvelopeVerifierPassed:         true,
+		RepositoryWrites:               0,
+		OutputMode:                     "caller-owned-temporary-output",
 	}
-	if evidence.BaselineMaterializationCount != 1 || evidence.CandidateMaterializationCount != 0 {
-		return fmt.Errorf("candidate import duplicate-key materialization count is not exactly 1 -> 0")
+	if evidence.BaselinePrimaryOperationCount != 1 || evidence.CandidatePrimaryOperationCount != 0 {
+		return fmt.Errorf("candidate unchanged-refresh parse-call count is not exactly 1 -> 0")
 	}
 	if err := writeJSON(evidencePath, evidence); err != nil {
 		return err
 	}
-	fmt.Printf("candidate generated: %s (%d -> %d materializations)\n", targetPath, evidence.BaselineMaterializationCount, evidence.CandidateMaterializationCount)
+	fmt.Printf("candidate generated: %s (%d -> %d unchanged-refresh parse calls)\n", targetPath, evidence.BaselinePrimaryOperationCount, evidence.CandidatePrimaryOperationCount)
 	return nil
 }
 
@@ -339,8 +342,8 @@ func runDecision(programPath, graphPath, normalPath, evidencePath, envelopeDir, 
 	if normal.AuthorityProgram != programRule || normal.GraphHash != released.GraphHash {
 		return fmt.Errorf("normal observation is not bound to the authoritative graph")
 	}
-	if normal.Before.MaterializationCount != int64(evidence.BaselineMaterializationCount) || normal.After == nil || normal.After.MaterializationCount != int64(evidence.CandidateMaterializationCount) {
-		return fmt.Errorf("normal observation does not carry the generated materialization pair")
+	if normal.Before.PrimaryOperationCount != int64(evidence.BaselinePrimaryOperationCount) || normal.After == nil || normal.After.PrimaryOperationCount != int64(evidence.CandidatePrimaryOperationCount) {
+		return fmt.Errorf("normal observation does not carry the generated primary-operation pair")
 	}
 	evidenceDigest, err := digestFile(evidencePath)
 	if err != nil {
@@ -482,7 +485,7 @@ func verifyEnvelopeSuite(program []byte, released graph, outputDir string) (enve
 }
 
 func verifyCandidateEvidence(evidence candidateEvidence, released graph) error {
-	if evidence.Schema != schema || evidence.AuthorityProgram != programRule || evidence.Target != targetPath || evidence.Fixture != fixturePath || evidence.GraphSchema != graphSchema || evidence.GraphHash != released.GraphHash || evidence.GraphSourceDigest != released.SourceDigest || evidence.BaselineMaterializationCount != 1 || evidence.CandidateMaterializationCount != 0 || evidence.BaselineTransformationCount != 1 || evidence.CandidateTransformationCount != 1 || evidence.EnvelopeScenarioDenominator != len(generation.SemanticOperationScenarioIDs()) || !evidence.EnvelopeVerifierPassed || evidence.RepositoryWrites != 0 {
+	if evidence.Schema != schema || evidence.AuthorityProgram != programRule || evidence.Target != targetPath || evidence.Fixture != fixturePath || evidence.GraphSchema != graphSchema || evidence.GraphHash != released.GraphHash || evidence.GraphSourceDigest != released.SourceDigest || evidence.BaselinePrimaryOperationCount != 1 || evidence.CandidatePrimaryOperationCount != 0 || evidence.BaselineTransformationCount != 1 || evidence.CandidateTransformationCount != 1 || evidence.EnvelopeScenarioDenominator != len(generation.SemanticOperationScenarioIDs()) || !evidence.EnvelopeVerifierPassed || evidence.RepositoryWrites != 0 {
 		return fmt.Errorf("candidate evidence authority or metric identity mismatch")
 	}
 	if !validDigest(evidence.BaselineSourceDigest) || !validDigest(evidence.CandidateSourceDigest) || !validDigest(evidence.EnvelopeAuthorityDigest) || !validDigest(evidence.EnvelopeSummaryDigest) {
@@ -493,13 +496,13 @@ func verifyCandidateEvidence(evidence candidateEvidence, released graph) error {
 
 func verifyAuthority(program string) error {
 	required := []string{
-		`activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "compiler.operation-intent:v1;operation=generator-validation;mode=read-only"`,
-		`activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/generator/normalize_part02.go;metric=import_duplicate_key_materializations"`,
+		`activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "compiler.operation-intent:v1;operation=lsp-document-refresh;mode=read-only"`,
+		`activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/lsp/features_part03.go;metric=lsp_refresh_parse_calls"`,
 		`activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "compiler.effect-grant:v1;effects=read:source;repository-writes=0"`,
-		`activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "compiler.effect-request:v1;replay=exact-request-identity"`,
-		`activity RecordEffectResult(EffectResultInput) -> EffectResult computes "compiler.effect-result:v1;match=request-source-grant"`,
-		`activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity computes "compiler.replay-identity:v1;compare=current-request-digest"`,
-		`activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision computes "compiler.decision:v1;precedence=REFUTED>UNKNOWN>CLOSED;conditions=grant-source-replay-exact-pair"`,
+		`activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "compiler.effect-request:v1;replay=exact-source-profile-toolchain-contract-digest"`,
+		`activity RecordEffectResult(EffectResultInput) -> EffectResult computes "compiler.effect-result:v1;match=request-source-grant;cases=unchanged-reuse|changed-input-invalidation"`,
+		`activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity computes "compiler.replay-identity:v1;compare=current-request-digest;stale=corrupt-cache-reject"`,
+		`activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision computes "compiler.decision:v1;precedence=REFUTED>UNKNOWN>CLOSED;conditions=unchanged-reuse|changed-input-invalidation|corrupt-stale-evidence"`,
 		`activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt computes "compiler.operation-receipt:v1;artifacts=6;utility=UNKNOWN"`,
 	}
 	for _, snippet := range required {
@@ -534,25 +537,36 @@ func verifyGraph(released graph) error {
 }
 
 func transformBaseline(source string) (string, error) {
-	oldBlock := "\tseen := make(map[string]struct{}, len(ir.Imports))\n"
-	oldTail := "\t\tkey := item.Name + \"\\x00\" + item.Path\n\t\tif _, exists := seen[key]; exists {\n\t\t\treturn fmt.Errorf(\"generator: duplicate import %q\", item.Path)\n\t\t}\n\t\tseen[key] = struct{}{}\n"
-	if strings.Count(source, oldBlock) != 1 || strings.Count(source, oldTail) != 1 || countImportDuplicateKeyMaterializations(source) != 1 {
-		return "", fmt.Errorf("baseline does not contain exactly one import duplicate-key materialization")
+	oldBlock := "\tserver.mu.RLock()\n\tdocument, exists := server.documents[uri]\n\tif exists {\n\t\tversion, source := document.version, document.text\n\t\tserver.mu.RUnlock()\n\t\tresult, err := server.parse(ctx, uri, source)\n"
+	if strings.Count(source, oldBlock) != 1 || countUnchangedRefreshParseCalls(source) != 1 {
+		return "", fmt.Errorf("baseline does not contain exactly one unchanged-refresh parse call")
 	}
-	result := strings.Replace(source, oldBlock, "", 1)
-	result = strings.Replace(result, oldTail, "", 1)
-	if countImportDuplicateKeyMaterializations(result) != 0 || strings.Contains(result, "seen := make(map[string]struct{}, len(ir.Imports))") || strings.Contains(result, "key := item.Name + \"\\x00\" + item.Path") {
-		return "", fmt.Errorf("generated candidate failed the import duplicate-key materialization invariant")
+	newBlock := "\tif err := ctx.Err(); err != nil {\n\t\treturn err\n\t}\n\tserver.mu.RLock()\n\tdocument, exists := server.documents[uri]\n\tif exists {\n\t\tversion, source, cachedKey := document.version, document.text, document.cacheKey\n\t\tserver.mu.RUnlock()\n\t\tif cachedKey == server.cacheKey(source) {\n\t\t\treturn nil\n\t\t}\n\t\tresult, err := server.parse(ctx, uri, source)\n"
+	result := strings.Replace(source, oldBlock, newBlock, 1)
+	oldAssignment := "\t\tcurrent.result = result\n"
+	newAssignment := "\t\tcurrent.result = result\n\t\tcurrent.cacheKey = server.cacheKey(source)\n"
+	if strings.Count(result, oldAssignment) != 1 {
+		return "", fmt.Errorf("baseline does not contain exactly one refreshed document result assignment")
+	}
+	result = strings.Replace(result, oldAssignment, newAssignment, 1)
+	if countUnchangedRefreshParseCalls(result) != 0 || !strings.Contains(result, "if cachedKey == server.cacheKey(source)") {
+		return "", fmt.Errorf("generated candidate failed the unchanged-refresh reuse invariant")
 	}
 	return result, nil
 }
 
-func countImportDuplicateKeyMaterializations(source string) int {
-	return strings.Count(source, "seen := make(map[string]struct{}, len(ir.Imports))")
+func countUnchangedRefreshParseCalls(source string) int {
+	if strings.Contains(source, "if cachedKey == server.cacheKey(source)") {
+		return 0
+	}
+	if strings.Count(source, "\t\tresult, err := server.parse(ctx, uri, source)") == 1 {
+		return 1
+	}
+	return -1
 }
 
 func evaluate(input observation) (scenarioResult, string, string) {
-	result := scenarioResult{ID: input.ScenarioID, SourceDigest: input.SourceDigest, ContractDigest: input.ContractDigest, ToolchainDigest: input.ToolchainDigest, CacheState: input.CacheState, BeforeContext: input.BeforeContext, AfterContext: input.AfterContext, Before: input.Before, After: input.After, SemanticGuard: input.SemanticGuard}
+	result := scenarioResult{ID: input.ScenarioID, SourceDigest: input.SourceDigest, ProfileDigest: input.ProfileDigest, ContractDigest: input.ContractDigest, ToolchainDigest: input.ToolchainDigest, CacheState: input.CacheState, BeforeContext: input.BeforeContext, AfterContext: input.AfterContext, Before: input.Before, After: input.After, SemanticGuard: input.SemanticGuard}
 	if input.After == nil || !exactContext(input) || !validMetrics(input.Before) || (input.After != nil && !validMetrics(*input.After)) {
 		result.Decision = decisionUnknown
 		result.Reason = unknownReason
@@ -569,7 +583,7 @@ func evaluate(input observation) (scenarioResult, string, string) {
 		result.Reason = "SEMANTIC_OR_GUARDRAIL_NON_REGRESSION_FAILED"
 		return result, decisionRefuted, result.Reason
 	}
-	if input.After.MaterializationCount >= input.Before.MaterializationCount {
+	if input.After.PrimaryOperationCount >= input.Before.PrimaryOperationCount {
 		result.Decision = decisionRefuted
 		result.Reason = "PRIMARY_DETERMINISTIC_COUNT_DID_NOT_IMPROVE"
 		return result, decisionRefuted, result.Reason
@@ -582,11 +596,11 @@ func evaluate(input observation) (scenarioResult, string, string) {
 func exactContext(input observation) bool {
 	before := input.BeforeContext
 	after := input.AfterContext
-	return input.PrimaryMetric == primaryMetric && before.ScenarioID == "NORMAL" && after.ScenarioID == "NORMAL" && before.Metric == primaryMetric && after.Metric == primaryMetric && validDigest(before.SourceDigest) && before.SourceDigest == after.SourceDigest && before.SourceDigest == input.SourceDigest && validDigest(before.ContractDigest) && before.ContractDigest == after.ContractDigest && before.ContractDigest == input.ContractDigest && validDigest(before.ToolchainDigest) && before.ToolchainDigest == after.ToolchainDigest && before.ToolchainDigest == input.ToolchainDigest && before.CacheState != "" && before.CacheState == after.CacheState && before.CacheState == input.CacheState
+	return input.PrimaryMetric == primaryMetric && before.ScenarioID == "NORMAL" && after.ScenarioID == "NORMAL" && before.Metric == primaryMetric && after.Metric == primaryMetric && validDigest(before.SourceDigest) && before.SourceDigest == after.SourceDigest && before.SourceDigest == input.SourceDigest && validDigest(before.ProfileDigest) && before.ProfileDigest == after.ProfileDigest && before.ProfileDigest == input.ProfileDigest && validDigest(before.ContractDigest) && before.ContractDigest == after.ContractDigest && before.ContractDigest == input.ContractDigest && validDigest(before.ToolchainDigest) && before.ToolchainDigest == after.ToolchainDigest && before.ToolchainDigest == input.ToolchainDigest && before.CacheState != "" && before.CacheState == after.CacheState && before.CacheState == input.CacheState
 }
 
 func validMetrics(value metrics) bool {
-	return value.TransformationCount >= 0 && value.MaterializationCount >= 0 && value.AllocationCount >= 0 && value.AllocationBytes >= 0 && value.WallMS > 0 && value.PeakRSSKiB > 0 && value.BuildMS > 0 && value.TestMS > 0 && value.ExecutedTests >= 0 && value.ReusedTests >= 0 && value.InputDescendantDirs >= 0 && value.InputRegularFiles > 0 && value.InputGoPhysicalLines > 0 && value.InputGoooLines > 0 && value.OutputArtifactFiles == 6
+	return value.TransformationCount >= 0 && value.PrimaryOperationCount >= 0 && value.AllocationCount >= 0 && value.AllocationBytes >= 0 && value.WallMS > 0 && value.PeakRSSKiB > 0 && value.BuildMS > 0 && value.TestMS > 0 && value.ExecutedTests >= 0 && value.ReusedTests >= 0 && value.InputDescendantDirs >= 0 && value.InputRegularFiles > 0 && value.InputGoPhysicalLines > 0 && value.InputGoooLines > 0 && value.OutputArtifactFiles == 6
 }
 
 func resolvePrecedence(results []scenarioResult) string {
