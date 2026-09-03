@@ -3233,6 +3233,22 @@
       ]
     },
     {
+      "branch": "agent/compiler-envelope-self-improvement-iteration-20260904-lsp-cache",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        "examples/compiler-self-improvement",
+        "internal/lsp/features_part03.go",
+        "internal/lsp/server_part01.go",
+        "internal/lsp/server_part01_test.go",
+        "internal/lsp/server_part04.go",
+        "internal/lsp/state.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",

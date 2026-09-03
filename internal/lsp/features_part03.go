@@ -42,11 +42,17 @@ func resolveDefinitionSymbol(symbols []Symbol, target string) (Symbol, bool) {
 	return match, true
 }
 func (server *Server) refresh(ctx context.Context, uri string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	server.mu.RLock()
 	document, exists := server.documents[uri]
 	if exists {
-		version, source := document.version, document.text
+		version, source, cachedKey := document.version, document.text, document.cacheKey
 		server.mu.RUnlock()
+		if cachedKey == server.cacheKey(source) {
+			return nil
+		}
 		result, err := server.parse(ctx, uri, source)
 		if err != nil {
 			return err
@@ -58,6 +64,7 @@ func (server *Server) refresh(ctx context.Context, uri string) error {
 			return ErrStaleResult
 		}
 		current.result = result
+		current.cacheKey = server.cacheKey(source)
 		return nil
 	}
 	server.mu.RUnlock()
