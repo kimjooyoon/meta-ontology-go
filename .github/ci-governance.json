@@ -3177,6 +3177,27 @@
         "internal/verify/scope_guardian_successor_fail_closed_observers_20260903.go",
         "scripts/ci-proof/guardian.js"
       ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/compiler-self-improvement",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/generator/normalize_part01.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v24.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
     }
   ],
   "protected_kernel_paths": [
