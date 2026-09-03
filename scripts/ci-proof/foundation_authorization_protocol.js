@@ -233,7 +233,7 @@ function evaluate(input, {now = new Date().toISOString()} = {}) {
   const candidateComplete = isObject(candidate)
     && validPositiveInteger(candidate.pull_request)
     && typeof candidate.base_repo === 'string' && candidate.base_repo.length > 0
-    && candidate.base_branch === 'dev' && validSHA(candidate.base_sha)
+    && ['dev', 'main'].includes(candidate.base_branch) && validSHA(candidate.base_sha)
     && typeof candidate.head_repo === 'string' && candidate.head_repo.length > 0
     && typeof candidate.head_branch === 'string' && candidate.head_branch.length > 0 && validSHA(candidate.head_sha)
     && validSHA(candidate.merge_base_sha);

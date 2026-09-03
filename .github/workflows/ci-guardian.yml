@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  issues: read
   actions: read
 
 jobs:
@@ -56,6 +57,10 @@ jobs:
             }
             fs.writeFileSync('ci-guardian-environment.json', JSON.stringify(snapshot, null, 2) + '\n');
             core.setOutput('verified', snapshot.read_status === 'verified' ? 'true' : 'false');
+      - name: Run successor protocol witnesses
+        run: |
+          node scripts/ci-proof/foundation_authorization_protocol_test.js
+          node scripts/ci-proof/guardian_successor_test.js
       - name: Mint current-repository Guardian App token
         id: guardian-app-token
         if: github.base_ref == 'main' && steps.observer-environment.outputs.verified == 'true'
@@ -90,6 +95,7 @@ jobs:
             const fs = require('node:fs');
             const crypto = require('node:crypto');
             const guardian = require('./scripts/ci-proof/guardian');
+            const successor = require('./scripts/ci-proof/guardian_successor');
             const eventPull = context.payload.pull_request;
             const repository = context.payload.repository && context.payload.repository.full_name;
             const defaultBranch = context.payload.repository && context.payload.repository.default_branch;
@@ -358,6 +364,41 @@ jobs:
               }
               if (route === 'promotion_main' && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.INSTALLATION_SCOPE_CODE, reason: (installationRepositoryScope && installationRepositoryScope.missing_reason) || 'installation repository scope observer evidence is unavailable'};
+              }
+              if (route === 'promotion_main') {
+                const successorProtocol = await successor.evaluatePromotion({
+                  pull: observedPull,
+                  repository,
+                  workflowRef,
+                  workflowSha,
+                  runtimeRef,
+                  runtimeSha,
+                  runId,
+                  runAttempt,
+                  liveBefore,
+                  liveAfter,
+                  changedFiles: result.files,
+                  listComments: (parameters) => github.rest.issues.listComments(parameters),
+                  getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                  getTree: (parameters) => github.rest.git.getTree(parameters),
+                });
+                if (successorProtocol.decision === 'PASS') {
+                  result = {
+                    ...result,
+                    decision: 'PASS',
+                    code: null,
+                    reason: successorProtocol.reason,
+                    successorProtocol,
+                    kernelBeforeDigest: successorProtocol.kernel.before_sha256,
+                    kernelAfterDigest: successorProtocol.kernel.after_sha256,
+                  };
+                  branchProtection = null;
+                  devBranchProtection = null;
+                  observerEnvironmentSnapshot = null;
+                  installationRepositoryScope = null;
+                } else {
+                  result = {...result, decision: 'FAIL_CLOSED', code: successorProtocol.code, reason: successorProtocol.reason, successorProtocol};
+                }
               }
             } catch (error) {
               result = {...result, decision: 'FAIL_CLOSED', code: error.code || guardian.ROOT_FAILURE_CODE, reason: error.message || String(error)};
