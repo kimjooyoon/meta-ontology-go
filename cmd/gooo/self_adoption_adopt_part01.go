@@ -106,6 +106,8 @@ func runAdoption(args []string, reader SourceReader, parser SourceParser, stdout
 		boundObservation.Reason = generation.SemanticObservationUnknownReason
 		boundObservation.Unknown = generation.SemanticObservationUnknownState()
 		boundObservation.PairEvidence = generation.SemanticObservationPairEvidence{}
+		boundObservation.Metrics.BeforeOperationCount = 0
+		boundObservation.Metrics.AfterOperationCount = 0
 	} else if decision == generation.SemanticAdoptionRefuted {
 		boundObservation.Decision = generation.SemanticAdoptionRefuted
 		boundObservation.Reason = generation.SemanticObservationContradiction
