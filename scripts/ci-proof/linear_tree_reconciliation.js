@@ -15,6 +15,7 @@ const REQUIRED_CHECKS = Object.freeze(['CI policy', 'Semantic conformance', 'go 
 const UNKNOWN_FIELDS = Object.freeze(['stage', 'step', 'reason', 'unknown_class', 'next_operation', 'blocked_by']);
 const DECISION_PRECEDENCE = Object.freeze(['REFUTED', 'UNKNOWN', 'CLOSED']);
 const AUTHORIZATION_SCHEMA = 'gooo/linear-tree-reconciliation-owner-record/v1';
+const AUTHORIZATION_CANDIDATE_ENCODING = 'COMPACT_TREE_DIGESTS_V1';
 const RECONCILIATION_CODE = 'CI-GUARDIAN-RECONCILIATION-001';
 
 const definition = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', PROTOCOL_DEFINITION_PATH), 'utf8'));
@@ -107,7 +108,7 @@ function treeManifest(entries) {
 }
 
 function validateProtocolDefinition(candidate = definition) {
-  if (!candidate || candidate.schema !== SCHEMA || !exactArray(candidate.decision_precedence, DECISION_PRECEDENCE) || !exactArray(candidate.unknown_fields, UNKNOWN_FIELDS) || !Array.isArray(candidate.cells) || candidate.cells.length !== 12) {
+  if (!candidate || candidate.schema !== SCHEMA || candidate.authorization_candidate_encoding !== AUTHORIZATION_CANDIDATE_ENCODING || !exactArray(candidate.decision_precedence, DECISION_PRECEDENCE) || !exactArray(candidate.unknown_fields, UNKNOWN_FIELDS) || !Array.isArray(candidate.cells) || candidate.cells.length !== 12) {
     throw new Error('linear-tree reconciliation protocol definition is not exact');
   }
   const ids = new Set();
@@ -180,13 +181,31 @@ function validTreeBinding(binding) {
   return binding && Array.isArray(binding.paths) && Number.isInteger(binding.count) && binding.count === binding.paths.length && exactArray(binding.paths, canonicalPathList(binding.paths)) && validDigest(binding.paths_digest) && validDigest(binding.tree_digest) && validDigest(binding.manifest_digest) && binding.paths_digest === digestPathList(binding.paths);
 }
 
+function compactTreeBinding(binding) {
+  return {
+    count: binding.count,
+    paths_digest: binding.paths_digest,
+    tree_digest: binding.tree_digest,
+    manifest_digest: binding.manifest_digest,
+    tree_sha: binding.tree_sha,
+  };
+}
+
+function compactCandidateForAuthorization(candidate) {
+  return {
+    ...candidate,
+    source_dev_tree: compactTreeBinding(candidate.source_dev_tree),
+    candidate_tree: compactTreeBinding(candidate.candidate_tree),
+  };
+}
+
 function isReconciliationBranch(value) {
   return typeof value === 'string' && value.startsWith(BRANCH_PREFIX) && value.length > BRANCH_PREFIX.length;
 }
 
 function validateOwnerAuthorization(record, {candidate, repository = REPOSITORY, now = new Date()} = {}) {
   const expired = !record || typeof record.expires_at !== 'string' || !Number.isFinite(Date.parse(record.expires_at)) || Date.parse(now) >= Date.parse(record.expires_at);
-  if (!record || record.schema !== AUTHORIZATION_SCHEMA || record.state !== 'AUTHORIZED' || record.proof_choice !== 'FOUNDATION' || record.intent !== 'AUTHORIZE_LINEAR_TREE_EQUIVALENT_RECONCILIATION_FOR_EXACT_CANDIDATE' || record.required_operation !== 'OWNER_CREATE_ONE_USE_LINEAR_TREE_RECONCILIATION_AUTHORIZATION' || record.reusable !== false || record.one_use !== true || typeof record.nonce !== 'string' || record.nonce.length < 16 || typeof record.issued_at !== 'string' || !Number.isFinite(Date.parse(record.issued_at)) || expired || record.use_count !== 0 || record.reuse_attempts !== 0 || record.stale !== false || record.revoked !== false || !exactObject(record.owner_selection, OWNER) || !exactObject(record.actor, OWNER) || !exactObject(record.candidate, candidate) || record.candidate_digest !== candidateDigest(candidate) || record.source_dev_sha_at_authorization !== candidate.source_dev_sha || record.base_snapshot_sha !== candidate.base_sha || record.candidate_tree_digest !== candidate.candidate_tree.tree_digest || record.source_dev_tree_digest !== candidate.source_dev_tree.tree_digest || !record.authorization_receipt || record.authorization_receipt.nonce !== record.nonce || record.authorization_receipt.candidate_digest !== record.candidate_digest || !exactObject(record.authorization_receipt.owner, OWNER) || record.no_protection_mutation !== true || record.no_check_bypass !== true || record.no_force_push !== true || record.repository_writes_before_authorization !== 0 || repository !== REPOSITORY) {
+  if (!record || record.schema !== AUTHORIZATION_SCHEMA || record.candidate_encoding !== AUTHORIZATION_CANDIDATE_ENCODING || record.state !== 'AUTHORIZED' || record.proof_choice !== 'FOUNDATION' || record.intent !== 'AUTHORIZE_LINEAR_TREE_EQUIVALENT_RECONCILIATION_FOR_EXACT_CANDIDATE' || record.required_operation !== 'OWNER_CREATE_ONE_USE_LINEAR_TREE_RECONCILIATION_AUTHORIZATION' || record.reusable !== false || record.one_use !== true || typeof record.nonce !== 'string' || record.nonce.length < 16 || typeof record.issued_at !== 'string' || !Number.isFinite(Date.parse(record.issued_at)) || expired || record.use_count !== 0 || record.reuse_attempts !== 0 || record.stale !== false || record.revoked !== false || !exactObject(record.owner_selection, OWNER) || !exactObject(record.actor, OWNER) || !exactObject(record.candidate, compactCandidateForAuthorization(candidate)) || record.candidate_digest !== candidateDigest(candidate) || record.source_dev_sha_at_authorization !== candidate.source_dev_sha || record.base_snapshot_sha !== candidate.base_sha || record.candidate_tree_digest !== candidate.candidate_tree.tree_digest || record.source_dev_tree_digest !== candidate.source_dev_tree.tree_digest || !record.authorization_receipt || record.authorization_receipt.nonce !== record.nonce || record.authorization_receipt.candidate_digest !== record.candidate_digest || !exactObject(record.authorization_receipt.owner, OWNER) || record.no_protection_mutation !== true || record.no_check_bypass !== true || record.no_force_push !== true || record.repository_writes_before_authorization !== 0 || repository !== REPOSITORY) {
     throw new Error(expired || record?.stale === true ? 'linear-tree reconciliation authorization is stale or expired' : 'linear-tree reconciliation owner authorization is missing or not exact');
   }
   return {
@@ -398,6 +417,7 @@ validateProtocolDefinition();
 
 module.exports = {
   AUTHORIZATION_SCHEMA,
+  AUTHORIZATION_CANDIDATE_ENCODING,
   BRANCH_PREFIX,
   CI_APP_ID,
   DECISION_PRECEDENCE,
@@ -409,6 +429,7 @@ module.exports = {
   UNKNOWN_FIELDS,
   candidateDigest,
   candidateFromPull,
+  compactCandidateForAuthorization,
   canonicalPathNames,
   canonicalPathList,
   canonicalProtectedIntersection,
