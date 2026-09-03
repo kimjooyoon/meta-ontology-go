@@ -43,6 +43,14 @@ type publicLoopReport struct {
 	LocalTestExecutions     int                                        `json:"local_test_executions"`
 }
 
+type publicRunInputs struct {
+	input           []byte
+	certificateData []byte
+	certificate     generation.SemanticRetentionCertificate
+	contract        []byte
+	evidence        publicEvidence
+}
+
 func main() {
 	contract := flag.String("contract", "", "policy .gooo")
 	input := flag.String("input", "", "input .gooo")
@@ -66,37 +74,47 @@ func main() {
 }
 
 func run(contractPath, inputPath, certificatePath, observationPath, proposalPath, authorizationPath, adoptionPath, baselineDir, appliedDir, replayDir, casesRoot, outputPath string) error {
-	input, err := os.ReadFile(inputPath)
-	if err != nil {
-		return fmt.Errorf("read input: %w", err)
-	}
-	certificateData, certificate, err := readCertificate(certificatePath)
+	inputs, err := loadPublicRunInputs(contractPath, inputPath, certificatePath, observationPath, proposalPath, authorizationPath, adoptionPath)
 	if err != nil {
 		return err
 	}
-	if err := generation.ValidateSemanticRetentionCertificate(certificate); err != nil {
-		return fmt.Errorf("certificate: %w", err)
-	}
-	contract, err := os.ReadFile(contractPath)
-	if err != nil {
-		return fmt.Errorf("read contract: %w", err)
-	}
-	evidence, err := readPublicEvidence(observationPath, proposalPath, authorizationPath, adoptionPath)
-	if err != nil {
+	if err := verifyPublicPolicy(inputs.contract); err != nil {
 		return err
 	}
-	if err := verifyPublicPolicy(contract); err != nil {
+	if err := verifyPublicEvidence(inputs.contract, inputs.input, inputs.certificate, inputs.evidence); err != nil {
 		return err
 	}
-	if err := verifyPublicEvidence(contract, input, certificate, evidence); err != nil {
-		return err
-	}
-	certificateDigest := cache.HashBytes(certificateData).String()
-	sourceDigest := cache.HashBytes(input).String()
-	inputDigest, err := independentlyComputeInputDigest(inputPath, input)
+	inputDigest, err := independentlyComputeInputDigest(inputPath, inputs.input)
 	if err != nil {
 		return err
 	}
+	return verifyPublicLoop(inputs, inputDigest, baselineDir, appliedDir, replayDir, casesRoot, outputPath)
+}
+
+func loadPublicRunInputs(contractPath, inputPath, certificatePath, observationPath, proposalPath, authorizationPath, adoptionPath string) (publicRunInputs, error) {
+	var inputs publicRunInputs
+	var err error
+	if inputs.input, err = os.ReadFile(inputPath); err != nil {
+		return inputs, fmt.Errorf("read input: %w", err)
+	}
+	if inputs.certificateData, inputs.certificate, err = readCertificate(certificatePath); err != nil {
+		return inputs, err
+	}
+	if err := generation.ValidateSemanticRetentionCertificate(inputs.certificate); err != nil {
+		return inputs, fmt.Errorf("certificate: %w", err)
+	}
+	if inputs.contract, err = os.ReadFile(contractPath); err != nil {
+		return inputs, fmt.Errorf("read contract: %w", err)
+	}
+	if inputs.evidence, err = readPublicEvidence(observationPath, proposalPath, authorizationPath, adoptionPath); err != nil {
+		return inputs, err
+	}
+	return inputs, nil
+}
+
+func verifyPublicLoop(inputs publicRunInputs, normalizedDigest, baselineDir, appliedDir, replayDir, casesRoot, outputPath string) error {
+	certificateDigest := cache.HashBytes(inputs.certificateData).String()
+	sourceDigest := cache.HashBytes(inputs.input).String()
 	baseline, err := readReport(baselineDir)
 	if err != nil {
 		return fmt.Errorf("baseline: %w", err)
@@ -109,7 +127,7 @@ func run(contractPath, inputPath, certificatePath, observationPath, proposalPath
 	if err != nil {
 		return fmt.Errorf("replay: %w", err)
 	}
-	if err := verifyClosedPublicResults(input, sourceDigest, inputDigest, certificate, certificateDigest, baseline, applied, replay); err != nil {
+	if err := verifyClosedPublicResults(inputs.input, sourceDigest, normalizedDigest, inputs.certificate, certificateDigest, baseline, applied, replay); err != nil {
 		return err
 	}
 	caseReports, counts, artifacts, err := verifyPublicCases(casesRoot)

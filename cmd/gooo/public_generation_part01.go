@@ -235,36 +235,8 @@ func writePublicReportAndArtifacts(outputDir string, writes []atomicWrite, repor
 	}
 	jsonPath := filepath.Join(outputDir, "generation-report.json")
 	markdownPath := filepath.Join(outputDir, "generation-report.md")
-	allWrites := append([]atomicWrite(nil), writes...)
-	allWrites = append(allWrites, atomicWrite{path: jsonPath}, atomicWrite{path: markdownPath})
-	report.OutputFileCount = len(allWrites)
-	report.ArtifactCount = len(allWrites)
-	for range 3 {
-		jsonData, err := publicReportJSON(report)
-		if err != nil {
-			fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
-			return exitFailure
-		}
-		markdownData := []byte(publicReportMarkdown(report))
-		allWrites[len(writes)].data = jsonData
-		allWrites[len(writes)+1].data = markdownData
-		var total int64
-		for _, write := range allWrites {
-			total += int64(len(write.data))
-		}
-		if report.OutputBytes == total {
-			break
-		}
-		report.OutputBytes = total
-	}
-	jsonData, err := publicReportJSON(report)
+	allWrites, jsonData, err := publicReportArtifacts(writes, report, jsonPath, markdownPath)
 	if err != nil {
-		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
-		return exitFailure
-	}
-	allWrites[len(writes)].data = jsonData
-	allWrites[len(writes)+1].data = []byte(publicReportMarkdown(report))
-	if err := generation.ValidateSemanticPublicGenerationReport(report); err != nil {
 		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
 		return exitFailure
 	}
@@ -280,4 +252,37 @@ func writePublicReportAndArtifacts(outputDir string, writes []atomicWrite, repor
 		fmt.Fprintf(stdout, "retention: %s (%s)\nreport: %s\n", jsonPath, report.Decision, markdownPath)
 	}
 	return exitOK
+}
+
+func publicReportArtifacts(writes []atomicWrite, report generation.SemanticPublicGenerationReport, jsonPath, markdownPath string) ([]atomicWrite, []byte, error) {
+	allWrites := append([]atomicWrite(nil), writes...)
+	allWrites = append(allWrites, atomicWrite{path: jsonPath}, atomicWrite{path: markdownPath})
+	report.OutputFileCount = len(allWrites)
+	report.ArtifactCount = len(allWrites)
+	for range 3 {
+		jsonData, err := publicReportJSON(report)
+		if err != nil {
+			return nil, nil, err
+		}
+		allWrites[len(writes)].data = jsonData
+		allWrites[len(writes)+1].data = []byte(publicReportMarkdown(report))
+		var total int64
+		for _, write := range allWrites {
+			total += int64(len(write.data))
+		}
+		if report.OutputBytes == total {
+			break
+		}
+		report.OutputBytes = total
+	}
+	jsonData, err := publicReportJSON(report)
+	if err != nil {
+		return nil, nil, err
+	}
+	allWrites[len(writes)].data = jsonData
+	allWrites[len(writes)+1].data = []byte(publicReportMarkdown(report))
+	if err := generation.ValidateSemanticPublicGenerationReport(report); err != nil {
+		return nil, nil, err
+	}
+	return allWrites, jsonData, nil
 }
