@@ -3149,6 +3149,15 @@
         ".github/workflows/ci.yml",
         "internal/verify/scope_guardian_proof_check_suite_authority_20260903.go"
       ]
+    },
+    {
+      "branch": "agent/guardian-preserve-promotion-observers-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_preserve_promotion_observers_20260903.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
