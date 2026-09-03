@@ -3140,6 +3140,15 @@
         "internal/verify/scope_guardian_kernel_digest_alignment_20260903.go",
         "scripts/ci-proof/guardian.js"
       ]
+    },
+    {
+      "branch": "agent/guardian-proof-check-suite-authority-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_guardian_proof_check_suite_authority_20260903.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
