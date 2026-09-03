@@ -33,6 +33,7 @@ func expectedRegistry() Registry {
 		valid("language-test-failing-assertion", "examples/language-test/failing.gooo"),
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
+		valid("compiler-self-improvement", "examples/compiler-self-improvement/main.gooo"),
 		valid("causal-ci-selection", "examples/causal-ci-selection/main.gooo"),
 		valid("causal-ci-selection-semantic-intervention", "examples/causal-ci-selection/semantic-intervention.gooo"),
 		valid("causal-ci-selection-nonsemantic-intervention", "examples/causal-ci-selection/nonsemantic-intervention.gooo"),
