@@ -7,6 +7,7 @@ func init() {
 		".github/main-history-reconciliation-v2.json",
 		".github/workflows/ci-guardian.yml",
 		".github/workflows/ci.yml",
+		".github/workflows/compiler-self-improvement.yml",
 		"internal/verify/scope_main_history_reconciliation_protocol_20260903.go",
 		"scripts/ci-proof/guardian.js",
 		"scripts/ci-proof/guardian_evidence_part01.go",

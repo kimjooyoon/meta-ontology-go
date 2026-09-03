@@ -3,8 +3,24 @@ name: Compiler self-improvement
 on:
   pull_request:
     branches: [dev]
+    paths:
+      - 'cmd/gooo/**'
+      - 'examples/billing/**'
+      - 'examples/compiler-self-improvement/**'
+      - 'internal/generator/**'
+      - 'scripts/compiler-self-improvement/**'
+      - 'go.mod'
+      - 'go.sum'
   push:
     branches: [dev, main]
+    paths:
+      - 'cmd/gooo/**'
+      - 'examples/billing/**'
+      - 'examples/compiler-self-improvement/**'
+      - 'internal/generator/**'
+      - 'scripts/compiler-self-improvement/**'
+      - 'go.mod'
+      - 'go.sum'
 
 permissions:
   contents: read
