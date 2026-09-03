@@ -109,7 +109,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-retained-knowledge.yml",
-		"cmd/gooo/main_part01.go",
+		"cmd/gooo/emit_dispatch.go",
 		"cmd/gooo/self_retention_certify_part01.go",
 		"cmd/gooo/self_retention_consume_part01.go",
 		"cmd/gooo/self_retention_helpers_part01.go",
