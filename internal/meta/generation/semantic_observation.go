@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -184,15 +185,15 @@ func ParseSemanticObservationContract(source []byte) (SemanticObservationContrac
 		if !strings.HasPrefix(line, "activity ") {
 			continue
 		}
-		marker := strings.Index(line, " computes ")
-		if marker < 0 {
+		_, after, ok := strings.Cut(line, " computes ")
+		if !ok {
 			continue
 		}
-		payload, err := strconv.Unquote(strings.TrimSpace(line[marker+len(" computes "):]))
+		payload, err := strconv.Unquote(strings.TrimSpace(after))
 		if err != nil {
 			return SemanticObservationContract{}, fmt.Errorf("decode activity computation: %w", err)
 		}
-		for _, item := range strings.Split(payload, ";") {
+		for item := range strings.SplitSeq(payload, ";") {
 			key, value, ok := strings.Cut(item, "=")
 			if !ok || strings.TrimSpace(key) == "" {
 				continue
@@ -264,13 +265,7 @@ func knownEnvelopeDigest(value string) bool {
 
 func subsetStrings(values, allowed []string) bool {
 	for _, value := range values {
-		found := false
-		for _, candidate := range allowed {
-			if value == candidate {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(allowed, value)
 		if !found {
 			return false
 		}
@@ -280,13 +275,7 @@ func subsetStrings(values, allowed []string) bool {
 
 func appendUniqueObservationSpans(spans []SemanticObservationSpan, additions ...SemanticObservationSpan) []SemanticObservationSpan {
 	for _, addition := range additions {
-		found := false
-		for _, existing := range spans {
-			if existing == addition {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(spans, addition)
 		if !found {
 			spans = append(spans, addition)
 		}
