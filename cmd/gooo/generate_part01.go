@@ -23,6 +23,12 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 	if code != exitOK {
 		return code
 	}
+	if options.publicRetentionRequested() {
+		return runPublicGenerate(options, input, reader, parser, jsonMode, stdout, stderr, deadline)
+	}
+	if options.retentionReport {
+		return runBaselineGenerateReport(options, input, jsonMode, stdout, stderr, deadline)
+	}
 	artifacts, code := buildGenerateArtifacts(options, input, jsonMode, stdout, stderr, deadline)
 	if code != exitOK {
 		return code

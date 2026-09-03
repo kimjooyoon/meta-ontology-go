@@ -8,6 +8,7 @@ on:
       - cmd/gooo/emit_dispatch.go
       - cmd/gooo/generate_pipeline_part01_part01.go
       - cmd/gooo/generate_pipeline_part04.go
+      - cmd/gooo/public_generation_*.go
       - cmd/gooo/self_adoption_generation_part01.go
       - cmd/gooo/self_retention_*.go
       - examples/self-improvement-observation/**
@@ -15,6 +16,8 @@ on:
       - internal/meta/generation/semantic_observation_verify.go
       - internal/meta/generation/semantic_operation_envelope_*.go
       - internal/meta/generation/semantic_retention.go
+      - internal/meta/generation/semantic_public_generation.go
+      - scripts/self-improvement-public-generation/**
       - scripts/self-improvement-retained-knowledge/**
   push:
     branches: [dev]
@@ -23,6 +26,7 @@ on:
       - cmd/gooo/emit_dispatch.go
       - cmd/gooo/generate_pipeline_part01_part01.go
       - cmd/gooo/generate_pipeline_part04.go
+      - cmd/gooo/public_generation_*.go
       - cmd/gooo/self_adoption_generation_part01.go
       - cmd/gooo/self_retention_*.go
       - examples/self-improvement-observation/**
@@ -30,6 +34,8 @@ on:
       - internal/meta/generation/semantic_observation_verify.go
       - internal/meta/generation/semantic_operation_envelope_*.go
       - internal/meta/generation/semantic_retention.go
+      - internal/meta/generation/semantic_public_generation.go
+      - scripts/self-improvement-public-generation/**
       - scripts/self-improvement-retained-knowledge/**
 
 permissions:
@@ -110,6 +116,88 @@ jobs:
             "$work/certify/retained-knowledge-certificate.json" >/dev/null
           jq -e '.decision == "CLOSED" and .reason == "EXACT_RETAINED_KNOWLEDGE_CERTIFIED" and .metrics.semantic_operation_count == 1 and .metrics.certificate_hits == 0 and .metrics.certificate_misses == 1 and .metrics.peak_rss_kib >= 0' \
             "$work/certify/retention-before.json" >/dev/null
+
+      - name: Use retained knowledge through ordinary public generate
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          public="$work/public"
+          mkdir -p "$public/cases"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture \
+            --out "$public/baseline" --retention-report
+          jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_BASELINE" and .metrics.semantic_operation_count == 1 and .metrics.certificate_hits == 0 and .metrics.certificate_misses == 0 and .output_file_count == 4' \
+            "$public/baseline/generation-report.json" >/dev/null
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture \
+            --out "$public/applied" --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --contract examples/self-improvement-observation/observation.gooo \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture \
+            --out "$public/replay" --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --contract examples/self-improvement-observation/observation.gooo \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json"
+          for directory in applied replay; do
+            jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT" and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 1 and .metrics.certificate_misses == 0 and .output_file_count == 4' \
+              "$public/$directory/generation-report.json" >/dev/null
+          done
+
+      - name: Exercise exact public UNKNOWN and REFUTED cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          cases="$work/public/cases"
+          common=(--contract examples/self-improvement-observation/observation.gooo \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --adoption "$work/adoption/adoption-result.json")
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/certificate-hit" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/certificate-replay" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/missing-certificate" \
+            --certificate "$work/public/not-present.json" --authorization "$work/authorization.json" "${common[@]}"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/missing-authorization" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" "${common[@]}"
+          cp examples/self-improvement-observation/input.fixture "$work/public/stale-input.gooo"
+          printf '\n' >> "$work/public/stale-input.gooo"
+          go run ./cmd/gooo generate "$work/public/stale-input.gooo" --out "$cases/stale-input" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+          jq -S '.verifier_digest = "0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$work/certify/retained-knowledge-certificate.json" > "$work/public/mismatched-certificate.json"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture --out "$cases/mismatched-certificate" \
+            --certificate "$work/public/mismatched-certificate.json" --authorization "$work/authorization.json" "${common[@]}"
+          jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT"' "$cases/certificate-hit/generation-report.json" >/dev/null
+          jq -e '.decision == "CLOSED" and .reason == "PUBLIC_GENERATE_RETAINED_KNOWLEDGE_HIT"' "$cases/certificate-replay/generation-report.json" >/dev/null
+          jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETAINED_CERTIFICATE" and .metrics == {semantic_operation_count:0,certificate_hits:0,certificate_misses:0,generated_bytes_equal:false,normalized_semantic_equal:false,wall_ms:0,peak_rss_kib:0,allocation_count:0,allocation_bytes:0,build_ms:0,test_ms:0,executed_tests:0,reused_tests:0}' "$cases/missing-certificate/generation-report.json" >/dev/null
+          jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETENTION_AUTHORIZATION"' "$cases/missing-authorization/generation-report.json" >/dev/null
+          jq -e '.decision == "REFUTED" and .reason == "RETENTION_CERTIFICATE_MISMATCH" and .unknown == null' "$cases/stale-input/generation-report.json" >/dev/null
+          jq -e '.decision == "REFUTED" and .reason == "RETENTION_CERTIFICATE_MISMATCH" and .unknown == null' "$cases/mismatched-certificate/generation-report.json" >/dev/null
+
+      - name: Independently verify public compiler processes and fixed denominator
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./scripts/self-improvement-public-generation \
+            -contract examples/self-improvement-observation/observation.gooo \
+            -input examples/self-improvement-observation/input.fixture \
+            -observation "$work/observation/compiler-observation.json" \
+            -proposal "$work/proposal/adoption-proposal.json" \
+            -authorization "$work/authorization.json" \
+            -adoption "$work/adoption/adoption-result.json" \
+            -certificate "$work/certify/retained-knowledge-certificate.json" \
+            -baseline "$work/public/baseline" -applied "$work/public/applied" -replay "$work/public/replay" \
+            -cases "$work/public/cases" -output "$work/public/public-generation-loop.json"
+          jq -e '.schema == "gooo/semantic-public-generation-loop/v1" and .case_denominator == 6 and .counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .public_artifacts_expected == 16 and .public_artifacts == 16 and .baseline_artifacts == 4 and .generated_bytes_equal and .normalized_semantic_equal and .baseline_metrics.semantic_operation_count == 1 and .applied_metrics.semantic_operation_count == 0 and .applied_metrics.certificate_hits == 1 and .replay_metrics.certificate_hits == 1 and .repository_writes == 0 and .local_test_executions == 0' \
+            "$work/public/public-generation-loop.json" >/dev/null
+          test "$(find "$work/public/cases" -type f | wc -l | tr -d ' ')" -eq 16
 
       - name: Consume the certificate in a separate later invocation
         shell: bash
