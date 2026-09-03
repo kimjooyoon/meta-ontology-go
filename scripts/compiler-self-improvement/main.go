@@ -15,11 +15,11 @@ import (
 
 const (
 	schema                 = "gooo/compiler-self-improvement/v2"
-	programRule            = "generator.validateGoTypes:reuse-port-slices/v1"
-	targetPath             = "internal/generator/types_part01.go"
+	programRule            = "generator.normalizeImports:reuse-import-path-set/v1"
+	targetPath             = "internal/generator/normalize_part02.go"
 	fixturePath            = "examples/billing/main.gooo"
 	graphSchema            = "gooo-graph/v1"
-	primaryMetric          = "port_validation_materializations"
+	primaryMetric          = "import_duplicate_key_materializations"
 	decisionClosed         = "CLOSED"
 	decisionUnknown        = "UNKNOWN"
 	decisionRefuted        = "REFUTED"
@@ -270,8 +270,8 @@ func runCandidate(programPath, graphPath, baselinePath, candidatePath, evidenceP
 		CandidateSourceDigest:         candidateDigest,
 		BaselineTransformationCount:   1,
 		CandidateTransformationCount:  1,
-		BaselineMaterializationCount:  countPortValidationMaterializations(string(baseline)),
-		CandidateMaterializationCount: countPortValidationMaterializations(candidate),
+		BaselineMaterializationCount:  countImportDuplicateKeyMaterializations(string(baseline)),
+		CandidateMaterializationCount: countImportDuplicateKeyMaterializations(candidate),
 		EnvelopeAuthorityDigest:       digestBytes(program),
 		EnvelopeSummaryDigest:         summaryDigest,
 		EnvelopeScenarioDenominator:   summary.ScenarioDenominator,
@@ -281,7 +281,7 @@ func runCandidate(programPath, graphPath, baselinePath, candidatePath, evidenceP
 		OutputMode:                    "caller-owned-temporary-output",
 	}
 	if evidence.BaselineMaterializationCount != 1 || evidence.CandidateMaterializationCount != 0 {
-		return fmt.Errorf("candidate materialization count is not exactly 1 -> 0")
+		return fmt.Errorf("candidate import duplicate-key materialization count is not exactly 1 -> 0")
 	}
 	if err := writeJSON(evidencePath, evidence); err != nil {
 		return err
@@ -494,7 +494,7 @@ func verifyCandidateEvidence(evidence candidateEvidence, released graph) error {
 func verifyAuthority(program string) error {
 	required := []string{
 		`activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "compiler.operation-intent:v1;operation=generator-validation;mode=read-only"`,
-		`activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/generator/types_part01.go;metric=port_validation_materializations"`,
+		`activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/generator/normalize_part02.go;metric=import_duplicate_key_materializations"`,
 		`activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "compiler.effect-grant:v1;effects=read:source;repository-writes=0"`,
 		`activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "compiler.effect-request:v1;replay=exact-request-identity"`,
 		`activity RecordEffectResult(EffectResultInput) -> EffectResult computes "compiler.effect-result:v1;match=request-source-grant"`,
@@ -534,20 +534,21 @@ func verifyGraph(released graph) error {
 }
 
 func transformBaseline(source string) (string, error) {
-	oldBlock := "\t\tfor _, port := range append(append([]Port(nil), activity.Inputs...), activity.Outputs...) {\n\t\t\tif err := validateTypeExpr(packageScope, port.GoType, \"port \"+port.ID); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}"
-	if strings.Count(source, oldBlock) != 1 || countPortValidationMaterializations(source) != 1 {
-		return "", fmt.Errorf("baseline does not contain exactly one port-slice materialization")
+	oldBlock := "\tseen := make(map[string]struct{}, len(ir.Imports))\n"
+	oldTail := "\t\tkey := item.Name + \"\\x00\" + item.Path\n\t\tif _, exists := seen[key]; exists {\n\t\t\treturn fmt.Errorf(\"generator: duplicate import %q\", item.Path)\n\t\t}\n\t\tseen[key] = struct{}{}\n"
+	if strings.Count(source, oldBlock) != 1 || strings.Count(source, oldTail) != 1 || countImportDuplicateKeyMaterializations(source) != 1 {
+		return "", fmt.Errorf("baseline does not contain exactly one import duplicate-key materialization")
 	}
-	newBlock := "\t\tfor _, port := range activity.Inputs {\n\t\t\tif err := validateTypeExpr(packageScope, port.GoType, \"port \"+port.ID); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}\n\t\tfor _, port := range activity.Outputs {\n\t\t\tif err := validateTypeExpr(packageScope, port.GoType, \"port \"+port.ID); err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t}"
-	result := strings.Replace(source, oldBlock, newBlock, 1)
-	if countPortValidationMaterializations(result) != 0 || !strings.Contains(result, "for _, port := range activity.Inputs") || !strings.Contains(result, "for _, port := range activity.Outputs") {
-		return "", fmt.Errorf("generated candidate failed the port validation materialization invariant")
+	result := strings.Replace(source, oldBlock, "", 1)
+	result = strings.Replace(result, oldTail, "", 1)
+	if countImportDuplicateKeyMaterializations(result) != 0 || strings.Contains(result, "seen := make(map[string]struct{}, len(ir.Imports))") || strings.Contains(result, "key := item.Name + \"\\x00\" + item.Path") {
+		return "", fmt.Errorf("generated candidate failed the import duplicate-key materialization invariant")
 	}
 	return result, nil
 }
 
-func countPortValidationMaterializations(source string) int {
-	return strings.Count(source, "append(append([]Port(nil), activity.Inputs...), activity.Outputs...)")
+func countImportDuplicateKeyMaterializations(source string) int {
+	return strings.Count(source, "seen := make(map[string]struct{}, len(ir.Imports))")
 }
 
 func evaluate(input observation) (scenarioResult, string, string) {

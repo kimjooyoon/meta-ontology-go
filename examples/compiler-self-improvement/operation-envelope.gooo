@@ -19,7 +19,7 @@ entity ReceiptInput id "gooo://compiler-operation-envelope/entity/receipt-input"
 entity OperationReceipt id "gooo://compiler-operation-envelope/entity/receipt"
 
 activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "compiler.operation-intent:v1;operation=generator-validation;mode=read-only"
-activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/generator/types_part01.go;metric=port_validation_materializations"
+activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/generator/normalize_part02.go;metric=import_duplicate_key_materializations"
 activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "compiler.effect-grant:v1;effects=read:source;repository-writes=0"
 activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "compiler.effect-request:v1;replay=exact-request-identity"
 activity RecordEffectResult(EffectResultInput) -> EffectResult computes "compiler.effect-result:v1;match=request-source-grant"
