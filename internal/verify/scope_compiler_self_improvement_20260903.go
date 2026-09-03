@@ -5,6 +5,7 @@ const compilerEnvelopeSelfImprovement20260903Branch = "agent/compiler-envelope-s
 const compilerEnvelopeSelfImprovementIteration20260904Branch = "agent/compiler-envelope-self-improvement-iteration-20260904"
 const compilerEnvelopeSelfImprovementIteration20260904LSPCacheBranch = "agent/compiler-envelope-self-improvement-iteration-20260904-lsp-cache"
 const compilerSelfObservationIteration20260904Branch = "agent/compiler-self-observation-iteration-20260904"
+const compilerSelfImprovementIteration20260904V5Branch = "agent/compiler-self-improvement-iteration-20260904-v5"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -86,5 +87,21 @@ func init() {
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/compiler-self-improvement",
 		"scripts/self-improvement-observation",
+	}
+	branchScopeAllowlist[compilerSelfImprovementIteration20260904V5Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/self-improvement-adoption.yml",
+		"cmd/gooo/main_part01.go",
+		"cmd/gooo/self_adoption_adopt_part01.go",
+		"cmd/gooo/self_adoption_generation_part01.go",
+		"cmd/gooo/self_adoption_proposal_part01.go",
+		"examples/self-improvement-observation",
+		"internal/meta/generation/semantic_adoption.go",
+		"internal/meta/generation/semantic_observation_public.go",
+		"internal/meta/generation/semantic_observation_verify.go",
+		"internal/meta/generation/semantic_operation_envelope_types.go",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-adoption",
 	}
 }

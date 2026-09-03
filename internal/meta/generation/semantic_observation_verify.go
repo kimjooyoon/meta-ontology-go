@@ -54,6 +54,18 @@ func verifyBoundSemanticObservation(manifest semanticOperationManifest, patch Se
 	} else if observation.Unknown != nil {
 		return errors.New("non-unknown observation contains unknown evidence")
 	}
+	if observation.Adoption != nil {
+		if err := ValidateSemanticAdoptionEvidence(*observation.Adoption); err != nil {
+			return err
+		}
+		if len(observation.Candidates) != 1 || observation.Adoption.CandidateStableID != observation.Candidates[0].StableID ||
+			observation.Adoption.InputDigest != observation.Candidates[0].InputDigest {
+			return errors.New("semantic adoption evidence is not bound to the observed candidate")
+		}
+		if err := ValidateBoundSemanticAdoption(*observation, SemanticAdoptionProposal{Candidate: observation.Candidates[0]}, *observation.Adoption); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

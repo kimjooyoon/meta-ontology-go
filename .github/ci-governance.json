@@ -3274,6 +3274,25 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v5",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-adoption.yml",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/self_adoption_adopt_part01.go",
+        "cmd/gooo/self_adoption_generation_part01.go",
+        "cmd/gooo/self_adoption_proposal_part01.go",
+        "examples/self-improvement-observation",
+        "internal/meta/generation/semantic_adoption.go",
+        "internal/meta/generation/semantic_observation_public.go",
+        "internal/meta/generation/semantic_observation_verify.go",
+        "internal/meta/generation/semantic_operation_envelope_types.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-adoption"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
