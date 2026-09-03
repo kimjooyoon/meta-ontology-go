@@ -10,6 +10,7 @@ type contextInput struct {
 	BaseRef              string                       `json:"base_ref"`
 	BaseSHA              string                       `json:"base_sha"`
 	HeadSHA              string                       `json:"head_sha"`
+	HeadRef              string                       `json:"head_ref"`
 	WorkflowSHA          string                       `json:"workflow_sha"`
 	PRNumber             int64                        `json:"pr_number"`
 	RunID                int64                        `json:"run_id"`

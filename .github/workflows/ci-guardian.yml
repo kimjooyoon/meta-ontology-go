@@ -64,6 +64,7 @@ jobs:
           script: |
             require('./scripts/ci-proof/foundation_authorization_protocol_test');
             require('./scripts/ci-proof/guardian_successor_test');
+            require('./scripts/ci-proof/linear_tree_reconciliation_test');
       - name: Mint current-repository Guardian App token
         id: guardian-app-token
         if: github.base_ref == 'main' && steps.observer-environment.outputs.verified == 'true'
@@ -99,6 +100,7 @@ jobs:
             const crypto = require('node:crypto');
             const guardian = require('./scripts/ci-proof/guardian');
             const successor = require('./scripts/ci-proof/guardian_successor');
+            const reconciliation = require('./scripts/ci-proof/linear_tree_reconciliation');
             const eventPull = context.payload.pull_request;
             const repository = context.payload.repository && context.payload.repository.full_name;
             const defaultBranch = context.payload.repository && context.payload.repository.default_branch;
@@ -115,6 +117,7 @@ jobs:
             let devBranchProtection = null;
             let observerEnvironmentSnapshot = null;
             let installationRepositoryScope = null;
+            let reconciliationProtocol = null;
             let baseCommit = null;
             let baseKernelBlobs = null;
             let preCorrectionKernelBlobs = null;
@@ -133,7 +136,7 @@ jobs:
               const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
               const appSlug = process.env.GUARDIAN_APP_SLUG || '';
               const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
-              if (route === 'promotion_main') {
+              if (route === 'promotion_main' || route === reconciliation.ROUTE) {
                 branchProtection = guardian.emptyBranchProtection({
                   branch: 'main', repository, policySHA, eventRef: runtimeRef, checkoutRef: runtimeSha,
                   baseSHA: pull.base.sha, headSHA: pull.head.sha, runId, runAttempt, workflowSHA: workflowSha,
@@ -191,6 +194,31 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
+              if (route === reconciliation.ROUTE) {
+                reconciliationProtocol = await reconciliation.evaluatePromotion({
+                  pull: observedPull,
+                  repository,
+                  workflowRef,
+                  workflowSha,
+                  runtimeRef,
+                  runtimeSha,
+                  runId,
+                  runAttempt,
+                  liveBefore,
+                  liveAfter,
+                  changedFiles: result.files,
+                  listComments: (parameters) => github.rest.issues.listComments(parameters),
+                  compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                  getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                  getTree: (parameters) => github.rest.git.getTree(parameters),
+                });
+                result = {...result, reconciliationProtocol};
+                if (reconciliationProtocol.decision === 'PASS') {
+                  result = {...result, decision: 'PASS', code: null, reason: reconciliationProtocol.reason};
+                } else {
+                  result = {...result, decision: 'FAIL_CLOSED', code: reconciliation.RECONCILIATION_CODE || guardian.RECONCILIATION_CODE, reason: reconciliationProtocol.reason};
+                }
+              }
               if (result.authorizationRequired === true && route === guardian.FOUNDATION_ROUTE) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
               }
@@ -248,7 +276,7 @@ jobs:
               if (route === 'promotion_main' && result.authorizationRequired === true) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
               }
-              if (route === 'promotion_main') {
+              if (route === 'promotion_main' || route === reconciliation.ROUTE) {
                 try {
                   observerEnvironmentSnapshot = JSON.parse(fs.readFileSync('ci-guardian-environment.json', 'utf8'));
                 } catch (error) {
@@ -362,10 +390,10 @@ jobs:
                 }
               }
               result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
-              if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
+              if ((route === 'promotion_main' || route === reconciliation.ROUTE) && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.PROTECTION_CODE, reason: (branchProtection && branchProtection.missing_reason) || (observerEnvironmentSnapshot && observerEnvironmentSnapshot.missing_reason) || 'trusted protection observer evidence is unavailable'};
               }
-              if (route === 'promotion_main' && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
+              if ((route === 'promotion_main' || route === reconciliation.ROUTE) && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.INSTALLATION_SCOPE_CODE, reason: (installationRepositoryScope && installationRepositoryScope.missing_reason) || 'installation repository scope observer evidence is unavailable'};
               }
               if (route === 'promotion_main') {
