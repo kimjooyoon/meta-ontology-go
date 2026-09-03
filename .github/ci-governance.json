@@ -39,29 +39,6 @@
     "proof_choice": "FOUNDATION",
     "human_decision": "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
   },
-  "foundation_authorization_protocol": {
-    "schema": "gooo/foundation-authorization-protocol/v1",
-    "definition_path": ".github/foundation-authorization-protocol.json",
-    "workflow_job": "FOUNDATION authorization protocol",
-    "denominator": {
-      "cells": 12,
-      "stage_counts": {
-        "FOUNDATION": 4,
-        "COHERENCE": 4,
-        "REGRESSION": 4
-      },
-      "indicator_counts": {
-        "DRIVER": 4,
-        "OUTCOME": 4,
-        "GUARDRAIL": 4
-      }
-    },
-    "decision_precedence": ["REFUTED", "UNKNOWN", "CLOSED"],
-    "required_owner_action": "OWNER_CREATE_ONE_USE_AUTHORIZATION_FOR_EXACT_CANDIDATE",
-    "repository_writes": 0,
-    "check_bypass": false,
-    "force_push": false
-  },
   "proof_jobs": [
     "gofmt",
     "go vet",
