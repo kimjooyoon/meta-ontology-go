@@ -19,6 +19,9 @@ const (
 	// DenominatorMigrationV25Digest is the append-only v25 contract used when
 	// the semantic operation envelope capability is registered in the corpus.
 	DenominatorMigrationV25Digest = "sha256:5ef82bd6ca0a861a054d67d37176dd44fd3fd67b25290647fde290c42b916795"
+	// DenominatorMigrationV26Digest is the append-only v26 contract used when
+	// the compiler operation envelope capability is registered in the corpus.
+	DenominatorMigrationV26Digest = "sha256:18cf03b8b7bef829bebde8fefddf59c6a231dbd46760347c17452b867c722009"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
