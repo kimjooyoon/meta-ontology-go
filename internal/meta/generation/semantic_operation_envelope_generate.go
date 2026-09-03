@@ -12,6 +12,17 @@ import (
 // GenerateSemanticOperationEnvelope parses the .gooo authority, constructs the
 // semantic IR, and writes exactly six artifacts to the caller-owned directory.
 func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir string) (SemanticOperationRun, error) {
+	return generateSemanticOperationEnvelope(source, scenarioID, outputDir, nil)
+}
+
+// GenerateSemanticOperationEnvelopeWithObservation binds a compiler-produced
+// self-observation to the existing semantic operation envelope. The observer
+// is evidence only: no repository change is applied here.
+func GenerateSemanticOperationEnvelopeWithObservation(source []byte, scenarioID, outputDir string, observation SemanticObservation) (SemanticOperationRun, error) {
+	return generateSemanticOperationEnvelope(source, scenarioID, outputDir, &observation)
+}
+
+func generateSemanticOperationEnvelope(source []byte, scenarioID, outputDir string, observation *SemanticObservation) (SemanticOperationRun, error) {
 	var run SemanticOperationRun
 	if len(source) == 0 {
 		return run, errors.New(".gooo authority is empty")
@@ -22,6 +33,11 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 	if err := validateSemanticOperationAuthority(source); err != nil {
 		return run, err
 	}
+	if observation != nil {
+		if err := validateBoundSemanticObservation(source, *observation); err != nil {
+			return run, err
+		}
+	}
 	if err := prepareSemanticOperationOutput(outputDir); err != nil {
 		return run, err
 	}
@@ -29,6 +45,10 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 	ir, metrics, err := buildSemanticOperationIR(source, scenarioID)
 	if err != nil {
 		return run, err
+	}
+	ir.Observation = observation
+	if observation != nil {
+		metrics = mergeSemanticObservationMetrics(metrics, observation.Metrics)
 	}
 	manifest := semanticOperationManifest{
 		Schema:           SemanticOperationEnvelopeSchema,
@@ -41,6 +61,9 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 		Activities:       append([]string(nil), ir.Activities...),
 		ReplayIdentity:   ir.Replay.Identity,
 		ExpectedDecision: ir.Decision.Decision,
+	}
+	if observation != nil {
+		manifest.ObservationDigest = envelopeDigestJSON(*observation)
 	}
 	requestBytes := []byte{}
 	if ir.Request != nil {
@@ -66,6 +89,7 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 		Changed:          false,
 		Operations:       []string{},
 		RepositoryWrites: 0,
+		Observation:      observation,
 	}
 	patchBytes, err := encodeEnvelopeJSON(patch)
 	if err != nil {
@@ -85,6 +109,7 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 		SemanticPatchDigest: envelopeDigestBytes(patchBytes),
 		Metrics:             metrics,
 		ExternalUserUtility: "UNKNOWN",
+		Observation:         observation,
 	}
 	receiptBytes, err := encodeEnvelopeJSON(receipt)
 	if err != nil {
@@ -109,17 +134,62 @@ func GenerateSemanticOperationEnvelope(source []byte, scenarioID, outputDir stri
 	return SemanticOperationRun{IR: ir, Receipt: receipt, Artifacts: artifacts, ReceiptDigest: receiptDigest}, nil
 }
 
+func mergeSemanticObservationMetrics(metrics EnvelopeMetrics, observation SemanticObservationMetrics) EnvelopeMetrics {
+	metrics.ObservedOperations = observation.ObservedOperations
+	metrics.DistinctInputDigests = observation.DistinctInputDigests
+	metrics.DuplicateEvaluations = observation.DuplicateEvaluations
+	metrics.CandidatesEmitted = observation.CandidatesEmitted
+	metrics.BeforeOperationCount = observation.BeforeOperationCount
+	metrics.AfterOperationCount = observation.AfterOperationCount
+	metrics.AllocationCount = observation.AllocationCount
+	metrics.AllocationBytes = observation.AllocationBytes
+	metrics.WallMS = int(observation.WallMS)
+	metrics.PeakRSSKib = int(observation.PeakRSSKib)
+	metrics.BuildMS = observation.BuildMS
+	metrics.TestMS = observation.TestMS
+	metrics.ExecutedTests = observation.ExecutedTests
+	metrics.ReusedTests = observation.ReusedTests
+	return metrics
+}
+
 type semanticOperationManifest struct {
-	Schema           string          `json:"schema"`
-	ScenarioID       string          `json:"scenario_id"`
-	AuthorityDigest  string          `json:"authority_digest"`
-	ToolchainDigest  string          `json:"toolchain_digest"`
-	SourceRevision   SourceRevision  `json:"source_revision"`
-	Intent           OperationIntent `json:"intent"`
-	Grant            EffectGrant     `json:"grant"`
-	Activities       []string        `json:"activities"`
-	ReplayIdentity   string          `json:"replay_identity"`
-	ExpectedDecision string          `json:"expected_decision"`
+	Schema            string          `json:"schema"`
+	ScenarioID        string          `json:"scenario_id"`
+	AuthorityDigest   string          `json:"authority_digest"`
+	ToolchainDigest   string          `json:"toolchain_digest"`
+	SourceRevision    SourceRevision  `json:"source_revision"`
+	Intent            OperationIntent `json:"intent"`
+	Grant             EffectGrant     `json:"grant"`
+	Activities        []string        `json:"activities"`
+	ReplayIdentity    string          `json:"replay_identity"`
+	ExpectedDecision  string          `json:"expected_decision"`
+	ObservationDigest string          `json:"observation_digest,omitempty"`
+}
+
+func validateBoundSemanticObservation(source []byte, observation SemanticObservation) error {
+	contract, err := ParseSemanticObservationContract(source)
+	if err != nil {
+		return err
+	}
+	if observation.Schema != SemanticObservationSchema {
+		return fmt.Errorf("semantic observation schema mismatch: %q", observation.Schema)
+	}
+	if observation.ContractDigest != envelopeDigestBytes(source) {
+		return errors.New("semantic observation contract digest does not match authority")
+	}
+	if observation.Contract.Activity != contract.Activity ||
+		observation.Contract.Phase != contract.Phase ||
+		observation.Contract.OperationID != contract.OperationID ||
+		observation.Contract.CanonicalInputIdentity != contract.CanonicalInputIdentity ||
+		observation.Contract.Pure != contract.Pure ||
+		observation.Contract.CandidateRule != contract.CandidateRule ||
+		strings.Join(observation.Contract.AllowedEffects, "\x00") != strings.Join(contract.AllowedEffects, "\x00") {
+		return errors.New("semantic observation contract does not match authority")
+	}
+	if observation.Metrics.RepositoryWrites != 0 || observation.Metrics.LocalTestExecutions != 0 {
+		return errors.New("semantic observation metrics violate the no-write/no-local-test contract")
+	}
+	return nil
 }
 
 func validateSemanticOperationAuthority(source []byte) error {
