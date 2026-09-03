@@ -568,6 +568,7 @@ jobs:
           node scripts/ci-proof/concurrency_test.js
           node scripts/ci-proof/foundation_authorization_test.js
           node scripts/ci-proof/guardian_test.js
+          node scripts/ci-proof/linear_tree_reconciliation_test.js
           node scripts/ci-proof/source_migration_v3_test.js
           node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
