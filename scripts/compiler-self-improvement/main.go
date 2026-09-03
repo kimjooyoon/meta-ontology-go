@@ -581,7 +581,7 @@ func evaluate(input observation) (scenarioResult, string, string) {
 func exactContext(input observation) bool {
 	before := input.BeforeContext
 	after := input.AfterContext
-	return input.ScenarioID == "NORMAL" && input.PrimaryMetric == primaryMetric && before.ScenarioID == input.ScenarioID && after.ScenarioID == input.ScenarioID && before.Metric == primaryMetric && after.Metric == primaryMetric && validDigest(before.SourceDigest) && before.SourceDigest == after.SourceDigest && before.SourceDigest == input.SourceDigest && validDigest(before.ContractDigest) && before.ContractDigest == after.ContractDigest && before.ContractDigest == input.ContractDigest && validDigest(before.ToolchainDigest) && before.ToolchainDigest == after.ToolchainDigest && before.ToolchainDigest == input.ToolchainDigest && before.CacheState != "" && before.CacheState == after.CacheState && before.CacheState == input.CacheState
+	return input.PrimaryMetric == primaryMetric && before.ScenarioID == "NORMAL" && after.ScenarioID == "NORMAL" && before.Metric == primaryMetric && after.Metric == primaryMetric && validDigest(before.SourceDigest) && before.SourceDigest == after.SourceDigest && before.SourceDigest == input.SourceDigest && validDigest(before.ContractDigest) && before.ContractDigest == after.ContractDigest && before.ContractDigest == input.ContractDigest && validDigest(before.ToolchainDigest) && before.ToolchainDigest == after.ToolchainDigest && before.ToolchainDigest == input.ToolchainDigest && before.CacheState != "" && before.CacheState == after.CacheState && before.CacheState == input.CacheState
 }
 
 func validMetrics(value metrics) bool {
