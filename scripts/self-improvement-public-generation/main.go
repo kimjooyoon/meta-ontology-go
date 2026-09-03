@@ -127,7 +127,7 @@ func verifyPublicLoop(inputs publicRunInputs, normalizedDigest, baselineDir, app
 	if err != nil {
 		return fmt.Errorf("replay: %w", err)
 	}
-	if err := verifyClosedPublicResults(inputs.input, sourceDigest, normalizedDigest, inputs.certificate, certificateDigest, baseline, applied, replay); err != nil {
+	if err := verifyClosedPublicResults(sourceDigest, normalizedDigest, inputs.certificate, certificateDigest, baseline, applied, replay); err != nil {
 		return err
 	}
 	caseReports, counts, artifacts, err := verifyPublicCases(casesRoot)
@@ -275,19 +275,32 @@ func verifyPublicEvidence(contract, input []byte, certificate generation.Semanti
 	return nil
 }
 
-func verifyClosedPublicResults(input []byte, sourceDigest, normalizedDigest string, certificate generation.SemanticRetentionCertificate, certificateDigest string, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
-	if err := generation.ValidateSemanticPublicGenerationReport(baseline); err != nil {
-		return fmt.Errorf("baseline report: %w", err)
+func verifyClosedPublicResults(sourceDigest, normalizedDigest string, certificate generation.SemanticRetentionCertificate, certificateDigest string, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
+	if err := validateClosedPublicReports(baseline, applied, replay); err != nil {
+		return err
 	}
-	if err := generation.ValidateSemanticPublicGenerationReport(applied); err != nil {
-		return fmt.Errorf("applied report: %w", err)
+	if err := verifyClosedPublicBindings(sourceDigest, certificate, certificateDigest, baseline, applied, replay); err != nil {
+		return err
 	}
-	if err := generation.ValidateSemanticPublicGenerationReport(replay); err != nil {
-		return fmt.Errorf("replay report: %w", err)
+	if err := verifyClosedPublicOutputs(normalizedDigest, certificate, baseline, applied, replay); err != nil {
+		return err
+	}
+	return verifyClosedPublicAccounting(baseline, applied, replay)
+}
+
+func validateClosedPublicReports(baseline, applied, replay generation.SemanticPublicGenerationReport) error {
+	for name, report := range map[string]generation.SemanticPublicGenerationReport{"baseline": baseline, "applied": applied, "replay": replay} {
+		if err := generation.ValidateSemanticPublicGenerationReport(report); err != nil {
+			return fmt.Errorf("%s report: %w", name, err)
+		}
 	}
 	if baseline.Reason != generation.SemanticPublicGenerationBaselineReason || applied.Reason != generation.SemanticPublicGenerationHitReason || replay.Reason != generation.SemanticPublicGenerationHitReason {
 		return errors.New("public generation reports do not identify baseline and retained paths")
 	}
+	return nil
+}
+
+func verifyClosedPublicBindings(sourceDigest string, certificate generation.SemanticRetentionCertificate, certificateDigest string, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
 	if baseline.InputSourceDigest != sourceDigest || applied.InputSourceDigest != sourceDigest || replay.InputSourceDigest != sourceDigest {
 		return errors.New("public generation reports are not bound to the exact input")
 	}
@@ -299,17 +312,13 @@ func verifyClosedPublicResults(input []byte, sourceDigest, normalizedDigest stri
 			return errors.New("public generation report dropped an evidence binding")
 		}
 	}
-	baselineSource, err := os.ReadFile(baseline.OutputFile)
+	return nil
+}
+
+func verifyClosedPublicOutputs(normalizedDigest string, certificate generation.SemanticRetentionCertificate, baseline, applied, replay generation.SemanticPublicGenerationReport) error {
+	baselineSource, appliedSource, replaySource, err := readClosedPublicSources(baseline, applied, replay)
 	if err != nil {
-		return fmt.Errorf("read baseline source: %w", err)
-	}
-	appliedSource, err := os.ReadFile(applied.OutputFile)
-	if err != nil {
-		return fmt.Errorf("read applied source: %w", err)
-	}
-	replaySource, err := os.ReadFile(replay.OutputFile)
-	if err != nil {
-		return fmt.Errorf("read replay source: %w", err)
+		return err
 	}
 	if !bytes.Equal(baselineSource, certificate.GeneratedSource) || !bytes.Equal(baselineSource, appliedSource) || !bytes.Equal(appliedSource, replaySource) {
 		return errors.New("public compiler output bytes changed across baseline, certificate, and replay")
@@ -320,6 +329,33 @@ func verifyClosedPublicResults(input []byte, sourceDigest, normalizedDigest stri
 	if baseline.Metrics.SemanticOperationCount != 1 || applied.Metrics.SemanticOperationCount != 0 || replay.Metrics.SemanticOperationCount != 0 || applied.Metrics.CertificateHits != 1 || replay.Metrics.CertificateHits != 1 {
 		return errors.New("public compiler operation or certificate counts changed")
 	}
+	manifest, err := os.ReadFile(applied.ManifestFile)
+	if err != nil {
+		return fmt.Errorf("read applied manifest: %w", err)
+	}
+	if !bytes.Equal(manifest, certificate.GeneratedManifest) {
+		return errors.New("public compiler manifest bytes changed on certificate application")
+	}
+	return nil
+}
+
+func readClosedPublicSources(baseline, applied, replay generation.SemanticPublicGenerationReport) ([]byte, []byte, []byte, error) {
+	baselineSource, err := os.ReadFile(baseline.OutputFile)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read baseline source: %w", err)
+	}
+	appliedSource, err := os.ReadFile(applied.OutputFile)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read applied source: %w", err)
+	}
+	replaySource, err := os.ReadFile(replay.OutputFile)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("read replay source: %w", err)
+	}
+	return baselineSource, appliedSource, replaySource, nil
+}
+
+func verifyClosedPublicAccounting(baseline, applied, replay generation.SemanticPublicGenerationReport) error {
 	if directoryFileCount(filepath.Dir(baseline.OutputFile)) != 4 || directoryFileCount(filepath.Dir(applied.OutputFile)) != 4 || directoryFileCount(filepath.Dir(replay.OutputFile)) != 4 {
 		return errors.New("public compiler artifact denominator changed")
 	}
@@ -328,14 +364,6 @@ func verifyClosedPublicResults(input []byte, sourceDigest, normalizedDigest stri
 			return errors.New("public compiler output byte count is not exact")
 		}
 	}
-	manifest, err := os.ReadFile(applied.ManifestFile)
-	if err != nil {
-		return fmt.Errorf("read applied manifest: %w", err)
-	}
-	if !bytes.Equal(manifest, certificate.GeneratedManifest) {
-		return errors.New("public compiler manifest bytes changed on certificate application")
-	}
-	_ = input
 	return nil
 }
 
