@@ -63,7 +63,7 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/self-improvement-observation"
           contract=examples/self-improvement-observation/observation.gooo
-          input=examples/self-improvement-observation/input.gooo
+          input=examples/self-improvement-observation/input.fixture
           mkdir -p "$work/observation"
           go run ./cmd/gooo check --semantic "$contract"
 
