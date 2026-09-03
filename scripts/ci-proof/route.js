@@ -2,6 +2,9 @@
 
 const crypto = require('node:crypto');
 
+const RECONCILIATION_ROUTE = 'reconciliation_main';
+const RECONCILIATION_BRANCH_PREFIX = 'agent/main-history-reconciliation-';
+
 const schema = 'gooo/ci-proof-route/v1';
 const foundationPromotion = Object.freeze({
   repository: 'kimjooyoon/meta-ontology-go',
@@ -23,8 +26,16 @@ function isFoundationPromotion(input) {
     input.baseRef === foundationPromotion.baseRef && input.baseSha === foundationPromotion.baseSha;
 }
 
+function isReconciliationPromotion(input) {
+  return input.event === 'pull_request' && input.baseRef === 'main' && typeof input.headRef === 'string' && input.headRef.startsWith(RECONCILIATION_BRANCH_PREFIX) && input.headRef.length > RECONCILIATION_BRANCH_PREFIX.length;
+}
+
 function classifyProofRoute(event, baseRef, input = {}) {
   if (isFoundationPromotion({...input, event, baseRef})) return 'foundation_promotion';
+  if (isReconciliationPromotion({...input, event, baseRef})) return RECONCILIATION_ROUTE;
+  if (event === 'pull_request' && baseRef === 'main' && typeof input.headRef === 'string' && input.headRef.startsWith('agent/') && input.headRef !== 'dev' && !input.headRef.startsWith('agent/foundation-discovery-recovery-')) {
+    throw new Error('ordinary agent-to-main route is not authorized');
+  }
   const route = routes[event + ':' + baseRef];
   if (!route) throw new Error('unsupported CI proof route tuple');
   return route;
@@ -56,5 +67,8 @@ module.exports = {
   classifyProofRoute,
   foundationPromotion,
   isFoundationPromotion,
+  isReconciliationPromotion,
+  RECONCILIATION_BRANCH_PREFIX,
+  RECONCILIATION_ROUTE,
   validateProofRouteEvidence,
 };

@@ -568,6 +568,7 @@ jobs:
           node scripts/ci-proof/concurrency_test.js
           node scripts/ci-proof/foundation_authorization_test.js
           node scripts/ci-proof/guardian_test.js
+          node scripts/ci-proof/linear_tree_reconciliation_test.js
           node scripts/ci-proof/source_migration_v3_test.js
           node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
@@ -929,7 +930,16 @@ jobs:
             if (manifest.live_refs_before.dev_sha !== live.refs.dev_sha || manifest.live_refs_after.dev_sha !== live.refs.dev_sha || manifest.live_refs_before.main_sha !== live.refs.main_sha || manifest.live_refs_after.main_sha !== live.refs.main_sha || manifest.topology.merge_base_sha !== live.topology.merge_base_sha || manifest.topology.ahead_by !== live.topology.ahead_by || manifest.topology.behind_by !== live.topology.behind_by) throw new Error('Guardian live topology drifted while proof was collecting evidence');
             const zipDigest = fs.readFileSync('ci-guardian-zip-sha256.txt', 'utf8').trim();
             if (manifest.decision !== 'PASS' || manifest.code !== null || manifest.check_name !== 'CI guardian' || selection.job.id <= 0 || selection.artifact.id <= 0 || selection.artifact.name !== `ci-guardian-${selection.run_id}-${selection.run_attempt}` || `sha256:${zipDigest}` !== selection.artifact.digest) throw new Error('Guardian promotion evidence is not exact PASS/check/artifact identity');
-            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
+            if (manifest.route === 'reconciliation_main') {
+              const reconciliation = require('./scripts/ci-proof/linear_tree_reconciliation');
+              const canonicalJobs = JSON.parse(fs.readFileSync('ci-final-jobs.json', 'utf8'));
+              const requiredChecks = canonicalJobs.map(job => ({name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, app_id: 15368}));
+              requiredChecks.push({name: selection.check.name, status: selection.check.status, conclusion: selection.check.conclusion, head_sha: selection.check.head_sha, app_id: selection.check.app_id});
+              const finalization = reconciliation.finalizePromotionReceipt(manifest.reconciliation_protocol, {requiredChecks, currentDevSHA: live.refs.dev_sha, currentMainSHA: live.refs.main_sha});
+              if (finalization.decision !== 'CLOSED') throw new Error(`linear-tree reconciliation finalization is not CLOSED: ${finalization.reason}`);
+              fs.writeFileSync('ci-reconciliation-finalization.json', JSON.stringify(finalization, null, 2) + '\n');
+            }
+            const bundle = {schema: 'gooo/ci-guardian-evidence/v1', route: manifest.route, check_name: manifest.check_name, repository: manifest.repository, pr_number: manifest.pull_request_number, action: manifest.action, base_repo: manifest.base_repo, base_ref: manifest.base_ref, base_sha: manifest.base_sha, head_repo: manifest.head_repo, head_ref: manifest.head_ref, head_sha: manifest.head_sha, workflow_ref: manifest.workflow_ref, workflow_sha: manifest.workflow_sha, runtime_ref: manifest.runtime_ref, runtime_sha: manifest.runtime_sha, event_ref: manifest.event_ref, default_branch: manifest.default_branch, observer_environment: manifest.observer_environment, observer_environment_snapshot: manifest.observer_environment_snapshot, observer_environment_digest: manifest.observer_environment_digest, head_binding_status: manifest.head_binding_status, run_id: selection.run_id, run_attempt: selection.run_attempt, workflow_id: selection.workflow_id, workflow_path: selection.workflow_path, run_event: selection.run_event, run_status: selection.run_status, run_conclusion: selection.run_conclusion, run_created_at: selection.run_created_at, run_number: selection.run_number, live_refs_before: manifest.live_refs_before, live_refs_after: manifest.live_refs_after, topology: manifest.topology, branch_protection: manifest.branch_protection, dev_branch_protection: manifest.dev_branch_protection, reconciliation_protocol: manifest.reconciliation_protocol || null, artifact_id: selection.artifact.id, artifact_name: selection.artifact.name, artifact_size: selection.artifact.size, artifact_expired: selection.artifact.expired, artifact_digest: selection.artifact.digest, manifest_bundle_sha256: manifest.bundle_sha256, guardian_job_id: selection.job.id, guardian_job_name: selection.job.name, guardian_job_status: selection.job.status, guardian_job_conclusion: selection.job.conclusion, guardian_job_head_sha: selection.job.head_sha, check_run_id: selection.check.id, check_run_name: selection.check.name, check_run_app_id: selection.check.app_id, check_run_status: selection.check.status, check_run_conclusion: selection.check.conclusion, check_run_head_sha: selection.check.head_sha, check_suite_id: selection.check.suite_id, decision: manifest.decision, code: manifest.code, bundle_sha256: manifest.bundle_sha256};
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
       - name: Download exact Foundation predecessor artifact
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
@@ -1008,7 +1018,7 @@ jobs:
               event: context.eventName, eventRef: context.ref, baseRef, baseSha, headSha, ...foundationIdentity,
             });
             const proofRoute = routeEvidence.route;
-            const isPromotion = proofRoute === 'promotion_main';
+            const isPromotion = proofRoute === 'promotion_main' || proofRoute === 'reconciliation_main';
             const isFoundation = proofRoute === 'foundation_promotion';
             const evidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-evidence.json', 'utf8'));
             const domainEvidence = JSON.parse(fs.readFileSync('ci-evidence-input/ci-domain-evidence.json', 'utf8'));
@@ -1081,7 +1091,7 @@ jobs:
             const checkoutRef = headSha;
             const contextData = {
               repository: `${context.repo.owner}/${context.repo.repo}`, event: context.eventName, ref: eventRef, event_ref: eventRef, checkout_ref: checkoutRef,
-              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, workflow_sha: process.env.CI_WORKFLOW_SHA,
+              proof_route: proofRoute, base_ref: baseRef, base_sha: baseSha, head_sha: headSha, head_ref: pull ? pull.head.ref : '', workflow_sha: process.env.CI_WORKFLOW_SHA,
               pr_number: pull ? pull.number : 0, run_id: context.runId, run_attempt: runAttempt,
               actor: context.actor, builder: context.actor, gate: 'CI policy',
               branch_protected: protection.exists, branch_protection: protection, dev_branch_protection: guardianEvidence ? guardianEvidence.dev_branch_protection : null, scope_decision: 'passed', fixture_status: 'verified', source_status: 'verified', semantic_status: 'verified',
@@ -1113,6 +1123,14 @@ jobs:
             ci-evidence-input/ci-domain-evidence.json
           if-no-files-found: error
           retention-days: 14
+      - name: Upload reconciliation finalization
+        if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'agent/main-history-reconciliation-')
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-reconciliation-finalization-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-reconciliation-finalization.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload Foundation promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
         uses: actions/upload-artifact@v6
@@ -1326,6 +1344,78 @@ jobs:
           path: |
             foundation-authorization-root-axiom.json
             foundation-authorization-protocol-live.json
+          if-no-files-found: error
+          retention-days: 30
+
+  reconciliation-post-main:
+    name: Reconciliation post-main verification
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify merged tree and consume one-use authorization
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const fs = require('fs');
+            const guardian = require('./scripts/ci-proof/guardian');
+            const reconciliation = require('./scripts/ci-proof/linear_tree_reconciliation');
+            const repository = context.payload.repository.full_name;
+            const live = await guardian.readLiveTopology({getRef: p => github.rest.git.getRef(p), compareCommits: p => github.rest.repos.compareCommits(p), owner: context.repo.owner, repo: context.repo.repo});
+            const closed = [];
+            for (let page = 1; page <= 10; page++) {
+              const response = await github.rest.pulls.list({owner: context.repo.owner, repo: context.repo.repo, state: 'closed', base: 'main', sort: 'updated', direction: 'desc', per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data)) throw new Error('post-main pull request API returned malformed data');
+              closed.push(...response.data);
+              if (response.data.length < 100) break;
+            }
+            const matches = closed.filter(pull => pull.merged_at && pull.merge_commit_sha === context.sha && reconciliation.isReconciliationBranch(pull.head?.ref));
+            if (matches.length !== 1) throw new Error('post-main reconciliation merge identity is missing or ambiguous');
+            const pull = matches[0];
+            const comments = [];
+            for (let page = 1; page <= 1000; page++) {
+              const response = await github.rest.issues.listComments({owner: context.repo.owner, repo: context.repo.repo, issue_number: pull.number, per_page: 100, page});
+              if (!response.data || !Array.isArray(response.data)) throw new Error('post-main owner comment API returned malformed data');
+              comments.push(...response.data);
+              if (response.data.length < 100) break;
+            }
+            const ownerRecords = comments.filter(comment => comment.user?.login === reconciliation.OWNER.login && comment.user?.id === reconciliation.OWNER.id).flatMap(comment => {
+              try {
+                const record = JSON.parse(comment.body);
+                return record.schema === reconciliation.AUTHORIZATION_SCHEMA ? [{record, comment}] : [];
+              } catch {
+                return [];
+              }
+            });
+            if (ownerRecords.length !== 1) throw new Error('post-main one-use owner authorization is missing or ambiguous');
+            const record = ownerRecords[0].record;
+            if (!record.candidate || record.candidate.base_sha !== pull.base.sha || record.candidate.head_branch !== pull.head.ref || record.candidate.head_sha !== pull.head.sha) throw new Error('post-main pinned candidate identity is not exact');
+            const devMovedAfterMerge = record.candidate.source_dev_sha !== live.refs.dev_sha;
+            const sourceTree = await reconciliation.readTreeBinding({getCommit: p => github.rest.repos.getCommit(p), getTree: p => github.rest.git.getTree(p), owner: context.repo.owner, repo: context.repo.repo, ref: record.candidate.source_dev_sha});
+            const subjectTree = await reconciliation.readTreeBinding({getCommit: p => github.rest.repos.getCommit(p), getTree: p => github.rest.git.getTree(p), owner: context.repo.owner, repo: context.repo.repo, ref: context.sha});
+            if (sourceTree.tree_digest !== subjectTree.tree_digest || sourceTree.manifest_digest !== subjectTree.manifest_digest || JSON.stringify(sourceTree.paths) !== JSON.stringify(subjectTree.paths)) throw new Error('post-main tree is not exactly equivalent to pinned source-dev tree');
+            const replay = reconciliation.replayReceipt({authorization: {use_count: 1, reuse_attempts: 1}});
+            if (replay.decision !== 'REFUTED') throw new Error('post-main one-use replay was not refuted');
+            const receipt = {schema: reconciliation.SCHEMA, lifecycle: 'POST_MAIN', decision: devMovedAfterMerge ? 'UNKNOWN' : 'CLOSED', unknown: devMovedAfterMerge ? {stage: 'COHERENCE', step: 'CURRENT_DEV_REF', reason: 'DEV_REF_MOVED', unknown_class: 'LIVE_REF_MOVED', next_operation: 'RETAIN_PINNED_POST_MAIN_RECEIPT_AND_REVIEW_CURRENT_DEV', blocked_by: ['dev-ref']} : null, repository, pull_request: pull.number, merge_commit_sha: context.sha, merge_parent_sha: pull.base.sha, source_dev_sha: record.candidate.source_dev_sha, subject_main_sha: context.sha, current_dev_sha: live.refs.dev_sha, candidate_digest: record.candidate_digest, source_dev_tree: sourceTree, subject_main_tree: subjectTree, tree_equivalent: true, authorization_consumed_once: true, replay_decision: replay.decision, replay_reason: replay.reason, repository_writes: 0, local_test_executions: 0, no_protection_mutation: true, no_check_bypass: true, no_force_push: true};
+            fs.writeFileSync('reconciliation-post-main.json', JSON.stringify(receipt, null, 2) + '\n');
+            await core.summary.addHeading('Linear tree reconciliation post-main').addTable([
+              [{data: 'binding', header: true}, {data: 'value', header: true}],
+              ['source dev', receipt.source_dev_sha],
+              ['subject main', receipt.subject_main_sha],
+              ['tree equivalent', String(receipt.tree_equivalent)],
+              ['authorization consumed once', String(receipt.authorization_consumed_once)],
+              ['replay decision', receipt.replay_decision],
+            ]).write();
+      - name: Upload reconciliation post-main receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: reconciliation-post-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reconciliation-post-main.json
           if-no-files-found: error
           retention-days: 30
 
