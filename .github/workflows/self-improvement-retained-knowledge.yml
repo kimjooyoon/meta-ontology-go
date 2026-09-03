@@ -1,0 +1,237 @@
+name: Compiler self-improvement retained knowledge
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-retained-knowledge.yml
+      - cmd/gooo/emit_dispatch.go
+      - cmd/gooo/generate_pipeline_part01_part01.go
+      - cmd/gooo/generate_pipeline_part04.go
+      - cmd/gooo/self_adoption_generation_part01.go
+      - cmd/gooo/self_retention_*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/generation/semantic_adoption.go
+      - internal/meta/generation/semantic_observation_verify.go
+      - internal/meta/generation/semantic_operation_envelope_*.go
+      - internal/meta/generation/semantic_retention.go
+      - scripts/self-improvement-retained-knowledge/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-retained-knowledge.yml
+      - cmd/gooo/emit_dispatch.go
+      - cmd/gooo/generate_pipeline_part01_part01.go
+      - cmd/gooo/generate_pipeline_part04.go
+      - cmd/gooo/self_adoption_generation_part01.go
+      - cmd/gooo/self_retention_*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/generation/semantic_adoption.go
+      - internal/meta/generation/semantic_observation_verify.go
+      - internal/meta/generation/semantic_operation_envelope_*.go
+      - internal/meta/generation/semantic_retention.go
+      - scripts/self-improvement-retained-knowledge/**
+
+permissions:
+  contents: read
+
+jobs:
+  retained-knowledge:
+    name: certify and consume retained semantic knowledge
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Check out exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - name: Install exact toolchain
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact toolchain and clean source worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Declare, observe, propose, and authorize the real compiler seam
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          mkdir -p "$work"
+          go run ./cmd/gooo check --semantic examples/self-improvement-observation/observation.gooo
+          go run ./cmd/gooo observe examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --out "$work/observation"
+          jq -e '.decision == "CLOSED" and .candidates_emitted == 1 and (.candidates | length) == 1 and .pair_evidence.evidence_available and (.pair_evidence.change_adopted | not)' \
+            "$work/observation/compiler-observation.json" >/dev/null
+          go run ./cmd/gooo propose "$work/observation/compiler-observation.json" --out "$work/proposal"
+          jq -S -n \
+            --arg proposal_digest "$(sha256sum "$work/proposal/adoption-proposal.json" | awk '{print $1}')" \
+            --arg candidate_stable_id "$(jq -r '.candidate.stable_id' "$work/proposal/adoption-proposal.json")" \
+            --arg candidate_input_digest "$(jq -r '.candidate.input_digest' "$work/proposal/adoption-proposal.json")" \
+            --arg contract_digest "$(jq -r '.contract_digest' "$work/observation/compiler-observation.json")" \
+            --arg input_source_digest "$(jq -r '.input_source_digest' "$work/observation/compiler-observation.json")" \
+            '{schema:"gooo/semantic-self-adoption-authorization/v1",authorization_id:"iteration-6-human-approval-fixture",authorization_mode:"explicit-human-input",proposal_digest:$proposal_digest,candidate_stable_id:$candidate_stable_id,candidate_input_digest:$candidate_input_digest,contract_digest:$contract_digest,input_source_digest:$input_source_digest,authorized:true,repository_writes:0,local_test_executions:0}' \
+            > "$work/authorization.json"
+          go run ./cmd/gooo adopt examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --out "$work/adoption"
+          jq -e '.independent_decision == "CLOSED" and .evidence.before_operation_count == 2 and .evidence.after_operation_count == 1 and .evidence.cache_hits == 1 and .evidence.cache_misses == 1' \
+            "$work/adoption/adoption-result.json" >/dev/null
+
+      - name: Certify the immutable caller-owned result
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./cmd/gooo certify examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --out "$work/certify"
+          jq -e '.schema == "gooo/semantic-self-retention-certificate/v1" and .mode == "caller-owned-immutable-certificate" and .repository_writes == 0 and .local_test_executions == 0 and (.normalized_ir_digest | length) == 64 and (.generated_output_digest | length) == 64 and (.compiler_digest | length) == 64 and (.toolchain_digest | length) == 64 and (.verifier_digest | length) == 64' \
+            "$work/certify/retained-knowledge-certificate.json" >/dev/null
+          jq -e '.decision == "CLOSED" and .reason == "EXACT_RETAINED_KNOWLEDGE_CERTIFIED" and .metrics.semantic_operation_count == 1 and .metrics.certificate_hits == 0 and .metrics.certificate_misses == 1 and .metrics.peak_rss_kib >= 0' \
+            "$work/certify/retention-before.json" >/dev/null
+
+      - name: Consume the certificate in a separate later invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --baseline "$work/certify/retention-before.json" \
+            --out "$work/after"
+          jq -e '.decision == "CLOSED" and .reason == "EXACT_RETAINED_KNOWLEDGE_HIT" and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 1 and .metrics.certificate_misses == 0 and .metrics.generated_bytes_equal and .metrics.normalized_semantic_equal' \
+            "$work/after/retention-result.json" >/dev/null
+
+      - name: Replay the same certificate in another independent invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --baseline "$work/certify/retention-before.json" \
+            --out "$work/replay"
+          jq -e '.decision == "CLOSED" and .reason == "EXACT_RETAINED_KNOWLEDGE_HIT" and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 1 and .metrics.generated_bytes_equal and .metrics.normalized_semantic_equal' \
+            "$work/replay/retention-result.json" >/dev/null
+
+      - name: Preserve causal UNKNOWN states for missing evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --out "$work/missing-certificate"
+          jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETAINED_CERTIFICATE" and .unknown.stage == "RETENTION" and .unknown.step == "LOAD_CERTIFICATE" and .unknown.blocked_by == ["retained_certificate"] and .metrics == {semantic_operation_count:0,certificate_hits:0,certificate_misses:0,generated_bytes_equal:false,normalized_semantic_equal:false,wall_ms:0,peak_rss_kib:0,allocation_count:0,allocation_bytes:0,build_ms:0,test_ms:0,executed_tests:0,reused_tests:0}' \
+            "$work/missing-certificate/retention-result.json" >/dev/null
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --out "$work/missing-authorization"
+          jq -e '.decision == "UNKNOWN" and .reason == "MISSING_RETENTION_AUTHORIZATION" and .unknown.stage == "RETENTION" and .unknown.step == "AUTHORIZE_CERTIFICATE" and .unknown.blocked_by == ["retention_authorization"]' \
+            "$work/missing-authorization/retention-result.json" >/dev/null
+
+      - name: Preserve causal REFUTED states for stale and mismatched evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          cp examples/self-improvement-observation/input.fixture "$work/stale-input.gooo"
+          printf '\n' >> "$work/stale-input.gooo"
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input "$work/stale-input.gooo" \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --certificate "$work/certify/retained-knowledge-certificate.json" \
+            --out "$work/stale-input"
+          jq -e '.decision == "REFUTED" and .reason == "RETENTION_CERTIFICATE_MISMATCH" and .unknown == null and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 0 and .metrics.certificate_misses == 1' \
+            "$work/stale-input/retention-result.json" >/dev/null
+          jq -S '.verifier_digest = "0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$work/certify/retained-knowledge-certificate.json" > "$work/mismatched-certificate.json"
+          go run ./cmd/gooo consume examples/self-improvement-observation/observation.gooo \
+            --input examples/self-improvement-observation/input.fixture \
+            --observation "$work/observation/compiler-observation.json" \
+            --proposal "$work/proposal/adoption-proposal.json" \
+            --authorization "$work/authorization.json" \
+            --adoption "$work/adoption/adoption-result.json" \
+            --certificate "$work/mismatched-certificate.json" \
+            --baseline "$work/certify/retention-before.json" \
+            --out "$work/mismatched-certificate"
+          jq -e '.decision == "REFUTED" and .reason == "RETENTION_CERTIFICATE_MISMATCH" and .unknown == null and .metrics.semantic_operation_count == 0 and .metrics.certificate_hits == 0 and .metrics.certificate_misses == 1' \
+            "$work/mismatched-certificate/retention-result.json" >/dev/null
+
+      - name: Independently verify the exact six-case retained loop
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          go run ./scripts/self-improvement-retained-knowledge \
+            -contract examples/self-improvement-observation/observation.gooo \
+            -input examples/self-improvement-observation/input.fixture \
+            -observation "$work/observation/compiler-observation.json" \
+            -proposal "$work/proposal/adoption-proposal.json" \
+            -authorization "$work/authorization.json" \
+            -adoption "$work/adoption/adoption-result.json" \
+            -certificate "$work/certify/retained-knowledge-certificate.json" \
+            -before "$work/certify/retention-before.json" \
+            -after "$work/after/retention-result.json" \
+            -replay "$work/replay/retention-result.json" \
+            -missing-certificate "$work/missing-certificate/retention-result.json" \
+            -missing-authorization "$work/missing-authorization/retention-result.json" \
+            -stale-input "$work/stale-input/retention-result.json" \
+            -mismatched-certificate "$work/mismatched-certificate/retention-result.json" \
+            -envelope-root "$work/envelopes" \
+            -output "$work/retained-loop.json"
+          jq -e '.schema == "gooo/semantic-self-retention-report/v1" and .case_denominator == 6 and .counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_case == 6 and .total_artifacts == 36 and .before_metrics.semantic_operation_count == 1 and .before_metrics.certificate_misses == 1 and .after_metrics.semantic_operation_count == 0 and .after_metrics.certificate_hits == 1 and .generated_bytes_equal and .normalized_semantic_equal and .comparable and (.superiority_claim | not) and .no_superiority_claim and .repository_writes == 0 and .local_test_executions == 0' \
+            "$work/retained-loop.json" >/dev/null
+          test "$(find "$work/envelopes" -type f | wc -l | tr -d ' ')" -eq 36
+          test "$(git status --porcelain)" = ""
+
+      - name: Upload exact-head retained-knowledge evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: compiler-self-improvement-retained-knowledge-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-retained-knowledge
+          if-no-files-found: error
+          retention-days: 30
