@@ -1152,7 +1152,7 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   }
   if (manifest.route === 'promotion_main') {
     if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
-    if (successorProtocol !== null) {
+    if (successorProtocol !== null && manifest.decision === 'PASS') {
       if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null || manifest.installation_repository_scope !== null) {
         throw guardianFailure('successor promotion artifact must not carry unavailable privileged observer snapshots', guardianSuccessor.SUCCESSOR_CODE);
       }
