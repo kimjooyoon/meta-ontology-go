@@ -211,19 +211,25 @@ async function readOwnerAuthorization({listComments, owner, repo, pullNumber, ca
     if (response.data.length < 100) break;
     if (page === 1000) throw new Error('linear-tree reconciliation owner comment pagination exceeded the limit');
   }
-  const matches = [];
+  const records = [];
   for (const comment of comments) {
     if (!comment || !comment.user || comment.user.login !== OWNER.login || comment.user.id !== OWNER.id) continue;
     try {
       const record = JSON.parse(comment.body);
-      validateOwnerAuthorization(record, {candidate, now});
-      matches.push({comment, record});
+      if (record && record.schema === AUTHORIZATION_SCHEMA) records.push({comment, record});
     } catch {
-      // Stale, replayed, and non-matching owner records are evidence, not authorization.
+      // Malformed owner comments are evidence, not authorization.
     }
   }
-  if (matches.length !== 1) throw new Error(matches.length === 0 ? 'linear-tree reconciliation owner authorization is unavailable' : 'linear-tree reconciliation owner authorization is ambiguous');
-  return matches[0];
+  if (records.length === 0) throw new Error('linear-tree reconciliation owner authorization is unavailable');
+  if (records.length !== 1) throw new Error('linear-tree reconciliation owner authorization is ambiguous');
+  try {
+    validateOwnerAuthorization(records[0].record, {candidate, now});
+  } catch (error) {
+    error.authorization = records[0].record;
+    throw error;
+  }
+  return records[0];
 }
 
 function validateRequiredChecks(checks, headSHA) {
@@ -252,7 +258,7 @@ function evaluate(input, {now = new Date()} = {}) {
       addRefuted('CANDIDATE_TUPLE_MISMATCH', 'CANDIDATE_TUPLE', error.message);
     }
   }
-  if (candidate && input.route !== ROUTE) addRefuted('UNAUTHORIZED_ROUTE', 'ROUTE_AUTHORITY', 'ordinary agent-to-main route is not a reconciliation route');
+  if (candidate && input?.route !== ROUTE) addRefuted('UNAUTHORIZED_ROUTE', 'ROUTE_AUTHORITY', 'ordinary agent-to-main route is not a reconciliation route');
   if (!input || !validSHA(input.live_main_sha)) addUnknown(unknownEvidence('COHERENCE', 'CURRENT_MAIN_REF', 'INCOMPLETE_CURRENT_MAIN_REF', 'INCOMPLETE_EVIDENCE', 'READ_CURRENT_MAIN_REF', ['main-ref']), 'CURRENT_MAIN_REF');
   else if (candidate && candidate.base_sha !== input.live_main_sha) addUnknown(unknownEvidence('COHERENCE', 'CURRENT_MAIN_REF', 'MAIN_REF_MOVED', 'LIVE_REF_MOVED', 'REBASE_OR_RECREATE_RECONCILIATION_SNAPSHOT', ['main-ref']), 'CURRENT_MAIN_REF');
   if (!input || !validSHA(input.live_dev_sha)) addUnknown(unknownEvidence('COHERENCE', 'CURRENT_DEV_REF', 'INCOMPLETE_CURRENT_DEV_REF', 'INCOMPLETE_EVIDENCE', 'READ_CURRENT_DEV_REF', ['dev-ref']), 'CURRENT_DEV_REF');
@@ -260,9 +266,9 @@ function evaluate(input, {now = new Date()} = {}) {
   if (candidate && candidate.source_dev_tree && candidate.candidate_tree && (candidate.source_dev_tree.tree_digest !== candidate.candidate_tree.tree_digest || candidate.source_dev_tree.manifest_digest !== candidate.candidate_tree.manifest_digest || !exactArray(candidate.source_dev_tree.paths, candidate.candidate_tree.paths))) {
     addRefuted('TREE_MISMATCH', 'TREE_EQUIVALENCE', 'candidate tree and pinned source-dev tree are not exactly equivalent');
   }
-  if (candidate && input.observed_candidate && !exactObject(candidate, input.observed_candidate)) addRefuted('CANDIDATE_DRIFT', 'CANDIDATE_TUPLE', 'observed candidate differs from the authorized candidate tuple');
-  if (candidate && input.required_checks !== undefined && !validateRequiredChecks(input.required_checks, candidate.head_sha)) addUnknown(unknownEvidence('COHERENCE', 'REQUIRED_CHECKS', 'INCOMPLETE_REQUIRED_CHECKS', 'INCOMPLETE_EVIDENCE', 'WAIT_FOR_EXACT_7_OF_7_REQUIRED_CHECKS', ['required-checks']), 'REQUIRED_CHECKS');
-  if (candidate && input.workflow && (!candidate.workflow || !exactObject(input.workflow, candidate.workflow))) addRefuted('WORKFLOW_IDENTITY_MISMATCH', 'WORKFLOW_IDENTITY', 'workflow identity differs from candidate authorization');
+  if (candidate && input?.observed_candidate && !exactObject(candidate, input.observed_candidate)) addRefuted('CANDIDATE_DRIFT', 'CANDIDATE_TUPLE', 'observed candidate differs from the authorized candidate tuple');
+  if (candidate && input?.required_checks !== undefined && !validateRequiredChecks(input.required_checks, candidate.head_sha)) addUnknown(unknownEvidence('COHERENCE', 'REQUIRED_CHECKS', 'INCOMPLETE_REQUIRED_CHECKS', 'INCOMPLETE_EVIDENCE', 'WAIT_FOR_EXACT_7_OF_7_REQUIRED_CHECKS', ['required-checks']), 'REQUIRED_CHECKS');
+  if (candidate && input?.workflow && (!candidate.workflow || !exactObject(input.workflow, candidate.workflow))) addRefuted('WORKFLOW_IDENTITY_MISMATCH', 'WORKFLOW_IDENTITY', 'workflow identity differs from candidate authorization');
   if (!input || !input.authorization) addUnknown(unknownEvidence('REGRESSION', 'ONE_USE_AUTHORIZATION', 'INCOMPLETE_OWNER_AUTHORIZATION', 'INCOMPLETE_EVIDENCE', 'POST_ONE_FRESH_OWNER_AUTHORIZATION', ['owner-authorization']), 'ONE_USE_AUTHORIZATION');
   else {
     const authorization = input.authorization;
@@ -332,8 +338,15 @@ async function evaluatePromotion({pull, repository, workflowRef, workflowSha, ru
     const candidateTree = await readTreeBinding({getCommit, getTree, owner: repository.split('/')[0], repo: repository.split('/')[1], ref: pull.head.sha});
     const runtime = {workflow_ref: workflowRef, workflow_sha: workflowSha, runtime_ref: runtimeRef, runtime_sha: runtimeSha, check_name: 'CI guardian', app_id: CI_APP_ID};
     const candidate = candidateFromPull({pull, changedFiles, sourceDevSHA: liveBefore.refs.dev_sha, mergeBaseSHA, sourceDevTree, candidateTree, workflow: runtime});
-    const ownerAuthorization = await readOwnerAuthorization({listComments, owner: repository.split('/')[0], repo: repository.split('/')[1], pullNumber: pull.number, candidate, now});
-    const authorization = validateOwnerAuthorization(ownerAuthorization.record, {candidate, repository, now});
+    let ownerAuthorization;
+    let authorization;
+    try {
+      ownerAuthorization = await readOwnerAuthorization({listComments, owner: repository.split('/')[0], repo: repository.split('/')[1], pullNumber: pull.number, candidate, now});
+      authorization = validateOwnerAuthorization(ownerAuthorization.record, {candidate, repository, now});
+    } catch (error) {
+      const evaluation = evaluate({route: ROUTE, candidate, live_main_sha: liveBefore.refs.main_sha, live_dev_sha: liveBefore.refs.dev_sha, authorization: error.authorization || null, workflow: runtime});
+      return {schema: SCHEMA, decision: 'FAIL_CLOSED', code: RECONCILIATION_CODE, reason: evaluation.reason, protocol_decision: evaluation.decision, candidate, candidate_digest: candidateDigest(candidate), evaluation, repository_writes: 0};
+    }
     const evaluation = evaluate({route: ROUTE, candidate, live_main_sha: liveBefore.refs.main_sha, live_dev_sha: liveBefore.refs.dev_sha, authorization, workflow: runtime});
     if (evaluation.decision !== 'CLOSED') return {schema: SCHEMA, decision: 'FAIL_CLOSED', code: RECONCILIATION_CODE, reason: evaluation.reason, protocol_decision: evaluation.decision, candidate, candidate_digest: candidateDigest(candidate), evaluation, repository_writes: 0};
     return protocolReceipt({candidate, authorization, ownerComment: ownerAuthorization.comment, evaluation, sourceDevTree, candidateTree, runtime});
