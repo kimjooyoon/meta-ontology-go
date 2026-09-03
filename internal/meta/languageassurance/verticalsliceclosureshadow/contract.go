@@ -13,6 +13,9 @@ const (
 	// DenominatorMigrationV23Digest is the append-only v23 contract used when
 	// the inherited minimal-loop capability is registered in the corpus.
 	DenominatorMigrationV23Digest = "sha256:122db17eb5ff8236e6d7fdd6ba175429c70543def3af420240344aa65fe8ca0d"
+	// DenominatorMigrationV24Digest is the append-only v24 contract used when
+	// the compiler self-improvement capability is registered in the corpus.
+	DenominatorMigrationV24Digest = "sha256:e22d8c3ba0ba2440f42d4d2028cf9f61d833ae4db0e0d9f10ddf42a0af4973ce"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
