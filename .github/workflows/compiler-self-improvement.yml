@@ -69,18 +69,18 @@ jobs:
           go run ./cmd/gooo check --semantic "$program"
           go run ./cmd/gooo graph dump "$program" > "$work/authority.graph.json"
           jq -e '.schema_version == "gooo-graph/v1" and (.nodes | map(select(.kind == "Activity")) | length) == 8' "$work/authority.graph.json" >/dev/null
-          git show "$BASE_SHA:internal/generator/types_part01.go" > "$work/baseline-types.go"
+          git show "$BASE_SHA:internal/generator/normalize_part02.go" > "$work/baseline-normalize-imports.go"
           go run ./scripts/compiler-self-improvement \
             -mode candidate \
             -program "$program" \
             -graph "$work/authority.graph.json" \
-            -baseline "$work/baseline-types.go" \
-            -candidate "$work/candidate-types.go" \
+            -baseline "$work/baseline-normalize-imports.go" \
+            -candidate "$work/candidate-normalize-imports.go" \
             -evidence "$work/candidate-evidence.json" \
             -envelope-dir "$work/operation-envelope"
-          cmp -s "$work/candidate-types.go" internal/generator/types_part01.go
-          test -z "$(gofmt -d "$work/candidate-types.go")"
-          diff -u "$work/baseline-types.go" "$work/candidate-types.go" > "$work/candidate.patch" || test $? -eq 1
+          cmp -s "$work/candidate-normalize-imports.go" internal/generator/normalize_part02.go
+          test -z "$(gofmt -d "$work/candidate-normalize-imports.go")"
+          diff -u "$work/baseline-normalize-imports.go" "$work/candidate-normalize-imports.go" > "$work/candidate.patch" || test $? -eq 1
           test "$(find "$work/operation-envelope" -mindepth 2 -maxdepth 2 -type f | wc -l | tr -d ' ')" -eq 36
           test "$(git status --porcelain)" = ""
 
@@ -149,7 +149,7 @@ jobs:
             executed="$(jq -s '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/measurements/$side-test/stdout")"
             allocation_count="$(awk -v name="$benchmark_name" '$1 ~ "^" name {for (i = 1; i <= NF; i++) if ($i == "allocs/op") {print $(i - 1); exit}}' "$work/measurements/$side-benchmark/stdout")"
             allocation_bytes="$(awk -v name="$benchmark_name" '$1 ~ "^" name {for (i = 1; i <= NF; i++) if ($i == "B/op") {print $(i - 1); exit}}' "$work/measurements/$side-benchmark/stdout")"
-            go_lines="$(wc -l < "$root/internal/generator/types_part01.go" | tr -d ' ')"
+            go_lines="$(wc -l < "$root/internal/generator/normalize_part02.go" | tr -d ' ')"
             gooo_lines="$(wc -l < "$candidate_root/$program" | tr -d ' ')"
             test -n "$allocation_count"
             test -n "$allocation_bytes"
@@ -195,8 +195,8 @@ jobs:
             --arg contract_digest "$contract_digest" \
             --arg toolchain_digest "$toolchain_digest" \
             --arg cache_state "$cache_state" \
-            --arg primary_metric port_validation_materializations \
-            --arg authority_program generator.validateGoTypes:reuse-port-slices/v1 \
+            --arg primary_metric import_duplicate_key_materializations \
+            --arg authority_program generator.normalizeImports:reuse-import-path-set/v1 \
             --arg graph_hash "$(jq -r .graph_hash "$work/authority.graph.json")" \
             --argjson before "$baseline_metrics" \
             --argjson after "$candidate_metrics" \
@@ -231,7 +231,7 @@ jobs:
             -output "$work/report-replay.json"
           cmp -s "$work/report.json" "$work/report-replay.json"
           jq '{candidate_decision,scenario_suite_decision,envelope_suite_decision,counts,envelope_counts,scenarios:[.scenarios[]|{id,decision,reason,before,after,semantic_guard}]}' "$work/report.json"
-          jq -e '.candidate_decision == "CLOSED" and .scenario_suite_decision == "REFUTED" and .envelope_suite_decision == "REFUTED" and .scenario_denominator == 3 and .envelope_scenario_denominator == 6 and .counts == {CLOSED:1,UNKNOWN:1,REFUTED:1} and .envelope_counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .primary_metric == "port_validation_materializations" and .repository_writes == 0 and .local_test_executions == 0 and (has("score") | not) and (has("aggregate") | not)' "$work/report.json" >/dev/null
+          jq -e '.candidate_decision == "CLOSED" and .scenario_suite_decision == "REFUTED" and .envelope_suite_decision == "REFUTED" and .scenario_denominator == 3 and .envelope_scenario_denominator == 6 and .counts == {CLOSED:1,UNKNOWN:1,REFUTED:1} and .envelope_counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .primary_metric == "import_duplicate_key_materializations" and .repository_writes == 0 and .local_test_executions == 0 and (has("score") | not) and (has("aggregate") | not)' "$work/report.json" >/dev/null
           jq -e '.scenarios[] | select(.id == "NORMAL") | .decision == "CLOSED" and .before.materialization_count == 1 and .after.materialization_count == 0 and .before.wall_ms > 0 and .after.wall_ms > 0 and .before.peak_rss_kib > 0 and .after.peak_rss_kib > 0 and .before.allocation_count >= 0 and .after.allocation_count >= 0 and .semantic_guard.behavior_equal and .semantic_guard.deterministic_equal and .semantic_guard.memory_guardrail and .semantic_guard.time_guardrail and .semantic_guard.ci_passed' "$work/report.json" >/dev/null
           jq -e '.scenarios[] | select(.id == "UNKNOWN") | .decision == "UNKNOWN" and (.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and .unknown.stage == "COHERENCE" and .unknown.step == "COMPARE_EXACT_PAIR" and .unknown.reason == "MISSING_EXACT_INTEGER_PAIR" and .unknown.unknown_class == "INCOMPLETE_EVIDENCE" and .unknown.next_operation == "CAPTURE_EXACT_BEFORE_AFTER" and .unknown.blocked_by == ["before_after_pair"]' "$work/report.json" >/dev/null
           jq -e '.scenarios[] | select(.id == "REFUTED") | .decision == "REFUTED" and (.semantic_guard.memory_guardrail | not) and .reason == "SEMANTIC_OR_GUARDRAIL_NON_REGRESSION_FAILED"' "$work/report.json" >/dev/null
@@ -255,7 +255,7 @@ jobs:
             --arg subject_sha "$HEAD_SHA" \
             --arg base_sha "$BASE_SHA" \
             --arg authority_program examples/compiler-self-improvement/operation-envelope.gooo \
-            --arg target internal/generator/types_part01.go \
+            --arg target internal/generator/normalize_part02.go \
             --arg candidate_digest "$candidate_digest" \
             --arg graph_hash "$graph_hash" \
             --arg report_digest "$report_digest" \
@@ -269,7 +269,7 @@ jobs:
           test "$(git status --porcelain)" = ""
           cp "$work/authority.graph.json" "$artifact/authority.graph.json"
           cp "$work/candidate-evidence.json" "$artifact/candidate-evidence.json"
-          cp "$work/candidate-types.go" "$artifact/generated-candidate-types.go"
+          cp "$work/candidate-normalize-imports.go" "$artifact/generated-candidate-normalize-imports.go"
           cp "$work/candidate.patch" "$artifact/generated-candidate.patch"
           cp "$work/normal.json" "$artifact/normal-observation.json"
           cp "$work/report.json" "$artifact/decision-report.json"
@@ -281,7 +281,7 @@ jobs:
             echo "### Compiler self-improvement"
             jq -r '"- lifecycle: \(.lifecycle)"' "$work/post-adoption-receipt.json"
             jq -r '"- candidate decision: \(.candidate_decision); envelope: \(.envelope_suite_decision); counts: \(.envelope_counts.CLOSED)/\(.envelope_counts.UNKNOWN)/\(.envelope_counts.REFUTED)"' "$work/report.json"
-            jq -r '"- exact materialization count: \(.scenarios[] | select(.id=="NORMAL") | .before.materialization_count) -> \(.after.materialization_count)"' "$work/report.json"
+            jq -r '"- exact import duplicate-key materialization count: \(.scenarios[] | select(.id=="NORMAL") | .before.materialization_count) -> \(.after.materialization_count)"' "$work/report.json"
             jq -r '"- report digest: \(.report_digest)"' "$work/post-adoption-receipt.json"
           } >> "$GITHUB_STEP_SUMMARY"
 

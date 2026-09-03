@@ -3221,6 +3221,18 @@
       ]
     },
     {
+      "branch": "agent/compiler-envelope-self-improvement-iteration-20260904",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        "examples/compiler-self-improvement",
+        "internal/generator/normalize_part02.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
