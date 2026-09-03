@@ -53,14 +53,21 @@ func runAdoption(args []string, reader SourceReader, parser SourceParser, stdout
 	if !reportDiagnostics(diagnostics, stderr) {
 		return exitFailure
 	}
-	observationData, observation, proposalData, proposal, authorizationData, authorization, err := readAdoptionInputs(options, reader)
+	report, err := buildAdoptionReport(options, inputs, reader)
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption: %v\n", err)
 		return exitFailure
 	}
+	return writeAdoptionReport(options.outputDir, report, stdout, stderr)
+}
+
+func buildAdoptionReport(options adoptionOptions, inputs observationInputs, reader SourceReader) (generation.SemanticAdoptionReport, error) {
+	observationData, observation, proposalData, proposal, authorizationData, authorization, err := readAdoptionInputs(options, reader)
+	if err != nil {
+		return generation.SemanticAdoptionReport{}, err
+	}
 	if err := validateAdoptionInputs(inputs, observationData, observation, proposalData, proposal, authorization); err != nil {
-		fmt.Fprintf(stderr, "gooo: adoption: %v\n", err)
-		return exitFailure
+		return generation.SemanticAdoptionReport{}, err
 	}
 	proposalDigest := cache.HashBytes(proposalData).String()
 	authorizationDigest := cache.HashBytes(authorizationData).String()
@@ -76,8 +83,7 @@ func runAdoption(args []string, reader SourceReader, parser SourceParser, stdout
 			adopted, err = runAdoptionPair(inputs.file, authorization, true)
 		}
 		if err != nil {
-			fmt.Fprintf(stderr, "gooo: adoption: compiler execution: %v\n", err)
-			return exitFailure
+			return generation.SemanticAdoptionReport{}, fmt.Errorf("compiler execution: %w", err)
 		}
 		evidence = adoptionEvidence(proposal, proposalDigest, authorizationDigest, before, adopted)
 	} else {
@@ -87,8 +93,7 @@ func runAdoption(args []string, reader SourceReader, parser SourceParser, stdout
 	}
 	decision, reason, unknown, err := generation.VerifySemanticAdoption(proposal, proposalDigest, authorization, authorizationDigest, evidence)
 	if err != nil {
-		fmt.Fprintf(stderr, "gooo: adoption: independent verification: %v\n", err)
-		return exitFailure
+		return generation.SemanticAdoptionReport{}, fmt.Errorf("independent verification: %w", err)
 	}
 	evidence.Decision, evidence.Reason, evidence.Unknown = decision, reason, unknown
 	boundObservation := observation
@@ -119,25 +124,28 @@ func runAdoption(args []string, reader SourceReader, parser SourceParser, stdout
 		}
 		boundObservation.Adoption = &evidence
 	}
-	report := generation.SemanticAdoptionReport{
+	return generation.SemanticAdoptionReport{
 		Schema: generation.SemanticAdoptionReportSchema, Lifecycle: adoptionLifecycle(authorization.Authorized),
 		ObservationDigest: cache.HashBytes(observationData).String(), ProposalDigest: proposalDigest,
 		AuthorizationDigest: authorizationDigest, Proposal: proposal, Authorization: authorization,
 		Evidence: evidence, Observation: boundObservation, BeforeRuntimeMetrics: before.metrics,
 		AfterRuntimeMetrics: adopted.metrics, IndependentDecision: decision, IndependentReason: reason,
 		RepositoryWrites: 0, LocalTestExecutions: 0,
-	}
+	}, nil
+}
+
+func writeAdoptionReport(outputDir string, report generation.SemanticAdoptionReport, stdout, stderr io.Writer) int {
 	reportData, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption: encode report: %v\n", err)
 		return exitFailure
 	}
 	reportData = append(reportData, '\n')
-	if err := writeAdoptionArtifact(options.outputDir, "adoption-result.json", reportData); err != nil {
+	if err := writeAdoptionArtifact(outputDir, "adoption-result.json", reportData); err != nil {
 		fmt.Fprintf(stderr, "gooo: adoption: output: %v\n", err)
 		return exitFailure
 	}
-	fmt.Fprintf(stdout, "adoption: %s (%s)\n", options.outputDir, decision)
+	fmt.Fprintf(stdout, "adoption: %s (%s)\n", outputDir, report.IndependentDecision)
 	return exitOK
 }
 
