@@ -64,6 +64,9 @@ func VerifySemanticOperationEnvelope(outputDir string) (SemanticOperationVerific
 		receipt.SemanticPatchDigest != envelopeDigestBytes(contents["semantic-patch.json"]) {
 		return verification, errors.New("artifact digest mismatch")
 	}
+	if err := verifyBoundSemanticObservation(manifest, patch, receipt); err != nil {
+		return verification, err
+	}
 	requests, err := decodeEnvelopeRequests(contents["effect-requests.ndjson"])
 	if err != nil {
 		return verification, err
@@ -92,13 +95,19 @@ func VerifySemanticOperationEnvelope(outputDir string) (SemanticOperationVerific
 	if string(contents["operation-report.md"]) != renderSemanticOperationReport(receipt, receiptDigest) {
 		return verification, errors.New("report replay mismatch")
 	}
-	return SemanticOperationVerification{
+	verification = SemanticOperationVerification{
 		ScenarioID:    receipt.ScenarioID,
 		Decision:      receipt.Decision.Decision,
 		Reason:        receipt.Decision.Reason,
 		ReceiptDigest: receiptDigest,
 		Metrics:       receipt.Metrics,
-	}, nil
+	}
+	if receipt.Observation != nil {
+		verification.ObservationDecision = receipt.Observation.Decision
+		verification.ObservationReason = receipt.Observation.Reason
+		verification.ObservationCandidates = receipt.Observation.CandidatesEmitted
+	}
+	return verification, nil
 }
 
 func sameEnvelopeActivities(actual []string) bool {

@@ -1,0 +1,28 @@
+package selfimprovementobservation
+namespace self-improvement-observation
+
+entity OperationIntentInput id "gooo://self-improvement-observation/entity/intent-input"
+entity OperationIntent id "gooo://self-improvement-observation/entity/intent"
+entity SourceRevisionInput id "gooo://self-improvement-observation/entity/source-input"
+entity SourceRevision id "gooo://self-improvement-observation/entity/source"
+entity EffectGrantInput id "gooo://self-improvement-observation/entity/grant-input"
+entity EffectGrant id "gooo://self-improvement-observation/entity/grant"
+entity EffectRequestInput id "gooo://self-improvement-observation/entity/request-input"
+entity EffectRequest id "gooo://self-improvement-observation/entity/request"
+entity EffectResultInput id "gooo://self-improvement-observation/entity/result-input"
+entity EffectResult id "gooo://self-improvement-observation/entity/result"
+entity ReplayIdentityInput id "gooo://self-improvement-observation/entity/replay-input"
+entity ReplayIdentity id "gooo://self-improvement-observation/entity/replay"
+entity SemanticOutcomeInput id "gooo://self-improvement-observation/entity/outcome-input"
+entity OperationDecision id "gooo://self-improvement-observation/entity/decision"
+entity ReceiptInput id "gooo://self-improvement-observation/entity/receipt-input"
+entity OperationReceipt id "gooo://self-improvement-observation/entity/receipt"
+
+activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "observation=semantic-activity;operation_id=bidir.lower.entity-fields-v1;phase=semantic-lowering;pure=true;repository_writes=0;local_test_executions=0"
+activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "input_identity=normalized-semantic-ir/sha256"
+activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "effects=read:source|read:semantic-ir"
+activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "role=bounded-run;effects=read:source|read:semantic-ir"
+activity RecordEffectResult(EffectResultInput) -> EffectResult computes "role=exact-phase-event;pure=true"
+activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity computes "role=canonical-input-digest"
+activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision computes "candidate_rule=same-pure-operation-and-input-digest-count>1"
+activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt computes "role=proposal-only;repository_writes=0;local_test_executions=0"
