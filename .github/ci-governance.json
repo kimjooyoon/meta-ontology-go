@@ -3087,6 +3087,96 @@
         "scripts/ci-proof/guardian.js",
         "scripts/ci-proof/guardian_test.js"
       ]
+    },
+    {
+      "branch": "agent/foundation-authorization-protocol-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/foundation-authorization-protocol.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_foundation_authorization_protocol_20260903.go",
+        "scripts/ci-proof/foundation_authorization_protocol.js",
+        "scripts/ci-proof/foundation_authorization_protocol_test.js"
+      ]
+    },
+    {
+      "branch": "agent/ontology-visuals",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "README.md",
+        "docs/assets/ontology-visuals",
+        "internal/verify/scope_ontology_visuals.go"
+      ]
+    },
+    {
+      "branch": "agent/guardian-successor-protocol-adoption-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_successor_protocol_adoption_20260903.go",
+        "scripts/ci-proof/foundation_authorization_protocol.js",
+        "scripts/ci-proof/guardian.js",
+        "scripts/ci-proof/guardian_successor.js",
+        "scripts/ci-proof/guardian_successor_test.js"
+      ]
+    },
+    {
+      "branch": "agent/guardian-successor-artifact-validation-fix-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_guardian_successor_artifact_validation_fix_20260903.go",
+        "scripts/ci-proof/guardian.js"
+      ]
+    },
+    {
+      "branch": "agent/guardian-kernel-digest-alignment-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_guardian_kernel_digest_alignment_20260903.go",
+        "scripts/ci-proof/guardian.js"
+      ]
+    },
+    {
+      "branch": "agent/guardian-proof-check-suite-authority-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_guardian_proof_check_suite_authority_20260903.go"
+      ]
+    },
+    {
+      "branch": "agent/guardian-preserve-promotion-observers-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_preserve_promotion_observers_20260903.go"
+      ]
+    },
+    {
+      "branch": "agent/guardian-validate-preserved-observers-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_guardian_validate_preserved_observers_20260903.go",
+        "scripts/ci-proof/guardian.js"
+      ]
+    },
+    {
+      "branch": "agent/guardian-successor-fail-closed-observers-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-guardian.yml",
+        "internal/verify/scope_guardian_successor_fail_closed_observers_20260903.go",
+        "scripts/ci-proof/guardian.js"
+      ]
     }
   ],
   "protected_kernel_paths": [
