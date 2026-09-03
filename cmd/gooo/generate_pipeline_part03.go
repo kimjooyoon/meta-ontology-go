@@ -40,7 +40,7 @@ type generateOptions struct {
 }
 
 func parseGenerateArguments(args []string) (generateOptions, error) {
-	usage := "usage: gooo generate <file.gooo> --out <directory> [--retention-report] [--certificate FILE --contract FILE --observation FILE --proposal FILE --authorization FILE --adoption FILE]"
+	usage := "usage: gooo generate <file.gooo> --out <directory>"
 	if len(args) == 0 {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
