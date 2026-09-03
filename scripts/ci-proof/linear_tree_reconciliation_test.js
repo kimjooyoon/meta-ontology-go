@@ -14,20 +14,20 @@ const authorization = {schema: reconciliation.AUTHORIZATION_SCHEMA, state: 'AUTH
 
 test('NORMAL closes only after exact tree, current refs, authorization, and 7/7 checks', () => {
   const result = reconciliation.evaluate({route: reconciliation.ROUTE, candidate, live_main_sha: pull.base.sha, live_dev_sha: candidate.source_dev_sha, authorization, workflow, required_checks: reconciliation.REQUIRED_CHECKS.map((name) => ({name, status: 'completed', conclusion: 'success', head_sha: pull.head.sha, app_id: 15368}))});
-  assert.equal(result.decision, 'CLOSED');
+  assert.equal(result.decision, 'CLOSED', JSON.stringify(result));
   assert.equal(result.unknown, null);
 });
 
 test('UNKNOWN preserves the exact six-field evidence shape when dev moves', () => {
   const result = reconciliation.evaluate({route: reconciliation.ROUTE, candidate, live_main_sha: pull.base.sha, live_dev_sha: sha('2'), authorization});
-  assert.equal(result.decision, 'UNKNOWN');
+  assert.equal(result.decision, 'UNKNOWN', JSON.stringify(result));
   assert.deepEqual(Object.keys(result.unknown), reconciliation.UNKNOWN_FIELDS);
 });
 
 test('REFUTED wins for a tree mismatch and ordinary main route', () => {
   const mismatched = {...candidate, candidate_tree: {...tree, tree_digest: reconciliation.sha256('different')}};
   const result = reconciliation.evaluate({route: 'promotion_main', candidate: mismatched, live_main_sha: pull.base.sha, live_dev_sha: candidate.source_dev_sha, authorization});
-  assert.equal(result.decision, 'REFUTED');
+  assert.equal(result.decision, 'REFUTED', JSON.stringify(result));
   assert.equal(result.refuted.reason, 'UNAUTHORIZED_ROUTE');
 });
 
