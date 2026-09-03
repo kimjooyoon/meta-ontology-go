@@ -41,6 +41,10 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runAdoptionProposal(args[1:], OSFileReader{}, stdout, stderr)
 	case "adopt":
 		return runAdoption(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
+	case "certify":
+		return runRetentionCertify(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
+	case "consume":
+		return runRetentionConsume(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "roundtrip":
 		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "query":

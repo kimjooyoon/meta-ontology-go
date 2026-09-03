@@ -18,11 +18,11 @@ entity OperationDecision id "gooo://self-improvement-observation/entity/decision
 entity ReceiptInput id "gooo://self-improvement-observation/entity/receipt-input"
 entity OperationReceipt id "gooo://self-improvement-observation/entity/receipt"
 
-activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "observation=semantic-activity;operation_id=bidir.lower.entity-fields-v1;phase=semantic-lowering;pure=true;repository_writes=0;local_test_executions=0"
+activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "observation=semantic-activity;operation_id=bidir.lower.entity-fields-v1;phase=semantic-lowering;pure=true;repository_writes=0;local_test_executions=0;retention=immutable-caller-owned-certificate;lifecycle=declare-policy|observe|propose|authorize|verify|certify|consume"
 activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "input_identity=normalized-semantic-ir/sha256"
 activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "effects=read:source|read:semantic-ir"
 activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "role=bounded-run;effects=read:source|read:semantic-ir"
 activity RecordEffectResult(EffectResultInput) -> EffectResult computes "role=exact-phase-event;pure=true"
 activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity computes "role=canonical-input-digest"
 activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision computes "candidate_rule=same-pure-operation-and-input-digest-count>1"
-activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt computes "role=proposal-only;repository_writes=0;local_test_executions=0"
+activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt computes "role=proposal-only;repository_writes=0;local_test_executions=0;retention=verify-before-consume;flow=declare-policy->observe/propose->authorize->verify/certify->consume->result/evidence;denied=UNKNOWN;stale-or-mismatch=REFUTED"
