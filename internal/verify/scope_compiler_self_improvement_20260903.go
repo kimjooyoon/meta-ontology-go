@@ -26,6 +26,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/compiler-self-improvement.yml",
+		".github/workflows/transformation-effect.yml",
 		"examples/compiler-self-improvement",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/generator/types_part01.go",
