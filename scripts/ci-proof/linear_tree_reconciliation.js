@@ -356,10 +356,32 @@ async function evaluatePromotion({pull, repository, workflowRef, workflowSha, ru
 }
 
 function finalizePromotionReceipt(receipt, {requiredChecks, currentDevSHA, currentMainSHA, now = new Date()} = {}) {
-  if (!receipt || receipt.schema !== SCHEMA || receipt.decision !== 'PASS' || receipt.protocol_decision !== 'CLOSED' || receipt.candidate_digest !== candidateDigest(receipt.candidate) || !receipt.candidate || receipt.candidate.source_dev_sha !== currentDevSHA || receipt.candidate.base_sha !== currentMainSHA || !validateRequiredChecks(requiredChecks, receipt.candidate.head_sha)) {
-    const unknown = unknownEvidence('COHERENCE', 'REQUIRED_CHECKS', receipt?.candidate?.source_dev_sha !== currentDevSHA ? 'DEV_REF_MOVED' : 'INCOMPLETE_REQUIRED_CHECKS', 'INCOMPLETE_EVIDENCE', 'RETRY_WITH_CURRENT_EXACT_HEAD', ['reconciliation-finalization']);
-    return {schema: SCHEMA, decision: receipt?.candidate?.source_dev_sha !== currentDevSHA ? 'UNKNOWN' : 'UNKNOWN', reason: unknown.reason, precedence: DECISION_PRECEDENCE.join('>'), unknown, refuted: null, cells: [], checked_at: now.toISOString()};
+  const baseResult = {schema: SCHEMA, precedence: DECISION_PRECEDENCE.join('>'), cells: [], checked_at: now.toISOString()};
+  const refuted = (reason, detail = null) => ({...baseResult, decision: 'REFUTED', reason, unknown: null, refuted: {reason, detail}});
+  const unknown = (step, reason, nextOperation, blockedBy) => {
+    const evidence = unknownEvidence('COHERENCE', step, reason, 'INCOMPLETE_EVIDENCE', nextOperation, blockedBy);
+    return {...baseResult, decision: 'UNKNOWN', reason: evidence.reason, unknown: evidence, refuted: null};
+  };
+  if (!receipt || receipt.schema !== SCHEMA || receipt.decision !== 'PASS' || receipt.protocol_decision !== 'CLOSED' || !receipt.candidate || receipt.candidate_digest !== candidateDigest(receipt.candidate)) {
+    return refuted('MALFORMED_RECONCILIATION_RECEIPT');
   }
+  try {
+    validateCandidate(receipt.candidate);
+  } catch (error) {
+    return refuted('CANDIDATE_TUPLE_MISMATCH', error.message || String(error));
+  }
+  if (!receipt.authorization || receipt.authorization.use_count !== 0 || receipt.authorization.reuse_attempts !== 0) {
+    return refuted('NONCE_REPLAY');
+  }
+  const sourceTree = receipt.source_dev_tree || receipt.candidate.source_dev_tree;
+  const candidateTree = receipt.candidate_tree || receipt.candidate.candidate_tree;
+  if (!validTreeBinding(sourceTree) || !validTreeBinding(candidateTree) || sourceTree.tree_digest !== candidateTree.tree_digest || sourceTree.manifest_digest !== candidateTree.manifest_digest || !exactArray(sourceTree.paths, candidateTree.paths)) {
+    return refuted('TREE_MISMATCH', 'candidate tree and pinned source-dev tree are not exactly equivalent');
+  }
+  if (!validSHA(currentDevSHA) || !validSHA(currentMainSHA)) return unknown('CURRENT_REFS', 'INCOMPLETE_CURRENT_REFS', 'READ_CURRENT_MAIN_AND_DEV_REFS', ['main-ref', 'dev-ref']);
+  if (receipt.candidate.source_dev_sha !== currentDevSHA) return unknown('CURRENT_DEV_REF', 'DEV_REF_MOVED', 'RETRY_WITH_CURRENT_EXACT_HEAD', ['dev-ref']);
+  if (receipt.candidate.base_sha !== currentMainSHA) return unknown('CURRENT_MAIN_REF', 'MAIN_REF_MOVED', 'RETRY_WITH_CURRENT_EXACT_HEAD', ['main-ref']);
+  if (!validateRequiredChecks(requiredChecks, receipt.candidate.head_sha)) return unknown('REQUIRED_CHECKS', 'INCOMPLETE_REQUIRED_CHECKS', 'WAIT_FOR_EXACT_7_OF_7_REQUIRED_CHECKS', ['required-checks']);
   return {schema: SCHEMA, decision: 'CLOSED', reason: 'EXACT_7_OF_7_REQUIRED_CHECKS_AND_TREE_EQUIVALENCE', precedence: DECISION_PRECEDENCE.join('>'), unknown: null, refuted: null, required_checks: REQUIRED_CHECKS, checked_at: now.toISOString()};
 }
 
