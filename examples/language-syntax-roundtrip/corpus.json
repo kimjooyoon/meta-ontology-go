@@ -56,6 +56,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "compiler-self-improvement-operation-envelope",
+      "path": "examples/compiler-self-improvement/operation-envelope.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "causal-ci-selection",
       "path": "examples/causal-ci-selection/main.gooo",
       "kind": "VALID",
