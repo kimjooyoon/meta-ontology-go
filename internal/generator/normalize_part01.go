@@ -12,7 +12,6 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 		return SemanticIR{}, fmt.Errorf("generator: invalid Go package %q", input.Package)
 	}
 	result := copyIR(input)
-	canonicalizeIRCollections(&result)
 	if err := normalizeImports(&result); err != nil {
 		return SemanticIR{}, err
 	}
@@ -35,38 +34,24 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 	return result, nil
 }
 
-// canonicalizeIRCollections gives semantically equivalent nil and empty
-// collections one wire representation without changing caller-owned input.
-// This keeps generated metadata digests independent of how an adapter
-// materializes absent optional declarations.
-func canonicalizeIRCollections(ir *SemanticIR) {
-	ir.Imports = append([]Import{}, ir.Imports...)
-	ir.Entities = append([]Entity{}, ir.Entities...)
-	for index := range ir.Entities {
-		ir.Entities[index].Fields = append([]Field{}, ir.Entities[index].Fields...)
-	}
-	ir.Activities = append([]Activity{}, ir.Activities...)
-	for index := range ir.Activities {
-		ir.Activities[index].Inputs = append([]Port{}, ir.Activities[index].Inputs...)
-		ir.Activities[index].Outputs = append([]Port{}, ir.Activities[index].Outputs...)
-		ir.Activities[index].Slots = append([]Slot{}, ir.Activities[index].Slots...)
-	}
-}
 func copyIR(input SemanticIR) SemanticIR {
 	result := input
-	result.Imports = append([]Import(nil), input.Imports...)
-	result.Entities = append([]Entity(nil), input.Entities...)
-	result.Activities = append([]Activity(nil), input.Activities...)
+	// Copying with a non-nil zero-length seed preserves the canonical empty
+	// collection representation while folding canonicalization into the only
+	// collection copy pass.
+	result.Imports = append([]Import{}, input.Imports...)
+	result.Entities = append([]Entity{}, input.Entities...)
+	result.Activities = append([]Activity{}, input.Activities...)
 	for index := range result.Entities {
-		result.Entities[index].Fields = append([]Field(nil), input.Entities[index].Fields...)
+		result.Entities[index].Fields = append([]Field{}, input.Entities[index].Fields...)
 		for fieldIndex := range result.Entities[index].Fields {
 			result.Entities[index].Fields[fieldIndex].Aliases = append([]string(nil), input.Entities[index].Fields[fieldIndex].Aliases...)
 		}
 	}
 	for index := range result.Activities {
-		result.Activities[index].Inputs = append([]Port(nil), input.Activities[index].Inputs...)
-		result.Activities[index].Outputs = append([]Port(nil), input.Activities[index].Outputs...)
-		result.Activities[index].Slots = append([]Slot(nil), input.Activities[index].Slots...)
+		result.Activities[index].Inputs = append([]Port{}, input.Activities[index].Inputs...)
+		result.Activities[index].Outputs = append([]Port{}, input.Activities[index].Outputs...)
+		result.Activities[index].Slots = append([]Slot{}, input.Activities[index].Slots...)
 	}
 	return result
 }
