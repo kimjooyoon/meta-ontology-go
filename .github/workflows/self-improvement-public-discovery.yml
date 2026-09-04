@@ -1,0 +1,273 @@
+name: Public self-observation discovery
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/self-improvement-public-discovery.yml'
+      - 'cmd/gooo/cli_json_part01.go'
+      - 'cmd/gooo/generate_part01.go'
+      - 'cmd/gooo/generate_pipeline_part03.go'
+      - 'examples/self-improvement-discovery/**'
+      - 'internal/meta/discoverypolicy/**'
+      - 'internal/meta/publicdiscovery/**'
+      - 'scripts/self-improvement-discovery-policy/**'
+      - 'scripts/self-improvement-public-discovery/**'
+      - 'go.mod'
+      - 'go.sum'
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/self-improvement-public-discovery.yml'
+      - 'cmd/gooo/cli_json_part01.go'
+      - 'cmd/gooo/generate_part01.go'
+      - 'cmd/gooo/generate_pipeline_part03.go'
+      - 'examples/self-improvement-discovery/**'
+      - 'internal/meta/discoverypolicy/**'
+      - 'internal/meta/publicdiscovery/**'
+      - 'scripts/self-improvement-discovery-policy/**'
+      - 'scripts/self-improvement-public-discovery/**'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+
+jobs:
+  public-discovery:
+    name: Public self-observation evidence
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+
+    steps:
+      - name: Check out the exact subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install the exact toolchain
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Materialize exact logical workspace
+        uses: ./.github/actions/materialize
+        with:
+          expected-sha: ${{ env.HEAD_SHA }}
+
+      - name: Bind toolchain and source worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test -n "$BASE_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Regenerate and replay the discovery policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/public-discovery"
+          mkdir -p "$work/policy"
+          contract=examples/self-improvement-discovery/discovery.gooo
+          generated="$work/policy/evaluator.go"
+          report="$work/policy/report.json"
+          go run ./scripts/self-improvement-discovery-policy \
+            -contract "$contract" \
+            -expected internal/meta/discoverypolicy/generated/evaluator.go \
+            -output "$generated" \
+            -report "$report"
+          cmp -s "$generated" internal/meta/discoverypolicy/generated/evaluator.go
+          jq -e '
+            .schema == "gooo/public-self-observation-policy-generation/v1" and
+            .generated_files == 1 and .generated_lines > 0 and
+            .policy_activities_expected == 1 and .policy_activities_observed == 1 and
+            (.cases | length) == 6 and .generated_evaluator_cases_bound == 6 and
+            .unbound_cases == 0 and .duplicate_cases == 0 and
+            .regeneration_byte_mismatches == 0 and .repository_writes == 0 and
+            .local_build_executions == 0 and .local_test_executions == 0' "$report" >/dev/null
+
+      - name: Prove policy counterfactual changes the evaluator
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/public-discovery"
+          mkdir -p "$work/counterfactual"
+          sed 's/discovery-case=SINGLE_COMPARABLE_OBSERVATION:UNKNOWN/discovery-case=SINGLE_COMPARABLE_OBSERVATION:CLOSED/' \
+            examples/self-improvement-discovery/discovery.gooo > "$work/counterfactual/discovery.gooo"
+          go run ./scripts/self-improvement-discovery-policy \
+            -contract "$work/counterfactual/discovery.gooo" \
+            -output "$work/counterfactual/evaluator.go" \
+            -report "$work/counterfactual/report.json"
+          base_digest="$(jq -r '.evaluator_digest' "$work/policy/report.json")"
+          counter_digest="$(jq -r '.evaluator_digest' "$work/counterfactual/report.json")"
+          test "$base_digest" != "$counter_digest"
+          jq -e '.cases[] | select(.id == "SINGLE_COMPARABLE_OBSERVATION") | .decision == "CLOSED"' \
+            "$work/counterfactual/report.json" >/dev/null
+          test "$(git status --porcelain)" = ""
+
+      - name: Run independent ordinary generate observations
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/public-discovery"
+          project=examples/self-improvement-discovery/project.gooo
+          alternate=examples/self-improvement-discovery/project-alt.gooo
+          source_before="$work/project.sha256.before"
+          source_after="$work/project.sha256.after"
+          sha256sum "$project" > "$source_before"
+          mkdir -p "$work/first" "$work/second" "$work/third" "$work/pair/ledger" "$work/incompatible/first" "$work/incompatible/second" "$work/tampered/ledger" "$work/contradictory/ledger"
+
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/first/generated" --observation-ledger "$work/first/ledger" --json > "$work/first/cli.json"
+          jq -e '
+            .observation_decision == "UNKNOWN" and
+            .observation_reason == "INSUFFICIENT_COMPARABLE_OBSERVATIONS" and
+            (.observation_report | length) > 0' "$work/first/cli.json" >/dev/null
+          jq -e '
+            .schema == "gooo/public-self-observation-report/v1" and
+            .decision == "UNKNOWN" and
+            .reason == "INSUFFICIENT_COMPARABLE_OBSERVATIONS" and
+            .case_ids == ["SINGLE_COMPARABLE_OBSERVATION"] and
+            .invocations_observed == 1 and .comparable_observations == 1 and
+            .candidates_emitted == 0 and .artifact_denominator == 4 and .artifact_count == 4 and
+            .semantic_operations == 1 and .policy_activities_expected == 1 and
+            .policy_activities_observed == 1 and .generated_evaluator_mismatches == 0 and
+            .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0 and
+            (.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"] and
+            .unknown.stage == "PUBLIC_SELF_OBSERVATION" and
+            .unknown.step == "COMPARE_CALLER_OWNED_LEDGER" and
+            .unknown.reason == "INSUFFICIENT_COMPARABLE_OBSERVATIONS" and
+            .unknown.unknown_class == "INCOMPLETE_EVIDENCE" and
+            .unknown.next_operation == "RECORD_ONE_MORE_EXACT_COMPARABLE_GENERATE" and
+            .unknown.blocked_by == ["comparable_observation_quorum"]' "$work/first/ledger/observation-report.json" >/dev/null
+          cp "$work/first/ledger/invocation-receipt.json" "$work/first/invocation-receipt.json"
+          cp "$work/first/ledger/observation-ledger.ndjson" "$work/first/observation-ledger.ndjson"
+          cp "$work/first/ledger/observation-report.md" "$work/first/observation-report.md"
+          jq --arg receipt "$work/first/invocation-receipt.json" \
+            --arg machine "$work/first/observation-report.json" \
+            --arg human "$work/first/observation-report.md" \
+            '.invocation_receipt_path = $receipt | .machine_report_path = $machine | .human_report_path = $human' \
+            "$work/first/ledger/observation-report.json" > "$work/first/observation-report.json"
+
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/second/generated" --observation-ledger "$work/first/ledger" --json > "$work/second/cli.json"
+          jq -e '
+            .decision == "CLOSED" and
+            .case_ids == ["EXACT_PAIR_CANDIDATE","DETERMINISTIC_REPLAY"] and
+            .invocations_observed == 2 and .comparable_observations == 2 and
+            .candidates_emitted == 1 and .artifact_denominator == 5 and .artifact_count == 5 and
+            .candidate_bytes_equal and .candidate_byte_replay_equal and
+            .semantic_operations == 1 and .policy_activities_expected == 1 and
+            .policy_activities_observed == 1 and .generated_evaluator_mismatches == 0 and
+            .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
+            "$work/first/ledger/observation-report.json" >/dev/null
+          cp "$work/first/ledger/invocation-receipt.json" "$work/second/invocation-receipt.json"
+          cp "$work/first/ledger/observation-report.md" "$work/second/observation-report.md"
+          jq --arg receipt "$work/second/invocation-receipt.json" \
+            --arg machine "$work/second/observation-report.json" \
+            --arg human "$work/second/observation-report.md" \
+            '.invocation_receipt_path = $receipt | .machine_report_path = $machine | .human_report_path = $human' \
+            "$work/first/ledger/observation-report.json" > "$work/second/observation-report.json"
+          cp "$work/first/ledger/observation-ledger.ndjson" "$work/pair/ledger/observation-ledger.ndjson"
+
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/third/generated" --observation-ledger "$work/first/ledger" --json > "$work/third/cli.json"
+          jq -e '.decision == "CLOSED" and .candidates_emitted == 1 and .artifact_count == 5 and .candidate_byte_replay_equal' \
+            "$work/third/ledger/observation-report.json" >/dev/null
+          jq -e '
+            .execution_allowed == false and .authorization_required == true and
+            .proposal_required == true and .certificate_required == true and
+            .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
+            "$(jq -r '.candidate_path' "$work/second/observation-report.json")" >/dev/null
+          cmp -s "$(jq -r '.candidate_path' "$work/second/observation-report.json")" \
+            "$(jq -r '.candidate_path' "$work/third/ledger/observation-report.json")"
+
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/incompatible/first/generated" --observation-ledger "$work/incompatible/ledger" --json > "$work/incompatible/first/cli.json"
+          go run ./cmd/gooo generate "$alternate" \
+            --out "$work/incompatible/second/generated" --observation-ledger "$work/incompatible/ledger" --json > "$work/incompatible/second/cli.json"
+          jq -e '
+            .decision == "UNKNOWN" and .reason == "CURRENT_GROUP_BELOW_QUORUM" and
+            .case_ids == ["INCOMPATIBLE_OBSERVATION_GROUP"] and
+            .comparable_observations == 1 and .incompatible_observations == 1 and
+            .candidates_emitted == 0 and .artifact_denominator == 4 and .artifact_count == 4 and
+            .unknown.blocked_by == ["same_source_input_toolchain_contract_group"]' \
+            "$work/incompatible/second/ledger/observation-report.json" >/dev/null
+
+          cp "$work/first/ledger/observation-ledger.ndjson" "$work/tampered/ledger/observation-ledger.ndjson"
+          sed -i 's/"source_digest":"[0-9a-f]\{64\}"/"source_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"/' \
+            "$work/tampered/ledger/observation-ledger.ndjson"
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/tampered/generated" --observation-ledger "$work/tampered/ledger" --json > "$work/tampered/cli.json"
+          jq -e '
+            .decision == "REFUTED" and .reason == "TAMPERED_LEDGER_ENTRY" and
+            .case_ids == ["TAMPERED_LEDGER_ENTRY"] and .candidates_emitted == 0 and
+            .artifact_denominator == 4 and .artifact_count == 4 and .candidate_byte_mismatches == 0' \
+            "$work/tampered/ledger/observation-report.json" >/dev/null
+
+          go run ./scripts/self-improvement-public-discovery \
+            -forge-contradiction "$work/pair/ledger/observation-ledger.ndjson" \
+            -forge-output "$work/contradictory/ledger/observation-ledger.ndjson"
+          go run ./cmd/gooo generate "$project" \
+            --out "$work/contradictory/generated" --observation-ledger "$work/contradictory/ledger" --json > "$work/contradictory/cli.json"
+          jq -e '
+            .decision == "REFUTED" and .reason == "CONTRADICTORY_SEMANTIC_OR_OUTPUT_DIGEST" and
+            .case_ids == ["CONTRADICTORY_OUTPUTS"] and .contradictory_observations == 1 and
+            .candidates_emitted == 0 and .artifact_denominator == 4 and .artifact_count == 4' \
+            "$work/contradictory/ledger/observation-report.json" >/dev/null
+
+          sha256sum "$project" > "$source_after"
+          cmp -s "$source_before" "$source_after"
+          grep -q 'Evidence remains bounded' "$work/first/observation-report.md"
+          grep -q 'Decision: `CLOSED`' "$work/second/observation-report.md"
+          grep -q 'Execution allowed: `false`' "$work/second/observation-report.md"
+          test "$(git status --porcelain)" = ""
+
+      - name: Independently verify all six fixed discovery cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/public-discovery"
+          jq -n \
+            --arg single "$work/first/observation-report.json" \
+            --arg single_ledger "$work/first/observation-ledger.ndjson" \
+            --arg pair "$work/second/observation-report.json" \
+            --arg pair_ledger "$work/pair/ledger/observation-ledger.ndjson" \
+            --arg incompatible "$work/incompatible/second/ledger/observation-report.json" \
+            --arg incompatible_ledger "$work/incompatible/ledger/observation-ledger.ndjson" \
+            --arg tampered "$work/tampered/ledger/observation-report.json" \
+            --arg tampered_ledger "$work/tampered/ledger/observation-ledger.ndjson" \
+            --arg contradictory "$work/contradictory/ledger/observation-report.json" \
+            --arg contradictory_ledger "$work/contradictory/ledger/observation-ledger.ndjson" \
+            '{schema:"gooo/public-self-observation-verification-input/v1",cases:[
+              {id:"EXACT_PAIR_CANDIDATE",report:$pair,ledger:$pair_ledger},
+              {id:"DETERMINISTIC_REPLAY",report:$pair,ledger:$pair_ledger},
+              {id:"SINGLE_COMPARABLE_OBSERVATION",report:$single,ledger:$single_ledger},
+              {id:"INCOMPATIBLE_OBSERVATION_GROUP",report:$incompatible,ledger:$incompatible_ledger},
+              {id:"TAMPERED_LEDGER_ENTRY",report:$tampered,ledger:$tampered_ledger},
+              {id:"CONTRADICTORY_OUTPUTS",report:$contradictory,ledger:$contradictory_ledger}]}' \
+            > "$work/verification-input.json"
+          go run ./scripts/self-improvement-public-discovery \
+            -contract examples/self-improvement-discovery/discovery.gooo \
+            -manifest "$work/verification-input.json" \
+            -output "$work/verification-report.json"
+          jq -e '
+            .schema == "gooo/public-self-observation-verification/v1" and
+            .case_denominator == 6 and
+            .case_ids == ["EXACT_PAIR_CANDIDATE","DETERMINISTIC_REPLAY","SINGLE_COMPARABLE_OBSERVATION","INCOMPATIBLE_OBSERVATION_GROUP","TAMPERED_LEDGER_ENTRY","CONTRADICTORY_OUTPUTS"] and
+            .closed_cases == 2 and .unknown_cases == 2 and .refuted_cases == 2 and
+            .policy_activities_expected == 1 and .policy_activities_observed == 1 and
+            .generated_evaluator_mismatches == 0 and .malformed_ledger_entries == 1 and
+            .tampered_ledger_entries == 1 and .contradictory_outputs == 1 and
+            .candidate_byte_mismatches == 0 and .repository_writes == 0 and
+            .local_build_executions == 0 and .local_test_executions == 0 and
+            (.cases | length) == 6' "$work/verification-report.json" >/dev/null
+          test "$(git status --porcelain)" = ""

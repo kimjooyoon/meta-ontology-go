@@ -28,6 +28,10 @@ type jsonReport struct {
 	PreviousGo               string          `json:"previous_go,omitempty"`
 	ProtectedBytesEqual      *bool           `json:"protected_bytes_equal,omitempty"`
 	SemanticHash             string          `json:"semantic_hash,omitempty"`
+	ObservationReport        string          `json:"observation_report,omitempty"`
+	ObservationDecision      string          `json:"observation_decision,omitempty"`
+	ObservationReason        string          `json:"observation_reason,omitempty"`
+	ObservationCandidate     string          `json:"observation_candidate,omitempty"`
 	OriginalSemanticHash     string          `json:"original_semantic_hash,omitempty"`
 	RoundTrippedSemanticHash string          `json:"round_tripped_semantic_hash,omitempty"`
 	Equivalent               *bool           `json:"equivalent,omitempty"`

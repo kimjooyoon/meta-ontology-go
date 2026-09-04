@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
-	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"io"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
 func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout, stderr io.Writer) int {
@@ -23,6 +27,7 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 	if code != exitOK {
 		return code
 	}
+	started := time.Now()
 	if options.publicRetentionRequested() {
 		return runPublicGenerate(options, input, reader, parser, jsonMode, stdout, stderr, deadline)
 	}
@@ -36,7 +41,37 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 	if code := writeGenerateArtifacts(artifacts, jsonMode, stdout, stderr); code != exitOK {
 		return code
 	}
-	return reportGenerateSuccess(options, input, artifacts, jsonMode, stdout)
+	var discovery *publicdiscovery.Result
+	if options.observationLedgerDir != "" {
+		manifestDigest, err := publicObservationManifestDigest(artifacts.manifest)
+		if err != nil {
+			return reportGenerateError(jsonMode, stdout, stderr, options.observationLedgerDir, "observation.manifest", "observation manifest", err, input.file)
+		}
+		observed, err := publicdiscovery.Record(options.observationLedgerDir, publicdiscovery.Input{
+			SourceDigest: cache.HashBytes(input.source).String(), InputSemanticDigest: artifacts.ir.StableHash(),
+			PreviousGoDigest: cache.HashBytes(input.previousGo).String(), ToolchainDigest: generation.SemanticRetentionToolchainDigest(),
+			ContractDigest: publicdiscovery.PolicySourceDigest(), EvaluatorDigest: publicdiscovery.GeneratedEvaluatorDigest(),
+			GeneratedSemanticDigest: artifacts.ir.StableHash(), GeneratedOutputDigest: cache.HashBytes(artifacts.result.Source).String(),
+			GeneratedManifestDigest: manifestDigest,
+		}, int64(time.Since(started)/time.Millisecond), readPeakRSSKib())
+		if err != nil {
+			return reportGenerateError(jsonMode, stdout, stderr, options.observationLedgerDir, "observation.record", "record observation", err, input.file)
+		}
+		discovery = &observed
+	}
+	return reportGenerateSuccess(options, input, artifacts, discovery, jsonMode, stdout)
+}
+
+func publicObservationManifestDigest(manifest projectionManifest) (string, error) {
+	// The ordinary manifest contains the caller's output path. Normalize that
+	// path so an identical generate remains comparable across output folders.
+	normalized := manifest
+	normalized.GeneratedFile = generatedFileName
+	data, err := jsonManifestBytes(normalized)
+	if err != nil {
+		return "", err
+	}
+	return cache.HashBytes(data).String(), nil
 }
 func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {
 	if err := ir.Validate(); err != nil {

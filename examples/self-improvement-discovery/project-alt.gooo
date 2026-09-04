@@ -1,0 +1,7 @@
+package publicdiscoveryalternate
+namespace public_discovery_alternate
+
+entity Input id "gooo://public-discovery-alternate/entity/input"
+entity Output id "gooo://public-discovery-alternate/entity/output"
+
+activity Compile(Input) -> Output computes "role=real-public-generate-alternate-example"
