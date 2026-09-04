@@ -11,6 +11,7 @@ const compilerSelfImprovementIteration20260904V8Branch = "agent/compiler-self-im
 const compilerSelfImprovementIteration20260904V9Branch = "agent/compiler-self-improvement-iteration-20260904-v9"
 const compilerSelfImprovementIteration20260904V10Branch = "agent/compiler-self-improvement-iteration-20260904-v10"
 const compilerSelfImprovementIteration20260904V11Branch = "agent/compiler-self-improvement-iteration-20260904-v11"
+const compilerSelfImprovementUtility20260904V12Branch = "agent/compiler-self-improvement-utility-20260904-v12"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -187,5 +188,13 @@ func init() {
 		"internal/meta/publicdiscovery",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/self-improvement-public-continuity",
+	}
+	branchScopeAllowlist[compilerSelfImprovementUtility20260904V12Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/self-improvement-public-continuity.yml",
+		"examples/self-improvement-discovery",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-public-utility",
 	}
 }
