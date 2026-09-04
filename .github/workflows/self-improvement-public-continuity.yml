@@ -16,12 +16,14 @@ on:
       - 'internal/meta/publictestreuse/**'
       - 'internal/meta/publicorchestration/**'
       - 'internal/meta/publicpartialreuse/**'
+      - 'internal/meta/publicresolutionrepair/**'
       - 'internal/meta/languagereadiness/languagesyntax/registry.go'
       - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'scripts/self-improvement-public-continuity/**'
       - 'scripts/self-improvement-public-test-reuse/**'
       - 'scripts/self-improvement-public-orchestration/**'
       - 'scripts/self-improvement-public-partial-reuse/**'
+      - 'scripts/self-improvement-public-resolution-repair/**'
       - 'examples/self-improvement-partial-reuse/**'
       - 'go.mod'
       - 'go.sum'
@@ -40,12 +42,14 @@ on:
       - 'internal/meta/publictestreuse/**'
       - 'internal/meta/publicorchestration/**'
       - 'internal/meta/publicpartialreuse/**'
+      - 'internal/meta/publicresolutionrepair/**'
       - 'internal/meta/languagereadiness/languagesyntax/registry.go'
       - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'scripts/self-improvement-public-continuity/**'
       - 'scripts/self-improvement-public-test-reuse/**'
       - 'scripts/self-improvement-public-orchestration/**'
       - 'scripts/self-improvement-public-partial-reuse/**'
+      - 'scripts/self-improvement-public-resolution-repair/**'
       - 'examples/self-improvement-partial-reuse/**'
       - 'go.mod'
       - 'go.sum'
@@ -709,5 +713,69 @@ jobs:
         with:
           name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Run counterexample-driven semantic resolution repair
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          repo="$(pwd)"
+          root="$RUNNER_TEMP/public-continuity/resolution-repair"
+          upstream="$RUNNER_TEMP/public-continuity/orchestration/resume/orchestration-report.json"
+          v15="$RUNNER_TEMP/public-continuity/partial-reuse/evidence/publish"
+          project="$repo/examples/self-improvement-partial-reuse/main.gooo"
+          project_test="$repo/examples/self-improvement-partial-reuse/generated_project_test.go"
+          mkdir -p "$root"
+          test -s "$upstream"
+          test -s "$v15/partial-reuse-report.json"
+          test -s "$v15/changed-hidden-dependency.json"
+          go build -o "$root/gooo" ./cmd/gooo
+          go build -o "$root/resolution-repair" ./scripts/self-improvement-public-resolution-repair
+          "$root/resolution-repair" -mode run \
+            -source "$project" -test-contract "$project_test" -gooo "$root/gooo" \
+            -orchestration-report "$upstream" -v15-report "$v15/partial-reuse-report.json" \
+            -v15-hidden "$v15/changed-hidden-dependency.json" -repo-root "$repo" -out "$root/evidence"
+          "$root/resolution-repair" -mode verify \
+            -report "$root/evidence/resolution-repair-report.json" \
+            -human-output "$root/evidence/verified-dossier.txt"
+          test "$(find "$root/evidence/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 30
+          jq -e '
+            .decision == "CLOSED" and .case_denominator == 6 and
+            .closed_cases == 2 and .unknown_cases == 2 and .refuted_cases == 2 and
+            .resolution_level_count == 3 and .proof_mode_observation_count == 6 and
+            .proof_foundation_count == 1 and .proof_coherence_count == 1 and .proof_regression_count == 4 and
+            .repair_proposal_count == 1 and .authorization_decision_count == 2 and
+            .graph_edges_before == 1 and .graph_edges_after == 2 and .canonical_graph_edge_count == 2 and
+            .test_units_total == 2 and .fallback_test_units_executed == 2 and .fallback_test_units_reused == 0 and
+            .overlay_test_units_executed == 2 and .overlay_test_units_reused == 0 and
+            .selectivity_test_units_executed == 1 and .selectivity_test_units_reused == 1 and
+            .continuity_edge_count == 2 and .generated_artifact_count == 2 and .evidence_artifact_count == 30 and
+            .original_counterexample.case_id == "CHANGED_HIDDEN_DEPENDENCY" and
+            .original_counterexample.decision == "REFUTED" and
+            .repair_proposal.from == "shared-contract" and .repair_proposal.to == "inventory" and
+            .repair_authorization.decision == "AUTHORIZED" and .repair_authorization.human_authorized and
+            .graph_overlay.applied_to == "CALLER_OWNED_IMMUTABLE_GRAPH_OVERLAY" and
+            .cases[0].resolution_after == "FULL_PROJECT_FALLBACK" and
+            .cases[0].fallback.test_units_executed == 2 and .cases[0].fallback.test_units_reused == 0 and
+            .cases[1].resolution_after == "AUTHORIZED_GRAPH_OVERLAY" and
+            .cases[1].impacted_closure_before == 1 and .cases[1].impacted_closure_after == 2 and
+            .cases[1].false_negative_impacted_tests_before == 1 and .cases[1].false_negative_impacted_tests_after == 0 and
+            .cases[1].unchanged_partition_selectivity.test_units_executed == 1 and
+            .cases[1].unchanged_partition_selectivity.test_units_reused == 1 and .cases[1].safety_improvement and
+            (.cases[2:4] | all(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .unknown.unknown_class != "" and .unknown.next_operation != "" and (.unknown.blocked_by | length) > 0)) and
+            (.cases[4:6] | all(.decision == "REFUTED" and .unknown == null)) and
+            .generated_bytes_equal and .semantic_equal and .test_contract_equal and .full_test_outcome_equal and .overlay_binding_equal and
+            .safety_improvement and .runtime_comparable == false and .runtime_unknown == "RUNTIME_MODES_NOT_EQUIVALENT" and
+            .repository_writes == 0 and .local_test_executions == 0
+          ' "$root/evidence/resolution-repair-report.json"
+
+      - name: Upload semantic resolution repair dossier
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: public-self-improvement-resolution-repair-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/resolution-repair/evidence/publish
           if-no-files-found: error
           retention-days: 30

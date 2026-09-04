@@ -27,3 +27,13 @@ Selective reuse is explicit opt-in and fail-closed. A receipt is reusable only
 when its canonical source and semantic subgraph, generated partition artifact,
 compiler/released identity, Go 1.27 toolchain, exact test contract, dependency
 graph, successful result, and v14 orchestration provenance all match.
+
+The same canonical source also carries the v16 counterexample-driven semantic
+resolution repair table. A proven hidden dependency first falls back to the
+full project test contract, then produces a deterministic `shared-contract ->
+inventory` proposal from the preserved v15 REFUTED record. Only an explicit
+human authorization permits a caller-owned immutable graph overlay; the
+overlay replay proves complete affected closure and retains selectivity for
+an independent unchanged partition. Ambiguous or unsupported proof evidence
+is `UNKNOWN`, while tampered counterexamples and unauthorized overlays are
+`REFUTED` with REFUTED dominance.

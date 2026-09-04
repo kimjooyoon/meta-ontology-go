@@ -3438,6 +3438,18 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-resolution-repair-20260904-v16",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-partial-reuse",
+        "internal/meta/publicresolutionrepair",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-resolution-repair"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
