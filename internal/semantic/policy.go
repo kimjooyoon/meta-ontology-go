@@ -72,10 +72,10 @@ func (p Policy) Normalized() (Policy, error) {
 	if err := span.Validate(); err != nil {
 		return Policy{}, fmt.Errorf("%w: policy span: %v", ErrInvalidNode, err)
 	}
-	out := Policy{ID: id, Name: name, Span: span}
-	out.States = append([]PolicyState(nil), p.States...)
-	out.Transitions = append([]PolicyTransition(nil), p.Transitions...)
-	out.Cases = make([]PolicyCase, len(p.Cases))
+	out := Policy{ID: id, Name: name, Span: span,
+		States:      append([]PolicyState(nil), p.States...),
+		Transitions: append([]PolicyTransition(nil), p.Transitions...),
+		Cases:       make([]PolicyCase, len(p.Cases))}
 	for index, current := range p.Cases {
 		current.Name = strings.TrimSpace(current.Name)
 		if current.Name == "" {
