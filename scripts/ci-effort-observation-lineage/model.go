@@ -43,6 +43,13 @@ type report struct {
 	FallbackAccepted                int                          `json:"fallback_to_current_dev_accepted"`
 	FallbackRejected                int                          `json:"fallback_to_current_dev_rejected"`
 	SourceArtifactResolutions       int                          `json:"source_artifact_resolutions"`
+	ActiveLineageRoots              int                          `json:"active_lineage_roots"`
+	CasesSatisfied                  int                          `json:"cases_satisfied"`
+	CasesTotal                      int                          `json:"cases_total"`
+	UnknownSixFieldPreservations    int                          `json:"unknown_six_field_preservations"`
+	ContradictionsRefuted           int                          `json:"contradictions_refuted"`
+	ExactReplayComparisons          int                          `json:"exact_replay_comparisons"`
+	ProvenanceState                 string                       `json:"provenance_state"`
 	TrueProductFailuresNotRelabeled bool                         `json:"true_product_failures_not_relabeled"`
 	WallMS                          int64                        `json:"wall_ms"`
 	PeakRSSKib                      int64                        `json:"peak_rss_kib"`
@@ -55,7 +62,7 @@ type report struct {
 
 var publicationNames = []string{
 	"canonical-source.gooo", "workflow-lineage-policy.json", "workflow-lineage-case-table.json", "source-run-receipts.json", "consumer-receipts.json", "lineage-edges.json",
-	"exact-subject-binding.json", "stale-lineage-a5697c29.json", "stale-lineage-8a919d0a.json", "mismatch-lineage.json", "tampered-artifact.json", "product-failure-safety.json",
+	"exact-subject-binding.json", "stale-lineage-a5697c29.json", "source-api-missing.json", "artifact-lookup-missing.json", "mismatch-lineage.json", "tampered-artifact.json", "source-repository-mismatch.json", "product-failure-safety.json",
 	"runtime-measurements.json", "repository-status.json", "workflow-lineage-report.json", "workflow-lineage-human.txt", "workflow-lineage-verification-input.json", "workflow-lineage-metrics.json",
 }
 
