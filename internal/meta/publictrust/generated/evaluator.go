@@ -6,7 +6,7 @@ const (
 	Schema             = "gooo/public-trust-surface/v1"
 	PolicySourcePath   = "examples/public-trust-surface/main.gooo"
 	PolicySourceDigest = "c08a005fe6142a1f1ab169cf1c7b82a37afcdc2d8c6a123ed90e2b4b2a1164af"
-	EvaluatorDigest    = "8640568415a1dfdd8ffb8c37997c17febbb9b41bac40f3120fb905e6b9bd9d32"
+	EvaluatorDigest    = "e8ea0c68bc8990f25a846e6c5dad0c7a8332055a5f8933577caf78d28d6d7f10"
 )
 
 type Badge struct {
