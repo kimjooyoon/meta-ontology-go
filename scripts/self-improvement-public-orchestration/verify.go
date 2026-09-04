@@ -32,22 +32,19 @@ func runVerification(manifestPath, outputPath, humanPath string) error {
 	if input.Schema != "gooo/public-self-improvement-orchestration-verification-input/v1" {
 		return errors.New("orchestration evidence manifest schema is unknown")
 	}
-	policySource, err := readRegular(input.Policy)
-	if err != nil {
-		return err
-	}
-	policy, err := publicorchestration.Load(input.Policy, policySource)
-	if err != nil {
-		return err
-	}
 	source, err := readRegular(input.Source)
 	if err != nil {
 		return err
 	}
-	if !bytes.Equal(policySource, source) {
-		return errors.New("policy and source bytes differ")
+	policy, err := publicorchestration.Load(input.Source, source)
+	if err != nil {
+		return err
 	}
-	compiledPolicy, err := readPolicyArtifact(input.Policy)
+	policyArtifact, err := readRegular(input.Policy)
+	if err != nil {
+		return err
+	}
+	compiledPolicy, err := readPolicyArtifactBytes(policyArtifact)
 	if err != nil {
 		return err
 	}
@@ -313,6 +310,10 @@ func readPolicyArtifact(filename string) (publicorchestration.Policy, error) {
 	if err != nil {
 		return publicorchestration.Policy{}, err
 	}
+	return readPolicyArtifactBytes(data)
+}
+
+func readPolicyArtifactBytes(data []byte) (publicorchestration.Policy, error) {
 	var policy publicorchestration.Policy
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
