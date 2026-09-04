@@ -40,7 +40,11 @@ func runReceipt(contractPath, inputPath, outputRoot, role, candidateID, compiler
 		return errors.New("authorization does not bind the receipt subject")
 	}
 	var summary generateSummary
-	if _, err := readStrict(filepath.Join(outputRoot, "generate.json"), &summary); err != nil {
+	summaryData, err := os.ReadFile(filepath.Join(outputRoot, "generate.json"))
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(summaryData, &summary); err != nil {
 		return err
 	}
 	if summary.SemanticHash == "" {
