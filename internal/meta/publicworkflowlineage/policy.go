@@ -82,7 +82,7 @@ func (policy Policy) Validate() error {
 		return errors.New("workflow lineage policy identity or denominator is invalid")
 	}
 	wantFields := []string{"stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"}
-	if !sameStrings(policy.SourceIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "repository", "event"}) || !sameStrings(policy.SourceIdentityPriority, []string{"run_id", "repository", "workflow", "event", "run_attempt", "head_sha"}) || !sameStrings(policy.SourceSecondaryFields, []string{"ref", "head_branch"}) || !sameStrings(policy.ArtifactIdentityFields, []string{"name", "id", "digest", "run_id", "subject_sha"}) || !sameStrings(policy.ConsumerIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "ref"}) || !sameStrings(policy.LineageStates, []string{StateExact, StateStale, StateDirectMissing, StateMismatch, StateTampered, StateCurrentDevFallback}) {
+	if !sameStrings(policy.SourceIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "repository", "event"}) || !sameStrings(policy.SourceIdentityPriority, []string{"run_id", "repository", "workflow", "event", "run_attempt", "head_sha"}) || !sameStrings(policy.SourceSecondaryFields, []string{"ref", "head_branch"}) || !sameStrings(policy.ArtifactIdentityFields, []string{"name", "id", "digest", "run_id", "run_attempt", "subject_sha"}) || !sameStrings(policy.ConsumerIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "ref"}) || !sameStrings(policy.LineageStates, []string{StateExact, StateStale, StateDirectMissing, StateMismatch, StateTampered, StateCurrentDevFallback}) {
 		return errors.New("workflow lineage identity or state fields are not canonical")
 	}
 	if !sameStrings(policy.CausalFields, wantFields) {
