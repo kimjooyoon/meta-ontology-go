@@ -195,7 +195,7 @@ func declarationName(declaration ast.Decl) string {
 
 func manifestDigest(data []byte) (string, error) {
 	var semanticDigest string
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.SplitSeq(string(data), "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue

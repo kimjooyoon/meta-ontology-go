@@ -241,7 +241,7 @@ func (policy Policy) DependencyGraphDigest() string {
 
 func parseMarkers(value string) markers {
 	result := markers{}
-	for _, part := range strings.Split(value, ";") {
+	for part := range strings.SplitSeq(value, ";") {
 		fields := strings.SplitN(part, "=", 2)
 		if len(fields) != 2 || strings.TrimSpace(fields[0]) == "" {
 			continue

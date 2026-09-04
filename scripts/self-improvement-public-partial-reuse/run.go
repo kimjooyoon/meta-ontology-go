@@ -378,7 +378,7 @@ func runTimed(directory, label string, args []string, prefix string) (executionR
 	}
 	timeFile := prefix + "-" + label + ".rss"
 	started := time.Now()
-	commandArgs := append([]string{"-f", "%M", "-o", timeFile, "go"}, args...)
+	commandArgs := append([]string{"-f", "%e %M", "-o", timeFile, "go"}, args...)
 	command := exec.Command("/usr/bin/time", commandArgs...)
 	command.Dir = directory
 	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOFLAGS=-mod=readonly", "GOWORK=off")
@@ -396,9 +396,13 @@ func runTimed(directory, label string, args []string, prefix string) (executionR
 	if readErr != nil {
 		return executionResult{}, readErr
 	}
-	peak, parseErr := strconv.ParseInt(strings.TrimSpace(string(rss)), 10, 64)
+	fields := strings.Fields(string(rss))
+	if len(fields) != 2 {
+		return executionResult{}, fmt.Errorf("generated command runtime evidence is malformed: %q", strings.TrimSpace(string(rss)))
+	}
+	peak, parseErr := strconv.ParseInt(fields[1], 10, 64)
 	if parseErr != nil || peak <= 0 {
-		return executionResult{}, errors.New("generated command peak RSS is not positive")
+		return executionResult{}, fmt.Errorf("generated command peak RSS is not positive: %q", strings.TrimSpace(string(rss)))
 	}
 	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{"go", label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
 	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: maxInt64(1, int64(time.Since(started)/time.Millisecond)), PeakRSSKib: peak}, nil

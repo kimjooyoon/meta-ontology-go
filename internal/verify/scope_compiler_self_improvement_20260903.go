@@ -222,6 +222,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-public-continuity.yml",
+		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/self-improvement-discovery",
 		"examples/self-improvement-partial-reuse",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
