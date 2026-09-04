@@ -160,6 +160,7 @@ type ContinuationRequest struct {
 	ExecutionAuthorized bool              `json:"execution_authorized"`
 	RepositoryWrites    int               `json:"repository_writes"`
 	LocalTestExecutions int               `json:"local_test_executions"`
+	Metrics             Metrics           `json:"metrics"`
 	Digest              string            `json:"digest"`
 }
 
@@ -385,7 +386,7 @@ func validatePolicy(policy semantic.Policy) error {
 	counts := map[string]int{}
 	for _, current := range policy.Cases {
 		counts[current.Resolution.Decision]++
-		if current.Resolution.Decision == string(DecisionUnknown) && (current.Resolution.Stage == "" || current.Resolution.Step == "" || current.Resolution.Reason == "" || current.Resolution.UnknownClass == "" || current.Resolution.NextOperation == "" || len(current.Resolution.BlockedBy) == 0) {
+		if current.Resolution.Decision == string(DecisionUnknown) && (current.Resolution.Stage == "" || current.Resolution.Step == 0 || current.Resolution.Reason == "" || current.Resolution.UnknownClass == "" || current.Resolution.NextOperation == "" || len(current.Resolution.BlockedBy) == 0) {
 			return fmt.Errorf("unknown continuation case %q lacks six fields", current.Name)
 		}
 	}
