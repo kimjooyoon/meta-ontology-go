@@ -317,6 +317,24 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "public-self-observation-discovery-policy",
+      "path": "examples/self-improvement-discovery/discovery.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "public-self-observation-discovery-project",
+      "path": "examples/self-improvement-discovery/project.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "unknown-keyword",
       "path": "examples/language-syntax-roundtrip/unknown-keyword.txt",
       "kind": "INVALID",

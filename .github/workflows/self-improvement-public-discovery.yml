@@ -119,12 +119,14 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/public-discovery"
           project=examples/self-improvement-discovery/project.gooo
-          alternate=examples/self-improvement-discovery/project-alt.gooo
+          alternate="$work/incompatible/project-alt.gooo"
           source_before="$work/project.sha256.before"
           source_after="$work/project.sha256.after"
           sha256sum "$project" > "$source_before"
           mkdir -p "$work/first" "$work/second" "$work/third" "$work/pair/ledger" "$work/incompatible/first" "$work/incompatible/second" "$work/tampered/ledger" "$work/contradictory/ledger"
 
+          sed 's/publicdiscoveryexample/publicdiscoveryalternate/; s/public_discovery_example/public_discovery_alternate/; s/public-discovery-example/public-discovery-alternate/; s/real-public-generate-example/real-public-generate-alternate-example/' \
+            "$project" > "$alternate"
           go run ./cmd/gooo generate "$project" \
             --out "$work/first/generated" --observation-ledger "$work/first/ledger" --json > "$work/first/cli.json"
           jq -e '

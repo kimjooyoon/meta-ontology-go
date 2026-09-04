@@ -20,5 +20,8 @@ The candidate is evidence only: it contains no executable patch, has
 proposal, authorization, and certificate controls before any future use. No
 repository source is modified by this observation loop.
 
-`project-alt.gooo` is a second small project used to demonstrate that an
-incompatible source/input group remains UNKNOWN rather than reaching quorum.
+The incompatible-source case is derived into caller-owned temporary output from
+`project.gooo`; no second tracked language source is needed.
+
+Corpus accounting is explicit: the fixed language corpus moves from 51 cases,
+56 sources, and 997 `.gooo` lines to 53 cases, 58 sources, and 1,011 lines.
