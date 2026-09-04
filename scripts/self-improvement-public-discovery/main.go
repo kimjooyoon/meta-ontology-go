@@ -360,7 +360,7 @@ func verifyFixture(fixture fixtureCase, expectedDecision, contractDigest, evalua
 		}
 		result.CandidateReplayEqual = bytes.Equal(candidateBytes, replayBytes)
 		if !result.CandidateBytesEqual || !result.CandidateReplayEqual || !observed.CandidateBytesEqual || !observed.CandidateByteReplayEqual {
-			return result, errors.New("closed candidate bytes are not deterministic")
+			return result, fmt.Errorf("fixture %q closed candidate bytes are not deterministic: file_equal=%t replay_equal=%t report_equal=%t report_replay_equal=%t path=%q", fixture.ID, result.CandidateBytesEqual, result.CandidateReplayEqual, observed.CandidateBytesEqual, observed.CandidateByteReplayEqual, candidatePath)
 		}
 	} else if observed.CandidatePath != "" || observed.CandidateBytesEqual || observed.CandidateByteReplayEqual || observed.CandidateByteMismatches != 0 {
 		return result, fmt.Errorf("fixture %q non-closed report emitted candidate evidence", fixture.ID)
