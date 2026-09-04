@@ -84,17 +84,17 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-compatibility"
           predecessor="$work/predecessor"
-          mkdir -p "$work/predecessor" "$work/successor" "$work/observation"
+          mkdir -p "$work/predecessor/generate" "$work/successor/generate" "$work/observation"
           input="examples/self-improvement-observation/input.fixture"
           contract="examples/self-improvement-observation/observation.gooo"
 
           (
             cd "$predecessor"
-            go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate.json"
+            go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate/generate.json"
             go test ./...
             go test -race ./...
           )
-          go run ./cmd/gooo generate "$input" --out "$work/successor/generate" --json > "$work/successor/generate.json"
+          go run ./cmd/gooo generate "$input" --out "$work/successor/generate" --json > "$work/successor/generate/generate.json"
           go test ./...
           go test -race ./...
 
