@@ -218,6 +218,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-candidate-authorization",
+      "path": "examples/self-improvement/authorization.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "self-improvement-transport",
       "path": "examples/self-improvement/transport.gooo",
       "kind": "VALID",
