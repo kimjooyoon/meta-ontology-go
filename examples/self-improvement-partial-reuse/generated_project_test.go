@@ -10,5 +10,5 @@ func TestOrdersPartition(t *testing.T) {
 }
 
 func TestInventoryPartition(t *testing.T) {
-	SnapshotInventory(StockItem{}, SharedContract{})
+	SnapshotInventory(SharedContract{}, StockItem{})
 }
