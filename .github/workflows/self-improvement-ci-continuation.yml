@@ -81,10 +81,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ! rg -n 'workflow_run:' .github/workflows/self-improvement-execution-contract.yml
-          ! rg -n 'workflow_run:' .github/workflows/self-improvement-execution-grant.yml
-          rg -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-contract.yml
-          rg -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-grant.yml
+          ! grep -n 'workflow_run:' .github/workflows/self-improvement-execution-contract.yml
+          ! grep -n 'workflow_run:' .github/workflows/self-improvement-execution-grant.yml
+          grep -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-contract.yml
+          grep -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-grant.yml
 
       - name: Upload continuation contract evidence
         if: always()
