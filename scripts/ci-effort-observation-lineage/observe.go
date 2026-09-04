@@ -46,7 +46,7 @@ func runObserve(input runInput) error {
 		return err
 	}
 	expected := fmt.Sprintf("ci-evidence-%d-%d", sourceRun.ID, sourceRun.RunAttempt)
-	evaluation := publicworkflowlineage.Evaluate(publicworkflowlineage.Input{Trigger: trigger, Source: sourceRun, Artifacts: artifacts, ExpectedArtifactName: expected})
+	evaluation := publicworkflowlineage.Evaluate(publicworkflowlineage.Input{Trigger: trigger, Source: sourceRun, Artifacts: artifacts, ExpectedArtifactName: expected, ExpectedRepository: policy.Repository, ExpectedWorkflow: policy.SourceWorkflow, ExpectedSourceAPIKey: policy.SourceAPIKey, ExpectedArtifactSubjectBinding: policy.ArtifactSubjectBinding})
 	value := observation{Schema: publicworkflowlineage.ReportSchema, Decision: evaluation.Decision, LineageState: evaluation.LineageState, Reason: evaluation.Reason, Trigger: trigger, Source: sourceRun, Evaluation: evaluation, PolicyDigest: policy.SourceDigest}
 	if err := os.MkdirAll(input.Out, 0o755); err != nil {
 		return err

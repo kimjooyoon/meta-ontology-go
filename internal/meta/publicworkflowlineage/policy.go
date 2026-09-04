@@ -48,11 +48,17 @@ func Load(filename string, source []byte) (Policy, error) {
 		Namespace:               ir.Namespace.String(),
 		Activity:                "ObserveCIWorkflowWindow",
 		Name:                    first(markers, "partial-lineage-policy"),
+		Repository:              first(markers, "partial-lineage-repository"),
 		SourceWorkflow:          first(markers, "partial-lineage-source-workflow"),
 		ConsumerWorkflow:        first(markers, "partial-lineage-consumer-workflow"),
 		SourceIdentity:          splitCSV(first(markers, "partial-lineage-source-identity")),
+		SourceIdentityPriority:  splitCSV(first(markers, "partial-lineage-source-identity-priority")),
+		SourceSecondaryFields:   splitCSV(first(markers, "partial-lineage-source-secondary-fields")),
+		SourceAPIKey:            first(markers, "partial-lineage-source-api-key"),
 		ArtifactIdentityFields:  splitCSV(first(markers, "partial-lineage-artifact-identity")),
+		ArtifactSubjectBinding:  first(markers, "partial-lineage-artifact-subject-binding"),
 		ConsumerIdentity:        splitCSV(first(markers, "partial-lineage-consumer-identity")),
+		ProvenanceState:         first(markers, "partial-lineage-provenance-state"),
 		LineageStates:           splitCSV(first(markers, "partial-lineage-lineage-states")),
 		CausalFields:            splitCSV(first(markers, "partial-lineage-causal-fields")),
 		LineageEdges:            append([]string(nil), markers["partial-lineage-edge"]...),
@@ -69,13 +75,14 @@ func Load(filename string, source []byte) (Policy, error) {
 func (policy Policy) Validate() error {
 	if policy.Schema != PolicySchema || policy.EvaluatorSchema != EvaluatorSchema || policy.Name != PolicyName ||
 		policy.Package != "cieffortobservation" || policy.Namespace != "cieffortobservation" || policy.Activity != "ObserveCIWorkflowWindow" ||
-		policy.SourceWorkflow != "CI" || policy.ConsumerWorkflow != "CI effort observation" || !policy.RefutedDominatesUnknown ||
+		policy.Repository != "kimjooyoon/meta-ontology-go" || policy.SourceWorkflow != ".github/workflows/ci.yml" || policy.ConsumerWorkflow != "CI effort observation" || !policy.RefutedDominatesUnknown ||
+		policy.SourceAPIKey != "workflow_run.id" || policy.ArtifactSubjectBinding != "ci-evidence.head_sha" || policy.ProvenanceState != "EXACT_REQUIRED" ||
 		len(policy.CausalFields) != 6 || len(policy.LineageEdges) != LineageEdgeCount || len(policy.Cases) != CaseCount ||
 		policy.SourceDigest == "" || policy.SemanticDigest == "" || policy.EvaluatorDigest == "" {
 		return errors.New("workflow lineage policy identity or denominator is invalid")
 	}
 	wantFields := []string{"stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"}
-	if !sameStrings(policy.SourceIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "subject_ref"}) || !sameStrings(policy.ArtifactIdentityFields, []string{"name", "id", "digest", "subject_sha"}) || !sameStrings(policy.ConsumerIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "ref"}) || !sameStrings(policy.LineageStates, []string{StateExact, StateStale, StateDirectMissing, StateMismatch, StateTampered, StateCurrentDevFallback}) {
+	if !sameStrings(policy.SourceIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "repository", "event"}) || !sameStrings(policy.SourceIdentityPriority, []string{"run_id", "repository", "workflow", "event", "run_attempt", "head_sha"}) || !sameStrings(policy.SourceSecondaryFields, []string{"ref", "head_branch"}) || !sameStrings(policy.ArtifactIdentityFields, []string{"name", "id", "digest", "run_id", "run_attempt", "subject_sha"}) || !sameStrings(policy.ConsumerIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "ref"}) || !sameStrings(policy.LineageStates, []string{StateExact, StateStale, StateDirectMissing, StateMismatch, StateTampered, StateCurrentDevFallback}) {
 		return errors.New("workflow lineage identity or state fields are not canonical")
 	}
 	if !sameStrings(policy.CausalFields, wantFields) {
@@ -85,14 +92,14 @@ func (policy Policy) Validate() error {
 	if !sameStrings(policy.LineageEdges, wantEdges) {
 		return errors.New("workflow lineage edges are not canonical")
 	}
-	wantMetrics := map[string]int{"stale_misattributed_before": 2, "stale_misattributed_after": 0, "stale_unknown": 2, "exact_subject_bindings": 2, "unknown_classifications": 2, "mismatch_detections": 2, "fallback_attempts": 1, "fallback_accepted": 0, "fallback_rejected": 1, "source_artifact_resolutions": 2, "source_receipts": SourceReceiptCount, "consumer_receipts": ConsumerReceiptCount, "evidence_artifacts": EvidenceArtifactCount}
+	wantMetrics := map[string]int{"active_lineage_roots": 1, "cases_satisfied": CaseCount, "cases_total": CaseCount, "stale_misattributed_before": 2, "stale_misattributed_after": 0, "stale_unknown": 3, "exact_subject_bindings": 3, "unknown_classifications": 3, "unknown_six_field_preservations": 3, "contradictions_refuted": 3, "mismatch_detections": 3, "fallback_attempts": 1, "fallback_accepted": 0, "fallback_rejected": 1, "exact_replay_comparisons": 1, "source_artifact_resolutions": 3, "source_receipts": SourceReceiptCount, "consumer_receipts": ConsumerReceiptCount, "evidence_artifacts": EvidenceArtifactCount}
 	if !sameMetrics(policy.Metrics, wantMetrics) {
 		return errors.New("workflow lineage metrics are not canonical")
 	}
 	counts := map[string]int{}
 	seen := map[string]bool{}
 	for _, item := range policy.Cases {
-		if item.ID == "" || seen[item.ID] || item.Decision == "" || item.LineageState == "" || item.SourceSubject == "" || item.SourceRunID <= 0 {
+		if item.ID == "" || seen[item.ID] || item.Decision == "" || item.LineageState == "" || item.SourceSubject == "" || item.SourceRunID <= 0 || (item.SourceRefState != RefStateValue && item.SourceRefState != RefStateNull && item.SourceRefState != RefStateEmpty) {
 			return errors.New("workflow lineage case table is invalid")
 		}
 		if item.Decision == DecisionUnknown && item.UnknownClass == "" {
@@ -102,13 +109,13 @@ func (policy Policy) Validate() error {
 		counts[item.Decision]++
 	}
 	if counts[DecisionClosed] != ClosedCaseCount || counts[DecisionUnknown] != UnknownCaseCount || counts[DecisionRefuted] != RefutedCaseCount {
-		return errors.New("workflow lineage cases are not 2/2/2")
+		return errors.New("workflow lineage cases are not 3/3/3")
 	}
 	return nil
 }
 
 func evaluatorDigest() string {
-	return cache.HashBytes([]byte(EvaluatorSchema + "\x00exact-subject-run-attempt-artifact-v1")).String()
+	return cache.HashBytes([]byte(EvaluatorSchema + "\x00exact-api-run-id-priority-secondary-ref-payload-subject-v2")).String()
 }
 
 func parseMarkers(value string) markerValues {
@@ -134,11 +141,11 @@ func parseCases(values []string) []CaseSpec {
 	result := make([]CaseSpec, 0, len(values))
 	for _, value := range values {
 		fields := strings.Split(value, "|")
-		if len(fields) != 6 {
+		if len(fields) != 7 {
 			continue
 		}
 		runID, _ := strconv.ParseInt(fields[5], 10, 64)
-		result = append(result, CaseSpec{ID: fields[0], Decision: fields[1], LineageState: fields[2], UnknownClass: fields[3], SourceSubject: fields[4], SourceRunID: runID})
+		result = append(result, CaseSpec{ID: fields[0], Decision: fields[1], LineageState: fields[2], UnknownClass: fields[3], SourceSubject: fields[4], SourceRunID: runID, SourceRefState: fields[6]})
 	}
 	return result
 }

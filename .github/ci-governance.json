@@ -3502,6 +3502,18 @@
       ]
     },
     {
+      "branch": "agent/resolve-workflow-run-lineage-v22",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-effort-observation.yml",
+        "examples/ci-effort-observation",
+        "internal/meta/publicworkflowlineage",
+        "internal/verify/scope_workflow_lineage_v22.go",
+        "scripts/ci-effort-observation-lineage"
+      ]
+    },
+    {
       "branch": "agent/compiler-self-improvement-compatibility-20260904-v18",
       "paths": [
         ".github/agent-scope-table.md",
