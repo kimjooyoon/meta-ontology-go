@@ -3422,6 +3422,21 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-partial-reuse-20260904-v15",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "examples/self-improvement-partial-reuse",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/publicpartialreuse",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-partial-reuse"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
