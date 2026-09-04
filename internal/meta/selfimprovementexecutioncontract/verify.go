@@ -215,7 +215,7 @@ func independentMapping(input ContractInput) bool {
 		input.Observation.OperationID == OperationID(KnownOperationID) && input.Observation.BoundedTarget == KnownBoundedTarget &&
 		input.ExecutionInput != nil && !executionInputIncomplete(input.ExecutionInput) &&
 		input.Candidate.InputDigest == input.Candidate.ExecutionInputDigest && input.Candidate.ExecutionInputDigest == input.ExecutionInput.Digest &&
-		input.ExecutionInput.OperationID == KnownOperationID && input.ExecutionInput.BoundedTarget == KnownBoundedTarget &&
+		input.ExecutionInput.OperationID == KnownOperationID && BoundedTarget(input.ExecutionInput.BoundedTarget) == KnownBoundedTarget &&
 		input.ExecutionInput.Phase == KnownPhase && valuewitnessinput.Validate(*input.ExecutionInput) == nil
 }
 
