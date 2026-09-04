@@ -38,11 +38,11 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceSatisfied != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
-		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 1022 ||
-		len(report.Source.GoooFiles) != 59 || len(report.Source.PackageUnits) != 4 ||
+		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 1031 ||
+		len(report.Source.GoooFiles) != 60 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
-		t.Fatalf("report = %#v", report)
+		t.Fatalf("report summary: decision=%q resolution=%q reason=%q gooo_lines=%d gooo_files=%d unregistered=%v missing=%v satisfied=%d valid=%d invalid=%d unresolved=%d package_units=%d", report.Decision, report.Resolution, report.Reason, report.Summary.GoooLines, len(report.Source.GoooFiles), report.Source.UnregisteredGooo, report.Source.MissingRegistered, report.Summary.Satisfied, report.Summary.ValidCases, report.Summary.InvalidCases, report.Summary.Unresolved, len(report.Source.PackageUnits))
 	}
 }
 

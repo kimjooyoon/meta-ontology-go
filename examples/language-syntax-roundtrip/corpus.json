@@ -538,6 +538,7 @@
     }
   ],
   "meta_sources": [
-    "internal/meta/entityfields/entity-fields-meta.gooo"
+    "internal/meta/entityfields/entity-fields-meta.gooo",
+    "examples/public-trust-surface/main.gooo"
   ]
 }

@@ -16,6 +16,40 @@ and CI results are derived views or evidence.
      └── source spans, IDs, and explicit assertions
 ```
 
+<!-- PUBLIC-TRUST-BADGES:BEGIN -->
+### Public trust surface
+
+These badges are generated from the lowered public-trust `.gooo` policy. Workflow badges report workflow results; they do not claim branch-protection or ruleset enforcement.
+
+#### Language / Release
+
+[![Go 1.27.0 toolchain](https://img.shields.io/badge/Go-1.27.0-00ADD8?logo=go&logoColor=white)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/go.mod)
+[![Published release v0.4.0-dev](https://img.shields.io/github/v/release/kimjooyoon/meta-ontology-go?include_prereleases&label=published%20release)](https://github.com/kimjooyoon/meta-ontology-go/releases/tag/v0.4.0-dev)
+
+#### Build / Conformance
+
+[![CI workflow result](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/ci.yml)
+[![Compiler compatibility evidence](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/self-improvement-compiler-compatibility.yml)
+[![Experimental release readiness](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/gooo-release-readiness.yml)
+
+#### Security / Supply Chain
+
+[![CodeQL code scanning configured](https://img.shields.io/badge/CodeQL-code%20scanning-2ea44f?logo=github)](https://github.com/kimjooyoon/meta-ontology-go/security/code-scanning)
+[![Dependabot weekly updates](https://img.shields.io/badge/Dependabot-weekly%20updates-0366d6?logo=dependabot)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/.github/dependabot.yml)
+[![Dependency review on pull requests](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/dependency-review.yml/badge.svg?branch=dev)](https://github.com/kimjooyoon/meta-ontology-go/actions/workflows/dependency-review.yml)
+[![Private vulnerability reporting enabled](https://img.shields.io/badge/Private%20vulnerability%20reporting-enabled-2ea44f?logo=github)](https://github.com/kimjooyoon/meta-ontology-go/security/advisories/new)
+
+#### Evidence / Project Health
+
+[![Project status: experimental](https://img.shields.io/badge/Project-experimental-orange)](https://github.com/kimjooyoon/meta-ontology-go#project-status)
+
+#### Community
+
+[![MIT licensed](https://img.shields.io/github/license/kimjooyoon/meta-ontology-go)](https://github.com/kimjooyoon/meta-ontology-go/blob/dev/LICENSE)
+
+The complete row ledger, including unavailable and refuted claims, is emitted by the `Public trust surface` workflow.
+<!-- PUBLIC-TRUST-BADGES:END -->
+
 The repository is intentionally small. The supported language sketch currently
 covers packages, namespaces, entities with URI-like IDs, and activities with
 entity inputs and an entity result. The semantic kernel also defines a
@@ -111,9 +145,15 @@ the current contract. Governance is `ci_only`: review and approval fields do not
 authorize a protected-branch promotion.
 
 The six canonical proof jobs are `gofmt`, `go vet`, `go test`, `go test -race`,
-`Semantic conformance`, and `CI policy`. Protected `dev` requires those six plus
-`CI guardian shadow`; protected `main` requires those six plus `CI guardian`.
-The resulting seven-context protections are route-specific.
+`Semantic conformance`, and `CI policy`. Those names identify workflow evidence,
+not branch-protection enforcement. The v19 live audit found no required status
+checks on `dev`; `main` retains its existing seven-context branch-protection
+listing, while the named `dev` and `main` rulesets are disabled. No badge above
+turns a workflow result into an enforcement claim.
+
+The root README reaches the default `main` page only after a later, legitimate
+protected-main promotion. This v19 change is a `dev`-targeted trust-surface
+update and does not alter protection, rulesets, or the promotion route.
 
 For the promotion route, CI emits a digest-bound `promotion_authorization` with
 `source=dev`, `target=main`, and `operation=fast_forward`. It passes only for

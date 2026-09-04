@@ -3519,6 +3519,25 @@
         "AGENTS.md",
         "CONTRIBUTING.md"
       ]
+    },
+    {
+      "branch": "agent/public-trust-surface-20260904-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/dependabot.yml",
+        ".github/workflows/dependency-review.yml",
+        ".github/workflows/public-trust-surface.yml",
+        "README.md",
+        "SECURITY.md",
+        "examples/public-trust-surface",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/publictrust",
+        "internal/verify/scope_public_trust_surface_20260904.go",
+        "scripts/public-trust-surface"
+      ]
     }
   ],
   "protected_kernel_paths": [

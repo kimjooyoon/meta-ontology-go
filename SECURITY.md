@@ -1,21 +1,29 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+This project is experimental. It has no stable release line and makes no
+stable compatibility, response-time, or security-update promise. The published
+release history currently contains these development prereleases:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Release | Status |
+| --- | --- |
+| `v0.4.0-dev` | Latest published experimental prerelease; report against an exact commit or tag. |
+| `v0.3.0-dev` | Superseded experimental prerelease; report against an exact commit or tag. |
+| `v0.2.0-dev` | Superseded experimental prerelease; report against an exact commit or tag. |
+| `v0.1.0-dev` | Superseded experimental prerelease; report against an exact commit or tag. |
 
-## Reporting a Vulnerability
+Development snapshots can change without notice. The version table is not a
+promise that any prerelease receives a fixed support window.
 
-Use this section to tell people how to report a vulnerability.
+## Reporting a vulnerability
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Private vulnerability reporting is enabled for this public repository. Submit
+sensitive reports through [GitHub's private vulnerability reporting form](https://github.com/kimjooyoon/meta-ontology-go/security/advisories/new).
+Do not open a public issue or discussion containing exploit details.
+
+Include the affected version or exact commit, impact, reproduction steps, and
+any safe mitigation. The maintainers will use GitHub's security-advisory
+workflow to discuss and resolve the report. No acknowledgement or remediation
+SLA, severity promise, signature promise, revocation promise, or compatibility
+guarantee is made.
