@@ -185,7 +185,7 @@ func run(input runInput) error {
 	}
 	comparisons := publicresolutionrepair.Comparisons{
 		GeneratedBytesEqual: bytes.Equal(fallbackProgram, overlayProgram), GeneratedSemanticEqual: bytes.Equal(fallbackManifest, overlayManifest),
-		TestContractEqual: bytes.Equal(testContract, testContract), FullTestOutcomeEqual: fallbackResult.ResultDigest == overlayResult.ResultDigest,
+		TestContractEqual: bytes.Equal(testContract, testContract), FullTestOutcomeEqual: fallbackResult.Success && overlayResult.Success && fallbackResult.ExitCode == overlayResult.ExitCode,
 		OverlayBindingEqual: publicresolutionrepair.ValidateOverlay(overlay, policy, proposal, authorization) == nil,
 	}
 	if err := writeJSON(filepath.Join(input.Out, "overlay-outcome-comparison.json"), comparisons); err != nil {
