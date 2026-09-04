@@ -74,11 +74,10 @@ func BuildCanonicalCaseReport(program PolicyProgram) CanonicalCaseReport {
 		ExecutionGrants: 0, RepositoryWrites: 0, LocalTestExecutions: 0, FallbackAccepted: 0,
 		IndependentReplayComparisons: 1, ArtifactFiles: 9, ArtifactTypes: 3,
 		PerformanceImprovement: PerformanceUnknown, Decision: DecisionClosed, Resolution: ResolutionDeclared,
-		Reason: "NINE_CANONICAL_PRE_EXECUTION_CASES",
-	}
-	report.GoPhysicalLines = program.Inventory.GoPhysicalLines
-	report.GoooPhysicalLines = program.Inventory.GoooPhysicalLines
-	report.ReplayEqual = true
+		Reason:            "NINE_CANONICAL_PRE_EXECUTION_CASES",
+		GoPhysicalLines:   program.Inventory.GoPhysicalLines,
+		GoooPhysicalLines: program.Inventory.GoooPhysicalLines,
+		ReplayEqual:       true}
 	for _, current := range cases {
 		caseInput := current.input(base)
 		resolution := Evaluate(program, caseInput)

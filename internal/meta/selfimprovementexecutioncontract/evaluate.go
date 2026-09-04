@@ -3,6 +3,7 @@ package selfimprovementexecutioncontract
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
@@ -29,10 +30,7 @@ func Evaluate(program PolicyProgram, input ContractInput) ContractResolution {
 	missing, contradictions := inspectInput(input)
 	resolution.MissingFields = sortedStrings(missing)
 	resolution.ContradictoryFields = sortedStrings(contradictions)
-	resolution.Metrics.BoundFields = PreExecutionRequiredField - len(requiredMissing(input))
-	if resolution.Metrics.BoundFields < 0 {
-		resolution.Metrics.BoundFields = 0
-	}
+	resolution.Metrics.BoundFields = max(PreExecutionRequiredField-len(requiredMissing(input)), 0)
 	resolution.Metrics.MissingFields = len(resolution.MissingFields)
 	resolution.Metrics.ContradictoryFields = len(resolution.ContradictoryFields)
 	resolution.Metrics.StructuralCandidateToOperationAfter = boolInt(operationMapped(input))
@@ -358,12 +356,7 @@ func boolInt(value bool) int {
 	return 0
 }
 func contains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, target)
 }
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
