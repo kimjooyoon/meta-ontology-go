@@ -14,6 +14,21 @@ var resolutionPolicyKeys = []string{
 }
 
 func parseResolutionPolicy(ir *semantic.IR) (ResolutionPolicy, error) {
+	markers, err := resolutionPolicyMarkers(ir)
+	if err != nil {
+		return ResolutionPolicy{}, err
+	}
+	policy, err := buildResolutionPolicy(markers)
+	if err != nil {
+		return ResolutionPolicy{}, err
+	}
+	if err := policy.Validate(); err != nil {
+		return ResolutionPolicy{}, err
+	}
+	return policy, nil
+}
+
+func resolutionPolicyMarkers(ir *semantic.IR) (map[string][]string, error) {
 	markers := map[string][]string{}
 	if ir != nil {
 		for _, node := range ir.Graph.Nodes() {
@@ -31,38 +46,54 @@ func parseResolutionPolicy(ir *semantic.IR) (ResolutionPolicy, error) {
 	}
 	for _, key := range resolutionPolicyKeys {
 		if len(markers[key]) != 1 {
-			return ResolutionPolicy{}, fmt.Errorf("transport resolution policy marker %q is not unique", key)
+			return nil, fmt.Errorf("transport resolution policy marker %q is not unique", key)
 		}
 	}
+	return markers, nil
+}
+
+func buildResolutionPolicy(markers map[string][]string) (ResolutionPolicy, error) {
 	policy := ResolutionPolicy{
 		Schema:                  markers["resolution-schema"][0],
 		States:                  splitResolutionCSV(markers["resolution-states"][0]),
 		CausalFields:            splitResolutionCSV(markers["resolution-causal-fields"][0]),
 		ArtifactIdentity:        splitResolutionCSV(markers["resolution-artifact-identity"][0]),
 		RefutedDominatesUnknown: markers["resolution-refuted-dominates-unknown"][0] == "true",
+		Transitions:             append([]string(nil), markers["resolution-transition"]...),
 		Metrics:                 map[string]int{},
 	}
-	for _, value := range markers["resolution-transition"] {
-		policy.Transitions = append(policy.Transitions, value)
+	if err := appendResolutionPolicyMetrics(&policy, markers["resolution-metric"]); err != nil {
+		return ResolutionPolicy{}, err
 	}
-	for _, value := range markers["resolution-metric"] {
+	if err := appendResolutionPolicyCases(&policy, markers["resolution-case"]); err != nil {
+		return ResolutionPolicy{}, err
+	}
+	return policy, nil
+}
+
+func appendResolutionPolicyMetrics(policy *ResolutionPolicy, values []string) error {
+	for _, value := range values {
 		fields := strings.SplitN(value, "|", 2)
 		if len(fields) != 2 || fields[0] == "" {
-			return ResolutionPolicy{}, errors.New("transport resolution metric marker is invalid")
+			return errors.New("transport resolution metric marker is invalid")
 		}
 		var parsed int
 		if _, err := fmt.Sscanf(fields[1], "%d", &parsed); err != nil {
-			return ResolutionPolicy{}, fmt.Errorf("transport resolution metric %q is invalid", fields[0])
+			return fmt.Errorf("transport resolution metric %q is invalid", fields[0])
 		}
 		if _, exists := policy.Metrics[fields[0]]; exists {
-			return ResolutionPolicy{}, fmt.Errorf("transport resolution metric %q is duplicated", fields[0])
+			return fmt.Errorf("transport resolution metric %q is duplicated", fields[0])
 		}
 		policy.Metrics[fields[0]] = parsed
 	}
-	for _, value := range markers["resolution-case"] {
+	return nil
+}
+
+func appendResolutionPolicyCases(policy *ResolutionPolicy, values []string) error {
+	for _, value := range values {
 		fields := strings.Split(value, "|")
 		if len(fields) != 6 {
-			return ResolutionPolicy{}, errors.New("transport resolution case marker is invalid")
+			return errors.New("transport resolution case marker is invalid")
 		}
 		policy.Cases = append(policy.Cases, ResolutionCase{ID: fields[0], State: fields[1], Stage: fields[2], Step: fields[3], UnknownClass: fields[4], Reason: fields[5]})
 	}
@@ -77,10 +108,7 @@ func parseResolutionPolicy(ir *semantic.IR) (ResolutionPolicy, error) {
 			policy.RefutedCases++
 		}
 	}
-	if err := policy.Validate(); err != nil {
-		return ResolutionPolicy{}, err
-	}
-	return policy, nil
+	return nil
 }
 
 func (policy ResolutionPolicy) Validate() error {
