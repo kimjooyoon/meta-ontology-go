@@ -181,14 +181,14 @@ jobs:
           go run ./cmd/gooo generate "$project" \
             --out "$work/third/generated" --observation-ledger "$work/first/ledger" --json > "$work/third/cli.json"
           jq -e '.decision == "CLOSED" and .candidates_emitted == 1 and .artifact_count == 5 and .candidate_byte_replay_equal' \
-            "$work/third/ledger/observation-report.json" >/dev/null
+            "$work/first/ledger/observation-report.json" >/dev/null
           jq -e '
             .execution_allowed == false and .authorization_required == true and
             .proposal_required == true and .certificate_required == true and
             .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
             "$(jq -r '.candidate_path' "$work/second/observation-report.json")" >/dev/null
           cmp -s "$(jq -r '.candidate_path' "$work/second/observation-report.json")" \
-            "$(jq -r '.candidate_path' "$work/third/ledger/observation-report.json")"
+            "$(jq -r '.candidate_path' "$work/first/ledger/observation-report.json")"
 
           go run ./cmd/gooo generate "$project" \
             --out "$work/incompatible/first/generated" --observation-ledger "$work/incompatible/ledger" --json > "$work/incompatible/first/cli.json"
