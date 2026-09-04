@@ -16,10 +16,9 @@ func Verify(program PolicyProgram, input ContractInput, resolution ContractResol
 		IndependentDecision: decision, IndependentResolution: contractResolution,
 		IndependentReason: reason, IndependentReplayComparisons: 1,
 		RepositoryWrites: 0, LocalTestExecutions: 0, ExecutionGrants: 0,
-	}
-	verification.Verified = resolution.Decision == decision && resolution.Resolution == contractResolution && resolution.Reason == reason &&
-		!resolution.ExecutionAuthorized && resolution.ExecutionGrantRequired && resolution.MaxExecutions == 1 && !resolution.RepositoryWritesAllowed &&
-		ValidateResolution(resolution) == nil
+		Verified: resolution.Decision == decision && resolution.Resolution == contractResolution && resolution.Reason == reason &&
+			!resolution.ExecutionAuthorized && resolution.ExecutionGrantRequired && resolution.MaxExecutions == 1 && !resolution.RepositoryWritesAllowed &&
+			ValidateResolution(resolution) == nil}
 	verification.Digest = verificationDigest(verification)
 	return verification
 }
