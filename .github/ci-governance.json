@@ -2976,7 +2976,8 @@
         "internal/bidir/**",
         "internal/meta/policycompilation/**",
         "internal/semantic/**",
-        "internal/syntax/**"
+        "internal/syntax/**",
+        "internal/verify/scope_first_class_meta_policy_v20.go"
       ]
     },
     {
