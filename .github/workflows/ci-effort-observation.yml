@@ -24,7 +24,7 @@ jobs:
       SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
       SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || '' }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
-      TRIGGER_SOURCE_WORKFLOW: ${{ github.event.workflow_run.name || 'CI' }}
+      TRIGGER_SOURCE_WORKFLOW: CI
       TRIGGER_SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
       TRIGGER_SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || '' }}
       TRIGGER_SOURCE_SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
@@ -100,7 +100,7 @@ jobs:
             done
           fi
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$root/source/run.json"
-          jq '{id,name,workflow_name:(.name // .workflow_name // ""),event,ref,head_branch,head_sha,head_repository:(.head_repository.full_name // .repository.full_name // ""),status,conclusion,run_attempt,created_at,run_started_at,updated_at,html_url}' "$root/source/run.json" > "$lineage_root/source-run.json"
+          jq '{id,name,workflow_name:"CI",event,ref,head_branch,head_sha,head_repository:(.head_repository.full_name // .repository.full_name // ""),status,conclusion,run_attempt,created_at,run_started_at,updated_at,html_url}' "$root/source/run.json" > "$lineage_root/source-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$root/source/jobs.json"
           SOURCE_RUN_ATTEMPT="$(jq -er .run_attempt "$lineage_root/source-run.json")"
           echo "SOURCE_RUN_ID=$SOURCE_RUN_ID" >> "$GITHUB_ENV"
