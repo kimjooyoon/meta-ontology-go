@@ -181,6 +181,7 @@ func runResume(input orchestrationInput) error {
 	baselineResult := filepath.Join(input.Output, "baseline-result")
 	replayResult := filepath.Join(input.Output, "replay-result")
 	handlers := map[string]func() error{
+		"EXPLICIT_AUTHORIZATION": func() error { return nil },
 		"DURABLE_CERTIFICATE": func() error {
 			return runPublic(input, filepath.Join(input.Output, "certificate-cli.json"), "certify-discovery", input.Contract, "--input", input.Source, "--candidate", input.Candidate, "--decision", input.Authorization, "--out", filepath.Dir(certificatePath))
 		},
