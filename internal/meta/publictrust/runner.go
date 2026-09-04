@@ -18,11 +18,24 @@ type RunOptions struct {
 }
 
 func Execute(options RunOptions) error {
+	options = defaultRunOptions(options)
+	policy, err := loadPolicy(options)
+	if err != nil {
+		return err
+	}
+	summary, err := loadRunSummary(options, policy)
+	if err != nil {
+		return err
+	}
+	if err := validateSummary(summary); err != nil {
+		return err
+	}
+	return writeOutputs(options.OutputDir, policy, summary)
+}
+
+func defaultRunOptions(options RunOptions) RunOptions {
 	if options.Mode == "" {
 		options.Mode = "verify"
-	}
-	if options.Mode != "verify" && options.Mode != "generate" {
-		return errors.New("mode must be verify or generate")
 	}
 	if options.SourcePath == "" {
 		options.SourcePath = CanonicalPolicyPath
@@ -30,29 +43,41 @@ func Execute(options RunOptions) error {
 	if options.ReadmePath == "" {
 		options.ReadmePath = "README.md"
 	}
+	return options
+}
+
+func loadPolicy(options RunOptions) (Policy, error) {
+	if options.Mode != "verify" && options.Mode != "generate" {
+		return Policy{}, errors.New("mode must be verify or generate")
+	}
 	source, err := os.ReadFile(options.SourcePath)
 	if err != nil {
-		return fmt.Errorf("read public trust source: %w", err)
+		return Policy{}, fmt.Errorf("read public trust source: %w", err)
 	}
 	policy, generated, err := GenerateNamed(options.SourcePath, source)
 	if err != nil {
-		return err
+		return Policy{}, err
 	}
-	if options.Mode == "verify" {
-		if _, err := Load(options.SourcePath, source); err != nil {
-			return err
-		}
-		committed, err := os.ReadFile(GeneratedEvaluatorPath)
-		if err != nil {
-			return fmt.Errorf("read committed generated evaluator: %w", err)
-		}
-		if !bytes.Equal(committed, generated) {
-			return errors.New("generated public trust evaluator is stale")
-		}
+	if options.Mode != "verify" {
+		return policy, nil
 	}
+	if _, err := Load(options.SourcePath, source); err != nil {
+		return Policy{}, err
+	}
+	committed, err := os.ReadFile(GeneratedEvaluatorPath)
+	if err != nil {
+		return Policy{}, fmt.Errorf("read committed generated evaluator: %w", err)
+	}
+	if !bytes.Equal(committed, generated) {
+		return Policy{}, errors.New("generated public trust evaluator is stale")
+	}
+	return policy, nil
+}
+
+func loadRunSummary(options RunOptions, policy Policy) (Summary, error) {
 	readme, err := os.ReadFile(options.ReadmePath)
 	if err != nil {
-		return fmt.Errorf("read README: %w", err)
+		return Summary{}, fmt.Errorf("read README: %w", err)
 	}
 	readmeDrift := 0
 	if !hasGeneratedBlock(string(readme), RenderBadgeBlock(policy)) {
@@ -60,29 +85,29 @@ func Execute(options RunOptions) error {
 	}
 	security, err := os.ReadFile("SECURITY.md")
 	if err != nil {
-		return fmt.Errorf("read SECURITY.md: %w", err)
+		return Summary{}, fmt.Errorf("read SECURITY.md: %w", err)
 	}
-	summary := SummaryFor(policy, readmeDrift, countSecurityPlaceholders(security))
-	if err := validateSummary(summary); err != nil {
-		return err
-	}
-	if options.OutputDir == "" {
+	return SummaryFor(policy, readmeDrift, countSecurityPlaceholders(security)), nil
+}
+
+func writeOutputs(outputDir string, policy Policy, summary Summary) error {
+	if outputDir == "" {
 		return nil
 	}
-	if err := os.MkdirAll(options.OutputDir, 0o755); err != nil {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return fmt.Errorf("create output directory: %w", err)
 	}
 	manifest := Manifest{Schema: Schema, Policy: policy, Summary: summary, SecurityEvidence: securityEvidence(policy)}
-	if err := writeJSON(filepath.Join(options.OutputDir, "public-trust-manifest.json"), manifest); err != nil {
+	if err := writeJSON(filepath.Join(outputDir, "public-trust-manifest.json"), manifest); err != nil {
 		return err
 	}
-	if err := writeJSON(filepath.Join(options.OutputDir, "public-trust-report.json"), summary); err != nil {
+	if err := writeJSON(filepath.Join(outputDir, "public-trust-report.json"), summary); err != nil {
 		return err
 	}
-	if err := writeText(filepath.Join(options.OutputDir, "public-trust-report.md"), RenderReport(policy, summary)); err != nil {
+	if err := writeText(filepath.Join(outputDir, "public-trust-report.md"), RenderReport(policy, summary)); err != nil {
 		return err
 	}
-	return writeText(filepath.Join(options.OutputDir, "README.badges.md"), RenderBadgeBlock(policy))
+	return writeText(filepath.Join(outputDir, "README.badges.md"), RenderBadgeBlock(policy))
 }
 
 func validateSummary(summary Summary) error {
