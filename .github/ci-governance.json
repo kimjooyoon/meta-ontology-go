@@ -3610,6 +3610,7 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/self-improvement-candidate-authorization.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
         "examples/self-improvement/AUTHORIZATION.md",
         "examples/self-improvement/authorization.gooo",
         "internal/meta/selfimprovementcandidate/authorization.go",
