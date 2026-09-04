@@ -396,6 +396,9 @@ func runTimed(directory, label string, args []string, prefix string) (executionR
 	if readErr != nil {
 		return executionResult{}, readErr
 	}
+	if err != nil {
+		return executionResult{}, fmt.Errorf("generated command %s failed: %w: stdout=%q stderr=%q", label, err, stdout.String(), stderr.String())
+	}
 	fields := strings.Fields(string(rss))
 	if len(fields) != 2 {
 		return executionResult{}, fmt.Errorf("generated command runtime evidence is malformed: %q", strings.TrimSpace(string(rss)))
