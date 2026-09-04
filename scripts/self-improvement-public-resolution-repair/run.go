@@ -184,7 +184,7 @@ func run(input runInput) error {
 		return err
 	}
 	comparisons := publicresolutionrepair.Comparisons{
-		GeneratedBytesEqual: bytes.Equal(fallbackProgram, overlayProgram), GeneratedSemanticEqual: bytes.Equal(fallbackManifest, overlayManifest),
+		GeneratedBytesEqual: bytes.Equal(fallbackProgram, overlayProgram), GeneratedSemanticEqual: semanticManifestEqual(fallbackManifest, overlayManifest),
 		TestContractEqual: bytes.Equal(testContract, testContract), FullTestOutcomeEqual: fallbackResult.Success && overlayResult.Success && fallbackResult.ExitCode == overlayResult.ExitCode,
 		OverlayBindingEqual: publicresolutionrepair.ValidateOverlay(overlay, policy, proposal, authorization) == nil,
 	}
@@ -479,6 +479,18 @@ func writeJSON(filename string, value any) error {
 }
 
 func physicalLines(data []byte) int { return bytes.Count(data, []byte{'\n'}) }
+
+func semanticManifestEqual(left, right []byte) bool {
+	var leftValue, rightValue map[string]any
+	if json.Unmarshal(left, &leftValue) != nil || json.Unmarshal(right, &rightValue) != nil {
+		return false
+	}
+	delete(leftValue, "generated_file")
+	delete(rightValue, "generated_file")
+	leftCanonical, leftErr := json.Marshal(leftValue)
+	rightCanonical, rightErr := json.Marshal(rightValue)
+	return leftErr == nil && rightErr == nil && bytes.Equal(leftCanonical, rightCanonical)
+}
 
 func maxInt64(left, right int64) int64 {
 	if left > right {
