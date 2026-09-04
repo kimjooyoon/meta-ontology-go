@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -366,7 +367,7 @@ func verifyActivityRelations(ir semantic.IR, activity semantic.Node) error {
 
 func splitMarkers(value string) map[string]string {
 	result := make(map[string]string)
-	for _, part := range strings.Split(value, ";") {
+	for part := range strings.SplitSeq(value, ";") {
 		key, item, ok := strings.Cut(part, "=")
 		if ok && key != "" {
 			if key == "utility-case" {
@@ -405,7 +406,7 @@ func parseOperationCounts(value string) (operationCounts, error) {
 			return result, fmt.Errorf("unknown utility operation count %q", part)
 		}
 		body := strings.TrimSuffix(strings.TrimPrefix(part, strings.SplitN(part, "(", 2)[0]+"("), ")")
-		for _, item := range strings.Split(body, ",") {
+		for item := range strings.SplitSeq(body, ",") {
 			key, raw, ok := strings.Cut(item, "=")
 			if !ok {
 				return result, fmt.Errorf("malformed operation count %q", item)
@@ -457,7 +458,7 @@ func verifyContract(filename string, source []byte) error {
 
 func countMarker(value, prefix string) int {
 	count := 0
-	for _, part := range strings.Split(value, ";") {
+	for part := range strings.SplitSeq(value, ";") {
 		if strings.HasPrefix(part, prefix) {
 			count++
 		}
@@ -786,9 +787,7 @@ func sameNormalizedManifest(left, right map[string]any) bool {
 
 func copyMap(input map[string]any) map[string]any {
 	result := make(map[string]any, len(input))
-	for key, value := range input {
-		result[key] = value
-	}
+	maps.Copy(result, input)
 	return result
 }
 
