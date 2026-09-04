@@ -3398,6 +3398,18 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-utility-reuse-20260904-v13",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "internal/meta/publictestreuse",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-test-reuse"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
