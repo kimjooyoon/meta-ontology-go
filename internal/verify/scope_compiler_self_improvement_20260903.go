@@ -260,11 +260,11 @@ func init() {
 		"cmd/gooo/compatibility_generate_part02.go",
 		"cmd/gooo/generate_part01.go",
 		"cmd/gooo/generate_pipeline_part03.go",
-		"examples/self-improvement-observation/**",
-		"internal/meta/compatibilitypolicy/**",
-		"internal/meta/compilercompatibility/**",
+		"examples/self-improvement-observation",
+		"internal/meta/compatibilitypolicy",
+		"internal/meta/compilercompatibility",
 		"internal/meta/retentionpolicy/generated/evaluator.go",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
-		"scripts/self-improvement-compiler-compatibility/**",
+		"scripts/self-improvement-compiler-compatibility",
 	}
 }

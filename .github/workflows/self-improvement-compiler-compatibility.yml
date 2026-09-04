@@ -53,12 +53,13 @@ jobs:
           persist-credentials: false
 
       - name: Check out the exact v17 predecessor
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ env.PREDECESSOR_SHA }}
-          path: predecessor
-          fetch-depth: 1
-          persist-credentials: false
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
+          mkdir -p "$(dirname "$predecessor")"
+          git worktree add --detach "$predecessor" "$PREDECESSOR_SHA"
+          test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
       - name: Install exact Go 1.27.0
         uses: actions/setup-go@v6
@@ -70,23 +71,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
           test "$(go env GOVERSION)" = "go1.27.0"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
-          test "$(git -C predecessor rev-parse HEAD)" = "$PREDECESSOR_SHA"
-          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
-          test "$(git -C predecessor status --porcelain)" = ""
+          test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
+          test "$(git status --porcelain)" = ""
+          test "$(git -C "$predecessor" status --porcelain)" = ""
 
       - name: Execute predecessor and successor independently
         shell: bash
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-compatibility"
+          predecessor="$work/predecessor"
           mkdir -p "$work/predecessor" "$work/successor" "$work/observation"
           input="examples/self-improvement-observation/input.fixture"
           contract="examples/self-improvement-observation/observation.gooo"
 
           (
-            cd predecessor
+            cd "$predecessor"
             go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate.json"
             go test ./...
             go test -race ./...
@@ -100,6 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/compiler-compatibility"
+          predecessor_root="$work/predecessor"
           contract="examples/self-improvement-observation/observation.gooo"
           input="examples/self-improvement-observation/input.fixture"
           predecessor_manifest=(
@@ -122,7 +126,7 @@ jobs:
           predecessor_digest="$(
             for path in "${predecessor_manifest[@]}"; do
               printf '%s\t' "$path"
-              sha256sum "predecessor/$path" | awk '{print $1}'
+              sha256sum "$predecessor_root/$path" | awk '{print $1}'
               printf '\n'
             done | sha256sum | awk '{print $1}'
           )"
