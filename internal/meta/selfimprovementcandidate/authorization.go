@@ -255,22 +255,35 @@ type CanonicalCase struct {
 }
 
 type CanonicalCaseReport struct {
-	Schema          string               `json:"schema"`
-	RequestDigest   string               `json:"request_digest"`
-	CaseDenominator int                  `json:"case_denominator"`
-	ClosedCases     int                  `json:"closed_cases"`
-	UnknownCases    int                  `json:"unknown_cases"`
-	RefutedCases    int                  `json:"refuted_cases"`
-	Counts          map[string]int       `json:"counts"`
-	Cases           []CanonicalCase      `json:"cases"`
-	ReplayEqual     bool                 `json:"replay_equal"`
-	LiveAuthorized  int                  `json:"live_authorized"`
-	LiveState       string               `json:"live_state"`
-	Metrics         AuthorizationMetrics `json:"metrics"`
-	Decision        string               `json:"decision"`
-	Resolution      string               `json:"resolution"`
-	Reason          string               `json:"reason"`
-	Digest          string               `json:"digest"`
+	Schema          string                         `json:"schema"`
+	RequestDigest   string                         `json:"request_digest"`
+	CaseDenominator int                            `json:"case_denominator"`
+	ClosedCases     int                            `json:"closed_cases"`
+	UnknownCases    int                            `json:"unknown_cases"`
+	RefutedCases    int                            `json:"refuted_cases"`
+	Counts          map[string]int                 `json:"counts"`
+	Cases           []CanonicalCase                `json:"cases"`
+	ReplayEqual     bool                           `json:"replay_equal"`
+	LiveAuthorized  int                            `json:"live_authorized"`
+	LiveState       string                         `json:"live_state"`
+	Metrics         AuthorizationMetrics           `json:"metrics"`
+	Decision        string                         `json:"decision"`
+	Resolution      string                         `json:"resolution"`
+	Reason          string                         `json:"reason"`
+	Roundtrip       AuthorizationRoundtripEvidence `json:"roundtrip"`
+	Digest          string                         `json:"digest"`
+}
+
+// AuthorizationRoundtripEvidence records the v27A.1 regression boundary. The
+// first post-merge authorization run is retained as the counterexample for
+// pointer-address comparison; the repaired verifier closes the same value
+// after JSON serialization without adding execution authority.
+type AuthorizationRoundtripEvidence struct {
+	AuthorizationRoundtripExactBefore int   `json:"authorization_roundtrip_exact_before"`
+	AuthorizationRoundtripExactAfter  int   `json:"authorization_roundtrip_exact_after"`
+	PointerIdentityDependencyBefore   int   `json:"pointer_identity_dependency_before"`
+	PointerIdentityDependencyAfter    int   `json:"pointer_identity_dependency_after"`
+	CounterexampleRunID               int64 `json:"counterexample_run_id"`
 }
 
 func compileAuthorizationContract(repository fs.FS, path string) (AuthorizationContract, error) {
@@ -570,6 +583,15 @@ func decisionsConflict(inputs []AuthorizationDecisionInput) bool {
 	return false
 }
 
+func candidateBindingEqual(left, right CandidateBinding) bool {
+	// CandidateBinding contains the source-backed ExecutionInput pointer. A
+	// JSON round-trip necessarily allocates a distinct pointer, so compare the
+	// complete value graph instead of pointer addresses. DeepEqual also keeps
+	// nil and present inputs distinct, and preserves slice ordering for the
+	// canonical source/corpus binding.
+	return reflect.DeepEqual(left, right)
+}
+
 func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisionInput) *AuthorizationReceipt {
 	authorized := input.Decision == AuthorizationAllow
 	base := generation.SemanticAdoptionAuthorization{
@@ -737,7 +759,7 @@ func VerifyAuthorizationResolution(request AuthorizationRequest, resolution Auth
 	if err := ValidateAuthorizationResolution(resolution); err != nil {
 		return err
 	}
-	if resolution.RequestDigest != request.Digest || resolution.Candidate != request.Candidate || resolution.Artifact != request.Artifact {
+	if resolution.RequestDigest != request.Digest || !candidateBindingEqual(resolution.Candidate, request.Candidate) || resolution.Artifact != request.Artifact {
 		return errors.New("authorization resolution is not bound to the request")
 	}
 	if resolution.Decision == AuthorizationUnknown {
@@ -852,7 +874,12 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 	report := CanonicalCaseReport{Schema: AuthorizationCasesSchema, RequestDigest: request.Digest,
 		CaseDenominator: 9, Counts: map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0},
 		LiveAuthorized: 0, LiveState: "UNKNOWN", Decision: AuthorizationClosed,
-		Resolution: ResolutionExact, Reason: "EXACT_CANONICAL_AUTHORIZATION_CASES"}
+		Resolution: ResolutionExact, Reason: "EXACT_CANONICAL_AUTHORIZATION_CASES",
+		Roundtrip: AuthorizationRoundtripEvidence{
+			AuthorizationRoundtripExactBefore: 0, AuthorizationRoundtripExactAfter: 1,
+			PointerIdentityDependencyBefore: 1, PointerIdentityDependencyAfter: 0,
+			CounterexampleRunID: 33926584593,
+		}}
 	for _, spec := range caseSpecs {
 		result, err := canonicalCase(spec.id, spec.request, spec.inputs, spec.decision, spec.reason)
 		if err != nil {
@@ -890,7 +917,10 @@ func ValidateCanonicalCases(report CanonicalCaseReport) error {
 		report.UnknownCases != 3 || report.RefutedCases != 3 || report.Counts[AuthorizationClosed] != 3 ||
 		report.Counts[AuthorizationUnknown] != 3 || report.Counts[AuthorizationRefuted] != 3 || !report.ReplayEqual ||
 		report.LiveAuthorized != 0 || report.LiveState != "UNKNOWN" || report.Decision != AuthorizationClosed ||
-		report.Resolution != ResolutionExact || report.Digest != canonicalCasesDigest(report) {
+		report.Resolution != ResolutionExact || report.Roundtrip.AuthorizationRoundtripExactBefore != 0 ||
+		report.Roundtrip.AuthorizationRoundtripExactAfter != 1 || report.Roundtrip.PointerIdentityDependencyBefore != 1 ||
+		report.Roundtrip.PointerIdentityDependencyAfter != 0 || report.Roundtrip.CounterexampleRunID != 33926584593 ||
+		report.Digest != canonicalCasesDigest(report) {
 		return errors.New("canonical authorization cases are not exact")
 	}
 	if len(report.Cases) != report.CaseDenominator {

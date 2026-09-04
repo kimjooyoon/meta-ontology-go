@@ -225,7 +225,7 @@ jobs:
           fi
           go run ./scripts/self-improvement-candidate-authorization \
             -mode cases -request "$WORK/request.json" -output "$WORK/canonical-cases.json" -check
-          jq -e '.case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and .replay_equal and .live_authorized == 0 and .live_state == "UNKNOWN" and .metrics.structural_unbound_edges_before == 1 and .metrics.structural_unbound_edges_after == 0 and .metrics.fallback_accepted == 0 and .metrics.repository_writes == 0 and .metrics.local_test_executions == 0' "$WORK/canonical-cases.json" >/dev/null
+          jq -e '.case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and .replay_equal and .live_authorized == 0 and .live_state == "UNKNOWN" and .metrics.structural_unbound_edges_before == 1 and .metrics.structural_unbound_edges_after == 0 and .metrics.fallback_accepted == 0 and .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and .roundtrip.authorization_roundtrip_exact_before == 0 and .roundtrip.authorization_roundtrip_exact_after == 1 and .roundtrip.pointer_identity_dependency_before == 1 and .roundtrip.pointer_identity_dependency_after == 0 and .roundtrip.counterexample_run_id == 33926584593' "$WORK/canonical-cases.json" >/dev/null
           jq -r '"canonical cases: \(.case_denominator) (\(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED), replay_equal=\(.replay_equal), live_authorized=\(.live_authorized)"' "$WORK/canonical-cases.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload candidate authorization bridge artifacts

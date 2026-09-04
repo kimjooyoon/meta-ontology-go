@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 	"testing/fstest"
+
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 )
 
 const authorizationContractPath = "examples/self-improvement/authorization.gooo"
@@ -37,6 +39,19 @@ func authorizationMetadata() ArtifactMetadata {
 		ArchiveDigest: fixtureDigest(), SizeBytes: 1234}
 }
 
+func authorizationJSONRoundTrip[T any](t *testing.T, value T) T {
+	t.Helper()
+	raw, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var roundTripped T
+	if err := json.Unmarshal(raw, &roundTripped); err != nil {
+		t.Fatal(err)
+	}
+	return roundTripped
+}
+
 func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *testing.T) {
 	head, runID := fixtureSHA("e"), int64(45)
 	raw := authorizationCandidateRaw(head, runID)
@@ -65,6 +80,74 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 	secondBytes, _ := json.Marshal(second)
 	if string(firstBytes) != string(secondBytes) {
 		t.Fatal("authorization request was not deterministic")
+	}
+}
+
+func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.T) {
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("r"), 50), authorizationMetadata())
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{fixtureDecision(request, AuthorizationAllow)})
+	if resolution.Decision != AuthorizationClosed {
+		t.Fatalf("expected CLOSED resolution, got %+v", resolution)
+	}
+	roundTrippedRequest := authorizationJSONRoundTrip(t, request)
+	roundTrippedResolution := authorizationJSONRoundTrip(t, resolution)
+	if roundTrippedRequest.Candidate.ExecutionInput == roundTrippedResolution.Candidate.ExecutionInput {
+		t.Fatal("round-trip regression fixture unexpectedly reused the same input pointer")
+	}
+	if err := VerifyAuthorizationResolution(roundTrippedRequest, roundTrippedResolution); err != nil {
+		t.Fatalf("exact JSON round-trip was not independently verified: %v", err)
+	}
+}
+
+func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testing.T) {
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("s"), 51), authorizationMetadata())
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutations := []struct {
+		name   string
+		mutate func(*valuewitnessinput.ExecutionInput)
+	}{
+		{name: "source-bytes", mutate: func(input *valuewitnessinput.ExecutionInput) { input.Source.Bytes += "\n" }},
+		{name: "source-digest", mutate: func(input *valuewitnessinput.ExecutionInput) {
+			input.Source.Digest = digestBytes([]byte("different-source"))
+		}},
+		{name: "corpus", mutate: func(input *valuewitnessinput.ExecutionInput) { input.Corpus[0].ExpectedOutput++ }},
+		{name: "activity", mutate: func(input *valuewitnessinput.ExecutionInput) { input.Activity.ValueProgram = "int.add:2" }},
+	}
+	for _, mutation := range mutations {
+		t.Run(mutation.name, func(t *testing.T) {
+			mutated := authorizationJSONRoundTrip(t, request)
+			mutation.mutate(mutated.Candidate.ExecutionInput)
+			mutated.Digest = requestDigest(mutated)
+			resolution := ResolveAuthorization(mutated, []AuthorizationDecisionInput{fixtureDecision(mutated, AuthorizationAllow)})
+			if resolution.Decision != AuthorizationRefuted {
+				t.Fatalf("nested execution-input contradiction was not REFUTED: %+v", resolution)
+			}
+		})
+	}
+}
+
+func TestVerifyAuthorizationResolutionDistinguishesNilAndPresentExecutionInput(t *testing.T) {
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("n"), 52), authorizationMetadata())
+	if err != nil {
+		t.Fatal(err)
+	}
+	nilRequest := authorizationJSONRoundTrip(t, request)
+	nilRequest.Candidate.ExecutionInput = nil
+	nilRequest.Digest = requestDigest(nilRequest)
+	if resolution := ResolveAuthorization(nilRequest, []AuthorizationDecisionInput{fixtureDecision(nilRequest, AuthorizationAllow)}); resolution.Decision != AuthorizationUnknown {
+		t.Fatalf("nil execution input was treated as present: %+v", resolution)
+	}
+	resolution := ResolveAuthorization(request, []AuthorizationDecisionInput{fixtureDecision(request, AuthorizationAllow)})
+	nilResolution := authorizationJSONRoundTrip(t, resolution)
+	nilResolution.Candidate.ExecutionInput = nil
+	nilResolution.Digest = resolutionDigest(nilResolution)
+	if err := VerifyAuthorizationResolution(request, nilResolution); err == nil {
+		t.Fatal("nil and present execution inputs were treated as equal")
 	}
 }
 
@@ -144,7 +227,9 @@ func TestBuildCanonicalAuthorizationCasesFixesNineCaseDenominator(t *testing.T) 
 	}
 	if report.CaseDenominator != 9 || report.ClosedCases != 3 || report.UnknownCases != 3 || report.RefutedCases != 3 ||
 		report.Metrics.StructuralUnboundEdgesBefore != 1 || report.Metrics.StructuralUnboundEdgesAfter != 0 ||
-		report.LiveAuthorized != 0 {
+		report.LiveAuthorized != 0 || report.Roundtrip.AuthorizationRoundtripExactBefore != 0 ||
+		report.Roundtrip.AuthorizationRoundtripExactAfter != 1 || report.Roundtrip.PointerIdentityDependencyBefore != 1 ||
+		report.Roundtrip.PointerIdentityDependencyAfter != 0 || report.Roundtrip.CounterexampleRunID != 33926584593 {
 		t.Fatalf("unexpected canonical metrics: %+v", report)
 	}
 }
