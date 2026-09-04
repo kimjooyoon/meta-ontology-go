@@ -16,6 +16,7 @@ const (
 	ReasonReplay                = "EXECUTION_GRANT_REPLAYED_DETERMINISTICALLY"
 	ReasonMissingDecision       = "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION"
 	ReasonMissingArtifact       = "MISSING_OR_EXPIRED_UPSTREAM_ARTIFACT"
+	ReasonSourceRetrievalFailed = "SOURCE_ARTIFACT_RETRIEVAL_FAILED"
 	ReasonIncompleteInput       = "INCOMPLETE_EXECUTION_GRANT_INPUT"
 	ReasonV24Unknown            = "V24_AUTHORIZATION_UNKNOWN"
 	ReasonV24Denied             = "V24_AUTHORIZATION_DENIED"
@@ -39,11 +40,14 @@ func Evaluate(program PolicyProgram, input GrantInput) GrantResolution {
 	if len(contradictions) > 0 {
 		return finishRefuted(resolution, refutedReason(contradictions))
 	}
+	if sourceArtifactRetrievalFailed(input.Request.Source) {
+		return finishUnknownWithObligations(resolution, ReasonSourceRetrievalFailed, "FETCH", "2", "SOURCE_ARTIFACT_RETRIEVAL", "retry-exact-source-artifact-retrieval", "source_artifact_retrieval", unknownObligations(input, "source_artifact_retrieval"), unknownFrontier(input, "retry-exact-source-artifact-retrieval"))
+	}
 	if len(input.DecisionInputs) == 0 {
-		return finishUnknown(resolution, ReasonMissingDecision, "GRANT", "1", "INCOMPLETE_EVIDENCE", "provide-explicit-execution-grant-decision", "explicit_execution_grant_decision")
+		return finishUnknownWithObligations(resolution, ReasonMissingDecision, "GRANT", "1", "INCOMPLETE_EVIDENCE", "provide-explicit-execution-grant-decision", "explicit_execution_grant_decision", unknownObligations(input, "explicit_execution_grant_decision"), unknownFrontier(input, "provide-explicit-execution-grant-decision"))
 	}
 	if sourceMissing(input.Request.Source) || input.Request.Source.ArtifactExpired {
-		return finishUnknown(resolution, ReasonMissingArtifact, "BIND", "2", "UPSTREAM_ARTIFACT_UNAVAILABLE", "restore-exact-upstream-artifact", "upstream_artifact")
+		return finishUnknownWithObligations(resolution, ReasonMissingArtifact, "BIND", "3", "UPSTREAM_ARTIFACT_UNAVAILABLE", "restore-exact-upstream-artifact", "upstream_artifact", unknownObligations(input, "upstream_artifact"), unknownFrontier(input, "restore-exact-upstream-artifact"))
 	}
 	if len(missing) > 0 {
 		return finishUnknown(resolution, ReasonIncompleteInput, "BIND", "3", "INCOMPLETE_EVIDENCE", "bind-complete-execution-grant-input", "grant_input_binding")
@@ -77,12 +81,20 @@ func Evaluate(program PolicyProgram, input GrantInput) GrantResolution {
 }
 
 func baseResolution(program PolicyProgram, input GrantInput) GrantResolution {
+	sourceBound := boolInt(validArtifact(input.Request.Source))
+	exactSourceDigest := boolInt(sourceBound == 1 && input.Request.Source.ObservedArtifactDigest != "" && input.Request.Source.ArtifactDigest == input.Request.Source.ObservedArtifactDigest)
 	metrics := GrantMetrics{
 		StructuralSeparateGrantEdgesBefore: 0, StructuralSeparateGrantEdgesAfter: 1,
+		SourceArtifactBoundBefore: 0, SourceArtifactBoundAfter: sourceBound, SourceArtifactBound: sourceBound,
+		SourceArtifactExpiredMisclassifiedBefore: 1, SourceArtifactExpiredMisclassifiedAfter: 0, SourceArtifactExpiredMisclassified: 0,
+		ExactSourceDigestBoundBefore: 0, ExactSourceDigestBoundAfter: exactSourceDigest, ExactSourceDigestBound: exactSourceDigest,
 		LiveGrantRequests: boolInt(input.Live), LiveGrants: 0, LiveExecutionCount: 0,
+		LiveGrantsBefore: 0, LiveGrantsAfter: 0, ExecutionCountBefore: 0, ExecutionCountAfter: 0,
 		CanonicalExecutionCount: 0, GrantConsumedUses: 0, RepositoryWrites: 0,
+		RepositoryWritesBefore: 0, RepositoryWritesAfter: 0,
 		LocalTestExecutions: 0, FallbackAccepted: 0, PerformanceImprovement: PerformanceUnknown,
 		GoPhysicalLines: program.Inventory.GoPhysicalLines, GoooPhysicalLines: program.Inventory.GoooPhysicalLines,
+		CounterexampleArtifactIDs: []int64{KnownFlawedArtifactID},
 	}
 	return GrantResolution{Schema: ResolutionSchema, RequestDigest: input.Request.Digest,
 		GrantAllowsExecution: false, RemainingUses: 0, ConsumedUses: 0, ExecutionCount: 0,
@@ -91,11 +103,61 @@ func baseResolution(program PolicyProgram, input GrantInput) GrantResolution {
 }
 
 func finishUnknown(resolution GrantResolution, reason, stage, step, class, next, blocked string) GrantResolution {
+	return finishUnknownWithObligations(resolution, reason, stage, step, class, next, blocked, []string{blocked}, []string{next})
+}
+
+func finishUnknownWithObligations(resolution GrantResolution, reason, stage, step, class, next, blocked string, obligations, frontier []string) GrantResolution {
 	resolution.Decision, resolution.Resolution, resolution.Reason = DecisionUnknown, ResolutionLower, reason
 	resolution.Unknown = &UnknownState{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: blocked}
+	resolution.Obligations = sortedStrings(obligations)
+	resolution.Frontier = sortedStrings(frontier)
 	resolution.Metrics.SixFieldUnknowns = 1
 	resolution.Digest = resolutionDigest(resolution)
 	return resolution
+}
+
+func unknownObligations(input GrantInput, primary string) []string {
+	obligations := []string{primary}
+	if len(input.DecisionInputs) == 0 {
+		obligations = append(obligations, "explicit_execution_grant_decision")
+	}
+	if sourceArtifactRetrievalFailed(input.Request.Source) {
+		obligations = append(obligations, "source_artifact_retrieval")
+	}
+	if sourceMissing(input.Request.Source) || input.Request.Source.ArtifactExpired {
+		obligations = append(obligations, "upstream_artifact")
+	}
+	if len(requiredMissing(input)) > 0 {
+		obligations = append(obligations, "grant_input_binding")
+	}
+	return uniqueStrings(obligations)
+}
+
+func unknownFrontier(input GrantInput, primary string) []string {
+	frontier := []string{primary}
+	if len(input.DecisionInputs) == 0 {
+		frontier = append(frontier, "provide-explicit-execution-grant-decision")
+	}
+	if sourceArtifactRetrievalFailed(input.Request.Source) {
+		frontier = append(frontier, "retry-exact-source-artifact-retrieval")
+	}
+	if sourceMissing(input.Request.Source) || input.Request.Source.ArtifactExpired {
+		frontier = append(frontier, "restore-exact-upstream-artifact")
+	}
+	if len(requiredMissing(input)) > 0 {
+		frontier = append(frontier, "bind-complete-execution-grant-input")
+	}
+	return uniqueStrings(frontier)
+}
+
+func uniqueStrings(values []string) []string {
+	result := []string{}
+	for _, value := range values {
+		if value != "" && !contains(result, value) {
+			result = append(result, value)
+		}
+	}
+	return result
 }
 
 func finishRefuted(resolution GrantResolution, reason string) GrantResolution {
@@ -113,6 +175,7 @@ func finishClosed(resolution GrantResolution, input GrantDecisionInput, allows b
 	if allows {
 		resolution.RemainingUses = 1
 		resolution.Metrics.LiveGrants = boolInt(resolution.Metrics.LiveGrantRequests == 1)
+		resolution.Metrics.LiveGrantsAfter = resolution.Metrics.LiveGrants
 		resolution.Metrics.GrantRemainingUses = 1
 	}
 	resolution.Receipt = buildReceipt(resolution.RequestDigest, input, allows)
@@ -378,7 +441,11 @@ func refutedReason(fields []string) string {
 }
 
 func sourceMissing(source SourceArtifact) bool {
-	return source.Repository == "" || source.WorkflowRunID == 0 || source.WorkflowRunAttempt == 0 || source.ArtifactID == 0 || source.ArtifactDigest == "" || !source.ArtifactExpiryKnown
+	return !validArtifact(source)
+}
+
+func sourceArtifactRetrievalFailed(source SourceArtifact) bool {
+	return source.ArtifactRetrievalError != ""
 }
 
 func boolInt(value bool) int {
@@ -400,7 +467,7 @@ func ValidateResolution(resolution GrantResolution) error {
 	}
 	switch resolution.Decision {
 	case DecisionUnknown:
-		if resolution.Resolution != ResolutionLower || resolution.Unknown == nil || resolution.Receipt != nil || len(resolution.DecisionInputs) != 0 || resolution.Unknown.Stage == "" || resolution.Unknown.Step == "" || resolution.Unknown.Reason == "" || resolution.Unknown.UnknownClass == "" || resolution.Unknown.NextOperation == "" || resolution.Unknown.BlockedBy == "" {
+		if resolution.Resolution != ResolutionLower || resolution.Unknown == nil || resolution.Receipt != nil || len(resolution.DecisionInputs) != 0 || resolution.Unknown.Stage == "" || resolution.Unknown.Step == "" || resolution.Unknown.Reason == "" || resolution.Unknown.UnknownClass == "" || resolution.Unknown.NextOperation == "" || resolution.Unknown.BlockedBy == "" || len(resolution.Obligations) == 0 || len(resolution.Frontier) == 0 || !contains(resolution.Obligations, resolution.Unknown.BlockedBy) || !contains(resolution.Frontier, resolution.Unknown.NextOperation) {
 			return errors.New("execution grant UNKNOWN resolution is not six-field causal")
 		}
 	case DecisionRefuted:

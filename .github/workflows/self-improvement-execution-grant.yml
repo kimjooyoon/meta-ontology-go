@@ -15,6 +15,7 @@ on:
       - 'internal/meta/languagereadiness/languagesyntax/registry.go'
       - 'internal/meta/selfimprovementexecutiongrant/**'
       - 'internal/verify/scope_gooo_self_improvement_execution_grant_v26.go'
+      - 'internal/verify/scope_gooo_self_improvement_execution_grant_v26_1.go'
       - 'scripts/self-improvement-execution-grant/**'
   workflow_run:
     workflows: ["Self-improvement candidate execution contract"]
@@ -93,10 +94,28 @@ jobs:
           artifact_id=0
           artifact_run_id="${SOURCE_RUN_ID:-0}"
           artifact_run_attempt="${SOURCE_RUN_ATTEMPT:-0}"
+          artifact_name=""
           expected_digest=""
+          metadata_digest=""
+          declared_digest=""
+          actual_digest=""
+          artifact_expired=false
+          artifact_expiry_known=false
+          artifact_retrieved=false
+          retrieval_error=""
+          v25_contract=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json" || true
-            artifact_id="$(jq -r --arg name "self-improvement-execution-contract-$SUBJECT_SHA" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].id else 0 end' "$work/artifacts.json" 2>/dev/null || echo 0)"
+            artifact_name="self-improvement-execution-contract-$SUBJECT_SHA"
+            if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json"; then
+              artifact_count="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)] | length' "$work/artifacts.json" 2>/dev/null || echo 0)"
+              if [ "$artifact_count" = "1" ]; then
+                artifact_id="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].id' "$work/artifacts.json")"
+              elif [ "$artifact_count" -gt 1 ]; then
+                retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
+              fi
+            else
+              retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
+            fi
           elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             artifact_id="$DISPATCH_ARTIFACT_ID"
             expected_digest="$DISPATCH_ARTIFACT_DIGEST"
@@ -109,28 +128,36 @@ jobs:
           if ! [[ "$artifact_run_id" =~ ^[0-9]+$ ]]; then artifact_run_id=0; fi
           if ! [[ "$artifact_run_attempt" =~ ^[0-9]+$ ]]; then artifact_run_attempt=0; fi
           archive="$work/v25-contract.zip"
-          actual_digest=""
-          expired=true
-          artifact_size=0
           if [[ "$artifact_id" =~ ^[1-9][0-9]*$ ]]; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json" || true
-            expired="$(jq -r '.expired // true' "$work/artifact.json" 2>/dev/null || echo true)"
-            artifact_size="$(jq -r '.size_in_bytes // 0' "$work/artifact.json" 2>/dev/null || echo 0)"
-            if [ "$expired" = "false" ]; then
-              curl --fail --location --silent --show-error \
-                -H "Authorization: Bearer $GH_TOKEN" \
-                -H "Accept: application/vnd.github+json" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" -o "$archive" || true
-              if [ -s "$archive" ]; then
+            if gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json"; then
+              metadata_id="$(jq -r '.id // 0' "$work/artifact.json")"
+              metadata_name="$(jq -r '.name // ""' "$work/artifact.json")"
+              metadata_run_id="$(jq -r '.workflow_run.id // 0' "$work/artifact.json")"
+              metadata_digest="$(jq -r '.digest // ""' "$work/artifact.json")"
+              artifact_expired="$(jq -r '.expired // false' "$work/artifact.json")"
+              artifact_expiry_known=true
+              if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then declared_digest="$metadata_digest"; else declared_digest="${expected_digest:-$metadata_digest}"; fi
+              if [ "$metadata_id" != "$artifact_id" ] || { [ -n "$artifact_name" ] && [ "$metadata_name" != "$artifact_name" ]; } || [ "$metadata_run_id" != "$artifact_run_id" ] || ! [[ "$metadata_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+                retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
+              elif [ "$artifact_expired" = "true" ]; then
+                retrieval_error=""
+              elif gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$archive"; then
                 actual_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
-                unzip -q "$archive" -d "$source_dir" || true
+                if [ "$actual_digest" = "$declared_digest" ] && unzip -q "$archive" -d "$source_dir"; then
+                  while IFS= read -r file; do
+                    if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then v25_contract="$file"; break; fi
+                  done < <(find "$source_dir" -type f -name '*.json' -print | sort)
+                  if [ -n "$v25_contract" ]; then artifact_retrieved=true; else retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"; fi
+                elif [ "$actual_digest" = "$declared_digest" ]; then
+                  retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
+                fi
               else
-                expired=true
+                retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
               fi
+            else
+              retrieval_error="SOURCE_ARTIFACT_RETRIEVAL_FAILED"
             fi
           fi
-          declared_digest="$actual_digest"
-          if [ -n "$expected_digest" ]; then declared_digest="$expected_digest"; fi
           jq -n \
             --arg repository "$GITHUB_REPOSITORY" \
             --argjson workflow_run_id "${artifact_run_id:-0}" \
@@ -138,13 +165,12 @@ jobs:
             --argjson artifact_id "${artifact_id:-0}" \
             --arg artifact_digest "$declared_digest" \
             --arg observed_artifact_digest "$actual_digest" \
-            --argjson artifact_expired "$expired" \
-            '{repository:$repository,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_id:$artifact_id,artifact_digest:$artifact_digest,observed_artifact_digest:$observed_artifact_digest,artifact_expired:$artifact_expired,artifact_expiry_known:true}' \
+            --argjson artifact_expired "$artifact_expired" \
+            --argjson artifact_expiry_known "$artifact_expiry_known" \
+            --argjson artifact_retrieved "$artifact_retrieved" \
+            --arg artifact_retrieval_error "$retrieval_error" \
+            '{repository:$repository,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_id:$artifact_id,artifact_digest:$artifact_digest,observed_artifact_digest:$observed_artifact_digest,artifact_expired:$artifact_expired,artifact_expiry_known:$artifact_expiry_known,artifact_retrieved:$artifact_retrieved} + (if $artifact_retrieval_error == "" then {} else {artifact_retrieval_error:$artifact_retrieval_error} end)' \
             > "$work/source.json"
-          v25_contract=""
-          while IFS= read -r file; do
-            if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then v25_contract="$file"; break; fi
-          done < <(find "$source_dir" -type f -name '*.json' -print | sort)
           echo "V25_CONTRACT=$v25_contract" >> "$GITHUB_ENV"
           echo "GRANT_WORK=$work" >> "$GITHUB_ENV"
           echo "GRANT_OUTPUT=$output_dir" >> "$GITHUB_ENV"
@@ -164,6 +190,13 @@ jobs:
             .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and
             .structural_separate_grant_edges_before == 0 and
             .structural_separate_grant_edges_after == 1 and
+            .source_artifact_bound_before == 0 and .source_artifact_bound_after == 1 and
+            .source_artifact_bound == 1 and
+            .source_artifact_expired_misclassified_before == 1 and .source_artifact_expired_misclassified_after == 0 and
+            .source_artifact_expired_misclassified == 0 and
+            .exact_source_digest_bound_before == 0 and .exact_source_digest_bound_after == 1 and
+            .exact_source_digest_bound == 1 and
+            (.counterexample_artifact_ids | index(9955461668)) != null and
             .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and
             .replay_equal and .live_grant_requests == 0 and .live_grants == 0 and
             .live_execution_count == 0 and .canonical_granted_cases == 2 and
@@ -187,17 +220,41 @@ jobs:
           fi
           go run ./scripts/self-improvement-execution-grant "${args[@]}"
           if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then
-            jq -e '
+            jq --arg event "$GITHUB_EVENT_NAME" -e '
               .schema == "gooo/self-improvement-execution-grant/v1" and
-              .grant_decision == "" and .resolution.decision == "UNKNOWN" and
-              .resolution.resolution == "LOWER_RESOLUTION" and
-              .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
               ((.resolution.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"]) and
-              .resolution.unknown.blocked_by == "explicit_execution_grant_decision" and
               .metrics.live_grant_requests == 1 and .metrics.live_grants == 0 and
               .metrics.live_execution_count == 0 and .metrics.grant_consumed_uses == 0 and
               .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
-              .metrics.fallback_accepted == 0 and .verification.verified' \
+              .metrics.fallback_accepted == 0 and
+              .metrics.source_artifact_bound_before == 0 and .metrics.source_artifact_expired_misclassified_before == 1 and
+              .metrics.exact_source_digest_bound_before == 0 and .metrics.live_grants_before == 0 and
+              .metrics.execution_count_before == 0 and .metrics.repository_writes_before == 0 and
+              .metrics.source_artifact_expired_misclassified_after == 0 and .metrics.live_grants_after == 0 and
+              .metrics.execution_count_after == 0 and .metrics.repository_writes_after == 0 and .verification.verified and
+              (if .request.source_artifact.artifact_retrieval_error then
+                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
+                .resolution.reason == "SOURCE_ARTIFACT_RETRIEVAL_FAILED" and
+                .metrics.source_artifact_bound_after == 0 and .metrics.exact_source_digest_bound_after == 0 and
+                .metrics.source_artifact_bound == 0 and .metrics.exact_source_digest_bound == 0 and
+                .resolution.unknown.blocked_by == "source_artifact_retrieval" and
+                (.resolution.obligations | index("explicit_execution_grant_decision")) != null and
+                (.resolution.obligations | index("source_artifact_retrieval")) != null
+               elif $event == "workflow_run" then
+                .request.source_artifact.artifact_retrieved and .request.source_artifact.artifact_expired == false and
+                .request.source_artifact.artifact_digest == .request.source_artifact.observed_artifact_digest and
+                .metrics.source_artifact_bound_after == 1 and .metrics.exact_source_digest_bound_after == 1 and
+                .metrics.source_artifact_bound == 1 and .metrics.exact_source_digest_bound == 1 and
+                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
+                .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
+                .resolution.unknown.blocked_by == "explicit_execution_grant_decision"
+               else
+                .metrics.source_artifact_bound_after == 0 and .metrics.exact_source_digest_bound_after == 0 and
+                .metrics.source_artifact_bound == 0 and .metrics.exact_source_digest_bound == 0 and
+                .resolution.decision == "UNKNOWN" and .resolution.resolution == "LOWER_RESOLUTION" and
+                .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
+                .resolution.unknown.blocked_by == "explicit_execution_grant_decision"
+               end)' \
               "$GRANT_OUTPUT/live-grant.json" >/dev/null
           fi
           jq -r '"live grant: \(.resolution.decision)/\(.resolution.resolution)/\(.resolution.reason), grant_allows_execution=\(.resolution.grant_allows_execution), remaining_uses=\(.resolution.remaining_uses), consumed_uses=\(.resolution.consumed_uses), execution_count=\(.resolution.execution_count)"' "$GRANT_OUTPUT/live-grant.json" >> "$GITHUB_STEP_SUMMARY"

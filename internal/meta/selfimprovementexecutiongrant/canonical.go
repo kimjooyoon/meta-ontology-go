@@ -16,7 +16,7 @@ func canonicalV25() V25Binding {
 }
 
 func canonicalSource() SourceArtifact {
-	return SourceArtifact{Repository: "kimjooyoon/meta-ontology-go", WorkflowRunID: 1, WorkflowRunAttempt: 1, ArtifactID: 1, ArtifactDigest: digestBytes([]byte("v25-artifact")), ArtifactExpired: false, ArtifactExpiryKnown: true}
+	return SourceArtifact{Repository: "kimjooyoon/meta-ontology-go", WorkflowRunID: 1, WorkflowRunAttempt: 1, ArtifactID: 1, ArtifactDigest: digestBytes([]byte("v25-artifact")), ObservedArtifactDigest: digestBytes([]byte("v25-artifact")), ArtifactExpired: false, ArtifactExpiryKnown: true, ArtifactRetrieved: true}
 }
 
 func canonicalRequest(program PolicyProgram) GrantRequest {
@@ -72,7 +72,7 @@ func BuildCanonicalCaseReport(program PolicyProgram) (CanonicalCaseReport, error
 		{"conflicting-duplicate-grant", ReasonDuplicate, request, []GrantDecisionInput{allow, deny}, DecisionRefuted, ResolutionExact},
 		{"unauthorized-or-unsafe-grant", ReasonUnsafe, unsafeRequest, []GrantDecisionInput{fixtureDecision(unsafeRequest, DecisionAllow)}, DecisionRefuted, ResolutionExact},
 	}
-	report := CanonicalCaseReport{Schema: CanonicalCasesSchema, Policy: program.Evidence, RequiredFields: RequiredBindingNames(), RequestDigest: request.Digest, CaseDenominator: 9, StructuralSeparateGrantEdgesBefore: 0, StructuralSeparateGrantEdgesAfter: 1, Counts: map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}, ReplayEqual: true, LiveGrantRequests: 0, LiveGrants: 0, LiveExecutionCount: 0, CanonicalExecutionCount: 0, RepositoryWrites: 0, LocalTestExecutions: 0, FallbackAccepted: 0, PerformanceImprovement: PerformanceUnknown, Decision: DecisionClosed, Resolution: ResolutionExact, Reason: "NINE_CANONICAL_EXECUTION_GRANT_CASES", GoPhysicalLines: program.Inventory.GoPhysicalLines, GoooPhysicalLines: program.Inventory.GoooPhysicalLines}
+	report := CanonicalCaseReport{Schema: CanonicalCasesSchema, Policy: program.Evidence, RequiredFields: RequiredBindingNames(), RequestDigest: request.Digest, CaseDenominator: 9, StructuralSeparateGrantEdgesBefore: 0, StructuralSeparateGrantEdgesAfter: 1, SourceArtifactBoundBefore: 0, SourceArtifactBoundAfter: 1, SourceArtifactBound: 1, SourceArtifactExpiredMisclassifiedBefore: 1, SourceArtifactExpiredMisclassifiedAfter: 0, SourceArtifactExpiredMisclassified: 0, ExactSourceDigestBoundBefore: 0, ExactSourceDigestBoundAfter: 1, ExactSourceDigestBound: 1, CounterexampleArtifactIDs: []int64{KnownFlawedArtifactID}, Counts: map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}, ReplayEqual: true, LiveGrantRequests: 0, LiveGrants: 0, LiveExecutionCount: 0, CanonicalExecutionCount: 0, RepositoryWrites: 0, LocalTestExecutions: 0, FallbackAccepted: 0, PerformanceImprovement: PerformanceUnknown, Decision: DecisionClosed, Resolution: ResolutionExact, Reason: "NINE_CANONICAL_EXECUTION_GRANT_CASES", GoPhysicalLines: program.Inventory.GoPhysicalLines, GoooPhysicalLines: program.Inventory.GoooPhysicalLines}
 	for _, spec := range caseSpecs {
 		result, err := canonicalCase(program, spec.id, spec.request, spec.inputs, spec.decision, spec.resolution, spec.reason)
 		if err != nil {
@@ -115,7 +115,7 @@ func mustJSON(value GrantResolution) []byte {
 }
 
 func ValidateCanonicalCases(report CanonicalCaseReport) error {
-	if report.Schema != CanonicalCasesSchema || report.CaseDenominator != 9 || report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.ClosedCases != 3 || report.UnknownCases != 3 || report.RefutedCases != 3 || report.Counts["CLOSED"] != 3 || report.Counts["UNKNOWN"] != 3 || report.Counts["REFUTED"] != 3 || !report.ReplayEqual || report.LiveGrantRequests != 0 || report.LiveGrants != 0 || report.LiveExecutionCount != 0 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 || report.Digest != canonicalDigest(report) {
+	if report.Schema != CanonicalCasesSchema || report.CaseDenominator != 9 || report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.SourceArtifactBoundBefore != 0 || report.SourceArtifactBoundAfter != 1 || report.SourceArtifactBound != 1 || report.SourceArtifactExpiredMisclassifiedBefore != 1 || report.SourceArtifactExpiredMisclassifiedAfter != 0 || report.SourceArtifactExpiredMisclassified != 0 || report.ExactSourceDigestBoundBefore != 0 || report.ExactSourceDigestBoundAfter != 1 || report.ExactSourceDigestBound != 1 || len(report.CounterexampleArtifactIDs) != 1 || report.CounterexampleArtifactIDs[0] != KnownFlawedArtifactID || report.ClosedCases != 3 || report.UnknownCases != 3 || report.RefutedCases != 3 || report.Counts["CLOSED"] != 3 || report.Counts["UNKNOWN"] != 3 || report.Counts["REFUTED"] != 3 || !report.ReplayEqual || report.LiveGrantRequests != 0 || report.LiveGrants != 0 || report.LiveExecutionCount != 0 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 || report.Digest != canonicalDigest(report) {
 		return errors.New("canonical execution grant cases are not exact")
 	}
 	if len(report.Cases) != report.CaseDenominator {

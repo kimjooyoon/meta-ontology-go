@@ -32,7 +32,7 @@ func TestCanonicalCasesAreNineSeparateGrantCases(t *testing.T) {
 	if err := ValidateCanonicalCases(report); err != nil {
 		t.Fatal(err)
 	}
-	if report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.CanonicalGrantedCases != 2 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 {
+	if report.StructuralSeparateGrantEdgesBefore != 0 || report.StructuralSeparateGrantEdgesAfter != 1 || report.SourceArtifactBoundBefore != 0 || report.SourceArtifactBoundAfter != 1 || report.SourceArtifactExpiredMisclassifiedBefore != 1 || report.SourceArtifactExpiredMisclassifiedAfter != 0 || report.ExactSourceDigestBoundBefore != 0 || report.ExactSourceDigestBoundAfter != 1 || len(report.CounterexampleArtifactIDs) != 1 || report.CounterexampleArtifactIDs[0] != KnownFlawedArtifactID || report.CanonicalGrantedCases != 2 || report.CanonicalExecutionCount != 0 || report.GrantConsumedUses != 0 || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.FallbackAccepted != 0 {
 		t.Fatalf("canonical grant boundary drifted: %#v", report)
 	}
 }
@@ -76,8 +76,32 @@ func TestLiveNoDecisionIsSixFieldUnknown(t *testing.T) {
 	if resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
 		t.Fatalf("live grant metrics crossed the boundary: %#v", resolution.Metrics)
 	}
+	if resolution.Metrics.SourceArtifactBound != 1 || resolution.Metrics.SourceArtifactBoundAfter != 1 || resolution.Metrics.ExactSourceDigestBound != 1 || resolution.Metrics.ExactSourceDigestBoundAfter != 1 || resolution.Metrics.SourceArtifactExpiredMisclassified != 0 || resolution.Metrics.SourceArtifactExpiredMisclassifiedAfter != 0 {
+		t.Fatalf("retrieved source was not bound exactly: %#v", resolution.Metrics)
+	}
 	if verification := Verify(program, GrantInput{Request: request, Live: true}, resolution); !verification.Verified {
 		t.Fatalf("independent UNKNOWN replay failed: %#v", verification)
+	}
+}
+
+func TestSourceRetrievalFailureIsUnknownWithoutExpiredMisclassification(t *testing.T) {
+	program := testProgram(t)
+	request := canonicalRequest(program)
+	request.Source.ArtifactRetrieved = false
+	request.Source.ArtifactRetrievalError = ReasonSourceRetrievalFailed
+	request.Digest = requestDigest(request)
+	resolution := Evaluate(program, GrantInput{Request: request, Live: true})
+	if resolution.Decision != DecisionUnknown || resolution.Resolution != ResolutionLower || resolution.Reason != ReasonSourceRetrievalFailed || resolution.Unknown == nil || resolution.Unknown.Stage != "FETCH" || resolution.Unknown.Step != "2" || resolution.Unknown.BlockedBy != "source_artifact_retrieval" {
+		t.Fatalf("retrieval failure was not preserved as UNKNOWN: %#v", resolution)
+	}
+	if !contains(resolution.Obligations, "explicit_execution_grant_decision") || !contains(resolution.Obligations, "source_artifact_retrieval") || !contains(resolution.Frontier, "provide-explicit-execution-grant-decision") || !contains(resolution.Frontier, "retry-exact-source-artifact-retrieval") {
+		t.Fatalf("retrieval and decision obligations were not both preserved: %#v", resolution)
+	}
+	if resolution.Metrics.SourceArtifactBound != 0 || resolution.Metrics.SourceArtifactBoundAfter != 0 || resolution.Metrics.ExactSourceDigestBound != 0 || resolution.Metrics.ExactSourceDigestBoundAfter != 0 || resolution.Metrics.SourceArtifactExpiredMisclassified != 0 || resolution.Metrics.SourceArtifactExpiredMisclassifiedAfter != 0 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 {
+		t.Fatalf("retrieval failure crossed a safety boundary: %#v", resolution.Metrics)
+	}
+	if verification := Verify(program, GrantInput{Request: request, Live: true}, resolution); !verification.Verified {
+		t.Fatalf("independent retrieval-failure replay failed: %#v", verification)
 	}
 }
 

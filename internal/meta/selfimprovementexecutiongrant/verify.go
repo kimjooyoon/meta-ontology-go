@@ -31,6 +31,9 @@ func independentClassify(program PolicyProgram, input GrantInput) (Decision, Res
 	if fields := independentContradictions(input); len(fields) > 0 {
 		return DecisionRefuted, ResolutionExact, independentRefutedReason(fields)
 	}
+	if input.Request.Source.ArtifactRetrievalError != "" {
+		return DecisionUnknown, ResolutionLower, ReasonSourceRetrievalFailed
+	}
 	if len(input.DecisionInputs) == 0 {
 		return DecisionUnknown, ResolutionLower, ReasonMissingDecision
 	}
@@ -73,7 +76,7 @@ func independentPolicy(program PolicyProgram) bool {
 }
 
 func independentSourceMissing(source SourceArtifact) bool {
-	return source.Repository == "" || source.WorkflowRunID == 0 || source.WorkflowRunAttempt == 0 || source.ArtifactID == 0 || source.ArtifactDigest == "" || !source.ArtifactExpiryKnown || source.ArtifactExpired
+	return !validArtifact(source)
 }
 
 func independentMissing(input GrantInput) []string {
@@ -167,6 +170,9 @@ func independentContradictions(input GrantInput) []string {
 		add("scope")
 	}
 	if input.Request.Source.ArtifactDigest != "" && !validDigest(input.Request.Source.ArtifactDigest) {
+		add("source_artifact_digest")
+	}
+	if input.Request.Source.ObservedArtifactDigest != "" && input.Request.Source.ArtifactDigest != input.Request.Source.ObservedArtifactDigest {
 		add("source_artifact_digest")
 	}
 	if independentConflict(input.DecisionInputs) {

@@ -16,8 +16,17 @@ func runLive(program grant.PolicyProgram, settings options) error {
 		if err := grant.VerifyGrantResolution(resolution); err != nil || !report.Verification.Verified {
 			return fmt.Errorf("live execution grant check failed: resolution=%v verification=%v", err, report.Verification)
 		}
-		if settings.decision == "" && (resolution.Decision != grant.DecisionUnknown || resolution.Reason != grant.ReasonMissingDecision || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "explicit_execution_grant_decision" || resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0) {
-			return fmt.Errorf("live no-decision grant request was not UNKNOWN: %#v", resolution)
+		if settings.decision == "" {
+			if input.Request.Source.ArtifactRetrievalError != "" {
+				if resolution.Decision != grant.DecisionUnknown || resolution.Reason != grant.ReasonSourceRetrievalFailed || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "source_artifact_retrieval" {
+					return fmt.Errorf("source retrieval failure was not preserved as UNKNOWN: %#v", resolution)
+				}
+			} else if resolution.Decision != grant.DecisionUnknown || resolution.Reason != grant.ReasonMissingDecision || resolution.Unknown == nil || resolution.Unknown.BlockedBy != "explicit_execution_grant_decision" {
+				return fmt.Errorf("live no-decision grant request was not UNKNOWN: %#v", resolution)
+			}
+			if resolution.Metrics.LiveGrantRequests != 1 || resolution.Metrics.LiveGrants != 0 || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
+				return fmt.Errorf("live grant request crossed execution boundary: %#v", resolution)
+			}
 		}
 	}
 	report.Digest = reportDigest(report)
