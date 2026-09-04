@@ -5,6 +5,7 @@ const publicTrustSurface20260904Branch = "agent/public-trust-surface-20260904-v1
 func init() {
 	branchScopeAllowlist[publicTrustSurface20260904Branch] = []string{
 		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 		".github/dependabot.yml",
 		".github/workflows/dependency-review.yml",
 		".github/workflows/public-trust-surface.yml",
