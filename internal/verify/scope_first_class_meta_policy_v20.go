@@ -11,6 +11,7 @@ func init() {
 		"cmd/meta-policy-compilation-consumer",
 		"docs/language/meta-policy-compilation.md",
 		"examples/meta-policy-compilation",
+		"examples/repository-projection-diagnostics/package-partition.json",
 		"internal/bidir",
 		"internal/meta/policycompilation",
 		"internal/semantic",
