@@ -14,6 +14,18 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/compilercompatibility"
 )
 
+type compatibilityGenerationState struct {
+	policy            compatibilitypolicy.Policy
+	certificate       compilercompatibility.Certificate
+	certificateDigest string
+	started           time.Time
+}
+
+type compatibilityReplay struct {
+	current    compilercompatibility.ExecutionReceipt
+	evaluation compilercompatibility.Evaluation
+}
+
 func runCompatibilityGenerate(options generateOptions, input generateInput, reader SourceReader, jsonMode bool, stdout, stderr io.Writer, deadline time.Time) int {
 	started := time.Now()
 	policySource, err := reader.ReadFile(compilercompatibility.CanonicalPolicyPath)
@@ -33,47 +45,64 @@ func runCompatibilityGenerate(options generateOptions, input generateInput, read
 	if err != nil {
 		return writeCompatibilityFailureWithPolicy(options, input, policy, "REFUTED", compilercompatibility.ReasonTamperedCertificate, certificateDigest, started, jsonMode, stdout, stderr)
 	}
+	state := compatibilityGenerationState{policy: policy, certificate: certificate, certificateDigest: certificateDigest, started: started}
+	return runCompatibilityReplay(options, input, reader, jsonMode, stdout, stderr, deadline, state)
+}
+
+func runCompatibilityReplay(options generateOptions, input generateInput, reader SourceReader, jsonMode bool, stdout, stderr io.Writer, deadline time.Time, state compatibilityGenerationState) int {
+	replay, err := buildCompatibilityReplay(options, input, reader, deadline, state)
+	if err != nil {
+		return writeCompatibilityFailureWithPolicy(options, input, state.policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, state.certificateDigest, state.started, jsonMode, stdout, stderr)
+	}
+	if replay.evaluation.Decision != compilercompatibility.DecisionClosed {
+		return writeCompatibilityFailureWithEvaluation(options, input, state.policy, replay.evaluation, state.certificateDigest, state.started, jsonMode, stdout, stderr)
+	}
+	output, manifestPath, err := publicGeneratePaths(options)
+	if err != nil {
+		return writeCompatibilityFailureWithEvaluation(options, input, state.policy, compilercompatibility.Evaluation{Decision: compilercompatibility.DecisionRefuted, Reason: compilercompatibility.ReasonAxisMismatch, MismatchDetected: true}, state.certificateDigest, state.started, jsonMode, stdout, stderr)
+	}
+	return writeCompatibilityGeneration(options, state, replay, output, manifestPath, jsonMode, stdout, stderr)
+}
+
+func buildCompatibilityReplay(options generateOptions, input generateInput, reader SourceReader, deadline time.Time, state compatibilityGenerationState) (compatibilityReplay, error) {
 	generated, err := generateWithDeadlineCore(input.file, nil, remainingDeadline(deadline))
 	if err != nil {
-		return writeCompatibilityFailureWithPolicy(options, input, policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, certificateDigest, started, jsonMode, stdout, stderr)
+		return compatibilityReplay{}, err
 	}
 	normalizedDigest, err := cache.SemanticDigest(generated.ir)
 	if err != nil {
-		return writeCompatibilityFailureWithPolicy(options, input, policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, certificateDigest, started, jsonMode, stdout, stderr)
+		return compatibilityReplay{}, err
 	}
 	manifest, err := buildProjectionManifest(options.filename, generatedFileName, input.source, nil, generated.ir, generated.result)
 	if err != nil {
-		return writeCompatibilityFailureWithPolicy(options, input, policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, certificateDigest, started, jsonMode, stdout, stderr)
+		return compatibilityReplay{}, err
 	}
 	manifestData, err := jsonManifestBytes(manifest)
 	if err != nil {
-		return writeCompatibilityFailureWithPolicy(options, input, policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, certificateDigest, started, jsonMode, stdout, stderr)
+		return compatibilityReplay{}, err
 	}
 	compilerDigest, err := compilercompatibility.CompilerImplementationDigest(reader.ReadFile)
 	if err != nil {
-		return writeCompatibilityFailureWithPolicy(options, input, policy, "UNKNOWN", compilercompatibility.ReasonMissingSuccessorReplay, certificateDigest, started, jsonMode, stdout, stderr)
+		return compatibilityReplay{}, err
 	}
 	inputDigest := cache.HashBytes(input.source).String()
 	current := compilercompatibility.ExecutionReceipt{
 		Schema: compilercompatibility.ConsumptionSchema, Role: "successor-consumer-replay",
-		CandidateStableID: certificate.CandidateStableID, SubjectDigest: inputDigest, SourceDigest: inputDigest,
+		CandidateStableID: state.certificate.CandidateStableID, SubjectDigest: inputDigest, SourceDigest: inputDigest,
 		SemanticIRDigest: normalizedDigest.String(), GeneratedOutputDigest: cache.HashBytes(generated.result.Source).String(),
 		GeneratedManifestDigest: cache.HashBytes(manifestData).String(), GeneratedSource: append([]byte(nil), generated.result.Source...), GeneratedManifest: append([]byte(nil), manifestData...),
-		PolicyDigest: policy.SourceDigest, PolicyEvaluatorDigest: policy.EvaluatorDigest, PolicyResult: compilercompatibility.DecisionClosed,
+		PolicyDigest: state.policy.SourceDigest, PolicyEvaluatorDigest: state.policy.EvaluatorDigest, PolicyResult: compilercompatibility.DecisionClosed,
 		CompilerImplementationDigest: compilerDigest, GoToolchainDigest: compilercompatibility.CurrentToolchainDigest(),
 		TestContractDigest: compilercompatibility.TestContractDigest(), TestContractResult: "NOT_EXECUTED",
-		AuthorizationDigest: certificate.AuthorizationDigest,
+		AuthorizationDigest: state.certificate.AuthorizationDigest,
 	}
-	evaluation := compilercompatibility.EvaluateOptIn(policy, compilercompatibility.Request{Mode: "OPT_IN", CandidateStableID: certificate.CandidateStableID,
-		SubjectDigest: inputDigest, SourceDigest: inputDigest, Current: current, Certificate: &certificate})
-	if evaluation.Decision != compilercompatibility.DecisionClosed {
-		return writeCompatibilityFailureWithEvaluation(options, input, policy, evaluation, certificateDigest, started, jsonMode, stdout, stderr)
-	}
-	output, manifestPath, err := publicGeneratePaths(options)
-	if err != nil {
-		return writeCompatibilityFailureWithEvaluation(options, input, policy, compilercompatibility.Evaluation{Decision: compilercompatibility.DecisionRefuted, Reason: compilercompatibility.ReasonAxisMismatch, MismatchDetected: true}, certificateDigest, started, jsonMode, stdout, stderr)
-	}
-	report := compatibilityConsumptionReport(policy, certificate, certificateDigest, current, evaluation, output, manifestPath, started)
+	evaluation := compilercompatibility.EvaluateOptIn(state.policy, compilercompatibility.Request{Mode: "OPT_IN", CandidateStableID: state.certificate.CandidateStableID,
+		SubjectDigest: inputDigest, SourceDigest: inputDigest, Current: current, Certificate: &state.certificate})
+	return compatibilityReplay{current: current, evaluation: evaluation}, nil
+}
+
+func writeCompatibilityGeneration(options generateOptions, state compatibilityGenerationState, replay compatibilityReplay, output, manifestPath string, jsonMode bool, stdout, stderr io.Writer) int {
+	report := compatibilityConsumptionReport(state.policy, state.certificate, state.certificateDigest, replay.current, replay.evaluation, output, manifestPath, state.started)
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: compatibility generation: encode report: %v\n", err)
@@ -85,7 +114,7 @@ func runCompatibilityGenerate(options generateOptions, input generateInput, read
 		fmt.Fprintf(stderr, "gooo: compatibility generation: output: %v\n", err)
 		return exitFailure
 	}
-	writes := []atomicWrite{{path: output, data: generated.result.Source}, {path: manifestPath, data: manifestData},
+	writes := []atomicWrite{{path: output, data: replay.current.GeneratedSource}, {path: manifestPath, data: replay.current.GeneratedManifest},
 		{path: filepath.Join(options.outputDir, "generation-report.json"), data: data},
 		{path: filepath.Join(options.outputDir, "generation-report.md"), data: human}}
 	if err := writeAtomicFiles(writes); err != nil {
