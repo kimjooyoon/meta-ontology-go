@@ -27,11 +27,13 @@ func SelectTransportMetadata(runRaw, artifactsRaw []byte,
 	if err != nil {
 		return TransportMetadata{}, err
 	}
+	instances, types := artifactStats(list.Artifacts, input.ArtifactName)
 	return TransportMetadata{
 		Schema: MetadataSchema, Repository: input.Repository,
 		ProducerRunID: run.ID, ProducerRunAttempt: run.RunAttempt,
 		OrchestrationHeadSHA: run.HeadSHA, WorkflowPath: run.Path,
 		ArtifactID: artifact.ID, ArtifactName: artifact.Name,
 		ArtifactDigest: artifact.Digest, ArtifactSizeBytes: artifact.SizeInBytes,
+		ArtifactInstanceCount: instances, ArtifactTypeCount: types,
 	}, nil
 }

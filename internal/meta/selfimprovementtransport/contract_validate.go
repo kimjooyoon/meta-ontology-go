@@ -1,6 +1,10 @@
 package selfimprovementtransport
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+import (
+	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
 
 func contractKnown(file *syntax.File) bool {
 	if file == nil || file.Package == nil || file.Namespace == nil ||
@@ -40,7 +44,25 @@ func contractKnown(file *syntax.File) bool {
 			return false
 		}
 	}
-	return equalMap(entities, expectedEntities) && equalMap(activities, expectedActivities)
+	if !equalMap(entities, expectedEntities) || len(activities) != len(expectedActivities) {
+		return false
+	}
+	for name, expected := range expectedActivities {
+		actual, ok := activities[name]
+		if !ok || actual.Input != expected.Input || actual.Output != expected.Output {
+			return false
+		}
+		if name == "ResolveConsumerSubject" {
+			if actual.Program != expected.Program && !strings.HasPrefix(actual.Program, expected.Program+";") {
+				return false
+			}
+			continue
+		}
+		if actual.Program != expected.Program {
+			return false
+		}
+	}
+	return true
 }
 
 func equalMap[K comparable, V comparable](left, right map[K]V) bool {
