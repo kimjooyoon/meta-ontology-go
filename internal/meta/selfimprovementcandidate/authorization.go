@@ -838,12 +838,13 @@ func canonicalCase(id string, request AuthorizationRequest, inputs []Authorizati
 	return result, nil
 }
 
-func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, error) {
-	if err := ValidateAuthorizationRequest(request); err != nil {
-		return CanonicalCaseReport{}, err
-	}
-	allow := fixtureDecision(request, AuthorizationAllow)
-	deny := fixtureDecision(request, AuthorizationDeny)
+type authorizationCaseSpec struct {
+	id, decision, reason string
+	request              AuthorizationRequest
+	inputs               []AuthorizationDecisionInput
+}
+
+func canonicalAuthorizationCaseSpecs(request AuthorizationRequest, allow, deny AuthorizationDecisionInput) []authorizationCaseSpec {
 	missingField := request
 	missingField.Candidate.CandidateDigest = ""
 	missingField.Digest = requestDigest(missingField)
@@ -855,12 +856,7 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 	observationMismatch := allow
 	observationMismatch.SourceObservationDigest = digestBytes([]byte("wrong-observation"))
 	conflicting := []AuthorizationDecisionInput{allow, deny}
-
-	caseSpecs := []struct {
-		id, decision, reason string
-		request              AuthorizationRequest
-		inputs               []AuthorizationDecisionInput
-	}{
+	return []authorizationCaseSpec{
 		{"allow", AuthorizationClosed, AuthorizationClosedAllow, request, []AuthorizationDecisionInput{allow}},
 		{"deny", AuthorizationClosed, AuthorizationClosedDeny, request, []AuthorizationDecisionInput{deny}},
 		{"deterministic-replay", AuthorizationClosed, AuthorizationClosedAllow, request, []AuthorizationDecisionInput{allow}},
@@ -871,7 +867,10 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 		{"observation-contract-mismatch", AuthorizationRefuted, AuthorizationRefutedReason, request, []AuthorizationDecisionInput{observationMismatch}},
 		{"conflicting-duplicate-decision", AuthorizationRefuted, AuthorizationDuplicateReason, request, conflicting},
 	}
-	report := CanonicalCaseReport{Schema: AuthorizationCasesSchema, RequestDigest: request.Digest,
+}
+
+func newCanonicalCaseReport(request AuthorizationRequest) CanonicalCaseReport {
+	return CanonicalCaseReport{Schema: AuthorizationCasesSchema, RequestDigest: request.Digest,
 		CaseDenominator: 9, Counts: map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0},
 		LiveAuthorized: 0, LiveState: "UNKNOWN", Decision: AuthorizationClosed,
 		Resolution: ResolutionExact, Reason: "EXACT_CANONICAL_AUTHORIZATION_CASES",
@@ -880,6 +879,16 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 			PointerIdentityDependencyBefore: 1, PointerIdentityDependencyAfter: 0,
 			CounterexampleRunID: 33926584593,
 		}}
+}
+
+func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, error) {
+	if err := ValidateAuthorizationRequest(request); err != nil {
+		return CanonicalCaseReport{}, err
+	}
+	allow := fixtureDecision(request, AuthorizationAllow)
+	deny := fixtureDecision(request, AuthorizationDeny)
+	caseSpecs := canonicalAuthorizationCaseSpecs(request, allow, deny)
+	report := newCanonicalCaseReport(request)
 	for _, spec := range caseSpecs {
 		result, err := canonicalCase(spec.id, spec.request, spec.inputs, spec.decision, spec.reason)
 		if err != nil {
