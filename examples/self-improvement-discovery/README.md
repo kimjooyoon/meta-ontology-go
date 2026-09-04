@@ -78,3 +78,30 @@ evidence. The six cases are exactly two \`CLOSED\`, two \`UNKNOWN\`, and two
 \`REFUTED\`: successful baseline execution, authorized immutable receipt reuse,
 missing authorization, stale or unbounded evidence, tampered receipt, and
 policy mismatch. No score is emitted; the artifact denominator is exactly 24.
+
+## Public orchestration protocol
+
+The same lowered `Compile` meta-code now declares the v1 orchestration state
+machine. Its ordinary journey is semantic discovery -> proposal -> explicit
+authorization -> durable certificate -> ordinary generate -> real project
+validation -> immutable test-receipt reuse -> evidence. The public orchestrator
+executes the discovery and proposal steps, then stops at `AUTHORIZE` and emits a
+structured `UNKNOWN` handoff until the caller supplies an existing explicit
+authorization artifact. It never approves, mutates source, writes the
+repository, or silently skips a state.
+
+The resume path consumes the caller-owned authorization, certifies it, performs
+ordinary generation, validates the generated project with the real Go build and
+test contract, and reuses only the exact immutable successful test receipt. The
+state transitions and all six acceptance cases are read from the lowered
+`.gooo` activity; Go provides only generic transition dispatch and artifact
+validation. The six orchestration cases are exactly two `CLOSED`, two
+`UNKNOWN`, and two `REFUTED`, with an artifact denominator of 24.
+
+The utility contract measures the fixed manual route as 15 public CLI
+invocations and the orchestrated route as 4: one prepare, two explicit human
+decisions (accept and reject), and one resume. Semantic, lowering, generation,
+test, handoff-artifact, and explicit-decision counts are preserved. Wall-clock
+and RSS comparison remains `UNKNOWN` because the routes are not equivalent
+runtime modes. The 53-case / 58-source corpus remains unchanged; this protocol
+is an append-only extension of the canonical project source.

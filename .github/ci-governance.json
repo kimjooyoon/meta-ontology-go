@@ -3410,6 +3410,18 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-orchestration-20260904-v14",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "internal/meta/publicorchestration",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-orchestration"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
