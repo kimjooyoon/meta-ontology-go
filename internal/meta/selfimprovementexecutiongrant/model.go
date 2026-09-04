@@ -43,6 +43,7 @@ const (
 	CanonicalEvidenceLabel         = "CANONICAL_FIXTURE_METADATA"
 	ConsumptionObligation          = "NEXT_EXECUTOR_MUST_VERIFY_AND_CONSUME_ONCE"
 	ConsumptionPending             = "UNCONSUMED_NOT_EXECUTED"
+	KnownFlawedArtifactID          = int64(9955461668)
 )
 
 type Decision string
@@ -110,6 +111,8 @@ type SourceArtifact struct {
 	ObservedArtifactDigest string `json:"observed_artifact_digest,omitempty"`
 	ArtifactExpired        bool   `json:"artifact_expired"`
 	ArtifactExpiryKnown    bool   `json:"artifact_expiry_known"`
+	ArtifactRetrieved      bool   `json:"artifact_retrieved"`
+	ArtifactRetrievalError string `json:"artifact_retrieval_error,omitempty"`
 }
 
 type ActorEvidence struct {
@@ -181,26 +184,42 @@ type GrantReceipt struct {
 }
 
 type GrantMetrics struct {
-	StructuralSeparateGrantEdgesBefore int    `json:"structural_separate_grant_edges_before"`
-	StructuralSeparateGrantEdgesAfter  int    `json:"structural_separate_grant_edges_after"`
-	LiveGrantRequests                  int    `json:"live_grant_requests"`
-	LiveGrants                         int    `json:"live_grants"`
-	LiveExecutionCount                 int    `json:"live_execution_count"`
-	CanonicalGrantedCases              int    `json:"canonical_granted_cases"`
-	CanonicalExecutionCount            int    `json:"canonical_execution_count"`
-	SixFieldUnknowns                   int    `json:"six_field_unknowns"`
-	RefutedContradictions              int    `json:"refuted_contradictions"`
-	GrantRemainingUses                 int    `json:"grant_remaining_uses"`
-	GrantConsumedUses                  int    `json:"grant_consumed_uses"`
-	RepositoryWrites                   int    `json:"repository_writes"`
-	LocalTestExecutions                int    `json:"local_test_executions"`
-	FallbackAccepted                   int    `json:"fallback_accepted"`
-	IndependentReplayComparisons       int    `json:"independent_replay_comparisons"`
-	ArtifactFiles                      int    `json:"artifact_files"`
-	ArtifactTypes                      int    `json:"artifact_types"`
-	GoPhysicalLines                    int    `json:"go_physical_lines"`
-	GoooPhysicalLines                  int    `json:"gooo_physical_lines"`
-	PerformanceImprovement             string `json:"performance_improvement"`
+	StructuralSeparateGrantEdgesBefore       int     `json:"structural_separate_grant_edges_before"`
+	StructuralSeparateGrantEdgesAfter        int     `json:"structural_separate_grant_edges_after"`
+	SourceArtifactBoundBefore                int     `json:"source_artifact_bound_before"`
+	SourceArtifactBoundAfter                 int     `json:"source_artifact_bound_after"`
+	SourceArtifactBound                      int     `json:"source_artifact_bound"`
+	SourceArtifactExpiredMisclassifiedBefore int     `json:"source_artifact_expired_misclassified_before"`
+	SourceArtifactExpiredMisclassifiedAfter  int     `json:"source_artifact_expired_misclassified_after"`
+	SourceArtifactExpiredMisclassified       int     `json:"source_artifact_expired_misclassified"`
+	ExactSourceDigestBoundBefore             int     `json:"exact_source_digest_bound_before"`
+	ExactSourceDigestBoundAfter              int     `json:"exact_source_digest_bound_after"`
+	ExactSourceDigestBound                   int     `json:"exact_source_digest_bound"`
+	LiveGrantRequests                        int     `json:"live_grant_requests"`
+	LiveGrants                               int     `json:"live_grants"`
+	LiveGrantsBefore                         int     `json:"live_grants_before"`
+	LiveGrantsAfter                          int     `json:"live_grants_after"`
+	LiveExecutionCount                       int     `json:"live_execution_count"`
+	ExecutionCountBefore                     int     `json:"execution_count_before"`
+	ExecutionCountAfter                      int     `json:"execution_count_after"`
+	CanonicalGrantedCases                    int     `json:"canonical_granted_cases"`
+	CanonicalExecutionCount                  int     `json:"canonical_execution_count"`
+	SixFieldUnknowns                         int     `json:"six_field_unknowns"`
+	RefutedContradictions                    int     `json:"refuted_contradictions"`
+	GrantRemainingUses                       int     `json:"grant_remaining_uses"`
+	GrantConsumedUses                        int     `json:"grant_consumed_uses"`
+	RepositoryWrites                         int     `json:"repository_writes"`
+	RepositoryWritesBefore                   int     `json:"repository_writes_before"`
+	RepositoryWritesAfter                    int     `json:"repository_writes_after"`
+	LocalTestExecutions                      int     `json:"local_test_executions"`
+	FallbackAccepted                         int     `json:"fallback_accepted"`
+	IndependentReplayComparisons             int     `json:"independent_replay_comparisons"`
+	ArtifactFiles                            int     `json:"artifact_files"`
+	ArtifactTypes                            int     `json:"artifact_types"`
+	GoPhysicalLines                          int     `json:"go_physical_lines"`
+	GoooPhysicalLines                        int     `json:"gooo_physical_lines"`
+	PerformanceImprovement                   string  `json:"performance_improvement"`
+	CounterexampleArtifactIDs                []int64 `json:"counterexample_artifact_ids,omitempty"`
 }
 
 type PolicyEvidence struct {
@@ -226,6 +245,8 @@ type GrantResolution struct {
 	Unknown               *UnknownState        `json:"unknown,omitempty"`
 	MissingFields         []string             `json:"missing_fields,omitempty"`
 	ContradictoryFields   []string             `json:"contradictory_fields,omitempty"`
+	Obligations           []string             `json:"obligations,omitempty"`
+	Frontier              []string             `json:"frontier,omitempty"`
 	DecisionInputs        []GrantDecisionInput `json:"decision_inputs,omitempty"`
 	GrantAllowsExecution  bool                 `json:"grant_allows_execution"`
 	RemainingUses         int                  `json:"remaining_uses"`
@@ -287,41 +308,51 @@ type CanonicalCase struct {
 }
 
 type CanonicalCaseReport struct {
-	Schema                             string          `json:"schema"`
-	Policy                             PolicyEvidence  `json:"policy"`
-	RequiredFields                     []string        `json:"required_fields"`
-	RequestDigest                      string          `json:"request_digest"`
-	CaseDenominator                    int             `json:"case_denominator"`
-	StructuralSeparateGrantEdgesBefore int             `json:"structural_separate_grant_edges_before"`
-	StructuralSeparateGrantEdgesAfter  int             `json:"structural_separate_grant_edges_after"`
-	ClosedCases                        int             `json:"closed_cases"`
-	UnknownCases                       int             `json:"unknown_cases"`
-	RefutedCases                       int             `json:"refuted_cases"`
-	Counts                             map[string]int  `json:"counts"`
-	Cases                              []CanonicalCase `json:"cases"`
-	ReplayEqual                        bool            `json:"replay_equal"`
-	LiveGrantRequests                  int             `json:"live_grant_requests"`
-	LiveGrants                         int             `json:"live_grants"`
-	LiveExecutionCount                 int             `json:"live_execution_count"`
-	CanonicalGrantedCases              int             `json:"canonical_granted_cases"`
-	CanonicalExecutionCount            int             `json:"canonical_execution_count"`
-	SixFieldUnknowns                   int             `json:"six_field_unknowns"`
-	RefutedContradictions              int             `json:"refuted_contradictions"`
-	GrantRemainingUses                 int             `json:"grant_remaining_uses"`
-	GrantConsumedUses                  int             `json:"grant_consumed_uses"`
-	RepositoryWrites                   int             `json:"repository_writes"`
-	LocalTestExecutions                int             `json:"local_test_executions"`
-	FallbackAccepted                   int             `json:"fallback_accepted"`
-	IndependentReplayComparisons       int             `json:"independent_replay_comparisons"`
-	ArtifactFiles                      int             `json:"artifact_files"`
-	ArtifactTypes                      int             `json:"artifact_types"`
-	GoPhysicalLines                    int             `json:"go_physical_lines"`
-	GoooPhysicalLines                  int             `json:"gooo_physical_lines"`
-	PerformanceImprovement             string          `json:"performance_improvement"`
-	Decision                           Decision        `json:"decision"`
-	Resolution                         Resolution      `json:"resolution"`
-	Reason                             string          `json:"reason"`
-	Digest                             string          `json:"digest"`
+	Schema                                   string          `json:"schema"`
+	Policy                                   PolicyEvidence  `json:"policy"`
+	RequiredFields                           []string        `json:"required_fields"`
+	RequestDigest                            string          `json:"request_digest"`
+	CaseDenominator                          int             `json:"case_denominator"`
+	StructuralSeparateGrantEdgesBefore       int             `json:"structural_separate_grant_edges_before"`
+	StructuralSeparateGrantEdgesAfter        int             `json:"structural_separate_grant_edges_after"`
+	SourceArtifactBoundBefore                int             `json:"source_artifact_bound_before"`
+	SourceArtifactBoundAfter                 int             `json:"source_artifact_bound_after"`
+	SourceArtifactBound                      int             `json:"source_artifact_bound"`
+	SourceArtifactExpiredMisclassifiedBefore int             `json:"source_artifact_expired_misclassified_before"`
+	SourceArtifactExpiredMisclassifiedAfter  int             `json:"source_artifact_expired_misclassified_after"`
+	SourceArtifactExpiredMisclassified       int             `json:"source_artifact_expired_misclassified"`
+	ExactSourceDigestBoundBefore             int             `json:"exact_source_digest_bound_before"`
+	ExactSourceDigestBoundAfter              int             `json:"exact_source_digest_bound_after"`
+	ExactSourceDigestBound                   int             `json:"exact_source_digest_bound"`
+	ClosedCases                              int             `json:"closed_cases"`
+	UnknownCases                             int             `json:"unknown_cases"`
+	RefutedCases                             int             `json:"refuted_cases"`
+	Counts                                   map[string]int  `json:"counts"`
+	Cases                                    []CanonicalCase `json:"cases"`
+	ReplayEqual                              bool            `json:"replay_equal"`
+	LiveGrantRequests                        int             `json:"live_grant_requests"`
+	LiveGrants                               int             `json:"live_grants"`
+	LiveExecutionCount                       int             `json:"live_execution_count"`
+	CanonicalGrantedCases                    int             `json:"canonical_granted_cases"`
+	CanonicalExecutionCount                  int             `json:"canonical_execution_count"`
+	SixFieldUnknowns                         int             `json:"six_field_unknowns"`
+	RefutedContradictions                    int             `json:"refuted_contradictions"`
+	GrantRemainingUses                       int             `json:"grant_remaining_uses"`
+	GrantConsumedUses                        int             `json:"grant_consumed_uses"`
+	RepositoryWrites                         int             `json:"repository_writes"`
+	LocalTestExecutions                      int             `json:"local_test_executions"`
+	FallbackAccepted                         int             `json:"fallback_accepted"`
+	IndependentReplayComparisons             int             `json:"independent_replay_comparisons"`
+	ArtifactFiles                            int             `json:"artifact_files"`
+	ArtifactTypes                            int             `json:"artifact_types"`
+	GoPhysicalLines                          int             `json:"go_physical_lines"`
+	GoooPhysicalLines                        int             `json:"gooo_physical_lines"`
+	PerformanceImprovement                   string          `json:"performance_improvement"`
+	CounterexampleArtifactIDs                []int64         `json:"counterexample_artifact_ids,omitempty"`
+	Decision                                 Decision        `json:"decision"`
+	Resolution                               Resolution      `json:"resolution"`
+	Reason                                   string          `json:"reason"`
+	Digest                                   string          `json:"digest"`
 }
 
 type PolicyProgram struct {
@@ -552,5 +583,5 @@ func validatePolicy(policy semantic.Policy) error {
 }
 
 func validArtifact(source SourceArtifact) bool {
-	return source.Repository != "" && source.WorkflowRunID > 0 && source.WorkflowRunAttempt > 0 && source.ArtifactID > 0 && validDigest(source.ArtifactDigest) && (source.ObservedArtifactDigest == "" || source.ArtifactDigest == source.ObservedArtifactDigest) && source.ArtifactExpiryKnown && !source.ArtifactExpired
+	return source.Repository != "" && source.WorkflowRunID > 0 && source.WorkflowRunAttempt > 0 && source.ArtifactID > 0 && validDigest(source.ArtifactDigest) && source.ObservedArtifactDigest != "" && source.ArtifactDigest == source.ObservedArtifactDigest && source.ArtifactExpiryKnown && !source.ArtifactExpired && source.ArtifactRetrieved && source.ArtifactRetrievalError == ""
 }
