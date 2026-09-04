@@ -13,6 +13,7 @@ func init() {
 		"examples/meta-policy-compilation",
 		"examples/repository-projection-diagnostics/package-partition.json",
 		"internal/bidir",
+		"internal/meta/languagereadiness/languagesyntax/replay/shape.go",
 		"internal/meta/policycompilation",
 		"internal/semantic",
 		"internal/syntax",
