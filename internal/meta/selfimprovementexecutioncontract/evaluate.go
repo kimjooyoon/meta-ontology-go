@@ -339,7 +339,7 @@ func unknownFor(reason string) *UnknownState {
 	case ReasonMissingObservation:
 		unknown.Stage, unknown.Step, unknown.NextOperation, unknown.BlockedBy = "OBSERVE", "4", "bind-exact-observation-evidence", []string{"observation_evidence"}
 	}
-	return unknown
+	return &unknown
 }
 
 func observationDigest(value ObservationEvidence) string {
