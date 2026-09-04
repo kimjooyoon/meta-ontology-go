@@ -73,7 +73,7 @@ jobs:
           test "$(go env GOVERSION)" = "go1.27.0"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
           test "$(git -C predecessor rev-parse HEAD)" = "$PREDECESSOR_SHA"
-          test "$(git status --porcelain)" = ""
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
           test "$(git -C predecessor status --porcelain)" = ""
 
       - name: Execute predecessor and successor independently
@@ -179,7 +179,7 @@ jobs:
             "$work/compatibility-consumption/generation-report.json" >/dev/null
           test -s "$work/compatibility-consumption/semantic.gooo.go"
           test -s "$work/compatibility-consumption/semantic.gooo.manifest.jsonl"
-          test "$(git status --porcelain)" = ""
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Verify strict default remains the ordinary path
         shell: bash
@@ -190,7 +190,7 @@ jobs:
             --out "$work/strict-default" --json > "$work/strict-default.json"
           jq -e '.schema_version == "gooo/diagnostics/v1" and .command == "generate" and .status == "ok" and (.semantic_hash | length) == 64' \
             "$work/strict-default.json" >/dev/null
-          test "$(git status --porcelain)" = ""
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Run six-case compatibility conformance and publish evidence
         shell: bash
@@ -221,7 +221,7 @@ jobs:
             .repository_writes == 0 and .local_test_executions == 0' \
             "$work/verification-report.json" >/dev/null
           test "$(find "$work/publication" -type f | wc -l | tr -d ' ')" -eq 24
-          test "$(git status --porcelain)" = ""
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
 
       - name: Upload immutable compatibility evidence
         uses: actions/upload-artifact@v4
