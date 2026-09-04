@@ -53,8 +53,28 @@ jobs:
           set -euo pipefail
           tool="$RUNNER_TEMP/candidate/transport-tool"
           mkdir -p "$tool"
-          go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
-          go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
+          build_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/build-peak-rss-kib" \
+            go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
+          build_selector_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/build-selector-peak-rss-kib" \
+            go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
+          build_end_ms="$(date +%s%3N)"
+          test_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/test-peak-rss-kib" \
+            go test ./internal/meta/selfimprovementtransport
+          test_end_ms="$(date +%s%3N)"
+          jq -n \
+            --argjson build_wall_ms "$((build_end_ms - build_start_ms))" \
+            --argjson selector_build_wall_ms "$((build_end_ms - build_selector_start_ms))" \
+            --argjson test_wall_ms "$((test_end_ms - test_start_ms))" \
+            --arg build_peak_rss_kib "$(cat "$tool/build-peak-rss-kib")" \
+            --arg selector_build_peak_rss_kib "$(cat "$tool/build-selector-peak-rss-kib")" \
+            --arg test_peak_rss_kib "$(cat "$tool/test-peak-rss-kib")" \
+            '{schema:"gooo/self-improvement-transport-runtime/v1",build_wall_ms:($build_wall_ms|tonumber),selector_build_wall_ms:($selector_build_wall_ms|tonumber),test_wall_ms:($test_wall_ms|tonumber),build_peak_rss_kib:($build_peak_rss_kib|tonumber),selector_build_peak_rss_kib:($selector_build_peak_rss_kib|tonumber),test_peak_rss_kib:($test_peak_rss_kib|tonumber),runtime_comparable:false,runtime_unknown:"NO_EXACT_BEFORE_AFTER_RUNTIME_PAIR"}' \
+            > "$RUNNER_TEMP/candidate/runtime-measurements.json"
+          jq -r '"runtime observation: build \(.build_wall_ms) ms / \(.build_peak_rss_kib) KiB; test \(.test_wall_ms) ms / \(.test_peak_rss_kib) KiB; comparison UNKNOWN (\(.runtime_unknown))"' \
+            "$RUNNER_TEMP/candidate/runtime-measurements.json" >> "$GITHUB_STEP_SUMMARY"
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
       - name: Reproduce exact observation for PR
         if: github.event_name == 'pull_request'
@@ -147,7 +167,8 @@ jobs:
           fi
           "$RUNNER_TEMP/candidate/transport-tool/select-transport-artifact" \
             -mode transport -receipt "$transport/lifecycle.json" \
-            -archive "$archive" -download-exit "$download_exit"
+            -archive "$archive" -download-exit "$download_exit" \
+            -output "$transport/metadata.json"
           jq -r '"artifact lifecycle: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_step_total) (\(.metrics.coverage_basis_points) bps), unknown-path \(.metrics.unknown_path_count), \(.coordinate.stage)/\(.coordinate.step)/\(.reason)"' \
             "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload artifact lifecycle receipt
@@ -186,14 +207,18 @@ jobs:
           set -euo pipefail
           input="$RUNNER_TEMP/candidate/input"
           transport="$RUNNER_TEMP/candidate/transport"
-          "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
-            -mode consume \
-            -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
-            -repository "$GITHUB_REPOSITORY" -run-id "$SOURCE_RUN_ID" \
-            -observation "$input/first.json" -producer "$input/producer.json" \
-            -metadata "$transport/metadata.json" \
-            -archive-digest "$(cat "$transport/archive-digest.txt")" \
-            -output "$transport/receipt.json" -check-read-only
+          for replay in first second; do
+            "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
+              -mode consume \
+              -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
+              -repository "$GITHUB_REPOSITORY" -run-id "$SOURCE_RUN_ID" \
+              -observation "$input/first.json" -producer "$input/producer.json" \
+              -metadata "$transport/metadata.json" \
+              -archive-digest "$(cat "$transport/archive-digest.txt")" \
+              -output "$transport/receipt-$replay.json" -check-read-only
+          done
+          cmp "$transport/receipt-first.json" "$transport/receipt-second.json"
+          cp "$transport/receipt-first.json" "$transport/receipt.json"
           subject_sha="$(jq -r '.subject_sha' "$transport/receipt.json")"
           if ! [[ "$subject_sha" =~ ^[0-9a-f]{40}$ ]]; then
             echo "CONSUME/recompute-subject-digest: invalid producer subject" >&2
@@ -235,6 +260,10 @@ jobs:
           path: |
             ${{ runner.temp }}/candidate/output/first.json
             ${{ runner.temp }}/candidate/transport/receipt.json
+            ${{ runner.temp }}/candidate/transport/receipt-first.json
+            ${{ runner.temp }}/candidate/transport/receipt-second.json
             ${{ runner.temp }}/candidate/transport/lifecycle.json
+            ${{ runner.temp }}/candidate/transport/metadata.json
+            ${{ runner.temp }}/candidate/runtime-measurements.json
           if-no-files-found: error
           retention-days: 14

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -21,6 +22,14 @@ func CompileContract(repository fs.FS, path string) (ContractEvidence, error) {
 	if err != nil || !contractKnown(file) {
 		return ContractEvidence{}, fmt.Errorf("transport contract declarations mismatch")
 	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return ContractEvidence{}, fmt.Errorf("lower transport contract: %w", err)
+	}
+	policy, err := parseResolutionPolicy(ir)
+	if err != nil {
+		return ContractEvidence{}, err
+	}
 	lines := bytes.Count(raw, []byte{'\n'})
 	if len(raw) != 0 && raw[len(raw)-1] != '\n' {
 		lines++
@@ -30,5 +39,6 @@ func CompileContract(repository fs.FS, path string) (ContractEvidence, error) {
 		Namespace: file.Namespace.Name, EntityCount: len(expectedEntities),
 		ActivityCount: len(expectedActivities), ObligationTotal: fixedObligationTotal,
 		SourceLines: lines, SourceDigest: digestBytes(raw), CanonicalDigest: digestBytes([]byte(canonical)),
+		SemanticDigest: ir.StableHash(), ResolutionPolicy: policy,
 	}, nil
 }
