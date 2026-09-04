@@ -491,7 +491,8 @@ func independentCandidate(entry publicdiscovery.LedgerEntry, keyDigest, reason s
 		ToolchainDigest: entry.ToolchainDigest, ContractDigest: entry.ContractDigest, EvaluatorDigest: entry.EvaluatorDigest,
 		GeneratedSemanticDigest: entry.GeneratedSemanticDigest, GeneratedOutputDigest: entry.GeneratedOutputDigest,
 		GeneratedManifestDigest: entry.GeneratedManifestDigest, Quorum: publicdiscovery.Quorum,
-		ExecutionAllowed: false, AuthorizationRequired: true, RepositoryWrites: 0, LocalBuildExecutions: 0, LocalTestExecutions: 0}
+		ExecutionAllowed: false, AuthorizationRequired: true, ProposalRequired: true, CertificateRequired: true,
+		RepositoryWrites: 0, LocalBuildExecutions: 0, LocalTestExecutions: 0}
 	data, err := json.MarshalIndent(candidate, "", "  ")
 	if err != nil {
 		return nil, err
