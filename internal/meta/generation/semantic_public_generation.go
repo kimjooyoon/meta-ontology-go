@@ -35,6 +35,7 @@ type SemanticPublicGenerationReport struct {
 	ToolchainDigest         string                          `json:"toolchain_digest"`
 	VerifierDigest          string                          `json:"verifier_digest"`
 	PolicyDigest            string                          `json:"policy_digest"`
+	EvaluatorDigest         string                          `json:"evaluator_digest"`
 	OutputFile              string                          `json:"output_file"`
 	ManifestFile            string                          `json:"manifest_file"`
 	ArtifactCount           int                             `json:"artifact_count"`
@@ -48,7 +49,7 @@ type SemanticPublicGenerationReport struct {
 // ValidateSemanticPublicGenerationReport keeps fail-closed reports distinct
 // from an applied retained result and fixes the caller artifact denominator.
 func ValidateSemanticPublicGenerationReport(report SemanticPublicGenerationReport) error {
-	if report.Schema != SemanticPublicGenerationReportSchema || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.ArtifactCount < 2 || report.OutputFileCount != report.ArtifactCount || report.OutputBytes <= 0 {
+	if report.Schema != SemanticPublicGenerationReportSchema || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || report.ArtifactCount < 2 || report.OutputFileCount != report.ArtifactCount || report.OutputBytes <= 0 || !cache.Digest(report.EvaluatorDigest).Known() {
 		return errors.New("semantic public generation report is invalid")
 	}
 	if report.Decision == "CLOSED" {
@@ -93,7 +94,7 @@ func validatePublicGenerationUnknown(report SemanticPublicGenerationReport) erro
 }
 
 func validatePublicGenerationBindings(report SemanticPublicGenerationReport) error {
-	for _, digest := range []string{report.AdoptionReportDigest, report.ObservationDigest, report.ProposalDigest, report.AuthorizationDigest, report.ContractSourceDigest, report.InputSourceDigest, report.NormalizedIRDigest, report.GeneratedOutputDigest, report.GeneratedManifestDigest, report.CompilerDigest, report.ToolchainDigest, report.VerifierDigest, report.PolicyDigest} {
+	for _, digest := range []string{report.AdoptionReportDigest, report.ObservationDigest, report.ProposalDigest, report.AuthorizationDigest, report.ContractSourceDigest, report.InputSourceDigest, report.NormalizedIRDigest, report.GeneratedOutputDigest, report.GeneratedManifestDigest, report.CompilerDigest, report.ToolchainDigest, report.VerifierDigest, report.PolicyDigest, report.EvaluatorDigest} {
 		if !cache.Digest(digest).Known() {
 			return errors.New("semantic public generation report contains unknown binding")
 		}

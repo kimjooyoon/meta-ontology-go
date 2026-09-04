@@ -11,6 +11,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 )
 
 func runBaselineGenerateReport(options generateOptions, input generateInput, jsonMode bool, stdout, stderr io.Writer, deadline time.Time) int {
@@ -39,7 +40,7 @@ func runBaselineGenerateReport(options generateOptions, input generateInput, jso
 		ArtifactCount: generation.SemanticPublicGenerationArtifactsClosed, OutputFileCount: generation.SemanticPublicGenerationArtifactsClosed,
 		Metrics: generation.SemanticRetentionRuntimeMetrics{SemanticOperationCount: 1, GeneratedBytesEqual: true, NormalizedSemanticEqual: true,
 			WallMS: retentionWallMS(started), PeakRSSKib: readPeakRSSKib(), AllocationCount: int64(after.Mallocs - before.Mallocs), AllocationBytes: int64(after.TotalAlloc - before.TotalAlloc)},
-		RepositoryWrites: 0, LocalTestExecutions: 0,
+		EvaluatorDigest: retentionpolicy.GeneratedEvaluatorDigest(), RepositoryWrites: 0, LocalTestExecutions: 0,
 		OutputBytes: int64(len(artifacts.result.Source) + len(manifestData)),
 	}
 	return writeBaselinePublicReport(options.outputDir, report, started, jsonMode, stdout, stderr)

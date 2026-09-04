@@ -17,8 +17,10 @@ on:
       - internal/meta/generation/semantic_operation_envelope_*.go
       - internal/meta/generation/semantic_retention.go
       - internal/meta/generation/semantic_public_generation.go
+      - internal/meta/retentionpolicy/**
       - scripts/self-improvement-public-generation/**
       - scripts/self-improvement-retained-knowledge/**
+      - scripts/self-improvement-retention-policy/**
   push:
     branches: [dev]
     paths:
@@ -35,8 +37,10 @@ on:
       - internal/meta/generation/semantic_operation_envelope_*.go
       - internal/meta/generation/semantic_retention.go
       - internal/meta/generation/semantic_public_generation.go
+      - internal/meta/retentionpolicy/**
       - scripts/self-improvement-public-generation/**
       - scripts/self-improvement-retained-knowledge/**
+      - scripts/self-improvement-retention-policy/**
 
 permissions:
   contents: read
@@ -68,6 +72,34 @@ jobs:
           set -euo pipefail
           test "$(go env GOVERSION)" = "go1.27.0"
           test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Regenerate the .gooo retained-decision evaluator and prove causality
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-retained-knowledge"
+          policy="$work/policy"
+          mkdir -p "$policy"
+          go run ./scripts/self-improvement-retention-policy \
+            -contract examples/self-improvement-observation/observation.gooo \
+            -expected internal/meta/retentionpolicy/generated/evaluator.go \
+            -output "$policy/evaluator.go" -report "$policy/generation-report.json"
+          jq -e '.schema == "gooo/semantic-retention-policy-generation/v1" and .generated_files == 1 and .generated_lines > 0 and .policy_activities_expected == 1 and .policy_activities_observed == 1 and .generated_evaluator_cases_bound == 6 and .unbound_cases == 0 and .duplicate_cases == 0 and .regeneration_byte_mismatches == 0 and .repository_writes == 0 and .local_test_executions == 0' \
+            "$policy/generation-report.json" >/dev/null
+          cmp "$policy/evaluator.go" internal/meta/retentionpolicy/generated/evaluator.go
+          cp examples/self-improvement-observation/observation.gooo "$policy/counterfactual.gooo"
+          sed -i 's/retention-case=MISSING_CERTIFICATE:UNKNOWN/retention-case=MISSING_CERTIFICATE:CLOSED/' "$policy/counterfactual.gooo"
+          go run ./scripts/self-improvement-retention-policy \
+            -contract "$policy/counterfactual.gooo" \
+            -output "$policy/counterfactual-evaluator.go" -report "$policy/counterfactual-report.json"
+          base_digest="$(jq -r '.evaluator_digest' "$policy/generation-report.json")"
+          counter_digest="$(jq -r '.evaluator_digest' "$policy/counterfactual-report.json")"
+          base_decision="$(jq -r '.cases[] | select(.id == "MISSING_CERTIFICATE") | .decision' "$policy/generation-report.json")"
+          counter_decision="$(jq -r '.cases[] | select(.id == "MISSING_CERTIFICATE") | .decision' "$policy/counterfactual-report.json")"
+          test "$base_digest" != "$counter_digest"
+          test "$base_decision" = UNKNOWN
+          test "$counter_decision" = CLOSED
           test "$(git status --porcelain)" = ""
 
       - name: Declare, observe, propose, and authorize the real compiler seam
@@ -310,7 +342,7 @@ jobs:
             -mismatched-certificate "$work/mismatched-certificate/retention-result.json" \
             -envelope-root "$work/envelopes" \
             -output "$work/retained-loop.json"
-          jq -e '.schema == "gooo/semantic-self-retention-report/v1" and .case_denominator == 6 and .counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_case == 6 and .total_artifacts == 36 and .before_metrics.semantic_operation_count == 1 and .before_metrics.certificate_misses == 1 and .after_metrics.semantic_operation_count == 0 and .after_metrics.certificate_hits == 1 and .generated_bytes_equal and .normalized_semantic_equal and .comparable and (.superiority_claim | not) and .no_superiority_claim and .repository_writes == 0 and .local_test_executions == 0' \
+          jq -e '.schema == "gooo/semantic-self-retention-report/v1" and .case_denominator == 6 and .counts == {CLOSED:2,UNKNOWN:2,REFUTED:2} and .envelope_scenario_denominator == 6 and .envelope_artifacts_per_case == 6 and .total_artifacts == 36 and .before_metrics.semantic_operation_count == 1 and .before_metrics.certificate_misses == 1 and .after_metrics.semantic_operation_count == 0 and .after_metrics.certificate_hits == 1 and .generated_bytes_equal and .normalized_semantic_equal and .comparable and (.superiority_claim | not) and .no_superiority_claim and .repository_writes == 0 and .local_test_executions == 0 and .policy_activities_expected == 1 and .policy_activities_observed == 1 and .policy_decision_rows == 6 and (.generated_evaluator_digest | length) == 64 and .generated_evaluator_cases_bound == 6 and .unbound_cases == 0 and .duplicate_cases == 0 and .regeneration_byte_mismatches == 0' \
             "$work/retained-loop.json" >/dev/null
           test "$(find "$work/envelopes" -type f | wc -l | tr -d ' ')" -eq 36
           test "$(git status --porcelain)" = ""

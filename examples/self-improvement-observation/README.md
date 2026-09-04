@@ -57,3 +57,10 @@ baseline compiler path. A caller that wants a measured baseline report may
 add `--retention-report`; the report records the operation count, certificate
 hit/miss counts, output file count and bytes, wall time, and peak RSS without
 claiming superiority from noisy process measurements.
+
+The ninth iteration makes the six retained outcome rows executable policy.
+`PublishOperationReceipt` carries the `retention-decision:v1` rows in this
+`.gooo` source; the repository generator lowers those rows into the checked-in
+evaluator imported by the compiler. The retained-policy lane regenerates and
+byte-compares that evaluator, then changes one source row in caller-owned temp
+output to prove that both the evaluator digest and expected outcome change.
