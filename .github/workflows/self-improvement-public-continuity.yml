@@ -100,7 +100,7 @@ jobs:
 
           go run ./cmd/gooo generate "$project" \
             --continuity-certificate "$work/certificate/continuity-certificate.json" \
-            --out "$work/consume" --json > "$work/consume/cli.json"
+            --out "$work/consume" --json > "$work/consume-cli.json"
           sha256sum "$project" > "$work/project.sha256.after"
           cmp -s "$work/project.sha256.before" "$work/project.sha256.after"
 
@@ -149,7 +149,7 @@ jobs:
           mkdir -p "$work/stale-consume"
           go run ./cmd/gooo generate "$work/stale-project.gooo" \
             --continuity-certificate "$work/certificate/continuity-certificate.json" \
-            --out "$work/stale-consume" --json > "$work/stale-consume/cli.json"
+            --out "$work/stale-consume" --json > "$work/stale-consume-cli.json"
           jq -e '.decision == "REFUTED" and .reason == "STALE_SOURCE" and .artifact_denominator == 2 and .artifact_count == 2 and .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
             "$work/stale-consume/continuity-generation-report.json" >/dev/null
           test "$(git status --porcelain)" = ""
