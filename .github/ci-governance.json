@@ -3603,6 +3603,20 @@
         "internal/verify/scope_public_trust_surface_20260904.go",
         "scripts/public-trust-surface"
       ]
+    },
+    {
+      "branch": "agent/v24-candidate-authorization-bridge-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-candidate-authorization.yml",
+        "examples/self-improvement/AUTHORIZATION.md",
+        "examples/self-improvement/authorization.gooo",
+        "internal/meta/selfimprovementcandidate/authorization.go",
+        "internal/meta/selfimprovementcandidate/authorization_test.go",
+        "internal/verify/scope_gooo_candidate_authorization_v24.go",
+        "scripts/self-improvement-candidate-authorization"
+      ]
     }
   ],
   "protected_kernel_paths": [
