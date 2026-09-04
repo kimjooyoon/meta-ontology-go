@@ -39,14 +39,14 @@ func Evaluate(repository fs.FS, contractPath, expectedRepository string, expecte
 			observationRaw: observationRaw, producer: producer, producerErr: producerErr,
 			producerRaw: producerRaw,
 			metadata:    metadata, metadataErr: metadataErr, actualArchiveDigest: actualArchiveDigest,
+		}),
+		Provenance: evaluateProvenance(evaluationInput{
+			contract: contract, contractErr: contractErr, expectedRepository: expectedRepository,
+			expectedRunID: expectedRunID, source: source, sourceErr: sourceErr,
+			observationRaw: observationRaw, producer: producer, producerErr: producerErr,
+			producerRaw: producerRaw, metadata: metadata, metadataErr: metadataErr,
+			actualArchiveDigest: actualArchiveDigest,
 		})}
-	report.Provenance = evaluateProvenance(evaluationInput{
-		contract: contract, contractErr: contractErr, expectedRepository: expectedRepository,
-		expectedRunID: expectedRunID, source: source, sourceErr: sourceErr,
-		observationRaw: observationRaw, producer: producer, producerErr: producerErr,
-		producerRaw: producerRaw, metadata: metadata, metadataErr: metadataErr,
-		actualArchiveDigest: actualArchiveDigest,
-	})
 	report.ProvenanceState = report.Provenance.State
 	report.ResolutionMetrics = resolutionMetrics(contract.ResolutionPolicy, report.Provenance)
 	reduce(&report)
