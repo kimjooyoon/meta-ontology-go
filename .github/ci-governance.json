@@ -3450,6 +3450,18 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-workflow-lineage-20260904-v17",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-effort-observation.yml",
+        "examples/ci-effort-observation",
+        "internal/meta/publicworkflowlineage",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/ci-effort-observation-lineage"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
