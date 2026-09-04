@@ -75,6 +75,8 @@ type verificationCase struct {
 type verificationReport struct {
 	Schema                         string             `json:"schema"`
 	ContractSourceDigest           string             `json:"contract_source_digest"`
+	Decision                       string             `json:"decision"`
+	Reason                         string             `json:"reason"`
 	CandidateDigest                string             `json:"candidate_digest"`
 	DecisionCandidateDigest        string             `json:"decision_candidate_digest"`
 	CertificateCandidateDigest     string             `json:"certificate_candidate_digest"`
@@ -137,7 +139,7 @@ func verify(contractPath, manifestPath, outputPath string) error {
 	if input.Schema != "gooo/public-self-observation-continuity-verification-input/v1" {
 		return errors.New("fixture manifest schema is invalid")
 	}
-	report := verificationReport{Schema: verificationSchema, ContractSourceDigest: cache.HashBytes(contractSource).String(), CaseDenominator: 6, CaseIDs: append([]string(nil), fixedCases...), Cases: make([]verificationCase, 0, 6), ArtifactDenominator: 10, ArtifactCount: 10}
+	report := verificationReport{Schema: verificationSchema, ContractSourceDigest: cache.HashBytes(contractSource).String(), Decision: "CLOSED", Reason: "EXACT_FOUR_EDGE_CONTINUITY", CaseDenominator: 6, CaseIDs: append([]string(nil), fixedCases...), Cases: make([]verificationCase, 0, 6), ArtifactDenominator: 10, ArtifactCount: 10}
 	policyIDs := make([]string, 0, len(policyCases))
 	policyDecisions := make([]string, 0, len(policyCases))
 	for _, item := range policyCases {
