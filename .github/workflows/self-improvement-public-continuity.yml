@@ -80,7 +80,6 @@ jobs:
             --out "$work/first/generated" --observation-ledger "$work/ledger" --json > "$work/first/cli.json"
           cp "$work/ledger/observation-report.json" "$work/first/report.json"
           cp "$work/ledger/observation-ledger.ndjson" "$work/first/ledger.ndjson"
-          echo continuity-first-observation-ok
 
           go run ./cmd/gooo generate "$project" \
             --out "$work/second/generated" --observation-ledger "$work/ledger" --json > "$work/second/cli.json"
@@ -89,7 +88,6 @@ jobs:
           candidate="$(jq -r '.candidate_path' "$work/second/report.json")"
           test -n "$candidate" -a -f "$candidate"
           cp "$candidate" "$work/candidate.json"
-          echo continuity-candidate-ok
 
           go run ./cmd/gooo authorize-discovery "$work/candidate.json" \
             --decision accept --out "$work/decision"
@@ -99,12 +97,10 @@ jobs:
           go run ./cmd/gooo certify-discovery "$contract" --input "$project" \
             --candidate "$work/candidate.json" --decision "$work/decision/decision-receipt.json" \
             --out "$work/certificate"
-          echo continuity-certificate-ok
 
           go run ./cmd/gooo generate "$project" \
             --continuity-certificate "$work/certificate/continuity-certificate.json" \
             --out "$work/consume" --json > "$work/consume-cli.json"
-          echo continuity-consumption-ok
           sha256sum "$project" > "$work/project.sha256.after"
           cmp -s "$work/project.sha256.before" "$work/project.sha256.after"
 
@@ -126,7 +122,6 @@ jobs:
           go run ./scripts/self-improvement-public-continuity \
             -contract "$contract" -manifest "$work/verification-input.json" \
             -output "$work/verification-report.json"
-          echo continuity-independent-verifier-ok
 
           jq -e '
             .schema == "gooo/public-self-observation-continuity-verification/v1" and
@@ -140,17 +135,14 @@ jobs:
             .artifact_denominator == 10 and .artifact_count == 10 and
             .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0 and
             (.cases | length) == 6' "$work/verification-report.json" >/dev/null
-          echo continuity-verification-counts-ok
           jq -e '
             .decision == "CLOSED" and .candidate_digest == .decision_candidate_digest and
             .candidate_digest == .certificate_candidate_digest and .candidate_digest == .consumption_candidate_digest and
             .digest_edges_expected == 4 and .digest_edges_observed == 4 and
             .manual_transformations == 0 and .generated_bytes_equal and .normalized_semantic_equal' \
             "$work/verification-report.json" >/dev/null
-          echo continuity-verification-edges-ok
           jq -e '.decision == "REJECT" and .reason == "EXPLICIT_HUMAN_REJECT" and .explicit_human_decision and .execution_allowed == false and .manual_transformations == 0' \
             "$work/rejection/decision-receipt.json" >/dev/null
-          echo continuity-rejection-ok
 
           cp "$project" "$work/stale-project.gooo"
           printf '\n' >> "$work/stale-project.gooo"
@@ -160,7 +152,6 @@ jobs:
             --out "$work/stale-consume" --json > "$work/stale-consume-cli.json"
           jq -e '.decision == "REFUTED" and .reason == "STALE_SOURCE" and .artifact_denominator == 2 and .artifact_count == 2 and .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
             "$work/stale-consume/continuity-generation-report.json" >/dev/null
-          echo continuity-stale-source-ok
           test "$(git status --porcelain)" = ""
 
       - name: Verify the six lowered-policy continuity cases and exact artifacts
