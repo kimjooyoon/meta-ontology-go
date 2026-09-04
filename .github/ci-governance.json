@@ -2965,6 +2965,21 @@
       ]
     },
     {
+      "branch": "agent/first-class-meta-policy-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "cmd/meta-policy-compilation-consumer/**",
+        "docs/language/meta-policy-compilation.md",
+        "examples/meta-policy-compilation/**",
+        "internal/bidir/**",
+        "internal/meta/policycompilation/**",
+        "internal/semantic/**",
+        "internal/syntax/**"
+      ]
+    },
+    {
       "branch": "agent/self-improvement-minimal-loop",
       "paths": [
         ".github/agent-scope-table.md",

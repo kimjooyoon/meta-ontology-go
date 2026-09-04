@@ -47,6 +47,11 @@ func cloneDeclaration(declaration Declaration) Declaration {
 		clone.Inputs = append([]NameRef(nil), value.Inputs...)
 		clone.Parameters = append([]NameRef(nil), value.Parameters...)
 		return &clone
+	case *PolicyDecl:
+		if value == nil {
+			return (*PolicyDecl)(nil)
+		}
+		return value.Clone()
 	default:
 		return declaration
 	}

@@ -32,6 +32,8 @@ func formatDeclaration(output *strings.Builder, declaration Declaration, support
 		return formatEntity(output, value, support)
 	case *ActivityDecl:
 		return formatActivity(output, value)
+	case *PolicyDecl:
+		return formatPolicy(output, value)
 	default:
 		return fmt.Errorf("unsupported declaration %T", declaration)
 	}

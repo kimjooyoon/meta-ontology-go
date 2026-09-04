@@ -34,6 +34,9 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		if err := checkLowerContext(ctx); err != nil {
 			return Document{}, err
 		}
+		if _, isPolicy := declaration.(*syntax.PolicyDecl); isPolicy {
+			continue
+		}
 		adapted, err := adaptSyntaxDeclaration(ctx, declaration)
 		if err != nil {
 			return Document{}, err
