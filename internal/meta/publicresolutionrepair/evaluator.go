@@ -165,7 +165,7 @@ func Evaluate(input EvaluationInput) (CaseReport, error) {
 
 func CompareCase(report CaseReport, expected string) error {
 	if report.Decision != expected {
-		return fmt.Errorf("semantic repair case %s decision=%s want=%s", report.CaseID, report.Decision, expected)
+		return fmt.Errorf("semantic repair case %s decision=%s want=%s reason=%s unknown=%+v closure=%d/%d false_negative=%d/%d replay=%d/%d selectivity=%d/%d comparisons=%+v", report.CaseID, report.Decision, expected, report.Reason, report.Unknown, report.ImpactedClosureBefore, report.ImpactedClosureAfter, report.FalseNegativeImpactedTestsBefore, report.FalseNegativeImpactedTestsAfter, report.OverlayReplay.TestUnitsExecuted, report.OverlayReplay.TestUnitsReused, report.UnchangedPartitionSelectivity.TestUnitsExecuted, report.UnchangedPartitionSelectivity.TestUnitsReused, report.Comparisons)
 	}
 	if report.Decision == DecisionUnknown {
 		if report.Unknown == nil || report.Unknown.Stage == "" || report.Unknown.Step == "" || report.Unknown.Reason == "" || report.Unknown.UnknownClass == "" || report.Unknown.NextOperation == "" || len(report.Unknown.BlockedBy) == 0 {
