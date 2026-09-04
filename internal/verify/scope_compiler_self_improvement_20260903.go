@@ -7,6 +7,7 @@ const compilerEnvelopeSelfImprovementIteration20260904LSPCacheBranch = "agent/co
 const compilerSelfObservationIteration20260904Branch = "agent/compiler-self-observation-iteration-20260904"
 const compilerSelfImprovementIteration20260904V5Branch = "agent/compiler-self-improvement-iteration-20260904-v5"
 const compilerSelfImprovementIteration20260904V6Branch = "agent/compiler-self-improvement-iteration-20260904-v6"
+const compilerSelfImprovementIteration20260904V8Branch = "agent/compiler-self-improvement-iteration-20260904-v8"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -117,5 +118,11 @@ func init() {
 		"internal/meta/generation/semantic_retention.go",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/self-improvement-retained-knowledge",
+	}
+	branchScopeAllowlist[compilerSelfImprovementIteration20260904V8Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/generate_pipeline_part03.go",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
 	}
 }

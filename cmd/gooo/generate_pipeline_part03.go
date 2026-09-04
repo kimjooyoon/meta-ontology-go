@@ -60,53 +60,7 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		if value == "" {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
-		switch args[index] {
-		case "--out":
-			if options.outputDir != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.outputDir = value
-		case "--previous-go":
-			if options.previousGo != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.previousGo = value
-		case "--manifest":
-			if options.manifestPath != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.manifestPath = value
-		case "--certificate", "--retained-certificate":
-			if options.retainedCertificateFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retainedCertificateFilename = value
-		case "--contract", "--retention-contract":
-			if options.retentionContractFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retentionContractFilename = value
-		case "--observation", "--retention-observation":
-			if options.retentionObservationFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retentionObservationFilename = value
-		case "--proposal", "--retention-proposal":
-			if options.retentionProposalFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retentionProposalFilename = value
-		case "--authorization", "--retention-authorization":
-			if options.retentionAuthorizationFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retentionAuthorizationFilename = value
-		case "--adoption", "--retention-adoption":
-			if options.retentionAdoptionFilename != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.retentionAdoptionFilename = value
-		default:
+		if !setGenerateOption(&options, args[index], value) {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
 		index++
@@ -115,4 +69,57 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
 	return options, nil
+}
+
+func setGenerateOption(options *generateOptions, name, value string) bool {
+	switch name {
+	case "--out":
+		if options.outputDir != "" {
+			return false
+		}
+		options.outputDir = value
+	case "--previous-go":
+		if options.previousGo != "" {
+			return false
+		}
+		options.previousGo = value
+	case "--manifest":
+		if options.manifestPath != "" {
+			return false
+		}
+		options.manifestPath = value
+	case "--certificate", "--retained-certificate":
+		if options.retainedCertificateFilename != "" {
+			return false
+		}
+		options.retainedCertificateFilename = value
+	case "--contract", "--retention-contract":
+		if options.retentionContractFilename != "" {
+			return false
+		}
+		options.retentionContractFilename = value
+	case "--observation", "--retention-observation":
+		if options.retentionObservationFilename != "" {
+			return false
+		}
+		options.retentionObservationFilename = value
+	case "--proposal", "--retention-proposal":
+		if options.retentionProposalFilename != "" {
+			return false
+		}
+		options.retentionProposalFilename = value
+	case "--authorization", "--retention-authorization":
+		if options.retentionAuthorizationFilename != "" {
+			return false
+		}
+		options.retentionAuthorizationFilename = value
+	case "--adoption", "--retention-adoption":
+		if options.retentionAdoptionFilename != "" {
+			return false
+		}
+		options.retentionAdoptionFilename = value
+	default:
+		return false
+	}
+	return true
 }

@@ -3309,6 +3309,15 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v8",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
