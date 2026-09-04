@@ -60,3 +60,21 @@ The six utility cases are exactly two `CLOSED`, two `UNKNOWN`, and two
 `REFUTED`. The runtime comparison remains `UNKNOWN` unless the predeclared
 runtime modes are equivalent; deterministic semantic operation reduction is
 reported independently. The published evidence denominator is exactly 32.
+
+## Public generated-test reuse contract
+
+The same canonical project also declares a v1 test-reuse policy in its
+lowered \`Compile\` meta-code. An independent caller may run the fixed
+\`go test -tags generated_project -count=1 .\` contract once, publish an
+immutable caller-owned receipt, and later request reuse explicitly. The
+second public command validates the receipt against the canonical source and
+semantic digest, generated program and manifest, compiler and released-tool
+identity, Go 1.27 toolchain, test command, test contract, and successful
+original result. It never auto-skips a test.
+
+The v13 journey is baseline generation -> baseline build -> baseline test ->
+receipt -> explicit authorization -> replay validation -> reused test ->
+evidence. The six cases are exactly two \`CLOSED\`, two \`UNKNOWN\`, and two
+\`REFUTED\`: successful baseline execution, authorized immutable receipt reuse,
+missing authorization, stale or unbounded evidence, tampered receipt, and
+policy mismatch. No score is emitted; the artifact denominator is exactly 24.

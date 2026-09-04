@@ -13,7 +13,9 @@ on:
       - 'internal/meta/discoverypolicy/**'
       - 'internal/meta/publiccontinuity/**'
       - 'internal/meta/publicdiscovery/**'
+      - 'internal/meta/publictestreuse/**'
       - 'scripts/self-improvement-public-continuity/**'
+      - 'scripts/self-improvement-public-test-reuse/**'
       - 'go.mod'
       - 'go.sum'
   push:
@@ -28,7 +30,9 @@ on:
       - 'internal/meta/discoverypolicy/**'
       - 'internal/meta/publiccontinuity/**'
       - 'internal/meta/publicdiscovery/**'
+      - 'internal/meta/publictestreuse/**'
       - 'scripts/self-improvement-public-continuity/**'
+      - 'scripts/self-improvement-public-test-reuse/**'
       - 'go.mod'
       - 'go.sum'
 
@@ -366,11 +370,146 @@ jobs:
           jq -r '"cases: \(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED; artifacts: \(.artifact_count)/\(.artifact_denominator); operations baseline=\(.operation_counts.baseline.semantic)/\(.operation_counts.baseline.lowering)/\(.operation_counts.baseline.generation) learned=\(.operation_counts.learned.semantic)/\(.operation_counts.learned.lowering)/\(.operation_counts.learned.generation)"' "$publish/utility-verification-report.json" >> "$GITHUB_STEP_SUMMARY"
           jq -r '"baseline observations: " + ([.measurements.baseline[] | "\(.index)=\(.wall_ms)/\(.peak_rss_kib)"] | join(", ")) + "\nlearned observations: " + ([.measurements.learned[] | "\(.index)=\(.wall_ms)/\(.peak_rss_kib)"] | join(", "))' "$publish/utility-verification-report.json" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Reuse an authorized generated-test receipt across public commands
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          work="$RUNNER_TEMP/public-continuity/test-reuse"
+          project=examples/self-improvement-discovery/project.gooo
+          baseline_generated="$RUNNER_TEMP/public-continuity/first/generated"
+          project_test=examples/self-improvement-discovery/generated_project_test.go
+          mkdir -p "$work" "$work/baseline-package" "$work/replay-package" "$work/no-auth" "$work/stale-package" "$work/stale" "$work/tampered" "$work/policy-mismatch"
+
+          cp "$baseline_generated/semantic.gooo.go" "$work/baseline-package/semantic.gooo.go"
+          cp "$project_test" "$work/baseline-package/generated_project_test.go"
+          cp go.mod "$work/baseline-package/go.mod"
+          cp -a "$work/baseline-package/." "$work/replay-package/"
+
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode baseline -policy "$project" -source "$project" \
+            -program "$work/baseline-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/baseline-package/generated_project_test.go" \
+            -package-dir "$work/baseline-package" -out "$work/baseline-result"
+
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode reuse -policy "$project" -source "$project" \
+            -program "$work/replay-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/replay-package/generated_project_test.go" \
+            -package-dir "$work/replay-package" -receipt "$work/baseline-result/reuse-receipt.json" \
+            -authorize-reuse -out "$work/replay-result"
+
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode reuse -policy "$project" -source "$project" \
+            -program "$work/replay-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/replay-package/generated_project_test.go" \
+            -package-dir "$work/replay-package" -receipt "$work/baseline-result/reuse-receipt.json" \
+            -out "$work/no-auth"
+
+          cp -a "$work/baseline-package/." "$work/stale-package/"
+          printf '\n// stale generated program mutation\n' >> "$work/stale-package/semantic.gooo.go"
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode reuse -policy "$project" -source "$project" \
+            -program "$work/stale-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/stale-package/generated_project_test.go" \
+            -package-dir "$work/stale-package" -receipt "$work/baseline-result/reuse-receipt.json" \
+            -authorize-reuse -out "$work/stale"
+
+          cp "$work/baseline-result/reuse-receipt.json" "$work/tampered-receipt.json"
+          sed -i 's/SUCCESSFUL_ORIGINAL_TEST_EXECUTION/TAMPERED_RECEIPT/' "$work/tampered-receipt.json"
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode reuse -policy "$project" -source "$project" \
+            -program "$work/replay-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/replay-package/generated_project_test.go" \
+            -package-dir "$work/replay-package" -receipt "$work/tampered-receipt.json" \
+            -authorize-reuse -out "$work/tampered"
+
+          cp "$project" "$work/policy-mismatch.gooo"
+          printf '\n# policy source mutation\n' >> "$work/policy-mismatch.gooo"
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode reuse -policy "$work/policy-mismatch.gooo" -source "$work/policy-mismatch.gooo" \
+            -program "$work/replay-package/semantic.gooo.go" \
+            -manifest "$baseline_generated/semantic.gooo.manifest.jsonl" \
+            -test-contract "$work/replay-package/generated_project_test.go" \
+            -package-dir "$work/replay-package" -receipt "$work/baseline-result/reuse-receipt.json" \
+            -authorize-reuse -out "$work/policy-mismatch"
+
+          publish="$work/publish"
+          mkdir -p "$publish"
+          cp "$project" "$publish/test-reuse-policy.gooo"
+          cp "$project" "$publish/test-reuse-source.gooo"
+          cp "$work/baseline-package/semantic.gooo.go" "$publish/test-reuse-baseline-program.go"
+          cp "$work/replay-package/semantic.gooo.go" "$publish/test-reuse-replay-program.go"
+          cp "$baseline_generated/semantic.gooo.manifest.jsonl" "$publish/test-reuse-generated.manifest.jsonl"
+          cp "$work/baseline-package/generated_project_test.go" "$publish/test-reuse-test-contract.go"
+          cp "$work/baseline-package/go.mod" "$publish/go.mod"
+          cp "$work/baseline-result/reuse-report.json" "$publish/test-reuse-baseline-report.json"
+          cp "$work/baseline-result/reuse-report.md" "$publish/test-reuse-baseline-report.md"
+          cp "$work/baseline-result/reuse-receipt.json" "$publish/test-reuse-baseline-receipt.json"
+          cp "$work/replay-result/reuse-report.json" "$publish/test-reuse-replay-report.json"
+          cp "$work/replay-result/reuse-report.md" "$publish/test-reuse-replay-report.md"
+          cp "$work/no-auth/reuse-report.json" "$publish/test-reuse-no-auth-report.json"
+          cp "$work/no-auth/reuse-report.md" "$publish/test-reuse-no-auth-report.md"
+          cp "$work/stale/reuse-report.json" "$publish/test-reuse-stale-report.json"
+          cp "$work/stale/reuse-report.md" "$publish/test-reuse-stale-report.md"
+          cp "$work/tampered/reuse-report.json" "$publish/test-reuse-tampered-report.json"
+          cp "$work/tampered/reuse-report.md" "$publish/test-reuse-tampered-report.md"
+          cp "$work/policy-mismatch/reuse-report.json" "$publish/test-reuse-policy-mismatch-report.json"
+          cp "$work/policy-mismatch/reuse-report.md" "$publish/test-reuse-policy-mismatch-report.md"
+          jq -n \
+            --argjson baseline "$(jq . "$work/baseline-result/reuse-report.json")" \
+            --argjson replay "$(jq . "$work/replay-result/reuse-report.json")" \
+            '{schema:"gooo/public-test-reuse-runtime-measurement/v1",runtime_comparable:false,before:{build_ms:$baseline.build_ms,test_ms:$baseline.test_ms,wall_ms:$baseline.wall_ms,peak_rss_kib:$baseline.peak_rss_kib,test_executions:$baseline.test_executions,reused_test_executions:$baseline.reused_test_executions},after:{build_ms:$replay.build_ms,test_ms:$replay.test_ms,wall_ms:$replay.wall_ms,peak_rss_kib:$replay.peak_rss_kib,test_executions:$replay.test_executions,reused_test_executions:$replay.reused_test_executions},unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT"}' \
+            > "$publish/test-reuse-runtime-measurements.json"
+
+          artifact_names=(
+            test-reuse-policy.gooo test-reuse-source.gooo test-reuse-baseline-program.go test-reuse-replay-program.go
+            test-reuse-generated.manifest.jsonl test-reuse-test-contract.go go.mod
+            test-reuse-baseline-report.json test-reuse-baseline-report.md test-reuse-baseline-receipt.json
+            test-reuse-replay-report.json test-reuse-replay-report.md test-reuse-no-auth-report.json test-reuse-no-auth-report.md
+            test-reuse-stale-report.json test-reuse-stale-report.md test-reuse-tampered-report.json test-reuse-tampered-report.md
+            test-reuse-policy-mismatch-report.json test-reuse-policy-mismatch-report.md test-reuse-runtime-measurements.json
+            test-reuse-input.json
+          )
+          jq -n \
+            --arg policy "$publish/test-reuse-policy.gooo" --arg source "$publish/test-reuse-source.gooo" \
+            --arg baseline_program "$publish/test-reuse-baseline-program.go" --arg replay_program "$publish/test-reuse-replay-program.go" \
+            --arg manifest "$publish/test-reuse-generated.manifest.jsonl" --arg test_contract "$publish/test-reuse-test-contract.go" \
+            --arg baseline_report "$publish/test-reuse-baseline-report.json" --arg replay_report "$publish/test-reuse-replay-report.json" \
+            --arg missing_authorization "$publish/test-reuse-no-auth-report.json" --arg stale_evidence "$publish/test-reuse-stale-report.json" \
+            --arg tampered_receipt "$publish/test-reuse-tampered-report.json" --arg policy_mismatch "$publish/test-reuse-policy-mismatch-report.json" \
+            --arg baseline_receipt "$publish/test-reuse-baseline-receipt.json" --arg root "$publish" \
+            --argjson artifacts "$(printf '%s\n' "${artifact_names[@]}" | jq -R . | jq -s .)" \
+            '{schema:"gooo/public-test-reuse-verification-input/v1",policy:$policy,source:$source,baseline_program:$baseline_program,replay_program:$replay_program,manifest:$manifest,test_contract:$test_contract,baseline_report:$baseline_report,replay_report:$replay_report,missing_authorization_report:$missing_authorization,stale_evidence_report:$stale_evidence,tampered_receipt_report:$tampered_receipt,policy_mismatch_report:$policy_mismatch,baseline_receipt:$baseline_receipt,published_root:$root,published_artifacts:$artifacts}' \
+            > "$publish/test-reuse-input.json"
+
+          go run ./scripts/self-improvement-public-test-reuse \
+            -mode verify -verification-manifest "$publish/test-reuse-input.json" \
+            -output "$publish/test-reuse-verification-report.json" \
+            -human-output "$publish/test-reuse-dossier.md"
+          test "$(find "$publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 24
+          jq -e '.decision=="CLOSED" and .case_denominator==6 and .closed_cases==2 and .unknown_cases==2 and .refuted_cases==2 and .artifact_count==24 and .artifact_denominator==24 and .before.test_executions==1 and .after.test_executions==0 and .after.reused_test_executions==1 and .repository_writes==0 and .local_test_executions==0 and .no_aggregate_score' "$publish/test-reuse-verification-report.json" >/dev/null
+          jq -r '"test reuse: cases=\(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED; artifacts=\(.artifact_count)/\(.artifact_denominator); test executions before/after=\(.before.test_executions)/\(.after.test_executions); reused before/after=\(.before.reused_test_executions)/\(.after.reused_test_executions); receipt hits/misses before=\(.before.receipt_hits)/\(.before.receipt_misses) after=\(.after.receipt_hits)/\(.after.receipt_misses)"' "$publish/test-reuse-verification-report.json" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload generated project utility dossier
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: public-self-improvement-utility-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/utility-publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload generated-test reuse dossier
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: public-self-improvement-test-reuse-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/test-reuse/publish
           if-no-files-found: error
           retention-days: 30
