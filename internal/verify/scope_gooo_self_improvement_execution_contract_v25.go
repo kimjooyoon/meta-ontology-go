@@ -5,6 +5,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/self-improvement-execution-contract.yml",
+		".github/workflows/transformation-effect.yml",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"examples/self-improvement-execution-contract",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
