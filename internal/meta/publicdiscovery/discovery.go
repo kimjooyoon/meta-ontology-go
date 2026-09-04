@@ -424,7 +424,7 @@ func writeResult(outputDir string, entries []LedgerEntry, current LedgerEntry, l
 }
 
 func baseReport(outputDir string, input Input, current LedgerEntry, caseIDs []string, decision, reason string, ledgerLines, ledgerBytes int, wallMS, peakRSSKib int64) Report {
-	report := Report{Schema: ReportSchema, Decision: decision, Reason: reason, CaseIDs: append([]string(nil), caseIDs...),
+	return Report{Schema: ReportSchema, Decision: decision, Reason: reason, CaseIDs: append([]string(nil), caseIDs...),
 		ObservationDigest: current.ObservationDigest, GroupKeyDigest: digestGroupKeyMust(current),
 		SourceDigest: input.SourceDigest, InputSemanticDigest: input.InputSemanticDigest, PreviousGoDigest: input.PreviousGoDigest,
 		ToolchainDigest: input.ToolchainDigest, ContractDigest: input.ContractDigest, EvaluatorDigest: input.EvaluatorDigest,
@@ -435,7 +435,6 @@ func baseReport(outputDir string, input Input, current LedgerEntry, caseIDs []st
 		HumanReportPath: filepath.Join(outputDir, HumanFilename), SemanticOperations: 1,
 		PolicyActivitiesExpected: 1, PolicyActivitiesObserved: 1, RepositoryWrites: 0, LocalBuildExecutions: 0,
 		LocalTestExecutions: 0, WallMS: wallMS, PeakRSSKib: peakRSSKib}
-	return report
 }
 
 func inputFromEntry(entry LedgerEntry) Input {
