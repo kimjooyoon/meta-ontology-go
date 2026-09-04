@@ -32,7 +32,8 @@ func putWithTypesAndEntityFieldsSupport(document Document, updated Model, regist
 	if err := updated.ValidateWithTypes(registry); err != nil {
 		return document, putError(PutModelInvalid, err)
 	}
-	result := Document{Package: document.Package, Namespace: document.Namespace, ImplicitActivityPorts: document.ImplicitActivityPorts}
+	result := Document{Package: document.Package, Namespace: document.Namespace,
+		Policies: append([]semantic.Policy(nil), document.Policies...), ImplicitActivityPorts: document.ImplicitActivityPorts}
 	if result.Package == "" {
 		result.Package = updated.Package
 	}

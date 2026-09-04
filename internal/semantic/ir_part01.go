@@ -14,6 +14,7 @@ type IR struct {
 	Package   string
 	Namespace Namespace
 	Graph     Graph
+	Policies  []Policy
 	evidence  map[ID]Evidence
 }
 
@@ -26,6 +27,7 @@ func NewIR(packageName string, namespace Namespace) IR {
 		Package:   strings.TrimSpace(packageName),
 		Namespace: namespace,
 		Graph:     NewGraph(),
+		Policies:  nil,
 		evidence:  make(map[ID]Evidence),
 	}
 }
@@ -54,6 +56,9 @@ func (ir IR) Validate() error {
 		}
 	}
 	if err := ir.Graph.Validate(); err != nil {
+		return err
+	}
+	if err := validatePolicies(ir.Policies); err != nil {
 		return err
 	}
 	return ir.validateEvidence()

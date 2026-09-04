@@ -1,5 +1,7 @@
 package bidir
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/semantic"
+
 // ID is the stable identity of a semantic node.
 type ID string
 
@@ -50,6 +52,7 @@ type Document struct {
 	Package               string
 	Namespace             string
 	Declarations          []Declaration
+	Policies              []semantic.Policy
 	Relations             []Relation
 	ImplicitActivityPorts bool
 }

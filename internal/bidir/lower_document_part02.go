@@ -36,6 +36,16 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	if err := lowerDocumentRelations(ctx, &ir, document.Relations); err != nil {
 		return semantic.IR{}, err
 	}
+	for _, policy := range document.Policies {
+		if err := checkLowerContext(ctx); err != nil {
+			return semantic.IR{}, err
+		}
+		normalized, err := policy.Normalized()
+		if err != nil {
+			return semantic.IR{}, err
+		}
+		ir.Policies = append(ir.Policies, normalized)
+	}
 	if err := validateLoweredContext(ctx, ir); err != nil {
 		return semantic.IR{}, err
 	}

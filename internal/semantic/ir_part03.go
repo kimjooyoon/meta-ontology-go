@@ -17,6 +17,9 @@ func (ir IR) SemanticCanonical() string {
 	b.WriteString(namespace)
 	b.WriteByte('\n')
 	b.WriteString(ir.Graph.SemanticCanonical())
+	for _, policy := range ir.Policies {
+		b.WriteString(policy.SemanticCanonical())
+	}
 	return b.String()
 }
 func (ir IR) StableHash() string {
