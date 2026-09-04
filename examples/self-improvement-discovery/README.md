@@ -20,6 +20,23 @@ The candidate is evidence only: it contains no executable patch, has
 proposal, authorization, and certificate controls before any future use. No
 repository source is modified by this observation loop.
 
+The continuity handoff is explicit and caller-owned:
+
+```text
+candidate -> gooo authorize-discovery --decision accept|reject
+          -> gooo certify-discovery (accepted only)
+          -> gooo generate --continuity-certificate CERTIFICATE
+```
+
+The decision receipt and certificate carry the raw candidate digest and every
+source, semantic, toolchain, contract, evaluator, output, and manifest digest.
+Certification replays generation and records a typed conversion because a
+public-discovery candidate and a semantic-retention certificate represent
+different operations. Rejection is a terminal human decision; missing,
+tampered, stale-source, stale-policy, and mismatched-toolchain evidence remain
+distinct fail-closed outcomes. The continuity verifier requires four equal
+candidate-digest edges and zero manual transformations.
+
 The incompatible-source case is derived into caller-owned temporary output from
 `project.gooo`; no second tracked language source is needed.
 

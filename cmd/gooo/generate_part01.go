@@ -28,6 +28,9 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 		return code
 	}
 	started := time.Now()
+	if options.continuityCertificateFilename != "" {
+		return runPublicContinuityGenerate(options, input, reader, jsonMode, stdout, stderr, deadline)
+	}
 	if options.publicRetentionRequested() {
 		return runPublicGenerate(options, input, reader, parser, jsonMode, stdout, stderr, deadline)
 	}

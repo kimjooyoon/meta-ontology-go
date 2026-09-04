@@ -48,6 +48,7 @@ type generateOptions struct {
 	manifestPath                   string
 	retentionReport                bool
 	retainedCertificateFilename    string
+	continuityCertificateFilename  string
 	retentionContractFilename      string
 	retentionObservationFilename   string
 	retentionProposalFilename      string
@@ -88,6 +89,9 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	if options.observationLedgerDir != "" && (options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
+	if options.continuityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested()) {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
 	return options, nil
 }
 
@@ -113,6 +117,11 @@ func setGenerateOption(options *generateOptions, name, value string) bool {
 			return false
 		}
 		options.retainedCertificateFilename = value
+	case "--continuity-certificate":
+		if options.continuityCertificateFilename != "" {
+			return false
+		}
+		options.continuityCertificateFilename = value
 	case "--contract", "--retention-contract":
 		if options.retentionContractFilename != "" {
 			return false

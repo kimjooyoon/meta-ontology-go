@@ -115,6 +115,7 @@ type InvocationReceipt struct {
 	WallMS                  int64  `json:"wall_ms"`
 	PeakRSSKib              int64  `json:"peak_rss_kib"`
 	CandidateByteMismatches int    `json:"candidate_byte_mismatches"`
+	CandidateDigest         string `json:"candidate_digest"`
 }
 
 type Report struct {
@@ -145,6 +146,7 @@ type Report struct {
 	ArtifactDenominator          int                              `json:"artifact_denominator"`
 	ArtifactCount                int                              `json:"artifact_count"`
 	CandidatePath                string                           `json:"candidate_path,omitempty"`
+	CandidateDigest              string                           `json:"candidate_digest,omitempty"`
 	InvocationReceiptPath        string                           `json:"invocation_receipt_path"`
 	MachineReportPath            string                           `json:"machine_report_path"`
 	HumanReportPath              string                           `json:"human_report_path"`
@@ -410,6 +412,9 @@ func writeResult(outputDir string, entries []LedgerEntry, current LedgerEntry, l
 	report.ArtifactDenominator = artifactCount
 	report.ArtifactCount = artifactCount
 	report.CandidatePath = candidatePath
+	if candidateEmitted {
+		report.CandidateDigest = cache.HashBytes(candidateBytes).String()
+	}
 	report.CandidateByteMismatches = candidateMismatches
 	report.PolicyActivitiesObserved = 1
 	report.GeneratedEvaluatorMismatches = evaluatorMismatches
@@ -451,7 +456,8 @@ func receiptFromReport(report Report, sequence int, candidate bool) InvocationRe
 		CandidateEmitted: candidate, LedgerLines: report.LedgerLines, LedgerBytes: report.LedgerBytes,
 		ArtifactDenominator: report.ArtifactDenominator, ArtifactCount: report.ArtifactCount,
 		RepositoryWrites: 0, LocalBuildExecutions: 0, LocalTestExecutions: 0,
-		WallMS: report.WallMS, PeakRSSKib: report.PeakRSSKib, CandidateByteMismatches: report.CandidateByteMismatches}
+		WallMS: report.WallMS, PeakRSSKib: report.PeakRSSKib, CandidateByteMismatches: report.CandidateByteMismatches,
+		CandidateDigest: report.CandidateDigest}
 }
 
 func writeReportArtifacts(outputDir string, result Result, note string) error {

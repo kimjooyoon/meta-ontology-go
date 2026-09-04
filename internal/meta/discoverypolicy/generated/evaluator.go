@@ -5,7 +5,7 @@ package discoverypolicygenerated
 const (
 	EvaluatorSchema    = "gooo/public-self-observation-policy-evaluator/v1"
 	PolicySourcePath   = "examples/self-improvement-discovery/discovery.gooo"
-	PolicySourceDigest = "a0cf445080ef4edbea240d05d3418c738f684a26fd0ab41d1e179440e54e17d5"
+	PolicySourceDigest = "69b189b0da7041f8986a5982a89be014549404e6088dd506520861d7cb50a608"
 	EvaluatorDigest    = "e80bb7aa41e12d146dbd101cd2b78b863c6542ad50054c08c234c90381ae721c"
 )
 
