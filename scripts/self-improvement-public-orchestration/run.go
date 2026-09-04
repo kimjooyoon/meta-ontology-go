@@ -581,9 +581,11 @@ func inputInventory(source, testContract string) publicorchestration.Inventory {
 }
 
 func generatedInventory(directory string) publicorchestration.GeneratedInventory {
+	return generatedInventoryFiles(filepath.Join(directory, "semantic.gooo.go"), filepath.Join(directory, "semantic.gooo.manifest.jsonl"))
+}
+
+func generatedInventoryFiles(program, manifest string) publicorchestration.GeneratedInventory {
 	var result publicorchestration.GeneratedInventory
-	program := filepath.Join(directory, "semantic.gooo.go")
-	manifest := filepath.Join(directory, "semantic.gooo.manifest.jsonl")
 	if data, err := readRegular(program); err == nil {
 		result.GoFiles = 1
 		result.GoBytes = len(data)

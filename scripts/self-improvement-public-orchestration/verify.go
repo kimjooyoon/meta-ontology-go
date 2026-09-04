@@ -187,7 +187,7 @@ func runVerification(manifestPath, outputPath, humanPath string) error {
 		return err
 	}
 	inputInventoryValue := inputInventory(input.Source, input.ProjectTest)
-	generatedInventoryValue := generatedInventory(filepath.Dir(input.GeneratedProgram))
+	generatedInventoryValue := generatedInventoryFiles(input.GeneratedProgram, input.GeneratedManifest)
 	if inputInventoryValue.RegularFiles != 2 || inputInventoryValue.PhysicalLines != 19 || inputInventoryValue.GoFiles != 1 || inputInventoryValue.GoooFiles != 1 || generatedInventoryValue.Files != 2 || generatedInventoryValue.GoFiles != 1 || generatedInventoryValue.GoBytes == 0 || generatedInventoryValue.GoLines == 0 {
 		return fmt.Errorf("input/generated inventory is not exact: input=%+v generated=%+v", inputInventoryValue, generatedInventoryValue)
 	}
