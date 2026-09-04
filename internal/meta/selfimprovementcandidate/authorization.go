@@ -797,7 +797,6 @@ func BuildCanonicalCases(request AuthorizationRequest) (CanonicalCaseReport, err
 	}
 	allow := fixtureDecision(request, AuthorizationAllow)
 	deny := fixtureDecision(request, AuthorizationDeny)
-	missing := AuthorizationDecisionInput{}
 	missingField := request
 	missingField.Candidate.CandidateDigest = ""
 	missingField.Digest = requestDigest(missingField)
