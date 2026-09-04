@@ -34,7 +34,7 @@ jobs:
           cache: false
 
       - name: Download canonical cycle artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: self-improvement-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/cycle/input
@@ -43,7 +43,7 @@ jobs:
           run-id: ${{ env.CI_RUN_ID }}
 
       - name: Download canonical source metrics
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: source-line-metrics-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/cycle/source

@@ -32,7 +32,7 @@ jobs:
           cache: false
 
       - name: Download exact source metrics
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: source-line-metrics-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/subject-witness/source

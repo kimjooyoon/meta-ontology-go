@@ -33,7 +33,7 @@ jobs:
           cache: false
 
       - name: Download exact candidate transport receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: self-improvement-nonexecuting-candidate-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/attestation-resolution/input

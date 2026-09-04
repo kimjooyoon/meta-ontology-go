@@ -557,7 +557,7 @@ jobs:
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact artifact provenance
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
@@ -747,7 +747,7 @@ jobs:
             }
             core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
@@ -943,7 +943,7 @@ jobs:
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
       - name: Download exact Foundation predecessor artifact
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: feedback-predecessor-${{ github.event.pull_request.head.sha }}
           path: foundation-predecessor
@@ -1442,7 +1442,7 @@ jobs:
       - name: Download exact proof evidence
         if: ${{ always() }}
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
