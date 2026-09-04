@@ -200,7 +200,7 @@ jobs:
             .comparable_observations == 1 and .incompatible_observations == 1 and
             .candidates_emitted == 0 and .artifact_denominator == 4 and .artifact_count == 4 and
             .unknown.blocked_by == ["same_source_input_toolchain_contract_group"]' \
-            "$work/incompatible/second/ledger/observation-report.json" >/dev/null
+            "$work/incompatible/ledger/observation-report.json" >/dev/null
 
           cp "$work/first/ledger/observation-ledger.ndjson" "$work/tampered/ledger/observation-ledger.ndjson"
           sed -i 's/"source_digest":"[0-9a-f]\{64\}"/"source_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"/' \
@@ -241,7 +241,7 @@ jobs:
             --arg single_ledger "$work/first/observation-ledger.ndjson" \
             --arg pair "$work/second/observation-report.json" \
             --arg pair_ledger "$work/pair/ledger/observation-ledger.ndjson" \
-            --arg incompatible "$work/incompatible/second/ledger/observation-report.json" \
+            --arg incompatible "$work/incompatible/ledger/observation-report.json" \
             --arg incompatible_ledger "$work/incompatible/ledger/observation-ledger.ndjson" \
             --arg tampered "$work/tampered/ledger/observation-report.json" \
             --arg tampered_ledger "$work/tampered/ledger/observation-ledger.ndjson" \
