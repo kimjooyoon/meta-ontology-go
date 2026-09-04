@@ -3462,6 +3462,24 @@
       ]
     },
     {
+      "branch": "agent/compiler-self-improvement-compatibility-20260904-v18",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-compiler-compatibility.yml",
+        "cmd/gooo/compatibility_generate_part01.go",
+        "cmd/gooo/compatibility_generate_part02.go",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "examples/self-improvement-observation",
+        "internal/meta/compatibilitypolicy",
+        "internal/meta/compilercompatibility",
+        "internal/meta/retentionpolicy/generated/evaluator.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-compiler-compatibility"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",

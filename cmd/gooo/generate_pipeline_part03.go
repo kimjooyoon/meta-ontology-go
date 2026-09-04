@@ -42,19 +42,20 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 const generatedManifestFileName = "semantic.gooo.manifest.jsonl"
 
 type generateOptions struct {
-	filename                       string
-	outputDir                      string
-	previousGo                     string
-	manifestPath                   string
-	retentionReport                bool
-	retainedCertificateFilename    string
-	continuityCertificateFilename  string
-	retentionContractFilename      string
-	retentionObservationFilename   string
-	retentionProposalFilename      string
-	retentionAuthorizationFilename string
-	retentionAdoptionFilename      string
-	observationLedgerDir           string
+	filename                         string
+	outputDir                        string
+	previousGo                       string
+	manifestPath                     string
+	retentionReport                  bool
+	retainedCertificateFilename      string
+	continuityCertificateFilename    string
+	compatibilityCertificateFilename string
+	retentionContractFilename        string
+	retentionObservationFilename     string
+	retentionProposalFilename        string
+	retentionAuthorizationFilename   string
+	retentionAdoptionFilename        string
+	observationLedgerDir             string
 }
 
 func parseGenerateArguments(args []string) (generateOptions, error) {
@@ -89,7 +90,10 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	if options.observationLedgerDir != "" && (options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
-	if options.continuityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested()) {
+	if options.continuityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested() || options.compatibilityCertificateFilename != "") {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
+	if options.compatibilityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
 	return options, nil
@@ -122,6 +126,11 @@ func setGenerateOption(options *generateOptions, name, value string) bool {
 			return false
 		}
 		options.continuityCertificateFilename = value
+	case "--compatibility-certificate":
+		if options.compatibilityCertificateFilename != "" {
+			return false
+		}
+		options.compatibilityCertificateFilename = value
 	case "--contract", "--retention-contract":
 		if options.retentionContractFilename != "" {
 			return false
