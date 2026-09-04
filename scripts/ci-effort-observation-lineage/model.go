@@ -62,7 +62,7 @@ type report struct {
 
 var publicationNames = []string{
 	"canonical-source.gooo", "workflow-lineage-policy.json", "workflow-lineage-case-table.json", "source-run-receipts.json", "consumer-receipts.json", "lineage-edges.json",
-	"exact-subject-binding.json", "stale-lineage-a5697c29.json", "source-api-missing.json", "artifact-lookup-missing.json", "mismatch-lineage.json", "tampered-artifact.json", "source-repository-mismatch.json", "product-failure-safety.json",
+	"source-identity-priority.json", "exact-subject-binding.json", "stale-lineage-a5697c29.json", "source-api-missing.json", "artifact-lookup-missing.json", "mismatch-lineage.json", "tampered-artifact.json", "source-repository-mismatch.json", "product-failure-safety.json",
 	"runtime-measurements.json", "repository-status.json", "workflow-lineage-report.json", "workflow-lineage-human.txt", "workflow-lineage-verification-input.json", "workflow-lineage-metrics.json",
 }
 
