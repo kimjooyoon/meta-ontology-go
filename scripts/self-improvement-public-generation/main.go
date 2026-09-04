@@ -430,7 +430,7 @@ func independentPublicDecisionRows(contract []byte) ([]string, map[string]string
 			continue
 		}
 		activityCount++
-		for _, part := range strings.Split(node.ValueProgram, ";") {
+		for part := range strings.SplitSeq(node.ValueProgram, ";") {
 			if !strings.HasPrefix(part, "retention-case=") {
 				continue
 			}

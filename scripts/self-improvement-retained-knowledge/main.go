@@ -86,7 +86,7 @@ func deriveRetentionPolicy(filename string, source []byte) (sourceRetentionPolic
 		}
 		policy.ActivityCount++
 		seenHeader := false
-		for _, part := range strings.Split(node.ValueProgram, ";") {
+		for part := range strings.SplitSeq(node.ValueProgram, ";") {
 			switch {
 			case part == retentionpolicy.RetentionDecisionHead:
 				if seenHeader {
@@ -115,10 +115,7 @@ func deriveRetentionPolicy(filename string, source []byte) (sourceRetentionPolic
 	}
 	expectedIDs := generation.SemanticRetentionCaseIDs()
 	if len(policy.Cases) != len(expectedIDs) {
-		policy.UnboundCases = len(expectedIDs) - len(policy.Cases)
-		if policy.UnboundCases < 0 {
-			policy.UnboundCases = 0
-		}
+		policy.UnboundCases = max(len(expectedIDs)-len(policy.Cases), 0)
 		return policy, fmt.Errorf("independent retention decision rows = %d, want %d", len(policy.Cases), len(expectedIDs))
 	}
 	for index, id := range expectedIDs {
