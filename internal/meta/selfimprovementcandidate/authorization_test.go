@@ -84,7 +84,7 @@ func TestBuildAuthorizationRequestBindsExactCandidateAndLeavesLiveUnknown(t *tes
 }
 
 func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("r"), 50), authorizationMetadata())
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("a"), 50), authorizationMetadata())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestVerifyAuthorizationResolutionAcceptsExactJSONRoundTripValue(t *testing.
 }
 
 func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("s"), 51), authorizationMetadata())
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("b"), 51), authorizationMetadata())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ func TestResolveAuthorizationRefutesNestedExecutionInputContradictions(t *testin
 }
 
 func TestVerifyAuthorizationResolutionDistinguishesNilAndPresentExecutionInput(t *testing.T) {
-	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("n"), 52), authorizationMetadata())
+	request, err := BuildAuthorizationRequest(authorizationRepository(), authorizationContractPath, authorizationCandidateRaw(fixtureSHA("c"), 52), authorizationMetadata())
 	if err != nil {
 		t.Fatal(err)
 	}
