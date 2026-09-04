@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 )
 
 const (
@@ -23,6 +24,7 @@ const (
 	ReasonSafetyConflict        = "SAFETY_ENVELOPE_CONTRADICTION"
 	ReasonRegistryConflict      = "REGISTRY_CONTRADICTION"
 	ReasonAuthorizationConflict = "AUTHORIZATION_CONTRADICTION"
+	ReasonMissingExecutionInput = "MISSING_EXECUTION_INPUT_ARTIFACT"
 )
 
 func Evaluate(program PolicyProgram, input ContractInput) ContractResolution {
@@ -80,7 +82,7 @@ func baseResolution(program PolicyProgram, input ContractInput) ContractResoluti
 		RequiredFields:    RequiredFieldNames(),
 		CandidateStableID: input.Candidate.StableID, CandidateDigest: input.Candidate.Digest,
 		SubjectSHA: input.Candidate.SubjectSHA, ObservationDigest: firstNonEmpty(input.Observation.ObservationDigest, input.Candidate.ObservationDigest),
-		CandidateInputDigest: input.Candidate.InputDigest, Phase: input.Observation.Phase,
+		CandidateInputDigest: input.Candidate.InputDigest, ExecutionInputDigest: input.Candidate.ExecutionInputDigest, ExecutionInput: input.ExecutionInput, Phase: input.Observation.Phase,
 		OperationID: input.Observation.OperationID, BoundedTarget: input.Observation.BoundedTarget,
 		EvaluatorRegistryDigest: input.Registry.EvaluatorRegistryDigest,
 		ToolchainTestContractID: input.Registry.ToolchainTestContractIdentity,
@@ -124,6 +126,24 @@ func inspectInput(input ContractInput) ([]string, []string) {
 	if input.Candidate.InputDigest != "" && !validDigest(input.Candidate.InputDigest) {
 		addContradiction("candidate_input_digest")
 	}
+	if input.Candidate.ExecutionInputDigest != "" && !validDigest(input.Candidate.ExecutionInputDigest) {
+		addContradiction("candidate_input_digest")
+	}
+	if input.ExecutionInput == nil || executionInputIncomplete(input.ExecutionInput) {
+		addMissing("candidate_input_digest")
+	} else {
+		if input.Candidate.ExecutionInputDigest != input.Candidate.InputDigest ||
+			input.Candidate.ExecutionInputDigest != input.ExecutionInput.Digest ||
+			input.ExecutionInput.CandidateStableID != input.Candidate.StableID ||
+			input.ExecutionInput.CandidateDigest != input.Candidate.Digest ||
+			input.ExecutionInput.SubjectSHA != input.Candidate.SubjectSHA ||
+			input.ExecutionInput.ObservationDigest != input.Candidate.ObservationDigest {
+			addContradiction("candidate_input_digest")
+		}
+		if valuewitnessinput.Validate(*input.ExecutionInput) != nil {
+			addContradiction("candidate_input_digest")
+		}
+	}
 
 	observation := input.Observation
 	if observation.Schema != "" && observation.Schema != ObservationSchema {
@@ -136,6 +156,11 @@ func inspectInput(input ContractInput) ([]string, []string) {
 	}
 	if observation.CandidateInputDigest != "" && input.Candidate.InputDigest != "" && observation.CandidateInputDigest != input.Candidate.InputDigest {
 		addContradiction("candidate_input_digest")
+	}
+	if observation.SourceObservationDigest != "" {
+		if !validDigest(observation.SourceObservationDigest) || observation.SourceObservationDigest != input.Candidate.ObservationDigest {
+			addContradiction("observation_digest")
+		}
 	}
 	if observation.CandidateStableID != "" && input.Candidate.StableID != "" && observation.CandidateStableID != input.Candidate.StableID {
 		addContradiction("candidate_stable_id")
@@ -274,6 +299,9 @@ func requiredMissing(input ContractInput) []string {
 	if input.Candidate.InputDigest == "" {
 		missing = append(missing, "candidate_input_digest")
 	}
+	if input.Candidate.InputDigest != "" && (input.Candidate.ExecutionInputDigest == "" || input.ExecutionInput == nil || executionInputIncomplete(input.ExecutionInput)) {
+		missing = append(missing, "candidate_input_digest")
+	}
 	if input.Observation.Phase == "" {
 		missing = append(missing, "phase")
 	}
@@ -300,7 +328,11 @@ func requiredMissing(input ContractInput) []string {
 
 func operationMapped(input ContractInput) bool {
 	return input.Candidate.MetaOperation == CandidateMetaOperation && input.Candidate.ExperimentKind == CandidateExperimentKind &&
-		input.Observation.OperationID == OperationID(KnownOperationID) && input.Observation.BoundedTarget == KnownBoundedTarget
+		input.Observation.OperationID == OperationID(KnownOperationID) && input.Observation.BoundedTarget == KnownBoundedTarget &&
+		input.ExecutionInput != nil && !executionInputIncomplete(input.ExecutionInput) &&
+		input.Candidate.InputDigest == input.Candidate.ExecutionInputDigest && input.Candidate.ExecutionInputDigest == input.ExecutionInput.Digest &&
+		input.ExecutionInput.OperationID == KnownOperationID && input.ExecutionInput.BoundedTarget == KnownBoundedTarget &&
+		input.ExecutionInput.Phase == KnownPhase && valuewitnessinput.Validate(*input.ExecutionInput) == nil
 }
 
 func policyReady(program PolicyProgram) bool {
@@ -314,6 +346,9 @@ func unknownReason(program PolicyProgram, input ContractInput, missing []string)
 	}
 	if input.Registry.EvaluatorRegistryDigest == "" || input.Registry.ToolchainTestContractIdentity == "" || input.Registry.Schema == "" || !input.Registry.SafetyDeclared {
 		return ReasonMissingRegistry
+	}
+	if input.ExecutionInput == nil || executionInputIncomplete(input.ExecutionInput) {
+		return ReasonMissingExecutionInput
 	}
 	if input.Candidate.MetaOperation == "" || input.Candidate.MetaOperation != CandidateMetaOperation || input.Candidate.ExperimentKind == "" || input.Candidate.ExperimentKind != CandidateExperimentKind || (input.Observation.OperationID != "" && input.Observation.OperationID != OperationID(KnownOperationID)) {
 		return ReasonUnsupportedMapping
@@ -336,6 +371,8 @@ func unknownFor(reason string) *UnknownState {
 		unknown.Stage, unknown.Step, unknown.NextOperation, unknown.BlockedBy = "BIND", "3", "bind-fixed-registry-identity", []string{"registry_identity"}
 	case ReasonMissingObservation:
 		unknown.Stage, unknown.Step, unknown.NextOperation, unknown.BlockedBy = "OBSERVE", "4", "bind-exact-observation-evidence", []string{"observation_evidence"}
+	case ReasonMissingExecutionInput:
+		unknown.Stage, unknown.Step, unknown.UnknownClass, unknown.NextOperation, unknown.BlockedBy = "BIND", "5", "INCOMPLETE_EVIDENCE", "bind-exact-execution-input", []string{"execution_input_artifact"}
 	}
 	return &unknown
 }
@@ -347,6 +384,16 @@ func observationDigest(value ObservationEvidence) string {
 
 func validSpan(span SourceSpan) bool {
 	return strings.TrimSpace(span.SourceID) != "" && !strings.HasPrefix(span.SourceID, "/") && span.StartLine > 0 && span.EndLine >= span.StartLine
+}
+
+func executionInputIncomplete(input *valuewitnessinput.ExecutionInput) bool {
+	return input == nil || input.Schema == "" || input.ContractID == "" || input.CandidateStableID == "" ||
+		input.CandidateDigest == "" || input.SubjectSHA == "" || input.ObservationDigest == "" ||
+		input.OperationID == "" || input.BoundedTarget == "" || input.Phase == "" || input.Source.Path == "" ||
+		input.Source.Bytes == "" || input.Source.Digest == "" || input.Activity.Name == "" ||
+		input.Activity.SemanticFingerprint == "" || len(input.Corpus) == 0 || input.CorpusDigest == "" ||
+		input.EvaluatorRegistry.Schema == "" || input.EvaluatorRegistry.Digest == "" || input.ToolchainTestContractID == "" ||
+		input.OutputSchema == "" || input.InputAuthority == "" || input.OutputAuthority == "" || input.MaxExecutions == 0
 }
 
 func boolInt(value bool) int {

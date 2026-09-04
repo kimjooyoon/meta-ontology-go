@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -67,23 +68,27 @@ type AuthorizationContract struct {
 }
 
 type CandidateBinding struct {
-	ReportSchema            string    `json:"report_schema"`
-	CandidateSchema         string    `json:"candidate_schema"`
-	CandidateID             string    `json:"candidate_id"`
-	CandidateDigest         string    `json:"candidate_digest"`
-	CandidateReportDigest   string    `json:"candidate_report_digest"`
-	SourceObservationDigest string    `json:"source_observation_digest"`
-	InputSourceDigest       string    `json:"input_source_digest"`
-	SubjectSHA              string    `json:"subject_sha"`
-	SourceWorkflowRunID     int64     `json:"source_workflow_run_id"`
-	PolicyVersion           string    `json:"policy_version"`
-	PolicyDigest            string    `json:"policy_digest"`
-	ContractID              string    `json:"contract_id"`
-	ContractSourceDigest    string    `json:"contract_source_digest"`
-	ContractCanonicalDigest string    `json:"contract_canonical_digest"`
-	Scope                   string    `json:"scope"`
-	ScopeDigest             string    `json:"scope_digest"`
-	Authority               Authority `json:"authority"`
+	ReportSchema            string                            `json:"report_schema"`
+	CandidateSchema         string                            `json:"candidate_schema"`
+	CandidateID             string                            `json:"candidate_id"`
+	CandidateDigest         string                            `json:"candidate_digest"`
+	CandidateReportDigest   string                            `json:"candidate_report_digest"`
+	SourceObservationDigest string                            `json:"source_observation_digest"`
+	InputSourceDigest       string                            `json:"input_source_digest"`
+	ExecutionInputDigest    string                            `json:"execution_input_digest"`
+	ExecutionInput          *valuewitnessinput.ExecutionInput `json:"execution_input,omitempty"`
+	ExperimentKind          string                            `json:"experiment_kind"`
+	MetaOperation           string                            `json:"meta_operation"`
+	SubjectSHA              string                            `json:"subject_sha"`
+	SourceWorkflowRunID     int64                             `json:"source_workflow_run_id"`
+	PolicyVersion           string                            `json:"policy_version"`
+	PolicyDigest            string                            `json:"policy_digest"`
+	ContractID              string                            `json:"contract_id"`
+	ContractSourceDigest    string                            `json:"contract_source_digest"`
+	ContractCanonicalDigest string                            `json:"contract_canonical_digest"`
+	Scope                   string                            `json:"scope"`
+	ScopeDigest             string                            `json:"scope_digest"`
+	Authority               Authority                         `json:"authority"`
 }
 
 type ArtifactMetadata struct {
@@ -146,6 +151,7 @@ type AuthorizationDecisionInput struct {
 	CandidateReportDigest   string `json:"candidate_report_digest"`
 	SourceObservationDigest string `json:"source_observation_digest"`
 	InputSourceDigest       string `json:"input_source_digest"`
+	ExecutionInputDigest    string `json:"execution_input_digest"`
 	PolicyDigest            string `json:"policy_digest"`
 	ContractDigest          string `json:"contract_digest"`
 	SubjectSHA              string `json:"subject_sha"`
@@ -172,6 +178,7 @@ type AuthorizationReceipt struct {
 	CandidateDigest         string `json:"candidate_digest"`
 	CandidateReportDigest   string `json:"candidate_report_digest"`
 	SourceObservationDigest string `json:"source_observation_digest"`
+	ExecutionInputDigest    string `json:"execution_input_digest"`
 	SubjectSHA              string `json:"subject_sha"`
 	PolicyVersion           string `json:"policy_version"`
 	PolicyDigest            string `json:"policy_digest"`
@@ -377,6 +384,8 @@ func BuildAuthorizationRequest(repository fs.FS, contractPath string, candidateR
 		ReportSchema: ReportSchema, CandidateSchema: candidate.Schema, CandidateID: candidate.ID,
 		CandidateDigest: candidate.Digest, CandidateReportDigest: digestBytes(candidateRaw),
 		SourceObservationDigest: report.SourceObservationDigest, InputSourceDigest: report.SourceFileDigest,
+		ExecutionInputDigest: candidate.ExecutionInputDigest, ExecutionInput: report.ExecutionInput,
+		ExperimentKind: candidate.ExperimentKind, MetaOperation: candidate.MetaOperation,
 		SubjectSHA: report.SubjectSHA, SourceWorkflowRunID: report.SourceWorkflowRunID,
 		PolicyVersion: report.PolicyVersion, PolicyDigest: digestBytes([]byte(report.PolicyVersion)),
 		ContractID: report.Contract.ContractID, ContractSourceDigest: report.Contract.SourceDigest,
@@ -390,7 +399,7 @@ func BuildAuthorizationRequest(repository fs.FS, contractPath string, candidateR
 		LocalTestExecutions: 0, Decision: AuthorizationRequestState, Resolution: AuthorizationUnresolved,
 		Reason: "CANDIDATE_AUTHORIZATION_REQUESTED", LiveAuthorized: 0, LiveState: "UNKNOWN",
 		Metrics: AuthorizationMetrics{StructuralUnboundEdgesBefore: 1, StructuralUnboundEdgesAfter: 0,
-			AdapterEdges: 1, Requests: 1, ArtifactFiles: 1, ArtifactTypes: 1},
+			AdapterEdges: 1, Requests: 1, ArtifactFiles: 2, ArtifactTypes: 2},
 	}
 	request.Digest = requestDigest(request)
 	return request, nil
@@ -447,7 +456,12 @@ func validCandidateBinding(binding CandidateBinding) bool {
 	return binding.ReportSchema == ReportSchema && binding.CandidateSchema == CandidateSchema &&
 		validDigest(binding.CandidateID) && validDigest(binding.CandidateDigest) &&
 		validDigest(binding.CandidateReportDigest) && validDigest(binding.SourceObservationDigest) &&
-		validDigest(binding.InputSourceDigest) && validSHA(binding.SubjectSHA) && binding.SourceWorkflowRunID > 0 &&
+		validDigest(binding.InputSourceDigest) && validDigest(binding.ExecutionInputDigest) &&
+		binding.ExperimentKind == "VALUE_WITNESS_EXPERIMENT" && binding.MetaOperation == "propose-value-level-witness-experiment" &&
+		binding.ExecutionInput != nil && valuewitnessinput.Validate(*binding.ExecutionInput) == nil &&
+		binding.ExecutionInput.Digest == binding.ExecutionInputDigest && binding.ExecutionInput.CandidateStableID == binding.CandidateID &&
+		binding.ExecutionInput.CandidateDigest == binding.CandidateDigest && binding.ExecutionInput.SubjectSHA == binding.SubjectSHA &&
+		binding.ExecutionInput.ObservationDigest == binding.SourceObservationDigest && validSHA(binding.SubjectSHA) && binding.SourceWorkflowRunID > 0 &&
 		binding.PolicyVersion == PolicyVersion && validDigest(binding.PolicyDigest) &&
 		binding.ContractID == ContractID && validDigest(binding.ContractSourceDigest) &&
 		validDigest(binding.ContractCanonicalDigest) && binding.Scope == AuthorizationScope &&
@@ -457,7 +471,8 @@ func validCandidateBinding(binding CandidateBinding) bool {
 func incompleteCandidateBinding(binding CandidateBinding) bool {
 	return binding.ReportSchema == "" || binding.CandidateSchema == "" || binding.CandidateID == "" ||
 		binding.CandidateDigest == "" || binding.CandidateReportDigest == "" || binding.SourceObservationDigest == "" ||
-		binding.InputSourceDigest == "" || binding.SubjectSHA == "" || binding.SourceWorkflowRunID == 0 ||
+		binding.InputSourceDigest == "" || binding.ExecutionInputDigest == "" || binding.ExecutionInput == nil ||
+		binding.ExperimentKind == "" || binding.MetaOperation == "" || binding.SubjectSHA == "" || binding.SourceWorkflowRunID == 0 ||
 		binding.PolicyVersion == "" || binding.PolicyDigest == "" || binding.ContractID == "" ||
 		binding.ContractSourceDigest == "" || binding.ContractCanonicalDigest == "" || binding.Scope == "" ||
 		binding.ScopeDigest == ""
@@ -482,7 +497,7 @@ func resolutionBase(request AuthorizationRequest) AuthorizationResolution {
 		RequestDigest: request.Digest, Candidate: request.Candidate, Artifact: request.Artifact,
 		LiveAuthorized: 0, LiveState: "UNKNOWN", Metrics: AuthorizationMetrics{
 			StructuralUnboundEdgesBefore: 1, StructuralUnboundEdgesAfter: 0, AdapterEdges: 1,
-			Requests: 1, ArtifactFiles: 1, ArtifactTypes: 1}, RepositoryWrites: 0, LocalTestExecutions: 0}
+			Requests: 1, ArtifactFiles: 2, ArtifactTypes: 2}, RepositoryWrites: 0, LocalTestExecutions: 0}
 }
 
 func unknownResolution(request AuthorizationRequest, reason, next string, blockedBy []string) AuthorizationResolution {
@@ -510,7 +525,7 @@ func refutedResolution(request AuthorizationRequest, reason string, inputs []Aut
 func missingDecision(input AuthorizationDecisionInput) bool {
 	return input.Schema == "" || input.Decision == "" || input.RequestDigest == "" || input.CandidateID == "" ||
 		input.CandidateDigest == "" || input.CandidateReportDigest == "" || input.SourceObservationDigest == "" ||
-		input.InputSourceDigest == "" || input.PolicyDigest == "" || input.ContractDigest == "" || input.SubjectSHA == "" ||
+		input.InputSourceDigest == "" || input.ExecutionInputDigest == "" || input.PolicyDigest == "" || input.ContractDigest == "" || input.SubjectSHA == "" ||
 		input.ScopeDigest == "" || input.Repository == "" || input.Actor == "" || input.WorkflowRunID == 0 ||
 		input.WorkflowRunAttempt == 0 || input.CandidateArtifactID == 0 || input.CandidateArtifactDigest == "" ||
 		input.DecisionSource == "" || input.IdentityAssurance == ""
@@ -520,6 +535,7 @@ func decisionBindingMatches(request AuthorizationRequest, input AuthorizationDec
 	return input.RequestDigest == request.Digest && input.CandidateID == request.Candidate.CandidateID &&
 		input.CandidateDigest == request.Candidate.CandidateDigest && input.CandidateReportDigest == request.Candidate.CandidateReportDigest &&
 		input.SourceObservationDigest == request.Candidate.SourceObservationDigest && input.InputSourceDigest == request.Candidate.InputSourceDigest &&
+		input.ExecutionInputDigest == request.Candidate.ExecutionInputDigest &&
 		input.PolicyDigest == request.Candidate.PolicyDigest && input.ContractDigest == request.Candidate.ContractCanonicalDigest &&
 		input.SubjectSHA == request.Candidate.SubjectSHA && input.ScopeDigest == request.Candidate.ScopeDigest &&
 		input.Repository == request.Artifact.Repository && input.CandidateArtifactID == request.Artifact.ArtifactID &&
@@ -530,6 +546,7 @@ func decisionInputValid(input AuthorizationDecisionInput) bool {
 	return input.Schema == AuthorizationDecisionSchema && (input.Decision == AuthorizationAllow || input.Decision == AuthorizationDeny) &&
 		validDigest(input.RequestDigest) && validDigest(input.CandidateID) && validDigest(input.CandidateDigest) &&
 		validDigest(input.CandidateReportDigest) && validDigest(input.SourceObservationDigest) && validDigest(input.InputSourceDigest) &&
+		validDigest(input.ExecutionInputDigest) &&
 		validDigest(input.PolicyDigest) && validDigest(input.ContractDigest) && validSHA(input.SubjectSHA) && validDigest(input.ScopeDigest) &&
 		input.Repository != "" && input.Actor != "" && input.WorkflowRunID > 0 && input.WorkflowRunAttempt > 0 &&
 		input.CandidateArtifactID > 0 && validDigest(input.CandidateArtifactDigest) &&
@@ -570,7 +587,8 @@ func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisio
 		CandidateID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
 		CandidateReportDigest:   request.Candidate.CandidateReportDigest,
 		SourceObservationDigest: request.Candidate.SourceObservationDigest, SubjectSHA: request.Candidate.SubjectSHA,
-		PolicyVersion: request.Candidate.PolicyVersion, PolicyDigest: request.Candidate.PolicyDigest,
+		ExecutionInputDigest: request.Candidate.ExecutionInputDigest,
+		PolicyVersion:        request.Candidate.PolicyVersion, PolicyDigest: request.Candidate.PolicyDigest,
 		ContractID: request.Candidate.ContractID, ContractSourceDigest: request.Candidate.ContractSourceDigest,
 		ContractCanonicalDigest: request.Candidate.ContractCanonicalDigest, Scope: request.Candidate.Scope,
 		ScopeDigest: request.Candidate.ScopeDigest, ExecutionAuthorized: false,
@@ -740,6 +758,7 @@ func VerifyAuthorizationResolution(request AuthorizationRequest, resolution Auth
 		auth.CandidateInputDigest != adoptionDigest(request.Candidate.InputSourceDigest) || auth.ContractDigest != adoptionDigest(request.Candidate.ContractCanonicalDigest) ||
 		auth.InputSourceDigest != adoptionDigest(request.Candidate.SourceObservationDigest) || auth.CandidateID != request.Candidate.CandidateID ||
 		auth.CandidateDigest != request.Candidate.CandidateDigest || auth.CandidateReportDigest != request.Candidate.CandidateReportDigest ||
+		auth.ExecutionInputDigest != request.Candidate.ExecutionInputDigest ||
 		auth.SourceObservationDigest != request.Candidate.SourceObservationDigest || auth.SubjectSHA != request.Candidate.SubjectSHA ||
 		auth.PolicyDigest != request.Candidate.PolicyDigest || auth.ContractCanonicalDigest != request.Candidate.ContractCanonicalDigest ||
 		auth.ScopeDigest != request.Candidate.ScopeDigest || auth.CandidateArtifactID != request.Artifact.ArtifactID ||
@@ -776,7 +795,7 @@ func fixtureDecision(request AuthorizationRequest, decision string) Authorizatio
 	return AuthorizationDecisionInput{Schema: AuthorizationDecisionSchema, Decision: decision, RequestDigest: request.Digest,
 		CandidateID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
 		CandidateReportDigest: request.Candidate.CandidateReportDigest, SourceObservationDigest: request.Candidate.SourceObservationDigest,
-		InputSourceDigest: request.Candidate.InputSourceDigest, PolicyDigest: request.Candidate.PolicyDigest,
+		InputSourceDigest: request.Candidate.InputSourceDigest, ExecutionInputDigest: request.Candidate.ExecutionInputDigest, PolicyDigest: request.Candidate.PolicyDigest,
 		ContractDigest: request.Candidate.ContractCanonicalDigest, SubjectSHA: request.Candidate.SubjectSHA,
 		ScopeDigest: request.Candidate.ScopeDigest, Repository: request.Artifact.Repository, Actor: "canonical-fixture",
 		WorkflowRunID: 1, WorkflowRunAttempt: 1, CandidateArtifactID: request.Artifact.ArtifactID,
