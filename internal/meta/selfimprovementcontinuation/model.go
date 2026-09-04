@@ -160,7 +160,6 @@ type ContinuationRequest struct {
 	ExecutionAuthorized bool              `json:"execution_authorized"`
 	RepositoryWrites    int               `json:"repository_writes"`
 	LocalTestExecutions int               `json:"local_test_executions"`
-	Metrics             Metrics           `json:"metrics"`
 	Digest              string            `json:"digest"`
 }
 
@@ -181,6 +180,7 @@ type ContinuationResolution struct {
 	GrantConsumedUses   int               `json:"grant_consumed_uses"`
 	RepositoryWrites    int               `json:"repository_writes"`
 	LocalTestExecutions int               `json:"local_test_executions"`
+	Metrics             Metrics           `json:"metrics"`
 	Digest              string            `json:"digest"`
 }
 
