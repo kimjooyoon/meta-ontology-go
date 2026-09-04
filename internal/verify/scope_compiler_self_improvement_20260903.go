@@ -10,6 +10,7 @@ const compilerSelfImprovementIteration20260904V6Branch = "agent/compiler-self-im
 const compilerSelfImprovementIteration20260904V8Branch = "agent/compiler-self-improvement-iteration-20260904-v8"
 const compilerSelfImprovementIteration20260904V9Branch = "agent/compiler-self-improvement-iteration-20260904-v9"
 const compilerSelfImprovementIteration20260904V10Branch = "agent/compiler-self-improvement-iteration-20260904-v10"
+const compilerSelfImprovementIteration20260904V11Branch = "agent/compiler-self-improvement-iteration-20260904-v11"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -167,5 +168,24 @@ func init() {
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/self-improvement-discovery-policy",
 		"scripts/self-improvement-public-discovery",
+	}
+	branchScopeAllowlist[compilerSelfImprovementIteration20260904V11Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/self-improvement-public-continuity.yml",
+		"cmd/gooo/emit_dispatch.go",
+		"cmd/gooo/generate_part01.go",
+		"cmd/gooo/generate_pipeline_part03.go",
+		"cmd/gooo/public_continuity_authorize_part01.go",
+		"cmd/gooo/public_continuity_certify_part01.go",
+		"cmd/gooo/public_continuity_generate_part01.go",
+		"cmd/gooo/public_continuity_generate_part02.go",
+		"cmd/gooo/public_continuity_generate_part03.go",
+		"examples/self-improvement-discovery",
+		"internal/meta/discoverypolicy",
+		"internal/meta/publiccontinuity",
+		"internal/meta/publicdiscovery",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-public-continuity",
 	}
 }
