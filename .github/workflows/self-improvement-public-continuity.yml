@@ -533,9 +533,9 @@ jobs:
           jq 'del(.state)' "$prepare/handoff.json" > "$root/malformed-input/handoff.json"
           "$root/orchestrator" -mode resume -policy "$project" -source "$project" -contract "$contract" -gooo "$root/gooo" -test-reuse "$root/test-reuse" -project-test "$project_test" -repo-root "$repo" -handoff "$root/malformed-input/handoff.json" -candidate "$prepare/candidate.json" -authorization "$root/authorization/decision-receipt.json" -out "$malformed"
 
-cp "$prepare/candidate.json" "$root/contradictory-candidate.json"
-chmod u+w "$root/contradictory-candidate.json"
-printf '\n' >> "$root/contradictory-candidate.json"
+          cp "$prepare/candidate.json" "$root/contradictory-candidate.json"
+          chmod u+w "$root/contradictory-candidate.json"
+          printf '\n' >> "$root/contradictory-candidate.json"
           "$root/orchestrator" -mode resume -policy "$project" -source "$project" -contract "$contract" -gooo "$root/gooo" -test-reuse "$root/test-reuse" -project-test "$project_test" -repo-root "$repo" -handoff "$prepare/handoff.json" -candidate "$root/contradictory-candidate.json" -authorization "$root/authorization/decision-receipt.json" -out "$contradictory"
 
           "$root/orchestrator" -mode resume -policy "$project" -source "$project" -contract "$contract" -gooo "$root/gooo" -test-reuse "$root/test-reuse" -project-test "$project_test" -repo-root "$repo" -handoff "$prepare/handoff.json" -candidate "$prepare/candidate.json" -authorization "$root/rejection/decision-receipt.json" -out "$mismatched"
