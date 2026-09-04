@@ -638,10 +638,10 @@ jobs:
           stage="validate"
           step="validate-language-syntax-scope-partition"
           jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .summary.satisfied == 55 and .summary.total == 55 and
-            .summary.executed == 55 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 54 and .summary.capability_total == 54 and
-            .summary.capability_executed == 54 and .summary.capability_unresolved == 0 and
+            .summary.satisfied == 56 and .summary.total == 56 and
+            .summary.executed == 56 and .summary.unresolved == 0 and
+            .summary.capability_satisfied == 55 and .summary.capability_total == 55 and
+            .summary.capability_executed == 55 and .summary.capability_unresolved == 0 and
             .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
             .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
@@ -680,8 +680,8 @@ jobs:
           cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
           cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
-          echo "- overall: \`55/55 satisfied, 55 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- language capability: \`54/54 satisfied, 54 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overall: \`56/56 satisfied, 56 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- language capability: \`55/55 satisfied, 55 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
@@ -728,8 +728,8 @@ jobs:
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
-            .overall == {satisfied: 55, total: 55, executed: 55, unresolved: 0} and
-            .language_capability == {satisfied: 54, total: 54, executed: 54, unresolved: 0} and
+            .overall == {satisfied: 56, total: 56, executed: 56, unresolved: 0} and
+            .language_capability == {satisfied: 55, total: 55, executed: 55, unresolved: 0} and
             .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
             "$report"
   language-concept-artifact:

@@ -1,0 +1,227 @@
+name: Self-improvement separate execution grant
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - '.github/workflows/self-improvement-execution-grant.yml'
+      - '.github/workflows/transformation-effect.yml'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - 'examples/self-improvement-execution-grant/**'
+      - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
+      - 'internal/meta/languagereadiness/languagesyntax/model.go'
+      - 'internal/meta/languagereadiness/languagesyntax/registry.go'
+      - 'internal/meta/selfimprovementexecutiongrant/**'
+      - 'internal/verify/scope_gooo_self_improvement_execution_grant_v26.go'
+      - 'scripts/self-improvement-execution-grant/**'
+  workflow_run:
+    workflows: ["Self-improvement candidate execution contract"]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      subject_sha:
+        description: Exact v25 subject SHA
+        required: true
+        type: string
+      v25_artifact_id:
+        description: Exact v25 contract artifact ID
+        required: true
+        type: string
+      v25_artifact_digest:
+        description: Expected v25 contract artifact archive digest
+        required: true
+        type: string
+      decision:
+        description: Explicit grant decision
+        required: true
+        type: choice
+        options: [ALLOW, DENY]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  execution-grant:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      SUBJECT_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event_name == 'pull_request' && github.event.pull_request.head.sha || inputs.subject_sha }}
+      SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || '' }}
+      DISPATCH_ARTIFACT_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.v25_artifact_id || '' }}
+      DISPATCH_ARTIFACT_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.v25_artifact_digest || '' }}
+      DISPATCH_DECISION: ${{ github.event_name == 'workflow_dispatch' && inputs.decision || '' }}
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+
+    steps:
+      - name: Check out the exact v25 subject
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Bind exact subject and toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test "$(git status --porcelain)" = ""
+
+      - name: Locate exact v25 source artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-execution-grant"
+          source_dir="$work/source"
+          output_dir="$work/output"
+          mkdir -p "$source_dir" "$output_dir"
+          artifact_id=0
+          artifact_run_id="${SOURCE_RUN_ID:-0}"
+          artifact_run_attempt="${SOURCE_RUN_ATTEMPT:-0}"
+          expected_digest=""
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json" || true
+            artifact_id="$(jq -r --arg name "self-improvement-execution-contract-$SUBJECT_SHA" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].id else 0 end' "$work/artifacts.json" 2>/dev/null || echo 0)"
+          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            artifact_id="$DISPATCH_ARTIFACT_ID"
+            expected_digest="$DISPATCH_ARTIFACT_DIGEST"
+            artifact_run_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" --jq '.workflow_run.id // 0' 2>/dev/null || echo 0)"
+            if [ "$artifact_run_id" -gt 0 ]; then
+              artifact_run_attempt="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$artifact_run_id" --jq '.run_attempt' 2>/dev/null || echo 0)"
+            fi
+          fi
+          if ! [[ "$artifact_id" =~ ^[0-9]+$ ]]; then artifact_id=0; fi
+          if ! [[ "$artifact_run_id" =~ ^[0-9]+$ ]]; then artifact_run_id=0; fi
+          if ! [[ "$artifact_run_attempt" =~ ^[0-9]+$ ]]; then artifact_run_attempt=0; fi
+          archive="$work/v25-contract.zip"
+          actual_digest=""
+          expired=true
+          artifact_size=0
+          if [[ "$artifact_id" =~ ^[1-9][0-9]*$ ]]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json" || true
+            expired="$(jq -r '.expired // true' "$work/artifact.json" 2>/dev/null || echo true)"
+            artifact_size="$(jq -r '.size_in_bytes // 0' "$work/artifact.json" 2>/dev/null || echo 0)"
+            if [ "$expired" = "false" ]; then
+              curl --fail --location --silent --show-error \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" -o "$archive" || true
+              if [ -s "$archive" ]; then
+                actual_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+                unzip -q "$archive" -d "$source_dir" || true
+              else
+                expired=true
+              fi
+            fi
+          fi
+          declared_digest="$actual_digest"
+          if [ -n "$expected_digest" ]; then declared_digest="$expected_digest"; fi
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson workflow_run_id "${artifact_run_id:-0}" \
+            --argjson workflow_run_attempt "${artifact_run_attempt:-0}" \
+            --argjson artifact_id "${artifact_id:-0}" \
+            --arg artifact_digest "$declared_digest" \
+            --arg observed_artifact_digest "$actual_digest" \
+            --argjson artifact_expired "$expired" \
+            '{repository:$repository,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_id:$artifact_id,artifact_digest:$artifact_digest,observed_artifact_digest:$observed_artifact_digest,artifact_expired:$artifact_expired,artifact_expiry_known:true}' \
+            > "$work/source.json"
+          v25_contract=""
+          while IFS= read -r file; do
+            if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then v25_contract="$file"; break; fi
+          done < <(find "$source_dir" -type f -name '*.json' -print | sort)
+          echo "V25_CONTRACT=$v25_contract" >> "$GITHUB_ENV"
+          echo "GRANT_WORK=$work" >> "$GITHUB_ENV"
+          echo "GRANT_OUTPUT=$output_dir" >> "$GITHUB_ENV"
+
+      - name: Emit and replay nine v26 canonical grant cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./scripts/self-improvement-execution-grant \
+            -mode cases \
+            -contract examples/self-improvement-execution-grant/grant.gooo \
+            -output "$GRANT_OUTPUT/canonical-cases.json" \
+            -check
+          jq -e '
+            .schema == "gooo/self-improvement-execution-grant-cases/v1" and
+            .case_denominator == 9 and
+            .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and
+            .structural_separate_grant_edges_before == 0 and
+            .structural_separate_grant_edges_after == 1 and
+            .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and
+            .replay_equal and .live_grant_requests == 0 and .live_grants == 0 and
+            .live_execution_count == 0 and .canonical_granted_cases == 2 and
+            .canonical_execution_count == 0 and .six_field_unknowns == 3 and
+            .refuted_contradictions == 3 and .grant_remaining_uses == 2 and
+            .grant_consumed_uses == 0 and .repository_writes == 0 and
+            .local_test_executions == 0 and .fallback_accepted == 0 and
+            .independent_replay_comparisons == 1 and .artifact_files == 9 and
+            .artifact_types == 3 and .performance_improvement == "UNKNOWN" and
+            ([.cases[] | select(.pass == false)] | length) == 0' \
+            "$GRANT_OUTPUT/canonical-cases.json" >/dev/null
+
+      - name: Emit live grant request or explicit grant declaration
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(-mode live -contract examples/self-improvement-execution-grant/grant.gooo -source "$GRANT_WORK/source.json" -output "$GRANT_OUTPUT/live-grant.json" -check)
+          if [ -n "$V25_CONTRACT" ]; then args+=(-v25-contract "$V25_CONTRACT"); fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            args+=(-decision "$DISPATCH_DECISION" -decision-source workflow_dispatch -actor "$GITHUB_ACTOR" -repository "$GITHUB_REPOSITORY" -event "$GITHUB_EVENT_NAME" -workflow-run-id "$GITHUB_RUN_ID" -workflow-run-attempt "$GITHUB_RUN_ATTEMPT")
+          fi
+          go run ./scripts/self-improvement-execution-grant "${args[@]}"
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then
+            jq -e '
+              .schema == "gooo/self-improvement-execution-grant/v1" and
+              .grant_decision == "" and .resolution.decision == "UNKNOWN" and
+              .resolution.resolution == "LOWER_RESOLUTION" and
+              .resolution.reason == "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION" and
+              ((.resolution.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"]) and
+              .resolution.unknown.blocked_by == "explicit_execution_grant_decision" and
+              .metrics.live_grant_requests == 1 and .metrics.live_grants == 0 and
+              .metrics.live_execution_count == 0 and .metrics.grant_consumed_uses == 0 and
+              .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
+              .metrics.fallback_accepted == 0 and .verification.verified' \
+              "$GRANT_OUTPUT/live-grant.json" >/dev/null
+          fi
+          jq -r '"live grant: \(.resolution.decision)/\(.resolution.resolution)/\(.resolution.reason), grant_allows_execution=\(.resolution.grant_allows_execution), remaining_uses=\(.resolution.remaining_uses), consumed_uses=\(.resolution.consumed_uses), execution_count=\(.resolution.execution_count)"' "$GRANT_OUTPUT/live-grant.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Independently replay the live grant resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq '.request' "$GRANT_OUTPUT/live-grant.json" > "$GRANT_WORK/live-request.json"
+          jq '.resolution' "$GRANT_OUTPUT/live-grant.json" > "$GRANT_WORK/live-resolution.json"
+          go run ./scripts/self-improvement-execution-grant \
+            -mode verify \
+            -contract examples/self-improvement-execution-grant/grant.gooo \
+            -grant-request "$GRANT_WORK/live-request.json" \
+            -resolution "$GRANT_WORK/live-resolution.json" \
+            -output "$GRANT_OUTPUT/verification.json" \
+            -check
+          jq -e '.verified and .independent_replay_comparisons == 1 and .execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0 and .local_test_executions == 0' "$GRANT_OUTPUT/verification.json" >/dev/null
+
+      - name: Upload v26 grant evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: self-improvement-execution-grant-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/self-improvement-execution-grant/output/*.json
+          if-no-files-found: error
+          retention-days: 14

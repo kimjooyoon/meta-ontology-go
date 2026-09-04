@@ -1,0 +1,181 @@
+package selfimprovementexecutiongrant
+namespace selfimprovementexecutiongrant
+
+policy SeparateExecutionGrant id "gooo://self-improvement/execution-grant/v1" {
+    state "EXPLICIT_ALLOW"
+    state "EXPLICIT_DENY"
+    state "DETERMINISTIC_REPLAY"
+    state "MISSING_GRANT_DECISION"
+    state "MISSING_UPSTREAM_ARTIFACT"
+    state "INCOMPLETE_GRANT_INPUT"
+    state "DIGEST_OR_SCOPE_MISMATCH"
+    state "CONFLICTING_DUPLICATE_GRANT"
+    state "UNAUTHORIZED_OR_UNSAFE_GRANT"
+    state "CLOSED"
+    state "UNKNOWN"
+    state "REFUTED"
+
+    transition "EXPLICIT_ALLOW" -> "CLOSED"
+    transition "EXPLICIT_DENY" -> "CLOSED"
+    transition "DETERMINISTIC_REPLAY" -> "CLOSED"
+    transition "MISSING_GRANT_DECISION" -> "UNKNOWN"
+    transition "MISSING_UPSTREAM_ARTIFACT" -> "UNKNOWN"
+    transition "INCOMPLETE_GRANT_INPUT" -> "UNKNOWN"
+    transition "DIGEST_OR_SCOPE_MISMATCH" -> "REFUTED"
+    transition "CONFLICTING_DUPLICATE_GRANT" -> "REFUTED"
+    transition "UNAUTHORIZED_OR_UNSAFE_GRANT" -> "REFUTED"
+
+    case "EXPLICIT_ALLOW" {
+        evidence "decision" "explicit ALLOW binds exact v24, v25, source artifact, and actor evidence"
+        resolution {
+            decision "CLOSED"
+            stage "GRANT"
+            step "1"
+            reason "EXECUTION_GRANT_GRANTED_UNCONSUMED"
+            decision_stage "GRANT"
+            decision_step "1"
+            decision_reason "EXECUTION_GRANT_GRANTED_UNCONSUMED"
+            role "GRANT"
+            meta_operation "declare-execution-grant"
+            proof_choice "EXACT_TYPED_BINDING"
+            claim "grant-allows-future-execution-only"
+        }
+    }
+    case "EXPLICIT_DENY" {
+        evidence "decision" "explicit DENY closes the grant without execution authority"
+        resolution {
+            decision "CLOSED"
+            stage "GRANT"
+            step "2"
+            reason "EXECUTION_GRANT_DENIED"
+            decision_stage "GRANT"
+            decision_step "2"
+            decision_reason "EXECUTION_GRANT_DENIED"
+            role "GUARDRAIL"
+            meta_operation "declare-denied-execution-grant"
+            proof_choice "DEFAULT_DENY"
+            claim "deny-does-not-authorize-execution"
+        }
+    }
+    case "DETERMINISTIC_REPLAY" {
+        evidence "replay" "same typed grant input and policy produce the same unconsumed receipt"
+        resolution {
+            decision "CLOSED"
+            stage "REPLAY"
+            step "3"
+            reason "EXECUTION_GRANT_GRANTED_UNCONSUMED"
+            decision_stage "REPLAY"
+            decision_step "3"
+            decision_reason "EXECUTION_GRANT_GRANTED_UNCONSUMED"
+            role "CONSUMER"
+            meta_operation "replay-execution-grant"
+            proof_choice "INDEPENDENT_REPLAY"
+            claim "grant-receipt-byte-stable"
+        }
+    }
+    case "MISSING_GRANT_DECISION" {
+        evidence "decision" "automatic workflow_run request has no explicit execution grant decision"
+        resolution {
+            decision "UNKNOWN"
+            stage "GRANT"
+            step "4"
+            reason "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION"
+            decision_stage "RESOLVE"
+            decision_step "4"
+            decision_reason "MISSING_EXPLICIT_EXECUTION_GRANT_DECISION"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "provide-explicit-execution-grant-decision"
+            blocked_by "explicit_execution_grant_decision"
+            role "CONSUMER"
+            meta_operation "request-execution-grant-decision"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "grant-decision-bound"
+        }
+    }
+    case "MISSING_UPSTREAM_ARTIFACT" {
+        evidence "artifact" "v25 source artifact is missing or expired"
+        resolution {
+            decision "UNKNOWN"
+            stage "BIND"
+            step "5"
+            reason "MISSING_OR_EXPIRED_UPSTREAM_ARTIFACT"
+            decision_stage "RESOLVE"
+            decision_step "5"
+            decision_reason "MISSING_OR_EXPIRED_UPSTREAM_ARTIFACT"
+            unknown_class "UPSTREAM_ARTIFACT_UNAVAILABLE"
+            next_operation "restore-exact-upstream-artifact"
+            blocked_by "upstream_artifact"
+            role "CONSUMER"
+            meta_operation "bind-source-artifact"
+            proof_choice "EXACT_ARTIFACT_IDENTITY"
+            claim "source-artifact-bound"
+        }
+    }
+    case "INCOMPLETE_GRANT_INPUT" {
+        evidence "binding" "one or more upstream or source binding fields are absent"
+        resolution {
+            decision "UNKNOWN"
+            stage "BIND"
+            step "6"
+            reason "INCOMPLETE_EXECUTION_GRANT_INPUT"
+            decision_stage "RESOLVE"
+            decision_step "6"
+            decision_reason "INCOMPLETE_EXECUTION_GRANT_INPUT"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "bind-complete-execution-grant-input"
+            blocked_by "grant_input_binding"
+            role "CONSUMER"
+            meta_operation "bind-grant-input"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "grant-input-bound"
+        }
+    }
+    case "DIGEST_OR_SCOPE_MISMATCH" {
+        evidence "binding" "candidate, contract, operation, scope, or request digests disagree"
+        resolution {
+            decision "REFUTED"
+            stage "BIND"
+            step "7"
+            reason "EXECUTION_GRANT_SCOPE_BINDING_MISMATCH"
+            decision_stage "RESOLVE"
+            decision_step "7"
+            decision_reason "EXECUTION_GRANT_SCOPE_BINDING_MISMATCH"
+            role "GUARDRAIL"
+            meta_operation "refute-grant-scope-binding"
+            proof_choice "CONTRADICTION_DOMINATES"
+            claim "grant-scope-bound"
+        }
+    }
+    case "CONFLICTING_DUPLICATE_GRANT" {
+        evidence "duplicate" "conflicting grant decisions cannot resolve to a receipt"
+        resolution {
+            decision "REFUTED"
+            stage "RESOLVE"
+            step "8"
+            reason "CONFLICTING_DUPLICATE_EXECUTION_GRANTS"
+            decision_stage "RESOLVE"
+            decision_step "8"
+            decision_reason "CONFLICTING_DUPLICATE_EXECUTION_GRANTS"
+            role "GUARDRAIL"
+            meta_operation "refute-conflicting-grant-decisions"
+            proof_choice "CONFLICTING_DUPLICATE"
+            claim "grant-decision-unique"
+        }
+    }
+    case "UNAUTHORIZED_OR_UNSAFE_GRANT" {
+        evidence "safety" "missing actor evidence or unsafe v25 execution envelope cannot grant"
+        resolution {
+            decision "REFUTED"
+            stage "SAFETY"
+            step "9"
+            reason "UNAUTHORIZED_OR_UNSAFE_EXECUTION_GRANT"
+            decision_stage "RESOLVE"
+            decision_step "9"
+            decision_reason "UNAUTHORIZED_OR_UNSAFE_EXECUTION_GRANT"
+            role "GUARDRAIL"
+            meta_operation "refute-unsafe-execution-grant"
+            proof_choice "DEFAULT_DENY"
+            claim "unconsumed-grant-safety-bound"
+        }
+    }
+}
