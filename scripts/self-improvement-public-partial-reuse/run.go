@@ -248,7 +248,6 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 		return caseArtifacts{}, err
 	}
 	caseReport.Before = before
-	caseReport.After = after
 	if err := publicpartialreuse.CompareCase(caseReport, item.Decision); err != nil {
 		return caseArtifacts{}, err
 	}
