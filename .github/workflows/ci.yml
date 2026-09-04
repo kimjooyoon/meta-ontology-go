@@ -572,7 +572,7 @@ jobs:
           node scripts/ci-proof/source_migration_v3_test.js
           node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -621,7 +621,7 @@ jobs:
           go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --provenance ci-meta-provenance/self-improvement-provenance.json --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -681,7 +681,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Resolve CI concurrency lane
         id: concurrency-lane
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW: ${{ github.workflow }}
@@ -714,7 +714,7 @@ jobs:
             }
       - name: Resolve canonical evidence lineage
         id: evidence-lineage
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -752,7 +752,7 @@ jobs:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -796,7 +796,7 @@ jobs:
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
       - name: Compile deterministic proof route
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -814,7 +814,7 @@ jobs:
             fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Select exact Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -904,7 +904,7 @@ jobs:
           test -s ci-guardian-input/ci-guardian.json
       - name: Validate Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -949,7 +949,7 @@ jobs:
           path: foundation-predecessor
       - name: Bind exact Foundation promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           FOUNDATION_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
         with:
@@ -995,7 +995,7 @@ jobs:
             if (matches.length !== 1 || matches[0].id <= 0 || matches[0].size_in_bytes <= 0 || matches[0].expired || !/^sha256:[0-9a-f]{64}$/.test(matches[0].digest || '')) throw new Error('Foundation predecessor artifact metadata is not unique, current, and digest-bound');
             fs.writeFileSync('foundation-promotion-evidence.json', JSON.stringify({schema: 'gooo/foundation-promotion-evidence/v1', decision: 'PASS', human_decision: process.env.FOUNDATION_HUMAN_DECISION, repository: context.payload.repository.full_name, pr_number: eventPull.number, base_ref: eventPull.base.ref, base_sha: eventPull.base.sha, head_ref: eventPull.head.ref, head_sha: eventPull.head.sha, artifact_id: matches[0].id, artifact_name: matches[0].name, artifact_size_bytes: matches[0].size_in_bytes, artifact_digest: matches[0].digest, artifact_run_id: context.runId, artifact_run_attempt: attempt, input, receipt, non_route_jobs: jobs}, null, 2) + '\n');
       - name: Collect proof context
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -1152,7 +1152,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Verify exact FOUNDATION authorization envelope
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           FOUNDATION_TOKEN: ${{ github.token }}
         with:
@@ -1220,7 +1220,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Execute exact-candidate protocol audit
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EXPECTED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -1358,7 +1358,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
       - name: Verify merged tree and consume one-use authorization
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -1447,7 +1447,7 @@ jobs:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
       - name: Capture exact failure tuple
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
