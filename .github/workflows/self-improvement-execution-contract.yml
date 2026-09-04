@@ -9,10 +9,14 @@ on:
       - '.github/workflows/self-improvement-execution-contract.yml'
       - 'examples/language-syntax-roundtrip/corpus.json'
       - 'examples/self-improvement-execution-contract/**'
+      - 'examples/language-value-witness/main.gooo'
+      - 'examples/self-improvement-value-witness-execution-input/**'
       - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'internal/meta/languagereadiness/languagesyntax/model.go'
       - 'internal/meta/languagereadiness/languagesyntax/registry.go'
       - 'internal/meta/selfimprovementexecutioncontract/**'
+      - 'internal/meta/selfimprovementvaluewitnessinput/**'
+      - 'internal/valueexecution/**'
       - 'internal/verify/scope_gooo_self_improvement_execution_contract_v25.go'
       - 'scripts/self-improvement-execution-contract/**'
       - 'go.mod'
@@ -25,10 +29,14 @@ on:
       - '.github/workflows/self-improvement-execution-contract.yml'
       - 'examples/language-syntax-roundtrip/corpus.json'
       - 'examples/self-improvement-execution-contract/**'
+      - 'examples/language-value-witness/main.gooo'
+      - 'examples/self-improvement-value-witness-execution-input/**'
       - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'internal/meta/languagereadiness/languagesyntax/model.go'
       - 'internal/meta/languagereadiness/languagesyntax/registry.go'
       - 'internal/meta/selfimprovementexecutioncontract/**'
+      - 'internal/meta/selfimprovementvaluewitnessinput/**'
+      - 'internal/valueexecution/**'
       - 'internal/verify/scope_gooo_self_improvement_execution_contract_v25.go'
       - 'scripts/self-improvement-execution-contract/**'
       - 'go.mod'
@@ -91,6 +99,10 @@ jobs:
             .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and
             .replay_equal and
             .bound_fields == 12 and .missing_fields == 0 and .contradictory_fields == 0 and
+            .execution_input_digest != null and (.execution_input_digest | startswith("sha256:")) and
+            .execution_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and
+            .execution_input.source.path == "examples/language-value-witness/main.gooo" and
+            (.execution_input.corpus | length) == 5 and .execution_input.allowed_effects == [] and
             .structural_candidate_to_operation_edges_before == 0 and
             .structural_candidate_to_operation_edges_after == 1 and
             .live_execution_count == 0 and .canonical_execution_count == 0 and
@@ -141,7 +153,13 @@ jobs:
             .max_executions == 1 and .repository_writes_allowed == false and
             .output_evidence_deferred and .runtime_result_deferred and
             .verification.verified and .verification.independent_replay_comparisons == 1 and
-            ((.decision == "CLOSED" and .resolution == "DECLARED") or
+            ((.decision == "CLOSED" and .resolution == "DECLARED" and
+              .metrics.bound_fields == 12 and .metrics.missing_fields == 0 and .metrics.contradictory_fields == 0 and
+              (.execution_input_digest | startswith("sha256:")) and
+              .execution_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and
+              .execution_input.source.path == "examples/language-value-witness/main.gooo" and
+              (.execution_input.corpus | length) == 5 and .execution_input.allowed_effects == [] and
+              .execution_input.max_executions == 1 and .execution_input.repository_writes_allowed == false) or
              (.decision == "UNKNOWN" and (.unknown | type) == "object" and
               ((.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"])))' \
             "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >/dev/null

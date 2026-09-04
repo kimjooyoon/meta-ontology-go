@@ -26,4 +26,5 @@ const (
 	ReasonSourceShape     = "CANDIDATE_SOURCE_SHAPE_MISMATCH"
 	ReasonContractUnknown = "CANDIDATE_CONTRACT_UNKNOWN"
 	ReasonContractInvalid = "CANDIDATE_CONTRACT_INVALID"
+	ReasonExecutionInputUnknown = "CANDIDATE_EXECUTION_INPUT_UNKNOWN"
 )

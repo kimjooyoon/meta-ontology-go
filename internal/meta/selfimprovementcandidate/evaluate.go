@@ -1,6 +1,10 @@
 package selfimprovementcandidate
 
-import "io/fs"
+import (
+	"io/fs"
+
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
+)
 
 func Evaluate(repository fs.FS, contractPath, head string, sourceRunID int64, raw []byte) Report {
 	report := Report{Schema: ReportSchema, Metaprogram: "internal/meta/selfimprovementcandidate",
@@ -24,7 +28,20 @@ func Evaluate(repository fs.FS, contractPath, head string, sourceRunID int64, ra
 	}
 	report.Contract = contract
 	report.Decision, report.Resolution, report.Reason = DecisionProposed, ResolutionExact, ReasonProposed
-	report.Candidates = []Candidate{buildCandidate(source.Digest, gapPolicies[0])}
+	candidate := buildCandidate(source.Digest, gapPolicies[0])
+	input, err := valuewitnessinput.Build(repository, valuewitnessinput.SourcePath, valuewitnessinput.ActivityName,
+		candidate.ID, "", head, source.Digest)
+	if err != nil {
+		return fail(report, ReasonExecutionInputUnknown, ResolutionLower)
+	}
+	candidate.ExecutionInputDigest = input.Digest
+	candidate.Digest = candidateDigest(candidate)
+	valuewitnessinput.BindCandidateDigest(&input, candidate.Digest)
+	if err := valuewitnessinput.Validate(input); err != nil {
+		return fail(report, ReasonExecutionInputUnknown, ResolutionLower)
+	}
+	report.ExecutionInput = &input
+	report.Candidates = []Candidate{candidate}
 	return finish(report, true)
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -35,7 +36,6 @@ const (
 	PerformanceUnknown                 = "UNKNOWN"
 	InputAuthorityName                 = CallerOwnedInput
 	OutputAuthorityName                = CallerOwnedOutput
-	FixedEvaluatorRegistryDigest       = "sha256:7149e030bf738191961becd518a03b42f2d5714e4815c4835a3ba10d85b29b0a"
 	FixedToolchainTestContractIdentity = "sha256:0be1f592782114f96b3422c3622cc57593c9db4e13dea376bd6e7065ccdb8acd"
 )
 
@@ -73,13 +73,14 @@ type SourceSpan struct {
 }
 
 type CandidateEvidence struct {
-	StableID          string `json:"candidate_stable_id"`
-	Digest            string `json:"candidate_digest"`
-	SubjectSHA        string `json:"subject_sha"`
-	ObservationDigest string `json:"observation_digest"`
-	InputDigest       string `json:"candidate_input_digest"`
-	ExperimentKind    string `json:"experiment_kind"`
-	MetaOperation     string `json:"meta_operation"`
+	StableID             string `json:"candidate_stable_id"`
+	Digest               string `json:"candidate_digest"`
+	SubjectSHA           string `json:"subject_sha"`
+	ObservationDigest    string `json:"observation_digest"`
+	InputDigest          string `json:"candidate_input_digest"`
+	ExecutionInputDigest string `json:"execution_input_digest"`
+	ExperimentKind       string `json:"experiment_kind"`
+	MetaOperation        string `json:"meta_operation"`
 }
 
 type AuthorizationBinding struct {
@@ -97,17 +98,18 @@ type AuthorizationBinding struct {
 }
 
 type ObservationEvidence struct {
-	Schema               string        `json:"schema"`
-	ObservationDigest    string        `json:"observation_digest"`
-	CandidateInputDigest string        `json:"candidate_input_digest"`
-	CandidateStableID    string        `json:"candidate_stable_id"`
-	SubjectSHA           string        `json:"subject_sha"`
-	Phase                Phase         `json:"phase"`
-	OperationID          OperationID   `json:"operation_id"`
-	BoundedTarget        BoundedTarget `json:"bounded_target"`
-	SourceSpans          []SourceSpan  `json:"source_spans"`
-	ObservedCount        int           `json:"observed_count"`
-	ObservedCountKnown   bool          `json:"observed_count_known"`
+	Schema                  string        `json:"schema"`
+	ObservationDigest       string        `json:"observation_digest"`
+	SourceObservationDigest string        `json:"source_observation_digest"`
+	CandidateInputDigest    string        `json:"candidate_input_digest"`
+	CandidateStableID       string        `json:"candidate_stable_id"`
+	SubjectSHA              string        `json:"subject_sha"`
+	Phase                   Phase         `json:"phase"`
+	OperationID             OperationID   `json:"operation_id"`
+	BoundedTarget           BoundedTarget `json:"bounded_target"`
+	SourceSpans             []SourceSpan  `json:"source_spans"`
+	ObservedCount           int           `json:"observed_count"`
+	ObservedCountKnown      bool          `json:"observed_count_known"`
 }
 
 type RegistryEvidence struct {
@@ -125,10 +127,11 @@ type RegistryEvidence struct {
 }
 
 type ContractInput struct {
-	Candidate     CandidateEvidence    `json:"candidate"`
-	Authorization AuthorizationBinding `json:"authorization"`
-	Observation   ObservationEvidence  `json:"observation"`
-	Registry      RegistryEvidence     `json:"registry"`
+	Candidate      CandidateEvidence                 `json:"candidate"`
+	Authorization  AuthorizationBinding              `json:"authorization"`
+	Observation    ObservationEvidence               `json:"observation"`
+	Registry       RegistryEvidence                  `json:"registry"`
+	ExecutionInput *valuewitnessinput.ExecutionInput `json:"execution_input,omitempty"`
 }
 
 type PolicyEvidence struct {
@@ -176,37 +179,39 @@ type Metrics struct {
 }
 
 type ContractResolution struct {
-	Schema                  string         `json:"schema"`
-	ContractID              string         `json:"contract_id"`
-	Policy                  PolicyEvidence `json:"policy"`
-	RequiredFields          []string       `json:"required_fields"`
-	CandidateStableID       string         `json:"candidate_stable_id"`
-	CandidateDigest         string         `json:"candidate_digest"`
-	SubjectSHA              string         `json:"subject_sha"`
-	ObservationDigest       string         `json:"observation_digest"`
-	CandidateInputDigest    string         `json:"candidate_input_digest"`
-	Phase                   Phase          `json:"phase"`
-	OperationID             OperationID    `json:"operation_id"`
-	BoundedTarget           BoundedTarget  `json:"bounded_target"`
-	EvaluatorRegistryDigest string         `json:"evaluator_registry_digest"`
-	ToolchainTestContractID string         `json:"toolchain_test_contract_identity"`
-	Decision                Decision       `json:"decision"`
-	Resolution              Resolution     `json:"resolution"`
-	Reason                  string         `json:"reason"`
-	Unknown                 *UnknownState  `json:"unknown,omitempty"`
-	MissingFields           []string       `json:"missing_fields,omitempty"`
-	ContradictoryFields     []string       `json:"contradictory_fields,omitempty"`
-	InputAuthority          RootAuthority  `json:"input_authority"`
-	OutputAuthority         RootAuthority  `json:"output_authority"`
-	MaxExecutions           int            `json:"max_executions"`
-	RepositoryWritesAllowed bool           `json:"repository_writes_allowed"`
-	ExecutionAuthorized     bool           `json:"execution_authorized"`
-	ExecutionGrantRequired  bool           `json:"execution_grant_required"`
-	ExecutionGrantBlockedBy string         `json:"execution_grant_blocked_by"`
-	OutputEvidenceDeferred  bool           `json:"output_evidence_deferred"`
-	RuntimeResultDeferred   bool           `json:"runtime_result_deferred"`
-	Metrics                 Metrics        `json:"metrics"`
-	Digest                  string         `json:"digest"`
+	Schema                  string                            `json:"schema"`
+	ContractID              string                            `json:"contract_id"`
+	Policy                  PolicyEvidence                    `json:"policy"`
+	RequiredFields          []string                          `json:"required_fields"`
+	CandidateStableID       string                            `json:"candidate_stable_id"`
+	CandidateDigest         string                            `json:"candidate_digest"`
+	SubjectSHA              string                            `json:"subject_sha"`
+	ObservationDigest       string                            `json:"observation_digest"`
+	CandidateInputDigest    string                            `json:"candidate_input_digest"`
+	ExecutionInputDigest    string                            `json:"execution_input_digest"`
+	ExecutionInput          *valuewitnessinput.ExecutionInput `json:"execution_input,omitempty"`
+	Phase                   Phase                             `json:"phase"`
+	OperationID             OperationID                       `json:"operation_id"`
+	BoundedTarget           BoundedTarget                     `json:"bounded_target"`
+	EvaluatorRegistryDigest string                            `json:"evaluator_registry_digest"`
+	ToolchainTestContractID string                            `json:"toolchain_test_contract_identity"`
+	Decision                Decision                          `json:"decision"`
+	Resolution              Resolution                        `json:"resolution"`
+	Reason                  string                            `json:"reason"`
+	Unknown                 *UnknownState                     `json:"unknown,omitempty"`
+	MissingFields           []string                          `json:"missing_fields,omitempty"`
+	ContradictoryFields     []string                          `json:"contradictory_fields,omitempty"`
+	InputAuthority          RootAuthority                     `json:"input_authority"`
+	OutputAuthority         RootAuthority                     `json:"output_authority"`
+	MaxExecutions           int                               `json:"max_executions"`
+	RepositoryWritesAllowed bool                              `json:"repository_writes_allowed"`
+	ExecutionAuthorized     bool                              `json:"execution_authorized"`
+	ExecutionGrantRequired  bool                              `json:"execution_grant_required"`
+	ExecutionGrantBlockedBy string                            `json:"execution_grant_blocked_by"`
+	OutputEvidenceDeferred  bool                              `json:"output_evidence_deferred"`
+	RuntimeResultDeferred   bool                              `json:"runtime_result_deferred"`
+	Metrics                 Metrics                           `json:"metrics"`
+	Digest                  string                            `json:"digest"`
 }
 
 type Verification struct {
@@ -241,37 +246,39 @@ type CanonicalCase struct {
 }
 
 type CanonicalCaseReport struct {
-	Schema                               string          `json:"schema"`
-	Policy                               PolicyEvidence  `json:"policy"`
-	RequiredFields                       []string        `json:"required_fields"`
-	CaseDenominator                      int             `json:"case_denominator"`
-	BoundFields                          int             `json:"bound_fields"`
-	MissingFields                        int             `json:"missing_fields"`
-	ContradictoryFields                  int             `json:"contradictory_fields"`
-	StructuralCandidateToOperationBefore int             `json:"structural_candidate_to_operation_edges_before"`
-	StructuralCandidateToOperationAfter  int             `json:"structural_candidate_to_operation_edges_after"`
-	ClosedCases                          int             `json:"closed_cases"`
-	UnknownCases                         int             `json:"unknown_cases"`
-	RefutedCases                         int             `json:"refuted_cases"`
-	Counts                               map[string]int  `json:"counts"`
-	Cases                                []CanonicalCase `json:"cases"`
-	ReplayEqual                          bool            `json:"replay_equal"`
-	LiveExecutionCount                   int             `json:"live_execution_count"`
-	CanonicalExecutionCount              int             `json:"canonical_execution_count"`
-	ExecutionGrants                      int             `json:"execution_grants"`
-	RepositoryWrites                     int             `json:"repository_writes"`
-	LocalTestExecutions                  int             `json:"local_test_executions"`
-	FallbackAccepted                     int             `json:"fallback_accepted"`
-	IndependentReplayComparisons         int             `json:"independent_replay_comparisons"`
-	ArtifactFiles                        int             `json:"artifact_files"`
-	ArtifactTypes                        int             `json:"artifact_types"`
-	GoPhysicalLines                      int             `json:"go_physical_lines"`
-	GoooPhysicalLines                    int             `json:"gooo_physical_lines"`
-	PerformanceImprovement               string          `json:"performance_improvement"`
-	Decision                             Decision        `json:"decision"`
-	Resolution                           Resolution      `json:"resolution"`
-	Reason                               string          `json:"reason"`
-	Digest                               string          `json:"digest"`
+	Schema                               string                            `json:"schema"`
+	Policy                               PolicyEvidence                    `json:"policy"`
+	ExecutionInputDigest                 string                            `json:"execution_input_digest"`
+	ExecutionInput                       *valuewitnessinput.ExecutionInput `json:"execution_input,omitempty"`
+	RequiredFields                       []string                          `json:"required_fields"`
+	CaseDenominator                      int                               `json:"case_denominator"`
+	BoundFields                          int                               `json:"bound_fields"`
+	MissingFields                        int                               `json:"missing_fields"`
+	ContradictoryFields                  int                               `json:"contradictory_fields"`
+	StructuralCandidateToOperationBefore int                               `json:"structural_candidate_to_operation_edges_before"`
+	StructuralCandidateToOperationAfter  int                               `json:"structural_candidate_to_operation_edges_after"`
+	ClosedCases                          int                               `json:"closed_cases"`
+	UnknownCases                         int                               `json:"unknown_cases"`
+	RefutedCases                         int                               `json:"refuted_cases"`
+	Counts                               map[string]int                    `json:"counts"`
+	Cases                                []CanonicalCase                   `json:"cases"`
+	ReplayEqual                          bool                              `json:"replay_equal"`
+	LiveExecutionCount                   int                               `json:"live_execution_count"`
+	CanonicalExecutionCount              int                               `json:"canonical_execution_count"`
+	ExecutionGrants                      int                               `json:"execution_grants"`
+	RepositoryWrites                     int                               `json:"repository_writes"`
+	LocalTestExecutions                  int                               `json:"local_test_executions"`
+	FallbackAccepted                     int                               `json:"fallback_accepted"`
+	IndependentReplayComparisons         int                               `json:"independent_replay_comparisons"`
+	ArtifactFiles                        int                               `json:"artifact_files"`
+	ArtifactTypes                        int                               `json:"artifact_types"`
+	GoPhysicalLines                      int                               `json:"go_physical_lines"`
+	GoooPhysicalLines                    int                               `json:"gooo_physical_lines"`
+	PerformanceImprovement               string                            `json:"performance_improvement"`
+	Decision                             Decision                          `json:"decision"`
+	Resolution                           Resolution                        `json:"resolution"`
+	Reason                               string                            `json:"reason"`
+	Digest                               string                            `json:"digest"`
 }
 
 type PolicyProgram struct {
@@ -350,7 +357,7 @@ func canonicalDigest(value CanonicalCaseReport) string {
 func KnownRegistry() RegistryEvidence {
 	return RegistryEvidence{
 		Schema:                        "gooo/self-improvement-execution-operation-registry/v1",
-		EvaluatorRegistryDigest:       FixedEvaluatorRegistryDigest,
+		EvaluatorRegistryDigest:       valuewitnessinput.KnownRegistry().Digest,
 		ToolchainTestContractIdentity: FixedToolchainTestContractIdentity,
 		Phase:                         Phase(KnownPhase), OperationID: OperationID(KnownOperationID), BoundedTarget: KnownBoundedTarget,
 		InputAuthority: CallerOwnedInput, OutputAuthority: CallerOwnedOutput,
@@ -363,7 +370,8 @@ func ProjectAuthorizationRequest(request selfimprovementcandidate.AuthorizationR
 		Candidate: CandidateEvidence{
 			StableID: request.Candidate.CandidateID, Digest: request.Candidate.CandidateDigest,
 			SubjectSHA: request.Candidate.SubjectSHA, ObservationDigest: request.Candidate.SourceObservationDigest,
-			InputDigest: request.Candidate.InputSourceDigest,
+			InputDigest: request.Candidate.ExecutionInputDigest, ExecutionInputDigest: request.Candidate.ExecutionInputDigest,
+			ExperimentKind: request.Candidate.ExperimentKind, MetaOperation: request.Candidate.MetaOperation,
 		},
 		Authorization: AuthorizationBinding{
 			RequestSchema: request.Schema, RequestDigest: request.Digest,
@@ -372,8 +380,24 @@ func ProjectAuthorizationRequest(request selfimprovementcandidate.AuthorizationR
 			RepositoryWrites: request.RepositoryWrites, LocalTestExecutions: request.LocalTestExecutions,
 			LiveAuthorized: request.LiveAuthorized, LiveState: request.LiveState,
 		},
-		Registry: registry,
+		Observation: observationForExecutionInput(request.Candidate.ExecutionInput), Registry: registry, ExecutionInput: request.Candidate.ExecutionInput,
 	}
+}
+
+func observationForExecutionInput(input *valuewitnessinput.ExecutionInput) ObservationEvidence {
+	if input == nil {
+		return ObservationEvidence{}
+	}
+	observation := ObservationEvidence{
+		Schema: ObservationSchema, SourceObservationDigest: input.ObservationDigest,
+		CandidateInputDigest: input.Digest, CandidateStableID: input.CandidateStableID,
+		SubjectSHA: input.SubjectSHA, Phase: Phase(input.Phase), OperationID: OperationID(input.OperationID),
+		BoundedTarget: BoundedTarget(input.BoundedTarget), SourceSpans: []SourceSpan{{
+			SourceID: input.Activity.ASTSpan.SourceID, StartLine: input.Activity.ASTSpan.StartLine, EndLine: input.Activity.ASTSpan.EndLine,
+		}}, ObservedCount: len(input.Corpus), ObservedCountKnown: true,
+	}
+	observation.ObservationDigest = observationDigest(observation)
+	return observation
 }
 
 func RequiredFieldNames() []string {

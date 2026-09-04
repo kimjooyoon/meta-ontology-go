@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 )
 
 // Verify is an independent consumer. It reclassifies the input without
@@ -18,7 +19,7 @@ func Verify(program PolicyProgram, input ContractInput, resolution ContractResol
 		RepositoryWrites: 0, LocalTestExecutions: 0, ExecutionGrants: 0,
 		Verified: resolution.Decision == decision && resolution.Resolution == contractResolution && resolution.Reason == reason &&
 			!resolution.ExecutionAuthorized && resolution.ExecutionGrantRequired && resolution.MaxExecutions == 1 && !resolution.RepositoryWritesAllowed &&
-			ValidateResolution(resolution) == nil}
+			resolutionInputMatches(resolution, input) && ValidateResolution(resolution) == nil}
 	verification.Digest = verificationDigest(verification)
 	return verification
 }
@@ -50,6 +51,21 @@ func independentFields(input ContractInput) ([]string, []string) {
 	}
 	if input.Candidate.InputDigest == "" {
 		missing = append(missing, "candidate_input_digest")
+	}
+	if input.Candidate.ExecutionInputDigest == "" || input.ExecutionInput == nil || executionInputIncomplete(input.ExecutionInput) {
+		missing = append(missing, "candidate_input_digest")
+	} else {
+		if input.Candidate.ExecutionInputDigest != input.Candidate.InputDigest ||
+			input.Candidate.ExecutionInputDigest != input.ExecutionInput.Digest ||
+			input.ExecutionInput.CandidateStableID != input.Candidate.StableID ||
+			input.ExecutionInput.CandidateDigest != input.Candidate.Digest ||
+			input.ExecutionInput.SubjectSHA != input.Candidate.SubjectSHA ||
+			input.ExecutionInput.ObservationDigest != input.Candidate.ObservationDigest {
+			contradictions = append(contradictions, "candidate_input_digest")
+		}
+		if err := valuewitnessinput.Validate(*input.ExecutionInput); err != nil {
+			contradictions = append(contradictions, "candidate_input_digest")
+		}
 	}
 	if input.Observation.Phase == "" {
 		missing = append(missing, "phase")
@@ -96,11 +112,18 @@ func independentFields(input ContractInput) ([]string, []string) {
 	if input.Candidate.InputDigest != "" && !validDigest(input.Candidate.InputDigest) {
 		contradictions = append(contradictions, "candidate_input_digest")
 	}
+	if input.Candidate.ExecutionInputDigest != "" && !validDigest(input.Candidate.ExecutionInputDigest) {
+		contradictions = append(contradictions, "candidate_input_digest")
+	}
 	if input.Candidate.ObservationDigest != "" && !validDigest(input.Candidate.ObservationDigest) {
 		contradictions = append(contradictions, "observation_digest")
 	}
 	if input.Observation.CandidateInputDigest != "" && input.Observation.CandidateInputDigest != input.Candidate.InputDigest {
 		contradictions = append(contradictions, "candidate_input_digest")
+	}
+	if input.Observation.SourceObservationDigest != "" &&
+		(!validDigest(input.Observation.SourceObservationDigest) || input.Observation.SourceObservationDigest != input.Candidate.ObservationDigest) {
+		contradictions = append(contradictions, "observation_digest")
 	}
 	if input.Observation.CandidateStableID != "" && input.Observation.CandidateStableID != input.Candidate.StableID {
 		contradictions = append(contradictions, "candidate_stable_id")
@@ -189,7 +212,11 @@ func independentFields(input ContractInput) ([]string, []string) {
 
 func independentMapping(input ContractInput) bool {
 	return input.Candidate.MetaOperation == CandidateMetaOperation && input.Candidate.ExperimentKind == CandidateExperimentKind &&
-		input.Observation.OperationID == OperationID(KnownOperationID) && input.Observation.BoundedTarget == KnownBoundedTarget
+		input.Observation.OperationID == OperationID(KnownOperationID) && input.Observation.BoundedTarget == KnownBoundedTarget &&
+		input.ExecutionInput != nil && !executionInputIncomplete(input.ExecutionInput) &&
+		input.Candidate.InputDigest == input.Candidate.ExecutionInputDigest && input.Candidate.ExecutionInputDigest == input.ExecutionInput.Digest &&
+		input.ExecutionInput.OperationID == KnownOperationID && input.ExecutionInput.BoundedTarget == KnownBoundedTarget &&
+		input.ExecutionInput.Phase == KnownPhase && valuewitnessinput.Validate(*input.ExecutionInput) == nil
 }
 
 func independentPolicy(program PolicyProgram) bool {
@@ -202,6 +229,9 @@ func independentUnknownReason(program PolicyProgram, input ContractInput, missin
 	}
 	if input.Registry.EvaluatorRegistryDigest == "" || input.Registry.ToolchainTestContractIdentity == "" || input.Registry.Schema == "" || !input.Registry.SafetyDeclared {
 		return ReasonMissingRegistry
+	}
+	if input.ExecutionInput == nil || executionInputIncomplete(input.ExecutionInput) {
+		return ReasonMissingExecutionInput
 	}
 	if input.Candidate.MetaOperation == "" || input.Candidate.MetaOperation != CandidateMetaOperation || input.Candidate.ExperimentKind == "" || input.Candidate.ExperimentKind != CandidateExperimentKind || (input.Observation.OperationID != "" && input.Observation.OperationID != OperationID(KnownOperationID)) {
 		return ReasonUnsupportedMapping
@@ -234,9 +264,31 @@ func independentReason(contradictions []string) string {
 	return ReasonCandidateConflict
 }
 
+func resolutionInputMatches(resolution ContractResolution, input ContractInput) bool {
+	if input.ExecutionInput == nil {
+		return resolution.ExecutionInput == nil && resolution.ExecutionInputDigest == ""
+	}
+	return resolution.ExecutionInput != nil && resolution.ExecutionInputDigest == input.ExecutionInput.Digest &&
+		resolution.CandidateInputDigest == input.ExecutionInput.Digest &&
+		resolution.ExecutionInput.Digest == input.ExecutionInput.Digest &&
+		resolution.ExecutionInput.CandidateStableID == input.Candidate.StableID &&
+		resolution.ExecutionInput.CandidateDigest == input.Candidate.Digest &&
+		resolution.ExecutionInput.SubjectSHA == input.Candidate.SubjectSHA &&
+		resolution.ExecutionInput.ObservationDigest == input.Candidate.ObservationDigest
+}
+
 func VerifyResolution(resolution ContractResolution) error {
 	if resolution.Schema != Schema || resolution.Digest == "" {
 		return errors.New("missing execution contract resolution")
+	}
+	if resolution.ExecutionInput != nil && valuewitnessinput.Validate(*resolution.ExecutionInput) != nil {
+		return errors.New("execution contract resolution carries invalid execution input")
+	}
+	if resolution.ExecutionInput != nil && (resolution.ExecutionInputDigest != resolution.ExecutionInput.Digest || resolution.CandidateInputDigest != resolution.ExecutionInput.Digest) {
+		return errors.New("execution contract resolution input digest is not bound")
+	}
+	if resolution.Decision == DecisionClosed && resolution.ExecutionInput == nil {
+		return errors.New("closed execution contract omitted execution input")
 	}
 	return ValidateResolution(resolution)
 }

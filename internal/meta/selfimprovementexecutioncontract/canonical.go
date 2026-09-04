@@ -4,27 +4,26 @@ import (
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 )
 
 func canonicalInput() ContractInput {
+	stableID := digestBytes([]byte("v25-canonical-candidate"))
+	candidateDigest := digestBytes([]byte("v25-canonical-candidate-digest"))
+	subjectSHA := "0123456789abcdef0123456789abcdef01234567"
+	sourceObservationDigest := digestBytes([]byte("v25-canonical-source-observation"))
+	executionInput, err := valuewitnessinput.BuildFromBytes(valuewitnessinput.SourcePath, []byte(valuewitnessinput.CanonicalSource), valuewitnessinput.ActivityName, stableID, candidateDigest, subjectSHA, sourceObservationDigest)
+	if err != nil {
+		return ContractInput{}
+	}
 	candidate := CandidateEvidence{
-		StableID:       digestBytes([]byte("v25-canonical-candidate")),
-		Digest:         digestBytes([]byte("v25-canonical-candidate-digest")),
-		SubjectSHA:     "0123456789abcdef0123456789abcdef01234567",
-		ExperimentKind: CandidateExperimentKind, MetaOperation: CandidateMetaOperation,
-		InputDigest: digestBytes([]byte("v25-canonical-candidate-input")),
+		StableID: stableID, Digest: candidateDigest, SubjectSHA: subjectSHA,
+		ObservationDigest: sourceObservationDigest, InputDigest: executionInput.Digest,
+		ExecutionInputDigest: executionInput.Digest, ExperimentKind: CandidateExperimentKind,
+		MetaOperation: CandidateMetaOperation,
 	}
-	observation := ObservationEvidence{
-		Schema: ObservationSchema, CandidateInputDigest: candidate.InputDigest, CandidateStableID: candidate.StableID,
-		SubjectSHA: candidate.SubjectSHA, Phase: Phase(KnownPhase), OperationID: OperationID(KnownOperationID),
-		BoundedTarget: KnownBoundedTarget, SourceSpans: []SourceSpan{{SourceID: "examples/self-improvement/project.gooo", StartLine: 1, EndLine: 12}},
-		ObservedCount: 1, ObservedCountKnown: true,
-	}
-	observation.ObservationDigest = observationDigest(observation)
-	candidate.ObservationDigest = observation.ObservationDigest
 	return ContractInput{
-		Candidate: candidate,
-		Authorization: AuthorizationBinding{
+		Candidate: candidate, Authorization: AuthorizationBinding{
 			RequestSchema:  selfimprovementcandidate.AuthorizationRequestSchema,
 			RequestDigest:  digestBytes([]byte("v25-canonical-authorization-request")),
 			ContractID:     selfimprovementcandidate.AuthorizationContractID,
@@ -33,7 +32,8 @@ func canonicalInput() ContractInput {
 			ExecutionAllowed: false, RepositoryWrites: 0, LocalTestExecutions: 0,
 			LiveAuthorized: 0, LiveState: "UNKNOWN",
 		},
-		Observation: observation, Registry: KnownRegistry(),
+		Observation: observationForExecutionInput(&executionInput), Registry: KnownRegistry(),
+		ExecutionInput: &executionInput,
 	}
 }
 
@@ -66,7 +66,7 @@ func BuildCanonicalCaseReport(program PolicyProgram) CanonicalCaseReport {
 		{"MAX_EXECUTIONS_OR_WRITE_AUTHORITY", func(input ContractInput) ContractInput { input.Registry.MaxExecutions = 2; return input }, DecisionRefuted, ReasonSafetyConflict},
 	}
 	report := CanonicalCaseReport{
-		Schema: CanonicalCasesSchema, Policy: program.Evidence, RequiredFields: RequiredFieldNames(), CaseDenominator: 9,
+		Schema: CanonicalCasesSchema, Policy: program.Evidence, ExecutionInputDigest: base.Candidate.ExecutionInputDigest, ExecutionInput: base.ExecutionInput, RequiredFields: RequiredFieldNames(), CaseDenominator: 9,
 		BoundFields: PreExecutionRequiredField, MissingFields: 0, ContradictoryFields: 0,
 		StructuralCandidateToOperationBefore: 0, StructuralCandidateToOperationAfter: 1,
 		Counts: map[string]int{string(DecisionClosed): 0, string(DecisionUnknown): 0, string(DecisionRefuted): 0},
@@ -74,10 +74,8 @@ func BuildCanonicalCaseReport(program PolicyProgram) CanonicalCaseReport {
 		ExecutionGrants: 0, RepositoryWrites: 0, LocalTestExecutions: 0, FallbackAccepted: 0,
 		IndependentReplayComparisons: 1, ArtifactFiles: 9, ArtifactTypes: 3,
 		PerformanceImprovement: PerformanceUnknown, Decision: DecisionClosed, Resolution: ResolutionDeclared,
-		Reason:            "NINE_CANONICAL_PRE_EXECUTION_CASES",
-		GoPhysicalLines:   program.Inventory.GoPhysicalLines,
-		GoooPhysicalLines: program.Inventory.GoooPhysicalLines,
-		ReplayEqual:       true}
+		Reason: "NINE_CANONICAL_PRE_EXECUTION_CASES", GoPhysicalLines: program.Inventory.GoPhysicalLines,
+		GoooPhysicalLines: program.Inventory.GoooPhysicalLines, ReplayEqual: true}
 	for _, current := range cases {
 		caseInput := current.input(base)
 		resolution := Evaluate(program, caseInput)

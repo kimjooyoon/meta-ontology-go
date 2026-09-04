@@ -183,6 +183,7 @@ jobs:
               --arg candidate_report_digest "$(jq -r '.candidate.candidate_report_digest' "$WORK/request.json")" \
               --arg source_observation_digest "$(jq -r '.candidate.source_observation_digest' "$WORK/request.json")" \
               --arg input_source_digest "$(jq -r '.candidate.input_source_digest' "$WORK/request.json")" \
+              --arg execution_input_digest "$(jq -r '.candidate.execution_input_digest' "$WORK/request.json")" \
               --arg policy_digest "$(jq -r '.candidate.policy_digest' "$WORK/request.json")" \
               --arg contract_digest "$(jq -r '.candidate.contract_canonical_digest' "$WORK/request.json")" \
               --arg subject_sha "$(jq -r '.candidate.subject_sha' "$WORK/request.json")" \
@@ -193,7 +194,7 @@ jobs:
               --argjson workflow_run_attempt "$GITHUB_RUN_ATTEMPT" \
               --argjson candidate_artifact_id "$(jq -r '.artifact.artifact_id' "$WORK/request.json")" \
               --arg candidate_artifact_digest "$candidate_artifact_digest" \
-              '{schema:"gooo/self-improvement-candidate-authorization-decision/v1",decision:$decision,request_digest:$request_digest,candidate_id:$candidate_id,candidate_digest:$candidate_digest,candidate_report_digest:$candidate_report_digest,source_observation_digest:$source_observation_digest,input_source_digest:$input_source_digest,policy_digest:$policy_digest,contract_digest:$contract_digest,subject_sha:$subject_sha,scope_digest:$scope_digest,repository:$repository,actor:$actor,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,candidate_artifact_id:$candidate_artifact_id,candidate_artifact_digest:$candidate_artifact_digest,decision_source:"workflow_dispatch",identity_assurance:"UNSIGNED_GITHUB_ACTOR_METADATA"}' \
+              '{schema:"gooo/self-improvement-candidate-authorization-decision/v1",decision:$decision,request_digest:$request_digest,candidate_id:$candidate_id,candidate_digest:$candidate_digest,candidate_report_digest:$candidate_report_digest,source_observation_digest:$source_observation_digest,input_source_digest:$input_source_digest,execution_input_digest:$execution_input_digest,policy_digest:$policy_digest,contract_digest:$contract_digest,subject_sha:$subject_sha,scope_digest:$scope_digest,repository:$repository,actor:$actor,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,candidate_artifact_id:$candidate_artifact_id,candidate_artifact_digest:$candidate_artifact_digest,decision_source:"workflow_dispatch",identity_assurance:"UNSIGNED_GITHUB_ACTOR_METADATA"}' \
               > "$WORK/decision.json"
             decision_path="$WORK/decision.json"
           fi

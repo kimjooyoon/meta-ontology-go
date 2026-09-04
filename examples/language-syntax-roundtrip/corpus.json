@@ -263,6 +263,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-value-witness-execution-input",
+      "path": "examples/self-improvement-value-witness-execution-input/contract.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-operation-catalog",
       "path": "examples/language-operation-catalog/main.gooo",
       "kind": "VALID",
