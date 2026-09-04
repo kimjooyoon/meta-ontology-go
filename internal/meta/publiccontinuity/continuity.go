@@ -30,7 +30,8 @@ const (
 
 var compilerManifestPaths = append(generation.SemanticRetentionCompilerManifestPaths(),
 	"cmd/gooo/public_continuity_authorize_part01.go", "cmd/gooo/public_continuity_certify_part01.go",
-	"cmd/gooo/public_continuity_generate_part01.go", "cmd/gooo/emit_dispatch.go", "internal/meta/publiccontinuity/continuity.go",
+	"cmd/gooo/public_continuity_generate_part01.go", "cmd/gooo/public_continuity_generate_part02.go",
+	"cmd/gooo/public_continuity_generate_part03.go", "cmd/gooo/emit_dispatch.go", "internal/meta/publiccontinuity/continuity.go",
 	"internal/meta/publicdiscovery/discovery.go", "internal/meta/discoverypolicy/policy.go",
 	"internal/meta/discoverypolicy/generated/evaluator.go")
 
