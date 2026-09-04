@@ -7,6 +7,7 @@ func init() {
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		".github/workflows/meta-policy-compilation.yml",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/verify/scope_first_class_meta_policy_v20_1.go",
 	}
 }
