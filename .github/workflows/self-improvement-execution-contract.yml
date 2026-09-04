@@ -49,7 +49,6 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
-      WORK: ${{ runner.temp }}/self-improvement-execution-contract
       GOTOOLCHAIN: local
       GOFLAGS: -mod=readonly
 
@@ -79,12 +78,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          work="$RUNNER_TEMP/self-improvement-execution-contract"
-          mkdir -p "$work"
+          mkdir -p "$RUNNER_TEMP/self-improvement-execution-contract"
           go run ./scripts/self-improvement-execution-contract \
             -mode cases \
             -contract examples/self-improvement-execution-contract/contract.gooo \
-            -output "$work/canonical-cases.json" \
+            -output "$RUNNER_TEMP/self-improvement-execution-contract/canonical-cases.json" \
             -check
           jq -e '
             .schema == "gooo/self-improvement-execution-contract-cases/v1" and
@@ -102,7 +100,7 @@ jobs:
             .artifact_files == 9 and .artifact_types == 3 and
             .performance_improvement == "UNKNOWN" and
             ([.cases[] | select(.pass == false)] | length) == 0' \
-            "$work/canonical-cases.json" >/dev/null
+            "$RUNNER_TEMP/self-improvement-execution-contract/canonical-cases.json" >/dev/null
 
       - name: Download the v24 authorization request when available
         if: github.event_name == 'workflow_run'
@@ -112,7 +110,7 @@ jobs:
           run-id: ${{ env.SOURCE_RUN_ID }}
           name: self-improvement-candidate-authorization-${{ env.SUBJECT_SHA }}
           github-token: ${{ github.token }}
-          path: ${{ env.WORK }}/v24
+          path: ${{ runner.temp }}/self-improvement-execution-contract/v24
 
       - name: Emit live pre-execution contract without granting execution
         shell: bash
@@ -120,20 +118,20 @@ jobs:
           set -euo pipefail
           request=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
-            request="$(find "$WORK/v24" -type f -name request.json -print -quit 2>/dev/null || true)"
+            request="$(find "$RUNNER_TEMP/self-improvement-execution-contract/v24" -type f -name request.json -print -quit 2>/dev/null || true)"
           fi
           if [ -n "$request" ]; then
             go run ./scripts/self-improvement-execution-contract \
               -mode live \
               -contract examples/self-improvement-execution-contract/contract.gooo \
               -request "$request" \
-              -output "$WORK/live-contract.json" \
+              -output "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" \
               -check
           else
             go run ./scripts/self-improvement-execution-contract \
               -mode live \
               -contract examples/self-improvement-execution-contract/contract.gooo \
-              -output "$WORK/live-contract.json" \
+              -output "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" \
               -check
           fi
           jq -e '
@@ -146,15 +144,15 @@ jobs:
             ((.decision == "CLOSED" and .resolution == "DECLARED") or
              (.decision == "UNKNOWN" and (.unknown | type) == "object" and
               ((.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"])))' \
-            "$WORK/live-contract.json" >/dev/null
+            "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >/dev/null
           jq -r '"live contract: \(.decision)/\(.resolution)/\(.reason), execution_authorized=\(.execution_authorized), grant_required=\(.execution_grant_required), writes=\(.metrics.repository_writes), local_tests=\(.metrics.local_test_executions)"' \
-            "$WORK/live-contract.json" >> "$GITHUB_STEP_SUMMARY"
+            "$RUNNER_TEMP/self-improvement-execution-contract/live-contract.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload v25 contract evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: self-improvement-execution-contract-${{ env.SUBJECT_SHA }}
-          path: ${{ env.WORK }}/*.json
+          path: ${{ runner.temp }}/self-improvement-execution-contract/*.json
           if-no-files-found: error
           retention-days: 14
