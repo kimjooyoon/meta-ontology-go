@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/fs"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
@@ -11,6 +12,8 @@ import (
 )
 
 const testHead = "0000000000000000000000000000000000000000"
+
+const expectedInvalidCaseIDs = "unknown-keyword,unterminated-string,source-execution-invalid"
 
 func fixture(t *testing.T) (fs.FS, []byte) {
 	t.Helper()
@@ -38,11 +41,26 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceSatisfied != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
-		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 1031 ||
+		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 1172 ||
 		len(report.Source.GoooFiles) != 60 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
-		t.Fatalf("report summary: decision=%q resolution=%q reason=%q gooo_lines=%d gooo_files=%d unregistered=%v missing=%v satisfied=%d valid=%d invalid=%d unresolved=%d package_units=%d", report.Decision, report.Resolution, report.Reason, report.Summary.GoooLines, len(report.Source.GoooFiles), report.Source.UnregisteredGooo, report.Source.MissingRegistered, report.Summary.Satisfied, report.Summary.ValidCases, report.Summary.InvalidCases, report.Summary.Unresolved, len(report.Source.PackageUnits))
+		invalidIDs := make([]string, 0, report.Summary.InvalidCases)
+		for _, item := range report.Cases {
+			if item.Definition.Kind == languagesyntax.KindInvalid {
+				invalidIDs = append(invalidIDs, item.Definition.ID)
+			}
+		}
+		t.Fatalf("report summary: decision=%q resolution=%q reason=%q gooo_lines=%d gooo_files=%d unregistered=%v missing=%v satisfied=%d valid=%d invalid=%d invalid_ids=%q expected_invalid_ids=%q unresolved=%d package_units=%d", report.Decision, report.Resolution, report.Reason, report.Summary.GoooLines, len(report.Source.GoooFiles), report.Source.UnregisteredGooo, report.Source.MissingRegistered, report.Summary.Satisfied, report.Summary.ValidCases, report.Summary.InvalidCases, strings.Join(invalidIDs, ","), expectedInvalidCaseIDs, report.Summary.Unresolved, len(report.Source.PackageUnits))
+	}
+	invalidIDs := make([]string, 0, report.Summary.InvalidCases)
+	for _, item := range report.Cases {
+		if item.Definition.Kind == languagesyntax.KindInvalid {
+			invalidIDs = append(invalidIDs, item.Definition.ID)
+		}
+	}
+	if strings.Join(invalidIDs, ",") != expectedInvalidCaseIDs {
+		t.Fatalf("invalid corpus identities drifted: got=%q want=%q", strings.Join(invalidIDs, ","), expectedInvalidCaseIDs)
 	}
 }
 
