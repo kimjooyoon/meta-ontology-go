@@ -14,6 +14,7 @@ const compilerSelfImprovementIteration20260904V11Branch = "agent/compiler-self-i
 const compilerSelfImprovementUtility20260904V12Branch = "agent/compiler-self-improvement-utility-20260904-v12"
 const compilerSelfImprovementUtilityReuse20260904V13Branch = "agent/compiler-self-improvement-utility-reuse-20260904-v13"
 const compilerSelfImprovementOrchestration20260904V14Branch = "agent/compiler-self-improvement-orchestration-20260904-v14"
+const compilerSelfImprovementPartialReuse20260904V15Branch = "agent/compiler-self-improvement-partial-reuse-20260904-v15"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -216,5 +217,18 @@ func init() {
 		"internal/meta/publicorchestration",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/self-improvement-public-orchestration",
+	}
+	branchScopeAllowlist[compilerSelfImprovementPartialReuse20260904V15Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/self-improvement-public-continuity.yml",
+		"examples/language-syntax-roundtrip/corpus.json",
+		"examples/self-improvement-discovery",
+		"examples/self-improvement-partial-reuse",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
+		"internal/meta/publicpartialreuse",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-public-partial-reuse",
 	}
 }

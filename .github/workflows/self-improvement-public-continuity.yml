@@ -15,9 +15,14 @@ on:
       - 'internal/meta/publicdiscovery/**'
       - 'internal/meta/publictestreuse/**'
       - 'internal/meta/publicorchestration/**'
+      - 'internal/meta/publicpartialreuse/**'
+      - 'internal/meta/languagereadiness/languagesyntax/registry.go'
+      - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'scripts/self-improvement-public-continuity/**'
       - 'scripts/self-improvement-public-test-reuse/**'
       - 'scripts/self-improvement-public-orchestration/**'
+      - 'scripts/self-improvement-public-partial-reuse/**'
+      - 'examples/self-improvement-partial-reuse/**'
       - 'go.mod'
       - 'go.sum'
   push:
@@ -34,9 +39,14 @@ on:
       - 'internal/meta/publicdiscovery/**'
       - 'internal/meta/publictestreuse/**'
       - 'internal/meta/publicorchestration/**'
+      - 'internal/meta/publicpartialreuse/**'
+      - 'internal/meta/languagereadiness/languagesyntax/registry.go'
+      - 'internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go'
       - 'scripts/self-improvement-public-continuity/**'
       - 'scripts/self-improvement-public-test-reuse/**'
       - 'scripts/self-improvement-public-orchestration/**'
+      - 'scripts/self-improvement-public-partial-reuse/**'
+      - 'examples/self-improvement-partial-reuse/**'
       - 'go.mod'
       - 'go.sum'
 
@@ -651,5 +661,53 @@ jobs:
         with:
           name: public-self-improvement-orchestration-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/orchestration/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Run graph-driven partial test reuse from the v14 boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          repo="$(pwd)"
+          root="$RUNNER_TEMP/public-continuity/partial-reuse"
+          upstream="$RUNNER_TEMP/public-continuity/orchestration/resume/orchestration-report.json"
+          mkdir -p "$root"
+          test -s "$upstream"
+          go build -o "$root/gooo" ./cmd/gooo
+          go build -o "$root/partial-reuse" ./scripts/self-improvement-public-partial-reuse
+          "$root/partial-reuse" -mode run \
+            -source "$repo/examples/self-improvement-partial-reuse/main.gooo" \
+            -test-contract "$repo/examples/self-improvement-partial-reuse/generated_project_test.go" \
+            -gooo "$root/gooo" -orchestration-report "$upstream" -repo-root "$repo" -out "$root/evidence"
+          "$root/partial-reuse" -mode verify \
+            -report "$root/evidence/partial-reuse-report.json" -human-output "$root/verified-dossier.txt"
+          test "$(find "$root/evidence/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 25
+          jq -e '
+            .decision == "CLOSED" and .case_denominator == 6 and
+            .closed_cases == 2 and .unknown_cases == 2 and .refuted_cases == 2 and
+            .test_units_total == 2 and .generated_artifacts == 2 and .evidence_artifacts == 25 and
+            .before.test_units_executed == 2 and .after.test_units_executed == 1 and
+            .no_change_before.test_units_executed == 2 and .no_change_after.test_units_executed == 0 and
+            .no_change_after.test_units_reused == 2 and
+            .single_change_before.test_units_executed == 2 and .single_change_after.test_units_executed == 1 and
+            .single_change_after.test_units_reused == 1 and
+            .cases[0].decision == "CLOSED" and .cases[0].impacted_partitions == 0 and
+            .cases[0].unaffected_partitions == 2 and .cases[0].closure_edges == 0 and
+            .cases[1].decision == "CLOSED" and .cases[1].impacted_partitions == 1 and
+            .cases[1].unaffected_partitions == 1 and .cases[1].closure_edges == 0 and
+            (.cases[2:4] | all(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .unknown.unknown_class != "" and .unknown.next_operation != "" and (.unknown.blocked_by | length) > 0)) and
+            (.cases[4:6] | all(.decision == "REFUTED" and .unknown == null)) and
+            .generated_bytes_equal and .semantic_equal and .test_contract_equal and .receipt_binding_equal and
+            .runtime_comparable == false and .runtime_unknown == "RUNTIME_MODES_NOT_EQUIVALENT" and
+            .repository_writes == 0 and .local_test_executions == 0
+          ' "$root/evidence/partial-reuse-report.json"
+
+      - name: Upload graph-driven partial test reuse dossier
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
           if-no-files-found: error
           retention-days: 30

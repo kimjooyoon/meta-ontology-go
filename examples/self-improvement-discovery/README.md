@@ -41,7 +41,8 @@ The incompatible-source case is derived into caller-owned temporary output from
 `project.gooo`; no second tracked language source is needed.
 
 Corpus accounting is explicit: the fixed language corpus moves from 51 cases,
-56 sources, and 997 `.gooo` lines to 53 cases, 58 sources, and 1,011 lines.
+56 sources, and 997 `.gooo` lines to 53 cases, 59 sources, and 1,022 lines after
+the v15 partial-reuse example is appended.
 
 ## Utility acceptance contract
 
@@ -103,5 +104,5 @@ invocations and the orchestrated route as 4: one prepare, two explicit human
 decisions (accept and reject), and one resume. Semantic, lowering, generation,
 test, handoff-artifact, and explicit-decision counts are preserved. Wall-clock
 and RSS comparison remains `UNKNOWN` because the routes are not equivalent
-runtime modes. The 53-case / 58-source corpus remains unchanged; this protocol
-is an append-only extension of the canonical project source.
+runtime modes. The v14 dossier preserved the 53-case / 58-source snapshot; v15
+appends one canonical multi-partition source and keeps the case corpus fixed.

@@ -523,6 +523,18 @@
       "meta_reducer": "languagepackageexecution.Evaluate",
       "source_files_indicator": "PACKAGE_SOURCE_FILES",
       "execution_indicator": "PACKAGE_EXECUTIONS"
+    },
+    {
+      "id": "self-improvement-partial-reuse",
+      "path": "examples/self-improvement-partial-reuse",
+      "members": [
+        "examples/self-improvement-partial-reuse/main.gooo"
+      ],
+      "entry": "CreateReceipt",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
     }
   ],
   "meta_sources": [

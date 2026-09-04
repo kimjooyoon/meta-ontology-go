@@ -1,0 +1,11 @@
+package partialreuseexample
+namespace partial_reuse_example
+
+entity SharedContract id "gooo://partial-reuse-example/entity/shared-contract"
+entity Order id "gooo://partial-reuse-example/entity/order"
+entity Receipt id "gooo://partial-reuse-example/entity/receipt"
+entity StockItem id "gooo://partial-reuse-example/entity/stock-item"
+entity InventorySnapshot id "gooo://partial-reuse-example/entity/inventory-snapshot"
+
+activity CreateReceipt(Order, SharedContract) -> Receipt computes "partial-reuse-schema=v1;partial-reuse-policy=EXPLICIT_OPT_IN_PARTIAL_TEST_REUSE;partial-reuse-test-unit-count=2;partial-reuse-dependency-edge-count=2;partial-reuse-generated-artifact-count=2;partial-reuse-evidence-artifact-count=25;partial-reuse-runtime-rule=UNKNOWN_WHEN_RUNTIME_MODES_ARE_NOT_EQUIVALENT;partial-reuse-refuted-dominates-unknown=true;partial-reuse-component=orders;partial-reuse-test=TestOrdersPartition;partial-reuse-symbols=Order,Receipt,CreateReceipt;partial-reuse-roots=Order,Receipt,CreateReceipt;partial-reuse-component-root=shared-contract|SharedContract;partial-reuse-edge=shared-contract>orders;partial-reuse-edge=shared-contract>inventory;partial-reuse-case=NO_CHANGE_ALL_RECEIPTS_REUSED|CLOSED|none|canonical|valid;partial-reuse-case=SINGLE_PARTITION_CHANGE_SELECTIVE_REUSE|CLOSED|orders|canonical|valid;partial-reuse-case=MISSING_DEPENDENCY_EDGE|UNKNOWN|orders|missing-edge|valid;partial-reuse-case=UNBOUNDED_IMPACT|UNKNOWN|shared-contract|unbounded|valid;partial-reuse-case=CHANGED_HIDDEN_DEPENDENCY|REFUTED|shared-contract|missing-edge|omitted-target=inventory;partial-reuse-case=TAMPERED_PARTITION_RECEIPT|REFUTED|none|canonical|tampered;partial-reuse-journey=v14-orchestration>ordinary-generate>full-baseline>selective-closure>receipt-validation>evidence"
+activity SnapshotInventory(StockItem, SharedContract) -> InventorySnapshot computes "partial-reuse-schema=v1;partial-reuse-policy=EXPLICIT_OPT_IN_PARTIAL_TEST_REUSE;partial-reuse-component=inventory;partial-reuse-test=TestInventoryPartition;partial-reuse-symbols=StockItem,InventorySnapshot,SnapshotInventory;partial-reuse-roots=StockItem,InventorySnapshot,SnapshotInventory"
