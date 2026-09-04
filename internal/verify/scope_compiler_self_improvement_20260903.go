@@ -8,6 +8,7 @@ const compilerSelfObservationIteration20260904Branch = "agent/compiler-self-obse
 const compilerSelfImprovementIteration20260904V5Branch = "agent/compiler-self-improvement-iteration-20260904-v5"
 const compilerSelfImprovementIteration20260904V6Branch = "agent/compiler-self-improvement-iteration-20260904-v6"
 const compilerSelfImprovementIteration20260904V8Branch = "agent/compiler-self-improvement-iteration-20260904-v8"
+const compilerSelfImprovementIteration20260904V9Branch = "agent/compiler-self-improvement-iteration-20260904-v9"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -124,5 +125,23 @@ func init() {
 		".github/ci-governance.json",
 		"cmd/gooo/generate_pipeline_part03.go",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
+	}
+	branchScopeAllowlist[compilerSelfImprovementIteration20260904V9Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/self-improvement-retained-knowledge.yml",
+		"cmd/gooo/public_generation_part01.go",
+		"cmd/gooo/public_generation_part02.go",
+		"cmd/gooo/self_retention_certify_part01.go",
+		"cmd/gooo/self_retention_consume_part01.go",
+		"cmd/gooo/self_retention_helpers_part01.go",
+		"examples/self-improvement-observation",
+		"internal/meta/generation/semantic_public_generation.go",
+		"internal/meta/generation/semantic_retention.go",
+		"internal/meta/retentionpolicy",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-public-generation",
+		"scripts/self-improvement-retained-knowledge",
+		"scripts/self-improvement-retention-policy",
 	}
 }

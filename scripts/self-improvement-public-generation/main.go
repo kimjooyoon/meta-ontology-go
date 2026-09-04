@@ -15,6 +15,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -130,7 +131,7 @@ func verifyPublicLoop(inputs publicRunInputs, normalizedDigest, baselineDir, app
 	if err := verifyClosedPublicResults(sourceDigest, normalizedDigest, inputs.certificate, certificateDigest, baseline, applied, replay); err != nil {
 		return err
 	}
-	caseReports, counts, artifacts, err := verifyPublicCases(casesRoot)
+	caseReports, counts, artifacts, err := verifyPublicCases(casesRoot, inputs.contract)
 	if err != nil {
 		return err
 	}
@@ -255,7 +256,7 @@ func verifyPublicEvidence(contract, input []byte, certificate generation.Semanti
 		AdoptionReportDigest: cache.HashBytes(evidence.adoptionData).String(), ObservationDigest: observationDigest,
 		ProposalDigest: proposalDigest, AuthorizationDigest: authorizationDigest, CandidateStableID: evidence.proposal.Candidate.StableID,
 		ContractSourceDigest: cache.HashBytes(contract).String(), InputSourceDigest: cache.HashBytes(input).String(), NormalizedIRDigest: evidence.proposal.Candidate.InputDigest,
-		CompilerDigest: compilerDigest, ToolchainDigest: generation.SemanticRetentionToolchainDigest(), VerifierDigest: verifierDigest, PolicyDigest: cache.HashBytes(contract).String(),
+		CompilerDigest: compilerDigest, ToolchainDigest: generation.SemanticRetentionToolchainDigest(), VerifierDigest: verifierDigest, PolicyDigest: cache.HashBytes(contract).String(), EvaluatorDigest: retentionpolicy.GeneratedEvaluatorDigest(),
 	}
 	if err := generation.VerifySemanticRetentionCertificate(certificate, expected); err != nil {
 		return fmt.Errorf("certificate bindings: %w", err)
@@ -308,7 +309,7 @@ func verifyClosedPublicBindings(sourceDigest string, certificate generation.Sema
 		return errors.New("public generation reports are not bound to the certificate")
 	}
 	for _, report := range []generation.SemanticPublicGenerationReport{applied, replay} {
-		if report.AdoptionReportDigest != certificate.AdoptionReportDigest || report.ObservationDigest != certificate.ObservationDigest || report.ProposalDigest != certificate.ProposalDigest || report.AuthorizationDigest != certificate.AuthorizationDigest || report.CandidateStableID != certificate.CandidateStableID || report.ContractSourceDigest != certificate.ContractSourceDigest || report.CompilerDigest != certificate.CompilerDigest || report.ToolchainDigest != certificate.ToolchainDigest || report.VerifierDigest != certificate.VerifierDigest || report.PolicyDigest != certificate.PolicyDigest || report.GeneratedManifestDigest != certificate.GeneratedManifestDigest {
+		if report.AdoptionReportDigest != certificate.AdoptionReportDigest || report.ObservationDigest != certificate.ObservationDigest || report.ProposalDigest != certificate.ProposalDigest || report.AuthorizationDigest != certificate.AuthorizationDigest || report.CandidateStableID != certificate.CandidateStableID || report.ContractSourceDigest != certificate.ContractSourceDigest || report.CompilerDigest != certificate.CompilerDigest || report.ToolchainDigest != certificate.ToolchainDigest || report.VerifierDigest != certificate.VerifierDigest || report.PolicyDigest != certificate.PolicyDigest || report.EvaluatorDigest != certificate.EvaluatorDigest || report.GeneratedManifestDigest != certificate.GeneratedManifestDigest {
 			return errors.New("public generation report dropped an evidence binding")
 		}
 	}
@@ -367,31 +368,34 @@ func verifyClosedPublicAccounting(baseline, applied, replay generation.SemanticP
 	return nil
 }
 
-func verifyPublicCases(root string) ([]publicCase, map[string]int, int, error) {
-	ids := []string{"CERTIFICATE_HIT", "CERTIFICATE_REPLAY", "MISSING_CERTIFICATE", "MISSING_AUTHORIZATION", "STALE_INPUT", "MISMATCHED_CERTIFICATE"}
-	directories := []string{"certificate-hit", "certificate-replay", "missing-certificate", "missing-authorization", "stale-input", "mismatched-certificate"}
-	want := map[string]struct{ decision, reason string }{
-		"CERTIFICATE_HIT": {"CLOSED", generation.SemanticPublicGenerationHitReason}, "CERTIFICATE_REPLAY": {"CLOSED", generation.SemanticPublicGenerationHitReason},
-		"MISSING_CERTIFICATE": {"UNKNOWN", generation.SemanticRetentionUnknownCertificateReason}, "MISSING_AUTHORIZATION": {"UNKNOWN", generation.SemanticRetentionUnknownAuthorizationReason},
-		"STALE_INPUT": {generation.SemanticRetentionRefuted, generation.SemanticRetentionRefutedReason}, "MISMATCHED_CERTIFICATE": {generation.SemanticRetentionRefuted, generation.SemanticRetentionRefutedReason},
+func verifyPublicCases(root string, contract []byte) ([]publicCase, map[string]int, int, error) {
+	ids, decisions, err := independentPublicDecisionRows(contract)
+	if err != nil {
+		return nil, nil, 0, err
+	}
+	directories := map[string]string{
+		"CERTIFICATE_HIT": "certificate-hit", "CERTIFICATE_REPLAY": "certificate-replay",
+		"MISSING_CERTIFICATE": "missing-certificate", "MISSING_AUTHORIZATION": "missing-authorization",
+		"STALE_INPUT": "stale-input", "MISMATCHED_CERTIFICATE": "mismatched-certificate",
 	}
 	counts := map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}
 	results := make([]publicCase, 0, len(ids))
 	total := 0
-	for index, id := range ids {
-		report, err := readReport(filepath.Join(root, directories[index]))
+	for _, id := range ids {
+		report, err := readReport(filepath.Join(root, directories[id]))
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("case %s: %w", id, err)
 		}
-		expected := want[id]
-		if report.Decision != expected.decision || report.Reason != expected.reason {
-			return nil, nil, 0, fmt.Errorf("case %s = %s/%s, want %s/%s", id, report.Decision, report.Reason, expected.decision, expected.reason)
+		expectedDecision := decisions[id]
+		expectedReason := publicDecisionReason(id, expectedDecision)
+		if report.Decision != expectedDecision || report.Reason != expectedReason {
+			return nil, nil, 0, fmt.Errorf("case %s = %s/%s, want %s/%s", id, report.Decision, report.Reason, expectedDecision, expectedReason)
 		}
-		artifacts := directoryFileCount(filepath.Join(root, directories[index]))
+		caseDirectory := filepath.Join(root, directories[id])
+		artifacts := directoryFileCount(caseDirectory)
 		if artifacts != expectedArtifacts(report.Decision) {
 			return nil, nil, 0, fmt.Errorf("case %s artifacts = %d", id, artifacts)
 		}
-		caseDirectory := filepath.Join(root, directories[index])
 		if report.OutputFileCount != artifacts || report.OutputBytes != directoryFileBytes(caseDirectory) {
 			return nil, nil, 0, fmt.Errorf("case %s output accounting is not exact", id)
 		}
@@ -407,6 +411,63 @@ func verifyPublicCases(root string) ([]publicCase, map[string]int, int, error) {
 		results = append(results, publicCase{ID: id, Decision: report.Decision, Reason: report.Reason, Artifacts: artifacts})
 	}
 	return results, counts, total, nil
+}
+
+func independentPublicDecisionRows(contract []byte) ([]string, map[string]string, error) {
+	file, diagnostics := syntax.ParseFileWithEntityFieldsSupport("contract.gooo", string(contract), syntax.EntityFieldsV1Support())
+	if diagnostics.HasErrors() {
+		return nil, nil, errors.New("independent public decision policy parsing failed")
+	}
+	ir, err := bidir.LowerContextWithEntityFieldsSupport(context.Background(), file, syntax.EntityFieldsV1Support())
+	if err != nil {
+		return nil, nil, fmt.Errorf("independent public decision policy lowering failed: %w", err)
+	}
+	decisions := make(map[string]string, generation.SemanticRetentionCaseDenominator)
+	ids := make([]string, 0, generation.SemanticRetentionCaseDenominator)
+	activityCount := 0
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind != semantic.Activity || node.Name != retentionpolicy.PolicyActivity {
+			continue
+		}
+		activityCount++
+		for _, part := range strings.Split(node.ValueProgram, ";") {
+			if !strings.HasPrefix(part, "retention-case=") {
+				continue
+			}
+			id, decision, ok := strings.Cut(strings.TrimPrefix(part, "retention-case="), ":")
+			if !ok || id == "" || decision == "" || decisions[id] != "" {
+				return nil, nil, fmt.Errorf("independent public decision row %q is malformed or duplicated", part)
+			}
+			decisions[id] = decision
+			ids = append(ids, id)
+		}
+	}
+	expected := generation.SemanticRetentionCaseIDs()
+	if activityCount != 1 || len(ids) != len(expected) {
+		return nil, nil, fmt.Errorf("independent public policy activities/rows = %d/%d, want 1/%d", activityCount, len(ids), len(expected))
+	}
+	for index, id := range expected {
+		if ids[index] != id || (decisions[id] != "CLOSED" && decisions[id] != "UNKNOWN" && decisions[id] != "REFUTED") {
+			return nil, nil, fmt.Errorf("independent public decision row %d is not fixed-policy compliant", index+1)
+		}
+	}
+	return ids, decisions, nil
+}
+
+func publicDecisionReason(caseID, decision string) string {
+	switch decision {
+	case "CLOSED":
+		return generation.SemanticPublicGenerationHitReason
+	case "UNKNOWN":
+		if caseID == retentionpolicy.CaseMissingAuthorization {
+			return generation.SemanticRetentionUnknownAuthorizationReason
+		}
+		return generation.SemanticRetentionUnknownCertificateReason
+	case "REFUTED":
+		return generation.SemanticRetentionRefutedReason
+	default:
+		return ""
+	}
 }
 
 func expectedArtifacts(decision string) int {

@@ -162,7 +162,7 @@ func buildRetentionCertificate(context retentionCertifyContext, normalizedDigest
 		ContractSourceDigest: bindings.ContractSourceDigest, InputSourceDigest: bindings.InputSourceDigest,
 		NormalizedIRDigest: normalizedDigest, GeneratedOutputDigest: outputDigest,
 		CompilerDigest: bindings.CompilerDigest, ToolchainDigest: bindings.ToolchainDigest,
-		VerifierDigest: bindings.VerifierDigest, PolicyDigest: bindings.PolicyDigest,
+		VerifierDigest: bindings.VerifierDigest, PolicyDigest: bindings.PolicyDigest, EvaluatorDigest: bindings.EvaluatorDigest,
 		GeneratedSource: append([]byte(nil), source...), GeneratedManifest: append([]byte(nil), manifest...),
 		GeneratedManifestDigest: cache.HashBytes(manifest).String(), RepositoryWrites: 0, LocalTestExecutions: 0,
 	}

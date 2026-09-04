@@ -10,10 +10,13 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
+	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
@@ -46,6 +49,87 @@ type retainedLoopReport struct {
 	Cases                    []retainedScenario                         `json:"cases"`
 	RepositoryWrites         int                                        `json:"repository_writes"`
 	LocalTestExecutions      int                                        `json:"local_test_executions"`
+	PolicyActivitiesExpected int                                        `json:"policy_activities_expected"`
+	PolicyActivitiesObserved int                                        `json:"policy_activities_observed"`
+	PolicyDecisionRows       int                                        `json:"policy_decision_rows"`
+	GeneratedEvaluatorDigest string                                     `json:"generated_evaluator_digest"`
+	GeneratedEvaluatorCases  int                                        `json:"generated_evaluator_cases_bound"`
+	UnboundCases             int                                        `json:"unbound_cases"`
+	DuplicateCases           int                                        `json:"duplicate_cases"`
+	RegenerationMismatches   int                                        `json:"regeneration_byte_mismatches"`
+}
+
+type sourceRetentionPolicy struct {
+	ActivityCount  int
+	Cases          []string
+	Decisions      map[string]string
+	UnboundCases   int
+	DuplicateCases int
+}
+
+// deriveRetentionPolicy is deliberately independent of the generated
+// evaluator: it lowers the raw .gooo graph and reads the decision rows from
+// the PublishOperationReceipt activity as the verifier's expectation.
+func deriveRetentionPolicy(filename string, source []byte) (sourceRetentionPolicy, error) {
+	file, diagnostics := syntax.ParseFile(filename, string(source))
+	if diagnostics.HasErrors() {
+		return sourceRetentionPolicy{}, fmt.Errorf("independent retention policy parse: %w", diagnostics.Error())
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		return sourceRetentionPolicy{}, fmt.Errorf("independent retention policy lowering: %w", err)
+	}
+	policy := sourceRetentionPolicy{Decisions: make(map[string]string)}
+	for _, node := range ir.Graph.Nodes() {
+		if node.Kind != semantic.Activity || node.Name != retentionpolicy.PolicyActivity {
+			continue
+		}
+		policy.ActivityCount++
+		seenHeader := false
+		for _, part := range strings.Split(node.ValueProgram, ";") {
+			switch {
+			case part == retentionpolicy.RetentionDecisionHead:
+				if seenHeader {
+					return sourceRetentionPolicy{}, errors.New("independent retention policy header is duplicated")
+				}
+				seenHeader = true
+			case strings.HasPrefix(part, "retention-case="):
+				id, decision, ok := strings.Cut(strings.TrimPrefix(part, "retention-case="), ":")
+				if !ok || id == "" || decision == "" {
+					return sourceRetentionPolicy{}, fmt.Errorf("independent retention row %q is malformed", part)
+				}
+				if _, exists := policy.Decisions[id]; exists {
+					policy.DuplicateCases++
+					continue
+				}
+				policy.Decisions[id] = decision
+				policy.Cases = append(policy.Cases, id)
+			}
+		}
+		if !seenHeader {
+			return sourceRetentionPolicy{}, errors.New("independent retention policy header is missing")
+		}
+	}
+	if policy.ActivityCount != 1 {
+		return sourceRetentionPolicy{}, fmt.Errorf("independent retention policy activities = %d, want 1", policy.ActivityCount)
+	}
+	expectedIDs := generation.SemanticRetentionCaseIDs()
+	if len(policy.Cases) != len(expectedIDs) {
+		policy.UnboundCases = len(expectedIDs) - len(policy.Cases)
+		if policy.UnboundCases < 0 {
+			policy.UnboundCases = 0
+		}
+		return policy, fmt.Errorf("independent retention decision rows = %d, want %d", len(policy.Cases), len(expectedIDs))
+	}
+	for index, id := range expectedIDs {
+		if policy.Cases[index] != id {
+			return sourceRetentionPolicy{}, fmt.Errorf("independent retention row %d = %q, want %q", index+1, policy.Cases[index], id)
+		}
+		if decision := policy.Decisions[id]; decision != "CLOSED" && decision != "UNKNOWN" && decision != "REFUTED" {
+			return sourceRetentionPolicy{}, fmt.Errorf("independent retention decision %q is outside the fixed set", decision)
+		}
+	}
+	return policy, nil
 }
 
 func main() {
@@ -81,6 +165,26 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 	contract, err := os.ReadFile(contractPath)
 	if err != nil {
 		return fmt.Errorf("read contract: %w", err)
+	}
+	sourcePolicy, err := deriveRetentionPolicy(contractPath, contract)
+	if err != nil {
+		return err
+	}
+	generatedPolicy, generatedEvaluator, err := retentionpolicy.GenerateNamed(contractPath, contract)
+	if err != nil {
+		return fmt.Errorf("generate retention evaluator: %w", err)
+	}
+	checkedInEvaluator, err := os.ReadFile("internal/meta/retentionpolicy/generated/evaluator.go")
+	if err != nil {
+		return fmt.Errorf("read checked-in retention evaluator: %w", err)
+	}
+	regenerationMismatches := 0
+	if !bytes.Equal(generatedEvaluator, checkedInEvaluator) {
+		regenerationMismatches = 1
+	}
+	if generatedPolicy.EvaluatorDigest != retentionpolicy.GeneratedEvaluatorDigest() ||
+		!reflect.DeepEqual(sourcePolicy.Cases, retentionpolicy.GeneratedEvaluatorCaseIDs()) {
+		return errors.New("generated retention evaluator is not bound to the independently lowered policy")
 	}
 	input, err := os.ReadFile(inputPath)
 	if err != nil {
@@ -159,9 +263,13 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 		ToolchainDigest:      generation.SemanticRetentionToolchainDigest(),
 		VerifierDigest:       verifierDigest,
 		PolicyDigest:         cache.HashBytes(contract).String(),
+		EvaluatorDigest:      retentionpolicy.GeneratedEvaluatorDigest(),
 	}
 	if err := generation.VerifySemanticRetentionCertificate(certificate, bindings); err != nil {
 		return fmt.Errorf("independent certificate verification: %w", err)
+	}
+	if certificate.EvaluatorDigest != generatedPolicy.EvaluatorDigest {
+		return errors.New("retained certificate evaluator digest is not bound to regenerated policy")
 	}
 	if certificate.GeneratedOutputDigest != adoption.Evidence.BeforeOutputDigest || certificate.NormalizedIRDigest != adoption.Evidence.BeforeSemanticDigest {
 		return errors.New("retained certificate is not bound to the independently verified adoption result")
@@ -206,10 +314,10 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 	counts := map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}
 	scenarios := make([]retainedScenario, 0, generation.SemanticRetentionCaseDenominator)
 	totalArtifacts := 0
-	for _, caseID := range generation.SemanticRetentionCaseIDs() {
+	for _, caseID := range sourcePolicy.Cases {
 		result := caseResults[caseID]
-		expectedDecision, ok := generation.SemanticRetentionCaseDecision(caseID)
-		if !ok {
+		expectedDecision, ok := sourcePolicy.Decisions[caseID]
+		if !ok || expectedDecision == "" {
 			return fmt.Errorf("unknown retained case %q", caseID)
 		}
 		if err := verifyCaseResult(caseID, expectedDecision, result); err != nil {
@@ -250,6 +358,11 @@ func run(contractPath, inputPath, observationPath, proposalPath, authorizationPa
 		GeneratedBytesEqual: generatedBytesEqual, NormalizedSemanticEqual: normalizedSemanticEqual,
 		Comparable: comparable, SuperiorityClaim: false, NoSuperiorityClaim: true, Cases: scenarios,
 		RepositoryWrites: 0, LocalTestExecutions: 0,
+		PolicyActivitiesExpected: 1, PolicyActivitiesObserved: sourcePolicy.ActivityCount,
+		PolicyDecisionRows: len(sourcePolicy.Cases), GeneratedEvaluatorDigest: generatedPolicy.EvaluatorDigest,
+		GeneratedEvaluatorCases: len(retentionpolicy.GeneratedEvaluatorCaseIDs()),
+		UnboundCases:            sourcePolicy.UnboundCases, DuplicateCases: sourcePolicy.DuplicateCases,
+		RegenerationMismatches: regenerationMismatches,
 	}
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {

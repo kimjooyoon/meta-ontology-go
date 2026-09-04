@@ -16,6 +16,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 )
 
 type retentionEvidenceOptions struct {
@@ -175,6 +176,7 @@ func retentionBindings(inputs observationInputs, evidence retentionEvidence, com
 		ToolchainDigest:      generation.SemanticRetentionToolchainDigest(),
 		VerifierDigest:       verifierDigest,
 		PolicyDigest:         contractDigest,
+		EvaluatorDigest:      retentionpolicy.GeneratedEvaluatorDigest(),
 	}
 }
 
@@ -192,6 +194,7 @@ func retentionResultBase(inputs observationInputs, evidence retentionEvidence, c
 		ToolchainDigest:      generation.SemanticRetentionToolchainDigest(),
 		VerifierDigest:       verifierDigest,
 		PolicyDigest:         cache.HashBytes(inputs.contractSource).String(),
+		EvaluatorDigest:      retentionpolicy.GeneratedEvaluatorDigest(),
 		RepositoryWrites:     0,
 		LocalTestExecutions:  0,
 	}
@@ -201,7 +204,10 @@ func retentionResultBase(inputs observationInputs, evidence retentionEvidence, c
 	return result
 }
 
-func retentionUnknownResult(base generation.SemanticRetentionResult, reason, lifecycle string) generation.SemanticRetentionResult {
+func retentionUnknownResult(base generation.SemanticRetentionResult, caseID, reason, lifecycle string) generation.SemanticRetentionResult {
+	if !retentionDecisionAllowed(caseID, retentionpolicy.DecisionUnknown) {
+		return retentionRefutedResult(base, retentionpolicy.CaseMismatchedCertificate, "")
+	}
 	base.Lifecycle = lifecycle
 	base.Decision = "UNKNOWN"
 	base.Reason = reason
@@ -210,7 +216,10 @@ func retentionUnknownResult(base generation.SemanticRetentionResult, reason, lif
 	return base
 }
 
-func retentionRefutedResult(base generation.SemanticRetentionResult, certificateDigest string) generation.SemanticRetentionResult {
+func retentionRefutedResult(base generation.SemanticRetentionResult, caseID, certificateDigest string) generation.SemanticRetentionResult {
+	if !retentionDecisionAllowed(caseID, retentionpolicy.DecisionRefuted) {
+		return retentionUnknownResult(base, retentionpolicy.CaseMissingCertificate, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED")
+	}
 	base.Decision = generation.SemanticRetentionRefuted
 	base.Reason = generation.SemanticRetentionRefutedReason
 	base.Unknown = nil

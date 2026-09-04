@@ -14,6 +14,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -21,6 +22,7 @@ import (
 type publicRetentionContext struct {
 	inputs         observationInputs
 	evidence       retentionEvidence
+	policy         retentionpolicy.Policy
 	compilerDigest string
 	verifierDigest string
 }
@@ -37,30 +39,30 @@ func runPublicGenerate(options generateOptions, input generateInput, reader Sour
 	if err != nil {
 		var bindingError retentionInputBindingError
 		if errors.As(err, &bindingError) && retainedContext.inputs.inputSource != nil {
-			return writePublicRefuted(options, retainedContext, "", started, jsonMode, stdout, stderr)
+			return writePublicRefuted(options, retainedContext, retentionpolicy.CaseStaleInput, "", started, jsonMode, stdout, stderr)
 		}
 		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
 		return exitFailure
 	}
 	if len(retainedContext.evidence.authorizationData) == 0 || !retainedContext.evidence.authorization.Authorized {
-		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownAuthorizationReason, started, jsonMode, stdout, stderr)
+		return writePublicUnknown(options, retainedContext, retentionpolicy.CaseMissingAuthorization, generation.SemanticRetentionUnknownAuthorizationReason, started, jsonMode, stdout, stderr)
 	}
 	if options.retainedCertificateFilename == "" {
-		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
+		return writePublicUnknown(options, retainedContext, retentionpolicy.CaseMissingCertificate, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
 	}
 	certificateData, err := reader.ReadFile(options.retainedCertificateFilename)
 	if err != nil {
-		return writePublicUnknown(options, retainedContext, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
+		return writePublicUnknown(options, retainedContext, retentionpolicy.CaseMissingCertificate, generation.SemanticRetentionUnknownCertificateReason, started, jsonMode, stdout, stderr)
 	}
 	certificateDigest := cache.HashBytes(certificateData).String()
 	var certificate generation.SemanticRetentionCertificate
 	if err := json.Unmarshal(certificateData, &certificate); err != nil {
-		return writePublicRefuted(options, retainedContext, certificateDigest, started, jsonMode, stdout, stderr)
+		return writePublicRefuted(options, retainedContext, retentionpolicy.CaseMismatchedCertificate, certificateDigest, started, jsonMode, stdout, stderr)
 	}
 	if options.previousGo != "" || !publicCertificateMatches(certificate, retainedContext) {
-		return writePublicRefuted(options, retainedContext, certificateDigest, started, jsonMode, stdout, stderr)
+		return writePublicRefuted(options, retainedContext, retentionpolicy.CaseMismatchedCertificate, certificateDigest, started, jsonMode, stdout, stderr)
 	}
-	return writePublicCertificate(options, retainedContext, certificate, certificateDigest, started, jsonMode, stdout, stderr)
+	return writePublicCertificate(options, retainedContext, retentionpolicy.CaseCertificateHit, certificate, certificateDigest, started, jsonMode, stdout, stderr)
 }
 
 func loadPublicRetentionContext(options generateOptions, input generateInput, reader SourceReader, parser SourceParser, deadline time.Time) (publicRetentionContext, error) {
@@ -74,6 +76,10 @@ func loadPublicRetentionContext(options generateOptions, input generateInput, re
 	contract, err := generation.ParseSemanticObservationContract(contractSource)
 	if err != nil {
 		return publicRetentionContext{}, fmt.Errorf("retention contract: %w", err)
+	}
+	policy, err := retentionpolicy.Load(options.retentionContractFilename, contractSource)
+	if err != nil {
+		return publicRetentionContext{}, fmt.Errorf("retention decision policy: %w", err)
 	}
 	contractFile, diagnostics, err := parseWithDeadline(parser, options.retentionContractFilename, string(contractSource), remainingDeadline(deadline))
 	if err != nil {
@@ -101,7 +107,7 @@ func loadPublicRetentionContext(options generateOptions, input generateInput, re
 	if err != nil {
 		return publicRetentionContext{}, fmt.Errorf("verifier binding: %w", err)
 	}
-	retainedContext := publicRetentionContext{inputs: inputs, evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest}
+	retainedContext := publicRetentionContext{inputs: inputs, evidence: evidence, policy: policy, compilerDigest: compilerDigest, verifierDigest: verifierDigest}
 	if err := validateRetentionEvidence(inputs, evidence); err != nil {
 		return retainedContext, err
 	}
@@ -136,7 +142,11 @@ func publicCertificateMatches(certificate generation.SemanticRetentionCertificat
 	return generation.VerifySemanticRetentionCertificate(certificate, expected) == nil
 }
 
-func writePublicCertificate(options generateOptions, retainedContext publicRetentionContext, certificate generation.SemanticRetentionCertificate, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+func writePublicCertificate(options generateOptions, retainedContext publicRetentionContext, caseID string, certificate generation.SemanticRetentionCertificate, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+	if !retentionDecisionAllowed(caseID, retentionpolicy.DecisionClosed) {
+		fmt.Fprintf(stderr, "gooo: generated retention policy rejected %s as CLOSED\n", caseID)
+		return exitFailure
+	}
 	output, manifest, err := publicGeneratePaths(options)
 	if err != nil {
 		fmt.Fprintf(stderr, "gooo: generate retained knowledge: %v\n", err)
@@ -147,7 +157,11 @@ func writePublicCertificate(options generateOptions, retainedContext publicReten
 	return writePublicReportAndArtifacts(options.outputDir, writes, report, started, jsonMode, stdout, stderr)
 }
 
-func writePublicUnknown(options generateOptions, retainedContext publicRetentionContext, reason string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+func writePublicUnknown(options generateOptions, retainedContext publicRetentionContext, caseID, reason string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+	if !retentionDecisionAllowed(caseID, retentionpolicy.DecisionUnknown) {
+		fmt.Fprintf(stderr, "gooo: generated retention policy rejected %s as UNKNOWN\n", caseID)
+		return exitFailure
+	}
 	report := publicReportBase(retainedContext)
 	report.Lifecycle = generation.SemanticPublicGenerationFailClosed
 	report.Decision = "UNKNOWN"
@@ -156,7 +170,11 @@ func writePublicUnknown(options generateOptions, retainedContext publicRetention
 	return writePublicReportAndArtifacts(options.outputDir, nil, report, started, jsonMode, stdout, stderr)
 }
 
-func writePublicRefuted(options generateOptions, retainedContext publicRetentionContext, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+func writePublicRefuted(options generateOptions, retainedContext publicRetentionContext, caseID, certificateDigest string, started time.Time, jsonMode bool, stdout, stderr io.Writer) int {
+	if !retentionDecisionAllowed(caseID, retentionpolicy.DecisionRefuted) {
+		fmt.Fprintf(stderr, "gooo: generated retention policy rejected %s as REFUTED\n", caseID)
+		return exitFailure
+	}
 	report := publicReportBase(retainedContext)
 	report.Lifecycle = generation.SemanticPublicGenerationFailClosed
 	report.Decision = generation.SemanticRetentionRefuted
@@ -164,6 +182,11 @@ func writePublicRefuted(options generateOptions, retainedContext publicRetention
 	report.CertificateDigest = certificateDigest
 	report.Metrics.CertificateMisses = 1
 	return writePublicReportAndArtifacts(options.outputDir, nil, report, started, jsonMode, stdout, stderr)
+}
+
+func retentionDecisionAllowed(caseID, expected string) bool {
+	decision, ok := retentionpolicy.Evaluate(caseID)
+	return ok && decision == expected
 }
 
 func publicReportBase(retainedContext publicRetentionContext) generation.SemanticPublicGenerationReport {
@@ -174,7 +197,7 @@ func publicReportBase(retainedContext publicRetentionContext) generation.Semanti
 		AuthorizationDigest: bindings.AuthorizationDigest, CandidateStableID: bindings.CandidateStableID,
 		ContractSourceDigest: bindings.ContractSourceDigest, InputSourceDigest: bindings.InputSourceDigest,
 		CompilerDigest: bindings.CompilerDigest, ToolchainDigest: bindings.ToolchainDigest,
-		VerifierDigest: bindings.VerifierDigest, PolicyDigest: bindings.PolicyDigest,
+		VerifierDigest: bindings.VerifierDigest, PolicyDigest: bindings.PolicyDigest, EvaluatorDigest: bindings.EvaluatorDigest,
 		RepositoryWrites: 0, LocalTestExecutions: 0,
 	}
 }

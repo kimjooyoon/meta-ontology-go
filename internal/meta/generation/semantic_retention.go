@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 )
 
 const (
@@ -60,6 +61,8 @@ var semanticRetentionCompilerManifestPaths = [...]string{
 	"cmd/gooo/self_retention_helpers_part01.go",
 	"internal/meta/generation/semantic_public_generation.go",
 	"internal/meta/generation/semantic_retention.go",
+	"internal/meta/retentionpolicy/policy.go",
+	"internal/meta/retentionpolicy/generated/evaluator.go",
 }
 
 var semanticRetentionVerifierManifestPaths = [...]string{
@@ -76,16 +79,7 @@ func SemanticRetentionCaseIDs() []string {
 }
 
 func SemanticRetentionCaseDecision(caseID string) (string, bool) {
-	switch caseID {
-	case "CERTIFICATE_HIT", "CERTIFICATE_REPLAY":
-		return "CLOSED", true
-	case "MISSING_CERTIFICATE", "MISSING_AUTHORIZATION":
-		return "UNKNOWN", true
-	case "STALE_INPUT", "MISMATCHED_CERTIFICATE":
-		return SemanticRetentionRefuted, true
-	default:
-		return "", false
-	}
+	return retentionpolicy.Evaluate(caseID)
 }
 
 // SemanticRetentionCertificate is an immutable, caller-owned result of an
@@ -109,6 +103,7 @@ type SemanticRetentionCertificate struct {
 	ToolchainDigest         string `json:"toolchain_digest"`
 	VerifierDigest          string `json:"verifier_digest"`
 	PolicyDigest            string `json:"policy_digest"`
+	EvaluatorDigest         string `json:"evaluator_digest"`
 	GeneratedSource         []byte `json:"generated_source"`
 	GeneratedManifest       []byte `json:"generated_manifest"`
 	GeneratedManifestDigest string `json:"generated_manifest_digest"`
@@ -139,7 +134,7 @@ func ValidateSemanticRetentionCertificate(certificate SemanticRetentionCertifica
 		certificate.AdoptionReportDigest, certificate.ObservationDigest, certificate.ProposalDigest,
 		certificate.AuthorizationDigest, certificate.ContractSourceDigest, certificate.InputSourceDigest,
 		certificate.NormalizedIRDigest, certificate.GeneratedOutputDigest, certificate.CompilerDigest,
-		certificate.ToolchainDigest, certificate.VerifierDigest, certificate.PolicyDigest,
+		certificate.ToolchainDigest, certificate.VerifierDigest, certificate.PolicyDigest, certificate.EvaluatorDigest,
 	} {
 		if !cache.Digest(value).Known() {
 			return errors.New("semantic retention certificate contains unknown digest evidence")
@@ -177,6 +172,7 @@ type SemanticRetentionBindings struct {
 	ToolchainDigest      string
 	VerifierDigest       string
 	PolicyDigest         string
+	EvaluatorDigest      string
 }
 
 func VerifySemanticRetentionCertificate(certificate SemanticRetentionCertificate, expected SemanticRetentionBindings) error {
@@ -188,12 +184,14 @@ func VerifySemanticRetentionCertificate(certificate SemanticRetentionCertificate
 		certificate.AuthorizationDigest, certificate.CandidateStableID, certificate.ContractSourceDigest,
 		certificate.InputSourceDigest, certificate.NormalizedIRDigest, certificate.CompilerDigest,
 		certificate.ToolchainDigest, certificate.VerifierDigest, certificate.PolicyDigest,
+		certificate.EvaluatorDigest,
 	}
 	want := []string{
 		expected.AdoptionReportDigest, expected.ObservationDigest, expected.ProposalDigest,
 		expected.AuthorizationDigest, expected.CandidateStableID, expected.ContractSourceDigest,
 		expected.InputSourceDigest, expected.NormalizedIRDigest, expected.CompilerDigest,
 		expected.ToolchainDigest, expected.VerifierDigest, expected.PolicyDigest,
+		expected.EvaluatorDigest,
 	}
 	for index := range actual {
 		if actual[index] != want[index] {
@@ -245,6 +243,7 @@ type SemanticRetentionResult struct {
 	ToolchainDigest       string                          `json:"toolchain_digest"`
 	VerifierDigest        string                          `json:"verifier_digest"`
 	PolicyDigest          string                          `json:"policy_digest"`
+	EvaluatorDigest       string                          `json:"evaluator_digest"`
 	GeneratedSource       []byte                          `json:"generated_source"`
 	Metrics               SemanticRetentionRuntimeMetrics `json:"metrics"`
 	RepositoryWrites      int                             `json:"repository_writes"`
@@ -279,6 +278,7 @@ func ValidateSemanticRetentionResult(result SemanticRetentionResult) error {
 		result.CandidateStableID == "" || !cache.Digest(result.AdoptionReportDigest).Known() ||
 		!cache.Digest(result.ObservationDigest).Known() || !cache.Digest(result.ProposalDigest).Known() ||
 		!cache.Digest(result.ContractSourceDigest).Known() || !cache.Digest(result.InputSourceDigest).Known() ||
+		!cache.Digest(result.EvaluatorDigest).Known() ||
 		result.RepositoryWrites != 0 || result.LocalTestExecutions != 0 {
 		return errors.New("semantic retention result is invalid")
 	}

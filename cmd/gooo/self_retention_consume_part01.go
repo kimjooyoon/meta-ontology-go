@@ -9,6 +9,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/retentionpolicy"
 )
 
 const retentionConsumeUsage = "usage: gooo consume <observation.gooo> --input <file.gooo> --observation FILE --proposal FILE --adoption FILE [--authorization FILE] [--certificate FILE] [--baseline FILE] --out <directory>"
@@ -46,35 +47,39 @@ func runRetentionConsume(args []string, reader SourceReader, parser SourceParser
 	}
 	if err := validateRetentionEvidence(inputs, context.evidence); err != nil {
 		if _, isBindingMismatch := err.(retentionInputBindingError); isBindingMismatch {
-			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, ""), stdout, stderr)
+			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseStaleInput, ""), stdout, stderr)
 		}
 		fmt.Fprintf(stderr, "gooo: retention consume: %v\n", err)
 		return exitFailure
 	}
 	if options.authorizationFilename == "" {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, retentionpolicy.CaseMissingAuthorization, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
 	}
 	if !context.evidence.authorization.Authorized {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, retentionpolicy.CaseMissingAuthorization, generation.SemanticRetentionUnknownAuthorizationReason, "AUTHORIZATION_REQUIRED"), stdout, stderr)
 	}
 	if err := validateRetentionAuthorization(context.evidence); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, ""), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseMismatchedCertificate, ""), stdout, stderr)
 	}
 	if options.certificateFilename == "" {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, retentionpolicy.CaseMissingCertificate, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
 	}
 	certificateData, err := reader.ReadFile(options.certificateFilename)
 	if err != nil {
-		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionUnknownResult(context.base, retentionpolicy.CaseMissingCertificate, generation.SemanticRetentionUnknownCertificateReason, "CERTIFICATE_REQUIRED"), stdout, stderr)
 	}
 	certificateDigest := cache.HashBytes(certificateData).String()
 	var certificate generation.SemanticRetentionCertificate
 	if err := json.Unmarshal(certificateData, &certificate); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseMismatchedCertificate, certificateDigest), stdout, stderr)
 	}
 	expected := retentionBindings(inputs, context.evidence, context.compilerDigest, context.verifierDigest)
 	if err := generation.VerifySemanticRetentionCertificate(certificate, expected); err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseMismatchedCertificate, certificateDigest), stdout, stderr)
+	}
+	if !retentionDecisionAllowed(retentionpolicy.CaseCertificateHit, retentionpolicy.DecisionClosed) {
+		fmt.Fprintln(stderr, "gooo: generated retention policy rejected CERTIFICATE_HIT as CLOSED")
+		return exitFailure
 	}
 	return consumeRetentionCertificate(options, context, certificate, certificateDigest, reader, stdout, stderr)
 }
@@ -102,6 +107,9 @@ func prepareRetentionConsume(inputs observationInputs, options retentionConsumeO
 	if err != nil {
 		return retentionConsumeContext{}, fmt.Errorf("verifier binding: %w", err)
 	}
+	if _, err := retentionpolicy.Load(options.contractFilename, inputs.contractSource); err != nil {
+		return retentionConsumeContext{}, fmt.Errorf("retention decision policy: %w", err)
+	}
 	return retentionConsumeContext{evidence: evidence, compilerDigest: compilerDigest, verifierDigest: verifierDigest,
 		base: retentionResultBase(inputs, evidence, compilerDigest, verifierDigest)}, nil
 }
@@ -113,7 +121,7 @@ func consumeRetentionCertificate(options retentionConsumeOptions, context retent
 	runtime.ReadMemStats(&beforeMem)
 	baseline, err := readRetentionBaseline(options.baselineFilename, reader)
 	if err != nil {
-		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
+		return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseMismatchedCertificate, certificateDigest), stdout, stderr)
 	}
 	bytesEqual := false
 	semanticEqual := false
@@ -123,7 +131,7 @@ func consumeRetentionCertificate(options retentionConsumeOptions, context retent
 		if baseline.Decision != "CLOSED" || baseline.Reason != generation.SemanticRetentionCertifiedReason ||
 			baseline.CertificateDigest != certificateDigest || baseline.Metrics.SemanticOperationCount != 1 || baseline.Metrics.CertificateMisses != 1 ||
 			!bytesEqual || !semanticEqual {
-			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, certificateDigest), stdout, stderr)
+			return writeRetentionResult(options.outputDir, retentionRefutedResult(context.base, retentionpolicy.CaseMismatchedCertificate, certificateDigest), stdout, stderr)
 		}
 	}
 	runtime.ReadMemStats(&afterMem)
