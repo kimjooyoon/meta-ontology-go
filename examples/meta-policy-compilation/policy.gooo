@@ -2,38 +2,162 @@ package metapolicycompilation
 namespace metapolicycompilation
 
 policy DecisionReduction id "gooo://meta-policy-compilation/policy/v4" {
-    state "UNRECOGNIZED_TOP_LEVEL_DECISION" state "SOURCE_DIGEST_MISMATCH" state "ARTIFACT_SOURCE_MISMATCH"
-    state "INDEPENDENT_SOURCE_MISMATCH" state "EVIDENCE_UNAVAILABLE" state "DIGEST_UNAVAILABLE"
-    state "MALFORMED_DIGEST" state "SEMANTIC_EQUIVALENCE" state "PASS"
-    state "FAIL_CLOSED" state "UNKNOWN"
+    state "UNRECOGNIZED_TOP_LEVEL_DECISION"
+    state "SOURCE_DIGEST_MISMATCH"
+    state "ARTIFACT_SOURCE_MISMATCH"
+    state "INDEPENDENT_SOURCE_MISMATCH"
+    state "EVIDENCE_UNAVAILABLE"
+    state "DIGEST_UNAVAILABLE"
+    state "MALFORMED_DIGEST"
+    state "SEMANTIC_EQUIVALENCE"
+    state "PASS"
+    state "FAIL_CLOSED"
+    state "UNKNOWN"
 
-    transition "UNRECOGNIZED_TOP_LEVEL_DECISION" -> "FAIL_CLOSED" transition "SOURCE_DIGEST_MISMATCH" -> "FAIL_CLOSED"
-    transition "ARTIFACT_SOURCE_MISMATCH" -> "FAIL_CLOSED" transition "INDEPENDENT_SOURCE_MISMATCH" -> "FAIL_CLOSED"
-    transition "EVIDENCE_UNAVAILABLE" -> "UNKNOWN" transition "DIGEST_UNAVAILABLE" -> "UNKNOWN"
-    transition "MALFORMED_DIGEST" -> "UNKNOWN" transition "SEMANTIC_EQUIVALENCE" -> "PASS"
+    transition "UNRECOGNIZED_TOP_LEVEL_DECISION" -> "FAIL_CLOSED"
+    transition "SOURCE_DIGEST_MISMATCH" -> "FAIL_CLOSED"
+    transition "ARTIFACT_SOURCE_MISMATCH" -> "FAIL_CLOSED"
+    transition "INDEPENDENT_SOURCE_MISMATCH" -> "FAIL_CLOSED"
+    transition "EVIDENCE_UNAVAILABLE" -> "UNKNOWN"
+    transition "DIGEST_UNAVAILABLE" -> "UNKNOWN"
+    transition "MALFORMED_DIGEST" -> "UNKNOWN"
+    transition "SEMANTIC_EQUIVALENCE" -> "PASS"
 
-    case "UNRECOGNIZED_TOP_LEVEL_DECISION" { evidence "upper_decision" "unrecognized"
-        resolution { decision "FAIL_CLOSED" stage "META_OPERATION" step "8" reason "LINEAGE_BOUND" decision_stage "REDUCE" decision_step "7" decision_reason "FEEDBACK_COVERAGE_DECISION_UNKNOWN" role "CONSUMER" meta_operation "bind-lineage-receipt" proof_choice "lineage-receipt" claim "lineage-seal" }
+    case "UNRECOGNIZED_TOP_LEVEL_DECISION" {
+        evidence "upper_decision" "unrecognized"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "META_OPERATION"
+            step "8"
+            reason "LINEAGE_BOUND"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+            role "CONSUMER"
+            meta_operation "bind-lineage-receipt"
+            proof_choice "lineage-receipt"
+            claim "lineage-seal"
+        }
     }
-    case "SOURCE_DIGEST_MISMATCH" { evidence "source_digest" "valid-but-different"
-        resolution { decision "FAIL_CLOSED" stage "LEDGER" step "6" reason "CLAIM_TRANSITION_RECORDED" decision_stage "REDUCE" decision_step "7" decision_reason "SOURCE_DIGEST_MISMATCH" role "META_OPERATION" meta_operation "record-claim-transition" proof_choice "append-only-ledger" claim "ledger-chain" }
+    case "SOURCE_DIGEST_MISMATCH" {
+        evidence "source_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "LEDGER"
+            step "6"
+            reason "CLAIM_TRANSITION_RECORDED"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "SOURCE_DIGEST_MISMATCH"
+            role "META_OPERATION"
+            meta_operation "record-claim-transition"
+            proof_choice "append-only-ledger"
+            claim "ledger-chain"
+        }
     }
-    case "ARTIFACT_SOURCE_MISMATCH" { evidence "artifact_source_digest" "valid-but-different"
-        resolution { decision "FAIL_CLOSED" stage "CONSUME" step "7" reason "DECISION_REDUCED" decision_stage "CONSUME" decision_step "2" decision_reason "ARTIFACT_SOURCE_MISMATCH" role "META_OPERATION" meta_operation "reduce-decision" proof_choice "fail-closed-reconciliation" claim "decision-reduction" }
+    case "ARTIFACT_SOURCE_MISMATCH" {
+        evidence "artifact_source_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "CONSUME"
+            step "7"
+            reason "DECISION_REDUCED"
+            decision_stage "CONSUME"
+            decision_step "2"
+            decision_reason "ARTIFACT_SOURCE_MISMATCH"
+            role "META_OPERATION"
+            meta_operation "reduce-decision"
+            proof_choice "fail-closed-reconciliation"
+            claim "decision-reduction"
+        }
     }
-    case "INDEPENDENT_SOURCE_MISMATCH" { evidence "independent_digest" "valid-but-different"
-        resolution { decision "FAIL_CLOSED" stage "VERIFY" step "4" reason "INDEPENDENT_VERIFIED" decision_stage "VERIFY" decision_step "4" decision_reason "INDEPENDENT_SOURCE_MISMATCH" role "CONSUMER" meta_operation "run-independent-verifier" proof_choice "independent-reexecution" claim "independent-replay" }
+    case "INDEPENDENT_SOURCE_MISMATCH" {
+        evidence "independent_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "VERIFY"
+            step "4"
+            reason "INDEPENDENT_VERIFIED"
+            decision_stage "VERIFY"
+            decision_step "4"
+            decision_reason "INDEPENDENT_SOURCE_MISMATCH"
+            role "CONSUMER"
+            meta_operation "run-independent-verifier"
+            proof_choice "independent-reexecution"
+            claim "independent-replay"
+        }
     }
-    case "EVIDENCE_UNAVAILABLE" { evidence "producer_and_consumer" "unavailable"
-        resolution { decision "UNKNOWN" stage "PRODUCE" step "1" reason "SOURCE_BOUND" decision_stage "VERIFY" decision_step "4" decision_reason "EVIDENCE_UNAVAILABLE" unknown_class "EVIDENCE_UNAVAILABLE" next_operation "collect-policy-evidence" blocked_by "producer-evidence" "consumer-evidence" role "PRODUCER" meta_operation "bind-policy-source" proof_choice "source-ir-digest" claim "source-bound" }
+    case "EVIDENCE_UNAVAILABLE" {
+        evidence "producer_and_consumer" "unavailable"
+        resolution {
+            decision "UNKNOWN"
+            stage "PRODUCE"
+            step "1"
+            reason "SOURCE_BOUND"
+            decision_stage "VERIFY"
+            decision_step "4"
+            decision_reason "EVIDENCE_UNAVAILABLE"
+            unknown_class "EVIDENCE_UNAVAILABLE"
+            next_operation "collect-policy-evidence"
+            blocked_by "producer-evidence" "consumer-evidence"
+            role "PRODUCER"
+            meta_operation "bind-policy-source"
+            proof_choice "source-ir-digest"
+            claim "source-bound"
+        }
     }
-    case "DIGEST_UNAVAILABLE" { evidence "digest_coordinates" "empty"
-        resolution { decision "UNKNOWN" stage "CONSUME" step "2" reason "ARTIFACT_BOUND" decision_stage "LOWER_RESOLUTION" decision_step "4" decision_reason "DIGEST_UNAVAILABLE" unknown_class "DIGEST_UNAVAILABLE" next_operation "collect-policy-evidence" blocked_by "producer-evidence" "consumer-evidence" role "CONSUMER" meta_operation "bind-compiled-artifact" proof_choice "artifact-source-equivalence" claim "artifact-digest-bound" }
+    case "DIGEST_UNAVAILABLE" {
+        evidence "digest_coordinates" "empty"
+        resolution {
+            decision "UNKNOWN"
+            stage "CONSUME"
+            step "2"
+            reason "ARTIFACT_BOUND"
+            decision_stage "LOWER_RESOLUTION"
+            decision_step "4"
+            decision_reason "DIGEST_UNAVAILABLE"
+            unknown_class "DIGEST_UNAVAILABLE"
+            next_operation "collect-policy-evidence"
+            blocked_by "producer-evidence" "consumer-evidence"
+            role "CONSUMER"
+            meta_operation "bind-compiled-artifact"
+            proof_choice "artifact-source-equivalence"
+            claim "artifact-digest-bound"
+        }
     }
-    case "MALFORMED_DIGEST" { evidence "digest_coordinates" "malformed"
-        resolution { decision "UNKNOWN" stage "COMPILE" step "3" reason "JUDGE_COMPILED" decision_stage "LOWER_RESOLUTION" decision_step "4" decision_reason "MALFORMED_DIGEST" unknown_class "MALFORMED_INPUT" next_operation "repair-digest-evidence" blocked_by "well-formed-sha256-digests" role "META_OPERATION" meta_operation "compile-generated-judge" proof_choice "policy-semantic-preservation" claim "generated-execution" }
+    case "MALFORMED_DIGEST" {
+        evidence "digest_coordinates" "malformed"
+        resolution {
+            decision "UNKNOWN"
+            stage "COMPILE"
+            step "3"
+            reason "JUDGE_COMPILED"
+            decision_stage "LOWER_RESOLUTION"
+            decision_step "4"
+            decision_reason "MALFORMED_DIGEST"
+            unknown_class "MALFORMED_INPUT"
+            next_operation "repair-digest-evidence"
+            blocked_by "well-formed-sha256-digests"
+            role "META_OPERATION"
+            meta_operation "compile-generated-judge"
+            proof_choice "policy-semantic-preservation"
+            claim "generated-execution"
+        }
     }
-    case "SEMANTIC_EQUIVALENCE" { evidence "digest_coordinates" "equivalent"
-        resolution { decision "PASS" stage "PROVE" step "5" reason "PROOF_SELECTED" decision_stage "REDUCE" decision_step "7" decision_reason "SEMANTIC_EQUIVALENCE_PROVED" role "PROOF" meta_operation "select-semantic-equivalence" proof_choice "SEMANTIC_EQUIVALENCE_WITH_INDEPENDENT_EXECUTION" claim "proof-selection" }
+    case "SEMANTIC_EQUIVALENCE" {
+        evidence "digest_coordinates" "equivalent"
+        resolution {
+            decision "PASS"
+            stage "PROVE"
+            step "5"
+            reason "PROOF_SELECTED"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "SEMANTIC_EQUIVALENCE_PROVED"
+            role "PROOF"
+            meta_operation "select-semantic-equivalence"
+            proof_choice "SEMANTIC_EQUIVALENCE_WITH_INDEPENDENT_EXECUTION"
+            claim "proof-selection"
+        }
     }
 }
