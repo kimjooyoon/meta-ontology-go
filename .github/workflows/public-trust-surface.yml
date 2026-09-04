@@ -1,0 +1,84 @@
+name: Public trust surface
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - README.md
+      - SECURITY.md
+      - .github/dependabot.yml
+      - .github/workflows/dependency-review.yml
+      - .github/workflows/public-trust-surface.yml
+      - examples/public-trust-surface/**
+      - internal/meta/publictrust/**
+      - scripts/public-trust-surface/**
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - README.md
+      - SECURITY.md
+      - .github/dependabot.yml
+      - .github/workflows/dependency-review.yml
+      - .github/workflows/public-trust-surface.yml
+      - examples/public-trust-surface/**
+      - internal/meta/publictrust/**
+      - scripts/public-trust-surface/**
+
+permissions:
+  contents: read
+
+jobs:
+  public-trust:
+    name: Public trust surface
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact subject
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Verify exact toolchain and source head
+        env:
+          SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+          test "$(git status --porcelain)" = ""
+      - name: Execute lowered policy and emit evidence
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/public-trust-surface"
+          go test ./internal/meta/publictrust
+          go run ./scripts/public-trust-surface -mode verify -readme README.md -output-dir "$output"
+          jq -e '
+            .summary.badge_category_count == 5 and
+            .summary.total_active_badges == 11 and
+            .summary.meta_rows_bound == 16 and
+            .summary.meta_rows_total == 16 and
+            .summary.unique_claims == 16 and
+            .summary.unique_targets == 16 and
+            .summary.unsupported_badges == 0 and
+            .summary.duplicate_claims == 0 and
+            .summary.duplicate_targets == 0 and
+            .summary.readme_generated_drift == 0 and
+            .summary.security_placeholder_claims == 0 and
+            .summary.security_evidence_links == 8 and
+            .summary.ci_repository_writes == 0 and
+            .summary.local_test_executions == 0 and
+            .summary.state_rows.CLOSED == 11 and
+            .summary.state_rows.UNKNOWN == 3 and
+            .summary.state_rows.REFUTED == 2
+          ' "$output/public-trust-manifest.json"
+          cat "$output/public-trust-report.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload public trust manifest and report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-trust-surface-${{ github.sha }}
+          path: ${{ runner.temp }}/public-trust-surface
