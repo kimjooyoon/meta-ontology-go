@@ -20,7 +20,7 @@ func parseResolutionPolicy(ir *semantic.IR) (ResolutionPolicy, error) {
 			if node.Kind != semantic.Activity || node.Name != "ResolveConsumerSubject" || node.ValueProgram == "" {
 				continue
 			}
-			for _, part := range strings.Split(node.ValueProgram, ";") {
+			for part := range strings.SplitSeq(node.ValueProgram, ";") {
 				fields := strings.SplitN(part, "=", 2)
 				if len(fields) == 2 && strings.TrimSpace(fields[0]) != "" {
 					key := strings.TrimSpace(fields[0])
@@ -148,7 +148,7 @@ func canonicalResolutionMetrics() map[string]int {
 
 func splitResolutionCSV(value string) []string {
 	result := []string{}
-	for _, item := range strings.Split(value, ",") {
+	for item := range strings.SplitSeq(value, ",") {
 		if item = strings.TrimSpace(item); item != "" {
 			result = append(result, item)
 		}
