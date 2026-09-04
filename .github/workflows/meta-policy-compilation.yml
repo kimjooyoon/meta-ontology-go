@@ -203,14 +203,57 @@ jobs:
             '{schema:"gooo/meta-policy-compilation-runtime/v1", subject_sha:$subject_sha, build:{wall_ms:$build_wall_ms, peak_rss_kb:$build_peak_rss_kb}, test:{wall_ms:$test_wall_ms, peak_rss_kb:$test_peak_rss_kb, total:$test_total, executed:$test_executed, reused:$test_reused, skipped:$test_skipped, not_observed:$test_not_observed}, conformance:{wall_ms:$conformance_wall_ms, peak_rss_kb:$conformance_peak_rss_kb}, inventory:{repository_files:$repository_files, repository_directories:$repository_directories, physical_lines:$physical_lines, go_files:$go_files, go_lines:$go_lines, gooo_files:$gooo_files, gooo_lines:$gooo_lines}, repository:{before_file_count:$repository_before_file_count, after_file_count:$repository_after_file_count, writes:$repository_writes, net_change_observed:$repository_net_change_observed}}' > "$root/runtime-metrics.json"
           jq -e '.repository.before_file_count == .repository.after_file_count and .repository.writes == 0 and .repository.net_change_observed == false and (.build.wall_ms|type)=="number" and (.test.wall_ms|type)=="number" and (.conformance.wall_ms|type)=="number"' "$root/runtime-metrics.json"
           git fetch origin dev --depth=1
-          marker_before=$(git show origin/dev:examples/meta-policy-compilation/policy.gooo | grep -o 'policy-compilation:v3' | wc -l | tr -d ' ')
-          marker_after=$(grep -o 'policy-compilation:v3' examples/meta-policy-compilation/policy.gooo | wc -l | tr -d ' ' || true)
+          marker_path="examples/meta-policy-compilation/policy.gooo"
+          marker_baseline="$root/marker-baseline.gooo"
+          marker_current="$root/marker-current.gooo"
+          if ! git show "origin/dev:$marker_path" > "$marker_baseline"; then
+            echo "marker observation: REFUTED: unable to read origin/dev:$marker_path" >&2
+            exit 1
+          fi
+          if ! cp "$marker_path" "$marker_current"; then
+            echo "marker observation: REFUTED: unable to read $marker_path" >&2
+            exit 1
+          fi
+          count_markers() {
+            local source="$1"
+            if [ ! -r "$source" ]; then
+              echo "marker observation: REFUTED: unreadable source $source" >&2
+              return 1
+            fi
+            awk '
+              {
+                remaining = $0
+                while ((offset = index(remaining, "policy-compilation:v3")) > 0) {
+                  count++
+                  remaining = substr(remaining, offset + length("policy-compilation:v3"))
+                }
+              }
+              END { print count + 0 }
+            ' "$source"
+          }
+          if ! marker_before=$(count_markers "$marker_baseline"); then
+            echo "marker observation: REFUTED: failed to count baseline markers" >&2
+            exit 1
+          fi
+          if ! marker_after=$(count_markers "$marker_current"); then
+            echo "marker observation: REFUTED: failed to count current markers" >&2
+            exit 1
+          fi
+          if [ "$marker_before" -gt 0 ]; then marker_before_state="LEGACY_MARKER_PRESENT"; else marker_before_state="CANONICAL_MIGRATED_CLOSED"; fi
+          if [ "$marker_after" -eq 0 ]; then
+            marker_after_state="CANONICAL_MIGRATED_CLOSED"
+          else
+            marker_after_state="REFUTED_LEGACY_MARKER_REMAINS"
+            echo "marker observation: REFUTED: canonical source still contains $marker_after legacy markers" >&2
+            exit 1
+          fi
           ast_counts=$(jq -c '.structure.ast_node_counts' "$root/first/policy.json")
           ir_counts=$(jq -c '.structure.ir_node_counts' "$root/first/policy.json")
           refuted_cases=$(jq '[.cases[] | select(any(.claim_predicates[]; .outcome == "REFUTED"))] | length' "$root/first/receipt.json")
           unknown_fields=$(jq '[.cases[] | select(.generated.decision == "UNKNOWN") | .generated | (.stage != "" and .step > 0 and .reason != "" and .unknown_class != "" and .next_operation != "" and (.blocked_by | length) > 0)] | all' "$root/first/receipt.json")
           jq -n \
             --arg subject_sha "$SUBJECT_SHA" \
+            --arg marker_before_state "$marker_before_state" --arg marker_after_state "$marker_after_state" \
             --argjson ast_counts "$ast_counts" --argjson ir_counts "$ir_counts" \
             --argjson marker_before "$marker_before" --argjson marker_after "$marker_after" \
             --argjson refuted_cases "$refuted_cases" --argjson unknown_fields "$unknown_fields" \
@@ -220,9 +263,9 @@ jobs:
             --argjson evidence_bindings "$(jq '.structure.evidence_bindings' "$root/first/policy.json")" \
             --argjson resolution_bindings "$(jq '.structure.resolution_bindings' "$root/first/policy.json")" \
             --argjson generated_artifacts 6 --argjson repository_writes 0 --argjson local_test_executions 0 --argjson cross_project_gates 0 \
-            '{schema:"gooo/meta-policy-compilation-fixed-metrics/v1", subject_sha:$subject_sha, grammar_node_kinds:6, ast_node_counts:$ast_counts, ir_node_counts:$ir_counts, bindings:{transition:$transition_bindings, evidence:$evidence_bindings, resolution:$resolution_bindings}, marker_occurrences:{before:$marker_before, after:$marker_after, improvement:"UNKNOWN"}, cases:{normal:$normal_cases, unknown:$unknown_cases, refuted:$refuted_cases}, unknown_six_fields_preserved:$unknown_fields, generated_artifact_count:$generated_artifacts, repository_writes:$repository_writes, local_test_executions:$local_test_executions, cross_project_gates:$cross_project_gates}' > "$root/first-class-meta-policy-metrics.json"
-          jq -e '.grammar_node_kinds == 6 and .ast_node_counts == {case:8,evidence:8,policy:1,resolution:8,state:11,transition:8} and .ir_node_counts == .ast_node_counts and .bindings == {transition:8,evidence:8,resolution:8} and .marker_occurrences == {before:8,after:0,improvement:"UNKNOWN"} and .cases == {normal:1,unknown:1,refuted:1} and .unknown_six_fields_preserved and .generated_artifact_count == 6 and .repository_writes == 0 and .local_test_executions == 0 and .cross_project_gates == 0' "$root/first-class-meta-policy-metrics.json"
-          jq -r '"# First-class meta-policy fixed metrics\n\n- grammar node kinds: " + (.grammar_node_kinds|tostring) + "\n- AST nodes: " + (.ast_node_counts|tojson) + "\n- IR nodes: " + (.ir_node_counts|tojson) + "\n- transition/evidence/resolution bindings: " + ([.bindings.transition,.bindings.evidence,.bindings.resolution] | map(tostring) | join("/")) + "\n- marker occurrences before/after: " + ([.marker_occurrences.before,.marker_occurrences.after] | map(tostring) | join("/")) + " (improvement=" + .marker_occurrences.improvement + ")\n- cases normal/UNKNOWN/REFUTED: " + ([.cases.normal,.cases.unknown,.cases.refuted] | map(tostring) | join("/")) + "\n- UNKNOWN six fields preserved: " + (.unknown_six_fields_preserved|tostring) + "\n- generated artifacts: " + (.generated_artifact_count|tostring) + "\n- repository writes/local test executions/cross-project gates: " + ([.repository_writes,.local_test_executions,.cross_project_gates] | map(tostring) | join("/"))' "$root/first-class-meta-policy-metrics.json" > "$root/first-class-meta-policy-metrics.md"
+            '{schema:"gooo/meta-policy-compilation-fixed-metrics/v1", subject_sha:$subject_sha, grammar_node_kinds:6, ast_node_counts:$ast_counts, ir_node_counts:$ir_counts, bindings:{transition:$transition_bindings, evidence:$evidence_bindings, resolution:$resolution_bindings}, marker_occurrences:{before:$marker_before, after:$marker_after, improvement:"UNKNOWN"}, marker_observation:{before:$marker_before_state, after:$marker_after_state, decision:"CLOSED"}, cases:{normal:$normal_cases, unknown:$unknown_cases, refuted:$refuted_cases}, unknown_six_fields_preserved:$unknown_fields, generated_artifact_count:$generated_artifacts, repository_writes:$repository_writes, local_test_executions:$local_test_executions, cross_project_gates:$cross_project_gates}' > "$root/first-class-meta-policy-metrics.json"
+          jq -e '.grammar_node_kinds == 6 and .ast_node_counts == {case:8,evidence:8,policy:1,resolution:8,state:11,transition:8} and .ir_node_counts == .ast_node_counts and .bindings == {transition:8,evidence:8,resolution:8} and .marker_occurrences.after == 0 and .marker_occurrences.improvement == "UNKNOWN" and .marker_observation.after == "CANONICAL_MIGRATED_CLOSED" and .marker_observation.decision == "CLOSED" and ((.marker_occurrences.before == 8 and .marker_observation.before == "LEGACY_MARKER_PRESENT") or (.marker_occurrences.before == 0 and .marker_observation.before == "CANONICAL_MIGRATED_CLOSED")) and .cases == {normal:1,unknown:1,refuted:1} and .unknown_six_fields_preserved and .generated_artifact_count == 6 and .repository_writes == 0 and .local_test_executions == 0 and .cross_project_gates == 0' "$root/first-class-meta-policy-metrics.json"
+          jq -r '"# First-class meta-policy fixed metrics\n\n- grammar node kinds: " + (.grammar_node_kinds|tostring) + "\n- AST nodes: " + (.ast_node_counts|tojson) + "\n- IR nodes: " + (.ir_node_counts|tojson) + "\n- transition/evidence/resolution bindings: " + ([.bindings.transition,.bindings.evidence,.bindings.resolution] | map(tostring) | join("/")) + "\n- marker occurrences before/after: " + ([.marker_occurrences.before,.marker_occurrences.after] | map(tostring) | join("/")) + " (improvement=" + .marker_occurrences.improvement + ")\n- marker observation before/after/decision: " + ([.marker_observation.before,.marker_observation.after,.marker_observation.decision] | join("/")) + "\n- cases normal/UNKNOWN/REFUTED: " + ([.cases.normal,.cases.unknown,.cases.refuted] | map(tostring) | join("/")) + "\n- UNKNOWN six fields preserved: " + (.unknown_six_fields_preserved|tostring) + "\n- generated artifacts: " + (.generated_artifact_count|tostring) + "\n- repository writes/local test executions/cross-project gates: " + ([.repository_writes,.local_test_executions,.cross_project_gates] | map(tostring) | join("/"))' "$root/first-class-meta-policy-metrics.json" > "$root/first-class-meta-policy-metrics.md"
       - name: Publish producer summary
         shell: bash
         run: |
