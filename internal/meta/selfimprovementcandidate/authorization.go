@@ -559,10 +559,10 @@ func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisio
 		Schema:            generation.SemanticAdoptionAuthorizationSchema,
 		AuthorizationID:   "candidate-authorization/" + strings.TrimPrefix(decisionDigest(input), "sha256:"),
 		AuthorizationMode: generation.SemanticAdoptionAuthorizationMode,
-		ProposalDigest:    request.Digest, CandidateStableID: request.Candidate.CandidateID,
-		CandidateInputDigest: request.Candidate.InputSourceDigest,
-		ContractDigest:       request.Candidate.ContractCanonicalDigest,
-		InputSourceDigest:    request.Candidate.SourceObservationDigest,
+		ProposalDigest:    adoptionDigest(request.Digest), CandidateStableID: adoptionDigest(request.Candidate.CandidateID),
+		CandidateInputDigest: adoptionDigest(request.Candidate.InputSourceDigest),
+		ContractDigest:       adoptionDigest(request.Candidate.ContractCanonicalDigest),
+		InputSourceDigest:    adoptionDigest(request.Candidate.SourceObservationDigest),
 		Authorized:           authorized, RepositoryWrites: 0, LocalTestExecutions: 0,
 	}
 	return &AuthorizationReceipt{
@@ -579,6 +579,12 @@ func buildAuthorization(request AuthorizationRequest, input AuthorizationDecisio
 		WorkflowRunAttempt: input.WorkflowRunAttempt, DecisionSource: input.DecisionSource,
 		IdentityAssurance: input.IdentityAssurance, DecisionInputDigest: decisionDigest(input),
 	}
+}
+
+// adoptionDigest converts the candidate bridge's content-addressed form to
+// the released generation authorization form, which uses bare SHA-256 hex.
+func adoptionDigest(value string) string {
+	return strings.TrimPrefix(value, "sha256:")
 }
 
 // ResolveAuthorization is the evaluator for the request -> decision ->
@@ -730,9 +736,9 @@ func VerifyAuthorizationResolution(request AuthorizationRequest, resolution Auth
 	if err := generation.ValidateSemanticAdoptionAuthorization(auth.SemanticAdoptionAuthorization); err != nil {
 		return fmt.Errorf("embedded adoption authorization: %w", err)
 	}
-	if auth.ProposalDigest != request.Digest || auth.CandidateStableID != request.Candidate.CandidateID ||
-		auth.CandidateInputDigest != request.Candidate.InputSourceDigest || auth.ContractDigest != request.Candidate.ContractCanonicalDigest ||
-		auth.InputSourceDigest != request.Candidate.SourceObservationDigest || auth.CandidateID != request.Candidate.CandidateID ||
+	if auth.ProposalDigest != adoptionDigest(request.Digest) || auth.CandidateStableID != adoptionDigest(request.Candidate.CandidateID) ||
+		auth.CandidateInputDigest != adoptionDigest(request.Candidate.InputSourceDigest) || auth.ContractDigest != adoptionDigest(request.Candidate.ContractCanonicalDigest) ||
+		auth.InputSourceDigest != adoptionDigest(request.Candidate.SourceObservationDigest) || auth.CandidateID != request.Candidate.CandidateID ||
 		auth.CandidateDigest != request.Candidate.CandidateDigest || auth.CandidateReportDigest != request.Candidate.CandidateReportDigest ||
 		auth.SourceObservationDigest != request.Candidate.SourceObservationDigest || auth.SubjectSHA != request.Candidate.SubjectSHA ||
 		auth.PolicyDigest != request.Candidate.PolicyDigest || auth.ContractCanonicalDigest != request.Candidate.ContractCanonicalDigest ||
