@@ -4,4 +4,4 @@ namespace public_discovery_example
 entity Input id "gooo://public-discovery-example/entity/input"
 entity Output id "gooo://public-discovery-example/entity/output"
 
-activity Compile(Input) -> Output computes "role=real-public-generate-example"
+activity Compile(Input) -> Output computes "role=real-public-generate-example;utility-contract=v1;utility-project=public-discovery-example;utility-case=BASELINE_PROJECT_GENERATION_BUILD_TEST:CLOSED;utility-case=LEARNED_PROJECT_GENERATION_BUILD_TEST:CLOSED;utility-case=FIRST_OBSERVATION_NO_QUORUM:UNKNOWN;utility-case=PERFORMANCE_INCOMPARABLE:UNKNOWN;utility-case=STALE_PROJECT_SOURCE:REFUTED;utility-case=OUTPUT_SEMANTIC_DIGEST_MISMATCH:REFUTED;utility-journey=baseline-generate>first-observed-generate>second-observed-generate>authorize>certify>learned-generate>generated-build>generated-test>dossier;utility-artifact-denominator=32;utility-performance-rule=UNKNOWN_WHEN_RUNTIME_MODES_ARE_NOT_EQUIVALENT;utility-operation-counts=baseline(semantic=1,lowering=1,generation=1)|learned(semantic=0,lowering=0,generation=0)"

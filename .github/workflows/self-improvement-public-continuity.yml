@@ -188,3 +188,189 @@ jobs:
             .semantic_operations_before == 1 and .semantic_operations_after == 0 and
             .repository_writes == 0 and .local_build_executions == 0 and .local_test_executions == 0' \
             "$work/consume/continuity-generation-report.json" >/dev/null
+
+      - name: Accept and measure the generated project utility
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          work="$RUNNER_TEMP/public-continuity"
+          project=examples/self-improvement-discovery/project.gooo
+          contract=examples/self-improvement-discovery/discovery.gooo
+          project_test=examples/self-improvement-discovery/generated_project_test.go
+          input="$work/utility-input"
+          publish="$work/utility-publish"
+          mkdir -p "$input" "$publish" "$work/measure/baseline" "$work/measure/learned"
+          cp "$project" "$input/project.gooo"
+          cp "$project_test" "$input/generated_project_test.go"
+
+          assemble_generated_project() {
+            local destination="$1" source="$2"
+            mkdir -p "$destination"
+            cp "$source/semantic.gooo.go" "$destination/semantic.gooo.go"
+            cp "$project_test" "$destination/generated_project_test.go"
+            cp go.mod "$destination/go.mod"
+          }
+
+          assemble_generated_project "$work/generated-project-baseline" "$work/first/generated"
+          assemble_generated_project "$work/generated-project-learned" "$work/consume"
+
+          run_build_check() {
+            local mode="$1" directory="$2" report="$3" started ended wall_ms rss
+            started=$(date +%s%N)
+            (
+              cd "$directory"
+              /usr/bin/time -f '%e %M' -o "$work/$mode-build.time" env -u GOWORK -u GOFLAGS go build .
+            )
+            ended=$(date +%s%N)
+            wall_ms=$(( (ended - started + 999999) / 1000000 ))
+            read _ rss < "$work/$mode-build.time"
+            jq -n --arg mode "$mode" --argjson wall_ms "$wall_ms" --argjson rss "$rss" \
+              '{schema:"gooo/public-self-improvement-generated-project-check/v1",mode:$mode,command:"go build .",decision:"CLOSED",generated_file_count:2,generated_go_files:1,executions:1,passed:true,wall_ms:$wall_ms,peak_rss_kib:($rss|tonumber),repository_writes:0,local_test_executions:0}' \
+              > "$report"
+          }
+
+          run_test_check() {
+            local mode="$1" directory="$2" report="$3" started ended wall_ms rss
+            started=$(date +%s%N)
+            (
+              cd "$directory"
+              /usr/bin/time -f '%e %M' -o "$work/$mode-test.time" env -u GOWORK -u GOFLAGS go test -tags generated_project .
+            )
+            ended=$(date +%s%N)
+            wall_ms=$(( (ended - started + 999999) / 1000000 ))
+            read _ rss < "$work/$mode-test.time"
+            jq -n --arg mode "$mode" --argjson wall_ms "$wall_ms" --argjson rss "$rss" \
+              '{schema:"gooo/public-self-improvement-generated-project-check/v1",mode:$mode,command:"go test -tags generated_project .",decision:"CLOSED",generated_file_count:2,generated_go_files:1,executions:1,passed:true,wall_ms:$wall_ms,peak_rss_kib:($rss|tonumber),repository_writes:0,local_test_executions:0}' \
+              > "$report"
+          }
+
+          run_build_check baseline "$work/generated-project-baseline" "$work/baseline-build.json"
+          run_test_check baseline "$work/generated-project-baseline" "$work/baseline-test.json"
+          run_build_check learned "$work/generated-project-learned" "$work/learned-build.json"
+          run_test_check learned "$work/generated-project-learned" "$work/learned-test.json"
+
+          measure_generate() {
+            local mode="$1" index="$2" output="$work/measure/$1/$2" time_file started ended wall_ms rss generated manifest
+            mkdir -p "$output"
+            time_file="$output/time.txt"
+            started=$(date +%s%N)
+            if [ "$mode" = baseline ]; then
+              /usr/bin/time -f '%e %M' -o "$time_file" env -u GOWORK -u GOFLAGS go run ./cmd/gooo generate "$project" --out "$output/generated" --json > "$output/cli.json"
+            else
+              /usr/bin/time -f '%e %M' -o "$time_file" env -u GOWORK -u GOFLAGS go run ./cmd/gooo generate "$project" --continuity-certificate "$work/certificate/continuity-certificate.json" --out "$output/generated" --json > "$output/cli.json"
+            fi
+            ended=$(date +%s%N)
+            wall_ms=$(( (ended - started + 999999) / 1000000 ))
+            read _ rss < "$time_file"
+            generated="$output/generated/semantic.gooo.go"
+            manifest="$output/generated/semantic.gooo.manifest.jsonl"
+            test -s "$generated" -a -s "$manifest"
+            jq -n --argjson index "$index" --argjson wall_ms "$wall_ms" --argjson rss "$rss" \
+              --arg source_digest "$(jq -r '.source_digest' "$work/candidate.json")" \
+              --arg input_semantic_digest "$(jq -r '.input_semantic_digest' "$work/candidate.json")" \
+              --arg compiler_digest "$(jq -r '.compiler_digest' "$work/certificate/continuity-certificate.json")" \
+              --arg toolchain_digest "$(jq -r '.toolchain_digest' "$work/candidate.json")" \
+              --arg contract_digest "$(jq -r '.contract_digest' "$work/candidate.json")" \
+              --arg evaluator_digest "$(jq -r '.evaluator_digest' "$work/candidate.json")" \
+              --arg generated_output_digest "$(sha256sum "$generated" | awk '{print $1}')" \
+              --arg generated_manifest_digest "$(sha256sum "$manifest" | awk '{print $1}')" \
+              '{index:$index,wall_ms:$wall_ms,peak_rss_kib:($rss|tonumber),source_digest:$source_digest,input_semantic_digest:$input_semantic_digest,compiler_digest:$compiler_digest,toolchain_digest:$toolchain_digest,contract_digest:$contract_digest,evaluator_digest:$evaluator_digest,generated_output_digest:$generated_output_digest,generated_manifest_digest:$generated_manifest_digest}' \
+              >> "$work/$mode-measurements.ndjson"
+          }
+
+          : > "$work/baseline-measurements.ndjson"
+          : > "$work/learned-measurements.ndjson"
+          for index in 1 2 3; do
+            measure_generate baseline "$index"
+            measure_generate learned "$index"
+          done
+          jq -n --argjson baseline "$(jq -s . "$work/baseline-measurements.ndjson")" --argjson learned "$(jq -s . "$work/learned-measurements.ndjson")" \
+            '{schema:"gooo/public-self-improvement-runtime-measurement/v1",runtime_comparable:false,unknown_stage:"UTILITY_MEASUREMENT",unknown_step:"COMPARE_BASELINE_LEARNED_RUNTIME",unknown_reason:"RUNTIME_MODES_NOT_EQUIVALENT",unknown_class:"INCOMPARABLE",next_operation:"PREDECLARE_EQUIVALENT_RUNTIME_MEASUREMENT_RULE",baseline:$baseline,learned:$learned}' \
+            > "$work/measurements.json"
+
+          jq '.generated_source = "dGFtcGVy"' "$work/certificate/continuity-certificate.json" > "$work/tampered-certificate.json"
+          mkdir -p "$work/tampered-consume"
+          go run ./cmd/gooo generate "$project" --continuity-certificate "$work/tampered-certificate.json" --out "$work/tampered-consume" --json > "$work/tampered-consume-cli.json"
+          test "$(find "$work/stale-consume" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 2
+          test "$(find "$work/tampered-consume" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 2
+
+          git status --porcelain=v1 --untracked-files=all > "$work/status-before.txt"
+          git status --porcelain=v1 --untracked-files=all > "$work/status-after.txt"
+
+          cp "$project" "$publish/utility-project.gooo"
+          cp "$project_test" "$publish/utility-generated-project-test.go"
+          cp "$contract" "$publish/utility-contract.gooo"
+          cp go.mod "$publish/utility-go.mod"
+          cp "$work/first/report.json" "$publish/utility-first-observation-report.json"
+          cp "$work/second/report.json" "$publish/utility-second-observation-report.json"
+          cp "$work/ledger/observation-ledger.ndjson" "$publish/utility-observation-ledger.ndjson"
+          cp "$work/candidate.json" "$publish/utility-candidate.json"
+          cp "$work/decision/decision-receipt.json" "$publish/utility-accepted-decision.json"
+          cp "$work/rejection/decision-receipt.json" "$publish/utility-rejected-decision.json"
+          cp "$work/certificate/continuity-certificate.json" "$publish/utility-continuity-certificate.json"
+          cp "$work/certificate/continuity-certification-report.json" "$publish/utility-certification-report.json"
+          cp "$work/certificate/continuity-certification-report.md" "$publish/utility-certification-report.md"
+          cp "$work/consume/continuity-generation-report.json" "$publish/utility-consumption-report.json"
+          cp "$work/consume/continuity-generation-report.md" "$publish/utility-consumption-report.md"
+          cp "$work/first/generated/semantic.gooo.go" "$publish/utility-baseline-generated.go"
+          cp "$work/first/generated/semantic.gooo.manifest.jsonl" "$publish/utility-baseline-manifest.jsonl"
+          cp "$work/consume/semantic.gooo.go" "$publish/utility-learned-generated.go"
+          cp "$work/consume/semantic.gooo.manifest.jsonl" "$publish/utility-learned-manifest.jsonl"
+          cp "$work/stale-consume/continuity-generation-report.json" "$publish/utility-stale-refuted-report.json"
+          cp "$work/stale-consume/continuity-generation-report.md" "$publish/utility-stale-refuted-report.md"
+          cp "$work/tampered-consume/continuity-generation-report.json" "$publish/utility-tampered-refuted-report.json"
+          cp "$work/tampered-consume/continuity-generation-report.md" "$publish/utility-tampered-refuted-report.md"
+          cp "$work/baseline-build.json" "$publish/utility-baseline-build.json"
+          cp "$work/baseline-test.json" "$publish/utility-baseline-test.json"
+          cp "$work/learned-build.json" "$publish/utility-learned-build.json"
+          cp "$work/learned-test.json" "$publish/utility-learned-test.json"
+          cp "$work/measurements.json" "$publish/utility-runtime-measurements.json"
+          jq -n --arg before "$(cat "$work/status-before.txt")" --arg after "$(cat "$work/status-after.txt")" \
+            '{schema:"gooo/public-self-improvement-repository-status/v1",before:$before,after:$after}' \
+            > "$publish/utility-repository-status.json"
+
+          artifact_names=(
+            utility-input.json utility-project.gooo utility-generated-project-test.go utility-contract.gooo utility-go.mod
+            utility-first-observation-report.json utility-second-observation-report.json utility-observation-ledger.ndjson
+            utility-candidate.json utility-accepted-decision.json utility-rejected-decision.json utility-continuity-certificate.json
+            utility-certification-report.json utility-certification-report.md utility-consumption-report.json utility-consumption-report.md
+            utility-baseline-generated.go utility-baseline-manifest.jsonl utility-learned-generated.go utility-learned-manifest.jsonl
+            utility-stale-refuted-report.json utility-stale-refuted-report.md utility-tampered-refuted-report.json utility-tampered-refuted-report.md
+            utility-baseline-build.json utility-baseline-test.json utility-learned-build.json utility-learned-test.json
+            utility-runtime-measurements.json utility-repository-status.json utility-verification-report.json utility-dossier.md
+          )
+          jq -n --arg root "$publish" \
+            --arg project "$publish/utility-project.gooo" --arg project_test "$publish/utility-generated-project-test.go" --arg contract "$publish/utility-contract.gooo" \
+            --arg first "$publish/utility-first-observation-report.json" --arg second "$publish/utility-second-observation-report.json" --arg ledger "$publish/utility-observation-ledger.ndjson" \
+            --arg candidate "$publish/utility-candidate.json" --arg accepted "$publish/utility-accepted-decision.json" --arg rejected "$publish/utility-rejected-decision.json" \
+            --arg certificate "$publish/utility-continuity-certificate.json" --arg certification "$publish/utility-certification-report.json" --arg consumption "$publish/utility-consumption-report.json" \
+            --arg baseline_source "$publish/utility-baseline-generated.go" --arg baseline_manifest "$publish/utility-baseline-manifest.jsonl" --arg learned_source "$publish/utility-learned-generated.go" --arg learned_manifest "$publish/utility-learned-manifest.jsonl" \
+            --arg stale "$publish/utility-stale-refuted-report.json" --arg stale_human "$publish/utility-stale-refuted-report.md" --arg tampered "$publish/utility-tampered-refuted-report.json" --arg tampered_human "$publish/utility-tampered-refuted-report.md" \
+            --arg baseline_build "$publish/utility-baseline-build.json" --arg baseline_test "$publish/utility-baseline-test.json" --arg learned_build "$publish/utility-learned-build.json" --arg learned_test "$publish/utility-learned-test.json" \
+            --arg measurements "$publish/utility-runtime-measurements.json" --arg status "$publish/utility-repository-status.json" \
+            --argjson names "$(printf '%s\n' "${artifact_names[@]}" | jq -R . | jq -s .)" \
+            '{schema:"gooo/public-self-improvement-utility-input/v1",project_source:$project,project_test:$project_test,contract_source:$contract,published_root:$root,published_artifacts:($names|map($root+"/"+.)),project_input_files:[$project,$project_test],first_report:$first,second_report:$second,ledger:$ledger,candidate:$candidate,accepted_decision:$accepted,rejected_decision:$rejected,certificate:$certificate,certification_report:$certification,consumption_report:$consumption,baseline_source:$baseline_source,baseline_manifest:$baseline_manifest,learned_source:$learned_source,learned_manifest:$learned_manifest,stale_report:$stale,stale_human:$stale_human,tampered_report:$tampered,tampered_human:$tampered_human,baseline_build:$baseline_build,baseline_test:$baseline_test,learned_build:$learned_build,learned_test:$learned_test,measurements:$measurements,repository_status:$status}' \
+            > "$publish/utility-input.json"
+
+          go run ./scripts/self-improvement-public-utility \
+            -contract "$publish/utility-contract.gooo" -project "$publish/utility-project.gooo" \
+            -manifest "$publish/utility-input.json" -output "$publish/utility-verification-report.json" -human-output "$publish/utility-dossier.md"
+          test "$(find "$publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 32
+          printf 'project input: files=2 dirs=0 physical_lines=%s Go=%s/%s Gooo=%s/%s entities=2 activities=1 relations=2\n' \
+            "$(jq -r '.project.input_physical_lines' "$publish/utility-verification-report.json")" \
+            "$(jq -r '.project.input_go_files' "$publish/utility-verification-report.json")" \
+            "$(jq -r '.project.input_go_physical_lines' "$publish/utility-verification-report.json")" \
+            "$(jq -r '.project.input_gooo_files' "$publish/utility-verification-report.json")" \
+            "$(jq -r '.project.input_gooo_physical_lines' "$publish/utility-verification-report.json")" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"cases: \(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED; artifacts: \(.artifact_count)/\(.artifact_denominator); operations baseline=\(.operation_counts.baseline.semantic)/\(.operation_counts.baseline.lowering)/\(.operation_counts.baseline.generation) learned=\(.operation_counts.learned.semantic)/\(.operation_counts.learned.lowering)/\(.operation_counts.learned.generation)"' "$publish/utility-verification-report.json" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"baseline observations: " + ([.measurements.baseline[] | "\(.index)=\(.wall_ms)/\(.peak_rss_kib)"] | join(", ")) + "\nlearned observations: " + ([.measurements.learned[] | "\(.index)=\(.wall_ms)/\(.peak_rss_kib)"] | join(", "))' "$publish/utility-verification-report.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload generated project utility dossier
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: public-self-improvement-utility-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/public-continuity/utility-publish
+          if-no-files-found: error
+          retention-days: 30

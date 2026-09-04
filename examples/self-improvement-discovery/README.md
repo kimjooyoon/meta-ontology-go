@@ -42,3 +42,21 @@ The incompatible-source case is derived into caller-owned temporary output from
 
 Corpus accounting is explicit: the fixed language corpus moves from 51 cases,
 56 sources, and 997 `.gooo` lines to 53 cases, 58 sources, and 1,011 lines.
+
+## Utility acceptance contract
+
+The `Compile` activity in `project.gooo` carries the v1 utility contract as
+lowered meta-code. It fixes a nine-step public journey from ordinary baseline
+generation through observation, explicit authorization, certification,
+certified consumption, generated-project build/test, and a human dossier.
+The project input is two regular files (the `.gooo` source and the tagged Go
+acceptance test), with one `.gooo` source, two entities, one activity, and two
+derived relations. The generator must publish two output artifacts: one Go
+file and one manifest. The lane records three baseline and three certified
+consumption `wall_ms`/`peak_rss_kib` observations under the same source,
+semantic, compiler, toolchain, contract, and evaluator digests.
+
+The six utility cases are exactly two `CLOSED`, two `UNKNOWN`, and two
+`REFUTED`. The runtime comparison remains `UNKNOWN` unless the predeclared
+runtime modes are equivalent; deterministic semantic operation reduction is
+reported independently. The published evidence denominator is exactly 32.
