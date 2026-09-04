@@ -57,6 +57,7 @@ func expectedRegistry() Registry {
 		valid("self-improvement-candidate-authorization", "examples/self-improvement/authorization.gooo"),
 		valid("self-improvement-transport", "examples/self-improvement/transport.gooo"),
 		valid("self-improvement-execution-contract", "examples/self-improvement-execution-contract/contract.gooo"),
+		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
