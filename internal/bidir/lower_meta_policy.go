@@ -1,33 +1,11 @@
 package bidir
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
-
-func lowerSyntaxPolicies(ctx context.Context, ir *semantic.IR, file *syntax.File) error {
-	if file == nil {
-		return nil
-	}
-	for _, declaration := range syntaxDeclarations(file) {
-		if err := checkLowerContext(ctx); err != nil {
-			return err
-		}
-		policy, ok := declaration.(*syntax.PolicyDecl)
-		if !ok {
-			continue
-		}
-		lowered, err := lowerSyntaxPolicy(policy)
-		if err != nil {
-			return err
-		}
-		ir.Policies = append(ir.Policies, lowered)
-	}
-	return nil
-}
 
 func lowerSyntaxPolicy(policy *syntax.PolicyDecl) (semantic.Policy, error) {
 	if policy == nil {

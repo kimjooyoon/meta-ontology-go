@@ -43,6 +43,20 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		}
 		document.Declarations = append(document.Declarations, adapted)
 	}
+	for _, declaration := range syntaxDeclarations(file) {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		policy, ok := declaration.(*syntax.PolicyDecl)
+		if !ok {
+			continue
+		}
+		lowered, err := lowerSyntaxPolicy(policy)
+		if err != nil {
+			return Document{}, err
+		}
+		document.Policies = append(document.Policies, lowered)
+	}
 	if err := validateEntityFieldsDocument(document, document.Namespace, semantic.DefaultTypeRegistry(), support); err != nil {
 		return Document{}, err
 	}

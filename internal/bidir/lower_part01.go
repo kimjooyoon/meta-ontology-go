@@ -57,9 +57,6 @@ func lowerContextWithTypesAndEntityFieldsSupportAndImplicitActivityPorts(ctx con
 	if err != nil {
 		return semantic.IR{}, err
 	}
-	if err := lowerSyntaxPolicies(ctx, &ir, file); err != nil {
-		return semantic.IR{}, err
-	}
 	if err := ir.Validate(); err != nil {
 		return semantic.IR{}, err
 	}
