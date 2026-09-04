@@ -26,7 +26,7 @@ func CompileContract(repository fs.FS, path string) (ContractEvidence, error) {
 	if err != nil {
 		return ContractEvidence{}, fmt.Errorf("lower transport contract: %w", err)
 	}
-	policy, err := parseResolutionPolicy(ir)
+	policy, err := parseResolutionPolicy(&ir)
 	if err != nil {
 		return ContractEvidence{}, err
 	}
