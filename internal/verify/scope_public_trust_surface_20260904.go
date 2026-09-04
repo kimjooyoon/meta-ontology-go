@@ -11,6 +11,7 @@ func init() {
 		"README.md",
 		"SECURITY.md",
 		"examples/public-trust-surface",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/publictrust",
 		"internal/verify/scope_public_trust_surface_20260904.go",
 		"scripts/public-trust-surface",
