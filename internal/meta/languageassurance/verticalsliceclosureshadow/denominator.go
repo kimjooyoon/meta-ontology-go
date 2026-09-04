@@ -15,7 +15,7 @@ import (
 
 func decodeDenominator(raw []byte) (denominator, error) {
 	digest := digestBytes(raw)
-	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest {
+	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest {
 		return denominator{}, fmt.Errorf("denominator digest mismatch")
 	}
 	var value denominator
