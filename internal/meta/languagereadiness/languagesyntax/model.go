@@ -13,11 +13,11 @@ const (
 	KindInvalid                = "INVALID"
 	ScopeLanguageCapability    = "LANGUAGE_CAPABILITY"
 	ScopeGovernanceObservation = "GOVERNANCE_OBSERVATION"
-	totalCases                 = 51
-	validCases                 = 48
+	totalCases                 = 53
+	validCases                 = 50
 	invalidCases               = 3
 	FixedTotal                 = totalCases
-	FixedCapabilityTotal       = 50
+	FixedCapabilityTotal       = 52
 	FixedGovernanceTotal       = 1
 	invalidDigest              = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
 )

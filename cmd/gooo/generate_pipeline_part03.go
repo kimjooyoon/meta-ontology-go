@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery"
 )
 
-func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, jsonMode bool, stdout io.Writer) int {
+func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, discovery *publicdiscovery.Result, jsonMode bool, stdout io.Writer) int {
 	if !jsonMode {
 		fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName))
+		if discovery != nil {
+			fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision)
+			if discovery.Report.CandidatesEmitted > 0 {
+				fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath)
+			}
+		}
 		return exitOK
 	}
 	report := newJSONReport("generate", "ok", options.filename, syntaxCLIDiagnostics(input.diagnostics))
@@ -17,6 +25,14 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 	report.PreviousGo = options.previousGo
 	report.ProtectedBytesEqual = &artifacts.manifest.ProtectedBytesEqual
 	report.SemanticHash = artifacts.ir.StableHash()
+	if discovery != nil {
+		report.ObservationReport = discovery.Report.MachineReportPath
+		report.ObservationDecision = discovery.Report.Decision
+		report.ObservationReason = discovery.Report.Reason
+		if discovery.Report.CandidatesEmitted > 0 {
+			report.ObservationCandidate = discovery.CandidatePath
+		}
+	}
 	if err := writeJSONReport(stdout, report); err != nil {
 		return exitFailure
 	}
@@ -37,6 +53,7 @@ type generateOptions struct {
 	retentionProposalFilename      string
 	retentionAuthorizationFilename string
 	retentionAdoptionFilename      string
+	observationLedgerDir           string
 }
 
 func parseGenerateArguments(args []string) (generateOptions, error) {
@@ -66,6 +83,9 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		index++
 	}
 	if options.outputDir == "" {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
+	if options.observationLedgerDir != "" && (options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
 	return options, nil
@@ -118,6 +138,11 @@ func setGenerateOption(options *generateOptions, name, value string) bool {
 			return false
 		}
 		options.retentionAdoptionFilename = value
+	case "--observation-ledger", "--observation-output":
+		if options.observationLedgerDir != "" {
+			return false
+		}
+		options.observationLedgerDir = value
 	default:
 		return false
 	}

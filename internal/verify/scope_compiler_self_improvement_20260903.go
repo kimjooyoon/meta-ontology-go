@@ -9,6 +9,7 @@ const compilerSelfImprovementIteration20260904V5Branch = "agent/compiler-self-im
 const compilerSelfImprovementIteration20260904V6Branch = "agent/compiler-self-improvement-iteration-20260904-v6"
 const compilerSelfImprovementIteration20260904V8Branch = "agent/compiler-self-improvement-iteration-20260904-v8"
 const compilerSelfImprovementIteration20260904V9Branch = "agent/compiler-self-improvement-iteration-20260904-v9"
+const compilerSelfImprovementIteration20260904V10Branch = "agent/compiler-self-improvement-iteration-20260904-v10"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -143,5 +144,28 @@ func init() {
 		"scripts/self-improvement-public-generation",
 		"scripts/self-improvement-retained-knowledge",
 		"scripts/self-improvement-retention-policy",
+	}
+	branchScopeAllowlist[compilerSelfImprovementIteration20260904V10Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/transformation-effect.yml",
+		".github/workflows/self-improvement-public-discovery.yml",
+		"cmd/gooo/cli_json_part01.go",
+		"cmd/gooo/generate_part01.go",
+		"cmd/gooo/generate_pipeline_part03.go",
+		"examples/language-syntax-roundtrip/corpus.json",
+		"examples/self-improvement-discovery",
+		"internal/meta/discoverypolicy",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/model.go",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v27.json",
+		"internal/meta/publicdiscovery",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+		"scripts/self-improvement-discovery-policy",
+		"scripts/self-improvement-public-discovery",
 	}
 }

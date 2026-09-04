@@ -1,0 +1,7 @@
+package publicdiscoveryexample
+namespace public_discovery_example
+
+entity Input id "gooo://public-discovery-example/entity/input"
+entity Output id "gooo://public-discovery-example/entity/output"
+
+activity Compile(Input) -> Output computes "role=real-public-generate-example"
