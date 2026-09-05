@@ -265,12 +265,17 @@ jobs:
           report_digest="sha256:$(sha256sum "$report" | awk '{print $1}')"
           receipt_digest="sha256:$(sha256sum "$receipt" | awk '{print $1}')"
           meta_source_digest="sha256:$(sha256sum internal/meta/entityfields/entity-fields-meta.gooo | awk '{print $1}')"
+          generated_output_digest="sha256:$(sha256sum "$work/cli-generated/semantic.gooo.go" | awk '{print $1}')"
+          generated_manifest_digest="sha256:$(sha256sum "$work/cli-generated/semantic.gooo.manifest.jsonl" | awk '{print $1}')"
 
           jq -n --slurpfile report "$report" \
+            --slurpfile receipt "$receipt" \
             --arg head "$HEAD_SHA" \
             --arg report_digest "$report_digest" \
             --arg receipt_digest "$receipt_digest" \
             --arg meta_source_digest "$meta_source_digest" \
+            --arg generated_output_digest "$generated_output_digest" \
+            --arg generated_manifest_digest "$generated_manifest_digest" \
             --argjson public_check true \
             --argjson public_generate true \
             --argjson generated_compile true \
@@ -279,17 +284,31 @@ jobs:
             def evidence($keys): [
               $keys[] as $key |
               cell($key)[]? |
-              {key:$key, decision:.decision, resolution:.resolution, digest:.evidence_digest}
+              {key:$key, cell_id:.id, activity:.activity, meta_operation:.meta_operation,
+               decision:.decision, resolution:.resolution, digest:.evidence_digest}
             ];
             def evidence_ok($keys):
+              (($keys | unique | length) == ($keys | length)) and
               (evidence($keys)) as $evidence |
               ($evidence | length == ($keys | length)) and
-              all($evidence[]; .decision == "PASS" and .resolution == "EXACT" and .digest != "");
+              ([ $evidence[] | .key ] == $keys) and
+              all($evidence[]; (.cell_id | type) == "string" and (.cell_id | length) > 0 and
+                (.activity | type) == "string" and (.activity | length) > 0 and
+                (.meta_operation | type) == "string" and (.meta_operation | length) > 0 and
+                .decision == "PASS" and .resolution == "EXACT" and
+                (.digest | type) == "string" and (.digest | test("^sha256:[0-9a-f]{64}$")));
+            def unknown($stage; $step; $reason; $class; $next; $blocked):
+              {stage:$stage, step:$step, reason:$reason, unknown_class:$class,
+               next_operation:$next, blocked_by:$blocked};
             def route($id; $label; $scope; $keys; $gate):
               (evidence($keys)) as $evidence |
+              (if $gate == "PASS" and evidence_ok($keys) then "SUPPORTED" else "UNKNOWN" end) as $state |
               {id:$id, label:$label, scope:$scope, required_evidence_keys:$keys,
-               evidence:$evidence, runtime_gate:$gate,
-               state:(if $gate == "PASS" and evidence_ok($keys) then "SUPPORTED" else "UNKNOWN" end)};
+               evidence:$evidence, runtime_gate:$gate, state:$state,
+               unknown:(if $state == "UNKNOWN" then
+                 unknown("support-projection"; $id; "MISSING_OR_UNRESOLVED_EVIDENCE";
+                   "DIRECT_MISSING"; "RESTORE_ENTITY_FIELDS_OBSERVATION"; $keys)
+               else null end)};
             {
               schema:"gooo/entity-fields-support/v1",
               identity:{
@@ -299,12 +318,41 @@ jobs:
                 profile:($report[0] | {id:.profile_id, version:.profile_version, digest:.profile_digest}),
                 activities:$report[0].activities
               },
+              source_report:{
+                schema:$report[0].schema,
+                digest:$report_digest,
+                profile_id:$report[0].profile_id,
+                profile_version:$report[0].profile_version,
+                profile_digest:$report[0].profile_digest,
+                decision:$report[0].decision,
+                resolution:$report[0].resolution,
+                cells:($report[0].cells | map({id,activity,meta_operation,evidence_key,decision,resolution,evidence_digest})),
+                activities:$report[0].activities,
+                evidence_digests:$report[0].evidence_digests
+              },
+              receipt_identity:{
+                digest:$receipt_digest,
+                head_sha:$receipt[0].head_sha,
+                profile_id:$receipt[0].profile_id,
+                profile_digest:$receipt[0].profile_digest,
+                decision:$receipt[0].decision,
+                resolution:$receipt[0].resolution,
+                output_artifact_files:$receipt[0].output_artifact_files,
+                repository_writes:$receipt[0].repository_writes,
+                branch_setting_writes:$receipt[0].branch_setting_writes,
+                public_cli:$receipt[0].public_cli,
+                generated_go_test_executions:$receipt[0].runtime.generated_go_test_executions,
+                evidence_origin:$receipt[0].evidence_origin
+              },
               runtime:{
                 head_sha:$head,
                 observation_report_digest:$report_digest,
                 observation_receipt_digest:$receipt_digest,
-                public_cli:{check:(if $public_check then "PASS" else "UNKNOWN" end), generate:(if $public_generate then "PASS" else "UNKNOWN" end)},
-                generated_go:{compile:(if $generated_compile then "PASS" else "UNKNOWN" end), proof_scope:"COMPILE_ONLY"},
+                public_cli:{
+                  check:{command:"gooo check --semantic examples/entity-fields-v1/main.gooo", result:(if $public_check then "PASS" else "UNKNOWN" end), artifact_digest:$report_digest},
+                  generate:{command:"gooo generate examples/entity-fields-v1/main.gooo --out caller-owned-temp", result:(if $public_generate then "PASS" else "UNKNOWN" end), output_digest:$generated_output_digest, manifest_digest:$generated_manifest_digest, compared_to:"first/generated.go"}
+                },
+                generated_go:{command:"go test ./...", result:(if $generated_compile then "PASS" else "UNKNOWN" end), proof_scope:"COMPILE_ONLY", artifact_digest:$generated_output_digest},
                 evidence_origin:"CALLER_OWNED_TEMP_OUTPUT_ONLY"
               },
               routes:[
@@ -319,7 +367,7 @@ jobs:
                 route("public-cli-check"; "public CLI check"; "gooo check --semantic on the canonical fixture"; ["OBSERVATION_SOURCE_PIN","SEMANTIC_IR_LOWERING"]; (if $public_check then "PASS" else "UNKNOWN" end)),
                 route("public-cli-generate"; "public CLI generate"; "gooo generate and exact generated artifact comparison"; ["GO_STRUCT_PROJECTION","SOURCE_MAP_PROJECTION"]; (if $public_generate then "PASS" else "UNKNOWN" end)),
                 route("generated-go-compile"; "generated Go"; "generated module compilation only, not business-behavior proof"; ["GO_STRUCT_PROJECTION"]; (if $generated_compile then "PASS" else "UNKNOWN" end)),
-                {id:"lsp-server", label:"LSP server/editor support", scope:"no server or editor integration claim without separate evidence", required_evidence_keys:[], evidence:[], runtime_gate:"NOT_OBSERVED", state:"UNKNOWN"}
+                {id:"lsp-server", label:"LSP server/editor support", scope:"no server or editor integration claim without separate evidence", required_evidence_keys:[], evidence:[], runtime_gate:"NOT_OBSERVED", state:"UNKNOWN", unknown:unknown("lsp"; "lsp-server"; "LSP_SERVER_NOT_OBSERVED"; "UNOBSERVED"; "OBSERVE_LSP_SERVER"; [])}
               ],
               documentation:{path:"docs/entity-fields-support.md", decision:"PENDING", comparison:"PENDING"},
               boundary_cases:{
@@ -346,42 +394,257 @@ jobs:
             ] + (.routes | map("| " + .label + " | " + .state + " | " + .scope + " |")) | .[]
           ' "$support/support-projection.json" > "$support/support-section.md"
 
-          support_valid='
-            .schema == "gooo/entity-fields-support/v1" and
-            .runtime.head_sha == $head and
-            .identity.profile.id == "gooo.entityfields.go-projection.v1" and
-            .identity.profile.version == 1 and
-            (.identity.profile.digest | length) > 0 and
-            (.identity.activities | length) == 12 and
-            ([.routes[] | select(.state == "SUPPORTED" and ((.required_evidence_keys | length) == 0 or .runtime_gate != "PASS"))] | length) == 0 and
-            all(.routes[]; if .state == "SUPPORTED" then
-              (.evidence | length) == (.required_evidence_keys | length) and
-              all(.evidence[]; .decision == "PASS" and .resolution == "EXACT" and .digest != "")
-            else true end) and
-            ([.routes[] | select(.id == "ordinary-parser" and .state != "DEFERRED")] | length) == 0 and
-            ([.routes[] | select(.id == "lsp-server" and .state != "UNKNOWN")] | length) == 0 and
-            .documentation.decision == "PENDING"
+          support_defs='
+            def string_ok:
+              if type == "string" then length > 0 else false end;
+            def digest_ok:
+              if type == "string" then test("^sha256:[0-9a-f]{64}$") else false end;
+            def expected_cells: [
+              {id:"EF_SOURCE_PIN", activity:"ParseEntityFields", meta_operation:"parse-entity-fields", evidence_key:"OBSERVATION_SOURCE_PIN"},
+              {id:"EF_FORMAT_REPLAY", activity:"FormatEntityFields", meta_operation:"format-entity-fields", evidence_key:"SYNTAX_FORMAT_REPLAY"},
+              {id:"EF_PROFILE_BINDING", activity:"BindEntityFieldsProfile", meta_operation:"bind-entity-fields-profile", evidence_key:"CONTRACT_PROFILE_PIN"},
+              {id:"EF_SEMANTIC_LOWERING", activity:"LowerEntityFields", meta_operation:"lower-entity-fields", evidence_key:"SEMANTIC_IR_LOWERING"},
+              {id:"EF_GLOBAL_IDS", activity:"ValidateStableIDs", meta_operation:"validate-stable-ids", evidence_key:"GLOBAL_ID_VALIDATION"},
+              {id:"EF_DECLARATION_ORDER", activity:"PreserveDeclarationOrder", meta_operation:"preserve-declaration-order", evidence_key:"DECLARATION_ORDER"},
+              {id:"EF_BX_GET", activity:"RoundTripGet", meta_operation:"roundtrip-get", evidence_key:"BX_GET_ROUNDTRIP"},
+              {id:"EF_BX_PUT", activity:"RoundTripPut", meta_operation:"roundtrip-put", evidence_key:"BX_PUT_ROUNDTRIP"},
+              {id:"EF_GO_PROJECTION", activity:"GenerateGoProjection", meta_operation:"generate-go-projection", evidence_key:"GO_STRUCT_PROJECTION"},
+              {id:"EF_SOURCE_MAP", activity:"GenerateSourceMap", meta_operation:"generate-source-map", evidence_key:"SOURCE_MAP_PROJECTION"},
+              {id:"EF_LSP_NAVIGATION", activity:"ResolveLSPNavigation", meta_operation:"resolve-lsp-navigation", evidence_key:"LSP_NAVIGATION"},
+              {id:"EF_RECEIPT", activity:"PublishEntityFieldsReceipt", meta_operation:"publish-entity-fields-receipt", evidence_key:"ENTITY_FIELDS_RECEIPT"}
+            ];
+            def expected_route_ids: [
+              "ordinary-parser", "explicit-v1-parser", "formatter", "semantic-lowering",
+              "bx-get-put", "go-generator", "source-map", "lsp-adapter",
+              "public-cli-check", "public-cli-generate", "generated-go-compile", "lsp-server"
+            ];
+            def unknown_ok:
+              if type != "object" then false else
+                ((.stage | string_ok) and (.step | string_ok) and (.reason | string_ok) and
+                 (.unknown_class | string_ok) and (.next_operation | string_ok) and
+                 (.blocked_by | type) == "array")
+              end;
+            def source_cell($key): [.source_report.cells[]? | select(.evidence_key == $key)];
+            def route_evidence($keys): [
+              $keys[] as $key |
+              source_cell($key)[]? |
+              {key:$key, cell_id:.id, activity:.activity, meta_operation:.meta_operation,
+               decision:.decision, resolution:.resolution, digest:.evidence_digest}
+            ];
+            def evidence_ok($keys):
+              ((($keys | unique | length) == ($keys | length)) and
+               ((route_evidence($keys)) as $evidence |
+                 ($evidence | length == ($keys | length)) and
+                 ([ $evidence[] | .key ] == $keys) and
+                 all($evidence[]; (.cell_id | string_ok) and (.activity | string_ok) and
+                   (.meta_operation | string_ok) and .decision == "PASS" and
+                   .resolution == "EXACT" and (.digest | digest_ok))))
+              ;
+            def identity_ok:
+              (.identity | type) == "object" and (.runtime | type) == "object" and
+              (.source_report | type) == "object" and (.receipt_identity | type) == "object" and
+              .runtime.head_sha == $head and .receipt_identity.head_sha == $head and
+              .runtime.observation_report_digest == .source_report.digest and
+              .runtime.observation_receipt_digest == .receipt_identity.digest and
+              (.runtime.observation_report_digest | digest_ok) and
+              (.runtime.observation_receipt_digest | digest_ok) and
+              .identity.meta_source == "internal/meta/entityfields/entity-fields-meta.gooo" and
+              .identity.meta_source_digest == $meta_source_digest and
+              (.identity.meta_source_digest | digest_ok) and
+              .identity.fixture == "examples/entity-fields-v1/main.gooo" and
+              .identity.profile.id == "gooo.entityfields.go-projection.v1" and
+              .identity.profile.version == 1 and (.identity.profile.digest | digest_ok) and
+              .source_report.schema == "gooo/entity-fields-observation/v1" and
+              .source_report.profile_id == .identity.profile.id and
+              .source_report.profile_version == .identity.profile.version and
+              .source_report.profile_digest == .identity.profile.digest and
+              .source_report.decision == "PASS" and .source_report.resolution == "EXACT" and
+              .receipt_identity.profile_id == .identity.profile.id and
+              .receipt_identity.profile_digest == .identity.profile.digest and
+              .receipt_identity.decision == "PASS" and .receipt_identity.resolution == "EXACT" and
+              .receipt_identity.output_artifact_files == 13 and
+              .receipt_identity.repository_writes == 0 and
+              .receipt_identity.branch_setting_writes == 0 and
+              .receipt_identity.public_cli.check == true and
+              .receipt_identity.public_cli.generate == true and
+              .receipt_identity.generated_go_test_executions == 1 and
+              .receipt_identity.evidence_origin == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
+              (.runtime.public_cli.check.command | string_ok) and
+              .runtime.public_cli.check.command == "gooo check --semantic examples/entity-fields-v1/main.gooo" and
+              .runtime.public_cli.check.result == "PASS" and
+              .runtime.public_cli.check.artifact_digest == .runtime.observation_report_digest and
+              (.runtime.public_cli.generate.command | string_ok) and
+              .runtime.public_cli.generate.command == "gooo generate examples/entity-fields-v1/main.gooo --out caller-owned-temp" and
+              .runtime.public_cli.generate.result == "PASS" and
+              (.runtime.public_cli.generate.output_digest | digest_ok) and
+              (.runtime.public_cli.generate.manifest_digest | digest_ok) and
+              .runtime.public_cli.generate.compared_to == "first/generated.go" and
+              .runtime.generated_go.command == "go test ./..." and
+              .runtime.generated_go.result == "PASS" and
+              .runtime.generated_go.proof_scope == "COMPILE_ONLY" and
+              (.runtime.generated_go.artifact_digest | digest_ok) and
+              .runtime.evidence_origin == "CALLER_OWNED_TEMP_OUTPUT_ONLY";
+            def route_shape_ok:
+              (.routes | type) == "array" and (.routes | map(.id)) == expected_route_ids;
+            def binding_ok:
+              (.source_report.cells | type) == "array" and
+              (.source_report.cells | map({id,activity,meta_operation,evidence_key})) == expected_cells and
+              .source_report.activities == (expected_cells | map(.activity)) and
+              (.source_report.evidence_digests | type) == "object" and
+              ([.source_report.cells[] | {key:.evidence_key,digest:.evidence_digest}] | sort_by(.key)) ==
+                ([.source_report.evidence_digests | to_entries[] | {key:.key,digest:.value}] | sort_by(.key)) and
+              all(.source_report.cells[]?; .decision == "PASS" and .resolution == "EXACT" and (.evidence_digest | digest_ok)) and
+              ([.source_report.evidence_digests | to_entries[] | select((.value | digest_ok) | not)] | length) == 0;
+            def route_evidence_integrity_ok:
+              all(.routes[]?;
+                (.required_evidence_keys | type) == "array" and
+                ((.required_evidence_keys | unique | length) == (.required_evidence_keys | length)) and
+                (.evidence | type) == "array" and
+                ([.evidence[]?.key] == .required_evidence_keys) and
+                all(.evidence[]?; (.key | string_ok) and (.cell_id | string_ok) and
+                  (.activity | string_ok) and (.meta_operation | string_ok) and
+                  .decision == "PASS" and .resolution == "EXACT" and (.digest | digest_ok))
+              );
+            def claims_ok:
+              all(.routes[]?;
+                if .id == "ordinary-parser" then
+                  .state == "DEFERRED" and .runtime_gate == "DEFERRED" and (.required_evidence_keys | length) == 0
+                elif .id == "lsp-server" then
+                  .state == "UNKNOWN" and .runtime_gate == "NOT_OBSERVED" and (.unknown | unknown_ok)
+                elif .state == "SUPPORTED" then
+                  .runtime_gate == "PASS" and (.required_evidence_keys | length) > 0 and evidence_ok(.required_evidence_keys)
+                elif .state == "UNKNOWN" then
+                  (.unknown | unknown_ok)
+                else false end
+              ) and
+              all(.routes[]?; if .state == "SUPPORTED" then
+                (.required_evidence_keys | length) > 0 and .runtime_gate == "PASS"
+              else true end);
+            def support_assess:
+              if (identity_ok | not) then
+                {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"IDENTITY_MISMATCH"}
+              elif (route_shape_ok | not) then
+                {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SUPPORT_SHAPE_INVALID"}
+              elif (binding_ok | not) then
+                {decision:"UNKNOWN", resolution:"LOWER_RESOLUTION", reason:"SOURCE_BINDING_INCOMPLETE"}
+              elif (route_evidence_integrity_ok | not) then
+                {decision:"UNKNOWN", resolution:"LOWER_RESOLUTION", reason:"EVIDENCE_INCOMPLETE"}
+              elif (claims_ok | not) then
+                {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SUPPORT_OVERCLAIM"}
+              else
+                {decision:"PASS", resolution:"EXACT", reason:"ENTITY_FIELDS_SUPPORT_CLOSED"}
+              end;
           '
-          jq -e --arg head "$HEAD_SHA" "$support_valid" "$support/support-projection.json" > /dev/null
+          support_assess="$support_defs
+            (support_assess)"
+          support_valid="$support_defs
+            (support_assess) as \$assessment |
+            \$assessment.decision == \"PASS\" and \$assessment.resolution == \"EXACT\" and
+            .documentation.decision == \"PENDING\" and .documentation.comparison == \"PENDING\"
+          "
+          jq -e --arg head "$HEAD_SHA" --arg meta_source_digest "$meta_source_digest" "$support_valid" "$support/support-projection.json" > /dev/null
+
+          record_boundary_case() {
+            local name="$1" decision="$2" resolution="$3" reason="$4"
+            jq --arg name "$name" --arg decision "$decision" --arg resolution "$resolution" --arg reason "$reason" \
+              '.boundary_cases[$name] = {decision:$decision, resolution:$resolution, reason:$reason}' \
+              "$support/support-projection.json" > "$support/support-projection.next.json"
+            mv "$support/support-projection.next.json" "$support/support-projection.json"
+          }
+
+          expect_boundary_case() {
+            local name="$1" expected_decision="$2" expected_resolution="$3" reason="$4" case_file="$5"
+            if ! jq -e --arg head "$HEAD_SHA" --arg meta_source_digest "$meta_source_digest" \
+              --arg expected_decision "$expected_decision" --arg expected_resolution "$expected_resolution" \
+              "$support_assess as \$assessment | \$assessment.decision == \$expected_decision and \$assessment.resolution == \$expected_resolution" \
+              "$case_file" > /dev/null; then
+              record_boundary_case "$name" "REFUTED" "FAIL_CLOSED" "BOUNDARY_CASE_ASSESSMENT_FAILED"
+              jq --arg name "$name" --arg reason "$reason" \
+                '.failure = {case:$name, decision:"REFUTED", resolution:"FAIL_CLOSED", reason:$reason}' \
+                "$support/support-projection.json" > "$support/support-projection.failure.json"
+              mv "$support/support-projection.failure.json" "$support/support-projection.json"
+              echo "boundary case $name did not produce the expected assessment"
+              exit 1
+            fi
+            record_boundary_case "$name" "$expected_decision" "$expected_resolution" "$reason"
+          }
+
+          expect_boundary_case "positive" "PASS" "EXACT" "ENTITY_FIELDS_SUPPORT_CLOSED" "$support/support-projection.json"
           cmp -s "$support/support-section.md" docs/entity-fields-support.md
           sed 's/ordinary\/default parser | DEFERRED/ordinary\/default parser | SUPPORTED/' docs/entity-fields-support.md > "$support/stale-document.md"
           if cmp -s "$support/support-section.md" "$support/stale-document.md"; then
+            record_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
+            jq '.failure = {case:"stale_document", decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"DOCUMENTATION_CONTRADICTION_ACCEPTED"}' \
+              "$support/support-projection.json" > "$support/support-projection.failure.json"
+            mv "$support/support-projection.failure.json" "$support/support-projection.json"
             echo "stale support documentation was accepted"
             exit 1
           fi
-          jq '(.routes[] | select(.id == "explicit-v1-parser") | .state) = "SUPPORTED" | (.routes[] | select(.id == "explicit-v1-parser") | .required_evidence_keys) = []' "$support/support-projection.json" > "$support/overbroad-support.json"
-          if jq -e --arg head "$HEAD_SHA" "$support_valid" "$support/overbroad-support.json" > /dev/null; then
-            echo "overbroad support claim was accepted"
-            exit 1
-          fi
-          jq '.boundary_cases.stale_document = {decision:"REFUTED", resolution:"FAIL_CLOSED"} | .boundary_cases.overbroad_support = {decision:"REFUTED", resolution:"FAIL_CLOSED"} | .documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
+          record_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
+
+          jq '(.routes[] | select(.id == "semantic-lowering") | .evidence) = []' \
+            "$support/support-projection.json" > "$support/missing-evidence.json"
+          expect_boundary_case "missing_evidence" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/missing-evidence.json"
+
+          jq '(.routes[] | select(.id == "semantic-lowering") | .required_evidence_keys) = ["SEMANTIC_IR_LOWERING","SEMANTIC_IR_LOWERING"]' \
+            "$support/support-projection.json" > "$support/duplicate-key.json"
+          expect_boundary_case "duplicate_key" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/duplicate-key.json"
+
+          jq 'del(.routes[] | select(.id == "formatter"))' \
+            "$support/support-projection.json" > "$support/missing-route.json"
+          expect_boundary_case "missing_route" "REFUTED" "FAIL_CLOSED" "SUPPORT_SHAPE_INVALID" "$support/missing-route.json"
+
+          jq '(.source_report.cells[] | select(.evidence_key == "SYNTAX_FORMAT_REPLAY") | .evidence_digest) = null |
+              (.routes[] | select(.id == "formatter") | .evidence[0].digest) = null' \
+            "$support/support-projection.json" > "$support/null-digest.json"
+          expect_boundary_case "null_digest" "UNKNOWN" "LOWER_RESOLUTION" "SOURCE_BINDING_INCOMPLETE" "$support/null-digest.json"
+
+          jq '.identity.profile.id = "gooo.entityfields.invalid.v1"' \
+            "$support/support-projection.json" > "$support/profile-mismatch.json"
+          expect_boundary_case "profile_mismatch" "REFUTED" "FAIL_CLOSED" "IDENTITY_MISMATCH" "$support/profile-mismatch.json"
+
+          jq '.runtime.head_sha = "0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$support/support-projection.json" > "$support/head-mismatch.json"
+          expect_boundary_case "head_mismatch" "REFUTED" "FAIL_CLOSED" "IDENTITY_MISMATCH" "$support/head-mismatch.json"
+
+          jq '.receipt_identity.profile_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$support/support-projection.json" > "$support/receipt-mismatch.json"
+          expect_boundary_case "receipt_mismatch" "REFUTED" "FAIL_CLOSED" "IDENTITY_MISMATCH" "$support/receipt-mismatch.json"
+
+          jq '
+            (.routes[] | select(.id == "explicit-v1-parser") | .evidence[0]) as $source_evidence |
+            (.routes[] | select(.id == "lsp-adapter") | .evidence[0]) as $lsp_evidence |
+            .routes = ((.routes | map(
+              if .id == "ordinary-parser" then
+                .state = "SUPPORTED" | .runtime_gate = "PASS" |
+                .required_evidence_keys = ["OBSERVATION_SOURCE_PIN"] | .evidence = [$source_evidence]
+              elif .id == "lsp-server" then
+                .state = "SUPPORTED" | .runtime_gate = "PASS" |
+                .required_evidence_keys = ["LSP_NAVIGATION"] | .evidence = [$lsp_evidence]
+              else . end
+            )) + [
+              {id:"external-effect", label:"external effect", scope:"outside the EntityFields profile", required_evidence_keys:["GO_STRUCT_PROJECTION"], evidence:[$source_evidence], runtime_gate:"PASS", state:"SUPPORTED", unknown:null},
+              {id:"business-behavior", label:"business behavior", scope:"not established by generated Go compilation", required_evidence_keys:["GO_STRUCT_PROJECTION"], evidence:[$source_evidence], runtime_gate:"PASS", state:"SUPPORTED", unknown:null}
+            ])
+          ' "$support/support-projection.json" > "$support/overbroad-support.json"
+          expect_boundary_case "overbroad_support" "REFUTED" "FAIL_CLOSED" "SUPPORT_SHAPE_INVALID" "$support/overbroad-support.json"
+
+          jq '.documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
           mv "$support/support-projection.final.json" "$support/support-projection.json"
+          jq -e --arg head "$HEAD_SHA" --arg meta_source_digest "$meta_source_digest" "$support_assess as \$assessment | \$assessment.decision == \"PASS\" and \$assessment.resolution == \"EXACT\"" "$support/support-projection.json" > /dev/null
           jq -e --arg head "$HEAD_SHA" '
             .schema == "gooo/entity-fields-support/v1" and .runtime.head_sha == $head and
             .documentation.decision == "PASS" and .documentation.comparison == "EXACT" and
             .boundary_cases.positive.decision == "PASS" and .boundary_cases.positive.resolution == "EXACT" and
             .boundary_cases.stale_document.decision == "REFUTED" and .boundary_cases.stale_document.resolution == "FAIL_CLOSED" and
-            .boundary_cases.overbroad_support.decision == "REFUTED" and .boundary_cases.overbroad_support.resolution == "FAIL_CLOSED"
+            .boundary_cases.overbroad_support.decision == "REFUTED" and .boundary_cases.overbroad_support.resolution == "FAIL_CLOSED" and
+            .boundary_cases.missing_evidence.decision == "UNKNOWN" and .boundary_cases.missing_evidence.resolution == "LOWER_RESOLUTION" and
+            .boundary_cases.duplicate_key.decision == "UNKNOWN" and .boundary_cases.duplicate_key.resolution == "LOWER_RESOLUTION" and
+            .boundary_cases.missing_route.decision == "REFUTED" and .boundary_cases.missing_route.resolution == "FAIL_CLOSED" and
+            .boundary_cases.null_digest.decision == "UNKNOWN" and .boundary_cases.null_digest.resolution == "LOWER_RESOLUTION" and
+            .boundary_cases.profile_mismatch.decision == "REFUTED" and .boundary_cases.profile_mismatch.resolution == "FAIL_CLOSED" and
+            .boundary_cases.head_mismatch.decision == "REFUTED" and .boundary_cases.head_mismatch.resolution == "FAIL_CLOSED" and
+            .boundary_cases.receipt_mismatch.decision == "REFUTED" and .boundary_cases.receipt_mismatch.resolution == "FAIL_CLOSED"
           ' "$support/support-projection.json" > /dev/null
 
       - name: Upload EntityFields V1 support view
