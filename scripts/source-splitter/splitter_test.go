@@ -164,10 +164,10 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 
 func TestRenderPartSharedImportHeaderGuards(t *testing.T) {
 	cases := []struct {
-		name       string
-		source     string
-		grouped    bool
-		wantText   string
+		name     string
+		source   string
+		grouped  bool
+		wantText string
 	}{
 		{name: "named-alias", source: "package p\n\nimport (\n\tj \"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ j.RawMessage\n\t_ = strconv.IntSize\n}\n", grouped: false, wantText: `import j "encoding/json"`},
 		{name: "dot-import-preserved", source: "package p\n\nimport (\n\t. \"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ RawMessage\n\t_ = strconv.IntSize\n}\n", grouped: true, wantText: `. "encoding/json"`},
