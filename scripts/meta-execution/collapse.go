@@ -259,7 +259,7 @@ func collapseIndicatorID(indicator sourcepolicy.Indicator) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	return "sha256:" + digestBytes(payload), true
+	return digestBytes(payload), true
 }
 
 func validBareDigest(value string) bool {
