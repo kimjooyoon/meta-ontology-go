@@ -109,8 +109,9 @@ func normalizeTypeDiagnostic(root string, err error) string {
 	}
 	text := strings.TrimSpace(err.Error())
 	text = strings.ReplaceAll(text, "\r\n", "\n")
-	text = strings.ReplaceAll(text, "\n", "\\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
 	text = strings.ReplaceAll(text, "\\", "/")
+	text = strings.ReplaceAll(text, "\n", "\\n")
 	workspace := strings.TrimRight(filepath.ToSlash(filepath.Clean(root)), "/")
 	if workspace != "." && workspace != "" {
 		text = strings.ReplaceAll(text, workspace+"/", "<workspace>/")
