@@ -25,6 +25,16 @@ func ( /* receiver */ renamed *T ) M() {}
 	}
 }
 
+func TestMethodIdentityUnwrapsParenthesizedReceiverType(t *testing.T) {
+	identity := methodIdentityFromSource(t, `package p
+type T struct{}
+func (receiver (T)) M() {}
+`)
+	if identity != "method:T:M" {
+		t.Fatalf("parenthesized receiver identity = %q, want method:T:M", identity)
+	}
+}
+
 func TestMethodIdentityIgnoresGenericReceiverBinders(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -63,6 +73,38 @@ func (renamed Pair[Left, Right]) M() {}
 			second := methodIdentityFromSource(t, testCase.second)
 			if first != testCase.want || second != first {
 				t.Fatalf("generic receiver binders changed method identity: first=%q second=%q want=%q", first, second, testCase.want)
+			}
+		})
+	}
+}
+
+func TestMethodIdentityAllowsBlankGenericReceiverBinders(t *testing.T) {
+	cases := []struct {
+		name   string
+		source string
+		want   string
+	}{
+		{
+			name: "single blank binder",
+			source: `package p
+type Single[A any] struct{}
+func (receiver Single[_]) M() {}
+`,
+			want: "method:Single:M",
+		},
+		{
+			name: "multiple blank binders",
+			source: `package p
+type Pair[A, B any] struct{}
+func (receiver Pair[_, _]) M() {}
+`,
+			want: "method:Pair:M",
+		},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			if got := methodIdentityFromSource(t, testCase.source); got != testCase.want {
+				t.Fatalf("blank generic receiver identity = %q, want %q", got, testCase.want)
 			}
 		})
 	}
@@ -120,7 +162,7 @@ func (other *T) M() {}
 			}
 			_, _, err := Extract(root, "x.go")
 			var failure Failure
-			if !errors.As(err, &failure) || failure.Reason != "DECLARATION_IDENTITY_COLLISION" || len(failure.Diagnostics) != 1 || failure.Diagnostics[0] != "method:T:M" {
+			if !errors.As(err, &failure) || failure.Reason != "DECLARATION_IDENTITY_COLLISION" || len(failure.Diagnostics) != 0 || len(failure.BlockedBy) != 1 || failure.BlockedBy[0] != "method:T:M" {
 				t.Fatalf("Extract collision = %v, want stable method:T:M collision", err)
 			}
 		})
@@ -139,8 +181,45 @@ func (receiver pkg.T) M() {}
 	}
 	_, _, err := Extract(root, "x.go")
 	var failure Failure
-	if !errors.As(err, &failure) || failure.Reason != "UNSUPPORTED_RECEIVER" || len(failure.Diagnostics) != 1 || strings.Contains(failure.Diagnostics[0], "func-at:") {
+	if !errors.As(err, &failure) || failure.Reason != "UNSUPPORTED_RECEIVER" || len(failure.BlockedBy) != 0 || len(failure.Diagnostics) != 1 || failure.Diagnostics[0] != "method=M" {
 		t.Fatalf("malformed receiver = %v, want fail-closed unsupported receiver", err)
+	}
+}
+
+func TestBlankMethodsRemainPositionalCandidates(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := `package p
+type T struct{}
+func (T) _() {}
+func (T) _() {}
+`
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	declarations, fallbackUsed, err := candidates(fset, file)
+	if err != nil || !fallbackUsed {
+		t.Fatalf("blank method candidates = declarations=%#v fallback=%t err=%v, want positional fallback", declarations, fallbackUsed, err)
+	}
+	blankMethods := 0
+	for _, declaration := range declarations {
+		if strings.HasPrefix(declaration.identity, "func-at:") {
+			blankMethods++
+		}
+	}
+	if blankMethods != 2 {
+		t.Fatalf("blank method candidates = %#v, want two positional identities", declarations)
+	}
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := Extract(root, "x.go"); err != nil {
+		t.Fatalf("blank methods should remain independently movable: %v", err)
 	}
 }
 

@@ -13,8 +13,8 @@ func candidates(fset *token.FileSet, file *ast.File) ([]declaration, bool, error
 	for order, node := range file.Decls {
 		identity, movable := identityOf(fset, node)
 		if !movable {
-			if function, ok := node.(*ast.FuncDecl); ok && function.Recv != nil && function.Name != nil && function.Name.Name != "init" {
-				return nil, false, fail("validate-ast", "identity", "UNSUPPORTED_RECEIVER", "KNOWN_CONTRADICTION", "report-contradiction", []string{"method=" + function.Name.Name})
+			if function, ok := node.(*ast.FuncDecl); ok && function.Recv != nil && function.Name != nil && function.Name.Name != "init" && function.Name.Name != "_" {
+				return nil, false, failWithDiagnostics("validate-ast", "identity", "UNSUPPORTED_RECEIVER", "KNOWN_CONTRADICTION", "report-contradiction", []string{"method=" + function.Name.Name})
 			}
 			identity, movable = fallbackIdentity(node)
 			fallbackUsed = fallbackUsed || movable
@@ -107,6 +107,12 @@ func receiverBaseIdentifier(receiver *ast.FieldList) (string, bool) {
 }
 
 func receiverBaseTypeIdentifier(expression ast.Expr) (string, bool) {
+	if parenthesized, ok := expression.(*ast.ParenExpr); ok {
+		if parenthesized == nil {
+			return "", false
+		}
+		return receiverBaseTypeIdentifier(parenthesized.X)
+	}
 	if pointer, ok := expression.(*ast.StarExpr); ok {
 		if pointer == nil {
 			return "", false
@@ -123,6 +129,11 @@ func receiverBaseTypeIdentifierWithoutPointer(expression ast.Expr) (string, bool
 			return "", false
 		}
 		return value.Name, true
+	case *ast.ParenExpr:
+		if value == nil {
+			return "", false
+		}
+		return receiverBaseTypeIdentifierWithoutPointer(value.X)
 	case *ast.IndexExpr:
 		if value == nil {
 			return "", false
@@ -145,7 +156,7 @@ func indexedReceiverBaseIdentifier(base ast.Expr, arguments []ast.Expr) (string,
 	}
 	for _, argument := range arguments {
 		binder, ok := argument.(*ast.Ident)
-		if !ok || binder == nil || binder.Name == "" || binder.Name == "_" {
+		if !ok || binder == nil || binder.Name == "" {
 			return "", false
 		}
 	}
