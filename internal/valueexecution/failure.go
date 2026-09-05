@@ -20,6 +20,10 @@ const (
 	ReasonInputArityMismatch        = "VALUE_INPUT_ARITY_MISMATCH"
 	ReasonIntegerOverflow           = "VALUE_INTEGER_OVERFLOW"
 	ReasonIndicatorUnsatisfied      = "VALUE_INDICATOR_UNSATISFIED"
+	ReasonProgramAuthorityInvalid   = "VALUE_PROGRAM_AUTHORITY_INVALID"
+	ReasonProgramAuthorityMismatch  = "VALUE_PROGRAM_AUTHORITY_MISMATCH"
+	ReasonResultHandleInvalid       = "VALUE_RESULT_HANDLE_INVALID"
+	ReasonResultProducerMismatch    = "VALUE_RESULT_PRODUCER_MISMATCH"
 )
 
 type Failure struct {
