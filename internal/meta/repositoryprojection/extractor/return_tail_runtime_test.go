@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -25,6 +26,7 @@ type runtimeWitnessCase struct {
 	name         string
 	functionName string
 	source       string
+	support      map[string]string
 	expected     string
 }
 
@@ -34,6 +36,7 @@ func TestReturnTailRuntimeWitness(t *testing.T) {
 			name:         "W1_sentinel_guard_terminal_nil",
 			functionName: "W1",
 			source:       runtimeWitnessW1Source(),
+			support:      map[string]string{"harness.go": runtimeWitnessW1Harness()},
 			expected: "early:true:*main.witnessError:false\n" +
 				"nil:true:<nil>:true\n" +
 				"terminal:true:*main.witnessError:false\n",
@@ -42,6 +45,7 @@ func TestReturnTailRuntimeWitness(t *testing.T) {
 			name:         "W2_typed_nil_interface",
 			functionName: "W2",
 			source:       runtimeWitnessW2Source(),
+			support:      map[string]string{"harness.go": runtimeWitnessW2Harness()},
 			expected:     "typed-nil:*main.typedNilError:false\n",
 		},
 	}
@@ -54,6 +58,19 @@ func TestReturnTailRuntimeWitness(t *testing.T) {
 
 func runReturnTailRuntimeWitness(t *testing.T, tc runtimeWitnessCase) {
 	t.Helper()
+	if os.Getenv("CI") != "true" {
+		t.Skip("runtime witness requires CI=true")
+	}
+	caseRoot := runtimeWitnessPrepareCase(t, tc)
+	originalOutput := runtimeWitnessRunOriginal(t, tc, caseRoot)
+	result := runtimeWitnessExtract(t, tc, caseRoot)
+	generatedRoot := runtimeWitnessMaterializeGenerated(t, tc, result, caseRoot)
+	generatedOutput := runtimeWitnessRunGenerated(t, tc, generatedRoot, caseRoot)
+	runtimeWitnessAssertOutputs(t, tc, originalOutput, generatedOutput, caseRoot)
+}
+
+func runtimeWitnessPrepareCase(t *testing.T, tc runtimeWitnessCase) string {
+	t.Helper()
 	artifactRoot := os.Getenv(runtimeWitnessOutputEnv)
 	if artifactRoot == "" {
 		artifactRoot = filepath.Join(t.TempDir(), "return-tail-runtime-witness")
@@ -62,7 +79,6 @@ func runReturnTailRuntimeWitness(t *testing.T, tc runtimeWitnessCase) {
 	if err := os.MkdirAll(caseRoot, 0o755); err != nil {
 		t.Fatal(err)
 	}
-
 	functionLines, renderedInputLines, err := runtimeWitnessInputLines(tc.source, tc.functionName)
 	if err != nil {
 		t.Fatal(err)
@@ -70,39 +86,60 @@ func runReturnTailRuntimeWitness(t *testing.T, tc runtimeWitnessCase) {
 	if functionLines <= runtimeWitnessLineLimit || renderedInputLines <= runtimeWitnessLineLimit {
 		t.Fatalf("input capacity was not exceeded: function_lines=%d rendered_input_lines=%d", functionLines, renderedInputLines)
 	}
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "input-lines.json"), runtimeWitnessJSON(map[string]int{
-		"function_lines":        functionLines,
-		"rendered_input_lines": renderedInputLines,
-	})); err != nil {
-		t.Fatal(err)
+	metadata := map[string]any{"function": tc.functionName, "expected_output": tc.expected, "function_lines": functionLines, "rendered_input_lines": renderedInputLines}
+	for path, data := range map[string][]byte{
+		"source.go":           []byte(tc.source),
+		"expected-output.txt": []byte(tc.expected),
+		"case-metadata.json":  runtimeWitnessJSON(metadata),
+	} {
+		if err := runtimeWitnessWrite(filepath.Join(caseRoot, path), data); err != nil {
+			t.Fatal(err)
+		}
 	}
+	for logical, source := range tc.support {
+		if err := runtimeWitnessWriteRelative(filepath.Join(caseRoot, "support-source"), logical, []byte(source)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return caseRoot
+}
 
-	originalRoot := filepath.Join(caseRoot, "original")
-	if err := runtimeWitnessWriteModule(originalRoot, tc.source); err != nil {
+func runtimeWitnessRunOriginal(t *testing.T, tc runtimeWitnessCase, caseRoot string) []byte {
+	t.Helper()
+	root := t.TempDir()
+	if err := runtimeWitnessWriteModule(root, tc.source, tc.support); err != nil {
 		t.Fatal(err)
 	}
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "original-source.go"), []byte(tc.source)); err != nil {
-		t.Fatal(err)
+	stdout, stderr, runErr := runtimeWitnessRunGo(root)
+	for path, data := range map[string][]byte{
+		"original-stdout.txt": []byte(stdout),
+		"original-stderr.txt": []byte(stderr),
+	} {
+		if err := runtimeWitnessWrite(filepath.Join(caseRoot, path), data); err != nil {
+			t.Fatal(err)
+		}
 	}
-	originalOutput, originalErr := runtimeWitnessRunGo(originalRoot)
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "original-stdout.txt"), originalOutput); err != nil {
-		t.Fatal(err)
+	if runErr != nil {
+		t.Fatalf("original fixture did not execute: %v\n%s", runErr, stderr)
 	}
-	if originalErr != nil {
-		t.Fatalf("original fixture did not execute: %v\n%s", originalErr, originalOutput)
+	if string(stdout) != tc.expected {
+		t.Fatalf("original observation=%q, want %q", stdout, tc.expected)
 	}
-	if string(originalOutput) != tc.expected {
-		t.Fatalf("original observation=%q, want %q", originalOutput, tc.expected)
-	}
+	return stdout
+}
 
-	extractionRoot := t.TempDir()
-	if err := runtimeWitnessWriteModule(extractionRoot, tc.source); err != nil {
+func runtimeWitnessExtract(t *testing.T, tc runtimeWitnessCase, caseRoot string) Result {
+	t.Helper()
+	root := t.TempDir()
+	if err := runtimeWitnessWriteModule(root, tc.source, tc.support); err != nil {
 		t.Fatal(err)
 	}
-	result, extractionErr := ExtractWithResult(extractionRoot, "x.go")
-	if extractionErr != nil {
-		_ = runtimeWitnessWrite(filepath.Join(caseRoot, "result-error.txt"), []byte(extractionErr.Error()+"\n"))
-		t.Fatalf("fixture extraction failed: %v", extractionErr)
+	result, err := ExtractWithResult(root, "x.go")
+	if err != nil {
+		if writeErr := runtimeWitnessWrite(filepath.Join(caseRoot, "result-error.txt"), []byte(err.Error()+"\n")); writeErr != nil {
+			t.Fatal(writeErr)
+		}
+		t.Fatalf("fixture extraction failed: %v", err)
 	}
 	if len(result.Generated) == 0 {
 		t.Fatal("fixture extraction produced no generated units")
@@ -114,79 +151,124 @@ func runReturnTailRuntimeWitness(t *testing.T, tc runtimeWitnessCase) {
 	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "result-evidence.json"), evidence); err != nil {
 		t.Fatal(err)
 	}
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "result-evidence.jsonl"), append(evidence, '\n')); err != nil {
+	return result
+}
+
+func runtimeWitnessMaterializeGenerated(t *testing.T, tc runtimeWitnessCase, result Result, caseRoot string) string {
+	t.Helper()
+	root := t.TempDir()
+	if err := runtimeWitnessWriteGoMod(root); err != nil {
 		t.Fatal(err)
 	}
-
-	generatedRoot := filepath.Join(caseRoot, "generated")
+	if err := runtimeWitnessWriteSupport(root, tc.support); err != nil {
+		t.Fatal(err)
+	}
 	generatedArtifactRoot := filepath.Join(caseRoot, "generated-source")
 	for logical, data := range result.Generated {
-		if err := runtimeWitnessWriteRelative(generatedRoot, logical, data); err != nil {
+		if err := runtimeWitnessWriteRelative(root, logical, data); err != nil {
 			t.Fatal(err)
 		}
 		if err := runtimeWitnessWriteRelative(generatedArtifactRoot, logical, data); err != nil {
 			t.Fatal(err)
 		}
 	}
-	unitLines, err := runtimeWitnessGeneratedUnitLines(result.Generated)
+	fileLines := runtimeWitnessGeneratedFileLines(result.Generated)
+	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "generated-file-lines.json"), runtimeWitnessJSON(fileLines)); err != nil {
+		t.Fatal(err)
+	}
+	for logical, lineCount := range fileLines {
+		if lineCount > runtimeWitnessLineLimit {
+			t.Fatalf("generated file %s has %d raw lines, want <=%d", logical, lineCount, runtimeWitnessLineLimit)
+		}
+	}
+	unitLines, err := runtimeWitnessGeneratedFunctionUnitLines(result.Generated)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "generated-unit-lines.json"), runtimeWitnessJSON(unitLines)); err != nil {
+	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "generated-function-unit-lines.json"), runtimeWitnessJSON(unitLines)); err != nil {
 		t.Fatal(err)
 	}
 	for logical, units := range unitLines {
 		for functionName, lineCount := range units {
 			if lineCount > runtimeWitnessLineLimit {
-				t.Fatalf("generated unit %s:%s has %d raw lines, want <=%d", logical, functionName, lineCount, runtimeWitnessLineLimit)
+				t.Fatalf("generated function unit %s:%s has %d raw lines, want <=%d", logical, functionName, lineCount, runtimeWitnessLineLimit)
 			}
 		}
 	}
+	return root
+}
 
-	generatedOutput, generatedErr := runtimeWitnessRunGo(generatedRoot)
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "generated-stdout.txt"), generatedOutput); err != nil {
-		t.Fatal(err)
+func runtimeWitnessRunGenerated(t *testing.T, tc runtimeWitnessCase, root, caseRoot string) []byte {
+	t.Helper()
+	stdout, stderr, runErr := runtimeWitnessRunGo(root)
+	for path, data := range map[string][]byte{
+		"generated-stdout.txt": []byte(stdout),
+		"generated-stderr.txt": []byte(stderr),
+	} {
+		if err := runtimeWitnessWrite(filepath.Join(caseRoot, path), data); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if generatedErr != nil {
-		t.Fatalf("generated fixture did not execute: %v\n%s", generatedErr, generatedOutput)
+	if runErr != nil {
+		t.Fatalf("generated fixture did not execute: %v\n%s", runErr, stderr)
 	}
-	if string(generatedOutput) != tc.expected || string(generatedOutput) != string(originalOutput) {
-		t.Fatalf("generated observation=%q, original=%q, want %q", generatedOutput, originalOutput, tc.expected)
-	}
-	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "expected-stdout.txt"), []byte(tc.expected)); err != nil {
-		t.Fatal(err)
+	return stdout
+}
+
+func runtimeWitnessAssertOutputs(t *testing.T, tc runtimeWitnessCase, original, generated []byte, caseRoot string) {
+	t.Helper()
+	if string(generated) != tc.expected || string(generated) != string(original) {
+		t.Fatalf("generated observation=%q, original=%q, want %q", generated, original, tc.expected)
 	}
 	observations := map[string]string{
-		"expected":  tc.expected,
-		"original":  string(originalOutput),
-		"generated": string(generatedOutput),
+		"expected_stdout":  tc.expected,
+		"original_stdout":  string(original),
+		"generated_stdout": string(generated),
 	}
 	if err := runtimeWitnessWrite(filepath.Join(caseRoot, "observations.json"), runtimeWitnessJSON(observations)); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func runtimeWitnessWriteModule(root, source string) error {
+func runtimeWitnessWriteModule(root, source string, support map[string]string) error {
 	if err := os.MkdirAll(root, 0o755); err != nil {
 		return err
 	}
-	if err := runtimeWitnessWrite(filepath.Join(root, "go.mod"), []byte("module runtime-witness.test\n")); err != nil {
+	if err := runtimeWitnessWriteGoMod(root); err != nil {
 		return err
 	}
-	return runtimeWitnessWrite(filepath.Join(root, "x.go"), []byte(source))
+	if err := runtimeWitnessWrite(filepath.Join(root, "x.go"), []byte(source)); err != nil {
+		return err
+	}
+	return runtimeWitnessWriteSupport(root, support)
 }
 
-func runtimeWitnessRunGo(root string) ([]byte, error) {
+func runtimeWitnessWriteSupport(root string, support map[string]string) error {
+	for logical, source := range support {
+		if err := runtimeWitnessWriteRelative(root, logical, []byte(source)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func runtimeWitnessWriteGoMod(root string) error {
+	return runtimeWitnessWrite(filepath.Join(root, "go.mod"), []byte("module runtime-witness.test\n"))
+}
+
+func runtimeWitnessRunGo(root string) ([]byte, []byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), runtimeWitnessGoTimeout)
 	defer cancel()
 	command := exec.CommandContext(ctx, "go", "run", ".")
 	command.Dir = root
 	command.Env = append(os.Environ(), "GOTOOLCHAIN=local", "GOWORK=off", "GOFLAGS=-mod=readonly")
-	output, err := command.CombinedOutput()
+	var stderr bytes.Buffer
+	command.Stderr = &stderr
+	stdout, err := command.Output()
 	if ctx.Err() != nil {
-		return output, ctx.Err()
+		return stdout, stderr.Bytes(), ctx.Err()
 	}
-	return output, err
+	return stdout, stderr.Bytes(), err
 }
 
 func runtimeWitnessInputLines(source, functionName string) (int, int, error) {
@@ -221,7 +303,26 @@ func runtimeWitnessInputLines(source, functionName string) (int, int, error) {
 	return 0, 0, fmt.Errorf("function %q not found", functionName)
 }
 
-func runtimeWitnessGeneratedUnitLines(generated map[string][]byte) (map[string]map[string]int, error) {
+func runtimeWitnessGeneratedFileLines(generated map[string][]byte) map[string]int {
+	result := make(map[string]int, len(generated))
+	for logical, source := range generated {
+		result[logical] = runtimeWitnessRawPhysicalLines(source)
+	}
+	return result
+}
+
+func runtimeWitnessRawPhysicalLines(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	lines := bytes.Count(data, []byte{'\n'})
+	if data[len(data)-1] != '\n' {
+		lines++
+	}
+	return lines
+}
+
+func runtimeWitnessGeneratedFunctionUnitLines(generated map[string][]byte) (map[string]map[string]int, error) {
 	result := make(map[string]map[string]int, len(generated))
 	for logical, source := range generated {
 		fset := token.NewFileSet()
@@ -276,14 +377,22 @@ func runtimeWitnessJSON(value any) []byte {
 }
 
 func runtimeWitnessW1Source() string {
-	return "package main\n\nimport \"fmt\"\n\nfunc W1(mode int) error {\n" +
+	return "package main\n\nfunc W1(mode int) error {\n" +
+		"\tif mode == 1 {\n\t\treturn earlySentinel\n\t}\n" +
 		strings.Repeat("\t_ = 1\n", 80) +
-		"\tif mode == 1 {\n\t\treturn earlySentinel\n\t}\n\tif mode == 2 {\n\t\treturn nil\n\t}\n\treturn terminalSentinel\n}\n\n" +
-		"var earlySentinel error = &witnessError{kind: \"early\"}\nvar terminalSentinel error = &witnessError{kind: \"terminal\"}\n\ntype witnessError struct{ kind string }\n\nfunc (e *witnessError) Error() string { return e.kind }\n\nfunc emitW1(label string, got error, expected error) {\n\tfmt.Printf(\"%s:%t:%T:%t\\n\", label, got == expected, got, got == nil)\n}\n\nfunc main() {\n\temitW1(\"early\", W1(1), earlySentinel)\n\temitW1(\"nil\", W1(2), nil)\n\temitW1(\"terminal\", W1(0), terminalSentinel)\n}\n"
+		"\tif mode == 2 {\n\t\treturn nil\n\t}\n\treturn terminalSentinel\n}\n"
+}
+
+func runtimeWitnessW1Harness() string {
+	return "package main\n\nimport \"fmt\"\n\nvar earlySentinel error = &witnessError{kind: \"early\"}\nvar terminalSentinel error = &witnessError{kind: \"terminal\"}\n\ntype witnessError struct{ kind string }\n\nfunc (e *witnessError) Error() string { return e.kind }\n\nfunc emitW1(label string, got error, expected error) {\n\tfmt.Printf(\"%s:%t:%T:%t\\n\", label, got == expected, got, got == nil)\n}\n\nfunc main() {\n\temitW1(\"early\", W1(1), earlySentinel)\n\temitW1(\"nil\", W1(2), nil)\n\temitW1(\"terminal\", W1(0), terminalSentinel)\n}\n"
 }
 
 func runtimeWitnessW2Source() string {
-	return "package main\n\nimport \"fmt\"\n\nfunc W2() error {\n" +
+	return "package main\n\nfunc W2() error {\n" +
 		strings.Repeat("\t_ = 1\n", 80) +
-		"\treturn (*typedNilError)(nil)\n}\n\ntype typedNilError struct{}\n\nfunc (*typedNilError) Error() string { return \"typed-nil\" }\n\nfunc main() {\n\terr := W2()\n\tfmt.Printf(\"typed-nil:%T:%t\\n\", err, err == nil)\n}\n"
+		"\treturn (*typedNilError)(nil)\n}\n"
+}
+
+func runtimeWitnessW2Harness() string {
+	return "package main\n\nimport \"fmt\"\n\ntype typedNilError struct{}\n\nfunc (*typedNilError) Error() string { return \"typed-nil\" }\n\nfunc main() {\n\terr := W2()\n\tfmt.Printf(\"typed-nil:%T:%t\\n\", err, err == nil)\n}\n"
 }
