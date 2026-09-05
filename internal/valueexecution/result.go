@@ -55,14 +55,13 @@ type producedResultDigestInput struct {
 // The digest is content identity for replay comparison only. It intentionally
 // carries no invocation counter or attempt identity.
 func issueProducedResult(authority resultAuthority, value int64) ProducedResult {
-	result := ProducedResult{authority: authority, value: value,
+	return ProducedResult{authority: authority, value: value,
 		resultDigest: digestValue(producedResultDigestInput{
 			ProducerActivityID: authority.activityID, ProducerActivity: authority.activityName,
 			OutputEntityID: authority.outputEntityID, OutputEntity: authority.outputEntityName,
 			SourceDigest: authority.sourceDigest, SemanticFingerprint: authority.semanticFingerprint,
 			OperationSpecDigest: authority.operationSpecDigest, Value: value,
 		})}
-	return result
 }
 
 func (result ProducedResult) validate() error {
