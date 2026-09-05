@@ -178,6 +178,9 @@ func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
 	}
 	matching.IndicatorDecisionLedger = &ledger
 	matching = finish(matching)
+	if err := validatePlanRefutedEvidence(matching); err == nil || !strings.Contains(err.Error(), "matching input-domain observation was marked refuted") {
+		t.Fatalf("matching source did not fail for the canonical cause: %v", err)
+	}
 	if manifest := BuildExecutionManifest(matching); manifest.Decision != ExecutionDecisionUnknown {
 		t.Fatalf("matching source was hidden by forged refutation: %+v", manifest)
 	}
@@ -210,7 +213,7 @@ func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
 		BlockerID:     "binding-input-domain:unregistered-operation:FILE:SOURCE_FRAGMENT",
 		Stage:         "binding",
 		Step:          "validate-input-subject-kind",
-		Reason:        "INPUT_SUBJECT_KIND_MISMATCH",
+		Reason:        "UNRECOGNIZED_REASON",
 		UnknownClass:  "KNOWN_CONTRADICTION",
 		NextOperation: "select-valid-domain-action",
 		BlockedBy:     []string{},

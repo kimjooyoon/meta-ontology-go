@@ -42,11 +42,12 @@ func validatePlanRefutedEvidence(plan Plan) error {
 				return fmt.Errorf("counterexample source indicator does not match the ledger observation")
 			}
 		}
-		binding, known := BindingForOperation(plan.Registry, counterexample.SourceIndicator.Operation)
-		if counterexample.Reason == "INPUT_SUBJECT_KIND_MISMATCH" && !known {
-			return fmt.Errorf("input-domain counterexample requires a known operation binding")
-		}
-		if known {
+		switch counterexample.Reason {
+		case "INPUT_SUBJECT_KIND_MISMATCH":
+			binding, known := BindingForOperation(plan.Registry, counterexample.SourceIndicator.Operation)
+			if !known {
+				return fmt.Errorf("input-domain counterexample requires a known operation binding")
+			}
 			if counterexample.SourceIndicator.SubjectKind == binding.InputSubjectKind {
 				return fmt.Errorf("matching input-domain observation was marked refuted")
 			}
@@ -54,6 +55,8 @@ func validatePlanRefutedEvidence(plan Plan) error {
 			if !reflect.DeepEqual(counterexample, expected) {
 				return fmt.Errorf("input-domain counterexample is not canonical")
 			}
+		default:
+			return fmt.Errorf("unsupported planner counterexample reason %q", counterexample.Reason)
 		}
 		if _, exists := refuted[counterexample.IndicatorID]; !exists {
 			return fmt.Errorf("counterexample is not linked to a refuted indicator")
