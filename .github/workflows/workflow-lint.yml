@@ -16,6 +16,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-tooling-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
+  cancel-in-progress: true
+
 jobs:
   workflow-lint:
     name: actionlint
@@ -29,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Bind the declared Go toolchain
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.0.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: 1.27.0
           cache: false
@@ -38,10 +42,14 @@ jobs:
         run: bash scripts/ci-tooling/actionlint.sh
         env:
           ACTIONLINT_OUTPUT_DIR: ${{ runner.temp }}/workflow-lint
+          OBSERVE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OBSERVE_RUN_ID: ${{ github.run_id }}
+          OBSERVE_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OBSERVE_SCOPE: .github/workflows/**,scripts/ci-tooling/actionlint.sh
 
       - name: Upload workflow lint evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: workflow-lint-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/workflow-lint

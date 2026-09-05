@@ -20,6 +20,10 @@ permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: ci-tooling-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.run_attempt > 1 && format('replay-{0}', github.run_id) || 'head' }}
+  cancel-in-progress: true
+
 jobs:
   cache-inventory:
     name: cache inventory
@@ -38,10 +42,15 @@ jobs:
 
       - name: Inventory caches without mutation
         run: bash scripts/ci-tooling/cache-inventory.sh
+        env:
+          OBSERVE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          OBSERVE_RUN_ID: ${{ github.run_id }}
+          OBSERVE_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OBSERVE_SCOPE: repository Actions caches; no deletions
 
       - name: Upload cache inventory evidence
         if: ${{ always() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cache-inventory-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-tooling-output/cache-inventory
