@@ -17,6 +17,8 @@ func init() {
 		"internal/meta/selfimprovementexecutiongrant/model.go",
 		"internal/meta/selfimprovementexecutiongrant/verify.go",
 		"internal/meta/selfimprovementcandidate/constants.go",
+		"internal/meta/repositoryprojection/extractor/candidates.go",
+		"internal/meta/repositoryprojection/extractor/method_identity_test.go",
 		"internal/verify/scope_gooo_core_conformance_registry.go",
 	}
 }
