@@ -195,7 +195,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			Obligations:              obligationsFromProofStages(proof.stages),
 			ContractObligations:      contractObligations,
 			ProofStages:              proof.stages,
-			PreflightObservations:   preflightObservationEvidence(contract, preflight),
+			PreflightObservations:    preflightObservationEvidence(contract, preflight),
 		},
 	}, nil
 }
@@ -216,11 +216,11 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			FunctionEnd:            observation.functionEnd,
 			DeclarationStart:       observation.declarationStart,
 			DeclarationEnd:         observation.declarationEnd,
-			SourceDigest:            observation.sourceDigest,
-			ContractSourceDigest:    contract.SourceDigest,
-			ContractSemanticDigest:  contract.SemanticDigest,
-			FunctionLines:           observation.functionLines,
-			FunctionStatus:          string(observation.functionStatus),
+			SourceDigest:           observation.sourceDigest,
+			ContractSourceDigest:   contract.SourceDigest,
+			ContractSemanticDigest: contract.SemanticDigest,
+			FunctionLines:          observation.functionLines,
+			FunctionStatus:         string(observation.functionStatus),
 			HelperStatus:            string(observation.helperStatus),
 		}
 		if observation.helperLines != nil {

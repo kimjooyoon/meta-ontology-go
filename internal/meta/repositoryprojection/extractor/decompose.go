@@ -43,30 +43,30 @@ type returnTailCandidate struct {
 type renderedCapacityObservationStatus string
 
 const (
-	renderedCapacityWithinCap renderedCapacityObservationStatus = "WITHIN_CAP"
-	renderedCapacityOverCap    renderedCapacityObservationStatus = "OVER_CAP"
-	renderedCapacityUnmeasured renderedCapacityObservationStatus = "UNMEASURED"
-	renderedCapacityHelperMeasurementScope                    = "rendered-helper-physical-lines"
+	renderedCapacityWithinCap              renderedCapacityObservationStatus = "WITHIN_CAP"
+	renderedCapacityOverCap                renderedCapacityObservationStatus = "OVER_CAP"
+	renderedCapacityUnmeasured             renderedCapacityObservationStatus = "UNMEASURED"
+	renderedCapacityHelperMeasurementScope                                   = "rendered-helper-physical-lines"
 )
 
 type renderedCapacityObservation struct {
-	declaration       *ast.FuncDecl
-	subject           string
-	receiver          string
-	functionStart     string
-	functionEnd       string
-	declarationStart  string
-	declarationEnd    string
-	sourceDigest      string
-	functionLines     int
-	functionStatus    renderedCapacityObservationStatus
-	helperLines       *int
-	helperStatus      renderedCapacityObservationStatus
-	helperFailure     error
+	declaration      *ast.FuncDecl
+	subject          string
+	receiver         string
+	functionStart    string
+	functionEnd      string
+	declarationStart string
+	declarationEnd   string
+	sourceDigest     string
+	functionLines    int
+	functionStatus   renderedCapacityObservationStatus
+	helperLines      *int
+	helperStatus     renderedCapacityObservationStatus
+	helperFailure    error
 }
 
 type renderedCapacitySelection struct {
-	function      *ast.FuncDecl
+	function     *ast.FuncDecl
 	observations []renderedCapacityObservation
 }
 
