@@ -584,6 +584,7 @@
   ],
   "meta_sources": [
     "internal/meta/entityfields/entity-fields-meta.gooo",
-    "examples/public-trust-surface/main.gooo"
+    "examples/public-trust-surface/main.gooo",
+    "internal/meta/generation/operation-input-contract.gooo"
   ]
 }
