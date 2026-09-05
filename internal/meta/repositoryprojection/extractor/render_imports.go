@@ -5,9 +5,15 @@ import (
 	"go/ast"
 	"go/format"
 	"go/token"
+	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 func renderImports(fset *token.FileSet, file *ast.File, decls []ast.Decl, list []importSpec, includeBlank bool) (map[*ast.GenDecl][]byte, []byte, error) {
+	if err := importNormalizationPolicy(); err != nil {
+		return nil, nil, err
+	}
 	selected, err := selectedImports(decls, list, includeBlank)
 	if err != nil {
 		return nil, nil, err
@@ -19,7 +25,7 @@ func renderImports(fset *token.FileSet, file *ast.File, decls []ast.Decl, list [
 		if !ok || group.Tok != token.IMPORT || len(selected[group]) == 0 {
 			continue
 		}
-		data, err := formatImport(fset, group, selected[group])
+		data, err := formatSelectedImports(fset, group, selected[group])
 		if err != nil {
 			return nil, nil, err
 		}
@@ -28,6 +34,51 @@ func renderImports(fset *token.FileSet, file *ast.File, decls []ast.Decl, list [
 		helper.WriteByte('\n')
 	}
 	return replacements, helper.Bytes(), nil
+}
+
+func importNormalizationPolicy() error {
+	policy, err := generation.ImportNormalizationPolicyEvidence()
+	if err != nil || policy.InputSubjectKind != "FILE" || policy.SourceDigest == "" || policy.SemanticDigest == "" || !policy.UsedInputFact || !policy.GeneratedOutputFact {
+		return fail("validate-ast-imports", "normalize-imports", "IMPORT_NORMALIZATION_POLICY_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil || policy.SourceDigest != contract.SourceDigest || policy.SemanticDigest != contract.SemanticDigest {
+		return failWithDiagnostics("validate-ast-imports", "normalize-imports", "IMPORT_NORMALIZATION_POLICY_UNPROVEN", "KNOWN_CONTRADICTION", "report-counterexample", []string{"policy=eligible-plain-import-group"})
+	}
+	return nil
+}
+
+func formatSelectedImports(fset *token.FileSet, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {
+	if !eligiblePlainImportGroup(group, specs) {
+		return formatImport(fset, group, specs)
+	}
+	ordered := append([]*ast.ImportSpec{}, specs...)
+	sort.SliceStable(ordered, func(left, right int) bool { return ordered[left].Pos() < ordered[right].Pos() })
+	var output bytes.Buffer
+	for index, spec := range ordered {
+		if index > 0 {
+			output.WriteByte('\n')
+		}
+		data, err := formatImport(fset, group, []*ast.ImportSpec{spec})
+		if err != nil {
+			return nil, err
+		}
+		output.Write(data)
+	}
+	return output.Bytes(), nil
+}
+
+func eligiblePlainImportGroup(group *ast.GenDecl, specs []*ast.ImportSpec) bool {
+	if group == nil || group.Doc != nil || len(group.Specs) < 2 || len(specs) < 2 {
+		return false
+	}
+	for _, raw := range group.Specs {
+		spec, ok := raw.(*ast.ImportSpec)
+		if !ok || spec.Name != nil || spec.Doc != nil || spec.Comment != nil || spec.Path == nil || spec.Path.Value == `"C"` {
+			return false
+		}
+	}
+	return true
 }
 
 func formatImport(fset *token.FileSet, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {

@@ -30,6 +30,14 @@ type nativeOperationObligation struct {
 	OutputEntity string
 }
 
+type nativeContractPolicy struct {
+	Name         string
+	Activity     string
+	InputEntity  string
+	OutputEntity string
+	InputKind    sourcepolicy.SubjectKind
+}
+
 var nativeOperationInputs = []nativeOperationInput{
 	{Operation: sourcepolicy.OperationCollapseAssign, Activity: "CollapseAssignReturn", InputEntity: "FunctionInput", OutputEntity: "OperationResult", InputKind: sourcepolicy.SubjectKindFunction},
 	{Operation: sourcepolicy.OperationSplitGo, Activity: "SplitGoDeclarations", InputEntity: "FileInput", OutputEntity: "OperationResult", InputKind: sourcepolicy.SubjectKindFile},
@@ -44,6 +52,10 @@ var nativeOperationObligations = []nativeOperationObligation{
 	{Name: "callee-effects", Activity: "ProveCalleeEffects", InputEntity: "FreeBindingsObligation", OutputEntity: "CalleeEffectsObligation"},
 	{Name: "rendered-capacity", Activity: "ProveRenderedCapacity", InputEntity: "CalleeEffectsObligation", OutputEntity: "RenderedCapacityObligation"},
 	{Name: "projected-conformance", Activity: "ProveProjectedConformance", InputEntity: "RenderedCapacityObligation", OutputEntity: "ProjectedConformanceObligation"},
+}
+
+var nativeContractPolicies = []nativeContractPolicy{
+	{Name: "eligible-plain-import-group", Activity: "NormalizeEligibleImportGroup", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile},
 }
 
 type operationInputContractBinding struct {
@@ -61,6 +73,7 @@ type operationInputContract struct {
 	Bindings        map[sourcepolicy.Operation]operationInputContractBinding
 	Facts           map[sourcepolicy.Operation]operationInputContractFacts
 	ObligationFacts map[string]operationInputContractFacts
+	PolicyFacts     map[string]operationInputContractFacts
 }
 
 // OperationInputContractEvidence is the native admission evidence for an
@@ -84,6 +97,18 @@ type OperationInputContractObligationEvidence struct {
 	Activity            string
 	InputEntity         string
 	OutputEntity        string
+	UsedInputFact       bool
+	GeneratedOutputFact bool
+}
+
+type OperationInputContractPolicyEvidence struct {
+	Name                string
+	Activity            string
+	InputEntity         string
+	OutputEntity        string
+	InputSubjectKind    sourcepolicy.SubjectKind
+	SourceDigest        string
+	SemanticDigest      string
 	UsedInputFact       bool
 	GeneratedOutputFact bool
 }
@@ -116,6 +141,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		"FunctionInput":                  "gooo://meta-operation-input-contract/entity/function-input",
 		"FileInput":                      "gooo://meta-operation-input-contract/entity/file-input",
 		"OperationResult":                "gooo://meta-operation-input-contract/entity/result",
+		"ImportNormalizationPolicy":     "gooo://meta-operation-input-contract/entity/import-normalization-policy",
 		"ReturnShapeObligation":          "gooo://meta-operation-input-contract/entity/return-shape-obligation",
 		"ControlFlowObligation":          "gooo://meta-operation-input-contract/entity/control-flow-obligation",
 		"FreeBindingsObligation":         "gooo://meta-operation-input-contract/entity/free-bindings-obligation",
@@ -127,7 +153,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		"FunctionInput": sourcepolicy.SubjectKindFunction,
 		"FileInput":     sourcepolicy.SubjectKindFile,
 	}
-	activities := make(map[string]*syntax.ActivityDecl, len(nativeOperationInputs)+len(nativeOperationObligations))
+	activities := make(map[string]*syntax.ActivityDecl, len(nativeOperationInputs)+len(nativeOperationObligations)+len(nativeContractPolicies))
 	entities := make(map[string]*syntax.EntityDecl, len(entityIDs))
 	for _, declaration := range file.Decls {
 		switch declaration := declaration.(type) {
@@ -145,7 +171,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 			return operationInputContract{}, fmt.Errorf("unknown operation input contract declaration")
 		}
 	}
-	if len(entities) != len(entityIDs) || len(activities) != len(nativeOperationInputs)+len(nativeOperationObligations) {
+	if len(entities) != len(entityIDs) || len(activities) != len(nativeOperationInputs)+len(nativeOperationObligations)+len(nativeContractPolicies) {
 		return operationInputContract{}, fmt.Errorf("operation input contract declaration count is not exact")
 	}
 	for name, expectedID := range entityIDs {
@@ -207,6 +233,29 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 			return operationInputContract{}, fmt.Errorf("operation input contract obligation output %q is not exact", obligation.OutputEntity)
 		}
 	}
+	for _, policy := range nativeContractPolicies {
+		expectedActivities[policy.Activity] = nativeOperationInput{Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity, InputKind: policy.InputKind}
+		activity, ok := activities[policy.Activity]
+		if !ok || len(activity.Inputs) != 1 || activity.Inputs[0].Name != policy.InputEntity || activity.Output != policy.OutputEntity {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy %q signature is not exact", policy.Name)
+		}
+		inputKind, inputKnown := inputKinds[activity.Inputs[0].Name]
+		if !inputKnown || inputKind != policy.InputKind {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy %q input kind conflicts with native ABI", policy.Name)
+		}
+		activityNode, ok := ir.Graph.NodeByName(ir.Namespace, policy.Activity)
+		if !ok || activityNode.Kind != semantic.Activity {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy %q is not exact", policy.Name)
+		}
+		inputNode, ok := ir.Graph.NodeByName(ir.Namespace, policy.InputEntity)
+		if !ok || inputNode.Kind != semantic.Entity {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy input %q is not exact", policy.InputEntity)
+		}
+		outputNode, ok := ir.Graph.NodeByName(ir.Namespace, policy.OutputEntity)
+		if !ok || outputNode.Kind != semantic.Entity {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy output %q is not exact", policy.OutputEntity)
+		}
+	}
 	for activityName := range activities {
 		if _, ok := expectedActivities[activityName]; !ok {
 			return operationInputContract{}, fmt.Errorf("unknown operation input contract activity %q", activityName)
@@ -215,7 +264,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 	if err := validateOperationInputContractFacts(ir, activities, entities); err != nil {
 		return operationInputContract{}, err
 	}
-	facts, obligationFacts, err := operationInputContractFactsFor(ir, len(activities)+len(entities))
+	facts, obligationFacts, policyFacts, err := operationInputContractFactsFor(ir, len(activities)+len(entities))
 	if err != nil {
 		return operationInputContract{}, err
 	}
@@ -227,6 +276,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		Bindings:        bindings,
 		Facts:           facts,
 		ObligationFacts: obligationFacts,
+		PolicyFacts:     policyFacts,
 	}, nil
 }
 
@@ -271,6 +321,30 @@ func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, err
 	}, nil
 }
 
+// ImportNormalizationPolicyEvidence exposes the exact contract relation the
+// native helper renderer consumes before normalizing eligible import groups.
+// It shares the operation-input contract source and semantic identities with
+// ExtractFunction rather than introducing a second receipt or operation.
+func ImportNormalizationPolicyEvidence() (OperationInputContractPolicyEvidence, error) {
+	contract, err := loadOperationInputContract()
+	if err != nil {
+		return OperationInputContractPolicyEvidence{}, err
+	}
+	if len(nativeContractPolicies) != 1 {
+		return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy cardinality is not exact")
+	}
+	policy := nativeContractPolicies[0]
+	facts, ok := contract.PolicyFacts[policy.Activity]
+	if !ok || !facts.UsedInput || !facts.GeneratedOutput {
+		return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy facts are incomplete")
+	}
+	return OperationInputContractPolicyEvidence{
+		Name: policy.Name, Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity,
+		InputSubjectKind: policy.InputKind, SourceDigest: contract.SourceDigest, SemanticDigest: contract.SemanticDigest,
+		UsedInputFact: facts.UsedInput, GeneratedOutputFact: facts.GeneratedOutput,
+	}, nil
+}
+
 func nativeOperationInputFor(operation sourcepolicy.Operation) nativeOperationInput {
 	for _, native := range nativeOperationInputs {
 		if native.Operation == operation {
@@ -281,28 +355,29 @@ func nativeOperationInputFor(operation sourcepolicy.Operation) nativeOperationIn
 }
 
 func validateOperationInputContractFacts(ir semantic.IR, activities map[string]*syntax.ActivityDecl, entities map[string]*syntax.EntityDecl) error {
-	_, _, err := operationInputContractFactsFor(ir, len(activities)+len(entities))
+	_, _, _, err := operationInputContractFactsFor(ir, len(activities)+len(entities))
 	return err
 }
 
-func operationInputContractFactsFor(ir semantic.IR, expectedNodes int) (map[sourcepolicy.Operation]operationInputContractFacts, map[string]operationInputContractFacts, error) {
+func operationInputContractFactsFor(ir semantic.IR, expectedNodes int) (map[sourcepolicy.Operation]operationInputContractFacts, map[string]operationInputContractFacts, map[string]operationInputContractFacts, error) {
 	if len(ir.Graph.Nodes()) != expectedNodes {
-		return nil, nil, fmt.Errorf("operation input contract semantic node count is not exact")
+		return nil, nil, nil, fmt.Errorf("operation input contract semantic node count is not exact")
 	}
 	seen := make(map[string]struct{}, len(nativeOperationInputs)*2)
 	facts := make(map[sourcepolicy.Operation]operationInputContractFacts, len(nativeOperationInputs))
 	obligationFacts := make(map[string]operationInputContractFacts, len(nativeOperationObligations))
+	policyFacts := make(map[string]operationInputContractFacts, len(nativeContractPolicies))
 	for _, native := range nativeOperationInputs {
 		activity, ok := ir.Graph.NodeByName(ir.Namespace, native.Activity)
 		input, inputOK := ir.Graph.NodeByName(ir.Namespace, native.InputEntity)
 		output, outputOK := ir.Graph.NodeByName(ir.Namespace, native.OutputEntity)
 		if !ok || !inputOK || !outputOK {
-			return nil, nil, fmt.Errorf("operation input contract fact endpoint is missing for %q", native.Activity)
+			return nil, nil, nil, fmt.Errorf("operation input contract fact endpoint is missing for %q", native.Activity)
 		}
 		used := semantic.FactKey{Subject: activity.ID, Predicate: semantic.Used, Object: input.ID}
 		generated := semantic.FactKey{Subject: output.ID, Predicate: semantic.WasGeneratedBy, Object: activity.ID}
 		if !ir.Graph.HasFact(used) || !ir.Graph.HasFact(generated) {
-			return nil, nil, fmt.Errorf("operation input contract facts are incomplete for %q", native.Activity)
+			return nil, nil, nil, fmt.Errorf("operation input contract facts are incomplete for %q", native.Activity)
 		}
 		facts[native.Operation] = operationInputContractFacts{UsedInput: ir.Graph.HasFact(used), GeneratedOutput: ir.Graph.HasFact(generated)}
 		seen[fmt.Sprintf("%s:%s:%s", used.Subject, used.Predicate, used.Object)] = struct{}{}
@@ -313,19 +388,35 @@ func operationInputContractFactsFor(ir semantic.IR, expectedNodes int) (map[sour
 		input, inputOK := ir.Graph.NodeByName(ir.Namespace, obligation.InputEntity)
 		output, outputOK := ir.Graph.NodeByName(ir.Namespace, obligation.OutputEntity)
 		if !ok || !inputOK || !outputOK {
-			return nil, nil, fmt.Errorf("operation input contract obligation fact endpoint is missing for %q", obligation.Activity)
+			return nil, nil, nil, fmt.Errorf("operation input contract obligation fact endpoint is missing for %q", obligation.Activity)
 		}
 		used := semantic.FactKey{Subject: activity.ID, Predicate: semantic.Used, Object: input.ID}
 		generated := semantic.FactKey{Subject: output.ID, Predicate: semantic.WasGeneratedBy, Object: activity.ID}
 		if !ir.Graph.HasFact(used) || !ir.Graph.HasFact(generated) {
-			return nil, nil, fmt.Errorf("operation input contract obligation facts are incomplete for %q", obligation.Activity)
+			return nil, nil, nil, fmt.Errorf("operation input contract obligation facts are incomplete for %q", obligation.Activity)
 		}
 		obligationFacts[obligation.Activity] = operationInputContractFacts{UsedInput: ir.Graph.HasFact(used), GeneratedOutput: ir.Graph.HasFact(generated)}
 		seen[fmt.Sprintf("%s:%s:%s", used.Subject, used.Predicate, used.Object)] = struct{}{}
 		seen[fmt.Sprintf("%s:%s:%s", generated.Subject, generated.Predicate, generated.Object)] = struct{}{}
 	}
-	if len(ir.Graph.AllFacts()) != len(seen) || len(seen) != (len(nativeOperationInputs)+len(nativeOperationObligations))*2 {
-		return nil, nil, fmt.Errorf("operation input contract has unexpected facts")
+	for _, policy := range nativeContractPolicies {
+		activity, ok := ir.Graph.NodeByName(ir.Namespace, policy.Activity)
+		input, inputOK := ir.Graph.NodeByName(ir.Namespace, policy.InputEntity)
+		output, outputOK := ir.Graph.NodeByName(ir.Namespace, policy.OutputEntity)
+		if !ok || !inputOK || !outputOK {
+			return nil, nil, nil, fmt.Errorf("operation input contract policy fact endpoint is missing for %q", policy.Activity)
+		}
+		used := semantic.FactKey{Subject: activity.ID, Predicate: semantic.Used, Object: input.ID}
+		generated := semantic.FactKey{Subject: output.ID, Predicate: semantic.WasGeneratedBy, Object: activity.ID}
+		if !ir.Graph.HasFact(used) || !ir.Graph.HasFact(generated) {
+			return nil, nil, nil, fmt.Errorf("operation input contract policy facts are incomplete for %q", policy.Activity)
+		}
+		policyFacts[policy.Activity] = operationInputContractFacts{UsedInput: ir.Graph.HasFact(used), GeneratedOutput: ir.Graph.HasFact(generated)}
+		seen[fmt.Sprintf("%s:%s:%s", used.Subject, used.Predicate, used.Object)] = struct{}{}
+		seen[fmt.Sprintf("%s:%s:%s", generated.Subject, generated.Predicate, generated.Object)] = struct{}{}
 	}
-	return facts, obligationFacts, nil
+	if len(ir.Graph.AllFacts()) != len(seen) || len(seen) != (len(nativeOperationInputs)+len(nativeOperationObligations)+len(nativeContractPolicies))*2 {
+		return nil, nil, nil, fmt.Errorf("operation input contract has unexpected facts")
+	}
+	return facts, obligationFacts, policyFacts, nil
 }
