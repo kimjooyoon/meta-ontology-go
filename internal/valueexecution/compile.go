@@ -43,9 +43,13 @@ func Compile(filename string, source []byte, activityName string) (Program, erro
 	if err != nil {
 		return Program{}, err
 	}
+	authority, err := newResultAuthority(model, activityName, source, programText, modelProgram, operationIR)
+	if err != nil {
+		return Program{}, err
+	}
 	return Program{
 		Activity: activityName, Text: programText, Operation: operationIR,
 		SourceDigest: digestBytes(source), SemanticFingerprint: bidir.SemanticFingerprint(model),
-		ModelProgram: modelProgram, implementation: implementation, document: document,
+		ModelProgram: modelProgram, implementation: implementation, document: document, authority: authority,
 	}, nil
 }

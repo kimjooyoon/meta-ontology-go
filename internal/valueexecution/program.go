@@ -16,6 +16,7 @@ type Program struct {
 	runtimeBindings     bool
 	implementation      registeredOperation
 	document            bidir.Document
+	authority           resultAuthority
 }
 
 func (program Program) Execute(inputs []int64) (int64, error) {
@@ -30,6 +31,36 @@ func (program Program) Execute(inputs []int64) (int64, error) {
 		return 0, failAt(ReasonInputArityMismatch, "EXECUTE", "validate-input-arity", detail)
 	}
 	return program.implementation.Apply(inputs[0], program.Operation.Operand.Int64)
+}
+
+// ExecuteResult preserves the existing scalar Execute API while issuing a
+// typed result only after the compiled operation has successfully applied.
+// The result authority is retained privately by Compile and is never derived
+// from the public Program fields at issuance time.
+func (program Program) ExecuteResult(inputs []int64) (ProducedResult, error) {
+	if err := program.validateResultAuthority(); err != nil {
+		return ProducedResult{}, err
+	}
+	value, err := program.Execute(inputs)
+	if err != nil {
+		return ProducedResult{}, err
+	}
+	return issueProducedResult(program.authority, value), nil
+}
+
+// ValidateProducedResult accepts only a result issued by this exact compiled
+// producer authority. The result itself remains opaque to callers.
+func (program Program) ValidateProducedResult(result ProducedResult) error {
+	if err := program.validateResultAuthority(); err != nil {
+		return err
+	}
+	if err := result.validate(); err != nil {
+		return err
+	}
+	if result.authority != program.authority {
+		return failAt(ReasonResultProducerMismatch, "RESULT", "bind-produced-result", "result was issued by a different compiled producer")
+	}
+	return nil
 }
 
 func activityDeclaration(document bidir.Document, name string) (bidir.Declaration, bool) {
