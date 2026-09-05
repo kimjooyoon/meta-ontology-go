@@ -428,6 +428,56 @@ func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
 	}
 }
 
+func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T) {
+	statusValues := []string{"UNKNOWN", "REFUTED", "FIXED_POINT", "UNRECOGNIZED"}
+	statusLocations := []struct {
+		name   string
+		mutate func(map[string]any, string)
+	}{
+		{
+			name: "obligation-status",
+			mutate: func(evidence map[string]any, status string) {
+				obligations := evidence["obligations"].([]any)
+				obligations[0].(map[string]any)["status"] = status
+			},
+		},
+		{
+			name: "proof-stage-status",
+			mutate: func(evidence map[string]any, status string) {
+				stages := evidence["proof_stages"].([]any)
+				stages[0].(map[string]any)["status"] = status
+			},
+		},
+	}
+	const expectedCohort8Cases = 8
+	if len(statusLocations)*len(statusValues) != expectedCohort8Cases {
+		t.Fatalf("cohort8 status cases changed: got=%d want=%d", len(statusLocations)*len(statusValues), expectedCohort8Cases)
+	}
+	for _, location := range statusLocations {
+		for _, status := range statusValues {
+			t.Run("cohort8/"+location.name+"/"+status, func(t *testing.T) {
+				root := t.TempDir()
+				value := extractionReportMapWithStrategyEvidence(t, nativeStrategyEvidenceFixture(t))
+				subjects := value["subjects"].([]any)
+				subject := subjects[0].(map[string]any)
+				evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+				location.mutate(evidence, status)
+				payload, err := json.Marshal(value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				path := filepath.Join(root, "report.json")
+				if err := os.WriteFile(path, payload, 0o644); err != nil {
+					t.Fatal(err)
+				}
+				if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+					t.Fatalf("cohort8 accepted non-PASS %q at %s", status, location.name)
+				}
+			})
+		}
+	}
+}
+
 func extractionReportWithStrategyEvidence(evidence []projectionextractor.StrategyEvidence) extractorReport {
 	subject := validExtractionSubjectFixture("a.go")
 	subject.Evidence = evidence

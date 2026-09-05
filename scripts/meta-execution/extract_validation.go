@@ -178,6 +178,8 @@ type proofStagePresence struct {
 	Detail           string `json:"detail,omitempty"`
 }
 
+const strategyEvidencePassStatus = "PASS"
+
 func failedExtractionError(root, reportName string, plan generation.Plan, action generation.Action, observed ...generation.ProcessObservation) *operationError {
 	path := filepath.Join(root, reportName)
 	_, report, err := decodeExtractorReport(path, plan.HeadSHA)
@@ -408,7 +410,7 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				return false
 			}
 			for _, obligation := range evidence.Obligations {
-				if obligation.Name == "" || obligation.Status == "" {
+				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus {
 					return false
 				}
 			}
@@ -420,7 +422,7 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 			}
 			for _, stage := range evidence.ProofStages {
 				if stage.Name == "" || stage.Activity == "" || stage.InputEntity == "" ||
-					stage.OutputEntity == "" || stage.Status == "" || stage.SourceDigest == "" ||
+					stage.OutputEntity == "" || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
 					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
 					stage.PayloadDigest == "" || stage.PayloadBytes < 0 {
 					return false
