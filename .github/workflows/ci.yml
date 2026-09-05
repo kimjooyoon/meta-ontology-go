@@ -1907,7 +1907,8 @@ jobs:
             (.predecessor_sha | test("^[0-9a-f]{40}$")) and
             .canonical_branch == $canonical_branch and
             .canonical_workflow == "CI [push full]" and
-            (.candidates | length >= 1)
+            (has("candidates") and
+              (.candidates == null or (.candidates | type) == "array"))
           ' "$extracted/predecessor-input-a.json" > /dev/null
           jq -e --arg repository "$GITHUB_REPOSITORY" --arg report_digest "$expected_report_digest" '
             .schema == "gooo/meta-feedback-predecessor-receipt/v1" and
@@ -1934,6 +1935,11 @@ jobs:
           ' "$extracted/predecessor-receipt-a.json" > /dev/null
           application_decision="$(jq -r '.report.decision' "$extracted/predecessor-receipt-a.json")"
           application_reason="$(jq -r '.report.reason' "$extracted/predecessor-receipt-a.json")"
+          synthetic_seed_used="$(jq -r 'if .candidates == null or ((.candidates | type) == "array" and (.candidates | length == 0)) then "true" else "false" end' "$extracted/predecessor-input-a.json")"
+          case "$synthetic_seed_used" in
+            true|false) ;;
+            *) echo "invalid synthetic seed marker: $synthetic_seed_used" >&2; exit 1 ;;
+          esac
           case "$application_decision" in
             FOUNDATION|SELECTED)
               boundary_decision=NORMAL
@@ -1978,8 +1984,26 @@ jobs:
           test "$actual_check_status" = "$expected_check_status"
           cmp "$extracted/predecessor-receipt-a.json" "$probe_root/probe-receipt.json"
 
-          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "success" | .candidates[0].receipt_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
-            "$extracted/predecessor-input-a.json" > "$probe_root/normal-input.json"
+          jq '
+            def seed_candidate:
+              if .candidates == null or (.candidates | length == 0) then {
+                artifact_id: 1,
+                run_id: 1,
+                run_attempt: 1,
+                artifact_name: ("artifact-feedback-resolution-" + .predecessor_sha),
+                head_sha: .predecessor_sha,
+                head_branch: .canonical_branch,
+                workflow: .canonical_workflow,
+                event: "push",
+                conclusion: "failure",
+                expired: false,
+                receipt_digest: "",
+                repository_writes: 0
+              } else .candidates[0] end;
+            .candidates = [seed_candidate]
+          ' "$extracted/predecessor-input-a.json" > "$probe_root/seeded-input.json"
+          jq '.candidates[0].conclusion = "success" | .candidates[0].receipt_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
+            "$probe_root/seeded-input.json" > "$probe_root/normal-input.json"
           go run ./cmd/feedback-predecessor-witness \
             --root "$GITHUB_WORKSPACE" \
             --input "$probe_root/normal-input.json" \
@@ -2002,8 +2026,8 @@ jobs:
             .report.report_digest == .replay_report_digest
           ' "$probe_root/normal-receipt-a.json" > /dev/null
 
-          jq '.candidates = [.candidates[0]] | .candidates[0].conclusion = "failure" | .candidates[0].receipt_digest = ""' \
-            "$extracted/predecessor-input-a.json" > "$probe_root/unknown-input.json"
+          jq '.candidates[0].conclusion = "failure" | .candidates[0].receipt_digest = ""' \
+            "$probe_root/seeded-input.json" > "$probe_root/unknown-input.json"
           go run ./cmd/feedback-predecessor-witness \
             --root "$GITHUB_WORKSPACE" \
             --input "$probe_root/unknown-input.json" \
@@ -2063,6 +2087,7 @@ jobs:
             --arg application_decision "$application_decision" \
             --arg application_reason "$application_reason" \
             --arg unknown_class "$unknown_class" \
+            --argjson synthetic_seed_used "$synthetic_seed_used" \
             --slurpfile receipt "$probe_root/probe-receipt.json" \
             --slurpfile normal_receipt "$probe_root/normal-receipt-a.json" \
             --slurpfile unknown_receipt "$probe_root/unknown-receipt-a.json" \
@@ -2107,6 +2132,8 @@ jobs:
               },
               case_witnesses: {
                 normal: {
+                  source: "caller-temp-synthetic-fixture",
+                  seed_used: $synthetic_seed_used,
                   decision: "NORMAL",
                   application_decision: $normal.report.decision,
                   report_digest: $normal.report.report_digest,
@@ -2114,6 +2141,8 @@ jobs:
                   check_exit: 0
                 },
                 unknown: {
+                  source: "caller-temp-synthetic-fixture",
+                  seed_used: $synthetic_seed_used,
                   decision: "UNKNOWN",
                   application_decision: $unknown.report.decision,
                   reason: $unknown.report.reason,
@@ -2123,6 +2152,8 @@ jobs:
                   unknown_fields: ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]
                 },
                 refuted: {
+                  source: "caller-temp-foundation-fixture",
+                  seed_used: false,
                   decision: "REFUTED",
                   application_decision: $refuted.report.decision,
                   reason: $refuted.report.reason,
@@ -2133,7 +2164,7 @@ jobs:
               }
             }' \
             > coherence-boundary-probe.json
-          jq -e --arg boundary_decision "$boundary_decision" '
+          jq -e --arg boundary_decision "$boundary_decision" --argjson synthetic_seed_used "$synthetic_seed_used" '
             .schema == "gooo/coherence-boundary-probe/v2" and
             .status == "PASS" and
             .boundary == "COHERENCE evaluator" and
@@ -2144,9 +2175,9 @@ jobs:
             .meta_binding.report_schema == "gooo/meta-feedback-predecessor-selection/v2" and
             .meta_binding.producer == "feedbackpredecessor.Select" and
             .meta_binding.consumer == "self-improvement-cycle" and
-            (.case_witnesses.normal.decision == "NORMAL" and .case_witnesses.normal.application_decision == "SELECTED" and .case_witnesses.normal.replay_verified == true and .case_witnesses.normal.check_exit == 0) and
-            (.case_witnesses.unknown.decision == "UNKNOWN" and .case_witnesses.unknown.application_decision == "LOWER_RESOLUTION" and .case_witnesses.unknown.replay_verified == true and .case_witnesses.unknown.check_exit == 0 and .case_witnesses.unknown.unknown_fields == ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]) and
-            (.case_witnesses.refuted.decision == "REFUTED" and .case_witnesses.refuted.application_decision == "REFUTED" and .case_witnesses.refuted.reason == "FOUNDATION_RECOVERY_REFUTED" and .case_witnesses.refuted.replay_verified == true and .case_witnesses.refuted.check_exit == 1) and
+            (.case_witnesses.normal.source == "caller-temp-synthetic-fixture" and .case_witnesses.normal.seed_used == $synthetic_seed_used and .case_witnesses.normal.decision == "NORMAL" and .case_witnesses.normal.application_decision == "SELECTED" and .case_witnesses.normal.replay_verified == true and .case_witnesses.normal.check_exit == 0) and
+            (.case_witnesses.unknown.source == "caller-temp-synthetic-fixture" and .case_witnesses.unknown.seed_used == $synthetic_seed_used and .case_witnesses.unknown.decision == "UNKNOWN" and .case_witnesses.unknown.application_decision == "LOWER_RESOLUTION" and .case_witnesses.unknown.replay_verified == true and .case_witnesses.unknown.check_exit == 0 and .case_witnesses.unknown.unknown_fields == ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"]) and
+            (.case_witnesses.refuted.source == "caller-temp-foundation-fixture" and .case_witnesses.refuted.seed_used == false and .case_witnesses.refuted.decision == "REFUTED" and .case_witnesses.refuted.application_decision == "REFUTED" and .case_witnesses.refuted.reason == "FOUNDATION_RECOVERY_REFUTED" and .case_witnesses.refuted.replay_verified == true and .case_witnesses.refuted.check_exit == 1) and
             (if .decision == "UNKNOWN" then
               (.unknown | keys == ["blocked_by", "next_operation", "reason", "stage", "step", "unknown_class"] and
                 .stage == "COHERENCE" and .step == "RECONSUME_PREDECESSOR" and
