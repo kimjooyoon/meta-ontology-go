@@ -296,7 +296,7 @@ jobs:
                 meta_source:"internal/meta/entityfields/entity-fields-meta.gooo",
                 meta_source_digest:$meta_source_digest,
                 fixture:"examples/entity-fields-v1/main.gooo",
-                profile:$report[0] | {id:.profile_id, version:.profile_version, digest:.profile_digest},
+                profile:($report[0] | {id:.profile_id, version:.profile_version, digest:.profile_digest}),
                 activities:$report[0].activities
               },
               runtime:{
@@ -321,7 +321,12 @@ jobs:
                 route("generated-go-compile"; "generated Go"; "generated module compilation only, not business-behavior proof"; ["GO_STRUCT_PROJECTION"]; (if $generated_compile then "PASS" else "UNKNOWN" end)),
                 {id:"lsp-server", label:"LSP server/editor support", scope:"no server or editor integration claim without separate evidence", required_evidence_keys:[], evidence:[], runtime_gate:"NOT_OBSERVED", state:"UNKNOWN"}
               ],
-              documentation:{path:"docs/entity-fields-support.md", decision:"PENDING", comparison:"PENDING"}
+              documentation:{path:"docs/entity-fields-support.md", decision:"PENDING", comparison:"PENDING"},
+              boundary_cases:{
+                positive:{decision:"PASS", resolution:"EXACT"},
+                stale_document:{decision:"PENDING", resolution:"PENDING"},
+                overbroad_support:{decision:"PENDING", resolution:"PENDING"}
+              }
             }
           ' > "$support/support-projection.json"
 
@@ -369,11 +374,14 @@ jobs:
             echo "overbroad support claim was accepted"
             exit 1
           fi
-          jq '.documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
+          jq '.boundary_cases.stale_document = {decision:"REFUTED", resolution:"FAIL_CLOSED"} | .boundary_cases.overbroad_support = {decision:"REFUTED", resolution:"FAIL_CLOSED"} | .documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
           mv "$support/support-projection.final.json" "$support/support-projection.json"
           jq -e --arg head "$HEAD_SHA" '
             .schema == "gooo/entity-fields-support/v1" and .runtime.head_sha == $head and
-            .documentation.decision == "PASS" and .documentation.comparison == "EXACT"
+            .documentation.decision == "PASS" and .documentation.comparison == "EXACT" and
+            .boundary_cases.positive.decision == "PASS" and .boundary_cases.positive.resolution == "EXACT" and
+            .boundary_cases.stale_document.decision == "REFUTED" and .boundary_cases.stale_document.resolution == "FAIL_CLOSED" and
+            .boundary_cases.overbroad_support.decision == "REFUTED" and .boundary_cases.overbroad_support.resolution == "FAIL_CLOSED"
           ' "$support/support-projection.json" > /dev/null
 
       - name: Upload EntityFields V1 support view
