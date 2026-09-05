@@ -28,6 +28,7 @@ type StrategyEvidence struct {
 	ContractObligations      []ContractObligationEvidence `json:"contract_obligations"`
 	ProofStages              []ProofStageEvidence         `json:"proof_stages"`
 	FinalGeneratedBytes      int                          `json:"final_generated_bytes"`
+	FinalGeneratedEvidenceBytes int                       `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits      int                          `json:"final_generated_units"`
 }
 

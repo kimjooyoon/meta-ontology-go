@@ -48,7 +48,7 @@ func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
 	}
 	for _, node := range file.Decls {
 		function, ok := node.(*ast.FuncDecl)
-		if !ok || function.Name == nil || function.Name.Name != name {
+		if !ok || function.Recv != nil || function.Name == nil || function.Name.Name != name {
 			continue
 		}
 		start := function.Pos()

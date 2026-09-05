@@ -8,24 +8,30 @@ import (
 )
 
 type returnTailProofChain struct {
-	contract        []ContractObligationEvidence
-	sourceDigest    string
-	candidateDigest string
-	stages          []ProofStageEvidence
+	contract         []ContractObligationEvidence
+	sourceDigest     string
+	contractSource   string
+	contractSemantic string
+	candidateDigest  string
+	stages           []ProofStageEvidence
 }
 
 type returnTailPredicateResult struct {
-	Status  string
-	Payload []byte
-	Detail  string
+	Status          string
+	Payload         []byte
+	CandidateDigest string
+	Detail          string
 }
 
-func newReturnTailProofChain(contract []ContractObligationEvidence, source, candidate []byte) returnTailProofChain {
+func newReturnTailProofChain(contract []ContractObligationEvidence, source, candidate []byte, contractSource, contractSemantic string) returnTailProofChain {
+	candidateDigest := ""
+	if candidate != nil {
+		candidateDigest = proofDigest(candidate)
+	}
 	return returnTailProofChain{
-		contract:        append([]ContractObligationEvidence{}, contract...),
-		sourceDigest:    proofDigest(source),
-		candidateDigest: proofDigest(candidate),
-		stages:          make([]ProofStageEvidence, 0, len(contract)),
+		contract: append([]ContractObligationEvidence{}, contract...),
+		sourceDigest: proofDigest(source), contractSource: contractSource, contractSemantic: contractSemantic,
+		candidateDigest: candidateDigest, stages: make([]ProofStageEvidence, 0, len(contract)),
 	}
 }
 
@@ -34,29 +40,51 @@ func (chain *returnTailProofChain) consume(index int, result returnTailPredicate
 		return fail("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", nil)
 	}
 	relation := chain.contract[index]
-	inputEvidenceID := proofEvidenceID(relation.InputEntity, chain.sourceDigest, "input")
+	inputEvidenceID := proofEvidenceID(relation.InputEntity, "input", chain.sourceDigest, chain.candidateDigest, "", chain.sourceDigest, chain.contractSource, chain.contractSemantic)
 	if index > 0 {
 		inputEvidenceID = chain.stages[index-1].OutputEvidenceID
 		if inputEvidenceID == "" || chain.stages[index-1].OutputEntity != relation.InputEntity {
 			return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
 		}
 	}
-	if result.Status == "" || result.Payload == nil {
+	if result.Status != "PASS" {
+		if result.Status == "REFUTED" {
+			return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_REFUTED", "KNOWN_CONTRADICTION", "report-counterexample", []string{"obligation=" + relation.Name})
+		}
+		return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
+	}
+	if result.Payload == nil {
+		return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_MISSING", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
+	}
+	candidateDigest := result.CandidateDigest
+	if candidateDigest == "" {
+		candidateDigest = chain.candidateDigest
+	}
+	if candidateDigest == "" {
 		return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_MISSING", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
 	}
 	payloadDigest := proofDigest(result.Payload)
-	outputEvidenceID := proofEvidenceID(relation.OutputEntity, relation.Activity, payloadDigest)
+	outputEvidenceID := proofEvidenceID(relation.OutputEntity, relation.Activity, chain.sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, chain.contractSource, chain.contractSemantic)
 	chain.stages = append(chain.stages, ProofStageEvidence{
 		Name: relation.Name, Activity: relation.Activity, InputEntity: relation.InputEntity, OutputEntity: relation.OutputEntity,
-		Status: result.Status, SourceDigest: chain.sourceDigest, CandidateDigest: chain.candidateDigest,
+		Status: result.Status, SourceDigest: chain.sourceDigest, CandidateDigest: candidateDigest,
 		InputEvidenceID: inputEvidenceID, OutputEvidenceID: outputEvidenceID, PayloadDigest: payloadDigest,
 		PayloadBytes: len(result.Payload), Detail: result.Detail,
 	})
 	return nil
 }
 
-func proofEvidenceID(entity, activity, payloadDigest string) string {
-	return proofDigest([]byte(entity + "\x00" + activity + "\x00" + payloadDigest))
+func proofEvidenceID(entity, activity, sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, contractSource, contractSemantic string) string {
+	return proofDigest(proofCanonical(entity, activity, sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, contractSource, contractSemantic))
+}
+
+func proofCanonical(values ...string) []byte {
+	var payload bytes.Buffer
+	for _, value := range values {
+		fmt.Fprintf(&payload, "%d:", len(value))
+		payload.WriteString(value)
+	}
+	return payload.Bytes()
 }
 
 func proofDigest(payload []byte) string {

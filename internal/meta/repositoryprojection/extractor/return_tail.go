@@ -87,7 +87,13 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if start < 0 || end < start || end > len(source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail source coordinates are invalid")
 	}
-	stagePayloads := [][]byte{append([]byte(nil), source[start:end]...)}
+	proof := newReturnTailProofChain(contractObligations, source, source[start:end], contract.SourceDigest, contract.SemanticDigest)
+	if err := proof.consume(0, returnTailPredicateResult{Status: "PASS", Payload: append([]byte(nil), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "unnamed single-error result with assignable selected returns"}); err != nil {
+		return nil, err
+	}
+	if err := proof.consume(1, returnTailPredicateResult{Status: "PASS", Payload: append([]byte("control-flow\x00"), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "no escaping branch, defer, go, panic, or recover"}); err != nil {
+		return nil, err
+	}
 	bindings, err := suffixBindings(statements, function, fset, evidence)
 	if err != nil {
 		return nil, err
@@ -95,12 +101,15 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err := hasReturnTailBindingHazard(function.Body, statements, bindings, evidence.info); err != nil {
 		return nil, err
 	}
+	if err := proof.consume(2, returnTailPredicateResult{Status: "PASS", Payload: proofBindingPayload(bindings), CandidateDigest: proofDigest(source[start:end]), Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"}); err != nil {
+		return nil, err
+	}
 	if err := returnTailCalleeEffects(statements, evidence); err != nil {
 		return nil, err
 	}
-	stagePayloads = append(stagePayloads, append([]byte("control-flow\x00"), source[start:end]...))
-	stagePayloads = append(stagePayloads, proofBindingPayload(bindings))
-	stagePayloads = append(stagePayloads, append([]byte("callee-effects\x00"), source[start:end]...))
+	if err := proof.consume(3, returnTailPredicateResult{Status: "PASS", Payload: append([]byte("callee-effects\x00"), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "all selected calls have closed typed effect evidence"}); err != nil {
+		return nil, err
+	}
 
 	name := stableReturnTailName(function.Name.Name, startIndex+1)
 	if existing[name] {
@@ -147,25 +156,14 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if physicalLines(renderedHelper) > functionLineLimit {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered extracted helper including package and imports remains over the limit")
 	}
-	stagePayloads = append(stagePayloads, append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...))
 	if !renderedCapacityProgress(beforeOuterHelper, renderedOuterHelper) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered outer helper made no capacity progress")
 	}
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
 	}
-	proof := newReturnTailProofChain(contractObligations, source, combined)
-	proofResults := []returnTailPredicateResult{
-		{Status: "PASS", Payload: stagePayloads[0], Detail: "unnamed single-error result with assignable selected returns"},
-		{Status: "PASS", Payload: stagePayloads[1], Detail: "no escaping branch, defer, go, panic, or recover"},
-		{Status: "PASS", Payload: stagePayloads[2], Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"},
-		{Status: "PASS", Payload: stagePayloads[3], Detail: "all selected calls have closed typed effect evidence"},
-		{Status: "PASS", Payload: stagePayloads[4], Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))},
-	}
-	for index, result := range proofResults {
-		if err := proof.consume(index, result); err != nil {
-			return nil, err
-		}
+	if err := proof.consume(4, returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))}); err != nil {
+		return nil, err
 	}
 	return &returnTailCandidate{
 		helperName: name,

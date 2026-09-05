@@ -25,17 +25,17 @@ func finalizeReturnTailEvidence(root, logical string, generated map[string][]byt
 		}
 		stages := append([]ProofStageEvidence{}, item.ProofStages...)
 		chain := returnTailProofChain{
-			contract:        append([]ContractObligationEvidence{}, item.ContractObligations...),
-			sourceDigest:    stages[0].SourceDigest,
-			candidateDigest: proofDigest(finalPayload),
-			stages:          stages,
+			contract: append([]ContractObligationEvidence{}, item.ContractObligations...),
+			sourceDigest: stages[0].SourceDigest, contractSource: item.ContractSourceDigest,
+			contractSemantic: item.ContractSemanticDigest, candidateDigest: proofDigest(finalPayload), stages: stages,
 		}
-		if err := chain.consume(len(stages), returnTailPredicateResult{Status: "PASS", Payload: finalPayload, Detail: fmt.Sprintf("final generated package type-check passed; runtime conformance is not asserted (units=%d)", len(generated))}); err != nil {
+		if err := chain.consume(len(stages), returnTailPredicateResult{Status: "PASS", Payload: finalPayload, CandidateDigest: proofDigest(finalPayload), Detail: fmt.Sprintf("final generated package type-check passed; runtime conformance is not asserted (units=%d)", len(generated))}); err != nil {
 			return nil, err
 		}
 		item.ProofStages = chain.stages
 		item.Obligations = obligationsFromProofStages(chain.stages)
-		item.FinalGeneratedBytes = len(finalPayload)
+		item.FinalGeneratedBytes = generatedSourceBytes(generated)
+		item.FinalGeneratedEvidenceBytes = len(finalPayload)
 		item.FinalGeneratedUnits = len(generated)
 		result = append(result, item)
 	}
@@ -75,6 +75,14 @@ func projectedFinalConformance(root, logical string, generated map[string][]byte
 		return failWithDiagnostics("verify-result", "projected-conformance", "PROJECTED_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample", []string{"logical=" + logical})
 	}
 	return nil
+}
+
+func generatedSourceBytes(generated map[string][]byte) int {
+	total := 0
+	for _, source := range generated {
+		total += len(source)
+	}
+	return total
 }
 
 func generatedPackagePayload(generated map[string][]byte) []byte {
