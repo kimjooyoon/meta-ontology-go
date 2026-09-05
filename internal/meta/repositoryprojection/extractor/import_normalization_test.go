@@ -90,7 +90,9 @@ func TestImportNormalizationCorrectionRegressionCohort(t *testing.T) {
 			group := firstImportGroupInFile(t, file)
 			var commentsText strings.Builder
 			for _, comments := range file.Comments {
-				commentsText.WriteString(comments.Text())
+				for _, comment := range comments.List {
+					commentsText.WriteString(comment.Text)
+				}
 			}
 			if !strings.Contains(commentsText.String(), tc.wantDetachedComment) {
 				t.Fatalf("detached comment was not retained in ast.File.Comments: %q", commentsText.String())

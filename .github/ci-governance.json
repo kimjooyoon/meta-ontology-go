@@ -3710,6 +3710,8 @@
         "internal/meta/repositoryprojection/extractor/return_tail_proof_regression_test.go",
         "internal/meta/repositoryprojection/extractor/return_tail_render.go",
         "internal/meta/repositoryprojection/extractor/return_tail_projection.go",
+        "internal/meta/repositoryprojection/extractor/render_imports.go",
+        "internal/meta/repositoryprojection/extractor/import_normalization_test.go",
         "internal/verify/scope_gooo_core_conformance_registry.go",
         "scripts/meta-execution/operations.go",
         "scripts/meta-execution/extract_validation.go",
