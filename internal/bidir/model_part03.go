@@ -1,6 +1,8 @@
 package bidir
 
 import (
+	"maps"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"sort"
 )
@@ -24,9 +26,7 @@ func cloneActivityArity(source map[ID]int) map[ID]int {
 		return nil
 	}
 	result := make(map[ID]int, len(source))
-	for activity, arity := range source {
-		result[activity] = arity
-	}
+	maps.Copy(result, source)
 	return result
 }
 
