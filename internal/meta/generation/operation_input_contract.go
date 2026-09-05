@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
+	"maps"
 	"sync"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -157,18 +158,10 @@ func cloneOperationInputContract(contract operationInputContract) operationInput
 		ObligationFacts: make(map[string]operationInputContractFacts, len(contract.ObligationFacts)),
 		PolicyFacts:     make(map[string]operationInputContractFacts, len(contract.PolicyFacts)),
 	}
-	for operation, binding := range contract.Bindings {
-		clone.Bindings[operation] = binding
-	}
-	for operation, facts := range contract.Facts {
-		clone.Facts[operation] = facts
-	}
-	for activity, facts := range contract.ObligationFacts {
-		clone.ObligationFacts[activity] = facts
-	}
-	for activity, facts := range contract.PolicyFacts {
-		clone.PolicyFacts[activity] = facts
-	}
+	maps.Copy(clone.Bindings, contract.Bindings)
+	maps.Copy(clone.Facts, contract.Facts)
+	maps.Copy(clone.ObligationFacts, contract.ObligationFacts)
+	maps.Copy(clone.PolicyFacts, contract.PolicyFacts)
 	return clone
 }
 
