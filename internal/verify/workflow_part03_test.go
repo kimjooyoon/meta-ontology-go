@@ -25,7 +25,7 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
 		"needs: [format, vet, test, race, semantic]",
 		"if: ${{ always() }}",
-		"actions/github-script@v8",
+		"actions/github-script@v9.0.0",
 		"listJobsForWorkflowRun",
 		"ci-jobs.json",
 		"ci-final-jobs.json",
