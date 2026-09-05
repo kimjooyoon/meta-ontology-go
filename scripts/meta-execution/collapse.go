@@ -322,11 +322,10 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 	}
 	receiver := ""
 	if target.Recv != nil {
-		var rendered bytes.Buffer
-		if err := format.Node(&rendered, fset, target.Recv); err != nil {
+		receiver, err = renderCollapseReceiver(fset, target.Recv)
+		if err != nil {
 			return collapseSourceInspection{}, err
 		}
-		receiver = rendered.String()
 	}
 	signature, err := renderCollapseNode(fset, target.Type)
 	if err != nil {
@@ -418,6 +417,25 @@ func renderCollapseNode(fset *token.FileSet, node ast.Node) (string, error) {
 		return "", err
 	}
 	return rendered.String(), nil
+}
+
+func renderCollapseReceiver(fset *token.FileSet, receiver *ast.FieldList) (string, error) {
+	if len(receiver.List) != 1 {
+		return "", fmt.Errorf("receiver has %d fields", len(receiver.List))
+	}
+	field := receiver.List[0]
+	typeName, err := renderCollapseNode(fset, field.Type)
+	if err != nil {
+		return "", err
+	}
+	if len(field.Names) == 0 {
+		return "(" + typeName + ")", nil
+	}
+	names := make([]string, 0, len(field.Names))
+	for _, name := range field.Names {
+		names = append(names, name.Name)
+	}
+	return "(" + strings.Join(names, ", ") + " " + typeName + ")", nil
 }
 
 func validateCollapseOutput(before, after collapseSourceInspection, source []byte) *operationError {
