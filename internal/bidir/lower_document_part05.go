@@ -70,13 +70,39 @@ func lowerDocumentRuntimeBindings(ctx context.Context, ir *semantic.IR, document
 		if err != nil {
 			return fmt.Errorf("runtime binding %d consumer: %w", index, err)
 		}
+		entity := semantic.ID(binding.Entity)
+		producerDeclaration, producerFound, err := documentActivityForBinding(document, namespace.String(), binding.Producer.Activity)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d producer declaration: %w", index, err)
+		}
+		consumerDeclaration, consumerFound, err := documentActivityForBinding(document, namespace.String(), binding.Consumer.Activity)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d consumer declaration: %w", index, err)
+		}
+		if producerFound && consumerFound {
+			producerEntity, err := resolveSemanticReference(producerDeclaration.Outputs[0], namespace, ids, names)
+			if err != nil {
+				return fmt.Errorf("runtime binding %d producer output: %w", index, err)
+			}
+			consumerEntity, err := resolveSemanticReference(consumerDeclaration.Inputs[0], namespace, ids, names)
+			if err != nil {
+				return fmt.Errorf("runtime binding %d consumer input: %w", index, err)
+			}
+			if producerEntity != consumerEntity {
+				return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingTypeMismatch)
+			}
+			if entity != "" && entity != producerEntity {
+				return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingTypeMismatch)
+			}
+			entity = producerEntity
+		}
 		ir.RuntimeBindings = append(ir.RuntimeBindings, semantic.RuntimeBinding{
 			Schema:           semantic.RuntimeBindingSchema,
 			ProducerActivity: producer,
 			ProducerPort:     binding.Producer.Port.Name,
 			ConsumerActivity: consumer,
 			ConsumerPort:     binding.Consumer.Port.Name,
-			Entity:           semantic.ID(binding.Entity),
+			Entity:           entity,
 			Span:             toSemanticSpan(binding.Span),
 		})
 	}
