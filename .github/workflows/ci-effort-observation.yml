@@ -131,6 +131,7 @@ jobs:
           if [ "$source_api_run_id" -gt 0 ]; then
             source_run_id="$source_api_run_id"
             source_run_attempt="$source_api_attempt"
+            event_run_attempt="$source_api_attempt"
             if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$source_api_run_id/jobs?per_page=100" > "$root/source/jobs.json"; then
               printf '%s\n' '{"jobs":[]}' > "$root/source/jobs.json"
             fi
@@ -194,8 +195,7 @@ jobs:
           set -e
           cat "$lineage_root/actual/lineage.env" >> "$GITHUB_ENV"
           lineage_decision="$(awk -F= '$1 == "LINEAGE_DECISION" { value=substr($0, index($0, "=") + 1) } END { print value }' "$lineage_root/actual/lineage.env")"
-          lineage_state="$(awk -F= '$1 == "LINEAGE_STATE" { value=substr($0, index($0, "=") + 1) } END { print value }' "$lineage_root/actual/lineage.env")"
-          if [ "$SOURCE_TERMINAL" != true ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$SOURCE_TERMINAL" != true ]; then
             source_identity_exact=false
             if [ "$source_api_run_id" -gt 0 ] && jq -e \
               --argjson run "$event_run_id" \
@@ -212,9 +212,8 @@ jobs:
               echo "non-terminal source failed exact identity binding" >&2
               exit 1
             fi
-            if [ "$lineage_decision" != "UNKNOWN" ] &&
-              { [ "$lineage_decision" != "REFUTED" ] || [ "$lineage_state" != "MISMATCH" ]; }; then
-              echo "non-terminal source produced unexpected lineage decision/state: $lineage_decision/$lineage_state" >&2
+            if [ "$lineage_decision" != "UNKNOWN" ]; then
+              echo "non-terminal pull-request source produced unexpected lineage decision: $lineage_decision" >&2
               exit 1
             fi
             echo "LINEAGE_DECISION=UNKNOWN" >> "$GITHUB_ENV"
