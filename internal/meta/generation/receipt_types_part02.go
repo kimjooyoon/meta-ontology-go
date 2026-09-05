@@ -79,10 +79,10 @@ type OperationReceipt struct {
 	IndicatorDecisionLedgerDigest string                     `json:"indicator_decision_ledger_digest"`
 	IndicatorDecisionLedgerCount  int                        `json:"indicator_decision_ledger_count"`
 	ActionIndicatorID             string                     `json:"action_indicator_id"`
-	SubjectKind                   sourcepolicy.SubjectKind  `json:"subject_kind"`
-	InputSubjectKind              sourcepolicy.SubjectKind  `json:"input_subject_kind"`
-	InputContractSourceDigest    string                     `json:"input_contract_source_digest"`
-	InputContractSemanticDigest  string                     `json:"input_contract_semantic_digest"`
+	SubjectKind                   sourcepolicy.SubjectKind   `json:"subject_kind"`
+	InputSubjectKind              sourcepolicy.SubjectKind   `json:"input_subject_kind"`
+	InputContractSourceDigest     string                     `json:"input_contract_source_digest"`
+	InputContractSemanticDigest   string                     `json:"input_contract_semantic_digest"`
 	Operation                     sourcepolicy.Operation     `json:"operation"`
 	Activity                      string                     `json:"activity"`
 	Output                        string                     `json:"output"`

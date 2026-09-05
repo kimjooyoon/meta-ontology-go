@@ -56,16 +56,16 @@ func partitionIndicatorsForRegistry(indicators []sourcepolicy.Indicator, registr
 
 func inputDomainCounterexample(indicator sourcepolicy.Indicator, binding Binding) Counterexample {
 	return Counterexample{
-		ID:            "input-domain:" + indicatorID(indicator),
-		IndicatorID:   indicatorID(indicator),
+		ID:              "input-domain:" + indicatorID(indicator),
+		IndicatorID:     indicatorID(indicator),
 		SourceIndicator: indicator,
-		BlockerID:     "binding-input-domain:" + string(binding.Operation) + ":" + string(binding.InputSubjectKind) + ":" + string(indicator.SubjectKind),
-		Stage:         "binding",
-		Step:          "validate-input-subject-kind",
-		Reason:        "INPUT_SUBJECT_KIND_MISMATCH",
-		UnknownClass:  "KNOWN_CONTRADICTION",
-		NextOperation: "select-valid-domain-action",
-		BlockedBy:     []string{},
+		BlockerID:       "binding-input-domain:" + string(binding.Operation) + ":" + string(binding.InputSubjectKind) + ":" + string(indicator.SubjectKind),
+		Stage:           "binding",
+		Step:            "validate-input-subject-kind",
+		Reason:          "INPUT_SUBJECT_KIND_MISMATCH",
+		UnknownClass:    "KNOWN_CONTRADICTION",
+		NextOperation:   "select-valid-domain-action",
+		BlockedBy:       []string{},
 	}
 }
 

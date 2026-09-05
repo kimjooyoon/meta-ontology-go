@@ -108,10 +108,10 @@ func validateActionBinding(registry []generation.Binding, action generation.Acti
 func actionBinding(action generation.Action) generation.Binding {
 	return generation.Binding{
 		Operation: action.Operation, Activity: action.Activity, Output: action.Output,
-		InputSubjectKind: action.InputSubjectKind,
-		InputContractSourceDigest: action.InputContractSourceDigest,
+		InputSubjectKind:            action.InputSubjectKind,
+		InputContractSourceDigest:   action.InputContractSourceDigest,
 		InputContractSemanticDigest: action.InputContractSemanticDigest,
-		IndependenceGroupID: action.IndependenceGroupID, ProofChoice: action.ProofChoice,
+		IndependenceGroupID:         action.IndependenceGroupID, ProofChoice: action.ProofChoice,
 		Executor: action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
 		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,

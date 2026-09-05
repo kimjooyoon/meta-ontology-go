@@ -3,64 +3,64 @@ package generation
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
 type Binding struct {
-	Operation            sourcepolicy.Operation `json:"operation"`
-	Activity             string                 `json:"activity"`
-	Output               string                 `json:"output"`
-	InputSubjectKind     sourcepolicy.SubjectKind `json:"input_subject_kind"`
-	InputContractSourceDigest string             `json:"input_contract_source_digest"`
-	InputContractSemanticDigest string           `json:"input_contract_semantic_digest"`
-	IndependenceGroupID  string                 `json:"independence_group_id"`
-	ProofChoice          ProofChoice            `json:"proof_choice"`
-	Executor             string                 `json:"executor"`
-	Evaluator            string                 `json:"evaluator"`
-	RequiredIndicatorIDs []string               `json:"required_indicator_ids"`
-	ReceiptRequired      bool                   `json:"receipt_required"`
-	Priority             uint32                 `json:"priority"`
+	Operation                   sourcepolicy.Operation   `json:"operation"`
+	Activity                    string                   `json:"activity"`
+	Output                      string                   `json:"output"`
+	InputSubjectKind            sourcepolicy.SubjectKind `json:"input_subject_kind"`
+	InputContractSourceDigest   string                   `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string                   `json:"input_contract_semantic_digest"`
+	IndependenceGroupID         string                   `json:"independence_group_id"`
+	ProofChoice                 ProofChoice              `json:"proof_choice"`
+	Executor                    string                   `json:"executor"`
+	Evaluator                   string                   `json:"evaluator"`
+	RequiredIndicatorIDs        []string                 `json:"required_indicator_ids"`
+	ReceiptRequired             bool                     `json:"receipt_required"`
+	Priority                    uint32                   `json:"priority"`
 }
 
 type Action struct {
-	IndicatorID          string                           `json:"indicator_id"`
-	MetricID             sourcepolicy.Dimension           `json:"metric_id"`
-	Subject              string                           `json:"subject"`
-	SubjectKind          sourcepolicy.SubjectKind         `json:"subject_kind"`
-	InputSubjectKind     sourcepolicy.SubjectKind         `json:"input_subject_kind"`
-	InputContractSourceDigest string                      `json:"input_contract_source_digest"`
-	InputContractSemanticDigest string                    `json:"input_contract_semantic_digest"`
-	Applicability        sourcepolicy.Applicability       `json:"applicability"`
-	ApplicabilityRule    string                           `json:"applicability_rule_id"`
-	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
-	Blocking             bool                             `json:"blocking"`
-	SourceIndicator      sourcepolicy.Indicator           `json:"source_indicator"`
-	IndicatorOutcome     sourcepolicy.IndicatorOutcome    `json:"indicator_outcome"`
-	MetricProofChoice    sourcepolicy.ProofChoice         `json:"metric_proof_choice"`
-	MetricProducer       string                           `json:"metric_producer"`
-	MetricConsumer       string                           `json:"metric_consumer"`
-	Operation            sourcepolicy.Operation           `json:"meta_operation"`
-	Activity             string                           `json:"activity"`
-	Output               string                           `json:"output"`
-	IndependenceGroupID  string                           `json:"independence_group_id"`
-	ProofChoice          ProofChoice                      `json:"proof_choice"`
-	Executor             string                           `json:"executor"`
-	Evaluator            string                           `json:"evaluator"`
-	RequiredIndicatorIDs []string                         `json:"required_indicator_ids"`
-	ReceiptRequired      bool                             `json:"receipt_required"`
-	Priority             uint32                           `json:"priority"`
+	IndicatorID                 string                           `json:"indicator_id"`
+	MetricID                    sourcepolicy.Dimension           `json:"metric_id"`
+	Subject                     string                           `json:"subject"`
+	SubjectKind                 sourcepolicy.SubjectKind         `json:"subject_kind"`
+	InputSubjectKind            sourcepolicy.SubjectKind         `json:"input_subject_kind"`
+	InputContractSourceDigest   string                           `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string                           `json:"input_contract_semantic_digest"`
+	Applicability               sourcepolicy.Applicability       `json:"applicability"`
+	ApplicabilityRule           string                           `json:"applicability_rule_id"`
+	ApplicabilityReason         sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
+	Blocking                    bool                             `json:"blocking"`
+	SourceIndicator             sourcepolicy.Indicator           `json:"source_indicator"`
+	IndicatorOutcome            sourcepolicy.IndicatorOutcome    `json:"indicator_outcome"`
+	MetricProofChoice           sourcepolicy.ProofChoice         `json:"metric_proof_choice"`
+	MetricProducer              string                           `json:"metric_producer"`
+	MetricConsumer              string                           `json:"metric_consumer"`
+	Operation                   sourcepolicy.Operation           `json:"meta_operation"`
+	Activity                    string                           `json:"activity"`
+	Output                      string                           `json:"output"`
+	IndependenceGroupID         string                           `json:"independence_group_id"`
+	ProofChoice                 ProofChoice                      `json:"proof_choice"`
+	Executor                    string                           `json:"executor"`
+	Evaluator                   string                           `json:"evaluator"`
+	RequiredIndicatorIDs        []string                         `json:"required_indicator_ids"`
+	ReceiptRequired             bool                             `json:"receipt_required"`
+	Priority                    uint32                           `json:"priority"`
 }
 
 // Counterexample preserves a typed planner contradiction without turning it
 // into an executable or unknown operation. Its ID is stable for the exact
 // indicator and blocker coordinate.
 type Counterexample struct {
-	ID            string   `json:"id"`
-	IndicatorID   string   `json:"indicator_id"`
+	ID              string                 `json:"id"`
+	IndicatorID     string                 `json:"indicator_id"`
 	SourceIndicator sourcepolicy.Indicator `json:"source_indicator"`
-	BlockerID     string   `json:"blocker_id"`
-	Stage         string   `json:"stage"`
-	Step          string   `json:"step"`
-	Reason        string   `json:"reason"`
-	UnknownClass  string   `json:"unknown_class"`
-	NextOperation string   `json:"next_operation"`
-	BlockedBy     []string `json:"blocked_by"`
+	BlockerID       string                 `json:"blocker_id"`
+	Stage           string                 `json:"stage"`
+	Step            string                 `json:"step"`
+	Reason          string                 `json:"reason"`
+	UnknownClass    string                 `json:"unknown_class"`
+	NextOperation   string                 `json:"next_operation"`
+	BlockedBy       []string               `json:"blocked_by"`
 }
 
 type Plan struct {

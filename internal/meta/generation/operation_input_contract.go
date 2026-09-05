@@ -2,8 +2,8 @@ package generation
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	_ "embed"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"

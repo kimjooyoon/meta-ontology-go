@@ -18,9 +18,9 @@ func TestOperationInputContractUsesExactEmbeddedGoooIR(t *testing.T) {
 	}
 	want := map[sourcepolicy.Operation]sourcepolicy.SubjectKind{
 		sourcepolicy.OperationCollapseAssign:  sourcepolicy.SubjectKindFunction,
-		sourcepolicy.OperationSplitGo:          sourcepolicy.SubjectKindFile,
-		sourcepolicy.OperationSplitGooo:        sourcepolicy.SubjectKindFile,
-		sourcepolicy.OperationExtractFunction:  sourcepolicy.SubjectKindFunction,
+		sourcepolicy.OperationSplitGo:         sourcepolicy.SubjectKindFile,
+		sourcepolicy.OperationSplitGooo:       sourcepolicy.SubjectKindFile,
+		sourcepolicy.OperationExtractFunction: sourcepolicy.SubjectKindFunction,
 	}
 	for operation, kind := range want {
 		binding, ok := contract.Bindings[operation]
@@ -33,9 +33,9 @@ func TestOperationInputContractUsesExactEmbeddedGoooIR(t *testing.T) {
 func TestOperationInputContractRejectsMissingDuplicateAndUnknownDeclarations(t *testing.T) {
 	base := string(operationInputContractSource)
 	cases := map[string]string{
-		"missing activity": strings.Replace(base, "activity ExtractFunction(FunctionInput) -> OperationResult\n", "", 1),
+		"missing activity":   strings.Replace(base, "activity ExtractFunction(FunctionInput) -> OperationResult\n", "", 1),
 		"duplicate activity": base + "\nactivity ExtractFunction(FunctionInput) -> OperationResult\n",
-		"unknown input": strings.Replace(base, "activity ExtractFunction(FunctionInput) -> OperationResult", "activity ExtractFunction(UnknownInput) -> OperationResult", 1),
+		"unknown input":      strings.Replace(base, "activity ExtractFunction(FunctionInput) -> OperationResult", "activity ExtractFunction(UnknownInput) -> OperationResult", 1),
 	}
 	for name, source := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -207,16 +207,16 @@ func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
 	unknown.IndicatorsDigest = digestJSON(normalizeIndicators(unknownIndicators))
 	unknown.RefutedIndicatorIDs = []string{unknownOperationID}
 	unknown.Counterexamples = []Counterexample{{
-		ID:            "input-domain:" + unknownOperationID,
-		IndicatorID:   unknownOperationID,
+		ID:              "input-domain:" + unknownOperationID,
+		IndicatorID:     unknownOperationID,
 		SourceIndicator: unknownOperation,
-		BlockerID:     "binding-input-domain:unregistered-operation:FILE:SOURCE_FRAGMENT",
-		Stage:         "binding",
-		Step:          "validate-input-subject-kind",
-		Reason:        "UNRECOGNIZED_REASON",
-		UnknownClass:  "KNOWN_CONTRADICTION",
-		NextOperation: "select-valid-domain-action",
-		BlockedBy:     []string{},
+		BlockerID:       "binding-input-domain:unregistered-operation:FILE:SOURCE_FRAGMENT",
+		Stage:           "binding",
+		Step:            "validate-input-subject-kind",
+		Reason:          "UNRECOGNIZED_REASON",
+		UnknownClass:    "KNOWN_CONTRADICTION",
+		NextOperation:   "select-valid-domain-action",
+		BlockedBy:       []string{},
 	}}
 	unknown.IndicatorDecisionLedger = &unknownLedger
 	unknown = finish(unknown)
@@ -226,7 +226,9 @@ func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
 
 	mutations := map[string]func(*Counterexample){
 		"reason": func(counterexample *Counterexample) { counterexample.Reason = "FORGED_REASON" },
-		"expected-binding": func(counterexample *Counterexample) { counterexample.BlockerID = "binding-input-domain:extract-function:FILE:SOURCE_FRAGMENT" },
+		"expected-binding": func(counterexample *Counterexample) {
+			counterexample.BlockerID = "binding-input-domain:extract-function:FILE:SOURCE_FRAGMENT"
+		},
 		"cause": func(counterexample *Counterexample) { counterexample.Step = "forged-step" },
 	}
 	for name, mutate := range mutations {
@@ -247,10 +249,10 @@ func duplicateDomainMetric(subject string) sourcepolicy.Indicator {
 		MetricID: sourcepolicy.DimensionRefactorDuplicate, Family: sourcepolicy.FamilyDuplication,
 		Subject: subject, SubjectKind: sourcepolicy.SubjectKindSourceFragment,
 		Value: 1, Limit: 0, Relation: sourcepolicy.RelationLessOrEqual,
-		Applicability: sourcepolicy.ApplicabilityApplicable,
-		ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault,
+		Applicability:       sourcepolicy.ApplicabilityApplicable,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleDefault,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
-		Blocking: true, Satisfied: false, Proof: sourcepolicy.ProofFoundation,
+		Blocking:            true, Satisfied: false, Proof: sourcepolicy.ProofFoundation,
 		Producer: "duplicate-detector", Consumer: "deduplicator",
 		Operation: sourcepolicy.OperationExtractFunction,
 	}
