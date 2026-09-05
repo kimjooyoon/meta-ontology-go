@@ -217,10 +217,8 @@ jobs:
             --arg observer_binary_digest "$CI_EFFORT_OBSERVER_BINARY_DIGEST" \
             --arg observer_program "$CI_EFFORT_OBSERVER_PROGRAM" \
             --arg observer_program_digest "$CI_EFFORT_OBSERVER_PROGRAM_DIGEST" \
-            --arg source_head "$HEAD_SHA" \
-            --argjson source_run "$SOURCE_RUN_ID" \
-            --argjson source_attempt "$SOURCE_RUN_ATTEMPT" \
-            '{schema:$schema,observer:{checkout_commit:$observer_commit,expected_workflow_sha:$observer_expected_sha,runtime_path:$observer_runtime,binary_digest:$observer_binary_digest,program_path:$observer_program,program_digest:$observer_program_digest,program_role:"current-observer-policy"},source:{head_sha:$source_head,run_id:$source_run,run_attempt:$source_attempt,inputs:"exact-source-snapshot"}}' > "$root/read-only/observer-runtime-binding.json"
+            --slurpfile source "$root/source/run.json" \
+            '{schema:$schema,observer:{checkout_commit:$observer_commit,expected_workflow_sha:$observer_expected_sha,runtime_path:$observer_runtime,binary_digest:$observer_binary_digest,program_path:$observer_program,program_digest:$observer_program_digest,program_role:"current-observer-policy"},source:{head_sha:$source[0].head_sha,run_id:$source[0].id,run_attempt:$source[0].run_attempt,inputs:"exact-source-snapshot"}}' > "$root/read-only/observer-runtime-binding.json"
           "$CI_EFFORT_OBSERVER_RUNTIME" \
             --read-only \
             --run "$root/source/run.json" \
