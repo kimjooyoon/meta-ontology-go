@@ -466,9 +466,66 @@ jobs:
             -provenance "$input/self-improvement-provenance.json"
             -expected-sha "$HEAD_SHA"
           )
-          for target in "$first" "$replay"; do
+          emit_invocation_boundary() {
+            local boundary="$1"
+            local pass="$2"
+            local target="$3"
+            local plan_digest_file="$input/self-improvement-plan.json"
+            local execution_digest_file="$input/self-improvement-execution.json"
+            local plan_digest_output execution_digest_output plan_digest execution_digest
+            if [[ ! -s "$plan_digest_file" || ! -s "$execution_digest_file" ]]; then
+              return 1
+            fi
+            if ! plan_digest_output="$(sha256sum "$plan_digest_file")"; then
+              return 1
+            fi
+            if ! execution_digest_output="$(sha256sum "$execution_digest_file")"; then
+              return 1
+            fi
+            plan_digest="${plan_digest_output%% *}"
+            execution_digest="${execution_digest_output%% *}"
+            if [[ ! "$plan_digest" =~ ^[[:xdigit:]]{64}$ || ! "$execution_digest" =~ ^[[:xdigit:]]{64}$ ]]; then
+              return 1
+            fi
+            jq -cn \
+              --arg schema gooo/transformation-effect-invocation-boundary/v1 \
+              --arg head_sha "$HEAD_SHA" \
+              --arg stage "$stage" \
+              --arg pass "$pass" \
+              --arg boundary "$boundary" \
+              --arg scope EXTERNAL_WRAPPER_ONLY \
+              --arg input_plan_digest "sha256:$plan_digest" \
+              --arg input_execution_digest "sha256:$execution_digest" \
+              --arg command './scripts/transformation-effect' \
+              --arg root "$GITHUB_WORKSPACE" \
+              --arg metrics "$input/source-metrics.json" \
+              --arg plan "$plan_digest_file" \
+              --arg execution "$execution_digest_file" \
+              --arg receipts "$input/self-improvement-receipts.json" \
+              --arg provenance "$input/self-improvement-provenance.json" \
+              --arg expected_sha "$HEAD_SHA" \
+              --arg output "$target/ledger.json" \
+              --arg generated_receipts "$target/receipts.json" \
+              --arg executed_provenance "$target/provenance.json" \
+              --arg patch "$target/patch.json" \
+              '{schema:$schema,head_sha:$head_sha,stage:$stage,pass:$pass,boundary:$boundary,scope:$scope,input_plan_digest:$input_plan_digest,input_execution_digest:$input_execution_digest,command:$command,args:{root:$root,metrics:$metrics,plan:$plan,execution:$execution,receipts:$receipts,provenance:$provenance,expected_sha:$expected_sha,output:$output,generated_receipts:$generated_receipts,executed_provenance:$executed_provenance,patch:$patch},diagnostic_only:true,operation_entry:"UNOBSERVED",semantic_effect:"UNOBSERVED",permission:"UNOBSERVED"}' \
+              >&2
+          }
+          warn_invocation_boundary() {
+            local pass="$1"
+            local boundary="$2"
+            printf 'transformation-effect: invocation boundary unavailable stage=%s pass=%s boundary=%s\n' "$stage" "$pass" "$boundary" >&2
+          }
+          for pass in first replay; do
+            target="$root/$pass"
             start_ns="$(date +%s%N)"
+            if ! emit_invocation_boundary BEFORE_INVOKE "$pass" "$target"; then
+              warn_invocation_boundary "$pass" BEFORE_INVOKE
+            fi
             /usr/bin/time -f '%M' -o "$target/peak-rss-kib.txt" go run ./scripts/transformation-effect "${common[@]}" -output "$target/ledger.json" -generated-receipts "$target/receipts.json" -executed-provenance "$target/provenance.json" -patch "$target/patch.json"
+            if ! emit_invocation_boundary RETURNED "$pass" "$target"; then
+              warn_invocation_boundary "$pass" RETURNED
+            fi
             end_ns="$(date +%s%N)"
             elapsed_ms=$(( (end_ns - start_ns + 999999) / 1000000 ))
             if (( elapsed_ms < 1 )); then elapsed_ms=1; fi
