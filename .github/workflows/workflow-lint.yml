@@ -1,0 +1,48 @@
+name: Workflow lint
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/**
+      - scripts/ci-tooling/actionlint.sh
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/**
+      - scripts/ci-tooling/actionlint.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  workflow-lint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Bind the declared Go toolchain
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.0.0
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Run actionlint v1.7.12
+        run: bash scripts/ci-tooling/actionlint.sh
+        env:
+          ACTIONLINT_OUTPUT_DIR: ${{ runner.temp }}/workflow-lint
+
+      - name: Upload workflow lint evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        with:
+          name: workflow-lint-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/workflow-lint
+          if-no-files-found: error
