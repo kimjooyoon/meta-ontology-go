@@ -346,11 +346,11 @@ jobs:
           cp "$resolution" "$output_dir/source-authorization-resolution.json"
           jq -e --arg sha "$SOURCE_HEAD_SHA" --arg archive "$api_digest" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and
-             .request.input.source_head_sha == $sha and
-             .request.input.source_artifact_archive_digest == $archive and
-             .request.input.source_artifact_observed_digest == $archive and
-             .request.input.repository_writes == 0 and
-             .request.input.local_test_executions == 0 and
+             .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.source_artifact_archive_digest == $archive and
+             .request.continuation_input.source_artifact_observed_digest == $archive and
+             .request.continuation_input.repository_writes == 0 and
+             .request.continuation_input.local_test_executions == 0 and
              .resolution.execution_authorized == false and
              .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
              .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
@@ -411,19 +411,19 @@ jobs:
           jq -e --arg sha "$SOURCE_HEAD_SHA" --arg digest "$archive_digest" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and
              .digest != null and (.digest | startswith("sha256:")) and
-             .request.input.source_head_sha == $sha and
-             .request.input.source_run_id == ($ENV.AUTH_RUN_ID|tonumber) and
-             .request.input.source_artifact_name == ("self-improvement-candidate-authorization-"+$sha) and
-             .request.input.source_artifact_archive_digest != null and
-             .request.input.source_artifact_observed_digest == .request.input.source_artifact_archive_digest and
+             .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.source_run_id == ($ENV.AUTH_RUN_ID|tonumber) and
+             .request.continuation_input.source_artifact_name == ("self-improvement-candidate-authorization-"+$sha) and
+             .request.continuation_input.source_artifact_archive_digest != null and
+             .request.continuation_input.source_artifact_observed_digest == .request.continuation_input.source_artifact_archive_digest and
              .verification.verified == true and .resolution.execution_authorized == false and
              .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
              .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
              .resolution.repository_writes == 0 and .resolution.local_test_executions == 0' "$continuation" >/dev/null
           receipt_digest="$(jq -r '.digest' "$continuation")"
-          source_workflow_name="$(jq -r '.request.input.source_workflow_name' "$continuation")"
-          source_workflow_path="$(jq -r '.request.input.source_workflow_path' "$continuation")"
-          source_event="$(jq -r '.request.input.source_event' "$continuation")"
+          source_workflow_name="$(jq -r '.request.continuation_input.source_workflow_name' "$continuation")"
+          source_workflow_path="$(jq -r '.request.continuation_input.source_workflow_path' "$continuation")"
+          source_event="$(jq -r '.request.continuation_input.source_event' "$continuation")"
           jq -n \
             --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" --arg name "$artifact_name" \
             --arg source_workflow "$source_workflow_name" --arg source_path "$source_workflow_path" \
