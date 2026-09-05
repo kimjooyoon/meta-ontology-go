@@ -381,7 +381,7 @@ jobs:
             --arg repository "$GITHUB_REPOSITORY" --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" \
             --arg artifact "$artifact_name" --arg archive_digest "$archive_digest" --arg observed_digest "$observed_digest" \
             --arg receipt_digest "$receipt_digest" \
-            --argjson run "$V25_RUN_ID" --argjson attempt "$V25_RUN_ATTEMPT" --argjson artifact_id "$artifact_id" \
+            --arg run "$V25_RUN_ID" --arg attempt "$V25_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
             '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:"workflow_dispatch",source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$artifact,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$observed_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement separate execution grant",target_workflow_path:".github/workflows/self-improvement-execution-grant.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest,decision:""}}' \
             > "$work/v26-dispatch.json"
           gh api --method POST \
