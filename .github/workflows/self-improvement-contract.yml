@@ -209,7 +209,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -278,7 +278,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download activated assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -551,12 +551,12 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download language assurance baseline
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
       - name: Download immutable upstream evidence
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: source-authority-upstream-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/source-authority-upstream
@@ -614,7 +614,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -751,7 +751,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -818,7 +818,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -885,7 +885,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -949,7 +949,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1018,7 +1018,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1086,7 +1086,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1154,7 +1154,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1215,7 +1215,7 @@ jobs:
           go-version-file: go.mod
           cache: false
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/rollback-integrity/assurance

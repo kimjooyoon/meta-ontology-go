@@ -145,7 +145,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download publication meta contract
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-publication-contract-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/publication-contract
@@ -316,7 +316,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - name: Download exact publication candidate
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/gooo-release-dist
@@ -482,7 +482,7 @@ jobs:
             }' > "$RUNNER_TEMP/final/publication.json"
       - name: Download closed publication result
         if: needs.prepare.result == 'success' && needs.publish.result == 'success'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-published-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/published

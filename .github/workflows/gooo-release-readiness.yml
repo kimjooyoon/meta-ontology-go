@@ -96,7 +96,7 @@ jobs:
       - name: Bind exact candidate head
         run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
       - name: Download all three exact-head receipts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: gooo-release-platform-*-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence/receipts
@@ -268,7 +268,7 @@ jobs:
             }' > "$RUNNER_TEMP/final/eligibility.json"
       - name: Download closed eligibility evidence
         if: needs.platform.result == 'success' && needs.aggregate.result == 'success'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-eligibility-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/downloaded

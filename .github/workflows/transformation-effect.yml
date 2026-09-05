@@ -271,11 +271,11 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/guard
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: transformation-effect-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/transformation
@@ -325,7 +325,7 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact meta artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: '*-${{ github.event.workflow_run.head_sha }}'
           path: ${{ runner.temp }}/meta-inputs
@@ -857,7 +857,7 @@ jobs:
           fi
           grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
       - name: Download exact platform release receipts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-platforms
@@ -2246,7 +2246,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact functional CLI receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/user-journey/upstream
@@ -2339,12 +2339,12 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact guarded promotion receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/guard
       - name: Download exact rollback route receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: rollback-fixed-point-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/recovery
@@ -2931,7 +2931,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact source execution artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
@@ -2970,12 +2970,12 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Download structural source execution evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-input
       - name: Download independent source binding evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-artifact-oracle-${{ env.HEAD_SHA }}
           path: artifact-oracle-input
