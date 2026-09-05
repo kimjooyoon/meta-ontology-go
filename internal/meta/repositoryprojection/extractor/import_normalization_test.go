@@ -63,9 +63,9 @@ func TestImportNormalizationPreservationRegressionCohort(t *testing.T) {
 
 func TestImportNormalizationCorrectionRegressionCohort(t *testing.T) {
 	cases := []struct {
-		name                  string
-		source                string
-		wantDetachedComment   string
+		name                string
+		source              string
+		wantDetachedComment string
 	}{
 		{name: "detached-comment-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t// detached import note\n\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", wantDetachedComment: "detached import note"},
 		{name: "detached-directive-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t//go:custom-import-directive\n\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", wantDetachedComment: "go:custom-import-directive"},

@@ -141,7 +141,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		"FunctionInput":                  "gooo://meta-operation-input-contract/entity/function-input",
 		"FileInput":                      "gooo://meta-operation-input-contract/entity/file-input",
 		"OperationResult":                "gooo://meta-operation-input-contract/entity/result",
-		"ImportNormalizationPolicy":     "gooo://meta-operation-input-contract/entity/import-normalization-policy",
+		"ImportNormalizationPolicy":      "gooo://meta-operation-input-contract/entity/import-normalization-policy",
 		"ReturnShapeObligation":          "gooo://meta-operation-input-contract/entity/return-shape-obligation",
 		"ControlFlowObligation":          "gooo://meta-operation-input-contract/entity/control-flow-obligation",
 		"FreeBindingsObligation":         "gooo://meta-operation-input-contract/entity/free-bindings-obligation",
