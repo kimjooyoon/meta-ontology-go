@@ -56,11 +56,11 @@ type operationInputContractFacts struct {
 }
 
 type operationInputContract struct {
-	SourceDigest     string
-	SemanticDigest   string
-	Bindings         map[sourcepolicy.Operation]operationInputContractBinding
-	Facts            map[sourcepolicy.Operation]operationInputContractFacts
-	ObligationFacts  map[string]operationInputContractFacts
+	SourceDigest    string
+	SemanticDigest  string
+	Bindings        map[sourcepolicy.Operation]operationInputContractBinding
+	Facts           map[sourcepolicy.Operation]operationInputContractFacts
+	ObligationFacts map[string]operationInputContractFacts
 }
 
 // OperationInputContractEvidence is the native admission evidence for an
@@ -80,11 +80,11 @@ type OperationInputContractEvidence struct {
 }
 
 type OperationInputContractObligationEvidence struct {
-	Name               string
-	Activity           string
-	InputEntity        string
-	OutputEntity       string
-	UsedInputFact      bool
+	Name                string
+	Activity            string
+	InputEntity         string
+	OutputEntity        string
+	UsedInputFact       bool
 	GeneratedOutputFact bool
 }
 
@@ -222,9 +222,9 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 
 	sourceDigest := sha256.Sum256(raw)
 	return operationInputContract{
-		SourceDigest:   hex.EncodeToString(sourceDigest[:]),
-		SemanticDigest: ir.StableHash(),
-		Bindings:       bindings,
+		SourceDigest:    hex.EncodeToString(sourceDigest[:]),
+		SemanticDigest:  ir.StableHash(),
+		Bindings:        bindings,
 		Facts:           facts,
 		ObligationFacts: obligationFacts,
 	}, nil
@@ -266,7 +266,7 @@ func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, err
 		SourceDigest:        contract.SourceDigest,
 		SemanticDigest:      contract.SemanticDigest,
 		UsedInputFact:       facts.UsedInput,
-		GeneratedOutputFact:  facts.GeneratedOutput,
+		GeneratedOutputFact: facts.GeneratedOutput,
 		Obligations:         obligations,
 	}, nil
 }

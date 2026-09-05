@@ -26,16 +26,16 @@ type densitySubject struct {
 }
 
 type extractionSubject struct {
-	Logical      string   `json:"logical"`
-	State        string   `json:"state"`
-	Before       int      `json:"before_lines"`
-	After        int      `json:"after_lines"`
-	Files        []string `json:"changed_files"`
-	CreatedFiles []string `json:"created_files,omitempty"`
-	Consumer     string   `json:"consumer"`
-	Operation    string   `json:"meta_operation"`
-	Operations   []string `json:"meta_operations,omitempty"`
-	Proof        string   `json:"proof_choice"`
+	Logical      string                                 `json:"logical"`
+	State        string                                 `json:"state"`
+	Before       int                                    `json:"before_lines"`
+	After        int                                    `json:"after_lines"`
+	Files        []string                               `json:"changed_files"`
+	CreatedFiles []string                               `json:"created_files,omitempty"`
+	Consumer     string                                 `json:"consumer"`
+	Operation    string                                 `json:"meta_operation"`
+	Operations   []string                               `json:"meta_operations,omitempty"`
+	Proof        string                                 `json:"proof_choice"`
 	Evidence     []projectionextractor.StrategyEvidence `json:"strategy_evidence,omitempty"`
 }
 
