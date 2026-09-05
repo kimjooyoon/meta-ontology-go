@@ -29,7 +29,7 @@ jobs:
       - name: Validate guardian observer environment
         id: observer-environment
         continue-on-error: true
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           GUARDIAN_WORKFLOW_SHA: ${{ github.workflow_sha }}
           GUARDIAN_RUN_ID: ${{ github.run_id }}
@@ -58,7 +58,7 @@ jobs:
             fs.writeFileSync('ci-guardian-environment.json', JSON.stringify(snapshot, null, 2) + '\n');
             core.setOutput('verified', snapshot.read_status === 'verified' ? 'true' : 'false');
       - name: Run successor protocol witnesses
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           github-token: ${{ github.token }}
           script: |
@@ -82,7 +82,7 @@ jobs:
           permission-administration: read
       - name: Inspect changed paths from default authority
         # v7: f28e40c7f34bde8b3046d885e986cb6290c5673b
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           GUARDIAN_WORKFLOW_REF: ${{ github.workflow_ref }}
           GUARDIAN_WORKFLOW_SHA: ${{ github.workflow_sha }}
