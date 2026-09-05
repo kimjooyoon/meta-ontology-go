@@ -429,9 +429,11 @@ jobs:
             --arg source_workflow "$source_workflow_name" --arg source_path "$source_workflow_path" \
             --arg source_event "$source_event" --arg repository "$GITHUB_REPOSITORY" \
             --arg archive_digest "$archive_digest" --arg receipt_digest "$receipt_digest" \
-            --argjson run "$AUTH_RUN_ID" --argjson attempt "$AUTH_RUN_ATTEMPT" --argjson artifact_id "$artifact_id" \
+            --arg run "$AUTH_RUN_ID" --arg attempt "$AUTH_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
             '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:$source_event,source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$name,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$archive_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement candidate execution contract",target_workflow_path:".github/workflows/self-improvement-execution-contract.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest}}' \
             > "$work/v25-dispatch.json"
+          jq -e '(.inputs | type) == "object" and ([.inputs[] | type] | all(. == "string"))' \
+            "$work/v25-dispatch.json" >/dev/null
           gh api --method POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
