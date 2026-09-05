@@ -308,7 +308,11 @@ jobs:
             stack_bytes="$(awk 'BEGIN {seen=0; total=0} /^(SIGQUIT: quit|goroutine [0-9]+ )/ {seen=1} seen {total += length($0)+1} END {print total+0}' "$attempt_dir/stderr.txt")"
             stack_observation='OBSERVED_IN_BOUNDED_CAPTURE'
           fi
-          if grep -Eq 'bootstrap/function-extractor|function-extractor' "$attempt_dir/stderr.txt"; then
+          if awk '
+            /^goroutine [0-9]+ / { stack=1; next }
+            stack && $0 ~ /bootstrap\/function-extractor\/[^[:space:]]+\.go:[0-9]+/ { found=1; exit }
+            END { exit(found ? 0 : 1) }
+          ' "$attempt_dir/stderr.txt"; then
             helper_frame_observation='OBSERVED_IN_BOUNDED_CAPTURE'
           fi
           jq -cn --args '$ARGS.positional' -- "${args[@]}" > "$attempt_dir/argv.json"
@@ -548,6 +552,31 @@ jobs:
           jq -r \
             '"### Function extractor diagnostic\n- source subject: `" + .source_sha + "`\n- workflow implementation: `" + .workflow_implementation_sha + "`\n- source artifact: `" + .source_artifact_id + "`\n- stage/step: `" + .stage + " / " + .step + "`\n- unknown: `" + .unknown_class + "`\n- reason: " + .reason + "\n- next operation: " + .next_operation + "\n- blocked by: " + .blocked_by + "\n- helper attempts: `" + ((.helper_attempts|length)|tostring) + "`\n- decision: `" + .decision + " / " + .resolution + "`\n- normal CLOSED/promotion claims: `" + (.normal_closed|tostring) + " / " + (.promotion_authorized|tostring) + "`"' \
             "$summary" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce diagnostic evidence result
+        if: always()
+        shell: bash
+        env:
+          RESOLVE_OUTCOME: ${{ steps.resolve.outcome }}
+          SAMPLING_OUTCOME: ${{ steps.sampling.outcome }}
+          SUMMARY_OUTCOME: ${{ steps.summary.outcome }}
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/function-extractor-diagnostic"
+          summary="$root/diagnostic-summary.json"
+          test -s "$summary"
+          if [[ "$RESOLVE_OUTCOME" != 'success' || "$SAMPLING_OUTCOME" != 'success' || "$SUMMARY_OUTCOME" != 'success' ]]; then
+            echo "diagnostic evidence is incomplete: resolve=$RESOLVE_OUTCOME sampling=$SAMPLING_OUTCOME summary=$SUMMARY_OUTCOME" >&2
+            exit 1
+          fi
+          jq -e \
+            '.diagnostic_only == true and
+             .decision == "UNKNOWN" and
+             .normal_closed == false and
+             .promotion_authorized == false and
+             .helper_match_observed == true and
+             (.helper_attempts | length) >= 1' \
+            "$summary" >/dev/null
 
       - name: Upload diagnostic-only evidence
         if: always()
