@@ -23,7 +23,7 @@ func TestSchemaMigrationRejectsPreviousReceiptBoundaries(t *testing.T) {
 		old     string
 		decode  func([]byte) error
 	}
-	marshal := func(value interface{}) []byte {
+	marshal := func(value any) []byte {
 		t.Helper()
 		payload, err := json.Marshal(value)
 		if err != nil {
