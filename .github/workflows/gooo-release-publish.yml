@@ -54,7 +54,7 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
-          cache: true
+          cache: false
       - name: Bind and check the Gooo publication authority
         shell: bash
         run: |
@@ -214,7 +214,7 @@ jobs:
           cp "$evidence/eligibility.json" "$dist/release-eligibility.json"
 
           tar -xzf "$dist/gooo-linux-amd64.tar.gz" -C "$extract"
-          "$extract/gooo" version --json > "$dist/version.json"
+          env -u GH_TOKEN -u GITHUB_TOKEN "$extract/gooo" version --json > "$dist/version.json"
           jq -e '
             .schema_version == "gooo-version/v1" and .language == "gooo" and
             .version == "0.2.0-dev" and .status == "development" and
