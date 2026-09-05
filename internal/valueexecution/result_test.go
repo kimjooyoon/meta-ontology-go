@@ -76,21 +76,38 @@ func TestProducedResultRejectsZeroAndJSONForgedHandles(t *testing.T) {
 		t.Fatal(err)
 	}
 	var forged ProducedResult
-	if err := json.Unmarshal(raw, &forged); err != nil {
-		t.Fatal(err)
+	if err := json.Unmarshal(raw, &forged); err == nil {
+		t.Fatal("JSON evidence unexpectedly decoded into ProducedResult")
 	}
-	for name, result := range map[string]ProducedResult{"zero": {}, "json-forged": forged} {
+	if forged.Valid() {
+		t.Fatal("JSON-forged result handle reported valid")
+	}
+	err = program.ValidateProducedResult(forged)
+	if Reason(err) != ReasonResultHandleInvalid {
+		t.Fatalf("JSON-forged reason = %s, want %s", Reason(err), ReasonResultHandleInvalid)
+	}
+	zeroFailure, ok := FailureOf(err)
+	if !ok || zeroFailure.Stage != "RESULT" || zeroFailure.Step != "validate-produced-result" {
+		t.Fatalf("zero-destination structured failure = %#v", zeroFailure)
+	}
+
+	for name, payload := range map[string][]byte{
+		"evidence":     raw,
+		"null":         []byte("null"),
+		"empty-object": []byte("{}"),
+	} {
 		t.Run(name, func(t *testing.T) {
-			if result.Valid() {
-				t.Fatal("invalid result handle reported valid")
+			alreadyIssued := issued
+			err := json.Unmarshal(payload, &alreadyIssued)
+			if err == nil {
+				t.Fatal("JSON unexpectedly decoded into an existing ProducedResult")
 			}
-			err := program.ValidateProducedResult(result)
-			if Reason(err) != ReasonResultHandleInvalid {
-				t.Fatalf("reason = %s, want %s", Reason(err), ReasonResultHandleInvalid)
+			if alreadyIssued.Valid() {
+				t.Fatal("existing ProducedResult remained usable after rejected JSON decode")
 			}
 			failure, ok := FailureOf(err)
-			if !ok || failure.Stage != "RESULT" || failure.Step != "validate-produced-result" {
-				t.Fatalf("structured failure = %#v", failure)
+			if !ok || failure.Code != ReasonResultHandleInvalid || failure.Stage != "RESULT" || failure.Step != "unmarshal-produced-result" {
+				t.Fatalf("structured JSON failure = %#v", failure)
 			}
 		})
 	}
@@ -120,14 +137,14 @@ func TestExecuteResultRejectsCopiedProgramWithoutPrivateAuthorityBeforeApply(t *
 
 func TestExecuteResultRejectsPublicBindingMutationBeforeApply(t *testing.T) {
 	mutations := map[string]func(*Program){
-		"activity": func(program *Program) { program.Activity = "Other" },
-		"text": func(program *Program) { program.Text = "int.add:2" },
-		"source-digest": func(program *Program) { program.SourceDigest = digestBytes([]byte("other-source")) },
-		"semantic-fingerprint": func(program *Program) { program.SemanticFingerprint = "other-semantic" },
-		"model-program": func(program *Program) { program.ModelProgram = "int.add:2" },
-		"operation-activity": func(program *Program) { program.Operation.Activity = "Other" },
+		"activity":               func(program *Program) { program.Activity = "Other" },
+		"text":                   func(program *Program) { program.Text = "int.add:2" },
+		"source-digest":          func(program *Program) { program.SourceDigest = digestBytes([]byte("other-source")) },
+		"semantic-fingerprint":   func(program *Program) { program.SemanticFingerprint = "other-semantic" },
+		"model-program":          func(program *Program) { program.ModelProgram = "int.add:2" },
+		"operation-activity":     func(program *Program) { program.Operation.Activity = "Other" },
 		"operation-input-entity": func(program *Program) { program.Operation.InputEntities[0] = "Other" },
-		"operation-spec-digest": func(program *Program) { program.Operation.SpecDigest = digestBytes([]byte("other-spec")) },
+		"operation-spec-digest":  func(program *Program) { program.Operation.SpecDigest = digestBytes([]byte("other-spec")) },
 	}
 	for name, mutate := range mutations {
 		t.Run(name, func(t *testing.T) {
@@ -146,14 +163,14 @@ func TestExecuteResultRejectsPublicBindingMutationBeforeApply(t *testing.T) {
 	}
 }
 
-func TestProducedResultRejectsDifferentCompiledProducerAndSource(t *testing.T) {
+func TestProducedResultRejectsChangedSourceOrigin(t *testing.T) {
 	filename, source := actualValueFixture(t)
 	producer, err := Compile(filename, source, "Increment")
 	if err != nil {
 		t.Fatal(err)
 	}
-	otherSource := []byte(strings.ReplaceAll(string(source), "package valuewitness\nnamespace valuewitness", "package otherwitness\nnamespace otherwitness"))
-	other, err := Compile("other.gooo", otherSource, "Increment")
+	changedSource := append(append([]byte(nil), source...), '\n')
+	other, err := Compile(filename, changedSource, "Increment")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,9 +179,46 @@ func TestProducedResultRejectsDifferentCompiledProducerAndSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !result.Valid() {
-		t.Fatal("other compiled producer did not issue a valid result")
+		t.Fatal("changed-source producer did not issue a valid result")
+	}
+	if result.Evidence().ProducerActivityID != "valuewitness://activity/increment" || result.Evidence().SourceDigest == producer.SourceDigest {
+		t.Fatalf("changed-source evidence = %#v, producer source digest = %q", result.Evidence(), producer.SourceDigest)
 	}
 	if err := producer.ValidateProducedResult(result); Reason(err) != ReasonResultProducerMismatch {
+		t.Fatalf("reason = %s, want %s", Reason(err), ReasonResultProducerMismatch)
+	}
+}
+
+func TestProducedResultRejectsDifferentActivityInSameSource(t *testing.T) {
+	filename, source := actualValueFixture(t)
+	twoActivitySource := []byte(strings.Replace(
+		string(source),
+		`activity Increment(Integer) -> Integer computes "int.add:1"`,
+		`activity Increment(Integer) -> Integer computes "int.add:1"
+activity Repeat(Integer) -> Integer computes "int.add:1"`,
+		1,
+	))
+	increment, err := Compile(filename, twoActivitySource, "Increment")
+	if err != nil {
+		t.Fatal(err)
+	}
+	repeat, err := Compile(filename, twoActivitySource, "Repeat")
+	if err != nil {
+		t.Fatal(err)
+	}
+	calls := instrumentApply(&repeat)
+	result, err := repeat.ExecuteResult([]int64{41})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *calls != 1 || !result.Valid() {
+		t.Fatalf("same-source second activity calls=%d valid=%t", *calls, result.Valid())
+	}
+	evidence := result.Evidence()
+	if evidence.SourceDigest != increment.SourceDigest || evidence.ProducerActivity != "Repeat" || evidence.ProducerActivityID != "valuewitness://activity/repeat" {
+		t.Fatalf("same-source activity evidence = %#v, increment source digest = %q", evidence, increment.SourceDigest)
+	}
+	if err := increment.ValidateProducedResult(result); Reason(err) != ReasonResultProducerMismatch {
 		t.Fatalf("reason = %s, want %s", Reason(err), ReasonResultProducerMismatch)
 	}
 }

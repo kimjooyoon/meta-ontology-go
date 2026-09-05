@@ -24,9 +24,21 @@ type ResultEvidence struct {
 // decoded value are invalid because its private authority cannot be supplied
 // by ordinary exported-field construction.
 type ProducedResult struct {
-	authority   resultAuthority
-	value       int64
+	authority    resultAuthority
+	value        int64
 	resultDigest string
+}
+
+// UnmarshalJSON deliberately rejects every JSON input. ResultEvidence may be
+// serialized as detached data, but JSON never restores a ProducedResult
+// authority. A valid JSON attempt clears the destination before returning a
+// structured failure; syntax rejected before this method may leave a
+// destination unchanged.
+func (result *ProducedResult) UnmarshalJSON(_ []byte) error {
+	if result != nil {
+		*result = ProducedResult{}
+	}
+	return failAt(ReasonResultHandleInvalid, "RESULT", "unmarshal-produced-result", "ProducedResult does not support JSON deserialization")
 }
 
 type producedResultDigestInput struct {
