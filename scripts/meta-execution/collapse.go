@@ -20,30 +20,39 @@ import (
 )
 
 type collapseSourceInspection struct {
-	Subject            string
-	Receiver           string
-	StartLine          int
-	EndLine            int
-	AssignmentReturn   bool
-	SingleReturn       bool
-	ReturnExpression   string
-	CommentsPreserved  bool
+	Subject              string
+	Receiver             string
+	Signature            string
+	OutsideDeclarations  []string
+	CommentGroups        []string
+	StartLine            int
+	EndLine              int
+	AssignmentReturn     bool
+	SingleReturn         bool
+	ReturnExpression     string
+	CommentsPreserved    bool
 }
 
 type collapseInstanceEvidence struct {
-	Operation                    string                  `json:"operation"`
-	Subject                      string                  `json:"subject"`
-	Receiver                     string                  `json:"receiver"`
-	InputContractSourceDigest    string                  `json:"input_contract_source_digest"`
-	InputContractSemanticDigest  string                  `json:"input_contract_semantic_digest"`
-	BeforeSourceDigest           string                  `json:"before_source_digest"`
-	AfterSourceDigest            string                  `json:"after_source_digest"`
-	Before                       []byte                  `json:"before"`
-	After                        []byte                  `json:"after"`
-	ChangedFiles                 []string                `json:"changed_files"`
-	PreflightCount               int                     `json:"preflight_count"`
-	ApplyCount                   int                     `json:"apply_count"`
-	Process                      operationReplayEvidence `json:"process"`
+	Operation                     string                  `json:"operation"`
+	Subject                       string                  `json:"subject"`
+	Receiver                      string                  `json:"receiver"`
+	InputContractSourceDigest     string                  `json:"input_contract_source_digest"`
+	InputContractSemanticDigest   string                  `json:"input_contract_semantic_digest"`
+	BeforeSignature               string                  `json:"before_signature"`
+	AfterSignature                string                  `json:"after_signature"`
+	BeforeCommentGroups           []string                `json:"before_comment_groups"`
+	AfterCommentGroups            []string                `json:"after_comment_groups"`
+	BeforeOutsideDeclarations     []string                `json:"before_outside_declarations"`
+	AfterOutsideDeclarations      []string                `json:"after_outside_declarations"`
+	BeforeSourceDigest             string                  `json:"before_source_digest"`
+	AfterSourceDigest              string                  `json:"after_source_digest"`
+	Before                         []byte                  `json:"before"`
+	After                          []byte                  `json:"after"`
+	ChangedFiles                   []string                `json:"changed_files"`
+	PreflightCount                 int                     `json:"preflight_count"`
+	ApplyCount                     int                     `json:"apply_count"`
+	Process                        operationReplayEvidence `json:"process"`
 }
 
 func validateCollapseAction(action generation.Action) *operationError {
@@ -51,7 +60,8 @@ func validateCollapseAction(action generation.Action) *operationError {
 	if !ok {
 		return newOperationError("validate-action", "resolve-collapse-binding", "ACTION_BINDING_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-contract")
 	}
-	valid := action.IndicatorID != "" && action.Subject != "" &&
+	expectedIndicatorID, indicatorIDOK := collapseIndicatorID(action.SourceIndicator)
+	valid := indicatorIDOK && action.IndicatorID == expectedIndicatorID && action.Subject != "" &&
 		action.MetricID == sourcepolicy.DimensionRefactorAssign &&
 		action.Applicability == sourcepolicy.ApplicabilityApplicable &&
 		action.ApplicabilityRule == sourcepolicy.ApplicabilityRuleDefault &&
@@ -63,6 +73,7 @@ func validateCollapseAction(action generation.Action) *operationError {
 		action.InputContractSemanticDigest == binding.InputContractSemanticDigest &&
 		action.IndependenceGroupID == binding.IndependenceGroupID &&
 		action.ProofChoice == binding.ProofChoice && string(action.MetricProofChoice) == string(binding.ProofChoice) &&
+		action.MetricProducer == "linecaps.Analyze" && action.MetricConsumer == "refactor-planner" &&
 		action.Executor == binding.Executor && action.Evaluator == binding.Evaluator &&
 		slices.Equal(action.RequiredIndicatorIDs, binding.RequiredIndicatorIDs) &&
 		action.ReceiptRequired == binding.ReceiptRequired && action.Priority == binding.Priority &&
@@ -124,6 +135,10 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	defer os.RemoveAll(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	sourcePath := filepath.Join(temporary, filepath.FromSlash(subject.Path))
+	beforeFiles, err := snapshotWorkspaceFiles(temporary)
+	if err != nil {
+		return operationMaterialization{}, newOperationError("evaluate-operation", "snapshot-collapse-input", "INPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
+	}
 	before, err := os.ReadFile(sourcePath)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("observe-plan", "read-collapse-source", "SOURCE_UNAVAILABLE", "DIRECT_MISSING", "restore-source")
@@ -143,11 +158,6 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	if preflightErr != nil || preflight.Observation.ExitCode != 0 || !collapseSummaryMatches(preflight.Stdout, false) {
 		return operationMaterialization{Executor: preflight.Observation}, newOperationError("evaluate-operation", "preflight-collapse-candidate", "PREFLIGHT_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	beforeFiles, err := snapshotWorkspaceFiles(temporary)
-	if err != nil {
-		return operationMaterialization{Executor: preflight.Observation, Evaluator: preflight.Observation}, newOperationError("evaluate-operation", "snapshot-collapse-input", "INPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
-	}
-
 	applyDescriptor := []string{"go", "run", "./scripts/refactor-metrics", "-root", "<workspace>", "-metrics", "<source-metrics>", "-sha", plan.HeadSHA, "-subject", action.Subject}
 	applyActual := []string{"go", "run", "./scripts/refactor-metrics", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject}
 	executor, executorErr := runProcessObserved(temporary, environment, applyDescriptor, applyActual, &trace, pass, "executor")
@@ -155,13 +165,29 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	if executorErr != nil || executor.Observation.ExitCode != 0 || !collapseSummaryMatches(executor.Stdout, true) {
 		return materialized, newOperationError("execute-operation", "apply-collapse-candidate", "EXECUTOR_PROCESS_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	after, err := os.ReadFile(sourcePath)
+	afterApplied, err := os.ReadFile(sourcePath)
 	if err != nil {
 		return materialized, newOperationError("evaluate-operation", "read-collapse-output", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
 	}
-	afterInspection, err := inspectCollapseSource(after, subject)
+	afterAppliedInspection, err := inspectCollapseSource(afterApplied, subject)
 	if err != nil {
 		return materialized, newOperationError("evaluate-operation", "validate-collapse-output", "OUTPUT_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence")
+	}
+	if failure := validateCollapseOutput(beforeInspection, afterAppliedInspection, afterApplied); failure != nil {
+		return materialized, failure
+	}
+	verifier := runGoTestObserved(temporary, environment, &trace, pass)
+	materialized.Verifier = verifier.Observation
+	after, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return materialized, newOperationError("evaluate-operation", "read-collapse-final-source", "OUTPUT_EVIDENCE_UNAVAILABLE", "DIRECT_MISSING", "restore-operation-evidence")
+	}
+	afterInspection, err := inspectCollapseSource(after, subject)
+	if err != nil {
+		return materialized, newOperationError("evaluate-operation", "validate-collapse-final-output", "OUTPUT_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-evidence")
+	}
+	if !bytes.Equal(afterApplied, after) {
+		return materialized, newOperationError("evaluate-operation", "compare-collapse-final-source", "WORKSPACE_EFFECT_OUT_OF_SCOPE", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if failure := validateCollapseOutput(beforeInspection, afterInspection, after); failure != nil {
 		return materialized, failure
@@ -173,8 +199,6 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	if len(changedFiles) != 1 || changedFiles[0] != subject.Path {
 		return materialized, newOperationError("evaluate-operation", "compare-collapse-workspace", "WORKSPACE_EFFECT_OUT_OF_SCOPE", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
-	materialized.Verifier = verifier.Observation
 	if verifier.Observation.ExitCode != 0 {
 		return materialized, newOperationError("verify-operation", "go-test-transformed-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
@@ -194,6 +218,12 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 		Receiver:                    beforeInspection.Receiver,
 		InputContractSourceDigest:   action.InputContractSourceDigest,
 		InputContractSemanticDigest: action.InputContractSemanticDigest,
+		BeforeSignature:             beforeInspection.Signature,
+		AfterSignature:              afterInspection.Signature,
+		BeforeCommentGroups:         beforeInspection.CommentGroups,
+		AfterCommentGroups:          afterInspection.CommentGroups,
+		BeforeOutsideDeclarations:   beforeInspection.OutsideDeclarations,
+		AfterOutsideDeclarations:    afterInspection.OutsideDeclarations,
 		BeforeSourceDigest:          digestBytes(before),
 		AfterSourceDigest:           digestBytes(after),
 		Before:                      before,
@@ -201,7 +231,7 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 		ChangedFiles:                changedFiles,
 		PreflightCount:              1,
 		ApplyCount:                  1,
-		Process:                     operationReplayEvidenceFrom(executor.Observation, preflight.Observation, verifier.Observation),
+		Process:                     collapseReplayEvidence(executor.Observation, preflight.Observation, verifier.Observation),
 	}
 	canonical, _ := json.Marshal(canonicalValue)
 	materialized.OperationID = string(sourcepolicy.OperationCollapseAssign)
@@ -219,6 +249,14 @@ func collapseContractDigest(action generation.Action) (string, bool) {
 	return "sha256:" + action.InputContractSourceDigest, true
 }
 
+func collapseIndicatorID(indicator sourcepolicy.Indicator) (string, bool) {
+	payload, err := json.Marshal(indicator)
+	if err != nil {
+		return "", false
+	}
+	return digestBytes(payload), true
+}
+
 func validBareDigest(value string) bool {
 	if len(value) != 64 {
 		return false
@@ -234,6 +272,27 @@ func validBareDigest(value string) bool {
 func collapseSummaryMatches(output []byte, write bool) bool {
 	want := fmt.Sprintf("refactor-metrics: checked=1 operation=%s write=%t", sourcepolicy.OperationCollapseAssign, write)
 	return strings.TrimSpace(string(output)) == want
+}
+
+func collapseSummaryOutput(write bool) []byte {
+	return []byte(fmt.Sprintf("refactor-metrics: checked=1 operation=%s write=%t\n", sourcepolicy.OperationCollapseAssign, write))
+}
+
+func collapseReplayEvidence(executor, evaluator, verifier generation.ProcessObservation) operationReplayEvidence {
+	return operationReplayEvidence{
+		Executor:  collapseReplayProcess(executor, collapseSummaryOutput(true), nil),
+		Evaluator: collapseReplayProcess(evaluator, collapseSummaryOutput(false), nil),
+		Verifier:  collapseReplayProcess(verifier, nil, nil),
+	}
+}
+
+func collapseReplayProcess(observation generation.ProcessObservation, stdout, stderr []byte) replayProcessObservation {
+	projected := replayProcess(observation)
+	projected.StdoutBytes = len(stdout)
+	projected.StdoutDigest = digestBytes(stdout)
+	projected.StderrBytes = len(stderr)
+	projected.StderrDigest = digestBytes(stderr)
+	return projected
 }
 
 func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (collapseSourceInspection, error) {
@@ -258,6 +317,9 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 		return collapseSourceInspection{}, fmt.Errorf("subject %q matched %d functions", subject.String(), len(matches))
 	}
 	target := matches[0]
+	if target.Body == nil {
+		return collapseSourceInspection{}, fmt.Errorf("subject %q has no function body", subject.String())
+	}
 	receiver := ""
 	if target.Recv != nil {
 		var rendered bytes.Buffer
@@ -266,11 +328,37 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 		}
 		receiver = rendered.String()
 	}
+	signature, err := renderCollapseNode(fset, target.Type)
+	if err != nil {
+		return collapseSourceInspection{}, err
+	}
+	outsideDeclarations := make([]string, 0, len(file.Decls)-1)
+	for _, declaration := range file.Decls {
+		if declaration == target {
+			continue
+		}
+		rendered, err := renderCollapseNode(fset, declaration)
+		if err != nil {
+			return collapseSourceInspection{}, err
+		}
+		outsideDeclarations = append(outsideDeclarations, rendered)
+	}
+	commentGroups := make([]string, 0, len(file.Comments))
+	for _, group := range file.Comments {
+		comments := make([]string, 0, len(group.List))
+		for _, comment := range group.List {
+			comments = append(comments, comment.Text)
+		}
+		commentGroups = append(commentGroups, strings.Join(comments, "\n"))
+	}
 	inspection := collapseSourceInspection{
-		Subject:   subject.String(),
-		Receiver:  receiver,
-		StartLine: fset.Position(target.Pos()).Line,
-		EndLine:   fset.Position(target.End()).Line,
+		Subject:             subject.String(),
+		Receiver:            receiver,
+		Signature:           receiver + "|" + signature,
+		OutsideDeclarations: outsideDeclarations,
+		CommentGroups:       commentGroups,
+		StartLine:           fset.Position(target.Pos()).Line,
+		EndLine:             fset.Position(target.End()).Line,
 	}
 	if len(target.Body.List) == 1 {
 		returnExpression, ok := target.Body.List[0].(*ast.ReturnStmt)
@@ -321,15 +409,21 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 }
 
 func renderCollapseExpression(fset *token.FileSet, expression ast.Expr) (string, error) {
+	return renderCollapseNode(fset, expression)
+}
+
+func renderCollapseNode(fset *token.FileSet, node ast.Node) (string, error) {
 	var rendered bytes.Buffer
-	if err := format.Node(&rendered, fset, expression); err != nil {
+	if err := format.Node(&rendered, fset, node); err != nil {
 		return "", err
 	}
 	return rendered.String(), nil
 }
 
 func validateCollapseOutput(before, after collapseSourceInspection, source []byte) *operationError {
-	if !after.SingleReturn || after.ReturnExpression != before.ReturnExpression || after.Receiver != before.Receiver || after.StartLine != before.StartLine || after.EndLine >= before.EndLine {
+	if !after.SingleReturn || after.ReturnExpression != before.ReturnExpression || after.Receiver != before.Receiver || after.Signature != before.Signature ||
+		!slices.Equal(after.OutsideDeclarations, before.OutsideDeclarations) || !slices.Equal(after.CommentGroups, before.CommentGroups) ||
+		after.StartLine != before.StartLine || after.EndLine >= before.EndLine {
 		return newOperationError("evaluate-operation", "validate-collapse-output", "OUTPUT_IDENTITY_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	formatted, err := format.Source(source)
@@ -398,9 +492,10 @@ func changedWorkspaceFiles(before map[string]string, root, subject string) ([]st
 }
 
 func collapseIndicatorReceipts(action generation.Action, headSHA string, before, after collapseSourceInspection) ([]generation.IndicatorReceipt, bool) {
+	commentsPreserved := before.CommentsPreserved && slices.Equal(before.CommentGroups, after.CommentGroups)
 	values := map[string]bool{
 		"go.ast.single-match/v1":    before.AssignmentReturn,
-		"go.comments.preserved/v1":  before.CommentsPreserved,
+		"go.comments.preserved/v1":  commentsPreserved,
 		"go.format.fixed-point/v1":  after.SingleReturn && after.EndLine < before.EndLine,
 	}
 	result := make([]generation.IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
