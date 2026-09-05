@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
@@ -332,7 +331,7 @@ func TestDecodeExtractorReportAcceptsLegacyWithoutStrategyEvidence(t *testing.T)
 
 func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
 	root := t.TempDir()
-	evidence := validStrategyEvidenceFixture()
+	evidence := nativeStrategyEvidenceFixture(t)
 	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
 	payload, err := json.Marshal(report)
 	if err != nil {
@@ -351,7 +350,8 @@ func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
 		t.Fatalf("native strategy evidence was not preserved: got=%+v want=%+v", decoded.Subjects[0].Evidence, evidence)
 	}
 	decodedEvidence := decoded.Subjects[0].Evidence[0]
-	if decodedEvidence.BeforeBytes == decodedEvidence.AfterBytes ||
+	if len(decodedEvidence.ProofStages) != 6 || decodedEvidence.ProofStages[2].PayloadBytes != 0 ||
+		decodedEvidence.BeforeBytes == decodedEvidence.AfterBytes ||
 		decodedEvidence.FinalGeneratedBytes == decodedEvidence.FinalGeneratedEvidenceBytes {
 		t.Fatalf("source/evidence byte distinctions were lost: %+v", decodedEvidence)
 	}
@@ -360,36 +360,59 @@ func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
 func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
 	cases := []struct {
 		name   string
-		mutate func(map[string]any)
+		mutate func(map[string]any, map[string]any)
 	}{
 		{
 			name: "unknown-nested-field",
-			mutate: func(evidence map[string]any) {
+			mutate: func(_ map[string]any, evidence map[string]any) {
 				stages := evidence["proof_stages"].([]any)
 				stages[0].(map[string]any)["unexpected"] = true
 			},
 		},
 		{
 			name: "missing-required-field",
-			mutate: func(evidence map[string]any) {
+			mutate: func(_ map[string]any, evidence map[string]any) {
 				delete(evidence, "strategy")
 			},
 		},
 		{
 			name: "ill-typed-required-field",
-			mutate: func(evidence map[string]any) {
+			mutate: func(_ map[string]any, evidence map[string]any) {
 				evidence["before_bytes"] = "not-an-int"
 			},
 		},
+		{
+			name: "missing-nested-payload-bytes",
+			mutate: func(_ map[string]any, evidence map[string]any) {
+				stages := evidence["proof_stages"].([]any)
+				delete(stages[2].(map[string]any), "payload_bytes")
+			},
+		},
+		{
+			name: "present-null-is-not-legacy",
+			mutate: func(subject map[string]any, _ map[string]any) {
+				subject["strategy_evidence"] = nil
+			},
+		},
+		{
+			name: "present-empty-is-not-legacy",
+			mutate: func(subject map[string]any, _ map[string]any) {
+				subject["strategy_evidence"] = []any{}
+			},
+		},
+	}
+	const expectedMalformedCases = 6
+	if len(cases) != expectedMalformedCases {
+		t.Fatalf("malformed strategy evidence cohort changed: got=%d want=%d", len(cases), expectedMalformedCases)
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
-			value := extractionReportMapWithStrategyEvidence(t, validStrategyEvidenceFixture())
+			value := extractionReportMapWithStrategyEvidence(t, nativeStrategyEvidenceFixture(t))
 			subjects := value["subjects"].([]any)
 			subject := subjects[0].(map[string]any)
 			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
-			test.mutate(evidence)
+			test.mutate(subject, evidence)
 			payload, err := json.Marshal(value)
 			if err != nil {
 				t.Fatal(err)
@@ -417,56 +440,18 @@ func extractionReportWithStrategyEvidence(evidence []projectionextractor.Strateg
 	}
 }
 
-func extractionReportMapWithStrategyEvidence(t *testing.T, evidence projectionextractor.StrategyEvidence) map[string]any {
+// The fixture is copied from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
+// CI run 33951302941, runtime artifact 9964924639, verified as sha256:
+// 0afff72d0e3593b4673350decc8ebfc8db499a50da92ad3ea545c7ab04c7d36.
+func nativeStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
-	payload, err := json.Marshal(extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence}))
+	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var value map[string]any
-	if err := json.Unmarshal(payload, &value); err != nil {
-		t.Fatal(err)
+	var evidence []projectionextractor.StrategyEvidence
+	if err := decodeStrictBytes(payload, &evidence); err != nil || len(evidence) != 1 {
+		t.Fatalf("native strategy evidence fixture is malformed: %v", err)
 	}
-	return value
-}
-
-func validStrategyEvidenceFixture() projectionextractor.StrategyEvidence {
-	digest := "sha256:" + strings.Repeat("a", 64)
-	return projectionextractor.StrategyEvidence{
-		Strategy:                 "return-preserving-terminal-tail",
-		Operation:                "ExtractFunction",
-		ContractActivity:         "ProveReturnShape",
-		ContractInputEntity:      "FunctionInput",
-		ContractOutputEntity:     "ReturnShapeObligation",
-		ContractInputSubjectKind: "function",
-		ContractSourceDigest:     digest,
-		ContractSemanticDigest:   "sha256:" + strings.Repeat("b", 64),
-		UsedInputFact:            true,
-		GeneratedOutputFact:     true,
-		Subject:                  "a.go#func:Selected",
-		Helper:                   "selectedTail",
-		BeforeBytes:             200,
-		AfterBytes:              150,
-		BeforeFunctionLines:     90,
-		AfterFunctionLines:      70,
-		RenderedHelperBytes:     120,
-		RenderedHelperLines:     20,
-		RenderedOuterHelperBytes: 110,
-		RenderedOuterHelperLines: 18,
-		Obligations: []projectionextractor.ObligationEvidence{{
-			Name: "return-shape", Status: "PASS", Detail: "shape preserved",
-		}},
-		ContractObligations: []projectionextractor.ContractObligationEvidence{{
-			Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput",
-			OutputEntity: "ReturnShapeObligation", UsedInputFact: true, GeneratedOutputFact: true,
-		}},
-		ProofStages: []projectionextractor.ProofStageEvidence{{
-			Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput",
-			OutputEntity: "ReturnShapeObligation", Status: "PASS", SourceDigest: digest,
-			CandidateDigest: "sha256:" + strings.Repeat("c", 64), InputEvidenceID: "input-id",
-			OutputEvidenceID: "output-id", PayloadDigest: "sha256:" + strings.Repeat("d", 64),
-			PayloadBytes: 17, Detail: "shape preserved",
-		}},
-		FinalGeneratedBytes: 500, FinalGeneratedEvidenceBytes: 700, FinalGeneratedUnits: 2,
-	}
+	return evidence[0]
 }

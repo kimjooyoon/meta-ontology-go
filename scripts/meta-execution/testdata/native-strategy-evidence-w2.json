@@ -1,0 +1,195 @@
+[
+  {
+    "strategy": "return-preserving-terminal-tail",
+    "operation": "extract-function",
+    "contract_activity": "ExtractFunction",
+    "contract_input_entity": "FunctionInput",
+    "contract_output_entity": "OperationResult",
+    "contract_input_subject_kind": "FUNCTION",
+    "contract_source_digest": "d9c591400581e5938dd05657bed295b94327b88d99ec85037f3e286818b40c3a",
+    "contract_semantic_digest": "e26164e580cfcbe02be8d997b7a41355b277e2521408027b9b8247657ec794f0",
+    "used_input_fact": true,
+    "generated_output_fact": true,
+    "subject": "func:W2",
+    "helper": "W2ExtractedReturnTail71",
+    "before_bytes": 624,
+    "after_bytes": 700,
+    "before_function_lines": 83,
+    "after_function_lines": 73,
+    "rendered_helper_bytes": 155,
+    "rendered_helper_lines": 15,
+    "rendered_outer_helper_bytes": 558,
+    "rendered_outer_helper_lines": 75,
+    "obligations": [
+      {
+        "name": "return-shape",
+        "status": "PASS",
+        "detail": "unnamed single-error result with assignable selected returns"
+      },
+      {
+        "name": "control-flow",
+        "status": "PASS",
+        "detail": "no escaping branch, defer, go, panic, or recover"
+      },
+      {
+        "name": "free-bindings",
+        "status": "PASS",
+        "detail": "selected free bindings have no stale-copy, rebinding, address, or closure hazard"
+      },
+      {
+        "name": "callee-effects",
+        "status": "PASS",
+        "detail": "all selected calls have closed typed effect evidence"
+      },
+      {
+        "name": "rendered-capacity",
+        "status": "PASS",
+        "detail": "outer_helper_lines=75 extracted_helper_lines=15"
+      },
+      {
+        "name": "projected-conformance",
+        "status": "PASS",
+        "detail": "final generated package type-check passed; runtime conformance is not asserted (units=3)"
+      }
+    ],
+    "contract_obligations": [
+      {
+        "name": "return-shape",
+        "activity": "ProveReturnShape",
+        "input_entity": "FunctionInput",
+        "output_entity": "ReturnShapeObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      },
+      {
+        "name": "control-flow",
+        "activity": "ProveControlFlow",
+        "input_entity": "ReturnShapeObligation",
+        "output_entity": "ControlFlowObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      },
+      {
+        "name": "free-bindings",
+        "activity": "ProveFreeBindings",
+        "input_entity": "ControlFlowObligation",
+        "output_entity": "FreeBindingsObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      },
+      {
+        "name": "callee-effects",
+        "activity": "ProveCalleeEffects",
+        "input_entity": "FreeBindingsObligation",
+        "output_entity": "CalleeEffectsObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      },
+      {
+        "name": "rendered-capacity",
+        "activity": "ProveRenderedCapacity",
+        "input_entity": "CalleeEffectsObligation",
+        "output_entity": "RenderedCapacityObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      },
+      {
+        "name": "projected-conformance",
+        "activity": "ProveProjectedConformance",
+        "input_entity": "RenderedCapacityObligation",
+        "output_entity": "ProjectedConformanceObligation",
+        "used_input_fact": true,
+        "generated_output_fact": true
+      }
+    ],
+    "proof_stages": [
+      {
+        "name": "return-shape",
+        "activity": "ProveReturnShape",
+        "input_entity": "FunctionInput",
+        "output_entity": "ReturnShapeObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:e2cc5df598125e1e2151e277b754a76f0b120249ede5854be1078cf427d82ac0",
+        "input_evidence_id": "sha256:5fd858062ca9b2dd6e9967d7e6f2eebac7c40012a2d38874e113df148c26138e",
+        "output_evidence_id": "sha256:4323184ad30ee2e12405eba7fcf38819f5ce1843fa174b4b3955885aa3b61659",
+        "payload_digest": "sha256:e2cc5df598125e1e2151e277b754a76f0b120249ede5854be1078cf427d82ac0",
+        "payload_bytes": 98,
+        "detail": "unnamed single-error result with assignable selected returns"
+      },
+      {
+        "name": "control-flow",
+        "activity": "ProveControlFlow",
+        "input_entity": "ReturnShapeObligation",
+        "output_entity": "ControlFlowObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:e2cc5df598125e1e2151e277b754a76f0b120249ede5854be1078cf427d82ac0",
+        "input_evidence_id": "sha256:4323184ad30ee2e12405eba7fcf38819f5ce1843fa174b4b3955885aa3b61659",
+        "output_evidence_id": "sha256:bfb152f4bd59c58b5afb40361f0f6528bdbe488fc59a49629bdb009f693ae043",
+        "payload_digest": "sha256:35408c6adc29f47c8419bb338893bdf7dc2ec1e57d1bfb41094b640844d339e1",
+        "payload_bytes": 111,
+        "detail": "no escaping branch, defer, go, panic, or recover"
+      },
+      {
+        "name": "free-bindings",
+        "activity": "ProveFreeBindings",
+        "input_entity": "ControlFlowObligation",
+        "output_entity": "FreeBindingsObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:e2cc5df598125e1e2151e277b754a76f0b120249ede5854be1078cf427d82ac0",
+        "input_evidence_id": "sha256:bfb152f4bd59c58b5afb40361f0f6528bdbe488fc59a49629bdb009f693ae043",
+        "output_evidence_id": "sha256:cfaa37c9755ae1cf08693502f72c841f45f26cd54133159ae8a4ed67dcaaf073",
+        "payload_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "payload_bytes": 0,
+        "detail": "selected free bindings have no stale-copy, rebinding, address, or closure hazard"
+      },
+      {
+        "name": "callee-effects",
+        "activity": "ProveCalleeEffects",
+        "input_entity": "FreeBindingsObligation",
+        "output_entity": "CalleeEffectsObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:e2cc5df598125e1e2151e277b754a76f0b120249ede5854be1078cf427d82ac0",
+        "input_evidence_id": "sha256:cfaa37c9755ae1cf08693502f72c841f45f26cd54133159ae8a4ed67dcaaf073",
+        "output_evidence_id": "sha256:3986701657871785af09d52d754000760fb974b7ff8d5cff7489533d09af2a1a",
+        "payload_digest": "sha256:1589655bde9391a4fd0a1e274b6444685b875e99ccca3f771cf287d9ac05be82",
+        "payload_bytes": 113,
+        "detail": "all selected calls have closed typed effect evidence"
+      },
+      {
+        "name": "rendered-capacity",
+        "activity": "ProveRenderedCapacity",
+        "input_entity": "CalleeEffectsObligation",
+        "output_entity": "RenderedCapacityObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:852bc0e835921511179a1e9c2ee4b0078c9f84ac75ce5500555fc4c2dd959125",
+        "input_evidence_id": "sha256:3986701657871785af09d52d754000760fb974b7ff8d5cff7489533d09af2a1a",
+        "output_evidence_id": "sha256:37855beb0ed7846d0999e35b2a37de674667a1f941dbdecf8361607957cbeb7c",
+        "payload_digest": "sha256:0f1af1d59345b9d2a028a2ad4e48faa05e8ccedd91cac14ad1aba9fd564ba3f2",
+        "payload_bytes": 731,
+        "detail": "outer_helper_lines=75 extracted_helper_lines=15"
+      },
+      {
+        "name": "projected-conformance",
+        "activity": "ProveProjectedConformance",
+        "input_entity": "RenderedCapacityObligation",
+        "output_entity": "ProjectedConformanceObligation",
+        "status": "PASS",
+        "source_digest": "sha256:9c4e4c0519db00714d642a25301d2a1a8dedf77d791f6d507b777ab1528016a6",
+        "candidate_digest": "sha256:dac99ec4b6450dd184d0c0b2b3342d77ac1ab2531c164e923a66b9af6999e18d",
+        "input_evidence_id": "sha256:37855beb0ed7846d0999e35b2a37de674667a1f941dbdecf8361607957cbeb7c",
+        "output_evidence_id": "sha256:bd155919477a9ea714f95367fa06716bc1685f9a4458772cd956a92be7e900b4",
+        "payload_digest": "sha256:dac99ec4b6450dd184d0c0b2b3342d77ac1ab2531c164e923a66b9af6999e18d",
+        "payload_bytes": 768,
+        "detail": "final generated package type-check passed; runtime conformance is not asserted (units=3)"
+      }
+    ],
+    "final_generated_bytes": 726,
+    "final_generated_evidence_bytes": 768,
+    "final_generated_units": 3
+  }
+]
