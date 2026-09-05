@@ -17,12 +17,12 @@ type Relation struct {
 
 // Model is the normalized semantic view used by the generic lens.
 type Model struct {
-	Package    string
-	Namespace  string
-	Nodes      []Node
-	Relations  []Relation
+	Package         string
+	Namespace       string
+	Nodes           []Node
+	Relations       []Relation
 	RuntimeBindings []RuntimeBinding
-	Candidates FactSet
+	Candidates      FactSet
 }
 
 // Delta is a normalized semantic change set.

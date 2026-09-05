@@ -127,7 +127,7 @@ type referenceEvidence struct {
 
 func documentEvidence(document Document) canonicalDocumentEvidence {
 	result := canonicalDocumentEvidence{Package: document.Package, Namespace: document.Namespace,
-		Policies: append([]semantic.Policy(nil), document.Policies...),
+		Policies:        append([]semantic.Policy(nil), document.Policies...),
 		RuntimeBindings: append([]RuntimeBinding(nil), document.RuntimeBindings...)}
 	idsByName := make(map[string]ID, len(document.Declarations))
 	for _, declaration := range document.Declarations {
