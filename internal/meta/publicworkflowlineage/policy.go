@@ -94,13 +94,13 @@ func Load(filename string, source []byte) (Policy, error) {
 		RefutedDominatesUnknown: first(markers, "partial-lineage-refuted-dominates-unknown") == "true",
 		Metrics:                 parseMetrics(markers["partial-lineage-metric"]),
 		Cases:                   parseCases(markers["partial-lineage-case"]),
-	}
-	policy.ReadOnlyPermissions = Permissions{
-		WorkflowWindow:       first(activityMarkers["ObserveCIWorkflowWindow"], "partial-lineage-observation-permission"),
-		VerificationRuntime:  first(activityMarkers["ObserveVerificationRuntime"], "observation-permission"),
-		EvidenceReuse:        first(activityMarkers["EvaluateExactEvidenceReuse"], "evidence-reuse-permission"),
-		Promotion:            first(activityMarkers["EvaluateExactEvidenceReuse"], "promotion-permission"),
-	}
+
+		ReadOnlyPermissions: Permissions{
+			WorkflowWindow:      first(activityMarkers["ObserveCIWorkflowWindow"], "partial-lineage-observation-permission"),
+			VerificationRuntime: first(activityMarkers["ObserveVerificationRuntime"], "observation-permission"),
+			EvidenceReuse:       first(activityMarkers["EvaluateExactEvidenceReuse"], "evidence-reuse-permission"),
+			Promotion:           first(activityMarkers["EvaluateExactEvidenceReuse"], "promotion-permission"),
+		}}
 	if err := policy.Validate(); err != nil {
 		return Policy{}, err
 	}
