@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
+	"sync"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -117,10 +118,58 @@ type OperationInputContractPolicyEvidence struct {
 }
 
 //go:embed operation-input-contract.gooo
-var operationInputContractSource []byte
+var operationInputContractSource string
+
+type operationInputContractSnapshotCache struct {
+	source   string
+	parse    func([]byte) (operationInputContract, error)
+	once     sync.Once
+	contract operationInputContract
+	err      error
+}
+
+func newOperationInputContractSnapshotCache(source string, parse func([]byte) (operationInputContract, error)) *operationInputContractSnapshotCache {
+	return &operationInputContractSnapshotCache{source: source, parse: parse}
+}
+
+var operationInputContractCacheState = newOperationInputContractSnapshotCache(operationInputContractSource, parseOperationInputContract)
 
 func loadOperationInputContract() (operationInputContract, error) {
-	return parseOperationInputContract(operationInputContractSource)
+	return operationInputContractCacheState.load()
+}
+
+func (cache *operationInputContractSnapshotCache) load() (operationInputContract, error) {
+	cache.once.Do(func() {
+		cache.contract, cache.err = cache.parse([]byte(cache.source))
+	})
+	if cache.err != nil {
+		return operationInputContract{}, cache.err
+	}
+	return cloneOperationInputContract(cache.contract), nil
+}
+
+func cloneOperationInputContract(contract operationInputContract) operationInputContract {
+	clone := operationInputContract{
+		SourceDigest:   contract.SourceDigest,
+		SemanticDigest: contract.SemanticDigest,
+		Bindings:       make(map[sourcepolicy.Operation]operationInputContractBinding, len(contract.Bindings)),
+		Facts:          make(map[sourcepolicy.Operation]operationInputContractFacts, len(contract.Facts)),
+		ObligationFacts: make(map[string]operationInputContractFacts, len(contract.ObligationFacts)),
+		PolicyFacts:     make(map[string]operationInputContractFacts, len(contract.PolicyFacts)),
+	}
+	for operation, binding := range contract.Bindings {
+		clone.Bindings[operation] = binding
+	}
+	for operation, facts := range contract.Facts {
+		clone.Facts[operation] = facts
+	}
+	for activity, facts := range contract.ObligationFacts {
+		clone.ObligationFacts[activity] = facts
+	}
+	for activity, facts := range contract.PolicyFacts {
+		clone.PolicyFacts[activity] = facts
+	}
+	return clone
 }
 
 func parseOperationInputContract(raw []byte) (operationInputContract, error) {
