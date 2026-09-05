@@ -85,8 +85,11 @@ jobs:
             "$metadata" >/dev/null
 
           archive="$root/source-artifact.zip"
-          gh api -H 'Accept: application/octet-stream' \
-            "repos/$repository/actions/artifacts/$SOURCE_ARTIFACT_ID/zip" > "$archive"
+          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "${GITHUB_API_URL:-https://api.github.com}/repos/$repository/actions/artifacts/$SOURCE_ARTIFACT_ID/zip" \
+            > "$archive"
           printf '%s  %s\n' "$SOURCE_ARTIFACT_DIGEST" "$archive" | sha256sum --check --strict -
 
           archive_list="$root/source-artifact-members.txt"
