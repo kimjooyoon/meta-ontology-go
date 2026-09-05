@@ -1,18 +1,18 @@
 package main
 
 type graphDump struct {
-	SchemaVersion string              `json:"schema_version"`
-	GraphHash     string              `json:"graph_hash"`
-	SourceDigest  string              `json:"source_digest"`
-	IR            graphIRStatus       `json:"ir"`
-	Evidence      graphReferenceState `json:"evidence"`
-	Provenance    graphReferenceState `json:"provenance"`
-	Projection    graphStatus         `json:"projection"`
-	Lowering      graphStatus         `json:"lowering"`
-	Output        graphStatus         `json:"output"`
-	Authorities   graphAuthorities    `json:"authorities"`
-	Nodes         []graphNode         `json:"nodes"`
-	Relations     []graphRelation     `json:"relations"`
+	SchemaVersion   string                `json:"schema_version"`
+	GraphHash       string                `json:"graph_hash"`
+	SourceDigest    string                `json:"source_digest"`
+	IR              graphIRStatus         `json:"ir"`
+	Evidence        graphReferenceState   `json:"evidence"`
+	Provenance      graphReferenceState   `json:"provenance"`
+	Projection      graphStatus           `json:"projection"`
+	Lowering        graphStatus           `json:"lowering"`
+	Output          graphStatus           `json:"output"`
+	Authorities     graphAuthorities      `json:"authorities"`
+	Nodes           []graphNode           `json:"nodes"`
+	Relations       []graphRelation       `json:"relations"`
 	RuntimeBindings []graphRuntimeBinding `json:"runtime_bindings,omitempty"`
 }
 type graphIRStatus struct {
