@@ -518,6 +518,15 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "self-improvement-ci-continuation",
+      "path": "examples/self-improvement-ci-continuation/continuation.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [
@@ -575,6 +584,7 @@
   ],
   "meta_sources": [
     "internal/meta/entityfields/entity-fields-meta.gooo",
-    "examples/public-trust-surface/main.gooo"
+    "examples/public-trust-surface/main.gooo",
+    "internal/meta/generation/operation-input-contract.gooo"
   ]
 }

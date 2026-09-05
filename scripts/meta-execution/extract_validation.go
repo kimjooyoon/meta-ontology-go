@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -83,12 +84,101 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 		return nil, extractorReport{}, err
 	}
 	var report extractorReport
+	var presence extractorReportPresence
 	if err := decodeStrictBytes(raw, &report); err != nil ||
-		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA {
+		decodeStrictBytes(raw, &presence) != nil ||
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
+		!validStrategyEvidenceReport(report, presence) {
 		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
 	}
 	return raw, report, nil
 }
+
+type extractorReportPresence struct {
+	Schema                string                        `json:"schema"`
+	SourceSHA             string                        `json:"source_sha"`
+	StagedSubjects        int                           `json:"staged_subjects"`
+	Subjects              []extractorSubjectPresence    `json:"subjects"`
+	Unhandled             []string                      `json:"unhandled"`
+	Failures              []extractorFailureRecord      `json:"failures,omitempty"`
+	Indicators            []json.RawMessage             `json:"indicators"`
+	NamespaceReplacements []namespaceReplacementReceipt `json:"namespace_replacements,omitempty"`
+	BackupCleanup         backupCleanupObservation      `json:"backup_cleanup"`
+}
+
+type extractorSubjectPresence struct {
+	Logical      string                      `json:"logical"`
+	State        string                      `json:"state"`
+	Before       int                         `json:"before_lines"`
+	After        int                         `json:"after_lines"`
+	Files        []string                    `json:"changed_files"`
+	CreatedFiles []string                    `json:"created_files,omitempty"`
+	Consumer     string                      `json:"consumer"`
+	Operation    string                      `json:"meta_operation"`
+	Operations   []string                    `json:"meta_operations,omitempty"`
+	Proof        string                      `json:"proof_choice"`
+	Evidence     presentStrategyEvidenceList `json:"strategy_evidence"`
+}
+
+type presentStrategyEvidenceList struct {
+	Present bool
+	Values  []strategyEvidencePresence
+}
+
+func (list *presentStrategyEvidenceList) UnmarshalJSON(data []byte) error {
+	list.Present = true
+	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+		list.Values = nil
+		return nil
+	}
+	return decodeStrictBytes(data, &list.Values)
+}
+
+type strategyEvidencePresence struct {
+	Strategy                    string                                           `json:"strategy"`
+	Operation                   string                                           `json:"operation"`
+	ContractActivity            string                                           `json:"contract_activity"`
+	ContractInputEntity         string                                           `json:"contract_input_entity"`
+	ContractOutputEntity        string                                           `json:"contract_output_entity"`
+	ContractInputSubjectKind    string                                           `json:"contract_input_subject_kind"`
+	ContractSourceDigest        string                                           `json:"contract_source_digest"`
+	ContractSemanticDigest      string                                           `json:"contract_semantic_digest"`
+	UsedInputFact               bool                                             `json:"used_input_fact"`
+	GeneratedOutputFact         bool                                             `json:"generated_output_fact"`
+	Subject                     string                                           `json:"subject"`
+	Helper                      string                                           `json:"helper"`
+	BeforeBytes                 int                                              `json:"before_bytes"`
+	AfterBytes                  int                                              `json:"after_bytes"`
+	BeforeFunctionLines         int                                              `json:"before_function_lines"`
+	AfterFunctionLines          int                                              `json:"after_function_lines"`
+	RenderedHelperBytes         int                                              `json:"rendered_helper_bytes"`
+	RenderedHelperLines         int                                              `json:"rendered_helper_lines"`
+	RenderedOuterHelperBytes    int                                              `json:"rendered_outer_helper_bytes"`
+	RenderedOuterHelperLines    int                                              `json:"rendered_outer_helper_lines"`
+	Obligations                 []projectionextractor.ObligationEvidence         `json:"obligations"`
+	ContractObligations         []projectionextractor.ContractObligationEvidence `json:"contract_obligations"`
+	ProofStages                 []proofStagePresence                             `json:"proof_stages"`
+	FinalGeneratedBytes         int                                              `json:"final_generated_bytes"`
+	FinalGeneratedEvidenceBytes int                                              `json:"final_generated_evidence_bytes"`
+	FinalGeneratedUnits         int                                              `json:"final_generated_units"`
+}
+
+type proofStagePresence struct {
+	Name             string `json:"name"`
+	Activity         string `json:"activity"`
+	InputEntity      string `json:"input_entity"`
+	OutputEntity     string `json:"output_entity"`
+	Status           string `json:"status"`
+	SourceDigest     string `json:"source_digest"`
+	CandidateDigest  string `json:"candidate_digest"`
+	InputEvidenceID  string `json:"input_evidence_id"`
+	OutputEvidenceID string `json:"output_evidence_id"`
+	PayloadDigest    string `json:"payload_digest"`
+	PayloadBytes     *int   `json:"payload_bytes"`
+	Detail           string `json:"detail,omitempty"`
+}
+
+const strategyEvidencePassStatus = "PASS"
 
 func failedExtractionError(root, reportName string, plan generation.Plan, action generation.Action, observed ...generation.ProcessObservation) *operationError {
 	path := filepath.Join(root, reportName)
@@ -202,6 +292,9 @@ func adjudicateExtractorReport(report extractorReport) *operationError {
 }
 
 func validateExtractorReport(report extractorReport) bool {
+	if !validStrategyEvidenceValues(report) {
+		return true
+	}
 	failures := make(map[string]extractorFailureRecord, len(report.Failures))
 	blockers := make(map[string]bool, len(report.Failures))
 	for _, failure := range report.Failures {
@@ -269,6 +362,75 @@ func validateExtractorReport(report extractorReport) bool {
 		}
 	}
 	return false
+}
+
+func validStrategyEvidenceReport(report extractorReport, presence extractorReportPresence) bool {
+	if len(report.Subjects) != len(presence.Subjects) || !validStrategyEvidenceValues(report) {
+		return false
+	}
+	for index, subject := range report.Subjects {
+		observed := presence.Subjects[index].Evidence
+		if !observed.Present {
+			if subject.Evidence != nil {
+				return false
+			}
+			continue
+		}
+		if len(subject.Evidence) == 0 || len(subject.Evidence) != len(observed.Values) {
+			return false
+		}
+		for evidenceIndex, evidence := range subject.Evidence {
+			if len(evidence.ProofStages) != len(observed.Values[evidenceIndex].ProofStages) {
+				return false
+			}
+			for stageIndex := range evidence.ProofStages {
+				if observed.Values[evidenceIndex].ProofStages[stageIndex].PayloadBytes == nil {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
+
+func validStrategyEvidenceValues(report extractorReport) bool {
+	for _, subject := range report.Subjects {
+		for _, evidence := range subject.Evidence {
+			if evidence.Strategy == "" || evidence.Operation == "" || evidence.ContractActivity == "" ||
+				evidence.ContractInputEntity == "" || evidence.ContractOutputEntity == "" ||
+				evidence.ContractInputSubjectKind == "" || evidence.ContractSourceDigest == "" ||
+				evidence.ContractSemanticDigest == "" || !evidence.UsedInputFact || !evidence.GeneratedOutputFact ||
+				evidence.Subject == "" || evidence.Helper == "" || evidence.BeforeBytes <= 0 ||
+				evidence.AfterBytes <= 0 || evidence.BeforeFunctionLines <= 0 || evidence.AfterFunctionLines <= 0 ||
+				evidence.RenderedHelperBytes <= 0 || evidence.RenderedHelperLines <= 0 ||
+				evidence.RenderedOuterHelperBytes <= 0 || evidence.RenderedOuterHelperLines <= 0 ||
+				evidence.FinalGeneratedBytes <= 0 || evidence.FinalGeneratedEvidenceBytes <= 0 ||
+				evidence.FinalGeneratedUnits <= 0 || len(evidence.Obligations) == 0 ||
+				len(evidence.ContractObligations) == 0 || len(evidence.ProofStages) == 0 {
+				return false
+			}
+			for _, obligation := range evidence.Obligations {
+				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus {
+					return false
+				}
+			}
+			for _, obligation := range evidence.ContractObligations {
+				if obligation.Name == "" || obligation.Activity == "" || obligation.InputEntity == "" ||
+					obligation.OutputEntity == "" || !obligation.UsedInputFact || !obligation.GeneratedOutputFact {
+					return false
+				}
+			}
+			for _, stage := range evidence.ProofStages {
+				if stage.Name == "" || stage.Activity == "" || stage.InputEntity == "" ||
+					stage.OutputEntity == "" || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
+					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
+					stage.PayloadDigest == "" || stage.PayloadBytes < 0 {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func validExtractionSubject(subject extractorSubject) bool {

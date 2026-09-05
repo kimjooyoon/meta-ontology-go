@@ -25,6 +25,9 @@ const (
 	// DenominatorMigrationV27Digest is the append-only v27 contract used when
 	// the public self-observation discovery capabilities are registered in the corpus.
 	DenominatorMigrationV27Digest = "sha256:be246116defd88b0150cbe221b17b2d30286482c68d6cfbe95b8629fdf264fe0"
+	// V28 binds the existing 56 language capabilities. CI continuation is
+	// a governance observation and does not increase this denominator.
+	DenominatorMigrationV28Digest = "sha256:65fcb1dae77aacfd2e092fc4ab036099f89fae4504171874a154d656c2cf397d"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

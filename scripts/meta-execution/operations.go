@@ -16,6 +16,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -83,16 +84,17 @@ type extractorReport struct {
 }
 
 type extractorSubject struct {
-	Logical      string   `json:"logical"`
-	State        string   `json:"state"`
-	Before       int      `json:"before_lines"`
-	After        int      `json:"after_lines"`
-	Files        []string `json:"changed_files"`
-	CreatedFiles []string `json:"created_files,omitempty"`
-	Consumer     string   `json:"consumer"`
-	Operation    string   `json:"meta_operation"`
-	Operations   []string `json:"meta_operations,omitempty"`
-	Proof        string   `json:"proof_choice"`
+	Logical      string                                 `json:"logical"`
+	State        string                                 `json:"state"`
+	Before       int                                    `json:"before_lines"`
+	After        int                                    `json:"after_lines"`
+	Files        []string                               `json:"changed_files"`
+	CreatedFiles []string                               `json:"created_files,omitempty"`
+	Consumer     string                                 `json:"consumer"`
+	Operation    string                                 `json:"meta_operation"`
+	Operations   []string                               `json:"meta_operations,omitempty"`
+	Proof        string                                 `json:"proof_choice"`
+	Evidence     []projectionextractor.StrategyEvidence `json:"strategy_evidence,omitempty"`
 }
 
 type extractorPlan struct {
@@ -154,7 +156,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		Receipts:       []generation.OperationReceipt{},
 		Failures:       []generation.ObservationFailure{},
 	}
-	if plan.Decision != generation.DecisionPlan {
+	if plan.Decision != generation.DecisionPlan || manifest.Decision != generation.ExecutionDecisionProposed {
 		return generation.SealObservationBundle(bundle), nil
 	}
 	gitDir, err := gitDirectory(workspace)

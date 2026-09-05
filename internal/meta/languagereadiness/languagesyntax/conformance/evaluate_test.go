@@ -28,11 +28,12 @@ func fixture(t *testing.T) (fs.FS, []byte) {
 func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 	repository, raw := fixture(t)
 	report := languagesyntax.Evaluate(repository, testHead, raw, languageconcept.BuildArtifact(repository))
+	assertSourceInventory(t, repository, report.Source, report.Summary.GoooLines)
 	if err := languagesyntax.Validate(report, testHead); err != nil {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-		report.Summary.Satisfied != 57 || report.Summary.ValidCases != 54 ||
+		report.Summary.Satisfied != 58 || report.Summary.ValidCases != 55 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
@@ -41,8 +42,8 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceSatisfied != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
-		report.Summary.GovernanceUnresolved != 0 || report.Summary.GoooLines != 1559 ||
-		len(report.Source.GoooFiles) != 64 || len(report.Source.PackageUnits) != 4 ||
+		report.Summary.GovernanceUnresolved != 0 ||
+		len(report.Source.GoooFiles) != 66 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
 		invalidIDs := make([]string, 0, report.Summary.InvalidCases)
@@ -73,15 +74,15 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 57 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 58 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}
 }
 
 func TestScopePartitionUsesFixedDenominatorsAndRejectsDrift(t *testing.T) {
-	if languagesyntax.FixedTotal != 57 || languagesyntax.FixedCapabilityTotal != 56 ||
-		languagesyntax.FixedGovernanceTotal != 1 ||
+	if languagesyntax.FixedTotal != 58 || languagesyntax.FixedCapabilityTotal != 56 ||
+		languagesyntax.FixedGovernanceTotal != 2 ||
 		languagesyntax.FixedCapabilityTotal+languagesyntax.FixedGovernanceTotal != languagesyntax.FixedTotal {
 		t.Fatalf("scope denominators drifted: total=%d capability=%d governance=%d", languagesyntax.FixedTotal,
 			languagesyntax.FixedCapabilityTotal, languagesyntax.FixedGovernanceTotal)

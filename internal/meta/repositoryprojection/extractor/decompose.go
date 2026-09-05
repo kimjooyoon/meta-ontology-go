@@ -31,46 +31,61 @@ type suffixCandidate struct {
 	result     []byte
 }
 
-type typeEvidence struct {
-	info *types.Info
+type returnTailCandidate struct {
+	helperName string
+	arguments  []suffixBinding
+	helper     []byte
+	result     []byte
+	evidence   StrategyEvidence
 }
 
-func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, error) {
+type typeEvidence struct {
+	info  *types.Info
+	pkg   *types.Package
+	files []*ast.File
+	funcs map[*types.Func]*ast.FuncDecl
+}
+
+func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
 	current := append([]byte(nil), source...)
 	currentSet, currentFile := fset, file
+	evidence := make([]StrategyEvidence, 0)
 	for {
-		function := firstOversizedFunction(currentSet, currentFile)
+		function := firstOversizedFunction(currentSet, currentFile, current)
 		if function == nil {
-			return current, nil
+			return current, evidence, nil
 		}
-		prepared, err := decomposeFunction(root, logical, current, currentSet, currentFile, function)
+		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if bytes.Equal(prepared, current) {
-			return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
+			return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
 				"declaration=" + functionIdentity(currentSet, function),
 				fmt.Sprintf("function_lines=%d", declarationLines(currentSet, function)),
 			})
+		}
+		if strategyEvidence != nil {
+			evidence = append(evidence, *strategyEvidence)
 		}
 		current = prepared
 		currentSet = token.NewFileSet()
 		parsed, err := parser.ParseFile(currentSet, logical, current, parser.ParseComments)
 		if err != nil {
-			return nil, fail("rewrite-source", "parse-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+			return nil, nil, fail("rewrite-source", "parse-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 		}
 		currentFile = parsed
 	}
 }
 
-func firstOversizedFunction(fset *token.FileSet, file *ast.File) *ast.FuncDecl {
+func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) *ast.FuncDecl {
 	var result *ast.FuncDecl
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
 		if !ok || function.Name == nil || function.Name.Name == "init" || function.Body == nil {
 			continue
 		}
-		if declarationLines(fset, function) <= functionLineLimit {
+		if declarationLines(fset, function) <= functionLineLimit && !renderedFunctionExceedsLimit(source, function.Name.Name) {
 			continue
 		}
 		if result == nil || function.Pos() < result.Pos() {
@@ -93,15 +108,34 @@ func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 	return "method:" + fset.Position(function.Pos()).String() + ":" + function.Name.Name
 }
 
-func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl) ([]byte, error) {
+func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl) ([]byte, *StrategyEvidence, error) {
 	if function.Recv != nil {
-		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
+		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
+			"declaration=" + functionIdentity(fset, function),
+		})
+	}
+	if function.Type != nil && function.Type.TypeParams != nil && len(function.Type.TypeParams.List) != 0 {
+		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "UNSUPPORTED_GENERIC", "KNOWN_CONTRADICTION", "report-contradiction", []string{
 			"declaration=" + functionIdentity(fset, function),
 		})
 	}
 	evidence, err := checkTypes(root, logical, fset, file, function)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file)); candidateErr != nil {
+		if !isKnownSuffixContradiction(candidateErr) {
+			return nil, nil, candidateErr
+		}
+		if returnTailShapeEligible(function, evidence.info) {
+			return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
+				"declaration=" + functionIdentity(fset, function),
+				"strategy=" + returnTailStrategy,
+				fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
+			})
+		}
+	} else if candidate != nil {
+		return candidate.result, &candidate.evidence, nil
 	}
 	existing := functionNames(file)
 	for index := range slices.Backward(function.Body.List) {
@@ -110,13 +144,13 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			if isKnownSuffixContradiction(candidateErr) {
 				continue
 			}
-			return nil, candidateErr
+			return nil, nil, candidateErr
 		}
 		if candidate != nil {
-			return candidate.result, nil
+			return candidate.result, nil, nil
 		}
 	}
-	return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
+	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
 		"declaration=" + functionIdentity(fset, function),
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
 	})

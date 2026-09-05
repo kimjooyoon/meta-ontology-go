@@ -439,6 +439,17 @@ jobs:
           if [[ -z "$base_sha" ]]; then base_sha="$(git rev-parse "$HEAD_SHA^")"; fi
           stage=plan
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$input/source-metrics.json" -sha "$HEAD_SHA" -base-sha "$base_sha" -plan "$input/self-improvement-plan.json" -check
+          jq -e '
+            .decision == "PLAN" and (.selected | length) == 2 and
+            (.selected | all(.[]; .subject_kind == .input_subject_kind and
+              (.input_contract_source_digest | length) == 64 and
+              (.input_contract_semantic_digest | length) == 64)) and
+            (.refuted_indicator_ids | length) >= 1 and
+            (.counterexamples | any(.[];
+              .reason == "INPUT_SUBJECT_KIND_MISMATCH" and
+              .source_indicator.subject_kind == "SOURCE_FRAGMENT" and
+              .source_indicator.meta_operation == "extract-function"))
+          ' "$input/self-improvement-plan.json"
           go run ./scripts/meta-execution -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-execution.json"
           test -s "$input/meta-operation-observations.json"
           go run ./scripts/meta-receipts -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-receipts.json"
@@ -491,25 +502,34 @@ jobs:
             test "$final_repository_writes" = "$repository_writes"
           fi
           test "$repository_writes" -eq 0
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and .selected_plan_operations == 2 and .bound_executor_operations == 2 and .unbound_executor_operations == 0 and .receipt_count == 1 and .failure_count == 1 and .unknown_count == 5 and .operation_outcome == "MIXED_CLOSED_REFUTED" and .operation_executor_commands == 2 and .operation_executor_tests == 1 and .reused_commands == 0 and .reused_tests == 0 and .command_scope == "operation-receipt-executors" and .test_scope == "operation-receipt-verifiers" and .reused_evidence_records == 1 and .evidence_reuse_scope == "input-receipt-instance-evidence" and .repository_writes == 0 and .runtime.repository_writes == 0 and .promotion_authorized == false and .runtime.replay_equal == true' "$root/verification.json"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and .selected_plan_operations == 2 and .bound_executor_operations == 2 and .unbound_executor_operations == 0 and ((.receipt_count + .failure_count) == 2) and ((.failure_count == 0 and .operation_executor_tests == 2 and .operation_outcome == "CLOSED") or (.failure_count == 1 and .operation_executor_tests == 1 and .operation_outcome == "MIXED_CLOSED_REFUTED")) and .operation_executor_commands == 2 and .reused_commands == 0 and .reused_tests == 0 and .command_scope == "operation-receipt-executors" and .test_scope == "operation-receipt-verifiers" and .reused_evidence_records == 1 and .evidence_reuse_scope == "input-receipt-instance-evidence" and .repository_writes == 0 and .runtime.repository_writes == 0 and .promotion_authorized == false and .runtime.replay_equal == true' "$root/verification.json"
           jq -e --slurpfile plan "$input/self-improvement-plan.json" '
-            .failures[0] as $failure |
-            (.decision == "REFUTED" and .promotion_authorized == false and
-             (.receipts | length) == 1 and (.failures | length) == 1 and
-             (.unknowns | length) == 5 and
-             ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
-             ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
-             $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
-             $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
-             $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
-             ($failure.failure_evidence | length) == 5 and ($failure.derived_relations | length) == 1 and
-             $failure.derived_relations[0].relation == "DERIVED_FROM" and
-             $failure.derived_relations[0].derived_from == $failure.counterexample and
-             (all(.unknowns[]; .action_indicator_id == $failure.action_indicator_id and
-               .unknown_class == "DEPENDENCY_BLOCKED" and .stage == $failure.stage and
-               .step == $failure.step and .reason == $failure.reason and
-               .next_operation == $failure.next_operation and
-               .blocked_by == ["operation-failure:" + $failure.action_indicator_id])))
+            (
+              (.decision == "CONFORMANT" and .promotion_authorized == false and
+               (.receipts | length) == 2 and (.failures | length) == 0 and (.unknowns | length) == 0) or
+              (
+                .failures[0] as $failure |
+                .decision == "REFUTED" and .promotion_authorized == false and
+                (.receipts | length) == 1 and (.failures | length) == 1 and
+                (.unknowns | length) == 5 and
+                ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
+                ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
+                $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
+                $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
+                $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
+                ($failure.failure_evidence | length) == 5 and ($failure.derived_relations | length) == 1 and
+                $failure.derived_relations[0].relation == "DERIVED_FROM" and
+                $failure.derived_relations[0].derived_from == $failure.counterexample and
+                (all(.unknowns[]; .action_indicator_id == $failure.action_indicator_id and
+                  .unknown_class == "DEPENDENCY_BLOCKED" and .stage == $failure.stage and
+                  .step == $failure.step and .reason == $failure.reason and
+                  .next_operation == $failure.next_operation and
+                  .blocked_by == ["operation-failure:" + $failure.action_indicator_id]))
+              )
+            ) and
+            ($plan[0].selected | all(.[]; .subject_kind == .input_subject_kind)) and
+            ($plan[0].refuted_indicator_ids | length) >= 1 and
+            ($plan[0].counterexamples | any(.[]; .reason == "INPUT_SUBJECT_KIND_MISMATCH" and .source_indicator.subject_kind == "SOURCE_FRAGMENT" and (.blocked_by | length) == 0))
           ' "$input/self-improvement-receipts.json"
           jq -e '.decision == "PASS" and .resolution == "EXACT" and (.counterexamples | length) == 3 and (.counterexamples | all(.[]; .decision == "REFUTED" and .resolution == "EXACT" and .reason == "META_OPERATION_EXECUTOR_BINDING_MISMATCH")) and ([.counterexamples[] | select(.id == "executor-binding-stale")][0] | .expected == "scripts/source-splitter" and .observed == "stale-executor")' "$root/counterexamples.json"
           jq -r '"### Focused transformation effect\n- selected/bound/unbound: \(.selected_plan_operations)/\(.bound_executor_operations)/\(.unbound_executor_operations)\n- receipts/failures/dependent-unknowns: \(.receipt_count)/\(.failure_count)/\(.unknown_count)\n- operation executor commands/tests (scoped): \(.operation_executor_commands)/\(.operation_executor_tests) [\(.command_scope)/\(.test_scope)]\n- reused evidence records: \(.reused_evidence_records) [\(.evidence_reuse_scope)]\n- replay: \(.runtime.replay_equal)\n- observed repository writes/local tests/cross-project gates: \(.repository_writes)/\(.local_test_executions)/\(.cross_project_required_gates)\n- operation outcome: \(.operation_outcome)\n- promotion authorized: \(.promotion_authorized)"' "$root/verification.json" >> "$GITHUB_STEP_SUMMARY"
@@ -637,13 +657,17 @@ jobs:
           syntax_build_ms="$(awk -v seconds="$syntax_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
           stage="validate"
           step="validate-language-syntax-scope-partition"
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .summary.satisfied == 56 and .summary.total == 56 and
-            .summary.executed == 56 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 55 and .summary.capability_total == 55 and
-            .summary.capability_executed == 55 and .summary.capability_unresolved == 0 and
-            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
-            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
+          jq -e --slurpfile registry "$syntax_registry" '
+            ($registry[0].cases | length) as $total |
+            ([$registry[0].cases[] | select(.scope == "LANGUAGE_CAPABILITY")] | length) as $capability |
+            ([$registry[0].cases[] | select(.scope == "GOVERNANCE_OBSERVATION")] | length) as $governance |
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.satisfied == $total and .summary.total == $total and
+            .summary.executed == $total and .summary.unresolved == 0 and
+            .summary.capability_satisfied == $capability and .summary.capability_total == $capability and
+            .summary.capability_executed == $capability and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == $governance and .summary.governance_total == $governance and
+            .summary.governance_executed == $governance and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
           stage="publish"
           step="assemble-scope-partition-receipt"
@@ -680,9 +704,11 @@ jobs:
           cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
           cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
-          echo "- overall: \`56/56 satisfied, 56 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- language capability: \`55/55 satisfied, 55 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '
+            "- overall: \(.overall.satisfied)/\(.overall.total) satisfied, \(.overall.executed) executed, \(.overall.unresolved) unresolved",
+            "- language capability: \(.language_capability.satisfied)/\(.language_capability.total) satisfied, \(.language_capability.executed) executed, \(.language_capability.unresolved) unresolved",
+            "- governance observation: \(.governance_observation.satisfied)/\(.governance_observation.total) satisfied, \(.governance_observation.executed) executed, \(.governance_observation.unresolved) unresolved"
+          ' "$publish_root/scope-partition.json" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload language syntax scope partition evidence
@@ -717,7 +743,11 @@ jobs:
             --arg replay_digest "$replay_digest" \
             --arg concept_digest "$concept_digest" \
             --arg report_digest "$report_digest" \
-            '.decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
+            --slurpfile registry "$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json" \
+            '($registry[0].cases | length) as $total |
+            ([$registry[0].cases[] | select(.scope == "LANGUAGE_CAPABILITY")] | length) as $capability |
+            ([$registry[0].cases[] | select(.scope == "GOVERNANCE_OBSERVATION")] | length) as $governance |
+            .decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
             .head_sha == $head and .replay_equal == true and
             .compile_executions == 2 and .test_executions == 0 and
             .output_artifact_files == 3 and
@@ -728,9 +758,9 @@ jobs:
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
-            .overall == {satisfied: 56, total: 56, executed: 56, unresolved: 0} and
-            .language_capability == {satisfied: 55, total: 55, executed: 55, unresolved: 0} and
-            .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
+            .overall == {satisfied: $total, total: $total, executed: $total, unresolved: 0} and
+            .language_capability == {satisfied: $capability, total: $capability, executed: $capability, unresolved: 0} and
+            .governance_observation == {satisfied: $governance, total: $governance, executed: $governance, unresolved: 0}' \
             "$report"
   language-concept-artifact:
     needs: [cross-platform-release]

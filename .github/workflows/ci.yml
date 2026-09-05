@@ -187,6 +187,7 @@ jobs:
             "$receipt" > /dev/null
           echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
       - name: Upload Go format remediation artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v6
         with:
           name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
