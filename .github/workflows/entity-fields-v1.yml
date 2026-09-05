@@ -400,6 +400,8 @@ jobs:
               if type == "string" then length > 0 else false end;
             def digest_ok:
               if type == "string" then test("^sha256:[0-9a-f]{64}$") else false end;
+            def profile_digest_ok:
+              if type == "string" then test("^[0-9a-f]{64}$") else false end;
             def expected_route_ids: [
               "ordinary-parser", "explicit-v1-parser", "formatter", "semantic-lowering",
               "bx-get-put", "go-generator", "source-map", "lsp-adapter",
@@ -443,7 +445,7 @@ jobs:
               .identity.fixture == "examples/entity-fields-v1/main.gooo" and
               .identity.profile.id == "gooo.entityfields.go-projection.v1" and
               .identity.profile.version == 1 and .identity.profile.digest == $profile_digest and
-              (.identity.profile.digest | digest_ok) and
+              (.identity.profile.digest | profile_digest_ok) and
               .source_report.schema == "gooo/entity-fields-observation/v1" and
               .source_report.profile_id == .identity.profile.id and
               .source_report.profile_version == .identity.profile.version and
