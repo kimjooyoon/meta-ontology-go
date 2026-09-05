@@ -665,34 +665,34 @@ func validateCanonicalExecutorManifest(program PolicyProgram, fixture CanonicalE
 
 func countCanonicalExecutorBindings(program PolicyProgram, fixture CanonicalExecutorGrantFixture) int {
 	request, input, source := fixture.Request, fixture.Request.CandidateInput, fixture.Request.SourceArtifact
-	v25 := request.GrantRequest.V25
+	v25Contract := request.V25Contract
 	v24Request := request.V24Request
 	v24Resolution := request.V24Resolution
 	v24Verification := request.V24Verification
 	v24Binding := request.GrantRequest.V24
 	v25Binding := request.GrantRequest.V25
 	v25Verification := request.V25Verification
-	inputBound := input.Digest != "" && v24Request.Candidate.ExecutionInput != nil && v25.ExecutionInput != nil &&
-		reflect.DeepEqual(input, *v24Request.Candidate.ExecutionInput) && reflect.DeepEqual(input, *v25.ExecutionInput) &&
+	inputBound := input.Digest != "" && v24Request.Candidate.ExecutionInput != nil && v25Contract.ExecutionInput != nil &&
+		reflect.DeepEqual(input, *v24Request.Candidate.ExecutionInput) && reflect.DeepEqual(input, *v25Contract.ExecutionInput) &&
 		validDigest(input.Digest)
 	bindings := map[string]bool{
 		"v24_request_digest": validDigest(v24Request.Digest) && v24Binding.RequestDigest == v24Request.Digest,
 		"v24_resolution_digest": validDigest(v24Resolution.Digest) && v24Binding.ResolutionDigest == v24Resolution.Digest && v24Resolution.RequestDigest == v24Request.Digest,
 		"v24_verification_digest": validDigest(v24Verification.Digest) && v24Verification.RequestDigest == v24Request.Digest && v24Verification.ResolutionDigest == v24Resolution.Digest && v24Verification.DecisionVerified,
-		"candidate_stable_id": input.CandidateStableID != "" && input.CandidateStableID == v24Request.Candidate.CandidateID && input.CandidateStableID == v25.CandidateStableID,
-		"candidate_digest": validDigest(input.CandidateDigest) && input.CandidateDigest == v24Request.Candidate.CandidateDigest && input.CandidateDigest == v25.CandidateDigest,
-		"subject_sha": validSHA(input.SubjectSHA) && input.SubjectSHA == v24Request.Candidate.SubjectSHA && input.SubjectSHA == v25.SubjectSHA,
-		"observation_digest": validDigest(input.ObservationDigest) && input.ObservationDigest == v24Request.Candidate.SourceObservationDigest && input.ObservationDigest == v25.ObservationDigest,
-		"candidate_input_digest": inputBound && input.Digest == v24Request.Candidate.ExecutionInputDigest && input.Digest == v25.CandidateInputDigest && input.Digest == v25.ExecutionInputDigest,
+		"candidate_stable_id": input.CandidateStableID != "" && input.CandidateStableID == v24Request.Candidate.CandidateID && input.CandidateStableID == v25Contract.CandidateStableID,
+		"candidate_digest": validDigest(input.CandidateDigest) && input.CandidateDigest == v24Request.Candidate.CandidateDigest && input.CandidateDigest == v25Contract.CandidateDigest,
+		"subject_sha": validSHA(input.SubjectSHA) && input.SubjectSHA == v24Request.Candidate.SubjectSHA && input.SubjectSHA == v25Contract.SubjectSHA,
+		"observation_digest": validDigest(input.ObservationDigest) && input.ObservationDigest == v24Request.Candidate.SourceObservationDigest && input.ObservationDigest == v25Contract.ObservationDigest,
+		"candidate_input_digest": inputBound && input.Digest == v24Request.Candidate.ExecutionInputDigest && input.Digest == v25Contract.CandidateInputDigest && input.Digest == v25Contract.ExecutionInputDigest,
 		"v24_contract_digest": validDigest(v24Request.Candidate.ContractCanonicalDigest) && v24Binding.ContractDigest == v24Request.Candidate.ContractCanonicalDigest,
-		"v25_contract_digest": validDigest(v25.ContractDigest) && v25Binding.ContractDigest == v25.ContractDigest,
+		"v25_contract_digest": validDigest(v25Contract.Digest) && v25Binding.ContractDigest == v25Contract.Digest,
 		"v24_authorization_contract_digest": validDigest(v24Request.Contract.CanonicalDigest) && v24Binding.AuthorizationContractDigest == v24Request.Contract.CanonicalDigest,
-		"v25_verification_digest": validDigest(v25Verification.Digest) && v25Verification.ContractDigest == v25.ContractDigest && v25Verification.Verified,
-		"operation_id": string(v25.OperationID) == v25.KnownOperationID,
-		"evaluator_registry_digest": v25.EvaluatorRegistryDigest == v25.KnownRegistry().EvaluatorRegistryDigest,
-		"toolchain_test_contract_identity": v25.ToolchainTestContractIdentity == v25.FixedToolchainTestContractIdentity,
-		"max_executions": v25.MaxExecutions == MaxExecutions,
-		"repository_writes_allowed": !v25.RepositoryWritesAllowed,
+		"v25_verification_digest": validDigest(v25Verification.Digest) && v25Verification.ContractDigest == v25Contract.Digest && v25Verification.Verified,
+		"operation_id": string(v25Contract.OperationID) == v25.KnownOperationID,
+		"evaluator_registry_digest": v25Contract.EvaluatorRegistryDigest == v25.KnownRegistry().EvaluatorRegistryDigest,
+		"toolchain_test_contract_identity": v25Contract.ToolchainTestContractID == v25.FixedToolchainTestContractIdentity,
+		"max_executions": v25Contract.MaxExecutions == MaxExecutions,
+		"repository_writes_allowed": !v25Contract.RepositoryWritesAllowed,
 		"source_workflow_name": source.WorkflowName == CanonicalExecutorWorkflowName,
 		"source_workflow_path": source.WorkflowPath == CanonicalExecutorWorkflowPath,
 		"source_event": source.Event == CanonicalExecutorWorkflowEvent,
