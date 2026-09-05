@@ -110,8 +110,7 @@ func assertReturnTailClosureCaptureRejected(t *testing.T, source string) {
 		t.Fatalf("terminal candidate free bindings=%+v error=%v", bindings, err)
 	}
 	err = hasReturnTailBindingHazard(function.Body, statements, bindings, info)
-	var failure Failure
-	if !errors.As(err, &failure) || failure.UnknownClass != "KNOWN_CONTRADICTION" {
+	if !isKnownSuffixContradiction(err) {
 		t.Fatalf("captured free binding was not refuted: error=%v", err)
 	}
 }
