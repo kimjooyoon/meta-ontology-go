@@ -20,13 +20,12 @@ will remain source-compatible.
 
 ## Public EntityFields V1 contract
 
-This section is normative for the upcoming EntityFields V1 implementation
-closure. It is not a current support claim: the live parser still rejects
-`EntityFields` source and the implementation Gate must land before this syntax
-can be parsed, lowered, formatted, passed through the CLI generator, represented
-in a field source map, or exposed by LSP. Until then, none of those public
-surfaces is runnable, and the public parser must continue to reject it without
-constructing a partial field list.
+This section is normative for the profile-bound EntityFields V1 contract. The
+ordinary/default parser remains `DEFERRED`; explicit V1 routes used by `gooo
+check`, `gooo generate`, and the atomic witness are profile-bound and observed
+by the generated [support view](entity-fields-support.md). The view is a
+bounded fixture-and-evidence claim, not a claim that every parser or LSP server
+supports EntityFields.
 
 ### Surface grammar
 
@@ -56,8 +55,8 @@ forms. The lexical categories overlap intentionally; the value is classified
 as a stable ID first, then as a qualified lookup, and otherwise is invalid for
 V1. A quoted unqualified type is not a second spelling; use the identifier form.
 
-Minimal contract example (illustrative only; it is not runnable on the live
-parser until the implementation Gate lands):
+Minimal contract example (illustrative of the explicit profile-bound routes;
+the ordinary/default parser remains deferred):
 
 ```gooo
 package billing

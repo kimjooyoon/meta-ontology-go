@@ -47,12 +47,13 @@ jobs:
           set -Eeuo pipefail
           work="$RUNNER_TEMP/entity-fields-v1/work"
           publish="$RUNNER_TEMP/entity-fields-v1/publish"
+          support="$RUNNER_TEMP/entity-fields-v1/support"
           input="$work/input"
           first="$work/first"
           replay="$work/replay"
           generated_module="$work/generated-module"
           cli_generated="$work/cli-generated"
-          mkdir -p "$input" "$first" "$replay" "$generated_module" "$cli_generated" "$publish"
+          mkdir -p "$input" "$first" "$replay" "$generated_module" "$cli_generated" "$publish" "$support"
           status_before="$work/status-before.txt"
           status_after="$work/status-after.txt"
           env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$status_before"
@@ -251,3 +252,135 @@ jobs:
             .files[12] == "entity-fields-receipt.json"
           ' "$manifest"
           test "$(find "$root" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 13
+
+      - name: Generate profile-scoped EntityFields support view
+        if: success()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          work="$RUNNER_TEMP/entity-fields-v1/work"
+          support="$RUNNER_TEMP/entity-fields-v1/support"
+          report="$work/first/report.json"
+          receipt="$RUNNER_TEMP/entity-fields-v1/publish/entity-fields-receipt.json"
+          report_digest="sha256:$(sha256sum "$report" | awk '{print $1}')"
+          receipt_digest="sha256:$(sha256sum "$receipt" | awk '{print $1}')"
+          meta_source_digest="sha256:$(sha256sum internal/meta/entityfields/entity-fields-meta.gooo | awk '{print $1}')"
+
+          jq -n --slurpfile report "$report" \
+            --arg head "$HEAD_SHA" \
+            --arg report_digest "$report_digest" \
+            --arg receipt_digest "$receipt_digest" \
+            --arg meta_source_digest "$meta_source_digest" \
+            --argjson public_check true \
+            --argjson public_generate true \
+            --argjson generated_compile true \
+            '
+            def cell($key): [$report[0].cells[] | select(.evidence_key == $key)];
+            def evidence($keys): [
+              $keys[] as $key |
+              cell($key)[]? |
+              {key:$key, decision:.decision, resolution:.resolution, digest:.evidence_digest}
+            ];
+            def evidence_ok($keys):
+              (evidence($keys)) as $evidence |
+              ($evidence | length == ($keys | length)) and
+              all($evidence[]; .decision == "PASS" and .resolution == "EXACT" and .digest != "");
+            def route($id; $label; $scope; $keys; $gate):
+              (evidence($keys)) as $evidence |
+              {id:$id, label:$label, scope:$scope, required_evidence_keys:$keys,
+               evidence:$evidence, runtime_gate:$gate,
+               state:(if $gate == "PASS" and evidence_ok($keys) then "SUPPORTED" else "UNKNOWN" end)};
+            {
+              schema:"gooo/entity-fields-support/v1",
+              identity:{
+                meta_source:"internal/meta/entityfields/entity-fields-meta.gooo",
+                meta_source_digest:$meta_source_digest,
+                fixture:"examples/entity-fields-v1/main.gooo",
+                profile:$report[0] | {id:.profile_id, version:.profile_version, digest:.profile_digest},
+                activities:$report[0].activities
+              },
+              runtime:{
+                head_sha:$head,
+                observation_report_digest:$report_digest,
+                observation_receipt_digest:$receipt_digest,
+                public_cli:{check:(if $public_check then "PASS" else "UNKNOWN" end), generate:(if $public_generate then "PASS" else "UNKNOWN" end)},
+                generated_go:{compile:(if $generated_compile then "PASS" else "UNKNOWN" end), proof_scope:"COMPILE_ONLY"},
+                evidence_origin:"CALLER_OWNED_TEMP_OUTPUT_ONLY"
+              },
+              routes:[
+                {id:"ordinary-parser", label:"ordinary/default parser", scope:"default parser remains deferred until explicit V1 opt-in", required_evidence_keys:[], evidence:[], runtime_gate:"DEFERRED", state:"DEFERRED"},
+                route("explicit-v1-parser"; "explicit V1 parser"; "profile-bound syntax parser on the canonical fixture"; ["OBSERVATION_SOURCE_PIN","CONTRACT_PROFILE_PIN"]; "PASS"),
+                route("formatter"; "formatter"; "syntax formatting and canonical replay"; ["SYNTAX_FORMAT_REPLAY"]; "PASS"),
+                route("semantic-lowering"; "semantic lowerer"; "profile-bound semantic IR lowering"; ["SEMANTIC_IR_LOWERING"]; "PASS"),
+                route("bx-get-put"; "BX Get/Put"; "source-preserving and semantic mutation round trips"; ["BX_GET_ROUNDTRIP","BX_PUT_ROUNDTRIP"]; "PASS"),
+                route("go-generator"; "Go generator"; "profile-bound structural Go projection"; ["GO_STRUCT_PROJECTION"]; "PASS"),
+                route("source-map"; "source map"; "generated structural source-map projection"; ["SOURCE_MAP_PROJECTION"]; "PASS"),
+                route("lsp-adapter"; "LSP adapter"; "EntityFieldsSyntaxParser adapter evidence only"; ["LSP_NAVIGATION"]; "PASS"),
+                route("public-cli-check"; "public CLI check"; "gooo check --semantic on the canonical fixture"; ["OBSERVATION_SOURCE_PIN","SEMANTIC_IR_LOWERING"]; (if $public_check then "PASS" else "UNKNOWN" end)),
+                route("public-cli-generate"; "public CLI generate"; "gooo generate and exact generated artifact comparison"; ["GO_STRUCT_PROJECTION","SOURCE_MAP_PROJECTION"]; (if $public_generate then "PASS" else "UNKNOWN" end)),
+                route("generated-go-compile"; "generated Go"; "generated module compilation only, not business-behavior proof"; ["GO_STRUCT_PROJECTION"]; (if $generated_compile then "PASS" else "UNKNOWN" end)),
+                {id:"lsp-server", label:"LSP server/editor support", scope:"no server or editor integration claim without separate evidence", required_evidence_keys:[], evidence:[], runtime_gate:"NOT_OBSERVED", state:"UNKNOWN"}
+              ],
+              documentation:{path:"docs/entity-fields-support.md", decision:"PENDING", comparison:"PENDING"}
+            }
+          ' > "$support/support-projection.json"
+
+          jq -r '
+            [
+              "# EntityFields V1 support view",
+              "",
+              "This section is generated from the profile-bound observation and observed public routes; it is not a language-completeness score.",
+              "",
+              ("profile_id=" + .identity.profile.id),
+              ("profile_version=" + (.identity.profile.version | tostring)),
+              ("meta_source=" + .identity.meta_source),
+              ("fixture=" + .identity.fixture),
+              "",
+              "| Surface | State | Scope |",
+              "| --- | --- | --- |"
+            ] + (.routes | map("| " + .label + " | " + .state + " | " + .scope + " |")) | .[]
+          ' "$support/support-projection.json" > "$support/support-section.md"
+
+          support_valid='
+            .schema == "gooo/entity-fields-support/v1" and
+            .runtime.head_sha == $head and
+            .identity.profile.id == "gooo.entityfields.go-projection.v1" and
+            .identity.profile.version == 1 and
+            (.identity.profile.digest | length) > 0 and
+            (.identity.activities | length) == 12 and
+            ([.routes[] | select(.state == "SUPPORTED" and ((.required_evidence_keys | length) == 0 or .runtime_gate != "PASS"))] | length) == 0 and
+            all(.routes[]; if .state == "SUPPORTED" then
+              (.evidence | length) == (.required_evidence_keys | length) and
+              all(.evidence[]; .decision == "PASS" and .resolution == "EXACT" and .digest != "")
+            else true end) and
+            ([.routes[] | select(.id == "ordinary-parser" and .state != "DEFERRED")] | length) == 0 and
+            ([.routes[] | select(.id == "lsp-server" and .state != "UNKNOWN")] | length) == 0 and
+            .documentation.decision == "PENDING"
+          '
+          jq -e --arg head "$HEAD_SHA" "$support_valid" "$support/support-projection.json" > /dev/null
+          cmp -s "$support/support-section.md" docs/entity-fields-support.md
+          sed 's/ordinary\/default parser | DEFERRED/ordinary\/default parser | SUPPORTED/' docs/entity-fields-support.md > "$support/stale-document.md"
+          if cmp -s "$support/support-section.md" "$support/stale-document.md"; then
+            echo "stale support documentation was accepted"
+            exit 1
+          fi
+          jq '(.routes[] | select(.id == "explicit-v1-parser") | .state) = "SUPPORTED" | (.routes[] | select(.id == "explicit-v1-parser") | .required_evidence_keys) = []' "$support/support-projection.json" > "$support/overbroad-support.json"
+          if jq -e --arg head "$HEAD_SHA" "$support_valid" "$support/overbroad-support.json" > /dev/null; then
+            echo "overbroad support claim was accepted"
+            exit 1
+          fi
+          jq '.documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
+          mv "$support/support-projection.final.json" "$support/support-projection.json"
+          jq -e --arg head "$HEAD_SHA" '
+            .schema == "gooo/entity-fields-support/v1" and .runtime.head_sha == $head and
+            .documentation.decision == "PASS" and .documentation.comparison == "EXACT"
+          ' "$support/support-projection.json" > /dev/null
+
+      - name: Upload EntityFields V1 support view
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: entity-fields-support-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/entity-fields-v1/support
+          if-no-files-found: ignore
+          retention-days: 30
