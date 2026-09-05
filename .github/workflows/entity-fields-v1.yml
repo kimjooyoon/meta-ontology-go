@@ -510,7 +510,7 @@ jobs:
                   (.unknown | unknown_ok)
                 else false end
               ) and
-              all(.routes[]?; if .state == "SUPPORTED" then
+              all($root.routes[]?; if .state == "SUPPORTED" then
                 (.required_evidence_keys | length) > 0 and .runtime_gate == "PASS"
               else true end);
             def support_assess:
@@ -533,6 +533,7 @@ jobs:
           support_valid="$support_defs
             (support_assess) as \$assessment |
             \$assessment.decision == \"PASS\" and \$assessment.resolution == \"EXACT\" and
+            .documentation.path == \"docs/entity-fields-support.md\" and
             .documentation.decision == \"PENDING\" and .documentation.comparison == \"PENDING\"
           "
           jq -e --arg head "$HEAD_SHA" --arg report_digest "$report_digest" --arg receipt_digest "$receipt_digest" \
@@ -654,6 +655,7 @@ jobs:
               (.boundary_cases[$name].unknown.next_operation | type == "string" and length > 0) and
               .boundary_cases[$name].unknown.blocked_by == [];
             .schema == "gooo/entity-fields-support/v1" and .runtime.head_sha == $head and
+            .documentation.path == "docs/entity-fields-support.md" and
             .documentation.decision == "PASS" and .documentation.comparison == "EXACT" and
             .boundary_cases.positive.decision == "PASS" and .boundary_cases.positive.resolution == "EXACT" and
             .boundary_cases.stale_document.decision == "REFUTED" and .boundary_cases.stale_document.resolution == "FAIL_CLOSED" and
