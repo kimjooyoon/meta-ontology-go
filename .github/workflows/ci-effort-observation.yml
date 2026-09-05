@@ -194,11 +194,30 @@ jobs:
           set -e
           cat "$lineage_root/actual/lineage.env" >> "$GITHUB_ENV"
           lineage_decision="$(awk -F= '$1 == "LINEAGE_DECISION" { value=substr($0, index($0, "=") + 1) } END { print value }' "$lineage_root/actual/lineage.env")"
+          lineage_state="$(awk -F= '$1 == "LINEAGE_STATE" { value=substr($0, index($0, "=") + 1) } END { print value }' "$lineage_root/actual/lineage.env")"
           if [ "$SOURCE_TERMINAL" != true ]; then
-            if [ "$lineage_decision" != "UNKNOWN" ]; then
-              echo "non-terminal source produced unexpected lineage decision: $lineage_decision" >&2
+            source_identity_exact=false
+            if [ "$source_api_run_id" -gt 0 ] && jq -e \
+              --argjson run "$event_run_id" \
+              --arg head "$HEAD_SHA" \
+              --arg repository "$GITHUB_REPOSITORY" \
+              --arg workflow "$TRIGGER_SOURCE_WORKFLOW" \
+              --arg event "$TRIGGER_SOURCE_EVENT" \
+              --arg branch "$TRIGGER_SOURCE_HEAD_BRANCH" \
+              '.id == $run and .api_query_run_id == $run and .run_attempt > 0 and .head_sha == $head and .head_repository == $repository and .api_repository == $repository and .workflow_path == $workflow and .event == $event and .head_branch == $branch' \
+              "$lineage_root/source-run.json" > /dev/null; then
+              source_identity_exact=true
+            fi
+            if [ "$source_api_run_id" -gt 0 ] && [ "$source_identity_exact" != true ]; then
+              echo "non-terminal source failed exact identity binding" >&2
               exit 1
             fi
+            if [ "$lineage_decision" != "UNKNOWN" ] &&
+              { [ "$lineage_decision" != "REFUTED" ] || [ "$lineage_state" != "MISMATCH" ]; }; then
+              echo "non-terminal source produced unexpected lineage decision/state: $lineage_decision/$lineage_state" >&2
+              exit 1
+            fi
+            echo "LINEAGE_DECISION=UNKNOWN" >> "$GITHUB_ENV"
             echo "LINEAGE_DEFERRED=true" >> "$GITHUB_ENV"
             lineage_status=0
           else
