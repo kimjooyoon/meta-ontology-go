@@ -46,7 +46,9 @@ func runObserve(input runInput) error {
 		return err
 	}
 	expected := fmt.Sprintf("ci-evidence-%d-%d", sourceRun.ID, sourceRun.RunAttempt)
-	evaluation := publicworkflowlineage.Evaluate(publicworkflowlineage.Input{Trigger: trigger, Source: sourceRun, Artifacts: artifacts, ExpectedArtifactName: expected, ExpectedRepository: policy.Repository, ExpectedWorkflow: policy.SourceWorkflow, ExpectedSourceAPIKey: policy.SourceAPIKey, ExpectedArtifactSubjectBinding: policy.ArtifactSubjectBinding})
+	lineageInput := publicworkflowlineage.Input{Trigger: trigger, Source: sourceRun, Artifacts: artifacts, ExpectedArtifactName: expected, ExpectedRepository: policy.Repository, ExpectedWorkflow: policy.SourceWorkflow, ExpectedSourceAPIKey: policy.SourceAPIKey, ExpectedArtifactSubjectBinding: policy.ArtifactSubjectBinding}
+	evaluation := publicworkflowlineage.Evaluate(lineageInput)
+	readOnly := policy.EvaluateReadOnlyObservation(lineageInput)
 	value := observation{Schema: publicworkflowlineage.ReportSchema, Decision: evaluation.Decision, LineageState: evaluation.LineageState, Reason: evaluation.Reason, Trigger: trigger, Source: sourceRun, Evaluation: evaluation, PolicyDigest: policy.SourceDigest}
 	if err := os.MkdirAll(input.Out, 0o755); err != nil {
 		return err
@@ -54,13 +56,16 @@ func runObserve(input runInput) error {
 	if err := writeJSON(filepath.Join(input.Out, "lineage-observation.json"), value); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(input.Out, "lineage-human.txt"), []byte(fmt.Sprintf("Decision: %s\nState: %s\nReason: %s\n", value.Decision, value.LineageState, value.Reason)), 0o444); err != nil {
+	if err := writeJSON(filepath.Join(input.Out, "read-only-observation.json"), readOnly); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(input.Out, "lineage.env"), []byte("LINEAGE_DECISION="+value.Decision+"\nLINEAGE_STATE="+value.LineageState+"\n"), 0o444); err != nil {
+	if err := os.WriteFile(filepath.Join(input.Out, "lineage-human.txt"), []byte(fmt.Sprintf("Decision: %s\nState: %s\nReason: %s\nRead-only observation eligibility: %s\nTiming/operation observation: %t/%t\nEvidence reuse/promotion authority: %t/%t\n", value.Decision, value.LineageState, value.Reason, readOnly.Eligibility, readOnly.TimingObservationEligible, readOnly.OperationObservationEligible, readOnly.EvidenceReuseAllowed, readOnly.PromotionAllowed)), 0o444); err != nil {
 		return err
 	}
-	if evaluation.Decision == publicworkflowlineage.DecisionRefuted {
+	if err := os.WriteFile(filepath.Join(input.Out, "lineage.env"), []byte(fmt.Sprintf("LINEAGE_DECISION=%s\nLINEAGE_STATE=%s\nLINEAGE_OBSERVATION_ELIGIBILITY=%s\nLINEAGE_TIMING_OBSERVATION_ELIGIBLE=%t\nLINEAGE_OPERATION_OBSERVATION_ELIGIBLE=%t\nLINEAGE_EVIDENCE_REUSE_ALLOWED=%t\nLINEAGE_PROMOTION_ALLOWED=%t\n", value.Decision, value.LineageState, readOnly.Eligibility, readOnly.TimingObservationEligible, readOnly.OperationObservationEligible, readOnly.EvidenceReuseAllowed, readOnly.PromotionAllowed)), 0o444); err != nil {
+		return err
+	}
+	if evaluation.Decision == publicworkflowlineage.DecisionRefuted && readOnly.Eligibility != publicworkflowlineage.ObservationAllowed {
 		return errors.New("workflow lineage is REFUTED; refusing to consume mismatched evidence")
 	}
 	return nil

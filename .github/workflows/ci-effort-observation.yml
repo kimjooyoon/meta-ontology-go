@@ -70,6 +70,7 @@ jobs:
           lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
           mkdir -p "$lineage_root/conformance"
           go build -o "$lineage_root/lineage" ./scripts/ci-effort-observation-lineage
+          go test ./scripts/ci-effort-observation-lineage
           "$lineage_root/lineage" -mode run --source examples/ci-effort-observation/main.gooo --out "$lineage_root/conformance"
           "$lineage_root/lineage" -mode verify --report "$lineage_root/conformance/publish/workflow-lineage-report.json"
           test "$(find "$lineage_root/conformance/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 21
@@ -254,6 +255,11 @@ jobs:
 
       - name: Record unresolved workflow-lineage observation
         if: env.LINEAGE_DECISION == 'UNKNOWN'
+        shell: bash
+        run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record read-only source-failure observation eligibility
+        if: env.LINEAGE_DECISION == 'REFUTED' && env.LINEAGE_OBSERVATION_ELIGIBILITY == 'ELIGIBLE'
         shell: bash
         run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
 
