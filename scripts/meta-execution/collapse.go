@@ -21,6 +21,7 @@ import (
 
 type collapseSourceInspection struct {
 	Subject              string
+	PackageName          string
 	Receiver             string
 	Signature            string
 	OutsideDeclarations  []string
@@ -36,6 +37,8 @@ type collapseSourceInspection struct {
 type collapseInstanceEvidence struct {
 	Operation                     string                  `json:"operation"`
 	Subject                       string                  `json:"subject"`
+	BeforePackageName             string                  `json:"before_package_name"`
+	AfterPackageName              string                  `json:"after_package_name"`
 	Receiver                      string                  `json:"receiver"`
 	InputContractSourceDigest     string                  `json:"input_contract_source_digest"`
 	InputContractSemanticDigest   string                  `json:"input_contract_semantic_digest"`
@@ -215,6 +218,8 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	canonicalValue := collapseInstanceEvidence{
 		Operation:                   string(sourcepolicy.OperationCollapseAssign),
 		Subject:                     subject.String(),
+		BeforePackageName:           beforeInspection.PackageName,
+		AfterPackageName:            afterInspection.PackageName,
 		Receiver:                    beforeInspection.Receiver,
 		InputContractSourceDigest:   action.InputContractSourceDigest,
 		InputContractSemanticDigest: action.InputContractSemanticDigest,
@@ -352,6 +357,7 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 	}
 	inspection := collapseSourceInspection{
 		Subject:             subject.String(),
+		PackageName:         file.Name.Name,
 		Receiver:            receiver,
 		Signature:           receiver + "|" + signature,
 		OutsideDeclarations: outsideDeclarations,
@@ -439,7 +445,7 @@ func renderCollapseReceiver(fset *token.FileSet, receiver *ast.FieldList) (strin
 }
 
 func validateCollapseOutput(before, after collapseSourceInspection, source []byte) *operationError {
-	if !after.SingleReturn || after.ReturnExpression != before.ReturnExpression || after.Receiver != before.Receiver || after.Signature != before.Signature ||
+	if !after.SingleReturn || after.ReturnExpression != before.ReturnExpression || after.PackageName != before.PackageName || after.Receiver != before.Receiver || after.Signature != before.Signature ||
 		!slices.Equal(after.OutsideDeclarations, before.OutsideDeclarations) || !slices.Equal(after.CommentGroups, before.CommentGroups) ||
 		after.StartLine != before.StartLine || after.EndLine >= before.EndLine {
 		return newOperationError("evaluate-operation", "validate-collapse-output", "OUTPUT_IDENTITY_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
