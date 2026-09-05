@@ -51,9 +51,9 @@ func TestNamedFunctionLinesFreeFunctionIdentityRegressionCohort(t *testing.T) {
 			found: true,
 		},
 		{
-			name: "method-only",
+			name:   "method-only",
 			source: "package p\n\ntype T struct{}\n\nfunc (T) F() {}\n",
-			found: false,
+			found:  false,
 		},
 	}
 	if len(cases) != 3 {

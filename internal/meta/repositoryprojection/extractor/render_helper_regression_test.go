@@ -33,17 +33,17 @@ func TestExtractFunctionHelperProjectionRegressionCohort(t *testing.T) {
 		fn     string
 	}{
 		{
-			name: "plain-free-function",
+			name:   "plain-free-function",
 			source: "package fixture\n\nfunc F() {\n\tvalue := 1\n\t_ = value\n}\n",
 			fn:     "F",
 		},
 		{
-			name: "selected-imports-and-comments",
+			name:   "selected-imports-and-comments",
 			source: "package fixture\n\nimport (\n\t\"encoding/json\"\n\t\"strconv\"\n)\n\n// F retains the selected declaration documentation.\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n",
 			fn:     "F",
 		},
 		{
-			name: "free-function-over-same-named-method",
+			name:   "free-function-over-same-named-method",
 			source: "package fixture\n\ntype T struct{}\n\nfunc (T) F() error { return nil }\n\nfunc F() error { return nil }\n",
 			fn:     "F",
 		},

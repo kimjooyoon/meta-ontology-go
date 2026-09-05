@@ -57,9 +57,9 @@ func TestFirstOversizedFunctionUsesActualDeclarationIdentity(t *testing.T) {
 			wantMethod: true,
 		},
 		{
-			name:       "small-method-only",
-			source:     "package p\n\ntype T struct{}\n\nfunc (T) F() {}\n",
-			wantNil:    true,
+			name:    "small-method-only",
+			source:  "package p\n\ntype T struct{}\n\nfunc (T) F() {}\n",
+			wantNil: true,
 		},
 	}
 	if len(cases) != 4 {
