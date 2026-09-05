@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -70,6 +72,10 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fixtureSHA := sha256.Sum256(source)
+	if got := fmt.Sprintf("%x", fixtureSHA); got != "5f6261d3d661fa8dde5bd024ad95e8c36f6ef681a36bb9c232c2013e05d7a7ff" {
+		t.Fatalf("apply.go fixture SHA-256=%s", got)
+	}
 	root := t.TempDir()
 	subject := "apply.go"
 	if err := os.WriteFile(filepath.Join(root, subject), source, 0o600); err != nil {
@@ -89,6 +95,7 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 			t.Fatal("stageExtractions was rendered into multiple split parts")
 		}
 		found = true
+		t.Logf("stageExtractions rendered physical_lines=%d", physicalLines(part.Data))
 		if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
 			t.Fatalf("stageExtractions helper exceeded rendered capacity or retained grouped imports:\n%s", text)
 		}

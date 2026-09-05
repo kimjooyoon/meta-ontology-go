@@ -15,8 +15,9 @@ type ImportHeaderNormalizationMode string
 
 const (
 	ImportHeaderNormalizationPlain       ImportHeaderNormalizationMode = "plain-source-rewrite"
-	ImportHeaderNormalizationNamedAlias ImportHeaderNormalizationMode = "named-alias-header"
-	ImportHeaderNamedAliasCapability    = "named-alias-single-spec-header"
+	ImportHeaderNormalizationNamedAlias  ImportHeaderNormalizationMode = "named-alias-header"
+	ImportHeaderPlainCapability                                        = "plain-source-rewrite"
+	ImportHeaderNamedAliasCapability                                   = "named-alias-single-spec-header"
 )
 
 // NormalizeImportHeaderGroup returns one-spec import declarations when the
@@ -27,11 +28,16 @@ func NormalizeImportHeaderGroup(file *ast.File, group *ast.GenDecl, specs []*ast
 		return nil, false, fmt.Errorf("unknown import header normalization mode %q", mode)
 	}
 	policy, err := ImportNormalizationPolicyEvidence()
+	capability := ImportHeaderPlainCapability
+	if mode == ImportHeaderNormalizationNamedAlias {
+		policy, err = ImportHeaderNormalizationPolicyEvidence()
+		capability = ImportHeaderNamedAliasCapability
+	}
 	if err != nil {
 		return nil, false, err
 	}
 	if policy.InputSubjectKind != sourcepolicy.SubjectKindFile || policy.SourceDigest == "" || policy.SemanticDigest == "" ||
-		!policy.UsedInputFact || !policy.GeneratedOutputFact || policy.HeaderCapability != ImportHeaderNamedAliasCapability {
+		!policy.UsedInputFact || !policy.GeneratedOutputFact || policy.HeaderCapability != capability {
 		return nil, false, fmt.Errorf("import normalization header capability is not proven")
 	}
 	if file == nil || group == nil || group.Tok != token.IMPORT || group.Doc != nil || len(group.Specs) < 2 || len(specs) < 2 {

@@ -56,7 +56,8 @@ var nativeOperationObligations = []nativeOperationObligation{
 }
 
 var nativeContractPolicies = []nativeContractPolicy{
-	{Name: "eligible-plain-import-group", Activity: "NormalizeEligibleImportGroup", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile, HeaderCapability: ImportHeaderNamedAliasCapability},
+	{Name: "eligible-plain-import-group", Activity: "NormalizeEligibleImportGroup", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile, HeaderCapability: ImportHeaderPlainCapability},
+	{Name: "named-alias-import-header", Activity: "NormalizeNamedAliasImportHeader", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile, HeaderCapability: ImportHeaderNamedAliasCapability},
 }
 
 type operationInputContractBinding struct {
@@ -236,7 +237,7 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		}
 	}
 	for _, policy := range nativeContractPolicies {
-		if policy.HeaderCapability != ImportHeaderNamedAliasCapability {
+		if policy.HeaderCapability != ImportHeaderPlainCapability && policy.HeaderCapability != ImportHeaderNamedAliasCapability {
 			return operationInputContract{}, fmt.Errorf("operation input contract policy %q header capability is not exact", policy.Name)
 		}
 		expectedActivities[policy.Activity] = nativeOperationInput{Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity, InputKind: policy.InputKind}
@@ -331,14 +332,38 @@ func ExtractFunctionInputContractEvidence() (OperationInputContractEvidence, err
 // It shares the operation-input contract source and semantic identities with
 // ExtractFunction rather than introducing a second receipt or operation.
 func ImportNormalizationPolicyEvidence() (OperationInputContractPolicyEvidence, error) {
+	return importNormalizationPolicyEvidence("NormalizeEligibleImportGroup")
+}
+
+// ImportHeaderNormalizationPolicyEvidence exposes the contract relation that
+// authorizes named-alias single-spec headers for generated source parts.
+func ImportHeaderNormalizationPolicyEvidence() (OperationInputContractPolicyEvidence, error) {
+	return importNormalizationPolicyEvidence("NormalizeNamedAliasImportHeader")
+}
+
+func importNormalizationPolicyEvidence(activity string) (OperationInputContractPolicyEvidence, error) {
 	contract, err := loadOperationInputContract()
 	if err != nil {
 		return OperationInputContractPolicyEvidence{}, err
 	}
-	if len(nativeContractPolicies) != 1 {
+	if len(nativeContractPolicies) != 2 {
 		return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy cardinality is not exact")
 	}
-	policy := nativeContractPolicies[0]
+	var policy nativeContractPolicy
+	found := false
+	for _, candidate := range nativeContractPolicies {
+		if candidate.Activity != activity {
+			continue
+		}
+		if found {
+			return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy activity is duplicated")
+		}
+		policy = candidate
+		found = true
+	}
+	if !found {
+		return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy activity is not registered")
+	}
 	facts, ok := contract.PolicyFacts[policy.Activity]
 	if !ok || !facts.UsedInput || !facts.GeneratedOutput {
 		return OperationInputContractPolicyEvidence{}, fmt.Errorf("import normalization policy facts are incomplete")

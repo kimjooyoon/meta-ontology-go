@@ -62,7 +62,14 @@ func formatSelectedImports(fset *token.FileSet, file *ast.File, group *ast.GenDe
 		if index > 0 {
 			output.WriteByte('\n')
 		}
-		data, err := formatImport(fset, file, declaration, declaration.Specs)
+		if len(declaration.Specs) != 1 {
+			return nil, fail("rewrite-source", "render-imports", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+		}
+		spec, ok := declaration.Specs[0].(*ast.ImportSpec)
+		if !ok {
+			return nil, fail("rewrite-source", "render-imports", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+		}
+		data, err := formatImport(fset, file, declaration, []*ast.ImportSpec{spec})
 		if err != nil {
 			return nil, err
 		}
