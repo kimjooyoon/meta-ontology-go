@@ -90,7 +90,9 @@ jobs:
             -H 'Accept: application/vnd.github+json' \
             "${GITHUB_API_URL:-https://api.github.com}/repos/$repository/actions/artifacts/$SOURCE_ARTIFACT_ID/zip" \
             > "$archive"
-          printf '%s  %s\n' "$SOURCE_ARTIFACT_DIGEST" "$archive" | sha256sum --check --strict -
+          artifact_sha256="${SOURCE_ARTIFACT_DIGEST#sha256:}"
+          test "$artifact_sha256" != "$SOURCE_ARTIFACT_DIGEST"
+          printf '%s  %s\n' "$artifact_sha256" "$archive" | sha256sum --check --strict -
 
           archive_list="$root/source-artifact-members.txt"
           unzip -Z1 "$archive" | sed '/\/$/d' | LC_ALL=C sort > "$archive_list"
