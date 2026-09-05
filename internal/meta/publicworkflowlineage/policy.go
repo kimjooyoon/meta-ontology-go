@@ -51,6 +51,22 @@ func Load(filename string, source []byte) (Policy, error) {
 			return Policy{}, fmt.Errorf("workflow lineage semantic IR must bind exactly one %s activity", activity)
 		}
 	}
+	permissionMarkers := []struct {
+		activity string
+		key      string
+		value    string
+	}{
+		{"ObserveCIWorkflowWindow", "partial-lineage-observation-permission", ReadOnlyPermission},
+		{"ObserveVerificationRuntime", "observation-permission", ReadOnlyPermission},
+		{"EvaluateExactEvidenceReuse", "evidence-reuse-permission", ExactSuccessReuse},
+		{"EvaluateExactEvidenceReuse", "promotion-permission", NoPromotionPermission},
+	}
+	for _, marker := range permissionMarkers {
+		values := activityMarkers[marker.activity][marker.key]
+		if len(values) != 1 || values[0] != marker.value {
+			return Policy{}, fmt.Errorf("workflow lineage semantic permission %s/%s is not exactly bound", marker.activity, marker.key)
+		}
+	}
 	policy := Policy{
 		Schema:                  PolicySchema,
 		EvaluatorSchema:         EvaluatorSchema,

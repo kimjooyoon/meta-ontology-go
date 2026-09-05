@@ -11,6 +11,22 @@ import (
 
 func main() {
 	config := parseConfig()
+	if config.ReadOnly {
+		projection, err := buildReadOnlyProjection(config)
+		if err != nil {
+			exitError(err)
+		}
+		if err := writeReadOnlyProjection(config, projection); err != nil {
+			exitError(err)
+		}
+		if config.Check {
+			if err := validateConfigReadOnlyProjection(config, projection); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+		}
+		return
+	}
 	report, err := buildReport(config)
 	if err != nil {
 		exitError(err)
@@ -68,7 +84,10 @@ func parseConfig() Config {
 	flag.StringVar(&config.Environment, "environment", "", "canonical environment allowlist descriptor")
 	flag.StringVar(&config.OutputPath, "output", "", "JSON report path")
 	flag.StringVar(&config.MarkdownPath, "markdown", "", "human-readable report path")
-	flag.BoolVar(&config.Check, "check", false, "require PASS/EXACT")
+	flag.BoolVar(&config.ReadOnly, "read-only", false, "record timing and operation observations without reuse or promotion authority")
+	flag.StringVar(&config.LineageObservationPath, "lineage-observation", "", "strict workflow-lineage observation JSON")
+	flag.StringVar(&config.ReadOnlyObservationPath, "read-only-observation", "", "read-only workflow-lineage eligibility JSON")
+	flag.BoolVar(&config.Check, "check", false, "validate the resulting receipt")
 	flag.Parse()
 	for path := range strings.SplitSeq(dependencies, ",") {
 		if strings.TrimSpace(path) != "" {

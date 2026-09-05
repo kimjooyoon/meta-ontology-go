@@ -15,7 +15,7 @@ func (policy Policy) EvaluateReadOnlyObservation(input Input) ReadOnlyObservatio
 		SourceFailureKept:    evaluation.ProductFailureKept,
 		Unknown:              evaluation.Unknown,
 	}
-	if !policy.readOnlyObservationPermissionsValid() {
+	if err := policy.Validate(); err != nil || !policy.readOnlyObservationPermissionsValid() {
 		result.Reason = "canonical Gooo read-only observation permissions are unavailable"
 		return result
 	}
