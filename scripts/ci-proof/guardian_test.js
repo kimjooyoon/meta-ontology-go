@@ -663,7 +663,7 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /github\.workflow_ref/);
   assert.match(workflow, /github\.workflow_sha/);
   assert.match(workflow, /github\.sha/);
-  assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
+  assert.match(workflow, /actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/);
   assert.match(workflow, /if: \$\{\{ always\(\) \}\}/);
   assert.match(workflow, /ci-guardian\.json/);
   assert.match(workflow, /pull_request_number: observedPull && observedPull\.number/);

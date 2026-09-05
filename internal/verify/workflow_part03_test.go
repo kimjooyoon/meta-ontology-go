@@ -37,7 +37,7 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"domain_evidence",
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
-		"actions/upload-artifact@v6",
+		"actions/upload-artifact@v7",
 		"administration: read must not be added here",
 		"read_status: 'unavailable'",
 		"event_ref: context.ref",
