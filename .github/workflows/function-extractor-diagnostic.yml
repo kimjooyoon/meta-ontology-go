@@ -6,6 +6,27 @@ on:
     paths:
       - '.github/workflows/function-extractor-diagnostic.yml'
   workflow_dispatch:
+    inputs:
+      subject_sha:
+        description: Exact source commit to diagnose, not a branch or tag
+        required: true
+        type: string
+        default: 'e86c8183a6afde47cee848fb567ece317345dd23'
+      source_run_id:
+        description: Workflow run that produced the source artifact
+        required: true
+        type: string
+        default: '33969275768'
+      source_artifact_id:
+        description: Immutable source artifact ID from the same repository
+        required: true
+        type: string
+        default: '9970866969'
+      source_artifact_digest:
+        description: SHA-256 digest of that exact source artifact archive
+        required: true
+        type: string
+        default: 'sha256:424339c5ed6e20b37cf67612775cd291ed086156c41d880c4708718d70dd3d99'
 
 permissions:
   contents: read
@@ -16,11 +37,11 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SUBJECT_SHA: e86c8183a6afde47cee848fb567ece317345dd23
-  SOURCE_RUN_ID: '33969275768'
-  SOURCE_ARTIFACT_ID: '9970866969'
-  SOURCE_ARTIFACT_NAME: transformation-effect-focused-e86c8183a6afde47cee848fb567ece317345dd23
-  SOURCE_ARTIFACT_DIGEST: sha256:424339c5ed6e20b37cf67612775cd291ed086156c41d880c4708718d70dd3d99
+  SUBJECT_SHA: ${{ inputs.subject_sha || 'e86c8183a6afde47cee848fb567ece317345dd23' }}
+  SOURCE_RUN_ID: ${{ inputs.source_run_id || '33969275768' }}
+  SOURCE_ARTIFACT_ID: ${{ inputs.source_artifact_id || '9970866969' }}
+  SOURCE_ARTIFACT_NAME: ${{ format('transformation-effect-focused-{0}', inputs.subject_sha || 'e86c8183a6afde47cee848fb567ece317345dd23') }}
+  SOURCE_ARTIFACT_DIGEST: ${{ inputs.source_artifact_digest || 'sha256:424339c5ed6e20b37cf67612775cd291ed086156c41d880c4708718d70dd3d99' }}
   MAX_CAPTURE_BYTES: '262144'
   HELPER_TIMEOUT_SECONDS: '45'
   META_EXECUTION_TIMEOUT_SECONDS: '180'
@@ -36,6 +57,21 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
+      - name: Validate exact diagnostic subject tuple
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ ! "$SUBJECT_SHA" =~ ^[0-9a-f]{40}$ ||
+                ! "$SOURCE_RUN_ID" =~ ^[1-9][0-9]*$ ||
+                ! "$SOURCE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ||
+                ! "$SOURCE_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            printf '%s\n' '::error::Diagnostic inputs require an exact commit, positive run/artifact IDs, and a SHA-256 archive digest.'
+            exit 1
+          fi
+          test "$SOURCE_ARTIFACT_NAME" = "transformation-effect-focused-$SUBJECT_SHA"
+          # Format validation does not establish artifact identity or authority.
+          # The metadata, archive, and plan checks below remain mandatory.
+
       - name: Check out exact source subject
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -82,6 +118,8 @@ jobs:
              .expired == false and
              .digest == $digest and
              .workflow_run.id == $run_id and
+             (.workflow_run.repository_id | type) == "number" and
+             .workflow_run.head_repository_id == .workflow_run.repository_id and
              .workflow_run.head_sha == $sha' \
             "$metadata" >/dev/null
 
