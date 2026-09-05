@@ -341,7 +341,12 @@ jobs:
           go run ./scripts/self-improvement-ci-continuation \
             -mode cases -contract examples/self-improvement-ci-continuation/continuation.gooo \
             -output "$output_dir/canonical-cases.json" -check
-          jq '.verification' "$output_dir/continuation.json" > "$output_dir/verification.json"
+          # Preserve the candidate-authorization verification as its own v24
+          # root. The continuation proof has a different schema and must not
+          # be relabeled as candidate authorization evidence.
+          cp "$verification" "$output_dir/source-authorization-verification.json"
+          jq '.verification' "$output_dir/continuation.json" > "$output_dir/source-continuation-verification.json"
+          cp "$output_dir/source-continuation-verification.json" "$output_dir/verification.json"
           cp "$request" "$output_dir/source-authorization-request.json"
           cp "$resolution" "$output_dir/source-authorization-resolution.json"
           jq -e --arg sha "$SOURCE_HEAD_SHA" --arg archive "$api_digest" \

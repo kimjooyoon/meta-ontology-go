@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
 
 	candidate "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
 	v25 "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementexecutioncontract"
@@ -43,7 +44,7 @@ func runCanonicalFixture(program grant.PolicyProgram, settings options) error {
 	if err := os.MkdirAll(settings.outputDir, 0o755); err != nil {
 		return err
 	}
-	materializedBefore, bindingsBefore, placeholdersBefore, err := priorCanonicalFixtureObservations(settings.outputDir)
+	materializedBefore, bindingsBefore, markerOccurrencesBefore, err := priorCanonicalFixtureObservations(settings.outputDir)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func runCanonicalFixture(program grant.PolicyProgram, settings options) error {
 		return fmt.Errorf("canonical fixture writer observed %d pre-manifest artifacts, want 4", len(actualNames))
 	}
 	actualNames = append(actualNames, artifactNames[4])
-	fixture, err = grant.FinalizeCanonicalExecutorBindingManifest(program, fixture, actualNames, 5, materializedBefore, bindingsBefore, placeholdersBefore)
+	fixture, err = grant.FinalizeCanonicalExecutorBindingManifest(program, fixture, actualNames, 5, materializedBefore, bindingsBefore, markerOccurrencesBefore)
 	if err != nil {
 		return err
 	}
@@ -104,9 +105,13 @@ func canonicalFixtureNames(dir string) ([]string, error) {
 	}
 	result := []string{}
 	for _, entry := range entries {
-		if !entry.IsDir() && known[entry.Name()] {
-			result = append(result, entry.Name())
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), "canonical-executor-") || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
 		}
+		if !known[entry.Name()] {
+			return nil, fmt.Errorf("unexpected canonical fixture artifact %q", entry.Name())
+		}
+		result = append(result, entry.Name())
 	}
 	sort.Strings(result)
 	return result, nil
@@ -120,30 +125,20 @@ func priorCanonicalFixtureObservations(dir string) (int, int, int, error) {
 		}
 		return 0, 0, 0, err
 	}
-	manifestPath := filepath.Join(dir, "canonical-executor-grant-binding-manifest.json")
-	manifestPresent := false
 	known := map[string]bool{}
 	for _, name := range grant.CanonicalExecutorArtifactNames() {
 		known[name] = true
 	}
 	for _, entry := range entries {
 		if !entry.IsDir() && known[entry.Name()] {
-			manifestPresent = manifestPresent || entry.Name() == "canonical-executor-grant-binding-manifest.json"
+			return 0, 0, 0, fmt.Errorf("canonical fixture output directory already contains %q; use a fresh directory", entry.Name())
 		}
 	}
-	if !manifestPresent {
-		for _, entry := range entries {
-			if !entry.IsDir() && known[entry.Name()] {
-				return 0, 0, 0, errors.New("partial prior canonical fixture artifacts are not replaceable")
-			}
-		}
-		return 0, 0, 0, nil
-	}
-	var manifest grant.CanonicalExecutorBindingManifest
-	if err := readJSON(manifestPath, &manifest); err != nil {
-		return 0, 0, 0, fmt.Errorf("read prior canonical fixture manifest: %w", err)
-	}
-	return manifest.MaterializedFixtureCountAfter, manifest.ExactGrantIdentityBindingsAfter, manifest.PlaceholderFieldsAfter, nil
+	// Existing non-canonical evidence is allowed in the shared workflow
+	// directory, but canonical materialization always starts from a clean
+	// canonical namespace. This preserves append-only observations and avoids
+	// trusting an arbitrary prior manifest as a baseline.
+	return 0, 0, 0, nil
 }
 
 func checkPersistedCanonicalFixture(program grant.PolicyProgram, dir string, expected grant.CanonicalExecutorGrantFixture) error {

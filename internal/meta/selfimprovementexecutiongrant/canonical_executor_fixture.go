@@ -25,6 +25,9 @@ const (
 	CanonicalExecutorUnknownReason          = "MISSING_EXACT_CANONICAL_EXECUTOR_GRANT_INPUT"
 	CanonicalExecutorUnknownNext            = "restore-exact-canonical-executor-grant-input"
 	CanonicalExecutorUnknownBlockedBy       = "canonical_executor_grant_input"
+	CanonicalExecutorSourceUnknownNext      = "restore-exact-canonical-executor-source-artifact"
+	CanonicalExecutorSourceUnknownBlockedBy = "canonical_executor_source_artifact"
+	CanonicalExecutorSourceUnknownClass     = "SOURCE_ARTIFACT_UNAVAILABLE"
 	CanonicalExecutorWorkflowName           = "Self-improvement candidate execution contract"
 	CanonicalExecutorWorkflowPath           = ".github/workflows/self-improvement-execution-contract.yml"
 	CanonicalExecutorWorkflowEvent          = "workflow_dispatch"
@@ -148,16 +151,17 @@ type CanonicalExecutorGrantReceipt struct {
 }
 
 type CanonicalExecutorVerificationCase struct {
-	ID                 string     `json:"id"`
-	ExpectedDecision   Decision   `json:"expected_decision"`
-	ExpectedResolution Resolution `json:"expected_resolution"`
-	ExpectedReason     string     `json:"expected_reason"`
-	ActualDecision     Decision   `json:"actual_decision"`
-	ActualResolution   Resolution `json:"actual_resolution"`
-	ActualReason       string     `json:"actual_reason"`
-	MissingFields      []string   `json:"missing_fields,omitempty"`
-	ContradictoryFields []string  `json:"contradictory_fields,omitempty"`
-	Pass               bool       `json:"pass"`
+	ID                  string       `json:"id"`
+	ExpectedDecision    Decision     `json:"expected_decision"`
+	ExpectedResolution  Resolution   `json:"expected_resolution"`
+	ExpectedReason      string       `json:"expected_reason"`
+	ActualDecision      Decision     `json:"actual_decision"`
+	ActualResolution    Resolution   `json:"actual_resolution"`
+	ActualReason        string       `json:"actual_reason"`
+	Unknown             *UnknownState `json:"unknown,omitempty"`
+	MissingFields       []string     `json:"missing_fields,omitempty"`
+	ContradictoryFields []string     `json:"contradictory_fields,omitempty"`
+	Pass                bool         `json:"pass"`
 }
 
 type CanonicalExecutorVerification struct {
@@ -168,6 +172,7 @@ type CanonicalExecutorVerification struct {
 	IndependentDecision          Decision                            `json:"independent_decision"`
 	IndependentResolution        Resolution                          `json:"independent_resolution"`
 	IndependentReason            string                              `json:"independent_reason"`
+	IndependentUnknown           *UnknownState                       `json:"unknown,omitempty"`
 	Verified                     bool                                `json:"verified"`
 	IndependentReplayComparisons int                                 `json:"independent_replay_comparisons"`
 	CaseDenominator              int                                 `json:"case_denominator"`
@@ -194,12 +199,13 @@ type CanonicalExecutorBindingManifest struct {
 	ExactGrantIdentityBindingsAfter        int                            `json:"exact_grant_identity_bindings_after"`
 	ExactGrantIdentityBindings              int                            `json:"exact_grant_identity_bindings"`
 	ExactGrantIdentityBindingDenominator    int                            `json:"exact_grant_identity_binding_denominator"`
-	PlaceholderFieldsBefore                 int                            `json:"placeholder_fields_before"`
-	PlaceholderFieldsAfter                  int                            `json:"placeholder_fields_after"`
+	LegacyMarkerOccurrencesBefore           int                            `json:"legacy_marker_occurrences_before"`
+	LegacyMarkerOccurrencesAfter            int                            `json:"legacy_marker_occurrences_after"`
 	ArtifactFiles                           int                            `json:"artifact_files"`
 	ArtifactTypes                           int                            `json:"artifact_types"`
 	ArtifactNames                           []string                       `json:"artifact_names"`
 	RequestDigest                           string                         `json:"request_digest"`
+	CanonicalRequestDigest                   string                         `json:"canonical_request_digest"`
 	DecisionDigest                          string                         `json:"decision_digest"`
 	ReceiptDigest                           string                         `json:"receipt_digest"`
 	VerificationDigest                      string                         `json:"verification_digest"`
@@ -355,6 +361,7 @@ func VerifyCanonicalExecutorGrantFixture(program PolicyProgram, fixture Canonica
 		Schema: CanonicalExecutorVerificationSchema, RequestDigest: fixture.Request.GrantRequest.Digest,
 		DecisionDigest: fixture.Decision.Digest, ReceiptDigest: fixture.Receipt.Digest,
 		IndependentDecision: decision, IndependentResolution: resolution, IndependentReason: reason,
+		IndependentUnknown: canonicalExecutorUnknownState(decision, missing),
 		CaseDenominator: 0,
 		Counts: map[string]int{"CLOSED": 0, "UNKNOWN": 0, "REFUTED": 0}, Fixture: true,
 		LiveAuthority: false, CanonicalExecutionCount: 0, GrantConsumedUses: 0,
@@ -372,7 +379,7 @@ func VerifyCanonicalExecutorGrantFixture(program PolicyProgram, fixture Canonica
 	for _, item := range verification.Cases {
 		verification.Counts[string(item.ActualDecision)]++
 	}
-	verification.Verified = contractErr == nil && verifyProgram["verification"] == "independent" && verifyProgram["candidate_execution"] == "0" && verifyProgram["grant_consumption"] == "0" && verifyProgram["repository_writes"] == "0" && verifyProgram["local_test_executions"] == "0" && verifyProgram["refuted_dominates_unknown"] == "true" && decision == DecisionClosed && resolution == ResolutionGrantedUnconsumed && reason == ReasonAllow && len(missing) == 0 && len(contradictory) == 0 && fixture.Decision.DecisionType == CanonicalExecutorDecisionType && fixture.Decision.Fixture && !fixture.Decision.LiveAuthority && !fixture.Decision.UserDecision && !fixture.Decision.ProductUtilityEvidence && fixture.Decision.CanonicalExecutionAllowed && fixture.Decision.ExecutionScope == CanonicalExecutorScope && fixture.Receipt.GrantReceipt.GrantAllowsExecution && fixture.Receipt.GrantReceipt.RemainingUses == 1 && fixture.Receipt.GrantReceipt.ConsumedUses == 0 && fixture.Receipt.GrantReceipt.ExecutionCount == 0 && fixture.Receipt.MaxExecutions == 1 && !fixture.Receipt.LiveAuthority && fixture.Receipt.CanonicalExecutionAllowed && fixture.Receipt.GrantReceipt.Digest == receiptDigest(fixture.Receipt.GrantReceipt) && fixture.Decision.Digest == canonicalExecutorDecisionDigest(fixture.Decision) && fixture.Receipt.Digest == canonicalExecutorReceiptDigest(fixture.Receipt) && fixture.Request.Digest == canonicalExecutorRequestDigest(fixture.Request) && verification.IndependentReplayComparisons == 1 && verification.Counts["CLOSED"] == 1 && verification.Counts["UNKNOWN"] == 3 && verification.Counts["REFUTED"] == 9 && allCanonicalExecutorCasesPass(verification.Cases)
+	verification.Verified = contractErr == nil && verifyProgram["verification"] == "independent" && verifyProgram["candidate_execution"] == "0" && verifyProgram["grant_consumption"] == "0" && verifyProgram["repository_writes"] == "0" && verifyProgram["local_test_executions"] == "0" && verifyProgram["refuted_dominates_unknown"] == "true" && decision == DecisionClosed && resolution == ResolutionGrantedUnconsumed && reason == ReasonAllow && len(missing) == 0 && len(contradictory) == 0 && fixture.Decision.DecisionType == CanonicalExecutorDecisionType && fixture.Decision.Fixture && !fixture.Decision.LiveAuthority && !fixture.Decision.UserDecision && !fixture.Decision.ProductUtilityEvidence && fixture.Decision.CanonicalExecutionAllowed && fixture.Decision.ExecutionScope == CanonicalExecutorScope && fixture.Receipt.GrantReceipt.GrantAllowsExecution && fixture.Receipt.GrantReceipt.RemainingUses == 1 && fixture.Receipt.GrantReceipt.ConsumedUses == 0 && fixture.Receipt.GrantReceipt.ExecutionCount == 0 && fixture.Receipt.MaxExecutions == 1 && !fixture.Receipt.LiveAuthority && fixture.Receipt.CanonicalExecutionAllowed && fixture.Receipt.GrantReceipt.Digest == receiptDigest(fixture.Receipt.GrantReceipt) && fixture.Decision.Digest == canonicalExecutorDecisionDigest(fixture.Decision) && fixture.Receipt.Digest == canonicalExecutorReceiptDigest(fixture.Receipt) && fixture.Request.Digest == canonicalExecutorRequestDigest(fixture.Request) && verification.IndependentReplayComparisons == 1 && verification.Counts["CLOSED"] == 1 && verification.Counts["UNKNOWN"] == 3 && verification.Counts["REFUTED"] == 9 && canonicalExecutorUnknownComplete(verification.IndependentDecision, verification.IndependentUnknown) && allCanonicalExecutorCasesPass(verification.Cases)
 	verification.Digest = canonicalExecutorVerificationDigest(verification)
 	return verification
 }
@@ -384,20 +391,21 @@ func canonicalExecutorVerificationCases(program PolicyProgram, fixture Canonical
 		expected Decision
 		resolution Resolution
 		reason   string
+		unknown  *UnknownState
 	}{
-		{"exact-materialized-grant", func(*CanonicalExecutorGrantFixture) {}, DecisionClosed, ResolutionGrantedUnconsumed, ReasonAllow},
-		{"missing-candidate-input", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput = valuewitnessinput.ExecutionInput{}; current.Request.V24Request.Candidate.ExecutionInput = nil; current.Request.V25Contract.ExecutionInput = nil; current.Receipt.CandidateStableID = ""; current.Receipt.CandidateDigest = ""; current.Receipt.CandidateInputDigest = ""; current.Receipt.SubjectSHA = ""; current.Receipt.GrantReceipt.Digest = receiptDigest(current.Receipt.GrantReceipt); current.Receipt.Digest = canonicalExecutorReceiptDigest(current.Receipt); current.Request.Digest = canonicalExecutorRequestDigest(current.Request) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason},
-		{"missing-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact = CanonicalExecutorSourceArtifact{}; current.Request.GrantRequest.Source = SourceArtifact{}; current.Request.GrantRequest.Digest = requestDigest(current.Request.GrantRequest); current.Request.Digest = canonicalExecutorRequestDigest(current.Request); current.Decision.DecisionInput.Source = SourceArtifact{}; current.Decision.DecisionInput.DecisionDigest = decisionDigest(current.Decision.DecisionInput); current.Decision.Digest = canonicalExecutorDecisionDigest(current.Decision); current.Receipt.SourceArtifact = CanonicalExecutorSourceArtifact{}; current.Receipt.GrantReceipt.Digest = receiptDigest(current.Receipt.GrantReceipt); current.Receipt.Digest = canonicalExecutorReceiptDigest(current.Receipt) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason},
-		{"missing-source-freshness", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.ArtifactExpiryKnown = false; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason},
-		{"expired-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.ArtifactExpired = true; refreshCanonicalExecutorDerived(current) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH"},
-		{"tampered-candidate-digest", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput.CandidateDigest = digestBytes([]byte("tampered-candidate")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_CANDIDATE_BINDING_MISMATCH"},
-		{"tampered-v24-binding", func(current *CanonicalExecutorGrantFixture) { current.Request.V24Request.Digest = digestBytes([]byte("tampered-v24-request")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_V24_BINDING_MISMATCH"},
-		{"tampered-v25-binding", func(current *CanonicalExecutorGrantFixture) { current.Request.V25Contract.Digest = digestBytes([]byte("tampered-v25-contract")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_V25_BINDING_MISMATCH"},
-		{"tampered-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.APIArchiveDigest = digestBytes([]byte("tampered-source")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH"},
-		{"tampered-scope", func(current *CanonicalExecutorGrantFixture) { current.Request.GrantRequest.Target = "unbounded" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SCOPE_BINDING_MISMATCH"},
-		{"tampered-ref", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.Ref = "refs/heads/main" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH"},
-		{"tampered-decision", func(current *CanonicalExecutorGrantFixture) { current.Decision.DecisionInput.Decision = DecisionDeny }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_DECISION_BINDING_MISMATCH"},
-		{"missing-input-with-tampered-scope", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput = valuewitnessinput.ExecutionInput{}; current.Request.V24Request.Candidate.ExecutionInput = nil; current.Request.V25Contract.ExecutionInput = nil; current.Request.GrantRequest.Target = "unbounded" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SCOPE_BINDING_MISMATCH"},
+		{"exact-materialized-grant", func(*CanonicalExecutorGrantFixture) {}, DecisionClosed, ResolutionGrantedUnconsumed, ReasonAllow, nil},
+		{"missing-candidate-input", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput = valuewitnessinput.ExecutionInput{}; current.Receipt.CandidateStableID = ""; current.Receipt.CandidateDigest = ""; current.Receipt.CandidateInputDigest = ""; current.Receipt.SubjectSHA = ""; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"candidate_input_digest"})},
+		{"missing-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact = CanonicalExecutorSourceArtifact{}; current.Request.GrantRequest.Source = SourceArtifact{}; current.Receipt.SourceArtifact = CanonicalExecutorSourceArtifact{}; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"source_artifact"})},
+		{"expired-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.ArtifactExpired = true; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"source_artifact_expiry"})},
+		{"tampered-candidate-digest", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput.CandidateDigest = digestBytes([]byte("tampered-candidate")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_CANDIDATE_BINDING_MISMATCH", nil},
+		{"tampered-v24-binding", func(current *CanonicalExecutorGrantFixture) { current.Request.V24Request.Digest = digestBytes([]byte("tampered-v24-request")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_V24_BINDING_MISMATCH", nil},
+		{"tampered-v25-binding", func(current *CanonicalExecutorGrantFixture) { current.Request.V25Contract.Digest = digestBytes([]byte("tampered-v25-contract")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_V25_BINDING_MISMATCH", nil},
+		{"tampered-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.APIArchiveDigest = digestBytes([]byte("tampered-source")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH", nil},
+		{"tampered-scope", func(current *CanonicalExecutorGrantFixture) { current.Request.GrantRequest.Target = "unbounded" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SCOPE_BINDING_MISMATCH", nil},
+		{"tampered-ref", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.Ref = "refs/heads/main" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH", nil},
+		{"tampered-decision", func(current *CanonicalExecutorGrantFixture) { current.Decision.DecisionInput.Decision = DecisionDeny }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_DECISION_BINDING_MISMATCH", nil},
+		{"missing-input-with-tampered-scope", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput = valuewitnessinput.ExecutionInput{}; current.Request.GrantRequest.Target = "unbounded" }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SCOPE_BINDING_MISMATCH", nil},
+		{"rehashed-receipt-identity-tamper", func(current *CanonicalExecutorGrantFixture) { current.Receipt.CandidateDigest = digestBytes([]byte("tampered-receipt-identity")); current.Receipt.Digest = canonicalExecutorReceiptDigest(current.Receipt) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_RECEIPT_BINDING_MISMATCH", nil},
 	}
 	result := make([]CanonicalExecutorVerificationCase, 0, len(variants))
 	for _, variant := range variants {
@@ -407,8 +415,9 @@ func canonicalExecutorVerificationCases(program PolicyProgram, fixture Canonical
 		result = append(result, CanonicalExecutorVerificationCase{ID: variant.id,
 			ExpectedDecision: variant.expected, ExpectedResolution: variant.resolution, ExpectedReason: variant.reason,
 			ActualDecision: actual, ActualResolution: actualResolution, ActualReason: actualReason,
+			Unknown: canonicalExecutorUnknownState(actual, missing),
 			MissingFields: missing, ContradictoryFields: contradictory,
-			Pass: actual == variant.expected && actualResolution == variant.resolution && actualReason == variant.reason,
+			Pass: actual == variant.expected && actualResolution == variant.resolution && actualReason == variant.reason && reflect.DeepEqual(canonicalExecutorUnknownState(actual, missing), variant.unknown),
 		})
 	}
 	return result
@@ -450,13 +459,39 @@ func classifyCanonicalExecutorFixture(fixture CanonicalExecutorGrantFixture) (De
 	if contains(contradictory, "source") {
 		return DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_SOURCE_BINDING_MISMATCH", missing, contradictory
 	}
+	if contains(contradictory, "receipt") {
+		return DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_RECEIPT_BINDING_MISMATCH", missing, contradictory
+	}
 	if contains(contradictory, "digest") {
 		return DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_DIGEST_BINDING_MISMATCH", missing, contradictory
+	}
+	if len(contradictory) > 0 {
+		return DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_BINDING_CONTRADICTION", missing, contradictory
 	}
 	if len(missing) > 0 {
 		return DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, missing, contradictory
 	}
 	return DecisionClosed, ResolutionGrantedUnconsumed, ReasonAllow, nil, nil
+}
+
+func canonicalExecutorUnknownState(decision Decision, missing []string) *UnknownState {
+	if decision != DecisionUnknown {
+		return nil
+	}
+	for _, field := range missing {
+		switch field {
+		case "source_artifact", "source_workflow_identity", "source_workflow_run", "source_artifact_expiry":
+			return &UnknownState{Stage: "FETCH", Step: "2", Reason: CanonicalExecutorUnknownReason, UnknownClass: CanonicalExecutorSourceUnknownClass, NextOperation: CanonicalExecutorSourceUnknownNext, BlockedBy: CanonicalExecutorSourceUnknownBlockedBy}
+		}
+	}
+	return &UnknownState{Stage: "BIND", Step: "3", Reason: CanonicalExecutorUnknownReason, UnknownClass: "INCOMPLETE_EVIDENCE", NextOperation: CanonicalExecutorUnknownNext, BlockedBy: CanonicalExecutorUnknownBlockedBy}
+}
+
+func canonicalExecutorUnknownComplete(decision Decision, unknown *UnknownState) bool {
+	if decision != DecisionUnknown {
+		return unknown == nil
+	}
+	return unknown != nil && unknown.Stage != "" && unknown.Step != "" && unknown.Reason != "" && unknown.UnknownClass != "" && unknown.NextOperation != "" && unknown.BlockedBy != ""
 }
 
 func canonicalExecutorBindingState(fixture CanonicalExecutorGrantFixture) ([]string, []string) {
@@ -478,7 +513,7 @@ func canonicalExecutorBindingState(fixture CanonicalExecutorGrantFixture) ([]str
 	if request.SourceArtifact.ArtifactID == 0 || request.SourceArtifact.APIArchiveDigest == "" || request.SourceArtifact.ObservedArchiveDigest == "" { addMissing("source_artifact") }
 	if request.SourceArtifact.WorkflowRunID == 0 || request.SourceArtifact.WorkflowRunAttempt == 0 { addMissing("source_workflow_run") }
 	if !request.SourceArtifact.ArtifactExpiryKnown || !request.SourceArtifact.ArtifactRetrieved { addMissing("source_artifact_expiry") }
-	if request.SourceArtifact.ArtifactExpired { addContradictory("source") }
+	if request.SourceArtifact.ArtifactExpired { addMissing("source_artifact_expiry") }
 	if request.SourceArtifact.ArtifactRetrievalError != "" { addMissing("source_artifact_expiry") }
 	if request.GrantRequest.Target != GrantTarget || request.GrantRequest.Mode != GrantMode { addContradictory("scope") }
 	if request.GrantRequest.V24 != ProjectV24(request.V24Request, request.V24Resolution) { addContradictory("v24") }
@@ -520,7 +555,9 @@ func canonicalExecutorBindingState(fixture CanonicalExecutorGrantFixture) ([]str
 		addMissing("receipt")
 	} else {
 		if receipt.Schema != CanonicalExecutorReceiptSchema || receipt.DecisionType != CanonicalExecutorDecisionType || !receipt.Fixture || receipt.LiveAuthority || !receipt.CanonicalExecutionAllowed || receipt.ExecutionScope != CanonicalExecutorScope || receipt.MaxExecutions != MaxExecutions { addContradictory("receipt") }
-		if receipt.RequestDigest != request.GrantRequest.Digest || receipt.DecisionDigest != decision.Digest || receipt.CandidateStableID != input.CandidateStableID || receipt.CandidateDigest != input.CandidateDigest || receipt.CandidateInputDigest != input.Digest || receipt.V24RequestDigest != request.V24Request.Digest || receipt.V24ResolutionDigest != request.V24Resolution.Digest || receipt.V24VerificationDigest != request.V24Verification.Digest || receipt.V24AuthorizationContractDigest != request.V24Request.Contract.CanonicalDigest || receipt.V25ContractDigest != request.V25Contract.Digest || receipt.V25VerificationDigest != request.V25Verification.Digest || receipt.SubjectSHA != input.SubjectSHA || receipt.SourceArtifact != request.SourceArtifact { addContradictory("receipt") }
+		if receipt.RequestDigest != request.GrantRequest.Digest || receipt.DecisionDigest != decision.Digest || receipt.V24RequestDigest != request.V24Request.Digest || receipt.V24ResolutionDigest != request.V24Resolution.Digest || receipt.V24VerificationDigest != request.V24Verification.Digest || receipt.V24AuthorizationContractDigest != request.V24Request.Contract.CanonicalDigest || receipt.V25ContractDigest != request.V25Contract.Digest || receipt.V25VerificationDigest != request.V25Verification.Digest || receipt.SubjectSHA != input.SubjectSHA || receipt.SourceArtifact != request.SourceArtifact { addContradictory("receipt") }
+		if !inputMissing && (receipt.CandidateStableID != input.CandidateStableID || receipt.CandidateDigest != input.CandidateDigest || receipt.CandidateInputDigest != input.Digest) { addContradictory("receipt") }
+		if inputMissing && (receipt.CandidateStableID != "" || receipt.CandidateDigest != "" || receipt.CandidateInputDigest != "") { addMissing("candidate_input_digest") }
 		if receipt.GrantReceipt.RequestDigest != request.GrantRequest.Digest || receipt.GrantReceipt.Decision != DecisionAllow || receipt.GrantReceipt.DecisionSource != DecisionSourceCanonical || !receipt.GrantReceipt.GrantAllowsExecution || receipt.GrantReceipt.RemainingUses != 1 || receipt.GrantReceipt.ConsumedUses != 0 || receipt.GrantReceipt.ExecutionCount != 0 || receipt.GrantReceipt.ConsumptionStatus != ConsumptionPending || receipt.GrantReceipt.ConsumptionObligation != ConsumptionObligation || receipt.GrantReceipt.OneUseEnforcementState != "PENDING_NEXT_EXECUTOR" || receipt.GrantReceipt.Digest != receiptDigest(receipt.GrantReceipt) { addContradictory("receipt") }
 		if receipt.Digest == "" { addMissing("receipt_digest") } else if receipt.Digest != canonicalExecutorReceiptDigest(receipt) { addContradictory("digest") }
 	}
@@ -529,13 +566,15 @@ func canonicalExecutorBindingState(fixture CanonicalExecutorGrantFixture) ([]str
 
 func buildCanonicalExecutorBindingManifest(program PolicyProgram, fixture CanonicalExecutorGrantFixture) CanonicalExecutorBindingManifest {
 	bound := countCanonicalExecutorBindings(program, fixture)
+	artifactNames := CanonicalExecutorArtifactNames()
+	sort.Strings(artifactNames)
 	return CanonicalExecutorBindingManifest{
 		Schema: CanonicalExecutorBindingManifestSchema, FixtureSchema: CanonicalExecutorRequestSchema,
 		MaterializedFixtureOf: CanonicalExecutorMaterializedCase, MaterializedFixtureCountBefore: 0, MaterializedFixtureCountAfter: 1,
-		ExactGrantIdentityBindingsBefore: 0, ExactGrantIdentityBindingsAfter: bound, ExactGrantIdentityBindings: bound, ExactGrantIdentityBindingDenominator: bound,
-		PlaceholderFieldsBefore: countLegacyCanonicalPlaceholders(program), PlaceholderFieldsAfter: countCanonicalExecutorPlaceholders(fixture),
-		ArtifactFiles: 5, ArtifactTypes: 5, ArtifactNames: []string{"canonical-executor-grant-request.json", "canonical-executor-grant-decision.json", "canonical-executor-grant-receipt.json", "canonical-executor-grant-verification.json", "canonical-executor-grant-binding-manifest.json"},
-		RequestDigest: fixture.Request.GrantRequest.Digest, DecisionDigest: fixture.Decision.Digest, ReceiptDigest: fixture.Receipt.Digest, VerificationDigest: fixture.Verification.Digest,
+		ExactGrantIdentityBindingsBefore: 0, ExactGrantIdentityBindingsAfter: bound, ExactGrantIdentityBindings: bound, ExactGrantIdentityBindingDenominator: len(canonicalExecutorBindingNames),
+		LegacyMarkerOccurrencesBefore: countLegacyCanonicalMarkerOccurrences(program), LegacyMarkerOccurrencesAfter: countCanonicalExecutorMarkerOccurrences(fixture),
+		ArtifactFiles: 5, ArtifactTypes: 5, ArtifactNames: artifactNames,
+		RequestDigest: fixture.Request.GrantRequest.Digest, CanonicalRequestDigest: fixture.Request.Digest, DecisionDigest: fixture.Decision.Digest, ReceiptDigest: fixture.Receipt.Digest, VerificationDigest: fixture.Verification.Digest,
 		CandidateStableID: fixture.Request.CandidateInput.CandidateStableID, CandidateDigest: fixture.Request.CandidateInput.CandidateDigest, CandidateInputDigest: fixture.Request.CandidateInput.Digest, SubjectSHA: fixture.Request.CandidateInput.SubjectSHA,
 		V24RequestDigest: fixture.Request.V24Request.Digest, V24ResolutionDigest: fixture.Request.V24Resolution.Digest, V24VerificationDigest: fixture.Request.V24Verification.Digest, V24AuthorizationContractDigest: fixture.Request.V24Request.Contract.CanonicalDigest,
 		V25ContractDigest: fixture.Request.V25Contract.Digest, V25VerificationDigest: fixture.Request.V25Verification.Digest, SourceArtifact: fixture.Request.SourceArtifact,
@@ -553,8 +592,8 @@ func buildCanonicalExecutorBindingManifest(program PolicyProgram, fixture Canoni
 // FinalizeCanonicalExecutorBindingManifest records the observations made by
 // the artifact writer. The in-memory builder uses zero pre-materialization
 // values; the writer supplies its actual directory counts and names here.
-func FinalizeCanonicalExecutorBindingManifest(program PolicyProgram, fixture CanonicalExecutorGrantFixture, artifactNames []string, artifactTypes, materializedBefore, bindingsBefore, placeholdersBefore int) (CanonicalExecutorGrantFixture, error) {
-	if len(artifactNames) == 0 || artifactTypes <= 0 || artifactTypes > len(artifactNames) || materializedBefore < 0 || bindingsBefore < 0 || placeholdersBefore < 0 {
+func FinalizeCanonicalExecutorBindingManifest(program PolicyProgram, fixture CanonicalExecutorGrantFixture, artifactNames []string, artifactTypes, materializedBefore, bindingsBefore, markerOccurrencesBefore int) (CanonicalExecutorGrantFixture, error) {
+	if len(artifactNames) == 0 || artifactTypes <= 0 || artifactTypes > len(artifactNames) || materializedBefore < 0 || bindingsBefore < 0 || markerOccurrencesBefore < 0 {
 		return CanonicalExecutorGrantFixture{}, errors.New("canonical executor artifact observations are incomplete")
 	}
 	manifest := buildCanonicalExecutorBindingManifest(program, fixture)
@@ -563,8 +602,8 @@ func FinalizeCanonicalExecutorBindingManifest(program PolicyProgram, fixture Can
 	manifest.ExactGrantIdentityBindingsBefore = bindingsBefore
 	manifest.ExactGrantIdentityBindingsAfter = countCanonicalExecutorBindings(program, fixture)
 	manifest.ExactGrantIdentityBindings = manifest.ExactGrantIdentityBindingsAfter
-	manifest.PlaceholderFieldsBefore = placeholdersBefore
-	manifest.PlaceholderFieldsAfter = countCanonicalExecutorPlaceholders(fixture)
+	manifest.LegacyMarkerOccurrencesBefore = markerOccurrencesBefore
+	manifest.LegacyMarkerOccurrencesAfter = countCanonicalExecutorMarkerOccurrences(fixture)
 	manifest.ArtifactFiles = len(artifactNames)
 	manifest.ArtifactTypes = artifactTypes
 	manifest.ArtifactNames = append([]string(nil), artifactNames...)
@@ -579,8 +618,47 @@ func ValidateCanonicalExecutorFixture(program PolicyProgram, fixture CanonicalEx
 	if !verification.Verified || verification.Digest != fixture.Verification.Digest {
 		return errors.New("canonical executor fixture independent verification failed")
 	}
-	if fixture.Manifest.Schema != CanonicalExecutorBindingManifestSchema || fixture.Manifest.FixtureSchema != CanonicalExecutorRequestSchema || fixture.Manifest.MaterializedFixtureCountAfter != fixture.Manifest.MaterializedFixtureCountBefore+1 || fixture.Manifest.ExactGrantIdentityBindings != fixture.Manifest.ExactGrantIdentityBindingsAfter || fixture.Manifest.ExactGrantIdentityBindingsAfter != len(canonicalExecutorBindingNames) || fixture.Manifest.ArtifactFiles != len(fixture.Manifest.ArtifactNames) || fixture.Manifest.ArtifactTypes != len(fixture.Manifest.ArtifactNames) || fixture.Manifest.LiveAuthority || !fixture.Manifest.Fixture || fixture.Manifest.CanonicalExecutionCount != 0 || fixture.Manifest.ReceiptConsumedUses != 0 || fixture.Manifest.ReceiptExecutionCount != 0 || fixture.Manifest.Digest != canonicalExecutorManifestDigest(fixture.Manifest) {
+	if err := validateCanonicalExecutorManifest(program, fixture); err != nil {
+		return err
+	}
+	for _, mutate := range []func(*CanonicalExecutorBindingManifest){
+		func(manifest *CanonicalExecutorBindingManifest) { manifest.CandidateDigest = digestBytes([]byte("rehashed-wrong-candidate-root")) },
+		func(manifest *CanonicalExecutorBindingManifest) { manifest.ExecutorContractDigest = digestBytes([]byte("rehashed-wrong-semantic-root")) },
+		func(manifest *CanonicalExecutorBindingManifest) { manifest.ArtifactNames[0] = "substituted-canonical-executor-artifact.json" },
+	} {
+		adversarial := fixture
+		mutate(&adversarial.Manifest)
+		adversarial.Manifest.Digest = canonicalExecutorManifestDigest(adversarial.Manifest)
+		if validateCanonicalExecutorManifest(program, adversarial) == nil {
+			return errors.New("canonical executor fixture manifest tamper case was accepted")
+		}
+	}
+	return nil
+}
+
+func validateCanonicalExecutorManifest(program PolicyProgram, fixture CanonicalExecutorGrantFixture) error {
+	manifest := fixture.Manifest
+	expectedNames := CanonicalExecutorArtifactNames()
+	sort.Strings(expectedNames)
+	actualNames := append([]string(nil), manifest.ArtifactNames...)
+	sort.Strings(actualNames)
+	if manifest.Schema != CanonicalExecutorBindingManifestSchema || manifest.FixtureSchema != CanonicalExecutorRequestSchema || manifest.MaterializedFixtureCountBefore != 0 || manifest.MaterializedFixtureCountAfter != 1 || manifest.ExactGrantIdentityBindingsBefore != 0 || manifest.ExactGrantIdentityBindings != manifest.ExactGrantIdentityBindingsAfter || manifest.ExactGrantIdentityBindingsAfter != len(canonicalExecutorBindingNames) || manifest.ExactGrantIdentityBindingDenominator != len(canonicalExecutorBindingNames) || manifest.LegacyMarkerOccurrencesBefore != countLegacyCanonicalMarkerOccurrences(program) || manifest.LegacyMarkerOccurrencesAfter != countCanonicalExecutorMarkerOccurrences(fixture) || manifest.ArtifactFiles != len(expectedNames) || manifest.ArtifactTypes != len(expectedNames) || !reflect.DeepEqual(actualNames, expectedNames) || manifest.LiveAuthority || !manifest.Fixture || manifest.UserDecision || manifest.ProductUtilityEvidence || manifest.CanonicalExecutionCount != 0 || manifest.ReceiptConsumedUses != 0 || manifest.ReceiptExecutionCount != 0 {
 		return errors.New("canonical executor fixture manifest is not exact")
+	}
+	expected := buildCanonicalExecutorBindingManifest(program, fixture)
+	expected.MaterializedFixtureCountBefore = manifest.MaterializedFixtureCountBefore
+	expected.MaterializedFixtureCountAfter = manifest.MaterializedFixtureCountAfter
+	expected.ExactGrantIdentityBindingsBefore = manifest.ExactGrantIdentityBindingsBefore
+	expected.LegacyMarkerOccurrencesBefore = manifest.LegacyMarkerOccurrencesBefore
+	expected.ArtifactFiles = manifest.ArtifactFiles
+	expected.ArtifactTypes = manifest.ArtifactTypes
+	expected.ArtifactNames = append([]string(nil), expectedNames...)
+	expected.ExactGrantIdentityBindingsAfter = countCanonicalExecutorBindings(program, fixture)
+	expected.ExactGrantIdentityBindings = expected.ExactGrantIdentityBindingsAfter
+	expected.ExactGrantIdentityBindingDenominator = len(canonicalExecutorBindingNames)
+	expected.Digest = canonicalExecutorManifestDigest(expected)
+	if !reflect.DeepEqual(manifest, expected) || manifest.Digest != canonicalExecutorManifestDigest(manifest) {
+		return errors.New("canonical executor fixture manifest projection is not bound to the fixture")
 	}
 	return nil
 }
@@ -588,22 +666,31 @@ func ValidateCanonicalExecutorFixture(program PolicyProgram, fixture CanonicalEx
 func countCanonicalExecutorBindings(program PolicyProgram, fixture CanonicalExecutorGrantFixture) int {
 	request, input, source := fixture.Request, fixture.Request.CandidateInput, fixture.Request.SourceArtifact
 	v25 := request.GrantRequest.V25
+	v24Request := request.V24Request
+	v24Resolution := request.V24Resolution
+	v24Verification := request.V24Verification
+	v24Binding := request.GrantRequest.V24
+	v25Binding := request.GrantRequest.V25
+	v25Verification := request.V25Verification
+	inputBound := input.Digest != "" && v24Request.Candidate.ExecutionInput != nil && v25.ExecutionInput != nil &&
+		reflect.DeepEqual(input, *v24Request.Candidate.ExecutionInput) && reflect.DeepEqual(input, *v25.ExecutionInput) &&
+		validDigest(input.Digest)
 	bindings := map[string]bool{
-		"v24_request_digest": request.V24Request.Digest != "",
-		"v24_resolution_digest": request.V24Resolution.Digest != "",
-		"v24_verification_digest": request.V24Verification.Digest != "",
-		"candidate_stable_id": input.CandidateStableID != "",
-		"candidate_digest": validDigest(input.CandidateDigest),
-		"subject_sha": validSHA(input.SubjectSHA),
-		"observation_digest": validDigest(input.ObservationDigest),
-		"candidate_input_digest": validDigest(input.Digest),
-		"v24_contract_digest": validDigest(request.V24Request.Candidate.ContractCanonicalDigest),
-		"v25_contract_digest": validDigest(v25.ContractDigest),
-		"v24_authorization_contract_digest": validDigest(request.V24Request.Contract.CanonicalDigest),
-		"v25_verification_digest": validDigest(request.V25Verification.Digest),
-		"operation_id": v25.OperationID != "",
-		"evaluator_registry_digest": validDigest(v25.EvaluatorRegistryDigest),
-		"toolchain_test_contract_identity": v25.ToolchainTestContractIdentity != "",
+		"v24_request_digest": validDigest(v24Request.Digest) && v24Binding.RequestDigest == v24Request.Digest,
+		"v24_resolution_digest": validDigest(v24Resolution.Digest) && v24Binding.ResolutionDigest == v24Resolution.Digest && v24Resolution.RequestDigest == v24Request.Digest,
+		"v24_verification_digest": validDigest(v24Verification.Digest) && v24Verification.RequestDigest == v24Request.Digest && v24Verification.ResolutionDigest == v24Resolution.Digest && v24Verification.DecisionVerified,
+		"candidate_stable_id": input.CandidateStableID != "" && input.CandidateStableID == v24Request.Candidate.CandidateID && input.CandidateStableID == v25.CandidateStableID,
+		"candidate_digest": validDigest(input.CandidateDigest) && input.CandidateDigest == v24Request.Candidate.CandidateDigest && input.CandidateDigest == v25.CandidateDigest,
+		"subject_sha": validSHA(input.SubjectSHA) && input.SubjectSHA == v24Request.Candidate.SubjectSHA && input.SubjectSHA == v25.SubjectSHA,
+		"observation_digest": validDigest(input.ObservationDigest) && input.ObservationDigest == v24Request.Candidate.SourceObservationDigest && input.ObservationDigest == v25.ObservationDigest,
+		"candidate_input_digest": inputBound && input.Digest == v24Request.Candidate.ExecutionInputDigest && input.Digest == v25.CandidateInputDigest && input.Digest == v25.ExecutionInputDigest,
+		"v24_contract_digest": validDigest(v24Request.Candidate.ContractCanonicalDigest) && v24Binding.ContractDigest == v24Request.Candidate.ContractCanonicalDigest,
+		"v25_contract_digest": validDigest(v25.ContractDigest) && v25Binding.ContractDigest == v25.ContractDigest,
+		"v24_authorization_contract_digest": validDigest(v24Request.Contract.CanonicalDigest) && v24Binding.AuthorizationContractDigest == v24Request.Contract.CanonicalDigest,
+		"v25_verification_digest": validDigest(v25Verification.Digest) && v25Verification.ContractDigest == v25.ContractDigest && v25Verification.Verified,
+		"operation_id": string(v25.OperationID) == v25.KnownOperationID,
+		"evaluator_registry_digest": v25.EvaluatorRegistryDigest == v25.KnownRegistry().EvaluatorRegistryDigest,
+		"toolchain_test_contract_identity": v25.ToolchainTestContractIdentity == v25.FixedToolchainTestContractIdentity,
 		"max_executions": v25.MaxExecutions == MaxExecutions,
 		"repository_writes_allowed": !v25.RepositoryWritesAllowed,
 		"source_workflow_name": source.WorkflowName == CanonicalExecutorWorkflowName,
@@ -615,7 +702,7 @@ func countCanonicalExecutorBindings(program PolicyProgram, fixture CanonicalExec
 		"source_workflow_run_attempt": source.WorkflowRunAttempt > 0,
 		"source_artifact_name": source.ArtifactName == CanonicalExecutorArtifactPrefix+source.HeadSHA,
 		"source_artifact_id": source.ArtifactID > 0,
-		"source_artifact_archive_digest": validDigest(source.APIArchiveDigest),
+		"source_artifact_archive_digest": validDigest(source.APIArchiveDigest) && source.APIArchiveDigest == source.ObservedArchiveDigest,
 		"source_artifact_observed_digest": validDigest(source.ObservedArchiveDigest) && source.ObservedArchiveDigest == source.APIArchiveDigest,
 		"source_artifact_expiry": source.ArtifactExpiryKnown && source.ArtifactRetrieved && !source.ArtifactExpired && source.ArtifactRetrievalError == "",
 		"executor_semantic_contract_digest": validDigest(program.ExecutorContract.Digest),
@@ -636,19 +723,22 @@ func allCanonicalExecutorCasesPass(cases []CanonicalExecutorVerificationCase) bo
 	return true
 }
 
-func countCanonicalExecutorPlaceholders(fixture CanonicalExecutorGrantFixture) int {
+// Marker occurrence counts are a narrow source-quality diagnostic. They do not
+// claim to detect every legacy placeholder representation, including a digest
+// derived from a placeholder label.
+func countCanonicalExecutorMarkerOccurrences(fixture CanonicalExecutorGrantFixture) int {
 	raw, _ := json.Marshal(fixture)
 	markers := []string{"PLACEHOLDER", "placeholder", "<missing>", "TODO", "synthetic"}
 	count := 0
-	for _, marker := range markers { if bytes.Contains(raw, []byte(marker)) { count++ } }
+	for _, marker := range markers { count += bytes.Count(raw, []byte(marker)) }
 	return count
 }
 
-func countLegacyCanonicalPlaceholders(program PolicyProgram) int {
+func countLegacyCanonicalMarkerOccurrences(program PolicyProgram) int {
 	raw, _ := json.Marshal(program)
 	markers := []string{"PLACEHOLDER", "placeholder", "<missing>", "TODO", "synthetic"}
 	count := 0
-	for _, marker := range markers { if bytes.Contains(raw, []byte(marker)) { count++ } }
+	for _, marker := range markers { count += bytes.Count(raw, []byte(marker)) }
 	return count
 }
 
