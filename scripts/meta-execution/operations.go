@@ -178,10 +178,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 	for _, action := range generationActions(plan) {
 		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action)
 		if runErr != nil {
-			failure := observationFailure(action, runErr.stage, runErr.step, runErr.reason, runErr.class, runErr.next, runErr.blockedBy, materialized.Executor)
-			failure.FailureEvidence = append([]generation.ObservationFailureEvidence{}, runErr.evidence...)
-			failure.Counterexample = runErr.counterexample
-			failure.DerivedRelations = append([]generation.CounterexampleRelation{}, runErr.derivedRelations...)
+			failure := observationFailureFromError(action, runErr, materialized.Executor)
 			bundle.Failures = append(bundle.Failures, failure)
 			continue
 		}
@@ -219,6 +216,7 @@ type operationError struct {
 	evidence                         []generation.ObservationFailureEvidence
 	counterexample                   string
 	derivedRelations                 []generation.CounterexampleRelation
+	diagnostics                      []string
 	canonical                        []byte
 }
 

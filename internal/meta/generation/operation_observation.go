@@ -346,6 +346,7 @@ func normalizeObservationFailures(failures []ObservationFailure) []ObservationFa
 	for index := range result {
 		result[index].FailureEvidence = normalizeObservationFailureEvidence(result[index].FailureEvidence)
 		result[index].DerivedRelations = normalizeCounterexampleRelations(result[index].DerivedRelations)
+		result[index].Diagnostics = append([]string(nil), result[index].Diagnostics...)
 	}
 	sort.SliceStable(result, func(left, right int) bool {
 		leftKey, _ := json.Marshal(result[left])
@@ -407,6 +408,7 @@ type replayFailureProjection struct {
 	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
 	Counterexample    string                       `json:"counterexample,omitempty"`
 	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
+	Diagnostics       []string                     `json:"diagnostics,omitempty"`
 	Executor          replayProcessProjection      `json:"executor"`
 }
 
@@ -441,7 +443,7 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 			UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation,
 			BlockedBy: failure.BlockedBy, FailureEvidence: failure.FailureEvidence,
 			Counterexample: failure.Counterexample, DerivedRelations: failure.DerivedRelations,
-			Executor: replayProcess(failure.Executor),
+			Diagnostics: failure.Diagnostics, Executor: replayProcess(failure.Executor),
 		})
 	}
 	return digestJSON(struct {
