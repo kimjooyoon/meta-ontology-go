@@ -32,6 +32,8 @@ on:
       - 'internal/meta/repositoryprojection/extractor/return_tail_test.go'
       - 'internal/meta/repositoryprojection/extractor/typecheck.go'
       - 'internal/meta/repositoryprojection/extractor/return_tail_regression_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go'
       - 'internal/meta/transformationeffect/commands.go'
       - 'internal/meta/transformationeffectverification/validate.go'
       - 'internal/verify/scope_gooo_core_conformance_registry.go'
@@ -102,6 +104,8 @@ jobs:
             internal/meta/repositoryprojection/extractor/return_tail_test.go \
             internal/meta/repositoryprojection/extractor/typecheck.go \
             internal/meta/repositoryprojection/extractor/return_tail_regression_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go \
             scripts/meta-execution/operations.go \
             scripts/meta-summary/fixture_test.go \
             scripts/meta-summary/source_inventory_candidates.go \
@@ -113,6 +117,8 @@ jobs:
           test ! -s "$RUNNER_TEMP/core-conformance-format.diff"
       - name: Test registry, inventory and pinned denominator
         shell: bash
+        env:
+          RETURN_TAIL_RUNTIME_WITNESS_OUTPUT_DIR: ${{ runner.temp }}/return-tail-runtime-witness
         run: |
           set -euo pipefail
           go test \
@@ -138,5 +144,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: core-conformance-registry-${{ github.event.pull_request.head.sha }}
-          path: ${{ runner.temp }}/core-conformance-*
+          path: |
+            ${{ runner.temp }}/core-conformance-*
+            ${{ runner.temp }}/return-tail-runtime-witness/**
           if-no-files-found: error

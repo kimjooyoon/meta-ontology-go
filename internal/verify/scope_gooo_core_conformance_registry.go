@@ -35,6 +35,8 @@ func init() {
 		"internal/meta/repositoryprojection/extractor/return_tail_test.go",
 		"internal/meta/repositoryprojection/extractor/typecheck.go",
 		"internal/meta/repositoryprojection/extractor/return_tail_regression_test.go",
+		"internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go",
+		"internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go",
 		"scripts/meta-execution/operations.go",
 		"scripts/meta-summary/fixture_test.go",
 		"scripts/meta-summary/source_inventory_candidates.go",
