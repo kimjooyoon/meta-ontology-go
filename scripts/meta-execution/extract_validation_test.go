@@ -440,9 +440,22 @@ func extractionReportWithStrategyEvidence(evidence []projectionextractor.Strateg
 	}
 }
 
+func extractionReportMapWithStrategyEvidence(t *testing.T, evidence projectionextractor.StrategyEvidence) map[string]any {
+	t.Helper()
+	payload, err := json.Marshal(extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var value map[string]any
+	if err := json.Unmarshal(payload, &value); err != nil {
+		t.Fatal(err)
+	}
+	return value
+}
+
 // The fixture is copied from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
-// CI run 33951302941, runtime artifact 9964924639, verified as sha256:
-// 0afff72d0e3593b4673350decc8ebfc8db499a50da92ad3ea545c7ab04c7d36.
+// CI run 33951302941, runtime artifact 9964924639. The artifact archive SHA256 is
+// 0afff72d0e3593b4673350decc8ebfc8db499a50da92ad3ea545c7ab04c7d36d.
 func nativeStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
 	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
