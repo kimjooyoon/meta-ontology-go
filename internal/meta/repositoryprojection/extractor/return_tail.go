@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"go/types"
 	"path/filepath"
+	"slices"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -47,7 +48,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 		return nil, returnTailContradiction(obligationControlFlow, "function contains unsupported control flow")
 	}
 
-	for startIndex := len(statements) - 1; startIndex >= 0; startIndex-- {
+	for startIndex := range slices.Backward(statements) {
 		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
