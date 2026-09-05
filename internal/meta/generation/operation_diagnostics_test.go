@@ -41,7 +41,7 @@ func diagnosticObservationBundle() OperationObservationBundle {
 	return SealObservationBundle(OperationObservationBundle{
 		Failures: []ObservationFailure{{
 			ActionIndicatorID: "diagnostic-action",
-			Decision: "UNKNOWN", Stage: "derive-recipe", Step: "type-check-suffix",
+			Decision:          "UNKNOWN", Stage: "derive-recipe", Step: "type-check-suffix",
 			Reason: "TYPE_EVIDENCE_MISSING", UnknownClass: "DIRECT_MISSING",
 			NextOperation: "restore-type-evidence", BlockedBy: []string{},
 			Diagnostics: []string{"evidence=types-check", "unresolved-identifiers=value"},
