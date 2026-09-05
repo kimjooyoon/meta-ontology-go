@@ -67,7 +67,7 @@ func TestOperationProgressBoundaries(t *testing.T) {
 			called = true
 			return []byte("executor-output"), sentinel
 		})
-		if !called || string(output) != "executor-output" || !errors.Is(runErr, sentinel) {
+		if !called || string(output) != "executor-output" || runErr != sentinel {
 			t.Fatalf("diagnostic I/O changed executor result: called=%t output=%q err=%v", called, output, runErr)
 		}
 	})
