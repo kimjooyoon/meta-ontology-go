@@ -77,9 +77,9 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 }
 
 func returnTailFixture(header, tail string) string {
-	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n\ntype T struct{}\n"
+	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n\ntype T struct{}\n"
 }
 
 func returnTailPrefixBindingFixture(header, prefix, tail string) string {
-	return "package p\n\n" + header + prefix + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n\ntype T struct{}\n"
+	return "package p\n\n" + header + prefix + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n\ntype T struct{}\n"
 }

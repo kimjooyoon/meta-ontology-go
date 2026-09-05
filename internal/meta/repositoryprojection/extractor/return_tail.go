@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
-	"go/parser"
 	"go/token"
 	"go/types"
-	"path/filepath"
 	"slices"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
@@ -82,6 +80,14 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if !returnTailReturnsCompatible(statements, evidence.info, evidence.info.TypeOf(function.Type.Results.List[0].Type)) {
 		return nil, returnTailContradiction(obligationReturnShape, "terminal tail has a bare, multiple, or incompatible return")
 	}
+	first, last := statements[0], statements[len(statements)-1]
+	start := fset.Position(first.Pos()).Offset
+	end := fset.Position(last.End()).Offset
+	start = includeLeadingComments(fset, file, first, start)
+	if start < 0 || end < start || end > len(source) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail source coordinates are invalid")
+	}
+	stagePayloads := [][]byte{append([]byte(nil), source[start:end]...)}
 	bindings, err := suffixBindings(statements, function, fset, evidence)
 	if err != nil {
 		return nil, err
@@ -92,17 +98,13 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err := returnTailCalleeEffects(statements, evidence); err != nil {
 		return nil, err
 	}
+	stagePayloads = append(stagePayloads, append([]byte("control-flow\x00"), source[start:end]...))
+	stagePayloads = append(stagePayloads, proofBindingPayload(bindings))
+	stagePayloads = append(stagePayloads, append([]byte("callee-effects\x00"), source[start:end]...))
 
 	name := stableReturnTailName(function.Name.Name, startIndex+1)
 	if existing[name] {
 		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{"helper=" + name})
-	}
-	first, last := statements[0], statements[len(statements)-1]
-	start := fset.Position(first.Pos()).Offset
-	end := fset.Position(last.End()).Offset
-	start = includeLeadingComments(fset, file, first, start)
-	if start < 0 || end < start || end > len(source) {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail source coordinates are invalid")
 	}
 	helper, err := renderReturnTailHelper(fset, name, bindings, source[start:end])
 	if err != nil {
@@ -145,19 +147,25 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if physicalLines(renderedHelper) > functionLineLimit {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered extracted helper including package and imports remains over the limit")
 	}
-	if err := projectedConformance(root, logical, combined); err != nil {
-		return nil, err
+	stagePayloads = append(stagePayloads, append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...))
+	if !renderedCapacityProgress(beforeOuterHelper, renderedOuterHelper) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered outer helper made no capacity progress")
 	}
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
 	}
-	proof := []ObligationEvidence{
-		{Name: obligationReturnShape, Status: "PASS", Detail: "unnamed single-error result with assignable selected returns"},
-		{Name: obligationControlFlow, Status: "PASS", Detail: "no escaping branch, defer, go, panic, or recover"},
-		{Name: obligationFreeBindings, Status: "PASS", Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"},
-		{Name: obligationCalleeEffects, Status: "PASS", Detail: "all selected calls have closed typed effect evidence"},
-		{Name: obligationRenderedCapacity, Status: "PASS", Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))},
-		{Name: obligationProjectedConform, Status: "PASS", Detail: "projected package type-check passed"},
+	proof := newReturnTailProofChain(contractObligations, source, combined)
+	proofResults := []returnTailPredicateResult{
+		{Status: "PASS", Payload: stagePayloads[0], Detail: "unnamed single-error result with assignable selected returns"},
+		{Status: "PASS", Payload: stagePayloads[1], Detail: "no escaping branch, defer, go, panic, or recover"},
+		{Status: "PASS", Payload: stagePayloads[2], Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"},
+		{Status: "PASS", Payload: stagePayloads[3], Detail: "all selected calls have closed typed effect evidence"},
+		{Status: "PASS", Payload: stagePayloads[4], Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))},
+	}
+	for index, result := range proofResults {
+		if err := proof.consume(index, result); err != nil {
+			return nil, err
+		}
 	}
 	return &returnTailCandidate{
 		helperName: name,
@@ -185,8 +193,9 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			RenderedHelperLines:      physicalLines(renderedHelper),
 			RenderedOuterHelperBytes: len(renderedOuterHelper),
 			RenderedOuterHelperLines: physicalLines(renderedOuterHelper),
-			Obligations:              proof,
+			Obligations:              obligationsFromProofStages(proof.stages),
 			ContractObligations:      contractObligations,
+			ProofStages:              proof.stages,
 		},
 	}, nil
 }
@@ -592,90 +601,6 @@ func returnTailDirectLocalLValue(expression ast.Expr, object types.Object, local
 	}
 	identifier, ok := expression.(*ast.Ident)
 	return ok && object != nil && local[object] && identifier.Name != "_"
-}
-
-func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixBinding, body []byte) ([]byte, error) {
-	var output bytes.Buffer
-	output.WriteString("func ")
-	output.WriteString(name)
-	output.WriteByte('(')
-	for index, binding := range bindings {
-		if index > 0 {
-			output.WriteString(", ")
-		}
-		output.WriteString(binding.name)
-		output.WriteByte(' ')
-		if err := format.Node(&output, fset, binding.type_); err != nil {
-			return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
-		}
-	}
-	output.WriteString(") error {\n")
-	output.Write(body)
-	if len(body) == 0 || body[len(body)-1] != '\n' {
-		output.WriteByte('\n')
-	}
-	output.WriteString("}\n")
-	formatted, err := format.Source(output.Bytes())
-	if err != nil {
-		return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
-	}
-	return formatted, nil
-}
-
-func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "decomposed.go", source, parser.ParseComments)
-	if err != nil {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered source is not parseable")
-	}
-	list, err := imports(file)
-	if err != nil {
-		return nil, err
-	}
-	for _, node := range file.Decls {
-		function, ok := node.(*ast.FuncDecl)
-		if !ok || function.Name == nil || function.Name.Name != name {
-			continue
-		}
-		start := function.Pos()
-		if function.Doc != nil {
-			start = function.Doc.Pos()
-		}
-		selected := []declaration{{node: function, start: fset.Position(start).Offset, end: fset.Position(function.End()).Offset, identity: "func:" + name}}
-		rendered, renderErr := render(fset, file, source, selected, list)
-		if renderErr != nil {
-			return nil, renderErr
-		}
-		return rendered.helper, nil
-	}
-	return nil, returnTailContradiction(obligationRenderedCapacity, "rendered target function is missing")
-}
-
-func renderedFunctionExceedsLimit(source []byte, name string) bool {
-	rendered, err := renderedFunctionHelper(source, name)
-	return err == nil && physicalLines(rendered) > functionLineLimit
-}
-
-func renderedCapacityProgress(before, after []byte) bool {
-	beforeLines, afterLines := physicalLines(before), physicalLines(after)
-	return afterLines < beforeLines || beforeLines == afterLines && len(after) < len(before)
-}
-
-func projectedConformance(root, logical string, source []byte) error {
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, logical, source, parser.ParseComments)
-	if err != nil {
-		return returnTailContradiction(obligationProjectedConform, "projected source is not parseable")
-	}
-	files, err := packageTypeFiles(root, logical, fset, file)
-	if err != nil {
-		return err
-	}
-	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
-	if _, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, nil); err != nil {
-		return returnTailContradiction(obligationProjectedConform, "projected package does not type-check")
-	}
-	return nil
 }
 
 func returnTailContradiction(obligation, detail string) error {

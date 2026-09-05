@@ -83,6 +83,10 @@ func buildExtractionResult(root, logical string, original, source []byte, fset *
 	generated := map[string][]byte{logical: output.source}
 	maps.Copy(generated, helpers)
 	paths = append([]string{logical}, paths...)
+	strategyEvidence, err = finalizeReturnTailEvidence(root, logical, generated, strategyEvidence)
+	if err != nil {
+		return Result{}, err
+	}
 	return Result{Generated: generated, Paths: paths, Operations: extractionOperations(original, source, partitions), Evidence: strategyEvidence}, nil
 }
 

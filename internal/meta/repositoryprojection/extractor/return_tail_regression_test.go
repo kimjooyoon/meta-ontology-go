@@ -50,7 +50,15 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 				return
 			}
 			if tc.kind == "binding" {
-				if err != nil || len(result.Evidence) != 1 || result.Evidence[0].Operation != "extract-function" || result.Evidence[0].ContractActivity != "ExtractFunction" || result.Evidence[0].ContractOutputEntity != "OperationResult" || len(result.Evidence[0].ContractObligations) != 6 || len(result.Generated) < 2 {
+				stages := []ProofStageEvidence(nil)
+				if len(result.Evidence) == 1 {
+					stages = result.Evidence[0].ProofStages
+				}
+				chainBound := len(stages) == 6
+				for index := 1; index < len(stages); index++ {
+					chainBound = chainBound && stages[index-1].OutputEvidenceID != "" && stages[index-1].OutputEvidenceID == stages[index].InputEvidenceID
+				}
+				if err != nil || len(result.Evidence) != 1 || result.Evidence[0].Operation != "extract-function" || result.Evidence[0].ContractActivity != "ExtractFunction" || result.Evidence[0].ContractOutputEntity != "OperationResult" || len(result.Evidence[0].ContractObligations) != 6 || !chainBound || len(result.Generated) < 2 {
 					t.Fatalf("generated unit binding evidence=%+v generated=%d err=%v", result.Evidence, len(result.Generated), err)
 				}
 				return
@@ -102,7 +110,7 @@ func generatedContains(generated map[string][]byte, wanted string) bool {
 }
 
 func returnTailHeaderOverflowFixture() string {
-	return "package p\n\nfunc F(values map[string]struct{}) error {\n" + strings.Repeat("\t_ = 1\n", 69) + "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
+	return "package p\n\nfunc F(values map[string]struct{}) error {\n" + strings.Repeat("\t_ = 1\n", 69) + "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n"
 }
 
 func returnTailWholeTailFixture() string {
@@ -110,7 +118,7 @@ func returnTailWholeTailFixture() string {
 }
 
 func returnTailTypedNilFixture() string {
-	return "package p\n\ntype typedError struct{ error }\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\treturn (*typedError)(nil)\n}\n"
+	return "package p\n\ntype typedError struct{}\n\nfunc (*typedError) Error() string { return \"typed\" }\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\treturn (*typedError)(nil)\n}\n"
 }
 
 func returnTailUnknownCalleeFixture() string {
@@ -118,11 +126,11 @@ func returnTailUnknownCalleeFixture() string {
 }
 
 func returnTailPointerCalleeFixture() string {
-	return "package p\n\ntype Box struct{ Field error }\n\nfunc mutate(box *Box) { box.Field = nil }\n\nfunc F() error {\n\tbox := &Box{}\n" + strings.Repeat("\t_ = 1\n", 72) + "\tmutate(box)\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
+	return "package p\n\ntype Box struct{ Field error }\n\nfunc mutate(box *Box) { box.Field = nil }\n\nfunc F() error {\n\tbox := &Box{}\n" + strings.Repeat("\t_ = 1\n", 72) + "\tmutate(box)\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n"
 }
 
 func returnTailExposedMutationFixture() string {
-	return "package p\n\nvar exposed *Box\n\ntype Box struct{ Field error }\n\nfunc F() error {\n\tx := Box{}\n\texposed = &(x)\n" + strings.Repeat("\t_ = 1\n", 72) + "\t(x).Field = errorSentinel()\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
+	return "package p\n\nvar exposed *Box\n\ntype Box struct{ Field error }\n\nfunc F() error {\n\tx := Box{}\n\texposed = &(x)\n" + strings.Repeat("\t_ = 1\n", 72) + "\t(x).Field = errorSentinel()\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n"
 }
 
 func returnTailIncompleteCalleeFixture() string {

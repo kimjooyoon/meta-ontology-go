@@ -26,6 +26,9 @@ type StrategyEvidence struct {
 	RenderedOuterHelperLines int                          `json:"rendered_outer_helper_lines"`
 	Obligations              []ObligationEvidence         `json:"obligations"`
 	ContractObligations      []ContractObligationEvidence `json:"contract_obligations"`
+	ProofStages              []ProofStageEvidence  `json:"proof_stages"`
+	FinalGeneratedBytes      int                    `json:"final_generated_bytes"`
+	FinalGeneratedUnits      int                    `json:"final_generated_units"`
 }
 
 type ObligationEvidence struct {
@@ -41,6 +44,21 @@ type ContractObligationEvidence struct {
 	OutputEntity        string `json:"output_entity"`
 	UsedInputFact       bool   `json:"used_input_fact"`
 	GeneratedOutputFact bool   `json:"generated_output_fact"`
+}
+
+type ProofStageEvidence struct {
+	Name             string `json:"name"`
+	Activity         string `json:"activity"`
+	InputEntity      string `json:"input_entity"`
+	OutputEntity     string `json:"output_entity"`
+	Status           string `json:"status"`
+	SourceDigest     string `json:"source_digest"`
+	CandidateDigest  string `json:"candidate_digest"`
+	InputEvidenceID  string `json:"input_evidence_id"`
+	OutputEvidenceID string `json:"output_evidence_id"`
+	PayloadDigest    string `json:"payload_digest"`
+	PayloadBytes     int    `json:"payload_bytes"`
+	Detail           string `json:"detail,omitempty"`
 }
 
 const (
