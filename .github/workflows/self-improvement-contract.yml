@@ -19,7 +19,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -61,7 +61,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -200,7 +200,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -269,7 +269,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -346,7 +346,7 @@ jobs:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -416,7 +416,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.x'
       - name: Check generated assurance bindings
@@ -460,7 +460,7 @@ jobs:
           ref: ${{ env.EXACT_SHA }}
 
       - name: Install Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -542,7 +542,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -605,7 +605,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -679,7 +679,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -742,7 +742,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -809,7 +809,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -876,7 +876,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -940,7 +940,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1009,7 +1009,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1077,7 +1077,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1145,7 +1145,7 @@ jobs:
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1210,7 +1210,7 @@ jobs:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false
