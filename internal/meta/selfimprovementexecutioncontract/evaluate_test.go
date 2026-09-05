@@ -3,6 +3,8 @@ package selfimprovementexecutioncontract
 import (
 	"os"
 	"testing"
+
+	selfimprovementcandidate "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
 )
 
 func testProgram(t *testing.T) PolicyProgram {
@@ -53,6 +55,26 @@ func TestV24AllowDoesNotAuthorizeExecution(t *testing.T) {
 	verification := Verify(program, input, resolution)
 	if !verification.Verified || verification.IndependentReplayComparisons != 1 {
 		t.Fatalf("independent replay failed: %#v", verification)
+	}
+}
+
+func TestProjectAuthorizationRequestBindsAuthorizationContract(t *testing.T) {
+	request := selfimprovementcandidate.AuthorizationRequest{
+		Schema: selfimprovementcandidate.AuthorizationRequestSchema,
+		Digest: digestBytes([]byte("authorization-request")),
+		Contract: selfimprovementcandidate.AuthorizationContract{
+			ContractID:      selfimprovementcandidate.AuthorizationContractID,
+			CanonicalDigest: digestBytes([]byte("authorization-contract")),
+		},
+		Candidate: selfimprovementcandidate.CandidateBinding{
+			ContractID:              selfimprovementcandidate.ContractID,
+			ContractCanonicalDigest: digestBytes([]byte("candidate-contract")),
+			Scope:                   selfimprovementcandidate.AuthorizationScope,
+		},
+	}
+	input := ProjectAuthorizationRequest(request, RegistryEvidence{})
+	if input.Authorization.ContractID != request.Contract.ContractID || input.Authorization.ContractDigest != request.Contract.CanonicalDigest {
+		t.Fatalf("authorization projection used candidate contract identity: %+v", input.Authorization)
 	}
 }
 

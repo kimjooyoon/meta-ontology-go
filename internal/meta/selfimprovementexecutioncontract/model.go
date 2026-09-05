@@ -375,7 +375,7 @@ func ProjectAuthorizationRequest(request selfimprovementcandidate.AuthorizationR
 		},
 		Authorization: AuthorizationBinding{
 			RequestSchema: request.Schema, RequestDigest: request.Digest,
-			ContractID: request.Candidate.ContractID, ContractDigest: request.Candidate.ContractCanonicalDigest,
+			ContractID: request.Contract.ContractID, ContractDigest: request.Contract.CanonicalDigest,
 			Scope: request.Candidate.Scope, ExecutionAllowed: request.ExecutionAllowed,
 			RepositoryWrites: request.RepositoryWrites, LocalTestExecutions: request.LocalTestExecutions,
 			LiveAuthorized: request.LiveAuthorized, LiveState: request.LiveState,
