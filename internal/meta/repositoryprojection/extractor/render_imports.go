@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"go/ast"
 	"go/format"
+	"go/printer"
 	"go/token"
 	"sort"
 	"strconv"
@@ -52,7 +53,7 @@ func importNormalizationPolicy() error {
 
 func formatSelectedImports(fset *token.FileSet, file *ast.File, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {
 	if !eligiblePlainImportGroup(file, group, specs) {
-		return formatImport(fset, group, specs)
+		return formatImport(fset, file, group, specs)
 	}
 	ordered := append([]*ast.ImportSpec{}, specs...)
 	sort.SliceStable(ordered, func(left, right int) bool { return ordered[left].Pos() < ordered[right].Pos() })
@@ -61,7 +62,7 @@ func formatSelectedImports(fset *token.FileSet, file *ast.File, group *ast.GenDe
 		if index > 0 {
 			output.WriteByte('\n')
 		}
-		data, err := formatImport(fset, group, []*ast.ImportSpec{spec})
+		data, err := formatImport(fset, file, group, []*ast.ImportSpec{spec})
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +93,7 @@ func eligiblePlainImportGroup(file *ast.File, group *ast.GenDecl, specs []*ast.I
 	return true
 }
 
-func formatImport(fset *token.FileSet, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {
+func formatImport(fset *token.FileSet, file *ast.File, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {
 	copyGroup := *group
 	copyGroup.Specs = make([]ast.Spec, len(specs))
 	for i, spec := range specs {
@@ -102,8 +103,35 @@ func formatImport(fset *token.FileSet, group *ast.GenDecl, specs []*ast.ImportSp
 		copyGroup.Lparen, copyGroup.Rparen = token.NoPos, token.NoPos
 	}
 	var out bytes.Buffer
-	if err := format.Node(&out, fset, &copyGroup); err != nil {
+	var node any = &copyGroup
+	if comments := importComments(file, group); len(comments) != 0 {
+		node = &printer.CommentedNode{Node: &copyGroup, Comments: comments}
+	}
+	if err := format.Node(&out, fset, node); err != nil {
 		return nil, fail("rewrite-source", "render-imports", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
 	return out.Bytes(), nil
+}
+
+func importComments(file *ast.File, group *ast.GenDecl) []*ast.CommentGroup {
+	if file == nil || group == nil {
+		return nil
+	}
+	start := group.Pos()
+	if group.Doc != nil && group.Doc.Pos() < start {
+		start = group.Doc.Pos()
+	}
+	for _, raw := range group.Specs {
+		spec, ok := raw.(*ast.ImportSpec)
+		if ok && spec.Doc != nil && spec.Doc.Pos() < start {
+			start = spec.Doc.Pos()
+		}
+	}
+	comments := make([]*ast.CommentGroup, 0)
+	for _, current := range file.Comments {
+		if current.End() >= start && current.Pos() <= group.End() {
+			comments = append(comments, current)
+		}
+	}
+	return comments
 }

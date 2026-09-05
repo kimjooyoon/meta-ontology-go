@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -64,21 +63,56 @@ func TestImportNormalizationPreservationRegressionCohort(t *testing.T) {
 
 func TestImportNormalizationCorrectionRegressionCohort(t *testing.T) {
 	cases := []struct {
-		name   string
-		source string
+		name                  string
+		source                string
+		wantDetachedComment   string
 	}{
-		{name: "detached-comment-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t// detached import note\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n"},
-		{name: "detached-directive-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t//go:custom-import-directive\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n"},
-		{name: "raw-string-c-preserves-grouped-rendering", source: "package p\n\nimport (\n\t`C`\n\t\"strconv\"\n)\n\nfunc F() {\n\t_ = C.symbol\n\t_ = strconv.IntSize\n}\n"},
+		{name: "detached-comment-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t// detached import note\n\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", wantDetachedComment: "detached import note"},
+		{name: "detached-directive-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t//go:custom-import-directive\n\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", wantDetachedComment: "go:custom-import-directive"},
+		{name: "raw-string-c-rejected-by-admission", source: "package p\n\nimport (\n\t`C`\n\t\"strconv\"\n)\n\nfunc F() {\n\t_ = C.symbol\n\t_ = strconv.IntSize\n}\n"},
 	}
 	if len(cases) != 3 {
 		t.Fatalf("import normalization correction cohort denominator=%d, want 3", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			helper, err := renderImportFixtureWithRawImportList(t, tc.source, "F")
-			if err != nil || !strings.Contains(string(helper), "import (\n") {
+			file := importFixtureFile(t, tc.source)
+			if tc.name == "raw-string-c-rejected-by-admission" {
+				_, err := imports(file)
+				if err == nil || !strings.Contains(err.Error(), "CGO_IMPORT_RELOCATION_UNSAFE") {
+					t.Fatalf("raw-string C admission err=%v", err)
+				}
+				return
+			}
+			if len(file.Comments) == 0 {
+				t.Fatal("detached comment was not retained in ast.File.Comments")
+			}
+			group := firstImportGroupInFile(t, file)
+			var commentsText strings.Builder
+			for _, comments := range file.Comments {
+				commentsText.WriteString(comments.Text())
+			}
+			if !strings.Contains(commentsText.String(), tc.wantDetachedComment) {
+				t.Fatalf("detached comment was not retained in ast.File.Comments: %q", commentsText.String())
+			}
+			for _, raw := range group.Specs {
+				spec := raw.(*ast.ImportSpec)
+				if spec.Doc != nil || spec.Comment != nil {
+					t.Fatalf("comment unexpectedly attached to import spec: %+v", spec)
+				}
+			}
+			helper, err := renderImportFixture(t, tc.source, "F")
+			text := string(helper)
+			jsonPath := strings.Index(text, "\"encoding/json\"")
+			strconvPath := strings.Index(text, "\"strconv\"")
+			if err != nil || !strings.Contains(text, "import (\n") || jsonPath < 0 || strconvPath < 0 || jsonPath >= strconvPath {
 				t.Fatalf("preservation renderer=%q err=%v", helper, err)
+			}
+			if tc.name == "detached-comment-preserves-grouped-rendering" && !strings.Contains(text, "detached import note") {
+				t.Fatalf("detached comment was dropped: %q", helper)
+			}
+			if tc.name == "detached-directive-preserves-grouped-rendering" && !strings.Contains(text, "go:custom-import-directive") {
+				t.Fatalf("detached directive was dropped: %q", helper)
 			}
 		})
 	}
@@ -147,37 +181,6 @@ func renderImportFixture(t *testing.T, source, name string) ([]byte, error) {
 	list, err := imports(file)
 	if err != nil {
 		return nil, err
-	}
-	for _, declaration := range file.Decls {
-		function, ok := declaration.(*ast.FuncDecl)
-		if ok && function.Name != nil && function.Name.Name == name {
-			_, helper, renderErr := renderImports(fset, file, []ast.Decl{function}, list, false)
-			return helper, renderErr
-		}
-	}
-	return nil, nil
-}
-
-func renderImportFixtureWithRawImportList(t *testing.T, source, name string) ([]byte, error) {
-	t.Helper()
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "fixture.go", []byte(source), parser.ParseComments)
-	if err != nil {
-		return nil, err
-	}
-	group := firstImportGroupInFile(t, file)
-	list := make([]importSpec, 0, len(group.Specs))
-	for _, raw := range group.Specs {
-		spec := raw.(*ast.ImportSpec)
-		path, err := strconv.Unquote(spec.Path.Value)
-		if err != nil {
-			path = spec.Path.Value
-		}
-		importedName := ""
-		if spec.Name != nil {
-			importedName = spec.Name.Name
-		}
-		list = append(list, importSpec{group: group, spec: spec, path: path, name: importedName})
 	}
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
