@@ -65,7 +65,7 @@ func authoritativeIRHash(ir semantic.IR) string {
 		if left.ConsumerPort != right.ConsumerPort {
 			return left.ConsumerPort < right.ConsumerPort
 		}
-		return left.Entity < right.Entity
+		return bindings[i].Entity < bindings[j].Entity
 	})
 	for _, binding := range bindings {
 		canonical.WriteString(binding.SemanticCanonical())
