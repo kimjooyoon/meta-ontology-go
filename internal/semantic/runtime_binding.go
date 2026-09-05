@@ -3,6 +3,7 @@ package semantic
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -20,7 +21,7 @@ var (
 	ErrRuntimeBindingDuplicate     = errors.New("duplicate runtime binding")
 	ErrRuntimeBindingInputConflict = errors.New("runtime binding input already bound")
 	ErrRuntimeBindingTypeMismatch  = errors.New("runtime binding type mismatch")
-	ErrRuntimeBindingCycle          = errors.New("runtime binding cycle")
+	ErrRuntimeBindingCycle         = errors.New("runtime binding cycle")
 )
 
 // RuntimeBinding is an explicit, port-sensitive execution edge. It is a
@@ -33,7 +34,7 @@ type RuntimeBinding struct {
 	ConsumerActivity ID     `json:"consumer_activity"`
 	ConsumerPort     string `json:"consumer_port"`
 	Entity           ID     `json:"entity"`
-	Span             Span   `json:"span,omitempty"`
+	Span             Span   `json:"span"`
 }
 
 type RuntimeBindingKey struct {
@@ -201,7 +202,7 @@ func validateRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 			queue = append(queue, id)
 		}
 	}
-	sort.Slice(queue, func(i, j int) bool { return queue[i] < queue[j] })
+	slices.Sort(queue)
 	visited := 0
 	for len(queue) > 0 {
 		id := queue[0]
@@ -213,7 +214,7 @@ func validateRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 				queue = append(queue, next)
 			}
 		}
-		sort.Slice(queue, func(i, j int) bool { return queue[i] < queue[j] })
+		slices.Sort(queue)
 	}
 	if visited != len(indegree) {
 		return ErrRuntimeBindingCycle

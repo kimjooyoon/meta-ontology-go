@@ -2,6 +2,7 @@ package bidir
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
@@ -137,7 +138,7 @@ func validateModelRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 			queue = append(queue, id)
 		}
 	}
-	sort.Slice(queue, func(i, j int) bool { return queue[i] < queue[j] })
+	slices.Sort(queue)
 	visited := 0
 	for len(queue) > 0 {
 		id := queue[0]
@@ -149,7 +150,7 @@ func validateModelRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 				queue = append(queue, next)
 			}
 		}
-		sort.Slice(queue, func(i, j int) bool { return queue[i] < queue[j] })
+		slices.Sort(queue)
 	}
 	if visited != len(indegree) {
 		return semantic.ErrRuntimeBindingCycle
