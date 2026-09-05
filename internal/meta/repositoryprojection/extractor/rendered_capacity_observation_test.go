@@ -14,9 +14,9 @@ import (
 
 func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 	cases := []struct {
-		name string
+		name   string
 		source string
-		check func(t *testing.T, selection *renderedCapacitySelection, err error)
+		check  func(t *testing.T, selection *renderedCapacitySelection, err error)
 		render func(*token.FileSet, *ast.File, []byte, *ast.FuncDecl) ([]byte, error)
 	}{
 		{
