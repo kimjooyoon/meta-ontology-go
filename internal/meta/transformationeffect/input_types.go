@@ -14,6 +14,28 @@ type Options struct {
 	ReceiptsPath   string
 	ProvenancePath string
 	ExpectedSHA    string
+	ProgressPath   string
+	InvocationID   string
+}
+
+// operationProgressEvent is a diagnostic-only control-flow trace. Boundary
+// values record command entry/return and never assert semantic success.
+type operationProgressEvent struct {
+	Schema                       string `json:"schema"`
+	HeadSHA                      string `json:"head_sha"`
+	InvocationID                 string `json:"invocation_id"`
+	Sequence                     int    `json:"sequence"`
+	ActionIndicatorID            string `json:"action_indicator_id"`
+	Operation                    string `json:"operation"`
+	Activity                     string `json:"activity"`
+	Executor                     string `json:"executor"`
+	Subject                      string `json:"subject"`
+	SubjectKind                  string `json:"subject_kind"`
+	InputContractSourceDigest    string `json:"input_contract_source_digest"`
+	InputContractSemanticDigest  string `json:"input_contract_semantic_digest"`
+	Phase                        string `json:"phase"`
+	Boundary                     string `json:"boundary"`
+	ReturnError                  string `json:"return_error,omitempty"`
 }
 
 type ArtifactDigests struct {

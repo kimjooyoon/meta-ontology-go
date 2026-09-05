@@ -1,8 +1,12 @@
 package transformationeffect
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -32,6 +36,7 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 	}
 	sealed := make([]generation.OperationReceipt, 0, len(actions))
 	result.failures = append(result.failures, in.receipts.Failures...)
+	progressSequence := 0
 	for _, action := range actions {
 		before, err := workspace.Scan(box.Root)
 		if err != nil {
@@ -41,11 +46,11 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 			result.effects = append(result.effects, effectForFailure(action, before, failure))
 			continue
 		}
-		preflight, err := runAction(box, opts, in.plan, action, true)
+		preflight, err := runActionWithProgress(box, opts, in.plan, action, true, &progressSequence)
 		if err != nil {
 			return result, err
 		}
-		applied, err := runAction(box, opts, in.plan, action, false)
+		applied, err := runActionWithProgress(box, opts, in.plan, action, false, &progressSequence)
 		if err != nil {
 			return result, err
 		}
@@ -86,6 +91,72 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		return result, fmt.Errorf("executed provenance is not bound")
 	}
 	return result, nil
+}
+
+func runActionWithProgress(box *workspace.Sandbox, opts Options, plan generation.Plan, action generation.Action, check bool, sequence *int) ([]byte, error) {
+	phase := "APPLY"
+	if check {
+		phase = "PREFLIGHT"
+	}
+	if err := writeOperationProgress(opts, action, phase, "ENTERED", "", sequence); err != nil {
+		return nil, err
+	}
+	output, runErr := runAction(box, opts, plan, action, check)
+	returnError := ""
+	if runErr != nil {
+		returnError = "ERROR"
+	}
+	if err := writeOperationProgress(opts, action, phase, "RETURNED", returnError, sequence); err != nil {
+		return nil, errors.Join(runErr, err)
+	}
+	return output, runErr
+}
+
+func writeOperationProgress(opts Options, action generation.Action, phase, boundary, returnError string, sequence *int) error {
+	if opts.ProgressPath == "" {
+		return nil
+	}
+	*sequence = *sequence + 1
+	event := operationProgressEvent{
+		Schema:                      "gooo/transformation-effect-operation-progress/v1",
+		HeadSHA:                     opts.ExpectedSHA,
+		InvocationID:                opts.InvocationID,
+		Sequence:                    *sequence,
+		ActionIndicatorID:           action.IndicatorID,
+		Operation:                   string(action.Operation),
+		Activity:                    action.Activity,
+		Executor:                    action.Executor,
+		Subject:                     action.Subject,
+		SubjectKind:                 string(action.SubjectKind),
+		InputContractSourceDigest:   action.InputContractSourceDigest,
+		InputContractSemanticDigest: action.InputContractSemanticDigest,
+		Phase:                       phase,
+		Boundary:                    boundary,
+		ReturnError:                 returnError,
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(opts.ProgressPath), 0o755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(opts.ProgressPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return err
+	}
+	if written, err := file.Write(append(payload, '\n')); err != nil {
+		_ = file.Close()
+		return err
+	} else if written != len(payload)+1 {
+		_ = file.Close()
+		return io.ErrShortWrite
+	}
+	if err := file.Sync(); err != nil {
+		_ = file.Close()
+		return err
+	}
+	return file.Close()
 }
 
 func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs []generation.OperationReceipt) generation.OperationReceipt {

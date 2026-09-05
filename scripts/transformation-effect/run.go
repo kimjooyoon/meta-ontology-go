@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect"
 )
@@ -24,6 +26,8 @@ func run(args []string) error {
 	result, err := transformationeffect.Build(transformationeffect.Options{
 		Root: cfg.root, MetricsPath: cfg.metrics, PlanPath: cfg.plan, ExecutionPath: cfg.execution,
 		ReceiptsPath: cfg.receipts, ProvenancePath: cfg.provenance, ExpectedSHA: cfg.expected,
+		ProgressPath: filepath.Join(filepath.Dir(cfg.output), "operation-progress.jsonl"),
+		InvocationID: invocationID(cfg.output),
 	})
 	if err != nil {
 		if diagnosticErr := transformationeffect.WriteReplayDiagnostic(cfg.output, err); diagnosticErr != nil {
@@ -37,6 +41,22 @@ func run(args []string) error {
 	fmt.Printf("transformation-effect: decision=%s effects=%d status=%s\n",
 		result.Ledger.Decision, len(result.Ledger.Effects), result.Ledger.Status)
 	return nil
+}
+
+func invocationID(output string) string {
+	runID := os.Getenv("GITHUB_RUN_ID")
+	attempt := os.Getenv("GITHUB_RUN_ATTEMPT")
+	job := os.Getenv("GITHUB_JOB")
+	if runID == "" {
+		runID = "local"
+	}
+	if attempt == "" {
+		attempt = "1"
+	}
+	if job == "" {
+		job = "transformation-effect"
+	}
+	return fmt.Sprintf("%s/%s/%s:%s", runID, attempt, job, output)
 }
 
 func parseConfig(args []string) (config, error) {
