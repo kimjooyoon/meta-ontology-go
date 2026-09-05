@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -15,7 +16,7 @@ import (
 
 const returnTailStrategy = "return-preserving-terminal-tail"
 
-func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool) (*returnTailCandidate, error) {
+func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
 	contract, err := generation.ExtractFunctionInputContractEvidence()
 	if err != nil {
 		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
@@ -47,7 +48,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 	}
 
 	for startIndex := range slices.Backward(statements) {
-		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex)
+		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex, preflight)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
 				continue
@@ -72,7 +73,7 @@ func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
 	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
 }
 
-func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int) (*returnTailCandidate, error) {
+func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
 	statements := function.Body.List[startIndex:]
 	if len(statements) == 0 {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
@@ -194,8 +195,57 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			Obligations:              obligationsFromProofStages(proof.stages),
 			ContractObligations:      contractObligations,
 			ProofStages:              proof.stages,
+			PreflightObservations:    preflightObservationEvidence(contract, preflight),
 		},
 	}, nil
+}
+
+func preflightObservationEvidence(contract generation.OperationInputContractEvidence, observations []renderedCapacityObservation) []PreflightObservationEvidence {
+	result := make([]PreflightObservationEvidence, 0, len(observations))
+	for _, observation := range observations {
+		item := PreflightObservationEvidence{
+			Operation:              string(contract.Operation),
+			Activity:               contract.Activity,
+			InputEntity:            contract.InputEntity,
+			InputSubjectKind:       string(contract.InputSubjectKind),
+			Metric:                 sourcepolicy.DimensionFunctionLines,
+			HelperMeasurementScope: renderedCapacityHelperMeasurementScope,
+			Subject:                observation.subject,
+			Receiver:               observation.receiver,
+			FunctionStart:          observation.functionStart,
+			FunctionEnd:            observation.functionEnd,
+			DeclarationStart:       observation.declarationStart,
+			DeclarationEnd:         observation.declarationEnd,
+			SourceDigest:           observation.sourceDigest,
+			ContractSourceDigest:   contract.SourceDigest,
+			ContractSemanticDigest: contract.SemanticDigest,
+			FunctionLines:          observation.functionLines,
+			FunctionStatus:         string(observation.functionStatus),
+			HelperStatus:           string(observation.helperStatus),
+		}
+		if observation.helperLines != nil {
+			helperLines := *observation.helperLines
+			item.HelperLines = &helperLines
+		}
+		if observation.helperFailure != nil {
+			if failure, ok := errors.AsType[Failure](observation.helperFailure); ok {
+				item.FailureReason = failure.Reason
+				item.Failure = &PreflightFailureEvidence{
+					Stage:         failure.Stage,
+					Step:          failure.Step,
+					Reason:        failure.Reason,
+					UnknownClass:  failure.UnknownClass,
+					NextOperation: failure.NextOperation,
+					BlockedBy:     append([]string{}, failure.BlockedBy...),
+					Diagnostics:   append([]string{}, failure.Diagnostics...),
+				}
+			} else {
+				item.FailureReason = observation.helperFailure.Error()
+			}
+		}
+		result = append(result, item)
+	}
+	return result
 }
 
 func returnTailContractObligations(values []generation.OperationInputContractObligationEvidence) ([]ContractObligationEvidence, bool) {

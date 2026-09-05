@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -39,6 +40,36 @@ type returnTailCandidate struct {
 	evidence   StrategyEvidence
 }
 
+type renderedCapacityObservationStatus string
+
+const (
+	renderedCapacityWithinCap              renderedCapacityObservationStatus = "WITHIN_CAP"
+	renderedCapacityOverCap                renderedCapacityObservationStatus = "OVER_CAP"
+	renderedCapacityUnmeasured             renderedCapacityObservationStatus = "UNMEASURED"
+	renderedCapacityHelperMeasurementScope                                   = "rendered-helper-physical-lines"
+)
+
+type renderedCapacityObservation struct {
+	declaration      *ast.FuncDecl
+	subject          string
+	receiver         string
+	functionStart    string
+	functionEnd      string
+	declarationStart string
+	declarationEnd   string
+	sourceDigest     string
+	functionLines    int
+	functionStatus   renderedCapacityObservationStatus
+	helperLines      *int
+	helperStatus     renderedCapacityObservationStatus
+	helperFailure    error
+}
+
+type renderedCapacitySelection struct {
+	function     *ast.FuncDecl
+	observations []renderedCapacityObservation
+}
+
 type typeEvidence struct {
 	info  *types.Info
 	pkg   *types.Package
@@ -51,19 +82,24 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 	currentSet, currentFile := fset, file
 	evidence := make([]StrategyEvidence, 0)
 	for {
-		function := firstOversizedFunction(currentSet, currentFile, current)
-		if function == nil {
-			return current, evidence, nil
-		}
-		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function)
+		selection, err := firstOversizedFunction(currentSet, currentFile, current)
 		if err != nil {
 			return nil, nil, err
 		}
+		if selection.function == nil {
+			return current, evidence, nil
+		}
+		function := selection.function
+		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations)
+		if err != nil {
+			return nil, nil, withRenderedCapacityDiagnostics(err, selection.observations)
+		}
 		if bytes.Equal(prepared, current) {
-			return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
+			err := failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
 				"declaration=" + functionIdentity(currentSet, function),
 				fmt.Sprintf("function_lines=%d", declarationLines(currentSet, function)),
 			})
+			return nil, nil, withRenderedCapacityDiagnostics(err, selection.observations)
 		}
 		if strategyEvidence != nil {
 			evidence = append(evidence, *strategyEvidence)
@@ -78,32 +114,129 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 	}
 }
 
-func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) *ast.FuncDecl {
-	var result *ast.FuncDecl
+func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) (*renderedCapacitySelection, error) {
+	return firstOversizedFunctionWithRenderer(fset, file, source, renderedDeclarationHelper)
+}
+
+func firstOversizedFunctionWithRenderer(fset *token.FileSet, file *ast.File, source []byte, renderer func(*token.FileSet, *ast.File, []byte, *ast.FuncDecl) ([]byte, error)) (*renderedCapacitySelection, error) {
+	selection := &renderedCapacitySelection{}
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
 		if !ok || function.Name == nil || function.Name.Name == "init" || function.Body == nil {
 			continue
 		}
-		if declarationLines(fset, function) <= functionLineLimit && !renderedDeclarationExceedsLimit(fset, file, source, function) {
-			continue
-		}
-		if result == nil || function.Pos() < result.Pos() {
-			result = function
+		observation := observeRenderedCapacityWithRenderer(fset, file, source, function, renderer)
+		selection.observations = append(selection.observations, observation)
+		if observation.functionStatus == renderedCapacityOverCap || observation.helperStatus == renderedCapacityOverCap {
+			if selection.function == nil || function.Pos() < selection.function.Pos() {
+				selection.function = function
+			}
 		}
 	}
-	return result
+	if selection.function != nil {
+		return selection, nil
+	}
+	for _, observation := range selection.observations {
+		if observation.helperStatus == renderedCapacityUnmeasured {
+			return nil, renderedCapacityObservationFailure(observation)
+		}
+	}
+	return selection, nil
+}
+
+func observeRenderedCapacity(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) renderedCapacityObservation {
+	return observeRenderedCapacityWithRenderer(fset, file, source, function, renderedDeclarationHelper)
+}
+
+func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl, renderer func(*token.FileSet, *ast.File, []byte, *ast.FuncDecl) ([]byte, error)) renderedCapacityObservation {
+	declarationStart := function.Pos()
+	if function.Doc != nil {
+		declarationStart = function.Doc.Pos()
+	}
+	functionLines := declarationLines(fset, function)
+	observation := renderedCapacityObservation{
+		declaration:      function,
+		subject:          functionIdentity(fset, function),
+		functionStart:    fset.Position(function.Pos()).String(),
+		functionEnd:      fset.Position(function.End()).String(),
+		declarationStart: fset.Position(declarationStart).String(),
+		declarationEnd:   fset.Position(function.End()).String(),
+		sourceDigest:     proofDigest(source),
+		functionLines:    functionLines,
+		functionStatus:   renderedCapacityWithinCap,
+		helperStatus:     renderedCapacityUnmeasured,
+	}
+	if function.Recv != nil {
+		if receiver, ok := receiverBaseIdentifier(function.Recv); ok {
+			observation.receiver = receiver
+		}
+	}
+	if functionLines > functionLineLimit {
+		observation.functionStatus = renderedCapacityOverCap
+	}
+	rendered, err := renderer(fset, file, source, function)
+	if err != nil {
+		observation.helperFailure = err
+		return observation
+	}
+	helperLines := physicalLines(rendered)
+	observation.helperLines = &helperLines
+	observation.helperStatus = renderedCapacityWithinCap
+	if helperLines > functionLineLimit {
+		observation.helperStatus = renderedCapacityOverCap
+	}
+	return observation
+}
+
+func renderedCapacityObservationFailure(observation renderedCapacityObservation) error {
+	if observation.helperFailure == nil {
+		return nil
+	}
+	if failure, ok := errors.AsType[Failure](observation.helperFailure); ok {
+		failure.Diagnostics = append(failure.Diagnostics, renderedCapacityObservationDiagnostics(observation)...)
+		return failure
+	}
+	return observation.helperFailure
+}
+
+func withRenderedCapacityDiagnostics(err error, observations []renderedCapacityObservation) error {
+	if err == nil {
+		return nil
+	}
+	var failure Failure
+	if !errors.As(err, &failure) {
+		return err
+	}
+	for _, observation := range observations {
+		if observation.helperStatus == renderedCapacityUnmeasured {
+			failure.Diagnostics = append(failure.Diagnostics, renderedCapacityObservationDiagnostics(observation)...)
+		}
+	}
+	return failure
+}
+
+func renderedCapacityObservationDiagnostics(observation renderedCapacityObservation) []string {
+	diagnostics := []string{
+		"preflight=rendered-capacity",
+		"measurement=UNMEASURED",
+		"subject=" + observation.subject,
+		"function_start=" + observation.functionStart,
+		"function_end=" + observation.functionEnd,
+		"declaration_start=" + observation.declarationStart,
+		"declaration_end=" + observation.declarationEnd,
+		"source_digest=" + observation.sourceDigest,
+		fmt.Sprintf("function_lines=%d", observation.functionLines),
+	}
+	if observation.helperFailure != nil {
+		diagnostics = append(diagnostics, "helper_failure="+observation.helperFailure.Error())
+	}
+	return diagnostics
 }
 
 func declarationLines(fset *token.FileSet, declaration ast.Node) int {
 	start := fset.Position(declaration.Pos()).Line
 	end := fset.Position(declaration.End()).Line
 	return end - start + 1
-}
-
-func renderedDeclarationExceedsLimit(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) bool {
-	rendered, err := renderedDeclarationHelper(fset, file, source, function)
-	return err == nil && physicalLines(rendered) > functionLineLimit
 }
 
 func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) ([]byte, error) {
@@ -139,7 +272,7 @@ func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 	return "method:" + fset.Position(function.Pos()).String() + ":" + function.Name.Name
 }
 
-func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl) ([]byte, *StrategyEvidence, error) {
+func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation) ([]byte, *StrategyEvidence, error) {
 	if function.Recv != nil {
 		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
 			"declaration=" + functionIdentity(fset, function),
@@ -154,7 +287,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	if err != nil {
 		return nil, nil, err
 	}
-	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file)); candidateErr != nil {
+	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight); candidateErr != nil {
 		if !isKnownSuffixContradiction(candidateErr) {
 			return nil, nil, candidateErr
 		}
