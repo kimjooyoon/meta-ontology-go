@@ -51,6 +51,8 @@ func (bundle *OperationObservationBundle) UnmarshalJSON(data []byte) error {
 		candidate.Failures = []ObservationFailure{}
 	}
 	decoded := OperationObservationBundle(candidate)
+	decoded.Receipts = normalizeOperationReceipts(decoded.Receipts)
+	decoded.Failures = normalizeObservationFailures(decoded.Failures)
 	if !reflect.DeepEqual(decoded, SealObservationBundle(decoded)) {
 		return fmt.Errorf("operation observation bundle canonical replay mismatch")
 	}
