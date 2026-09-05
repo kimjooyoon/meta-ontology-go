@@ -17,13 +17,13 @@ func TestValidateSuccessBindsEventSubjectsToReceiptMetadata(t *testing.T) {
 		{
 			name: "source event subject",
 			mutate: func(receipt *Receipt) {
-				receipt.Events[0].Subject = "sha256:source-subject-variant"
+				receipt.Events[0].Subject = digestBytes([]byte("source-subject-variant"))
 			},
 		},
 		{
 			name: "semantic event subject",
 			mutate: func(receipt *Receipt) {
-				receipt.Events[1].Subject = "sha256:semantic-subject-variant"
+				receipt.Events[1].Subject = digestBytes([]byte("semantic-subject-variant"))
 			},
 		},
 		{
@@ -41,13 +41,13 @@ func TestValidateSuccessBindsEventSubjectsToReceiptMetadata(t *testing.T) {
 		{
 			name: "source metadata",
 			mutate: func(receipt *Receipt) {
-				receipt.SourceDigest = "sha256:source-metadata-variant"
+				receipt.SourceDigest = digestBytes([]byte("source-metadata-variant"))
 			},
 		},
 		{
 			name: "semantic metadata",
 			mutate: func(receipt *Receipt) {
-				receipt.SemanticDigest = "sha256:semantic-metadata-variant"
+				receipt.SemanticDigest = digestBytes([]byte("semantic-metadata-variant"))
 			},
 		},
 		{
