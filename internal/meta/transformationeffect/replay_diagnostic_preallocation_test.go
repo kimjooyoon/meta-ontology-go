@@ -4,11 +4,11 @@ import "testing"
 
 func TestFirstReplayDifferenceKeyUnionRegression(t *testing.T) {
 	tests := []struct {
-		name               string
-		left, right        map[string]any
-		wantPath           string
-		wantExpectedValue  string
-		wantObservedValue  string
+		name              string
+		left, right       map[string]any
+		wantPath          string
+		wantExpectedValue string
+		wantObservedValue string
 	}{
 		{
 			name:              "nil left map",
