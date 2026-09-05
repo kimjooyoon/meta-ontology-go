@@ -115,7 +115,7 @@ jobs:
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head value witness
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-value-witness-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-value-witness/first.json

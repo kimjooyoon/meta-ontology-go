@@ -126,7 +126,7 @@ jobs:
           sha256sum "$evidence" > "$work/evidence.json.sha256"
           cp "$RUNNER_TEMP/repository-projector-unformatted.txt" "$work/unformatted.txt"
       - name: Upload exact-head diagnostic evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: repository-projection-diagnostics-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/repository-projection-diagnostics

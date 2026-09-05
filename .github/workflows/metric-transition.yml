@@ -78,7 +78,7 @@ jobs:
             -verify-state "$first/state.json" \
             -verify-ledger "$first/ledger.json"
       - name: Upload exact-head metric transition
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-transition-${{ github.event.workflow_run.head_sha }}
           path: |

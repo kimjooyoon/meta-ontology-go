@@ -107,7 +107,7 @@ jobs:
           ' "$first/verification.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic counterfactual evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-counterfactual-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-counterfactual/first
@@ -187,7 +187,7 @@ jobs:
           test -z "$(git status --porcelain)"
       - name: Upload exact-head repository topology receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: repository-topology-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/repository-topology
@@ -256,7 +256,7 @@ jobs:
           ' "$first/verification.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic metric intervention evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-intervention-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-intervention/first
@@ -362,7 +362,7 @@ jobs:
           ' "$first/proposal-contract.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic metric strategy evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-strategy-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-strategy/first
@@ -428,7 +428,7 @@ jobs:
           ' "$out/contract.json"
       - name: Upload proposal continuity evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: proposal-continuity-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/proposal-continuity
@@ -663,7 +663,7 @@ jobs:
             --check
       - name: Upload v1 guard contract
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
@@ -671,7 +671,7 @@ jobs:
           retention-days: 30
       - name: Upload v2 proposal evidence
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -679,7 +679,7 @@ jobs:
           retention-days: 30
       - name: Upload compatibility receipt
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
@@ -687,7 +687,7 @@ jobs:
           retention-days: 30
       - name: Upload proposal predecessor raw observation cache
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-observation.json
@@ -695,7 +695,7 @@ jobs:
           retention-days: 14
       - name: Upload proposal predecessor receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -703,7 +703,7 @@ jobs:
           retention-days: 14
       - name: Upload bound proposal observation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-evidence
@@ -795,7 +795,7 @@ jobs:
       - name: Upload deterministic typed metric meta-program evidence
         id: upload
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-meta-program-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program/first
@@ -872,7 +872,7 @@ jobs:
           ' "$first/verification.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed meta-program closure
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-meta-program-closure-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program-closure/first

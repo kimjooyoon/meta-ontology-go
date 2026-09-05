@@ -42,7 +42,7 @@ jobs:
         run: bash scripts/workgraph-pilot/main.sh
       - name: Upload exact Workgraph evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: workgraph-evidence-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/workgraph-evidence

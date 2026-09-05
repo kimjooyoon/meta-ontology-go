@@ -107,7 +107,7 @@ jobs:
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head catalog receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-operation-catalog-${{ env.HEAD_SHA }}
           path: |
@@ -206,7 +206,7 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload operation claim causality receipts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: operation-claim-causality-${{ github.sha }}
           path: |

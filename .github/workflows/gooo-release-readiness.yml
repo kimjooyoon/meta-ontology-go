@@ -66,7 +66,7 @@ jobs:
             --expected-goos "${{ matrix.goos }}" \
             --expected-goarch "${{ matrix.goarch }}"
       - name: Upload exact platform receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-platform-${{ matrix.platform }}-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/platform-${{ matrix.platform }}
@@ -212,14 +212,14 @@ jobs:
           test -z "$(git ls-files --others --exclude-standard)"
           sha256sum "$report" "$evidence/eligibility.json" > "$evidence/manifest.sha256"
       - name: Publish exact candidate evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-evidence-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence
           if-no-files-found: error
           retention-days: 30
       - name: Publish exact eligibility projection
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-eligibility-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence/eligibility.json
@@ -281,7 +281,7 @@ jobs:
           fi
       - name: Upload final fail-closed eligibility receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-final-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/final/eligibility.json
