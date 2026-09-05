@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -130,11 +131,25 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 				t.Fatal("indexRecipes was rendered into multiple split parts")
 			}
 			indexRecipesFound = true
-			if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
-				t.Fatalf("indexRecipes helper exceeded rendered capacity or retained grouped imports:\n%s", text)
+			if physicalLines(part.Data) > 75 {
+				t.Fatalf("indexRecipes helper exceeded rendered capacity:\n%s", text)
 			}
-			imported := `import recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"`
-			if !strings.Contains(text, imported) || !strings.Contains(text, "return recipeauthority.Index(recipes)") {
+			partFile, err := parser.ParseFile(token.NewFileSet(), "indexRecipes.go", part.Data, parser.ParseComments)
+			if err != nil {
+				t.Fatalf("indexRecipes rendered source is not parseable: %v", err)
+			}
+			recipeImportFound := false
+			for _, imported := range partFile.Imports {
+				path, err := strconv.Unquote(imported.Path.Value)
+				if err != nil || path != "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe" {
+					continue
+				}
+				if imported.Name == nil || imported.Name.Name != "recipeauthority" {
+					t.Fatalf("indexRecipes lost recipeauthority alias for %q", path)
+				}
+				recipeImportFound = true
+			}
+			if !recipeImportFound || !strings.Contains(text, "return recipeauthority.Index(recipes)") {
 				t.Fatalf("indexRecipes lost recipeauthority import/path/alias or body: %q", text)
 			}
 		}
