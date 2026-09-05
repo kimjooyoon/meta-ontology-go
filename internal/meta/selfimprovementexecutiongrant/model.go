@@ -528,11 +528,11 @@ func CompilePolicy(repository fs.FS, path string) (PolicyProgram, error) {
 	if err := validatePolicy(policy); err != nil {
 		return PolicyProgram{}, err
 	}
-	executorContract, err := compileCanonicalExecutorSemanticContract(file, raw, canonical, ir)
+	executorContract, err := compileCanonicalExecutorSemanticContract(file, string(raw), canonical, ir)
 	if err != nil {
 		return PolicyProgram{}, fmt.Errorf("compile canonical executor semantic contract: %w", err)
 	}
-	if err := validateCanonicalExecutorSemanticContract(file, raw, canonical, ir, executorContract); err != nil {
+	if err := validateCanonicalExecutorSemanticContract(file, string(raw), canonical, ir, executorContract); err != nil {
 		return PolicyProgram{}, fmt.Errorf("validate canonical executor semantic contract: %w", err)
 	}
 	inventory, err := ObserveInventory(repository)
