@@ -377,7 +377,7 @@ func namedFunctionLines(source []byte, name string) (int, bool) {
 	}
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
-		if ok && function.Name != nil && function.Name.Name == name {
+		if ok && function.Recv == nil && function.Name != nil && function.Name.Name == name {
 			return declarationLines(fset, function), true
 		}
 	}
