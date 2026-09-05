@@ -23,7 +23,7 @@ func validatePlanIndicatorDecisionLedger(plan Plan) error {
 		return err
 	}
 	indicators := ledgerSourceIndicators(*plan.IndicatorDecisionLedger)
-	expected, err := buildPlanIndicatorDecisionLedger(indicators, plan.Selected, plan.UnselectedIndicatorIDs)
+	expected, err := buildPlanIndicatorDecisionLedgerWithRefuted(indicators, plan.Selected, plan.UnselectedIndicatorIDs, plan.RefutedIndicatorIDs)
 	if err != nil || !reflect.DeepEqual(*plan.IndicatorDecisionLedger, expected) {
 		return fmt.Errorf("plan indicator decision ledger does not match plan decisions")
 	}

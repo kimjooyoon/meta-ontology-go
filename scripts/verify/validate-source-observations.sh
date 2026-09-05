@@ -45,7 +45,7 @@ jq -e '
   (.report_digest | strings | test("^sha256:[0-9a-f]{64}$"))
 ' "$actionability" >/dev/null
 jq -e '
-  (.schema_version == "gooo/self-improvement-generation/v6") and
+  (.schema_version == "gooo/self-improvement-generation/v7") and
   (.decision == "PLAN" or .decision == "FIXED_POINT" or .decision == "UNKNOWN" or .decision == "REJECTED") and
   (.registry | type == "array") and
   (.selected | type == "array") and
@@ -57,7 +57,7 @@ jq -e '
   (.replay_digest | strings | test("^[0-9a-f]{64}$"))
 ' "$plan" >/dev/null
 jq -e '
-  (.schema_version == "gooo/meta-operation-execution/v6") and
+  (.schema_version == "gooo/meta-operation-execution/v7") and
   (.decision == "PROPOSED" or .decision == "FIXED_POINT" or .decision == "UNKNOWN" or .decision == "REJECTED") and
   (.steps | type == "array") and
   (.promotion_authorized | type == "boolean") and

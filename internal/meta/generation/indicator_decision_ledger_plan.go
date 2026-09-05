@@ -6,7 +6,7 @@ func attachPlanIndicatorDecisionLedger(plan Plan, indicators []sourcepolicy.Indi
 	if plan.Decision != DecisionFixedPoint && plan.Decision != DecisionPlan {
 		return plan
 	}
-	ledger, err := buildPlanIndicatorDecisionLedger(indicators, plan.Selected, plan.UnselectedIndicatorIDs)
+	ledger, err := buildPlanIndicatorDecisionLedgerWithRefuted(indicators, plan.Selected, plan.UnselectedIndicatorIDs, plan.RefutedIndicatorIDs)
 	if err != nil {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonInvalidInput
 		plan.Selected = []Action{}

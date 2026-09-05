@@ -45,6 +45,21 @@ func resolveActionBinding(plan generation.Plan, action generation.Action) (gener
 			Expected: binding.Evaluator, Observed: action.Evaluator,
 		}
 	}
+	if action.SubjectKind != binding.InputSubjectKind {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.subject_kind",
+			Expected: string(binding.InputSubjectKind), Observed: string(action.SubjectKind),
+		}
+	}
+	if action.InputSubjectKind != binding.InputSubjectKind ||
+		action.InputContractSourceDigest != binding.InputContractSourceDigest ||
+		action.InputContractSemanticDigest != binding.InputContractSemanticDigest {
+		return generation.Binding{}, &executorBindingError{
+			Operation: string(action.Operation), FieldPath: "$.selected.input_contract",
+			Expected: binding.InputContractSourceDigest + ":" + binding.InputContractSemanticDigest,
+			Observed: action.InputContractSourceDigest + ":" + action.InputContractSemanticDigest,
+		}
+	}
 	return binding, nil
 }
 

@@ -80,9 +80,12 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 		}
 		evidence := receipt.InstanceEvidence
 		action, actionExists := actions[receipt.ActionIndicatorID]
+		if !actionExists || !receiptMatchesAction(plan, action, receipt) {
+			return fmt.Errorf("operation observation receipt binding mismatch for %s", receipt.ActionIndicatorID)
+		}
 		if evidence.Schema != OperationInstanceEvidenceSchema ||
 			evidence.ActionIndicatorID != receipt.ActionIndicatorID ||
-			!actionExists || evidence.Subject != action.Subject ||
+			evidence.Subject != action.Subject ||
 			evidence.HeadSHA != plan.HeadSHA ||
 			evidence.Subject == "" ||
 			evidence.OperationID == "" ||

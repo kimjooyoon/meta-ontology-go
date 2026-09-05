@@ -6,6 +6,9 @@ type Binding struct {
 	Operation            sourcepolicy.Operation `json:"operation"`
 	Activity             string                 `json:"activity"`
 	Output               string                 `json:"output"`
+	InputSubjectKind     sourcepolicy.SubjectKind `json:"input_subject_kind"`
+	InputContractSourceDigest string             `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string           `json:"input_contract_semantic_digest"`
 	IndependenceGroupID  string                 `json:"independence_group_id"`
 	ProofChoice          ProofChoice            `json:"proof_choice"`
 	Executor             string                 `json:"executor"`
@@ -20,6 +23,9 @@ type Action struct {
 	MetricID             sourcepolicy.Dimension           `json:"metric_id"`
 	Subject              string                           `json:"subject"`
 	SubjectKind          sourcepolicy.SubjectKind         `json:"subject_kind"`
+	InputSubjectKind     sourcepolicy.SubjectKind         `json:"input_subject_kind"`
+	InputContractSourceDigest string                      `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string                    `json:"input_contract_semantic_digest"`
 	Applicability        sourcepolicy.Applicability       `json:"applicability"`
 	ApplicabilityRule    string                           `json:"applicability_rule_id"`
 	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`
@@ -47,6 +53,7 @@ type Action struct {
 type Counterexample struct {
 	ID            string   `json:"id"`
 	IndicatorID   string   `json:"indicator_id"`
+	SourceIndicator sourcepolicy.Indicator `json:"source_indicator"`
 	BlockerID     string   `json:"blocker_id"`
 	Stage         string   `json:"stage"`
 	Step          string   `json:"step"`

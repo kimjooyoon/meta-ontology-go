@@ -38,7 +38,9 @@ func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 		plan.UnknownIndicatorIDs = failures
 		return finish(plan)
 	}
-	actionable, unknown := partitionIndicators(indicators)
+	actionable, unknown, refuted, counterexamples := partitionIndicatorsForRegistry(indicators, registry)
+	plan.RefutedIndicatorIDs = append(plan.RefutedIndicatorIDs, refuted...)
+	plan.Counterexamples = append(plan.Counterexamples, counterexamples...)
 	if len(unknown) != 0 {
 		plan.Decision, plan.Reason = DecisionUnknown, ReasonMissingOperation
 		plan.UnknownIndicatorIDs = unknown

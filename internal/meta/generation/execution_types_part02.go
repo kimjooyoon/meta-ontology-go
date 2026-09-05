@@ -7,6 +7,9 @@ type ExecutionStep struct {
 	MetricID             sourcepolicy.Dimension           `json:"metric_id"`
 	Subject              string                           `json:"subject"`
 	SubjectKind          sourcepolicy.SubjectKind         `json:"subject_kind"`
+	InputSubjectKind     sourcepolicy.SubjectKind         `json:"input_subject_kind"`
+	InputContractSourceDigest string                      `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string                    `json:"input_contract_semantic_digest"`
 	Applicability        sourcepolicy.Applicability       `json:"applicability"`
 	ApplicabilityRule    string                           `json:"applicability_rule_id"`
 	ApplicabilityReason  sourcepolicy.ApplicabilityReason `json:"applicability_reason"`

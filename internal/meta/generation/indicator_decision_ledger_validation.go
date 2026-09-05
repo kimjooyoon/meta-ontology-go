@@ -13,6 +13,7 @@ func (ledger IndicatorDecisionLedger) Validate() error {
 	indicators := make([]sourcepolicy.Indicator, 0, len(ledger.Entries))
 	actions := make([]Action, 0, ledger.SelectedCount)
 	deferred := make([]string, 0, ledger.DeferredCount)
+	refuted := make([]string, 0, ledger.RefutedCount)
 	for _, entry := range ledger.Entries {
 		indicators = append(indicators, entry.SourceIndicator)
 		if entry.Action != nil {
@@ -21,8 +22,11 @@ func (ledger IndicatorDecisionLedger) Validate() error {
 		if entry.Disposition == IndicatorDispositionRepairDeferred {
 			deferred = append(deferred, entry.IndicatorID)
 		}
+		if entry.Disposition == IndicatorDispositionRepairRefuted {
+			refuted = append(refuted, entry.IndicatorID)
+		}
 	}
-	rebuilt, err := buildIndicatorDecisionLedger(indicators, actions, deferred)
+	rebuilt, err := buildIndicatorDecisionLedgerWithRefuted(indicators, actions, deferred, refuted)
 	if err != nil {
 		return err
 	}

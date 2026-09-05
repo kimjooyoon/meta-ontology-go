@@ -154,7 +154,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		Receipts:       []generation.OperationReceipt{},
 		Failures:       []generation.ObservationFailure{},
 	}
-	if plan.Decision != generation.DecisionPlan {
+	if plan.Decision != generation.DecisionPlan || manifest.Decision != generation.ExecutionDecisionProposed {
 		return generation.SealObservationBundle(bundle), nil
 	}
 	gitDir, err := gitDirectory(workspace)

@@ -1,0 +1,11 @@
+package operationinputcontract
+namespace operationinputcontract
+
+entity FunctionInput id "gooo://meta-operation-input-contract/entity/function-input"
+entity FileInput id "gooo://meta-operation-input-contract/entity/file-input"
+entity OperationResult id "gooo://meta-operation-input-contract/entity/result"
+
+activity CollapseAssignReturn(FunctionInput) -> OperationResult
+activity SplitGoDeclarations(FileInput) -> OperationResult
+activity SplitGoooSections(FileInput) -> OperationResult
+activity ExtractFunction(FunctionInput) -> OperationResult

@@ -8,7 +8,10 @@ func candidateKey(candidate candidate) string {
 
 func actionFor(candidate candidate, id string) Action {
 	return Action{IndicatorID: id, MetricID: candidate.indicator.MetricID, Subject: candidate.indicator.Subject,
-		SubjectKind: candidate.indicator.SubjectKind, Applicability: candidate.indicator.Applicability,
+		SubjectKind: candidate.indicator.SubjectKind, InputSubjectKind: candidate.binding.InputSubjectKind,
+		InputContractSourceDigest: candidate.binding.InputContractSourceDigest,
+		InputContractSemanticDigest: candidate.binding.InputContractSemanticDigest,
+		Applicability: candidate.indicator.Applicability,
 		ApplicabilityRule: candidate.indicator.ApplicabilityRule, ApplicabilityReason: candidate.indicator.ApplicabilityReason,
 		Blocking: candidate.indicator.Blocking, SourceIndicator: candidate.indicator,
 		IndicatorOutcome:  candidate.indicator.Outcome(),

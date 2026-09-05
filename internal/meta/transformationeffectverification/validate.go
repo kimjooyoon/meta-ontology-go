@@ -99,12 +99,18 @@ func validateActionBinding(registry []generation.Binding, action generation.Acti
 	if err := compareBinding(expected, candidates[0]); err != nil {
 		return err
 	}
+	if action.SubjectKind != expected.InputSubjectKind || action.SourceIndicator.SubjectKind != action.SubjectKind {
+		return bindingFailure(bindingPath(action.Operation)+".input_subject_kind", string(expected.InputSubjectKind), string(action.SubjectKind))
+	}
 	return compareBinding(expected, actionBinding(action))
 }
 
 func actionBinding(action generation.Action) generation.Binding {
 	return generation.Binding{
 		Operation: action.Operation, Activity: action.Activity, Output: action.Output,
+		InputSubjectKind: action.InputSubjectKind,
+		InputContractSourceDigest: action.InputContractSourceDigest,
+		InputContractSemanticDigest: action.InputContractSemanticDigest,
 		IndependenceGroupID: action.IndependenceGroupID, ProofChoice: action.ProofChoice,
 		Executor: action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
@@ -120,6 +126,9 @@ func compareBinding(expected, observed generation.Binding) error {
 		path, expected, observed string
 	}{
 		{"activity", expected.Activity, observed.Activity}, {"output", expected.Output, observed.Output},
+		{"input_subject_kind", string(expected.InputSubjectKind), string(observed.InputSubjectKind)},
+		{"input_contract_source_digest", expected.InputContractSourceDigest, observed.InputContractSourceDigest},
+		{"input_contract_semantic_digest", expected.InputContractSemanticDigest, observed.InputContractSemanticDigest},
 		{"executor", expected.Executor, observed.Executor}, {"evaluator", expected.Evaluator, observed.Evaluator},
 		{"independence_group_id", expected.IndependenceGroupID, observed.IndependenceGroupID},
 		{"proof_choice", string(expected.ProofChoice), string(observed.ProofChoice)},
@@ -149,7 +158,10 @@ func validateExecution(plan generation.Plan, execution generation.ExecutionManif
 				found++
 				if step.Operation != action.Operation || step.Executor != action.Executor ||
 					step.Evaluator != action.Evaluator || step.Activity != action.Activity ||
-					step.Output != action.Output || step.ProofChoice != action.ProofChoice {
+					step.Output != action.Output || step.ProofChoice != action.ProofChoice ||
+					step.SubjectKind != action.SubjectKind || step.InputSubjectKind != action.InputSubjectKind ||
+					step.InputContractSourceDigest != action.InputContractSourceDigest ||
+					step.InputContractSemanticDigest != action.InputContractSemanticDigest {
 					return bindingFailure("execution.steps["+action.IndicatorID+"]", "selected action binding", "stale execution binding")
 				}
 			}
@@ -280,6 +292,9 @@ func validateReceipts(plan generation.Plan, report generation.ReceiptReport) err
 
 func validateClosedReceipt(receipt generation.OperationReceipt, action generation.Action, head string) error {
 	if receipt.ActionIndicatorID != action.IndicatorID || receipt.Operation != action.Operation ||
+		receipt.SubjectKind != action.SubjectKind || receipt.InputSubjectKind != action.InputSubjectKind ||
+		receipt.InputContractSourceDigest != action.InputContractSourceDigest ||
+		receipt.InputContractSemanticDigest != action.InputContractSemanticDigest ||
 		receipt.Activity != action.Activity || receipt.Output != action.Output || receipt.Executor != action.Executor ||
 		receipt.Evaluator != action.Evaluator || receipt.ProofChoice != action.ProofChoice || receipt.InstanceEvidence == nil ||
 		len(receipt.Indicators) != len(action.RequiredIndicatorIDs) {
