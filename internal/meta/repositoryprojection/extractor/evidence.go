@@ -27,9 +27,32 @@ type StrategyEvidence struct {
 	Obligations                 []ObligationEvidence         `json:"obligations"`
 	ContractObligations         []ContractObligationEvidence `json:"contract_obligations"`
 	ProofStages                 []ProofStageEvidence         `json:"proof_stages"`
+	PreflightObservations       []PreflightObservationEvidence  `json:"preflight_observations,omitempty"`
 	FinalGeneratedBytes         int                          `json:"final_generated_bytes"`
 	FinalGeneratedEvidenceBytes int                          `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits         int                          `json:"final_generated_units"`
+}
+
+type PreflightObservationEvidence struct {
+	Operation              string  `json:"operation"`
+	Activity               string  `json:"activity"`
+	InputEntity            string  `json:"input_entity"`
+	InputSubjectKind       string  `json:"input_subject_kind"`
+	Metric                 string  `json:"metric"`
+	Subject                string  `json:"subject"`
+	Receiver               string  `json:"receiver,omitempty"`
+	FunctionStart          string  `json:"function_start"`
+	FunctionEnd            string  `json:"function_end"`
+	DeclarationStart       string  `json:"declaration_start"`
+	DeclarationEnd         string  `json:"declaration_end"`
+	SourceDigest           string  `json:"source_digest"`
+	ContractSourceDigest   string  `json:"contract_source_digest"`
+	ContractSemanticDigest string  `json:"contract_semantic_digest"`
+	FunctionLines          int     `json:"function_lines"`
+	FunctionStatus         string  `json:"function_status"`
+	HelperLines            *int    `json:"helper_lines,omitempty"`
+	HelperStatus           string  `json:"helper_status"`
+	FailureReason          string  `json:"failure_reason,omitempty"`
 }
 
 type ObligationEvidence struct {

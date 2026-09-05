@@ -76,7 +76,11 @@ func TestFirstOversizedFunctionUsesActualDeclarationIdentity(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			function := firstOversizedFunction(fset, file, []byte(tc.source))
+			selection, selectionErr := firstOversizedFunction(fset, file, []byte(tc.source))
+			if selectionErr != nil {
+				t.Fatalf("preflight selection failed: %v", selectionErr)
+			}
+			function := selection.function
 			if tc.wantNil {
 				if function != nil {
 					t.Fatalf("small method-only fixture selected %s", functionIdentity(fset, function))
@@ -101,7 +105,7 @@ func TestFirstOversizedFunctionUsesActualDeclarationIdentity(t *testing.T) {
 			if !tc.wantMethod {
 				return
 			}
-			_, _, err = decomposeFunction(t.TempDir(), "fixture.go", []byte(tc.source), fset, file, function)
+			_, _, err = decomposeFunction(t.TempDir(), "fixture.go", []byte(tc.source), fset, file, function, selection.observations)
 			var failure Failure
 			if !errors.As(err, &failure) || failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
 				t.Fatalf("oversized method decomposition=%v, want METHOD_SUFFIX_DECOMPOSITION_UNSAFE", err)

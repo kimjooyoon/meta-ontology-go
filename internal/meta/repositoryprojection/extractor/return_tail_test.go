@@ -52,6 +52,19 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				if len(result.Evidence[0].Obligations) != len(returnTailObligations) {
 					t.Fatalf("obligations=%+v", result.Evidence[0].Obligations)
 				}
+				var selectedPreflight *PreflightObservationEvidence
+				for index := range result.Evidence[0].PreflightObservations {
+					observation := &result.Evidence[0].PreflightObservations[index]
+					if observation.Subject == "func:F" {
+						selectedPreflight = observation
+						break
+					}
+				}
+				if selectedPreflight == nil || selectedPreflight.Activity != "ExtractFunction" || selectedPreflight.Metric != sourcepolicy.DimensionFunctionLines ||
+					selectedPreflight.FunctionStatus != string(renderedCapacityOverCap) || selectedPreflight.SourceDigest == "" ||
+					selectedPreflight.ContractSourceDigest == "" || selectedPreflight.ContractSemanticDigest == "" {
+					t.Fatalf("preflight evidence=%+v, want selected function observation with bound digests", result.Evidence[0].PreflightObservations)
+				}
 				if result.Evidence[0].BeforeFunctionLines <= functionLineLimit || result.Evidence[0].AfterFunctionLines > functionLineLimit ||
 					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit {
 					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
