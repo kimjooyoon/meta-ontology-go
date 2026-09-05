@@ -148,6 +148,10 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
           test "$(git status --porcelain)" = ""
 
+      - name: Run focused execution-grant unit tests
+        shell: bash
+        run: go test ./internal/meta/selfimprovementexecutiongrant
+
       - name: Locate and verify exact v25 source artifact
         shell: bash
         env:
@@ -485,7 +489,7 @@ jobs:
           jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-request/v1" and .candidate_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and .candidate_input.allowed_effects == []' "$output_dir/canonical-executor-grant-request.json" >/dev/null
           jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-decision/v1" and .decision_type == "CANONICAL_EXECUTOR_CONFORMANCE_ONLY" and .fixture and (.live_authority | not) and (.user_decision | not) and (.product_utility_evidence | not) and .execution_scope == "CALLER_OWNED_TEMP_ONLY"' "$output_dir/canonical-executor-grant-decision.json" >/dev/null
           jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-receipt/v1" and .max_executions == 1 and .grant_receipt.remaining_uses == 1 and .grant_receipt.consumed_uses == 0 and .grant_receipt.execution_count == 0 and (.live_authority | not)' "$output_dir/canonical-executor-grant-receipt.json" >/dev/null
-          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-verification/v1" and .verified and .fixture and (.live_authority | not) and .case_denominator == 13 and .counts == {CLOSED:1,UNKNOWN:3,REFUTED:9} and .canonical_execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0 and .local_test_executions == 0 and .independent_replay_comparisons == 1 and ([.cases[] | select(.pass == false)] | length) == 0 and ([.cases[] | select(.actual_decision == "UNKNOWN" and ((.unknown | keys | sort) != ["blocked_by","next_operation","reason","stage","step","unknown_class"]))] | length) == 0' "$output_dir/canonical-executor-grant-verification.json" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-verification/v1" and .verified and .fixture and (.live_authority | not) and .case_denominator == 14 and .counts == {CLOSED:1,UNKNOWN:4,REFUTED:9} and .canonical_execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0 and .local_test_executions == 0 and .independent_replay_comparisons == 1 and ([.cases[] | select(.pass == false)] | length) == 0 and ([.cases[] | select(.actual_decision == "UNKNOWN" and ((.unknown | keys | sort) != ["blocked_by","next_operation","reason","stage","step","unknown_class"]))] | length) == 0' "$output_dir/canonical-executor-grant-verification.json" >/dev/null
           jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-binding-manifest/v1" and .fixture and (.live_authority | not) and .materialized_fixture_count_after == (.materialized_fixture_count_before + 1) and .exact_grant_identity_bindings == .exact_grant_identity_binding_denominator and .exact_grant_identity_binding_denominator == 32 and .artifact_files == 5 and .artifact_types == 5 and (.artifact_names | length) == 5 and .canonical_execution_count == 0 and .receipt_consumed_uses == 0 and .receipt_execution_count == 0 and .executor_contract_digest != null and .materialize_activity_digest != null and .verify_activity_digest != null' "$output_dir/canonical-executor-grant-binding-manifest.json" >/dev/null
 
       - name: Independently replay the live grant resolution

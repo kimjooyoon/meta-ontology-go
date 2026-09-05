@@ -379,7 +379,7 @@ func VerifyCanonicalExecutorGrantFixture(program PolicyProgram, fixture Canonica
 	for _, item := range verification.Cases {
 		verification.Counts[string(item.ActualDecision)]++
 	}
-	verification.Verified = contractErr == nil && verifyProgram["verification"] == "independent" && verifyProgram["candidate_execution"] == "0" && verifyProgram["grant_consumption"] == "0" && verifyProgram["repository_writes"] == "0" && verifyProgram["local_test_executions"] == "0" && verifyProgram["refuted_dominates_unknown"] == "true" && decision == DecisionClosed && resolution == ResolutionGrantedUnconsumed && reason == ReasonAllow && len(missing) == 0 && len(contradictory) == 0 && fixture.Decision.DecisionType == CanonicalExecutorDecisionType && fixture.Decision.Fixture && !fixture.Decision.LiveAuthority && !fixture.Decision.UserDecision && !fixture.Decision.ProductUtilityEvidence && fixture.Decision.CanonicalExecutionAllowed && fixture.Decision.ExecutionScope == CanonicalExecutorScope && fixture.Receipt.GrantReceipt.GrantAllowsExecution && fixture.Receipt.GrantReceipt.RemainingUses == 1 && fixture.Receipt.GrantReceipt.ConsumedUses == 0 && fixture.Receipt.GrantReceipt.ExecutionCount == 0 && fixture.Receipt.MaxExecutions == 1 && !fixture.Receipt.LiveAuthority && fixture.Receipt.CanonicalExecutionAllowed && fixture.Receipt.GrantReceipt.Digest == receiptDigest(fixture.Receipt.GrantReceipt) && fixture.Decision.Digest == canonicalExecutorDecisionDigest(fixture.Decision) && fixture.Receipt.Digest == canonicalExecutorReceiptDigest(fixture.Receipt) && fixture.Request.Digest == canonicalExecutorRequestDigest(fixture.Request) && verification.IndependentReplayComparisons == 1 && verification.Counts["CLOSED"] == 1 && verification.Counts["UNKNOWN"] == 3 && verification.Counts["REFUTED"] == 9 && canonicalExecutorUnknownComplete(verification.IndependentDecision, verification.IndependentUnknown) && allCanonicalExecutorCasesPass(verification.Cases)
+	verification.Verified = contractErr == nil && verifyProgram["verification"] == "independent" && verifyProgram["candidate_execution"] == "0" && verifyProgram["grant_consumption"] == "0" && verifyProgram["repository_writes"] == "0" && verifyProgram["local_test_executions"] == "0" && verifyProgram["refuted_dominates_unknown"] == "true" && decision == DecisionClosed && resolution == ResolutionGrantedUnconsumed && reason == ReasonAllow && len(missing) == 0 && len(contradictory) == 0 && fixture.Decision.DecisionType == CanonicalExecutorDecisionType && fixture.Decision.Fixture && !fixture.Decision.LiveAuthority && !fixture.Decision.UserDecision && !fixture.Decision.ProductUtilityEvidence && fixture.Decision.CanonicalExecutionAllowed && fixture.Decision.ExecutionScope == CanonicalExecutorScope && fixture.Receipt.GrantReceipt.GrantAllowsExecution && fixture.Receipt.GrantReceipt.RemainingUses == 1 && fixture.Receipt.GrantReceipt.ConsumedUses == 0 && fixture.Receipt.GrantReceipt.ExecutionCount == 0 && fixture.Receipt.MaxExecutions == 1 && !fixture.Receipt.LiveAuthority && fixture.Receipt.CanonicalExecutionAllowed && fixture.Receipt.GrantReceipt.Digest == receiptDigest(fixture.Receipt.GrantReceipt) && fixture.Decision.Digest == canonicalExecutorDecisionDigest(fixture.Decision) && fixture.Receipt.Digest == canonicalExecutorReceiptDigest(fixture.Receipt) && fixture.Request.Digest == canonicalExecutorRequestDigest(fixture.Request) && verification.IndependentReplayComparisons == 1 && verification.Counts["CLOSED"] == 1 && verification.Counts["UNKNOWN"] == 4 && verification.Counts["REFUTED"] == 9 && canonicalExecutorUnknownComplete(verification.IndependentDecision, verification.IndependentUnknown) && allCanonicalExecutorCasesPass(verification.Cases)
 	verification.Digest = canonicalExecutorVerificationDigest(verification)
 	return verification
 }
@@ -396,6 +396,7 @@ func canonicalExecutorVerificationCases(program PolicyProgram, fixture Canonical
 		{"exact-materialized-grant", func(*CanonicalExecutorGrantFixture) {}, DecisionClosed, ResolutionGrantedUnconsumed, ReasonAllow, nil},
 		{"missing-candidate-input", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput = valuewitnessinput.ExecutionInput{}; current.Receipt.CandidateStableID = ""; current.Receipt.CandidateDigest = ""; current.Receipt.CandidateInputDigest = ""; current.Receipt.SubjectSHA = ""; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"candidate_input_digest"})},
 		{"missing-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact = CanonicalExecutorSourceArtifact{}; current.Request.GrantRequest.Source = SourceArtifact{}; current.Receipt.SourceArtifact = CanonicalExecutorSourceArtifact{}; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"source_artifact"})},
+		{"missing-source-freshness", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.ArtifactExpiryKnown = false; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"source_artifact_expiry"})},
 		{"expired-source-artifact", func(current *CanonicalExecutorGrantFixture) { current.Request.SourceArtifact.ArtifactExpired = true; refreshCanonicalExecutorDerived(current) }, DecisionUnknown, ResolutionLower, CanonicalExecutorUnknownReason, canonicalExecutorUnknownState(DecisionUnknown, []string{"source_artifact_expiry"})},
 		{"tampered-candidate-digest", func(current *CanonicalExecutorGrantFixture) { current.Request.CandidateInput.CandidateDigest = digestBytes([]byte("tampered-candidate")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_CANDIDATE_BINDING_MISMATCH", nil},
 		{"tampered-v24-binding", func(current *CanonicalExecutorGrantFixture) { current.Request.V24Request.Digest = digestBytes([]byte("tampered-v24-request")) }, DecisionRefuted, ResolutionExact, "CANONICAL_EXECUTOR_V24_BINDING_MISMATCH", nil},
@@ -409,7 +410,7 @@ func canonicalExecutorVerificationCases(program PolicyProgram, fixture Canonical
 	}
 	result := make([]CanonicalExecutorVerificationCase, 0, len(variants))
 	for _, variant := range variants {
-		current := fixture
+		current := cloneCanonicalExecutorFixture(fixture)
 		variant.mutate(&current)
 		actual, actualResolution, actualReason, missing, contradictory := classifyCanonicalExecutorFixture(current)
 		result = append(result, CanonicalExecutorVerificationCase{ID: variant.id,
@@ -621,12 +622,17 @@ func ValidateCanonicalExecutorFixture(program PolicyProgram, fixture CanonicalEx
 	if err := validateCanonicalExecutorManifest(program, fixture); err != nil {
 		return err
 	}
+	original := fixture
+	repeatedVerification := VerifyCanonicalExecutorGrantFixture(program, fixture)
+	if !reflect.DeepEqual(repeatedVerification, verification) || !reflect.DeepEqual(fixture, original) {
+		return errors.New("canonical executor fixture verification is not pure across repeated reads")
+	}
 	for _, mutate := range []func(*CanonicalExecutorBindingManifest){
 		func(manifest *CanonicalExecutorBindingManifest) { manifest.CandidateDigest = digestBytes([]byte("rehashed-wrong-candidate-root")) },
 		func(manifest *CanonicalExecutorBindingManifest) { manifest.ExecutorContractDigest = digestBytes([]byte("rehashed-wrong-semantic-root")) },
 		func(manifest *CanonicalExecutorBindingManifest) { manifest.ArtifactNames[0] = "substituted-canonical-executor-artifact.json" },
 	} {
-		adversarial := fixture
+		adversarial := cloneCanonicalExecutorFixture(fixture)
 		mutate(&adversarial.Manifest)
 		adversarial.Manifest.Digest = canonicalExecutorManifestDigest(adversarial.Manifest)
 		if validateCanonicalExecutorManifest(program, adversarial) == nil {
@@ -634,6 +640,28 @@ func ValidateCanonicalExecutorFixture(program PolicyProgram, fixture CanonicalEx
 		}
 	}
 	return nil
+}
+
+func cloneCanonicalExecutorFixture(fixture CanonicalExecutorGrantFixture) CanonicalExecutorGrantFixture {
+	clone := fixture
+	clone.Manifest.ArtifactNames = append([]string(nil), fixture.Manifest.ArtifactNames...)
+	if fixture.Verification.Counts != nil {
+		clone.Verification.Counts = map[string]int{}
+		for key, value := range fixture.Verification.Counts {
+			clone.Verification.Counts[key] = value
+		}
+	}
+	clone.Verification.Cases = append([]CanonicalExecutorVerificationCase(nil), fixture.Verification.Cases...)
+	for index, current := range clone.Verification.Cases {
+		current.MissingFields = append([]string(nil), current.MissingFields...)
+		current.ContradictoryFields = append([]string(nil), current.ContradictoryFields...)
+		if fixture.Verification.Cases[index].Unknown != nil {
+			unknown := *fixture.Verification.Cases[index].Unknown
+			current.Unknown = &unknown
+		}
+		clone.Verification.Cases[index] = current
+	}
+	return clone
 }
 
 func validateCanonicalExecutorManifest(program PolicyProgram, fixture CanonicalExecutorGrantFixture) error {
