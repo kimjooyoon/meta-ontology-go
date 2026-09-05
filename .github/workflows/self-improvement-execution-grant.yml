@@ -351,7 +351,7 @@ jobs:
 
       - name: Upload v26 grant evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-execution-grant-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/self-improvement-execution-grant/output/*.json

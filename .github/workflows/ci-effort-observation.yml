@@ -427,7 +427,7 @@ jobs:
 
       - name: Upload exact workflow-lineage receipts
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ci-effort-observation-lineage-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/ci-effort-observation-lineage
@@ -436,7 +436,7 @@ jobs:
 
       - name: Upload diagnostic-only pending lineage preview
         if: always() && env.LINEAGE_DEFERRED == 'true'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ci-effort-observation-pending-lineage-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/ci-effort-observation/pending-lineage
@@ -445,7 +445,7 @@ jobs:
 
       - name: Upload exact CI effort receipt
         if: always() && env.LINEAGE_DEFERRED != 'true'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ci-effort-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/ci-effort-observation

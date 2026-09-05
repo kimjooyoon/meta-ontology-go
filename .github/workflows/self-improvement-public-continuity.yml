@@ -643,7 +643,7 @@ jobs:
 
       - name: Upload generated project utility dossier
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: public-self-improvement-utility-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/utility-publish
@@ -652,7 +652,7 @@ jobs:
 
       - name: Upload generated-test reuse dossier
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: public-self-improvement-test-reuse-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/test-reuse/publish
@@ -661,7 +661,7 @@ jobs:
 
       - name: Upload meta-defined public orchestration dossier
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: public-self-improvement-orchestration-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/orchestration/publish
@@ -709,7 +709,7 @@ jobs:
 
       - name: Upload graph-driven partial test reuse dossier
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
@@ -773,7 +773,7 @@ jobs:
 
       - name: Upload semantic resolution repair dossier
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: public-self-improvement-resolution-repair-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/resolution-repair/evidence/publish

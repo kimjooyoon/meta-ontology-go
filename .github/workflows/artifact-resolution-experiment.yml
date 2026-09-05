@@ -41,7 +41,7 @@ jobs:
         run: bash scripts/artifact-resolution-experiment/main.sh
       - name: Upload resolution receipts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-resolution-experiment-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/artifact-resolution-experiment

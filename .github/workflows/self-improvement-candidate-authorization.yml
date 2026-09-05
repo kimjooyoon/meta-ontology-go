@@ -230,7 +230,7 @@ jobs:
 
       - name: Upload candidate authorization bridge artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-candidate-authorization-${{ env.SOURCE_HEAD_SHA }}
           path: ${{ runner.temp }}/candidate-authorization/*.json
@@ -360,7 +360,7 @@ jobs:
 
       - name: Upload exact continuation proof
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-ci-continuation-${{ env.SOURCE_HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-ci-continuation/output/*.json

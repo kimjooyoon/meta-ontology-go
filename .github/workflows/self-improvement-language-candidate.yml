@@ -120,7 +120,7 @@ jobs:
           cp "$output/producer.json" "$artifact/producer.json"
       - name: Upload PR observation transport witness
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SOURCE_ARTIFACT_NAME }}
           path: ${{ runner.temp }}/candidate/source-artifact
@@ -177,7 +177,7 @@ jobs:
             "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload artifact lifecycle receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-artifact-lifecycle-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
           path: ${{ runner.temp }}/candidate/transport/lifecycle.json
@@ -269,7 +269,7 @@ jobs:
           ' "$output/first.json" > "$output/execution-input.json"
           jq -r '"candidate: \(.decision) \(.summary.candidate_count), achieved \(.summary.achieved_delta)/1, target \(.summary.target_delta)/1"' "$output/first.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head non-executing candidate
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-nonexecuting-candidate-${{ github.event_name == 'workflow_run' && steps.verify-transport.outputs.subject_sha || env.HEAD_SHA }}
           path: |

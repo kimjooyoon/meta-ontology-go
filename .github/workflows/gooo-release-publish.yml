@@ -110,7 +110,7 @@ jobs:
             ([.cells[].proof_choice] | unique | sort) == ["COHERENCE","FOUNDATION","REGRESSION"]
           ' "$output/contract.json"
       - name: Upload exact publication contract
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-contract-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-publication-contract
@@ -292,7 +292,7 @@ jobs:
           git diff --quiet
           test -z "$(git ls-files --others --exclude-standard)"
       - name: Upload exact eight-asset publication candidate
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/gooo-release-dist
@@ -433,7 +433,7 @@ jobs:
               summary:{total_work:8,closed:8,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:8,checksum_entries:7,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-published-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/publication.json
@@ -495,7 +495,7 @@ jobs:
           fi
       - name: Upload final publication receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-final-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/final/publication.json

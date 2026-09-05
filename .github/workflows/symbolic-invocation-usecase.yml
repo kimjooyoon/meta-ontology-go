@@ -70,7 +70,7 @@ jobs:
           test -f "$producer_path/bin/jv"
           echo "path=$producer_path" >> "$GITHUB_OUTPUT"
       - name: Upload producer evidence boundary
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: symbolic-invocation-schema-producer-${{ env.HEAD_SHA }}
           path: ${{ steps.locate.outputs.path }}
@@ -99,7 +99,7 @@ jobs:
       - name: Observe and reduce fixed user decisions
         run: bash scripts/symbolic-invocation-usecase/main.sh "$RUNNER_TEMP/symbolic-invocation-schema-producer"
       - name: Upload user-use-case receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: symbolic-invocation-usecase-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/symbolic-invocation-usecase

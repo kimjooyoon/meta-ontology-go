@@ -275,7 +275,7 @@ jobs:
           cat "$root/first-class-meta-policy-metrics.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload producer evidence and runtime artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-policy-compilation-producer-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/meta-policy-compilation
@@ -335,7 +335,7 @@ jobs:
           jq -r '"### Independent Gooo consumer\n- raw Gooo parse: " + (.raw_policy_parsed|tostring) + "\n- source/generated/independent: 3/3/3\n- import boundary: producer compiler " + .import_boundary.producer_compiler_imports + "\n- synthetic evidence/current evidence: " + ((.synthetic_evidence|length)|tostring) + "/" + .current_evidence.class + "\n- subject: " + .subject_resolution + " / " + .subject_decision.decision' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload independent consumer report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-policy-compilation-consumer-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/meta-policy-compilation/consumer-report.json

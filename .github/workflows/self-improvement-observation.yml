@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload exact-head observation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-observation
