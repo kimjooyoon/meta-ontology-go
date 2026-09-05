@@ -175,8 +175,9 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
+	traceState := newMetaExecutionTraceState()
 	for sequence, action := range generationActions(plan) {
-		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1)
+		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1, traceState)
 		trace.emitActionEntered()
 		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action, trace)
 		trace.emitActionReturned(materialized, runErr)
@@ -398,7 +399,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 		}
 		return materialized, failure
 	}
-	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName)
+	return evaluateExtractMaterialization(temporary, environment, before, result, plan, action, subject, reportName, trace, pass)
 }
 
 func writeExtractorInputs(root string, plan generation.Plan, subject sourcepolicy.SourceSubject, lines int) (string, string, *operationError) {
@@ -415,7 +416,7 @@ func writeExtractorInputs(root string, plan generation.Plan, subject sourcepolic
 	return planPath, densityPath, nil
 }
 
-func evaluateExtractMaterialization(temporary string, environment []string, before []byte, result processResult, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, reportName string) (operationMaterialization, *operationError) {
+func evaluateExtractMaterialization(temporary string, environment []string, before []byte, result processResult, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, reportName string, trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
 	reportRaw, report, err := decodeExtractorReport(filepath.Join(temporary, reportName), plan.HeadSHA)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -626,7 +627,8 @@ func runGoTest(root string, environment []string) processResult {
 }
 
 func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) processResult {
-	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+	result, _ := runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+	return result
 }
 
 func runProcessResult(root string, environment, descriptor, actual []string) processResult {
@@ -635,14 +637,9 @@ func runProcessResult(root string, environment, descriptor, actual []string) pro
 }
 
 func runProcessObserved(root string, environment, descriptor, actual []string, trace *metaExecutionTrace, pass, commandKind string) (processResult, error) {
-	if trace != nil {
-		trace.emitProcessCallEntered(pass, commandKind)
-	}
-	result, runErr := runProcess(root, environment, descriptor, actual)
-	if trace != nil {
-		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr)
-	}
-	return result, runErr
+	return observeProcessCall(trace, pass, commandKind, func() (processResult, error) {
+		return runProcess(root, environment, descriptor, actual)
+	})
 }
 
 func runProcess(root string, environment, descriptor, actual []string) (processResult, error) {
