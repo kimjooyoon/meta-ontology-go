@@ -131,7 +131,9 @@ jobs:
           if [ "$source_api_run_id" -gt 0 ]; then
             source_run_id="$source_api_run_id"
             source_run_attempt="$source_api_attempt"
-            event_run_attempt="$source_api_attempt"
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              event_run_attempt="$source_api_attempt"
+            fi
             if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$source_api_run_id/jobs?per_page=100" > "$root/source/jobs.json"; then
               printf '%s\n' '{"jobs":[]}' > "$root/source/jobs.json"
             fi
