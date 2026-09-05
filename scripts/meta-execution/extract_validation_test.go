@@ -5,9 +5,12 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -304,5 +307,166 @@ func TestFailedExtractionBindsActionRootToDerivedBlocker(t *testing.T) {
 		failure.derivedRelations[0].Relation != "DERIVED_FROM" || len(failure.canonical) == 0 ||
 		failure.evidence[0].Counterexample != failure.derivedRelations[0].Counterexample {
 		t.Fatalf("action and derived blocker binding was not preserved: %+v", failure)
+	}
+}
+
+func TestDecodeExtractorReportAcceptsLegacyWithoutStrategyEvidence(t *testing.T) {
+	root := t.TempDir()
+	report := extractionReportWithStrategyEvidence(nil)
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, decoded, err := decodeExtractorReport(path, "head")
+	if err != nil {
+		t.Fatalf("legacy report was rejected: %v", err)
+	}
+	if len(decoded.Subjects) != 1 || len(decoded.Subjects[0].Evidence) != 0 {
+		t.Fatalf("legacy report gained strategy evidence: %+v", decoded.Subjects)
+	}
+}
+
+func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
+	root := t.TempDir()
+	evidence := validStrategyEvidenceFixture()
+	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, decoded, err := decodeExtractorReport(path, "head")
+	if err != nil {
+		t.Fatalf("native strategy evidence was rejected: %v", err)
+	}
+	if len(decoded.Subjects) != 1 || len(decoded.Subjects[0].Evidence) != 1 ||
+		!reflect.DeepEqual(decoded.Subjects[0].Evidence[0], evidence) {
+		t.Fatalf("native strategy evidence was not preserved: got=%+v want=%+v", decoded.Subjects[0].Evidence, evidence)
+	}
+	decodedEvidence := decoded.Subjects[0].Evidence[0]
+	if decodedEvidence.BeforeBytes == decodedEvidence.AfterBytes ||
+		decodedEvidence.FinalGeneratedBytes == decodedEvidence.FinalGeneratedEvidenceBytes {
+		t.Fatalf("source/evidence byte distinctions were lost: %+v", decodedEvidence)
+	}
+}
+
+func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(map[string]any)
+	}{
+		{
+			name: "unknown-nested-field",
+			mutate: func(evidence map[string]any) {
+				stages := evidence["proof_stages"].([]any)
+				stages[0].(map[string]any)["unexpected"] = true
+			},
+		},
+		{
+			name: "missing-required-field",
+			mutate: func(evidence map[string]any) {
+				delete(evidence, "strategy")
+			},
+		},
+		{
+			name: "ill-typed-required-field",
+			mutate: func(evidence map[string]any) {
+				evidence["before_bytes"] = "not-an-int"
+			},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			value := extractionReportMapWithStrategyEvidence(t, validStrategyEvidenceFixture())
+			subjects := value["subjects"].([]any)
+			subject := subjects[0].(map[string]any)
+			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+			test.mutate(evidence)
+			payload, err := json.Marshal(value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(root, "report.json")
+			if err := os.WriteFile(path, payload, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+				t.Fatal("malformed strategy evidence was accepted")
+			}
+		})
+	}
+}
+
+func extractionReportWithStrategyEvidence(evidence []projectionextractor.StrategyEvidence) extractorReport {
+	subject := validExtractionSubjectFixture("a.go")
+	subject.Evidence = evidence
+	return extractorReport{
+		Schema:         functionExtractionReportSchema,
+		SourceSHA:      "head",
+		StagedSubjects: 1,
+		Subjects:       []extractorSubject{subject},
+		Indicators:     extractionTestIndicatorsWithValues(1, 1, 1, 0, 0),
+	}
+}
+
+func extractionReportMapWithStrategyEvidence(t *testing.T, evidence projectionextractor.StrategyEvidence) map[string]any {
+	t.Helper()
+	payload, err := json.Marshal(extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var value map[string]any
+	if err := json.Unmarshal(payload, &value); err != nil {
+		t.Fatal(err)
+	}
+	return value
+}
+
+func validStrategyEvidenceFixture() projectionextractor.StrategyEvidence {
+	digest := "sha256:" + strings.Repeat("a", 64)
+	return projectionextractor.StrategyEvidence{
+		Strategy:                 "return-preserving-terminal-tail",
+		Operation:                "ExtractFunction",
+		ContractActivity:         "ProveReturnShape",
+		ContractInputEntity:      "FunctionInput",
+		ContractOutputEntity:     "ReturnShapeObligation",
+		ContractInputSubjectKind: "function",
+		ContractSourceDigest:     digest,
+		ContractSemanticDigest:   "sha256:" + strings.Repeat("b", 64),
+		UsedInputFact:            true,
+		GeneratedOutputFact:     true,
+		Subject:                  "a.go#func:Selected",
+		Helper:                   "selectedTail",
+		BeforeBytes:             200,
+		AfterBytes:              150,
+		BeforeFunctionLines:     90,
+		AfterFunctionLines:      70,
+		RenderedHelperBytes:     120,
+		RenderedHelperLines:     20,
+		RenderedOuterHelperBytes: 110,
+		RenderedOuterHelperLines: 18,
+		Obligations: []projectionextractor.ObligationEvidence{{
+			Name: "return-shape", Status: "PASS", Detail: "shape preserved",
+		}},
+		ContractObligations: []projectionextractor.ContractObligationEvidence{{
+			Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput",
+			OutputEntity: "ReturnShapeObligation", UsedInputFact: true, GeneratedOutputFact: true,
+		}},
+		ProofStages: []projectionextractor.ProofStageEvidence{{
+			Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput",
+			OutputEntity: "ReturnShapeObligation", Status: "PASS", SourceDigest: digest,
+			CandidateDigest: "sha256:" + strings.Repeat("c", 64), InputEvidenceID: "input-id",
+			OutputEvidenceID: "output-id", PayloadDigest: "sha256:" + strings.Repeat("d", 64),
+			PayloadBytes: 17, Detail: "shape preserved",
+		}},
+		FinalGeneratedBytes: 500, FinalGeneratedEvidenceBytes: 700, FinalGeneratedUnits: 2,
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -84,7 +85,8 @@ func decodeExtractorReport(path, expectedSHA string) ([]byte, extractorReport, e
 	}
 	var report extractorReport
 	if err := decodeStrictBytes(raw, &report); err != nil ||
-		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA {
+		report.Schema != functionExtractionReportSchema || report.SourceSHA != expectedSHA ||
+		!validStrategyEvidenceReport(report) {
 		return raw, extractorReport{}, fmt.Errorf("malformed extraction report")
 	}
 	return raw, report, nil
@@ -202,6 +204,9 @@ func adjudicateExtractorReport(report extractorReport) *operationError {
 }
 
 func validateExtractorReport(report extractorReport) bool {
+	if !validStrategyEvidenceReport(report) {
+		return true
+	}
 	failures := make(map[string]extractorFailureRecord, len(report.Failures))
 	blockers := make(map[string]bool, len(report.Failures))
 	for _, failure := range report.Failures {
@@ -269,6 +274,46 @@ func validateExtractorReport(report extractorReport) bool {
 		}
 	}
 	return false
+}
+
+func validStrategyEvidenceReport(report extractorReport) bool {
+	for _, subject := range report.Subjects {
+		for _, evidence := range subject.Evidence {
+			if evidence.Strategy == "" || evidence.Operation == "" || evidence.ContractActivity == "" ||
+				evidence.ContractInputEntity == "" || evidence.ContractOutputEntity == "" ||
+				evidence.ContractInputSubjectKind == "" || evidence.ContractSourceDigest == "" ||
+				evidence.ContractSemanticDigest == "" || !evidence.UsedInputFact || !evidence.GeneratedOutputFact ||
+				evidence.Subject == "" || evidence.Helper == "" || evidence.BeforeBytes <= 0 ||
+				evidence.AfterBytes <= 0 || evidence.BeforeFunctionLines <= 0 || evidence.AfterFunctionLines <= 0 ||
+				evidence.RenderedHelperBytes <= 0 || evidence.RenderedHelperLines <= 0 ||
+				evidence.RenderedOuterHelperBytes <= 0 || evidence.RenderedOuterHelperLines <= 0 ||
+				evidence.FinalGeneratedBytes <= 0 || evidence.FinalGeneratedEvidenceBytes <= 0 ||
+				evidence.FinalGeneratedUnits <= 0 || len(evidence.Obligations) == 0 ||
+				len(evidence.ContractObligations) == 0 || len(evidence.ProofStages) == 0 {
+				return false
+			}
+			for _, obligation := range evidence.Obligations {
+				if obligation.Name == "" || obligation.Status == "" {
+					return false
+				}
+			}
+			for _, obligation := range evidence.ContractObligations {
+				if obligation.Name == "" || obligation.Activity == "" || obligation.InputEntity == "" ||
+					obligation.OutputEntity == "" || !obligation.UsedInputFact || !obligation.GeneratedOutputFact {
+					return false
+				}
+			}
+			for _, stage := range evidence.ProofStages {
+				if stage.Name == "" || stage.Activity == "" || stage.InputEntity == "" ||
+					stage.OutputEntity == "" || stage.Status == "" || stage.SourceDigest == "" ||
+					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
+					stage.PayloadDigest == "" || stage.PayloadBytes <= 0 {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }
 
 func validExtractionSubject(subject extractorSubject) bool {

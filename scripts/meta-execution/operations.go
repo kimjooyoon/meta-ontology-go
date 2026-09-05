@@ -16,6 +16,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/operationconformance"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -93,6 +94,7 @@ type extractorSubject struct {
 	Operation    string   `json:"meta_operation"`
 	Operations   []string `json:"meta_operations,omitempty"`
 	Proof        string   `json:"proof_choice"`
+	Evidence     []projectionextractor.StrategyEvidence `json:"strategy_evidence,omitempty"`
 }
 
 type extractorPlan struct {
