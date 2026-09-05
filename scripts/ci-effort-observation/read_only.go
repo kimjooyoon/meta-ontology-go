@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicworkflowlineage"
@@ -19,6 +20,7 @@ type readOnlyLineageObservation struct {
 	Trigger      publicworkflowlineage.Trigger    `json:"trigger"`
 	Source       publicworkflowlineage.SourceRun  `json:"source_run"`
 	Evaluation   publicworkflowlineage.Evaluation `json:"evaluation"`
+	PolicyDigest string                           `json:"policy_source_digest"`
 }
 
 type readOnlyTimingSummary struct {
@@ -114,6 +116,10 @@ func buildReadOnlyProjection(config Config) (readOnlyProjection, error) {
 	if err := validateStaticInputs(manifest, contract, program); err != nil {
 		return readOnlyProjection{}, err
 	}
+	policy, err := publicworkflowlineage.Load(config.ProgramPath, program)
+	if err != nil {
+		return readOnlyProjection{}, err
+	}
 	var lineage readOnlyLineageObservation
 	if _, err := readJSON(config.LineageObservationPath, &lineage); err != nil {
 		return readOnlyProjection{}, err
@@ -122,7 +128,7 @@ func buildReadOnlyProjection(config Config) (readOnlyProjection, error) {
 	if _, err := readJSON(config.ReadOnlyObservationPath, &observation); err != nil {
 		return readOnlyProjection{}, err
 	}
-	if err := validateReadOnlyLineageInputs(source, lineage, observation); err != nil {
+	if err := validateReadOnlyLineageInputs(source, lineage, observation, policy); err != nil {
 		return readOnlyProjection{}, err
 	}
 
@@ -165,7 +171,10 @@ func buildReadOnlyProjection(config Config) (readOnlyProjection, error) {
 	return report, nil
 }
 
-func validateReadOnlyLineageInputs(source sourceRunInput, lineage readOnlyLineageObservation, observation publicworkflowlineage.ReadOnlyObservationEvaluation) error {
+func validateReadOnlyLineageInputs(source sourceRunInput, lineage readOnlyLineageObservation, observation publicworkflowlineage.ReadOnlyObservationEvaluation, policy publicworkflowlineage.Policy) error {
+	if lineage.PolicyDigest != policy.SourceDigest {
+		return fmt.Errorf("strict workflow-lineage policy digest does not match the current Gooo source")
+	}
 	if lineage.Schema != publicworkflowlineage.ReportSchema || lineage.Decision != publicworkflowlineage.DecisionRefuted || lineage.LineageState != publicworkflowlineage.StateMismatch || lineage.Evaluation.Decision != lineage.Decision || lineage.Evaluation.LineageState != lineage.LineageState || !lineage.Evaluation.ProductFailureKept || lineage.Evaluation.MismatchDetected || lineage.Evaluation.FallbackAttempted || lineage.Evaluation.FallbackRejected {
 		return fmt.Errorf("strict workflow-lineage source failure observation is not eligible")
 	}
@@ -174,6 +183,17 @@ func validateReadOnlyLineageInputs(source sourceRunInput, lineage readOnlyLineag
 	}
 	if !sourceMatchesLineage(source, lineage.Source) {
 		return fmt.Errorf("read-only observation source identity is not exact")
+	}
+	lineageInput := publicworkflowlineage.Input{
+		Trigger: lineage.Trigger, Source: lineage.Source,
+		ExpectedArtifactName: fmt.Sprintf("ci-evidence-%d-%d", lineage.Source.ID, lineage.Source.RunAttempt),
+		ExpectedRepository: policy.Repository, ExpectedWorkflow: policy.SourceWorkflow,
+		ExpectedSourceAPIKey: policy.SourceAPIKey, ExpectedArtifactSubjectBinding: policy.ArtifactSubjectBinding,
+	}
+	expectedEvaluation := publicworkflowlineage.Evaluate(lineageInput)
+	expectedObservation := policy.EvaluateReadOnlyObservation(lineageInput)
+	if !reflect.DeepEqual(lineage.Evaluation, expectedEvaluation) || !reflect.DeepEqual(observation, expectedObservation) {
+		return fmt.Errorf("supplied workflow-lineage decisions do not match the current Gooo policy evaluation")
 	}
 	if observation.Schema != publicworkflowlineage.ObservationSchema || observation.Eligibility != publicworkflowlineage.ObservationAllowed || observation.Decision != lineage.Decision || observation.LineageState != lineage.LineageState || !observation.ExactSourceIdentity || !observation.SourceFailureKept || !observation.TimingObservationEligible || !observation.OperationObservationEligible || observation.EvidenceReuseAllowed || observation.PromotionAllowed {
 		return fmt.Errorf("read-only workflow-lineage observation is not eligible")

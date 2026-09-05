@@ -100,7 +100,7 @@ func TestLoadRejectsReadOnlyPermissionMarkerDrift(t *testing.T) {
 		to   string
 	}{
 		{"window-permission-missing", "partial-lineage-observation-permission=READ_ONLY;", ""},
-		{"runtime-permission-changed", "observation-permission=READ_ONLY", "observation-permission=WRITE"},
+		{"runtime-permission-changed", "ci.verification.runtime/v1;observation-permission=READ_ONLY", "ci.verification.runtime/v1;observation-permission=WRITE"},
 		{"reuse-permission-duplicated", "evidence-reuse-permission=EXACT_SUCCESS_ONLY;", "evidence-reuse-permission=EXACT_SUCCESS_ONLY;evidence-reuse-permission=WRITE;"},
 		{"promotion-permission-contradictory", "promotion-permission=NONE", "promotion-permission=NONE;promotion-permission=WRITE"},
 	}
