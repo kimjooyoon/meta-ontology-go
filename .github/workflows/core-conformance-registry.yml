@@ -138,7 +138,7 @@ jobs:
           RETURN_TAIL_RUNTIME_WITNESS_OUTPUT_DIR: ${{ runner.temp }}/return-tail-runtime-witness
         run: |
           set -euo pipefail
-          go test \
+          go test -json \
             ./internal/meta/generation \
             ./internal/meta/languagereadiness/languagesyntax/... \
             ./internal/meta/languageassurance/verticalsliceclosureshadow \
