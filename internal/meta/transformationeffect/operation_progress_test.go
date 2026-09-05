@@ -14,14 +14,14 @@ import (
 
 func TestOperationProgressBoundaries(t *testing.T) {
 	action := generation.Action{
-		IndicatorID:                   "sha256:action",
-		Operation:                     "extract-function",
-		Activity:                      "ExtractFunction",
-		Executor:                      "bootstrap/function-extractor",
-		Subject:                       "fixture.go:1:Example",
-		SubjectKind:                   sourcepolicy.SubjectKindFunction,
-		InputContractSourceDigest:     "source-contract",
-		InputContractSemanticDigest:   "semantic-contract",
+		IndicatorID:                 "sha256:action",
+		Operation:                   "extract-function",
+		Activity:                    "ExtractFunction",
+		Executor:                    "bootstrap/function-extractor",
+		Subject:                     "fixture.go:1:Example",
+		SubjectKind:                 sourcepolicy.SubjectKindFunction,
+		InputContractSourceDigest:   "source-contract",
+		InputContractSemanticDigest: "semantic-contract",
 	}
 
 	t.Run("normal returned phases", func(t *testing.T) {
