@@ -75,7 +75,7 @@ func validateCollapseAction(action generation.Action) *operationError {
 		action.InputContractSourceDigest == binding.InputContractSourceDigest &&
 		action.InputContractSemanticDigest == binding.InputContractSemanticDigest &&
 		action.IndependenceGroupID == binding.IndependenceGroupID &&
-		action.ProofChoice == binding.ProofChoice && string(action.MetricProofChoice) == string(binding.ProofChoice) &&
+		action.ProofChoice == binding.ProofChoice && action.MetricProofChoice == sourcepolicy.ProofRegression &&
 		action.MetricProducer == "linecaps.Analyze" && action.MetricConsumer == "refactor-planner" &&
 		action.Executor == binding.Executor && action.Evaluator == binding.Evaluator &&
 		slices.Equal(action.RequiredIndicatorIDs, binding.RequiredIndicatorIDs) &&
