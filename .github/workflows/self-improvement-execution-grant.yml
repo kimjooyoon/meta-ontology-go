@@ -128,7 +128,7 @@ jobs:
 
     steps:
       - name: Check out the exact v25 subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0

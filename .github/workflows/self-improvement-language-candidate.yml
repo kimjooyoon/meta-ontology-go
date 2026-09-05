@@ -43,7 +43,7 @@ jobs:
       SOURCE_ARTIFACT_NAME: self-improvement-language-observation
       EVENT_NAME: ${{ github.event_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TOOLING_SHA }}
           persist-credentials: false
@@ -233,7 +233,7 @@ jobs:
           jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
             "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout verified producer subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.verify-transport.outputs.subject_sha }}
           persist-credentials: false

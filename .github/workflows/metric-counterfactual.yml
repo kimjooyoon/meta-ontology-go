@@ -56,7 +56,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7
@@ -121,7 +121,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact repository subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -200,7 +200,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7
@@ -270,7 +270,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7
@@ -378,7 +378,7 @@ jobs:
       PREDECESSOR_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7
@@ -444,7 +444,7 @@ jobs:
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
     steps:
       - name: Check out exact proposal subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -721,7 +721,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - uses: actions/setup-go@v7
@@ -813,7 +813,7 @@ jobs:
       PROGRAM_ARTIFACT_NAME: metric-meta-program-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact metric subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0

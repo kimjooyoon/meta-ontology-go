@@ -22,7 +22,7 @@ jobs:
       CANDIDATE_RUN_ID: ${{ github.event.workflow_run.id }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false

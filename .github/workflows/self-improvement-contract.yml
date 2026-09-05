@@ -14,7 +14,7 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
@@ -56,7 +56,7 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
@@ -196,7 +196,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 3920551d8db1226810832f6f924783b2fddf4ccd
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -265,7 +265,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 2104e3fcede21572951c266cd7b61fd38f386aef
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -341,7 +341,7 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
@@ -415,7 +415,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: '1.27.x'
@@ -454,7 +454,7 @@ jobs:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.EXACT_SHA }}
@@ -538,7 +538,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -601,7 +601,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 240bb8019af2f5488701cd00797a4d3598bda213
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -674,7 +674,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -737,7 +737,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -805,7 +805,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 308233198b91a47bdfc34016f73e44905e2be582
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -872,7 +872,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 0908088ab35447098671263ffa7290c0363f7404
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -936,7 +936,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -1004,7 +1004,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -1072,7 +1072,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -1141,7 +1141,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 1b9acfaac0ff2d1a2353de6c5019d515ab542eb3
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
@@ -1205,7 +1205,7 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
