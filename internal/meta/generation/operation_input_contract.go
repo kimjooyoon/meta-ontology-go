@@ -150,10 +150,10 @@ func (cache *operationInputContractSnapshotCache) load() (operationInputContract
 
 func cloneOperationInputContract(contract operationInputContract) operationInputContract {
 	clone := operationInputContract{
-		SourceDigest:   contract.SourceDigest,
-		SemanticDigest: contract.SemanticDigest,
-		Bindings:       make(map[sourcepolicy.Operation]operationInputContractBinding, len(contract.Bindings)),
-		Facts:          make(map[sourcepolicy.Operation]operationInputContractFacts, len(contract.Facts)),
+		SourceDigest:    contract.SourceDigest,
+		SemanticDigest:  contract.SemanticDigest,
+		Bindings:        make(map[sourcepolicy.Operation]operationInputContractBinding, len(contract.Bindings)),
+		Facts:           make(map[sourcepolicy.Operation]operationInputContractFacts, len(contract.Facts)),
 		ObligationFacts: make(map[string]operationInputContractFacts, len(contract.ObligationFacts)),
 		PolicyFacts:     make(map[string]operationInputContractFacts, len(contract.PolicyFacts)),
 	}
