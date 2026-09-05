@@ -656,14 +656,14 @@ function testWorkflowIsReadOnlyAndBasePinned() {
   assert.match(workflow, /ref: \$\{\{ github\.workflow_sha \}\}/);
   assert.doesNotMatch(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/);
   assert.match(workflow, /persist-credentials: false/);
-  assert.match(workflow, /actions\/checkout@11d5960a326750d5838078e36cf38b85af677262/);
-  assert.match(workflow, /actions\/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b/);
+  assert.match(workflow, /actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/);
+  assert.match(workflow, /actions\/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3/);
   assert.match(workflow, /listFiles/);
   assert.match(workflow, /github\.rest\.pulls\.get/);
   assert.match(workflow, /github\.workflow_ref/);
   assert.match(workflow, /github\.workflow_sha/);
   assert.match(workflow, /github\.sha/);
-  assert.match(workflow, /actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
+  assert.match(workflow, /actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/);
   assert.match(workflow, /if: \$\{\{ always\(\) \}\}/);
   assert.match(workflow, /ci-guardian\.json/);
   assert.match(workflow, /pull_request_number: observedPull && observedPull\.number/);
