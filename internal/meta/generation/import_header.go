@@ -96,6 +96,9 @@ func importHeaderHasComments(file *ast.File, group *ast.GenDecl) bool {
 		if comments.End() >= group.Pos() && comments.Pos() <= group.End() {
 			return true
 		}
+		if comments.End() < group.Pos() && group.Pos()-comments.End() <= 2 {
+			return true
+		}
 	}
 	return false
 }

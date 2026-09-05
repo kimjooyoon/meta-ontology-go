@@ -86,46 +86,64 @@ func TestPlanSourceFunctionExtractorApplyUsesSharedImportHeader(t *testing.T) {
 		t.Fatal(err)
 	}
 	found := false
+	indexRecipesFound := false
 	for _, part := range plan.Parts {
 		text := string(part.Data)
-		if !strings.Contains(text, "func stageExtractions(") {
-			continue
-		}
-		if found {
-			t.Fatal("stageExtractions was rendered into multiple split parts")
-		}
-		found = true
-		t.Logf("stageExtractions rendered physical_lines=%d", physicalLines(part.Data))
-		if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
-			t.Fatalf("stageExtractions helper exceeded rendered capacity or retained grouped imports:\n%s", text)
-		}
-		imports := []string{
-			`import "bytes"`,
-			`import "fmt"`,
-			`import "os"`,
-			`import recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"`,
-			`import projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"`,
-		}
-		previous := -1
-		for _, imported := range imports {
-			position := strings.Index(text, imported)
-			if position < 0 || position <= previous {
-				t.Fatalf("shared import header lost alias/path/order %q: %q", imported, text)
+		if strings.Contains(text, "func stageExtractions(") {
+			if found {
+				t.Fatal("stageExtractions was rendered into multiple split parts")
 			}
-			previous = position
+			found = true
+			t.Logf("stageExtractions rendered physical_lines=%d", physicalLines(part.Data))
+			if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
+				t.Fatalf("stageExtractions helper exceeded rendered capacity or retained grouped imports:\n%s", text)
+			}
+			imports := []string{
+				`import "bytes"`,
+				`import "fmt"`,
+				`import "os"`,
+				`import projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"`,
+			}
+			previous := -1
+			for _, imported := range imports {
+				position := strings.Index(text, imported)
+				if position < 0 || position <= previous {
+					t.Fatalf("shared import header lost alias/path/order %q: %q", imported, text)
+				}
+				previous = position
+			}
+			if strings.Contains(text, "recipeauthority") {
+				t.Fatalf("stageExtractions retained an import used only by indexRecipes: %q", text)
+			}
+			for _, body := range []string{
+				"operations, evidence, err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject)",
+				"changedBySubject[logical] = appendUnique(changedBySubject[logical], edit.Path)",
+				"return staged, subjects, unhandled, failures, nil",
+			} {
+				if !strings.Contains(text, body) {
+					t.Fatalf("shared render lost stageExtractions body %q: %q", body, text)
+				}
+			}
 		}
-		for _, body := range []string{
-			"operations, evidence, err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject)",
-			"changedBySubject[logical] = appendUnique(changedBySubject[logical], edit.Path)",
-			"return staged, subjects, unhandled, failures, nil",
-		} {
-			if !strings.Contains(text, body) {
-				t.Fatalf("shared render lost stageExtractions body %q: %q", body, text)
+		if strings.Contains(text, "func indexRecipes(") {
+			if indexRecipesFound {
+				t.Fatal("indexRecipes was rendered into multiple split parts")
+			}
+			indexRecipesFound = true
+			if physicalLines(part.Data) > 75 || strings.Contains(text, "import (\n") {
+				t.Fatalf("indexRecipes helper exceeded rendered capacity or retained grouped imports:\n%s", text)
+			}
+			imported := `import recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"`
+			if !strings.Contains(text, imported) || !strings.Contains(text, "return recipeauthority.Index(recipes)") {
+				t.Fatalf("indexRecipes lost recipeauthority import/path/alias or body: %q", text)
 			}
 		}
 	}
 	if !found {
 		t.Fatal("stageExtractions was not assigned to a split part")
+	}
+	if !indexRecipesFound {
+		t.Fatal("indexRecipes was not assigned to a split part")
 	}
 }
 
