@@ -51,13 +51,19 @@ func TestFirstOversizedFunctionUsesActualDeclarationIdentity(t *testing.T) {
 			wantMethod: true,
 		},
 		{
+			name: "short-method-long-doc-helper",
+			source: "package p\n\ntype T struct{}\n\n" +
+				strings.Repeat("// method documentation\n", functionLineLimit+1) + "func (T) F() {}\n\nfunc F() {}\n",
+			wantMethod: true,
+		},
+		{
 			name:       "small-method-only",
 			source:     "package p\n\ntype T struct{}\n\nfunc (T) F() {}\n",
 			wantNil:    true,
 		},
 	}
-	if len(cases) != 3 {
-		t.Fatalf("selector identity regression cohort denominator=%d, want 3", len(cases))
+	if len(cases) != 4 {
+		t.Fatalf("selector identity regression cohort denominator=%d, want 4", len(cases))
 	}
 
 	for _, tc := range cases {
@@ -85,8 +91,12 @@ func TestFirstOversizedFunctionUsesActualDeclarationIdentity(t *testing.T) {
 			if (function.Recv != nil) != tc.wantMethod {
 				t.Fatalf("selected declaration=%s method=%t, want method=%t", functionIdentity(fset, function), function.Recv != nil, tc.wantMethod)
 			}
-			t.Logf("extract-function metric=%s selected_declaration=%s selected_function_span_lines=%d method=%t contract_source_digest=%s contract_semantic_digest=%s",
-				sourcepolicy.DimensionFunctionLines, functionIdentity(fset, function), declarationLines(fset, function), function.Recv != nil,
+			helper, helperErr := renderedDeclarationHelper(fset, file, []byte(tc.source), function)
+			if helperErr != nil {
+				t.Fatalf("selected declaration helper render failed: %v", helperErr)
+			}
+			t.Logf("extract-function metric=%s selected_declaration=%s selected_function_span_lines=%d selected_helper_physical_lines=%d method=%t contract_source_digest=%s contract_semantic_digest=%s",
+				sourcepolicy.DimensionFunctionLines, functionIdentity(fset, function), declarationLines(fset, function), physicalLines(helper), function.Recv != nil,
 				contract.SourceDigest, contract.SemanticDigest)
 			if !tc.wantMethod {
 				return

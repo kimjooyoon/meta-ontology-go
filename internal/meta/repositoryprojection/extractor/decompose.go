@@ -85,8 +85,7 @@ func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) 
 		if !ok || function.Name == nil || function.Name.Name == "init" || function.Body == nil {
 			continue
 		}
-		if declarationLines(fset, function) <= functionLineLimit &&
-			(function.Recv != nil || !renderedFunctionExceedsLimit(source, function.Name.Name)) {
+		if declarationLines(fset, function) <= functionLineLimit && !renderedDeclarationExceedsLimit(fset, file, source, function) {
 			continue
 		}
 		if result == nil || function.Pos() < result.Pos() {
@@ -100,6 +99,29 @@ func declarationLines(fset *token.FileSet, declaration ast.Node) int {
 	start := fset.Position(declaration.Pos()).Line
 	end := fset.Position(declaration.End()).Line
 	return end - start + 1
+}
+
+func renderedDeclarationExceedsLimit(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) bool {
+	rendered, err := renderedDeclarationHelper(fset, file, source, function)
+	return err == nil && physicalLines(rendered) > functionLineLimit
+}
+
+func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) ([]byte, error) {
+	list, err := imports(file)
+	if err != nil {
+		return nil, err
+	}
+	start := function.Pos()
+	if function.Doc != nil {
+		start = function.Doc.Pos()
+	}
+	selected := []declaration{{
+		node:     function,
+		start:    fset.Position(start).Offset,
+		end:      fset.Position(function.End()).Offset,
+		identity: functionIdentity(fset, function),
+	}}
+	return renderSelectedHelper(fset, file, source, selected, list)
 }
 
 func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
