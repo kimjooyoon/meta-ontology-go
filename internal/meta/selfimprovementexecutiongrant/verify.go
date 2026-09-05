@@ -72,7 +72,8 @@ func independentClassify(program PolicyProgram, input GrantInput) (Decision, Res
 }
 
 func independentPolicy(program PolicyProgram) bool {
-	return program.Evidence.Schema == PolicySchema && program.Evidence.PolicyID == ContractID && program.Evidence.CaseCount == 9 && program.Evidence.ClosedCases == 3 && program.Evidence.UnknownCases == 3 && program.Evidence.RefutedCases == 3
+	_, _, err := canonicalExecutorProgramBinding(program)
+	return err == nil && program.Evidence.Schema == PolicySchema && program.Evidence.PolicyID == ContractID && program.Evidence.CaseCount == 9 && program.Evidence.ClosedCases == 3 && program.Evidence.UnknownCases == 3 && program.Evidence.RefutedCases == 3
 }
 
 func independentSourceMissing(source SourceArtifact) bool {
@@ -179,7 +180,7 @@ func independentContradictions(input GrantInput) []string {
 		add("conflicting_duplicate_grant")
 	}
 	for _, decision := range input.DecisionInputs {
-		if decision.Schema != GrantDecisionSchema || (decision.Decision != DecisionAllow && decision.Decision != DecisionDeny) || decision.RequestDigest != input.Request.Digest || decision.V24 != input.Request.V24 || decision.V25 != input.Request.V25 || decision.Source != input.Request.Source || !independentActorValid(decision) {
+		if decision.Schema != GrantDecisionSchema || (decision.Decision != DecisionAllow && decision.Decision != DecisionDeny) || decision.RequestDigest != input.Request.Digest || decision.V24 != input.Request.V24 || decision.V25 != input.Request.V25 || decision.Source != input.Request.Source || !independentActorValid(decision, input.Live) {
 			add("unauthorized_grant")
 		}
 		if decision.DecisionDigest != "" && decision.DecisionDigest != decisionDigest(decision) {
@@ -189,9 +190,9 @@ func independentContradictions(input GrantInput) []string {
 	return fields
 }
 
-func independentActorValid(input GrantDecisionInput) bool {
+func independentActorValid(input GrantDecisionInput, live bool) bool {
 	if input.DecisionSource == DecisionSourceCanonical {
-		return input.ActorEvidence.EvidenceLabel == CanonicalEvidenceLabel
+		return !live && input.ActorEvidence.EvidenceLabel == CanonicalEvidenceLabel
 	}
 	return input.DecisionSource == DecisionSourceWorkflowDispatch && input.ActorEvidence.EvidenceLabel == ActorEvidenceLabel && input.ActorEvidence.Event == DecisionSourceWorkflowDispatch && input.ActorEvidence.Repository != "" && input.ActorEvidence.Actor != "" && input.ActorEvidence.WorkflowRunID > 0 && input.ActorEvidence.WorkflowRunAttempt > 0
 }

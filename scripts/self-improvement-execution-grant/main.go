@@ -6,8 +6,8 @@ import (
 )
 
 type options struct {
-	mode, contractPath, v24RequestPath, v24ResolutionPath string
-	v25ContractPath, sourcePath, outputPath               string
+	mode, contractPath, v24RequestPath, v24ResolutionPath, v24VerificationPath string
+	v25ContractPath, sourcePath, sourceProvenancePath, outputPath, outputDir    string
 	grantRequestPath, resolutionPath                      string
 	decision, decisionSource, actor, repository, event    string
 	workflowRunID                                         int64
@@ -26,7 +26,10 @@ func parseOptions() options {
 	contract := flag.String("contract", "examples/self-improvement-execution-grant/grant.gooo", "caller-selected grant policy")
 	v24Request := flag.String("v24-request", "", "optional v24 authorization request JSON")
 	v24Resolution := flag.String("v24-resolution", "", "optional v24 authorization resolution JSON")
+	v24Verification := flag.String("v24-verification", "", "optional v24 authorization verification JSON")
 	v25Contract := flag.String("v25-contract", "", "optional v25 pre-execution contract JSON")
+	sourceProvenance := flag.String("source-provenance", "", "exact canonical source artifact provenance JSON for canonical-fixture mode")
+	outputDir := flag.String("output-dir", "", "caller-owned output directory for canonical-fixture mode")
 	grantRequest := flag.String("grant-request", "", "grant request JSON for verify mode")
 	resolution := flag.String("resolution", "", "grant resolution JSON for verify mode")
 	source := flag.String("source", "", "optional source artifact metadata JSON")
@@ -40,5 +43,5 @@ func parseOptions() options {
 	runAttempt := flag.Int("workflow-run-attempt", 0, "GitHub workflow run attempt evidence")
 	check := flag.Bool("check", false, "validate the emitted artifact")
 	flag.Parse()
-	return options{mode: *mode, contractPath: *contract, v24RequestPath: *v24Request, v24ResolutionPath: *v24Resolution, v25ContractPath: *v25Contract, grantRequestPath: *grantRequest, resolutionPath: *resolution, sourcePath: *source, outputPath: *output, decision: *decision, decisionSource: *decisionSource, actor: *actor, repository: *repository, event: *event, workflowRunID: *runID, workflowRunAttempt: *runAttempt, check: *check}
+	return options{mode: *mode, contractPath: *contract, v24RequestPath: *v24Request, v24ResolutionPath: *v24Resolution, v24VerificationPath: *v24Verification, v25ContractPath: *v25Contract, sourceProvenancePath: *sourceProvenance, outputDir: *outputDir, grantRequestPath: *grantRequest, resolutionPath: *resolution, sourcePath: *source, outputPath: *output, decision: *decision, decisionSource: *decisionSource, actor: *actor, repository: *repository, event: *event, workflowRunID: *runID, workflowRunAttempt: *runAttempt, check: *check}
 }

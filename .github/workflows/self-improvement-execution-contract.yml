@@ -237,6 +237,9 @@ jobs:
           test -f "$request"
           test -f "$resolution"
           test -f "$verification"
+          cp "$request" "$work/source-authorization-request.json"
+          cp "$resolution" "$work/source-authorization-resolution.json"
+          cp "$verification" "$work/source-authorization-verification.json"
           jq -e --arg sha "$SUBJECT_SHA" --arg run "$SOURCE_RUN_ID" --arg receipt "$SOURCE_RECEIPT_DIGEST" \
             --arg source_workflow "$SOURCE_WORKFLOW_NAME" --arg source_path "$SOURCE_WORKFLOW_PATH" --arg target_path "$TARGET_WORKFLOW_PATH" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and .digest == $receipt and
@@ -264,7 +267,7 @@ jobs:
              .execution_authorized == false and .live_grant_decision == 0 and
              .live_execution_count == 0 and .grant_consumed_uses == 0 and
              .repository_writes == 0 and .local_test_executions == 0' "$verification" >/dev/null
-          echo "V24_REQUEST=$request" >> "$GITHUB_ENV"
+          echo "V24_REQUEST=$work/source-authorization-request.json" >> "$GITHUB_ENV"
           echo "CONTINUATION=$continuation" >> "$GITHUB_ENV"
           jq -r '"continuation: \(.resolution.decision)/\(.resolution.reason), source artifact exact, execution/grants/writes=\(.resolution.live_execution_count)/\(.resolution.execution_grants)/\(.resolution.repository_writes)"' "$continuation" >> "$GITHUB_STEP_SUMMARY"
 

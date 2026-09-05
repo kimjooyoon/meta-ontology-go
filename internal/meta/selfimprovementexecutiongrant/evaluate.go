@@ -230,7 +230,7 @@ func inspectInput(input GrantInput) ([]string, []string) {
 		addContradiction("conflicting_duplicate_grant")
 	}
 	for _, decision := range input.DecisionInputs {
-		inspectDecision(input.Request, decision, addContradiction)
+		inspectDecision(input.Request, decision, input.Live, addContradiction)
 	}
 	return missing, contradictions
 }
@@ -244,7 +244,7 @@ func inspectV24(binding V24Binding, add func(string)) {
 	if binding.SubjectSHA != "" && !validSHA(binding.SubjectSHA) {
 		add("subject_sha")
 	}
-	if binding.RequestValid && binding.ResolutionValid && (binding.AuthorizationDecision != candidate.AuthorizationAllow && binding.AuthorizationDecision != candidate.AuthorizationDeny) {
+	if binding.RequestValid && binding.ResolutionValid && binding.AuthorizationDecision != "" && binding.AuthorizationDecision != candidate.AuthorizationUnknown && binding.AuthorizationDecision != candidate.AuthorizationAllow && binding.AuthorizationDecision != candidate.AuthorizationDeny {
 		add("v24_authorization_decision")
 	}
 }
@@ -286,7 +286,7 @@ func inspectSource(source SourceArtifact, add func(string)) {
 	}
 }
 
-func inspectDecision(request GrantRequest, input GrantDecisionInput, add func(string)) {
+func inspectDecision(request GrantRequest, input GrantDecisionInput, live bool, add func(string)) {
 	if input.Schema != "" && input.Schema != GrantDecisionSchema {
 		add("grant_decision_schema")
 	}
@@ -314,7 +314,7 @@ func inspectDecision(request GrantRequest, input GrantDecisionInput, add func(st
 	if input.DecisionSource == DecisionSourceWorkflowDispatch && (input.ActorEvidence.EvidenceLabel != ActorEvidenceLabel || input.ActorEvidence.Event != DecisionSourceWorkflowDispatch || input.ActorEvidence.Repository == "" || input.ActorEvidence.Actor == "" || input.ActorEvidence.WorkflowRunID <= 0 || input.ActorEvidence.WorkflowRunAttempt <= 0) {
 		add("unauthorized_grant")
 	}
-	if input.DecisionSource == DecisionSourceCanonical && input.ActorEvidence.EvidenceLabel != CanonicalEvidenceLabel {
+	if input.DecisionSource == DecisionSourceCanonical && (live || input.ActorEvidence.EvidenceLabel != CanonicalEvidenceLabel) {
 		add("unauthorized_grant")
 	}
 }

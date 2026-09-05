@@ -169,6 +169,9 @@ jobs:
           artifact_retrieved=false
           retrieval_error=""
           v25_contract=""
+          v24_request=""
+          v24_resolution=""
+          v24_verification=""
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             test "$SOURCE_REPOSITORY" = "$GITHUB_REPOSITORY"
             test "$SOURCE_WORKFLOW_NAME" = "Self-improvement candidate execution contract"
@@ -216,6 +219,16 @@ jobs:
             while IFS= read -r file; do
               if jq -e '.schema == "gooo/self-improvement-execution-contract/v1"' "$file" >/dev/null 2>&1; then v25_contract="$file"; break; fi
             done < <(find "$source_dir" -type f -name '*.json' -print | sort)
+            v24_request="$source_dir/source-authorization-request.json"
+            v24_resolution="$source_dir/source-authorization-resolution.json"
+            v24_verification="$source_dir/source-authorization-verification.json"
+            test -f "$v24_request"
+            test -f "$v24_resolution"
+            test -f "$v24_verification"
+            jq -e --arg sha "$SUBJECT_SHA" \
+              '.schema == "gooo/self-improvement-candidate-authorization-request/v1" and .candidate.subject_sha == $sha and .live_authorized == 0 and .repository_writes == 0 and .local_test_executions == 0' "$v24_request" >/dev/null
+            jq -e '.schema == "gooo/self-improvement-candidate-authorization-resolution/v1" and .live_authorized == 0 and .repository_writes == 0 and .local_test_executions == 0' "$v24_resolution" >/dev/null
+            jq -e '.schema == "gooo/self-improvement-ci-continuation-verification/v1" and .verified == true and .independent_replay_comparisons == 1 and .execution_authorized == false and .live_execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0 and .local_test_executions == 0' "$v24_verification" >/dev/null
             if [ -n "$v25_contract" ]; then
               jq -e --arg receipt "$SOURCE_RECEIPT_DIGEST" --arg sha "$SUBJECT_SHA" \
                 '.schema == "gooo/self-improvement-execution-contract/v1" and
@@ -246,7 +259,28 @@ jobs:
             --arg artifact_retrieval_error "$retrieval_error" \
             '{repository:$repository,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_id:$artifact_id,artifact_digest:$artifact_digest,observed_artifact_digest:$observed_artifact_digest,artifact_expired:$artifact_expired,artifact_expiry_known:$artifact_expiry_known,artifact_retrieved:$artifact_retrieved} + (if $artifact_retrieval_error == "" then {} else {artifact_retrieval_error:$artifact_retrieval_error} end)' \
             > "$work/source.json"
+          source_provenance="$work/source-provenance.json"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            jq -n \
+              --arg schema "gooo/self-improvement-execution-grant-source-artifact/v1" \
+              --arg workflow_name "$SOURCE_WORKFLOW_NAME" --arg workflow_path "$SOURCE_WORKFLOW_PATH" \
+              --arg repository "$SOURCE_REPOSITORY" --arg event "$SOURCE_EVENT" --arg ref "$SOURCE_REF" \
+              --arg head_sha "$SUBJECT_SHA" --argjson workflow_run_id "$artifact_run_id" \
+              --argjson workflow_run_attempt "$artifact_run_attempt" --arg artifact_name "$artifact_name" \
+              --argjson artifact_id "$artifact_id" --arg api_digest "$declared_digest" \
+              --arg observed_digest "$actual_digest" --arg embedded_digest "$SOURCE_RECEIPT_DIGEST" \
+              --argjson artifact_expired "$artifact_expired" --argjson artifact_expiry_known "$artifact_expiry_known" \
+              --argjson artifact_retrieved "$artifact_retrieved" --arg retrieval_error "$retrieval_error" \
+              '{schema:$schema,workflow_name:$workflow_name,workflow_path:$workflow_path,repository:$repository,event:$event,ref:$ref,head_sha:$head_sha,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,artifact_name:$artifact_name,artifact_id:$artifact_id,api_archive_digest:$api_digest,observed_archive_digest:$observed_digest,embedded_verification_digest:$embedded_digest,artifact_expired:$artifact_expired,artifact_expiry_known:$artifact_expiry_known,artifact_retrieved:$artifact_retrieved} + (if $retrieval_error == "" then {} else {artifact_retrieval_error:$retrieval_error} end)' \
+              > "$source_provenance"
+          else
+            : > "$source_provenance"
+          fi
           echo "V25_CONTRACT=$v25_contract" >> "$GITHUB_ENV"
+          echo "V24_REQUEST=$v24_request" >> "$GITHUB_ENV"
+          echo "V24_RESOLUTION=$v24_resolution" >> "$GITHUB_ENV"
+          echo "V24_VERIFICATION=$v24_verification" >> "$GITHUB_ENV"
+          echo "SOURCE_PROVENANCE=$source_provenance" >> "$GITHUB_ENV"
           echo "GRANT_WORK=$work" >> "$GITHUB_ENV"
           echo "GRANT_OUTPUT=$output_dir" >> "$GITHUB_ENV"
 
@@ -289,6 +323,9 @@ jobs:
         run: |
           set -euo pipefail
           args=(-mode live -contract examples/self-improvement-execution-grant/grant.gooo -source "$GRANT_WORK/source.json" -output "$GRANT_OUTPUT/live-grant.json" -check)
+          if [ -n "$V24_REQUEST" ] && [ -n "$V24_RESOLUTION" ]; then
+            args+=(-v24-request "$V24_REQUEST" -v24-resolution "$V24_RESOLUTION")
+          fi
           if [ -n "$V25_CONTRACT" ]; then args+=(-v25-contract "$V25_CONTRACT"); fi
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ -n "$DISPATCH_DECISION" ]; then
             args+=(-decision "$DISPATCH_DECISION" -decision-source workflow_dispatch -actor "$GITHUB_ACTOR" -repository "$GITHUB_REPOSITORY" -event "$GITHUB_EVENT_NAME" -workflow-run-id "$GITHUB_RUN_ID" -workflow-run-attempt "$GITHUB_RUN_ATTEMPT")
@@ -333,6 +370,28 @@ jobs:
               "$GRANT_OUTPUT/live-grant.json" >/dev/null
           fi
           jq -r '"live grant: \(.resolution.decision)/\(.resolution.resolution)/\(.resolution.reason), grant_allows_execution=\(.resolution.grant_allows_execution), remaining_uses=\(.resolution.remaining_uses), consumed_uses=\(.resolution.consumed_uses), execution_count=\(.resolution.execution_count)"' "$GRANT_OUTPUT/live-grant.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Materialize exact canonical executor grant fixture
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          go run ./scripts/self-improvement-execution-grant \
+            -mode canonical-fixture \
+            -contract examples/self-improvement-execution-grant/grant.gooo \
+            -v24-request "$V24_REQUEST" \
+            -v24-resolution "$V24_RESOLUTION" \
+            -v24-verification "$V24_VERIFICATION" \
+            -v25-contract "$V25_CONTRACT" \
+            -source-provenance "$SOURCE_PROVENANCE" \
+            -output-dir "$GRANT_OUTPUT" \
+            -check
+          test "$(find "$GRANT_OUTPUT" -maxdepth 1 -type f -name 'canonical-executor-*.json' | wc -l | tr -d ' ')" = 5
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-request/v1" and .candidate_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and .candidate_input.allowed_effects == []' "$GRANT_OUTPUT/canonical-executor-grant-request.json" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-decision/v1" and .decision_type == "CANONICAL_EXECUTOR_CONFORMANCE_ONLY" and .fixture and (.live_authority | not) and (.user_decision | not) and (.product_utility_evidence | not) and .execution_scope == "CALLER_OWNED_TEMP_ONLY"' "$GRANT_OUTPUT/canonical-executor-grant-decision.json" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-receipt/v1" and .max_executions == 1 and .grant_receipt.remaining_uses == 1 and .grant_receipt.consumed_uses == 0 and .grant_receipt.execution_count == 0 and (.live_authority | not)' "$GRANT_OUTPUT/canonical-executor-grant-receipt.json" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-verification/v1" and .verified and .fixture and (.live_authority | not) and .case_denominator == 13 and .counts == {CLOSED:1,UNKNOWN:3,REFUTED:9} and .canonical_execution_count == 0 and .grant_consumed_uses == 0 and .repository_writes == 0 and .local_test_executions == 0 and .independent_replay_comparisons == 1 and ([.cases[] | select(.pass == false)] | length) == 0' "$GRANT_OUTPUT/canonical-executor-grant-verification.json" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-execution-grant-canonical-binding-manifest/v1" and .fixture and (.live_authority | not) and .materialized_fixture_count_after == (.materialized_fixture_count_before + 1) and .exact_grant_identity_bindings == .exact_grant_identity_binding_denominator and .artifact_files == 5 and .artifact_types == 5 and (.artifact_names | length) == 5 and .canonical_execution_count == 0 and .receipt_consumed_uses == 0 and .receipt_execution_count == 0 and .executor_contract_digest != null and .materialize_activity_digest != null and .verify_activity_digest != null' "$GRANT_OUTPUT/canonical-executor-grant-binding-manifest.json" >/dev/null
 
       - name: Independently replay the live grant resolution
         shell: bash

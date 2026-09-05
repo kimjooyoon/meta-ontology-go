@@ -72,7 +72,12 @@ type V24Binding struct {
 	CandidateDigest         string `json:"candidate_digest"`
 	SubjectSHA              string `json:"subject_sha"`
 	ObservationDigest       string `json:"observation_digest"`
+	// ContractDigest is the candidate policy contract root carried by v24.
+	// AuthorizationContractDigest is the distinct v24 authorization contract
+	// root; both are preserved so a policy root cannot masquerade as an
+	// authorization root.
 	ContractDigest          string `json:"contract_digest"`
+	AuthorizationContractDigest string `json:"authorization_contract_digest"`
 	AuthorizationDecision   string `json:"authorization_decision"`
 	AuthorizationResolution string `json:"authorization_resolution"`
 	AuthorizationOutcome    string `json:"authorization_outcome"`
@@ -228,6 +233,8 @@ type PolicyEvidence struct {
 	SourceDigest     string `json:"source_digest"`
 	CanonicalDigest  string `json:"canonical_digest"`
 	SemanticIRDigest string `json:"semantic_ir_digest"`
+	FullIRDigest     string `json:"full_ir_digest"`
+	SemanticContractDigest string `json:"semantic_contract_digest"`
 	StateCount       int    `json:"state_count"`
 	TransitionCount  int    `json:"transition_count"`
 	CaseCount        int    `json:"case_count"`
@@ -356,9 +363,10 @@ type CanonicalCaseReport struct {
 }
 
 type PolicyProgram struct {
-	Evidence  PolicyEvidence  `json:"evidence"`
-	Policy    semantic.Policy `json:"-"`
-	Inventory SourceInventory `json:"inventory"`
+	Evidence         PolicyEvidence                    `json:"evidence"`
+	Policy           semantic.Policy                  `json:"-"`
+	Inventory        SourceInventory                   `json:"inventory"`
+	ExecutorContract CanonicalExecutorSemanticContract `json:"executor_contract"`
 }
 
 type SourceInventory struct {
@@ -450,7 +458,7 @@ func ProjectV24(request candidate.AuthorizationRequest, resolution candidate.Aut
 		ResolutionSchema: resolution.Schema, ResolutionDigest: resolution.Digest,
 		CandidateStableID: request.Candidate.CandidateID, CandidateDigest: request.Candidate.CandidateDigest,
 		SubjectSHA: request.Candidate.SubjectSHA, ObservationDigest: request.Candidate.SourceObservationDigest,
-		ContractDigest:        request.Candidate.ContractCanonicalDigest,
+		ContractDigest: request.Candidate.ContractCanonicalDigest, AuthorizationContractDigest: request.Contract.CanonicalDigest,
 		AuthorizationDecision: resolution.Decision, AuthorizationResolution: resolution.Resolution,
 		AuthorizationOutcome: resolution.Outcome,
 		RequestValid:         candidate.ValidateAuthorizationRequest(request) == nil,
@@ -502,6 +510,9 @@ func CompilePolicy(repository fs.FS, path string) (PolicyProgram, error) {
 	if diagnostics.HasErrors() {
 		return PolicyProgram{}, errors.New("execution grant policy has syntax errors")
 	}
+	if err := validateCanonicalExecutorDeclaration(file); err != nil {
+		return PolicyProgram{}, fmt.Errorf("canonical executor declaration: %w", err)
+	}
 	canonical, err := syntax.Format(file)
 	if err != nil {
 		return PolicyProgram{}, fmt.Errorf("format execution grant policy: %w", err)
@@ -517,13 +528,21 @@ func CompilePolicy(repository fs.FS, path string) (PolicyProgram, error) {
 	if err := validatePolicy(policy); err != nil {
 		return PolicyProgram{}, err
 	}
+	executorContract, err := compileCanonicalExecutorSemanticContract(file, raw, canonical, ir)
+	if err != nil {
+		return PolicyProgram{}, fmt.Errorf("compile canonical executor semantic contract: %w", err)
+	}
+	if err := validateCanonicalExecutorSemanticContract(file, raw, canonical, ir, executorContract); err != nil {
+		return PolicyProgram{}, fmt.Errorf("validate canonical executor semantic contract: %w", err)
+	}
 	inventory, err := ObserveInventory(repository)
 	if err != nil {
 		return PolicyProgram{}, fmt.Errorf("observe source inventory: %w", err)
 	}
-	return PolicyProgram{Policy: policy, Inventory: inventory, Evidence: PolicyEvidence{
+	return PolicyProgram{Policy: policy, Inventory: inventory, ExecutorContract: executorContract, Evidence: PolicyEvidence{
 		Schema: PolicySchema, PolicyID: policy.ID.String(), SourceDigest: digestBytes(raw),
-		CanonicalDigest: digestBytes([]byte(canonical)), SemanticIRDigest: digestBytes([]byte(policy.SemanticCanonical())),
+		CanonicalDigest: digestBytes([]byte(canonical)), SemanticIRDigest: executorContract.SemanticIRDigest,
+		FullIRDigest: executorContract.FullIRDigest, SemanticContractDigest: executorContract.Digest,
 		StateCount: len(policy.States), TransitionCount: len(policy.Transitions), CaseCount: len(policy.Cases),
 		ClosedCases: 3, UnknownCases: 3, RefutedCases: 3,
 	}}, nil

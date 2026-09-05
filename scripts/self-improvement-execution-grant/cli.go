@@ -9,7 +9,7 @@ import (
 )
 
 func run(settings options) error {
-	if settings.outputPath == "" {
+	if settings.outputPath == "" && settings.mode != "canonical-fixture" {
 		return errors.New("-output is required")
 	}
 	program, err := grant.CompilePolicy(os.DirFS("."), settings.contractPath)
@@ -23,6 +23,8 @@ func run(settings options) error {
 		return runCases(program, settings)
 	case "verify":
 		return runVerification(program, settings)
+	case "canonical-fixture":
+		return runCanonicalFixture(program, settings)
 	default:
 		return fmt.Errorf("unknown mode %q", settings.mode)
 	}

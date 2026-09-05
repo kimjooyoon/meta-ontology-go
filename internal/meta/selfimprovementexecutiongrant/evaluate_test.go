@@ -126,3 +126,16 @@ func TestScopeDuplicateAndSafetyContradictionsRefute(t *testing.T) {
 		t.Fatalf("unsafe grant was not refuted: %#v", resolution)
 	}
 }
+
+func TestCanonicalFixtureDecisionCannotAuthorizeLiveGrant(t *testing.T) {
+	program := testProgram(t)
+	request := canonicalRequest(program)
+	input := GrantInput{Request: request, DecisionInputs: []GrantDecisionInput{fixtureDecision(request, DecisionAllow)}, Live: true}
+	resolution := Evaluate(program, input)
+	if resolution.Decision != DecisionRefuted || resolution.Reason != ReasonUnsafe || resolution.GrantAllowsExecution || resolution.ExecutionCount != 0 || resolution.ConsumedUses != 0 {
+		t.Fatalf("canonical fixture decision crossed the live-authority boundary: %#v", resolution)
+	}
+	if verification := Verify(program, input, resolution); !verification.Verified {
+		t.Fatalf("live-boundary refutation did not replay independently: %#v", verification)
+	}
+}

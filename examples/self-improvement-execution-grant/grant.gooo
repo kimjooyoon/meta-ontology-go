@@ -1,6 +1,13 @@
 package selfimprovementexecutiongrant
 namespace selfimprovementexecutiongrant
 
+entity CanonicalExecutorGrantInput id "gooo://self-improvement/execution-grant/entity/canonical-executor-grant-input"
+entity CanonicalExecutorGrantFixture id "gooo://self-improvement/execution-grant/entity/canonical-executor-grant-fixture"
+entity CanonicalExecutorGrantVerification id "gooo://self-improvement/execution-grant/entity/canonical-executor-grant-verification"
+
+activity MaterializeCanonicalExecutorGrantFixture(CanonicalExecutorGrantInput) -> CanonicalExecutorGrantFixture computes "fixture_schema=gooo/self-improvement-execution-grant-canonical-request/v1;decision_type=CANONICAL_EXECUTOR_CONFORMANCE_ONLY;scope=CALLER_OWNED_TEMP_ONLY;live_authority=false;user_decision=false;product_utility_evidence=false;repository_writes=0;local_test_executions=0;next=VerifyCanonicalExecutorGrantFixture"
+activity VerifyCanonicalExecutorGrantFixture(CanonicalExecutorGrantFixture) -> CanonicalExecutorGrantVerification computes "verification=independent;candidate_execution=0;grant_consumption=0;repository_writes=0;local_test_executions=0;refuted_dominates_unknown=true;output=caller-owned-artifact"
+
 policy SeparateExecutionGrant id "gooo://self-improvement/execution-grant/v1" {
     state "EXPLICIT_ALLOW"
     state "EXPLICIT_DENY"
