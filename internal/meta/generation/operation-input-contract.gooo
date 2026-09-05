@@ -17,6 +17,7 @@ activity SplitGoDeclarations(FileInput) -> OperationResult
 activity SplitGoooSections(FileInput) -> OperationResult
 activity ExtractFunction(FunctionInput) -> OperationResult
 activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy
+activity NormalizeNamedAliasImportHeader(FileInput) -> ImportNormalizationPolicy
 activity ProveReturnShape(FunctionInput) -> ReturnShapeObligation
 activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation
 activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
