@@ -175,8 +175,11 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	for _, action := range generationActions(plan) {
-		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action)
+	for sequence, action := range generationActions(plan) {
+		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1)
+		trace.emitActionEntered()
+		materialized, runErr := executeAction(workspace, gitDir, metricsPath, plan, action, trace)
+		trace.emitActionReturned(materialized, runErr)
 		if runErr != nil {
 			failure := observationFailureFromError(action, runErr, materialized.Executor)
 			bundle.Failures = append(bundle.Failures, failure)
@@ -258,22 +261,22 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 	return generation.ObservationFailure{ActionIndicatorID: action.IndicatorID, Decision: decision, Stage: stage, Step: step, Reason: reason, UnknownClass: unknownClass, NextOperation: next, BlockedBy: append([]string{}, blockedBy...), Executor: process}
 }
 
-func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
+func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
 	if action.Operation == sourcepolicy.OperationSplitGo {
-		return executeSplit(workspace, gitDir, metricsPath, plan, action)
+		return executeSplit(workspace, gitDir, metricsPath, plan, action, trace)
 	}
 	if action.Operation == sourcepolicy.OperationExtractFunction {
-		return executeExtract(workspace, gitDir, metricsPath, plan, action)
+		return executeExtract(workspace, gitDir, metricsPath, plan, action, trace)
 	}
 	return operationMaterialization{}, newOperationError("execute-operation", "select-executor", "UNSUPPORTED_SELECTED_OPERATION", "KNOWN_CONTRADICTION", "report-counterexample")
 }
 
-func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
-	first, firstErr := materializeSplit(workspace, gitDir, metricsPath, plan, action)
+func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	first, firstErr := materializeSplit(workspace, gitDir, metricsPath, plan, action, trace, "first")
 	if firstErr != nil {
 		return first, firstErr
 	}
-	second, secondErr := materializeSplit(workspace, gitDir, metricsPath, plan, action)
+	second, secondErr := materializeSplit(workspace, gitDir, metricsPath, plan, action, trace, "replay")
 	if secondErr != nil {
 		return second, secondErr
 	}
@@ -284,7 +287,7 @@ func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, a
 	return first, nil
 }
 
-func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
+func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
 	temporary, err := copyWorkspace(workspace)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
@@ -297,7 +300,7 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	defer os.RemoveAll(filepath.Dir(snapshot))
 	environment := childEnvironment(snapshot, temporary)
 	command := []string{"go", "run", "./scripts/source-splitter", "-root", "<workspace>", "-metrics", "<source-metrics>", "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"}
-	result, runErr := runProcess(temporary, environment, command, []string{"go", "run", "./scripts/source-splitter", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"})
+	result, runErr := runProcessObserved(temporary, environment, command, []string{"go", "run", "./scripts/source-splitter", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject, "-evidence-json"}, &trace, pass, "executor")
 	if runErr != nil || result.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation}, newOperationError("execute-operation", "run-source-splitter", "EXECUTOR_PROCESS_FAILED", "DIRECT_MISSING", "restore-operation-evidence")
 	}
@@ -318,7 +321,7 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 		failure.evidence = splitFailureEvidence(report)
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator}, failure
 	}
-	verifier := runGoTest(temporary, environment)
+	verifier := runGoTestObserved(temporary, environment, &trace, pass)
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
@@ -334,14 +337,14 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 	return operationMaterialization{OperationID: operationconformance.OperationID, InstanceDigest: instance, ContractDigest: digestBytes(contractRaw), Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation, Indicators: indicators, Canonical: canonical}, nil
 }
 
-func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action) (operationMaterialization, *operationError) {
+func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
 	subject, err := sourcepolicy.ParseSourceSubject(action.Subject)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("observe-plan", "parse-function-subject", "SUBJECT_COORDINATE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	first, firstErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
+	first, firstErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject, trace, "first")
 	if firstErr != nil {
-		second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
+		second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay")
 		if len(first.Canonical) == 0 || secondErr == nil || len(second.Canonical) == 0 {
 			return first, firstErr
 		}
@@ -351,7 +354,7 @@ func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan,
 		}
 		return first, firstErr
 	}
-	second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject)
+	second, secondErr := materializeExtract(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay")
 	if secondErr != nil {
 		return second, secondErr
 	}
@@ -361,7 +364,7 @@ func executeExtract(workspace, gitDir, metricsPath string, plan generation.Plan,
 	return first, nil
 }
 
-func materializeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject) (operationMaterialization, *operationError) {
+func materializeExtract(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
 	temporary, err := copyWorkspace(workspace)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
@@ -385,7 +388,7 @@ func materializeExtract(workspace, gitDir, metricsPath string, plan generation.P
 	command := []string{"go", "run", "./bootstrap/function-extractor", "-root", "<workspace>", "-plan", "meta-execution-function-plan.json", "-density-report", "meta-execution-function-density.json", "-expected-sha", plan.HeadSHA, "-output", "<extraction-report>"}
 	reportName := "meta-execution-extraction-report.json"
 	actual := []string{"go", "run", "./bootstrap/function-extractor", "-root", temporary, "-plan", planPath, "-density-report", densityPath, "-expected-sha", plan.HeadSHA, "-output", filepath.Join(temporary, reportName)}
-	result, runErr := runProcess(temporary, environment, command, actual)
+	result, runErr := runProcessObserved(temporary, environment, command, actual, &trace, pass, "executor")
 	if runErr != nil || result.Observation.ExitCode != 0 {
 		failure := failedExtractionError(temporary, reportName, plan, action, result.Observation)
 		materialized := operationMaterialization{Executor: result.Observation, Canonical: failure.canonical}
@@ -448,7 +451,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{action.Evaluator, subject.Path, subject.Name}, evaluatorRaw, nil)
-	verifier := runGoTest(temporary, environment)
+	verifier := runGoTestObserved(temporary, environment, &trace, pass)
 	if verifier.Observation.ExitCode != 0 {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
@@ -622,9 +625,24 @@ func runGoTest(root string, environment []string) processResult {
 	return runProcessResult(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."})
 }
 
+func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) processResult {
+	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+}
+
 func runProcessResult(root string, environment, descriptor, actual []string) processResult {
 	result, _ := runProcess(root, environment, descriptor, actual)
 	return result
+}
+
+func runProcessObserved(root string, environment, descriptor, actual []string, trace *metaExecutionTrace, pass, commandKind string) (processResult, error) {
+	if trace != nil {
+		trace.emitProcessCallEntered(pass, commandKind)
+	}
+	result, runErr := runProcess(root, environment, descriptor, actual)
+	if trace != nil {
+		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr)
+	}
+	return result, runErr
 }
 
 func runProcess(root string, environment, descriptor, actual []string) (processResult, error) {
