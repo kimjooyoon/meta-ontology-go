@@ -241,7 +241,7 @@ func includeLeadingComments(fset *token.FileSet, file *ast.File, first ast.Stmt,
 func suffixBindings(statements []ast.Stmt, function *ast.FuncDecl, fset *token.FileSet, evidence typeEvidence) ([]suffixBinding, error) {
 	inside := suffixDefinedObjects(statements, evidence.info)
 	objects := suffixFreeObjects(statements, function, inside, evidence.info)
-	return renderSuffixBindings(objects, fset, evidence.info)
+	return renderSuffixBindings(objects, fset, evidence.info, evidence.pkg)
 }
 
 func suffixDefinedObjects(statements []ast.Stmt, info *types.Info) map[types.Object]bool {
@@ -284,10 +284,13 @@ func suffixFreeObjects(statements []ast.Stmt, function *ast.FuncDecl, inside map
 	return objects
 }
 
-func renderSuffixBindings(objects map[types.Object]bool, fset *token.FileSet, info *types.Info) ([]suffixBinding, error) {
+func renderSuffixBindings(objects map[types.Object]bool, fset *token.FileSet, info *types.Info, current *types.Package) ([]suffixBinding, error) {
 	result := make([]suffixBinding, 0, len(objects))
 	for object := range objects {
 		text := types.TypeString(object.Type(), func(imported *types.Package) string {
+			if imported == current {
+				return ""
+			}
 			return packageAlias(info, imported)
 		})
 		typeExpr, err := parser.ParseExpr(text)
