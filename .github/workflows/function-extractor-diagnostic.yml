@@ -24,6 +24,7 @@ env:
   MAX_CAPTURE_BYTES: '262144'
   HELPER_TIMEOUT_SECONDS: '45'
   META_EXECUTION_TIMEOUT_SECONDS: '180'
+  META_EXECUTION_DISPATCH_MODE: direct-prebuilt-native
 
 jobs:
   diagnose:
@@ -185,13 +186,32 @@ jobs:
           chmod 700 "$helper_binary"
           helper_binary_sha256="sha256:$(sha256sum "$helper_binary" | awk '{print $1}')"
           build_go_version="$("$real_go" version 2>&1)"
+          meta_execution_binary="$root/meta-execution-driver"
+          "$real_go" build -o "$meta_execution_binary" ./scripts/meta-execution
+          chmod 700 "$meta_execution_binary"
+          meta_execution_binary_sha256="sha256:$(sha256sum "$meta_execution_binary" | awk '{print $1}')"
+          meta_plan_path="$execution_input/self-improvement-plan.json"
+          meta_output_path="$meta_dir/self-improvement-execution.json"
           jq -n \
             --arg schema 'gooo/function-extractor-diagnostic-build/v1' \
             --arg source_sha "$SUBJECT_SHA" \
             --arg binary_sha256 "$helper_binary_sha256" \
+            --arg meta_binary_sha256 "$meta_execution_binary_sha256" \
             --arg go_version "$build_go_version" \
-            '{schema:$schema,diagnostic_only:true,build_source_sha:$source_sha,binary_sha256:$binary_sha256,go_version:$go_version}' \
+            --arg dispatch_mode "$META_EXECUTION_DISPATCH_MODE" \
+            '{schema:$schema,diagnostic_only:true,build_source_sha:$source_sha,binary_sha256:$binary_sha256,meta_execution_binary_sha256:$meta_binary_sha256,go_version:$go_version,meta_execution_dispatch_mode:$dispatch_mode}' \
             > "$root/diagnostic-build.json"
+          jq -n \
+            --arg schema 'gooo/function-extractor-diagnostic-meta-execution/v1' \
+            --arg source_sha "$SUBJECT_SHA" \
+            --arg dispatch_mode "$META_EXECUTION_DISPATCH_MODE" \
+            --arg binary "$meta_execution_binary" \
+            --arg binary_sha256 "$meta_execution_binary_sha256" \
+            --arg go_version "$build_go_version" \
+            --arg plan "$meta_plan_path" \
+            --arg output "$meta_output_path" \
+            '{schema:$schema,diagnostic_only:true,source_sha:$source_sha,dispatch_mode:$dispatch_mode,binary:$binary,binary_sha256:$binary_sha256,go_version:$go_version,requested_argv:["go","run","./scripts/meta-execution","-plan",$plan,"-output",$output],actual_argv:[$binary,"-plan",$plan,"-output",$output]}' \
+            > "$root/diagnostic-meta-execution.json"
 
           {
           cat <<'SHIM'
@@ -353,6 +373,7 @@ jobs:
           chmod 700 "$shim_dir/go"
           export METRICS_DIR="$execution_input"
           export PATH="$shim_dir:$PATH"
+          export GOTRACEBACK=system
 
           test "$(command -v go)" = "$shim_dir/go"
           go_root="$("$real_go" env GOROOT)"
@@ -415,9 +436,9 @@ jobs:
           meta_stderr_capture_pid=$!
           set +e
           /usr/bin/timeout --verbose --signal=TERM --kill-after=5s "${META_EXECUTION_TIMEOUT_SECONDS}s" \
-            go run ./scripts/meta-execution \
-              -plan "$execution_input/self-improvement-plan.json" \
-              -output "$meta_dir/self-improvement-execution.json" \
+            "$meta_execution_binary" \
+              -plan "$meta_plan_path" \
+              -output "$meta_output_path" \
             > "$meta_stdout_fifo" 2> "$meta_stderr_fifo"
           meta_exit_code=$?
           set -e
@@ -591,6 +612,7 @@ jobs:
             ${{ runner.temp }}/function-extractor-diagnostic/source-repository-before.txt
             ${{ runner.temp }}/function-extractor-diagnostic/source-binding.json
             ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-build.json
+            ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-meta-execution.json
             ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-launch-environment.json
             ${{ runner.temp }}/function-extractor-diagnostic/plan-digest.txt
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution-exit-code.txt
