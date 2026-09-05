@@ -242,6 +242,7 @@ jobs:
           cp "$request" "$work/source-authorization-request.json"
           cp "$resolution" "$work/source-authorization-resolution.json"
           cp "$authorization_verification" "$work/source-authorization-verification.json"
+          cp "$verification" "$work/source-continuation-verification.json"
           jq -e --arg sha "$SUBJECT_SHA" --arg run "$SOURCE_RUN_ID" --arg receipt "$SOURCE_RECEIPT_DIGEST" \
             --arg source_workflow "$SOURCE_WORKFLOW_NAME" --arg source_path "$SOURCE_WORKFLOW_PATH" --arg target_path "$TARGET_WORKFLOW_PATH" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and .digest == $receipt and
