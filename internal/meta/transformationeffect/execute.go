@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -124,20 +122,8 @@ func warnOperationProgress(opts Options, action generation.Action, phase, bounda
 }
 
 func writeOperationProgress(opts Options, action generation.Action, phase, boundary, returnError string, sequence *int) error {
-	if opts.ProgressPath == "" {
+	if opts.ProgressWriter == nil {
 		return nil
-	}
-	outputPath, err := filepath.Abs(opts.OutputPath)
-	if err != nil {
-		return fmt.Errorf("resolve caller output boundary: %w", err)
-	}
-	progressPath, err := filepath.Abs(opts.ProgressPath)
-	if err != nil {
-		return fmt.Errorf("resolve operation progress path: %w", err)
-	}
-	expectedPath := filepath.Join(filepath.Dir(outputPath), "operation-progress.jsonl")
-	if opts.OutputPath == "" || progressPath != expectedPath {
-		return fmt.Errorf("operation progress path escapes caller output boundary")
 	}
 	*sequence = *sequence + 1
 	event := operationProgressEvent{
@@ -161,25 +147,12 @@ func writeOperationProgress(opts Options, action generation.Action, phase, bound
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(opts.ProgressPath), 0o755); err != nil {
-		return err
-	}
-	file, err := os.OpenFile(opts.ProgressPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return err
-	}
-	if written, err := file.Write(append(payload, '\n')); err != nil {
-		_ = file.Close()
+	if written, err := opts.ProgressWriter.Write(append(payload, '\n')); err != nil {
 		return err
 	} else if written != len(payload)+1 {
-		_ = file.Close()
-		return io.ErrShortWrite
+		return fmt.Errorf("short operation progress write: wrote %d of %d bytes", written, len(payload)+1)
 	}
-	if err := file.Sync(); err != nil {
-		_ = file.Close()
-		return err
-	}
-	return file.Close()
+	return nil
 }
 
 func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs []generation.OperationReceipt) generation.OperationReceipt {

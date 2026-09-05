@@ -1,6 +1,8 @@
 package transformationeffect
 
 import (
+	"io"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
@@ -14,8 +16,7 @@ type Options struct {
 	ReceiptsPath   string
 	ProvenancePath string
 	ExpectedSHA    string
-	OutputPath     string
-	ProgressPath   string
+	ProgressWriter io.Writer
 	InvocationID   string
 }
 

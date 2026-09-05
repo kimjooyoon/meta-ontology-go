@@ -2,10 +2,10 @@ package transformationeffect
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
-	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
@@ -25,11 +25,9 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	}
 
 	t.Run("normal returned phases", func(t *testing.T) {
-		outputDir := t.TempDir()
-		outputPath := filepath.Join(outputDir, "ledger.json")
-		progressPath := filepath.Join(outputDir, "operation-progress.jsonl")
+		var progress bytes.Buffer
 		sequence := 0
-		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:first"}
+		opts := Options{ExpectedSHA: "head", ProgressWriter: &progress, InvocationID: "run/1/job:first"}
 		output, runErr := runProgressPhase(opts, action, "PREFLIGHT", &sequence, func() ([]byte, error) {
 			return []byte("executor-output"), nil
 		})
@@ -39,7 +37,7 @@ func TestOperationProgressBoundaries(t *testing.T) {
 		if sequence != 2 {
 			t.Fatalf("unexpected normal sequence: %d", sequence)
 		}
-		events := readOperationProgress(t, progressPath)
+		events := readOperationProgress(t, progress.String())
 		if len(events) != 2 || events[0].Boundary != "ENTERED" || events[1].Boundary != "RETURNED" || events[1].ReturnError != "" {
 			t.Fatalf("unexpected normal progress: %#v", events)
 		}
@@ -47,15 +45,13 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	})
 
 	t.Run("incomplete phase has no return", func(t *testing.T) {
-		outputDir := t.TempDir()
-		outputPath := filepath.Join(outputDir, "ledger.json")
-		progressPath := filepath.Join(outputDir, "operation-progress.jsonl")
+		var progress bytes.Buffer
 		sequence := 0
-		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:replay"}
+		opts := Options{ExpectedSHA: "head", ProgressWriter: &progress, InvocationID: "run/1/job:replay"}
 		if err := writeOperationProgress(opts, action, "APPLY", "ENTERED", "", &sequence); err != nil {
 			t.Fatal(err)
 		}
-		events := readOperationProgress(t, progressPath)
+		events := readOperationProgress(t, progress.String())
 		if len(events) != 1 || events[0].Boundary != "ENTERED" {
 			t.Fatalf("unexpected incomplete progress: %#v", events)
 		}
@@ -63,12 +59,7 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	})
 
 	t.Run("diagnostic write failure preserves executor result", func(t *testing.T) {
-		root := t.TempDir()
-		outputPath := filepath.Join(root, "blocked", "ledger.json")
-		if err := os.WriteFile(filepath.Join(root, "blocked"), []byte("not a directory"), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: filepath.Join(root, "blocked", "operation-progress.jsonl"), InvocationID: "run/1/job:negative"}
+		opts := Options{ExpectedSHA: "head", ProgressWriter: failingProgressWriter{}, InvocationID: "run/1/job:negative"}
 		sequence := 0
 		sentinel := errors.New("executor failure")
 		called := false
@@ -82,20 +73,18 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	})
 
 	t.Run("different attempts remain separate", func(t *testing.T) {
-		root := t.TempDir()
-		outputPath := filepath.Join(root, "ledger.json")
-		progressPath := filepath.Join(root, "operation-progress.jsonl")
-		first := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:first"}
-		retry := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/2/job:first"}
+		var progress bytes.Buffer
+		first := Options{ExpectedSHA: "head", ProgressWriter: &progress, InvocationID: "run/1/job:first"}
+		retry := Options{ExpectedSHA: "head", ProgressWriter: &progress, InvocationID: "run/2/job:first"}
 		firstSequence, retrySequence := 0, 0
 		if err := writeOperationProgress(first, action, "APPLY", "ENTERED", "", &firstSequence); err != nil {
 			t.Fatal(err)
 		}
-		firstEvents := readOperationProgress(t, progressPath)
+		firstEvents := readOperationProgress(t, progress.String())
 		if err := writeOperationProgress(retry, action, "APPLY", "ENTERED", "", &retrySequence); err != nil {
 			t.Fatal(err)
 		}
-		allEvents := readOperationProgress(t, progressPath)
+		allEvents := readOperationProgress(t, progress.String())
 		if len(firstEvents) != 1 || len(allEvents) != 2 || allEvents[0].InvocationID == allEvents[1].InvocationID {
 			t.Fatalf("attempt progress was combined: first=%#v all=%#v", firstEvents, allEvents)
 		}
@@ -105,15 +94,10 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	})
 }
 
-func readOperationProgress(t *testing.T, progressPath string) []operationProgressEvent {
+func readOperationProgress(t *testing.T, progress string) []operationProgressEvent {
 	t.Helper()
-	file, err := os.Open(progressPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
 	var events []operationProgressEvent
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(strings.NewReader(progress))
 	for scanner.Scan() {
 		var event operationProgressEvent
 		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
@@ -125,6 +109,12 @@ func readOperationProgress(t *testing.T, progressPath string) []operationProgres
 		t.Fatal(err)
 	}
 	return events
+}
+
+type failingProgressWriter struct{}
+
+func (failingProgressWriter) Write([]byte) (int, error) {
+	return 0, errors.New("diagnostic writer unavailable")
 }
 
 func assertProgressIdentity(t *testing.T, events []operationProgressEvent, opts Options, action generation.Action) {
