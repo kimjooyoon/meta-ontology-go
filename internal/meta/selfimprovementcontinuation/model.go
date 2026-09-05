@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/fs"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -74,35 +75,139 @@ type UnknownState struct {
 // ContinuationInput is the typed CI_CONTINUATION_REQUEST payload. It is a
 // scheduling proof only: no field in this type grants execution or mutation.
 type ContinuationInput struct {
-	SourceWorkflowName           string `json:"source_workflow_name"`
-	SourceWorkflowPath           string `json:"source_workflow_path"`
-	SourceRepository             string `json:"source_repository"`
-	SourceEvent                  string `json:"source_event"`
-	SourceRef                    string `json:"source_ref"`
-	SourceHeadSHA                string `json:"source_head_sha"`
-	SourceRunID                  int64  `json:"source_run_id"`
-	SourceRunAttempt             int    `json:"source_run_attempt"`
-	SourceArtifactName           string `json:"source_artifact_name"`
-	SourceArtifactID             int64  `json:"source_artifact_id"`
-	SourceArtifactArchiveDigest  string `json:"source_artifact_archive_digest"`
-	SourceArtifactObservedDigest string `json:"source_artifact_observed_digest"`
-	SourceReceiptDigest          string `json:"source_receipt_digest"`
-	TargetWorkflowName           string `json:"target_workflow_name"`
-	TargetWorkflowPath           string `json:"target_workflow_path"`
-	DispatchRef                  string `json:"dispatch_ref"`
-	DispatchMode                 string `json:"dispatch_mode"`
-	Replay                       bool   `json:"replay"`
-	DuplicateDispatch            bool   `json:"duplicate_dispatch"`
-	DuplicateConflict            bool   `json:"duplicate_conflict"`
-	ManualDispatches             int    `json:"manual_dispatches"`
-	UnauthorizedDispatches       int    `json:"unauthorized_dispatches"`
-	ExecutionAuthorized          bool   `json:"execution_authorized"`
-	ExecutionGrants              int    `json:"execution_grants"`
-	LiveGrantDecision            int    `json:"live_grant_decision"`
-	LiveExecutionCount           int    `json:"live_execution_count"`
-	GrantConsumedUses            int    `json:"grant_consumed_uses"`
-	RepositoryWrites             int    `json:"repository_writes"`
-	LocalTestExecutions          int    `json:"local_test_executions"`
+	SourceWorkflowName           string   `json:"source_workflow_name"`
+	SourceWorkflowPath           string   `json:"source_workflow_path"`
+	SourceRepository             string   `json:"source_repository"`
+	SourceEvent                  string   `json:"source_event"`
+	SourceRef                    string   `json:"source_ref"`
+	SourceHeadSHA                string   `json:"source_head_sha"`
+	SourceRunID                  int64    `json:"source_run_id"`
+	SourceRunAttempt             int      `json:"source_run_attempt"`
+	SourceArtifactName           string   `json:"source_artifact_name"`
+	SourceArtifactID             int64    `json:"source_artifact_id"`
+	SourceArtifactArchiveDigest  string   `json:"source_artifact_archive_digest"`
+	SourceArtifactObservedDigest string   `json:"source_artifact_observed_digest"`
+	SourceReceiptDigest          string   `json:"source_receipt_digest"`
+	TargetWorkflowName           string   `json:"target_workflow_name"`
+	TargetWorkflowPath           string   `json:"target_workflow_path"`
+	DispatchRef                  string   `json:"dispatch_ref"`
+	DispatchMode                 string   `json:"dispatch_mode"`
+	Replay                       bool     `json:"replay"`
+	DuplicateDispatch            bool     `json:"duplicate_dispatch"`
+	DuplicateConflict            bool     `json:"duplicate_conflict"`
+	ManualDispatches             int      `json:"manual_dispatches"`
+	UnauthorizedDispatches       int      `json:"unauthorized_dispatches"`
+	ExecutionAuthorized          bool     `json:"execution_authorized"`
+	ExecutionGrants              int      `json:"execution_grants"`
+	LiveGrantDecision            int      `json:"live_grant_decision"`
+	LiveExecutionCount           int      `json:"live_execution_count"`
+	GrantConsumedUses            int      `json:"grant_consumed_uses"`
+	RepositoryWrites             int      `json:"repository_writes"`
+	LocalTestExecutions          int      `json:"local_test_executions"`
+	ParseErrors                  []string `json:"parse_errors,omitempty"`
+}
+
+// UnmarshalJSON accepts the numeric values emitted by the local typed
+// producer and the scalar strings delivered by workflow_dispatch. The
+// integer identity fields remain typed ints; malformed, overflowing, zero,
+// signed, fractional, and exponent forms are retained as contradictions so
+// the evaluator emits REFUTED rather than weakening them to UNKNOWN.
+func (input *ContinuationInput) UnmarshalJSON(data []byte) error {
+	type wire struct {
+		SourceWorkflowName           string          `json:"source_workflow_name"`
+		SourceWorkflowPath           string          `json:"source_workflow_path"`
+		SourceRepository             string          `json:"source_repository"`
+		SourceEvent                  string          `json:"source_event"`
+		SourceRef                    string          `json:"source_ref"`
+		SourceHeadSHA                string          `json:"source_head_sha"`
+		SourceRunID                  json.RawMessage `json:"source_run_id"`
+		SourceRunAttempt             json.RawMessage `json:"source_run_attempt"`
+		SourceArtifactName           string          `json:"source_artifact_name"`
+		SourceArtifactID             json.RawMessage `json:"source_artifact_id"`
+		SourceArtifactArchiveDigest  string          `json:"source_artifact_archive_digest"`
+		SourceArtifactObservedDigest string          `json:"source_artifact_observed_digest"`
+		SourceReceiptDigest          string          `json:"source_receipt_digest"`
+		TargetWorkflowName           string          `json:"target_workflow_name"`
+		TargetWorkflowPath           string          `json:"target_workflow_path"`
+		DispatchRef                  string          `json:"dispatch_ref"`
+		DispatchMode                 string          `json:"dispatch_mode"`
+		Replay                       bool            `json:"replay"`
+		DuplicateDispatch            bool            `json:"duplicate_dispatch"`
+		DuplicateConflict            bool            `json:"duplicate_conflict"`
+		ManualDispatches             int             `json:"manual_dispatches"`
+		UnauthorizedDispatches       int             `json:"unauthorized_dispatches"`
+		ExecutionAuthorized          bool            `json:"execution_authorized"`
+		ExecutionGrants              int             `json:"execution_grants"`
+		LiveGrantDecision            int             `json:"live_grant_decision"`
+		LiveExecutionCount           int             `json:"live_execution_count"`
+		GrantConsumedUses            int             `json:"grant_consumed_uses"`
+		RepositoryWrites             int             `json:"repository_writes"`
+		LocalTestExecutions          int             `json:"local_test_executions"`
+		ParseErrors                  []string        `json:"parse_errors"`
+	}
+	var value wire
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	runID, runIDError := parsePositiveIdentityInt(value.SourceRunID, "source_run_id", 64)
+	runAttempt, runAttemptError := parsePositiveIdentityInt(value.SourceRunAttempt, "source_run_attempt", strconv.IntSize)
+	artifactID, artifactIDError := parsePositiveIdentityInt(value.SourceArtifactID, "source_artifact_id", 64)
+	parseErrors := append([]string(nil), value.ParseErrors...)
+	for _, current := range []string{runIDError, runAttemptError, artifactIDError} {
+		if current != "" && !contains(parseErrors, current) {
+			parseErrors = append(parseErrors, current)
+		}
+	}
+	*input = ContinuationInput{
+		SourceWorkflowName: value.SourceWorkflowName, SourceWorkflowPath: value.SourceWorkflowPath,
+		SourceRepository: value.SourceRepository, SourceEvent: value.SourceEvent, SourceRef: value.SourceRef,
+		SourceHeadSHA: value.SourceHeadSHA, SourceRunID: int64(runID), SourceRunAttempt: int(runAttempt),
+		SourceArtifactName: value.SourceArtifactName, SourceArtifactID: int64(artifactID),
+		SourceArtifactArchiveDigest: value.SourceArtifactArchiveDigest, SourceArtifactObservedDigest: value.SourceArtifactObservedDigest,
+		SourceReceiptDigest: value.SourceReceiptDigest, TargetWorkflowName: value.TargetWorkflowName,
+		TargetWorkflowPath: value.TargetWorkflowPath, DispatchRef: value.DispatchRef, DispatchMode: value.DispatchMode,
+		Replay: value.Replay, DuplicateDispatch: value.DuplicateDispatch, DuplicateConflict: value.DuplicateConflict,
+		ManualDispatches: value.ManualDispatches, UnauthorizedDispatches: value.UnauthorizedDispatches,
+		ExecutionAuthorized: value.ExecutionAuthorized, ExecutionGrants: value.ExecutionGrants,
+		LiveGrantDecision: value.LiveGrantDecision, LiveExecutionCount: value.LiveExecutionCount,
+		GrantConsumedUses: value.GrantConsumedUses, RepositoryWrites: value.RepositoryWrites,
+		LocalTestExecutions: value.LocalTestExecutions, ParseErrors: parseErrors,
+	}
+	return nil
+}
+
+func parsePositiveIdentityInt(raw json.RawMessage, field string, bitSize int) (int64, string) {
+	if len(raw) == 0 {
+		return 0, ""
+	}
+	var token any
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&token); err != nil {
+		return 0, field
+	}
+	var encoded string
+	switch value := token.(type) {
+	case string:
+		encoded = value
+	case json.Number:
+		encoded = string(value)
+	default:
+		return 0, field
+	}
+	if encoded == "" || encoded[0] == '0' {
+		return 0, field
+	}
+	for _, character := range encoded {
+		if character < '0' || character > '9' {
+			return 0, field
+		}
+	}
+	value, err := strconv.ParseInt(encoded, 10, bitSize)
+	if err != nil || value <= 0 {
+		return 0, field
+	}
+	return value, ""
 }
 
 type PolicyEvidence struct {

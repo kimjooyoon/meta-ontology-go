@@ -13,6 +13,7 @@ const (
 	ReasonDigestMismatch    = "CONTINUATION_ARTIFACT_DIGEST_MISMATCH"
 	ReasonUnauthorized      = "UNAUTHORIZED_CONTINUATION_DISPATCH"
 	ReasonDuplicateConflict = "CONFLICTING_DUPLICATE_CONTINUATIONS"
+	ReasonMalformedIdentity = "MALFORMED_CONTINUATION_IDENTITY"
 )
 
 func RequiredFieldNames() []string {
@@ -73,7 +74,7 @@ func baseResolution(program PolicyProgram, input ContinuationInput) Continuation
 
 func inspectInput(input ContinuationInput) ([]string, []string) {
 	missing := requiredMissing(input)
-	contradictions := []string{}
+	contradictions := sortedStrings(append([]string(nil), input.ParseErrors...))
 	add := func(value string) {
 		if !contains(contradictions, value) {
 			contradictions = append(contradictions, value)
@@ -228,6 +229,9 @@ func refutedReason(fields []string) string {
 	}
 	if contains(fields, "conflicting_duplicate_dispatch") {
 		return ReasonDuplicateConflict
+	}
+	if contains(fields, "source_run_id") || contains(fields, "source_run_attempt") || contains(fields, "source_artifact_id") {
+		return ReasonMalformedIdentity
 	}
 	if contains(fields, "source_artifact_digest") || contains(fields, "source_artifact_archive_digest") || contains(fields, "source_artifact_observed_digest") {
 		return ReasonDigestMismatch
