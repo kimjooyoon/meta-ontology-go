@@ -14,10 +14,10 @@ import (
 type ImportHeaderNormalizationMode string
 
 const (
-	ImportHeaderNormalizationPlain       ImportHeaderNormalizationMode = "plain-source-rewrite"
-	ImportHeaderNormalizationNamedAlias  ImportHeaderNormalizationMode = "named-alias-header"
-	ImportHeaderPlainCapability                                        = "plain-source-rewrite"
-	ImportHeaderNamedAliasCapability                                   = "named-alias-single-spec-header"
+	ImportHeaderNormalizationPlain      ImportHeaderNormalizationMode = "plain-source-rewrite"
+	ImportHeaderNormalizationNamedAlias ImportHeaderNormalizationMode = "named-alias-header"
+	ImportHeaderPlainCapability                                       = "plain-source-rewrite"
+	ImportHeaderNamedAliasCapability                                  = "named-alias-single-spec-header"
 )
 
 // NormalizeImportHeaderGroup returns one-spec import declarations when the
