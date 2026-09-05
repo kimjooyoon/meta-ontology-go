@@ -2,6 +2,10 @@ package extractor
 
 import (
 	"errors"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +19,7 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 		positive bool
 	}{
 		{name: "positive terminal error tail", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
-		{name: "positive early return is preserved", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) == 0 {\n\t\treturn errorSentinel()\n\t}\n\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
+		{name: "positive early return is preserved", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) == 0 {\n\t\treturn errorSentinel()\n\t}\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
 		{name: "named result", source: returnTailFixture("func F(values map[string]struct{}) (err error) {\n", "\tif len(values) != 0 {\n\t\treturn err\n\t}\n\treturn err\n"), positive: false},
 		{name: "method", source: returnTailFixture("func (T) F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: false},
 		{name: "go statement", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgo func() {}()\n\treturn nil\n"), positive: false},
@@ -69,10 +73,46 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 			if !errors.As(err, &failure) {
 				t.Fatalf("negative case error=%v", err)
 			}
+			if tc.name == "closure capture stale copy" {
+				// A refuted candidate does not refute another candidate with unknown effects.
+				if failure.Reason != "CALLEE_EFFECTS_UNPROVEN" || failure.UnknownClass != "DIRECT_MISSING" {
+					t.Fatalf("whole-search closure evidence=%+v error=%v", failure, err)
+				}
+				assertReturnTailClosureCaptureRejected(t, tc.source)
+				return
+			}
 			if failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
 				t.Fatalf("negative case reason=%s error=%v", failure.Reason, err)
 			}
 		})
+	}
+}
+
+func assertReturnTailClosureCaptureRejected(t *testing.T, source string) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	function, ok := file.Decls[0].(*ast.FuncDecl)
+	if !ok || function.Name.Name != "F" || function.Body == nil || len(function.Body.List) == 0 {
+		t.Fatal("closure fixture lacks the target function")
+	}
+	info := &types.Info{Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}, Types: map[ast.Expr]types.TypeAndValue{}}
+	configuration := types.Config{}
+	if _, err := configuration.Check("fixture", fset, []*ast.File{file}, info); err != nil {
+		t.Fatal(err)
+	}
+	statements := function.Body.List[len(function.Body.List)-1:]
+	bindings, err := suffixBindings(statements, function, fset, typeEvidence{info: info})
+	if err != nil || len(bindings) != 1 || bindings[0].name != "err" {
+		t.Fatalf("terminal candidate free bindings=%+v error=%v", bindings, err)
+	}
+	err = hasReturnTailBindingHazard(function.Body, statements, bindings, info)
+	var failure Failure
+	if !errors.As(err, &failure) || failure.UnknownClass != "KNOWN_CONTRADICTION" {
+		t.Fatalf("captured free binding was not refuted: error=%v", err)
 	}
 }
 
