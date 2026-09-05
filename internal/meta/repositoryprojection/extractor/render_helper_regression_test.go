@@ -64,7 +64,10 @@ func TestExtractFunctionHelperProjectionRegressionCohort(t *testing.T) {
 			if !bytes.Equal(helperOnly, fullRenderer) {
 				t.Fatalf("helper-only output differs from full renderer:\nhelper-only=%q\nfull=%q", helperOnly, fullRenderer)
 			}
-			t.Logf("format-call-observation=helper-only bytes equal full-renderer bytes=%d", len(helperOnly))
+			t.Logf("helper-byte-equivalence=helper-only bytes equal full-renderer bytes=%d", len(helperOnly))
+			t.Logf("extract-function-contract operation=%s activity=%s input=%s output=%s subject_kind=%s source_digest=%s semantic_digest=%s",
+				contract.Operation, contract.Activity, contract.InputEntity, contract.OutputEntity,
+				contract.InputSubjectKind, contract.SourceDigest, contract.SemanticDigest)
 
 			fset := token.NewFileSet()
 			if _, err := parser.ParseFile(fset, "helper.go", helperOnly, parser.ParseComments); err != nil {
@@ -85,8 +88,8 @@ func renderHelperFixture(source, name string) ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, declaration := range file.Decls {
-		function, ok := declaration.(*ast.FuncDecl)
+	for _, decl := range file.Decls {
+		function, ok := decl.(*ast.FuncDecl)
 		if !ok || function.Recv != nil || function.Name == nil || function.Name.Name != name {
 			continue
 		}
