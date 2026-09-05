@@ -68,7 +68,10 @@ func TestReadOnlyOperationCountsKeepUnknownOperationsSeparate(t *testing.T) {
 func TestReadOnlyLineageInputsRejectForgedEligibleReceipt(t *testing.T) {
 	policy := readOnlyTestPolicy(t)
 	source, lineage, observation := readOnlyTestLineageInput(policy)
-	observation.TimingObservationEligible = false
+	if err := validateReadOnlyLineageInputs(source, lineage, observation, policy); err != nil {
+		t.Fatalf("canonical failed-source observation was rejected: %v", err)
+	}
+	lineage.Trigger.SourceSubjectSHA = "fedcba9876543210fedcba9876543210fedcba98"
 	if err := validateReadOnlyLineageInputs(source, lineage, observation, policy); err == nil {
 		t.Fatal("forged read-only eligibility was accepted")
 	}
