@@ -62,7 +62,7 @@ jobs:
           test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
 
       - name: Install exact Go 1.27.0
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
