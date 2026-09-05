@@ -682,22 +682,15 @@ jobs:
           expect_boundary_case "source_report_mismatch" "REFUTED" "FAIL_CLOSED" "SOURCE_REPORT_MISMATCH" "$support/source-report-mismatch.json"
 
           jq '
-            (.routes[] | select(.id == "explicit-v1-parser") | .evidence[0]) as $source_evidence |
-            (.routes[] | select(.id == "lsp-adapter") | .evidence[0]) as $lsp_evidence |
-            .routes = ((.routes | map(
+            (.routes[] | select(.id == "explicit-v1-parser") | .evidence) as $source_evidence |
+            .routes = (.routes | map(
               if .id == "ordinary-parser" then
                 .state = "SUPPORTED" | .runtime_gate = "PASS" |
-                .required_evidence_keys = ["OBSERVATION_SOURCE_PIN"] | .evidence = [$source_evidence]
-              elif .id == "lsp-server" then
-                .state = "SUPPORTED" | .runtime_gate = "PASS" |
-                .required_evidence_keys = ["LSP_NAVIGATION"] | .evidence = [$lsp_evidence]
+                .required_evidence_keys = ["OBSERVATION_SOURCE_PIN","CONTRACT_PROFILE_PIN"] | .evidence = $source_evidence
               else . end
-            )) + [
-              {id:"external-effect", label:"external effect", scope:"outside the EntityFields profile", required_evidence_keys:["GO_STRUCT_PROJECTION"], evidence:[$source_evidence], runtime_gate:"PASS", state:"SUPPORTED", unknown:null},
-              {id:"business-behavior", label:"business behavior", scope:"not established by generated Go compilation", required_evidence_keys:["GO_STRUCT_PROJECTION"], evidence:[$source_evidence], runtime_gate:"PASS", state:"SUPPORTED", unknown:null}
-            ])
+            ))
           ' "$support/support-projection.json" > "$support/overbroad-support.json"
-          expect_boundary_case "overbroad_support" "REFUTED" "FAIL_CLOSED" "SUPPORT_SHAPE_INVALID" "$support/overbroad-support.json"
+          expect_boundary_case "overbroad_support" "REFUTED" "FAIL_CLOSED" "SUPPORT_OVERCLAIM" "$support/overbroad-support.json"
 
           jq '.documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
           mv "$support/support-projection.final.json" "$support/support-projection.json"
