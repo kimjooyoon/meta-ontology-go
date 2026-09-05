@@ -43,10 +43,9 @@ func TestRuntimeBindingFanoutSurvivesBidirAndIRLowering(t *testing.T) {
 namespace billing
 
 entity Integer id "billing://entity/integer"
-entity Result id "billing://entity/result"
-activity Produce() -> Integer
-activity ConsumeA(Integer) -> Result
-activity ConsumeB(Integer) -> Result
+activity Produce(Integer) -> Integer computes "int.add:1"
+activity ConsumeA(Integer) -> Integer computes "int.add:1"
+activity ConsumeB(Integer) -> Integer computes "int.add:1"
 
 bind Produce.result -> ConsumeA.input
 bind Produce.result -> ConsumeB.input
@@ -77,6 +76,32 @@ bind Produce.result -> ConsumeB.input
 		if binding.Entity != semantic.ID("billing://entity/integer") {
 			t.Fatalf("IR fanout entity=%q, want billing://entity/integer", binding.Entity)
 		}
+	}
+}
+
+func TestRuntimeBindingMissingRelationFailsClosedWithoutPanic(t *testing.T) {
+	file, diagnostics := syntax.ParseFile("binding.gooo", bindingFixtureForBidir)
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("binding parse diagnostics=%v file=%#v", diagnostics, file)
+	}
+	document, err := DocumentFromSyntax(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model, err := Get(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filtered := model.Relations[:0]
+	for _, relation := range model.Relations {
+		if relation.Kind == PredicateUsed && relation.Source == ID("billing://activity/consume") {
+			continue
+		}
+		filtered = append(filtered, relation)
+	}
+	model.Relations = filtered
+	if err := model.Validate(); err == nil || !errors.Is(err, semantic.ErrRuntimeBindingPort) {
+		t.Fatalf("missing binding relation error=%v, want runtime binding port error", err)
 	}
 }
 

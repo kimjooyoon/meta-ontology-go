@@ -82,7 +82,8 @@ func validateModelRuntimeBindings(model Model) error {
 		producerOutputs := modelRuntimePorts(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false)
 		consumerInputs := modelRuntimePorts(model, binding.Consumer.Activity.ID, PredicateUsed, true)
 		if modelRuntimePortArity(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false) != 1 ||
-			modelRuntimePortArity(model, binding.Consumer.Activity.ID, PredicateUsed, true) != 1 {
+			modelRuntimePortArity(model, binding.Consumer.Activity.ID, PredicateUsed, true) != 1 ||
+			len(producerOutputs) != 1 || len(consumerInputs) != 1 {
 			return fmt.Errorf("runtime binding %d: %w: one input/output is required", index, semantic.ErrRuntimeBindingPort)
 		}
 		if producerOutputs[0] != consumerInputs[0] {

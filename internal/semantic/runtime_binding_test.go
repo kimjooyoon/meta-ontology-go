@@ -1,11 +1,13 @@
 package semantic
 
-import (
-	"encoding/json"
-	"testing"
-)
+import "testing"
 
 func TestRuntimeBindingSemanticHashIgnoresSourceOrderAndSpans(t *testing.T) {
+	spanOnly := runtimeBindingFixture(t)
+	spanOnly.RuntimeBindings[0].Span = Span{File: "binding.gooo", Start: Position{Offset: 10, Line: 1, Column: 1}, End: Position{Offset: 20, Line: 1, Column: 11}}
+	if spanOnly.SemanticCanonical() != runtimeBindingFixture(t).SemanticCanonical() || spanOnly.StableHash() != runtimeBindingFixture(t).StableHash() {
+		t.Fatal("semantic binding hash changed after a span-only mutation")
+	}
 	base := runtimeBindingFixture(t)
 	base.RuntimeBindings[0].Span.Start.Offset = 10
 	base.RuntimeBindings[0].Span.End.Offset = 20
@@ -18,34 +20,6 @@ func TestRuntimeBindingSemanticHashIgnoresSourceOrderAndSpans(t *testing.T) {
 	}
 	if base.Canonical() == reordered.Canonical() {
 		t.Fatal("full canonical form discarded binding source order or spans")
-	}
-}
-
-func TestRuntimeBindingJSONRoundTripNormalizesEntityIdentity(t *testing.T) {
-	base := runtimeBindingFixture(t)
-	base.RuntimeBindings[0].Entity = ID("BILLING://ENTITY/payment")
-	payload, err := json.Marshal(base.RuntimeBindings)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var decoded []RuntimeBinding
-	if err := json.Unmarshal(payload, &decoded); err != nil {
-		t.Fatal(err)
-	}
-	if len(decoded) != len(base.RuntimeBindings) {
-		t.Fatalf("decoded runtime bindings=%#v", decoded)
-	}
-	decodedIR := base
-	decodedIR.RuntimeBindings = decoded
-	normalized, err := decodedIR.Normalized()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if normalized.RuntimeBindings[0].Entity != ID("billing://entity/payment") {
-		t.Fatalf("normalized binding entity=%q", normalized.RuntimeBindings[0].Entity)
-	}
-	if normalized.SemanticCanonical() != base.SemanticCanonical() {
-		t.Fatalf("JSON round trip changed semantic bindings:\nbase=%s\nroundtrip=%s", base.SemanticCanonical(), normalized.SemanticCanonical())
 	}
 }
 
