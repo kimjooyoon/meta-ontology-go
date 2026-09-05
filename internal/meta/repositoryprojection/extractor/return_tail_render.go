@@ -60,7 +60,11 @@ func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		return renderSelectedHelper(fset, file, source, selected, helperImports)
+		helper, err := renderSelectedHelper(fset, file, source, selected, helperImports)
+		if err != nil {
+			return nil, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+		}
+		return helper, nil
 	}
 	return nil, returnTailContradiction(obligationRenderedCapacity, "rendered target function is missing")
 }
