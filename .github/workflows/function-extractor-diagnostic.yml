@@ -211,14 +211,18 @@ jobs:
           printf 'DIAGNOSTIC_HELPER_BINARY=%q\n' "$helper_binary"
           printf 'DIAGNOSTIC_BUILD_HELPER_SHA256=%q\n' "$helper_binary_sha256"
           printf 'DIAGNOSTIC_BUILD_GO_VERSION=%q\n' "$build_go_version"
+          printf 'DIAGNOSTIC_ENTRY_FILE=%q\n' "$capture_root/shim-entry.txt"
+          printf 'DIAGNOSTIC_MATCH_FILE=%q\n' "$capture_root/helper-match.txt"
           cat <<'SHIM'
           args=("$@")
+          capture_root="$DIAGNOSTIC_CAPTURE_ROOT"
+          mkdir -p "$capture_root"
+          printf '%s\n' 'SHIM_ENTRY' >> "$DIAGNOSTIC_ENTRY_FILE"
           if (( ${#args[@]} < 2 )) || [[ "${args[0]}" != "run" || "${args[1]}" != "./bootstrap/function-extractor" ]]; then
             exec "$DIAGNOSTIC_REAL_GO" "${args[@]}"
           fi
 
-          capture_root="$DIAGNOSTIC_CAPTURE_ROOT"
-          mkdir -p "$capture_root"
+          printf '%s\n' 'FUNCTION_EXTRACTOR_MATCH' >> "$DIAGNOSTIC_MATCH_FILE"
           sequence_file="$capture_root/sequence.txt"
           sequence_lock="$capture_root/sequence.lock"
           exec 9>"$sequence_lock"
@@ -347,30 +351,77 @@ jobs:
           export PATH="$shim_dir:$PATH"
 
           test "$(command -v go)" = "$shim_dir/go"
+          go_root="$("$real_go" env GOROOT)"
+          go_toolchain_value="${GOTOOLCHAIN:-<unset>}"
+          jq -n \
+            --arg schema 'gooo/function-extractor-diagnostic-launch-environment/v1' \
+            --arg path_value "$PATH" \
+            --arg go_toolchain "$go_toolchain_value" \
+            --arg goroot "$go_root" \
+            '{schema:$schema,diagnostic_only:true,environment:{PATH:$path_value,GOTOOLCHAIN:$go_toolchain,GOROOT:$goroot,GOTRACEBACK:"system"},production_equivalence_claim:false,representativeness_note:"diagnostic launch environment observed; production equivalence is not claimed"}' \
+            > "$root/diagnostic-launch-environment.json"
           printf '%s\n' "$plan_digest" > "$root/plan-digest.txt"
+
+          capture_meta_stream() {
+            local source_fifo="$1"
+            local capture_file="$2"
+            local bytes_file="$3"
+            local truncated_file="$4"
+            local capture_pipe="$capture_file.pipe"
+            local count_pipe="$bytes_file.pipe"
+            local capture_reader_pid
+            local count_reader_pid
+            local tee_exit
+            local total_bytes
+            local was_truncated=false
+            : > "$capture_file"
+            rm -f "$capture_pipe" "$count_pipe"
+            mkfifo "$capture_pipe" "$count_pipe"
+            {
+              {
+                head -c "$MAX_CAPTURE_BYTES" > "$capture_file"
+                cat > /dev/null
+              } < "$capture_pipe"
+            } &
+            capture_reader_pid=$!
+            {
+              wc -c < "$count_pipe" > "$bytes_file"
+            } &
+            count_reader_pid=$!
+            tee "$capture_pipe" "$count_pipe" < "$source_fifo" > /dev/null
+            tee_exit=$?
+            wait "$capture_reader_pid"
+            wait "$count_reader_pid"
+            rm -f "$capture_pipe" "$count_pipe"
+            total_bytes="$(tr -d '[:space:]' < "$bytes_file")"
+            if (( total_bytes > MAX_CAPTURE_BYTES )); then
+              was_truncated=true
+            fi
+            printf '%s\n' "$total_bytes" > "$bytes_file"
+            printf '%s\n' "$was_truncated" > "$truncated_file"
+            return "$tee_exit"
+          }
+
+          meta_stdout_fifo="$meta_dir/stdout.pipe"
+          meta_stderr_fifo="$meta_dir/stderr.pipe"
+          mkfifo "$meta_stdout_fifo" "$meta_stderr_fifo"
+          capture_meta_stream "$meta_stdout_fifo" "$meta_dir/stdout.txt" "$meta_dir/stdout-bytes.txt" "$meta_dir/stdout-truncated.txt" &
+          meta_stdout_capture_pid=$!
+          capture_meta_stream "$meta_stderr_fifo" "$meta_dir/stderr.txt" "$meta_dir/stderr-bytes.txt" "$meta_dir/stderr-truncated.txt" &
+          meta_stderr_capture_pid=$!
           set +e
           /usr/bin/timeout --verbose --signal=TERM --kill-after=5s "${META_EXECUTION_TIMEOUT_SECONDS}s" \
             go run ./scripts/meta-execution \
               -plan "$execution_input/self-improvement-plan.json" \
               -output "$meta_dir/self-improvement-execution.json" \
-            > "$meta_dir/stdout.txt" 2> "$meta_dir/stderr.txt"
+            > "$meta_stdout_fifo" 2> "$meta_stderr_fifo"
           meta_exit_code=$?
           set -e
+          wait "$meta_stdout_capture_pid"
+          wait "$meta_stderr_capture_pid"
+          rm -f "$meta_stdout_fifo" "$meta_stderr_fifo"
           printf '%s\n' "$meta_exit_code" > "$root/meta-execution-exit-code.txt"
           printf '%s\n' 'GNU timeout diagnostic wrapper exit status' > "$root/meta-execution-exit-code-source.txt"
-
-          for stream_name in stdout stderr; do
-            stream_file="$meta_dir/$stream_name.txt"
-            stream_bytes="$(wc -c < "$stream_file" | tr -d '[:space:]')"
-            stream_truncated=false
-            if (( stream_bytes > MAX_CAPTURE_BYTES )); then
-              head -c "$MAX_CAPTURE_BYTES" "$stream_file" > "$stream_file.capped"
-              mv "$stream_file.capped" "$stream_file"
-              stream_truncated=true
-            fi
-            printf '%s\n' "$stream_bytes" > "$meta_dir/$stream_name-bytes.txt"
-            printf '%s\n' "$stream_truncated" > "$meta_dir/$stream_name-truncated.txt"
-          done
 
 
       - name: Write diagnostic-only summary
@@ -406,13 +457,42 @@ jobs:
           if (( ${#receipts[@]} > 0 )); then
             helper_attempts="$(jq -s '.' "${receipts[@]}")"
           fi
+          shim_entry_observed=false
+          helper_match_observed=false
+          if [[ -s "$capture_root/shim-entry.txt" ]]; then
+            shim_entry_observed=true
+          fi
+          if [[ -s "$capture_root/helper-match.txt" ]]; then
+            helper_match_observed=true
+          fi
 
           stage='diagnostic-only'
           step='resolve-exact-source-artifact'
-          reason='source artifact acquisition did not produce a helper receipt'
-          unknown_class='HELPER_NOT_STARTED'
+          reason='source artifact acquisition failed before diagnostic dispatch'
+          unknown_class='SOURCE_ARTIFACT_UNAVAILABLE'
           next_operation='resolve source artifact and rerun diagnostic sampling'
           blocked_by='source artifact acquisition'
+          if [[ "$RESOLVE_OUTCOME" == 'success' ]]; then
+            stage='process-dispatch'
+            step='diagnostic-dispatch'
+            reason='diagnostic sampling ended without a shim entry sentinel'
+            unknown_class='DIAGNOSTIC_DISPATCH_UNOBSERVED'
+            next_operation='inspect diagnostic process dispatch and rerun sampling'
+            blocked_by='process dispatch boundary'
+            if [[ "$shim_entry_observed" == true ]]; then
+              step='shim-dispatch'
+              reason='shim entry was observed but the exact helper invocation was not matched'
+              next_operation='inspect child command delivery and rerun sampling'
+              blocked_by='exact helper command dispatch'
+            fi
+            if [[ "$helper_match_observed" == true ]]; then
+              step='helper-receipt'
+              reason='exact helper invocation matched but no post-exec receipt was produced'
+              unknown_class='HELPER_INVOCATION_UNOBSERVED'
+              next_operation='inspect the helper pre-receipt boundary and rerun sampling'
+              blocked_by='helper execution or pre-receipt boundary'
+            fi
+          fi
           if (( ${#receipts[@]} > 0 )); then
             step='run-diagnostic-only-helper-sampling'
             reason='helper boundary was observed but causal classification remains unresolved'
@@ -435,12 +515,6 @@ jobs:
               next_operation='rerun diagnostic sampling with helper-frame attribution'
               blocked_by='helper frame attribution'
             fi
-          elif [[ "$RESOLVE_OUTCOME" == 'success' && "$SAMPLING_OUTCOME" == 'failure' ]]; then
-            step='run-diagnostic-only-helper-sampling'
-            reason='diagnostic helper sampling failed before a helper receipt was produced'
-            unknown_class='HELPER_NOT_STARTED'
-            next_operation='inspect diagnostic helper build and launch evidence'
-            blocked_by='diagnostic helper build or launch'
           fi
 
           jq -n \
@@ -458,11 +532,13 @@ jobs:
             --arg resolve_outcome "$RESOLVE_OUTCOME" \
             --arg sampling_outcome "$SAMPLING_OUTCOME" \
             --arg meta_exit_code_source "$meta_exit_code_source" \
+            --argjson shim_entry_observed "$shim_entry_observed" \
+            --argjson helper_match_observed "$helper_match_observed" \
             --argjson meta_exit_code "$meta_exit_code" \
             --argjson helper_timeout_seconds "$HELPER_TIMEOUT_SECONDS" \
             --argjson meta_timeout_seconds "$META_EXECUTION_TIMEOUT_SECONDS" \
             --argjson helper_attempts "$helper_attempts" \
-            '{schema:$schema,diagnostic_only:true,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",source_sha:$source_sha,workflow_implementation_sha:$workflow_implementation_sha,source_artifact_id:$source_artifact_id,source_artifact_digest:$source_artifact_digest,stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by,resolve_outcome:$resolve_outcome,sampling_outcome:$sampling_outcome,meta_execution_exit_code:$meta_exit_code,meta_execution_exit_code_source:$meta_exit_code_source,helper_timeout_seconds:$helper_timeout_seconds,meta_execution_timeout_seconds:$meta_timeout_seconds,helper_attempts:$helper_attempts,normal_closed:false,promotion_authorized:false}' \
+            '{schema:$schema,diagnostic_only:true,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",source_sha:$source_sha,workflow_implementation_sha:$workflow_implementation_sha,source_artifact_id:$source_artifact_id,source_artifact_digest:$source_artifact_digest,stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by,resolve_outcome:$resolve_outcome,sampling_outcome:$sampling_outcome,shim_entry_observed:$shim_entry_observed,helper_match_observed:$helper_match_observed,meta_execution_exit_code:$meta_exit_code,meta_execution_exit_code_source:$meta_exit_code_source,helper_timeout_seconds:$helper_timeout_seconds,meta_execution_timeout_seconds:$meta_timeout_seconds,helper_attempts:$helper_attempts,normal_closed:false,promotion_authorized:false}' \
             > "$summary"
           jq -e \
             --arg sha "$source_sha" \
@@ -486,6 +562,7 @@ jobs:
             ${{ runner.temp }}/function-extractor-diagnostic/source-repository-before.txt
             ${{ runner.temp }}/function-extractor-diagnostic/source-binding.json
             ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-build.json
+            ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-launch-environment.json
             ${{ runner.temp }}/function-extractor-diagnostic/plan-digest.txt
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution-exit-code.txt
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution-exit-code-source.txt
@@ -505,5 +582,7 @@ jobs:
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stderr-bytes.txt
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stdout-truncated.txt
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stderr-truncated.txt
-          if-no-files-found: warn
+            ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/shim-entry.txt
+            ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/helper-match.txt
+          if-no-files-found: error
           retention-days: 30
