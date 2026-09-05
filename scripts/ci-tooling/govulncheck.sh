@@ -52,7 +52,7 @@ if [ "$install_exit" -ne 0 ]; then
     --arg observed_at "$observed_at" \
     --arg scope "${OBSERVE_SCOPE:-./...}" \
     --arg source_binding_reason "$source_binding_reason" \
-    --arg wall_scope 'installation start through installation end; checkout and receipt upload measured separately' \
+    --arg wall_scope 'installation start through installation end; checkout and receipt upload excluded' \
     --argjson wall_ms "$install_wall_ms" \
     --argjson source_binding_exit "$source_binding_exit" \
     --argjson install_exit "$install_exit" \
@@ -112,6 +112,35 @@ validate_rejected_fixture whitespace '   '
 validate_rejected_fixture empty_object '{}'
 rm -f "$fixture_path"
 
+publication_fixture_failures=0
+sarif_publication_eligible_for() {
+  case "$1" in
+    PASS|FAIL_FINDINGS) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+validate_publication_fixture() {
+  local fixture_name="$1"
+  local fixture_verdict="$2"
+  local expected_publish="$3"
+  local actual_publish=0
+  if sarif_publication_eligible_for "$fixture_verdict"; then
+    actual_publish=1
+  fi
+  if [ "$actual_publish" -ne "$expected_publish" ]; then
+    printf 'publication_%s=UNEXPECTED_%s\n' "$fixture_name" "$actual_publish" >>"$fixture_log"
+    publication_fixture_failures=$((publication_fixture_failures + 1))
+  else
+    printf 'publication_%s=%s\n' "$fixture_name" "$actual_publish" >>"$fixture_log"
+  fi
+}
+validate_publication_fixture invalid_json FAIL_SCAN_OUTPUT 0
+validate_publication_fixture invalid_config FAIL_SCAN_OUTPUT 0
+validate_publication_fixture source_binding FAIL_SOURCE_BINDING 0
+validate_publication_fixture real_findings FAIL_FINDINGS 1
+validate_publication_fixture clean_scan PASS 1
+contract_failures=$((fixture_failures + publication_fixture_failures))
+
 govuln_db='UNKNOWN'
 if [ "$raw_parse_exit" -eq 0 ] && db_candidate="$(jq -s -r 'map(select(.config? != null) | .config.db // empty) | first // empty' "$json_path" 2>/dev/null)" && [ -n "$db_candidate" ]; then
   govuln_db="$db_candidate"
@@ -135,7 +164,7 @@ scan_wall_ms=$((scan_end_ms - scan_start_ms))
 text_wall_ms=$((text_end_ms - text_start_ms))
 sarif_wall_ms=$((sarif_end_ms - sarif_start_ms))
 total_wall_ms=$((sarif_end_ms - scan_start_ms))
-wall_scope='scan start through SARIF conversion end; installation, tool metadata, checkout, and receipt upload measured separately'
+wall_scope='scan start through SARIF conversion end; installation, tool metadata, checkout, and receipt upload excluded'
 
 if [ "$sarif_exit" -ne 0 ] || [ ! -s "$sarif_path" ]; then
   rm -f "$sarif_path"
@@ -151,7 +180,7 @@ elif [ "$json_exit" -ne 0 ]; then
   verdict=FAIL_SCAN
 elif [ "$raw_parse_exit" -ne 0 ]; then
   verdict=FAIL_SCAN_OUTPUT
-elif [ "$fixture_failures" -ne 0 ]; then
+elif [ "$contract_failures" -ne 0 ]; then
   verdict=FAIL_FIXTURE_CONTRACT
 elif [ "$text_exit" -eq 3 ]; then
   verdict=FAIL_FINDINGS
@@ -161,6 +190,16 @@ elif [ "$sarif_exit" -ne 0 ] || [ ! -s "$output_dir/govulncheck.sarif" ]; then
   verdict=FAIL_SARIF_CONVERSION
 else
   verdict=PASS
+fi
+
+sarif_publication_eligible=0
+sarif_publication_reason='verdict_not_publishable'
+if sarif_publication_eligible_for "$verdict" && [ -s "$sarif_path" ]; then
+  sarif_publication_eligible=1
+  sarif_publication_reason='verdict_and_sarif_valid'
+elif [ -e "$sarif_path" ]; then
+  sarif_publication_reason='sarif_quarantined_due_to_verdict'
+  mv "$sarif_path" "$sarif_path.diagnostic"
 fi
 
 observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -177,6 +216,7 @@ observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   --arg scope "${OBSERVE_SCOPE:-./...}" \
   --arg govuln_db "$govuln_db" \
   --arg raw_rejection_reason "$raw_rejection_reason" \
+  --arg sarif_publication_reason "$sarif_publication_reason" \
   --arg wall_scope "$wall_scope" \
   --arg verdict "$verdict" \
   --argjson wall_ms "$total_wall_ms" \
@@ -188,12 +228,15 @@ observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   --argjson tool_version_exit "$tool_version_exit" \
   --argjson raw_parse_exit "$raw_parse_exit" \
   --argjson fixture_failures "$fixture_failures" \
+  --argjson publication_fixture_failures "$publication_fixture_failures" \
+  --argjson contract_failures "$contract_failures" \
+  --argjson sarif_publication_eligible "$sarif_publication_eligible" \
   --argjson install_wall_ms "$install_wall_ms" \
   --argjson tool_metadata_wall_ms "$tool_metadata_wall_ms" \
   --argjson scan_wall_ms "$scan_wall_ms" \
   --argjson text_wall_ms "$text_wall_ms" \
   --argjson sarif_wall_ms "$sarif_wall_ms" \
-  '{schema: $schema, source_sha: $source_sha, expected_source_sha: $expected_source_sha, source_binding_exit: $source_binding_exit, source_binding_reason: $source_binding_reason, run_id: $run_id, run_attempt: $run_attempt, tool: $tool, tool_commit: $tool_commit, observed_at: $observed_at, wall_ms: $wall_ms, wall_scope: $wall_scope, install_wall_ms: $install_wall_ms, tool_metadata_wall_ms: $tool_metadata_wall_ms, install_exit: $install_exit, tool_version_exit: $tool_version_exit, original_exit: $original_exit, raw_parse_exit: $raw_parse_exit, raw_rejection_reason: $raw_rejection_reason, fixture_failures: $fixture_failures, text_conversion_exit: $text_exit, sarif_conversion_exit: $sarif_exit, verdict: $verdict, scope: $scope, govuln_db: $govuln_db, json_scan: {wall_ms: $scan_wall_ms, original_exit: $original_exit, raw_parse_exit: $raw_parse_exit, rejection_reason: $raw_rejection_reason}, text_conversion: {wall_ms: $text_wall_ms, original_exit: $text_exit}, sarif_conversion: {wall_ms: $sarif_wall_ms, original_exit: $sarif_exit}}' \
+  '{schema: $schema, source_sha: $source_sha, expected_source_sha: $expected_source_sha, source_binding_exit: $source_binding_exit, source_binding_reason: $source_binding_reason, run_id: $run_id, run_attempt: $run_attempt, tool: $tool, tool_commit: $tool_commit, observed_at: $observed_at, wall_ms: $wall_ms, wall_scope: $wall_scope, install_wall_ms: $install_wall_ms, tool_metadata_wall_ms: $tool_metadata_wall_ms, install_exit: $install_exit, tool_version_exit: $tool_version_exit, original_exit: $original_exit, raw_parse_exit: $raw_parse_exit, raw_rejection_reason: $raw_rejection_reason, fixture_failures: $fixture_failures, publication_fixture_failures: $publication_fixture_failures, contract_failures: $contract_failures, text_conversion_exit: $text_exit, sarif_conversion_exit: $sarif_exit, sarif_publication_eligible: $sarif_publication_eligible, sarif_publication_reason: $sarif_publication_reason, verdict: $verdict, scope: $scope, govuln_db: $govuln_db, json_scan: {wall_ms: $scan_wall_ms, original_exit: $original_exit, raw_parse_exit: $raw_parse_exit, rejection_reason: $raw_rejection_reason}, text_conversion: {wall_ms: $text_wall_ms, original_exit: $text_exit}, sarif_conversion: {wall_ms: $sarif_wall_ms, original_exit: $sarif_exit}}' \
   > "$receipt_path"
 
 {
@@ -208,6 +251,9 @@ observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   printf 'text_conversion_exit=%s\n' "$text_exit"
   printf 'sarif_conversion_exit=%s\n' "$sarif_exit"
   printf 'fixture_failures=%s\n' "$fixture_failures"
+  printf 'publication_fixture_failures=%s\n' "$publication_fixture_failures"
+  printf 'sarif_publication_eligible=%s\n' "$sarif_publication_eligible"
+  printf 'sarif_publication_reason=%s\n' "$sarif_publication_reason"
   printf 'source_binding_exit=%s\n' "$source_binding_exit"
   printf 'verdict=%s\n' "$verdict"
 } | tee -a "$text_path"

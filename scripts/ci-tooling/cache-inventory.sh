@@ -30,6 +30,14 @@ fi
 cleanup_protection='PROTECTED'
 lookup_budget_ms=120000
 
+gh_version_start_ms="$(date +%s%3N)"
+set +e
+timeout 30s gh version >"$output_dir/gh-version.txt" 2>"$output_dir/gh-version-stderr.log"
+gh_version_exit=$?
+set -e
+gh_version_end_ms="$(date +%s%3N)"
+gh_version_wall_ms=$((gh_version_end_ms - gh_version_start_ms))
+
 api_start_ms="$(date +%s%3N)"
 set +e
 timeout 180s gh api --paginate --slurp \
@@ -55,7 +63,7 @@ if [ "$api_exit" -ne 0 ]; then
     --arg run_attempt "$OBSERVE_RUN_ATTEMPT" \
     --arg observed_at "$observed_at" \
     --arg scope "${OBSERVE_SCOPE:-repository Actions caches; no deletions}" \
-    --arg wall_scope 'pagination start through API failure; checkout and receipt upload measured separately' \
+    --arg wall_scope 'pagination start through API failure; checkout and receipt upload excluded' \
     --argjson wall_ms "$(( $(date +%s%3N) - start_ms ))" \
     --argjson source_binding_exit "$source_binding_exit" \
     --argjson original_exit "$api_exit" \
@@ -87,7 +95,7 @@ if [ "$page_schema_exit" -ne 0 ]; then
     --arg run_attempt "$OBSERVE_RUN_ATTEMPT" \
     --arg observed_at "$observed_at" \
     --arg scope "${OBSERVE_SCOPE:-repository Actions caches; no deletions}" \
-    --arg wall_scope 'pagination start through page schema validation; checkout and receipt upload measured separately' \
+    --arg wall_scope 'pagination start through page schema validation; checkout and receipt upload excluded' \
     --arg verdict "$page_verdict" \
     --argjson wall_ms "$(( $(date +%s%3N) - start_ms ))" \
     --argjson source_binding_exit "$source_binding_exit" \
@@ -121,7 +129,7 @@ if [ "$parse_exit" -ne 0 ]; then
     --arg run_attempt "$OBSERVE_RUN_ATTEMPT" \
     --arg observed_at "$observed_at" \
     --arg scope "${OBSERVE_SCOPE:-repository Actions caches; no deletions}" \
-    --arg wall_scope 'pagination start through cache parsing failure; checkout and receipt upload measured separately' \
+    --arg wall_scope 'pagination start through cache parsing failure; checkout and receipt upload excluded' \
     --argjson wall_ms "$(( $(date +%s%3N) - start_ms ))" \
     --argjson source_binding_exit "$source_binding_exit" \
     --argjson original_exit "$parse_exit" \
@@ -223,11 +231,20 @@ reported_total_count="$(jq 'if length > 0 and ([.[].total_count] | unique | leng
   printf 'cleanup_protection_main=%s\n' "$cleanup_protection"
   printf 'default_branch=%s\n' "$default_branch"
   printf 'default_branch_cleanup_protection=%s\n' "$cleanup_protection"
+  printf 'gh_version_exit=%s\n' "$gh_version_exit"
+  printf 'gh_version_wall_ms=%s\n' "$gh_version_wall_ms"
   printf 'pull_lookup_budget_ms=%s\n' "$lookup_budget_ms"
   printf 'pull_lookup_wall_ms=%s\n' "$pull_lookup_wall_ms"
   printf 'pull_lookup_status=%s\n' "$pull_lookup_status"
   jq -r '.[] | "cache id=\(.id) ref=\(.ref // "UNKNOWN") key=\(.key // "UNKNOWN") bytes=\(.size_in_bytes // "UNKNOWN") created_at=\(.created_at // "UNKNOWN") last_accessed_at=\(.last_accessed_at // "UNKNOWN") candidate_reason=\(.candidate_reason) observed_at=\(.observed_at)"' "$inventory_path"
 } | tee "$text_path"
+
+cache_verdict='PASS'
+if [ "$source_binding_exit" -ne 0 ]; then
+  cache_verdict='SOURCE_BINDING_FAILED'
+elif [ "$gh_version_exit" -ne 0 ]; then
+  cache_verdict='FAIL_TOOL_METADATA'
+fi
 
 jq -n \
   --arg schema 'ci-tooling/cache-inventory/v1' \
@@ -242,20 +259,22 @@ jq -n \
   --arg default_branch "$default_branch" \
   --arg cleanup_protection "$cleanup_protection" \
   --arg pull_lookup_status "$pull_lookup_status" \
-  --arg wall_scope 'pagination start through receipt generation; checkout and receipt upload measured separately' \
+  --arg verdict "$cache_verdict" \
+  --arg wall_scope 'pagination start through receipt generation; checkout and receipt upload excluded' \
   --argjson caches "$(jq -c . "$inventory_path")" \
   --argjson api_pages "$api_pages" \
   --argjson reported_total_count "$reported_total_count" \
   --argjson pull_lookup_budget_ms "$lookup_budget_ms" \
   --argjson pull_lookup_wall_ms "$pull_lookup_wall_ms" \
   --argjson api_wall_ms "$api_wall_ms" \
+  --argjson gh_version_exit "$gh_version_exit" \
+  --argjson gh_version_wall_ms "$gh_version_wall_ms" \
   --argjson wall_ms "$(( $(date +%s%3N) - start_ms ))" \
   --argjson source_binding_exit "$source_binding_exit" \
   --argjson original_exit 0 \
-  --arg verdict "$([ "$source_binding_exit" -eq 0 ] && printf PASS || printf SOURCE_BINDING_FAILED)" \
-  '{schema: $schema, repository: $repository, source_sha: $source_sha, expected_source_sha: $expected_source_sha, source_binding_exit: $source_binding_exit, source_binding_reason: $source_binding_reason, run_id: $run_id, run_attempt: $run_attempt, observed_at: $observed_at, wall_ms: $wall_ms, wall_scope: $wall_scope, api_wall_ms: $api_wall_ms, original_exit: $original_exit, scope: $scope, pagination: "full", api: {pages: $api_pages, reported_total_count: $reported_total_count, observed_count: ($caches | length)}, plan: {read_only: true, planned_deletions: 0, mutations_attempted: 0}, cache_cleanup_protection: {dev: $cleanup_protection, main: $cleanup_protection, default_branch: $cleanup_protection, non_pull_request_refs: $cleanup_protection, pull_request_refs: "STATE_CHECKED"}, pull_lookup: {budget_ms: $pull_lookup_budget_ms, wall_ms: $pull_lookup_wall_ms, status: $pull_lookup_status}, verdict: $verdict, caches: $caches}' \
+  '{schema: $schema, repository: $repository, source_sha: $source_sha, expected_source_sha: $expected_source_sha, source_binding_exit: $source_binding_exit, source_binding_reason: $source_binding_reason, run_id: $run_id, run_attempt: $run_attempt, observed_at: $observed_at, wall_ms: $wall_ms, wall_scope: $wall_scope, api_wall_ms: $api_wall_ms, original_exit: $original_exit, gh_version_exit: $gh_version_exit, gh_version_wall_ms: $gh_version_wall_ms, scope: $scope, pagination: "full", api: {pages: $api_pages, reported_total_count: $reported_total_count, observed_count: ($caches | length)}, plan: {read_only: true, planned_deletions: 0, mutations_attempted: 0}, cache_cleanup_protection: {dev: $cleanup_protection, main: $cleanup_protection, default_branch: $cleanup_protection, non_pull_request_refs: $cleanup_protection, pull_request_refs: "STATE_CHECKED"}, pull_lookup: {budget_ms: $pull_lookup_budget_ms, wall_ms: $pull_lookup_wall_ms, status: $pull_lookup_status}, verdict: $verdict, caches: $caches}' \
   >"$receipt_path"
 
-if [ "$source_binding_exit" -ne 0 ]; then
+if [ "$cache_verdict" != PASS ]; then
   exit 1
 fi
