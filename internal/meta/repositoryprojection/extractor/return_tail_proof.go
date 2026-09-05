@@ -29,7 +29,7 @@ func newReturnTailProofChain(contract []ContractObligationEvidence, source, cand
 		candidateDigest = proofDigest(candidate)
 	}
 	return returnTailProofChain{
-		contract: append([]ContractObligationEvidence{}, contract...),
+		contract:     append([]ContractObligationEvidence{}, contract...),
 		sourceDigest: proofDigest(source), contractSource: contractSource, contractSemantic: contractSemantic,
 		candidateDigest: candidateDigest, stages: make([]ProofStageEvidence, 0, len(contract)),
 	}

@@ -25,7 +25,7 @@ func finalizeReturnTailEvidence(root, logical string, generated map[string][]byt
 		}
 		stages := append([]ProofStageEvidence{}, item.ProofStages...)
 		chain := returnTailProofChain{
-			contract: append([]ContractObligationEvidence{}, item.ContractObligations...),
+			contract:     append([]ContractObligationEvidence{}, item.ContractObligations...),
 			sourceDigest: stages[0].SourceDigest, contractSource: item.ContractSourceDigest,
 			contractSemantic: item.ContractSemanticDigest, candidateDigest: proofDigest(finalPayload), stages: stages,
 		}
