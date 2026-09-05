@@ -18,10 +18,9 @@ func TestImportNormalizationFixedRegressionCohort(t *testing.T) {
 	}{
 		{name: "eligible-two-spec-group-normalizes", source: "package p\n\nimport (\n\t\"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", normalized: true, wantImports: "import \"encoding/json\"\nimport \"strconv\"\n"},
 		{name: "one-spec-import-stays-unchanged", source: "package p\n\nimport \"encoding/json\"\n\nfunc F() {\n\tvar _ json.RawMessage\n}\n", normalized: false, wantImports: "import \"encoding/json\"\n"},
-		{name: "local-binding-does-not-select-shadowed-alias", source: "package p\n\nimport (\n\tv25 \"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tv25 := struct{ Value int }{}\n\t_ = v25.Value\n\t_ = strconv.IntSize\n}\n", normalized: false, wantImports: "import \"strconv\"\n"},
 	}
-	if len(cases) != 3 {
-		t.Fatalf("import normalization cohort denominator=%d, want 3", len(cases))
+	if len(cases) != 2 {
+		t.Fatalf("import normalization cohort denominator=%d, want 2", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -31,6 +30,29 @@ func TestImportNormalizationFixedRegressionCohort(t *testing.T) {
 			}
 			if tc.normalized && strings.Contains(string(helper), "import (\n") {
 				t.Fatalf("eligible import group retained grouped rendering: %q", helper)
+			}
+		})
+	}
+}
+
+func TestImportSelectionBindingRegressionCohort(t *testing.T) {
+	source := "package p\n\nimport (\n\tv25 \"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tv25 := struct{ Value int }{}\n\t_ = v25.Value\n\t_ = strconv.IntSize\n}\n\nfunc G() {\n\tvar _ v25.RawMessage\n}\n"
+	cases := []struct {
+		name        string
+		function    string
+		wantImports string
+	}{
+		{name: "local-binding-does-not-select-shadowed-alias", function: "F", wantImports: "import \"strconv\"\n"},
+		{name: "genuine-alias-qualifier-is-selected", function: "G", wantImports: "import v25 \"encoding/json\"\n"},
+	}
+	if len(cases) != 2 {
+		t.Fatalf("import selection binding cohort denominator=%d, want 2", len(cases))
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			helper, err := renderImportFixture(t, source, tc.function)
+			if err != nil || string(helper) != tc.wantImports {
+				t.Fatalf("helper imports=%q err=%v", helper, err)
 			}
 		})
 	}
