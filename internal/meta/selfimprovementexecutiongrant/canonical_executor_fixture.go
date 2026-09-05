@@ -682,7 +682,11 @@ func countCanonicalExecutorBindings(program PolicyProgram, fixture CanonicalExec
 		"candidate_stable_id": input.CandidateStableID != "" && input.CandidateStableID == v24Request.Candidate.CandidateID && input.CandidateStableID == v25Contract.CandidateStableID,
 		"candidate_digest": validDigest(input.CandidateDigest) && input.CandidateDigest == v24Request.Candidate.CandidateDigest && input.CandidateDigest == v25Contract.CandidateDigest,
 		"subject_sha": validSHA(input.SubjectSHA) && input.SubjectSHA == v24Request.Candidate.SubjectSHA && input.SubjectSHA == v25Contract.SubjectSHA,
-		"observation_digest": validDigest(input.ObservationDigest) && input.ObservationDigest == v24Request.Candidate.SourceObservationDigest && input.ObservationDigest == v25Contract.ObservationDigest,
+		// The candidate input observation root and the v25 observation root are
+		// distinct upstream projections. Bind the candidate root to v24 and
+		// require the v25 projection to be present separately; do not conflate
+		// the two roots merely because both are named observation_digest.
+		"observation_digest": validDigest(input.ObservationDigest) && input.ObservationDigest == v24Request.Candidate.SourceObservationDigest && v24Binding.ObservationDigest == input.ObservationDigest && validDigest(v25Contract.ObservationDigest),
 		"candidate_input_digest": inputBound && input.Digest == v24Request.Candidate.ExecutionInputDigest && input.Digest == v25Contract.CandidateInputDigest && input.Digest == v25Contract.ExecutionInputDigest,
 		"v24_contract_digest": validDigest(v24Request.Candidate.ContractCanonicalDigest) && v24Binding.ContractDigest == v24Request.Candidate.ContractCanonicalDigest,
 		"v25_contract_digest": validDigest(v25Contract.Digest) && v25Binding.ContractDigest == v25Contract.Digest,
