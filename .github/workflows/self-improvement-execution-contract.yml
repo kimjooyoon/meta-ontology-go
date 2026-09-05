@@ -240,13 +240,13 @@ jobs:
           jq -e --arg sha "$SUBJECT_SHA" --arg run "$SOURCE_RUN_ID" --arg receipt "$SOURCE_RECEIPT_DIGEST" \
             --arg source_workflow "$SOURCE_WORKFLOW_NAME" --arg source_path "$SOURCE_WORKFLOW_PATH" --arg target_path "$TARGET_WORKFLOW_PATH" \
             '.schema == "gooo/self-improvement-ci-continuation/v1" and .digest == $receipt and
-             .request.input.source_head_sha == $sha and
-             (.request.input.source_run_id | tostring) == $run and
-             .request.input.source_workflow_name == $source_workflow and
-             .request.input.source_workflow_path == $source_path and
-             .request.input.source_artifact_archive_digest != null and
-             .request.input.source_artifact_archive_digest == .request.input.source_artifact_observed_digest and
-             .request.input.target_workflow_path == $target_path and
+             .request.continuation_input.source_head_sha == $sha and
+             (.request.continuation_input.source_run_id | tostring) == $run and
+             .request.continuation_input.source_workflow_name == $source_workflow and
+             .request.continuation_input.source_workflow_path == $source_path and
+             .request.continuation_input.source_artifact_archive_digest != null and
+             .request.continuation_input.source_artifact_archive_digest == .request.continuation_input.source_artifact_observed_digest and
+             .request.continuation_input.target_workflow_path == $target_path and
              .verification.verified == true and .resolution.execution_authorized == false and
              .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
              .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
