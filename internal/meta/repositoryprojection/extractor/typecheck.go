@@ -24,11 +24,23 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
 	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
-	_, err = configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, info)
+	checked, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, info)
 	if err != nil && !sufficientFunctionTypeEvidence(function, info) {
 		return typeEvidence{}, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
 	}
-	return typeEvidence{info: info}, nil
+	functions := make(map[*types.Func]*ast.FuncDecl)
+	for _, packageFile := range files {
+		for _, declaration := range packageFile.Decls {
+			function, ok := declaration.(*ast.FuncDecl)
+			if !ok || function.Name == nil {
+				continue
+			}
+			if object, ok := info.Defs[function.Name].(*types.Func); ok {
+				functions[object] = function
+			}
+		}
+	}
+	return typeEvidence{info: info, pkg: checked, files: files, funcs: functions}, nil
 }
 
 func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bool {

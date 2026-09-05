@@ -28,6 +28,15 @@ func TestOperationInputContractUsesExactEmbeddedGoooIR(t *testing.T) {
 			t.Fatalf("operation %q input binding = %+v", operation, binding)
 		}
 	}
+	evidence, err := ExtractFunctionInputContractEvidence()
+	if err != nil || len(evidence.Obligations) != 6 {
+		t.Fatalf("return-tail contract obligations are not bound to IR facts: evidence=%+v err=%v", evidence, err)
+	}
+	for _, obligation := range evidence.Obligations {
+		if !obligation.UsedInputFact || !obligation.GeneratedOutputFact {
+			t.Fatalf("return-tail obligation lacks semantic relation facts: %+v", obligation)
+		}
+	}
 }
 
 func TestOperationInputContractRejectsMissingDuplicateAndUnknownDeclarations(t *testing.T) {

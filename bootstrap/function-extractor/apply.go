@@ -6,6 +6,7 @@ import (
 	"os"
 
 	recipeauthority "github.com/kimjooyoon/meta-ontology-go/internal/meta/functionextractorrecipe"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 )
 
 type stagedFile struct {
@@ -30,12 +31,13 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 	changedBySubject := make(map[string][]string)
 	createdBySubject := make(map[string][]string)
 	operationsBySubject := make(map[string][]string)
+	evidenceBySubject := make(map[string][]projectionextractor.StrategyEvidence)
 	unhandled := make([]string, 0)
 	failures := make([]extractionFailureRecord, 0)
 	for _, logical := range residual {
 		recipe, exists := bySubject[logical]
 		if !exists {
-			operations, err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject)
+			operations, evidence, err := stageGenericExtraction(root, logical, buffers, created, changedBySubject, createdBySubject)
 			if err != nil {
 				unhandled = append(unhandled, logical)
 				failures = append(failures, extractionFailure(logical, err))
@@ -43,6 +45,7 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 				continue
 			}
 			operationsBySubject[logical] = operations
+			evidenceBySubject[logical] = evidence
 			continue
 		}
 		for _, edit := range recipe.Edits {
@@ -77,7 +80,7 @@ func stageExtractions(root string, plans map[string]planSubject, residual []stri
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	subjects, err := extractionSubjects(plans, residual, bySubject, operationsBySubject, changedBySubject, createdBySubject, staged)
+	subjects, err := extractionSubjects(plans, residual, bySubject, operationsBySubject, evidenceBySubject, changedBySubject, createdBySubject, staged)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

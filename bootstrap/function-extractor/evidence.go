@@ -1,5 +1,7 @@
 package main
 
+import projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
+
 type splitPlan struct {
 	Schema    string        `json:"schema"`
 	SourceSHA string        `json:"source_sha"`
@@ -34,6 +36,7 @@ type extractionSubject struct {
 	Operation    string   `json:"meta_operation"`
 	Operations   []string `json:"meta_operations,omitempty"`
 	Proof        string   `json:"proof_choice"`
+	Evidence     []projectionextractor.StrategyEvidence `json:"strategy_evidence,omitempty"`
 }
 
 type extractionFailureRecord struct {

@@ -1,0 +1,546 @@
+package extractor
+
+import (
+	"bytes"
+	"fmt"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
+	"go/types"
+	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+)
+
+const returnTailStrategy = "return-preserving-terminal-tail"
+
+func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool) (*returnTailCandidate, error) {
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil {
+		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity != "FunctionInput" ||
+		contract.OutputEntity != "OperationResult" || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
+		!contract.UsedInputFact || !contract.GeneratedOutputFact || contract.SourceDigest == "" || contract.SemanticDigest == "" {
+		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	contractObligations, obligationsOK := returnTailContractObligations(contract.Obligations)
+	if !obligationsOK {
+		return nil, fail("derive-recipe", "admit-return-tail", "RETURN_TAIL_OBLIGATIONS_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	if !returnTailSignatureEvidence(function, evidence.info) {
+		return nil, fail("derive-recipe", "type-check-return-tail", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
+	}
+	if !returnTailShapeEligible(function, evidence.info) {
+		return nil, returnTailContradiction(obligationReturnShape, "function is not an unnamed single-error result")
+	}
+	statements := function.Body.List
+	if len(statements) < 2 {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail cannot make progress")
+	}
+	if _, ok := statements[len(statements)-1].(*ast.ReturnStmt); !ok {
+		return nil, returnTailContradiction(obligationReturnShape, "function does not end in a return")
+	}
+	if hasReturnTailOuterHazard(statements, evidence.info) {
+		return nil, returnTailContradiction(obligationControlFlow, "function contains unsupported control flow")
+	}
+
+	for startIndex := len(statements) - 1; startIndex >= 0; startIndex-- {
+		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, existing, startIndex)
+		if candidateErr != nil {
+			if isKnownSuffixContradiction(candidateErr) {
+				continue
+			}
+			return nil, candidateErr
+		}
+		if candidate != nil {
+			return candidate, nil
+		}
+	}
+	return nil, returnTailContradiction(obligationRenderedCapacity, "no terminal tail satisfies rendered capacity")
+}
+
+func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
+	if function == nil || function.Recv != nil || function.Type == nil || function.Type.TypeParams != nil && len(function.Type.TypeParams.List) != 0 || function.Type.Results == nil || len(function.Type.Results.List) != 1 ||
+		len(function.Type.Results.List[0].Names) != 0 || function.Body == nil || len(function.Body.List) == 0 {
+		return false
+	}
+	if _, ok := function.Body.List[len(function.Body.List)-1].(*ast.ReturnStmt); !ok {
+		return false
+	}
+	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
+}
+
+func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, existing map[string]bool, startIndex int) (*returnTailCandidate, error) {
+	statements := function.Body.List[startIndex:]
+	if len(statements) == 0 {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
+	}
+	if !returnTailReturnsCompatible(statements, evidence.info, evidence.info.TypeOf(function.Type.Results.List[0].Type)) {
+		return nil, returnTailContradiction(obligationReturnShape, "terminal tail has a bare, multiple, or incompatible return")
+	}
+	bindings, err := suffixBindings(statements, function, fset, evidence)
+	if err != nil {
+		return nil, err
+	}
+	if hasReturnTailBindingHazard(function.Body, statements, bindings, evidence.info) {
+		return nil, returnTailContradiction(obligationFreeBindings, "terminal tail has a stale-copy, rebinding, address, or closure hazard")
+	}
+	if err := returnTailCalleeEffects(statements, evidence); err != nil {
+		return nil, err
+	}
+
+	name := stableReturnTailName(function.Name.Name, startIndex+1)
+	if existing[name] {
+		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{"helper=" + name})
+	}
+	first, last := statements[0], statements[len(statements)-1]
+	start := fset.Position(first.Pos()).Offset
+	end := fset.Position(last.End()).Offset
+	start = includeLeadingComments(fset, file, first, start)
+	if start < 0 || end < start || end > len(source) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail source coordinates are invalid")
+	}
+	helper, err := renderReturnTailHelper(fset, name, bindings, source[start:end])
+	if err != nil {
+		return nil, err
+	}
+	call := []byte("return " + name + "(" + bindingArguments(bindings) + ")")
+	modified, err := replaceSource(source, start, end, call)
+	if err != nil {
+		return nil, err
+	}
+	formatted, err := format.Source(modified)
+	if err != nil {
+		return nil, returnTailContradiction(obligationProjectedConform, "outer source did not render")
+	}
+	afterFunctionLines, ok := namedFunctionLines(formatted, function.Name.Name)
+	if !ok || afterFunctionLines > functionLineLimit {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "outer function remains over the declaration limit")
+	}
+	renderedHelper, err := renderedFunctionHelper(formatted, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	if physicalLines(renderedHelper) > functionLineLimit {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered helper including package and imports remains over the limit")
+	}
+	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
+	combined = append(combined, helper...)
+	combined, err = format.Source(combined)
+	if err != nil {
+		return nil, returnTailContradiction(obligationProjectedConform, "combined source did not render")
+	}
+	if err := projectedConformance(root, logical, combined); err != nil {
+		return nil, err
+	}
+	if bytes.Equal(combined, source) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
+	}
+	return &returnTailCandidate{
+		helperName: name,
+		arguments:  bindings,
+		helper:     helper,
+		result:     combined,
+		evidence: StrategyEvidence{
+			Strategy:                 returnTailStrategy,
+			Operation:                string(contract.Operation),
+			ContractActivity:         contract.Activity,
+			ContractInputEntity:      contract.InputEntity,
+			ContractOutputEntity:     contract.OutputEntity,
+			ContractInputSubjectKind: string(contract.InputSubjectKind),
+			ContractSourceDigest:     contract.SourceDigest,
+			ContractSemanticDigest:   contract.SemanticDigest,
+			UsedInputFact:            contract.UsedInputFact,
+			GeneratedOutputFact:      contract.GeneratedOutputFact,
+			Subject:                  functionIdentity(fset, function),
+			Helper:                   name,
+			BeforeBytes:              len(source),
+			AfterBytes:               len(formatted),
+			BeforeFunctionLines:      declarationLines(fset, function),
+			AfterFunctionLines:       afterFunctionLines,
+			RenderedHelperBytes:      len(renderedHelper),
+			RenderedHelperLines:      physicalLines(renderedHelper),
+			Obligations:              passingReturnTailObligations(),
+			ContractObligations:      contractObligations,
+		},
+	}, nil
+}
+
+func returnTailContractObligations(values []generation.OperationInputContractObligationEvidence) ([]ContractObligationEvidence, bool) {
+	if len(values) != len(returnTailObligations) {
+		return nil, false
+	}
+	known := make(map[string]bool, len(values))
+	result := make([]ContractObligationEvidence, 0, len(values))
+	for _, value := range values {
+		if known[value.Name] || !value.UsedInputFact || !value.GeneratedOutputFact || value.Activity == "" || value.InputEntity != "FunctionInput" || value.OutputEntity != "OperationResult" {
+			return nil, false
+		}
+		known[value.Name] = true
+		result = append(result, ContractObligationEvidence{
+			Name: value.Name, Activity: value.Activity, InputEntity: value.InputEntity, OutputEntity: value.OutputEntity,
+			UsedInputFact: value.UsedInputFact, GeneratedOutputFact: value.GeneratedOutputFact,
+		})
+	}
+	for _, name := range returnTailObligations {
+		if !known[name] {
+			return nil, false
+		}
+	}
+	return result, true
+}
+
+func stableReturnTailName(function string, suffix int) string {
+	return fmt.Sprintf("%sExtractedReturnTail%02d", function, suffix)
+}
+
+func isErrorType(value types.Type) bool {
+	return value != nil && types.Identical(value, types.Universe.Lookup("error").Type())
+}
+
+func returnTailSignatureEvidence(function *ast.FuncDecl, info *types.Info) bool {
+	complete := true
+	ast.Inspect(function.Type, func(node ast.Node) bool {
+		identifier, ok := node.(*ast.Ident)
+		if !ok || identifier.Name == "_" {
+			return true
+		}
+		if info.Defs[identifier] == nil && info.Uses[identifier] == nil {
+			complete = false
+			return false
+		}
+		return true
+	})
+	return complete
+}
+
+func returnTailReturnsCompatible(statements []ast.Stmt, info *types.Info, resultType types.Type) bool {
+	compatible := true
+	for _, statement := range statements {
+		ast.Inspect(statement, func(node ast.Node) bool {
+			returnStatement, ok := node.(*ast.ReturnStmt)
+			if !ok {
+				return true
+			}
+			if len(returnStatement.Results) != 1 {
+				compatible = false
+				return false
+			}
+			expressionType := info.TypeOf(returnStatement.Results[0])
+			if expressionType == nil {
+				identifier, isNil := returnStatement.Results[0].(*ast.Ident)
+				if !isNil || identifier.Name != "nil" {
+					compatible = false
+					return false
+				}
+			} else if !types.AssignableTo(expressionType, resultType) {
+				compatible = false
+				return false
+			}
+			return true
+		})
+		if !compatible {
+			return false
+		}
+	}
+	return compatible
+}
+
+func hasReturnTailOuterHazard(statements []ast.Stmt, info *types.Info) bool {
+	hazard := false
+	for _, statement := range statements {
+		ast.Inspect(statement, func(node ast.Node) bool {
+			if hazard {
+				return false
+			}
+			if _, ok := node.(*ast.FuncLit); ok {
+				return false
+			}
+			switch value := node.(type) {
+			case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.BranchStmt:
+				hazard = true
+			case *ast.CallExpr:
+				if identifier, ok := value.Fun.(*ast.Ident); ok && (identifier.Name == "panic" || identifier.Name == "recover") {
+					hazard = true
+				}
+			}
+			return true
+		})
+		if hazard {
+			return true
+		}
+	}
+	return false
+}
+
+func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.Stmt, bindings []suffixBinding, info *types.Info) bool {
+	free := make(map[types.Object]bool, len(bindings))
+	for _, binding := range bindings {
+		free[binding.object] = true
+	}
+	for _, statement := range statements {
+		unsafe := false
+		ast.Inspect(statement, func(node ast.Node) bool {
+			if unsafe {
+				return false
+			}
+			switch value := node.(type) {
+			case *ast.AssignStmt:
+				for _, lhs := range value.Lhs {
+					if free[returnTailAssignedObject(lhs, info)] {
+						unsafe = true
+					}
+				}
+			case *ast.IncDecStmt:
+				unsafe = free[returnTailAssignedObject(value.X, info)]
+			case *ast.UnaryExpr:
+				if value.Op == token.AND && free[returnTailAssignedObject(value.X, info)] {
+					unsafe = true
+				}
+			}
+			return true
+		})
+		if unsafe {
+			return true
+		}
+	}
+	unsafe := false
+	ast.Inspect(functionBody, func(node ast.Node) bool {
+		if unsafe {
+			return false
+		}
+		if value, ok := node.(*ast.UnaryExpr); ok && value.Op == token.AND && free[returnTailAssignedObject(value.X, info)] {
+			unsafe = true
+			return false
+		}
+		literal, ok := node.(*ast.FuncLit)
+		if !ok {
+			return true
+		}
+		ast.Inspect(literal.Body, func(inner ast.Node) bool {
+			identifier, ok := inner.(*ast.Ident)
+			if ok && free[info.Uses[identifier]] {
+				unsafe = true
+				return false
+			}
+			return true
+		})
+		return false
+	})
+	return unsafe
+}
+
+func returnTailAssignedObject(expression ast.Expr, info *types.Info) types.Object {
+	if star, ok := expression.(*ast.StarExpr); ok {
+		return returnTailAssignedObject(star.X, info)
+	}
+	return assignedObject(expression, info)
+}
+
+func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error {
+	var effectErr error
+	ast.Inspect(&ast.BlockStmt{List: statements}, func(node ast.Node) bool {
+		if effectErr != nil {
+			return false
+		}
+		call, ok := node.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}) {
+			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"obligation=" + obligationCalleeEffects})
+			return false
+		}
+		return true
+	})
+	return effectErr
+}
+
+func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {
+	var object types.Object
+	switch function := call.Fun.(type) {
+	case *ast.Ident:
+		object = evidence.info.Uses[function]
+	case *ast.SelectorExpr:
+		object = evidence.info.Uses[function.Sel]
+	default:
+		return false
+	}
+	switch value := object.(type) {
+	case *types.Builtin:
+		return value.Name() == "len"
+	case *types.Func:
+		if value.Pkg() != nil && value.Pkg().Path() == "fmt" && value.Name() == "Errorf" {
+			return exactErrorfCall(value, call, evidence.info)
+		}
+		if value.Pkg() != nil && value.Pkg().Path() == "reflect" && value.Name() == "DeepEqual" {
+			return exactDeepEqualSignature(value)
+		}
+		if value.Pkg() == nil || evidence.pkg == nil || value.Pkg() != evidence.pkg || value.Name() == "" {
+			return false
+		}
+		declaration := evidence.funcs[value]
+		if declaration == nil || declaration.Recv != nil || visiting[value] {
+			return false
+		}
+		visiting[value] = true
+		defer delete(visiting, value)
+		return provenLocalPureFunction(declaration, evidence, visiting)
+	default:
+		return false
+	}
+}
+
+func exactErrorfCall(function *types.Func, call *ast.CallExpr, info *types.Info) bool {
+	signature, ok := function.Type().(*types.Signature)
+	if !ok || !signature.Variadic() || signature.Params().Len() != 2 || signature.Results().Len() != 1 || !isErrorType(signature.Results().At(0).Type()) || len(call.Args) != 1 {
+		return false
+	}
+	formatType := info.TypeOf(call.Args[0])
+	return formatType != nil && types.AssignableTo(formatType, types.Typ[types.String]) && info.Types[call.Args[0]].Value != nil
+}
+
+func exactDeepEqualSignature(function *types.Func) bool {
+	signature, ok := function.Type().(*types.Signature)
+	return ok && !signature.Variadic() && signature.Params().Len() == 2 && signature.Results().Len() == 1 && signature.Results().At(0).Type() == types.Typ[types.Bool]
+}
+
+func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool) bool {
+	local := make(map[types.Object]bool)
+	ast.Inspect(function.Type, func(node ast.Node) bool {
+		identifier, ok := node.(*ast.Ident)
+		if ok {
+			if object := evidence.info.Defs[identifier]; object != nil {
+				local[object] = true
+			}
+		}
+		return true
+	})
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if identifier, ok := node.(*ast.Ident); ok {
+			if object := evidence.info.Defs[identifier]; object != nil {
+				local[object] = true
+			}
+		}
+		return true
+	})
+	pure := true
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if !pure {
+			return false
+		}
+		if _, ok := node.(*ast.FuncLit); ok {
+			pure = false
+			return false
+		}
+		switch value := node.(type) {
+		case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.BranchStmt, *ast.SendStmt:
+			pure = false
+		case *ast.CallExpr:
+			if !returnTailCalleeAllowed(value, evidence, visiting) {
+				pure = false
+			}
+		case *ast.AssignStmt:
+			for _, lhs := range value.Lhs {
+				if object := assignedObject(lhs, evidence.info); object != nil && !local[object] {
+					pure = false
+				}
+			}
+		case *ast.IncDecStmt:
+			if object := assignedObject(value.X, evidence.info); object != nil && !local[object] {
+				pure = false
+			}
+		case *ast.UnaryExpr:
+			if value.Op == token.AND {
+				pure = false
+			}
+		case *ast.Ident:
+			if object, ok := evidence.info.Uses[value].(*types.Var); ok && object.Parent() == evidence.pkg.Scope() {
+				pure = false
+			}
+		}
+		return true
+	})
+	return pure
+}
+
+func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixBinding, body []byte) ([]byte, error) {
+	var output bytes.Buffer
+	output.WriteString("func ")
+	output.WriteString(name)
+	output.WriteByte('(')
+	for index, binding := range bindings {
+		if index > 0 {
+			output.WriteString(", ")
+		}
+		output.WriteString(binding.name)
+		output.WriteByte(' ')
+		if err := format.Node(&output, fset, binding.type_); err != nil {
+			return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+		}
+	}
+	output.WriteString(") error {\n")
+	output.Write(body)
+	if len(body) == 0 || body[len(body)-1] != '\n' {
+		output.WriteByte('\n')
+	}
+	output.WriteString("}\n")
+	formatted, err := format.Source(output.Bytes())
+	if err != nil {
+		return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	return formatted, nil
+}
+
+func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "decomposed.go", source, parser.ParseComments)
+	if err != nil {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered source is not parseable")
+	}
+	list, err := imports(file)
+	if err != nil {
+		return nil, err
+	}
+	for _, node := range file.Decls {
+		function, ok := node.(*ast.FuncDecl)
+		if !ok || function.Name == nil || function.Name.Name != name {
+			continue
+		}
+		start := function.Pos()
+		if function.Doc != nil {
+			start = function.Doc.Pos()
+		}
+		selected := []declaration{{node: function, start: fset.Position(start).Offset, end: fset.Position(function.End()).Offset, identity: "func:" + name}}
+		rendered, renderErr := render(fset, file, source, selected, list)
+		if renderErr != nil {
+			return nil, renderErr
+		}
+		return rendered.helper, nil
+	}
+	return nil, returnTailContradiction(obligationRenderedCapacity, "rendered target function is missing")
+}
+
+func projectedConformance(root, logical string, source []byte) error {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, logical, source, parser.ParseComments)
+	if err != nil {
+		return returnTailContradiction(obligationProjectedConform, "projected source is not parseable")
+	}
+	files, err := packageTypeFiles(root, logical, fset, file)
+	if err != nil {
+		return err
+	}
+	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
+	if _, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, nil); err != nil {
+		return returnTailContradiction(obligationProjectedConform, "projected package does not type-check")
+	}
+	return nil
+}
+
+func returnTailContradiction(obligation, detail string) error {
+	return knownSuffixContradiction("obligation=" + obligation + ": " + detail)
+}
