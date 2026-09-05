@@ -53,8 +53,8 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
 				}
 				for path, data := range result.Generated {
-					if extractionLines(data) > functionLineLimit {
-						t.Fatalf("generated unit %s exceeds capacity: %d lines", path, extractionLines(data))
+					if physicalLines(data) > functionLineLimit {
+						t.Fatalf("generated unit %s exceeds capacity: %d lines", path, physicalLines(data))
 					}
 				}
 				if !strings.Contains(string(result.Generated["x.go"]), "return FExtractedReturnTail") {
