@@ -228,8 +228,7 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			item.HelperLines = &helperLines
 		}
 		if observation.helperFailure != nil {
-			var failure Failure
-			if errors.As(observation.helperFailure, &failure) {
+			if failure, ok := errors.AsType[Failure](observation.helperFailure); ok {
 				item.FailureReason = failure.Reason
 				item.Failure = &PreflightFailureEvidence{
 					Stage:         failure.Stage,

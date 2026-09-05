@@ -192,8 +192,7 @@ func renderedCapacityObservationFailure(observation renderedCapacityObservation)
 	if observation.helperFailure == nil {
 		return nil
 	}
-	var failure Failure
-	if errors.As(observation.helperFailure, &failure) {
+	if failure, ok := errors.AsType[Failure](observation.helperFailure); ok {
 		failure.Diagnostics = append(failure.Diagnostics, renderedCapacityObservationDiagnostics(observation)...)
 		return failure
 	}
