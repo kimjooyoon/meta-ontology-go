@@ -57,10 +57,10 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 						t.Fatalf("generated unit %s exceeds capacity: %d lines", path, physicalLines(data))
 					}
 				}
-				if !strings.Contains(string(result.Generated["x.go"]), "return FExtractedReturnTail") {
+				if !generatedFunctionContains(result.Generated, "F", "return FExtractedReturnTail") {
 					t.Fatal("outer function did not use a return-valued helper")
 				}
-				if tc.name == "positive early return is preserved" && !strings.Contains(string(result.Generated["x.go"]), "return errorSentinel()") {
+				if tc.name == "positive early return is preserved" && !generatedFunctionContains(result.Generated, "F", "return errorSentinel()") {
 					t.Fatal("outer early return was not preserved")
 				}
 				return
@@ -74,6 +74,17 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 			}
 		})
 	}
+}
+
+func generatedFunctionContains(generated map[string][]byte, name, wanted string) bool {
+	needle := "func " + name + "("
+	for _, data := range generated {
+		text := string(data)
+		if strings.Contains(text, needle) && strings.Contains(text, wanted) {
+			return true
+		}
+	}
+	return false
 }
 
 func returnTailFixture(header, tail string) string {

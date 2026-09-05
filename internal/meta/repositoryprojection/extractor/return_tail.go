@@ -575,6 +575,9 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 			}
 		case *ast.UnaryExpr:
 			if value.Op == token.AND {
+				if _, ok := value.X.(*ast.CompositeLit); ok {
+					break
+				}
 				pure = false
 			}
 		case *ast.Ident:
