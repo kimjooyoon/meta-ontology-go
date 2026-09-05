@@ -20,7 +20,7 @@ func buildLedgerEntriesWithRefuted(indicators []sourcepolicy.Indicator, actions 
 	for _, indicator := range indicators {
 		id := indicatorID(indicator)
 		if _, exists := seen[id]; exists {
-			return nil, 0, 0, fmt.Errorf("duplicate source indicator %q", id)
+			return nil, 0, 0, 0, fmt.Errorf("duplicate source indicator %q", id)
 		}
 		seen[id] = struct{}{}
 		action, hasAction := actions[id]
