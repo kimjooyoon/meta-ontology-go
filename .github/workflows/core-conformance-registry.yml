@@ -5,9 +5,16 @@ on:
     paths:
       - 'examples/language-syntax-roundtrip/corpus.json'
       - 'examples/self-improvement-ci-continuation/**'
+      - 'internal/meta/selfimprovementcontinuation/build.go'
+      - 'internal/meta/selfimprovementcontinuation/model.go'
+      - 'internal/meta/selfimprovementcontinuation/verify.go'
+      - 'internal/meta/selfimprovementexecutiongrant/evaluate.go'
+      - 'internal/meta/selfimprovementexecutiongrant/model.go'
+      - 'internal/meta/selfimprovementexecutiongrant/verify.go'
       - 'internal/meta/languagereadiness/languagesyntax/**'
       - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
       - 'internal/verify/scope_gooo_core_conformance_registry.go'
+      - '.github/workflows/ci.yml'
       - '.github/workflows/core-conformance-registry.yml'
       - '.github/workflows/transformation-effect.yml'
 
@@ -42,6 +49,12 @@ jobs:
             internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go \
             internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go \
             internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go \
+            internal/meta/selfimprovementcontinuation/build.go \
+            internal/meta/selfimprovementcontinuation/model.go \
+            internal/meta/selfimprovementcontinuation/verify.go \
+            internal/meta/selfimprovementexecutiongrant/evaluate.go \
+            internal/meta/selfimprovementexecutiongrant/model.go \
+            internal/meta/selfimprovementexecutiongrant/verify.go \
             internal/verify/scope_gooo_core_conformance_registry.go \
             > "$RUNNER_TEMP/core-conformance-format.diff"
           test ! -s "$RUNNER_TEMP/core-conformance-format.diff"
@@ -52,6 +65,8 @@ jobs:
           go test \
             ./internal/meta/languagereadiness/languagesyntax/... \
             ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./internal/meta/selfimprovementcontinuation \
+            ./internal/meta/selfimprovementexecutiongrant \
             2>&1 | tee "$RUNNER_TEMP/core-conformance-tests.log"
       - name: Preserve conformance diagnostics
         if: always()
