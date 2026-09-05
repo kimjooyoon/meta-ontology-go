@@ -1,8 +1,10 @@
 package transformationeffect
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -32,6 +34,7 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 	}
 	sealed := make([]generation.OperationReceipt, 0, len(actions))
 	result.failures = append(result.failures, in.receipts.Failures...)
+	progressSequence := 0
 	for _, action := range actions {
 		before, err := workspace.Scan(box.Root)
 		if err != nil {
@@ -41,11 +44,11 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 			result.effects = append(result.effects, effectForFailure(action, before, failure))
 			continue
 		}
-		preflight, err := runAction(box, opts, in.plan, action, true)
+		preflight, err := runActionWithProgress(box, opts, in.plan, action, true, &progressSequence)
 		if err != nil {
 			return result, err
 		}
-		applied, err := runAction(box, opts, in.plan, action, false)
+		applied, err := runActionWithProgress(box, opts, in.plan, action, false, &progressSequence)
 		if err != nil {
 			return result, err
 		}
@@ -86,6 +89,70 @@ func executePlan(in inputSet, opts Options, source workspace.State) (result exec
 		return result, fmt.Errorf("executed provenance is not bound")
 	}
 	return result, nil
+}
+
+func runActionWithProgress(box *workspace.Sandbox, opts Options, plan generation.Plan, action generation.Action, check bool, sequence *int) ([]byte, error) {
+	phase := "APPLY"
+	if check {
+		phase = "PREFLIGHT"
+	}
+	return runProgressPhase(opts, action, phase, sequence, func() ([]byte, error) {
+		return runAction(box, opts, plan, action, check)
+	})
+}
+
+func runProgressPhase(opts Options, action generation.Action, phase string, sequence *int, execute func() ([]byte, error)) ([]byte, error) {
+	if err := writeOperationProgress(opts, action, phase, "ENTERED", "", sequence); err != nil {
+		warnOperationProgress(opts, action, phase, "ENTERED", err)
+	}
+	output, runErr := execute()
+	returnError := ""
+	if runErr != nil {
+		returnError = "ERROR"
+	}
+	if err := writeOperationProgress(opts, action, phase, "RETURNED", returnError, sequence); err != nil {
+		warnOperationProgress(opts, action, phase, "RETURNED", err)
+	}
+	return output, runErr
+}
+
+func warnOperationProgress(opts Options, action generation.Action, phase, boundary string, err error) {
+	fmt.Fprintf(os.Stderr, "transformation-effect: operation progress unavailable invocation=%s action_indicator_id=%s operation=%s phase=%s boundary=%s: %v\n",
+		opts.InvocationID, action.IndicatorID, action.Operation, phase, boundary, err)
+}
+
+func writeOperationProgress(opts Options, action generation.Action, phase, boundary, returnError string, sequence *int) error {
+	if opts.ProgressWriter == nil {
+		return nil
+	}
+	*sequence = *sequence + 1
+	event := operationProgressEvent{
+		Schema:                      "gooo/transformation-effect-operation-progress/v1",
+		HeadSHA:                     opts.ExpectedSHA,
+		InvocationID:                opts.InvocationID,
+		Sequence:                    *sequence,
+		ActionIndicatorID:           action.IndicatorID,
+		Operation:                   string(action.Operation),
+		Activity:                    action.Activity,
+		Executor:                    action.Executor,
+		Subject:                     action.Subject,
+		SubjectKind:                 string(action.SubjectKind),
+		InputContractSourceDigest:   action.InputContractSourceDigest,
+		InputContractSemanticDigest: action.InputContractSemanticDigest,
+		Phase:                       phase,
+		Boundary:                    boundary,
+		ReturnError:                 returnError,
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	if written, err := opts.ProgressWriter.Write(append(payload, '\n')); err != nil {
+		return err
+	} else if written != len(payload)+1 {
+		return fmt.Errorf("short operation progress write: wrote %d of %d bytes", written, len(payload)+1)
+	}
+	return nil
 }
 
 func preserveInputInstanceEvidence(receipt generation.OperationReceipt, inputs []generation.OperationReceipt) generation.OperationReceipt {
