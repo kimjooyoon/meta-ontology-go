@@ -14,6 +14,7 @@ type Options struct {
 	ReceiptsPath   string
 	ProvenancePath string
 	ExpectedSHA    string
+	OutputPath     string
 	ProgressPath   string
 	InvocationID   string
 }

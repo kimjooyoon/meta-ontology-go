@@ -3,6 +3,7 @@ package transformationeffect
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,14 +25,19 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	}
 
 	t.Run("normal returned phases", func(t *testing.T) {
-		progressPath := filepath.Join(t.TempDir(), "operation-progress.jsonl")
+		outputDir := t.TempDir()
+		outputPath := filepath.Join(outputDir, "ledger.json")
+		progressPath := filepath.Join(outputDir, "operation-progress.jsonl")
 		sequence := 0
-		opts := Options{ExpectedSHA: "head", ProgressPath: progressPath, InvocationID: "run/1/job:first"}
-		if err := writeOperationProgress(opts, action, "PREFLIGHT", "ENTERED", "", &sequence); err != nil {
-			t.Fatal(err)
+		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:first"}
+		output, runErr := runProgressPhase(opts, action, "PREFLIGHT", &sequence, func() ([]byte, error) {
+			return []byte("executor-output"), nil
+		})
+		if runErr != nil || string(output) != "executor-output" {
+			t.Fatalf("executor result changed: output=%q err=%v", output, runErr)
 		}
-		if err := writeOperationProgress(opts, action, "PREFLIGHT", "RETURNED", "", &sequence); err != nil {
-			t.Fatal(err)
+		if sequence != 2 {
+			t.Fatalf("unexpected normal sequence: %d", sequence)
 		}
 		events := readOperationProgress(t, progressPath)
 		if len(events) != 2 || events[0].Boundary != "ENTERED" || events[1].Boundary != "RETURNED" || events[1].ReturnError != "" {
@@ -41,9 +47,11 @@ func TestOperationProgressBoundaries(t *testing.T) {
 	})
 
 	t.Run("incomplete phase has no return", func(t *testing.T) {
-		progressPath := filepath.Join(t.TempDir(), "operation-progress.jsonl")
+		outputDir := t.TempDir()
+		outputPath := filepath.Join(outputDir, "ledger.json")
+		progressPath := filepath.Join(outputDir, "operation-progress.jsonl")
 		sequence := 0
-		opts := Options{ExpectedSHA: "head", ProgressPath: progressPath, InvocationID: "run/1/job:replay"}
+		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:replay"}
 		if err := writeOperationProgress(opts, action, "APPLY", "ENTERED", "", &sequence); err != nil {
 			t.Fatal(err)
 		}
@@ -54,26 +62,45 @@ func TestOperationProgressBoundaries(t *testing.T) {
 		assertProgressIdentity(t, events, opts, action)
 	})
 
+	t.Run("diagnostic write failure preserves executor result", func(t *testing.T) {
+		root := t.TempDir()
+		outputPath := filepath.Join(root, "blocked", "ledger.json")
+		if err := os.WriteFile(filepath.Join(root, "blocked"), []byte("not a directory"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		opts := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: filepath.Join(root, "blocked", "operation-progress.jsonl"), InvocationID: "run/1/job:negative"}
+		sequence := 0
+		sentinel := errors.New("executor failure")
+		called := false
+		output, runErr := runProgressPhase(opts, action, "APPLY", &sequence, func() ([]byte, error) {
+			called = true
+			return []byte("executor-output"), sentinel
+		})
+		if !called || string(output) != "executor-output" || !errors.Is(runErr, sentinel) {
+			t.Fatalf("diagnostic I/O changed executor result: called=%t output=%q err=%v", called, output, runErr)
+		}
+	})
+
 	t.Run("different attempts remain separate", func(t *testing.T) {
 		root := t.TempDir()
-		firstPath := filepath.Join(root, "first", "operation-progress.jsonl")
-		retryPath := filepath.Join(root, "retry", "operation-progress.jsonl")
-		first := Options{ExpectedSHA: "head", ProgressPath: firstPath, InvocationID: "run/1/job:first"}
-		retry := Options{ExpectedSHA: "head", ProgressPath: retryPath, InvocationID: "run/2/job:first"}
+		outputPath := filepath.Join(root, "ledger.json")
+		progressPath := filepath.Join(root, "operation-progress.jsonl")
+		first := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/1/job:first"}
+		retry := Options{ExpectedSHA: "head", OutputPath: outputPath, ProgressPath: progressPath, InvocationID: "run/2/job:first"}
 		firstSequence, retrySequence := 0, 0
 		if err := writeOperationProgress(first, action, "APPLY", "ENTERED", "", &firstSequence); err != nil {
 			t.Fatal(err)
 		}
+		firstEvents := readOperationProgress(t, progressPath)
 		if err := writeOperationProgress(retry, action, "APPLY", "ENTERED", "", &retrySequence); err != nil {
 			t.Fatal(err)
 		}
-		firstEvents := readOperationProgress(t, firstPath)
-		retryEvents := readOperationProgress(t, retryPath)
-		if len(firstEvents) != 1 || len(retryEvents) != 1 || firstEvents[0].InvocationID == retryEvents[0].InvocationID {
-			t.Fatalf("attempt progress was combined: first=%#v retry=%#v", firstEvents, retryEvents)
+		allEvents := readOperationProgress(t, progressPath)
+		if len(firstEvents) != 1 || len(allEvents) != 2 || allEvents[0].InvocationID == allEvents[1].InvocationID {
+			t.Fatalf("attempt progress was combined: first=%#v all=%#v", firstEvents, allEvents)
 		}
-		if firstEvents[0].Sequence != 1 || retryEvents[0].Sequence != 1 {
-			t.Fatalf("attempt sequence was not isolated: first=%#v retry=%#v", firstEvents, retryEvents)
+		if allEvents[0].Sequence != 1 || allEvents[1].Sequence != 1 {
+			t.Fatalf("attempt sequence was not isolated: all=%#v", allEvents)
 		}
 	})
 }

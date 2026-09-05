@@ -98,23 +98,46 @@ func runActionWithProgress(box *workspace.Sandbox, opts Options, plan generation
 	if check {
 		phase = "PREFLIGHT"
 	}
+	return runProgressPhase(opts, action, phase, sequence, func() ([]byte, error) {
+		return runAction(box, opts, plan, action, check)
+	})
+}
+
+func runProgressPhase(opts Options, action generation.Action, phase string, sequence *int, execute func() ([]byte, error)) ([]byte, error) {
 	if err := writeOperationProgress(opts, action, phase, "ENTERED", "", sequence); err != nil {
-		return nil, err
+		warnOperationProgress(opts, action, phase, "ENTERED", err)
 	}
-	output, runErr := runAction(box, opts, plan, action, check)
+	output, runErr := execute()
 	returnError := ""
 	if runErr != nil {
 		returnError = "ERROR"
 	}
 	if err := writeOperationProgress(opts, action, phase, "RETURNED", returnError, sequence); err != nil {
-		return nil, errors.Join(runErr, err)
+		warnOperationProgress(opts, action, phase, "RETURNED", err)
 	}
 	return output, runErr
+}
+
+func warnOperationProgress(opts Options, action generation.Action, phase, boundary string, err error) {
+	fmt.Fprintf(os.Stderr, "transformation-effect: operation progress unavailable invocation=%s action_indicator_id=%s operation=%s phase=%s boundary=%s: %v\n",
+		opts.InvocationID, action.IndicatorID, action.Operation, phase, boundary, err)
 }
 
 func writeOperationProgress(opts Options, action generation.Action, phase, boundary, returnError string, sequence *int) error {
 	if opts.ProgressPath == "" {
 		return nil
+	}
+	outputPath, err := filepath.Abs(opts.OutputPath)
+	if err != nil {
+		return fmt.Errorf("resolve caller output boundary: %w", err)
+	}
+	progressPath, err := filepath.Abs(opts.ProgressPath)
+	if err != nil {
+		return fmt.Errorf("resolve operation progress path: %w", err)
+	}
+	expectedPath := filepath.Join(filepath.Dir(outputPath), "operation-progress.jsonl")
+	if opts.OutputPath == "" || progressPath != expectedPath {
+		return fmt.Errorf("operation progress path escapes caller output boundary")
 	}
 	*sequence = *sequence + 1
 	event := operationProgressEvent{

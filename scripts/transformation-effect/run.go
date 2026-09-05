@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
@@ -23,11 +25,16 @@ func run(args []string) error {
 	if cfg.verify != "" {
 		return transformationeffect.VerifyFiles(cfg.verify, cfg.generatedReceipts, cfg.executedProvenance, cfg.patch)
 	}
+	invocation, err := invocationID(cfg.output)
+	if err != nil {
+		return err
+	}
+	outputDir := filepath.Dir(cfg.output)
 	result, err := transformationeffect.Build(transformationeffect.Options{
 		Root: cfg.root, MetricsPath: cfg.metrics, PlanPath: cfg.plan, ExecutionPath: cfg.execution,
 		ReceiptsPath: cfg.receipts, ProvenancePath: cfg.provenance, ExpectedSHA: cfg.expected,
-		ProgressPath: filepath.Join(filepath.Dir(cfg.output), "operation-progress.jsonl"),
-		InvocationID: invocationID(cfg.output),
+		OutputPath: cfg.output, ProgressPath: filepath.Join(outputDir, "operation-progress.jsonl"),
+		InvocationID: invocation,
 	})
 	if err != nil {
 		if diagnosticErr := transformationeffect.WriteReplayDiagnostic(cfg.output, err); diagnosticErr != nil {
@@ -43,7 +50,11 @@ func run(args []string) error {
 	return nil
 }
 
-func invocationID(output string) string {
+func invocationID(output string) (string, error) {
+	token := make([]byte, 16)
+	if _, err := rand.Read(token); err != nil {
+		return "", fmt.Errorf("generate diagnostic invocation identity: %w", err)
+	}
 	runID := os.Getenv("GITHUB_RUN_ID")
 	attempt := os.Getenv("GITHUB_RUN_ATTEMPT")
 	job := os.Getenv("GITHUB_JOB")
@@ -56,7 +67,7 @@ func invocationID(output string) string {
 	if job == "" {
 		job = "transformation-effect"
 	}
-	return fmt.Sprintf("%s/%s/%s:%s", runID, attempt, job, output)
+	return fmt.Sprintf("%s/%s/%s/%s:%s", runID, attempt, job, hex.EncodeToString(token), output), nil
 }
 
 func parseConfig(args []string) (config, error) {
