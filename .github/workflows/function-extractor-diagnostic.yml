@@ -435,6 +435,12 @@ jobs:
               next_operation='rerun diagnostic sampling with helper-frame attribution'
               blocked_by='helper frame attribution'
             fi
+          elif [[ "$RESOLVE_OUTCOME" == 'success' && "$SAMPLING_OUTCOME" == 'failure' ]]; then
+            step='run-diagnostic-only-helper-sampling'
+            reason='diagnostic helper sampling failed before a helper receipt was produced'
+            unknown_class='HELPER_NOT_STARTED'
+            next_operation='inspect diagnostic helper build and launch evidence'
+            blocked_by='diagnostic helper build or launch'
           fi
 
           jq -n \
