@@ -30,12 +30,41 @@ func Load(filename string, source []byte) (Policy, error) {
 		return Policy{}, errors.New("workflow lineage source is not the canonical CI effort observation source")
 	}
 	markers := markerValues{}
+	activityMarkers := map[string]markerValues{}
+	activityCounts := map[string]int{}
 	for _, node := range ir.Graph.Nodes() {
-		if node.Kind != semantic.Activity || node.Name != "ObserveCIWorkflowWindow" || node.ValueProgram == "" {
+		if node.Kind != semantic.Activity || node.ValueProgram == "" {
 			continue
 		}
-		for key, values := range parseMarkers(node.ValueProgram) {
+		activityCounts[node.Name]++
+		parsed := parseMarkers(node.ValueProgram)
+		activityMarkers[node.Name] = parsed
+		if node.Name != "ObserveCIWorkflowWindow" {
+			continue
+		}
+		for key, values := range parsed {
 			markers[key] = append(markers[key], values...)
+		}
+	}
+	for _, activity := range []string{"ObserveCIWorkflowWindow", "ObserveVerificationRuntime", "EvaluateExactEvidenceReuse"} {
+		if activityCounts[activity] != 1 {
+			return Policy{}, fmt.Errorf("workflow lineage semantic IR must bind exactly one %s activity", activity)
+		}
+	}
+	permissionMarkers := []struct {
+		activity string
+		key      string
+		value    string
+	}{
+		{"ObserveCIWorkflowWindow", "partial-lineage-observation-permission", ReadOnlyPermission},
+		{"ObserveVerificationRuntime", "observation-permission", ReadOnlyPermission},
+		{"EvaluateExactEvidenceReuse", "evidence-reuse-permission", ExactSuccessReuse},
+		{"EvaluateExactEvidenceReuse", "promotion-permission", NoPromotionPermission},
+	}
+	for _, marker := range permissionMarkers {
+		values := activityMarkers[marker.activity][marker.key]
+		if len(values) != 1 || values[0] != marker.value {
+			return Policy{}, fmt.Errorf("workflow lineage semantic permission %s/%s is not exactly bound", marker.activity, marker.key)
 		}
 	}
 	policy := Policy{
@@ -65,7 +94,13 @@ func Load(filename string, source []byte) (Policy, error) {
 		RefutedDominatesUnknown: first(markers, "partial-lineage-refuted-dominates-unknown") == "true",
 		Metrics:                 parseMetrics(markers["partial-lineage-metric"]),
 		Cases:                   parseCases(markers["partial-lineage-case"]),
-	}
+
+		ReadOnlyPermissions: Permissions{
+			WorkflowWindow:      first(activityMarkers["ObserveCIWorkflowWindow"], "partial-lineage-observation-permission"),
+			VerificationRuntime: first(activityMarkers["ObserveVerificationRuntime"], "observation-permission"),
+			EvidenceReuse:       first(activityMarkers["EvaluateExactEvidenceReuse"], "evidence-reuse-permission"),
+			Promotion:           first(activityMarkers["EvaluateExactEvidenceReuse"], "promotion-permission"),
+		}}
 	if err := policy.Validate(); err != nil {
 		return Policy{}, err
 	}
@@ -80,6 +115,12 @@ func (policy Policy) Validate() error {
 		len(policy.CausalFields) != 6 || len(policy.LineageEdges) != LineageEdgeCount || len(policy.Cases) != CaseCount ||
 		policy.SourceDigest == "" || policy.SemanticDigest == "" || policy.EvaluatorDigest == "" {
 		return errors.New("workflow lineage policy identity or denominator is invalid")
+	}
+	if policy.ReadOnlyPermissions.WorkflowWindow != ReadOnlyPermission ||
+		policy.ReadOnlyPermissions.VerificationRuntime != ReadOnlyPermission ||
+		policy.ReadOnlyPermissions.EvidenceReuse != ExactSuccessReuse ||
+		policy.ReadOnlyPermissions.Promotion != NoPromotionPermission {
+		return errors.New("workflow lineage read-only observation permissions are not canonical")
 	}
 	wantFields := []string{"stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"}
 	if !sameStrings(policy.SourceIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "repository", "event"}) || !sameStrings(policy.SourceIdentityPriority, []string{"run_id", "repository", "workflow", "event", "run_attempt", "head_sha"}) || !sameStrings(policy.SourceSecondaryFields, []string{"ref", "head_branch"}) || !sameStrings(policy.ArtifactIdentityFields, []string{"name", "id", "digest", "run_id", "run_attempt", "subject_sha"}) || !sameStrings(policy.ConsumerIdentity, []string{"workflow", "run_id", "run_attempt", "subject_sha", "ref"}) || !sameStrings(policy.LineageStates, []string{StateExact, StateStale, StateDirectMissing, StateMismatch, StateTampered, StateCurrentDevFallback}) {

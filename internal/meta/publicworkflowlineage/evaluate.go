@@ -2,6 +2,40 @@ package publicworkflowlineage
 
 import "fmt"
 
+func (policy Policy) EvaluateReadOnlyObservation(input Input) ReadOnlyObservationEvaluation {
+	evaluation := Evaluate(input)
+	result := ReadOnlyObservationEvaluation{
+		Schema:               ObservationSchema,
+		Eligibility:          ObservationDenied,
+		Decision:             evaluation.Decision,
+		LineageState:         evaluation.LineageState,
+		Reason:               evaluation.Reason,
+		EvidenceReuseAllowed: false,
+		PromotionAllowed:     false,
+		SourceFailureKept:    evaluation.ProductFailureKept,
+		Unknown:              evaluation.Unknown,
+	}
+	if err := policy.Validate(); err != nil || !policy.readOnlyObservationPermissionsValid() {
+		result.Reason = "canonical Gooo read-only observation permissions are unavailable"
+		return result
+	}
+	if evaluation.Decision != DecisionClosed && !evaluation.ProductFailureKept {
+		return result
+	}
+	result.Eligibility = ObservationAllowed
+	result.ExactSourceIdentity = true
+	result.TimingObservationEligible = true
+	result.OperationObservationEligible = true
+	return result
+}
+
+func (policy Policy) readOnlyObservationPermissionsValid() bool {
+	return policy.ReadOnlyPermissions.WorkflowWindow == ReadOnlyPermission &&
+		policy.ReadOnlyPermissions.VerificationRuntime == ReadOnlyPermission &&
+		policy.ReadOnlyPermissions.EvidenceReuse == ExactSuccessReuse &&
+		policy.ReadOnlyPermissions.Promotion == NoPromotionPermission
+}
+
 func Evaluate(input Input) Evaluation {
 	evaluation := Evaluation{Decision: DecisionClosed, LineageState: StateExact, ExactSubjectBinding: true, ProvenanceState: ProvenanceExact}
 	if input.Trigger.ConsumerWorkflow != "CI effort observation" || input.Trigger.ConsumerRunID <= 0 || input.Trigger.ConsumerRunAttempt <= 0 || input.Trigger.ConsumerSubjectSHA == "" || input.Trigger.ConsumerRef == "" {

@@ -70,6 +70,8 @@ jobs:
           lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
           mkdir -p "$lineage_root/conformance"
           go build -o "$lineage_root/lineage" ./scripts/ci-effort-observation-lineage
+          go test ./scripts/ci-effort-observation-lineage
+          go test ./scripts/ci-effort-observation
           "$lineage_root/lineage" -mode run --source examples/ci-effort-observation/main.gooo --out "$lineage_root/conformance"
           "$lineage_root/lineage" -mode verify --report "$lineage_root/conformance/publish/workflow-lineage-report.json"
           test "$(find "$lineage_root/conformance/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 21
@@ -174,6 +176,47 @@ jobs:
           cat "$lineage_root/actual/lineage.env" >> "$GITHUB_ENV"
           exit "$lineage_status"
 
+      - name: Produce read-only failed-source timing and operation observation
+        if: env.LINEAGE_DECISION == 'REFUTED' && env.LINEAGE_OBSERVATION_ELIGIBILITY == 'ELIGIBLE'
+        working-directory: source-worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
+          mkdir -p "$root/read-only"
+          go run ./scripts/ci-effort-observation \
+            --read-only \
+            --run "$root/source/run.json" \
+            --jobs "$root/source/jobs.json" \
+            --manifest examples/ci-effort-observation/operations.json \
+            --contract examples/ci-effort-observation/contract.json \
+            --program examples/ci-effort-observation/main.gooo \
+            --lineage-observation "$lineage_root/actual/lineage-observation.json" \
+            --read-only-observation "$lineage_root/actual/read-only-observation.json" \
+            --output "$root/read-only/report.json" \
+            --markdown "$root/read-only/report.md" \
+            --check
+          jq -e --arg head "$HEAD_SHA" '
+            .schema == "gooo/ci-effort-observation-read-only/v1" and
+            .decision == "REFUTED" and .resolution == "READ_ONLY" and .lineage_state == "MISMATCH" and
+            .head_sha == $head and .source_run_id > 0 and .source_run_attempt > 0 and
+            .source_run_status == "completed" and .source_run_conclusion != "" and .source_run_conclusion != "success" and
+            .source_failure_kept == true and .exact_source_identity == true and
+            .evidence_reuse_allowed == false and .promotion_allowed == false and
+            .repository_writes == 0 and .local_test_executions == 0 and .improvement == "UNKNOWN" and
+            (.timing.window_wall_ms | type) == "number" and (.timing.window_wall_ms >= 0) and
+            (.timing.observed_job_intervals | floor) == .timing.observed_job_intervals and
+            (.timing.observed_step_intervals | floor) == .timing.observed_step_intervals and
+            (.timing.missing_job_intervals | floor) == .timing.missing_job_intervals and
+            (.timing.missing_step_intervals | floor) == .timing.missing_step_intervals and
+            (.operations | length) == 7 and
+            .operation_counts.manifest == 7 and
+            (.operation_counts.observed + .operation_counts.skipped + .operation_counts.missing + .operation_counts.rejected) == 7 and
+            (.operations | all(.wall_ms >= 0))
+          ' "$root/read-only/report.json" > /dev/null
+          cat "$root/read-only/report.md" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Collect exact source and OpenTofu inputs
         if: env.LINEAGE_DECISION == 'CLOSED'
         working-directory: source-worktree
@@ -254,6 +297,11 @@ jobs:
 
       - name: Record unresolved workflow-lineage observation
         if: env.LINEAGE_DECISION == 'UNKNOWN'
+        shell: bash
+        run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record read-only source-failure observation eligibility
+        if: env.LINEAGE_DECISION == 'REFUTED' && env.LINEAGE_OBSERVATION_ELIGIBILITY == 'ELIGIBLE'
         shell: bash
         run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
 
