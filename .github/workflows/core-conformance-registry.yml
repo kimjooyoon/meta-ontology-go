@@ -34,6 +34,9 @@ on:
       - 'internal/meta/repositoryprojection/extractor/return_tail_regression_test.go'
       - 'internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go'
       - 'internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_proof.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_render.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_projection.go'
       - 'internal/meta/transformationeffect/commands.go'
       - 'internal/meta/transformationeffectverification/validate.go'
       - 'internal/verify/scope_gooo_core_conformance_registry.go'
@@ -106,6 +109,9 @@ jobs:
             internal/meta/repositoryprojection/extractor/return_tail_regression_test.go \
             internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go \
             internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_proof.go \
+            internal/meta/repositoryprojection/extractor/return_tail_render.go \
+            internal/meta/repositoryprojection/extractor/return_tail_projection.go \
             scripts/meta-execution/operations.go \
             scripts/meta-summary/fixture_test.go \
             scripts/meta-summary/source_inventory_candidates.go \
