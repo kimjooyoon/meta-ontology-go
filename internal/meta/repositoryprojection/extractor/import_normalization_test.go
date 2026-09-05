@@ -18,9 +18,10 @@ func TestImportNormalizationFixedRegressionCohort(t *testing.T) {
 	}{
 		{name: "eligible-two-spec-group-normalizes", source: "package p\n\nimport (\n\t\"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n", normalized: true, wantImports: "import \"encoding/json\"\nimport \"strconv\"\n"},
 		{name: "one-spec-import-stays-unchanged", source: "package p\n\nimport \"encoding/json\"\n\nfunc F() {\n\tvar _ json.RawMessage\n}\n", normalized: false, wantImports: "import \"encoding/json\"\n"},
+		{name: "local-binding-does-not-select-shadowed-alias", source: "package p\n\nimport (\n\tv25 \"encoding/json\"\n\t\"strconv\"\n)\n\nfunc F() {\n\tv25 := struct{ Value int }{}\n\t_ = v25.Value\n\t_ = strconv.IntSize\n}\n", normalized: false, wantImports: "import \"strconv\"\n"},
 	}
-	if len(cases) != 2 {
-		t.Fatalf("import normalization cohort denominator=%d, want 2", len(cases))
+	if len(cases) != 3 {
+		t.Fatalf("import normalization cohort denominator=%d, want 3", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
