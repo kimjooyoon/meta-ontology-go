@@ -421,7 +421,9 @@ jobs:
             def evidence_projection_ok($root; $route):
               (($route.required_evidence_keys | type) == "array") and
               ((($route.required_evidence_keys | unique | length) == ($route.required_evidence_keys | length))) and
+              (([$route.required_evidence_keys[] as $key | select((source_cell($root; $key) | length) != 1)] | length) == 0) and
               (($route.evidence | type) == "array") and
+              (($route.evidence | length) == ($route.required_evidence_keys | length)) and
               ($route.evidence == route_evidence($root; $route.required_evidence_keys)) and
               all($route.evidence[]?; (.key | string_ok) and (.cell_id | string_ok) and
                 (.activity | string_ok) and (.meta_operation | string_ok) and
@@ -477,6 +479,16 @@ jobs:
               .runtime.evidence_origin == "CALLER_OWNED_TEMP_OUTPUT_ONLY";
             def route_shape_ok:
               (.routes | type) == "array" and (.routes | map(.id)) == expected_route_ids;
+            def trusted_report_ok:
+              (.source_report.schema == $trusted_report[0].schema) and
+              (.source_report.profile_id == $trusted_report[0].profile_id) and
+              (.source_report.profile_version == $trusted_report[0].profile_version) and
+              (.source_report.profile_digest == $trusted_report[0].profile_digest) and
+              (.source_report.decision == $trusted_report[0].decision) and
+              (.source_report.resolution == $trusted_report[0].resolution) and
+              (.source_report.cells == ($trusted_report[0].cells | map({id,activity,meta_operation,evidence_key,decision,resolution,evidence_digest}))) and
+              (.source_report.activities == $trusted_report[0].activities) and
+              (.source_report.evidence_digests == $trusted_report[0].evidence_digests);
             def binding_ok:
               (.source_report.cells | type) == "array" and (.source_report.cells | length) == 12 and
               all(.source_report.cells[]?; (.id | string_ok) and (.activity | string_ok) and
@@ -494,6 +506,13 @@ jobs:
                 ([.source_report.evidence_digests | to_entries[] | {key:.key,digest:.value}] | sort_by(.key)) and
               all(.source_report.cells[]?; .decision == "PASS" and .resolution == "EXACT" and (.evidence_digest | digest_ok)) and
               ([.source_report.evidence_digests | to_entries[] | select((.value | digest_ok) | not)] | length) == 0;
+            def duplicate_required_keys:
+              any(.routes[]?; ((.required_evidence_keys | type) == "array") and
+                ((.required_evidence_keys | unique | length) != (.required_evidence_keys | length)));
+            def unknown_assessment($step; $reason):
+              {decision:"UNKNOWN", resolution:"LOWER_RESOLUTION", reason:$reason,
+               unknown:{stage:"support-boundary", step:$step, reason:$reason,
+                        unknown_class:"DIRECT_MISSING", next_operation:"RESTORE_ENTITY_FIELDS_OBSERVATION", blocked_by:[]}};
             def route_evidence_integrity_ok:
               . as $root |
               all($root.routes[]?; evidence_projection_ok($root; .));
@@ -518,10 +537,14 @@ jobs:
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"IDENTITY_MISMATCH"}
               elif (route_shape_ok | not) then
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SUPPORT_SHAPE_INVALID"}
+              elif (trusted_report_ok | not) then
+                {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SOURCE_REPORT_MISMATCH"}
               elif (binding_ok | not) then
-                {decision:"UNKNOWN", resolution:"LOWER_RESOLUTION", reason:"SOURCE_BINDING_INCOMPLETE"}
+                unknown_assessment("source-report"; "SOURCE_BINDING_INCOMPLETE")
+              elif duplicate_required_keys then
+                {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"EVIDENCE_KEY_DUPLICATE"}
               elif (route_evidence_integrity_ok | not) then
-                {decision:"UNKNOWN", resolution:"LOWER_RESOLUTION", reason:"EVIDENCE_INCOMPLETE"}
+                unknown_assessment("route-evidence"; "EVIDENCE_INCOMPLETE")
               elif (claims_ok | not) then
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SUPPORT_OVERCLAIM"}
               else
@@ -537,43 +560,71 @@ jobs:
             .documentation.decision == \"PENDING\" and .documentation.comparison == \"PENDING\"
           "
           jq -e --arg head "$HEAD_SHA" --arg report_digest "$report_digest" --arg receipt_digest "$receipt_digest" \
+            --slurpfile trusted_report "$report" \
             --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
             --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
             "$support_valid" "$support/support-projection.json" > /dev/null
 
           record_boundary_case() {
+            local name="$1" assessment_file="$2"
+            jq --arg name "$name" --slurpfile assessment "$assessment_file" \
+              '.boundary_cases[$name] = $assessment[0]' \
+              "$support/support-projection.json" > "$support/support-projection.next.json"
+            mv "$support/support-projection.next.json" "$support/support-projection.json"
+          }
+
+          record_static_boundary_case() {
             local name="$1" decision="$2" resolution="$3" reason="$4"
             jq --arg name "$name" --arg decision "$decision" --arg resolution "$resolution" --arg reason "$reason" \
-              '.boundary_cases[$name] = {decision:$decision, resolution:$resolution, reason:$reason} |
-               if $decision == "UNKNOWN" then
-                 .boundary_cases[$name].unknown = {stage:"support-boundary", step:$name, reason:$reason, unknown_class:"DIRECT_MISSING", next_operation:"RESTORE_ENTITY_FIELDS_OBSERVATION", blocked_by:[]}
-               else . end' \
+              '.boundary_cases[$name] = {decision:$decision, resolution:$resolution, reason:$reason}' \
               "$support/support-projection.json" > "$support/support-projection.next.json"
             mv "$support/support-projection.next.json" "$support/support-projection.json"
           }
 
           expect_boundary_case() {
-            local name="$1" expected_decision="$2" expected_resolution="$3" reason="$4" case_file="$5"
+            local name="$1" expected_decision="$2" expected_resolution="$3" expected_reason="$4" case_file="$5"
+            local assessment_file="$support/$name-assessment.json"
             if ! jq -e --arg head "$HEAD_SHA" --arg report_digest "$report_digest" --arg receipt_digest "$receipt_digest" \
+              --slurpfile trusted_report "$report" \
               --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
               --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
-              --arg expected_decision "$expected_decision" --arg expected_resolution "$expected_resolution" \
-              "$support_assess as \$assessment | \$assessment.decision == \$expected_decision and \$assessment.resolution == \$expected_resolution" \
-              "$case_file" > /dev/null; then
-              record_boundary_case "$name" "REFUTED" "FAIL_CLOSED" "BOUNDARY_CASE_ASSESSMENT_FAILED"
-              jq --arg name "$name" --arg reason "$reason" \
+              "$support_assess" "$case_file" > "$assessment_file"; then
+              record_static_boundary_case "$name" "REFUTED" "FAIL_CLOSED" "BOUNDARY_CASE_ASSESSMENT_FAILED"
+              jq --arg name "$name" --arg reason "BOUNDARY_CASE_ASSESSMENT_FAILED" \
+                '.failure = {case:$name, decision:"REFUTED", resolution:"FAIL_CLOSED", reason:$reason}' \
+                "$support/support-projection.json" > "$support/support-projection.failure.json"
+              mv "$support/support-projection.failure.json" "$support/support-projection.json"
+              echo "boundary case $name did not produce an assessment"
+              exit 1
+            fi
+            if ! jq -e --arg expected_decision "$expected_decision" --arg expected_resolution "$expected_resolution" \
+              --arg expected_reason "$expected_reason" '
+              .decision == $expected_decision and .resolution == $expected_resolution and .reason == $expected_reason and
+              (if .decision == "UNKNOWN" then
+                 (.unknown | type == "object") and
+                 ((.unknown | keys | sort) == ["blocked_by","next_operation","reason","stage","step","unknown_class"]) and
+                 (.unknown.stage | type == "string" and length > 0) and
+                 (.unknown.step | type == "string" and length > 0) and
+                 (.unknown.reason | type == "string" and length > 0) and
+                 .unknown.unknown_class == "DIRECT_MISSING" and
+                 (.unknown.next_operation | type == "string" and length > 0) and
+                 .unknown.blocked_by == []
+               else .unknown == null end)
+            ' "$assessment_file" > /dev/null; then
+              record_boundary_case "$name" "$assessment_file"
+              jq --arg name "$name" --arg reason "BOUNDARY_CASE_EXPECTATION_MISMATCH" \
                 '.failure = {case:$name, decision:"REFUTED", resolution:"FAIL_CLOSED", reason:$reason}' \
                 "$support/support-projection.json" > "$support/support-projection.failure.json"
               mv "$support/support-projection.failure.json" "$support/support-projection.json"
               echo "boundary case $name did not produce the expected assessment"
               exit 1
             fi
-            record_boundary_case "$name" "$expected_decision" "$expected_resolution" "$reason"
+            record_boundary_case "$name" "$assessment_file"
           }
 
           expect_boundary_case "positive" "PASS" "EXACT" "ENTITY_FIELDS_SUPPORT_CLOSED" "$support/support-projection.json"
           if ! cmp -s "$support/support-section.md" docs/entity-fields-support.md; then
-            record_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
+            record_static_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
             jq '.failure = {case:"stale_document", decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"DOCUMENTATION_MISMATCH"}' \
               "$support/support-projection.json" > "$support/support-projection.failure.json"
             mv "$support/support-projection.failure.json" "$support/support-projection.json"
@@ -582,31 +633,35 @@ jobs:
           fi
           sed 's/ordinary\/default parser | DEFERRED/ordinary\/default parser | SUPPORTED/' docs/entity-fields-support.md > "$support/stale-document.md"
           if cmp -s "$support/support-section.md" "$support/stale-document.md"; then
-            record_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
+            record_static_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
             jq '.failure = {case:"stale_document", decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"DOCUMENTATION_CONTRADICTION_ACCEPTED"}' \
               "$support/support-projection.json" > "$support/support-projection.failure.json"
             mv "$support/support-projection.failure.json" "$support/support-projection.json"
             echo "stale support documentation was accepted"
             exit 1
           fi
-          record_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
+          record_static_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
 
           jq '(.routes[] | select(.id == "semantic-lowering") | .evidence) = []' \
             "$support/support-projection.json" > "$support/missing-evidence.json"
           expect_boundary_case "missing_evidence" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/missing-evidence.json"
 
+          jq '(.routes[] | select(.id == "semantic-lowering") | .required_evidence_keys) = ["UNOBSERVED_ROUTE_EVIDENCE"] |
+              (.routes[] | select(.id == "semantic-lowering") | .evidence) = []' \
+            "$support/support-projection.json" > "$support/missing-source-cell.json"
+          expect_boundary_case "missing_source_cell" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/missing-source-cell.json"
+
           jq '(.routes[] | select(.id == "semantic-lowering") | .required_evidence_keys) = ["SEMANTIC_IR_LOWERING","SEMANTIC_IR_LOWERING"]' \
             "$support/support-projection.json" > "$support/duplicate-key.json"
-          expect_boundary_case "duplicate_key" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/duplicate-key.json"
+          expect_boundary_case "duplicate_key" "REFUTED" "FAIL_CLOSED" "EVIDENCE_KEY_DUPLICATE" "$support/duplicate-key.json"
 
           jq 'del(.routes[] | select(.id == "formatter"))' \
             "$support/support-projection.json" > "$support/missing-route.json"
           expect_boundary_case "missing_route" "REFUTED" "FAIL_CLOSED" "SUPPORT_SHAPE_INVALID" "$support/missing-route.json"
 
-          jq '(.source_report.cells[] | select(.evidence_key == "SYNTAX_FORMAT_REPLAY") | .evidence_digest) = null |
-              (.routes[] | select(.id == "formatter") | .evidence[0].digest) = null' \
+          jq '(.routes[] | select(.id == "formatter") | .evidence[0].digest) = null' \
             "$support/support-projection.json" > "$support/null-digest.json"
-          expect_boundary_case "null_digest" "UNKNOWN" "LOWER_RESOLUTION" "SOURCE_BINDING_INCOMPLETE" "$support/null-digest.json"
+          expect_boundary_case "null_digest" "UNKNOWN" "LOWER_RESOLUTION" "EVIDENCE_INCOMPLETE" "$support/null-digest.json"
 
           jq '.identity.profile.id = "gooo.entityfields.invalid.v1"' \
             "$support/support-projection.json" > "$support/profile-mismatch.json"
@@ -619,6 +674,10 @@ jobs:
           jq '.receipt_identity.profile_digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"' \
             "$support/support-projection.json" > "$support/receipt-mismatch.json"
           expect_boundary_case "receipt_mismatch" "REFUTED" "FAIL_CLOSED" "IDENTITY_MISMATCH" "$support/receipt-mismatch.json"
+
+          jq '(.source_report.cells[] | select(.evidence_key == "SYNTAX_FORMAT_REPLAY") | .activity) = "MUTATED_SOURCE_ACTIVITY"' \
+            "$support/support-projection.json" > "$support/source-report-mismatch.json"
+          expect_boundary_case "source_report_mismatch" "REFUTED" "FAIL_CLOSED" "SOURCE_REPORT_MISMATCH" "$support/source-report-mismatch.json"
 
           jq '
             (.routes[] | select(.id == "explicit-v1-parser") | .evidence[0]) as $source_evidence |
@@ -641,6 +700,7 @@ jobs:
           jq '.documentation = {path:"docs/entity-fields-support.md", decision:"PASS", comparison:"EXACT"}' "$support/support-projection.json" > "$support/support-projection.final.json"
           mv "$support/support-projection.final.json" "$support/support-projection.json"
           jq -e --arg head "$HEAD_SHA" --arg report_digest "$report_digest" --arg receipt_digest "$receipt_digest" \
+            --slurpfile trusted_report "$report" \
             --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
             --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
             "$support_assess as \$assessment | \$assessment.decision == \"PASS\" and \$assessment.resolution == \"EXACT\"" "$support/support-projection.json" > /dev/null
@@ -661,13 +721,15 @@ jobs:
             .boundary_cases.stale_document.decision == "REFUTED" and .boundary_cases.stale_document.resolution == "FAIL_CLOSED" and
             .boundary_cases.overbroad_support.decision == "REFUTED" and .boundary_cases.overbroad_support.resolution == "FAIL_CLOSED" and
             .boundary_cases.missing_evidence.decision == "UNKNOWN" and .boundary_cases.missing_evidence.resolution == "LOWER_RESOLUTION" and
-            .boundary_cases.duplicate_key.decision == "UNKNOWN" and .boundary_cases.duplicate_key.resolution == "LOWER_RESOLUTION" and
+            .boundary_cases.missing_source_cell.decision == "UNKNOWN" and .boundary_cases.missing_source_cell.resolution == "LOWER_RESOLUTION" and
+            .boundary_cases.duplicate_key.decision == "REFUTED" and .boundary_cases.duplicate_key.resolution == "FAIL_CLOSED" and
             .boundary_cases.missing_route.decision == "REFUTED" and .boundary_cases.missing_route.resolution == "FAIL_CLOSED" and
             .boundary_cases.null_digest.decision == "UNKNOWN" and .boundary_cases.null_digest.resolution == "LOWER_RESOLUTION" and
             .boundary_cases.profile_mismatch.decision == "REFUTED" and .boundary_cases.profile_mismatch.resolution == "FAIL_CLOSED" and
             .boundary_cases.head_mismatch.decision == "REFUTED" and .boundary_cases.head_mismatch.resolution == "FAIL_CLOSED" and
             .boundary_cases.receipt_mismatch.decision == "REFUTED" and .boundary_cases.receipt_mismatch.resolution == "FAIL_CLOSED" and
-            unknown_boundary("missing_evidence") and unknown_boundary("duplicate_key") and unknown_boundary("null_digest")
+            .boundary_cases.source_report_mismatch.decision == "REFUTED" and .boundary_cases.source_report_mismatch.resolution == "FAIL_CLOSED" and
+            unknown_boundary("missing_evidence") and unknown_boundary("missing_source_cell") and unknown_boundary("null_digest")
           ' "$support/support-projection.json" > /dev/null
 
       - name: Upload EntityFields V1 support view
