@@ -518,6 +518,15 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "self-improvement-ci-continuation",
+      "path": "examples/self-improvement-ci-continuation/continuation.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [

@@ -87,6 +87,7 @@ func expectedRegistry() Registry {
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
+		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
 	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo"}}
 }
 
@@ -132,8 +133,8 @@ func validateCaseScopes(registry Registry) error {
 		}
 	}
 	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
-		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
-		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		!reflect.DeepEqual(governanceIDs, []string{"live-governance-snapshot", "self-improvement-ci-continuation"}) ||
+		!reflect.DeepEqual(governancePaths, []string{"examples/live-governance-snapshot/main.gooo", "examples/self-improvement-ci-continuation/continuation.gooo"}) {
 		return fmt.Errorf("language syntax scope partition mismatch")
 	}
 	return nil
