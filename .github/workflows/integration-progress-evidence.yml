@@ -21,13 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.x
           cache: true
       - name: Collect exact GitHub observation
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           OUTPUT_DIR: ${{ runner.temp }}/integration-progress
           OBSERVER_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -131,7 +131,7 @@ jobs:
           jq -r '"### Integration progress\n- decision: \(.decision) (\(.reason))\n- cells: \(.summary.closed_cells)/\(.summary.cells_total)\n- merges: \(.summary.merged_pull_requests)/\(.summary.pull_requests_total)\n- evidence reachable: \(.summary.evidence_reachable)/\(.summary.pull_requests_total)\n- evidenced merges: \(.summary.evidenced_merges)/\(.summary.pull_requests_total)\n- queue snapshot: \(.summary.queued_runs_snapshot) queued / \(.summary.in_progress_runs_snapshot) in progress (\(.summary.queue_pressure_basis_points) bps)\n- unknown/refuted: \(.summary.unknown_cells)/\(.summary.refuted_cells)"' "$OUTPUT_DIR/report.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload progress evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: integration-progress-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/integration-progress

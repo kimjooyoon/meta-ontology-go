@@ -26,11 +26,11 @@ jobs:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       GOTOOLCHAIN: local
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           check-latest: true
@@ -42,7 +42,7 @@ jobs:
         run: bash scripts/workgraph-pilot/main.sh
       - name: Upload exact Workgraph evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: workgraph-evidence-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/workgraph-evidence

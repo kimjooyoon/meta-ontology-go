@@ -14,12 +14,12 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload exact-head self-improvement contract
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-contract-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-contract/first.json
@@ -56,12 +56,12 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -180,7 +180,7 @@ jobs:
                     (cd "$output/first" && find . -type f -name '*.json' -print0 | sort -z | xargs -0 sha256sum > manifest.sha256)
 
       - name: Upload exact-head language assurance reports
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-assurance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-assurance/first
@@ -196,11 +196,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 3920551d8db1226810832f6f924783b2fddf4ccd
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -209,7 +209,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -249,7 +249,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.capability.vertical-slice-closure.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "close-vertical-slice")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/replay.json" "$out/unavailable.json" "$out/digest-mismatch.json" "$out/eligibility-unknown.json" > "$out/manifest.sha256"
       - name: Upload vertical slice closure activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: vertical-slice-closure-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/vertical-slice-closure-activation
@@ -265,11 +265,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 2104e3fcede21572951c266cd7b61fd38f386aef
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -278,7 +278,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download activated assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -328,7 +328,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.ecosystem.external-conformance.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "verify-external-conformance")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out"/*.json > "$out/manifest.sha256"
       - name: Upload external conformance activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: external-conformance-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-conformance-activation
@@ -341,12 +341,12 @@ jobs:
     env:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -400,7 +400,7 @@ jobs:
           (cd "$output" && sha256sum input.json first.json > manifest.sha256)
 
       - name: Upload exact-head source authority shadow receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-authority-shadow-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/source-authority-shadow
@@ -415,8 +415,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.x'
       - name: Check generated assurance bindings
@@ -441,7 +441,7 @@ jobs:
           go run ./cmd/language-assurance-witness/write-set-observer compare --before "${receipt_dir}/sandbox-before.json" --after "${receipt_dir}/sandbox-after.json" --output "${receipt_dir}/undeclared-mismatch.json" --expect BLOCK --subject-sha "${EXACT_SUBJECT_SHA}" --denominator-digest "${denominator}"
       - name: Upload write-set receipts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: write-set-exactness-${{ env.EXACT_SUBJECT_SHA }}
           path: ${{ runner.temp }}/write-set-receipts
@@ -454,13 +454,13 @@ jobs:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.EXACT_SHA }}
 
       - name: Install Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -519,7 +519,7 @@ jobs:
             "$RUNNER_TEMP/source-authority-upstream/first/authority-mismatch.json"
 
       - name: Upload exact upstream receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-authority-upstream-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/source-authority-upstream
@@ -538,11 +538,11 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -551,12 +551,12 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download language assurance baseline
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
       - name: Download immutable upstream evidence
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: source-authority-upstream-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/source-authority-upstream
@@ -585,7 +585,7 @@ jobs:
           sha256sum "$out/block.json" > "$out/manifest.sha256"
       - name: Upload repeated-promotion guard receipts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-authority-promotion-guard-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/source-authority-promotion
@@ -601,11 +601,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 240bb8019af2f5488701cd00797a4d3598bda213
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -614,7 +614,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -662,7 +662,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.source-backed-authority.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "bind-source-backed-authority")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload source authority activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-authority-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/source-authority-activation
@@ -674,12 +674,12 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -724,7 +724,7 @@ jobs:
             jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .summary.unknown_paths == 1 and .summary.leakage_paths == 0' "$work/$receipt.json"
           done
       - name: Upload candidate leakage shadow receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: candidate-leakage-shadow-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/candidate-leakage-shadow
@@ -737,12 +737,12 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -751,7 +751,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -789,7 +789,7 @@ jobs:
           jq -e '.cases_total == 3 and .cases_passed == 3 and .coverage_bps == 10000' "$out/suite.json"
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload candidate leakage eligibility receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: candidate-leakage-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/candidate-leakage-eligibility
@@ -805,11 +805,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 308233198b91a47bdfc34016f73e44905e2be582
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -818,7 +818,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -855,7 +855,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload candidate leakage activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: candidate-leakage-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/candidate-leakage-activation
@@ -872,11 +872,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 0908088ab35447098671263ffa7290c0363f7404
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -885,7 +885,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -922,7 +922,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.candidate-leakage.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "detect-candidate-leakage")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload rollback integrity activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rollback-integrity-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/rollback-integrity-activation
@@ -936,11 +936,11 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -949,7 +949,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -989,7 +989,7 @@ jobs:
           sha256sum "$out/exact.json" "$out/zero-change.json" "$out/missing.json" "$out/orphan.json" "$out/duplicate.json" "$out/unknown-top.json" "$out/suite.json" > "$out/manifest.sha256"
       - name: Upload changed surface receipt shadow receipts
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: changed-surface-receipt-shadow-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/changed-surface-receipt-shadow
@@ -1004,12 +1004,12 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1018,7 +1018,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1057,7 +1057,7 @@ jobs:
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload changed surface receipt eligibility receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: changed-surface-receipt-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/changed-surface-receipt-eligibility
@@ -1072,12 +1072,12 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1086,7 +1086,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1125,7 +1125,7 @@ jobs:
           jq -e '([.indicators[] | select(.class == "OUTCOME")] | length) == 1 and ([.indicators[] | select(.class == "DRIVER")] | length) == 2 and ([.indicators[] | select(.class == "GUARDRAIL")] | length) == 3 and ([.indicators[] | select(.proof_choice == "FOUNDATION")] | length) == 3 and ([.indicators[] | select(.proof_choice == "COHERENCE")] | length) == 2 and ([.indicators[] | select(.proof_choice == "REGRESSION")] | length) == 1 and ([.indicators[] | select(.satisfied == true)] | length) == 6' "$out/exact.json"
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.operation.rollback-integrity.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "verify-rollback-integrity")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
       - name: Upload rollback integrity eligibility receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rollback-integrity-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/rollback-integrity-eligibility
@@ -1141,11 +1141,11 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       PREDECESSOR_SHA: 1b9acfaac0ff2d1a2353de6c5019d515ab542eb3
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1154,7 +1154,7 @@ jobs:
         with:
           expected-sha: ${{ env.SUBJECT_SHA }}
       - name: Download operating assurance report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/language-assurance
@@ -1191,7 +1191,7 @@ jobs:
           jq -e '.summary.denominator_total == 12 and .summary.operating == 12 and .summary.not_implemented == 0 and .summary.implementation_coverage_bps == 10000 and ([.obligations[] | select(.metric_id == "gooo.metric.semantic.changed-surface-receipt-totality.v1" and .status == "OPERATING" and .resolution == "EXACT" and .meta_operation == "totalize-changed-surface-receipts")] | length) == 1' "$RUNNER_TEMP/language-assurance/independent.json"
           sha256sum "$out/exact.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload changed surface receipt activation receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: changed-surface-receipt-activation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/changed-surface-receipt-activation
@@ -1205,17 +1205,17 @@ jobs:
     env:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: false
       - name: Download current official assurance
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: language-assurance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/rollback-integrity/assurance
@@ -1250,7 +1250,7 @@ jobs:
           jq -e '.decision == "FAIL_CLOSED" and .resolution == "INVARIANT_ONLY" and .reason == "ROLLBACK_INTEGRITY_ASSURANCE_DIGEST_MISMATCH" and .summary.projected_operating == 9 and .repository_writes == 0 and .promotion_applied == 0' "$out/digest-mismatch.json"
           sha256sum "$out/exact-a.json" "$out/unavailable.json" "$out/digest-mismatch.json" > "$out/manifest.sha256"
       - name: Upload rollback integrity shadow receipts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: rollback-integrity-shadow-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/rollback-integrity/shadow

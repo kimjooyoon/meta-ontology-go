@@ -29,12 +29,12 @@ jobs:
     name: gofmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -188,7 +188,7 @@ jobs:
           echo "format remediation paths=$path_count replay_equal=$replay_equal fixed_point=$fixed_point source_repository_writes=$source_repository_writes"
       - name: Upload Go format remediation artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: go-format-remediation-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -228,12 +228,12 @@ jobs:
     name: go vet
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -248,12 +248,12 @@ jobs:
     name: go test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -268,12 +268,12 @@ jobs:
     name: go test -race
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -288,12 +288,12 @@ jobs:
     name: Semantic conformance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -316,12 +316,12 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -423,7 +423,7 @@ jobs:
           cat "$METRICS_DIR/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload source metrics artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-line-metrics-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/source-metrics.json
@@ -431,7 +431,7 @@ jobs:
           retention-days: 30
       - name: Upload meta-binding coverage artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-binding-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/meta-binding-report.json
@@ -439,7 +439,7 @@ jobs:
           retention-days: 30
       - name: Upload meta-actionability artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: meta-actionability-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/meta-actionability-report.json
@@ -447,7 +447,7 @@ jobs:
           retention-days: 30
       - name: Upload directory partition plan artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: directory-partition-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/directory-partition-report.json
@@ -455,7 +455,7 @@ jobs:
           retention-days: 30
       - name: Upload directory kind separation plan artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: directory-kind-separation-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/directory-kind-report.json
@@ -463,42 +463,42 @@ jobs:
           retention-days: 30
       - name: Upload self-improvement generation artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-generation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-plan.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload operation artifact coverage
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: operation-artifact-coverage-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/operation-artifact
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement execution artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-execution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-execution.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement receipt artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-receipts-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-receipts.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload self-improvement provenance artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-provenance.json
           if-no-files-found: error
           retention-days: 30
       - name: Upload artifact feedback resolution
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: artifact-feedback-resolution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -507,7 +507,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Upload CI summary indicator artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-summary-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/ci-summary.json
@@ -544,12 +544,12 @@ jobs:
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -559,7 +559,7 @@ jobs:
         with:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download exact artifact provenance
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: self-improvement-provenance-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ci-meta-provenance
@@ -574,7 +574,7 @@ jobs:
           node scripts/ci-proof/source_migration_v3_test.js
           node scripts/ci-proof/time_causality_v011_test.js
       - name: Collect terminal canonical job evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -623,7 +623,7 @@ jobs:
           go run ./scripts/ci-evidence --jobs ci-jobs.json --generated ci-generated/first --provenance ci-meta-provenance/self-improvement-provenance.json --output ci-evidence.json
           go run ./scripts/ci-evidence --verify ci-evidence.json
       - name: Write machine-readable domain evidence
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -652,7 +652,7 @@ jobs:
             domain.digests.domain_sha256 = crypto.createHash('sha256').update(JSON.stringify(domainPayload)).digest('hex');
             fs.writeFileSync('ci-domain-evidence.json', JSON.stringify(domain, null, 2) + '\n');
       - name: Upload CI evidence bundle
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -667,12 +667,12 @@ jobs:
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -683,7 +683,7 @@ jobs:
           expected-sha: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Resolve CI concurrency lane
         id: concurrency-lane
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW: ${{ github.workflow }}
@@ -716,7 +716,7 @@ jobs:
             }
       - name: Resolve canonical evidence lineage
         id: evidence-lineage
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -749,12 +749,12 @@ jobs:
             }
             core.setOutput('artifact-name', report.selected.name);
       - name: Download canonical evidence
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ${{ steps.evidence-lineage.outputs.artifact-name }}
           path: ci-evidence-input
       - name: Collect terminal canonical jobs
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
         with:
@@ -798,7 +798,7 @@ jobs:
           test -z "$(gofmt -l ci-generated/first/semantic.gooo.go)"
           test -z "$(git diff --name-only)"
       - name: Compile deterministic proof route
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -816,7 +816,7 @@ jobs:
             fs.writeFileSync('ci-proof-route.json', JSON.stringify(evidence, null, 2) + '\n');
       - name: Select exact Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -906,7 +906,7 @@ jobs:
           test -s ci-guardian-input/ci-guardian.json
       - name: Validate Guardian promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && (github.event.pull_request.number != 602 || github.head_ref != 'agent/foundation-discovery-recovery-20260830' || github.event.pull_request.base.sha != 'cd9727af80f5118405290d3be96890c18e1529c0')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -945,13 +945,13 @@ jobs:
             fs.writeFileSync('ci-guardian-evidence.json', JSON.stringify(bundle, null, 2) + '\n');
       - name: Download exact Foundation predecessor artifact
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: feedback-predecessor-${{ github.event.pull_request.head.sha }}
           path: foundation-predecessor
       - name: Bind exact Foundation promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           FOUNDATION_HUMAN_DECISION: "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
         with:
@@ -997,7 +997,7 @@ jobs:
             if (matches.length !== 1 || matches[0].id <= 0 || matches[0].size_in_bytes <= 0 || matches[0].expired || !/^sha256:[0-9a-f]{64}$/.test(matches[0].digest || '')) throw new Error('Foundation predecessor artifact metadata is not unique, current, and digest-bound');
             fs.writeFileSync('foundation-promotion-evidence.json', JSON.stringify({schema: 'gooo/foundation-promotion-evidence/v1', decision: 'PASS', human_decision: process.env.FOUNDATION_HUMAN_DECISION, repository: context.payload.repository.full_name, pr_number: eventPull.number, base_ref: eventPull.base.ref, base_sha: eventPull.base.sha, head_ref: eventPull.head.ref, head_sha: eventPull.head.sha, artifact_id: matches[0].id, artifact_name: matches[0].name, artifact_size_bytes: matches[0].size_in_bytes, artifact_digest: matches[0].digest, artifact_run_id: context.runId, artifact_run_attempt: attempt, input, receipt, non_route_jobs: jobs}, null, 2) + '\n');
       - name: Collect proof context
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
         with:
@@ -1112,7 +1112,7 @@ jobs:
         run: go run ./scripts/ci-proof --verify ci-proof.json --governance .github/ci-governance.json --receipt provenance-receipt.jsonl --require-pass
       - name: Upload proof and provenance receipt
         if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -1127,7 +1127,7 @@ jobs:
           retention-days: 14
       - name: Upload reconciliation finalization
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'agent/main-history-reconciliation-')
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-reconciliation-finalization-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-reconciliation-finalization.json
@@ -1135,7 +1135,7 @@ jobs:
           retention-days: 30
       - name: Upload Foundation promotion evidence
         if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.number == 602 && github.head_ref == 'agent/foundation-discovery-recovery-20260830' && github.event.pull_request.base.sha == 'cd9727af80f5118405290d3be96890c18e1529c0'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: foundation-promotion-${{ github.run_id }}-${{ github.run_attempt }}
           path: foundation-promotion-evidence.json
@@ -1148,13 +1148,13 @@ jobs:
     if: ${{ !cancelled() && github.event_name == 'pull_request' && github.head_ref == 'agent/foundation-authorization-dev-sync-20260831' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Verify exact FOUNDATION authorization envelope
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           FOUNDATION_TOKEN: ${{ github.token }}
         with:
@@ -1216,13 +1216,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Execute exact-candidate protocol audit
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           EXPECTED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -1340,7 +1340,7 @@ jobs:
       - name: Run exact protocol case witnesses
         run: node scripts/ci-proof/foundation_authorization_protocol_test.js
       - name: Upload protocol audit and root axiom
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: foundation-authorization-protocol-${{ github.event.pull_request.head.sha }}
           path: |
@@ -1354,13 +1354,13 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
       - name: Verify merged tree and consume one-use authorization
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         with:
           github-token: ${{ github.token }}
           script: |
@@ -1414,7 +1414,7 @@ jobs:
               ['replay decision', receipt.replay_decision],
             ]).write();
       - name: Upload reconciliation post-main receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: reconciliation-post-main-${{ github.run_id }}-${{ github.run_attempt }}
           path: reconciliation-post-main.json
@@ -1427,12 +1427,12 @@ jobs:
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1444,12 +1444,12 @@ jobs:
       - name: Download exact proof evidence
         if: ${{ always() }}
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: ci-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-proof-input
       - name: Capture exact failure tuple
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9.0.0
         env:
           CI_RUN_ATTEMPT: ${{ github.run_attempt }}
           CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -1701,7 +1701,7 @@ jobs:
           jq -r '"- failure_codes: `\(.failure_codes | join(", "))`\n- owner_branch: `\(.owner_branch)` ref `\(.owner_ref)`\n- catalog_digest: `\(.catalog_digest)`\n- artifact_status: `\(.artifact_status)` reason `\(.artifact_reason)` refs \(.artifact_refs | map([.id, .name, .size_bytes, .digest, .run_id, .run_attempt] | @csv) | join("; "))\n- proof_artifact_ref: \(.proof_artifact_ref // "none" | tostring)\n- rejections: \(.rejections | join(", "))"' ci-failure.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload failure reason manifest
         if: ${{ always() && hashFiles('ci-failure.json') != '' }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-failure.json
@@ -1709,7 +1709,7 @@ jobs:
           retention-days: 14
       - name: Upload no-failure closure manifest
         if: ${{ always() && hashFiles('ci-closure.json') != '' }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ci-closure-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-closure.json
@@ -1721,12 +1721,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -1812,7 +1812,7 @@ jobs:
           cmp "$RUNNER_TEMP/predecessor-semantic-a.json" "$RUNNER_TEMP/predecessor-semantic-b.json"
           echo "emitted=true" >> "$GITHUB_OUTPUT"
           jq -r '"### Predecessor semantic state\n- decision: \(.report.decision) (\(.report.reason))\n- next: \(.report.snapshot.next_operation)\n- replay verified: \(.replay_verified)\n- receipt digest: \(.receipt_digest)"' "$RUNNER_TEMP/predecessor-semantic-a.json" >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: feedback-predecessor-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: |
@@ -1820,7 +1820,7 @@ jobs:
             ${{ runner.temp }}/predecessor-receipt-a.json
           if-no-files-found: error
           retention-days: 30
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: steps.semantic.outputs.emitted == 'true'
         with:
           name: feedback-semantic-state-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -1836,8 +1836,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: true
@@ -1845,7 +1845,7 @@ jobs:
         env:
           EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: scripts/language-package-execution/main.sh "$RUNNER_TEMP/language-package-execution"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: language-package-execution-${{ github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/language-package-execution
@@ -1858,12 +1858,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -2187,7 +2187,7 @@ jobs:
             else .unknown == null end)
           ' coherence-boundary-probe.json > /dev/null
           jq -r '"### COHERENCE evaluator boundary\n- status: `\(.status)`\n- predecessor decision: `\(.decision)`\n- successor commit: `\(.coherence_successor_commit)`\n- predecessor artifact: `\(.predecessor_artifact.name)` (`\(.predecessor_artifact.digest)`)\n- exact report digest: `\(.predecessor_report_digest)`"' coherence-boundary-probe.json >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: coherence-boundary-probe-${{ github.event.pull_request.head.sha || github.sha }}
           path: coherence-boundary-probe.json

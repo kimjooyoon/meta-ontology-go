@@ -45,7 +45,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -68,7 +68,7 @@ jobs:
             --expected-goos "${{ matrix.goos }}" \
             --expected-goarch "${{ matrix.goarch }}"
       - name: Upload exact platform release receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-release-platform-${{ matrix.platform }}-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-${{ matrix.platform }}
@@ -93,7 +93,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload exact-head conformance artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-splitter-conformance-${{ env.HEAD_SHA }}
           path: .ci-tmp/source-splitter-conformance/output
@@ -181,7 +181,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out exact CI subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 1
@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload guarded promotion receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
           path: |
@@ -263,7 +263,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -271,11 +271,11 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/guard
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: transformation-effect-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/transformation
@@ -298,7 +298,7 @@ jobs:
             --expected-sha "$HEAD_SHA" \
             --output "$RUNNER_TEMP/rollback-fixed-point-a.json" \
             --check
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: rollback-fixed-point-${{ env.HEAD_SHA }}
@@ -317,7 +317,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
@@ -325,7 +325,7 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact meta artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: '*-${{ github.event.workflow_run.head_sha }}'
           path: ${{ runner.temp }}/meta-inputs
@@ -365,7 +365,7 @@ jobs:
             -patch "$first/patch.json"
       - name: Upload exact-head transformation effects
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: transformation-effect-${{ github.event.workflow_run.head_sha }}
           path: ${{ runner.temp }}/transformation-effect/first
@@ -383,7 +383,7 @@ jobs:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - name: Check out exact pull request head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -593,7 +593,7 @@ jobs:
           jq -r '"### Focused transformation effect\n- selected/bound/unbound: \(.selected_plan_operations)/\(.bound_executor_operations)/\(.unbound_executor_operations)\n- receipts/failures/dependent-unknowns: \(.receipt_count)/\(.failure_count)/\(.unknown_count)\n- operation executor commands/tests (scoped): \(.operation_executor_commands)/\(.operation_executor_tests) [\(.command_scope)/\(.test_scope)]\n- reused evidence records: \(.reused_evidence_records) [\(.evidence_reuse_scope)]\n- replay: \(.runtime.replay_equal)\n- observed repository writes/local tests/cross-project gates: \(.repository_writes)/\(.local_test_executions)/\(.cross_project_required_gates)\n- operation outcome: \(.operation_outcome)\n- promotion authorized: \(.promotion_authorized)"' "$root/verification.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload focused transformation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: transformation-effect-focused-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/transformation-effect-focused
@@ -620,7 +620,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -771,7 +771,7 @@ jobs:
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload language syntax scope partition evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-scope-partition-publish
@@ -839,7 +839,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -857,7 +857,7 @@ jobs:
           fi
           grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
       - name: Download exact platform release receipts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-platforms
@@ -1023,7 +1023,7 @@ jobs:
           echo "- capture/replay reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload proposal predecessor raw observation cache
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-observation.json
@@ -1031,7 +1031,7 @@ jobs:
           retention-days: 14
       - name: Upload proposal predecessor resolution receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-predecessor-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -1039,7 +1039,7 @@ jobs:
           retention-days: 14
       - name: Upload bound proposal observation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-evidence
@@ -1091,7 +1091,7 @@ jobs:
             --check
       - name: Upload merged autonomous change proposal promotion
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
@@ -1099,7 +1099,7 @@ jobs:
           retention-days: 14
       - name: Upload current v2 proposal evidence
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -1107,7 +1107,7 @@ jobs:
           retention-days: 14
       - name: Upload proposal compatibility receipt
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
@@ -1340,7 +1340,7 @@ jobs:
           echo "- readiness resolution: \`LOWER_RESOLUTION\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload resolved exact-head readiness predecessor selection
         if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'RESOLVED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
@@ -1352,7 +1352,7 @@ jobs:
           retention-days: 14
       - name: Upload foundation exact-head readiness predecessor selection
         if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'FOUNDATION'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
@@ -1362,7 +1362,7 @@ jobs:
           retention-days: 14
       - name: Upload readiness predecessor failure receipt
         if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-selection-*.json
@@ -1370,7 +1370,7 @@ jobs:
           retention-days: 14
       - name: Upload optional readiness predecessor diagnostics
         if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
           path: |
@@ -1414,7 +1414,7 @@ jobs:
             --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
       - name: Upload guarded promotion capability
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-guarded-capability-a.json
@@ -2037,7 +2037,7 @@ jobs:
             --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
       - name: Upload exact-head predecessor binding transition
         if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-binding-transition-a.json
@@ -2045,7 +2045,7 @@ jobs:
           retention-days: 14
       - name: Upload exact-head predecessor bindings
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-binding-a.json*
@@ -2053,7 +2053,7 @@ jobs:
           retention-days: 14
       - name: Upload exact-head language concepts
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-concept-artifact/first
@@ -2061,7 +2061,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language semantic model
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-semantic-model-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
@@ -2069,7 +2069,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head semantic readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-readiness-binding/first
@@ -2077,7 +2077,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head deterministic query
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-deterministic-query-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-deterministic-query/first/query
@@ -2085,7 +2085,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head deterministic query readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-deterministic-query/first/binding
@@ -2093,7 +2093,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head Go interoperation
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-go-interoperation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-go-interoperation/first/interop
@@ -2101,7 +2101,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head Go interoperation readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-go-interoperation/first/binding
@@ -2109,7 +2109,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head diagnostic provenance
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-diagnostic-provenance/first
@@ -2117,7 +2117,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head diagnostic provenance readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-diagnostic-provenance-readiness-binding/first
@@ -2125,7 +2125,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language package runtime
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-package-runtime-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-package-runtime/first
@@ -2133,7 +2133,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain CLI
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-cli/first
@@ -2141,7 +2141,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain format/fix
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-format-fix-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-format-fix/first
@@ -2149,7 +2149,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain conformance
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-conformance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-conformance/first
@@ -2157,7 +2157,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain LSP
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-lsp-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-lsp/first
@@ -2165,7 +2165,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head cross-platform release
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-cross-platform-release/first
@@ -2173,7 +2173,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language readiness
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-artifact/first
@@ -2181,7 +2181,7 @@ jobs:
 
       - name: Upload exact-head executable use cases
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-executable-use-cases/first/artifact.json
@@ -2190,7 +2190,7 @@ jobs:
 
       - name: Upload exact-head language syntax roundtrip
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-roundtrip/first/artifact.json
@@ -2236,7 +2236,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2246,7 +2246,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact functional CLI receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/user-journey/upstream
@@ -2305,7 +2305,7 @@ jobs:
           test -z "$(git status --porcelain)"
       - name: Upload exact-head user journey scorecard
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: user-journey-scorecard-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/user-journey
@@ -2329,7 +2329,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact transformation subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2339,12 +2339,12 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact guarded promotion receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/guard
       - name: Download exact rollback route receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: rollback-fixed-point-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/recovery
@@ -2366,7 +2366,7 @@ jobs:
           done
           cmp "$first/report.json" "$replay/report.json"
       - name: Upload authorization continuity receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: promotion-authorized-continuity-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/output/a/report.json
@@ -2384,7 +2384,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2432,7 +2432,7 @@ jobs:
           sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
       - name: Upload vertical slice eligibility artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: vertical-slice-closure-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/vertical-slice-closure-eligibility
@@ -2449,7 +2449,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2500,7 +2500,7 @@ jobs:
           sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
       - name: Upload external ecosystem reference artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-ecosystem-reference-conformance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-ecosystem-reference/output
@@ -2520,13 +2520,13 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           path: gooo
       - name: Checkout pinned gomacro
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: cosmos72/gomacro
           ref: cf0d4bf32da393dbda97e3572f216731013ffa55
@@ -2557,7 +2557,7 @@ jobs:
           fi
       - name: Upload Go 1.27 correction
         if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: go-1.27-tool-correction-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/go-1.27-tools.patch
@@ -2698,7 +2698,7 @@ jobs:
             first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
       - name: Upload capability authorization evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-authorization-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-authorization
@@ -2750,7 +2750,7 @@ jobs:
             first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
 
       - name: Upload capability authorization foundation evidence
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-authorization-foundation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-authorization-foundation
@@ -2800,7 +2800,7 @@ jobs:
           sha256sum *.json > manifest.sha256
       - name: Upload external assurance eligibility evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-conformance-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-conformance-eligibility
@@ -2812,7 +2812,7 @@ jobs:
           sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
       - name: Upload capability evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-go127-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-execution
@@ -2825,7 +2825,7 @@ jobs:
           sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
       - name: Upload execution evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-ecosystem-go127-baseline-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-ecosystem-execution
@@ -2849,7 +2849,7 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2862,7 +2862,7 @@ jobs:
         shell: bash
         run: bash scripts/language-delivery-scorecard/main.sh
       - if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-delivery-scorecard-${{ env.HEAD_SHA }}
           path: |
@@ -2893,7 +2893,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2906,7 +2906,7 @@ jobs:
         run: bash scripts/language-source-execution/main.sh
       - name: Upload exact-head source execution artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
@@ -2922,7 +2922,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2931,7 +2931,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact source execution artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
@@ -2940,7 +2940,7 @@ jobs:
         run: bash scripts/language-artifact-oracle/main.sh
       - name: Upload exact-head artifact oracle
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-artifact-oracle-${{ env.HEAD_SHA }}
           path: artifact-oracle-output
@@ -2960,7 +2960,7 @@ jobs:
       PROMOTION_OUTPUT: source-binding-promotion-output
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -2970,12 +2970,12 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Download structural source execution evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-input
       - name: Download independent source binding evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-artifact-oracle-${{ env.HEAD_SHA }}
           path: artifact-oracle-input
@@ -2984,7 +2984,7 @@ jobs:
         run: bash scripts/language-source-binding-promotion/main.sh
       - name: Upload append-only source binding promotion receipt
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-source-binding-promotion-${{ env.HEAD_SHA }}
           path: source-binding-promotion-output

@@ -37,14 +37,14 @@ jobs:
 
     steps:
       - name: Check out the exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install the exact toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload exact-head observation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-observation

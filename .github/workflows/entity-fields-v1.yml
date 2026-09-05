@@ -28,14 +28,14 @@ jobs:
 
     steps:
       - name: Checkout exact source head
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
           persist-credentials: false
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
         with:
           go-version: '1.27.0'
           cache: false
@@ -204,7 +204,7 @@ jobs:
 
       - name: Upload EntityFields V1 evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: entity-fields-v1-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/entity-fields-v1/publish
@@ -729,7 +729,7 @@ jobs:
 
       - name: Upload EntityFields V1 support view
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: entity-fields-support-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/entity-fields-v1/support

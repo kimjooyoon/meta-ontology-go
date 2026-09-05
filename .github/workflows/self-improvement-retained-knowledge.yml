@@ -55,13 +55,13 @@ jobs:
       GOFLAGS: -mod=readonly
     steps:
       - name: Check out exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
       - name: Install exact toolchain
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -349,7 +349,7 @@ jobs:
 
       - name: Upload exact-head retained-knowledge evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: compiler-self-improvement-retained-knowledge-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-retained-knowledge

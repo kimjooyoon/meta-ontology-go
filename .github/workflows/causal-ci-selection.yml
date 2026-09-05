@@ -48,7 +48,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       SOURCE_PATH: examples/causal-ci-selection/main.gooo
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -411,7 +411,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload causal selection evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: causal-ci-selection-${{ env.HEAD_SHA }}
           path: |

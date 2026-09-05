@@ -45,7 +45,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact publication contract
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
@@ -110,7 +110,7 @@ jobs:
             ([.cells[].proof_choice] | unique | sort) == ["COHERENCE","FOUNDATION","REGRESSION"]
           ' "$output/contract.json"
       - name: Upload exact publication contract
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-contract-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-publication-contract
@@ -134,7 +134,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact validated merge
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.VALIDATED_SHA }}
           fetch-depth: 1
@@ -145,7 +145,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download publication meta contract
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-publication-contract-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/publication-contract
@@ -292,7 +292,7 @@ jobs:
           git diff --quiet
           test -z "$(git ls-files --others --exclude-standard)"
       - name: Upload exact eight-asset publication candidate
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/gooo-release-dist
@@ -316,7 +316,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.tag }}
     steps:
       - name: Download exact publication candidate
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/gooo-release-dist
@@ -433,7 +433,7 @@ jobs:
               summary:{total_work:8,closed:8,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:8,checksum_entries:7,repository_writes:0}
             }' "$release_json" > "$RUNNER_TEMP/publication.json"
       - name: Upload publication result
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-published-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/publication.json
@@ -482,7 +482,7 @@ jobs:
             }' > "$RUNNER_TEMP/final/publication.json"
       - name: Download closed publication result
         if: needs.prepare.result == 'success' && needs.publish.result == 'success'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-published-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/published
@@ -495,7 +495,7 @@ jobs:
           fi
       - name: Upload final publication receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-publication-final-${{ env.VALIDATED_SHA }}
           path: ${{ runner.temp }}/final/publication.json

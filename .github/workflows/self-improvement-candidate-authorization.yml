@@ -43,13 +43,13 @@ jobs:
 
     steps:
       - name: Checkout the authorization bridge
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: 1.27.x
           check-latest: true
@@ -230,7 +230,7 @@ jobs:
 
       - name: Upload candidate authorization bridge artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-candidate-authorization-${{ env.SOURCE_HEAD_SHA }}
           path: ${{ runner.temp }}/candidate-authorization/*.json
@@ -257,13 +257,13 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out exact source head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false
 
       - name: Install Go 1.27
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
@@ -360,7 +360,7 @@ jobs:
 
       - name: Upload exact continuation proof
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-ci-continuation-${{ env.SOURCE_HEAD_SHA }}
           path: ${{ runner.temp }}/self-improvement-ci-continuation/output/*.json
