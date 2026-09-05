@@ -448,13 +448,31 @@ func validateCollapseOutput(before, after collapseSourceInspection, source []byt
 	if !after.SingleReturn || after.ReturnExpression != before.ReturnExpression || after.PackageName != before.PackageName || after.Receiver != before.Receiver || after.Signature != before.Signature ||
 		!slices.Equal(after.OutsideDeclarations, before.OutsideDeclarations) || !slices.Equal(after.CommentGroups, before.CommentGroups) ||
 		after.StartLine != before.StartLine || after.EndLine >= before.EndLine {
-		return newOperationError("evaluate-operation", "validate-collapse-output", "OUTPUT_IDENTITY_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		failure := newOperationError("evaluate-operation", "validate-collapse-output", "OUTPUT_IDENTITY_MISMATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		failure.diagnostics = collapseOutputIdentityDiagnostics(before, after)
+		return failure
 	}
 	formatted, err := format.Source(source)
 	if err != nil || !bytes.Equal(formatted, source) {
 		return newOperationError("evaluate-operation", "validate-collapse-output", "FORMAT_FIXED_POINT_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	return nil
+}
+
+func collapseOutputIdentityDiagnostics(before, after collapseSourceInspection) []string {
+	return []string{
+		fmt.Sprintf("single_return=%t", after.SingleReturn),
+		fmt.Sprintf("return_expression_equal=%t", after.ReturnExpression == before.ReturnExpression),
+		fmt.Sprintf("package_equal=%t", after.PackageName == before.PackageName),
+		fmt.Sprintf("receiver_equal=%t", after.Receiver == before.Receiver),
+		fmt.Sprintf("signature_equal=%t", after.Signature == before.Signature),
+		fmt.Sprintf("outside_declarations_equal=%t", slices.Equal(after.OutsideDeclarations, before.OutsideDeclarations)),
+		fmt.Sprintf("comments_equal=%t", slices.Equal(after.CommentGroups, before.CommentGroups)),
+		fmt.Sprintf("start_line_before=%d", before.StartLine),
+		fmt.Sprintf("start_line_after=%d", after.StartLine),
+		fmt.Sprintf("end_line_before=%d", before.EndLine),
+		fmt.Sprintf("end_line_after=%d", after.EndLine),
+	}
 }
 
 func snapshotWorkspaceFiles(root string) (map[string]string, error) {
