@@ -6,8 +6,6 @@ import (
 	"go/format"
 	"go/printer"
 	"go/token"
-	"sort"
-	"strconv"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -52,17 +50,19 @@ func importNormalizationPolicy() error {
 }
 
 func formatSelectedImports(fset *token.FileSet, file *ast.File, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {
-	if !eligiblePlainImportGroup(file, group, specs) {
+	normalized, eligible, err := generation.NormalizeImportHeaderGroup(file, group, specs, generation.ImportHeaderNormalizationPlain)
+	if err != nil {
+		return nil, fail("validate-ast-imports", "normalize-imports", "IMPORT_NORMALIZATION_POLICY_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	if !eligible {
 		return formatImport(fset, file, group, specs)
 	}
-	ordered := append([]*ast.ImportSpec{}, specs...)
-	sort.SliceStable(ordered, func(left, right int) bool { return ordered[left].Pos() < ordered[right].Pos() })
 	var output bytes.Buffer
-	for index, spec := range ordered {
+	for index, declaration := range normalized {
 		if index > 0 {
 			output.WriteByte('\n')
 		}
-		data, err := formatImport(fset, file, group, []*ast.ImportSpec{spec})
+		data, err := formatImport(fset, file, declaration, declaration.Specs)
 		if err != nil {
 			return nil, err
 		}
@@ -72,25 +72,8 @@ func formatSelectedImports(fset *token.FileSet, file *ast.File, group *ast.GenDe
 }
 
 func eligiblePlainImportGroup(file *ast.File, group *ast.GenDecl, specs []*ast.ImportSpec) bool {
-	if file == nil || group == nil || group.Doc != nil || len(group.Specs) < 2 || len(specs) < 2 {
-		return false
-	}
-	for _, comments := range file.Comments {
-		if comments.Pos() >= group.Pos() && comments.Pos() <= group.End() {
-			return false
-		}
-	}
-	for _, raw := range group.Specs {
-		spec, ok := raw.(*ast.ImportSpec)
-		if !ok || spec.Name != nil || spec.Doc != nil || spec.Comment != nil || spec.Path == nil {
-			return false
-		}
-		path, err := strconv.Unquote(spec.Path.Value)
-		if err != nil || path == "C" {
-			return false
-		}
-	}
-	return true
+	_, eligible, err := generation.NormalizeImportHeaderGroup(file, group, specs, generation.ImportHeaderNormalizationPlain)
+	return err == nil && eligible
 }
 
 func formatImport(fset *token.FileSet, file *ast.File, group *ast.GenDecl, specs []*ast.ImportSpec) ([]byte, error) {

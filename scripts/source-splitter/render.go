@@ -11,7 +11,10 @@ import (
 )
 
 func renderPart(fset *token.FileSet, file *ast.File, declarations []ast.Decl) ([]byte, error) {
-	importDecls, imports := importsFor(file, declarations)
+	importDecls, imports, err := importsFor(file, declarations)
+	if err != nil {
+		return nil, err
+	}
 	allDecls := make([]ast.Decl, 0, len(importDecls)+len(declarations))
 	allDecls = append(allDecls, importDecls...)
 	allDecls = append(allDecls, declarations...)

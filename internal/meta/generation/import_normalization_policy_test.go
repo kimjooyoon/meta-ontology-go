@@ -21,7 +21,7 @@ func TestImportNormalizationPolicyContractRegressionCohort(t *testing.T) {
 			if tc.source != "" {
 				policy, err := ImportNormalizationPolicyEvidence()
 				operation, operationErr := ExtractFunctionInputContractEvidence()
-				if err != nil || operationErr != nil || policy.Activity != "NormalizeEligibleImportGroup" || policy.InputEntity != "FileInput" || policy.OutputEntity != "ImportNormalizationPolicy" || !policy.UsedInputFact || !policy.GeneratedOutputFact || policy.SourceDigest != operation.SourceDigest || policy.SemanticDigest != operation.SemanticDigest {
+				if err != nil || operationErr != nil || policy.Activity != "NormalizeEligibleImportGroup" || policy.InputEntity != "FileInput" || policy.OutputEntity != "ImportNormalizationPolicy" || !policy.UsedInputFact || !policy.GeneratedOutputFact || policy.HeaderCapability != ImportHeaderNamedAliasCapability || policy.SourceDigest != operation.SourceDigest || policy.SemanticDigest != operation.SemanticDigest {
 					t.Fatalf("policy evidence=%+v operation=%+v policy_err=%v operation_err=%v", policy, operation, err, operationErr)
 				}
 				return

@@ -31,11 +31,12 @@ type nativeOperationObligation struct {
 }
 
 type nativeContractPolicy struct {
-	Name         string
-	Activity     string
-	InputEntity  string
-	OutputEntity string
-	InputKind    sourcepolicy.SubjectKind
+	Name             string
+	Activity         string
+	InputEntity      string
+	OutputEntity     string
+	InputKind        sourcepolicy.SubjectKind
+	HeaderCapability string
 }
 
 var nativeOperationInputs = []nativeOperationInput{
@@ -55,7 +56,7 @@ var nativeOperationObligations = []nativeOperationObligation{
 }
 
 var nativeContractPolicies = []nativeContractPolicy{
-	{Name: "eligible-plain-import-group", Activity: "NormalizeEligibleImportGroup", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile},
+	{Name: "eligible-plain-import-group", Activity: "NormalizeEligibleImportGroup", InputEntity: "FileInput", OutputEntity: "ImportNormalizationPolicy", InputKind: sourcepolicy.SubjectKindFile, HeaderCapability: ImportHeaderNamedAliasCapability},
 }
 
 type operationInputContractBinding struct {
@@ -111,6 +112,7 @@ type OperationInputContractPolicyEvidence struct {
 	SemanticDigest      string
 	UsedInputFact       bool
 	GeneratedOutputFact bool
+	HeaderCapability    string
 }
 
 //go:embed operation-input-contract.gooo
@@ -234,6 +236,9 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		}
 	}
 	for _, policy := range nativeContractPolicies {
+		if policy.HeaderCapability != ImportHeaderNamedAliasCapability {
+			return operationInputContract{}, fmt.Errorf("operation input contract policy %q header capability is not exact", policy.Name)
+		}
 		expectedActivities[policy.Activity] = nativeOperationInput{Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity, InputKind: policy.InputKind}
 		activity, ok := activities[policy.Activity]
 		if !ok || len(activity.Inputs) != 1 || activity.Inputs[0].Name != policy.InputEntity || activity.Output != policy.OutputEntity {
@@ -341,7 +346,7 @@ func ImportNormalizationPolicyEvidence() (OperationInputContractPolicyEvidence, 
 	return OperationInputContractPolicyEvidence{
 		Name: policy.Name, Activity: policy.Activity, InputEntity: policy.InputEntity, OutputEntity: policy.OutputEntity,
 		InputSubjectKind: policy.InputKind, SourceDigest: contract.SourceDigest, SemanticDigest: contract.SemanticDigest,
-		UsedInputFact: facts.UsedInput, GeneratedOutputFact: facts.GeneratedOutput,
+		UsedInputFact: facts.UsedInput, GeneratedOutputFact: facts.GeneratedOutput, HeaderCapability: policy.HeaderCapability,
 	}, nil
 }
 
