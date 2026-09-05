@@ -54,14 +54,6 @@ jobs:
           go-version: '1.27.0'
           cache: false
 
-      - name: Checkout exact source for observer inputs
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          ref: ${{ env.HEAD_SHA }}
-          path: source-worktree
-          fetch-depth: 0
-          persist-credentials: false
-
       - name: Build and verify canonical workflow-lineage conformance
         shell: bash
         run: |
@@ -76,6 +68,35 @@ jobs:
           "$lineage_root/lineage" -mode verify --report "$lineage_root/conformance/publish/workflow-lineage-report.json"
           test "$(find "$lineage_root/conformance/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 21
           jq -e '.decision == "CLOSED" and .provenance_state == "EXACT" and .case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .cases_satisfied == 9 and .cases_total == 9 and .active_lineage_roots == 1 and .stale_misattributed_current_head_failures_before == 2 and .stale_misattributed_current_head_failures_after == 0 and .stale_source_states_unknown == 3 and .unknown_six_field_preservations == 3 and .contradictions_refuted == 3 and .exact_replay_comparisons == 1 and .fallback_to_current_dev_accepted == 0 and .fallback_to_current_dev_rejected == 1 and .repository_writes == 0 and .local_test_executions == 0 and (.cases[3:6] | all(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .unknown.unknown_class != "" and .unknown.next_operation != "" and (.unknown.blocked_by | length) > 0)) and (.cases[6:9] | all(.decision == "REFUTED" and .unknown == null))' "$lineage_root/conformance/publish/workflow-lineage-report.json" > /dev/null
+
+          runtime_root="$RUNNER_TEMP/ci-effort-observation-runtime"
+          runtime_binary="$runtime_root/ci-effort-observation"
+          runtime_program="$GITHUB_WORKSPACE/examples/ci-effort-observation/main.gooo"
+          mkdir -p "$runtime_root"
+          observer_commit="$(git rev-parse HEAD)"
+          test "$observer_commit" = "$GITHUB_SHA"
+          go build -o "$runtime_binary" ./scripts/ci-effort-observation
+          chmod 0555 "$runtime_binary"
+          runtime_binary_digest="sha256:$(sha256sum "$runtime_binary" | awk '{print $1}')"
+          runtime_program_digest="sha256:$(sha256sum "$runtime_program" | awk '{print $1}')"
+          test "$runtime_binary_digest" = "sha256:$(sha256sum "$runtime_binary" | awk '{print $1}')"
+          test -s "$runtime_binary"
+          test -s "$runtime_program"
+          {
+            echo "CI_EFFORT_OBSERVER_RUNTIME=$runtime_binary"
+            echo "CI_EFFORT_OBSERVER_COMMIT=$observer_commit"
+            echo "CI_EFFORT_OBSERVER_BINARY_DIGEST=$runtime_binary_digest"
+            echo "CI_EFFORT_OBSERVER_PROGRAM=$runtime_program"
+            echo "CI_EFFORT_OBSERVER_PROGRAM_DIGEST=$runtime_program_digest"
+          } >> "$GITHUB_ENV"
+
+      - name: Checkout exact source for observer inputs
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          path: source-worktree
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve exact source workflow lineage
         shell: bash
@@ -185,13 +206,28 @@ jobs:
           root="$RUNNER_TEMP/ci-effort-observation"
           lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
           mkdir -p "$root/read-only"
-          go run ./scripts/ci-effort-observation \
+          test "$(sha256sum "$CI_EFFORT_OBSERVER_RUNTIME" | awk '{print "sha256:"$1}')" = "$CI_EFFORT_OBSERVER_BINARY_DIGEST"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" = "$CI_EFFORT_OBSERVER_COMMIT"
+          test "$(sha256sum "$CI_EFFORT_OBSERVER_PROGRAM" | awk '{print "sha256:"$1}')" = "$CI_EFFORT_OBSERVER_PROGRAM_DIGEST"
+          jq -n \
+            --arg schema "gooo/ci-effort-observer-runtime-binding/v1" \
+            --arg observer_commit "$CI_EFFORT_OBSERVER_COMMIT" \
+            --arg observer_expected_sha "$GITHUB_SHA" \
+            --arg observer_runtime "$CI_EFFORT_OBSERVER_RUNTIME" \
+            --arg observer_binary_digest "$CI_EFFORT_OBSERVER_BINARY_DIGEST" \
+            --arg observer_program "$CI_EFFORT_OBSERVER_PROGRAM" \
+            --arg observer_program_digest "$CI_EFFORT_OBSERVER_PROGRAM_DIGEST" \
+            --arg source_head "$HEAD_SHA" \
+            --argjson source_run "$SOURCE_RUN_ID" \
+            --argjson source_attempt "$SOURCE_RUN_ATTEMPT" \
+            '{schema:$schema,observer:{checkout_commit:$observer_commit,expected_workflow_sha:$observer_expected_sha,runtime_path:$observer_runtime,binary_digest:$observer_binary_digest,program_path:$observer_program,program_digest:$observer_program_digest,program_role:"current-observer-policy"},source:{head_sha:$source_head,run_id:$source_run,run_attempt:$source_attempt,inputs:"exact-source-snapshot"}}' > "$root/read-only/observer-runtime-binding.json"
+          "$CI_EFFORT_OBSERVER_RUNTIME" \
             --read-only \
             --run "$root/source/run.json" \
             --jobs "$root/source/jobs.json" \
             --manifest examples/ci-effort-observation/operations.json \
             --contract examples/ci-effort-observation/contract.json \
-            --program examples/ci-effort-observation/main.gooo \
+            --program "$CI_EFFORT_OBSERVER_PROGRAM" \
             --lineage-observation "$lineage_root/actual/lineage-observation.json" \
             --read-only-observation "$lineage_root/actual/read-only-observation.json" \
             --output "$root/read-only/report.json" \
