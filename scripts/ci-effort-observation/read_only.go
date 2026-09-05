@@ -24,64 +24,64 @@ type readOnlyLineageObservation struct {
 }
 
 type readOnlyTimingSummary struct {
-	WindowWallMS                   int64 `json:"window_wall_ms"`
-	ObservedJobIntervals           int   `json:"observed_job_intervals"`
-	ObservedStepIntervals          int   `json:"observed_step_intervals"`
-	MissingJobIntervals             int   `json:"missing_job_intervals"`
-	MissingStepIntervals            int   `json:"missing_step_intervals"`
-	JobsDataUnavailable             bool  `json:"jobs_data_unavailable"`
-	WindowTimestampsUnknown         bool  `json:"window_timestamps_unknown"`
-	BelowSourceResolutionJobs       int   `json:"below_source_resolution_jobs"`
-	BelowSourceResolutionSteps      int   `json:"below_source_resolution_steps"`
-	RuntimeRejectionCount           int   `json:"runtime_rejection_count"`
+	WindowWallMS               int64 `json:"window_wall_ms"`
+	ObservedJobIntervals       int   `json:"observed_job_intervals"`
+	ObservedStepIntervals      int   `json:"observed_step_intervals"`
+	MissingJobIntervals        int   `json:"missing_job_intervals"`
+	MissingStepIntervals       int   `json:"missing_step_intervals"`
+	JobsDataUnavailable        bool  `json:"jobs_data_unavailable"`
+	WindowTimestampsUnknown    bool  `json:"window_timestamps_unknown"`
+	BelowSourceResolutionJobs  int   `json:"below_source_resolution_jobs"`
+	BelowSourceResolutionSteps int   `json:"below_source_resolution_steps"`
+	RuntimeRejectionCount      int   `json:"runtime_rejection_count"`
 }
 
 type readOnlyOperationCounts struct {
-	Manifest  int `json:"manifest"`
-	Observed  int `json:"observed"`
-	Skipped   int `json:"skipped"`
-	Missing   int `json:"missing"`
-	Rejected  int `json:"rejected"`
+	Manifest int `json:"manifest"`
+	Observed int `json:"observed"`
+	Skipped  int `json:"skipped"`
+	Missing  int `json:"missing"`
+	Rejected int `json:"rejected"`
 }
 
 type readOnlyProjection struct {
-	Schema                    string                 `json:"schema"`
-	Decision                  string                 `json:"decision"`
-	Resolution                string                 `json:"resolution"`
-	Reason                    string                 `json:"reason"`
-	LineageState              string                 `json:"lineage_state"`
-	LineageReason             string                 `json:"lineage_reason"`
-	ObservationReason         string                 `json:"observation_reason"`
-	Repository                string                 `json:"repository"`
-	SourceWorkflow            string                 `json:"source_workflow"`
-	SourceEvent               string                 `json:"source_event"`
-	SourceRef                 string                 `json:"source_ref"`
-	HeadSHA                   string                 `json:"head_sha"`
-	SourceRunStatus           string                 `json:"source_run_status"`
-	SourceRunConclusion       string                 `json:"source_run_conclusion"`
-	SourceRunID               int64                  `json:"source_run_id"`
-	SourceRunAttempt          int64                  `json:"source_run_attempt"`
-	SourceRunURL              string                 `json:"source_run_url"`
-	WorkflowSourcePath        string                 `json:"workflow_source_path"`
-	WorkflowSourceDigest      string                 `json:"workflow_source_digest"`
-	ContractID                string                 `json:"contract_id"`
-	OperationManifestDigest   string                 `json:"operation_manifest_digest"`
-	ExactSourceIdentity       bool                   `json:"exact_source_identity"`
-	SourceFailureKept         bool                   `json:"source_failure_kept"`
-	EvidenceReuseAllowed      bool                   `json:"evidence_reuse_allowed"`
-	PromotionAllowed          bool                   `json:"promotion_allowed"`
-	Timing                    readOnlyTimingSummary   `json:"timing"`
-	OperationCounts           readOnlyOperationCounts `json:"operation_counts"`
-	Window                    WorkflowWindow         `json:"workflow_window"`
-	Jobs                      []JobObservation       `json:"jobs"`
-	Operations                []OperationObservation `json:"operations"`
-	Accounting                Accounting             `json:"accounting"`
-	Graph                     GraphObservation       `json:"graph"`
-	RepositoryWrites          int                    `json:"repository_writes"`
-	LocalTestExecutions       int                    `json:"local_test_executions"`
-	Improvement               string                 `json:"improvement"`
-	HumanReport               string                 `json:"human_report"`
-	ReportDigest              string                 `json:"report_digest"`
+	Schema                  string                  `json:"schema"`
+	Decision                string                  `json:"decision"`
+	Resolution              string                  `json:"resolution"`
+	Reason                  string                  `json:"reason"`
+	LineageState            string                  `json:"lineage_state"`
+	LineageReason           string                  `json:"lineage_reason"`
+	ObservationReason       string                  `json:"observation_reason"`
+	Repository              string                  `json:"repository"`
+	SourceWorkflow          string                  `json:"source_workflow"`
+	SourceEvent             string                  `json:"source_event"`
+	SourceRef               string                  `json:"source_ref"`
+	HeadSHA                 string                  `json:"head_sha"`
+	SourceRunStatus         string                  `json:"source_run_status"`
+	SourceRunConclusion     string                  `json:"source_run_conclusion"`
+	SourceRunID             int64                   `json:"source_run_id"`
+	SourceRunAttempt        int64                   `json:"source_run_attempt"`
+	SourceRunURL            string                  `json:"source_run_url"`
+	WorkflowSourcePath      string                  `json:"workflow_source_path"`
+	WorkflowSourceDigest    string                  `json:"workflow_source_digest"`
+	ContractID              string                  `json:"contract_id"`
+	OperationManifestDigest string                  `json:"operation_manifest_digest"`
+	ExactSourceIdentity     bool                    `json:"exact_source_identity"`
+	SourceFailureKept       bool                    `json:"source_failure_kept"`
+	EvidenceReuseAllowed    bool                    `json:"evidence_reuse_allowed"`
+	PromotionAllowed        bool                    `json:"promotion_allowed"`
+	Timing                  readOnlyTimingSummary   `json:"timing"`
+	OperationCounts         readOnlyOperationCounts `json:"operation_counts"`
+	Window                  WorkflowWindow          `json:"workflow_window"`
+	Jobs                    []JobObservation        `json:"jobs"`
+	Operations              []OperationObservation  `json:"operations"`
+	Accounting              Accounting              `json:"accounting"`
+	Graph                   GraphObservation        `json:"graph"`
+	RepositoryWrites        int                     `json:"repository_writes"`
+	LocalTestExecutions     int                     `json:"local_test_executions"`
+	Improvement             string                  `json:"improvement"`
+	HumanReport             string                  `json:"human_report"`
+	ReportDigest            string                  `json:"report_digest"`
 }
 
 func buildReadOnlyProjection(config Config) (readOnlyProjection, error) {
@@ -187,7 +187,7 @@ func validateReadOnlyLineageInputs(source sourceRunInput, lineage readOnlyLineag
 	lineageInput := publicworkflowlineage.Input{
 		Trigger: lineage.Trigger, Source: lineage.Source,
 		ExpectedArtifactName: fmt.Sprintf("ci-evidence-%d-%d", lineage.Source.ID, lineage.Source.RunAttempt),
-		ExpectedRepository: policy.Repository, ExpectedWorkflow: policy.SourceWorkflow,
+		ExpectedRepository:   policy.Repository, ExpectedWorkflow: policy.SourceWorkflow,
 		ExpectedSourceAPIKey: policy.SourceAPIKey, ExpectedArtifactSubjectBinding: policy.ArtifactSubjectBinding,
 	}
 	expectedEvaluation := publicworkflowlineage.Evaluate(lineageInput)

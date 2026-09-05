@@ -8,20 +8,20 @@ const (
 )
 
 type Config struct {
-	RunPath              string
-	JobsPath             string
-	ManifestPath         string
-	ContractPath         string
-	ProgramPath          string
-	TimeCausalityRoot    string
-	SummaryPath          string
-	EvidencePath         string
-	RepositoryStatusPath string
-	OpenTofuPath         string
-	OpenTofuMetaPath     string
-	PriorPath            string
-	DependencyFiles      []string
-	Environment          string
+	RunPath                 string
+	JobsPath                string
+	ManifestPath            string
+	ContractPath            string
+	ProgramPath             string
+	TimeCausalityRoot       string
+	SummaryPath             string
+	EvidencePath            string
+	RepositoryStatusPath    string
+	OpenTofuPath            string
+	OpenTofuMetaPath        string
+	PriorPath               string
+	DependencyFiles         []string
+	Environment             string
 	OutputPath              string
 	MarkdownPath            string
 	ReadOnly                bool
