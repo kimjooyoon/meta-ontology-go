@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	candidate "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementcandidate"
@@ -201,10 +202,8 @@ func inspectInput(input GrantInput) ([]string, []string) {
 	missing := requiredMissing(input)
 	contradictions := []string{}
 	addContradiction := func(field string) {
-		for _, current := range contradictions {
-			if current == field {
-				return
-			}
+		if slices.Contains(contradictions, field) {
+			return
 		}
 		contradictions = append(contradictions, field)
 	}

@@ -17,8 +17,8 @@ func BuildReport(program PolicyProgram, input ContinuationInput) Report {
 	resolution := Evaluate(program, input)
 	resolution.RequestDigest = request.Digest
 	resolution.Digest = resolutionDigest(resolution)
-	report := Report{Schema: Schema, Policy: program.Evidence, Request: request, Resolution: resolution, Metrics: resolution.Metrics}
-	report.Verification = Verify(program, request, resolution)
+	report := Report{Schema: Schema, Policy: program.Evidence, Request: request, Resolution: resolution, Metrics: resolution.Metrics,
+		Verification: Verify(program, request, resolution)}
 	report.Digest = reportDigest(report)
 	return report
 }
