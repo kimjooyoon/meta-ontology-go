@@ -2,7 +2,7 @@ package generation
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
-const IndicatorDecisionLedgerSchemaVersion = "gooo/indicator-decision-ledger/v2"
+const IndicatorDecisionLedgerSchemaVersion = "gooo/indicator-decision-ledger/v3"
 
 type TrilemmaRoute string
 

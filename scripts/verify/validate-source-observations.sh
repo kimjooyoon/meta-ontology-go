@@ -65,7 +65,7 @@ jq -e '
   (.replay_digest | strings | test("^[0-9a-f]{64}$"))
 ' "$execution" >/dev/null
 jq -e '
-  (.schema_version == "gooo/meta-operation-receipt-report/v2") and
+  (.schema_version == "gooo/meta-operation-receipt-report/v3") and
   (.decision == "CONFORMANT" or .decision == "FIXED_POINT" or .decision == "UNKNOWN" or .decision == "REJECTED" or .decision == "REFUTED") and
   (.receipts | type == "array") and
   (.failures | type == "array") and

@@ -48,6 +48,9 @@ func (ledger *IndicatorDecisionLedger) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	decoded := IndicatorDecisionLedger(candidate)
+	if decoded.SchemaVersion != IndicatorDecisionLedgerSchemaVersion {
+		return fmt.Errorf("unsupported indicator decision ledger schema %q", decoded.SchemaVersion)
+	}
 	if err := decoded.Validate(); err != nil {
 		return err
 	}

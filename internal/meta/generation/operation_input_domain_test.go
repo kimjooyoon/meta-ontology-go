@@ -125,24 +125,19 @@ func TestBuildAndExecutionRejectForgedInputDomainContract(t *testing.T) {
 		t.Fatalf("forged registry input kind was executable: %+v", manifest)
 	}
 
-	action := plan.Selected[0]
-	indicators := make([]IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
-	for _, identifier := range action.RequiredIndicatorIDs {
-		indicators = append(indicators, IndicatorReceipt{ID: identifier, Verdict: IndicatorVerdictPass, EvidenceDigest: digestJSON([]string{action.IndicatorID, identifier}), ProofChoice: action.ProofChoice})
-	}
-	receipt := SealReceipt(plan, action, indicators)
-	if report := VerifyReceipts(plan, []OperationReceipt{receipt}); report.Decision != ReceiptDecisionConformant {
+	receipts := passingReceipts(plan)
+	if report := VerifyReceipts(plan, receipts); report.Decision != ReceiptDecisionConformant {
 		t.Fatalf("valid receipt fixture was not accepted: %+v", report)
 	}
-	receipt.SubjectKind = sourcepolicy.SubjectKindSourceFragment
-	receipt.ReceiptDigest = operationReceiptDigest(receipt)
-	if report := VerifyReceipts(plan, []OperationReceipt{receipt}); report.Decision != ReceiptDecisionUnknown {
+	receipts[0].SubjectKind = sourcepolicy.SubjectKindSourceFragment
+	receipts[0].ReceiptDigest = operationReceiptDigest(receipts[0])
+	if report := VerifyReceipts(plan, receipts); report.Decision != ReceiptDecisionUnknown {
 		t.Fatalf("forged receipt input kind was accepted: %+v", report)
 	}
 }
 
 func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
-	base, head := strings.Repeat("g", 40), strings.Repeat("h", 40)
+	base, head := strings.Repeat("a", 40), strings.Repeat("b", 40)
 	duplicate := duplicateDomainMetric("fixture.go#func:Duplicate")
 	plan := Build(base, head, sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
 		metric("fixture.go", sourcepolicy.OperationSplitGo, false, false),
@@ -152,20 +147,78 @@ func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
 	if plan.Decision != DecisionPlan || len(plan.Counterexamples) != 1 || plan.IndicatorDecisionLedger == nil {
 		t.Fatalf("fixture did not produce a canonical refuted plan: %+v", plan)
 	}
+	if manifest := BuildExecutionManifest(plan); manifest.Decision != ExecutionDecisionProposed {
+		t.Fatalf("canonical refuted plan was not executable before mutation: %+v", manifest)
+	}
 
 	matching := Build(base, head, sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+		metric("expression", sourcepolicy.OperationCollapseAssign, false, false),
 		metric("fixture.go", sourcepolicy.OperationSplitGo, false, false),
 		metric("fixture.go:1:Selected", sourcepolicy.OperationExtractFunction, false, false),
 	}})
-	matching.RefutedIndicatorIDs = []string{matching.Selected[0].IndicatorID}
-	binding, ok := BindingForOperation(matching.Registry, matching.Selected[0].Operation)
+	if manifest := BuildExecutionManifest(matching); manifest.Decision != ExecutionDecisionProposed {
+		t.Fatalf("matching fixture was not executable before mutation: %+v", manifest)
+	}
+	refutedAction := matching.Selected[0]
+	matching.Selected = append([]Action{}, matching.Selected[1:]...)
+	matching.RefutedIndicatorIDs = []string{refutedAction.IndicatorID}
+	binding, ok := BindingForOperation(matching.Registry, refutedAction.Operation)
 	if !ok {
 		t.Fatal("matching fixture binding is unavailable")
 	}
-	matching.Counterexamples = []Counterexample{inputDomainCounterexample(matching.Selected[0].SourceIndicator, binding)}
+	matching.Counterexamples = []Counterexample{inputDomainCounterexample(refutedAction.SourceIndicator, binding)}
+	ledger, err := buildPlanIndicatorDecisionLedgerWithRefuted(
+		ledgerSourceIndicators(*matching.IndicatorDecisionLedger),
+		matching.Selected,
+		matching.UnselectedIndicatorIDs,
+		matching.RefutedIndicatorIDs,
+	)
+	if err != nil {
+		t.Fatalf("rebuild matching fixture ledger: %v", err)
+	}
+	matching.IndicatorDecisionLedger = &ledger
 	matching = finish(matching)
 	if manifest := BuildExecutionManifest(matching); manifest.Decision != ExecutionDecisionUnknown {
 		t.Fatalf("matching source was hidden by forged refutation: %+v", manifest)
+	}
+
+	unknownOperation := duplicate
+	unknownOperation.Operation = sourcepolicy.Operation("unregistered-operation")
+	unknownOperationID := indicatorID(unknownOperation)
+	unknownIndicators := ledgerSourceIndicators(*plan.IndicatorDecisionLedger)
+	for index, indicator := range unknownIndicators {
+		if indicatorID(indicator) == indicatorID(duplicate) {
+			unknownIndicators[index] = unknownOperation
+		}
+	}
+	unknownLedger, err := buildPlanIndicatorDecisionLedgerWithRefuted(
+		unknownIndicators,
+		plan.Selected,
+		plan.UnselectedIndicatorIDs,
+		[]string{unknownOperationID},
+	)
+	if err != nil {
+		t.Fatalf("rebuild unknown-operation fixture ledger: %v", err)
+	}
+	unknown := plan
+	unknown.IndicatorsDigest = digestJSON(normalizeIndicators(unknownIndicators))
+	unknown.RefutedIndicatorIDs = []string{unknownOperationID}
+	unknown.Counterexamples = []Counterexample{{
+		ID:            "input-domain:" + unknownOperationID,
+		IndicatorID:   unknownOperationID,
+		SourceIndicator: unknownOperation,
+		BlockerID:     "binding-input-domain:unregistered-operation:FILE:SOURCE_FRAGMENT",
+		Stage:         "binding",
+		Step:          "validate-input-subject-kind",
+		Reason:        "INPUT_SUBJECT_KIND_MISMATCH",
+		UnknownClass:  "KNOWN_CONTRADICTION",
+		NextOperation: "select-valid-domain-action",
+		BlockedBy:     []string{},
+	}}
+	unknown.IndicatorDecisionLedger = &unknownLedger
+	unknown = finish(unknown)
+	if manifest := BuildExecutionManifest(unknown); manifest.Decision != ExecutionDecisionUnknown {
+		t.Fatalf("unknown operation hid forged input-domain cause: %+v", manifest)
 	}
 
 	mutations := map[string]func(*Counterexample){

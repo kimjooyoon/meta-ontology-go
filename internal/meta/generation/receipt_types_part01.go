@@ -1,7 +1,7 @@
 package generation
 
-const OperationReceiptSchemaVersion = "gooo/meta-operation-receipt/v2"
-const ReceiptReportSchemaVersion = "gooo/meta-operation-receipt-report/v2"
+const OperationReceiptSchemaVersion = "gooo/meta-operation-receipt/v3"
+const ReceiptReportSchemaVersion = "gooo/meta-operation-receipt-report/v3"
 
 type ReceiptDecision string
 

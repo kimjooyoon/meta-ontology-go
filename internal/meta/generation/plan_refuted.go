@@ -42,7 +42,11 @@ func validatePlanRefutedEvidence(plan Plan) error {
 				return fmt.Errorf("counterexample source indicator does not match the ledger observation")
 			}
 		}
-		if binding, known := BindingForOperation(plan.Registry, counterexample.SourceIndicator.Operation); known {
+		binding, known := BindingForOperation(plan.Registry, counterexample.SourceIndicator.Operation)
+		if counterexample.Reason == "INPUT_SUBJECT_KIND_MISMATCH" && !known {
+			return fmt.Errorf("input-domain counterexample requires a known operation binding")
+		}
+		if known {
 			if counterexample.SourceIndicator.SubjectKind == binding.InputSubjectKind {
 				return fmt.Errorf("matching input-domain observation was marked refuted")
 			}
