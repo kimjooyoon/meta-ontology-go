@@ -30,9 +30,10 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 		t.Fatalf("named regression denominator=%d, want 9", len(cases))
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
 			if tc.kind == "contract" {
-				values := []generation.OperationInputContractObligationEvidence{{Name: obligationReturnShape, Activity: "ProveReturnShape", InputEntity: "FunctionInput", OutputEntity: "ControlFlowObligation", UsedInputFact: true, GeneratedOutputFact: true}}
+				values := returnTailContractBaseline()
+				values[1].InputEntity = "FunctionInput"
 				if _, ok := returnTailContractObligations(values); ok {
 					t.Fatal("tampered obligation dependency was admitted")
 				}
@@ -48,6 +49,12 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 				}
 				return
 			}
+			if tc.kind == "binding" {
+				if err != nil || len(result.Evidence) != 1 || result.Evidence[0].Operation != "extract-function" || result.Evidence[0].ContractActivity != "ExtractFunction" || result.Evidence[0].ContractOutputEntity != "OperationResult" || len(result.Evidence[0].ContractObligations) != 6 || len(result.Generated) < 2 {
+					t.Fatalf("generated unit binding evidence=%+v generated=%d err=%v", result.Evidence, len(result.Generated), err)
+				}
+				return
+			}
 			var failure Failure
 			if !errors.As(err, &failure) {
 				t.Fatalf("regression failure=%v", err)
@@ -60,11 +67,17 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 			}
 		})
 	}
+}
 
-	result, err := extractReturnTailRegressionFixture(t, returnTailTypedNilFixture())
-	if err != nil || len(result.Evidence) != 1 || result.Evidence[0].Operation != "extract-function" || result.Evidence[0].ContractActivity != "ExtractFunction" || result.Evidence[0].ContractOutputEntity != "OperationResult" {
-		t.Fatalf("generated unit binding evidence=%+v err=%v", result.Evidence, err)
+func returnTailContractBaseline() []generation.OperationInputContractObligationEvidence {
+	values := make([]generation.OperationInputContractObligationEvidence, 0, len(returnTailObligations))
+	previous := "FunctionInput"
+	for _, name := range returnTailObligations {
+		activity, output := returnTailContractStage(name)
+		values = append(values, generation.OperationInputContractObligationEvidence{Name: name, Activity: activity, InputEntity: previous, OutputEntity: output, UsedInputFact: true, GeneratedOutputFact: true})
+		previous = output
 	}
+	return values
 }
 
 func extractReturnTailRegressionFixture(t *testing.T, source string) (Result, error) {
@@ -89,7 +102,7 @@ func generatedContains(generated map[string][]byte, wanted string) bool {
 }
 
 func returnTailHeaderOverflowFixture() string {
-	return "package p\n\nfunc F(values map[string]struct{}) error {\n" + strings.Repeat("\t_ = 1\n", 69) + "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n"
+	return "package p\n\nfunc F(values map[string]struct{}) error {\n" + strings.Repeat("\t_ = 1\n", 69) + "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
 }
 
 func returnTailWholeTailFixture() string {
@@ -97,7 +110,7 @@ func returnTailWholeTailFixture() string {
 }
 
 func returnTailTypedNilFixture() string {
-	return "package p\n\ntype typedError struct{}\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\treturn (*typedError)(nil)\n}\n"
+	return "package p\n\ntype typedError struct{ error }\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\treturn (*typedError)(nil)\n}\n"
 }
 
 func returnTailUnknownCalleeFixture() string {
@@ -105,11 +118,11 @@ func returnTailUnknownCalleeFixture() string {
 }
 
 func returnTailPointerCalleeFixture() string {
-	return "package p\n\ntype Box struct{ Field error }\n\nfunc mutate(box *Box) { box.Field = errorSentinel() }\n\nfunc F() error {\n\tbox := &Box{}\n" + strings.Repeat("\t_ = 1\n", 72) + "\tmutate(box)\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n"
+	return "package p\n\ntype Box struct{ Field error }\n\nfunc mutate(box *Box) { box.Field = nil }\n\nfunc F() error {\n\tbox := &Box{}\n" + strings.Repeat("\t_ = 1\n", 72) + "\tmutate(box)\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
 }
 
 func returnTailExposedMutationFixture() string {
-	return "package p\n\nvar exposed *Box\n\ntype Box struct{ Field error }\n\nfunc F() error {\n\tx := Box{}\n\texposed = &(x)\n" + strings.Repeat("\t_ = 1\n", 72) + "\t(x).Field = errorSentinel()\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n"
+	return "package p\n\nvar exposed *Box\n\ntype Box struct{ Field error }\n\nfunc F() error {\n\tx := Box{}\n\texposed = &(x)\n" + strings.Repeat("\t_ = 1\n", 72) + "\t(x).Field = errorSentinel()\n\treturn nil\n}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n"
 }
 
 func returnTailIncompleteCalleeFixture() string {

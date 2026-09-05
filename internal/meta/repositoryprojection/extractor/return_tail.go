@@ -446,6 +446,9 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error
 		if !ok {
 			return true
 		}
+		if returnTailTypedConversion(call, evidence.info) {
+			return true
+		}
 		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}) {
 			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"obligation=" + obligationCalleeEffects})
 			return false
@@ -453,6 +456,37 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error
 		return true
 	})
 	return effectErr
+}
+
+func returnTailTypedConversion(call *ast.CallExpr, info *types.Info) bool {
+	if call == nil || info == nil {
+		return false
+	}
+	functionType := info.TypeOf(call.Fun)
+	resultType := info.TypeOf(call)
+	if functionType == nil || resultType == nil {
+		return false
+	}
+	if _, callable := functionType.(*types.Signature); callable {
+		return false
+	}
+	object := info.Uses[conversionIdentifier(call.Fun)]
+	if object == nil {
+		return true
+	}
+	_, typeName := object.(*types.TypeName)
+	return typeName
+}
+
+func conversionIdentifier(expression ast.Expr) *ast.Ident {
+	switch value := expression.(type) {
+	case *ast.Ident:
+		return value
+	case *ast.ParenExpr:
+		return conversionIdentifier(value.X)
+	default:
+		return nil
+	}
 }
 
 func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {

@@ -21,8 +21,8 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 		{name: "go statement", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgo func() {}()\n\treturn nil\n"), positive: false},
 		{name: "defer statement", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tdefer func() {}()\n\treturn nil\n"), positive: false},
 		{name: "escaping branch", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgoto done\n\tdone:\n\treturn nil\n"), positive: false},
-		{name: "address escape stale pointer", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tp := &err\n\t_ = p\n\t*p = errorSentinel()\n\treturn err\n"), positive: false},
-		{name: "closure capture stale copy", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tset := func() { err = errorSentinel() }\n\t_ = set\n\tset()\n\treturn err\n"), positive: false},
+		{name: "address escape stale pointer", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tp := &err\n\t_ = p\n", "\t*p = errorSentinel()\n\treturn err\n"), positive: false},
+		{name: "closure capture stale copy", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tset := func() { err = errorSentinel() }\n\t_ = set\n", "\tset()\n\treturn err\n"), positive: false},
 		{name: "false helper capacity proof", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n"+strings.Repeat("\t\t_ = 1\n", 70)+"\t\treturn nil\n\t}\n\treturn nil\n"), positive: false},
 	}
 	if len(cases) != 10 {
@@ -52,6 +52,11 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit {
 					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
 				}
+				for path, data := range result.Generated {
+					if extractionLines(data) > functionLineLimit {
+						t.Fatalf("generated unit %s exceeds capacity: %d lines", path, extractionLines(data))
+					}
+				}
 				if !strings.Contains(string(result.Generated["x.go"]), "return FExtractedReturnTail") {
 					t.Fatal("outer function did not use a return-valued helper")
 				}
@@ -72,5 +77,9 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 }
 
 func returnTailFixture(header, tail string) string {
-	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\ntype T struct{}\n"
+	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n\ntype T struct{}\n"
+}
+
+func returnTailPrefixBindingFixture(header, prefix, tail string) string {
+	return "package p\n\n" + header + prefix + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{ error }\n\ntype T struct{}\n"
 }
