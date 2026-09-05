@@ -17,6 +17,10 @@ func (ir IR) SemanticCanonical() string {
 	b.WriteString(namespace)
 	b.WriteByte('\n')
 	b.WriteString(ir.Graph.SemanticCanonical())
+	for _, binding := range sortedRuntimeBindings(ir.RuntimeBindings) {
+		b.WriteString(binding.SemanticCanonical())
+		b.WriteByte('\n')
+	}
 	for _, policy := range ir.Policies {
 		b.WriteString(policy.SemanticCanonical())
 	}

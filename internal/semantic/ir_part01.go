@@ -10,12 +10,13 @@ const CurrentIRVersion = "semantic-ir/v1"
 // parser-independent and can be populated by a DSL lowerer, a Go symbol
 // lifter, or another authoritative view.
 type IR struct {
-	Version   string
-	Package   string
-	Namespace Namespace
-	Graph     Graph
-	Policies  []Policy
-	evidence  map[ID]Evidence
+	Version         string
+	Package         string
+	Namespace       Namespace
+	Graph           Graph
+	Policies        []Policy
+	RuntimeBindings []RuntimeBinding `json:"runtime_bindings,omitempty"`
+	evidence        map[ID]Evidence
 }
 
 // SemanticIR is an alias for callers that want the full name in APIs.
@@ -56,6 +57,9 @@ func (ir IR) Validate() error {
 		}
 	}
 	if err := ir.Graph.Validate(); err != nil {
+		return err
+	}
+	if _, err := normalizeRuntimeBindings(ir.RuntimeBindings, ir.Graph); err != nil {
 		return err
 	}
 	if err := validatePolicies(ir.Policies); err != nil {

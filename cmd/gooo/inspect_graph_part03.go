@@ -50,6 +50,27 @@ func authoritativeIRHash(ir semantic.IR) string {
 	canonical.WriteString(namespace)
 	canonical.WriteByte('\n')
 	canonical.WriteString(authoritativeGraphCanonical(ir.Graph))
+	bindings := append([]semantic.RuntimeBinding(nil), ir.RuntimeBindings...)
+	sort.Slice(bindings, func(i, j int) bool {
+		left, right := bindings[i].Key(), bindings[j].Key()
+		if left.ProducerActivity != right.ProducerActivity {
+			return left.ProducerActivity < right.ProducerActivity
+		}
+		if left.ProducerPort != right.ProducerPort {
+			return left.ProducerPort < right.ProducerPort
+		}
+		if left.ConsumerActivity != right.ConsumerActivity {
+			return left.ConsumerActivity < right.ConsumerActivity
+		}
+		if left.ConsumerPort != right.ConsumerPort {
+			return left.ConsumerPort < right.ConsumerPort
+		}
+		return left.Entity < right.Entity
+	})
+	for _, binding := range bindings {
+		canonical.WriteString(binding.SemanticCanonical())
+		canonical.WriteByte('\n')
+	}
 	return semantic.StableHash([]byte(canonical.String()))
 }
 func authoritativeGraphCanonical(graph semantic.Graph) string {

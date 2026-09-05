@@ -7,7 +7,7 @@ import (
 
 // Clone returns a detached model suitable for transactional updates.
 func (m Model) Clone() Model {
-	clone := Model{Package: m.Package, Namespace: m.Namespace}
+	clone := Model{Package: m.Package, Namespace: m.Namespace, RuntimeBindings: append([]RuntimeBinding(nil), m.RuntimeBindings...)}
 	for _, node := range m.Nodes {
 		clone.Nodes = append(clone.Nodes, node.normalized())
 	}

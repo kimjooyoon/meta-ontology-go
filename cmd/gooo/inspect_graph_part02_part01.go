@@ -43,7 +43,38 @@ func newGraphDump(source []byte, ir semantic.IR) graphDump {
 		},
 		Nodes:     graphNodes(ir.Graph.Nodes()),
 		Relations: graphRelations(ir.Graph.AllFacts()),
+		RuntimeBindings: graphRuntimeBindings(ir.RuntimeBindings),
 	}
+}
+
+func graphRuntimeBindings(bindings []semantic.RuntimeBinding) []graphRuntimeBinding {
+	result := make([]graphRuntimeBinding, 0, len(bindings))
+	for _, binding := range bindings {
+		result = append(result, graphRuntimeBinding{
+			Schema: binding.Schema, ProducerActivity: string(binding.ProducerActivity), ProducerPort: binding.ProducerPort,
+			ConsumerActivity: string(binding.ConsumerActivity), ConsumerPort: binding.ConsumerPort, Entity: string(binding.Entity),
+			Source: graphSpan{File: binding.Span.File,
+				Start: graphPosition{Offset: binding.Span.Start.Offset, Line: binding.Span.Start.Line, Column: binding.Span.Start.Column},
+				End: graphPosition{Offset: binding.Span.End.Offset, Line: binding.Span.End.Line, Column: binding.Span.End.Column}},
+		})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		left, right := result[i], result[j]
+		if left.ProducerActivity != right.ProducerActivity {
+			return left.ProducerActivity < right.ProducerActivity
+		}
+		if left.ProducerPort != right.ProducerPort {
+			return left.ProducerPort < right.ProducerPort
+		}
+		if left.ConsumerActivity != right.ConsumerActivity {
+			return left.ConsumerActivity < right.ConsumerActivity
+		}
+		if left.ConsumerPort != right.ConsumerPort {
+			return left.ConsumerPort < right.ConsumerPort
+		}
+		return left.Entity < right.Entity
+	})
+	return result
 }
 func graphReferences(refs []string, missingReason string) graphReferenceState {
 	if len(refs) == 0 {

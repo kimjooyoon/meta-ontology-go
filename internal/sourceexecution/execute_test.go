@@ -44,3 +44,14 @@ func TestExecuteFailuresAreExplicitAndSealed(t *testing.T) {
 		}
 	}
 }
+
+func TestExecuteRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
+	request := Request{Filename: "binding.gooo", Source: fixtureSource + "\nbind PayOrder.result -> PayOrder.input\n", Entry: "PayOrder"}
+	receipt := Execute(request)
+	if err := Validate(receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Decision != "FAIL_CLOSED" || receipt.Reason != "SOURCE_RUNTIME_BINDINGS_UNSUPPORTED" || len(receipt.Events) != 0 {
+		t.Fatalf("receipt=%#v", receipt)
+	}
+}

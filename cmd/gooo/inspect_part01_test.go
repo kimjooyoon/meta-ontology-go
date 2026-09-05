@@ -60,3 +60,25 @@ func TestRunInspectReadErrorAndUsage(t *testing.T) {
 		t.Fatalf("inspect usage = code %d, stderr=%q", code, stderr.String())
 	}
 }
+
+func TestRunInspectPreservesRuntimeBindingsInGraphDump(t *testing.T) {
+	dump := decodeGraphDump(t, inspectFixtureOutput(t, sourceWithRuntimeBinding))
+	if len(dump.RuntimeBindings) != 1 {
+		t.Fatalf("runtime bindings=%#v, want one preserved binding", dump.RuntimeBindings)
+	}
+	binding := dump.RuntimeBindings[0]
+	if binding.ProducerActivity == "" || binding.ProducerPort != "result" || binding.ConsumerActivity == "" || binding.ConsumerPort != "input" || binding.Entity == "" {
+		t.Fatalf("incomplete graph binding=%#v", binding)
+	}
+}
+
+const sourceWithRuntimeBinding = `package billing
+namespace billing
+
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity Produce(Order) -> Payment
+activity Consume(Payment) -> Order
+
+bind Produce.result -> Consume.input
+`

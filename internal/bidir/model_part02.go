@@ -21,6 +21,7 @@ type Model struct {
 	Namespace  string
 	Nodes      []Node
 	Relations  []Relation
+	RuntimeBindings []RuntimeBinding
 	Candidates FactSet
 }
 

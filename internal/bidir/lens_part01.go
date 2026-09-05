@@ -56,6 +56,9 @@ func getWithTypesAndEntityFieldsSupport(document Document, registry semantic.Typ
 	if err := lowerExplicitRelations(&model, document.Relations, ids); err != nil {
 		return Model{}, err
 	}
+	if err := lowerRuntimeBindings(&model, document.RuntimeBindings, names, ids); err != nil {
+		return Model{}, err
+	}
 	model.Normalize()
 	if err := normalizeModelFields(&model, registry); err != nil {
 		return Model{}, classifyEntityFieldsModelError(err, firstModelFieldSpan(model.Nodes))

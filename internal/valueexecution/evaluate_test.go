@@ -43,3 +43,16 @@ func TestCompileLowersAndDefendsTypedOperationIR(t *testing.T) {
 		t.Fatalf("tampered IR reason = %s, want %s", got, ReasonOperationIRInvalid)
 	}
 }
+
+func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
+	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
+		[]byte("bind Increment.result -> Increment.input\n")...)
+	_, err := Compile("bound.gooo", source, "Increment")
+	if got := Reason(err); got != ReasonPlanRequired {
+		t.Fatalf("reason = %s, want %s", got, ReasonPlanRequired)
+	}
+	failure, ok := FailureOf(err)
+	if !ok || failure.Stage != "PLAN" || failure.Step != "runtime-binding-plan-required" {
+		t.Fatalf("plan boundary = %#v", failure)
+	}
+}
