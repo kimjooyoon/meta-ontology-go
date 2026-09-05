@@ -34,3 +34,24 @@ func TestGraphDumpCandidateIsExplicitAndNotInGraphHash(t *testing.T) {
 		t.Fatalf("candidate relation was not explicit: %#v", dump.Relations)
 	}
 }
+
+func TestAuthoritativeIRHashTracksRuntimeBindingEndpointChanges(t *testing.T) {
+	file, diagnostics := syntax.Parse(sourceWithRuntimeBinding)
+	if diagnostics.Error() != nil {
+		t.Fatal(diagnostics.Error())
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseHash := authoritativeIRHash(ir)
+	changed := ir
+	changed.RuntimeBindings = append([]semantic.RuntimeBinding(nil), ir.RuntimeBindings...)
+	changed.RuntimeBindings[0].ConsumerActivity = semantic.MustIdentity("billing://activity/produce")
+	if changed.SemanticCanonical() == ir.SemanticCanonical() {
+		t.Fatal("binding endpoint mutation did not change semantic fingerprint")
+	}
+	if authoritativeIRHash(changed) == baseHash {
+		t.Fatal("binding endpoint mutation did not change authoritative inspect hash")
+	}
+}

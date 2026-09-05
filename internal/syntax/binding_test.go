@@ -40,3 +40,22 @@ func TestRuntimeBindingIsParsedAndFormattedWithoutLosingEndpoints(t *testing.T) 
 		t.Fatalf("formatted binding=%#v, original=%#v", replayedBinding, binding)
 	}
 }
+
+func TestBindRemainsAnOrdinaryIdentifierOutsideBindingSyntax(t *testing.T) {
+	source := `package billing
+namespace billing
+
+entity bind id "billing://entity/bind"
+activity Use(bind) -> bind
+`
+	file, diagnostics := ParseFile("bind-identifier.gooo", source)
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("bind identifier diagnostics=%v file=%#v", diagnostics, file)
+	}
+	if len(file.Bindings) != 0 || len(file.Declarations) != 2 {
+		t.Fatalf("binding identifier was misclassified: declarations=%d bindings=%d", len(file.Declarations), len(file.Bindings))
+	}
+	if file.Declarations[0].(*EntityDecl).Name != "bind" || file.Declarations[1].(*ActivityDecl).Name != "Use" {
+		t.Fatalf("bind identifier declarations=%#v", file.Declarations)
+	}
+}

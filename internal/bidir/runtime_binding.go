@@ -81,7 +81,8 @@ func validateModelRuntimeBindings(model Model) error {
 		incoming[incomingKey] = struct{}{}
 		producerOutputs := modelRuntimePorts(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false)
 		consumerInputs := modelRuntimePorts(model, binding.Consumer.Activity.ID, PredicateUsed, true)
-		if len(producerOutputs) != 1 || len(consumerInputs) != 1 {
+		if modelRuntimePortArity(model, binding.Producer.Activity.ID, PredicateWasGeneratedBy, false) != 1 ||
+			modelRuntimePortArity(model, binding.Consumer.Activity.ID, PredicateUsed, true) != 1 {
 			return fmt.Errorf("runtime binding %d: %w: one input/output is required", index, semantic.ErrRuntimeBindingPort)
 		}
 		if producerOutputs[0] != consumerInputs[0] {
@@ -96,6 +97,61 @@ func validateModelRuntimeBindings(model Model) error {
 		return err
 	}
 	return nil
+}
+
+func modelRuntimePortArity(model Model, activity ID, predicate Predicate, input bool) int {
+	if input {
+		if arity, ok := model.activityInputArity[activity]; ok {
+			return arity
+		}
+	} else if arity, ok := model.activityOutputArity[activity]; ok {
+		return arity
+	}
+	return len(modelRuntimePorts(model, activity, predicate, input))
+}
+
+func validateDocumentRuntimeBindingArity(document Document, namespace string, binding RuntimeBinding, index int) error {
+	producer, producerFound, err := documentActivityForBinding(document, namespace, binding.Producer.Activity)
+	if err != nil {
+		return fmt.Errorf("runtime binding %d producer: %w", index, err)
+	}
+	consumer, consumerFound, err := documentActivityForBinding(document, namespace, binding.Consumer.Activity)
+	if err != nil {
+		return fmt.Errorf("runtime binding %d consumer: %w", index, err)
+	}
+	if producerFound && len(producer.Outputs) != 1 {
+		return fmt.Errorf("runtime binding %d: %w: one producer output is required", index, semantic.ErrRuntimeBindingPort)
+	}
+	if consumerFound && len(consumer.Inputs) != 1 {
+		return fmt.Errorf("runtime binding %d: %w: one consumer input is required", index, semantic.ErrRuntimeBindingPort)
+	}
+	return nil
+}
+
+func documentActivityForBinding(document Document, namespace string, reference Reference) (Declaration, bool, error) {
+	for _, declaration := range document.Declarations {
+		if declaration.Kind != ActivityKind {
+			continue
+		}
+		id, err := declarationIdentity(namespace, declaration)
+		if err != nil {
+			return Declaration{}, false, err
+		}
+		if reference.ID != "" {
+			if id == reference.ID {
+				return declaration, true, nil
+			}
+			continue
+		}
+		refNamespace := reference.Namespace
+		if refNamespace == "" {
+			refNamespace = namespace
+		}
+		if refNamespace == namespace && reference.Name == declaration.Name {
+			return declaration, true, nil
+		}
+	}
+	return Declaration{}, false, nil
 }
 
 func findModelNode(nodes []Node, id ID) (Node, bool) {

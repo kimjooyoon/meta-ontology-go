@@ -59,6 +59,9 @@ func lowerDocumentRuntimeBindings(ctx context.Context, ir *semantic.IR, document
 		if err := checkLowerContext(ctx); err != nil {
 			return err
 		}
+		if err := validateDocumentRuntimeBindingArity(document, namespace.String(), binding, index); err != nil {
+			return err
+		}
 		producer, err := resolveSemanticReference(binding.Producer.Activity, namespace, ids, names)
 		if err != nil {
 			return fmt.Errorf("runtime binding %d producer: %w", index, err)

@@ -23,6 +23,10 @@ type Model struct {
 	Relations       []Relation
 	RuntimeBindings []RuntimeBinding
 	Candidates      FactSet
+	// Activity port arities preserve source declaration cardinality that is
+	// otherwise lost when equal PROV edges are normalized into one relation.
+	activityInputArity  map[ID]int
+	activityOutputArity map[ID]int
 }
 
 // Delta is a normalized semantic change set.
