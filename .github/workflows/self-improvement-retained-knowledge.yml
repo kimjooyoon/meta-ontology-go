@@ -55,7 +55,7 @@ jobs:
       GOFLAGS: -mod=readonly
     steps:
       - name: Check out exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false

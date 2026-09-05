@@ -26,7 +26,7 @@ jobs:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       GOTOOLCHAIN: local
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 0

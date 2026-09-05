@@ -45,7 +45,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact publication contract
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
@@ -134,7 +134,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact validated merge
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.VALIDATED_SHA }}
           fetch-depth: 1

@@ -28,7 +28,7 @@ jobs:
       SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
       EVENT_NAME: ${{ github.event_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TOOLING_SHA }}
           persist-credentials: false
@@ -48,7 +48,7 @@ jobs:
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
 
       - name: Checkout producer-declared logical subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.SUBJECT_SHA }}
           persist-credentials: false

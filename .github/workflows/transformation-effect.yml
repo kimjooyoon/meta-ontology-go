@@ -45,7 +45,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -93,7 +93,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -181,7 +181,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out exact CI subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 1
@@ -263,7 +263,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -317,7 +317,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
@@ -383,7 +383,7 @@ jobs:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - name: Check out exact pull request head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -620,7 +620,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -839,7 +839,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -2236,7 +2236,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2329,7 +2329,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact transformation subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2384,7 +2384,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2449,7 +2449,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2520,13 +2520,13 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           path: gooo
       - name: Checkout pinned gomacro
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: cosmos72/gomacro
           ref: cf0d4bf32da393dbda97e3572f216731013ffa55
@@ -2849,7 +2849,7 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2893,7 +2893,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2922,7 +2922,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2960,7 +2960,7 @@ jobs:
       PROMOTION_OUTPUT: source-binding-promotion-output
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0

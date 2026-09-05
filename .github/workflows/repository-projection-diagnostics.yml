@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out exact subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
       - name: Set up Go 1.27

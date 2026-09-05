@@ -40,7 +40,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact candidate
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
@@ -83,7 +83,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact candidate
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
