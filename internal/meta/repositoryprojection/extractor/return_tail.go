@@ -231,12 +231,15 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			var failure Failure
 			if errors.As(observation.helperFailure, &failure) {
 				item.FailureReason = failure.Reason
-				item.FailureStage = failure.Stage
-				item.FailureStep = failure.Step
-				item.FailureUnknownClass = failure.UnknownClass
-				item.FailureNextOperation = failure.NextOperation
-				item.FailureBlockedBy = append([]string(nil), failure.BlockedBy...)
-				item.FailureDiagnostics = append([]string(nil), failure.Diagnostics...)
+				item.Failure = &PreflightFailureEvidence{
+					Stage:         failure.Stage,
+					Step:          failure.Step,
+					Reason:        failure.Reason,
+					UnknownClass:  failure.UnknownClass,
+					NextOperation: failure.NextOperation,
+					BlockedBy:     append([]string{}, failure.BlockedBy...),
+					Diagnostics:   append([]string{}, failure.Diagnostics...),
+				}
 			} else {
 				item.FailureReason = observation.helperFailure.Error()
 			}

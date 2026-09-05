@@ -53,13 +53,18 @@ type PreflightObservationEvidence struct {
 	FunctionStatus         string  `json:"function_status"`
 	HelperLines            *int    `json:"helper_lines,omitempty"`
 	HelperStatus           string  `json:"helper_status"`
-	FailureStage           string  `json:"failure_stage,omitempty"`
-	FailureStep            string  `json:"failure_step,omitempty"`
 	FailureReason          string  `json:"failure_reason,omitempty"`
-	FailureUnknownClass    string  `json:"failure_unknown_class,omitempty"`
-	FailureNextOperation   string  `json:"failure_next_operation,omitempty"`
-	FailureBlockedBy       []string `json:"failure_blocked_by,omitempty"`
-	FailureDiagnostics     []string `json:"failure_diagnostics,omitempty"`
+	Failure                *PreflightFailureEvidence `json:"failure,omitempty"`
+}
+
+type PreflightFailureEvidence struct {
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	UnknownClass  string   `json:"unknown_class"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+	Diagnostics   []string `json:"diagnostics"`
 }
 
 type ObligationEvidence struct {

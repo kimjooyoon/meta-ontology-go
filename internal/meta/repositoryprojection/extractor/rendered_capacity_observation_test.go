@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"encoding/json"
 	"errors"
 	"go/ast"
 	"go/parser"
@@ -79,6 +80,19 @@ func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 				if len(failure.Diagnostics) == 0 || !hasUnmeasuredDiagnostic {
 					t.Fatalf("failure=%+v, want unresolved measurement diagnostics", failure)
 				}
+				contract, contractErr := generation.ExtractFunctionInputContractEvidence()
+				if contractErr != nil {
+					t.Fatal(contractErr)
+				}
+				evidence := preflightObservationEvidence(contract, []renderedCapacityObservation{{helperFailure: failure}})
+				encoded, marshalErr := json.Marshal(evidence[0])
+				if marshalErr != nil {
+					t.Fatal(marshalErr)
+				}
+				var decoded PreflightObservationEvidence
+				if unmarshalErr := json.Unmarshal(encoded, &decoded); unmarshalErr != nil || decoded.Failure == nil || decoded.Failure.BlockedBy == nil || len(decoded.Failure.BlockedBy) != 0 {
+					t.Fatalf("round-tripped evidence=%+v error=%v, want explicit empty frontier", decoded, unmarshalErr)
+				}
 			},
 			render: func(_ *token.FileSet, _ *ast.File, _ []byte, _ *ast.FuncDecl) ([]byte, error) {
 				return nil, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", nil)
@@ -101,11 +115,19 @@ func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 					t.Fatal(contractErr)
 				}
 				evidence := preflightObservationEvidence(contract, selection.observations)
-				if len(evidence) != 2 || evidence[0].FailureStage != "observe-plan" || evidence[0].FailureStep != "render-capacity" ||
-					evidence[0].FailureReason != "PREFLIGHT_RENDER_FAILED" || evidence[0].FailureUnknownClass != "DIRECT_MISSING" ||
-					evidence[0].FailureNextOperation != "restore-render-evidence" || len(evidence[0].FailureBlockedBy) != 1 ||
-					evidence[0].FailureBlockedBy[0] != "rendered-capacity-helper" || len(evidence[0].FailureDiagnostics) != 1 {
+				if len(evidence) != 2 || evidence[0].Failure == nil || evidence[0].Failure.Stage != "observe-plan" || evidence[0].Failure.Step != "render-capacity" ||
+					evidence[0].Failure.Reason != "PREFLIGHT_RENDER_FAILED" || evidence[0].Failure.UnknownClass != "DIRECT_MISSING" ||
+					evidence[0].Failure.NextOperation != "restore-render-evidence" || len(evidence[0].Failure.BlockedBy) != 1 ||
+					evidence[0].Failure.BlockedBy[0] != "rendered-capacity-helper" || len(evidence[0].Failure.Diagnostics) != 1 {
 					t.Fatalf("evidence=%+v, want structured unresolved failure retention", evidence)
+				}
+				encoded, marshalErr := json.Marshal(evidence[0])
+				if marshalErr != nil {
+					t.Fatal(marshalErr)
+				}
+				var decoded PreflightObservationEvidence
+				if unmarshalErr := json.Unmarshal(encoded, &decoded); unmarshalErr != nil || decoded.Failure == nil || len(decoded.Failure.BlockedBy) != 1 || decoded.Failure.BlockedBy[0] != "rendered-capacity-helper" {
+					t.Fatalf("round-tripped evidence=%+v error=%v, want retained nonempty frontier", decoded, unmarshalErr)
 				}
 			},
 			render: func(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) ([]byte, error) {
