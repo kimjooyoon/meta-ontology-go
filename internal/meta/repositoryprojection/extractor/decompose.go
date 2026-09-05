@@ -121,7 +121,15 @@ func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byt
 		end:      fset.Position(function.End()).Offset,
 		identity: functionIdentity(fset, function),
 	}}
-	return renderSelectedHelper(fset, file, source, selected, list)
+	_, helperImports, renderErr := renderImports(fset, file, []ast.Decl{function}, list, false)
+	if renderErr != nil {
+		return nil, renderErr
+	}
+	helper, err := renderSelectedHelper(fset, file, source, selected, helperImports)
+	if err != nil {
+		return nil, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	return helper, nil
 }
 
 func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
