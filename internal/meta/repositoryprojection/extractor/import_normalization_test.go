@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -52,9 +53,32 @@ func TestImportNormalizationPreservationRegressionCohort(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			group := firstImportGroup(t, tc.source)
-			if eligiblePlainImportGroup(group, importSpecsForGroup(group)) {
+			file := importFixtureFile(t, tc.source)
+			group := firstImportGroupInFile(t, file)
+			if eligiblePlainImportGroup(file, group, importSpecsForGroup(group)) {
 				t.Fatal("unsupported import group was admitted to normalization")
+			}
+		})
+	}
+}
+
+func TestImportNormalizationCorrectionRegressionCohort(t *testing.T) {
+	cases := []struct {
+		name   string
+		source string
+	}{
+		{name: "detached-comment-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t// detached import note\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n"},
+		{name: "detached-directive-preserves-grouped-rendering", source: "package p\n\nimport (\n\t\"encoding/json\"\n\n\t//go:custom-import-directive\n\t\"strconv\"\n)\n\nfunc F() {\n\tvar _ json.RawMessage\n\t_ = strconv.IntSize\n}\n"},
+		{name: "raw-string-c-preserves-grouped-rendering", source: "package p\n\nimport (\n\t`C`\n\t\"strconv\"\n)\n\nfunc F() {\n\t_ = C.symbol\n\t_ = strconv.IntSize\n}\n"},
+	}
+	if len(cases) != 3 {
+		t.Fatalf("import normalization correction cohort denominator=%d, want 3", len(cases))
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			helper, err := renderImportFixtureWithRawImportList(t, tc.source, "F")
+			if err != nil || !strings.Contains(string(helper), "import (\n") {
+				t.Fatalf("preservation renderer=%q err=%v", helper, err)
 			}
 		})
 	}
@@ -134,13 +158,49 @@ func renderImportFixture(t *testing.T, source, name string) ([]byte, error) {
 	return nil, nil
 }
 
-func firstImportGroup(t *testing.T, source string) *ast.GenDecl {
+func renderImportFixtureWithRawImportList(t *testing.T, source, name string) ([]byte, error) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "fixture.go", []byte(source), parser.ParseComments)
+	if err != nil {
+		return nil, err
+	}
+	group := firstImportGroupInFile(t, file)
+	list := make([]importSpec, 0, len(group.Specs))
+	for _, raw := range group.Specs {
+		spec := raw.(*ast.ImportSpec)
+		path, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			path = spec.Path.Value
+		}
+		importedName := ""
+		if spec.Name != nil {
+			importedName = spec.Name.Name
+		}
+		list = append(list, importSpec{group: group, spec: spec, path: path, name: importedName})
+	}
+	for _, declaration := range file.Decls {
+		function, ok := declaration.(*ast.FuncDecl)
+		if ok && function.Name != nil && function.Name.Name == name {
+			_, helper, renderErr := renderImports(fset, file, []ast.Decl{function}, list, false)
+			return helper, renderErr
+		}
+	}
+	return nil, nil
+}
+
+func importFixtureFile(t *testing.T, source string) *ast.File {
 	t.Helper()
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "fixture.go", []byte(source), parser.ParseComments)
 	if err != nil {
 		t.Fatal(err)
 	}
+	return file
+}
+
+func firstImportGroupInFile(t *testing.T, file *ast.File) *ast.GenDecl {
+	t.Helper()
 	for _, declaration := range file.Decls {
 		group, ok := declaration.(*ast.GenDecl)
 		if ok && group.Tok == token.IMPORT {
