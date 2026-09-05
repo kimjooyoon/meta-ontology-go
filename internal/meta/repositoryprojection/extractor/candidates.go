@@ -58,7 +58,7 @@ func fallbackIdentity(node ast.Decl) (string, bool) {
 func identityOf(fset *token.FileSet, node ast.Decl) (string, bool) {
 	switch d := node.(type) {
 	case *ast.FuncDecl:
-		if d.Name == nil || d.Name.Name == "init" {
+		if d.Name == nil || d.Name.Name == "init" || d.Name.Name == "_" {
 			return "", false
 		}
 		if d.Recv == nil {
