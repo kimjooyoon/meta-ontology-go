@@ -292,7 +292,12 @@ func renderSuffixBindings(objects map[types.Object]bool, fset *token.FileSet, in
 		})
 		typeExpr, err := parser.ParseExpr(text)
 		if err != nil {
-			return nil, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
+			return nil, failWithDiagnostics("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", []string{
+				"evidence=type-string",
+				"binding=" + object.Name(),
+				"type-string=" + text,
+				"type-string-parse-error=" + err.Error(),
+			})
 		}
 		result = append(result, suffixBinding{object: object, name: object.Name(), type_: typeExpr, pos: object.Pos()})
 	}

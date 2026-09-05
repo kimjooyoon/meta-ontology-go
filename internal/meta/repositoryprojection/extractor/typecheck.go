@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -23,10 +24,31 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 		Scopes:     map[ast.Node]*types.Scope{},
 		Selections: map[*ast.SelectorExpr]*types.Selection{},
 	}
-	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
+	typeErrors := make([]error, 0)
+	configuration := types.Config{Importer: newModuleImporter(root), Error: func(err error) {
+		if err != nil {
+			typeErrors = append(typeErrors, err)
+		}
+	}}
 	checked, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, info)
-	if err != nil && !sufficientFunctionTypeEvidence(function, info) {
-		return typeEvidence{}, fail("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
+	if err != nil {
+		unresolved := unresolvedFunctionIdentifiers(function, info)
+		if len(unresolved) != 0 {
+			diagnostics := []string{
+				"evidence=types-check",
+				"go-types-error=" + normalizeTypeDiagnostic(root, err),
+				"unresolved-identifiers=" + strings.Join(unresolved, ","),
+			}
+			if len(typeErrors) != 0 {
+				errors := make([]string, 0, len(typeErrors))
+				for _, typeError := range typeErrors {
+					errors = append(errors, normalizeTypeDiagnostic(root, typeError))
+				}
+				sort.Strings(errors)
+				diagnostics = append(diagnostics, "go-types-callback-errors="+strings.Join(errors, " || "))
+			}
+			return typeEvidence{}, failWithDiagnostics("derive-recipe", "type-check-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", diagnostics)
+		}
 	}
 	functions := make(map[*types.Func]*ast.FuncDecl)
 	for _, packageFile := range files {
@@ -44,6 +66,10 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 }
 
 func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bool {
+	return len(unresolvedFunctionIdentifiers(function, info)) == 0
+}
+
+func unresolvedFunctionIdentifiers(function *ast.FuncDecl, info *types.Info) []string {
 	packageSelectors := make(map[*ast.Ident]bool)
 	ast.Inspect(function.Body, func(node ast.Node) bool {
 		selector, ok := node.(*ast.SelectorExpr)
@@ -59,17 +85,38 @@ func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bo
 		}
 		return true
 	})
-	sufficient := true
+	unresolved := make(map[string]bool)
 	ast.Inspect(function.Body, func(node ast.Node) bool {
 		identifier, ok := node.(*ast.Ident)
 		if !ok || identifier.Name == "_" || packageSelectors[identifier] ||
 			info.Defs[identifier] != nil || info.Uses[identifier] != nil {
 			return true
 		}
-		sufficient = false
-		return false
+		unresolved[identifier.Name] = true
+		return true
 	})
-	return sufficient
+	result := make([]string, 0, len(unresolved))
+	for identifier := range unresolved {
+		result = append(result, identifier)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func normalizeTypeDiagnostic(root string, err error) string {
+	if err == nil {
+		return "<nil>"
+	}
+	text := strings.TrimSpace(err.Error())
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+	text = strings.ReplaceAll(text, "\\", "/")
+	text = strings.ReplaceAll(text, "\n", "\\n")
+	workspace := strings.TrimRight(filepath.ToSlash(filepath.Clean(root)), "/")
+	if workspace != "." && workspace != "" {
+		text = strings.ReplaceAll(text, workspace+"/", "<workspace>/")
+	}
+	return text
 }
 
 func packageTypeFiles(root, logical string, fset *token.FileSet, target *ast.File) ([]*ast.File, error) {
