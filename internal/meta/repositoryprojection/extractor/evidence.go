@@ -26,9 +26,9 @@ type StrategyEvidence struct {
 	RenderedOuterHelperLines int                          `json:"rendered_outer_helper_lines"`
 	Obligations              []ObligationEvidence         `json:"obligations"`
 	ContractObligations      []ContractObligationEvidence `json:"contract_obligations"`
-	ProofStages              []ProofStageEvidence  `json:"proof_stages"`
-	FinalGeneratedBytes      int                    `json:"final_generated_bytes"`
-	FinalGeneratedUnits      int                    `json:"final_generated_units"`
+	ProofStages              []ProofStageEvidence         `json:"proof_stages"`
+	FinalGeneratedBytes      int                          `json:"final_generated_bytes"`
+	FinalGeneratedUnits      int                          `json:"final_generated_units"`
 }
 
 type ObligationEvidence struct {

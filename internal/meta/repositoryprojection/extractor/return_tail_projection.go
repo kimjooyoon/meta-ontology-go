@@ -25,10 +25,10 @@ func finalizeReturnTailEvidence(root, logical string, generated map[string][]byt
 		}
 		stages := append([]ProofStageEvidence{}, item.ProofStages...)
 		chain := returnTailProofChain{
-			contract: append([]ContractObligationEvidence{}, item.ContractObligations...),
-			sourceDigest: stages[0].SourceDigest,
+			contract:        append([]ContractObligationEvidence{}, item.ContractObligations...),
+			sourceDigest:    stages[0].SourceDigest,
 			candidateDigest: proofDigest(finalPayload),
-			stages: stages,
+			stages:          stages,
 		}
 		if err := chain.consume(len(stages), returnTailPredicateResult{Status: "PASS", Payload: finalPayload, Detail: fmt.Sprintf("final generated package type-check passed; runtime conformance is not asserted (units=%d)", len(generated))}); err != nil {
 			return nil, err

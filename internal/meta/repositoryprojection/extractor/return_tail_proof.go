@@ -8,10 +8,10 @@ import (
 )
 
 type returnTailProofChain struct {
-	contract      []ContractObligationEvidence
-	sourceDigest  string
+	contract        []ContractObligationEvidence
+	sourceDigest    string
 	candidateDigest string
-	stages        []ProofStageEvidence
+	stages          []ProofStageEvidence
 }
 
 type returnTailPredicateResult struct {
@@ -22,10 +22,10 @@ type returnTailPredicateResult struct {
 
 func newReturnTailProofChain(contract []ContractObligationEvidence, source, candidate []byte) returnTailProofChain {
 	return returnTailProofChain{
-		contract: append([]ContractObligationEvidence{}, contract...),
-		sourceDigest: proofDigest(source),
+		contract:        append([]ContractObligationEvidence{}, contract...),
+		sourceDigest:    proofDigest(source),
 		candidateDigest: proofDigest(candidate),
-		stages: make([]ProofStageEvidence, 0, len(contract)),
+		stages:          make([]ProofStageEvidence, 0, len(contract)),
 	}
 }
 

@@ -30,7 +30,7 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 		t.Fatalf("named regression denominator=%d, want 9", len(cases))
 	}
 	for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			if tc.kind == "contract" {
 				values := returnTailContractBaseline()
 				values[1].InputEntity = "FunctionInput"
