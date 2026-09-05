@@ -545,6 +545,7 @@ func reportFailureOperationError(failures []extractorFailureRecord) (*operationE
 		}
 		candidate := newOperationError(failure.Stage, failure.Step, failure.Reason, failureClass(failure), failure.NextOperation)
 		candidate.blockedBy = append([]string{}, failure.BlockedBy...)
+		candidate.diagnostics = append([]string(nil), failure.Diagnostics...)
 		if failure.Decision == "REFUTED" {
 			return candidate, true
 		}

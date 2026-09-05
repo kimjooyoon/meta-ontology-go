@@ -90,6 +90,9 @@ func printObservationSummary(bundle generation.OperationObservationBundle) {
 			failure.Executor.RawStderrDigest,
 			failure.Executor.StderrDigest,
 		)
+		for _, diagnostic := range failure.Diagnostics {
+			fmt.Printf("operation failure diagnostic: action=%s detail=%q\n", failure.ActionIndicatorID, diagnostic)
+		}
 		for _, evidence := range failure.FailureEvidence {
 			fmt.Printf(
 				"operation failure evidence: action=%s indicator_id=%s decision=%s observed=%d expected=%d counterexample=%s\n",

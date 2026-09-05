@@ -68,6 +68,7 @@ type ObservationFailure struct {
 	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
 	Counterexample    string                       `json:"counterexample,omitempty"`
 	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
+	Diagnostics       []string                     `json:"diagnostics,omitempty"`
 	Executor          ProcessObservation           `json:"executor_observation"`
 }
 
