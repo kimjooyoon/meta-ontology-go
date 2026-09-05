@@ -176,12 +176,42 @@ jobs:
           cp "$source_input/source-metrics.json" "$execution_input/source-metrics.json"
           real_go="$(command -v go)"
           printf '%s\n' "$real_go" > "$root/real-go-path.txt"
+          plan_digest="sha256:$(sha256sum "$source_input/self-improvement-plan.json" | awk '{print $1}')"
+          action_indicator_id="$(jq -r '.action_indicator_id' "$root/source-binding.json")"
+          action_subject="$(jq -r '.action_subject' "$root/source-binding.json")"
+          action_executor="$(jq -r '.action_executor // "bootstrap/function-extractor"' "$root/source-binding.json")"
+          helper_binary="$root/function-extractor-diagnostic-helper"
+          "$real_go" build -o "$helper_binary" ./bootstrap/function-extractor
+          chmod 700 "$helper_binary"
+          helper_binary_sha256="sha256:$(sha256sum "$helper_binary" | awk '{print $1}')"
+          build_go_version="$("$real_go" version 2>&1)"
+          jq -n \
+            --arg schema 'gooo/function-extractor-diagnostic-build/v1' \
+            --arg source_sha "$SUBJECT_SHA" \
+            --arg binary_sha256 "$helper_binary_sha256" \
+            --arg go_version "$build_go_version" \
+            '{schema:$schema,diagnostic_only:true,build_source_sha:$source_sha,binary_sha256:$binary_sha256,go_version:$go_version}' \
+            > "$root/diagnostic-build.json"
 
-          cat > "$shim_dir/go" <<'SHIM'
+          {
+          cat <<'SHIM'
           #!/usr/bin/env bash
           set -Eeuo pipefail
           export LC_ALL=C
-
+          SHIM
+          printf 'DIAGNOSTIC_REAL_GO=%q\n' "$real_go"
+          printf 'DIAGNOSTIC_CAPTURE_ROOT=%q\n' "$capture_root"
+          printf 'DIAGNOSTIC_MAX_CAPTURE_BYTES=%q\n' "$MAX_CAPTURE_BYTES"
+          printf 'DIAGNOSTIC_HELPER_TIMEOUT_SECONDS=%q\n' "$HELPER_TIMEOUT_SECONDS"
+          printf 'DIAGNOSTIC_SOURCE_SHA=%q\n' "$SUBJECT_SHA"
+          printf 'DIAGNOSTIC_PLAN_DIGEST=%q\n' "$plan_digest"
+          printf 'DIAGNOSTIC_ACTION_INDICATOR_ID=%q\n' "$action_indicator_id"
+          printf 'DIAGNOSTIC_ACTION_SUBJECT=%q\n' "$action_subject"
+          printf 'DIAGNOSTIC_ACTION_EXECUTOR=%q\n' "$action_executor"
+          printf 'DIAGNOSTIC_HELPER_BINARY=%q\n' "$helper_binary"
+          printf 'DIAGNOSTIC_BUILD_HELPER_SHA256=%q\n' "$helper_binary_sha256"
+          printf 'DIAGNOSTIC_BUILD_GO_VERSION=%q\n' "$build_go_version"
+          cat <<'SHIM'
           args=("$@")
           if (( ${#args[@]} < 2 )) || [[ "${args[0]}" != "run" || "${args[1]}" != "./bootstrap/function-extractor" ]]; then
             exec "$DIAGNOSTIC_REAL_GO" "${args[@]}"
@@ -254,21 +284,31 @@ jobs:
 
           set +e
           GOTRACEBACK=system /usr/bin/timeout --verbose --signal=QUIT --kill-after=5s "${DIAGNOSTIC_HELPER_TIMEOUT_SECONDS}s" \
-            "$DIAGNOSTIC_REAL_GO" "${args[@]}" > "$stdout_fifo" 2> "$stderr_fifo"
-          helper_exit_code=$?
+            "$DIAGNOSTIC_HELPER_BINARY" "${args[@]:2}" > "$stdout_fifo" 2> "$stderr_fifo"
+          wrapper_exit_code=$?
           set -e
           wait "$stdout_capture_pid"
           wait "$stderr_capture_pid"
           rm -f "$stdout_fifo" "$stderr_fifo"
 
+          helper_exit_code="$wrapper_exit_code"
+          helper_exit_code_source='built diagnostic helper process exit status'
+          if [[ "$wrapper_exit_code" -eq 124 || "$wrapper_exit_code" -eq 137 ]]; then
+            helper_exit_code=null
+            helper_exit_code_source='GNU timeout diagnostic wrapper exit status; helper process status unavailable'
+          fi
           stack_bytes=0
           stack_observation='UNKNOWN'
+          helper_frame_observation='UNKNOWN'
           if grep -Eq '^(SIGQUIT: quit|goroutine [0-9]+ )' "$attempt_dir/stderr.txt"; then
             stack_bytes="$(awk 'BEGIN {seen=0; total=0} /^(SIGQUIT: quit|goroutine [0-9]+ )/ {seen=1} seen {total += length($0)+1} END {print total+0}' "$attempt_dir/stderr.txt")"
             stack_observation='OBSERVED_IN_BOUNDED_CAPTURE'
           fi
-          go_version="$($DIAGNOSTIC_REAL_GO version 2>&1)"
+          if grep -Eq 'bootstrap/function-extractor|function-extractor' "$attempt_dir/stderr.txt"; then
+            helper_frame_observation='OBSERVED_IN_BOUNDED_CAPTURE'
+          fi
           jq -cn --args '$ARGS.positional' -- "${args[@]}" > "$attempt_dir/argv.json"
+          jq -cn --args '$ARGS.positional' -- "$DIAGNOSTIC_HELPER_BINARY" "${args[@]:2}" > "$attempt_dir/actual-argv.json"
           jq -n \
             --arg schema 'gooo/function-extractor-diagnostic-receipt/v1' \
             --arg source_sha "$DIAGNOSTIC_SOURCE_SHA" \
@@ -276,6 +316,11 @@ jobs:
             --arg action_indicator_id "$DIAGNOSTIC_ACTION_INDICATOR_ID" \
             --arg action_subject "$DIAGNOSTIC_ACTION_SUBJECT" \
             --arg action_executor "$DIAGNOSTIC_ACTION_EXECUTOR" \
+            --arg binary_sha256 "$DIAGNOSTIC_BUILD_HELPER_SHA256" \
+            --arg build_source_sha "$DIAGNOSTIC_SOURCE_SHA" \
+            --arg build_go_version "$DIAGNOSTIC_BUILD_GO_VERSION" \
+            --arg helper_exit_code_source "$helper_exit_code_source" \
+            --argjson wrapper_exit_code "$wrapper_exit_code" \
             --argjson helper_exit_code "$helper_exit_code" \
             --argjson attempt_sequence "$attempt_sequence" \
             --argjson stdout_bytes "$(cat "$attempt_dir/stdout-bytes.txt")" \
@@ -283,33 +328,21 @@ jobs:
             --argjson captured_stdout_bytes "$(wc -c < "$attempt_dir/stdout.txt" | tr -d '[:space:]')" \
             --argjson captured_stderr_bytes "$(wc -c < "$attempt_dir/stderr.txt" | tr -d '[:space:]')" \
             --argjson stack_bytes "$stack_bytes" \
-            --rawfile go_version <(printf '%s\n' "$go_version") \
             --rawfile stdout_truncated "$attempt_dir/stdout-truncated.txt" \
             --rawfile stderr_truncated "$attempt_dir/stderr-truncated.txt" \
             --arg stack_observation "$stack_observation" \
+            --arg helper_frame_observation "$helper_frame_observation" \
             --arg timeout_seconds "$DIAGNOSTIC_HELPER_TIMEOUT_SECONDS" \
             --argjson argv "$(cat "$attempt_dir/argv.json")" \
-            '{schema:$schema,diagnostic_only:true,source_sha:$source_sha,plan_digest:$plan_digest,action_indicator_id:$action_indicator_id,action_subject:$action_subject,action_executor:$action_executor,attempt_sequence:$attempt_sequence,argv:$argv,go_version:($go_version|rtrimstr("\n")),timeout_seconds:($timeout_seconds|tonumber),helper_exit_code:$helper_exit_code,exit_code_source:"diagnostic helper observation",stdout_bytes:$stdout_bytes,stderr_bytes:$stderr_bytes,captured_stdout_bytes:$captured_stdout_bytes,captured_stderr_bytes:$captured_stderr_bytes,stdout_truncated:($stdout_truncated|rtrimstr("\n")|test("true")),stderr_truncated:($stderr_truncated|rtrimstr("\n")|test("true")),stack_bytes:$stack_bytes,stack_observation:$stack_observation}' \
+            --argjson actual_argv "$(cat "$attempt_dir/actual-argv.json")" \
+            '{schema:$schema,diagnostic_only:true,source_sha:$source_sha,plan_digest:$plan_digest,action_indicator_id:$action_indicator_id,action_subject:$action_subject,action_executor:$action_executor,attempt_sequence:$attempt_sequence,requested_argv:$argv,actual_argv:$actual_argv,binary_sha256:$binary_sha256,build_source_sha:$build_source_sha,build_go_version:$build_go_version,timeout_seconds:($timeout_seconds|tonumber),wrapper_exit_code:$wrapper_exit_code,helper_exit_code:$helper_exit_code,exit_code_source:$helper_exit_code_source,stdout_bytes:$stdout_bytes,stderr_bytes:$stderr_bytes,captured_stdout_bytes:$captured_stdout_bytes,captured_stderr_bytes:$captured_stderr_bytes,stdout_truncated:($stdout_truncated|rtrimstr("\n")|test("true")),stderr_truncated:($stderr_truncated|rtrimstr("\n")|test("true")),stack_bytes:$stack_bytes,stack_observation:$stack_observation,helper_frame_observation:$helper_frame_observation}' \
             > "$attempt_dir/receipt.json"
           # The helper's original stdout/stderr were forwarded by capture_stream;
-          # return its original status to the meta-execution caller unchanged.
-          exit "$helper_exit_code"
+          # return the GNU timeout wrapper status to the meta-execution caller.
+          exit "$wrapper_exit_code"
           SHIM
+          } > "$shim_dir/go"
           chmod 700 "$shim_dir/go"
-
-          plan_digest="sha256:$(sha256sum "$source_input/self-improvement-plan.json" | awk '{print $1}')"
-          action_indicator_id="$(jq -r '.action_indicator_id' "$root/source-binding.json")"
-          action_subject="$(jq -r '.action_subject' "$root/source-binding.json")"
-          action_executor="$(jq -r '.action_executor // "bootstrap/function-extractor"' "$root/source-binding.json")"
-          export DIAGNOSTIC_REAL_GO="$real_go"
-          export DIAGNOSTIC_CAPTURE_ROOT="$capture_root"
-          export DIAGNOSTIC_MAX_CAPTURE_BYTES="$MAX_CAPTURE_BYTES"
-          export DIAGNOSTIC_HELPER_TIMEOUT_SECONDS="$HELPER_TIMEOUT_SECONDS"
-          export DIAGNOSTIC_SOURCE_SHA="$SUBJECT_SHA"
-          export DIAGNOSTIC_PLAN_DIGEST="$plan_digest"
-          export DIAGNOSTIC_ACTION_INDICATOR_ID="$action_indicator_id"
-          export DIAGNOSTIC_ACTION_SUBJECT="$action_subject"
-          export DIAGNOSTIC_ACTION_EXECUTOR="$action_executor"
           export METRICS_DIR="$execution_input"
           export PATH="$shim_dir:$PATH"
 
@@ -324,6 +357,7 @@ jobs:
           meta_exit_code=$?
           set -e
           printf '%s\n' "$meta_exit_code" > "$root/meta-execution-exit-code.txt"
+          printf '%s\n' 'GNU timeout diagnostic wrapper exit status' > "$root/meta-execution-exit-code-source.txt"
 
           for stream_name in stdout stderr; do
             stream_file="$meta_dir/$stream_name.txt"
@@ -355,10 +389,15 @@ jobs:
           source_sha="$SUBJECT_SHA"
           workflow_implementation_sha="$GITHUB_SHA"
           meta_exit_code_file="$root/meta-execution-exit-code.txt"
+          meta_exit_code_source_file="$root/meta-execution-exit-code-source.txt"
           meta_exit_code=null
+          meta_exit_code_source='GNU timeout diagnostic wrapper exit status'
           if [[ -s "$meta_exit_code_file" ]]; then
             meta_exit_code="$(tr -d '[:space:]' < "$meta_exit_code_file")"
             [[ "$meta_exit_code" =~ ^[0-9]+$ ]]
+          fi
+          if [[ -s "$meta_exit_code_source_file" ]]; then
+            meta_exit_code_source="$(cat "$meta_exit_code_source_file")"
           fi
 
           shopt -s nullglob
@@ -390,6 +429,11 @@ jobs:
               unknown_class='STACK_UNAVAILABLE'
               next_operation='rerun diagnostic sampling with stack evidence acquisition'
               blocked_by='stack evidence acquisition'
+            elif jq -e 'any(.[]; .stack_observation == "OBSERVED_IN_BOUNDED_CAPTURE" and .helper_frame_observation != "OBSERVED_IN_BOUNDED_CAPTURE")' <<< "$helper_attempts" >/dev/null; then
+              reason='Go stack was observed without an attributable function-extractor frame'
+              unknown_class='HELPER_FRAME_UNATTRIBUTED'
+              next_operation='rerun diagnostic sampling with helper-frame attribution'
+              blocked_by='helper frame attribution'
             fi
           fi
 
@@ -407,11 +451,12 @@ jobs:
             --arg blocked_by "$blocked_by" \
             --arg resolve_outcome "$RESOLVE_OUTCOME" \
             --arg sampling_outcome "$SAMPLING_OUTCOME" \
+            --arg meta_exit_code_source "$meta_exit_code_source" \
             --argjson meta_exit_code "$meta_exit_code" \
             --argjson helper_timeout_seconds "$HELPER_TIMEOUT_SECONDS" \
             --argjson meta_timeout_seconds "$META_EXECUTION_TIMEOUT_SECONDS" \
             --argjson helper_attempts "$helper_attempts" \
-            '{schema:$schema,diagnostic_only:true,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",source_sha:$source_sha,workflow_implementation_sha:$workflow_implementation_sha,source_artifact_id:$source_artifact_id,source_artifact_digest:$source_artifact_digest,stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by,resolve_outcome:$resolve_outcome,sampling_outcome:$sampling_outcome,meta_execution_exit_code:$meta_exit_code,helper_timeout_seconds:$helper_timeout_seconds,meta_execution_timeout_seconds:$meta_timeout_seconds,helper_attempts:$helper_attempts,normal_closed:false,promotion_authorized:false}' \
+            '{schema:$schema,diagnostic_only:true,decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",source_sha:$source_sha,workflow_implementation_sha:$workflow_implementation_sha,source_artifact_id:$source_artifact_id,source_artifact_digest:$source_artifact_digest,stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by,resolve_outcome:$resolve_outcome,sampling_outcome:$sampling_outcome,meta_execution_exit_code:$meta_exit_code,meta_execution_exit_code_source:$meta_exit_code_source,helper_timeout_seconds:$helper_timeout_seconds,meta_execution_timeout_seconds:$meta_timeout_seconds,helper_attempts:$helper_attempts,normal_closed:false,promotion_authorized:false}' \
             > "$summary"
           jq -e \
             --arg sha "$source_sha" \
@@ -434,8 +479,10 @@ jobs:
             ${{ runner.temp }}/function-extractor-diagnostic/source-artifact-members.txt
             ${{ runner.temp }}/function-extractor-diagnostic/source-repository-before.txt
             ${{ runner.temp }}/function-extractor-diagnostic/source-binding.json
+            ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-build.json
             ${{ runner.temp }}/function-extractor-diagnostic/plan-digest.txt
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution-exit-code.txt
+            ${{ runner.temp }}/function-extractor-diagnostic/meta-execution-exit-code-source.txt
             ${{ runner.temp }}/function-extractor-diagnostic/diagnostic-summary.json
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution/stdout.txt
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution/stderr.txt
@@ -445,6 +492,7 @@ jobs:
             ${{ runner.temp }}/function-extractor-diagnostic/meta-execution/stderr-truncated.txt
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/receipt.json
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/argv.json
+            ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/actual-argv.json
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stdout.txt
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stderr.txt
             ${{ runner.temp }}/function-extractor-diagnostic/helper-captures/attempt-*/stdout-bytes.txt
