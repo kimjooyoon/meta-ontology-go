@@ -15,7 +15,7 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 		positive bool
 	}{
 		{name: "positive terminal error tail", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
-		{name: "positive early return is preserved", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) == 0 {\n\t\treturn nil\n\t}\n\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
+		{name: "positive early return is preserved", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) == 0 {\n\t\treturn errorSentinel()\n\t}\n\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: true},
 		{name: "named result", source: returnTailFixture("func F(values map[string]struct{}) (err error) {\n", "\tif len(values) != 0 {\n\t\treturn err\n\t}\n\treturn err\n"), positive: false},
 		{name: "method", source: returnTailFixture("func (T) F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n"), positive: false},
 		{name: "go statement", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgo func() {}()\n\treturn nil\n"), positive: false},
@@ -48,8 +48,15 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				if len(result.Evidence[0].Obligations) != len(returnTailObligations) {
 					t.Fatalf("obligations=%+v", result.Evidence[0].Obligations)
 				}
+				if result.Evidence[0].BeforeFunctionLines <= functionLineLimit || result.Evidence[0].AfterFunctionLines > functionLineLimit ||
+					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit {
+					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
+				}
 				if !strings.Contains(string(result.Generated["x.go"]), "return FExtractedReturnTail") {
 					t.Fatal("outer function did not use a return-valued helper")
+				}
+				if tc.name == "positive early return is preserved" && !strings.Contains(string(result.Generated["x.go"]), "return errorSentinel()") {
+					t.Fatal("outer early return was not preserved")
 				}
 				return
 			}
@@ -65,5 +72,5 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 }
 
 func returnTailFixture(header, tail string) string {
-	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return nil }\n\ntype T struct{}\n"
+	return "package p\n\n" + header + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\ntype T struct{}\n"
 }

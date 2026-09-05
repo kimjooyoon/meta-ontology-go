@@ -38,12 +38,12 @@ var nativeOperationInputs = []nativeOperationInput{
 }
 
 var nativeOperationObligations = []nativeOperationObligation{
-	{Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
-	{Name: "control-flow", Activity: "ProveControlFlow", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
-	{Name: "free-bindings", Activity: "ProveFreeBindings", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
-	{Name: "callee-effects", Activity: "ProveCalleeEffects", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
-	{Name: "rendered-capacity", Activity: "ProveRenderedCapacity", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
-	{Name: "projected-conformance", Activity: "ProveProjectedConformance", InputEntity: "FunctionInput", OutputEntity: "OperationResult"},
+	{Name: "return-shape", Activity: "ProveReturnShape", InputEntity: "FunctionInput", OutputEntity: "ReturnShapeObligation"},
+	{Name: "control-flow", Activity: "ProveControlFlow", InputEntity: "ReturnShapeObligation", OutputEntity: "ControlFlowObligation"},
+	{Name: "free-bindings", Activity: "ProveFreeBindings", InputEntity: "ControlFlowObligation", OutputEntity: "FreeBindingsObligation"},
+	{Name: "callee-effects", Activity: "ProveCalleeEffects", InputEntity: "FreeBindingsObligation", OutputEntity: "CalleeEffectsObligation"},
+	{Name: "rendered-capacity", Activity: "ProveRenderedCapacity", InputEntity: "CalleeEffectsObligation", OutputEntity: "RenderedCapacityObligation"},
+	{Name: "projected-conformance", Activity: "ProveProjectedConformance", InputEntity: "RenderedCapacityObligation", OutputEntity: "ProjectedConformanceObligation"},
 }
 
 type operationInputContractBinding struct {
@@ -191,8 +191,8 @@ func parseOperationInputContract(raw []byte) (operationInputContract, error) {
 		if !ok || len(activity.Inputs) != 1 || activity.Inputs[0].Name != obligation.InputEntity || activity.Output != obligation.OutputEntity {
 			return operationInputContract{}, fmt.Errorf("operation input contract obligation %q signature is not exact", obligation.Name)
 		}
-		if inputKind, inputKnown := inputKinds[activity.Inputs[0].Name]; !inputKnown || inputKind != sourcepolicy.SubjectKindFunction {
-			return operationInputContract{}, fmt.Errorf("operation input contract obligation %q input kind is not FUNCTION", obligation.Name)
+		if _, inputKnown := entityIDs[activity.Inputs[0].Name]; !inputKnown {
+			return operationInputContract{}, fmt.Errorf("operation input contract obligation %q input entity is not exact", obligation.Name)
 		}
 		activityNode, ok := ir.Graph.NodeByName(ir.Namespace, obligation.Activity)
 		if !ok || activityNode.Kind != semantic.Activity {

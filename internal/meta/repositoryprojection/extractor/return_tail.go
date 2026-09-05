@@ -48,7 +48,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 	}
 
 	for startIndex := len(statements) - 1; startIndex >= 0; startIndex-- {
-		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, existing, startIndex)
+		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
 				continue
@@ -73,7 +73,7 @@ func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
 	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
 }
 
-func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, existing map[string]bool, startIndex int) (*returnTailCandidate, error) {
+func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int) (*returnTailCandidate, error) {
 	statements := function.Body.List[startIndex:]
 	if len(statements) == 0 {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
@@ -85,8 +85,8 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err != nil {
 		return nil, err
 	}
-	if hasReturnTailBindingHazard(function.Body, statements, bindings, evidence.info) {
-		return nil, returnTailContradiction(obligationFreeBindings, "terminal tail has a stale-copy, rebinding, address, or closure hazard")
+	if err := hasReturnTailBindingHazard(function.Body, statements, bindings, evidence.info); err != nil {
+		return nil, err
 	}
 	if err := returnTailCalleeEffects(statements, evidence); err != nil {
 		return nil, err
@@ -120,12 +120,16 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if !ok || afterFunctionLines > functionLineLimit {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "outer function remains over the declaration limit")
 	}
-	renderedHelper, err := renderedFunctionHelper(formatted, function.Name.Name)
+	beforeOuterHelper, err := renderedFunctionHelper(source, function.Name.Name)
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(renderedHelper) > functionLineLimit {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered helper including package and imports remains over the limit")
+	renderedOuterHelper, err := renderedFunctionHelper(formatted, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	if physicalLines(renderedOuterHelper) > functionLineLimit || !renderedCapacityProgress(beforeOuterHelper, renderedOuterHelper) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered outer helper remains over the limit or made no capacity progress")
 	}
 	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
 	combined = append(combined, helper...)
@@ -133,11 +137,26 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err != nil {
 		return nil, returnTailContradiction(obligationProjectedConform, "combined source did not render")
 	}
+	renderedHelper, err := renderedFunctionHelper(combined, name)
+	if err != nil {
+		return nil, err
+	}
+	if physicalLines(renderedHelper) > functionLineLimit {
+		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered extracted helper including package and imports remains over the limit")
+	}
 	if err := projectedConformance(root, logical, combined); err != nil {
 		return nil, err
 	}
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
+	}
+	proof := []ObligationEvidence{
+		{Name: obligationReturnShape, Status: "PASS", Detail: "unnamed single-error result with assignable selected returns"},
+		{Name: obligationControlFlow, Status: "PASS", Detail: "no escaping branch, defer, go, panic, or recover"},
+		{Name: obligationFreeBindings, Status: "PASS", Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"},
+		{Name: obligationCalleeEffects, Status: "PASS", Detail: "all selected calls have closed typed effect evidence"},
+		{Name: obligationRenderedCapacity, Status: "PASS", Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))},
+		{Name: obligationProjectedConform, Status: "PASS", Detail: "projected package type-check passed"},
 	}
 	return &returnTailCandidate{
 		helperName: name,
@@ -158,12 +177,14 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			Subject:                  functionIdentity(fset, function),
 			Helper:                   name,
 			BeforeBytes:              len(source),
-			AfterBytes:               len(formatted),
+			AfterBytes:               len(combined),
 			BeforeFunctionLines:      declarationLines(fset, function),
 			AfterFunctionLines:       afterFunctionLines,
 			RenderedHelperBytes:      len(renderedHelper),
 			RenderedHelperLines:      physicalLines(renderedHelper),
-			Obligations:              passingReturnTailObligations(),
+			RenderedOuterHelperBytes: len(renderedOuterHelper),
+			RenderedOuterHelperLines: physicalLines(renderedOuterHelper),
+			Obligations:              proof,
 			ContractObligations:      contractObligations,
 		},
 	}, nil
@@ -175,11 +196,14 @@ func returnTailContractObligations(values []generation.OperationInputContractObl
 	}
 	known := make(map[string]bool, len(values))
 	result := make([]ContractObligationEvidence, 0, len(values))
+	previousOutput := "FunctionInput"
 	for _, value := range values {
-		if known[value.Name] || !value.UsedInputFact || !value.GeneratedOutputFact || value.Activity == "" || value.InputEntity != "FunctionInput" || value.OutputEntity != "OperationResult" {
+		expectedActivity, expectedOutput := returnTailContractStage(value.Name)
+		if known[value.Name] || !value.UsedInputFact || !value.GeneratedOutputFact || value.Activity != expectedActivity || value.InputEntity != previousOutput || value.OutputEntity != expectedOutput {
 			return nil, false
 		}
 		known[value.Name] = true
+		previousOutput = value.OutputEntity
 		result = append(result, ContractObligationEvidence{
 			Name: value.Name, Activity: value.Activity, InputEntity: value.InputEntity, OutputEntity: value.OutputEntity,
 			UsedInputFact: value.UsedInputFact, GeneratedOutputFact: value.GeneratedOutputFact,
@@ -190,7 +214,29 @@ func returnTailContractObligations(values []generation.OperationInputContractObl
 			return nil, false
 		}
 	}
+	if previousOutput != "ProjectedConformanceObligation" {
+		return nil, false
+	}
 	return result, true
+}
+
+func returnTailContractStage(name string) (string, string) {
+	switch name {
+	case obligationReturnShape:
+		return "ProveReturnShape", "ReturnShapeObligation"
+	case obligationControlFlow:
+		return "ProveControlFlow", "ControlFlowObligation"
+	case obligationFreeBindings:
+		return "ProveFreeBindings", "FreeBindingsObligation"
+	case obligationCalleeEffects:
+		return "ProveCalleeEffects", "CalleeEffectsObligation"
+	case obligationRenderedCapacity:
+		return "ProveRenderedCapacity", "RenderedCapacityObligation"
+	case obligationProjectedConform:
+		return "ProveProjectedConformance", "ProjectedConformanceObligation"
+	default:
+		return "", ""
+	}
 }
 
 func stableReturnTailName(function string, suffix int) string {
@@ -276,45 +322,65 @@ func hasReturnTailOuterHazard(statements []ast.Stmt, info *types.Info) bool {
 	return false
 }
 
-func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.Stmt, bindings []suffixBinding, info *types.Info) bool {
+func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.Stmt, bindings []suffixBinding, info *types.Info) error {
 	free := make(map[types.Object]bool, len(bindings))
 	for _, binding := range bindings {
 		free[binding.object] = true
 	}
 	for _, statement := range statements {
-		unsafe := false
+		var hazard error
 		ast.Inspect(statement, func(node ast.Node) bool {
-			if unsafe {
+			if hazard != nil {
 				return false
 			}
 			switch value := node.(type) {
 			case *ast.AssignStmt:
 				for _, lhs := range value.Lhs {
-					if free[returnTailAssignedObject(lhs, info)] {
-						unsafe = true
+					object, known := returnTailAssignedObject(lhs, info)
+					if !known {
+						hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
+					} else if free[object] {
+						hazard = returnTailContradiction(obligationFreeBindings, "terminal tail rebinds a free binding")
 					}
 				}
 			case *ast.IncDecStmt:
-				unsafe = free[returnTailAssignedObject(value.X, info)]
+				object, known := returnTailAssignedObject(value.X, info)
+				if !known {
+					hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
+				} else if free[object] {
+					hazard = returnTailContradiction(obligationFreeBindings, "terminal tail increments a free binding")
+				}
 			case *ast.UnaryExpr:
-				if value.Op == token.AND && free[returnTailAssignedObject(value.X, info)] {
-					unsafe = true
+				if value.Op == token.AND {
+					object, known := returnTailAssignedObject(value.X, info)
+					if !known {
+						hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
+					} else if free[object] {
+						hazard = returnTailContradiction(obligationFreeBindings, "terminal tail takes the address of a free binding")
+					}
 				}
 			}
 			return true
 		})
-		if unsafe {
-			return true
+		if hazard != nil {
+			return hazard
 		}
 	}
-	unsafe := false
+	var hazard error
 	ast.Inspect(functionBody, func(node ast.Node) bool {
-		if unsafe {
+		if hazard != nil {
 			return false
 		}
-		if value, ok := node.(*ast.UnaryExpr); ok && value.Op == token.AND && free[returnTailAssignedObject(value.X, info)] {
-			unsafe = true
-			return false
+		if value, ok := node.(*ast.UnaryExpr); ok && value.Op == token.AND {
+			object, known := returnTailAssignedObject(value.X, info)
+			if !known {
+				hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
+			} else if free[object] {
+				hazard = returnTailContradiction(obligationFreeBindings, "function takes the address of a selected free binding")
+			}
+			if hazard != nil {
+				return false
+			}
 		}
 		literal, ok := node.(*ast.FuncLit)
 		if !ok {
@@ -322,22 +388,51 @@ func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.St
 		}
 		ast.Inspect(literal.Body, func(inner ast.Node) bool {
 			identifier, ok := inner.(*ast.Ident)
-			if ok && free[info.Uses[identifier]] {
-				unsafe = true
+			if !ok || identifier.Name == "_" || identifier.Name == "nil" {
+				return true
+			}
+			object := info.Uses[identifier]
+			if object == nil && info.Defs[identifier] == nil {
+				hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
+				return false
+			}
+			if free[object] {
+				hazard = returnTailContradiction(obligationFreeBindings, "closure captures a selected free binding")
 				return false
 			}
 			return true
 		})
 		return false
 	})
-	return unsafe
+	return hazard
 }
 
-func returnTailAssignedObject(expression ast.Expr, info *types.Info) types.Object {
-	if star, ok := expression.(*ast.StarExpr); ok {
-		return returnTailAssignedObject(star.X, info)
+func returnTailAssignedObject(expression ast.Expr, info *types.Info) (types.Object, bool) {
+	switch value := expression.(type) {
+	case *ast.Ident:
+		if value.Name == "_" {
+			return nil, true
+		}
+		if object := info.Defs[value]; object != nil {
+			return object, true
+		}
+		if object := info.Uses[value]; object != nil {
+			return object, true
+		}
+		return nil, false
+	case *ast.ParenExpr:
+		return returnTailAssignedObject(value.X, info)
+	case *ast.SelectorExpr:
+		return returnTailAssignedObject(value.X, info)
+	case *ast.IndexExpr:
+		return returnTailAssignedObject(value.X, info)
+	case *ast.IndexListExpr:
+		return returnTailAssignedObject(value.X, info)
+	case *ast.StarExpr:
+		return returnTailAssignedObject(value.X, info)
+	default:
+		return nil, false
 	}
-	return assignedObject(expression, info)
 }
 
 func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error {
@@ -445,12 +540,14 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 			}
 		case *ast.AssignStmt:
 			for _, lhs := range value.Lhs {
-				if object := assignedObject(lhs, evidence.info); object != nil && !local[object] {
+				object, known := returnTailAssignedObject(lhs, evidence.info)
+				if !known || !returnTailDirectLocalLValue(lhs, object, local) {
 					pure = false
 				}
 			}
 		case *ast.IncDecStmt:
-			if object := assignedObject(value.X, evidence.info); object != nil && !local[object] {
+			object, known := returnTailAssignedObject(value.X, evidence.info)
+			if !known || !returnTailDirectLocalLValue(value.X, object, local) {
 				pure = false
 			}
 		case *ast.UnaryExpr:
@@ -458,6 +555,9 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 				pure = false
 			}
 		case *ast.Ident:
+			if value.Name != "_" && value.Name != "nil" && evidence.info.Defs[value] == nil && evidence.info.Uses[value] == nil {
+				pure = false
+			}
 			if object, ok := evidence.info.Uses[value].(*types.Var); ok && object.Parent() == evidence.pkg.Scope() {
 				pure = false
 			}
@@ -465,6 +565,17 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 		return true
 	})
 	return pure
+}
+
+func returnTailDirectLocalLValue(expression ast.Expr, object types.Object, local map[types.Object]bool) bool {
+	if identifier, ok := expression.(*ast.Ident); ok && identifier.Name == "_" {
+		return true
+	}
+	if parenthesized, ok := expression.(*ast.ParenExpr); ok {
+		return returnTailDirectLocalLValue(parenthesized.X, object, local)
+	}
+	identifier, ok := expression.(*ast.Ident)
+	return ok && object != nil && local[object] && identifier.Name != "_"
 }
 
 func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixBinding, body []byte) ([]byte, error) {
@@ -522,6 +633,16 @@ func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
 		return rendered.helper, nil
 	}
 	return nil, returnTailContradiction(obligationRenderedCapacity, "rendered target function is missing")
+}
+
+func renderedFunctionExceedsLimit(source []byte, name string) bool {
+	rendered, err := renderedFunctionHelper(source, name)
+	return err == nil && physicalLines(rendered) > functionLineLimit
+}
+
+func renderedCapacityProgress(before, after []byte) bool {
+	beforeLines, afterLines := physicalLines(before), physicalLines(after)
+	return afterLines < beforeLines || beforeLines == afterLines && len(after) < len(before)
 }
 
 func projectedConformance(root, logical string, source []byte) error {

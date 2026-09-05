@@ -22,6 +22,8 @@ type StrategyEvidence struct {
 	AfterFunctionLines       int                    `json:"after_function_lines"`
 	RenderedHelperBytes      int                    `json:"rendered_helper_bytes"`
 	RenderedHelperLines      int                    `json:"rendered_helper_lines"`
+	RenderedOuterHelperBytes  int                    `json:"rendered_outer_helper_bytes"`
+	RenderedOuterHelperLines  int                    `json:"rendered_outer_helper_lines"`
 	Obligations              []ObligationEvidence  `json:"obligations"`
 	ContractObligations      []ContractObligationEvidence `json:"contract_obligations"`
 }
@@ -57,12 +59,4 @@ var returnTailObligations = []string{
 	obligationCalleeEffects,
 	obligationRenderedCapacity,
 	obligationProjectedConform,
-}
-
-func passingReturnTailObligations() []ObligationEvidence {
-	result := make([]ObligationEvidence, 0, len(returnTailObligations))
-	for _, name := range returnTailObligations {
-		result = append(result, ObligationEvidence{Name: name, Status: "PASS"})
-	}
-	return result
 }

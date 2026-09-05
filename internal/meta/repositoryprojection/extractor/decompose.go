@@ -51,7 +51,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 	currentSet, currentFile := fset, file
 	evidence := make([]StrategyEvidence, 0)
 	for {
-		function := firstOversizedFunction(currentSet, currentFile)
+		function := firstOversizedFunction(currentSet, currentFile, current)
 		if function == nil {
 			return current, evidence, nil
 		}
@@ -78,14 +78,14 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 	}
 }
 
-func firstOversizedFunction(fset *token.FileSet, file *ast.File) *ast.FuncDecl {
+func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) *ast.FuncDecl {
 	var result *ast.FuncDecl
 	for _, declaration := range file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
 		if !ok || function.Name == nil || function.Name.Name == "init" || function.Body == nil {
 			continue
 		}
-		if declarationLines(fset, function) <= functionLineLimit {
+		if declarationLines(fset, function) <= functionLineLimit && !renderedFunctionExceedsLimit(source, function.Name.Name) {
 			continue
 		}
 		if result == nil || function.Pos() < result.Pos() {

@@ -15,9 +15,9 @@ activity CollapseAssignReturn(FunctionInput) -> OperationResult
 activity SplitGoDeclarations(FileInput) -> OperationResult
 activity SplitGoooSections(FileInput) -> OperationResult
 activity ExtractFunction(FunctionInput) -> OperationResult
-activity ProveReturnShape(FunctionInput) -> OperationResult
-activity ProveControlFlow(FunctionInput) -> OperationResult
-activity ProveFreeBindings(FunctionInput) -> OperationResult
-activity ProveCalleeEffects(FunctionInput) -> OperationResult
-activity ProveRenderedCapacity(FunctionInput) -> OperationResult
-activity ProveProjectedConformance(FunctionInput) -> OperationResult
+activity ProveReturnShape(FunctionInput) -> ReturnShapeObligation
+activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation
+activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
+activity ProveCalleeEffects(FreeBindingsObligation) -> CalleeEffectsObligation
+activity ProveRenderedCapacity(CalleeEffectsObligation) -> RenderedCapacityObligation
+activity ProveProjectedConformance(RenderedCapacityObligation) -> ProjectedConformanceObligation

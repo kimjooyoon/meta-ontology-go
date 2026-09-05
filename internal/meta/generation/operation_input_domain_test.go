@@ -55,6 +55,14 @@ func TestOperationInputContractRejectsMissingDuplicateAndUnknownDeclarations(t *
 	}
 }
 
+func TestReturnTailContractRejectsTamperedDependencyChain(t *testing.T) {
+	base := string(operationInputContractSource)
+	tampered := strings.Replace(base, "activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation", "activity ProveControlFlow(FunctionInput) -> ControlFlowObligation", 1)
+	if _, err := parseOperationInputContract([]byte(tampered)); err == nil {
+		t.Fatal("tampered return-tail dependency chain was accepted")
+	}
+}
+
 func TestBuildRefutesMismatchedSourceFragmentBeforeSelection(t *testing.T) {
 	base, head := strings.Repeat("a", 40), strings.Repeat("b", 40)
 	duplicate := duplicateDomainMetric("fixture.go#func:Duplicate")
