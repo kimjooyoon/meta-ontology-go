@@ -1,5 +1,7 @@
 package selfimprovementcontinuation
 
+import "reflect"
+
 func Verify(program PolicyProgram, request ContinuationRequest, resolution ContinuationResolution) Verification {
 	decision, outcome, reason := independentClassify(program, request.Input)
 	verification := Verification{
@@ -8,7 +10,7 @@ func Verify(program PolicyProgram, request ContinuationRequest, resolution Conti
 		IndependentReplayComparisons: 1, ExecutionAuthorized: false, LiveGrantDecision: 0,
 		LiveExecutionCount: 0, GrantConsumedUses: 0, RepositoryWrites: 0, LocalTestExecutions: 0,
 	}
-	verification.Verified = request.Digest == requestDigest(request) && resolution.RequestDigest == request.Digest && resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && !resolution.ExecutionAuthorized && resolution.ExecutionGrants == 0 && resolution.LiveGrantDecision == 0 && resolution.LiveExecutionCount == 0 && resolution.GrantConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil
+	verification.Verified = request.Digest == requestDigest(request) && resolution.RequestDigest == request.Digest && reflect.DeepEqual(request.Input, resolution.Input) && resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && !resolution.ExecutionAuthorized && resolution.ExecutionGrants == 0 && resolution.LiveGrantDecision == 0 && resolution.LiveExecutionCount == 0 && resolution.GrantConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil
 	verification.Digest = verificationDigest(verification)
 	return verification
 }
@@ -36,6 +38,11 @@ func independentClassify(program PolicyProgram, input ContinuationInput) (Decisi
 
 func independentFields(input ContinuationInput) ([]string, []string) {
 	missing, contradictions := requiredMissing(input), []string{}
+	for _, field := range input.ParseErrors {
+		if !contains(contradictions, field) {
+			contradictions = append(contradictions, field)
+		}
+	}
 	add := func(value string) {
 		if !contains(contradictions, value) {
 			contradictions = append(contradictions, value)
