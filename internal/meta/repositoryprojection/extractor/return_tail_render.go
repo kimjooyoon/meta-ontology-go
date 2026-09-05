@@ -56,11 +56,11 @@ func renderedFunctionHelper(source []byte, name string) ([]byte, error) {
 			start = function.Doc.Pos()
 		}
 		selected := []declaration{{node: function, start: fset.Position(start).Offset, end: fset.Position(function.End()).Offset, identity: "func:" + name}}
-		rendered, renderErr := render(fset, file, source, selected, list)
+		_, helperImports, renderErr := renderImports(fset, file, []ast.Decl{function}, list, false)
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		return rendered.helper, nil
+		return renderSelectedHelper(fset, file, source, selected, helperImports)
 	}
 	return nil, returnTailContradiction(obligationRenderedCapacity, "rendered target function is missing")
 }
