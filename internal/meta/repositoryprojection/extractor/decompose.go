@@ -85,7 +85,8 @@ func firstOversizedFunction(fset *token.FileSet, file *ast.File, source []byte) 
 		if !ok || function.Name == nil || function.Name.Name == "init" || function.Body == nil {
 			continue
 		}
-		if declarationLines(fset, function) <= functionLineLimit && !renderedFunctionExceedsLimit(source, function.Name.Name) {
+		if declarationLines(fset, function) <= functionLineLimit &&
+			(function.Recv != nil || !renderedFunctionExceedsLimit(source, function.Name.Name)) {
 			continue
 		}
 		if result == nil || function.Pos() < result.Pos() {
