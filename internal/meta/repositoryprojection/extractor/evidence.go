@@ -40,7 +40,7 @@ type PreflightObservationEvidence struct {
 	Activity               string                    `json:"activity"`
 	InputEntity            string                    `json:"input_entity"`
 	InputSubjectKind       string                    `json:"input_subject_kind"`
-	Metric                 sourcepolicy.Dimension   `json:"metric"`
+	Metric                 sourcepolicy.Dimension    `json:"metric"`
 	HelperMeasurementScope string                    `json:"helper_measurement_scope"`
 	Subject                string                    `json:"subject"`
 	Receiver               string                    `json:"receiver,omitempty"`

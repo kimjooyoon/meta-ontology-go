@@ -221,7 +221,7 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			ContractSemanticDigest: contract.SemanticDigest,
 			FunctionLines:          observation.functionLines,
 			FunctionStatus:         string(observation.functionStatus),
-			HelperStatus:            string(observation.helperStatus),
+			HelperStatus:           string(observation.helperStatus),
 		}
 		if observation.helperLines != nil {
 			helperLines := *observation.helperLines
