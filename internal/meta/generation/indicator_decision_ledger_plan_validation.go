@@ -9,7 +9,7 @@ import (
 )
 
 func validatePlanIndicatorDecisionLedger(plan Plan) error {
-	required := plan.Decision == DecisionFixedPoint || plan.Decision == DecisionPlan
+	required := plan.Decision == DecisionFixedPoint || plan.Decision == DecisionPlan || len(plan.RefutedIndicatorIDs) != 0
 	if !required {
 		if plan.IndicatorDecisionLedger != nil {
 			return fmt.Errorf("non-executable plan carries an indicator decision ledger")

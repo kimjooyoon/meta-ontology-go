@@ -69,7 +69,8 @@ func TestBuildRefutesMismatchedSourceFragmentBeforeSelection(t *testing.T) {
 	}
 	duplicateID := indicatorID(duplicate)
 	if first.RefutedIndicatorIDs[0] != duplicateID || first.Counterexamples[0].IndicatorID != duplicateID ||
-		!reflect.DeepEqual(first.Counterexamples[0].SourceIndicator, duplicate) || first.Counterexamples[0].Reason != "INPUT_SUBJECT_KIND_MISMATCH" {
+		!reflect.DeepEqual(first.Counterexamples[0].SourceIndicator, duplicate) || first.Counterexamples[0].Reason != "INPUT_SUBJECT_KIND_MISMATCH" ||
+		len(first.Counterexamples[0].BlockedBy) != 0 {
 		t.Fatalf("domain counterexample is not exact: %+v", first.Counterexamples)
 	}
 	if first.IndicatorDecisionLedger == nil || first.IndicatorDecisionLedger.RefutedCount != 1 {
@@ -125,11 +126,63 @@ func TestBuildAndExecutionRejectForgedInputDomainContract(t *testing.T) {
 	}
 
 	action := plan.Selected[0]
-	receipt := SealReceipt(plan, action, nil)
+	indicators := make([]IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
+	for _, identifier := range action.RequiredIndicatorIDs {
+		indicators = append(indicators, IndicatorReceipt{ID: identifier, Verdict: IndicatorVerdictPass, EvidenceDigest: digestJSON([]string{action.IndicatorID, identifier}), ProofChoice: action.ProofChoice})
+	}
+	receipt := SealReceipt(plan, action, indicators)
+	if report := VerifyReceipts(plan, []OperationReceipt{receipt}); report.Decision != ReceiptDecisionConformant {
+		t.Fatalf("valid receipt fixture was not accepted: %+v", report)
+	}
 	receipt.SubjectKind = sourcepolicy.SubjectKindSourceFragment
 	receipt.ReceiptDigest = operationReceiptDigest(receipt)
 	if report := VerifyReceipts(plan, []OperationReceipt{receipt}); report.Decision != ReceiptDecisionUnknown {
 		t.Fatalf("forged receipt input kind was accepted: %+v", report)
+	}
+}
+
+func TestRefutedInputDomainClaimsRequireCanonicalCause(t *testing.T) {
+	base, head := strings.Repeat("g", 40), strings.Repeat("h", 40)
+	duplicate := duplicateDomainMetric("fixture.go#func:Duplicate")
+	plan := Build(base, head, sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+		metric("fixture.go", sourcepolicy.OperationSplitGo, false, false),
+		metric("fixture.go:1:Selected", sourcepolicy.OperationExtractFunction, false, false),
+		duplicate,
+	}})
+	if plan.Decision != DecisionPlan || len(plan.Counterexamples) != 1 || plan.IndicatorDecisionLedger == nil {
+		t.Fatalf("fixture did not produce a canonical refuted plan: %+v", plan)
+	}
+
+	matching := Build(base, head, sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(), Indicators: []sourcepolicy.Indicator{
+		metric("fixture.go", sourcepolicy.OperationSplitGo, false, false),
+		metric("fixture.go:1:Selected", sourcepolicy.OperationExtractFunction, false, false),
+	}})
+	matching.RefutedIndicatorIDs = []string{matching.Selected[0].IndicatorID}
+	binding, ok := BindingForOperation(matching.Registry, matching.Selected[0].Operation)
+	if !ok {
+		t.Fatal("matching fixture binding is unavailable")
+	}
+	matching.Counterexamples = []Counterexample{inputDomainCounterexample(matching.Selected[0].SourceIndicator, binding)}
+	matching = finish(matching)
+	if manifest := BuildExecutionManifest(matching); manifest.Decision != ExecutionDecisionUnknown {
+		t.Fatalf("matching source was hidden by forged refutation: %+v", manifest)
+	}
+
+	mutations := map[string]func(*Counterexample){
+		"reason": func(counterexample *Counterexample) { counterexample.Reason = "FORGED_REASON" },
+		"expected-binding": func(counterexample *Counterexample) { counterexample.BlockerID = "binding-input-domain:extract-function:FILE:SOURCE_FRAGMENT" },
+		"cause": func(counterexample *Counterexample) { counterexample.Step = "forged-step" },
+	}
+	for name, mutate := range mutations {
+		t.Run(name, func(t *testing.T) {
+			forged := plan
+			forged.Counterexamples = append([]Counterexample{}, plan.Counterexamples...)
+			mutate(&forged.Counterexamples[0])
+			forged = finish(forged)
+			if manifest := BuildExecutionManifest(forged); manifest.Decision != ExecutionDecisionUnknown {
+				t.Fatalf("forged refutation %s was accepted: %+v", name, manifest)
+			}
+		})
 	}
 }
 

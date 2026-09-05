@@ -65,7 +65,7 @@ func inputDomainCounterexample(indicator sourcepolicy.Indicator, binding Binding
 		Reason:        "INPUT_SUBJECT_KIND_MISMATCH",
 		UnknownClass:  "KNOWN_CONTRADICTION",
 		NextOperation: "select-valid-domain-action",
-		BlockedBy:     []string{string(binding.Operation)},
+		BlockedBy:     []string{},
 	}
 }
 

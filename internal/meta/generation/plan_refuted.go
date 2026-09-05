@@ -2,6 +2,7 @@ package generation
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
@@ -15,6 +16,10 @@ func validatePlanRefutedEvidence(plan Plan) error {
 	refuted := make(map[string]struct{}, len(plan.RefutedIndicatorIDs))
 	for _, indicatorID := range plan.RefutedIndicatorIDs {
 		refuted[indicatorID] = struct{}{}
+	}
+	ledgerIndicators, err := refutedSourceIndicators(plan)
+	if err != nil {
+		return err
 	}
 	for _, counterexample := range plan.Counterexamples {
 		if counterexample.ID == "" || counterexample.IndicatorID == "" ||
@@ -30,6 +35,21 @@ func validatePlanRefutedEvidence(plan Plan) error {
 			counterexample.SourceIndicator.Satisfied ||
 			counterexample.SourceIndicator.Applicability != sourcepolicy.ApplicabilityApplicable {
 			return fmt.Errorf("counterexample source indicator is not the refuted observation")
+		}
+		if ledgerIndicators != nil {
+			source, exists := ledgerIndicators[counterexample.IndicatorID]
+			if !exists || !reflect.DeepEqual(source, counterexample.SourceIndicator) {
+				return fmt.Errorf("counterexample source indicator does not match the ledger observation")
+			}
+		}
+		if binding, known := BindingForOperation(plan.Registry, counterexample.SourceIndicator.Operation); known {
+			if counterexample.SourceIndicator.SubjectKind == binding.InputSubjectKind {
+				return fmt.Errorf("matching input-domain observation was marked refuted")
+			}
+			expected := inputDomainCounterexample(counterexample.SourceIndicator, binding)
+			if !reflect.DeepEqual(counterexample, expected) {
+				return fmt.Errorf("input-domain counterexample is not canonical")
+			}
 		}
 		if _, exists := refuted[counterexample.IndicatorID]; !exists {
 			return fmt.Errorf("counterexample is not linked to a refuted indicator")
@@ -47,4 +67,21 @@ func validatePlanRefutedEvidence(plan Plan) error {
 		return fmt.Errorf("refuted indicator is missing a planner counterexample")
 	}
 	return nil
+}
+
+func refutedSourceIndicators(plan Plan) (map[string]sourcepolicy.Indicator, error) {
+	if plan.IndicatorDecisionLedger == nil {
+		return nil, nil
+	}
+	result := make(map[string]sourcepolicy.Indicator, len(plan.IndicatorDecisionLedger.Entries))
+	for _, entry := range plan.IndicatorDecisionLedger.Entries {
+		if indicatorID(entry.SourceIndicator) != entry.IndicatorID {
+			return nil, fmt.Errorf("ledger source indicator identity is not canonical")
+		}
+		if _, duplicate := result[entry.IndicatorID]; duplicate {
+			return nil, fmt.Errorf("ledger source indicator is duplicated")
+		}
+		result[entry.IndicatorID] = entry.SourceIndicator
+	}
+	return result, nil
 }
