@@ -255,12 +255,12 @@ jobs:
             '{schema:$schema,observer_status:$observer_status,decision:$decision,resolution:$resolution,collection_status:$collection_status,source_state:$source_state,source_api_status:$source_status,source_workflow:$workflow,source_run_id:$run,source_run_attempt:$attempt,source_head_sha:$head,source_event:$source_event,source_repository:$source_repository,unknown:{stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by},timing:{status:"UNAVAILABLE",window_wall_ms:null,job_wall_ms:null,step_wall_ms:null},semantic:{terminal_source_validation:false,terminal_effort_report:false,reuse_allowed:false,promotion_allowed:false},program:{source:$program,operations_manifest:$operations,contract:$contract},diagnostic_only:true}' \
             > "$root/pending-lineage/pending-lineage.json"
           cat > "$root/pending-lineage/README.txt" <<EOF
-This diagnostic-only preview records source workflow lineage that is not terminal.
-It is not a CI effort receipt, terminal source validation, success result, or promotion input.
-The existing terminal collector remains deferred to the workflow_run(completed) path.
-Program: examples/ci-effort-observation/main.gooo
-Contract: examples/ci-effort-observation/contract.json
-EOF
+          This diagnostic-only preview records source workflow lineage that is not terminal.
+          It is not a CI effort receipt, terminal source validation, success result, or promotion input.
+          The existing terminal collector remains deferred to the workflow_run(completed) path.
+          Program: examples/ci-effort-observation/main.gooo
+          Contract: examples/ci-effort-observation/contract.json
+          EOF
           cat "$root/pending-lineage/pending-lineage.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Produce read-only failed-source timing and operation observation
