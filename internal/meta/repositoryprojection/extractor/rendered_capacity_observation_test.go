@@ -7,6 +7,8 @@ import (
 	"go/token"
 	"strings"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
@@ -67,7 +69,14 @@ func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 				if selection != nil || !errors.As(err, &failure) || failure.Reason != "PREFLIGHT_RENDER_FAILED" {
 					t.Fatalf("selection=%+v err=%v, want structured helper measurement failure", selection, err)
 				}
-				if len(failure.Diagnostics) == 0 || !strings.Contains(failure.Diagnostics[0], "measurement=UNMEASURED") {
+				hasUnmeasuredDiagnostic := false
+				for _, diagnostic := range failure.Diagnostics {
+					if strings.Contains(diagnostic, "measurement=UNMEASURED") {
+						hasUnmeasuredDiagnostic = true
+						break
+					}
+				}
+				if len(failure.Diagnostics) == 0 || !hasUnmeasuredDiagnostic {
 					t.Fatalf("failure=%+v, want unresolved measurement diagnostics", failure)
 				}
 			},
@@ -87,10 +96,24 @@ func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 				if earlier.helperStatus != renderedCapacityUnmeasured || earlier.helperLines != nil || earlier.helperFailure == nil || later.functionStatus != renderedCapacityOverCap {
 					t.Fatalf("observations=%+v, want unresolved earlier and known later violation", selection.observations)
 				}
+				contract, contractErr := generation.ExtractFunctionInputContractEvidence()
+				if contractErr != nil {
+					t.Fatal(contractErr)
+				}
+				evidence := preflightObservationEvidence(contract, selection.observations)
+				if len(evidence) != 2 || evidence[0].FailureStage != "observe-plan" || evidence[0].FailureStep != "render-capacity" ||
+					evidence[0].FailureReason != "PREFLIGHT_RENDER_FAILED" || evidence[0].FailureUnknownClass != "DIRECT_MISSING" ||
+					evidence[0].FailureNextOperation != "restore-render-evidence" || len(evidence[0].FailureBlockedBy) != 1 ||
+					evidence[0].FailureBlockedBy[0] != "rendered-capacity-helper" || len(evidence[0].FailureDiagnostics) != 1 {
+					t.Fatalf("evidence=%+v, want structured unresolved failure retention", evidence)
+				}
 			},
 			render: func(fset *token.FileSet, file *ast.File, source []byte, function *ast.FuncDecl) ([]byte, error) {
 				if function.Name.Name == "Earlier" {
-					return nil, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", nil)
+					return nil, Failure{
+						Stage: "observe-plan", Step: "render-capacity", Reason: "PREFLIGHT_RENDER_FAILED", UnknownClass: "DIRECT_MISSING", NextOperation: "restore-render-evidence",
+						BlockedBy: []string{"rendered-capacity-helper"}, Diagnostics: []string{"renderer=Earlier"},
+					}
 				}
 				return renderedDeclarationHelper(fset, file, source, function)
 			},
@@ -108,6 +131,14 @@ func TestRenderedCapacityObservationAcceptanceSet(t *testing.T) {
 				}
 				if selection.observations[0].functionStart == selection.observations[1].functionStart || selection.observations[0].declarationStart == selection.observations[1].declarationStart {
 					t.Fatalf("observations=%+v, want distinct source coordinates", selection.observations)
+				}
+				contract, contractErr := generation.ExtractFunctionInputContractEvidence()
+				if contractErr != nil {
+					t.Fatal(contractErr)
+				}
+				evidence := preflightObservationEvidence(contract, selection.observations)
+				if len(evidence) != 2 || evidence[0].Receiver != "T" || evidence[1].Receiver != "" || evidence[0].HelperMeasurementScope != renderedCapacityHelperMeasurementScope {
+					t.Fatalf("preflight evidence=%+v, want receiver and helper scope preservation", evidence)
 				}
 			},
 		},

@@ -61,6 +61,7 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					}
 				}
 				if selectedPreflight == nil || selectedPreflight.Activity != "ExtractFunction" || selectedPreflight.Metric != sourcepolicy.DimensionFunctionLines ||
+					selectedPreflight.HelperMeasurementScope != renderedCapacityHelperMeasurementScope ||
 					selectedPreflight.FunctionStatus != string(renderedCapacityOverCap) || selectedPreflight.SourceDigest == "" ||
 					selectedPreflight.ContractSourceDigest == "" || selectedPreflight.ContractSemanticDigest == "" {
 					t.Fatalf("preflight evidence=%+v, want selected function observation with bound digests", result.Evidence[0].PreflightObservations)

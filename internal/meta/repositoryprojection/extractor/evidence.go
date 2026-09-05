@@ -39,6 +39,7 @@ type PreflightObservationEvidence struct {
 	InputEntity            string  `json:"input_entity"`
 	InputSubjectKind       string  `json:"input_subject_kind"`
 	Metric                 string  `json:"metric"`
+	HelperMeasurementScope string  `json:"helper_measurement_scope"`
 	Subject                string  `json:"subject"`
 	Receiver               string  `json:"receiver,omitempty"`
 	FunctionStart          string  `json:"function_start"`
@@ -52,7 +53,13 @@ type PreflightObservationEvidence struct {
 	FunctionStatus         string  `json:"function_status"`
 	HelperLines            *int    `json:"helper_lines,omitempty"`
 	HelperStatus           string  `json:"helper_status"`
+	FailureStage           string  `json:"failure_stage,omitempty"`
+	FailureStep            string  `json:"failure_step,omitempty"`
 	FailureReason          string  `json:"failure_reason,omitempty"`
+	FailureUnknownClass    string  `json:"failure_unknown_class,omitempty"`
+	FailureNextOperation   string  `json:"failure_next_operation,omitempty"`
+	FailureBlockedBy       []string `json:"failure_blocked_by,omitempty"`
+	FailureDiagnostics     []string `json:"failure_diagnostics,omitempty"`
 }
 
 type ObligationEvidence struct {

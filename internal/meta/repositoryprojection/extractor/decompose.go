@@ -46,6 +46,7 @@ const (
 	renderedCapacityWithinCap renderedCapacityObservationStatus = "WITHIN_CAP"
 	renderedCapacityOverCap    renderedCapacityObservationStatus = "OVER_CAP"
 	renderedCapacityUnmeasured renderedCapacityObservationStatus = "UNMEASURED"
+	renderedCapacityHelperMeasurementScope                    = "rendered-helper-physical-lines"
 )
 
 type renderedCapacityObservation struct {

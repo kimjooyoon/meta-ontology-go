@@ -48,7 +48,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 	}
 
 	for startIndex := range slices.Backward(statements) {
-		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex)
+		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex, preflight)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
 				continue
@@ -73,7 +73,7 @@ func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
 	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
 }
 
-func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int) (*returnTailCandidate, error) {
+func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
 	statements := function.Body.List[startIndex:]
 	if len(statements) == 0 {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
@@ -209,6 +209,7 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			InputEntity:            contract.InputEntity,
 			InputSubjectKind:       string(contract.InputSubjectKind),
 			Metric:                 sourcepolicy.DimensionFunctionLines,
+			HelperMeasurementScope: renderedCapacityHelperMeasurementScope,
 			Subject:                observation.subject,
 			Receiver:               observation.receiver,
 			FunctionStart:          observation.functionStart,
@@ -230,6 +231,12 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			var failure Failure
 			if errors.As(observation.helperFailure, &failure) {
 				item.FailureReason = failure.Reason
+				item.FailureStage = failure.Stage
+				item.FailureStep = failure.Step
+				item.FailureUnknownClass = failure.UnknownClass
+				item.FailureNextOperation = failure.NextOperation
+				item.FailureBlockedBy = append([]string(nil), failure.BlockedBy...)
+				item.FailureDiagnostics = append([]string(nil), failure.Diagnostics...)
 			} else {
 				item.FailureReason = observation.helperFailure.Error()
 			}
