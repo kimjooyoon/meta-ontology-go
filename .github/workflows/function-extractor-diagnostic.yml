@@ -134,7 +134,7 @@ jobs:
           plan_file="$source_input/self-improvement-plan.json"
           jq -e \
             --arg sha "$SUBJECT_SHA" \
-            '.decision == "PLAN" and .source_sha == $sha and
+            '.decision == "PLAN" and .head_sha == $sha and
              ([.selected[] | select(.meta_operation == "extract-function")] | length) == 1' \
             "$plan_file" >/dev/null
           action_indicator_id="$(jq -r '.selected[] | select(.meta_operation == "extract-function") | .indicator_id' "$plan_file")"
