@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-runtime-binding/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
       - internal/semantic/**
@@ -18,6 +19,7 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-runtime-binding/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
       - internal/semantic/**
@@ -71,6 +73,7 @@ jobs:
             internal/valueexecution/registry.go \
             internal/valueexecution/compile.go \
             internal/valueexecution/program.go \
+            internal/valueexecution/plan.go \
             internal/valueexecution/evaluate.go \
             internal/valueexecution/evaluation.go \
             internal/valueexecution/measurement.go \
@@ -85,6 +88,7 @@ jobs:
             internal/valueexecution/proofs.go \
             internal/valueexecution/validate.go \
             internal/valueexecution/evaluate_test.go \
+            internal/valueexecution/plan_test.go \
             scripts/language-value-witness/main.go
           git diff --exit-code -- \
             internal/syntax internal/bidir internal/semantic internal/valueexecution \
@@ -121,3 +125,23 @@ jobs:
           path: ${{ runner.temp }}/language-value-witness/first.json
           if-no-files-found: error
           retention-days: 14
+      - name: Execute the native runtime-binding plan through the CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          input="$RUNNER_TEMP/runtime-binding-input.json"
+          output="$RUNNER_TEMP/runtime-binding-plan.json"
+          printf '%s\n' '{"value":41}' > "$input"
+          go run ./cmd/gooo run --json \
+            --entry Produce --input "$input" \
+            examples/language-runtime-binding/main.gooo > "$output"
+          test "$(jq -r '.decision' "$output")" = PASS
+          test "$(jq -r '.execution.apply_calls' "$output")" = 3
+          test "$(jq -r '.execution.deliveries' "$output")" = 2
+          test "$(jq -r '.execution.results.ConsumeA.value' "$output")" = 43
+          test "$(jq -r '.execution.results.ConsumeB.value' "$output")" = 43
+          {
+            echo "### Native runtime-binding plan"
+            jq -r '"- decision: `\(.decision)`; applies: `\(.execution.apply_calls)`; deliveries: `\(.execution.deliveries)`"' "$output"
+            jq -r '"- consumer results: ConsumeA=`\(.execution.results.ConsumeA.value)`, ConsumeB=`\(.execution.results.ConsumeB.value)`"' "$output"
+          } >> "$GITHUB_STEP_SUMMARY"

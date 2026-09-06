@@ -25,6 +25,11 @@ const (
 	ReasonProgramAuthorityMismatch  = "VALUE_PROGRAM_AUTHORITY_MISMATCH"
 	ReasonResultHandleInvalid       = "VALUE_RESULT_HANDLE_INVALID"
 	ReasonResultProducerMismatch    = "VALUE_RESULT_PRODUCER_MISMATCH"
+	ReasonPlanInvalid               = "VALUE_PLAN_INVALID"
+	ReasonExternalInputMissing      = "VALUE_EXTERNAL_INPUT_MISSING"
+	ReasonExternalInputUnexpected   = "VALUE_EXTERNAL_INPUT_UNEXPECTED"
+	ReasonBindingResultInvalid      = "VALUE_BINDING_RESULT_INVALID"
+	ReasonPlanExecutionFailed       = "VALUE_PLAN_EXECUTION_FAILED"
 )
 
 type Failure struct {

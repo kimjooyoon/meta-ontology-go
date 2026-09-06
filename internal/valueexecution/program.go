@@ -38,10 +38,27 @@ func (program Program) Execute(inputs []int64) (int64, error) {
 // The result authority is retained privately by Compile and is never derived
 // from the public Program fields at issuance time.
 func (program Program) ExecuteResult(inputs []int64) (ProducedResult, error) {
+	return program.executeResult(inputs, nil)
+}
+
+func (program Program) executeResult(inputs []int64, onApply func()) (ProducedResult, error) {
 	if err := program.validateResultAuthority(); err != nil {
 		return ProducedResult{}, err
 	}
-	value, err := program.Execute(inputs)
+	if program.runtimeBindings {
+		return ProducedResult{}, failAt(ReasonPlanRequired, "PLAN", "runtime-binding-plan-required", "runtime binding execution requires an explicit plan")
+	}
+	if err := ValidateOperationIR(program.Operation); err != nil {
+		return ProducedResult{}, failAt(ReasonOperationIRInvalid, "EXECUTE", "validate-operation-ir", err.Error())
+	}
+	if len(inputs) != program.Operation.Spec.Arity {
+		detail := fmt.Sprintf("got=%d want=%d", len(inputs), program.Operation.Spec.Arity)
+		return ProducedResult{}, failAt(ReasonInputArityMismatch, "EXECUTE", "validate-input-arity", detail)
+	}
+	if onApply != nil {
+		onApply()
+	}
+	value, err := program.implementation.Apply(inputs[0], program.Operation.Operand.Int64)
 	if err != nil {
 		return ProducedResult{}, err
 	}
