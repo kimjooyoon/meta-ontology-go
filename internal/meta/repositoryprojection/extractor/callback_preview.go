@@ -10,6 +10,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"maps"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -340,9 +341,7 @@ func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence,
 		"ParentFunctionLines": strconv.Itoa(candidate.ParentFunctionLines), "CaptureCount": strconv.Itoa(candidate.CaptureCount),
 		"PendingEffectCount": strconv.Itoa(candidate.PendingEffectCount), "State": candidate.State, "Promotion": candidate.Promotion,
 	}
-	for name, value := range closurePreservationRecordValues(result.StructureProof) {
-		candidateValues[name] = value
-	}
+	maps.Copy(candidateValues, closurePreservationRecordValues(result.StructureProof))
 	candidateRecord, err := contract.BuildCallbackPreviewRecord(contract.CandidateEntity, candidateValues)
 	if err != nil {
 		return nil, err

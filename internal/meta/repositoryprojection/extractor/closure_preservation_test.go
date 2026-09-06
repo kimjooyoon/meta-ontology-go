@@ -73,7 +73,9 @@ func TestClosurePreservationRejectsCoherentSourceMutantsCI(t *testing.T) {
 			c.CandidateSource = strings.Replace(c.CandidateSource, c.WrapperSource, strings.Replace(c.WrapperSource, "&fixture", "&fixtures", 1), 1)
 			c.WrapperSource = strings.Replace(c.WrapperSource, "&fixture", "&fixtures", 1)
 		}},
-		{"constructor-effect", func(c *CallbackPreviewCandidate) { mutateClosureHelper(t, c, "return func(", "println(\"extra\")\nreturn func(") }},
+		{"constructor-effect", func(c *CallbackPreviewCandidate) {
+			mutateClosureHelper(t, c, "return func(", "println(\"extra\")\nreturn func(")
+		}},
 		{"unrelated-source", func(c *CallbackPreviewCandidate) {
 			c.CandidateSource = strings.Replace(c.CandidateSource, "runtime caller unavailable", "tampered caller", 1)
 		}},
@@ -148,7 +150,7 @@ func observedClosureCaller(t *testing.T, root string) string {
 	if err != nil {
 		t.Fatalf("caller observation: %v\n%s", err, output)
 	}
-	for _, line := range strings.Split(string(output), "\n") {
+	for line := range strings.SplitSeq(string(output), "\n") {
 		if _, value, found := strings.Cut(line, "OBSERVED_CALLER="); found && strings.TrimSpace(value) != "" {
 			return strings.TrimSpace(value)
 		}
