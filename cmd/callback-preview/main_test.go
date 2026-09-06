@@ -42,7 +42,7 @@ func TestPreviewOutputRejectsSymlinkBoundary(t *testing.T) {
 	if err := os.Symlink(target, link); err != nil {
 		t.Fatal(err)
 	}
-	if err := writePreviewOutput(root, link, []byte("changed\n")); err == nil || !strings.Contains(err.Error(), "symlink") {
+	if err := writePreviewOutput(root, link, []byte("changed\n")); err == nil || !strings.Contains(err.Error(), "outside the repository root") {
 		t.Fatalf("symlink output was not rejected: %v", err)
 	}
 	got, err := os.ReadFile(target)

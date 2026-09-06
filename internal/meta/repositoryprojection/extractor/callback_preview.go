@@ -195,7 +195,6 @@ func callbackPreviewSetLifecycle(result *CallbackPreviewResult, reason string) {
 	result.BlockedBy = []string{}
 	switch reason {
 	case "TYPE_EVIDENCE_MISSING":
-		result.UnknownClass = callbackPreviewUnknownDependency
 		result.Step = "TYPE_EVIDENCE"
 		result.NextOperation = "RECHECK_TYPE_EVIDENCE"
 	case "CALLBACK_TARGET_SHAPE_UNSUPPORTED":
@@ -248,6 +247,12 @@ func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence,
 	receiverTypes := make([]string, 0, len(effects))
 	effectKinds := make([]string, 0, len(effects))
 	states := make([]string, 0, len(effects))
+	effectStages := make([]string, 0, len(effects))
+	effectSteps := make([]string, 0, len(effects))
+	effectReasons := make([]string, 0, len(effects))
+	effectUnknownClasses := make([]string, 0, len(effects))
+	effectNextOperations := make([]string, 0, len(effects))
+	effectBlockedBy := make([][]string, 0, len(effects))
 	for _, effect := range effects {
 		callIdentities = append(callIdentities, effect.CallIdentity)
 		symbols = append(symbols, effect.Symbol)
@@ -255,6 +260,12 @@ func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence,
 		receiverTypes = append(receiverTypes, effect.ReceiverType)
 		effectKinds = append(effectKinds, effect.EffectKind)
 		states = append(states, effect.State)
+		effectStages = append(effectStages, effect.Stage)
+		effectSteps = append(effectSteps, effect.Step)
+		effectReasons = append(effectReasons, effect.Reason)
+		effectUnknownClasses = append(effectUnknownClasses, effect.UnknownClass)
+		effectNextOperations = append(effectNextOperations, effect.NextOperation)
+		effectBlockedBy = append(effectBlockedBy, append([]string{}, effect.BlockedBy...))
 	}
 	encode := func(values []string) (string, error) { return generation.EncodeCallbackPreviewList(values) }
 	encodedCaptureNames, err := encode(captureNames)
@@ -316,7 +327,10 @@ func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence,
 	effectsRecord, err := contract.BuildCallbackPreviewRecord(contract.EffectsEntity, map[string]string{
 		"CandidateIdentity": candidate.CandidateIdentity, "CallIdentities": encodedCallIdentities, "Symbols": encodedSymbols,
 		"Signatures": encodedSignatures, "ReceiverTypes": encodedReceiverTypes, "EffectKinds": encodedEffectKinds,
-		"States": encodedStates, "Count": strconv.Itoa(len(effects)), "ResolvedCount": "0", "State": result.State,
+		"States": encodedStates, "EffectStages": callbackPreviewEncodeList(effectStages), "EffectSteps": callbackPreviewEncodeList(effectSteps),
+		"EffectReasons": callbackPreviewEncodeList(effectReasons), "EffectUnknownClasses": callbackPreviewEncodeList(effectUnknownClasses),
+		"EffectNextOperations": callbackPreviewEncodeList(effectNextOperations), "EffectBlockedBy": callbackPreviewEncodeNestedList(effectBlockedBy),
+		"Count": strconv.Itoa(len(effects)), "ResolvedCount": "0", "State": result.State,
 	})
 	if err != nil {
 		return nil, err
@@ -352,6 +366,14 @@ func callbackPreviewEncodeList(values []string) string {
 	return encoded
 }
 
+func callbackPreviewEncodeNestedList(values [][]string) string {
+	encoded, err := generation.EncodeCallbackPreviewNestedList(values)
+	if err != nil {
+		return generation.CallbackPreviewListCodecPrefix + "[]"
+	}
+	return encoded
+}
+
 func ValidateCallbackPreviewResult(result CallbackPreviewResult) error {
 	contract, err := generation.LoadCallbackPreviewContract()
 	if err != nil {
@@ -364,6 +386,17 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 	if result.Schema != callbackPreviewSchema || result.State != callbackPreviewStateUnknown || result.OperationResultAdmission != "FORBIDDEN" || result.ApplyPermission != "FORBIDDEN" || result.Stage != callbackPreviewStage || result.Reason == "" || result.UnknownClass == "" || result.Step == "" || result.NextOperation == "" || result.BlockedBy == nil {
 		return fmt.Errorf("callback preview result identity or admission is invalid")
 	}
+	expectedClass, knownClass := callbackPreviewUnknownClassForReason(result.Reason)
+	if !knownClass || result.UnknownClass != expectedClass {
+		return fmt.Errorf("callback preview unknown class is not bound to reason")
+	}
+	expectedStep, expectedNext := callbackPreviewLifecycleForReason(result.Reason)
+	if result.Step != expectedStep || result.NextOperation != expectedNext {
+		return fmt.Errorf("callback preview lifecycle step is not bound to reason")
+	}
+	if (expectedClass == callbackPreviewUnknownDirect || expectedClass == callbackPreviewUnknownAmbiguous) && len(result.BlockedBy) != 0 {
+		return fmt.Errorf("callback preview direct or ambiguous unknown has a blocker frontier")
+	}
 	if result.ContractSourceDigest != contract.SourceDigest || result.ContractSemanticDigest != contract.SemanticDigest || result.Evidence.State != result.State || result.Evidence.OperationResultAdmission != result.OperationResultAdmission || result.Evidence.ApplyPermission != result.ApplyPermission || result.Evidence.Stage != result.Stage || result.Evidence.Step != result.Step || result.Evidence.Reason != result.Reason || result.Evidence.UnknownClass != result.UnknownClass || result.Evidence.NextOperation != result.NextOperation || !sameStringSlice(result.Evidence.BlockedBy, result.BlockedBy) {
 		return fmt.Errorf("callback preview result lifecycle evidence is not bound")
 	}
@@ -371,10 +404,31 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		if len(result.ContractRecords) != 2 {
 			return fmt.Errorf("callback preview direct-unknown record flow is not bounded")
 		}
+		input, evidence := result.ContractRecords[0], result.ContractRecords[1]
+		if input.Entity != contract.InputEntity || evidence.Entity != contract.EvidenceEntity {
+			return fmt.Errorf("callback preview direct-unknown record entities are not bound")
+		}
+		if err := contract.ValidateCallbackPreviewRecord(input); err != nil {
+			return err
+		}
+		if err := contract.ValidateCallbackPreviewRecord(evidence); err != nil {
+			return err
+		}
+		inputValues := callbackPreviewRecordFieldMap(input)
+		if inputValues["LogicalPath"] != result.LogicalPath || inputValues["Subject"] != result.Subject || inputValues["SourceDigest"] != result.SourceDigest || inputValues["State"] != result.State {
+			return fmt.Errorf("callback preview direct input record is not bound")
+		}
+		evidenceValues := callbackPreviewRecordFieldMap(evidence)
+		if evidenceValues["CandidateIdentity"] != "" || evidenceValues["SourceDigest"] != result.SourceDigest || evidenceValues["CandidateDigest"] != "" || evidenceValues["State"] != result.State || evidenceValues["CaptureCount"] != "0" || evidenceValues["PendingEffectCount"] != "0" || evidenceValues["ResolvedEffectCount"] != "0" || evidenceValues["HelperLines"] != "0" || evidenceValues["ParentFunctionLines"] != "0" || evidenceValues["OperationResultAdmission"] != result.OperationResultAdmission || evidenceValues["ApplyPermission"] != result.ApplyPermission || evidenceValues["Stage"] != result.Stage || evidenceValues["Step"] != result.Step || evidenceValues["Reason"] != result.Reason || evidenceValues["UnknownClass"] != result.UnknownClass || evidenceValues["NextOperation"] != result.NextOperation {
+			return fmt.Errorf("callback preview direct evidence record is not bound")
+		}
+		if err := validateCallbackPreviewListField(evidenceValues, "BlockedBy", result.BlockedBy); err != nil {
+			return err
+		}
 		return nil
 	}
 	candidate := result.Candidate
-	if candidate.CandidateIdentity == "" || candidate.SourceDigest != result.SourceDigest || candidate.State != result.State || candidate.Promotion != callbackPreviewPromotionNone || candidate.CaptureCount != len(result.Captures) || candidate.PendingEffectCount != len(result.PendingEffects) || candidate.HelperLines <= 0 || candidate.HelperLines > functionLineLimit || candidate.ParentFunctionLines <= 0 || candidate.ParentFunctionLines > functionLineLimit {
+	if candidate.CandidateIdentity == "" || candidate.SourceDigest != result.SourceDigest || candidate.CandidateDigest == "" || callbackPreviewDigest([]byte(candidate.CandidateSource)) != candidate.CandidateDigest || candidate.HelperBytes != len([]byte(candidate.HelperSource)) || candidate.HelperLines != physicalLines([]byte(candidate.HelperSource)) || candidate.State != result.State || candidate.Promotion != callbackPreviewPromotionNone || candidate.CaptureCount != len(result.Captures) || candidate.PendingEffectCount != len(result.PendingEffects) || candidate.HelperLines <= 0 || candidate.HelperLines > functionLineLimit || candidate.ParentFunctionLines <= 0 || candidate.ParentFunctionLines > functionLineLimit {
 		return fmt.Errorf("callback preview candidate does not match bounded result")
 	}
 	if result.Reason == "PENDING_TYPED_CALLBACK_EFFECTS" {
@@ -385,7 +439,7 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return fmt.Errorf("callback preview capacity frontier is not bound")
 	}
 	for _, effect := range result.PendingEffects {
-		if effect.CallIdentity == "" || effect.State != callbackPreviewStateUnknown || effect.Stage != callbackPreviewStage || effect.Step != "PENDING_EFFECT_REVIEW" || effect.Reason != "PENDING_TYPED_CALLBACK_EFFECTS" || effect.UnknownClass != callbackPreviewUnknownDependency || effect.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || !sameStringSlice(effect.BlockedBy, []string{effect.CallIdentity}) || effect.StartOffset < 0 || effect.EndOffset < effect.StartOffset {
+		if effect.CallIdentity == "" || effect.State != callbackPreviewStateUnknown || effect.Stage != callbackPreviewStage || effect.Step != "PENDING_EFFECT_REVIEW" || effect.Reason != "PENDING_TYPED_CALLBACK_EFFECTS" || effect.UnknownClass != callbackPreviewUnknownDirect || effect.NextOperation != "RESTORE_TYPED_CALLBACK_EFFECT" || effect.BlockedBy == nil || len(effect.BlockedBy) != 0 || effect.StartOffset < 0 || effect.EndOffset < effect.StartOffset {
 			return fmt.Errorf("callback preview pending effect %q is not bounded", effect.CallIdentity)
 		}
 	}
@@ -400,11 +454,11 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 	}
 	records := make(map[string]map[string]string, len(result.ContractRecords))
 	for _, record := range result.ContractRecords {
-		values := make(map[string]string, len(record.Fields))
-		for _, field := range record.Fields {
-			values[field.Name] = field.Value
-		}
-		records[record.Entity] = values
+		records[record.Entity] = callbackPreviewRecordFieldMap(record)
+	}
+	inputValues := records[contract.InputEntity]
+	if inputValues["LogicalPath"] != result.LogicalPath || inputValues["Subject"] != result.Subject || inputValues["SourceDigest"] != result.SourceDigest || inputValues["State"] != result.State {
+		return fmt.Errorf("callback preview input record is not bound")
 	}
 	candidateValues := records[contract.CandidateEntity]
 	for name, expected := range map[string]string{
@@ -450,6 +504,28 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "States", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.State })); err != nil {
 		return err
 	}
+	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "EffectStages", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.Stage })); err != nil {
+		return err
+	}
+	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "EffectSteps", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.Step })); err != nil {
+		return err
+	}
+	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "EffectReasons", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.Reason })); err != nil {
+		return err
+	}
+	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "EffectUnknownClasses", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.UnknownClass })); err != nil {
+		return err
+	}
+	if err := validateCallbackPreviewListField(records[contract.EffectsEntity], "EffectNextOperations", callbackPreviewEffectValues(result.PendingEffects, func(e CallbackPreviewEffect) string { return e.NextOperation })); err != nil {
+		return err
+	}
+	effectBlockedBy := make([][]string, 0, len(result.PendingEffects))
+	for _, effect := range result.PendingEffects {
+		effectBlockedBy = append(effectBlockedBy, effect.BlockedBy)
+	}
+	if err := validateCallbackPreviewNestedListField(records[contract.EffectsEntity], "EffectBlockedBy", effectBlockedBy); err != nil {
+		return err
+	}
 	if records[contract.EffectsEntity]["CandidateIdentity"] != candidate.CandidateIdentity || records[contract.EffectsEntity]["Count"] != strconv.Itoa(len(result.PendingEffects)) || records[contract.EffectsEntity]["ResolvedCount"] != "0" || records[contract.EffectsEntity]["State"] != result.State {
 		return fmt.Errorf("callback preview effect record counters are not bound")
 	}
@@ -461,6 +537,38 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return err
 	}
 	return nil
+}
+
+func callbackPreviewUnknownClassForReason(reason string) (string, bool) {
+	switch reason {
+	case "CALLBACK_TARGET_MISSING", "TYPE_EVIDENCE_MISSING":
+		return callbackPreviewUnknownDirect, true
+	case "CALLBACK_TARGET_SHAPE_UNSUPPORTED", "CALLBACK_CAPTURE_UNSUPPORTED":
+		return callbackPreviewUnknownAmbiguous, true
+	case "PENDING_TYPED_CALLBACK_EFFECTS":
+		return callbackPreviewUnknownDependency, true
+	case "CALLBACK_CANDIDATE_OVER_CAPACITY":
+		return callbackPreviewUnknownUnbounded, true
+	default:
+		return "", false
+	}
+}
+
+func callbackPreviewLifecycleForReason(reason string) (string, string) {
+	switch reason {
+	case "TYPE_EVIDENCE_MISSING":
+		return "TYPE_EVIDENCE", "RECHECK_TYPE_EVIDENCE"
+	case "CALLBACK_TARGET_SHAPE_UNSUPPORTED":
+		return "CALLBACK_SHAPE", "RESELECT_CALLBACK_SHAPE"
+	case "CALLBACK_CAPTURE_UNSUPPORTED":
+		return "CAPTURE_BINDING", "REVIEW_CAPTURE_BINDING"
+	case "PENDING_TYPED_CALLBACK_EFFECTS":
+		return "PENDING_EFFECT_REVIEW", "RESOLVE_TYPED_CALLBACK_EFFECTS"
+	case "CALLBACK_CANDIDATE_OVER_CAPACITY":
+		return "CAPACITY_GATE", "REMEASURE_BOUNDED_CANDIDATE"
+	default:
+		return "TARGET_DISCOVERY", "REVIEW_CALLBACK_TARGET"
+	}
 }
 
 func validateCallbackPreviewListField(values map[string]string, name string, expected []string) error {
@@ -476,6 +584,34 @@ func validateCallbackPreviewListField(values map[string]string, name string, exp
 		return fmt.Errorf("callback preview record field %s does not match native values", name)
 	}
 	return nil
+}
+
+func validateCallbackPreviewNestedListField(values map[string]string, name string, expected [][]string) error {
+	encoded := values[name]
+	if err := generation.ValidateCallbackPreviewNestedList(encoded); err != nil {
+		return fmt.Errorf("callback preview record field %s: %w", name, err)
+	}
+	var actual [][]string
+	if err := json.Unmarshal([]byte(strings.TrimPrefix(encoded, generation.CallbackPreviewListCodecPrefix)), &actual); err != nil {
+		return err
+	}
+	if len(actual) != len(expected) {
+		return fmt.Errorf("callback preview record field %s does not match native values", name)
+	}
+	for index := range actual {
+		if !sameStringSlice(actual[index], expected[index]) {
+			return fmt.Errorf("callback preview record field %s does not match native values", name)
+		}
+	}
+	return nil
+}
+
+func callbackPreviewRecordFieldMap(record generation.CallbackPreviewRecord) map[string]string {
+	values := make(map[string]string, len(record.Fields))
+	for _, field := range record.Fields {
+		values[field.Name] = field.Value
+	}
+	return values
 }
 
 func callbackPreviewCaptureValues(captures []CallbackPreviewCapture, value func(CallbackPreviewCapture) string) []string {
@@ -688,7 +824,7 @@ func callbackPreviewEffects(callback *ast.FuncLit, evidence typeEvidence, fset *
 }
 
 func callbackPreviewPendingEffect(callIdentity, symbol, signature, receiverType, effectKind string, start, end int) CallbackPreviewEffect {
-	return CallbackPreviewEffect{CallIdentity: callIdentity, Symbol: symbol, Signature: signature, ReceiverType: receiverType, EffectKind: effectKind, State: callbackPreviewStateUnknown, StartOffset: start, EndOffset: end, Stage: callbackPreviewStage, Step: "PENDING_EFFECT_REVIEW", Reason: "PENDING_TYPED_CALLBACK_EFFECTS", UnknownClass: callbackPreviewUnknownDependency, NextOperation: "RESOLVE_TYPED_CALLBACK_EFFECTS", BlockedBy: []string{callIdentity}}
+	return CallbackPreviewEffect{CallIdentity: callIdentity, Symbol: symbol, Signature: signature, ReceiverType: receiverType, EffectKind: effectKind, State: callbackPreviewStateUnknown, StartOffset: start, EndOffset: end, Stage: callbackPreviewStage, Step: "PENDING_EFFECT_REVIEW", Reason: "PENDING_TYPED_CALLBACK_EFFECTS", UnknownClass: callbackPreviewUnknownDirect, NextOperation: "RESTORE_TYPED_CALLBACK_EFFECT", BlockedBy: []string{}}
 }
 
 func callbackPreviewEffectIdentities(effects []CallbackPreviewEffect) []string {

@@ -52,7 +52,7 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 		t.Fatalf("preview counters = candidate:%#v effects:%d", preview.Candidate, len(preview.PendingEffects))
 	}
 	for _, effect := range preview.PendingEffects {
-		if effect.UnknownClass != "DEPENDENCY_BLOCKED" || effect.Stage != "CALLBACK_PREVIEW" || effect.Step != "PENDING_EFFECT_REVIEW" || effect.Reason != "PENDING_TYPED_CALLBACK_EFFECTS" || effect.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || len(effect.BlockedBy) != 1 || effect.BlockedBy[0] != effect.CallIdentity {
+		if effect.UnknownClass != "DIRECT_MISSING" || effect.Stage != "CALLBACK_PREVIEW" || effect.Step != "PENDING_EFFECT_REVIEW" || effect.Reason != "PENDING_TYPED_CALLBACK_EFFECTS" || effect.NextOperation != "RESTORE_TYPED_CALLBACK_EFFECT" || effect.BlockedBy == nil || len(effect.BlockedBy) != 0 {
 			t.Fatalf("pending effect lifecycle = %#v", effect)
 		}
 	}
@@ -67,9 +67,17 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 		t.Fatalf("baseline callback preview validation failed: %v", err)
 	}
 	for name, mutate := range map[string]func(*CallbackPreviewResult){
+		"input-record-value": func(value *CallbackPreviewResult) {
+			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
+			for index := range value.ContractRecords[0].Fields {
+				if value.ContractRecords[0].Fields[index].Name == "SourceDigest" {
+					value.ContractRecords[0].Fields[index].Value = "forged"
+				}
+			}
+		},
 		"field-id": func(value *CallbackPreviewResult) {
 			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
-			value.ContractRecords[2].Fields[0].ID = "gooo://forged-field"
+			value.ContractRecords[0].Fields[0].ID = "gooo://forged-field"
 		},
 		"codec": func(value *CallbackPreviewResult) {
 			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
@@ -86,6 +94,15 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 					value.ContractRecords[2].Fields[index].Value = "999"
 				}
 			}
+		},
+		"candidate-bytes": func(value *CallbackPreviewResult) {
+			candidate := *value.Candidate
+			candidate.CandidateSource += "\n"
+			value.Candidate = &candidate
+		},
+		"effect-self-loop": func(value *CallbackPreviewResult) {
+			value.PendingEffects = append([]CallbackPreviewEffect(nil), value.PendingEffects...)
+			value.PendingEffects[0].BlockedBy = []string{value.PendingEffects[0].CallIdentity}
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -116,6 +133,21 @@ func TestPaginationCallbackPreviewMissingAndMalformedAreNotAdmission(t *testing.
 	}
 	if missing.Reason != "CALLBACK_TARGET_MISSING" || missing.Candidate != nil || missing.ApplyPermission != "FORBIDDEN" || missing.OperationResultAdmission != "FORBIDDEN" {
 		t.Fatalf("missing callback preview = %#v", missing)
+	}
+	if err := ValidateCallbackPreviewResult(missing); err != nil {
+		t.Fatalf("direct unknown callback preview validation failed: %v", err)
+	}
+	tampered := missing
+	tampered.ContractRecords = cloneCallbackPreviewRecords(missing.ContractRecords)
+	tampered.UnknownClass = "DEPENDENCY_BLOCKED"
+	if err := ValidateCallbackPreviewResult(tampered); err == nil {
+		t.Fatal("direct unknown enum tamper was accepted")
+	}
+	tampered = missing
+	tampered.ContractRecords = cloneCallbackPreviewRecords(missing.ContractRecords)
+	tampered.ContractRecords[1].Fields[0].ID = "gooo://forged-direct-field"
+	if err := ValidateCallbackPreviewResult(tampered); err == nil {
+		t.Fatal("direct unknown field ID tamper was accepted")
 	}
 	if err := os.WriteFile(path, []byte("package main\nfunc"), 0o644); err != nil {
 		t.Fatal(err)

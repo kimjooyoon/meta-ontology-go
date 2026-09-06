@@ -99,6 +99,32 @@ func ValidateCallbackPreviewList(encoded string) error {
 	return nil
 }
 
+func EncodeCallbackPreviewNestedList(values [][]string) (string, error) {
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return "", err
+	}
+	return CallbackPreviewListCodecPrefix + string(raw), nil
+}
+
+func ValidateCallbackPreviewNestedList(encoded string) error {
+	if len(encoded) < len(CallbackPreviewListCodecPrefix) || encoded[:len(CallbackPreviewListCodecPrefix)] != CallbackPreviewListCodecPrefix {
+		return fmt.Errorf("callback preview nested list does not use %s", CallbackPreviewListCodecPrefix)
+	}
+	var values [][]string
+	if err := json.Unmarshal([]byte(encoded[len(CallbackPreviewListCodecPrefix):]), &values); err != nil {
+		return fmt.Errorf("decode callback preview nested list: %w", err)
+	}
+	canonical, err := EncodeCallbackPreviewNestedList(values)
+	if err != nil {
+		return err
+	}
+	if canonical != encoded {
+		return fmt.Errorf("callback preview nested list is not canonical")
+	}
+	return nil
+}
+
 func (contract CallbackPreviewContractEvidence) BuildCallbackPreviewRecord(entity string, values map[string]string) (CallbackPreviewRecord, error) {
 	fields := make([]CallbackPreviewFieldValue, 0)
 	for _, field := range contract.Fields {
@@ -155,6 +181,10 @@ func (contract CallbackPreviewContractEvidence) ValidateCallbackPreviewFlow(reco
 	return nil
 }
 
+func (contract CallbackPreviewContractEvidence) ValidateCallbackPreviewRecord(record CallbackPreviewRecord) error {
+	return contract.validateCallbackPreviewRecordFields(record)
+}
+
 func (contract CallbackPreviewContractEvidence) validateCallbackPreviewRecordFields(record CallbackPreviewRecord) error {
 	expected := make(map[string]string)
 	for _, field := range contract.Fields {
@@ -172,7 +202,11 @@ func (contract CallbackPreviewContractEvidence) validateCallbackPreviewRecordFie
 			return fmt.Errorf("callback preview record %s field %s has an unbound ID", record.Entity, field.Name)
 		}
 		seen[field.Name] = true
-		if callbackPreviewListField(field.Name) {
+		if field.Name == "EffectBlockedBy" {
+			if err := ValidateCallbackPreviewNestedList(field.Value); err != nil {
+				return fmt.Errorf("callback preview record %s field %s: %w", record.Entity, field.Name, err)
+			}
+		} else if callbackPreviewListField(field.Name) {
 			if err := ValidateCallbackPreviewList(field.Value); err != nil {
 				return fmt.Errorf("callback preview record %s field %s: %w", record.Entity, field.Name, err)
 			}
@@ -183,7 +217,7 @@ func (contract CallbackPreviewContractEvidence) validateCallbackPreviewRecordFie
 
 func callbackPreviewListField(name string) bool {
 	switch name {
-	case "CaptureNames", "ObjectIdentities", "ObjectTypes", "BindingModes", "CallIdentities", "Symbols", "Signatures", "ReceiverTypes", "EffectKinds", "States", "BlockedBy":
+	case "CaptureNames", "ObjectIdentities", "ObjectTypes", "BindingModes", "CallIdentities", "Symbols", "Signatures", "ReceiverTypes", "EffectKinds", "States", "BlockedBy", "EffectStages", "EffectSteps", "EffectReasons", "EffectUnknownClasses", "EffectNextOperations":
 		return true
 	default:
 		return false
@@ -263,6 +297,12 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 		{Name: "ReceiverTypes", ID: "gooo://meta-callback-preview/field/effects-receiver-types", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "EffectKinds", ID: "gooo://meta-callback-preview/field/effects-kinds", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "States", ID: "gooo://meta-callback-preview/field/effects-states", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectStages", ID: "gooo://meta-callback-preview/field/effects-stages", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectSteps", ID: "gooo://meta-callback-preview/field/effects-steps", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectReasons", ID: "gooo://meta-callback-preview/field/effects-reasons", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectUnknownClasses", ID: "gooo://meta-callback-preview/field/effects-unknown-classes", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectNextOperations", ID: "gooo://meta-callback-preview/field/effects-next-operations", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectBlockedBy", ID: "gooo://meta-callback-preview/field/effects-blocked-by", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "Count", ID: "gooo://meta-callback-preview/field/effects-count", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "ResolvedCount", ID: "gooo://meta-callback-preview/field/effects-resolved-count", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "State", ID: "gooo://meta-callback-preview/field/effects-state", Presence: semantic.Required, Cardinality: semantic.One},

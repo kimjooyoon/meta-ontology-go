@@ -39,6 +39,12 @@ entity PendingCallbackEffects id "gooo://meta-callback-preview/entity/pending-ef
     field ReceiverTypes id "gooo://meta-callback-preview/field/effects-receiver-types" type string required one
     field EffectKinds id "gooo://meta-callback-preview/field/effects-kinds" type string required one
     field States id "gooo://meta-callback-preview/field/effects-states" type string required one
+    field EffectStages id "gooo://meta-callback-preview/field/effects-stages" type string required one
+    field EffectSteps id "gooo://meta-callback-preview/field/effects-steps" type string required one
+    field EffectReasons id "gooo://meta-callback-preview/field/effects-reasons" type string required one
+    field EffectUnknownClasses id "gooo://meta-callback-preview/field/effects-unknown-classes" type string required one
+    field EffectNextOperations id "gooo://meta-callback-preview/field/effects-next-operations" type string required one
+    field EffectBlockedBy id "gooo://meta-callback-preview/field/effects-blocked-by" type string required one
     field Count id "gooo://meta-callback-preview/field/effects-count" type string required one
     field ResolvedCount id "gooo://meta-callback-preview/field/effects-resolved-count" type string required one
     field State id "gooo://meta-callback-preview/field/effects-state" type string required one
