@@ -69,6 +69,24 @@ func TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI(t *testing.T)
 		proposal.LineLimit, len(proposal.Contract.Steps), proposal.OperationAdmission)
 }
 
+func TestCallbackExtractionRejectsUnsupportedCaptureCI(t *testing.T) {
+	if os.Getenv("CI") != "true" {
+		t.Skip("callback extraction capture conformance is CI-only")
+	}
+	source := "package fixture\nimport h \"net/http\"\nimport \"testing\"\nfunc " + callbackPreviewTarget + "(t *testing.T) {\n" + `
+const marker = "capture"
+callback := h.HandlerFunc(func(_ h.ResponseWriter, _ *h.Request) {
+if marker == "" { panic("missing marker") }
+})
+callback(nil, nil)
+}` + "\n"
+	root := writeCallbackFactoryFixture(t, source)
+	proposal, err := PlanCallbackExtraction(root, "fixture_test.go", "func:"+callbackPreviewTarget)
+	if err == nil || !strings.Contains(err.Error(), "unsupported non-variable callback capture marker") || len(proposal.Artifacts) != 0 {
+		t.Fatalf("unsupported capture escaped planning: artifacts=%d err=%v", len(proposal.Artifacts), err)
+	}
+}
+
 func TestCallbackExtractionFinalPartitionRejectsMutation(t *testing.T) {
 	intermediate := []byte("package p\nfunc A() int { return 1 }\nfunc B() int { return 2 }\n")
 	generated := map[string][]byte{"a.go": []byte("package p\nfunc A() int { return 1 }\n"), "b.go": []byte("package p\nfunc B() int { return 2 }\n")}

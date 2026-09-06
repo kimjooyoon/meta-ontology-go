@@ -65,7 +65,10 @@ func PlanCallbackExtraction(root, logical, subject string) (CallbackExtractionPr
 	if err != nil {
 		return CallbackExtractionProposal{}, err
 	}
-	captures := callbackPreviewCaptures(callback, evidence, fset)
+	captures, err := callbackPreviewCaptures(callback, evidence, fset)
+	if err != nil {
+		return CallbackExtractionProposal{}, err
+	}
 	effects := callbackPreviewEffects(callback, evidence, fset)
 	candidate, err := callbackPreviewFactoryCandidate(root, source, logical, fset, file, target, callback, evidence, captures, effects)
 	if err != nil {
