@@ -13,6 +13,7 @@ import (
 )
 
 const Operation = "RegisterSyntaxCapability"
+
 // RequiredMembers is the unchanged canonical nine-file acceptance target.
 const RequiredMembers = 9
 const RequiredArtifacts = 9

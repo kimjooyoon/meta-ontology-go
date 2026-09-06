@@ -115,7 +115,7 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 		report := map[string]any{"operation": Operation, "candidate_digest": digestValue(candidate),
 			"native_conformance": "PASS", "emitted_members": candidate.Emitted, "required_members": candidate.Required,
 			"required_artifacts": candidate.RequiredArtifacts, "generated_artifacts": len(candidate.Artifacts),
-			"source_view": view,
+			"source_view":            view,
 			"manual_follow_up_edits": 0, "replay_comparisons": 1, "repository_writes": 0,
 			"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": "UNASSESSED",
 			"global_planner_admission": "NOT_IMPLEMENTED", "wall_ms": time.Since(started).Milliseconds()}
