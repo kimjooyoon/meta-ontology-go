@@ -60,6 +60,7 @@ func expectedRegistry() Registry {
 		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
 		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
+		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
 		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
