@@ -77,7 +77,7 @@ activity Beta(Integer) -> Integer computes "int.add:1"
 		t.Run(testCase.name, func(t *testing.T) {
 			reader := runSourceReaderWithFiles{
 				"fixture.gooo": testCase.source,
-				"input.json":  []byte(`{"value":41}`),
+				"input.json":   []byte(`{"value":41}`),
 			}
 			var stdout, stderr bytes.Buffer
 			code := runSource([]string{"--json", "--entry", testCase.entry, "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
@@ -118,9 +118,9 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}
 	var report struct {
-		Decision  string `json:"decision"`
-		Reason    string `json:"reason"`
-		Failure   struct {
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+		Failure  struct {
 			Code   string `json:"code"`
 			Stage  string `json:"stage"`
 			Step   string `json:"step"`
