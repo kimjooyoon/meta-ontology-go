@@ -137,6 +137,7 @@ func registrationPublishNativeEvidence(t *testing.T, plan generation.Plan, manif
 		"registration_request_digest": candidate.RequestDigest, "execution_binding": candidate.ExecutionBinding,
 		"replay_comparisons": bundle.ReplayComparisons, "repository_writes": 0,
 		"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": candidate.Admission,
+		"input_scopes": 2, "registration_input_scope": "EXPLICIT_REGISTRATION_SNAPSHOT",
 		"promotion_authorized": false, "utility": "UNKNOWN", "improvement": "UNKNOWN",
 		"build_wall_ms": buildMS, "execution_wall_ms": executionMS,
 		"capture_note": "candidate.json is a separate read-only worker replay with the same exact request"}

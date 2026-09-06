@@ -69,11 +69,13 @@ func TestNativeRegistrationCommonExecutionOwnershipIsExact(t *testing.T) {
 		"scripts/meta-execution/registration_cli.go",
 		"scripts/meta-execution/registration_evidence.go",
 		"scripts/meta-execution/registration_execute.go",
+		"scripts/meta-execution/registration_input_scope.go",
 		"scripts/meta-execution/registration_native_helpers_test.go",
 		"scripts/meta-execution/registration_native_test.go",
 		"scripts/meta-execution/registration_process.go",
 		"scripts/meta-execution/registration_verify.go",
 		"scripts/meta-execution/run.go",
+		"scripts/self-improvement-contract/contract_test.go",
 	}
 	got, known := BranchScope("agent/registration-native-integration-20260907")
 	if !known || !reflect.DeepEqual(got, want) {

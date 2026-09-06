@@ -72,3 +72,26 @@ security finding. Those remain separately observable integration concerns.
 
 Local validation is intentionally not run. Native Actions must establish
 actual conformance before this implementation can be counted as closed.
+
+## Explicit independent input scopes
+
+A pending, unregistered Gooo source can make its whole repository fail corpus
+conformance. Another independent operation must not hide that source, skip the
+corpus verifier, or pretend that registration has already been applied.
+
+The common executor therefore accepts an explicit --registration-root snapshot
+for the REGISTRATION_REQUEST action. Its actual Git HEAD must equal the common
+plan head, and Compile rechecks the request's scoped snapshot/source digests and
+execution identity against that exact input. The root's absolute location is
+not identity; its observed HEAD, process evidence and pinned contents are.
+
+The native acceptance case uses two caller-owned snapshots of the same commit:
+a clean common input for the real CollapseAssignReturn operation, and a separate
+registration input containing the new Gooo source. Both are checked for net
+source changes after execution. Registration verifies its full generated
+candidate in a third temporary copy. The common verifier still runs the full
+module unchanged. No source is removed or excluded to make a verifier pass.
+
+This does not claim that operations on one invalid shared snapshot are
+independent or conformant. Callers that select such an input still get the
+actual failure. Input scopes are explicit, not inferred from an error message.

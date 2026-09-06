@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
 )
 
@@ -42,5 +44,24 @@ func TestRegistrationWorkerFailurePreservesSemanticCoordinates(t *testing.T) {
 		Reason: "COUNTEREXAMPLE", NextOperation: "preserve-counterexample", BlockedBy: []string{}}
 	if failure := registrationNativeFailure(refuted, "fallback"); failure.class != "KNOWN_CONTRADICTION" {
 		t.Fatalf("known contradiction became UNKNOWN: %+v", failure)
+	}
+}
+
+func TestRegistrationContractComparisonUsesExactNativeWireFormats(t *testing.T) {
+	source, semantic := strings.Repeat("a", 64), strings.Repeat("b", 64)
+	action := generation.Action{InputContractSourceDigest: source, InputContractSemanticDigest: semantic}
+	candidate := syntaxregistration.Candidate{ContractDigest: "sha256:" + source, SemanticDigest: semantic}
+	if !registrationContractMatches(candidate, action) {
+		t.Fatal("native source digest and semantic StableHash were incorrectly compared")
+	}
+	for _, changed := range []syntaxregistration.Candidate{
+		{ContractDigest: source, SemanticDigest: semantic},
+		{ContractDigest: candidate.ContractDigest, SemanticDigest: "sha256:" + semantic},
+		{ContractDigest: "sha256:" + strings.Repeat("c", 64), SemanticDigest: semantic},
+		{ContractDigest: candidate.ContractDigest, SemanticDigest: strings.Repeat("c", 64)},
+	} {
+		if registrationContractMatches(changed, action) {
+			t.Fatalf("substituted native contract accepted: %+v", changed)
+		}
 	}
 }

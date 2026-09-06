@@ -17,6 +17,11 @@ func executeNativeRegistration(workspace string, plan generation.Plan, action ge
 		return materialized, newOperationError("OPERATION_INPUT", "bind-registration-request",
 			"REGISTRATION_ACTION_INPUT_MISMATCH", "KNOWN_CONTRADICTION", "restore-exact-typed-request")
 	}
+	inputRoot, inputBinding, inputFailure := registrationBoundInputRoot(workspace, plan.HeadSHA)
+	if inputFailure != nil {
+		return materialized, inputFailure
+	}
+	workspace = inputRoot
 	request := *action.RegistrationRequest
 	compiled, err := syntaxregistration.Compile(os.DirFS(workspace), request)
 	if err != nil {
@@ -64,8 +69,7 @@ func executeNativeRegistration(workspace string, plan generation.Plan, action ge
 	if err := compiled.ValidateCandidate(os.DirFS(workspace), candidate); err != nil {
 		return materialized, registrationNativeFailure(err, "validate-candidate")
 	}
-	if candidate.ContractDigest != "sha256:"+action.InputContractSourceDigest ||
-		candidate.SemanticDigest != "sha256:"+action.InputContractSemanticDigest {
+	if !registrationContractMatches(candidate, action) {
 		return materialized, newOperationError("OPERATION_INPUT", "bind-native-contract",
 			"REGISTRATION_CONTRACT_SUBSTITUTED", "KNOWN_CONTRADICTION", "restore-compiled-native-binding")
 	}
@@ -74,7 +78,11 @@ func executeNativeRegistration(workspace string, plan generation.Plan, action ge
 	if failure != nil {
 		return materialized, failure
 	}
-	return finishRegistrationMaterialization(plan, action, candidate, materialized)
+	materialized, failure = finishRegistrationMaterialization(plan, action, candidate, materialized)
+	if failure != nil {
+		return materialized, failure
+	}
+	return bindRegistrationInputEvidence(materialized, inputBinding)
 }
 
 func registrationNativeFailure(err error, step string) *operationError {

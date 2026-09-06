@@ -32,15 +32,18 @@ func TestNativeRegistrationUsesCommonTwoOperationExecution(t *testing.T) {
 	if err := restoreCollapseFixture(snapshot); err != nil {
 		t.Fatal(err)
 	}
-	request := registrationTestRequest(t, snapshot)
+	registrationSnapshot := filepath.Join(temporary, "registration-input")
+	registrationTestCommand(t, root, "git", "clone", "--no-hardlinks", "--quiet", root, registrationSnapshot)
+	registrationTestCommand(t, registrationSnapshot, "git", "checkout", "--quiet", "--detach", head)
+	request := registrationTestRequest(t, registrationSnapshot)
 	binary := filepath.Join(temporary, "meta-execution")
 	buildStarted := time.Now()
 	registrationTestCommand(t, root, "go", "build", "-mod=readonly", "-o", binary, "./scripts/meta-execution")
 	buildMS := time.Since(buildStarted).Milliseconds()
 	requestPath := filepath.Join(temporary, "request.json")
 	registrationTestWriteJSON(t, requestPath, request)
-	pinned := registrationTestCommand(t, snapshot, binary, "--registration-mode=inspect",
-		"--registration-root="+snapshot, "--registration-request="+requestPath)
+	pinned := registrationTestCommand(t, registrationSnapshot, binary, "--registration-mode=inspect",
+		"--registration-root="+registrationSnapshot, "--registration-request="+requestPath)
 	var err error
 	request, err = syntaxregistration.DecodeRequest(pinned)
 	if err != nil {
@@ -55,7 +58,7 @@ func TestNativeRegistrationUsesCommonTwoOperationExecution(t *testing.T) {
 	registrationTestWriteJSON(t, metricsPath, linecaps.LineMetricsReport{
 		Root: snapshot, CommitSHA: head, Meta: sourceReport})
 	planBytes := registrationTestCommand(t, snapshot, binary, "--registration-mode=plan",
-		"--registration-root="+snapshot, "--registration-request="+requestPath,
+		"--registration-root="+registrationSnapshot, "--registration-request="+requestPath,
 		"--registration-base="+head, "--source-metrics="+metricsPath)
 	var plan generation.Plan
 	if err := json.Unmarshal(planBytes, &plan); err != nil {
@@ -69,9 +72,11 @@ func TestNativeRegistrationUsesCommonTwoOperationExecution(t *testing.T) {
 	registrationTestWriteJSON(t, planPath, plan)
 	beforeStatus := registrationTestCommand(t, snapshot, "git", "--no-optional-locks",
 		"status", "--porcelain=v1", "--untracked-files=all")
+	beforeRegistrationStatus := registrationTestCommand(t, registrationSnapshot, "git", "--no-optional-locks",
+		"status", "--porcelain=v1", "--untracked-files=all")
 	executionStarted := time.Now()
 	output := registrationTestCommand(t, snapshot, binary, "--plan="+planPath,
-		"--output="+manifestPath, "--source-metrics="+metricsPath)
+		"--output="+manifestPath, "--source-metrics="+metricsPath, "--registration-root="+registrationSnapshot)
 	executionMS := time.Since(executionStarted).Milliseconds()
 	var manifest generation.ExecutionManifest
 	var bundle generation.OperationObservationBundle
@@ -88,13 +93,16 @@ func TestNativeRegistrationUsesCommonTwoOperationExecution(t *testing.T) {
 	registrationAssertNativeReceipts(t, plan, bundle, request)
 	afterStatus := registrationTestCommand(t, snapshot, "git", "--no-optional-locks",
 		"status", "--porcelain=v1", "--untracked-files=all")
-	repinned := registrationTestCommand(t, snapshot, binary, "--registration-mode=inspect",
-		"--registration-root="+snapshot, "--registration-request="+requestPath)
-	if !bytes.Equal(beforeStatus, afterStatus) || !bytes.Equal(pinned, repinned) {
+	afterRegistrationStatus := registrationTestCommand(t, registrationSnapshot, "git", "--no-optional-locks",
+		"status", "--porcelain=v1", "--untracked-files=all")
+	repinned := registrationTestCommand(t, registrationSnapshot, binary, "--registration-mode=inspect",
+		"--registration-root="+registrationSnapshot, "--registration-request="+requestPath)
+	if !bytes.Equal(beforeStatus, afterStatus) || !bytes.Equal(beforeRegistrationStatus, afterRegistrationStatus) ||
+		!bytes.Equal(pinned, repinned) {
 		t.Fatal("common executor changed its input project or pinned source view")
 	}
-	candidateBytes := registrationTestCommand(t, snapshot, binary, "--registration-mode=worker",
-		"--registration-root="+snapshot, "--registration-request="+requestPath)
+	candidateBytes := registrationTestCommand(t, registrationSnapshot, binary, "--registration-mode=worker",
+		"--registration-root="+registrationSnapshot, "--registration-request="+requestPath)
 	var candidate syntaxregistration.Candidate
 	if err := json.Unmarshal(candidateBytes, &candidate); err != nil {
 		t.Fatal(err)

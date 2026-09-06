@@ -14,7 +14,7 @@ import (
 
 var registrationMode = flag.String("registration-mode", "", "inspect, plan or worker; empty uses the common executor")
 var registrationRequestPath = flag.String("registration-request", "", "explicit typed registration request JSON")
-var registrationRoot = flag.String("registration-root", "", "read-only input project root")
+var registrationRoot = flag.String("registration-root", "", "read-only registration input snapshot, including in common execution")
 var registrationBase = flag.String("registration-base", "", "exact common-plan base commit")
 var registrationMetricsPath = flag.String("source-metrics", "", "explicit common source metrics JSON")
 
