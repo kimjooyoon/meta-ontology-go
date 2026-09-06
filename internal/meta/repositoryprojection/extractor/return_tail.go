@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
+	"go/parser"
 	"go/token"
 	"go/types"
 	"slices"
+	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
@@ -36,7 +38,7 @@ func preparationProgressEvidence(contract generation.OperationInputContractEvide
 	}
 }
 
-func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
+func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool, preflight []renderedCapacityObservation, helperProofRegistry map[string]returnTailHelperProof) (*returnTailCandidate, error) {
 	contract, err := generation.ExtractFunctionInputContractEvidence()
 	if err != nil {
 		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
@@ -46,6 +48,8 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 		!contract.UsedInputFact || !contract.GeneratedOutputFact || contract.SourceDigest == "" || contract.SemanticDigest == "" {
 		return nil, fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
 	}
+	evidence.contractSourceDigest = contract.SourceDigest
+	evidence.contractSemanticDigest = contract.SemanticDigest
 	contractObligations, obligationsOK := returnTailContractObligations(contract.Obligations)
 	if !obligationsOK {
 		return nil, fail("derive-recipe", "admit-return-tail", "RETURN_TAIL_OBLIGATIONS_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
@@ -68,7 +72,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 	}
 
 	for startIndex := range slices.Backward(statements) {
-		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex, preflight)
+		candidate, candidateErr := tryReturnTailStart(root, logical, source, fset, file, function, evidence, contract, contractObligations, existing, startIndex, preflight, helperProofRegistry)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
 				continue
@@ -93,7 +97,7 @@ func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
 	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
 }
 
-func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
+func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int, preflight []renderedCapacityObservation, helperProofRegistry map[string]returnTailHelperProof) (*returnTailCandidate, error) {
 	statements := function.Body.List[startIndex:]
 	if len(statements) == 0 {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
@@ -125,7 +129,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err := proof.consume(2, returnTailPredicateResult{Status: "PASS", Payload: proofBindingPayload(bindings), CandidateDigest: proofDigest(source[start:end]), Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"}); err != nil {
 		return nil, err
 	}
-	if err := returnTailCalleeEffects(statements, evidence); err != nil {
+	if err := returnTailCalleeEffects(statements, evidence, helperProofRegistry); err != nil {
 		return nil, err
 	}
 	if err := proof.consume(3, returnTailPredicateResult{Status: "PASS", Payload: append([]byte("callee-effects\x00"), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "all selected calls have closed typed effect evidence"}); err != nil {
@@ -170,6 +174,9 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	combined, err = format.Source(combined)
 	if err != nil {
 		return nil, returnTailContradiction(obligationProjectedConform, "combined source did not render")
+	}
+	if err := registerReturnTailHelperProof(root, logical, combined, name, contract, proof, evidence, helperProofRegistry); err != nil {
+		return nil, err
 	}
 	renderedHelper, err := renderedFunctionHelper(combined, name)
 	if err != nil {
@@ -570,7 +577,7 @@ func returnTailAssignedObject(expression ast.Expr, info *types.Info) (types.Obje
 	}
 }
 
-func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error {
+func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof) error {
 	var effectErr error
 	ast.Inspect(&ast.BlockStmt{List: statements}, func(node ast.Node) bool {
 		if effectErr != nil {
@@ -583,7 +590,7 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error
 		if returnTailTypedConversion(call, evidence.info) {
 			return true
 		}
-		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}) {
+		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}, helperProofRegistry) {
 			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"obligation=" + obligationCalleeEffects})
 			return false
 		}
@@ -612,7 +619,7 @@ func returnTailTypeExpression(expression ast.Expr, info *types.Info) bool {
 	return ok && returnTailTypeExpression(parenthesized.X, info)
 }
 
-func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {
+func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof) bool {
 	var object types.Object
 	switch function := call.Fun.(type) {
 	case *ast.Ident:
@@ -639,9 +646,12 @@ func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting
 		if declaration == nil || declaration.Recv != nil || visiting[value] {
 			return false
 		}
+		if helperProof, ok := helperProofRegistry[value.Name()]; ok && returnTailHelperProofMatches(value, declaration, evidence, helperProof) {
+			return true
+		}
 		visiting[value] = true
 		defer delete(visiting, value)
-		return provenLocalPureFunction(declaration, evidence, visiting)
+		return provenLocalPureFunction(declaration, evidence, visiting, helperProofRegistry, nil)
 	default:
 		return false
 	}
@@ -661,7 +671,7 @@ func exactDeepEqualSignature(function *types.Func) bool {
 	return ok && !signature.Variadic() && signature.Params().Len() == 2 && signature.Results().Len() == 1 && signature.Results().At(0).Type() == types.Typ[types.Bool]
 }
 
-func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool) bool {
+func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, allowedGlobals map[types.Object]bool) bool {
 	local := make(map[types.Object]bool)
 	ast.Inspect(function.Type, func(node ast.Node) bool {
 		identifier, ok := node.(*ast.Ident)
@@ -696,7 +706,7 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 			if returnTailTypedConversion(value, evidence.info) {
 				break
 			}
-			if !returnTailCalleeAllowed(value, evidence, visiting) {
+			if !returnTailCalleeAllowed(value, evidence, visiting, helperProofRegistry) {
 				pure = false
 			}
 		case *ast.AssignStmt:
@@ -722,13 +732,250 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 			if value.Name != "_" && value.Name != "nil" && evidence.info.Defs[value] == nil && evidence.info.Uses[value] == nil {
 				pure = false
 			}
-			if object, ok := evidence.info.Uses[value].(*types.Var); ok && object.Parent() == evidence.pkg.Scope() {
+			if object, ok := evidence.info.Uses[value].(*types.Var); ok && object.Parent() == evidence.pkg.Scope() && !allowedGlobals[object] {
 				pure = false
 			}
 		}
 		return true
 	})
 	return pure
+}
+
+func registerReturnTailHelperProof(root, logical string, source []byte, helperName string, contract generation.OperationInputContractEvidence, proof returnTailProofChain, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof) error {
+	if helperProofRegistry == nil {
+		return nil
+	}
+	helperSet := token.NewFileSet()
+	helperFile, err := parser.ParseFile(helperSet, logical, source, parser.ParseComments)
+	if err != nil {
+		return fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
+	}
+	var helperDeclaration *ast.FuncDecl
+	for _, declaration := range helperFile.Decls {
+		function, ok := declaration.(*ast.FuncDecl)
+		if ok && function.Recv == nil && function.Name != nil && function.Name.Name == helperName {
+			helperDeclaration = function
+			break
+		}
+	}
+	if helperDeclaration == nil {
+		return fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
+	}
+	helperEvidence, err := checkTypes(root, logical, helperSet, helperFile, helperDeclaration)
+	if err != nil {
+		return err
+	}
+	helperObject, ok := helperEvidence.info.Defs[helperDeclaration.Name].(*types.Func)
+	if !ok || helperObject == nil || helperObject.Pkg() == nil || helperEvidence.pkg == nil || helperObject.Pkg() != helperEvidence.pkg {
+		return fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
+	}
+	globalObjects, globalReadIdentities, safe := returnTailGlobalReadEvidence(helperDeclaration, helperEvidence)
+	if !safe || !provenLocalPureFunction(helperDeclaration, helperEvidence, map[*types.Func]bool{}, helperProofRegistry, globalObjects) {
+		return failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"helper=" + helperName})
+	}
+	signatureDigest, bodyDigest, ok := returnTailFunctionDigests(helperSet, helperDeclaration)
+	if !ok {
+		return fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
+	}
+	calleeEvidenceID := ""
+	if len(proof.stages) > 3 {
+		calleeEvidenceID = proof.stages[3].OutputEvidenceID
+	}
+	if calleeEvidenceID == "" {
+		return fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
+	}
+	helperProofRegistry[helperName] = returnTailHelperProof{
+		helperName:              helperName,
+		helperSignatureDigest:   signatureDigest,
+		helperBodyDigest:        bodyDigest,
+		helperType:              returnTailCanonicalType(helperObject.Type()),
+		contractSourceDigest:    contract.SourceDigest,
+		contractSemanticDigest:  contract.SemanticDigest,
+		calleeEffectsEvidenceID: calleeEvidenceID,
+		globalReadIdentities:    globalReadIdentities,
+	}
+	return nil
+}
+
+func returnTailHelperProofMatches(function *types.Func, declaration *ast.FuncDecl, evidence typeEvidence, proof returnTailHelperProof) bool {
+	if function == nil || declaration == nil || evidence.pkg == nil || function.Pkg() != evidence.pkg || proof.helperName != function.Name() ||
+		proof.calleeEffectsEvidenceID == "" || proof.contractSourceDigest == "" || proof.contractSemanticDigest == "" ||
+		evidence.contractSourceDigest != proof.contractSourceDigest || evidence.contractSemanticDigest != proof.contractSemanticDigest ||
+		returnTailCanonicalType(function.Type()) != proof.helperType {
+		return false
+	}
+	signatureDigest, bodyDigest, ok := returnTailFunctionDigests(evidence.fset, declaration)
+	if !ok || signatureDigest != proof.helperSignatureDigest || bodyDigest != proof.helperBodyDigest {
+		return false
+	}
+	_, globalReadIdentities, safe := returnTailGlobalReadEvidence(declaration, evidence)
+	return safe && sameReturnTailStrings(globalReadIdentities, proof.globalReadIdentities)
+}
+
+func returnTailFunctionDigests(fset *token.FileSet, function *ast.FuncDecl) (string, string, bool) {
+	if fset == nil || function == nil || function.Type == nil || function.Body == nil {
+		return "", "", false
+	}
+	var signature, body bytes.Buffer
+	if err := format.Node(&signature, fset, function.Type); err != nil {
+		return "", "", false
+	}
+	if err := format.Node(&body, fset, function.Body); err != nil {
+		return "", "", false
+	}
+	return proofDigest(signature.Bytes()), proofDigest(body.Bytes()), true
+}
+
+func returnTailCanonicalType(value types.Type) string {
+	if value == nil {
+		return ""
+	}
+	return types.TypeString(value, func(pkg *types.Package) string {
+		if pkg == nil {
+			return ""
+		}
+		return pkg.Path()
+	})
+}
+
+func returnTailGlobalReadEvidence(function *ast.FuncDecl, evidence typeEvidence) (map[types.Object]bool, []string, bool) {
+	objects := make(map[types.Object]bool)
+	if function == nil || evidence.info == nil || evidence.pkg == nil {
+		return objects, nil, false
+	}
+	safe := true
+	global := func(expression ast.Expr) (types.Object, bool) {
+		identifier, ok := expression.(*ast.Ident)
+		if !ok {
+			return nil, false
+		}
+		object, ok := evidence.info.Uses[identifier].(*types.Var)
+		return object, ok && object.Parent() == evidence.pkg.Scope()
+	}
+	containsGlobal := func(node ast.Node) bool {
+		found := false
+		ast.Inspect(node, func(inner ast.Node) bool {
+			identifier, ok := inner.(*ast.Ident)
+			if ok {
+				if object, isGlobal := global(identifier); isGlobal {
+					objects[object] = true
+					found = true
+				}
+			}
+			return !found
+		})
+		return found
+	}
+	ast.Inspect(function.Body, func(node ast.Node) bool {
+		if !safe {
+			return false
+		}
+		switch value := node.(type) {
+		case *ast.FuncLit:
+			safe = false
+			return false
+		case *ast.AssignStmt:
+			for _, lhs := range value.Lhs {
+				if object, isGlobal := global(lhs); isGlobal {
+					objects[object] = true
+					safe = false
+				}
+			}
+			for _, rhs := range value.Rhs {
+				if containsGlobal(rhs) {
+					safe = false
+				}
+			}
+		case *ast.IncDecStmt:
+			if object, isGlobal := global(value.X); isGlobal {
+				objects[object] = true
+				safe = false
+			}
+		case *ast.UnaryExpr:
+			if value.Op == token.AND {
+				if object, isGlobal := global(value.X); isGlobal {
+					objects[object] = true
+					safe = false
+				}
+			}
+		case *ast.RangeStmt:
+			if value.Tok == token.ASSIGN {
+				if object, isGlobal := global(value.Key); isGlobal {
+					objects[object] = true
+					safe = false
+				}
+				if object, isGlobal := global(value.Value); isGlobal {
+					objects[object] = true
+					safe = false
+				}
+			}
+		case *ast.ValueSpec:
+			for _, expression := range value.Values {
+				if containsGlobal(expression) {
+					safe = false
+				}
+			}
+		case *ast.CallExpr:
+			if containsGlobal(value.Fun) {
+				safe = false
+			}
+			for _, argument := range value.Args {
+				if containsGlobal(argument) {
+					safe = false
+				}
+			}
+		case *ast.SelectorExpr:
+			if containsGlobal(value.X) {
+				safe = false
+			}
+		case *ast.IndexExpr:
+			if containsGlobal(value.X) {
+				safe = false
+			}
+		case *ast.IndexListExpr:
+			if containsGlobal(value.X) {
+				safe = false
+			}
+		case *ast.Ident:
+			if object, isGlobal := global(value); isGlobal {
+				objects[object] = true
+			}
+		}
+		return true
+	})
+	identities := make([]string, 0, len(objects))
+	for object := range objects {
+		identities = append(identities, returnTailObjectIdentity(object, evidence))
+	}
+	sort.Strings(identities)
+	return objects, identities, safe
+}
+
+func returnTailObjectIdentity(object types.Object, evidence typeEvidence) string {
+	if object == nil {
+		return ""
+	}
+	position := ""
+	if evidence.fset != nil && object.Pos() != token.NoPos {
+		position = evidence.fset.Position(object.Pos()).String()
+	}
+	packagePath := ""
+	if object.Pkg() != nil {
+		packagePath = object.Pkg().Path()
+	}
+	return packagePath + "\x00" + object.Name() + "\x00" + returnTailCanonicalType(object.Type()) + "\x00" + position
+}
+
+func sameReturnTailStrings(left, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func returnTailDirectLocalLValue(expression ast.Expr, object types.Object, local map[types.Object]bool) bool {

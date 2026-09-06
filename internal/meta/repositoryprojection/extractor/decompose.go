@@ -87,16 +87,31 @@ type renderedCapacitySnapshot struct {
 }
 
 type typeEvidence struct {
-	info  *types.Info
-	pkg   *types.Package
-	files []*ast.File
-	funcs map[*types.Func]*ast.FuncDecl
+	info                   *types.Info
+	pkg                    *types.Package
+	files                  []*ast.File
+	funcs                  map[*types.Func]*ast.FuncDecl
+	fset                   *token.FileSet
+	contractSourceDigest   string
+	contractSemanticDigest string
+}
+
+type returnTailHelperProof struct {
+	helperName              string
+	helperSignatureDigest   string
+	helperBodyDigest        string
+	helperType              string
+	contractSourceDigest    string
+	contractSemanticDigest  string
+	calleeEffectsEvidenceID string
+	globalReadIdentities    []string
 }
 
 func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
 	current := append([]byte(nil), source...)
 	currentSet, currentFile := fset, file
 	evidence := make([]StrategyEvidence, 0)
+	helperProofs := make(map[string]returnTailHelperProof)
 	for {
 		selection, err := firstOversizedFunction(currentSet, currentFile, current)
 		if err != nil {
@@ -106,7 +121,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 			return current, evidence, nil
 		}
 		function := selection.function
-		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations)
+		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations, helperProofs)
 		if err != nil {
 			return nil, nil, withRenderedCapacityDiagnostics(err, selection.observations)
 		}
@@ -343,7 +358,7 @@ func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 	return "method:" + fset.Position(function.Pos()).String() + ":" + function.Name.Name
 }
 
-func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation) ([]byte, *StrategyEvidence, error) {
+func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation, helperProofRegistry ...map[string]returnTailHelperProof) ([]byte, *StrategyEvidence, error) {
 	if function.Recv != nil {
 		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
 			"declaration=" + functionIdentity(fset, function),
@@ -358,7 +373,11 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	if err != nil {
 		return nil, nil, err
 	}
-	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight); candidateErr != nil {
+	proofs := make(map[string]returnTailHelperProof)
+	if len(helperProofRegistry) > 0 && helperProofRegistry[0] != nil {
+		proofs = helperProofRegistry[0]
+	}
+	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight, proofs); candidateErr != nil {
 		if !isKnownSuffixContradiction(candidateErr) {
 			return nil, nil, candidateErr
 		}
