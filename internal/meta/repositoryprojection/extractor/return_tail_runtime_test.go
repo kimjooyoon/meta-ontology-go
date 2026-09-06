@@ -26,6 +26,7 @@ type runtimeWitnessCase struct {
 	name         string
 	functionName string
 	source       string
+	original     string
 	support      map[string]string
 	expected     string
 }
@@ -36,6 +37,7 @@ func TestReturnTailRuntimeWitness(t *testing.T) {
 			name:         "W1_sentinel_guard_terminal_nil",
 			functionName: "W1",
 			source:       runtimeWitnessW1Source(),
+			original:     runtimeWitnessW1OriginalSource(),
 			support:      map[string]string{"harness.go": runtimeWitnessW1Harness()},
 			expected: "early:true:*main.witnessError:false\n" +
 				"nil:true:<nil>:true\n" +
@@ -107,7 +109,11 @@ func runtimeWitnessPrepareCase(t *testing.T, tc runtimeWitnessCase) string {
 func runtimeWitnessRunOriginal(t *testing.T, tc runtimeWitnessCase, caseRoot string) []byte {
 	t.Helper()
 	root := t.TempDir()
-	if err := runtimeWitnessWriteModule(root, tc.source, tc.support); err != nil {
+	source := tc.source
+	if tc.original != "" {
+		source = tc.original
+	}
+	if err := runtimeWitnessWriteModule(root, source, tc.support); err != nil {
 		t.Fatal(err)
 	}
 	stdout, stderr, runErr := runtimeWitnessRunGo(root)
@@ -144,6 +150,9 @@ func runtimeWitnessExtract(t *testing.T, tc runtimeWitnessCase, caseRoot string)
 	if len(result.Generated) == 0 {
 		t.Fatal("fixture extraction produced no generated units")
 	}
+	if tc.name == "W1_sentinel_guard_terminal_nil" {
+		assertRuntimeWitnessW1DependencyEvidence(t, result)
+	}
 	evidence, err := json.MarshalIndent(result.Evidence, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -152,6 +161,38 @@ func runtimeWitnessExtract(t *testing.T, tc runtimeWitnessCase, caseRoot string)
 		t.Fatal(err)
 	}
 	return result
+}
+
+func assertRuntimeWitnessW1DependencyEvidence(t *testing.T, result Result) {
+	t.Helper()
+	var witness *StrategyEvidence
+	for index := range result.Evidence {
+		if result.Evidence[index].Subject == "func:W1" {
+			witness = &result.Evidence[index]
+			break
+		}
+	}
+	if witness == nil {
+		t.Fatal("W1 runtime witness lacks strategy evidence")
+	}
+	if len(witness.CalleeDependencies) != 1 {
+		t.Fatalf("W1 callee dependencies=%+v, want one generated helper dependency", witness.CalleeDependencies)
+	}
+	dependency := witness.CalleeDependencies[0]
+	if dependency.Name != "calleeExtractedReturnTail73" || dependency.EvidenceID == "" {
+		t.Fatalf("W1 dependency=%+v, want generated callee with evidence id", dependency)
+	}
+	var calleeEffectsEvidenceID string
+	for _, evidence := range result.Evidence {
+		if evidence.Subject != "func:callee" || len(evidence.ProofStages) <= 3 {
+			continue
+		}
+		calleeEffectsEvidenceID = evidence.ProofStages[3].OutputEvidenceID
+		break
+	}
+	if calleeEffectsEvidenceID == "" || dependency.EvidenceID != calleeEffectsEvidenceID {
+		t.Fatalf("W1 dependency evidence id=%q, callee-effects proof stage=%q", dependency.EvidenceID, calleeEffectsEvidenceID)
+	}
 }
 
 func runtimeWitnessMaterializeGenerated(t *testing.T, tc runtimeWitnessCase, result Result, caseRoot string) string {
@@ -377,7 +418,18 @@ func runtimeWitnessJSON(value any) []byte {
 }
 
 func runtimeWitnessW1Source() string {
-	return "package main\n\nfunc W1(mode int) error {\n" +
+	return "package main\n\nfunc callee() error {\n" +
+		strings.Repeat("\t_ = 1\n", 73) +
+		"\treturn terminalSentinel\n}\n\nfunc W1(mode int) error {\n" +
+		"\tif mode == 1 {\n\t\treturn earlySentinel\n\t}\n" +
+		strings.Repeat("\t_ = 1\n", 80) +
+		"\tif mode == 2 {\n\t\treturn nil\n\t}\n\treturn calleeExtractedReturnTail73()\n}\n"
+}
+
+func runtimeWitnessW1OriginalSource() string {
+	return "package main\n\nfunc callee() error {\n" +
+		strings.Repeat("\t_ = 1\n", 73) +
+		"\treturn terminalSentinel\n}\n\nfunc W1(mode int) error {\n" +
 		"\tif mode == 1 {\n\t\treturn earlySentinel\n\t}\n" +
 		strings.Repeat("\t_ = 1\n", 80) +
 		"\tif mode == 2 {\n\t\treturn nil\n\t}\n\treturn terminalSentinel\n}\n"

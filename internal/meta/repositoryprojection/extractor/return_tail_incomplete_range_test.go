@@ -12,7 +12,7 @@ import (
 )
 
 func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
-	source := "package p\n\nfunc caller() error { return helper() }\n\nfunc helper() error {\n\tvar iterator func(func(int) bool)\n\tfor range iterator {}\n\treturn nil\n}\n"
+	source := "package p\n\nfunc caller() error { return helper() }\n\nfunc helper() error {\n\tfor range []int{1, 2} {}\n\treturn nil\n}\n"
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
 		t.Fatal(err)
@@ -52,7 +52,15 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	evidence.contractSourceDigest = "contract-source"
+	evidence.contractSemanticDigest = "contract-semantic"
+	if evidence.info.TypeOf(rangeExpression) == nil {
+		t.Fatal("complete range type evidence was unexpectedly absent before mutation")
+	}
 	delete(evidence.info.Types, rangeExpression)
+	if evidence.info.TypeOf(rangeExpression) != nil {
+		t.Fatal("range type mutation did not remove the selected TypeAndValue")
+	}
 	helperObject, ok := evidence.info.Defs[helper.Name].(*types.Func)
 	if !ok || helperObject == nil {
 		t.Fatal("incomplete range fixture lacks typed helper")
