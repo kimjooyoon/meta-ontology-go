@@ -1,5 +1,7 @@
 package syntaxregistration
 
+import "slices"
+
 // ExecutionIdentity binds bytes, not paths or a version-only assertion.
 // Environment configuration and publisher authenticity are separate obligations.
 type ExecutionIdentity struct {
@@ -19,12 +21,10 @@ type ExecutionBinding struct {
 }
 
 func validateExecutionIdentity(expected, observed ExecutionIdentity) error {
-	for _, value := range []string{expected.GoVersion, expected.GOOS, expected.GOARCH,
-		expected.ExecutableDigest, expected.GoCommandDigest, expected.CompilerDigest} {
-		if value == "" {
-			return failure("UNKNOWN", "bind-execution-identity", "REGISTRATION_EXECUTION_IDENTITY_MISSING",
-				"DIRECT_MISSING", "observe-and-pin-execution-identity")
-		}
+	if slices.Contains([]string{expected.GoVersion, expected.GOOS, expected.GOARCH,
+		expected.ExecutableDigest, expected.GoCommandDigest, expected.CompilerDigest}, "") {
+		return failure("UNKNOWN", "bind-execution-identity", "REGISTRATION_EXECUTION_IDENTITY_MISSING",
+			"DIRECT_MISSING", "observe-and-pin-execution-identity")
 	}
 	for _, value := range []string{expected.ExecutableDigest, expected.GoCommandDigest, expected.CompilerDigest} {
 		if !executionDigestValid(value) {
