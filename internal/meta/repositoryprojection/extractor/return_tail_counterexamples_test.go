@@ -170,6 +170,9 @@ func TestReturnTailCalleeProofCounterexamples(t *testing.T) {
 				t.Fatal("baseline helper proof did not match complete typed evidence")
 			}
 			if tc.proofMutation != nil {
+				if _, err := returnTailCalleeEffects(caller.Body.List, evidence, map[string]returnTailHelperProof{"helper": proof}); err != nil {
+					t.Fatalf("complete helper proof was rejected before mutation: %v", err)
+				}
 				tc.proofMutation(&proof)
 			}
 			_, err := returnTailCalleeEffects(caller.Body.List, evidence, map[string]returnTailHelperProof{"helper": proof})

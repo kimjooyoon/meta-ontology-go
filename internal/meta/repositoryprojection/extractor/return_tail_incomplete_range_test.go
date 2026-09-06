@@ -54,12 +54,11 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	}
 	evidence.contractSourceDigest = "contract-source"
 	evidence.contractSemanticDigest = "contract-semantic"
+	if _, err := (types.Config{}).Check("example.test", fset, []*ast.File{file}, nil); err != nil {
+		t.Fatalf("strict fixture package type-check failed: %v", err)
+	}
 	if evidence.info.TypeOf(rangeExpression) == nil {
 		t.Fatal("complete range type evidence was unexpectedly absent before mutation")
-	}
-	delete(evidence.info.Types, rangeExpression)
-	if evidence.info.TypeOf(rangeExpression) != nil {
-		t.Fatal("range type mutation did not remove the selected TypeAndValue")
 	}
 	helperObject, ok := evidence.info.Defs[helper.Name].(*types.Func)
 	if !ok || helperObject == nil {
@@ -67,6 +66,13 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	}
 	registry := map[string]returnTailHelperProof{
 		"helper": returnTailTestHelperProof(t, "helper", evidence, helperObject, helper, "helper-evidence", nil),
+	}
+	if _, err := returnTailCalleeEffects(caller.Body.List, evidence, registry); err != nil {
+		t.Fatalf("complete range type evidence was rejected before mutation: %v", err)
+	}
+	delete(evidence.info.Types, rangeExpression)
+	if evidence.info.TypeOf(rangeExpression) != nil {
+		t.Fatal("range type mutation did not remove the selected TypeAndValue")
 	}
 	_, err = returnTailCalleeEffects(caller.Body.List, evidence, registry)
 	var failure Failure
