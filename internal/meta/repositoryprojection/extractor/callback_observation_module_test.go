@@ -18,9 +18,9 @@ func TestCallbackObservationPreservesModuleAndPackageIdentityCI(t *testing.T) {
 	root, output := t.TempDir(), t.TempDir()
 	const logical = "cmd/subject/subject_test.go"
 	files := map[string][]byte{
-		"go.mod": []byte("module example.invalid/callback-observation/v2\n\ngo 1.27.0\n"),
-		"go.sum": []byte(""),
-		"internal/value/value.go": []byte("package value\nconst Answer = 42\n"),
+		"go.mod":                         []byte("module example.invalid/callback-observation/v2\n\ngo 1.27.0\n"),
+		"go.sum":                         []byte(""),
+		"internal/value/value.go":        []byte("package value\nconst Answer = 42\n"),
 		"cmd/subject/testdata/proof.txt": []byte("original-input"),
 		logical: []byte(`package subject
 import (

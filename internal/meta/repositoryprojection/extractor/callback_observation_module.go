@@ -57,8 +57,8 @@ func callbackObservationModuleSources(ctx context.Context, root, logical string,
 	}
 	observed := map[string][]byte{}
 	for name, raw := range files {
-		if strings.HasPrefix(name, prefix) {
-			observed[strings.TrimPrefix(name, prefix)] = raw
+		if after, ok := strings.CutPrefix(name, prefix); ok {
+			observed[after] = raw
 		}
 	}
 	if !maps.EqualFunc(observed, baseline, bytes.Equal) {

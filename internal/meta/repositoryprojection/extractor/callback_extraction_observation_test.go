@@ -46,6 +46,13 @@ func TestCallbackExtractionObservesOriginalAndFinalPackageCI(t *testing.T) {
 		record.Fields["FinalPackageDigest"] != observation.FinalPackageDigest || record.Fields["TestEventDigest"] != observation.TestEventDigest {
 		t.Fatalf("runtime observation is not Gooo-bound: %+v", record)
 	}
+	t.Logf("callback module snapshot digest=%s files=%d bytes=%d scope=MODULE_SOURCE_BYTES_ONLY external_dependency_binding=%s",
+		observation.ModuleDigest, observation.ModuleFiles, observation.ModuleBytes, observation.DependencyBinding)
+	recordJSON, err := json.Marshal(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("callback Gooo observer record=%s", recordJSON)
 	for _, run := range observation.Runs {
 		if run.ExitCode != 0 || !run.TestEventsComplete || run.WallMS < 0 || len(run.Events) == 0 ||
 			run.StdoutDigest != proofDigest(run.Stdout) || run.StderrDigest != proofDigest(run.Stderr) {
