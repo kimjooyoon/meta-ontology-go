@@ -1,0 +1,56 @@
+name: Native registration common execution
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'internal/meta/generation/**'
+      - 'internal/meta/sourcepolicy/**'
+      - 'internal/meta/syntaxregistration/**'
+      - 'scripts/meta-execution/**'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - '.github/workflows/native-registration-execution.yml'
+  push:
+    branches: [dev]
+    paths:
+      - 'internal/meta/generation/**'
+      - 'internal/meta/sourcepolicy/**'
+      - 'internal/meta/syntaxregistration/**'
+      - 'scripts/meta-execution/**'
+      - '.github/workflows/native-registration-execution.yml'
+permissions:
+  contents: read
+concurrency:
+  group: native-registration-execution-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-common-execution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GOTOOLCHAIN: local
+      GOOO_REGISTRATION_NATIVE_E2E: '1'
+      GOOO_REGISTRATION_NATIVE_EVIDENCE_DIR: ${{ runner.temp }}/native-registration-evidence
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Run real two-operation common execution and exact input regressions
+        run: |
+          go test -count=1 ./internal/meta/generation -run Registration
+          go test -count=1 -timeout=45m -v ./scripts/meta-execution -run 'Test(NativeRegistration|Registration)'
+      - name: Preserve actual common plan, process receipts and candidate
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: native-registration-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/native-registration-evidence
+          if-no-files-found: warn
+          retention-days: 14

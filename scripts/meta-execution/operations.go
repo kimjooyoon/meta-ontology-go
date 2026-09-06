@@ -167,7 +167,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	metricsPath, err := sourceMetricsPath()
+	metricsPath, err := configuredSourceMetricsPath()
 	if err != nil {
 		for _, action := range generationActions(plan) {
 			bundle.Failures = append(bundle.Failures, observationFailure(action, "observe-metrics", "resolve-source-metrics", "SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics", []string{}, generation.ProcessObservation{}))
@@ -263,6 +263,9 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	if action.Operation == sourcepolicy.OperationRegisterSyntax {
+		return executeNativeRegistration(workspace, plan, action)
+	}
 	if action.Operation == sourcepolicy.OperationCollapseAssign {
 		if failure := validateCollapseAction(action); failure != nil {
 			return operationMaterialization{}, failure

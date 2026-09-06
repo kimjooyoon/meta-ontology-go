@@ -53,6 +53,7 @@ func executionStepFor(action Action) ExecutionStep {
 		Executor:            action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
 		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,
+		RegistrationRequest: cloneRegistrationRequest(action.RegistrationRequest),
 		WorkspaceMode: WorkspaceModeDisposable,
 		WriteBoundary: WriteBoundarySandboxOnly,
 	}

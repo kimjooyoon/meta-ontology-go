@@ -93,6 +93,8 @@ type OperationReceipt struct {
 	Indicators                    []IndicatorReceipt         `json:"indicators"`
 	InstanceEvidence              *OperationInstanceEvidence `json:"instance_evidence,omitempty"`
 	ReceiptDigest                 string                     `json:"receipt_digest"`
+
+	OperationInputDigest string `json:"operation_input_digest,omitempty"`
 }
 
 // ReceiptUnknown preserves an unavailable or malformed execution observation

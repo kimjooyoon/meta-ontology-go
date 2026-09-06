@@ -2,7 +2,7 @@ package generation
 
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 
-func Build(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
+func buildWithoutRegistrationInputs(baseSHA, headSHA string, report sourcepolicy.Report) Plan {
 	indicators := normalizeIndicators(report.Indicators)
 	registry := normalizeRegistry(DefaultRegistry())
 	floors := blockingIndicators(indicators)
