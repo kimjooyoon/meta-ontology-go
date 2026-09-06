@@ -53,7 +53,7 @@ func TestDuplicateIdentityAndPathAreRefuted(t *testing.T) {
 }
 
 func TestCandidateCannotDropMembersRewriteHistoryOrAcquireAuthority(t *testing.T) {
-	for _, mutation := range []string{"missing", "duplicate", "history", "content", "authority", "lowered"} {
+	for _, mutation := range []string{"missing", "duplicate", "history", "content", "authority", "lowered", "role", "binding"} {
 		data, request := fixture(t)
 		plan, err := Compile(data, request)
 		if err != nil {
@@ -65,17 +65,25 @@ func TestCandidateCannotDropMembersRewriteHistoryOrAcquireAuthority(t *testing.T
 		}
 		switch mutation {
 		case "missing":
-			candidate.Members = candidate.Members[:8]
+			candidate.Members = candidate.Members[:len(candidate.Members)-1]
 		case "duplicate":
-			candidate.Members[8] = candidate.Members[0]
+			candidate.Members[len(candidate.Members)-1] = candidate.Members[0]
 		case "history":
-			candidate.Members[7].Path = denominatorPath(request.BaseVersion)
+			for index := range candidate.Members {
+				if candidate.Members[index].Path == denominatorPath(request.BaseVersion+1) {
+					candidate.Members[index].Path = denominatorPath(request.BaseVersion)
+				}
+			}
 		case "content":
 			candidate.Members[0].Content = []byte("{}")
 		case "authority":
 			candidate.ApplyAuthorized = true
 		case "lowered":
-			candidate.Required = 8
+			candidate.Required--
+		case "role":
+			candidate.Artifacts = candidate.Artifacts[:8]
+		case "binding":
+			candidate.Members[0].ActivityIDs = nil
 		}
 		requireFailure(t, plan.ValidateCandidate(data, candidate), "REFUTED", "")
 	}

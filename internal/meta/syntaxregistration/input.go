@@ -47,9 +47,11 @@ func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
 		!strings.HasSuffix(request.Case.Path, ".gooo") {
 		return nil, failure("REFUTED", "validate-request", "REGISTRATION_INPUT_INVALID", "", "correct-explicit-input")
 	}
-	paths := memberPaths(request.BaseVersion + 1)
-	paths[7] = denominatorPath(request.BaseVersion)
-	paths = append(paths, request.Case.Path)
+	paths, err := sourceInputPaths(repository)
+	if err != nil {
+		return nil, err
+	}
+	paths = append(paths, corpusPath, denominatorPath(request.BaseVersion), request.Case.Path)
 	history, err := fs.Glob(repository, closureRoot+"evidence/denominator*.json")
 	if err != nil {
 		return nil, err

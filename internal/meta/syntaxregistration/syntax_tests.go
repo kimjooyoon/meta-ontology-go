@@ -8,14 +8,10 @@ import (
 	"strings"
 )
 
-func generateSyntaxTests(raw, corpus []byte) ([]byte, error) {
+func generateSyntaxTests(source *goSource, corpus []byte) error {
 	total, valid, capability, err := corpusTotals(corpus)
 	if err != nil {
-		return nil, err
-	}
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
+		return err
 	}
 	expected := map[string]int{
 		"report.Summary.Satisfied": total, "report.Summary.ValidCases": valid,
@@ -48,14 +44,14 @@ func generateSyntaxTests(raw, corpus []byte) ([]byte, error) {
 		return true
 	})
 	if failure != nil {
-		return nil, failure
+		return failure
 	}
 	for _, name := range []string{"report.Summary.Satisfied", "report.Summary.ValidCases",
 		"report.Summary.Unresolved", "languagesyntax.FixedTotal", "languagesyntax.FixedCapabilityTotal",
 		"len(report.Source.GoooFiles)"} {
 		if seen[name] == 0 {
-			return nil, fmt.Errorf("syntax conformance obligation not found: %s", name)
+			return fmt.Errorf("syntax conformance obligation not found: %s", name)
 		}
 	}
-	return source.finish()
+	return nil
 }

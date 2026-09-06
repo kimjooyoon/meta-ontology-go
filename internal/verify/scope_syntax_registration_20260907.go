@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/syntax-registration-operator-20260907"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/repository-projection.yml",
 		".github/workflows/syntax-registration-candidate.yml",
 		"cmd/syntax-registration-candidate/main.go",
 		"cmd/syntax-registration-candidate/output.go",
@@ -25,6 +26,8 @@ func init() {
 		"internal/meta/syntaxregistration/migration_tests.go",
 		"internal/meta/syntaxregistration/native_test.go",
 		"internal/meta/syntaxregistration/selection.go",
+		"internal/meta/syntaxregistration/source_units.go",
+		"internal/meta/syntaxregistration/source_units_test.go",
 		"internal/meta/syntaxregistration/syntax_tests.go",
 		"internal/meta/syntaxregistration/types.go",
 		"internal/verify/scope_syntax_registration_20260907.go",

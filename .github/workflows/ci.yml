@@ -355,6 +355,17 @@ jobs:
           actual_head="$(git rev-parse HEAD)"
           test "$actual_head" = "$EXPECTED_HEAD"
           git rev-parse --verify "$EXPECTED_BASE^{commit}" >/dev/null
+      - name: Preflight changed-file scope before meta execution
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' }}
+        timeout-minutes: 5
+        env:
+          GOOO_SCOPE_FROM: ${{ github.event.pull_request.base.sha }}
+          GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}
+          GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          GOOO_SCOPE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        # Reuse the exact-head/path checks without making an early route
+        # authorization. The original final scope and PR-target check remains.
+        run: go run ./scripts/verify --skip-caps --head= --base=
       - name: Emit source metrics (go/gooo + folders/files)
         timeout-minutes: 15
         env:

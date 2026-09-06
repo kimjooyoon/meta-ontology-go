@@ -5,18 +5,14 @@ import (
 	"go/ast"
 )
 
-func generateSelection(raw []byte, version, capability int) ([]byte, error) {
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
-	}
+func generateSelection(source *goSource, version, capability int) error {
 	for _, item := range []struct{ function, result string }{
 		{"activeDenominator", evidenceName(version)},
 		{"activeDenominatorDigest", digestName(version)},
 	} {
 		function, err := source.function(item.function)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		count := 0
 		ast.Inspect(function, func(node ast.Node) bool {
@@ -48,10 +44,31 @@ func generateSelection(raw []byte, version, capability int) ([]byte, error) {
 			return false
 		})
 		if count != 1 {
-			return nil, fmt.Errorf("denominator selection %s lacks one exact baseline", item.function)
+			return fmt.Errorf("denominator selection %s lacks one exact baseline", item.function)
 		}
 	}
-	source.edits = append(source.edits, sourceEdit{len(raw), len(raw),
-		fmt.Sprintf("\n//go:embed evidence/denominator-v%d.json\nvar %s []byte\n", version, evidenceName(version))})
-	return source.finish()
+	var anchor ast.Node
+	for _, declaration := range source.file.Decls {
+		group, ok := declaration.(*ast.GenDecl)
+		if !ok {
+			continue
+		}
+		for _, spec := range group.Specs {
+			value, ok := spec.(*ast.ValueSpec)
+			if ok && len(value.Names) == 1 && value.Names[0].Name == evidenceName(version-1) {
+				if anchor != nil {
+					return fmt.Errorf("baseline embedded evidence is ambiguous")
+				}
+				anchor = value
+			}
+		}
+	}
+	if anchor == nil {
+		return fmt.Errorf("baseline embedded evidence is missing")
+	}
+	if err := source.requireImport(anchor, "embed", "_"); err != nil {
+		return err
+	}
+	source.appendAt(anchor, fmt.Sprintf("\n//go:embed evidence/denominator-v%d.json\nvar %s []byte\n", version, evidenceName(version)))
+	return nil
 }

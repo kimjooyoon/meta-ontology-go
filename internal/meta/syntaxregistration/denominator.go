@@ -55,18 +55,14 @@ func denominatorID(version int) string {
 func digestName(version int) string   { return fmt.Sprintf("DenominatorMigrationV%dDigest", version) }
 func evidenceName(version int) string { return fmt.Sprintf("embeddedDenominatorV%d", version) }
 
-func generateAdmission(raw []byte, version int) ([]byte, error) {
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
-	}
+func generateAdmission(source *goSource, version int) error {
 	decode, err := source.function("decodeDenominator")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	header, err := source.function("validateDenominator")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	digests, headers := 0, 0
 	ast.Inspect(decode, func(node ast.Node) bool {
@@ -89,17 +85,14 @@ func generateAdmission(raw []byte, version int) ([]byte, error) {
 		return true
 	})
 	if digests != 1 || headers != 1 {
-		return nil, fmt.Errorf("denominator admission anchors are not exact")
+		return fmt.Errorf("denominator admission anchors are not exact")
 	}
-	return source.finish()
+	return nil
 }
 
-func generateDigest(raw, previous []byte, version int, next []byte) ([]byte, error) {
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
-	}
+func generateDigest(source *goSource, previous []byte, version int, next []byte) error {
 	bound := 0
+	var anchor ast.Node
 	for _, declaration := range source.file.Decls {
 		group, ok := declaration.(*ast.GenDecl)
 		if !ok {
@@ -111,25 +104,25 @@ func generateDigest(raw, previous []byte, version int, next []byte) ([]byte, err
 				continue
 			}
 			if value.Names[0].Name == digestName(version) {
-				return nil, fmt.Errorf("new denominator digest is already declared")
+				return fmt.Errorf("new denominator digest is already declared")
 			}
 			if value.Names[0].Name == digestName(version-1) {
 				literal, ok := value.Values[0].(*ast.BasicLit)
 				if !ok {
-					return nil, fmt.Errorf("baseline digest is not literal")
+					return fmt.Errorf("baseline digest is not literal")
 				}
 				text, err := strconv.Unquote(literal.Value)
 				if err != nil || text != digest(previous) {
-					return nil, fmt.Errorf("baseline denominator digest mismatch")
+					return fmt.Errorf("baseline denominator digest mismatch")
 				}
+				anchor = value
 				bound++
 			}
 		}
 	}
 	if bound != 1 {
-		return nil, fmt.Errorf("baseline denominator digest is not uniquely pinned")
+		return fmt.Errorf("baseline denominator digest is not uniquely pinned")
 	}
-	source.edits = append(source.edits, sourceEdit{len(raw), len(raw),
-		fmt.Sprintf("\nconst %s = %q\n", digestName(version), digest(next))})
-	return source.finish()
+	source.appendAt(anchor, fmt.Sprintf("\nconst %s = %q\n", digestName(version), digest(next)))
+	return nil
 }

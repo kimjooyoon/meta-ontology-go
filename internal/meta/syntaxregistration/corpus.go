@@ -35,14 +35,10 @@ func generateCorpus(raw []byte, request Request) ([]byte, error) {
 	return bytes.Replace(raw, old, next, 1), nil
 }
 
-func generateRegistry(raw []byte, request Request) ([]byte, error) {
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
-	}
+func generateRegistry(source *goSource, request Request) error {
 	function, err := source.function("expectedRegistry")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	count := 0
 	ast.Inspect(function, func(node ast.Node) bool {
@@ -62,9 +58,9 @@ func generateRegistry(raw []byte, request Request) ([]byte, error) {
 		return false
 	})
 	if count != 1 {
-		return nil, fmt.Errorf("expected exactly one native case registry, got %d", count)
+		return fmt.Errorf("expected exactly one native case registry, got %d", count)
 	}
-	return source.finish()
+	return nil
 }
 
 func corpusTotals(raw []byte) (total, valid, capability int, err error) {
@@ -84,14 +80,10 @@ func corpusTotals(raw []byte) (total, valid, capability int, err error) {
 	return
 }
 
-func generateModel(raw, corpus []byte) ([]byte, error) {
+func generateModel(source *goSource, corpus []byte) error {
 	total, valid, capability, err := corpusTotals(corpus)
 	if err != nil {
-		return nil, err
-	}
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
+		return err
 	}
 	expected := map[string]int{"totalCases": total, "validCases": valid, "FixedCapabilityTotal": capability}
 	seen := map[string]int{}
@@ -112,16 +104,16 @@ func generateModel(raw, corpus []byte) ([]byte, error) {
 			}
 			actual, literal := integer(value.Values[0])
 			if !literal || actual != old {
-				return nil, fmt.Errorf("baseline syntax denominator mismatch: %s", name)
+				return fmt.Errorf("baseline syntax denominator mismatch: %s", name)
 			}
 			seen[name]++
 			source.replace(value.Values[0], strconv.Itoa(old+1))
 		}
 	}
-	for name := range expected {
+	for _, name := range sortedPaths(expected) {
 		if seen[name] != 1 {
-			return nil, fmt.Errorf("syntax denominator %s is not unique", name)
+			return fmt.Errorf("syntax denominator %s is not unique", name)
 		}
 	}
-	return source.finish()
+	return nil
 }

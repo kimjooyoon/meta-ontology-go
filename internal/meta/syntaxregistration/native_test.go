@@ -46,7 +46,20 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 		t.Fatal(err)
 	}
 	archive := filepath.Join(temporary, "source.tar")
-	nativeCommand(t, original, "git", "archive", "--format=tar", "--output="+archive, "HEAD")
+	view := os.Getenv("GOOO_SYNTAX_REGISTRATION_SOURCE_VIEW")
+	if view == "" {
+		view = "canonical"
+	}
+	switch view {
+	case "canonical":
+		nativeCommand(t, original, "git", "archive", "--format=tar", "--output="+archive, "HEAD")
+	case "projected":
+		// Preserve the actual projected input, including created units. Dereference
+		// logical-workspace links so applying the copy cannot write through them.
+		nativeCommand(t, original, "tar", "--dereference", "--exclude=.git", "-cf", archive, ".")
+	default:
+		t.Fatalf("unsupported native source view: %s", view)
+	}
 	nativeCommand(t, original, "tar", "-xf", archive, "-C", snapshot)
 	_, request := fixture(t)
 	inputPath := filepath.Join(snapshot, filepath.FromSlash(request.Case.Path))
@@ -65,6 +78,13 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 	candidate, err := plan.Generate(repository)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if candidate.RequiredArtifacts != 9 || len(candidate.Artifacts) != 9 ||
+		candidate.Required != candidate.Emitted || candidate.Emitted != len(candidate.Members) {
+		t.Fatal("native candidate lost a semantic role or physical member")
+	}
+	if view == "canonical" && candidate.Required != RequiredMembers {
+		t.Fatalf("canonical acceptance requires exactly nine files, got %d", candidate.Required)
 	}
 	replayed, err := plan.Generate(repository)
 	if err != nil {
@@ -93,7 +113,9 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 			t.Fatal(err)
 		}
 		report := map[string]any{"operation": Operation, "candidate_digest": digestValue(candidate),
-			"native_conformance": "PASS", "emitted_members": candidate.Emitted, "required_members": RequiredMembers,
+			"native_conformance": "PASS", "emitted_members": candidate.Emitted, "required_members": candidate.Required,
+			"required_artifacts": candidate.RequiredArtifacts, "generated_artifacts": len(candidate.Artifacts),
+			"source_view": view,
 			"manual_follow_up_edits": 0, "replay_comparisons": 1, "repository_writes": 0,
 			"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": "UNASSESSED",
 			"global_planner_admission": "NOT_IMPLEMENTED", "wall_ms": time.Since(started).Milliseconds()}

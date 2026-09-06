@@ -13,7 +13,9 @@ import (
 )
 
 const Operation = "RegisterSyntaxCapability"
+// RequiredMembers is the unchanged canonical nine-file acceptance target.
 const RequiredMembers = 9
+const RequiredArtifacts = 9
 const corpusPath = "examples/language-syntax-roundtrip/corpus.json"
 const syntaxRoot = "internal/meta/languagereadiness/languagesyntax/"
 const closureRoot = "internal/meta/languageassurance/verticalsliceclosureshadow/"
@@ -43,29 +45,38 @@ func failure(state, step, reason, class, next string) error {
 }
 
 type Member struct {
-	Path         string `json:"path"`
-	ActivityID   string `json:"activity_id"`
-	BeforeDigest string `json:"before_digest"`
-	AfterDigest  string `json:"after_digest"`
-	Content      []byte `json:"content"`
+	Path         string   `json:"path"`
+	ActivityID   string   `json:"activity_id,omitempty"`
+	ActivityIDs  []string `json:"activity_ids"`
+	BeforeDigest string   `json:"before_digest"`
+	AfterDigest  string   `json:"after_digest"`
+	Content      []byte   `json:"content"`
+}
+
+type Artifact struct {
+	ActivityID string   `json:"activity_id"`
+	OutputID   string   `json:"output_id"`
+	Paths      []string `json:"member_paths"`
 }
 
 type Candidate struct {
-	Operation        string   `json:"operation"`
-	ActivityID       string   `json:"activity_id"`
-	ContractDigest   string   `json:"contract_digest"`
-	SemanticDigest   string   `json:"semantic_digest"`
-	InputDigest      string   `json:"input_digest"`
-	RequestDigest    string   `json:"request_digest"`
-	Toolchain        string   `json:"toolchain"`
-	State            string   `json:"state"`
-	Admission        string   `json:"semantic_admission"`
-	Members          []Member `json:"members"`
-	Required         int      `json:"required_members"`
-	Emitted          int      `json:"emitted_members"`
-	RepositoryWrites int      `json:"repository_writes"`
-	ApplyAuthorized  bool     `json:"apply_authorized"`
-	PromotionAllowed bool     `json:"promotion_authorized"`
+	Operation         string     `json:"operation"`
+	ActivityID        string     `json:"activity_id"`
+	ContractDigest    string     `json:"contract_digest"`
+	SemanticDigest    string     `json:"semantic_digest"`
+	InputDigest       string     `json:"input_digest"`
+	RequestDigest     string     `json:"request_digest"`
+	Toolchain         string     `json:"toolchain"`
+	State             string     `json:"state"`
+	Admission         string     `json:"semantic_admission"`
+	Members           []Member   `json:"members"`
+	Artifacts         []Artifact `json:"artifacts"`
+	Required          int        `json:"required_members"`
+	Emitted           int        `json:"emitted_members"`
+	RequiredArtifacts int        `json:"required_artifacts"`
+	RepositoryWrites  int        `json:"repository_writes"`
+	ApplyAuthorized   bool       `json:"apply_authorized"`
+	PromotionAllowed  bool       `json:"promotion_authorized"`
 }
 
 type Plan struct {

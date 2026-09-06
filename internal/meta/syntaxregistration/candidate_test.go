@@ -46,8 +46,11 @@ func fixture(t *testing.T) (fstest.MapFS, Request) {
 			ExpectedDecision: languagesyntax.DecisionPass, ProofChoice: "COHERENCE",
 			MetaOperation: "replay-language-syntax", Scope: languagesyntax.ScopeLanguageCapability, EntityFields: true}}
 	data := fstest.MapFS{request.Case.Path: {Data: []byte(fixtureSource)}}
-	paths := memberPaths(version + 1)
-	paths[7] = denominatorPath(version)
+	paths, err := sourceInputPaths(repository)
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths = append(paths, corpusPath, denominatorPath(version))
 	history, err := fs.Glob(repository, closureRoot+"evidence/denominator*.json")
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +90,8 @@ func TestCandidateIsCompleteSourceBoundReplayWithoutAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(first, replay) || first.Emitted != 9 || first.Required != 9 ||
+	if !reflect.DeepEqual(first, replay) || first.Emitted != len(first.Members) || first.Required != first.Emitted ||
+		first.RequiredArtifacts != 9 || len(first.Artifacts) != 9 ||
 		first.ContractDigest == "" || first.SemanticDigest == "" || first.ActivityID == "" ||
 		first.ApplyAuthorized || first.PromotionAllowed || first.RepositoryWrites != 0 ||
 		first.State != "PROPOSAL_ONLY" || first.Admission != "UNASSESSED" {
@@ -99,9 +103,14 @@ func TestCandidateIsCompleteSourceBoundReplayWithoutAuthority(t *testing.T) {
 	if digestValue(data) != before {
 		t.Fatal("generator changed its input snapshot")
 	}
+	for _, artifact := range first.Artifacts {
+		if artifact.ActivityID == "" || artifact.OutputID == "" || len(artifact.Paths) == 0 {
+			t.Fatalf("semantic artifact role is unresolved: %#v", artifact)
+		}
+	}
 	seen := map[string]bool{}
 	for _, member := range first.Members {
-		if seen[member.Path] || member.ActivityID == "" || member.AfterDigest != digest(member.Content) {
+		if seen[member.Path] || len(member.ActivityIDs) == 0 || member.AfterDigest != digest(member.Content) {
 			t.Fatalf("candidate member is unbound or duplicated: %s", member.Path)
 		}
 		seen[member.Path] = true

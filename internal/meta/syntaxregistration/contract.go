@@ -15,6 +15,7 @@ var contractSource []byte
 type contractBinding struct {
 	source, semantic string
 	activities       []string
+	outputs          []string
 }
 
 func bindContract() (contractBinding, error) {
@@ -53,6 +54,7 @@ func bindContract() (contractBinding, error) {
 			return contractBinding{}, fmt.Errorf("registration native program mismatch")
 		}
 		binding.activities = append(binding.activities, activity.ID.String())
+		binding.outputs = append(binding.outputs, output.ID.String())
 	}
 	return binding, nil
 }

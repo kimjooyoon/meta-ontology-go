@@ -8,11 +8,7 @@ import (
 	"strings"
 )
 
-func generateMigrationTests(raw []byte, version, capability int) ([]byte, error) {
-	source, err := parseGo(raw)
-	if err != nil {
-		return nil, err
-	}
+func generateMigrationTests(source *goSource, version, capability int) error {
 	for _, declaration := range source.file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
 		if !ok {
@@ -20,6 +16,10 @@ func generateMigrationTests(raw []byte, version, capability int) ([]byte, error)
 		}
 		current := function.Name.Name == "TestCurrentDenominatorPinsExistingCapabilities" ||
 			function.Name.Name == "TestCurrentDenominatorRejectsLoweredTarget"
+		if !current && function.Name.Name != "TestRecordMigrationPreservesPreviousBoundaryEvidence" &&
+			!strings.HasPrefix(function.Name.Name, "TestGeneratedRegistrationMigrationV") {
+			continue
+		}
 		ast.Inspect(function.Body, func(node ast.Node) bool {
 			if !current {
 				if call, ok := node.(*ast.CallExpr); ok && source.text(call.Fun) == "activeDenominator" && len(call.Args) == 0 {
@@ -67,7 +67,7 @@ func generateMigrationTests(raw []byte, version, capability int) ([]byte, error)
 	}
 	for _, name := range []string{"TestCurrentDenominatorPinsExistingCapabilities", "TestCurrentDenominatorRejectsLoweredTarget"} {
 		if _, err := source.function(name); err != nil {
-			return nil, err
+			return err
 		}
 	}
 	test := fmt.Sprintf("\nfunc TestGeneratedRegistrationMigrationV%dPreservesBaseline(t *testing.T) {\n"+
@@ -81,6 +81,16 @@ func generateMigrationTests(raw []byte, version, capability int) ([]byte, error)
 		"if current.Boundaries[index] != expected { t.Fatalf(\"unrelated boundary changed: %%d\", index) }\n"+
 		"}\n}\n", version, evidenceName(version-1), digestName(version-1),
 		evidenceName(version-1), evidenceName(version), version-1, version)
-	source.edits = append(source.edits, sourceEdit{len(raw), len(raw), test})
-	return source.finish()
+	anchor, err := source.function("TestCurrentDenominatorPinsExistingCapabilities")
+	if err != nil {
+		return err
+	}
+	if err := source.requireImport(anchor, "encoding/json", "json"); err != nil {
+		return err
+	}
+	if err := source.requireImport(anchor, "testing", "testing"); err != nil {
+		return err
+	}
+	source.appendAt(anchor, test)
+	return nil
 }

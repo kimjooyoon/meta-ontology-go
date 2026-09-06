@@ -19,9 +19,21 @@ A missing input is UNKNOWN/DIRECT_MISSING; changed content or runtime identity i
 UNKNOWN/STALE. Both retain stage, step, reason, unknown_class, next_operation and
 blocked_by. Duplicate case IDs or paths are REFUTED.
 
-Generation coordinates exactly nine members: corpus JSON, native registry,
+Generation coordinates exactly nine semantic artifact roles: corpus JSON, native registry,
 syntax counters, syntax conformance expectations, denominator admission,
 denominator selection, digest pin, one new denominator JSON, and migration tests.
+The canonical acceptance case still requires exactly nine physical member files.
+After repository projection, one role can own several physical files and a file
+can participate in several roles. All nine activity/output bindings remain
+mandatory; emitted/required physical members are the complete distinct write set,
+not a substituted language-completeness score.
+
+Native symbols are resolved across the declared package namespaces. Every Go
+source unit in those namespaces is included in the input snapshot; missing,
+duplicated or newly added units cannot silently inherit prior evidence.
+AST token-file ownership binds edits to actual paths, ignoring misleading
+line-directive aliases. `artifacts` carries nine lowered activity/output IDs and
+their member paths; each member carries all generating `activity_ids`.
 Go changes are bounded AST-position edits. Existing denominator files are
 immutable inputs; only the new version is emitted. Current obligations increase
 by one and unrelated boundary/link targets are preserved.
@@ -41,7 +53,7 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -request request.json -
 
 The first command reports observed snapshot/source digests and Go runtime
 version. Pin them explicitly in the request before generation. The second writes
-nine member files, candidate.json and execution.json outside the input project.
+the complete member files, candidate.json and execution.json outside the input project.
 Existing output directories and parents resolving inside the input are rejected.
 It does not apply the candidate to the project.
 
@@ -68,9 +80,14 @@ Request example, with observed values filled by the caller:
 
 ## Native evidence and remaining integration
 
-The dedicated Actions job runs the real generator twice, applies all nine
-members only to a CI temporary repository, and runs the existing syntax and
-vertical-slice conformance tests. It reports the actual emitted/required members,
+The dedicated Actions job retains the canonical nine-file end-to-end case.
+The repository-projection job additionally uses its actual authorized transformed
+workspace, copies it with source links dereferenced, generates the complete
+candidate twice, applies every member only to that CI temporary copy, and runs
+the existing syntax and vertical-slice conformance tests. It neither substitutes
+a historical checkout for the projected case nor skips the original full-module
+test. Arbitrary source-file relocation, ambiguous symbol owners, added source
+units and forged source locations have separate regression cases. It reports the actual emitted/required members,
 replay comparison, native command result and elapsed milliseconds. Zero manual
 follow-up edits is reported only after those unchanged conformance commands pass.
 No local test, build or formatter execution is part of this development workflow.

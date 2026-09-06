@@ -61,6 +61,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
         ".github/workflows/syntax-registration-candidate.yml",
         "cmd/syntax-registration-candidate/main.go",
         "cmd/syntax-registration-candidate/output.go",
@@ -82,10 +83,23 @@
         "internal/meta/syntaxregistration/migration_tests.go",
         "internal/meta/syntaxregistration/native_test.go",
         "internal/meta/syntaxregistration/selection.go",
+        "internal/meta/syntaxregistration/source_units.go",
+        "internal/meta/syntaxregistration/source_units_test.go",
         "internal/meta/syntaxregistration/syntax_tests.go",
         "internal/meta/syntaxregistration/types.go",
         "internal/verify/scope_syntax_registration_20260907.go",
         "internal/verify/scope_syntax_registration_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/ci-scope-preflight-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/ci_scope_preflight_order_test.go",
+        "internal/verify/scope_ci_preflight_20260907.go",
+        "internal/verify/scope_ci_preflight_20260907_test.go"
       ]
     },
     {

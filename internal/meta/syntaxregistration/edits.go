@@ -5,73 +5,109 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
-	"go/parser"
 	"go/token"
-	"sort"
+	"slices"
 	"strconv"
 )
 
 type sourceEdit struct {
-	start, end int
-	text       string
+	path     string
+	start    int
+	end      int
+	text     string
+	activity string
 }
 
 type goSource struct {
-	raw   []byte
-	set   *token.FileSet
-	file  *ast.File
-	edits []sourceEdit
+	set      *token.FileSet
+	file     *ast.File
+	units    map[string][]byte
+	edits    []sourceEdit
+	activity string
 }
 
-func parseGo(raw []byte) (*goSource, error) {
-	set := token.NewFileSet()
-	file, err := parser.ParseFile(set, "input.go", raw, parser.ParseComments|parser.SkipObjectResolution)
-	if err != nil {
-		return nil, err
-	}
-	return &goSource{raw: raw, set: set, file: file}, nil
+func (source *goSource) location(position token.Pos) (string, int) {
+	file := source.set.File(position)
+	return file.Name(), file.Offset(position)
 }
 
 func (source *goSource) text(node ast.Node) string {
-	return string(source.raw[source.set.Position(node.Pos()).Offset:source.set.Position(node.End()).Offset])
+	path, start := source.location(node.Pos())
+	endPath, end := source.location(node.End())
+	if path != endPath {
+		return ""
+	}
+	return string(source.units[path][start:end])
 }
 
 func (source *goSource) replace(node ast.Node, text string) {
-	source.edits = append(source.edits, sourceEdit{source.set.Position(node.Pos()).Offset, source.set.Position(node.End()).Offset, text})
+	path, start := source.location(node.Pos())
+	_, end := source.location(node.End())
+	source.edits = append(source.edits, sourceEdit{path, start, end, text, source.activity})
 }
 
 func (source *goSource) insert(position token.Pos, text string) {
-	offset := source.set.Position(position).Offset
-	source.edits = append(source.edits, sourceEdit{offset, offset, text})
+	path, offset := source.location(position)
+	source.edits = append(source.edits, sourceEdit{path, offset, offset, text, source.activity})
 }
 
-func (source *goSource) finish() ([]byte, error) {
-	sort.Slice(source.edits, func(i, j int) bool { return source.edits[i].start > source.edits[j].start })
-	out := bytes.Clone(source.raw)
-	limit := len(out)
+func (source *goSource) appendAt(anchor ast.Node, text string) {
+	path, _ := source.location(anchor.Pos())
+	end := len(source.units[path])
+	source.edits = append(source.edits, sourceEdit{path, end, end, text, source.activity})
+}
+
+func (source *goSource) finish() (map[string][]byte, error) {
+	grouped := map[string][]sourceEdit{}
 	for _, edit := range source.edits {
-		if edit.start < 0 || edit.end < edit.start || edit.end > limit {
-			return nil, fmt.Errorf("registration edits overlap or escape their source")
-		}
-		out = append(append(bytes.Clone(out[:edit.start]), []byte(edit.text)...), out[edit.end:]...)
-		limit = edit.start
+		grouped[edit.path] = append(grouped[edit.path], edit)
 	}
-	return format.Source(out)
+	out := map[string][]byte{}
+	for _, path := range sortedPaths(grouped) {
+		edits := grouped[path]
+		slices.SortStableFunc(edits, func(a, b sourceEdit) int {
+			if a.start > b.start {
+				return -1
+			}
+			if a.start < b.start {
+				return 1
+			}
+			return 0
+		})
+		raw := bytes.Clone(source.units[path])
+		limit := len(raw)
+		for _, edit := range edits {
+			if edit.start < 0 || edit.end < edit.start || edit.end > limit || edit.activity == "" {
+				return nil, fmt.Errorf("registration edits overlap, escape a source unit or lack an activity")
+			}
+			raw = append(append(bytes.Clone(raw[:edit.start]), []byte(edit.text)...), raw[edit.end:]...)
+			limit = edit.start
+		}
+		formatted, err := format.Source(raw)
+		if err != nil {
+			return nil, err
+		}
+		out[path] = formatted
+	}
+	return out, nil
 }
 
 func (source *goSource) function(name string) (*ast.FuncDecl, error) {
 	var found *ast.FuncDecl
 	for _, declaration := range source.file.Decls {
 		function, ok := declaration.(*ast.FuncDecl)
-		if ok && function.Name.Name == name {
-			if found != nil {
-				return nil, fmt.Errorf("ambiguous native function %s", name)
-			}
-			found = function
+		if !ok || function.Recv != nil || function.Name.Name != name {
+			continue
 		}
+		if found != nil {
+			return nil, failure("UNKNOWN", "bind-symbol:"+name, "REGISTRATION_SYMBOL_AMBIGUOUS",
+				"AMBIGUOUS", "disambiguate-source-units")
+		}
+		found = function
 	}
 	if found == nil {
-		return nil, fmt.Errorf("native function missing: %s", name)
+		return nil, failure("UNKNOWN", "bind-symbol:"+name, "REGISTRATION_SYMBOL_MISSING",
+			"DIRECT_MISSING", "restore-source-unit")
 	}
 	return found, nil
 }
