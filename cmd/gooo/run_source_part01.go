@@ -45,13 +45,13 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
 		}
 		payload := struct {
-			Schema              string                          `json:"schema"`
-			Decision            string                          `json:"decision"`
-			SourcePath          string                          `json:"source_path"`
-			SourceDigest        string                          `json:"source_digest"`
-			SemanticFingerprint string                          `json:"semantic_fingerprint"`
-			Entry               string                          `json:"entry"`
-			Execution           valueexecution.Execution        `json:"execution"`
+			Schema              string                   `json:"schema"`
+			Decision            string                   `json:"decision"`
+			SourcePath          string                   `json:"source_path"`
+			SourceDigest        string                   `json:"source_digest"`
+			SemanticFingerprint string                   `json:"semantic_fingerprint"`
+			Entry               string                   `json:"entry"`
+			Execution           valueexecution.Execution `json:"execution"`
 		}{
 			Schema: "gooo/value-execution-plan/v1", Decision: "PASS", SourcePath: options.filename,
 			SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint, Entry: options.entry, Execution: execution,
