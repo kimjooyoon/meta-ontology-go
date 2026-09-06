@@ -10,6 +10,7 @@ import (
 type runSourceOptions struct {
 	filename string
 	entry    string
+	input    string
 }
 
 func parseRunSourceArguments(args []string) (runSourceOptions, error) {
@@ -22,6 +23,12 @@ func parseRunSourceArguments(args []string) (runSourceOptions, error) {
 			}
 			index++
 			options.entry = args[index]
+		case "--input":
+			if options.input != "" || index+1 >= len(args) {
+				return runSourceOptions{}, errors.New(runSourceUsage)
+			}
+			index++
+			options.input = args[index]
 		default:
 			if strings.HasPrefix(args[index], "-") || options.filename != "" {
 				return runSourceOptions{}, errors.New(runSourceUsage)
