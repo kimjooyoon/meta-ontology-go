@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
@@ -125,8 +126,8 @@ func canonicalPreviewOutputPath(path string) (string, error) {
 			if evalErr != nil {
 				return "", fmt.Errorf("resolve preview output parent: %w", evalErr)
 			}
-			for index := len(missing) - 1; index >= 0; index-- {
-				resolved = filepath.Join(resolved, missing[index])
+			for _, component := range slices.Backward(missing) {
+				resolved = filepath.Join(resolved, component)
 			}
 			return filepath.Clean(resolved), nil
 		}
