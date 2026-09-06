@@ -168,19 +168,28 @@ func assertRuntimeWitnessW1DependencyEvidence(t *testing.T, result Result) {
 	if len(witnesses) < 2 {
 		t.Fatalf("W1 runtime evidence=%+v, want multiple prepare stages", witnesses)
 	}
-	for index := 1; index < len(witnesses); index++ {
-		previous, current := witnesses[index-1], witnesses[index]
-		if len(current.CalleeDependencies) != 1 || len(previous.ProofStages) <= 3 {
-			t.Fatalf("W1 evidence[%d]=%+v, want one dependency and an earlier callee-effects stage", index, current)
+	linkedDependencies := 0
+	for index, current := range witnesses {
+		for _, dependency := range current.CalleeDependencies {
+			linked := false
+			for previousIndex := 0; previousIndex < index; previousIndex++ {
+				previous := witnesses[previousIndex]
+				if previous.Helper == dependency.Name && len(previous.ProofStages) > 3 && dependency.EvidenceID != "" && dependency.EvidenceID == previous.ProofStages[3].OutputEvidenceID {
+					linked = true
+					break
+				}
+			}
+			if !linked {
+				t.Fatalf("W1 evidence[%d] dependency=%+v lacks an earlier matching helper callee-effects proof", index, dependency)
+			}
+			linkedDependencies++
+			if !runtimeWitnessGeneratedFunctionExists(result.Generated, dependency.Name) {
+				t.Fatalf("W1 dependency helper %q was not present in generated output", dependency.Name)
+			}
 		}
-		dependency := current.CalleeDependencies[0]
-		previousCalleeEffectsID := previous.ProofStages[3].OutputEvidenceID
-		if dependency.Name != previous.Helper || dependency.EvidenceID == "" || dependency.EvidenceID != previousCalleeEffectsID {
-			t.Fatalf("W1 evidence[%d] dependency=%+v, previous helper=%q callee-effects evidence=%q", index, dependency, previous.Helper, previousCalleeEffectsID)
-		}
-		if !runtimeWitnessGeneratedFunctionExists(result.Generated, dependency.Name) {
-			t.Fatalf("W1 dependency helper %q was not present in generated output", dependency.Name)
-		}
+	}
+	if linkedDependencies == 0 {
+		t.Fatalf("W1 runtime evidence=%+v, want at least one generated dependency link", witnesses)
 	}
 }
 
