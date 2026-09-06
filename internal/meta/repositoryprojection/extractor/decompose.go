@@ -24,12 +24,16 @@ type suffixBinding struct {
 }
 
 type suffixCandidate struct {
-	start      int
-	end        int
-	helperName string
-	arguments  []suffixBinding
-	helper     []byte
-	result     []byte
+	start                         int
+	end                           int
+	helperName                    string
+	arguments                     []suffixBinding
+	helper                        []byte
+	result                        []byte
+	beforeRenderedCapacityOverage int
+	afterRenderedCapacityOverage  int
+	renderedHelper                renderedCapacityMeasurement
+	renderedOuter                 renderedCapacityMeasurement
 }
 
 type returnTailCandidate struct {
@@ -59,8 +63,10 @@ type renderedCapacityObservation struct {
 	declarationEnd   string
 	sourceDigest     string
 	functionLines    int
+	functionOverage  int
 	functionStatus   renderedCapacityObservationStatus
 	helperLines      *int
+	helperOverage    *int
 	helperStatus     renderedCapacityObservationStatus
 	helperFailure    error
 }
@@ -70,17 +76,56 @@ type renderedCapacitySelection struct {
 	observations []renderedCapacityObservation
 }
 
+type renderedCapacityMeasurement struct {
+	bytes   int
+	lines   int
+	overage int
+}
+
+type renderedCapacitySnapshot struct {
+	overage int
+}
+
 type typeEvidence struct {
-	info  *types.Info
-	pkg   *types.Package
-	files []*ast.File
-	funcs map[*types.Func]*ast.FuncDecl
+	info                   *types.Info
+	pkg                    *types.Package
+	files                  []*ast.File
+	funcs                  map[*types.Func]*ast.FuncDecl
+	fset                   *token.FileSet
+	root                   string
+	contractSourceDigest   string
+	contractSemanticDigest string
+}
+
+type returnTailHelperProof struct {
+	helperName              string
+	helperObjectIdentity    string
+	helperSignatureDigest   string
+	helperBodyDigest        string
+	helperType              string
+	contractSourceDigest    string
+	contractSemanticDigest  string
+	calleeEffectsEvidenceID string
+	globalReadIdentities    []string
+	dependencies            []CalleeDependencyEvidence
+}
+
+type returnTailValidation struct {
+	valid        bool
+	dependencies []CalleeDependencyEvidence
+}
+
+type returnTailValidationContext struct {
+	visiting        map[*types.Func]bool
+	memo            map[*types.Func]returnTailValidation
+	proofBodyVisits map[*types.Func]int
 }
 
 func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
 	current := append([]byte(nil), source...)
 	currentSet, currentFile := fset, file
 	evidence := make([]StrategyEvidence, 0)
+	helperProofs := make(map[string]returnTailHelperProof)
 	for {
 		selection, err := firstOversizedFunction(currentSet, currentFile, current)
 		if err != nil {
@@ -90,7 +135,7 @@ func prepareOversizedFunctions(root, logical string, source []byte, fset *token.
 			return current, evidence, nil
 		}
 		function := selection.function
-		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations)
+		prepared, strategyEvidence, err := decomposeFunction(root, logical, current, currentSet, currentFile, function, selection.observations, helperProofs)
 		if err != nil {
 			return nil, nil, withRenderedCapacityDiagnostics(err, selection.observations)
 		}
@@ -127,7 +172,7 @@ func firstOversizedFunctionWithRenderer(fset *token.FileSet, file *ast.File, sou
 		}
 		observation := observeRenderedCapacityWithRenderer(fset, file, source, function, renderer)
 		selection.observations = append(selection.observations, observation)
-		if observation.functionStatus == renderedCapacityOverCap || observation.helperStatus == renderedCapacityOverCap {
+		if observation.functionOverage > 0 || observation.helperOverage != nil && *observation.helperOverage > 0 {
 			if selection.function == nil || function.Pos() < selection.function.Pos() {
 				selection.function = function
 			}
@@ -163,6 +208,7 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 		declarationEnd:   fset.Position(function.End()).String(),
 		sourceDigest:     proofDigest(source),
 		functionLines:    functionLines,
+		functionOverage:  renderedCapacityOverage(functionLines),
 		functionStatus:   renderedCapacityWithinCap,
 		helperStatus:     renderedCapacityUnmeasured,
 	}
@@ -179,13 +225,63 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 		observation.helperFailure = err
 		return observation
 	}
-	helperLines := physicalLines(rendered)
+	measurement, err := canonicalRenderedCapacity(rendered)
+	if err != nil {
+		observation.helperFailure = err
+		return observation
+	}
+	helperLines := measurement.lines
+	helperOverage := measurement.overage
 	observation.helperLines = &helperLines
+	observation.helperOverage = &helperOverage
 	observation.helperStatus = renderedCapacityWithinCap
-	if helperLines > functionLineLimit {
+	if measurement.overage > 0 {
 		observation.helperStatus = renderedCapacityOverCap
 	}
 	return observation
+}
+
+func renderedCapacityOverage(lines int) int {
+	if lines <= functionLineLimit {
+		return 0
+	}
+	return lines - functionLineLimit
+}
+
+func canonicalRenderedCapacity(rendered []byte) (renderedCapacityMeasurement, error) {
+	if len(bytes.TrimSpace(rendered)) == 0 {
+		return renderedCapacityMeasurement{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED"})
+	}
+	lines := physicalLines(rendered)
+	return renderedCapacityMeasurement{bytes: len(rendered), lines: lines, overage: renderedCapacityOverage(lines)}, nil
+}
+
+func renderedCapacitySnapshotForFunctions(source []byte, names ...string) (renderedCapacitySnapshot, error) {
+	if len(names) == 0 {
+		return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "functions=EMPTY"})
+	}
+	seen := make(map[string]bool, len(names))
+	snapshot := renderedCapacitySnapshot{}
+	for _, name := range names {
+		if name == "" || seen[name] {
+			return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "function=" + name})
+		}
+		seen[name] = true
+		rendered, err := renderedFunctionHelper(source, name)
+		if err != nil {
+			return renderedCapacitySnapshot{}, err
+		}
+		measurement, err := canonicalRenderedCapacity(rendered)
+		if err != nil {
+			return renderedCapacitySnapshot{}, err
+		}
+		snapshot.overage += measurement.overage
+	}
+	return snapshot, nil
+}
+
+func renderedCapacityProgress(before, after renderedCapacitySnapshot) bool {
+	return before.overage >= 0 && after.overage >= 0 && after.overage < before.overage
 }
 
 func renderedCapacityObservationFailure(observation renderedCapacityObservation) error {
@@ -230,6 +326,10 @@ func renderedCapacityObservationDiagnostics(observation renderedCapacityObservat
 	if observation.helperFailure != nil {
 		diagnostics = append(diagnostics, "helper_failure="+observation.helperFailure.Error())
 	}
+	diagnostics = append(diagnostics, fmt.Sprintf("function_overage=%d", observation.functionOverage))
+	if observation.helperOverage != nil {
+		diagnostics = append(diagnostics, fmt.Sprintf("helper_overage=%d", *observation.helperOverage))
+	}
 	return diagnostics
 }
 
@@ -272,7 +372,7 @@ func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 	return "method:" + fset.Position(function.Pos()).String() + ":" + function.Name.Name
 }
 
-func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation) ([]byte, *StrategyEvidence, error) {
+func decomposeFunction(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, preflight []renderedCapacityObservation, helperProofRegistry ...map[string]returnTailHelperProof) ([]byte, *StrategyEvidence, error) {
 	if function.Recv != nil {
 		return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "METHOD_SUFFIX_DECOMPOSITION_UNSAFE", "KNOWN_CONTRADICTION", "report-contradiction", []string{
 			"declaration=" + functionIdentity(fset, function),
@@ -287,7 +387,11 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	if err != nil {
 		return nil, nil, err
 	}
-	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight); candidateErr != nil {
+	proofs := make(map[string]returnTailHelperProof)
+	if len(helperProofRegistry) > 0 && helperProofRegistry[0] != nil {
+		proofs = helperProofRegistry[0]
+	}
+	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight, proofs); candidateErr != nil {
 		if !isKnownSuffixContradiction(candidateErr) {
 			return nil, nil, candidateErr
 		}
@@ -311,7 +415,11 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			return nil, nil, candidateErr
 		}
 		if candidate != nil {
-			return candidate.result, nil, nil
+			strategyEvidence, evidenceErr := suffixStrategyEvidence(root, logical, source, fset, file, function, candidate, preflight)
+			if evidenceErr != nil {
+				return nil, nil, evidenceErr
+			}
+			return candidate.result, strategyEvidence, nil
 		}
 	}
 	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
@@ -345,7 +453,7 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	}
 	name := stableSuffixName(function.Name.Name, startIndex+1)
 	if existing[name] {
-		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{"helper=" + name})
+		return nil, knownSuffixContradiction("suffix helper identity already exists")
 	}
 	first := statements[0]
 	last := statements[len(statements)-1]
@@ -359,9 +467,6 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(helper) > functionLineLimit {
-		return nil, knownSuffixContradiction("suffix helper exceeds the physical line limit")
-	}
 	call := []byte(name + "(" + bindingArguments(bindings) + ")")
 	modified, err := replaceSource(source, start, end, call)
 	if err != nil {
@@ -371,20 +476,60 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
-	if lines, ok := namedFunctionLines(formatted, function.Name.Name); !ok || lines > functionLineLimit {
-		return nil, knownSuffixContradiction("outer function remains over the physical line limit")
-	}
 	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
 	combined = append(combined, helper...)
 	combined, err = format.Source(combined)
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
-	return &suffixCandidate{start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined}, nil
+	beforeCapacity, err := renderedCapacitySnapshotForFunctions(source, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	afterCapacity, err := renderedCapacitySnapshotForFunctions(combined, function.Name.Name, name)
+	if err != nil {
+		return nil, err
+	}
+	if !renderedCapacityProgress(beforeCapacity, afterCapacity) {
+		return nil, knownSuffixContradiction(fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
+	}
+	renderedOuter, err := renderedFunctionHelper(combined, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	renderedHelper, err := renderedFunctionHelper(combined, name)
+	if err != nil {
+		return nil, err
+	}
+	outerMeasurement, err := canonicalRenderedCapacity(renderedOuter)
+	if err != nil {
+		return nil, err
+	}
+	helperMeasurement, err := canonicalRenderedCapacity(renderedHelper)
+	if err != nil {
+		return nil, err
+	}
+	return &suffixCandidate{
+		start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined,
+		beforeRenderedCapacityOverage: beforeCapacity.overage,
+		afterRenderedCapacityOverage:  afterCapacity.overage,
+		renderedHelper:                helperMeasurement,
+		renderedOuter:                 outerMeasurement,
+	}, nil
 }
 
 func stableSuffixName(function string, suffix int) string {
-	return fmt.Sprintf("%sExtractedSuffix%02d", function, suffix)
+	return fmt.Sprintf("%sExtractedSuffix%02d", safeGeneratedFunctionPrefix(function), suffix)
+}
+
+func safeGeneratedFunctionPrefix(function string) string {
+	switch {
+	case strings.HasPrefix(function, "Test"), strings.HasPrefix(function, "Benchmark"),
+		strings.HasPrefix(function, "Example"), strings.HasPrefix(function, "Fuzz"):
+		return "Extracted" + function
+	default:
+		return function
+	}
 }
 
 func includeLeadingComments(fset *token.FileSet, file *ast.File, first ast.Stmt, start int) int {

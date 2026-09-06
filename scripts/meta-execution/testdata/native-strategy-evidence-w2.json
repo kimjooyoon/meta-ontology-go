@@ -6,8 +6,8 @@
     "contract_input_entity": "FunctionInput",
     "contract_output_entity": "OperationResult",
     "contract_input_subject_kind": "FUNCTION",
-    "contract_source_digest": "d9c591400581e5938dd05657bed295b94327b88d99ec85037f3e286818b40c3a",
-    "contract_semantic_digest": "e26164e580cfcbe02be8d997b7a41355b277e2521408027b9b8247657ec794f0",
+    "contract_source_digest": "b886df4511dab6fcc9f37a9a661594f0fd8bb24f43f92337bb30146354177a0a",
+    "contract_semantic_digest": "b9a780ed3ba67f58bd91a86e83280ef8b98fd3b38893dc11ddd69169c85e012e",
     "used_input_fact": true,
     "generated_output_fact": true,
     "subject": "func:W2",
@@ -16,6 +16,8 @@
     "after_bytes": 700,
     "before_function_lines": 83,
     "after_function_lines": 73,
+    "before_rendered_capacity_overage": 10,
+    "after_rendered_capacity_overage": 0,
     "rendered_helper_bytes": 155,
     "rendered_helper_lines": 15,
     "rendered_outer_helper_bytes": 558,
@@ -190,6 +192,14 @@
     ],
     "final_generated_bytes": 726,
     "final_generated_evidence_bytes": 768,
-    "final_generated_units": 3
+    "final_generated_units": 3,
+    "final_rendered_capacity": {
+      "scope": "final-generated-functions",
+      "payload_digest": "sha256:0f1af1d59345b9d2a028a2ad4e48faa05e8ccedd91cac14ad1aba9fd564ba3f2",
+      "bytes": 713,
+      "lines": 90,
+      "overage": 0,
+      "status": "PASS"
+    }
   }
 ]

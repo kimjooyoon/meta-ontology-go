@@ -73,8 +73,3 @@ func renderedFunctionExceedsLimit(source []byte, name string) bool {
 	rendered, err := renderedFunctionHelper(source, name)
 	return err == nil && physicalLines(rendered) > functionLineLimit
 }
-
-func renderedCapacityProgress(before, after []byte) bool {
-	beforeLines, afterLines := physicalLines(before), physicalLines(after)
-	return afterLines < beforeLines || beforeLines == afterLines && len(after) < len(before)
-}

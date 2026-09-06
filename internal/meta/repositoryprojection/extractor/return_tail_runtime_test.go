@@ -144,6 +144,9 @@ func runtimeWitnessExtract(t *testing.T, tc runtimeWitnessCase, caseRoot string)
 	if len(result.Generated) == 0 {
 		t.Fatal("fixture extraction produced no generated units")
 	}
+	if tc.name == "W1_sentinel_guard_terminal_nil" {
+		assertRuntimeWitnessW1DependencyEvidence(t, result)
+	}
 	evidence, err := json.MarshalIndent(result.Evidence, "", "  ")
 	if err != nil {
 		t.Fatal(err)
@@ -152,6 +155,52 @@ func runtimeWitnessExtract(t *testing.T, tc runtimeWitnessCase, caseRoot string)
 		t.Fatal(err)
 	}
 	return result
+}
+
+func assertRuntimeWitnessW1DependencyEvidence(t *testing.T, result Result) {
+	t.Helper()
+	witnesses := make([]StrategyEvidence, 0)
+	for _, evidence := range result.Evidence {
+		if evidence.Subject == "func:W1" {
+			witnesses = append(witnesses, evidence)
+		}
+	}
+	if len(witnesses) < 2 {
+		t.Fatalf("W1 runtime evidence=%+v, want multiple prepare stages", witnesses)
+	}
+	linkedDependencies := 0
+	for index, current := range witnesses {
+		for _, dependency := range current.CalleeDependencies {
+			linked := false
+			for previousIndex := range index {
+				previous := witnesses[previousIndex]
+				if previous.Helper == dependency.Name && len(previous.ProofStages) > 3 && dependency.EvidenceID != "" && dependency.EvidenceID == previous.ProofStages[3].OutputEvidenceID {
+					linked = true
+					break
+				}
+			}
+			if !linked {
+				t.Fatalf("W1 evidence[%d] dependency=%+v lacks an earlier matching helper callee-effects proof", index, dependency)
+			}
+			linkedDependencies++
+			if !runtimeWitnessGeneratedFunctionExists(result.Generated, dependency.Name) {
+				t.Fatalf("W1 dependency helper %q was not present in generated output", dependency.Name)
+			}
+		}
+	}
+	if linkedDependencies == 0 {
+		t.Fatalf("W1 runtime evidence=%+v, want at least one generated dependency link", witnesses)
+	}
+}
+
+func runtimeWitnessGeneratedFunctionExists(generated map[string][]byte, name string) bool {
+	needle := "func " + name + "("
+	for _, source := range generated {
+		if strings.Contains(string(source), needle) {
+			return true
+		}
+	}
+	return false
 }
 
 func runtimeWitnessMaterializeGenerated(t *testing.T, tc runtimeWitnessCase, result Result, caseRoot string) string {
