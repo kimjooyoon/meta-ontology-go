@@ -109,9 +109,9 @@ func ObserveRegistrationInput(repository fs.FS, request syntaxregistration.Reque
 		Family: sourcepolicy.FamilyConformance, Subject: request.Case.Path,
 		SubjectKind: sourcepolicy.SubjectKindRegistrationRequest, Value: value, Limit: 1,
 		Relation: sourcepolicy.RelationEqual, Applicability: sourcepolicy.ApplicabilityApplicable,
-		ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleDefault,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
-		Satisfied: present, Role: sourcepolicy.IndicatorRoleDriver, Proof: sourcepolicy.ProofCoherence,
+		Satisfied:           present, Role: sourcepolicy.IndicatorRoleDriver, Proof: sourcepolicy.ProofCoherence,
 		Producer: evidence.InputActivityID, Consumer: evidence.ActivityID,
 		Operation: sourcepolicy.OperationRegisterSyntax, OperationInputDigest: syntaxregistration.RequestDigest(request)}, nil
 }

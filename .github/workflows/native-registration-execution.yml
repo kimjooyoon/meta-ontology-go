@@ -31,7 +31,6 @@ jobs:
     env:
       GOTOOLCHAIN: local
       GOOO_REGISTRATION_NATIVE_E2E: '1'
-      GOOO_REGISTRATION_NATIVE_EVIDENCE_DIR: ${{ runner.temp }}/native-registration-evidence
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,6 +42,8 @@ jobs:
           go-version: 1.27.0
           cache: false
       - name: Run real two-operation common execution and exact input regressions
+        env:
+          GOOO_REGISTRATION_NATIVE_EVIDENCE_DIR: ${{ runner.temp }}/native-registration-evidence
         run: |
           go test -count=1 ./internal/meta/generation -run Registration
           go test -count=1 -timeout=45m -v ./scripts/meta-execution -run 'Test(NativeRegistration|Registration)'

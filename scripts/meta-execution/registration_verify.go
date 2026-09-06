@@ -75,7 +75,7 @@ func registrationVerifyCandidate(workspace, temporary string, request syntaxregi
 
 func normalizeRegistrationVerifier(raw []byte) ([]byte, error) {
 	seen := make(map[string]bool)
-	for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(string(raw)), "\n") {
 		fields := strings.Fields(line)
 		if len(fields) != 3 || fields[0] != "ok" || !strings.HasSuffix(fields[2], "s") {
 			return nil, fmt.Errorf("unexpected native conformance output: %q", line)

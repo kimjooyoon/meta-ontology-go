@@ -31,7 +31,7 @@ func registrationPlanFixture(t *testing.T) (sourcepolicy.Report, syntaxregistrat
 		Value: 0, Limit: 1, Relation: sourcepolicy.RelationEqual,
 		Applicability: sourcepolicy.ApplicabilityApplicable, ApplicabilityRule: sourcepolicy.ApplicabilityRuleDefault,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
-		Role: sourcepolicy.IndicatorRoleDriver, Proof: sourcepolicy.ProofCoherence,
+		Role:                sourcepolicy.IndicatorRoleDriver, Proof: sourcepolicy.ProofCoherence,
 		Producer: binding.InputActivityID, Consumer: binding.ActivityID, Operation: sourcepolicy.OperationRegisterSyntax,
 		OperationInputDigest: syntaxregistration.RequestDigest(request)}
 	return sourcepolicy.Report{Schema: sourcepolicy.IndicatorSchema, Policy: sourcepolicy.Default(),

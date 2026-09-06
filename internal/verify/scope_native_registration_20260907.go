@@ -13,6 +13,7 @@ func init() {
 		"docs/native-registration-execution.md",
 		"docs/syntax-registration-candidate.md",
 		"examples/language-syntax-roundtrip/corpus.json",
+		"examples/self-improvement/main.gooo",
 		"internal/meta/generation/applicability_part01.go",
 		"internal/meta/generation/build_part01.go",
 		"internal/meta/generation/execution_build.go",

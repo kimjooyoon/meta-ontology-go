@@ -54,7 +54,7 @@ func executionStepFor(action Action) ExecutionStep {
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
 		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,
 		RegistrationRequest: cloneRegistrationRequest(action.RegistrationRequest),
-		WorkspaceMode: WorkspaceModeDisposable,
-		WriteBoundary: WriteBoundarySandboxOnly,
+		WorkspaceMode:       WorkspaceModeDisposable,
+		WriteBoundary:       WriteBoundarySandboxOnly,
 	}
 }

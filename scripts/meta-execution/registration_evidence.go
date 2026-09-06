@@ -42,10 +42,10 @@ func finishRegistrationMaterialization(plan generation.Plan, action generation.A
 			EvidenceDigest: strings.TrimPrefix(digestBytes(raw), "sha256:"), Observation: &observation})
 	}
 	evidence := struct {
-		Schema        string                      `json:"schema"`
-		RequestDigest string                      `json:"request_digest"`
+		Schema        string                       `json:"schema"`
+		RequestDigest string                       `json:"request_digest"`
 		Candidate     syntaxregistration.Candidate `json:"candidate"`
-		Process       operationReplayEvidence     `json:"process"`
+		Process       operationReplayEvidence      `json:"process"`
 	}{Schema: "gooo/native-registration-instance/v1", RequestDigest: candidate.RequestDigest,
 		Candidate: candidate, Process: operationReplayEvidenceFrom(materialized.Executor, materialized.Evaluator, materialized.Verifier)}
 	raw, err := json.Marshal(evidence)

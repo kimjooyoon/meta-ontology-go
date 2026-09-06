@@ -31,10 +31,10 @@ func nativeRegistrationBinding() (Binding, bool) {
 	}
 	return Binding{Operation: sourcepolicy.OperationRegisterSyntax,
 		Activity: evidence.ActivityID, Output: evidence.OutputID,
-		InputSubjectKind: sourcepolicy.SubjectKindRegistrationRequest,
+		InputSubjectKind:          sourcepolicy.SubjectKindRegistrationRequest,
 		InputContractSourceDigest: source, InputContractSemanticDigest: semantic,
 		IndependenceGroupID: "syntax-registration", ProofChoice: ProofCoherence,
-		Executor: "scripts/meta-execution:registration-worker",
+		Executor:  "scripts/meta-execution:registration-worker",
 		Evaluator: "scripts/meta-execution:registration-conformance",
 		RequiredIndicatorIDs: []string{"registration.artifact-completeness/v1",
 			"registration.execution-identity/v1", "registration.native-conformance/v1", "registration.replay/v1"},
