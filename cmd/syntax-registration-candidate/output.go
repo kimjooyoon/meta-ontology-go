@@ -59,6 +59,7 @@ func exportCandidate(root, output string, candidate syntaxregistration.Candidate
 	}
 	observation := map[string]any{"operation": syntaxregistration.Operation,
 		"emitted_members": candidate.Emitted, "required_members": candidate.Required,
+		"execution_binding": candidate.ExecutionBinding,
 		"required_artifacts": candidate.RequiredArtifacts, "generated_artifacts": len(candidate.Artifacts),
 		"wall_ms": elapsed, "repository_writes": 0, "semantic_admission": "UNASSESSED",
 		"global_planner_admission": "NOT_IMPLEMENTED", "manual_follow_up_edits": nil}

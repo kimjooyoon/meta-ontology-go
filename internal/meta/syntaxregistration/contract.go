@@ -16,10 +16,16 @@ type contractBinding struct {
 	source, semantic string
 	activities       []string
 	outputs          []string
+
+	inputActivity, inputOutput string
 }
 
 func bindContract() (contractBinding, error) {
-	file, diagnostics := syntax.ParseFile("contract.gooo", string(contractSource))
+	return bindContractSource(contractSource)
+}
+
+func bindContractSource(source []byte) (contractBinding, error) {
+	file, diagnostics := syntax.ParseFile("contract.gooo", string(source))
 	if file == nil || diagnostics.HasErrors() {
 		return contractBinding{}, fmt.Errorf("registration contract cannot be parsed")
 	}
@@ -34,14 +40,23 @@ func bindContract() (contractBinding, error) {
 		"GenerateSyntaxDenominator", "GenerateSyntaxConformance", "GenerateDenominatorAdmission",
 		"GenerateDenominatorSelection", "GenerateDenominatorDigest",
 		"GenerateDenominatorEvidence", "GenerateMigrationConformance"}
-	if len(ir.Graph.Nodes()) != 21 {
+	if len(ir.Graph.Nodes()) != 23 {
 		return contractBinding{}, fmt.Errorf("registration contract node inventory is not exact")
 	}
-	input, ok := ir.Graph.NodeByName(ir.Namespace, "RegistrationRequest")
-	if !ok || input.Kind != semantic.Entity || input.ID.String() != "gooo://syntax-registration/request" {
+	request, ok := ir.Graph.NodeByName(ir.Namespace, "RegistrationRequest")
+	if !ok || request.Kind != semantic.Entity || request.ID.String() != "gooo://syntax-registration/request" {
 		return contractBinding{}, fmt.Errorf("registration request identity mismatch")
 	}
-	binding := contractBinding{source: digest(contractSource), semantic: ir.StableHash()}
+	input, inputFound := ir.Graph.NodeByName(ir.Namespace, "PinnedRegistrationInput")
+	pin, pinFound := ir.Graph.NodeByName(ir.Namespace, "PinRegistrationExecutionIdentity")
+	if !inputFound || !pinFound || input.Kind != semantic.Entity || pin.Kind != semantic.Activity ||
+		input.ID.String() != "gooo://syntax-registration/pinned-input" ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: pin.ID, Predicate: semantic.Used, Object: request.ID}) ||
+		!ir.Graph.HasFact(semantic.FactKey{Subject: input.ID, Predicate: semantic.WasGeneratedBy, Object: pin.ID}) {
+		return contractBinding{}, fmt.Errorf("registration execution identity ABI mismatch")
+	}
+	binding := contractBinding{source: digest(source), semantic: ir.StableHash(),
+		inputActivity: pin.ID.String(), inputOutput: input.ID.String()}
 	for index, name := range activities {
 		activity, found := ir.Graph.NodeByName(ir.Namespace, name)
 		output, outputFound := ir.Graph.NodeByName(ir.Namespace, outputs[index])
@@ -50,7 +65,7 @@ func bindContract() (contractBinding, error) {
 			!ir.Graph.HasFact(semantic.FactKey{Subject: output.ID, Predicate: semantic.WasGeneratedBy, Object: activity.ID}) {
 			return contractBinding{}, fmt.Errorf("registration activity ABI mismatch: %s", name)
 		}
-		if index == 0 && activity.ValueProgram != "syntax.register:v1" {
+		if index == 0 && activity.ValueProgram != "syntax.register:v2" {
 			return contractBinding{}, fmt.Errorf("registration native program mismatch")
 		}
 		binding.activities = append(binding.activities, activity.ID.String())

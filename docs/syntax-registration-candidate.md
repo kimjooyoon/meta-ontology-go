@@ -3,8 +3,8 @@
 This is the candidate-generation backend for issue #742, not admission of a
 fifth operation into the existing automatic meta-operation planner.
 
-The embedded Gooo contract declares RegisterSyntaxCapability and nine artifact
-activities. Native lowering binds their Used/WasGeneratedBy relations and carries
+The embedded Gooo contract declares an execution-identity pinning activity,
+RegisterSyntaxCapability and nine artifact activities. Native lowering binds their Used/WasGeneratedBy relations and carries
 the source digest, semantic digest, activity IDs, exact input digest and explicit
 typed request into a complete candidate. No request parameter is hidden in a
 subject name or inferred from prose.
@@ -14,7 +14,9 @@ subject name or inferred from prose.
 The input source already exists in the caller snapshot. The request declares a
 VALID LANGUAGE_CAPABILITY case, its source path, entity-fields or implicit-port
 support, proof choice, current denominator version, input/source digests and Go
-runtime version. The source must satisfy the existing five syntax/BX obligations.
+runtime version and execution_identity. The identity includes SHA-256 digests of
+the running generator, the selected Go driver and its compiler, plus Go version,
+OS and architecture. The source must satisfy the existing five syntax/BX obligations.
 A missing input is UNKNOWN/DIRECT_MISSING; changed content or runtime identity is
 UNKNOWN/STALE. Both retain stage, step, reason, unknown_class, next_operation and
 blocked_by. Duplicate case IDs or paths are REFUTED.
@@ -51,8 +53,12 @@ go run ./cmd/syntax-registration-candidate -root PROJECT -request request.json -
 go run ./cmd/syntax-registration-candidate -root PROJECT -request request.json -output NEW_EXTERNAL_DIRECTORY
 ~~~
 
-The first command reports observed snapshot/source digests and Go runtime
-version. Pin them explicitly in the request before generation. The second writes
+The first command reports observed snapshot/source digests, Go runtime version
+and execution_identity. Pin all of them explicitly in the request before generation.
+The Go driver is observed with GOTOOLCHAIN=local and GOWORK=off, as in native
+evaluation. Observation invokes only go env and reads executable bytes; it does
+not build, test, install, repair or grant authority. No absolute tool path is
+serialized into the identity. The second writes
 the complete member files, candidate.json and execution.json outside the input project.
 Existing output directories and parents resolving inside the input are rejected.
 It does not apply the candidate to the project.
@@ -74,7 +80,15 @@ Request example, with observed values filled by the caller:
   "base_version": 30,
   "snapshot_digest": "sha256:<observed-snapshot>",
   "source_digest": "sha256:<observed-source>",
-  "toolchain": "go1.27.0"
+  "toolchain": "go1.27.0",
+  "execution_identity": {
+    "go_version": "go1.27.0",
+    "goos": "linux",
+    "goarch": "amd64",
+    "executable_sha256": "sha256:<observed-generator>",
+    "go_command_sha256": "sha256:<observed-go-driver>",
+    "compiler_sha256": "sha256:<observed-compiler>"
+  }
 }
 ~~~
 
@@ -94,7 +108,19 @@ No local test, build or formatter execution is part of this development workflow
 
 The existing automatic generation.Action input schema, DefaultRegistry,
 meta-execution dispatch and shared operation receipts are NOT connected yet.
-Go runtime version binding is not an executable/toolchain-binary digest proof.
+The syntax.register:v2 contract routes every generation activity through
+PinnedRegistrationInput, produced by PinRegistrationExecutionIdentity. Compilation
+and generation both reobserve and compare execution identity. Missing identity
+is UNKNOWN/DIRECT_MISSING, changed bytes are UNKNOWN/STALE, and malformed digests
+are REFUTED. All six UNKNOWN fields remain present. Candidate execution_binding
+carries the lowered pin activity and input/output IDs together with the observed
+identity. Candidate validation rejects a substituted identity.
+
+This pins three executable identities, not the entire environment, toolchain
+publisher authenticity or semantic correctness. The new identity requirement is
+an explicit experimental request-ABI change: version-only requests are no longer
+accepted. Native reports carry the actual binding; existing nine-role and
+canonical/projected conformance obligations are unchanged.
 Issue #742 remains open until those input/identity/executor integrations and all
 six original acceptance obligations are supported by exact-head native evidence.
 Neither candidate byte equality nor the backend tests close product utility or

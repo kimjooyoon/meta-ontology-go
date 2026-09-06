@@ -44,9 +44,13 @@ func run(root, requestPath, output string, inspect bool, started time.Time) erro
 		if err != nil {
 			return err
 		}
-		return json.NewEncoder(os.Stdout).Encode(map[string]string{
+		identity, err := syntaxregistration.ObserveExecutionIdentity()
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{
 			"snapshot_digest": snapshot, "source_digest": source, "toolchain": runtime.Version(),
-			"semantic_admission": "UNASSESSED"})
+			"execution_identity": identity, "semantic_admission": "UNASSESSED"})
 	}
 	plan, err := syntaxregistration.Compile(repository, request)
 	if err != nil {

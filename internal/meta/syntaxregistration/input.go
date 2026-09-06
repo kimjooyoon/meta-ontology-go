@@ -82,6 +82,9 @@ func Compile(repository fs.FS, request Request) (Plan, error) {
 		request.Toolchain != runtime.Version() {
 		return Plan{}, failure("UNKNOWN", "bind-input", "REGISTRATION_INPUT_STALE", "STALE", "refresh-exact-input-binding")
 	}
+	if err := recheckExecutionIdentity(request.ExecutionIdentity); err != nil {
+		return Plan{}, err
+	}
 	if err := validateCase(repository, request, inputs); err != nil {
 		return Plan{}, err
 	}

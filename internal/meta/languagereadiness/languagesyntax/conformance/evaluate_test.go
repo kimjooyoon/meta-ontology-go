@@ -44,7 +44,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		report.Summary.GovernanceTotal != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceExecuted != languagesyntax.FixedGovernanceTotal ||
 		report.Summary.GovernanceUnresolved != 0 ||
-		len(report.Source.GoooFiles) != 69 || len(report.Source.PackageUnits) != 4 ||
+		len(report.Source.GoooFiles) != 71 || len(report.Source.PackageUnits) != 4 ||
 		len(report.Source.PackageUnits[0].Members) != 2 || len(report.Source.PackageUnits[1].Members) != 3 ||
 		len(report.Source.PackageUnits[2].Members) != 1 || len(report.Source.PackageUnits[3].Members) != 1 {
 		invalidIDs := make([]string, 0, report.Summary.InvalidCases)

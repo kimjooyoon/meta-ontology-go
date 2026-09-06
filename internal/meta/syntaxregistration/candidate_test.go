@@ -69,6 +69,10 @@ func fixture(t *testing.T) (fstest.MapFS, Request) {
 func pin(t *testing.T, data fs.FS, request *Request) {
 	t.Helper()
 	var err error
+	request.ExecutionIdentity, err = ObserveExecutionIdentity()
+	if err != nil {
+		t.Fatal(err)
+	}
 	request.SnapshotDigest, request.SourceDigest, err = InspectInputs(data, *request)
 	if err != nil {
 		t.Fatal(err)

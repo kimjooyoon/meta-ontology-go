@@ -11,8 +11,11 @@ import (
 // Generate closes all nine semantic artifact roles or emits no candidate.
 // Physical member paths come from exact AST ownership, not filename guesses.
 func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
-	if plan.digest == "" || len(plan.binding.activities) != 10 || len(plan.binding.outputs) != 10 || plan.inputs == nil {
+	if plan.digest == "" || len(plan.binding.activities) != 10 || len(plan.binding.outputs) != 10 || plan.inputs == nil || plan.binding.inputActivity == "" {
 		return Candidate{}, failure("REFUTED", "validate-plan", "REGISTRATION_PLAN_NOT_COMPILED", "", "compile-source-bound-plan")
+	}
+	if err := recheckExecutionIdentity(plan.request.ExecutionIdentity); err != nil {
+		return Candidate{}, err
 	}
 	current, err := readInputs(repository, plan.request)
 	if err != nil {
@@ -97,6 +100,9 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 	candidate := Candidate{Operation: Operation, ActivityID: plan.binding.activities[0],
 		ContractDigest: plan.binding.source, SemanticDigest: plan.binding.semantic,
 		InputDigest: plan.digest, RequestDigest: digestValue(plan.request), Toolchain: plan.request.Toolchain,
+		ExecutionBinding: ExecutionBinding{ActivityID: plan.binding.inputActivity,
+			InputID: "gooo://syntax-registration/request", OutputID: plan.binding.inputOutput,
+			Identity: plan.request.ExecutionIdentity},
 		State: "PROPOSAL_ONLY", Admission: "UNASSESSED", RequiredArtifacts: RequiredArtifacts,
 		Required: len(generated), Members: []Member{}, Artifacts: []Artifact{}}
 	for index, paths := range rolePaths {

@@ -83,6 +83,10 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 		candidate.Required != candidate.Emitted || candidate.Emitted != len(candidate.Members) {
 		t.Fatal("native candidate lost a semantic role or physical member")
 	}
+	if candidate.ExecutionBinding.Identity != request.ExecutionIdentity ||
+		candidate.ExecutionBinding.ActivityID == "" || candidate.ExecutionBinding.OutputID == "" {
+		t.Fatal("native candidate lost its observed execution identity binding")
+	}
 	if view == "canonical" && candidate.Required != RequiredMembers {
 		t.Fatalf("canonical acceptance requires exactly nine files, got %d", candidate.Required)
 	}
@@ -116,6 +120,7 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 			"native_conformance": "PASS", "emitted_members": candidate.Emitted, "required_members": candidate.Required,
 			"required_artifacts": candidate.RequiredArtifacts, "generated_artifacts": len(candidate.Artifacts),
 			"source_view":            view,
+			"execution_binding": candidate.ExecutionBinding,
 			"manual_follow_up_edits": 0, "replay_comparisons": 1, "repository_writes": 0,
 			"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": "UNASSESSED",
 			"global_planner_admission": "NOT_IMPLEMENTED", "wall_ms": time.Since(started).Milliseconds()}

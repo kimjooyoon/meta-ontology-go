@@ -27,6 +27,8 @@ type Request struct {
 	SnapshotDigest string                        `json:"snapshot_digest"`
 	SourceDigest   string                        `json:"source_digest"`
 	Toolchain      string                        `json:"toolchain"`
+
+	ExecutionIdentity ExecutionIdentity `json:"execution_identity"`
 }
 
 type Failure struct {
@@ -78,6 +80,8 @@ type Candidate struct {
 	RepositoryWrites  int        `json:"repository_writes"`
 	ApplyAuthorized   bool       `json:"apply_authorized"`
 	PromotionAllowed  bool       `json:"promotion_authorized"`
+
+	ExecutionBinding ExecutionBinding `json:"execution_binding"`
 }
 
 type Plan struct {
