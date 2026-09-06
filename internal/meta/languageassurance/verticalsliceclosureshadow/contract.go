@@ -28,6 +28,9 @@ const (
 	// V28 binds the existing 56 language capabilities. CI continuation is
 	// a governance observation and does not increase this denominator.
 	DenominatorMigrationV28Digest = "sha256:65fcb1dae77aacfd2e092fc4ab036099f89fae4504171874a154d656c2cf397d"
+	// V29 binds the existing 57 language capabilities after the runtime
+	// binding fixture was registered in the syntax corpus.
+	DenominatorMigrationV29Digest = "sha256:554dde79ad5108152351782ce36fd5e60b024b2d5ccb88ba9a8ac192db3af6d3"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
