@@ -13,12 +13,16 @@ type Program struct {
 	SourceDigest        string
 	SemanticFingerprint string
 	ModelProgram        string
+	runtimeBindings     bool
 	implementation      registeredOperation
 	document            bidir.Document
 	authority           resultAuthority
 }
 
 func (program Program) Execute(inputs []int64) (int64, error) {
+	if program.runtimeBindings {
+		return 0, failAt(ReasonPlanRequired, "PLAN", "runtime-binding-plan-required", "runtime binding execution requires an explicit plan")
+	}
 	if err := ValidateOperationIR(program.Operation); err != nil {
 		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "validate-operation-ir", err.Error())
 	}

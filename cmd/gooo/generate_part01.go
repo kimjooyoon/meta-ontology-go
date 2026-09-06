@@ -83,6 +83,9 @@ func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {
 	if err := ir.Validate(); err != nil {
 		return generator.SemanticIR{}, err
 	}
+	if len(ir.RuntimeBindings) != 0 {
+		return generator.SemanticIR{}, errRuntimeBindingsUnsupportedByGenerator
+	}
 	model := generator.SemanticIR{Package: ir.Package}
 	entities := make(map[string]int)
 	activities := make(map[string]int)

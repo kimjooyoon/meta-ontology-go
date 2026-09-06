@@ -16,6 +16,9 @@ func Compile(filename string, source []byte, activityName string) (Program, erro
 	if err != nil {
 		return Program{}, failAt(ReasonSemanticBindingFailed, "LOWER", "bind-bidir-document", err.Error())
 	}
+	if len(document.RuntimeBindings) != 0 {
+		return Program{}, failAt(ReasonPlanRequired, "PLAN", "runtime-binding-plan-required", "runtime binding execution requires an explicit plan")
+	}
 	model, err := bidir.Get(document)
 	if err != nil {
 		return Program{}, failAt(ReasonSemanticBindingFailed, "LOWER", "read-bidir-model", err.Error())

@@ -57,6 +57,22 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		}
 		document.Policies = append(document.Policies, lowered)
 	}
+	for _, binding := range file.Bindings {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		document.RuntimeBindings = append(document.RuntimeBindings, RuntimeBinding{
+			Producer: BindingEndpoint{
+				Activity: Reference{Name: binding.Producer.Activity.Name, Span: toSourceSpan(binding.Producer.Activity.Span)},
+				Port:     Reference{Name: binding.Producer.Port.Name, Span: toSourceSpan(binding.Producer.Port.Span)},
+			},
+			Consumer: BindingEndpoint{
+				Activity: Reference{Name: binding.Consumer.Activity.Name, Span: toSourceSpan(binding.Consumer.Activity.Span)},
+				Port:     Reference{Name: binding.Consumer.Port.Name, Span: toSourceSpan(binding.Consumer.Port.Span)},
+			},
+			Span: toSourceSpan(binding.Span),
+		})
+	}
 	if err := validateEntityFieldsDocument(document, document.Namespace, semantic.DefaultTypeRegistry(), support); err != nil {
 		return Document{}, err
 	}
