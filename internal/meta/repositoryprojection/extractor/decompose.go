@@ -667,6 +667,9 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 		return nil
 	}
 	if _, ok := node.(*ast.FuncLit); ok {
+		// Relocating a literal changes its enclosing function identity. Its
+		// body may observe that identity, even without changing any captures.
+		visitor.hazards.unsafe = true
 		return nil
 	}
 	switch value := node.(type) {
