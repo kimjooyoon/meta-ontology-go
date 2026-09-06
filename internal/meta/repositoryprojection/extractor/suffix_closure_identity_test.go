@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"context"
+	"errors"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -29,7 +30,11 @@ func TestSuffixRejectsRelocatedFunctionLiteralIdentity(t *testing.T) {
 			t.Fatal("suffix accepted a function literal whose enclosing identity changes")
 		}
 		candidate, err := buildSuffixCandidate([]byte(source), fset, file, function, 0, typeEvidence{}, nil)
-		if candidate != nil || !isKnownSuffixContradiction(err) || err.Error() != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" {
+		failure, structured := errors.AsType[Failure](err)
+		if candidate != nil || !structured || isKnownSuffixContradiction(err) ||
+			failure.Reason != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" || failure.UnknownClass != "UNBOUNDED" ||
+			failure.Stage != "derive-recipe" || failure.Step != "preserve-callback-identity" ||
+			failure.NextOperation != "prove-callback-observability" || len(failure.BlockedBy) != 0 {
 			t.Fatalf("callback rejection lost its precise cause: candidate=%v err=%v", candidate, err)
 		}
 	}

@@ -98,14 +98,15 @@ func TestCapacityFailureRetainsEveryRejectedSuffixInAttemptOrder(t *testing.T) {
 		t.Fatalf("candidates=%v, want exactly two attempted suffixes", candidates)
 	}
 	for order, candidate := range candidates {
+		reason := []string{"OUTER_SCOPE_UNPROVEN", "CONTROL_FLOW_SCOPE_UNPROVEN"}[order]
 		if !strings.HasPrefix(candidate, fmt.Sprintf("suffix_candidate_index=%d;", 1-order)) ||
 			!strings.Contains(candidate, "statement_start=fixture.go:") ||
 			!strings.Contains(candidate, "statement_end=fixture.go:") ||
-			!strings.Contains(candidate, `rejection="suffix control-flow or scope invariant is not preserved"`) {
+			!strings.HasSuffix(candidate, fmt.Sprintf("rejection=%q", reason)) {
 			t.Fatalf("candidate=%q, want source-bound rejection in actual attempt order", candidate)
 		}
 	}
-	for _, want := range []string{"suffix_candidates_attempted=2", "suffix_candidates_rejected=2"} {
+	for _, want := range []string{"suffix_candidates_attempted=2", "suffix_candidates_rejected=2", "suffix_candidates_unproven=0"} {
 		if !capacityDiagnosticPresent(failure.Diagnostics, want) {
 			t.Fatalf("diagnostics=%v, missing exact denominator %q", failure.Diagnostics, want)
 		}

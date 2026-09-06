@@ -140,7 +140,7 @@ func renderCallbackExtractionPackage(root, logical string, source []byte) (map[s
 // carried as diagnostic data, never copied into Result.Generated.
 func withCallbackExtractionProposal(root, logical string, original []byte, cause error) error {
 	var failure Failure
-	if !errors.As(cause, &failure) || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" {
+	if !errors.As(cause, &failure) || (failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN") {
 		return cause
 	}
 	file, err := parser.ParseFile(token.NewFileSet(), logical, original, 0)

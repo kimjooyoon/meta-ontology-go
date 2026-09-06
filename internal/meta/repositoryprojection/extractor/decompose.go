@@ -357,15 +357,24 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
 		"decomposition_source_digest=" + proofDigest(source),
 	}
+	var unproven *Failure
+	unprovenCount := 0
 	for index := range slices.Backward(function.Body.List) {
 		candidate, candidateErr := buildSuffixCandidate(source, fset, file, function, index, evidence, existing)
 		if candidateErr != nil {
-			if isKnownSuffixContradiction(candidateErr) {
-				diagnostics = append(diagnostics, fmt.Sprintf("suffix_candidate_index=%d;statement_start=%s;statement_end=%s;rejection=%q",
-					index, fset.Position(function.Body.List[index].Pos()), fset.Position(function.Body.List[len(function.Body.List)-1].End()), candidateErr.Error()))
-				continue
+			reason := candidateErr.Error()
+			if failure, ok := errors.AsType[Failure](candidateErr); ok && failure.UnknownClass == "UNBOUNDED" {
+				unprovenCount++
+				reason = failure.Reason
+				if unproven == nil {
+					unproven = &failure
+				}
+			} else if !isKnownSuffixContradiction(candidateErr) {
+				return nil, nil, candidateErr
 			}
-			return nil, nil, candidateErr
+			diagnostics = append(diagnostics, fmt.Sprintf("suffix_candidate_index=%d;statement_start=%s;statement_end=%s;rejection=%q",
+				index, fset.Position(function.Body.List[index].Pos()), fset.Position(function.Body.List[len(function.Body.List)-1].End()), reason))
+			continue
 		}
 		if candidate != nil {
 			return candidate.result, nil, nil
@@ -374,7 +383,12 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	diagnostics = append(diagnostics,
 		fmt.Sprintf("suffix_candidates_attempted=%d", len(function.Body.List)),
 		fmt.Sprintf("suffix_candidates_rejected=%d", len(function.Body.List)),
+		fmt.Sprintf("suffix_candidates_unproven=%d", unprovenCount),
 	)
+	if unproven != nil {
+		unproven.Diagnostics = append(unproven.Diagnostics, diagnostics...)
+		return nil, nil, *unproven
+	}
 	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", diagnostics)
 }
 
@@ -398,6 +412,9 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 		return nil, knownSuffixContradiction("OUTER_SCOPE_UNPROVEN")
 	}
 	if hazard := firstSuffixHazard(statements); hazard != nil {
+		if hazard.reason == "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" {
+			return nil, fail("derive-recipe", "preserve-callback-identity", hazard.reason, "UNBOUNDED", "prove-callback-observability", nil)
+		}
 		return nil, knownSuffixContradiction(hazard.reason)
 	}
 	bindings, err := suffixBindings(statements, function, fset, evidence)

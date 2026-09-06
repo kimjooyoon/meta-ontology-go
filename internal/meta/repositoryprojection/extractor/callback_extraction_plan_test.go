@@ -23,7 +23,10 @@ func TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI(t *testing.T)
 	}
 	result, err := ExtractWithResult(root, callbackPreviewLogicalPath)
 	var failure Failure
-	if !errors.As(err, &failure) || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" || len(result.Generated) != 0 {
+	if !errors.As(err, &failure) || failure.Reason != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" ||
+		failure.UnknownClass != "UNBOUNDED" || failure.Stage != "derive-recipe" ||
+		failure.Step != "preserve-callback-identity" || failure.NextOperation != "prove-callback-observability" ||
+		len(failure.BlockedBy) != 0 || len(result.Generated) != 0 {
 		t.Fatalf("normal admission boundary changed: generated=%d err=%v", len(result.Generated), err)
 	}
 	assertNormalPaginationSuffixRejections(t, before, failure)
@@ -104,18 +107,19 @@ func assertNormalPaginationSuffixRejections(t *testing.T, source []byte, failure
 	}
 	expected := len(function.Body.List)
 	rejections := []string{}
-	sourceBound, attemptedBound, rejectedBound := false, false, false
+	sourceBound, attemptedBound, rejectedBound, unprovenBound := false, false, false, false
 	for _, diagnostic := range failure.Diagnostics {
 		sourceBound = sourceBound || diagnostic == "decomposition_source_digest="+proofDigest(source)
 		attemptedBound = attemptedBound || diagnostic == fmt.Sprintf("suffix_candidates_attempted=%d", expected)
 		rejectedBound = rejectedBound || diagnostic == fmt.Sprintf("suffix_candidates_rejected=%d", expected)
+		unprovenBound = unprovenBound || diagnostic == fmt.Sprintf("suffix_candidates_unproven=%d", expected)
 		if strings.HasPrefix(diagnostic, "suffix_candidate_index=") {
 			rejections = append(rejections, diagnostic)
 		}
 	}
-	if !sourceBound || !attemptedBound || !rejectedBound || len(rejections) != expected {
-		t.Fatalf("suffix rejection coverage=%d/%d source_bound=%t attempted_bound=%t rejected_bound=%t",
-			len(rejections), expected, sourceBound, attemptedBound, rejectedBound)
+	if !sourceBound || !attemptedBound || !rejectedBound || !unprovenBound || len(rejections) != expected {
+		t.Fatalf("suffix rejection coverage=%d/%d source_bound=%t attempted_bound=%t rejected_bound=%t unproven_bound=%t",
+			len(rejections), expected, sourceBound, attemptedBound, rejectedBound, unprovenBound)
 	}
 	for index, diagnostic := range rejections {
 		start := expected - index - 1
@@ -126,8 +130,8 @@ func assertNormalPaginationSuffixRejections(t *testing.T, source []byte, failure
 			t.Fatalf("original pagination rejection differs: got=%s want=%s", diagnostic, want)
 		}
 	}
-	t.Logf("normal suffix rejection coverage=%d/%d source_bound=%t reason=CALLBACK_ENCLOSING_IDENTITY_UNPROVEN",
-		len(rejections), expected, sourceBound)
+	t.Logf("normal suffix rejection coverage=%d/%d source_bound=%t unproven=%d/%d class=%s next=%s",
+		len(rejections), expected, sourceBound, len(rejections), expected, failure.UnknownClass, failure.NextOperation)
 }
 
 func TestCallbackExtractionFinalPartitionRejectsMutation(t *testing.T) {
