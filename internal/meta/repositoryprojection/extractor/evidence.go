@@ -31,12 +31,24 @@ type StrategyEvidence struct {
 	Obligations                   []ObligationEvidence           `json:"obligations"`
 	ContractObligations           []ContractObligationEvidence   `json:"contract_obligations"`
 	ProofStages                   []ProofStageEvidence           `json:"proof_stages"`
+	CalleeDependencies            []CalleeDependencyEvidence     `json:"callee_dependencies,omitempty"`
 	PreflightObservations         []PreflightObservationEvidence `json:"preflight_observations,omitempty"`
 	PreparationProgress           *PreparationProgressEvidence   `json:"preparation_progress,omitempty"`
 	FinalRenderedCapacity         *FinalRenderedCapacityEvidence `json:"final_rendered_capacity,omitempty"`
 	FinalGeneratedBytes           int                            `json:"final_generated_bytes"`
 	FinalGeneratedEvidenceBytes   int                            `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits           int                            `json:"final_generated_units"`
+}
+
+// CalleeDependencyEvidence connects a generated helper's callee-effects proof
+// to the typed, same-prepare proof of each generated helper it calls.
+type CalleeDependencyEvidence struct {
+	Name             string `json:"name"`
+	ObjectType       string `json:"object_type"`
+	SignatureDigest  string `json:"signature_digest"`
+	BodyDigest       string `json:"body_digest"`
+	EvidenceID       string `json:"evidence_id"`
+	Declaration      string `json:"declaration"`
 }
 
 // PreparationProgressEvidence records a strict capacity decrease while the

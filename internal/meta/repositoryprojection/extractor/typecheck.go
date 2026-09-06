@@ -62,7 +62,7 @@ func checkTypes(root, logical string, fset *token.FileSet, file *ast.File, funct
 			}
 		}
 	}
-	return typeEvidence{info: info, pkg: checked, files: files, funcs: functions, fset: fset}, nil
+	return typeEvidence{info: info, pkg: checked, files: files, funcs: functions, fset: fset, root: root}, nil
 }
 
 func sufficientFunctionTypeEvidence(function *ast.FuncDecl, info *types.Info) bool {

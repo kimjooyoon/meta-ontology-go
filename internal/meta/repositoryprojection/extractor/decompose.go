@@ -92,12 +92,14 @@ type typeEvidence struct {
 	files                  []*ast.File
 	funcs                  map[*types.Func]*ast.FuncDecl
 	fset                   *token.FileSet
+	root                   string
 	contractSourceDigest   string
 	contractSemanticDigest string
 }
 
 type returnTailHelperProof struct {
 	helperName              string
+	helperObjectIdentity    string
 	helperSignatureDigest   string
 	helperBodyDigest        string
 	helperType              string
@@ -105,6 +107,7 @@ type returnTailHelperProof struct {
 	contractSemanticDigest  string
 	calleeEffectsEvidenceID string
 	globalReadIdentities    []string
+	dependencies            []CalleeDependencyEvidence
 }
 
 func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
