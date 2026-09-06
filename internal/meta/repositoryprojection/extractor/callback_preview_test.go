@@ -32,7 +32,7 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 	if preview.Candidate.HelperLines <= 0 || preview.Candidate.HelperLines > functionLineLimit || preview.Candidate.ParentFunctionLines <= 0 || preview.Candidate.ParentFunctionLines > functionLineLimit {
 		t.Fatalf("candidate capacity = helper:%d parent:%d", preview.Candidate.HelperLines, preview.Candidate.ParentFunctionLines)
 	}
-	if len(preview.Captures) != 2 || !callbackPreviewHasCapture(preview.Captures, "fixture", "*paginationFixture", "pointer-identity") || !callbackPreviewHasCapture(preview.Captures, "requestCount", "*atomic.Int32", "pointer-identity") {
+	if len(preview.Captures) != 2 || !callbackPreviewHasCapture(preview.Captures, "fixture", "paginationFixture", "pointer-identity") || !callbackPreviewHasCapture(preview.Captures, "requestCount", "atomic.Int32", "pointer-identity") {
 		t.Fatalf("capture bindings = %#v", preview.Captures)
 	}
 	if preview.Candidate.CaptureCount != len(preview.Captures) || preview.Candidate.PendingEffectCount != len(preview.PendingEffects) || len(preview.PendingEffects) == 0 {
