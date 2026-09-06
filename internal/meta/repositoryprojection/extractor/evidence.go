@@ -32,7 +32,7 @@ type StrategyEvidence struct {
 	ContractObligations           []ContractObligationEvidence   `json:"contract_obligations"`
 	ProofStages                   []ProofStageEvidence           `json:"proof_stages"`
 	PreflightObservations         []PreflightObservationEvidence `json:"preflight_observations,omitempty"`
-	PreparationProgress           *PreparationProgressEvidence  `json:"preparation_progress,omitempty"`
+	PreparationProgress           *PreparationProgressEvidence   `json:"preparation_progress,omitempty"`
 	FinalRenderedCapacity         *FinalRenderedCapacityEvidence `json:"final_rendered_capacity,omitempty"`
 	FinalGeneratedBytes           int                            `json:"final_generated_bytes"`
 	FinalGeneratedEvidenceBytes   int                            `json:"final_generated_evidence_bytes"`

@@ -486,7 +486,17 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 }
 
 func stableSuffixName(function string, suffix int) string {
-	return fmt.Sprintf("%sExtractedSuffix%02d", function, suffix)
+	return fmt.Sprintf("%sExtractedSuffix%02d", safeGeneratedFunctionPrefix(function), suffix)
+}
+
+func safeGeneratedFunctionPrefix(function string) string {
+	switch {
+	case strings.HasPrefix(function, "Test"), strings.HasPrefix(function, "Benchmark"),
+		strings.HasPrefix(function, "Example"), strings.HasPrefix(function, "Fuzz"):
+		return "Extracted" + function
+	default:
+		return function
+	}
 }
 
 func includeLeadingComments(fset *token.FileSet, file *ast.File, first ast.Stmt, start int) int {

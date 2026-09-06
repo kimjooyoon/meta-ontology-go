@@ -164,8 +164,8 @@ type strategyEvidencePresence struct {
 	FinalGeneratedEvidenceBytes   int                                              `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits           int                                              `json:"final_generated_units"`
 	PreflightObservations         []json.RawMessage                                `json:"preflight_observations,omitempty"`
-	PreparationProgress           *preparationProgressPresence             `json:"preparation_progress,omitempty"`
-	FinalRenderedCapacity         *finalRenderedCapacityPresence           `json:"final_rendered_capacity,omitempty"`
+	PreparationProgress           *preparationProgressPresence                     `json:"preparation_progress,omitempty"`
+	FinalRenderedCapacity         *finalRenderedCapacityPresence                   `json:"final_rendered_capacity,omitempty"`
 }
 
 type preparationProgressPresence struct {

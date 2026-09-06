@@ -320,8 +320,8 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 		RenderedHelperLines:           candidate.renderedHelper.lines,
 		RenderedOuterHelperBytes:      candidate.renderedOuter.bytes,
 		RenderedOuterHelperLines:      candidate.renderedOuter.lines,
-		PreparationProgress: progress,
-		PreflightObservations: preflightObservationEvidence(contract, preflight),
+		PreparationProgress:           progress,
+		PreflightObservations:         preflightObservationEvidence(contract, preflight),
 	}, nil
 }
 
@@ -375,7 +375,7 @@ func returnTailContractStage(name string) (string, string) {
 }
 
 func stableReturnTailName(function string, suffix int) string {
-	return fmt.Sprintf("%sExtractedReturnTail%02d", function, suffix)
+	return fmt.Sprintf("%sExtractedReturnTail%02d", safeGeneratedFunctionPrefix(function), suffix)
 }
 
 func isErrorType(value types.Type) bool {
@@ -596,12 +596,31 @@ func returnTailTypedConversion(call *ast.CallExpr, info *types.Info) bool {
 	if call == nil || info == nil {
 		return false
 	}
-	functionEvidence, functionKnown := info.Types[call.Fun]
-	resultEvidence, resultKnown := info.Types[call]
-	if !functionKnown || !resultKnown || !functionEvidence.IsType() || functionEvidence.Type == nil || resultEvidence.Type == nil {
+	functionType := info.TypeOf(call.Fun)
+	resultType := info.TypeOf(call)
+	if functionType == nil || resultType == nil {
 		return false
 	}
-	return true
+	if _, callable := functionType.(*types.Signature); callable {
+		return false
+	}
+	object := info.Uses[conversionIdentifier(call.Fun)]
+	if object == nil {
+		return true
+	}
+	_, typeName := object.(*types.TypeName)
+	return typeName
+}
+
+func conversionIdentifier(expression ast.Expr) *ast.Ident {
+	switch value := expression.(type) {
+	case *ast.Ident:
+		return value
+	case *ast.ParenExpr:
+		return conversionIdentifier(value.X)
+	default:
+		return nil
+	}
 }
 
 func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {
