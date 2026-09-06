@@ -249,16 +249,48 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	return materialized, nil
 }
 
-func collapseVerifierFailureDiagnostic(root string, result processResult) string {
-	return fmt.Sprintf("collapse verifier failed: cwd=%s command=%v stdout=%q stderr=%q", filepath.Clean(root), result.Observation.Command, boundedCollapseDiagnostic(result.Stdout), boundedCollapseDiagnostic(result.Stderr))
+func collapseVerifierFailureDiagnostic(_ string, result processResult) string {
+	return fmt.Sprintf("collapse verifier failed: cwd=<workspace> command=%v stdout=%q stderr=%q", result.Observation.Command, boundedCollapseDiagnostic(result.Stdout), boundedCollapseDiagnostic(result.Stderr))
 }
 
 func boundedCollapseDiagnostic(payload []byte) string {
-	const limit = 512
+	const limit = 2048
 	if len(payload) <= limit {
 		return string(payload)
 	}
-	return string(payload[:limit]) + "...<truncated>"
+	const head = 512
+	if failure := collapseFailureExcerpt(string(payload)); failure != "" {
+		const separator = "...<truncated; failure excerpt>..."
+		available := limit - head - len(separator)
+		if len(failure) > available {
+			failure = failure[:available]
+		}
+		return string(payload[:head]) + separator + failure
+	}
+	return string(payload[:head]) + "...<truncated>..." + string(payload[len(payload)-(limit-head):])
+}
+
+func collapseFailureExcerpt(payload string) string {
+	lines := strings.Split(payload, "\n")
+	selected := make([]bool, len(lines))
+	for index, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "FAIL" && !strings.HasPrefix(trimmed, "--- FAIL:") && !strings.HasPrefix(trimmed, "FAIL\t") && !strings.HasPrefix(trimmed, "FAIL ") && !strings.Contains(trimmed, "[build failed]") && !strings.Contains(trimmed, ": declared and not used") && !strings.Contains(trimmed, ": undefined:") && !strings.Contains(trimmed, ": syntax error") && !strings.Contains(trimmed, ": cannot ") && !strings.Contains(trimmed, "panic:") {
+			continue
+		}
+		start := max(0, index-1)
+		end := min(len(lines), index+2)
+		for contextIndex := start; contextIndex < end; contextIndex++ {
+			selected[contextIndex] = true
+		}
+	}
+	var excerpt []string
+	for index, line := range lines {
+		if selected[index] {
+			excerpt = append(excerpt, line)
+		}
+	}
+	return strings.Join(excerpt, "\n")
 }
 
 func collapseContractDigest(action generation.Action) (string, bool) {

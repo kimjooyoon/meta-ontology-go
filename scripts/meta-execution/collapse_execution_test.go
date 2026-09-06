@@ -73,6 +73,17 @@ func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 	}
 }
 
+func TestBoundedCollapseDiagnosticPreservesFailureExcerpt(t *testing.T) {
+	payload := strings.Repeat("ok  \tgithub.com/example/package\t0.001s\n", 256) + "--- FAIL: TestCollapseExecutionRouteUsesNativeMaterializer (0.01s)\n\tcollapse_execution_test.go:42: transformed workspace failed\nFAIL\n"
+	diagnostic := boundedCollapseDiagnostic([]byte(payload))
+	if len(diagnostic) > 2048 {
+		t.Fatalf("bounded diagnostic length = %d", len(diagnostic))
+	}
+	if !strings.Contains(diagnostic, "--- FAIL: TestCollapseExecutionRouteUsesNativeMaterializer") || !strings.Contains(diagnostic, "transformed workspace failed") || !strings.Contains(diagnostic, "FAIL") {
+		t.Fatalf("bounded diagnostic omitted failure excerpt: %q", diagnostic)
+	}
+}
+
 func collapseTestRepositoryRoot(t *testing.T) string {
 	t.Helper()
 	_, filename, _, ok := runtime.Caller(0)
