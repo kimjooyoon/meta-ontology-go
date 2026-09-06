@@ -351,6 +351,10 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	} else if candidate != nil {
 		return candidate.result, &candidate.evidence, nil
 	}
+	return decomposeSuffixCandidates(source, fset, file, function, evidence)
+}
+
+func decomposeSuffixCandidates(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence) ([]byte, *StrategyEvidence, error) {
 	existing := functionNames(file)
 	diagnostics := []string{
 		"declaration=" + functionIdentity(fset, function),
