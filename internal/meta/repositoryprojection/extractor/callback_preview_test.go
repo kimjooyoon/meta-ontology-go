@@ -101,15 +101,29 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 			value.Candidate = &candidate
 		},
 		"effect-self-loop": func(value *CallbackPreviewResult) {
+			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
 			value.PendingEffects = append([]CallbackPreviewEffect(nil), value.PendingEffects...)
 			value.PendingEffects[0].BlockedBy = []string{value.PendingEffects[0].CallIdentity}
+			blockedBy := make([][]string, len(value.PendingEffects))
+			for index := range value.PendingEffects {
+				blockedBy[index] = append([]string{}, value.PendingEffects[index].BlockedBy...)
+			}
+			for index := range value.ContractRecords[3].Fields {
+				if value.ContractRecords[3].Fields[index].Name == "EffectBlockedBy" {
+					value.ContractRecords[3].Fields[index].Value = callbackPreviewEncodeNestedList(blockedBy)
+				}
+			}
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			tampered := preview
 			mutate(&tampered)
-			if err := ValidateCallbackPreviewResult(tampered); err == nil {
+			err := ValidateCallbackPreviewResult(tampered)
+			if err == nil {
 				t.Fatal("tampered callback preview was accepted")
+			}
+			if name == "effect-self-loop" && !strings.Contains(err.Error(), "pending effect") {
+				t.Fatalf("effect self-loop was rejected outside the leaf lifecycle guard: %v", err)
 			}
 		})
 	}
