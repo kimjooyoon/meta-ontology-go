@@ -658,7 +658,7 @@ func processCounts(report generation.ReceiptReport) (int, int, int) {
 		}
 		commands++
 		if receipt.InstanceEvidence.EvidenceOrigin == generation.EvidenceOriginInputReceipt {
-			evidenceReuse = 1
+			evidenceReuse++
 		}
 		if hasTestCommand(receipt.InstanceEvidence.VerifierObservation.Command) {
 			tests++
