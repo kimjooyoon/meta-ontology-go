@@ -596,12 +596,20 @@ func returnTailTypedConversion(call *ast.CallExpr, info *types.Info) bool {
 	if call == nil || info == nil {
 		return false
 	}
-	functionEvidence, functionKnown := info.Types[call.Fun]
 	resultEvidence, resultKnown := info.Types[call]
-	if !functionKnown || !resultKnown || !functionEvidence.IsType() || functionEvidence.Type == nil || resultEvidence.Type == nil {
+	if !resultKnown || resultEvidence.Type == nil || !returnTailTypeExpression(call.Fun, info) {
 		return false
 	}
 	return true
+}
+
+func returnTailTypeExpression(expression ast.Expr, info *types.Info) bool {
+	evidence, known := info.Types[expression]
+	if known && evidence.IsType() && evidence.Type != nil {
+		return true
+	}
+	parenthesized, ok := expression.(*ast.ParenExpr)
+	return ok && returnTailTypeExpression(parenthesized.X, info)
 }
 
 func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {
