@@ -30,7 +30,9 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 	if options.input != "" {
 		input, err := reader.ReadFile(options.input)
 		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, valueexecution.Failure{
+				Code: valueexecution.ReasonSourceReadFailed, Stage: "INPUT", Step: "read-plan-input", Detail: err.Error(),
+			})
 		}
 		plan, err := valueexecution.CompilePlan(options.filename, source)
 		if err != nil {
@@ -93,10 +95,11 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 }
 
 func decodePlanInput(raw []byte) (int64, error) {
+	const detail = "plan input must be an integer or {\"value\": integer}"
 	var value int64
 	if err := json.Unmarshal(raw, &value); err == nil {
 		if strings.TrimSpace(string(raw)) == "null" {
-			return 0, fmt.Errorf("plan input must be an integer or {\"value\": integer}")
+			return 0, valueexecution.Failure{Code: valueexecution.ReasonExternalInputUnexpected, Stage: "INPUT", Step: "decode-plan-input", Detail: detail}
 		}
 		return value, nil
 	}
@@ -106,10 +109,10 @@ func decodePlanInput(raw []byte) (int64, error) {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&envelope); err != nil || envelope.Value == nil {
-		return 0, fmt.Errorf("plan input must be an integer or {\"value\": integer}")
+		return 0, valueexecution.Failure{Code: valueexecution.ReasonExternalInputUnexpected, Stage: "INPUT", Step: "decode-plan-input", Detail: detail}
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return 0, fmt.Errorf("plan input must be an integer or {\"value\": integer}")
+		return 0, valueexecution.Failure{Code: valueexecution.ReasonExternalInputUnexpected, Stage: "INPUT", Step: "decode-plan-input", Detail: detail}
 	}
 	return *envelope.Value, nil
 }

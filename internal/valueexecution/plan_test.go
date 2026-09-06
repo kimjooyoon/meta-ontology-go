@@ -1,6 +1,7 @@
 package valueexecution
 
 import (
+	"encoding/json"
 	"math"
 	"strings"
 	"testing"
@@ -85,6 +86,17 @@ func TestPlanRejectsUncompiledOrTamperedPublicIdentityBeforeApply(t *testing.T) 
 			}
 		})
 	}
+	encoded, err := json.Marshal(plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var publicOnly Plan
+	if err := json.Unmarshal(encoded, &publicOnly); err != nil {
+		t.Fatal(err)
+	}
+	if execution, err := publicOnly.Execute(map[string]int64{"Produce": 41}); Reason(err) != ReasonPlanInvalid || execution.ApplyCalls != 0 {
+		t.Fatalf("public-only plan execution = %#v / %v, want fail closed before apply", execution, err)
+	}
 }
 
 func TestPlanPreservesPartialExecutionOnApplyFailure(t *testing.T) {
@@ -103,6 +115,26 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 	}
 	if execution.ApplyCalls != 1 || len(execution.Activities) != 1 || execution.Activities[0] != "Produce" || len(execution.Results) != 0 {
 		t.Fatalf("partial execution = %#v, want one attempted apply and no result", execution)
+	}
+}
+
+func TestPlanPreservesDeliveryAndProducerResultBeforeConsumerFailure(t *testing.T) {
+	plan, err := CompilePlan("fanout.gooo", []byte(runtimeBindingFanoutFixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	execution, err := plan.Execute(map[string]int64{"Produce": math.MaxInt64 - 1})
+	if Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("consumer overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+	if execution.ApplyCalls != 2 || execution.Deliveries != 1 || len(execution.Activities) != 2 || execution.Activities[0] != "Produce" || execution.Activities[1] != "ConsumeA" || execution.Results["Produce"].Value != math.MaxInt64 || len(execution.Results) != 1 {
+		t.Fatalf("consumer overflow partial execution = %#v", execution)
+	}
+	if _, ran := execution.Results["ConsumeA"]; ran {
+		t.Fatal("failed consumer unexpectedly produced a result")
+	}
+	if _, ran := execution.Results["ConsumeB"]; ran {
+		t.Fatal("second consumer ran after first consumer failure")
 	}
 }
 

@@ -140,6 +140,55 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 	}
 }
 
+func TestRunSourceInputFailuresPreserveInputStageAndZeroExecution(t *testing.T) {
+	source := []byte(`package runtimebinding
+namespace runtimebinding
+entity Integer id "gooo://runtime-binding/entity/integer"
+activity Produce(Integer) -> Integer computes "int.add:1"
+`)
+	cases := []struct {
+		name      string
+		input     []byte
+		include   bool
+		wantCode  string
+		wantStage string
+		wantStep  string
+	}{
+		{name: "read failure", include: false, wantCode: "VALUE_SOURCE_READ_FAILED", wantStage: "INPUT", wantStep: "read-plan-input"},
+		{name: "decode failure", input: []byte("not-json"), include: true, wantCode: "VALUE_EXTERNAL_INPUT_UNEXPECTED", wantStage: "INPUT", wantStep: "decode-plan-input"},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			reader := runSourceReaderWithFiles{"fixture.gooo": source}
+			if testCase.include {
+				reader["input.json"] = testCase.input
+			}
+			var stdout, stderr bytes.Buffer
+			code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "fixture.gooo"}, reader, &stdout, &stderr)
+			if code != exitFailure || stderr.Len() != 0 {
+				t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+			}
+			var report struct {
+				Reason  string `json:"reason"`
+				Failure struct {
+					Code  string `json:"code"`
+					Stage string `json:"stage"`
+					Step  string `json:"step"`
+				} `json:"failure"`
+				Execution struct {
+					ApplyCalls int `json:"apply_calls"`
+				} `json:"execution"`
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+				t.Fatal(err)
+			}
+			if report.Reason != testCase.wantCode || report.Failure.Code != testCase.wantCode || report.Failure.Stage != testCase.wantStage || report.Failure.Step != testCase.wantStep || report.Execution.ApplyCalls != 0 {
+				t.Fatalf("input failure report = %#v, want %s/%s/%s and zero apply", report, testCase.wantCode, testCase.wantStage, testCase.wantStep)
+			}
+		})
+	}
+}
+
 type runSourceReaderWithFiles map[string][]byte
 
 func (reader runSourceReaderWithFiles) ReadFile(path string) ([]byte, error) {
