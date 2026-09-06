@@ -48,15 +48,16 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	if caller == nil || helper == nil || rangeExpression == nil {
 		t.Fatal("incomplete range fixture lacks caller, helper, or range expression")
 	}
+	configuration := types.Config{}
+	if _, err := configuration.Check("example.test", fset, []*ast.File{file}, nil); err != nil {
+		t.Fatalf("strict fixture package type-check failed: %v", err)
+	}
 	evidence, err := checkTypes(root, "x.go", fset, file, caller)
 	if err != nil {
 		t.Fatal(err)
 	}
 	evidence.contractSourceDigest = "contract-source"
 	evidence.contractSemanticDigest = "contract-semantic"
-	if _, err := (types.Config{}).Check("example.test", fset, []*ast.File{file}, nil); err != nil {
-		t.Fatalf("strict fixture package type-check failed: %v", err)
-	}
 	if evidence.info.TypeOf(rangeExpression) == nil {
 		t.Fatal("complete range type evidence was unexpectedly absent before mutation")
 	}

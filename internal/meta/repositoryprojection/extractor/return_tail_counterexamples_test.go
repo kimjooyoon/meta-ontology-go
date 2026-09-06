@@ -211,6 +211,10 @@ func returnTailCounterexampleEvidence(t *testing.T, source string) (typeEvidence
 	if caller == nil {
 		t.Fatal("callee counterexample lacks caller declaration")
 	}
+	configuration := types.Config{}
+	if _, err := configuration.Check("example.test", fset, []*ast.File{file}, nil); err != nil {
+		t.Fatalf("strict fixture package type-check failed: %v", err)
+	}
 	evidence, err := checkTypes(root, "x.go", fset, file, caller)
 	if err != nil {
 		t.Fatal(err)
