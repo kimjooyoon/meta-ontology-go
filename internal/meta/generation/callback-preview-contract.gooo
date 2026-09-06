@@ -24,21 +24,21 @@ entity BoundedCallbackCandidate id "gooo://meta-callback-preview/entity/candidat
 
 entity CallbackCaptures id "gooo://meta-callback-preview/entity/captures" fields {
     field CandidateIdentity id "gooo://meta-callback-preview/field/captures-candidate-identity" type string required one
-    field CaptureNames id "gooo://meta-callback-preview/field/captures-names" type string optional many
-    field ObjectIdentities id "gooo://meta-callback-preview/field/captures-object-identities" type string optional many
-    field ObjectTypes id "gooo://meta-callback-preview/field/captures-object-types" type string optional many
-    field BindingModes id "gooo://meta-callback-preview/field/captures-binding-modes" type string optional many
+    field CaptureNames id "gooo://meta-callback-preview/field/captures-names" type string required one
+    field ObjectIdentities id "gooo://meta-callback-preview/field/captures-object-identities" type string required one
+    field ObjectTypes id "gooo://meta-callback-preview/field/captures-object-types" type string required one
+    field BindingModes id "gooo://meta-callback-preview/field/captures-binding-modes" type string required one
     field Count id "gooo://meta-callback-preview/field/captures-count" type string required one
 }
 
 entity PendingCallbackEffects id "gooo://meta-callback-preview/entity/pending-effects" fields {
     field CandidateIdentity id "gooo://meta-callback-preview/field/effects-candidate-identity" type string required one
-    field CallIdentities id "gooo://meta-callback-preview/field/effects-call-identities" type string optional many
-    field Symbols id "gooo://meta-callback-preview/field/effects-symbols" type string optional many
-    field Signatures id "gooo://meta-callback-preview/field/effects-signatures" type string optional many
-    field ReceiverTypes id "gooo://meta-callback-preview/field/effects-receiver-types" type string optional many
-    field EffectKinds id "gooo://meta-callback-preview/field/effects-kinds" type string optional many
-    field States id "gooo://meta-callback-preview/field/effects-states" type string optional many
+    field CallIdentities id "gooo://meta-callback-preview/field/effects-call-identities" type string required one
+    field Symbols id "gooo://meta-callback-preview/field/effects-symbols" type string required one
+    field Signatures id "gooo://meta-callback-preview/field/effects-signatures" type string required one
+    field ReceiverTypes id "gooo://meta-callback-preview/field/effects-receiver-types" type string required one
+    field EffectKinds id "gooo://meta-callback-preview/field/effects-kinds" type string required one
+    field States id "gooo://meta-callback-preview/field/effects-states" type string required one
     field Count id "gooo://meta-callback-preview/field/effects-count" type string required one
     field ResolvedCount id "gooo://meta-callback-preview/field/effects-resolved-count" type string required one
     field State id "gooo://meta-callback-preview/field/effects-state" type string required one

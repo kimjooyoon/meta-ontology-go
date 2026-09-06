@@ -19,21 +19,21 @@ import (
 // EntityFields V1 semantic registry currently exposes only the builtin string
 // type; native preview evidence still carries counters as integers.
 type CallbackPreviewFieldEvidence struct {
-	Entity       string `json:"entity"`
-	Name         string `json:"name"`
-	ID           string `json:"id"`
-	Presence     string `json:"presence"`
-	Cardinality  string `json:"cardinality"`
-	TypeID       string `json:"type_id"`
+	Entity      string `json:"entity"`
+	Name        string `json:"name"`
+	ID          string `json:"id"`
+	Presence    string `json:"presence"`
+	Cardinality string `json:"cardinality"`
+	TypeID      string `json:"type_id"`
 }
 
 type CallbackPreviewActivityEvidence struct {
-	Name             string `json:"name"`
-	InputEntity      string `json:"input_entity"`
-	OutputEntity     string `json:"output_entity"`
-	ValueProgram     string `json:"value_program"`
-	UsedInputFact    bool   `json:"used_input_fact"`
-	GeneratedOutputFact bool `json:"generated_output_fact"`
+	Name                string `json:"name"`
+	InputEntity         string `json:"input_entity"`
+	OutputEntity        string `json:"output_entity"`
+	ValueProgram        string `json:"value_program"`
+	UsedInputFact       bool   `json:"used_input_fact"`
+	GeneratedOutputFact bool   `json:"generated_output_fact"`
 }
 
 type CallbackPreviewBindingEvidence struct {
@@ -47,16 +47,16 @@ type CallbackPreviewBindingEvidence struct {
 // CallbackPreviewContractEvidence is a preview-only contract. It has no
 // OperationResult output and cannot authorize repository writes.
 type CallbackPreviewContractEvidence struct {
-	SourceDigest   string                           `json:"source_digest"`
-	SemanticDigest string                           `json:"semantic_digest"`
-	InputEntity    string                           `json:"input_entity"`
-	CandidateEntity string                          `json:"candidate_entity"`
-	CapturesEntity string                           `json:"captures_entity"`
-	EffectsEntity  string                           `json:"effects_entity"`
-	EvidenceEntity string                           `json:"evidence_entity"`
-	Fields         []CallbackPreviewFieldEvidence   `json:"fields"`
-	Activities     []CallbackPreviewActivityEvidence `json:"activities"`
-	Bindings       []CallbackPreviewBindingEvidence `json:"bindings"`
+	SourceDigest    string                            `json:"source_digest"`
+	SemanticDigest  string                            `json:"semantic_digest"`
+	InputEntity     string                            `json:"input_entity"`
+	CandidateEntity string                            `json:"candidate_entity"`
+	CapturesEntity  string                            `json:"captures_entity"`
+	EffectsEntity   string                            `json:"effects_entity"`
+	EvidenceEntity  string                            `json:"evidence_entity"`
+	Fields          []CallbackPreviewFieldEvidence    `json:"fields"`
+	Activities      []CallbackPreviewActivityEvidence `json:"activities"`
+	Bindings        []CallbackPreviewBindingEvidence  `json:"bindings"`
 }
 
 //go:embed callback-preview-contract.gooo
@@ -110,20 +110,20 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 	}},
 	{Name: "CallbackCaptures", ID: "gooo://meta-callback-preview/entity/captures", Fields: []callbackPreviewFieldSpec{
 		{Name: "CandidateIdentity", ID: "gooo://meta-callback-preview/field/captures-candidate-identity", Presence: semantic.Required, Cardinality: semantic.One},
-		{Name: "CaptureNames", ID: "gooo://meta-callback-preview/field/captures-names", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "ObjectIdentities", ID: "gooo://meta-callback-preview/field/captures-object-identities", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "ObjectTypes", ID: "gooo://meta-callback-preview/field/captures-object-types", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "BindingModes", ID: "gooo://meta-callback-preview/field/captures-binding-modes", Presence: semantic.Optional, Cardinality: semantic.Many},
+		{Name: "CaptureNames", ID: "gooo://meta-callback-preview/field/captures-names", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "ObjectIdentities", ID: "gooo://meta-callback-preview/field/captures-object-identities", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "ObjectTypes", ID: "gooo://meta-callback-preview/field/captures-object-types", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "BindingModes", ID: "gooo://meta-callback-preview/field/captures-binding-modes", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "Count", ID: "gooo://meta-callback-preview/field/captures-count", Presence: semantic.Required, Cardinality: semantic.One},
 	}},
 	{Name: "PendingCallbackEffects", ID: "gooo://meta-callback-preview/entity/pending-effects", Fields: []callbackPreviewFieldSpec{
 		{Name: "CandidateIdentity", ID: "gooo://meta-callback-preview/field/effects-candidate-identity", Presence: semantic.Required, Cardinality: semantic.One},
-		{Name: "CallIdentities", ID: "gooo://meta-callback-preview/field/effects-call-identities", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "Symbols", ID: "gooo://meta-callback-preview/field/effects-symbols", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "Signatures", ID: "gooo://meta-callback-preview/field/effects-signatures", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "ReceiverTypes", ID: "gooo://meta-callback-preview/field/effects-receiver-types", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "EffectKinds", ID: "gooo://meta-callback-preview/field/effects-kinds", Presence: semantic.Optional, Cardinality: semantic.Many},
-		{Name: "States", ID: "gooo://meta-callback-preview/field/effects-states", Presence: semantic.Optional, Cardinality: semantic.Many},
+		{Name: "CallIdentities", ID: "gooo://meta-callback-preview/field/effects-call-identities", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "Symbols", ID: "gooo://meta-callback-preview/field/effects-symbols", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "Signatures", ID: "gooo://meta-callback-preview/field/effects-signatures", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "ReceiverTypes", ID: "gooo://meta-callback-preview/field/effects-receiver-types", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "EffectKinds", ID: "gooo://meta-callback-preview/field/effects-kinds", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "States", ID: "gooo://meta-callback-preview/field/effects-states", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "Count", ID: "gooo://meta-callback-preview/field/effects-count", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "ResolvedCount", ID: "gooo://meta-callback-preview/field/effects-resolved-count", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "State", ID: "gooo://meta-callback-preview/field/effects-state", Presence: semantic.Required, Cardinality: semantic.One},

@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	callbackPreviewSchema       = "gooo.callback-preview/v1"
-	callbackPreviewTarget       = "TestPaginationFixturesExecuteParserAndHTTPClient"
-	callbackPreviewStateUnknown = "UNKNOWN"
+	callbackPreviewSchema        = "gooo.callback-preview/v1"
+	callbackPreviewTarget        = "TestPaginationFixturesExecuteParserAndHTTPClient"
+	callbackPreviewStateUnknown  = "UNKNOWN"
 	callbackPreviewPromotionNone = "NONE"
 )
 
@@ -26,20 +26,20 @@ const (
 // owned preview data and cannot enter the normal OperationResult or staging
 // path.
 type CallbackPreviewResult struct {
-	Schema                   string                                      `json:"schema"`
-	LogicalPath              string                                      `json:"logical_path"`
-	Subject                  string                                      `json:"subject"`
-	SourceDigest             string                                      `json:"source_digest"`
-	ContractSourceDigest     string                                      `json:"contract_source_digest"`
-	ContractSemanticDigest   string                                      `json:"contract_semantic_digest"`
-	State                    string                                      `json:"state"`
-	Reason                   string                                      `json:"reason"`
-	Candidate                *CallbackPreviewCandidate                   `json:"candidate,omitempty"`
-	Captures                 []CallbackPreviewCapture                    `json:"captures,omitempty"`
-	PendingEffects           []CallbackPreviewEffect                     `json:"pending_effects,omitempty"`
-	Evidence                 CallbackPreviewEvidence                      `json:"evidence"`
-	OperationResultAdmission string                                      `json:"operation_result_admission"`
-	ApplyPermission          string                                      `json:"apply_permission"`
+	Schema                   string                    `json:"schema"`
+	LogicalPath              string                    `json:"logical_path"`
+	Subject                  string                    `json:"subject"`
+	SourceDigest             string                    `json:"source_digest"`
+	ContractSourceDigest     string                    `json:"contract_source_digest"`
+	ContractSemanticDigest   string                    `json:"contract_semantic_digest"`
+	State                    string                    `json:"state"`
+	Reason                   string                    `json:"reason"`
+	Candidate                *CallbackPreviewCandidate `json:"candidate,omitempty"`
+	Captures                 []CallbackPreviewCapture  `json:"captures,omitempty"`
+	PendingEffects           []CallbackPreviewEffect   `json:"pending_effects,omitempty"`
+	Evidence                 CallbackPreviewEvidence   `json:"evidence"`
+	OperationResultAdmission string                    `json:"operation_result_admission"`
+	ApplyPermission          string                    `json:"apply_permission"`
 }
 
 type CallbackPreviewCandidate struct {
@@ -78,17 +78,17 @@ type CallbackPreviewEffect struct {
 }
 
 type CallbackPreviewEvidence struct {
-	CandidateIdentity       string `json:"candidate_identity"`
-	SourceDigest            string `json:"source_digest"`
-	CandidateDigest         string `json:"candidate_digest"`
-	State                   string `json:"state"`
-	CaptureCount            int    `json:"capture_count"`
-	PendingEffectCount      int    `json:"pending_effect_count"`
-	ResolvedEffectCount     int    `json:"resolved_effect_count"`
-	HelperLines             int    `json:"helper_lines"`
-	ParentFunctionLines     int    `json:"parent_function_lines"`
+	CandidateIdentity        string `json:"candidate_identity"`
+	SourceDigest             string `json:"source_digest"`
+	CandidateDigest          string `json:"candidate_digest"`
+	State                    string `json:"state"`
+	CaptureCount             int    `json:"capture_count"`
+	PendingEffectCount       int    `json:"pending_effect_count"`
+	ResolvedEffectCount      int    `json:"resolved_effect_count"`
+	HelperLines              int    `json:"helper_lines"`
+	ParentFunctionLines      int    `json:"parent_function_lines"`
 	OperationResultAdmission string `json:"operation_result_admission"`
-	ApplyPermission         string `json:"apply_permission"`
+	ApplyPermission          string `json:"apply_permission"`
 }
 
 // PreviewBoundedPaginationCallback observes and renders the exact callback
