@@ -14,6 +14,9 @@ type options struct {
 }
 
 func run(configuration options) error {
+	if handled, err := runRegistrationMode(); handled {
+		return err
+	}
 	if configuration.planPath == "" || configuration.outputPath == "" ||
 		filepath.Clean(configuration.planPath) ==
 			filepath.Clean(configuration.outputPath) {
