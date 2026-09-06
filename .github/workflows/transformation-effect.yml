@@ -589,13 +589,18 @@ jobs:
             ($plan[0].refuted_indicator_ids | length) >= 1 and
             ($plan[0].counterexamples | any(.[]; .reason == "INPUT_SUBJECT_KIND_MISMATCH" and .source_indicator.subject_kind == "SOURCE_FRAGMENT" and (.blocked_by | length) == 0))
           ' "$input/self-improvement-receipts.json"
-          jq -e --slurpfile plan "$input/self-improvement-plan.json" '
+          jq -e --slurpfile plan "$input/self-improvement-plan.json" --slurpfile manifest "$input/self-improvement-execution.json" '
             .decision == "PASS" and .resolution == "EXACT" and
             (.counterexamples | length) == 3 and
             (.counterexamples | all(.[]; .decision == "REFUTED" and .resolution == "EXACT" and .reason == "META_OPERATION_EXECUTOR_BINDING_MISMATCH")) and
             ([.counterexamples[] | select(.id == "executor-binding-stale")][0] as $stale |
-              $stale.field_path == ("registry[" + $plan[0].selected[0].meta_operation + "].executor") and
-              $stale.expected == $plan[0].selected[0].executor and
+              $plan[0].selected[0] as $action |
+              ($plan[0].registry | map(select(.operation == $action.meta_operation))) as $bindings |
+              ($manifest[0].steps | map(select(.action_indicator_id == $action.indicator_id and .operation == $action.meta_operation))) as $steps |
+              ($bindings | length) == 1 and ($steps | length) == 1 and
+              $stale.field_path == ("registry[" + $action.meta_operation + "].executor") and
+              $stale.expected == $bindings[0].executor and
+              $stale.expected == $steps[0].executor and
               $stale.observed == "stale-executor")
           ' "$root/counterexamples.json"
           jq -r '"### Focused transformation effect\n- selected/bound/unbound: \(.selected_plan_operations)/\(.bound_executor_operations)/\(.unbound_executor_operations)\n- receipts/failures/dependent-unknowns: \(.receipt_count)/\(.failure_count)/\(.unknown_count)\n- operation executor commands/tests (scoped): \(.operation_executor_commands)/\(.operation_executor_tests) [\(.command_scope)/\(.test_scope)]\n- reused evidence records: \(.reused_evidence_records) [\(.evidence_reuse_scope)]\n- replay: \(.runtime.replay_equal)\n- observed repository writes/local tests/cross-project gates: \(.repository_writes)/\(.local_test_executions)/\(.cross_project_required_gates)\n- operation outcome: \(.operation_outcome)\n- promotion authorized: \(.promotion_authorized)"' "$root/verification.json" >> "$GITHUB_STEP_SUMMARY"
