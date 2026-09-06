@@ -22,6 +22,22 @@ type CompiledPolicy struct {
 	Denominator    int               `json:"fixed_denominator"`
 	Rules          []Rule            `json:"rules"`
 	Reduction      DecisionReduction `json:"decision_reduction"`
+	Structure      StructureMetrics  `json:"structure"`
+}
+
+// StructureMetrics is derived from the parsed syntax and lowered semantic IR
+// of a first-class policy. It is evidence about exact node/binding counts, not
+// a score or an inferred improvement claim.
+type StructureMetrics struct {
+	GrammarNodeKinds        int            `json:"grammar_node_kinds"`
+	ASTNodeCounts           map[string]int `json:"ast_node_counts"`
+	IRNodeCounts            map[string]int `json:"ir_node_counts"`
+	TransitionBindings      int            `json:"transition_bindings"`
+	EvidenceBindings        int            `json:"evidence_bindings"`
+	ResolutionBindings      int            `json:"resolution_bindings"`
+	MarkerOccurrencesBefore int            `json:"marker_occurrences_before"`
+	MarkerOccurrencesAfter  int            `json:"marker_occurrences_after"`
+	MarkerImprovement       string         `json:"marker_improvement"`
 }
 
 type DecisionReduction struct {

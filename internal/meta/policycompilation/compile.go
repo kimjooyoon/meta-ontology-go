@@ -23,7 +23,7 @@ func Compile(source []byte) (CompiledPolicy, error) {
 }
 
 func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
-	ir, err := lowerPolicy(filename, source)
+	ir, file, err := lowerPolicy(filename, source)
 	if err != nil {
 		return CompiledPolicy{}, fmt.Errorf("lower policy: %w", err)
 	}
@@ -31,30 +31,42 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 	rules := make([]Rule, 0, FixedDenominator)
 	var reduction DecisionReduction
 	reductionCount := 0
-	for _, node := range ir.Graph.Nodes() {
-		if node.Kind != semantic.Activity {
-			continue
+	structure := StructureMetrics{}
+	if len(ir.Policies) > 0 {
+		if len(ir.Policies) != 1 {
+			return CompiledPolicy{}, errors.New("exactly one first-class policy is required")
 		}
-		values, err := parseActivityProgram(node.ValueProgram)
+		rules, reduction, structure, err = compileFirstClassPolicy(file, ir.Policies[0])
 		if err != nil {
-			return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+			return CompiledPolicy{}, fmt.Errorf("compile first-class policy: %w", err)
 		}
-		if values.Reduction != "" {
-			reductionCount++
-			if reductionCount > 1 {
-				return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+		reductionCount = 1
+	} else {
+		for _, node := range ir.Graph.Nodes() {
+			if node.Kind != semantic.Activity {
+				continue
 			}
-			reduction, err = parseDecisionReduction(values.Reduction)
+			values, err := parseActivityProgram(node.ValueProgram)
 			if err != nil {
 				return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
 			}
+			if values.Reduction != "" {
+				reductionCount++
+				if reductionCount > 1 {
+					return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+				}
+				reduction, err = parseDecisionReduction(values.Reduction)
+				if err != nil {
+					return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+				}
+			}
+			rules = append(rules, Rule{
+				ActivityID: string(node.ID), ActivityName: node.Name,
+				Role: values.Role, MetaOperation: values.MetaOperation,
+				ProofChoice: values.ProofChoice, Stage: values.Stage,
+				Step: values.Step, Reason: values.Reason, Claim: values.Claim,
+			})
 		}
-		rules = append(rules, Rule{
-			ActivityID: string(node.ID), ActivityName: node.Name,
-			Role: values.Role, MetaOperation: values.MetaOperation,
-			ProofChoice: values.ProofChoice, Stage: values.Stage,
-			Step: values.Step, Reason: values.Reason, Claim: values.Claim,
-		})
 	}
 	if len(rules) != FixedDenominator {
 		return CompiledPolicy{}, fmt.Errorf("fixed denominator changed: got %d want %d", len(rules), FixedDenominator)
@@ -74,27 +86,31 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 	if reductionCount != 1 {
 		return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
 	}
+	compiledPolicyID := policyID
+	if len(ir.Policies) == 1 {
+		compiledPolicyID = string(ir.Policies[0].ID)
+	}
 	return CompiledPolicy{
-		Schema: SchemaVersion, PolicyID: policyID,
+		Schema: SchemaVersion, PolicyID: compiledPolicyID,
 		Package: ir.Package, Namespace: ir.Namespace.String(),
 		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
-		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
+		Denominator: FixedDenominator, Rules: rules, Reduction: reduction, Structure: structure,
 	}, nil
 }
 
-func lowerPolicy(filename string, source []byte) (semantic.IR, error) {
+func lowerPolicy(filename string, source []byte) (semantic.IR, *syntax.File, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
-		return semantic.IR{}, errors.New(diagnostics.Error().Error())
+		return semantic.IR{}, nil, errors.New(diagnostics.Error().Error())
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return semantic.IR{}, err
+		return semantic.IR{}, nil, err
 	}
 	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
-		return semantic.IR{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
+		return semantic.IR{}, nil, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
 	}
-	return ir, nil
+	return ir, file, nil
 }
 
 func validateClaimPredicates(rules []Rule) error {

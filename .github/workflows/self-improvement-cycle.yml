@@ -23,18 +23,18 @@ jobs:
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
       CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
           cache: false
 
       - name: Download canonical cycle artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: self-improvement-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/cycle/input
@@ -43,7 +43,7 @@ jobs:
           run-id: ${{ env.CI_RUN_ID }}
 
       - name: Download canonical source metrics
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: source-line-metrics-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/cycle/source
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload exact-head cycle envelope
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-cycle-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/cycle/output/first.json

@@ -75,8 +75,9 @@ func firstReplayDifferenceAt(path string, expected any, expectedPresent bool, ob
 		if !ok {
 			return path, replayValue(expected), replayValue(observed)
 		}
-		keys := make([]string, 0, len(left)+len(right))
-		seen := make(map[string]bool, len(left)+len(right))
+		capacity := max(len(left), len(right))
+		keys := make([]string, 0, capacity)
+		seen := make(map[string]bool, capacity)
 		for key := range left {
 			seen[key] = true
 			keys = append(keys, key)

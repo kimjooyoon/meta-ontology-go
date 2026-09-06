@@ -26,7 +26,7 @@ jobs:
       TF_IN_AUTOMATION: "1"
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -41,7 +41,7 @@ jobs:
         run: bash scripts/opentofu-observation/main.sh
       - name: Upload OpenTofu observation artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: opentofu-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/opentofu-observation

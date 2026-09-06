@@ -35,7 +35,11 @@
     "base_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
     "missing_predecessor_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
     "last_known_good_sha": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
-    "gap_pull_requests": [599, 600, 601],
+    "gap_pull_requests": [
+      599,
+      600,
+      601
+    ],
     "proof_choice": "FOUNDATION",
     "human_decision": "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
   },
@@ -52,6 +56,130 @@
     "main"
   ],
   "ownership": [
+    {
+      "branch": "agent/syntax-registration-operator-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
+        ".github/workflows/syntax-registration-candidate.yml",
+        "cmd/syntax-registration-candidate/main.go",
+        "cmd/syntax-registration-candidate/output.go",
+        "cmd/syntax-registration-candidate/output_test.go",
+        "docs/syntax-registration-candidate.md",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/syntaxregistration/candidate_test.go",
+        "internal/meta/syntaxregistration/contract.go",
+        "internal/meta/syntaxregistration/contract.gooo",
+        "internal/meta/syntaxregistration/corpus.go",
+        "internal/meta/syntaxregistration/counterexample_test.go",
+        "internal/meta/syntaxregistration/denominator.go",
+        "internal/meta/syntaxregistration/edits.go",
+        "internal/meta/syntaxregistration/execution_identity.go",
+        "internal/meta/syntaxregistration/execution_identity_test.go",
+        "internal/meta/syntaxregistration/execution_identity_types.go",
+        "internal/meta/syntaxregistration/generate.go",
+        "internal/meta/syntaxregistration/input.go",
+        "internal/meta/syntaxregistration/json.go",
+        "internal/meta/syntaxregistration/migration_tests.go",
+        "internal/meta/syntaxregistration/native_test.go",
+        "internal/meta/syntaxregistration/selection.go",
+        "internal/meta/syntaxregistration/source_units.go",
+        "internal/meta/syntaxregistration/source_units_test.go",
+        "internal/meta/syntaxregistration/syntax_tests.go",
+        "internal/meta/syntaxregistration/types.go",
+        "internal/verify/scope_syntax_registration_20260907.go",
+        "internal/verify/scope_syntax_registration_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/main-language-preview-20260906",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/callback-preview/factory_test.go",
+        "cmd/callback-preview/main.go",
+        "cmd/callback-preview/main_test.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/generation/callback-extraction-contract.gooo",
+        "internal/meta/generation/callback-preview-contract.gooo",
+        "internal/meta/generation/callback_extraction_contract.go",
+        "internal/meta/generation/callback_extraction_contract_test.go",
+        "internal/meta/generation/callback_extraction_observer_test.go",
+        "internal/meta/generation/callback_preview_contract.go",
+        "internal/meta/generation/callback_preview_contract_test.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_claims.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_observation.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_observation_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_plan.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_plan_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_factory.go",
+        "internal/meta/repositoryprojection/extractor/callback_factory_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_module.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_module_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_workspace.go",
+        "internal/meta/repositoryprojection/extractor/callback_preview.go",
+        "internal/meta/repositoryprojection/extractor/callback_preview_test.go",
+        "internal/meta/repositoryprojection/extractor/capacity_failure_diagnostics_test.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation_structure.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation_test.go",
+        "internal/meta/repositoryprojection/extractor/decompose.go",
+        "internal/meta/repositoryprojection/extractor/extract.go",
+        "internal/meta/repositoryprojection/extractor/rendered_capacity_progress_regression_test.go",
+        "internal/meta/repositoryprojection/extractor/suffix_closure_identity_test.go",
+        "internal/verify/scope_callback_preview_20260907.go",
+        "internal/verify/scope_callback_preview_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/ci-scope-preflight-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/ci_scope_preflight_order_test.go",
+        "internal/verify/scope_ci_preflight_20260907.go",
+        "internal/verify/scope_ci_preflight_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/record-value-plan-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/gooo/run_source_part01.go",
+        "cmd/gooo/run_source_part02.go",
+        "cmd/gooo/run_source_record.go",
+        "cmd/gooo/run_source_record_test.go",
+        "examples/language-record-binding/README.md",
+        "examples/language-record-binding/input.json",
+        "examples/language-record-binding/main.gooo",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v30.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/valueexecution/record_bindings.go",
+        "internal/valueexecution/record_compile.go",
+        "internal/valueexecution/record_execute.go",
+        "internal/valueexecution/record_input.go",
+        "internal/valueexecution/record_plan_test.go",
+        "internal/valueexecution/record_result.go",
+        "internal/verify/scope_record_value_plan_20260907.go",
+        "internal/verify/scope_record_value_plan_20260907_test.go"
+      ]
+    },
     {
       "branch": "agent/foundation-authorization-dispatch-adoption-20260831",
       "paths": [
@@ -1386,6 +1514,19 @@
       ]
     },
     {
+      "branch": "agent/v23-exact-producer-subject-payload-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-language-candidate.yml",
+        "examples/self-improvement/transport.gooo",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/selfimprovementtransport",
+        "internal/verify/scope_gooo_producer_subject_payload_v23.go",
+        "scripts/self-improvement-transport-selector"
+      ]
+    },
+    {
       "branch": "agent/gooo-producer-attestation",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1862,7 +2003,7 @@
         "docs/language/promotion-authorized-continuity.md",
         "examples/metric-meta-program/main.gooo",
         "internal/meta/languagereadiness/promotioncontinuity/**",
-		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
         "internal/meta/metricprogram/**",
         "internal/meta/metricstrategy/**",
         "internal/verify/scope_promotion_authorized_continuity.go"
@@ -2924,21 +3065,21 @@
     },
     {
       "branch": "agent/temporal-transition-ticket-v1",
-        "paths": [
-          ".github/agent-scope-table.md",
-          ".github/ci-governance.json",
-          ".github/workflows/temporal-transition-ticket-v1.yml",
-          ".github/workflows/transformation-effect.yml",
-          "contracts",
-          "examples/temporal-transition-ticket",
-          "examples/language-syntax-roundtrip/corpus.json",
-          "fixtures/temporal-transition-ticket",
-          "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
-          "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
-          "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
-          "internal/meta/languagereadiness/languagesyntax/model.go",
-          "internal/meta/languagereadiness/languagesyntax/registry.go",
-          "internal/verify/scope_temporal_transition_ticket_v1.go",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/temporal-transition-ticket-v1.yml",
+        ".github/workflows/transformation-effect.yml",
+        "contracts",
+        "examples/temporal-transition-ticket",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "fixtures/temporal-transition-ticket",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_temporal_transition_ticket_v1.go",
         "internal/verify/scope_temporal_transition_ticket_v1_test.go",
         "scripts/bind-activity-resolutions.sh",
         "scripts/conform-temporal-transition-ticket-v1.sh",
@@ -2952,7 +3093,7 @@
         ".github/ci-governance.json",
         ".github/workflows/meta-policy-compilation.yml",
         ".github/workflows/transformation-effect.yml",
-        "cmd/meta-policy-compilation-consumer/**",
+        "cmd/meta-policy-compilation-consumer",
         "cmd/meta-policy-compilation-witness/**",
         "docs/language/meta-policy-compilation.md",
         "examples/language-syntax-roundtrip/corpus.json",
@@ -2962,6 +3103,46 @@
         "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/policycompilation/**",
         "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
+      ]
+    },
+    {
+      "branch": "agent/first-class-meta-policy-v20",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "bootstrap/repository-projector/evidence",
+        "cmd/meta-policy-compilation-consumer",
+        "docs/language/meta-policy-compilation.md",
+        "examples/meta-policy-compilation",
+        "examples/repository-projection-diagnostics/package-partition.json",
+        "internal/bidir",
+        "internal/meta/languagereadiness/languagesyntax/replay/shape.go",
+        "internal/meta/policycompilation",
+        "internal/semantic",
+        "internal/syntax",
+        "internal/verify/scope_first_class_meta_policy_v20.go"
+      ]
+    },
+    {
+      "branch": "agent/first-class-meta-policy-v20-1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/verify/scope_first_class_meta_policy_v20_1.go"
+      ]
+    },
+    {
+      "branch": "agent/resolve-declaration-capacity-v21",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/compatibility_generate_part01.go",
+        "internal/meta/repositoryprojection/extractor/cases_test.go",
+        "internal/verify/scope_resolve_declaration_capacity_v21.go",
+        "scripts/self-improvement-compiler-compatibility/receipt.go"
       ]
     },
     {
@@ -3200,6 +3381,298 @@
       ]
     },
     {
+      "branch": "agent/compiler-envelope-self-improvement-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/compiler-self-improvement",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/generator/types_part01.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v26.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
+    },
+    {
+      "branch": "agent/compiler-envelope-self-improvement-iteration-20260904",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        "examples/compiler-self-improvement",
+        "internal/generator/normalize_part02.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
+    },
+    {
+      "branch": "agent/compiler-envelope-self-improvement-iteration-20260904-lsp-cache",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        "examples/compiler-self-improvement",
+        "internal/lsp/features_part03.go",
+        "internal/lsp/server_part01.go",
+        "internal/lsp/server_part01_test.go",
+        "internal/lsp/server_part04.go",
+        "internal/lsp/state.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-observation-iteration-20260904",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        ".github/workflows/self-improvement-observation.yml",
+        "cmd/gooo/generate_observation_part04.go",
+        "cmd/gooo/generate_pipeline_part04.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/observe_part01.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement-observation",
+        "internal/meta/generation/semantic_observation.go",
+        "internal/meta/generation/semantic_observation_verify.go",
+        "internal/meta/generation/semantic_operation_envelope_generate.go",
+        "internal/meta/generation/semantic_operation_envelope_types.go",
+        "internal/meta/generation/semantic_operation_envelope_verify.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/compiler-self-improvement",
+        "scripts/self-improvement-observation"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v5",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-adoption.yml",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/self_adoption_adopt_part01.go",
+        "cmd/gooo/self_adoption_generation_part01.go",
+        "cmd/gooo/self_adoption_proposal_part01.go",
+        "examples/self-improvement-observation",
+        "internal/meta/generation/semantic_adoption.go",
+        "internal/meta/generation/semantic_observation_public.go",
+        "internal/meta/generation/semantic_observation_verify.go",
+        "internal/meta/generation/semantic_operation_envelope_types.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-adoption"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v6",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-retained-knowledge.yml",
+        "cmd/gooo/emit_dispatch.go",
+        "cmd/gooo/self_retention_certify_part01.go",
+        "cmd/gooo/self_retention_consume_part01.go",
+        "cmd/gooo/self_retention_helpers_part01.go",
+        "examples/self-improvement-observation",
+        "internal/meta/generation/semantic_retention.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-retained-knowledge"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v8",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v9",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-retained-knowledge.yml",
+        "cmd/gooo/public_generation_part01.go",
+        "cmd/gooo/public_generation_part02.go",
+        "cmd/gooo/self_retention_certify_part01.go",
+        "cmd/gooo/self_retention_consume_part01.go",
+        "cmd/gooo/self_retention_helpers_part01.go",
+        "examples/self-improvement-observation",
+        "internal/meta/generation/semantic_public_generation.go",
+        "internal/meta/generation/semantic_retention.go",
+        "internal/meta/retentionpolicy",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-generation",
+        "scripts/self-improvement-retained-knowledge",
+        "scripts/self-improvement-retention-policy"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v10",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-discovery.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/gooo/cli_json_part01.go",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement-discovery",
+        "internal/meta/discoverypolicy",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v27.json",
+        "internal/meta/publicdiscovery",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-discovery-policy",
+        "scripts/self-improvement-public-discovery"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-iteration-20260904-v11",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "cmd/gooo/emit_dispatch.go",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "cmd/gooo/public_continuity_authorize_part01.go",
+        "cmd/gooo/public_continuity_certify_part01.go",
+        "cmd/gooo/public_continuity_generate_part01.go",
+        "cmd/gooo/public_continuity_generate_part02.go",
+        "cmd/gooo/public_continuity_generate_part03.go",
+        "examples/self-improvement-discovery",
+        "internal/meta/discoverypolicy",
+        "internal/meta/publiccontinuity",
+        "internal/meta/publicdiscovery",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-continuity"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-utility-20260904-v12",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-utility"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-utility-reuse-20260904-v13",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "internal/meta/publictestreuse",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-test-reuse"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-orchestration-20260904-v14",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-discovery",
+        "internal/meta/publicorchestration",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-orchestration"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-partial-reuse-20260904-v15",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement-discovery",
+        "examples/self-improvement-partial-reuse",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/publicpartialreuse",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-partial-reuse"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-resolution-repair-20260904-v16",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-public-continuity.yml",
+        "examples/self-improvement-partial-reuse",
+        "internal/meta/publicresolutionrepair",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-public-resolution-repair"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-workflow-lineage-20260904-v17",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-effort-observation.yml",
+        "examples/ci-effort-observation",
+        "internal/meta/publicworkflowlineage",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/ci-effort-observation-lineage"
+      ]
+    },
+    {
+      "branch": "agent/resolve-workflow-run-lineage-v22",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci-effort-observation.yml",
+        "examples/ci-effort-observation",
+        "internal/meta/publicworkflowlineage",
+        "internal/verify/scope_workflow_lineage_v22.go",
+        "scripts/ci-effort-observation-lineage"
+      ]
+    },
+    {
+      "branch": "agent/compiler-self-improvement-compatibility-20260904-v18",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-compiler-compatibility.yml",
+        "cmd/gooo/compatibility_generate_part01.go",
+        "cmd/gooo/compatibility_generate_part02.go",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "examples/self-improvement-observation",
+        "internal/meta/compatibilitypolicy",
+        "internal/meta/compilercompatibility",
+        "internal/meta/retentionpolicy/generated/evaluator.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go",
+        "scripts/self-improvement-compiler-compatibility"
+      ]
+    },
+    {
       "branch": "agent/main-history-reconciliation-protocol-20260903",
       "paths": [
         ".github/agent-scope-table.md",
@@ -3248,6 +3721,146 @@
         "internal/verify/policy_part06.go",
         "internal/verify/scope_main_history_reconciliation_protocol_20260903.go",
         "internal/verify/transition_policy_test.go"
+      ]
+    },
+    {
+      "branch": "agent/public-trust-surface-20260904-v19",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/dependabot.yml",
+        ".github/workflows/dependency-review.yml",
+        ".github/workflows/public-trust-surface.yml",
+        "README.md",
+        "SECURITY.md",
+        "examples/public-trust-surface",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/publictrust",
+        "internal/verify/scope_public_trust_surface_20260904.go",
+        "scripts/public-trust-surface"
+      ]
+    },
+    {
+      "branch": "agent/v24-candidate-authorization-bridge-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-candidate-authorization.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement/AUTHORIZATION.md",
+        "examples/self-improvement/authorization.gooo",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/selfimprovementcandidate/authorization.go",
+        "internal/meta/selfimprovementcandidate/authorization_test.go",
+        "internal/verify/scope_gooo_candidate_authorization_v24.go",
+        "scripts/self-improvement-candidate-authorization"
+      ]
+    },
+    {
+      "branch": "agent/v25-candidate-execution-contract-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-execution-contract.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement-execution-contract",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/selfimprovementexecutioncontract",
+        "internal/verify/scope_gooo_self_improvement_execution_contract_v25.go",
+        "scripts/self-improvement-execution-contract"
+      ]
+    },
+    {
+      "branch": "agent/v26-separate-execution-grant-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-execution-grant.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement-execution-grant",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/selfimprovementexecutiongrant",
+        "internal/verify/scope_gooo_self_improvement_execution_grant_v26.go",
+        "scripts/self-improvement-execution-grant"
+      ]
+    },
+    {
+      "branch": "agent/v26.1-execution-grant-artifact-retrieval-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-execution-grant.yml",
+        "internal/meta/selfimprovementexecutiongrant",
+        "internal/verify/scope_gooo_self_improvement_execution_grant_v26_1.go",
+        "scripts/self-improvement-execution-grant"
+      ]
+    },
+    {
+      "branch": "agent/core-conformance-registry-20260905",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        ".github/workflows/core-conformance-registry.yml",
+        ".github/workflows/transformation-effect.yml",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/generation",
+        "internal/meta/languagereadiness/languagesyntax",
+        "internal/meta/languageassurance/verticalsliceclosureshadow",
+        "internal/meta/selfimprovementcontinuation/build.go",
+        "internal/meta/selfimprovementcontinuation/model.go",
+        "internal/meta/selfimprovementcontinuation/verify.go",
+        "internal/meta/selfimprovementexecutiongrant/evaluate.go",
+        "internal/meta/selfimprovementexecutiongrant/model.go",
+        "internal/meta/selfimprovementexecutiongrant/verify.go",
+        "internal/meta/selfimprovementcandidate/constants.go",
+        "internal/meta/transformationeffect/commands.go",
+        "internal/meta/transformationeffectverification/validate.go",
+        "internal/meta/repositoryprojection/extractor/candidates.go",
+        "internal/meta/repositoryprojection/extractor/method_identity_test.go",
+        "bootstrap/function-extractor/apply.go",
+        "bootstrap/function-extractor/evidence.go",
+        "bootstrap/function-extractor/paths.go",
+        "bootstrap/function-extractor/report.go",
+        "internal/meta/repositoryprojection/extractor/decompose.go",
+        "internal/meta/repositoryprojection/extractor/evidence.go",
+        "internal/meta/repositoryprojection/extractor/extract.go",
+        "internal/meta/repositoryprojection/extractor/prepare.go",
+        "internal/meta/repositoryprojection/extractor/result.go",
+        "internal/meta/repositoryprojection/extractor/return_tail.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_test.go",
+        "internal/meta/repositoryprojection/extractor/typecheck.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_regression_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_proof.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_proof_regression_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_render.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_projection.go",
+        "internal/meta/repositoryprojection/extractor/render_imports.go",
+        "internal/meta/repositoryprojection/extractor/import_normalization_test.go",
+        "internal/verify/scope_gooo_core_conformance_registry.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/extract_validation.go",
+        "scripts/meta-execution/extract_validation_test.go",
+        "scripts/meta-execution/testdata/native-strategy-evidence-w2.json",
+        "scripts/meta-summary/fixture_test.go",
+        "scripts/meta-summary/source_inventory_candidates.go",
+        "scripts/meta-summary/source_inventory_candidates_test.go",
+        "scripts/self-improvement-cycle/cycle_test.go",
+        "scripts/self-improvement-cycle/validate.go",
+        "scripts/verify/validate-source-observations.sh"
       ]
     }
   ],

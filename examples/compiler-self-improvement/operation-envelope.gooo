@@ -1,0 +1,28 @@
+package compileroperationenvelope
+namespace compiler
+
+entity OperationIntentInput id "gooo://compiler-operation-envelope/entity/intent-input"
+entity OperationIntent id "gooo://compiler-operation-envelope/entity/intent"
+entity SourceRevisionInput id "gooo://compiler-operation-envelope/entity/source-input"
+entity SourceRevision id "gooo://compiler-operation-envelope/entity/source"
+entity EffectGrantInput id "gooo://compiler-operation-envelope/entity/grant-input"
+entity EffectGrant id "gooo://compiler-operation-envelope/entity/grant"
+entity EffectRequestInput id "gooo://compiler-operation-envelope/entity/request-input"
+entity EffectRequest id "gooo://compiler-operation-envelope/entity/request"
+entity EffectResultInput id "gooo://compiler-operation-envelope/entity/result-input"
+entity EffectResult id "gooo://compiler-operation-envelope/entity/result"
+entity ReplayIdentityInput id "gooo://compiler-operation-envelope/entity/replay-input"
+entity ReplayIdentity id "gooo://compiler-operation-envelope/entity/replay"
+entity SemanticOutcomeInput id "gooo://compiler-operation-envelope/entity/outcome-input"
+entity OperationDecision id "gooo://compiler-operation-envelope/entity/decision"
+entity ReceiptInput id "gooo://compiler-operation-envelope/entity/receipt-input"
+entity OperationReceipt id "gooo://compiler-operation-envelope/entity/receipt"
+
+activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent computes "compiler.operation-intent:v1;operation=lsp-document-refresh;mode=read-only"
+activity BindSourceRevision(SourceRevisionInput) -> SourceRevision computes "compiler.source-revision:v1;binding=exact-source-digest;target=internal/lsp/features_part03.go;metric=lsp_refresh_parse_calls"
+activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant computes "compiler.effect-grant:v1;effects=read:source;repository-writes=0"
+activity EmitEffectRequest(EffectRequestInput) -> EffectRequest computes "compiler.effect-request:v1;replay=exact-source-profile-toolchain-contract-digest"
+activity RecordEffectResult(EffectResultInput) -> EffectResult computes "compiler.effect-result:v1;match=request-source-grant;cases=unchanged-reuse|changed-input-invalidation"
+activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity computes "compiler.replay-identity:v1;compare=current-request-digest;stale=corrupt-cache-reject"
+activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision computes "compiler.decision:v1;precedence=REFUTED>UNKNOWN>CLOSED;conditions=unchanged-reuse|changed-input-invalidation|corrupt-stale-evidence"
+activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt computes "compiler.operation-receipt:v1;artifacts=6;utility=UNKNOWN"

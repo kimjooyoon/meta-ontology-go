@@ -27,6 +27,8 @@ func expectedRegistry() Registry {
 	ciTimeCausality.ImplicitActivityPorts = true
 	packageUnit := PackageDefinition{ID: "billing-package", Path: "examples/billing-package", Members: []string{"examples/billing-package/activity.gooo", "examples/billing-package/entities.gooo"}, Entry: "PayOrder", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	symbolicUnit := PackageDefinition{ID: "symbolic-invocation-schema", Path: "examples/symbolic-invocation-schema", Members: []string{"examples/symbolic-invocation-schema/activity.gooo", "examples/symbolic-invocation-schema/entities.gooo", "examples/symbolic-invocation-schema/reader-request.gooo"}, Entry: "Checkout", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	selfImprovementObservationUnit := PackageDefinition{ID: "self-improvement-observation", Path: "examples/self-improvement-observation", Members: []string{"examples/self-improvement-observation/observation.gooo"}, Entry: "DeclareOperationIntent", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
+	partialReuseUnit := PackageDefinition{ID: "self-improvement-partial-reuse", Path: "examples/self-improvement-partial-reuse", Members: []string{"examples/self-improvement-partial-reuse/main.gooo"}, Entry: "CreateReceipt", ReportSchema: languagepackageexecution.ReportSchema, MetaReducer: "languagepackageexecution.Evaluate", SourceFilesIndicator: "PACKAGE_SOURCE_FILES", ExecutionIndicator: "PACKAGE_EXECUTIONS"}
 	return Registry{Schema: RegistrySchema, Cases: []CaseDefinition{
 		valid("billing", "examples/billing/main.gooo"),
 		valid("language-test-pass", "examples/language-test/main.gooo"),
@@ -34,6 +36,7 @@ func expectedRegistry() Registry {
 		valid("bootstrap", "examples/bootstrap/main.gooo"),
 		valid("conformance", "examples/conformance/main.gooo"),
 		valid("compiler-self-improvement", "examples/compiler-self-improvement/main.gooo"),
+		valid("compiler-self-improvement-operation-envelope", "examples/compiler-self-improvement/operation-envelope.gooo"),
 		valid("causal-ci-selection", "examples/causal-ci-selection/main.gooo"),
 		valid("causal-ci-selection-semantic-intervention", "examples/causal-ci-selection/semantic-intervention.gooo"),
 		valid("causal-ci-selection-nonsemantic-intervention", "examples/causal-ci-selection/nonsemantic-intervention.gooo"),
@@ -51,8 +54,14 @@ func expectedRegistry() Registry {
 		valid("self-improvement-minimal-loop", "examples/self-improvement-minimal-loop/main.gooo"),
 		valid("self-improvement-operation-envelope", "examples/self-improvement-minimal-loop/operation-envelope.gooo"),
 		valid("self-improvement-candidate", "examples/self-improvement/candidate.gooo"),
+		valid("self-improvement-candidate-authorization", "examples/self-improvement/authorization.gooo"),
 		valid("self-improvement-transport", "examples/self-improvement/transport.gooo"),
+		valid("self-improvement-execution-contract", "examples/self-improvement-execution-contract/contract.gooo"),
+		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
+		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
+		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
+		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
 		valid("claim-resolution-tuple", "cmd/gooo/testdata/claim-resolution/main.gooo"),
@@ -62,6 +71,8 @@ func expectedRegistry() Registry {
 		valid("directory-partition-ontology", "internal/meta/directorypartition/ontology.gooo"),
 		valid("repository-projection-repair", "examples/repository-projection-repair/main.gooo"),
 		valid("opentofu-observation", "examples/opentofu-observation/main.gooo"),
+		valid("public-self-observation-discovery-policy", "examples/self-improvement-discovery/discovery.gooo"),
+		valid("public-self-observation-discovery-project", "examples/self-improvement-discovery/project.gooo"),
 		invalid("unknown-keyword", "examples/language-syntax-roundtrip/unknown-keyword.txt", "parse.unexpected-token"),
 		invalid("unterminated-string", "examples/language-syntax-roundtrip/unterminated-string.txt", "lex.unterminated-string"),
 		invalid("source-execution-invalid", "examples/language-source-execution/invalid.gooo", "parse.unexpected-token"),
@@ -78,7 +89,8 @@ func expectedRegistry() Registry {
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo"}}
+		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo"}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
@@ -123,8 +135,8 @@ func validateCaseScopes(registry Registry) error {
 		}
 	}
 	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
-		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
-		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		!reflect.DeepEqual(governanceIDs, []string{"live-governance-snapshot", "self-improvement-ci-continuation"}) ||
+		!reflect.DeepEqual(governancePaths, []string{"examples/live-governance-snapshot/main.gooo", "examples/self-improvement-ci-continuation/continuation.gooo"}) {
 		return fmt.Errorf("language syntax scope partition mismatch")
 	}
 	return nil

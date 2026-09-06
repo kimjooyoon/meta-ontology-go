@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery"
 )
 
-func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, jsonMode bool, stdout io.Writer) int {
+func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, discovery *publicdiscovery.Result, jsonMode bool, stdout io.Writer) int {
 	if !jsonMode {
 		fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName))
+		if discovery != nil {
+			fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision)
+			if discovery.Report.CandidatesEmitted > 0 {
+				fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath)
+			}
+		}
 		return exitOK
 	}
 	report := newJSONReport("generate", "ok", options.filename, syntaxCLIDiagnostics(input.diagnostics))
@@ -17,6 +25,14 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 	report.PreviousGo = options.previousGo
 	report.ProtectedBytesEqual = &artifacts.manifest.ProtectedBytesEqual
 	report.SemanticHash = artifacts.ir.StableHash()
+	if discovery != nil {
+		report.ObservationReport = discovery.Report.MachineReportPath
+		report.ObservationDecision = discovery.Report.Decision
+		report.ObservationReason = discovery.Report.Reason
+		if discovery.Report.CandidatesEmitted > 0 {
+			report.ObservationCandidate = discovery.CandidatePath
+		}
+	}
 	if err := writeJSONReport(stdout, report); err != nil {
 		return exitFailure
 	}
@@ -26,10 +42,20 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 const generatedManifestFileName = "semantic.gooo.manifest.jsonl"
 
 type generateOptions struct {
-	filename     string
-	outputDir    string
-	previousGo   string
-	manifestPath string
+	filename                         string
+	outputDir                        string
+	previousGo                       string
+	manifestPath                     string
+	retentionReport                  bool
+	retainedCertificateFilename      string
+	continuityCertificateFilename    string
+	compatibilityCertificateFilename string
+	retentionContractFilename        string
+	retentionObservationFilename     string
+	retentionProposalFilename        string
+	retentionAuthorizationFilename   string
+	retentionAdoptionFilename        string
+	observationLedgerDir             string
 }
 
 func parseGenerateArguments(args []string) (generateOptions, error) {
@@ -39,6 +65,13 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	}
 	options := generateOptions{filename: args[0]}
 	for index := 1; index < len(args); index++ {
+		if args[index] == "--retention-report" {
+			if options.retentionReport {
+				return generateOptions{}, fmt.Errorf("%s", usage)
+			}
+			options.retentionReport = true
+			continue
+		}
 		if index+1 >= len(args) {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
@@ -46,23 +79,7 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		if value == "" {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
-		switch args[index] {
-		case "--out":
-			if options.outputDir != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.outputDir = value
-		case "--previous-go":
-			if options.previousGo != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.previousGo = value
-		case "--manifest":
-			if options.manifestPath != "" {
-				return generateOptions{}, fmt.Errorf("%s", usage)
-			}
-			options.manifestPath = value
-		default:
+		if !setGenerateOption(&options, args[index], value) {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
 		index++
@@ -70,5 +87,82 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	if options.outputDir == "" {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
+	if options.observationLedgerDir != "" && (options.retentionReport || options.publicRetentionRequested()) {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
+	if options.continuityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested() || options.compatibilityCertificateFilename != "") {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
+	if options.compatibilityCertificateFilename != "" && (options.observationLedgerDir != "" || options.retentionReport || options.publicRetentionRequested()) {
+		return generateOptions{}, fmt.Errorf("%s", usage)
+	}
 	return options, nil
+}
+
+func setGenerateOption(options *generateOptions, name, value string) bool {
+	switch name {
+	case "--out":
+		if options.outputDir != "" {
+			return false
+		}
+		options.outputDir = value
+	case "--previous-go":
+		if options.previousGo != "" {
+			return false
+		}
+		options.previousGo = value
+	case "--manifest":
+		if options.manifestPath != "" {
+			return false
+		}
+		options.manifestPath = value
+	case "--certificate", "--retained-certificate":
+		if options.retainedCertificateFilename != "" {
+			return false
+		}
+		options.retainedCertificateFilename = value
+	case "--continuity-certificate":
+		if options.continuityCertificateFilename != "" {
+			return false
+		}
+		options.continuityCertificateFilename = value
+	case "--compatibility-certificate":
+		if options.compatibilityCertificateFilename != "" {
+			return false
+		}
+		options.compatibilityCertificateFilename = value
+	case "--contract", "--retention-contract":
+		if options.retentionContractFilename != "" {
+			return false
+		}
+		options.retentionContractFilename = value
+	case "--observation", "--retention-observation":
+		if options.retentionObservationFilename != "" {
+			return false
+		}
+		options.retentionObservationFilename = value
+	case "--proposal", "--retention-proposal":
+		if options.retentionProposalFilename != "" {
+			return false
+		}
+		options.retentionProposalFilename = value
+	case "--authorization", "--retention-authorization":
+		if options.retentionAuthorizationFilename != "" {
+			return false
+		}
+		options.retentionAuthorizationFilename = value
+	case "--adoption", "--retention-adoption":
+		if options.retentionAdoptionFilename != "" {
+			return false
+		}
+		options.retentionAdoptionFilename = value
+	case "--observation-ledger", "--observation-output":
+		if options.observationLedgerDir != "" {
+			return false
+		}
+		options.observationLedgerDir = value
+	default:
+		return false
+	}
+	return true
 }

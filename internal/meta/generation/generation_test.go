@@ -63,11 +63,30 @@ func TestBuildRejectsShortfallAndUnboundMetrics(t *testing.T) {
 
 func metric(subject string, operation sourcepolicy.Operation, satisfied, blocking bool) sourcepolicy.Indicator {
 	proof := sourcepolicy.ProofFoundation
+	dimension := sourcepolicy.DimensionRefactorAssign
+	kind := sourcepolicy.SubjectKindFunction
+	value, limit := 0, 0
+	relation := sourcepolicy.RelationEqual
+	role := sourcepolicy.IndicatorRole("")
 	if operation == sourcepolicy.OperationCollapseAssign {
 		proof = sourcepolicy.ProofRegression
 	}
-	return sourcepolicy.Indicator{MetricID: sourcepolicy.DimensionRefactorAssign, Subject: subject,
-		SubjectKind: sourcepolicy.SubjectKindFunction, Applicability: sourcepolicy.ApplicabilityApplicable,
+	switch operation {
+	case sourcepolicy.OperationSplitGo:
+		dimension, kind, value, limit = sourcepolicy.DimensionGoFileLines, sourcepolicy.SubjectKindFile, 76, 75
+		relation, role, blocking = sourcepolicy.RelationLessOrEqual, sourcepolicy.IndicatorRoleDriver, false
+	case sourcepolicy.OperationSplitGooo:
+		dimension, kind, value, limit = sourcepolicy.DimensionGoooFileLines, sourcepolicy.SubjectKindFile, 76, 75
+		relation, role, blocking = sourcepolicy.RelationLessOrEqual, sourcepolicy.IndicatorRoleDriver, false
+	case sourcepolicy.OperationExtractFunction:
+		dimension, kind, value, limit = sourcepolicy.DimensionFunctionLines, sourcepolicy.SubjectKindFunction, 76, 75
+		relation, role, blocking = sourcepolicy.RelationLessOrEqual, sourcepolicy.IndicatorRoleDriver, false
+	}
+	if sourcepolicy.IsLineCapMetric(dimension) && satisfied {
+		value = limit
+	}
+	return sourcepolicy.Indicator{MetricID: dimension, Subject: subject,
+		SubjectKind: kind, Value: value, Limit: limit, Relation: relation, Role: role, Applicability: sourcepolicy.ApplicabilityApplicable,
 		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleDefault,
 		ApplicabilityReason: sourcepolicy.ApplicabilityReasonCatalogApplicable,
 		Satisfied:           satisfied, Blocking: blocking, Proof: proof,

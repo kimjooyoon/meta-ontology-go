@@ -1,18 +1,20 @@
 package generation
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-const OperationObservationBundleSchema = "gooo/meta-operation-observation-bundle/v1"
+const OperationObservationBundleSchema = "gooo/meta-operation-observation-bundle/v2"
 
 type OperationObservationBundle struct {
 	Schema            string               `json:"schema"`
@@ -26,6 +28,36 @@ type OperationObservationBundle struct {
 	ReplayComparisons int                  `json:"replay_comparisons"`
 	BundleDigest      string               `json:"bundle_digest"`
 	ReplayDigest      string               `json:"replay_digest"`
+}
+
+func (bundle *OperationObservationBundle) UnmarshalJSON(data []byte) error {
+	type wire OperationObservationBundle
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var candidate wire
+	if err := decoder.Decode(&candidate); err != nil {
+		return fmt.Errorf("decode operation observation bundle: %w", err)
+	}
+	if err := ensureIndicatorLedgerEOF(decoder); err != nil {
+		return fmt.Errorf("decode operation observation bundle: %w", err)
+	}
+	if candidate.Schema != OperationObservationBundleSchema {
+		return fmt.Errorf("unsupported operation observation bundle schema %q", candidate.Schema)
+	}
+	if candidate.Receipts == nil {
+		candidate.Receipts = []OperationReceipt{}
+	}
+	if candidate.Failures == nil {
+		candidate.Failures = []ObservationFailure{}
+	}
+	decoded := OperationObservationBundle(candidate)
+	decoded.Receipts = normalizeOperationReceipts(decoded.Receipts)
+	decoded.Failures = normalizeObservationFailures(decoded.Failures)
+	if !reflect.DeepEqual(decoded, SealObservationBundle(decoded)) {
+		return fmt.Errorf("operation observation bundle canonical replay mismatch")
+	}
+	*bundle = decoded
+	return nil
 }
 
 func AttachInstanceEvidence(receipt OperationReceipt, evidence OperationInstanceEvidence) OperationReceipt {
@@ -80,9 +112,12 @@ func ValidateObservationBundle(bundle OperationObservationBundle, plan Plan, man
 		}
 		evidence := receipt.InstanceEvidence
 		action, actionExists := actions[receipt.ActionIndicatorID]
+		if !actionExists || !receiptMatchesAction(plan, action, receipt) {
+			return fmt.Errorf("operation observation receipt binding mismatch for %s", receipt.ActionIndicatorID)
+		}
 		if evidence.Schema != OperationInstanceEvidenceSchema ||
 			evidence.ActionIndicatorID != receipt.ActionIndicatorID ||
-			!actionExists || evidence.Subject != action.Subject ||
+			evidence.Subject != action.Subject ||
 			evidence.HeadSHA != plan.HeadSHA ||
 			evidence.Subject == "" ||
 			evidence.OperationID == "" ||
@@ -311,6 +346,7 @@ func normalizeObservationFailures(failures []ObservationFailure) []ObservationFa
 	for index := range result {
 		result[index].FailureEvidence = normalizeObservationFailureEvidence(result[index].FailureEvidence)
 		result[index].DerivedRelations = normalizeCounterexampleRelations(result[index].DerivedRelations)
+		result[index].Diagnostics = append([]string(nil), result[index].Diagnostics...)
 	}
 	sort.SliceStable(result, func(left, right int) bool {
 		leftKey, _ := json.Marshal(result[left])
@@ -372,6 +408,7 @@ type replayFailureProjection struct {
 	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
 	Counterexample    string                       `json:"counterexample,omitempty"`
 	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
+	Diagnostics       []string                     `json:"diagnostics,omitempty"`
 	Executor          replayProcessProjection      `json:"executor"`
 }
 
@@ -406,7 +443,7 @@ func operationObservationReplayDigest(bundle OperationObservationBundle) string 
 			UnknownClass: failure.UnknownClass, NextOperation: failure.NextOperation,
 			BlockedBy: failure.BlockedBy, FailureEvidence: failure.FailureEvidence,
 			Counterexample: failure.Counterexample, DerivedRelations: failure.DerivedRelations,
-			Executor: replayProcess(failure.Executor),
+			Diagnostics: failure.Diagnostics, Executor: replayProcess(failure.Executor),
 		})
 	}
 	return digestJSON(struct {

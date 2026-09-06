@@ -40,7 +40,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact candidate
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
@@ -66,7 +66,7 @@ jobs:
             --expected-goos "${{ matrix.goos }}" \
             --expected-goarch "${{ matrix.goarch }}"
       - name: Upload exact platform receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-platform-${{ matrix.platform }}-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/platform-${{ matrix.platform }}
@@ -83,7 +83,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
     steps:
       - name: Check out exact candidate
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.EXACT_SHA }}
           fetch-depth: 1
@@ -96,7 +96,7 @@ jobs:
       - name: Bind exact candidate head
         run: test "$(git rev-parse HEAD)" = "$EXACT_SHA"
       - name: Download all three exact-head receipts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: gooo-release-platform-*-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence/receipts
@@ -212,14 +212,14 @@ jobs:
           test -z "$(git ls-files --others --exclude-standard)"
           sha256sum "$report" "$evidence/eligibility.json" > "$evidence/manifest.sha256"
       - name: Publish exact candidate evidence
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-evidence-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence
           if-no-files-found: error
           retention-days: 30
       - name: Publish exact eligibility projection
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-eligibility-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/gooo-release-evidence/eligibility.json
@@ -268,7 +268,7 @@ jobs:
             }' > "$RUNNER_TEMP/final/eligibility.json"
       - name: Download closed eligibility evidence
         if: needs.platform.result == 'success' && needs.aggregate.result == 'success'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: gooo-release-eligibility-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/downloaded
@@ -281,7 +281,7 @@ jobs:
           fi
       - name: Upload final fail-closed eligibility receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: gooo-release-final-${{ env.EXACT_SHA }}
           path: ${{ runner.temp }}/final/eligibility.json

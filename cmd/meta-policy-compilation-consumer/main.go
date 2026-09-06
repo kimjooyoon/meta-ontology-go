@@ -54,15 +54,16 @@ type reduction struct {
 	Rules  []decisionRule `json:"rules"`
 }
 type policy struct {
-	Schema         string    `json:"schema"`
-	PolicyID       string    `json:"policy_id"`
-	Package        string    `json:"package"`
-	Namespace      string    `json:"namespace"`
-	SourceDigest   string    `json:"source_digest"`
-	SemanticDigest string    `json:"semantic_digest"`
-	Denominator    int       `json:"fixed_denominator"`
-	Rules          []rule    `json:"rules"`
-	Reduction      reduction `json:"decision_reduction"`
+	Schema         string          `json:"schema"`
+	PolicyID       string          `json:"policy_id"`
+	Package        string          `json:"package"`
+	Namespace      string          `json:"namespace"`
+	SourceDigest   string          `json:"source_digest"`
+	SemanticDigest string          `json:"semantic_digest"`
+	Denominator    int             `json:"fixed_denominator"`
+	Rules          []rule          `json:"rules"`
+	Reduction      reduction       `json:"decision_reduction"`
+	Structure      json.RawMessage `json:"structure"`
 }
 type artifact struct {
 	Schema             string `json:"schema"`
@@ -236,6 +237,9 @@ func parseRawPolicy(filename string, source []byte) (policy, error) {
 	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
 		return policy{}, errors.New("unexpected policy package or namespace")
 	}
+	if len(ir.Policies) == 1 {
+		return parseFirstClassPolicy(ir, source)
+	}
 	result := policy{Schema: "gooo/meta-policy-compilation/v3", PolicyID: "gooo://meta-policy-compilation/policy/v3", Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom)}
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity {
@@ -256,6 +260,24 @@ func parseRawPolicy(filename string, source []byte) (policy, error) {
 	sort.Slice(result.Rules, func(i, j int) bool { return result.Rules[i].Step < result.Rules[j].Step })
 	if len(result.Rules) != fixedDenom || result.Reduction.Schema == "" || len(result.Reduction.Rules) != fixedDenom {
 		return policy{}, errors.New("raw policy did not produce fixed source contract")
+	}
+	return result, nil
+}
+
+func parseFirstClassPolicy(ir semantic.IR, source []byte) (policy, error) {
+	declaration := ir.Policies[0]
+	if len(declaration.Cases) != fixedDenom || len(declaration.Transitions) != fixedDenom {
+		return policy{}, errors.New("first-class policy denominator changed")
+	}
+	result := policy{Schema: "gooo/meta-policy-compilation/v4", PolicyID: string(declaration.ID), Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom), Reduction: reduction{Schema: "decision-reduction:v2", Rules: make([]decisionRule, 0, fixedDenom)}}
+	for _, current := range declaration.Cases {
+		resolution := current.Resolution
+		result.Rules = append(result.Rules, rule{ActivityID: string(declaration.ID) + "/case/" + strings.ToLower(current.Name), ActivityName: current.Name, Role: resolution.Role, MetaOperation: resolution.MetaOperation, ProofChoice: resolution.ProofChoice, Stage: resolution.Stage, Step: resolution.Step, Reason: resolution.Reason, Claim: resolution.Claim})
+		result.Reduction.Rules = append(result.Reduction.Rules, decisionRule{Condition: current.Name, Decision: resolution.Decision, Stage: resolution.DecisionStage, Step: resolution.DecisionStep, Reason: resolution.DecisionReason, UnknownClass: resolution.UnknownClass, NextOperation: resolution.NextOperation, BlockedBy: append([]string(nil), resolution.BlockedBy...)})
+	}
+	sort.Slice(result.Rules, func(i, j int) bool { return result.Rules[i].Step < result.Rules[j].Step })
+	if len(result.Rules) != fixedDenom || len(result.Reduction.Rules) != fixedDenom {
+		return policy{}, errors.New("first-class policy did not produce fixed source contract")
 	}
 	return result, nil
 }

@@ -26,7 +26,7 @@ func receiptPlanKnown(plan Plan) bool {
 	}
 	switch plan.Decision {
 	case DecisionFixedPoint:
-		return plan.Reason == ReasonExactFixedPoint && len(plan.Selected) == 0
+		return plan.Reason == ReasonExactFixedPoint && len(plan.Selected) == 0 && len(plan.RefutedIndicatorIDs) == 0 && len(plan.Counterexamples) == 0
 	case DecisionPlan:
 		return plan.Reason == ReasonIndependentActions &&
 			uint32(len(plan.Selected)) >= minimumIndependent &&
@@ -61,7 +61,11 @@ func selectedActionIndex(plan Plan) (map[string]Action, bool) {
 }
 
 func actionMatchesBinding(action Action, binding Binding) bool {
-	return action.IndependenceGroupID == binding.IndependenceGroupID &&
+	return action.SubjectKind == binding.InputSubjectKind &&
+		action.InputSubjectKind == binding.InputSubjectKind &&
+		action.InputContractSourceDigest == binding.InputContractSourceDigest &&
+		action.InputContractSemanticDigest == binding.InputContractSemanticDigest &&
+		action.IndependenceGroupID == binding.IndependenceGroupID &&
 		action.Activity == binding.Activity &&
 		action.Output == binding.Output &&
 		action.ProofChoice == binding.ProofChoice &&

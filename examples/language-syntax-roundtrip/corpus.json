@@ -56,6 +56,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "compiler-self-improvement-operation-envelope",
+      "path": "examples/compiler-self-improvement/operation-envelope.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "causal-ci-selection",
       "path": "examples/causal-ci-selection/main.gooo",
       "kind": "VALID",
@@ -209,6 +218,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-candidate-authorization",
+      "path": "examples/self-improvement/authorization.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "self-improvement-transport",
       "path": "examples/self-improvement/transport.gooo",
       "kind": "VALID",
@@ -218,8 +236,54 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "self-improvement-execution-contract",
+      "path": "examples/self-improvement-execution-contract/contract.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "self-improvement-execution-grant",
+      "path": "examples/self-improvement-execution-grant/grant.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-value-witness",
       "path": "examples/language-value-witness/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-runtime-binding",
+      "path": "examples/language-runtime-binding/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-record-binding",
+      "path": "examples/language-record-binding/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields": true
+    },
+    {
+      "id": "self-improvement-value-witness-execution-input",
+      "path": "examples/self-improvement-value-witness-execution-input/contract.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
@@ -253,17 +317,17 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY"
     },
-{
-  "id": "claim-dependency-causality",
-  "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
-  "kind": "VALID",
-  "expected_decision": "PASS",
-  "proof_choice": "COHERENCE",
-  "meta_operation": "replay-language-syntax",
-  "scope": "LANGUAGE_CAPABILITY"
-},
-{
-  "id": "roundtrip-minimal",
+    {
+      "id": "claim-dependency-causality",
+      "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
@@ -301,6 +365,24 @@
     {
       "id": "opentofu-observation",
       "path": "examples/opentofu-observation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "public-self-observation-discovery-policy",
+      "path": "examples/self-improvement-discovery/discovery.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "public-self-observation-discovery-project",
+      "path": "examples/self-improvement-discovery/project.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
       "proof_choice": "COHERENCE",
@@ -455,6 +537,15 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "self-improvement-ci-continuation",
+      "path": "examples/self-improvement-ci-continuation/continuation.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [
@@ -484,9 +575,38 @@
       "meta_reducer": "languagepackageexecution.Evaluate",
       "source_files_indicator": "PACKAGE_SOURCE_FILES",
       "execution_indicator": "PACKAGE_EXECUTIONS"
+    },
+    {
+      "id": "self-improvement-observation",
+      "path": "examples/self-improvement-observation",
+      "members": [
+        "examples/self-improvement-observation/observation.gooo"
+      ],
+      "entry": "DeclareOperationIntent",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
+    },
+    {
+      "id": "self-improvement-partial-reuse",
+      "path": "examples/self-improvement-partial-reuse",
+      "members": [
+        "examples/self-improvement-partial-reuse/main.gooo"
+      ],
+      "entry": "CreateReceipt",
+      "report_schema": "gooo/language-package-execution-report/v1",
+      "meta_reducer": "languagepackageexecution.Evaluate",
+      "source_files_indicator": "PACKAGE_SOURCE_FILES",
+      "execution_indicator": "PACKAGE_EXECUTIONS"
     }
   ],
   "meta_sources": [
-    "internal/meta/entityfields/entity-fields-meta.gooo"
+    "internal/meta/syntaxregistration/contract.gooo",
+    "internal/meta/entityfields/entity-fields-meta.gooo",
+    "examples/public-trust-surface/main.gooo",
+    "internal/meta/generation/operation-input-contract.gooo",
+    "internal/meta/generation/callback-preview-contract.gooo",
+    "internal/meta/generation/callback-extraction-contract.gooo"
   ]
 }

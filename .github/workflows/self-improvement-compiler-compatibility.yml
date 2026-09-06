@@ -1,0 +1,236 @@
+name: Compiler self-improvement compatibility
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-compiler-compatibility.yml
+      - cmd/gooo/generate_part01.go
+      - cmd/gooo/generate_pipeline_part03.go
+      - cmd/gooo/compatibility_generate_part*.go
+      - cmd/gooo/public_continuity_generate_part*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/compatibilitypolicy/**
+      - internal/meta/compilercompatibility/**
+      - internal/meta/generation/semantic_public_generation.go
+      - internal/meta/generation/semantic_retention.go
+      - internal/meta/retentionpolicy/generated/evaluator.go
+      - scripts/self-improvement-compiler-compatibility/**
+  push:
+    branches: [dev]
+    paths:
+      - .github/workflows/self-improvement-compiler-compatibility.yml
+      - cmd/gooo/generate_part01.go
+      - cmd/gooo/generate_pipeline_part03.go
+      - cmd/gooo/compatibility_generate_part*.go
+      - cmd/gooo/public_continuity_generate_part*.go
+      - examples/self-improvement-observation/**
+      - internal/meta/compatibilitypolicy/**
+      - internal/meta/compilercompatibility/**
+      - internal/meta/generation/semantic_public_generation.go
+      - internal/meta/generation/semantic_retention.go
+      - internal/meta/retentionpolicy/generated/evaluator.go
+      - scripts/self-improvement-compiler-compatibility/**
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: prove bounded implementation-successor compatibility
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PREDECESSOR_SHA: 9ade37e64409fc7cdd599993b3231e1f792d1160
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Check out the exact successor
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out the exact v17 predecessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
+          mkdir -p "$(dirname "$predecessor")"
+          git worktree add --detach "$predecessor" "$PREDECESSOR_SHA"
+          test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
+
+      - name: Install exact Go 1.27.0
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Require exact heads, toolchain, and clean source trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          predecessor="$RUNNER_TEMP/compiler-compatibility/predecessor"
+          test "$(go env GOVERSION)" = "go1.27.0"
+          test "$(git rev-parse HEAD)" = "$HEAD_SHA"
+          test "$(git -C "$predecessor" rev-parse HEAD)" = "$PREDECESSOR_SHA"
+          test "$(git status --porcelain)" = ""
+          test "$(git -C "$predecessor" status --porcelain)" = ""
+
+      - name: Execute predecessor and successor independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          predecessor="$work/predecessor"
+          mkdir -p "$work/predecessor/generate" "$work/successor/generate" "$work/observation"
+          input="examples/self-improvement-observation/input.fixture"
+          contract="examples/self-improvement-observation/observation.gooo"
+
+          (
+            cd "$predecessor"
+            go run ./cmd/gooo generate "$input" --out "$work/predecessor/generate" --json > "$work/predecessor/generate/generate.json"
+            go test ./...
+            go test -race ./...
+          )
+          go run ./cmd/gooo generate "$input" --out "$work/successor/generate" --json > "$work/successor/generate/generate.json"
+          go test ./...
+          go test -race ./...
+
+      - name: Build caller-owned identity, authorization, and certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          predecessor_root="$work/predecessor"
+          contract="examples/self-improvement-observation/observation.gooo"
+          input="examples/self-improvement-observation/input.fixture"
+          predecessor_manifest=(
+            cmd/gooo/generate_part01.go
+            cmd/gooo/generate_pipeline_part01_part01.go
+            cmd/gooo/generate_pipeline_part02_part01.go
+            cmd/gooo/generate_pipeline_part03.go
+            cmd/gooo/generate_pipeline_part04.go
+            cmd/gooo/public_generation_part01.go
+            cmd/gooo/public_generation_part02.go
+            cmd/gooo/self_adoption_generation_part01.go
+            cmd/gooo/self_retention_certify_part01.go
+            cmd/gooo/self_retention_consume_part01.go
+            cmd/gooo/self_retention_helpers_part01.go
+            internal/meta/generation/semantic_public_generation.go
+            internal/meta/generation/semantic_retention.go
+            internal/meta/retentionpolicy/policy.go
+            internal/meta/retentionpolicy/generated/evaluator.go
+          )
+          predecessor_digest="$(
+            for path in "${predecessor_manifest[@]}"; do
+              printf '%s\t' "$path"
+              sha256sum "$predecessor_root/$path" | awk '{print $1}'
+              printf '\n'
+            done | sha256sum | awk '{print $1}'
+          )"
+
+          go run ./cmd/gooo observe "$contract" --input "$input" --out "$work/observation"
+          candidate="$(jq -r '.candidates[0].stable_id' "$work/observation/compiler-observation.json")"
+          test -n "$candidate"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode identity -contract "$contract" -output "$work/successor-identity.json"
+          successor_digest="$(jq -r '.compiler_implementation_digest' "$work/successor-identity.json")"
+          test "$predecessor_digest" != "$successor_digest"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode authorize -candidate-stable-id "$candidate" -input "$input" \
+            -compiler-digest "$successor_digest" -output "$work/authorization.json"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode receipt -contract "$contract" -input "$input" \
+            -output-root "$work/predecessor/generate" -role predecessor \
+            -candidate-stable-id "$candidate" -compiler-digest "$predecessor_digest" \
+            -test-result PASS -authorization "$work/authorization.json" \
+            -output "$work/predecessor-receipt.json"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode receipt -contract "$contract" -input "$input" \
+            -output-root "$work/successor/generate" -role successor \
+            -candidate-stable-id "$candidate" -compiler-digest "$successor_digest" \
+            -test-result PASS -authorization "$work/authorization.json" \
+            -output "$work/successor-receipt.json"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode certify -contract "$contract" \
+            -predecessor "$work/predecessor-receipt.json" \
+            -successor "$work/successor-receipt.json" \
+            -authorization "$work/authorization.json" \
+            -output "$work/compatibility-certificate.json"
+
+      - name: Consume through ordinary generate with explicit compatibility opt-in
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          contract="examples/self-improvement-observation/observation.gooo"
+          input="examples/self-improvement-observation/input.fixture"
+          go run ./cmd/gooo generate "$input" \
+            --out "$work/compatibility-consumption" \
+            --compatibility-certificate "$work/compatibility-certificate.json" \
+            --json > "$work/compatibility-cli.json"
+          jq -e '
+            .schema == "gooo/compiler-successor-compatibility-report/v1" and
+            .decision == "CLOSED" and
+            .reason == "BOUNDED_IMPLEMENTATION_SUCCESSOR_REPLAY" and
+            .implementation_digest_different and .semantic_equal and
+            .generated_bytes_equal and .generated_manifest_equal and
+            .full_test_contract_equal and .compatibility_hits == 1 and
+            .compatibility_misses == 0 and .repository_writes == 0 and
+            .local_test_executions == 0' \
+            "$work/compatibility-consumption/generation-report.json" >/dev/null
+          test -s "$work/compatibility-consumption/semantic.gooo.go"
+          test -s "$work/compatibility-consumption/semantic.gooo.manifest.jsonl"
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
+
+      - name: Verify strict default remains the ordinary path
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          go run ./cmd/gooo generate examples/self-improvement-observation/input.fixture \
+            --out "$work/strict-default" --json > "$work/strict-default.json"
+          jq -e '.schema_version == "gooo/diagnostics/v1" and .command == "generate" and .status == "ok" and (.semantic_hash | length) == 64' \
+            "$work/strict-default.json" >/dev/null
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
+
+      - name: Run six-case compatibility conformance and publish evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/compiler-compatibility"
+          contract="examples/self-improvement-observation/observation.gooo"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode run -contract "$contract" \
+            -predecessor "$work/predecessor-receipt.json" \
+            -successor "$work/successor-receipt.json" \
+            -authorization "$work/authorization.json" \
+            -certificate "$work/compatibility-certificate.json" \
+            -consumption-report "$work/compatibility-consumption/generation-report.json" \
+            -publication-root "$work/publication" \
+            -output "$work/conformance-report.json"
+          go run ./scripts/self-improvement-compiler-compatibility \
+            -mode verify -contract "$contract" \
+            -certificate "$work/compatibility-certificate.json" \
+            -consumption-report "$work/compatibility-consumption/generation-report.json" \
+            -publication-root "$work/publication" \
+            -output "$work/conformance-report.json"
+          jq -e '
+            .schema == "gooo/compiler-successor-compatibility-verification/v1" and
+            .decision == "CLOSED" and .case_denominator == 6 and
+            .closed_cases == 2 and .unknown_cases == 2 and .refuted_cases == 2 and
+            .evidence_artifact_count == 24 and .continuity_edge_count == 7 and
+            .repository_writes == 0 and .local_test_executions == 0' \
+            "$work/verification-report.json" >/dev/null
+          test "$(find "$work/publication" -type f | wc -l | tr -d ' ')" -eq 24
+          test "$(git status --porcelain -- . ':(exclude)predecessor')" = ""
+
+      - name: Upload immutable compatibility evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: compiler-compatibility-evidence-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/compiler-compatibility/publication
+          if-no-files-found: error
+          retention-days: 30

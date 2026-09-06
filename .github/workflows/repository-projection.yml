@@ -17,13 +17,13 @@ jobs:
       METRICS_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.EXACT_SHA }}
 
       - name: Install the declared Go toolchain
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
           cache: false
@@ -126,9 +126,16 @@ jobs:
             jq -r '"- authorized paths: `\(.coordinates.observed_paths)/\(.coordinates.expected_paths)`\n- recipe-declared creations: `\(.coordinates.untracked_paths)/\(.coordinates.created_paths)`\n- unclassified paths: `\(.coordinates.unclassified_untracked_paths)`\n- decision: `\(.decision) / \(.resolution)`"' "$report"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Apply registration candidate to a copy of the actual projected workspace
+        env:
+          GOOO_SYNTAX_REGISTRATION_E2E: '1'
+          GOOO_SYNTAX_REGISTRATION_SOURCE_VIEW: projected
+          GOOO_SYNTAX_REGISTRATION_EVIDENCE_DIR: ${{ runner.temp }}/repository-projection/registration-candidate
+        run: go test -count=1 -v -run '^TestNativeNineMemberCandidatePassesExistingConformance$' ./internal/meta/syntaxregistration
+
       - name: Upload exact-SHA projection indicators
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: repository-projection-${{ env.EXACT_SHA }}
           path: |
@@ -146,6 +153,7 @@ jobs:
             ${{ runner.temp }}/repository-projection/untracked-write-set.txt
             ${{ runner.temp }}/repository-projection/authorized-rewrite.patch
             ${{ runner.temp }}/repository-projection/cutover-evidence.json
+            ${{ runner.temp }}/repository-projection/registration-candidate
             ${{ steps.materialize.outputs.storage-root }}/projection/catalog/manifest.json
             ${{ steps.materialize.outputs.materialization-evidence }}
             ${{ steps.materialize.outputs.activation-evidence }}

@@ -10,6 +10,7 @@ type evaluationInput struct {
 	observationRaw      []byte
 	producer            ProducerReceipt
 	producerErr         error
+	producerRaw         []byte
 	metadata            TransportMetadata
 	metadataErr         error
 	actualArchiveDigest string

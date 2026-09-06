@@ -45,7 +45,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -68,7 +68,7 @@ jobs:
             --expected-goos "${{ matrix.goos }}" \
             --expected-goarch "${{ matrix.goarch }}"
       - name: Upload exact platform release receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-release-platform-${{ matrix.platform }}-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-${{ matrix.platform }}
@@ -93,7 +93,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -167,7 +167,7 @@ jobs:
 
       - name: Upload exact-head conformance artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: source-splitter-conformance-${{ env.HEAD_SHA }}
           path: .ci-tmp/source-splitter-conformance/output
@@ -181,7 +181,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out exact CI subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 1
@@ -241,7 +241,7 @@ jobs:
 
       - name: Upload guarded promotion receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: guarded-promotion-${{ github.event.workflow_run.head_sha }}
           path: |
@@ -263,7 +263,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -271,11 +271,11 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27.0'
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/guard
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: transformation-effect-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/rollback/transformation
@@ -298,7 +298,7 @@ jobs:
             --expected-sha "$HEAD_SHA" \
             --output "$RUNNER_TEMP/rollback-fixed-point-a.json" \
             --check
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: rollback-fixed-point-${{ env.HEAD_SHA }}
@@ -317,7 +317,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
@@ -325,7 +325,7 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact meta artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: '*-${{ github.event.workflow_run.head_sha }}'
           path: ${{ runner.temp }}/meta-inputs
@@ -365,7 +365,7 @@ jobs:
             -patch "$first/patch.json"
       - name: Upload exact-head transformation effects
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: transformation-effect-${{ github.event.workflow_run.head_sha }}
           path: ${{ runner.temp }}/transformation-effect/first
@@ -383,7 +383,7 @@ jobs:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - name: Check out exact pull request head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -439,6 +439,17 @@ jobs:
           if [[ -z "$base_sha" ]]; then base_sha="$(git rev-parse "$HEAD_SHA^")"; fi
           stage=plan
           go run ./scripts/refactor-metrics -root "$GITHUB_WORKSPACE" -metrics "$input/source-metrics.json" -sha "$HEAD_SHA" -base-sha "$base_sha" -plan "$input/self-improvement-plan.json" -check
+          jq -e '
+            .decision == "PLAN" and (.selected | length) == 2 and
+            (.selected | all(.[]; .subject_kind == .input_subject_kind and
+              (.input_contract_source_digest | length) == 64 and
+              (.input_contract_semantic_digest | length) == 64)) and
+            (.refuted_indicator_ids | length) >= 1 and
+            (.counterexamples | any(.[];
+              .reason == "INPUT_SUBJECT_KIND_MISMATCH" and
+              .source_indicator.subject_kind == "SOURCE_FRAGMENT" and
+              .source_indicator.meta_operation == "extract-function"))
+          ' "$input/self-improvement-plan.json"
           go run ./scripts/meta-execution -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-execution.json"
           test -s "$input/meta-operation-observations.json"
           go run ./scripts/meta-receipts -plan "$input/self-improvement-plan.json" -output "$input/self-improvement-receipts.json"
@@ -455,10 +466,68 @@ jobs:
             -provenance "$input/self-improvement-provenance.json"
             -expected-sha "$HEAD_SHA"
           )
-          for target in "$first" "$replay"; do
+          emit_invocation_boundary() {
+            local boundary="$1"
+            local pass="$2"
+            local target="$3"
+            local plan_digest_file="$input/self-improvement-plan.json"
+            local execution_digest_file="$input/self-improvement-execution.json"
+            local plan_digest_output execution_digest_output plan_digest execution_digest
+            if [[ ! -s "$plan_digest_file" || ! -s "$execution_digest_file" ]]; then
+              return 1
+            fi
+            if ! plan_digest_output="$(sha256sum "$plan_digest_file")"; then
+              return 1
+            fi
+            if ! execution_digest_output="$(sha256sum "$execution_digest_file")"; then
+              return 1
+            fi
+            plan_digest="${plan_digest_output%% *}"
+            execution_digest="${execution_digest_output%% *}"
+            if [[ ! "$plan_digest" =~ ^[[:xdigit:]]{64}$ || ! "$execution_digest" =~ ^[[:xdigit:]]{64}$ ]]; then
+              return 1
+            fi
+            jq -cn \
+              --arg schema gooo/transformation-effect-invocation-boundary/v1 \
+              --arg head_sha "$HEAD_SHA" \
+              --arg stage "$stage" \
+              --arg pass "$pass" \
+              --arg boundary "$boundary" \
+              --arg scope EXTERNAL_WRAPPER_ONLY \
+              --arg input_plan_digest "sha256:$plan_digest" \
+              --arg input_execution_digest "sha256:$execution_digest" \
+              --arg command './scripts/transformation-effect' \
+              --arg root "$GITHUB_WORKSPACE" \
+              --arg metrics "$input/source-metrics.json" \
+              --arg plan "$plan_digest_file" \
+              --arg execution "$execution_digest_file" \
+              --arg receipts "$input/self-improvement-receipts.json" \
+              --arg provenance "$input/self-improvement-provenance.json" \
+              --arg expected_sha "$HEAD_SHA" \
+              --arg output "$target/ledger.json" \
+              --arg generated_receipts "$target/receipts.json" \
+              --arg executed_provenance "$target/provenance.json" \
+              --arg patch "$target/patch.json" \
+              '{schema:$schema,head_sha:$head_sha,stage:$stage,pass:$pass,boundary:$boundary,scope:$scope,input_plan_digest:$input_plan_digest,input_execution_digest:$input_execution_digest,command:$command,args:{root:$root,metrics:$metrics,plan:$plan,execution:$execution,receipts:$receipts,provenance:$provenance,expected_sha:$expected_sha,output:$output,generated_receipts:$generated_receipts,executed_provenance:$executed_provenance,patch:$patch},diagnostic_only:true,operation_entry:"UNOBSERVED",semantic_effect:"UNOBSERVED",permission:"UNOBSERVED"}' \
+              >&2
+          }
+          warn_invocation_boundary() {
+            local pass="$1"
+            local boundary="$2"
+            printf 'transformation-effect: invocation boundary unavailable stage=%s pass=%s boundary=%s\n' "$stage" "$pass" "$boundary" >&2 || :
+          }
+          for pass in first replay; do
+            target="$first"
+            if [[ "$pass" == replay ]]; then target="$replay"; fi
+            if ! emit_invocation_boundary BEFORE_INVOKE "$pass" "$target"; then
+              warn_invocation_boundary "$pass" BEFORE_INVOKE
+            fi
             start_ns="$(date +%s%N)"
             /usr/bin/time -f '%M' -o "$target/peak-rss-kib.txt" go run ./scripts/transformation-effect "${common[@]}" -output "$target/ledger.json" -generated-receipts "$target/receipts.json" -executed-provenance "$target/provenance.json" -patch "$target/patch.json"
             end_ns="$(date +%s%N)"
+            if ! emit_invocation_boundary RETURNED "$pass" "$target"; then
+              warn_invocation_boundary "$pass" RETURNED
+            fi
             elapsed_ms=$(( (end_ns - start_ns + 999999) / 1000000 ))
             if (( elapsed_ms < 1 )); then elapsed_ms=1; fi
             rss="$(tr -d '[:space:]' < "$target/peak-rss-kib.txt")"
@@ -491,31 +560,53 @@ jobs:
             test "$final_repository_writes" = "$repository_writes"
           fi
           test "$repository_writes" -eq 0
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and .selected_plan_operations == 2 and .bound_executor_operations == 2 and .unbound_executor_operations == 0 and .receipt_count == 1 and .failure_count == 1 and .unknown_count == 5 and .operation_outcome == "MIXED_CLOSED_REFUTED" and .operation_executor_commands == 2 and .operation_executor_tests == 1 and .reused_commands == 0 and .reused_tests == 0 and .command_scope == "operation-receipt-executors" and .test_scope == "operation-receipt-verifiers" and .reused_evidence_records == 1 and .evidence_reuse_scope == "input-receipt-instance-evidence" and .repository_writes == 0 and .runtime.repository_writes == 0 and .promotion_authorized == false and .runtime.replay_equal == true' "$root/verification.json"
+          jq -e '.decision == "PASS" and .resolution == "EXACT" and .selected_plan_operations == 2 and .bound_executor_operations == 2 and .unbound_executor_operations == 0 and ((.receipt_count + .failure_count) == 2) and ((.failure_count == 0 and .operation_executor_tests == 2 and .operation_outcome == "CLOSED") or (.failure_count == 1 and .operation_executor_tests == 1 and .operation_outcome == "MIXED_CLOSED_REFUTED")) and .operation_executor_commands == 2 and .reused_commands == 0 and .reused_tests == 0 and .command_scope == "operation-receipt-executors" and .test_scope == "operation-receipt-verifiers" and .reused_evidence_records == .receipt_count and .evidence_reuse_scope == "input-receipt-instance-evidence" and .repository_writes == 0 and .runtime.repository_writes == 0 and .promotion_authorized == false and .runtime.replay_equal == true' "$root/verification.json"
           jq -e --slurpfile plan "$input/self-improvement-plan.json" '
-            .failures[0] as $failure |
-            (.decision == "REFUTED" and .promotion_authorized == false and
-             (.receipts | length) == 1 and (.failures | length) == 1 and
-             (.unknowns | length) == 5 and
-             ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
-             ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
-             $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
-             $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
-             $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
-             ($failure.failure_evidence | length) == 5 and ($failure.derived_relations | length) == 1 and
-             $failure.derived_relations[0].relation == "DERIVED_FROM" and
-             $failure.derived_relations[0].derived_from == $failure.counterexample and
-             (all(.unknowns[]; .action_indicator_id == $failure.action_indicator_id and
-               .unknown_class == "DEPENDENCY_BLOCKED" and .stage == $failure.stage and
-               .step == $failure.step and .reason == $failure.reason and
-               .next_operation == $failure.next_operation and
-               .blocked_by == ["operation-failure:" + $failure.action_indicator_id])))
+            (
+              (.decision == "CONFORMANT" and .promotion_authorized == false and
+               (.receipts | length) == 2 and (.failures | length) == 0 and (.unknowns | length) == 0) or
+              (
+                .failures[0] as $failure |
+                .decision == "REFUTED" and .promotion_authorized == false and
+                (.receipts | length) == 1 and (.failures | length) == 1 and
+                (.unknowns | length) == 5 and
+                ($plan[0].selected | map(select(.meta_operation == "split-go-declarations")) | length) == 1 and
+                ($plan[0].selected | map(select(.indicator_id == $failure.action_indicator_id and .meta_operation == "extract-function")) | length) == 1 and
+                $failure.decision == "REFUTED" and $failure.stage == "derive-recipe" and
+                $failure.step == "select-declaration" and $failure.reason == "NO_SAFE_DECLARATION_CAPACITY" and
+                $failure.next_operation == "report-counterexample" and ($failure.blocked_by | length) == 0 and
+                ($failure.failure_evidence | length) == 5 and ($failure.derived_relations | length) == 1 and
+                $failure.derived_relations[0].relation == "DERIVED_FROM" and
+                $failure.derived_relations[0].derived_from == $failure.counterexample and
+                (all(.unknowns[]; .action_indicator_id == $failure.action_indicator_id and
+                  .unknown_class == "DEPENDENCY_BLOCKED" and .stage == $failure.stage and
+                  .step == $failure.step and .reason == $failure.reason and
+                  .next_operation == $failure.next_operation and
+                  .blocked_by == ["operation-failure:" + $failure.action_indicator_id]))
+              )
+            ) and
+            ($plan[0].selected | all(.[]; .subject_kind == .input_subject_kind)) and
+            ($plan[0].refuted_indicator_ids | length) >= 1 and
+            ($plan[0].counterexamples | any(.[]; .reason == "INPUT_SUBJECT_KIND_MISMATCH" and .source_indicator.subject_kind == "SOURCE_FRAGMENT" and (.blocked_by | length) == 0))
           ' "$input/self-improvement-receipts.json"
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and (.counterexamples | length) == 3 and (.counterexamples | all(.[]; .decision == "REFUTED" and .resolution == "EXACT" and .reason == "META_OPERATION_EXECUTOR_BINDING_MISMATCH")) and ([.counterexamples[] | select(.id == "executor-binding-stale")][0] | .expected == "scripts/source-splitter" and .observed == "stale-executor")' "$root/counterexamples.json"
+          jq -e --slurpfile plan "$input/self-improvement-plan.json" --slurpfile manifest "$input/self-improvement-execution.json" '
+            .decision == "PASS" and .resolution == "EXACT" and
+            (.counterexamples | length) == 3 and
+            (.counterexamples | all(.[]; .decision == "REFUTED" and .resolution == "EXACT" and .reason == "META_OPERATION_EXECUTOR_BINDING_MISMATCH")) and
+            ([.counterexamples[] | select(.id == "executor-binding-stale")][0] as $stale |
+              $plan[0].selected[0] as $action |
+              ($plan[0].registry | map(select(.operation == $action.meta_operation))) as $bindings |
+              ($manifest[0].steps | map(select(.action_indicator_id == $action.indicator_id and .operation == $action.meta_operation))) as $steps |
+              ($bindings | length) == 1 and ($steps | length) == 1 and
+              $stale.field_path == ("registry[" + $action.meta_operation + "].executor") and
+              $stale.expected == $bindings[0].executor and
+              $stale.expected == $steps[0].executor and
+              $stale.observed == "stale-executor")
+          ' "$root/counterexamples.json"
           jq -r '"### Focused transformation effect\n- selected/bound/unbound: \(.selected_plan_operations)/\(.bound_executor_operations)/\(.unbound_executor_operations)\n- receipts/failures/dependent-unknowns: \(.receipt_count)/\(.failure_count)/\(.unknown_count)\n- operation executor commands/tests (scoped): \(.operation_executor_commands)/\(.operation_executor_tests) [\(.command_scope)/\(.test_scope)]\n- reused evidence records: \(.reused_evidence_records) [\(.evidence_reuse_scope)]\n- replay: \(.runtime.replay_equal)\n- observed repository writes/local tests/cross-project gates: \(.repository_writes)/\(.local_test_executions)/\(.cross_project_required_gates)\n- operation outcome: \(.operation_outcome)\n- promotion authorized: \(.promotion_authorized)"' "$root/verification.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload focused transformation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: transformation-effect-focused-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/transformation-effect-focused
@@ -542,7 +633,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact head
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -637,13 +728,17 @@ jobs:
           syntax_build_ms="$(awk -v seconds="$syntax_seconds" 'BEGIN { printf "%d", seconds * 1000 }')"
           stage="validate"
           step="validate-language-syntax-scope-partition"
-          jq -e '.decision == "PASS" and .resolution == "EXACT" and
-            .summary.satisfied == 50 and .summary.total == 50 and
-            .summary.executed == 50 and .summary.unresolved == 0 and
-            .summary.capability_satisfied == 49 and .summary.capability_total == 49 and
-            .summary.capability_executed == 49 and .summary.capability_unresolved == 0 and
-            .summary.governance_satisfied == 1 and .summary.governance_total == 1 and
-            .summary.governance_executed == 1 and .summary.governance_unresolved == 0' \
+          jq -e --slurpfile registry "$syntax_registry" '
+            ($registry[0].cases | length) as $total |
+            ([$registry[0].cases[] | select(.scope == "LANGUAGE_CAPABILITY")] | length) as $capability |
+            ([$registry[0].cases[] | select(.scope == "GOVERNANCE_OBSERVATION")] | length) as $governance |
+            .decision == "PASS" and .resolution == "EXACT" and
+            .summary.satisfied == $total and .summary.total == $total and
+            .summary.executed == $total and .summary.unresolved == 0 and
+            .summary.capability_satisfied == $capability and .summary.capability_total == $capability and
+            .summary.capability_executed == $capability and .summary.capability_unresolved == 0 and
+            .summary.governance_satisfied == $governance and .summary.governance_total == $governance and
+            .summary.governance_executed == $governance and .summary.governance_unresolved == 0' \
             "$syntax_first/artifact.json"
           stage="publish"
           step="assemble-scope-partition-receipt"
@@ -680,14 +775,16 @@ jobs:
           cp "$syntax_first/artifact.json" "$publish_root/language-syntax-roundtrip-first.json"
           cp "$syntax_replay/artifact.json" "$publish_root/language-syntax-roundtrip-replay.json"
           echo "### Language syntax scope partition" >> "$GITHUB_STEP_SUMMARY"
-          echo "- overall: \`50/50 satisfied, 50 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- language capability: \`49/49 satisfied, 49 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- governance observation: \`1/1 satisfied, 1 executed, 0 unresolved\`" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '
+            "- overall: \(.overall.satisfied)/\(.overall.total) satisfied, \(.overall.executed) executed, \(.overall.unresolved) unresolved",
+            "- language capability: \(.language_capability.satisfied)/\(.language_capability.total) satisfied, \(.language_capability.executed) executed, \(.language_capability.unresolved) unresolved",
+            "- governance observation: \(.governance_observation.satisfied)/\(.governance_observation.total) satisfied, \(.governance_observation.executed) executed, \(.governance_observation.unresolved) unresolved"
+          ' "$publish_root/scope-partition.json" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload language syntax scope partition evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-syntax-scope-partition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-scope-partition-publish
@@ -717,7 +814,11 @@ jobs:
             --arg replay_digest "$replay_digest" \
             --arg concept_digest "$concept_digest" \
             --arg report_digest "$report_digest" \
-            '.decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
+            --slurpfile registry "$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json" \
+            '($registry[0].cases | length) as $total |
+            ([$registry[0].cases[] | select(.scope == "LANGUAGE_CAPABILITY")] | length) as $capability |
+            ([$registry[0].cases[] | select(.scope == "GOVERNANCE_OBSERVATION")] | length) as $governance |
+            .decision == "PASS" and .resolution == "EXACT" and .reason == "SCOPE_PARTITION_OBSERVED" and
             .head_sha == $head and .replay_equal == true and
             .compile_executions == 2 and .test_executions == 0 and
             .output_artifact_files == 3 and
@@ -728,9 +829,9 @@ jobs:
             .repository_writes == 0 and .branch_setting_writes == 0 and
             .local_test_executions == 0 and .cross_project_required_gates == 0 and
             .generation_authority == "CALLER_OWNED_TEMP_OUTPUT_ONLY" and
-            .overall == {satisfied: 50, total: 50, executed: 50, unresolved: 0} and
-            .language_capability == {satisfied: 49, total: 49, executed: 49, unresolved: 0} and
-            .governance_observation == {satisfied: 1, total: 1, executed: 1, unresolved: 0}' \
+            .overall == {satisfied: $total, total: $total, executed: $total, unresolved: 0} and
+            .language_capability == {satisfied: $capability, total: $capability, executed: $capability, unresolved: 0} and
+            .governance_observation == {satisfied: $governance, total: $governance, executed: $governance, unresolved: 0}' \
             "$report"
   language-concept-artifact:
     needs: [cross-platform-release]
@@ -751,7 +852,7 @@ jobs:
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
       REQUESTED_ROUTE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event_name == 'workflow_run' && github.event.workflow_run.head_branch || github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -769,7 +870,7 @@ jobs:
           fi
           grep -Eq '^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/setup-go@v7([[:space:]]|$)' .github/workflows/metric-counterfactual.yml .github/workflows/transformation-effect.yml
       - name: Download exact platform release receipts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: toolchain-release-platform-*-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-release-platforms
@@ -935,7 +1036,7 @@ jobs:
           echo "- capture/replay reconstruction: \`2/2\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload proposal predecessor raw observation cache
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-observation.json
@@ -943,7 +1044,7 @@ jobs:
           retention-days: 14
       - name: Upload proposal predecessor resolution receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-predecessor-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -951,7 +1052,7 @@ jobs:
           retention-days: 14
       - name: Upload bound proposal observation evidence
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-evidence-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-evidence
@@ -1003,7 +1104,7 @@ jobs:
             --check
       - name: Upload merged autonomous change proposal promotion
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-legacy-a.json
@@ -1011,7 +1112,7 @@ jobs:
           retention-days: 14
       - name: Upload current v2 proposal evidence
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-promotion-v2-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-promotion-a.json
@@ -1019,7 +1120,7 @@ jobs:
           retention-days: 14
       - name: Upload proposal compatibility receipt
         if: steps.proposal-predecessor.outputs.mode == 'SELECTED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-proposal-compat-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-proposal-compat-a.json
@@ -1252,7 +1353,7 @@ jobs:
           echo "- readiness resolution: \`LOWER_RESOLUTION\`" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload resolved exact-head readiness predecessor selection
         if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'RESOLVED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
@@ -1264,7 +1365,7 @@ jobs:
           retention-days: 14
       - name: Upload foundation exact-head readiness predecessor selection
         if: steps.readiness-predecessor.outcome == 'success' && steps.readiness-predecessor.outputs.mode == 'FOUNDATION'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-selection-${{ env.HEAD_SHA }}
           path: |
@@ -1274,7 +1375,7 @@ jobs:
           retention-days: 14
       - name: Upload readiness predecessor failure receipt
         if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-receipt-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-selection-*.json
@@ -1282,7 +1383,7 @@ jobs:
           retention-days: 14
       - name: Upload optional readiness predecessor diagnostics
         if: always() && steps.proposal-predecessor.outcome == 'success' && steps.proposal-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-diagnostic-${{ env.HEAD_SHA }}
           path: |
@@ -1326,7 +1427,7 @@ jobs:
             --check "$RUNNER_TEMP/language-readiness-guarded-capability-a.json"
       - name: Upload guarded promotion capability
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-guarded-capability-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-guarded-capability-a.json
@@ -1949,7 +2050,7 @@ jobs:
             --check "$RUNNER_TEMP/language-readiness-predecessor-binding-transition-a.json"
       - name: Upload exact-head predecessor binding transition
         if: steps.readiness-predecessor.outputs.mode == 'RESOLVED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-binding-transition-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-binding-transition-a.json
@@ -1957,7 +2058,7 @@ jobs:
           retention-days: 14
       - name: Upload exact-head predecessor bindings
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-predecessor-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-predecessor-binding-a.json*
@@ -1965,7 +2066,7 @@ jobs:
           retention-days: 14
       - name: Upload exact-head language concepts
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-concept-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-concept-artifact/first
@@ -1973,7 +2074,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language semantic model
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-semantic-model-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-model/first/artifact.json
@@ -1981,7 +2082,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head semantic readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-semantic-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-semantic-readiness-binding/first
@@ -1989,7 +2090,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head deterministic query
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-deterministic-query-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-deterministic-query/first/query
@@ -1997,7 +2098,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head deterministic query readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-deterministic-query-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-deterministic-query/first/binding
@@ -2005,7 +2106,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head Go interoperation
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-go-interoperation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-go-interoperation/first/interop
@@ -2013,7 +2114,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head Go interoperation readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-go-interoperation-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-go-interoperation/first/binding
@@ -2021,7 +2122,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head diagnostic provenance
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-diagnostic-provenance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-diagnostic-provenance/first
@@ -2029,7 +2130,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head diagnostic provenance readiness binding
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-diagnostic-provenance-readiness-binding-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-diagnostic-provenance-readiness-binding/first
@@ -2037,7 +2138,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language package runtime
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-package-runtime-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-package-runtime/first
@@ -2045,7 +2146,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain CLI
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-cli/first
@@ -2053,7 +2154,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain format/fix
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-format-fix-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-format-fix/first
@@ -2061,7 +2162,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain conformance
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-conformance-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-conformance/first
@@ -2069,7 +2170,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head toolchain LSP
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-lsp-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-lsp/first
@@ -2077,7 +2178,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head cross-platform release
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-cross-platform-release-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-cross-platform-release/first
@@ -2085,7 +2186,7 @@ jobs:
           retention-days: 30
       - name: Upload exact-head language readiness
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-readiness-artifact-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-readiness-artifact/first
@@ -2093,7 +2194,7 @@ jobs:
 
       - name: Upload exact-head executable use cases
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: toolchain-executable-use-cases-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/toolchain-executable-use-cases/first/artifact.json
@@ -2102,7 +2203,7 @@ jobs:
 
       - name: Upload exact-head language syntax roundtrip
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: language-syntax-roundtrip-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-syntax-roundtrip/first/artifact.json
@@ -2148,7 +2249,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2158,7 +2259,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact functional CLI receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: toolchain-cli-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/user-journey/upstream
@@ -2217,7 +2318,7 @@ jobs:
           test -z "$(git status --porcelain)"
       - name: Upload exact-head user journey scorecard
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: user-journey-scorecard-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/user-journey
@@ -2241,7 +2342,7 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Check out exact transformation subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2251,12 +2352,12 @@ jobs:
         with:
           go-version: '1.27.0'
       - name: Download exact guarded promotion receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: guarded-promotion-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/guard
       - name: Download exact rollback route receipt
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: rollback-fixed-point-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/recovery
@@ -2278,7 +2379,7 @@ jobs:
           done
           cmp "$first/report.json" "$replay/report.json"
       - name: Upload authorization continuity receipt
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: promotion-authorized-continuity-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/promotion-continuity/output/a/report.json
@@ -2296,7 +2397,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2344,7 +2445,7 @@ jobs:
           sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
       - name: Upload vertical slice eligibility artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: vertical-slice-closure-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/vertical-slice-closure-eligibility
@@ -2361,7 +2462,7 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
       - name: Set up Go 1.27
@@ -2412,7 +2513,7 @@ jobs:
           sha256sum "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/manifest.sha256"
       - name: Upload external ecosystem reference artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-ecosystem-reference-conformance-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-ecosystem-reference/output
@@ -2432,13 +2533,13 @@ jobs:
       SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout exact subject
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.SUBJECT_SHA }}
           fetch-depth: 0
           path: gooo
       - name: Checkout pinned gomacro
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: cosmos72/gomacro
           ref: cf0d4bf32da393dbda97e3572f216731013ffa55
@@ -2469,7 +2570,7 @@ jobs:
           fi
       - name: Upload Go 1.27 correction
         if: failure()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: go-1.27-tool-correction-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/go-1.27-tools.patch
@@ -2610,7 +2711,7 @@ jobs:
             first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
       - name: Upload capability authorization evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-authorization-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-authorization
@@ -2662,7 +2763,7 @@ jobs:
             first-suite.json replay-suite.json first-summary.md replay-summary.md > manifest.sha256
 
       - name: Upload capability authorization foundation evidence
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-authorization-foundation-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-authorization-foundation
@@ -2712,7 +2813,7 @@ jobs:
           sha256sum *.json > manifest.sha256
       - name: Upload external assurance eligibility evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-conformance-eligibility-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-conformance-eligibility
@@ -2724,7 +2825,7 @@ jobs:
           sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
       - name: Upload capability evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-capability-go127-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-capability-execution
@@ -2737,7 +2838,7 @@ jobs:
           sha256sum observation.json report.json suite.json replay-report.json replay-suite.json > manifest.sha256
       - name: Upload execution evidence
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: external-ecosystem-go127-baseline-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/external-ecosystem-execution
@@ -2761,7 +2862,7 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2774,7 +2875,7 @@ jobs:
         shell: bash
         run: bash scripts/language-delivery-scorecard/main.sh
       - if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-delivery-scorecard-${{ env.HEAD_SHA }}
           path: |
@@ -2805,7 +2906,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2818,7 +2919,7 @@ jobs:
         run: bash scripts/language-source-execution/main.sh
       - name: Upload exact-head source execution artifact
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
@@ -2834,7 +2935,7 @@ jobs:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 1
@@ -2843,7 +2944,7 @@ jobs:
           go-version: '1.27.0'
           cache: true
       - name: Download exact source execution artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-output
@@ -2852,7 +2953,7 @@ jobs:
         run: bash scripts/language-artifact-oracle/main.sh
       - name: Upload exact-head artifact oracle
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-artifact-oracle-${{ env.HEAD_SHA }}
           path: artifact-oracle-output
@@ -2872,7 +2973,7 @@ jobs:
       PROMOTION_OUTPUT: source-binding-promotion-output
     steps:
       - name: Check out the exact source identity
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
@@ -2882,12 +2983,12 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Download structural source execution evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-source-execution-${{ env.HEAD_SHA }}
           path: source-execution-input
       - name: Download independent source binding evidence
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: language-artifact-oracle-${{ env.HEAD_SHA }}
           path: artifact-oracle-input
@@ -2896,7 +2997,7 @@ jobs:
         run: bash scripts/language-source-binding-promotion/main.sh
       - name: Upload append-only source binding promotion receipt
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: language-source-binding-promotion-${{ env.HEAD_SHA }}
           path: source-binding-promotion-output

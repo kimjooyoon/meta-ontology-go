@@ -1,0 +1,167 @@
+name: Core conformance registry
+
+on:
+  pull_request:
+    paths:
+      - '.github/agent-scope-table.md'
+      - '.github/ci-governance.json'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - 'examples/self-improvement-ci-continuation/**'
+      - 'internal/meta/generation/**'
+      - 'internal/meta/selfimprovementcandidate/constants.go'
+      - 'internal/meta/selfimprovementcontinuation/build.go'
+      - 'internal/meta/selfimprovementcontinuation/model.go'
+      - 'internal/meta/selfimprovementcontinuation/verify.go'
+      - 'internal/meta/selfimprovementexecutiongrant/evaluate.go'
+      - 'internal/meta/selfimprovementexecutiongrant/model.go'
+      - 'internal/meta/selfimprovementexecutiongrant/verify.go'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'internal/meta/repositoryprojection/extractor/candidates.go'
+      - 'internal/meta/repositoryprojection/extractor/method_identity_test.go'
+      - 'bootstrap/function-extractor/apply.go'
+      - 'bootstrap/function-extractor/evidence.go'
+      - 'bootstrap/function-extractor/paths.go'
+      - 'bootstrap/function-extractor/report.go'
+      - 'internal/meta/repositoryprojection/extractor/decompose.go'
+      - 'internal/meta/repositoryprojection/extractor/evidence.go'
+      - 'internal/meta/repositoryprojection/extractor/extract.go'
+      - 'internal/meta/repositoryprojection/extractor/prepare.go'
+      - 'internal/meta/repositoryprojection/extractor/result.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_test.go'
+      - 'internal/meta/repositoryprojection/extractor/typecheck.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_regression_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_proof.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_proof_regression_test.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_render.go'
+      - 'internal/meta/repositoryprojection/extractor/return_tail_projection.go'
+      - 'internal/meta/repositoryprojection/extractor/render_imports.go'
+      - 'internal/meta/repositoryprojection/extractor/import_normalization_test.go'
+      - 'internal/meta/transformationeffect/commands.go'
+      - 'internal/meta/transformationeffectverification/validate.go'
+      - 'internal/verify/scope_gooo_core_conformance_registry.go'
+      - 'scripts/meta-execution/operations.go'
+      - 'scripts/meta-execution/extract_validation.go'
+      - 'scripts/meta-execution/extract_validation_test.go'
+      - 'scripts/meta-execution/testdata/native-strategy-evidence-w2.json'
+      - 'scripts/meta-summary/fixture_test.go'
+      - 'scripts/meta-summary/source_inventory_candidates.go'
+      - 'scripts/meta-summary/source_inventory_candidates_test.go'
+      - 'scripts/self-improvement-cycle/cycle_test.go'
+      - 'scripts/self-improvement-cycle/validate.go'
+      - 'scripts/verify/validate-source-observations.sh'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/core-conformance-registry.yml'
+      - '.github/workflows/transformation-effect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  registry-conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Check changed Go formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          gofmt -d \
+            internal/meta/generation/*.go \
+            internal/meta/languagereadiness/languagesyntax/model.go \
+            internal/meta/languagereadiness/languagesyntax/registry.go \
+            internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go \
+            internal/meta/languagereadiness/languagesyntax/conformance/inventory_test.go \
+            internal/meta/languageassurance/verticalsliceclosureshadow/contract.go \
+            internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go \
+            internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go \
+            internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go \
+            internal/meta/selfimprovementcandidate/constants.go \
+            internal/meta/selfimprovementcontinuation/build.go \
+            internal/meta/selfimprovementcontinuation/model.go \
+            internal/meta/selfimprovementcontinuation/verify.go \
+            internal/meta/selfimprovementexecutiongrant/evaluate.go \
+            internal/meta/selfimprovementexecutiongrant/model.go \
+            internal/meta/selfimprovementexecutiongrant/verify.go \
+            internal/meta/transformationeffect/commands.go \
+            internal/meta/transformationeffectverification/validate.go \
+            internal/meta/repositoryprojection/extractor/candidates.go \
+            internal/meta/repositoryprojection/extractor/method_identity_test.go \
+            bootstrap/function-extractor/apply.go \
+            bootstrap/function-extractor/evidence.go \
+            bootstrap/function-extractor/paths.go \
+            bootstrap/function-extractor/report.go \
+            internal/meta/repositoryprojection/extractor/decompose.go \
+            internal/meta/repositoryprojection/extractor/evidence.go \
+            internal/meta/repositoryprojection/extractor/extract.go \
+            internal/meta/repositoryprojection/extractor/prepare.go \
+            internal/meta/repositoryprojection/extractor/result.go \
+            internal/meta/repositoryprojection/extractor/return_tail.go \
+            internal/meta/repositoryprojection/extractor/return_tail_test.go \
+            internal/meta/repositoryprojection/extractor/typecheck.go \
+            internal/meta/repositoryprojection/extractor/return_tail_regression_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_conversion_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_proof.go \
+            internal/meta/repositoryprojection/extractor/return_tail_proof_regression_test.go \
+            internal/meta/repositoryprojection/extractor/return_tail_render.go \
+            internal/meta/repositoryprojection/extractor/return_tail_projection.go \
+            internal/meta/repositoryprojection/extractor/render_imports.go \
+            internal/meta/repositoryprojection/extractor/import_normalization_test.go \
+            scripts/meta-execution/operations.go \
+            scripts/meta-execution/extract_validation.go \
+            scripts/meta-execution/extract_validation_test.go \
+            scripts/meta-summary/fixture_test.go \
+            scripts/meta-summary/source_inventory_candidates.go \
+            scripts/meta-summary/source_inventory_candidates_test.go \
+            scripts/self-improvement-cycle/cycle_test.go \
+            scripts/self-improvement-cycle/validate.go \
+            internal/verify/scope_gooo_core_conformance_registry.go \
+            > "$RUNNER_TEMP/core-conformance-format.diff"
+          test ! -s "$RUNNER_TEMP/core-conformance-format.diff"
+      - name: Test registry, inventory and pinned denominator
+        shell: bash
+        env:
+          RETURN_TAIL_RUNTIME_WITNESS_OUTPUT_DIR: ${{ runner.temp }}/return-tail-runtime-witness
+        run: |
+          set -euo pipefail
+          go test -json ./scripts/source-splitter \
+            ./internal/meta/generation \
+            ./internal/meta/languagereadiness/languagesyntax/... \
+            ./internal/meta/languageassurance/verticalsliceclosureshadow \
+            ./internal/meta/transformationeffect \
+            ./internal/meta/transformationeffectverification \
+            ./internal/meta/selfimprovementcandidate \
+            ./internal/meta/selfimprovementcontinuation \
+            ./internal/meta/selfimprovementexecutiongrant \
+            ./internal/meta/repositoryprojection/extractor \
+            ./bootstrap/function-extractor \
+            ./scripts/meta-execution \
+            ./scripts/meta-summary \
+            ./scripts/self-improvement-cycle \
+            2>&1 | tee "$RUNNER_TEMP/core-conformance-tests.log"
+      - name: Check source observation verifier shell syntax
+        shell: bash
+        run: bash -n scripts/verify/validate-source-observations.sh
+      - name: Preserve conformance diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: core-conformance-registry-${{ github.event.pull_request.head.sha }}
+          path: |
+            ${{ runner.temp }}/core-conformance-*
+            ${{ runner.temp }}/return-tail-runtime-witness/**
+          if-no-files-found: error

@@ -32,6 +32,18 @@ func maybeRunSourcePackage(args []string, stdout, stderr io.Writer) (bool, int) 
 	if err != nil || !info.IsDir() {
 		return false, 0
 	}
+	if options.input != "" {
+		receipt := packageexecution.Reject(packageexecution.Request{
+			PackagePath: filepath.Base(filepath.Clean(options.filename)),
+			Entry:       options.entry,
+		}, "PACKAGE_VALUE_INPUT_UNSUPPORTED", []packageexecution.Diagnostic{{
+			Stage:    "INPUT",
+			Code:     "PACKAGE_VALUE_INPUT_UNSUPPORTED",
+			Filename: options.filename,
+			Message:  "value-plan input is supported only for a native .gooo source file",
+		}})
+		return true, writeSourcePackageResult(receipt, options.filename, jsonMode, stdout, stderr, exitFailure)
+	}
 	sources, err := packageexecution.LoadDirectory(options.filename)
 	if err != nil {
 		receipt := packageexecution.Reject(packageexecution.Request{

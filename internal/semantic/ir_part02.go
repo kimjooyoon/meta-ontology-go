@@ -29,7 +29,21 @@ func (ir IR) Normalized() (IR, error) {
 	if err != nil {
 		return IR{}, err
 	}
-	out := IR{Version: version, Package: packageName, Namespace: namespace, Graph: graph, evidence: make(map[ID]Evidence)}
+	runtimeBindings, err := normalizeRuntimeBindings(ir.RuntimeBindings, graph)
+	if err != nil {
+		return IR{}, err
+	}
+	out := IR{Version: version, Package: packageName, Namespace: namespace, Graph: graph, RuntimeBindings: runtimeBindings, evidence: make(map[ID]Evidence)}
+	if len(ir.Policies) > 0 {
+		out.Policies = make([]Policy, len(ir.Policies))
+		for index, policy := range ir.Policies {
+			normalizedPolicy, err := policy.Normalized()
+			if err != nil {
+				return IR{}, err
+			}
+			out.Policies[index] = normalizedPolicy
+		}
+	}
 	for _, evidence := range ir.Evidence() {
 		if err := out.AddEvidence(evidence); err != nil {
 			return IR{}, err
@@ -69,6 +83,13 @@ func (ir IR) Canonical() string {
 	b.WriteString(namespace)
 	b.WriteByte('\n')
 	b.WriteString(ir.Graph.Canonical())
+	for _, binding := range ir.RuntimeBindings {
+		b.WriteString(binding.Canonical())
+		b.WriteByte('\n')
+	}
+	for _, policy := range ir.Policies {
+		b.WriteString(policy.Canonical())
+	}
 	b.WriteString(ir.EvidenceCanonical())
 	return b.String()
 }

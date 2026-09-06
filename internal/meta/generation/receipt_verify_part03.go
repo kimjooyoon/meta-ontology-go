@@ -68,12 +68,18 @@ func classifyOperationReceipt(
 
 func receiptMatchesAction(plan Plan, action Action, receipt OperationReceipt) bool {
 	ledgerDigest, ledgerCount := planIndicatorDecisionLedgerProvenance(plan)
-	return receipt.SchemaVersion == OperationReceiptSchemaVersion &&
+	return action.SubjectKind == action.InputSubjectKind &&
+		validDigest(action.InputContractSourceDigest) && validDigest(action.InputContractSemanticDigest) &&
+		receipt.SchemaVersion == OperationReceiptSchemaVersion &&
 		receipt.BaseSHA == plan.BaseSHA && receipt.HeadSHA == plan.HeadSHA &&
 		receipt.PlanDigest == plan.PlanDigest &&
 		receipt.IndicatorDecisionLedgerDigest == ledgerDigest &&
 		receipt.IndicatorDecisionLedgerCount == ledgerCount &&
 		receipt.ActionIndicatorID == action.IndicatorID &&
+		receipt.SubjectKind == action.SubjectKind &&
+		receipt.InputSubjectKind == action.InputSubjectKind &&
+		receipt.InputContractSourceDigest == action.InputContractSourceDigest &&
+		receipt.InputContractSemanticDigest == action.InputContractSemanticDigest &&
 		receipt.Operation == action.Operation &&
 		receipt.Activity == action.Activity &&
 		receipt.Output == action.Output &&

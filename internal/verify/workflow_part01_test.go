@@ -53,10 +53,10 @@ func TestCIGuardianIsBasePinnedAndReadOnly(t *testing.T) {
 	for _, marker := range []string{
 		"name: CI guardian", "pull_request_target:", "- dev\n      - main",
 		"environment: ${{ github.base_ref == 'main' && 'guardian-observer'", "actions: read", "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1", "permission-administration: read", "GUARDIAN_APP_PRIVATE_KEY", "getBranchProtection", "observer_environment",
-		"actions/checkout@11d5960a326750d5838078e36cf38b85af677262", "ref: ${{ github.workflow_sha }}",
-		"persist-credentials: false", "actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b", "listFiles",
+		"actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1", "ref: ${{ github.workflow_sha }}",
+		"persist-credentials: false", "actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3", "listFiles",
 		"github.rest.pulls.get", "github.workflow_ref", "github.workflow_sha", "github.sha",
-		"actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", "head_binding_status", "ci-guardian.json",
+		"actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a", "head_binding_status", "ci-guardian.json",
 		"contents: read", "pull-requests: read",
 	} {
 		if !strings.Contains(text, marker) {
