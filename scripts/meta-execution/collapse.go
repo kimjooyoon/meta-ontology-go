@@ -203,7 +203,9 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 		return materialized, newOperationError("evaluate-operation", "compare-collapse-workspace", "WORKSPACE_EFFECT_OUT_OF_SCOPE", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if verifier.Observation.ExitCode != 0 {
-		return materialized, newOperationError("verify-operation", "go-test-transformed-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+		failure := newOperationError("verify-operation", "go-test-transformed-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+		failure.diagnostics = append(failure.diagnostics, collapseVerifierFailureDiagnostic(temporary, verifier))
+		return materialized, failure
 	}
 	indicators, allPassed := collapseIndicatorReceipts(action, plan.HeadSHA, beforeInspection, afterInspection)
 	if indicators == nil {
@@ -245,6 +247,18 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	materialized.Indicators = indicators
 	materialized.Canonical = canonical
 	return materialized, nil
+}
+
+func collapseVerifierFailureDiagnostic(root string, result processResult) string {
+	return fmt.Sprintf("collapse verifier failed: cwd=%s command=%v stdout=%q stderr=%q", filepath.Clean(root), result.Observation.Command, boundedCollapseDiagnostic(result.Stdout), boundedCollapseDiagnostic(result.Stderr))
+}
+
+func boundedCollapseDiagnostic(payload []byte) string {
+	const limit = 512
+	if len(payload) <= limit {
+		return string(payload)
+	}
+	return string(payload[:limit]) + "...<truncated>"
 }
 
 func collapseContractDigest(action generation.Action) (string, bool) {
