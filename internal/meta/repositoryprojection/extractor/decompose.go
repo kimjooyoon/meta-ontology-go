@@ -70,6 +70,10 @@ type renderedCapacitySelection struct {
 	observations []renderedCapacityObservation
 }
 
+type renderedCapacitySnapshot struct {
+	overage int
+}
+
 type typeEvidence struct {
 	info  *types.Info
 	pkg   *types.Package
@@ -171,7 +175,7 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 			observation.receiver = receiver
 		}
 	}
-	if functionLines > functionLineLimit {
+	if renderedCapacityOverage(functionLines) > 0 {
 		observation.functionStatus = renderedCapacityOverCap
 	}
 	rendered, err := renderer(fset, file, source, function)
@@ -182,7 +186,7 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 	helperLines := physicalLines(rendered)
 	observation.helperLines = &helperLines
 	observation.helperStatus = renderedCapacityWithinCap
-	if helperLines > functionLineLimit {
+	if renderedCapacityOverage(helperLines) > 0 {
 		observation.helperStatus = renderedCapacityOverCap
 	}
 	return observation
@@ -208,7 +212,7 @@ func withRenderedCapacityDiagnostics(err error, observations []renderedCapacityO
 		return err
 	}
 	for _, observation := range observations {
-		if observation.helperStatus == renderedCapacityUnmeasured {
+		if observation.helperStatus == renderedCapacityUnmeasured || observation.helperStatus == renderedCapacityOverCap || observation.functionStatus == renderedCapacityOverCap {
 			failure.Diagnostics = append(failure.Diagnostics, renderedCapacityObservationDiagnostics(observation)...)
 		}
 	}
@@ -216,9 +220,13 @@ func withRenderedCapacityDiagnostics(err error, observations []renderedCapacityO
 }
 
 func renderedCapacityObservationDiagnostics(observation renderedCapacityObservation) []string {
+	measurement := "UNMEASURED"
+	if observation.helperLines != nil && observation.helperStatus != renderedCapacityUnmeasured {
+		measurement = "MEASURED"
+	}
 	diagnostics := []string{
 		"preflight=rendered-capacity",
-		"measurement=UNMEASURED",
+		"measurement=" + measurement,
 		"subject=" + observation.subject,
 		"function_start=" + observation.functionStart,
 		"function_end=" + observation.functionEnd,
@@ -226,6 +234,17 @@ func renderedCapacityObservationDiagnostics(observation renderedCapacityObservat
 		"declaration_end=" + observation.declarationEnd,
 		"source_digest=" + observation.sourceDigest,
 		fmt.Sprintf("function_lines=%d", observation.functionLines),
+		"function_status=" + string(observation.functionStatus),
+		"helper_status=" + string(observation.helperStatus),
+		"helper_measurement_scope=" + renderedCapacityHelperMeasurementScope,
+		fmt.Sprintf("function_line_limit=%d", functionLineLimit),
+		fmt.Sprintf("function_overage=%d", renderedCapacityOverage(observation.functionLines)),
+	}
+	if measurement == "MEASURED" {
+		diagnostics = append(diagnostics,
+			fmt.Sprintf("helper_lines=%d", *observation.helperLines),
+			fmt.Sprintf("helper_overage=%d", renderedCapacityOverage(*observation.helperLines)),
+		)
 	}
 	if observation.helperFailure != nil {
 		diagnostics = append(diagnostics, "helper_failure="+observation.helperFailure.Error())
@@ -265,6 +284,37 @@ func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byt
 	return helper, nil
 }
 
+func renderedCapacityOverage(lines int) int {
+	if lines <= functionLineLimit {
+		return 0
+	}
+	return lines - functionLineLimit
+}
+
+func renderedCapacitySnapshotForFunctions(source []byte, names ...string) (renderedCapacitySnapshot, error) {
+	if len(names) == 0 {
+		return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "functions=EMPTY"})
+	}
+	seen := make(map[string]bool, len(names))
+	snapshot := renderedCapacitySnapshot{}
+	for _, name := range names {
+		if name == "" || seen[name] {
+			return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "function=" + name})
+		}
+		seen[name] = true
+		rendered, err := renderedFunctionHelper(source, name)
+		if err != nil {
+			return renderedCapacitySnapshot{}, err
+		}
+		snapshot.overage += renderedCapacityOverage(physicalLines(rendered))
+	}
+	return snapshot, nil
+}
+
+func strictRenderedCapacityProgress(before, after renderedCapacitySnapshot) bool {
+	return before.overage >= 0 && after.overage >= 0 && after.overage < before.overage
+}
+
 func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
 	if function.Recv == nil {
 		return "func:" + function.Name.Name
@@ -301,23 +351,49 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	} else if candidate != nil {
 		return candidate.result, &candidate.evidence, nil
 	}
+	return decomposeSuffixCandidates(source, fset, file, function, evidence)
+}
+
+func decomposeSuffixCandidates(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence) ([]byte, *StrategyEvidence, error) {
 	existing := functionNames(file)
+	diagnostics := []string{
+		"declaration=" + functionIdentity(fset, function),
+		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
+		"decomposition_source_digest=" + proofDigest(source),
+	}
+	var unproven *Failure
+	unprovenCount := 0
 	for index := range slices.Backward(function.Body.List) {
 		candidate, candidateErr := buildSuffixCandidate(source, fset, file, function, index, evidence, existing)
 		if candidateErr != nil {
-			if isKnownSuffixContradiction(candidateErr) {
-				continue
+			reason := candidateErr.Error()
+			if failure, ok := errors.AsType[Failure](candidateErr); ok && failure.UnknownClass == "UNBOUNDED" {
+				unprovenCount++
+				reason = failure.Reason
+				if unproven == nil {
+					unproven = &failure
+				}
+			} else if !isKnownSuffixContradiction(candidateErr) {
+				return nil, nil, candidateErr
 			}
-			return nil, nil, candidateErr
+			diagnostics = append(diagnostics, fmt.Sprintf("suffix_candidate_index=%d;statement_start=%s;statement_end=%s;rejection=%q",
+				index, fset.Position(function.Body.List[index].Pos()), fset.Position(function.Body.List[len(function.Body.List)-1].End()), reason))
+			continue
 		}
 		if candidate != nil {
 			return candidate.result, nil, nil
 		}
 	}
-	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
-		"declaration=" + functionIdentity(fset, function),
-		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
-	})
+	diagnostics = append(diagnostics,
+		fmt.Sprintf("suffix_candidates_attempted=%d", len(function.Body.List)),
+		fmt.Sprintf("suffix_candidates_rejected=%d", len(function.Body.List)),
+		fmt.Sprintf("suffix_candidates_unproven=%d", unprovenCount),
+	)
+	if unproven != nil {
+		unproven.Diagnostics = append(unproven.Diagnostics, diagnostics...)
+		return nil, nil, *unproven
+	}
+	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", diagnostics)
 }
 
 func functionNames(file *ast.File) map[string]bool {
@@ -333,8 +409,17 @@ func functionNames(file *ast.File) map[string]bool {
 
 func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, startIndex int, evidence typeEvidence, existing map[string]bool) (*suffixCandidate, error) {
 	statements := function.Body.List[startIndex:]
-	if len(statements) == 0 || hasUnsafeOuterScope(function.Body.List[:startIndex]) || hasUnsafeSuffix(statements, evidence.info) {
-		return nil, knownSuffixContradiction("suffix control-flow or scope invariant is not preserved")
+	if len(statements) == 0 {
+		return nil, knownSuffixContradiction("EMPTY_SUFFIX")
+	}
+	if hasUnsafeOuterScope(function.Body.List[:startIndex]) {
+		return nil, knownSuffixContradiction("OUTER_SCOPE_UNPROVEN")
+	}
+	if hazard := firstSuffixHazard(statements); hazard != nil {
+		if hazard.reason == "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" {
+			return nil, fail("derive-recipe", "preserve-callback-identity", hazard.reason, "UNBOUNDED", "prove-callback-observability", nil)
+		}
+		return nil, knownSuffixContradiction(hazard.reason)
 	}
 	bindings, err := suffixBindings(statements, function, fset, evidence)
 	if err != nil {
@@ -359,9 +444,6 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(helper) > functionLineLimit {
-		return nil, knownSuffixContradiction("suffix helper exceeds the physical line limit")
-	}
 	call := []byte(name + "(" + bindingArguments(bindings) + ")")
 	modified, err := replaceSource(source, start, end, call)
 	if err != nil {
@@ -371,14 +453,22 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
-	if lines, ok := namedFunctionLines(formatted, function.Name.Name); !ok || lines > functionLineLimit {
-		return nil, knownSuffixContradiction("outer function remains over the physical line limit")
-	}
 	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
 	combined = append(combined, helper...)
 	combined, err = format.Source(combined)
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	beforeCapacity, err := renderedCapacitySnapshotForFunctions(source, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	afterCapacity, err := renderedCapacitySnapshotForFunctions(combined, function.Name.Name, name)
+	if err != nil {
+		return nil, err
+	}
+	if !strictRenderedCapacityProgress(beforeCapacity, afterCapacity) {
+		return nil, knownSuffixContradiction(fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
 	}
 	return &suffixCandidate{start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined}, nil
 }
@@ -583,17 +673,24 @@ func hasUnsafeOuterScope(statements []ast.Stmt) bool {
 }
 
 func hasUnsafeSuffix(statements []ast.Stmt, info *types.Info) bool {
+	return firstSuffixHazard(statements) != nil
+}
+
+func firstSuffixHazard(statements []ast.Stmt) *suffixHazards {
 	for _, statement := range statements {
 		hazards := &suffixHazards{}
 		ast.Walk(hazardVisitor{hazards: hazards}, statement)
 		if hazards.unsafe {
-			return true
+			return hazards
 		}
 	}
-	return false
+	return nil
 }
 
-type suffixHazards struct{ unsafe bool }
+type suffixHazards struct {
+	unsafe bool
+	reason string
+}
 
 type hazardVisitor struct {
 	hazards   *suffixHazards
@@ -605,6 +702,10 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 		return nil
 	}
 	if _, ok := node.(*ast.FuncLit); ok {
+		// Relocating a literal changes its enclosing function identity. Its
+		// body may observe that identity, even without changing any captures.
+		visitor.hazards.unsafe = true
+		visitor.hazards.reason = "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN"
 		return nil
 	}
 	switch value := node.(type) {
@@ -612,14 +713,17 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 		return hazardVisitor{hazards: visitor.hazards, loopDepth: visitor.loopDepth + 1}
 	case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
 		visitor.hazards.unsafe = true
+		visitor.hazards.reason = "CONTROL_FLOW_SCOPE_UNPROVEN"
 	case *ast.BranchStmt:
 		if visitor.loopDepth == 0 && value.Tok != token.FALLTHROUGH {
 			visitor.hazards.unsafe = true
+			visitor.hazards.reason = "ESCAPING_BRANCH_UNPROVEN"
 		}
 	case *ast.CallExpr:
 		if identifier, ok := value.Fun.(*ast.Ident); ok &&
 			(identifier.Name == "panic" || identifier.Name == "recover") {
 			visitor.hazards.unsafe = true
+			visitor.hazards.reason = "STACK_CONTROL_UNPROVEN"
 		}
 	}
 	return hazardVisitor{hazards: visitor.hazards, loopDepth: visitor.loopDepth}

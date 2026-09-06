@@ -24,7 +24,7 @@ func ExtractWithResult(root, logical string) (Result, error) {
 	var strategyEvidence []StrategyEvidence
 	source, fset, file, strategyEvidence, err = prepareParsedSource(root, logical, source, fset, file)
 	if err != nil {
-		return Result{}, err
+		return Result{}, withCallbackExtractionProposal(root, logical, original, err)
 	}
 	list, all, err := extractionInputs(root, source, fset, file)
 	if err != nil {
