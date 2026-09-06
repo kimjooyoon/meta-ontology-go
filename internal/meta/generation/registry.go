@@ -7,7 +7,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
-func DefaultRegistry() []Binding {
+func legacyDefaultRegistry() []Binding {
 	registry, err := defaultRegistryWithError()
 	if err != nil {
 		return nil
@@ -28,9 +28,9 @@ func defaultRegistryWithError() ([]Binding, error) {
 	}, nil
 }
 
-// BindingForOperation resolves one operation from the plan's registry. The
+// legacyBindingForOperation resolves one operation from the plan's registry. The
 // registry is the authority shared by planning and execution consumers.
-func BindingForOperation(bindings []Binding, operation sourcepolicy.Operation) (Binding, bool) {
+func legacyBindingForOperation(bindings []Binding, operation sourcepolicy.Operation) (Binding, bool) {
 	var result Binding
 	found := false
 	for _, binding := range bindings {
@@ -60,7 +60,7 @@ func normalizeRegistry(bindings []Binding) []Binding {
 	return result
 }
 
-func registryIndex(bindings []Binding) (map[sourcepolicy.Operation]Binding, bool) {
+func legacyRegistryIndex(bindings []Binding) (map[sourcepolicy.Operation]Binding, bool) {
 	if !canonicalRegistry(bindings) {
 		return nil, false
 	}
