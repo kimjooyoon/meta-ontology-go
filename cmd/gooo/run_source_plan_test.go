@@ -127,9 +127,9 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 			Detail string `json:"detail"`
 		} `json:"failure"`
 		Execution struct {
-			ApplyCalls  int            `json:"apply_calls"`
-			Activities  []string       `json:"activities"`
-			Results     map[string]any `json:"results"`
+			ApplyCalls int            `json:"apply_calls"`
+			Activities []string       `json:"activities"`
+			Results    map[string]any `json:"results"`
 		} `json:"execution"`
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {

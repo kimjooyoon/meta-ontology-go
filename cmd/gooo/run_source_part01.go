@@ -121,13 +121,13 @@ func reportPlanFailure(jsonMode bool, stdout, stderr io.Writer, filename string,
 			failure = valueexecution.Failure{Code: valueexecution.Reason(err), Stage: "EXECUTE", Step: "plan-execution", Detail: err.Error()}
 		}
 		_ = json.NewEncoder(stdout).Encode(struct {
-			Schema     string                        `json:"schema"`
-			Decision   string                        `json:"decision"`
-			SourcePath string                        `json:"source_path"`
-			Reason     string                        `json:"reason"`
-			Failure    valueexecution.Failure        `json:"failure"`
-			Execution  valueexecution.Execution     `json:"execution"`
-			Error      string                        `json:"error"`
+			Schema     string                   `json:"schema"`
+			Decision   string                   `json:"decision"`
+			SourcePath string                   `json:"source_path"`
+			Reason     string                   `json:"reason"`
+			Failure    valueexecution.Failure   `json:"failure"`
+			Execution  valueexecution.Execution `json:"execution"`
+			Error      string                   `json:"error"`
 		}{
 			Schema: "gooo/value-execution-plan/v1", Decision: "FAIL_CLOSED", SourcePath: filename,
 			Reason: valueexecution.Reason(err), Failure: failure, Execution: execution, Error: err.Error(),
