@@ -15,6 +15,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 const callbackPreviewLogicalPath = "cmd/language-readiness-witness/predecessor-selection/pagination_test.go"
@@ -34,7 +36,7 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 	if preview.OperationResultAdmission != "FORBIDDEN" || preview.ApplyPermission != "FORBIDDEN" || preview.Candidate.Promotion != callbackPreviewPromotionNone {
 		t.Fatalf("pending preview was admitted: %#v", preview)
 	}
-	if preview.Stage != "CALLBACK_PREVIEW" || preview.Step != "PENDING_EFFECT_REVIEW" || preview.UnknownClass != "PENDING_TYPED_CALLBACK_EFFECTS" || preview.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || preview.BlockedBy != "PENDING_TYPED_CALLBACK_EFFECTS" {
+	if preview.Stage != "CALLBACK_PREVIEW" || preview.Step != "PENDING_EFFECT_REVIEW" || preview.UnknownClass != "DEPENDENCY_BLOCKED" || preview.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || len(preview.BlockedBy) != len(preview.PendingEffects) {
 		t.Fatalf("preview lifecycle = %#v", preview)
 	}
 	if len(preview.ContractRecords) != 5 || preview.ContractRecords[0].Entity != "CallbackPreviewInput" || preview.ContractRecords[1].Entity != "BoundedCallbackCandidate" || preview.ContractRecords[2].Entity != "CallbackCaptures" || preview.ContractRecords[3].Entity != "PendingCallbackEffects" || preview.ContractRecords[4].Entity != "CallbackPreviewEvidence" {
@@ -49,6 +51,11 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 	if preview.Candidate.CaptureCount != len(preview.Captures) || preview.Candidate.PendingEffectCount != len(preview.PendingEffects) || len(preview.PendingEffects) == 0 {
 		t.Fatalf("preview counters = candidate:%#v effects:%d", preview.Candidate, len(preview.PendingEffects))
 	}
+	for _, effect := range preview.PendingEffects {
+		if effect.UnknownClass != "DEPENDENCY_BLOCKED" || effect.Stage != "CALLBACK_PREVIEW" || effect.Step != "PENDING_EFFECT_REVIEW" || effect.Reason != "PENDING_TYPED_CALLBACK_EFFECTS" || effect.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || len(effect.BlockedBy) != 1 || effect.BlockedBy[0] != effect.CallIdentity {
+			t.Fatalf("pending effect lifecycle = %#v", effect)
+		}
+	}
 	if !callbackPreviewHasEffectKind(preview.PendingEffects, "dynamic-interface-method") || !callbackPreviewHasEffectKind(preview.PendingEffects, "dynamic-interface-argument") || !callbackPreviewHasEffectKind(preview.PendingEffects, "typed-method") || !callbackPreviewHasEffectKind(preview.PendingEffects, "external-function") {
 		t.Fatalf("typed pending effects = %#v", preview.PendingEffects)
 	}
@@ -56,6 +63,39 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 		t.Fatalf("identity-preserving candidate binding missing: wrapper=%q helper=%q", preview.Candidate.WrapperSource, preview.Candidate.HelperSource)
 	}
 	typeCheckCallbackPreviewCandidate(t, root, callbackPreviewLogicalPath, preview.Candidate.CandidateSource)
+	if err := ValidateCallbackPreviewResult(preview); err != nil {
+		t.Fatalf("baseline callback preview validation failed: %v", err)
+	}
+	for name, mutate := range map[string]func(*CallbackPreviewResult){
+		"field-id": func(value *CallbackPreviewResult) {
+			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
+			value.ContractRecords[2].Fields[0].ID = "gooo://forged-field"
+		},
+		"codec": func(value *CallbackPreviewResult) {
+			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
+			for index := range value.ContractRecords[2].Fields {
+				if value.ContractRecords[2].Fields[index].Name == "CaptureNames" {
+					value.ContractRecords[2].Fields[index].Value = "forged"
+				}
+			}
+		},
+		"native-value": func(value *CallbackPreviewResult) {
+			value.ContractRecords = cloneCallbackPreviewRecords(value.ContractRecords)
+			for index := range value.ContractRecords[2].Fields {
+				if value.ContractRecords[2].Fields[index].Name == "Count" {
+					value.ContractRecords[2].Fields[index].Value = "999"
+				}
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			tampered := preview
+			mutate(&tampered)
+			if err := ValidateCallbackPreviewResult(tampered); err == nil {
+				t.Fatal("tampered callback preview was accepted")
+			}
+		})
+	}
 	runCallbackPreviewFixtureSuite(t, root, callbackPreviewLogicalPath, "")
 	runCallbackPreviewFixtureSuite(t, root, callbackPreviewLogicalPath, preview.Candidate.CandidateSource)
 }
@@ -114,6 +154,15 @@ func callbackPreviewHasEffectKind(effects []CallbackPreviewEffect, kind string) 
 		}
 	}
 	return false
+}
+
+func cloneCallbackPreviewRecords(records []generation.CallbackPreviewRecord) []generation.CallbackPreviewRecord {
+	cloned := make([]generation.CallbackPreviewRecord, len(records))
+	for index, record := range records {
+		cloned[index] = record
+		cloned[index].Fields = append([]generation.CallbackPreviewFieldValue(nil), record.Fields...)
+	}
+	return cloned
 }
 
 func typeCheckCallbackPreviewCandidate(t *testing.T, root, logical, source string) {

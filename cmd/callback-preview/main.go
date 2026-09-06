@@ -73,6 +73,15 @@ func safePreviewOutputPath(root, output string) (string, error) {
 	} else if !os.IsNotExist(err) {
 		return "", fmt.Errorf("inspect preview output: %w", err)
 	}
+	if info, err := os.Stat(outputPath); err == nil {
+		if aliases, aliasErr := previewOutputAliasesRepositoryFile(rootPath, info); aliasErr != nil {
+			return "", aliasErr
+		} else if aliases {
+			return "", fmt.Errorf("preview output aliases a repository input")
+		}
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("stat preview output: %w", err)
+	}
 	canonical, err := canonicalPreviewOutputPath(outputPath)
 	if err != nil {
 		return "", err
@@ -81,6 +90,23 @@ func safePreviewOutputPath(root, output string) (string, error) {
 		return "", fmt.Errorf("preview output resolves inside the repository root")
 	}
 	return outputPath, nil
+}
+
+func previewOutputAliasesRepositoryFile(root string, outputInfo os.FileInfo) (bool, error) {
+	var aliases bool
+	err := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if aliases || info.IsDir() {
+			return nil
+		}
+		if os.SameFile(outputInfo, info) {
+			aliases = true
+		}
+		return nil
+	})
+	return aliases, err
 }
 
 func canonicalPreviewOutputPath(path string) (string, error) {

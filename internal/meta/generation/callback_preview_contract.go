@@ -183,7 +183,7 @@ func (contract CallbackPreviewContractEvidence) validateCallbackPreviewRecordFie
 
 func callbackPreviewListField(name string) bool {
 	switch name {
-	case "CaptureNames", "ObjectIdentities", "ObjectTypes", "BindingModes", "CallIdentities", "Symbols", "Signatures", "ReceiverTypes", "EffectKinds", "States":
+	case "CaptureNames", "ObjectIdentities", "ObjectTypes", "BindingModes", "CallIdentities", "Symbols", "Signatures", "ReceiverTypes", "EffectKinds", "States", "BlockedBy":
 		return true
 	default:
 		return false
