@@ -59,12 +59,12 @@ type PreparationProgressEvidence struct {
 // FinalRenderedCapacityEvidence records the bounded measurement of the
 // actual final generated package. It is not a preparation-progress receipt.
 type FinalRenderedCapacityEvidence struct {
-	Scope        string `json:"scope"`
+	Scope         string `json:"scope"`
 	PayloadDigest string `json:"payload_digest"`
-	Bytes        int    `json:"bytes"`
-	Lines        int    `json:"lines"`
-	Overage      int    `json:"overage"`
-	Status       string `json:"status"`
+	Bytes         int    `json:"bytes"`
+	Lines         int    `json:"lines"`
+	Overage       int    `json:"overage"`
+	Status        string `json:"status"`
 }
 
 type PreflightObservationEvidence struct {

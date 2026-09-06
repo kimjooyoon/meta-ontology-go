@@ -105,6 +105,37 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 	}
 }
 
+func TestReturnTailPreparationProgressDefersFinalCapacityProof(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n")
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", []byte(source), parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, evidence, err := prepareOversizedFunctions(root, "x.go", []byte(source), fset, file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range evidence {
+		if item.Strategy != returnTailStrategy || item.AfterRenderedCapacityOverage <= 0 {
+			continue
+		}
+		if item.PreparationProgress == nil || len(item.ProofStages) != len(returnTailObligations)-2 || len(item.Obligations) != len(returnTailObligations)-2 ||
+			item.FinalRenderedCapacity != nil {
+			t.Fatalf("return-tail intermediate evidence=%+v, want progress without final capacity proof", item)
+		}
+		return
+	}
+	t.Fatalf("preparation evidence=%+v, want a return-tail intermediate progress record", evidence)
+}
+
 func assertReturnTailClosureCaptureRejected(t *testing.T, source string) {
 	t.Helper()
 	fset := token.NewFileSet()

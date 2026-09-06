@@ -17,7 +17,7 @@ import (
 const returnTailStrategy = "return-preserving-terminal-tail"
 const suffixStrategy = "suffix-extraction"
 
-func preparationProgressEvidence(contract generation.OperationInputContractEvidence, source, subject string, before, after int) *PreparationProgressEvidence {
+func preparationProgressEvidence(contract generation.OperationInputContractEvidence, source []byte, subject string, before, after int) *PreparationProgressEvidence {
 	if after <= 0 || before <= after {
 		return nil
 	}

@@ -164,8 +164,31 @@ type strategyEvidencePresence struct {
 	FinalGeneratedEvidenceBytes   int                                              `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits           int                                              `json:"final_generated_units"`
 	PreflightObservations         []json.RawMessage                                `json:"preflight_observations,omitempty"`
-	PreparationProgress           *projectionextractor.PreparationProgressEvidence `json:"preparation_progress,omitempty"`
-	FinalRenderedCapacity         *projectionextractor.FinalRenderedCapacityEvidence `json:"final_rendered_capacity,omitempty"`
+	PreparationProgress           *preparationProgressPresence             `json:"preparation_progress,omitempty"`
+	FinalRenderedCapacity         *finalRenderedCapacityPresence           `json:"final_rendered_capacity,omitempty"`
+}
+
+type preparationProgressPresence struct {
+	Operation              *string `json:"operation"`
+	Activity               *string `json:"activity"`
+	InputEntity            *string `json:"input_entity"`
+	InputSubjectKind       *string `json:"input_subject_kind"`
+	ContractSourceDigest   *string `json:"contract_source_digest"`
+	ContractSemanticDigest *string `json:"contract_semantic_digest"`
+	Subject                *string `json:"subject"`
+	SourceDigest           *string `json:"source_digest"`
+	BeforeOverage          *int    `json:"before_overage"`
+	AfterOverage           *int    `json:"after_overage"`
+	Status                 *string `json:"status"`
+}
+
+type finalRenderedCapacityPresence struct {
+	Scope         *string `json:"scope"`
+	PayloadDigest *string `json:"payload_digest"`
+	Bytes         *int    `json:"bytes"`
+	Lines         *int    `json:"lines"`
+	Overage       *int    `json:"overage"`
+	Status        *string `json:"status"`
 }
 
 type proofStagePresence struct {
@@ -399,6 +422,12 @@ func validStrategyEvidenceReport(report extractorReport, presence extractorRepor
 				(evidence.FinalRenderedCapacity == nil) != (observedEvidence.FinalRenderedCapacity == nil) {
 				return false
 			}
+			if evidence.PreparationProgress != nil && !validPreparationProgressPresence(observedEvidence.PreparationProgress) {
+				return false
+			}
+			if evidence.FinalRenderedCapacity != nil && !validFinalRenderedCapacityPresence(observedEvidence.FinalRenderedCapacity) {
+				return false
+			}
 			for stageIndex := range evidence.ProofStages {
 				if observed.Values[evidenceIndex].ProofStages[stageIndex].PayloadBytes == nil {
 					return false
@@ -409,7 +438,23 @@ func validStrategyEvidenceReport(report extractorReport, presence extractorRepor
 	return true
 }
 
+func validPreparationProgressPresence(value *preparationProgressPresence) bool {
+	return value != nil && value.Operation != nil && value.Activity != nil && value.InputEntity != nil &&
+		value.InputSubjectKind != nil && value.ContractSourceDigest != nil && value.ContractSemanticDigest != nil &&
+		value.Subject != nil && value.SourceDigest != nil && value.BeforeOverage != nil && value.AfterOverage != nil &&
+		value.Status != nil
+}
+
+func validFinalRenderedCapacityPresence(value *finalRenderedCapacityPresence) bool {
+	return value != nil && value.Scope != nil && value.PayloadDigest != nil && value.Bytes != nil &&
+		value.Lines != nil && value.Overage != nil && value.Status != nil
+}
+
 func validStrategyEvidenceValues(report extractorReport) bool {
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil || len(contract.Obligations) == 0 {
+		return false
+	}
 	for _, subject := range report.Subjects {
 		for _, evidence := range subject.Evidence {
 			if evidence.Strategy == "" || evidence.Operation == "" || evidence.ContractActivity == "" ||
@@ -424,6 +469,12 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				evidence.FinalGeneratedUnits <= 0 {
 				return false
 			}
+			if evidence.Operation != string(contract.Operation) || evidence.ContractActivity != contract.Activity ||
+				evidence.ContractInputEntity != contract.InputEntity || evidence.ContractOutputEntity != contract.OutputEntity ||
+				evidence.ContractInputSubjectKind != string(contract.InputSubjectKind) || evidence.ContractSourceDigest != contract.SourceDigest ||
+				evidence.ContractSemanticDigest != contract.SemanticDigest {
+				return false
+			}
 			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
 				return false
 			}
@@ -435,19 +486,29 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 					progress.SourceDigest == "" || progress.Status != strategyEvidencePassStatus ||
 					progress.BeforeOverage <= progress.AfterOverage || progress.AfterOverage <= 0 ||
 					progress.BeforeOverage != evidence.BeforeRenderedCapacityOverage ||
-					progress.AfterOverage != evidence.AfterRenderedCapacityOverage {
+					progress.AfterOverage != evidence.AfterRenderedCapacityOverage || progress.Operation != evidence.Operation ||
+					progress.Activity != evidence.ContractActivity || progress.InputEntity != evidence.ContractInputEntity ||
+					progress.InputSubjectKind != evidence.ContractInputSubjectKind || progress.ContractSourceDigest != evidence.ContractSourceDigest ||
+					progress.ContractSemanticDigest != evidence.ContractSemanticDigest || progress.Subject != evidence.Subject {
+					return false
+				}
+				boundSource := false
+				for _, observation := range evidence.PreflightObservations {
+					if observation.Subject == progress.Subject && observation.SourceDigest == progress.SourceDigest {
+						boundSource = true
+						break
+					}
+				}
+				if !boundSource {
 					return false
 				}
 			} else if evidence.AfterRenderedCapacityOverage > 0 {
 				return false
 			}
-			if evidence.FinalRenderedCapacity != nil {
-				finalCapacity := evidence.FinalRenderedCapacity
-				if finalCapacity.Scope == "" || finalCapacity.PayloadDigest == "" || finalCapacity.Bytes <= 0 ||
-					finalCapacity.Lines <= 0 || finalCapacity.Overage != 0 || finalCapacity.Status != strategyEvidencePassStatus {
-					return false
-				}
-			} else if evidence.Strategy == "suffix-extraction" {
+			if evidence.FinalRenderedCapacity == nil || evidence.FinalRenderedCapacity.Scope != "final-generated-functions" ||
+				evidence.FinalRenderedCapacity.PayloadDigest == "" || evidence.FinalRenderedCapacity.Bytes <= 0 ||
+				evidence.FinalRenderedCapacity.Lines <= 0 || evidence.FinalRenderedCapacity.Overage != 0 ||
+				evidence.FinalRenderedCapacity.Status != strategyEvidencePassStatus {
 				return false
 			}
 			if evidence.Strategy == "suffix-extraction" {
@@ -456,48 +517,40 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				}
 				continue
 			}
-			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) != 6 || len(evidence.ProofStages) != 6 || len(evidence.Obligations) != 6 {
+			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) != len(contract.Obligations) ||
+				len(evidence.ProofStages) != len(contract.Obligations) || len(evidence.Obligations) != len(contract.Obligations) {
 				return false
 			}
-			for _, obligation := range evidence.Obligations {
-				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus || !validReturnTailObligationName(obligation.Name) {
+			for index, expected := range contract.Obligations {
+				obligation := evidence.Obligations[index]
+				if obligation.Name != expected.Name || obligation.Status != strategyEvidencePassStatus {
 					return false
 				}
 			}
-			expectedNames := []string{"return-shape", "control-flow", "free-bindings", "callee-effects", "rendered-capacity", "projected-conformance"}
-			expectedActivities := []string{"ProveReturnShape", "ProveControlFlow", "ProveFreeBindings", "ProveCalleeEffects", "ProveRenderedCapacity", "ProveProjectedConformance"}
-			expectedInputs := []string{"FunctionInput", "ReturnShapeObligation", "ControlFlowObligation", "FreeBindingsObligation", "CalleeEffectsObligation", "RenderedCapacityObligation"}
-			expectedOutputs := []string{"ReturnShapeObligation", "ControlFlowObligation", "FreeBindingsObligation", "CalleeEffectsObligation", "RenderedCapacityObligation", "ProjectedConformanceObligation"}
 			for index, obligation := range evidence.ContractObligations {
-				if obligation.Name != expectedNames[index] || obligation.Activity != expectedActivities[index] ||
-					obligation.InputEntity != expectedInputs[index] || obligation.OutputEntity != expectedOutputs[index] ||
+				expected := contract.Obligations[index]
+				if obligation.Name != expected.Name || obligation.Activity != expected.Activity ||
+					obligation.InputEntity != expected.InputEntity || obligation.OutputEntity != expected.OutputEntity ||
 					!obligation.UsedInputFact || !obligation.GeneratedOutputFact {
 					return false
 				}
 			}
 			for index, stage := range evidence.ProofStages {
-				if stage.Name != expectedNames[index] || stage.Activity != expectedActivities[index] || stage.InputEntity != expectedInputs[index] ||
-					stage.OutputEntity != expectedOutputs[index] || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
+				expected := evidence.ContractObligations[index]
+				if stage.Name != expected.Name || stage.Activity != expected.Activity || stage.InputEntity != expected.InputEntity ||
+					stage.OutputEntity != expected.OutputEntity || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
 					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
 					stage.PayloadDigest == "" || stage.PayloadBytes < 0 {
 					return false
 				}
 			}
-			if evidence.FinalRenderedCapacity != nil && evidence.ProofStages[4].PayloadDigest != evidence.FinalRenderedCapacity.PayloadDigest {
+			capacityIndex := len(evidence.ProofStages) - 2
+			if evidence.ProofStages[capacityIndex].Name != "rendered-capacity" || evidence.ProofStages[capacityIndex].PayloadDigest != evidence.FinalRenderedCapacity.PayloadDigest {
 				return false
 			}
 		}
 	}
 	return true
-}
-
-func validReturnTailObligationName(name string) bool {
-	switch name {
-	case "return-shape", "control-flow", "free-bindings", "callee-effects", "rendered-capacity", "projected-conformance":
-		return true
-	default:
-		return false
-	}
 }
 
 func validExtractionSubject(subject extractorSubject) bool {

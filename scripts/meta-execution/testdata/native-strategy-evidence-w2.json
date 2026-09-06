@@ -192,6 +192,14 @@
     ],
     "final_generated_bytes": 726,
     "final_generated_evidence_bytes": 768,
-    "final_generated_units": 3
+    "final_generated_units": 3,
+    "final_rendered_capacity": {
+      "scope": "final-generated-functions",
+      "payload_digest": "sha256:852bc0e835921511179a1e9c2ee4b0078c9f84ac75ce5500555fc4c2dd959125",
+      "bytes": 713,
+      "lines": 90,
+      "overage": 0,
+      "status": "PASS"
+    }
   }
 ]

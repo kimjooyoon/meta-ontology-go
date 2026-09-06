@@ -331,7 +331,7 @@ func TestDecodeExtractorReportAcceptsLegacyWithoutStrategyEvidence(t *testing.T)
 
 func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
 	root := t.TempDir()
-	evidence := nativeStrategyEvidenceFixture(t)
+	evidence := strategyEvidenceFixture(t)
 	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
 	payload, err := json.Marshal(report)
 	if err != nil {
@@ -408,7 +408,7 @@ func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			root := t.TempDir()
-			value := extractionReportMapWithStrategyEvidence(t, nativeStrategyEvidenceFixture(t))
+			value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
 			subjects := value["subjects"].([]any)
 			subject := subjects[0].(map[string]any)
 			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
@@ -457,7 +457,7 @@ func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T)
 		for _, status := range statusValues {
 			t.Run("cohort8/"+location.name+"/"+status, func(t *testing.T) {
 				root := t.TempDir()
-				value := extractionReportMapWithStrategyEvidence(t, nativeStrategyEvidenceFixture(t))
+				value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
 				subjects := value["subjects"].([]any)
 				subject := subjects[0].(map[string]any)
 				evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
@@ -480,6 +480,7 @@ func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T)
 
 func TestDecodeExtractorReportRejectsPreparationProgressAsFinalProof(t *testing.T) {
 	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	assertExtractorReportMapAccepted(t, value)
 	subject := value["subjects"].([]any)[0].(map[string]any)
 	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
 	stages := evidence["proof_stages"].([]any)
@@ -500,6 +501,7 @@ func TestDecodeExtractorReportRejectsPreparationProgressAsFinalProof(t *testing.
 
 func TestDecodeExtractorReportRejectsTamperedFinalCapacityMeasurement(t *testing.T) {
 	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	assertExtractorReportMapAccepted(t, value)
 	subject := value["subjects"].([]any)[0].(map[string]any)
 	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
 	evidence["final_rendered_capacity"].(map[string]any)["overage"] = 1
@@ -514,6 +516,41 @@ func TestDecodeExtractorReportRejectsTamperedFinalCapacityMeasurement(t *testing
 	}
 	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
 		t.Fatal("tampered final rendered-capacity measurement was accepted")
+	}
+}
+
+func TestDecodeExtractorReportRejectsMissingFinalCapacityFields(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(map[string]any)
+	}{
+		{name: "whole evidence", mutate: func(evidence map[string]any) {
+			delete(evidence, "final_rendered_capacity")
+		}},
+		{name: "nested overage", mutate: func(evidence map[string]any) {
+			delete(evidence["final_rendered_capacity"].(map[string]any), "overage")
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+			assertExtractorReportMapAccepted(t, value)
+			subject := value["subjects"].([]any)[0].(map[string]any)
+			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+			tc.mutate(evidence)
+			payload, err := json.Marshal(value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root := t.TempDir()
+			path := filepath.Join(root, "report.json")
+			if err := os.WriteFile(path, payload, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+				t.Fatal("missing final rendered-capacity evidence was accepted")
+			}
+		})
 	}
 }
 
@@ -542,10 +579,26 @@ func extractionReportMapWithStrategyEvidence(t *testing.T, evidence projectionex
 	return value
 }
 
-// The fixture is copied from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
-// CI run 33951302941, runtime artifact 9964924639. The artifact archive SHA256 is
-// 0afff72d0e3593b4673350decc8ebfc8db499a50da92ad3ea545c7ab04c7d36d.
-func nativeStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+func assertExtractorReportMapAccepted(t *testing.T, value map[string]any) {
+	t.Helper()
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err != nil {
+		t.Fatalf("unmodified strategy evidence fixture was rejected: %v", err)
+	}
+}
+
+// This schema fixture is derived from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
+// CI run 33951302941, runtime artifact 9964924639. It is a test fixture rather
+// than a claim about a current native observation.
+func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
 	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
 	if err != nil {
@@ -560,7 +613,7 @@ func nativeStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvi
 
 func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
 	t.Helper()
-	evidence := nativeStrategyEvidenceFixture(t)
+	evidence := strategyEvidenceFixture(t)
 	evidence.AfterRenderedCapacityOverage = 3
 	evidence.PreparationProgress = &projectionextractor.PreparationProgressEvidence{
 		Operation:              evidence.Operation,
