@@ -13,6 +13,14 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
+const collapseFixtureSource = `package collapsefixture
+
+func CollapseFixture() int {
+	result := 1
+	return result
+}
+`
+
 func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 	root := collapseTestRepositoryRoot(t)
 	head := collapseTestHead(t, root)
@@ -34,6 +42,9 @@ func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := copyTree(root, fixtureWorkspace); err != nil {
+		t.Fatal(err)
+	}
+	if err := restoreCollapseFixture(fixtureWorkspace); err != nil {
 		t.Fatal(err)
 	}
 	if err := removeCollapseIntegrationTest(fixtureWorkspace); err != nil {
@@ -108,4 +119,9 @@ func collapseTestHead(t *testing.T, root string) string {
 
 func removeCollapseIntegrationTest(root string) error {
 	return os.Remove(filepath.Join(root, filepath.FromSlash("scripts/meta-execution/collapse_execution_test.go")))
+}
+
+func restoreCollapseFixture(root string) error {
+	path := filepath.Join(root, filepath.FromSlash("scripts/meta-execution/collapsefixture/collapse_fixture.go"))
+	return os.WriteFile(path, []byte(collapseFixtureSource), 0o644)
 }
