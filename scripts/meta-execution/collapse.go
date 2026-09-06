@@ -155,7 +155,7 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 		return operationMaterialization{}, newOperationError("evaluate-operation", "bind-collapse-contract", "CONTRACT_EVIDENCE_MALFORMED", "MALFORMED_EVIDENCE", "restore-operation-contract")
 	}
 
-	checkDescriptor := []string{"go", "run", "./scripts/refactor-metrics", "-root", "<workspace>", "-metrics", "<source-metrics>", "-sha", plan.HeadSHA, "-subject", action.Subject, "-check"}
+	checkDescriptor := []string{action.Evaluator, subject.Path, subject.Name}
 	checkActual := []string{"go", "run", "./scripts/refactor-metrics", "-root", temporary, "-metrics", metricsPath, "-sha", plan.HeadSHA, "-subject", action.Subject, "-check"}
 	preflight, preflightErr := runProcessObserved(temporary, environment, checkDescriptor, checkActual, &trace, pass, "evaluator")
 	if preflightErr != nil || preflight.Observation.ExitCode != 0 || !collapseSummaryMatches(preflight.Stdout, false) {

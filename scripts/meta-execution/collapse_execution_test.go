@@ -21,7 +21,13 @@ func CollapseFixture() int {
 }
 `
 
+const collapseNestedE2EEnvironment = "META_ONTOLOGY_COLLAPSE_NESTED_E2E"
+
 func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
+	if os.Getenv(collapseNestedE2EEnvironment) == "1" {
+		t.Skip("nested collapse E2E invocation")
+	}
+	t.Setenv(collapseNestedE2EEnvironment, "1")
 	root := collapseTestRepositoryRoot(t)
 	head := collapseTestHead(t, root)
 	subject := sourcepolicy.SourceSubject{Path: "scripts/meta-execution/collapsefixture/collapse_fixture.go", Line: 3, Name: "CollapseFixture"}
@@ -45,9 +51,6 @@ func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := restoreCollapseFixture(fixtureWorkspace); err != nil {
-		t.Fatal(err)
-	}
-	if err := removeCollapseIntegrationTest(fixtureWorkspace); err != nil {
 		t.Fatal(err)
 	}
 	gitDir, err := gitDirectory(root)
@@ -115,10 +118,6 @@ func collapseTestHead(t *testing.T, root string) string {
 		t.Fatalf("invalid test head %q", head)
 	}
 	return head
-}
-
-func removeCollapseIntegrationTest(root string) error {
-	return os.Remove(filepath.Join(root, filepath.FromSlash("scripts/meta-execution/collapse_execution_test.go")))
 }
 
 func restoreCollapseFixture(root string) error {
