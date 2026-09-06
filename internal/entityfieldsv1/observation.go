@@ -97,6 +97,9 @@ func Observe(filename, source string) (Observation, error) {
 	if err != nil {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: document lowering: %w", err)
 	}
+	if len(document.RuntimeBindings) != 0 {
+		return Observation{}, fmt.Errorf("REFUTED/EXACT: runtime binding plan is required")
+	}
 	model, err := bidir.GetWithEntityFieldsSupport(document, support)
 	if err != nil {
 		return Observation{}, fmt.Errorf("REFUTED/EXACT: BX Get: %w", err)
@@ -151,6 +154,9 @@ func entityFieldNodeIndex(model bidir.Model) int {
 }
 
 func projection(ir semantic.IR, model bidir.Model, source *syntax.File) (generator.SemanticIR, error) {
+	if len(ir.RuntimeBindings) != 0 {
+		return generator.SemanticIR{}, fmt.Errorf("runtime binding plan is required")
+	}
 	result := generator.SemanticIR{Package: ir.Package}
 	byID := make(map[string]bidir.Node, len(model.Nodes))
 	for _, node := range model.Nodes {

@@ -22,6 +22,10 @@ func Execute(request Request) Receipt {
 		return rejected(request, sourceDigest, "PARSE", "SOURCE_HEADER_UNKNOWN",
 			"package and namespace headers are required")
 	}
+	if len(file.Bindings) != 0 {
+		return rejected(request, sourceDigest, "PLAN", "SOURCE_RUNTIME_BINDINGS_UNSUPPORTED",
+			"runtime binding plan is required")
+	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
 		return rejected(request, sourceDigest, "LOWER", "SOURCE_SEMANTIC_INVALID",

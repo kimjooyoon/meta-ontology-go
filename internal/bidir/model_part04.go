@@ -57,6 +57,9 @@ func (m Model) ValidateWithTypes(registry semantic.TypeRegistry) error {
 			return fmt.Errorf("candidate %q is shadowed by a deterministic relation", candidate.SemanticKey())
 		}
 	}
+	if err := validateModelRuntimeBindings(m); err != nil {
+		return err
+	}
 	return nil
 }
 func validateID(id ID) error {

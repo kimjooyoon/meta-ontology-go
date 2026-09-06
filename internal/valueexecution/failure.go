@@ -9,6 +9,7 @@ const (
 	ReasonSourceReadFailed          = "VALUE_SOURCE_READ_FAILED"
 	ReasonSourceParseFailed         = "VALUE_SOURCE_PARSE_FAILED"
 	ReasonSemanticBindingFailed     = "VALUE_SEMANTIC_BINDING_FAILED"
+	ReasonPlanRequired              = "VALUE_PLAN_REQUIRED"
 	ReasonActivityNotFound          = "VALUE_ACTIVITY_NOT_FOUND"
 	ReasonProgramMissing            = "VALUE_PROGRAM_MISSING"
 	ReasonProgramUnknown            = "VALUE_PROGRAM_UNKNOWN"

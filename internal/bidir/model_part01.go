@@ -35,6 +35,23 @@ type Reference struct {
 	Span      SourceSpan
 }
 
+// BindingEndpoint identifies a declared activity and one of the fixed
+// runtime ports supported by the source binding extension.
+type BindingEndpoint struct {
+	Activity Reference
+	Port     Reference
+}
+
+// RuntimeBinding is carried separately from PROV relations because a
+// producer result identity and a consumer port cannot be reconstructed from
+// an entity-level used/wasGeneratedBy pair.
+type RuntimeBinding struct {
+	Producer BindingEndpoint
+	Consumer BindingEndpoint
+	Entity   ID
+	Span     SourceSpan
+}
+
 // Declaration is the parser-neutral representation of a DSL declaration.
 type Declaration struct {
 	Kind       Kind
@@ -54,6 +71,7 @@ type Document struct {
 	Declarations          []Declaration
 	Policies              []semantic.Policy
 	Relations             []Relation
+	RuntimeBindings       []RuntimeBinding
 	ImplicitActivityPorts bool
 }
 

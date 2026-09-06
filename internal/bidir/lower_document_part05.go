@@ -53,6 +53,62 @@ func lowerDocumentRelations(ctx context.Context, ir *semantic.IR, relations []Re
 	}
 	return nil
 }
+
+func lowerDocumentRuntimeBindings(ctx context.Context, ir *semantic.IR, document Document, namespace semantic.Namespace, ids map[ID]semantic.ID, names map[string]semantic.ID) error {
+	for index, binding := range document.RuntimeBindings {
+		if err := checkLowerContext(ctx); err != nil {
+			return err
+		}
+		if err := validateDocumentRuntimeBindingArity(document, namespace.String(), binding, index); err != nil {
+			return err
+		}
+		producer, err := resolveSemanticReference(binding.Producer.Activity, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d producer: %w", index, err)
+		}
+		consumer, err := resolveSemanticReference(binding.Consumer.Activity, namespace, ids, names)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d consumer: %w", index, err)
+		}
+		entity := semantic.ID(binding.Entity)
+		producerDeclaration, producerFound, err := documentActivityForBinding(document, namespace.String(), binding.Producer.Activity)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d producer declaration: %w", index, err)
+		}
+		consumerDeclaration, consumerFound, err := documentActivityForBinding(document, namespace.String(), binding.Consumer.Activity)
+		if err != nil {
+			return fmt.Errorf("runtime binding %d consumer declaration: %w", index, err)
+		}
+		if producerFound && consumerFound {
+			producerEntity, err := resolveSemanticReference(producerDeclaration.Outputs[0], namespace, ids, names)
+			if err != nil {
+				return fmt.Errorf("runtime binding %d producer output: %w", index, err)
+			}
+			consumerEntity, err := resolveSemanticReference(consumerDeclaration.Inputs[0], namespace, ids, names)
+			if err != nil {
+				return fmt.Errorf("runtime binding %d consumer input: %w", index, err)
+			}
+			if producerEntity != consumerEntity {
+				return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingTypeMismatch)
+			}
+			if entity != "" && entity != producerEntity {
+				return fmt.Errorf("runtime binding %d: %w", index, semantic.ErrRuntimeBindingTypeMismatch)
+			}
+			entity = producerEntity
+		}
+		ir.RuntimeBindings = append(ir.RuntimeBindings, semantic.RuntimeBinding{
+			Schema:           semantic.RuntimeBindingSchema,
+			ProducerActivity: producer,
+			ProducerPort:     binding.Producer.Port.Name,
+			ConsumerActivity: consumer,
+			ConsumerPort:     binding.Consumer.Port.Name,
+			Entity:           entity,
+			Span:             toSemanticSpan(binding.Span),
+		})
+	}
+	return nil
+}
+
 func validateLoweredContext(ctx context.Context, ir semantic.IR) error {
 	for range ir.Graph.Nodes() {
 		if err := checkLowerContext(ctx); err != nil {
