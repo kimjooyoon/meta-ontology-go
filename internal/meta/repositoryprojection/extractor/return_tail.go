@@ -282,6 +282,10 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 	if !ok {
 		return nil, fail("derive-recipe", "admit-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
 	}
+	capacityObligationName := obligationRenderedCapacity
+	if candidate.afterRenderedCapacityOverage > 0 {
+		capacityObligationName = obligationRenderedCapacityProgress
+	}
 	return &StrategyEvidence{
 		Strategy:                      suffixStrategy,
 		Operation:                     string(contract.Operation),
@@ -305,10 +309,6 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 		RenderedHelperLines:           candidate.renderedHelper.lines,
 		RenderedOuterHelperBytes:      candidate.renderedOuter.bytes,
 		RenderedOuterHelperLines:      candidate.renderedOuter.lines,
-		capacityObligationName := obligationRenderedCapacity
-		if candidate.afterRenderedCapacityOverage > 0 {
-			capacityObligationName = obligationRenderedCapacityProgress
-		}
 		Obligations: []ObligationEvidence{{
 			Name: capacityObligationName, Status: "PASS",
 			Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", candidate.beforeRenderedCapacityOverage, candidate.afterRenderedCapacityOverage, candidate.renderedOuter.lines, candidate.renderedHelper.lines),
