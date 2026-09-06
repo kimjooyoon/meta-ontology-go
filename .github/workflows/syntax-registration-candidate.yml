@@ -1,0 +1,54 @@
+name: Syntax registration candidate
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'internal/meta/syntaxregistration/**'
+      - 'cmd/syntax-registration-candidate/**'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - '.github/workflows/syntax-registration-candidate.yml'
+  push:
+    branches: [dev]
+    paths:
+      - 'internal/meta/syntaxregistration/**'
+      - 'cmd/syntax-registration-candidate/**'
+      - 'internal/meta/languagereadiness/languagesyntax/**'
+      - 'internal/meta/languageassurance/verticalsliceclosureshadow/**'
+      - 'examples/language-syntax-roundtrip/corpus.json'
+      - '.github/workflows/syntax-registration-candidate.yml'
+permissions:
+  contents: read
+concurrency:
+  group: syntax-registration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GOTOOLCHAIN: local
+      GOOO_SYNTAX_REGISTRATION_E2E: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.0
+          cache: false
+      - name: Generate and apply candidate only to a temporary copy
+        env:
+          GOOO_SYNTAX_REGISTRATION_EVIDENCE_DIR: ${{ runner.temp }}/syntax-registration-evidence
+        run: go test -count=1 -v ./internal/meta/syntaxregistration ./cmd/syntax-registration-candidate
+      - name: Preserve native candidate evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: syntax-registration-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/syntax-registration-evidence
+          if-no-files-found: warn
+          retention-days: 14
