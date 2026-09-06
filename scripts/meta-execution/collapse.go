@@ -20,42 +20,42 @@ import (
 )
 
 type collapseSourceInspection struct {
-	Subject              string
-	PackageName          string
+	Subject             string
+	PackageName         string
 	Receiver             string
-	Signature            string
-	OutsideDeclarations  []string
-	CommentGroups        []string
-	StartLine            int
-	EndLine              int
-	AssignmentReturn     bool
-	SingleReturn         bool
-	ReturnExpression     string
-	CommentsPreserved    bool
+	Signature           string
+	OutsideDeclarations []string
+	CommentGroups       []string
+	StartLine           int
+	EndLine             int
+	AssignmentReturn    bool
+	SingleReturn        bool
+	ReturnExpression    string
+	CommentsPreserved   bool
 }
 
 type collapseInstanceEvidence struct {
-	Operation                     string                  `json:"operation"`
-	Subject                       string                  `json:"subject"`
-	BeforePackageName             string                  `json:"before_package_name"`
-	AfterPackageName              string                  `json:"after_package_name"`
-	Receiver                      string                  `json:"receiver"`
-	InputContractSourceDigest     string                  `json:"input_contract_source_digest"`
-	InputContractSemanticDigest   string                  `json:"input_contract_semantic_digest"`
-	BeforeSignature               string                  `json:"before_signature"`
-	AfterSignature                string                  `json:"after_signature"`
-	BeforeCommentGroups           []string                `json:"before_comment_groups"`
-	AfterCommentGroups            []string                `json:"after_comment_groups"`
-	BeforeOutsideDeclarations     []string                `json:"before_outside_declarations"`
-	AfterOutsideDeclarations      []string                `json:"after_outside_declarations"`
-	BeforeSourceDigest             string                  `json:"before_source_digest"`
-	AfterSourceDigest              string                  `json:"after_source_digest"`
-	Before                         []byte                  `json:"before"`
-	After                          []byte                  `json:"after"`
-	ChangedFiles                   []string                `json:"changed_files"`
-	PreflightCount                 int                     `json:"preflight_count"`
-	ApplyCount                     int                     `json:"apply_count"`
-	Process                        operationReplayEvidence `json:"process"`
+	Operation                   string                  `json:"operation"`
+	Subject                     string                  `json:"subject"`
+	BeforePackageName           string                  `json:"before_package_name"`
+	AfterPackageName            string                  `json:"after_package_name"`
+	Receiver                    string                  `json:"receiver"`
+	InputContractSourceDigest   string                  `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string                  `json:"input_contract_semantic_digest"`
+	BeforeSignature             string                  `json:"before_signature"`
+	AfterSignature              string                  `json:"after_signature"`
+	BeforeCommentGroups         []string                `json:"before_comment_groups"`
+	AfterCommentGroups          []string                `json:"after_comment_groups"`
+	BeforeOutsideDeclarations   []string                `json:"before_outside_declarations"`
+	AfterOutsideDeclarations    []string                `json:"after_outside_declarations"`
+	BeforeSourceDigest          string                  `json:"before_source_digest"`
+	AfterSourceDigest            string                  `json:"after_source_digest"`
+	Before                      []byte                  `json:"before"`
+	After                       []byte                  `json:"after"`
+	ChangedFiles                []string                `json:"changed_files"`
+	PreflightCount              int                     `json:"preflight_count"`
+	ApplyCount                  int                     `json:"apply_count"`
+	Process                     operationReplayEvidence `json:"process"`
 }
 
 func validateCollapseAction(action generation.Action) *operationError {
@@ -582,9 +582,9 @@ func changedWorkspaceFiles(before map[string]string, root, subject string) ([]st
 func collapseIndicatorReceipts(action generation.Action, headSHA string, before, after collapseSourceInspection) ([]generation.IndicatorReceipt, bool) {
 	commentsPreserved := before.CommentsPreserved && slices.Equal(before.CommentGroups, after.CommentGroups)
 	values := map[string]bool{
-		"go.ast.single-match/v1":    before.AssignmentReturn,
-		"go.comments.preserved/v1":  commentsPreserved,
-		"go.format.fixed-point/v1":  after.SingleReturn && after.EndLine < before.EndLine,
+		"go.ast.single-match/v1":   before.AssignmentReturn,
+		"go.comments.preserved/v1": commentsPreserved,
+		"go.format.fixed-point/v1": after.SingleReturn && after.EndLine < before.EndLine,
 	}
 	result := make([]generation.IndicatorReceipt, 0, len(action.RequiredIndicatorIDs))
 	allPassed := true

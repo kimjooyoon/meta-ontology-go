@@ -34,7 +34,9 @@ func TestCollapseDispatchRejectsSingleFieldBindingTampering(t *testing.T) {
 		}},
 		{name: "metric producer", mutate: func(candidate *generation.Action) { candidate.MetricProducer = "tampered-producer" }},
 		{name: "source proof", mutate: func(candidate *generation.Action) { candidate.SourceIndicator.Proof = sourcepolicy.ProofCoherence }},
-		{name: "indicator outcome", mutate: func(candidate *generation.Action) { candidate.IndicatorOutcome.Decision = sourcepolicy.IndicatorDecisionPass }},
+		{name: "indicator outcome", mutate: func(candidate *generation.Action) {
+			candidate.IndicatorOutcome.Decision = sourcepolicy.IndicatorDecisionPass
+		}},
 	}
 	for _, mutation := range mutations {
 		t.Run(mutation.name, func(t *testing.T) {
