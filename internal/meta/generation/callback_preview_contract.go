@@ -275,6 +275,7 @@ type callbackPreviewBindingSpec struct {
 var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 	{Name: "CallbackPreviewInput", ID: "gooo://meta-callback-preview/entity/input", Fields: []callbackPreviewFieldSpec{
 		{Name: "LogicalPath", ID: "gooo://meta-callback-preview/field/input-logical-path", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "LoweringStrategy", ID: "gooo://meta-callback-preview/field/input-lowering-strategy", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "Subject", ID: "gooo://meta-callback-preview/field/input-subject", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "SourceDigest", ID: "gooo://meta-callback-preview/field/input-source-digest", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "State", ID: "gooo://meta-callback-preview/field/input-state", Presence: semantic.Required, Cardinality: semantic.One},
@@ -340,7 +341,7 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 }
 
 var callbackPreviewActivitySpecs = []callbackPreviewActivitySpec{
-	{Name: "GenerateBoundedCallbackCandidate", InputEntity: "CallbackPreviewInput", OutputEntity: "BoundedCallbackCandidate", ValueProgram: "callback-preview.candidate:v1;promotion=NONE"},
+	{Name: "GenerateBoundedCallbackCandidate", InputEntity: "CallbackPreviewInput", OutputEntity: "BoundedCallbackCandidate", ValueProgram: "callback-preview.candidate:v2;lowering=input.LoweringStrategy;promotion=NONE"},
 	{Name: "BindCallbackCaptures", InputEntity: "BoundedCallbackCandidate", OutputEntity: "CallbackCaptures", ValueProgram: "callback-preview.captures:v1"},
 	{Name: "RecordPendingCallbackEffects", InputEntity: "CallbackCaptures", OutputEntity: "PendingCallbackEffects", ValueProgram: "callback-preview.effects:v1;state=UNKNOWN"},
 	{Name: "CloseCallbackPreview", InputEntity: "PendingCallbackEffects", OutputEntity: "CallbackPreviewEvidence", ValueProgram: "callback-preview.evidence:v1;operation-result=FORBIDDEN;apply=FORBIDDEN"},

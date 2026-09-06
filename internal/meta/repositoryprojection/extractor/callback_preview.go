@@ -28,12 +28,15 @@ const (
 	callbackPreviewUnknownDependency = "DEPENDENCY_BLOCKED"
 	callbackPreviewUnknownAmbiguous  = "AMBIGUOUS"
 	callbackPreviewUnknownUnbounded  = "UNBOUNDED"
+	callbackPreviewWrapperLowering   = "wrapper"
+	callbackPreviewFactoryLowering   = "closure-factory"
 )
 
 // CallbackPreviewResult is deliberately not Result. Its candidate is caller-
 // owned preview data and cannot enter the normal OperationResult or staging
 // path.
 type CallbackPreviewResult struct {
+	LoweringStrategy         string                             `json:"lowering_strategy"`
 	Schema                   string                             `json:"schema"`
 	LogicalPath              string                             `json:"logical_path"`
 	Subject                  string                             `json:"subject"`
@@ -121,6 +124,15 @@ type CallbackPreviewEvidence struct {
 // shape used by the pagination fixture. It never writes the repository and
 // never returns an accepted extraction Result.
 func PreviewBoundedPaginationCallback(root, logical string) (CallbackPreviewResult, error) {
+	return PreviewBoundedPaginationCallbackWithStrategy(root, logical, callbackPreviewWrapperLowering)
+}
+
+// PreviewBoundedPaginationCallbackWithStrategy selects a typed, recorded preview
+// lowering. Neither lowering can authorize an OperationResult or repository write.
+func PreviewBoundedPaginationCallbackWithStrategy(root, logical, lowering string) (CallbackPreviewResult, error) {
+	if lowering != callbackPreviewWrapperLowering && lowering != callbackPreviewFactoryLowering {
+		return CallbackPreviewResult{}, fmt.Errorf("unsupported callback preview lowering %q", lowering)
+	}
 	contract, err := generation.LoadCallbackPreviewContract()
 	if err != nil {
 		return CallbackPreviewResult{}, err
@@ -130,7 +142,8 @@ func PreviewBoundedPaginationCallback(root, logical string) (CallbackPreviewResu
 		return CallbackPreviewResult{}, err
 	}
 	base := CallbackPreviewResult{Schema: callbackPreviewSchema, LogicalPath: logical, Subject: "func:" + callbackPreviewTarget, SourceDigest: callbackPreviewDigest(source), ContractSourceDigest: contract.SourceDigest, ContractSemanticDigest: contract.SemanticDigest, State: callbackPreviewStateUnknown, Stage: callbackPreviewStage, BlockedBy: []string{}, OperationResultAdmission: "FORBIDDEN", ApplyPermission: "FORBIDDEN"}
-	inputRecord, err := contract.BuildCallbackPreviewRecord(contract.InputEntity, map[string]string{"LogicalPath": logical, "Subject": base.Subject, "SourceDigest": base.SourceDigest, "State": base.State})
+	base.LoweringStrategy = lowering
+	inputRecord, err := contract.BuildCallbackPreviewRecord(contract.InputEntity, map[string]string{"LogicalPath": logical, "LoweringStrategy": lowering, "Subject": base.Subject, "SourceDigest": base.SourceDigest, "State": base.State})
 	if err != nil {
 		return CallbackPreviewResult{}, err
 	}
@@ -164,7 +177,12 @@ func PreviewBoundedPaginationCallback(root, logical string) (CallbackPreviewResu
 		return base, nil
 	}
 	effects := callbackPreviewEffects(callback, typeEvidence, fset)
-	candidate, err := callbackPreviewCandidate(source, logical, fset, file, target, callback, captures, effects)
+	var candidate CallbackPreviewCandidate
+	if callbackPreviewRecordFieldMap(inputRecord)["LoweringStrategy"] == callbackPreviewFactoryLowering {
+		candidate, err = callbackPreviewFactoryCandidate(root, source, logical, fset, file, target, callback, typeEvidence, captures, effects)
+	} else {
+		candidate, err = callbackPreviewCandidate(source, logical, fset, file, target, callback, captures, effects)
+	}
 	if err != nil {
 		return CallbackPreviewResult{}, err
 	}
@@ -383,6 +401,9 @@ func ValidateCallbackPreviewResult(result CallbackPreviewResult) error {
 }
 
 func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEvidence, result CallbackPreviewResult) error {
+	if result.LoweringStrategy != callbackPreviewWrapperLowering && result.LoweringStrategy != callbackPreviewFactoryLowering {
+		return fmt.Errorf("callback preview lowering strategy is unknown")
+	}
 	if result.Schema != callbackPreviewSchema || result.State != callbackPreviewStateUnknown || result.OperationResultAdmission != "FORBIDDEN" || result.ApplyPermission != "FORBIDDEN" || result.Stage != callbackPreviewStage || result.Reason == "" || result.UnknownClass == "" || result.Step == "" || result.NextOperation == "" || result.BlockedBy == nil {
 		return fmt.Errorf("callback preview result identity or admission is invalid")
 	}
@@ -418,6 +439,9 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 			return err
 		}
 		inputValues := callbackPreviewRecordFieldMap(input)
+		if inputValues["LoweringStrategy"] != result.LoweringStrategy {
+			return fmt.Errorf("callback preview direct lowering input is not bound")
+		}
 		if inputValues["LogicalPath"] != result.LogicalPath || inputValues["Subject"] != result.Subject || inputValues["SourceDigest"] != result.SourceDigest || inputValues["State"] != result.State {
 			return fmt.Errorf("callback preview direct input record is not bound")
 		}
@@ -435,6 +459,9 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return nil
 	}
 	candidate := result.Candidate
+	if err := validateCallbackPreviewLowering(result); err != nil {
+		return err
+	}
 	if candidate.CandidateIdentity == "" || candidate.SourceDigest != result.SourceDigest || candidate.CandidateDigest == "" || callbackPreviewDigest([]byte(candidate.CandidateSource)) != candidate.CandidateDigest || candidate.HelperBytes != len([]byte(candidate.HelperSource)) || candidate.HelperLines != physicalLines([]byte(candidate.HelperSource)) || candidate.State != result.State || candidate.Promotion != callbackPreviewPromotionNone || candidate.CaptureCount != len(result.Captures) || candidate.PendingEffectCount != len(result.PendingEffects) || candidate.HelperLines <= 0 || candidate.HelperLines > functionLineLimit || candidate.ParentFunctionLines <= 0 || candidate.ParentFunctionLines > functionLineLimit {
 		return fmt.Errorf("callback preview candidate does not match bounded result")
 	}
@@ -464,6 +491,9 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		records[record.Entity] = callbackPreviewRecordFieldMap(record)
 	}
 	inputValues := records[contract.InputEntity]
+	if inputValues["LoweringStrategy"] != result.LoweringStrategy {
+		return fmt.Errorf("callback preview lowering input is not bound")
+	}
 	if inputValues["LogicalPath"] != result.LogicalPath || inputValues["Subject"] != result.Subject || inputValues["SourceDigest"] != result.SourceDigest || inputValues["State"] != result.State {
 		return fmt.Errorf("callback preview input record is not bound")
 	}

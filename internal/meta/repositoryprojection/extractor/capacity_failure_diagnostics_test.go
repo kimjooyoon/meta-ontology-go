@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -112,10 +113,5 @@ func TestCapacityFailureRetainsEveryRejectedSuffixInAttemptOrder(t *testing.T) {
 }
 
 func capacityDiagnosticPresent(diagnostics []string, want string) bool {
-	for _, diagnostic := range diagnostics {
-		if diagnostic == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(diagnostics, want)
 }

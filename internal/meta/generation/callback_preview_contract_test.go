@@ -33,6 +33,7 @@ func TestCallbackPreviewContractIsTypedAndPreviewOnly(t *testing.T) {
 	}
 	for _, required := range []string{
 		"CallbackPreviewInput.SourceDigest",
+		"CallbackPreviewInput.LoweringStrategy",
 		"BoundedCallbackCandidate.CandidateDigest",
 		"BoundedCallbackCandidate.PendingEffectCount",
 		"CallbackCaptures.ObjectIdentities",

@@ -16,11 +16,12 @@ func main() {
 	root := flag.String("root", "", "read-only repository root")
 	logical := flag.String("logical", "cmd/language-readiness-witness/predecessor-selection/pagination_test.go", "logical pagination fixture path")
 	output := flag.String("output", "", "caller-owned preview JSON output")
+	lowering := flag.String("strategy", "wrapper", "preview lowering: wrapper or closure-factory; neither permits apply")
 	flag.Parse()
 	if *root == "" || *output == "" {
 		fatal("root and output are required")
 	}
-	preview, err := extractor.PreviewBoundedPaginationCallback(*root, filepath.ToSlash(*logical))
+	preview, err := extractor.PreviewBoundedPaginationCallbackWithStrategy(*root, filepath.ToSlash(*logical), *lowering)
 	if err != nil {
 		fatal(err.Error())
 	}

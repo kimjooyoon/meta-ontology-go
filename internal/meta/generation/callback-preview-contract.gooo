@@ -3,6 +3,7 @@ namespace callbackpreview
 
 entity CallbackPreviewInput id "gooo://meta-callback-preview/entity/input" fields {
     field LogicalPath id "gooo://meta-callback-preview/field/input-logical-path" type string required one
+    field LoweringStrategy id "gooo://meta-callback-preview/field/input-lowering-strategy" type string required one
     field Subject id "gooo://meta-callback-preview/field/input-subject" type string required one
     field SourceDigest id "gooo://meta-callback-preview/field/input-source-digest" type string required one
     field State id "gooo://meta-callback-preview/field/input-state" type string required one
@@ -70,7 +71,7 @@ entity CallbackPreviewEvidence id "gooo://meta-callback-preview/entity/evidence"
     field BlockedBy id "gooo://meta-callback-preview/field/evidence-blocked-by" type string required one
 }
 
-activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v1;promotion=NONE"
+activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v2;lowering=input.LoweringStrategy;promotion=NONE"
 activity BindCallbackCaptures(BoundedCallbackCandidate) -> CallbackCaptures computes "callback-preview.captures:v1"
 activity RecordPendingCallbackEffects(CallbackCaptures) -> PendingCallbackEffects computes "callback-preview.effects:v1;state=UNKNOWN"
 activity CloseCallbackPreview(PendingCallbackEffects) -> CallbackPreviewEvidence computes "callback-preview.evidence:v1;operation-result=FORBIDDEN;apply=FORBIDDEN"
