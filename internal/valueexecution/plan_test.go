@@ -75,7 +75,7 @@ func TestPlanRejectsUncompiledOrTamperedPublicIdentityBeforeApply(t *testing.T) 
 		t.Fatal(err)
 	}
 	for name, mutate := range map[string]func(*Plan){
-		"source digest": func(plan *Plan) { plan.SourceDigest = "sha256:" + strings.Repeat("0", 64) },
+		"source digest":        func(plan *Plan) { plan.SourceDigest = "sha256:" + strings.Repeat("0", 64) },
 		"semantic fingerprint": func(plan *Plan) { plan.SemanticFingerprint = "tampered" },
 	} {
 		t.Run(name, func(t *testing.T) {

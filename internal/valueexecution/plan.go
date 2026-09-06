@@ -26,10 +26,10 @@ type Plan struct {
 // Execution is a detached summary of one plan run. Results contain evidence,
 // not ProducedResult handles; the handles never leave the per-run store.
 type Execution struct {
-	Results     map[string]ResultEvidence `json:"results"`
-	ApplyCalls  int                       `json:"apply_calls"`
-	Deliveries  int                       `json:"deliveries"`
-	Activities  []string                  `json:"activities"`
+	Results    map[string]ResultEvidence `json:"results"`
+	ApplyCalls int                       `json:"apply_calls"`
+	Deliveries int                       `json:"deliveries"`
+	Activities []string                  `json:"activities"`
 }
 
 // CompilePlan parses, lowers, validates, and compiles every value activity in
