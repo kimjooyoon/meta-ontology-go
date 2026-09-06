@@ -75,7 +75,7 @@ func CompilePlan(filename string, source []byte) (Plan, error) {
 // Integer input for each root activity; bound activities must receive their
 // input from a validated ProducedResult edge.
 func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
-	order, incoming, outgoing, err := plan.executionOrder()
+	order, incoming, _, err := plan.executionOrder()
 	if err != nil {
 		return Execution{}, err
 	}
