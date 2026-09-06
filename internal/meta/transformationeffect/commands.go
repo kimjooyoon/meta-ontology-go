@@ -94,11 +94,30 @@ func freshMetrics(box *workspace.Sandbox, expected string) (linecaps.LineMetrics
 	if report.CommitSHA != expected {
 		return report, nil, fmt.Errorf("remeasured SHA is not exact")
 	}
-	return report, canonicalMetricsPayload(stdout.Bytes(), box.Root), nil
+	canonicalPayload, err := canonicalMetricsPayload(stdout.Bytes(), box.Root)
+	if err != nil {
+		return report, nil, err
+	}
+	return report, canonicalPayload, nil
 }
 
-func canonicalMetricsPayload(payload []byte, root string) []byte {
-	return bytes.ReplaceAll(payload, []byte(root), []byte("<workspace>"))
+func canonicalMetricsPayload(payload []byte, root string) ([]byte, error) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &fields); err != nil {
+		return nil, err
+	}
+	for _, field := range []string{"root", "storage_root"} {
+		raw, ok := fields[field]
+		if !ok {
+			continue
+		}
+		var value string
+		if err := json.Unmarshal(raw, &value); err != nil || value != root {
+			continue
+		}
+		fields[field] = json.RawMessage(`"<workspace>"`)
+	}
+	return json.Marshal(fields)
 }
 
 func residualActionable(report linecaps.LineMetricsReport, action generation.Action) int {
