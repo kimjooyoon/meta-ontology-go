@@ -272,6 +272,16 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-record-binding",
+      "path": "examples/language-record-binding/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields": true
+    },
+    {
       "id": "self-improvement-value-witness-execution-input",
       "path": "examples/self-improvement-value-witness-execution-input/contract.gooo",
       "kind": "VALID",

@@ -386,9 +386,33 @@ jobs:
           cmp -s "$METRICS_DIR/self-improvement-plan.json" "$METRICS_DIR/self-improvement-replay.json"
           bash ./scripts/operation-artifact-ci/build-observations.sh "$METRICS_DIR"
           bash ./scripts/operation-artifact-ci/evaluate.sh "$METRICS_DIR"
+      # Each execution includes native first/replay verification internally.
+      # The exact-head focused run for PR #739 took 23m54s; do not put both
+      # complete executions under the inventory step's 15-minute budget.
+      - name: Execute declared meta-operation plan
+        timeout-minutes: 30
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution.json"
+      - name: Replay declared meta-operation plan
+        timeout-minutes: 30
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-execution -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-execution-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-execution.json" "$METRICS_DIR/self-improvement-execution-replay.json"
+      - name: Emit source metric receipts and feedback
+        timeout-minutes: 15
+        env:
+          METRICS_COMMIT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          GENERATION_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          METRICS_DIR: ${{ runner.temp }}/source-metrics
+        run: |
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts.json"
           go run ./scripts/meta-receipts -plan "$METRICS_DIR/self-improvement-plan.json" -output "$METRICS_DIR/self-improvement-receipts-replay.json"
           cmp -s "$METRICS_DIR/self-improvement-receipts.json" "$METRICS_DIR/self-improvement-receipts-replay.json"
