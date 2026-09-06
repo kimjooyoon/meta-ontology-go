@@ -1,0 +1,68 @@
+package callbackpreview
+namespace callbackpreview
+
+entity CallbackPreviewInput id "gooo://meta-callback-preview/entity/input" fields {
+    field LogicalPath id "gooo://meta-callback-preview/field/input-logical-path" type string required one
+    field Subject id "gooo://meta-callback-preview/field/input-subject" type string required one
+    field SourceDigest id "gooo://meta-callback-preview/field/input-source-digest" type string required one
+    field State id "gooo://meta-callback-preview/field/input-state" type string required one
+}
+
+entity BoundedCallbackCandidate id "gooo://meta-callback-preview/entity/candidate" fields {
+    field CandidateIdentity id "gooo://meta-callback-preview/field/candidate-identity" type string required one
+    field SourceDigest id "gooo://meta-callback-preview/field/candidate-source-digest" type string required one
+    field CandidateDigest id "gooo://meta-callback-preview/field/candidate-digest" type string required one
+    field HelperName id "gooo://meta-callback-preview/field/candidate-helper-name" type string required one
+    field HelperBytes id "gooo://meta-callback-preview/field/candidate-helper-bytes" type string required one
+    field HelperLines id "gooo://meta-callback-preview/field/candidate-helper-lines" type string required one
+    field ParentFunctionLines id "gooo://meta-callback-preview/field/candidate-parent-lines" type string required one
+    field CaptureCount id "gooo://meta-callback-preview/field/candidate-capture-count" type string required one
+    field PendingEffectCount id "gooo://meta-callback-preview/field/candidate-pending-effect-count" type string required one
+    field State id "gooo://meta-callback-preview/field/candidate-state" type string required one
+    field Promotion id "gooo://meta-callback-preview/field/candidate-promotion" type string required one
+}
+
+entity CallbackCaptures id "gooo://meta-callback-preview/entity/captures" fields {
+    field CandidateIdentity id "gooo://meta-callback-preview/field/captures-candidate-identity" type string required one
+    field CaptureNames id "gooo://meta-callback-preview/field/captures-names" type string optional many
+    field ObjectIdentities id "gooo://meta-callback-preview/field/captures-object-identities" type string optional many
+    field ObjectTypes id "gooo://meta-callback-preview/field/captures-object-types" type string optional many
+    field BindingModes id "gooo://meta-callback-preview/field/captures-binding-modes" type string optional many
+    field Count id "gooo://meta-callback-preview/field/captures-count" type string required one
+}
+
+entity PendingCallbackEffects id "gooo://meta-callback-preview/entity/pending-effects" fields {
+    field CandidateIdentity id "gooo://meta-callback-preview/field/effects-candidate-identity" type string required one
+    field CallIdentities id "gooo://meta-callback-preview/field/effects-call-identities" type string optional many
+    field Symbols id "gooo://meta-callback-preview/field/effects-symbols" type string optional many
+    field Signatures id "gooo://meta-callback-preview/field/effects-signatures" type string optional many
+    field ReceiverTypes id "gooo://meta-callback-preview/field/effects-receiver-types" type string optional many
+    field EffectKinds id "gooo://meta-callback-preview/field/effects-kinds" type string optional many
+    field States id "gooo://meta-callback-preview/field/effects-states" type string optional many
+    field Count id "gooo://meta-callback-preview/field/effects-count" type string required one
+    field ResolvedCount id "gooo://meta-callback-preview/field/effects-resolved-count" type string required one
+    field State id "gooo://meta-callback-preview/field/effects-state" type string required one
+}
+
+entity CallbackPreviewEvidence id "gooo://meta-callback-preview/entity/evidence" fields {
+    field CandidateIdentity id "gooo://meta-callback-preview/field/evidence-candidate-identity" type string required one
+    field SourceDigest id "gooo://meta-callback-preview/field/evidence-source-digest" type string required one
+    field CandidateDigest id "gooo://meta-callback-preview/field/evidence-candidate-digest" type string required one
+    field State id "gooo://meta-callback-preview/field/evidence-state" type string required one
+    field CaptureCount id "gooo://meta-callback-preview/field/evidence-capture-count" type string required one
+    field PendingEffectCount id "gooo://meta-callback-preview/field/evidence-pending-effect-count" type string required one
+    field ResolvedEffectCount id "gooo://meta-callback-preview/field/evidence-resolved-effect-count" type string required one
+    field HelperLines id "gooo://meta-callback-preview/field/evidence-helper-lines" type string required one
+    field ParentFunctionLines id "gooo://meta-callback-preview/field/evidence-parent-lines" type string required one
+    field OperationResultAdmission id "gooo://meta-callback-preview/field/evidence-operation-result-admission" type string required one
+    field ApplyPermission id "gooo://meta-callback-preview/field/evidence-apply-permission" type string required one
+}
+
+activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v1;promotion=NONE"
+activity BindCallbackCaptures(BoundedCallbackCandidate) -> CallbackCaptures computes "callback-preview.captures:v1"
+activity RecordPendingCallbackEffects(CallbackCaptures) -> PendingCallbackEffects computes "callback-preview.effects:v1;state=UNKNOWN"
+activity CloseCallbackPreview(PendingCallbackEffects) -> CallbackPreviewEvidence computes "callback-preview.evidence:v1;operation-result=FORBIDDEN;apply=FORBIDDEN"
+
+bind GenerateBoundedCallbackCandidate.result -> BindCallbackCaptures.input
+bind BindCallbackCaptures.result -> RecordPendingCallbackEffects.input
+bind RecordPendingCallbackEffects.result -> CloseCallbackPreview.input

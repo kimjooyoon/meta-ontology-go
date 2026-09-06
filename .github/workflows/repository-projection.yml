@@ -9,6 +9,55 @@ permissions:
   contents: read
 
 jobs:
+  callback-preview:
+    name: pagination callback preview conformance
+    runs-on: ubuntu-latest
+    env:
+      EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out the exact source identity
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ env.EXACT_SHA }}
+
+      - name: Install the declared Go toolchain
+        uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.0
+          cache: false
+
+      - name: Run original pagination and preview-only candidate cohort
+        run: |
+          mkdir -p "$RUNNER_TEMP/callback-preview"
+          go test ./cmd/language-readiness-witness/predecessor-selection ./internal/meta/generation ./internal/meta/repositoryprojection/extractor
+          go run ./cmd/callback-preview \
+            --root "$GITHUB_WORKSPACE" \
+            --output "$RUNNER_TEMP/callback-preview/pagination.json"
+          jq -e \
+            '.schema == "gooo.callback-preview/v1" and
+             .state == "UNKNOWN" and
+             .reason == "PENDING_TYPED_CALLBACK_EFFECTS" and
+             .candidate.state == "UNKNOWN" and
+             .candidate.promotion == "NONE" and
+             .operation_result_admission == "FORBIDDEN" and
+             .apply_permission == "FORBIDDEN" and
+             (.candidate.helper_lines > 0 and .candidate.helper_lines <= 75) and
+             (.candidate.parent_function_lines > 0 and .candidate.parent_function_lines <= 75) and
+             (.captures | length) == .candidate.capture_count and
+             (.pending_effects | length) == .candidate.pending_effect_count and
+             (.pending_effects | length) > 0' \
+            "$RUNNER_TEMP/callback-preview/pagination.json"
+
+      - name: Upload preview-only callback evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: callback-preview-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/callback-preview/pagination.json
+          if-no-files-found: error
+          retention-days: 14
+
   roundtrip:
     name: repository projection roundtrip
     runs-on: ubuntu-latest
