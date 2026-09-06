@@ -36,6 +36,11 @@ entity CallbackPackageTypes id "gooo://callback-extraction/entity/CallbackPackag
 }
 
 entity CallbackObserverEvidence id "gooo://callback-extraction/entity/CallbackObserverEvidence" fields {
+    field Scope id "gooo://callback-extraction/field/CallbackObserverEvidence/Scope" type string required one
+    field SourcePackageDigest id "gooo://callback-extraction/field/CallbackObserverEvidence/SourcePackageDigest" type string required one
+    field FinalPackageDigest id "gooo://callback-extraction/field/CallbackObserverEvidence/FinalPackageDigest" type string required one
+    field TestEventDigest id "gooo://callback-extraction/field/CallbackObserverEvidence/TestEventDigest" type string required one
+    field ObservationDecision id "gooo://callback-extraction/field/CallbackObserverEvidence/ObservationDecision" type string required one
     field State id "gooo://callback-extraction/field/CallbackObserverEvidence/State" type string required one
     field EvidenceDigest id "gooo://callback-extraction/field/CallbackObserverEvidence/EvidenceDigest" type string required one
     field ObservedCount id "gooo://callback-extraction/field/CallbackObserverEvidence/ObservedCount" type string required one
@@ -53,7 +58,7 @@ activity BindCallbackExtractionSource(CallbackExtractionInput) -> CallbackSource
 activity ProveCallbackExtractionStructure(CallbackSourceBinding) -> CallbackStructureProof computes "callback-extraction.structure:v1;authority=PROPOSAL_ONLY"
 activity RenderCallbackExtractionPackage(CallbackStructureProof) -> CallbackPackageCapacity computes "callback-extraction.capacity:v1;authority=PROPOSAL_ONLY"
 activity CheckCallbackExtractionPackage(CallbackPackageCapacity) -> CallbackPackageTypes computes "callback-extraction.types:v1;authority=PROPOSAL_ONLY"
-activity BindCallbackExtractionObservers(CallbackPackageTypes) -> CallbackObserverEvidence computes "callback-extraction.observers:v1;authority=PROPOSAL_ONLY"
+activity BindCallbackExtractionObservers(CallbackPackageTypes) -> CallbackObserverEvidence computes "callback-extraction.observers:v2;scope=PACKAGE_TEST_EVENTS_ONLY;authority=PROPOSAL_ONLY"
 activity RecordCallbackExtractionAdmission(CallbackObserverEvidence) -> CallbackExtractionAdmission computes "callback-extraction.admission:v1;authority=PROPOSAL_ONLY"
 
 bind BindCallbackExtractionSource.result -> ProveCallbackExtractionStructure.input

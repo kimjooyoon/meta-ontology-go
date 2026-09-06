@@ -98,10 +98,17 @@ func validateCallbackExtractionEntity(file *syntax.File, ir semantic.IR, name st
 }
 
 func validateCallbackExtractionStep(file *syntax.File, ir semantic.IR, index int, step CallbackExtractionStep) (CallbackExtractionStep, error) {
-	if err := validateCallbackExtractionEntity(file, ir, step.Output, []string{"State", "EvidenceDigest", "ObservedCount", "RequiredCount"}); err != nil {
+	fields := []string{"State", "EvidenceDigest", "ObservedCount", "RequiredCount"}
+	if step.ID == "observers" {
+		fields = append([]string{"Scope", "SourcePackageDigest", "FinalPackageDigest", "TestEventDigest", "ObservationDecision"}, fields...)
+	}
+	if err := validateCallbackExtractionEntity(file, ir, step.Output, fields); err != nil {
 		return step, err
 	}
 	step.Program = "callback-extraction." + step.ID + ":v1;authority=PROPOSAL_ONLY"
+	if step.ID == "observers" {
+		step.Program = "callback-extraction.observers:v2;scope=PACKAGE_TEST_EVENTS_ONLY;authority=PROPOSAL_ONLY"
+	}
 	declaration, ok := findCallbackPreviewActivity(file, step.Activity)
 	if !ok || len(declaration.Inputs) != 1 || declaration.Inputs[0].Name != step.Input || declaration.Output != step.Output ||
 		!declaration.ValueProgramPresent || declaration.ValueProgram != step.Program {
@@ -142,7 +149,12 @@ func (contract CallbackExtractionContract) BuildRecord(index int, state, evidenc
 		return CallbackExtractionRecord{}, fmt.Errorf("callback extraction proposal has no observer admission authority")
 	}
 	step := contract.Steps[index]
-	return CallbackExtractionRecord{Activity: step.Activity, Entity: step.Output, Program: step.Program, Fields: map[string]string{
+	fields := map[string]string{
 		"State": state, "EvidenceDigest": evidence, "ObservedCount": strconv.Itoa(observed), "RequiredCount": strconv.Itoa(required),
-	}}, nil
+	}
+	if index == 4 {
+		fields["Scope"], fields["ObservationDecision"] = "PACKAGE_TEST_EVENTS_ONLY", "UNKNOWN"
+		fields["SourcePackageDigest"], fields["FinalPackageDigest"], fields["TestEventDigest"] = "", "", ""
+	}
+	return CallbackExtractionRecord{Activity: step.Activity, Entity: step.Output, Program: step.Program, Fields: fields}, nil
 }
