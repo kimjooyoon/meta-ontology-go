@@ -105,7 +105,7 @@ func TestReturnTailCalleeProofCounterexamples(t *testing.T) {
 		},
 		{
 			name:   "parenthesized global channel receive",
-			source: "package p\n\nvar globalChannel chan int\n\nfunc consume(int) {}\n\nfunc caller() error { return helper() }\n\nfunc helper() error { consume((<-globalChannel)); return nil }\n",
+			source: "package p\n\nvar globalChannel chan int\n\nfunc consume(int) {}\n\nfunc caller() error { return helper() }\n\nfunc helper() error { consume(<-(globalChannel)); return nil }\n",
 			assertSafe: func(t *testing.T, node ast.Node, evidence typeEvidence) {
 				helper, ok := node.(*ast.FuncDecl)
 				if !ok {
@@ -137,7 +137,7 @@ func TestReturnTailCalleeProofCounterexamples(t *testing.T) {
 		},
 		{
 			name:   "derived channel receive",
-			source: "package p\n\nfunc consume(int) {}\n\nfunc caller() error { return helper(nil) }\n\nfunc helper(channel chan int) error { derived := channel; consume((<-derived)); return nil }\n",
+			source: "package p\n\nfunc consume(int) {}\n\nfunc caller() error { return helper(nil) }\n\nfunc helper(channel chan int) error { derived := channel; consume(<-(derived)); return nil }\n",
 		},
 		{
 			name:   "nested call inside typed conversion",
