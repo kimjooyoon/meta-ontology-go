@@ -428,8 +428,8 @@ func inspectCollapseSource(source []byte, subject sourcepolicy.SourceSubject) (c
 		return collapseSourceInspection{}, fmt.Errorf("subject %q has %d body statements", subject.String(), len(target.Body.List))
 	}
 	assignment, ok := target.Body.List[0].(*ast.AssignStmt)
-	if !ok || len(assignment.Lhs) != 1 || len(assignment.Rhs) != 1 {
-		return collapseSourceInspection{}, fmt.Errorf("subject %q has no single assignment", subject.String())
+	if !ok || assignment.Tok != token.DEFINE || len(assignment.Lhs) != 1 || len(assignment.Rhs) != 1 {
+		return collapseSourceInspection{}, fmt.Errorf("subject %q has no single local declaration", subject.String())
 	}
 	lhs, ok := assignment.Lhs[0].(*ast.Ident)
 	if !ok || lhs.Name == "_" {

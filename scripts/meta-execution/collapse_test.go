@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -77,6 +78,19 @@ func TestInspectCollapseSourceBindsExactSubjectAndReceiver(t *testing.T) {
 	}
 	if failure := validateCollapseOutput(before, packageChanged, packageChangedSource); failure == nil {
 		t.Fatal("package-name mutation was accepted")
+	}
+}
+
+func TestInspectCollapseSourceRejectsExistingAssignments(t *testing.T) {
+	operators := []string{"=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>=", "&^="}
+	for _, operator := range operators {
+		t.Run(operator, func(t *testing.T) {
+			source := []byte(fmt.Sprintf("package fixture\n\nvar value = 8\nfunc change() int { value %s 1; return value }\n", operator))
+			subject := sourcepolicy.SourceSubject{Path: "fixture.go", Line: 4, Name: "change"}
+			if _, err := inspectCollapseSource(source, subject); err == nil {
+				t.Fatalf("operator=%s was admitted as a local declaration", operator)
+			}
+		})
 	}
 }
 
