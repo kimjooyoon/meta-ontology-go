@@ -393,6 +393,7 @@ jobs:
           mkdir -p "$out"
           go run ./scripts/metric-strategy \
             -mode proposal-predecessor \
+            -predecessor-observation-attempts 13 \
             -repository "$GITHUB_REPOSITORY" \
             -subject-sha "$SUBJECT_SHA" \
             -predecessor-sha "$PREDECESSOR_SHA" \
