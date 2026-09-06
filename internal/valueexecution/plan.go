@@ -13,11 +13,14 @@ import (
 // inputs and observe detached evidence, but cannot manufacture execution
 // authority by assembling public fields.
 type Plan struct {
-	Filename            string
-	SourceDigest        string
-	SemanticFingerprint string
-	programs            map[string]Program
-	bindings            []bidir.RuntimeBinding
+	Filename             string
+	SourceDigest         string
+	SemanticFingerprint  string
+	programs             map[string]Program
+	bindings             []bidir.RuntimeBinding
+	compiledFilename     string
+	compiledSourceDigest string
+	compiledFingerprint  string
 }
 
 // Execution is a detached summary of one plan run. Results contain evidence,
@@ -68,13 +71,17 @@ func CompilePlan(filename string, source []byte) (Plan, error) {
 		return Plan{}, err
 	}
 	return Plan{Filename: filename, SourceDigest: digestBytes(source), SemanticFingerprint: bidir.SemanticFingerprint(model), programs: programs,
-		bindings: append([]bidir.RuntimeBinding(nil), model.RuntimeBindings...)}, nil
+		bindings: append([]bidir.RuntimeBinding(nil), model.RuntimeBindings...), compiledFilename: filename,
+		compiledSourceDigest: digestBytes(source), compiledFingerprint: bidir.SemanticFingerprint(model)}, nil
 }
 
 // Execute runs one isolated plan instance. The map supplies exactly one
 // Integer input for each root activity; bound activities must receive their
 // input from a validated ProducedResult edge.
 func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
+	if err := plan.validateCompiledAuthority(); err != nil {
+		return Execution{}, err
+	}
 	order, incoming, _, err := plan.executionOrder()
 	if err != nil {
 		return Execution{}, err
@@ -86,37 +93,70 @@ func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
 		return Execution{}, err
 	}
 	values := make(map[string]ProducedResult, len(plan.programs))
-	execution := Execution{Results: make(map[string]ResultEvidence, len(plan.programs)), Activities: append([]string(nil), order...)}
+	execution := Execution{Results: make(map[string]ResultEvidence, len(plan.programs))}
 	for _, activity := range order {
 		input, hasInput := rootInputs[activity]
 		if !hasInput {
 			for _, binding := range incoming[activity] {
 				result, ok := values[string(binding.Producer.Activity.Name)]
 				if !ok {
-					return Execution{}, failAt(ReasonPlanExecutionFailed, "EXECUTE", "read-bound-input", activity)
+					return execution, failAt(ReasonPlanExecutionFailed, "EXECUTE", "read-bound-input", activity)
 				}
 				if err := validateBindingResult(plan.programs[string(binding.Producer.Activity.Name)], plan.programs[activity], binding, result); err != nil {
-					return Execution{}, err
+					return execution, err
 				}
 				input, err = integerResult(result)
 				if err != nil {
-					return Execution{}, err
+					return execution, err
 				}
 				execution.Deliveries++
 				hasInput = true
 			}
 		}
 		if !hasInput {
-			return Execution{}, failAt(ReasonExternalInputMissing, "EXECUTE", "require-external-root-input", activity)
+			return execution, failAt(ReasonExternalInputMissing, "EXECUTE", "require-external-root-input", activity)
 		}
-		result, err := plan.programs[activity].executeResult([]int64{input}, func() { execution.ApplyCalls++ })
+		result, err := plan.programs[activity].executeResult([]int64{input}, func() {
+			execution.ApplyCalls++
+			execution.Activities = append(execution.Activities, activity)
+		})
 		if err != nil {
-			return Execution{}, err
+			return execution, err
 		}
 		values[activity] = result
 		execution.Results[activity] = result.Evidence()
 	}
 	return execution, nil
+}
+
+func (plan Plan) validateCompiledAuthority() error {
+	if plan.compiledFilename == "" || plan.Filename != plan.compiledFilename {
+		return failAt(ReasonPlanInvalid, "PLAN", "validate-plan-authority", "plan filename is not Compile-issued")
+	}
+	if !validDigest(plan.compiledSourceDigest) || plan.SourceDigest != plan.compiledSourceDigest {
+		return failAt(ReasonPlanInvalid, "PLAN", "validate-plan-authority", "plan source digest is not Compile-issued")
+	}
+	if plan.compiledFingerprint == "" || plan.SemanticFingerprint != plan.compiledFingerprint {
+		return failAt(ReasonPlanInvalid, "PLAN", "validate-plan-authority", "plan semantic fingerprint is not Compile-issued")
+	}
+	if len(plan.programs) == 0 {
+		return failAt(ReasonPlanInvalid, "PLAN", "validate-plan-authority", "plan contains no private compiled programs")
+	}
+	for activity, program := range plan.programs {
+		if activity == "" || program.authority.activityName != activity {
+			return failAt(ReasonPlanInvalid, "PLAN", "validate-plan-authority", "private compiled program activity does not match its map key")
+		}
+		if err := program.validateResultAuthority(); err != nil {
+			return failAt(ReasonBindingResultInvalid, "PLAN", "validate-program-authority", err.Error())
+		}
+		if program.authority.sourceDigest != plan.compiledSourceDigest || program.authority.semanticFingerprint != plan.compiledFingerprint {
+			return failAt(ReasonPlanInvalid, "PLAN", "validate-program-authority", "private compiled program identity does not match the plan")
+		}
+		if program.implementation.Apply == nil {
+			return failAt(ReasonPlanInvalid, "PLAN", "validate-program-authority", "private compiled program has no registered implementation")
+		}
+	}
+	return nil
 }
 
 func compileDocumentProgram(filename string, source []byte, document bidir.Document, model bidir.Model, activityName string) (Program, error) {
@@ -250,7 +290,12 @@ func validateExecutionBindings(programs map[string]Program, bindings []bidir.Run
 }
 
 func validateRootInputs(programs map[string]Program, incoming map[string][]bidir.RuntimeBinding, rootInputs map[string]int64) error {
+	inputActivities := make([]string, 0, len(rootInputs))
 	for activity := range rootInputs {
+		inputActivities = append(inputActivities, activity)
+	}
+	slices.Sort(inputActivities)
+	for _, activity := range inputActivities {
 		if _, ok := programs[activity]; !ok {
 			return failAt(ReasonExternalInputUnexpected, "EXECUTE", "reject-unknown-external-input", activity)
 		}
@@ -258,7 +303,12 @@ func validateRootInputs(programs map[string]Program, incoming map[string][]bidir
 			return failAt(ReasonExternalInputUnexpected, "EXECUTE", "reject-bound-external-input", activity)
 		}
 	}
+	activities := make([]string, 0, len(programs))
 	for activity := range programs {
+		activities = append(activities, activity)
+	}
+	slices.Sort(activities)
+	for _, activity := range activities {
 		if len(incoming[activity]) == 0 {
 			if _, ok := rootInputs[activity]; !ok {
 				return failAt(ReasonExternalInputMissing, "EXECUTE", "require-external-root-input", activity)

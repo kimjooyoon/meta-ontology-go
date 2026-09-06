@@ -30,19 +30,19 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 	if options.input != "" {
 		input, err := reader.ReadFile(options.input)
 		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
 		}
 		plan, err := valueexecution.CompilePlan(options.filename, source)
 		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
 		}
 		rootInput, err := decodePlanInput(input)
 		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
 		}
 		execution, err := plan.Execute(map[string]int64{options.entry: rootInput})
 		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
 		}
 		payload := struct {
 			Schema              string                   `json:"schema"`
@@ -60,7 +60,7 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 			encoder := json.NewEncoder(stdout)
 			encoder.SetIndent("", "  ")
 			if err := encoder.Encode(payload); err != nil {
-				return reportPlanFailure(jsonMode, stdout, stderr, options.filename, err)
+				return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
 			}
 		} else {
 			fmt.Fprintf(stdout, "executed value plan: entry=%s activities=%d applies=%d deliveries=%d\n", options.entry, len(execution.Activities), execution.ApplyCalls, execution.Deliveries)
@@ -114,11 +114,23 @@ func decodePlanInput(raw []byte) (int64, error) {
 	return *envelope.Value, nil
 }
 
-func reportPlanFailure(jsonMode bool, stdout, stderr io.Writer, filename string, err error) int {
+func reportPlanFailure(jsonMode bool, stdout, stderr io.Writer, filename string, execution valueexecution.Execution, err error) int {
 	if jsonMode {
-		_ = json.NewEncoder(stdout).Encode(map[string]string{
-			"schema": "gooo/value-execution-plan/v1", "decision": "FAIL_CLOSED",
-			"source_path": filename, "reason": valueexecution.Reason(err), "error": err.Error(),
+		failure, ok := valueexecution.FailureOf(err)
+		if !ok {
+			failure = valueexecution.Failure{Code: valueexecution.Reason(err), Stage: "EXECUTE", Step: "plan-execution", Detail: err.Error()}
+		}
+		_ = json.NewEncoder(stdout).Encode(struct {
+			Schema     string                        `json:"schema"`
+			Decision   string                        `json:"decision"`
+			SourcePath string                        `json:"source_path"`
+			Reason     string                        `json:"reason"`
+			Failure    valueexecution.Failure        `json:"failure"`
+			Execution  valueexecution.Execution     `json:"execution"`
+			Error      string                        `json:"error"`
+		}{
+			Schema: "gooo/value-execution-plan/v1", Decision: "FAIL_CLOSED", SourcePath: filename,
+			Reason: valueexecution.Reason(err), Failure: failure, Execution: execution, Error: err.Error(),
 		})
 	} else {
 		fmt.Fprintf(stderr, "%s: value plan: %v\n", filename, err)

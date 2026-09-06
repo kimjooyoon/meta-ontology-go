@@ -118,19 +118,13 @@ jobs:
             jq -r '"- core IR preservation: `\(.summary.core_ir_program_preserved.satisfied)/\(.summary.core_ir_program_preserved.total)`; fingerprint: `\(.summary.core_ir_fingerprint_sensitive.satisfied)/\(.summary.core_ir_fingerprint_sensitive.total)`; unknown-attribute guard: `\(.summary.core_ir_unknown_attribute_fail_closed.satisfied)/\(.summary.core_ir_unknown_attribute_fail_closed.total)`"' "$output/first.json"
             jq -r '"- repository writes: `\(.summary.repository_writes)`; mutation authority: `\(.authority.repository_mutation_authorized)`"' "$output/first.json"
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload exact-head value witness
-        uses: actions/upload-artifact@v7
-        with:
-          name: language-value-witness-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-witness/first.json
-          if-no-files-found: error
-          retention-days: 14
       - name: Execute the native runtime-binding plan through the CLI
         shell: bash
         run: |
           set -euo pipefail
           input="$RUNNER_TEMP/runtime-binding-input.json"
-          output="$RUNNER_TEMP/runtime-binding-plan.json"
+          output="$RUNNER_TEMP/language-value-witness/runtime-binding-plan.json"
+          mkdir -p "$(dirname "$output")"
           printf '%s\n' '{"value":41}' > "$input"
           go run ./cmd/gooo run --json \
             --entry Produce --input "$input" \
@@ -145,3 +139,10 @@ jobs:
             jq -r '"- decision: `\(.decision)`; applies: `\(.execution.apply_calls)`; deliveries: `\(.execution.deliveries)`"' "$output"
             jq -r '"- consumer results: ConsumeA=`\(.execution.results.ConsumeA.value)`, ConsumeB=`\(.execution.results.ConsumeB.value)`"' "$output"
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload exact-head value witness and runtime plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-witness-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-witness
+          if-no-files-found: error
+          retention-days: 14

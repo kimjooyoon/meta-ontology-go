@@ -9,3 +9,12 @@ same registered operation once, yielding `43` from an input of `41`.
 The plan records three real `Apply` calls and two real token deliveries. The
 generated-Go and source-execution boundaries remain unsupported for runtime
 bindings; this example exercises only the native value plan path.
+
+Run it through the native CLI with an explicit root value:
+
+```sh
+go run ./cmd/gooo run --json --entry Produce --input input.json examples/language-runtime-binding/main.gooo
+```
+
+where `input.json` contains `{"value":41}` (an integer literal is also
+accepted).

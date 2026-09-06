@@ -33,10 +33,10 @@ const (
 )
 
 type Failure struct {
-	Code   string
-	Stage  string
-	Step   string
-	Detail string
+	Code   string `json:"code"`
+	Stage  string `json:"stage"`
+	Step   string `json:"step"`
+	Detail string `json:"detail"`
 }
 
 func (failure Failure) Error() string {
