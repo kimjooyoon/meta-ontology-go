@@ -89,6 +89,9 @@ func ValidateCallbackPreviewList(encoded string) error {
 	if err := json.Unmarshal([]byte(encoded[len(CallbackPreviewListCodecPrefix):]), &values); err != nil {
 		return fmt.Errorf("decode callback preview list: %w", err)
 	}
+	if values == nil {
+		return fmt.Errorf("callback preview list must be a JSON array")
+	}
 	canonical, err := EncodeCallbackPreviewList(values)
 	if err != nil {
 		return err
@@ -114,6 +117,14 @@ func ValidateCallbackPreviewNestedList(encoded string) error {
 	var values [][]string
 	if err := json.Unmarshal([]byte(encoded[len(CallbackPreviewListCodecPrefix):]), &values); err != nil {
 		return fmt.Errorf("decode callback preview nested list: %w", err)
+	}
+	if values == nil {
+		return fmt.Errorf("callback preview nested list must be a JSON array")
+	}
+	for _, value := range values {
+		if value == nil {
+			return fmt.Errorf("callback preview nested list entries must be JSON arrays")
+		}
 	}
 	canonical, err := EncodeCallbackPreviewNestedList(values)
 	if err != nil {
