@@ -584,12 +584,56 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence) error
 			return true
 		}
 		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}) {
-			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"obligation=" + obligationCalleeEffects})
+			diagnostics := []string{"obligation=" + obligationCalleeEffects}
+			diagnostics = append(diagnostics, returnTailCallDiagnostics(call, evidence.info)...)
+			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", diagnostics)
 			return false
 		}
 		return true
 	})
 	return effectErr
+}
+
+func returnTailCallDiagnostics(call *ast.CallExpr, info *types.Info) []string {
+	if call == nil || info == nil {
+		return []string{"call=<nil>"}
+	}
+	var rendered bytes.Buffer
+	if err := format.Node(&rendered, token.NewFileSet(), call); err != nil {
+		rendered.WriteString("<render-error>")
+	}
+	functionEvidence, functionKnown := info.Types[call.Fun]
+	resultEvidence, resultKnown := info.Types[call]
+	diagnostics := []string{
+		"call=" + rendered.String(),
+		fmt.Sprintf("callee-ast=%T", call.Fun),
+		fmt.Sprintf("callee-known=%t", functionKnown),
+		fmt.Sprintf("callee-is-type=%t", functionKnown && functionEvidence.IsType()),
+		"callee-type=" + typeEvidenceString(functionEvidence.Type),
+		fmt.Sprintf("result-known=%t", resultKnown),
+		"result-type=" + typeEvidenceString(resultEvidence.Type),
+	}
+	switch function := call.Fun.(type) {
+	case *ast.Ident:
+		diagnostics = append(diagnostics, "callee-object="+objectEvidenceString(info.Uses[function]))
+	case *ast.SelectorExpr:
+		diagnostics = append(diagnostics, "callee-object="+objectEvidenceString(info.Uses[function.Sel]))
+	}
+	return diagnostics
+}
+
+func typeEvidenceString(value types.Type) string {
+	if value == nil {
+		return "<nil>"
+	}
+	return types.TypeString(value, nil)
+}
+
+func objectEvidenceString(value types.Object) string {
+	if value == nil {
+		return "<nil>"
+	}
+	return types.ObjectString(value, nil)
 }
 
 func returnTailTypedConversion(call *ast.CallExpr, info *types.Info) bool {
