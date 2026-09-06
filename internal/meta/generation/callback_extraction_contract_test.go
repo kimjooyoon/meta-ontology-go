@@ -33,10 +33,10 @@ func TestCallbackExtractionContractOwnsSixProposalSteps(t *testing.T) {
 func TestCallbackExtractionContractRejectsSemanticMutants(t *testing.T) {
 	source := string(callbackExtractionContractSource)
 	for name, changed := range map[string]string{
-		"authority": strings.Replace(source, "authority=PROPOSAL_ONLY", "authority=APPLY", 1),
+		"authority":     strings.Replace(source, "authority=PROPOSAL_ONLY", "authority=APPLY", 1),
 		"counter-field": strings.Replace(source, "ObservedCount", "InventedCount", 1),
-		"binding": strings.Replace(source, "bind BindCallbackExtractionSource.result -> ProveCallbackExtractionStructure.input", "", 1),
-		"extra-result": source + "\nentity OperationResult\n",
+		"binding":       strings.Replace(source, "bind BindCallbackExtractionSource.result -> ProveCallbackExtractionStructure.input", "", 1),
+		"extra-result":  source + "\nentity OperationResult\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := parseCallbackExtractionContract([]byte(changed)); err == nil {

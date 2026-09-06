@@ -32,8 +32,8 @@ type CallbackExtractionProposal struct {
 	MaximumLines       int                                   `json:"maximum_lines"`
 	Contract           generation.CallbackExtractionContract `json:"contract"`
 	StructureProof     ClosurePreservationProof              `json:"structure_proof"`
-	Artifacts          []CallbackExtractionArtifact           `json:"artifacts"`
-	Claims             []CallbackExtractionClaim              `json:"claims"`
+	Artifacts          []CallbackExtractionArtifact          `json:"artifacts"`
+	Claims             []CallbackExtractionClaim             `json:"claims"`
 	Closed             int                                   `json:"closed"`
 	Unknown            int                                   `json:"unknown"`
 	Refuted            int                                   `json:"refuted"`
