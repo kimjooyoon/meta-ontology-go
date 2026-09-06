@@ -91,7 +91,7 @@ func TestReturnTailCalleeProofCounterexamples(t *testing.T) {
 		},
 		{
 			name:   "closure capture",
-			source: "package p\n\nfunc caller() error { return helper() }\n\nfunc helper() error { value := 0; set := func() { value = 1 }; _ = set; return nil }\n",
+			source: "package p\n\nfunc caller() error { return helper() }\n\nfunc helper() error { value := 0; set := func() { value = value + 1 }; _ = set; return nil }\n",
 			assertSafe: func(t *testing.T, node ast.Node, evidence typeEvidence) {
 				helper, ok := node.(*ast.FuncDecl)
 				if !ok {

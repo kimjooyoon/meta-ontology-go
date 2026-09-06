@@ -172,7 +172,7 @@ func assertRuntimeWitnessW1DependencyEvidence(t *testing.T, result Result) {
 	for index, current := range witnesses {
 		for _, dependency := range current.CalleeDependencies {
 			linked := false
-			for previousIndex := 0; previousIndex < index; previousIndex++ {
+			for previousIndex := range index {
 				previous := witnesses[previousIndex]
 				if previous.Helper == dependency.Name && len(previous.ProofStages) > 3 && dependency.EvidenceID != "" && dependency.EvidenceID == previous.ProofStages[3].OutputEvidenceID {
 					linked = true
