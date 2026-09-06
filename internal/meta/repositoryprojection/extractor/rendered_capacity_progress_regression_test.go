@@ -119,7 +119,7 @@ func TestSuffixCandidateRejectsFullRenderedHelperOverCap(t *testing.T) {
 	}
 }
 
-func TestPaginationGenericExtractionTerminatesAsRefutedCapacity(t *testing.T) {
+func TestPaginationGenericExtractionTerminatesWithUnprovenCallbackIdentity(t *testing.T) {
 	_, sourceFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("runtime caller unavailable")
@@ -130,13 +130,15 @@ func TestPaginationGenericExtractionTerminatesAsRefutedCapacity(t *testing.T) {
 	}
 	result, err := ExtractWithResult(root, "cmd/language-readiness-witness/predecessor-selection/pagination_test.go")
 	var failure Failure
-	if !errors.As(err, &failure) || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" || failure.UnknownClass != "KNOWN_CONTRADICTION" {
-		t.Fatalf("result=%+v err=%v, want refuted capacity contradiction", result, err)
+	if !errors.As(err, &failure) || failure.Reason != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" || failure.UnknownClass != "UNBOUNDED" ||
+		failure.Stage != "derive-recipe" || failure.Step != "preserve-callback-identity" ||
+		failure.NextOperation != "prove-callback-observability" || len(failure.BlockedBy) != 0 {
+		t.Fatalf("result=%+v err=%v, want an unproven preservation obligation", result, err)
 	}
 	if len(result.Generated) != 0 {
-		t.Fatalf("generated=%d, want no conversion output after refuted capacity", len(result.Generated))
+		t.Fatalf("generated=%d, want no conversion output without preservation evidence", len(result.Generated))
 	}
-	for _, prefix := range []string{"measurement=MEASURED", "helper_lines=", "helper_overage=", "suffix_candidate_index=", "suffix_candidates_attempted=", "suffix_candidates_rejected="} {
+	for _, prefix := range []string{"measurement=MEASURED", "helper_lines=", "helper_overage=", "suffix_candidate_index=", "suffix_candidates_attempted=", "suffix_candidates_rejected=", "suffix_candidates_unproven="} {
 		found := false
 		for _, diagnostic := range failure.Diagnostics {
 			if strings.HasPrefix(diagnostic, prefix) {
@@ -145,7 +147,7 @@ func TestPaginationGenericExtractionTerminatesAsRefutedCapacity(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Fatalf("diagnostics=%v, want actual pagination counterexample field %q", failure.Diagnostics, prefix)
+			t.Fatalf("diagnostics=%v, want actual pagination observation field %q", failure.Diagnostics, prefix)
 		}
 	}
 }
