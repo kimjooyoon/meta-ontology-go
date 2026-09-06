@@ -33,7 +33,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-			report.Summary.Satisfied != 59 || report.Summary.ValidCases != 56 ||
+		report.Summary.Satisfied != 59 || report.Summary.ValidCases != 56 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
