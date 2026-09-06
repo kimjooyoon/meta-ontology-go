@@ -43,12 +43,12 @@ type StrategyEvidence struct {
 // CalleeDependencyEvidence connects a generated helper's callee-effects proof
 // to the typed, same-prepare proof of each generated helper it calls.
 type CalleeDependencyEvidence struct {
-	Name             string `json:"name"`
-	ObjectType       string `json:"object_type"`
-	SignatureDigest  string `json:"signature_digest"`
-	BodyDigest       string `json:"body_digest"`
-	EvidenceID       string `json:"evidence_id"`
-	Declaration      string `json:"declaration"`
+	Name            string `json:"name"`
+	ObjectType      string `json:"object_type"`
+	SignatureDigest string `json:"signature_digest"`
+	BodyDigest      string `json:"body_digest"`
+	EvidenceID      string `json:"evidence_id"`
+	Declaration     string `json:"declaration"`
 }
 
 // PreparationProgressEvidence records a strict capacity decrease while the
