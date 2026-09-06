@@ -3,6 +3,9 @@ package extractor
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"go/parser"
+	"go/token"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +26,7 @@ func TestNormalPaginationFailureCarriesGoooBoundRenderedProposalCI(t *testing.T)
 	if !errors.As(err, &failure) || failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" || len(result.Generated) != 0 {
 		t.Fatalf("normal admission boundary changed: generated=%d err=%v", len(result.Generated), err)
 	}
+	assertNormalPaginationSuffixRejections(t, before, failure)
 	var proposal CallbackExtractionProposal
 	found := false
 	for _, diagnostic := range failure.Diagnostics {
@@ -85,6 +89,45 @@ callback(nil, nil)
 	if err == nil || !strings.Contains(err.Error(), "unsupported non-variable callback capture marker") || len(proposal.Artifacts) != 0 {
 		t.Fatalf("unsupported capture escaped planning: artifacts=%d err=%v", len(proposal.Artifacts), err)
 	}
+}
+
+func assertNormalPaginationSuffixRejections(t *testing.T, source []byte, failure Failure) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, callbackPreviewLogicalPath, source, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	function := callbackPreviewFunction(file, callbackPreviewTarget)
+	if function == nil || function.Body == nil {
+		t.Fatal("original pagination subject is missing")
+	}
+	expected := len(function.Body.List)
+	rejections := []string{}
+	sourceBound, attemptedBound, rejectedBound := false, false, false
+	for _, diagnostic := range failure.Diagnostics {
+		sourceBound = sourceBound || diagnostic == "decomposition_source_digest="+proofDigest(source)
+		attemptedBound = attemptedBound || diagnostic == fmt.Sprintf("suffix_candidates_attempted=%d", expected)
+		rejectedBound = rejectedBound || diagnostic == fmt.Sprintf("suffix_candidates_rejected=%d", expected)
+		if strings.HasPrefix(diagnostic, "suffix_candidate_index=") {
+			rejections = append(rejections, diagnostic)
+		}
+	}
+	if !sourceBound || !attemptedBound || !rejectedBound || len(rejections) != expected {
+		t.Fatalf("suffix rejection coverage=%d/%d source_bound=%t attempted_bound=%t rejected_bound=%t",
+			len(rejections), expected, sourceBound, attemptedBound, rejectedBound)
+	}
+	for index, diagnostic := range rejections {
+		start := expected - index - 1
+		want := fmt.Sprintf("suffix_candidate_index=%d;statement_start=%s;statement_end=%s;rejection=%q",
+			start, fset.Position(function.Body.List[start].Pos()), fset.Position(function.Body.List[expected-1].End()),
+			"CALLBACK_ENCLOSING_IDENTITY_UNPROVEN")
+		if diagnostic != want {
+			t.Fatalf("original pagination rejection differs: got=%s want=%s", diagnostic, want)
+		}
+	}
+	t.Logf("normal suffix rejection coverage=%d/%d source_bound=%t reason=CALLBACK_ENCLOSING_IDENTITY_UNPROVEN",
+		len(rejections), expected, sourceBound)
 }
 
 func TestCallbackExtractionFinalPartitionRejectsMutation(t *testing.T) {

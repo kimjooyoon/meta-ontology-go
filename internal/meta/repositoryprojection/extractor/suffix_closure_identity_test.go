@@ -19,13 +19,18 @@ func TestSuffixRejectsRelocatedFunctionLiteralIdentity(t *testing.T) {
 		"package p; func f() { invoke(func() {}) }",
 		"package p; func f() { for { invoke(func() {}); break } }",
 	} {
-		file, err := parser.ParseFile(token.NewFileSet(), "fixture.go", source, 0)
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, "fixture.go", source, 0)
 		if err != nil {
 			t.Fatal(err)
 		}
 		function := file.Decls[0].(*ast.FuncDecl)
 		if !hasUnsafeSuffix(function.Body.List, nil) {
 			t.Fatal("suffix accepted a function literal whose enclosing identity changes")
+		}
+		candidate, err := buildSuffixCandidate([]byte(source), fset, file, function, 0, typeEvidence{}, nil)
+		if candidate != nil || !isKnownSuffixContradiction(err) || err.Error() != "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN" {
+			t.Fatalf("callback rejection lost its precise cause: candidate=%v err=%v", candidate, err)
 		}
 	}
 }
@@ -74,7 +79,7 @@ func TestSuffixClosureOwnerCounterexampleUsesSameModuleCI(t *testing.T) {
 			t.Fatalf("native identity observation: %v\n%s", err, output)
 		}
 		observed := ""
-		for _, line := range strings.Split(string(output), "\n") {
+		for line := range strings.SplitSeq(string(output), "\n") {
 			if _, value, found := strings.Cut(line, "OBSERVED_SUFFIX_CALLER="); found {
 				if observed != "" {
 					t.Fatal("duplicate caller observation")

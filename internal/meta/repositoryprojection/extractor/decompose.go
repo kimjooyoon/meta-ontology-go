@@ -355,6 +355,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	diagnostics := []string{
 		"declaration=" + functionIdentity(fset, function),
 		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
+		"decomposition_source_digest=" + proofDigest(source),
 	}
 	for index := range slices.Backward(function.Body.List) {
 		candidate, candidateErr := buildSuffixCandidate(source, fset, file, function, index, evidence, existing)
@@ -390,8 +391,14 @@ func functionNames(file *ast.File) map[string]bool {
 
 func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, startIndex int, evidence typeEvidence, existing map[string]bool) (*suffixCandidate, error) {
 	statements := function.Body.List[startIndex:]
-	if len(statements) == 0 || hasUnsafeOuterScope(function.Body.List[:startIndex]) || hasUnsafeSuffix(statements, evidence.info) {
-		return nil, knownSuffixContradiction("suffix control-flow or scope invariant is not preserved")
+	if len(statements) == 0 {
+		return nil, knownSuffixContradiction("EMPTY_SUFFIX")
+	}
+	if hasUnsafeOuterScope(function.Body.List[:startIndex]) {
+		return nil, knownSuffixContradiction("OUTER_SCOPE_UNPROVEN")
+	}
+	if hazard := firstSuffixHazard(statements); hazard != nil {
+		return nil, knownSuffixContradiction(hazard.reason)
 	}
 	bindings, err := suffixBindings(statements, function, fset, evidence)
 	if err != nil {
@@ -645,17 +652,24 @@ func hasUnsafeOuterScope(statements []ast.Stmt) bool {
 }
 
 func hasUnsafeSuffix(statements []ast.Stmt, info *types.Info) bool {
+	return firstSuffixHazard(statements) != nil
+}
+
+func firstSuffixHazard(statements []ast.Stmt) *suffixHazards {
 	for _, statement := range statements {
 		hazards := &suffixHazards{}
 		ast.Walk(hazardVisitor{hazards: hazards}, statement)
 		if hazards.unsafe {
-			return true
+			return hazards
 		}
 	}
-	return false
+	return nil
 }
 
-type suffixHazards struct{ unsafe bool }
+type suffixHazards struct {
+	unsafe bool
+	reason string
+}
 
 type hazardVisitor struct {
 	hazards   *suffixHazards
@@ -670,6 +684,7 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 		// Relocating a literal changes its enclosing function identity. Its
 		// body may observe that identity, even without changing any captures.
 		visitor.hazards.unsafe = true
+		visitor.hazards.reason = "CALLBACK_ENCLOSING_IDENTITY_UNPROVEN"
 		return nil
 	}
 	switch value := node.(type) {
@@ -677,14 +692,17 @@ func (visitor hazardVisitor) Visit(node ast.Node) ast.Visitor {
 		return hazardVisitor{hazards: visitor.hazards, loopDepth: visitor.loopDepth + 1}
 	case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.ReturnStmt:
 		visitor.hazards.unsafe = true
+		visitor.hazards.reason = "CONTROL_FLOW_SCOPE_UNPROVEN"
 	case *ast.BranchStmt:
 		if visitor.loopDepth == 0 && value.Tok != token.FALLTHROUGH {
 			visitor.hazards.unsafe = true
+			visitor.hazards.reason = "ESCAPING_BRANCH_UNPROVEN"
 		}
 	case *ast.CallExpr:
 		if identifier, ok := value.Fun.(*ast.Ident); ok &&
 			(identifier.Name == "panic" || identifier.Name == "recover") {
 			visitor.hazards.unsafe = true
+			visitor.hazards.reason = "STACK_CONTROL_UNPROVEN"
 		}
 	}
 	return hazardVisitor{hazards: visitor.hazards, loopDepth: visitor.loopDepth}
