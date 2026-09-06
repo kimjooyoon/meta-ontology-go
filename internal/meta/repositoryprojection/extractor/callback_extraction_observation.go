@@ -241,7 +241,7 @@ func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPacka
 		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		} else if err != nil {
-// A damaged suffix cannot erase a previously decoded counterexample.
+			// A damaged suffix cannot erase a previously decoded counterexample.
 			return events, fmt.Errorf("package test event decoding: %w", err)
 		}
 		if event.Test == "" {
@@ -252,9 +252,9 @@ func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPacka
 			continue
 		case "pass", "fail", "skip":
 		default:
-return events, fmt.Errorf("unknown package test action %q", event.Action)
+			return events, fmt.Errorf("unknown package test action %q", event.Action)
 		}
-if seen[event.Test] {
+		if seen[event.Test] {
 			if event.Action == "fail" {
 				events = append(events, CallbackPackageTestEvent{Name: event.Test, Action: event.Action})
 			}
