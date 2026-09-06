@@ -230,6 +230,12 @@ func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset 
 		if object == nil || local[object] {
 			return true
 		}
+		if object.Name() == "nil" || object.Type() == nil {
+			return true
+		}
+		if _, ok := object.(*types.TypeName); ok {
+			return true
+		}
 		if _, ok := object.(*types.PkgName); ok {
 			return true
 		}
