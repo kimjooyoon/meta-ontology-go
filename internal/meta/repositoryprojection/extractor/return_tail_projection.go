@@ -20,6 +20,16 @@ func finalizeReturnTailEvidence(root, logical string, generated map[string][]byt
 	finalPayload := generatedPackagePayload(generated)
 	result := make([]StrategyEvidence, 0, len(evidence))
 	for _, item := range evidence {
+		if item.Strategy == suffixStrategy {
+			item.FinalGeneratedBytes = generatedSourceBytes(generated)
+			item.FinalGeneratedEvidenceBytes = len(finalPayload)
+			item.FinalGeneratedUnits = len(generated)
+			result = append(result, item)
+			continue
+		}
+		if item.Strategy != returnTailStrategy {
+			return nil, fail("verify-result", "consume-extraction-proof", "EXTRACTION_STRATEGY_UNSUPPORTED", "KNOWN_CONTRADICTION", "report-counterexample", nil)
+		}
 		if len(item.ProofStages) != len(returnTailObligations)-1 || len(item.ContractObligations) != len(returnTailObligations) {
 			return nil, fail("verify-result", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", nil)
 		}

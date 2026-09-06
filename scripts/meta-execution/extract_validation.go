@@ -135,34 +135,35 @@ func (list *presentStrategyEvidenceList) UnmarshalJSON(data []byte) error {
 }
 
 type strategyEvidencePresence struct {
-	Strategy                    string                                           `json:"strategy"`
-	Operation                   string                                           `json:"operation"`
-	ContractActivity            string                                           `json:"contract_activity"`
-	ContractInputEntity         string                                           `json:"contract_input_entity"`
-	ContractOutputEntity        string                                           `json:"contract_output_entity"`
-	ContractInputSubjectKind    string                                           `json:"contract_input_subject_kind"`
-	ContractSourceDigest        string                                           `json:"contract_source_digest"`
-	ContractSemanticDigest      string                                           `json:"contract_semantic_digest"`
-	UsedInputFact               bool                                             `json:"used_input_fact"`
-	GeneratedOutputFact         bool                                             `json:"generated_output_fact"`
-	Subject                     string                                           `json:"subject"`
-	Helper                      string                                           `json:"helper"`
-	BeforeBytes                 int                                              `json:"before_bytes"`
-	AfterBytes                  int                                              `json:"after_bytes"`
-	BeforeFunctionLines         int                                              `json:"before_function_lines"`
-	AfterFunctionLines          int                                              `json:"after_function_lines"`
-	BeforeRenderedCapacityOverage *int                                           `json:"before_rendered_capacity_overage"`
-	AfterRenderedCapacityOverage  *int                                           `json:"after_rendered_capacity_overage"`
-	RenderedHelperBytes         int                                              `json:"rendered_helper_bytes"`
-	RenderedHelperLines         int                                              `json:"rendered_helper_lines"`
-	RenderedOuterHelperBytes    int                                              `json:"rendered_outer_helper_bytes"`
-	RenderedOuterHelperLines    int                                              `json:"rendered_outer_helper_lines"`
-	Obligations                 []projectionextractor.ObligationEvidence         `json:"obligations"`
-	ContractObligations         []projectionextractor.ContractObligationEvidence `json:"contract_obligations"`
-	ProofStages                 []proofStagePresence                             `json:"proof_stages"`
-	FinalGeneratedBytes         int                                              `json:"final_generated_bytes"`
-	FinalGeneratedEvidenceBytes int                                              `json:"final_generated_evidence_bytes"`
-	FinalGeneratedUnits         int                                              `json:"final_generated_units"`
+	Strategy                      string                                           `json:"strategy"`
+	Operation                     string                                           `json:"operation"`
+	ContractActivity              string                                           `json:"contract_activity"`
+	ContractInputEntity           string                                           `json:"contract_input_entity"`
+	ContractOutputEntity          string                                           `json:"contract_output_entity"`
+	ContractInputSubjectKind      string                                           `json:"contract_input_subject_kind"`
+	ContractSourceDigest          string                                           `json:"contract_source_digest"`
+	ContractSemanticDigest        string                                           `json:"contract_semantic_digest"`
+	UsedInputFact                 bool                                             `json:"used_input_fact"`
+	GeneratedOutputFact           bool                                             `json:"generated_output_fact"`
+	Subject                       string                                           `json:"subject"`
+	Helper                        string                                           `json:"helper"`
+	BeforeBytes                   int                                              `json:"before_bytes"`
+	AfterBytes                    int                                              `json:"after_bytes"`
+	BeforeFunctionLines           int                                              `json:"before_function_lines"`
+	AfterFunctionLines            int                                              `json:"after_function_lines"`
+	BeforeRenderedCapacityOverage *int                                             `json:"before_rendered_capacity_overage"`
+	AfterRenderedCapacityOverage  *int                                             `json:"after_rendered_capacity_overage"`
+	RenderedHelperBytes           int                                              `json:"rendered_helper_bytes"`
+	RenderedHelperLines           int                                              `json:"rendered_helper_lines"`
+	RenderedOuterHelperBytes      int                                              `json:"rendered_outer_helper_bytes"`
+	RenderedOuterHelperLines      int                                              `json:"rendered_outer_helper_lines"`
+	Obligations                   []projectionextractor.ObligationEvidence         `json:"obligations"`
+	ContractObligations           []projectionextractor.ContractObligationEvidence `json:"contract_obligations"`
+	ProofStages                   []proofStagePresence                             `json:"proof_stages"`
+	FinalGeneratedBytes           int                                              `json:"final_generated_bytes"`
+	FinalGeneratedEvidenceBytes   int                                              `json:"final_generated_evidence_bytes"`
+	FinalGeneratedUnits           int                                              `json:"final_generated_units"`
+	PreflightObservations         []json.RawMessage                                `json:"preflight_observations,omitempty"`
 }
 
 type proofStagePresence struct {
@@ -414,8 +415,19 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				evidence.RenderedHelperBytes <= 0 || evidence.RenderedHelperLines <= 0 ||
 				evidence.RenderedOuterHelperBytes <= 0 || evidence.RenderedOuterHelperLines <= 0 ||
 				evidence.FinalGeneratedBytes <= 0 || evidence.FinalGeneratedEvidenceBytes <= 0 ||
-				evidence.FinalGeneratedUnits <= 0 || len(evidence.Obligations) == 0 ||
-				len(evidence.ContractObligations) == 0 || len(evidence.ProofStages) == 0 {
+				evidence.FinalGeneratedUnits <= 0 {
+				return false
+			}
+			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
+				return false
+			}
+			if evidence.Strategy == "suffix-extraction" {
+				if len(evidence.ProofStages) != 0 || len(evidence.ContractObligations) != 0 || len(evidence.Obligations) != 1 || evidence.Obligations[0].Name != "rendered-capacity" || evidence.Obligations[0].Status != strategyEvidencePassStatus {
+					return false
+				}
+				continue
+			}
+			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) == 0 || len(evidence.ProofStages) == 0 || len(evidence.Obligations) == 0 {
 				return false
 			}
 			for _, obligation := range evidence.Obligations {

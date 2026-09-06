@@ -15,6 +15,7 @@ import (
 )
 
 const returnTailStrategy = "return-preserving-terminal-tail"
+const suffixStrategy = "suffix-extraction"
 
 func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
 	contract, err := generation.ExtractFunctionInputContractEvidence()
@@ -165,7 +166,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	}
 	beforeCapacity := renderedCapacitySnapshot{overage: beforeMeasurement.overage}
 	afterCapacity := renderedCapacitySnapshot{overage: outerMeasurement.overage + helperMeasurement.overage}
-	if afterCapacity.overage > 0 || !renderedCapacityProgress(beforeCapacity, afterCapacity) {
+	if !renderedCapacityProgress(beforeCapacity, afterCapacity) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
 	}
 	if bytes.Equal(combined, source) {
@@ -180,32 +181,32 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 		helper:     helper,
 		result:     combined,
 		evidence: StrategyEvidence{
-			Strategy:                 returnTailStrategy,
-			Operation:                string(contract.Operation),
-			ContractActivity:         contract.Activity,
-			ContractInputEntity:      contract.InputEntity,
-			ContractOutputEntity:     contract.OutputEntity,
-			ContractInputSubjectKind: string(contract.InputSubjectKind),
-			ContractSourceDigest:     contract.SourceDigest,
-			ContractSemanticDigest:   contract.SemanticDigest,
-			UsedInputFact:            contract.UsedInputFact,
-			GeneratedOutputFact:      contract.GeneratedOutputFact,
-			Subject:                  functionIdentity(fset, function),
-			Helper:                   name,
-			BeforeBytes:              len(source),
-			AfterBytes:               len(combined),
-			BeforeFunctionLines:      declarationLines(fset, function),
-			AfterFunctionLines:       afterFunctionLines,
+			Strategy:                      returnTailStrategy,
+			Operation:                     string(contract.Operation),
+			ContractActivity:              contract.Activity,
+			ContractInputEntity:           contract.InputEntity,
+			ContractOutputEntity:          contract.OutputEntity,
+			ContractInputSubjectKind:      string(contract.InputSubjectKind),
+			ContractSourceDigest:          contract.SourceDigest,
+			ContractSemanticDigest:        contract.SemanticDigest,
+			UsedInputFact:                 contract.UsedInputFact,
+			GeneratedOutputFact:           contract.GeneratedOutputFact,
+			Subject:                       functionIdentity(fset, function),
+			Helper:                        name,
+			BeforeBytes:                   len(source),
+			AfterBytes:                    len(combined),
+			BeforeFunctionLines:           declarationLines(fset, function),
+			AfterFunctionLines:            afterFunctionLines,
 			BeforeRenderedCapacityOverage: beforeCapacity.overage,
 			AfterRenderedCapacityOverage:  afterCapacity.overage,
-			RenderedHelperBytes:      helperMeasurement.bytes,
-			RenderedHelperLines:      helperMeasurement.lines,
-			RenderedOuterHelperBytes: outerMeasurement.bytes,
-			RenderedOuterHelperLines: outerMeasurement.lines,
-			Obligations:              obligationsFromProofStages(proof.stages),
-			ContractObligations:      contractObligations,
-			ProofStages:              proof.stages,
-			PreflightObservations:    preflightObservationEvidence(contract, preflight),
+			RenderedHelperBytes:           helperMeasurement.bytes,
+			RenderedHelperLines:           helperMeasurement.lines,
+			RenderedOuterHelperBytes:      outerMeasurement.bytes,
+			RenderedOuterHelperLines:      outerMeasurement.lines,
+			Obligations:                   obligationsFromProofStages(proof.stages),
+			ContractObligations:           contractObligations,
+			ProofStages:                   proof.stages,
+			PreflightObservations:         preflightObservationEvidence(contract, preflight),
 		},
 	}, nil
 }
@@ -214,25 +215,25 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 	result := make([]PreflightObservationEvidence, 0, len(observations))
 	for _, observation := range observations {
 		item := PreflightObservationEvidence{
-			Operation:              string(contract.Operation),
-			Activity:               contract.Activity,
-			InputEntity:            contract.InputEntity,
-			InputSubjectKind:       string(contract.InputSubjectKind),
-			Metric:                 sourcepolicy.DimensionFunctionLines,
-			HelperMeasurementScope: renderedCapacityHelperMeasurementScope,
-			Subject:                observation.subject,
-			Receiver:               observation.receiver,
-			FunctionStart:          observation.functionStart,
-			FunctionEnd:            observation.functionEnd,
-			DeclarationStart:       observation.declarationStart,
-			DeclarationEnd:         observation.declarationEnd,
-			SourceDigest:           observation.sourceDigest,
-			ContractSourceDigest:   contract.SourceDigest,
-			ContractSemanticDigest: contract.SemanticDigest,
-			FunctionLines:          observation.functionLines,
+			Operation:                       string(contract.Operation),
+			Activity:                        contract.Activity,
+			InputEntity:                     contract.InputEntity,
+			InputSubjectKind:                string(contract.InputSubjectKind),
+			Metric:                          sourcepolicy.DimensionFunctionLines,
+			HelperMeasurementScope:          renderedCapacityHelperMeasurementScope,
+			Subject:                         observation.subject,
+			Receiver:                        observation.receiver,
+			FunctionStart:                   observation.functionStart,
+			FunctionEnd:                     observation.functionEnd,
+			DeclarationStart:                observation.declarationStart,
+			DeclarationEnd:                  observation.declarationEnd,
+			SourceDigest:                    observation.sourceDigest,
+			ContractSourceDigest:            contract.SourceDigest,
+			ContractSemanticDigest:          contract.SemanticDigest,
+			FunctionLines:                   observation.functionLines,
 			FunctionRenderedCapacityOverage: observation.functionOverage,
-			FunctionStatus:         string(observation.functionStatus),
-			HelperStatus:           string(observation.helperStatus),
+			FunctionStatus:                  string(observation.functionStatus),
+			HelperStatus:                    string(observation.helperStatus),
 		}
 		if observation.helperLines != nil {
 			helperLines := *observation.helperLines
@@ -261,6 +262,51 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 		result = append(result, item)
 	}
 	return result
+}
+
+func suffixStrategyEvidence(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, candidate *suffixCandidate, preflight []renderedCapacityObservation) (*StrategyEvidence, error) {
+	contract, err := generation.ExtractFunctionInputContractEvidence()
+	if err != nil {
+		return nil, fail("derive-recipe", "admit-suffix", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	if contract.Operation == "" || contract.Activity != "ExtractFunction" || contract.InputEntity != "FunctionInput" ||
+		contract.OutputEntity != "OperationResult" || contract.InputSubjectKind != sourcepolicy.SubjectKindFunction ||
+		!contract.UsedInputFact || !contract.GeneratedOutputFact || contract.SourceDigest == "" || contract.SemanticDigest == "" {
+		return nil, fail("derive-recipe", "admit-suffix", "OPERATION_INPUT_CONTRACT_UNPROVEN", "DIRECT_MISSING", "restore-operation-input-contract", nil)
+	}
+	afterFunctionLines, ok := namedFunctionLines(candidate.result, function.Name.Name)
+	if !ok {
+		return nil, fail("derive-recipe", "admit-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
+	}
+	return &StrategyEvidence{
+		Strategy:                      suffixStrategy,
+		Operation:                     string(contract.Operation),
+		ContractActivity:              contract.Activity,
+		ContractInputEntity:           contract.InputEntity,
+		ContractOutputEntity:          contract.OutputEntity,
+		ContractInputSubjectKind:      string(contract.InputSubjectKind),
+		ContractSourceDigest:          contract.SourceDigest,
+		ContractSemanticDigest:        contract.SemanticDigest,
+		UsedInputFact:                 contract.UsedInputFact,
+		GeneratedOutputFact:           contract.GeneratedOutputFact,
+		Subject:                       functionIdentity(fset, function),
+		Helper:                        candidate.helperName,
+		BeforeBytes:                   len(source),
+		AfterBytes:                    len(candidate.result),
+		BeforeFunctionLines:           declarationLines(fset, function),
+		AfterFunctionLines:            afterFunctionLines,
+		BeforeRenderedCapacityOverage: candidate.beforeRenderedCapacityOverage,
+		AfterRenderedCapacityOverage:  candidate.afterRenderedCapacityOverage,
+		RenderedHelperBytes:           candidate.renderedHelper.bytes,
+		RenderedHelperLines:           candidate.renderedHelper.lines,
+		RenderedOuterHelperBytes:      candidate.renderedOuter.bytes,
+		RenderedOuterHelperLines:      candidate.renderedOuter.lines,
+		Obligations: []ObligationEvidence{{
+			Name: obligationRenderedCapacity, Status: "PASS",
+			Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", candidate.beforeRenderedCapacityOverage, candidate.afterRenderedCapacityOverage, candidate.renderedOuter.lines, candidate.renderedHelper.lines),
+		}},
+		PreflightObservations: preflightObservationEvidence(contract, preflight),
+	}, nil
 }
 
 func returnTailContractObligations(values []generation.OperationInputContractObligationEvidence) ([]ContractObligationEvidence, bool) {

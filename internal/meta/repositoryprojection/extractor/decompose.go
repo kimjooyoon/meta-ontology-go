@@ -24,12 +24,16 @@ type suffixBinding struct {
 }
 
 type suffixCandidate struct {
-	start      int
-	end        int
-	helperName string
-	arguments  []suffixBinding
-	helper     []byte
-	result     []byte
+	start                         int
+	end                           int
+	helperName                    string
+	arguments                     []suffixBinding
+	helper                        []byte
+	result                        []byte
+	beforeRenderedCapacityOverage int
+	afterRenderedCapacityOverage  int
+	renderedHelper                renderedCapacityMeasurement
+	renderedOuter                 renderedCapacityMeasurement
 }
 
 type returnTailCandidate struct {
@@ -378,7 +382,11 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			return nil, nil, candidateErr
 		}
 		if candidate != nil {
-			return candidate.result, nil, nil
+			strategyEvidence, evidenceErr := suffixStrategyEvidence(root, logical, source, fset, file, function, candidate, preflight)
+			if evidenceErr != nil {
+				return nil, nil, evidenceErr
+			}
+			return candidate.result, strategyEvidence, nil
 		}
 	}
 	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
@@ -449,10 +457,32 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, err
 	}
-	if afterCapacity.overage > 0 || !renderedCapacityProgress(beforeCapacity, afterCapacity) {
+	if !renderedCapacityProgress(beforeCapacity, afterCapacity) {
 		return nil, knownSuffixContradiction(fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
 	}
-	return &suffixCandidate{start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined}, nil
+	renderedOuter, err := renderedFunctionHelper(combined, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	renderedHelper, err := renderedFunctionHelper(combined, name)
+	if err != nil {
+		return nil, err
+	}
+	outerMeasurement, err := canonicalRenderedCapacity(renderedOuter)
+	if err != nil {
+		return nil, err
+	}
+	helperMeasurement, err := canonicalRenderedCapacity(renderedHelper)
+	if err != nil {
+		return nil, err
+	}
+	return &suffixCandidate{
+		start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined,
+		beforeRenderedCapacityOverage: beforeCapacity.overage,
+		afterRenderedCapacityOverage:  afterCapacity.overage,
+		renderedHelper:                helperMeasurement,
+		renderedOuter:                 outerMeasurement,
+	}, nil
 }
 
 func stableSuffixName(function string, suffix int) string {

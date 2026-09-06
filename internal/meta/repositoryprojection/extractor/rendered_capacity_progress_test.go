@@ -66,6 +66,116 @@ func TestImportHeavyWholeBodyHelperOverCapIsRejected(t *testing.T) {
 	}
 }
 
+func TestTypeSafeSuffixCandidateAcceptsStrictIntermediateProgress(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := "package p\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\nfunc F() {\n" +
+		strings.Repeat("\t_ = fmt.Sprintf(\"%s\", strings.Repeat(\"x\", 1))\n", 100) +
+		"}\n"
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", []byte(source), parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	function, ok := file.Decls[len(file.Decls)-1].(*ast.FuncDecl)
+	if !ok || function.Name == nil || function.Name.Name != "F" {
+		t.Fatal("type-safe suffix fixture lacks F")
+	}
+	typeEvidence, err := checkTypes(root, "x.go", fset, file, function)
+	if err != nil {
+		t.Fatal(err)
+	}
+	existing := functionNames(file)
+	var found *suffixCandidate
+	for startIndex := range function.Body.List {
+		candidate, candidateErr := buildSuffixCandidate([]byte(source), fset, file, function, startIndex, typeEvidence, existing)
+		if candidateErr != nil {
+			continue
+		}
+		if candidate != nil && candidate.afterRenderedCapacityOverage > 0 {
+			found = candidate
+			break
+		}
+	}
+	if found == nil {
+		t.Fatal("no type-safe suffix candidate made strict intermediate progress")
+	}
+	if found.beforeRenderedCapacityOverage <= found.afterRenderedCapacityOverage || found.afterRenderedCapacityOverage <= 0 {
+		t.Fatalf("candidate overage before=%d after=%d, want before>after>0", found.beforeRenderedCapacityOverage, found.afterRenderedCapacityOverage)
+	}
+	if len(found.result) == 0 || len(found.helper) == 0 {
+		t.Fatal("accepted suffix candidate did not produce typed source and helper")
+	}
+	validatedRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(validatedRoot, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(validatedRoot, "candidate.go"), found.result, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	validatedSet := token.NewFileSet()
+	validatedFile, err := parser.ParseFile(validatedSet, "candidate.go", found.result, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	validatedFunction, ok := validatedFile.Decls[0].(*ast.FuncDecl)
+	if !ok || validatedFunction.Name == nil || validatedFunction.Name.Name != "F" {
+		t.Fatal("validated suffix candidate lacks F")
+	}
+	if _, err := checkTypes(validatedRoot, "candidate.go", validatedSet, validatedFile, validatedFunction); err != nil {
+		t.Fatalf("accepted suffix candidate is not type-safe: %v", err)
+	}
+}
+
+func TestTypeSafeSuffixIntermediateProgressCompletesPreparation(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := "package p\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\nfunc F() {\n" +
+		strings.Repeat("\t_ = fmt.Sprintf(\"%s\", strings.Repeat(\"x\", 1))\n", 180) +
+		"}\n"
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", []byte(source), parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prepared, evidence, err := prepareOversizedFunctions(root, "x.go", []byte(source), fset, file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	intermediate := false
+	for _, item := range evidence {
+		if item.Strategy == suffixStrategy && item.AfterRenderedCapacityOverage > 0 && item.BeforeRenderedCapacityOverage > item.AfterRenderedCapacityOverage {
+			intermediate = true
+			break
+		}
+	}
+	if !intermediate {
+		t.Fatalf("preparation evidence=%+v, want strict intermediate suffix progress", evidence)
+	}
+	preparedSet := token.NewFileSet()
+	preparedFile, err := parser.ParseFile(preparedSet, "x.go", prepared, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection, err := firstOversizedFunction(preparedSet, preparedFile, prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if selection.function != nil {
+		t.Fatalf("prepared source still has oversized function=%s observations=%+v", selection.function.Name.Name, selection.observations)
+	}
+}
+
 func TestRenderedCapacityObservesOriginalPaginationSubject(t *testing.T) {
 	_, sourceFile, _, ok := runtime.Caller(0)
 	if !ok {
