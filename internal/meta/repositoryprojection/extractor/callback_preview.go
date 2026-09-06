@@ -36,6 +36,7 @@ const (
 // owned preview data and cannot enter the normal OperationResult or staging
 // path.
 type CallbackPreviewResult struct {
+	StructureProof           *ClosurePreservationProof          `json:"structure_proof,omitempty"`
 	LoweringStrategy         string                             `json:"lowering_strategy"`
 	Schema                   string                             `json:"schema"`
 	LogicalPath              string                             `json:"logical_path"`
@@ -187,6 +188,13 @@ func PreviewBoundedPaginationCallbackWithStrategy(root, logical, lowering string
 		return CallbackPreviewResult{}, err
 	}
 	base.Candidate = &candidate
+	if lowering == callbackPreviewFactoryLowering {
+		proof, proofErr := proveClosurePreservation(root, logical, source, fset, file, target, callback, typeEvidence, captures, candidate)
+		if proofErr != nil {
+			return CallbackPreviewResult{}, proofErr
+		}
+		base.StructureProof = &proof
+	}
 	base.Captures = captures
 	base.PendingEffects = effects
 	callbackPreviewSetLifecycle(&base, "PENDING_TYPED_CALLBACK_EFFECTS")
@@ -326,12 +334,16 @@ func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence,
 	if err != nil {
 		return nil, err
 	}
-	candidateRecord, err := contract.BuildCallbackPreviewRecord(contract.CandidateEntity, map[string]string{
+	candidateValues := map[string]string{
 		"CandidateIdentity": candidate.CandidateIdentity, "SourceDigest": candidate.SourceDigest, "CandidateDigest": candidate.CandidateDigest,
 		"HelperName": candidate.HelperName, "HelperBytes": strconv.Itoa(candidate.HelperBytes), "HelperLines": strconv.Itoa(candidate.HelperLines),
 		"ParentFunctionLines": strconv.Itoa(candidate.ParentFunctionLines), "CaptureCount": strconv.Itoa(candidate.CaptureCount),
 		"PendingEffectCount": strconv.Itoa(candidate.PendingEffectCount), "State": candidate.State, "Promotion": candidate.Promotion,
-	})
+	}
+	for name, value := range closurePreservationRecordValues(result.StructureProof) {
+		candidateValues[name] = value
+	}
+	candidateRecord, err := contract.BuildCallbackPreviewRecord(contract.CandidateEntity, candidateValues)
 	if err != nil {
 		return nil, err
 	}
@@ -459,6 +471,9 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return nil
 	}
 	candidate := result.Candidate
+	if err := validateClosurePreservationSummary(result); err != nil {
+		return err
+	}
 	if err := validateCallbackPreviewLowering(result); err != nil {
 		return err
 	}
@@ -498,6 +513,11 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return fmt.Errorf("callback preview input record is not bound")
 	}
 	candidateValues := records[contract.CandidateEntity]
+	for name, expected := range closurePreservationRecordValues(result.StructureProof) {
+		if candidateValues[name] != expected {
+			return fmt.Errorf("callback preview source structure field %s is not bound", name)
+		}
+	}
 	for name, expected := range map[string]string{
 		"CandidateIdentity": candidate.CandidateIdentity, "SourceDigest": candidate.SourceDigest, "CandidateDigest": candidate.CandidateDigest,
 		"HelperName": candidate.HelperName, "HelperBytes": strconv.Itoa(candidate.HelperBytes), "HelperLines": strconv.Itoa(candidate.HelperLines),

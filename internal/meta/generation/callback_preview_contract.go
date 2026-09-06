@@ -292,6 +292,10 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 		{Name: "PendingEffectCount", ID: "gooo://meta-callback-preview/field/candidate-pending-effect-count", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "State", ID: "gooo://meta-callback-preview/field/candidate-state", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "Promotion", ID: "gooo://meta-callback-preview/field/candidate-promotion", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "SourceStructureState", ID: "gooo://meta-callback-preview/field/candidate-source-structure-state", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "SourceStructureDigest", ID: "gooo://meta-callback-preview/field/candidate-source-structure-digest", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "CaptureReferenceCount", ID: "gooo://meta-callback-preview/field/candidate-capture-reference-count", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "CallExpressionCount", ID: "gooo://meta-callback-preview/field/candidate-call-expression-count", Presence: semantic.Required, Cardinality: semantic.One},
 	}},
 	{Name: "CallbackCaptures", ID: "gooo://meta-callback-preview/entity/captures", Fields: []callbackPreviewFieldSpec{
 		{Name: "CandidateIdentity", ID: "gooo://meta-callback-preview/field/captures-candidate-identity", Presence: semantic.Required, Cardinality: semantic.One},
@@ -341,7 +345,7 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 }
 
 var callbackPreviewActivitySpecs = []callbackPreviewActivitySpec{
-	{Name: "GenerateBoundedCallbackCandidate", InputEntity: "CallbackPreviewInput", OutputEntity: "BoundedCallbackCandidate", ValueProgram: "callback-preview.candidate:v2;lowering=input.LoweringStrategy;promotion=NONE"},
+	{Name: "GenerateBoundedCallbackCandidate", InputEntity: "CallbackPreviewInput", OutputEntity: "BoundedCallbackCandidate", ValueProgram: "callback-preview.candidate:v3;lowering=input.LoweringStrategy;factory-structure=source-bound;promotion=NONE"},
 	{Name: "BindCallbackCaptures", InputEntity: "BoundedCallbackCandidate", OutputEntity: "CallbackCaptures", ValueProgram: "callback-preview.captures:v1"},
 	{Name: "RecordPendingCallbackEffects", InputEntity: "CallbackCaptures", OutputEntity: "PendingCallbackEffects", ValueProgram: "callback-preview.effects:v1;state=UNKNOWN"},
 	{Name: "CloseCallbackPreview", InputEntity: "PendingCallbackEffects", OutputEntity: "CallbackPreviewEvidence", ValueProgram: "callback-preview.evidence:v1;operation-result=FORBIDDEN;apply=FORBIDDEN"},

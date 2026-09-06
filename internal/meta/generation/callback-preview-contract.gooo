@@ -21,6 +21,10 @@ entity BoundedCallbackCandidate id "gooo://meta-callback-preview/entity/candidat
     field PendingEffectCount id "gooo://meta-callback-preview/field/candidate-pending-effect-count" type string required one
     field State id "gooo://meta-callback-preview/field/candidate-state" type string required one
     field Promotion id "gooo://meta-callback-preview/field/candidate-promotion" type string required one
+    field SourceStructureState id "gooo://meta-callback-preview/field/candidate-source-structure-state" type string required one
+    field SourceStructureDigest id "gooo://meta-callback-preview/field/candidate-source-structure-digest" type string required one
+    field CaptureReferenceCount id "gooo://meta-callback-preview/field/candidate-capture-reference-count" type string required one
+    field CallExpressionCount id "gooo://meta-callback-preview/field/candidate-call-expression-count" type string required one
 }
 
 entity CallbackCaptures id "gooo://meta-callback-preview/entity/captures" fields {
@@ -71,7 +75,7 @@ entity CallbackPreviewEvidence id "gooo://meta-callback-preview/entity/evidence"
     field BlockedBy id "gooo://meta-callback-preview/field/evidence-blocked-by" type string required one
 }
 
-activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v2;lowering=input.LoweringStrategy;promotion=NONE"
+activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v3;lowering=input.LoweringStrategy;factory-structure=source-bound;promotion=NONE"
 activity BindCallbackCaptures(BoundedCallbackCandidate) -> CallbackCaptures computes "callback-preview.captures:v1"
 activity RecordPendingCallbackEffects(CallbackCaptures) -> PendingCallbackEffects computes "callback-preview.effects:v1;state=UNKNOWN"
 activity CloseCallbackPreview(PendingCallbackEffects) -> CallbackPreviewEvidence computes "callback-preview.evidence:v1;operation-result=FORBIDDEN;apply=FORBIDDEN"
