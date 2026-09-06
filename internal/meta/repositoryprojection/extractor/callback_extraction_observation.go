@@ -43,6 +43,9 @@ type CallbackExtractionObservation struct {
 	ProposalDigest      string                              `json:"proposal_digest"`
 	ContractDigest      string                              `json:"contract_digest"`
 	ModulePath          string                              `json:"module_path"`
+	ModuleDigest        string                              `json:"module_snapshot_digest"`
+	ModuleFiles         int                                 `json:"module_snapshot_files"`
+	ModuleBytes         int64                               `json:"module_snapshot_bytes"`
 	GoVersion           string                              `json:"go_version"`
 	GeneratedFiles      int                                 `json:"generated_files"`
 	AttemptedRuns       int                                 `json:"attempted_runs"`
@@ -104,6 +107,19 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 	}
 	observation.SourcePackageDigest = proofDigest(generatedPackagePayload(baseline))
 	observation.FinalPackageDigest = proofDigest(generatedPackagePayload(final))
+	observation.Frontier = callbackObservationUnknown("SNAPSHOT_MODULE", "SOURCE_MODULE_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "CAPTURE_SOURCE_MODULE_SNAPSHOT")
+	moduleFiles, err := callbackObservationModuleSources(ctx, root, logical, baseline)
+	if err != nil {
+		return observation, err
+	}
+	modulePayload, err := json.Marshal(moduleFiles)
+	if err != nil {
+		return observation, err
+	}
+	observation.ModuleDigest, observation.ModuleFiles = proofDigest(modulePayload), len(moduleFiles)
+	for _, raw := range moduleFiles {
+		observation.ModuleBytes += int64(len(raw))
+	}
 	observation.Frontier = callbackObservationUnknown("BIND_TOOLCHAIN", "GO_TOOLCHAIN_IDENTITY_UNAVAILABLE", "DIRECT_MISSING", "RESTORE_GO_TOOLCHAIN_OBSERVATION")
 	observation.ModulePath, observation.GoVersion, err = callbackObservationToolchain(ctx, root)
 	if err != nil {
@@ -120,7 +136,7 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 		files map[string][]byte
 	}{{"source", baseline}, {"final", final}} {
 		observation.Frontier = callbackObservationUnknown("PREPARE_"+strings.ToUpper(variant.name)+"_PACKAGE", "PACKAGE_WORKSPACE_UNAVAILABLE", "DIRECT_MISSING", "MATERIALIZE_PACKAGE_OBSERVATION")
-		workdir, prepareError := materializeCallbackObservation(directory, variant.name, root, logical, observation.ModulePath, observation.GoVersion, variant.files)
+		workdir, prepareError := materializeCallbackObservation(directory, variant.name, logical, moduleFiles, variant.files)
 		if prepareError != nil {
 			return observation, prepareError
 		}
@@ -175,7 +191,7 @@ func bindCallbackPackageObservation(observation *CallbackExtractionObservation, 
 }
 
 func runCallbackPackageObservation(ctx context.Context, directory, variant, requiredTest string) (CallbackPackageRun, error) {
-	args := []string{"test", "-mod=mod", "-json", "-count=1", "."}
+	args := []string{"test", "-mod=readonly", "-json", "-count=1", "."}
 	run := CallbackPackageRun{Variant: variant, Command: append([]string{"go"}, args...), ExitCode: -1}
 	command := exec.CommandContext(ctx, "go", args...)
 	command.Dir = directory

@@ -33,6 +33,7 @@ func TestCallbackExtractionObservesOriginalAndFinalPackageCI(t *testing.T) {
 	}
 	if observation.Decision != "OBSERVED" || observation.Scope != "PACKAGE_TEST_EVENTS_ONLY" || len(observation.Runs) != 2 ||
 		observation.AttemptedRuns != 2 || observation.CompletedTestRuns != 2 || observation.RequiredTestRuns != 2 ||
+		observation.ModuleDigest == "" || observation.ModuleFiles == 0 || observation.ModuleBytes == 0 ||
 		observation.SourcePackageDigest == "" || observation.FinalPackageDigest == "" || observation.TestEventDigest == "" ||
 		observation.GeneratedFiles != 6 || observation.OperationAdmission != "UNKNOWN" || observation.ApplyPermission != "FORBIDDEN" ||
 		observation.DependencyBinding != "UNBOUND" || observation.Frontier.UnknownClass != "UNBOUNDED" {
@@ -61,7 +62,7 @@ func TestCallbackPackageCommandFailurePreservesOutputCI(t *testing.T) {
 	}
 	directory := t.TempDir()
 	for name, source := range map[string]string{
-		"go.mod": "module example.invalid/callback-failure\n\ngo 1.27.0\n",
+		"go.mod":          "module example.invalid/callback-failure\n\ngo 1.27.0\n",
 		"failure_test.go": "package fixture\nimport \"testing\"\nfunc TestRequired(t *testing.T) { missingObserverSymbol() }\n",
 	} {
 		if err := os.WriteFile(filepath.Join(directory, name), []byte(source), 0o600); err != nil {

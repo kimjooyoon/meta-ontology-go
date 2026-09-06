@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -20,6 +19,12 @@ func callbackObservationSources(root, logical string, proposal CallbackExtractio
 	err := fs.WalkDir(tree, ".", func(name string, entry fs.DirEntry, walkError error) error {
 		if walkError != nil {
 			return walkError
+		}
+		if name == ".git" {
+			if entry.IsDir() {
+				return fs.SkipDir
+			}
+			return nil
 		}
 		if entry.IsDir() {
 			return nil
@@ -76,7 +81,17 @@ func callbackObservationToolchain(ctx context.Context, root string) (string, str
 	return module, version, nil
 }
 
-func materializeCallbackObservation(parent, variant, root, logical, module, version string, files map[string][]byte) (string, error) {
+func materializeCallbackObservation(parent, variant, logical string, moduleFiles, packageFiles map[string][]byte) (string, error) {
+	if (variant != "source" && variant != "final") || !fs.ValidPath(logical) || path.Ext(logical) != ".go" || len(moduleFiles["go.mod"]) == 0 {
+		return "", fmt.Errorf("callback observation requires a module snapshot and a bounded variant/package path")
+	}
+	files := maps.Clone(moduleFiles)
+	for name, raw := range packageFiles {
+		if !fs.ValidPath(name) {
+			return "", fmt.Errorf("callback observation package path is not relative")
+		}
+		files[path.Join(path.Dir(logical), name)] = raw
+	}
 	directory := filepath.Join(parent, variant)
 	for name, raw := range files {
 		if !fs.ValidPath(name) {
@@ -90,23 +105,5 @@ func materializeCallbackObservation(parent, variant, root, logical, module, vers
 			return "", err
 		}
 	}
-	absoluteRoot, err := filepath.Abs(root)
-	if err != nil {
-		return "", err
-	}
-	packageModule := module + "/" + path.Dir(logical)
-	if path.Dir(logical) == "." {
-		packageModule = module + "/callback-observation"
-	}
-	requiredVersion := "v0.0.0"
-	if major, ok := strings.CutPrefix(path.Base(module), "v"); ok {
-		if number, err := strconv.Atoi(major); err == nil && number >= 2 {
-			requiredVersion = "v" + major + ".0.0"
-		}
-	}
-	goMod := "module " + packageModule + "\n\ngo " + strings.TrimPrefix(version, "go") + "\n\nrequire " + module + " " + requiredVersion + "\nreplace " + module + " => " + strconv.Quote(absoluteRoot) + "\n"
-	if err := os.WriteFile(filepath.Join(directory, "go.mod"), []byte(goMod), 0o600); err != nil {
-		return "", err
-	}
-	return directory, nil
+	return filepath.Join(directory, filepath.FromSlash(path.Dir(logical))), nil
 }
