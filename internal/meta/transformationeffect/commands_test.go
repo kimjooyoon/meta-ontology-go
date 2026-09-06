@@ -2,6 +2,7 @@ package transformationeffect
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 )
 
@@ -15,7 +16,15 @@ func TestCanonicalMetricsPayloadNormalizesWorkspacePath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(first, second) || !bytes.Contains(first, []byte(`"root":"<workspace>"`)) || !bytes.Contains(first, []byte(`"storage_root":"<workspace>"`)) || !bytes.Contains(first, []byte(`"semantic_path":"/tmp/metrics-workspace-123"`)) {
+	var fields struct {
+		Root         string `json:"root"`
+		StorageRoot  string `json:"storage_root"`
+		SemanticPath string `json:"semantic_path"`
+	}
+	if err := json.Unmarshal(first, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) || fields.Root != "<workspace>" || fields.StorageRoot != "<workspace>" || fields.SemanticPath != "/tmp/metrics-workspace-123" {
 		t.Fatalf("canonical metrics payloads differ or omit normalized roots: first=%s second=%s", first, second)
 	}
 
