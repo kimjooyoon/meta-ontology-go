@@ -141,8 +141,8 @@ func PreviewBoundedPaginationCallbackWithStrategy(root, logical, lowering string
 	if err != nil {
 		return CallbackPreviewResult{}, err
 	}
-	base := CallbackPreviewResult{Schema: callbackPreviewSchema, LogicalPath: logical, Subject: "func:" + callbackPreviewTarget, SourceDigest: callbackPreviewDigest(source), ContractSourceDigest: contract.SourceDigest, ContractSemanticDigest: contract.SemanticDigest, State: callbackPreviewStateUnknown, Stage: callbackPreviewStage, BlockedBy: []string{}, OperationResultAdmission: "FORBIDDEN", ApplyPermission: "FORBIDDEN"}
-	base.LoweringStrategy = lowering
+	base := CallbackPreviewResult{Schema: callbackPreviewSchema, LogicalPath: logical, Subject: "func:" + callbackPreviewTarget, SourceDigest: callbackPreviewDigest(source), ContractSourceDigest: contract.SourceDigest, ContractSemanticDigest: contract.SemanticDigest, State: callbackPreviewStateUnknown, Stage: callbackPreviewStage, BlockedBy: []string{}, OperationResultAdmission: "FORBIDDEN", ApplyPermission: "FORBIDDEN",
+		LoweringStrategy: lowering}
 	inputRecord, err := contract.BuildCallbackPreviewRecord(contract.InputEntity, map[string]string{"LogicalPath": logical, "LoweringStrategy": lowering, "Subject": base.Subject, "SourceDigest": base.SourceDigest, "State": base.State})
 	if err != nil {
 		return CallbackPreviewResult{}, err

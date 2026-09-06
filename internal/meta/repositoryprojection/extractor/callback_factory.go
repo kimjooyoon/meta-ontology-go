@@ -72,7 +72,7 @@ func callbackPreviewFactoryCandidate(root string, source []byte, logical string,
 	}
 	return CallbackPreviewCandidate{
 		CandidateIdentity: fmt.Sprintf("%s#%s@%d:%d", filepath.ToSlash(logical), target.Name.Name, start, end),
-		SourceDigest: callbackPreviewDigest(source), CandidateDigest: callbackPreviewDigest(formatted), HelperName: name,
+		SourceDigest:      callbackPreviewDigest(source), CandidateDigest: callbackPreviewDigest(formatted), HelperName: name,
 		WrapperSource: replacement, HelperSource: string(helper), CandidateSource: string(formatted),
 		HelperBytes: len(helper), HelperLines: physicalLines(helper), ParentFunctionLines: declarationLines(candidateSet, candidateTarget),
 		CaptureCount: len(captures), PendingEffectCount: len(effects), State: callbackPreviewStateUnknown, Promotion: callbackPreviewPromotionNone,
