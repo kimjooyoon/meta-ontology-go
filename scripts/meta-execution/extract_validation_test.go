@@ -615,6 +615,10 @@ func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.St
 	t.Helper()
 	evidence := strategyEvidenceFixture(t)
 	evidence.AfterRenderedCapacityOverage = 3
+	evidence.PreflightObservations = []projectionextractor.PreflightObservationEvidence{{
+		Subject:      evidence.Subject,
+		SourceDigest: evidence.ProofStages[0].SourceDigest,
+	}}
 	evidence.PreparationProgress = &projectionextractor.PreparationProgressEvidence{
 		Operation:              evidence.Operation,
 		Activity:               evidence.ContractActivity,
@@ -627,13 +631,6 @@ func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.St
 		BeforeOverage:          evidence.BeforeRenderedCapacityOverage,
 		AfterOverage:           evidence.AfterRenderedCapacityOverage,
 		Status:                 strategyEvidencePassStatus,
-	}
-	evidence.FinalRenderedCapacity = &projectionextractor.FinalRenderedCapacityEvidence{
-		Scope:         "final-generated-functions",
-		PayloadDigest: evidence.ProofStages[4].PayloadDigest,
-		Bytes:         evidence.FinalGeneratedBytes,
-		Lines:         evidence.FinalGeneratedUnits,
-		Status:        strategyEvidencePassStatus,
 	}
 	return evidence
 }

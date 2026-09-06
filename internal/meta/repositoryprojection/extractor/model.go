@@ -14,11 +14,7 @@ type Failure struct {
 }
 
 func (e Failure) Error() string {
-	message := fmt.Sprintf("%s/%s/%s unknown_class=%s next=%s blocked_by=%v", e.Stage, e.Step, e.Reason, e.UnknownClass, e.NextOperation, e.BlockedBy)
-	if len(e.Diagnostics) != 0 {
-		message += fmt.Sprintf(" diagnostics=%v", e.Diagnostics)
-	}
-	return message
+	return fmt.Sprintf("%s/%s/%s unknown_class=%s next=%s blocked_by=%v", e.Stage, e.Step, e.Reason, e.UnknownClass, e.NextOperation, e.BlockedBy)
 }
 
 func fail(stage, step, reason, class, next string, blocked []string) error {
