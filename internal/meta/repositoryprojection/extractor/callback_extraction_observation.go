@@ -21,34 +21,40 @@ type CallbackPackageTestEvent struct {
 }
 
 type CallbackPackageRun struct {
-	Variant      string                     `json:"variant"`
-	Command      []string                   `json:"command"`
-	ExitCode     int                        `json:"exit_code"`
-	WallMS       int64                      `json:"wall_ms"`
-	StdoutDigest string                     `json:"stdout_digest"`
-	StderrDigest string                     `json:"stderr_digest"`
-	Events       []CallbackPackageTestEvent `json:"events"`
+	Variant            string                     `json:"variant"`
+	Command            []string                   `json:"command"`
+	ExitCode           int                        `json:"exit_code"`
+	WallMS             int64                      `json:"wall_ms"`
+	StdoutDigest       string                     `json:"stdout_digest"`
+	StderrDigest       string                     `json:"stderr_digest"`
+	Stdout             []byte                     `json:"stdout"`
+	Stderr             []byte                     `json:"stderr"`
+	Events             []CallbackPackageTestEvent `json:"events"`
+	TestEventsComplete bool                       `json:"test_events_complete"`
 }
 
 type CallbackExtractionObservation struct {
-	Schema             string                              `json:"schema"`
-	Scope              string                              `json:"scope"`
-	Decision           string                              `json:"decision"`
-	SourceDigest       string                              `json:"source_digest"`
-	SourcePackageDigest string                             `json:"source_package_digest"`
-	FinalPackageDigest string                              `json:"final_package_digest"`
-	ProposalDigest     string                              `json:"proposal_digest"`
-	ContractDigest     string                              `json:"contract_digest"`
-	ModulePath         string                              `json:"module_path"`
-	GoVersion          string                              `json:"go_version"`
-	GeneratedFiles     int                                 `json:"generated_files"`
-	DependencyBinding  string                              `json:"dependency_binding"`
-	Runs               []CallbackPackageRun                `json:"runs"`
-	TestEventDigest    string                              `json:"test_event_digest"`
-	Record             generation.CallbackExtractionRecord `json:"record"`
-	Frontier           CallbackExtractionClaim             `json:"frontier"`
-	OperationAdmission string                              `json:"operation_admission"`
-	ApplyPermission    string                              `json:"apply_permission"`
+	Schema              string                              `json:"schema"`
+	Scope               string                              `json:"scope"`
+	Decision            string                              `json:"decision"`
+	SourceDigest        string                              `json:"source_digest"`
+	SourcePackageDigest string                              `json:"source_package_digest"`
+	FinalPackageDigest  string                              `json:"final_package_digest"`
+	ProposalDigest      string                              `json:"proposal_digest"`
+	ContractDigest      string                              `json:"contract_digest"`
+	ModulePath          string                              `json:"module_path"`
+	GoVersion           string                              `json:"go_version"`
+	GeneratedFiles      int                                 `json:"generated_files"`
+	AttemptedRuns       int                                 `json:"attempted_runs"`
+	CompletedTestRuns   int                                 `json:"completed_test_runs"`
+	RequiredTestRuns    int                                 `json:"required_test_runs"`
+	DependencyBinding   string                              `json:"dependency_binding"`
+	Runs                []CallbackPackageRun                `json:"runs"`
+	TestEventDigest     string                              `json:"test_event_digest"`
+	Record              generation.CallbackExtractionRecord `json:"record"`
+	Frontier            CallbackExtractionClaim             `json:"frontier"`
+	OperationAdmission  string                              `json:"operation_admission"`
+	ApplyPermission     string                              `json:"apply_permission"`
 }
 
 // ObserveCallbackExtraction executes only in CI and only in disposable copies.
@@ -63,16 +69,19 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 	if os.Getenv("CI") != "true" {
 		return observation, fmt.Errorf("callback package observation is CI-only")
 	}
+	observation.Frontier = callbackObservationUnknown("CHECK_DEADLINE", "BOUNDED_CONTEXT_REQUIRED", "UNBOUNDED", "SUPPLY_BOUNDED_OBSERVER_CONTEXT")
 	if ctx == nil {
 		return observation, fmt.Errorf("callback package observation requires a bounded context")
 	}
 	if _, bounded := ctx.Deadline(); !bounded {
 		return observation, fmt.Errorf("callback package observation requires a deadline")
 	}
+	observation.Frontier = callbackObservationUnknown("PLAN_FINAL_PACKAGE", "CALLBACK_EXTRACTION_PROPOSAL_UNAVAILABLE", "DIRECT_MISSING", "PLAN_CALLBACK_EXTRACTION")
 	proposal, err := PlanCallbackExtraction(root, logical, subject)
 	if err != nil {
 		return observation, err
 	}
+	observation.Frontier = callbackObservationUnknown("BIND_REQUIRED_TEST", "SOURCE_TEST_SUBJECT_UNAVAILABLE", "AMBIGUOUS", "SELECT_SOURCE_TEST_SUBJECT")
 	requiredTest, ok := strings.CutPrefix(subject, "func:Test")
 	if !ok || requiredTest == "" {
 		return observation, fmt.Errorf("callback package observation requires a test function subject")
@@ -88,16 +97,19 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 			err = recordError
 		}
 	}()
+	observation.Frontier = callbackObservationUnknown("SNAPSHOT_PACKAGE", "SOURCE_PACKAGE_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "CAPTURE_SOURCE_PACKAGE_SNAPSHOT")
 	baseline, final, err := callbackObservationSources(root, logical, proposal)
 	if err != nil {
 		return observation, err
 	}
 	observation.SourcePackageDigest = proofDigest(generatedPackagePayload(baseline))
 	observation.FinalPackageDigest = proofDigest(generatedPackagePayload(final))
+	observation.Frontier = callbackObservationUnknown("BIND_TOOLCHAIN", "GO_TOOLCHAIN_IDENTITY_UNAVAILABLE", "DIRECT_MISSING", "RESTORE_GO_TOOLCHAIN_OBSERVATION")
 	observation.ModulePath, observation.GoVersion, err = callbackObservationToolchain(ctx, root)
 	if err != nil {
 		return observation, err
 	}
+	observation.Frontier = callbackObservationUnknown("CREATE_TEMP_WORKSPACE", "TEMPORARY_OUTPUT_UNAVAILABLE", "DIRECT_MISSING", "ALLOCATE_EXTERNAL_OBSERVATION_WORKSPACE")
 	directory, err := os.MkdirTemp("", "gooo-callback-observation-")
 	if err != nil {
 		return observation, err
@@ -107,6 +119,7 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 		name  string
 		files map[string][]byte
 	}{{"source", baseline}, {"final", final}} {
+		observation.Frontier = callbackObservationUnknown("PREPARE_"+strings.ToUpper(variant.name)+"_PACKAGE", "PACKAGE_WORKSPACE_UNAVAILABLE", "DIRECT_MISSING", "MATERIALIZE_PACKAGE_OBSERVATION")
 		workdir, prepareError := materializeCallbackObservation(directory, variant.name, root, logical, observation.ModulePath, observation.GoVersion, variant.files)
 		if prepareError != nil {
 			return observation, prepareError
@@ -114,16 +127,8 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 		run, runError := runCallbackPackageObservation(ctx, workdir, variant.name, requiredTest)
 		observation.Runs = append(observation.Runs, run)
 		if runError != nil {
-			observation.Frontier.Step = "RUN_" + strings.ToUpper(variant.name) + "_PACKAGE"
-			observation.Frontier.Reason = "PACKAGE_TEST_OBSERVATION_INCOMPLETE"
-			observation.Frontier.NextOperation = "RESOLVE_PACKAGE_TEST_OBSERVATION"
-			if run.ExitCode > 0 {
-				observation.Decision = "REFUTED"
-				observation.Frontier.State = "REFUTED"
-				observation.Frontier.Reason = "PACKAGE_TESTS_FAILED"
-				observation.Frontier.UnknownClass = ""
-				observation.Frontier.NextOperation = "PRESERVE_PACKAGE_TEST_COUNTEREXAMPLE"
-			}
+			observation.Frontier = callbackPackageFailureFrontier(run)
+			observation.Decision = observation.Frontier.State
 			return observation, runError
 		}
 	}
@@ -146,11 +151,17 @@ func ObserveCallbackExtraction(ctx context.Context, root, logical, subject strin
 }
 
 func bindCallbackPackageObservation(observation *CallbackExtractionObservation, contract generation.CallbackExtractionContract) error {
+	observation.AttemptedRuns, observation.CompletedTestRuns, observation.RequiredTestRuns = len(observation.Runs), 0, 2
+	for _, run := range observation.Runs {
+		if run.ExitCode == 0 && run.TestEventsComplete && len(run.Events) > 0 {
+			observation.CompletedTestRuns++
+		}
+	}
 	raw, err := json.Marshal(observation)
 	if err != nil {
 		return err
 	}
-	record, err := contract.BuildRecord(4, "UNKNOWN", proofDigest(raw), len(observation.Runs), 2)
+	record, err := contract.BuildRecord(4, "UNKNOWN", proofDigest(raw), observation.CompletedTestRuns, observation.RequiredTestRuns)
 	if err != nil {
 		return err
 	}
@@ -174,15 +185,35 @@ func runCallbackPackageObservation(ctx context.Context, directory, variant, requ
 	started := time.Now()
 	err := command.Run()
 	run.WallMS = time.Since(started).Milliseconds()
-	run.StdoutDigest, run.StderrDigest = proofDigest(stdout.Bytes()), proofDigest(stderr.Bytes())
+	run.Stdout, run.Stderr = bytes.Clone(stdout.Bytes()), bytes.Clone(stderr.Bytes())
+	run.StdoutDigest, run.StderrDigest = proofDigest(run.Stdout), proofDigest(run.Stderr)
 	if command.ProcessState != nil {
 		run.ExitCode = command.ProcessState.ExitCode()
 	}
+	events, eventError := callbackPackageTestEvents(run.Stdout, requiredTest)
+	run.Events = events
+	run.TestEventsComplete = err == nil && eventError == nil
 	if err != nil {
-		return run, fmt.Errorf("%s package tests: %w; stderr=%s", variant, err, stderr.String())
+		return run, fmt.Errorf("%s package command: %w; stdout=%s; stderr=%s", variant, err, run.Stdout, run.Stderr)
 	}
-	run.Events, err = callbackPackageTestEvents(stdout.Bytes(), requiredTest)
-	return run, err
+	return run, eventError
+}
+
+func callbackObservationUnknown(step, reason, class, next string) CallbackExtractionClaim {
+	return CallbackExtractionClaim{ID: "gooo://callback-extraction/claim/observers", State: "UNKNOWN",
+		Stage: "CALLBACK_OBSERVATION", Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: []string{}}
+}
+
+func callbackPackageFailureFrontier(run CallbackPackageRun) CallbackExtractionClaim {
+	claim := callbackObservationUnknown("RUN_"+strings.ToUpper(run.Variant)+"_PACKAGE",
+		"PACKAGE_TEST_OBSERVATION_INCOMPLETE", "DIRECT_MISSING", "RESOLVE_PACKAGE_TEST_OBSERVATION")
+	for _, event := range run.Events {
+		if event.Action == "fail" {
+			claim.State, claim.Reason, claim.UnknownClass = "REFUTED", "PACKAGE_TEST_COUNTEREXAMPLE_OBSERVED", ""
+			claim.NextOperation = "PRESERVE_PACKAGE_TEST_COUNTEREXAMPLE"
+		}
+	}
+	return claim
 }
 
 func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPackageTestEvent, error) {
@@ -214,7 +245,7 @@ func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPacka
 		requiredPassed = requiredPassed || event.Test == requiredTest && event.Action == "pass"
 	}
 	if !requiredPassed {
-		return nil, fmt.Errorf("required source test %s did not pass", requiredTest)
+		return events, fmt.Errorf("required source test %s did not pass", requiredTest)
 	}
 	slices.SortFunc(events, func(left, right CallbackPackageTestEvent) int { return strings.Compare(left.Name, right.Name) })
 	return events, nil
