@@ -29,10 +29,11 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 		{name: "escaping branch", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgoto done\n\tdone:\n\treturn nil\n"), positive: false},
 		{name: "address escape stale pointer", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tp := &err\n\t_ = p\n", "\t*p = errorSentinel()\n\treturn err\n"), positive: false},
 		{name: "closure capture stale copy", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tset := func() { err = errorSentinel() }\n\t_ = set\n", "\tset()\n\treturn err\n"), positive: false},
+		{name: "function iterator execution", source: returnTailFunctionIteratorFixture(), positive: false},
 		{name: "false helper capacity proof", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n"+strings.Repeat("\t\t_ = 1\n", 70)+"\t\treturn nil\n\t}\n\treturn nil\n"), positive: false},
 	}
-	if len(cases) != 10 {
-		t.Fatalf("safety matrix denominator=%d, want 10", len(cases))
+	if len(cases) != 11 {
+		t.Fatalf("safety matrix denominator=%d, want 11", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -111,7 +112,10 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				assertReturnTailClosureCaptureRejected(t, tc.source)
 				return
 			}
-			if failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
+			if tc.name == "function iterator execution" && (failure.Reason != "CALLEE_EFFECTS_UNPROVEN" || failure.UnknownClass != "DIRECT_MISSING") {
+				t.Fatalf("function iterator reason=%s class=%s error=%v", failure.Reason, failure.UnknownClass, err)
+			}
+			if tc.name != "function iterator execution" && failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
 				t.Fatalf("negative case reason=%s error=%v", failure.Reason, err)
 			}
 		})
@@ -193,4 +197,8 @@ func returnTailFixture(header, tail string) string {
 
 func returnTailPrefixBindingFixture(header, prefix, tail string) string {
 	return "package p\n\n" + header + prefix + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n\ntype T struct{}\n"
+}
+
+func returnTailFunctionIteratorFixture() string {
+	return "package p\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\tfor range iterator {}\n\treturn nil\n}\n\nfunc iterator(yield func(int) bool) {}\n"
 }
