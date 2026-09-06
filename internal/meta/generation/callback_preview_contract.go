@@ -140,8 +140,15 @@ func (contract CallbackPreviewContractEvidence) ValidateCallbackPreviewFlow(reco
 	if len(contract.Activities) != 4 || len(contract.Bindings) != 3 {
 		return fmt.Errorf("callback preview contract activity/binding flow is incomplete")
 	}
-	for index, binding := range contract.Bindings {
-		if binding.Entity != expected[index+1] || binding.ProducerActivity != contract.Activities[index].Name || binding.ConsumerActivity != contract.Activities[index+1].Name {
+	for index, expectedBinding := range callbackPreviewBindingSpecs {
+		matched := false
+		for _, binding := range contract.Bindings {
+			if binding.Entity == expectedBinding.Entity && binding.ProducerActivity == expectedBinding.ProducerActivity && binding.ConsumerActivity == expectedBinding.ConsumerActivity {
+				matched = true
+				break
+			}
+		}
+		if !matched {
 			return fmt.Errorf("callback preview contract binding %d does not match activity flow", index)
 		}
 	}
