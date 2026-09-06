@@ -89,8 +89,8 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 						chainBound = chainBound && stage.Name == want.Name && stage.Activity == want.Activity &&
 							stage.InputEntity == want.InputEntity && stage.OutputEntity == want.OutputEntity && stage.Status == "PASS" &&
 							stage.SourceDigest != "" && stage.SourceDigest == stages[0].SourceDigest && stage.CandidateDigest != "" &&
-								stage.InputEvidenceID != "" && stage.OutputEvidenceID != "" && stage.PayloadDigest != "" &&
-								(stage.Name == "free-bindings" || stage.PayloadBytes > 0)
+							stage.InputEvidenceID != "" && stage.OutputEvidenceID != "" && stage.PayloadDigest != "" &&
+							(stage.Name == "free-bindings" || stage.PayloadBytes > 0)
 						if index > 0 {
 							chainBound = chainBound && stages[index-1].OutputEvidenceID == stage.InputEvidenceID
 						}

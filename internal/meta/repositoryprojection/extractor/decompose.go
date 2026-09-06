@@ -115,6 +115,12 @@ type returnTailValidation struct {
 	dependencies []CalleeDependencyEvidence
 }
 
+type returnTailValidationContext struct {
+	visiting          map[*types.Func]bool
+	memo              map[*types.Func]returnTailValidation
+	proofBodyVisits   map[*types.Func]int
+}
+
 func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
 	current := append([]byte(nil), source...)
 	currentSet, currentFile := fset, file

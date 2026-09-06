@@ -588,9 +588,23 @@ func returnTailAssignedObject(expression ast.Expr, info *types.Info) (types.Obje
 }
 
 func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof) ([]CalleeDependencyEvidence, error) {
+	context := returnTailValidationContext{
+		visiting:        make(map[*types.Func]bool),
+		memo:            make(map[*types.Func]returnTailValidation),
+		proofBodyVisits: make(map[*types.Func]int),
+	}
+	return returnTailCalleeEffectsWithContext(statements, evidence, helperProofRegistry, &context)
+}
+
+func returnTailCalleeEffectsWithContext(statements []ast.Stmt, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof, context *returnTailValidationContext) ([]CalleeDependencyEvidence, error) {
+	if context == nil {
+		context = &returnTailValidationContext{
+			visiting:        make(map[*types.Func]bool),
+			memo:            make(map[*types.Func]returnTailValidation),
+			proofBodyVisits: make(map[*types.Func]int),
+		}
+	}
 	dependencies := make([]CalleeDependencyEvidence, 0)
-	visiting := make(map[*types.Func]bool)
-	memo := make(map[*types.Func]returnTailValidation)
 	var effectErr error
 	ast.Inspect(&ast.BlockStmt{List: statements}, func(node ast.Node) bool {
 		if effectErr != nil {
@@ -603,7 +617,7 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence, helpe
 		if returnTailTypedConversion(call, evidence.info) {
 			return true
 		}
-		validation := returnTailCalleeAllowed(call, evidence, visiting, helperProofRegistry, memo)
+		validation := returnTailCalleeAllowed(call, evidence, helperProofRegistry, context)
 		if !validation.valid {
 			diagnostics := []string{"obligation=" + obligationCalleeEffects}
 			if function, ok := returnTailCalleeFunction(call, evidence); ok {
@@ -667,7 +681,7 @@ func returnTailTypeExpression(expression ast.Expr, info *types.Info) bool {
 	return ok && returnTailTypeExpression(parenthesized.X, info)
 }
 
-func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, memo map[*types.Func]returnTailValidation) returnTailValidation {
+func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof, context *returnTailValidationContext) returnTailValidation {
 	var object types.Object
 	switch function := call.Fun.(type) {
 	case *ast.Ident:
@@ -690,14 +704,18 @@ func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting
 		if value.Pkg() == nil || evidence.pkg == nil || value.Pkg() != evidence.pkg || value.Name() == "" {
 			return returnTailValidation{}
 		}
-		if memo == nil {
-			memo = make(map[*types.Func]returnTailValidation)
+		if context == nil {
+			context = &returnTailValidationContext{
+				visiting:        make(map[*types.Func]bool),
+				memo:            make(map[*types.Func]returnTailValidation),
+				proofBodyVisits: make(map[*types.Func]int),
+			}
 		}
-		if result, ok := memo[value]; ok {
+		if result, ok := context.memo[value]; ok {
 			return result
 		}
 		declaration := evidence.funcs[value]
-		if declaration == nil || declaration.Recv != nil || visiting[value] {
+		if declaration == nil || declaration.Recv != nil || context.visiting[value] {
 			return returnTailValidation{}
 		}
 		helperProof, hasHelperProof := helperProofRegistry[value.Name()]
@@ -715,13 +733,14 @@ func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting
 				return returnTailValidation{}
 			}
 		}
-		visiting[value] = true
-		defer delete(visiting, value)
-		validation := provenLocalPureFunction(declaration, evidence, visiting, helperProofRegistry, allowedGlobals, memo)
+		context.visiting[value] = true
+		defer delete(context.visiting, value)
+		context.proofBodyVisits[value]++
+		validation := provenLocalPureFunction(declaration, evidence, helperProofRegistry, allowedGlobals, context)
 		if hasHelperProof && !sameReturnTailDependencies(validation.dependencies, helperProof.dependencies) {
 			validation.valid = false
 		}
-		memo[value] = validation
+		context.memo[value] = validation
 		return validation
 	default:
 		return returnTailValidation{}
@@ -836,7 +855,7 @@ func exactDeepEqualSignature(function *types.Func) bool {
 	return ok && !signature.Variadic() && signature.Params().Len() == 2 && signature.Results().Len() == 1 && signature.Results().At(0).Type() == types.Typ[types.Bool]
 }
 
-func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, allowedGlobals map[types.Object]bool, memo map[*types.Func]returnTailValidation) returnTailValidation {
+func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof, allowedGlobals map[types.Object]bool, context *returnTailValidationContext) returnTailValidation {
 	local := make(map[types.Object]bool)
 	ast.Inspect(function.Type, func(node ast.Node) bool {
 		identifier, ok := node.(*ast.Ident)
@@ -871,7 +890,7 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 			if returnTailTypedConversion(value, evidence.info) {
 				break
 			}
-			calleeValidation := returnTailCalleeAllowed(value, evidence, visiting, helperProofRegistry, memo)
+			calleeValidation := returnTailCalleeAllowed(value, evidence, helperProofRegistry, context)
 			if !calleeValidation.valid {
 				validation.valid = false
 				break
@@ -968,7 +987,12 @@ func registerReturnTailHelperProof(root, logical string, source []byte, helperNa
 		return returnTailHelperProof{}, fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
 	}
 	globalObjects, globalReadIdentities, safe := returnTailGlobalReadEvidence(helperDeclaration, helperEvidence)
-	validation := provenLocalPureFunction(helperDeclaration, helperEvidence, map[*types.Func]bool{}, helperProofRegistry, globalObjects, map[*types.Func]returnTailValidation{})
+	validationContext := &returnTailValidationContext{
+		visiting:        make(map[*types.Func]bool),
+		memo:            make(map[*types.Func]returnTailValidation),
+		proofBodyVisits: make(map[*types.Func]int),
+	}
+	validation := provenLocalPureFunction(helperDeclaration, helperEvidence, helperProofRegistry, globalObjects, validationContext)
 	if !safe || !validation.valid {
 		return returnTailHelperProof{}, failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"helper=" + helperName})
 	}
