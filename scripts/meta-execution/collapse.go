@@ -22,7 +22,7 @@ import (
 type collapseSourceInspection struct {
 	Subject             string
 	PackageName         string
-	Receiver             string
+	Receiver            string
 	Signature           string
 	OutsideDeclarations []string
 	CommentGroups       []string
@@ -49,7 +49,7 @@ type collapseInstanceEvidence struct {
 	BeforeOutsideDeclarations   []string                `json:"before_outside_declarations"`
 	AfterOutsideDeclarations    []string                `json:"after_outside_declarations"`
 	BeforeSourceDigest          string                  `json:"before_source_digest"`
-	AfterSourceDigest            string                  `json:"after_source_digest"`
+	AfterSourceDigest           string                  `json:"after_source_digest"`
 	Before                      []byte                  `json:"before"`
 	After                       []byte                  `json:"after"`
 	ChangedFiles                []string                `json:"changed_files"`
