@@ -212,7 +212,7 @@ func withRenderedCapacityDiagnostics(err error, observations []renderedCapacityO
 		return err
 	}
 	for _, observation := range observations {
-		if observation.helperStatus == renderedCapacityUnmeasured {
+		if observation.helperStatus == renderedCapacityUnmeasured || observation.helperStatus == renderedCapacityOverCap || observation.functionStatus == renderedCapacityOverCap {
 			failure.Diagnostics = append(failure.Diagnostics, renderedCapacityObservationDiagnostics(observation)...)
 		}
 	}
@@ -220,9 +220,13 @@ func withRenderedCapacityDiagnostics(err error, observations []renderedCapacityO
 }
 
 func renderedCapacityObservationDiagnostics(observation renderedCapacityObservation) []string {
+	measurement := "UNMEASURED"
+	if observation.helperLines != nil && observation.helperStatus != renderedCapacityUnmeasured {
+		measurement = "MEASURED"
+	}
 	diagnostics := []string{
 		"preflight=rendered-capacity",
-		"measurement=UNMEASURED",
+		"measurement=" + measurement,
 		"subject=" + observation.subject,
 		"function_start=" + observation.functionStart,
 		"function_end=" + observation.functionEnd,
@@ -230,6 +234,17 @@ func renderedCapacityObservationDiagnostics(observation renderedCapacityObservat
 		"declaration_end=" + observation.declarationEnd,
 		"source_digest=" + observation.sourceDigest,
 		fmt.Sprintf("function_lines=%d", observation.functionLines),
+		"function_status=" + string(observation.functionStatus),
+		"helper_status=" + string(observation.helperStatus),
+		"helper_measurement_scope=" + renderedCapacityHelperMeasurementScope,
+		fmt.Sprintf("function_line_limit=%d", functionLineLimit),
+		fmt.Sprintf("function_overage=%d", renderedCapacityOverage(observation.functionLines)),
+	}
+	if measurement == "MEASURED" {
+		diagnostics = append(diagnostics,
+			fmt.Sprintf("helper_lines=%d", *observation.helperLines),
+			fmt.Sprintf("helper_overage=%d", renderedCapacityOverage(*observation.helperLines)),
+		)
 	}
 	if observation.helperFailure != nil {
 		diagnostics = append(diagnostics, "helper_failure="+observation.helperFailure.Error())
@@ -337,10 +352,16 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		return candidate.result, &candidate.evidence, nil
 	}
 	existing := functionNames(file)
+	diagnostics := []string{
+		"declaration=" + functionIdentity(fset, function),
+		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
+	}
 	for index := range slices.Backward(function.Body.List) {
 		candidate, candidateErr := buildSuffixCandidate(source, fset, file, function, index, evidence, existing)
 		if candidateErr != nil {
 			if isKnownSuffixContradiction(candidateErr) {
+				diagnostics = append(diagnostics, fmt.Sprintf("suffix_candidate_index=%d;statement_start=%s;statement_end=%s;rejection=%q",
+					index, fset.Position(function.Body.List[index].Pos()), fset.Position(function.Body.List[len(function.Body.List)-1].End()), candidateErr.Error()))
 				continue
 			}
 			return nil, nil, candidateErr
@@ -349,10 +370,11 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 			return candidate.result, nil, nil
 		}
 	}
-	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", []string{
-		"declaration=" + functionIdentity(fset, function),
-		fmt.Sprintf("function_lines=%d", declarationLines(fset, function)),
-	})
+	diagnostics = append(diagnostics,
+		fmt.Sprintf("suffix_candidates_attempted=%d", len(function.Body.List)),
+		fmt.Sprintf("suffix_candidates_rejected=%d", len(function.Body.List)),
+	)
+	return nil, nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "NO_SAFE_DECLARATION_CAPACITY", "KNOWN_CONTRADICTION", "report-counterexample", diagnostics)
 }
 
 func functionNames(file *ast.File) map[string]bool {

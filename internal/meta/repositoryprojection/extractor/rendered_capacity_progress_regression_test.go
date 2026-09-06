@@ -136,4 +136,16 @@ func TestPaginationGenericExtractionTerminatesAsRefutedCapacity(t *testing.T) {
 	if len(result.Generated) != 0 {
 		t.Fatalf("generated=%d, want no conversion output after refuted capacity", len(result.Generated))
 	}
+	for _, prefix := range []string{"measurement=MEASURED", "helper_lines=", "helper_overage=", "suffix_candidate_index=", "suffix_candidates_attempted=", "suffix_candidates_rejected="} {
+		found := false
+		for _, diagnostic := range failure.Diagnostics {
+			if strings.HasPrefix(diagnostic, prefix) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("diagnostics=%v, want actual pagination counterexample field %q", failure.Diagnostics, prefix)
+		}
+	}
 }
