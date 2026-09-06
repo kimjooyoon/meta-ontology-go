@@ -422,7 +422,11 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				return false
 			}
 			if evidence.Strategy == "suffix-extraction" {
-				if len(evidence.ProofStages) != 0 || len(evidence.ContractObligations) != 0 || len(evidence.Obligations) != 1 || evidence.Obligations[0].Name != "rendered-capacity" || evidence.Obligations[0].Status != strategyEvidencePassStatus {
+				capacityObligationName := "rendered-capacity"
+				if evidence.AfterRenderedCapacityOverage > 0 {
+					capacityObligationName = "rendered-capacity-progress"
+				}
+				if len(evidence.ProofStages) != 0 || len(evidence.ContractObligations) != 0 || len(evidence.Obligations) != 1 || evidence.Obligations[0].Name != capacityObligationName || evidence.Obligations[0].Status != strategyEvidencePassStatus {
 					return false
 				}
 				continue
@@ -431,7 +435,8 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				return false
 			}
 			for _, obligation := range evidence.Obligations {
-				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus {
+				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus ||
+					(obligation.Name != "rendered-capacity-progress" && !validReturnTailObligationName(obligation.Name)) {
 					return false
 				}
 			}
@@ -452,6 +457,15 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 		}
 	}
 	return true
+}
+
+func validReturnTailObligationName(name string) bool {
+	switch name {
+	case "return-shape", "control-flow", "free-bindings", "callee-effects", "rendered-capacity", "projected-conformance":
+		return true
+	default:
+		return false
+	}
 }
 
 func validExtractionSubject(subject extractorSubject) bool {

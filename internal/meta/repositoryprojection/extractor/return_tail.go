@@ -172,7 +172,11 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
 	}
-	if err := proof.consume(4, returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", beforeCapacity.overage, afterCapacity.overage, outerMeasurement.lines, helperMeasurement.lines)}); err != nil {
+	capacityResult := returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", beforeCapacity.overage, afterCapacity.overage, outerMeasurement.lines, helperMeasurement.lines)}
+	if afterCapacity.overage > 0 {
+		capacityResult.Name = obligationRenderedCapacityProgress
+	}
+	if err := proof.consume(4, capacityResult); err != nil {
 		return nil, err
 	}
 	return &returnTailCandidate{
@@ -301,8 +305,12 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 		RenderedHelperLines:           candidate.renderedHelper.lines,
 		RenderedOuterHelperBytes:      candidate.renderedOuter.bytes,
 		RenderedOuterHelperLines:      candidate.renderedOuter.lines,
+		capacityObligationName := obligationRenderedCapacity
+		if candidate.afterRenderedCapacityOverage > 0 {
+			capacityObligationName = obligationRenderedCapacityProgress
+		}
 		Obligations: []ObligationEvidence{{
-			Name: obligationRenderedCapacity, Status: "PASS",
+			Name: capacityObligationName, Status: "PASS",
 			Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", candidate.beforeRenderedCapacityOverage, candidate.afterRenderedCapacityOverage, candidate.renderedOuter.lines, candidate.renderedHelper.lines),
 		}},
 		PreflightObservations: preflightObservationEvidence(contract, preflight),

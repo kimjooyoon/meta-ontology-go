@@ -123,8 +123,15 @@ func TestTypeSafeSuffixCandidateAcceptsStrictIntermediateProgress(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	validatedFunction, ok := validatedFile.Decls[0].(*ast.FuncDecl)
-	if !ok || validatedFunction.Name == nil || validatedFunction.Name.Name != "F" {
+	var validatedFunction *ast.FuncDecl
+	for _, declaration := range validatedFile.Decls {
+		function, ok := declaration.(*ast.FuncDecl)
+		if ok && function.Name != nil && function.Name.Name == "F" {
+			validatedFunction = function
+			break
+		}
+	}
+	if validatedFunction == nil {
 		t.Fatal("validated suffix candidate lacks F")
 	}
 	if _, err := checkTypes(validatedRoot, "candidate.go", validatedSet, validatedFile, validatedFunction); err != nil {

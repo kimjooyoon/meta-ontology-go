@@ -21,6 +21,7 @@ type returnTailPredicateResult struct {
 	Payload         []byte
 	CandidateDigest string
 	Detail          string
+	Name            string
 }
 
 func newReturnTailProofChain(contract []ContractObligationEvidence, source, candidate []byte, contractSource, contractSemantic string) returnTailProofChain {
@@ -64,9 +65,16 @@ func (chain *returnTailProofChain) consume(index int, result returnTailPredicate
 		return failWithDiagnostics("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_RESULT_MISSING", "DIRECT_MISSING", "restore-return-tail-proof", []string{"obligation=" + relation.Name})
 	}
 	payloadDigest := proofDigest(result.Payload)
+	name := relation.Name
+	if result.Name != "" {
+		if relation.Name != obligationRenderedCapacity || result.Name != obligationRenderedCapacityProgress {
+			return fail("derive-recipe", "consume-return-tail-proof", "RETURN_TAIL_PROOF_CHAIN_UNPROVEN", "DIRECT_MISSING", "restore-return-tail-proof", nil)
+		}
+		name = result.Name
+	}
 	outputEvidenceID := proofEvidenceID(relation.OutputEntity, relation.Activity, chain.sourceDigest, candidateDigest, inputEvidenceID, payloadDigest, chain.contractSource, chain.contractSemantic)
 	chain.stages = append(chain.stages, ProofStageEvidence{
-		Name: relation.Name, Activity: relation.Activity, InputEntity: relation.InputEntity, OutputEntity: relation.OutputEntity,
+		Name: name, Activity: relation.Activity, InputEntity: relation.InputEntity, OutputEntity: relation.OutputEntity,
 		Status: result.Status, SourceDigest: chain.sourceDigest, CandidateDigest: candidateDigest,
 		InputEvidenceID: inputEvidenceID, OutputEvidenceID: outputEvidenceID, PayloadDigest: payloadDigest,
 		PayloadBytes: len(result.Payload), Detail: result.Detail,
