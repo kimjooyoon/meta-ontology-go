@@ -151,6 +151,8 @@ type strategyEvidencePresence struct {
 	AfterBytes                  int                                              `json:"after_bytes"`
 	BeforeFunctionLines         int                                              `json:"before_function_lines"`
 	AfterFunctionLines          int                                              `json:"after_function_lines"`
+	BeforeRenderedCapacityOverage *int                                           `json:"before_rendered_capacity_overage"`
+	AfterRenderedCapacityOverage  *int                                           `json:"after_rendered_capacity_overage"`
 	RenderedHelperBytes         int                                              `json:"rendered_helper_bytes"`
 	RenderedHelperLines         int                                              `json:"rendered_helper_lines"`
 	RenderedOuterHelperBytes    int                                              `json:"rendered_outer_helper_bytes"`
@@ -380,7 +382,14 @@ func validStrategyEvidenceReport(report extractorReport, presence extractorRepor
 			return false
 		}
 		for evidenceIndex, evidence := range subject.Evidence {
+			observedEvidence := observed.Values[evidenceIndex]
+			if observedEvidence.BeforeRenderedCapacityOverage == nil || observedEvidence.AfterRenderedCapacityOverage == nil {
+				return false
+			}
 			if len(evidence.ProofStages) != len(observed.Values[evidenceIndex].ProofStages) {
+				return false
+			}
+			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
 				return false
 			}
 			for stageIndex := range evidence.ProofStages {

@@ -22,6 +22,8 @@ type StrategyEvidence struct {
 	AfterBytes                  int                            `json:"after_bytes"`
 	BeforeFunctionLines         int                            `json:"before_function_lines"`
 	AfterFunctionLines          int                            `json:"after_function_lines"`
+	BeforeRenderedCapacityOverage int                          `json:"before_rendered_capacity_overage"`
+	AfterRenderedCapacityOverage  int                          `json:"after_rendered_capacity_overage"`
 	RenderedHelperBytes         int                            `json:"rendered_helper_bytes"`
 	RenderedHelperLines         int                            `json:"rendered_helper_lines"`
 	RenderedOuterHelperBytes    int                            `json:"rendered_outer_helper_bytes"`
@@ -52,8 +54,10 @@ type PreflightObservationEvidence struct {
 	ContractSourceDigest   string                    `json:"contract_source_digest"`
 	ContractSemanticDigest string                    `json:"contract_semantic_digest"`
 	FunctionLines          int                       `json:"function_lines"`
+	FunctionRenderedCapacityOverage int              `json:"function_rendered_capacity_overage"`
 	FunctionStatus         string                    `json:"function_status"`
 	HelperLines            *int                      `json:"helper_lines,omitempty"`
+	HelperRenderedCapacityOverage *int               `json:"helper_rendered_capacity_overage,omitempty"`
 	HelperStatus           string                    `json:"helper_status"`
 	FailureReason          string                    `json:"failure_reason,omitempty"`
 	Failure                *PreflightFailureEvidence `json:"failure,omitempty"`

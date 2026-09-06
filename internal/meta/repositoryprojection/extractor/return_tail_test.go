@@ -69,7 +69,8 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					t.Fatalf("preflight evidence=%+v, want selected function observation with bound digests", result.Evidence[0].PreflightObservations)
 				}
 				if result.Evidence[0].BeforeFunctionLines <= functionLineLimit || result.Evidence[0].AfterFunctionLines > functionLineLimit ||
-					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit {
+					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit ||
+					result.Evidence[0].BeforeRenderedCapacityOverage <= result.Evidence[0].AfterRenderedCapacityOverage || result.Evidence[0].AfterRenderedCapacityOverage < 0 {
 					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
 				}
 				for path, data := range result.Generated {

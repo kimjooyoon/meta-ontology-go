@@ -16,6 +16,8 @@
     "after_bytes": 700,
     "before_function_lines": 83,
     "after_function_lines": 73,
+    "before_rendered_capacity_overage": 10,
+    "after_rendered_capacity_overage": 0,
     "rendered_helper_bytes": 155,
     "rendered_helper_lines": 15,
     "rendered_outer_helper_bytes": 558,

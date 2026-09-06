@@ -137,12 +137,13 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err != nil {
 		return nil, err
 	}
-	renderedOuterHelper, err := renderedFunctionHelper(formatted, function.Name.Name)
+	beforeMeasurement, err := canonicalRenderedCapacity(beforeOuterHelper)
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(renderedOuterHelper) > functionLineLimit || !renderedCapacityProgress(beforeOuterHelper, renderedOuterHelper) {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered outer helper remains over the limit or made no capacity progress")
+	renderedOuterHelper, err := renderedFunctionHelper(formatted, function.Name.Name)
+	if err != nil {
+		return nil, err
 	}
 	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
 	combined = append(combined, helper...)
@@ -154,16 +155,23 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(renderedHelper) > functionLineLimit {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered extracted helper including package and imports remains over the limit")
+	outerMeasurement, err := canonicalRenderedCapacity(renderedOuterHelper)
+	if err != nil {
+		return nil, err
 	}
-	if !renderedCapacityProgress(beforeOuterHelper, renderedOuterHelper) {
-		return nil, returnTailContradiction(obligationRenderedCapacity, "rendered outer helper made no capacity progress")
+	helperMeasurement, err := canonicalRenderedCapacity(renderedHelper)
+	if err != nil {
+		return nil, err
+	}
+	beforeCapacity := renderedCapacitySnapshot{overage: beforeMeasurement.overage}
+	afterCapacity := renderedCapacitySnapshot{overage: outerMeasurement.overage + helperMeasurement.overage}
+	if afterCapacity.overage > 0 || !renderedCapacityProgress(beforeCapacity, afterCapacity) {
+		return nil, returnTailContradiction(obligationRenderedCapacity, fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
 	}
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
 	}
-	if err := proof.consume(4, returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("outer_helper_lines=%d extracted_helper_lines=%d", physicalLines(renderedOuterHelper), physicalLines(renderedHelper))}); err != nil {
+	if err := proof.consume(4, returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", beforeCapacity.overage, afterCapacity.overage, outerMeasurement.lines, helperMeasurement.lines)}); err != nil {
 		return nil, err
 	}
 	return &returnTailCandidate{
@@ -188,10 +196,12 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			AfterBytes:               len(combined),
 			BeforeFunctionLines:      declarationLines(fset, function),
 			AfterFunctionLines:       afterFunctionLines,
-			RenderedHelperBytes:      len(renderedHelper),
-			RenderedHelperLines:      physicalLines(renderedHelper),
-			RenderedOuterHelperBytes: len(renderedOuterHelper),
-			RenderedOuterHelperLines: physicalLines(renderedOuterHelper),
+			BeforeRenderedCapacityOverage: beforeCapacity.overage,
+			AfterRenderedCapacityOverage:  afterCapacity.overage,
+			RenderedHelperBytes:      helperMeasurement.bytes,
+			RenderedHelperLines:      helperMeasurement.lines,
+			RenderedOuterHelperBytes: outerMeasurement.bytes,
+			RenderedOuterHelperLines: outerMeasurement.lines,
 			Obligations:              obligationsFromProofStages(proof.stages),
 			ContractObligations:      contractObligations,
 			ProofStages:              proof.stages,
@@ -220,12 +230,17 @@ func preflightObservationEvidence(contract generation.OperationInputContractEvid
 			ContractSourceDigest:   contract.SourceDigest,
 			ContractSemanticDigest: contract.SemanticDigest,
 			FunctionLines:          observation.functionLines,
+			FunctionRenderedCapacityOverage: observation.functionOverage,
 			FunctionStatus:         string(observation.functionStatus),
 			HelperStatus:           string(observation.helperStatus),
 		}
 		if observation.helperLines != nil {
 			helperLines := *observation.helperLines
 			item.HelperLines = &helperLines
+		}
+		if observation.helperOverage != nil {
+			helperOverage := *observation.helperOverage
+			item.HelperRenderedCapacityOverage = &helperOverage
 		}
 		if observation.helperFailure != nil {
 			if failure, ok := errors.AsType[Failure](observation.helperFailure); ok {
