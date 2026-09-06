@@ -911,7 +911,10 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, help
 				validation.valid = false
 			}
 		case *ast.RangeStmt:
-			if rangeType := evidence.info.TypeOf(value.X); rangeType != nil {
+			rangeType := evidence.info.TypeOf(value.X)
+			if rangeType == nil {
+				validation.valid = false
+			} else {
 				switch rangeType.Underlying().(type) {
 				case *types.Chan, *types.Signature:
 					validation.valid = false
