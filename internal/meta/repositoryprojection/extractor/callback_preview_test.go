@@ -1,15 +1,20 @@
 package extractor
 
 import (
+	"context"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 const callbackPreviewLogicalPath = "cmd/language-readiness-witness/predecessor-selection/pagination_test.go"
@@ -29,6 +34,12 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 	if preview.OperationResultAdmission != "FORBIDDEN" || preview.ApplyPermission != "FORBIDDEN" || preview.Candidate.Promotion != callbackPreviewPromotionNone {
 		t.Fatalf("pending preview was admitted: %#v", preview)
 	}
+	if preview.Stage != "CALLBACK_PREVIEW" || preview.Step != "PENDING_EFFECT_REVIEW" || preview.UnknownClass != "PENDING_TYPED_CALLBACK_EFFECTS" || preview.NextOperation != "RESOLVE_TYPED_CALLBACK_EFFECTS" || preview.BlockedBy != "PENDING_TYPED_CALLBACK_EFFECTS" {
+		t.Fatalf("preview lifecycle = %#v", preview)
+	}
+	if len(preview.ContractRecords) != 5 || preview.ContractRecords[0].Entity != "CallbackPreviewInput" || preview.ContractRecords[1].Entity != "BoundedCallbackCandidate" || preview.ContractRecords[2].Entity != "CallbackCaptures" || preview.ContractRecords[3].Entity != "PendingCallbackEffects" || preview.ContractRecords[4].Entity != "CallbackPreviewEvidence" {
+		t.Fatalf("contract record flow = %#v", preview.ContractRecords)
+	}
 	if preview.Candidate.HelperLines <= 0 || preview.Candidate.HelperLines > functionLineLimit || preview.Candidate.ParentFunctionLines <= 0 || preview.Candidate.ParentFunctionLines > functionLineLimit {
 		t.Fatalf("candidate capacity = helper:%d parent:%d", preview.Candidate.HelperLines, preview.Candidate.ParentFunctionLines)
 	}
@@ -45,6 +56,8 @@ func TestPaginationCallbackPreviewCI(t *testing.T) {
 		t.Fatalf("identity-preserving candidate binding missing: wrapper=%q helper=%q", preview.Candidate.WrapperSource, preview.Candidate.HelperSource)
 	}
 	typeCheckCallbackPreviewCandidate(t, root, callbackPreviewLogicalPath, preview.Candidate.CandidateSource)
+	runCallbackPreviewFixtureSuite(t, root, callbackPreviewLogicalPath, "")
+	runCallbackPreviewFixtureSuite(t, root, callbackPreviewLogicalPath, preview.Candidate.CandidateSource)
 }
 
 func TestPaginationCallbackPreviewMissingAndMalformedAreNotAdmission(t *testing.T) {
@@ -127,4 +140,60 @@ func typeCheckCallbackPreviewCandidate(t *testing.T, root, logical, source strin
 		sort.Slice(typeErrors, func(left, right int) bool { return typeErrors[left].Error() < typeErrors[right].Error() })
 		t.Fatalf("candidate strict type-check failed: %s", typeErrors[0])
 	}
+}
+
+func runCallbackPreviewFixtureSuite(t *testing.T, root, logical, candidateSource string) {
+	t.Helper()
+	tempRoot := t.TempDir()
+	for _, relative := range []string{"go.mod", "cmd/language-readiness-witness/predecessor-selection", "internal", "examples/causal-ci-selection/pagination-fixtures.json"} {
+		if err := copyCallbackPreviewPath(root, tempRoot, relative); err != nil {
+			t.Fatalf("copy callback preview fixture tree: %v", err)
+		}
+	}
+	if candidateSource != "" {
+		path := filepath.Join(tempRoot, filepath.FromSlash(logical))
+		if err := os.WriteFile(path, []byte(candidateSource), 0o644); err != nil {
+			t.Fatalf("write generated callback preview: %v", err)
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	command := exec.CommandContext(ctx, "go", "test", "./cmd/language-readiness-witness/predecessor-selection", "-run", "^TestPaginationFixturesExecuteParserAndHTTPClient$")
+	command.Dir = tempRoot
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("callback preview fixture suite candidate=%t: %v\n%s", candidateSource != "", err, output)
+	}
+}
+
+func copyCallbackPreviewPath(root, destination, relative string) error {
+	source := filepath.Join(root, filepath.FromSlash(relative))
+	return filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if entry.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("source tree contains symlink %s", path)
+		}
+		relativePath, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(destination, relativePath)
+		if entry.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return err
+		}
+		return os.WriteFile(target, data, info.Mode().Perm())
+	})
 }

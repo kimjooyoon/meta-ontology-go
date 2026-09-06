@@ -11,6 +11,7 @@ import (
 	"go/types"
 	"path/filepath"
 	"sort"
+	"strconv"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
@@ -20,26 +21,33 @@ const (
 	callbackPreviewTarget        = "TestPaginationFixturesExecuteParserAndHTTPClient"
 	callbackPreviewStateUnknown  = "UNKNOWN"
 	callbackPreviewPromotionNone = "NONE"
+	callbackPreviewStage         = "CALLBACK_PREVIEW"
 )
 
 // CallbackPreviewResult is deliberately not Result. Its candidate is caller-
 // owned preview data and cannot enter the normal OperationResult or staging
 // path.
 type CallbackPreviewResult struct {
-	Schema                   string                    `json:"schema"`
-	LogicalPath              string                    `json:"logical_path"`
-	Subject                  string                    `json:"subject"`
-	SourceDigest             string                    `json:"source_digest"`
-	ContractSourceDigest     string                    `json:"contract_source_digest"`
-	ContractSemanticDigest   string                    `json:"contract_semantic_digest"`
-	State                    string                    `json:"state"`
-	Reason                   string                    `json:"reason"`
-	Candidate                *CallbackPreviewCandidate `json:"candidate,omitempty"`
-	Captures                 []CallbackPreviewCapture  `json:"captures,omitempty"`
-	PendingEffects           []CallbackPreviewEffect   `json:"pending_effects,omitempty"`
-	Evidence                 CallbackPreviewEvidence   `json:"evidence"`
-	OperationResultAdmission string                    `json:"operation_result_admission"`
-	ApplyPermission          string                    `json:"apply_permission"`
+	Schema                   string                             `json:"schema"`
+	LogicalPath              string                             `json:"logical_path"`
+	Subject                  string                             `json:"subject"`
+	SourceDigest             string                             `json:"source_digest"`
+	ContractSourceDigest     string                             `json:"contract_source_digest"`
+	ContractSemanticDigest   string                             `json:"contract_semantic_digest"`
+	State                    string                             `json:"state"`
+	Reason                   string                             `json:"reason"`
+	Stage                    string                             `json:"stage"`
+	Step                     string                             `json:"step"`
+	UnknownClass             string                             `json:"unknown_class"`
+	NextOperation            string                             `json:"next_operation"`
+	BlockedBy                string                             `json:"blocked_by"`
+	Candidate                *CallbackPreviewCandidate          `json:"candidate,omitempty"`
+	Captures                 []CallbackPreviewCapture           `json:"captures,omitempty"`
+	PendingEffects           []CallbackPreviewEffect            `json:"pending_effects,omitempty"`
+	Evidence                 CallbackPreviewEvidence            `json:"evidence"`
+	ContractRecords          []generation.CallbackPreviewRecord `json:"contract_records,omitempty"`
+	OperationResultAdmission string                             `json:"operation_result_admission"`
+	ApplyPermission          string                             `json:"apply_permission"`
 }
 
 type CallbackPreviewCandidate struct {
@@ -89,6 +97,12 @@ type CallbackPreviewEvidence struct {
 	ParentFunctionLines      int    `json:"parent_function_lines"`
 	OperationResultAdmission string `json:"operation_result_admission"`
 	ApplyPermission          string `json:"apply_permission"`
+	Stage                    string `json:"stage"`
+	Step                     string `json:"step"`
+	Reason                   string `json:"reason"`
+	UnknownClass             string `json:"unknown_class"`
+	NextOperation            string `json:"next_operation"`
+	BlockedBy                string `json:"blocked_by"`
 }
 
 // PreviewBoundedPaginationCallback observes and renders the exact callback
@@ -103,40 +117,212 @@ func PreviewBoundedPaginationCallback(root, logical string) (CallbackPreviewResu
 	if err != nil {
 		return CallbackPreviewResult{}, err
 	}
-	base := CallbackPreviewResult{Schema: callbackPreviewSchema, LogicalPath: logical, Subject: "func:" + callbackPreviewTarget, SourceDigest: callbackPreviewDigest(source), ContractSourceDigest: contract.SourceDigest, ContractSemanticDigest: contract.SemanticDigest, State: callbackPreviewStateUnknown, OperationResultAdmission: "FORBIDDEN", ApplyPermission: "FORBIDDEN"}
+	base := CallbackPreviewResult{Schema: callbackPreviewSchema, LogicalPath: logical, Subject: "func:" + callbackPreviewTarget, SourceDigest: callbackPreviewDigest(source), ContractSourceDigest: contract.SourceDigest, ContractSemanticDigest: contract.SemanticDigest, State: callbackPreviewStateUnknown, Stage: callbackPreviewStage, OperationResultAdmission: "FORBIDDEN", ApplyPermission: "FORBIDDEN"}
+	inputRecord, err := contract.BuildCallbackPreviewRecord(contract.InputEntity, map[string]string{"LogicalPath": logical, "Subject": base.Subject, "SourceDigest": base.SourceDigest, "State": base.State})
+	if err != nil {
+		return CallbackPreviewResult{}, err
+	}
+	base.ContractRecords = []generation.CallbackPreviewRecord{inputRecord}
 	target := callbackPreviewFunction(file, callbackPreviewTarget)
 	if target == nil {
-		base.Reason = "CALLBACK_TARGET_MISSING"
-		base.Evidence = CallbackPreviewEvidence{SourceDigest: base.SourceDigest, State: base.State, OperationResultAdmission: base.OperationResultAdmission, ApplyPermission: base.ApplyPermission}
+		callbackPreviewSetLifecycle(&base, "CALLBACK_TARGET_MISSING")
+		base.Evidence = callbackPreviewEvidence(base, nil, 0, 0)
+		base.ContractRecords = append(base.ContractRecords, callbackPreviewEvidenceRecord(contract, base, base.Evidence))
 		return base, nil
 	}
 	typeEvidence, err := checkTypes(root, logical, fset, file, target)
 	if err != nil {
-		base.Reason = "TYPE_EVIDENCE_MISSING"
-		base.Evidence = CallbackPreviewEvidence{SourceDigest: base.SourceDigest, State: base.State, OperationResultAdmission: base.OperationResultAdmission, ApplyPermission: base.ApplyPermission}
+		callbackPreviewSetLifecycle(&base, "TYPE_EVIDENCE_MISSING")
+		base.Evidence = callbackPreviewEvidence(base, nil, 0, 0)
+		base.ContractRecords = append(base.ContractRecords, callbackPreviewEvidenceRecord(contract, base, base.Evidence))
 		return base, nil
 	}
 	callback, err := callbackPreviewFuncLit(target, typeEvidence.info)
 	if err != nil {
-		base.Reason = err.Error()
-		base.Evidence = CallbackPreviewEvidence{SourceDigest: base.SourceDigest, State: base.State, OperationResultAdmission: base.OperationResultAdmission, ApplyPermission: base.ApplyPermission}
+		callbackPreviewSetLifecycle(&base, err.Error())
+		base.Evidence = callbackPreviewEvidence(base, nil, 0, 0)
+		base.ContractRecords = append(base.ContractRecords, callbackPreviewEvidenceRecord(contract, base, base.Evidence))
 		return base, nil
 	}
-	captures := callbackPreviewCaptures(callback, typeEvidence, fset)
+	captures, err := callbackPreviewCaptures(callback, typeEvidence, fset)
+	if err != nil {
+		callbackPreviewSetLifecycle(&base, "CALLBACK_CAPTURE_UNSUPPORTED")
+		base.Evidence = callbackPreviewEvidence(base, nil, 0, 0)
+		base.ContractRecords = append(base.ContractRecords, callbackPreviewEvidenceRecord(contract, base, base.Evidence))
+		return base, nil
+	}
 	effects := callbackPreviewEffects(callback, typeEvidence, fset)
-	candidate, err := callbackPreviewCandidate(source, fset, file, target, callback, captures, effects)
+	candidate, err := callbackPreviewCandidate(source, logical, fset, file, target, callback, captures, effects)
 	if err != nil {
 		return CallbackPreviewResult{}, err
 	}
 	base.Candidate = &candidate
 	base.Captures = captures
 	base.PendingEffects = effects
-	base.Reason = "PENDING_TYPED_CALLBACK_EFFECTS"
+	callbackPreviewSetLifecycle(&base, "PENDING_TYPED_CALLBACK_EFFECTS")
 	if candidate.HelperLines > functionLineLimit || candidate.ParentFunctionLines > functionLineLimit {
-		base.Reason = "CALLBACK_CANDIDATE_OVER_CAPACITY"
+		callbackPreviewSetLifecycle(&base, "CALLBACK_CANDIDATE_OVER_CAPACITY")
 	}
-	base.Evidence = CallbackPreviewEvidence{CandidateIdentity: candidate.CandidateIdentity, SourceDigest: candidate.SourceDigest, CandidateDigest: candidate.CandidateDigest, State: base.State, CaptureCount: len(captures), PendingEffectCount: len(effects), ResolvedEffectCount: 0, HelperLines: candidate.HelperLines, ParentFunctionLines: candidate.ParentFunctionLines, OperationResultAdmission: base.OperationResultAdmission, ApplyPermission: base.ApplyPermission}
+	base.Evidence = callbackPreviewEvidence(base, &candidate, len(captures), len(effects))
+	records, err := callbackPreviewRecords(contract, base, candidate, captures, effects)
+	if err != nil {
+		return CallbackPreviewResult{}, err
+	}
+	base.ContractRecords = records
 	return base, nil
+}
+
+func callbackPreviewSetLifecycle(result *CallbackPreviewResult, reason string) {
+	result.Reason = reason
+	result.Stage = callbackPreviewStage
+	result.UnknownClass = reason
+	result.Step = "TARGET_DISCOVERY"
+	result.NextOperation = "REVIEW_CALLBACK_TARGET"
+	result.BlockedBy = reason
+	switch reason {
+	case "TYPE_EVIDENCE_MISSING":
+		result.Step = "TYPE_EVIDENCE"
+		result.NextOperation = "RECHECK_TYPE_EVIDENCE"
+	case "CALLBACK_TARGET_SHAPE_UNSUPPORTED":
+		result.Step = "CALLBACK_SHAPE"
+		result.NextOperation = "RESELECT_CALLBACK_SHAPE"
+	case "CALLBACK_CAPTURE_UNSUPPORTED":
+		result.Step = "CAPTURE_BINDING"
+		result.NextOperation = "REVIEW_CAPTURE_BINDING"
+	case "PENDING_TYPED_CALLBACK_EFFECTS":
+		result.Step = "PENDING_EFFECT_REVIEW"
+		result.NextOperation = "RESOLVE_TYPED_CALLBACK_EFFECTS"
+	case "CALLBACK_CANDIDATE_OVER_CAPACITY":
+		result.Step = "CAPACITY_GATE"
+		result.NextOperation = "REMEASURE_BOUNDED_CANDIDATE"
+	}
+}
+
+func callbackPreviewEvidence(result CallbackPreviewResult, candidate *CallbackPreviewCandidate, captures, effects int) CallbackPreviewEvidence {
+	evidence := CallbackPreviewEvidence{State: result.State, CaptureCount: captures, PendingEffectCount: effects, OperationResultAdmission: result.OperationResultAdmission, ApplyPermission: result.ApplyPermission, Stage: result.Stage, Step: result.Step, Reason: result.Reason, UnknownClass: result.UnknownClass, NextOperation: result.NextOperation, BlockedBy: result.BlockedBy}
+	if candidate != nil {
+		evidence.CandidateIdentity = candidate.CandidateIdentity
+		evidence.SourceDigest = candidate.SourceDigest
+		evidence.CandidateDigest = candidate.CandidateDigest
+		evidence.HelperLines = candidate.HelperLines
+		evidence.ParentFunctionLines = candidate.ParentFunctionLines
+	} else {
+		evidence.SourceDigest = result.SourceDigest
+	}
+	return evidence
+}
+
+func callbackPreviewRecords(contract generation.CallbackPreviewContractEvidence, result CallbackPreviewResult, candidate CallbackPreviewCandidate, captures []CallbackPreviewCapture, effects []CallbackPreviewEffect) ([]generation.CallbackPreviewRecord, error) {
+	captureNames := make([]string, 0, len(captures))
+	captureIdentities := make([]string, 0, len(captures))
+	captureTypes := make([]string, 0, len(captures))
+	captureModes := make([]string, 0, len(captures))
+	for _, capture := range captures {
+		captureNames = append(captureNames, capture.Name)
+		captureIdentities = append(captureIdentities, capture.ObjectIdentity)
+		captureTypes = append(captureTypes, capture.ObjectType)
+		captureModes = append(captureModes, capture.BindingMode)
+	}
+	callIdentities := make([]string, 0, len(effects))
+	symbols := make([]string, 0, len(effects))
+	signatures := make([]string, 0, len(effects))
+	receiverTypes := make([]string, 0, len(effects))
+	effectKinds := make([]string, 0, len(effects))
+	states := make([]string, 0, len(effects))
+	for _, effect := range effects {
+		callIdentities = append(callIdentities, effect.CallIdentity)
+		symbols = append(symbols, effect.Symbol)
+		signatures = append(signatures, effect.Signature)
+		receiverTypes = append(receiverTypes, effect.ReceiverType)
+		effectKinds = append(effectKinds, effect.EffectKind)
+		states = append(states, effect.State)
+	}
+	encode := func(values []string) (string, error) { return generation.EncodeCallbackPreviewList(values) }
+	encodedCaptureNames, err := encode(captureNames)
+	if err != nil {
+		return nil, err
+	}
+	encodedCaptureIdentities, err := encode(captureIdentities)
+	if err != nil {
+		return nil, err
+	}
+	encodedCaptureTypes, err := encode(captureTypes)
+	if err != nil {
+		return nil, err
+	}
+	encodedCaptureModes, err := encode(captureModes)
+	if err != nil {
+		return nil, err
+	}
+	encodedCallIdentities, err := encode(callIdentities)
+	if err != nil {
+		return nil, err
+	}
+	encodedSymbols, err := encode(symbols)
+	if err != nil {
+		return nil, err
+	}
+	encodedSignatures, err := encode(signatures)
+	if err != nil {
+		return nil, err
+	}
+	encodedReceiverTypes, err := encode(receiverTypes)
+	if err != nil {
+		return nil, err
+	}
+	encodedEffectKinds, err := encode(effectKinds)
+	if err != nil {
+		return nil, err
+	}
+	encodedStates, err := encode(states)
+	if err != nil {
+		return nil, err
+	}
+	candidateRecord, err := contract.BuildCallbackPreviewRecord(contract.CandidateEntity, map[string]string{
+		"CandidateIdentity": candidate.CandidateIdentity, "SourceDigest": candidate.SourceDigest, "CandidateDigest": candidate.CandidateDigest,
+		"HelperName": candidate.HelperName, "HelperBytes": strconv.Itoa(candidate.HelperBytes), "HelperLines": strconv.Itoa(candidate.HelperLines),
+		"ParentFunctionLines": strconv.Itoa(candidate.ParentFunctionLines), "CaptureCount": strconv.Itoa(candidate.CaptureCount),
+		"PendingEffectCount": strconv.Itoa(candidate.PendingEffectCount), "State": candidate.State, "Promotion": candidate.Promotion,
+	})
+	if err != nil {
+		return nil, err
+	}
+	capturesRecord, err := contract.BuildCallbackPreviewRecord(contract.CapturesEntity, map[string]string{
+		"CandidateIdentity": candidate.CandidateIdentity, "CaptureNames": encodedCaptureNames, "ObjectIdentities": encodedCaptureIdentities,
+		"ObjectTypes": encodedCaptureTypes, "BindingModes": encodedCaptureModes, "Count": strconv.Itoa(len(captures)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	effectsRecord, err := contract.BuildCallbackPreviewRecord(contract.EffectsEntity, map[string]string{
+		"CandidateIdentity": candidate.CandidateIdentity, "CallIdentities": encodedCallIdentities, "Symbols": encodedSymbols,
+		"Signatures": encodedSignatures, "ReceiverTypes": encodedReceiverTypes, "EffectKinds": encodedEffectKinds,
+		"States": encodedStates, "Count": strconv.Itoa(len(effects)), "ResolvedCount": "0", "State": result.State,
+	})
+	if err != nil {
+		return nil, err
+	}
+	evidenceRecord := callbackPreviewEvidenceRecord(contract, result, result.Evidence)
+	records := []generation.CallbackPreviewRecord{result.ContractRecords[0], candidateRecord, capturesRecord, effectsRecord, evidenceRecord}
+	if err := contract.ValidateCallbackPreviewFlow(records); err != nil {
+		return nil, err
+	}
+	return records, nil
+}
+
+func callbackPreviewEvidenceRecord(contract generation.CallbackPreviewContractEvidence, result CallbackPreviewResult, evidence CallbackPreviewEvidence) generation.CallbackPreviewRecord {
+	record, err := contract.BuildCallbackPreviewRecord(contract.EvidenceEntity, map[string]string{
+		"CandidateIdentity": evidence.CandidateIdentity, "SourceDigest": evidence.SourceDigest, "CandidateDigest": evidence.CandidateDigest,
+		"State": evidence.State, "CaptureCount": strconv.Itoa(evidence.CaptureCount), "PendingEffectCount": strconv.Itoa(evidence.PendingEffectCount),
+		"ResolvedEffectCount": strconv.Itoa(evidence.ResolvedEffectCount), "HelperLines": strconv.Itoa(evidence.HelperLines),
+		"ParentFunctionLines": strconv.Itoa(evidence.ParentFunctionLines), "OperationResultAdmission": evidence.OperationResultAdmission,
+		"ApplyPermission": evidence.ApplyPermission, "Stage": evidence.Stage, "Step": evidence.Step, "Reason": evidence.Reason,
+		"UnknownClass": evidence.UnknownClass, "NextOperation": evidence.NextOperation, "BlockedBy": evidence.BlockedBy,
+	})
+	if err != nil {
+		return generation.CallbackPreviewRecord{}
+	}
+	return record
 }
 
 func callbackPreviewFunction(file *ast.File, name string) *ast.FuncDecl {
@@ -198,7 +384,7 @@ func callbackPreviewHTTPRequestParam(expression ast.Expr, info *types.Info) bool
 	return ok && named.Obj() != nil && named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == "net/http" && named.Obj().Name() == "Request"
 }
 
-func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset *token.FileSet) []CallbackPreviewCapture {
+func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset *token.FileSet) ([]CallbackPreviewCapture, error) {
 	local := make(map[types.Object]bool)
 	selectorNames := make(map[*ast.Ident]bool)
 	ast.Inspect(callback.Type, func(node ast.Node) bool {
@@ -221,6 +407,7 @@ func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset 
 		return true
 	})
 	objects := make(map[types.Object]bool)
+	var unsupported types.Object
 	ast.Inspect(callback.Body, func(node ast.Node) bool {
 		identifier, ok := node.(*ast.Ident)
 		if !ok || selectorNames[identifier] {
@@ -230,7 +417,10 @@ func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset 
 		if object == nil || local[object] {
 			return true
 		}
-		if object.Name() == "nil" || object.Type() == nil {
+		if object.Type() == nil {
+			return true
+		}
+		if basic, ok := object.Type().Underlying().(*types.Basic); ok && basic.Kind() == types.UntypedNil && object.Pkg() == nil {
 			return true
 		}
 		if _, ok := object.(*types.TypeName); ok {
@@ -239,19 +429,30 @@ func callbackPreviewCaptures(callback *ast.FuncLit, evidence typeEvidence, fset 
 		if _, ok := object.(*types.PkgName); ok {
 			return true
 		}
+		if variable, ok := object.(*types.Var); ok {
+			if variable.Parent() == evidence.pkg.Scope() {
+				return true
+			}
+			objects[object] = true
+			return true
+		}
+		if object.Pkg() == nil {
+			return true
+		}
+		unsupported = object
 		objects[object] = true
 		return true
 	})
+	if unsupported != nil {
+		return nil, fmt.Errorf("unsupported non-variable callback capture %s", unsupported.Name())
+	}
 	captures := make([]CallbackPreviewCapture, 0, len(objects))
 	for object := range objects {
 		mode := "pointer-identity"
-		if variable, ok := object.(*types.Var); !ok || variable.Parent() == evidence.pkg.Scope() {
-			mode = "typed-reference"
-		}
 		captures = append(captures, CallbackPreviewCapture{Name: object.Name(), ObjectIdentity: callbackPreviewObjectIdentity(object, fset), ObjectType: callbackPreviewTypeString(object.Type(), evidence.pkg), BindingMode: mode})
 	}
 	sort.Slice(captures, func(left, right int) bool { return captures[left].Name < captures[right].Name })
-	return captures
+	return captures, nil
 }
 
 func callbackPreviewEffects(callback *ast.FuncLit, evidence typeEvidence, fset *token.FileSet) []CallbackPreviewEffect {
@@ -372,14 +573,14 @@ func callbackPreviewFrameSensitive(object types.Object) bool {
 	return ok && function.Pkg() != nil && (function.Pkg().Path() == "runtime" || function.Pkg().Path() == "runtime/debug") && (function.Name() == "Caller" || function.Name() == "Callers" || function.Name() == "CallersFrames" || function.Name() == "Stack")
 }
 
-func callbackPreviewCandidate(source []byte, fset *token.FileSet, file *ast.File, target *ast.FuncDecl, callback *ast.FuncLit, captures []CallbackPreviewCapture, effects []CallbackPreviewEffect) (CallbackPreviewCandidate, error) {
+func callbackPreviewCandidate(source []byte, logical string, fset *token.FileSet, file *ast.File, target *ast.FuncDecl, callback *ast.FuncLit, captures []CallbackPreviewCapture, effects []CallbackPreviewEffect) (CallbackPreviewCandidate, error) {
 	usedNames := make(map[string]bool)
 	for _, declaration := range file.Decls {
 		if function, ok := declaration.(*ast.FuncDecl); ok && function.Name != nil {
 			usedNames[function.Name.Name] = true
 		}
 	}
-	helperName := target.Name.Name + "BoundedCallbackPreview"
+	helperName := "boundedCallbackPreview" + target.Name.Name
 	if usedNames[helperName] {
 		return CallbackPreviewCandidate{}, fmt.Errorf("callback preview helper name collides: %s", helperName)
 	}
@@ -429,7 +630,7 @@ func callbackPreviewCandidate(source []byte, fset *token.FileSet, file *ast.File
 		parentLines = candidateFset.Position(candidateTarget.End()).Line - candidateFset.Position(candidateTarget.Pos()).Line + 1
 	}
 	helperLines := physicalLines(helperBuffer.Bytes())
-	identity := fmt.Sprintf("%s#%s@%d:%d", filepath.ToSlash("cmd/language-readiness-witness/predecessor-selection/pagination_test.go"), target.Name.Name, start, end)
+	identity := fmt.Sprintf("%s#%s@%d:%d", filepath.ToSlash(logical), target.Name.Name, start, end)
 	candidateDigest := callbackPreviewDigest(formatted)
 	return CallbackPreviewCandidate{CandidateIdentity: identity, SourceDigest: callbackPreviewDigest(source), CandidateDigest: candidateDigest, HelperName: helperName, WrapperSource: wrapperBuffer.String(), HelperSource: helperBuffer.String(), CandidateSource: string(formatted), HelperBytes: len(helperBuffer.Bytes()), HelperLines: helperLines, ParentFunctionLines: parentLines, CaptureCount: len(captures), PendingEffectCount: len(effects), State: callbackPreviewStateUnknown, Promotion: callbackPreviewPromotionNone}, nil
 }

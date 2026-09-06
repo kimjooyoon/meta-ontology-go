@@ -56,6 +56,12 @@ entity CallbackPreviewEvidence id "gooo://meta-callback-preview/entity/evidence"
     field ParentFunctionLines id "gooo://meta-callback-preview/field/evidence-parent-lines" type string required one
     field OperationResultAdmission id "gooo://meta-callback-preview/field/evidence-operation-result-admission" type string required one
     field ApplyPermission id "gooo://meta-callback-preview/field/evidence-apply-permission" type string required one
+    field Stage id "gooo://meta-callback-preview/field/evidence-stage" type string required one
+    field Step id "gooo://meta-callback-preview/field/evidence-step" type string required one
+    field Reason id "gooo://meta-callback-preview/field/evidence-reason" type string required one
+    field UnknownClass id "gooo://meta-callback-preview/field/evidence-unknown-class" type string required one
+    field NextOperation id "gooo://meta-callback-preview/field/evidence-next-operation" type string required one
+    field BlockedBy id "gooo://meta-callback-preview/field/evidence-blocked-by" type string required one
 }
 
 activity GenerateBoundedCallbackCandidate(CallbackPreviewInput) -> BoundedCallbackCandidate computes "callback-preview.candidate:v1;promotion=NONE"

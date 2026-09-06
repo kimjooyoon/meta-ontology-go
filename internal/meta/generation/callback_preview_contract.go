@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"sort"
@@ -57,6 +58,137 @@ type CallbackPreviewContractEvidence struct {
 	Fields          []CallbackPreviewFieldEvidence    `json:"fields"`
 	Activities      []CallbackPreviewActivityEvidence `json:"activities"`
 	Bindings        []CallbackPreviewBindingEvidence  `json:"bindings"`
+}
+
+const CallbackPreviewListCodecPrefix = "json-array:v1:"
+
+type CallbackPreviewFieldValue struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type CallbackPreviewRecord struct {
+	Entity string                      `json:"entity"`
+	Fields []CallbackPreviewFieldValue `json:"fields"`
+}
+
+func EncodeCallbackPreviewList(values []string) (string, error) {
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return "", err
+	}
+	return CallbackPreviewListCodecPrefix + string(raw), nil
+}
+
+func ValidateCallbackPreviewList(encoded string) error {
+	if len(encoded) < len(CallbackPreviewListCodecPrefix) || encoded[:len(CallbackPreviewListCodecPrefix)] != CallbackPreviewListCodecPrefix {
+		return fmt.Errorf("callback preview list does not use %s", CallbackPreviewListCodecPrefix)
+	}
+	var values []string
+	if err := json.Unmarshal([]byte(encoded[len(CallbackPreviewListCodecPrefix):]), &values); err != nil {
+		return fmt.Errorf("decode callback preview list: %w", err)
+	}
+	canonical, err := EncodeCallbackPreviewList(values)
+	if err != nil {
+		return err
+	}
+	if canonical != encoded {
+		return fmt.Errorf("callback preview list is not canonical")
+	}
+	return nil
+}
+
+func (contract CallbackPreviewContractEvidence) BuildCallbackPreviewRecord(entity string, values map[string]string) (CallbackPreviewRecord, error) {
+	fields := make([]CallbackPreviewFieldValue, 0)
+	for _, field := range contract.Fields {
+		if field.Entity != entity {
+			continue
+		}
+		value, ok := values[field.Name]
+		if !ok {
+			return CallbackPreviewRecord{}, fmt.Errorf("callback preview record %s is missing field %s", entity, field.Name)
+		}
+		fields = append(fields, CallbackPreviewFieldValue{ID: field.ID, Name: field.Name, Value: value})
+	}
+	if len(fields) == 0 {
+		return CallbackPreviewRecord{}, fmt.Errorf("callback preview record entity %q is not in the contract", entity)
+	}
+	if len(values) != len(fields) {
+		return CallbackPreviewRecord{}, fmt.Errorf("callback preview record %s has fields outside the contract", entity)
+	}
+	sort.Slice(fields, func(left, right int) bool { return fields[left].ID < fields[right].ID })
+	return CallbackPreviewRecord{Entity: entity, Fields: fields}, nil
+}
+
+func (contract CallbackPreviewContractEvidence) ValidateCallbackPreviewFlow(records []CallbackPreviewRecord) error {
+	expected := []string{contract.InputEntity, contract.CandidateEntity, contract.CapturesEntity, contract.EffectsEntity, contract.EvidenceEntity}
+	if len(records) != len(expected) {
+		return fmt.Errorf("callback preview record flow has %d records, want %d", len(records), len(expected))
+	}
+	for index, record := range records {
+		if record.Entity != expected[index] {
+			return fmt.Errorf("callback preview record flow step %d is %q, want %q", index, record.Entity, expected[index])
+		}
+		if err := contract.validateCallbackPreviewRecordFields(record); err != nil {
+			return err
+		}
+		if _, err := contract.BuildCallbackPreviewRecord(record.Entity, callbackPreviewRecordValues(record)); err != nil {
+			return err
+		}
+	}
+	if len(contract.Activities) != 4 || len(contract.Bindings) != 3 {
+		return fmt.Errorf("callback preview contract activity/binding flow is incomplete")
+	}
+	for index, binding := range contract.Bindings {
+		if binding.Entity != expected[index+1] || binding.ProducerActivity != contract.Activities[index].Name || binding.ConsumerActivity != contract.Activities[index+1].Name {
+			return fmt.Errorf("callback preview contract binding %d does not match activity flow", index)
+		}
+	}
+	return nil
+}
+
+func (contract CallbackPreviewContractEvidence) validateCallbackPreviewRecordFields(record CallbackPreviewRecord) error {
+	expected := make(map[string]string)
+	for _, field := range contract.Fields {
+		if field.Entity == record.Entity {
+			expected[field.Name] = field.ID
+		}
+	}
+	if len(expected) != len(record.Fields) {
+		return fmt.Errorf("callback preview record %s has an unexpected field count", record.Entity)
+	}
+	seen := make(map[string]bool, len(record.Fields))
+	for _, field := range record.Fields {
+		id, ok := expected[field.Name]
+		if !ok || seen[field.Name] || id != field.ID {
+			return fmt.Errorf("callback preview record %s field %s has an unbound ID", record.Entity, field.Name)
+		}
+		seen[field.Name] = true
+		if callbackPreviewListField(field.Name) {
+			if err := ValidateCallbackPreviewList(field.Value); err != nil {
+				return fmt.Errorf("callback preview record %s field %s: %w", record.Entity, field.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func callbackPreviewListField(name string) bool {
+	switch name {
+	case "CaptureNames", "ObjectIdentities", "ObjectTypes", "BindingModes", "CallIdentities", "Symbols", "Signatures", "ReceiverTypes", "EffectKinds", "States":
+		return true
+	default:
+		return false
+	}
+}
+
+func callbackPreviewRecordValues(record CallbackPreviewRecord) map[string]string {
+	values := make(map[string]string, len(record.Fields))
+	for _, field := range record.Fields {
+		values[field.Name] = field.Value
+	}
+	return values
 }
 
 //go:embed callback-preview-contract.gooo
@@ -140,6 +272,12 @@ var callbackPreviewEntitySpecs = []callbackPreviewEntitySpec{
 		{Name: "ParentFunctionLines", ID: "gooo://meta-callback-preview/field/evidence-parent-lines", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "OperationResultAdmission", ID: "gooo://meta-callback-preview/field/evidence-operation-result-admission", Presence: semantic.Required, Cardinality: semantic.One},
 		{Name: "ApplyPermission", ID: "gooo://meta-callback-preview/field/evidence-apply-permission", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "Stage", ID: "gooo://meta-callback-preview/field/evidence-stage", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "Step", ID: "gooo://meta-callback-preview/field/evidence-step", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "Reason", ID: "gooo://meta-callback-preview/field/evidence-reason", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "UnknownClass", ID: "gooo://meta-callback-preview/field/evidence-unknown-class", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "NextOperation", ID: "gooo://meta-callback-preview/field/evidence-next-operation", Presence: semantic.Required, Cardinality: semantic.One},
+		{Name: "BlockedBy", ID: "gooo://meta-callback-preview/field/evidence-blocked-by", Presence: semantic.Required, Cardinality: semantic.One},
 	}},
 }
 
