@@ -1,0 +1,25 @@
+package syntaxregistration
+namespace syntaxregistration
+
+entity RegistrationRequest id "gooo://syntax-registration/request"
+entity RegistrationCandidate id "gooo://syntax-registration/candidate"
+entity SyntaxCorpus id "gooo://syntax-registration/corpus"
+entity NativeRegistry id "gooo://syntax-registration/registry"
+entity SyntaxDenominator id "gooo://syntax-registration/syntax-denominator"
+entity SyntaxConformance id "gooo://syntax-registration/syntax-conformance"
+entity DenominatorAdmission id "gooo://syntax-registration/denominator-admission"
+entity DenominatorSelection id "gooo://syntax-registration/denominator-selection"
+entity DenominatorDigest id "gooo://syntax-registration/denominator-digest"
+entity DenominatorEvidence id "gooo://syntax-registration/denominator-evidence"
+entity MigrationConformance id "gooo://syntax-registration/migration-conformance"
+
+activity RegisterSyntaxCapability(RegistrationRequest) -> RegistrationCandidate computes "syntax.register:v1"
+activity GenerateSyntaxCorpus(RegistrationRequest) -> SyntaxCorpus
+activity GenerateNativeRegistry(RegistrationRequest) -> NativeRegistry
+activity GenerateSyntaxDenominator(RegistrationRequest) -> SyntaxDenominator
+activity GenerateSyntaxConformance(RegistrationRequest) -> SyntaxConformance
+activity GenerateDenominatorAdmission(RegistrationRequest) -> DenominatorAdmission
+activity GenerateDenominatorSelection(RegistrationRequest) -> DenominatorSelection
+activity GenerateDenominatorDigest(RegistrationRequest) -> DenominatorDigest
+activity GenerateDenominatorEvidence(RegistrationRequest) -> DenominatorEvidence
+activity GenerateMigrationConformance(RegistrationRequest) -> MigrationConformance

@@ -1,0 +1,33 @@
+package verify
+
+func init() {
+	branchScopeAllowlist["agent/syntax-registration-operator-20260907"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/syntax-registration-candidate.yml",
+		"cmd/syntax-registration-candidate/main.go",
+		"cmd/syntax-registration-candidate/output.go",
+		"cmd/syntax-registration-candidate/output_test.go",
+		"docs/syntax-registration-candidate.md",
+		"examples/language-syntax-roundtrip/corpus.json",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
+		"internal/meta/syntaxregistration/candidate_test.go",
+		"internal/meta/syntaxregistration/contract.go",
+		"internal/meta/syntaxregistration/contract.gooo",
+		"internal/meta/syntaxregistration/corpus.go",
+		"internal/meta/syntaxregistration/counterexample_test.go",
+		"internal/meta/syntaxregistration/denominator.go",
+		"internal/meta/syntaxregistration/edits.go",
+		"internal/meta/syntaxregistration/generate.go",
+		"internal/meta/syntaxregistration/input.go",
+		"internal/meta/syntaxregistration/json.go",
+		"internal/meta/syntaxregistration/migration_tests.go",
+		"internal/meta/syntaxregistration/native_test.go",
+		"internal/meta/syntaxregistration/selection.go",
+		"internal/meta/syntaxregistration/syntax_tests.go",
+		"internal/meta/syntaxregistration/types.go",
+		"internal/verify/scope_syntax_registration_20260907.go",
+		"internal/verify/scope_syntax_registration_20260907_test.go",
+	}
+}

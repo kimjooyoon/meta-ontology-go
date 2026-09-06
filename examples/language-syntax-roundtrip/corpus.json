@@ -317,17 +317,17 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY"
     },
-{
-  "id": "claim-dependency-causality",
-  "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
-  "kind": "VALID",
-  "expected_decision": "PASS",
-  "proof_choice": "COHERENCE",
-  "meta_operation": "replay-language-syntax",
-  "scope": "LANGUAGE_CAPABILITY"
-},
-{
-  "id": "roundtrip-minimal",
+    {
+      "id": "claim-dependency-causality",
+      "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
@@ -602,6 +602,7 @@
     }
   ],
   "meta_sources": [
+    "internal/meta/syntaxregistration/contract.gooo",
     "internal/meta/entityfields/entity-fields-meta.gooo",
     "examples/public-trust-surface/main.gooo",
     "internal/meta/generation/operation-input-contract.gooo"
