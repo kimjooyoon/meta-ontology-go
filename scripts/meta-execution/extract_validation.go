@@ -164,6 +164,8 @@ type strategyEvidencePresence struct {
 	FinalGeneratedEvidenceBytes   int                                              `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits           int                                              `json:"final_generated_units"`
 	PreflightObservations         []json.RawMessage                                `json:"preflight_observations,omitempty"`
+	PreparationProgress           *projectionextractor.PreparationProgressEvidence `json:"preparation_progress,omitempty"`
+	FinalRenderedCapacity         *projectionextractor.FinalRenderedCapacityEvidence `json:"final_rendered_capacity,omitempty"`
 }
 
 type proofStagePresence struct {
@@ -393,6 +395,10 @@ func validStrategyEvidenceReport(report extractorReport, presence extractorRepor
 			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
 				return false
 			}
+			if (evidence.PreparationProgress == nil) != (observedEvidence.PreparationProgress == nil) ||
+				(evidence.FinalRenderedCapacity == nil) != (observedEvidence.FinalRenderedCapacity == nil) {
+				return false
+			}
 			for stageIndex := range evidence.ProofStages {
 				if observed.Values[evidenceIndex].ProofStages[stageIndex].PayloadBytes == nil {
 					return false
@@ -421,38 +427,64 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 			if evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 {
 				return false
 			}
-			if evidence.Strategy == "suffix-extraction" {
-				capacityObligationName := "rendered-capacity"
-				if evidence.AfterRenderedCapacityOverage > 0 {
-					capacityObligationName = "rendered-capacity-progress"
+			if evidence.PreparationProgress != nil {
+				progress := evidence.PreparationProgress
+				if progress.Operation == "" || progress.Activity == "" || progress.InputEntity == "" ||
+					progress.InputSubjectKind == "" || progress.ContractSourceDigest == "" ||
+					progress.ContractSemanticDigest == "" || progress.Subject == "" ||
+					progress.SourceDigest == "" || progress.Status != strategyEvidencePassStatus ||
+					progress.BeforeOverage <= progress.AfterOverage || progress.AfterOverage <= 0 ||
+					progress.BeforeOverage != evidence.BeforeRenderedCapacityOverage ||
+					progress.AfterOverage != evidence.AfterRenderedCapacityOverage {
+					return false
 				}
-				if len(evidence.ProofStages) != 0 || len(evidence.ContractObligations) != 0 || len(evidence.Obligations) != 1 || evidence.Obligations[0].Name != capacityObligationName || evidence.Obligations[0].Status != strategyEvidencePassStatus {
+			} else if evidence.AfterRenderedCapacityOverage > 0 {
+				return false
+			}
+			if evidence.FinalRenderedCapacity != nil {
+				finalCapacity := evidence.FinalRenderedCapacity
+				if finalCapacity.Scope == "" || finalCapacity.PayloadDigest == "" || finalCapacity.Bytes <= 0 ||
+					finalCapacity.Lines <= 0 || finalCapacity.Overage != 0 || finalCapacity.Status != strategyEvidencePassStatus {
+					return false
+				}
+			} else if evidence.Strategy == "suffix-extraction" {
+				return false
+			}
+			if evidence.Strategy == "suffix-extraction" {
+				if len(evidence.ProofStages) != 0 || len(evidence.ContractObligations) != 0 || len(evidence.Obligations) != 0 {
 					return false
 				}
 				continue
 			}
-			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) == 0 || len(evidence.ProofStages) == 0 || len(evidence.Obligations) == 0 {
+			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) != 6 || len(evidence.ProofStages) != 6 || len(evidence.Obligations) != 6 {
 				return false
 			}
 			for _, obligation := range evidence.Obligations {
-				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus ||
-					(obligation.Name != "rendered-capacity-progress" && !validReturnTailObligationName(obligation.Name)) {
+				if obligation.Name == "" || obligation.Status != strategyEvidencePassStatus || !validReturnTailObligationName(obligation.Name) {
 					return false
 				}
 			}
-			for _, obligation := range evidence.ContractObligations {
-				if obligation.Name == "" || obligation.Activity == "" || obligation.InputEntity == "" ||
-					obligation.OutputEntity == "" || !obligation.UsedInputFact || !obligation.GeneratedOutputFact {
+			expectedNames := []string{"return-shape", "control-flow", "free-bindings", "callee-effects", "rendered-capacity", "projected-conformance"}
+			expectedActivities := []string{"ProveReturnShape", "ProveControlFlow", "ProveFreeBindings", "ProveCalleeEffects", "ProveRenderedCapacity", "ProveProjectedConformance"}
+			expectedInputs := []string{"FunctionInput", "ReturnShapeObligation", "ControlFlowObligation", "FreeBindingsObligation", "CalleeEffectsObligation", "RenderedCapacityObligation"}
+			expectedOutputs := []string{"ReturnShapeObligation", "ControlFlowObligation", "FreeBindingsObligation", "CalleeEffectsObligation", "RenderedCapacityObligation", "ProjectedConformanceObligation"}
+			for index, obligation := range evidence.ContractObligations {
+				if obligation.Name != expectedNames[index] || obligation.Activity != expectedActivities[index] ||
+					obligation.InputEntity != expectedInputs[index] || obligation.OutputEntity != expectedOutputs[index] ||
+					!obligation.UsedInputFact || !obligation.GeneratedOutputFact {
 					return false
 				}
 			}
-			for _, stage := range evidence.ProofStages {
-				if stage.Name == "" || stage.Activity == "" || stage.InputEntity == "" ||
-					stage.OutputEntity == "" || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
+			for index, stage := range evidence.ProofStages {
+				if stage.Name != expectedNames[index] || stage.Activity != expectedActivities[index] || stage.InputEntity != expectedInputs[index] ||
+					stage.OutputEntity != expectedOutputs[index] || stage.Status != strategyEvidencePassStatus || stage.SourceDigest == "" ||
 					stage.CandidateDigest == "" || stage.InputEvidenceID == "" || stage.OutputEvidenceID == "" ||
 					stage.PayloadDigest == "" || stage.PayloadBytes < 0 {
 					return false
 				}
+			}
+			if evidence.FinalRenderedCapacity != nil && evidence.ProofStages[4].PayloadDigest != evidence.FinalRenderedCapacity.PayloadDigest {
+				return false
 			}
 		}
 	}

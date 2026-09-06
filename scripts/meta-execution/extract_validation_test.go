@@ -478,6 +478,45 @@ func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T)
 	}
 }
 
+func TestDecodeExtractorReportRejectsPreparationProgressAsFinalProof(t *testing.T) {
+	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	subject := value["subjects"].([]any)[0].(map[string]any)
+	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+	stages := evidence["proof_stages"].([]any)
+	stages[4].(map[string]any)["name"] = "rendered-capacity-progress"
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("preparation progress was accepted as the final rendered-capacity proof")
+	}
+}
+
+func TestDecodeExtractorReportRejectsTamperedFinalCapacityMeasurement(t *testing.T) {
+	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	subject := value["subjects"].([]any)[0].(map[string]any)
+	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+	evidence["final_rendered_capacity"].(map[string]any)["overage"] = 1
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("tampered final rendered-capacity measurement was accepted")
+	}
+}
+
 func extractionReportWithStrategyEvidence(evidence []projectionextractor.StrategyEvidence) extractorReport {
 	subject := validExtractionSubjectFixture("a.go")
 	subject.Evidence = evidence
@@ -517,4 +556,31 @@ func nativeStrategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvi
 		t.Fatalf("native strategy evidence fixture is malformed: %v", err)
 	}
 	return evidence[0]
+}
+
+func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+	t.Helper()
+	evidence := nativeStrategyEvidenceFixture(t)
+	evidence.AfterRenderedCapacityOverage = 3
+	evidence.PreparationProgress = &projectionextractor.PreparationProgressEvidence{
+		Operation:              evidence.Operation,
+		Activity:               evidence.ContractActivity,
+		InputEntity:            evidence.ContractInputEntity,
+		InputSubjectKind:       evidence.ContractInputSubjectKind,
+		ContractSourceDigest:   evidence.ContractSourceDigest,
+		ContractSemanticDigest: evidence.ContractSemanticDigest,
+		Subject:                evidence.Subject,
+		SourceDigest:           evidence.ProofStages[0].SourceDigest,
+		BeforeOverage:          evidence.BeforeRenderedCapacityOverage,
+		AfterOverage:           evidence.AfterRenderedCapacityOverage,
+		Status:                 strategyEvidencePassStatus,
+	}
+	evidence.FinalRenderedCapacity = &projectionextractor.FinalRenderedCapacityEvidence{
+		Scope:         "final-generated-functions",
+		PayloadDigest: evidence.ProofStages[4].PayloadDigest,
+		Bytes:         evidence.FinalGeneratedBytes,
+		Lines:         evidence.FinalGeneratedUnits,
+		Status:        strategyEvidencePassStatus,
+	}
+	return evidence
 }

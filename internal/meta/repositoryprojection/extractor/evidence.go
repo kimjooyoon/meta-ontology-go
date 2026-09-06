@@ -32,9 +32,39 @@ type StrategyEvidence struct {
 	ContractObligations           []ContractObligationEvidence   `json:"contract_obligations"`
 	ProofStages                   []ProofStageEvidence           `json:"proof_stages"`
 	PreflightObservations         []PreflightObservationEvidence `json:"preflight_observations,omitempty"`
+	PreparationProgress           *PreparationProgressEvidence  `json:"preparation_progress,omitempty"`
+	FinalRenderedCapacity         *FinalRenderedCapacityEvidence `json:"final_rendered_capacity,omitempty"`
 	FinalGeneratedBytes           int                            `json:"final_generated_bytes"`
 	FinalGeneratedEvidenceBytes   int                            `json:"final_generated_evidence_bytes"`
 	FinalGeneratedUnits           int                            `json:"final_generated_units"`
+}
+
+// PreparationProgressEvidence records a strict capacity decrease while the
+// extractor is still preparing a source. It is deliberately separate from the
+// final proof chain: an intermediate candidate is not a bounded final result.
+type PreparationProgressEvidence struct {
+	Operation              string `json:"operation"`
+	Activity               string `json:"activity"`
+	InputEntity            string `json:"input_entity"`
+	InputSubjectKind       string `json:"input_subject_kind"`
+	ContractSourceDigest   string `json:"contract_source_digest"`
+	ContractSemanticDigest string `json:"contract_semantic_digest"`
+	Subject                string `json:"subject"`
+	SourceDigest           string `json:"source_digest"`
+	BeforeOverage          int    `json:"before_overage"`
+	AfterOverage           int    `json:"after_overage"`
+	Status                 string `json:"status"`
+}
+
+// FinalRenderedCapacityEvidence records the bounded measurement of the
+// actual final generated package. It is not a preparation-progress receipt.
+type FinalRenderedCapacityEvidence struct {
+	Scope        string `json:"scope"`
+	PayloadDigest string `json:"payload_digest"`
+	Bytes        int    `json:"bytes"`
+	Lines        int    `json:"lines"`
+	Overage      int    `json:"overage"`
+	Status       string `json:"status"`
 }
 
 type PreflightObservationEvidence struct {
@@ -108,9 +138,8 @@ const (
 	obligationControlFlow      = "control-flow"
 	obligationFreeBindings     = "free-bindings"
 	obligationCalleeEffects    = "callee-effects"
-	obligationRenderedCapacity         = "rendered-capacity"
-	obligationRenderedCapacityProgress = "rendered-capacity-progress"
-	obligationProjectedConform         = "projected-conformance"
+	obligationRenderedCapacity = "rendered-capacity"
+	obligationProjectedConform = "projected-conformance"
 )
 
 var returnTailObligations = []string{

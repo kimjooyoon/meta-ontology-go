@@ -162,6 +162,9 @@ func TestTypeSafeSuffixIntermediateProgressCompletesPreparation(t *testing.T) {
 	intermediate := false
 	for _, item := range evidence {
 		if item.Strategy == suffixStrategy && item.AfterRenderedCapacityOverage > 0 && item.BeforeRenderedCapacityOverage > item.AfterRenderedCapacityOverage {
+			if item.PreparationProgress == nil || len(item.Obligations) != 0 || len(item.ProofStages) != 0 || len(item.ContractObligations) != 0 {
+				t.Fatalf("intermediate suffix evidence=%+v, want typed preparation progress without final proof", item)
+			}
 			intermediate = true
 			break
 		}
@@ -180,6 +183,37 @@ func TestTypeSafeSuffixIntermediateProgressCompletesPreparation(t *testing.T) {
 	}
 	if selection.function != nil {
 		t.Fatalf("prepared source still has oversized function=%s observations=%+v", selection.function.Name.Name, selection.observations)
+	}
+}
+
+func TestTypeSafeSuffixProgressFinalizesWithBoundedFinalEvidence(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := "package p\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n)\n\nfunc F() {\n" +
+		strings.Repeat("\t_ = fmt.Sprintf(\"%s\", strings.Repeat(\"x\", 1))\n", 180) +
+		"}\n"
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ExtractWithResult(root, "x.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	intermediate := false
+	for _, item := range result.Evidence {
+		if item.Strategy != suffixStrategy || item.AfterRenderedCapacityOverage <= 0 {
+			continue
+		}
+		intermediate = true
+		if item.PreparationProgress == nil || item.FinalRenderedCapacity == nil || item.FinalRenderedCapacity.Overage != 0 ||
+			len(item.Obligations) != 0 || len(item.ProofStages) != 0 || len(item.ContractObligations) != 0 {
+			t.Fatalf("progress evidence was promoted into final proof or lost final capacity=%+v", item)
+		}
+	}
+	if !intermediate {
+		t.Fatalf("finalized evidence=%+v, want a strict intermediate suffix progress record", result.Evidence)
 	}
 }
 

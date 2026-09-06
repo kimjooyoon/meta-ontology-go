@@ -420,7 +420,7 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	}
 	name := stableSuffixName(function.Name.Name, startIndex+1)
 	if existing[name] {
-		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{"helper=" + name})
+		return nil, knownSuffixContradiction("suffix helper identity already exists")
 	}
 	first := statements[0]
 	last := statements[len(statements)-1]

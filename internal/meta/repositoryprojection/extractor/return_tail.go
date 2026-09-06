@@ -17,6 +17,25 @@ import (
 const returnTailStrategy = "return-preserving-terminal-tail"
 const suffixStrategy = "suffix-extraction"
 
+func preparationProgressEvidence(contract generation.OperationInputContractEvidence, source, subject string, before, after int) *PreparationProgressEvidence {
+	if after <= 0 || before <= after {
+		return nil
+	}
+	return &PreparationProgressEvidence{
+		Operation:              string(contract.Operation),
+		Activity:               contract.Activity,
+		InputEntity:            contract.InputEntity,
+		InputSubjectKind:       string(contract.InputSubjectKind),
+		ContractSourceDigest:   contract.SourceDigest,
+		ContractSemanticDigest: contract.SemanticDigest,
+		Subject:                subject,
+		SourceDigest:           proofDigest(source),
+		BeforeOverage:          before,
+		AfterOverage:           after,
+		Status:                 "PASS",
+	}
+}
+
 func buildReturnTailCandidate(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, existing map[string]bool, preflight []renderedCapacityObservation) (*returnTailCandidate, error) {
 	contract, err := generation.ExtractFunctionInputContractEvidence()
 	if err != nil {
@@ -115,7 +134,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 
 	name := stableReturnTailName(function.Name.Name, startIndex+1)
 	if existing[name] {
-		return nil, failWithDiagnostics("derive-recipe", "select-safe-suffix", "DECLARATION_IDENTITY_COLLISION", "KNOWN_CONTRADICTION", "report-contradiction", []string{"helper=" + name})
+		return nil, returnTailContradiction(obligationRenderedCapacity, "return-tail helper identity already exists")
 	}
 	helper, err := renderReturnTailHelper(fset, name, bindings, source[start:end])
 	if err != nil {
@@ -172,13 +191,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if bytes.Equal(combined, source) {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail extraction made no progress")
 	}
-	capacityResult := returnTailPredicateResult{Status: "PASS", Payload: append(append([]byte("rendered-capacity\x00"), renderedOuterHelper...), renderedHelper...), CandidateDigest: proofDigest(combined), Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", beforeCapacity.overage, afterCapacity.overage, outerMeasurement.lines, helperMeasurement.lines)}
-	if afterCapacity.overage > 0 {
-		capacityResult.Name = obligationRenderedCapacityProgress
-	}
-	if err := proof.consume(4, capacityResult); err != nil {
-		return nil, err
-	}
+	progress := preparationProgressEvidence(contract, source, functionIdentity(fset, function), beforeCapacity.overage, afterCapacity.overage)
 	return &returnTailCandidate{
 		helperName: name,
 		arguments:  bindings,
@@ -207,6 +220,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 			RenderedHelperLines:           helperMeasurement.lines,
 			RenderedOuterHelperBytes:      outerMeasurement.bytes,
 			RenderedOuterHelperLines:      outerMeasurement.lines,
+			PreparationProgress:           progress,
 			Obligations:                   obligationsFromProofStages(proof.stages),
 			ContractObligations:           contractObligations,
 			ProofStages:                   proof.stages,
@@ -282,10 +296,7 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 	if !ok {
 		return nil, fail("derive-recipe", "admit-suffix", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
 	}
-	capacityObligationName := obligationRenderedCapacity
-	if candidate.afterRenderedCapacityOverage > 0 {
-		capacityObligationName = obligationRenderedCapacityProgress
-	}
+	progress := preparationProgressEvidence(contract, source, functionIdentity(fset, function), candidate.beforeRenderedCapacityOverage, candidate.afterRenderedCapacityOverage)
 	return &StrategyEvidence{
 		Strategy:                      suffixStrategy,
 		Operation:                     string(contract.Operation),
@@ -309,10 +320,7 @@ func suffixStrategyEvidence(root, logical string, source []byte, fset *token.Fil
 		RenderedHelperLines:           candidate.renderedHelper.lines,
 		RenderedOuterHelperBytes:      candidate.renderedOuter.bytes,
 		RenderedOuterHelperLines:      candidate.renderedOuter.lines,
-		Obligations: []ObligationEvidence{{
-			Name: capacityObligationName, Status: "PASS",
-			Detail: fmt.Sprintf("before_overage=%d after_overage=%d outer_helper_lines=%d extracted_helper_lines=%d", candidate.beforeRenderedCapacityOverage, candidate.afterRenderedCapacityOverage, candidate.renderedOuter.lines, candidate.renderedHelper.lines),
-		}},
+		PreparationProgress: progress,
 		PreflightObservations: preflightObservationEvidence(contract, preflight),
 	}, nil
 }
