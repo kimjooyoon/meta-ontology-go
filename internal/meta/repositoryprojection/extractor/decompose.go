@@ -70,6 +70,10 @@ type renderedCapacitySelection struct {
 	observations []renderedCapacityObservation
 }
 
+type renderedCapacitySnapshot struct {
+	overage int
+}
+
 type typeEvidence struct {
 	info  *types.Info
 	pkg   *types.Package
@@ -171,7 +175,7 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 			observation.receiver = receiver
 		}
 	}
-	if functionLines > functionLineLimit {
+	if renderedCapacityOverage(functionLines) > 0 {
 		observation.functionStatus = renderedCapacityOverCap
 	}
 	rendered, err := renderer(fset, file, source, function)
@@ -182,7 +186,7 @@ func observeRenderedCapacityWithRenderer(fset *token.FileSet, file *ast.File, so
 	helperLines := physicalLines(rendered)
 	observation.helperLines = &helperLines
 	observation.helperStatus = renderedCapacityWithinCap
-	if helperLines > functionLineLimit {
+	if renderedCapacityOverage(helperLines) > 0 {
 		observation.helperStatus = renderedCapacityOverCap
 	}
 	return observation
@@ -263,6 +267,37 @@ func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byt
 		return nil, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
 	return helper, nil
+}
+
+func renderedCapacityOverage(lines int) int {
+	if lines <= functionLineLimit {
+		return 0
+	}
+	return lines - functionLineLimit
+}
+
+func renderedCapacitySnapshotForFunctions(source []byte, names ...string) (renderedCapacitySnapshot, error) {
+	if len(names) == 0 {
+		return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "functions=EMPTY"})
+	}
+	seen := make(map[string]bool, len(names))
+	snapshot := renderedCapacitySnapshot{}
+	for _, name := range names {
+		if name == "" || seen[name] {
+			return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "function=" + name})
+		}
+		seen[name] = true
+		rendered, err := renderedFunctionHelper(source, name)
+		if err != nil {
+			return renderedCapacitySnapshot{}, err
+		}
+		snapshot.overage += renderedCapacityOverage(physicalLines(rendered))
+	}
+	return snapshot, nil
+}
+
+func strictRenderedCapacityProgress(before, after renderedCapacitySnapshot) bool {
+	return before.overage >= 0 && after.overage >= 0 && after.overage < before.overage
 }
 
 func functionIdentity(fset *token.FileSet, function *ast.FuncDecl) string {
@@ -359,9 +394,6 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, err
 	}
-	if physicalLines(helper) > functionLineLimit {
-		return nil, knownSuffixContradiction("suffix helper exceeds the physical line limit")
-	}
 	call := []byte(name + "(" + bindingArguments(bindings) + ")")
 	modified, err := replaceSource(source, start, end, call)
 	if err != nil {
@@ -371,14 +403,22 @@ func buildSuffixCandidate(source []byte, fset *token.FileSet, file *ast.File, fu
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
-	if lines, ok := namedFunctionLines(formatted, function.Name.Name); !ok || lines > functionLineLimit {
-		return nil, knownSuffixContradiction("outer function remains over the physical line limit")
-	}
 	combined := append(bytes.TrimRight(formatted, "\n"), '\n', '\n')
 	combined = append(combined, helper...)
 	combined, err = format.Source(combined)
 	if err != nil {
 		return nil, fail("rewrite-source", "format-decomposed-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	beforeCapacity, err := renderedCapacitySnapshotForFunctions(source, function.Name.Name)
+	if err != nil {
+		return nil, err
+	}
+	afterCapacity, err := renderedCapacitySnapshotForFunctions(combined, function.Name.Name, name)
+	if err != nil {
+		return nil, err
+	}
+	if !strictRenderedCapacityProgress(beforeCapacity, afterCapacity) {
+		return nil, knownSuffixContradiction(fmt.Sprintf("rendered capacity overage did not strictly decrease: before=%d after=%d", beforeCapacity.overage, afterCapacity.overage))
 	}
 	return &suffixCandidate{start: start, end: end, helperName: name, arguments: bindings, helper: helper, result: combined}, nil
 }
