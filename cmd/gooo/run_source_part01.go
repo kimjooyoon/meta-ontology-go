@@ -28,46 +28,7 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 			"read", err.Error(), sourceexecutionSpan())
 	}
 	if options.input != "" {
-		input, err := reader.ReadFile(options.input)
-		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, valueexecution.Failure{
-				Code: valueexecution.ReasonSourceReadFailed, Stage: "INPUT", Step: "read-plan-input", Detail: err.Error(),
-			})
-		}
-		plan, err := valueexecution.CompilePlan(options.filename, source)
-		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
-		}
-		rootInput, err := decodePlanInput(input)
-		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
-		}
-		execution, err := plan.Execute(map[string]int64{options.entry: rootInput})
-		if err != nil {
-			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
-		}
-		payload := struct {
-			Schema              string                   `json:"schema"`
-			Decision            string                   `json:"decision"`
-			SourcePath          string                   `json:"source_path"`
-			SourceDigest        string                   `json:"source_digest"`
-			SemanticFingerprint string                   `json:"semantic_fingerprint"`
-			Entry               string                   `json:"entry"`
-			Execution           valueexecution.Execution `json:"execution"`
-		}{
-			Schema: "gooo/value-execution-plan/v1", Decision: "PASS", SourcePath: options.filename,
-			SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint, Entry: options.entry, Execution: execution,
-		}
-		if jsonMode {
-			encoder := json.NewEncoder(stdout)
-			encoder.SetIndent("", "  ")
-			if err := encoder.Encode(payload); err != nil {
-				return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
-			}
-		} else {
-			fmt.Fprintf(stdout, "executed value plan: entry=%s activities=%d applies=%d deliveries=%d\n", options.entry, len(execution.Activities), execution.ApplyCalls, execution.Deliveries)
-		}
-		return exitOK
+		return runSourceValuePlan(options, source, reader, jsonMode, stdout, stderr)
 	}
 	receipt := sourceexecution.Execute(sourceexecution.Request{
 		Filename: options.filename, Source: string(source), Entry: options.entry,
@@ -92,6 +53,49 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 		return exitOK
 	}
 	return exitFailure
+}
+
+func runSourceValuePlan(options runSourceOptions, source []byte, reader SourceReader, jsonMode bool, stdout, stderr io.Writer) int {
+	input, err := reader.ReadFile(options.input)
+	if err != nil {
+		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, valueexecution.Failure{
+			Code: valueexecution.ReasonSourceReadFailed, Stage: "INPUT", Step: "read-plan-input", Detail: err.Error(),
+		})
+	}
+	plan, err := valueexecution.CompilePlan(options.filename, source)
+	if err != nil {
+		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
+	}
+	rootInput, err := decodePlanInput(input)
+	if err != nil {
+		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
+	}
+	execution, err := plan.Execute(map[string]int64{options.entry: rootInput})
+	if err != nil {
+		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
+	}
+	payload := struct {
+		Schema              string                   `json:"schema"`
+		Decision            string                   `json:"decision"`
+		SourcePath          string                   `json:"source_path"`
+		SourceDigest        string                   `json:"source_digest"`
+		SemanticFingerprint string                   `json:"semantic_fingerprint"`
+		Entry               string                   `json:"entry"`
+		Execution           valueexecution.Execution `json:"execution"`
+	}{
+		Schema: "gooo/value-execution-plan/v1", Decision: "PASS", SourcePath: options.filename,
+		SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint, Entry: options.entry, Execution: execution,
+	}
+	if jsonMode {
+		encoder := json.NewEncoder(stdout)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(payload); err != nil {
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
+		}
+	} else {
+		fmt.Fprintf(stdout, "executed value plan: entry=%s activities=%d applies=%d deliveries=%d\n", options.entry, len(execution.Activities), execution.ApplyCalls, execution.Deliveries)
+	}
+	return exitOK
 }
 
 func decodePlanInput(raw []byte) (int64, error) {
