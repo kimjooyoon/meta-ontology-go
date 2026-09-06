@@ -116,12 +116,25 @@ func validateNativePlan(receipt runtimePlanReceipt) error {
 	if receipt.Schema != nativePlanSchema || receipt.Decision != "PASS" || receipt.SourcePath != nativePlanSource || receipt.Entry != nativePlanEntry {
 		return fmt.Errorf("runtime plan CLI receipt identity is not exact")
 	}
-	if receipt.Execution.ApplyCalls != 3 || receipt.Execution.Deliveries != 2 {
+	if receipt.SourceDigest == "" || receipt.SemanticFingerprint == "" || receipt.Execution.ApplyCalls != 3 || receipt.Execution.Deliveries != 2 {
 		return fmt.Errorf("runtime plan CLI execution counts are not exact: applies=%d deliveries=%d", receipt.Execution.ApplyCalls, receipt.Execution.Deliveries)
 	}
-	for _, activity := range []string{"ConsumeA", "ConsumeB"} {
+	wantActivities := []string{"Produce", "ConsumeA", "ConsumeB"}
+	if len(receipt.Execution.Activities) != len(wantActivities) {
+		return fmt.Errorf("runtime plan CLI activity count is not exact: got %d", len(receipt.Execution.Activities))
+	}
+	for index, activity := range wantActivities {
+		if receipt.Execution.Activities[index] != activity {
+			return fmt.Errorf("runtime plan CLI activity order is not exact at %d", index)
+		}
+	}
+	wantValues := map[string]int64{"Produce": 42, "ConsumeA": 43, "ConsumeB": 43}
+	if len(receipt.Execution.Results) != len(wantValues) {
+		return fmt.Errorf("runtime plan CLI result count is not exact: got %d", len(receipt.Execution.Results))
+	}
+	for activity, wantValue := range wantValues {
 		result, ok := receipt.Execution.Results[activity]
-		if !ok || result.Value != 43 {
+		if !ok || result.ProducerActivity != activity || result.Value != wantValue || result.SourceDigest != receipt.SourceDigest || result.SemanticFingerprint != receipt.SemanticFingerprint || result.OutputEntity != "Integer" || result.OperationSpecDigest == "" || result.ResultDigest == "" {
 			return fmt.Errorf("runtime plan CLI result is not exact for %s", activity)
 		}
 	}
