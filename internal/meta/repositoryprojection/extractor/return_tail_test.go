@@ -48,11 +48,29 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				if err != nil {
 					t.Fatalf("positive case failed: %v", err)
 				}
-				if len(result.Evidence) != 1 || result.Evidence[0].Strategy != returnTailStrategy {
+				if len(result.Evidence) == 0 {
 					t.Fatalf("strategy evidence=%+v", result.Evidence)
 				}
-				if len(result.Evidence[0].Obligations) != len(returnTailObligations) {
-					t.Fatalf("obligations=%+v", result.Evidence[0].Obligations)
+				for index := range result.Evidence {
+					evidence := &result.Evidence[index]
+					if evidence.Strategy != returnTailStrategy || len(evidence.Obligations) != len(returnTailObligations) ||
+						len(evidence.ProofStages) != len(returnTailObligations) || len(evidence.ContractObligations) != len(returnTailObligations) {
+						t.Fatalf("strategy evidence[%d]=%+v", index, *evidence)
+					}
+					finalCapacity := evidence.FinalRenderedCapacity
+					if evidence.AfterFunctionLines > functionLineLimit || evidence.RenderedHelperLines > functionLineLimit ||
+						evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 ||
+						finalCapacity == nil || finalCapacity.Scope != "final-generated-functions" || finalCapacity.Lines <= 0 || finalCapacity.Overage != 0 {
+						t.Fatalf("capacity evidence[%d]=%+v", index, *evidence)
+					}
+					if evidence.AfterRenderedCapacityOverage > 0 {
+						progress := evidence.PreparationProgress
+						if progress == nil || progress.BeforeOverage != evidence.BeforeRenderedCapacityOverage || progress.AfterOverage != evidence.AfterRenderedCapacityOverage || progress.BeforeOverage <= progress.AfterOverage || progress.AfterOverage <= 0 {
+							t.Fatalf("progress evidence[%d]=%+v", index, *evidence)
+						}
+					} else if evidence.PreparationProgress != nil {
+						t.Fatalf("final evidence[%d] retained intermediate progress=%+v", index, *evidence)
+					}
 				}
 				var selectedPreflight *PreflightObservationEvidence
 				for index := range result.Evidence[0].PreflightObservations {
@@ -67,13 +85,6 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					selectedPreflight.FunctionStatus != string(renderedCapacityOverCap) || selectedPreflight.SourceDigest == "" ||
 					selectedPreflight.ContractSourceDigest == "" || selectedPreflight.ContractSemanticDigest == "" {
 					t.Fatalf("preflight evidence=%+v, want selected function observation with bound digests", result.Evidence[0].PreflightObservations)
-				}
-				finalCapacity := result.Evidence[0].FinalRenderedCapacity
-				if result.Evidence[0].BeforeFunctionLines <= functionLineLimit || result.Evidence[0].AfterFunctionLines > functionLineLimit ||
-					result.Evidence[0].RenderedHelperLines > functionLineLimit ||
-					result.Evidence[0].BeforeRenderedCapacityOverage <= result.Evidence[0].AfterRenderedCapacityOverage || result.Evidence[0].AfterRenderedCapacityOverage < 0 ||
-					finalCapacity == nil || finalCapacity.Scope != "final-generated-functions" || finalCapacity.Lines <= 0 || finalCapacity.Overage != 0 {
-					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
 				}
 				for path, data := range result.Generated {
 					if physicalLines(data) > functionLineLimit {
