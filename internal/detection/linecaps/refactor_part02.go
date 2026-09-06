@@ -36,6 +36,10 @@ func CollapseAssignReturn(fset *token.FileSet, node ast.Node, comments []*ast.Co
 			return false
 		}
 	}
-	body.List = []ast.Stmt{&ast.ReturnStmt{Return: result.Return, Results: assign.Rhs}}
+	// Re-anchor the generated statement and closing brace to the removed
+	// assignment. Keeping the original return and brace positions makes the
+	// printer preserve their old line gap after the assignment is removed.
+	body.List = []ast.Stmt{&ast.ReturnStmt{Return: assign.Pos(), Results: assign.Rhs}}
+	body.Rbrace = assign.End()
 	return true
 }

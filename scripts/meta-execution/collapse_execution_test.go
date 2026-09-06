@@ -60,6 +60,17 @@ func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 	if evidence.Process.Executor.ExitCode != 0 || evidence.Process.Evaluator.ExitCode != 0 || evidence.Process.Verifier.ExitCode != 0 {
 		t.Fatalf("native collapse process evidence = %#v", evidence.Process)
 	}
+	beforeInspection, err := inspectCollapseSource(evidence.Before, subject)
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterInspection, err := inspectCollapseSource(evidence.After, subject)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if beforeInspection.StartLine != 3 || beforeInspection.EndLine != 6 || afterInspection.StartLine != 3 || afterInspection.EndLine >= beforeInspection.EndLine {
+		t.Fatalf("native collapse span = before %d-%d after %d-%d", beforeInspection.StartLine, beforeInspection.EndLine, afterInspection.StartLine, afterInspection.EndLine)
+	}
 }
 
 func collapseTestRepositoryRoot(t *testing.T) string {
