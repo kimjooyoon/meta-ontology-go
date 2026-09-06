@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	defaultSource          = "examples/language-value-witness/main.gooo"
-	nativePlanSource       = "examples/language-runtime-binding/main.gooo"
-	nativePlanEntry        = "Produce"
-	nativePlanInput        = `{"value":41}`
-	nativePlanSchema        = "gooo/value-execution-plan/v1"
+	defaultSource    = "examples/language-value-witness/main.gooo"
+	nativePlanSource = "examples/language-runtime-binding/main.gooo"
+	nativePlanEntry  = "Produce"
+	nativePlanInput  = `{"value":41}`
+	nativePlanSchema = "gooo/value-execution-plan/v1"
 )
 
 type witnessReceipt struct {
