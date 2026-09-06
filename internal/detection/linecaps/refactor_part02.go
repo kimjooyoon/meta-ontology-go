@@ -32,7 +32,7 @@ func CollapseAssignReturn(fset *token.FileSet, node ast.Node, comments []*ast.Co
 	assign := body.List[0].(*ast.AssignStmt)
 	result := body.List[1].(*ast.ReturnStmt)
 	for _, comment := range comments {
-		if comment.Pos() >= assign.Pos() && comment.Pos() <= result.End() {
+		if comment.Pos() >= assign.Pos() && comment.Pos() <= body.Rbrace {
 			return false
 		}
 	}
