@@ -20,8 +20,7 @@ func main() {
 	flag.Parse()
 	started := time.Now()
 	if err := run(*root, *requestPath, *output, *inspect, started); err != nil {
-		var failure *syntaxregistration.Failure
-		if errors.As(err, &failure) {
+		if failure, ok := errors.AsType[*syntaxregistration.Failure](err); ok {
 			raw, _ := json.Marshal(failure)
 			fmt.Fprintln(os.Stderr, string(raw))
 		}

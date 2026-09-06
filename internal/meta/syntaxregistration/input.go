@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
@@ -107,16 +108,12 @@ func validateCase(repository fs.FS, request Request, inputs map[string][]byte) e
 			return failure("REFUTED", "register-case", "REGISTRATION_CASE_ALREADY_EXISTS", "", "report-counterexample")
 		}
 	}
-	for _, existing := range registry.MetaSources {
-		if existing == definition.Path {
-			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
-		}
+	if slices.Contains(registry.MetaSources, definition.Path) {
+		return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
 	}
 	for _, unit := range registry.PackageUnits {
-		for _, existing := range unit.Members {
-			if existing == definition.Path {
-				return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
-			}
+		if slices.Contains(unit.Members, definition.Path) {
+			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
 		}
 	}
 	observed := replay.Execute(repository, definition.Path, definition.Kind, "")

@@ -52,7 +52,7 @@ func denominatorID(version int) string {
 	return fmt.Sprintf("gooo.denominator.capability.vertical-slice-closure.v%d", version)
 }
 
-func digestName(version int) string { return fmt.Sprintf("DenominatorMigrationV%dDigest", version) }
+func digestName(version int) string   { return fmt.Sprintf("DenominatorMigrationV%dDigest", version) }
 func evidenceName(version int) string { return fmt.Sprintf("embeddedDenominatorV%d", version) }
 
 func generateAdmission(raw []byte, version int) ([]byte, error) {

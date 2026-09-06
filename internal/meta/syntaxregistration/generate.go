@@ -49,8 +49,7 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 	for index, generate := range generators {
 		raw, err := generate()
 		if err != nil {
-			var explicit *Failure
-			if errors.As(err, &explicit) {
+			if _, ok := errors.AsType[*Failure](err); ok {
 				return Candidate{}, err
 			}
 			return Candidate{}, fmt.Errorf("%w: %v",
