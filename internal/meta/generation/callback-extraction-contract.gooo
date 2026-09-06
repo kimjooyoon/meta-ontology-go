@@ -1,0 +1,63 @@
+package callbackextraction
+namespace callbackextraction
+
+entity CallbackExtractionInput id "gooo://callback-extraction/entity/CallbackExtractionInput" fields {
+    field LogicalPath id "gooo://callback-extraction/field/CallbackExtractionInput/LogicalPath" type string required one
+    field Subject id "gooo://callback-extraction/field/CallbackExtractionInput/Subject" type string required one
+    field SourceDigest id "gooo://callback-extraction/field/CallbackExtractionInput/SourceDigest" type string required one
+}
+
+entity CallbackSourceBinding id "gooo://callback-extraction/entity/CallbackSourceBinding" fields {
+    field State id "gooo://callback-extraction/field/CallbackSourceBinding/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackSourceBinding/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackSourceBinding/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackSourceBinding/RequiredCount" type string required one
+}
+
+entity CallbackStructureProof id "gooo://callback-extraction/entity/CallbackStructureProof" fields {
+    field State id "gooo://callback-extraction/field/CallbackStructureProof/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackStructureProof/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackStructureProof/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackStructureProof/RequiredCount" type string required one
+}
+
+entity CallbackPackageCapacity id "gooo://callback-extraction/entity/CallbackPackageCapacity" fields {
+    field State id "gooo://callback-extraction/field/CallbackPackageCapacity/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackPackageCapacity/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackPackageCapacity/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackPackageCapacity/RequiredCount" type string required one
+}
+
+entity CallbackPackageTypes id "gooo://callback-extraction/entity/CallbackPackageTypes" fields {
+    field State id "gooo://callback-extraction/field/CallbackPackageTypes/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackPackageTypes/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackPackageTypes/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackPackageTypes/RequiredCount" type string required one
+}
+
+entity CallbackObserverEvidence id "gooo://callback-extraction/entity/CallbackObserverEvidence" fields {
+    field State id "gooo://callback-extraction/field/CallbackObserverEvidence/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackObserverEvidence/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackObserverEvidence/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackObserverEvidence/RequiredCount" type string required one
+}
+
+entity CallbackExtractionAdmission id "gooo://callback-extraction/entity/CallbackExtractionAdmission" fields {
+    field State id "gooo://callback-extraction/field/CallbackExtractionAdmission/State" type string required one
+    field EvidenceDigest id "gooo://callback-extraction/field/CallbackExtractionAdmission/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://callback-extraction/field/CallbackExtractionAdmission/ObservedCount" type string required one
+    field RequiredCount id "gooo://callback-extraction/field/CallbackExtractionAdmission/RequiredCount" type string required one
+}
+
+activity BindCallbackExtractionSource(CallbackExtractionInput) -> CallbackSourceBinding computes "callback-extraction.source:v1;authority=PROPOSAL_ONLY"
+activity ProveCallbackExtractionStructure(CallbackSourceBinding) -> CallbackStructureProof computes "callback-extraction.structure:v1;authority=PROPOSAL_ONLY"
+activity RenderCallbackExtractionPackage(CallbackStructureProof) -> CallbackPackageCapacity computes "callback-extraction.capacity:v1;authority=PROPOSAL_ONLY"
+activity CheckCallbackExtractionPackage(CallbackPackageCapacity) -> CallbackPackageTypes computes "callback-extraction.types:v1;authority=PROPOSAL_ONLY"
+activity BindCallbackExtractionObservers(CallbackPackageTypes) -> CallbackObserverEvidence computes "callback-extraction.observers:v1;authority=PROPOSAL_ONLY"
+activity RecordCallbackExtractionAdmission(CallbackObserverEvidence) -> CallbackExtractionAdmission computes "callback-extraction.admission:v1;authority=PROPOSAL_ONLY"
+
+bind BindCallbackExtractionSource.result -> ProveCallbackExtractionStructure.input
+bind ProveCallbackExtractionStructure.result -> RenderCallbackExtractionPackage.input
+bind RenderCallbackExtractionPackage.result -> CheckCallbackExtractionPackage.input
+bind CheckCallbackExtractionPackage.result -> BindCallbackExtractionObservers.input
+bind BindCallbackExtractionObservers.result -> RecordCallbackExtractionAdmission.input
