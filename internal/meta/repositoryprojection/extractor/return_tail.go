@@ -596,31 +596,12 @@ func returnTailTypedConversion(call *ast.CallExpr, info *types.Info) bool {
 	if call == nil || info == nil {
 		return false
 	}
-	functionType := info.TypeOf(call.Fun)
-	resultType := info.TypeOf(call)
-	if functionType == nil || resultType == nil {
+	functionEvidence, functionKnown := info.Types[call.Fun]
+	resultEvidence, resultKnown := info.Types[call]
+	if !functionKnown || !resultKnown || !functionEvidence.IsType() || functionEvidence.Type == nil || resultEvidence.Type == nil {
 		return false
 	}
-	if _, callable := functionType.(*types.Signature); callable {
-		return false
-	}
-	object := info.Uses[conversionIdentifier(call.Fun)]
-	if object == nil {
-		return true
-	}
-	_, typeName := object.(*types.TypeName)
-	return typeName
-}
-
-func conversionIdentifier(expression ast.Expr) *ast.Ident {
-	switch value := expression.(type) {
-	case *ast.Ident:
-		return value
-	case *ast.ParenExpr:
-		return conversionIdentifier(value.X)
-	default:
-		return nil
-	}
+	return true
 }
 
 func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool) bool {
