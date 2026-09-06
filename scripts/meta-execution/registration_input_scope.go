@@ -57,7 +57,7 @@ func bindRegistrationInputEvidence(materialized operationMaterialization,
 	input registrationInputBinding) (operationMaterialization, *operationError) {
 	raw, err := json.Marshal(registrationScopedEvidence{
 		Schema: "gooo/native-registration-scoped-instance/v1",
-		Input: input, Operation: json.RawMessage(materialized.Canonical)})
+		Input:  input, Operation: json.RawMessage(materialized.Canonical)})
 	if err != nil {
 		return materialized, registrationNativeFailure(err, "encode-input-scope-evidence")
 	}
