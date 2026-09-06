@@ -401,6 +401,9 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return fmt.Errorf("callback preview result lifecycle evidence is not bound")
 	}
 	if result.Candidate == nil {
+		if len(result.Captures) != 0 || len(result.PendingEffects) != 0 {
+			return fmt.Errorf("callback preview direct-unknown native collections are not empty")
+		}
 		if len(result.ContractRecords) != 2 {
 			return fmt.Errorf("callback preview direct-unknown record flow is not bounded")
 		}
@@ -419,7 +422,11 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 			return fmt.Errorf("callback preview direct input record is not bound")
 		}
 		evidenceValues := callbackPreviewRecordFieldMap(evidence)
-		if evidenceValues["CandidateIdentity"] != "" || evidenceValues["SourceDigest"] != result.SourceDigest || evidenceValues["CandidateDigest"] != "" || evidenceValues["State"] != result.State || evidenceValues["CaptureCount"] != "0" || evidenceValues["PendingEffectCount"] != "0" || evidenceValues["ResolvedEffectCount"] != "0" || evidenceValues["HelperLines"] != "0" || evidenceValues["ParentFunctionLines"] != "0" || evidenceValues["OperationResultAdmission"] != result.OperationResultAdmission || evidenceValues["ApplyPermission"] != result.ApplyPermission || evidenceValues["Stage"] != result.Stage || evidenceValues["Step"] != result.Step || evidenceValues["Reason"] != result.Reason || evidenceValues["UnknownClass"] != result.UnknownClass || evidenceValues["NextOperation"] != result.NextOperation {
+		expectedEvidence := callbackPreviewEvidence(result, nil, 0, 0)
+		if !callbackPreviewEvidenceMatches(result.Evidence, expectedEvidence) {
+			return fmt.Errorf("callback preview direct native evidence is not canonical")
+		}
+		if evidenceValues["CandidateIdentity"] != expectedEvidence.CandidateIdentity || evidenceValues["SourceDigest"] != expectedEvidence.SourceDigest || evidenceValues["CandidateDigest"] != expectedEvidence.CandidateDigest || evidenceValues["State"] != expectedEvidence.State || evidenceValues["CaptureCount"] != "0" || evidenceValues["PendingEffectCount"] != "0" || evidenceValues["ResolvedEffectCount"] != "0" || evidenceValues["HelperLines"] != "0" || evidenceValues["ParentFunctionLines"] != "0" || evidenceValues["OperationResultAdmission"] != expectedEvidence.OperationResultAdmission || evidenceValues["ApplyPermission"] != expectedEvidence.ApplyPermission || evidenceValues["Stage"] != expectedEvidence.Stage || evidenceValues["Step"] != expectedEvidence.Step || evidenceValues["Reason"] != expectedEvidence.Reason || evidenceValues["UnknownClass"] != expectedEvidence.UnknownClass || evidenceValues["NextOperation"] != expectedEvidence.NextOperation {
 			return fmt.Errorf("callback preview direct evidence record is not bound")
 		}
 		if err := validateCallbackPreviewListField(evidenceValues, "BlockedBy", result.BlockedBy); err != nil {
@@ -537,6 +544,10 @@ func validateCallbackPreviewResult(contract generation.CallbackPreviewContractEv
 		return err
 	}
 	return nil
+}
+
+func callbackPreviewEvidenceMatches(actual, expected CallbackPreviewEvidence) bool {
+	return actual.CandidateIdentity == expected.CandidateIdentity && actual.SourceDigest == expected.SourceDigest && actual.CandidateDigest == expected.CandidateDigest && actual.State == expected.State && actual.CaptureCount == expected.CaptureCount && actual.PendingEffectCount == expected.PendingEffectCount && actual.ResolvedEffectCount == expected.ResolvedEffectCount && actual.HelperLines == expected.HelperLines && actual.ParentFunctionLines == expected.ParentFunctionLines && actual.OperationResultAdmission == expected.OperationResultAdmission && actual.ApplyPermission == expected.ApplyPermission && actual.Stage == expected.Stage && actual.Step == expected.Step && actual.Reason == expected.Reason && actual.UnknownClass == expected.UnknownClass && actual.NextOperation == expected.NextOperation && (actual.BlockedBy == nil) == (expected.BlockedBy == nil) && sameStringSlice(actual.BlockedBy, expected.BlockedBy)
 }
 
 func callbackPreviewUnknownClassForReason(reason string) (string, bool) {

@@ -140,6 +140,12 @@ func TestPaginationCallbackPreviewMissingAndMalformedAreNotAdmission(t *testing.
 	tampered := missing
 	tampered.ContractRecords = cloneCallbackPreviewRecords(missing.ContractRecords)
 	tampered.UnknownClass = "DEPENDENCY_BLOCKED"
+	tampered.Evidence.UnknownClass = "DEPENDENCY_BLOCKED"
+	for index := range tampered.ContractRecords[1].Fields {
+		if tampered.ContractRecords[1].Fields[index].Name == "UnknownClass" {
+			tampered.ContractRecords[1].Fields[index].Value = "DEPENDENCY_BLOCKED"
+		}
+	}
 	if err := ValidateCallbackPreviewResult(tampered); err == nil {
 		t.Fatal("direct unknown enum tamper was accepted")
 	}
@@ -148,6 +154,16 @@ func TestPaginationCallbackPreviewMissingAndMalformedAreNotAdmission(t *testing.
 	tampered.ContractRecords[1].Fields[0].ID = "gooo://forged-direct-field"
 	if err := ValidateCallbackPreviewResult(tampered); err == nil {
 		t.Fatal("direct unknown field ID tamper was accepted")
+	}
+	tampered = missing
+	tampered.Evidence.CaptureCount = 1
+	if err := ValidateCallbackPreviewResult(tampered); err == nil {
+		t.Fatal("direct unknown native evidence tamper was accepted")
+	}
+	tampered = missing
+	tampered.Captures = []CallbackPreviewCapture{{Name: "forged"}}
+	if err := ValidateCallbackPreviewResult(tampered); err == nil {
+		t.Fatal("direct unknown native collection tamper was accepted")
 	}
 	if err := os.WriteFile(path, []byte("package main\nfunc"), 0o644); err != nil {
 		t.Fatal(err)
