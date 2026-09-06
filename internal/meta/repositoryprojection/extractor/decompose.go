@@ -110,6 +110,11 @@ type returnTailHelperProof struct {
 	dependencies            []CalleeDependencyEvidence
 }
 
+type returnTailValidation struct {
+	valid        bool
+	dependencies []CalleeDependencyEvidence
+}
+
 func prepareOversizedFunctions(root, logical string, source []byte, fset *token.FileSet, file *ast.File) ([]byte, []StrategyEvidence, error) {
 	current := append([]byte(nil), source...)
 	currentSet, currentFile := fset, file

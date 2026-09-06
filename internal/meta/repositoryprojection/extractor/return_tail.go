@@ -589,6 +589,8 @@ func returnTailAssignedObject(expression ast.Expr, info *types.Info) (types.Obje
 
 func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof) ([]CalleeDependencyEvidence, error) {
 	dependencies := make([]CalleeDependencyEvidence, 0)
+	visiting := make(map[*types.Func]bool)
+	memo := make(map[*types.Func]returnTailValidation)
 	var effectErr error
 	ast.Inspect(&ast.BlockStmt{List: statements}, func(node ast.Node) bool {
 		if effectErr != nil {
@@ -601,8 +603,15 @@ func returnTailCalleeEffects(statements []ast.Stmt, evidence typeEvidence, helpe
 		if returnTailTypedConversion(call, evidence.info) {
 			return true
 		}
-		if !returnTailCalleeAllowed(call, evidence, map[*types.Func]bool{}, helperProofRegistry) {
-			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"obligation=" + obligationCalleeEffects})
+		validation := returnTailCalleeAllowed(call, evidence, visiting, helperProofRegistry, memo)
+		if !validation.valid {
+			diagnostics := []string{"obligation=" + obligationCalleeEffects}
+			if function, ok := returnTailCalleeFunction(call, evidence); ok {
+				if proof, exists := helperProofRegistry[function.Name()]; exists {
+					diagnostics = append(diagnostics, returnTailHelperProofDiagnostics(function, evidence, proof)...)
+				}
+			}
+			effectErr = failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", diagnostics)
 			return false
 		}
 		if dependency, ok := returnTailCalleeDependency(call, evidence, helperProofRegistry); ok {
@@ -658,7 +667,7 @@ func returnTailTypeExpression(expression ast.Expr, info *types.Info) bool {
 	return ok && returnTailTypeExpression(parenthesized.X, info)
 }
 
-func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof) bool {
+func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, memo map[*types.Func]returnTailValidation) returnTailValidation {
 	var object types.Object
 	switch function := call.Fun.(type) {
 	case *ast.Ident:
@@ -666,48 +675,56 @@ func returnTailCalleeAllowed(call *ast.CallExpr, evidence typeEvidence, visiting
 	case *ast.SelectorExpr:
 		object = evidence.info.Uses[function.Sel]
 	default:
-		return false
+		return returnTailValidation{}
 	}
 	switch value := object.(type) {
 	case *types.Builtin:
-		return value.Name() == "len"
+		return returnTailValidation{valid: value.Name() == "len"}
 	case *types.Func:
 		if value.Pkg() != nil && value.Pkg().Path() == "fmt" && value.Name() == "Errorf" {
-			return exactErrorfCall(value, call, evidence.info)
+			return returnTailValidation{valid: exactErrorfCall(value, call, evidence.info)}
 		}
 		if value.Pkg() != nil && value.Pkg().Path() == "reflect" && value.Name() == "DeepEqual" {
-			return exactDeepEqualSignature(value)
+			return returnTailValidation{valid: exactDeepEqualSignature(value)}
 		}
 		if value.Pkg() == nil || evidence.pkg == nil || value.Pkg() != evidence.pkg || value.Name() == "" {
-			return false
+			return returnTailValidation{}
+		}
+		if memo == nil {
+			memo = make(map[*types.Func]returnTailValidation)
+		}
+		if result, ok := memo[value]; ok {
+			return result
 		}
 		declaration := evidence.funcs[value]
 		if declaration == nil || declaration.Recv != nil || visiting[value] {
-			return false
+			return returnTailValidation{}
+		}
+		helperProof, hasHelperProof := helperProofRegistry[value.Name()]
+		if !hasHelperProof && returnTailGeneratedHelperName(value.Name()) {
+			return returnTailValidation{}
 		}
 		allowedGlobals := map[types.Object]bool(nil)
-		if helperProof, ok := helperProofRegistry[value.Name()]; ok {
+		if hasHelperProof {
 			if !returnTailHelperProofMatches(value, declaration, evidence, helperProof) {
-				return false
+				return returnTailValidation{}
 			}
 			var safe bool
 			allowedGlobals, _, safe = returnTailGlobalReadEvidence(declaration, evidence)
 			if !safe {
-				return false
+				return returnTailValidation{}
 			}
 		}
 		visiting[value] = true
 		defer delete(visiting, value)
-		if !provenLocalPureFunction(declaration, evidence, visiting, helperProofRegistry, allowedGlobals) {
-			return false
+		validation := provenLocalPureFunction(declaration, evidence, visiting, helperProofRegistry, allowedGlobals, memo)
+		if hasHelperProof && !sameReturnTailDependencies(validation.dependencies, helperProof.dependencies) {
+			validation.valid = false
 		}
-		if helperProof, ok := helperProofRegistry[value.Name()]; ok {
-			dependencies, err := returnTailCalleeEffects(declaration.Body.List, evidence, helperProofRegistry)
-			return err == nil && sameReturnTailDependencies(dependencies, helperProof.dependencies)
-		}
-		return true
+		memo[value] = validation
+		return validation
 	default:
-		return false
+		return returnTailValidation{}
 	}
 }
 
@@ -715,22 +732,16 @@ func returnTailCalleeDependency(call *ast.CallExpr, evidence typeEvidence, helpe
 	if call == nil || evidence.info == nil || evidence.fset == nil {
 		return CalleeDependencyEvidence{}, false
 	}
-	var object types.Object
-	switch function := call.Fun.(type) {
-	case *ast.Ident:
-		object = evidence.info.Uses[function]
-	case *ast.SelectorExpr:
-		object = evidence.info.Uses[function.Sel]
-	default:
+	function, ok := returnTailCalleeFunction(call, evidence)
+	if !ok {
 		return CalleeDependencyEvidence{}, false
 	}
-	function, ok := object.(*types.Func)
-	if !ok || function.Pkg() == nil || evidence.pkg == nil || function.Pkg() != evidence.pkg || !returnTailGeneratedHelperName(function.Name()) {
+	proof, ok := helperProofRegistry[function.Name()]
+	if !ok {
 		return CalleeDependencyEvidence{}, false
 	}
 	declaration := evidence.funcs[function]
-	proof, ok := helperProofRegistry[function.Name()]
-	if declaration == nil || !ok || !returnTailHelperProofMatches(function, declaration, evidence, proof) {
+	if declaration == nil || !returnTailHelperProofMatches(function, declaration, evidence, proof) {
 		return CalleeDependencyEvidence{}, false
 	}
 	signatureDigest, bodyDigest, ok := returnTailFunctionDigests(evidence.fset, declaration)
@@ -745,6 +756,44 @@ func returnTailCalleeDependency(call *ast.CallExpr, evidence typeEvidence, helpe
 		EvidenceID:      proof.calleeEffectsEvidenceID,
 		Declaration:     returnTailObjectIdentity(function, evidence),
 	}, true
+}
+
+func returnTailCalleeFunction(call *ast.CallExpr, evidence typeEvidence) (*types.Func, bool) {
+	if call == nil || evidence.info == nil {
+		return nil, false
+	}
+	var object types.Object
+	switch function := call.Fun.(type) {
+	case *ast.Ident:
+		object = evidence.info.Uses[function]
+	case *ast.SelectorExpr:
+		object = evidence.info.Uses[function.Sel]
+	default:
+		return nil, false
+	}
+	function, ok := object.(*types.Func)
+	return function, ok
+}
+
+func returnTailHelperProofDiagnostics(function *types.Func, evidence typeEvidence, proof returnTailHelperProof) []string {
+	declaration := evidence.funcs[function]
+	signatureDigest, bodyDigest, digestOK := returnTailFunctionDigests(evidence.fset, declaration)
+	_, globalReadIdentities, globalsSafe := returnTailGlobalReadEvidence(declaration, evidence)
+	return []string{
+		"callee=" + function.Name(),
+		"proof-object=" + proof.helperObjectIdentity,
+		"current-object=" + returnTailObjectIdentity(function, evidence),
+		"proof-type=" + proof.helperType,
+		"current-type=" + returnTailCanonicalType(function.Type()),
+		"proof-signature=" + proof.helperSignatureDigest,
+		"current-signature=" + signatureDigest,
+		"proof-body=" + proof.helperBodyDigest,
+		"current-body=" + bodyDigest,
+		"digest-known=" + strconv.FormatBool(digestOK),
+		"globals-safe=" + strconv.FormatBool(globalsSafe),
+		"proof-globals=" + strings.Join(proof.globalReadIdentities, ","),
+		"current-globals=" + strings.Join(globalReadIdentities, ","),
+	}
 }
 
 func returnTailGeneratedHelperName(name string) bool {
@@ -787,7 +836,7 @@ func exactDeepEqualSignature(function *types.Func) bool {
 	return ok && !signature.Variadic() && signature.Params().Len() == 2 && signature.Results().Len() == 1 && signature.Results().At(0).Type() == types.Typ[types.Bool]
 }
 
-func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, allowedGlobals map[types.Object]bool) bool {
+func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visiting map[*types.Func]bool, helperProofRegistry map[string]returnTailHelperProof, allowedGlobals map[types.Object]bool, memo map[*types.Func]returnTailValidation) returnTailValidation {
 	local := make(map[types.Object]bool)
 	ast.Inspect(function.Type, func(node ast.Node) bool {
 		identifier, ok := node.(*ast.Ident)
@@ -806,55 +855,85 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, visi
 		}
 		return true
 	})
-	pure := true
+	validation := returnTailValidation{valid: true, dependencies: make([]CalleeDependencyEvidence, 0)}
 	ast.Inspect(function.Body, func(node ast.Node) bool {
-		if !pure {
+		if !validation.valid {
 			return false
 		}
 		if _, ok := node.(*ast.FuncLit); ok {
-			pure = false
+			validation.valid = false
 			return false
 		}
 		switch value := node.(type) {
 		case *ast.DeferStmt, *ast.GoStmt, *ast.LabeledStmt, *ast.BranchStmt, *ast.SendStmt:
-			pure = false
+			validation.valid = false
 		case *ast.CallExpr:
 			if returnTailTypedConversion(value, evidence.info) {
 				break
 			}
-			if !returnTailCalleeAllowed(value, evidence, visiting, helperProofRegistry) {
-				pure = false
+			calleeValidation := returnTailCalleeAllowed(value, evidence, visiting, helperProofRegistry, memo)
+			if !calleeValidation.valid {
+				validation.valid = false
+				break
+			}
+			if dependency, ok := returnTailCalleeDependency(value, evidence, helperProofRegistry); ok {
+				validation.dependencies = append(validation.dependencies, dependency)
 			}
 		case *ast.AssignStmt:
 			for _, lhs := range value.Lhs {
 				object, known := returnTailAssignedObject(lhs, evidence.info)
 				if !known || !returnTailDirectLocalLValue(lhs, object, local) {
-					pure = false
+					validation.valid = false
 				}
 			}
 		case *ast.IncDecStmt:
 			object, known := returnTailAssignedObject(value.X, evidence.info)
 			if !known || !returnTailDirectLocalLValue(value.X, object, local) {
-				pure = false
+				validation.valid = false
+			}
+		case *ast.RangeStmt:
+			if rangeType := evidence.info.TypeOf(value.X); rangeType != nil {
+				if _, ok := rangeType.Underlying().(*types.Chan); ok {
+					validation.valid = false
+				}
+			}
+			if value.Tok == token.ASSIGN {
+				for _, target := range []ast.Expr{value.Key, value.Value} {
+					if target == nil {
+						continue
+					}
+					object, known := returnTailAssignedObject(target, evidence.info)
+					if !known || !returnTailDirectLocalLValue(target, object, local) {
+						validation.valid = false
+					}
+				}
 			}
 		case *ast.UnaryExpr:
-			if value.Op == token.AND {
+			if value.Op == token.ARROW {
+				validation.valid = false
+			} else if value.Op == token.AND {
 				if _, ok := value.X.(*ast.CompositeLit); ok {
 					break
 				}
-				pure = false
+				validation.valid = false
 			}
 		case *ast.Ident:
 			if value.Name != "_" && value.Name != "nil" && evidence.info.Defs[value] == nil && evidence.info.Uses[value] == nil {
-				pure = false
+				validation.valid = false
 			}
 			if object, ok := evidence.info.Uses[value].(*types.Var); ok && object.Parent() == evidence.pkg.Scope() && !allowedGlobals[object] {
-				pure = false
+				validation.valid = false
 			}
 		}
 		return true
 	})
-	return pure
+	sort.Slice(validation.dependencies, func(left, right int) bool {
+		if validation.dependencies[left].Name != validation.dependencies[right].Name {
+			return validation.dependencies[left].Name < validation.dependencies[right].Name
+		}
+		return validation.dependencies[left].EvidenceID < validation.dependencies[right].EvidenceID
+	})
+	return validation
 }
 
 func registerReturnTailHelperProof(root, logical string, source []byte, helperName string, contract generation.OperationInputContractEvidence, proof returnTailProofChain, evidence typeEvidence, helperProofRegistry map[string]returnTailHelperProof) (returnTailHelperProof, error) {
@@ -888,13 +967,11 @@ func registerReturnTailHelperProof(root, logical string, source []byte, helperNa
 		return returnTailHelperProof{}, fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
 	}
 	globalObjects, globalReadIdentities, safe := returnTailGlobalReadEvidence(helperDeclaration, helperEvidence)
-	if !safe || !provenLocalPureFunction(helperDeclaration, helperEvidence, map[*types.Func]bool{}, helperProofRegistry, globalObjects) {
+	validation := provenLocalPureFunction(helperDeclaration, helperEvidence, map[*types.Func]bool{}, helperProofRegistry, globalObjects, map[*types.Func]returnTailValidation{})
+	if !safe || !validation.valid {
 		return returnTailHelperProof{}, failWithDiagnostics("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", []string{"helper=" + helperName})
 	}
-	dependencies, err := returnTailCalleeEffects(helperDeclaration.Body.List, helperEvidence, helperProofRegistry)
-	if err != nil {
-		return returnTailHelperProof{}, err
-	}
+	dependencies := validation.dependencies
 	signatureDigest, bodyDigest, ok := returnTailFunctionDigests(helperSet, helperDeclaration)
 	if !ok {
 		return returnTailHelperProof{}, fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil)
@@ -969,6 +1046,13 @@ func returnTailGlobalReadEvidence(function *ast.FuncDecl, evidence typeEvidence)
 	}
 	safe := true
 	global := func(expression ast.Expr) (types.Object, bool) {
+		for {
+			parenthesized, ok := expression.(*ast.ParenExpr)
+			if !ok {
+				break
+			}
+			expression = parenthesized.X
+		}
 		identifier, ok := expression.(*ast.Ident)
 		if !ok {
 			return nil, false
@@ -1088,15 +1172,11 @@ func returnTailObjectIdentity(object types.Object, evidence typeEvidence) string
 	if object == nil {
 		return ""
 	}
-	position := ""
-	if evidence.fset != nil && object.Pos() != token.NoPos {
-		position = returnTailPositionIdentity(evidence.root, evidence.fset.Position(object.Pos()))
-	}
 	packagePath := ""
 	if object.Pkg() != nil {
 		packagePath = object.Pkg().Path()
 	}
-	return packagePath + "\x00" + object.Name() + "\x00" + returnTailCanonicalType(object.Type()) + "\x00" + position
+	return packagePath + "\x00" + object.Name() + "\x00" + returnTailCanonicalType(object.Type())
 }
 
 func returnTailPositionIdentity(root string, position token.Position) string {
