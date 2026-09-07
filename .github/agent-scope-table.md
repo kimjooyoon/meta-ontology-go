@@ -321,3 +321,5 @@ allowed repository prefix and do not create additional branch aliases.
 | agent/observation-boundary-journal-20260907 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_observation_journal_20260907.go`, `scripts/meta-execution/operations.go`, `scripts/meta-execution/run.go`, `scripts/meta-execution/observation_journal.go`, `scripts/meta-execution/observation_journal_test.go` | Persist existing diagnostic execution boundaries without changing semantic authority. |
 
 | agent/observation-journal-artifact-20260908 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_observation_journal_artifact_20260908.go` | Diagnostic journal artifact preservation only; unchanged verification gates. |
+
+| agent/journal-process-interruption-20260908 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_journal_process_interruption_20260908.go`, `scripts/meta-execution/observation_journal_process_test.go` | Planner-bound child-process interruption evidence; no production or gate changes. |
