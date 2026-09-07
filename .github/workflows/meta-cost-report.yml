@@ -1,0 +1,59 @@
+name: Meta execution cost report
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/meta-cost-report.yml'
+      - 'scripts/meta-cost-report/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: meta-cost-report-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GOTOOLCHAIN: local
+      GOWORK: 'off'
+      GOFLAGS: -mod=readonly
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Capture immutable baseline observation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/meta-cost-report"
+          mkdir -p "$out"
+          gh api repos/kimjooyoon/meta-ontology-go/actions/runs/34081014161 > "$out/source-run.json"
+          gh api repos/kimjooyoon/meta-ontology-go/actions/jobs/101617890564 > "$out/source-job.json"
+          gh api repos/kimjooyoon/meta-ontology-go/actions/jobs/101617890564/logs --allow-escape-sequences > "$out/source.log"
+          go version > "$out/toolchain.txt"
+          node scripts/meta-cost-report/capture.mjs "$out"
+      - name: Execute consumer and publish diagnostic view
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/meta-cost-report"
+          go run ./scripts/meta-cost-report < "$out/driver-events.ndjson" > "$out/cost-report.json"
+          go run ./scripts/meta-cost-report -format markdown < "$out/driver-events.ndjson" > "$out/cost-report.md"
+          cat "$out/cost-report.md" >> "$GITHUB_STEP_SUMMARY"
+          printf '\nBaseline: run 34081014161, job 101617890564, head a8b3813c26252d523ae81ad8d81cfcdbf267788e. Historical observation, not current-head performance.\n' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: meta-cost-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/meta-cost-report
+          if-no-files-found: error
+          retention-days: 14
