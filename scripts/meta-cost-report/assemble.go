@@ -8,6 +8,7 @@ import (
 func assembleCostReport(report costReport, events map[eventKey]costEvent, ordered []costEvent) (costReport, error) {
 	starts, used := make(map[eventKey]bool), make(map[eventKey]bool)
 	report.Events = len(ordered)
+	report.Unknowns = []boundaryUnknown{}
 	for _, event := range ordered {
 		if event.Cost == nil {
 			report.UnmeasuredEvents++
@@ -37,6 +38,7 @@ func assembleCostReport(report costReport, events map[eventKey]costEvent, ordere
 	for key := range starts {
 		if !used[key] {
 			report.UnpairedStarts++
+			report.Unknowns = append(report.Unknowns, missingBoundaryReturn(events[key]))
 		}
 	}
 	sort.Slice(report.Rows, func(i, j int) bool {
@@ -46,6 +48,7 @@ func assembleCostReport(report costReport, events map[eventKey]costEvent, ordere
 		}
 		return left.Return < right.Return
 	})
+	sortBoundaryUnknowns(report.Unknowns)
 	return report, nil
 }
 
