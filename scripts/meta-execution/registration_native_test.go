@@ -81,7 +81,7 @@ func TestNativeRegistrationUsesCommonTwoOperationExecution(t *testing.T) {
 	var manifest generation.ExecutionManifest
 	var bundle generation.OperationObservationBundle
 	registrationTestReadJSON(t, manifestPath, &manifest)
-	registrationTestReadJSON(t, filepath.Join(temporary, "meta-operation-observations.json"), &bundle)
+	registrationTestReadJSON(t, manifestPath+".observations.json", &bundle)
 	if err := generation.ValidateObservationBundle(bundle, plan, manifest); err != nil {
 		t.Fatalf("actual common bundle failed: %v\n%s", err, output)
 	}

@@ -8,6 +8,7 @@ func init() {
 		"internal/meta/generation/observation_path_test.go",
 		"internal/verify/scope_manifest_observation_20260907.go",
 		"scripts/meta-execution/run.go",
+		"scripts/meta-execution/registration_native_test.go",
 		"scripts/meta-receipts/run.go",
 	}
 }
