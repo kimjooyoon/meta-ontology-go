@@ -147,6 +147,10 @@ const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
 const functionExtractionReportSchema = "gooo.function-extraction.v2"
 
 func executeSelectedOperations(plan generation.Plan, manifest generation.ExecutionManifest, workspace string) (generation.OperationObservationBundle, error) {
+	return executeSelectedOperationsWithTrace(plan, manifest, workspace, newMetaExecutionTraceState())
+}
+
+func executeSelectedOperationsWithTrace(plan generation.Plan, manifest generation.ExecutionManifest, workspace string, traceState *metaExecutionTraceState) (generation.OperationObservationBundle, error) {
 	bundle := generation.OperationObservationBundle{
 		Schema:         generation.OperationObservationBundleSchema,
 		BaseSHA:        plan.BaseSHA,
@@ -175,7 +179,6 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	traceState := newMetaExecutionTraceState()
 	for sequence, action := range generationActions(plan) {
 		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1, traceState)
 		trace.emitActionEntered()

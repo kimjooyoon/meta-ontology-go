@@ -57,6 +57,18 @@
   ],
   "ownership": [
     {
+      "branch": "agent/observation-boundary-journal-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_observation_journal_20260907.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/observation_journal_test.go"
+      ]
+    },
+    {
       "branch": "agent/observation-stale-output-20260907",
       "paths": [
         ".github/agent-scope-table.md",
