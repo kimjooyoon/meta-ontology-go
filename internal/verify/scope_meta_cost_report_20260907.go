@@ -10,5 +10,7 @@ func init() {
 		"scripts/meta-cost-report/read.go",
 		"scripts/meta-cost-report/assemble.go",
 		"scripts/meta-cost-report/report_test.go",
+		"scripts/meta-cost-report/markdown.go",
+		"scripts/meta-cost-report/markdown_test.go",
 	}
 }

@@ -9,6 +9,7 @@ contents:
 
 ```sh
 go run ./scripts/meta-cost-report < driver-events.ndjson > cost-report.json
+go run ./scripts/meta-cost-report -format markdown < driver-events.ndjson > cost-report.md
 ```
 
 The consumer accepts existing v1 driver events without cost fields as unmeasured.
@@ -25,6 +26,11 @@ process intervals. Source authenticity is UNVERIFIED; a parsed log is not a sign
 CI receipt. Improvement remains UNKNOWN. This parser does not establish toolchain
 equivalence, cache misses, semantic conformance or external utility. It is not a
 replacement for the existing canonical receipts or independent replay.
+
+The Markdown view exposes measured, unmeasured and incomplete counts separately,
+with one row per interval. It deliberately omits a grand total and any claimed
+speedup. JSON remains the detailed view with full input bindings. Input labels
+are escaped before inclusion in Markdown tables, and output errors are fatal.
 
 The first implementation is a standalone consumer, not yet wired into automatic
 artifact publication. Native CI must validate it before merge. Follow-up work
