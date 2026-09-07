@@ -38,7 +38,7 @@ func run(configuration options) error {
 	if bundleErr != nil {
 		return fmt.Errorf("execute selected operations: %w", bundleErr)
 	}
-	bundlePath := filepath.Join(filepath.Dir(configuration.planPath), "meta-operation-observations.json")
+	bundlePath := generation.ObservationBundlePath(configuration.planPath, configuration.outputPath)
 	bundlePayload, err := generation.EncodeObservationBundle(bundle)
 	if err != nil {
 		return fmt.Errorf("encode operation observations: %w", err)
