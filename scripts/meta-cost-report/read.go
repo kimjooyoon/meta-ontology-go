@@ -9,7 +9,7 @@ import (
 
 func readCostReport(input io.Reader) (costReport, error) {
 	report := costReport{Schema: "gooo/meta-execution-cost-report/v1",
-		Scope: "DIAGNOSTIC_INTERVALS_ONLY_NO_ADDITIVE_TOTAL",
+		Scope:        "DIAGNOSTIC_INTERVALS_ONLY_NO_ADDITIVE_TOTAL",
 		Authenticity: "UNVERIFIED", Improvement: "UNKNOWN", Rows: []costRow{}}
 	events := make(map[eventKey]costEvent)
 	ordered := []costEvent{}
