@@ -323,3 +323,5 @@ allowed repository prefix and do not create additional branch aliases.
 | agent/observation-journal-artifact-20260908 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `.github/workflows/ci.yml`, `internal/verify/scope_observation_journal_artifact_20260908.go` | Diagnostic journal artifact preservation only; unchanged verification gates. |
 
 | agent/journal-process-interruption-20260908 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_journal_process_interruption_20260908.go`, `scripts/meta-execution/observation_journal_process_test.go` | Planner-bound child-process interruption evidence; no production or gate changes. |
+
+| agent/boundary-unknown-records-20260908 | `.github/agent-scope-table.md`, `.github/ci-governance.json`, `internal/verify/scope_boundary_unknown_20260908.go`, `scripts/meta-cost-report/model.go`, `scripts/meta-cost-report/assemble.go`, `scripts/meta-cost-report/unknown.go`, `scripts/meta-cost-report/unknown_test.go` | Source-bound diagnostic UNKNOWN for missing terminal observations; no inferred cause or authority. |

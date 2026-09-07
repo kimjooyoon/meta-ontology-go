@@ -57,6 +57,18 @@
   ],
   "ownership": [
     {
+      "branch": "agent/boundary-unknown-records-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_boundary_unknown_20260908.go",
+        "scripts/meta-cost-report/model.go",
+        "scripts/meta-cost-report/assemble.go",
+        "scripts/meta-cost-report/unknown.go",
+        "scripts/meta-cost-report/unknown_test.go"
+      ]
+    },
+    {
       "branch": "agent/journal-process-interruption-20260908",
       "paths": [
         ".github/agent-scope-table.md",

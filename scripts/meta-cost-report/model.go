@@ -44,6 +44,7 @@ type costReport struct {
 	UnpairedStarts   int       `json:"unpaired_starts"`
 	UnknownReturns   int       `json:"unknown_returns"`
 	Rows             []costRow `json:"intervals"`
+	Unknowns         []boundaryUnknown `json:"unknowns"`
 }
 
 type eventKey struct {
