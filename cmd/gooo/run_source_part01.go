@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-const runSourceUsage = "usage: gooo run [--json] --entry <activity> [--input <input.json>] <file.gooo|package-directory>"
+const runSourceUsage = "usage: gooo run [--json] --entry <activity> [--input <input.json> | --record-input <record.json>] <file.gooo|package-directory>"
 
 func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	if handled, code := maybeRunSourcePackage(args, stdout, stderr); handled {
@@ -28,6 +28,9 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 			"read", err.Error(), sourceexecutionSpan())
 	}
 	if options.input != "" {
+		if options.record {
+			return runSourceRecordPlan(options, source, reader, jsonMode, stdout, stderr)
+		}
 		return runSourceValuePlan(options, source, reader, jsonMode, stdout, stderr)
 	}
 	receipt := sourceexecution.Execute(sourceexecution.Request{

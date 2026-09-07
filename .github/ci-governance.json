@@ -35,7 +35,11 @@
     "base_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
     "missing_predecessor_sha": "cd9727af80f5118405290d3be96890c18e1529c0",
     "last_known_good_sha": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
-    "gap_pull_requests": [599, 600, 601],
+    "gap_pull_requests": [
+      599,
+      600,
+      601
+    ],
     "proof_choice": "FOUNDATION",
     "human_decision": "ALLOW_ONE_TIME_FOUNDATION_PROMOTION_FOR_PR_602_WITH_NORMAL_ROUTES_UNCHANGED"
   },
@@ -52,6 +56,353 @@
     "main"
   ],
   "ownership": [
+    {
+      "branch": "agent/boundary-unknown-records-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_boundary_unknown_20260908.go",
+        "scripts/meta-cost-report/model.go",
+        "scripts/meta-cost-report/assemble.go",
+        "scripts/meta-cost-report/unknown.go",
+        "scripts/meta-cost-report/unknown_test.go"
+      ]
+    },
+    {
+      "branch": "agent/journal-process-interruption-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_journal_process_interruption_20260908.go",
+        "scripts/meta-execution/observation_journal_process_test.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-journal-artifact-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_observation_journal_artifact_20260908.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-boundary-journal-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_observation_journal_20260907.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/observation_journal_test.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-stale-output-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_observation_stale_output_20260907.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/observation_archive.go",
+        "scripts/meta-execution/observation_archive_test.go"
+      ]
+    },
+    {
+      "branch": "agent/manifest-observation-ownership-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/generation/observation_path.go",
+        "internal/meta/generation/observation_path_test.go",
+        "internal/verify/scope_manifest_observation_20260907.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/registration_native_test.go",
+        "scripts/meta-receipts/run.go"
+      ]
+    },
+    {
+      "branch": "agent/meta-cost-publication-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-cost-report.yml",
+        "internal/verify/scope_meta_cost_publication_20260907.go",
+        "scripts/meta-cost-report/capture.mjs"
+      ]
+    },
+    {
+      "branch": "agent/meta-cost-report-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "docs/meta-execution-cost-report.md",
+        "internal/verify/scope_meta_cost_report_20260907.go",
+        "scripts/meta-cost-report/main.go",
+        "scripts/meta-cost-report/model.go",
+        "scripts/meta-cost-report/read.go",
+        "scripts/meta-cost-report/assemble.go",
+        "scripts/meta-cost-report/report_test.go",
+        "scripts/meta-cost-report/markdown.go",
+        "scripts/meta-cost-report/markdown_test.go"
+      ]
+    },
+    {
+      "branch": "agent/meta-execution-cost-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_meta_execution_cost_20260907.go",
+        "scripts/meta-execution/trace.go",
+        "scripts/meta-execution/trace_cost.go",
+        "scripts/meta-execution/trace_cost_test.go"
+      ]
+    },
+    {
+      "branch": "agent/callback-counterexample-retention-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_observation.go",
+        "internal/meta/repositoryprojection/extractor/callback_counterexample_retention_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_counterexample_claim_test.go",
+        "internal/verify/scope_callback_counterexample_20260907.go",
+        "internal/verify/scope_callback_counterexample_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/release-artifact-execution-isolation-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/gooo-release-publish.yml",
+        "internal/verify/scope_release_isolation_20260907.go",
+        "internal/verify/scope_release_isolation_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/registration-native-integration-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/native-registration-execution.yml",
+        ".github/workflows/repository-projection.yml",
+        ".github/workflows/syntax-registration-candidate.yml",
+        "cmd/syntax-registration-candidate/main.go",
+        "cmd/syntax-registration-candidate/output.go",
+        "cmd/syntax-registration-candidate/output_test.go",
+        "docs/native-registration-execution.md",
+        "docs/syntax-registration-candidate.md",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/self-improvement/main.gooo",
+        "internal/meta/generation/applicability_part01.go",
+        "internal/meta/generation/build_part01.go",
+        "internal/meta/generation/execution_build.go",
+        "internal/meta/generation/execution_types_part02.go",
+        "internal/meta/generation/generation_test.go",
+        "internal/meta/generation/operation_observation.go",
+        "internal/meta/generation/receipt_canonical.go",
+        "internal/meta/generation/receipt_types_part02.go",
+        "internal/meta/generation/receipt_verify_part02.go",
+        "internal/meta/generation/receipt_verify_part03.go",
+        "internal/meta/generation/registration_input.go",
+        "internal/meta/generation/registration_native_registry.go",
+        "internal/meta/generation/registration_plan.go",
+        "internal/meta/generation/registration_plan_test.go",
+        "internal/meta/generation/registry.go",
+        "internal/meta/generation/types_part02.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/sourcepolicy/indicator.go",
+        "internal/meta/sourcepolicy/registration.go",
+        "internal/meta/syntaxregistration/candidate_test.go",
+        "internal/meta/syntaxregistration/contract.go",
+        "internal/meta/syntaxregistration/contract.gooo",
+        "internal/meta/syntaxregistration/corpus.go",
+        "internal/meta/syntaxregistration/counterexample_test.go",
+        "internal/meta/syntaxregistration/denominator.go",
+        "internal/meta/syntaxregistration/edits.go",
+        "internal/meta/syntaxregistration/execution_identity.go",
+        "internal/meta/syntaxregistration/execution_identity_test.go",
+        "internal/meta/syntaxregistration/execution_identity_types.go",
+        "internal/meta/syntaxregistration/generate.go",
+        "internal/meta/syntaxregistration/input.go",
+        "internal/meta/syntaxregistration/json.go",
+        "internal/meta/syntaxregistration/migration_tests.go",
+        "internal/meta/syntaxregistration/native_binding.go",
+        "internal/meta/syntaxregistration/native_test.go",
+        "internal/meta/syntaxregistration/selection.go",
+        "internal/meta/syntaxregistration/source_units.go",
+        "internal/meta/syntaxregistration/source_units_test.go",
+        "internal/meta/syntaxregistration/syntax_tests.go",
+        "internal/meta/syntaxregistration/types.go",
+        "internal/verify/scope_native_registration_20260907.go",
+        "internal/verify/scope_native_registration_20260907_test.go",
+        "internal/verify/scope_syntax_registration_20260907.go",
+        "internal/verify/scope_syntax_registration_20260907_test.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/registration_boundary_test.go",
+        "scripts/meta-execution/registration_cli.go",
+        "scripts/meta-execution/registration_evidence.go",
+        "scripts/meta-execution/registration_execute.go",
+        "scripts/meta-execution/registration_input_scope.go",
+        "scripts/meta-execution/registration_native_helpers_test.go",
+        "scripts/meta-execution/registration_native_test.go",
+        "scripts/meta-execution/registration_process.go",
+        "scripts/meta-execution/registration_verify.go",
+        "scripts/meta-execution/run.go",
+        "scripts/self-improvement-contract/contract_test.go"
+      ]
+    },
+    {
+      "branch": "agent/proposal-pending-observation-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        "docs/proposal-pending-observation.md",
+        "internal/meta/metricstrategy/proposalpredecessor/collect.go",
+        "internal/meta/metricstrategy/proposalpredecessor/pending_collect.go",
+        "internal/meta/metricstrategy/proposalpredecessor/pending_collect_test.go",
+        "internal/meta/metricstrategy/proposalpredecessor/pending_identity.go",
+        "internal/meta/metricstrategy/proposalpredecessor/pending_priority_test.go",
+        "internal/meta/metricstrategy/proposalpredecessor/pending_select.go",
+        "internal/meta/metricstrategy/proposalpredecessor/types.go",
+        "internal/verify/scope_proposal_pending_20260907.go",
+        "internal/verify/scope_proposal_pending_20260907_test.go",
+        "scripts/metric-strategy/main.go",
+        "scripts/metric-strategy/predecessor.go",
+        "scripts/metric-strategy/predecessor_observe.go",
+        "scripts/metric-strategy/predecessor_wait.go",
+        "scripts/metric-strategy/predecessor_wait_fixture_test.go",
+        "scripts/metric-strategy/predecessor_wait_test.go"
+      ]
+    },
+    {
+      "branch": "agent/syntax-registration-operator-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/repository-projection.yml",
+        ".github/workflows/syntax-registration-candidate.yml",
+        "cmd/syntax-registration-candidate/main.go",
+        "cmd/syntax-registration-candidate/output.go",
+        "cmd/syntax-registration-candidate/output_test.go",
+        "docs/syntax-registration-candidate.md",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/syntaxregistration/candidate_test.go",
+        "internal/meta/syntaxregistration/contract.go",
+        "internal/meta/syntaxregistration/contract.gooo",
+        "internal/meta/syntaxregistration/corpus.go",
+        "internal/meta/syntaxregistration/counterexample_test.go",
+        "internal/meta/syntaxregistration/denominator.go",
+        "internal/meta/syntaxregistration/edits.go",
+        "internal/meta/syntaxregistration/execution_identity.go",
+        "internal/meta/syntaxregistration/execution_identity_test.go",
+        "internal/meta/syntaxregistration/execution_identity_types.go",
+        "internal/meta/syntaxregistration/generate.go",
+        "internal/meta/syntaxregistration/input.go",
+        "internal/meta/syntaxregistration/json.go",
+        "internal/meta/syntaxregistration/migration_tests.go",
+        "internal/meta/syntaxregistration/native_test.go",
+        "internal/meta/syntaxregistration/selection.go",
+        "internal/meta/syntaxregistration/source_units.go",
+        "internal/meta/syntaxregistration/source_units_test.go",
+        "internal/meta/syntaxregistration/syntax_tests.go",
+        "internal/meta/syntaxregistration/types.go",
+        "internal/verify/scope_syntax_registration_20260907.go",
+        "internal/verify/scope_syntax_registration_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/main-language-preview-20260906",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/callback-preview/factory_test.go",
+        "cmd/callback-preview/main.go",
+        "cmd/callback-preview/main_test.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/generation/callback-extraction-contract.gooo",
+        "internal/meta/generation/callback-preview-contract.gooo",
+        "internal/meta/generation/callback_extraction_contract.go",
+        "internal/meta/generation/callback_extraction_contract_test.go",
+        "internal/meta/generation/callback_extraction_observer_test.go",
+        "internal/meta/generation/callback_preview_contract.go",
+        "internal/meta/generation/callback_preview_contract_test.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_claims.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_observation.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_observation_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_plan.go",
+        "internal/meta/repositoryprojection/extractor/callback_extraction_plan_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_factory.go",
+        "internal/meta/repositoryprojection/extractor/callback_factory_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_module.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_module_test.go",
+        "internal/meta/repositoryprojection/extractor/callback_observation_workspace.go",
+        "internal/meta/repositoryprojection/extractor/callback_preview.go",
+        "internal/meta/repositoryprojection/extractor/callback_preview_test.go",
+        "internal/meta/repositoryprojection/extractor/capacity_failure_diagnostics_test.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation_structure.go",
+        "internal/meta/repositoryprojection/extractor/closure_preservation_test.go",
+        "internal/meta/repositoryprojection/extractor/decompose.go",
+        "internal/meta/repositoryprojection/extractor/extract.go",
+        "internal/meta/repositoryprojection/extractor/rendered_capacity_progress_regression_test.go",
+        "internal/meta/repositoryprojection/extractor/suffix_closure_identity_test.go",
+        "internal/verify/scope_callback_preview_20260907.go",
+        "internal/verify/scope_callback_preview_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/ci-scope-preflight-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/ci_scope_preflight_order_test.go",
+        "internal/verify/scope_ci_preflight_20260907.go",
+        "internal/verify/scope_ci_preflight_20260907_test.go"
+      ]
+    },
+    {
+      "branch": "agent/record-value-plan-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "cmd/gooo/run_source_part01.go",
+        "cmd/gooo/run_source_part02.go",
+        "cmd/gooo/run_source_record.go",
+        "cmd/gooo/run_source_record_test.go",
+        "examples/language-record-binding/README.md",
+        "examples/language-record-binding/input.json",
+        "examples/language-record-binding/main.gooo",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v30.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/valueexecution/record_bindings.go",
+        "internal/valueexecution/record_compile.go",
+        "internal/valueexecution/record_execute.go",
+        "internal/valueexecution/record_input.go",
+        "internal/valueexecution/record_plan_test.go",
+        "internal/valueexecution/record_result.go",
+        "internal/verify/scope_record_value_plan_20260907.go",
+        "internal/verify/scope_record_value_plan_20260907_test.go"
+      ]
+    },
     {
       "branch": "agent/foundation-authorization-dispatch-adoption-20260831",
       "paths": [
@@ -1875,7 +2226,7 @@
         "docs/language/promotion-authorized-continuity.md",
         "examples/metric-meta-program/main.gooo",
         "internal/meta/languagereadiness/promotioncontinuity/**",
-		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
         "internal/meta/metricprogram/**",
         "internal/meta/metricstrategy/**",
         "internal/verify/scope_promotion_authorized_continuity.go"
@@ -2937,21 +3288,21 @@
     },
     {
       "branch": "agent/temporal-transition-ticket-v1",
-        "paths": [
-          ".github/agent-scope-table.md",
-          ".github/ci-governance.json",
-          ".github/workflows/temporal-transition-ticket-v1.yml",
-          ".github/workflows/transformation-effect.yml",
-          "contracts",
-          "examples/temporal-transition-ticket",
-          "examples/language-syntax-roundtrip/corpus.json",
-          "fixtures/temporal-transition-ticket",
-          "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
-          "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
-          "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
-          "internal/meta/languagereadiness/languagesyntax/model.go",
-          "internal/meta/languagereadiness/languagesyntax/registry.go",
-          "internal/verify/scope_temporal_transition_ticket_v1.go",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/temporal-transition-ticket-v1.yml",
+        ".github/workflows/transformation-effect.yml",
+        "contracts",
+        "examples/temporal-transition-ticket",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "fixtures/temporal-transition-ticket",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_temporal_transition_ticket_v1.go",
         "internal/verify/scope_temporal_transition_ticket_v1_test.go",
         "scripts/bind-activity-resolutions.sh",
         "scripts/conform-temporal-transition-ticket-v1.sh",
@@ -3583,6 +3934,16 @@
         "go.sum",
         "AGENTS.md",
         "CONTRIBUTING.md"
+      ]
+    },
+    {
+      "branch": "agent/main-history-reconciliation-policy-route-20260903",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/policy_part06.go",
+        "internal/verify/scope_main_history_reconciliation_protocol_20260903.go",
+        "internal/verify/transition_policy_test.go"
       ]
     },
     {

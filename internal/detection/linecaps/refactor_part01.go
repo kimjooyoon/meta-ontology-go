@@ -54,7 +54,7 @@ func classifyRefactorCandidate(body *ast.BlockStmt) (rule Rule, detail string, a
 		return "", "", 0, 0
 	}
 	assign, ok := body.List[0].(*ast.AssignStmt)
-	if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+	if !ok || assign.Tok != token.DEFINE || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
 		return "", "", 0, 0
 	}
 	lhs, ok := assign.Lhs[0].(*ast.Ident)

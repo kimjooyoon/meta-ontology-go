@@ -30,6 +30,8 @@ type Indicator struct {
 	Consumer            string              `json:"consumer"`
 	Operation           Operation           `json:"meta_operation"`
 	Detail              string              `json:"detail,omitempty"`
+
+	OperationInputDigest string `json:"operation_input_digest,omitempty"`
 }
 
 // Report is the deterministic bridge from metrics to meta operations.

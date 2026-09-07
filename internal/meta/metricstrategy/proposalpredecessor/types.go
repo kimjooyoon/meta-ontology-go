@@ -82,6 +82,7 @@ type Collection struct {
 	Unresolved        int
 	Candidates        []Candidate
 	FailureReason     string
+	pending           []githubRun
 }
 
 type Report struct {

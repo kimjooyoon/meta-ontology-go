@@ -60,6 +60,7 @@ func expectedRegistry() Registry {
 		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
 		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
+		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
 		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
@@ -89,7 +90,7 @@ func expectedRegistry() Registry {
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
 		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo"}}
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo"}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {

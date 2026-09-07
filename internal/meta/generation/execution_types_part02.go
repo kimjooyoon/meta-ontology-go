@@ -1,6 +1,9 @@
 package generation
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
+)
 
 type ExecutionStep struct {
 	ActionIndicatorID           string                           `json:"action_indicator_id"`
@@ -31,6 +34,8 @@ type ExecutionStep struct {
 	Priority                    uint32                           `json:"priority"`
 	WorkspaceMode               WorkspaceMode                    `json:"workspace_mode"`
 	WriteBoundary               WriteBoundary                    `json:"write_boundary"`
+
+	RegistrationRequest *syntaxregistration.Request `json:"registration_request,omitempty"`
 }
 
 type ExecutionManifest struct {

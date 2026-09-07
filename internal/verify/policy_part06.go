@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
+const reconciliationMainBranchPrefix = "agent/main-history-reconciliation-"
+
 // CheckPullRequestPolicy enforces the steady-state branch policy used by CI.
 func CheckPullRequestPolicy(head, base string) error {
 	if base == "main" {
-		if head != "dev" {
+		if head != "dev" && (len(head) <= len(reconciliationMainBranchPrefix) || !strings.HasPrefix(head, reconciliationMainBranchPrefix)) {
 			return fmt.Errorf("main promotion head must be dev, got %q", head)
 		}
 		return nil

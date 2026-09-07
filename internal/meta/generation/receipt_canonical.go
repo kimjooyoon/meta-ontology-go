@@ -16,8 +16,9 @@ func SealReceipt(plan Plan, action Action, indicators []IndicatorReceipt) Operat
 		InputContractSemanticDigest:   action.InputContractSemanticDigest,
 		Operation:                     action.Operation, Activity: action.Activity, Output: action.Output,
 		Executor: action.Executor, Evaluator: action.Evaluator,
-		ProofChoice: action.ProofChoice,
-		Indicators:  normalizeIndicatorReceipts(indicators),
+		ProofChoice:          action.ProofChoice,
+		Indicators:           normalizeIndicatorReceipts(indicators),
+		OperationInputDigest: action.SourceIndicator.OperationInputDigest,
 	}
 	receipt.ReceiptDigest = operationReceiptDigest(receipt)
 	return receipt

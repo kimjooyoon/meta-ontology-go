@@ -11,6 +11,7 @@ type runSourceOptions struct {
 	filename string
 	entry    string
 	input    string
+	record   bool
 }
 
 func parseRunSourceArguments(args []string) (runSourceOptions, error) {
@@ -23,12 +24,16 @@ func parseRunSourceArguments(args []string) (runSourceOptions, error) {
 			}
 			index++
 			options.entry = args[index]
-		case "--input":
+		case "--input", "--record-input":
 			if options.input != "" || index+1 >= len(args) {
 				return runSourceOptions{}, errors.New(runSourceUsage)
 			}
+			options.record = args[index] == "--record-input"
 			index++
 			options.input = args[index]
+			if options.record && options.input == "" {
+				return runSourceOptions{}, errors.New(runSourceUsage)
+			}
 		default:
 			if strings.HasPrefix(args[index], "-") || options.filename != "" {
 				return runSourceOptions{}, errors.New(runSourceUsage)

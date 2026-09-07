@@ -147,6 +147,10 @@ const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
 const functionExtractionReportSchema = "gooo.function-extraction.v2"
 
 func executeSelectedOperations(plan generation.Plan, manifest generation.ExecutionManifest, workspace string) (generation.OperationObservationBundle, error) {
+	return executeSelectedOperationsWithTrace(plan, manifest, workspace, newMetaExecutionTraceState())
+}
+
+func executeSelectedOperationsWithTrace(plan generation.Plan, manifest generation.ExecutionManifest, workspace string, traceState *metaExecutionTraceState) (generation.OperationObservationBundle, error) {
 	bundle := generation.OperationObservationBundle{
 		Schema:         generation.OperationObservationBundleSchema,
 		BaseSHA:        plan.BaseSHA,
@@ -167,7 +171,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	metricsPath, err := sourceMetricsPath()
+	metricsPath, err := configuredSourceMetricsPath()
 	if err != nil {
 		for _, action := range generationActions(plan) {
 			bundle.Failures = append(bundle.Failures, observationFailure(action, "observe-metrics", "resolve-source-metrics", "SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics", []string{}, generation.ProcessObservation{}))
@@ -175,7 +179,6 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	traceState := newMetaExecutionTraceState()
 	for sequence, action := range generationActions(plan) {
 		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1, traceState)
 		trace.emitActionEntered()
@@ -263,6 +266,15 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	if action.Operation == sourcepolicy.OperationRegisterSyntax {
+		return executeNativeRegistration(workspace, plan, action)
+	}
+	if action.Operation == sourcepolicy.OperationCollapseAssign {
+		if failure := validateCollapseAction(action); failure != nil {
+			return operationMaterialization{}, failure
+		}
+		return executeCollapse(workspace, gitDir, metricsPath, plan, action, trace)
+	}
 	if action.Operation == sourcepolicy.OperationSplitGo {
 		return executeSplit(workspace, gitDir, metricsPath, plan, action, trace)
 	}
