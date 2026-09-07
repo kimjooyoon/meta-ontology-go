@@ -38,7 +38,12 @@ func run(configuration options) error {
 	if err := writeAtomic(configuration.outputPath, payload); err != nil {
 		return err
 	}
-	bundle, bundleErr := executeSelectedOperations(plan, manifest, workspaceRoot())
+	journal, traceState, err := openObservationJournal(configuration.outputPath)
+	if err != nil {
+		return fmt.Errorf("open operation boundary journal: %w", err)
+	}
+	defer journal.Close()
+	bundle, bundleErr := executeSelectedOperationsWithTrace(plan, manifest, workspaceRoot(), traceState)
 	if bundleErr != nil {
 		return fmt.Errorf("execute selected operations: %w", bundleErr)
 	}
