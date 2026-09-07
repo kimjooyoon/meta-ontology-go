@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	predecessor "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/proposalpredecessor"
 )
 
 func writeProposalPredecessor(value options) error {
@@ -17,11 +15,10 @@ func writeProposalPredecessor(value options) error {
 		return fmt.Errorf("github-api, token, repository, subject-sha, predecessor-sha, route, and selected-proposal are required")
 	}
 	client := &http.Client{Timeout: 30 * time.Second}
-	collection, err := predecessor.Collect(context.Background(), client, value.githubAPI, token, value.repository, value.predecessorSHA, value.requestedRoute)
-	if err != nil {
-		return err
+	report, payload, selectionErr := observeProposalPredecessor(context.Background(), client, token, value)
+	if report.Schema == "" && selectionErr != nil {
+		return selectionErr
 	}
-	report, payload, selectionErr := predecessor.Select(value.repository, value.subjectSHA, value.predecessorSHA, collection)
 	if err := writeJSON(value.output, report); err != nil {
 		return err
 	}
