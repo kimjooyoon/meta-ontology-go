@@ -518,6 +518,14 @@ jobs:
           path: ${{ runner.temp }}/source-metrics/self-improvement-execution.json
           if-no-files-found: error
           retention-days: 30
+      - name: Preserve operation boundary journals
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: meta-boundary-journals-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-metrics/*.trace.ndjson
+          if-no-files-found: warn
+          retention-days: 30
       - name: Upload self-improvement receipt artifact
         uses: actions/upload-artifact@v7
         with:

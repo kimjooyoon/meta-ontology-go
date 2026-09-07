@@ -57,6 +57,15 @@
   ],
   "ownership": [
     {
+      "branch": "agent/observation-journal-artifact-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_observation_journal_artifact_20260908.go"
+      ]
+    },
+    {
       "branch": "agent/observation-boundary-journal-20260907",
       "paths": [
         ".github/agent-scope-table.md",
