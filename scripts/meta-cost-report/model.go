@@ -35,15 +35,15 @@ type costRow struct {
 }
 
 type costReport struct {
-	Schema           string    `json:"schema"`
-	Scope            string    `json:"scope"`
-	Authenticity     string    `json:"source_authenticity"`
-	Improvement      string    `json:"improvement"`
-	Events           int       `json:"events"`
-	UnmeasuredEvents int       `json:"unmeasured_events"`
-	UnpairedStarts   int       `json:"unpaired_starts"`
-	UnknownReturns   int       `json:"unknown_returns"`
-	Rows             []costRow `json:"intervals"`
+	Schema           string            `json:"schema"`
+	Scope            string            `json:"scope"`
+	Authenticity     string            `json:"source_authenticity"`
+	Improvement      string            `json:"improvement"`
+	Events           int               `json:"events"`
+	UnmeasuredEvents int               `json:"unmeasured_events"`
+	UnpairedStarts   int               `json:"unpaired_starts"`
+	UnknownReturns   int               `json:"unknown_returns"`
+	Rows             []costRow         `json:"intervals"`
 	Unknowns         []boundaryUnknown `json:"unknowns"`
 }
 

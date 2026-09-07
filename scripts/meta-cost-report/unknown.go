@@ -19,7 +19,7 @@ type boundaryUnknown struct {
 func missingBoundaryReturn(event costEvent) boundaryUnknown {
 	return boundaryUnknown{
 		costBinding: event.costBinding,
-		State: "UNKNOWN", Stage: "DRIVER_BOUNDARY", Step: event.Boundary,
+		State:       "UNKNOWN", Stage: "DRIVER_BOUNDARY", Step: event.Boundary,
 		Reason: "MATCHING_TERMINAL_OBSERVATION_MISSING", UnknownClass: "DIRECT_MISSING",
 		NextOperation: "OBSERVE_MATCHING_TERMINAL_EVENT", BlockedBy: []string{},
 		StartEvent: event.Sequence,
