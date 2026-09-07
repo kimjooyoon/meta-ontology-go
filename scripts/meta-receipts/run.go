@@ -35,7 +35,7 @@ func run(configuration options) error {
 		if err := decodeJSON(manifestPath, &manifest); err != nil {
 			return fmt.Errorf("read execution manifest: %w", err)
 		}
-		bundlePath := filepath.Join(filepath.Dir(configuration.planPath), "meta-operation-observations.json")
+		bundlePath := generation.ObservationBundlePath(configuration.planPath, manifestPath)
 		bundle := generation.OperationObservationBundle{}
 		if err := decodeJSON(bundlePath, &bundle); err != nil {
 			return fmt.Errorf("read operation observations: %w", err)
