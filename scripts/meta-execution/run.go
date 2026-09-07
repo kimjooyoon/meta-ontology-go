@@ -31,6 +31,10 @@ func run(configuration options) error {
 	if err != nil {
 		return fmt.Errorf("encode execution manifest: %w", err)
 	}
+	bundlePath := generation.ObservationBundlePath(configuration.planPath, configuration.outputPath)
+	if _, err := archivePreviousObservation(bundlePath); err != nil {
+		return fmt.Errorf("preserve previous operation observations: %w", err)
+	}
 	if err := writeAtomic(configuration.outputPath, payload); err != nil {
 		return err
 	}
@@ -38,7 +42,6 @@ func run(configuration options) error {
 	if bundleErr != nil {
 		return fmt.Errorf("execute selected operations: %w", bundleErr)
 	}
-	bundlePath := generation.ObservationBundlePath(configuration.planPath, configuration.outputPath)
 	bundlePayload, err := generation.EncodeObservationBundle(bundle)
 	if err != nil {
 		return fmt.Errorf("encode operation observations: %w", err)
