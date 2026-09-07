@@ -380,33 +380,6 @@ func renderedDeclarationHelper(fset *token.FileSet, file *ast.File, source []byt
 	return helper, nil
 }
 
-func renderedCapacityOverage(lines int) int {
-	if lines <= functionLineLimit {
-		return 0
-	}
-	return lines - functionLineLimit
-}
-
-func renderedCapacitySnapshotForFunctions(source []byte, names ...string) (renderedCapacitySnapshot, error) {
-	if len(names) == 0 {
-		return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "functions=EMPTY"})
-	}
-	seen := make(map[string]bool, len(names))
-	snapshot := renderedCapacitySnapshot{}
-	for _, name := range names {
-		if name == "" || seen[name] {
-			return renderedCapacitySnapshot{}, fail("observe-plan", "render-capacity", "PREFLIGHT_RENDER_FAILED", "DIRECT_MISSING", "restore-render-evidence", []string{"measurement=UNMEASURED", "function=" + name})
-		}
-		seen[name] = true
-		rendered, err := renderedFunctionHelper(source, name)
-		if err != nil {
-			return renderedCapacitySnapshot{}, err
-		}
-		snapshot.overage += renderedCapacityOverage(physicalLines(rendered))
-	}
-	return snapshot, nil
-}
-
 func strictRenderedCapacityProgress(before, after renderedCapacitySnapshot) bool {
 	return before.overage >= 0 && after.overage >= 0 && after.overage < before.overage
 }
@@ -451,10 +424,10 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 	} else if candidate != nil {
 		return candidate.result, &candidate.evidence, nil
 	}
-	return decomposeSuffixCandidates(source, fset, file, function, evidence)
+	return decomposeSuffixCandidates(root, logical, source, fset, file, function, evidence, preflight)
 }
 
-func decomposeSuffixCandidates(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence) ([]byte, *StrategyEvidence, error) {
+func decomposeSuffixCandidates(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, preflight []renderedCapacityObservation) ([]byte, *StrategyEvidence, error) {
 	existing := functionNames(file)
 	diagnostics := []string{
 		"declaration=" + functionIdentity(fset, function),
