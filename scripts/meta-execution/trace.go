@@ -25,6 +25,7 @@ type metaExecutionTraceState struct {
 	invocationID  string
 	eventSequence uint64
 	writer        io.Writer
+	cost          metaExecutionCostState
 }
 
 type metaExecutionTraceEvent struct {
@@ -56,6 +57,7 @@ type metaExecutionTraceEvent struct {
 	ExitCode                    *int   `json:"exit_code,omitempty"`
 	ExitCodeSource              string `json:"exit_code_source"`
 	ReturnErrorObserved         *bool  `json:"return_error_observed,omitempty"`
+	Cost                        *metaExecutionCost `json:"cost,omitempty"`
 }
 
 func newMetaExecutionTraceState() *metaExecutionTraceState {
@@ -122,6 +124,7 @@ func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest
 	event := trace.event(boundary, pass, commandKind, contractDigest, operationID, exitCodeSource, exitCode, returnErrorObserved)
 	event.InvocationID = trace.state.invocationID
 	event.EventSequence = trace.state.nextEventSequence()
+	event.Cost = trace.state.cost.observe(event, time.Now())
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return
