@@ -4,12 +4,12 @@ import "time"
 
 // Cost is diagnostic, never part of canonical output or permission evidence.
 type metaExecutionCost struct {
-	State              string `json:"state"`
-	StartedAtEvent     uint64 `json:"started_at_event,omitempty"`
-	ElapsedNS          *int64 `json:"elapsed_ns,omitempty"`
-	ExecutionMode      string `json:"execution_mode"`
-	ToolchainIdentity  string `json:"toolchain_identity"`
-	Improvement        string `json:"improvement"`
+	State             string `json:"state"`
+	StartedAtEvent    uint64 `json:"started_at_event,omitempty"`
+	ElapsedNS         *int64 `json:"elapsed_ns,omitempty"`
+	ExecutionMode     string `json:"execution_mode"`
+	ToolchainIdentity string `json:"toolchain_identity"`
+	Improvement       string `json:"improvement"`
 }
 
 type metaExecutionCostKey struct {
