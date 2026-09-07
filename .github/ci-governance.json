@@ -57,6 +57,16 @@
   ],
   "ownership": [
     {
+      "branch": "agent/release-artifact-execution-isolation-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/gooo-release-publish.yml",
+        "internal/verify/scope_release_isolation_20260907.go",
+        "internal/verify/scope_release_isolation_20260907_test.go"
+      ]
+    },
+    {
       "branch": "agent/registration-native-integration-20260907",
       "paths": [
         ".github/agent-scope-table.md",
