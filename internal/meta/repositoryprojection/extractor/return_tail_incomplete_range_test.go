@@ -25,26 +25,7 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var caller, helper *ast.FuncDecl
-	var rangeExpression ast.Expr
-	for _, declaration := range file.Decls {
-		function, ok := declaration.(*ast.FuncDecl)
-		if !ok || function.Name == nil {
-			continue
-		}
-		switch function.Name.Name {
-		case "caller":
-			caller = function
-		case "helper":
-			helper = function
-			ast.Inspect(function.Body, func(node ast.Node) bool {
-				if rangeStatement, ok := node.(*ast.RangeStmt); ok {
-					rangeExpression = rangeStatement.X
-				}
-				return true
-			})
-		}
-	}
+	caller, helper, rangeExpression := incompleteRangeFixtureNodes(file)
 	if caller == nil || helper == nil || rangeExpression == nil {
 		t.Fatal("incomplete range fixture lacks caller, helper, or range expression")
 	}
@@ -80,4 +61,26 @@ func TestReturnTailIncompleteRangeTypeEvidenceFailsClosed(t *testing.T) {
 	if !errors.As(err, &failure) || failure.Reason != "CALLEE_EFFECTS_UNPROVEN" || failure.UnknownClass != "DIRECT_MISSING" {
 		t.Fatalf("incomplete range type evidence error=%v, want fail-closed callee-effects failure", err)
 	}
+}
+
+func incompleteRangeFixtureNodes(file *ast.File) (caller, helper *ast.FuncDecl, rangeExpression ast.Expr) {
+	for _, declaration := range file.Decls {
+		function, ok := declaration.(*ast.FuncDecl)
+		if !ok || function.Name == nil {
+			continue
+		}
+		switch function.Name.Name {
+		case "caller":
+			caller = function
+		case "helper":
+			helper = function
+			ast.Inspect(function.Body, func(node ast.Node) bool {
+				if rangeStatement, ok := node.(*ast.RangeStmt); ok {
+					rangeExpression = rangeStatement.X
+				}
+				return true
+			})
+		}
+	}
+	return caller, helper, rangeExpression
 }
