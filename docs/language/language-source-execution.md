@@ -29,6 +29,15 @@ the meta evaluator lowers resolution instead.
 Registered-value operation execution, handwritten Go-body execution, external
 effects, multi-file execution, language-level tests, debugging, and profiling
 remain outside this receipt. The separately scoped `--input` value-plan path
-reports `REGISTERED_VALUE_OPERATION` only when a registered operation applies.
-Runner wall time and maximum RSS are observed by the user journey scorecard but
-are not called improvements across runs.
+uses `REGISTERED_VALUE_OPERATION` as its declared evaluation scope. That field
+does not by itself prove that a registered `Apply` call completed; the value
+report's decision, invocation counts, outputs, and result evidence establish
+that narrower fact. Runner wall time and maximum RSS are observed by the user
+journey scorecard but are not called improvements across runs.
+
+## Input compatibility
+
+The `gooo/source-execution-receipt/v1` contract requires `scope`. A historical
+receipt with the same v1 schema name but no scope is not evidence of
+`DECLARATION_RESOLUTION_ONLY` and is rejected by the validator. No permissive
+default or retrofit is applied to old evidence.

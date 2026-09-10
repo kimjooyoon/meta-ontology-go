@@ -22,6 +22,11 @@ func Validate(receipt Receipt) error {
 		receipt.Resolution == ResolutionExact && receipt.State == StateRejected && receipt.CurrentEvent == nil {
 		return nil
 	}
+	if receipt.Decision == DecisionFailClosed && receipt.Reason == "DEBUG_EXECUTION_UNKNOWN" &&
+		receipt.Resolution == ResolutionLower && receipt.State == StateRejected && receipt.CurrentEvent == nil &&
+		len(receipt.Trace) == 0 && receipt.ExecutionDigest == "" {
+		return nil
+	}
 	return fmt.Errorf("debug receipt decision is invalid")
 }
 

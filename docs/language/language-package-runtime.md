@@ -9,9 +9,11 @@ not sufficient.
 The runtime normalizes a manifest, orders a package import DAG, parses and
 lowers every `.gooo` source through the existing syntax and semantic IR, and
 resolves one activity contract. It produces an immutable runtime image and
-invocation plan. Its receipt scope is `DECLARATION_RESOLUTION_ONLY`; it does
-not execute handwritten Go function bodies, load Go
-plugins, access the network, or write the repository.
+invocation plan. These image and plan types do not emit a package-execution
+receipt or a `scope` field; the separate package-execution receipt carries
+`DECLARATION_RESOLUTION_ONLY` when that boundary is invoked. Neither path
+executes handwritten Go function bodies, loads Go plugins, accesses the
+network, or writes the repository.
 
 ## Fixed denominator
 

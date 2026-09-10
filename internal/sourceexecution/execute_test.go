@@ -55,3 +55,28 @@ func TestExecuteRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 		t.Fatalf("receipt=%#v", receipt)
 	}
 }
+
+func TestValidateRejectsDeclaredSourceScopeCohort(t *testing.T) {
+	cases := []struct {
+		name  string
+		scope string
+	}{
+		{name: "missing", scope: ""},
+		{name: "unknown", scope: "UNSUPPORTED_SCOPE"},
+		{name: "registered-value-operation", scope: "REGISTERED_VALUE_OPERATION"},
+	}
+	const declaredCaseCount = 3
+	if len(cases) != declaredCaseCount {
+		t.Fatalf("declared source scope regression cases = %d, want %d", len(cases), declaredCaseCount)
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			receipt := Execute(Request{Filename: "billing.gooo", Source: fixtureSource, Entry: "PayOrder"})
+			receipt.Scope = test.scope
+			if err := Validate(receipt); err == nil || err.Error() != "SOURCE_EXECUTION_SCOPE_UNKNOWN" {
+				t.Fatalf("scope %q validation error = %v, want SOURCE_EXECUTION_SCOPE_UNKNOWN", test.scope, err)
+			}
+		})
+	}
+}

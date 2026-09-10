@@ -56,3 +56,29 @@ func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 		t.Fatalf("plan boundary = %#v", failure)
 	}
 }
+
+func TestValidateRejectsDeclaredValueScopeCohort(t *testing.T) {
+	filesystem := fstest.MapFS{"main.gooo": {Data: valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`)}}
+	head := strings.Repeat("a", 40)
+	cases := []struct {
+		name  string
+		scope string
+	}{
+		{name: "missing", scope: ""},
+		{name: "declaration-resolution-only", scope: "DECLARATION_RESOLUTION_ONLY"},
+	}
+	const declaredCaseCount = 2
+	if len(cases) != declaredCaseCount {
+		t.Fatalf("declared value scope regression cases = %d, want %d", len(cases), declaredCaseCount)
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			report := Evaluate(filesystem, "main.gooo", "Increment", head)
+			report.Scope = test.scope
+			if err := Validate(report, head); err == nil {
+				t.Fatalf("scope %q unexpectedly validated", test.scope)
+			}
+		})
+	}
+}

@@ -36,3 +36,33 @@ func TestExecuteRejectsHeaderMismatch(t *testing.T) {
 		t.Fatalf("decision=%s reason=%s resolution=%s", receipt.Decision, receipt.Reason, receipt.Resolution)
 	}
 }
+
+func TestValidateRejectsNestedScopeDisagreement(t *testing.T) {
+	cases := []struct {
+		name  string
+		scope string
+	}{
+		{name: "registered-value-operation", scope: "REGISTERED_VALUE_OPERATION"},
+	}
+	const declaredCaseCount = 1
+	if len(cases) != declaredCaseCount {
+		t.Fatalf("declared package scope regression cases = %d, want %d", len(cases), declaredCaseCount)
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			sources, err := LoadDirectory(filepath.Join("..", "..", "..", "examples", "billing-package"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			receipt := Execute(Request{PackagePath: "billing-package", Entry: "PayOrder", Sources: sources})
+			if receipt.Execution == nil {
+				t.Fatal("positive package receipt has no nested execution")
+			}
+			receipt.Execution.Scope = test.scope
+			if err := Validate(receipt); err == nil || err.Error() != "packageexecution: nested execution scope mismatch" {
+				t.Fatalf("nested scope validation error = %v, want packageexecution: nested execution scope mismatch", err)
+			}
+		})
+	}
+}

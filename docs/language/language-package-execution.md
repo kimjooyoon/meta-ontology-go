@@ -22,6 +22,11 @@ The human-visible indicators are exact counters:
 | `PACKAGE_REPOSITORY_WRITES` | 0/0 | Execution writes no repository file. |
 | `PACKAGE_MUTATION_AUTHORITIES` | 0/0 | Execution acquires no mutation authority. |
 
+The `gooo/package-source-execution-receipt/v1` contract requires
+`DECLARATION_RESOLUTION_ONLY` in both the package receipt and its nested source
+receipt. A historical receipt with the same v1 schema name but no scope is not
+retrofit to that claim; validation rejects it as missing scope.
+
 ## Reader-dependent resolution
 
 `USER` sees outcome facts, `TOOL_AUTHOR` also sees operational binding and replay facts, and `GOVERNOR` sees every proof and effect fact. The visible set changes, but all views carry the same `facts_digest`; a lower-resolution view cannot invent a different result.

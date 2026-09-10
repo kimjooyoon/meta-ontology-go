@@ -25,6 +25,35 @@ func TestObserveRejectsMissingBreakpoint(t *testing.T) {
 	}
 }
 
+func TestObserveMalformedInputEmitsValidFailClosedReceipt(t *testing.T) {
+	receipt := Observe(nil, "ACTIVITY_INVOKED")
+	if err := Validate(receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Scope != SourceExecutionScope || receipt.Decision != DecisionFailClosed || receipt.Reason != "DEBUG_EXECUTION_UNKNOWN" {
+		t.Fatalf("malformed-input receipt = %#v", receipt)
+	}
+}
+
+func TestObserveDoesNotUpgradeUnsupportedIncomingScope(t *testing.T) {
+	var execution executionReceipt
+	if err := json.Unmarshal(executionJSON(t), &execution); err != nil {
+		t.Fatal(err)
+	}
+	execution.Scope = "REGISTERED_VALUE_OPERATION"
+	data, err := json.Marshal(execution)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt := Observe(data, "ACTIVITY_INVOKED")
+	if err := Validate(receipt); err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Scope != SourceExecutionScope || receipt.Decision != DecisionFailClosed || receipt.Reason != "DEBUG_EXECUTION_UNKNOWN" || receipt.CurrentEvent != nil {
+		t.Fatalf("unsupported-scope receipt = %#v", receipt)
+	}
+}
+
 func executionJSON(t *testing.T) []byte {
 	t.Helper()
 	execution := executionReceipt{

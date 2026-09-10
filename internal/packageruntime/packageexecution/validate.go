@@ -50,11 +50,11 @@ func validateEvents(values []Event) error {
 
 func validateExecution(receipt Receipt) error {
 	if receipt.Execution != nil {
-		if err := sourceexecution.Validate(*receipt.Execution); err != nil {
-			return fmt.Errorf("packageexecution: nested receipt: %w", err)
-		}
 		if receipt.Execution.Scope != receipt.Scope {
 			return fmt.Errorf("packageexecution: nested execution scope mismatch")
+		}
+		if err := sourceexecution.Validate(*receipt.Execution); err != nil {
+			return fmt.Errorf("packageexecution: nested receipt: %w", err)
 		}
 	}
 	if receipt.Decision != "PASS" {
