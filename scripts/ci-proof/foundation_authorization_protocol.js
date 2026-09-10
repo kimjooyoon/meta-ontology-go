@@ -294,7 +294,7 @@ function evaluate(input, {now = new Date().toISOString()} = {}) {
     addRefuted('AUTHORIZATION_EXPIRED', 'EXPIRY_STALENESS', 'one-use authorization is expired at evaluation time');
   }
   if (authorization && authorization.stale === true) addRefuted('AUTHORIZATION_STALE', 'EXPIRY_STALENESS', 'one-use authorization is explicitly stale');
-  if (!authorization || ![0, 1].includes(authorization.use_count)) {
+  if (!authorization || !Number.isInteger(authorization.use_count) || authorization.use_count < 0) {
     addUnknown(unknownEvidence('REGRESSION', 'ONE_USE_NONCE', 'INCOMPLETE_NONCE_USE_COUNT', 'INCOMPLETE_EVIDENCE', 'PROVIDE_NONCE_USE_COUNT', ['one-use-authorization']), 'ONE_USE_NONCE');
   } else if (authorization.use_count > 1) {
     addRefuted('NONCE_REPLAY', 'ONE_USE_NONCE', 'one-use nonce was used more than once');
@@ -320,9 +320,12 @@ function evaluate(input, {now = new Date().toISOString()} = {}) {
 
   const decision = resolveDecision([...refuted.map((item) => 'REFUTED'), ...unknown.map((item) => 'UNKNOWN')]);
   for (const item of refuted) mark(item.cellId, 'REFUTED');
-  if (decision === 'UNKNOWN') {
-    const selected = unknown.find((item) => item.evidence);
-    if (selected) mark(selected.cellId, 'UNKNOWN');
+  for (const item of unknown) {
+    const cell = cells.find((candidate) => candidate.id === item.cellId);
+    if (cell && cell.state !== 'REFUTED') {
+      cell.state = 'UNKNOWN';
+      if (!Object.prototype.hasOwnProperty.call(cell, 'unknown')) cell.unknown = item.evidence;
+    }
   }
   return {
     schema: PROTOCOL_SCHEMA,
