@@ -50,16 +50,68 @@ func TestReturnTailNamedRegressionSet(t *testing.T) {
 				return
 			}
 			if tc.kind == "binding" {
-				stages := []ProofStageEvidence(nil)
-				if len(result.Evidence) == 1 {
-					stages = result.Evidence[0].ProofStages
-				}
-				chainBound := len(stages) == 6
-				for index := 1; index < len(stages); index++ {
-					chainBound = chainBound && stages[index-1].OutputEvidenceID != "" && stages[index-1].OutputEvidenceID == stages[index].InputEvidenceID
-				}
-				if err != nil || len(result.Evidence) != 1 || result.Evidence[0].Operation != "extract-function" || result.Evidence[0].ContractActivity != "ExtractFunction" || result.Evidence[0].ContractOutputEntity != "OperationResult" || len(result.Evidence[0].ContractObligations) != 6 || !chainBound || len(result.Generated) < 2 {
+				if err != nil || len(result.Evidence) == 0 || len(result.Generated) < 2 {
 					t.Fatalf("generated unit binding evidence=%+v generated=%d err=%v", result.Evidence, len(result.Generated), err)
+				}
+				baseline := returnTailContractBaseline()
+				if len(baseline) != 6 {
+					t.Fatalf("binding contract stages=%d, want 6", len(baseline))
+				}
+				sourceBytes := 0
+				for _, data := range result.Generated {
+					sourceBytes += len(data)
+				}
+				finalPayload := generatedPackagePayload(result.Generated)
+				capacityPayload := append([]byte("final-rendered-capacity\x00"), finalPayload...)
+				finalDigest := proofDigest(finalPayload)
+				capacityDigest := proofDigest(capacityPayload)
+				for evidenceIndex, evidence := range result.Evidence {
+					contractBound := evidence.Strategy == returnTailStrategy && evidence.Operation == "extract-function" &&
+						evidence.ContractActivity == "ExtractFunction" && evidence.ContractInputEntity == "FunctionInput" &&
+						evidence.ContractOutputEntity == "OperationResult" && evidence.ContractSourceDigest != "" &&
+						evidence.ContractSemanticDigest != "" && len(evidence.ContractObligations) == len(baseline)
+					if contractBound {
+						for index, want := range baseline {
+							got := evidence.ContractObligations[index]
+							contractBound = contractBound && got.Name == want.Name && got.Activity == want.Activity &&
+								got.InputEntity == want.InputEntity && got.OutputEntity == want.OutputEntity &&
+								got.UsedInputFact == want.UsedInputFact && got.GeneratedOutputFact == want.GeneratedOutputFact
+						}
+					}
+					stages := evidence.ProofStages
+					chainBound := len(stages) == len(baseline)
+					for index, stage := range stages {
+						if index >= len(baseline) {
+							chainBound = false
+							break
+						}
+						want := baseline[index]
+						chainBound = chainBound && stage.Name == want.Name && stage.Activity == want.Activity &&
+							stage.InputEntity == want.InputEntity && stage.OutputEntity == want.OutputEntity && stage.Status == "PASS" &&
+							stage.SourceDigest != "" && stage.SourceDigest == stages[0].SourceDigest && stage.CandidateDigest != "" &&
+							stage.InputEvidenceID != "" && stage.OutputEvidenceID != "" && stage.PayloadDigest != "" &&
+							(stage.Name == "free-bindings" || stage.PayloadBytes > 0)
+						if index > 0 {
+							chainBound = chainBound && stages[index-1].OutputEvidenceID == stage.InputEvidenceID
+						}
+					}
+					if len(stages) == len(baseline) {
+						capacityStage, finalStage := stages[len(stages)-2], stages[len(stages)-1]
+						chainBound = chainBound && capacityStage.PayloadBytes == len(capacityPayload) &&
+							capacityStage.PayloadDigest == capacityDigest && capacityStage.CandidateDigest == finalDigest &&
+							finalStage.PayloadBytes == len(finalPayload) && finalStage.PayloadDigest == finalDigest && finalStage.CandidateDigest == finalDigest
+					}
+					capacityBound := evidence.FinalRenderedCapacity != nil
+					if capacityBound {
+						capacity := evidence.FinalRenderedCapacity
+						capacityBound = capacity.Scope == "final-generated-functions" && capacity.Status == "PASS" &&
+							capacity.PayloadDigest == capacityDigest && capacity.Bytes > 0 && capacity.Lines > 0 && capacity.Overage == 0
+					}
+					generatedBound := evidence.FinalGeneratedUnits == len(result.Generated) &&
+						evidence.FinalGeneratedBytes == sourceBytes && evidence.FinalGeneratedEvidenceBytes == len(finalPayload)
+					if !contractBound || !chainBound || !capacityBound || !generatedBound {
+						t.Fatalf("generated unit binding evidence[%d]=%+v generated=%d err=%v", evidenceIndex, evidence, len(result.Generated), err)
+					}
 				}
 				return
 			}

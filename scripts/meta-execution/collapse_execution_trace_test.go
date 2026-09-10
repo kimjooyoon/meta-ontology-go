@@ -24,7 +24,7 @@ func executeCollapseWithTestTrace(t *testing.T, workspace, gitDir, metricsPath s
 	}
 	var output bytes.Buffer
 	defer func() {
-		for _, event := range strings.Split(strings.TrimSpace(output.String()), "\n") {
+		for event := range strings.SplitSeq(strings.TrimSpace(output.String()), "\n") {
 			if event != "" {
 				t.Logf("native-collapse-test-trace=%s", event)
 			}
