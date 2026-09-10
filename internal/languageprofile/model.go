@@ -6,9 +6,8 @@ const (
 	ReceiptSchema          = "gooo/language-profile-receipt/v1"
 	RunnerScopedResolution = "RUNNER_SCOPED"
 	MaximumSamples         = 20
+	ExecutionScope         = sourceexecution.DeclarationResolutionScope
 )
-
-const ExecutionScope = sourceexecution.DeclarationResolutionScope
 
 type Request struct {
 	Filename string
