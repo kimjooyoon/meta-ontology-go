@@ -55,6 +55,32 @@
     "dev",
     "main"
   ],
+  "protected_kernel_paths": [
+    ".github/workflows/**",
+    ".github/ci-governance.json",
+    ".github/agent-scope-table.md",
+    ".github/branch-policy.md",
+    ".github/conformance-plan.md",
+    "scripts/ci-proof/**",
+    "scripts/ci-evidence/**",
+    "scripts/verify/**",
+    "internal/verify/**",
+    "go.mod",
+    "go.sum"
+  ],
+  "promotion": {
+    "source": "dev",
+    "target": "main",
+    "required_checks": [
+      "gofmt",
+      "go vet",
+      "go test",
+      "go test -race",
+      "Semantic conformance",
+      "CI policy"
+    ],
+    "branch_protection_required": true
+  },
   "ownership": [
     {
       "branch": "agent/callback-observer-cli-20260910",
@@ -4133,6 +4159,109 @@
       ]
     },
     {
+      "branch": "agent/relay-graph-fields-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_relay_graph_fields_20260911.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/graph_fields_v1.go",
+        "cmd/gooo/graph_fields_dump.go",
+        "cmd/gooo/graph_fields_v1_test.go",
+        "cmd/gooo/graph_fields_invalid_test.go",
+        "examples/relay-game-contract/main.gooo",
+        "examples/relay-game-contract/README.md",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go"
+      ]
+    },
+    {
+      "branch": "agent/syntax-negative-evidence-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "internal/verify/scope_syntax_negative_evidence_20260911.go",
+        "cmd/language-syntax-witness/run.go",
+        "cmd/language-syntax-witness/io.go",
+        "cmd/language-syntax-witness/negative_report.go",
+        "cmd/language-syntax-witness/negative_report_test.go"
+      ]
+    },
+    {
+      "branch": "agent/native-test-cost-trace-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_native_test_cost_trace_20260911.go",
+        "scripts/meta-execution/collapse_execution_test.go",
+        "scripts/meta-execution/collapse_execution_trace_test.go"
+      ]
+    },
+    {
+      "branch": "agent/graph-observer-coverage-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_graph_observer_coverage_20260911.go",
+        "internal/verify/workflow_part03_test.go",
+        "scripts/ci-proof/domain.go",
+        "scripts/ci-proof/graph_observation.go",
+        "scripts/ci-proof/graph_observation_test.go"
+      ]
+    },
+    {
+      "branch": "agent/pr-authoritative-contract-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "internal/verify/scope_pr_authoritative_contract_20260911.go",
+        "scripts/self-improvement-contract/workflow_authority_test.go",
+        "scripts/self-improvement-contract/workflow_authority_cases_test.go"
+      ]
+    },
+    {
+      "branch": "agent/core-evidence-integration-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        ".github/workflows/self-improvement-contract.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/gooo/graph_fields_dump.go",
+        "cmd/gooo/graph_fields_invalid_test.go",
+        "cmd/gooo/graph_fields_v1.go",
+        "cmd/gooo/graph_fields_v1_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/language-syntax-witness/io.go",
+        "cmd/language-syntax-witness/negative_report.go",
+        "cmd/language-syntax-witness/negative_report_test.go",
+        "cmd/language-syntax-witness/run.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/relay-game-contract/README.md",
+        "examples/relay-game-contract/main.gooo",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_core_evidence_integration_20260911.go",
+        "internal/verify/scope_graph_observer_coverage_20260911.go",
+        "internal/verify/scope_native_test_cost_trace_20260911.go",
+        "internal/verify/scope_pr_authoritative_contract_20260911.go",
+        "internal/verify/scope_relay_graph_fields_20260911.go",
+        "internal/verify/scope_syntax_negative_evidence_20260911.go",
+        "internal/verify/workflow_part03_test.go",
+        "scripts/ci-proof/domain.go",
+        "scripts/ci-proof/graph_observation.go",
+        "scripts/ci-proof/graph_observation_test.go",
+        "scripts/meta-execution/collapse_execution_test.go",
+        "scripts/meta-execution/collapse_execution_trace_test.go",
+        "scripts/self-improvement-contract/workflow_authority_cases_test.go",
+        "scripts/self-improvement-contract/workflow_authority_test.go"
+      ]
+    },
+    {
       "branch": "agent/partial-reuse-evidence-20260911",
       "paths": [
         ".github/agent-scope-table.md",
@@ -4146,31 +4275,5 @@
         "scripts/self-improvement-public-partial-reuse/run.go"
       ]
     }
-  ],
-  "protected_kernel_paths": [
-    ".github/workflows/**",
-    ".github/ci-governance.json",
-    ".github/agent-scope-table.md",
-    ".github/branch-policy.md",
-    ".github/conformance-plan.md",
-    "scripts/ci-proof/**",
-    "scripts/ci-evidence/**",
-    "scripts/verify/**",
-    "internal/verify/**",
-    "go.mod",
-    "go.sum"
-  ],
-  "promotion": {
-    "source": "dev",
-    "target": "main",
-    "required_checks": [
-      "gofmt",
-      "go vet",
-      "go test",
-      "go test -race",
-      "Semantic conformance",
-      "CI policy"
-    ],
-    "branch_protection_required": true
-  }
+  ]
 }

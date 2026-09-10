@@ -686,7 +686,11 @@ jobs:
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, event_ref: context.ref, checkout_ref: headSha,
               run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), workflow_sha: process.env.CI_WORKFLOW_SHA,
               cli: {command: 'go run ./cmd/gooo check examples/billing/main.gooo', fixture: 'examples/billing/main.gooo', status: 'verified', available: true, output, output_sha256: crypto.createHash('sha256').update(output).digest('hex')},
-              graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
+              graph: {
+                command: 'go run ./cmd/gooo graph dump examples/billing/main.gooo', status: 'deferred', available: false,
+                reason: 'GRAPH_OBSERVER_NOT_RUN', output_sha256: crypto.createHash('sha256').update('').digest('hex'),
+                observation: {state: 'UNKNOWN', stage: 'DOMAIN_EVIDENCE', step: 'GRAPH_DUMP', reason: 'GRAPH_OBSERVER_NOT_RUN', unknown_class: 'DIRECT_MISSING', next_operation: 'RUN_GRAPH_DUMP_OBSERVER', blocked_by: []},
+              },
               observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
               digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
               missing_reasons: {protection: 'domain_protection_observer_unavailable'},
