@@ -270,6 +270,7 @@ func init() {
 	}
 	branchScopeAllowlist[compilerConformanceEvidenceUpload20260911Branch] = []string{
 		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 		".github/workflows/compiler-self-improvement.yml",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 	}
