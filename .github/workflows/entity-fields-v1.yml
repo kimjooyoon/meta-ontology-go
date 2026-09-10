@@ -253,6 +253,11 @@ jobs:
           ' "$manifest"
           test "$(find "$root" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 13
 
+      - name: Observe profile-bound public graph support
+        if: success()
+        shell: bash
+        run: bash scripts/entity-fields-graph-support.sh "$RUNNER_TEMP/entity-fields-v1/work" "$RUNNER_TEMP/entity-fields-v1/support" "$HEAD_SHA"
+
       - name: Generate profile-scoped EntityFields support view
         if: success()
         shell: bash
@@ -268,6 +273,7 @@ jobs:
           profile_digest="$(jq -r '.profile_digest' "$report")"
           generated_output_digest="sha256:$(sha256sum "$work/cli-generated/semantic.gooo.go" | awk '{print $1}')"
           generated_manifest_digest="sha256:$(sha256sum "$work/cli-generated/semantic.gooo.manifest.jsonl" | awk '{print $1}')"
+          graph_support_digest="sha256:$(sha256sum "$support/graph-support-receipt.json" | awk '{print           generated_manifest_digest="sha256:$(sha256sum "$work/cli-generated/semantic.gooo.manifest.jsonl" | awk '{print $1}')"}')"
 
           jq -n --slurpfile report "$report" \
             --slurpfile receipt "$receipt" \
@@ -277,6 +283,8 @@ jobs:
             --arg meta_source_digest "$meta_source_digest" \
             --arg generated_output_digest "$generated_output_digest" \
             --arg generated_manifest_digest "$generated_manifest_digest" \
+            --slurpfile graph_support "$support/graph-support-receipt.json" \
+            --arg graph_support_digest "$graph_support_digest" \
             --argjson public_check true \
             --argjson public_generate true \
             --argjson generated_compile true \
@@ -311,7 +319,7 @@ jobs:
                    "DIRECT_MISSING"; "RESTORE_ENTITY_FIELDS_OBSERVATION"; [])
                else null end)};
             {
-              schema:"gooo/entity-fields-support/v1",
+              schema:"gooo/entity-fields-support/v2",
               identity:{
                 meta_source:"internal/meta/entityfields/entity-fields-meta.gooo",
                 meta_source_digest:$meta_source_digest,
@@ -349,7 +357,9 @@ jobs:
                 head_sha:$head,
                 observation_report_digest:$report_digest,
                 observation_receipt_digest:$receipt_digest,
-                public_cli:{
+                public_cli: {
+                  graph_dump: {command: "gooo graph dump examples/entity-fields-v1/main.gooo", result: $graph_support[0].decision,
+                    receipt_digest: $graph_support_digest, observation: $graph_support[0]},
                   check:{command:"gooo check --semantic examples/entity-fields-v1/main.gooo", result:(if $public_check then "PASS" else "UNKNOWN" end), artifact_digest:$report_digest},
                   generate:{command:"gooo generate examples/entity-fields-v1/main.gooo --out caller-owned-temp", result:(if $public_generate then "PASS" else "UNKNOWN" end), output_digest:$generated_output_digest, manifest_digest:$generated_manifest_digest, compared_to:"first/generated.go"}
                 },
@@ -367,6 +377,7 @@ jobs:
                 route("lsp-adapter"; "LSP adapter"; "EntityFieldsSyntaxParser adapter evidence only"; ["LSP_NAVIGATION"]; "PASS"),
                 route("public-cli-check"; "public CLI check"; "gooo check --semantic on the canonical fixture"; ["OBSERVATION_SOURCE_PIN","SEMANTIC_IR_LOWERING"]; (if $public_check then "PASS" else "UNKNOWN" end)),
                 route("public-cli-generate"; "public CLI generate"; "gooo generate and exact generated artifact comparison"; ["GO_STRUCT_PROJECTION","SOURCE_MAP_PROJECTION"]; (if $public_generate then "PASS" else "UNKNOWN" end)),
+                route("public-cli-graph-dump"; "public CLI graph dump"; "canonical-fixture entity, field and relation parity; not business execution"; ["OBSERVATION_SOURCE_PIN","SEMANTIC_IR_LOWERING"]; (if $graph_support[0].decision == "PASS" then "PASS" else "UNKNOWN" end)),
                 route("generated-go-compile"; "generated Go"; "generated module compilation only, not business-behavior proof"; ["GO_STRUCT_PROJECTION"]; (if $generated_compile then "PASS" else "UNKNOWN" end)),
                 {id:"lsp-server", label:"LSP server/editor support", scope:"no server or editor integration claim without separate evidence", required_evidence_keys:[], evidence:[], runtime_gate:"NOT_OBSERVED", state:"UNKNOWN", unknown:unknown("lsp"; "lsp-server"; "LSP_SERVER_NOT_OBSERVED"; "DIRECT_MISSING"; "OBSERVE_LSP_SERVER"; [])}
               ],
@@ -385,6 +396,7 @@ jobs:
               "",
               "This section is generated from the profile-bound observation and observed public routes; it is not a language-completeness score.",
               "",
+              ("support_schema=" + .schema),
               ("profile_id=" + .identity.profile.id),
               ("profile_version=" + (.identity.profile.version | tostring)),
               ("meta_source=" + .identity.meta_source),
@@ -405,7 +417,7 @@ jobs:
             def expected_route_ids: [
               "ordinary-parser", "explicit-v1-parser", "formatter", "semantic-lowering",
               "bx-get-put", "go-generator", "source-map", "lsp-adapter",
-              "public-cli-check", "public-cli-generate", "generated-go-compile", "lsp-server"
+              "public-cli-check", "public-cli-generate", "public-cli-graph-dump", "generated-go-compile", "lsp-server"
             ];
             def unknown_ok:
               if type != "object" then false else
@@ -534,11 +546,26 @@ jobs:
               all($root.routes[]?; if .state == "SUPPORTED" then
                 (.required_evidence_keys | length) > 0 and .runtime_gate == "PASS"
               else true end);
+            def graph_observation_present: .runtime.public_cli.graph_dump? != null;
+            def graph_observation_ok:
+              .runtime.public_cli.graph_dump as $g |
+              ($graph_support | length) == 1 and
+              $g.command == "gooo graph dump examples/entity-fields-v1/main.gooo" and
+              $g.result == "PASS" and ($graph_support_digest | digest_ok) and
+              $g.receipt_digest == $graph_support_digest and $g.observation == $graph_support[0] and
+              $g.observation.schema == "gooo/entity-fields-graph-support/v1" and
+              $g.observation.head_sha == $head and $g.observation.decision == "PASS" and
+              $g.observation.public_cli_invocations == 2 and $g.observation.replay_comparisons == 1 and
+              $g.observation.replay_equal == true and $g.observation.repository_snapshot_equal == true and
+              $g.observation.comparison.decision == "PASS" and ($g.observation.boundary_cases | length) == 6 and
+              all($g.observation.boundary_cases[]; .assessment.decision == .expected_decision);
             def support_assess:
               if (identity_ok | not) then
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"IDENTITY_MISMATCH"}
               elif (route_shape_ok | not) then
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SUPPORT_SHAPE_INVALID"}
+              elif (graph_observation_present | not) then unknown_assessment("public-cli-graph-dump"; "GRAPH_OBSERVATION_MISSING")
+              elif (graph_observation_ok | not) then {decision:"REFUTED",resolution:"FAIL_CLOSED",reason:"GRAPH_OBSERVATION_MISMATCH",unknown:null}
               elif (trusted_report_ok | not) then
                 {decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"SOURCE_REPORT_MISMATCH"}
               elif (binding_ok | not) then
@@ -565,6 +592,8 @@ jobs:
             --slurpfile trusted_report "$report" \
             --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
             --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
+            --slurpfile graph_support "$support/graph-support-receipt.json" \
+            --arg graph_support_digest "$graph_support_digest" \
             "$support_valid" "$support/support-projection.json" > /dev/null
 
           record_boundary_case() {
@@ -590,6 +619,8 @@ jobs:
               --slurpfile trusted_report "$report" \
               --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
               --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
+              --slurpfile graph_support "$support/graph-support-receipt.json" \
+              --arg graph_support_digest "$graph_support_digest" \
               "$support_assess" "$case_file" > "$assessment_file"; then
               record_static_boundary_case "$name" "REFUTED" "FAIL_CLOSED" "BOUNDARY_CASE_ASSESSMENT_FAILED"
               jq --arg name "$name" --arg reason "BOUNDARY_CASE_ASSESSMENT_FAILED" \
@@ -625,6 +656,11 @@ jobs:
           }
 
           expect_boundary_case "positive" "PASS" "EXACT" "ENTITY_FIELDS_SUPPORT_CLOSED" "$support/support-projection.json"
+          jq 'del(.runtime.public_cli.graph_dump)' "$support/support-projection.json" > "$support/missing-graph-observation.json"
+          expect_boundary_case missing_graph_observation UNKNOWN LOWER_RESOLUTION GRAPH_OBSERVATION_MISSING "$support/missing-graph-observation.json"
+          jq '.runtime.public_cli.graph_dump.receipt_digest = ("sha256:" + ("0" * 64))' "$support/support-projection.json" > "$support/mismatched-graph-observation.json"
+          expect_boundary_case mismatched_graph_observation REFUTED FAIL_CLOSED GRAPH_OBSERVATION_MISMATCH "$support/mismatched-graph-observation.json"
+
           if ! cmp -s "$support/support-section.md" docs/entity-fields-support.md; then
             record_static_boundary_case "stale_document" "REFUTED" "FAIL_CLOSED" "DOCUMENTATION_CONTRADICTION"
             jq '.failure = {case:"stale_document", decision:"REFUTED", resolution:"FAIL_CLOSED", reason:"DOCUMENTATION_MISMATCH"}' \
@@ -698,6 +734,8 @@ jobs:
             --slurpfile trusted_report "$report" \
             --arg meta_source_digest "$meta_source_digest" --arg profile_digest "$profile_digest" \
             --arg generated_output_digest "$generated_output_digest" --arg generated_manifest_digest "$generated_manifest_digest" \
+            --slurpfile graph_support "$support/graph-support-receipt.json" \
+            --arg graph_support_digest "$graph_support_digest" \
             "$support_assess as \$assessment | \$assessment.decision == \"PASS\" and \$assessment.resolution == \"EXACT\"" "$support/support-projection.json" > /dev/null
           jq -e --arg head "$HEAD_SHA" '
             def unknown_boundary($name):
@@ -709,7 +747,7 @@ jobs:
               .boundary_cases[$name].unknown.unknown_class == "DIRECT_MISSING" and
               (.boundary_cases[$name].unknown.next_operation | type == "string" and length > 0) and
               .boundary_cases[$name].unknown.blocked_by == [];
-            .schema == "gooo/entity-fields-support/v1" and .runtime.head_sha == $head and
+            .schema == "gooo/entity-fields-support/v2" and .runtime.head_sha == $head and
             .documentation.path == "docs/entity-fields-support.md" and
             .documentation.decision == "PASS" and .documentation.comparison == "EXACT" and
             .boundary_cases.positive.decision == "PASS" and .boundary_cases.positive.resolution == "EXACT" and
