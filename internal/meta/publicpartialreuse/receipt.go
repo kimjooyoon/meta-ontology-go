@@ -27,6 +27,9 @@ const (
 	RefutedReason    = "FAIL_CLOSED_PARTIAL_REUSE_CONTRADICTION"
 )
 
+// ErrInvalidReceipt identifies invalid content, not unavailable input.
+var ErrInvalidReceipt = errors.New("partial reuse receipt content is invalid")
+
 var compilerManifestPaths = []string{
 	"cmd/gooo/generate_part01.go",
 	"cmd/gooo/generate_pipeline_part03.go",
@@ -198,7 +201,7 @@ func ValidateReceipt(receipt Receipt) error {
 
 func VerifyReceipt(receipt Receipt, expected Binding, partition string) error {
 	if err := ValidateReceipt(receipt); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	if receipt.Partition != partition || receipt.Binding != expected {
 		return errors.New("partial reuse receipt does not bind the exact partition inputs")
@@ -250,14 +253,14 @@ func ReadReceipt(filename string) (Receipt, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&receipt); err != nil {
-		return Receipt{}, err
+		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
-		return Receipt{}, errors.New("partial reuse receipt contains trailing JSON")
+		return Receipt{}, fmt.Errorf("%w: trailing JSON", ErrInvalidReceipt)
 	}
 	if err := ValidateReceipt(receipt); err != nil {
-		return Receipt{}, err
+		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	return receipt, nil
 }
