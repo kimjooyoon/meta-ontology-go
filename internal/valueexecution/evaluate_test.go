@@ -76,8 +76,9 @@ func TestValidateRejectsDeclaredValueScopeCohort(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			report := Evaluate(filesystem, "main.gooo", "Increment", head)
 			report.Scope = test.scope
-			if err := Validate(report, head); err == nil {
-				t.Fatalf("scope %q unexpectedly validated", test.scope)
+			report.Digest = reportDigest(report)
+			if err := Validate(report, head); err == nil || err.Error() != "value witness identity is invalid" {
+				t.Fatalf("scope %q validation error = %v, want value witness identity is invalid", test.scope, err)
 			}
 		})
 	}
