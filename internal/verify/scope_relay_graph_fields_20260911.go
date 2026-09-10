@@ -14,5 +14,6 @@ func init() {
 		"examples/relay-game-contract/README.md",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"examples/language-syntax-roundtrip/corpus.json",
+		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 	}
 }
