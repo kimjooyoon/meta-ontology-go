@@ -55,6 +55,32 @@
     "dev",
     "main"
   ],
+  "protected_kernel_paths": [
+    ".github/workflows/**",
+    ".github/ci-governance.json",
+    ".github/agent-scope-table.md",
+    ".github/branch-policy.md",
+    ".github/conformance-plan.md",
+    "scripts/ci-proof/**",
+    "scripts/ci-evidence/**",
+    "scripts/verify/**",
+    "internal/verify/**",
+    "go.mod",
+    "go.sum"
+  ],
+  "promotion": {
+    "source": "dev",
+    "target": "main",
+    "required_checks": [
+      "gofmt",
+      "go vet",
+      "go test",
+      "go test -race",
+      "Semantic conformance",
+      "CI policy"
+    ],
+    "branch_protection_required": true
+  },
   "ownership": [
     {
       "branch": "agent/callback-observer-cli-20260910",
@@ -4234,32 +4260,20 @@
         "scripts/self-improvement-contract/workflow_authority_cases_test.go",
         "scripts/self-improvement-contract/workflow_authority_test.go"
       ]
+    },
+    {
+      "branch": "agent/partial-reuse-evidence-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/publicpartialreuse/evaluator.go",
+        "internal/meta/publicpartialreuse/evaluator_receipt_test.go",
+        "internal/meta/publicpartialreuse/receipt.go",
+        "internal/meta/publicpartialreuse/receipt_failure_test.go",
+        "internal/meta/publicpartialreuse/receipt_fixture_test.go",
+        "internal/verify/scope_partial_reuse_evidence_20260911.go",
+        "scripts/self-improvement-public-partial-reuse/run.go"
+      ]
     }
-  ],
-  "protected_kernel_paths": [
-    ".github/workflows/**",
-    ".github/ci-governance.json",
-    ".github/agent-scope-table.md",
-    ".github/branch-policy.md",
-    ".github/conformance-plan.md",
-    "scripts/ci-proof/**",
-    "scripts/ci-evidence/**",
-    "scripts/verify/**",
-    "internal/verify/**",
-    "go.mod",
-    "go.sum"
-  ],
-  "promotion": {
-    "source": "dev",
-    "target": "main",
-    "required_checks": [
-      "gofmt",
-      "go vet",
-      "go test",
-      "go test -race",
-      "Semantic conformance",
-      "CI policy"
-    ],
-    "branch_protection_required": true
-  }
+  ]
 }
