@@ -6,7 +6,7 @@ import (
 )
 
 func Validate(receipt Receipt) error {
-	if receipt.Schema != "gooo/language-debug-receipt/v1" || receipt.Digest == "" {
+	if receipt.Schema != "gooo/language-debug-receipt/v1" || receipt.Scope != SourceExecutionScope || receipt.Digest == "" {
 		return fmt.Errorf("debug receipt identity is invalid")
 	}
 	if seal(receipt).Digest != receipt.Digest || !slices.Equal(receipt.NonClaims, CanonicalNonClaims()) {

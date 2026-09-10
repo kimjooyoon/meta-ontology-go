@@ -18,7 +18,7 @@ func TestExecuteActivityContractReplaysExactly(t *testing.T) {
 	if err := Validate(first); err != nil {
 		t.Fatal(err)
 	}
-	if first.Digest != replay.Digest || first.Decision != "PASS" || len(first.Events) != 4 {
+	if first.Digest != replay.Digest || first.Scope != DeclarationResolutionScope || first.Decision != "PASS" || len(first.Events) != 4 {
 		t.Fatalf("first=%#v replay=%#v", first, replay)
 	}
 	if len(first.Entry.Inputs) != 2 || first.Entry.Output.ID != "billing://entity/payment" {
@@ -39,7 +39,7 @@ func TestExecuteFailuresAreExplicitAndSealed(t *testing.T) {
 		if err := Validate(receipt); err != nil {
 			t.Fatalf("%s: %v", test.code, err)
 		}
-		if receipt.Decision != "FAIL_CLOSED" || receipt.Reason != test.code || len(receipt.Diagnostics) != 1 {
+		if receipt.Scope != DeclarationResolutionScope || receipt.Decision != "FAIL_CLOSED" || receipt.Reason != test.code || len(receipt.Diagnostics) != 1 {
 			t.Fatalf("receipt=%#v", receipt)
 		}
 	}

@@ -9,7 +9,8 @@ not sufficient.
 The runtime normalizes a manifest, orders a package import DAG, parses and
 lowers every `.gooo` source through the existing syntax and semantic IR, and
 resolves one activity contract. It produces an immutable runtime image and
-invocation plan. It does not execute handwritten Go function bodies, load Go
+invocation plan. Its receipt scope is `DECLARATION_RESOLUTION_ONLY`; it does
+not execute handwritten Go function bodies, load Go
 plugins, access the network, or write the repository.
 
 ## Fixed denominator

@@ -13,7 +13,7 @@ func TestEvaluateProducesExactValueWitness(t *testing.T) {
 	if err := Validate(report, head); err != nil {
 		t.Fatal(err)
 	}
-	if report.Cases[3].Actual != 42 || report.Improvement.Before.Satisfied != 0 || report.Improvement.After.Satisfied != 1 {
+	if report.Scope != RegisteredValueOperationScope || report.Cases[3].Actual != 42 || report.Improvement.Before.Satisfied != 0 || report.Improvement.After.Satisfied != 1 {
 		t.Fatalf("value-level evidence is not exact: %#v", report)
 	}
 }

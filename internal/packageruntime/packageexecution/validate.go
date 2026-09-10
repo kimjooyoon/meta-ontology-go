@@ -10,6 +10,9 @@ func Validate(receipt Receipt) error {
 	if receipt.Schema != ReceiptSchema {
 		return fmt.Errorf("packageexecution: schema mismatch")
 	}
+	if receipt.Scope != sourceexecution.DeclarationResolutionScope {
+		return fmt.Errorf("packageexecution: scope mismatch")
+	}
 	if receipt.Decision != "PASS" && receipt.Decision != "FAIL_CLOSED" {
 		return fmt.Errorf("packageexecution: unknown decision %q", receipt.Decision)
 	}
@@ -49,6 +52,9 @@ func validateExecution(receipt Receipt) error {
 	if receipt.Execution != nil {
 		if err := sourceexecution.Validate(*receipt.Execution); err != nil {
 			return fmt.Errorf("packageexecution: nested receipt: %w", err)
+		}
+		if receipt.Execution.Scope != receipt.Scope {
+			return fmt.Errorf("packageexecution: nested execution scope mismatch")
 		}
 	}
 	if receipt.Decision != "PASS" {

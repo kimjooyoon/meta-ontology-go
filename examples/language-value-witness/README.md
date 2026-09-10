@@ -9,6 +9,10 @@ counterexamples, three reader resolutions, and the fixed scoped coordinate
 semantic fingerprints. Core IR preservation and fingerprint sensitivity are
 each `1/1`; an unknown declaration attribute remains fail-closed at `1/1`.
 
+Its receipt scope is `REGISTERED_VALUE_OPERATION`: the registered `int.add`
+operation applies to the declared value program. This does not claim
+handwritten Go-body execution or external effects.
+
 This does not claim a general expression language, arbitrary value types,
 core IR execution or code generation, runtime memory or performance bounds, or
 authority to mutate the repository.

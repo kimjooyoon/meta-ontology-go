@@ -28,7 +28,7 @@ func TestObserveRejectsMissingBreakpoint(t *testing.T) {
 func executionJSON(t *testing.T) []byte {
 	t.Helper()
 	execution := executionReceipt{
-		Schema: "gooo/source-execution-receipt/v1", Decision: "PASS", Resolution: "EXACT",
+		Schema: "gooo/source-execution-receipt/v1", Scope: SourceExecutionScope, Decision: "PASS", Resolution: "EXACT",
 		Filename: "main.gooo", SourceDigest: testDigest('a'), SemanticDigest: testDigest('b'),
 		Entry: json.RawMessage(`{"activity":"PayOrder"}`), Digest: testDigest('c'),
 		Events: []Event{{1, "SOURCE_PARSED", "a"}, {2, "SEMANTIC_LOWERED", "b"},

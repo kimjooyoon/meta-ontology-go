@@ -8,6 +8,8 @@ const (
 	MaximumSamples         = 20
 )
 
+const ExecutionScope = sourceexecution.DeclarationResolutionScope
+
 type Request struct {
 	Filename string
 	Source   string
@@ -56,6 +58,7 @@ type Effects struct {
 
 type Receipt struct {
 	Schema         string                `json:"schema"`
+	Scope          string                `json:"scope"`
 	Decision       string                `json:"decision"`
 	Resolution     string                `json:"resolution"`
 	Reason         string                `json:"reason"`

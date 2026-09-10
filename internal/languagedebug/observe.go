@@ -33,7 +33,7 @@ func Observe(data []byte, breakpoint string) Receipt {
 
 func fromExecution(execution executionReceipt, breakpoint string) Receipt {
 	return Receipt{
-		Schema: "gooo/language-debug-receipt/v1", Resolution: ResolutionExact,
+		Schema: "gooo/language-debug-receipt/v1", Scope: SourceExecutionScope, Resolution: ResolutionExact,
 		Filename: execution.Filename, SourceDigest: execution.SourceDigest,
 		SemanticDigest: execution.SemanticDigest, ExecutionDigest: execution.Digest,
 		Entry: execution.Entry, Breakpoint: breakpoint, Diagnostics: execution.Diagnostics,

@@ -30,7 +30,7 @@ func TestExecuteResultUsesActualGoooAndRegisteredOperation(t *testing.T) {
 		t.Fatalf("result integer = %d, err=%v, want 42", value, err)
 	}
 	evidence := result.Evidence()
-	if evidence.ProducerActivityID != "valuewitness://activity/increment" ||
+	if evidence.Scope != RegisteredValueOperationScope || evidence.ProducerActivityID != "valuewitness://activity/increment" ||
 		evidence.ProducerActivity != "Increment" || evidence.OutputEntityID != "gooo://value-witness/entity/integer" ||
 		evidence.OutputEntity != IntegerEntity || evidence.SourceDigest != digestBytes(source) ||
 		evidence.SemanticFingerprint != program.SemanticFingerprint || evidence.OperationSpecDigest != program.Operation.SpecDigest ||

@@ -12,7 +12,7 @@ func ObserveRuntime(request Request) Receipt { return Observe(request, RuntimeMe
 
 func Observe(request Request, measurer Measurer) Receipt {
 	receipt := Receipt{
-		Schema: ReceiptSchema, Filename: request.Filename, Entry: request.Entry,
+		Schema: ReceiptSchema, Scope: ExecutionScope, Filename: request.Filename, Entry: request.Entry,
 		SourceDigest: digestBytes([]byte(request.Source)), Samples: []Sample{}, Effects: Effects{},
 		Runner:     Runner{GoVersion: runtime.Version(), OS: runtime.GOOS, Architecture: runtime.GOARCH},
 		NotClaimed: DefaultNonClaims(),
