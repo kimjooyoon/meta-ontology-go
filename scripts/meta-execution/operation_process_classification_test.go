@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 func TestVerifierProcessClassification(t *testing.T) {
@@ -18,12 +20,15 @@ func TestVerifierProcessClassification(t *testing.T) {
 		wantClass  string
 		wantNil    bool
 		wantExit   int
+		wantDecision string
 		wantExitErr bool
+		wantUnknownClass string
+		wantNext string
 	}{
 		{name: "success", mode: "success", wantNil: true, wantExit: 0},
-		{name: "positive exit", mode: "positive-exit", wantReason: "PROJECTED_COMPILE_OR_TEST_FAILED", wantClass: "KNOWN_CONTRADICTION", wantExit: 7, wantExitErr: true},
-		{name: "start unavailable", missing: true, wantReason: "PROJECTED_COMPILE_OR_TEST_UNAVAILABLE", wantClass: "DIRECT_MISSING", wantExit: -1},
-		{name: "signal termination", mode: "signal", wantReason: "PROJECTED_COMPILE_OR_TEST_INTERRUPTED", wantClass: "DIRECT_MISSING", wantExit: -1, wantExitErr: true},
+		{name: "positive exit", mode: "positive-exit", wantReason: "PROJECTED_COMPILE_OR_TEST_FAILED", wantClass: "KNOWN_CONTRADICTION", wantExit: 7, wantDecision: "REFUTED", wantExitErr: true, wantNext: "report-counterexample"},
+		{name: "start unavailable", missing: true, wantReason: "PROJECTED_COMPILE_OR_TEST_UNAVAILABLE", wantClass: "DIRECT_MISSING", wantExit: -1, wantDecision: "UNKNOWN", wantUnknownClass: "DIRECT_MISSING", wantNext: "restore-operation-evidence"},
+		{name: "signal termination", mode: "signal", wantReason: "PROJECTED_COMPILE_OR_TEST_INTERRUPTED", wantClass: "DIRECT_MISSING", wantExit: -1, wantDecision: "UNKNOWN", wantExitErr: true, wantUnknownClass: "DIRECT_MISSING", wantNext: "restore-operation-evidence"},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -45,8 +50,16 @@ func TestVerifierProcessClassification(t *testing.T) {
 				}
 				return
 			}
-			if failure == nil || failure.reason != testCase.wantReason || failure.class != testCase.wantClass || failure.next != "restore-operation-evidence" {
-				t.Fatalf("failure = %+v, want reason=%s class=%s next=restore-operation-evidence", failure, testCase.wantReason, testCase.wantClass)
+			if failure == nil || failure.reason != testCase.wantReason || failure.class != testCase.wantClass || failure.next != testCase.wantNext {
+				t.Fatalf("failure = %+v, want reason=%s class=%s next=%s", failure, testCase.wantReason, testCase.wantClass, testCase.wantNext)
+			}
+			action := generation.Action{IndicatorID: "verifier-process-fixture"}
+			observed := observationFailureFromError(action, failure, result.Observation)
+			if observed.Decision != testCase.wantDecision || observed.Stage != "verify-operation" ||
+				observed.Step != "go-test-projected-workspace" || observed.Reason != testCase.wantReason ||
+				observed.UnknownClass != testCase.wantUnknownClass || observed.NextOperation != testCase.wantNext ||
+				observed.BlockedBy == nil || len(observed.BlockedBy) != 0 || observed.ActionIndicatorID != action.IndicatorID {
+				t.Fatalf("observation failure = %+v, want decision=%s stage=verify-operation step=go-test-projected-workspace reason=%s unknown_class=%s next=%s blocked_by=[]", observed, testCase.wantDecision, testCase.wantReason, testCase.wantUnknownClass, testCase.wantNext)
 			}
 		})
 	}
