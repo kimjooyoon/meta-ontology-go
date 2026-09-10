@@ -782,6 +782,14 @@ jobs:
           ' "$publish_root/scope-partition.json" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve detailed syntax outcomes without changing the gate
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: language-syntax-outcomes-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/language-syntax-scope-partition-work/language-syntax-roundtrip/*/artifact.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload language syntax scope partition evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
