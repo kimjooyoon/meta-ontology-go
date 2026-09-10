@@ -4162,6 +4162,16 @@
         "cmd/language-syntax-witness/negative_report.go",
         "cmd/language-syntax-witness/negative_report_test.go"
       ]
+    },
+    {
+      "branch": "agent/native-test-cost-trace-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_native_test_cost_trace_20260911.go",
+        "scripts/meta-execution/collapse_execution_test.go",
+        "scripts/meta-execution/collapse_execution_trace_test.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
