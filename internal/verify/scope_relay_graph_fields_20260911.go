@@ -12,5 +12,7 @@ func init() {
 		"cmd/gooo/graph_fields_invalid_test.go",
 		"examples/relay-game-contract/main.gooo",
 		"examples/relay-game-contract/README.md",
+		"internal/meta/languagereadiness/languagesyntax/registry.go",
+		"examples/language-syntax-roundtrip/corpus.json",
 	}
 }

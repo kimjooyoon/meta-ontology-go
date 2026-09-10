@@ -15,3 +15,7 @@ field identity and malformed cardinality. Validation runs in GitHub Actions;
 the existence of this fixture is not evidence that those tests have passed.
 
 Consumer evidence: https://github.com/kimjooyoon/meta-ontology-go/issues/763
+
+The declaration is registered as a meta source in the syntax inventory, not as
+an extra language completeness case. The existing 60-case denominator stays
+unchanged. Its graph behavior is covered separately by the CLI regressions.

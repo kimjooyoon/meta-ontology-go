@@ -68,7 +68,9 @@
         "cmd/gooo/graph_fields_v1_test.go",
         "cmd/gooo/graph_fields_invalid_test.go",
         "examples/relay-game-contract/main.gooo",
-        "examples/relay-game-contract/README.md"
+        "examples/relay-game-contract/README.md",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "examples/language-syntax-roundtrip/corpus.json"
       ]
     },
     {
