@@ -32,7 +32,10 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"ci-evidence.json",
 		"Capture CLI domain evidence",
 		"go run ./cmd/gooo check examples/billing/main.gooo",
-		"go run ./cmd/gooo graph-dump examples/billing/main.gooo",
+		"go run ./cmd/gooo graph dump examples/billing/main.gooo",
+		"reason: 'GRAPH_OBSERVER_NOT_RUN'",
+		"observation: {state: 'UNKNOWN', stage: 'DOMAIN_EVIDENCE', step: 'GRAPH_DUMP'",
+		"unknown_class: 'DIRECT_MISSING', next_operation: 'RUN_GRAPH_DUMP_OBSERVER', blocked_by: []",
 		"ci-domain-evidence.json",
 		"domain_evidence",
 		"CI_SLOT_PRESERVATION: \"true\"",
@@ -59,6 +62,9 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		}
 	}
 	assertWorkflowIdentityMarkers(t, text)
+	if strings.Contains(text, "graph-dump is not implemented") {
+		t.Fatal("an unexecuted observer must not claim language capability is absent")
+	}
 	if strings.Contains(text, "BRANCH_PROTECTION_TOKEN") || strings.Contains(text, "getBranchProtection") {
 		t.Fatal("pull_request CI must not read branch protection or receive its observer credential")
 	}
