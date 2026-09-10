@@ -10,7 +10,7 @@ import (
 func graphObservationFixture() domainCommand {
 	return domainCommand{
 		Command: "go run ./cmd/gooo graph dump examples/billing/main.gooo",
-		Status: "deferred", Reason: "GRAPH_OBSERVER_NOT_RUN", OutputSHA256: digestBytes(nil),
+		Status:  "deferred", Reason: "GRAPH_OBSERVER_NOT_RUN", OutputSHA256: digestBytes(nil),
 		Observation: &graphObservation{
 			State: "UNKNOWN", Stage: "DOMAIN_EVIDENCE", Step: "GRAPH_DUMP", Reason: "GRAPH_OBSERVER_NOT_RUN",
 			UnknownClass: "DIRECT_MISSING", NextOperation: "RUN_GRAPH_DUMP_OBSERVER", BlockedBy: []string{},
