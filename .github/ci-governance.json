@@ -4273,6 +4273,7 @@
         "cmd/gooo/run_package_source.go",
         "cmd/gooo/run_package_source_test.go",
         "cmd/gooo/run_source_part01.go",
+        "docs/assets/ontology-visuals/visual-manifest.json",
         "docs/language/language-delivery-scorecard.md",
         "docs/language/language-package-execution.md",
         "docs/language/language-package-runtime.md",

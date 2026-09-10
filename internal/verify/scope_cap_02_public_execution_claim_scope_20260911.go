@@ -11,6 +11,7 @@ func init() {
 		"docs/language/language-package-execution.md",
 		"docs/language/language-package-runtime.md",
 		"docs/language/language-source-execution.md",
+		"docs/assets/ontology-visuals/visual-manifest.json",
 		"examples/billing-package/operation-interface.golden.json",
 		"examples/billing-package/operation-manifest.artifact.golden.json",
 		"examples/language-debug/README.md",
