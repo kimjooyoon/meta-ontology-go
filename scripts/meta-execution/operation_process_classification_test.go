@@ -13,17 +13,17 @@ import (
 
 func TestVerifierProcessClassification(t *testing.T) {
 	cases := []struct {
-		name       string
-		mode       string
-		missing    bool
-		wantReason string
-		wantClass  string
-		wantNil    bool
-		wantExit   int
-		wantDecision string
-		wantExitErr bool
+		name             string
+		mode             string
+		missing          bool
+		wantReason       string
+		wantClass        string
+		wantNil          bool
+		wantExit         int
+		wantDecision     string
+		wantExitErr      bool
 		wantUnknownClass string
-		wantNext string
+		wantNext         string
 	}{
 		{name: "success", mode: "success", wantNil: true, wantExit: 0},
 		{name: "positive exit", mode: "positive-exit", wantReason: "PROJECTED_COMPILE_OR_TEST_FAILED", wantClass: "KNOWN_CONTRADICTION", wantExit: 7, wantDecision: "REFUTED", wantExitErr: true, wantNext: "report-counterexample"},
