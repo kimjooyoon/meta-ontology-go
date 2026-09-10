@@ -116,8 +116,12 @@ func Evaluate(input EvaluationInput) (CaseReport, error) {
 			impacted++
 			continue
 		}
-		if scenario.ReceiptVariant != "valid" {
-			refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
+		if err := input.ReceiptErrors[partition.ID]; err != nil {
+			if errors.Is(err, ErrInvalidReceipt) {
+				refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
+			} else {
+				unknowns = append(unknowns, unknownState("REUSE", "LOAD_PARTITION_RECEIPT", "PARTITION_RECEIPT_UNAVAILABLE", []string{"readable_partition_receipt", "exact_partition_binding"}))
+			}
 			continue
 		}
 		receipt, ok := input.Receipts[partition.ID]
@@ -125,12 +129,12 @@ func Evaluate(input EvaluationInput) (CaseReport, error) {
 			unknowns = append(unknowns, unknownState("REUSE", "LOAD_PARTITION_RECEIPT", "MISSING_OR_STALE_PARTITION_RECEIPT", []string{"immutable_successful_partition_receipt", "explicit_reuse_authorization"}))
 			continue
 		}
-		if err := input.ReceiptErrors[partition.ID]; err != nil {
-			refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
-			continue
-		}
 		if err := VerifyReceipt(receipt, input.Bindings[partition.ID], partition.ID); err != nil {
-			unknowns = append(unknowns, unknownState("REUSE", "VALIDATE_PARTITION_RECEIPT", "STALE_PARTITION_RECEIPT_BINDING", []string{"exact_partition_binding", "same_test_contract", "same_toolchain"}))
+			if errors.Is(err, ErrInvalidReceipt) {
+				refuted = append(refuted, "TAMPERED_PARTITION_RECEIPT")
+			} else {
+				unknowns = append(unknowns, unknownState("REUSE", "VALIDATE_PARTITION_RECEIPT", "STALE_PARTITION_RECEIPT_BINDING", []string{"exact_partition_binding", "same_test_contract", "same_toolchain"}))
+			}
 		}
 	}
 

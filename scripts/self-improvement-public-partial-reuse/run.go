@@ -273,11 +273,20 @@ func executeNegativeCases(policy publicpartialreuse.Policy, positive caseArtifac
 			if err != nil {
 				return nil, err
 			}
-			data = append(data, '\n')
+			data = append(data, '\n', '{', '}', '\n')
 			if err := writeNew(path, data, 0o444); err != nil {
 				return nil, err
 			}
 			_, err = publicpartialreuse.ReadReceipt(path)
+			if err == nil {
+				return nil, fmt.Errorf("tampered partition receipt was accepted")
+			}
+			input.Receipts = make(map[string]publicpartialreuse.Receipt, len(receipts))
+			for partition, receipt := range receipts {
+				if partition != policy.Partitions[0].ID {
+					input.Receipts[partition] = receipt
+				}
+			}
 			input.ReceiptErrors = map[string]error{policy.Partitions[0].ID: err}
 		}
 		caseReport, err := publicpartialreuse.Evaluate(input)
