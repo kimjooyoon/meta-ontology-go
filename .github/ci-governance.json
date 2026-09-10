@@ -55,32 +55,6 @@
     "dev",
     "main"
   ],
-  "protected_kernel_paths": [
-    ".github/workflows/**",
-    ".github/ci-governance.json",
-    ".github/agent-scope-table.md",
-    ".github/branch-policy.md",
-    ".github/conformance-plan.md",
-    "scripts/ci-proof/**",
-    "scripts/ci-evidence/**",
-    "scripts/verify/**",
-    "internal/verify/**",
-    "go.mod",
-    "go.sum"
-  ],
-  "promotion": {
-    "source": "dev",
-    "target": "main",
-    "required_checks": [
-      "gofmt",
-      "go vet",
-      "go test",
-      "go test -race",
-      "Semantic conformance",
-      "CI policy"
-    ],
-    "branch_protection_required": true
-  },
   "ownership": [
     {
       "branch": "agent/callback-observer-cli-20260910",
@@ -4262,6 +4236,22 @@
       ]
     },
     {
+      "branch": "agent/native-journal-reconstruction-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_native_journal_reconstruction_20260911.go",
+        "scripts/meta-cost-report/native_journal_fixture_test.go",
+        "scripts/meta-cost-report/native_journal_rejection_test.go",
+        "scripts/meta-cost-report/native_journal_test.go",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/README.md",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/capture.json",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/first.ndjson",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/replay.ndjson"
+      ]
+    },
+    {
       "branch": "agent/partial-reuse-evidence-20260911",
       "paths": [
         ".github/agent-scope-table.md",
@@ -4275,5 +4265,31 @@
         "scripts/self-improvement-public-partial-reuse/run.go"
       ]
     }
-  ]
+  ],
+  "protected_kernel_paths": [
+    ".github/workflows/**",
+    ".github/ci-governance.json",
+    ".github/agent-scope-table.md",
+    ".github/branch-policy.md",
+    ".github/conformance-plan.md",
+    "scripts/ci-proof/**",
+    "scripts/ci-evidence/**",
+    "scripts/verify/**",
+    "internal/verify/**",
+    "go.mod",
+    "go.sum"
+  ],
+  "promotion": {
+    "source": "dev",
+    "target": "main",
+    "required_checks": [
+      "gofmt",
+      "go vet",
+      "go test",
+      "go test -race",
+      "Semantic conformance",
+      "CI policy"
+    ],
+    "branch_protection_required": true
+  }
 }
