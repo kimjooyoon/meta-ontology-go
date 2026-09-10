@@ -46,8 +46,8 @@ func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int
 			return exitFailure
 		}
 	} else if receipt.Decision == "PASS" {
-		fmt.Fprintf(stdout, "executed: %s.%s(%s) -> %s digest=%s\n", receipt.Entry.Package,
-			receipt.Entry.Activity, inputNames(receipt.Entry.Inputs), receipt.Entry.Output.Name, receipt.Digest)
+		fmt.Fprintf(stdout, "executed: %s.%s(%s) -> %s digest=%s scope=%s\n", receipt.Entry.Package,
+			receipt.Entry.Activity, inputNames(receipt.Entry.Inputs), receipt.Entry.Output.Name, receipt.Digest, receipt.Scope)
 	} else {
 		diagnostic := receipt.Diagnostics[0]
 		fmt.Fprintf(stderr, "%s: %s: %s\n", options.filename, diagnostic.Code, diagnostic.Message)

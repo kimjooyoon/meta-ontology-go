@@ -9,6 +9,9 @@ func Validate(receipt Receipt) error {
 	if receipt.Schema != ReceiptSchema {
 		return fmt.Errorf("SOURCE_EXECUTION_SCHEMA_UNKNOWN")
 	}
+	if receipt.Scope != DeclarationResolutionScope {
+		return fmt.Errorf("SOURCE_EXECUTION_SCOPE_UNKNOWN")
+	}
 	if receipt.Decision != "PASS" && receipt.Decision != "FAIL_CLOSED" {
 		return fmt.Errorf("SOURCE_EXECUTION_DECISION_UNKNOWN")
 	}

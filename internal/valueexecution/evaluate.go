@@ -21,11 +21,8 @@ func Evaluate(filesystem fs.FS, sourcePath, activity, headSHA string) Report {
 
 func newReport(sourcePath, headSHA string) Report {
 	return Report{
-		Schema: ReportSchema, Decision: DecisionFailClosed, Reason: ReasonSourceReadFailed,
+		Schema: ReportSchema, Scope: RegisteredValueOperationScope, Decision: DecisionFailClosed, Reason: ReasonSourceReadFailed,
 		Resolution: ResolutionSyntaxOnly, HeadSHA: headSHA, SourcePath: sourcePath,
-		NonClaims: []string{
-			"general expression language", "arbitrary value types", "core IR execution or code generation",
-			"runtime memory or performance bounds", "repository mutation, promotion, or automatic adoption",
-		},
+		NonClaims: DefaultNonClaims(),
 	}
 }

@@ -14,7 +14,7 @@ const sourceFixture = "package billing\nnamespace billing\n\n" +
 func artifactFixture() sourceArtifact {
 	sourceDigest := digestBytes([]byte(sourceFixture))
 	semanticDigest := "sha256:" + strings.Repeat("a", 64)
-	artifact := sourceArtifact{Schema: SourceArtifactSchema, Decision: "PASS",
+	artifact := sourceArtifact{Schema: SourceArtifactSchema, Scope: SourceArtifactScope, Decision: "PASS",
 		Reason: "SOURCE_ACTIVITY_EXECUTED", Resolution: "EXACT",
 		Filename: "examples/billing/main.gooo", SourceDigest: sourceDigest,
 		SemanticDigest: semanticDigest, Entry: artifactEntry{Package: "billing", Namespace: "billing",

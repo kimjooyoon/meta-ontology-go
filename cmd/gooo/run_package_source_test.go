@@ -20,7 +20,7 @@ func TestRunSourceAcceptsPackageDirectory(t *testing.T) {
 		t.Fatalf("handled=%t code=%d stderr=%s", handled, code, stderr.String())
 	}
 	receipt := decodePackageReceipt(t, stdout.Bytes())
-	if receipt.Decision != "PASS" || len(receipt.Sources) != 2 {
+	if receipt.Scope != "DECLARATION_RESOLUTION_ONLY" || receipt.Decision != "PASS" || len(receipt.Sources) != 2 {
 		t.Fatalf("decision=%s sources=%d", receipt.Decision, len(receipt.Sources))
 	}
 }

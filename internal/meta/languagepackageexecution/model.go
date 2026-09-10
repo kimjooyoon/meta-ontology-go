@@ -1,11 +1,16 @@
 package languagepackageexecution
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/packageruntime/packageexecution"
+	"github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
+)
 
 const (
 	ContractSchema = "gooo/language-package-execution-contract/v1"
 	ReportSchema   = "gooo/language-package-execution-report/v1"
 )
+
+const ExecutionScope = sourceexecution.DeclarationResolutionScope
 
 type CaseSpec struct {
 	ID               string `json:"id"`
