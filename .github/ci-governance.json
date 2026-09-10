@@ -4240,6 +4240,7 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
         "internal/verify/scope_native_journal_reconstruction_20260911.go",
         "scripts/meta-cost-report/native_journal_fixture_test.go",
         "scripts/meta-cost-report/native_journal_rejection_test.go",
