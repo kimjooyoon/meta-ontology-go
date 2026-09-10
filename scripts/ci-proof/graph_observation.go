@@ -17,9 +17,7 @@ type graphObservation struct {
 func validateGraphObservation(graph domainCommand) error {
 	observation := graph.Observation
 	if observation == nil {
-		// Historical v2 receipts predate observer coverage. Retain their bytes;
-		// missing coverage is not a capability result or a new execution claim.
-		return nil
+		return validateHistoricalGraphEnvelope(graph)
 	}
 	if graph.Command != "go run ./cmd/gooo graph dump examples/billing/main.gooo" || graph.Status != "deferred" || graph.Available {
 		return fmt.Errorf("graph observer coverage must describe the unexecuted graph dump operation")
@@ -36,6 +34,21 @@ func validateGraphObservation(graph domainCommand) error {
 	// An empty digest is a legacy envelope placeholder, not observed output.
 	if graph.Output != "" || graph.OutputSHA256 != digestBytes(nil) {
 		return fmt.Errorf("unexecuted graph observer must not carry fabricated output")
+	}
+	return nil
+}
+
+func validateHistoricalGraphEnvelope(graph domainCommand) error {
+	// Preserve only the known historical envelope, not arbitrary coverage-free
+	// records. A current command cannot become historical by dropping fields.
+	if graph.Command != "go run ./cmd/gooo graph-dump examples/billing/main.gooo" || graph.Status != "deferred" || graph.Available {
+		return fmt.Errorf("current graph observer requires its complete UNKNOWN observation block")
+	}
+	if graph.Reason != "" && graph.Reason != "graph-dump is not implemented in the current checkout" {
+		return fmt.Errorf("coverage-free graph reason does not match the historical envelope")
+	}
+	if graph.Output != "" || (graph.OutputSHA256 != "" && graph.OutputSHA256 != digestBytes(nil)) {
+		return fmt.Errorf("historical deferred graph envelope cannot carry observed output")
 	}
 	return nil
 }

@@ -37,26 +37,38 @@ func TestGraphObserverCoveragePreservesUnknown(t *testing.T) {
 }
 
 func TestGraphObserverCoverageRejectsUnsupportedClaims(t *testing.T) {
-	cases := map[string]func(*domainCommand){
-		"state": func(g *domainCommand) { g.Observation.State = "FIXED_POINT" },
-		"stage": func(g *domainCommand) { g.Observation.Stage = "" },
-		"step": func(g *domainCommand) { g.Observation.Step = "" },
-		"reason": func(g *domainCommand) { g.Observation.Reason = "NOT_IMPLEMENTED" },
-		"envelope reason": func(g *domainCommand) { g.Reason = "NOT_IMPLEMENTED" },
-		"class": func(g *domainCommand) { g.Observation.UnknownClass = "DEPENDENCY_BLOCKED" },
-		"next operation": func(g *domainCommand) { g.Observation.NextOperation = "" },
-		"missing frontier": func(g *domainCommand) { g.Observation.BlockedBy = nil },
-		"invented blocker": func(g *domainCommand) { g.Observation.BlockedBy = []string{"language"} },
-		"stale command": func(g *domainCommand) { g.Command = "go run ./cmd/gooo graph-dump examples/billing/main.gooo" },
-		"verified": func(g *domainCommand) { g.Status = "verified" },
-		"available": func(g *domainCommand) { g.Available = true },
-		"output": func(g *domainCommand) { g.Output = "success" },
-		"output digest": func(g *domainCommand) { g.OutputSHA256 = digestBytes([]byte("success")) },
+	cases := []struct {
+		name   string
+		mutate func(*domainCommand)
+	}{
+		{"state", func(g *domainCommand) { g.Observation.State = "FIXED_POINT" }},
+		{"stage", func(g *domainCommand) { g.Observation.Stage = "" }},
+		{"step", func(g *domainCommand) { g.Observation.Step = "" }},
+		{"reason", func(g *domainCommand) { g.Observation.Reason = "NOT_IMPLEMENTED" }},
+		{"envelope reason", func(g *domainCommand) { g.Reason = "NOT_IMPLEMENTED" }},
+		{"class", func(g *domainCommand) { g.Observation.UnknownClass = "DEPENDENCY_BLOCKED" }},
+		{"next operation", func(g *domainCommand) { g.Observation.NextOperation = "" }},
+		{"missing frontier", func(g *domainCommand) { g.Observation.BlockedBy = nil }},
+		{"invented blocker", func(g *domainCommand) { g.Observation.BlockedBy = []string{"language"} }},
+		{"stale command", func(g *domainCommand) { g.Command = "go run ./cmd/gooo graph-dump examples/billing/main.gooo" }},
+		{"verified", func(g *domainCommand) { g.Status = "verified" }},
+		{"available", func(g *domainCommand) { g.Available = true }},
+		{"output", func(g *domainCommand) { g.Output = "success" }},
+		{"output digest", func(g *domainCommand) { g.OutputSHA256 = digestBytes([]byte("success")) }},
+		{"missing observation", func(g *domainCommand) { g.Observation = nil }},
+		{"stripped current reason", func(g *domainCommand) {
+			g.Observation = nil
+			g.Reason = ""
+		}},
+		{"new reason on legacy command", func(g *domainCommand) {
+			g.Observation = nil
+			g.Command = "go run ./cmd/gooo graph-dump examples/billing/main.gooo"
+		}},
 	}
-	for name, mutate := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
 			graph := graphObservationFixture()
-			mutate(&graph)
+			test.mutate(&graph)
 			if err := validateGraphObservation(graph); err == nil {
 				t.Fatal("unsupported observer claim was accepted")
 			}

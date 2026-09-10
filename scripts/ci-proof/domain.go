@@ -27,14 +27,14 @@ type domainEvidence struct {
 }
 
 type domainCommand struct {
-	Command      string             `json:"command"`
-	Fixture      string             `json:"fixture,omitempty"`
-	Status       string             `json:"status"`
-	Available    bool               `json:"available"`
-	Reason       string             `json:"reason,omitempty"`
-	Output       string             `json:"output,omitempty"`
-	OutputSHA256 string             `json:"output_sha256"`
-	Observation  *graphObservation  `json:"observation,omitempty"`
+	Command      string            `json:"command"`
+	Fixture      string            `json:"fixture,omitempty"`
+	Status       string            `json:"status"`
+	Available    bool              `json:"available"`
+	Reason       string            `json:"reason,omitempty"`
+	Output       string            `json:"output,omitempty"`
+	OutputSHA256 string            `json:"output_sha256"`
+	Observation  *graphObservation `json:"observation,omitempty"`
 }
 
 type domainEvidenceDigest struct {
