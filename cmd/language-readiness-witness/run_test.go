@@ -58,3 +58,17 @@ func TestRunRejectsRepositoryOutput(t *testing.T) {
 		t.Fatal("repository output accepted")
 	}
 }
+
+func TestRunRejectsPartialConceptOperationEvidence(t *testing.T) {
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = run(config{
+		root: root, input: conceptInput(t, root), output: filepath.Join(t.TempDir(), "readiness.json"),
+		expectedSHA: testSHA, conceptOperationBinding: filepath.Join(t.TempDir(), "receipt.json"),
+	}, &bytes.Buffer{})
+	if err == nil {
+		t.Fatal("partial concept-operation evidence was accepted")
+	}
+}

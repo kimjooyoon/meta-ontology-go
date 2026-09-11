@@ -13,6 +13,9 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 	if err != nil {
 		return readinessartifact.Receipt{}, err
 	}
+	if cfg.conceptOperationBinding != "" {
+		return buildConceptOperationObservation(cfg, raw)
+	}
 	if cfg.promotion == "" {
 		return readinessartifact.Build(raw, cfg.expectedSHA)
 	}
