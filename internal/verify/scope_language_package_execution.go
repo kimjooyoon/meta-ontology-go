@@ -27,5 +27,14 @@ func init() {
 		"internal/packageruntime/packageexecution",
 		"internal/verify/scope_language_package_execution.go",
 		"scripts/language-package-execution",
+		"scripts/source-subject-witness/applicability.go",
+		"scripts/source-subject-witness/applicability_fixture_test.go",
+		"scripts/source-subject-witness/applicability_test.go",
+		"scripts/source-subject-witness/catalog_binding_test.go",
+		"scripts/source-subject-witness/counts.go",
+		"scripts/source-subject-witness/function_binding.go",
+		"scripts/source-subject-witness/validate.go",
+		"scripts/source-subject-witness/source.go",
+		"scripts/source-subject-witness/source_test.go",
 	}
 }

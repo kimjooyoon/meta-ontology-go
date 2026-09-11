@@ -27,6 +27,10 @@ func Validate(receipt Receipt, expectedRepository, expectedCurrentHead, expected
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion repository is empty")
 	case receipt.Source.Selection.RunID <= 0 || receipt.Source.Selection.ArtifactID <= 0:
 		return fmt.Errorf("FAIL_CLOSED: proposal promotion source identity is invalid")
+	case receipt.Source.Selection.RequestedRoute != proposalpredecessor.RouteDev && receipt.Source.Selection.RequestedRoute != proposalpredecessor.RouteMain:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion route identity is invalid")
+	case receipt.Source.Selection.HeadBranch != receipt.Source.Selection.RequestedRoute:
+		return fmt.Errorf("FAIL_CLOSED: proposal promotion route identity mismatch")
 	}
 	if err := proposalpredecessor.ValidateObservationEvidence(receipt.ObservationEvidence); err != nil {
 		return err

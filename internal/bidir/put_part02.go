@@ -1,6 +1,8 @@
 package bidir
 
 import (
+	"fmt"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
 
@@ -14,6 +16,9 @@ func putWithTypesAndEntityFieldsSupport(document Document, updated Model, regist
 		return document, putError(PutSourceInvalid, err)
 	}
 	updated = updated.Normalized()
+	if !sameRuntimeBindings(source.RuntimeBindings, updated.RuntimeBindings) {
+		return document, putError(PutWriteConflict, fmt.Errorf("runtime binding changes are not source-representable"))
+	}
 	if err := validateFieldParentStability(source, updated); err != nil {
 		return document, putError(PutModelInvalid, err)
 	}
@@ -32,7 +37,8 @@ func putWithTypesAndEntityFieldsSupport(document Document, updated Model, regist
 	if err := updated.ValidateWithTypes(registry); err != nil {
 		return document, putError(PutModelInvalid, err)
 	}
-	result := Document{Package: document.Package, Namespace: document.Namespace, ImplicitActivityPorts: document.ImplicitActivityPorts}
+	result := Document{Package: document.Package, Namespace: document.Namespace,
+		Policies: append([]semantic.Policy(nil), document.Policies...), RuntimeBindings: append([]RuntimeBinding(nil), document.RuntimeBindings...), ImplicitActivityPorts: document.ImplicitActivityPorts}
 	if result.Package == "" {
 		result.Package = updated.Package
 	}

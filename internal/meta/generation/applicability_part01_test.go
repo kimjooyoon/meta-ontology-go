@@ -45,3 +45,20 @@ func TestPlanAndExecutionBindMetricApplicability(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkflowDiscoveryRootApplicabilityIsAccepted(t *testing.T) {
+	indicator := sourcepolicy.Indicator{
+		MetricID: sourcepolicy.DimensionDirectEntries, Family: sourcepolicy.FamilyTopology,
+		Subject: ".github/workflows", SubjectKind: sourcepolicy.SubjectKindDirectory,
+		Value: 36, Limit: 0, Relation: sourcepolicy.RelationObserve,
+		Applicability:       sourcepolicy.ApplicabilityNotApplicable,
+		ApplicabilityRule:   sourcepolicy.ApplicabilityRuleWorkflowDiscoveryRoot,
+		ApplicabilityReason: sourcepolicy.ApplicabilityReasonWorkflowRootExempt,
+		Satisfied:           true, Proof: sourcepolicy.ProofFoundation,
+		Producer: "repository-projector.topology", Consumer: "github-actions",
+		Operation: sourcepolicy.OperationExemptWorkflowRoot,
+	}
+	if !validIndicatorApplicability(indicator) {
+		t.Fatalf("workflow discovery root exemption was rejected: %+v", indicator)
+	}
+}

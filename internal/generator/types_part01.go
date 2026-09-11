@@ -23,7 +23,12 @@ func validateGoTypes(ir SemanticIR) error {
 		}
 	}
 	for _, activity := range ir.Activities {
-		for _, port := range append(append([]Port(nil), activity.Inputs...), activity.Outputs...) {
+		for _, port := range activity.Inputs {
+			if err := validateTypeExpr(packageScope, port.GoType, "port "+port.ID); err != nil {
+				return err
+			}
+		}
+		for _, port := range activity.Outputs {
 			if err := validateTypeExpr(packageScope, port.GoType, "port "+port.ID); err != nil {
 				return err
 			}

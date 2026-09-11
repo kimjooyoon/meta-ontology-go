@@ -1,22 +1,163 @@
 package metapolicycompilation
 namespace metapolicycompilation
 
-entity PolicyInput id "gooo://meta-policy-compilation/entity/policy-input"
-entity ProducerEvidence id "gooo://meta-policy-compilation/entity/producer-evidence"
-entity ConsumerEvidence id "gooo://meta-policy-compilation/entity/consumer-evidence"
-entity GeneratedJudgeArtifact id "gooo://meta-policy-compilation/entity/generated-judge-artifact"
-entity IndependentVerification id "gooo://meta-policy-compilation/entity/independent-verification"
-entity ProofSelection id "gooo://meta-policy-compilation/entity/proof-selection"
-entity ClaimLedger id "gooo://meta-policy-compilation/entity/claim-ledger"
-entity DecisionReduction id "gooo://meta-policy-compilation/entity/decision-reduction"
-entity LineageReceipt id "gooo://meta-policy-compilation/entity/lineage-receipt"
+policy DecisionReduction id "gooo://meta-policy-compilation/policy/v4" {
+    state "UNRECOGNIZED_TOP_LEVEL_DECISION"
+    state "SOURCE_DIGEST_MISMATCH"
+    state "ARTIFACT_SOURCE_MISMATCH"
+    state "INDEPENDENT_SOURCE_MISMATCH"
+    state "EVIDENCE_UNAVAILABLE"
+    state "DIGEST_UNAVAILABLE"
+    state "MALFORMED_DIGEST"
+    state "SEMANTIC_EQUIVALENCE"
+    state "PASS"
+    state "FAIL_CLOSED"
+    state "UNKNOWN"
 
-activity BindProducer(PolicyInput) -> ProducerEvidence computes "policy-compilation:v3|role=PRODUCER|meta-operation=bind-policy-source|proof-choice=source-ir-digest|stage=PRODUCE|step=1|reason=SOURCE_BOUND|claim=source-bound"
-activity BindConsumer(ProducerEvidence) -> ConsumerEvidence computes "policy-compilation:v3|role=CONSUMER|meta-operation=bind-compiled-artifact|proof-choice=artifact-source-equivalence|stage=CONSUME|step=2|reason=ARTIFACT_BOUND|claim=artifact-digest-bound"
-activity CompileGeneratedJudge(PolicyInput) -> GeneratedJudgeArtifact computes "policy-compilation:v3|role=META_OPERATION|meta-operation=compile-generated-judge|proof-choice=policy-semantic-preservation|stage=COMPILE|step=3|reason=JUDGE_COMPILED|claim=generated-execution"
-activity RunIndependentVerifier(ConsumerEvidence) -> IndependentVerification computes "policy-compilation:v3|role=CONSUMER|meta-operation=run-independent-verifier|proof-choice=independent-reexecution|stage=VERIFY|step=4|reason=INDEPENDENT_VERIFIED|claim=independent-replay"
-activity SelectSemanticProof(PolicyInput) -> ProofSelection computes "policy-compilation:v3|role=PROOF|meta-operation=select-semantic-equivalence|proof-choice=SEMANTIC_EQUIVALENCE_WITH_INDEPENDENT_EXECUTION|stage=PROVE|step=5|reason=PROOF_SELECTED|claim=proof-selection"
-activity RecordClaimTransition(PolicyInput) -> ClaimLedger computes "policy-compilation:v3|role=META_OPERATION|meta-operation=record-claim-transition|proof-choice=append-only-ledger|stage=LEDGER|step=6|reason=CLAIM_TRANSITION_RECORDED|claim=ledger-chain"
-activity ReduceDecision(GeneratedJudgeArtifact, IndependentVerification) -> DecisionReduction computes "policy-compilation:v3|role=META_OPERATION|meta-operation=reduce-decision|proof-choice=fail-closed-reconciliation|stage=REDUCE|step=7|reason=DECISION_REDUCED|claim=decision-reduction|decision-reduction=decision-reduction:v2;denominator=8;UNRECOGNIZED_TOP_LEVEL_DECISION:FAIL_CLOSED:REDUCE:7:FEEDBACK_COVERAGE_DECISION_UNKNOWN:NONE:NONE:NONE;SOURCE_DIGEST_MISMATCH:FAIL_CLOSED:REDUCE:7:SOURCE_DIGEST_MISMATCH:NONE:NONE:NONE;ARTIFACT_SOURCE_MISMATCH:FAIL_CLOSED:CONSUME:2:ARTIFACT_SOURCE_MISMATCH:NONE:NONE:NONE;INDEPENDENT_SOURCE_MISMATCH:FAIL_CLOSED:VERIFY:4:INDEPENDENT_SOURCE_MISMATCH:NONE:NONE:NONE;EVIDENCE_UNAVAILABLE:UNKNOWN:VERIFY:4:EVIDENCE_UNAVAILABLE:EVIDENCE_UNAVAILABLE:collect-policy-evidence:producer-evidence,consumer-evidence;DIGEST_UNAVAILABLE:UNKNOWN:LOWER_RESOLUTION:4:DIGEST_UNAVAILABLE:DIGEST_UNAVAILABLE:collect-policy-evidence:producer-evidence,consumer-evidence;MALFORMED_DIGEST:UNKNOWN:LOWER_RESOLUTION:4:MALFORMED_DIGEST:MALFORMED_INPUT:repair-digest-evidence:well-formed-sha256-digests;SEMANTIC_EQUIVALENCE:PASS:REDUCE:7:SEMANTIC_EQUIVALENCE_PROVED:NONE:NONE:NONE"
-activity BindLineage(DecisionReduction) -> LineageReceipt computes "policy-compilation:v3|role=CONSUMER|meta-operation=bind-lineage-receipt|proof-choice=lineage-receipt|stage=RECEIPT|step=8|reason=LINEAGE_BOUND|claim=lineage-seal"
+    transition "UNRECOGNIZED_TOP_LEVEL_DECISION" -> "FAIL_CLOSED"
+    transition "SOURCE_DIGEST_MISMATCH" -> "FAIL_CLOSED"
+    transition "ARTIFACT_SOURCE_MISMATCH" -> "FAIL_CLOSED"
+    transition "INDEPENDENT_SOURCE_MISMATCH" -> "FAIL_CLOSED"
+    transition "EVIDENCE_UNAVAILABLE" -> "UNKNOWN"
+    transition "DIGEST_UNAVAILABLE" -> "UNKNOWN"
+    transition "MALFORMED_DIGEST" -> "UNKNOWN"
+    transition "SEMANTIC_EQUIVALENCE" -> "PASS"
 
+    case "UNRECOGNIZED_TOP_LEVEL_DECISION" {
+        evidence "upper_decision" "unrecognized"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "META_OPERATION"
+            step "8"
+            reason "LINEAGE_BOUND"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "FEEDBACK_COVERAGE_DECISION_UNKNOWN"
+            role "CONSUMER"
+            meta_operation "bind-lineage-receipt"
+            proof_choice "lineage-receipt"
+            claim "lineage-seal"
+        }
+    }
+    case "SOURCE_DIGEST_MISMATCH" {
+        evidence "source_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "LEDGER"
+            step "6"
+            reason "CLAIM_TRANSITION_RECORDED"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "SOURCE_DIGEST_MISMATCH"
+            role "META_OPERATION"
+            meta_operation "record-claim-transition"
+            proof_choice "append-only-ledger"
+            claim "ledger-chain"
+        }
+    }
+    case "ARTIFACT_SOURCE_MISMATCH" {
+        evidence "artifact_source_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "CONSUME"
+            step "7"
+            reason "DECISION_REDUCED"
+            decision_stage "CONSUME"
+            decision_step "2"
+            decision_reason "ARTIFACT_SOURCE_MISMATCH"
+            role "META_OPERATION"
+            meta_operation "reduce-decision"
+            proof_choice "fail-closed-reconciliation"
+            claim "decision-reduction"
+        }
+    }
+    case "INDEPENDENT_SOURCE_MISMATCH" {
+        evidence "independent_digest" "valid-but-different"
+        resolution {
+            decision "FAIL_CLOSED"
+            stage "VERIFY"
+            step "4"
+            reason "INDEPENDENT_VERIFIED"
+            decision_stage "VERIFY"
+            decision_step "4"
+            decision_reason "INDEPENDENT_SOURCE_MISMATCH"
+            role "CONSUMER"
+            meta_operation "run-independent-verifier"
+            proof_choice "independent-reexecution"
+            claim "independent-replay"
+        }
+    }
+    case "EVIDENCE_UNAVAILABLE" {
+        evidence "producer_and_consumer" "unavailable"
+        resolution {
+            decision "UNKNOWN"
+            stage "PRODUCE"
+            step "1"
+            reason "SOURCE_BOUND"
+            decision_stage "VERIFY"
+            decision_step "4"
+            decision_reason "EVIDENCE_UNAVAILABLE"
+            unknown_class "EVIDENCE_UNAVAILABLE"
+            next_operation "collect-policy-evidence"
+            blocked_by "producer-evidence" "consumer-evidence"
+            role "PRODUCER"
+            meta_operation "bind-policy-source"
+            proof_choice "source-ir-digest"
+            claim "source-bound"
+        }
+    }
+    case "DIGEST_UNAVAILABLE" {
+        evidence "digest_coordinates" "empty"
+        resolution {
+            decision "UNKNOWN"
+            stage "CONSUME"
+            step "2"
+            reason "ARTIFACT_BOUND"
+            decision_stage "LOWER_RESOLUTION"
+            decision_step "4"
+            decision_reason "DIGEST_UNAVAILABLE"
+            unknown_class "DIGEST_UNAVAILABLE"
+            next_operation "collect-policy-evidence"
+            blocked_by "producer-evidence" "consumer-evidence"
+            role "CONSUMER"
+            meta_operation "bind-compiled-artifact"
+            proof_choice "artifact-source-equivalence"
+            claim "artifact-digest-bound"
+        }
+    }
+    case "MALFORMED_DIGEST" {
+        evidence "digest_coordinates" "malformed"
+        resolution {
+            decision "UNKNOWN"
+            stage "COMPILE"
+            step "3"
+            reason "JUDGE_COMPILED"
+            decision_stage "LOWER_RESOLUTION"
+            decision_step "4"
+            decision_reason "MALFORMED_DIGEST"
+            unknown_class "MALFORMED_INPUT"
+            next_operation "repair-digest-evidence"
+            blocked_by "well-formed-sha256-digests"
+            role "META_OPERATION"
+            meta_operation "compile-generated-judge"
+            proof_choice "policy-semantic-preservation"
+            claim "generated-execution"
+        }
+    }
+    case "SEMANTIC_EQUIVALENCE" {
+        evidence "digest_coordinates" "equivalent"
+        resolution {
+            decision "PASS"
+            stage "PROVE"
+            step "5"
+            reason "PROOF_SELECTED"
+            decision_stage "REDUCE"
+            decision_step "7"
+            decision_reason "SEMANTIC_EQUIVALENCE_PROVED"
+            role "PROOF"
+            meta_operation "select-semantic-equivalence"
+            proof_choice "SEMANTIC_EQUIVALENCE_WITH_INDEPENDENT_EXECUTION"
+            claim "proof-selection"
+        }
+    }
+}

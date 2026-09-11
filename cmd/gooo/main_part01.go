@@ -35,6 +35,12 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runCheck(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "generate":
 		return runGenerate(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
+	case "observe":
+		return runObserve(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
+	case "propose":
+		return runAdoptionProposal(args[1:], OSFileReader{}, stdout, stderr)
+	case "adopt":
+		return runAdoption(args[1:], OSFileReader{}, EntityFieldsCLIParser{}, stdout, stderr)
 	case "roundtrip":
 		return runRoundTrip(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "query":
@@ -42,7 +48,7 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	case "inspect":
 		return runInspect(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "graph":
-		return runGraph(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+		return runPublicGraph(args[1:], OSFileReader{}, stdout, stderr)
 	case "claim":
 		return runClaim(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "analyze":

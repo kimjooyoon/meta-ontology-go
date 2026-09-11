@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -26,8 +27,16 @@ func validateGuardianEvidenceAt(evidence *guardianEvidence, bundle proofBundle, 
 		}
 		return nil
 	}
-	if evidence == nil || evidence.Schema != guardianEvidenceSchema || evidence.Route != "promotion_main" || evidence.CheckName != "CI guardian" || evidence.Repository != bundle.Repository || evidence.PRNumber != bundle.PRNumber || !guardianEvidenceActions[evidence.Action] || evidence.BaseRepo != bundle.Repository || evidence.BaseRef != "main" || evidence.BaseSHA != bundle.BaseSHA || evidence.HeadRepo != bundle.Repository || evidence.HeadRef != "dev" || evidence.HeadSHA != bundle.HeadSHA || evidence.WorkflowSHA != bundle.HeadSHA || evidence.RuntimeSHA != evidence.WorkflowSHA || evidence.WorkflowRef != bundle.Repository+"/.github/workflows/ci-guardian.yml@refs/heads/dev" || evidence.RuntimeRef != "refs/heads/dev" || evidence.EventRef != "refs/heads/dev" || evidence.DefaultBranch != "dev" || evidence.HeadBindingStatus != "verified" || evidence.RunID <= 0 || evidence.RunAttempt <= 0 {
+	reconciliation := isReconciliationBundle(bundle)
+	if evidence == nil || evidence.Schema != guardianEvidenceSchema || (evidence.Route != "promotion_main" && evidence.Route != proofRouteReconciliationMain) || evidence.CheckName != "CI guardian" || evidence.Repository != bundle.Repository || evidence.PRNumber != bundle.PRNumber || !guardianEvidenceActions[evidence.Action] || evidence.BaseRepo != bundle.Repository || evidence.BaseRef != "main" || evidence.BaseSHA != bundle.BaseSHA || evidence.HeadRepo != bundle.Repository || evidence.HeadSHA != bundle.HeadSHA || evidence.WorkflowSHA != bundle.HeadSHA || evidence.RuntimeSHA != evidence.WorkflowSHA || evidence.WorkflowRef != bundle.Repository+"/.github/workflows/ci-guardian.yml@refs/heads/dev" || evidence.RuntimeRef != "refs/heads/dev" || evidence.EventRef != "refs/heads/dev" || evidence.DefaultBranch != "dev" || evidence.HeadBindingStatus != "verified" || evidence.RunID <= 0 || evidence.RunAttempt <= 0 {
 		return fmt.Errorf("guardian promotion evidence identity is incomplete or mismatched")
+	}
+	if reconciliation {
+		if evidence.Route != proofRouteReconciliationMain || evidence.HeadRef != bundle.HeadRef || !strings.HasPrefix(evidence.HeadRef, "agent/main-history-reconciliation-") || len(evidence.ReconciliationProtocol) == 0 {
+			return fmt.Errorf("guardian reconciliation evidence identity or protocol receipt is incomplete")
+		}
+	} else if evidence.Route != "promotion_main" || evidence.HeadRef != "dev" {
+		return fmt.Errorf("guardian promotion evidence route or head branch is not exact")
 	}
 	if evidence.ObserverEnvironmentName != "guardian-observer" {
 		return fmt.Errorf("guardian promotion evidence is not bound to the protected observer environment")
@@ -35,7 +44,7 @@ func validateGuardianEvidenceAt(evidence *guardianEvidence, bundle proofBundle, 
 	if bundle.PromotionObservation == nil || bundle.PromotionObservation.Action != evidence.Action || bundle.PromotionObservation.Topology != evidence.Topology {
 		return fmt.Errorf("guardian promotion evidence is not cross-bound to the live observation")
 	}
-	if !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || evidence.LiveRefsBefore.MainSHA != evidence.BaseSHA || evidence.LiveRefsAfter.MainSHA != evidence.BaseSHA || evidence.LiveRefsBefore.DevSHA != evidence.HeadSHA || evidence.LiveRefsAfter.DevSHA != evidence.HeadSHA || evidence.Topology.Status != "ahead" || evidence.Topology.AheadBy <= 0 || evidence.Topology.BehindBy != 0 || evidence.Topology.MergeBaseSHA != evidence.BaseSHA {
+	if !validSHA(evidence.BaseSHA) || !validSHA(evidence.HeadSHA) || !validSHA(evidence.WorkflowSHA) || evidence.LiveRefsBefore.MainSHA != evidence.BaseSHA || evidence.LiveRefsAfter.MainSHA != evidence.BaseSHA || (!reconciliation && (evidence.LiveRefsBefore.DevSHA != evidence.HeadSHA || evidence.LiveRefsAfter.DevSHA != evidence.HeadSHA || evidence.Topology.Status != "ahead" || evidence.Topology.AheadBy <= 0 || evidence.Topology.BehindBy != 0 || evidence.Topology.MergeBaseSHA != evidence.BaseSHA)) || (reconciliation && (!validSHA(evidence.LiveRefsBefore.DevSHA) || evidence.LiveRefsBefore.DevSHA != evidence.LiveRefsAfter.DevSHA || evidence.Topology.MergeBaseSHA == "")) {
 		return fmt.Errorf("guardian promotion topology is not exact")
 	}
 	if _, err := time.Parse(time.RFC3339, evidence.RunCreatedAt); err != nil {

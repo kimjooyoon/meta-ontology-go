@@ -43,7 +43,8 @@ func ValidateProducer(receipt ProducerReceipt, source observationHeader, observa
 		return fmt.Errorf("producer subject binding mismatch")
 	}
 	if receipt.Contract.ContractID != ContractID || receipt.Contract.CanonicalDigest != contract.CanonicalDigest ||
-		receipt.Contract.ObligationTotal != fixedObligationTotal || !validDigest(receipt.Contract.SourceDigest) {
+		receipt.Contract.SemanticDigest != contract.SemanticDigest || receipt.Contract.ObligationTotal != fixedObligationTotal ||
+		!validDigest(receipt.Contract.SourceDigest) || contract.ResolutionPolicy.Validate() != nil {
 		return fmt.Errorf("producer contract binding mismatch")
 	}
 	if !validSHA(receipt.WorkflowSHA) || receipt.WorkflowRef == "" || receipt.RunID <= 0 ||

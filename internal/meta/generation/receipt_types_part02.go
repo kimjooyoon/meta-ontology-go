@@ -68,6 +68,7 @@ type ObservationFailure struct {
 	FailureEvidence   []ObservationFailureEvidence `json:"failure_evidence,omitempty"`
 	Counterexample    string                       `json:"counterexample,omitempty"`
 	DerivedRelations  []CounterexampleRelation     `json:"derived_relations,omitempty"`
+	Diagnostics       []string                     `json:"diagnostics,omitempty"`
 	Executor          ProcessObservation           `json:"executor_observation"`
 }
 
@@ -79,6 +80,10 @@ type OperationReceipt struct {
 	IndicatorDecisionLedgerDigest string                     `json:"indicator_decision_ledger_digest"`
 	IndicatorDecisionLedgerCount  int                        `json:"indicator_decision_ledger_count"`
 	ActionIndicatorID             string                     `json:"action_indicator_id"`
+	SubjectKind                   sourcepolicy.SubjectKind   `json:"subject_kind"`
+	InputSubjectKind              sourcepolicy.SubjectKind   `json:"input_subject_kind"`
+	InputContractSourceDigest     string                     `json:"input_contract_source_digest"`
+	InputContractSemanticDigest   string                     `json:"input_contract_semantic_digest"`
 	Operation                     sourcepolicy.Operation     `json:"operation"`
 	Activity                      string                     `json:"activity"`
 	Output                        string                     `json:"output"`
@@ -88,6 +93,8 @@ type OperationReceipt struct {
 	Indicators                    []IndicatorReceipt         `json:"indicators"`
 	InstanceEvidence              *OperationInstanceEvidence `json:"instance_evidence,omitempty"`
 	ReceiptDigest                 string                     `json:"receipt_digest"`
+
+	OperationInputDigest string `json:"operation_input_digest,omitempty"`
 }
 
 // ReceiptUnknown preserves an unavailable or malformed execution observation

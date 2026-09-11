@@ -13,7 +13,7 @@ func TestFailedWorkflowWithSuccessfulSynthesisIsSelectable(t *testing.T) {
 	}
 	report, _, err := Select(
 		"owner/repository", strings.Repeat("f", 40), predecessor,
-		Collection{ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
+		Collection{RequestedRoute: RouteDev, ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
 			ExactJobs: 1, ObservedArtifacts: 4, ExactArtifacts: 1,
 			Candidates: []Candidate{candidate}},
 	)
@@ -28,7 +28,7 @@ func TestFailedSynthesisJobFailsClosed(t *testing.T) {
 	candidate.SynthesisJobConclusion = "failure"
 	report, _, err := Select(
 		"owner/repository", strings.Repeat("2", 40), predecessor,
-		Collection{ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
+		Collection{RequestedRoute: RouteDev, ObservedRuns: 1, ExactRuns: 1, ObservedJobs: 5,
 			ExactJobs: 1, ObservedArtifacts: 4, ExactArtifacts: 1,
 			Candidates: []Candidate{candidate}},
 	)
@@ -42,7 +42,7 @@ func TestSynthesisJobCardinalityFailsClosed(t *testing.T) {
 		predecessor := strings.Repeat("3", 40)
 		report, _, err := Select(
 			"owner/repository", strings.Repeat("4", 40), predecessor,
-			Collection{ObservedRuns: 1, ExactRuns: 1, ObservedJobs: exactJobs,
+			Collection{RequestedRoute: RouteDev, ObservedRuns: 1, ExactRuns: 1, ObservedJobs: exactJobs,
 				ExactJobs: exactJobs, ObservedArtifacts: 1, ExactArtifacts: 1,
 				Candidates: []Candidate{readyCandidate(predecessor, 11)}},
 		)

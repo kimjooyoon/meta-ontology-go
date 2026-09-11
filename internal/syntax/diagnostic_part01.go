@@ -35,6 +35,7 @@ const (
 	DiagExpectedRightParen    DiagnosticCode = "parse.expected-right-paren"
 	DiagExpectedComma         DiagnosticCode = "parse.expected-comma"
 	DiagExpectedArrow         DiagnosticCode = "parse.expected-arrow"
+	DiagExpectedDot           DiagnosticCode = "parse.expected-dot"
 	DiagExpectedResult        DiagnosticCode = "parse.expected-result"
 	DiagUnexpectedDeclaration DiagnosticCode = "parse.unexpected-token"
 )

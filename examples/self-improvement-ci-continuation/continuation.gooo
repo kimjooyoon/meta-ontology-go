@@ -1,0 +1,181 @@
+package selfimprovementcontinuation
+namespace selfimprovementcontinuation
+
+policy CIContinuationContract id "gooo://self-improvement/ci-continuation/v1" {
+    state "EXACT_AUTH_TO_V25"
+    state "DETERMINISTIC_REPLAY"
+    state "IDEMPOTENT_DUPLICATE_DISPATCH"
+    state "MISSING_DISPATCH_IDENTITY"
+    state "MISSING_ARTIFACT_RECEIPT"
+    state "MISSING_HEAD_LINEAGE"
+    state "WORKFLOW_IDENTITY_MISMATCH"
+    state "ARTIFACT_DIGEST_MISMATCH"
+    state "UNAUTHORIZED_DISPATCH"
+    state "CLOSED"
+    state "UNKNOWN"
+    state "REFUTED"
+
+    transition "EXACT_AUTH_TO_V25" -> "CLOSED"
+    transition "DETERMINISTIC_REPLAY" -> "CLOSED"
+    transition "IDEMPOTENT_DUPLICATE_DISPATCH" -> "CLOSED"
+    transition "MISSING_DISPATCH_IDENTITY" -> "UNKNOWN"
+    transition "MISSING_ARTIFACT_RECEIPT" -> "UNKNOWN"
+    transition "MISSING_HEAD_LINEAGE" -> "UNKNOWN"
+    transition "WORKFLOW_IDENTITY_MISMATCH" -> "REFUTED"
+    transition "ARTIFACT_DIGEST_MISMATCH" -> "REFUTED"
+    transition "UNAUTHORIZED_DISPATCH" -> "REFUTED"
+
+    case "EXACT_AUTH_TO_V25" {
+        evidence "identity" "the auth bridge run and continuation artifact bind exactly to the v25 dispatch"
+        resolution {
+            decision "CLOSED"
+            stage "DISPATCH"
+            step "1"
+            reason "EXACT_CONTINUATION_IDENTITY"
+            decision_stage "DISPATCH"
+            decision_step "1"
+            decision_reason "EXACT_CONTINUATION_IDENTITY"
+            role "CONSUMER"
+            meta_operation "dispatch-exact-v25-verifier"
+            proof_choice "EXACT_TYPED_BINDING"
+            claim "auth-to-v25-continuation-bound"
+        }
+    }
+    case "DETERMINISTIC_REPLAY" {
+        evidence "replay" "the same typed continuation input produces the same request and resolution"
+        resolution {
+            decision "CLOSED"
+            stage "REPLAY"
+            step "2"
+            reason "CONTINUATION_REQUEST_REPLAYED"
+            decision_stage "REPLAY"
+            decision_step "2"
+            decision_reason "CONTINUATION_REQUEST_REPLAYED"
+            role "CONSUMER"
+            meta_operation "replay-ci-continuation-request"
+            proof_choice "INDEPENDENT_REPLAY"
+            claim "continuation-request-byte-stable"
+        }
+    }
+    case "IDEMPOTENT_DUPLICATE_DISPATCH" {
+        evidence "duplicate" "a duplicate with the same continuation identity is a closed idempotent no-op"
+        resolution {
+            decision "CLOSED"
+            stage "DISPATCH"
+            step "3"
+            reason "IDEMPOTENT_DUPLICATE_CONTINUATION"
+            decision_stage "DISPATCH"
+            decision_step "3"
+            decision_reason "IDEMPOTENT_DUPLICATE_CONTINUATION"
+            role "GUARDRAIL"
+            meta_operation "deduplicate-ci-continuation"
+            proof_choice "IDEMPOTENT_REPLAY"
+            claim "duplicate-dispatch-safe"
+        }
+    }
+    case "MISSING_DISPATCH_IDENTITY" {
+        evidence "identity" "one or more source workflow, run, ref, or artifact identity fields are absent"
+        resolution {
+            decision "UNKNOWN"
+            stage "DISPATCH"
+            step "4"
+            reason "MISSING_DISPATCH_IDENTITY"
+            decision_stage "RESOLVE"
+            decision_step "4"
+            decision_reason "MISSING_DISPATCH_IDENTITY"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "bind-exact-continuation-identity"
+            blocked_by "continuation_identity"
+            role "CONSUMER"
+            meta_operation "bind-ci-continuation-identity"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "continuation-identity-incomplete"
+        }
+    }
+    case "MISSING_ARTIFACT_RECEIPT" {
+        evidence "receipt" "the API archive digest or embedded receipt digest is absent"
+        resolution {
+            decision "UNKNOWN"
+            stage "FETCH"
+            step "5"
+            reason "MISSING_CONTINUATION_ARTIFACT_RECEIPT"
+            decision_stage "RESOLVE"
+            decision_step "5"
+            decision_reason "MISSING_CONTINUATION_ARTIFACT_RECEIPT"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "restore-exact-continuation-artifact-receipt"
+            blocked_by "continuation_artifact_receipt"
+            role "CONSUMER"
+            meta_operation "bind-continuation-artifact-receipt"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "continuation-artifact-receipt-incomplete"
+        }
+    }
+    case "MISSING_HEAD_LINEAGE" {
+        evidence "lineage" "the exact source head SHA or dispatch ref is absent"
+        resolution {
+            decision "UNKNOWN"
+            stage "LINEAGE"
+            step "6"
+            reason "MISSING_SOURCE_HEAD_LINEAGE"
+            decision_stage "RESOLVE"
+            decision_step "6"
+            decision_reason "MISSING_SOURCE_HEAD_LINEAGE"
+            unknown_class "INCOMPLETE_EVIDENCE"
+            next_operation "bind-exact-source-head-lineage"
+            blocked_by "source_head_lineage"
+            role "CONSUMER"
+            meta_operation "bind-source-head-lineage"
+            proof_choice "SIX_FIELD_UNKNOWN"
+            claim "source-head-lineage-incomplete"
+        }
+    }
+    case "WORKFLOW_IDENTITY_MISMATCH" {
+        evidence "workflow" "the source workflow name or path does not match the declared auth bridge"
+        resolution {
+            decision "REFUTED"
+            stage "DISPATCH"
+            step "7"
+            reason "CONTINUATION_WORKFLOW_IDENTITY_MISMATCH"
+            decision_stage "RESOLVE"
+            decision_step "7"
+            decision_reason "CONTINUATION_WORKFLOW_IDENTITY_MISMATCH"
+            role "GUARDRAIL"
+            meta_operation "refute-continuation-workflow-identity"
+            proof_choice "CONTRADICTION_DOMINATES"
+            claim "workflow-identity-refuted"
+        }
+    }
+    case "ARTIFACT_DIGEST_MISMATCH" {
+        evidence "artifact" "the API archive digest differs from the observed archive digest"
+        resolution {
+            decision "REFUTED"
+            stage "FETCH"
+            step "8"
+            reason "CONTINUATION_ARTIFACT_DIGEST_MISMATCH"
+            decision_stage "RESOLVE"
+            decision_step "8"
+            decision_reason "CONTINUATION_ARTIFACT_DIGEST_MISMATCH"
+            role "GUARDRAIL"
+            meta_operation "refute-continuation-artifact-digest"
+            proof_choice "CONTRADICTION_DOMINATES"
+            claim "artifact-digest-refuted"
+        }
+    }
+    case "UNAUTHORIZED_DISPATCH" {
+        evidence "authority" "dispatch carries execution, grant, write, local-test, or manual-dispatch authority"
+        resolution {
+            decision "REFUTED"
+            stage "AUTHORITY"
+            step "9"
+            reason "UNAUTHORIZED_CONTINUATION_DISPATCH"
+            decision_stage "RESOLVE"
+            decision_step "9"
+            decision_reason "UNAUTHORIZED_CONTINUATION_DISPATCH"
+            role "GUARDRAIL"
+            meta_operation "refute-unauthorized-continuation"
+            proof_choice "DEFAULT_DENY"
+            claim "continuation-is-scheduling-only"
+        }
+    }
+}

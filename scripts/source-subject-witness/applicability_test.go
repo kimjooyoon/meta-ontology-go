@@ -8,10 +8,10 @@ func TestWorkflowDiscoveryApplicabilityIsBound(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if binding.IndicatorCount != 6 || binding.ApplicableIndicators != 5 || binding.NotApplicableIndicators != 1 {
+	if binding.IndicatorCount != 6 || binding.ApplicableIndicators != 4 || binding.NotApplicableIndicators != 2 {
 		t.Fatalf("binding applicability counts = %d/%d/%d", binding.IndicatorCount, binding.ApplicableIndicators, binding.NotApplicableIndicators)
 	}
-	if binding.Operation != "observe+preserve-workflow-discovery+separate-directory-kinds" {
+	if binding.Operation != "exempt-workflow-discovery-root+observe" {
 		t.Fatalf("binding operation = %q", binding.Operation)
 	}
 }

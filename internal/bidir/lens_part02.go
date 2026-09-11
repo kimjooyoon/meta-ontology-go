@@ -8,6 +8,8 @@ import (
 func collectDeclarations(model *Model, declarations []Declaration, allowImplicitActivityPorts bool) (map[string]ID, map[ID]struct{}, error) {
 	names := make(map[string]ID)
 	ids := make(map[ID]struct{}, len(declarations))
+	model.activityInputArity = make(map[ID]int)
+	model.activityOutputArity = make(map[ID]int)
 	allDeclarations := append([]Declaration(nil), declarations...)
 	if allowImplicitActivityPorts {
 		allDeclarations = append(allDeclarations, implicitEntityDeclarations(declarations, model.Namespace)...)
@@ -28,6 +30,10 @@ func collectDeclarations(model *Model, declarations []Declaration, allowImplicit
 		}
 		ids[id] = struct{}{}
 		names[referenceKey(model.Namespace, declaration.Name)] = id
+		if declaration.Kind == ActivityKind {
+			model.activityInputArity[id] = len(declaration.Inputs)
+			model.activityOutputArity[id] = len(declaration.Outputs)
+		}
 		model.Nodes = append(model.Nodes, Node{ID: id, Kind: declaration.Kind, Name: declaration.Name, Namespace: model.Namespace, Fields: cloneFields(declaration.Fields), Attributes: cloneStringMap(declaration.Attributes), Span: declaration.Span})
 	}
 	return names, ids, nil

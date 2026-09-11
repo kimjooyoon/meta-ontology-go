@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 )
 
-func extractionSubjects(plans map[string]planSubject, residual []string, recipes map[string]extractionRecipe, operations map[string][]string, changed, created map[string][]string, staged map[string]stagedFile) ([]extractionSubject, error) {
+func extractionSubjects(plans map[string]planSubject, residual []string, recipes map[string]extractionRecipe, operations map[string][]string, evidence map[string][]projectionextractor.StrategyEvidence, changed, created map[string][]string, staged map[string]stagedFile) ([]extractionSubject, error) {
 	result := make([]extractionSubject, 0, len(residual))
 	for _, logical := range residual {
 		files := changed[logical]
@@ -29,7 +31,7 @@ func extractionSubjects(plans map[string]planSubject, residual []string, recipes
 		if len(performed) == 0 {
 			return nil, fmt.Errorf("transformation operation is unavailable for %s", logical)
 		}
-		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: performed[0], Operations: append([]string{}, performed...), Proof: proof})
+		result = append(result, extractionSubject{Logical: logical, Before: plans[logical].Lines, After: extractionLines(source.data), Files: files, CreatedFiles: createdFiles, Consumer: "function-extractor", Operation: performed[0], Operations: append([]string{}, performed...), Proof: proof, Evidence: append([]projectionextractor.StrategyEvidence{}, evidence[logical]...)})
 	}
 	return result, nil
 }

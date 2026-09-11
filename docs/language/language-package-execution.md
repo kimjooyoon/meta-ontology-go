@@ -1,6 +1,6 @@
 # Language package execution
 
-`gooo run --entry PayOrder examples/billing-package` treats the immediate `.gooo` files in the directory as one semantic package. Files are sorted by canonical relative filename, parsed independently, checked for one package and namespace, combined as syntax declarations, and then lowered through the existing single-source execution boundary.
+`gooo run --entry PayOrder examples/billing-package` treats the immediate `.gooo` files in the directory as one semantic package. Files are sorted by canonical relative filename, parsed independently, checked for one package and namespace, combined as syntax declarations, and then lowered through the existing single-source execution boundary. The human CLI prints the resolved operation summary, while `gooo run --json --entry PayOrder examples/billing-package` emits the complete package receipt for automation. Both paths use the same sealed receipt and zero-effect boundary, with receipt scope `DECLARATION_RESOLUTION_ONLY`.
 
 ## Fixed denominator
 
@@ -21,6 +21,11 @@ The human-visible indicators are exact counters:
 | `PACKAGE_UNKNOWN_DECISIONS` | 0/0 | Unknown top decisions lower resolution and fail closed. |
 | `PACKAGE_REPOSITORY_WRITES` | 0/0 | Execution writes no repository file. |
 | `PACKAGE_MUTATION_AUTHORITIES` | 0/0 | Execution acquires no mutation authority. |
+
+The `gooo/package-source-execution-receipt/v1` contract requires
+`DECLARATION_RESOLUTION_ONLY` in both the package receipt and its nested source
+receipt. A historical receipt with the same v1 schema name but no scope is not
+retrofit to that claim; validation rejects it as missing scope.
 
 ## Reader-dependent resolution
 

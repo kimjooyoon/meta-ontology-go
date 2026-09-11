@@ -13,12 +13,18 @@ import (
 
 const workflowName = "Metric counterfactual conformance"
 
-func Collect(ctx context.Context, client *http.Client, apiURL, token, repository, predecessorSHA string) (Collection, error) {
-	collection := Collection{}
+func collectRuns(ctx context.Context, client *http.Client, apiURL, token, repository, predecessorSHA, requestedRoute string, includePending bool) (Collection, error) {
+	collection := Collection{RequestedRoute: requestedRoute}
 	if client == nil || apiURL == "" || token == "" || repository == "" || !validSHA(predecessorSHA) {
 		return collection, fmt.Errorf("proposal predecessor collector identity is invalid")
 	}
+	if !validRoute(requestedRoute) {
+		return collection, &Failure{Reason: ReasonRouteUnknown, Err: fmt.Errorf("requested route is not an allowed branch")}
+	}
 	runsURL := fmt.Sprintf("%s/repos/%s/actions/workflows/metric-counterfactual.yml/runs?head_sha=%s&event=push&status=completed&per_page=100", strings.TrimRight(apiURL, "/"), repository, url.QueryEscape(predecessorSHA))
+	if includePending {
+		runsURL = strings.Replace(runsURL, "&status=completed", "", 1)
+	}
 	var runs runsEnvelope
 	if err := getJSON(ctx, client, runsURL, token, &runs); err != nil {
 		return collection, err
@@ -31,9 +37,21 @@ func Collect(ctx context.Context, client *http.Client, apiURL, token, repository
 		if run.HeadSHA != predecessorSHA {
 			continue
 		}
+		if run.HeadBranch == "" {
+			collection.RouteUnknownRuns++
+			collection.Unresolved++
+			continue
+		}
+		if run.HeadBranch != requestedRoute {
+			collection.OtherRouteRuns++
+			continue
+		}
 		collection.ExactRuns++
 		if !canonicalRun(run) {
 			collection.Unresolved++
+			if includePending && isInFlightPredecessorRun(run) {
+				collection.pending = append(collection.pending, run)
+			}
 			continue
 		}
 		if err := collectRun(ctx, client, apiURL, token, repository, predecessorSHA, run, &collection); err != nil {

@@ -10,10 +10,15 @@ func SealReceipt(plan Plan, action Action, indicators []IndicatorReceipt) Operat
 		PlanDigest: plan.PlanDigest, ActionIndicatorID: action.IndicatorID,
 		IndicatorDecisionLedgerDigest: ledgerDigest,
 		IndicatorDecisionLedgerCount:  ledgerCount,
+		SubjectKind:                   action.SubjectKind,
+		InputSubjectKind:              action.InputSubjectKind,
+		InputContractSourceDigest:     action.InputContractSourceDigest,
+		InputContractSemanticDigest:   action.InputContractSemanticDigest,
 		Operation:                     action.Operation, Activity: action.Activity, Output: action.Output,
 		Executor: action.Executor, Evaluator: action.Evaluator,
-		ProofChoice: action.ProofChoice,
-		Indicators:  normalizeIndicatorReceipts(indicators),
+		ProofChoice:          action.ProofChoice,
+		Indicators:           normalizeIndicatorReceipts(indicators),
+		OperationInputDigest: action.SourceIndicator.OperationInputDigest,
 	}
 	receipt.ReceiptDigest = operationReceiptDigest(receipt)
 	return receipt

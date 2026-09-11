@@ -2,7 +2,9 @@ package lsp
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"os"
 	"testing"
 )
 
@@ -46,6 +48,53 @@ func TestServerLifecycleDiagnosticsAndFeatures(t *testing.T) {
 	assertDiagnostics(t, messages[5], uri, "lex.unterminated-string")
 	assertResultID(t, messages[6], 5)
 }
+func TestRefreshReusesExactDocumentAndInvalidatesChangedSource(t *testing.T) {
+	uri := "file:///cache.gooo"
+	source := "package p\nnamespace n\n"
+	changed := "package p\nnamespace changed\n"
+	calls := 0
+	server := NewServer(ParserFunc(func(string, string) ParseResult {
+		calls++
+		return ParseResult{}
+	}))
+	params, err := json.Marshal(DidOpenTextDocumentParams{TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: source}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := server.didOpen(context.Background(), requestEnvelope{Params: params}); err != nil {
+		t.Fatal(err)
+	}
+	calls = 0
+	if err := server.refresh(context.Background(), uri); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 {
+		t.Fatalf("initial refresh parse calls = %d, want 1", calls)
+	}
+	calls = 0
+	if err := server.refresh(context.Background(), uri); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 0 {
+		t.Fatalf("unchanged repeated refresh parse calls = %d, want 0", calls)
+	}
+	server.mu.Lock()
+	server.documents[uri].text = changed
+	server.documents[uri].version = 2
+	server.mu.Unlock()
+	if err := server.refresh(context.Background(), uri); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 {
+		t.Fatalf("changed refresh parse calls = %d, want 1", calls)
+	}
+	if err := server.refresh(context.Background(), uri); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 {
+		t.Fatalf("repeated changed refresh parse calls = %d, want 1", calls)
+	}
+}
 func TestInitializeAdvertisesReadFeaturesAndDefersSourceMaps(t *testing.T) {
 	var input, output bytes.Buffer
 	writeRequest(t, &input, 1, "initialize", nil)
@@ -70,4 +119,37 @@ func TestInitializeAdvertisesReadFeaturesAndDefersSourceMaps(t *testing.T) {
 			t.Fatalf("unsupported capability %q was advertised", unsupported)
 		}
 	}
+}
+
+func BenchmarkRefreshExactInput(b *testing.B) {
+	uri := "file:///billing.gooo"
+	sourceBytes, err := os.ReadFile("../../examples/billing/main.gooo")
+	if err != nil {
+		b.Fatal(err)
+	}
+	source := string(sourceBytes)
+	calls := 0
+	server := NewServer(ParserFunc(func(string, string) ParseResult {
+		calls++
+		return ParseResult{}
+	}))
+	params, err := json.Marshal(DidOpenTextDocumentParams{TextDocument: TextDocumentItem{URI: uri, Version: 1, Text: source}})
+	if err != nil {
+		b.Fatal(err)
+	}
+	if _, _, err := server.didOpen(context.Background(), requestEnvelope{Params: params}); err != nil {
+		b.Fatal(err)
+	}
+	if err := server.refresh(context.Background(), uri); err != nil {
+		b.Fatal(err)
+	}
+	calls = 0
+	b.ResetTimer()
+	for index := 0; index < b.N; index++ {
+		if err := server.refresh(context.Background(), uri); err != nil {
+			b.Fatal(err)
+		}
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(calls)/float64(b.N), "parse-calls/op")
 }

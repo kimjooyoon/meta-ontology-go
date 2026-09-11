@@ -48,6 +48,14 @@ func render(fset *token.FileSet, file *ast.File, source []byte, selected []decla
 		return rendered{}, fail("rewrite-source", "format-source", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 	}
 	sort.SliceStable(selected, func(i, j int) bool { return selected[i].start < selected[j].start })
+	formattedHelper, err := renderSelectedHelper(fset, file, source, selected, helperImports)
+	if err != nil {
+		return rendered{}, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+	}
+	return rendered{formattedSource, formattedHelper}, nil
+}
+
+func renderSelectedHelper(fset *token.FileSet, file *ast.File, source []byte, selected []declaration, helperImports []byte) ([]byte, error) {
 	var helper bytes.Buffer
 	packageOffset := fset.Position(file.Package).Offset
 	helper.Write(source[:packageOffset])
@@ -61,11 +69,7 @@ func render(fset *token.FileSet, file *ast.File, source []byte, selected []decla
 			helper.WriteByte('\n')
 		}
 	}
-	formattedHelper, err := format.Source(helper.Bytes())
-	if err != nil {
-		return rendered{}, fail("generate-helpers", "format-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
-	}
-	return rendered{formattedSource, formattedHelper}, nil
+	return format.Source(helper.Bytes())
 }
 
 func capacityRender(fset *token.FileSet, file *ast.File, source []byte, all []declaration, list []importSpec, limit int) (rendered, [][]declaration, error) {

@@ -3,6 +3,9 @@
 const crypto = require('node:crypto');
 const foundationBootstrap = require('./foundation_bootstrap');
 const foundationAuthorization = require('./foundation_authorization');
+const foundationAuthorizationProtocol = require('./foundation_authorization_protocol');
+const guardianSuccessor = require('./guardian_successor');
+const linearTreeReconciliation = require('./linear_tree_reconciliation');
 
 const ROOT_FAILURE_CODE = 'CI-ROOT-OF-TRUST-001';
 const FOUNDATION_BOOTSTRAP_CODE = foundationBootstrap.FOUNDATION_BOOTSTRAP_CODE;
@@ -15,11 +18,12 @@ const PROMOTION_TOPOLOGY_CODE = 'CI-GUARDIAN-PROMOTION-TOPOLOGY-001';
 const CHECK_IDENTITY_CODE = 'CI-GUARDIAN-CHECK-IDENTITY-001';
 const PROTECTION_CODE = 'CI-GUARDIAN-PROTECTION-001';
 const INSTALLATION_SCOPE_CODE = 'CI-GUARDIAN-INSTALLATION-SCOPE-001';
+const RECONCILIATION_CODE = 'CI-GUARDIAN-RECONCILIATION-001';
 const OBSERVER_ENVIRONMENT = 'guardian-observer';
 const INSTALLATION_SCOPE_REPOSITORY = 'kimjooyoon/meta-ontology-go';
 const OBSERVER_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
 const GUARDIAN_SCHEMA = 'gooo/ci-guardian/v2';
-const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, FOUNDATION_BOOTSTRAP_CODE, FOUNDATION_AUTHORIZATION_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE, INSTALLATION_SCOPE_CODE]);
+const GUARDIAN_FAILURE_CODES = new Set([ROOT_FAILURE_CODE, FOUNDATION_BOOTSTRAP_CODE, FOUNDATION_AUTHORIZATION_CODE, guardianSuccessor.SUCCESSOR_CODE, RECONCILIATION_CODE, DEFAULT_BRANCH_CODE, LIVE_REF_CODE, PROMOTION_TOPOLOGY_CODE, CHECK_IDENTITY_CODE, PROTECTION_CODE, INSTALLATION_SCOPE_CODE]);
 const ALLOWED_BASES = new Set(['dev', 'main']);
 const ALLOWED_ACTIONS = new Set(['opened', 'synchronize', 'reopened', 'ready_for_review']);
 const PROOF_CONTEXTS = ['CI policy', 'Semantic conformance', 'go test', 'go test -race', 'go vet', 'gofmt'];
@@ -424,6 +428,7 @@ function routeForPull(pull) {
   if (foundationBootstrap.exactIdentity(pull)) return foundationBootstrap.FOUNDATION_ROUTE;
   if (identity.base_ref === 'dev' && typeof identity.head_ref === 'string' && identity.head_ref.startsWith('agent/')) return 'feature_dev';
   if (identity.base_ref === 'main' && identity.head_ref === 'dev') return 'promotion_main';
+  if (identity.base_ref === 'main' && linearTreeReconciliation.isReconciliationBranch(identity.head_ref)) return linearTreeReconciliation.ROUTE;
   return null;
 }
 
@@ -431,6 +436,7 @@ function checkNameForRoute(route) {
   if (route === foundationBootstrap.FOUNDATION_ROUTE) return 'CI guardian shadow';
   if (route === 'feature_dev') return 'CI guardian shadow';
   if (route === 'promotion_main') return 'CI guardian';
+  if (route === linearTreeReconciliation.ROUTE) return 'CI guardian';
   return null;
 }
 
@@ -618,7 +624,7 @@ async function revalidatePullRequest({getPull, owner, repo, pullNumber, eventPul
   if (livePull.base.repo.full_name !== `${owner}/${repo}` || !sameIdentity(eventPull, livePull)) {
     throw guardianFailure('pull request base/head changed during guardian inspection');
   }
-  if (routeForPull(livePull) === 'promotion_main') validatePromotionPullRequestState(livePull);
+  if (['promotion_main', linearTreeReconciliation.ROUTE].includes(routeForPull(livePull))) validatePromotionPullRequestState(livePull);
   return livePull;
 }
 
@@ -668,8 +674,7 @@ async function kernelTreeDigest({getCommit, getTree, owner, repo, ref}) {
   if (entries.length === 0) {
     throw guardianFailure('kernel tree response contains no protected entries');
   }
-  entries.sort((left, right) => canonicalStringCompare([left.path, left.type, left.sha].join('\u0000'), [right.path, right.type, right.sha].join('\u0000')));
-  return `sha256:${crypto.createHash('sha256').update(JSON.stringify(entries)).digest('hex')}`;
+  return foundationAuthorizationProtocol.digestKernelEntries(entries);
 }
 
 function defaultBranchDecision(defaultBranch, eventRef) {
@@ -954,6 +959,7 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
     return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'guardian live refs are missing, malformed, or drifted'};
   }
   const promotion = trustedDevPromotion({pull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName: expectedCheckName});
+  const reconciliation = routeName === linearTreeReconciliation.ROUTE;
   const featureRoute = routeName === 'feature_dev';
   const foundationRoute = routeName === foundationBootstrap.FOUNDATION_ROUTE;
   if (featureRoute && expectedCheckName !== 'CI guardian shadow') {
@@ -977,7 +983,7 @@ function classifyGuardianDecision({pull, repository, defaultBranch, workflowRef,
   if (result.decision === 'PASS' && featureRoute && route.base_sha !== workflowSha) {
     return {...result, decision: 'FAIL_CLOSED', code: LIVE_REF_CODE, reason: 'feature base SHA is not the exact workflow SHA'};
   }
-  if (route.base_ref === 'main' && !promotion) {
+  if (route.base_ref === 'main' && !promotion && !reconciliation) {
     return {...result, decision: 'FAIL_CLOSED', code: PROMOTION_TOPOLOGY_CODE, reason: 'main promotion is not the exact same-repository dev workflow authority'};
   }
   if (result.decision === 'FAIL_CLOSED' && (result.kernelPaths || []).length > 0 && promotion) {
@@ -1046,6 +1052,8 @@ function buildGuardianArtifact({pull, repository, action, defaultBranch, workflo
     installation_repository_scope: installationRepositoryScope,
     foundation_bootstrap: result && result.foundationBootstrap ? result.foundationBootstrap : null,
     foundation_authorization: result && result.foundationAuthorization ? result.foundationAuthorization : null,
+    successor_protocol: result && result.successorProtocol ? result.successorProtocol : null,
+    reconciliation_protocol: result && result.reconciliationProtocol ? result.reconciliationProtocol : null,
     head_binding_status: result && result.decision === 'PASS' ? HEAD_BINDING_VERIFIED : HEAD_BINDING_STATUS,
     route,
     check_name: checkName || checkNameForRoute(route),
@@ -1131,10 +1139,12 @@ function foundationArtifactScopeIsExact(manifest) {
 }
 
 function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
-  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main', foundationBootstrap.FOUNDATION_ROUTE].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
+  if (!manifest || manifest.schema !== GUARDIAN_SCHEMA || !validRepository(manifest.repository) || !validPositiveInteger(manifest.pull_request_number) || !validRef(manifest.action) || !validRepository(manifest.base_repo) || !ALLOWED_BASES.has(manifest.base_ref) || !validSHA(manifest.base_sha) || !validRepository(manifest.head_repo) || !validRef(manifest.head_ref) || !validSHA(manifest.head_sha) || !validRef(manifest.workflow_ref) || !validSHA(manifest.workflow_sha) || !validRef(manifest.runtime_ref) || !validSHA(manifest.runtime_sha) || !validPositiveInteger(manifest.run_id) || !validPositiveInteger(manifest.run_attempt) || !validRef(manifest.event_ref) || !validRef(manifest.default_branch) || ![HEAD_BINDING_STATUS, HEAD_BINDING_VERIFIED].includes(manifest.head_binding_status) || !Array.isArray(manifest.changed_files) || !Array.isArray(manifest.kernel_paths) || !['PASS', 'FAIL_CLOSED'].includes(manifest.decision) || !/^sha256:[0-9a-f]{64}$/.test(manifest.bundle_sha256 || '') || typeof manifest.reason !== 'string' || manifest.reason.length === 0 || !['feature_dev', 'promotion_main', linearTreeReconciliation.ROUTE, foundationBootstrap.FOUNDATION_ROUTE].includes(manifest.route) || !['CI guardian shadow', 'CI guardian'].includes(manifest.check_name)) {
     throw guardianFailure('guardian artifact schema or identity is malformed');
   }
   validateExpectedArtifactTuple(manifest, expected);
+  const successorProtocol = manifest.successor_protocol === undefined ? null : manifest.successor_protocol;
+  const reconciliationProtocol = manifest.reconciliation_protocol === undefined ? null : manifest.reconciliation_protocol;
   if (manifest.check_name !== checkNameForRoute(manifest.route)) {
     throw guardianFailure('guardian artifact check identity does not match route', CHECK_IDENTITY_CODE);
   }
@@ -1144,13 +1154,28 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
   if (manifest.route !== 'feature_dev' && manifest.foundation_authorization !== null) {
     throw guardianFailure('non-feature guardian artifact must not carry a FOUNDATION authorization receipt', FOUNDATION_AUTHORIZATION_CODE);
   }
-  if (manifest.route === 'promotion_main') {
+  if (manifest.route !== 'promotion_main' && successorProtocol !== null) {
+    throw guardianFailure('non-promotion guardian artifact must not carry a successor protocol receipt', guardianSuccessor.SUCCESSOR_CODE);
+  }
+  if (manifest.route !== linearTreeReconciliation.ROUTE && reconciliationProtocol !== null) {
+    throw guardianFailure('non-reconciliation guardian artifact must not carry a linear-tree reconciliation receipt', RECONCILIATION_CODE);
+  }
+  if (manifest.route === linearTreeReconciliation.ROUTE && successorProtocol !== null) {
+    throw guardianFailure('reconciliation guardian artifact must not carry a successor protocol receipt', RECONCILIATION_CODE);
+  }
+  if (manifest.route === 'promotion_main' || manifest.route === linearTreeReconciliation.ROUTE) {
     if (manifest.observer_environment !== OBSERVER_ENVIRONMENT) throw guardianFailure('guardian observer environment is not the protected environment', PROTECTION_CODE);
-    validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
-    validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
-    validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS', now});
-    if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
-    validateInstallationRepositoryScope(manifest.installation_repository_scope, {requireVerified: manifest.decision === 'PASS', expectedRepository: manifest.repository, now});
+    if (successorProtocol !== null && manifest.decision === 'PASS') {
+      if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null || manifest.installation_repository_scope !== null) {
+        throw guardianFailure('one-use main promotion artifact must not carry unavailable privileged observer snapshots', guardianSuccessor.SUCCESSOR_CODE);
+      }
+    } else {
+      validateBranchProtectionSnapshot(manifest.branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'main', expectedContexts: MAIN_PROTECTION_CONTEXTS, now});
+      validateBranchProtectionSnapshot(manifest.dev_branch_protection, {requireVerified: manifest.decision === 'PASS', expectedBranch: 'dev', expectedContexts: DEV_PROTECTION_CONTEXTS, now});
+      validateGuardianEnvironment(manifest.observer_environment_snapshot, {requireVerified: manifest.decision === 'PASS', now});
+      if (manifest.observer_environment_digest !== manifest.observer_environment_snapshot.digest_sha256) throw guardianFailure('guardian observer environment digest is not bound', PROTECTION_CODE);
+      validateInstallationRepositoryScope(manifest.installation_repository_scope, {requireVerified: manifest.decision === 'PASS', expectedRepository: manifest.repository, now});
+    }
   } else if (manifest.branch_protection !== null || manifest.dev_branch_protection !== null || manifest.observer_environment_snapshot !== null || manifest.observer_environment_digest !== null || manifest.installation_repository_scope !== null) {
     throw guardianFailure('feature guardian artifact must not carry privileged observer snapshots', PROTECTION_CODE);
   }
@@ -1205,8 +1230,9 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     const trustedPromotion = manifest.base_repo === manifest.repository && manifest.head_repo === manifest.repository && manifest.base_ref === 'main' && manifest.head_ref === 'dev' && manifest.head_sha === manifest.workflow_sha;
     const featureRoute = manifest.base_ref === 'dev' && manifest.head_ref.startsWith('agent/');
     const foundationRoute = manifest.route === foundationBootstrap.FOUNDATION_ROUTE;
+    const reconciliationRoute = manifest.route === linearTreeReconciliation.ROUTE && manifest.base_ref === 'main' && linearTreeReconciliation.isReconciliationBranch(manifest.head_ref);
     const authorizedFoundationFeature = featureRoute && manifest.foundation_authorization !== null;
-    if (!featureRoute && !trustedPromotion && !foundationRoute) {
+    if (!featureRoute && !trustedPromotion && !foundationRoute && !reconciliationRoute) {
       throw guardianFailure('guardian artifact PASS route is neither an agent feature nor exact dev-to-main promotion');
     }
     if (featureRoute && manifest.base_sha !== manifest.workflow_sha) {
@@ -1227,7 +1253,7 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
         throw guardianFailure('guardian FOUNDATION authorization receipt is not exact', FOUNDATION_AUTHORIZATION_CODE);
       }
     }
-    if (manifest.kernel_paths.length > 0 && ((!trustedPromotion && !foundationRoute && !authorizedFoundationFeature) || (!foundationRoute && !authorizedFoundationFeature && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)))) {
+    if (manifest.kernel_paths.length > 0 && ((!trustedPromotion && !foundationRoute && !authorizedFoundationFeature && !reconciliationRoute) || (!foundationRoute && !authorizedFoundationFeature && !reconciliationRoute && (manifest.kernel_before_sha256 === null || manifest.kernel_after_sha256 === null)))) {
       throw guardianFailure('guardian artifact PASS kernel propagation is not exact dev-to-main authority');
     }
   }
@@ -1238,8 +1264,38 @@ function validateGuardianArtifact(manifest, expected, {now = new Date()} = {}) {
     throw guardianFailure('guardian FOUNDATION live topology is not exact', FOUNDATION_BOOTSTRAP_CODE);
   }
   if (manifest.decision === 'PASS' && manifest.route === 'promotion_main') {
-    if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || manifest.head_ref !== 'dev' || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.head_sha || manifest.live_refs_after.dev_sha !== manifest.head_sha || !validPromotionTopology({refs: manifest.live_refs_before, topology: manifest.topology}) || !validPromotionTopology({refs: manifest.live_refs_after, topology: manifest.topology}) || manifest.branch_protection.read_status !== 'verified' || manifest.branch_protection.branch !== 'main' || manifest.branch_protection.base_sha !== manifest.base_sha || manifest.branch_protection.head_sha !== manifest.head_sha || manifest.branch_protection.workflow_sha !== manifest.workflow_sha || manifest.branch_protection.run_id !== manifest.run_id || manifest.branch_protection.run_attempt !== manifest.run_attempt || manifest.dev_branch_protection.read_status !== 'verified' || manifest.dev_branch_protection.branch !== 'dev' || manifest.dev_branch_protection.base_sha !== manifest.base_sha || manifest.dev_branch_protection.head_sha !== manifest.head_sha || manifest.dev_branch_protection.workflow_sha !== manifest.workflow_sha || manifest.dev_branch_protection.run_id !== manifest.run_id || manifest.dev_branch_protection.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.read_status !== 'verified' || manifest.observer_environment_snapshot.run_id !== manifest.run_id || manifest.observer_environment_snapshot.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.workflow_sha !== manifest.workflow_sha) {
+    if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || manifest.head_ref !== 'dev' || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.head_sha || manifest.live_refs_after.dev_sha !== manifest.head_sha || !validPromotionTopology({refs: manifest.live_refs_before, topology: manifest.topology}) || !validPromotionTopology({refs: manifest.live_refs_after, topology: manifest.topology})) {
       throw guardianFailure('guardian promotion topology evidence is not exact', PROMOTION_TOPOLOGY_CODE);
+    }
+    if (successorProtocol !== null) {
+      const artifactPull = {
+        number: manifest.pull_request_number,
+        base: {ref: manifest.base_ref, sha: manifest.base_sha, repo: {full_name: manifest.base_repo}},
+        head: {ref: manifest.head_ref, sha: manifest.head_sha, repo: {full_name: manifest.head_repo}},
+      };
+      guardianSuccessor.validateSuccessorProtocolReceipt(successorProtocol, {
+        pull: artifactPull,
+        repository: manifest.repository,
+        workflowRef: manifest.workflow_ref,
+        workflowSha: manifest.workflow_sha,
+        runtimeRef: manifest.runtime_ref,
+        runtimeSha: manifest.runtime_sha,
+        runId: manifest.run_id,
+        runAttempt: manifest.run_attempt,
+        liveBefore: {refs: manifest.live_refs_before, topology: manifest.topology},
+        liveAfter: {refs: manifest.live_refs_after, topology: manifest.topology},
+        changedFiles: manifest.changed_files,
+        kernelBeforeDigest: manifest.kernel_before_sha256,
+        kernelAfterDigest: manifest.kernel_after_sha256,
+        now,
+      });
+    } else if (manifest.branch_protection.read_status !== 'verified' || manifest.branch_protection.branch !== 'main' || manifest.branch_protection.base_sha !== manifest.base_sha || manifest.branch_protection.head_sha !== manifest.head_sha || manifest.branch_protection.workflow_sha !== manifest.workflow_sha || manifest.branch_protection.run_id !== manifest.run_id || manifest.branch_protection.run_attempt !== manifest.run_attempt || manifest.dev_branch_protection.read_status !== 'verified' || manifest.dev_branch_protection.branch !== 'dev' || manifest.dev_branch_protection.base_sha !== manifest.base_sha || manifest.dev_branch_protection.head_sha !== manifest.head_sha || manifest.dev_branch_protection.workflow_sha !== manifest.workflow_sha || manifest.dev_branch_protection.run_id !== manifest.run_id || manifest.dev_branch_protection.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.read_status !== 'verified' || manifest.observer_environment_snapshot.run_id !== manifest.run_id || manifest.observer_environment_snapshot.run_attempt !== manifest.run_attempt || manifest.observer_environment_snapshot.workflow_sha !== manifest.workflow_sha) {
+      throw guardianFailure('guardian promotion protection evidence is not exact', PROTECTION_CODE);
+    }
+  }
+  if (manifest.decision === 'PASS' && manifest.route === linearTreeReconciliation.ROUTE) {
+    if (manifest.check_name !== 'CI guardian' || manifest.base_ref !== 'main' || !linearTreeReconciliation.isReconciliationBranch(manifest.head_ref) || manifest.live_refs_before.main_sha !== manifest.base_sha || manifest.live_refs_after.main_sha !== manifest.base_sha || manifest.live_refs_before.dev_sha !== manifest.live_refs_after.dev_sha || manifest.live_refs_before.main_sha !== manifest.live_refs_after.main_sha || !reconciliationProtocol || reconciliationProtocol.schema !== linearTreeReconciliation.SCHEMA || reconciliationProtocol.decision !== 'PASS' || reconciliationProtocol.protocol_decision !== 'CLOSED' || reconciliationProtocol.candidate_digest !== linearTreeReconciliation.candidateDigest(reconciliationProtocol.candidate) || reconciliationProtocol.candidate?.base_sha !== manifest.base_sha || reconciliationProtocol.candidate?.head_sha !== manifest.head_sha || reconciliationProtocol.candidate?.source_dev_sha !== manifest.live_refs_before.dev_sha) {
+      throw guardianFailure('linear-tree reconciliation identity, tree equivalence, or live-ref evidence is not exact', linearTreeReconciliation.ROUTE);
     }
   }
   if (manifest.bundle_sha256 !== digestGuardianArtifact(manifest)) {
@@ -1254,6 +1310,7 @@ module.exports = {
   OBSERVER_FRESHNESS_WINDOW_MS,
   LIVE_REF_CODE,
   PROMOTION_TOPOLOGY_CODE,
+  RECONCILIATION_CODE,
   CHECK_IDENTITY_CODE,
   PROTECTION_CODE,
   DEV_PROTECTION_CONTEXTS,
@@ -1278,6 +1335,7 @@ module.exports = {
   observerFreshnessFromResponse,
   validObserverFreshness,
   emptyGuardianEnvironment,
+  emptyBranchProtection,
   observeBranchProtection,
   observeGuardianEnvironment,
   digestInstallationRepositoryScope,

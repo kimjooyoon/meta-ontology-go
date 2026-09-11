@@ -24,6 +24,11 @@ type File struct {
 	// the same ordered values for callers that prefer the longer name.
 	Decls        []Declaration
 	Declarations []Declaration
+	// Bindings is kept separate from Decls because runtime bindings are an
+	// execution-plan extension, not declarations in the existing grammar.
+	// Source order is retained for evidence; semantic equality normalizes the
+	// edge set independently.
+	Bindings []BindingDecl
 }
 
 // SourceFile and AST are descriptive aliases for callers that prefer those

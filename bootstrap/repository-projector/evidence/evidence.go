@@ -18,7 +18,9 @@ func Build(sha string, entries []Entry, objects, loss int, topology Topology) Re
 		if entry.ObjectSHA == "" || entry.Backing == "" {
 			unbound++
 		}
-		if entry.Language != "" && entry.Lines > 75 {
+		// The generic logical splitter consumes Go declarations. Gooo sources
+		// have their own parser and must not be classified as Go split debt.
+		if entry.Language == "go" && entry.Lines > 75 {
 			lineDebt++
 			subjects = append(subjects, subject{
 				Indicator: "source.line-cap-debt", Logical: entry.Logical,

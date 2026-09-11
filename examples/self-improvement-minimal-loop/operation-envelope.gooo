@@ -1,0 +1,28 @@
+package operationenvelope
+namespace meta
+
+entity OperationIntentInput id "gooo://meta/operation-envelope/entity/intent-input"
+entity OperationIntent id "gooo://meta/operation-envelope/entity/intent"
+entity SourceRevisionInput id "gooo://meta/operation-envelope/entity/source-input"
+entity SourceRevision id "gooo://meta/operation-envelope/entity/source"
+entity EffectGrantInput id "gooo://meta/operation-envelope/entity/grant-input"
+entity EffectGrant id "gooo://meta/operation-envelope/entity/grant"
+entity EffectRequestInput id "gooo://meta/operation-envelope/entity/request-input"
+entity EffectRequest id "gooo://meta/operation-envelope/entity/request"
+entity EffectResultInput id "gooo://meta/operation-envelope/entity/result-input"
+entity EffectResult id "gooo://meta/operation-envelope/entity/result"
+entity ReplayIdentityInput id "gooo://meta/operation-envelope/entity/replay-input"
+entity ReplayIdentity id "gooo://meta/operation-envelope/entity/replay"
+entity SemanticOutcomeInput id "gooo://meta/operation-envelope/entity/outcome-input"
+entity OperationDecision id "gooo://meta/operation-envelope/entity/decision"
+entity ReceiptInput id "gooo://meta/operation-envelope/entity/receipt-input"
+entity OperationReceipt id "gooo://meta/operation-envelope/entity/receipt"
+
+activity DeclareOperationIntent(OperationIntentInput) -> OperationIntent
+activity BindSourceRevision(SourceRevisionInput) -> SourceRevision
+activity DeclareEffectGrant(EffectGrantInput) -> EffectGrant
+activity EmitEffectRequest(EffectRequestInput) -> EffectRequest
+activity RecordEffectResult(EffectResultInput) -> EffectResult
+activity VerifyReplayIdentity(ReplayIdentityInput) -> ReplayIdentity
+activity ClassifySemanticOutcome(SemanticOutcomeInput) -> OperationDecision
+activity PublishOperationReceipt(ReceiptInput) -> OperationReceipt

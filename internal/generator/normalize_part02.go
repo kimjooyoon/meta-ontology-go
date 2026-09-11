@@ -6,7 +6,6 @@ import (
 )
 
 func normalizeImports(ir *SemanticIR) error {
-	seen := make(map[string]struct{}, len(ir.Imports))
 	seenPaths := make(map[string]struct{}, len(ir.Imports))
 	for index := range ir.Imports {
 		item := &ir.Imports[index]
@@ -19,11 +18,6 @@ func normalizeImports(ir *SemanticIR) error {
 		if _, exists := seenPaths[item.Path]; exists {
 			return fmt.Errorf("generator: duplicate import path %q", item.Path)
 		}
-		key := item.Name + "\x00" + item.Path
-		if _, exists := seen[key]; exists {
-			return fmt.Errorf("generator: duplicate import %q", item.Path)
-		}
-		seen[key] = struct{}{}
 		seenPaths[item.Path] = struct{}{}
 	}
 	sort.Slice(ir.Imports, func(i, j int) bool {

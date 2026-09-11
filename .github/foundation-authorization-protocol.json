@@ -1,0 +1,138 @@
+{
+  "schema": "gooo/foundation-authorization-protocol/v1",
+  "decision_precedence": [
+    "REFUTED",
+    "UNKNOWN",
+    "CLOSED"
+  ],
+  "unknown_fields": [
+    "stage",
+    "step",
+    "reason",
+    "unknown_class",
+    "next_operation",
+    "blocked_by"
+  ],
+  "cells": [
+    {
+      "id": "REPOSITORY_ACTOR_AUTHORITY",
+      "stage": "FOUNDATION",
+      "step": "REPOSITORY_ACTOR_AUTHORITY",
+      "indicator": "DRIVER",
+      "dimension": "repository-owner-and-actor-identity",
+      "proof_choice": "FOUNDATION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "AUTHORIZATION_INTENT_PROOF_CHOICE",
+      "stage": "FOUNDATION",
+      "step": "AUTHORIZATION_INTENT_PROOF_CHOICE",
+      "indicator": "OUTCOME",
+      "dimension": "authorization-intent-and-proof-selection",
+      "proof_choice": "FOUNDATION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "CANDIDATE_PR_REPOSITORY_IDENTITY",
+      "stage": "FOUNDATION",
+      "step": "CANDIDATE_PR_REPOSITORY_IDENTITY",
+      "indicator": "GUARDRAIL",
+      "dimension": "candidate-pull-request-and-repository",
+      "proof_choice": "FOUNDATION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "EXACT_BASE_HEAD_MERGE_BASE_SHAS",
+      "stage": "FOUNDATION",
+      "step": "EXACT_BASE_HEAD_MERGE_BASE_SHAS",
+      "indicator": "DRIVER",
+      "dimension": "base-head-and-merge-base-sha-tuple",
+      "proof_choice": "FOUNDATION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "CANONICAL_CHANGED_PATH_BINDING",
+      "stage": "COHERENCE",
+      "step": "CANONICAL_CHANGED_PATH_BINDING",
+      "indicator": "OUTCOME",
+      "dimension": "changed-path-count-and-digest",
+      "proof_choice": "COHERENCE",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "PROTECTED_INTERSECTION_BINDING",
+      "stage": "COHERENCE",
+      "step": "PROTECTED_INTERSECTION_BINDING",
+      "indicator": "GUARDRAIL",
+      "dimension": "protected-kernel-intersection-count-and-digest",
+      "proof_choice": "COHERENCE",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "WORKFLOW_RUNTIME_CHECK_APP_IDENTITY",
+      "stage": "COHERENCE",
+      "step": "WORKFLOW_RUNTIME_CHECK_APP_IDENTITY",
+      "indicator": "DRIVER",
+      "dimension": "workflow-runtime-check-and-app",
+      "proof_choice": "COHERENCE",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "KERNEL_BEFORE_AFTER_DIGEST",
+      "stage": "COHERENCE",
+      "step": "KERNEL_BEFORE_AFTER_DIGEST",
+      "indicator": "OUTCOME",
+      "dimension": "kernel-before-and-after-digest",
+      "proof_choice": "COHERENCE",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "ONE_USE_NONCE",
+      "stage": "REGRESSION",
+      "step": "ONE_USE_NONCE",
+      "indicator": "DRIVER",
+      "dimension": "one-use-nonce-and-use-count",
+      "proof_choice": "REGRESSION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "EXPIRY_STALENESS",
+      "stage": "REGRESSION",
+      "step": "EXPIRY_STALENESS",
+      "indicator": "OUTCOME",
+      "dimension": "authorization-expiry-and-staleness",
+      "proof_choice": "REGRESSION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "MERGE_PARENT_CONSUMPTION_RECEIPT",
+      "stage": "REGRESSION",
+      "step": "MERGE_PARENT_CONSUMPTION_RECEIPT",
+      "indicator": "GUARDRAIL",
+      "dimension": "exact-merge-parent-and-consumption-receipt",
+      "proof_choice": "REGRESSION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    },
+    {
+      "id": "REPLAY_REUSE_REVOCATION_POST_ADOPTION",
+      "stage": "REGRESSION",
+      "step": "REPLAY_REUSE_REVOCATION_POST_ADOPTION",
+      "indicator": "GUARDRAIL",
+      "dimension": "replay-reuse-revocation-and-post-adoption",
+      "proof_choice": "REGRESSION",
+      "producer": "foundation-authorization-protocol",
+      "consumer": "ci-guardian"
+    }
+  ]
+}

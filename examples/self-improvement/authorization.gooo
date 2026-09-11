@@ -1,0 +1,11 @@
+package selfimprovement
+namespace selfimprovement
+
+entity NonExecutingImprovementCandidate id "gooo://self-improvement/entity/non-executing-improvement-candidate"
+entity CandidateAuthorizationRequest id "gooo://self-improvement/entity/candidate-authorization-request"
+entity CandidateAuthorizationDecision id "gooo://self-improvement/entity/candidate-authorization-decision"
+entity CandidateAuthorizationResolution id "gooo://self-improvement/entity/candidate-authorization-resolution"
+
+activity RequestCandidateAuthorization(NonExecutingImprovementCandidate) -> CandidateAuthorizationRequest
+activity DecideCandidateAuthorization(CandidateAuthorizationRequest) -> CandidateAuthorizationDecision
+activity ResolveCandidateAuthorization(CandidateAuthorizationDecision) -> CandidateAuthorizationResolution

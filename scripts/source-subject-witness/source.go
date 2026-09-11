@@ -50,6 +50,7 @@ type sourcePolicy struct {
 	MaxDirectDirectoryEntries     int    `json:"max_direct_directory_entries"`
 	RequireHomogeneousDirectories bool   `json:"require_homogeneous_directories"`
 	ExemptProjectRootTopology     bool   `json:"exempt_project_root_topology"`
+	ExemptWorkflowDiscoveryRoot   bool   `json:"exempt_workflow_discovery_root"`
 	ExemptProjectRootREADME       bool   `json:"exempt_project_root_readme"`
 }
 

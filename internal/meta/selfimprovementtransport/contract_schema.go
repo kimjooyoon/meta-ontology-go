@@ -6,8 +6,17 @@ type expectedActivity struct {
 	Program string
 }
 
+const (
+	producerDeclarationProgram = "meta.transport.producer-declaration/v1"
+	transportIndexProgram      = "meta.transport.artifact-index/v1"
+	consumerResolutionProgram  = "meta.transport.consumer-resolution/v1"
+)
+
 var expectedEntities = map[string]string{
 	"TransportInput":              "gooo://self-improvement/transport/entity/input",
+	"ProducerDeclarationEvidence": "gooo://self-improvement/transport/evidence/producer-declaration",
+	"TransportIndexEvidence":      "gooo://self-improvement/transport/evidence/transport-index",
+	"ConsumerResolutionEvidence":  "gooo://self-improvement/transport/evidence/consumer-resolution",
 	"ArtifactMetadataEvidence":    "gooo://self-improvement/transport/evidence/artifact-metadata",
 	"ArtifactValidationEvidence":  "gooo://self-improvement/transport/evidence/artifact-validation",
 	"ArchiveDownloadEvidence":     "gooo://self-improvement/transport/evidence/archive-download",
@@ -23,6 +32,9 @@ var expectedEntities = map[string]string{
 }
 
 var expectedActivities = map[string]expectedActivity{
+	"DeclareProducerSubject": {"TransportInput", "ProducerDeclarationEvidence", producerDeclarationProgram},
+	"BindTransportIndex":     {"ProducerDeclarationEvidence", "TransportIndexEvidence", transportIndexProgram},
+	"ResolveConsumerSubject": {"TransportIndexEvidence", "ConsumerResolutionEvidence", consumerResolutionProgram},
 	"ReadArtifactMetadata": {"TransportInput", "ArtifactMetadataEvidence",
 		"meta.artifact.lifecycle.read-metadata:v1"},
 	"ResolveArtifact": {"ArtifactMetadataEvidence", "ImmutableLocatorEvidence",

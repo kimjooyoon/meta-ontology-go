@@ -18,6 +18,8 @@ const runtimeIntervalModelDefinition = "timestamp values=UTC ISO-8601 second val
 type sourceRunInput struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
+	WorkflowName   string `json:"workflow_name"`
+	WorkflowPath   string `json:"path"`
 	Event          string `json:"event"`
 	Ref            string `json:"ref"`
 	HeadBranch     string `json:"head_branch"`

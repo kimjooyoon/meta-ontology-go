@@ -34,11 +34,44 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		if err := checkLowerContext(ctx); err != nil {
 			return Document{}, err
 		}
+		if _, isPolicy := declaration.(*syntax.PolicyDecl); isPolicy {
+			continue
+		}
 		adapted, err := adaptSyntaxDeclaration(ctx, declaration)
 		if err != nil {
 			return Document{}, err
 		}
 		document.Declarations = append(document.Declarations, adapted)
+	}
+	for _, declaration := range syntaxDeclarations(file) {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		policy, ok := declaration.(*syntax.PolicyDecl)
+		if !ok {
+			continue
+		}
+		lowered, err := lowerSyntaxPolicy(policy)
+		if err != nil {
+			return Document{}, err
+		}
+		document.Policies = append(document.Policies, lowered)
+	}
+	for _, binding := range file.Bindings {
+		if err := checkLowerContext(ctx); err != nil {
+			return Document{}, err
+		}
+		document.RuntimeBindings = append(document.RuntimeBindings, RuntimeBinding{
+			Producer: BindingEndpoint{
+				Activity: Reference{Name: binding.Producer.Activity.Name, Span: toSourceSpan(binding.Producer.Activity.Span)},
+				Port:     Reference{Name: binding.Producer.Port.Name, Span: toSourceSpan(binding.Producer.Port.Span)},
+			},
+			Consumer: BindingEndpoint{
+				Activity: Reference{Name: binding.Consumer.Activity.Name, Span: toSourceSpan(binding.Consumer.Activity.Span)},
+				Port:     Reference{Name: binding.Consumer.Port.Name, Span: toSourceSpan(binding.Consumer.Port.Span)},
+			},
+			Span: toSourceSpan(binding.Span),
+		})
 	}
 	if err := validateEntityFieldsDocument(document, document.Namespace, semantic.DefaultTypeRegistry(), support); err != nil {
 		return Document{}, err

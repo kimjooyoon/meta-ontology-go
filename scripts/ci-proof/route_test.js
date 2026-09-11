@@ -30,6 +30,38 @@ assert.throws(
   /unsupported CI proof route tuple/,
 );
 
+const foundationInput = {
+  event: 'pull_request',
+  eventRef: 'refs/pull/602/merge',
+  baseRef: 'main',
+  baseSha: route.foundationPromotion.baseSha,
+  headSha: 'b'.repeat(40),
+  repository: route.foundationPromotion.repository,
+  prNumber: route.foundationPromotion.pullRequest,
+  headRef: route.foundationPromotion.headRef,
+};
+const foundationEvidence = route.buildProofRouteEvidence(foundationInput);
+assert.equal(foundationEvidence.route, 'foundation_promotion');
+assert.equal(foundationEvidence.guardian_required, false);
+assert.doesNotThrow(() => route.validateProofRouteEvidence(foundationEvidence, foundationInput));
+assert.equal(route.classifyProofRoute('pull_request', 'main', {
+  ...foundationInput,
+  prNumber: 601,
+}), 'promotion_main');
+
+const reconciliationInput = {
+  event: 'pull_request',
+  eventRef: 'refs/pull/700/merge',
+  baseRef: 'main',
+  baseSha: 'c'.repeat(40),
+  headSha: 'd'.repeat(40),
+  repository: 'kimjooyoon/meta-ontology-go',
+  prNumber: 700,
+  headRef: 'agent/main-history-reconciliation-promotion-20260903',
+};
+assert.equal(route.classifyProofRoute('pull_request', 'main', reconciliationInput), 'reconciliation_main');
+assert.throws(() => route.classifyProofRoute('pull_request', 'main', {...reconciliationInput, headRef: 'agent/unrelated-main-change'}), /ordinary agent-to-main/);
+
 const foundationPull = () => ({
   number: foundation.FOUNDATION_BOOTSTRAP.pullRequest,
   state: 'open',

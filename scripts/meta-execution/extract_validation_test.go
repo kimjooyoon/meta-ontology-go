@@ -5,9 +5,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	projectionextractor "github.com/kimjooyoon/meta-ontology-go/internal/meta/repositoryprojection/extractor"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
@@ -305,4 +307,330 @@ func TestFailedExtractionBindsActionRootToDerivedBlocker(t *testing.T) {
 		failure.evidence[0].Counterexample != failure.derivedRelations[0].Counterexample {
 		t.Fatalf("action and derived blocker binding was not preserved: %+v", failure)
 	}
+}
+
+func TestDecodeExtractorReportAcceptsLegacyWithoutStrategyEvidence(t *testing.T) {
+	root := t.TempDir()
+	report := extractionReportWithStrategyEvidence(nil)
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, decoded, err := decodeExtractorReport(path, "head")
+	if err != nil {
+		t.Fatalf("legacy report was rejected: %v", err)
+	}
+	if len(decoded.Subjects) != 1 || len(decoded.Subjects[0].Evidence) != 0 {
+		t.Fatalf("legacy report gained strategy evidence: %+v", decoded.Subjects)
+	}
+}
+
+func TestDecodeExtractorReportPreservesNativeStrategyEvidence(t *testing.T) {
+	root := t.TempDir()
+	evidence := strategyEvidenceFixture(t)
+	report := extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence})
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, decoded, err := decodeExtractorReport(path, "head")
+	if err != nil {
+		t.Fatalf("native strategy evidence was rejected: %v", err)
+	}
+	if len(decoded.Subjects) != 1 || len(decoded.Subjects[0].Evidence) != 1 ||
+		!reflect.DeepEqual(decoded.Subjects[0].Evidence[0], evidence) {
+		t.Fatalf("native strategy evidence was not preserved: got=%+v want=%+v", decoded.Subjects[0].Evidence, evidence)
+	}
+	decodedEvidence := decoded.Subjects[0].Evidence[0]
+	if len(decodedEvidence.ProofStages) != 6 || decodedEvidence.ProofStages[2].PayloadBytes != 0 ||
+		decodedEvidence.BeforeBytes == decodedEvidence.AfterBytes ||
+		decodedEvidence.FinalGeneratedBytes == decodedEvidence.FinalGeneratedEvidenceBytes {
+		t.Fatalf("source/evidence byte distinctions were lost: %+v", decodedEvidence)
+	}
+}
+
+func TestDecodeExtractorReportRejectsMalformedStrategyEvidence(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(map[string]any, map[string]any)
+	}{
+		{
+			name: "unknown-nested-field",
+			mutate: func(_ map[string]any, evidence map[string]any) {
+				stages := evidence["proof_stages"].([]any)
+				stages[0].(map[string]any)["unexpected"] = true
+			},
+		},
+		{
+			name: "missing-required-field",
+			mutate: func(_ map[string]any, evidence map[string]any) {
+				delete(evidence, "strategy")
+			},
+		},
+		{
+			name: "ill-typed-required-field",
+			mutate: func(_ map[string]any, evidence map[string]any) {
+				evidence["before_bytes"] = "not-an-int"
+			},
+		},
+		{
+			name: "missing-nested-payload-bytes",
+			mutate: func(_ map[string]any, evidence map[string]any) {
+				stages := evidence["proof_stages"].([]any)
+				delete(stages[2].(map[string]any), "payload_bytes")
+			},
+		},
+		{
+			name: "present-null-is-not-legacy",
+			mutate: func(subject map[string]any, _ map[string]any) {
+				subject["strategy_evidence"] = nil
+			},
+		},
+		{
+			name: "present-empty-is-not-legacy",
+			mutate: func(subject map[string]any, _ map[string]any) {
+				subject["strategy_evidence"] = []any{}
+			},
+		},
+	}
+	const expectedMalformedCases = 6
+	if len(cases) != expectedMalformedCases {
+		t.Fatalf("malformed strategy evidence cohort changed: got=%d want=%d", len(cases), expectedMalformedCases)
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
+			subjects := value["subjects"].([]any)
+			subject := subjects[0].(map[string]any)
+			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+			test.mutate(subject, evidence)
+			payload, err := json.Marshal(value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(root, "report.json")
+			if err := os.WriteFile(path, payload, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+				t.Fatal("malformed strategy evidence was accepted")
+			}
+		})
+	}
+}
+
+func TestDecodeExtractorReportRejectsStrategyEvidenceStatusCohort8(t *testing.T) {
+	statusValues := []string{"UNKNOWN", "REFUTED", "FIXED_POINT", "UNRECOGNIZED"}
+	statusLocations := []struct {
+		name   string
+		mutate func(map[string]any, string)
+	}{
+		{
+			name: "obligation-status",
+			mutate: func(evidence map[string]any, status string) {
+				obligations := evidence["obligations"].([]any)
+				obligations[0].(map[string]any)["status"] = status
+			},
+		},
+		{
+			name: "proof-stage-status",
+			mutate: func(evidence map[string]any, status string) {
+				stages := evidence["proof_stages"].([]any)
+				stages[0].(map[string]any)["status"] = status
+			},
+		},
+	}
+	const expectedCohort8Cases = 8
+	if len(statusLocations)*len(statusValues) != expectedCohort8Cases {
+		t.Fatalf("cohort8 status cases changed: got=%d want=%d", len(statusLocations)*len(statusValues), expectedCohort8Cases)
+	}
+	for _, location := range statusLocations {
+		for _, status := range statusValues {
+			t.Run("cohort8/"+location.name+"/"+status, func(t *testing.T) {
+				root := t.TempDir()
+				value := extractionReportMapWithStrategyEvidence(t, strategyEvidenceFixture(t))
+				subjects := value["subjects"].([]any)
+				subject := subjects[0].(map[string]any)
+				evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+				location.mutate(evidence, status)
+				payload, err := json.Marshal(value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				path := filepath.Join(root, "report.json")
+				if err := os.WriteFile(path, payload, 0o644); err != nil {
+					t.Fatal(err)
+				}
+				if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+					t.Fatalf("cohort8 accepted non-PASS %q at %s", status, location.name)
+				}
+			})
+		}
+	}
+}
+
+func TestDecodeExtractorReportRejectsPreparationProgressAsFinalProof(t *testing.T) {
+	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	assertExtractorReportMapAccepted(t, value)
+	subject := value["subjects"].([]any)[0].(map[string]any)
+	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+	stages := evidence["proof_stages"].([]any)
+	stages[4].(map[string]any)["name"] = "rendered-capacity-progress"
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("preparation progress was accepted as the final rendered-capacity proof")
+	}
+}
+
+func TestDecodeExtractorReportRejectsTamperedFinalCapacityMeasurement(t *testing.T) {
+	value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+	assertExtractorReportMapAccepted(t, value)
+	subject := value["subjects"].([]any)[0].(map[string]any)
+	evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+	evidence["final_rendered_capacity"].(map[string]any)["overage"] = 1
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+		t.Fatal("tampered final rendered-capacity measurement was accepted")
+	}
+}
+
+func TestDecodeExtractorReportRejectsMissingFinalCapacityFields(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(map[string]any)
+	}{
+		{name: "whole evidence", mutate: func(evidence map[string]any) {
+			delete(evidence, "final_rendered_capacity")
+		}},
+		{name: "nested overage", mutate: func(evidence map[string]any) {
+			delete(evidence["final_rendered_capacity"].(map[string]any), "overage")
+		}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			value := extractionReportMapWithStrategyEvidence(t, intermediatePreparationEvidenceFixture(t))
+			assertExtractorReportMapAccepted(t, value)
+			subject := value["subjects"].([]any)[0].(map[string]any)
+			evidence := subject["strategy_evidence"].([]any)[0].(map[string]any)
+			tc.mutate(evidence)
+			payload, err := json.Marshal(value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			root := t.TempDir()
+			path := filepath.Join(root, "report.json")
+			if err := os.WriteFile(path, payload, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+				t.Fatal("missing final rendered-capacity evidence was accepted")
+			}
+		})
+	}
+}
+
+func extractionReportWithStrategyEvidence(evidence []projectionextractor.StrategyEvidence) extractorReport {
+	subject := validExtractionSubjectFixture("a.go")
+	subject.Evidence = evidence
+	return extractorReport{
+		Schema:         functionExtractionReportSchema,
+		SourceSHA:      "head",
+		StagedSubjects: 1,
+		Subjects:       []extractorSubject{subject},
+		Indicators:     extractionTestIndicatorsWithValues(1, 1, 1, 0, 0),
+	}
+}
+
+func extractionReportMapWithStrategyEvidence(t *testing.T, evidence projectionextractor.StrategyEvidence) map[string]any {
+	t.Helper()
+	payload, err := json.Marshal(extractionReportWithStrategyEvidence([]projectionextractor.StrategyEvidence{evidence}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var value map[string]any
+	if err := json.Unmarshal(payload, &value); err != nil {
+		t.Fatal(err)
+	}
+	return value
+}
+
+func assertExtractorReportMapAccepted(t *testing.T, value map[string]any) {
+	t.Helper()
+	payload, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	path := filepath.Join(root, "report.json")
+	if err := os.WriteFile(path, payload, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := decodeExtractorReport(path, "head"); err != nil {
+		t.Fatalf("unmodified strategy evidence fixture was rejected: %v", err)
+	}
+}
+
+// This schema fixture is derived from source e9b261d6b9c3ab118ea15c64976c36ad9641b244,
+// CI run 33951302941, runtime artifact 9964924639. It is a test fixture rather
+// than a claim about a current native observation.
+func strategyEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+	t.Helper()
+	payload, err := os.ReadFile(filepath.Join("testdata", "native-strategy-evidence-w2.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var evidence []projectionextractor.StrategyEvidence
+	if err := decodeStrictBytes(payload, &evidence); err != nil || len(evidence) != 1 {
+		t.Fatalf("native strategy evidence fixture is malformed: %v", err)
+	}
+	return evidence[0]
+}
+
+func intermediatePreparationEvidenceFixture(t *testing.T) projectionextractor.StrategyEvidence {
+	t.Helper()
+	evidence := strategyEvidenceFixture(t)
+	evidence.AfterRenderedCapacityOverage = 3
+	evidence.PreflightObservations = []projectionextractor.PreflightObservationEvidence{{
+		Subject:      evidence.Subject,
+		SourceDigest: evidence.ProofStages[0].SourceDigest,
+	}}
+	evidence.PreparationProgress = &projectionextractor.PreparationProgressEvidence{
+		Operation:              evidence.Operation,
+		Activity:               evidence.ContractActivity,
+		InputEntity:            evidence.ContractInputEntity,
+		InputSubjectKind:       evidence.ContractInputSubjectKind,
+		ContractSourceDigest:   evidence.ContractSourceDigest,
+		ContractSemanticDigest: evidence.ContractSemanticDigest,
+		Subject:                evidence.Subject,
+		SourceDigest:           evidence.ProofStages[0].SourceDigest,
+		BeforeOverage:          evidence.BeforeRenderedCapacityOverage,
+		AfterOverage:           evidence.AfterRenderedCapacityOverage,
+		Status:                 strategyEvidencePassStatus,
+	}
+	return evidence
 }

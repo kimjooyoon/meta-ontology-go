@@ -5,6 +5,9 @@ import artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccoun
 type Summary struct {
 	ObservedRuns         int `json:"observed_runs"`
 	ExactRuns            int `json:"exact_runs"`
+	OtherRouteRuns       int `json:"other_route_runs"`
+	RouteUnknownRuns     int `json:"route_unknown_runs"`
+	Contradictions       int `json:"contradictions"`
 	ObservedArtifacts    int `json:"observed_artifacts"`
 	ExactArtifacts       int `json:"exact_artifacts"`
 	ObservedJobs         int `json:"observed_jobs"`

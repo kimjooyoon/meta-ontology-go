@@ -10,9 +10,9 @@ func buildProofs(selected *Selected, predecessorSHA string, summary Summary) ([]
 		passed                bool
 		evidence              any
 	}{
-		{"exact-predecessor-head", "FOUNDATION", "bind-exact-proposal-predecessor", selected != nil && value.HeadSHA == predecessorSHA, []string{value.HeadSHA, predecessorSHA}},
-		{"canonical-synthesis-job", "COHERENCE", "bind-canonical-proposal-synthesis", selected != nil && canonicalSelected(value), []any{value.RunID, value.RunAttempt, value.Event, value.Status, value.Conclusion, value.WorkflowName, value.SynthesisJobID, value.SynthesisJobName, value.SynthesisJobStatus, value.SynthesisJobConclusion}},
-		{"unique-canonical-artifact", "REGRESSION", "reject-ambiguous-proposal-predecessor", summary.ExactJobs == 1 && summary.ValidCandidates == 1 && summary.AmbiguousCandidates == 0 && summary.UnresolvedCandidates == 0, []int{summary.ExactRuns, summary.ExactJobs, summary.ExactArtifacts, summary.ValidCandidates, summary.AmbiguousCandidates, summary.UnresolvedCandidates}},
+		{"exact-predecessor-head", "FOUNDATION", "bind-exact-proposal-predecessor", selected != nil && value.HeadSHA == predecessorSHA && value.HeadBranch != "", []string{value.HeadSHA, predecessorSHA, value.HeadBranch}},
+		{"canonical-synthesis-job", "COHERENCE", "bind-canonical-proposal-synthesis", selected != nil && canonicalSelected(value), []any{value.RunID, value.RunAttempt, value.HeadSHA, value.HeadBranch, value.Event, value.Status, value.Conclusion, value.WorkflowName, value.SynthesisJobID, value.SynthesisJobName, value.SynthesisJobStatus, value.SynthesisJobConclusion}},
+		{"unique-canonical-artifact", "REGRESSION", "reject-ambiguous-proposal-predecessor", summary.ExactJobs == 1 && summary.ValidCandidates == 1 && summary.AmbiguousCandidates == 0 && summary.UnresolvedCandidates == 0 && summary.Contradictions == 0, []int{summary.ExactRuns, summary.OtherRouteRuns, summary.RouteUnknownRuns, summary.ExactJobs, summary.ExactArtifacts, summary.ValidCandidates, summary.AmbiguousCandidates, summary.UnresolvedCandidates, summary.Contradictions}},
 		{"ready-proposal-contract", "COHERENCE", "verify-merged-proposal-contract", selected != nil && value.ContractSatisfied == 8 && value.ContractTotal == 8 && value.ContractBPS == 10000 && value.ContractUnresolved == 0, []any{value.ProposalFileSHA256, value.ProposalReportDigest, value.ContractSatisfied, value.ContractTotal, value.ContractBPS}},
 		{"read-only-non-authorizing", "FOUNDATION", "preserve-read-only-proposal-selection", selected != nil && value.RepositoryWrites == 0 && !value.PromotionAuthorized && summary.RepositoryWrites == 0, []any{value.RepositoryWrites, value.PromotionAuthorized, summary.RepositoryWrites}},
 	}
@@ -31,6 +31,7 @@ func canonicalSelected(selected Selected) bool {
 	terminal := selected.Conclusion == "success" || selected.Conclusion == "failure"
 	return selected.RunID > 0 && selected.RunAttempt > 0 && selected.Event == "push" &&
 		selected.Status == "completed" && terminal && selected.WorkflowName == workflowName &&
+		validRoute(selected.HeadBranch) &&
 		selected.SynthesisJobID > 0 && selected.SynthesisJobName == synthesisJobName &&
 		selected.SynthesisJobStatus == "completed" && selected.SynthesisJobConclusion == "success" &&
 		selected.ArtifactID > 0 && selected.ArtifactName == "metric-strategy-"+selected.HeadSHA

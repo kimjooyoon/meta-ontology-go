@@ -25,19 +25,22 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
 		"needs: [format, vet, test, race, semantic]",
 		"if: ${{ always() }}",
-		"actions/github-script@v8",
+		"actions/github-script@v9.0.0",
 		"listJobsForWorkflowRun",
 		"ci-jobs.json",
 		"ci-final-jobs.json",
 		"ci-evidence.json",
 		"Capture CLI domain evidence",
 		"go run ./cmd/gooo check examples/billing/main.gooo",
-		"go run ./cmd/gooo graph-dump examples/billing/main.gooo",
+		"go run ./cmd/gooo graph dump examples/billing/main.gooo",
+		"reason: 'GRAPH_OBSERVER_NOT_RUN'",
+		"observation: {state: 'UNKNOWN', stage: 'DOMAIN_EVIDENCE', step: 'GRAPH_DUMP'",
+		"unknown_class: 'DIRECT_MISSING', next_operation: 'RUN_GRAPH_DUMP_OBSERVER', blocked_by: []",
 		"ci-domain-evidence.json",
 		"domain_evidence",
 		"CI_SLOT_PRESERVATION: \"true\"",
 		"CI_NO_WRITE_OUTSIDE_GENERATED: \"true\"",
-		"actions/upload-artifact@v6",
+		"actions/upload-artifact@v7",
 		"administration: read must not be added here",
 		"read_status: 'unavailable'",
 		"event_ref: context.ref",
@@ -59,6 +62,9 @@ func assertWorkflowMarkers(t *testing.T, text string) {
 		}
 	}
 	assertWorkflowIdentityMarkers(t, text)
+	if strings.Contains(text, "graph-dump is not implemented") {
+		t.Fatal("an unexecuted observer must not claim language capability is absent")
+	}
 	if strings.Contains(text, "BRANCH_PROTECTION_TOKEN") || strings.Contains(text, "getBranchProtection") {
 		t.Fatal("pull_request CI must not read branch protection or receive its observer credential")
 	}

@@ -8,29 +8,33 @@ const (
 )
 
 type Config struct {
-	RunPath              string
-	JobsPath             string
-	ManifestPath         string
-	ContractPath         string
-	ProgramPath          string
-	TimeCausalityRoot    string
-	SummaryPath          string
-	EvidencePath         string
-	RepositoryStatusPath string
-	OpenTofuPath         string
-	OpenTofuMetaPath     string
-	PriorPath            string
-	DependencyFiles      []string
-	Environment          string
-	OutputPath           string
-	MarkdownPath         string
-	Check                bool
+	RunPath                 string
+	JobsPath                string
+	ManifestPath            string
+	ContractPath            string
+	ProgramPath             string
+	TimeCausalityRoot       string
+	SummaryPath             string
+	EvidencePath            string
+	RepositoryStatusPath    string
+	OpenTofuPath            string
+	OpenTofuMetaPath        string
+	PriorPath               string
+	DependencyFiles         []string
+	Environment             string
+	OutputPath              string
+	MarkdownPath            string
+	ReadOnly                bool
+	LineageObservationPath  string
+	ReadOnlyObservationPath string
+	Check                   bool
 }
 
 type SourceRun struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
 	WorkflowName   string `json:"workflow_name"`
+	WorkflowPath   string `json:"path"`
 	Event          string `json:"event"`
 	Ref            string `json:"ref"`
 	HeadBranch     string `json:"head_branch"`

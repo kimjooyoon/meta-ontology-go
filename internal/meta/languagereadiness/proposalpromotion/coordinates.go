@@ -13,12 +13,13 @@ func buildCoordinates(currentHead, evidenceHead string, source Source) []Coordin
 				contract.SubjectSHA, evidenceHead}),
 		coordinate("canonical-push-synthesis", "COHERENCE",
 			selection.Event == "push" && selection.Status == "completed" &&
+				selection.RequestedRoute != "" && selection.HeadBranch == selection.RequestedRoute &&
 				selection.WorkflowName == "Metric counterfactual conformance" &&
 				selection.SynthesisJobID > 0 && selection.SynthesisJobName == "strategy" &&
 				selection.SynthesisJobStatus == "completed" &&
 				selection.SynthesisJobConclusion == "success" &&
 				selection.ArtifactName == "metric-strategy-"+evidenceHead,
-			[]any{selection.Event, selection.Status, selection.Conclusion,
+			[]any{selection.RequestedRoute, selection.HeadBranch, selection.Event, selection.Status, selection.Conclusion,
 				selection.WorkflowName, selection.SynthesisJobID, selection.SynthesisJobName,
 				selection.SynthesisJobStatus, selection.SynthesisJobConclusion,
 				selection.ArtifactName}),

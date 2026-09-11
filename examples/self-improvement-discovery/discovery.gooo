@@ -1,0 +1,7 @@
+package selfimprovementdiscovery
+namespace self_improvement_discovery
+
+entity ObservationLedgerInput id "gooo://self-improvement-discovery/entity/observation-ledger-input"
+entity DiscoveryDecision id "gooo://self-improvement-discovery/entity/discovery-decision"
+
+activity ClassifyPublicObservation(ObservationLedgerInput) -> DiscoveryDecision computes "role=public-generate-opt-in;operation_id=gooo.generate.public-self-observation;phase=caller-owned-ledger;pure=true;repository_writes=0;local_build_executions=0;local_test_executions=0;candidate=non-executing;authorization=explicit-existing-controls;discovery-decision:v1;discovery-case=EXACT_PAIR_CANDIDATE:CLOSED;discovery-case=DETERMINISTIC_REPLAY:CLOSED;discovery-case=SINGLE_COMPARABLE_OBSERVATION:UNKNOWN;discovery-case=INCOMPATIBLE_OBSERVATION_GROUP:UNKNOWN;discovery-case=TAMPERED_LEDGER_ENTRY:REFUTED;discovery-case=CONTRADICTORY_OUTPUTS:REFUTED;handoff=public-discovery-candidate-to-explicit-decision-to-continuity-certificate-to-public-consumption;handoff-relation=candidate_digest:discovery=decision=certificate=consumption;handoff-relation=manual_transformations:0;continuity-case=COMPLETE_ACCEPTED_CHAIN:CLOSED;continuity-case=DETERMINISTIC_REPLAY:CLOSED;continuity-case=FIRST_COMPARABLE_OBSERVATION:UNKNOWN;continuity-case=MISSING_EXPLICIT_DECISION:UNKNOWN;continuity-case=TAMPERED_CANDIDATE:REFUTED;continuity-case=BINDING_MISMATCH:REFUTED"

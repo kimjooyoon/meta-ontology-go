@@ -1,0 +1,8 @@
+package observationfixture
+namespace observationfixture
+
+entity Order id "observation://entity/order"
+entity PaymentMethod id "observation://entity/payment-method"
+entity Payment id "observation://entity/payment"
+
+activity PayOrder(Order, PaymentMethod) -> Payment

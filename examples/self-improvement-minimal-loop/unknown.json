@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/self-improvement-minimal-loop/v1",
+  "scenario": "unknown",
+  "source_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "toolchain_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "baseline": {"present": true, "metric": "example_metric", "value": 11},
+  "target": {"present": true, "metric": "example_metric", "value": 12},
+  "scope": {"paths": ["internal/meta/selfimprovementloop"]},
+  "transformation": {"present": true, "patch": "proposal-only patch", "output_mode": "caller-owned-temporary-output", "repository_mutation": false},
+  "prediction": {"present": true, "metric": "example_metric", "before": 11, "after": 12},
+  "counterexample": {"checked": true, "found": false, "evidence": "counterexample search passed"},
+  "ci": {"executed": true, "passed": true, "evidence": "semantic CI passed"},
+  "receipt": {"captured": true, "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+  "pair": {"before": [], "after": []},
+  "human": {"decision": "APPROVE"}
+}

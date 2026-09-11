@@ -32,7 +32,8 @@ func KnownFailureReason(reason string) bool {
 		ReasonJobCardinality, ReasonRunPaginationIncomplete,
 		ReasonJobPaginationIncomplete, ReasonArtifactPaginationIncomplete,
 		ReasonAPIUnavailable, ReasonAPIPermissionDenied, ReasonResponseMalformed,
-		ReasonArtifactPayloadUnavailable, ReasonRedirectOriginMismatch:
+		ReasonArtifactPayloadUnavailable, ReasonRedirectOriginMismatch,
+		ReasonRouteUnknown, ReasonRouteContradiction:
 		return true
 	default:
 		return false

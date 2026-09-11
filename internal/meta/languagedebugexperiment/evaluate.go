@@ -14,7 +14,7 @@ func Evaluate(input Input) (Report, error) {
 		}
 	}
 	report := Report{
-		Schema: "gooo/language-debug-experiment-report/v1", SubjectSHA: input.SubjectSHA,
+		Schema: "gooo/language-debug-experiment-report/v1", Scope: languagedebug.SourceExecutionScope, SubjectSHA: input.SubjectSHA,
 		Decision: "PASS", Reason: "DEBUG_EXPERIMENT_SATISFIED", Resolution: "EXACT",
 		Indicators: indicators, Views: buildViews(indicators),
 		RepositoryWrites: value.RepositoryWrites, MutationAuthority: value.MutationAuthority,

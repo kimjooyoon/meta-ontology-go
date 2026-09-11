@@ -14,6 +14,9 @@ type options struct {
 }
 
 func run(configuration options) error {
+	if handled, err := runRegistrationMode(); handled {
+		return err
+	}
 	if configuration.planPath == "" || configuration.outputPath == "" ||
 		filepath.Clean(configuration.planPath) ==
 			filepath.Clean(configuration.outputPath) {
@@ -28,14 +31,23 @@ func run(configuration options) error {
 	if err != nil {
 		return fmt.Errorf("encode execution manifest: %w", err)
 	}
+	bundlePath := generation.ObservationBundlePath(configuration.planPath, configuration.outputPath)
+	if _, err := archivePreviousObservation(bundlePath); err != nil {
+		return fmt.Errorf("preserve previous operation observations: %w", err)
+	}
 	if err := writeAtomic(configuration.outputPath, payload); err != nil {
 		return err
 	}
-	bundle, bundleErr := executeSelectedOperations(plan, manifest, workspaceRoot())
+	journal, traceState, err := openObservationJournal(configuration.outputPath)
+	if err != nil {
+		return fmt.Errorf("open operation boundary journal: %w", err)
+	}
+	defer journal.Close()
+	defer func() { _ = traceState.writeVerifierPackageSummary() }()
+	bundle, bundleErr := executeSelectedOperationsWithTrace(plan, manifest, workspaceRoot(), traceState)
 	if bundleErr != nil {
 		return fmt.Errorf("execute selected operations: %w", bundleErr)
 	}
-	bundlePath := filepath.Join(filepath.Dir(configuration.planPath), "meta-operation-observations.json")
 	bundlePayload, err := generation.EncodeObservationBundle(bundle)
 	if err != nil {
 		return fmt.Errorf("encode operation observations: %w", err)
@@ -90,6 +102,9 @@ func printObservationSummary(bundle generation.OperationObservationBundle) {
 			failure.Executor.RawStderrDigest,
 			failure.Executor.StderrDigest,
 		)
+		for _, diagnostic := range failure.Diagnostics {
+			fmt.Printf("operation failure diagnostic: action=%s detail=%q\n", failure.ActionIndicatorID, diagnostic)
+		}
 		for _, evidence := range failure.FailureEvidence {
 			fmt.Printf(
 				"operation failure evidence: action=%s indicator_id=%s decision=%s observed=%d expected=%d counterexample=%s\n",

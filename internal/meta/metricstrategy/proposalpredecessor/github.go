@@ -14,6 +14,7 @@ type githubRun struct {
 	ID         int64  `json:"id"`
 	RunAttempt int    `json:"run_attempt"`
 	HeadSHA    string `json:"head_sha"`
+	HeadBranch string `json:"head_branch"`
 	Event      string `json:"event"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`

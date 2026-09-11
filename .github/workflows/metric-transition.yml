@@ -21,15 +21,15 @@ jobs:
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
       CI_RUN_ID: ${{ github.event.workflow_run.id }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.0
       - name: Download exact meta artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: '*-${{ github.event.workflow_run.head_sha }}'
           path: ${{ runner.temp }}/meta-inputs
@@ -78,7 +78,7 @@ jobs:
             -verify-state "$first/state.json" \
             -verify-ledger "$first/ledger.json"
       - name: Upload exact-head metric transition
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: metric-transition-${{ github.event.workflow_run.head_sha }}
           path: |

@@ -19,6 +19,15 @@ func runTransport(input options) error {
 	}
 	archiveRaw, downloadExit := readLookup(input.archive, input.downloadExit)
 	receipt = selfimprovementtransport.CompleteArtifactLifecycle(receipt, archiveRaw, downloadExit)
+	if receipt.Decision == selfimprovementtransport.DecisionPass && input.output != "" {
+		metadata, bindErr := selfimprovementtransport.BindTransportMetadata(receipt, archiveRaw)
+		if bindErr != nil {
+			return bindErr
+		}
+		if err := writeJSON(input.output, metadata); err != nil {
+			return err
+		}
+	}
 	if err := writeReceipt(input.receipt, receipt); err != nil {
 		return err
 	}

@@ -1,6 +1,9 @@
 package linecaps
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"strings"
 	"testing"
 )
@@ -66,6 +69,26 @@ func Long(v int) int {
 	}
 	if hasFinding(findings, RuleRefactorReturn) || hasFinding(findings, RuleRefactorAssign) {
 		t.Fatalf("non-trivial function should not be refactor candidate: %#v", findings)
+	}
+}
+func TestCollapseAssignReturnRejectsTrailingBodyComments(t *testing.T) {
+	source := "package p\n\nfunc F() int {\n\tresult := 1\n\treturn result\n\t// keep this comment attached to the function body\n}\n"
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "fixture.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	function, ok := file.Decls[0].(*ast.FuncDecl)
+	if !ok || function.Body == nil {
+		t.Fatal("function fixture was not parsed")
+	}
+	beforeStatements := len(function.Body.List)
+	beforeRbrace := function.Body.Rbrace
+	if CollapseAssignReturn(fset, function, file.Comments) {
+		t.Fatal("trailing body comment should fail closed")
+	}
+	if len(function.Body.List) != beforeStatements || function.Body.Rbrace != beforeRbrace {
+		t.Fatal("failed collapse mutated the function body")
 	}
 }
 func sourceWithFunctionLines(lines int) string {
