@@ -4,12 +4,222 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func declaredCaseSourceFixture(t *testing.T) []byte {
+	t.Helper()
+	source, err := os.ReadFile("../../../examples/meta-policy-compilation/policy.gooo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return source
+}
+
+func declaredCaseDocumentFixture(t *testing.T, source []byte) []byte {
+	t.Helper()
+	policy, err := Compile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := json.Marshal(Case{
+		ID: "declared-case", ValidatorExpectation: "PASS",
+		EvidenceClass: "SYNTHETIC_FIXTURE", Provenance: "CALLER_SUPPLIED",
+		ProducerAvailable: true, ConsumerAvailable: true,
+		ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest,
+		ObservedGeneratedJudgeDigest: policy.SemanticDigest, ObservedIndependentDigest: policy.SemanticDigest,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return document
+}
+
+func declaredCaseStrictIntervention(source []byte) ([]byte, error) {
+	// This is a bounded fixture transformation, not a general source rewriter.
+	// The native intervention contract permits one transition and its one case
+	// decision to change. Missing or ambiguous bindings are errors, not guesses.
+	lines := bytes.SplitAfter(source, []byte("\n"))
+	transitionLine, decisionLine := -1, -1
+	transitionCount, caseCount, decisionCount := 0, 0, 0
+	inTargetCase := false
+	for index, line := range lines {
+		fields := strings.Fields(string(line))
+		if len(fields) == 4 && fields[0] == "transition" && fields[1] == `"SEMANTIC_EQUIVALENCE"` && fields[2] == "->" && fields[3] == `"PASS"` {
+			transitionLine = index
+			transitionCount++
+		}
+		if len(fields) >= 2 && fields[0] == "case" {
+			inTargetCase = fields[1] == `"SEMANTIC_EQUIVALENCE"`
+			if inTargetCase {
+				caseCount++
+			}
+		}
+		if inTargetCase && len(fields) == 2 && fields[0] == "decision" && fields[1] == `"PASS"` {
+			decisionLine = index
+			decisionCount++
+		}
+	}
+	if transitionCount != 1 || caseCount != 1 || decisionCount != 1 {
+		return nil, fmt.Errorf("strict fixture intervention requires one transition, case, and decision; found %d/%d/%d", transitionCount, caseCount, decisionCount)
+	}
+	lines[transitionLine] = bytes.Replace(lines[transitionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
+	lines[decisionLine] = bytes.Replace(lines[decisionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
+	return bytes.Join(lines, nil), nil
+}
+
+func TestDeclaredCaseInterventionRejectsUnboundOrAmbiguousTargets(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	transition := []byte(`transition "SEMANTIC_EQUIVALENCE" -> "PASS"`)
+	caseHeader := []byte(`case "SEMANTIC_EQUIVALENCE"`)
+	for _, test := range []struct {
+		name   string
+		source []byte
+	}{
+		{"missing transition", bytes.Replace(source, transition, []byte(`transition "OTHER" -> "PASS"`), 1)},
+		{"duplicate transition", append(append([]byte(nil), source...), append([]byte("\n"), transition...)...)},
+		{"missing case", bytes.Replace(source, caseHeader, []byte(`case "OTHER"`), 1)},
+		{"duplicate case", append(append([]byte(nil), source...), []byte("\n    case \"SEMANTIC_EQUIVALENCE\" {\n        decision \"PASS\"\n    }\n")...)},
+		{"missing decision", bytes.ReplaceAll(source, []byte(`decision "PASS"`), []byte(`decision "FAIL_CLOSED"`))},
+		{"unrelated case decision", []byte("transition \"SEMANTIC_EQUIVALENCE\" -> \"PASS\"\ncase \"SEMANTIC_EQUIVALENCE\" {\n}\ncase \"OTHER\" {\n decision \"PASS\"\n}\n")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if result, err := declaredCaseStrictIntervention(test.source); err == nil || result != nil {
+				t.Fatal("unbound or ambiguous fixture intervention produced a candidate")
+			}
+		})
+	}
+}
+
+func TestEvaluateDeclaredCasePreservesSourcePolicyAuthority(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	strict, err := declaredCaseStrictIntervention(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	beforeLines, afterLines := bytes.Split(source, []byte("\n")), bytes.Split(strict, []byte("\n"))
+	if len(beforeLines) != len(afterLines) {
+		t.Fatal("fixture intervention changed the source line population")
+	}
+	changed := 0
+	for index, before := range beforeLines {
+		if bytes.Equal(before, afterLines[index]) {
+			continue
+		}
+		changed++
+		if !bytes.Equal(afterLines[index], bytes.Replace(before, []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)) {
+			t.Fatal("fixture intervention changed bytes outside the two decision tokens")
+		}
+	}
+	if changed != 2 {
+		t.Fatalf("fixture intervention changed %d lines, want exactly two", changed)
+	}
+	var baseline DeclaredCaseEvaluation
+	for index, policySource := range [][]byte{source, strict} {
+		document := declaredCaseDocumentFixture(t, policySource)
+		report, err := EvaluateDeclaredCase("policy.gooo", policySource, document, "metapolicycompilation", "metapolicycompilation")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if index == 0 {
+			baseline = report
+		} else if report.SourceDigest == baseline.SourceDigest || report.SemanticDigest == baseline.SemanticDigest {
+			t.Fatal("bound policy intervention did not change both source and semantic identities")
+		}
+		want := []string{"PASS", "FAIL_CLOSED"}[index]
+		if report.SourceDecision.Decision != want || report.SourceDecision.MatchedCondition != "SEMANTIC_EQUIVALENCE" {
+			t.Fatalf("Gooo source decision = %+v, want %s at SEMANTIC_EQUIVALENCE", report.SourceDecision, want)
+		}
+		var input Case
+		if err := json.Unmarshal(document, &input); err != nil {
+			t.Fatal(err)
+		}
+		policy, err := Compile(policySource)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(report.SourceDecision, EvaluateSourcePolicy(policy, input)) {
+			t.Fatal("explanation changed the existing source decision or UNKNOWN context")
+		}
+		if report.Schema != DeclaredCaseEvaluationSchema || report.SourceDigest != DigestBytes(policySource) || report.SemanticDigest != policy.SemanticDigest || report.InputDigest != DigestBytes(document) || report.EffectiveInputDigest != DigestBytes(document) || len(report.Fields) != 11 {
+			t.Fatalf("source/input/schema binding = %+v", report)
+		}
+		if report.EvaluationScope != "CONDITIONAL_SOURCE_POLICY_EVALUATION" || report.ExternalEvidenceState != "UNKNOWN_NOT_VERIFIED" || report.FullConformanceState != "UNKNOWN_NOT_EXECUTED" || report.GeneratedExecutionObserved || report.MutationAuthority != 0 || report.PromotionAuthority != 0 {
+			t.Fatalf("caller declarations were promoted to execution/evidence/authority: %+v", report)
+		}
+	}
+}
+
+func TestEvaluateDeclaredCaseSeparatesMissingNullAndFalse(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	var first DeclaredCaseEvaluation
+	digests := map[string]bool{}
+	for index, test := range []struct {
+		document string
+		binding  string
+	}{
+		{document: "{}", binding: "MISSING_DEFAULTED"},
+		{document: "{\"producer_available\":false}", binding: "DECLARED"},
+		{document: "{\"producer_available\":null}", binding: "NULL_DEFAULTED"},
+		{document: "{\n  \"producer_available\": false\n}", binding: "DECLARED"},
+	} {
+		report, err := EvaluateDeclaredCase("policy.gooo", source, []byte(test.document), "metapolicycompilation", "metapolicycompilation")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if index == 0 {
+			first = report
+		}
+		if report.EffectiveInputDigest != first.EffectiveInputDigest || !reflect.DeepEqual(report.SourceDecision, first.SourceDecision) || digests[report.InputDigest] {
+			t.Fatal("raw documents and equal effective inputs were conflated, or source defaults changed")
+		}
+		digests[report.InputDigest] = true
+		found := 0
+		for _, field := range report.Fields {
+			if field.JSONField != "producer_available" {
+				continue
+			}
+			found++
+			if field.Binding != test.binding || field.GoType != "bool" || string(field.Effective) != "false" {
+				t.Fatalf("presence or effective value = %+v", field)
+			}
+			wantSupplied := map[string]string{"MISSING_DEFAULTED": "", "NULL_DEFAULTED": "null", "DECLARED": "false"}[test.binding]
+			if string(field.Supplied) != wantSupplied {
+				t.Fatalf("supplied value = %q, want %q", field.Supplied, wantSupplied)
+			}
+		}
+		if found != 1 || len(report.Fields) != 11 {
+			t.Fatal("Case field binding is not exactly once per existing schema field")
+		}
+	}
+}
+
+func TestEvaluateDeclaredCaseRejectsUnbindableDocuments(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	for _, document := range []string{
+		"null",
+		"[]",
+		"{}{}",
+		"{\"unexpected\":true}",
+		"{\"producer_available\":\"false\"}",
+		"{\"producer_available\":false,\"producer_available\":true}",
+		"{\"id\":\"one\",\"ID\":\"two\"}",
+		"{\"Producer_Available\":true}",
+	} {
+		if _, err := EvaluateDeclaredCase("policy.gooo", source, []byte(document), "metapolicycompilation", "metapolicycompilation"); err == nil {
+			t.Fatalf("unbindable document was accepted: %s", document)
+		}
+	}
+	if _, err := EvaluateDeclaredCase("policy.gooo", source, []byte("{}"), "different", "metapolicycompilation"); err == nil {
+		t.Fatal("declared package identity mismatch was accepted")
+	}
+}
 
 func TestDecodeStrictJSONRejectsDuplicateObjectKeys(t *testing.T) {
 	tests := []struct {
