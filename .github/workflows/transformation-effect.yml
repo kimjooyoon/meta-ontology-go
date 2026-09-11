@@ -1441,6 +1441,30 @@ jobs:
           path: ${{ runner.temp }}/language-readiness-guarded-capability-a.json
           if-no-files-found: error
           retention-days: 30
+      - name: Download exact metric concept-operation receipt
+        if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/metric-concept-operation"
+          mkdir -p "$destination"
+          runs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
+          run_id="$(jq -r '[.workflow_runs[] | select(.name == "Metric counterfactual conformance" and .status == "completed" and .conclusion == "success" and .head_sha == env.HEAD_SHA and .head_repository.full_name == env.GITHUB_REPOSITORY)] | sort_by(.id) | last | .id // empty' <<<"$runs_json")"
+          test -n "$run_id"
+          artifacts_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/artifacts?per_page=100")"
+          artifact_rows="$(jq -c --arg name "metric-meta-program-$HEAD_SHA" '[.artifacts[] | select(.name == $name and .expired == false)]' <<<"$artifacts_json")"
+          test "$(jq 'length' <<<"$artifact_rows")" = 1
+          artifact_id="$(jq -r '.[0].id' <<<"$artifact_rows")"
+          artifact_digest="$(jq -r '.[0].digest' <<<"$artifact_rows")"
+          test "$artifact_id" != "null"
+          test "$artifact_digest" != "null"
+          gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$destination/metric-meta-program.zip"
+          test "sha256:$(sha256sum "$destination/metric-meta-program.zip" | awk '{print $1}')" = "$artifact_digest"
+          unzip -q "$destination/metric-meta-program.zip" -d "$destination/unpacked"
+          test -s "$destination/unpacked/concept-operation-binding.json"
+          cp "$destination/unpacked/concept-operation-binding.json" "$destination/concept-operation-binding.json"
       - name: Produce, replay, and consume exact-head concepts
         if: steps.proposal-predecessor.outputs.mode != 'BLOCKED' && steps.readiness-predecessor.outputs.mode != 'BLOCKED'
         env:
@@ -1699,6 +1723,7 @@ jobs:
             go run ./cmd/language-readiness-witness \
               -root "$GITHUB_WORKSPACE" \
               -input "$first/artifact.json" \
+              -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -1716,6 +1741,7 @@ jobs:
           go run ./cmd/language-readiness-witness \
             -root "$GITHUB_WORKSPACE" \
             -input "$first/artifact.json" \
+            -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -1958,6 +1984,7 @@ jobs:
             go run ./cmd/language-readiness-witness \
               -root "$GITHUB_WORKSPACE" \
               -input "$first/artifact.json" \
+              -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -1978,6 +2005,7 @@ jobs:
           go run ./cmd/language-readiness-witness \
             -root "$GITHUB_WORKSPACE" \
             -input "$first/artifact.json" \
+            -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \

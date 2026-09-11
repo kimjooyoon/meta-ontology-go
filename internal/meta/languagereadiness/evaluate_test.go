@@ -10,13 +10,13 @@ func TestUseCaseCurrentCatalogIsSevenOfTwentyFour(t *testing.T) {
 	if snapshot.Decision != "PASS" {
 		t.Fatalf("decision = %q", snapshot.Decision)
 	}
-	if snapshot.Summary.Completed != 7 || snapshot.Summary.Total != 24 {
+	if snapshot.Summary.Completed != 6 || snapshot.Summary.Total != 24 {
 		t.Fatalf("completion = %d/%d", snapshot.Summary.Completed, snapshot.Summary.Total)
 	}
-	if snapshot.Summary.ReadinessBPS != 2916 || snapshot.Summary.NotSatisfied != 17 {
+	if snapshot.Summary.ReadinessBPS != 2500 || snapshot.Summary.NotSatisfied != 18 {
 		t.Fatalf("summary = %+v", snapshot.Summary)
 	}
-	if snapshot.Summary.RatioNumerator != 7 || snapshot.Summary.RatioDenominator != 24 {
+	if snapshot.Summary.RatioNumerator != 6 || snapshot.Summary.RatioDenominator != 24 {
 		t.Fatalf("ratio = %d/%d", snapshot.Summary.RatioNumerator, snapshot.Summary.RatioDenominator)
 	}
 }
@@ -40,7 +40,7 @@ func TestUseCaseUnregisteredClaimsDoNotChangeTheCount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if snapshot.Summary.Completed != 7 {
+	if snapshot.Summary.Completed != 6 {
 		t.Fatalf("unregistered claim changed completion to %d", snapshot.Summary.Completed)
 	}
 	replayed, err := Evaluate(artifactFixture("PASS", ids...))

@@ -3,6 +3,7 @@ package languagereadiness
 import (
 	"fmt"
 
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
 )
@@ -35,7 +36,17 @@ func validatePromotionEvidence(bundle PromotionEvidence,
 	if err != nil {
 		return evidenceDigests{}, err
 	}
+	conceptOperationDigest := ""
+	if bundle.ConceptOperation.Schema != "" {
+		if _, err := conceptoperation.VerifyReceipt(bundle.ConceptOperation, expectedRepository, expectedHeadSHA); err != nil {
+			return evidenceDigests{}, fmt.Errorf("verify concept-operation binding receipt: %w", err)
+		}
+		if bundle.ConceptOperation.Status == "VERIFIED" {
+			conceptOperationDigest = bundle.ConceptOperation.Digest
+		}
+	}
 	return evidenceDigests{proposal: promotionDigest, guarded: bundle.Capability.ReportDigest,
 		useCases: bundle.UseCases.ReportDigest, syntax: bundle.Syntax.ReportDigest,
-		diagnostic: bundle.Diagnostic.ReportDigest, packageRuntime: runtimeDigest}, nil
+		diagnostic: bundle.Diagnostic.ReportDigest, packageRuntime: runtimeDigest,
+		conceptOperation: conceptOperationDigest}, nil
 }

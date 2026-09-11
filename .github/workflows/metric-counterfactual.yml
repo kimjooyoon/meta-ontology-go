@@ -733,6 +733,11 @@ jobs:
         with:
           name: metric-strategy-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program/input
+      - name: Download exact metric intervention evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: metric-intervention-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program/intervention
       - name: Compile, replay, and independently verify the typed Gooo program
         shell: bash
         run: |
@@ -744,6 +749,7 @@ jobs:
           common=(
             -strategy "$input/plan.json"
             -strategy-verification "$input/verification.json"
+            -intervention "$RUNNER_TEMP/metric-meta-program/intervention/ledger.json"
           )
           for target in "$first" "$replay"; do
             go run ./scripts/metric-meta-program "${common[@]}" -out "$target"
@@ -791,7 +797,28 @@ jobs:
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$first/verification.json"
+          jq -e \
+            --arg program_digest "$(jq -r '.digest' "$first/program.json")" \
+            --arg source_digest "$(jq -r '.source_digest' "$first/program.json")" \
+            --arg semantic_digest "$(jq -r '.semantic_digest' "$first/program.json")" \
+            --arg registry_digest "$(jq -r '.registry_digest' "$first/program.json")" \
+            '
+            .schema == "gooo/metric-meta-concept-operation-binding/v1" and
+            .metric_id == "gooo.metric.meta.concept-operation-binding-bps.v1" and
+            .source_authority == "HANDWRITTEN_GO_REGISTRY_TO_CANONICAL_SOURCE_TO_PARSED_LOWERED_IR" and
+            .program_source_path == "program.gooo" and
+            .status == "VERIFIED" and
+            .coverage_bps == 10000 and
+            .unknown_count == 0 and
+            .program_digest == $program_digest and
+            .program_source_digest == $source_digest and
+            .program_semantic_digest == $semantic_digest and
+            .program_registry_digest == $registry_digest and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$first/concept-operation-binding.json"
           test -s "$first/program.gooo"
+          test -s "$first/concept-operation-binding.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
         id: upload

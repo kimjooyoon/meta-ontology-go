@@ -2,6 +2,9 @@ package main
 
 func completePaths(cfg config, target string) []string {
 	paths := []string{cfg.input, target}
+	if cfg.conceptOperationBinding != "" {
+		paths = append(paths, cfg.conceptOperationBinding)
+	}
 	optional := []string{
 		cfg.promotion,
 		cfg.guarded,

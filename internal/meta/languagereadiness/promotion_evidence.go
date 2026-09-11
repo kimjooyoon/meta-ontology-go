@@ -1,6 +1,7 @@
 package languagereadiness
 
 import (
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime"
@@ -11,6 +12,7 @@ import (
 
 type PromotionEvidence struct {
 	Promotion      proposalpromotion.Receipt
+	ConceptOperation conceptoperation.Receipt
 	Capability     guardedcapability.Receipt
 	UseCases       toolchainusecases.Report
 	Syntax         languagesyntax.Report

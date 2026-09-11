@@ -2,6 +2,7 @@ package artifact
 
 type CompleteEvidenceInput struct {
 	ConceptArtifact        []byte
+	ConceptOperationBinding []byte
 	Promotion              []byte
 	Capability             []byte
 	UseCases               []byte
