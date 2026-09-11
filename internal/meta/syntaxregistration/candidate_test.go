@@ -214,6 +214,173 @@ func TestInternalMetaSourceRegistrationPreservesAllNineRoles(t *testing.T) {
 	}
 }
 
+func promotedMetaFixture(t *testing.T) (fstest.MapFS, Request) {
+	t.Helper()
+	data, request := fixture(t)
+	delete(data, request.Case.Path)
+	request.Case.ID = "syntax-registration-meta-contract"
+	request.Case.Path = "internal/meta/syntaxregistration/contract.gooo"
+	request.Case.EntityFields = false
+	request.PromoteMetaSource = true
+	source, err := os.ReadFile("contract.gooo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data[request.Case.Path] = &fstest.MapFile{Data: source}
+	pin(t, data, &request)
+	return data, request
+}
+
+func promotionRegistry(t *testing.T, raw []byte) languagesyntax.Registry {
+	t.Helper()
+	var registry languagesyntax.Registry
+	if err := json.Unmarshal(raw, &registry); err != nil {
+		t.Fatal(err)
+	}
+	return registry
+}
+
+func TestMetaSourcePromotionPreservesExactCohortAndNineRoles(t *testing.T) {
+	data, request := promotedMetaFixture(t)
+	before := digestValue(data)
+	baseline := promotionRegistry(t, data[corpusPath].Data)
+	raw, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := DecodeRequest(raw)
+	if err != nil || !decoded.PromoteMetaSource || !reflect.DeepEqual(decoded, request) {
+		t.Fatalf("explicit promotion request was lost: %v", err)
+	}
+	plan, err := Compile(data, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := plan.Generate(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := plan.ValidateCandidate(data, candidate); err != nil {
+		t.Fatal(err)
+	}
+	if candidate.RequiredArtifacts != 9 || len(candidate.Artifacts) != 9 ||
+		candidate.RequestDigest != digestValue(request) || candidate.InputDigest != request.SnapshotDigest ||
+		candidate.ApplyAuthorized || candidate.PromotionAllowed || candidate.RepositoryWrites != 0 ||
+		candidate.State != "PROPOSAL_ONLY" || candidate.Admission != "UNASSESSED" || digestValue(data) != before {
+		t.Fatal("promotion lost its role, request, read-only input, or authority boundary")
+	}
+	corpusMembers := 0
+	for _, member := range candidate.Members {
+		if member.Path == request.Case.Path {
+			t.Fatal("promotion rewrote its existing source")
+		}
+		if strings.HasPrefix(member.Path, closureRoot+"evidence/") &&
+			(member.Path != denominatorPath(request.BaseVersion+1) || member.BeforeDigest != "ABSENT") {
+			t.Fatal("promotion rewrote denominator history")
+		}
+		if member.Path == corpusPath {
+			corpusMembers++
+			assertPromotedCohort(t, baseline, promotionRegistry(t, member.Content), request)
+		}
+	}
+	if corpusMembers != 1 {
+		t.Fatal("promotion did not produce exactly one corpus")
+	}
+}
+
+func assertPromotedCohort(t *testing.T, before, after languagesyntax.Registry, request Request) {
+	t.Helper()
+	expected := []string{}
+	for _, path := range before.MetaSources {
+		if path != request.Case.Path {
+			expected = append(expected, path)
+		}
+	}
+	if len(after.Cases) != len(before.Cases)+1 || !reflect.DeepEqual(after.MetaSources, expected) ||
+		!reflect.DeepEqual(after.PackageUnits, before.PackageUnits) {
+		t.Fatal("promotion changed unrelated membership")
+	}
+	if !reflect.DeepEqual(after.Cases[:len(before.Cases)], before.Cases) ||
+		!reflect.DeepEqual(after.Cases[len(before.Cases)], request.Case) {
+		t.Fatal("promotion changed existing cases or did not bind its exact requested case")
+	}
+}
+
+func TestMetaSourcePromotionRequiresExplicitUniqueMembership(t *testing.T) {
+	for _, name := range []string{"not-requested", "not-registered", "duplicate-meta-source", "already-executed", "package-member"} {
+		t.Run(name, func(t *testing.T) {
+			data, request := promotedMetaFixture(t)
+			registry := promotionRegistry(t, data[corpusPath].Data)
+			reason := "REGISTRATION_SOURCE_ALREADY_REGISTERED"
+			switch name {
+			case "not-requested":
+				request.PromoteMetaSource = false
+			case "not-registered":
+				registry.MetaSources = nil
+				reason = "REGISTRATION_META_SOURCE_NOT_REGISTERED"
+			case "duplicate-meta-source":
+				registry.MetaSources = append(registry.MetaSources, request.Case.Path)
+				reason = "REGISTRATION_META_SOURCE_NOT_UNIQUE"
+			case "already-executed":
+				registry.Cases = append(registry.Cases, request.Case)
+				reason = "REGISTRATION_CASE_ALREADY_EXISTS"
+			case "package-member":
+				registry.PackageUnits = append(registry.PackageUnits, languagesyntax.PackageDefinition{
+					ID: "conflicting-package", Members: []string{request.Case.Path},
+				})
+			}
+			raw, err := json.Marshal(registry)
+			if err != nil {
+				t.Fatal(err)
+			}
+			data[corpusPath].Data = raw
+			pin(t, data, &request)
+			_, err = Compile(data, request)
+			requireFailure(t, err, "REFUTED", "")
+			if err.Error() != "REFUTED/"+reason {
+				t.Fatalf("unexpected rejection: %v", err)
+			}
+		})
+	}
+}
+
+func TestMetaSourcePromotionRejectsResealedMembership(t *testing.T) {
+	data, request := promotedMetaFixture(t)
+	plan, err := Compile(data, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"keep-promoted-meta-source", "drop-unrelated-meta-source"} {
+		t.Run(name, func(t *testing.T) {
+			candidate, err := plan.Generate(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for index := range candidate.Members {
+				member := &candidate.Members[index]
+				if member.Path != corpusPath {
+					continue
+				}
+				registry := promotionRegistry(t, member.Content)
+				if name == "keep-promoted-meta-source" {
+					registry.MetaSources = append(registry.MetaSources, request.Case.Path)
+				} else {
+					if len(registry.MetaSources) == 0 {
+						t.Fatal("fixture has no unrelated source")
+					}
+					registry.MetaSources = registry.MetaSources[1:]
+				}
+				member.Content, err = json.Marshal(registry)
+				if err != nil {
+					t.Fatal(err)
+				}
+				member.AfterDigest = digest(member.Content)
+			}
+			requireFailure(t, plan.ValidateCandidate(data, candidate), "REFUTED", "")
+		})
+	}
+}
+
 func requireFailure(t *testing.T, err error, state, class string) {
 	t.Helper()
 	var observed *Failure
