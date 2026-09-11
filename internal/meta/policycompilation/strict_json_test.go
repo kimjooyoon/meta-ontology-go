@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +15,72 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestGeneratedJudgeInputFieldsFollowTypedSchema(t *testing.T) {
+	policy, err := Compile(declaredCaseSourceFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := []string{"runtime-input", "renamed-fields", "reordered-and-retyped-fields"}
+	for index, shape := range []reflect.Type{
+		reflect.TypeFor[generatedJudgeInput](),
+		reflect.StructOf([]reflect.StructField{
+			{Name: "Enabled", Type: reflect.TypeFor[bool](), Tag: "json:\"enabled\""},
+			{Name: "Label", Type: reflect.TypeFor[string](), Tag: "json:\"label\""},
+		}),
+		reflect.StructOf([]reflect.StructField{
+			{Name: "Label", Type: reflect.TypeFor[bool](), Tag: "json:\"renamed_label,omitempty\""},
+			{Name: "Enabled", Type: reflect.TypeFor[string](), Tag: "json:\"renamed_enabled\""},
+		}),
+	} {
+		t.Run(names[index], func(t *testing.T) {
+			source := "package probe\n\ntype input struct {\n" + generatedJudgeInputFields(shape) + "}\n"
+			if index == 0 {
+				source = string(GenerateJudge(policy))
+			}
+			file, err := parser.ParseFile(token.NewFileSet(), "judge.go", source, parser.SkipObjectResolution)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fields *ast.FieldList
+			for _, declaration := range file.Decls {
+				group, ok := declaration.(*ast.GenDecl)
+				if !ok || group.Tok != token.TYPE {
+					continue
+				}
+				for _, specification := range group.Specs {
+					named, ok := specification.(*ast.TypeSpec)
+					if !ok || named.Name.Name != "input" {
+						continue
+					}
+					structure, ok := named.Type.(*ast.StructType)
+					if !ok || fields != nil {
+						t.Fatal("generated input declaration is not one struct")
+					}
+					fields = structure.Fields
+				}
+			}
+			if fields == nil || len(fields.List) != shape.NumField() {
+				t.Fatal("generated input field count differs from its typed schema")
+			}
+			for fieldIndex, observed := range fields.List {
+				expected := shape.Field(fieldIndex)
+				if len(observed.Names) != 1 || observed.Names[0].Name != expected.Name {
+					t.Fatalf("generated input field order/name differs at %d", fieldIndex)
+				}
+				kind, ok := observed.Type.(*ast.Ident)
+				if !ok || kind.Name != expected.Type.String() || observed.Tag == nil {
+					t.Fatalf("generated input field type/tag differs at %d", fieldIndex)
+				}
+				var tag string
+				count, err := fmt.Sscanf(observed.Tag.Value, "%q", &tag)
+				if err != nil || count != 1 || tag != string(expected.Tag) {
+					t.Fatalf("generated JSON tag differs at %d: %q (%v)", fieldIndex, tag, err)
+				}
+			}
+		})
+	}
+}
 
 func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) {
 	source := declaredCaseSourceFixture(t)

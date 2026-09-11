@@ -53,6 +53,13 @@ Bindings are derived from the generated program's actual input type and JSON
 tags, rather than another field registry. Missing, null and explicit false
 remain distinguishable even when their effective value and decision agree.
 
+The emitted input declaration is itself rendered from the compiler's typed
+runtime-input ABI. Field names, types, order and JSON tags are not repeated as
+a second hand-maintained list in the code template. CI parses the emitted Go
+declaration and exercises renamed, reordered and retyped renderer fixtures.
+These fixtures check schema derivation, not arbitrary extensibility of the
+policy's runtime input domain.
+
 The generated execution input has eight fields. It is not the eleven-field
 compiler Case: validator expectation, evidence classification and provenance
 metadata are not generated-judge input fields. Exact JSON names and a single

@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -21,6 +22,17 @@ type generatedJudgeInput struct {
 	ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 	ObservedIndependentDigest    string `json:"observed_independent_digest"`
 	UpperDecision                string `json:"upper_decision"`
+}
+
+// generatedJudgeInputFields renders the input ABI instead of maintaining a
+// second field-name, type, and JSON-tag list inside the generated template.
+func generatedJudgeInputFields(inputType reflect.Type) string {
+	var builder strings.Builder
+	for index := 0; index < inputType.NumField(); index++ {
+		field := inputType.Field(index)
+		fmt.Fprintf(&builder, "    %s %s %q\n", field.Name, field.Type.String(), string(field.Tag))
+	}
+	return builder.String()
 }
 
 // GenerateJudge emits a standalone Go program containing the reduction rows
@@ -45,15 +57,7 @@ import (
 )
 
 type input struct {
-    ID string %q
-    ProducerAvailable bool %q
-    ConsumerAvailable bool %q
-    ObservedSourceDigest string %q
-    ObservedArtifactSourceDigest string %q
-    ObservedGeneratedJudgeDigest string %q
-    ObservedIndependentDigest string %q
-    UpperDecision string %q
-}
+%s}
 type result struct {
     CaseID string %q
     Decision string %q
@@ -276,9 +280,7 @@ func main() {
     if err := json.NewEncoder(os.Stdout).Encode(output); err != nil { os.Exit(3) }
 }
 `,
-		`json:"id"`, `json:"producer_available"`, `json:"consumer_available"`,
-		`json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`,
-		`json:"observed_generated_judge_digest"`, `json:"observed_independent_digest"`, `json:"upper_decision"`,
+		generatedJudgeInputFields(reflect.TypeFor[generatedJudgeInput]()),
 		`json:"case_id"`, `json:"decision"`, `json:"matched_condition"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
 		`json:"unknown_class"`, `json:"next_operation"`, `json:"blocked_by"`, `json:"policy_digest"`,
 		`json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest,
