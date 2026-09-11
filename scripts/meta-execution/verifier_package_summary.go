@@ -1,0 +1,401 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"path"
+	"strings"
+	"time"
+	"unicode/utf8"
+)
+
+const verifierPackageSummarySchema = "gooo/meta-execution-verifier-package-summary-advisory/v1"
+const verifierPackageSummarySidecarSuffix = ".verifier-package-summaries.json"
+const verifierPackageSummaryModulePrefix = "github.com/kimjooyoon/meta-ontology-go"
+
+const maxVerifierPackageSummaryStdoutBytes = 64 * 1024
+const maxVerifierPackageSummaryLineBytes = 1024
+const maxVerifierPackageSummaryRowsPerInvocation = 512
+const maxVerifierPackageSummaryTotalRows = 2048
+const maxVerifierPackageSummaryRecords = 64
+const maxVerifierPackageSummaryFileBytes = 256 * 1024
+
+type verifierPackageSummaryDocument struct {
+	Schema             string                         `json:"schema"`
+	DiagnosticOnly     string                         `json:"diagnostic_only"`
+	Authenticity       string                         `json:"authenticity"`
+	Improvement        string                         `json:"improvement"`
+	DiagnosticMarkers  []string                       `json:"diagnostic_markers"`
+	Truncated          bool                           `json:"truncated"`
+	Records            []verifierPackageSummaryRecord `json:"records"`
+}
+
+type verifierPackageSummaryRecord struct {
+	InvocationID          string                         `json:"invocation_id"`
+	ActionIndicatorID     string                         `json:"action_indicator_id"`
+	Activity              string                         `json:"activity"`
+	MetaOperation         string                         `json:"meta_operation"`
+	Subject               string                         `json:"subject"`
+	OperationSequence     int                            `json:"operation_sequence"`
+	Pass                  string                         `json:"pass"`
+	CommandKind           string                         `json:"command_kind"`
+	ExitCode              int                            `json:"exit_code"`
+	StdoutBytes           int                            `json:"stdout_bytes"`
+	RawStdoutDigest       string                         `json:"raw_stdout_digest"`
+	StdoutDigest          string                         `json:"stdout_digest"`
+	ParseStatus           string                         `json:"parse_status"`
+	DiagnosticMarkers     []string                       `json:"diagnostic_markers"`
+	Truncated             bool                           `json:"truncated"`
+	UnrecognizedLineCount int                            `json:"unrecognized_line_count"`
+	Packages              []verifierPackageSummaryRow    `json:"packages"`
+}
+
+type verifierPackageSummaryRow struct {
+	Package             string `json:"package"`
+	Status              string `json:"status"`
+	ElapsedToken        string `json:"elapsed_token,omitempty"`
+	ElapsedStatus       string `json:"elapsed_status"`
+	ElapsedUnit         string `json:"elapsed_unit,omitempty"`
+	ElapsedNanoseconds  *int64 `json:"elapsed_nanoseconds,omitempty"`
+	OutputMarker        string `json:"output_marker,omitempty"`
+}
+
+type verifierPackageSummaryParse struct {
+	Rows                  []verifierPackageSummaryRow
+	Truncated             bool
+	UnrecognizedLineCount int
+}
+
+type verifierPackageSummaryCollector struct {
+	path      string
+	records   []verifierPackageSummaryRecord
+	totalRows int
+	truncated bool
+}
+
+func newVerifierPackageSummaryCollector(outputPath string) *verifierPackageSummaryCollector {
+	return &verifierPackageSummaryCollector{
+		path:    outputPath + verifierPackageSummarySidecarSuffix,
+		records: make([]verifierPackageSummaryRecord, 0),
+	}
+}
+
+func (collector *verifierPackageSummaryCollector) observe(trace metaExecutionTrace, pass string, result processResult) {
+	if collector == nil {
+		return
+	}
+	if len(collector.records) >= maxVerifierPackageSummaryRecords {
+		collector.truncated = true
+		return
+	}
+	parsed := parseVerifierPackageSummaries(result.Stdout)
+	if parsed.Truncated {
+		collector.truncated = true
+	}
+	if remaining := maxVerifierPackageSummaryTotalRows - collector.totalRows; remaining < len(parsed.Rows) {
+		if remaining < 0 {
+			remaining = 0
+		}
+		parsed.Rows = parsed.Rows[:remaining]
+		parsed.Truncated = true
+		collector.truncated = true
+	}
+	record := verifierPackageSummaryRecord{
+		InvocationID:          trace.state.invocationID,
+		ActionIndicatorID:     trace.action.IndicatorID,
+		Activity:              trace.action.Activity,
+		MetaOperation:         string(trace.action.Operation),
+		Subject:               trace.action.Subject,
+		OperationSequence:     trace.sequence,
+		Pass:                  pass,
+		CommandKind:           "verifier",
+		ExitCode:              result.Observation.ExitCode,
+		StdoutBytes:           result.Observation.StdoutBytes,
+		RawStdoutDigest:       result.Observation.RawStdoutDigest,
+		StdoutDigest:          result.Observation.StdoutDigest,
+		ParseStatus:           parsed.status(),
+		DiagnosticMarkers:     parsed.markers(),
+		Truncated:             parsed.Truncated,
+		UnrecognizedLineCount: parsed.UnrecognizedLineCount,
+		Packages:              parsed.Rows,
+	}
+	collector.records = append(collector.records, record)
+	collector.totalRows += len(parsed.Rows)
+}
+
+func (collector *verifierPackageSummaryCollector) write() error {
+	if collector == nil || collector.path == "" {
+		return nil
+	}
+	document := verifierPackageSummaryDocument{
+		Schema:            verifierPackageSummarySchema,
+		DiagnosticOnly:    "DIAGNOSTIC_ONLY",
+		Authenticity:      "AUTHENTICITY_UNVERIFIED",
+		Improvement:       "UNKNOWN",
+		DiagnosticMarkers: collector.markers(),
+		Truncated:         collector.truncated,
+		Records:           collector.records,
+	}
+	payload, err := boundedVerifierPackageSummaryPayload(document)
+	if err != nil {
+		return err
+	}
+	if _, err := archivePreviousObservation(collector.path); err != nil {
+		return err
+	}
+	return writeAtomic(collector.path, payload)
+}
+
+func (collector *verifierPackageSummaryCollector) markers() []string {
+	markers := make([]string, 0, 2)
+	if collector.truncated {
+		markers = append(markers, "TRUNCATED_OUTPUT")
+	}
+	if len(collector.records) == 0 {
+		markers = append(markers, "NO_VERIFIER_OBSERVATION")
+	}
+	return markers
+}
+
+func boundedVerifierPackageSummaryPayload(document verifierPackageSummaryDocument) ([]byte, error) {
+	maxPayloadBytes := maxVerifierPackageSummaryFileBytes - 1
+	payload, err := json.MarshalIndent(document, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(payload) <= maxPayloadBytes {
+		return append(payload, '\n'), nil
+	}
+
+	document.Truncated = true
+	document.DiagnosticMarkers = appendVerifierPackageSummaryMarker(document.DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
+	for index := len(document.Records) - 1; index >= 0 && len(payload) > maxPayloadBytes; index-- {
+		if len(document.Records[index].Packages) == 0 {
+			continue
+		}
+		document.Records[index].Packages = nil
+		document.Records[index].Truncated = true
+		document.Records[index].ParseStatus = "TRUNCATED"
+		document.Records[index].DiagnosticMarkers = appendVerifierPackageSummaryMarker(document.Records[index].DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
+		payload, err = json.MarshalIndent(document, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(payload) > maxPayloadBytes {
+		document.Records = nil
+		payload, err = json.MarshalIndent(document, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(payload) > maxPayloadBytes {
+		return nil, fmt.Errorf("verifier package summary sidecar exceeds bounded size")
+	}
+	return append(payload, '\n'), nil
+}
+
+func appendVerifierPackageSummaryMarker(markers []string, marker string) []string {
+	for _, existing := range markers {
+		if existing == marker {
+			return markers
+		}
+	}
+	return append(markers, marker)
+}
+
+func (state *metaExecutionTraceState) writeVerifierPackageSummary() error {
+	if state == nil || state.verifierPackageSummary == nil {
+		return nil
+	}
+	return state.verifierPackageSummary.write()
+}
+
+func (trace metaExecutionTrace) observeVerifierPackageSummary(pass, commandKind string, result processResult) {
+	if commandKind != "verifier" || trace.state == nil || trace.state.verifierPackageSummary == nil {
+		return
+	}
+	trace.state.verifierPackageSummary.observe(trace, pass, result)
+}
+
+func parseVerifierPackageSummaries(stdout []byte) verifierPackageSummaryParse {
+	parsed := verifierPackageSummaryParse{Rows: make([]verifierPackageSummaryRow, 0)}
+	input := stdout
+	if len(input) > maxVerifierPackageSummaryStdoutBytes {
+		input = input[:maxVerifierPackageSummaryStdoutBytes]
+		parsed.Truncated = true
+	}
+	for offset := 0; offset < len(input); {
+		if len(parsed.Rows) >= maxVerifierPackageSummaryRowsPerInvocation {
+			parsed.Truncated = true
+			break
+		}
+		relativeEnd := bytes.IndexByte(input[offset:], '\n')
+		completeLine := relativeEnd >= 0
+		var line []byte
+		if completeLine {
+			line = input[offset : offset+relativeEnd]
+			offset += relativeEnd + 1
+		} else {
+			line = input[offset:]
+			offset = len(input)
+			if len(stdout) > len(input) {
+				parsed.Truncated = true
+				break
+			}
+		}
+		if len(line) > maxVerifierPackageSummaryLineBytes {
+			parsed.Truncated = true
+			continue
+		}
+		line = bytes.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+		row, recognized, unrecognized := parseVerifierPackageSummaryLine(line)
+		if !recognized {
+			parsed.UnrecognizedLineCount++
+			continue
+		}
+		if unrecognized {
+			parsed.UnrecognizedLineCount++
+		}
+		parsed.Rows = append(parsed.Rows, row)
+	}
+	return parsed
+}
+
+func parseVerifierPackageSummaryLine(line []byte) (verifierPackageSummaryRow, bool, bool) {
+	if !utf8.Valid(line) {
+		return verifierPackageSummaryRow{}, false, false
+	}
+	fields := strings.Fields(string(line))
+	if len(fields) < 2 {
+		return verifierPackageSummaryRow{}, false, false
+	}
+	status := fields[0]
+	if status != "ok" && status != "FAIL" && status != "?" {
+		return verifierPackageSummaryRow{}, false, false
+	}
+	packagePath := fields[1]
+	if !validVerifierPackagePath(packagePath) {
+		return verifierPackageSummaryRow{}, false, false
+	}
+	row := verifierPackageSummaryRow{
+		Package:       packagePath,
+		Status:        status,
+		ElapsedStatus: "UNKNOWN",
+	}
+	if len(fields) == 2 {
+		return row, true, false
+	}
+	tail := fields[2:]
+	if len(tail) == 1 && tail[0] == "(cached)" {
+		row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
+		return row, true, false
+	}
+	if len(tail) > 0 && !strings.HasPrefix(tail[0], "[") {
+		row.ElapsedToken = tail[0]
+	}
+	if len(tail) == 1 {
+		if nanoseconds, ok := exactVerifierDuration(tail[0]); ok {
+			row.ElapsedToken = tail[0]
+			row.ElapsedStatus = "PARSED_EXACTLY"
+			row.ElapsedUnit = "NANOSECONDS"
+			row.ElapsedNanoseconds = &nanoseconds
+			return row, true, false
+		}
+	}
+	if len(tail) > 1 {
+		if nanoseconds, ok := exactVerifierDuration(tail[0]); ok && observedVerifierOutputMarker(tail[1:]) {
+			row.ElapsedToken = tail[0]
+			row.ElapsedStatus = "PARSED_EXACTLY"
+			row.ElapsedUnit = "NANOSECONDS"
+			row.ElapsedNanoseconds = &nanoseconds
+			row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
+			return row, true, false
+		}
+	}
+	if observedVerifierOutputMarker(tail) {
+		row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
+		return row, true, false
+	}
+	row.OutputMarker = "UNRECOGNIZED_OUTPUT_MARKER"
+	return row, true, true
+}
+
+func validVerifierPackagePath(packagePath string) bool {
+	if packagePath != verifierPackageSummaryModulePrefix && !strings.HasPrefix(packagePath, verifierPackageSummaryModulePrefix+"/") {
+		return false
+	}
+	if strings.ContainsAny(packagePath, "\\\t\r\n") || strings.Contains(packagePath, "//") || path.Clean(packagePath) != packagePath {
+		return false
+	}
+	for _, segment := range strings.Split(packagePath, "/") {
+		if segment == "" || segment == "." || segment == ".." {
+			return false
+		}
+	}
+	return true
+}
+
+func exactVerifierDuration(token string) (int64, bool) {
+	if token == "" || strings.HasPrefix(token, "-") || strings.HasPrefix(token, "+") {
+		return 0, false
+	}
+	for index := 0; index < len(token); index++ {
+		if token[index] != '.' {
+			continue
+		}
+		start := index + 1
+		end := start
+		for end < len(token) && token[end] >= '0' && token[end] <= '9' {
+			end++
+		}
+		if end == start || end-start > 9 {
+			return 0, false
+		}
+		index = end - 1
+	}
+	duration, err := time.ParseDuration(token)
+	if err != nil {
+		return 0, false
+	}
+	return int64(duration), true
+}
+
+func observedVerifierOutputMarker(tokens []string) bool {
+	if len(tokens) == 0 {
+		return false
+	}
+	joined := strings.Join(tokens, " ")
+	return strings.HasPrefix(joined, "[") && strings.HasSuffix(joined, "]")
+}
+
+func (parsed verifierPackageSummaryParse) status() string {
+	if parsed.Truncated {
+		return "TRUNCATED"
+	}
+	if parsed.UnrecognizedLineCount > 0 {
+		return "UNRECOGNIZED_INPUT"
+	}
+	if len(parsed.Rows) == 0 {
+		return "NO_PACKAGE_SUMMARIES"
+	}
+	return "COMPLETE"
+}
+
+func (parsed verifierPackageSummaryParse) markers() []string {
+	markers := make([]string, 0, 2)
+	if parsed.Truncated {
+		markers = append(markers, "TRUNCATED_INPUT")
+	}
+	if parsed.UnrecognizedLineCount > 0 {
+		markers = append(markers, "UNRECOGNIZED_INPUT")
+	}
+	if len(parsed.Rows) == 0 {
+		markers = append(markers, "NO_PACKAGE_SUMMARIES")
+	}
+	return markers
+}
