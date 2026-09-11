@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
 )
 
 func TestParseVerifierPackageSummariesPreservesBoundedRows(t *testing.T) {
@@ -140,12 +142,15 @@ func TestVerifierPackageSummaryMarkersAreFiniteAndUnknownTailsAreNotRetained(t *
 }
 
 func TestVerifierPackageSummaryCollectorBindsVerifierOnlyAndPreservesProcessResult(t *testing.T) {
-	state := &metaExecutionTraceState{invocationID: "invocation-1", verifierPackageSummary: newVerifierPackageSummaryCollector("")}
+	state := newMetaExecutionTraceStateWithWriter(io.Discard)
+	state.invocationID = "invocation-1"
+	state.verifierPackageSummary = newVerifierPackageSummaryCollector(filepath.Join(t.TempDir(), "self-improvement-execution.json"))
 	trace := metaExecutionTrace{
 		action: generation.Action{
 			IndicatorID: "action-1",
 			Activity:    "selected",
 			Subject:     "internal/marker.go:1:Marker",
+			Operation:   sourcepolicy.Operation("gooo/meta/operation/marker"),
 		},
 		sequence: 7,
 		state:    state,
@@ -190,12 +195,19 @@ func TestVerifierPackageSummaryCollectorBindsVerifierOnlyAndPreservesProcessResu
 	}
 	for index, wantPass := range []string{"first", "replay"} {
 		record := state.verifierPackageSummary.records[index]
-		if record.InvocationID != "invocation-1" || record.ActionIndicatorID != "action-1" || record.Activity != "selected" || record.Subject != trace.action.Subject || record.OperationSequence != 7 || record.Pass != wantPass || record.CommandKind != "verifier" {
+		if record.InvocationID != "invocation-1" || record.ActionIndicatorID != "action-1" || record.Activity != "selected" || record.MetaOperation != string(trace.action.Operation) || record.Subject != trace.action.Subject || record.OperationSequence != 7 || record.Pass != wantPass || record.CommandKind != "verifier" || record.StdoutBytes != first.Observation.StdoutBytes {
 			t.Errorf("record %d join fields = %#v", index, record)
 		}
 	}
 	if state.verifierPackageSummary.records[0].RawStdoutDigest == state.verifierPackageSummary.records[1].RawStdoutDigest || state.verifierPackageSummary.records[0].StdoutDigest == state.verifierPackageSummary.records[1].StdoutDigest {
 		t.Fatal("first/replay stdout digests were not preserved separately")
+	}
+	if err := state.verifierPackageSummary.write(); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(state.verifierPackageSummary.path)
+	if err != nil || strings.Contains(string(data), "SECRET-STDERR") {
+		t.Fatalf("sidecar retained stderr sentinel: err=%v data=%s", err, data)
 	}
 }
 
