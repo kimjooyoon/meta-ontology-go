@@ -74,7 +74,7 @@ func TestConceptOperationEvidenceRequiresIndependentSourceReplay(t *testing.T) {
 	}
 	root := t.TempDir()
 	scratch := t.TempDir()
-	_, err := EvaluateWithConceptOperation(
+	_, err = EvaluateWithConceptOperation(
 		artifactFixture("PASS", currentConceptIDs...), payload,
 		conceptoperation.SourceInputs{ScratchDirectory: scratch}, root, repository, subjectSHA,
 	)
