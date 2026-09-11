@@ -521,7 +521,6 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 	}
 }
 
-
 func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 	work := t.TempDir()
 	project := filepath.Join(work, "project")

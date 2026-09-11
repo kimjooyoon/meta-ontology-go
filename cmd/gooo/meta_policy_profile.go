@@ -323,13 +323,13 @@ func publicPolicyRevisionReport(prepared publicProfilePreparation, revision poli
 	return policycompilation.PublicPolicyRevisionReport{
 		Schema: policycompilation.PublicPolicyRevisionReportSchema, Profile: policycompilation.PublicPolicyRevisionProfileID,
 		SourceFile: profileRelativePath(prepared.projectRoot, prepared.sourcePath),
-		Condition: revision.Condition, FromDecision: revision.FromDecision, ToDecision: revision.ToDecision,
+		Condition:  revision.Condition, FromDecision: revision.FromDecision, ToDecision: revision.ToDecision,
 		Original: proposal.Original, Candidate: proposal.Candidate,
 		ChangedCoordinates: append([]string(nil), proposal.ChangedCoordinates...),
-		GeneratedFiles: []string{"candidate.gooo", "proposal.json"},
-		CandidateFormat: policycompilation.PublicPolicyRevisionFormat,
-		OutputRootClass: policycompilation.PublicGenerationOutputRootClass,
-		ExecutionObserved: false, CurrentConformance: policycompilation.PublicGenerationConformanceUnknown,
+		GeneratedFiles:     []string{"candidate.gooo", "proposal.json"},
+		CandidateFormat:    policycompilation.PublicPolicyRevisionFormat,
+		OutputRootClass:    policycompilation.PublicGenerationOutputRootClass,
+		ExecutionObserved:  false, CurrentConformance: policycompilation.PublicGenerationConformanceUnknown,
 		RepositoryWrites: 0, MutationAuthority: 0, PromotionAuthority: 0,
 	}
 }
