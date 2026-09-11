@@ -804,9 +804,9 @@ func TestPolicyRevisionOperationSourceBinding(t *testing.T) {
 		}
 		expected := map[string]string{
 			"expected_source_digest": revision.ExpectedSourceDigest,
-			"condition":             revision.Condition,
-			"from_decision":         revision.FromDecision,
-			"to_decision":           revision.ToDecision,
+			"condition":              revision.Condition,
+			"from_decision":          revision.FromDecision,
+			"to_decision":            revision.ToDecision,
 		}
 		if !reflect.DeepEqual(requestFields, expected) || proposal.RequestDigest != DigestBytes(requestDocument) ||
 			!reflect.DeepEqual(proposal.OperationBinding, binding) || proposal.Original.SourceDigest != revision.ExpectedSourceDigest {
