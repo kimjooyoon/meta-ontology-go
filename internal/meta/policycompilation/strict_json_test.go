@@ -3,6 +3,7 @@ package policycompilation
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"errors"
 	"os"
 	"os/exec"
@@ -40,17 +41,96 @@ func declaredCaseDocumentFixture(t *testing.T, source []byte) []byte {
 	return document
 }
 
+func declaredCaseStrictIntervention(source []byte) ([]byte, error) {
+	// This is a bounded fixture transformation, not a general source rewriter.
+	// The native intervention contract permits one transition and its one case
+	// decision to change. Missing or ambiguous bindings are errors, not guesses.
+	lines := bytes.SplitAfter(source, []byte("\n"))
+	transitionLine, decisionLine := -1, -1
+	transitionCount, caseCount, decisionCount := 0, 0, 0
+	inTargetCase := false
+	for index, line := range lines {
+		fields := strings.Fields(string(line))
+		if len(fields) == 4 && fields[0] == "transition" && fields[1] == `"SEMANTIC_EQUIVALENCE"` && fields[2] == "->" && fields[3] == `"PASS"` {
+			transitionLine = index
+			transitionCount++
+		}
+		if len(fields) >= 2 && fields[0] == "case" {
+			inTargetCase = fields[1] == `"SEMANTIC_EQUIVALENCE"`
+			if inTargetCase {
+				caseCount++
+			}
+		}
+		if inTargetCase && len(fields) == 2 && fields[0] == "decision" && fields[1] == `"PASS"` {
+			decisionLine = index
+			decisionCount++
+		}
+	}
+	if transitionCount != 1 || caseCount != 1 || decisionCount != 1 {
+		return nil, fmt.Errorf("strict fixture intervention requires one transition, case, and decision; found %d/%d/%d", transitionCount, caseCount, decisionCount)
+	}
+	lines[transitionLine] = bytes.Replace(lines[transitionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
+	lines[decisionLine] = bytes.Replace(lines[decisionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
+	return bytes.Join(lines, nil), nil
+}
+
+func TestDeclaredCaseInterventionRejectsUnboundOrAmbiguousTargets(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	transition := []byte(`transition "SEMANTIC_EQUIVALENCE" -> "PASS"`)
+	caseHeader := []byte(`case "SEMANTIC_EQUIVALENCE"`)
+	for _, test := range []struct {
+		name   string
+		source []byte
+	}{
+		{"missing transition", bytes.Replace(source, transition, []byte(`transition "OTHER" -> "PASS"`), 1)},
+		{"duplicate transition", append(append([]byte(nil), source...), append([]byte("\n"), transition...)...)},
+		{"missing case", bytes.Replace(source, caseHeader, []byte(`case "OTHER"`), 1)},
+		{"duplicate case", append(append([]byte(nil), source...), []byte("\n    case \"SEMANTIC_EQUIVALENCE\" {\n        decision \"PASS\"\n    }\n")...)},
+		{"missing decision", bytes.ReplaceAll(source, []byte(`decision "PASS"`), []byte(`decision "FAIL_CLOSED"`))},
+		{"unrelated case decision", []byte("transition \"SEMANTIC_EQUIVALENCE\" -> \"PASS\"\ncase \"SEMANTIC_EQUIVALENCE\" {\n}\ncase \"OTHER\" {\n decision \"PASS\"\n}\n")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if result, err := declaredCaseStrictIntervention(test.source); err == nil || result != nil {
+				t.Fatal("unbound or ambiguous fixture intervention produced a candidate")
+			}
+		})
+	}
+}
+
 func TestEvaluateDeclaredCasePreservesSourcePolicyAuthority(t *testing.T) {
 	source := declaredCaseSourceFixture(t)
-	strict := bytes.Replace(source, []byte("SEMANTIC_EQUIVALENCE:PASS:"), []byte("SEMANTIC_EQUIVALENCE:FAIL_CLOSED:"), 1)
-	if bytes.Equal(source, strict) {
-		t.Fatal("source policy intervention did not change the declared decision")
+	strict, err := declaredCaseStrictIntervention(source)
+	if err != nil {
+		t.Fatal(err)
 	}
+	beforeLines, afterLines := bytes.Split(source, []byte("\n")), bytes.Split(strict, []byte("\n"))
+	if len(beforeLines) != len(afterLines) {
+		t.Fatal("fixture intervention changed the source line population")
+	}
+	changed := 0
+	for index, before := range beforeLines {
+		if bytes.Equal(before, afterLines[index]) {
+			continue
+		}
+		changed++
+		if !bytes.Equal(afterLines[index], bytes.Replace(before, []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)) {
+			t.Fatal("fixture intervention changed bytes outside the two decision tokens")
+		}
+	}
+	if changed != 2 {
+		t.Fatalf("fixture intervention changed %d lines, want exactly two", changed)
+	}
+	var baseline DeclaredCaseEvaluation
 	for index, policySource := range [][]byte{source, strict} {
 		document := declaredCaseDocumentFixture(t, policySource)
 		report, err := EvaluateDeclaredCase("policy.gooo", policySource, document, "metapolicycompilation", "metapolicycompilation")
 		if err != nil {
 			t.Fatal(err)
+		}
+		if index == 0 {
+			baseline = report
+		} else if report.SourceDigest == baseline.SourceDigest || report.SemanticDigest == baseline.SemanticDigest {
+			t.Fatal("bound policy intervention did not change both source and semantic identities")
 		}
 		want := []string{"PASS", "FAIL_CLOSED"}[index]
 		if report.SourceDecision.Decision != want || report.SourceDecision.MatchedCondition != "SEMANTIC_EQUIVALENCE" {

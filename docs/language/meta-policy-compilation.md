@@ -62,6 +62,13 @@ executed, generated execution is false, and mutation/promotion authority is zero
 It does not replace the existing source/generated/independent conformance receipt.
 The public command admission and end-user route remain separate unfinished work.
 
+The declared-case regression uses a bounded source intervention: exactly one
+`SEMANTIC_EQUIVALENCE` transition and its matching case decision change from
+`PASS` to `FAIL_CLOSED`. Missing or ambiguous target bindings reject the candidate;
+only those two source lines may change. Native CI checks both the explicit decision
+and source/semantic identity changes. This fixture transformation is not a public
+repair API, external evidence, or permission to weaken a failing acceptance rule.
+
 ## Public generation profile
 
 Callers that need a portable compilation boundary can use
