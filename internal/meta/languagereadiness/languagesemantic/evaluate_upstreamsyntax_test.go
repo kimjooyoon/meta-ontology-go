@@ -155,7 +155,10 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 				t.Fatalf("tampered syntax report was accepted: decision=%s resolution=%s reason=%s", semantic.Decision, semantic.Resolution, semantic.ReasonCode)
 			}
 			if testCase.expectSourceBindError {
-				if len(semantic.Cases) == 0 || !strings.Contains(semantic.Cases[0].Evidence.Error, "upstream syntax source") {
+				if len(semantic.Cases) == 0 {
+					t.Fatal("source-bound tampering produced no semantic cases")
+				}
+				if !strings.Contains(semantic.Cases[0].Evidence.Error, "upstream syntax source") {
 					t.Fatalf("source-bound tampering did not reach independent source rejection: %#v", semantic.Cases[0].Evidence)
 				}
 			}
@@ -173,12 +176,12 @@ func TestCompareSyntaxSourcesChoosesStableFirstMismatch(t *testing.T) {
 		{Path: "b.gooo", GoooLines: 3, SourceDigest: testDigest([]byte("b"))},
 	}
 	swapped := []syntaxreplay.FileObservation{receipt[1], receipt[0]}
-	first, err := compareSyntaxSources(receipt, observed)
-	if err == nil {
+	first := compareSyntaxSources(receipt, observed)
+	if first == nil {
 		t.Fatal("source mismatches were accepted")
 	}
-	second, err := compareSyntaxSources(swapped, observed)
-	if err == nil {
+	second := compareSyntaxSources(swapped, observed)
+	if second == nil {
 		t.Fatal("source mismatches were accepted after reordering")
 	}
 	if first.Error() != second.Error() || !strings.Contains(first.Error(), "a.gooo") {
