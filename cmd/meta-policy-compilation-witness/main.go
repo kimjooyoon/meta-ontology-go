@@ -24,18 +24,20 @@ func main() {
 	policyPath := flag.String("policy", "", "raw Gooo policy source")
 	casesPath := flag.String("cases", "", "canonical cases")
 	outputDir := flag.String("output", "", "runner-temp output directory")
+	profilePackage := flag.String("profile-package", "metapolicycompilation", "expected policy package")
+	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
 	flag.Parse()
 	if *policyPath == "" || *casesPath == "" || *outputDir == "" {
 		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-witness -policy policy.gooo -cases cases.json -output DIR")
 		os.Exit(2)
 	}
-	if err := produce(*policyPath, *casesPath, *outputDir); err != nil {
+	if err := produce(*policyPath, *casesPath, *outputDir, *profilePackage, *profileNamespace); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func produce(policyPath, casesPath, outputDir string) error {
+func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace string) error {
 	if err := requireRunnerTempOutput(outputDir); err != nil {
 		return err
 	}
@@ -55,20 +57,21 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	publicCLI, err := runPublicGoooCLI(repoRoot, policyPath, outputDir)
-	if err != nil {
-		return err
-	}
-	// Compile performs the producer's own raw Gooo parse/lower operation. It is
-	// deliberately after the public CLI check so both boundaries are evidenced.
-	policy, err := policycompilation.CompileNamed(policyPath, source)
+	policy, err := policycompilation.CompileForIdentity(policyPath, source, profilePackage, profileNamespace)
 	if err != nil {
 		return fmt.Errorf("compile raw Gooo policy: %w", err)
 	}
-	judge := policycompilation.GenerateJudge(policy)
-	judgeHash := policycompilation.DigestBytes(judge)
+	publicCLI, publicOutputDir, err := runPublicGoooCLI(repoRoot, policyPath, outputDir, profilePackage, profileNamespace)
+	if err != nil {
+		return err
+	}
+	publicArtifact, judge, _, err := readPublicGenerationArtifacts(publicOutputDir, policy)
+	if err != nil {
+		return err
+	}
+	judgeHash := publicArtifact.GeneratedJudgeHash
 	cases = bindCaseDigests(cases, policy.SourceDigest, policy.SemanticDigest, judgeHash)
-	artifact := policycompilation.PolicyArtifact{Schema: policycompilation.ArtifactSchema, Policy: policy, GeneratedJudgeHash: judgeHash}
+	artifact := publicArtifact
 	generated, independent, err := executeAll(judge, policy, cases)
 	if err != nil {
 		return err
@@ -76,14 +79,14 @@ func produce(policyPath, casesPath, outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0o750); err != nil {
 		return fmt.Errorf("create output: %w", err)
 	}
-	if err := writeJSON(filepath.Join(outputDir, "policy.json"), policy); err != nil {
+	if err := copyFile(filepath.Join(publicOutputDir, "policy.json"), filepath.Join(outputDir, "policy.json")); err != nil {
 		return err
 	}
-	if err := writeJSON(filepath.Join(outputDir, "artifact.json"), artifact); err != nil {
+	if err := copyFile(filepath.Join(publicOutputDir, "artifact.json"), filepath.Join(outputDir, "artifact.json")); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(outputDir, "judge.go"), judge, 0o640); err != nil {
-		return fmt.Errorf("write generated judge: %w", err)
+	if err := copyFile(filepath.Join(publicOutputDir, "judge.go"), filepath.Join(outputDir, "judge.go")); err != nil {
+		return err
 	}
 	if err := writeJSON(filepath.Join(outputDir, "generated-results.json"), generated); err != nil {
 		return err
@@ -113,30 +116,91 @@ func produce(policyPath, casesPath, outputDir string) error {
 	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
 }
 
-func runPublicGoooCLI(repoRoot, policyPath, outputRoot string) (policycompilation.PublicCLIEvidence, error) {
+func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileNamespace string) (policycompilation.PublicCLIEvidence, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	check := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "check", "--semantic", policyPath)
 	check.Dir = repoRoot
 	check.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
 	if output, err := check.CombinedOutput(); err != nil {
-		return policycompilation.PublicCLIEvidence{}, fmt.Errorf("public gooo check --semantic failed: %w: %s", err, strings.TrimSpace(string(output)))
+		return policycompilation.PublicCLIEvidence{}, "", fmt.Errorf("public gooo check --semantic failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}
-	cliOutput := filepath.Join(filepath.Dir(outputRoot), "public-gooo-cli")
+	cliOutput := filepath.Clean(outputRoot) + "-public"
 	if err := os.MkdirAll(cliOutput, 0o750); err != nil {
-		return policycompilation.PublicCLIEvidence{}, err
+		return policycompilation.PublicCLIEvidence{}, "", err
 	}
-	generate := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "generate", policyPath, "--out", cliOutput)
+	generate := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "generate", policyPath, "--profile", policycompilation.PublicProfileID, "--profile-package", profilePackage, "--profile-namespace", profileNamespace, "--profile-project-root", repoRoot, "--out", cliOutput)
 	generate.Dir = repoRoot
 	generate.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
 	if output, err := generate.CombinedOutput(); err != nil {
-		return policycompilation.PublicCLIEvidence{}, fmt.Errorf("public gooo generate failed: %w: %s", err, strings.TrimSpace(string(output)))
+		return policycompilation.PublicCLIEvidence{}, "", fmt.Errorf("public gooo generate failed: %w: %s", err, strings.TrimSpace(string(output)))
 	}
 	entries, err := os.ReadDir(cliOutput)
 	if err != nil || len(entries) == 0 {
-		return policycompilation.PublicCLIEvidence{}, errors.New("public gooo generate produced no output")
+		return policycompilation.PublicCLIEvidence{}, "", errors.New("public gooo generate produced no output")
 	}
-	return policycompilation.PublicCLIEvidence{Path: "gooo", CheckExit: 0, GenerateExit: 0, CheckObserved: true, GenerateObserved: true}, nil
+	return policycompilation.PublicCLIEvidence{Path: "gooo", CheckExit: 0, GenerateExit: 0, CheckObserved: true, GenerateObserved: true}, cliOutput, nil
+}
+
+func readPublicGenerationArtifacts(outputDir string, policy policycompilation.CompiledPolicy) (policycompilation.PolicyArtifact, []byte, policycompilation.PublicGenerationManifest, error) {
+	policyBytes, err := os.ReadFile(filepath.Join(outputDir, "policy.json"))
+	if err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("read public policy artifact: %w", err)
+	}
+	artifactBytes, err := os.ReadFile(filepath.Join(outputDir, "artifact.json"))
+	if err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("read public compiled artifact: %w", err)
+	}
+	judge, err := os.ReadFile(filepath.Join(outputDir, "judge.go"))
+	if err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("read public generated judge: %w", err)
+	}
+	manifestBytes, err := os.ReadFile(filepath.Join(outputDir, "generation-manifest.json"))
+	if err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("read public generation manifest: %w", err)
+	}
+	var publicPolicy policycompilation.CompiledPolicy
+	if err := json.Unmarshal(policyBytes, &publicPolicy); err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("decode public policy artifact: %w", err)
+	}
+	var artifact policycompilation.PolicyArtifact
+	if err := json.Unmarshal(artifactBytes, &artifact); err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("decode public compiled artifact: %w", err)
+	}
+	var manifest policycompilation.PublicGenerationManifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("decode public generation manifest: %w", err)
+	}
+	if publicPolicy.SourceDigest != policy.SourceDigest || publicPolicy.SemanticDigest != policy.SemanticDigest || publicPolicy.Package != policy.Package || publicPolicy.Namespace != policy.Namespace {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, errors.New("public policy artifact is not bound to source policy")
+	}
+	if err := policycompilation.VerifyCompiledArtifact(artifact, policy, policycompilation.DigestBytes(judge)); err != nil {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("verify public compiled artifact: %w", err)
+	}
+	if manifest.Schema != policycompilation.PublicGenerationManifestSchema || manifest.Profile != policycompilation.PublicProfileID || manifest.SourceDigest != policy.SourceDigest || manifest.SemanticDigest != policy.SemanticDigest || manifest.Package != policy.Package || manifest.Namespace != policy.Namespace || manifest.PolicyBytesDigest != policycompilation.DigestBytes(policyBytes) || manifest.ArtifactBytesDigest != policycompilation.DigestBytes(artifactBytes) || manifest.GeneratedJudgeDigest != policycompilation.DigestBytes(judge) || manifest.OutputRootClass != policycompilation.PublicGenerationOutputRootClass || manifest.ExecutionObserved || manifest.CurrentConformance != policycompilation.PublicGenerationConformanceUnknown || manifest.RepositoryWrites != 0 || manifest.MutationAuthority != 0 || manifest.PromotionAuthority != 0 {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, errors.New("public generation manifest is not a pre-execution external artifact")
+	}
+	wantFiles := []string{"policy.json", "artifact.json", "judge.go", "generation-manifest.json"}
+	if len(manifest.GeneratedFiles) != len(wantFiles) {
+		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, errors.New("public generation file denominator changed")
+	}
+	for index, want := range wantFiles {
+		if manifest.GeneratedFiles[index] != want {
+			return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, errors.New("public generation file set is not canonical")
+		}
+	}
+	return artifact, judge, manifest, nil
+}
+
+func copyFile(source, target string) error {
+	data, err := os.ReadFile(source)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", source, err)
+	}
+	if err := os.WriteFile(target, data, 0o640); err != nil {
+		return fmt.Errorf("write %s: %w", target, err)
+	}
+	return nil
 }
 
 func executeAll(judge []byte, policy policycompilation.CompiledPolicy, cases []policycompilation.Case) ([]policycompilation.DecisionResult, []policycompilation.DecisionResult, error) {

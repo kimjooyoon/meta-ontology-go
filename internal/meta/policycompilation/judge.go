@@ -31,6 +31,7 @@ func GenerateJudge(policy CompiledPolicy) []byte {
 
 import (
     "encoding/json"
+    "io"
     "os"
     "regexp"
 )
@@ -48,6 +49,7 @@ type input struct {
 type result struct {
     CaseID string %q
     Decision string %q
+    MatchedCondition string %q
     Stage string %q
     Step int %q
     Reason string %q
@@ -113,6 +115,8 @@ func main() {
     decoder := json.NewDecoder(os.Stdin)
     decoder.DisallowUnknownFields()
     if err := decoder.Decode(&value); err != nil { os.Exit(2) }
+    var trailing any
+    if err := decoder.Decode(&trailing); err != io.EOF { os.Exit(2) }
     output := result{CaseID:value.ID, PolicyDigest:policyDigest, SemanticDigest:semanticDigest, Denominator:policyDenominator, BlockedBy:[]string{}}
     if policyDenominator != fixedDenominator {
         output.Decision, output.Stage, output.Reason = "FAIL_CLOSED", "COMPILE", "FIXED_DENOMINATOR_CHANGED"
@@ -120,7 +124,7 @@ func main() {
         matched := false
         for _, row := range reduction {
             if matches(row.Condition, value) {
-                output.Decision, output.Stage, output.Step, output.Reason = row.Decision, row.Stage, row.Step, row.Reason
+                output.Decision, output.MatchedCondition, output.Stage, output.Step, output.Reason = row.Decision, row.Condition, row.Stage, row.Step, row.Reason
                 output.UnknownClass, output.NextOperation, output.BlockedBy = row.UnknownClass, row.NextOperation, append([]string(nil), row.BlockedBy...)
                 matched = true
                 break
@@ -135,7 +139,7 @@ func main() {
 		`json:"id"`, `json:"producer_available"`, `json:"consumer_available"`,
 		`json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`,
 		`json:"observed_generated_judge_digest"`, `json:"observed_independent_digest"`, `json:"upper_decision"`,
-		`json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
+		`json:"case_id"`, `json:"decision"`, `json:"matched_condition"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
 		`json:"unknown_class"`, `json:"next_operation"`, `json:"blocked_by"`, `json:"policy_digest"`,
 		`json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest,
 		policy.Denominator, FixedDenominator, reductionLiteral(policy.Reduction)))
@@ -183,15 +187,9 @@ func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (Deci
 	if err != nil {
 		return DecisionResult{}, fmt.Errorf("execute generated judge: %w: %s", err, strings.TrimSpace(string(output)))
 	}
-	decoder := json.NewDecoder(bytes.NewReader(output))
-	decoder.DisallowUnknownFields()
 	var result DecisionResult
-	if err := decoder.Decode(&result); err != nil {
+	if err := decodeStrictJSON(output, &result); err != nil {
 		return DecisionResult{}, fmt.Errorf("decode generated judge: %w", err)
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
-		return DecisionResult{}, errors.New("generated judge emitted trailing JSON")
 	}
 	if result.CaseID != input.ID {
 		return DecisionResult{}, errors.New("generated judge changed case identity")

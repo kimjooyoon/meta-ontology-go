@@ -42,6 +42,10 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 const generatedManifestFileName = "semantic.gooo.manifest.jsonl"
 
 type generateOptions struct {
+	profile                          string
+	profilePackage                   string
+	profileNamespace                 string
+	profileProjectRoot               string
 	filename                         string
 	outputDir                        string
 	previousGo                       string
@@ -87,6 +91,18 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 	if options.outputDir == "" {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
+	if options.profile == "" {
+		if options.profilePackage != "" || options.profileNamespace != "" || options.profileProjectRoot != "" {
+			return generateOptions{}, fmt.Errorf("%s", usage)
+		}
+	} else {
+		if options.profile != "meta-policy-compilation-v3" || options.profilePackage == "" || options.profileNamespace == "" || options.profileProjectRoot == "" {
+			return generateOptions{}, fmt.Errorf("%s", usage)
+		}
+		if options.previousGo != "" || options.manifestPath != "" || options.retentionReport || options.publicRetentionRequested() || options.continuityCertificateFilename != "" || options.compatibilityCertificateFilename != "" || options.observationLedgerDir != "" {
+			return generateOptions{}, fmt.Errorf("%s", usage)
+		}
+	}
 	if options.observationLedgerDir != "" && (options.retentionReport || options.publicRetentionRequested()) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
@@ -101,6 +117,26 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 
 func setGenerateOption(options *generateOptions, name, value string) bool {
 	switch name {
+	case "--profile":
+		if options.profile != "" {
+			return false
+		}
+		options.profile = value
+	case "--profile-package":
+		if options.profilePackage != "" {
+			return false
+		}
+		options.profilePackage = value
+	case "--profile-namespace":
+		if options.profileNamespace != "" {
+			return false
+		}
+		options.profileNamespace = value
+	case "--profile-project-root":
+		if options.profileProjectRoot != "" {
+			return false
+		}
+		options.profileProjectRoot = value
 	case "--out":
 		if options.outputDir != "" {
 			return false

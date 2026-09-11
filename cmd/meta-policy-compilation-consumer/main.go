@@ -8,6 +8,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -70,6 +71,25 @@ type artifact struct {
 	Policy             policy `json:"policy"`
 	GeneratedJudgeHash string `json:"generated_judge_digest"`
 }
+type generationManifest struct {
+	Schema               string   `json:"schema"`
+	Profile              string   `json:"profile"`
+	SourceFile           string   `json:"source_file"`
+	SourceDigest         string   `json:"source_digest"`
+	SemanticDigest       string   `json:"semantic_digest"`
+	Package              string   `json:"package"`
+	Namespace            string   `json:"namespace"`
+	PolicyBytesDigest    string   `json:"policy_bytes_digest"`
+	ArtifactBytesDigest  string   `json:"artifact_bytes_digest"`
+	GeneratedJudgeDigest string   `json:"generated_judge_digest"`
+	GeneratedFiles       []string `json:"generated_files"`
+	OutputRootClass      string   `json:"output_root_class"`
+	ExecutionObserved    bool     `json:"execution_observed"`
+	CurrentConformance   string   `json:"current_conformance"`
+	RepositoryWrites     int      `json:"repository_writes"`
+	MutationAuthority    int      `json:"mutation_authority"`
+	PromotionAuthority   int      `json:"promotion_authority"`
+}
 type input struct {
 	ID                           string `json:"id"`
 	ValidatorExpectation         string `json:"validator_expectation"`
@@ -86,6 +106,7 @@ type input struct {
 type result struct {
 	CaseID         string   `json:"case_id"`
 	Decision       string   `json:"decision"`
+	MatchedCondition string `json:"matched_condition"`
 	Stage          string   `json:"stage"`
 	Step           int      `json:"step"`
 	Reason         string   `json:"reason"`
@@ -135,25 +156,28 @@ func main() {
 	casesPath := flag.String("cases", "", "raw canonical cases")
 	artifactDir := flag.String("artifact", "", "producer artifact directory")
 	outputPath := flag.String("output", "", "consumer report")
+	profilePackage := flag.String("profile-package", "metapolicycompilation", "expected policy package")
+	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
+	manifestPath := flag.String("manifest", "", "public generation manifest")
 	flag.Parse()
 	if *policyPath == "" || *casesPath == "" || *artifactDir == "" || *outputPath == "" {
 		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-consumer -policy policy.gooo -cases cases.json -artifact DIR -output report.json")
 		os.Exit(2)
 	}
-	if err := consume(*policyPath, *casesPath, *artifactDir, *outputPath); err != nil {
+	if err := consume(*policyPath, *casesPath, *artifactDir, *outputPath, *manifestPath, *profilePackage, *profileNamespace); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func consume(policyPath, casesPath, artifactDir, outputPath string) error {
+func consume(policyPath, casesPath, artifactDir, outputPath, manifestPath, expectedPackage, expectedNamespace string) error {
 	policySource, err := os.ReadFile(policyPath)
 	if err != nil {
 		return fmt.Errorf("read raw policy: %w", err)
 	}
 	// This parse/lower call is intentionally local to the consumer. It does
 	// not import the producer compiler, generated judge, or producer evaluator.
-	compiled, err := parseRawPolicy(policyPath, policySource)
+	compiled, err := parseRawPolicy(policyPath, policySource, expectedPackage, expectedNamespace)
 	if err != nil {
 		return fmt.Errorf("consumer parse raw Gooo policy: %w", err)
 	}
@@ -162,11 +186,11 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 		return err
 	}
 	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, "")
-	producerArtifact, err := readJSON[artifact](filepath.Join(artifactDir, "artifact.json"))
+	producerPolicy, policyBytes, err := readJSONBytes[policy](filepath.Join(artifactDir, "policy.json"))
 	if err != nil {
 		return err
 	}
-	producerPolicy, err := readJSON[policy](filepath.Join(artifactDir, "policy.json"))
+	producerArtifact, artifactBytes, err := readJSONBytes[artifact](filepath.Join(artifactDir, "artifact.json"))
 	if err != nil {
 		return err
 	}
@@ -182,12 +206,29 @@ func consume(policyPath, casesPath, artifactDir, outputPath string) error {
 	if err != nil {
 		return fmt.Errorf("read generated judge: %w", err)
 	}
+	if manifestPath == "" {
+		manifestPath = filepath.Join(artifactDir, "generation-manifest.json")
+	}
+	manifestBytes, err := os.ReadFile(manifestPath)
+	if err != nil {
+		return fmt.Errorf("read generation manifest: %w", err)
+	}
+	var manifest generationManifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		return fmt.Errorf("decode generation manifest: %w", err)
+	}
 	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, producerArtifact.GeneratedJudgeHash)
 	if producerArtifact.Policy.SourceDigest == "" || producerPolicy.SourceDigest == "" || producerArtifact.GeneratedJudgeHash != digestBytes(judge) {
 		return errors.New("producer artifact is not bound to its generated judge")
 	}
-	if producerArtifact.Policy.SourceDigest != compiled.SourceDigest || producerArtifact.Policy.SemanticDigest != compiled.SemanticDigest || producerArtifact.Policy.Denominator != fixedDenom || len(producerArtifact.Policy.Rules) != fixedDenom {
+	if !samePolicySemantics(producerArtifact.Policy, producerPolicy) {
+		return errors.New("producer policy and compiled artifact policy differ")
+	}
+	if !samePolicySemantics(producerPolicy, compiled) || !samePolicySemantics(producerArtifact.Policy, compiled) {
 		return errors.New("independent raw policy reconstruction differs from artifact")
+	}
+	if err := validateGenerationManifest(manifest, policyBytes, artifactBytes, judge, compiled, producerArtifact); err != nil {
+		return err
 	}
 	if len(generated) != caseDenom || len(independent) != caseDenom {
 		return errors.New("producer execution denominator is not 3")
@@ -209,6 +250,37 @@ func standaloneJudge(judge []byte) bool {
 	return strings.Contains(string(judge), "type result struct") && !strings.Contains(string(judge), producerPackagePath)
 }
 
+func validateGenerationManifest(manifest generationManifest, policyBytes, artifactBytes, judge []byte, compiled policy, producerArtifact artifact) error {
+	if manifest.Schema != "gooo/meta-policy-compilation-generation-manifest/v1" || manifest.Profile != "meta-policy-compilation-v3" || manifest.SourceFile == "" || manifest.SourceDigest != compiled.SourceDigest || manifest.SemanticDigest != compiled.SemanticDigest || manifest.Package != compiled.Package || manifest.Namespace != compiled.Namespace || manifest.PolicyBytesDigest != digestBytes(policyBytes) || manifest.ArtifactBytesDigest != digestBytes(artifactBytes) || manifest.GeneratedJudgeDigest != digestBytes(judge) || manifest.OutputRootClass != "CALLER_OWNED_EXTERNAL" || manifest.ExecutionObserved || manifest.CurrentConformance != "UNKNOWN" || manifest.RepositoryWrites != 0 || manifest.MutationAuthority != 0 || manifest.PromotionAuthority != 0 {
+		return errors.New("generation manifest is not bound to an unexecuted external profile artifact")
+	}
+	wantFiles := []string{"policy.json", "artifact.json", "judge.go", "generation-manifest.json"}
+	if len(manifest.GeneratedFiles) != len(wantFiles) {
+		return errors.New("generation manifest file denominator changed")
+	}
+	for index, want := range wantFiles {
+		if manifest.GeneratedFiles[index] != want {
+			return errors.New("generation manifest file set is not canonical")
+		}
+	}
+	if producerArtifact.Policy.SourceDigest != compiled.SourceDigest || producerArtifact.Policy.SemanticDigest != compiled.SemanticDigest || producerArtifact.Policy.Package != compiled.Package || producerArtifact.Policy.Namespace != compiled.Namespace {
+		return errors.New("generation manifest policy identity differs from raw source")
+	}
+	return nil
+}
+
+func mustJSON(value any) []byte {
+	data, _ := json.Marshal(value)
+	return data
+}
+
+func samePolicySemantics(left, right policy) bool {
+	// Structure is intentionally outside this consumer's reconstruction
+	// boundary. All scalar identity, ordered rules, and ordered reduction
+	// fields that this raw-source parser reconstructs are compared exactly.
+	return left.Schema == right.Schema && left.PolicyID == right.PolicyID && left.Package == right.Package && left.Namespace == right.Namespace && left.SourceDigest == right.SourceDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator && bytes.Equal(mustJSON(left.Rules), mustJSON(right.Rules)) && bytes.Equal(mustJSON(left.Reduction), mustJSON(right.Reduction))
+}
+
 func writeConsumerReport(outputPath string, cases []input, compiled policy, producerArtifact artifact, generated []result, judge []byte) error {
 	synthetic := make([]syntheticEvidence, 0, len(cases))
 	for _, current := range cases {
@@ -225,7 +297,7 @@ func writeConsumerReport(outputPath string, cases []input, compiled policy, prod
 	return writeJSON(outputPath, output)
 }
 
-func parseRawPolicy(filename string, source []byte) (policy, error) {
+func parseRawPolicy(filename string, source []byte, expectedPackage, expectedNamespace string) (policy, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
 		return policy{}, errors.New(diagnostics.Error().Error())
@@ -234,8 +306,11 @@ func parseRawPolicy(filename string, source []byte) (policy, error) {
 	if err != nil {
 		return policy{}, fmt.Errorf("lower raw policy: %w", err)
 	}
-	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
+	if ir.Package != expectedPackage || ir.Namespace.String() != expectedNamespace {
 		return policy{}, errors.New("unexpected policy package or namespace")
+	}
+	if len(ir.Policies) > 1 {
+		return policy{}, errors.New("raw policy contains multiple first-class policies")
 	}
 	if len(ir.Policies) == 1 {
 		return parseFirstClassPolicy(ir, source)
@@ -360,7 +435,7 @@ func evaluate(policy policy, value input) result {
 	}
 	for _, row := range policy.Reduction.Rules {
 		if match(row.Condition) {
-			output.Decision, output.Stage, output.Step, output.Reason = row.Decision, row.Stage, row.Step, row.Reason
+			output.Decision, output.MatchedCondition, output.Stage, output.Step, output.Reason = row.Decision, row.Condition, row.Stage, row.Step, row.Reason
 			output.UnknownClass, output.NextOperation, output.BlockedBy = row.UnknownClass, row.NextOperation, append([]string(nil), row.BlockedBy...)
 			if output.Decision != decisionUnknown {
 				output.UnknownClass, output.NextOperation, output.BlockedBy = "", "", []string{}
@@ -368,7 +443,7 @@ func evaluate(policy policy, value input) result {
 			return output
 		}
 	}
-	output.Decision, output.Stage, output.Reason = decisionFail, "COMPILE", "NO_REDUCTION_RULE_MATCHED"
+	output.Decision, output.MatchedCondition, output.Stage, output.Reason = decisionFail, "", "COMPILE", "NO_REDUCTION_RULE_MATCHED"
 	return output
 }
 
@@ -421,7 +496,7 @@ func digestBytes(data []byte) string {
 func atoi(value string) int { var number int; fmt.Sscanf(value, "%d", &number); return number }
 
 func sameResult(left, right result) bool {
-	return left.CaseID == right.CaseID && left.Decision == right.Decision && left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation && sameStrings(left.BlockedBy, right.BlockedBy) && left.PolicyDigest == right.PolicyDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator
+	return left.CaseID == right.CaseID && left.Decision == right.Decision && left.MatchedCondition == right.MatchedCondition && left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation && sameStrings(left.BlockedBy, right.BlockedBy) && left.PolicyDigest == right.PolicyDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator
 }
 func sameStrings(left, right []string) bool {
 	if len(left) != len(right) {
@@ -455,8 +530,27 @@ func readJSON[T any](path string) (T, error) {
 		return zero, fmt.Errorf("decode %s: %w", path, err)
 	}
 	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
 		return zero, fmt.Errorf("decode %s: trailing JSON", path)
 	}
 	return value, nil
+}
+
+func readJSONBytes[T any](path string) (T, []byte, error) {
+	data, err := os.ReadFile(path)
+	var zero T
+	if err != nil {
+		return zero, nil, fmt.Errorf("read %s: %w", path, err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	var value T
+	if err := decoder.Decode(&value); err != nil {
+		return zero, nil, fmt.Errorf("decode %s: %w", path, err)
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		return zero, nil, fmt.Errorf("decode %s: trailing JSON", path)
+	}
+	return value, data, nil
 }

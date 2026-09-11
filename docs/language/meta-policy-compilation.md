@@ -31,3 +31,19 @@ test executions, and cross-project gates. Marker improvement is explicitly
 The write-set claim compares exact sorted file snapshots (path, mode, size,
 and content digest) at the start and end of the producer run; it claims only a
 net repository change of zero, not that no system call wrote a file.
+
+## Public generation profile
+
+Callers that need a portable compilation boundary can use
+`gooo generate --profile meta-policy-compilation-v3` with explicit
+`--profile-package`, `--profile-namespace`, and `--profile-project-root`
+arguments. The output directory must be an empty caller-owned location outside
+the project; the profile writes `policy.json`, `artifact.json`, `judge.go`,
+and `generation-manifest.json` atomically. The manifest binds the actual byte
+digests, records `execution_observed=false`, and reports conformance as
+`UNKNOWN`; it is generation metadata, not execution or promotion evidence.
+
+The private witness consumes those public artifacts and executes the generated
+judge independently. Its existing six-file runner-temp write set remains the
+execution/conformance boundary, while the public profile directory is carried
+as a separate caller-owned artifact boundary.
