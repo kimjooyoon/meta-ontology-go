@@ -130,6 +130,41 @@ judge in temporary directories; these are CI-only test costs, not a language
 runtime benchmark. Synthetic digest declarations remain unverified external
 claims, even when the generated decision matches the source.
 
+## Source-derived receipt reconstruction
+
+A receipt digest and a valid claim-event hash chain establish internal byte
+integrity, not that the recorded claims follow from the policy and evidence.
+Receipt verification therefore reconstructs the existing receipt from the
+compiled Gooo policy, canonical input cases, and the already checked generated
+and independent decision observations. It compares the complete canonical
+content, not only self-reported success flags and denominator totals.
+
+The reconstruction reuses the existing source-driven receipt builder. It adds
+no parallel rule registry, policy semantics, receipt schema, artifact, or
+external dependency. Source-owned meta-operation/proof bindings, exact decision
+and predicate counts, predicate outcomes, event provenance, initial chain
+boundary and verification claims must all agree. UNKNOWN cannot be discharged,
+and a refuted predicate cannot become discharged, merely by rewriting the
+ledger and recomputing its hashes.
+
+Caller case order remains immaterial; canonical receipt order is reconstructed
+by case ID. The explicitly supplied current-evidence provenance description is
+retained, not replaced with a compiler-owned string. Existing write-boundary
+and public-CLI evidence checks still apply before reconstruction.
+
+The native regression suite declares exactly three accepted reconstruction
+cases and sixteen resealed counterexamples. Counterexamples retain valid
+receipt digests and internal event chains, including count-preserving summary
+changes and unsupported UNKNOWN/refutation discharge. Those are test
+requirements, not a completion or utility score; their pass counts come from
+the corresponding CI run.
+
+This is source-derived consistency, not a second independent implementation or
+fresh execution attestation. The unit fixtures are explicitly synthetic and do
+not execute a generated judge or Gooo CLI. External utility, actual execution
+and policy adoption still require their own observations. No policy candidate
+is applied, and no mutation or promotion authority is added.
+
 
 ## Discovering the generated input contract
 

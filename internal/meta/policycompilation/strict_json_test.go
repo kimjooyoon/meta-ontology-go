@@ -745,6 +745,178 @@ func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 	}
 }
 
+func TestReceiptReconstructionRejectsResealedClaims(t *testing.T) {
+	policy, err := Compile(declaredCaseSourceFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	judgeHash := DigestBytes(GenerateJudge(policy))
+	artifact := PolicyArtifact{Schema: ArtifactSchema, Policy: policy, GeneratedJudgeHash: judgeHash}
+	// These are synthetic unit fixtures, not observations of CLI execution,
+	// repository writes, or independent product utility.
+	complete := Case{
+		ID: "a-pass", ValidatorExpectation: DecisionPass,
+		EvidenceClass: "SYNTHETIC", Provenance: "synthetic receipt reconstruction fixture",
+		ProducerAvailable: true, ConsumerAvailable: true,
+		ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest,
+		ObservedGeneratedJudgeDigest: judgeHash, ObservedIndependentDigest: policy.SemanticDigest,
+	}
+	cases := []Case{complete, complete, complete}
+	cases[1].ID, cases[1].ValidatorExpectation = "b-refuted", DecisionFailClosed
+	cases[1].ObservedSourceDigest = DigestBytes([]byte("synthetic different source"))
+	cases[2] = Case{
+		ID: "c-unknown", ValidatorExpectation: DecisionUnknown,
+		EvidenceClass: "SYNTHETIC", Provenance: "synthetic missing evidence",
+	}
+	generated, independent := make([]DecisionResult, len(cases)), make([]DecisionResult, len(cases))
+	for index, input := range cases {
+		generated[index] = EvaluateSourcePolicy(policy, input)
+		independent[index] = IndependentEvaluate(policy, input)
+	}
+	boundary := DigestBytes([]byte("synthetic unchanged repository boundary"))
+	baseline, err := BuildReceipt(policy, artifact, judgeHash, cases, generated, independent, WriteSetObservation{
+		RepositoryBeforeDigest: boundary, RepositoryAfterDigest: boundary,
+		GeneratedRootClass: "RUNNER_TEMP_ONLY",
+		GeneratedFiles: []string{
+			"artifact.json", "generated-results.json", "independent-results.json",
+			"judge.go", "policy.json", "receipt.json",
+		},
+	}, PublicCLIEvidence{Path: "gooo", CheckObserved: true, GenerateObserved: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(baseline)
+	if err != nil {
+		t.Fatal(err)
+	}
+	clone := func(t *testing.T) Receipt {
+		t.Helper()
+		var value Receipt
+		if err := json.Unmarshal(encoded, &value); err != nil {
+			t.Fatal(err)
+		}
+		return value
+	}
+	reseal := func(t *testing.T, value *Receipt) {
+		t.Helper()
+		ledger := ClaimLedger{Schema: value.Claims.Schema, Events: make([]ClaimTransition, 0, len(value.Claims.Events))}
+		prior := ""
+		width := ClaimPredicateCount * 2
+		for index, event := range value.Claims.Events {
+			if index > 0 && index%width == 0 {
+				value.Cases[index/width].ClaimStartDigest = prior
+			}
+			prior = appendClaimEvent(&ledger, event, prior)
+			if (index+1)%width == 0 {
+				value.Cases[index/width].ClaimEndDigest = prior
+			}
+		}
+		ledger.EventCount, ledger.HeadDigest = len(ledger.Events), prior
+		value.Claims = ledger
+		if err := FinalizeReceipt(value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	promote := func(t *testing.T, value *Receipt, from string) {
+		t.Helper()
+		for caseIndex := range value.Cases {
+			for predicateIndex := range value.Cases[caseIndex].ClaimPredicates {
+				predicate := &value.Cases[caseIndex].ClaimPredicates[predicateIndex]
+				if predicate.Outcome != from {
+					continue
+				}
+				predicate.Outcome, predicate.Observed = ClaimDischarged, true
+				predicate.Reason = "SYNTHETIC_UNSUPPORTED_DISCHARGE"
+				for eventIndex := range value.Claims.Events {
+					event := &value.Claims.Events[eventIndex]
+					if event.ClaimID == predicate.ClaimID && event.From == ClaimOpen {
+						event.To, event.Observed, event.Reason = predicate.Outcome, predicate.Observed, predicate.Reason
+					}
+				}
+				value.Summary.ClaimPredicatesDischarged++
+				if from == ClaimOpen {
+					value.Summary.ClaimPredicatesOpen--
+				} else {
+					value.Summary.ClaimPredicatesRefuted--
+				}
+				return
+			}
+		}
+		t.Fatalf("synthetic fixture has no %s predicate", from)
+	}
+
+	t.Run("canonical-receipt", func(t *testing.T) {
+		if err := VerifyReceipt(clone(t), policy, artifact, judgeHash, cases); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("permuted-caller-case-order", func(t *testing.T) {
+		reordered := []Case{cases[2], cases[0], cases[1]}
+		if err := VerifyReceipt(clone(t), policy, artifact, judgeHash, reordered); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("producer-provenance-preserved", func(t *testing.T) {
+		value := clone(t)
+		value.CurrentEvidence.Provenance = "another explicit synthetic producer description"
+		reseal(t, &value)
+		if err := VerifyReceipt(value, policy, artifact, judgeHash, cases); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, test := range []struct {
+		name   string
+		change func(*testing.T, *Receipt)
+	}{
+		{"meta-operation", func(_ *testing.T, value *Receipt) { value.MetaOperation = "UNDECLARED_OPERATION" }},
+		{"proof-choice", func(_ *testing.T, value *Receipt) { value.ProofChoice = "UNDECLARED_PROOF" }},
+		{"decision-summary", func(_ *testing.T, value *Receipt) {
+			value.Summary.PassCount--
+			value.Summary.UnknownCount++
+		}},
+		{"claim-summary", func(_ *testing.T, value *Receipt) {
+			value.Summary.ClaimPredicatesOpen--
+			value.Summary.ClaimPredicatesDischarged++
+		}},
+		{"generated-replay-flag", func(_ *testing.T, value *Receipt) { value.Verification.GeneratedReplayed = false }},
+		{"independent-replay-flag", func(_ *testing.T, value *Receipt) { value.Verification.IndependentReplayed = false }},
+		{"ledger-verification-flag", func(_ *testing.T, value *Receipt) { value.Verification.LedgerVerified = false }},
+		{"subject-promotion", func(_ *testing.T, value *Receipt) { value.Verification.SubjectResolution = "CLOSED" }},
+		{"initial-claim-link", func(_ *testing.T, value *Receipt) {
+			value.Cases[0].ClaimStartDigest = DigestBytes([]byte("synthetic preceding ledger"))
+		}},
+		{"opening-reason", func(_ *testing.T, value *Receipt) { value.Claims.Events[0].Reason = "UNSUPPORTED_OPENING" }},
+		{"opening-provenance", func(_ *testing.T, value *Receipt) { value.Claims.Events[0].Provenance = "unrelated opening" }},
+		{"opening-observation", func(_ *testing.T, value *Receipt) {
+			value.Claims.Events[0].ObservationDigest = DigestBytes([]byte("unrelated opening observation"))
+		}},
+		{"outcome-provenance", func(_ *testing.T, value *Receipt) {
+			value.Claims.Events[ClaimPredicateCount].Provenance = "unrelated outcome"
+		}},
+		{"outcome-observation", func(_ *testing.T, value *Receipt) {
+			value.Claims.Events[ClaimPredicateCount].ObservationDigest = DigestBytes([]byte("unrelated outcome observation"))
+		}},
+		{"unknown-claim-discharged", func(t *testing.T, value *Receipt) { promote(t, value, ClaimOpen) }},
+		{"refuted-claim-discharged", func(t *testing.T, value *Receipt) { promote(t, value, ClaimRefuted) }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			value := clone(t)
+			test.change(t, &value)
+			reseal(t, &value)
+			if err := verifyClaimLedger(value.Claims); err != nil {
+				t.Fatalf("counterexample must retain a valid internal hash chain: %v", err)
+			}
+			digest, err := ReceiptDigest(value)
+			if err != nil || digest != value.ReceiptDigest {
+				t.Fatalf("counterexample must retain its valid content digest: %v", err)
+			}
+			if err := VerifyReceipt(value, policy, artifact, judgeHash, cases); err == nil || err.Error() != "receipt differs from source-derived reconstruction" {
+				t.Fatalf("source reconstruction did not reject the resealed counterexample: %v", err)
+			}
+		})
+	}
+}
+
 func declaredCaseSourceFixture(t *testing.T) []byte {
 	t.Helper()
 	source, err := os.ReadFile("../../../examples/meta-policy-compilation/policy.gooo")
