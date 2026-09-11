@@ -481,7 +481,7 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 	input := generatedJudgeInput{
 		ID: "source-revision", ProducerAvailable: true, ConsumerAvailable: true,
 		ObservedSourceDigest: proposal.Candidate.SourceDigest, ObservedArtifactSourceDigest: proposal.Candidate.SourceDigest,
-		ObservedGeneratedJudgeDigest: DigestBytes(generated), ObservedIndependentDigest: DigestBytes(generated),
+		ObservedGeneratedJudgeDigest: DigestBytes(generated), ObservedIndependentDigest: proposal.Candidate.SemanticDigest,
 		UpperDecision: "PASS",
 	}
 	document, err := json.Marshal(input)
@@ -512,7 +512,7 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 	}
 	reference.ObservedSourceDigest, reference.ObservedArtifactSourceDigest = proposal.Original.SourceDigest, proposal.Original.SourceDigest
 	originalJudgeDigest := DigestBytes(GenerateJudge(proposal.Original))
-	reference.ObservedGeneratedJudgeDigest, reference.ObservedIndependentDigest = originalJudgeDigest, originalJudgeDigest
+	reference.ObservedGeneratedJudgeDigest, reference.ObservedIndependentDigest = originalJudgeDigest, proposal.Original.SemanticDigest
 	if before := EvaluateSourcePolicy(proposal.Original, reference); before.Decision != DecisionPass || before.MatchedCondition != ConditionSemanticEquivalence {
 		t.Fatalf("the original source policy did not retain its independent baseline decision: %+v", before)
 	}
@@ -587,28 +587,16 @@ func TestDeclaredCaseInterventionRejectsUnboundOrAmbiguousTargets(t *testing.T) 
 
 func TestEvaluateDeclaredCasePreservesSourcePolicyAuthority(t *testing.T) {
 	source := declaredCaseSourceFixture(t)
+	untouched := append([]byte(nil), source...)
 	strict, err := declaredCaseStrictIntervention(source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	beforeLines, afterLines := bytes.Split(source, []byte("\n")), bytes.Split(strict, []byte("\n"))
-	if len(beforeLines) != len(afterLines) {
-		t.Fatal("fixture intervention changed the source line population")
-	}
-	changed := 0
-	for index, before := range beforeLines {
-		if bytes.Equal(before, afterLines[index]) {
-			continue
-		}
-		changed++
-		if !bytes.Equal(afterLines[index], bytes.Replace(before, []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)) {
-			t.Fatal("fixture intervention changed bytes outside the two decision tokens")
-		}
-	}
-	if changed != 2 {
-		t.Fatalf("fixture intervention changed %d lines, want exactly two", changed)
+	if !bytes.Equal(source, untouched) {
+		t.Fatal("policy intervention mutated the original source")
 	}
 	var baseline DeclaredCaseEvaluation
+	var baselinePolicy CompiledPolicy
 	for index, policySource := range [][]byte{source, strict} {
 		document := declaredCaseDocumentFixture(t, policySource)
 		report, err := EvaluateDeclaredCase("policy.gooo", policySource, document, "metapolicycompilation", "metapolicycompilation")
@@ -631,6 +619,30 @@ func TestEvaluateDeclaredCasePreservesSourcePolicyAuthority(t *testing.T) {
 		policy, err := Compile(policySource)
 		if err != nil {
 			t.Fatal(err)
+		}
+		// Canonical projection may change layout, but only the requested
+		// source-owned decision may change the compiled policy contract.
+		if index == 0 {
+			baselinePolicy = policy
+		} else {
+			expected := baselinePolicy
+			expected.SourceDigest = policy.SourceDigest
+			expected.SemanticDigest = policy.SemanticDigest
+			expected.Reduction.Rules = append([]DecisionRule(nil), baselinePolicy.Reduction.Rules...)
+			matches := 0
+			for ruleIndex, rule := range expected.Reduction.Rules {
+				if rule.Condition != ConditionSemanticEquivalence {
+					continue
+				}
+				matches++
+				if rule.Decision != DecisionPass {
+					t.Fatal("baseline semantic-equivalence decision is not PASS")
+				}
+				expected.Reduction.Rules[ruleIndex].Decision = DecisionFailClosed
+			}
+			if matches != 1 || !reflect.DeepEqual(expected, policy) {
+				t.Fatal("policy intervention changed the compiled contract beyond the requested decision")
+			}
 		}
 		if !reflect.DeepEqual(report.SourceDecision, EvaluateSourcePolicy(policy, input)) {
 			t.Fatal("explanation changed the existing source decision or UNKNOWN context")
