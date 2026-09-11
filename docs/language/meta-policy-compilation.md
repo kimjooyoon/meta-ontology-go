@@ -130,6 +130,51 @@ judge in temporary directories; these are CI-only test costs, not a language
 runtime benchmark. Synthetic digest declarations remain unverified external
 claims, even when the generated decision matches the source.
 
+## Source-owned native revision roles
+
+The proposal primitive now consumes an embedded Gooo operation contract before
+it compiles or transforms the policy source. The contract declares three
+opaque entities and one activity:
+
+```gooo
+entity PolicySource id "gooo://meta-policy-revision/source"
+entity PolicyDecisionRevision id "gooo://meta-policy-revision/request"
+entity PolicyDecisionProposal id "gooo://meta-policy-revision/proposal"
+activity ProposePolicyDecisionRevision(PolicySource, PolicyDecisionRevision) -> PolicyDecisionProposal
+```
+
+The compiler checks the exact native signature, lowers this declaration and
+requires both Used input facts and the WasGeneratedBy proposal fact. The
+request/proposal entity names are bound to the compiled Go API types; their
+opaque payload representation and the transformation implementation remain a
+native foundation, not Gooo-generated function bodies. Extra declarations,
+runtime bindings, entity fields, or an unadmitted value program cannot silently
+widen this role contract. Stable entity IDs come from Gooo rather than a second
+native ID table.
+
+A successful proposal retains the binding in `operation_binding`: exact
+contract source/semantic digests, activity/entity identities and three observed
+relation facts. It also carries `request_digest`, covering the canonical typed
+request fields `expected_source_digest`, `condition`, `from_decision` and
+`to_decision`. The original policy digest, this request digest and the candidate
+digest therefore describe separate inputs and output; none substitutes for an
+execution observation.
+
+The public revision report exposes these bindings without adding an artifact.
+The revision profile still writes two files, and the ordinary compilation
+profile still writes four. Input source remains immutable and the existing
+non-executing, UNKNOWN-conformance, zero-authority boundaries remain intact.
+
+CI adds three accepted role/request cases and twelve rejected contract cases,
+and checks the new bindings along the existing public generation/execution
+route without adding another CLI or judge build. These are declared test
+requirements until that candidate's native CI reports their outcomes.
+
+This binding does not add a sixth operation to the common selector. The
+existing four legacy operations and separately bound syntax-registration
+operation remain unchanged. Worker/verifier integration, common action
+selection, policy adoption and external utility are separate, still-open work.
+
 
 ## Discovering the generated input contract
 

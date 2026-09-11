@@ -1,0 +1,8 @@
+package metapolicyrevision
+namespace metapolicyrevision
+
+entity PolicySource id "gooo://meta-policy-revision/source"
+entity PolicyDecisionRevision id "gooo://meta-policy-revision/request"
+entity PolicyDecisionProposal id "gooo://meta-policy-revision/proposal"
+
+activity ProposePolicyDecisionRevision(PolicySource, PolicyDecisionRevision) -> PolicyDecisionProposal

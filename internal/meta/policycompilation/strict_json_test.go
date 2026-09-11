@@ -579,6 +579,19 @@ func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 		if report.Schema != PublicPolicyRevisionReportSchema || report.Profile != PublicPolicyRevisionProfileID || report.SourceFile != "policy.gooo" || report.Condition != ConditionSemanticEquivalence || report.FromDecision != DecisionPass || report.ToDecision != DecisionFailClosed {
 			t.Fatalf("unbound public proposal report: %+v", report)
 		}
+		binding, err := PolicyRevisionNativeBinding()
+		if err != nil {
+			t.Fatal(err)
+		}
+		requestDocument, err := canonicalJSON(PolicyDecisionRevision{
+			ExpectedSourceDigest: DigestBytes(source),
+			Condition:            ConditionSemanticEquivalence,
+			FromDecision:         DecisionPass,
+			ToDecision:           DecisionFailClosed,
+		})
+		if err != nil || report.RequestDigest != DigestBytes(requestDocument) || !reflect.DeepEqual(report.OperationBinding, binding) {
+			t.Fatalf("public proposal lost its source-owned native roles or typed request: %v", err)
+		}
 		if !reflect.DeepEqual(report.GeneratedFiles, []string{"candidate.gooo", "proposal.json"}) || !reflect.DeepEqual(report.ChangedCoordinates, []string{"transition.to", "case.resolution.decision"}) {
 			t.Fatal("public proposal artifact or coordinate boundary changed")
 		}
@@ -742,6 +755,87 @@ func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
 	entries, err := os.ReadDir(project)
 	if err != nil || len(entries) != 1 {
 		t.Fatalf("public revision wrote inside the input project: %v", err)
+	}
+}
+
+func TestPolicyRevisionOperationSourceBinding(t *testing.T) {
+	source := append([]byte(nil), policyRevisionOperationSource...)
+	binding, err := PolicyRevisionNativeBinding()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("released-native-abi", func(t *testing.T) {
+		if binding.SourceDigest != DigestBytes(source) || !ValidDigest(binding.SemanticDigest) ||
+			binding.ActivityID == "" || binding.SourceEntityID != "gooo://meta-policy-revision/source" ||
+			binding.RevisionEntityID != "gooo://meta-policy-revision/request" ||
+			binding.ProposalEntityID != "gooo://meta-policy-revision/proposal" ||
+			!binding.UsedSource || !binding.UsedRevision || !binding.GeneratedProposal {
+			t.Fatalf("native roles are not derived from the released Gooo graph: %+v", binding)
+		}
+	})
+	t.Run("source-entity-identity-propagates", func(t *testing.T) {
+		altered := bytes.Replace(source, []byte("gooo://meta-policy-revision/source"), []byte("gooo://meta-policy-revision/source-v2"), 1)
+		observed, err := bindPolicyRevisionOperation(altered)
+		if err != nil || observed.SourceEntityID != "gooo://meta-policy-revision/source-v2" ||
+			observed.SourceDigest == binding.SourceDigest || observed.SemanticDigest == binding.SemanticDigest ||
+			!observed.UsedSource || !observed.UsedRevision || !observed.GeneratedProposal {
+			t.Fatalf("source-owned identity was replaced by native labels: %+v (%v)", observed, err)
+		}
+	})
+	t.Run("proposal-binds-request-and-roles", func(t *testing.T) {
+		policySource := declaredCaseSourceFixture(t)
+		revision := PolicyDecisionRevision{
+			ExpectedSourceDigest: DigestBytes(policySource),
+			Condition:            ConditionSemanticEquivalence,
+			FromDecision:         DecisionPass,
+			ToDecision:           DecisionFailClosed,
+		}
+		proposal, err := ProposePolicyDecisionRevision("policy.gooo", policySource, "metapolicycompilation", "metapolicycompilation", revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		requestDocument, err := canonicalJSON(revision)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var requestFields map[string]string
+		if err := json.Unmarshal(requestDocument, &requestFields); err != nil {
+			t.Fatal(err)
+		}
+		expected := map[string]string{
+			"expected_source_digest": revision.ExpectedSourceDigest,
+			"condition":             revision.Condition,
+			"from_decision":         revision.FromDecision,
+			"to_decision":           revision.ToDecision,
+		}
+		if !reflect.DeepEqual(requestFields, expected) || proposal.RequestDigest != DigestBytes(requestDocument) ||
+			!reflect.DeepEqual(proposal.OperationBinding, binding) || proposal.Original.SourceDigest != revision.ExpectedSourceDigest {
+			t.Fatal("native proposal is detached from its exact source, typed request, or Gooo role contract")
+		}
+	})
+	for _, test := range []struct {
+		name   string
+		source []byte
+	}{
+		{"empty-source", nil},
+		{"invalid-syntax", []byte("not a Gooo contract")},
+		{"wrong-package", bytes.Replace(source, []byte("package metapolicyrevision"), []byte("package other"), 1)},
+		{"wrong-namespace", bytes.Replace(source, []byte("namespace metapolicyrevision"), []byte("namespace other"), 1)},
+		{"missing-source-entity", bytes.Replace(source, []byte("entity PolicySource id \"gooo://meta-policy-revision/source\"\n"), nil, 1)},
+		{"wrong-native-activity", bytes.Replace(source, []byte("activity ProposePolicyDecisionRevision"), []byte("activity AnotherNativeOperation"), 1)},
+		{"swapped-inputs", bytes.Replace(source, []byte("(PolicySource, PolicyDecisionRevision)"), []byte("(PolicyDecisionRevision, PolicySource)"), 1)},
+		{"wrong-output", bytes.Replace(source, []byte("-> PolicyDecisionProposal"), []byte("-> PolicySource"), 1)},
+		{"unadmitted-value-program", bytes.Replace(source, []byte("-> PolicyDecisionProposal"), []byte("-> PolicyDecisionProposal computes \"syntax.register:v2\""), 1)},
+		{"extra-entity", []byte(string(source) + "\nentity Extra id \"gooo://meta-policy-revision/extra\"\n")},
+		{"extra-activity", []byte(string(source) + "\nactivity Extra(PolicySource) -> PolicyDecisionProposal\n")},
+		{"duplicate-entity", []byte(string(source) + "\nentity PolicySource id \"gooo://meta-policy-revision/source\"\n")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			observed, err := bindPolicyRevisionOperation(test.source)
+			if err == nil || !reflect.DeepEqual(observed, PolicyRevisionOperationBinding{}) {
+				t.Fatalf("unadmitted operation contract produced a binding: %+v (%v)", observed, err)
+			}
+		})
 	}
 }
 

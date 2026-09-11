@@ -185,4 +185,7 @@ type PublicPolicyRevisionReport struct {
 	RepositoryWrites   int            `json:"repository_writes"`
 	MutationAuthority  int            `json:"mutation_authority"`
 	PromotionAuthority int            `json:"promotion_authority"`
+
+	RequestDigest    string                         `json:"request_digest"`
+	OperationBinding PolicyRevisionOperationBinding `json:"operation_binding"`
 }

@@ -40,10 +40,10 @@ func CompileForIdentity(filename string, source []byte, expectedPackage, expecte
 // PolicyDecisionRevision names an exact source-bound decision change.
 // It is a proposal request, not permission to change a repository or policy gate.
 type PolicyDecisionRevision struct {
-	ExpectedSourceDigest string
-	Condition            string
-	FromDecision         string
-	ToDecision           string
+	ExpectedSourceDigest string `json:"expected_source_digest"`
+	Condition            string `json:"condition"`
+	FromDecision         string `json:"from_decision"`
+	ToDecision           string `json:"to_decision"`
 }
 
 // PolicyDecisionProposal retains both compiled source contracts. CandidateSource
@@ -54,6 +54,9 @@ type PolicyDecisionProposal struct {
 	Candidate          CompiledPolicy
 	CandidateSource    string
 	ChangedCoordinates []string
+
+	OperationBinding PolicyRevisionOperationBinding
+	RequestDigest    string
 }
 
 // ProposePolicyDecisionRevision changes one transition target and its matching
@@ -69,6 +72,14 @@ func ProposePolicyDecisionRevision(filename string, source []byte, expectedPacka
 	}
 	if revision.FromDecision == revision.ToDecision {
 		return PolicyDecisionProposal{}, errors.New("policy revision does not change a decision")
+	}
+	operationBinding, err := PolicyRevisionNativeBinding()
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("bind policy revision operation: %w", err)
+	}
+	requestDocument, err := canonicalJSON(revision)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("encode policy revision request: %w", err)
 	}
 	original, err := CompileForIdentity(filename, source, expectedPackage, expectedNamespace)
 	if err != nil {
@@ -148,6 +159,9 @@ func ProposePolicyDecisionRevision(filename string, source []byte, expectedPacka
 		Candidate:          candidate,
 		CandidateSource:    candidateSource,
 		ChangedCoordinates: []string{"transition.to", "case.resolution.decision"},
+
+		OperationBinding: operationBinding,
+		RequestDigest:    DigestBytes(requestDocument),
 	}, nil
 }
 

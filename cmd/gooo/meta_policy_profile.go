@@ -331,5 +331,8 @@ func publicPolicyRevisionReport(prepared publicProfilePreparation, revision poli
 		OutputRootClass:    policycompilation.PublicGenerationOutputRootClass,
 		ExecutionObserved:  false, CurrentConformance: policycompilation.PublicGenerationConformanceUnknown,
 		RepositoryWrites: 0, MutationAuthority: 0, PromotionAuthority: 0,
+
+		RequestDigest:    proposal.RequestDigest,
+		OperationBinding: proposal.OperationBinding,
 	}
 }
