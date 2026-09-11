@@ -78,7 +78,7 @@ type Receipt struct {
 	CohortRule                 string             `json:"cohort_rule"`
 	SourceAuthority            string             `json:"source_authority"`
 	StrategyDigest             string             `json:"strategy_digest"`
-	StrategyVerificationDigest string            `json:"strategy_verification_digest"`
+	StrategyVerificationDigest string             `json:"strategy_verification_digest"`
 	InterventionDigest         string             `json:"intervention_digest"`
 	ProgramDigest              string             `json:"program_digest"`
 	ProgramVerificationDigest  string             `json:"program_verification_digest"`
@@ -261,7 +261,7 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 		SourceAuthority:            SourceAuthority,
 		StrategyVerificationDigest: strategyReceipt.Digest, InterventionDigest: ledger.Digest,
 		ProgramDigest: program.Digest, ProgramVerificationDigest: programReceipt.Digest,
-		ProgramSourcePath: program.SourcePath,
+		ProgramSourcePath:   program.SourcePath,
 		ProgramSourceDigest: program.SourceDigest, ProgramSemanticDigest: program.SemanticDigest,
 		ProgramRegistryDigest: program.RegistryDigest, Expected: expected, ExpectedCount: expectedCount,
 		ObservedCount: observed, BoundCount: bound, UnknownCount: unknown, CoverageBPS: coverage,
