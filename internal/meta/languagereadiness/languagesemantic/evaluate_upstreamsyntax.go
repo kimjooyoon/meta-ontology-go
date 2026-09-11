@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	syntaxreplay "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
@@ -47,7 +48,13 @@ func compareSyntaxSources(receipt, observed []syntaxreplay.FileObservation) erro
 	if len(receiptByPath) != len(observedByPath) {
 		return fmt.Errorf("upstream syntax source inventory has duplicate or missing paths")
 	}
-	for path, receiptFile := range receiptByPath {
+	paths := make([]string, 0, len(receiptByPath))
+	for path := range receiptByPath {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		receiptFile := receiptByPath[path]
 		observedFile, ok := observedByPath[path]
 		if !ok {
 			return fmt.Errorf("upstream syntax receipt omits observed source %q", path)

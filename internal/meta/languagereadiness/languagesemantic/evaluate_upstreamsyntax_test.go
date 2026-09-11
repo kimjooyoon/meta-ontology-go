@@ -12,6 +12,7 @@ import (
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
+	syntaxreplay "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 const testSyntaxHead = "0000000000000000000000000000000000000000"
@@ -33,8 +34,10 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 	root := testRepositoryRoot(t)
 	canonical := actualSyntaxProducerReport(t, root)
 	tests := []struct {
-		name   string
-		mutate func(*languagesyntax.Report)
+		name                   string
+		mutate                 func(*languagesyntax.Report)
+		validatorMustAccept    bool
+		expectSourceBindError  bool
 	}{
 		{
 			name: "head",
@@ -63,11 +66,56 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 					report.Summary.GoooLines += file.GoooLines
 				}
 			},
+			validatorMustAccept:   true,
+			expectSourceBindError: true,
+		},
+		{
+			name: "source path",
+			mutate: func(report *languagesyntax.Report) {
+				report.Source.GoooFiles[0].Path = "examples/tampered-source.gooo"
+			},
+			validatorMustAccept:   true,
+			expectSourceBindError: true,
+		},
+		{
+			name: "source line count",
+			mutate: func(report *languagesyntax.Report) {
+				report.Source.GoooFiles[0].GoooLines++
+				report.Summary.GoooLines++
+			},
+			validatorMustAccept:   true,
+			expectSourceBindError: true,
 		},
 		{
 			name: "source digest recomputed",
 			mutate: func(report *languagesyntax.Report) {
 				report.Source.GoooFiles[0].SourceDigest = testDigest([]byte("tampered source"))
+			},
+			validatorMustAccept:   true,
+			expectSourceBindError: true,
+		},
+		{
+			name: "case path",
+			mutate: func(report *languagesyntax.Report) {
+				report.Cases[0].Definition.Path = "examples/tampered-case.gooo"
+			},
+		},
+		{
+			name: "case kind",
+			mutate: func(report *languagesyntax.Report) {
+				report.Cases[0].Definition.Kind = "INVALID"
+			},
+		},
+		{
+			name: "repository writes",
+			mutate: func(report *languagesyntax.Report) {
+				report.RepositoryWrites = 1
+			},
+		},
+		{
+			name: "concept repository writes",
+			mutate: func(report *languagesyntax.Report) {
+				report.Source.ConceptRepositoryWrites = 1
 			},
 		},
 		{
@@ -94,6 +142,11 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 			report := cloneSyntaxReport(t, canonical)
 			testCase.mutate(&report)
 			resignSyntaxReport(&report)
+			if testCase.validatorMustAccept {
+				if err := languagesyntax.Validate(report, testSyntaxHead); err != nil {
+					t.Fatalf("producer validator rejected a source-bound tampering fixture: %v", err)
+				}
+			}
 			semantic, err := consumeSyntaxProducerReport(t, root, report)
 			if err != nil {
 				t.Fatal(err)
@@ -101,7 +154,35 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 			if semantic.Decision != DecisionFailClosed || semantic.Resolution != ResolutionLower {
 				t.Fatalf("tampered syntax report was accepted: decision=%s resolution=%s reason=%s", semantic.Decision, semantic.Resolution, semantic.ReasonCode)
 			}
+			if testCase.expectSourceBindError {
+				if len(semantic.Cases) == 0 || !strings.Contains(semantic.Cases[0].Evidence.Error, "upstream syntax source") {
+					t.Fatalf("source-bound tampering did not reach independent source rejection: %#v", semantic.Cases[0].Evidence)
+				}
+			}
 		})
+	}
+}
+
+func TestCompareSyntaxSourcesChoosesStableFirstMismatch(t *testing.T) {
+	observed := []syntaxreplay.FileObservation{
+		{Path: "a.gooo", GoooLines: 1, SourceDigest: testDigest([]byte("a"))},
+		{Path: "b.gooo", GoooLines: 2, SourceDigest: testDigest([]byte("b"))},
+	}
+	receipt := []syntaxreplay.FileObservation{
+		{Path: "a.gooo", GoooLines: 1, SourceDigest: testDigest([]byte("tampered-a"))},
+		{Path: "b.gooo", GoooLines: 3, SourceDigest: testDigest([]byte("b"))},
+	}
+	swapped := []syntaxreplay.FileObservation{receipt[1], receipt[0]}
+	first, err := compareSyntaxSources(receipt, observed)
+	if err == nil {
+		t.Fatal("source mismatches were accepted")
+	}
+	second, err := compareSyntaxSources(swapped, observed)
+	if err == nil {
+		t.Fatal("source mismatches were accepted after reordering")
+	}
+	if first.Error() != second.Error() || !strings.Contains(first.Error(), "a.gooo") {
+		t.Fatalf("source mismatch reason was not deterministic: first=%q second=%q", first, second)
 	}
 }
 
