@@ -32,6 +32,25 @@ func nativeCommand(t *testing.T, root string, args ...string) []byte {
 }
 
 func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
+	runNativeRegistrationConformance(t, false)
+}
+
+func TestNativeInternalMetaSourceRegistrationPassesExistingConformance(t *testing.T) {
+	runNativeRegistrationConformance(t, true)
+}
+
+func nativeRegistrationInput(t *testing.T, internal bool) (Request, []byte) {
+	t.Helper()
+	if internal {
+		data, request := internalMetaFixture(t)
+		return request, data[request.Case.Path].Data
+	}
+	_, request := fixture(t)
+	return request, []byte(fixtureSource)
+}
+
+func runNativeRegistrationConformance(t *testing.T, internal bool) {
+	t.Helper()
 	if os.Getenv("GOOO_SYNTAX_REGISTRATION_E2E") != "1" || os.Getenv("CI") != "true" {
 		t.Skip("native candidate application runs only in its dedicated GitHub Actions job")
 	}
@@ -61,12 +80,12 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 		t.Fatalf("unsupported native source view: %s", view)
 	}
 	nativeCommand(t, original, "tar", "-xf", archive, "-C", snapshot)
-	_, request := fixture(t)
+	request, source := nativeRegistrationInput(t, internal)
 	inputPath := filepath.Join(snapshot, filepath.FromSlash(request.Case.Path))
 	if err := os.MkdirAll(filepath.Dir(inputPath), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(inputPath, []byte(fixtureSource), 0600); err != nil {
+	if err := os.WriteFile(inputPath, source, 0600); err != nil {
 		t.Fatal(err)
 	}
 	repository := os.DirFS(snapshot)
@@ -113,20 +132,28 @@ func TestNativeNineMemberCandidatePassesExistingConformance(t *testing.T) {
 		"./internal/meta/languagereadiness/languagesyntax/conformance",
 		"./internal/meta/languageassurance/verticalsliceclosureshadow")
 	if directory := os.Getenv("GOOO_SYNTAX_REGISTRATION_EVIDENCE_DIR"); directory != "" {
+		if internal {
+			directory = filepath.Join(directory, "internal-meta-source")
+		}
 		if err := os.MkdirAll(directory, 0700); err != nil {
 			t.Fatal(err)
 		}
 		report := map[string]any{"operation": Operation, "candidate_digest": digestValue(candidate),
 			"native_conformance": "PASS", "emitted_members": candidate.Emitted, "required_members": candidate.Required,
 			"required_artifacts": candidate.RequiredArtifacts, "generated_artifacts": len(candidate.Artifacts),
-			"source_view":            view,
+			"source_view": view, "case_id": request.Case.ID, "source_path": request.Case.Path,
+			"source_digest": request.SourceDigest, "input_digest": request.SnapshotDigest,
+			"request_digest": digestValue(request), "evidence_class": "SYNTHETIC",
+			"base_denominator_version": request.BaseVersion, "candidate_denominator_version": request.BaseVersion + 1,
 			"execution_binding":      candidate.ExecutionBinding,
 			"manual_follow_up_edits": 0, "replay_comparisons": 1, "repository_writes": 0,
 			"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": "UNASSESSED",
 			"global_planner_admission": "NOT_IMPLEMENTED", "wall_ms": time.Since(started).Milliseconds()}
 		raw, _ := json.MarshalIndent(report, "", "  ")
 		bundle, _ := json.MarshalIndent(candidate, "", "  ")
-		for name, data := range map[string][]byte{"candidate.json": bundle, "native-evaluation.json": raw, "native-conformance.txt": output} {
+		requestDocument, _ := json.MarshalIndent(request, "", "  ")
+		for name, data := range map[string][]byte{"candidate.json": bundle, "native-evaluation.json": raw, "native-conformance.txt": output,
+			"request.json": requestDocument, "source.gooo": source} {
 			if err := os.WriteFile(filepath.Join(directory, name), data, 0600); err != nil {
 				t.Fatal(err)
 			}

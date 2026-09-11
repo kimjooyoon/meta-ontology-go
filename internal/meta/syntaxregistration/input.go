@@ -42,9 +42,7 @@ func InspectInputs(repository fs.FS, request Request) (string, string, error) {
 }
 
 func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
-	if request.BaseVersion < 22 || request.BaseVersion > 10000 ||
-		!validPath(request.Case.Path) || !strings.HasPrefix(request.Case.Path, "examples/") ||
-		!strings.HasSuffix(request.Case.Path, ".gooo") {
+	if request.BaseVersion < 22 || request.BaseVersion > 10000 || !registrationSourcePath(request.Case.Path) {
 		return nil, failure("REFUTED", "validate-request", "REGISTRATION_INPUT_INVALID", "", "correct-explicit-input")
 	}
 	paths, err := sourceInputPaths(repository)
@@ -71,6 +69,12 @@ func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
 		return nil, failure("UNKNOWN", "inspect-next-version", "DENOMINATOR_AVAILABILITY_UNKNOWN", "DIRECT_MISSING", "restore-input-snapshot")
 	}
 	return inputs, nil
+}
+
+// registrationSourcePath admits explicit lexical source domains, not write authority.
+func registrationSourcePath(path string) bool {
+	return validPath(path) && strings.HasSuffix(path, ".gooo") &&
+		(strings.HasPrefix(path, "examples/") || strings.HasPrefix(path, "internal/meta/"))
 }
 
 func Compile(repository fs.FS, request Request) (Plan, error) {
