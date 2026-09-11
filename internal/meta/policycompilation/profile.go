@@ -158,3 +158,31 @@ type PublicGenerationManifest struct {
 	MutationAuthority    int      `json:"mutation_authority"`
 	PromotionAuthority   int      `json:"promotion_authority"`
 }
+
+const (
+	PublicPolicyRevisionProfileID    = "meta-policy-revision-v1"
+	PublicPolicyRevisionReportSchema = "gooo/meta-policy-decision-proposal/v1"
+	PublicPolicyRevisionFormat       = "CANONICAL_SEMANTIC_PROJECTION"
+)
+
+// PublicPolicyRevisionReport describes a proposed source transformation.
+// Compiled contracts and declared decisions do not grant execution or adoption.
+type PublicPolicyRevisionReport struct {
+	Schema             string         `json:"schema"`
+	Profile            string         `json:"profile"`
+	SourceFile         string         `json:"source_file"`
+	Condition          string         `json:"condition"`
+	FromDecision       string         `json:"from_decision"`
+	ToDecision         string         `json:"to_decision"`
+	Original           CompiledPolicy `json:"original"`
+	Candidate          CompiledPolicy `json:"candidate"`
+	ChangedCoordinates []string       `json:"changed_coordinates"`
+	GeneratedFiles     []string       `json:"generated_files"`
+	CandidateFormat    string         `json:"candidate_format"`
+	OutputRootClass    string         `json:"output_root_class"`
+	ExecutionObserved  bool           `json:"execution_observed"`
+	CurrentConformance string         `json:"current_conformance"`
+	RepositoryWrites   int            `json:"repository_writes"`
+	MutationAuthority  int            `json:"mutation_authority"`
+	PromotionAuthority int            `json:"promotion_authority"`
+}

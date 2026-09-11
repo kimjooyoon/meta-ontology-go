@@ -13,6 +13,9 @@ import (
 )
 
 func runMetaPolicyGenerationProfile(options generateOptions, input generateInput, jsonMode bool, stdout, stderr interfaceWriter) int {
+	if options.profile == policycompilation.PublicPolicyRevisionProfileID {
+		return runMetaPolicyRevisionProfile(options, input, jsonMode, stdout, stderr)
+	}
 	prepared, err := preparePublicProfile(options, input)
 	if err != nil {
 		return reportMetaPolicyProfileError(stderr, err)
@@ -269,4 +272,64 @@ func profileRelativePath(root, target string) string {
 		return filepath.Base(target)
 	}
 	return filepath.ToSlash(rel)
+}
+
+func runMetaPolicyRevisionProfile(options generateOptions, input generateInput, jsonMode bool, stdout, stderr interfaceWriter) int {
+	revision := policycompilation.PolicyDecisionRevision{
+		ExpectedSourceDigest: options.profileSourceDigest,
+		Condition:            options.profileCondition,
+		FromDecision:         options.profileFromDecision,
+		ToDecision:           options.profileToDecision,
+	}
+	// Reject an unbound request before preparing or creating an output directory.
+	proposal, err := policycompilation.ProposePolicyDecisionRevision(options.filename, input.source, options.profilePackage, options.profileNamespace, revision)
+	if err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	prepared, err := preparePublicProfile(options, input)
+	if err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	candidatePath, err := resolveOutputPath(prepared.outputRoot, "candidate.gooo")
+	if err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	reportPath, err := resolveOutputPath(prepared.outputRoot, "proposal.json")
+	if err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	report := publicPolicyRevisionReport(prepared, revision, proposal)
+	reportBytes, err := profileJSONBytes(report)
+	if err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	if err := writeAtomicFiles([]atomicWrite{
+		{path: candidatePath, data: []byte(proposal.CandidateSource)},
+		{path: reportPath, data: reportBytes},
+	}); err != nil {
+		return reportMetaPolicyProfileError(stderr, err)
+	}
+	if jsonMode {
+		if _, err := stdout.Write(reportBytes); err != nil {
+			return exitFailure
+		}
+		return exitOK
+	}
+	fmt.Fprintf(stdout, "generated profile: %s\ncandidate: %s\nproposal: %s\n", policycompilation.PublicPolicyRevisionProfileID, candidatePath, reportPath)
+	return exitOK
+}
+
+func publicPolicyRevisionReport(prepared publicProfilePreparation, revision policycompilation.PolicyDecisionRevision, proposal policycompilation.PolicyDecisionProposal) policycompilation.PublicPolicyRevisionReport {
+	return policycompilation.PublicPolicyRevisionReport{
+		Schema: policycompilation.PublicPolicyRevisionReportSchema, Profile: policycompilation.PublicPolicyRevisionProfileID,
+		SourceFile: profileRelativePath(prepared.projectRoot, prepared.sourcePath),
+		Condition: revision.Condition, FromDecision: revision.FromDecision, ToDecision: revision.ToDecision,
+		Original: proposal.Original, Candidate: proposal.Candidate,
+		ChangedCoordinates: append([]string(nil), proposal.ChangedCoordinates...),
+		GeneratedFiles: []string{"candidate.gooo", "proposal.json"},
+		CandidateFormat: policycompilation.PublicPolicyRevisionFormat,
+		OutputRootClass: policycompilation.PublicGenerationOutputRootClass,
+		ExecutionObserved: false, CurrentConformance: policycompilation.PublicGenerationConformanceUnknown,
+		RepositoryWrites: 0, MutationAuthority: 0, PromotionAuthority: 0,
+	}
 }

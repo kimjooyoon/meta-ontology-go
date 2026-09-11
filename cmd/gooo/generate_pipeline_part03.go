@@ -5,6 +5,7 @@ import (
 	"io"
 	"path/filepath"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicdiscovery"
 )
 
@@ -46,6 +47,10 @@ type generateOptions struct {
 	profilePackage                   string
 	profileNamespace                 string
 	profileProjectRoot               string
+	profileSourceDigest              string
+	profileCondition                 string
+	profileFromDecision              string
+	profileToDecision                string
 	filename                         string
 	outputDir                        string
 	previousGo                       string
@@ -60,6 +65,10 @@ type generateOptions struct {
 	retentionAuthorizationFilename   string
 	retentionAdoptionFilename        string
 	observationLedgerDir             string
+}
+
+func (options generateOptions) policyRevisionRequested() bool {
+	return options.profileSourceDigest != "" || options.profileCondition != "" || options.profileFromDecision != "" || options.profileToDecision != ""
 }
 
 func parseGenerateArguments(args []string) (generateOptions, error) {
@@ -92,11 +101,23 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		return generateOptions{}, fmt.Errorf("%s", usage)
 	}
 	if options.profile == "" {
-		if options.profilePackage != "" || options.profileNamespace != "" || options.profileProjectRoot != "" {
+		if options.profilePackage != "" || options.profileNamespace != "" || options.profileProjectRoot != "" || options.policyRevisionRequested() {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
 	} else {
-		if options.profile != "meta-policy-compilation-v3" || options.profilePackage == "" || options.profileNamespace == "" || options.profileProjectRoot == "" {
+		if options.profilePackage == "" || options.profileNamespace == "" || options.profileProjectRoot == "" {
+			return generateOptions{}, fmt.Errorf("%s", usage)
+		}
+		switch options.profile {
+		case policycompilation.PublicProfileID:
+			if options.policyRevisionRequested() {
+				return generateOptions{}, fmt.Errorf("%s", usage)
+			}
+		case policycompilation.PublicPolicyRevisionProfileID:
+			if options.profileSourceDigest == "" || options.profileCondition == "" || options.profileFromDecision == "" || options.profileToDecision == "" {
+				return generateOptions{}, fmt.Errorf("%s", usage)
+			}
+		default:
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
 		if options.previousGo != "" || options.manifestPath != "" || options.retentionReport || options.publicRetentionRequested() || options.continuityCertificateFilename != "" || options.compatibilityCertificateFilename != "" || options.observationLedgerDir != "" {
@@ -132,6 +153,14 @@ func setProfileGenerateOption(options *generateOptions, name, value string) bool
 		return setGenerateString(&options.profileNamespace, value)
 	case "--profile-project-root":
 		return setGenerateString(&options.profileProjectRoot, value)
+	case "--profile-source-digest":
+		return setGenerateString(&options.profileSourceDigest, value)
+	case "--profile-condition":
+		return setGenerateString(&options.profileCondition, value)
+	case "--profile-from-decision":
+		return setGenerateString(&options.profileFromDecision, value)
+	case "--profile-to-decision":
+		return setGenerateString(&options.profileToDecision, value)
 	default:
 		return false
 	}
