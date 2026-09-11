@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	root, input, conceptOperationBinding, promotion, guarded, useCases, syntax, diagnostic, packageRuntime string
+	root, input, conceptOperationBinding, conceptOperationInputDir, promotion, guarded, useCases, syntax, diagnostic, packageRuntime string
 	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, toolchainRelease string
 	output, check, expectedRepository, expectedSHA, expectedPredecessorSHA                 string
 }
@@ -17,6 +17,7 @@ func main() {
 	flag.StringVar(&cfg.root, "root", "", "repository root")
 	flag.StringVar(&cfg.input, "input", "", "language concept artifact outside the repository")
 	flag.StringVar(&cfg.conceptOperationBinding, "concept-operation-binding", "", "verified concept-operation binding receipt outside the repository")
+	flag.StringVar(&cfg.conceptOperationInputDir, "concept-operation-input-dir", "", "immutable concept-operation producer inputs outside the repository")
 	flag.StringVar(&cfg.promotion, "proposal-promotion", "", "verified proposal promotion outside the repository")
 	flag.StringVar(&cfg.guarded, "guarded-capability", "", "verified guarded capability outside the repository")
 	flag.StringVar(&cfg.useCases, "toolchain-use-cases", "", "verified executable use cases outside the repository")

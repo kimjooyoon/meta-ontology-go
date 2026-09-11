@@ -1,8 +1,12 @@
 package artifact
 
+import conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
+
 type CompleteEvidenceInput struct {
 	ConceptArtifact        []byte
 	ConceptOperationBinding []byte
+	ConceptOperationInputs conceptoperation.SourceInputs
+	RepositoryRoot         string
 	Promotion              []byte
 	Capability             []byte
 	UseCases               []byte

@@ -809,7 +809,11 @@ jobs:
             .program_source_path == "program.gooo" and
             .status == "VERIFIED" and
             .coverage_bps == 10000 and
+            .expected_count == (.expected | length) and
+            .bound_count == .expected_count and
             .unknown_count == 0 and
+            .failure_class == "" and
+            .unknown == null and
             .program_digest == $program_digest and
             .program_source_digest == $source_digest and
             .program_semantic_digest == $semantic_digest and
@@ -817,8 +821,18 @@ jobs:
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$first/concept-operation-binding.json"
+          cp "$input/plan.json" "$first/strategy-plan.json"
+          cp "$input/verification.json" "$first/strategy-verification.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/source-metrics.json" "$first/source-metrics.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/ledger.json" "$first/intervention-ledger.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/verification.json" "$first/intervention-verification.json"
           test -s "$first/program.gooo"
           test -s "$first/concept-operation-binding.json"
+          test -s "$first/strategy-plan.json"
+          test -s "$first/strategy-verification.json"
+          test -s "$first/source-metrics.json"
+          test -s "$first/intervention-ledger.json"
+          test -s "$first/intervention-verification.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
         id: upload

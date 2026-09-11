@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -14,6 +17,7 @@ import (
 	programverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy"
 	strategyverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify"
+	interventionverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
 )
 
 const (
@@ -41,6 +45,28 @@ type OperationBinding struct {
 	OperationDigest   string `json:"operation_digest"`
 }
 
+type UnknownCausal struct {
+	UnknownClass  string   `json:"unknown_class"`
+	Stage         string   `json:"stage"`
+	Step          string   `json:"step"`
+	Reason        string   `json:"reason"`
+	NextOperation string   `json:"next_operation"`
+	BlockedBy     []string `json:"blocked_by"`
+}
+
+// SourceInputs are the immutable producer inputs carried with the receipt.
+// The consumer replays these inputs before accepting the receipt digest.
+type SourceInputs struct {
+	Strategy                   []byte
+	StrategyVerification      []byte
+	SourceMetrics              []byte
+	Intervention               []byte
+	InterventionVerification  []byte
+	Program                    []byte
+	ProgramSource              []byte
+	ProgramVerification       []byte
+}
+
 type Receipt struct {
 	Schema                    string             `json:"schema"`
 	Repository                string             `json:"repository"`
@@ -65,6 +91,8 @@ type Receipt struct {
 	UnknownCount              int                `json:"unknown_count"`
 	CoverageBPS               int                `json:"coverage_bps"`
 	Status                    string             `json:"status"`
+	FailureClass              string             `json:"failure_class,omitempty"`
+	Unknown                   *UnknownCausal     `json:"unknown,omitempty"`
 	Producer                  string             `json:"producer"`
 	Consumer                  string             `json:"consumer"`
 	MetaOperation             string             `json:"meta_operation"`
@@ -196,6 +224,16 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 	if expectedCount > 0 && bound == expectedCount && unknown == 0 {
 		status = "VERIFIED"
 	}
+	failureClass := ""
+	var unknownCausal *UnknownCausal
+	if status != "VERIFIED" {
+		if unknown > 0 || observed < expectedCount {
+			failureClass = "INCOMPLETE_EVIDENCE"
+			unknownCausal = &UnknownCausal{UnknownClass: "INCOMPLETE_EVIDENCE", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_BINDING_EVIDENCE_INCOMPLETE", NextOperation: "CAPTURE_EXACT_PRODUCER_INPUTS", BlockedBy: []string{"concept_operation_binding_receipt"}}
+		} else {
+			failureClass = "KNOWN_CONTRADICTION"
+		}
+	}
 	receipt := Receipt{
 		Schema: Schema, Repository: plan.Repository, SubjectSHA: plan.SubjectSHA, ExecutionPolicy: ExecutionPolicy,
 		MetricID: MetricID, CohortRule: CohortRule, StrategyDigest: plan.Digest,
@@ -206,10 +244,106 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 		ProgramSourceDigest: program.SourceDigest, ProgramSemanticDigest: program.SemanticDigest,
 		ProgramRegistryDigest: program.RegistryDigest, Expected: expected, ExpectedCount: expectedCount,
 		ObservedCount: observed, BoundCount: bound, UnknownCount: unknown, CoverageBPS: coverage,
-		Status: status, Producer: "metricprogram/conceptoperation.Build", Consumer: "language-readiness",
+		Status: status, FailureClass: failureClass, Unknown: unknownCausal, Producer: "metricprogram/conceptoperation.Build", Consumer: "language-readiness",
 		MetaOperation: "bind-concept-operation-metric", RepositoryWorkspaceWrites: false, PromotionAuthorized: false,
 	}
 	return seal(receipt)
+}
+
+// VerifySource independently authenticates the producer inputs and then
+// rebuilds the complete receipt. A receipt's self-hash is not provenance.
+func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS,
+	expectedRepository, expectedSubjectSHA string) error {
+	if err := VerifyReceipt(receipt, expectedRepository, expectedSubjectSHA); err != nil {
+		return fmt.Errorf("verify concept-operation receipt envelope: %w", err)
+	}
+	if repository == nil {
+		return fmt.Errorf("concept-operation repository source is missing")
+	}
+	for name, payload := range map[string][]byte{
+		"strategy": inputs.Strategy, "strategy verification": inputs.StrategyVerification,
+		"source metrics": inputs.SourceMetrics, "intervention": inputs.Intervention,
+		"intervention verification": inputs.InterventionVerification, "program": inputs.Program,
+		"program source": inputs.ProgramSource, "program verification": inputs.ProgramVerification,
+	} {
+		if len(payload) == 0 {
+			return fmt.Errorf("concept-operation %s source is missing", name)
+		}
+	}
+	var plan metricstrategy.Plan
+	if err := decodeExact(inputs.Strategy, &plan); err != nil {
+		return fmt.Errorf("decode source strategy: %w", err)
+	}
+	var strategyReceipt strategyverify.Receipt
+	if err := decodeExact(inputs.StrategyVerification, &strategyReceipt); err != nil {
+		return fmt.Errorf("decode source strategy verification: %w", err)
+	}
+	var ledger metric.Ledger
+	if err := decodeExact(inputs.Intervention, &ledger); err != nil {
+		return fmt.Errorf("decode source intervention: %w", err)
+	}
+	var interventionReceipt interventionverify.Receipt
+	if err := decodeExact(inputs.InterventionVerification, &interventionReceipt); err != nil {
+		return fmt.Errorf("decode source intervention verification: %w", err)
+	}
+	var program metricprogram.Program
+	if err := decodeExact(inputs.Program, &program); err != nil {
+		return fmt.Errorf("decode source program: %w", err)
+	}
+	var programReceipt programverify.Report
+	if err := decodeExact(inputs.ProgramVerification, &programReceipt); err != nil {
+		return fmt.Errorf("decode source program verification: %w", err)
+	}
+	if plan.Repository != expectedRepository || plan.SubjectSHA != expectedSubjectSHA ||
+		ledger.Repository != expectedRepository || ledger.SubjectSHA != expectedSubjectSHA ||
+		program.Repository != expectedRepository || program.SubjectSHA != expectedSubjectSHA {
+		return fmt.Errorf("concept-operation source subject is not exact")
+	}
+	temporary, err := os.MkdirTemp("", "gooo-concept-operation-")
+	if err != nil {
+		return fmt.Errorf("create temporary source directory: %w", err)
+	}
+	defer os.RemoveAll(temporary)
+	paths := map[string][]byte{
+		"source-metrics.json":          inputs.SourceMetrics,
+		"intervention.json":            inputs.Intervention,
+		"intervention-verification.json": inputs.InterventionVerification,
+	}
+	for name, payload := range paths {
+		if err := os.WriteFile(filepath.Join(temporary, name), payload, 0o600); err != nil {
+			return fmt.Errorf("stage %s: %w", name, err)
+		}
+	}
+	independentIntervention, err := interventionverify.Replay(filepath.Join(temporary, "source-metrics.json"), ledger)
+	if err != nil {
+		return fmt.Errorf("independent intervention replay: %w", err)
+	}
+	if !artifact.Equal(independentIntervention, interventionReceipt) {
+		return fmt.Errorf("intervention verification receipt is not independently bound")
+	}
+	independentStrategy, err := strategyverify.Replay(repository, filepath.Join(temporary, "source-metrics.json"), filepath.Join(temporary, "intervention.json"), filepath.Join(temporary, "intervention-verification.json"), plan)
+	if err != nil {
+		return fmt.Errorf("independent strategy replay: %w", err)
+	}
+	if !artifact.Equal(independentStrategy, strategyReceipt) {
+		return fmt.Errorf("strategy verification receipt is not independently bound")
+	}
+	independentProgram, err := programverify.Verify(inputs.Strategy, inputs.StrategyVerification, inputs.Program, inputs.ProgramSource)
+	if err != nil {
+		return fmt.Errorf("independent program replay: %w", err)
+	}
+	if !artifact.Equal(independentProgram, programReceipt) {
+		return fmt.Errorf("program verification receipt is not independently bound")
+	}
+	rebuilt, err := Build(inputs.Strategy, inputs.StrategyVerification, inputs.Intervention,
+		inputs.Program, inputs.ProgramSource, inputs.ProgramVerification)
+	if err != nil {
+		return fmt.Errorf("rebuild concept-operation receipt: %w", err)
+	}
+	if !artifact.Equal(rebuilt, receipt) {
+		return fmt.Errorf("concept-operation receipt does not match independently rebuilt evidence")
+	}
+	return nil
 }
 
 type cohortOperation struct {
@@ -282,10 +416,13 @@ func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA strin
 		(expectedSubjectSHA != "" && receipt.SubjectSHA != expectedSubjectSHA) {
 		return fmt.Errorf("concept-operation receipt identity is invalid")
 	}
+	if receipt.Producer != "metricprogram/conceptoperation.Build" || receipt.Consumer != "language-readiness" || receipt.MetaOperation != "bind-concept-operation-metric" {
+		return fmt.Errorf("concept-operation receipt producer or consumer is invalid")
+	}
 	for _, digest := range []string{receipt.StrategyDigest, receipt.StrategyVerificationDigest,
 		receipt.InterventionDigest, receipt.ProgramDigest, receipt.ProgramVerificationDigest,
 		receipt.ProgramSourceDigest, receipt.ProgramSemanticDigest, receipt.ProgramRegistryDigest} {
-		if !strings.HasPrefix(digest, "sha256:") || len(digest) != len("sha256:")+64 {
+		if !validDigest(digest) {
 			return fmt.Errorf("concept-operation receipt digest field is invalid")
 		}
 	}
@@ -297,6 +434,7 @@ func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA strin
 	seen := make(map[string]bool, len(receipt.Expected))
 	for _, binding := range receipt.Expected {
 		if binding.Operation == "" || binding.CarrierOperation == "" || binding.IndicatorID == "" ||
+			binding.IndicatorID != metricstrategy.ConceptOperationIndicatorID(binding.Operation) ||
 			seen[binding.Operation] || binding.Status == "" || binding.Expected == "" {
 			return fmt.Errorf("concept-operation receipt cohort is invalid")
 		}
@@ -305,15 +443,30 @@ func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA strin
 	if receipt.Status != "VERIFIED" && receipt.Status != "FAIL_CLOSED" {
 		return fmt.Errorf("concept-operation receipt status is invalid")
 	}
+	if receipt.Status == "VERIFIED" && (receipt.FailureClass != "" || receipt.Unknown != nil) {
+		return fmt.Errorf("verified concept-operation receipt has failure state")
+	}
+	if receipt.Status == "FAIL_CLOSED" {
+		switch receipt.FailureClass {
+		case "INCOMPLETE_EVIDENCE":
+			if receipt.Unknown == nil || receipt.Unknown.UnknownClass != "INCOMPLETE_EVIDENCE" || receipt.Unknown.Stage != "CONCEPT_OPERATION_BINDING" || receipt.Unknown.Step != "RECONSTRUCT_EXACT_COHORT" || receipt.Unknown.Reason != "CONCEPT_OPERATION_BINDING_EVIDENCE_INCOMPLETE" || receipt.Unknown.NextOperation != "CAPTURE_EXACT_PRODUCER_INPUTS" || len(receipt.Unknown.BlockedBy) != 1 || receipt.Unknown.BlockedBy[0] != "concept_operation_binding_receipt" || (receipt.UnknownCount == 0 && receipt.ObservedCount >= receipt.ExpectedCount) {
+				return fmt.Errorf("incomplete concept-operation receipt lacks causal UNKNOWN evidence")
+			}
+		case "KNOWN_CONTRADICTION":
+			if receipt.Unknown != nil || receipt.UnknownCount != 0 || receipt.BoundCount >= receipt.ExpectedCount {
+				return fmt.Errorf("known concept-operation contradiction has UNKNOWN evidence")
+			}
+		default:
+			return fmt.Errorf("concept-operation receipt failure class is invalid")
+		}
+	}
 	if receipt.Status == "VERIFIED" && (receipt.BoundCount != receipt.ExpectedCount || receipt.UnknownCount != 0 || receipt.CoverageBPS != 10000) {
 		return fmt.Errorf("verified concept-operation receipt is incomplete")
 	}
 	if receipt.Status == "VERIFIED" {
 		for _, binding := range receipt.Expected {
 			if binding.RegisteredActivity == "" || binding.RegisteredProofChoice == "" || binding.Activity == "" || binding.ProofChoice == "" || binding.Expected != binding.Actual ||
-				binding.Status != "SATISFIED" || !strings.HasPrefix(binding.EvidenceDigest, "sha256:") ||
-				len(binding.EvidenceDigest) != len("sha256:")+64 || !strings.HasPrefix(binding.OperationDigest, "sha256:") ||
-				len(binding.OperationDigest) != len("sha256:")+64 {
+				binding.Status != "SATISFIED" || !validDigest(binding.EvidenceDigest) || !validDigest(binding.OperationDigest) {
 				return fmt.Errorf("verified concept-operation receipt binding is incomplete")
 			}
 		}
@@ -329,6 +482,18 @@ func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA strin
 		return fmt.Errorf("concept-operation receipt digest mismatch")
 	}
 	return nil
+}
+
+func validDigest(value string) bool {
+	if !strings.HasPrefix(value, "sha256:") || len(value) != len("sha256:")+64 {
+		return false
+	}
+	for _, character := range value[len("sha256:"):] {
+		if !(character >= '0' && character <= '9') && !(character >= 'a' && character <= 'f') {
+			return false
+		}
+	}
+	return true
 }
 
 func seal(receipt Receipt) (Receipt, error) {

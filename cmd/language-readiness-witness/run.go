@@ -37,8 +37,11 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.toolchainRelease != "" && cfg.toolchainLSP == "" {
 		return fmt.Errorf("toolchain cross-platform release requires toolchain-lsp evidence")
 	}
-	if cfg.guarded != "" && cfg.conceptOperationBinding == "" {
-		return fmt.Errorf("concept-operation-binding is required with the complete evidence set")
+	if cfg.conceptOperationInputDir != "" && cfg.conceptOperationBinding == "" {
+		return fmt.Errorf("concept-operation-binding is required with concept-operation-input-dir")
+	}
+	if cfg.guarded != "" && (cfg.conceptOperationBinding == "" || cfg.conceptOperationInputDir == "") {
+		return fmt.Errorf("concept-operation-binding and concept-operation-input-dir are required with the complete evidence set")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err

@@ -5,6 +5,9 @@ func completePaths(cfg config, target string) []string {
 	if cfg.conceptOperationBinding != "" {
 		paths = append(paths, cfg.conceptOperationBinding)
 	}
+	if cfg.conceptOperationInputDir != "" {
+		paths = append(paths, cfg.conceptOperationInputDir)
+	}
 	optional := []string{
 		cfg.promotion,
 		cfg.guarded,

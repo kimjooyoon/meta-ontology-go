@@ -2,6 +2,7 @@ package languagereadiness
 
 import (
 	"fmt"
+	"os"
 
 	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
@@ -38,8 +39,12 @@ func validatePromotionEvidence(bundle PromotionEvidence,
 	}
 	conceptOperationDigest := ""
 	if bundle.ConceptOperation.Schema != "" {
-		if _, err := conceptoperation.VerifyReceipt(bundle.ConceptOperation, expectedRepository, expectedHeadSHA); err != nil {
+		if err := conceptoperation.VerifyReceipt(bundle.ConceptOperation, expectedRepository, expectedHeadSHA); err != nil {
 			return evidenceDigests{}, fmt.Errorf("verify concept-operation binding receipt: %w", err)
+		}
+		if err := conceptoperation.VerifySource(bundle.ConceptOperation, bundle.ConceptOperationInputs,
+			os.DirFS(bundle.ConceptOperationRepository), expectedRepository, expectedHeadSHA); err != nil {
+			return evidenceDigests{}, fmt.Errorf("verify concept-operation producer inputs: %w", err)
 		}
 		if bundle.ConceptOperation.Status == "VERIFIED" {
 			conceptOperationDigest = bundle.ConceptOperation.Digest

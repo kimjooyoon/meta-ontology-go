@@ -1,6 +1,8 @@
 package artifact
 
 import (
+	"os"
+
 	readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness"
 	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
@@ -19,6 +21,9 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 		return Receipt{}, err
 	}
 	if err := conceptoperation.VerifyReceipt(conceptOperation, input.ExpectedRepository, input.HeadSHA); err != nil {
+		return Receipt{}, err
+	}
+	if err := conceptoperation.VerifySource(conceptOperation, input.ConceptOperationInputs, os.DirFS(input.RepositoryRoot), input.ExpectedRepository, input.HeadSHA); err != nil {
 		return Receipt{}, err
 	}
 	promotion, err := decodeCompleteEvidence[proposalpromotion.Receipt](input.Promotion)
@@ -53,7 +58,7 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	if err != nil {
 		return Receipt{}, err
 	}
-	bundle := readiness.PromotionEvidence{Promotion: promotion, ConceptOperation: conceptOperation, Capability: capability,
+	bundle := readiness.PromotionEvidence{Promotion: promotion, ConceptOperation: conceptOperation, ConceptOperationInputs: input.ConceptOperationInputs, ConceptOperationRepository: input.RepositoryRoot, Capability: capability,
 		UseCases: useCases, Syntax: syntaxReport, Diagnostic: diagnostic,
 		PackageRuntime: []languagepackageruntime.Report{runtimeReport}}
 	snapshot, err := buildToolchainSnapshot(input, bundle, cliReport, formatFixReport)

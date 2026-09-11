@@ -11,9 +11,11 @@ import (
 )
 
 type PromotionEvidence struct {
-	Promotion      proposalpromotion.Receipt
-	ConceptOperation conceptoperation.Receipt
-	Capability     guardedcapability.Receipt
+	Promotion                  proposalpromotion.Receipt
+	ConceptOperation           conceptoperation.Receipt
+	ConceptOperationInputs     conceptoperation.SourceInputs
+	ConceptOperationRepository string
+	Capability                 guardedcapability.Receipt
 	UseCases       toolchainusecases.Report
 	Syntax         languagesyntax.Report
 	Diagnostic     languagediagnosticprovenance.Report
