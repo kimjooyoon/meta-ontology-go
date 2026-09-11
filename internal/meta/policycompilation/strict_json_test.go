@@ -521,6 +521,230 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 	}
 }
 
+func TestPublicPolicyDecisionRevisionProfileFromCLI(t *testing.T) {
+	work := t.TempDir()
+	project := filepath.Join(work, "project")
+	if err := os.Mkdir(project, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	source := declaredCaseSourceFixture(t)
+	sourcePath := filepath.Join(project, "policy.gooo")
+	if err := os.WriteFile(sourcePath, source, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	repository, err := filepath.Abs("../../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary := filepath.Join(work, "gooo")
+	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, "./cmd/gooo")
+	build.Dir = repository
+	build.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build public Gooo CLI: %v: %s", err, output)
+	}
+	run := func(args ...string) ([]byte, error) {
+		command := exec.CommandContext(t.Context(), binary, args...)
+		command.Dir = work
+		return command.CombinedOutput()
+	}
+	arguments := func(outputRoot string) []string {
+		return []string{
+			"generate", sourcePath, "--out", outputRoot,
+			"--profile", PublicPolicyRevisionProfileID,
+			"--profile-package", "metapolicycompilation",
+			"--profile-namespace", "metapolicycompilation",
+			"--profile-project-root", project,
+			"--profile-source-digest", DigestBytes(source),
+			"--profile-condition", ConditionSemanticEquivalence,
+			"--profile-from-decision", DecisionPass,
+			"--profile-to-decision", DecisionFailClosed,
+			"--json",
+		}
+	}
+	t.Run("proposal-replay-generation-and-execution", func(t *testing.T) {
+		firstRoot, replayRoot := filepath.Join(work, "first"), filepath.Join(work, "replay")
+		firstOutput, err := run(arguments(firstRoot)...)
+		if err != nil {
+			t.Fatalf("public policy revision: %v: %s", err, firstOutput)
+		}
+		replayOutput, err := run(arguments(replayRoot)...)
+		if err != nil || !bytes.Equal(firstOutput, replayOutput) {
+			t.Fatalf("public proposal replay changed: %v: %s", err, replayOutput)
+		}
+		var report PublicPolicyRevisionReport
+		if err := decodeStrictJSON(firstOutput, &report); err != nil {
+			t.Fatal(err)
+		}
+		if report.Schema != PublicPolicyRevisionReportSchema || report.Profile != PublicPolicyRevisionProfileID || report.SourceFile != "policy.gooo" || report.Condition != ConditionSemanticEquivalence || report.FromDecision != DecisionPass || report.ToDecision != DecisionFailClosed {
+			t.Fatalf("unbound public proposal report: %+v", report)
+		}
+		if !reflect.DeepEqual(report.GeneratedFiles, []string{"candidate.gooo", "proposal.json"}) || !reflect.DeepEqual(report.ChangedCoordinates, []string{"transition.to", "case.resolution.decision"}) {
+			t.Fatal("public proposal artifact or coordinate boundary changed")
+		}
+		if report.CandidateFormat != PublicPolicyRevisionFormat || report.OutputRootClass != PublicGenerationOutputRootClass || report.ExecutionObserved || report.CurrentConformance != PublicGenerationConformanceUnknown || report.RepositoryWrites != 0 || report.MutationAuthority != 0 || report.PromotionAuthority != 0 {
+			t.Fatal("a source proposal was promoted into execution or authority")
+		}
+		for _, outputRoot := range []string{firstRoot, replayRoot} {
+			entries, err := os.ReadDir(outputRoot)
+			if err != nil || len(entries) != 2 {
+				t.Fatalf("proposal output is not exactly two artifacts: %v", err)
+			}
+		}
+		var candidate []byte
+		for _, name := range report.GeneratedFiles {
+			first, err := os.ReadFile(filepath.Join(firstRoot, name))
+			if err != nil {
+				t.Fatal(err)
+			}
+			replayed, err := os.ReadFile(filepath.Join(replayRoot, name))
+			if err != nil || !bytes.Equal(first, replayed) {
+				t.Fatalf("proposal artifact %s did not replay: %v", name, err)
+			}
+			if name == "proposal.json" && !bytes.Equal(firstOutput, first) {
+				t.Fatal("JSON output is detached from the written proposal")
+			}
+			if name == "candidate.gooo" {
+				candidate = first
+			}
+		}
+		if report.Original.SourceDigest != DigestBytes(source) || report.Candidate.SourceDigest != DigestBytes(candidate) || report.Original.SemanticDigest == report.Candidate.SemanticDigest {
+			t.Fatal("public proposal source/semantic identities are not bound")
+		}
+		candidatePath := filepath.Join(firstRoot, "candidate.gooo")
+		if output, err := run("check", candidatePath); err != nil {
+			t.Fatalf("check emitted Gooo candidate: %v: %s", err, output)
+		}
+		generatedRoot := filepath.Join(work, "generated")
+		output, err := run("generate", candidatePath, "--out", generatedRoot, "--profile", PublicProfileID,
+			"--profile-package", "metapolicycompilation", "--profile-namespace", "metapolicycompilation",
+			"--profile-project-root", firstRoot, "--json")
+		if err != nil {
+			t.Fatalf("generate from emitted Gooo candidate: %v: %s", err, output)
+		}
+		var manifest PublicGenerationManifest
+		if err := decodeStrictJSON(output, &manifest); err != nil {
+			t.Fatal(err)
+		}
+		if manifest.SourceDigest != report.Candidate.SourceDigest || manifest.SemanticDigest != report.Candidate.SemanticDigest || len(manifest.GeneratedFiles) != 4 || manifest.ExecutionObserved || manifest.CurrentConformance != PublicGenerationConformanceUnknown {
+			t.Fatal("candidate generation lost its binding or claimed execution")
+		}
+		judgeSource, err := os.ReadFile(filepath.Join(generatedRoot, "judge.go"))
+		if err != nil || manifest.GeneratedJudgeDigest != DigestBytes(judgeSource) {
+			t.Fatalf("generated judge bytes are detached from the public manifest: %v", err)
+		}
+		judge := filepath.Join(work, "candidate-judge")
+		buildJudge := exec.CommandContext(t.Context(), "go", "build", "-o", judge, filepath.Join(generatedRoot, "judge.go"))
+		buildJudge.Dir = generatedRoot
+		buildJudge.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.0")
+		if output, err := buildJudge.CombinedOutput(); err != nil {
+			t.Fatalf("build public-profile judge: %v: %s", err, output)
+		}
+		document, err := json.Marshal(generatedJudgeInput{
+			ID: "public-source-revision", ProducerAvailable: true, ConsumerAvailable: true,
+			ObservedSourceDigest: manifest.SourceDigest, ObservedArtifactSourceDigest: manifest.SourceDigest,
+			ObservedGeneratedJudgeDigest: manifest.GeneratedJudgeDigest, ObservedIndependentDigest: manifest.SemanticDigest,
+			UpperDecision: DecisionPass,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		execute := exec.CommandContext(t.Context(), judge, "--declared-input")
+		execute.Dir = work
+		execute.Stdin = bytes.NewReader(document)
+		result, err := execute.CombinedOutput()
+		if err != nil {
+			t.Fatalf("execute public-profile judge: %v: %s", err, result)
+		}
+		var envelope map[string]json.RawMessage
+		if err := decodeStrictJSON(result, &envelope); err != nil {
+			t.Fatal(err)
+		}
+		var decision DecisionResult
+		if err := decodeStrictJSON(envelope["generated_decision"], &decision); err != nil {
+			t.Fatal(err)
+		}
+		if decision.Decision != DecisionFailClosed || decision.MatchedCondition != ConditionSemanticEquivalence || decision.PolicyDigest != report.Candidate.SourceDigest || decision.SemanticDigest != report.Candidate.SemanticDigest {
+			t.Fatalf("public proposal did not reach its source-owned revised decision: %+v", decision)
+		}
+		if string(envelope["mutation_authority"]) != "0" || string(envelope["promotion_authority"]) != "0" || string(envelope["external_evidence_state"]) != "\"UNKNOWN_NOT_VERIFIED\"" {
+			t.Fatal("synthetic execution input was promoted to external evidence")
+		}
+	})
+	for _, test := range []struct {
+		name  string
+		flag  string
+		value string
+	}{
+		{"missing-source-digest", "--profile-source-digest", ""},
+		{"stale-source-digest", "--profile-source-digest", DigestBytes([]byte("stale"))},
+		{"unknown-condition", "--profile-condition", "UNDECLARED_CONDITION"},
+		{"stale-from-decision", "--profile-from-decision", DecisionFailClosed},
+		{"missing-unknown-context", "--profile-to-decision", DecisionUnknown},
+		{"wrong-namespace", "--profile-namespace", "different"},
+		{"revision-flags-on-compilation-profile", "--profile", PublicProfileID},
+		{"project-overlap", "--out", filepath.Join(project, "forbidden")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			outputRoot := filepath.Join(work, test.name)
+			args := arguments(outputRoot)
+			for index, arg := range args {
+				if arg == test.flag {
+					args[index+1] = test.value
+				}
+			}
+			if test.flag == "--out" {
+				outputRoot = test.value
+			}
+			if output, err := run(args...); err == nil {
+				t.Fatalf("invalid public revision was accepted: %s", output)
+			}
+			if _, err := os.Stat(outputRoot); !os.IsNotExist(err) {
+				t.Fatalf("rejected revision created an output directory: %v", err)
+			}
+		})
+	}
+	t.Run("duplicate-option", func(t *testing.T) {
+		outputRoot := filepath.Join(work, "duplicate")
+		args := append(arguments(outputRoot), "--profile-condition", ConditionSemanticEquivalence)
+		if output, err := run(args...); err == nil {
+			t.Fatalf("duplicate revision option was accepted: %s", output)
+		}
+		if _, err := os.Stat(outputRoot); !os.IsNotExist(err) {
+			t.Fatalf("duplicate option created output: %v", err)
+		}
+	})
+	t.Run("occupied-output", func(t *testing.T) {
+		outputRoot := filepath.Join(work, "occupied")
+		if err := os.Mkdir(outputRoot, 0o700); err != nil {
+			t.Fatal(err)
+		}
+		sentinel := filepath.Join(outputRoot, "keep.txt")
+		if err := os.WriteFile(sentinel, []byte("unchanged"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if output, err := run(arguments(outputRoot)...); err == nil {
+			t.Fatalf("occupied output was accepted: %s", output)
+		}
+		contents, err := os.ReadFile(sentinel)
+		if err != nil || string(contents) != "unchanged" {
+			t.Fatalf("occupied output was modified: %v", err)
+		}
+		entries, err := os.ReadDir(outputRoot)
+		if err != nil || len(entries) != 1 {
+			t.Fatalf("rejected revision published partial artifacts: %v", err)
+		}
+	})
+	after, err := os.ReadFile(sourcePath)
+	if err != nil || !bytes.Equal(source, after) {
+		t.Fatalf("public revision changed its input source: %v", err)
+	}
+	entries, err := os.ReadDir(project)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("public revision wrote inside the input project: %v", err)
+	}
+}
+
 func declaredCaseSourceFixture(t *testing.T) []byte {
 	t.Helper()
 	source, err := os.ReadFile("../../../examples/meta-policy-compilation/policy.gooo")

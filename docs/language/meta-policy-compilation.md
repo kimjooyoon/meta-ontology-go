@@ -60,9 +60,10 @@ proposal. UNKNOWN context is neither synthesized nor deleted: a decision-only
 change that requires other resolution fields must be rejected. Opaque legacy
 activity programs are not rewritten by guessing at embedded strings.
 
-This is an internal compiler API, not a new public command, approval receipt or
-wire protocol. Successful compilation proves only the bounded structural
-contract. It does not run generated code, write a repository, establish external
+The API remains internal; the public generation profile below supplies an
+explicit CLI and proposal-report boundary, not an approval or conformance
+receipt. Successful compilation proves only the bounded structural contract.
+It does not run generated code, write a repository, establish external
 utility, authorize a weaker policy, or prove independent conformance. Both
 stricter and looser explicit proposals require separate acceptance against their
 pinned original policy; the candidate must not certify its own promotion.
@@ -73,6 +74,61 @@ source immutability, deterministic replay, an explicit reverse revision and
 rejection cases. A separate native test builds one generated candidate program
 and observes its changed decision. Its evidence values are synthetic test inputs,
 not verified external claims, and the proposal API remains nonexecuting.
+
+
+## Public policy revision profile
+
+`gooo generate` accepts the opt-in `meta-policy-revision-v1` profile.
+It exposes the typed proposal operation without requiring caller-written Go.
+The caller supplies an exact input-byte digest, condition, previous decision and
+proposed decision; the compiler does not infer missing values or choose a policy.
+
+```sh
+gooo generate ./project/policy.gooo \
+  --profile meta-policy-revision-v1 \
+  --profile-package metapolicycompilation \
+  --profile-namespace metapolicycompilation \
+  --profile-project-root ./project \
+  --profile-source-digest "$SOURCE_DIGEST" \
+  --profile-condition SEMANTIC_EQUIVALENCE \
+  --profile-from-decision PASS \
+  --profile-to-decision FAIL_CLOSED \
+  --out ./proposal-output --json
+```
+
+Here `policy.gooo` must be inside the explicitly declared project boundary,
+and `SOURCE_DIGEST` must be its exact `sha256:`-prefixed byte digest.
+The existing compilation profile's source-bound manifest provides that digest;
+neither a filename nor a semantic digest substitutes for it. The example paths
+must be adjusted so the output is outside the input project.
+
+The output directory must be empty and external to the project. A successful
+invocation writes exactly `candidate.gooo` and `proposal.json`, using the
+existing guarded atomic writer. `--json` emits the same proposal report bytes.
+Invalid revision requests are rejected before output preparation; nonempty,
+overlapping or disallowed output paths are not an overwrite/repair instruction.
+
+The `gooo/meta-policy-decision-proposal/v1` report binds the requested decision
+change, both compiled policies and their source/semantic identities, two changed
+semantic coordinate kinds, and the two artifact names. The candidate is a
+canonical semantic projection, not a byte-preserving patch. The original source
+remains unchanged. Execution is false, current conformance is UNKNOWN, and
+repository writes, mutation authority and promotion authority are zero.
+
+The emitted candidate can be checked with `gooo check`, then supplied to the
+unchanged `meta-policy-compilation-v3` profile with the proposal directory as
+its project boundary and a different empty external generation directory.
+That profile still produces its original four artifacts. Applying a revision,
+executing generated code and deciding whether a policy change is acceptable are
+separate operations, not effects of proposal generation.
+
+CI exercises one public route from original Gooo through deterministic proposal
+replay, candidate checking, ordinary public generation and generated decision
+observation. It also exercises eight invalid request/boundary cases, duplicate
+options and occupied output. The parent builds one Gooo CLI and one candidate
+judge in temporary directories; these are CI-only test costs, not a language
+runtime benchmark. Synthetic digest declarations remain unverified external
+claims, even when the generated decision matches the source.
 
 
 ## Discovering the generated input contract
