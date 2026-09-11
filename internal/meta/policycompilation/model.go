@@ -79,7 +79,7 @@ type Case struct {
 type DecisionResult struct {
 	CaseID           string   `json:"case_id"`
 	Decision         string   `json:"decision"`
-	MatchedCondition string `json:"matched_condition"`
+	MatchedCondition string   `json:"matched_condition"`
 	Stage            string   `json:"stage"`
 	Step             int      `json:"step"`
 	Reason           string   `json:"reason"`

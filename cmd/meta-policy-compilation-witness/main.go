@@ -87,12 +87,12 @@ func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace,
 }
 
 type witnessInputs struct {
-	repoRoot            string
-	profileProjectRoot  string
-	beforeDigest        string
-	beforeCount         int
-	cases               []policycompilation.Case
-	policy              policycompilation.CompiledPolicy
+	repoRoot           string
+	profileProjectRoot string
+	beforeDigest       string
+	beforeCount        int
+	cases              []policycompilation.Case
+	policy             policycompilation.CompiledPolicy
 }
 
 func prepareWitnessInputs(policyPath, casesPath, profilePackage, profileNamespace, profileProjectRoot string) (witnessInputs, error) {
