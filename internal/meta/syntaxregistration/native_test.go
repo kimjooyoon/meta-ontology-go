@@ -170,7 +170,7 @@ func runNativeRegistrationConformance(t *testing.T, mode string) {
 			"source_digest": request.SourceDigest, "input_digest": request.SnapshotDigest,
 			"request_digest": digestValue(request), "evidence_class": "SYNTHETIC",
 			"source_promotion_requested": request.PromoteMetaSource,
-			"base_denominator_version": request.BaseVersion, "candidate_denominator_version": request.BaseVersion + 1,
+			"base_denominator_version":   request.BaseVersion, "candidate_denominator_version": request.BaseVersion + 1,
 			"execution_binding":      candidate.ExecutionBinding,
 			"manual_follow_up_edits": 0, "replay_comparisons": 1, "repository_writes": 0,
 			"apply_scope": "CALLER_OWNED_CI_TEMP_COPY", "semantic_admission": "UNASSESSED",
