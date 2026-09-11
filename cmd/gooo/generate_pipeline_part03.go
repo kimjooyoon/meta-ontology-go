@@ -116,89 +116,76 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 }
 
 func setGenerateOption(options *generateOptions, name, value string) bool {
+	return setProfileGenerateOption(options, name, value) ||
+		setOutputGenerateOption(options, name, value) ||
+		setCertificateGenerateOption(options, name, value) ||
+		setRetentionGenerateOption(options, name, value)
+}
+
+func setProfileGenerateOption(options *generateOptions, name, value string) bool {
 	switch name {
 	case "--profile":
-		if options.profile != "" {
-			return false
-		}
-		options.profile = value
+		return setGenerateString(&options.profile, value)
 	case "--profile-package":
-		if options.profilePackage != "" {
-			return false
-		}
-		options.profilePackage = value
+		return setGenerateString(&options.profilePackage, value)
 	case "--profile-namespace":
-		if options.profileNamespace != "" {
-			return false
-		}
-		options.profileNamespace = value
+		return setGenerateString(&options.profileNamespace, value)
 	case "--profile-project-root":
-		if options.profileProjectRoot != "" {
-			return false
-		}
-		options.profileProjectRoot = value
-	case "--out":
-		if options.outputDir != "" {
-			return false
-		}
-		options.outputDir = value
-	case "--previous-go":
-		if options.previousGo != "" {
-			return false
-		}
-		options.previousGo = value
-	case "--manifest":
-		if options.manifestPath != "" {
-			return false
-		}
-		options.manifestPath = value
-	case "--certificate", "--retained-certificate":
-		if options.retainedCertificateFilename != "" {
-			return false
-		}
-		options.retainedCertificateFilename = value
-	case "--continuity-certificate":
-		if options.continuityCertificateFilename != "" {
-			return false
-		}
-		options.continuityCertificateFilename = value
-	case "--compatibility-certificate":
-		if options.compatibilityCertificateFilename != "" {
-			return false
-		}
-		options.compatibilityCertificateFilename = value
-	case "--contract", "--retention-contract":
-		if options.retentionContractFilename != "" {
-			return false
-		}
-		options.retentionContractFilename = value
-	case "--observation", "--retention-observation":
-		if options.retentionObservationFilename != "" {
-			return false
-		}
-		options.retentionObservationFilename = value
-	case "--proposal", "--retention-proposal":
-		if options.retentionProposalFilename != "" {
-			return false
-		}
-		options.retentionProposalFilename = value
-	case "--authorization", "--retention-authorization":
-		if options.retentionAuthorizationFilename != "" {
-			return false
-		}
-		options.retentionAuthorizationFilename = value
-	case "--adoption", "--retention-adoption":
-		if options.retentionAdoptionFilename != "" {
-			return false
-		}
-		options.retentionAdoptionFilename = value
-	case "--observation-ledger", "--observation-output":
-		if options.observationLedgerDir != "" {
-			return false
-		}
-		options.observationLedgerDir = value
+		return setGenerateString(&options.profileProjectRoot, value)
 	default:
 		return false
 	}
+}
+
+func setOutputGenerateOption(options *generateOptions, name, value string) bool {
+	switch name {
+	case "--out":
+		return setGenerateString(&options.outputDir, value)
+	case "--previous-go":
+		return setGenerateString(&options.previousGo, value)
+	case "--manifest":
+		return setGenerateString(&options.manifestPath, value)
+	default:
+		return false
+	}
+}
+
+func setCertificateGenerateOption(options *generateOptions, name, value string) bool {
+	switch name {
+	case "--certificate", "--retained-certificate":
+		return setGenerateString(&options.retainedCertificateFilename, value)
+	case "--continuity-certificate":
+		return setGenerateString(&options.continuityCertificateFilename, value)
+	case "--compatibility-certificate":
+		return setGenerateString(&options.compatibilityCertificateFilename, value)
+	default:
+		return false
+	}
+}
+
+func setRetentionGenerateOption(options *generateOptions, name, value string) bool {
+	switch name {
+	case "--contract", "--retention-contract":
+		return setGenerateString(&options.retentionContractFilename, value)
+	case "--observation", "--retention-observation":
+		return setGenerateString(&options.retentionObservationFilename, value)
+	case "--proposal", "--retention-proposal":
+		return setGenerateString(&options.retentionProposalFilename, value)
+	case "--authorization", "--retention-authorization":
+		return setGenerateString(&options.retentionAuthorizationFilename, value)
+	case "--adoption", "--retention-adoption":
+		return setGenerateString(&options.retentionAdoptionFilename, value)
+	case "--observation-ledger", "--observation-output":
+		return setGenerateString(&options.observationLedgerDir, value)
+	default:
+		return false
+	}
+}
+
+func setGenerateString(target *string, value string) bool {
+	if *target != "" {
+		return false
+	}
+	*target = value
 	return true
 }

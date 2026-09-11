@@ -195,8 +195,8 @@ jobs:
               strict) receipt="$root/intervention/strict/receipt.json" ;;
               identity) receipt="$root/intervention/identity/receipt.json" ;;
             esac
-            jq '[.cases[] | {id:.id, source:(.source | {decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by}), generated:(.generated | {decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by}), independent:(.independent | {decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by})}]' "$receipt" > "$root/intervention/$variant-behavior.json"
-            jq '[.cases[] | {id:.id, source:(.source | del(.reason)), generated:(.generated | del(.reason)), independent:(.independent | del(.reason))}]' "$receipt" > "$root/intervention/$variant-decision-behavior.json"
+            jq '[.cases[] | {case_id:.id, source:(.source | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator}), generated:(.generated | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator}), independent:(.independent | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator})}]' "$receipt" > "$root/intervention/$variant-behavior.json"
+            jq '[.cases[] | {case_id:.id, source:(.source | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator}), generated:(.generated | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator}), independent:(.independent | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator})}]' "$receipt" > "$root/intervention/$variant-decision-behavior.json"
             jq '[.claims.events[] | {claim_id, predicate, from, to, decision, stage, step, reason}]' "$receipt" > "$root/intervention/$variant-claims.json"
           done
           cmp "$root/intervention/base-behavior.json" "$root/intervention/comment-behavior.json"
@@ -209,16 +209,20 @@ jobs:
           jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.source_digest != $comment[0].policy.source_digest and $base[0].policy.semantic_digest == $comment[0].policy.semantic_digest' >/dev/null
           jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile reason "$root/intervention/reason/receipt.json" '$base[0].policy.source_digest != $reason[0].policy.source_digest and $base[0].policy.semantic_digest != $reason[0].policy.semantic_digest' >/dev/null
           jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile identity "$root/intervention/identity/receipt.json" '$base[0].policy.source_digest != $identity[0].policy.source_digest and $base[0].policy.semantic_digest != $identity[0].policy.semantic_digest and $identity[0].policy.package == "metapolicyalternate" and $identity[0].policy.namespace == "metapolicyalternate"' >/dev/null
+          # The reason variant changes source and semantic digests while retaining the ruling fields.
+          if cmp "$root/intervention/base-behavior.json" "$root/intervention/reason-behavior.json"; then
+            echo 'reason intervention did not change the observed reason' >&2
+            exit 1
+          fi
           jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile reason "$root/intervention/reason/receipt.json" '
             $base[0].policy.source_digest != $reason[0].policy.source_digest and
             $base[0].policy.semantic_digest != $reason[0].policy.semantic_digest and
-            ([$base[0].cases[] | {id, source:(.source | del(.reason)), generated:(.generated | del(.reason)), independent:(.independent | del(.reason))}] == [$reason[0].cases[] | {id, source:(.source | del(.reason)), generated:(.generated | del(.reason)), independent:(.independent | del(.reason))}]) and
             (any($base[0].cases[]; .id == "pass-semantic-equivalence" and .source.reason != ($reason[0].cases[] | select(.id == "pass-semantic-equivalence") | .source.reason)))
           ' >/dev/null
-          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile strict "$root/intervention/strict/receipt.json" '
-            ([$base[0].cases[] | select(.id != "pass-semantic-equivalence") | {id, source:(.source | del(.reason)), generated:(.generated | del(.reason)), independent:(.independent | del(.reason))}] == [$strict[0].cases[] | select(.id != "pass-semantic-equivalence") | {id, source:(.source | del(.reason)), generated:(.generated | del(.reason)), independent:(.independent | del(.reason))}]) and
-            ([$strict[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.decision == "FAIL_CLOSED") and
-            ([$strict[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.matched_condition == "SEMANTIC_EQUIVALENCE")
+          jq -n -e --slurpfile base "$root/intervention/base-behavior.json" --slurpfile strict "$root/intervention/strict-behavior.json" --slurpfile strict_receipt "$root/intervention/strict/receipt.json" '
+            ([$base[0][] | select(.case_id != "pass-semantic-equivalence")] == [$strict[0][] | select(.case_id != "pass-semantic-equivalence")]) and
+            ([$strict_receipt[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.decision == "FAIL_CLOSED") and
+            ([$strict_receipt[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.matched_condition == "SEMANTIC_EQUIVALENCE")
           ' >/dev/null
           jq -e '([.cases[] | select(.generated.decision == "PASS")] | length) == 1 and ([.cases[] | select(.generated.decision == "PASS")][0].generated.matched_condition == "SEMANTIC_EQUIVALENCE")' "$root/first/receipt.json"
           jq -e '([.cases[] | select(.generated.matched_condition == "SEMANTIC_EQUIVALENCE")] | length) == 1 and ([.cases[] | select(.generated.matched_condition == "SEMANTIC_EQUIVALENCE")][0].generated.decision == "FAIL_CLOSED") and (.summary.pass_count == 0) and (.summary.fail_closed_count == 2) and (.summary.unknown_count == 1)' "$root/intervention/strict/receipt.json"

@@ -43,82 +43,102 @@ func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace,
 	if err := requireRunnerTempOutput(outputDir); err != nil {
 		return err
 	}
+	prepared, err := prepareWitnessInputs(policyPath, casesPath, profilePackage, profileNamespace, profileProjectRoot)
+	if err != nil {
+		return err
+	}
+	publicCLI, publicOutputDir, err := runPublicGoooCLI(prepared.repoRoot, policyPath, outputDir, profilePackage, profileNamespace, prepared.profileProjectRoot)
+	if err != nil {
+		return err
+	}
+	publicArtifact, judge, _, err := readPublicGenerationArtifacts(publicOutputDir, prepared.policy)
+	if err != nil {
+		return err
+	}
+	judgeHash := publicArtifact.GeneratedJudgeHash
+	prepared.cases = bindCaseDigests(prepared.cases, prepared.policy.SourceDigest, prepared.policy.SemanticDigest, judgeHash)
+	generated, independent, err := executeAll(judge, prepared.policy, prepared.cases)
+	if err != nil {
+		return err
+	}
+	if err := writeWitnessArtifacts(outputDir, publicOutputDir, generated, independent); err != nil {
+		return err
+	}
+	afterDigest, afterCount, err := repositorySnapshot(prepared.repoRoot)
+	if err != nil {
+		return err
+	}
+	writeSet := policycompilation.WriteSetObservation{
+		RepositoryBeforeDigest: prepared.beforeDigest, RepositoryAfterDigest: afterDigest,
+		RepositoryBeforeCount: prepared.beforeCount, RepositoryAfterCount: afterCount,
+		RepositoryNetChangeObserved: prepared.beforeDigest != afterDigest,
+		GeneratedRootClass:          "RUNNER_TEMP_ONLY",
+		GeneratedFiles:              []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"},
+		MutationAuthority:           0, PromotionAuthority: 0,
+	}
+	receipt, err := policycompilation.BuildReceipt(prepared.policy, publicArtifact, judgeHash, prepared.cases, generated, independent, writeSet, publicCLI)
+	if err != nil {
+		return fmt.Errorf("build receipt: %w", err)
+	}
+	if err := policycompilation.VerifyReceipt(receipt, prepared.policy, publicArtifact, judgeHash, prepared.cases); err != nil {
+		return fmt.Errorf("verify receipt: %w", err)
+	}
+	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
+}
+
+type witnessInputs struct {
+	repoRoot            string
+	profileProjectRoot  string
+	beforeDigest        string
+	beforeCount         int
+	cases               []policycompilation.Case
+	policy              policycompilation.CompiledPolicy
+}
+
+func prepareWitnessInputs(policyPath, casesPath, profilePackage, profileNamespace, profileProjectRoot string) (witnessInputs, error) {
 	repoRoot, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("resolve repository root: %w", err)
+		return witnessInputs{}, fmt.Errorf("resolve repository root: %w", err)
 	}
 	if profileProjectRoot == "" {
 		profileProjectRoot = repoRoot
 	}
 	beforeDigest, beforeCount, err := repositorySnapshot(repoRoot)
 	if err != nil {
-		return err
+		return witnessInputs{}, err
 	}
 	source, err := os.ReadFile(policyPath)
 	if err != nil {
-		return fmt.Errorf("read policy: %w", err)
+		return witnessInputs{}, fmt.Errorf("read policy: %w", err)
 	}
 	cases, err := readCases(casesPath)
 	if err != nil {
-		return err
+		return witnessInputs{}, err
 	}
 	policy, err := policycompilation.CompileForIdentity(policyPath, source, profilePackage, profileNamespace)
 	if err != nil {
-		return fmt.Errorf("compile raw Gooo policy: %w", err)
+		return witnessInputs{}, fmt.Errorf("compile raw Gooo policy: %w", err)
 	}
-	publicCLI, publicOutputDir, err := runPublicGoooCLI(repoRoot, policyPath, outputDir, profilePackage, profileNamespace, profileProjectRoot)
-	if err != nil {
-		return err
-	}
-	publicArtifact, judge, _, err := readPublicGenerationArtifacts(publicOutputDir, policy)
-	if err != nil {
-		return err
-	}
-	judgeHash := publicArtifact.GeneratedJudgeHash
-	cases = bindCaseDigests(cases, policy.SourceDigest, policy.SemanticDigest, judgeHash)
-	artifact := publicArtifact
-	generated, independent, err := executeAll(judge, policy, cases)
-	if err != nil {
-		return err
-	}
+	return witnessInputs{
+		repoRoot: repoRoot, profileProjectRoot: profileProjectRoot,
+		beforeDigest: beforeDigest, beforeCount: beforeCount,
+		cases: cases, policy: policy,
+	}, nil
+}
+
+func writeWitnessArtifacts(outputDir, publicOutputDir string, generated, independent []policycompilation.DecisionResult) error {
 	if err := os.MkdirAll(outputDir, 0o750); err != nil {
 		return fmt.Errorf("create output: %w", err)
 	}
-	if err := copyFile(filepath.Join(publicOutputDir, "policy.json"), filepath.Join(outputDir, "policy.json")); err != nil {
-		return err
-	}
-	if err := copyFile(filepath.Join(publicOutputDir, "artifact.json"), filepath.Join(outputDir, "artifact.json")); err != nil {
-		return err
-	}
-	if err := copyFile(filepath.Join(publicOutputDir, "judge.go"), filepath.Join(outputDir, "judge.go")); err != nil {
-		return err
+	for _, name := range []string{"policy.json", "artifact.json", "judge.go"} {
+		if err := copyFile(filepath.Join(publicOutputDir, name), filepath.Join(outputDir, name)); err != nil {
+			return err
+		}
 	}
 	if err := writeJSON(filepath.Join(outputDir, "generated-results.json"), generated); err != nil {
 		return err
 	}
-	if err := writeJSON(filepath.Join(outputDir, "independent-results.json"), independent); err != nil {
-		return err
-	}
-	afterDigest, afterCount, err := repositorySnapshot(repoRoot)
-	if err != nil {
-		return err
-	}
-	writeSet := policycompilation.WriteSetObservation{
-		RepositoryBeforeDigest: beforeDigest, RepositoryAfterDigest: afterDigest,
-		RepositoryBeforeCount: beforeCount, RepositoryAfterCount: afterCount,
-		RepositoryNetChangeObserved: beforeDigest != afterDigest,
-		GeneratedRootClass:          "RUNNER_TEMP_ONLY",
-		GeneratedFiles:              []string{"artifact.json", "generated-results.json", "independent-results.json", "judge.go", "policy.json", "receipt.json"},
-		MutationAuthority:           0, PromotionAuthority: 0,
-	}
-	receipt, err := policycompilation.BuildReceipt(policy, artifact, judgeHash, cases, generated, independent, writeSet, publicCLI)
-	if err != nil {
-		return fmt.Errorf("build receipt: %w", err)
-	}
-	if err := policycompilation.VerifyReceipt(receipt, policy, artifact, judgeHash, cases); err != nil {
-		return fmt.Errorf("verify receipt: %w", err)
-	}
-	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
+	return writeJSON(filepath.Join(outputDir, "independent-results.json"), independent)
 }
 
 func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileNamespace, profileProjectRoot string) (policycompilation.PublicCLIEvidence, string, error) {

@@ -13,104 +13,137 @@ import (
 )
 
 func runMetaPolicyGenerationProfile(options generateOptions, input generateInput, jsonMode bool, stdout, stderr interfaceWriter) int {
-	projectRoot, err := profileCanonicalDirectory(options.profileProjectRoot)
+	prepared, err := preparePublicProfile(options, input)
 	if err != nil {
 		return reportMetaPolicyProfileError(stderr, err)
 	}
-	sourcePath, err := profileCanonicalInput(options.filename)
+	artifacts, err := buildPublicProfileArtifacts(prepared)
 	if err != nil {
 		return reportMetaPolicyProfileError(stderr, err)
 	}
-	if !profilePathWithin(projectRoot, sourcePath) {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("input source is outside the declared project boundary"))
-	}
-	outputCandidate, err := profileCanonicalCandidate(options.outputDir)
-	if err != nil {
+	if err := writePublicProfileArtifacts(artifacts); err != nil {
 		return reportMetaPolicyProfileError(stderr, err)
-	}
-	if profilePathsOverlap(projectRoot, outputCandidate) {
-		return reportMetaPolicyProfileError(stderr, errors.New("profile output must be outside the declared project boundary"))
-	}
-	outputRoot, err := canonicalOutputRoot(options.outputDir)
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-	if profilePathsOverlap(projectRoot, outputRoot) {
-		return reportMetaPolicyProfileError(stderr, errors.New("profile output must be outside the declared project boundary"))
-	}
-	if err := ensurePublicOutputDirectory(outputRoot); err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-
-	policy, err := policycompilation.CompileForIdentity(options.filename, input.source, options.profilePackage, options.profileNamespace)
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("compile source policy: %w", err))
-	}
-	judge := policycompilation.GenerateJudge(policy)
-	policyBytes, err := profileJSONBytes(policy)
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("encode policy artifact: %w", err))
-	}
-	artifact := policycompilation.PolicyArtifact{Schema: policycompilation.ArtifactSchema, Policy: policy, GeneratedJudgeHash: policycompilation.DigestBytes(judge)}
-	artifactBytes, err := profileJSONBytes(artifact)
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("encode compiled artifact: %w", err))
-	}
-	manifest := policycompilation.PublicGenerationManifest{
-		Schema:               policycompilation.PublicGenerationManifestSchema,
-		Profile:              policycompilation.PublicProfileID,
-		SourceFile:           profileRelativePath(projectRoot, sourcePath),
-		SourceDigest:         policy.SourceDigest,
-		SemanticDigest:       policy.SemanticDigest,
-		Package:              policy.Package,
-		Namespace:            policy.Namespace,
-		PolicyBytesDigest:    policycompilation.DigestBytes(policyBytes),
-		ArtifactBytesDigest:  policycompilation.DigestBytes(artifactBytes),
-		GeneratedJudgeDigest: policycompilation.DigestBytes(judge),
-		GeneratedFiles:       []string{"policy.json", "artifact.json", "judge.go", "generation-manifest.json"},
-		OutputRootClass:      policycompilation.PublicGenerationOutputRootClass,
-		ExecutionObserved:    false,
-		CurrentConformance:   policycompilation.PublicGenerationConformanceUnknown,
-		RepositoryWrites:     0,
-		MutationAuthority:    0,
-		PromotionAuthority:   0,
-	}
-	manifestBytes, err := profileJSONBytes(manifest)
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("encode generation manifest: %w", err))
-	}
-	policyPath, err := resolveOutputPath(outputRoot, "policy.json")
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-	artifactPath, err := resolveOutputPath(outputRoot, "artifact.json")
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-	judgePath, err := resolveOutputPath(outputRoot, "judge.go")
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-	manifestPath, err := resolveOutputPath(outputRoot, "generation-manifest.json")
-	if err != nil {
-		return reportMetaPolicyProfileError(stderr, err)
-	}
-	if err := writeAtomicFiles([]atomicWrite{
-		{path: policyPath, data: policyBytes},
-		{path: artifactPath, data: artifactBytes},
-		{path: judgePath, data: judge},
-		{path: manifestPath, data: manifestBytes},
-	}); err != nil {
-		return reportMetaPolicyProfileError(stderr, fmt.Errorf("write profile artifacts: %w", err))
 	}
 	if jsonMode {
-		if _, err := stdout.Write(manifestBytes); err != nil {
+		if _, err := stdout.Write(artifacts.manifestBytes); err != nil {
 			return exitFailure
 		}
 		return exitOK
 	}
-	fmt.Fprintf(stdout, "generated profile: %s\npolicy: %s\nartifact: %s\njudge: %s\nmanifest: %s\n", policycompilation.PublicProfileID, policyPath, artifactPath, judgePath, manifestPath)
+	fmt.Fprintf(stdout, "generated profile: %s\npolicy: %s\nartifact: %s\njudge: %s\nmanifest: %s\n", policycompilation.PublicProfileID, artifacts.paths[0], artifacts.paths[1], artifacts.paths[2], artifacts.paths[3])
 	return exitOK
+}
+
+type publicProfilePreparation struct {
+	projectRoot string
+	sourcePath  string
+	outputRoot  string
+	policy      policycompilation.CompiledPolicy
+}
+
+func preparePublicProfile(options generateOptions, input generateInput) (publicProfilePreparation, error) {
+	projectRoot, err := profileCanonicalDirectory(options.profileProjectRoot)
+	if err != nil {
+		return publicProfilePreparation{}, err
+	}
+	sourcePath, err := profileCanonicalInput(options.filename)
+	if err != nil {
+		return publicProfilePreparation{}, err
+	}
+	if !profilePathWithin(projectRoot, sourcePath) {
+		return publicProfilePreparation{}, fmt.Errorf("input source is outside the declared project boundary")
+	}
+	policy, err := policycompilation.CompileForIdentity(options.filename, input.source, options.profilePackage, options.profileNamespace)
+	if err != nil {
+		return publicProfilePreparation{}, fmt.Errorf("compile source policy: %w", err)
+	}
+	outputCandidate, err := profileCanonicalCandidate(options.outputDir)
+	if err != nil {
+		return publicProfilePreparation{}, err
+	}
+	if profilePathsOverlap(projectRoot, outputCandidate) {
+		return publicProfilePreparation{}, errors.New("profile output must be outside the declared project boundary")
+	}
+	outputRoot, err := canonicalOutputRoot(options.outputDir)
+	if err != nil {
+		return publicProfilePreparation{}, err
+	}
+	if profilePathsOverlap(projectRoot, outputRoot) {
+		return publicProfilePreparation{}, errors.New("profile output must be outside the declared project boundary")
+	}
+	if err := ensurePublicOutputDirectory(outputRoot); err != nil {
+		return publicProfilePreparation{}, err
+	}
+	return publicProfilePreparation{projectRoot: projectRoot, sourcePath: sourcePath, outputRoot: outputRoot, policy: policy}, nil
+}
+
+type publicProfileArtifacts struct {
+	policyBytes   []byte
+	artifactBytes []byte
+	judge         []byte
+	manifestBytes []byte
+	paths         []string
+}
+
+func buildPublicProfileArtifacts(prepared publicProfilePreparation) (publicProfileArtifacts, error) {
+	judge := policycompilation.GenerateJudge(prepared.policy)
+	policyBytes, err := profileJSONBytes(prepared.policy)
+	if err != nil {
+		return publicProfileArtifacts{}, fmt.Errorf("encode policy artifact: %w", err)
+	}
+	artifact := policycompilation.PolicyArtifact{Schema: policycompilation.ArtifactSchema, Policy: prepared.policy, GeneratedJudgeHash: policycompilation.DigestBytes(judge)}
+	artifactBytes, err := profileJSONBytes(artifact)
+	if err != nil {
+		return publicProfileArtifacts{}, fmt.Errorf("encode compiled artifact: %w", err)
+	}
+	manifest := publicProfileManifest(prepared, policyBytes, artifactBytes, judge)
+	manifestBytes, err := profileJSONBytes(manifest)
+	if err != nil {
+		return publicProfileArtifacts{}, fmt.Errorf("encode generation manifest: %w", err)
+	}
+	paths, err := publicProfilePaths(prepared.outputRoot)
+	if err != nil {
+		return publicProfileArtifacts{}, err
+	}
+	return publicProfileArtifacts{policyBytes: policyBytes, artifactBytes: artifactBytes, judge: judge, manifestBytes: manifestBytes, paths: paths}, nil
+}
+
+func publicProfileManifest(prepared publicProfilePreparation, policyBytes, artifactBytes, judge []byte) policycompilation.PublicGenerationManifest {
+	policy := prepared.policy
+	return policycompilation.PublicGenerationManifest{
+		Schema: policycompilation.PublicGenerationManifestSchema, Profile: policycompilation.PublicProfileID,
+		SourceFile: profileRelativePath(prepared.projectRoot, prepared.sourcePath), SourceDigest: policy.SourceDigest,
+		SemanticDigest: policy.SemanticDigest, Package: policy.Package, Namespace: policy.Namespace,
+		PolicyBytesDigest: policycompilation.DigestBytes(policyBytes), ArtifactBytesDigest: policycompilation.DigestBytes(artifactBytes),
+		GeneratedJudgeDigest: policycompilation.DigestBytes(judge), GeneratedFiles: []string{"policy.json", "artifact.json", "judge.go", "generation-manifest.json"},
+		OutputRootClass: policycompilation.PublicGenerationOutputRootClass, ExecutionObserved: false,
+		CurrentConformance: policycompilation.PublicGenerationConformanceUnknown, RepositoryWrites: 0,
+		MutationAuthority: 0, PromotionAuthority: 0,
+	}
+}
+
+func publicProfilePaths(outputRoot string) ([]string, error) {
+	paths := make([]string, 0, 4)
+	for _, name := range []string{"policy.json", "artifact.json", "judge.go", "generation-manifest.json"} {
+		path, err := resolveOutputPath(outputRoot, name)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, path)
+	}
+	return paths, nil
+}
+
+func writePublicProfileArtifacts(artifacts publicProfileArtifacts) error {
+	if err := writeAtomicFiles([]atomicWrite{
+		{path: artifacts.paths[0], data: artifacts.policyBytes},
+		{path: artifacts.paths[1], data: artifacts.artifactBytes},
+		{path: artifacts.paths[2], data: artifacts.judge},
+		{path: artifacts.paths[3], data: artifacts.manifestBytes},
+	}); err != nil {
+		return fmt.Errorf("write profile artifacts: %w", err)
+	}
+	return nil
 }
 
 type interfaceWriter interface {

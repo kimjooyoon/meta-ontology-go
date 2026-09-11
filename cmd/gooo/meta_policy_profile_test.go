@@ -26,6 +26,19 @@ func TestMetaPolicyProfileRejectsIncompatibleFlagsBeforeOutput(t *testing.T) {
 	}
 }
 
+func TestMetaPolicyProfileRejectsUnsupportedProfile(t *testing.T) {
+	projectRoot, policyPath := writeMetaPolicyProfileFixture(t)
+	outputDir := filepath.Join(t.TempDir(), "public")
+	args := metaPolicyProfileArgs(policyPath, projectRoot, outputDir, "metapolicycompilation", "metapolicycompilation")
+	args[2] = "unsupported-profile"
+	if code := runGenerate(args, OSFileReader{}, SyntaxSourceParser{}, &bytes.Buffer{}, &bytes.Buffer{}); code != exitUsage {
+		t.Fatalf("unsupported profile exit code = %d, want %d", code, exitUsage)
+	}
+	if _, err := os.Stat(outputDir); !os.IsNotExist(err) {
+		t.Fatalf("unsupported profile created output: err=%v", err)
+	}
+}
+
 func TestMetaPolicyProfileRejectsWrongIdentity(t *testing.T) {
 	tests := []struct {
 		name      string

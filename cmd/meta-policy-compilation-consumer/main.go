@@ -186,59 +186,97 @@ func consume(policyPath, casesPath, artifactDir, outputPath, manifestPath, expec
 		return err
 	}
 	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, "")
-	producerPolicy, policyBytes, err := readJSONBytes[policy](filepath.Join(artifactDir, "policy.json"))
+	boundary, err := readProducerBoundary(artifactDir, manifestPath)
 	if err != nil {
 		return err
+	}
+	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, boundary.artifact.GeneratedJudgeHash)
+	if err := validateProducerBoundary(boundary, compiled); err != nil {
+		return err
+	}
+	if err := compareProducerExecutions(cases, compiled, boundary.generated, boundary.independent); err != nil {
+		return err
+	}
+	if !standaloneJudge(boundary.judge) {
+		return errors.New("generated judge is not a standalone artifact")
+	}
+	return writeConsumerReport(outputPath, cases, compiled, boundary.artifact, boundary.generated, boundary.judge)
+}
+
+type producerBoundary struct {
+	policy       policy
+	policyBytes  []byte
+	artifact     artifact
+	artifactBytes []byte
+	generated    []result
+	independent  []result
+	judge        []byte
+	manifest     generationManifest
+}
+
+func readProducerBoundary(artifactDir, manifestPath string) (producerBoundary, error) {
+	producerPolicy, policyBytes, err := readJSONBytes[policy](filepath.Join(artifactDir, "policy.json"))
+	if err != nil {
+		return producerBoundary{}, err
 	}
 	producerArtifact, artifactBytes, err := readJSONBytes[artifact](filepath.Join(artifactDir, "artifact.json"))
 	if err != nil {
-		return err
+		return producerBoundary{}, err
 	}
 	generated, err := readJSON[[]result](filepath.Join(artifactDir, "generated-results.json"))
 	if err != nil {
-		return err
+		return producerBoundary{}, err
 	}
 	independent, err := readJSON[[]result](filepath.Join(artifactDir, "independent-results.json"))
 	if err != nil {
-		return err
+		return producerBoundary{}, err
 	}
 	judge, err := os.ReadFile(filepath.Join(artifactDir, "judge.go"))
 	if err != nil {
-		return fmt.Errorf("read generated judge: %w", err)
+		return producerBoundary{}, fmt.Errorf("read generated judge: %w", err)
 	}
 	if manifestPath == "" {
 		manifestPath = filepath.Join(artifactDir, "generation-manifest.json")
 	}
 	manifest, err := readGenerationManifest(manifestPath)
 	if err != nil {
-		return err
+		return producerBoundary{}, err
 	}
-	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, producerArtifact.GeneratedJudgeHash)
-	if producerArtifact.Policy.SourceDigest == "" || producerPolicy.SourceDigest == "" || producerArtifact.GeneratedJudgeHash != digestBytes(judge) {
+	return producerBoundary{
+		policy: producerPolicy, policyBytes: policyBytes,
+		artifact: producerArtifact, artifactBytes: artifactBytes,
+		generated: generated, independent: independent,
+		judge: judge, manifest: manifest,
+	}, nil
+}
+
+func validateProducerBoundary(boundary producerBoundary, compiled policy) error {
+	if boundary.artifact.Policy.SourceDigest == "" || boundary.policy.SourceDigest == "" || boundary.artifact.GeneratedJudgeHash != digestBytes(boundary.judge) {
 		return errors.New("producer artifact is not bound to its generated judge")
 	}
-	if !samePolicySemantics(producerArtifact.Policy, producerPolicy) {
+	if !samePolicySemantics(boundary.artifact.Policy, boundary.policy) {
 		return errors.New("producer policy and compiled artifact policy differ")
 	}
-	if !samePolicySemantics(producerPolicy, compiled) || !samePolicySemantics(producerArtifact.Policy, compiled) {
+	if !samePolicySemantics(boundary.policy, compiled) || !samePolicySemantics(boundary.artifact.Policy, compiled) {
 		return errors.New("independent raw policy reconstruction differs from artifact")
 	}
-	if err := validateGenerationManifest(manifest, policyBytes, artifactBytes, judge, compiled, producerArtifact); err != nil {
+	if err := validateGenerationManifest(boundary.manifest, boundary.policyBytes, boundary.artifactBytes, boundary.judge, compiled, boundary.artifact); err != nil {
 		return err
 	}
-	if len(generated) != caseDenom || len(independent) != caseDenom {
+	if len(boundary.generated) != caseDenom || len(boundary.independent) != caseDenom {
 		return errors.New("producer execution denominator is not 3")
 	}
+	return nil
+}
+
+func compareProducerExecutions(cases []input, compiled policy, generated, independent []result) error {
 	for index, current := range cases {
 		want := evaluate(compiled, current)
 		if !sameResult(want, generated[index]) || !sameResult(want, independent[index]) {
 			return fmt.Errorf("consumer reconstruction differs at case %q", current.ID)
 		}
 	}
-	if !standaloneJudge(judge) {
-		return errors.New("generated judge is not a standalone artifact")
-	}
-	return writeConsumerReport(outputPath, cases, compiled, producerArtifact, generated, judge)
+	return nil
 }
 
 func standaloneJudge(judge []byte) bool {
