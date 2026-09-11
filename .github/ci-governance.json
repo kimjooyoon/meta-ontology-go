@@ -3423,6 +3423,7 @@
         "cmd/gooo/generate_part01.go",
         "cmd/gooo/generate_pipeline_part03.go",
         "cmd/gooo/meta_policy_profile.go",
+        "cmd/gooo/meta_policy_profile_test.go",
         "cmd/meta-policy-compilation-consumer/main.go",
         "cmd/meta-policy-compilation-witness/main.go",
         "docs/language/meta-policy-compilation.md",

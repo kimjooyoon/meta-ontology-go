@@ -104,18 +104,18 @@ type input struct {
 	UpperDecision                string `json:"upper_decision,omitempty"`
 }
 type result struct {
-	CaseID         string   `json:"case_id"`
-	Decision       string   `json:"decision"`
+	CaseID           string   `json:"case_id"`
+	Decision         string   `json:"decision"`
 	MatchedCondition string `json:"matched_condition"`
-	Stage          string   `json:"stage"`
-	Step           int      `json:"step"`
-	Reason         string   `json:"reason"`
-	UnknownClass   string   `json:"unknown_class"`
-	NextOperation  string   `json:"next_operation"`
-	BlockedBy      []string `json:"blocked_by"`
-	PolicyDigest   string   `json:"policy_digest"`
-	SemanticDigest string   `json:"semantic_digest"`
-	Denominator    int      `json:"fixed_denominator"`
+	Stage            string   `json:"stage"`
+	Step             int      `json:"step"`
+	Reason           string   `json:"reason"`
+	UnknownClass     string   `json:"unknown_class"`
+	NextOperation    string   `json:"next_operation"`
+	BlockedBy        []string `json:"blocked_by"`
+	PolicyDigest     string   `json:"policy_digest"`
+	SemanticDigest   string   `json:"semantic_digest"`
+	Denominator      int      `json:"fixed_denominator"`
 }
 type syntheticEvidence struct {
 	Class             string `json:"class"`
@@ -209,13 +209,9 @@ func consume(policyPath, casesPath, artifactDir, outputPath, manifestPath, expec
 	if manifestPath == "" {
 		manifestPath = filepath.Join(artifactDir, "generation-manifest.json")
 	}
-	manifestBytes, err := os.ReadFile(manifestPath)
+	manifest, err := readGenerationManifest(manifestPath)
 	if err != nil {
-		return fmt.Errorf("read generation manifest: %w", err)
-	}
-	var manifest generationManifest
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
-		return fmt.Errorf("decode generation manifest: %w", err)
+		return err
 	}
 	cases = bindInputs(cases, compiled.SourceDigest, compiled.SemanticDigest, producerArtifact.GeneratedJudgeHash)
 	if producerArtifact.Policy.SourceDigest == "" || producerPolicy.SourceDigest == "" || producerArtifact.GeneratedJudgeHash != digestBytes(judge) {
@@ -523,15 +519,9 @@ func readJSON[T any](path string) (T, error) {
 	if err != nil {
 		return zero, fmt.Errorf("read %s: %w", path, err)
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	var value T
-	if err := decoder.Decode(&value); err != nil {
+	if err := decodeStrictDocument(data, &value); err != nil {
 		return zero, fmt.Errorf("decode %s: %w", path, err)
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
-		return zero, fmt.Errorf("decode %s: trailing JSON", path)
 	}
 	return value, nil
 }
@@ -542,15 +532,53 @@ func readJSONBytes[T any](path string) (T, []byte, error) {
 	if err != nil {
 		return zero, nil, fmt.Errorf("read %s: %w", path, err)
 	}
+	var value T
+	if err := decodeStrictDocument(data, &value); err != nil {
+		return zero, nil, fmt.Errorf("decode %s: %w", path, err)
+	}
+	return value, data, nil
+}
+
+func readGenerationManifest(path string) (generationManifest, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return generationManifest{}, fmt.Errorf("read generation manifest: %w", err)
+	}
+	var manifest generationManifest
+	if err := decodeRequiredDocument(data, &manifest, []string{
+		"schema", "profile", "source_file", "source_digest", "semantic_digest", "package", "namespace",
+		"policy_bytes_digest", "artifact_bytes_digest", "generated_judge_digest", "generated_files",
+		"output_root_class", "execution_observed", "current_conformance", "repository_writes",
+		"mutation_authority", "promotion_authority",
+	}); err != nil {
+		return generationManifest{}, fmt.Errorf("decode generation manifest: %w", err)
+	}
+	return manifest, nil
+}
+
+func decodeStrictDocument(data []byte, target any) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	var value T
-	if err := decoder.Decode(&value); err != nil {
-		return zero, nil, fmt.Errorf("decode %s: %w", path, err)
+	if err := decoder.Decode(target); err != nil {
+		return err
 	}
 	var trailing any
 	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
-		return zero, nil, fmt.Errorf("decode %s: trailing JSON", path)
+		return errors.New("json document contains trailing data")
 	}
-	return value, data, nil
+	return nil
+}
+
+func decodeRequiredDocument(data []byte, target any, required []string) error {
+	var fields map[string]json.RawMessage
+	if err := decodeStrictDocument(data, &fields); err != nil {
+		return err
+	}
+	for _, field := range required {
+		value, ok := fields[field]
+		if !ok || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			return fmt.Errorf("required JSON field %q is missing", field)
+		}
+	}
+	return decodeStrictDocument(data, target)
 }

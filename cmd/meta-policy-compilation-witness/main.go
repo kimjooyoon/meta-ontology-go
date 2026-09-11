@@ -9,6 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -26,24 +27,28 @@ func main() {
 	outputDir := flag.String("output", "", "runner-temp output directory")
 	profilePackage := flag.String("profile-package", "metapolicycompilation", "expected policy package")
 	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
+	profileProjectRoot := flag.String("profile-project-root", "", "declared project boundary for the public profile")
 	flag.Parse()
 	if *policyPath == "" || *casesPath == "" || *outputDir == "" {
 		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-witness -policy policy.gooo -cases cases.json -output DIR")
 		os.Exit(2)
 	}
-	if err := produce(*policyPath, *casesPath, *outputDir, *profilePackage, *profileNamespace); err != nil {
+	if err := produce(*policyPath, *casesPath, *outputDir, *profilePackage, *profileNamespace, *profileProjectRoot); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace string) error {
+func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace, profileProjectRoot string) error {
 	if err := requireRunnerTempOutput(outputDir); err != nil {
 		return err
 	}
 	repoRoot, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("resolve repository root: %w", err)
+	}
+	if profileProjectRoot == "" {
+		profileProjectRoot = repoRoot
 	}
 	beforeDigest, beforeCount, err := repositorySnapshot(repoRoot)
 	if err != nil {
@@ -61,7 +66,7 @@ func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace 
 	if err != nil {
 		return fmt.Errorf("compile raw Gooo policy: %w", err)
 	}
-	publicCLI, publicOutputDir, err := runPublicGoooCLI(repoRoot, policyPath, outputDir, profilePackage, profileNamespace)
+	publicCLI, publicOutputDir, err := runPublicGoooCLI(repoRoot, policyPath, outputDir, profilePackage, profileNamespace, profileProjectRoot)
 	if err != nil {
 		return err
 	}
@@ -116,7 +121,7 @@ func produce(policyPath, casesPath, outputDir, profilePackage, profileNamespace 
 	return writeJSON(filepath.Join(outputDir, "receipt.json"), receipt)
 }
 
-func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileNamespace string) (policycompilation.PublicCLIEvidence, string, error) {
+func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileNamespace, profileProjectRoot string) (policycompilation.PublicCLIEvidence, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	check := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "check", "--semantic", policyPath)
@@ -129,7 +134,7 @@ func runPublicGoooCLI(repoRoot, policyPath, outputRoot, profilePackage, profileN
 	if err := os.MkdirAll(cliOutput, 0o750); err != nil {
 		return policycompilation.PublicCLIEvidence{}, "", err
 	}
-	generate := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "generate", policyPath, "--profile", policycompilation.PublicProfileID, "--profile-package", profilePackage, "--profile-namespace", profileNamespace, "--profile-project-root", repoRoot, "--out", cliOutput)
+	generate := exec.CommandContext(ctx, "go", "run", "./cmd/gooo", "generate", policyPath, "--profile", policycompilation.PublicProfileID, "--profile-package", profilePackage, "--profile-namespace", profileNamespace, "--profile-project-root", profileProjectRoot, "--out", cliOutput)
 	generate.Dir = repoRoot
 	generate.Env = append(os.Environ(), "GOTOOLCHAIN=go1.27.0")
 	if output, err := generate.CombinedOutput(); err != nil {
@@ -168,7 +173,12 @@ func readPublicGenerationArtifacts(outputDir string, policy policycompilation.Co
 		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("decode public compiled artifact: %w", err)
 	}
 	var manifest policycompilation.PublicGenerationManifest
-	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+	if err := decodeRequiredJSON(manifestBytes, &manifest, []string{
+		"schema", "profile", "source_file", "source_digest", "semantic_digest", "package", "namespace",
+		"policy_bytes_digest", "artifact_bytes_digest", "generated_judge_digest", "generated_files",
+		"output_root_class", "execution_observed", "current_conformance", "repository_writes",
+		"mutation_authority", "promotion_authority",
+	}); err != nil {
 		return policycompilation.PolicyArtifact{}, nil, policycompilation.PublicGenerationManifest{}, fmt.Errorf("decode public generation manifest: %w", err)
 	}
 	if publicPolicy.SourceDigest != policy.SourceDigest || publicPolicy.SemanticDigest != policy.SemanticDigest || publicPolicy.Package != policy.Package || publicPolicy.Namespace != policy.Namespace {
@@ -190,6 +200,33 @@ func readPublicGenerationArtifacts(outputDir string, policy policycompilation.Co
 		}
 	}
 	return artifact, judge, manifest, nil
+}
+
+func decodeRequiredJSON(data []byte, target any, required []string) error {
+	var fields map[string]json.RawMessage
+	if err := decodeStrictJSON(data, &fields); err != nil {
+		return err
+	}
+	for _, field := range required {
+		value, ok := fields[field]
+		if !ok || bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+			return fmt.Errorf("required JSON field %q is missing", field)
+		}
+	}
+	return decodeStrictJSON(data, target)
+}
+
+func decodeStrictJSON(data []byte, target any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		return errors.New("json document contains trailing data")
+	}
+	return nil
 }
 
 func copyFile(source, target string) error {
