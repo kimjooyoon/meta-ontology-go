@@ -42,9 +42,16 @@ func TestDecodeStrictJSONRejectsDuplicateObjectKeys(t *testing.T) {
 			path:  `$["items"][0]["value"]`,
 		},
 	}
+	type nestedValue struct {
+		Value string `json:"value"`
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var value any
+			var value struct {
+				Value string        `json:"value"`
+				Outer nestedValue   `json:"outer"`
+				Items []nestedValue `json:"items"`
+			}
 			err := decodeStrictJSON([]byte(test.input), &value)
 			if err == nil {
 				t.Fatalf("duplicate object key input %q was accepted", test.input)
