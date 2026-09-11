@@ -32,6 +32,49 @@ The write-set claim compares exact sorted file snapshots (path, mode, size,
 and content digest) at the start and end of the producer run; it claims only a
 net repository change of zero, not that no system call wrote a file.
 
+## Typed policy decision proposals (internal compiler API)
+
+The compiler exposes `ProposePolicyDecisionRevision` for an explicit,
+source-bound revision of a first-class Gooo policy. The request names the exact
+source digest, condition, previous decision and proposed decision. It does not
+choose which decision would be useful or declare the revision an improvement.
+
+The API parses and validates the source, clones its typed policy AST, and changes
+exactly one transition target and the matching case resolution decision. The
+existing Gooo formatter produces a candidate source string, which is compiled
+again. Both compiled contracts are returned as `Original` and
+`Candidate`, preserving their source/semantic identities and source-owned
+rule metadata. `ChangedCoordinates` records `transition.to` and
+`case.resolution.decision` for the explicitly requested condition.
+
+The candidate is a **canonical semantic projection**, not a byte-preserving
+source patch. Formatting, comments and original source layout are not promised
+to survive in the new string. The original input bytes are never modified.
+Baseline canonicalization must preserve the compiled semantic digest before a
+proposal is emitted. Two changed semantic coordinates do not mean two changed
+text lines.
+
+Missing or stale identities, unknown conditions/decisions, no-op revisions,
+ambiguous bindings and invalid candidates return an error without a partial
+proposal. UNKNOWN context is neither synthesized nor deleted: a decision-only
+change that requires other resolution fields must be rejected. Opaque legacy
+activity programs are not rewritten by guessing at embedded strings.
+
+This is an internal compiler API, not a new public command, approval receipt or
+wire protocol. Successful compilation proves only the bounded structural
+contract. It does not run generated code, write a repository, establish external
+utility, authorize a weaker policy, or prove independent conformance. Both
+stricter and looser explicit proposals require separate acceptance against their
+pinned original policy; the candidate must not certify its own promotion.
+
+The existing source-authority test helper now uses this API instead of a
+line-oriented string editor. CI checks exact compiled-coordinate changes,
+source immutability, deterministic replay, an explicit reverse revision and
+rejection cases. A separate native test builds one generated candidate program
+and observes its changed decision. Its evidence values are synthetic test inputs,
+not verified external claims, and the proposal API remains nonexecuting.
+
+
 ## Discovering the generated input contract
 
 The generated executable can describe the input accepted by its
