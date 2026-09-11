@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -34,33 +35,33 @@ const (
 )
 
 type verifierPackageSummaryDocument struct {
-	Schema             string                         `json:"schema"`
-	DiagnosticOnly     string                         `json:"diagnostic_only"`
-	Authenticity       string                         `json:"authenticity"`
-	Improvement        string                         `json:"improvement"`
-	DiagnosticMarkers  []string                       `json:"diagnostic_markers"`
-	Truncated          bool                           `json:"truncated"`
-	Records            []verifierPackageSummaryRecord `json:"records"`
+	Schema            string                         `json:"schema"`
+	DiagnosticOnly    string                         `json:"diagnostic_only"`
+	Authenticity      string                         `json:"authenticity"`
+	Improvement       string                         `json:"improvement"`
+	DiagnosticMarkers []string                       `json:"diagnostic_markers"`
+	Truncated         bool                           `json:"truncated"`
+	Records           []verifierPackageSummaryRecord `json:"records"`
 }
 
 type verifierPackageSummaryRecord struct {
-	InvocationID          string                         `json:"invocation_id"`
-	ActionIndicatorID     string                         `json:"action_indicator_id"`
-	Activity              string                         `json:"activity"`
-	MetaOperation         string                         `json:"meta_operation"`
-	Subject               string                         `json:"subject"`
-	OperationSequence     int                            `json:"operation_sequence"`
-	Pass                  string                         `json:"pass"`
-	CommandKind           string                         `json:"command_kind"`
-	ExitCode              int                            `json:"exit_code"`
-	StdoutBytes           int                            `json:"stdout_bytes"`
-	RawStdoutDigest       string                         `json:"raw_stdout_digest"`
-	StdoutDigest          string                         `json:"stdout_digest"`
-	ParseStatus           string                         `json:"parse_status"`
-	DiagnosticMarkers     []string                       `json:"diagnostic_markers"`
-	Truncated             bool                           `json:"truncated"`
-	UnrecognizedLineCount int                            `json:"unrecognized_line_count"`
-	Packages              []verifierPackageSummaryRow    `json:"packages"`
+	InvocationID          string                      `json:"invocation_id"`
+	ActionIndicatorID     string                      `json:"action_indicator_id"`
+	Activity              string                      `json:"activity"`
+	MetaOperation         string                      `json:"meta_operation"`
+	Subject               string                      `json:"subject"`
+	OperationSequence     int                         `json:"operation_sequence"`
+	Pass                  string                      `json:"pass"`
+	CommandKind           string                      `json:"command_kind"`
+	ExitCode              int                         `json:"exit_code"`
+	StdoutBytes           int                         `json:"stdout_bytes"`
+	RawStdoutDigest       string                      `json:"raw_stdout_digest"`
+	StdoutDigest          string                      `json:"stdout_digest"`
+	ParseStatus           string                      `json:"parse_status"`
+	DiagnosticMarkers     []string                    `json:"diagnostic_markers"`
+	Truncated             bool                        `json:"truncated"`
+	UnrecognizedLineCount int                         `json:"unrecognized_line_count"`
+	Packages              []verifierPackageSummaryRow `json:"packages"`
 }
 
 type verifierPackageSummaryRow struct {
@@ -210,10 +211,8 @@ func boundedVerifierPackageSummaryPayload(document verifierPackageSummaryDocumen
 }
 
 func appendVerifierPackageSummaryMarker(markers []string, marker string) []string {
-	for _, existing := range markers {
-		if existing == marker {
-			return markers
-		}
+	if slices.Contains(markers, marker) {
+		return markers
 	}
 	return append(markers, marker)
 }
@@ -351,7 +350,7 @@ func validVerifierPackagePath(packagePath string) bool {
 	if strings.ContainsAny(packagePath, "\\\t\r\n") || strings.Contains(packagePath, "//") || path.Clean(packagePath) != packagePath {
 		return false
 	}
-	for _, segment := range strings.Split(packagePath, "/") {
+	for segment := range strings.SplitSeq(packagePath, "/") {
 		if segment == "" || segment == "." || segment == ".." {
 			return false
 		}
@@ -369,12 +368,12 @@ func exactVerifierDuration(token string) (int64, bool) {
 	}
 	whole := number
 	fraction := ""
-	if dot := strings.IndexByte(number, '.'); dot >= 0 {
-		if strings.IndexByte(number[dot+1:], '.') >= 0 {
+	if before, after, ok := strings.Cut(number, "."); ok {
+		if strings.IndexByte(after, '.') >= 0 {
 			return 0, false
 		}
-		whole = number[:dot]
-		fraction = number[dot+1:]
+		whole = before
+		fraction = after
 		if whole == "" || fraction == "" || len(fraction) > 9 {
 			return 0, false
 		}

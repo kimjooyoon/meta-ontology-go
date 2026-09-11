@@ -229,7 +229,7 @@ func TestVerifierPackageSummaryCollectorBoundsAndUsesCallerOutputOwner(t *testin
 		},
 		Stdout: []byte(strings.Repeat(line, maxVerifierPackageSummaryRowsPerInvocation)),
 	}
-	for pass := 0; pass < maxVerifierPackageSummaryRecords+1; pass++ {
+	for pass := range maxVerifierPackageSummaryRecords + 1 {
 		trace.sequence = pass + 1
 		collector.observe(trace, "first", result)
 	}
