@@ -386,9 +386,9 @@ func TestCompactVerifierPackageSummaryRowsPrioritizesFailureOverBenignMarkers(t 
 
 func TestBoundedVerifierPackageSummaryPayloadRetainsAllRecordSamples(t *testing.T) {
 	records := make([]verifierPackageSummaryRecord, 0, 4)
-	for index := 0; index < 4; index++ {
+	for index := range 4 {
 		packages := make([]verifierPackageSummaryRow, 0, maxVerifierPackageSummaryRowsPerInvocation)
-		for rowIndex := 0; rowIndex < maxVerifierPackageSummaryRowsPerInvocation; rowIndex++ {
+		for range maxVerifierPackageSummaryRowsPerInvocation {
 			packages = append(packages, verifierPackageSummaryRow{
 				Package:       "github.com/kimjooyoon/meta-ontology-go/internal/" + strings.Repeat("package", 30),
 				Status:        "ok",
@@ -409,11 +409,11 @@ func TestBoundedVerifierPackageSummaryPayloadRetainsAllRecordSamples(t *testing.
 		})
 	}
 	document := verifierPackageSummaryDocument{
-		Schema:            verifierPackageSummarySchema,
-		DiagnosticOnly:    "DIAGNOSTIC_ONLY",
-		Authenticity:      "AUTHENTICITY_UNVERIFIED",
-		Improvement:       "UNKNOWN",
-		Records:           records,
+		Schema:         verifierPackageSummarySchema,
+		DiagnosticOnly: "DIAGNOSTIC_ONLY",
+		Authenticity:   "AUTHENTICITY_UNVERIFIED",
+		Improvement:    "UNKNOWN",
+		Records:        records,
 	}
 	payload, err := boundedVerifierPackageSummaryPayload(document)
 	if err != nil || len(payload) > maxVerifierPackageSummaryFileBytes {
