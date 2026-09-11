@@ -28,8 +28,7 @@ type generatedJudgeInput struct {
 // second field-name, type, and JSON-tag list inside the generated template.
 func generatedJudgeInputFields(inputType reflect.Type) string {
 	var builder strings.Builder
-	for index := 0; index < inputType.NumField(); index++ {
-		field := inputType.Field(index)
+	for field := range inputType.Fields() {
 		fmt.Fprintf(&builder, "    %s %s %q\n", field.Name, field.Type.String(), string(field.Tag))
 	}
 	return builder.String()
