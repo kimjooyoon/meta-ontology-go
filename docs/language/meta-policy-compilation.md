@@ -32,6 +32,36 @@ The write-set claim compares exact sorted file snapshots (path, mode, size,
 and content digest) at the start and end of the producer run; it claims only a
 net repository change of zero, not that no system call wrote a file.
 
+## Declared-case evaluation boundary (internal compiler API)
+
+`policycompilation.EvaluateDeclaredCase` compiles caller-supplied Gooo source
+with an explicit package and namespace, then evaluates an explicit JSON Case.
+This is an internal compiler API, not a new public CLI command.
+
+The `gooo/meta-policy-declared-case-evaluation/v1` result preserves the existing
+source decision, including its matched rule and UNKNOWN context. It separately
+records source and semantic digests, the original input-byte digest, and the
+effective typed-input digest. Equal effective-input digests do not prove equal
+field presence or the truth of a caller's claims.
+
+Field bindings are derived from the existing Go Case type and its JSON tags,
+not a second hand-maintained field list. Each records its supplied and effective
+value as `DECLARED`, `MISSING_DEFAULTED`, or `NULL_DEFAULTED`. Thus an omitted
+boolean, explicit null, and explicit false can retain the same legacy decision
+while remaining distinguishable. The JSON `omitempty` tag is not interpreted
+as an optional-field or evidence rule.
+
+This API requires a JSON object and exact field spellings. Case-folded aliases
+are rejected rather than attributed to a different or missing field. Existing
+Case decoding and generated-judge behavior are unchanged.
+
+Availability, provenance, evidence classifications, and observed digests remain
+caller declarations. The result is conditional source-policy evaluation:
+external evidence is UNKNOWN/not verified, full conformance is UNKNOWN/not
+executed, generated execution is false, and mutation/promotion authority is zero.
+It does not replace the existing source/generated/independent conformance receipt.
+The public command admission and end-user route remain separate unfinished work.
+
 ## Public generation profile
 
 Callers that need a portable compilation boundary can use
