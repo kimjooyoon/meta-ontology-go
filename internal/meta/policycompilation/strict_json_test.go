@@ -3,6 +3,7 @@ package policycompilation
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,9 +13,9 @@ import (
 
 func TestDecodeStrictJSONRejectsDuplicateObjectKeys(t *testing.T) {
 	tests := []struct {
-		name string
+		name  string
 		input string
-		path string
+		path  string
 	}{
 		{
 			name:  "same value",
@@ -184,20 +185,44 @@ func TestGeneratedJudgeRejectsDuplicateObjectKeys(t *testing.T) {
 	if output, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build generated judge: %v: %s", err, output)
 	}
-	run := func(input string) error {
+	run := func(input string) (string, error) {
 		command := exec.Command(binaryPath)
 		command.Stdin = strings.NewReader(input)
-		return command.Run()
+		var stderr bytes.Buffer
+		command.Stderr = &stderr
+		err := command.Run()
+		return stderr.String(), err
 	}
-	for _, input := range []string{
-		`{"id":"same","id":"same"}`,
-		`{"id":"first","i\u0064":"second"}`,
+	for _, test := range []struct {
+		name  string
+		input string
+		key   string
+		path  string
+	}{
+		{name: "same value", input: `{"id":"same","id":"same"}`, key: "id", path: `$["id"]`},
+		{name: "escaped key alias", input: `{"id":"first","i\u0064":"second"}`, key: "id", path: `$["id"]`},
+		{name: "repeated boolean", input: `{"producer_available":false,"producer_available":true}`, key: "producer_available", path: `$["producer_available"]`},
 	} {
-		if err := run(input); err == nil {
-			t.Fatalf("duplicate object key input %q was accepted", input)
-		}
+		stderr, err := run(test.input)
+		t.Run(test.name, func(t *testing.T) {
+			if err == nil {
+				t.Fatalf("duplicate object key input %q was accepted", test.input)
+			}
+			var exitError *exec.ExitError
+			if !errors.As(err, &exitError) || exitError.ExitCode() != 2 {
+				t.Fatalf("error = %v, want process exit status 2", err)
+			}
+			if !strings.Contains(stderr, `duplicate JSON object key "`+test.key+`"`) {
+				t.Fatalf("stderr = %q, want duplicate-key diagnostic", stderr)
+			}
+			if !strings.Contains(stderr, test.path) || !strings.Contains(stderr, "byte offset") {
+				t.Fatalf("stderr = %q, want path %q and byte offsets", stderr, test.path)
+			}
+		})
 	}
-	if err := run(`{"id":"","producer_available":false,"consumer_available":false}`); err != nil {
+	if stderr, err := run(`{"id":"","producer_available":false,"consumer_available":false}`); err != nil {
 		t.Fatalf("explicit false/empty generated input = %v, want accepted", err)
+	} else if stderr != "" {
+		t.Fatalf("explicit false/empty generated input stderr = %q, want empty", stderr)
 	}
 }

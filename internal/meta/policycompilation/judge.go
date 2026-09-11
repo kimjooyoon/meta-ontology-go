@@ -167,7 +167,10 @@ func duplicateObjectKeyError(path, key string, keyOffset, previousOffset int64) 
 func main() {
     raw, err := io.ReadAll(os.Stdin)
     if err != nil { os.Exit(2) }
-    if err := rejectDuplicateObjectKeys(raw); err != nil { os.Exit(2) }
+    if err := rejectDuplicateObjectKeys(raw); err != nil {
+        io.WriteString(os.Stderr, err.Error()+"\n")
+        os.Exit(2)
+    }
     var value input
     decoder := json.NewDecoder(bytes.NewReader(raw))
     decoder.DisallowUnknownFields()
