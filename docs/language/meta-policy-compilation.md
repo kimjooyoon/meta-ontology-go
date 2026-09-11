@@ -339,3 +339,59 @@ source-bound execution/producer comparison, not permission to adopt a
 revision or relabel synthetic fixtures as current execution evidence.
 Read, parse and output failures remain errors and must not become success
 or silently supplied digests in a caller.
+
+## Source-bound revision execution observation
+
+The witness has a separate experimental mode for executing an exact policy
+revision without changing the existing three-fixture producer path:
+
+~~~sh
+meta-policy-compilation-witness \
+  -policy policy.gooo \
+  -observe-revision revision-observation-request.json
+~~~
+
+The request has `expected_source_digest`, `condition`, `from_decision`,
+`to_decision` and a nonempty `cases` array. Each array entry contains a
+`baseline` and `candidate` Case with the same unique ID and explicit evidence
+class/provenance. These are caller declarations, not authenticated provenance.
+Duplicate JSON keys, unknown fields, trailing documents, stale source identity,
+duplicate/mismatched case IDs and mixed legacy-mode flags are rejected.
+
+The result is one `gooo/meta-policy-revision-observation/v1` JSON document on
+stdout. It retains the exact typed request, its canonical digest, the raw
+request artifact digest, both compiled source contracts and their source-owned
+rule/meta-operation bindings, the candidate Gooo source, and both generated Go
+judges with their digests. The existing revision primitive edits the detached
+first-class policy AST; this mode actually executes its generated consequence.
+
+Each source version uses one generated-judge build invocation. Its declared
+cases are then executed twice as fresh processes using that binary. First
+results, replay results and producer-side source interpretations remain separate.
+The record counts actual decoded pairs, source comparisons, replay comparisons,
+mismatches and requested decision transitions. Process/build failure retains
+the successful prefix, identifies its exact batch boundary and returns a
+nonzero command exit. Missing outputs are not invented.
+
+No case digest or validator expectation is rebound. A predecessor snapshot
+supplied unchanged to the candidate remains stale. Separate caller-supplied
+before/candidate snapshots remain different inputs, not a same-input causal or
+performance comparison. `requested_transition_observed` reports only the
+observed condition and decisions; `causal_attribution` remains `UNASSESSED`.
+
+`execution_conformance=PASS` means generated/source agreement and replay
+agreement for the supplied cases, not independent validation or admission.
+A source/replay contradiction is `REFUTED`; failed execution is explicitly
+`execution_status=FAILED` with its error and incomplete evidence. A request
+whose target condition was not exercised retains a REQUEST_COVERAGE UNKNOWN.
+Independent revision admission always remains UNKNOWN with stage, step, reason,
+unknown_class, next_operation and an explicit blocked_by frontier. Neither
+self-authored expectations nor successful replay closes that claim.
+
+Wall time is an integer observation of each generated batch, not an improvement
+claim. Improvement remains UNKNOWN. Repository-wide write observation and peak
+RSS are not collected by this mode; it does not claim a measured zero write set
+or zero memory. Mutation/promotion authority remains zero. Generated execution
+uses the existing temporary judge workspaces, while the report is stdout-only.
+This is not yet registration in the common meta-operation selector or automatic
+adoption of the generated candidate.
