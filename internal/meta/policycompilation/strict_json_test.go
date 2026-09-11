@@ -13,6 +13,197 @@ import (
 	"testing"
 )
 
+func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	policy, err := Compile(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := t.TempDir()
+	judgePath := filepath.Join(work, "judge.go")
+	binary := filepath.Join(work, "judge-test")
+	if err := os.WriteFile(judgePath, GenerateJudge(policy), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Compile once for this corpus; each input runs the same generated binary.
+	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, judgePath)
+	build.Dir = work
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.0")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build generated judge: %v: %s", err, output)
+	}
+	run := func(document []byte, arguments ...string) ([]byte, error) {
+		command := exec.CommandContext(t.Context(), binary, arguments...)
+		command.Dir = work
+		command.Stdin = bytes.NewReader(document)
+		var stderr bytes.Buffer
+		command.Stderr = &stderr
+		output, err := command.Output()
+		if err != nil {
+			return output, fmt.Errorf("generated judge: %w: %s", err, stderr.String())
+		}
+		return output, nil
+	}
+	encode := func(value generatedJudgeInput) []byte {
+		t.Helper()
+		document, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return document
+	}
+	bound := generatedJudgeInput{
+		ID: "conditional-pass", ProducerAvailable: true, ConsumerAvailable: true,
+		ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest,
+		ObservedGeneratedJudgeDigest: policy.SemanticDigest, ObservedIndependentDigest: policy.SemanticDigest,
+		UpperDecision: "PASS",
+	}
+	passDocument := encode(bound)
+	upper := bound
+	upper.UpperDecision = "FIXED_POINT"
+	contradiction := bound
+	contradiction.ObservedSourceDigest = "sha256:" + strings.Repeat("0", 64)
+	if contradiction.ObservedSourceDigest == policy.SourceDigest {
+		contradiction.ObservedSourceDigest = "sha256:" + strings.Repeat("1", 64)
+	}
+	var firstEffective string
+	rawDigests := map[string]bool{}
+	for index, test := range []struct {
+		name, document, binding, decision, condition string
+	}{
+		{"missing", "{}", "MISSING_DEFAULTED", "UNKNOWN", "EVIDENCE_UNAVAILABLE"},
+		{"false", "{\"producer_available\":false}", "DECLARED", "UNKNOWN", "EVIDENCE_UNAVAILABLE"},
+		{"null", "{\"producer_available\":null}", "NULL_DEFAULTED", "UNKNOWN", "EVIDENCE_UNAVAILABLE"},
+		{"formatted-false", "{\n  \"producer_available\": false\n}", "DECLARED", "UNKNOWN", "EVIDENCE_UNAVAILABLE"},
+		{"conditional-pass", string(passDocument), "DECLARED", "PASS", "SEMANTIC_EQUIVALENCE"},
+		{"unknown-upper-decision", string(encode(upper)), "DECLARED", "FAIL_CLOSED", "UNRECOGNIZED_TOP_LEVEL_DECISION"},
+		{"source-contradiction", string(encode(contradiction)), "DECLARED", "FAIL_CLOSED", "SOURCE_DIGEST_MISMATCH"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			document := []byte(test.document)
+			output, err := run(document, "--declared-input")
+			if err != nil {
+				t.Fatal(err)
+			}
+			var envelope map[string]json.RawMessage
+			if err := decodeStrictJSON(output, &envelope); err != nil || len(envelope) != 14 {
+				t.Fatalf("declared envelope: %v: %s", err, output)
+			}
+			var effective generatedJudgeInput
+			var reference Case
+			var supplied map[string]json.RawMessage
+			if err := json.Unmarshal(document, &effective); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(document, &reference); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(document, &supplied); err != nil {
+				t.Fatal(err)
+			}
+			effectiveBytes := encode(effective)
+			wantText := map[string]string{
+				"schema":                   "gooo/generated-policy-declared-input/v1",
+				"source_digest":            policy.SourceDigest,
+				"semantic_digest":          policy.SemanticDigest,
+				"input_digest":             DigestBytes(document),
+				"effective_input_digest":   DigestBytes(effectiveBytes),
+				"evaluation_scope":         "CONDITIONAL_GENERATED_POLICY_EVALUATION",
+				"external_evidence_state":  "UNKNOWN_NOT_VERIFIED",
+				"full_conformance_state":   "UNKNOWN_NOT_EXECUTED",
+				"execution_evidence_state": "SELF_REPORTED_NOT_ATTESTED",
+			}
+			for key, want := range wantText {
+				var got string
+				if err := json.Unmarshal(envelope[key], &got); err != nil || got != want {
+					t.Fatalf("%s = %s (%v), want %q", key, envelope[key], err, want)
+				}
+			}
+			if string(envelope["generated_execution_observed"]) != "true" || string(envelope["mutation_authority"]) != "0" || string(envelope["promotion_authority"]) != "0" {
+				t.Fatal("generated execution, attestation, or authority boundaries were conflated")
+			}
+			var decision DecisionResult
+			if err := decodeStrictJSON(envelope["generated_decision"], &decision); err != nil {
+				t.Fatal(err)
+			}
+			if decision.Decision != test.decision || decision.MatchedCondition != test.condition || !reflect.DeepEqual(decision, EvaluateSourcePolicy(policy, reference)) {
+				t.Fatalf("generated decision changed the Gooo reduction or UNKNOWN context: %+v", decision)
+			}
+			var fields []DeclaredCaseField
+			if err := decodeStrictJSON(envelope["fields"], &fields); err != nil {
+				t.Fatal(err)
+			}
+			expectedFields, err := bindDeclaredCaseInputFields(reference, supplied)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expectedByName := map[string]DeclaredCaseField{}
+			for _, field := range expectedFields {
+				expectedByName[field.JSONField] = field
+			}
+			var effectiveFields map[string]json.RawMessage
+			if err := json.Unmarshal(effectiveBytes, &effectiveFields); err != nil {
+				t.Fatal(err)
+			}
+			if len(fields) != 8 || len(fields) != len(effectiveFields) {
+				t.Fatal("the generated eight-field input was confused with the eleven-field Case")
+			}
+			seen := map[string]bool{}
+			for _, field := range fields {
+				if seen[field.JSONField] || effectiveFields[field.JSONField] == nil || !reflect.DeepEqual(field, expectedByName[field.JSONField]) {
+					t.Fatalf("generated field was missing, duplicated, or relabeled: %+v", field)
+				}
+				seen[field.JSONField] = true
+				if field.JSONField == "producer_available" && field.Binding != test.binding {
+					t.Fatalf("producer binding = %s, want %s", field.Binding, test.binding)
+				}
+			}
+			if index < 4 {
+				if index == 0 {
+					firstEffective = wantText["effective_input_digest"]
+				}
+				if wantText["effective_input_digest"] != firstEffective || rawDigests[wantText["input_digest"]] {
+					t.Fatal("equal effective inputs erased distinct raw declarations")
+				}
+				rawDigests[wantText["input_digest"]] = true
+			}
+			if test.name == "conditional-pass" {
+				replay, err := run(document, "--declared-input")
+				if err != nil || !bytes.Equal(output, replay) {
+					t.Fatalf("declared report replay changed: %v", err)
+				}
+			}
+		})
+	}
+	for _, document := range []string{
+		"null", "[]", "{}{}", "{\"unexpected\":true}", "{\"producer_available\":\"false\"}",
+		"{\"producer_available\":false,\"producer_available\":true}",
+		"{\"Producer_Available\":true}", "{\"id\":\"one\",\"ID\":\"two\"}", "{\"id\":}",
+	} {
+		if output, err := run([]byte(document), "--declared-input"); err == nil || len(output) != 0 {
+			t.Fatalf("unbindable declared input emitted a report: %s: %v: %s", document, err, output)
+		}
+	}
+	if output, err := run(passDocument, "--declared-input", "--unknown"); err == nil || len(output) != 0 {
+		t.Fatalf("unknown argument silently downgraded the mode: %v: %s", err, output)
+	}
+	output, err := run(passDocument)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var legacy DecisionResult
+	var reference Case
+	if err := decodeStrictJSON(output, &legacy); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(passDocument, &reference); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(legacy, EvaluateSourcePolicy(policy, reference)) {
+		t.Fatal("default generated-judge output changed its legacy decision schema")
+	}
+}
+
 func declaredCaseSourceFixture(t *testing.T) []byte {
 	t.Helper()
 	source, err := os.ReadFile("../../../examples/meta-policy-compilation/policy.gooo")

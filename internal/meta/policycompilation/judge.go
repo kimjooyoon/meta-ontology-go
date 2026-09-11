@@ -31,12 +31,17 @@ func GenerateJudge(policy CompiledPolicy) []byte {
 
 import (
     "bytes"
+    "crypto/sha256"
+    "encoding/hex"
     "encoding/json"
     "errors"
     "io"
     "os"
+    "reflect"
     "regexp"
+    "sort"
     "strconv"
+    "strings"
 )
 
 type input struct {
@@ -164,7 +169,56 @@ func duplicateObjectKeyError(path, key string, keyOffset, previousOffset int64) 
     return errors.New("duplicate JSON object key " + strconv.Quote(key) + " at " + jsonKeyPath(path, key) +
         " (byte offset " + strconv.FormatInt(keyOffset, 10) + "; first occurrence at byte offset " + strconv.FormatInt(previousOffset, 10) + ")")
 }
+func declaredInputBindings(raw []byte, value input) ([]map[string]any, error) {
+    var supplied map[string]json.RawMessage
+    if err := json.Unmarshal(raw, &supplied); err != nil { return nil, err }
+    if supplied == nil { return nil, errors.New("declared input must be a JSON object") }
+    shape := reflect.TypeOf(value)
+    values := reflect.ValueOf(value)
+    known := make(map[string]bool, shape.NumField())
+    fields := make([]map[string]any, 0, shape.NumField())
+    for index := 0; index < shape.NumField(); index++ {
+        field := shape.Field(index)
+        name := strings.Split(field.Tag.Get("json"), ",")[0]
+        if name == "" || name == "-" || known[name] {
+            return nil, errors.New("generated input has no unique explicit JSON field binding")
+        }
+        known[name] = true
+        effective, err := json.Marshal(values.Field(index).Interface())
+        if err != nil { return nil, err }
+        binding := "MISSING_DEFAULTED"
+        rawValue, present := supplied[name]
+        if present {
+            binding = "DECLARED"
+            if bytes.Equal(bytes.TrimSpace(rawValue), []byte("null")) { binding = "NULL_DEFAULTED" }
+        }
+        record := map[string]any{
+            "json_field": name, "go_type": field.Type.String(), "binding": binding,
+            "effective": json.RawMessage(effective),
+        }
+        if present { record["supplied"] = rawValue }
+        fields = append(fields, record)
+    }
+    unknown := []string{}
+    for name := range supplied {
+        if !known[name] { unknown = append(unknown, name) }
+    }
+    if len(unknown) != 0 {
+        sort.Strings(unknown)
+        return nil, errors.New("unknown declared input fields: " + strings.Join(unknown, ","))
+    }
+    return fields, nil
+}
+func inputDigest(value []byte) string {
+    sum := sha256.Sum256(value)
+    return "sha256:" + hex.EncodeToString(sum[:])
+}
 func main() {
+    declared := len(os.Args) == 2 && os.Args[1] == "--declared-input"
+    if len(os.Args) != 1 && !declared {
+        io.WriteString(os.Stderr, "usage: judge [--declared-input]\n")
+        os.Exit(2)
+    }
     raw, err := io.ReadAll(os.Stdin)
     if err != nil { os.Exit(2) }
     if err := rejectDuplicateObjectKeys(raw); err != nil {
@@ -177,6 +231,14 @@ func main() {
     if err := decoder.Decode(&value); err != nil { os.Exit(2) }
     var trailing any
     if err := decoder.Decode(&trailing); err != io.EOF { os.Exit(2) }
+    var fields []map[string]any
+    if declared {
+        fields, err = declaredInputBindings(raw, value)
+        if err != nil {
+            io.WriteString(os.Stderr, err.Error()+"\n")
+            os.Exit(2)
+        }
+    }
     output := result{CaseID:value.ID, PolicyDigest:policyDigest, SemanticDigest:semanticDigest, Denominator:policyDenominator, BlockedBy:[]string{}}
     if policyDenominator != fixedDenominator {
         output.Decision, output.Stage, output.Reason = "FAIL_CLOSED", "COMPILE", "FIXED_DENOMINATOR_CHANGED"
@@ -193,6 +255,24 @@ func main() {
         if !matched { output.Decision, output.Stage, output.Reason = "FAIL_CLOSED", "COMPILE", "NO_REDUCTION_RULE_MATCHED" }
     }
     if output.Decision != "UNKNOWN" { output.UnknownClass, output.NextOperation, output.BlockedBy = "", "", []string{} }
+    if declared {
+        effective, err := json.Marshal(value)
+        if err != nil { os.Exit(3) }
+        report := map[string]any{
+            "schema": "gooo/generated-policy-declared-input/v1",
+            "source_digest": policyDigest, "semantic_digest": semanticDigest,
+            "input_digest": inputDigest(raw), "effective_input_digest": inputDigest(effective),
+            "evaluation_scope": "CONDITIONAL_GENERATED_POLICY_EVALUATION",
+            "external_evidence_state": "UNKNOWN_NOT_VERIFIED",
+            "full_conformance_state": "UNKNOWN_NOT_EXECUTED",
+            "generated_execution_observed": true,
+            "execution_evidence_state": "SELF_REPORTED_NOT_ATTESTED",
+            "mutation_authority": 0, "promotion_authority": 0,
+            "generated_decision": output, "fields": fields,
+        }
+        if err := json.NewEncoder(os.Stdout).Encode(report); err != nil { os.Exit(3) }
+        return
+    }
     if err := json.NewEncoder(os.Stdout).Encode(output); err != nil { os.Exit(3) }
 }
 `,
