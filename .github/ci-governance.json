@@ -1379,7 +1379,7 @@
         ".github/ci-governance.json",
         "cmd/feedback-semantic-state-witness/**",
         "internal/meta/feedbackstate/**",
-        "internal/verify/scope_part01.go"
+        "internal/verify/scope_feedback_write_count_boundary_20260911.go"
       ]
     },
     {
