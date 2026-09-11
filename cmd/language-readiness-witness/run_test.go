@@ -84,7 +84,7 @@ func TestBuildDoesNotIgnorePromotionOnCompleteRoute(t *testing.T) {
 		t.Fatal(err)
 	}
 	guarded := filepath.Join(t.TempDir(), "guarded.json")
-	err = build(config{
+	_, err = build(config{
 		root: root, input: conceptInput(t, root), expectedSHA: testSHA,
 		promotion: promotion, guarded: guarded,
 		conceptOperationBinding: filepath.Join(t.TempDir(), "binding.json"),

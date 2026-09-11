@@ -94,7 +94,7 @@ func conceptOperationEvidenceFixture() conceptoperation.Receipt {
 		ProgramSourceDigest: digestFixture(), ProgramSemanticDigest: digestFixture(),
 		ProgramRegistryDigest: digestFixture(), Expected: []conceptoperation.OperationBinding{{
 			Operation: "terminate-at-fixed-point", CarrierOperation: "replay-counterfactual",
-			IndicatorID: metricstrategy.ConceptOperationIndicatorID("terminate-at-fixed-point"),
+			IndicatorID:        metricstrategy.ConceptOperationIndicatorID("terminate-at-fixed-point"),
 			RegisteredActivity: "TerminateAtFixedPoint", RegisteredProofChoice: "REGRESSION",
 			Activity: "TerminateAtFixedPoint", ProofChoice: "REGRESSION", Expected: "REGISTERED_CONCEPT",
 			Actual: "REGISTERED_CONCEPT", Status: "SATISFIED", EvidenceDigest: digestFixture(), OperationDigest: digestFixture(),

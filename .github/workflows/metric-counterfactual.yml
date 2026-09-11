@@ -901,16 +901,27 @@ jobs:
           test "$PRODUCER_ARTIFACT_ID" != ""
           test "$PRODUCER_ARTIFACT_DIGEST" != ""
           test "$PRODUCER_ARTIFACT_NAME" != ""
+          normalize_sha256() {
+            value="${1#sha256:}"
+            if [[ ! "$value" =~ ^[0-9a-f]{64}$ ]]; then
+              echo "FAIL_CLOSED: producer artifact digest is not a 64-character lowercase sha256 value" >&2
+              exit 1
+            fi
+            printf 'sha256:%s\n' "$value"
+          }
+          declared_digest="$(normalize_sha256 "$PRODUCER_ARTIFACT_DIGEST")"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$PRODUCER_ARTIFACT_ID" > "$work/producer-artifact.json"
           jq -e \
             --arg name "$PRODUCER_ARTIFACT_NAME" \
-            --arg digest "$PRODUCER_ARTIFACT_DIGEST" \
             --argjson run_id "$GITHUB_RUN_ID" \
             --argjson artifact_id "$PRODUCER_ARTIFACT_ID" \
-            '.id == $artifact_id and .name == $name and .digest == $digest and .expired == false and .workflow_run.id == $run_id' \
+            '.id == $artifact_id and .name == $name and .expired == false and .workflow_run.id == $run_id' \
             "$work/producer-artifact.json"
+          metadata_digest="$(jq -r '.digest // empty' "$work/producer-artifact.json")"
+          metadata_digest="$(normalize_sha256 "$metadata_digest")"
+          test "$metadata_digest" = "$declared_digest"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$PRODUCER_ARTIFACT_ID/zip" > "$work/producer.zip"
-          printf '%s  %s\n' "${PRODUCER_ARTIFACT_DIGEST#sha256:}" "$work/producer.zip" | sha256sum -c -
+          printf '%s  %s\n' "${declared_digest#sha256:}" "$work/producer.zip" | sha256sum -c -
           unzip -q "$work/producer.zip" -d "$work/unpacked"
           expected_files=(
             concept-operation-binding.json strategy-plan.json strategy-verification.json
