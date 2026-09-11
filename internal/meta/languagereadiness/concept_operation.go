@@ -10,8 +10,8 @@ import (
 // EvaluateWithConceptOperation adds only independently verified concept-operation
 // evidence to the ordinary readiness evaluator. It does not authorize promotion.
 func EvaluateWithConceptOperation(raw, evidenceRaw []byte, inputs conceptoperation.SourceInputs, repositoryRoot, expectedRepository, expectedSubjectSHA string) (Snapshot, error) {
-	if repositoryRoot == "" {
-		return Snapshot{}, fmt.Errorf("concept-operation repository root is missing")
+	if repositoryRoot == "" || expectedRepository == "" || expectedSubjectSHA == "" || inputs.ScratchDirectory == "" {
+		return Snapshot{}, fmt.Errorf("concept-operation observation requires exact repository, head, root, and external scratch")
 	}
 	evidence, err := conceptoperation.Verify(evidenceRaw, expectedRepository, expectedSubjectSHA)
 	if err != nil {
