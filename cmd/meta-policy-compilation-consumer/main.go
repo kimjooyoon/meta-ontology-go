@@ -21,12 +21,13 @@ import (
 )
 
 const (
-	consumerSchema  = "gooo/meta-policy-compilation-consumer/v3"
-	fixedDenom      = 8
-	caseDenom       = 3
-	decisionPass    = "PASS"
-	decisionFail    = "FAIL_CLOSED"
-	decisionUnknown = "UNKNOWN"
+	consumerSchema   = "gooo/meta-policy-compilation-consumer/v3"
+	policyWireSchema = "gooo/meta-policy-compilation/v3"
+	fixedDenom       = 8
+	caseDenom        = 3
+	decisionPass     = "PASS"
+	decisionFail     = "FAIL_CLOSED"
+	decisionUnknown  = "UNKNOWN"
 )
 
 type rule struct {
@@ -254,11 +255,14 @@ func validateProducerBoundary(boundary producerBoundary, compiled policy) error 
 	if boundary.artifact.Policy.SourceDigest == "" || boundary.policy.SourceDigest == "" || boundary.artifact.GeneratedJudgeHash != digestBytes(boundary.judge) {
 		return errors.New("producer artifact is not bound to its generated judge")
 	}
-	if !samePolicySemantics(boundary.artifact.Policy, boundary.policy) {
-		return errors.New("producer policy and compiled artifact policy differ")
+	if mismatch := policySemanticMismatch(boundary.artifact.Policy, boundary.policy); mismatch != "" {
+		return fmt.Errorf("producer policy and compiled artifact policy differ at %s", mismatch)
 	}
-	if !samePolicySemantics(boundary.policy, compiled) || !samePolicySemantics(boundary.artifact.Policy, compiled) {
-		return errors.New("independent raw policy reconstruction differs from artifact")
+	if mismatch := policySemanticMismatch(boundary.policy, compiled); mismatch != "" {
+		return fmt.Errorf("independent raw policy reconstruction differs from artifact at %s", mismatch)
+	}
+	if mismatch := policySemanticMismatch(boundary.artifact.Policy, compiled); mismatch != "" {
+		return fmt.Errorf("independent raw policy reconstruction differs from artifact at %s", mismatch)
 	}
 	if err := validateGenerationManifest(boundary.manifest, boundary.policyBytes, boundary.artifactBytes, boundary.judge, compiled, boundary.artifact); err != nil {
 		return err
@@ -308,11 +312,32 @@ func mustJSON(value any) []byte {
 	return data
 }
 
-func samePolicySemantics(left, right policy) bool {
-	// Structure is intentionally outside this consumer's reconstruction
-	// boundary. All scalar identity, ordered rules, and ordered reduction
-	// fields that this raw-source parser reconstructs are compared exactly.
-	return left.Schema == right.Schema && left.PolicyID == right.PolicyID && left.Package == right.Package && left.Namespace == right.Namespace && left.SourceDigest == right.SourceDigest && left.SemanticDigest == right.SemanticDigest && left.Denominator == right.Denominator && bytes.Equal(mustJSON(left.Rules), mustJSON(right.Rules)) && bytes.Equal(mustJSON(left.Reduction), mustJSON(right.Reduction))
+func policySemanticMismatch(observed, expected policy) string {
+	if observed.Schema != expected.Schema {
+		return fmt.Sprintf("schema: expected wire schema %q observed %q", expected.Schema, observed.Schema)
+	}
+	if observed.PolicyID != expected.PolicyID {
+		return fmt.Sprintf("policy_id: expected %q observed %q", expected.PolicyID, observed.PolicyID)
+	}
+	if observed.Package != expected.Package || observed.Namespace != expected.Namespace {
+		return fmt.Sprintf("identity: expected package=%q namespace=%q observed package=%q namespace=%q", expected.Package, expected.Namespace, observed.Package, observed.Namespace)
+	}
+	if observed.SourceDigest != expected.SourceDigest {
+		return fmt.Sprintf("source_digest: expected %q observed %q", expected.SourceDigest, observed.SourceDigest)
+	}
+	if observed.SemanticDigest != expected.SemanticDigest {
+		return fmt.Sprintf("semantic_digest: expected %q observed %q", expected.SemanticDigest, observed.SemanticDigest)
+	}
+	if observed.Denominator != expected.Denominator {
+		return fmt.Sprintf("fixed_denominator: expected %d observed %d", expected.Denominator, observed.Denominator)
+	}
+	if !bytes.Equal(mustJSON(observed.Rules), mustJSON(expected.Rules)) {
+		return "rules"
+	}
+	if !bytes.Equal(mustJSON(observed.Reduction), mustJSON(expected.Reduction)) {
+		return "decision_reduction"
+	}
+	return ""
 }
 
 func writeConsumerReport(outputPath string, cases []input, compiled policy, producerArtifact artifact, generated []result, judge []byte) error {
@@ -349,7 +374,7 @@ func parseRawPolicy(filename string, source []byte, expectedPackage, expectedNam
 	if len(ir.Policies) == 1 {
 		return parseFirstClassPolicy(ir, source)
 	}
-	result := policy{Schema: "gooo/meta-policy-compilation/v3", PolicyID: "gooo://meta-policy-compilation/policy/v3", Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom)}
+	result := policy{Schema: policyWireSchema, PolicyID: "gooo://meta-policy-compilation/policy/v3", Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom)}
 	for _, node := range ir.Graph.Nodes() {
 		if node.Kind != semantic.Activity {
 			continue
@@ -378,7 +403,7 @@ func parseFirstClassPolicy(ir semantic.IR, source []byte) (policy, error) {
 	if len(declaration.Cases) != fixedDenom || len(declaration.Transitions) != fixedDenom {
 		return policy{}, errors.New("first-class policy denominator changed")
 	}
-	result := policy{Schema: "gooo/meta-policy-compilation/v4", PolicyID: string(declaration.ID), Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom), Reduction: reduction{Schema: "decision-reduction:v2", Rules: make([]decisionRule, 0, fixedDenom)}}
+	result := policy{Schema: policyWireSchema, PolicyID: string(declaration.ID), Package: ir.Package, Namespace: ir.Namespace.String(), SourceDigest: digestBytes(source), SemanticDigest: "sha256:" + ir.StableHash(), Denominator: fixedDenom, Rules: make([]rule, 0, fixedDenom), Reduction: reduction{Schema: "decision-reduction:v2", Rules: make([]decisionRule, 0, fixedDenom)}}
 	for _, current := range declaration.Cases {
 		resolution := current.Resolution
 		result.Rules = append(result.Rules, rule{ActivityID: string(declaration.ID) + "/case/" + strings.ToLower(current.Name), ActivityName: current.Name, Role: resolution.Role, MetaOperation: resolution.MetaOperation, ProofChoice: resolution.ProofChoice, Stage: resolution.Stage, Step: resolution.Step, Reason: resolution.Reason, Claim: resolution.Claim})

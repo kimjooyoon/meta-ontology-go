@@ -149,6 +149,14 @@ jobs:
             any(.cases[]; any(.claim_predicates[]; .outcome == "OPEN")) and
             any(.cases[]; .generated.decision == "UNKNOWN" and .generated.stage != "FIXED_POINT" and .generated.unknown_class != "" and .generated.next_operation != "" and (.generated.blocked_by | length) > 0)
           ' "$root/first/receipt.json"
+          jq -e '
+            .schema == "gooo/meta-policy-compilation/v3" and
+            .policy_id == "gooo://meta-policy-compilation/policy/v4"
+          ' "$root/first/policy.json"
+          jq -e '
+            .policy.schema == "gooo/meta-policy-compilation/v3" and
+            .policy.policy_id == "gooo://meta-policy-compilation/policy/v4"
+          ' "$root/first/artifact.json"
 
           mkdir -p "$root/intervention"
           cp examples/meta-policy-compilation/policy.gooo "$root/intervention/comment.gooo"
@@ -434,6 +442,20 @@ jobs:
             -profile-namespace metapolicycompilation \
             -output "$mutation_root/manifest-trailing-report.json"; then
             echo 'manifest with trailing JSON was accepted' >&2
+            exit 1
+          fi
+          cp -R "$RUNNER_TEMP/meta-policy-compilation/first" "$mutation_root/schema"
+          jq '.policy.schema = "gooo/meta-policy-compilation/v4"' "$mutation_root/schema/artifact.json" > "$mutation_root/schema/artifact.json.tmp"
+          mv "$mutation_root/schema/artifact.json.tmp" "$mutation_root/schema/artifact.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$mutation_root/schema" \
+            -manifest "$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/schema-report.json"; then
+            echo 'policy schema mutation was accepted' >&2
             exit 1
           fi
           cp -R "$RUNNER_TEMP/meta-policy-compilation/first" "$mutation_root/policy"
