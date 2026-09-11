@@ -1,6 +1,10 @@
 package languagereadiness
 
-import "testing"
+import (
+	"testing"
+
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
+)
 
 func TestUseCaseCurrentCatalogIsSevenOfTwentyFour(t *testing.T) {
 	snapshot, err := Evaluate(artifactFixture("PASS", currentConceptIDs...))
@@ -54,7 +58,7 @@ func TestUseCaseUnregisteredClaimsDoNotChangeTheCount(t *testing.T) {
 
 func TestConceptOperationEvidenceRequiresIndependentSourceReplay(t *testing.T) {
 	_, err := EvaluateWithConceptOperation(
-		artifactFixture("PASS", currentConceptIDs...), nil, nil,
+		artifactFixture("PASS", currentConceptIDs...), nil, conceptoperation.SourceInputs{},
 		"", "owner/repository", "0000000000000000000000000000000000000000",
 	)
 	if err == nil {
