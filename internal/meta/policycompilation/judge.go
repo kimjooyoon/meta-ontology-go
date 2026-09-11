@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 )
 
@@ -21,6 +22,16 @@ type generatedJudgeInput struct {
 	ObservedGeneratedJudgeDigest string `json:"observed_generated_judge_digest"`
 	ObservedIndependentDigest    string `json:"observed_independent_digest"`
 	UpperDecision                string `json:"upper_decision"`
+}
+
+// generatedJudgeInputFields renders the input ABI instead of maintaining a
+// second field-name, type, and JSON-tag list inside the generated template.
+func generatedJudgeInputFields(inputType reflect.Type) string {
+	var builder strings.Builder
+	for field := range inputType.Fields() {
+		fmt.Fprintf(&builder, "    %s %s %q\n", field.Name, field.Type.String(), string(field.Tag))
+	}
+	return builder.String()
 }
 
 // GenerateJudge emits a standalone Go program containing the reduction rows
@@ -45,15 +56,7 @@ import (
 )
 
 type input struct {
-    ID string %q
-    ProducerAvailable bool %q
-    ConsumerAvailable bool %q
-    ObservedSourceDigest string %q
-    ObservedArtifactSourceDigest string %q
-    ObservedGeneratedJudgeDigest string %q
-    ObservedIndependentDigest string %q
-    UpperDecision string %q
-}
+%s}
 type result struct {
     CaseID string %q
     Decision string %q
@@ -209,14 +212,42 @@ func declaredInputBindings(raw []byte, value input) ([]map[string]any, error) {
     }
     return fields, nil
 }
+func declaredInputSchema() (map[string]any, error) {
+    fields, err := declaredInputBindings([]byte("{}"), input{})
+    if err != nil { return nil, err }
+    for _, field := range fields {
+        field["default"] = field["effective"]
+        field["required"] = false
+        field["nullable"] = true
+        delete(field, "binding")
+        delete(field, "effective")
+    }
+    return map[string]any{
+        "schema": "gooo/generated-policy-input-schema/v1",
+        "source_digest": policyDigest, "semantic_digest": semanticDigest,
+        "evaluation_mode": "--declared-input",
+        "fields": fields, "default_input": input{},
+        "policy_evaluation_observed": false,
+        "mutation_authority": 0, "promotion_authority": 0,
+    }, nil
+}
 func inputDigest(value []byte) string {
     sum := sha256.Sum256(value)
     return "sha256:" + hex.EncodeToString(sum[:])
 }
 func main() {
+    if len(os.Args) == 2 && os.Args[1] == "--input-schema" {
+        schema, err := declaredInputSchema()
+        if err != nil {
+            io.WriteString(os.Stderr, err.Error()+"\n")
+            os.Exit(2)
+        }
+        if err := json.NewEncoder(os.Stdout).Encode(schema); err != nil { os.Exit(3) }
+        return
+    }
     declared := len(os.Args) == 2 && os.Args[1] == "--declared-input"
     if len(os.Args) != 1 && !declared {
-        io.WriteString(os.Stderr, "usage: judge [--declared-input]\n")
+        io.WriteString(os.Stderr, "usage: judge [--declared-input | --input-schema]\n")
         os.Exit(2)
     }
     raw, err := io.ReadAll(os.Stdin)
@@ -276,9 +307,7 @@ func main() {
     if err := json.NewEncoder(os.Stdout).Encode(output); err != nil { os.Exit(3) }
 }
 `,
-		`json:"id"`, `json:"producer_available"`, `json:"consumer_available"`,
-		`json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`,
-		`json:"observed_generated_judge_digest"`, `json:"observed_independent_digest"`, `json:"upper_decision"`,
+		generatedJudgeInputFields(reflect.TypeFor[generatedJudgeInput]()),
 		`json:"case_id"`, `json:"decision"`, `json:"matched_condition"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
 		`json:"unknown_class"`, `json:"next_operation"`, `json:"blocked_by"`, `json:"policy_digest"`,
 		`json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest,

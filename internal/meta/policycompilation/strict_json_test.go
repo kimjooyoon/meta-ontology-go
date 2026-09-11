@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +15,72 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestGeneratedJudgeInputFieldsFollowTypedSchema(t *testing.T) {
+	policy, err := Compile(declaredCaseSourceFixture(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := []string{"runtime-input", "renamed-fields", "reordered-and-retyped-fields"}
+	for index, shape := range []reflect.Type{
+		reflect.TypeFor[generatedJudgeInput](),
+		reflect.StructOf([]reflect.StructField{
+			{Name: "Enabled", Type: reflect.TypeFor[bool](), Tag: "json:\"enabled\""},
+			{Name: "Label", Type: reflect.TypeFor[string](), Tag: "json:\"label\""},
+		}),
+		reflect.StructOf([]reflect.StructField{
+			{Name: "Label", Type: reflect.TypeFor[bool](), Tag: "json:\"renamed_label,omitempty\""},
+			{Name: "Enabled", Type: reflect.TypeFor[string](), Tag: "json:\"renamed_enabled\""},
+		}),
+	} {
+		t.Run(names[index], func(t *testing.T) {
+			source := "package probe\n\ntype input struct {\n" + generatedJudgeInputFields(shape) + "}\n"
+			if index == 0 {
+				source = string(GenerateJudge(policy))
+			}
+			file, err := parser.ParseFile(token.NewFileSet(), "judge.go", source, parser.SkipObjectResolution)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fields *ast.FieldList
+			for _, declaration := range file.Decls {
+				group, ok := declaration.(*ast.GenDecl)
+				if !ok || group.Tok != token.TYPE {
+					continue
+				}
+				for _, specification := range group.Specs {
+					named, ok := specification.(*ast.TypeSpec)
+					if !ok || named.Name.Name != "input" {
+						continue
+					}
+					structure, ok := named.Type.(*ast.StructType)
+					if !ok || fields != nil {
+						t.Fatal("generated input declaration is not one struct")
+					}
+					fields = structure.Fields
+				}
+			}
+			if fields == nil || len(fields.List) != shape.NumField() {
+				t.Fatal("generated input field count differs from its typed schema")
+			}
+			for fieldIndex, observed := range fields.List {
+				expected := shape.Field(fieldIndex)
+				if len(observed.Names) != 1 || observed.Names[0].Name != expected.Name {
+					t.Fatalf("generated input field order/name differs at %d", fieldIndex)
+				}
+				kind, ok := observed.Type.(*ast.Ident)
+				if !ok || kind.Name != expected.Type.String() || observed.Tag == nil {
+					t.Fatalf("generated input field type/tag differs at %d", fieldIndex)
+				}
+				var tag string
+				count, err := fmt.Sscanf(observed.Tag.Value, "%q", &tag)
+				if err != nil || count != 1 || tag != string(expected.Tag) {
+					t.Fatalf("generated JSON tag differs at %d: %q (%v)", fieldIndex, tag, err)
+				}
+			}
+		})
+	}
+}
 
 func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) {
 	source := declaredCaseSourceFixture(t)
@@ -52,6 +121,79 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 		}
 		return document
 	}
+	t.Run("input-schema", func(t *testing.T) {
+		output, err := run(nil, "--input-schema")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var envelope map[string]json.RawMessage
+		if err := decodeStrictJSON(output, &envelope); err != nil || len(envelope) != 9 {
+			t.Fatalf("input schema: %v: %s", err, output)
+		}
+		for key, want := range map[string]string{
+			"schema":          "gooo/generated-policy-input-schema/v1",
+			"source_digest":   policy.SourceDigest,
+			"semantic_digest": policy.SemanticDigest,
+			"evaluation_mode": "--declared-input",
+		} {
+			var got string
+			if err := json.Unmarshal(envelope[key], &got); err != nil || got != want {
+				t.Fatalf("%s = %s (%v), want %q", key, envelope[key], err, want)
+			}
+		}
+		if string(envelope["policy_evaluation_observed"]) != "false" || string(envelope["mutation_authority"]) != "0" || string(envelope["promotion_authority"]) != "0" {
+			t.Fatal("input discovery was promoted into policy evaluation or authority")
+		}
+		if !bytes.Equal(envelope["default_input"], encode(generatedJudgeInput{})) {
+			t.Fatal("input schema defaults differ from the typed runtime ABI")
+		}
+		var fields []map[string]json.RawMessage
+		if err := decodeStrictJSON(envelope["fields"], &fields); err != nil {
+			t.Fatal(err)
+		}
+		shape := reflect.TypeFor[generatedJudgeInput]()
+		if len(fields) != shape.NumField() {
+			t.Fatal("input schema field count differs from the typed runtime ABI")
+		}
+		for index, field := range fields {
+			expected := shape.Field(index)
+			if len(field) != 5 || string(field["required"]) != "false" || string(field["nullable"]) != "true" {
+				t.Fatalf("input schema invented required fields or erased null defaulting: %s", envelope["fields"])
+			}
+			for key, want := range map[string]string{
+				"json_field": strings.Split(expected.Tag.Get("json"), ",")[0],
+				"go_type":    expected.Type.String(),
+			} {
+				var got string
+				if err := json.Unmarshal(field[key], &got); err != nil || got != want {
+					t.Fatalf("schema field %d %s = %s (%v), want %q", index, key, field[key], err, want)
+				}
+			}
+			zero, err := json.Marshal(reflect.Zero(expected.Type).Interface())
+			if err != nil || !bytes.Equal(field["default"], zero) {
+				t.Fatalf("schema field %d changed its zero value: %v", index, err)
+			}
+		}
+		replay, err := run([]byte("not JSON; input schema does not decode stdin"), "--input-schema")
+		if err != nil || !bytes.Equal(output, replay) {
+			t.Fatalf("input discovery depends on a supplied case: %v", err)
+		}
+		defaultOutput, err := run(envelope["default_input"], "--declared-input")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var defaultEnvelope map[string]json.RawMessage
+		if err := decodeStrictJSON(defaultOutput, &defaultEnvelope); err != nil {
+			t.Fatal(err)
+		}
+		var defaultDecision DecisionResult
+		if err := decodeStrictJSON(defaultEnvelope["generated_decision"], &defaultDecision); err != nil {
+			t.Fatal(err)
+		}
+		if defaultDecision.Decision != "UNKNOWN" || !reflect.DeepEqual(defaultDecision, EvaluateSourcePolicy(policy, Case{})) {
+			t.Fatalf("schema-driven defaults manufactured policy evidence: %+v", defaultDecision)
+		}
+	})
 	bound := generatedJudgeInput{
 		ID: "conditional-pass", ProducerAvailable: true, ConsumerAvailable: true,
 		ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest,
@@ -184,8 +326,13 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 			t.Fatalf("unbindable declared input emitted a report: %s: %v: %s", document, err, output)
 		}
 	}
-	if output, err := run(passDocument, "--declared-input", "--unknown"); err == nil || len(output) != 0 {
-		t.Fatalf("unknown argument silently downgraded the mode: %v: %s", err, output)
+	for _, arguments := range [][]string{
+		{"--declared-input", "--unknown"},
+		{"--input-schema", "--declared-input"},
+	} {
+		if output, err := run(passDocument, arguments...); err == nil || len(output) != 0 {
+			t.Fatalf("unknown or conflicting arguments silently downgraded the mode: %v: %s", err, output)
+		}
 	}
 	output, err := run(passDocument)
 	if err != nil {

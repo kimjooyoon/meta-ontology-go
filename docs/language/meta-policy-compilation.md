@@ -32,6 +32,44 @@ The write-set claim compares exact sorted file snapshots (path, mode, size,
 and content digest) at the start and end of the producer run; it claims only a
 net repository change of zero, not that no system call wrote a file.
 
+## Discovering the generated input contract
+
+The generated executable can describe the input accepted by its
+`--declared-input` mode without requiring an input case:
+
+```sh
+# Query in caller-owned CI/runner output after generation.
+go run "$OUT/judge.go" --input-schema > "$OUT/input-schema.json"
+```
+
+The `gooo/generated-policy-input-schema/v1` document contains the source and
+semantic identities, the target evaluation mode, the fields and a complete
+`default_input` object. Each field carries its exact `json_field`, `go_type`,
+`default`, `required` and `nullable` values. Names, types and zero values come
+from the generated input type; there is no separately maintained schema field
+list. The current eight scalar fields are optional and nullable because the
+runtime decoder defaults missing and null values to their zero values.
+
+An agent can obtain field names and a well-typed starting object from the
+executable instead of guessing them from prose. This does not supply evidence:
+executing the returned default input against the canonical policy yields
+UNKNOWN, not PASS. Selecting real values still requires the caller's actual
+observations. The ABI is compiler-owned; Gooo supplies the policy reductions.
+This mode does not claim that arbitrary Gooo declarations define a new ABI.
+
+Schema discovery is handled before stdin is read and performs no policy
+evaluation. `policy_evaluation_observed` is false, and mutation and promotion
+authority remain zero. Embedded identities are a self-description, not a
+signature or CI attestation. The schema output is produced only by this
+separate caller invocation; the public generation profile still emits exactly
+four artifacts and does not execute the generated program.
+
+CI queries the same already-built generated binary with absent and invalid
+stdin, checks the fields against the typed ABI, and evaluates the returned
+default input. Conflicting mode arguments fail rather than silently selecting
+a different mode. These are interface conformance checks, not external utility
+evidence or a language-completeness percentage.
+
 ## Declared inputs in the generated executable
 
 The generated standalone judge accepts an explicit `--declared-input` mode:
@@ -52,6 +90,13 @@ raw-input and effective-input digests, and per-field supplied/effective values.
 Bindings are derived from the generated program's actual input type and JSON
 tags, rather than another field registry. Missing, null and explicit false
 remain distinguishable even when their effective value and decision agree.
+
+The emitted input declaration is itself rendered from the compiler's typed
+runtime-input ABI. Field names, types, order and JSON tags are not repeated as
+a second hand-maintained list in the code template. CI parses the emitted Go
+declaration and exercises renamed, reordered and retyped renderer fixtures.
+These fixtures check schema derivation, not arbitrary extensibility of the
+policy's runtime input domain.
 
 The generated execution input has eight fields. It is not the eleven-field
 compiler Case: validator expectation, evidence classification and provenance
