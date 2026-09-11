@@ -30,9 +30,13 @@ func GenerateJudge(policy CompiledPolicy) []byte {
 	return []byte(fmt.Sprintf(`package main
 
 import (
+    "bytes"
     "encoding/json"
+    "errors"
+    "io"
     "os"
     "regexp"
+    "strconv"
 )
 
 type input struct {
@@ -48,6 +52,7 @@ type input struct {
 type result struct {
     CaseID string %q
     Decision string %q
+    MatchedCondition string %q
     Stage string %q
     Step int %q
     Reason string %q
@@ -108,11 +113,70 @@ func matches(condition string, value input) bool {
         return false
     }
 }
+// rejectDuplicateObjectKeys mirrors the package decoder's token-level
+// preflight while remaining self-contained in the generated consumer.
+func rejectDuplicateObjectKeys(data []byte) error {
+    decoder := json.NewDecoder(bytes.NewReader(data))
+    return scanJSONValue(decoder, "$")
+}
+func scanJSONValue(decoder *json.Decoder, path string) error {
+    token, err := decoder.Token()
+    if err != nil { return err }
+    delimiter, ok := token.(json.Delim)
+    if !ok { return nil }
+    switch delimiter {
+    case '{':
+        seen := make(map[string]int64)
+        for decoder.More() {
+            keyToken, err := decoder.Token()
+            if err != nil { return err }
+            key, ok := keyToken.(string)
+            if !ok { return errors.New("json object key is not a string") }
+            keyOffset := decoder.InputOffset()
+            if previousOffset, exists := seen[key]; exists {
+                return duplicateObjectKeyError(path, key, keyOffset, previousOffset)
+            }
+            seen[key] = keyOffset
+            if err := scanJSONValue(decoder, jsonKeyPath(path, key)); err != nil { return err }
+        }
+        closing, err := decoder.Token()
+        if err != nil { return err }
+        if closing != json.Delim('}') { return errors.New("json object did not close with an object delimiter") }
+    case '[':
+        for index := 0; decoder.More(); index++ {
+            if err := scanJSONValue(decoder, jsonArrayPath(path, index)); err != nil { return err }
+        }
+        closing, err := decoder.Token()
+        if err != nil { return err }
+        if closing != json.Delim(']') { return errors.New("json array did not close with an array delimiter") }
+    default:
+        return errors.New("unexpected JSON delimiter")
+    }
+    return nil
+}
+func jsonKeyPath(path, key string) string {
+    return path + "[" + strconv.Quote(key) + "]"
+}
+func jsonArrayPath(path string, index int) string {
+    return path + "[" + strconv.Itoa(index) + "]"
+}
+func duplicateObjectKeyError(path, key string, keyOffset, previousOffset int64) error {
+    return errors.New("duplicate JSON object key " + strconv.Quote(key) + " at " + jsonKeyPath(path, key) +
+        " (byte offset " + strconv.FormatInt(keyOffset, 10) + "; first occurrence at byte offset " + strconv.FormatInt(previousOffset, 10) + ")")
+}
 func main() {
+    raw, err := io.ReadAll(os.Stdin)
+    if err != nil { os.Exit(2) }
+    if err := rejectDuplicateObjectKeys(raw); err != nil {
+        io.WriteString(os.Stderr, err.Error()+"\n")
+        os.Exit(2)
+    }
     var value input
-    decoder := json.NewDecoder(os.Stdin)
+    decoder := json.NewDecoder(bytes.NewReader(raw))
     decoder.DisallowUnknownFields()
     if err := decoder.Decode(&value); err != nil { os.Exit(2) }
+    var trailing any
+    if err := decoder.Decode(&trailing); err != io.EOF { os.Exit(2) }
     output := result{CaseID:value.ID, PolicyDigest:policyDigest, SemanticDigest:semanticDigest, Denominator:policyDenominator, BlockedBy:[]string{}}
     if policyDenominator != fixedDenominator {
         output.Decision, output.Stage, output.Reason = "FAIL_CLOSED", "COMPILE", "FIXED_DENOMINATOR_CHANGED"
@@ -120,7 +184,7 @@ func main() {
         matched := false
         for _, row := range reduction {
             if matches(row.Condition, value) {
-                output.Decision, output.Stage, output.Step, output.Reason = row.Decision, row.Stage, row.Step, row.Reason
+                output.Decision, output.MatchedCondition, output.Stage, output.Step, output.Reason = row.Decision, row.Condition, row.Stage, row.Step, row.Reason
                 output.UnknownClass, output.NextOperation, output.BlockedBy = row.UnknownClass, row.NextOperation, append([]string(nil), row.BlockedBy...)
                 matched = true
                 break
@@ -135,7 +199,7 @@ func main() {
 		`json:"id"`, `json:"producer_available"`, `json:"consumer_available"`,
 		`json:"observed_source_digest"`, `json:"observed_artifact_source_digest"`,
 		`json:"observed_generated_judge_digest"`, `json:"observed_independent_digest"`, `json:"upper_decision"`,
-		`json:"case_id"`, `json:"decision"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
+		`json:"case_id"`, `json:"decision"`, `json:"matched_condition"`, `json:"stage"`, `json:"step"`, `json:"reason"`,
 		`json:"unknown_class"`, `json:"next_operation"`, `json:"blocked_by"`, `json:"policy_digest"`,
 		`json:"semantic_digest"`, `json:"fixed_denominator"`, policy.SourceDigest, policy.SemanticDigest,
 		policy.Denominator, FixedDenominator, reductionLiteral(policy.Reduction)))
@@ -183,15 +247,9 @@ func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (Deci
 	if err != nil {
 		return DecisionResult{}, fmt.Errorf("execute generated judge: %w: %s", err, strings.TrimSpace(string(output)))
 	}
-	decoder := json.NewDecoder(bytes.NewReader(output))
-	decoder.DisallowUnknownFields()
 	var result DecisionResult
-	if err := decoder.Decode(&result); err != nil {
+	if err := decodeStrictJSON(output, &result); err != nil {
 		return DecisionResult{}, fmt.Errorf("decode generated judge: %w", err)
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
-		return DecisionResult{}, errors.New("generated judge emitted trailing JSON")
 	}
 	if result.CaseID != input.ID {
 		return DecisionResult{}, errors.New("generated judge changed case identity")

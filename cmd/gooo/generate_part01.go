@@ -28,6 +28,9 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 		return code
 	}
 	started := time.Now()
+	if options.profile != "" {
+		return runMetaPolicyGenerationProfile(options, input, jsonMode, stdout, stderr)
+	}
 	if options.compatibilityCertificateFilename != "" {
 		return runCompatibilityGenerate(options, input, reader, jsonMode, stdout, stderr, deadline)
 	}
