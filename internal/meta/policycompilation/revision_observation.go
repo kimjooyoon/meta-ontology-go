@@ -47,7 +47,7 @@ func ObservePolicyDecisionRevision(ctx context.Context, filename string, source 
 	request.Cases = append([]PolicyRevisionCasePair(nil), request.Cases...)
 	proposal, err := ProposePolicyDecisionRevision(filename, source, expectedPackage, expectedNamespace, PolicyDecisionRevision{
 		ExpectedSourceDigest: request.ExpectedSourceDigest,
-		Condition: request.Condition, FromDecision: request.FromDecision, ToDecision: request.ToDecision,
+		Condition:            request.Condition, FromDecision: request.FromDecision, ToDecision: request.ToDecision,
 	})
 	if err != nil {
 		return PolicyRevisionObservation{}, err
@@ -60,12 +60,12 @@ func ObservePolicyDecisionRevision(ctx context.Context, filename string, source 
 		Schema: PolicyRevisionObservationSchema, SourceFile: filename,
 		RequestDigest: DigestBytes(requestBytes), Request: request,
 		OriginalPolicy: proposal.Original, CandidatePolicy: proposal.Candidate,
-		CandidateSource: proposal.CandidateSource,
+		CandidateSource:    proposal.CandidateSource,
 		ChangedCoordinates: append([]string(nil), proposal.ChangedCoordinates...),
 		Admission: revisionPending("INDEPENDENT_VALIDATION", "OBSERVE_REVISION_CANDIDATE",
 			"INDEPENDENT_REVISION_EVIDENCE_MISSING", "RUN_INDEPENDENT_REVISION_OBSERVER"),
-		Pending: []PolicyRevisionPending{},
-		InputProvenance: "CALLER_DECLARED_NOT_VERIFIED",
+		Pending:               []PolicyRevisionPending{},
+		InputProvenance:       "CALLER_DECLARED_NOT_VERIFIED",
 		RepositoryObservation: "NOT_PERFORMED", Improvement: "UNKNOWN",
 	}
 	baseline := make([]Case, 0, len(request.Cases))
@@ -101,8 +101,8 @@ func executeRevisionPolicy(ctx context.Context, policy CompiledPolicy, inputs []
 	phase := PolicyRevisionExecution{
 		GeneratedJudgeSource: string(judge), GeneratedJudgeDigest: DigestBytes(judge),
 		DeclaredInputs: append([]Case(nil), inputs...),
-		SourceResults: make([]DecisionResult, 0, len(inputs)),
-		FirstResults: []DecisionResult{}, ReplayResults: []DecisionResult{},
+		SourceResults:  make([]DecisionResult, 0, len(inputs)),
+		FirstResults:   []DecisionResult{}, ReplayResults: []DecisionResult{},
 	}
 	for _, input := range inputs {
 		phase.SourceResults = append(phase.SourceResults, EvaluateSourcePolicy(policy, input))

@@ -57,35 +57,35 @@ type PolicyRevisionObservationCounts struct {
 	SameInputObservedPairs       int `json:"same_input_observed_pairs"`
 	RequestedTransitionsObserved int `json:"requested_transitions_observed"`
 	SourceComparisons            int `json:"source_comparisons"`
-	SourceMismatches              int `json:"source_mismatches"`
+	SourceMismatches             int `json:"source_mismatches"`
 	ReplayComparisons            int `json:"replay_comparisons"`
-	ReplayMismatches              int `json:"replay_mismatches"`
+	ReplayMismatches             int `json:"replay_mismatches"`
 	FailedBatches                int `json:"failed_batches"`
 }
 
 // PolicyRevisionObservation is bounded execution evidence, not adoption.
 // A generated result cannot supply the missing independent validation.
 type PolicyRevisionObservation struct {
-	Schema                 string                             `json:"schema"`
-	SourceFile             string                             `json:"source_file"`
-	RequestDigest          string                             `json:"canonical_request_digest"`
-	RequestArtifactDigest  string                             `json:"request_artifact_digest,omitempty"`
-	Request                PolicyRevisionObservationRequest   `json:"request"`
-	OriginalPolicy         CompiledPolicy                     `json:"original_policy"`
-	CandidatePolicy        CompiledPolicy                     `json:"candidate_policy"`
-	CandidateSource        string                             `json:"candidate_source"`
-	ChangedCoordinates     []string                           `json:"changed_coordinates"`
-	Baseline               PolicyRevisionExecution            `json:"baseline"`
-	Candidate              PolicyRevisionExecution            `json:"candidate"`
-	Transitions            []PolicyRevisionObservedTransition `json:"transitions"`
-	Counts                 PolicyRevisionObservationCounts    `json:"counts"`
-	ExecutionStatus        string                             `json:"execution_status"`
-	ExecutionConformance   string                             `json:"execution_conformance"`
-	Admission              PolicyRevisionPending              `json:"admission"`
-	Pending                []PolicyRevisionPending            `json:"pending"`
-	InputProvenance        string                             `json:"input_provenance"`
-	RepositoryObservation  string                             `json:"repository_observation"`
-	Improvement            string                             `json:"improvement"`
-	MutationAuthority      int                                `json:"mutation_authority"`
-	PromotionAuthority     int                                `json:"promotion_authority"`
+	Schema                string                             `json:"schema"`
+	SourceFile            string                             `json:"source_file"`
+	RequestDigest         string                             `json:"canonical_request_digest"`
+	RequestArtifactDigest string                             `json:"request_artifact_digest,omitempty"`
+	Request               PolicyRevisionObservationRequest   `json:"request"`
+	OriginalPolicy        CompiledPolicy                     `json:"original_policy"`
+	CandidatePolicy       CompiledPolicy                     `json:"candidate_policy"`
+	CandidateSource       string                             `json:"candidate_source"`
+	ChangedCoordinates    []string                           `json:"changed_coordinates"`
+	Baseline              PolicyRevisionExecution            `json:"baseline"`
+	Candidate             PolicyRevisionExecution            `json:"candidate"`
+	Transitions           []PolicyRevisionObservedTransition `json:"transitions"`
+	Counts                PolicyRevisionObservationCounts    `json:"counts"`
+	ExecutionStatus       string                             `json:"execution_status"`
+	ExecutionConformance  string                             `json:"execution_conformance"`
+	Admission             PolicyRevisionPending              `json:"admission"`
+	Pending               []PolicyRevisionPending            `json:"pending"`
+	InputProvenance       string                             `json:"input_provenance"`
+	RepositoryObservation string                             `json:"repository_observation"`
+	Improvement           string                             `json:"improvement"`
+	MutationAuthority     int                                `json:"mutation_authority"`
+	PromotionAuthority    int                                `json:"promotion_authority"`
 }

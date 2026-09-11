@@ -108,7 +108,9 @@ func TestObservePolicyDecisionRevisionRejectsInvalidInputBeforeExecution(t *test
 		{"empty-id", func(r *PolicyRevisionObservationRequest) { r.Cases[0].Baseline.ID, r.Cases[0].Candidate.ID = "", "" }},
 		{"missing-provenance", func(r *PolicyRevisionObservationRequest) { r.Cases[0].Baseline.Provenance = "" }},
 		{"missing-evidence-class", func(r *PolicyRevisionObservationRequest) { r.Cases[0].Candidate.EvidenceClass = "" }},
-		{"stale-source", func(r *PolicyRevisionObservationRequest) { r.ExpectedSourceDigest = DigestBytes([]byte("different source")) }},
+		{"stale-source", func(r *PolicyRevisionObservationRequest) {
+			r.ExpectedSourceDigest = DigestBytes([]byte("different source"))
+		}},
 		{"unknown-condition", func(r *PolicyRevisionObservationRequest) { r.Condition = "unrecognized" }},
 		{"no-change", func(r *PolicyRevisionObservationRequest) { r.ToDecision = r.FromDecision }},
 	}
@@ -148,9 +150,9 @@ func TestDecodePolicyRevisionObservationRequestRejectsAmbiguousDocuments(t *test
 	}
 	for name, document := range map[string]string{
 		"duplicate": strings.Replace(string(document), "\"condition\":", "\"condition\":\"unknown\",\"condition\":", 1),
-		"unknown": strings.TrimSuffix(string(document), "}") + ",\"authority\":true}",
-		"trailing": string(document) + "{}",
-		"null": "null",
+		"unknown":   strings.TrimSuffix(string(document), "}") + ",\"authority\":true}",
+		"trailing":  string(document) + "{}",
+		"null":      "null",
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := DecodePolicyRevisionObservationRequest([]byte(document)); err == nil {
