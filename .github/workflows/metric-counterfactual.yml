@@ -975,11 +975,11 @@ jobs:
             "$work/unpacked/concept-operation-binding.json"
           jq -e \
             --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
-            '.snapshot.total == 24 and .snapshot.repository_writes == 0 and .fixed_point.decision == "NO_CHANGE" and .proposal_promotion_digest == null and .guarded_capability_digest == null and ([.snapshot.obligations[] | select(.id == $obligation)] | length) == 1 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "SATISFIED" and .reason == "CONCEPT_CONFORMANCE_EXPLICIT" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")))' \
+            '.snapshot.summary.total == 24 and .snapshot.repository_writes == 0 and .fixed_point.decision == "NO_CHANGE" and .proposal_promotion_digest == null and .guarded_capability_digest == null and ([.snapshot.obligations[] | select(.id == $obligation)] | length) == 1 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "SATISFIED" and .reason == "CONCEPT_CONFORMANCE_EXPLICIT" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")))' \
             "$work/readiness/first/artifact.json"
           jq -e \
             --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
-            '.snapshot.total == 24 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "NOT_SATISFIED" and .reason == "CONCEPT_OPERATION_BINDING_RECEIPT_REQUIRED")' \
+            '.snapshot.summary.total == 24 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "NOT_SATISFIED" and .reason == "CONCEPT_OPERATION_BINDING_RECEIPT_REQUIRED")' \
             "$work/baseline/artifact.json"
           jq -S --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" '[.snapshot.obligations[] | select(.id != $obligation) | {id,status,reason}]' "$work/baseline/artifact.json" > "$work/baseline/unrelated.json"
           jq -S --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" '[.snapshot.obligations[] | select(.id != $obligation) | {id,status,reason}]' "$work/readiness/first/artifact.json" > "$work/readiness/unrelated.json"

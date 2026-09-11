@@ -13,7 +13,7 @@ func build(cfg config) (readinessartifact.Receipt, error) {
 	if err != nil {
 		return readinessartifact.Receipt{}, err
 	}
-	if cfg.conceptOperationBinding != "" {
+	if cfg.conceptOperationBinding != "" && cfg.promotion == "" && cfg.guarded == "" {
 		return buildConceptOperationObservation(cfg, raw)
 	}
 	if cfg.promotion == "" {
