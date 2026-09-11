@@ -8,16 +8,17 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
 	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
+	interventionverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram"
 	programverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy"
 	strategyverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricstrategy/verify"
-	interventionverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
 )
 
 const (
@@ -30,19 +31,19 @@ const (
 )
 
 type OperationBinding struct {
-	Operation         string `json:"operation"`
-	CarrierOperation  string `json:"carrier_operation"`
-	IndicatorID       string `json:"indicator_id"`
-	ConceptID         string `json:"concept_id"`
-	RegisteredActivity string `json:"registered_activity"`
+	Operation             string `json:"operation"`
+	CarrierOperation      string `json:"carrier_operation"`
+	IndicatorID           string `json:"indicator_id"`
+	ConceptID             string `json:"concept_id"`
+	RegisteredActivity    string `json:"registered_activity"`
 	RegisteredProofChoice string `json:"registered_proof_choice"`
-	Activity          string `json:"activity"`
-	ProofChoice       string `json:"proof_choice"`
-	Expected          string `json:"expected"`
-	Actual            string `json:"actual"`
-	Status            string `json:"status"`
-	EvidenceDigest    string `json:"evidence_digest"`
-	OperationDigest   string `json:"operation_digest"`
+	Activity              string `json:"activity"`
+	ProofChoice           string `json:"proof_choice"`
+	Expected              string `json:"expected"`
+	Actual                string `json:"actual"`
+	Status                string `json:"status"`
+	EvidenceDigest        string `json:"evidence_digest"`
+	OperationDigest       string `json:"operation_digest"`
 }
 
 type UnknownCausal struct {
@@ -57,49 +58,49 @@ type UnknownCausal struct {
 // SourceInputs are the immutable producer inputs carried with the receipt.
 // The consumer replays these inputs before accepting the receipt digest.
 type SourceInputs struct {
-	Strategy                  []byte
+	Strategy                 []byte
 	StrategyVerification     []byte
-	SourceMetrics             []byte
-	Intervention              []byte
+	SourceMetrics            []byte
+	Intervention             []byte
 	InterventionVerification []byte
-	Program                   []byte
-	ProgramSource             []byte
+	Program                  []byte
+	ProgramSource            []byte
 	ProgramVerification      []byte
 	ScratchDirectory         string
 }
 
 type Receipt struct {
-	Schema                    string             `json:"schema"`
-	Repository                string             `json:"repository"`
-	SubjectSHA                string             `json:"subject_sha"`
-	ExecutionPolicy           string             `json:"execution_policy"`
-	MetricID                  string             `json:"metric_id"`
-	CohortRule                string             `json:"cohort_rule"`
-	SourceAuthority           string             `json:"source_authority"`
-	StrategyDigest            string             `json:"strategy_digest"`
+	Schema                     string             `json:"schema"`
+	Repository                 string             `json:"repository"`
+	SubjectSHA                 string             `json:"subject_sha"`
+	ExecutionPolicy            string             `json:"execution_policy"`
+	MetricID                   string             `json:"metric_id"`
+	CohortRule                 string             `json:"cohort_rule"`
+	SourceAuthority            string             `json:"source_authority"`
+	StrategyDigest             string             `json:"strategy_digest"`
 	StrategyVerificationDigest string            `json:"strategy_verification_digest"`
-	InterventionDigest        string             `json:"intervention_digest"`
-	ProgramDigest             string             `json:"program_digest"`
-	ProgramVerificationDigest string             `json:"program_verification_digest"`
-	ProgramSourcePath         string             `json:"program_source_path"`
-	ProgramSourceDigest       string             `json:"program_source_digest"`
-	ProgramSemanticDigest     string             `json:"program_semantic_digest"`
-	ProgramRegistryDigest     string             `json:"program_registry_digest"`
-	Expected                  []OperationBinding `json:"expected"`
-	ExpectedCount             int                `json:"expected_count"`
-	ObservedCount             int                `json:"observed_count"`
-	BoundCount                int                `json:"bound_count"`
-	UnknownCount              int                `json:"unknown_count"`
-	CoverageBPS               int                `json:"coverage_bps"`
-	Status                    string             `json:"status"`
-	FailureClass              string             `json:"failure_class"`
-	Unknown                   *UnknownCausal     `json:"unknown,omitempty"`
-	Producer                  string             `json:"producer"`
-	Consumer                  string             `json:"consumer"`
-	MetaOperation             string             `json:"meta_operation"`
-	RepositoryWorkspaceWrites bool               `json:"repository_workspace_writes"`
-	PromotionAuthorized       bool               `json:"promotion_authorized"`
-	Digest                    string             `json:"digest"`
+	InterventionDigest         string             `json:"intervention_digest"`
+	ProgramDigest              string             `json:"program_digest"`
+	ProgramVerificationDigest  string             `json:"program_verification_digest"`
+	ProgramSourcePath          string             `json:"program_source_path"`
+	ProgramSourceDigest        string             `json:"program_source_digest"`
+	ProgramSemanticDigest      string             `json:"program_semantic_digest"`
+	ProgramRegistryDigest      string             `json:"program_registry_digest"`
+	Expected                   []OperationBinding `json:"expected"`
+	ExpectedCount              int                `json:"expected_count"`
+	ObservedCount              int                `json:"observed_count"`
+	BoundCount                 int                `json:"bound_count"`
+	UnknownCount               int                `json:"unknown_count"`
+	CoverageBPS                int                `json:"coverage_bps"`
+	Status                     string             `json:"status"`
+	FailureClass               string             `json:"failure_class"`
+	Unknown                    *UnknownCausal     `json:"unknown,omitempty"`
+	Producer                   string             `json:"producer"`
+	Consumer                   string             `json:"consumer"`
+	MetaOperation              string             `json:"meta_operation"`
+	RepositoryWorkspaceWrites  bool               `json:"repository_workspace_writes"`
+	PromotionAuthorized        bool               `json:"promotion_authorized"`
+	Digest                     string             `json:"digest"`
 }
 
 func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
@@ -257,7 +258,7 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 	receipt := Receipt{
 		Schema: Schema, Repository: plan.Repository, SubjectSHA: plan.SubjectSHA, ExecutionPolicy: ExecutionPolicy,
 		MetricID: MetricID, CohortRule: CohortRule, StrategyDigest: plan.Digest,
-		SourceAuthority: SourceAuthority,
+		SourceAuthority:            SourceAuthority,
 		StrategyVerificationDigest: strategyReceipt.Digest, InterventionDigest: ledger.Digest,
 		ProgramDigest: program.Digest, ProgramVerificationDigest: programReceipt.Digest,
 		ProgramSourcePath: program.SourcePath,
@@ -566,8 +567,8 @@ func prepareScratch(scratchDirectory, repositoryRoot string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for index := len(missing) - 1; index >= 0; index-- {
-		existing = filepath.Join(existing, missing[index])
+	for _, m := range slices.Backward(missing) {
+		existing = filepath.Join(existing, m)
 	}
 	relative, err := filepath.Rel(repositoryPath, existing)
 	if err != nil {

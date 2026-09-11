@@ -22,12 +22,12 @@ import (
 )
 
 type receiptFixture struct {
-	receipt      Receipt
-	inputs       SourceInputs
-	repository   string
-	subjectSHA   string
+	receipt        Receipt
+	inputs         SourceInputs
+	repository     string
+	subjectSHA     string
 	repositoryRoot string
-	repositoryFS fs.FS
+	repositoryFS   fs.FS
 }
 
 func TestProducerReplayAndConsumerBindOneReceipt(t *testing.T) {
@@ -74,7 +74,7 @@ func TestVerifySourceMissingInputFrontierIsDeterministic(t *testing.T) {
 	inputs.Strategy = nil
 	inputs.StrategyVerification = nil
 	var first string
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := range 5 {
 		err := VerifySource(fixture.receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA)
 		if err == nil {
 			t.Fatal("missing source inputs were accepted")
