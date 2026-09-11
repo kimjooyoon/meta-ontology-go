@@ -110,7 +110,7 @@ func independentConditionMatches(condition, sourceDigest, semanticDigest string,
 }
 
 func applyDecisionRule(result DecisionResult, rule DecisionRule) DecisionResult {
-	result.Decision, result.Stage, result.Step, result.Reason = rule.Decision, rule.Stage, rule.Step, rule.Reason
+	result.Decision, result.MatchedCondition, result.Stage, result.Step, result.Reason = rule.Decision, rule.Condition, rule.Stage, rule.Step, rule.Reason
 	result.UnknownClass, result.NextOperation = rule.UnknownClass, rule.NextOperation
 	result.BlockedBy = append([]string(nil), rule.BlockedBy...)
 	if result.Decision != DecisionUnknown {
@@ -121,7 +121,7 @@ func applyDecisionRule(result DecisionResult, rule DecisionRule) DecisionResult 
 }
 
 func failClosed(result DecisionResult, reason string) DecisionResult {
-	result.Decision, result.Stage, result.Step, result.Reason = DecisionFailClosed, "COMPILE", 0, reason
+	result.Decision, result.MatchedCondition, result.Stage, result.Step, result.Reason = DecisionFailClosed, "", "COMPILE", 0, reason
 	result.UnknownClass, result.NextOperation, result.BlockedBy = "", "", []string{}
 	return result
 }

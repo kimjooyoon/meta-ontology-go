@@ -23,7 +23,22 @@ func Compile(source []byte) (CompiledPolicy, error) {
 }
 
 func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
-	ir, file, err := lowerPolicy(filename, source)
+	return compileNamedForIdentity(filename, source, "metapolicycompilation", "metapolicycompilation")
+}
+
+// CompileForIdentity compiles the bounded public profile while requiring the
+// caller's expected package and namespace to match the source header exactly.
+// The legacy Compile and CompileNamed entry points retain their fixture-bound
+// identity for existing witness contracts.
+func CompileForIdentity(filename string, source []byte, expectedPackage, expectedNamespace string) (CompiledPolicy, error) {
+	if strings.TrimSpace(expectedPackage) == "" || strings.TrimSpace(expectedNamespace) == "" {
+		return CompiledPolicy{}, errors.New("expected policy package and namespace are required")
+	}
+	return compileNamedForIdentity(filename, source, expectedPackage, expectedNamespace)
+}
+
+func compileNamedForIdentity(filename string, source []byte, expectedPackage, expectedNamespace string) (CompiledPolicy, error) {
+	ir, file, err := lowerPolicy(filename, source, expectedPackage, expectedNamespace)
 	if err != nil {
 		return CompiledPolicy{}, fmt.Errorf("lower policy: %w", err)
 	}
@@ -98,7 +113,7 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 	}, nil
 }
 
-func lowerPolicy(filename string, source []byte) (semantic.IR, *syntax.File, error) {
+func lowerPolicy(filename string, source []byte, expectedPackage, expectedNamespace string) (semantic.IR, *syntax.File, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
 		return semantic.IR{}, nil, errors.New(diagnostics.Error().Error())
@@ -107,8 +122,8 @@ func lowerPolicy(filename string, source []byte) (semantic.IR, *syntax.File, err
 	if err != nil {
 		return semantic.IR{}, nil, err
 	}
-	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
-		return semantic.IR{}, nil, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
+	if ir.Package != expectedPackage || ir.Namespace.String() != expectedNamespace {
+		return semantic.IR{}, nil, fmt.Errorf("policy package/namespace is %q/%q, want %s/%s", ir.Package, ir.Namespace, expectedPackage, expectedNamespace)
 	}
 	return ir, file, nil
 }
