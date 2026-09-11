@@ -37,6 +37,27 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.toolchainRelease != "" && cfg.toolchainLSP == "" {
 		return fmt.Errorf("toolchain cross-platform release requires toolchain-lsp evidence")
 	}
+	conceptOperationFields := 0
+	for _, path := range []string{cfg.conceptOperationBinding, cfg.conceptOperationInputDir, cfg.conceptOperationScratchDir} {
+		if path != "" {
+			conceptOperationFields++
+		}
+	}
+	if conceptOperationFields != 0 && conceptOperationFields != 3 {
+		return fmt.Errorf("concept-operation-binding, concept-operation-input-dir, and concept-operation-scratch-dir must be provided together")
+	}
+	if cfg.guarded != "" && cfg.promotion == "" {
+		return fmt.Errorf("proposal-promotion is required with the complete evidence set")
+	}
+	if cfg.conceptOperationBinding != "" && cfg.promotion != "" && cfg.guarded == "" {
+		return fmt.Errorf("concept-operation evidence with proposal promotion requires the complete evidence set")
+	}
+	if cfg.conceptOperationBinding != "" && cfg.expectedRepository == "" {
+		return fmt.Errorf("expected-repository is required with concept-operation evidence")
+	}
+	if cfg.guarded != "" && (cfg.conceptOperationBinding == "" || cfg.conceptOperationInputDir == "" || cfg.conceptOperationScratchDir == "") {
+		return fmt.Errorf("concept-operation-binding, concept-operation-input-dir, and concept-operation-scratch-dir are required with the complete evidence set")
+	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err
 	}

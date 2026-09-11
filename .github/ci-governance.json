@@ -1373,6 +1373,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-write-count-boundary-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_feedback_write_count_boundary_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/formatter",
       "paths": [
         "internal/formatter/**"
@@ -1905,6 +1915,22 @@
       ]
     },
     {
+      "branch": "agent/language-semantic-upstream-contract-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_08.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_14.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_syntaxcase.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_validatesyntaxreceipt.go",
+        "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+        "internal/verify/scope_language_semantic_upstream_contract_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/language-source-execution",
       "paths": [
         ".github/agent-scope-table.md",
@@ -2090,6 +2116,21 @@
         "internal/meta/metricprogram/**",
         "internal/meta/metricprogram/verify/**",
         "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
+      "branch": "agent/concept-operation-binding-receipt-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languagereadiness/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricstrategy/**",
+        "internal/verify/scope_concept_operation_binding_receipt.go",
         "scripts/metric-meta-program/**"
       ]
     },
