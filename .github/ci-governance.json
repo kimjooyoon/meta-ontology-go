@@ -3847,6 +3847,16 @@
       ]
     },
     {
+      "branch": "agent/continuity-previous-go-binding-785",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_part02_test.go",
+        "cmd/gooo/public_continuity_generate_part01.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
+      ]
+    },
+    {
       "branch": "agent/compiler-self-improvement-utility-20260904-v12",
       "paths": [
         ".github/agent-scope-table.md",
