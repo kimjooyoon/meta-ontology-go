@@ -263,14 +263,12 @@ func copyFile(source, target string) error {
 func executeAll(judge []byte, policy policycompilation.CompiledPolicy, cases []policycompilation.Case) ([]policycompilation.DecisionResult, []policycompilation.DecisionResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	generated := make([]policycompilation.DecisionResult, 0, len(cases))
+	generated, err := policycompilation.ExecuteGeneratedBatch(ctx, judge, cases)
+	if err != nil {
+		return nil, nil, err
+	}
 	independent := make([]policycompilation.DecisionResult, 0, len(cases))
 	for _, input := range cases {
-		result, err := policycompilation.ExecuteGenerated(ctx, judge, input)
-		if err != nil {
-			return nil, nil, err
-		}
-		generated = append(generated, result)
 		independent = append(independent, policycompilation.IndependentEvaluate(policy, input))
 	}
 	return generated, independent, nil

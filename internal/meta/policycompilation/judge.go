@@ -1,14 +1,8 @@
 package policycompilation
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -326,42 +320,9 @@ func reductionLiteral(reduction DecisionReduction) string {
 // directory. The caller must supply a runner-temp output root in CI; this
 // function never writes into the repository.
 func ExecuteGenerated(ctx context.Context, judgeSource []byte, input Case) (DecisionResult, error) {
-	work, err := os.MkdirTemp("", "gooo-policy-judge-")
+	results, err := ExecuteGeneratedBatch(ctx, judgeSource, []Case{input})
 	if err != nil {
 		return DecisionResult{}, err
 	}
-	defer os.RemoveAll(work)
-	path := filepath.Join(work, "judge.go")
-	if err := os.WriteFile(path, judgeSource, 0o600); err != nil {
-		return DecisionResult{}, err
-	}
-	payload, err := json.Marshal(generatedJudgeInput{
-		ID:                           input.ID,
-		ProducerAvailable:            input.ProducerAvailable,
-		ConsumerAvailable:            input.ConsumerAvailable,
-		ObservedSourceDigest:         input.ObservedSourceDigest,
-		ObservedArtifactSourceDigest: input.ObservedArtifactSourceDigest,
-		ObservedGeneratedJudgeDigest: input.ObservedGeneratedJudgeDigest,
-		ObservedIndependentDigest:    input.ObservedIndependentDigest,
-		UpperDecision:                input.UpperDecision,
-	})
-	if err != nil {
-		return DecisionResult{}, err
-	}
-	command := exec.CommandContext(ctx, "go", "run", path)
-	command.Dir = work
-	command.Stdin = bytes.NewReader(payload)
-	command.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.0")
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return DecisionResult{}, fmt.Errorf("execute generated judge: %w: %s", err, strings.TrimSpace(string(output)))
-	}
-	var result DecisionResult
-	if err := decodeStrictJSON(output, &result); err != nil {
-		return DecisionResult{}, fmt.Errorf("decode generated judge: %w", err)
-	}
-	if result.CaseID != input.ID {
-		return DecisionResult{}, errors.New("generated judge changed case identity")
-	}
-	return result, nil
+	return results[0], nil
 }
