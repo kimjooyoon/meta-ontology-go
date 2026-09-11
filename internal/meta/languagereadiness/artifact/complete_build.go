@@ -23,7 +23,8 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	if err := conceptoperation.VerifyReceipt(conceptOperation, input.ExpectedRepository, input.HeadSHA); err != nil {
 		return Receipt{}, err
 	}
-	if err := conceptoperation.VerifySource(conceptOperation, input.ConceptOperationInputs, os.DirFS(input.RepositoryRoot), input.ExpectedRepository, input.HeadSHA); err != nil {
+	input.ConceptOperationInputs.ScratchDirectory = input.ConceptOperationScratchDirectory
+	if err := conceptoperation.VerifySource(conceptOperation, input.ConceptOperationInputs, os.DirFS(input.RepositoryRoot), input.RepositoryRoot, input.ExpectedRepository, input.HeadSHA); err != nil {
 		return Receipt{}, err
 	}
 	promotion, err := decodeCompleteEvidence[proposalpromotion.Receipt](input.Promotion)
@@ -58,7 +59,7 @@ func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {
 	if err != nil {
 		return Receipt{}, err
 	}
-	bundle := readiness.PromotionEvidence{Promotion: promotion, ConceptOperation: conceptOperation, ConceptOperationInputs: input.ConceptOperationInputs, ConceptOperationRepository: input.RepositoryRoot, Capability: capability,
+	bundle := readiness.PromotionEvidence{Promotion: promotion, ConceptOperation: conceptOperation, ConceptOperationInputs: input.ConceptOperationInputs, ConceptOperationRepository: input.RepositoryRoot, ConceptOperationScratchDirectory: input.ConceptOperationScratchDirectory, Capability: capability,
 		UseCases: useCases, Syntax: syntaxReport, Diagnostic: diagnostic,
 		PackageRuntime: []languagepackageruntime.Report{runtimeReport}}
 	snapshot, err := buildToolchainSnapshot(input, bundle, cliReport, formatFixReport)

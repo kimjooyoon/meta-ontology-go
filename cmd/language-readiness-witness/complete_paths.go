@@ -8,6 +8,9 @@ func completePaths(cfg config, target string) []string {
 	if cfg.conceptOperationInputDir != "" {
 		paths = append(paths, cfg.conceptOperationInputDir)
 	}
+	if cfg.conceptOperationScratchDir != "" {
+		paths = append(paths, cfg.conceptOperationScratchDir)
+	}
 	optional := []string{
 		cfg.promotion,
 		cfg.guarded,

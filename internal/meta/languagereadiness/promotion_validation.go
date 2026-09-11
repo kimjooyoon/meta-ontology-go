@@ -42,7 +42,9 @@ func validatePromotionEvidence(bundle PromotionEvidence,
 		if err := conceptoperation.VerifyReceipt(bundle.ConceptOperation, expectedRepository, expectedHeadSHA); err != nil {
 			return evidenceDigests{}, fmt.Errorf("verify concept-operation binding receipt: %w", err)
 		}
-		if err := conceptoperation.VerifySource(bundle.ConceptOperation, bundle.ConceptOperationInputs,
+		conceptOperationInputs := bundle.ConceptOperationInputs
+		conceptOperationInputs.ScratchDirectory = bundle.ConceptOperationScratchDirectory
+		if err := conceptoperation.VerifySource(bundle.ConceptOperation, conceptOperationInputs,
 			os.DirFS(bundle.ConceptOperationRepository), expectedRepository, expectedHeadSHA); err != nil {
 			return evidenceDigests{}, fmt.Errorf("verify concept-operation producer inputs: %w", err)
 		}

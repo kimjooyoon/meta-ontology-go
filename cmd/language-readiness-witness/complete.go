@@ -26,6 +26,7 @@ func buildComplete(cfg config, concept, promotion []byte) (readinessartifact.Rec
 	input := readinessartifact.CompleteEvidenceInput{
 		ConceptArtifact: concept, ConceptOperationBinding: conceptOperationBinding, Promotion: promotion, Capability: evidence[0],
 		ConceptOperationInputs: conceptOperationInputs, RepositoryRoot: cfg.root,
+		ConceptOperationScratchDirectory: cfg.conceptOperationScratchDir,
 		UseCases: evidence[1], Syntax: evidence[2], Diagnostic: evidence[3],
 		PackageRuntime: evidence[4], ToolchainCLI: evidence[5],
 		ToolchainFormatFix: evidence[6], ExpectedRepository: cfg.expectedRepository,

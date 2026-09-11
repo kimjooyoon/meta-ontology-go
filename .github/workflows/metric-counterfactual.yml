@@ -821,6 +821,7 @@ jobs:
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$first/concept-operation-binding.json"
+          test -s "$RUNNER_TEMP/metric-meta-program/intervention/source-metrics.json"
           cp "$input/plan.json" "$first/strategy-plan.json"
           cp "$input/verification.json" "$first/strategy-verification.json"
           cp "$RUNNER_TEMP/metric-meta-program/intervention/source-metrics.json" "$first/source-metrics.json"
@@ -833,6 +834,16 @@ jobs:
           test -s "$first/source-metrics.json"
           test -s "$first/intervention-ledger.json"
           test -s "$first/intervention-verification.json"
+          jq -n \
+            --arg schema "gooo/metric-meta-program-producer-attempt/v1" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg subject_sha "$SUBJECT_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg producer_job "$GITHUB_JOB" \
+            '{schema:$schema,repository:$repository,subject_sha:$subject_sha,workflow_run_id:($run_id|tonumber),workflow_run_attempt:($run_attempt|tonumber),producer_job:$producer_job}' \
+            > "$first/producer-attempt.json"
+          test -s "$first/producer-attempt.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
         id: upload
@@ -840,6 +851,13 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: metric-meta-program-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact concept-operation producer evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: metric-concept-operation-${{ env.SUBJECT_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/metric-meta-program/first
           if-no-files-found: error
           retention-days: 30

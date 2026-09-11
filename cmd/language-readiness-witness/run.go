@@ -40,8 +40,11 @@ func run(cfg config, stdout io.Writer) error {
 	if cfg.conceptOperationInputDir != "" && cfg.conceptOperationBinding == "" {
 		return fmt.Errorf("concept-operation-binding is required with concept-operation-input-dir")
 	}
-	if cfg.guarded != "" && (cfg.conceptOperationBinding == "" || cfg.conceptOperationInputDir == "") {
-		return fmt.Errorf("concept-operation-binding and concept-operation-input-dir are required with the complete evidence set")
+	if cfg.conceptOperationScratchDir != "" && cfg.guarded == "" {
+		return fmt.Errorf("concept-operation-scratch-dir requires the complete evidence set")
+	}
+	if cfg.guarded != "" && (cfg.conceptOperationBinding == "" || cfg.conceptOperationInputDir == "" || cfg.conceptOperationScratchDir == "") {
+		return fmt.Errorf("concept-operation-binding, concept-operation-input-dir, and concept-operation-scratch-dir are required with the complete evidence set")
 	}
 	if err := requireExternal(cfg.root, paths...); err != nil {
 		return err

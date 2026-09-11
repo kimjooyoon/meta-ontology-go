@@ -1467,31 +1467,31 @@ jobs:
             fi
             run_id="$(jq -r '.id' <<<"$producer_run")"
             run_attempt="$(jq -r '.run_attempt' <<<"$producer_run")"
-            run_status="$(jq -r '.status' <<<"$producer_run")"
-            run_conclusion="$(jq -r '.conclusion // empty' <<<"$producer_run")"
             test "$run_id" != "null"
             test "$run_attempt" != "null"
-            if [[ "$run_status" != "completed" ]]; then
-              reason=PRODUCER_RUN_IN_PROGRESS
-              sleep 10
-              continue
-            fi
-            if [[ "$run_conclusion" != "success" ]]; then
-              echo "FAIL_CLOSED: exact-head metric producer run $run_id attempt $run_attempt concluded $run_conclusion" >&2
-              exit 1
-            fi
-            if ! jobs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" 2>/dev/null)"; then
+            if ! jobs_json="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/attempts/$run_attempt/jobs?per_page=100" 2>/dev/null)"; then
               echo "FAIL_CLOSED: exact-head metric producer job metadata unavailable for run $run_id attempt $run_attempt" >&2
               exit 1
             fi
             program_rows="$(jq -c '[.jobs[]? | select(.name == "program")]' <<<"$jobs_json")"
-            if [[ "$(jq 'length' <<<"$program_rows")" != 1 ]]; then
+            program_count="$(jq 'length' <<<"$program_rows")"
+            if [[ "$program_count" == 0 ]]; then
+              reason=PRODUCER_PROGRAM_JOB_PENDING
+              sleep 10
+              continue
+            fi
+            if [[ "$program_count" != 1 ]]; then
               echo "FAIL_CLOSED: exact-head metric producer program job cardinality is $(jq 'length' <<<"$program_rows")" >&2
               exit 1
             fi
             program_status="$(jq -r '.[0].status' <<<"$program_rows")"
             program_conclusion="$(jq -r '.[0].conclusion // empty' <<<"$program_rows")"
-            if [[ "$program_status" != "completed" || "$program_conclusion" != "success" ]]; then
+            if [[ "$program_status" != "completed" ]]; then
+              reason=PRODUCER_PROGRAM_JOB_IN_PROGRESS
+              sleep 10
+              continue
+            fi
+            if [[ "$program_conclusion" != "success" ]]; then
               echo "FAIL_CLOSED: exact-head metric producer program job concluded $program_conclusion" >&2
               exit 1
             fi
@@ -1500,7 +1500,8 @@ jobs:
               sleep 10
               continue
             fi
-            artifact_rows="$(jq -c --arg name "metric-meta-program-$HEAD_SHA" '[.artifacts[]? | select(.name == $name and .expired == false)]' <<<"$artifacts_json")"
+            artifact_name="metric-concept-operation-$HEAD_SHA-$run_id-$run_attempt"
+            artifact_rows="$(jq -c --arg name "$artifact_name" --argjson run_id "$run_id" '[.artifacts[]? | select(.name == $name and .expired == false and .workflow_run.id == $run_id)]' <<<"$artifacts_json")"
             if [[ "$(jq 'length' <<<"$artifact_rows")" != 1 ]]; then
               reason=PRODUCER_ARTIFACT_MISSING_OR_AMBIGUOUS
               sleep 10
@@ -1513,9 +1514,16 @@ jobs:
             gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$destination/metric-meta-program.zip"
             test "sha256:$(sha256sum "$destination/metric-meta-program.zip" | awk '{print $1}')" = "$artifact_digest"
             unzip -q "$destination/metric-meta-program.zip" -d "$destination/unpacked"
-            for source_file in concept-operation-binding.json strategy-plan.json strategy-verification.json source-metrics.json intervention-ledger.json intervention-verification.json program.json program.gooo verification.json; do
+            for source_file in concept-operation-binding.json strategy-plan.json strategy-verification.json source-metrics.json intervention-ledger.json intervention-verification.json program.json program.gooo verification.json producer-attempt.json; do
               test -s "$destination/unpacked/$source_file"
             done
+            jq -e \
+              --arg repository "$GITHUB_REPOSITORY" \
+              --arg subject_sha "$HEAD_SHA" \
+              --argjson run_id "$run_id" \
+              --argjson run_attempt "$run_attempt" \
+              '.schema == "gooo/metric-meta-program-producer-attempt/v1" and .repository == $repository and .subject_sha == $subject_sha and .workflow_run_id == $run_id and .workflow_run_attempt == $run_attempt and .producer_job == "program"' \
+              "$destination/unpacked/producer-attempt.json"
             cp "$destination/unpacked/concept-operation-binding.json" "$destination/concept-operation-binding.json"
             found=true
             break
@@ -1784,6 +1792,7 @@ jobs:
               -input "$first/artifact.json" \
               -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
               -concept-operation-input-dir "$RUNNER_TEMP/metric-concept-operation/unpacked" \
+              -concept-operation-scratch-dir "$RUNNER_TEMP/metric-concept-operation-scratch" \
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -1803,6 +1812,7 @@ jobs:
             -input "$first/artifact.json" \
             -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
             -concept-operation-input-dir "$RUNNER_TEMP/metric-concept-operation/unpacked" \
+            -concept-operation-scratch-dir "$RUNNER_TEMP/metric-concept-operation-scratch" \
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -2047,6 +2057,7 @@ jobs:
               -input "$first/artifact.json" \
               -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
               -concept-operation-input-dir "$RUNNER_TEMP/metric-concept-operation/unpacked" \
+              -concept-operation-scratch-dir "$RUNNER_TEMP/metric-concept-operation-scratch" \
               -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
               -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
               -toolchain-use-cases "$usecase_first/artifact.json" \
@@ -2069,6 +2080,7 @@ jobs:
             -input "$first/artifact.json" \
             -concept-operation-binding "$RUNNER_TEMP/metric-concept-operation/concept-operation-binding.json" \
             -concept-operation-input-dir "$RUNNER_TEMP/metric-concept-operation/unpacked" \
+            -concept-operation-scratch-dir "$RUNNER_TEMP/metric-concept-operation-scratch" \
             -proposal-promotion "$RUNNER_TEMP/language-readiness-proposal-promotion-a.json" \
             -guarded-capability "$RUNNER_TEMP/language-readiness-guarded-capability-a.json" \
             -toolchain-use-cases "$usecase_first/artifact.json" \

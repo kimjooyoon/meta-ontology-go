@@ -15,6 +15,7 @@ type PromotionEvidence struct {
 	ConceptOperation           conceptoperation.Receipt
 	ConceptOperationInputs     conceptoperation.SourceInputs
 	ConceptOperationRepository string
+	ConceptOperationScratchDirectory string
 	Capability                 guardedcapability.Receipt
 	UseCases       toolchainusecases.Report
 	Syntax         languagesyntax.Report

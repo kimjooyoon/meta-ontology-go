@@ -57,14 +57,15 @@ type UnknownCausal struct {
 // SourceInputs are the immutable producer inputs carried with the receipt.
 // The consumer replays these inputs before accepting the receipt digest.
 type SourceInputs struct {
-	Strategy                   []byte
-	StrategyVerification      []byte
-	SourceMetrics              []byte
-	Intervention               []byte
-	InterventionVerification  []byte
-	Program                    []byte
-	ProgramSource              []byte
-	ProgramVerification       []byte
+	Strategy                  []byte
+	StrategyVerification     []byte
+	SourceMetrics             []byte
+	Intervention              []byte
+	InterventionVerification []byte
+	Program                   []byte
+	ProgramSource             []byte
+	ProgramVerification      []byte
+	ScratchDirectory         string
 }
 
 type Receipt struct {
@@ -91,7 +92,7 @@ type Receipt struct {
 	UnknownCount              int                `json:"unknown_count"`
 	CoverageBPS               int                `json:"coverage_bps"`
 	Status                    string             `json:"status"`
-	FailureClass              string             `json:"failure_class,omitempty"`
+	FailureClass              string             `json:"failure_class"`
 	Unknown                   *UnknownCausal     `json:"unknown,omitempty"`
 	Producer                  string             `json:"producer"`
 	Consumer                  string             `json:"consumer"`
@@ -164,6 +165,7 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 
 	expected := make([]OperationBinding, 0, len(cohort))
 	bound := 0
+	knownContradiction := false
 	knownIndicators := make(map[string]bool, len(cohort))
 	for _, spec := range cohort {
 		conceptID, mapped := metricstrategy.ConceptIDForOperation(spec.Subject)
@@ -186,9 +188,17 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 		}
 		knownIndicators[indicatorID] = true
 		candidates := bindings[indicatorID]
+		if !mapped {
+			knownContradiction = true
+		}
 		if operationOK && mapped && len(candidates) == 1 {
 			candidate := candidates[0]
 			entry.Actual, entry.Status, entry.EvidenceDigest = candidate.Actual, candidate.Status, candidate.EvidenceDigest
+			if candidate.MetaOperation != spec.Carrier || candidate.Family != operation.ProofChoice ||
+				candidate.Expected != expectedValue || candidate.Actual != expectedValue ||
+				candidate.Status != "SATISFIED" || candidate.EvidenceDigest == "" {
+				knownContradiction = true
+			}
 			if candidate.MetaOperation == spec.Carrier && candidate.Family == operation.ProofChoice &&
 				candidate.Expected == expectedValue && candidate.Actual == expectedValue &&
 				candidate.Status == "SATISFIED" && candidate.EvidenceDigest != "" {
@@ -206,15 +216,19 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 	}
 	sort.Slice(expected, func(i, j int) bool { return expected[i].Operation < expected[j].Operation })
 	unknown := 0
+	ambiguousIndicators := []string{}
 	for indicatorID, candidates := range bindings {
 		if !knownIndicators[indicatorID] {
 			unknown += len(candidates)
+			ambiguousIndicators = append(ambiguousIndicators, indicatorID)
 			continue
 		}
 		if len(candidates) > 1 {
 			unknown += len(candidates) - 1
+			ambiguousIndicators = append(ambiguousIndicators, indicatorID)
 		}
 	}
+	sort.Strings(ambiguousIndicators)
 	expectedCount := len(expected)
 	coverage := 0
 	if expectedCount > 0 {
@@ -227,11 +241,17 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 	failureClass := ""
 	var unknownCausal *UnknownCausal
 	if status != "VERIFIED" {
-		if unknown > 0 || observed < expectedCount {
-			failureClass = "INCOMPLETE_EVIDENCE"
-			unknownCausal = &UnknownCausal{UnknownClass: "INCOMPLETE_EVIDENCE", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_BINDING_EVIDENCE_INCOMPLETE", NextOperation: "CAPTURE_EXACT_PRODUCER_INPUTS", BlockedBy: []string{"concept_operation_binding_receipt"}}
-		} else {
+		if knownContradiction {
 			failureClass = "KNOWN_CONTRADICTION"
+		} else if unknown > 0 {
+			failureClass = "UNKNOWN"
+			unknownCausal = &UnknownCausal{UnknownClass: "AMBIGUOUS", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_BINDING_AMBIGUOUS", NextOperation: "DISAMBIGUATE_CONCEPT_OPERATION_BINDINGS", BlockedBy: ambiguousIndicators}
+		} else if observed < expectedCount {
+			failureClass = "UNKNOWN"
+			unknownCausal = &UnknownCausal{UnknownClass: "DIRECT_MISSING", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_DIRECT_EVIDENCE_MISSING", NextOperation: "CAPTURE_EXACT_PRODUCER_INPUTS", BlockedBy: []string{}}
+		} else {
+			failureClass = "UNKNOWN"
+			unknownCausal = &UnknownCausal{UnknownClass: "UNBOUNDED", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_BINDING_BOUNDARY_UNBOUNDED", NextOperation: "CAPTURE_EXACT_PRODUCER_INPUTS", BlockedBy: []string{}}
 		}
 	}
 	receipt := Receipt{
@@ -252,7 +272,7 @@ func Build(strategyPayload, strategyVerificationPayload, interventionPayload,
 
 // VerifySource independently authenticates the producer inputs and then
 // rebuilds the complete receipt. A receipt's self-hash is not provenance.
-func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS,
+func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS, repositoryRoot string,
 	expectedRepository, expectedSubjectSHA string) error {
 	if err := VerifyReceipt(receipt, expectedRepository, expectedSubjectSHA); err != nil {
 		return fmt.Errorf("verify concept-operation receipt envelope: %w", err)
@@ -260,14 +280,22 @@ func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS,
 	if repository == nil {
 		return fmt.Errorf("concept-operation repository source is missing")
 	}
-	for name, payload := range map[string][]byte{
-		"strategy": inputs.Strategy, "strategy verification": inputs.StrategyVerification,
-		"source metrics": inputs.SourceMetrics, "intervention": inputs.Intervention,
-		"intervention verification": inputs.InterventionVerification, "program": inputs.Program,
-		"program source": inputs.ProgramSource, "program verification": inputs.ProgramVerification,
-	} {
-		if len(payload) == 0 {
-			return fmt.Errorf("concept-operation %s source is missing", name)
+	required := []struct {
+		name    string
+		payload []byte
+	}{
+		{name: "strategy", payload: inputs.Strategy},
+		{name: "strategy verification", payload: inputs.StrategyVerification},
+		{name: "source metrics", payload: inputs.SourceMetrics},
+		{name: "intervention", payload: inputs.Intervention},
+		{name: "intervention verification", payload: inputs.InterventionVerification},
+		{name: "program", payload: inputs.Program},
+		{name: "program source", payload: inputs.ProgramSource},
+		{name: "program verification", payload: inputs.ProgramVerification},
+	}
+	for _, input := range required {
+		if len(input.payload) == 0 {
+			return fmt.Errorf("concept-operation %s source is missing", input.name)
 		}
 	}
 	var plan metricstrategy.Plan
@@ -299,19 +327,26 @@ func VerifySource(receipt Receipt, inputs SourceInputs, repository fs.FS,
 		program.Repository != expectedRepository || program.SubjectSHA != expectedSubjectSHA {
 		return fmt.Errorf("concept-operation source subject is not exact")
 	}
-	temporary, err := os.MkdirTemp("", "gooo-concept-operation-")
+	scratch, err := prepareScratch(inputs.ScratchDirectory, repositoryRoot)
+	if err != nil {
+		return err
+	}
+	temporary, err := os.MkdirTemp(scratch, "gooo-concept-operation-")
 	if err != nil {
 		return fmt.Errorf("create temporary source directory: %w", err)
 	}
 	defer os.RemoveAll(temporary)
-	paths := map[string][]byte{
-		"source-metrics.json":          inputs.SourceMetrics,
-		"intervention.json":            inputs.Intervention,
-		"intervention-verification.json": inputs.InterventionVerification,
+	paths := []struct {
+		name    string
+		payload []byte
+	}{
+		{name: "source-metrics.json", payload: inputs.SourceMetrics},
+		{name: "intervention.json", payload: inputs.Intervention},
+		{name: "intervention-verification.json", payload: inputs.InterventionVerification},
 	}
-	for name, payload := range paths {
-		if err := os.WriteFile(filepath.Join(temporary, name), payload, 0o600); err != nil {
-			return fmt.Errorf("stage %s: %w", name, err)
+	for _, path := range paths {
+		if err := os.WriteFile(filepath.Join(temporary, path.name), path.payload, 0o600); err != nil {
+			return fmt.Errorf("stage %s: %w", path.name, err)
 		}
 	}
 	independentIntervention, err := interventionverify.Replay(filepath.Join(temporary, "source-metrics.json"), ledger)
@@ -448,12 +483,12 @@ func VerifyReceipt(receipt Receipt, expectedRepository, expectedSubjectSHA strin
 	}
 	if receipt.Status == "FAIL_CLOSED" {
 		switch receipt.FailureClass {
-		case "INCOMPLETE_EVIDENCE":
-			if receipt.Unknown == nil || receipt.Unknown.UnknownClass != "INCOMPLETE_EVIDENCE" || receipt.Unknown.Stage != "CONCEPT_OPERATION_BINDING" || receipt.Unknown.Step != "RECONSTRUCT_EXACT_COHORT" || receipt.Unknown.Reason != "CONCEPT_OPERATION_BINDING_EVIDENCE_INCOMPLETE" || receipt.Unknown.NextOperation != "CAPTURE_EXACT_PRODUCER_INPUTS" || len(receipt.Unknown.BlockedBy) != 1 || receipt.Unknown.BlockedBy[0] != "concept_operation_binding_receipt" || (receipt.UnknownCount == 0 && receipt.ObservedCount >= receipt.ExpectedCount) {
+		case "UNKNOWN":
+			if receipt.Unknown == nil || (receipt.Unknown.UnknownClass != "DIRECT_MISSING" && receipt.Unknown.UnknownClass != "DEPENDENCY_BLOCKED" && receipt.Unknown.UnknownClass != "STALE" && receipt.Unknown.UnknownClass != "AMBIGUOUS" && receipt.Unknown.UnknownClass != "UNBOUNDED") || receipt.Unknown.Stage != "CONCEPT_OPERATION_BINDING" || receipt.Unknown.Step != "RECONSTRUCT_EXACT_COHORT" || receipt.Unknown.Reason == "" || receipt.Unknown.NextOperation == "" || receipt.Unknown.BlockedBy == nil || (receipt.Unknown.UnknownClass == "DIRECT_MISSING" && receipt.ObservedCount >= receipt.ExpectedCount) || (receipt.Unknown.UnknownClass == "AMBIGUOUS" && receipt.UnknownCount == 0) {
 				return fmt.Errorf("incomplete concept-operation receipt lacks causal UNKNOWN evidence")
 			}
 		case "KNOWN_CONTRADICTION":
-			if receipt.Unknown != nil || receipt.UnknownCount != 0 || receipt.BoundCount >= receipt.ExpectedCount {
+			if receipt.Unknown != nil || receipt.BoundCount >= receipt.ExpectedCount {
 				return fmt.Errorf("known concept-operation contradiction has UNKNOWN evidence")
 			}
 		default:
@@ -494,6 +529,57 @@ func validDigest(value string) bool {
 		}
 	}
 	return true
+}
+
+func prepareScratch(scratchDirectory, repositoryRoot string) (string, error) {
+	if scratchDirectory == "" || repositoryRoot == "" {
+		return "", fmt.Errorf("concept-operation caller scratch or repository root is missing")
+	}
+	repositoryPath, err := filepath.Abs(filepath.Clean(repositoryRoot))
+	if err != nil {
+		return "", err
+	}
+	repositoryPath, err = filepath.EvalSymlinks(repositoryPath)
+	if err != nil {
+		return "", err
+	}
+	scratchPath, err := filepath.Abs(filepath.Clean(scratchDirectory))
+	if err != nil {
+		return "", err
+	}
+	existing := scratchPath
+	missing := []string{}
+	for {
+		if _, err := os.Lstat(existing); err == nil {
+			break
+		} else if !os.IsNotExist(err) {
+			return "", err
+		}
+		missing = append(missing, filepath.Base(existing))
+		parent := filepath.Dir(existing)
+		if parent == existing {
+			return "", fmt.Errorf("concept-operation scratch parent is unavailable")
+		}
+		existing = parent
+	}
+	existing, err = filepath.EvalSymlinks(existing)
+	if err != nil {
+		return "", err
+	}
+	for index := len(missing) - 1; index >= 0; index-- {
+		existing = filepath.Join(existing, missing[index])
+	}
+	relative, err := filepath.Rel(repositoryPath, existing)
+	if err != nil {
+		return "", err
+	}
+	if relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(os.PathSeparator))) {
+		return "", fmt.Errorf("concept-operation scratch must be outside repository root")
+	}
+	if err := os.MkdirAll(scratchPath, 0o750); err != nil {
+		return "", err
+	}
+	return scratchPath, nil
 }
 
 func seal(receipt Receipt) (Receipt, error) {

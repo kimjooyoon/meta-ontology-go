@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/detection/linecaps"
+	artifact "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualio"
 	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
 	interventionverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention/verify"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram"
@@ -25,6 +26,7 @@ type receiptFixture struct {
 	inputs       SourceInputs
 	repository   string
 	subjectSHA   string
+	repositoryRoot string
 	repositoryFS fs.FS
 }
 
@@ -33,8 +35,131 @@ func TestProducerReplayAndConsumerBindOneReceipt(t *testing.T) {
 	if err := VerifyReceipt(fixture.receipt, fixture.repository, fixture.subjectSHA); err != nil {
 		t.Fatal(err)
 	}
-	if err := VerifySource(fixture.receipt, fixture.inputs, fixture.repositoryFS, fixture.repository, fixture.subjectSHA); err != nil {
+	if fixture.receipt.Status != "VERIFIED" || fixture.receipt.ExpectedCount == 0 || fixture.receipt.BoundCount != fixture.receipt.ExpectedCount || fixture.receipt.CoverageBPS != 10000 {
+		t.Fatalf("producer receipt is not complete: %+v", fixture.receipt)
+	}
+	if err := VerifySource(fixture.receipt, fixture.inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestVerifiedReceiptJSONKeepsFailureClassBoundary(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	payload, err := json.Marshal(fixture.receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(payload, &fields); err != nil {
+		t.Fatal(err)
+	}
+	value, present := fields["failure_class"]
+	if !present || value != "" {
+		t.Fatalf("verified receipt failure_class = %#v, present=%t", value, present)
+	}
+}
+
+func TestVerifySourceRejectsRepositoryScratch(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	inputs := fixture.inputs
+	inputs.ScratchDirectory = fixture.repositoryRoot
+	if err := VerifySource(fixture.receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err == nil {
+		t.Fatal("repository scratch directory was accepted")
+	}
+}
+
+func TestVerifySourceMissingInputFrontierIsDeterministic(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	inputs := fixture.inputs
+	inputs.Strategy = nil
+	inputs.StrategyVerification = nil
+	var first string
+	for attempt := 0; attempt < 5; attempt++ {
+		err := VerifySource(fixture.receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA)
+		if err == nil {
+			t.Fatal("missing source inputs were accepted")
+		}
+		if attempt == 0 {
+			first = err.Error()
+		} else if err.Error() != first {
+			t.Fatalf("missing source error changed: %q != %q", err, first)
+		}
+	}
+}
+
+func TestConsumerRejectsResealedCohortChanges(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	cases := []struct {
+		name   string
+		mutate func(*Receipt)
+	}{
+		{name: "omitted-direct-missing", mutate: func(receipt *Receipt) {
+			receipt.Expected = receipt.Expected[:len(receipt.Expected)-1]
+			receipt.ExpectedCount = len(receipt.Expected)
+			receipt.ObservedCount = receipt.ExpectedCount - 1
+			receipt.BoundCount = receipt.ExpectedCount - 1
+			receipt.CoverageBPS = receipt.BoundCount * 10000 / receipt.ExpectedCount
+			receipt.Status = "FAIL_CLOSED"
+			receipt.FailureClass = "UNKNOWN"
+			receipt.Unknown = &UnknownCausal{UnknownClass: "DIRECT_MISSING", Stage: "CONCEPT_OPERATION_BINDING", Step: "RECONSTRUCT_EXACT_COHORT", Reason: "CONCEPT_OPERATION_DIRECT_EVIDENCE_MISSING", NextOperation: "CAPTURE_EXACT_PRODUCER_INPUTS", BlockedBy: []string{}}
+		}},
+		{name: "replaced-resealed", mutate: func(receipt *Receipt) {
+			receipt.Expected[0].Operation = "replaced-operation"
+			receipt.Expected[0].IndicatorID = metricstrategy.ConceptOperationIndicatorID("replaced-operation")
+		}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			receipt := fixture.receipt
+			receipt.Expected = append([]OperationBinding(nil), receipt.Expected...)
+			testCase.mutate(&receipt)
+			sealed, err := seal(receipt)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := VerifySource(sealed, fixture.inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err == nil {
+				t.Fatal("resealed cohort mutation was accepted")
+			}
+		})
+	}
+}
+
+func TestConsumerRejectsValidJSONResealedProgramTamper(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	inputs := fixture.inputs
+	var program metricprogram.Program
+	if err := json.Unmarshal(inputs.Program, &program); err != nil {
+		t.Fatal(err)
+	}
+	program.SourceDigest = fixtureDigest("forged-source")
+	program.Digest = ""
+	program.Digest, _ = artifact.Digest(program)
+	inputs.Program, _ = json.Marshal(program)
+	var verification programverify.Report
+	if err := json.Unmarshal(inputs.ProgramVerification, &verification); err != nil {
+		t.Fatal(err)
+	}
+	verification.ProgramDigest = program.Digest
+	verification.SourceDigest = program.SourceDigest
+	verification.Digest = ""
+	verification.Digest, _ = artifact.Digest(verification)
+	inputs.ProgramVerification, _ = json.Marshal(verification)
+	if err := VerifySource(fixture.receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err == nil {
+		t.Fatal("valid JSON resealed program tamper was accepted")
+	}
+}
+
+func TestConsumerRejectsAlteredInterventionWithClaimedDigest(t *testing.T) {
+	fixture := buildReceiptFixture(t)
+	inputs := fixture.inputs
+	var ledger metric.Ledger
+	if err := json.Unmarshal(inputs.Intervention, &ledger); err != nil {
+		t.Fatal(err)
+	}
+	ledger.Indicators[0].Actual = "tampered"
+	inputs.Intervention, _ = json.Marshal(ledger)
+	if err := VerifySource(fixture.receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err == nil {
+		t.Fatal("altered intervention with claimed digest was accepted")
 	}
 }
 
@@ -106,7 +231,7 @@ func TestConsumerRejectsResealedAndTamperedEvidence(t *testing.T) {
 			receipt.Expected = append([]OperationBinding(nil), receipt.Expected...)
 			inputs := fixture.inputs
 			testCase.mutate(&receipt, &inputs)
-			if err := VerifySource(receipt, inputs, fixture.repositoryFS, fixture.repository, fixture.subjectSHA); err == nil {
+			if err := VerifySource(receipt, inputs, fixture.repositoryFS, fixture.repositoryRoot, fixture.repository, fixture.subjectSHA); err == nil {
 				t.Fatal("tampered concept-operation evidence was accepted")
 			}
 		})
@@ -196,7 +321,7 @@ func buildReceiptFixture(t *testing.T) receiptFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return receiptFixture{receipt: receipt, inputs: SourceInputs{Strategy: strategyPayload, StrategyVerification: strategyVerificationPayload, SourceMetrics: metricsPayload, Intervention: ledgerPayload, InterventionVerification: interventionVerificationPayload, Program: programPayload, ProgramSource: programSource, ProgramVerification: programVerificationPayload}, repository: repository, subjectSHA: subjectSHA, repositoryFS: os.DirFS(root)}
+	return receiptFixture{receipt: receipt, inputs: SourceInputs{Strategy: strategyPayload, StrategyVerification: strategyVerificationPayload, SourceMetrics: metricsPayload, Intervention: ledgerPayload, InterventionVerification: interventionVerificationPayload, Program: programPayload, ProgramSource: programSource, ProgramVerification: programVerificationPayload, ScratchDirectory: directory}, repository: repository, subjectSHA: subjectSHA, repositoryRoot: root, repositoryFS: os.DirFS(root)}
 }
 
 func fixtureDigest(value string) string {

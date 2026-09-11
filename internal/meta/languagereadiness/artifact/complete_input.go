@@ -7,6 +7,7 @@ type CompleteEvidenceInput struct {
 	ConceptOperationBinding []byte
 	ConceptOperationInputs conceptoperation.SourceInputs
 	RepositoryRoot         string
+	ConceptOperationScratchDirectory string
 	Promotion              []byte
 	Capability             []byte
 	UseCases               []byte
