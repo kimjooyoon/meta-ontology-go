@@ -333,6 +333,57 @@ func TestCompactVerifierPackageSummaryRowsPrioritizesMarkersAndElapsedRows(t *te
 	}
 }
 
+func TestVerifierPackageSummaryRowLessOrdersTimedRowsTransitively(t *testing.T) {
+	twenty := int64(20)
+	ten := int64(10)
+	rows := []verifierPackageSummaryRow{
+		{Package: "pkg/z", ElapsedNanoseconds: &twenty},
+		{Package: "pkg/m", ElapsedStatus: "UNKNOWN"},
+		{Package: "pkg/a", ElapsedNanoseconds: &ten},
+	}
+	for first := range rows {
+		if verifierPackageSummaryRowLess(rows[first], rows[first]) {
+			t.Fatalf("row comparator is not irreflexive for row %d", first)
+		}
+		for second := range rows {
+			if verifierPackageSummaryRowLess(rows[first], rows[second]) && verifierPackageSummaryRowLess(rows[second], rows[first]) {
+				t.Fatalf("row comparator has a cycle: %d and %d", first, second)
+			}
+			for third := range rows {
+				if verifierPackageSummaryRowLess(rows[first], rows[second]) && verifierPackageSummaryRowLess(rows[second], rows[third]) && !verifierPackageSummaryRowLess(rows[first], rows[third]) {
+					t.Fatalf("row comparator is not transitive: %d, %d, %d", first, second, third)
+				}
+			}
+		}
+	}
+	if !verifierPackageSummaryRowLess(rows[0], rows[2]) || !verifierPackageSummaryRowLess(rows[2], rows[1]) || !verifierPackageSummaryRowLess(rows[0], rows[1]) {
+		t.Fatalf("timed rows did not precede unknown elapsed rows: %#v", rows)
+	}
+
+	fifty := int64(50)
+	fiftyAgain := int64(50)
+	ties := []verifierPackageSummaryRow{
+		{Package: "pkg/b", Status: "ok", OutputMarker: "z", ElapsedNanoseconds: &fifty},
+		{Package: "pkg/a", Status: "ok", OutputMarker: "z", ElapsedNanoseconds: &fiftyAgain},
+		{Package: "pkg/a", Status: "FAIL", OutputMarker: "z", ElapsedNanoseconds: &fifty},
+		{Package: "pkg/a", Status: "ok", OutputMarker: "a", ElapsedNanoseconds: &fiftyAgain},
+	}
+	if !verifierPackageSummaryRowLess(ties[2], ties[3]) || !verifierPackageSummaryRowLess(ties[3], ties[1]) || !verifierPackageSummaryRowLess(ties[1], ties[0]) {
+		t.Fatalf("equal-duration lexical tie-break changed: %#v", ties)
+	}
+}
+
+func TestCompactVerifierPackageSummaryRowsPrioritizesFailureOverBenignMarkers(t *testing.T) {
+	rows := []verifierPackageSummaryRow{
+		{Package: "pkg/cached", Status: "ok", ElapsedStatus: "UNKNOWN", OutputMarker: verifierOutputMarkerCached},
+		{Package: "pkg/fail", Status: "FAIL", ElapsedStatus: "UNKNOWN"},
+	}
+	sampled := compactVerifierPackageSummaryRows(rows, 1)
+	if len(sampled) != 1 || sampled[0].Status != "FAIL" || sampled[0].Package != "pkg/fail" {
+		t.Fatalf("failure exemplar was not prioritized: %#v", sampled)
+	}
+}
+
 func TestBoundedVerifierPackageSummaryPayloadRetainsAllRecordSamples(t *testing.T) {
 	records := make([]verifierPackageSummaryRecord, 0, 4)
 	for index := 0; index < 4; index++ {

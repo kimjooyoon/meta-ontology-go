@@ -263,66 +263,72 @@ func compactVerifierPackageSummaryRows(rows []verifierPackageSummaryRow, limit i
 
 	selected := make([]bool, len(rows))
 	indices := make([]int, 0, limit)
-	appendBest := func(matches func(verifierPackageSummaryRow) bool) {
-		if len(indices) >= limit {
-			return
+	selectVerifierPackageSummaryExemplars(rows, selected, &indices, limit)
+	orderedFillVerifierPackageSummaryRows(rows, selected, &indices, limit, unselectedVerifierPackageSummaryIndices(rows, selected, true))
+	orderedFillVerifierPackageSummaryRows(rows, selected, &indices, limit, unselectedVerifierPackageSummaryIndices(rows, selected, false))
+	return verifierPackageSummaryRowsAtIndices(rows, indices)
+}
+
+func selectVerifierPackageSummaryExemplars(rows []verifierPackageSummaryRow, selected []bool, indices *[]int, limit int) {
+	for _, marker := range []string{verifierOutputMarkerBuildFailed, verifierOutputMarkerSetupFailed} {
+		appendBestVerifierPackageSummaryRow(rows, selected, indices, limit, func(row verifierPackageSummaryRow) bool {
+			return row.OutputMarker == marker
+		})
+	}
+	appendBestVerifierPackageSummaryRow(rows, selected, indices, limit, func(row verifierPackageSummaryRow) bool {
+		return row.Status == "FAIL"
+	})
+	for _, marker := range []string{verifierOutputMarkerCached, verifierOutputMarkerNoTestFiles, verifierOutputMarkerNoTestsToRun} {
+		appendBestVerifierPackageSummaryRow(rows, selected, indices, limit, func(row verifierPackageSummaryRow) bool {
+			return row.OutputMarker == marker
+		})
+	}
+}
+
+func appendBestVerifierPackageSummaryRow(rows []verifierPackageSummaryRow, selected []bool, indices *[]int, limit int, matches func(verifierPackageSummaryRow) bool) {
+	if len(*indices) >= limit {
+		return
+	}
+	best := -1
+	for index, row := range rows {
+		if selected[index] || !matches(row) {
+			continue
 		}
-		best := -1
-		for index, row := range rows {
-			if selected[index] || !matches(row) || (best >= 0 && !verifierPackageSummaryRowLess(row, rows[best])) {
-				continue
-			}
+		if best < 0 || verifierPackageSummaryRowLess(row, rows[best]) {
 			best = index
 		}
-		if best >= 0 {
-			selected[best] = true
-			indices = append(indices, best)
-		}
 	}
-
-	for _, marker := range []string{
-		verifierOutputMarkerBuildFailed,
-		verifierOutputMarkerSetupFailed,
-		verifierOutputMarkerCached,
-		verifierOutputMarkerNoTestFiles,
-		verifierOutputMarkerNoTestsToRun,
-	} {
-		appendBest(func(row verifierPackageSummaryRow) bool { return row.OutputMarker == marker })
+	if best >= 0 {
+		selected[best] = true
+		*indices = append(*indices, best)
 	}
-	appendBest(func(row verifierPackageSummaryRow) bool { return row.Status == "FAIL" })
+}
 
-	fill := func(candidates []int) {
-		sort.SliceStable(candidates, func(left, right int) bool {
-			return verifierPackageSummaryRowLess(rows[candidates[left]], rows[candidates[right]])
-		})
-		for _, index := range candidates {
-			if len(indices) >= limit {
-				return
-			}
-			if selected[index] {
-				continue
-			}
-			selected[index] = true
-			indices = append(indices, index)
-		}
-	}
-
-	timed := make([]int, 0, len(rows))
+func unselectedVerifierPackageSummaryIndices(rows []verifierPackageSummaryRow, selected []bool, timedOnly bool) []int {
+	indices := make([]int, 0, len(rows))
 	for index, row := range rows {
-		if !selected[index] && row.ElapsedNanoseconds != nil {
-			timed = append(timed, index)
+		if selected[index] || (timedOnly && row.ElapsedNanoseconds == nil) {
+			continue
 		}
+		indices = append(indices, index)
 	}
-	fill(timed)
+	return indices
+}
 
-	remaining := make([]int, 0, len(rows)-len(indices))
-	for index := range rows {
-		if !selected[index] {
-			remaining = append(remaining, index)
+func orderedFillVerifierPackageSummaryRows(rows []verifierPackageSummaryRow, selected []bool, indices *[]int, limit int, candidates []int) {
+	sort.SliceStable(candidates, func(left, right int) bool {
+		return verifierPackageSummaryRowLess(rows[candidates[left]], rows[candidates[right]])
+	})
+	for _, index := range candidates {
+		if len(*indices) >= limit {
+			return
 		}
+		selected[index] = true
+		*indices = append(*indices, index)
 	}
-	fill(remaining)
+}
 
+func verifierPackageSummaryRowsAtIndices(rows []verifierPackageSummaryRow, indices []int) []verifierPackageSummaryRow {
 	compacted := make([]verifierPackageSummaryRow, 0, len(indices))
 	for _, index := range indices {
 		compacted = append(compacted, rows[index])
@@ -331,7 +337,12 @@ func compactVerifierPackageSummaryRows(rows []verifierPackageSummaryRow, limit i
 }
 
 func verifierPackageSummaryRowLess(left, right verifierPackageSummaryRow) bool {
-	if left.ElapsedNanoseconds != nil && right.ElapsedNanoseconds != nil && *left.ElapsedNanoseconds != *right.ElapsedNanoseconds {
+	leftTimed := left.ElapsedNanoseconds != nil
+	rightTimed := right.ElapsedNanoseconds != nil
+	if leftTimed != rightTimed {
+		return leftTimed
+	}
+	if leftTimed && *left.ElapsedNanoseconds != *right.ElapsedNanoseconds {
 		return *left.ElapsedNanoseconds > *right.ElapsedNanoseconds
 	}
 	if left.Package != right.Package {
