@@ -36,11 +36,11 @@ func PolicyRevisionNativeBinding() (PolicyRevisionOperationBinding, error) {
 }
 
 type policyRevisionOperationAST struct {
-	file      *syntax.File
-	source    *syntax.EntityDecl
-	revision  *syntax.EntityDecl
-	proposal  *syntax.EntityDecl
-	activity  *syntax.ActivityDecl
+	file     *syntax.File
+	source   *syntax.EntityDecl
+	revision *syntax.EntityDecl
+	proposal *syntax.EntityDecl
+	activity *syntax.ActivityDecl
 }
 
 func parsePolicyRevisionOperation(source []byte) (policyRevisionOperationAST, error) {

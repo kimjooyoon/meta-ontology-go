@@ -155,6 +155,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "policy-revision-operation-contract",
+      "path": "internal/meta/policycompilation/revision-contract.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "metric-meta-program-closure",
       "path": "examples/metric-meta-program-closure/main.gooo",
       "kind": "VALID",
