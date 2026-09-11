@@ -8,8 +8,8 @@ import (
 
 type config struct {
 	root, input, conceptOperationBinding, conceptOperationInputDir, conceptOperationScratchDir, promotion, guarded, useCases, syntax, diagnostic, packageRuntime string
-	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, toolchainRelease string
-	output, check, expectedRepository, expectedSHA, expectedPredecessorSHA                 string
+	toolchainCLI, toolchainFormatFix, toolchainLSP, toolchainConformance, toolchainRelease                                                                       string
+	output, check, expectedRepository, expectedSHA, expectedPredecessorSHA                                                                                       string
 }
 
 func main() {

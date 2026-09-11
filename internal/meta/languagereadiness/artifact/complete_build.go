@@ -4,7 +4,6 @@ import (
 	"os"
 
 	readiness "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness"
-	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagediagnosticprovenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagepackageruntime"
@@ -13,6 +12,7 @@ import (
 	metacli "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchaincli"
 	metaff "github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainformatfix"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 )
 
 func BuildWithCompleteEvidence(input CompleteEvidenceInput) (Receipt, error) {

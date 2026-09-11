@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/guardedcapability"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 )
 
 func validatePromotionEvidence(bundle PromotionEvidence,
@@ -45,7 +45,7 @@ func validatePromotionEvidence(bundle PromotionEvidence,
 		conceptOperationInputs := bundle.ConceptOperationInputs
 		conceptOperationInputs.ScratchDirectory = bundle.ConceptOperationScratchDirectory
 		if err := conceptoperation.VerifySource(bundle.ConceptOperation, conceptOperationInputs,
-			os.DirFS(bundle.ConceptOperationRepository), expectedRepository, expectedHeadSHA); err != nil {
+			os.DirFS(bundle.ConceptOperationRepository), bundle.ConceptOperationRepository, expectedRepository, expectedHeadSHA); err != nil {
 			return evidenceDigests{}, fmt.Errorf("verify concept-operation producer inputs: %w", err)
 		}
 		if bundle.ConceptOperation.Status == "VERIFIED" {

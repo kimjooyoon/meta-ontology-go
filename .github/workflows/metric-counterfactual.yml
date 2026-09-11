@@ -834,6 +834,11 @@ jobs:
           test -s "$first/source-metrics.json"
           test -s "$first/intervention-ledger.json"
           test -s "$first/intervention-verification.json"
+          transport="$RUNNER_TEMP/metric-concept-operation"
+          mkdir -p "$transport"
+          for source_file in concept-operation-binding.json strategy-plan.json strategy-verification.json source-metrics.json intervention-ledger.json intervention-verification.json program.json program.gooo verification.json; do
+            cp "$first/$source_file" "$transport/$source_file"
+          done
           jq -n \
             --arg schema "gooo/metric-meta-program-producer-attempt/v1" \
             --arg repository "$GITHUB_REPOSITORY" \
@@ -842,8 +847,8 @@ jobs:
             --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
             --arg producer_job "$GITHUB_JOB" \
             '{schema:$schema,repository:$repository,subject_sha:$subject_sha,workflow_run_id:($run_id|tonumber),workflow_run_attempt:($run_attempt|tonumber),producer_job:$producer_job}' \
-            > "$first/producer-attempt.json"
-          test -s "$first/producer-attempt.json"
+            > "$transport/producer-attempt.json"
+          test -s "$transport/producer-attempt.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
         id: upload
@@ -858,7 +863,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: metric-concept-operation-${{ env.SUBJECT_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/metric-meta-program/first
+          path: ${{ runner.temp }}/metric-concept-operation
           if-no-files-found: error
           retention-days: 30
 

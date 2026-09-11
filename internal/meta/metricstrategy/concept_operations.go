@@ -18,9 +18,9 @@ type conceptOperation struct {
 // the two registered terminal bindings; it is not derived from the observed
 // concept bindings in the sealed plan.
 type ConceptOperationSpec struct {
-	Subject string
-	Carrier string
-	Family  string
+	Subject  string
+	Carrier  string
+	Family   string
 	Trilemma string
 }
 
@@ -70,7 +70,7 @@ func conceptOperationBindings(value languageconcept.Artifact, source []Binding) 
 	for _, spec := range specs {
 		binding, err := conceptOperationBinding(value.ArtifactDigest, conceptOperation{
 			subject: spec.Subject, carrier: spec.Carrier, family: spec.Family, trilemma: spec.Trilemma,
-	}, known)
+		}, known)
 		if err != nil {
 			return nil, err
 		}

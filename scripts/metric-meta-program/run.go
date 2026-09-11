@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram"
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 	programverify "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/verify"
 )
 
