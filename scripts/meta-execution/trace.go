@@ -22,10 +22,10 @@ type metaExecutionTrace struct {
 }
 
 type metaExecutionTraceState struct {
-	invocationID          string
-	eventSequence         uint64
-	writer                io.Writer
-	cost                  metaExecutionCostState
+	invocationID           string
+	eventSequence          uint64
+	writer                 io.Writer
+	cost                   metaExecutionCostState
 	verifierPackageSummary *verifierPackageSummaryCollector
 }
 

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -20,6 +20,18 @@ const maxVerifierPackageSummaryRowsPerInvocation = 512
 const maxVerifierPackageSummaryTotalRows = 2048
 const maxVerifierPackageSummaryRecords = 64
 const maxVerifierPackageSummaryFileBytes = 256 * 1024
+const maxVerifierDurationNanoseconds int64 = 1<<63 - 1
+const verifierNanosecondsPerSecond uint64 = 1_000_000_000
+
+const verifierOutputMarkerAuthority = "OBSERVED_OUTPUT_MARKER"
+
+const (
+	verifierOutputMarkerCached       = "CACHED"
+	verifierOutputMarkerNoTestFiles  = "NO_TEST_FILES"
+	verifierOutputMarkerNoTestsToRun = "NO_TESTS_TO_RUN"
+	verifierOutputMarkerBuildFailed  = "BUILD_FAILED"
+	verifierOutputMarkerSetupFailed  = "SETUP_FAILED"
+)
 
 type verifierPackageSummaryDocument struct {
 	Schema             string                         `json:"schema"`
@@ -52,13 +64,14 @@ type verifierPackageSummaryRecord struct {
 }
 
 type verifierPackageSummaryRow struct {
-	Package             string `json:"package"`
-	Status              string `json:"status"`
-	ElapsedToken        string `json:"elapsed_token,omitempty"`
-	ElapsedStatus       string `json:"elapsed_status"`
-	ElapsedUnit         string `json:"elapsed_unit,omitempty"`
-	ElapsedNanoseconds  *int64 `json:"elapsed_nanoseconds,omitempty"`
-	OutputMarker        string `json:"output_marker,omitempty"`
+	Package               string `json:"package"`
+	Status                string `json:"status"`
+	ElapsedToken          string `json:"elapsed_token,omitempty"`
+	ElapsedStatus         string `json:"elapsed_status"`
+	ElapsedUnit           string `json:"elapsed_unit,omitempty"`
+	ElapsedNanoseconds    *int64 `json:"elapsed_nanoseconds,omitempty"`
+	OutputMarker          string `json:"output_marker,omitempty"`
+	OutputMarkerAuthority string `json:"output_marker_authority,omitempty"`
 }
 
 type verifierPackageSummaryParse struct {
@@ -292,11 +305,9 @@ func parseVerifierPackageSummaryLine(line []byte) (verifierPackageSummaryRow, bo
 	}
 	tail := fields[2:]
 	if len(tail) == 1 && tail[0] == "(cached)" {
-		row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
+		row.OutputMarker = verifierOutputMarkerCached
+		row.OutputMarkerAuthority = verifierOutputMarkerAuthority
 		return row, true, false
-	}
-	if len(tail) > 0 && !strings.HasPrefix(tail[0], "[") {
-		row.ElapsedToken = tail[0]
 	}
 	if len(tail) == 1 {
 		if nanoseconds, ok := exactVerifierDuration(tail[0]); ok {
@@ -306,22 +317,30 @@ func parseVerifierPackageSummaryLine(line []byte) (verifierPackageSummaryRow, bo
 			row.ElapsedNanoseconds = &nanoseconds
 			return row, true, false
 		}
-	}
-	if len(tail) > 1 {
-		if nanoseconds, ok := exactVerifierDuration(tail[0]); ok && observedVerifierOutputMarker(tail[1:]) {
-			row.ElapsedToken = tail[0]
-			row.ElapsedStatus = "PARSED_EXACTLY"
-			row.ElapsedUnit = "NANOSECONDS"
-			row.ElapsedNanoseconds = &nanoseconds
-			row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
+		if marker, ok := verifierOutputMarkerKind(tail); ok {
+			row.OutputMarker = marker
+			row.OutputMarkerAuthority = verifierOutputMarkerAuthority
 			return row, true, false
 		}
 	}
-	if observedVerifierOutputMarker(tail) {
-		row.OutputMarker = "OBSERVED_OUTPUT_MARKER"
-		return row, true, false
+	if len(tail) > 1 {
+		if nanoseconds, ok := exactVerifierDuration(tail[0]); ok {
+			if marker, markerOK := verifierOutputMarkerKind(tail[1:]); markerOK {
+				row.ElapsedToken = tail[0]
+				row.ElapsedStatus = "PARSED_EXACTLY"
+				row.ElapsedUnit = "NANOSECONDS"
+				row.ElapsedNanoseconds = &nanoseconds
+				row.OutputMarker = marker
+				row.OutputMarkerAuthority = verifierOutputMarkerAuthority
+				return row, true, false
+			}
+		}
+		if marker, ok := verifierOutputMarkerKind(tail); ok {
+			row.OutputMarker = marker
+			row.OutputMarkerAuthority = verifierOutputMarkerAuthority
+			return row, true, false
+		}
 	}
-	row.OutputMarker = "UNRECOGNIZED_OUTPUT_MARKER"
 	return row, true, true
 }
 
@@ -341,36 +360,71 @@ func validVerifierPackagePath(packagePath string) bool {
 }
 
 func exactVerifierDuration(token string) (int64, bool) {
-	if token == "" || strings.HasPrefix(token, "-") || strings.HasPrefix(token, "+") {
+	if token == "" || token[len(token)-1] != 's' {
 		return 0, false
 	}
-	for index := 0; index < len(token); index++ {
-		if token[index] != '.' {
-			continue
-		}
-		start := index + 1
-		end := start
-		for end < len(token) && token[end] >= '0' && token[end] <= '9' {
-			end++
-		}
-		if end == start || end-start > 9 {
+	number := token[:len(token)-1]
+	if number == "" {
+		return 0, false
+	}
+	whole := number
+	fraction := ""
+	if dot := strings.IndexByte(number, '.'); dot >= 0 {
+		if strings.IndexByte(number[dot+1:], '.') >= 0 {
 			return 0, false
 		}
-		index = end - 1
+		whole = number[:dot]
+		fraction = number[dot+1:]
+		if whole == "" || fraction == "" || len(fraction) > 9 {
+			return 0, false
+		}
 	}
-	duration, err := time.ParseDuration(token)
-	if err != nil {
+	for _, digit := range whole {
+		if digit < '0' || digit > '9' {
+			return 0, false
+		}
+	}
+	for _, digit := range fraction {
+		if digit < '0' || digit > '9' {
+			return 0, false
+		}
+	}
+	seconds, err := strconv.ParseUint(whole, 10, 64)
+	if err != nil || seconds > uint64(maxVerifierDurationNanoseconds)/verifierNanosecondsPerSecond {
 		return 0, false
 	}
-	return int64(duration), true
+	fractionValue := uint64(0)
+	if fraction != "" {
+		fractionValue, err = strconv.ParseUint(fraction, 10, 64)
+		if err != nil {
+			return 0, false
+		}
+		for digits := len(fraction); digits < 9; digits++ {
+			fractionValue *= 10
+		}
+	}
+	wholeNanoseconds := seconds * verifierNanosecondsPerSecond
+	maxNanoseconds := uint64(maxVerifierDurationNanoseconds)
+	if wholeNanoseconds > maxNanoseconds-fractionValue {
+		return 0, false
+	}
+	return int64(wholeNanoseconds + fractionValue), true
 }
 
-func observedVerifierOutputMarker(tokens []string) bool {
-	if len(tokens) == 0 {
-		return false
-	}
+func verifierOutputMarkerKind(tokens []string) (string, bool) {
 	joined := strings.Join(tokens, " ")
-	return strings.HasPrefix(joined, "[") && strings.HasSuffix(joined, "]")
+	switch joined {
+	case "[no test files]":
+		return verifierOutputMarkerNoTestFiles, true
+	case "[no tests to run]":
+		return verifierOutputMarkerNoTestsToRun, true
+	case "[build failed]":
+		return verifierOutputMarkerBuildFailed, true
+	case "[setup failed]":
+		return verifierOutputMarkerSetupFailed, true
+	default:
+		return "", false
+	}
 }
 
 func (parsed verifierPackageSummaryParse) status() string {
