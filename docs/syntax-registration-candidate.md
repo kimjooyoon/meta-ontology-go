@@ -92,6 +92,34 @@ Request example, with observed values filled by the caller:
 }
 ~~~
 
+## Internal meta source registration
+
+An explicit request may also name an existing `internal/meta/**/*.gooo`
+source. This is the same VALID LANGUAGE_CAPABILITY registration operation,
+not a meta-source exemption or a smaller denominator. Lexical traversal,
+absolute paths, look-alike prefixes, other internal namespaces and non-Gooo
+extensions remain rejected before input observation. This path predicate is
+not a filesystem sandbox or write permission.
+
+The source is read-only input. All nine generated artifact roles remain
+mandatory, the next denominator version is appended, historical versions
+remain unchanged, and candidate application/promotion authority stays false.
+Source, snapshot, typed request and executable identities remain pinned.
+
+The existing dedicated Actions workflow now exercises both the original
+example source and a policy-revision-shaped internal meta source. Each uses
+an isolated CI copy, exact candidate reconstruction, deterministic replay
+and the unchanged syntax/vertical-slice conformance packages. Internal-source
+evidence is kept under `internal-meta-source/` alongside the original
+case's artifacts. Both retain the exact request and Gooo source in addition
+to the candidate, native report and command output.
+
+The internal case is a declared synthetic compiler regression, not external
+adoption or proof of policy revision execution. Case-specific wall time is
+an observation only; no speed or memory improvement is claimed without a
+matched before/after pair. No extra local build, test, formatter or generator
+execution is part of this workflow.
+
 ## Native evidence and remaining integration
 
 The dedicated Actions job retains the canonical nine-file end-to-end case.

@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -118,6 +119,99 @@ func TestCandidateIsCompleteSourceBoundReplayWithoutAuthority(t *testing.T) {
 			t.Fatalf("candidate member is unbound or duplicated: %s", member.Path)
 		}
 		seen[member.Path] = true
+	}
+}
+
+
+const internalMetaRegistrationSource = `package metapolicyrevision
+namespace metapolicyrevision
+
+entity PolicySource id "gooo://meta-policy-revision/source"
+entity PolicyDecisionRevision id "gooo://meta-policy-revision/request"
+entity PolicyDecisionProposal id "gooo://meta-policy-revision/proposal"
+
+activity ProposePolicyDecisionRevision(PolicySource, PolicyDecisionRevision) -> PolicyDecisionProposal
+`
+
+func internalMetaFixture(t *testing.T) (fstest.MapFS, Request) {
+	t.Helper()
+	data, request := fixture(t)
+	delete(data, request.Case.Path)
+	request.Case.ID = "policy-revision-operation-contract"
+	request.Case.Path = "internal/meta/policycompilation/revision-contract.gooo"
+	request.Case.EntityFields = false
+	data[request.Case.Path] = &fstest.MapFile{Data: []byte(internalMetaRegistrationSource)}
+	pin(t, data, &request)
+	return data, request
+}
+
+func TestRegistrationSourceDomains(t *testing.T) {
+	for _, test := range []struct {
+		path    string
+		allowed bool
+	}{
+		{"examples/new/main.gooo", true},
+		{"internal/meta/new/contract.gooo", true},
+		{"../examples/main.gooo", false},
+		{"examples/../main.gooo", false},
+		{"/absolute/main.gooo", false},
+		{"internal/meta/../main.gooo", false},
+		{"internal/meta-other/main.gooo", false},
+		{"internal/other/main.gooo", false},
+		{".github/workflows/main.gooo", false},
+		{"docs/main.gooo", false},
+		{"internal/meta/main.go", false},
+		{"", false},
+	} {
+		t.Run(test.path, func(t *testing.T) {
+			if registrationSourcePath(test.path) != test.allowed {
+				t.Fatalf("unexpected source-domain admission for %q", test.path)
+			}
+			if !test.allowed {
+				request := Request{BaseVersion: 30, Case: languagesyntax.CaseDefinition{Path: test.path}}
+				_, _, err := InspectInputs(fstest.MapFS{}, request)
+				requireFailure(t, err, "REFUTED", "")
+				if err.Error() != "REFUTED/REGISTRATION_INPUT_INVALID" {
+					t.Fatalf("source was not rejected before input observation: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestInternalMetaSourceRegistrationPreservesAllNineRoles(t *testing.T) {
+	data, request := internalMetaFixture(t)
+	before := digestValue(data)
+	plan, err := Compile(data, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidate, err := plan.Generate(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := plan.ValidateCandidate(data, candidate); err != nil {
+		t.Fatal(err)
+	}
+	if candidate.RequiredArtifacts != 9 || len(candidate.Artifacts) != 9 ||
+		candidate.Required != candidate.Emitted || candidate.Emitted != len(candidate.Members) ||
+		candidate.InputDigest != request.SnapshotDigest || candidate.RequestDigest != digestValue(request) ||
+		candidate.ExecutionBinding.Identity != request.ExecutionIdentity ||
+		candidate.ApplyAuthorized || candidate.PromotionAllowed || candidate.RepositoryWrites != 0 ||
+		candidate.State != "PROPOSAL_ONLY" || candidate.Admission != "UNASSESSED" {
+		t.Fatal("internal source registration lost its complete role, input, or authority boundary")
+	}
+	if digestValue(data) != before {
+		t.Fatal("internal source registration changed the input snapshot")
+	}
+	for _, member := range candidate.Members {
+		if member.Path == request.Case.Path {
+			t.Fatal("registration attempted to rewrite its source")
+		}
+		if strings.HasPrefix(member.Path, closureRoot+"evidence/") &&
+			(member.Path != denominatorPath(request.BaseVersion+1) || member.BeforeDigest != "ABSENT") {
+			t.Fatal("registration attempted to rewrite denominator history")
+		}
 	}
 }
 
