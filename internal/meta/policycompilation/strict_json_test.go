@@ -412,7 +412,9 @@ func TestPolicyDecisionProposalRejectsUnboundChanges(t *testing.T) {
 		change func(*PolicyDecisionRevision)
 	}{
 		{"missing-source-digest", func(value *PolicyDecisionRevision) { value.ExpectedSourceDigest = "" }},
-		{"stale-source-digest", func(value *PolicyDecisionRevision) { value.ExpectedSourceDigest = DigestBytes([]byte("different source")) }},
+		{"stale-source-digest", func(value *PolicyDecisionRevision) {
+			value.ExpectedSourceDigest = DigestBytes([]byte("different source"))
+		}},
 		{"missing-condition", func(value *PolicyDecisionRevision) { value.Condition = "" }},
 		{"unknown-condition", func(value *PolicyDecisionRevision) { value.Condition = "UNDECLARED_CONDITION" }},
 		{"stale-from-decision", func(value *PolicyDecisionRevision) { value.FromDecision = DecisionUnknown }},
@@ -518,7 +520,6 @@ func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
 		t.Fatal("candidate execution was promoted into external evidence or mutation authority")
 	}
 }
-
 
 func declaredCaseSourceFixture(t *testing.T) []byte {
 	t.Helper()

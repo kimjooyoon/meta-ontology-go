@@ -151,7 +151,6 @@ func ProposePolicyDecisionRevision(filename string, source []byte, expectedPacka
 	}, nil
 }
 
-
 func compileNamedForIdentity(filename string, source []byte, expectedPackage, expectedNamespace string) (CompiledPolicy, error) {
 	ir, file, err := lowerPolicy(filename, source, expectedPackage, expectedNamespace)
 	if err != nil {
