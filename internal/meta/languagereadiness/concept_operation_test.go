@@ -3,7 +3,16 @@ package languagereadiness
 import "testing"
 
 func TestConceptGovernedRefactoringDoesNotCreditMetadataOnly(t *testing.T) {
-	obligation := obligations[5]
+	var obligation Obligation
+	for _, candidate := range obligations {
+		if candidate.ID == "META-CONCEPT-GOVERNED-REFACTORING" {
+			obligation = candidate
+			break
+		}
+	}
+	if obligation.ID == "" {
+		t.Fatal("META-CONCEPT-GOVERNED-REFACTORING obligation is not registered")
+	}
 	without := evaluateObligation(obligation, []conceptEvidence{{
 		ID: obligation.ConceptID, Stage: "OPERATING", CodeBindings: []string{"internal/meta/metricstrategy"},
 		MetricBindings: []string{"gooo.metric.meta.concept-operation-binding-bps.v1"},
