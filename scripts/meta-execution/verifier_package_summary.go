@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -21,6 +22,7 @@ const maxVerifierPackageSummaryRowsPerInvocation = 512
 const maxVerifierPackageSummaryTotalRows = 2048
 const maxVerifierPackageSummaryRecords = 64
 const maxVerifierPackageSummaryFileBytes = 256 * 1024
+const maxVerifierPackageSummarySampleRows = 16
 const maxVerifierDurationNanoseconds int64 = 1<<63 - 1
 const verifierNanosecondsPerSecond uint64 = 1_000_000_000
 
@@ -184,18 +186,21 @@ func boundedVerifierPackageSummaryPayload(document verifierPackageSummaryDocumen
 
 	document.Truncated = true
 	document.DiagnosticMarkers = appendVerifierPackageSummaryMarker(document.DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
-	for index := len(document.Records) - 1; index >= 0 && len(payload) > maxPayloadBytes; index-- {
-		if len(document.Records[index].Packages) == 0 {
-			continue
-		}
-		document.Records[index].Packages = nil
-		document.Records[index].Truncated = true
-		document.Records[index].ParseStatus = "TRUNCATED"
-		document.Records[index].DiagnosticMarkers = appendVerifierPackageSummaryMarker(document.Records[index].DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
+	for _, sampleRows := range []int{maxVerifierPackageSummarySampleRows, 8, 4, 2, 1} {
+		document.Records = compactVerifierPackageSummaryRecords(document.Records, sampleRows)
 		payload, err = json.MarshalIndent(document, "", "  ")
 		if err != nil {
 			return nil, err
 		}
+		if len(payload) <= maxPayloadBytes {
+			return append(payload, '\n'), nil
+		}
+	}
+
+	document.Records = truncateVerifierPackageSummaryRecords(document.Records)
+	payload, err = json.MarshalIndent(document, "", "  ")
+	if err != nil {
+		return nil, err
 	}
 	if len(payload) > maxPayloadBytes {
 		document.Records = nil
@@ -208,6 +213,140 @@ func boundedVerifierPackageSummaryPayload(document verifierPackageSummaryDocumen
 		return nil, fmt.Errorf("verifier package summary sidecar exceeds bounded size")
 	}
 	return append(payload, '\n'), nil
+}
+
+func cloneVerifierPackageSummaryRecords(records []verifierPackageSummaryRecord) []verifierPackageSummaryRecord {
+	cloned := make([]verifierPackageSummaryRecord, len(records))
+	for index, record := range records {
+		cloned[index] = record
+		cloned[index].DiagnosticMarkers = append([]string(nil), record.DiagnosticMarkers...)
+		cloned[index].Packages = append([]verifierPackageSummaryRow(nil), record.Packages...)
+	}
+	return cloned
+}
+
+func compactVerifierPackageSummaryRecords(records []verifierPackageSummaryRecord, limit int) []verifierPackageSummaryRecord {
+	compacted := cloneVerifierPackageSummaryRecords(records)
+	for index := range compacted {
+		if len(compacted[index].Packages) <= limit {
+			continue
+		}
+		compacted[index].Packages = compactVerifierPackageSummaryRows(compacted[index].Packages, limit)
+		compacted[index].Truncated = true
+		compacted[index].ParseStatus = "TRUNCATED"
+		compacted[index].DiagnosticMarkers = appendVerifierPackageSummaryMarker(compacted[index].DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
+	}
+	return compacted
+}
+
+func truncateVerifierPackageSummaryRecords(records []verifierPackageSummaryRecord) []verifierPackageSummaryRecord {
+	truncated := cloneVerifierPackageSummaryRecords(records)
+	for index := range truncated {
+		if len(truncated[index].Packages) == 0 {
+			continue
+		}
+		truncated[index].Packages = nil
+		truncated[index].Truncated = true
+		truncated[index].ParseStatus = "TRUNCATED"
+		truncated[index].DiagnosticMarkers = appendVerifierPackageSummaryMarker(truncated[index].DiagnosticMarkers, "TRUNCATED_OUTPUT_FILE")
+	}
+	return truncated
+}
+
+func compactVerifierPackageSummaryRows(rows []verifierPackageSummaryRow, limit int) []verifierPackageSummaryRow {
+	if len(rows) <= limit {
+		return append([]verifierPackageSummaryRow(nil), rows...)
+	}
+	if limit <= 0 {
+		return nil
+	}
+
+	selected := make([]bool, len(rows))
+	indices := make([]int, 0, limit)
+	appendBest := func(matches func(verifierPackageSummaryRow) bool) {
+		if len(indices) >= limit {
+			return
+		}
+		best := -1
+		for index, row := range rows {
+			if selected[index] || !matches(row) || (best >= 0 && !verifierPackageSummaryRowLess(row, rows[best])) {
+				continue
+			}
+			best = index
+		}
+		if best >= 0 {
+			selected[best] = true
+			indices = append(indices, best)
+		}
+	}
+
+	for _, marker := range []string{
+		verifierOutputMarkerBuildFailed,
+		verifierOutputMarkerSetupFailed,
+		verifierOutputMarkerCached,
+		verifierOutputMarkerNoTestFiles,
+		verifierOutputMarkerNoTestsToRun,
+	} {
+		appendBest(func(row verifierPackageSummaryRow) bool { return row.OutputMarker == marker })
+	}
+	appendBest(func(row verifierPackageSummaryRow) bool { return row.Status == "FAIL" })
+
+	fill := func(candidates []int) {
+		sort.SliceStable(candidates, func(left, right int) bool {
+			return verifierPackageSummaryRowLess(rows[candidates[left]], rows[candidates[right]])
+		})
+		for _, index := range candidates {
+			if len(indices) >= limit {
+				return
+			}
+			if selected[index] {
+				continue
+			}
+			selected[index] = true
+			indices = append(indices, index)
+		}
+	}
+
+	timed := make([]int, 0, len(rows))
+	for index, row := range rows {
+		if !selected[index] && row.ElapsedNanoseconds != nil {
+			timed = append(timed, index)
+		}
+	}
+	fill(timed)
+
+	remaining := make([]int, 0, len(rows)-len(indices))
+	for index := range rows {
+		if !selected[index] {
+			remaining = append(remaining, index)
+		}
+	}
+	fill(remaining)
+
+	compacted := make([]verifierPackageSummaryRow, 0, len(indices))
+	for _, index := range indices {
+		compacted = append(compacted, rows[index])
+	}
+	return compacted
+}
+
+func verifierPackageSummaryRowLess(left, right verifierPackageSummaryRow) bool {
+	if left.ElapsedNanoseconds != nil && right.ElapsedNanoseconds != nil && *left.ElapsedNanoseconds != *right.ElapsedNanoseconds {
+		return *left.ElapsedNanoseconds > *right.ElapsedNanoseconds
+	}
+	if left.Package != right.Package {
+		return left.Package < right.Package
+	}
+	if left.Status != right.Status {
+		return left.Status < right.Status
+	}
+	if left.OutputMarker != right.OutputMarker {
+		return left.OutputMarker < right.OutputMarker
+	}
+	if left.ElapsedToken != right.ElapsedToken {
+		return left.ElapsedToken < right.ElapsedToken
+	}
+	return left.ElapsedStatus < right.ElapsedStatus
 }
 
 func appendVerifierPackageSummaryMarker(markers []string, marker string) []string {
