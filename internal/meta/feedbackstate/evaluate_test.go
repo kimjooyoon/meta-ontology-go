@@ -63,8 +63,10 @@ func TestAggregateRepositoryWritesBoundaries(t *testing.T) {
 		{name: "positive", counts: []int{1, 0, 0}, want: 1},
 		{name: "negative input", counts: []int{-1, 0, 0}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
 		{name: "negative outer", counts: []int{0, -1, 0}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
+		{name: "negative cancellation", counts: []int{1, -1, 0}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
 		{name: "negative nested", counts: []int{0, 0, -1}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
 		{name: "overflow", counts: []int{maxInt, maxInt, 2}, wantReason: "FAIL_CLOSED: REPOSITORY_WRITES_OVERFLOW"},
+		{name: "negative takes priority", counts: []int{maxInt, maxInt, -1}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
 		{name: "maximum safe", counts: []int{maxInt - 1, 0, 1}, want: maxInt},
 	}
 	for _, test := range tests {
@@ -104,13 +106,15 @@ func inputWithRepositoryWrites(t *testing.T, inputWrites, outerWrites, nestedWri
 func TestEvaluateRejectsInvalidRepositoryWritesWithoutReport(t *testing.T) {
 	maxInt := int(^uint(0) >> 1)
 	tests := []struct {
-		name, wantReason string
+		name, wantReason     string
 		input, outer, nested int
 	}{
 		{name: "negative input", wantReason: "NEGATIVE_REPOSITORY_WRITES", input: -1},
 		{name: "negative outer", wantReason: "NEGATIVE_REPOSITORY_WRITES", outer: -1},
+		{name: "negative cancellation", wantReason: "NEGATIVE_REPOSITORY_WRITES", input: 1, outer: -1},
 		{name: "negative nested", wantReason: "NEGATIVE_REPOSITORY_WRITES", nested: -1},
 		{name: "overflow", wantReason: "REPOSITORY_WRITES_OVERFLOW", input: maxInt, outer: maxInt, nested: 2},
+		{name: "negative takes priority", wantReason: "NEGATIVE_REPOSITORY_WRITES", input: maxInt, outer: maxInt, nested: -1},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -128,9 +132,9 @@ func TestEvaluateRejectsInvalidRepositoryWritesWithoutReport(t *testing.T) {
 func TestEvaluatePreservesWriteEvidenceBoundaries(t *testing.T) {
 	maxInt := int(^uint(0) >> 1)
 	tests := []struct {
-		name                         string
+		name                       string
 		input, outer, nested, want int
-		wantDecision, wantReason     string
+		wantDecision, wantReason   string
 	}{
 		{name: "zero", wantDecision: "READY", wantReason: "PREDECESSOR_SEMANTIC_SNAPSHOT_READY"},
 		{name: "positive", input: 1, want: 1, wantDecision: decisionClosed, wantReason: "PREDECESSOR_WRITE_EFFECT"},
