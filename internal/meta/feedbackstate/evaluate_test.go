@@ -1,6 +1,10 @@
 package feedbackstate
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestSemanticUseCases(t *testing.T) {
 	tests := []struct {
@@ -17,7 +21,10 @@ func TestSemanticUseCases(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			input := fixture(test.decision, test.source, test.from, test.to, test.previous, test.descents)
-			report := Evaluate(input)
+			report, err := Evaluate(input)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if report.Decision != test.wantDecision || report.Reason != test.wantReason {
 				t.Fatalf("got %s/%s", report.Decision, report.Reason)
 			}
@@ -34,12 +41,107 @@ func TestSemanticUseCases(t *testing.T) {
 func TestBindingAndWriteEffectsFailClosed(t *testing.T) {
 	input := fixture(decisionFixed, decisionFixed, "exact_operation", "exact_operation", 0, 0)
 	input.PayloadDigest = "sha256:wrong"
-	if report := Evaluate(input); report.Reason != "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH" {
+	if report, err := Evaluate(input); err != nil || report.Reason != "PREDECESSOR_PAYLOAD_DIGEST_MISMATCH" {
 		t.Fatal(report.Reason)
 	}
 	input = fixture(decisionFixed, decisionFixed, "exact_operation", "exact_operation", 0, 0)
 	input.RepositoryWrites = 1
-	if report := Evaluate(input); report.Reason != "PREDECESSOR_WRITE_EFFECT" {
+	if report, err := Evaluate(input); err != nil || report.Reason != "PREDECESSOR_WRITE_EFFECT" {
 		t.Fatal(report.Reason)
+	}
+}
+
+func TestAggregateRepositoryWritesBoundaries(t *testing.T) {
+	maxInt := int(^uint(0) >> 1)
+	tests := []struct {
+		name       string
+		counts     []int
+		want       int
+		wantReason string
+	}{
+		{name: "zero", counts: []int{0, 0, 0}},
+		{name: "positive", counts: []int{1, 0, 0}, want: 1},
+		{name: "negative input", counts: []int{-1, 0, 0}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
+		{name: "negative outer", counts: []int{0, -1, 0}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
+		{name: "negative nested", counts: []int{0, 0, -1}, wantReason: "FAIL_CLOSED: NEGATIVE_REPOSITORY_WRITES"},
+		{name: "overflow", counts: []int{maxInt, maxInt, 2}, wantReason: "FAIL_CLOSED: REPOSITORY_WRITES_OVERFLOW"},
+		{name: "maximum safe", counts: []int{maxInt - 1, 0, 1}, want: maxInt},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := AggregateRepositoryWrites(test.counts...)
+			if test.wantReason != "" {
+				if err == nil || err.Error() != test.wantReason {
+					t.Fatalf("got %d/%v", got, err)
+				}
+				return
+			}
+			if err != nil || got != test.want {
+				t.Fatalf("got %d/%v", got, err)
+			}
+		})
+	}
+}
+
+func inputWithRepositoryWrites(t *testing.T, inputWrites, outerWrites, nestedWrites int) Input {
+	t.Helper()
+	input := fixture(decisionFixed, decisionFixed, "exact_operation", "exact_operation", 0, 0)
+	input.RepositoryWrites = inputWrites
+	var receipt archivedReceipt
+	if err := json.Unmarshal(input.Receipt, &receipt); err != nil {
+		t.Fatal(err)
+	}
+	receipt.RepositoryWrites = outerWrites
+	receipt.Report.RepositoryWrites = nestedWrites
+	raw, err := json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input.Receipt, input.PayloadDigest = raw, payloadDigest(raw)
+	return input
+}
+
+func TestEvaluateRejectsInvalidRepositoryWritesWithoutReport(t *testing.T) {
+	maxInt := int(^uint(0) >> 1)
+	tests := []struct {
+		name, wantReason string
+		input, outer, nested int
+	}{
+		{name: "negative input", wantReason: "NEGATIVE_REPOSITORY_WRITES", input: -1},
+		{name: "negative outer", wantReason: "NEGATIVE_REPOSITORY_WRITES", outer: -1},
+		{name: "negative nested", wantReason: "NEGATIVE_REPOSITORY_WRITES", nested: -1},
+		{name: "overflow", wantReason: "REPOSITORY_WRITES_OVERFLOW", input: maxInt, outer: maxInt, nested: 2},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			report, err := Evaluate(inputWithRepositoryWrites(t, test.input, test.outer, test.nested))
+			if err == nil || !strings.Contains(err.Error(), test.wantReason) {
+				t.Fatalf("got report=%#v err=%v", report, err)
+			}
+			if report.Decision != "" || report.ReportDigest != "" || len(report.Indicators) != 0 || len(report.Proofs) != 0 {
+				t.Fatalf("invalid count published report: %#v", report)
+			}
+		})
+	}
+}
+
+func TestEvaluatePreservesWriteEvidenceBoundaries(t *testing.T) {
+	maxInt := int(^uint(0) >> 1)
+	tests := []struct {
+		name                         string
+		input, outer, nested, want int
+		wantDecision, wantReason     string
+	}{
+		{name: "zero", wantDecision: "READY", wantReason: "PREDECESSOR_SEMANTIC_SNAPSHOT_READY"},
+		{name: "positive", input: 1, want: 1, wantDecision: decisionClosed, wantReason: "PREDECESSOR_WRITE_EFFECT"},
+		{name: "maximum safe", input: maxInt - 1, nested: 1, want: maxInt, wantDecision: decisionClosed, wantReason: "PREDECESSOR_WRITE_EFFECT"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			report, err := Evaluate(inputWithRepositoryWrites(t, test.input, test.outer, test.nested))
+			if err != nil || report.Decision != test.wantDecision || report.Reason != test.wantReason || report.Summary.RepositoryWrites != test.want {
+				t.Fatalf("got report=%#v err=%v", report, err)
+			}
+		})
 	}
 }

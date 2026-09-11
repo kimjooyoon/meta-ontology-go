@@ -1373,6 +1373,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-write-count-boundary-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_part01.go"
+      ]
+    },
+    {
       "branch": "agent/formatter",
       "paths": [
         "internal/formatter/**"
