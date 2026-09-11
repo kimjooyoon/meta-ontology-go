@@ -267,3 +267,40 @@ The private witness consumes those public artifacts and executes the generated
 judge independently. Its existing six-file runner-temp write set remains the
 execution/conformance boundary, while the public profile directory is carried
 as a separate caller-owned artifact boundary.
+
+
+## Independent raw-source observation
+
+After CI builds the consumer binary, the experimental read-only mode can
+observe a policy without the three synthetic cases or producer artifacts:
+
+~~~sh
+meta-policy-compilation-consumer -observe-source \
+  -policy examples/meta-policy-compilation/policy.gooo
+~~~
+
+The mode writes one `gooo/meta-policy-source-observation/v1` JSON document to
+stdout. It reparses raw Gooo with the consumer's policy reader and preserves
+source digest, semantic digest, expected package/namespace, declared rule
+denominator and source-derived rule/meta-operation bindings. It does not
+read producer JSON, bind placeholder case digests, execute a generated judge,
+write a report file or mutate the source.
+
+`-profile-package` and `-profile-namespace` retain their existing defaults
+and may be supplied explicitly. Mixing this mode with `-cases`, `-artifact`,
+`-manifest`, `-output`, unknown mode flags or positional arguments is rejected
+before reading a policy. The existing three-case consumer path is unchanged.
+
+Raw-source reconstruction is not policy conformance or admission.
+`current_conformance` remains `UNKNOWN` with stage, step, reason,
+unknown_class, next_operation and an explicit empty blocked_by frontier.
+Policy execution and producer-artifact observation remain false; repository
+writes, mutation authority and promotion authority remain zero.
+
+The consumer shares the language parser and IR lowering with other language
+tools. This is separate policy reconstruction, not an independently
+implemented compiler. Its digests are source observations for a later
+source-bound execution/producer comparison, not permission to adopt a
+revision or relabel synthetic fixtures as current execution evidence.
+Read, parse and output failures remain errors and must not become success
+or silently supplied digests in a caller.

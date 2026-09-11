@@ -160,7 +160,21 @@ func main() {
 	profilePackage := flag.String("profile-package", "metapolicycompilation", "expected policy package")
 	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
 	manifestPath := flag.String("manifest", "", "public generation manifest")
+	observeSource := flag.Bool("observe-source", false, "reconstruct only raw policy source to stdout; no execution or producer artifacts")
 	flag.Parse()
+	if *observeSource {
+		supplied := []string{}
+		flag.Visit(func(current *flag.Flag) { supplied = append(supplied, current.Name) })
+		request := sourceObservationRequest{
+			PolicyPath: *policyPath, ExpectedPackage: *profilePackage, ExpectedNamespace: *profileNamespace,
+			Flags: supplied, Arguments: flag.Args(),
+		}
+		if err := runSourceObservation(request, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *policyPath == "" || *casesPath == "" || *artifactDir == "" || *outputPath == "" {
 		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-consumer -policy policy.gooo -cases cases.json -artifact DIR -output report.json")
 		os.Exit(2)
