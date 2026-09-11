@@ -32,6 +32,45 @@ The write-set claim compares exact sorted file snapshots (path, mode, size,
 and content digest) at the start and end of the producer run; it claims only a
 net repository change of zero, not that no system call wrote a file.
 
+## Declared inputs in the generated executable
+
+The generated standalone judge accepts an explicit `--declared-input` mode:
+
+```sh
+# Execute in caller-owned CI/runner output, not during gooo generate.
+go run "$OUT/judge.go" --declared-input < "$CASE_JSON"
+```
+
+No handwritten Go wrapper or private witness is needed for this mode. Gooo
+still supplies the reduction rows. Generation still emits four artifacts and
+does not execute them; the caller separately chooses to run the generated
+program. This is a generated-executable mode, not a new Gooo CLI subcommand.
+
+The `gooo/generated-policy-declared-input/v1` envelope records the generated
+decision, matched rule and UNKNOWN context, source and semantic identities,
+raw-input and effective-input digests, and per-field supplied/effective values.
+Bindings are derived from the generated program's actual input type and JSON
+tags, rather than another field registry. Missing, null and explicit false
+remain distinguishable even when their effective value and decision agree.
+
+The generated execution input has eight fields. It is not the eleven-field
+compiler Case: validator expectation, evidence classification and provenance
+metadata are not generated-judge input fields. Exact JSON names and a single
+object are required in declared mode; aliases, duplicate keys, unknown fields,
+wrong types and trailing documents do not produce a report.
+
+An emitted report describes conditional generated-policy evaluation. External
+evidence remains UNKNOWN/not verified and full conformance remains UNKNOWN/not
+executed. The program reports that it ran, but this is
+`SELF_REPORTED_NOT_ATTESTED`, not authenticated CI execution evidence.
+Mutation and promotion authority are both zero. A conditional PASS does not
+verify the truth of supplied availability or digest claims.
+
+The no-argument mode preserves the existing decision-only output schema.
+Declared-mode replay equality covers this report, not external utility or
+permission to mutate a repository. CI exercises the input corpus using one
+compiled generated binary rather than rebuilding it for each document.
+
 ## Declared-case evaluation boundary (internal compiler API)
 
 `policycompilation.EvaluateDeclaredCase` compiles caller-supplied Gooo source
@@ -53,7 +92,7 @@ as an optional-field or evidence rule.
 
 This API requires a JSON object and exact field spellings. Case-folded aliases
 are rejected rather than attributed to a different or missing field. Existing
-Case decoding and generated-judge behavior are unchanged.
+Case decoding and the default generated-judge behavior are unchanged.
 
 Availability, provenance, evidence classifications, and observed digests remain
 caller declarations. The result is conditional source-policy evaluation:
