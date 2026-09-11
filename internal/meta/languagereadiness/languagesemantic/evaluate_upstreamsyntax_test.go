@@ -1,9 +1,11 @@
 package languagesemantic
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -34,10 +36,8 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 	root := testRepositoryRoot(t)
 	canonical := actualSyntaxProducerReport(t, root)
 	tests := []struct {
-		name                   string
-		mutate                 func(*languagesyntax.Report)
-		validatorMustAccept    bool
-		expectSourceBindError  bool
+		name   string
+		mutate func(*languagesyntax.Report)
 	}{
 		{
 			name: "head",
@@ -66,16 +66,12 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 					report.Summary.GoooLines += file.GoooLines
 				}
 			},
-			validatorMustAccept:   true,
-			expectSourceBindError: true,
 		},
 		{
 			name: "source path",
 			mutate: func(report *languagesyntax.Report) {
 				report.Source.GoooFiles[0].Path = "examples/tampered-source.gooo"
 			},
-			validatorMustAccept:   true,
-			expectSourceBindError: true,
 		},
 		{
 			name: "source line count",
@@ -83,16 +79,12 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 				report.Source.GoooFiles[0].GoooLines++
 				report.Summary.GoooLines++
 			},
-			validatorMustAccept:   true,
-			expectSourceBindError: true,
 		},
 		{
 			name: "source digest recomputed",
 			mutate: func(report *languagesyntax.Report) {
 				report.Source.GoooFiles[0].SourceDigest = testDigest([]byte("tampered source"))
 			},
-			validatorMustAccept:   true,
-			expectSourceBindError: true,
 		},
 		{
 			name: "case path",
@@ -142,11 +134,6 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 			report := cloneSyntaxReport(t, canonical)
 			testCase.mutate(&report)
 			resignSyntaxReport(&report)
-			if testCase.validatorMustAccept {
-				if err := languagesyntax.Validate(report, testSyntaxHead); err != nil {
-					t.Fatalf("producer validator rejected a source-bound tampering fixture: %v", err)
-				}
-			}
 			semantic, err := consumeSyntaxProducerReport(t, root, report)
 			if err != nil {
 				t.Fatal(err)
@@ -154,15 +141,25 @@ func TestSemanticConsumerRejectsRecomputedUpstreamTampering(t *testing.T) {
 			if semantic.Decision != DecisionFailClosed || semantic.Resolution != ResolutionLower {
 				t.Fatalf("tampered syntax report was accepted: decision=%s resolution=%s reason=%s", semantic.Decision, semantic.Resolution, semantic.ReasonCode)
 			}
-			if testCase.expectSourceBindError {
-				if len(semantic.Cases) == 0 {
-					t.Fatal("source-bound tampering produced no semantic cases")
-				}
-				if !strings.Contains(semantic.Cases[0].Evidence.Error, "upstream syntax source") {
-					t.Fatalf("source-bound tampering did not reach independent source rejection: %#v", semantic.Cases[0].Evidence)
-				}
-			}
 		})
+	}
+}
+
+func TestSemanticConsumerRejectsProducerValidModifiedSource(t *testing.T) {
+	root := testRepositoryRoot(t)
+	report := modifiedSyntaxProducerReport(t, root)
+	semantic, err := consumeSyntaxProducerReport(t, root, report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if semantic.Decision != DecisionFailClosed || semantic.Resolution != ResolutionLower {
+		t.Fatalf("producer-valid modified source was accepted: decision=%s resolution=%s reason=%s", semantic.Decision, semantic.Resolution, semantic.ReasonCode)
+	}
+	if len(semantic.Cases) == 0 {
+		t.Fatal("producer-valid modified source produced no semantic cases")
+	}
+	if !strings.Contains(semantic.Cases[0].Evidence.Error, "upstream syntax source") {
+		t.Fatalf("producer-valid modified source did not reach independent source rejection: %#v", semantic.Cases[0].Evidence)
 	}
 }
 
@@ -202,6 +199,61 @@ func actualSyntaxProducerReport(t *testing.T, root string) languagesyntax.Report
 	}
 	return report
 }
+
+func modifiedSyntaxProducerReport(t *testing.T, root string) languagesyntax.Report {
+	t.Helper()
+	base := os.DirFS(root)
+	path := "examples/billing/main.gooo"
+	original, err := fs.ReadFile(base, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	modified := append(append([]byte(nil), original...), '\n')
+	repository := syntaxOverlayFS{base: base, path: path, data: modified}
+	registry, err := os.ReadFile(filepath.Join(root, "examples/language-syntax-roundtrip/corpus.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := languagesyntax.Evaluate(repository, testSyntaxHead, registry, languageconcept.BuildArtifact(repository))
+	if err := languagesyntax.Validate(report, testSyntaxHead); err != nil {
+		t.Fatalf("producer rejected the modified-source fixture: %v", err)
+	}
+	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact {
+		t.Fatalf("modified-source producer report was not PASS/EXACT: decision=%s resolution=%s", report.Decision, report.Resolution)
+	}
+	return report
+}
+
+type syntaxOverlayFS struct {
+	base fs.FS
+	path string
+	data []byte
+}
+
+func (overlay syntaxOverlayFS) Open(name string) (fs.File, error) {
+	if name != overlay.path {
+		return overlay.base.Open(name)
+	}
+	baseFile, err := overlay.base.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	info, err := baseFile.Stat()
+	_ = baseFile.Close()
+	if err != nil {
+		return nil, err
+	}
+	return syntaxOverlayFile{Reader: bytes.NewReader(overlay.data), info: info}, nil
+}
+
+type syntaxOverlayFile struct {
+	*bytes.Reader
+	info fs.FileInfo
+}
+
+func (file syntaxOverlayFile) Stat() (fs.FileInfo, error) { return file.info, nil }
+
+func (file syntaxOverlayFile) Close() error { return nil }
 
 func consumeSyntaxProducerReport(t *testing.T, root string, syntaxReport languagesyntax.Report) (Report, error) {
 	t.Helper()
