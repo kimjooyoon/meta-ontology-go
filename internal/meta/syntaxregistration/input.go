@@ -71,7 +71,6 @@ func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
 	return inputs, nil
 }
 
-
 // registrationSourcePath admits explicit lexical source domains, not write authority.
 func registrationSourcePath(path string) bool {
 	return validPath(path) && strings.HasSuffix(path, ".gooo") &&

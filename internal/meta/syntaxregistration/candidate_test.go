@@ -122,7 +122,6 @@ func TestCandidateIsCompleteSourceBoundReplayWithoutAuthority(t *testing.T) {
 	}
 }
 
-
 const internalMetaRegistrationSource = `package metapolicyrevision
 namespace metapolicyrevision
 
