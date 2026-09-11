@@ -107,4 +107,3 @@ func runSourceObservation(request sourceObservationRequest, output io.Writer) er
 	}
 	return nil
 }
-

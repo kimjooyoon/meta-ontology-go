@@ -104,7 +104,7 @@ func TestSourceObservationRejectsMixedModesBeforeFileObservation(t *testing.T) {
 		"positional", "missing-policy", "missing-package", "missing-namespace"} {
 		t.Run(name, func(t *testing.T) {
 			request := sourceObservationRequest{
-				PolicyPath: filepath.Join(t.TempDir(), "must-not-be-read.gooo"),
+				PolicyPath:      filepath.Join(t.TempDir(), "must-not-be-read.gooo"),
 				ExpectedPackage: "metapolicycompilation", ExpectedNamespace: "metapolicycompilation",
 				Flags: []string{"observe-source", "policy"},
 			}
@@ -168,7 +168,7 @@ func (sourceObservationClosedWriter) Write([]byte) (int, error) { return 0, io.E
 func TestSourceObservationPreservesReadAndOutputFailures(t *testing.T) {
 	t.Run("missing-input", func(t *testing.T) {
 		request := sourceObservationRequest{
-			PolicyPath: filepath.Join(t.TempDir(), "missing.gooo"),
+			PolicyPath:      filepath.Join(t.TempDir(), "missing.gooo"),
 			ExpectedPackage: "metapolicycompilation", ExpectedNamespace: "metapolicycompilation",
 		}
 		var output bytes.Buffer
@@ -183,4 +183,3 @@ func TestSourceObservationPreservesReadAndOutputFailures(t *testing.T) {
 		}
 	})
 }
-
