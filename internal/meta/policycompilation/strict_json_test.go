@@ -121,6 +121,79 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 		}
 		return document
 	}
+	t.Run("input-schema", func(t *testing.T) {
+		output, err := run(nil, "--input-schema")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var envelope map[string]json.RawMessage
+		if err := decodeStrictJSON(output, &envelope); err != nil || len(envelope) != 9 {
+			t.Fatalf("input schema: %v: %s", err, output)
+		}
+		for key, want := range map[string]string{
+			"schema":          "gooo/generated-policy-input-schema/v1",
+			"source_digest":   policy.SourceDigest,
+			"semantic_digest": policy.SemanticDigest,
+			"evaluation_mode": "--declared-input",
+		} {
+			var got string
+			if err := json.Unmarshal(envelope[key], &got); err != nil || got != want {
+				t.Fatalf("%s = %s (%v), want %q", key, envelope[key], err, want)
+			}
+		}
+		if string(envelope["policy_evaluation_observed"]) != "false" || string(envelope["mutation_authority"]) != "0" || string(envelope["promotion_authority"]) != "0" {
+			t.Fatal("input discovery was promoted into policy evaluation or authority")
+		}
+		if !bytes.Equal(envelope["default_input"], encode(generatedJudgeInput{})) {
+			t.Fatal("input schema defaults differ from the typed runtime ABI")
+		}
+		var fields []map[string]json.RawMessage
+		if err := decodeStrictJSON(envelope["fields"], &fields); err != nil {
+			t.Fatal(err)
+		}
+		shape := reflect.TypeFor[generatedJudgeInput]()
+		if len(fields) != shape.NumField() {
+			t.Fatal("input schema field count differs from the typed runtime ABI")
+		}
+		for index, field := range fields {
+			expected := shape.Field(index)
+			if len(field) != 5 || string(field["required"]) != "false" || string(field["nullable"]) != "true" {
+				t.Fatalf("input schema invented required fields or erased null defaulting: %s", envelope["fields"])
+			}
+			for key, want := range map[string]string{
+				"json_field": strings.Split(expected.Tag.Get("json"), ",")[0],
+				"go_type":    expected.Type.String(),
+			} {
+				var got string
+				if err := json.Unmarshal(field[key], &got); err != nil || got != want {
+					t.Fatalf("schema field %d %s = %s (%v), want %q", index, key, field[key], err, want)
+				}
+			}
+			zero, err := json.Marshal(reflect.Zero(expected.Type).Interface())
+			if err != nil || !bytes.Equal(field["default"], zero) {
+				t.Fatalf("schema field %d changed its zero value: %v", index, err)
+			}
+		}
+		replay, err := run([]byte("not JSON; input schema does not decode stdin"), "--input-schema")
+		if err != nil || !bytes.Equal(output, replay) {
+			t.Fatalf("input discovery depends on a supplied case: %v", err)
+		}
+		defaultOutput, err := run(envelope["default_input"], "--declared-input")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var defaultEnvelope map[string]json.RawMessage
+		if err := decodeStrictJSON(defaultOutput, &defaultEnvelope); err != nil {
+			t.Fatal(err)
+		}
+		var defaultDecision DecisionResult
+		if err := decodeStrictJSON(defaultEnvelope["generated_decision"], &defaultDecision); err != nil {
+			t.Fatal(err)
+		}
+		if defaultDecision.Decision != "UNKNOWN" || !reflect.DeepEqual(defaultDecision, EvaluateSourcePolicy(policy, Case{})) {
+			t.Fatalf("schema-driven defaults manufactured policy evidence: %+v", defaultDecision)
+		}
+	})
 	bound := generatedJudgeInput{
 		ID: "conditional-pass", ProducerAvailable: true, ConsumerAvailable: true,
 		ObservedSourceDigest: policy.SourceDigest, ObservedArtifactSourceDigest: policy.SourceDigest,
@@ -253,8 +326,13 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 			t.Fatalf("unbindable declared input emitted a report: %s: %v: %s", document, err, output)
 		}
 	}
-	if output, err := run(passDocument, "--declared-input", "--unknown"); err == nil || len(output) != 0 {
-		t.Fatalf("unknown argument silently downgraded the mode: %v: %s", err, output)
+	for _, arguments := range [][]string{
+		{"--declared-input", "--unknown"},
+		{"--input-schema", "--declared-input"},
+	} {
+		if output, err := run(passDocument, arguments...); err == nil || len(output) != 0 {
+			t.Fatalf("unknown or conflicting arguments silently downgraded the mode: %v: %s", err, output)
+		}
 	}
 	output, err := run(passDocument)
 	if err != nil {
