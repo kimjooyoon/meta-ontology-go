@@ -2,7 +2,6 @@ package policycompilation
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -230,14 +229,8 @@ func verifyCaseClaimEvents(ledger ClaimLedger, caseIndex int, stored CaseReceipt
 
 func DecodeReceipt(data []byte) (Receipt, error) {
 	var receipt Receipt
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&receipt); err != nil {
+	if err := decodeStrictJSON(data, &receipt); err != nil {
 		return Receipt{}, err
-	}
-	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
-		return Receipt{}, errors.New("receipt contains trailing JSON")
 	}
 	return receipt, nil
 }

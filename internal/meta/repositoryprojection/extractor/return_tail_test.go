@@ -29,10 +29,11 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 		{name: "escaping branch", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tgoto done\n\tdone:\n\treturn nil\n"), positive: false},
 		{name: "address escape stale pointer", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tp := &err\n\t_ = p\n", "\t*p = errorSentinel()\n\treturn err\n"), positive: false},
 		{name: "closure capture stale copy", source: returnTailPrefixBindingFixture("func F(values map[string]struct{}) error {\n", "\terr := error(nil)\n\tset := func() { err = errorSentinel() }\n\t_ = set\n", "\tset()\n\treturn err\n"), positive: false},
+		{name: "function iterator execution", source: returnTailFunctionIteratorFixture(), positive: false},
 		{name: "false helper capacity proof", source: returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n"+strings.Repeat("\t\t_ = 1\n", 70)+"\t\treturn nil\n\t}\n\treturn nil\n"), positive: false},
 	}
-	if len(cases) != 10 {
-		t.Fatalf("safety matrix denominator=%d, want 10", len(cases))
+	if len(cases) != 11 {
+		t.Fatalf("safety matrix denominator=%d, want 11", len(cases))
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -48,11 +49,29 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				if err != nil {
 					t.Fatalf("positive case failed: %v", err)
 				}
-				if len(result.Evidence) != 1 || result.Evidence[0].Strategy != returnTailStrategy {
+				if len(result.Evidence) == 0 {
 					t.Fatalf("strategy evidence=%+v", result.Evidence)
 				}
-				if len(result.Evidence[0].Obligations) != len(returnTailObligations) {
-					t.Fatalf("obligations=%+v", result.Evidence[0].Obligations)
+				for index := range result.Evidence {
+					evidence := &result.Evidence[index]
+					if evidence.Strategy != returnTailStrategy || len(evidence.Obligations) != len(returnTailObligations) ||
+						len(evidence.ProofStages) != len(returnTailObligations) || len(evidence.ContractObligations) != len(returnTailObligations) {
+						t.Fatalf("strategy evidence[%d]=%+v", index, *evidence)
+					}
+					finalCapacity := evidence.FinalRenderedCapacity
+					if evidence.AfterFunctionLines > functionLineLimit || evidence.RenderedHelperLines > functionLineLimit ||
+						evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage || evidence.AfterRenderedCapacityOverage < 0 ||
+						finalCapacity == nil || finalCapacity.Scope != "final-generated-functions" || finalCapacity.Lines <= 0 || finalCapacity.Overage != 0 {
+						t.Fatalf("capacity evidence[%d]=%+v", index, *evidence)
+					}
+					if evidence.AfterRenderedCapacityOverage > 0 {
+						progress := evidence.PreparationProgress
+						if progress == nil || progress.BeforeOverage != evidence.BeforeRenderedCapacityOverage || progress.AfterOverage != evidence.AfterRenderedCapacityOverage || progress.BeforeOverage <= progress.AfterOverage || progress.AfterOverage <= 0 {
+							t.Fatalf("progress evidence[%d]=%+v", index, *evidence)
+						}
+					} else if evidence.PreparationProgress != nil {
+						t.Fatalf("final evidence[%d] retained intermediate progress=%+v", index, *evidence)
+					}
 				}
 				var selectedPreflight *PreflightObservationEvidence
 				for index := range result.Evidence[0].PreflightObservations {
@@ -67,10 +86,6 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 					selectedPreflight.FunctionStatus != string(renderedCapacityOverCap) || selectedPreflight.SourceDigest == "" ||
 					selectedPreflight.ContractSourceDigest == "" || selectedPreflight.ContractSemanticDigest == "" {
 					t.Fatalf("preflight evidence=%+v, want selected function observation with bound digests", result.Evidence[0].PreflightObservations)
-				}
-				if result.Evidence[0].BeforeFunctionLines <= functionLineLimit || result.Evidence[0].AfterFunctionLines > functionLineLimit ||
-					result.Evidence[0].RenderedHelperLines > functionLineLimit || result.Evidence[0].RenderedOuterHelperLines > functionLineLimit {
-					t.Fatalf("capacity evidence=%+v", result.Evidence[0])
 				}
 				for path, data := range result.Generated {
 					if physicalLines(data) > functionLineLimit {
@@ -97,11 +112,45 @@ func TestReturnTailSafetyMatrix(t *testing.T) {
 				assertReturnTailClosureCaptureRejected(t, tc.source)
 				return
 			}
-			if failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
+			if tc.name == "function iterator execution" && (failure.Reason != "CALLEE_EFFECTS_UNPROVEN" || failure.UnknownClass != "DIRECT_MISSING") {
+				t.Fatalf("function iterator reason=%s class=%s error=%v", failure.Reason, failure.UnknownClass, err)
+			}
+			if tc.name != "function iterator execution" && failure.Reason != "NO_SAFE_DECLARATION_CAPACITY" && failure.Reason != "METHOD_SUFFIX_DECOMPOSITION_UNSAFE" {
 				t.Fatalf("negative case reason=%s error=%v", failure.Reason, err)
 			}
 		})
 	}
+}
+
+func TestReturnTailPreparationProgressDefersFinalCapacityProof(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	source := returnTailFixture("func F(values map[string]struct{}) error {\n", "\tif len(values) != 0 {\n\t\treturn nil\n\t}\n\treturn nil\n")
+	if err := os.WriteFile(filepath.Join(root, "x.go"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", []byte(source), parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, evidence, err := prepareOversizedFunctions(root, "x.go", []byte(source), fset, file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range evidence {
+		if item.Strategy != returnTailStrategy || item.AfterRenderedCapacityOverage <= 0 {
+			continue
+		}
+		if item.PreparationProgress == nil || len(item.ProofStages) != len(returnTailObligations)-2 || len(item.Obligations) != len(returnTailObligations)-2 ||
+			item.FinalRenderedCapacity != nil {
+			t.Fatalf("return-tail intermediate evidence=%+v, want progress without final capacity proof", item)
+		}
+		return
+	}
+	t.Fatalf("preparation evidence=%+v, want a return-tail intermediate progress record", evidence)
 }
 
 func assertReturnTailClosureCaptureRejected(t *testing.T, source string) {
@@ -148,4 +197,8 @@ func returnTailFixture(header, tail string) string {
 
 func returnTailPrefixBindingFixture(header, prefix, tail string) string {
 	return "package p\n\n" + header + prefix + strings.Repeat("\t_ = 1\n", 72) + tail + "}\n\nfunc errorSentinel() error { return &sentinelError{} }\n\ntype sentinelError struct{}\n\nfunc (*sentinelError) Error() string { return \"sentinel\" }\n\ntype T struct{}\n"
+}
+
+func returnTailFunctionIteratorFixture() string {
+	return "package p\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\tfor range iterator {}\n\treturn nil\n}\n\nfunc iterator(yield func(int) bool) {}\n"
 }

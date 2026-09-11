@@ -12,16 +12,7 @@ import (
 
 func produce(cfg config, stdout io.Writer) error {
 	report, err := build(cfg)
-	if err != nil {
-		return err
-	}
-	data, _ := json.MarshalIndent(report, "", "  ")
-	data = append(data, '\n')
-	if err := os.WriteFile(cfg.output, data, 0o644); err != nil {
-		return err
-	}
-	printSummary(stdout, report)
-	return nil
+	return persistBuiltReport(cfg.output, report, err, stdout)
 }
 
 func consume(cfg config, stdout io.Writer) error {

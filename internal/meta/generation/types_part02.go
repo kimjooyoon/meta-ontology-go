@@ -1,6 +1,9 @@
 package generation
 
-import "github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/sourcepolicy"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/syntaxregistration"
+)
 
 type Binding struct {
 	Operation                   sourcepolicy.Operation   `json:"operation"`
@@ -45,6 +48,8 @@ type Action struct {
 	RequiredIndicatorIDs        []string                         `json:"required_indicator_ids"`
 	ReceiptRequired             bool                             `json:"receipt_required"`
 	Priority                    uint32                           `json:"priority"`
+
+	RegistrationRequest *syntaxregistration.Request `json:"registration_request,omitempty"`
 }
 
 // Counterexample preserves a typed planner contradiction without turning it
@@ -89,6 +94,8 @@ type Plan struct {
 	PromotionAuthorized       bool                     `json:"promotion_authorized"`
 	PlanDigest                string                   `json:"plan_digest"`
 	ReplayDigest              string                   `json:"replay_digest"`
+
+	RegistrationInputFailures []RegistrationInputFailure `json:"registration_input_failures,omitempty"`
 }
 
 // PromotionAuthorizedByPlan is always false: CI remains the authority.

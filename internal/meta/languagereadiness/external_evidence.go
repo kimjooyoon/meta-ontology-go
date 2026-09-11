@@ -12,6 +12,7 @@ const (
 	toolchainLSPConcept         = "toolchain-lsp"
 	toolchainConformanceConcept = "toolchain-conformance"
 	toolchainReleaseConcept     = "toolchain-cross-platform-release"
+	conceptGovernedRefactoring  = "concept-governed-refactoring"
 )
 
 type evidenceDigests struct {
@@ -26,6 +27,7 @@ type evidenceDigests struct {
 	toolchainLSP         string
 	toolchainConformance string
 	toolchainRelease     string
+	conceptOperation     string
 }
 
 type externalEvidence struct {
@@ -57,6 +59,8 @@ func requiredEvidence(conceptID string, evidence evidenceDigests) (string, strin
 		return evidence.toolchainConformance, "TOOLCHAIN_CONFORMANCE_RECEIPT_REQUIRED", true
 	case toolchainReleaseConcept:
 		return evidence.toolchainRelease, "TOOLCHAIN_CROSS_PLATFORM_RELEASE_RECEIPT_REQUIRED", true
+	case conceptGovernedRefactoring:
+		return evidence.conceptOperation, "CONCEPT_OPERATION_BINDING_RECEIPT_REQUIRED", true
 	default:
 		return "", "", false
 	}

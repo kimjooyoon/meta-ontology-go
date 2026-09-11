@@ -29,7 +29,7 @@ func validInput() Input {
 
 func TestEvaluateClosesFixedProfileExperiment(t *testing.T) {
 	report := Evaluate(validInput())
-	if report.Decision != "PASS" || report.Summary.Coordinates.Satisfied != ExpectedIndicators ||
+	if report.Scope != languageprofile.ExecutionScope || report.Decision != "PASS" || report.Summary.Coordinates.Satisfied != ExpectedIndicators ||
 		report.Summary.Samples != 10 || report.Summary.ExecutionDigestVariants != 1 ||
 		report.Summary.UnknownEntryRejections != 1 || report.Summary.Unknowns != 0 {
 		t.Fatalf("report=%#v", report)

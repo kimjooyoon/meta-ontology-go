@@ -31,7 +31,7 @@ func TestBuildIsExactFailClosedAndNonAuthorizing(t *testing.T) {
 	if planned.PromotionAuthorized || planned.PromotionAuthorizedByPlan() || planned.ReplayProof != ProofCoherence {
 		t.Fatal("a generation plan acquired authority or lost its replay proof")
 	}
-	if len(planned.Registry) != 4 {
+	if len(planned.Registry) != 5 {
 		t.Fatalf("operation registry is not visible in the plan: %+v", planned.Registry)
 	}
 	for _, action := range planned.Selected {

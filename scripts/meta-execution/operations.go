@@ -147,6 +147,10 @@ const extractFunctionOperationID = "gooo/meta/generation/ExtractFunctionSuffix"
 const functionExtractionReportSchema = "gooo.function-extraction.v2"
 
 func executeSelectedOperations(plan generation.Plan, manifest generation.ExecutionManifest, workspace string) (generation.OperationObservationBundle, error) {
+	return executeSelectedOperationsWithTrace(plan, manifest, workspace, newMetaExecutionTraceState())
+}
+
+func executeSelectedOperationsWithTrace(plan generation.Plan, manifest generation.ExecutionManifest, workspace string, traceState *metaExecutionTraceState) (generation.OperationObservationBundle, error) {
 	bundle := generation.OperationObservationBundle{
 		Schema:         generation.OperationObservationBundleSchema,
 		BaseSHA:        plan.BaseSHA,
@@ -167,7 +171,7 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	metricsPath, err := sourceMetricsPath()
+	metricsPath, err := configuredSourceMetricsPath()
 	if err != nil {
 		for _, action := range generationActions(plan) {
 			bundle.Failures = append(bundle.Failures, observationFailure(action, "observe-metrics", "resolve-source-metrics", "SOURCE_METRICS_UNAVAILABLE", "DIRECT_MISSING", "restore-source-metrics", []string{}, generation.ProcessObservation{}))
@@ -175,7 +179,6 @@ func executeSelectedOperations(plan generation.Plan, manifest generation.Executi
 		bundle.ObservationTotal = len(plan.Selected)
 		return generation.SealObservationBundle(bundle), nil
 	}
-	traceState := newMetaExecutionTraceState()
 	for sequence, action := range generationActions(plan) {
 		trace := newMetaExecutionTrace(plan, manifest, action, sequence+1, traceState)
 		trace.emitActionEntered()
@@ -263,6 +266,9 @@ func observationFailure(action generation.Action, stage, step, reason, class, ne
 }
 
 func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
+	if action.Operation == sourcepolicy.OperationRegisterSyntax {
+		return executeNativeRegistration(workspace, plan, action)
+	}
 	if action.Operation == sourcepolicy.OperationCollapseAssign {
 		if failure := validateCollapseAction(action); failure != nil {
 			return operationMaterialization{}, failure
@@ -328,9 +334,9 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 		failure.evidence = splitFailureEvidence(report)
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator}, failure
 	}
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
-	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
 	canonical, err := splitReplayProjectionBytes(evidence, result.Observation, evaluator, verifier.Observation)
 	if err != nil {
@@ -458,9 +464,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{action.Evaluator, subject.Path, subject.Name}, evaluatorRaw, nil)
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
-	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
 	validation.ProjectedTestsPassed = true
 	outputs, err := outputBytes(temporary, observed)
@@ -632,9 +638,33 @@ func runGoTest(root string, environment []string) processResult {
 	return runProcessResult(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."})
 }
 
-func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) processResult {
-	result, _ := runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
-	return result
+func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) (processResult, error) {
+	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+}
+
+func classifyVerifierProcess(step string, result processResult, runErr error) *operationError {
+	if runErr == nil && result.Observation.ExitCode == 0 {
+		return nil
+	}
+	if verifierProcessExitedPositive(result, runErr) {
+		return newOperationError("verify-operation", step, "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	reason := "PROJECTED_COMPILE_OR_TEST_UNAVAILABLE"
+	if exitError, ok := errors.AsType[*exec.ExitError](runErr); ok && exitError.ExitCode() < 0 {
+		reason = "PROJECTED_COMPILE_OR_TEST_INTERRUPTED"
+	}
+	return newOperationError("verify-operation", step, reason, "DIRECT_MISSING", "restore-operation-evidence")
+}
+
+func verifierProcessExitedPositive(result processResult, runErr error) bool {
+	if result.Observation.ExitCode <= 0 {
+		return false
+	}
+	if runErr == nil {
+		return true
+	}
+	exitError, ok := errors.AsType[*exec.ExitError](runErr)
+	return ok && exitError.ExitCode() > 0
 }
 
 func runProcessResult(root string, environment, descriptor, actual []string) processResult {
@@ -658,9 +688,9 @@ func runProcess(root string, environment, descriptor, actual []string) (processR
 	err := command.Run()
 	exitCode := 0
 	if err != nil {
-		exitCode = 1
-		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
-			exitCode = exitError.ExitCode()
+		exitCode = -1
+		if command.ProcessState != nil {
+			exitCode = command.ProcessState.ExitCode()
 		}
 	}
 	observation := descriptorObservation(descriptor, stdout.Bytes(), stderr.Bytes(), exitCode)

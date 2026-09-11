@@ -76,6 +76,7 @@ func receiptMatchesAction(plan Plan, action Action, receipt OperationReceipt) bo
 		receipt.IndicatorDecisionLedgerDigest == ledgerDigest &&
 		receipt.IndicatorDecisionLedgerCount == ledgerCount &&
 		receipt.ActionIndicatorID == action.IndicatorID &&
+		receipt.OperationInputDigest == action.SourceIndicator.OperationInputDigest &&
 		receipt.SubjectKind == action.SubjectKind &&
 		receipt.InputSubjectKind == action.InputSubjectKind &&
 		receipt.InputContractSourceDigest == action.InputContractSourceDigest &&

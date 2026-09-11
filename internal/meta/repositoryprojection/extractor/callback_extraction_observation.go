@@ -241,7 +241,8 @@ func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPacka
 		if err := decoder.Decode(&event); err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, fmt.Errorf("package test event decoding: %w", err)
+			// A damaged suffix cannot erase a previously decoded counterexample.
+			return events, fmt.Errorf("package test event decoding: %w", err)
 		}
 		if event.Test == "" {
 			continue
@@ -251,10 +252,13 @@ func callbackPackageTestEvents(raw []byte, requiredTest string) ([]CallbackPacka
 			continue
 		case "pass", "fail", "skip":
 		default:
-			return nil, fmt.Errorf("unknown package test action %q", event.Action)
+			return events, fmt.Errorf("unknown package test action %q", event.Action)
 		}
 		if seen[event.Test] {
-			return nil, fmt.Errorf("duplicate terminal test event for %s", event.Test)
+			if event.Action == "fail" {
+				events = append(events, CallbackPackageTestEvent{Name: event.Test, Action: event.Action})
+			}
+			return events, fmt.Errorf("duplicate terminal test event for %s", event.Test)
 		}
 		seen[event.Test] = true
 		events = append(events, CallbackPackageTestEvent{Name: event.Test, Action: event.Action})

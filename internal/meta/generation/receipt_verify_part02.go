@@ -61,7 +61,8 @@ func selectedActionIndex(plan Plan) (map[string]Action, bool) {
 }
 
 func actionMatchesBinding(action Action, binding Binding) bool {
-	return action.SubjectKind == binding.InputSubjectKind &&
+	return ValidRegistrationActionInput(action) &&
+		action.SubjectKind == binding.InputSubjectKind &&
 		action.InputSubjectKind == binding.InputSubjectKind &&
 		action.InputContractSourceDigest == binding.InputContractSourceDigest &&
 		action.InputContractSemanticDigest == binding.InputContractSemanticDigest &&

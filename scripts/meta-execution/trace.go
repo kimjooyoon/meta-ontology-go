@@ -22,40 +22,43 @@ type metaExecutionTrace struct {
 }
 
 type metaExecutionTraceState struct {
-	invocationID  string
-	eventSequence uint64
-	writer        io.Writer
+	invocationID           string
+	eventSequence          uint64
+	writer                 io.Writer
+	cost                   metaExecutionCostState
+	verifierPackageSummary *verifierPackageSummaryCollector
 }
 
 type metaExecutionTraceEvent struct {
-	Schema                      string `json:"schema"`
-	InvocationID                string `json:"invocation_id"`
-	EventSequence               uint64 `json:"event_sequence"`
-	HeadSHA                     string `json:"head_sha"`
-	PlanDigest                  string `json:"plan_digest"`
-	ManifestDigest              string `json:"manifest_digest"`
-	ActionIndicatorID           string `json:"action_indicator_id"`
-	Activity                    string `json:"activity"`
-	MetaOperation               string `json:"meta_operation"`
-	Subject                     string `json:"subject"`
-	Output                      string `json:"output"`
-	Executor                    string `json:"executor"`
-	Evaluator                   string `json:"evaluator"`
-	InputContractSourceDigest   string `json:"input_contract_source_digest"`
-	InputContractSemanticDigest string `json:"input_contract_semantic_digest"`
-	ContractDigest              string `json:"contract_digest"`
-	OperationID                 string `json:"operation_id"`
-	OperationSequence           int    `json:"operation_sequence"`
-	Pass                        string `json:"pass"`
-	Boundary                    string `json:"boundary"`
-	CommandKind                 string `json:"command_kind"`
-	ObservationScope            string `json:"observation_scope"`
-	DiagnosticOnly              bool   `json:"diagnostic_only"`
-	SemanticEffect              string `json:"semantic_effect"`
-	Permission                  string `json:"permission"`
-	ExitCode                    *int   `json:"exit_code,omitempty"`
-	ExitCodeSource              string `json:"exit_code_source"`
-	ReturnErrorObserved         *bool  `json:"return_error_observed,omitempty"`
+	Schema                      string             `json:"schema"`
+	InvocationID                string             `json:"invocation_id"`
+	EventSequence               uint64             `json:"event_sequence"`
+	HeadSHA                     string             `json:"head_sha"`
+	PlanDigest                  string             `json:"plan_digest"`
+	ManifestDigest              string             `json:"manifest_digest"`
+	ActionIndicatorID           string             `json:"action_indicator_id"`
+	Activity                    string             `json:"activity"`
+	MetaOperation               string             `json:"meta_operation"`
+	Subject                     string             `json:"subject"`
+	Output                      string             `json:"output"`
+	Executor                    string             `json:"executor"`
+	Evaluator                   string             `json:"evaluator"`
+	InputContractSourceDigest   string             `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string             `json:"input_contract_semantic_digest"`
+	ContractDigest              string             `json:"contract_digest"`
+	OperationID                 string             `json:"operation_id"`
+	OperationSequence           int                `json:"operation_sequence"`
+	Pass                        string             `json:"pass"`
+	Boundary                    string             `json:"boundary"`
+	CommandKind                 string             `json:"command_kind"`
+	ObservationScope            string             `json:"observation_scope"`
+	DiagnosticOnly              bool               `json:"diagnostic_only"`
+	SemanticEffect              string             `json:"semantic_effect"`
+	Permission                  string             `json:"permission"`
+	ExitCode                    *int               `json:"exit_code,omitempty"`
+	ExitCodeSource              string             `json:"exit_code_source"`
+	ReturnErrorObserved         *bool              `json:"return_error_observed,omitempty"`
+	Cost                        *metaExecutionCost `json:"cost,omitempty"`
 }
 
 func newMetaExecutionTraceState() *metaExecutionTraceState {
@@ -122,6 +125,7 @@ func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest
 	event := trace.event(boundary, pass, commandKind, contractDigest, operationID, exitCodeSource, exitCode, returnErrorObserved)
 	event.InvocationID = trace.state.invocationID
 	event.EventSequence = trace.state.nextEventSequence()
+	event.Cost = trace.state.cost.observe(event, time.Now())
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return
@@ -173,6 +177,7 @@ func observeProcessCall(trace *metaExecutionTrace, pass, commandKind string, run
 	result, runErr := run()
 	if trace != nil {
 		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr)
+		trace.observeVerifierPackageSummary(pass, commandKind, result)
 	}
 	return result, runErr
 }

@@ -34,7 +34,10 @@ func TestExecutableSemanticCycleUseCases(t *testing.T) {
 			case "repository-write":
 				input.RepositoryWrites = 1
 			}
-			report := Evaluate(input)
+			report, err := Evaluate(input)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if report.Decision != test.WantDecision || report.Reason != test.WantReason {
 				t.Fatalf("got %s/%s", report.Decision, report.Reason)
 			}

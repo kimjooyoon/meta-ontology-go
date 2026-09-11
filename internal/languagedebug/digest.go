@@ -20,6 +20,7 @@ const DeterministicPayloadSchema = "gooo/language-debug-deterministic-payload/v1
 // projection and runtime fields intentionally do not participate in it.
 type DeterministicPayload struct {
 	Schema          string            `json:"schema"`
+	Scope           string            `json:"scope"`
 	Filename        string            `json:"filename"`
 	SourceDigest    string            `json:"source_digest"`
 	SemanticDigest  string            `json:"semantic_digest"`
@@ -32,7 +33,7 @@ type DeterministicPayload struct {
 
 func (receipt Receipt) DeterministicPayload() DeterministicPayload {
 	return DeterministicPayload{
-		Schema: DeterministicPayloadSchema, Filename: receipt.Filename,
+		Schema: DeterministicPayloadSchema, Scope: receipt.Scope, Filename: receipt.Filename,
 		SourceDigest: receipt.SourceDigest, SemanticDigest: receipt.SemanticDigest,
 		ExecutionDigest: receipt.ExecutionDigest, Entry: receipt.Entry,
 		Diagnostics: receipt.Diagnostics, Effects: receipt.Effects,

@@ -10,6 +10,7 @@ type AudienceView struct {
 
 type Report struct {
 	Schema            string         `json:"schema"`
+	Scope             string         `json:"scope"`
 	Decision          string         `json:"decision"`
 	Reason            string         `json:"reason"`
 	Resolution        string         `json:"resolution"`
