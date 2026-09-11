@@ -351,6 +351,175 @@ func TestGeneratedJudgeDeclaredInputPreservesBindingsAndAuthority(t *testing.T) 
 	}
 }
 
+func TestPolicyDecisionProposalBindsCoordinatesAndPreservesSource(t *testing.T) {
+	source := append([]byte("\n"), declaredCaseSourceFixture(t)...)
+	untouched := append([]byte(nil), source...)
+	revision := PolicyDecisionRevision{
+		ExpectedSourceDigest: DigestBytes(source),
+		Condition:            ConditionSemanticEquivalence,
+		FromDecision:         DecisionPass,
+		ToDecision:           DecisionFailClosed,
+	}
+	proposal, err := ProposePolicyDecisionRevision("policy.gooo", source, "metapolicycompilation", "metapolicycompilation", revision)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(source, untouched) || proposal.Original.SourceDigest != revision.ExpectedSourceDigest || proposal.Candidate.SourceDigest != DigestBytes([]byte(proposal.CandidateSource)) {
+		t.Fatal("policy proposal mutated or detached its source identity")
+	}
+	if !reflect.DeepEqual(proposal.ChangedCoordinates, []string{"transition.to", "case.resolution.decision"}) || proposal.Original.SemanticDigest == proposal.Candidate.SemanticDigest {
+		t.Fatal("policy proposal did not bind two decision coordinates and a semantic change")
+	}
+	expected := proposal.Original
+	expected.SourceDigest = proposal.Candidate.SourceDigest
+	expected.SemanticDigest = proposal.Candidate.SemanticDigest
+	expected.Reduction.Rules = append([]DecisionRule(nil), proposal.Original.Reduction.Rules...)
+	matches := 0
+	for index, rule := range expected.Reduction.Rules {
+		if rule.Condition == revision.Condition {
+			matches++
+			expected.Reduction.Rules[index].Decision = revision.ToDecision
+		}
+	}
+	if matches != 1 || !reflect.DeepEqual(expected, proposal.Candidate) {
+		t.Fatal("policy proposal changed semantic coordinates beyond the requested decision")
+	}
+	replay, err := ProposePolicyDecisionRevision("policy.gooo", source, "metapolicycompilation", "metapolicycompilation", revision)
+	if err != nil || !reflect.DeepEqual(proposal, replay) {
+		t.Fatalf("policy proposal replay changed: %v", err)
+	}
+	reverse, err := ProposePolicyDecisionRevision("policy.gooo", []byte(proposal.CandidateSource), "metapolicycompilation", "metapolicycompilation", PolicyDecisionRevision{
+		ExpectedSourceDigest: proposal.Candidate.SourceDigest,
+		Condition:            revision.Condition,
+		FromDecision:         revision.ToDecision,
+		ToDecision:           revision.FromDecision,
+	})
+	if err != nil || reverse.Candidate.SemanticDigest != proposal.Original.SemanticDigest {
+		t.Fatalf("explicit reverse proposal did not recover the original semantic contract: %v", err)
+	}
+}
+
+func TestPolicyDecisionProposalRejectsUnboundChanges(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	revision := PolicyDecisionRevision{
+		ExpectedSourceDigest: DigestBytes(source),
+		Condition:            ConditionSemanticEquivalence,
+		FromDecision:         DecisionPass,
+		ToDecision:           DecisionFailClosed,
+	}
+	for _, test := range []struct {
+		name   string
+		change func(*PolicyDecisionRevision)
+	}{
+		{"missing-source-digest", func(value *PolicyDecisionRevision) { value.ExpectedSourceDigest = "" }},
+		{"stale-source-digest", func(value *PolicyDecisionRevision) { value.ExpectedSourceDigest = DigestBytes([]byte("different source")) }},
+		{"missing-condition", func(value *PolicyDecisionRevision) { value.Condition = "" }},
+		{"unknown-condition", func(value *PolicyDecisionRevision) { value.Condition = "UNDECLARED_CONDITION" }},
+		{"stale-from-decision", func(value *PolicyDecisionRevision) { value.FromDecision = DecisionUnknown }},
+		{"unknown-from-decision", func(value *PolicyDecisionRevision) { value.FromDecision = "FIXED_POINT" }},
+		{"missing-to-decision", func(value *PolicyDecisionRevision) { value.ToDecision = "" }},
+		{"unknown-to-decision", func(value *PolicyDecisionRevision) { value.ToDecision = "FIXED_POINT" }},
+		{"unchanged-decision", func(value *PolicyDecisionRevision) { value.ToDecision = value.FromDecision }},
+		{"missing-unknown-context", func(value *PolicyDecisionRevision) { value.ToDecision = DecisionUnknown }},
+		{"would-discard-unknown-context", func(value *PolicyDecisionRevision) {
+			value.Condition, value.FromDecision = ConditionEvidenceUnavailable, DecisionUnknown
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			altered := revision
+			test.change(&altered)
+			proposal, err := ProposePolicyDecisionRevision("policy.gooo", source, "metapolicycompilation", "metapolicycompilation", altered)
+			if err == nil || !reflect.DeepEqual(proposal, PolicyDecisionProposal{}) {
+				t.Fatalf("unbound revision produced a candidate: %+v (%v)", proposal, err)
+			}
+		})
+	}
+	for _, test := range []struct {
+		name, namespace string
+		source          []byte
+	}{
+		{"invalid-source", "metapolicycompilation", []byte("not a Gooo declaration")},
+		{"wrong-namespace", "different", source},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			altered := revision
+			altered.ExpectedSourceDigest = DigestBytes(test.source)
+			proposal, err := ProposePolicyDecisionRevision("policy.gooo", test.source, "metapolicycompilation", test.namespace, altered)
+			if err == nil || !reflect.DeepEqual(proposal, PolicyDecisionProposal{}) {
+				t.Fatal("invalid source or identity produced a candidate")
+			}
+		})
+	}
+}
+
+func TestPolicyDecisionProposalChangesGeneratedBehavior(t *testing.T) {
+	source := declaredCaseSourceFixture(t)
+	proposal, err := ProposePolicyDecisionRevision("policy.gooo", source, "metapolicycompilation", "metapolicycompilation", PolicyDecisionRevision{
+		ExpectedSourceDigest: DigestBytes(source),
+		Condition:            ConditionSemanticEquivalence,
+		FromDecision:         DecisionPass,
+		ToDecision:           DecisionFailClosed,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	generated := GenerateJudge(proposal.Candidate)
+	work := t.TempDir()
+	judgePath, binary := filepath.Join(work, "judge.go"), filepath.Join(work, "proposal-judge")
+	if err := os.WriteFile(judgePath, generated, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Build one candidate binary; the proposal API itself does not execute it.
+	build := exec.CommandContext(t.Context(), "go", "build", "-o", binary, judgePath)
+	build.Dir = work
+	build.Env = append(os.Environ(), "GO111MODULE=off", "GOTOOLCHAIN=go1.27.0")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build proposed generated judge: %v: %s", err, output)
+	}
+	input := generatedJudgeInput{
+		ID: "source-revision", ProducerAvailable: true, ConsumerAvailable: true,
+		ObservedSourceDigest: proposal.Candidate.SourceDigest, ObservedArtifactSourceDigest: proposal.Candidate.SourceDigest,
+		ObservedGeneratedJudgeDigest: DigestBytes(generated), ObservedIndependentDigest: DigestBytes(generated),
+		UpperDecision: "PASS",
+	}
+	document, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.CommandContext(t.Context(), binary, "--declared-input")
+	command.Dir = work
+	command.Stdin = bytes.NewReader(document)
+	output, err := command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("execute proposed generated judge: %v: %s", err, output)
+	}
+	var envelope map[string]json.RawMessage
+	if err := decodeStrictJSON(output, &envelope); err != nil {
+		t.Fatal(err)
+	}
+	var decision DecisionResult
+	if err := decodeStrictJSON(envelope["generated_decision"], &decision); err != nil {
+		t.Fatal(err)
+	}
+	var reference Case
+	if err := json.Unmarshal(document, &reference); err != nil {
+		t.Fatal(err)
+	}
+	if decision.Decision != DecisionFailClosed || decision.MatchedCondition != ConditionSemanticEquivalence || !reflect.DeepEqual(decision, EvaluateSourcePolicy(proposal.Candidate, reference)) {
+		t.Fatalf("generated behavior did not follow the proposed Gooo decision: %+v", decision)
+	}
+	reference.ObservedSourceDigest, reference.ObservedArtifactSourceDigest = proposal.Original.SourceDigest, proposal.Original.SourceDigest
+	originalJudgeDigest := DigestBytes(GenerateJudge(proposal.Original))
+	reference.ObservedGeneratedJudgeDigest, reference.ObservedIndependentDigest = originalJudgeDigest, originalJudgeDigest
+	if before := EvaluateSourcePolicy(proposal.Original, reference); before.Decision != DecisionPass || before.MatchedCondition != ConditionSemanticEquivalence {
+		t.Fatalf("the original source policy did not retain its independent baseline decision: %+v", before)
+	}
+	if string(envelope["mutation_authority"]) != "0" || string(envelope["promotion_authority"]) != "0" || string(envelope["external_evidence_state"]) != "\"UNKNOWN_NOT_VERIFIED\"" {
+		t.Fatal("candidate execution was promoted into external evidence or mutation authority")
+	}
+}
+
+
 func declaredCaseSourceFixture(t *testing.T) []byte {
 	t.Helper()
 	source, err := os.ReadFile("../../../examples/meta-policy-compilation/policy.gooo")
@@ -380,36 +549,16 @@ func declaredCaseDocumentFixture(t *testing.T, source []byte) []byte {
 }
 
 func declaredCaseStrictIntervention(source []byte) ([]byte, error) {
-	// This is a bounded fixture transformation, not a general source rewriter.
-	// The native intervention contract permits one transition and its one case
-	// decision to change. Missing or ambiguous bindings are errors, not guesses.
-	lines := bytes.SplitAfter(source, []byte("\n"))
-	transitionLine, decisionLine := -1, -1
-	transitionCount, caseCount, decisionCount := 0, 0, 0
-	inTargetCase := false
-	for index, line := range lines {
-		fields := strings.Fields(string(line))
-		if len(fields) == 4 && fields[0] == "transition" && fields[1] == `"SEMANTIC_EQUIVALENCE"` && fields[2] == "->" && fields[3] == `"PASS"` {
-			transitionLine = index
-			transitionCount++
-		}
-		if len(fields) >= 2 && fields[0] == "case" {
-			inTargetCase = fields[1] == `"SEMANTIC_EQUIVALENCE"`
-			if inTargetCase {
-				caseCount++
-			}
-		}
-		if inTargetCase && len(fields) == 2 && fields[0] == "decision" && fields[1] == `"PASS"` {
-			decisionLine = index
-			decisionCount++
-		}
+	proposal, err := ProposePolicyDecisionRevision("policy.gooo", source, "metapolicycompilation", "metapolicycompilation", PolicyDecisionRevision{
+		ExpectedSourceDigest: DigestBytes(source),
+		Condition:            ConditionSemanticEquivalence,
+		FromDecision:         DecisionPass,
+		ToDecision:           DecisionFailClosed,
+	})
+	if err != nil {
+		return nil, err
 	}
-	if transitionCount != 1 || caseCount != 1 || decisionCount != 1 {
-		return nil, fmt.Errorf("strict fixture intervention requires one transition, case, and decision; found %d/%d/%d", transitionCount, caseCount, decisionCount)
-	}
-	lines[transitionLine] = bytes.Replace(lines[transitionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
-	lines[decisionLine] = bytes.Replace(lines[decisionLine], []byte(`"PASS"`), []byte(`"FAIL_CLOSED"`), 1)
-	return bytes.Join(lines, nil), nil
+	return []byte(proposal.CandidateSource), nil
 }
 
 func TestDeclaredCaseInterventionRejectsUnboundOrAmbiguousTargets(t *testing.T) {
