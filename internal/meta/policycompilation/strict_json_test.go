@@ -3,8 +3,8 @@ package policycompilation
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
