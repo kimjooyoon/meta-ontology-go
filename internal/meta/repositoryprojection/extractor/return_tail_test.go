@@ -247,6 +247,7 @@ func TestReturnTailTypedResultCompatibility(t *testing.T) {
 				delete(info.Types, statement.Results[0])
 			case "nil":
 				delete(info.Types, statement.Results[1])
+				delete(info.Uses, statement.Results[1].(*ast.Ident))
 			}
 			if got := returnTailReturnsCompatible(function.Body.List, info, results); got != tc.compatible {
 				t.Fatalf("return compatibility=%t, want %t", got, tc.compatible)
