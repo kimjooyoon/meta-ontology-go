@@ -376,7 +376,7 @@ jobs:
     name: transformation-effect-focused
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       GOTOOLCHAIN: go1.27.0
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -398,7 +398,8 @@ jobs:
         uses: ./.github/actions/materialize
         with:
           expected-sha: ${{ env.HEAD_SHA }}
-      - name: Capture and verify focused transformation evidence
+      - name: Capture source-bound meta-operation inputs
+        timeout-minutes: 30
         shell: bash
         env:
           STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
@@ -456,7 +457,36 @@ jobs:
           go run ./scripts/meta-provenance -plan "$input/self-improvement-plan.json" -execution "$input/self-improvement-execution.json" -receipts "$input/self-improvement-receipts.json" -output "$input/self-improvement-provenance.json"
           snapshot_repository > "$root/repository-after-inputs.txt"
           cmp -s "$root/repository-before.txt" "$root/repository-after-inputs.txt"
+      - name: Capture and verify focused transformation evidence
+        timeout-minutes: 10
+        shell: bash
+        env:
+          STORAGE_ROOT: ${{ steps.materialize.outputs.storage-root }}
+        run: |
+          set -Eeuo pipefail
+          root="$RUNNER_TEMP/transformation-effect-focused"
+          input="$root/input"
+          first="$root/first"
+          replay="$root/replay"
           stage=effect
+          focused_error() {
+            status=$?
+            trap - ERR
+            if [[ -s "$root/counterexamples.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/counterexamples.json" >/dev/null 2>&1; then
+              cp "$root/counterexamples.json" "$root/diagnostic.json"
+            elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/verification.json" >/dev/null 2>&1; then
+              cp "$root/verification.json" "$root/diagnostic.json"
+            else
+              jq -n --arg stage "$stage" --arg step "focused-transformation" --arg reason "FOCUSED_JOB_COMMAND_FAILED" --arg command "$BASH_COMMAND" --argjson exit_code "$status" --argjson line "${BASH_LINENO[0]:-0}" '{schema:"gooo/transformation-effect-focused-diagnostic/v1",decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",stage:$stage,step:$step,reason:$reason,unknown_class:"UNCATALOGED_CAUSE",next_operation:"restore-transformation-evidence",blocked_by:[],command:$command,exit_code:$exit_code,line:$line}' > "$root/diagnostic.json"
+            fi
+            exit "$status"
+          }
+          trap focused_error ERR
+          snapshot_repository() {
+            git status --porcelain=v1 --untracked-files=all | LC_ALL=C sort
+          }
+          export METRICS_COMMIT_SHA="$HEAD_SHA"
+          export METRICS_DIR="$input"
           common=(
             -root "$GITHUB_WORKSPACE"
             -metrics "$input/source-metrics.json"

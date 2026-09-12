@@ -59,6 +59,7 @@ type metaExecutionTraceEvent struct {
 	ExitCodeSource              string             `json:"exit_code_source"`
 	ReturnErrorObserved         *bool              `json:"return_error_observed,omitempty"`
 	Cost                        *metaExecutionCost `json:"cost,omitempty"`
+	VerifierWork                *metaVerifierWork  `json:"verifier_work,omitempty"`
 }
 
 func newMetaExecutionTraceState() *metaExecutionTraceState {
@@ -112,13 +113,13 @@ func (trace metaExecutionTrace) emitProcessCallEntered(pass, commandKind string)
 	trace.emit("PROCESS_CALL_ENTERED", pass, commandKind, "UNOBSERVED", "UNOBSERVED", "UNOBSERVED", nil, nil)
 }
 
-func (trace metaExecutionTrace) emitProcessReturned(pass, commandKind string, observation generation.ProcessObservation, runErr error) {
+func (trace metaExecutionTrace) emitProcessReturned(pass, commandKind string, observation generation.ProcessObservation, runErr error, observedOutput ...processResult) {
 	exitCode := observation.ExitCode
 	returnErrorObserved := runErr != nil
-	trace.emit("PROCESS_RETURNED", pass, commandKind, "UNOBSERVED", "UNOBSERVED", "generation.ProcessObservation.ExitCode", &exitCode, &returnErrorObserved)
+	trace.emit("PROCESS_RETURNED", pass, commandKind, "UNOBSERVED", "UNOBSERVED", "generation.ProcessObservation.ExitCode", &exitCode, &returnErrorObserved, observedOutput...)
 }
 
-func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest, operationID, exitCodeSource string, exitCode *int, returnErrorObserved *bool) {
+func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest, operationID, exitCodeSource string, exitCode *int, returnErrorObserved *bool, observedOutput ...processResult) {
 	if trace.state == nil {
 		return
 	}
@@ -126,6 +127,10 @@ func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest
 	event.InvocationID = trace.state.invocationID
 	event.EventSequence = trace.state.nextEventSequence()
 	event.Cost = trace.state.cost.observe(event, time.Now())
+	// Capture the process-return clock before parsing diagnostic stdout.
+	if boundary == "PROCESS_RETURNED" && commandKind == "verifier" && len(observedOutput) == 1 {
+		event.VerifierWork = observeMetaVerifierWork(observedOutput[0])
+	}
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return
@@ -176,7 +181,7 @@ func observeProcessCall(trace *metaExecutionTrace, pass, commandKind string, run
 	}
 	result, runErr := run()
 	if trace != nil {
-		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr)
+		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr, result)
 		trace.observeVerifierPackageSummary(pass, commandKind, result)
 	}
 	return result, runErr
