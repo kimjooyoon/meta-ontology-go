@@ -340,6 +340,80 @@ revision or relabel synthetic fixtures as current execution evidence.
 Read, parse and output failures remain errors and must not become success
 or silently supplied digests in a caller.
 
+## Read-only revision receipt reconstruction
+
+The consumer can inspect a revision execution report without executing its
+generated program or adopting the candidate:
+
+```sh
+go run ./cmd/meta-policy-compilation-consumer \
+  -policy policy.gooo \
+  -revision-request request.json \
+  -observe-revision-receipt revision-report.json
+```
+
+The three inputs are read-only. The observer writes JSON to stdout and accepts
+neither an output directory nor mixed legacy/source-observation modes.
+Each input is bounded to 16 MiB. Raw source, request and report bytes retain
+separate digests. The canonical typed request digest does not replace the raw
+request identity. Source filenames are parsing context, not filesystem
+provenance or proof of where the producer read its bytes.
+
+Six bounded checks connect the report back to the Gooo policy's source rules
+and meta-operation bindings:
+
+| Check | Reconstruction |
+| --- | --- |
+| SOURCE_BINDING | Consumer-parsed baseline/candidate identities, rules and semantic digests |
+| REQUEST_BINDING | Original raw/canonical request and paired case identities |
+| REVISION_SCOPE | Only the requested transition/resolution decision change |
+| DECLARED_INPUT_PRESERVATION | Caller snapshots, order, classes and provenance, without digest repair |
+| RESULT_RECONSTRUCTION | Every source/first/replay result field, including UNKNOWN cause/frontier |
+| ACCOUNTING_RECONSTRUCTION | Counts, transitions, incomplete attempts, pending claims and zero authority |
+
+`RECEIPT_CONSISTENT_ONLY` means these supplied records agree with the consumer's
+source interpretation. It does not prove the producer executed those records.
+A contradictory result or advertised total is REFUTED. An honestly incomplete
+attempt remains UNKNOWN with a concrete stage, step, reason, class, next
+operation and blocked-by frontier. Missing source reconstruction blocks later
+checks explicitly; it never supplies a fabricated interpretation.
+
+The consumer uses its existing raw-source parser and its own condition
+evaluation, not the producer's compiler, interpreter, generator or executor.
+The Gooo syntax frontend and the versioned JSON wire schema remain shared
+assumptions, declared in the report. Wire declarations are consumer-owned;
+neither the observer nor its tests import the producer implementation. Structural metrics, actual generated-program semantics, process
+execution, wall-time accuracy, repository-wide writes, external utility and
+causal improvement are not established by this mode. Its process-execution
+claim remains UNKNOWN even when all six receipt checks close. Mutation and
+promotion authority are zero.
+
+The native test corpus includes a real generated baseline/candidate report,
+13 named counterexamples, an actual failed-toolchain attempt, mode rejections, and
+an actual consumer CLI path. The positive cohort has three paired inputs;
+18 comparisons include each side's source interpretation, first result and
+replay result. These are bounded observations, not language-completeness or
+external-utility percentages. CI results, not this description, determine
+whether the authored cases pass. Test inputs come from a separately built witness
+process, reused within each fixture, not direct calls into the producer package.
+A bootstrap execution supplies actual judge bytes before caller snapshots are
+declared; the completed request is then executed through the same public CLI.
+The missing-toolchain case changes only the fixture child process environment.
+That counterexample does not change repository settings or installed tools.
+
+The full-repository CI suite executes the consumer tests. Its non-verbose
+successful output does not retain individual receipt logs. The source-owned
+test logs emit `REVISION_RECEIPT_FIXTURE_PROCESS` and
+`POLICY_REVISION_RECEIPT_OBSERVATION` for a JSON-enabled CI invocation.
+
+Native run [34682470696](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/34682470696)
+retained those records at commit `71cf19fc2a2b1f4ea9b3eadc5726335ffac83dfd`.
+That candidate's one-line CI capture change was withdrawn after the default
+Guardian rejected its protected-workflow authorization. Its archived evidence
+is historical, not acceptance of a later head or a permanently enabled capture
+route. The original CI configuration and all consumer tests are preserved;
+no Guardian exception, permission change or adoption claim is introduced.
+
 ## Source-bound revision execution observation
 
 The witness has a separate experimental mode for executing an exact policy
@@ -395,3 +469,49 @@ or zero memory. Mutation/promotion authority remains zero. Generated execution
 uses the existing temporary judge workspaces, while the report is stdout-only.
 This is not yet registration in the common meta-operation selector or automatic
 adoption of the generated candidate.
+
+## Gooo-bound policy revision observation
+
+The explicit revision path can bind a caller-supplied Gooo operation contract
+before invoking the existing bounded native worker:
+
+```sh
+go run ./cmd/meta-policy-compilation-witness \
+  -policy /caller/input/policy.gooo \
+  -observe-revision /caller/input/request.json \
+  -revision-operation internal/meta/policycompilation/revision-operation.gooo \
+  -profile-package metapolicycompilation \
+  -profile-namespace metapolicycompilation
+```
+
+The contract declares PolicySource, RevisionRequest and RevisionObservation.
+ObservePolicyDecisionRevision must use both inputs and generate the observation
+in lowered semantic IR. Its computes program is the pinned
+`policy.revision.observe:v1` native ABI, not an arbitrary program selected by
+a Gooo string. Contract source bytes, semantic identity, embedded native contract,
+policy source bytes and exact request bytes retain separate identities.
+
+The binding rejects absent relations, unknown programs and incompatible semantic
+contracts before calling the worker. Strict request decoding and exact policy-byte
+binding also precede the call. A native invocation or cancelled attempt is not a
+successful generated execution; the nested observation retains actual counts,
+failure causes and the six-field UNKNOWN records.
+
+With this explicit flag, stdout uses `gooo/meta-policy-revision-operation/v1`.
+Its `observation` member remains the unchanged v1 producer receipt. That member
+can be passed to the existing independent consumer together with the original
+policy and request bytes. The new native CLI test exercises those two separate
+processes and checks that all three caller inputs remain unchanged. Consumer
+receipt consistency does not attest process execution or grant policy adoption.
+
+Without the flag, the existing revision-observation output remains unchanged.
+The four-artifact compilation profile, two-artifact revision profile, legacy
+inventory selector and common registry are unchanged. This is an explicitly
+requested single operation, not a fabricated second inventory action.
+
+`native_worker_invocations` counts actual calls to the bounded native API.
+Per-case/source/replay counts come from its existing observation, not a new score.
+Synthetic case pairs remain synthetic, including separately declared candidate
+expectations. Improvement and admission remain UNKNOWN; mutation and promotion
+authority remain zero. This connects Gooo relations to execution but does not
+close the independent adoption and next-run-use requirements in #804.
