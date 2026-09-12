@@ -22,10 +22,11 @@ type metaExecutionTrace struct {
 }
 
 type metaExecutionTraceState struct {
-	invocationID  string
-	eventSequence uint64
-	writer        io.Writer
-	cost          metaExecutionCostState
+	invocationID           string
+	eventSequence          uint64
+	writer                 io.Writer
+	cost                   metaExecutionCostState
+	verifierPackageSummary *verifierPackageSummaryCollector
 }
 
 type metaExecutionTraceEvent struct {
@@ -176,6 +177,7 @@ func observeProcessCall(trace *metaExecutionTrace, pass, commandKind string, run
 	result, runErr := run()
 	if trace != nil {
 		trace.emitProcessReturned(pass, commandKind, result.Observation, runErr)
+		trace.observeVerifierPackageSummary(pass, commandKind, result)
 	}
 	return result, runErr
 }

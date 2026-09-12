@@ -11,6 +11,7 @@ type View struct {
 
 type Report struct {
 	Schema              string               `json:"schema"`
+	Scope               string               `json:"scope"`
 	SubjectSHA          string               `json:"subject_sha"`
 	Decision            string               `json:"decision"`
 	Reason              string               `json:"reason"`

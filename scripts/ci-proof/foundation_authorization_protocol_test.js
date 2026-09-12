@@ -17,6 +17,10 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function cell(result, id) {
+  return result.cells.find((candidate) => candidate.id === id);
+}
+
 function buildCandidate() {
   const changedPaths = [
     '.github/foundation-authorization-protocol.json',
@@ -127,6 +131,49 @@ assert.deepEqual(result.unknown, {
   next_operation: 'SELECT_REPOSITORY_OWNER',
   blocked_by: [],
 });
+assert.equal(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').state, 'UNKNOWN');
+assert.deepEqual(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').unknown, result.unknown);
+
+const simultaneousMissing = buildInput('PENDING');
+simultaneousMissing.authorization.owner_selection = null;
+simultaneousMissing.authorization.nonce = null;
+result = protocol.evaluate(simultaneousMissing, {now: NOW});
+assert.equal(result.decision, 'UNKNOWN');
+assert.equal(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').state, 'UNKNOWN');
+assert.deepEqual(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').unknown, {
+  stage: 'FOUNDATION',
+  step: 'REPOSITORY_ACTOR_AUTHORITY',
+  reason: 'OWNER_SELECTION_MISSING',
+  unknown_class: 'DIRECT_MISSING',
+  next_operation: 'SELECT_REPOSITORY_OWNER',
+  blocked_by: [],
+});
+assert.equal(cell(result, 'ONE_USE_NONCE').state, 'UNKNOWN');
+assert.deepEqual(cell(result, 'ONE_USE_NONCE').unknown, {
+  stage: 'REGRESSION',
+  step: 'ONE_USE_NONCE',
+  reason: 'NONCE_NOT_ISSUED',
+  unknown_class: 'DIRECT_MISSING',
+  next_operation: 'ISSUE_ONE_USE_NONCE',
+  blocked_by: ['one-use-authorization'],
+});
+
+const mixedUnknownAndRefuted = buildInput('PENDING');
+mixedUnknownAndRefuted.authorization.owner_selection = null;
+mixedUnknownAndRefuted.observed.candidate.head_sha = '6'.repeat(40);
+result = protocol.evaluate(mixedUnknownAndRefuted, {now: NOW});
+assert.equal(result.decision, 'REFUTED');
+assert.equal(result.reason, 'CANDIDATE_DRIFT');
+assert.equal(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').state, 'UNKNOWN');
+assert.equal(cell(result, 'CANDIDATE_PR_REPOSITORY_IDENTITY').state, 'REFUTED');
+assert.deepEqual(cell(result, 'REPOSITORY_ACTOR_AUTHORITY').unknown, {
+  stage: 'FOUNDATION',
+  step: 'REPOSITORY_ACTOR_AUTHORITY',
+  reason: 'OWNER_SELECTION_MISSING',
+  unknown_class: 'DIRECT_MISSING',
+  next_operation: 'SELECT_REPOSITORY_OWNER',
+  blocked_by: [],
+});
 
 const incompleteTuple = buildInput('PENDING');
 delete incompleteTuple.candidate.head_sha;
@@ -157,6 +204,22 @@ nonceReplay.authorization.reuse_attempts = 1;
 result = protocol.evaluate(nonceReplay, {now: NOW});
 assert.equal(result.decision, 'REFUTED');
 assert.equal(result.reason, 'NONCE_REPLAY');
+
+const nonceCountReplay = buildInput('PENDING');
+nonceCountReplay.authorization.use_count = 2;
+nonceCountReplay.authorization.reuse_attempts = 0;
+result = protocol.evaluate(nonceCountReplay, {now: NOW});
+assert.equal(result.decision, 'REFUTED');
+assert.equal(result.reason, 'NONCE_REPLAY');
+assert.equal(cell(result, 'ONE_USE_NONCE').state, 'REFUTED');
+
+const invalidNonceCount = buildInput('PENDING');
+invalidNonceCount.authorization.use_count = 1.5;
+result = protocol.evaluate(invalidNonceCount, {now: NOW});
+assert.equal(result.decision, 'UNKNOWN');
+assert.equal(result.reason, 'INCOMPLETE_NONCE_USE_COUNT');
+assert.equal(cell(result, 'ONE_USE_NONCE').state, 'UNKNOWN');
+assert.deepEqual(cell(result, 'ONE_USE_NONCE').unknown, result.unknown);
 
 const actorMismatch = buildInput('PENDING');
 actorMismatch.actor.id = OWNER.id + 1;

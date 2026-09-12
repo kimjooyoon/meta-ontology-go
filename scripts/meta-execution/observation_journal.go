@@ -18,5 +18,6 @@ func openObservationJournal(manifestPath string) (*os.File, *metaExecutionTraceS
 		return nil, nil, err
 	}
 	state := newMetaExecutionTraceStateWithWriter(io.MultiWriter(file, os.Stderr))
+	state.verifierPackageSummary = newVerifierPackageSummaryCollector(manifestPath)
 	return file, state, nil
 }

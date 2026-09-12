@@ -4,6 +4,7 @@ import "encoding/json"
 
 type executionReceipt struct {
 	Schema         string            `json:"schema"`
+	Scope          string            `json:"scope"`
 	Decision       string            `json:"decision"`
 	Resolution     string            `json:"resolution"`
 	Filename       string            `json:"filename"`
@@ -22,6 +23,7 @@ func decodeExecution(data []byte) (executionReceipt, bool) {
 		return executionReceipt{}, false
 	}
 	valid := receipt.Schema == "gooo/source-execution-receipt/v1" &&
+		receipt.Scope == SourceExecutionScope &&
 		receipt.Decision == "PASS" && receipt.Resolution == ResolutionExact &&
 		receipt.Filename != "" && validDigest(receipt.SourceDigest) &&
 		validDigest(receipt.SemanticDigest) && validDigest(receipt.Digest) &&
