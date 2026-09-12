@@ -16,7 +16,7 @@ func BranchScope(branch string) ([]string, bool) {
 func CheckPathScopeForBranch(paths []string, branch string) error {
 	allowed, known := BranchScope(branch)
 	if !known {
-		return fmt.Errorf("unknown agent branch %q; no paths are allowed", branch)
+		return newUnknownAgentBranchError(branch, paths)
 	}
 	return CheckPathScope(paths, allowed)
 }
