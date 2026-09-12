@@ -11,12 +11,10 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation"
 )
 
-// Producer types are shared wire schemas, not an interpretation oracle.
-// No producer compiler, evaluator, generator or execution function is called.
+// Receipt interpretation uses consumer-owned wire declarations and raw Gooo.
+// Producer execution remains a separate, unobserved claim in this observer.
 const revisionReceiptSchema = "gooo/meta-policy-revision-receipt-observation/v1"
 
 type revisionReceiptCheck struct {
@@ -27,25 +25,25 @@ type revisionReceiptCheck struct {
 }
 
 type revisionReceiptObservation struct {
-	Schema                 string                                             `json:"schema"`
-	SourceDigest           string                                             `json:"source_digest"`
-	RequestArtifactDigest  string                                             `json:"request_artifact_digest"`
-	CanonicalRequestDigest string                                             `json:"canonical_request_digest"`
-	ReportArtifactDigest   string                                             `json:"report_artifact_digest"`
-	Decision               string                                             `json:"decision"`
-	Checks                 []revisionReceiptCheck                             `json:"checks"`
-	Counts                 policycompilation.PolicyRevisionObservationCounts   `json:"reconstructed_counts"`
-	Transitions            []policycompilation.PolicyRevisionObservedTransition `json:"reconstructed_transitions"`
-	BaselineSource         policySourceObservation                            `json:"baseline_source"`
-	CandidateSource        policySourceObservation                            `json:"candidate_source"`
-	IndependentComparisons int                                                `json:"independent_result_comparisons"`
-	ExecutionObserved      bool                                               `json:"policy_execution_observed"`
-	ExecutionUnknown       sourceObservationUnknown                           `json:"execution_unknown"`
-	SharedAssumptions      []string                                           `json:"shared_assumptions"`
-	UnobservedClaims       []string                                           `json:"unobserved_claims"`
-	Improvement            string                                             `json:"improvement"`
-	MutationAuthority      int                                                `json:"mutation_authority"`
-	PromotionAuthority     int                                                `json:"promotion_authority"`
+	Schema                 string                   `json:"schema"`
+	SourceDigest           string                   `json:"source_digest"`
+	RequestArtifactDigest  string                   `json:"request_artifact_digest"`
+	CanonicalRequestDigest string                   `json:"canonical_request_digest"`
+	ReportArtifactDigest   string                   `json:"report_artifact_digest"`
+	Decision               string                   `json:"decision"`
+	Checks                 []revisionReceiptCheck   `json:"checks"`
+	Counts                 revisionWireCounts       `json:"reconstructed_counts"`
+	Transitions            []revisionWireTransition `json:"reconstructed_transitions"`
+	BaselineSource         policySourceObservation  `json:"baseline_source"`
+	CandidateSource        policySourceObservation  `json:"candidate_source"`
+	IndependentComparisons int                      `json:"independent_result_comparisons"`
+	ExecutionObserved      bool                     `json:"policy_execution_observed"`
+	ExecutionUnknown       sourceObservationUnknown `json:"execution_unknown"`
+	SharedAssumptions      []string                 `json:"shared_assumptions"`
+	UnobservedClaims       []string                 `json:"unobserved_claims"`
+	Improvement            string                   `json:"improvement"`
+	MutationAuthority      int                      `json:"mutation_authority"`
+	PromotionAuthority     int                      `json:"promotion_authority"`
 }
 
 type revisionReceiptRule struct {
@@ -185,7 +183,7 @@ func revisionReceiptRules(source policySourceObservation) ([]revisionReceiptRule
 	return rows, nil
 }
 
-func revisionReceiptPolicyMatches(observed policySourceObservation, reported policycompilation.CompiledPolicy) bool {
+func revisionReceiptPolicyMatches(observed policySourceObservation, reported revisionWirePolicy) bool {
 	data, err := json.Marshal(reported)
 	if err != nil {
 		return false
@@ -216,7 +214,7 @@ func revisionReceiptKnownDecision(value string) bool {
 
 var revisionReceiptDigest = regexp.MustCompile("^sha256:[0-9a-f]{64}$")
 
-func revisionReceiptEvaluate(source policySourceObservation, rows []revisionReceiptRule, input policycompilation.Case) policycompilation.DecisionResult {
+func revisionReceiptEvaluate(source policySourceObservation, rows []revisionReceiptRule, input revisionWireCase) revisionWireResult {
 	sourceOK := revisionReceiptDigest.MatchString(input.ObservedSourceDigest)
 	artifactOK := revisionReceiptDigest.MatchString(input.ObservedArtifactSourceDigest)
 	independentOK := revisionReceiptDigest.MatchString(input.ObservedIndependentDigest)
@@ -226,18 +224,18 @@ func revisionReceiptEvaluate(source policySourceObservation, rows []revisionRece
 		input.ObservedIndependentDigest == "" || input.ObservedGeneratedJudgeDigest == ""
 	matches := map[string]bool{
 		"UNRECOGNIZED_TOP_LEVEL_DECISION": input.UpperDecision != "" && !revisionReceiptKnownDecision(input.UpperDecision),
-		"SOURCE_DIGEST_MISMATCH": sourceOK && input.ObservedSourceDigest != source.SourceDigest,
-		"ARTIFACT_SOURCE_MISMATCH": sourceOK && artifactOK && input.ObservedSourceDigest == source.SourceDigest && input.ObservedArtifactSourceDigest != source.SourceDigest,
+		"SOURCE_DIGEST_MISMATCH":          sourceOK && input.ObservedSourceDigest != source.SourceDigest,
+		"ARTIFACT_SOURCE_MISMATCH":        sourceOK && artifactOK && input.ObservedSourceDigest == source.SourceDigest && input.ObservedArtifactSourceDigest != source.SourceDigest,
 		"INDEPENDENT_SOURCE_MISMATCH": sourceOK && artifactOK && independentOK && input.ObservedSourceDigest == source.SourceDigest &&
 			input.ObservedArtifactSourceDigest == source.SourceDigest && input.ObservedIndependentDigest != source.SemanticDigest,
 		"EVIDENCE_UNAVAILABLE": !ready && !sourceOK && !artifactOK && !independentOK && !judgeOK,
-		"DIGEST_UNAVAILABLE": ready && empty,
-		"MALFORMED_DIGEST": ready && !empty && !(sourceOK && artifactOK && independentOK && judgeOK),
+		"DIGEST_UNAVAILABLE":   ready && empty,
+		"MALFORMED_DIGEST":     ready && !empty && !(sourceOK && artifactOK && independentOK && judgeOK),
 		"SEMANTIC_EQUIVALENCE": ready && sourceOK && artifactOK && independentOK && judgeOK &&
 			input.ObservedSourceDigest == source.SourceDigest && input.ObservedArtifactSourceDigest == source.SourceDigest &&
 			input.ObservedIndependentDigest == source.SemanticDigest,
 	}
-	result := policycompilation.DecisionResult{
+	result := revisionWireResult{
 		CaseID: input.ID, PolicyDigest: source.SourceDigest, SemanticDigest: source.SemanticDigest,
 		Denominator: source.Denominator, Decision: "FAIL_CLOSED", Stage: "COMPILE",
 		Reason: "NO_REDUCTION_RULE_MATCHED", BlockedBy: []string{},
@@ -258,13 +256,13 @@ func revisionReceiptEvaluate(source policySourceObservation, rows []revisionRece
 }
 
 func reconstructRevisionReceipt(filename string, source, requestBytes, reportBytes []byte, pkg, namespace string) (revisionReceiptObservation, error) {
-	var request policycompilation.PolicyRevisionObservationRequest
+	var request revisionWireRequest
 	if err := decodeRevisionReceiptDocument(requestBytes, &request, []string{
 		"expected_source_digest", "condition", "from_decision", "to_decision", "cases",
 	}); err != nil {
 		return revisionReceiptObservation{}, fmt.Errorf("decode original revision request: %w", err)
 	}
-	var supplied policycompilation.PolicyRevisionObservation
+	var supplied revisionWireObservation
 	if err := decodeRevisionReceiptDocument(reportBytes, &supplied, []string{
 		"schema", "source_file", "canonical_request_digest", "request_artifact_digest", "request",
 		"original_policy", "candidate_policy", "candidate_source", "changed_coordinates",
@@ -282,13 +280,13 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 		Schema: revisionReceiptSchema, SourceDigest: digestBytes(source),
 		RequestArtifactDigest: digestBytes(requestBytes), CanonicalRequestDigest: digestBytes(canonical),
 		ReportArtifactDigest: digestBytes(reportBytes), Decision: "RECEIPT_CONSISTENT_ONLY",
-		Checks: []revisionReceiptCheck{}, Transitions: []policycompilation.PolicyRevisionObservedTransition{},
+		Checks: []revisionReceiptCheck{}, Transitions: []revisionWireTransition{},
 		ExecutionUnknown: sourceObservationUnknown{
 			State: "UNKNOWN", Stage: "EXECUTION_PROVENANCE", Step: "OBSERVE_REVISION_RECEIPT",
 			Reason: "PROCESS_EXECUTION_NOT_ATTESTED", UnknownClass: "DIRECT_MISSING",
 			NextOperation: "BIND_INDEPENDENT_NATIVE_PROCESS_EVIDENCE", BlockedBy: []string{},
 		},
-		SharedAssumptions: []string{"GOOO_SYNTAX_FRONTEND", "POLICY_COMPILATION_WIRE_TYPES"},
+		SharedAssumptions: []string{"GOOO_SYNTAX_FRONTEND", "POLICY_COMPILATION_WIRE_SCHEMA"},
 		UnobservedClaims: []string{"PROCESS_EXECUTION", "GENERATED_PROGRAM_SEMANTICS", "POLICY_STRUCTURE_METRICS",
 			"WALL_TIME_ACCURACY", "REPOSITORY_WRITE_SET", "EXTERNAL_UTILITY", "CAUSAL_IMPROVEMENT"},
 		Improvement: "UNKNOWN",
@@ -314,7 +312,7 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 		return observed, err
 	}
 	observed.BaselineSource, observed.CandidateSource = baseline, candidate
-	check("SOURCE_BINDING", supplied.Schema == policycompilation.PolicyRevisionObservationSchema &&
+	check("SOURCE_BINDING", supplied.Schema == revisionWireSchema &&
 		revisionReceiptPolicyMatches(baseline, supplied.OriginalPolicy) && revisionReceiptPolicyMatches(candidate, supplied.CandidatePolicy),
 		"COMPARE_RAW_SOURCE_POLICY_PROJECTIONS")
 	requestOK := request.ExpectedSourceDigest == baseline.SourceDigest && len(request.Cases) > 0 &&
@@ -355,20 +353,20 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 	}
 	check("REVISION_SCOPE", scopeOK && changes == 1, "COMPARE_ONLY_REQUESTED_TRANSITION_AND_RESOLUTION")
 	inputsOK, resultsOK, incomplete := true, true, false
-	counts := policycompilation.PolicyRevisionObservationCounts{RequestedCasePairs: len(request.Cases)}
-	for side, phase := range []policycompilation.PolicyRevisionExecution{supplied.Baseline, supplied.Candidate} {
+	counts := revisionWireCounts{RequestedCasePairs: len(request.Cases)}
+	for side, phase := range []revisionWireExecution{supplied.Baseline, supplied.Candidate} {
 		view, rows := baseline, beforeRules
 		if side == 1 {
 			view, rows = candidate, afterRules
 		}
 		attempted := side == 0 || supplied.Baseline.Complete
 		if !attempted {
-			inputsOK = inputsOK && reflect.DeepEqual(phase, policycompilation.PolicyRevisionExecution{})
+			inputsOK = inputsOK && reflect.DeepEqual(phase, revisionWireExecution{})
 			incomplete = true
 			continue
 		}
-		inputs := make([]policycompilation.Case, 0, len(request.Cases))
-		expected := make([]policycompilation.DecisionResult, 0, len(request.Cases))
+		inputs := make([]revisionWireCase, 0, len(request.Cases))
+		expected := make([]revisionWireResult, 0, len(request.Cases))
 		for _, pair := range request.Cases {
 			input := pair.Baseline
 			if side == 1 {
@@ -387,7 +385,7 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 			observed.IndependentComparisons++
 			resultsOK = resultsOK && index < len(expected) && revisionReceiptEqual(result, expected[index])
 		}
-		for _, returned := range [][]policycompilation.DecisionResult{phase.FirstResults, phase.ReplayResults} {
+		for _, returned := range [][]revisionWireResult{phase.FirstResults, phase.ReplayResults} {
 			for index, result := range returned {
 				counts.SourceComparisons++
 				observed.IndependentComparisons++
@@ -431,7 +429,7 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 			continue
 		}
 		before, after := supplied.Baseline.FirstResults[index], supplied.Candidate.FirstResults[index]
-		transition := policycompilation.PolicyRevisionObservedTransition{
+		transition := revisionWireTransition{
 			CaseID: pair.Baseline.ID, InputsIdentical: pair.Baseline == pair.Candidate,
 			BaselineCondition: before.MatchedCondition, CandidateCondition: after.MatchedCondition,
 			BaselineDecision: before.Decision, CandidateDecision: after.Decision,
@@ -458,14 +456,14 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 	if counts.SourceMismatches > 0 || counts.ReplayMismatches > 0 {
 		conformance = "REFUTED"
 	}
-	pending := []policycompilation.PolicyRevisionPending{}
-	pendingRecord := func(stage, step, reason, next string) policycompilation.PolicyRevisionPending {
-		return policycompilation.PolicyRevisionPending{
+	pending := []revisionWirePending{}
+	pendingRecord := func(stage, step, reason, next string) revisionWirePending {
+		return revisionWirePending{
 			State: "UNKNOWN", Stage: stage, Step: step, Reason: reason,
 			UnknownClass: "DIRECT_MISSING", NextOperation: next, BlockedBy: []string{},
 		}
 	}
-	for side, phase := range []policycompilation.PolicyRevisionExecution{supplied.Baseline, supplied.Candidate} {
+	for side, phase := range []revisionWireExecution{supplied.Baseline, supplied.Candidate} {
 		if phase.ExecutionError != "" {
 			name := "BASELINE"
 			if side == 1 {

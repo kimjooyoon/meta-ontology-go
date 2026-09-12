@@ -13,59 +13,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/policycompilation"
 )
-
-func revisionReceiptFixture(t *testing.T) ([]byte, []byte, policycompilation.PolicyRevisionObservation) {
-	t.Helper()
-	source := sourceObservationFixture(t)
-	change := policycompilation.PolicyDecisionRevision{
-		ExpectedSourceDigest: digestBytes(source), Condition: "SEMANTIC_EQUIVALENCE",
-		FromDecision: "PASS", ToDecision: "FAIL_CLOSED",
-	}
-	proposal, err := policycompilation.ProposePolicyDecisionRevision("policy.gooo", source,
-		"metapolicycompilation", "metapolicycompilation", change)
-	if err != nil {
-		t.Fatal(err)
-	}
-	input := func(id string, policy policycompilation.CompiledPolicy) policycompilation.Case {
-		return policycompilation.Case{
-			ID: id, ValidatorExpectation: "PASS", EvidenceClass: "SYNTHETIC_FIXTURE", Provenance: "native receipt observer fixture",
-			ProducerAvailable: true, ConsumerAvailable: true, ObservedSourceDigest: policy.SourceDigest,
-			ObservedArtifactSourceDigest: policy.SourceDigest, ObservedIndependentDigest: policy.SemanticDigest,
-			ObservedGeneratedJudgeDigest: digestBytes(policycompilation.GenerateJudge(policy)),
-		}
-	}
-	freshBefore, freshAfter := input("fresh", proposal.Original), input("fresh", proposal.Candidate)
-	freshAfter.ValidatorExpectation = "FAIL_CLOSED"
-	stale := input("stale", proposal.Original)
-	missing := policycompilation.Case{ID: "missing", EvidenceClass: "SYNTHETIC_FIXTURE", Provenance: "explicit absent input"}
-	request := policycompilation.PolicyRevisionObservationRequest{
-		ExpectedSourceDigest: change.ExpectedSourceDigest, Condition: change.Condition,
-		FromDecision: change.FromDecision, ToDecision: change.ToDecision,
-		Cases: []policycompilation.PolicyRevisionCasePair{
-			{Baseline: freshBefore, Candidate: freshAfter},
-			{Baseline: stale, Candidate: stale},
-			{Baseline: missing, Candidate: missing},
-		},
-	}
-	requestBytes, err := json.MarshalIndent(request, "", "  ")
-	if err != nil {
-		t.Fatal(err)
-	}
-	requestBytes = append([]byte(" \n\t"), requestBytes...)
-	requestBytes = append(requestBytes, '\n')
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-	report, err := policycompilation.ObservePolicyDecisionRevision(ctx, "policy.gooo", source,
-		"metapolicycompilation", "metapolicycompilation", request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	report.RequestArtifactDigest = digestBytes(requestBytes)
-	return source, requestBytes, report
-}
 
 func revisionReceiptJSON(t *testing.T, value any) []byte {
 	t.Helper()
@@ -77,7 +25,7 @@ func revisionReceiptJSON(t *testing.T, value any) []byte {
 }
 
 func TestRevisionReceiptReconstructsGeneratedEvidenceAndRejectsCounterexamples(t *testing.T) {
-	source, requestBytes, report := revisionReceiptFixture(t)
+	source, requestBytes, report, failedAttempt := revisionReceiptFixture(t)
 	reportBytes := revisionReceiptJSON(t, report)
 	t.Run("source-bound-complete-receipt", func(t *testing.T) {
 		got, err := reconstructRevisionReceipt("policy.gooo", source, requestBytes, reportBytes,
@@ -109,12 +57,12 @@ func TestRevisionReceiptReconstructsGeneratedEvidenceAndRejectsCounterexamples(t
 		}
 	})
 	for _, name := range []string{
-		"raw-request-framing", "duplicate-json-key", "unknown-json-field", "source-digest-mismatch",
+		"raw-request-framing", "duplicate-json-key", "unknown-json-field", "unknown-policy-wire-field", "source-digest-mismatch",
 		"unrequested-semantic-change", "silently-rebound-snapshot", "changed-case-id", "tampered-unknown-frontier",
 		"missing-replay-result", "counter-overclaim", "forged-completion", "authority-escalation",
 	} {
 		t.Run(name, func(t *testing.T) {
-			var changed policycompilation.PolicyRevisionObservation
+			var changed revisionWireObservation
 			if err := json.Unmarshal(reportBytes, &changed); err != nil {
 				t.Fatal(err)
 			}
@@ -146,6 +94,8 @@ func TestRevisionReceiptReconstructsGeneratedEvidenceAndRejectsCounterexamples(t
 			switch name {
 			case "duplicate-json-key":
 				rawReport = []byte(strings.Replace(string(rawReport), "\"schema\":", "\"schema\":\"forged\",\"schema\":", 1))
+			case "unknown-policy-wire-field":
+				rawReport = []byte(strings.Replace(string(rawReport), `"original_policy":{`, `"original_policy":{"undeclared_contract":true,`, 1))
 			case "unknown-json-field":
 				rawReport = append(rawReport[:len(rawReport)-1], []byte(",\"undeclared_authority\":true}")...)
 			}
@@ -157,14 +107,7 @@ func TestRevisionReceiptReconstructsGeneratedEvidenceAndRejectsCounterexamples(t
 		})
 	}
 	t.Run("honest-incomplete-attempt-remains-unknown", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-		failed, err := policycompilation.ObservePolicyDecisionRevision(ctx, "policy.gooo", source,
-			"metapolicycompilation", "metapolicycompilation", report.Request)
-		if err == nil {
-			t.Fatal("cancelled producer unexpectedly succeeded")
-		}
-		failed.RequestArtifactDigest = digestBytes(requestBytes)
+		failed := failedAttempt()
 		got, err := reconstructRevisionReceipt("policy.gooo", source, requestBytes, revisionReceiptJSON(t, failed),
 			"metapolicycompilation", "metapolicycompilation")
 		if err != nil || got.Decision != "UNKNOWN" || got.Counts.FailedBatches != 1 ||
@@ -200,7 +143,7 @@ func TestRevisionReceiptModeRejectsMixedOrIncompleteInputs(t *testing.T) {
 }
 
 func TestRevisionReceiptObserverCLIEmitsReadOnlyBoundReport(t *testing.T) {
-	source, requestBytes, report := revisionReceiptFixture(t)
+	source, requestBytes, report, _ := revisionReceiptFixture(t)
 	reportBytes := revisionReceiptJSON(t, report)
 	work := t.TempDir()
 	files := []struct {
@@ -246,7 +189,7 @@ func TestRevisionReceiptObserverCLIEmitsReadOnlyBoundReport(t *testing.T) {
 		t.Fatal(err)
 	}
 	receipt := map[string]any{
-		"schema": "gooo/meta-policy-revision-receipt-cli-evidence/v1",
+		"schema":         "gooo/meta-policy-revision-receipt-cli-evidence/v1",
 		"evidence_class": "SYNTHETIC_FIXTURE", "command": command.Args,
 		"process_exit_code": command.ProcessState.ExitCode(), "observer_digest": digestBytes(binaryBytes),
 		"source_digest": digestBytes(source), "request_artifact_digest": digestBytes(requestBytes),

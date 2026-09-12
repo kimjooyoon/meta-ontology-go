@@ -380,20 +380,26 @@ checks explicitly; it never supplies a fabricated interpretation.
 
 The consumer uses its existing raw-source parser and its own condition
 evaluation, not the producer's compiler, interpreter, generator or executor.
-The Gooo syntax frontend and policy wire types are shared assumptions, declared
-in the report. Structural metrics, actual generated-program semantics, process
+The Gooo syntax frontend and the versioned JSON wire schema remain shared
+assumptions, declared in the report. Wire declarations are consumer-owned;
+neither the observer nor its tests import the producer implementation. Structural metrics, actual generated-program semantics, process
 execution, wall-time accuracy, repository-wide writes, external utility and
 causal improvement are not established by this mode. Its process-execution
 claim remains UNKNOWN even when all six receipt checks close. Mutation and
 promotion authority are zero.
 
 The native test corpus includes a real generated baseline/candidate report,
-12 named counterexamples, an honestly cancelled attempt, mode rejections, and
+13 named counterexamples, an actual failed-toolchain attempt, mode rejections, and
 an actual consumer CLI path. The positive cohort has three paired inputs;
 18 comparisons include each side's source interpretation, first result and
 replay result. These are bounded observations, not language-completeness or
 external-utility percentages. CI results, not this description, determine
-whether the authored cases pass.
+whether the authored cases pass. Test inputs come from a separately built witness
+process, reused within each fixture, not direct calls into the producer package.
+A bootstrap execution supplies actual judge bytes before caller snapshots are
+declared; the completed request is then executed through the same public CLI.
+The missing-toolchain case changes only the fixture child process environment.
+No repository workflow, gate or installed toolchain is changed.
 
 ## Source-bound revision execution observation
 
