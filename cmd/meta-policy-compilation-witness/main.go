@@ -28,7 +28,20 @@ func main() {
 	profilePackage := flag.String("profile-package", "metapolicycompilation", "expected policy package")
 	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
 	profileProjectRoot := flag.String("profile-project-root", "", "declared project boundary for the public profile")
+	revisionRequestPath := flag.String("observe-revision", "", "execute a source-bound revision observation request")
 	flag.Parse()
+	observationMode, modeError := revisionObservationMode(flag.CommandLine)
+	if modeError != nil {
+		fmt.Fprintln(os.Stderr, modeError)
+		os.Exit(2)
+	}
+	if observationMode {
+		if err := observeRevision(*policyPath, *revisionRequestPath, *profilePackage, *profileNamespace, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *policyPath == "" || *casesPath == "" || *outputDir == "" {
 		fmt.Fprintln(os.Stderr, "usage: meta-policy-compilation-witness -policy policy.gooo -cases cases.json -output DIR")
 		os.Exit(2)
