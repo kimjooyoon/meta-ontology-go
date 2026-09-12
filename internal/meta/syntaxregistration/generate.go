@@ -64,7 +64,9 @@ func (plan Plan) Generate(repository fs.FS) (Candidate, error) {
 	}{
 		{1, syntax, func() error { return generateRegistry(syntax, plan.request) }},
 		{2, syntax, func() error { return generateModel(syntax, plan.inputs[corpusPath]) }},
-		{3, conformance, func() error { return generateSyntaxTests(conformance, plan.inputs[corpusPath]) }},
+		{3, conformance, func() error {
+			return generateSyntaxTests(conformance, plan.inputs[corpusPath], plan.request.PromoteMetaSource)
+		}},
 		{4, closure, func() error { return generateAdmission(closure, version) }},
 		{5, closure, func() error { return generateSelection(closure, version, capability) }},
 		{6, closure, func() error { return generateDigest(closure, previous, version, next) }},
