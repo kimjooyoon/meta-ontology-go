@@ -6,9 +6,10 @@ activity receives an explicit integer root input, applies the registered
 that sealed result to `ConsumeA` and `ConsumeB`. Each consumer applies the
 same registered operation once, yielding `43` from an input of `41`.
 
-The plan records three real `Apply` calls and two real token deliveries. The
-generated-Go and source-execution boundaries remain unsupported for runtime
-bindings; this example exercises only the native value plan path.
+The plan records three real `Apply` calls and two real token deliveries. Its
+execution and result evidence carry scope `REGISTERED_VALUE_OPERATION`.
+The generated-Go and source-execution boundaries remain unsupported for
+runtime bindings; this example exercises only the native value plan path.
 
 Run it through the native CLI with an explicit root value:
 

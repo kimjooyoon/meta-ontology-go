@@ -36,7 +36,7 @@ func runtimeFixture(run int, receipt languagedebug.Receipt) RuntimeObservation {
 func executionFixture(t *testing.T) []byte {
 	t.Helper()
 	value := map[string]any{
-		"schema": "gooo/source-execution-receipt/v1", "decision": "PASS", "resolution": "EXACT",
+		"schema": "gooo/source-execution-receipt/v1", "scope": languagedebug.SourceExecutionScope, "decision": "PASS", "resolution": "EXACT",
 		"filename": "main.gooo", "source_digest": digest('a'), "semantic_digest": digest('b'),
 		"entry": map[string]any{"activity": "PayOrder"}, "digest": digest('c'),
 		"events": []map[string]any{{"sequence": 1, "kind": "SOURCE_PARSED", "subject": "a"},

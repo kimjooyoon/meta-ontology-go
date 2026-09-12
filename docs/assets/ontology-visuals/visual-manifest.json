@@ -21,7 +21,7 @@
       "generated_or_changed_artifact": "examples/billing-package/operation-interface.golden.json",
       "terminal_decision": "PASS / INTERFACE_ONLY",
       "next_consumer": "operation-manifest emitter",
-      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-interface.golden.json", "receipt_digest": "sha256:6738fe5a38268a29421d24438731111b14005d4d655d2706e9eb4d25c271f571"}],
+      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-interface.golden.json", "receipt_digest": "sha256:cd6383fcb58019730ddedf439fd5a11d300bcc26cc4a749b3e862b0231dd3edd"}],
       "binding": {"nodes": ["gooo.intent", "semantic.ir", "generated.go", "evidence"], "edges": ["lower", "normalize", "project", "record"], "transitions": ["source", "ir", "structural-view", "proof"]}
     },
     {
@@ -61,7 +61,7 @@
       "generated_or_changed_artifact": "examples/billing-package/operation-manifest.artifact.golden.json",
       "terminal_decision": "PASS / EXACT",
       "next_consumer": "PayOrder entry executor",
-      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:c591fca2be3ca32fe3fb6c83404e3a23908e89c32587db3aabf2eb80f47d4d00"}, {"path": "examples/billing-package/entities.gooo", "digest": "sha256:02b7a8cacdc6e00de1c753b372e252f85c4891b9b8c9b3d3e0dda742ab8809df", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:c591fca2be3ca32fe3fb6c83404e3a23908e89c32587db3aabf2eb80f47d4d00"}],
+      "evidence": [{"path": "examples/billing-package/activity.gooo", "digest": "sha256:a012513d1ccc19394542a96ce43355433b7496746277da08a2724e7fe0647dd3", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:241eb6e2ad1b79ac72d219d7f05d6e9fef94f991bc9e61e9db5e80ec44c3f1e3"}, {"path": "examples/billing-package/entities.gooo", "digest": "sha256:02b7a8cacdc6e00de1c753b372e252f85c4891b9b8c9b3d3e0dda742ab8809df", "receipt_path": "examples/billing-package/operation-manifest.artifact.golden.json", "receipt_digest": "sha256:241eb6e2ad1b79ac72d219d7f05d6e9fef94f991bc9e61e9db5e80ec44c3f1e3"}],
       "binding": {"nodes": ["activity.gooo", "entities.gooo", "canonical-order", "package-api", "entry.receipt"], "edges": ["sort", "parse", "merge", "resolve", "execute"], "transitions": ["unordered", "canonical", "bound", "entry", "receipt"]}
     },
     {

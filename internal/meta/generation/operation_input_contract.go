@@ -120,7 +120,7 @@ type OperationInputContractPolicyEvidence struct {
 var operationInputContractSource []byte
 
 func loadOperationInputContract() (operationInputContract, error) {
-	return parseOperationInputContract(operationInputContractSource)
+	return cachedOperationInputContract(operationInputContractSource)
 }
 
 func parseOperationInputContract(raw []byte) (operationInputContract, error) {

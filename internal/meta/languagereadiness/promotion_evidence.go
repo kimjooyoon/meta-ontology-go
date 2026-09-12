@@ -7,13 +7,18 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/proposalpromotion"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/toolchainusecases"
+	conceptoperation "github.com/kimjooyoon/meta-ontology-go/internal/meta/metricprogram/conceptoperation"
 )
 
 type PromotionEvidence struct {
-	Promotion      proposalpromotion.Receipt
-	Capability     guardedcapability.Receipt
-	UseCases       toolchainusecases.Report
-	Syntax         languagesyntax.Report
-	Diagnostic     languagediagnosticprovenance.Report
-	PackageRuntime []languagepackageruntime.Report
+	Promotion                        proposalpromotion.Receipt
+	ConceptOperation                 conceptoperation.Receipt
+	ConceptOperationInputs           conceptoperation.SourceInputs
+	ConceptOperationRepository       string
+	ConceptOperationScratchDirectory string
+	Capability                       guardedcapability.Receipt
+	UseCases                         toolchainusecases.Report
+	Syntax                           languagesyntax.Report
+	Diagnostic                       languagediagnosticprovenance.Report
+	PackageRuntime                   []languagepackageruntime.Report
 }
