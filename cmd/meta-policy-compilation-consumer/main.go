@@ -161,7 +161,21 @@ func main() {
 	profileNamespace := flag.String("profile-namespace", "metapolicycompilation", "expected policy namespace")
 	manifestPath := flag.String("manifest", "", "public generation manifest")
 	observeSource := flag.Bool("observe-source", false, "reconstruct only raw policy source to stdout; no execution or producer artifacts")
+	revisionReceiptPath := flag.String("observe-revision-receipt", "", "inspect a supplied revision report without executing it")
+	revisionRequestPath := flag.String("revision-request", "", "original raw request for revision receipt observation")
 	flag.Parse()
+	receiptMode, receiptModeError := revisionReceiptMode(flag.CommandLine)
+	if receiptModeError != nil {
+		fmt.Fprintln(os.Stderr, receiptModeError)
+		os.Exit(2)
+	}
+	if receiptMode {
+		if err := runRevisionReceiptObservation(*policyPath, *revisionRequestPath, *revisionReceiptPath, *profilePackage, *profileNamespace, os.Stdout); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if *observeSource {
 		supplied := []string{}
 		flag.Visit(func(current *flag.Flag) { supplied = append(supplied, current.Name) })
