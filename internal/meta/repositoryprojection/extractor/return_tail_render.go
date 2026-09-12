@@ -8,7 +8,7 @@ import (
 	"go/token"
 )
 
-func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixBinding, body []byte) ([]byte, error) {
+func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixBinding, results *ast.FieldList, body []byte) ([]byte, error) {
 	var output bytes.Buffer
 	output.WriteString("func ")
 	output.WriteString(name)
@@ -23,7 +23,28 @@ func renderReturnTailHelper(fset *token.FileSet, name string, bindings []suffixB
 			return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
 		}
 	}
-	output.WriteString(") error {\n")
+	if results == nil || len(results.List) == 0 {
+		return nil, returnTailContradiction(obligationReturnShape, "helper results are missing")
+	}
+	output.WriteString(") ")
+	if len(results.List) > 1 {
+		output.WriteByte('(')
+	}
+	for index, result := range results.List {
+		if len(result.Names) != 0 || result.Type == nil {
+			return nil, returnTailContradiction(obligationReturnShape, "helper results must be explicit and unnamed")
+		}
+		if index > 0 {
+			output.WriteString(", ")
+		}
+		if err := format.Node(&output, fset, result.Type); err != nil {
+			return nil, fail("derive-recipe", "render-return-tail-helper", "AST_RENDER_FAILED", "DIRECT_MISSING", "restore-parser-evidence", nil)
+		}
+	}
+	if len(results.List) > 1 {
+		output.WriteByte(')')
+	}
+	output.WriteString(" {\n")
 	output.Write(body)
 	if len(body) == 0 || body[len(body)-1] != '\n' {
 		output.WriteByte('\n')

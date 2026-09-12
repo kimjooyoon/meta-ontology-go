@@ -61,7 +61,7 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 		return nil, fail("derive-recipe", "type-check-return-tail", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil)
 	}
 	if !returnTailShapeEligible(function, evidence.info) {
-		return nil, returnTailContradiction(obligationReturnShape, "function is not an unnamed single-error result")
+		return nil, returnTailContradiction(obligationReturnShape, "function does not have explicit unnamed typed results")
 	}
 	statements := function.Body.List
 	if len(statements) < 2 {
@@ -90,14 +90,32 @@ func buildReturnTailCandidate(root, logical string, source []byte, fset *token.F
 }
 
 func returnTailShapeEligible(function *ast.FuncDecl, info *types.Info) bool {
-	if function == nil || function.Recv != nil || function.Type == nil || function.Type.TypeParams != nil && len(function.Type.TypeParams.List) != 0 || function.Type.Results == nil || len(function.Type.Results.List) != 1 ||
-		len(function.Type.Results.List[0].Names) != 0 || function.Body == nil || len(function.Body.List) == 0 {
+	if function == nil || function.Recv != nil || function.Type == nil || function.Type.TypeParams != nil && len(function.Type.TypeParams.List) != 0 ||
+		function.Body == nil || len(function.Body.List) == 0 {
 		return false
 	}
 	if _, ok := function.Body.List[len(function.Body.List)-1].(*ast.ReturnStmt); !ok {
 		return false
 	}
-	return isErrorType(info.TypeOf(function.Type.Results.List[0].Type))
+	return len(returnTailResultTypes(function.Type.Results, info)) != 0
+}
+
+func returnTailResultTypes(results *ast.FieldList, info *types.Info) []types.Type {
+	if results == nil || len(results.List) == 0 || info == nil {
+		return nil
+	}
+	typesByPosition := make([]types.Type, 0, len(results.List))
+	for _, field := range results.List {
+		if len(field.Names) != 0 || field.Type == nil {
+			return nil
+		}
+		resultType := info.TypeOf(field.Type)
+		if resultType == nil {
+			return nil
+		}
+		typesByPosition = append(typesByPosition, resultType)
+	}
+	return typesByPosition
 }
 
 func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence, contract generation.OperationInputContractEvidence, contractObligations []ContractObligationEvidence, existing map[string]bool, startIndex int, preflight []renderedCapacityObservation, helperProofRegistry map[string]returnTailHelperProof) (*returnTailCandidate, error) {
@@ -105,8 +123,8 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if len(statements) == 0 {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail does not reduce the declaration")
 	}
-	if !returnTailReturnsCompatible(statements, evidence.info, evidence.info.TypeOf(function.Type.Results.List[0].Type)) {
-		return nil, returnTailContradiction(obligationReturnShape, "terminal tail has a bare, multiple, or incompatible return")
+	if !returnTailReturnsCompatible(statements, evidence.info, returnTailResultTypes(function.Type.Results, evidence.info)) {
+		return nil, returnTailContradiction(obligationReturnShape, "terminal tail has a bare, untyped, or positionally incompatible return")
 	}
 	first, last := statements[0], statements[len(statements)-1]
 	start := fset.Position(first.Pos()).Offset
@@ -116,7 +134,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 		return nil, returnTailContradiction(obligationRenderedCapacity, "terminal tail source coordinates are invalid")
 	}
 	proof := newReturnTailProofChain(contractObligations, source, source[start:end], contract.SourceDigest, contract.SemanticDigest)
-	if err := proof.consume(0, returnTailPredicateResult{Status: "PASS", Payload: append([]byte(nil), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "unnamed single-error result with assignable selected returns"}); err != nil {
+	if err := proof.consume(0, returnTailPredicateResult{Status: "PASS", Payload: append([]byte(nil), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "unnamed typed results with positionally assignable selected returns"}); err != nil {
 		return nil, err
 	}
 	if err := proof.consume(1, returnTailPredicateResult{Status: "PASS", Payload: append([]byte("control-flow\x00"), source[start:end]...), CandidateDigest: proofDigest(source[start:end]), Detail: "no escaping branch, defer, go, panic, or recover"}); err != nil {
@@ -144,7 +162,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if existing[name] {
 		return nil, returnTailContradiction(obligationRenderedCapacity, "return-tail helper identity already exists")
 	}
-	helper, err := renderReturnTailHelper(fset, name, bindings, source[start:end])
+	helper, err := renderReturnTailHelper(fset, name, bindings, function.Type.Results, source[start:end])
 	if err != nil {
 		return nil, err
 	}
@@ -415,36 +433,57 @@ func returnTailSignatureEvidence(function *ast.FuncDecl, info *types.Info) bool 
 	return complete
 }
 
-func returnTailReturnsCompatible(statements []ast.Stmt, info *types.Info, resultType types.Type) bool {
+func returnTailReturnsCompatible(statements []ast.Stmt, info *types.Info, resultTypes []types.Type) bool {
+	if info == nil || len(resultTypes) == 0 {
+		return false
+	}
 	compatible := true
 	for _, statement := range statements {
 		ast.Inspect(statement, func(node ast.Node) bool {
+			if !compatible {
+				return false
+			}
+			if _, nested := node.(*ast.FuncLit); nested {
+				return false
+			}
 			returnStatement, ok := node.(*ast.ReturnStmt)
 			if !ok {
 				return true
 			}
-			if len(returnStatement.Results) != 1 {
-				compatible = false
-				return false
-			}
-			expressionType := info.TypeOf(returnStatement.Results[0])
-			if expressionType == nil {
-				identifier, isNil := returnStatement.Results[0].(*ast.Ident)
-				if !isNil || identifier.Name != "nil" {
-					compatible = false
-					return false
-				}
-			} else if !types.AssignableTo(expressionType, resultType) {
-				compatible = false
-				return false
-			}
-			return true
+			compatible = returnTailReturnCompatible(returnStatement, info, resultTypes)
+			return false
 		})
 		if !compatible {
 			return false
 		}
 	}
 	return compatible
+}
+
+func returnTailReturnCompatible(statement *ast.ReturnStmt, info *types.Info, resultTypes []types.Type) bool {
+	if len(statement.Results) == 1 {
+		if tuple, ok := info.TypeOf(statement.Results[0]).(*types.Tuple); ok {
+			if tuple.Len() != len(resultTypes) {
+				return false
+			}
+			for index, resultType := range resultTypes {
+				if !types.AssignableTo(tuple.At(index).Type(), resultType) {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	if len(statement.Results) != len(resultTypes) {
+		return false
+	}
+	for index, expression := range statement.Results {
+		expressionType := info.TypeOf(expression)
+		if expressionType == nil || !types.AssignableTo(expressionType, resultTypes[index]) {
+			return false
+		}
+	}
+	return true
 }
 
 func hasReturnTailOuterHazard(statements []ast.Stmt, info *types.Info) bool {
