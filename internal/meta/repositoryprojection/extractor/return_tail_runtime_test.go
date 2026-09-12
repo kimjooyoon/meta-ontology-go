@@ -48,6 +48,27 @@ func TestReturnTailRuntimeWitness(t *testing.T) {
 			support:      map[string]string{"harness.go": runtimeWitnessW2Harness()},
 			expected:     "typed-nil:*main.typedNilError:false\n",
 		},
+		{
+			name:         "W3_tuple_early_and_terminal",
+			functionName: "W3",
+			source:       runtimeWitnessW3Source(),
+			support:      map[string]string{"harness.go": runtimeWitnessW3Harness()},
+			expected:     "early:11:true:*main.witnessError:false\nnil:22:true:<nil>:true\nterminal:33:true:*main.witnessError:false\n",
+		},
+		{
+			name:         "W4_tuple_typed_nil_interface",
+			functionName: "W4",
+			source:       runtimeWitnessW4Source(),
+			support:      map[string]string{"harness.go": runtimeWitnessW4Harness()},
+			expected:     "typed-nil-tuple:*main.typedNilError:false:true\n",
+		},
+		{
+			name:         "W5_forwarded_imported_tuple",
+			functionName: "W5",
+			source:       runtimeWitnessW5Source(),
+			support:      map[string]string{"harness.go": runtimeWitnessW5Harness()},
+			expected:     "early:-1:early:true\nleaf:17:leaf:true\n",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -444,4 +465,36 @@ func runtimeWitnessW2Source() string {
 
 func runtimeWitnessW2Harness() string {
 	return "package main\n\nimport \"fmt\"\n\ntype typedNilError struct{}\n\nfunc (*typedNilError) Error() string { return \"typed-nil\" }\n\nfunc main() {\n\terr := W2()\n\tfmt.Printf(\"typed-nil:%T:%t\\n\", err, err == nil)\n}\n"
+}
+
+func runtimeWitnessW3Source() string {
+	return "package main\n\nfunc W3(mode int) (int, error) {\n" +
+		"\tif mode == 1 {\n\t\treturn 11, earlySentinel\n\t}\n" +
+		strings.Repeat("\t_ = 1\n", 80) +
+		"\tif mode == 2 {\n\t\treturn 22, nil\n\t}\n\treturn 33, terminalSentinel\n}\n"
+}
+
+func runtimeWitnessW3Harness() string {
+	return "package main\n\nimport \"fmt\"\n\nvar earlySentinel error = &witnessError{kind: \"early\"}\nvar terminalSentinel error = &witnessError{kind: \"terminal\"}\n\ntype witnessError struct{ kind string }\n\nfunc (e *witnessError) Error() string { return e.kind }\n\nfunc emitW3(label string, value int, got error, expected error) {\n\tfmt.Printf(\"%s:%d:%t:%T:%t\\n\", label, value, got == expected, got, got == nil)\n}\n\nfunc main() {\n\tvalue, err := W3(1)\n\temitW3(\"early\", value, err, earlySentinel)\n\tvalue, err = W3(2)\n\temitW3(\"nil\", value, err, nil)\n\tvalue, err = W3(0)\n\temitW3(\"terminal\", value, err, terminalSentinel)\n}\n"
+}
+
+func runtimeWitnessW4Source() string {
+	return "package main\n\nfunc W4() (any, error) {\n" +
+		strings.Repeat("\t_ = 1\n", 80) +
+		"\treturn (*typedNilError)(nil), nil\n}\n"
+}
+
+func runtimeWitnessW4Harness() string {
+	return "package main\n\nimport \"fmt\"\n\ntype typedNilError struct{}\n\nfunc (*typedNilError) Error() string { return \"typed-nil\" }\n\nfunc main() {\n\tvalue, err := W4()\n\tfmt.Printf(\"typed-nil-tuple:%T:%t:%t\\n\", value, value == nil, err == nil)\n}\n"
+}
+
+func runtimeWitnessW5Source() string {
+	return "package main\n\nimport \"time\"\n\nfunc W5(mode int) (time.Duration, string, error) {\n" +
+		"\tif mode == 1 {\n\t\treturn -1, \"early\", nil\n\t}\n" +
+		strings.Repeat("\t_ = 1\n", 80) +
+		"\treturn w5Leaf()\n}\n"
+}
+
+func runtimeWitnessW5Harness() string {
+	return "package main\n\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n\nfunc w5Leaf() (time.Duration, string, error) { return time.Duration(17), \"leaf\", nil }\n\nfunc main() {\n\tvalue, label, err := W5(1)\n\tfmt.Printf(\"early:%d:%s:%t\\n\", value, label, err == nil)\n\tvalue, label, err = W5(0)\n\tfmt.Printf(\"leaf:%d:%s:%t\\n\", value, label, err == nil)\n}\n"
 }
