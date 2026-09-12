@@ -340,6 +340,61 @@ revision or relabel synthetic fixtures as current execution evidence.
 Read, parse and output failures remain errors and must not become success
 or silently supplied digests in a caller.
 
+## Read-only revision receipt reconstruction
+
+The consumer can inspect a revision execution report without executing its
+generated program or adopting the candidate:
+
+```sh
+go run ./cmd/meta-policy-compilation-consumer \
+  -policy policy.gooo \
+  -revision-request request.json \
+  -observe-revision-receipt revision-report.json
+```
+
+The three inputs are read-only. The observer writes JSON to stdout and accepts
+neither an output directory nor mixed legacy/source-observation modes.
+Each input is bounded to 16 MiB. Raw source, request and report bytes retain
+separate digests. The canonical typed request digest does not replace the raw
+request identity. Source filenames are parsing context, not filesystem
+provenance or proof of where the producer read its bytes.
+
+Six bounded checks connect the report back to the Gooo policy's source rules
+and meta-operation bindings:
+
+| Check | Reconstruction |
+| --- | --- |
+| SOURCE_BINDING | Consumer-parsed baseline/candidate identities, rules and semantic digests |
+| REQUEST_BINDING | Original raw/canonical request and paired case identities |
+| REVISION_SCOPE | Only the requested transition/resolution decision change |
+| DECLARED_INPUT_PRESERVATION | Caller snapshots, order, classes and provenance, without digest repair |
+| RESULT_RECONSTRUCTION | Every source/first/replay result field, including UNKNOWN cause/frontier |
+| ACCOUNTING_RECONSTRUCTION | Counts, transitions, incomplete attempts, pending claims and zero authority |
+
+`RECEIPT_CONSISTENT_ONLY` means these supplied records agree with the consumer's
+source interpretation. It does not prove the producer executed those records.
+A contradictory result or advertised total is REFUTED. An honestly incomplete
+attempt remains UNKNOWN with a concrete stage, step, reason, class, next
+operation and blocked-by frontier. Missing source reconstruction blocks later
+checks explicitly; it never supplies a fabricated interpretation.
+
+The consumer uses its existing raw-source parser and its own condition
+evaluation, not the producer's compiler, interpreter, generator or executor.
+The Gooo syntax frontend and policy wire types are shared assumptions, declared
+in the report. Structural metrics, actual generated-program semantics, process
+execution, wall-time accuracy, repository-wide writes, external utility and
+causal improvement are not established by this mode. Its process-execution
+claim remains UNKNOWN even when all six receipt checks close. Mutation and
+promotion authority are zero.
+
+The native test corpus includes a real generated baseline/candidate report,
+12 named counterexamples, an honestly cancelled attempt, mode rejections, and
+an actual consumer CLI path. The positive cohort has three paired inputs;
+18 comparisons include each side's source interpretation, first result and
+replay result. These are bounded observations, not language-completeness or
+external-utility percentages. CI results, not this description, determine
+whether the authored cases pass.
+
 ## Source-bound revision execution observation
 
 The witness has a separate experimental mode for executing an exact policy
