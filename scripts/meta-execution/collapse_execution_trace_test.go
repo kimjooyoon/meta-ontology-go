@@ -185,14 +185,14 @@ func TestNativeCollapseCostSummaryPreservesTraceAndUnknown(t *testing.T) {
 
 func TestNativeCollapseCostSummaryRejectsUnsupportedObservations(t *testing.T) {
 	for name, raw := range map[string]string{
-		"empty": "",
-		"malformed": "{",
-		"null": "null",
-		"schema": `{"schema":"unknown"}`,
-		"missing-time": `{"schema":"gooo/meta-execution-driver-boundary/v1","boundary":"COMMAND_RETURNED","cost":{"state":"OBSERVED"}}`,
-		"negative-time": `{"schema":"gooo/meta-execution-driver-boundary/v1","boundary":"COMMAND_RETURNED","cost":{"state":"OBSERVED","elapsed_ns":-1}}`,
+		"empty":           "",
+		"malformed":       "{",
+		"null":            "null",
+		"schema":          `{"schema":"unknown"}`,
+		"missing-time":    `{"schema":"gooo/meta-execution-driver-boundary/v1","boundary":"COMMAND_RETURNED","cost":{"state":"OBSERVED"}}`,
+		"negative-time":   `{"schema":"gooo/meta-execution-driver-boundary/v1","boundary":"COMMAND_RETURNED","cost":{"state":"OBSERVED","elapsed_ns":-1}}`,
 		"fractional-time": `{"schema":"gooo/meta-execution-driver-boundary/v1","boundary":"COMMAND_RETURNED","cost":{"state":"OBSERVED","elapsed_ns":0.5}}`,
-		"oversized": strings.Repeat("x", 64*1024+1),
+		"oversized":       strings.Repeat("x", 64*1024+1),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := renderNativeCollapseCostSummary([]byte(raw)); err == nil {
@@ -229,9 +229,9 @@ func TestNativeCollapseCostSummaryOnlyAppendsToRunnerOutput(t *testing.T) {
 		t.Fatalf("native summary did not preserve prior content: %q %v", raw, err)
 	}
 	for name, invalid := range map[string]string{
-		"relative": "step_summary_relative",
+		"relative":                  "step_summary_relative",
 		"outside-command-directory": filepath.Join(root, "step_summary_outside"),
-		"different-command": filepath.Join(directory, "set_env_not_a_summary"),
+		"different-command":         filepath.Join(directory, "set_env_not_a_summary"),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if err := appendNativeCollapseCostSummary(root, invalid, []byte("no\n")); err == nil {
