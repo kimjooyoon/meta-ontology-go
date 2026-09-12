@@ -48,7 +48,7 @@ func TestCounterexampleRevisionDerivesRequestFromGeneratedResult(t *testing.T) {
 	if report.State != "PROPOSED" || report.Revision == nil || report.CandidatePolicy == nil ||
 		report.Revision.Condition != results[0].MatchedCondition || report.Revision.FromDecision != results[0].Decision ||
 		report.Revision.ToDecision != counterexample.Input.ValidatorExpectation || len(report.DerivedFields) != 3 ||
-		len(report.ChangedCoordinates) != 1 || report.CandidateSource == "" {
+		!reflect.DeepEqual(report.ChangedCoordinates, []string{"transition.to", "case.resolution.decision"}) || report.CandidateSource == "" {
 		t.Fatalf("request was not derived from its exact counterexample: %+v", report)
 	}
 	if string(source) != sourceBefore || !reflect.DeepEqual(counterexample, inputBefore) ||
@@ -130,7 +130,7 @@ func TestDecodePolicyRevisionCounterexampleIsStrict(t *testing.T) {
 	}
 	for name, bad := range map[string]string{
 		"null": "null", "trailing": string(raw) + "{}",
-		"unknown": strings.TrimSuffix(string(raw), "}") + ",\"adopt\":true}",
+		"unknown":   strings.TrimSuffix(string(raw), "}") + ",\"adopt\":true}",
 		"duplicate": strings.Replace(string(raw), "\"expected_source_digest\":", "\"expected_source_digest\":\"x\",\"expected_source_digest\":", 1),
 	} {
 		t.Run(name, func(t *testing.T) {

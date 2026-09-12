@@ -40,9 +40,14 @@ type PolicyCounterexampleProposal struct {
 }
 
 func DecodePolicyRevisionCounterexample(data []byte) (PolicyRevisionCounterexample, error) {
-	var input PolicyRevisionCounterexample
-	err := decodeStrictJSON(data, &input)
-	return input, err
+	var input *PolicyRevisionCounterexample
+	if err := decodeStrictJSON(data, &input); err != nil {
+		return PolicyRevisionCounterexample{}, err
+	}
+	if input == nil {
+		return PolicyRevisionCounterexample{}, errors.New("counterexample must be a JSON object")
+	}
+	return *input, nil
 }
 
 // ProposePolicyRevisionFromCounterexample derives a request, not an adoption.
@@ -60,7 +65,7 @@ func ProposePolicyRevisionFromCounterexample(filename string, source []byte, exp
 		ChangedCoordinates: []string{}, DerivedFields: []string{},
 		Admission: revisionPending("INDEPENDENT_VALIDATION", "OBSERVE_REVISION_CANDIDATE",
 			"INDEPENDENT_REVISION_EVIDENCE_MISSING", "RUN_INDEPENDENT_REVISION_OBSERVER"),
-		InputProvenance: "CALLER_DECLARED_NOT_VERIFIED",
+		InputProvenance:    "CALLER_DECLARED_NOT_VERIFIED",
 		CandidateExecution: "NOT_OBSERVED", Improvement: "UNKNOWN",
 	}
 	if input.ExpectedSourceDigest == "" {
@@ -93,7 +98,7 @@ func ProposePolicyRevisionFromCounterexample(filename string, source []byte, exp
 	}
 	revision := PolicyDecisionRevision{
 		ExpectedSourceDigest: input.ExpectedSourceDigest,
-		Condition: input.Observed.MatchedCondition, FromDecision: input.Observed.Decision,
+		Condition:            input.Observed.MatchedCondition, FromDecision: input.Observed.Decision,
 		ToDecision: input.Input.ValidatorExpectation,
 	}
 	proposal, err := ProposePolicyDecisionRevision(filename, source, expectedPackage, expectedNamespace, revision)
