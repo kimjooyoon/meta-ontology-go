@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -201,4 +202,132 @@ func returnTailPrefixBindingFixture(header, prefix, tail string) string {
 
 func returnTailFunctionIteratorFixture() string {
 	return "package p\n\nfunc F() error {\n" + strings.Repeat("\t_ = 1\n", 72) + "\tfor range iterator {}\n\treturn nil\n}\n\nfunc iterator(yield func(int) bool) {}\n"
+}
+
+func TestReturnTailTypedResultCompatibility(t *testing.T) {
+	pair := "package p\nfunc F() (int, error) { return leaf() }\nfunc leaf() (int, error) { return 7, nil }\n"
+	cases := []struct {
+		name       string
+		source     string
+		eligible   bool
+		compatible bool
+		mutation   string
+	}{
+		{"scalar", "package p\nfunc F() int { return 7 }\n", true, true, ""},
+		{"value-error", "package p\nfunc F() (int, error) { return 7, nil }\n", true, true, ""},
+		{"two-scalars", "package p\nfunc F() (int, string) { return 7, \"seven\" }\n", true, true, ""},
+		{"three-results", "package p\nfunc F() (int, string, error) { return 7, \"seven\", nil }\n", true, true, ""},
+		{"forwarded-tuple", pair, true, true, ""},
+		{"typed-nil-interface", "package p\nfunc F() (any, error) { return (*int)(nil), nil }\n", true, true, ""},
+		{"defined-result", "package p\ntype result struct{ N int }\nfunc F() (result, error) { return result{N: 7}, nil }\n", true, true, ""},
+		{"named-results", "package p\nfunc F() (value int, err error) { return 7, nil }\n", false, false, ""},
+		{"no-results", "package p\nfunc F() { return }\n", false, false, ""},
+		{"wrong-tuple-arity", pair, true, false, "arity"},
+		{"wrong-tuple-order", pair, true, false, "order"},
+		{"missing-expression-type", "package p\nfunc F() int { return 7 }\n", true, false, "expression"},
+		{"missing-nil-type", "package p\nfunc F() (int, error) { return 7, nil }\n", true, false, "nil"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			function, info := returnTailTypedFixture(t, tc.source)
+			if got := returnTailShapeEligible(function, info); got != tc.eligible {
+				t.Fatalf("shape eligibility=%t, want %t", got, tc.eligible)
+			}
+			if !tc.eligible {
+				return
+			}
+			results := returnTailResultTypes(function.Type.Results, info)
+			statement := function.Body.List[len(function.Body.List)-1].(*ast.ReturnStmt)
+			switch tc.mutation {
+			case "arity":
+				results = results[:1]
+			case "order":
+				results[0], results[1] = results[1], results[0]
+			case "expression":
+				delete(info.Types, statement.Results[0])
+			case "nil":
+				delete(info.Types, statement.Results[1])
+				delete(info.Uses, statement.Results[1].(*ast.Ident))
+			}
+			if got := returnTailReturnsCompatible(function.Body.List, info, results); got != tc.compatible {
+				t.Fatalf("return compatibility=%t, want %t", got, tc.compatible)
+			}
+		})
+	}
+}
+
+func returnTailTypedFixture(t *testing.T, source string) (*ast.FuncDecl, *types.Info) {
+	t.Helper()
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info := &types.Info{Defs: map[*ast.Ident]types.Object{}, Uses: map[*ast.Ident]types.Object{}, Types: map[ast.Expr]types.TypeAndValue{}}
+	configuration := types.Config{}
+	if _, err := configuration.Check("fixture", fset, []*ast.File{file}, info); err != nil {
+		t.Fatal(err)
+	}
+	for _, declaration := range file.Decls {
+		if function, ok := declaration.(*ast.FuncDecl); ok && function.Name.Name == "F" {
+			return function, info
+		}
+	}
+	t.Fatal("typed fixture lacks F")
+	return nil, nil
+}
+
+func TestReturnTailTupleExtractionRetainsProofChain(t *testing.T) {
+	cases := []struct {
+		name   string
+		source string
+	}{
+		{"pair", returnTailPrefixBindingFixture("func F(values map[string]struct{}) (int, error) {\n", "\tif len(values) == 0 {\n\t\treturn -1, errorSentinel()\n\t}\n", "\tif len(values) > 1 {\n\t\treturn 2, errorSentinel()\n\t}\n\treturn 1, nil\n")},
+		{"forwarded-triple", returnTailPrefixBindingFixture("func F(values map[string]struct{}) (int, string, error) {\n", "\tif len(values) == 0 {\n\t\treturn -1, \"empty\", errorSentinel()\n\t}\n", "\treturn tupleLeaf()\n") + "\nfunc tupleLeaf() (int, string, error) { return 7, \"ok\", nil }\n"},
+		{"typed-nil", returnTailFixture("func F(values map[string]struct{}) (any, error) {\n", "\treturn (*int)(nil), nil\n")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.test\n"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			filename := filepath.Join(root, "x.go")
+			if err := os.WriteFile(filename, []byte(tc.source), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			result, err := ExtractWithResult(root, "x.go")
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertReturnTailTupleProofChain(t, result)
+			replay, err := ExtractWithResult(root, "x.go")
+			if err != nil || !reflect.DeepEqual(result.Generated, replay.Generated) {
+				t.Fatalf("generated replay differs: error=%v", err)
+			}
+			unchanged, err := os.ReadFile(filename)
+			if err != nil || string(unchanged) != tc.source {
+				t.Fatalf("input source changed: error=%v", err)
+			}
+		})
+	}
+}
+
+func assertReturnTailTupleProofChain(t *testing.T, result Result) {
+	t.Helper()
+	if len(result.Evidence) == 0 || !generatedFunctionContains(result.Generated, "F", "return FExtractedReturnTail") {
+		t.Fatal("typed extraction lacks a return-preserving helper and evidence")
+	}
+	for _, evidence := range result.Evidence {
+		if evidence.Strategy != returnTailStrategy || evidence.ContractActivity != "ExtractFunction" ||
+			evidence.ContractSourceDigest == "" || evidence.ContractSemanticDigest == "" ||
+			len(evidence.ProofStages) != len(returnTailObligations) || len(evidence.ContractObligations) != len(returnTailObligations) {
+			t.Fatalf("typed extraction lost its Gooo proof chain: %+v", evidence)
+		}
+		if evidence.ContractObligations[0].Activity != "ProveReturnShape" ||
+			evidence.BeforeRenderedCapacityOverage <= evidence.AfterRenderedCapacityOverage ||
+			evidence.FinalRenderedCapacity == nil || evidence.FinalRenderedCapacity.Overage != 0 {
+			t.Fatalf("typed extraction lacks return-shape or final capacity evidence: %+v", evidence)
+		}
+	}
 }
