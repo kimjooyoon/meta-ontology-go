@@ -53,7 +53,7 @@ func verifierWorkResult(stdout string, code int) processResult {
 	raw := []byte(stdout)
 	return processResult{
 		Observation: descriptorObservation([]string{"go", "test", "./..."}, raw, nil, code),
-		Stdout: raw,
+		Stdout:      raw,
 	}
 }
 
@@ -114,13 +114,13 @@ func TestVerifierWorkPreservesParsedCountsBeforePresentationSampling(t *testing.
 func TestVerifierWorkBoundedInputsDoNotClaimACompleteDenominator(t *testing.T) {
 	line := "ok " + verifierPackageSummaryModulePrefix + "/internal/work 1s\n"
 	for _, test := range []struct {
-		name string
+		name   string
 		stdout string
-		rows int
+		rows   int
 	}{
 		{name: "rows", stdout: strings.Repeat(line, maxVerifierPackageSummaryRowsPerInvocation+1), rows: maxVerifierPackageSummaryRowsPerInvocation},
 		{name: "bytes", stdout: strings.Repeat("x", maxVerifierPackageSummaryStdoutBytes+1), rows: 0},
-		{name: "line", stdout: strings.Repeat("x", maxVerifierPackageSummaryLineBytes+1)+"\n", rows: 0},
+		{name: "line", stdout: strings.Repeat("x", maxVerifierPackageSummaryLineBytes+1) + "\n", rows: 0},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result := verifierWorkResult(test.stdout, 0)
@@ -136,7 +136,7 @@ func TestVerifierWorkBoundedInputsDoNotClaimACompleteDenominator(t *testing.T) {
 
 func TestVerifierWorkEmptyOrUnrecognizedInputDoesNotMeanZeroTests(t *testing.T) {
 	for _, test := range []struct {
-		stdout string
+		stdout   string
 		coverage string
 	}{
 		{stdout: "", coverage: "NO_PACKAGE_SUMMARIES"},
@@ -159,8 +159,8 @@ func TestVerifierWorkReportsMissingAndContradictoryProcessBindings(t *testing.T)
 	badSize := result
 	badSize.Observation.StdoutBytes++
 	for _, test := range []struct {
-		name string
-		result processResult
+		name    string
+		result  processResult
 		binding string
 	}{
 		{name: "matched", result: result, binding: "MATCHED"},

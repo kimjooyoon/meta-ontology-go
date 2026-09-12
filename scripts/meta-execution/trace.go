@@ -116,7 +116,7 @@ func (trace metaExecutionTrace) emitProcessCallEntered(pass, commandKind string)
 func (trace metaExecutionTrace) emitProcessReturned(pass, commandKind string, observation generation.ProcessObservation, runErr error, observedOutput ...processResult) {
 	exitCode := observation.ExitCode
 	returnErrorObserved := runErr != nil
-trace.emit("PROCESS_RETURNED", pass, commandKind, "UNOBSERVED", "UNOBSERVED", "generation.ProcessObservation.ExitCode", &exitCode, &returnErrorObserved, observedOutput...)
+	trace.emit("PROCESS_RETURNED", pass, commandKind, "UNOBSERVED", "UNOBSERVED", "generation.ProcessObservation.ExitCode", &exitCode, &returnErrorObserved, observedOutput...)
 }
 
 func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest, operationID, exitCodeSource string, exitCode *int, returnErrorObserved *bool, observedOutput ...processResult) {

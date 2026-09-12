@@ -70,28 +70,28 @@ func (state *metaExecutionCostState) observe(event metaExecutionTraceEvent, now 
 // These are bounded stdout observations, not unique packages, test cases,
 // executed work, or authority to reuse an earlier verification.
 type metaVerifierWork struct {
-	Unit                  string `json:"unit"`
-	CoverageScope         string `json:"coverage_scope"`
-	InputCoverage         string `json:"input_coverage"`
-	RawStdoutDigest       string `json:"raw_stdout_digest"`
-	StdoutBytes           int    `json:"stdout_bytes"`
-	ProcessBinding        string `json:"process_binding"`
-	ObservedRows          int    `json:"observed_rows"`
-	ElapsedObservedRows   int    `json:"elapsed_observed_rows"`
-	ElapsedUnknownRows    int    `json:"elapsed_unknown_rows"`
-	OKRows                int    `json:"ok_rows"`
-	FailRows              int    `json:"fail_rows"`
-	QuestionRows          int    `json:"question_rows"`
-	CachedMarkerRows      int    `json:"cached_marker_rows"`
-	NoTestFilesMarkerRows int    `json:"no_test_files_marker_rows"`
-	NoTestsToRunMarkerRows int   `json:"no_tests_to_run_marker_rows"`
-	BuildFailedMarkerRows int    `json:"build_failed_marker_rows"`
-	SetupFailedMarkerRows int    `json:"setup_failed_marker_rows"`
-	UnmarkedRows          int    `json:"unmarked_rows"`
-	UnrecognizedLines     int    `json:"unrecognized_lines"`
-	ExecutionClaims       string `json:"execution_claims"`
-	ReuseAuthority        string `json:"reuse_authority"`
-	Improvement           string `json:"improvement"`
+	Unit                   string `json:"unit"`
+	CoverageScope          string `json:"coverage_scope"`
+	InputCoverage          string `json:"input_coverage"`
+	RawStdoutDigest        string `json:"raw_stdout_digest"`
+	StdoutBytes            int    `json:"stdout_bytes"`
+	ProcessBinding         string `json:"process_binding"`
+	ObservedRows           int    `json:"observed_rows"`
+	ElapsedObservedRows    int    `json:"elapsed_observed_rows"`
+	ElapsedUnknownRows     int    `json:"elapsed_unknown_rows"`
+	OKRows                 int    `json:"ok_rows"`
+	FailRows               int    `json:"fail_rows"`
+	QuestionRows           int    `json:"question_rows"`
+	CachedMarkerRows       int    `json:"cached_marker_rows"`
+	NoTestFilesMarkerRows  int    `json:"no_test_files_marker_rows"`
+	NoTestsToRunMarkerRows int    `json:"no_tests_to_run_marker_rows"`
+	BuildFailedMarkerRows  int    `json:"build_failed_marker_rows"`
+	SetupFailedMarkerRows  int    `json:"setup_failed_marker_rows"`
+	UnmarkedRows           int    `json:"unmarked_rows"`
+	UnrecognizedLines      int    `json:"unrecognized_lines"`
+	ExecutionClaims        string `json:"execution_claims"`
+	ReuseAuthority         string `json:"reuse_authority"`
+	Improvement            string `json:"improvement"`
 }
 
 func observeMetaVerifierWork(result processResult) *metaVerifierWork {
@@ -102,7 +102,7 @@ func observeMetaVerifierWork(result processResult) *metaVerifierWork {
 		InputCoverage: parsed.status(), RawStdoutDigest: digest, StdoutBytes: len(result.Stdout),
 		ProcessBinding: "UNOBSERVED", ObservedRows: len(parsed.Rows),
 		UnrecognizedLines: parsed.UnrecognizedLineCount,
-		ExecutionClaims: "NOT_INFERRED", ReuseAuthority: "OUTPUT_MARKER_ONLY", Improvement: "UNKNOWN",
+		ExecutionClaims:   "NOT_INFERRED", ReuseAuthority: "OUTPUT_MARKER_ONLY", Improvement: "UNKNOWN",
 	}
 	if result.Observation.RawStdoutDigest != "" {
 		work.ProcessBinding = "MISMATCH"
