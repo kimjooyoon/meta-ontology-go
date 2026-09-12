@@ -49,7 +49,7 @@ func TestReturnTailReturnedValueFieldExtraction(t *testing.T) {
 			t.Logf("VALUE_FIELD_EXTRACTION=%s", runtimeWitnessJSON(map[string]any{
 				"case": tc.name, "before_function_lines": beforeFunction, "before_rendered_lines": beforeRendered,
 				"generated_files": len(result.Generated), "replay_equal": true, "source_unchanged": true,
-				"strategies": result.Evidence.Strategies,
+				"strategies": result.Evidence,
 			}))
 		})
 	}
