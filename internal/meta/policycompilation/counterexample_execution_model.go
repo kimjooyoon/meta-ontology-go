@@ -5,7 +5,7 @@ const PolicyCounterexampleExecutionSchema = "gooo/meta-policy-counterexample-exe
 // Callers supply observations, never the condition/from/to derived by Gooo.
 type PolicyCounterexampleExecutionInput struct {
 	Counterexample PolicyRevisionCounterexample `json:"counterexample"`
-	Cases          []PolicyRevisionCasePair      `json:"cases"`
+	Cases          []PolicyRevisionCasePair     `json:"cases"`
 }
 
 // Proposal and execution are separate stages; neither grants adoption.

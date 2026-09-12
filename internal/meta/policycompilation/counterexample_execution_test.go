@@ -48,9 +48,9 @@ func TestCounterexampleExecutionRejectsUnboundInputsBeforeNativeWork(t *testing.
 		"stale-evidence": func(v *PolicyCounterexampleExecutionInput) {
 			v.Counterexample.Input.ObservedGeneratedJudgeDigest = DigestBytes([]byte("stale"))
 		},
-		"changed-expectation": func(v *PolicyCounterexampleExecutionInput) { v.Cases[0].Candidate.ValidatorExpectation = DecisionPass },
+		"changed-expectation":    func(v *PolicyCounterexampleExecutionInput) { v.Cases[0].Candidate.ValidatorExpectation = DecisionPass },
 		"missing-counterexample": func(v *PolicyCounterexampleExecutionInput) { v.Cases = v.Cases[1:] },
-		"missing-pairs": func(v *PolicyCounterexampleExecutionInput) { v.Cases = nil },
+		"missing-pairs":          func(v *PolicyCounterexampleExecutionInput) { v.Cases = nil },
 	}
 	for name, mutate := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestCounterexampleExecutionRejectsUnboundInputsBeforeNativeWork(t *testing.
 	raw := counterexampleExecutionJSON(t, fixture)
 	for name, bad := range map[string][]byte{
 		"null": []byte("null"), "trailing": append(append([]byte(nil), raw...), []byte("{}")...),
-		"unknown": []byte(strings.TrimSuffix(string(raw), "}") + ",\"adopt\":true}"),
+		"unknown":   []byte(strings.TrimSuffix(string(raw), "}") + ",\"adopt\":true}"),
 		"duplicate": []byte(strings.Replace(string(raw), "\"cases\":", "\"cases\":[],\"cases\":", 1)),
 	} {
 		t.Run(name, func(t *testing.T) {
