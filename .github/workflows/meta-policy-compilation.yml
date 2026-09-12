@@ -89,7 +89,7 @@ jobs:
 
           test_start=$(date +%s%3N)
           set +e
-          /usr/bin/time -f '%M' -o "$root/test-rss" go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo ./cmd/meta-policy-compilation-consumer > "$root/test.json"
+          /usr/bin/time -f '%M' -o "$root/test-rss" go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo > "$root/test.json"
           test_exit=$?
           set -e
           test_end=$(date +%s%3N)

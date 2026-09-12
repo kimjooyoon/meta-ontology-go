@@ -401,12 +401,18 @@ declared; the completed request is then executed through the same public CLI.
 The missing-toolchain case changes only the fixture child process environment.
 That counterexample does not change repository settings or installed tools.
 
-CI includes the consumer package in the existing fresh JSON test invocation.
-The existing producer artifact retains `test.json`, including named test events,
-`REVISION_RECEIPT_FIXTURE_PROCESS` and `POLICY_REVISION_RECEIPT_OBSERVATION`.
-This preserves actual fixture-process and observer output evidence without a
-new job or artifact format. The full-repository tests and the independent raw
-Gooo consumer job remain in place. These records still do not authorize adoption.
+The full-repository CI suite executes the consumer tests. Its non-verbose
+successful output does not retain individual receipt logs. The source-owned
+test logs emit `REVISION_RECEIPT_FIXTURE_PROCESS` and
+`POLICY_REVISION_RECEIPT_OBSERVATION` for a JSON-enabled CI invocation.
+
+Native run [34682470696](https://github.com/kimjooyoon/meta-ontology-go/actions/runs/34682470696)
+retained those records at commit `71cf19fc2a2b1f4ea9b3eadc5726335ffac83dfd`.
+That candidate's one-line CI capture change was withdrawn after the default
+Guardian rejected its protected-workflow authorization. Its archived evidence
+is historical, not acceptance of a later head or a permanently enabled capture
+route. The original CI configuration and all consumer tests are preserved;
+no Guardian exception, permission change or adoption claim is introduced.
 
 ## Source-bound revision execution observation
 
