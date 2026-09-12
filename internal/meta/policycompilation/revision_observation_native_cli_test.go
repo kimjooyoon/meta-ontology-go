@@ -93,13 +93,13 @@ func TestPolicyRevisionWitnessCLIEmitsBoundExecutionEvidence(t *testing.T) {
 		report.CandidateSource == string(source) || report.OriginalPolicy.SemanticDigest == report.CandidatePolicy.SemanticDigest {
 		t.Fatal("native CLI request, source, or candidate binding differs from the caller")
 	}
-	want := PolicyRevisionObservationCounts{}
-	want.RequestedCasePairs = 3
-	want.ObservedCasePairs = 3
-	want.SameInputObservedPairs = 2
-	want.RequestedTransitionsObserved = 1
-	want.SourceComparisons = 12
-	want.ReplayComparisons = 6
+	want := PolicyRevisionObservationCounts{
+		RequestedCasePairs:           3,
+		ObservedCasePairs:            3,
+		SameInputObservedPairs:       2,
+		RequestedTransitionsObserved: 1,
+		SourceComparisons:            12,
+		ReplayComparisons:            6}
 	if report.Counts != want || report.ExecutionStatus != "COMPLETED" || report.ExecutionConformance != "PASS" {
 		t.Fatalf("native CLI execution accounting differs: %+v status=%s conformance=%s", report.Counts, report.ExecutionStatus, report.ExecutionConformance)
 	}
