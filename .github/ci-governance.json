@@ -133,6 +133,20 @@
       ]
     },
     {
+      "branch": "agent/verifier-package-summary-advisory-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_verifier_package_summary_advisory_20260911.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/trace.go",
+        "scripts/meta-execution/verifier_package_summary.go",
+        "scripts/meta-execution/verifier_package_summary_test.go"
+      ]
+    },
+    {
       "branch": "agent/observation-boundary-journal-20260907",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1356,6 +1370,16 @@
         ".github/ci-governance.json",
         "cmd/feedback-semantic-state-witness/**",
         "internal/verify/scope_part01.go"
+      ]
+    },
+    {
+      "branch": "agent/feedback-write-count-boundary-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_feedback_write_count_boundary_20260911.go"
       ]
     },
     {
@@ -3402,6 +3426,31 @@
         "internal/meta/languagereadiness/languagesyntax/model.go",
         "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/policycompilation/**",
+        "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
+      ]
+    },
+    {
+      "branch": "agent/meta-policy-public-profile-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "cmd/gooo/meta_policy_profile.go",
+        "cmd/gooo/meta_policy_profile_test.go",
+        "cmd/meta-policy-compilation-consumer/main.go",
+        "cmd/meta-policy-compilation-witness/main.go",
+        "docs/language/meta-policy-compilation.md",
+        "internal/meta/policycompilation/compile.go",
+        "internal/meta/policycompilation/evaluate.go",
+        "internal/meta/policycompilation/judge.go",
+        "internal/meta/policycompilation/model.go",
+        "internal/meta/policycompilation/profile.go",
+        "internal/meta/policycompilation/receipt.go",
+        "internal/meta/policycompilation/strict_json.go",
+        "internal/meta/policycompilation/strict_json_test.go",
+        "internal/meta/policycompilation/verify.go",
         "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
       ]
     },
