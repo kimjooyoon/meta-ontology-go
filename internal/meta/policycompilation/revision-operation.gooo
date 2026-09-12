@@ -1,0 +1,8 @@
+package policyrevisionoperation
+namespace policyrevisionoperation
+
+entity PolicySource id "gooo://policy-revision-operation/policy-source"
+entity RevisionRequest id "gooo://policy-revision-operation/request"
+entity RevisionObservation id "gooo://policy-revision-operation/observation"
+
+activity ObservePolicyDecisionRevision(PolicySource, RevisionRequest) -> RevisionObservation computes "policy.revision.observe:v1"

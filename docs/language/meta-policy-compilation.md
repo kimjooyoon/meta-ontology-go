@@ -469,3 +469,49 @@ or zero memory. Mutation/promotion authority remains zero. Generated execution
 uses the existing temporary judge workspaces, while the report is stdout-only.
 This is not yet registration in the common meta-operation selector or automatic
 adoption of the generated candidate.
+
+## Gooo-bound policy revision observation
+
+The explicit revision path can bind a caller-supplied Gooo operation contract
+before invoking the existing bounded native worker:
+
+```sh
+go run ./cmd/meta-policy-compilation-witness \
+  -policy /caller/input/policy.gooo \
+  -observe-revision /caller/input/request.json \
+  -revision-operation internal/meta/policycompilation/revision-operation.gooo \
+  -profile-package metapolicycompilation \
+  -profile-namespace metapolicycompilation
+```
+
+The contract declares PolicySource, RevisionRequest and RevisionObservation.
+ObservePolicyDecisionRevision must use both inputs and generate the observation
+in lowered semantic IR. Its computes program is the pinned
+`policy.revision.observe:v1` native ABI, not an arbitrary program selected by
+a Gooo string. Contract source bytes, semantic identity, embedded native contract,
+policy source bytes and exact request bytes retain separate identities.
+
+The binding rejects absent relations, unknown programs and incompatible semantic
+contracts before calling the worker. Strict request decoding and exact policy-byte
+binding also precede the call. A native invocation or cancelled attempt is not a
+successful generated execution; the nested observation retains actual counts,
+failure causes and the six-field UNKNOWN records.
+
+With this explicit flag, stdout uses `gooo/meta-policy-revision-operation/v1`.
+Its `observation` member remains the unchanged v1 producer receipt. That member
+can be passed to the existing independent consumer together with the original
+policy and request bytes. The new native CLI test exercises those two separate
+processes and checks that all three caller inputs remain unchanged. Consumer
+receipt consistency does not attest process execution or grant policy adoption.
+
+Without the flag, the existing revision-observation output remains unchanged.
+The four-artifact compilation profile, two-artifact revision profile, legacy
+inventory selector and common registry are unchanged. This is an explicitly
+requested single operation, not a fabricated second inventory action.
+
+`native_worker_invocations` counts actual calls to the bounded native API.
+Per-case/source/replay counts come from its existing observation, not a new score.
+Synthetic case pairs remain synthetic, including separately declared candidate
+expectations. Improvement and admission remain UNKNOWN; mutation and promotion
+authority remain zero. This connects Gooo relations to execution but does not
+close the independent adoption and next-run-use requirements in #804.
