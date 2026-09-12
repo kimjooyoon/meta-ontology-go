@@ -399,7 +399,14 @@ process, reused within each fixture, not direct calls into the producer package.
 A bootstrap execution supplies actual judge bytes before caller snapshots are
 declared; the completed request is then executed through the same public CLI.
 The missing-toolchain case changes only the fixture child process environment.
-No repository workflow, gate or installed toolchain is changed.
+That counterexample does not change repository settings or installed tools.
+
+CI includes the consumer package in the existing fresh JSON test invocation.
+The existing producer artifact retains `test.json`, including named test events,
+`REVISION_RECEIPT_FIXTURE_PROCESS` and `POLICY_REVISION_RECEIPT_OBSERVATION`.
+This preserves actual fixture-process and observer output evidence without a
+new job or artifact format. The full-repository tests and the independent raw
+Gooo consumer job remain in place. These records still do not authorize adoption.
 
 ## Source-bound revision execution observation
 
