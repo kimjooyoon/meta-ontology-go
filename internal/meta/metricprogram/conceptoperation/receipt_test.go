@@ -238,7 +238,7 @@ func TestConsumerRejectsResealedAndTamperedEvidence(t *testing.T) {
 	}
 }
 
-func buildReceiptFixture(t *testing.T) receiptFixture {
+func buildFreshReceiptFixture(t *testing.T, directory string) receiptFixture {
 	t.Helper()
 	_, sourceFile, _, ok := runtime.Caller(0)
 	if !ok {
@@ -256,7 +256,6 @@ func buildReceiptFixture(t *testing.T) receiptFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	directory := t.TempDir()
 	metricsPath := filepath.Join(directory, "source-metrics.json")
 	if err := os.WriteFile(metricsPath, metricsPayload, 0o600); err != nil {
 		t.Fatal(err)
