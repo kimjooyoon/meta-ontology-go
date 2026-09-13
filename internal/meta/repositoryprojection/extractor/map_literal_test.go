@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"strings"
 	"testing"
 )
@@ -92,4 +93,106 @@ func TestMapLiteralConstantKeyBoundary(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMapReceiverFusionClosesRemainingCapacity(t *testing.T) {
+	root := t.TempDir()
+	if err := runtimeWitnessWriteModule(root, mapReceiverWitnessSource(), map[string]string{"support.go": mapReceiverWitnessSupport()}); err != nil {
+		t.Fatal(err)
+	}
+	result, err := ExtractWithResult(root, "x.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	matched := 0
+	for _, item := range result.Evidence {
+		if item.Strategy != mapLiteralStrategy {
+			continue
+		}
+		matched++
+		if len(item.ProofStages) != 6 || len(item.ContractObligations) != 6 ||
+			item.FinalRenderedCapacity == nil || item.FinalRenderedCapacity.Overage != 0 {
+			t.Fatalf("caller preparation lost its Gooo obligations or final closure: %+v", item)
+		}
+		detail := item.ProofStages[1].Detail
+		for _, expected := range []string{
+			"caller-local-adjacent-pointer-receiver", `"binding":"command"`,
+			`"binding_uses":1`, `"before_rendered_overage":1`, `"after_rendered_overage":0`,
+			`"source_digest":"sha256:`, `"replacement_digest":"sha256:`,
+		} {
+			if !strings.Contains(detail, expected) {
+				t.Fatalf("caller preparation lost %s: %s", expected, detail)
+			}
+		}
+		if !strings.Contains(item.ProofStages[3].Detail, "CALLEE_EFFECTS_UNPROVEN") {
+			t.Fatal("caller preparation erased the original unproven effect")
+		}
+	}
+	if matched != 1 {
+		t.Fatalf("prepared map witnesses=%d, want 1", matched)
+	}
+	assertMapLiteralCallerExpressions(t, result)
+}
+
+func TestMapReceiverFusionRejectsUnsafePlacement(t *testing.T) {
+	for _, item := range []struct {
+		name, body string
+		eligible   bool
+	}{
+		{"adjacent", "command := factory(); _, _ = command.Run()", true},
+		{"extra use", "command := factory(); _, _ = command.Run(); _ = command", false},
+		{"intervening effect", "command := factory(); mark(); _, _ = command.Run()", false},
+		{"comment", "command := factory()\n// preserve binding\n_, _ = command.Run()", false},
+		{"effectful lhs", "sink := map[int]int{}; command := factory(); sink[mark()] = command.Value()", false},
+		{"compound assignment", "total := 1; command := factory(); total += command.Value(); _ = total", false},
+		{"value receiver initializer", "command := valueFactory(); _, _ = command.Run()", false},
+		{"multiple bindings", "command, other := pairFactory(); _, _ = command.Run(); _ = other", false},
+		{"deferred use", "command := factory(); _, _ = command.Run(); defer command.Run()", false},
+	} {
+		t.Run(item.name, func(t *testing.T) {
+			source, fset, file, function, evidence := mapReceiverBindingFixture(t, item.body)
+			fusion := findMapReceiverFusion(source, fset, file, function, evidence)
+			if (fusion != nil) != item.eligible {
+				t.Fatalf("eligible=%t, want %t", fusion != nil, item.eligible)
+			}
+		})
+	}
+}
+
+func mapReceiverBindingFixture(t *testing.T, body string) ([]byte, *token.FileSet, *ast.File, *ast.FuncDecl, typeEvidence) {
+	t.Helper()
+	source := []byte("package fixture\n" +
+		"type receiver struct{}\n" +
+		"func factory() *receiver { return &receiver{} }\n" +
+		"func valueFactory() receiver { return receiver{} }\n" +
+		"func pairFactory() (*receiver, *receiver) { return factory(), factory() }\n" +
+		"func (r *receiver) Run() (string, error) { return \"ok\", nil }\n" +
+		"func (r *receiver) Value() int { return 1 }\n" +
+		"func mark() int { return 0 }\n" +
+		"func Run() {\n" + body + "\n}\n")
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "x.go", source, parser.ParseComments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info := &types.Info{
+		Types: make(map[ast.Expr]types.TypeAndValue),
+		Defs:  make(map[*ast.Ident]types.Object),
+		Uses:  make(map[*ast.Ident]types.Object),
+	}
+	config := types.Config{}
+	pkg, err := config.Check("fixture", fset, []*ast.File{file}, info)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var function *ast.FuncDecl
+	for _, declaration := range file.Decls {
+		if candidate, ok := declaration.(*ast.FuncDecl); ok && candidate.Name.Name == "Run" && candidate.Recv == nil {
+			function = candidate
+		}
+	}
+	if function == nil {
+		t.Fatal("fixture function missing")
+	}
+	return source, fset, file, function, typeEvidence{pkg: pkg, info: info}
 }
