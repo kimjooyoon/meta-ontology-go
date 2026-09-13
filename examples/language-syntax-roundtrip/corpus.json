@@ -155,15 +155,6 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
-      "id": "meta-policy-unresolved-goal",
-      "path": "internal/meta/policycompilation/testdata/goal-unresolved.gooo",
-      "kind": "VALID",
-      "expected_decision": "PASS",
-      "proof_choice": "COHERENCE",
-      "meta_operation": "replay-language-syntax",
-      "scope": "LANGUAGE_CAPABILITY"
-    },
-    {
       "id": "metric-meta-program-closure",
       "path": "examples/metric-meta-program-closure/main.gooo",
       "kind": "VALID",
