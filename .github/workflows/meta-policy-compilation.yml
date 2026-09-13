@@ -89,7 +89,7 @@ jobs:
 
           test_start=$(date +%s%3N)
           set +e
-          /usr/bin/time -f '%M' -o "$root/test-rss" go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo > "$root/test.json"
+          /usr/bin/time -f '%M' -o "$root/test-rss" go test -count=1 -json ./internal/meta/policycompilation ./cmd/gooo ./cmd/meta-policy-compilation-witness > "$root/test.json"
           test_exit=$?
           set -e
           test_end=$(date +%s%3N)
@@ -101,6 +101,38 @@ jobs:
           test_skipped=$(jq -s '[.[] | select(.Action == "skip")] | length' "$root/test.json")
           test_not_observed=0
           test "$test_exit" -eq 0
+
+          composition_package='github.com/kimjooyoon/meta-ontology-go/cmd/meta-policy-compilation-witness'
+          composition_test='TestIndependentRevisionCompositionPublicCommand'
+          jq -s -e --arg package "$composition_package" --arg test "$composition_test" '
+            [.[] | select(.Package == $package and .Test == $test)] as $events |
+            ([$events[] | select(.Action == "pass")] | length) == 1 and
+            ([$events[] | select(.Action == "fail" or .Action == "skip")] | length) == 0
+          ' "$root/test.json" >/dev/null
+          jq -s --arg package "$composition_package" --arg test "$composition_test" --arg subject_sha "$SUBJECT_SHA" '
+            "INDEPENDENT_REVISION_COMPOSITION_WITNESS=" as $marker |
+            [.[] | select(.Package == $package and .Test == $test and .Action == "output") | .Output] |
+            join("") | split("\n") |
+            map(select(contains($marker)) | split($marker)[1] | fromjson) |
+            if length == 1 then .[0] + {subject_sha:$subject_sha}
+            else error("native independent composition witness missing or ambiguous") end
+          ' "$root/test.json" > "$root/independent-revision-composition-witness.json"
+          jq -e '
+            .decision == "INDEPENDENT_RECONSTRUCTION_OBSERVED" and
+            .gooo_binding.program == "policy.revision.observe:v1" and
+            .gooo_binding.used_policy_source and .gooo_binding.used_revision_request and
+            .gooo_binding.generated_observation and
+            .consumer_process_started and .consumer_exit_code == 0 and
+            (.consumer_executable_digest | test("^sha256:[0-9a-f]{64}$")) and
+            (.consumer_stdout_digest | test("^sha256:[0-9a-f]{64}$")) and
+            .counts.requested_case_pairs > 0 and
+            .counts.observed_case_pairs == .counts.requested_case_pairs and
+            .counts.source_comparisons == (4 * .counts.requested_case_pairs) and
+            .counts.replay_comparisons == (2 * .counts.requested_case_pairs) and
+            .counts.source_mismatches == 0 and .counts.replay_mismatches == 0 and
+            .admission.state == "UNKNOWN" and .admission.reason == "INDEPENDENT_REVISION_EVIDENCE_MISSING" and
+            .input_provenance == "CALLER_DECLARED_NOT_VERIFIED" and .improvement == "UNKNOWN"
+          ' "$root/independent-revision-composition-witness.json" >/dev/null
 
           conformance_start=$(date +%s%3N)
           /usr/bin/time -f '%M' -o "$root/conformance-rss" go run ./cmd/meta-policy-compilation-witness \
@@ -337,6 +369,14 @@ jobs:
           jq -r '"### Gooo meta-policy compilation\n- policy: " + .verification.decision + "\n- fixed denominator: " + (.verification.fixed_denominator|tostring) + "\n- canonical cases source/generated/independent: 3/3/3\n- cases: PASS=" + (.summary.pass_count|tostring) + ", FAIL_CLOSED=" + (.summary.fail_closed_count|tostring) + ", UNKNOWN=" + (.summary.unknown_count|tostring) + "\n- predicates: discharged=" + (.summary.claim_predicates_discharged|tostring) + ", refuted=" + (.summary.claim_predicates_refuted|tostring) + ", open=" + (.summary.claim_predicates_open|tostring) + "\n- synthetic evidence: " + ((.evidence|length)|tostring) + ", current evidence: " + .current_evidence.class + "\n- repository net change: " + (.write_set.repository_net_change_observed|tostring)' "$root/first/receipt.json" >> "$GITHUB_STEP_SUMMARY"
           jq -r '"- build wall_ms/peak_rss_kb: " + (.build.wall_ms|tostring) + "/" + (.build.peak_rss_kb|tostring) + "\n- test wall_ms/peak_rss_kb: " + (.test.wall_ms|tostring) + "/" + (.test.peak_rss_kb|tostring) + "\n- conformance wall_ms/peak_rss_kb: " + (.conformance.wall_ms|tostring) + "/" + (.conformance.peak_rss_kb|tostring) + "\n- tests total/executed/reused/skipped/not_observed: " + ([.test.total,.test.executed,.test.reused,.test.skipped,.test.not_observed] | map(tostring) | join("/")) + "\n- Go files/lines: " + ([.inventory.go_files,.inventory.go_lines] | map(tostring) | join("/")) + ", Gooo files/lines: " + ([.inventory.gooo_files,.inventory.gooo_lines] | map(tostring) | join("/")) + "\n- files/subfolders: " + ([.inventory.repository_files,.inventory.repository_directories] | map(tostring) | join("/")) + "\n- repository writes: " + (.repository.writes|tostring)' "$root/runtime-metrics.json" >> "$GITHUB_STEP_SUMMARY"
           cat "$root/first-class-meta-policy-metrics.md" >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"### Source-bound independent revision composition\n- native command: " + .decision +
+            "\n- consumer process started/exit: " + ([.consumer_process_started,.consumer_exit_code] | map(tostring) | join("/")) +
+            "\n- observed/requested case pairs: " + ([.counts.observed_case_pairs,.counts.requested_case_pairs] | map(tostring) | join("/")) +
+            "\n- source/replay comparisons: " + ([.counts.source_comparisons,.counts.replay_comparisons] | map(tostring) | join("/")) +
+            "\n- admission: " + .admission.state + " / " + .admission.reason +
+            "\n- provenance/improvement: " + .input_provenance + " / " + .improvement +
+            "\n- scope: synthetic command conformance, not autonomous adoption or external utility"
+          ' "$root/independent-revision-composition-witness.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload producer evidence and runtime artifact
         if: always()
         uses: actions/upload-artifact@v7
