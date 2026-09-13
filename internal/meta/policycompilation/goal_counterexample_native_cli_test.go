@@ -56,7 +56,7 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 	}
 	negative := map[string]PolicyGoalCounterexampleObservation{}
 	for _, name := range []string{"caller-expectation", "stale-source", "wrong-goal-pin", "different-case", "partial-evidence", "goal-unknown", "agreement"} {
-		input, originalSource := request, source
+		input, originalSource, declaredGoal := request, source, goal
 		switch name {
 		case "caller-expectation":
 			input.SourceCase.ValidatorExpectation = DecisionPass
@@ -69,13 +69,13 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 		case "partial-evidence":
 			input.SourceCase.ProducerAvailable, input.GoalCase.ProducerAvailable = false, false
 		case "goal-unknown":
-			input.SourceCase.ProducerAvailable, input.GoalCase.ProducerAvailable = false, false
-			input.SourceCase.ConsumerAvailable, input.GoalCase.ConsumerAvailable = false, false
+			input, originalSource = declaredUnknownGoalCounterexample(t, input)
+			declaredGoal = originalSource
 		case "agreement":
 			originalSource, input.ExpectedSourceDigest, input.SourceCase = goal, DigestBytes(goal), input.GoalCase
 		}
 		inputRaw, _ := json.Marshal(input)
-		result := ObserveGoalPolicyCounterexample(ctx, sourcePath, originalSource, goal, inputRaw, "metapolicycompilation", "metapolicycompilation")
+		result := ObserveGoalPolicyCounterexample(ctx, sourcePath, originalSource, declaredGoal, inputRaw, "metapolicycompilation", "metapolicycompilation")
 		negative[name] = result
 		expected := map[string]string{"caller-expectation": "REFUTED", "stale-source": "UNKNOWN", "wrong-goal-pin": "REFUTED", "different-case": "REFUTED", "partial-evidence": "UNKNOWN", "goal-unknown": "UNKNOWN", "agreement": "NOT_PROPOSED"}[name]
 		if result.State != expected || (result.Proposal != nil && result.Proposal.CandidateSource != "") {
@@ -99,6 +99,37 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 	goalCounterexampleContinue(t, ctx, dir, sourcePath, goalPath, goal, request, proposal, raw, negative)
 }
 
+func declaredUnknownGoalCounterexample(t *testing.T, input PolicyGoalCounterexampleRequest) (PolicyGoalCounterexampleRequest, []byte) {
+	t.Helper()
+	source, err := os.ReadFile(filepath.Join("..", "..", "..", "examples", "meta-policy-compilation", "policy.gooo"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy, err := CompileForIdentity("goal-unavailable.gooo", source, "metapolicycompilation", "metapolicycompilation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input.SourceCase.ID, input.SourceCase.UpperDecision = "goal-evidence-unavailable", DecisionPass
+	input.SourceCase.ProducerAvailable, input.SourceCase.ConsumerAvailable = false, false
+	input.SourceCase = goalCounterexampleCase(input.SourceCase, policy)
+	input.GoalCase = input.SourceCase
+	input.ExpectedSourceDigest, input.ExpectedGoalDigest = DigestBytes(source), DigestBytes(source)
+	declared := EvaluateSourcePolicy(policy, input.GoalCase)
+	if declared.Decision != DecisionUnknown || declared.MatchedCondition != "EVIDENCE_UNAVAILABLE" {
+		t.Fatalf("public Gooo declaration does not define the unavailable goal case: %+v", declared)
+	}
+	witness, err := json.Marshal(map[string]string{
+		"case": "goal-unknown", "source_path": "examples/meta-policy-compilation/policy.gooo",
+		"source": string(source), "source_digest": DigestBytes(source),
+		"role": "SOURCE_AND_FROZEN_GOAL_FOR_UNAVAILABLE_CASE",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("GOAL_UNKNOWN_DECLARATION_NATIVE_WITNESS=%s", witness)
+	return input, source
+}
+
 func assertGoalCounterexampleUnknownBoundary(t *testing.T, name string, result PolicyGoalCounterexampleObservation) {
 	t.Helper()
 	decision, reason, class := DecisionFailClosed, "COUNTEREXAMPLE_EVIDENCE_MISSING", "DIRECT_MISSING"
@@ -113,7 +144,9 @@ func assertGoalCounterexampleUnknownBoundary(t *testing.T, name string, result P
 		result.Pending.UnknownClass != class || !reflect.DeepEqual(result.Pending.BlockedBy, blockedBy) {
 		t.Fatalf("%s did not observe its declared UNKNOWN boundary: %+v", name, result)
 	}
-	if name == "goal-unknown" && (result.Proposal != nil || result.Pending.Stage != "GOAL" ||
+	if name == "goal-unknown" && (result.Proposal != nil ||
+		result.SourceResults[0].MatchedCondition != "EVIDENCE_UNAVAILABLE" ||
+		result.GoalResults[0].MatchedCondition != "EVIDENCE_UNAVAILABLE" || result.Pending.Stage != "GOAL" ||
 		result.Pending.Step != "OBSERVE_GOAL_BOUND_COUNTEREXAMPLE" ||
 		result.Pending.NextOperation != "RESOLVE_GOAL_AND_REPEAT") {
 		t.Fatalf("unknown goal did not preserve its dependency frontier: %+v", result)
