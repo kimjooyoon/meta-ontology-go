@@ -109,11 +109,11 @@ func TestNextPolicyExecutionPublicHandoff(t *testing.T) {
 		t.Fatalf("next invocation did not use the pinned candidate: exit=%d %s", exit, output)
 	}
 	negativeCases := []struct {
-		name string
-		edit func(*NextPolicyExecutionRequest)
+		name     string
+		edit     func(*NextPolicyExecutionRequest)
 		decision string
-		exit int
-		batches int
+		exit     int
+		batches  int
 	}{
 		{"changed-expectation", func(r *NextPolicyExecutionRequest) { r.Cases[0].ValidatorExpectation = DecisionPass }, "REFUTED", 1, 1},
 		{"wrong-source-pin", func(r *NextPolicyExecutionRequest) { r.ExpectedSourceDigest = DigestBytes(source) }, "REFUTED", 1, 0},

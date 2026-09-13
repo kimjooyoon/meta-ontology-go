@@ -13,37 +13,37 @@ const NextPolicyExecutionRequestSchema = "gooo/meta-policy-next-execution-reques
 // NextPolicyExecutionRequest pins a source handoff and caller-owned expectations.
 // A predecessor digest links bytes; it does not authenticate a historical run.
 type NextPolicyExecutionRequest struct {
-	Schema string `json:"schema"`
-	ExpectedSourceDigest string `json:"expected_source_digest"`
+	Schema                 string `json:"schema"`
+	ExpectedSourceDigest   string `json:"expected_source_digest"`
 	ExpectedSemanticDigest string `json:"expected_semantic_digest"`
-	PredecessorDigest string `json:"predecessor_digest"`
-	Cases []Case `json:"cases"`
+	PredecessorDigest      string `json:"predecessor_digest"`
+	Cases                  []Case `json:"cases"`
 }
 
 type NextPolicyExecutionReport struct {
-	Schema string `json:"schema"`
-	Decision string `json:"decision"`
-	Reason string `json:"reason"`
-	SourceDigest string `json:"source_digest"`
-	SemanticDigest string `json:"semantic_digest"`
-	RequestDigest string `json:"request_digest"`
-	PredecessorDigest string `json:"predecessor_digest"`
-	PredecessorBinding string `json:"predecessor_binding"`
-	GeneratedJudgeDigest string `json:"generated_judge_digest"`
-	GeneratedBatchInvocations int `json:"generated_batch_invocations"`
-	RequestedCases int `json:"requested_cases"`
-	ObservedCases int `json:"observed_cases"`
-	ExpectationComparisons int `json:"expectation_comparisons"`
-	ExpectationMismatches int `json:"expectation_mismatches"`
-	ResultBindingMismatches int `json:"result_binding_mismatches"`
-	DeclaredCases []Case `json:"declared_cases"`
-	Results []DecisionResult `json:"results"`
-	ExecutionError string `json:"execution_error,omitempty"`
-	Pending *PolicyRevisionPending `json:"pending,omitempty"`
-	Admission PolicyRevisionPending `json:"admission"`
-	Improvement string `json:"improvement"`
-	MutationAuthority int `json:"mutation_authority"`
-	PromotionAuthority int `json:"promotion_authority"`
+	Schema                    string                 `json:"schema"`
+	Decision                  string                 `json:"decision"`
+	Reason                    string                 `json:"reason"`
+	SourceDigest              string                 `json:"source_digest"`
+	SemanticDigest            string                 `json:"semantic_digest"`
+	RequestDigest             string                 `json:"request_digest"`
+	PredecessorDigest         string                 `json:"predecessor_digest"`
+	PredecessorBinding        string                 `json:"predecessor_binding"`
+	GeneratedJudgeDigest      string                 `json:"generated_judge_digest"`
+	GeneratedBatchInvocations int                    `json:"generated_batch_invocations"`
+	RequestedCases            int                    `json:"requested_cases"`
+	ObservedCases             int                    `json:"observed_cases"`
+	ExpectationComparisons    int                    `json:"expectation_comparisons"`
+	ExpectationMismatches     int                    `json:"expectation_mismatches"`
+	ResultBindingMismatches   int                    `json:"result_binding_mismatches"`
+	DeclaredCases             []Case                 `json:"declared_cases"`
+	Results                   []DecisionResult       `json:"results"`
+	ExecutionError            string                 `json:"execution_error,omitempty"`
+	Pending                   *PolicyRevisionPending `json:"pending,omitempty"`
+	Admission                 PolicyRevisionPending  `json:"admission"`
+	Improvement               string                 `json:"improvement"`
+	MutationAuthority         int                    `json:"mutation_authority"`
+	PromotionAuthority        int                    `json:"promotion_authority"`
 }
 
 // ObserveNextPolicyExecution uses a previous candidate as the source of a fresh
