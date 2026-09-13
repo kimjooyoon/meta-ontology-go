@@ -26,6 +26,7 @@ func run(arguments []string, stdout, stderr io.Writer) int {
 	requestPath := flags.String("request", "", "pinned next-execution request and declared expectations")
 	pkg := flags.String("profile-package", "metapolicycompilation", "expected Gooo package")
 	namespace := flags.String("profile-namespace", "metapolicycompilation", "expected Gooo namespace")
+	selection := bindGoalSelectionFlags(flags)
 	if err := flags.Parse(arguments); err != nil {
 		if err == flag.ErrHelp {
 			return 0
@@ -34,6 +35,10 @@ func run(arguments []string, stdout, stderr io.Writer) int {
 	}
 	if flags.NArg() != 0 || *policyPath == "" || *predecessorPath == "" || *requestPath == "" {
 		fmt.Fprintln(stderr, "-policy, -predecessor and -request are required; positional arguments are not accepted")
+		return 2
+	}
+	if !selection.valid() {
+		fmt.Fprintln(stderr, "-goal and -goal-digest are required together; materialization requires a goal")
 		return 2
 	}
 	source, err := readBounded(*policyPath, 4<<20)
@@ -53,6 +58,9 @@ func run(arguments []string, stdout, stderr io.Writer) int {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
+	if selection.enabled() {
+		return selection.run(ctx, *policyPath, source, predecessor, request, *pkg, *namespace, stdout, stderr)
+	}
 	report := policycompilation.ObserveNextPolicyExecution(ctx, *policyPath, source, predecessor, request, *pkg, *namespace)
 	if err := json.NewEncoder(stdout).Encode(report); err != nil {
 		fmt.Fprintln(stderr, err)
