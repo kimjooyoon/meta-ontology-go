@@ -92,6 +92,61 @@ Request example, with observed values filled by the caller:
 }
 ~~~
 
+## Internal meta source registration
+
+An explicit request may also name an existing `internal/meta/**/*.gooo`
+source. This is the same VALID LANGUAGE_CAPABILITY registration operation,
+not a meta-source exemption or a smaller denominator. Lexical traversal,
+absolute paths, look-alike prefixes, other internal namespaces and non-Gooo
+extensions remain rejected before input observation. This path predicate is
+not a filesystem sandbox or write permission.
+
+The source is read-only input. All nine generated artifact roles remain
+mandatory, the next denominator version is appended, historical versions
+remain unchanged, and candidate application/promotion authority stays false.
+Source, snapshot, typed request and executable identities remain pinned.
+
+The existing dedicated Actions workflow now exercises both the original
+example source and a policy-revision-shaped internal meta source. Each uses
+an isolated CI copy, exact candidate reconstruction, deterministic replay
+and the unchanged syntax/vertical-slice conformance packages. Internal-source
+evidence is kept under `internal-meta-source/` alongside the original
+case's artifacts. Both retain the exact request and Gooo source in addition
+to the candidate, native report and command output.
+
+The internal case is a declared synthetic compiler regression, not external
+adoption or proof of policy revision execution. Case-specific wall time is
+an observation only; no speed or memory improvement is claimed without a
+matched before/after pair. No extra local build, test, formatter or generator
+execution is part of this workflow.
+
+## Explicit promotion of an existing meta source
+
+Set `"promote_meta_source": true` in the typed request to move exactly one
+already registered meta source into the executed LANGUAGE_CAPABILITY corpus.
+The request must name a source present exactly once in `meta_sources`, not
+an existing executed case or package member. Omission or false preserves the
+original unregistered-source behavior and cannot authorize this promotion.
+
+The native operation removes that one membership from both corpus and native
+registry while adding the exact requested case. The same nine artifact roles
+also increase syntax counters, conformance expectations and the next
+denominator version. Other cases, other meta sources, package units, source
+bytes and denominator history remain unchanged. An incomplete or resealed
+candidate is rejected by full reconstruction; matching file counts alone is
+not acceptance.
+
+The explicit flag is included in the canonical request digest. It is not
+inferred from a path, title, score or failed check and does not grant apply,
+merge, release or planner-admission authority.
+
+The Actions-only `registered-meta-source/` case promotes the compiler's
+existing `internal/meta/syntaxregistration/contract.gooo` without overwriting
+that source even in the temporary snapshot. It retains the exact request,
+source, complete generated candidate and unchanged conformance output.
+The original example and previously unregistered internal-source cases remain
+separate. These are synthetic compiler regressions, not external utility.
+
 ## Native evidence and remaining integration
 
 The dedicated Actions job retains the canonical nine-file end-to-end case.
@@ -106,8 +161,10 @@ replay comparison, native command result and elapsed milliseconds. Zero manual
 follow-up edits is reported only after those unchanged conformance commands pass.
 No local test, build or formatter execution is part of this development workflow.
 
-The existing automatic generation.Action input schema, DefaultRegistry,
-meta-execution dispatch and shared operation receipts are NOT connected yet.
+The dedicated candidate witness does not assess common-planner or dispatch
+admission. Its `global_planner_admission` observation is `UNASSESSED`; it does
+not claim those integrations are absent or certified. The separate native
+common-execution checks own that evidence.
 The syntax.register:v2 contract routes every generation activity through
 PinnedRegistrationInput, produced by PinRegistrationExecutionIdentity. Compilation
 and generation both reobserve and compare execution identity. Missing identity

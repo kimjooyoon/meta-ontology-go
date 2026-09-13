@@ -27,6 +27,9 @@ func assessIndependent(oracleRaw, receiptRaw []byte, head, structuralArtifactDig
 	if err != nil || !verifyReceiptDigest(receipt) {
 		return refuted("SOURCE_EXECUTION_RECEIPT_INVALID", "PROMOTION_INPUT", "read-receipt", oracle.Digest)
 	}
+	if receipt.Scope != sourceReceiptScope {
+		return refuted("SOURCE_EXECUTION_RECEIPT_SCOPE_INVALID", "PROMOTION_INPUT", "read-receipt-scope", oracle.Digest, receipt.Digest)
+	}
 	if !validDigest(structuralArtifactDigest) {
 		value := open("INDEPENDENT_SOURCE_BINDING_DEPENDENCY_BLOCKED", "PROMOTION_DEPENDENCY", "structural-artifact",
 			oracle.Digest, receipt.Digest)

@@ -1,0 +1,10 @@
+package relaygame
+namespace relaygame
+
+entity TurnRequest id "gooo://relay-game/request" fields {
+    field RunID id "gooo://relay-game/request/run-id" type string required one
+    field Turn id "gooo://relay-game/request/turn" type string required one
+    field Action id "gooo://relay-game/request/action" type string required one
+    field Direction id "gooo://relay-game/request/direction" type string required one
+}
+activity ForwardTurn(TurnRequest) -> TurnRequest computes "record.forward:v1"

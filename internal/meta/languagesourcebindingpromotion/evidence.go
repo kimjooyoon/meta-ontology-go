@@ -2,8 +2,11 @@ package languagesourcebindingpromotion
 
 import "encoding/json"
 
+const sourceReceiptScope = "DECLARATION_RESOLUTION_ONLY"
+
 type producerEnvelope struct {
 	Schema            string          `json:"schema"`
+	Scope             string          `json:"scope"`
 	HeadSHA           string          `json:"head_sha"`
 	Decision          string          `json:"decision"`
 	Resolution        string          `json:"resolution"`
@@ -21,6 +24,7 @@ type producerEnvelope struct {
 
 type receiptEnvelope struct {
 	Schema         string          `json:"schema"`
+	Scope          string          `json:"scope"`
 	Decision       string          `json:"decision"`
 	Reason         string          `json:"reason"`
 	Resolution     string          `json:"resolution"`

@@ -400,6 +400,9 @@ jobs:
       # Each execution includes native first/replay verification internally.
       # The exact-head focused run for PR #739 took 23m54s; do not put both
       # complete executions under the inventory step's 15-minute budget.
+      - name: Build diagnostic boundary cost reporter
+        timeout-minutes: 5
+        run: go build -o "$RUNNER_TEMP/meta-cost-report" ./scripts/meta-cost-report
       - name: Execute declared meta-operation plan
         timeout-minutes: 30
         env:
@@ -517,6 +520,71 @@ jobs:
           name: self-improvement-execution-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           path: ${{ runner.temp }}/source-metrics/self-improvement-execution.json
           if-no-files-found: error
+          retention-days: 30
+      - name: Preserve operation boundary journals
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: meta-boundary-journals-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/source-metrics/*.trace.ndjson
+            ${{ runner.temp }}/source-metrics/*.verifier-package-summaries.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Reconstruct observed boundary costs
+        if: ${{ always() }}
+        timeout-minutes: 2
+        env:
+          OBSERVER_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          JOURNAL_DIR: ${{ runner.temp }}/source-metrics
+          COST_DIR: ${{ runner.temp }}/meta-boundary-cost
+          COST_REPORTER: ${{ runner.temp }}/meta-cost-report
+        run: |
+          mkdir -p "$COST_DIR"
+          unknown() {
+            jq -n --arg head "$OBSERVER_HEAD_SHA" --arg reason "$2" --arg next "$3" \
+              '{schema:"gooo/meta-boundary-cost-publication/v1", state:"UNKNOWN",
+                stage:"CI_DIAGNOSTIC_PUBLICATION", step:"RECONSTRUCT_BOUNDARY_COSTS",
+                reason:$reason, unknown_class:"DIRECT_MISSING", next_operation:$next, blocked_by:[],
+                observer_head_sha:$head, authenticity:"UNVERIFIED",
+                scope:"DIAGNOSTIC_ONLY_NO_SEMANTIC_PERMISSION", improvement:"UNKNOWN"}' > "$1"
+          }
+          shopt -s nullglob
+          journals=("$JOURNAL_DIR"/*.trace.ndjson)
+          if ((${#journals[@]} == 0)); then
+            unknown "$COST_DIR/availability.json" BOUNDARY_JOURNAL_MISSING OBSERVE_NATIVE_DRIVER_INVOCATION
+            exit 0
+          fi
+          if [[ ! -x "$COST_REPORTER" ]]; then
+            unknown "$COST_DIR/availability.json" COST_REPORTER_BINARY_MISSING BUILD_EXACT_HEAD_COST_REPORTER
+            exit 1
+          fi
+          status=0
+          for journal in "${journals[@]}"; do
+            name="$(basename "$journal")"
+            output="$COST_DIR/$name.cost.json"
+            sha256sum "$journal" > "$COST_DIR/$name.input.sha256"
+            if [[ ! -s "$journal" ]]; then
+              unknown "$COST_DIR/$name.availability.json" BOUNDARY_JOURNAL_EMPTY OBSERVE_NATIVE_DRIVER_INVOCATION
+              continue
+            fi
+            if "$COST_REPORTER" < "$journal" > "$output.partial" 2> "$COST_DIR/$name.stderr.txt"; then
+              mv "$output.partial" "$output"
+            else
+              unknown "$COST_DIR/$name.availability.json" COST_REPORT_NOT_PRODUCED INSPECT_BOUNDARY_REPORTER_STDERR
+              status=1
+            fi
+          done
+          exit "$status"
+      - name: Preserve reconstructed boundary costs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: meta-boundary-cost-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/meta-boundary-cost
+            ${{ runner.temp }}/source-metrics/*.trace.ndjson
+          if-no-files-found: warn
           retention-days: 30
       - name: Upload self-improvement receipt artifact
         uses: actions/upload-artifact@v7
@@ -678,7 +746,11 @@ jobs:
               base_ref: baseRef, base_sha: baseSha, head_sha: headSha, event_ref: context.ref, checkout_ref: headSha,
               run_id: context.runId, run_attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), workflow_sha: process.env.CI_WORKFLOW_SHA,
               cli: {command: 'go run ./cmd/gooo check examples/billing/main.gooo', fixture: 'examples/billing/main.gooo', status: 'verified', available: true, output, output_sha256: crypto.createHash('sha256').update(output).digest('hex')},
-              graph: {command: 'go run ./cmd/gooo graph-dump examples/billing/main.gooo', status: 'deferred', available: false, reason: 'graph-dump is not implemented in the current checkout', output_sha256: crypto.createHash('sha256').update('').digest('hex')},
+              graph: {
+                command: 'go run ./cmd/gooo graph dump examples/billing/main.gooo', status: 'deferred', available: false,
+                reason: 'GRAPH_OBSERVER_NOT_RUN', output_sha256: crypto.createHash('sha256').update('').digest('hex'),
+                observation: {state: 'UNKNOWN', stage: 'DOMAIN_EVIDENCE', step: 'GRAPH_DUMP', reason: 'GRAPH_OBSERVER_NOT_RUN', unknown_class: 'DIRECT_MISSING', next_operation: 'RUN_GRAPH_DUMP_OBSERVER', blocked_by: []},
+              },
               observer_receipt_refs: [], observer_status: 'unavailable', protection_status: 'unavailable', provenance_status: 'not_applicable',
               digests: {source_sha256: evidence.digests.source_sha256, ir_sha256: evidence.digests.ir_sha256, generated_output_sha256: evidence.digests.generated_output_sha256, bundle_sha256: evidence.digests.bundle_sha256, domain_sha256: ''},
               missing_reasons: {protection: 'domain_protection_observer_unavailable'},

@@ -57,6 +57,132 @@
   ],
   "ownership": [
     {
+      "branch": "agent/callback-observer-cli-20260910",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_callback_observer_cli_20260910.go",
+        "cmd/callback-extraction-observe/main.go",
+        "cmd/callback-extraction-observe/main_test.go",
+        "cmd/callback-extraction-observe/README.md"
+      ]
+    },
+    {
+      "branch": "agent/extract-function-progress-20260906",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_extract_progress_20260906.go",
+        "internal/meta/repositoryprojection/extractor/decompose.go",
+        "internal/meta/repositoryprojection/extractor/evidence.go",
+        "internal/meta/repositoryprojection/extractor/rendered_capacity_progress_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_composition_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_counterexamples_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_incomplete_range_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_projection.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_regression_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_render.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_runtime_test.go",
+        "internal/meta/repositoryprojection/extractor/return_tail_test.go",
+        "internal/meta/repositoryprojection/extractor/typecheck.go",
+        "scripts/meta-execution/extract_validation.go",
+        "scripts/meta-execution/extract_validation_test.go",
+        "scripts/meta-execution/testdata/native-strategy-evidence-w2.json"
+      ]
+    },
+    {
+      "branch": "agent/operation-contract-parse-reuse-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_operation_contract_reuse_20260908.go",
+        "internal/meta/generation/operation_input_contract.go",
+        "internal/meta/generation/operation_contract_cache.go",
+        "internal/meta/generation/operation_contract_cache_test.go"
+      ]
+    },
+    {
+      "branch": "agent/boundary-unknown-records-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_boundary_unknown_20260908.go",
+        "scripts/meta-cost-report/model.go",
+        "scripts/meta-cost-report/assemble.go",
+        "scripts/meta-cost-report/unknown.go",
+        "scripts/meta-cost-report/unknown_test.go"
+      ]
+    },
+    {
+      "branch": "agent/journal-process-interruption-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_journal_process_interruption_20260908.go",
+        "scripts/meta-execution/observation_journal_process_test.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-journal-artifact-20260908",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_observation_journal_artifact_20260908.go"
+      ]
+    },
+    {
+      "branch": "agent/verifier-package-summary-advisory-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_verifier_package_summary_advisory_20260911.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/trace.go",
+        "scripts/meta-execution/verifier_package_summary.go",
+        "scripts/meta-execution/verifier_package_summary_test.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-boundary-journal-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_observation_journal_20260907.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/observation_journal_test.go"
+      ]
+    },
+    {
+      "branch": "agent/observation-stale-output-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_observation_stale_output_20260907.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/observation_archive.go",
+        "scripts/meta-execution/observation_archive_test.go"
+      ]
+    },
+    {
+      "branch": "agent/manifest-observation-ownership-20260907",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/generation/observation_path.go",
+        "internal/meta/generation/observation_path_test.go",
+        "internal/verify/scope_manifest_observation_20260907.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/registration_native_test.go",
+        "scripts/meta-receipts/run.go"
+      ]
+    },
+    {
       "branch": "agent/meta-cost-publication-20260907",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1247,6 +1373,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-write-count-boundary-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_feedback_write_count_boundary_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/formatter",
       "paths": [
         "internal/formatter/**"
@@ -1779,6 +1915,22 @@
       ]
     },
     {
+      "branch": "agent/language-semantic-upstream-contract-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_08.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_14.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_syntaxcase.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_validatesyntaxreceipt.go",
+        "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+        "internal/verify/scope_language_semantic_upstream_contract_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/language-source-execution",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1964,6 +2116,21 @@
         "internal/meta/metricprogram/**",
         "internal/meta/metricprogram/verify/**",
         "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
+      "branch": "agent/concept-operation-binding-receipt-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languagereadiness/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricstrategy/**",
+        "internal/verify/scope_concept_operation_binding_receipt.go",
         "scripts/metric-meta-program/**"
       ]
     },
@@ -3263,6 +3430,31 @@
       ]
     },
     {
+      "branch": "agent/meta-policy-public-profile-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "cmd/gooo/meta_policy_profile.go",
+        "cmd/gooo/meta_policy_profile_test.go",
+        "cmd/meta-policy-compilation-consumer/main.go",
+        "cmd/meta-policy-compilation-witness/main.go",
+        "docs/language/meta-policy-compilation.md",
+        "internal/meta/policycompilation/compile.go",
+        "internal/meta/policycompilation/evaluate.go",
+        "internal/meta/policycompilation/judge.go",
+        "internal/meta/policycompilation/model.go",
+        "internal/meta/policycompilation/profile.go",
+        "internal/meta/policycompilation/receipt.go",
+        "internal/meta/policycompilation/strict_json.go",
+        "internal/meta/policycompilation/strict_json_test.go",
+        "internal/meta/policycompilation/verify.go",
+        "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
+      ]
+    },
+    {
       "branch": "agent/first-class-meta-policy-v20",
       "paths": [
         ".github/agent-scope-table.md",
@@ -3434,6 +3626,16 @@
         ".github/foundation-authorization-protocol.json",
         ".github/workflows/ci.yml",
         "internal/verify/scope_foundation_authorization_protocol_20260903.go",
+        "scripts/ci-proof/foundation_authorization_protocol.js",
+        "scripts/ci-proof/foundation_authorization_protocol_test.js"
+      ]
+    },
+    {
+      "branch": "agent/foundation-authorization-protocol-frontier-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_foundation_authorization_protocol_frontier_20260911.go",
         "scripts/ci-proof/foundation_authorization_protocol.js",
         "scripts/ci-proof/foundation_authorization_protocol_test.js"
       ]
@@ -3722,6 +3924,16 @@
         "internal/meta/publicdiscovery",
         "internal/verify/scope_compiler_self_improvement_20260903.go",
         "scripts/self-improvement-public-continuity"
+      ]
+    },
+    {
+      "branch": "agent/continuity-previous-go-binding-785",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_part02_test.go",
+        "cmd/gooo/public_continuity_generate_part01.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
       ]
     },
     {
@@ -4018,6 +4230,246 @@
         "scripts/self-improvement-cycle/cycle_test.go",
         "scripts/self-improvement-cycle/validate.go",
         "scripts/verify/validate-source-observations.sh"
+      ]
+    },
+    {
+      "branch": "agent/relay-graph-fields-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_relay_graph_fields_20260911.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/graph_fields_v1.go",
+        "cmd/gooo/graph_fields_dump.go",
+        "cmd/gooo/graph_fields_v1_test.go",
+        "cmd/gooo/graph_fields_invalid_test.go",
+        "examples/relay-game-contract/main.gooo",
+        "examples/relay-game-contract/README.md",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go"
+      ]
+    },
+    {
+      "branch": "agent/syntax-negative-evidence-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/transformation-effect.yml",
+        "internal/verify/scope_syntax_negative_evidence_20260911.go",
+        "cmd/language-syntax-witness/run.go",
+        "cmd/language-syntax-witness/io.go",
+        "cmd/language-syntax-witness/negative_report.go",
+        "cmd/language-syntax-witness/negative_report_test.go"
+      ]
+    },
+    {
+      "branch": "agent/native-test-cost-trace-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_native_test_cost_trace_20260911.go",
+        "scripts/meta-execution/collapse_execution_test.go",
+        "scripts/meta-execution/collapse_execution_trace_test.go"
+      ]
+    },
+    {
+      "branch": "agent/graph-observer-coverage-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_graph_observer_coverage_20260911.go",
+        "internal/verify/workflow_part03_test.go",
+        "scripts/ci-proof/domain.go",
+        "scripts/ci-proof/graph_observation.go",
+        "scripts/ci-proof/graph_observation_test.go"
+      ]
+    },
+    {
+      "branch": "agent/pr-authoritative-contract-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/self-improvement-contract.yml",
+        "internal/verify/scope_pr_authoritative_contract_20260911.go",
+        "scripts/self-improvement-contract/workflow_authority_test.go",
+        "scripts/self-improvement-contract/workflow_authority_cases_test.go"
+      ]
+    },
+    {
+      "branch": "agent/core-evidence-integration-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        ".github/workflows/self-improvement-contract.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/gooo/graph_fields_dump.go",
+        "cmd/gooo/graph_fields_invalid_test.go",
+        "cmd/gooo/graph_fields_v1.go",
+        "cmd/gooo/graph_fields_v1_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/language-syntax-witness/io.go",
+        "cmd/language-syntax-witness/negative_report.go",
+        "cmd/language-syntax-witness/negative_report_test.go",
+        "cmd/language-syntax-witness/run.go",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/relay-game-contract/README.md",
+        "examples/relay-game-contract/main.gooo",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/verify/scope_core_evidence_integration_20260911.go",
+        "internal/verify/scope_graph_observer_coverage_20260911.go",
+        "internal/verify/scope_native_test_cost_trace_20260911.go",
+        "internal/verify/scope_pr_authoritative_contract_20260911.go",
+        "internal/verify/scope_relay_graph_fields_20260911.go",
+        "internal/verify/scope_syntax_negative_evidence_20260911.go",
+        "internal/verify/workflow_part03_test.go",
+        "scripts/ci-proof/domain.go",
+        "scripts/ci-proof/graph_observation.go",
+        "scripts/ci-proof/graph_observation_test.go",
+        "scripts/meta-execution/collapse_execution_test.go",
+        "scripts/meta-execution/collapse_execution_trace_test.go",
+        "scripts/self-improvement-contract/workflow_authority_cases_test.go",
+        "scripts/self-improvement-contract/workflow_authority_test.go"
+      ]
+    },
+    {
+      "branch": "agent/native-journal-reconstruction-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_native_journal_reconstruction_20260911.go",
+        "scripts/meta-cost-report/native_journal_fixture_test.go",
+        "scripts/meta-cost-report/native_journal_rejection_test.go",
+        "scripts/meta-cost-report/native_journal_test.go",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/README.md",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/capture.json",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/first.ndjson",
+        "scripts/meta-cost-report/testdata/native-interruption-34510267647/replay.ndjson"
+      ]
+    },
+    {
+      "branch": "agent/partial-reuse-evidence-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/publicpartialreuse/evaluator.go",
+        "internal/meta/publicpartialreuse/evaluator_receipt_test.go",
+        "internal/meta/publicpartialreuse/receipt.go",
+        "internal/meta/publicpartialreuse/receipt_failure_test.go",
+        "internal/meta/publicpartialreuse/receipt_fixture_test.go",
+        "internal/verify/scope_partial_reuse_evidence_20260911.go",
+        "scripts/self-improvement-public-partial-reuse/run.go"
+      ]
+    },
+    {
+      "branch": "agent/compiler-conformance-evidence-upload-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/compiler-self-improvement.yml",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
+      ]
+    },
+    {
+      "branch": "agent/cap-02-public-execution-claim-scope-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/run_package_source.go",
+        "cmd/gooo/run_package_source_test.go",
+        "cmd/gooo/run_source_part01.go",
+        "docs/assets/ontology-visuals/visual-manifest.json",
+        "docs/language/language-delivery-scorecard.md",
+        "docs/language/language-package-execution.md",
+        "docs/language/language-package-runtime.md",
+        "docs/language/language-source-execution.md",
+        "examples/billing-package/operation-interface.golden.json",
+        "examples/billing-package/operation-manifest.artifact.golden.json",
+        "examples/language-debug/README.md",
+        "examples/language-delivery-scorecard/README.md",
+        "examples/language-runtime-binding/README.md",
+        "examples/language-source-execution/README.md",
+        "examples/language-value-witness/README.md",
+        "internal/languagedebug/decode.go",
+        "internal/languagedebug/digest.go",
+        "internal/languagedebug/model.go",
+        "internal/languagedebug/observe.go",
+        "internal/languagedebug/observe_test.go",
+        "internal/languagedebug/validate.go",
+        "internal/languageprofile/model.go",
+        "internal/languageprofile/observe.go",
+        "internal/languageprofile/validate.go",
+        "internal/meta/languageartifactoracle/artifact.go",
+        "internal/meta/languageartifactoracle/checks.go",
+        "internal/meta/languageartifactoracle/fixture_test.go",
+        "internal/meta/languagedebugexperiment/evaluate.go",
+        "internal/meta/languagedebugexperiment/evaluate_test.go",
+        "internal/meta/languagedebugexperiment/fixture_test.go",
+        "internal/meta/languagedebugexperiment/views.go",
+        "internal/meta/languagedelivery/evidence_debug.go",
+        "internal/meta/languagedelivery/evidence_execution.go",
+        "internal/meta/languagedelivery/evidence_profile.go",
+        "internal/meta/languagepackageexecution/evaluate.go",
+        "internal/meta/languagepackageexecution/evaluate_test.go",
+        "internal/meta/languagepackageexecution/model.go",
+        "internal/meta/languagepackageexecution/model_split02.go",
+        "internal/meta/languageprofileexperiment/evaluate.go",
+        "internal/meta/languageprofileexperiment/evaluate_test.go",
+        "internal/meta/languageprofileexperiment/model_split02.go",
+        "internal/meta/languagesourcebindingpromotion/evidence.go",
+        "internal/meta/languagesourcebindingpromotion/fixture_evidence_test.go",
+        "internal/meta/languagesourcebindingpromotion/fixture_test.go",
+        "internal/meta/languagesourcebindingpromotion/independent.go",
+        "internal/meta/languagesourcebindingpromotion/structural.go",
+        "internal/meta/languagesourceexecution/evaluate.go",
+        "internal/meta/languagesourceexecution/evaluate_test.go",
+        "internal/meta/languagesourceexecution/report.go",
+        "internal/packageruntime/packageexecution/model.go",
+        "internal/packageruntime/packageexecution/packageexecution_test.go",
+        "internal/packageruntime/packageexecution/reject.go",
+        "internal/packageruntime/packageexecution/validate.go",
+        "internal/sourceexecution/execute.go",
+        "internal/sourceexecution/execute_test.go",
+        "internal/sourceexecution/failure.go",
+        "internal/sourceexecution/model.go",
+        "internal/sourceexecution/validate.go",
+        "internal/valueexecution/evaluate.go",
+        "internal/valueexecution/evaluate_test.go",
+        "internal/valueexecution/model.go",
+        "internal/valueexecution/plan.go",
+        "internal/valueexecution/result.go",
+        "internal/valueexecution/result_test.go",
+        "internal/valueexecution/validate.go",
+        "internal/verify/scope_cap_02_public_execution_claim_scope_20260911.go",
+        "scripts/language-debug-experiment/main.sh",
+        "scripts/language-package-execution/main.sh",
+        "scripts/language-profile-experiment/main.sh",
+        "scripts/language-source-execution/main.sh",
+        "scripts/language-value-witness/main.go"
+      ]
+    },
+    {
+      "branch": "agent/verifier-observation-classification-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_verifier_observation_classification_20260911.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/collapse.go",
+        "scripts/meta-execution/operation_process_classification_test.go"
+      ]
+    },
+    {
+      "branch": "agent/cap-03-billing-user-transcript-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/billing-package/EXPERIMENT.md",
+        "internal/verify/scope_cap_03_billing_user_transcript_20260911.go"
       ]
     }
   ],

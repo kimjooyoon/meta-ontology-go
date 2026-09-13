@@ -718,6 +718,9 @@ jobs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
       artifact_digest: ${{ steps.upload.outputs.artifact-digest }}
       artifact_url: ${{ steps.upload.outputs.artifact-url }}
+      concept_operation_artifact_id: ${{ steps.concept-operation-upload.outputs.artifact-id }}
+      concept_operation_artifact_digest: ${{ steps.concept-operation-upload.outputs.artifact-digest }}
+      concept_operation_artifact_url: ${{ steps.concept-operation-upload.outputs.artifact-url }}
     env:
       GOTOOLCHAIN: go1.27.0
       SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
@@ -733,6 +736,11 @@ jobs:
         with:
           name: metric-strategy-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program/input
+      - name: Download exact metric intervention evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: metric-intervention-${{ env.SUBJECT_SHA }}
+          path: ${{ runner.temp }}/metric-meta-program/intervention
       - name: Compile, replay, and independently verify the typed Gooo program
         shell: bash
         run: |
@@ -744,6 +752,7 @@ jobs:
           common=(
             -strategy "$input/plan.json"
             -strategy-verification "$input/verification.json"
+            -intervention "$RUNNER_TEMP/metric-meta-program/intervention/ledger.json"
           )
           for target in "$first" "$replay"; do
             go run ./scripts/metric-meta-program "${common[@]}" -out "$target"
@@ -791,7 +800,58 @@ jobs:
             .repository_workspace_writes == false and
             .promotion_authorized == false
           ' "$first/verification.json"
+          jq -e \
+            --arg program_digest "$(jq -r '.digest' "$first/program.json")" \
+            --arg source_digest "$(jq -r '.source_digest' "$first/program.json")" \
+            --arg semantic_digest "$(jq -r '.semantic_digest' "$first/program.json")" \
+            --arg registry_digest "$(jq -r '.registry_digest' "$first/program.json")" \
+            '
+            .schema == "gooo/metric-meta-concept-operation-binding/v1" and
+            .metric_id == "gooo.metric.meta.concept-operation-binding-bps.v1" and
+            .source_authority == "HANDWRITTEN_GO_REGISTRY_TO_CANONICAL_SOURCE_TO_PARSED_LOWERED_IR" and
+            .program_source_path == "program.gooo" and
+            .status == "VERIFIED" and
+            .coverage_bps == 10000 and
+            .expected_count == (.expected | length) and
+            .bound_count == .expected_count and
+            .unknown_count == 0 and
+            .failure_class == "" and
+            .unknown == null and
+            .program_digest == $program_digest and
+            .program_source_digest == $source_digest and
+            .program_semantic_digest == $semantic_digest and
+            .program_registry_digest == $registry_digest and
+            .repository_workspace_writes == false and
+            .promotion_authorized == false
+          ' "$first/concept-operation-binding.json"
+          test -s "$RUNNER_TEMP/metric-meta-program/intervention/source-metrics.json"
+          cp "$input/plan.json" "$first/strategy-plan.json"
+          cp "$input/verification.json" "$first/strategy-verification.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/source-metrics.json" "$first/source-metrics.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/ledger.json" "$first/intervention-ledger.json"
+          cp "$RUNNER_TEMP/metric-meta-program/intervention/verification.json" "$first/intervention-verification.json"
           test -s "$first/program.gooo"
+          test -s "$first/concept-operation-binding.json"
+          test -s "$first/strategy-plan.json"
+          test -s "$first/strategy-verification.json"
+          test -s "$first/source-metrics.json"
+          test -s "$first/intervention-ledger.json"
+          test -s "$first/intervention-verification.json"
+          transport="$RUNNER_TEMP/metric-concept-operation"
+          mkdir -p "$transport"
+          for source_file in concept-operation-binding.json strategy-plan.json strategy-verification.json source-metrics.json intervention-ledger.json intervention-verification.json program.json program.gooo verification.json; do
+            cp "$first/$source_file" "$transport/$source_file"
+          done
+          jq -n \
+            --arg schema "gooo/metric-meta-program-producer-attempt/v1" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg subject_sha "$SUBJECT_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg producer_job "$GITHUB_JOB" \
+            '{schema:$schema,repository:$repository,subject_sha:$subject_sha,workflow_run_id:($run_id|tonumber),workflow_run_attempt:($run_attempt|tonumber),producer_job:$producer_job}' \
+            > "$transport/producer-attempt.json"
+          test -s "$transport/producer-attempt.json"
           test -z "$(git status --porcelain)"
       - name: Upload deterministic typed metric meta-program evidence
         id: upload
@@ -800,6 +860,158 @@ jobs:
         with:
           name: metric-meta-program-${{ env.SUBJECT_SHA }}
           path: ${{ runner.temp }}/metric-meta-program/first
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload exact concept-operation producer evidence
+        id: concept-operation-upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: metric-concept-operation-${{ env.SUBJECT_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/metric-concept-operation
+          if-no-files-found: error
+          retention-days: 30
+
+  concept-operation-observation:
+    needs: program
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: go1.27.0
+      SUBJECT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      PRODUCER_ARTIFACT_ID: ${{ needs.program.outputs.concept_operation_artifact_id }}
+      PRODUCER_ARTIFACT_DIGEST: ${{ needs.program.outputs.concept_operation_artifact_digest }}
+      PRODUCER_ARTIFACT_NAME: metric-concept-operation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SUBJECT_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+      - name: Prepare read-only observation workspace
+        run: mkdir -p "$RUNNER_TEMP/metric-concept-operation-observation/unpacked" "$RUNNER_TEMP/metric-concept-operation-observation/concept/first" "$RUNNER_TEMP/metric-concept-operation-observation/concept/replay" "$RUNNER_TEMP/metric-concept-operation-observation/readiness/first" "$RUNNER_TEMP/metric-concept-operation-observation/readiness/replay" "$RUNNER_TEMP/metric-concept-operation-observation/baseline"
+      - name: Download and authenticate exact producer bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/metric-concept-operation-observation"
+          test "$PRODUCER_ARTIFACT_ID" != ""
+          test "$PRODUCER_ARTIFACT_DIGEST" != ""
+          test "$PRODUCER_ARTIFACT_NAME" != ""
+          normalize_sha256() {
+            value="${1#sha256:}"
+            if [[ ! "$value" =~ ^[0-9a-f]{64}$ ]]; then
+              echo "FAIL_CLOSED: producer artifact digest is not a 64-character lowercase sha256 value" >&2
+              exit 1
+            fi
+            printf 'sha256:%s\n' "$value"
+          }
+          declared_digest="$(normalize_sha256 "$PRODUCER_ARTIFACT_DIGEST")"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$PRODUCER_ARTIFACT_ID" > "$work/producer-artifact.json"
+          jq -e \
+            --arg name "$PRODUCER_ARTIFACT_NAME" \
+            --argjson run_id "$GITHUB_RUN_ID" \
+            --argjson artifact_id "$PRODUCER_ARTIFACT_ID" \
+            '.id == $artifact_id and .name == $name and .expired == false and .workflow_run.id == $run_id' \
+            "$work/producer-artifact.json"
+          metadata_digest="$(jq -r '.digest // empty' "$work/producer-artifact.json")"
+          metadata_digest="$(normalize_sha256 "$metadata_digest")"
+          test "$metadata_digest" = "$declared_digest"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$PRODUCER_ARTIFACT_ID/zip" > "$work/producer.zip"
+          printf '%s  %s\n' "${declared_digest#sha256:}" "$work/producer.zip" | sha256sum -c -
+          unzip -q "$work/producer.zip" -d "$work/unpacked"
+          expected_files=(
+            concept-operation-binding.json strategy-plan.json strategy-verification.json
+            source-metrics.json intervention-ledger.json intervention-verification.json
+            program.json program.gooo verification.json producer-attempt.json
+          )
+          test "$(find "$work/unpacked" -type f | wc -l | tr -d '[:space:]')" = "10"
+          for source_file in "${expected_files[@]}"; do
+            test -s "$work/unpacked/$source_file"
+          done
+          jq -e \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg subject_sha "$SUBJECT_SHA" \
+            --argjson run_id "$GITHUB_RUN_ID" \
+            --argjson run_attempt "$GITHUB_RUN_ATTEMPT" \
+            '.schema == "gooo/metric-meta-program-producer-attempt/v1" and .repository == $repository and .subject_sha == $subject_sha and .workflow_run_id == $run_id and .workflow_run_attempt == $run_attempt and .producer_job == "program"' \
+            "$work/unpacked/producer-attempt.json"
+      - name: Produce exact-head concept artifact twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/metric-concept-operation-observation"
+          for target in first replay; do
+            go run ./cmd/language-concept-artifact-witness \
+              -root "$GITHUB_WORKSPACE" \
+              -output "$work/concept/$target/artifact.json"
+          done
+          cmp -s "$work/concept/first/artifact.json" "$work/concept/replay/artifact.json"
+          go run ./cmd/language-concept-artifact-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -check "$work/concept/first/artifact.json"
+      - name: Observe and replay concept-operation evidence through public readiness CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/metric-concept-operation-observation"
+          common=(
+            -root "$GITHUB_WORKSPACE"
+            -input "$work/concept/first/artifact.json"
+            -concept-operation-binding "$work/unpacked/concept-operation-binding.json"
+            -concept-operation-input-dir "$work/unpacked"
+            -expected-repository "$GITHUB_REPOSITORY"
+            -expected-sha "$SUBJECT_SHA"
+          )
+          go run ./cmd/language-readiness-witness \
+            -root "$GITHUB_WORKSPACE" \
+            -input "$work/concept/first/artifact.json" \
+            -expected-sha "$SUBJECT_SHA" \
+            -output "$work/baseline/artifact.json"
+          for target in first replay; do
+            go run ./cmd/language-readiness-witness "${common[@]}" \
+              -concept-operation-scratch-dir "$work/scratch/$target" \
+              -output "$work/readiness/$target/artifact.json"
+          done
+          cmp -s "$work/readiness/first/artifact.json" "$work/readiness/replay/artifact.json"
+          go run ./cmd/language-readiness-witness "${common[@]}" \
+            -concept-operation-scratch-dir "$work/scratch/check" \
+            -check "$work/readiness/first/artifact.json"
+          jq -e \
+            --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
+            '.status == "VERIFIED" and .repository_workspace_writes == false and .promotion_authorized == false and .expected_count == (.expected | length) and .coverage_bps == 10000' \
+            "$work/unpacked/concept-operation-binding.json"
+          jq -e \
+            --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
+            '.snapshot.summary.total == 24 and .snapshot.repository_writes == 0 and .fixed_point.decision == "NO_CHANGE" and .proposal_promotion_digest == null and .guarded_capability_digest == null and ([.snapshot.obligations[] | select(.id == $obligation)] | length) == 1 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "SATISFIED" and .reason == "CONCEPT_CONFORMANCE_EXPLICIT" and (.evidence_digest | test("^sha256:[0-9a-f]{64}$")))' \
+            "$work/readiness/first/artifact.json"
+          jq -e \
+            --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
+            '.snapshot.summary.total == 24 and ([.snapshot.obligations[] | select(.id == $obligation)][0] | .status == "NOT_SATISFIED" and .reason == "CONCEPT_OPERATION_BINDING_RECEIPT_REQUIRED")' \
+            "$work/baseline/artifact.json"
+          jq -S --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" '[.snapshot.obligations[] | select(.id != $obligation) | {id,status,reason}]' "$work/baseline/artifact.json" > "$work/baseline/unrelated.json"
+          jq -S --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" '[.snapshot.obligations[] | select(.id != $obligation) | {id,status,reason}]' "$work/readiness/first/artifact.json" > "$work/readiness/unrelated.json"
+          cmp -s "$work/baseline/unrelated.json" "$work/readiness/unrelated.json"
+          producer_status="$(jq -r '.status' "$work/unpacked/concept-operation-binding.json")"
+          producer_coverage="$(jq -r '.coverage_bps' "$work/unpacked/concept-operation-binding.json")"
+          producer_authorized="$(jq -r '.promotion_authorized' "$work/unpacked/concept-operation-binding.json")"
+          jq -r \
+            --arg obligation "META-CONCEPT-GOVERNED-REFACTORING" \
+            --arg producer_status "$producer_status" \
+            --arg producer_coverage "$producer_coverage" \
+            --arg producer_authorized "$producer_authorized" \
+            '"### Concept-operation readiness observation\n- producer receipt: \($producer_status), coverage \($producer_coverage) bps, promotion authority: \($producer_authorized)\n- readiness: \([.snapshot.obligations[] | select(.id == $obligation)][0].status)\n- fixed point: \(.fixed_point.decision)\n- deterministic replay: verified\n- unrelated obligations: unchanged"' \
+            "$work/readiness/first/artifact.json" >> "$GITHUB_STEP_SUMMARY"
+          test -z "$(git status --porcelain --untracked-files=all)"
+      - name: Upload concept-operation readiness observation
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: metric-concept-operation-readiness-${{ env.SUBJECT_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/metric-concept-operation-observation
           if-no-files-found: error
           retention-days: 30
 

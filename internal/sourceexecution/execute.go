@@ -37,7 +37,7 @@ func Execute(request Request) Receipt {
 	}
 	semanticDigest := "sha256:" + ir.StableHash()
 	receipt := Receipt{
-		Schema: ReceiptSchema, Decision: "PASS", Reason: "SOURCE_ACTIVITY_EXECUTED",
+		Schema: ReceiptSchema, Scope: DeclarationResolutionScope, Decision: "PASS", Reason: "SOURCE_ACTIVITY_EXECUTED",
 		Resolution: "EXACT", Filename: request.Filename, SourceDigest: sourceDigest,
 		SemanticDigest: semanticDigest, Entry: entry, Diagnostics: []Diagnostic{}, Effects: Effects{},
 		Events: []Event{
