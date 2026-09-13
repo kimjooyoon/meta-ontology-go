@@ -14,6 +14,62 @@ import (
 )
 
 func TestDecodeExtractorReportAcceptsGeneratedMapConstructionProof(t *testing.T) {
+	root, report := mapConstructionConsumerReport(t)
+	path := writeMapConstructionConsumerReport(t, root, report)
+	_, decoded, err := decodeExtractorReport(path, "head")
+	if err != nil {
+		t.Fatalf("meta executor rejected the generated map proof: %v", err)
+	}
+	if len(decoded.Subjects) != 1 || !reflect.DeepEqual(decoded.Subjects[0].Evidence, report.Subjects[0].Evidence) {
+		t.Fatal("meta executor lost generated proof fields")
+	}
+	if !strings.Contains(decoded.Subjects[0].Evidence[0].ProofStages[3].Detail, "CALLEE_EFFECTS_UNPROVEN") {
+		t.Fatal("meta executor lost the previous strategy's unresolved cause")
+	}
+}
+
+func TestDecodeExtractorReportRejectsTamperedGeneratedMapConstructionProof(t *testing.T) {
+	root, report := mapConstructionConsumerReport(t)
+	path := writeMapConstructionConsumerReport(t, root, report)
+	if _, _, err := decodeExtractorReport(path, "head"); err != nil {
+		t.Fatalf("untampered generated map proof must be accepted first: %v", err)
+	}
+	payload, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name   string
+		mutate func(*projectionextractor.StrategyEvidence)
+	}{
+		{"unregistered-strategy", func(e *projectionextractor.StrategyEvidence) { e.Strategy = "unregistered-map-strategy" }},
+		{"fixed-point-is-not-a-strategy", func(e *projectionextractor.StrategyEvidence) { e.Strategy = "FIXED_POINT" }},
+		{"suffix-cannot-disguise-six-stage-proof", func(e *projectionextractor.StrategyEvidence) { e.Strategy = "suffix-extraction" }},
+		{"unknown-proof-stage", func(e *projectionextractor.StrategyEvidence) { e.ProofStages[3].Status = "UNKNOWN" }},
+		{"missing-proof-stage", func(e *projectionextractor.StrategyEvidence) { e.ProofStages = e.ProofStages[:3] }},
+		{"refuted-obligation", func(e *projectionextractor.StrategyEvidence) { e.Obligations[3].Status = "REFUTED" }},
+		{"unbound-contract-digest", func(e *projectionextractor.StrategyEvidence) { e.ContractSemanticDigest = "not-bound" }},
+	}
+	if len(cases) != 7 {
+		t.Fatalf("generated map proof rejection cohort changed: got=%d want=7", len(cases))
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var candidate extractorReport
+			if err := json.Unmarshal(payload, &candidate); err != nil {
+				t.Fatal(err)
+			}
+			tc.mutate(&candidate.Subjects[0].Evidence[0])
+			path := writeMapConstructionConsumerReport(t, t.TempDir(), candidate)
+			if _, _, err := decodeExtractorReport(path, "head"); err == nil {
+				t.Fatal("tampered generated map proof was accepted")
+			}
+		})
+	}
+}
+
+func mapConstructionConsumerReport(t *testing.T) (string, extractorReport) {
+	t.Helper()
 	root, source := mapConstructionConsumerSource(t)
 	result, err := projectionextractor.ExtractWithResult(root, "a.go")
 	if err != nil {
@@ -38,6 +94,11 @@ func TestDecodeExtractorReportAcceptsGeneratedMapConstructionProof(t *testing.T)
 	sort.Strings(subject.Files)
 	sort.Strings(subject.CreatedFiles)
 	report.Indicators = extractionTestIndicatorsWithValues(1, 1, 1, len(subject.CreatedFiles), 0)
+	return root, report
+}
+
+func writeMapConstructionConsumerReport(t *testing.T, root string, report extractorReport) string {
+	t.Helper()
 	payload, err := json.Marshal(report)
 	if err != nil {
 		t.Fatal(err)
@@ -46,16 +107,7 @@ func TestDecodeExtractorReportAcceptsGeneratedMapConstructionProof(t *testing.T)
 	if err := os.WriteFile(path, payload, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, decoded, err := decodeExtractorReport(path, "head")
-	if err != nil {
-		t.Fatalf("meta executor rejected the generated map proof: %v", err)
-	}
-	if len(decoded.Subjects) != 1 || !reflect.DeepEqual(decoded.Subjects[0].Evidence, result.Evidence) {
-		t.Fatal("meta executor lost generated proof fields")
-	}
-	if !strings.Contains(decoded.Subjects[0].Evidence[0].ProofStages[3].Detail, "CALLEE_EFFECTS_UNPROVEN") {
-		t.Fatal("meta executor lost the previous strategy's unresolved cause")
-	}
+	return path
 }
 
 func mapConstructionConsumerSource(t *testing.T) (string, string) {
