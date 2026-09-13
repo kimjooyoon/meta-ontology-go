@@ -26,9 +26,9 @@ func prepareGoalCounterexample(report PolicyGoalCounterexampleObservation, filen
 		return policies, stopGoalCounterexample(report, "REFUTED", "INPUT", "SOURCE_AND_GOAL_CASE_SCOPE_MISMATCH", ""), false
 	}
 	for i, item := range []struct {
-		name string
+		name   string
 		source []byte
-		input Case
+		input  Case
 	}{{filename, source, a}, {filename + ".goal.gooo", goal, b}} {
 		policy, err := CompileForIdentity(item.name, item.source, pkg, namespace)
 		if err != nil {

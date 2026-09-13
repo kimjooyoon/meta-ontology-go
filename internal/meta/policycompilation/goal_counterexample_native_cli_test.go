@@ -30,7 +30,7 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 	request := PolicyGoalCounterexampleRequest{
 		ExpectedSourceDigest: DigestBytes(source), ExpectedGoalDigest: DigestBytes(goal),
 		SourceCase: goalCounterexampleCase(counterexample.Input, broken.Candidate),
-		GoalCase: goalCounterexampleCase(counterexample.Input, broken.Original),
+		GoalCase:   goalCounterexampleCase(counterexample.Input, broken.Original),
 	}
 	rawRequest, _ := json.Marshal(request)
 	sourcePath := goalCounterexampleFile(t, dir, "source.gooo", source)
@@ -127,7 +127,7 @@ func goalCounterexampleContinue(t *testing.T, ctx context.Context, dir, sourcePa
 	selection := runGoalCounterexampleCommand(t, ctx, next, "-policy", candidatePath, "-predecessor", predecessorPath,
 		"-request", nextPath, "-goal", goalPath, "-goal-digest", DigestBytes(goal), "-materialize-selection")
 	var selected struct {
-		Decision string `json:"decision"`
+		Decision           string `json:"decision"`
 		MaterializedSource string `json:"materialized_source"`
 	}
 	if err := json.Unmarshal(selection, &selected); err != nil || selected.Decision != "SELECTED_FOR_FROZEN_GOOO_GOAL" || selected.MaterializedSource == "" {

@@ -6,32 +6,32 @@ const PolicyGoalCounterexampleSchema = "gooo/meta-policy-goal-counterexample/v1"
 
 type PolicyGoalCounterexampleRequest struct {
 	ExpectedSourceDigest string `json:"expected_source_digest"`
-	ExpectedGoalDigest string `json:"expected_goal_digest"`
-	SourceCase Case `json:"source_case"`
-	GoalCase Case `json:"goal_case"`
+	ExpectedGoalDigest   string `json:"expected_goal_digest"`
+	SourceCase           Case   `json:"source_case"`
+	GoalCase             Case   `json:"goal_case"`
 }
 
 type PolicyGoalCounterexampleObservation struct {
-	Schema string `json:"schema"`
-	State string `json:"state"`
-	Reason string `json:"reason"`
-	SourceDigest string `json:"source_digest"`
-	GoalDigest string `json:"goal_digest"`
-	GoalSemanticDigest string `json:"goal_semantic_digest,omitempty"`
-	RequestDigest string `json:"request_digest"`
-	Request *PolicyGoalCounterexampleRequest `json:"declared_request,omitempty"`
-	SourceResults []DecisionResult `json:"source_results"`
-	GoalResults []DecisionResult `json:"goal_results"`
-	Proposal *PolicyCounterexampleProposal `json:"proposal,omitempty"`
-	Pending *PolicyRevisionPending `json:"pending,omitempty"`
-	Diagnostic string `json:"diagnostic,omitempty"`
-	GeneratedBatches int `json:"generated_batches"`
-	ExpectationAuthority string `json:"expectation_authority"`
-	CriterionIndependence string `json:"criterion_independence"`
-	GeneralAdmission string `json:"general_admission"`
-	Improvement string `json:"improvement"`
-	MutationAuthority int `json:"mutation_authority"`
-	PromotionAuthority int `json:"promotion_authority"`
+	Schema                string                           `json:"schema"`
+	State                 string                           `json:"state"`
+	Reason                string                           `json:"reason"`
+	SourceDigest          string                           `json:"source_digest"`
+	GoalDigest            string                           `json:"goal_digest"`
+	GoalSemanticDigest    string                           `json:"goal_semantic_digest,omitempty"`
+	RequestDigest         string                           `json:"request_digest"`
+	Request               *PolicyGoalCounterexampleRequest `json:"declared_request,omitempty"`
+	SourceResults         []DecisionResult                 `json:"source_results"`
+	GoalResults           []DecisionResult                 `json:"goal_results"`
+	Proposal              *PolicyCounterexampleProposal    `json:"proposal,omitempty"`
+	Pending               *PolicyRevisionPending           `json:"pending,omitempty"`
+	Diagnostic            string                           `json:"diagnostic,omitempty"`
+	GeneratedBatches      int                              `json:"generated_batches"`
+	ExpectationAuthority  string                           `json:"expectation_authority"`
+	CriterionIndependence string                           `json:"criterion_independence"`
+	GeneralAdmission      string                           `json:"general_admission"`
+	Improvement           string                           `json:"improvement"`
+	MutationAuthority     int                              `json:"mutation_authority"`
+	PromotionAuthority    int                              `json:"promotion_authority"`
 }
 
 // ObserveGoalPolicyCounterexample derives the expected decision from a fresh
@@ -43,9 +43,9 @@ func ObserveGoalPolicyCounterexample(ctx context.Context, filename string, sourc
 		Schema: PolicyGoalCounterexampleSchema, State: "UNKNOWN",
 		SourceDigest: DigestBytes(source), GoalDigest: DigestBytes(goal), RequestDigest: DigestBytes(raw),
 		SourceResults: []DecisionResult{}, GoalResults: []DecisionResult{},
-		ExpectationAuthority: "PINNED_GOOO_GOAL_GENERATED_EXECUTION",
+		ExpectationAuthority:  "PINNED_GOOO_GOAL_GENERATED_EXECUTION",
 		CriterionIndependence: "SEPARATE_GOOO_GOAL_SHARED_COMPILER",
-		GeneralAdmission: "UNKNOWN", Improvement: "UNKNOWN",
+		GeneralAdmission:      "UNKNOWN", Improvement: "UNKNOWN",
 	}
 	policies, report, ready := prepareGoalCounterexample(report, filename, source, goal, raw, pkg, namespace)
 	if !ready {
