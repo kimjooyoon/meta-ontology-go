@@ -62,3 +62,5 @@ const (
 	beforeCoverageBPS    = 8333
 	projectedCoverageBPS = 9166
 )
+
+const DenominatorMigrationV31Digest = "sha256:1096da4983138e09a0a78384f507542706bdae04a4f54454cf020ae6a138f7be"

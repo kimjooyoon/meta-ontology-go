@@ -44,10 +44,6 @@ func TestNativeRegisteredMetaSourcePromotionPassesExistingConformance(t *testing
 	runNativeRegistrationConformance(t, "registered-meta-source")
 }
 
-func TestNativePendingGoalRegistrationPassesExistingConformance(t *testing.T) {
-	runNativeRegistrationConformance(t, "goal-unresolved")
-}
-
 func nativeRegistrationInput(t *testing.T, mode string) (Request, []byte) {
 	t.Helper()
 	switch mode {
@@ -57,16 +53,6 @@ func nativeRegistrationInput(t *testing.T, mode string) (Request, []byte) {
 	case "registered-meta-source":
 		data, request := promotedMetaFixture(t)
 		return request, data[request.Case.Path].Data
-	case "goal-unresolved":
-		_, request := fixture(t)
-		request.Case.ID = "meta-policy-unresolved-goal"
-		request.Case.Path = "internal/meta/policycompilation/testdata/goal-unresolved.gooo"
-		request.Case.EntityFields = false
-		source, err := os.ReadFile(filepath.Join("..", "policycompilation", "testdata", "goal-unresolved.gooo"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return request, source
 	case "example":
 		_, request := fixture(t)
 		return request, []byte(fixtureSource)
