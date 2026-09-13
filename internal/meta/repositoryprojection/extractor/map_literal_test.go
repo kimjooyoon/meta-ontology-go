@@ -102,7 +102,7 @@ func TestMapReceiverFusionClosesRemainingCapacity(t *testing.T) {
 	}
 	result, err := ExtractWithResult(root, "x.go")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("extract receiver witness: %#v", err)
 	}
 	matched := 0
 	for _, item := range result.Evidence {
@@ -124,14 +124,59 @@ func TestMapReceiverFusionClosesRemainingCapacity(t *testing.T) {
 				t.Fatalf("caller preparation lost %s: %s", expected, detail)
 			}
 		}
-		if !strings.Contains(item.ProofStages[3].Detail, "CALLEE_EFFECTS_UNPROVEN") {
-			t.Fatal("caller preparation erased the original unproven effect")
+		prior := item.ProofStages[3].Detail
+		if !strings.Contains(prior, "RETURN_TAIL_CONTROL_FLOW_UNSUPPORTED") ||
+			!strings.Contains(prior, "function contains unsupported control flow") ||
+			strings.Contains(prior, "CALLEE_EFFECTS_UNPROVEN") {
+			t.Fatalf("caller preparation misreported the actual prior rejection: %s", prior)
 		}
 	}
 	if matched != 1 {
 		t.Fatalf("prepared map witnesses=%d, want 1", matched)
 	}
 	assertMapLiteralCallerExpressions(t, result)
+}
+
+func TestMapLiteralAlternativeRequiresTypedStrategyRejection(t *testing.T) {
+	control := "function contains unsupported control flow"
+	for _, item := range []struct {
+		name   string
+		err    error
+		reason string
+	}{
+		{"opaque callee", fail("derive-recipe", "prove-callee-effects", "CALLEE_EFFECTS_UNPROVEN", "DIRECT_MISSING", "restore-callee-evidence", nil), "CALLEE_EFFECTS_UNPROVEN"},
+		{"typed control flow", returnTailContradiction(obligationControlFlow, control), "RETURN_TAIL_CONTROL_FLOW_UNSUPPORTED"},
+		{"untyped lookalike", knownSuffixContradiction("obligation=" + obligationControlFlow + ": " + control), ""},
+		{"free binding", returnTailContradiction(obligationFreeBindings, "binding cannot move"), ""},
+		{"missing contract", fail("derive-recipe", "admit-return-tail", "OPERATION_INPUT_CONTRACT_MISSING", "DIRECT_MISSING", "restore-operation-input-contract", nil), ""},
+		{"missing type", fail("derive-recipe", "type-check-return-tail", "TYPE_EVIDENCE_MISSING", "DIRECT_MISSING", "restore-type-evidence", nil), ""},
+		{"unknown reason", fail("derive-recipe", "admit-return-tail", "UNKNOWN_FUTURE_REASON", "DIRECT_MISSING", "restore-evidence", nil), ""},
+		{"no rejection", nil, ""},
+	} {
+		t.Run(item.name, func(t *testing.T) {
+			previous, eligible := mapLiteralPriorFailure(item.err)
+			if eligible != (item.reason != "") {
+				t.Fatalf("alternative eligible=%t, expected reason=%q", eligible, item.reason)
+			}
+			if !eligible {
+				return
+			}
+			if previous.Reason != item.reason {
+				t.Fatalf("prior reason=%q, want %q", previous.Reason, item.reason)
+			}
+			if item.reason == "RETURN_TAIL_CONTROL_FLOW_UNSUPPORTED" {
+				detail := strings.Join(previous.Diagnostics, "\n")
+				if previous.Stage != "derive-recipe" || previous.Step != "admit-return-tail" ||
+					previous.UnknownClass != "KNOWN_CONTRADICTION" ||
+					previous.NextOperation != "select-caller-preserving-alternative" ||
+					previous.BlockedBy == nil || len(previous.BlockedBy) != 0 ||
+					!strings.Contains(detail, "obligation="+obligationControlFlow) ||
+					!strings.Contains(detail, "original_rejection="+item.err.Error()) {
+					t.Fatalf("prior rejection provenance lost: %#v", previous)
+				}
+			}
+		})
+	}
 }
 
 func TestMapReceiverFusionRejectsUnsafePlacement(t *testing.T) {

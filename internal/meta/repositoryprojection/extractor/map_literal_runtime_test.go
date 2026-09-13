@@ -27,7 +27,7 @@ func assertMapLiteralRuntimeWitness(t *testing.T, source, supportSource, expecte
 	}
 	result, err := ExtractWithResult(original, "x.go")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("extract runtime witness: %#v", err)
 	}
 	if err := runtimeWitnessWriteGoMod(generated); err != nil {
 		t.Fatal(err)

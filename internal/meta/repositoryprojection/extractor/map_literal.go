@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -35,6 +36,31 @@ func buildMapLiteralCandidate(root, logical string, source []byte, fset *token.F
 		return &returnTailCandidate{helperName: candidate.helperName, helper: candidate.helper, result: candidate.result, evidence: *proof}, nil
 	}
 	return nil, nil
+}
+
+// A rejected relocation is not a rejection of a caller-local transformation.
+// Missing contract/type evidence must never grant an alternative strategy.
+func mapLiteralPriorFailure(err error) (Failure, bool) {
+	if failure, ok := errors.AsType[Failure](err); ok {
+		return failure, failure.Reason == "CALLEE_EFFECTS_UNPROVEN"
+	}
+	rejection, ok := err.(suffixContradiction)
+	if !ok || rejection.obligation != obligationControlFlow {
+		return Failure{}, false
+	}
+	return Failure{
+		Stage:         "derive-recipe",
+		Step:          "admit-return-tail",
+		Reason:        "RETURN_TAIL_CONTROL_FLOW_UNSUPPORTED",
+		UnknownClass:  "KNOWN_CONTRADICTION",
+		NextOperation: "select-caller-preserving-alternative",
+		BlockedBy:     []string{},
+		Diagnostics: []string{
+			"strategy=" + returnTailStrategy,
+			"obligation=" + rejection.obligation,
+			"original_rejection=" + rejection.message,
+		},
+	}, true
 }
 
 func eligibleMapLiteral(statement ast.Stmt, file *ast.File, evidence typeEvidence) (*ast.CompositeLit, []string) {

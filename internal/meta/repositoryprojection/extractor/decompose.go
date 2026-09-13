@@ -411,7 +411,7 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		proofs = helperProofRegistry[0]
 	}
 	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight, proofs); candidateErr != nil {
-		if failure, ok := errors.AsType[Failure](candidateErr); ok && failure.Reason == "CALLEE_EFFECTS_UNPROVEN" {
+		if failure, ok := mapLiteralPriorFailure(candidateErr); ok {
 			alternative, alternativeErr := buildMapLiteralCandidate(root, logical, source, fset, file, function, evidence, preflight, failure)
 			if alternativeErr != nil {
 				return nil, nil, alternativeErr
@@ -907,7 +907,10 @@ func usedObject(expression ast.Expr, info *types.Info) types.Object {
 	return info.Uses[identifier]
 }
 
-type suffixContradiction struct{ message string }
+type suffixContradiction struct {
+	message    string
+	obligation string
+}
 
 func (e suffixContradiction) Error() string { return e.message }
 
