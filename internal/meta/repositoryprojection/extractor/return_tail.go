@@ -147,7 +147,7 @@ func tryReturnTailStart(root, logical string, source []byte, fset *token.FileSet
 	if err := hasReturnTailBindingHazard(function.Body, statements, bindings, evidence.info); err != nil {
 		return nil, err
 	}
-	if err := proof.consume(2, returnTailPredicateResult{Status: "PASS", Payload: proofBindingPayload(bindings), CandidateDigest: proofDigest(source[start:end]), Detail: "selected free bindings have no stale-copy, rebinding, address, or closure hazard"}); err != nil {
+	if err := proof.consume(2, returnTailPredicateResult{Status: "PASS", Payload: proofBindingPayload(bindings), CandidateDigest: proofDigest(source[start:end]), Detail: "selected free bindings are immutable or returned value-field copies, without rebinding, address, or closure hazards"}); err != nil {
 		return nil, err
 	}
 	calleeDependencies, err := returnTailCalleeEffects(statements, evidence, helperProofRegistry)
@@ -530,7 +530,7 @@ func hasReturnTailBindingHazard(functionBody *ast.BlockStmt, statements []ast.St
 					object, known := returnTailAssignedObject(lhs, info)
 					if !known {
 						hazard = failWithDiagnostics("derive-recipe", "prove-free-bindings", "FREE_BINDINGS_UNPROVEN", "DIRECT_MISSING", "restore-free-binding-evidence", []string{"obligation=" + obligationFreeBindings})
-					} else if free[object] {
+					} else if free[object] && !returnTailReturnedValueField(lhs, object, statements, info) {
 						hazard = returnTailContradiction(obligationFreeBindings, "terminal tail rebinds a free binding")
 					}
 				}
@@ -940,7 +940,8 @@ func provenLocalPureFunction(function *ast.FuncDecl, evidence typeEvidence, help
 		case *ast.AssignStmt:
 			for _, lhs := range value.Lhs {
 				object, known := returnTailAssignedObject(lhs, evidence.info)
-				if !known || !returnTailDirectLocalLValue(lhs, object, local) {
+				if !known || !returnTailDirectLocalLValue(lhs, object, local) &&
+					!(local[object] && returnTailValueFieldWrite(lhs, object, evidence.info)) {
 					validation.valid = false
 				}
 			}
