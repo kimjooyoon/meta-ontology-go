@@ -20,8 +20,8 @@ type goalSelectionOptions struct {
 
 func bindGoalSelectionFlags(flags *flag.FlagSet) goalSelectionOptions {
 	return goalSelectionOptions{
-		goal: flags.String("goal", "", "separate frozen Gooo target policy"),
-		digest: flags.String("goal-digest", "", "expected SHA-256 of the original frozen goal bytes"),
+		goal:        flags.String("goal", "", "separate frozen Gooo target policy"),
+		digest:      flags.String("goal-digest", "", "expected SHA-256 of the original frozen goal bytes"),
 		materialize: flags.Bool("materialize-selection", false, "write selected Gooo to a new private temporary directory"),
 	}
 }

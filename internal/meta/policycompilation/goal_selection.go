@@ -36,7 +36,7 @@ func SelectNextPolicyForGoal(ctx context.Context, filename string, source, prede
 	report := GoalSelectionReport{
 		Schema: GoalSelectionSchema, Decision: "UNKNOWN", GoalSourceDigest: DigestBytes(goal),
 		CandidateSourceDigest: DigestBytes(source), GeneralAdmission: "UNKNOWN", Improvement: "UNKNOWN",
-		CriterionIndependence: "SEPARATE_GOOO_GOAL_SHARED_COMPILER",
+		CriterionIndependence:   "SEPARATE_GOOO_GOAL_SHARED_COMPILER",
 		MaterializationBoundary: "NEW_CALLER_OWNED_TEMP_DIRECTORY_ONLY",
 	}
 	if !ValidDigest(expectedGoalDigest) {
