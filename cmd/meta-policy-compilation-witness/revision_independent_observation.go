@@ -16,16 +16,16 @@ var revisionConsumerPath = flag.String("revision-consumer", "", "compose the Goo
 var revisionConsumerDigest = flag.String("revision-consumer-digest", "", "required sha256 identity of the consumer executable")
 
 type revisionIndependentObservation struct {
-	Schema string `json:"schema"`
-	Decision string `json:"decision"`
-	Reason string `json:"reason"`
-	Operation *policycompilation.PolicyRevisionOperationObservation `json:"operation,omitempty"`
-	Consumer revisionConsumerProcess `json:"consumer_process"`
-	Pending *policycompilation.PolicyRevisionPending `json:"pending,omitempty"`
-	Improvement string `json:"improvement"`
-	ExecutionBoundary string `json:"execution_boundary"`
-	MutationAuthority int `json:"mutation_authority"`
-	PromotionAuthority int `json:"promotion_authority"`
+	Schema             string                                                `json:"schema"`
+	Decision           string                                                `json:"decision"`
+	Reason             string                                                `json:"reason"`
+	Operation          *policycompilation.PolicyRevisionOperationObservation `json:"operation,omitempty"`
+	Consumer           revisionConsumerProcess                               `json:"consumer_process"`
+	Pending            *policycompilation.PolicyRevisionPending              `json:"pending,omitempty"`
+	Improvement        string                                                `json:"improvement"`
+	ExecutionBoundary  string                                                `json:"execution_boundary"`
+	MutationAuthority  int                                                   `json:"mutation_authority"`
+	PromotionAuthority int                                                   `json:"promotion_authority"`
 }
 
 func validateRevisionConsumerFlags(flags *flag.FlagSet) error {
@@ -54,7 +54,7 @@ func observeIndependentRevision(ctx context.Context, filename string, source, re
 	report := revisionIndependentObservation{
 		Schema: "gooo/meta-policy-revision-independent-observation/v1", Improvement: "UNKNOWN",
 		ExecutionBoundary: "CALLER_PINNED_CONSUMER_NOT_AN_OS_SANDBOX",
-		Consumer: revisionConsumerProcess{ExpectedExecutableDigest: consumerDigest, ExitCode: -1},
+		Consumer:          revisionConsumerProcess{ExpectedExecutableDigest: consumerDigest, ExitCode: -1},
 	}
 	revisionCompositionUnknown(&report, "EXECUTABLE_BINDING", "CONSUMER_NOT_OBSERVED", "SUPPLY_PINNED_CONSUMER")
 	observationError := composeIndependentRevision(ctx, filename, source, request, pkg, namespace,

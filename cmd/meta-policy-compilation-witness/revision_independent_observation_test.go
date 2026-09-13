@@ -21,12 +21,12 @@ func TestIndependentRevisionCompositionFlagBoundary(t *testing.T) {
 	base := []string{"-policy", "policy.gooo", "-observe-revision", "request.json", "-revision-operation", "operation.gooo"}
 	digest := policycompilation.DigestBytes([]byte("consumer"))
 	for name, args := range map[string][]string{
-		"consumer-only": {"-revision-consumer", "consumer"},
+		"consumer-only":  {"-revision-consumer", "consumer"},
 		"missing-digest": append(append([]string{}, base...), "-revision-consumer", "consumer"),
-		"digest-only": append(append([]string{}, base...), "-revision-consumer-digest", digest),
-		"bad-digest": append(append([]string{}, base...), "-revision-consumer", "consumer", "-revision-consumer-digest", "bad"),
-		"no-gooo": {"-policy", "policy.gooo", "-observe-revision", "request.json", "-revision-consumer", "consumer", "-revision-consumer-digest", digest},
-		"valid": append(append([]string{}, base...), "-revision-consumer", "consumer", "-revision-consumer-digest", digest),
+		"digest-only":    append(append([]string{}, base...), "-revision-consumer-digest", digest),
+		"bad-digest":     append(append([]string{}, base...), "-revision-consumer", "consumer", "-revision-consumer-digest", "bad"),
+		"no-gooo":        {"-policy", "policy.gooo", "-observe-revision", "request.json", "-revision-consumer", "consumer", "-revision-consumer-digest", digest},
+		"valid":          append(append([]string{}, base...), "-revision-consumer", "consumer", "-revision-consumer-digest", digest),
 	} {
 		t.Run(name, func(t *testing.T) {
 			flags := flag.NewFlagSet(name, flag.ContinueOnError)
@@ -200,8 +200,8 @@ func testIndependentConsumerCounterexamples(t *testing.T, original []byte,
 	for name, data := range map[string][]byte{
 		"null": []byte("null"), "trailing": append(bytes.Clone(original), []byte("{}")...),
 		"unknown-decision": bytes.Replace(original, []byte("RECEIPT_CONSISTENT_ONLY"), []byte("FIXED_POINT"), 1),
-		"wrong-source": bytes.Replace(original, []byte(operation.PolicySourceDigest), []byte(policycompilation.DigestBytes([]byte("wrong"))), 1),
-		"duplicate": []byte(strings.Replace(string(original), "\"schema\":", "\"schema\":\"forged\",\"schema\":", 1)),
+		"wrong-source":     bytes.Replace(original, []byte(operation.PolicySourceDigest), []byte(policycompilation.DigestBytes([]byte("wrong"))), 1),
+		"duplicate":        []byte(strings.Replace(string(original), "\"schema\":", "\"schema\":\"forged\",\"schema\":", 1)),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if decision, err := checkRevisionConsumerReport(data, operation, report); err == nil || decision != "UNKNOWN" {

@@ -11,21 +11,21 @@ import (
 )
 
 type revisionConsumerView struct {
-	Schema string `json:"schema"`
-	SourceDigest string `json:"source_digest"`
-	RequestArtifactDigest string `json:"request_artifact_digest"`
+	Schema                 string `json:"schema"`
+	SourceDigest           string `json:"source_digest"`
+	RequestArtifactDigest  string `json:"request_artifact_digest"`
 	CanonicalRequestDigest string `json:"canonical_request_digest"`
-	ReportArtifactDigest string `json:"report_artifact_digest"`
-	Decision string `json:"decision"`
-	Checks []struct {
-		ID string `json:"id"`
+	ReportArtifactDigest   string `json:"report_artifact_digest"`
+	Decision               string `json:"decision"`
+	Checks                 []struct {
+		ID    string `json:"id"`
 		State string `json:"state"`
 	} `json:"checks"`
-	Comparisons int `json:"independent_result_comparisons"`
-	ExecutionObserved bool `json:"policy_execution_observed"`
-	Improvement string `json:"improvement"`
-	MutationAuthority int `json:"mutation_authority"`
-	PromotionAuthority int `json:"promotion_authority"`
+	Comparisons        int    `json:"independent_result_comparisons"`
+	ExecutionObserved  bool   `json:"policy_execution_observed"`
+	Improvement        string `json:"improvement"`
+	MutationAuthority  int    `json:"mutation_authority"`
+	PromotionAuthority int    `json:"promotion_authority"`
 }
 
 func checkRevisionConsumerReport(data []byte, operation policycompilation.PolicyRevisionOperationObservation, report []byte) (string, error) {

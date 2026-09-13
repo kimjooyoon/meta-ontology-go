@@ -18,13 +18,13 @@ import (
 type revisionConsumerProcess struct {
 	ExpectedExecutableDigest string `json:"expected_executable_digest"`
 	ObservedExecutableDigest string `json:"observed_executable_digest"`
-	Started bool `json:"started"`
-	ExitCode int `json:"exit_code"`
-	Stdout string `json:"stdout"`
-	Stderr string `json:"stderr"`
-	StdoutDigest string `json:"stdout_digest"`
-	StderrDigest string `json:"stderr_digest"`
-	WallMilliseconds int64 `json:"wall_ms"`
+	Started                  bool   `json:"started"`
+	ExitCode                 int    `json:"exit_code"`
+	Stdout                   string `json:"stdout"`
+	Stderr                   string `json:"stderr"`
+	StdoutDigest             string `json:"stdout_digest"`
+	StderrDigest             string `json:"stderr_digest"`
+	WallMilliseconds         int64  `json:"wall_ms"`
 }
 
 func pinRevisionConsumer(directory, path, expected string) (string, string, error) {
