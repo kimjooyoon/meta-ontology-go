@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -204,20 +205,22 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 	if err := preparePackage(baselinePackage, program, testContract); err != nil {
 		return caseArtifacts{}, err
 	}
-	before, testResult, err := executeTests(baselinePackage, "^Test(OrdersPartition|TestInventoryPartition)$", policy.TestUnitCount, filepath.Join(out, "baseline-time"))
-	if err != nil {
-		return caseArtifacts{}, err
-	}
+	before := publicpartialreuse.Metrics{TestUnitsTotal: policy.TestUnitCount}
 	bindings := map[string]publicpartialreuse.Binding{}
 	receipts := map[string]publicpartialreuse.Receipt{}
 	receiptPaths := map[string]string{}
 	for _, partition := range policy.Partitions {
+		observed, testResult, err := executeTests(baselinePackage, partition, filepath.Join(out, "baseline-time-"+partition.ID))
+		if err != nil {
+			return caseArtifacts{}, err
+		}
+		addExecutionMetrics(&before, observed)
 		binding, err := publicpartialreuse.BuildBinding(policy, partition, program, manifest, testContract, compiler, cache.HashBytes(mustRead(input.OrchestrationReport)).String(), upstream.Operation)
 		if err != nil {
 			return caseArtifacts{}, err
 		}
 		receipt := publicpartialreuse.Receipt{Schema: publicpartialreuse.ReceiptSchema, Partition: partition.ID, Decision: publicpartialreuse.DecisionClosed, Reason: publicpartialreuse.ReceiptReason, Binding: binding,
-			Original:   publicpartialreuse.OriginalExecution{Operation: publicpartialreuse.ReceiptOperation, ResultDigest: testResult.ResultDigest, Successful: true, ExitCode: 0, BuildExecutions: 1, TestExecutions: 1, BuildMS: before.BuildMS, TestMS: before.TestMS, WallMS: before.WallMS, PeakRSSKib: before.PeakRSSKib},
+			Original:   publicpartialreuse.OriginalExecution{Operation: publicpartialreuse.ReceiptOperation, ResultDigest: testResult.ResultDigest, Successful: true, ExitCode: 0, BuildExecutions: observed.BuildExecutions, TestExecutions: observed.TestExecutions, BuildMS: observed.BuildMS, TestMS: observed.TestMS, WallMS: observed.WallMS, PeakRSSKib: observed.PeakRSSKib},
 			Provenance: publicpartialreuse.Provenance{Operation: publicpartialreuse.Operation, CaseID: item.ID, Stage: "v14-authorized"}}
 		receipt.Original.InvocationID = cache.HashBytes([]byte(binding.GeneratedArtifactDigest + "\x00" + testResult.ResultDigest + "\x00" + partition.ID)).String()
 		receipt.ReceiptID, err = publicpartialreuse.ReceiptContentDigest(receipt)
@@ -237,10 +240,15 @@ func executePositive(input runInput, policy publicpartialreuse.Policy, item publ
 		if err := preparePackage(selectivePackage, program, testContract); err != nil {
 			return caseArtifacts{}, err
 		}
-		regex := selectedTestRegex(policy, selected)
-		after, _, err = executeTests(selectivePackage, regex, len(selected), filepath.Join(out, "selective-time"))
-		if err != nil {
-			return caseArtifacts{}, err
+		for _, partition := range policy.Partitions {
+			if !slices.Contains(selected, partition.ID) {
+				continue
+			}
+			observed, _, err := executeTests(selectivePackage, partition, filepath.Join(out, "selective-time-"+partition.ID))
+			if err != nil {
+				return caseArtifacts{}, err
+			}
+			addExecutionMetrics(&after, observed)
 		}
 	}
 	caseReport, err := publicpartialreuse.Evaluate(publicpartialreuse.EvaluationInput{Policy: policy, Case: item, Bindings: bindings, Receipts: receipts, Execution: after, Comparisons: publicpartialreuse.Comparisons{GeneratedBytesEqual: true, GeneratedSemanticEqual: true, TestContractEqual: true, ReceiptBindingEqual: true}})
@@ -320,16 +328,14 @@ func selectedPartitions(policy publicpartialreuse.Policy, item publicpartialreus
 	return nil
 }
 
-func selectedTestRegex(policy publicpartialreuse.Policy, selected []string) string {
-	names := make([]string, 0, len(selected))
-	for _, id := range selected {
-		for _, partition := range policy.Partitions {
-			if partition.ID == id {
-				names = append(names, partition.TestName)
-			}
-		}
-	}
-	return "^" + strings.Join(names, "|") + "$"
+func addExecutionMetrics(total *publicpartialreuse.Metrics, observed publicpartialreuse.Metrics) {
+	total.TestUnitsExecuted += observed.TestUnitsExecuted
+	total.TestExecutions += observed.TestExecutions
+	total.BuildExecutions += observed.BuildExecutions
+	total.BuildMS += observed.BuildMS
+	total.TestMS += observed.TestMS
+	total.WallMS += observed.WallMS
+	total.PeakRSSKib = maxInt64(total.PeakRSSKib, observed.PeakRSSKib)
 }
 
 func policyForSource(filename string, source []byte) publicpartialreuse.Policy {
@@ -365,24 +371,24 @@ func preparePackage(directory string, program, testContract []byte) error {
 	return writeNew(filepath.Join(directory, "go.mod"), []byte("module partial-reuse-example\n\ngo 1.27.0\n"), 0o644)
 }
 
-func executeTests(directory, regex string, units int, timePrefix string) (publicpartialreuse.Metrics, executionResult, error) {
-	build, err := runTimed(directory, "build", []string{"build", "."}, timePrefix)
+func executeTests(directory string, partition publicpartialreuse.Partition, timePrefix string) (publicpartialreuse.Metrics, executionResult, error) {
+	build, _, err := runTimed(directory, "build", []string{"build", "."}, timePrefix, nil)
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
-	test, err := runTimed(directory, "test", []string{"test", "-tags", "partial_reuse_example", "-run", regex, "-count=1", "."}, timePrefix)
+	test, passed, err := runTimed(directory, "test", publicpartialreuse.TestCommandArgs(partition), timePrefix, []string{partition.TestName})
 	if err != nil {
 		return publicpartialreuse.Metrics{}, executionResult{}, err
 	}
 	if !build.Success || !test.Success {
 		return publicpartialreuse.Metrics{}, executionResult{}, errors.New("generated package build or test failed")
 	}
-	return publicpartialreuse.Metrics{TestUnitsTotal: publicpartialreuse.TestUnitCount, TestUnitsExecuted: units, BuildExecutions: 1, TestExecutions: units, BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: build.WallMS + test.WallMS, PeakRSSKib: maxInt64(build.PeakRSSKib, test.PeakRSSKib)}, test, nil
+	return publicpartialreuse.Metrics{TestUnitsTotal: publicpartialreuse.TestUnitCount, TestUnitsExecuted: len(passed), BuildExecutions: 1, TestExecutions: len(passed), BuildMS: build.WallMS, TestMS: test.WallMS, WallMS: build.WallMS + test.WallMS, PeakRSSKib: maxInt64(build.PeakRSSKib, test.PeakRSSKib)}, test, nil
 }
 
-func runTimed(directory, label string, args []string, prefix string) (executionResult, error) {
+func runTimed(directory, label string, args []string, prefix string, expectedTests []string) (executionResult, []string, error) {
 	if err := os.MkdirAll(filepath.Dir(prefix), 0o755); err != nil {
-		return executionResult{}, err
+		return executionResult{}, nil, err
 	}
 	timeFile := prefix + "-" + label + ".rss"
 	started := time.Now()
@@ -402,21 +408,41 @@ func runTimed(directory, label string, args []string, prefix string) (executionR
 	}
 	rss, readErr := os.ReadFile(timeFile)
 	if readErr != nil {
-		return executionResult{}, readErr
+		return executionResult{}, nil, readErr
 	}
 	if err != nil {
-		return executionResult{}, fmt.Errorf("generated command %s failed: %w: stdout=%q stderr=%q", label, err, stdout.String(), stderr.String())
+		return executionResult{}, nil, fmt.Errorf("generated command %s failed: %w: stdout=%q stderr=%q", label, err, stdout.String(), stderr.String())
 	}
 	fields := strings.Fields(string(rss))
 	if len(fields) != 2 {
-		return executionResult{}, fmt.Errorf("generated command runtime evidence is malformed: %q", strings.TrimSpace(string(rss)))
+		return executionResult{}, nil, fmt.Errorf("generated command runtime evidence is malformed: %q", strings.TrimSpace(string(rss)))
 	}
 	peak, parseErr := strconv.ParseInt(fields[1], 10, 64)
 	if parseErr != nil || peak <= 0 {
-		return executionResult{}, fmt.Errorf("generated command peak RSS is not positive: %q", strings.TrimSpace(string(rss)))
+		return executionResult{}, nil, fmt.Errorf("generated command peak RSS is not positive: %q", strings.TrimSpace(string(rss)))
+	}
+	var passed []string
+	if len(expectedTests) > 0 {
+		passed, err = publicpartialreuse.ObserveTestOutput(stdout.Bytes(), expectedTests)
+		if err != nil {
+			return executionResult{}, nil, err
+		}
 	}
 	resultDigest := cache.HashBytes([]byte(strings.Join(append([]string{"go", label}, args...), "\x00") + "\x00" + stdout.String() + "\x00" + stderr.String() + "\x00" + strconv.Itoa(exitCode))).String()
-	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: maxInt64(1, int64(time.Since(started)/time.Millisecond)), PeakRSSKib: peak}, nil
+	if len(passed) > 0 {
+		witness, err := json.Marshal(struct {
+			Command      []string `json:"command"`
+			PassedTests  []string `json:"passed_tests"`
+			Stdout       string   `json:"stdout"`
+			Stderr       string   `json:"stderr"`
+			ResultDigest string   `json:"result_digest"`
+		}{append([]string{"go"}, args...), passed, stdout.String(), stderr.String(), resultDigest})
+		if err != nil {
+			return executionResult{}, nil, err
+		}
+		fmt.Printf("PARTIAL_REUSE_TEST_EXECUTION=%s\n", witness)
+	}
+	return executionResult{Success: err == nil, ExitCode: exitCode, ResultDigest: resultDigest, WallMS: maxInt64(1, int64(time.Since(started)/time.Millisecond)), PeakRSSKib: peak}, passed, nil
 }
 
 func decisionCounts(cases []publicpartialreuse.CaseReport) (int, int, int) {
