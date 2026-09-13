@@ -683,7 +683,22 @@ jobs:
           "$root/partial-reuse" -mode run \
             -source "$repo/examples/self-improvement-partial-reuse/main.gooo" \
             -test-contract "$repo/examples/self-improvement-partial-reuse/generated_project_test.go" \
+            -orchestration-evidence "$RUNNER_TEMP/public-continuity/orchestration/publish/orchestration-verification-input.json" \
+            -orchestration-verifier "$RUNNER_TEMP/public-continuity/orchestration/orchestrator" \
+            -orchestration-verifier-digest "$(sha256sum "$RUNNER_TEMP/public-continuity/orchestration/orchestrator" | cut -d ' ' -f 1)" \
+            -expected-producer-head "$HEAD_SHA" \
             -gooo "$root/gooo" -orchestration-report "$upstream" -repo-root "$repo" -out "$root/evidence"
+          jq -n '{schema:"gooo/public-self-improvement-orchestration-report/v1",decision:"CLOSED",operation:"gooo.self-improvement.public-orchestration"}' > "$root/labels-only.json"
+          if "$root/partial-reuse" -mode run \
+            -source "$repo/examples/self-improvement-partial-reuse/main.gooo" \
+            -test-contract "$repo/examples/self-improvement-partial-reuse/generated_project_test.go" \
+            -gooo "$root/gooo" -orchestration-report "$root/labels-only.json" \
+            -repo-root "$repo" -out "$root/labels-only-output" 2> "$root/labels-only-rejection.json"; then
+            echo "labels-only upstream claim was incorrectly admitted" >&2
+            exit 1
+          fi
+          jq -e '.decision == "UNKNOWN" and .unknown.reason == "UPSTREAM_BINDING_MISSING" and .unknown.stage == "UPSTREAM_ORCHESTRATION" and .unknown.step != "" and .unknown.unknown_class == "DIRECT_MISSING" and .unknown.next_operation != "" and .unknown.blocked_by == []' "$root/labels-only-rejection.json"
+          test ! -e "$root/labels-only-output/no-change"
           "$root/partial-reuse" -mode verify \
             -report "$root/evidence/partial-reuse-report.json" -human-output "$root/verified-dossier.txt"
           test "$(find "$root/evidence/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 25
@@ -713,6 +728,17 @@ jobs:
         with:
           name: public-self-improvement-partial-reuse-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/public-continuity/partial-reuse/evidence/publish
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload raw-bundle upstream admission evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: public-partial-upstream-admission-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/public-continuity/partial-reuse/evidence/upstream-admission.json
+            ${{ runner.temp }}/public-continuity/partial-reuse/labels-only-rejection.json
           if-no-files-found: error
           retention-days: 30
 

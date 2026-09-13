@@ -7,6 +7,10 @@ type runInput struct {
 	TestContract        string
 	Gooo                string
 	OrchestrationReport string
+	OrchestrationEvidence string
+	OrchestrationVerifier string
+	OrchestrationVerifierDigest string
+	ExpectedProducerHead string
 	RepoRoot            string
 	Out                 string
 }

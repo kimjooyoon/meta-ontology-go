@@ -13,6 +13,10 @@ func main() {
 	testContract := flag.String("test-contract", "", "canonical generated project test contract")
 	gooo := flag.String("gooo", "", "compiled public gooo command")
 	orchestration := flag.String("orchestration-report", "", "closed v14 orchestration report")
+	evidence := flag.String("orchestration-evidence", "", "original orchestration verification-input manifest")
+	verifier := flag.String("orchestration-verifier", "", "trusted compiled orchestration verifier")
+	verifierDigest := flag.String("orchestration-verifier-digest", "", "expected SHA256 of the trusted verifier")
+	producerHead := flag.String("expected-producer-head", "", "expected immutable producer/verifier source commit")
 	repoRoot := flag.String("repo-root", "", "repository root")
 	out := flag.String("out", "", "caller-owned evidence directory")
 	reportPath := flag.String("report", "", "partial reuse report to verify")
@@ -22,7 +26,7 @@ func main() {
 	var err error
 	switch *mode {
 	case "run":
-		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationReport: *orchestration, RepoRoot: *repoRoot, Out: *out})
+		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationReport: *orchestration, OrchestrationEvidence: *evidence, OrchestrationVerifier: *verifier, OrchestrationVerifierDigest: *verifierDigest, ExpectedProducerHead: *producerHead, RepoRoot: *repoRoot, Out: *out})
 	case "verify":
 		err = verify(*reportPath, *humanOutput)
 	default:

@@ -43,6 +43,8 @@ var compilerManifestPaths = []string{
 	"scripts/self-improvement-public-partial-reuse/main.go",
 	"scripts/self-improvement-public-partial-reuse/model.go",
 	"scripts/self-improvement-public-partial-reuse/run.go",
+	"scripts/self-improvement-public-partial-reuse/upstream.go",
+	"scripts/self-improvement-public-partial-reuse/upstream_snapshot.go",
 	"scripts/self-improvement-public-partial-reuse/verify.go",
 }
 

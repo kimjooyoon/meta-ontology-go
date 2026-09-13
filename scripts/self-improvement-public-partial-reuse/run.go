@@ -30,7 +30,7 @@ func run(input runInput) error {
 	if err != nil {
 		return err
 	}
-	upstream, upstreamBytes, err := readUpstream(input.OrchestrationReport)
+	upstream, upstreamBytes, err := verifyUpstream(input)
 	if err != nil {
 		return err
 	}
@@ -158,27 +158,6 @@ func validateInput(input runInput) error {
 		return errors.New("partial reuse output must be outside the repository")
 	}
 	return nil
-}
-
-type upstreamReport struct {
-	Schema    string `json:"schema"`
-	Decision  string `json:"decision"`
-	Operation string `json:"operation"`
-}
-
-func readUpstream(filename string) (upstreamReport, []byte, error) {
-	data, err := readRegular(filename)
-	if err != nil {
-		return upstreamReport{}, nil, err
-	}
-	var report upstreamReport
-	if err := json.Unmarshal(data, &report); err != nil {
-		return report, nil, err
-	}
-	if report.Schema != "gooo/public-self-improvement-orchestration-report/v1" || report.Decision != publicpartialreuse.DecisionClosed || report.Operation != "gooo.self-improvement.public-orchestration" {
-		return report, nil, errors.New("v14 orchestration report is not a closed authorized boundary")
-	}
-	return report, data, nil
 }
 
 func executePositive(input runInput, policy publicpartialreuse.Policy, item publicpartialreuse.Case, source, testContract []byte, compiler string, upstream upstreamReport, out string) (caseArtifacts, error) {
