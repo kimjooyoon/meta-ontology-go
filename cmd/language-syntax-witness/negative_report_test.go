@@ -86,6 +86,9 @@ func TestNativeSyntaxNegativeReportCannotBecomeAcceptance(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	binary := nativeSyntaxBinary(t, ctx)
+	t.Run("source-bound-counterexample", func(t *testing.T) {
+		nativeBoundSyntaxCounterexample(t, ctx, binary)
+	})
 	cfg := nativeSyntaxFixture(t)
 	producer := nativeSyntaxFailure(t, ctx, binary, cfg, "SYNTAX_ROUNDTRIP_EVIDENCE_UNKNOWN")
 	report, raw := nativeSyntaxNegativeReport(t, cfg)
