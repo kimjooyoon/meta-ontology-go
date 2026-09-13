@@ -812,12 +812,92 @@ jobs:
           ' "$publish_root/scope-partition.json" >> "$GITHUB_STEP_SUMMARY"
           echo "- first/replay: \`replay_equal=true\` (first \`$first_digest\`, replay \`$replay_digest\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- builds: \`2\`, tests: \`0\`; repository/branch writes: \`0/0\`; local tests/cross-project gates: \`0/0\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Observe a source-bound syntax counterexample with existing binaries
+        if: ${{ steps.observe.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          work_root="$RUNNER_TEMP/language-syntax-scope-partition-work"
+          fixture="$work_root/bound-negative-project"
+          witness="$work_root/bound-negative-witness"
+          concept_bin="$work_root/language-concept-artifact-witness"
+          syntax_bin="$work_root/language-syntax-witness"
+          fixture_head="0000000000000000000000000000000000000000"
+          target="examples/billing/main.gooo"
+          mkdir -p "$fixture" "$witness"
+          git archive "$HEAD_SHA" | tar -x -C "$fixture"
+          cp "$fixture/$target" "$witness/source-before.gooo"
+          cp "$fixture/examples/language-syntax-roundtrip/unknown-keyword.txt" "$fixture/$target"
+          cp "$fixture/$target" "$witness/source-after.gooo"
+          cp "$fixture/examples/language-syntax-roundtrip/corpus.json" "$witness/registry.json"
+          jq -n --arg head "$HEAD_SHA" --arg fixture_head "$fixture_head" --arg target "$target" \
+            '{schema:"gooo/syntax-negative-fixture/v1", evidence_class:"SYNTHETIC_SYNTAX_COUNTEREXAMPLE",
+              compiler_head_sha:$head, fixture_base_head_sha:$head, supplied_report_head_sha:$fixture_head,
+              supplied_report_head_is_synthetic:true, fixture_is_exact_head_tree:false,
+              modified_fixture_path:$target, mutation_location:"CALLER_OWNED_TEMP_COPY",
+              expectations:"UNCHANGED_REGISTERED_VALID_CASE", external_utility:"UNASSESSED",
+              improvement:"UNKNOWN"}' > "$witness/context.json"
+          "$concept_bin" --root "$fixture" --output "$witness/concept.json" \
+            > "$witness/concept.stdout" 2> "$witness/concept.stderr"
+          args=(--root "$fixture" --head "$fixture_head" --registry "$witness/registry.json"
+                --concept-artifact "$witness/concept.json")
+          for pass in first replay; do
+            set +e
+            "$syntax_bin" "${args[@]}" --output "$witness/negative-$pass.json" \
+              > "$witness/producer-$pass.stdout" 2> "$witness/producer-$pass.stderr"
+            exit_code=$?
+            set -e
+            printf '%s\n' "$exit_code" > "$witness/producer-$pass.exit"
+            test "$exit_code" -eq 1
+            test ! -s "$witness/producer-$pass.stdout"
+            case "$(cat "$witness/producer-$pass.stderr")" in
+              *SYNTAX_ROUNDTRIP_MISMATCH*) ;;
+              *) exit 1 ;;
+            esac
+          done
+          cmp "$witness/negative-first.json" "$witness/negative-replay.json"
+          jq -e --arg head "$fixture_head" --arg target "$target" \
+            --slurpfile baseline "$work_root/language-syntax-roundtrip/first/artifact.json" '
+            .head_sha == $head and .source.expected_head_sha == $head and
+            .decision == "FAIL_CLOSED" and .resolution == "EXACT" and
+            .reason == "SYNTAX_ROUNDTRIP_MISMATCH" and
+            .source.concept_bound == true and .source.observation_known == true and
+            .source.registry_digest == $baseline[0].source.registry_digest and
+            (.source.unregistered_gooo | length) == 0 and (.source.missing_registered | length) == 0 and
+            .summary.total == $baseline[0].summary.total and .summary.executed == .summary.total and
+            .summary.not_satisfied == 1 and .summary.unresolved == 0 and
+            ([.cases[].definition] == [$baseline[0].cases[].definition]) and
+            ([.cases[] | select(.status != "SATISFIED")] | length) == 1 and
+            ([.cases[] | select(.definition.id == "billing" and .definition.path == $target and
+              .definition.kind == "VALID" and .status != "SATISFIED" and .status != "UNRESOLVED")] | length) == 1 and
+            .repository_writes == 0 and .mutation_authorized == false' "$witness/negative-first.json"
+          set +e
+          "$syntax_bin" "${args[@]}" --check "$witness/negative-first.json" \
+            > "$witness/consumer.stdout" 2> "$witness/consumer.stderr"
+          consumer_exit=$?
+          set -e
+          printf '%s\n' "$consumer_exit" > "$witness/consumer.exit"
+          test "$consumer_exit" -eq 1
+          test ! -s "$witness/consumer.stdout"
+          case "$(cat "$witness/consumer.stderr")" in
+            *SYNTAX_ROUNDTRIP_MISMATCH*) ;;
+            *) exit 1 ;;
+          esac
+          cmp "$witness/negative-first.json" "$witness/negative-replay.json"
+          cmp "$GITHUB_WORKSPACE/$target" "$witness/source-before.gooo"
+          cmp "$GITHUB_WORKSPACE/examples/language-syntax-roundtrip/corpus.json" "$witness/registry.json"
+          cp "$work_root/language-syntax-roundtrip/first/artifact.json" "$witness/baseline.json"
+          cd "$witness"
+          sha256sum context.json registry.json concept.json baseline.json source-before.gooo source-after.gooo \
+            negative-first.json negative-replay.json *.stdout *.stderr *.exit > manifest.sha256
       - name: Preserve detailed syntax outcomes without changing the gate
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: language-syntax-outcomes-${{ github.event.pull_request.head.sha || github.sha }}
-          path: ${{ runner.temp }}/language-syntax-scope-partition-work/language-syntax-roundtrip/*/artifact.json
+          name: language-syntax-outcomes-${{ env.HEAD_SHA }}
+          path: |
+            ${{ runner.temp }}/language-syntax-scope-partition-work/language-syntax-roundtrip/*/artifact.json
+            ${{ runner.temp }}/language-syntax-scope-partition-work/bound-negative-witness
           if-no-files-found: warn
           retention-days: 7
       - name: Upload language syntax scope partition evidence
