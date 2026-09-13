@@ -55,7 +55,7 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 		t.Fatal("revision fields were not derived from the goal and original execution")
 	}
 	negative := map[string]PolicyGoalCounterexampleObservation{}
-	for _, name := range []string{"caller-expectation", "stale-source", "wrong-goal-pin", "different-case", "goal-unknown", "agreement"} {
+	for _, name := range []string{"caller-expectation", "stale-source", "wrong-goal-pin", "different-case", "partial-evidence", "goal-unknown", "agreement"} {
 		input, originalSource := request, source
 		switch name {
 		case "caller-expectation":
@@ -66,15 +66,18 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 			input.ExpectedGoalDigest = DigestBytes([]byte("other goal"))
 		case "different-case":
 			input.GoalCase.ID = "unrelated"
+		case "partial-evidence":
+			input.SourceCase.ProducerAvailable, input.GoalCase.ProducerAvailable = false, false
 		case "goal-unknown":
 			input.SourceCase.ProducerAvailable, input.GoalCase.ProducerAvailable = false, false
+			input.SourceCase.ConsumerAvailable, input.GoalCase.ConsumerAvailable = false, false
 		case "agreement":
 			originalSource, input.ExpectedSourceDigest, input.SourceCase = goal, DigestBytes(goal), input.GoalCase
 		}
 		inputRaw, _ := json.Marshal(input)
 		result := ObserveGoalPolicyCounterexample(ctx, sourcePath, originalSource, goal, inputRaw, "metapolicycompilation", "metapolicycompilation")
 		negative[name] = result
-		expected := map[string]string{"caller-expectation": "REFUTED", "stale-source": "UNKNOWN", "wrong-goal-pin": "REFUTED", "different-case": "REFUTED", "goal-unknown": "UNKNOWN", "agreement": "NOT_PROPOSED"}[name]
+		expected := map[string]string{"caller-expectation": "REFUTED", "stale-source": "UNKNOWN", "wrong-goal-pin": "REFUTED", "different-case": "REFUTED", "partial-evidence": "UNKNOWN", "goal-unknown": "UNKNOWN", "agreement": "NOT_PROPOSED"}[name]
 		if result.State != expected || (result.Proposal != nil && result.Proposal.CandidateSource != "") {
 			t.Fatalf("%s manufactured a candidate: %+v", name, result)
 		}
@@ -82,6 +85,9 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 			result.Pending.Stage == "" || result.Pending.Step == "" || result.Pending.Reason == "" ||
 			result.Pending.UnknownClass == "" || result.Pending.NextOperation == "" || result.Pending.BlockedBy == nil) {
 			t.Fatalf("%s lost UNKNOWN causality", name)
+		}
+		if name == "partial-evidence" || name == "goal-unknown" {
+			assertGoalCounterexampleUnknownBoundary(t, name, result)
 		}
 	}
 	for _, malformed := range []string{"null", "{}", string(rawRequest) + "{}"} {
@@ -91,6 +97,27 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 		}
 	}
 	goalCounterexampleContinue(t, ctx, dir, sourcePath, goalPath, goal, request, proposal, raw, negative)
+}
+
+func assertGoalCounterexampleUnknownBoundary(t *testing.T, name string, result PolicyGoalCounterexampleObservation) {
+	t.Helper()
+	decision, reason, class := DecisionFailClosed, "COUNTEREXAMPLE_EVIDENCE_MISSING", "DIRECT_MISSING"
+	blockedBy := []string{}
+	if name == "goal-unknown" {
+		decision, reason, class = DecisionUnknown, "GOAL_DECISION_UNKNOWN", "DEPENDENCY_BLOCKED"
+		blockedBy = []string{"goal.result"}
+	}
+	if result.GeneratedBatches != 2 || len(result.SourceResults) != 1 || len(result.GoalResults) != 1 ||
+		result.SourceResults[0].Decision != decision || result.GoalResults[0].Decision != decision ||
+		result.Reason != reason || result.Pending == nil || result.Pending.Reason != reason ||
+		result.Pending.UnknownClass != class || !reflect.DeepEqual(result.Pending.BlockedBy, blockedBy) {
+		t.Fatalf("%s did not observe its declared UNKNOWN boundary: %+v", name, result)
+	}
+	if name == "goal-unknown" && (result.Proposal != nil || result.Pending.Stage != "GOAL" ||
+		result.Pending.Step != "OBSERVE_GOAL_BOUND_COUNTEREXAMPLE" ||
+		result.Pending.NextOperation != "RESOLVE_GOAL_AND_REPEAT") {
+		t.Fatalf("unknown goal did not preserve its dependency frontier: %+v", result)
+	}
 }
 
 func goalCounterexampleContinue(t *testing.T, ctx context.Context, dir, sourcePath, goalPath string, goal []byte, request PolicyGoalCounterexampleRequest, proposal *PolicyCounterexampleProposal, raw []byte, negative map[string]PolicyGoalCounterexampleObservation) {
