@@ -140,19 +140,19 @@ func nativeSyntaxBinary(t *testing.T, ctx context.Context) string {
 func nativeSyntaxFixture(t *testing.T) config {
 	t.Helper()
 	work := t.TempDir()
-	cfg := config{root: filepath.Join(work, "project"), head: strings.Repeat("a", 40)}
-	cfg.registry = filepath.Join(work, "registry.json")
-	cfg.concept = filepath.Join(work, "concept.json")
-	cfg.output = filepath.Join(work, "negative-report.json")
+	cfg := config{root: filepath.Join(work, "project"), head: strings.Repeat("a", 40),
+		registry: filepath.Join(work, "registry.json"),
+		concept:  filepath.Join(work, "concept.json"),
+		output:   filepath.Join(work, "negative-report.json")}
 	if err := os.Mkdir(cfg.root, 0700); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(cfg.registry, []byte("{"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	artifact := languageconcept.Artifact{}
-	artifact.ArtifactDigest = "sha256:" + strings.Repeat("1", 64)
-	artifact.CatalogDigest = "sha256:" + strings.Repeat("2", 64)
+	artifact := languageconcept.Artifact{
+		ArtifactDigest: "sha256:" + strings.Repeat("1", 64),
+		CatalogDigest:  "sha256:" + strings.Repeat("2", 64)}
 	raw, err := json.Marshal(artifact)
 	if err != nil {
 		t.Fatal(err)
