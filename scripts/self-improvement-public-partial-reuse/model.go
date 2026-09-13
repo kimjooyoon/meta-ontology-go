@@ -3,16 +3,16 @@ package main
 import "github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
 
 type runInput struct {
-	Source              string
-	TestContract        string
-	Gooo                string
-	OrchestrationReport string
-	OrchestrationEvidence string
-	OrchestrationVerifier string
+	Source                      string
+	TestContract                string
+	Gooo                        string
+	OrchestrationReport         string
+	OrchestrationEvidence       string
+	OrchestrationVerifier       string
 	OrchestrationVerifierDigest string
-	ExpectedProducerHead string
-	RepoRoot            string
-	Out                 string
+	ExpectedProducerHead        string
+	RepoRoot                    string
+	Out                         string
 }
 
 type executionResult struct {

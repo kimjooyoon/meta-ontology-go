@@ -26,10 +26,10 @@ func TestUpstreamLabelsCannotAuthorizePartialReuse(t *testing.T) {
 	contradictory.Unknown = &publicorchestration.UnknownState{Reason: "NOT_CLOSED"}
 	fixedPoint.Decision = "FIXED_POINT"
 	for _, item := range []struct {
-		name string
-		report upstreamReport
+		name     string
+		report   upstreamReport
 		decision string
-		reason string
+		reason   string
 	}{
 		{"labels_only", labels, "UNKNOWN", "UPSTREAM_BINDING_MISSING"},
 		{"self_asserted_bound_header", bounded, "UNKNOWN", "UPSTREAM_EVIDENCE_REQUIRED"},

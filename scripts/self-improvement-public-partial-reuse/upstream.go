@@ -21,10 +21,10 @@ import (
 type upstreamReport = publicorchestration.Report
 
 type upstreamFailure struct {
-	Decision string `json:"decision"`
-	Reason string `json:"reason"`
-	Unknown *publicorchestration.UnknownState `json:"unknown"`
-	Diagnostic string `json:"diagnostic,omitempty"`
+	Decision   string                            `json:"decision"`
+	Reason     string                            `json:"reason"`
+	Unknown    *publicorchestration.UnknownState `json:"unknown"`
+	Diagnostic string                            `json:"diagnostic,omitempty"`
 }
 
 func (failure *upstreamFailure) Error() string {
@@ -149,8 +149,7 @@ func verifyUpstream(input runInput) (upstreamReport, []byte, error) {
 	}
 	snapshot, err := snapshotUpstream(input.OrchestrationEvidence, directory)
 	if err != nil {
-		var pathError *os.PathError
-		if errors.As(err, &pathError) {
+		if _, ok := errors.AsType[*os.PathError](err); ok {
 			return report, nil, upstreamUnknown("UPSTREAM_MATERIAL_UNAVAILABLE", "SNAPSHOT_EVIDENCE", "DIRECT_MISSING", err)
 		}
 		return report, nil, upstreamReject("UPSTREAM_MANIFEST_INVALID", err)
@@ -189,7 +188,7 @@ func verifyUpstream(input runInput) (upstreamReport, []byte, error) {
 		"scope": "PINNED_VERIFIER_RAW_BUNDLE_RECONSTRUCTION", "cross_workflow_admission": "UNKNOWN",
 		"report_digest": cache.HashBytes(data).String(), "manifest_digest": snapshot.OriginalDigest,
 		"verification_digest": cache.HashBytes(verifiedBytes).String(), "member_digests": snapshot.Digests,
-		"verifier_digest": strings.TrimPrefix(input.OrchestrationVerifierDigest, "sha256:"),
+		"verifier_digest":      strings.TrimPrefix(input.OrchestrationVerifierDigest, "sha256:"),
 		"verifier_source_head": input.ExpectedProducerHead, "policy_source_digest": verified.PolicySourceDigest,
 		"wall_ms": time.Since(started).Milliseconds(), "repository_mutation_authorized": false,
 	}

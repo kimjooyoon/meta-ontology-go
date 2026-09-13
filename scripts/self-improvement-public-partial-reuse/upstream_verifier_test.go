@@ -50,7 +50,7 @@ func TestUpstreamVerifierBuildIdentityClassifications(t *testing.T) {
 	for _, field := range []string{"matching", "package", "toolchain", "revision", "dirty"} {
 		t.Run(field, func(t *testing.T) {
 			info := debug.BuildInfo{
-				Path: "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-orchestration",
+				Path:      "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-orchestration",
 				GoVersion: "go1.27.0",
 				Settings: []debug.BuildSetting{
 					{Key: "vcs.revision", Value: "test-source-head"},

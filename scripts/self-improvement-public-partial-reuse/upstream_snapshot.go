@@ -10,10 +10,10 @@ import (
 )
 
 type upstreamSnapshot struct {
-	Manifest string
-	Resume []byte
+	Manifest       string
+	Resume         []byte
 	OriginalDigest string
-	Digests map[string]string
+	Digests        map[string]string
 }
 
 func snapshotUpstream(filename, directory string) (upstreamSnapshot, error) {
