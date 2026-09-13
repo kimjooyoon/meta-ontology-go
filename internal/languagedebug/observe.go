@@ -4,7 +4,7 @@ func Observe(data []byte, breakpoint string) Receipt {
 	execution, ok := decodeExecution(data)
 	if !ok || breakpoint == "" {
 		return seal(Receipt{
-			Schema: "gooo/language-debug-receipt/v1", Decision: DecisionFailClosed,
+			Schema: "gooo/language-debug-receipt/v1", Scope: SourceExecutionScope, Decision: DecisionFailClosed,
 			Reason: "DEBUG_EXECUTION_UNKNOWN", Resolution: ResolutionLower,
 			State: StateRejected, Breakpoint: breakpoint, Trace: []Event{},
 			NonClaims: CanonicalNonClaims(),
@@ -33,7 +33,7 @@ func Observe(data []byte, breakpoint string) Receipt {
 
 func fromExecution(execution executionReceipt, breakpoint string) Receipt {
 	return Receipt{
-		Schema: "gooo/language-debug-receipt/v1", Resolution: ResolutionExact,
+		Schema: "gooo/language-debug-receipt/v1", Scope: SourceExecutionScope, Resolution: ResolutionExact,
 		Filename: execution.Filename, SourceDigest: execution.SourceDigest,
 		SemanticDigest: execution.SemanticDigest, ExecutionDigest: execution.Digest,
 		Entry: execution.Entry, Breakpoint: breakpoint, Diagnostics: execution.Diagnostics,

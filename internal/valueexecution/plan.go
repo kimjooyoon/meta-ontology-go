@@ -26,6 +26,7 @@ type Plan struct {
 // Execution is a detached summary of one plan run. Results contain evidence,
 // not ProducedResult handles; the handles never leave the per-run store.
 type Execution struct {
+	Scope      string                    `json:"scope"`
 	Results    map[string]ResultEvidence `json:"results"`
 	ApplyCalls int                       `json:"apply_calls"`
 	Deliveries int                       `json:"deliveries"`
@@ -93,7 +94,7 @@ func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
 		return Execution{}, err
 	}
 	values := make(map[string]ProducedResult, len(plan.programs))
-	execution := Execution{Results: make(map[string]ResultEvidence, len(plan.programs))}
+	execution := Execution{Scope: RegisteredValueOperationScope, Results: make(map[string]ResultEvidence, len(plan.programs))}
 	for _, activity := range order {
 		input, hasInput := rootInputs[activity]
 		if !hasInput {

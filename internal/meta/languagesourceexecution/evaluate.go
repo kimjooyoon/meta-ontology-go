@@ -1,5 +1,7 @@
 package languagesourceexecution
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
+
 func Evaluate(input Input) Artifact {
 	if _, err := DecodeContract(mustJSON(input.Contract)); err != nil {
 		return failedContract(input.HeadSHA, err.Error())
@@ -17,18 +19,18 @@ func Evaluate(input Input) Artifact {
 		Summary Summary
 	}{input.HeadSHA, cases, summary})
 	artifact := Artifact{
-		Schema: ArtifactSchema, HeadSHA: input.HeadSHA, Decision: decision,
+		Schema: ArtifactSchema, Scope: sourceexecution.DeclarationResolutionScope, HeadSHA: input.HeadSHA, Decision: decision,
 		Resolution: resolution, Reason: reason, ContractDigest: digestValue(input.Contract),
 		Cases: cases, Summary: summary, Indicators: indicators(summary), Proofs: proofs(summary, evidence),
 		RepositoryWrites: summary.RepositoryWrites, MutationAuthority: summary.MutationAuthorities != 0,
-		NotClaimed: []string{"value-level computation", "external dependency execution", "cross-run resource improvement"},
+		NotClaimed: []string{"value-level computation", "registered-value operation execution", "handwritten Go-body execution", "external dependency execution", "external effects", "cross-run resource improvement"},
 	}
 	artifact.Digest = artifactDigest(artifact)
 	return artifact
 }
 
 func failedContract(head, reason string) Artifact {
-	artifact := Artifact{Schema: ArtifactSchema, HeadSHA: head, Decision: "FAIL_CLOSED",
+	artifact := Artifact{Schema: ArtifactSchema, Scope: sourceexecution.DeclarationResolutionScope, HeadSHA: head, Decision: "FAIL_CLOSED",
 		Resolution: "LOWER_RESOLUTION", Reason: reason, Summary: Summary{CasesTotal: 4, Unknowns: 4},
 		Cases: []CaseResult{}, Indicators: []Indicator{}, Proofs: []Proof{},
 		NotClaimed: []string{"runtime capability without a canonical contract"}}

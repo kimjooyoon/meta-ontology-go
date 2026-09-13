@@ -118,7 +118,7 @@ func projectedFinalConformance(root, logical string, generated map[string][]byte
 	fset := token.NewFileSet()
 	target, err := parser.ParseFile(fset, logical, targetSource, parser.ParseComments)
 	if err != nil {
-		return failWithDiagnostics("verify-result", "projected-conformance", "PROJECTED_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample", []string{"logical=" + logical})
+		return projectedConformanceFailure(root, "logical="+logical, "parse-target", err)
 	}
 	files, err := packageTypeFiles(root, logical, fset, target)
 	if err != nil {
@@ -133,14 +133,18 @@ func projectedFinalConformance(root, logical string, generated map[string][]byte
 	sort.Strings(paths)
 	for _, path := range paths {
 		file, parseErr := parser.ParseFile(fset, path, generated[path], parser.ParseComments)
-		if parseErr != nil || file.Name.Name != target.Name.Name {
-			return failWithDiagnostics("verify-result", "projected-conformance", "PROJECTED_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample", []string{"generated=" + path})
+		if parseErr != nil {
+			return projectedConformanceFailure(root, "generated="+path, "parse-generated", parseErr)
+		}
+		if file.Name.Name != target.Name.Name {
+			cause := fmt.Errorf("generated package %q does not match target package %q", file.Name.Name, target.Name.Name)
+			return projectedConformanceFailure(root, "generated="+path, "package-name", cause)
 		}
 		files = append(files, file)
 	}
 	configuration := types.Config{Importer: newModuleImporter(root), Error: func(error) {}}
 	if _, err := configuration.Check(filepath.ToSlash(filepath.Dir(logical)), fset, files, nil); err != nil {
-		return failWithDiagnostics("verify-result", "projected-conformance", "PROJECTED_CONFORMANCE_FAILED", "KNOWN_CONTRADICTION", "report-counterexample", []string{"logical=" + logical})
+		return projectedConformanceFailure(root, "logical="+logical, "typecheck", err)
 	}
 	return nil
 }

@@ -1,7 +1,10 @@
 package languagedelivery
 
+import "github.com/kimjooyoon/meta-ontology-go/internal/sourceexecution"
+
 type ExecutionReceipt struct {
 	Schema            string           `json:"schema"`
+	Scope             string           `json:"scope"`
 	HeadSHA           string           `json:"head_sha"`
 	Decision          string           `json:"decision"`
 	Resolution        string           `json:"resolution"`
@@ -29,6 +32,10 @@ func inspectExecution(data []byte, head string, receipt *ExecutionReceipt, entry
 	observation.MutationAuthority = receipt.MutationAuthority || receipt.Summary.MutationAuthorities != 0
 	if receipt.HeadSHA != head {
 		return headUnknown(observation)
+	}
+	if receipt.Scope != sourceexecution.DeclarationResolutionScope {
+		observation.State, observation.Reason = "UNKNOWN", "SOURCE_EXECUTION_SCOPE_UNKNOWN"
+		return observation
 	}
 	return finalizeObservation(observation, receipt.Schema, "gooo/language-source-execution-artifact/v1")
 }

@@ -11,6 +11,7 @@ on:
       - 'internal/lsp/**'
       - 'internal/meta/generation/**'
       - 'scripts/compiler-self-improvement/**'
+      - '.github/workflows/compiler-self-improvement.yml'
       - 'go.mod'
       - 'go.sum'
   push:
@@ -23,6 +24,7 @@ on:
       - 'internal/lsp/**'
       - 'internal/meta/generation/**'
       - 'scripts/compiler-self-improvement/**'
+      - '.github/workflows/compiler-self-improvement.yml'
       - 'go.mod'
       - 'go.sum'
 
@@ -297,19 +299,154 @@ jobs:
           cp "$work/baseline/measurements.json" "$artifact/baseline-measurements.json"
           cp "$work/candidate/measurements.json" "$artifact/candidate-measurements.json"
           cp -R "$work/operation-envelope" "$artifact/operation-envelope"
+          payload_metrics="$artifact/evidence-payload-metrics.json"
+          metrics_tmp="$RUNNER_TEMP/compiler-self-improvement-payload-metrics.json.tmp"
+          excluded_cache_dirs=(
+            "$work/cache-baseline-generation"
+            "$work/cache-baseline-replay"
+            "$work/cache-baseline-build"
+            "$work/cache-baseline-test"
+            "$work/cache-baseline-benchmark"
+            "$work/cache-candidate-generation"
+            "$work/cache-candidate-replay"
+            "$work/cache-candidate-build"
+            "$work/cache-candidate-test"
+            "$work/cache-candidate-benchmark"
+          )
+          is_excluded_cache() {
+            local file="$1"
+            local directory
+            for directory in "${excluded_cache_dirs[@]}"; do
+              case "$file" in
+                "$directory"/*) return 0 ;;
+              esac
+            done
+            return 1
+          }
+          payload_stats() {
+            local file
+            local size
+            local before_count=0
+            local before_bytes=0
+            local after_count=0
+            local after_bytes=0
+            while IFS=$'\t' read -r file size; do
+              if [ "$file" = "$payload_metrics" ]; then
+                continue
+              fi
+              before_count=$((before_count + 1))
+              before_bytes=$((before_bytes + size))
+              if is_excluded_cache "$file"; then
+                continue
+              fi
+              after_count=$((after_count + 1))
+              after_bytes=$((after_bytes + size))
+            done < <(find "$work" -type f ! -path '*/.*' -printf '%p\t%s\n')
+            printf '%s %s %s %s\n' "$before_count" "$before_bytes" "$after_count" "$after_bytes"
+          }
+          excluded_cache_dirs_json="$(printf '%s\n' "${excluded_cache_dirs[@]}" | sed "s#^$work/##" | jq -R -s 'split("\n") | map(select(length > 0))')"
+          read -r before_count before_bytes after_count after_bytes < <(payload_stats)
+          jq -n \
+            --arg schema gooo/compiler-self-improvement-payload-metrics/v1 \
+            --argjson excluded_cache_dirs "$excluded_cache_dirs_json" \
+            --arg observer_metrics_path artifact/evidence-payload-metrics.json \
+            --argjson before_count "$before_count" \
+            --argjson before_bytes "$before_bytes" \
+            --argjson after_count "$after_count" \
+            --argjson after_bytes "$after_bytes" \
+            '{schema:$schema,excluded_cache_directories:$excluded_cache_dirs,measurement_exclusions:{observer_metrics_path:$observer_metrics_path,hidden_files:"upload-artifact-default-excluded"},before:{regular_file_count:$before_count,regular_file_bytes:$before_bytes},after:{regular_file_count:$after_count,regular_file_bytes:$after_bytes}}' > "$metrics_tmp"
+          mv "$metrics_tmp" "$payload_metrics"
           {
             echo "### Compiler self-improvement"
             jq -r '"- lifecycle: \(.lifecycle)"' "$work/post-adoption-receipt.json"
             jq -r '"- candidate decision: \(.candidate_decision); envelope: \(.envelope_suite_decision); counts: \(.envelope_counts.CLOSED)/\(.envelope_counts.UNKNOWN)/\(.envelope_counts.REFUTED)"' "$work/report.json"
             jq -r '"- exact unchanged-refresh parse-call count: \(.scenarios[] | select(.id=="NORMAL") | .before.primary_operation_count) -> \(.after.primary_operation_count)"' "$work/report.json"
             jq -r '"- report digest: \(.report_digest)"' "$work/post-adoption-receipt.json"
+            jq -r '"- evidence payload regular files: \(.before.regular_file_count)/\(.before.regular_file_bytes) -> \(.after.regular_file_count)/\(.after.regular_file_bytes)"' "$payload_metrics"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload exact-head compiler evidence
+        id: upload-evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: compiler-self-improvement-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/compiler-self-improvement
+          path: |
+            ${{ runner.temp }}/compiler-self-improvement/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-baseline-generation/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-baseline-replay/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-baseline-build/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-baseline-test/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-baseline-benchmark/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-candidate-generation/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-candidate-replay/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-candidate-build/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-candidate-test/**
+            !${{ runner.temp }}/compiler-self-improvement/cache-candidate-benchmark/**
           if-no-files-found: error
           retention-days: 30
+
+      - name: Download uploaded compiler evidence for verification
+        if: success()
+        uses: actions/download-artifact@v8
+        with:
+          name: compiler-self-improvement-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/compiler-self-improvement-uploaded
+
+      - name: Verify uploaded compiler evidence boundary
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          uploaded="$RUNNER_TEMP/compiler-self-improvement-uploaded"
+          metrics="$uploaded/artifact/evidence-payload-metrics.json"
+          test -s "$metrics"
+          for cache in \
+            cache-baseline-generation \
+            cache-baseline-replay \
+            cache-baseline-build \
+            cache-baseline-test \
+            cache-baseline-benchmark \
+            cache-candidate-generation \
+            cache-candidate-replay \
+            cache-candidate-build \
+            cache-candidate-test \
+            cache-candidate-benchmark; do
+            test ! -e "$uploaded/$cache"
+          done
+          for required in \
+            artifact/authority.graph.json \
+            artifact/candidate-evidence.json \
+            artifact/generated-candidate-lsp-refresh.go \
+            artifact/generated-candidate.patch \
+            artifact/normal-observation.json \
+            artifact/decision-report.json \
+            artifact/post-adoption-receipt.json \
+            artifact/baseline-measurements.json \
+            artifact/candidate-measurements.json; do
+            if [ "$required" = artifact/generated-candidate.patch ]; then
+              test -f "$uploaded/$required"
+            else
+              test -s "$uploaded/$required"
+            fi
+          done
+          test "$(find "$uploaded/artifact/operation-envelope" -mindepth 2 -maxdepth 2 -type f | wc -l | tr -d ' ')" -eq 36
+          actual_stats() {
+            local file
+            local size
+            local count=0
+            local bytes=0
+            while IFS=$'\t' read -r file size; do
+              if [ "$file" = "$metrics" ]; then
+                continue
+              fi
+              count=$((count + 1))
+              bytes=$((bytes + size))
+            done < <(find "$uploaded" -type f ! -path '*/.*' -printf '%p\t%s\n')
+            printf '%s %s\n' "$count" "$bytes"
+          }
+          read -r actual_count actual_bytes < <(actual_stats)
+          expected_count="$(jq -r '.after.regular_file_count' "$metrics")"
+          expected_bytes="$(jq -r '.after.regular_file_bytes' "$metrics")"
+          test "$actual_count" = "$expected_count"
+          test "$actual_bytes" = "$expected_bytes"

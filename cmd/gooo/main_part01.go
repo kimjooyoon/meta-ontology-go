@@ -48,7 +48,7 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 	case "inspect":
 		return runInspect(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "graph":
-		return runGraph(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
+		return runPublicGraph(args[1:], OSFileReader{}, stdout, stderr)
 	case "claim":
 		return runClaim(args[1:], OSFileReader{}, SyntaxSourceParser{}, stdout, stderr)
 	case "analyze":

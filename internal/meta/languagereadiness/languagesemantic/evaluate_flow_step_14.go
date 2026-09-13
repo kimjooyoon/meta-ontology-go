@@ -3,14 +3,14 @@ package languagesemantic
 import "path/filepath"
 
 func evaluateFlowStep13(flow *evaluateFlowState) {
-	flow.slot09 = semanticSourcePaths(flow.slot05)
+	flow.slot09 = semanticSourcePaths(flow.slot01, flow.slot05)
 }
 
-func semanticSourcePaths(receipt syntaxReceipt) []string {
-	kinds := make(map[string]string, len(receipt.Cases))
-	for _, item := range receipt.Cases {
-		path := filepath.ToSlash(filepath.Clean(item.Definition.Path))
-		kinds[path] = item.Definition.Kind
+func semanticSourcePaths(registry Registry, receipt syntaxReceipt) []string {
+	present := make(map[string]bool, len(receipt.Source.GoooFiles))
+	for _, file := range receipt.Source.GoooFiles {
+		path := filepath.ToSlash(filepath.Clean(file.Path))
+		present[path] = true
 	}
 	packageMembers := map[string]bool{}
 	for _, unit := range receipt.Source.PackageUnits {
@@ -18,14 +18,13 @@ func semanticSourcePaths(receipt syntaxReceipt) []string {
 			packageMembers[filepath.ToSlash(filepath.Clean(member))] = true
 		}
 	}
-	paths := make([]string, 0, len(receipt.Source.GoooFiles))
-	for _, file := range receipt.Source.GoooFiles {
-		path := filepath.ToSlash(filepath.Clean(file.Path))
-		if packageMembers[path] {
+	paths := make([]string, 0, expectedSources)
+	for _, definition := range registry.Cases {
+		if definition.Kind != CaseSource {
 			continue
 		}
-		kind, registered := kinds[path]
-		if !registered || kind == "VALID" {
+		path := filepath.ToSlash(filepath.Clean(definition.Path))
+		if !packageMembers[path] && present[path] {
 			paths = append(paths, path)
 		}
 	}

@@ -9,6 +9,7 @@ type IntegerValue int64
 // ResultEvidence is a detached, data-only view of a produced result. It is
 // not a constructor and carries no execution authority.
 type ResultEvidence struct {
+	Scope               string `json:"scope"`
 	ProducerActivityID  string `json:"producer_activity_id"`
 	ProducerActivity    string `json:"producer_activity"`
 	OutputEntityID      string `json:"output_entity_id"`
@@ -42,6 +43,7 @@ func (result *ProducedResult) UnmarshalJSON(_ []byte) error {
 }
 
 type producedResultDigestInput struct {
+	Scope               string `json:"scope"`
 	ProducerActivityID  string `json:"producer_activity_id"`
 	ProducerActivity    string `json:"producer_activity"`
 	OutputEntityID      string `json:"output_entity_id"`
@@ -57,7 +59,7 @@ type producedResultDigestInput struct {
 func issueProducedResult(authority resultAuthority, value int64) ProducedResult {
 	return ProducedResult{authority: authority, value: value,
 		resultDigest: digestValue(producedResultDigestInput{
-			ProducerActivityID: authority.activityID, ProducerActivity: authority.activityName,
+			Scope: RegisteredValueOperationScope, ProducerActivityID: authority.activityID, ProducerActivity: authority.activityName,
 			OutputEntityID: authority.outputEntityID, OutputEntity: authority.outputEntityName,
 			SourceDigest: authority.sourceDigest, SemanticFingerprint: authority.semanticFingerprint,
 			OperationSpecDigest: authority.operationSpecDigest, Value: value,
@@ -69,7 +71,7 @@ func (result ProducedResult) validate() error {
 		return failAt(ReasonResultHandleInvalid, "RESULT", "validate-produced-result", "result handle has no valid private authority")
 	}
 	want := digestValue(producedResultDigestInput{
-		ProducerActivityID: result.authority.activityID, ProducerActivity: result.authority.activityName,
+		Scope: RegisteredValueOperationScope, ProducerActivityID: result.authority.activityID, ProducerActivity: result.authority.activityName,
 		OutputEntityID: result.authority.outputEntityID, OutputEntity: result.authority.outputEntityName,
 		SourceDigest: result.authority.sourceDigest, SemanticFingerprint: result.authority.semanticFingerprint,
 		OperationSpecDigest: result.authority.operationSpecDigest, Value: result.value,
@@ -90,7 +92,7 @@ func (result ProducedResult) Evidence() ResultEvidence {
 		return ResultEvidence{}
 	}
 	return ResultEvidence{
-		ProducerActivityID: result.authority.activityID, ProducerActivity: result.authority.activityName,
+		Scope: RegisteredValueOperationScope, ProducerActivityID: result.authority.activityID, ProducerActivity: result.authority.activityName,
 		OutputEntityID: result.authority.outputEntityID, OutputEntity: result.authority.outputEntityName,
 		SourceDigest: result.authority.sourceDigest, SemanticFingerprint: result.authority.semanticFingerprint,
 		OperationSpecDigest: result.authority.operationSpecDigest, Value: result.value, ResultDigest: result.resultDigest,

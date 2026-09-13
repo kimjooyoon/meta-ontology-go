@@ -36,6 +36,9 @@ func partialEvidence(document Document, base Model, delta FactDelta, observer BX
 	if !called {
 		return BXConflictEvidence{}, BXTransactionEvidence{}, BXDeltaEvidence{}, errors.New("rejected write observer did not run operation")
 	}
+	if reconcileErr != nil && len(result.Accepted) != 0 {
+		return BXConflictEvidence{}, BXTransactionEvidence{}, BXDeltaEvidence{}, errors.New("rejected reconciliation retained accepted facts")
+	}
 	partial := makeDeltaEvidenceUnchecked(delta, LocalityBetween(base, result.Model), true, base, result.Model)
 	before := stateEvidence(base, document, LocalityBetween(base, result.Model), observation.Before)
 	after := stateEvidence(result.Model, document, LocalityBetween(base, result.Model), observation.After)

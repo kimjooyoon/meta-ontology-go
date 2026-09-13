@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func generateSyntaxTests(source *goSource, corpus []byte) error {
+func generateSyntaxTests(source *goSource, corpus []byte, promoteMetaSource bool) error {
 	total, valid, capability, err := corpusTotals(corpus)
 	if err != nil {
 		return err
@@ -38,7 +38,11 @@ func generateSyntaxTests(source *goSource, corpus []byte) error {
 			if actual <= 0 {
 				failure = fmt.Errorf("source inventory baseline is not positive")
 			}
-			source.replace(comparison.Y, strconv.Itoa(actual+1))
+			sourceFiles := actual + 1
+			if promoteMetaSource {
+				sourceFiles = actual
+			}
+			source.replace(comparison.Y, strconv.Itoa(sourceFiles))
 			seen[name]++
 		}
 		return true

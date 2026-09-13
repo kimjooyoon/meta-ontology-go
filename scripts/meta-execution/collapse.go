@@ -179,7 +179,7 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	if failure := validateCollapseOutput(beforeInspection, afterAppliedInspection, afterApplied); failure != nil {
 		return materialized, failure
 	}
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
+	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
 	materialized.Verifier = verifier.Observation
 	after, err := os.ReadFile(sourcePath)
 	if err != nil {
@@ -202,8 +202,7 @@ func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.
 	if len(changedFiles) != 1 || changedFiles[0] != subject.Path {
 		return materialized, newOperationError("evaluate-operation", "compare-collapse-workspace", "WORKSPACE_EFFECT_OUT_OF_SCOPE", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	if verifier.Observation.ExitCode != 0 {
-		failure := newOperationError("verify-operation", "go-test-transformed-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	if failure := classifyVerifierProcess("go-test-transformed-workspace", verifier, verifierErr); failure != nil {
 		failure.diagnostics = append(failure.diagnostics, collapseVerifierFailureDiagnostic(temporary, verifier))
 		return materialized, failure
 	}

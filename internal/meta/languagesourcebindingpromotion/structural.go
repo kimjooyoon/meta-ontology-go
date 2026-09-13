@@ -11,13 +11,13 @@ func assessStructural(producerRaw, receiptRaw []byte, head string) component {
 		}
 		return refuted("SOURCE_EXECUTION_DECISION_REJECTED", "PROMOTION_COMPARE", "producer-decision", producer.Digest)
 	}
-	if producer.Schema != "gooo/language-source-execution-artifact/v1" || producer.HeadSHA != head ||
+	if producer.Schema != "gooo/language-source-execution-artifact/v1" || producer.Scope != sourceReceiptScope || producer.HeadSHA != head ||
 		producer.Resolution != ResolutionExact || producer.RepositoryWrites != 0 || producer.MutationAuthority {
 		return refuted("SOURCE_EXECUTION_EVIDENCE_INVALID", "PROMOTION_COMPARE", "producer-identity", producer.Digest)
 	}
 	receipt, err := decodeStrict[receiptEnvelope](receiptRaw)
 	if err != nil || !verifyReceiptDigest(receipt) || receipt.Schema != "gooo/source-execution-receipt/v1" ||
-		receipt.Decision != DecisionPass || receipt.Resolution != ResolutionExact {
+		receipt.Scope != sourceReceiptScope || receipt.Decision != DecisionPass || receipt.Resolution != ResolutionExact {
 		return refuted("SOURCE_EXECUTION_RECEIPT_INVALID", "PROMOTION_INPUT", "read-receipt", producer.Digest)
 	}
 	summary, err := decodeView[producerSummary](producer.Summary)

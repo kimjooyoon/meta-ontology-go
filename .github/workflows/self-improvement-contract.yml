@@ -2,6 +2,8 @@ name: Self-improvement contract
 
 on:
   push:
+    branches: ["dev","main"]
+    tags: ['**']
   pull_request:
 
 permissions:

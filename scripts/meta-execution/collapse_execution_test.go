@@ -57,7 +57,7 @@ func TestCollapseExecutionRouteUsesNativeMaterializer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	materialized, failure := executeCollapse(fixtureWorkspace, gitDir, metricsPath, plan, action, metaExecutionTrace{})
+	materialized, failure := executeCollapseWithTestTrace(t, fixtureWorkspace, gitDir, metricsPath, plan, action)
 	if failure != nil {
 		t.Fatalf("native collapse execution failed: %#v", failure)
 	}

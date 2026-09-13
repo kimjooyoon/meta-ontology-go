@@ -11,6 +11,7 @@ func Reject(request Request, reason string, diagnostics []Diagnostic) Receipt {
 func baseReceipt(request Request, sources []SourceEvidence, events []Event) Receipt {
 	return Receipt{
 		Schema:      ReceiptSchema,
+		Scope:       sourceexecution.DeclarationResolutionScope,
 		PackagePath: request.PackagePath,
 		Entry:       request.Entry,
 		Sources:     nonNilSources(sources),

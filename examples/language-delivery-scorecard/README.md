@@ -8,6 +8,7 @@ This directory fixes the `gooo-v0.2-observable-delivery` denominator at 36 oblig
 - Reader views are cumulative: USER is contained by TOOL_AUTHOR, which is contained by GOVERNOR.
 - `NOT_IMPLEMENTED` is a known zero, while malformed or unknown evidence is `UNKNOWN` and fails closed.
 - The internal 24-obligation readiness receipt remains visible only as `INTERNAL_SELF_IMPROVEMENT_CONTRACT`.
+- Source-execution delivery credit is limited to receipt scope `DECLARATION_RESOLUTION_ONLY`; it does not claim handwritten Go-body execution or external effects.
 - A separately uploaded source-execution artifact backs three user outcomes; five fixed gaps remain.
 
 The JSON contract is duplicated by canonical Go meta-code. Changing one without the other is contract drift, not progress.
