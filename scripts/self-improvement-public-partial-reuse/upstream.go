@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -96,28 +97,35 @@ func upstreamBindings(report upstreamReport) [7]string {
 func pinUpstreamVerifier(input runInput, directory string) (string, error) {
 	data, err := readRegular(input.OrchestrationVerifier)
 	if err != nil {
-		return "", err
+		return "", upstreamUnknown("UPSTREAM_VERIFIER_NOT_ESTABLISHED", "PIN_VERIFIER", "DEPENDENCY_BLOCKED", err)
 	}
 	if cache.HashBytes(data).String() != strings.TrimPrefix(input.OrchestrationVerifierDigest, "sha256:") {
-		return "", errors.New("upstream verifier bytes do not match the explicit trusted digest")
+		return "", upstreamReject("UPSTREAM_VERIFIER_DIGEST_MISMATCH", nil)
 	}
 	filename := filepath.Join(directory, "orchestration-verifier")
 	if err := writeNew(filename, data, 0o555); err != nil {
-		return "", err
+		return "", upstreamUnknown("UPSTREAM_VERIFIER_NOT_ESTABLISHED", "PIN_VERIFIER", "DEPENDENCY_BLOCKED", err)
 	}
 	info, err := buildinfo.ReadFile(filename)
 	if err != nil {
+		return "", upstreamUnknown("UPSTREAM_VERIFIER_NOT_ESTABLISHED", "PIN_VERIFIER", "DEPENDENCY_BLOCKED", err)
+	}
+	if err := validateUpstreamVerifierBuild(info, input.ExpectedProducerHead); err != nil {
 		return "", err
 	}
+	return filename, nil
+}
+
+func validateUpstreamVerifierBuild(info *debug.BuildInfo, expectedHead string) error {
 	settings := map[string]string{}
 	for _, setting := range info.Settings {
 		settings[setting.Key] = setting.Value
 	}
 	if info.Path != "github.com/kimjooyoon/meta-ontology-go/scripts/self-improvement-public-orchestration" ||
-		info.GoVersion != "go1.27.0" || settings["vcs.revision"] != input.ExpectedProducerHead || settings["vcs.modified"] != "false" {
-		return "", errors.New("upstream verifier build identity is not the pinned unmodified source")
+		info.GoVersion != "go1.27.0" || settings["vcs.revision"] != expectedHead || settings["vcs.modified"] != "false" {
+		return upstreamReject("UPSTREAM_VERIFIER_BUILD_IDENTITY_MISMATCH", nil)
 	}
-	return filename, nil
+	return nil
 }
 
 func verifyUpstream(input runInput) (upstreamReport, []byte, error) {
@@ -152,7 +160,7 @@ func verifyUpstream(input runInput) (upstreamReport, []byte, error) {
 	}
 	verifier, err := pinUpstreamVerifier(input, directory)
 	if err != nil {
-		return report, nil, upstreamUnknown("UPSTREAM_VERIFIER_NOT_ESTABLISHED", "PIN_VERIFIER", "DEPENDENCY_BLOCKED", err)
+		return report, nil, err
 	}
 	verifiedPath := filepath.Join(directory, "verification.json")
 	started := time.Now()
