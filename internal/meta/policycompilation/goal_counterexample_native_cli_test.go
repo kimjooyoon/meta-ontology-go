@@ -69,8 +69,7 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 		case "partial-evidence":
 			input.SourceCase.ProducerAvailable, input.GoalCase.ProducerAvailable = false, false
 		case "goal-unknown":
-			input, originalSource = declaredUnknownGoalCounterexample(t, input)
-			declaredGoal = originalSource
+			input, declaredGoal = declaredUnknownGoalCounterexample(t, input)
 		case "agreement":
 			originalSource, input.ExpectedSourceDigest, input.SourceCase = goal, DigestBytes(goal), input.GoalCase
 		}
@@ -101,27 +100,25 @@ func TestPinnedGoooGoalDerivesCounterexampleAndContinues(t *testing.T) {
 
 func declaredUnknownGoalCounterexample(t *testing.T, input PolicyGoalCounterexampleRequest) (PolicyGoalCounterexampleRequest, []byte) {
 	t.Helper()
-	source, err := os.ReadFile(filepath.Join("..", "..", "..", "examples", "meta-policy-compilation", "policy.gooo"))
+	source, err := os.ReadFile(filepath.Join("testdata", "goal-unresolved.gooo"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	policy, err := CompileForIdentity("goal-unavailable.gooo", source, "metapolicycompilation", "metapolicycompilation")
+	policy, err := CompileForIdentity("goal-unresolved.gooo", source, "metapolicycompilation", "metapolicycompilation")
 	if err != nil {
 		t.Fatal(err)
 	}
-	input.SourceCase.ID, input.SourceCase.UpperDecision = "goal-evidence-unavailable", DecisionPass
-	input.SourceCase.ProducerAvailable, input.SourceCase.ConsumerAvailable = false, false
-	input.SourceCase = goalCounterexampleCase(input.SourceCase, policy)
-	input.GoalCase = input.SourceCase
-	input.ExpectedSourceDigest, input.ExpectedGoalDigest = DigestBytes(source), DigestBytes(source)
+	input.GoalCase = goalCounterexampleCase(input.GoalCase, policy)
+	input.ExpectedGoalDigest = DigestBytes(source)
 	declared := EvaluateSourcePolicy(policy, input.GoalCase)
-	if declared.Decision != DecisionUnknown || declared.MatchedCondition != "EVIDENCE_UNAVAILABLE" {
-		t.Fatalf("public Gooo declaration does not define the unavailable goal case: %+v", declared)
+	if declared.Decision != DecisionUnknown || declared.MatchedCondition != "SEMANTIC_EQUIVALENCE" ||
+		declared.UnknownClass != "UNBOUNDED" || declared.Reason != "GOAL_CRITERION_UNRESOLVED" {
+		t.Fatalf("Gooo declaration does not define the unresolved goal criterion: %+v", declared)
 	}
 	witness, err := json.Marshal(map[string]string{
-		"case": "goal-unknown", "source_path": "examples/meta-policy-compilation/policy.gooo",
+		"case": "goal-unknown", "source_path": "internal/meta/policycompilation/testdata/goal-unresolved.gooo",
 		"source": string(source), "source_digest": DigestBytes(source),
-		"role": "SOURCE_AND_FROZEN_GOAL_FOR_UNAVAILABLE_CASE",
+		"role": "FROZEN_GOAL_WITH_UNRESOLVED_CRITERION",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -139,14 +136,16 @@ func assertGoalCounterexampleUnknownBoundary(t *testing.T, name string, result P
 		blockedBy = []string{"goal.result"}
 	}
 	if result.GeneratedBatches != 2 || len(result.SourceResults) != 1 || len(result.GoalResults) != 1 ||
-		result.SourceResults[0].Decision != decision || result.GoalResults[0].Decision != decision ||
+		result.SourceResults[0].Decision != DecisionFailClosed || result.GoalResults[0].Decision != decision ||
 		result.Reason != reason || result.Pending == nil || result.Pending.Reason != reason ||
 		result.Pending.UnknownClass != class || !reflect.DeepEqual(result.Pending.BlockedBy, blockedBy) {
 		t.Fatalf("%s did not observe its declared UNKNOWN boundary: %+v", name, result)
 	}
 	if name == "goal-unknown" && (result.Proposal != nil ||
-		result.SourceResults[0].MatchedCondition != "EVIDENCE_UNAVAILABLE" ||
-		result.GoalResults[0].MatchedCondition != "EVIDENCE_UNAVAILABLE" || result.Pending.Stage != "GOAL" ||
+		result.SourceResults[0].MatchedCondition != "SEMANTIC_EQUIVALENCE" ||
+		result.GoalResults[0].MatchedCondition != "SEMANTIC_EQUIVALENCE" ||
+		result.GoalResults[0].UnknownClass != "UNBOUNDED" ||
+		result.GoalResults[0].Reason != "GOAL_CRITERION_UNRESOLVED" || result.Pending.Stage != "GOAL" ||
 		result.Pending.Step != "OBSERVE_GOAL_BOUND_COUNTEREXAMPLE" ||
 		result.Pending.NextOperation != "RESOLVE_GOAL_AND_REPEAT") {
 		t.Fatalf("unknown goal did not preserve its dependency frontier: %+v", result)
