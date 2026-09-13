@@ -411,6 +411,15 @@ func decomposeFunction(root, logical string, source []byte, fset *token.FileSet,
 		proofs = helperProofRegistry[0]
 	}
 	if candidate, candidateErr := buildReturnTailCandidate(root, logical, source, fset, file, function, evidence, functionNames(file), preflight, proofs); candidateErr != nil {
+		if failure, ok := errors.AsType[Failure](candidateErr); ok && failure.Reason == "CALLEE_EFFECTS_UNPROVEN" {
+			alternative, alternativeErr := buildMapLiteralCandidate(root, logical, source, fset, file, function, evidence, preflight, failure)
+			if alternativeErr != nil {
+				return nil, nil, alternativeErr
+			}
+			if alternative != nil {
+				return alternative.result, &alternative.evidence, nil
+			}
+		}
 		if !isKnownSuffixContradiction(candidateErr) {
 			return nil, nil, candidateErr
 		}

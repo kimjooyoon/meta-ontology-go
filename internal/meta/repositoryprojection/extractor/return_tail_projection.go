@@ -38,7 +38,7 @@ func finalizeReturnTailEvidence(root, logical string, generated map[string][]byt
 			result = append(result, item)
 			continue
 		}
-		if item.Strategy != returnTailStrategy {
+		if item.Strategy != returnTailStrategy && item.Strategy != mapLiteralStrategy {
 			return nil, fail("verify-result", "consume-extraction-proof", "EXTRACTION_STRATEGY_UNSUPPORTED", "KNOWN_CONTRADICTION", "report-counterexample", nil)
 		}
 		if len(item.ProofStages) != len(returnTailObligations)-2 || len(item.ContractObligations) != len(returnTailObligations) {
