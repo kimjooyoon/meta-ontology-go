@@ -16,7 +16,11 @@ import (
 func revisionObservationMode(flags *flag.FlagSet) (bool, error) {
 	requested := false
 	operationRequested := false
+	independentRequested := false
 	flags.Visit(func(current *flag.Flag) {
+		if current.Name == "revision-consumer" || current.Name == "revision-consumer-digest" {
+			requested, independentRequested = true, true
+		}
 		if current.Name == "observe-revision" || current.Name == "revision-operation" {
 			requested = true
 		}
@@ -30,6 +34,7 @@ func revisionObservationMode(flags *flag.FlagSet) (bool, error) {
 	allowed := map[string]bool{
 		"observe-revision": true, "policy": true, "revision-operation": true,
 		"profile-package": true, "profile-namespace": true,
+		"revision-consumer": true, "revision-consumer-digest": true,
 	}
 	var modeError error
 	flags.Visit(func(current *flag.Flag) {
@@ -39,6 +44,11 @@ func revisionObservationMode(flags *flag.FlagSet) (bool, error) {
 	})
 	if modeError != nil {
 		return true, modeError
+	}
+	if independentRequested {
+		if err := validateRevisionConsumerFlags(flags); err != nil {
+			return true, err
+		}
 	}
 	if operationRequested && flags.Lookup("revision-operation").Value.String() == "" {
 		return true, errors.New("Gooo revision operation requires a nonempty contract path")
@@ -65,6 +75,10 @@ func observeRevision(policyPath, requestPath, profilePackage, profileNamespace s
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
+	if *revisionConsumerPath != "" {
+		return observeIndependentRevision(ctx, policyPath, source, requestBytes, profilePackage,
+			profileNamespace, *revisionOperationPath, *revisionConsumerPath, *revisionConsumerDigest, output)
+	}
 	if *revisionOperationPath != "" {
 		return observeBoundRevision(ctx, policyPath, source, requestBytes, profilePackage, profileNamespace, output)
 	}
