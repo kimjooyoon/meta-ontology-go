@@ -1281,5 +1281,8 @@ func returnTailDirectLocalLValue(expression ast.Expr, object types.Object, local
 }
 
 func returnTailContradiction(obligation, detail string) error {
-	return knownSuffixContradiction("obligation=" + obligation + ": " + detail)
+	return suffixContradiction{
+		message:    "obligation=" + obligation + ": " + detail,
+		obligation: obligation,
+	}
 }

@@ -1,6 +1,7 @@
 package extractor
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -18,7 +19,7 @@ func buildMapLiteralCandidate(root, logical string, source []byte, fset *token.F
 		if literal == nil {
 			continue
 		}
-		candidate, err := renderMapLiteralCandidate(source, fset, file, function, literal, keys, evidence.pkg)
+		candidate, err := renderMapLiteralCandidate(source, fset, file, function, literal, keys, evidence)
 		if err != nil {
 			if isKnownSuffixContradiction(err) {
 				continue
@@ -35,6 +36,31 @@ func buildMapLiteralCandidate(root, logical string, source []byte, fset *token.F
 		return &returnTailCandidate{helperName: candidate.helperName, helper: candidate.helper, result: candidate.result, evidence: *proof}, nil
 	}
 	return nil, nil
+}
+
+// A rejected relocation is not a rejection of a caller-local transformation.
+// Missing contract/type evidence must never grant an alternative strategy.
+func mapLiteralPriorFailure(err error) (Failure, bool) {
+	if failure, ok := errors.AsType[Failure](err); ok {
+		return failure, failure.Reason == "CALLEE_EFFECTS_UNPROVEN"
+	}
+	rejection, ok := err.(suffixContradiction)
+	if !ok || rejection.obligation != obligationControlFlow {
+		return Failure{}, false
+	}
+	return Failure{
+		Stage:         "derive-recipe",
+		Step:          "admit-return-tail",
+		Reason:        "RETURN_TAIL_CONTROL_FLOW_UNSUPPORTED",
+		UnknownClass:  "KNOWN_CONTRADICTION",
+		NextOperation: "select-caller-preserving-alternative",
+		BlockedBy:     []string{},
+		Diagnostics: []string{
+			"strategy=" + returnTailStrategy,
+			"obligation=" + rejection.obligation,
+			"original_rejection=" + rejection.message,
+		},
+	}, true
 }
 
 func eligibleMapLiteral(statement ast.Stmt, file *ast.File, evidence typeEvidence) (*ast.CompositeLit, []string) {
@@ -107,4 +133,82 @@ func mapLiteralHelperName(file *ast.File, pkg *types.Package, function string) s
 			return name
 		}
 	}
+}
+
+func findMapReceiverFusion(source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, evidence typeEvidence) *mapReceiverFusion {
+	for index := 0; index+1 < len(function.Body.List); index++ {
+		first, firstOK := function.Body.List[index].(*ast.AssignStmt)
+		next, nextOK := function.Body.List[index+1].(*ast.AssignStmt)
+		if !firstOK || !nextOK {
+			continue
+		}
+		receiver := mapReceiverFusionBinding(first, next, evidence)
+		if receiver == nil || mapReceiverFusionHasComments(fset, file, first, next) {
+			continue
+		}
+		return renderMapReceiverFusion(source, fset, first, next, receiver)
+	}
+	return nil
+}
+
+func mapReceiverFusionBinding(first, next *ast.AssignStmt, evidence typeEvidence) *ast.Ident {
+	if evidence.info == nil || evidence.pkg == nil || first.Tok != token.DEFINE ||
+		len(first.Lhs) != 1 || len(first.Rhs) != 1 || len(next.Rhs) != 1 ||
+		(next.Tok != token.DEFINE && next.Tok != token.ASSIGN) {
+		return nil
+	}
+	binding, ok := first.Lhs[0].(*ast.Ident)
+	if !ok || binding.Name == "_" {
+		return nil
+	}
+	initializer, ok := first.Rhs[0].(*ast.CallExpr)
+	if !ok || evidence.info.TypeOf(initializer) == nil {
+		return nil
+	}
+	if _, ok := evidence.info.TypeOf(initializer).Underlying().(*types.Pointer); !ok {
+		return nil
+	}
+	call, ok := next.Rhs[0].(*ast.CallExpr)
+	if !ok {
+		return nil
+	}
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil
+	}
+	receiver, ok := selector.X.(*ast.Ident)
+	object := evidence.info.Defs[binding]
+	if !ok || object == nil || evidence.info.Uses[receiver] != object {
+		return nil
+	}
+	method, _, _ := types.LookupFieldOrMethod(evidence.info.TypeOf(initializer), false, evidence.pkg, selector.Sel.Name)
+	if _, ok := method.(*types.Func); !ok || !mapReceiverFusionSingleUse(next, evidence.info, object) {
+		return nil
+	}
+	return receiver
+}
+
+func mapReceiverFusionSingleUse(next *ast.AssignStmt, info *types.Info, object types.Object) bool {
+	for _, target := range next.Lhs {
+		if _, ok := target.(*ast.Ident); !ok {
+			return false
+		}
+	}
+	uses := 0
+	for _, used := range info.Uses {
+		if used == object {
+			uses++
+		}
+	}
+	return uses == 1
+}
+
+func mapReceiverFusionHasComments(fset *token.FileSet, file *ast.File, first, next ast.Stmt) bool {
+	startLine := fset.Position(first.Pos()).Line
+	for _, comment := range file.Comments {
+		if comment.Pos() < next.End() && fset.Position(comment.End()).Line >= startLine-1 {
+			return true
+		}
+	}
+	return false
 }
