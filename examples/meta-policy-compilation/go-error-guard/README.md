@@ -66,11 +66,22 @@ cannot silently repair the original pin or become a claimed fixed point.
 
 The checked-in Go golden fixture is the actual original
 `cmd/gooo/run_package_source.go` at a97a1025d50c5405302853155ae2f4e93436d0cf.
-The native test freezes the unchanged repository regression file introduced by
-#849 before generating a candidate. Both trials use the same oracle bytes.
+Before generation, the native test uses Go's active-package file list to freeze
+the current CLI Go files and its complete active test-source set. Both trials
+use the same oracle bytes, including tests moved into generated files.
+Runtime billing-package Gooo input digests are recorded and checked unchanged.
 
-GitHub Actions builds the original and generated source using caller-owned Go
-build overlays. It runs only the four selected leaf paths in cmd/gooo:
+The overlay resolves the function named by the Gooo program in that active
+package. It replaces only that declaration in its current owning file, not the
+whole historical file. Package, signature and required import bindings must
+match. Missing or duplicate declarations and changed context fail explicitly.
+Existing extracted files and unrelated declarations are neither removed nor
+reintroduced. The input files and active file membership are checked after
+both trials. This preserves the repository-projection and nested-verifier
+paths rather than skipping them.
+
+GitHub Actions builds the original and generated declaration variants using
+caller-owned Go build overlays. It runs only the four selected leaf paths in cmd/gooo:
 human rejected writer, JSON rejected writer, human success, and JSON replay.
 The required before pair is 3 pass / 1 fail; the candidate must produce
 4 pass / 0 fail. These are acceptance conditions until actual native events
@@ -83,6 +94,12 @@ persistent published release artifacts.
 
 The Gooo program materialized by the tests is a caller-input fixture, not a
 checked-in production language corpus entry or new completeness credit.
+The native case adds two bounded Go package-list observations around the two
+focused test trials, not additional full-suite builds. The oracle digest now
+identifies the active test-source digest map (ACTIVE_TEST_SOURCE_SET), not one
+physical test file. This snapshot covers direct package Go files and the named
+runtime Gooo inputs, not the entire dependency or toolchain closure.
+
 The oracle is separate from proposal generation but uses the same Go ecosystem,
 not a diverse independent implementation. Adoption, external utility and
 performance improvement remain UNKNOWN. No CI policy, fixed denominator,

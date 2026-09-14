@@ -26,23 +26,22 @@ func TestGoErrorGuardGeneratedCandidateUsesFrozenNativeOracle(t *testing.T) {
 		t.Fatal(err)
 	}
 	root := filepath.Clean(filepath.Join(directory, "..", "..", ".."))
-	oraclePath := filepath.Join(root, "cmd", "gooo", "run_package_source_test.go")
-	oracle, err := os.ReadFile(oraclePath)
+	// Freeze the active package and oracle before candidate generation.
+	// A build overlay does not change runtime filesystem reads.
+	temp := t.TempDir()
+	view := freezeGoGuardNativeView(t, root, temp)
+	program := goErrorGuardFixture()
+	profile, _, _, err := compileGoErrorGuard("guard.gooo", program)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Freeze the unchanged repository oracle before candidate generation.
-	// A build overlay does not change runtime filesystem reads.
-	temp := t.TempDir()
-	writeGoGuardNativeFile(t, filepath.Join(temp, "oracle.go"), oracle)
-	program := goErrorGuardFixture()
 	proposal, err := ProposeGoErrorGuard("guard.gooo", program, goErrorGuardOriginal)
 	if err != nil {
 		t.Fatal(err)
 	}
 	writeGoGuardNativeFile(t, filepath.Join(temp, "guard.gooo"), program)
-	before, beforeCode := runGoGuardNativeOverlay(t, root, temp, "before", goErrorGuardOriginal)
-	after, afterCode := runGoGuardNativeOverlay(t, root, temp, "after", []byte(proposal.CandidateSource))
+	before, beforeCode := runGoGuardNativeOverlay(t, root, temp, "before", goErrorGuardOriginal, view, profile.function)
+	after, afterCode := runGoGuardNativeOverlay(t, root, temp, "after", []byte(proposal.CandidateSource), view, profile.function)
 	if beforeCode != 1 || afterCode != 0 {
 		t.Fatalf("native process exits before=%d after=%d", beforeCode, afterCode)
 	}
@@ -55,23 +54,28 @@ func TestGoErrorGuardGeneratedCandidateUsesFrozenNativeOracle(t *testing.T) {
 			t.Fatalf("frozen leaf %s: before=%v after=%v", path, before[path], after[path])
 		}
 	}
-	currentOracle, err := os.ReadFile(oraclePath)
-	if err != nil || !bytes.Equal(oracle, currentOracle) {
-		t.Fatal("native trial changed the input oracle")
-	}
-	t.Logf("gooo guard witness: program=%s ir=%s activity=%s original=%s candidate=%s oracle=%s paths=4 before_pass=3 before_fail=1 after_pass=4 after_fail=0 adoption=UNKNOWN utility=UNKNOWN performance=UNKNOWN",
+	view.requireUnchanged(t, root)
+	t.Logf("gooo guard witness: program=%s ir=%s activity=%s original=%s candidate=%s oracle=%s oracle_scope=ACTIVE_TEST_SOURCE_SET paths=4 before_pass=3 before_fail=1 after_pass=4 after_fail=0 adoption=UNKNOWN utility=UNKNOWN performance=UNKNOWN",
 		proposal.ProgramDigest, proposal.SemanticDigest, proposal.ActivityID,
-		proposal.SourceDigest, proposal.CandidateDigest, DigestBytes(oracle))
+		proposal.SourceDigest, proposal.CandidateDigest, view.oracleDigest)
 }
 
-func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []byte) (map[string][]string, int) {
+func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []byte, view goGuardNativeView, subject string) (map[string][]string, int) {
 	t.Helper()
+	owner, rebound, err := bindGoGuardDeclaration(view.files, view.production, subject, source)
+	if err != nil {
+		t.Fatalf("bind native %s declaration: %v", trial, err)
+	}
 	backing := filepath.Join(temp, trial+".go")
-	writeGoGuardNativeFile(t, backing, source)
-	overlay, err := json.Marshal(map[string]map[string]string{"Replace": {
-		filepath.Join(root, "cmd", "gooo", "run_package_source.go"):      backing,
-		filepath.Join(root, "cmd", "gooo", "run_package_source_test.go"): filepath.Join(temp, "oracle.go"),
-	}})
+	writeGoGuardNativeFile(t, backing, rebound)
+	replacements := make(map[string]string, len(view.backing))
+	for path, frozen := range view.backing {
+		replacements[path] = frozen
+	}
+	replacements[filepath.Join(view.directory, owner)] = backing
+	t.Logf("guard declaration binding: trial=%s subject=%s owner=%s overlay_file=%s variant=%s",
+		trial, subject, owner, DigestBytes(rebound), DigestBytes(source))
+	overlay, err := json.Marshal(map[string]map[string]string{"Replace": replacements})
 	if err != nil {
 		t.Fatal(err)
 	}
