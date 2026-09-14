@@ -9,6 +9,7 @@ import (
 )
 
 // This is the actual pre-#849 file at a97a102, not a fabricated bad revision.
+//
 //go:embed testdata/go-error-guard/original.go.golden
 var goErrorGuardOriginal []byte
 
