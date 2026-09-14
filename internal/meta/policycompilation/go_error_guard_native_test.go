@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -69,9 +70,7 @@ func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []by
 	backing := filepath.Join(temp, trial+".go")
 	writeGoGuardNativeFile(t, backing, rebound)
 	replacements := make(map[string]string, len(view.backing))
-	for path, frozen := range view.backing {
-		replacements[path] = frozen
-	}
+	maps.Copy(replacements, view.backing)
 	replacements[filepath.Join(view.directory, owner)] = backing
 	t.Logf("guard declaration binding: trial=%s subject=%s owner=%s overlay_file=%s variant=%s",
 		trial, subject, owner, DigestBytes(rebound), DigestBytes(source))

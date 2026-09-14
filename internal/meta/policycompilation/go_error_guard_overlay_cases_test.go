@@ -14,7 +14,7 @@ func TestGoErrorGuardOverlayFollowsDeclarationWithoutReintroducingSiblings(t *te
 			files := map[string][]byte{
 				"empty.go":        []byte("package main\n"),
 				owner:             []byte(goGuardOverlayCurrent),
-				"frozen_test.go":   []byte("package main\n// frozen oracle\n"),
+				"frozen_test.go":  []byte("package main\n// frozen oracle\n"),
 				"other-helper.go": []byte("package main\nfunc unrelated() int { return 3 }\n"),
 			}
 			original, oracle := bytes.Clone(files[owner]), bytes.Clone(files["frozen_test.go"])

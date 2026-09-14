@@ -19,7 +19,7 @@ import (
 
 type goGuardPackageFiles struct {
 	Dir, Name                                    string
-	GoFiles, CgoFiles, TestGoFiles, XTestGoFiles    []string
+	GoFiles, CgoFiles, TestGoFiles, XTestGoFiles []string
 }
 
 type goGuardNativeView struct {
