@@ -340,7 +340,7 @@ func TestVerifierCacheTracePreservesRawFirstReplayFailure(t *testing.T) {
 	trace.action.InputContractSemanticDigest = strings.Repeat("b", 64)
 	for _, pass := range []string{"first", "replay"} {
 		output.Reset()
-		result := verifierCacheResult("testcache: fixture: "+pass+"\n", 1)
+		result := verifierCacheResult("testcache: fixture: input list not found: "+pass+"\n", 1)
 		failure := errors.New("verifier failed")
 		got, gotErr := observeProcessCall(&trace, pass, "verifier", func() (processResult, error) {
 			return result, failure
@@ -362,8 +362,69 @@ func TestVerifierCacheTracePreservesRawFirstReplayFailure(t *testing.T) {
 			event.InputContractSemanticDigest != trace.action.InputContractSemanticDigest ||
 			event.VerifierCache == nil || event.VerifierCache.ProcessBinding != "MATCHED" ||
 			event.VerifierCache.RawStderrDigest != result.Observation.RawStderrDigest ||
+			event.VerifierCache.StageRows["PRIOR_INPUT_LIST_LOOKUP"] != 1 ||
+			len(event.VerifierCache.SampleStages) != 1 || event.VerifierCache.SampleStages[0] != "PRIOR_INPUT_LIST_LOOKUP" ||
 			event.ExitCode == nil || *event.ExitCode != 1 || event.ReturnErrorObserved == nil || !*event.ReturnErrorObserved {
 			t.Fatalf("cache record lost its Gooo/process/failure binding: %#v", event)
+		}
+	}
+}
+
+
+func TestVerifierCacheStagesPreserveLookupBoundariesWithoutInferringCause(t *testing.T) {
+	for _, test := range []struct {
+		name, message, stage string
+	}{
+		{"identity", "fixture: test ID aa => bb", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"missing-list", "fixture: input list not found: unavailable", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"list-envelope", "fixture: input list malformed", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"list-record", "fixture: input list malformed (\"bad\")", "INPUT_LOG_PARSE"},
+		{"result-key", "fixture: test ID aa => input ID bb => cc", "TEST_OUTPUT_LOOKUP"},
+		{"missing-output", "fixture: test output not found: unavailable", "TEST_OUTPUT_LOOKUP"},
+		{"output-shape", "fixture: test output malformed", "TEST_OUTPUT_LOOKUP"},
+		{"expired", "fixture: test output expired due to go clean -testcache", "TEST_OUTPUT_LOOKUP"},
+		{"save-attempt", "fixture: save test ID aa => input ID bb => cc", "STORE_ATTEMPT"},
+		{"disabled", "caching disabled for test argument: -test.count=1", "CONFIGURATION"},
+		{"future", "fixture: future cache format", "UNRECOGNIZED"},
+		{"empty", "", "UNRECOGNIZED"},
+		{"empty-package", ": input list not found: unavailable", "UNRECOGNIZED"},
+		{"invalid-package", "fake package: input list not found: unavailable", "UNRECOGNIZED"},
+		{"incomplete-key", "fixture: test ID aa => input ID => cc", "UNRECOGNIZED"},
+		{"not-hex", "fixture: test ID zz => bb", "UNRECOGNIZED"},
+		{"save-without-input", "fixture: save test ID aa => bb", "UNRECOGNIZED"},
+		{"missing-detail", "fixture: input list not found: ", "UNRECOGNIZED"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			line := "testcache: " + test.message
+			got := observeMetaVerifierCache(verifierCacheResult(line+"\n", 0))
+			total := 0
+			for _, count := range got.StageRows {
+				total += count
+			}
+			if got.DiagnosticRows != 1 || total != 1 || len(got.StageRows) != 6 || got.StageRows[test.stage] != 1 ||
+				len(got.SampleStages) != 1 || got.SampleStages[0] != test.stage || got.Samples[0] != line ||
+				got.StageBasis != "GO_TESTCACHE_TEXT_V1_NOT_EXECUTION_ATTESTATION" ||
+				got.LookupIdentityKind != "NOT_EXPOSED_BY_NATIVE_TEXT" || got.ProcessBinding != "MATCHED" ||
+				got.NativeInterpretation != "NOT_INFERRED" || got.ReuseAuthority != "NONE" || got.Improvement != "UNKNOWN" {
+				t.Fatalf("diagnostic shape became a cause or execution claim: %#v", got)
+			}
+		})
+	}
+}
+
+func TestVerifierCacheStageCountsKeepBoundedCoverageBeyondSampleLimit(t *testing.T) {
+	line := "testcache: fixture: input list not found: unavailable\n"
+	for _, rows := range []int{maxVerifierCacheSamples + 3, maxVerifierCacheRows + 1} {
+		got := observeMetaVerifierCache(verifierCacheResult(strings.Repeat(line, rows), 0))
+		want, coverage := rows, "COMPLETE"
+		if want > maxVerifierCacheRows {
+			want, coverage = maxVerifierCacheRows, "TRUNCATED"
+		}
+		if got.DiagnosticRows != want || got.StageRows["PRIOR_INPUT_LIST_LOOKUP"] != want ||
+			got.StageRows["TEST_OUTPUT_LOOKUP"] != 0 || got.StageRows["UNRECOGNIZED"] != 0 ||
+			len(got.Samples) != maxVerifierCacheSamples || len(got.SampleStages) != len(got.Samples) ||
+			got.InputCoverage != coverage || got.LookupIdentityKind != "NOT_EXPOSED_BY_NATIVE_TEXT" {
+			t.Fatalf("sample limit concealed stage counts or lookup uncertainty: %#v", got)
 		}
 	}
 }

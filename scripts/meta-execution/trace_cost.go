@@ -166,6 +166,11 @@ type metaVerifierCache struct {
 	NativeInterpretation string   `json:"native_interpretation"`
 	ReuseAuthority       string   `json:"reuse_authority"`
 	Improvement          string   `json:"improvement"`
+
+	StageRows          map[string]int `json:"stage_rows"`
+	SampleStages       []string       `json:"sample_stages"`
+	StageBasis         string         `json:"stage_basis"`
+	LookupIdentityKind string         `json:"lookup_identity_kind"`
 }
 
 func observeMetaVerifierCache(result processResult) *metaVerifierCache {
@@ -173,8 +178,17 @@ func observeMetaVerifierCache(result processResult) *metaVerifierCache {
 	cache := &metaVerifierCache{
 		Unit: "NATIVE_DIAGNOSTIC_LINES_NOT_TEST_CASES", CoverageScope: "BOUNDED_STDERR_PARSE_ONLY",
 		RawStderrDigest: digest, StderrBytes: len(result.Stderr), ProcessBinding: "UNOBSERVED",
-		Samples: []string{}, NativeInterpretation: "NOT_INFERRED",
+		Samples: []string{}, SampleStages: []string{}, NativeInterpretation: "NOT_INFERRED",
 		ReuseAuthority: "NONE", Improvement: "UNKNOWN",
+		StageBasis: "GO_TESTCACHE_TEXT_V1_NOT_EXECUTION_ATTESTATION", LookupIdentityKind: "NOT_EXPOSED_BY_NATIVE_TEXT",
+		StageRows: map[string]int{
+			"PRIOR_INPUT_LIST_LOOKUP": 0,
+			"INPUT_LOG_PARSE":         0,
+			"TEST_OUTPUT_LOOKUP":      0,
+			"STORE_ATTEMPT":           0,
+			"CONFIGURATION":           0,
+			"UNRECOGNIZED":            0,
+		},
 	}
 	if result.Observation.RawStderrDigest != "" {
 		cache.ProcessBinding = "MISMATCH"
@@ -212,8 +226,11 @@ func (cache *metaVerifierCache) observeLines(data []byte) {
 			break
 		}
 		cache.DiagnosticRows++
+		stage := classifyMetaVerifierCacheStage(string(line))
+		cache.StageRows[stage]++
 		if len(cache.Samples) < maxVerifierCacheSamples {
 			cache.Samples = append(cache.Samples, string(line))
+			cache.SampleStages = append(cache.SampleStages, stage)
 		}
 	}
 	switch {
@@ -226,4 +243,67 @@ func (cache *metaVerifierCache) observeLines(data []byte) {
 	default:
 		cache.InputCoverage = "COMPLETE"
 	}
+}
+
+
+// Classify the bounded text shape, not its author, cause, or permission to reuse.
+func classifyMetaVerifierCacheStage(line string) string {
+	const prefix = "testcache: "
+	if !strings.HasPrefix(line, prefix) {
+		return "UNRECOGNIZED"
+	}
+	body := strings.TrimPrefix(line, prefix)
+	disabled := "caching disabled for test argument: "
+	if strings.HasPrefix(body, disabled) && strings.TrimSpace(strings.TrimPrefix(body, disabled)) != "" {
+		return "CONFIGURATION"
+	}
+	pkg, message, found := strings.Cut(body, ": ")
+	if !found || pkg == "" || strings.ContainsAny(pkg, " \t\r\n") {
+		return "UNRECOGNIZED"
+	}
+	switch {
+	case message == "input list malformed" || nativeCacheMessageDetail(message, "input list not found: "):
+		return "PRIOR_INPUT_LIST_LOOKUP"
+	case strings.HasPrefix(message, "input list malformed (") && strings.HasSuffix(message, ")"):
+		return "INPUT_LOG_PARSE"
+	case message == "test output malformed" || message == "test output expired due to go clean -testcache" ||
+		nativeCacheMessageDetail(message, "test output not found: "):
+		return "TEST_OUTPUT_LOOKUP"
+	default:
+		return nativeCacheKeyMessageStage(message)
+	}
+}
+
+func nativeCacheMessageDetail(message, prefix string) bool {
+	return strings.HasPrefix(message, prefix) && strings.TrimSpace(strings.TrimPrefix(message, prefix)) != ""
+}
+
+func nativeCacheKeyMessageStage(message string) string {
+	fields := strings.Fields(message)
+	store := len(fields) > 0 && fields[0] == "save"
+	if store {
+		fields = fields[1:]
+	}
+	if (len(fields) != 5 && len(fields) != 9) || fields[0] != "test" || fields[1] != "ID" ||
+		!nativeCacheHexText(fields[2]) || fields[3] != "=>" {
+		return "UNRECOGNIZED"
+	}
+	if len(fields) == 5 {
+		if store || !nativeCacheHexText(fields[4]) {
+			return "UNRECOGNIZED"
+		}
+		return "PRIOR_INPUT_LIST_LOOKUP"
+	}
+	if fields[4] != "input" || fields[5] != "ID" || !nativeCacheHexText(fields[6]) ||
+		fields[7] != "=>" || !nativeCacheHexText(fields[8]) {
+		return "UNRECOGNIZED"
+	}
+	if store {
+		return "STORE_ATTEMPT"
+	}
+	return "TEST_OUTPUT_LOOKUP"
+}
+
+func nativeCacheHexText(value string) bool {
+	return value != "" && len(value)%2 == 0 && strings.Trim(value, "0123456789abcdef") == ""
 }
