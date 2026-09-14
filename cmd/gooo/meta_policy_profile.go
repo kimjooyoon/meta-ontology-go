@@ -34,8 +34,8 @@ func runMetaPolicyGenerationProfile(options generateOptions, input generateInput
 		return exitOK
 	}
 	if _, err := fmt.Fprintf(stdout, "generated profile: %s\npolicy: %s\nartifact: %s\njudge: %s\nmanifest: %s\n", policycompilation.PublicProfileID, artifacts.paths[0], artifacts.paths[1], artifacts.paths[2], artifacts.paths[3]); err != nil {
-			return exitFailure
-		}
+		return exitFailure
+	}
 	return exitOK
 }
 
@@ -318,8 +318,8 @@ func runMetaPolicyRevisionProfile(options generateOptions, input generateInput, 
 		return exitOK
 	}
 	if _, err := fmt.Fprintf(stdout, "generated profile: %s\ncandidate: %s\nproposal: %s\n", policycompilation.PublicPolicyRevisionProfileID, candidatePath, reportPath); err != nil {
-			return exitFailure
-		}
+		return exitFailure
+	}
 	return exitOK
 }
 
