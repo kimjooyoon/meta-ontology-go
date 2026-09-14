@@ -253,7 +253,7 @@ func newPublicProfileDeliveryFixture(t *testing.T, revision bool) publicProfileD
 	}
 	outputDir := filepath.Join(t.TempDir(), "public")
 	fixture := publicProfileDeliveryFixture{
-		args: metaPolicyProfileArgs(policyPath, projectRoot, outputDir, "metapolicycompilation", "metapolicycompilation"),
+		args:   metaPolicyProfileArgs(policyPath, projectRoot, outputDir, "metapolicycompilation", "metapolicycompilation"),
 		source: source, policyPath: policyPath, outputDir: outputDir,
 		profile: policycompilation.PublicProfileID, reportName: "generation-manifest.json",
 		files: []string{"artifact.json", "generation-manifest.json", "judge.go", "policy.json"},
