@@ -103,9 +103,14 @@ func executeCollapse(workspace, gitDir, metricsPath string, plan generation.Plan
 	if err != nil {
 		return operationMaterialization{}, newOperationError("observe-plan", "parse-collapse-subject", "SUBJECT_COORDINATE_MALFORMED", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
-	first, firstErr := materializeCollapse(workspace, gitDir, metricsPath, plan, action, subject, trace, "first")
+	replay, prepareErr := newMetaReplayWorkspace()
+	if prepareErr != nil {
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
+	}
+	defer replay.close()
+	first, firstErr := materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, subject, trace, "first", replay)
 	if firstErr != nil {
-		second, secondErr := materializeCollapse(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay")
+		second, secondErr := materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay", replay)
 		if len(first.Canonical) == 0 || secondErr == nil || len(second.Canonical) == 0 {
 			return first, firstErr
 		}
@@ -114,7 +119,7 @@ func executeCollapse(workspace, gitDir, metricsPath string, plan generation.Plan
 		}
 		return first, firstErr
 	}
-	second, secondErr := materializeCollapse(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay")
+	second, secondErr := materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, subject, trace, "replay", replay)
 	if secondErr != nil {
 		return second, secondErr
 	}
@@ -126,11 +131,19 @@ func executeCollapse(workspace, gitDir, metricsPath string, plan generation.Plan
 }
 
 func materializeCollapse(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
-	temporary, err := copyWorkspace(workspace)
+	replay, prepareErr := newMetaReplayWorkspace()
+	if prepareErr != nil {
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
+	}
+	defer replay.close()
+	return materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, subject, trace, pass, replay)
+}
+
+func materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, subject sourcepolicy.SourceSubject, trace metaExecutionTrace, pass string, replay *metaReplayWorkspace) (operationMaterialization, *operationError) {
+	temporary, err := replay.restore(workspace)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
 	}
-	defer os.RemoveAll(temporary)
 	snapshot, snapshotErr := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")

@@ -162,9 +162,15 @@ func TestVerifierCacheInvocationLeavesOtherOperationsUntouched(t *testing.T) {
 
 func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.T) {
 	// Synthetic cache conformance only, not a production speedup or utility claim.
-	root := t.TempDir()
+	source := t.TempDir()
+	replay, err := newMetaReplayWorkspace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer replay.close()
+	root := replay.path
 	write := func(name, content string) {
-		if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o600); err != nil {
+		if err := os.WriteFile(filepath.Join(source, name), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -178,7 +184,9 @@ func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.
 	environment = replaceEnvironment(environment, "GODEBUG", "panicnil=1")
 	trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
 	trace.action.Activity = "CollapseAssignReturn"
+	restoreVerifierReplayFixture(t, replay, source, root)
 	first, firstErr := runGoTestObserved(root, environment, &trace, "first")
+	restoreVerifierReplayFixture(t, replay, source, root)
 	second, secondErr := runGoTestObserved(root, environment, &trace, "replay")
 	if firstErr != nil || secondErr != nil || first.Observation.ExitCode != 0 || second.Observation.ExitCode != 0 {
 		t.Fatalf("native fixture did not pass: first=%v %s replay=%v %s", firstErr, first.Stderr, secondErr, second.Stderr)
@@ -194,11 +202,93 @@ func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.
 		}
 	}
 	write("value.go", "package cachewitness\n\nfunc Value() int { return 41 }\n")
+	restoreVerifierReplayFixture(t, replay, source, root)
 	changed, changedErr := runGoTestObserved(root, environment, &trace, "changed-source")
 	failure := classifyVerifierProcess("synthetic-cache-witness", changed, changedErr)
 	if changedErr == nil || changed.Observation.ExitCode <= 0 || failure == nil ||
 		failure.reason != "PROJECTED_COMPILE_OR_TEST_FAILED" || failure.class != "KNOWN_CONTRADICTION" ||
 		strings.Contains(string(changed.Stdout), "(cached)") {
 		t.Fatalf("changed source reused success: result=%#v error=%v failure=%#v", changed, changedErr, failure)
+	}
+}
+
+func restoreVerifierReplayFixture(t *testing.T, replay *metaReplayWorkspace, source, expectedRoot string) {
+	t.Helper()
+	root, err := replay.restore(source)
+	if err != nil || root != expectedRoot {
+		t.Fatalf("replay address or restoration changed: root=%q expected=%q error=%v", root, expectedRoot, err)
+	}
+}
+
+func TestMetaReplayWorkspaceRestoresPristineSource(t *testing.T) {
+	source := t.TempDir()
+	const original = "package fixture\n"
+	if err := os.WriteFile(filepath.Join(source, "input.go"), []byte(original), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	replay, err := newMetaReplayWorkspace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer replay.close()
+	root := replay.path
+	restoreVerifierReplayFixture(t, replay, source, root)
+	for _, name := range []string{"input.go", "residue.go"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte("mutated"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	restoreVerifierReplayFixture(t, replay, source, root)
+	data, err := os.ReadFile(filepath.Join(root, "input.go"))
+	if err != nil || string(data) != original {
+		t.Fatalf("prior candidate survived restoration: %q (%v)", data, err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "residue.go")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("prior candidate residue survived restoration: %v", err)
+	}
+	data, err = os.ReadFile(filepath.Join(source, "input.go"))
+	if err != nil || string(data) != original {
+		t.Fatalf("input source was changed: %q (%v)", data, err)
+	}
+}
+
+func TestMetaReplayWorkspaceSeparatesInvocationsAndRevokesClosedLease(t *testing.T) {
+	first, err := newMetaReplayWorkspace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer first.close()
+	second, err := newMetaReplayWorkspace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer second.close()
+	if first.path == second.path {
+		t.Fatal("independent invocations acquired the same workspace")
+	}
+	first.close()
+	for _, replay := range []*metaReplayWorkspace{nil, {}, first} {
+		if _, err := replay.restore(t.TempDir()); err == nil {
+			t.Fatal("unallocated or closed workspace acquired restore authority")
+		}
+	}
+}
+
+func TestMetaReplayWorkspaceRejectsAliasedSourceWithoutDeletingIt(t *testing.T) {
+	replay, err := newMetaReplayWorkspace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer replay.close()
+	path := filepath.Join(replay.path, "keep")
+	if err := os.WriteFile(path, []byte("original"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := replay.restore(replay.path); err == nil {
+		t.Fatal("aliased input was admitted")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || string(data) != "original" {
+		t.Fatalf("rejected aliased source was deleted: %q (%v)", data, err)
 	}
 }
