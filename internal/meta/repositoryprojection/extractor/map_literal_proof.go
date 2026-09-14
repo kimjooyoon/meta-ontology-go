@@ -8,8 +8,8 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
-func mapLiteralStrategyEvidence(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, candidate *suffixCandidate, preflight []renderedCapacityObservation, previous Failure) (*StrategyEvidence, error) {
-	item, err := suffixStrategyEvidence(root, logical, source, fset, file, function, candidate, preflight)
+func mapLiteralStrategyEvidence(root, logical string, source []byte, fset *token.FileSet, file *ast.File, function *ast.FuncDecl, candidate *mapLiteralCandidate, preflight []renderedCapacityObservation, previous Failure) (*StrategyEvidence, error) {
+	item, err := suffixStrategyEvidence(root, logical, source, fset, file, function, candidate.suffixCandidate, preflight)
 	if err != nil {
 		return nil, err
 	}
@@ -26,11 +26,19 @@ func mapLiteralStrategyEvidence(root, logical string, source []byte, fset *token
 	if err != nil {
 		return nil, err
 	}
+	var fusion *mapReceiverFusionReceipt
+	if candidate.fusion != nil {
+		fusion = &candidate.fusion.receipt
+	}
+	preparation, err := json.Marshal(fusion)
+	if err != nil {
+		return nil, err
+	}
 	chain := newReturnTailProofChain(obligations, source, candidate.result, contract.SourceDigest, contract.SemanticDigest)
 	details := []string{
 		"helper returns the same unnamed map[string]any type; original function signature and returns are unchanged",
-		"one direct short-declaration literal is replaced; no statements, returns, defer, or go operations move",
-		"every value expression remains in caller scope as one positional any argument; unique constant string keys are retained",
+		"one direct short-declaration literal is replaced; no branch, return, defer, or go operation moves; caller_receiver_fusion=" + string(preparation),
+		"every map value stays in caller scope as one positional any argument; unique constant keys remain; any recorded pointer receiver fusion has one type-bound use and only identifier assignment targets",
 		"constructor contains only a fresh map and parameter reads; original calls and lexical evaluation order remain in caller; allocation timing and performance are not asserted; previous_return_tail_failure=" + string(retained),
 	}
 	for index, detail := range details {
