@@ -370,7 +370,6 @@ func TestVerifierCacheTracePreservesRawFirstReplayFailure(t *testing.T) {
 	}
 }
 
-
 func TestVerifierCacheStagesPreserveLookupBoundariesWithoutInferringCause(t *testing.T) {
 	for _, test := range []struct {
 		name, message, stage string

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"strings"
 	"time"
 )
 
@@ -244,7 +245,6 @@ func (cache *metaVerifierCache) observeLines(data []byte) {
 		cache.InputCoverage = "COMPLETE"
 	}
 }
-
 
 // Classify the bounded text shape, not its author, cause, or permission to reuse.
 func classifyMetaVerifierCacheStage(line string) string {
