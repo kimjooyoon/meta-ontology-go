@@ -20,6 +20,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.SetOutput(stderr)
 	programPath := flags.String("program", "", "caller-owned Gooo guard program")
 	sourcePath := flags.String("source", "", "pinned original Go source")
+	pipeline := flags.Bool("pipeline", false, "explicit two-activity canonical Go guard pipeline")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return 0
@@ -40,7 +41,13 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	report, proposalErr := policycompilation.ProposeGoErrorGuard(*programPath, program, source)
+	var report any
+	var proposalErr error
+	if *pipeline {
+		report, proposalErr = policycompilation.ProposeGoErrorGuardPipeline(*programPath, program, source)
+	} else {
+		report, proposalErr = policycompilation.ProposeGoErrorGuard(*programPath, program, source)
+	}
 	if err := json.NewEncoder(stdout).Encode(report); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
