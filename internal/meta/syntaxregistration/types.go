@@ -29,6 +29,7 @@ type Request struct {
 	Toolchain      string                        `json:"toolchain"`
 
 	ExecutionIdentity ExecutionIdentity `json:"execution_identity"`
+	PromoteMetaSource bool              `json:"promote_meta_source,omitempty"`
 }
 
 type Failure struct {

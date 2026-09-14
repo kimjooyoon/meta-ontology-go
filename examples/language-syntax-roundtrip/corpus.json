@@ -608,6 +608,7 @@
     "internal/meta/generation/operation-input-contract.gooo",
     "internal/meta/generation/callback-preview-contract.gooo",
     "internal/meta/generation/callback-extraction-contract.gooo",
+    "internal/meta/policycompilation/revision-operation.gooo",
     "examples/relay-game-contract/main.gooo"
   ]
 }
