@@ -517,8 +517,9 @@ func validStrategyEvidenceValues(report extractorReport) bool {
 				}
 				continue
 			}
-			if evidence.Strategy != "return-preserving-terminal-tail" || len(evidence.ContractObligations) != len(contract.Obligations) ||
-				len(evidence.ProofStages) != len(contract.Obligations) || len(evidence.Obligations) != len(contract.Obligations) {
+			if (evidence.Strategy != "return-preserving-terminal-tail" && evidence.Strategy != "caller-evaluated-map-construction") ||
+				len(evidence.ContractObligations) != len(contract.Obligations) || len(evidence.ProofStages) != len(contract.Obligations) ||
+				len(evidence.Obligations) != len(contract.Obligations) {
 				return false
 			}
 			for index, expected := range contract.Obligations {

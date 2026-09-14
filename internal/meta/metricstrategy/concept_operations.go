@@ -3,12 +3,58 @@ package metricstrategy
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languageconcept"
+	metric "github.com/kimjooyoon/meta-ontology-go/internal/meta/metriccounterfactualverify/intervention"
 )
 
 type conceptOperation struct {
 	subject, carrier, family, trilemma string
+}
+
+// ConceptOperationSpec is the typed operation cohort emitted by the strategy
+// producer. The cohort is derived from upstream intervention indicators and
+// the two registered terminal bindings; it is not derived from the observed
+// concept bindings in the sealed plan.
+type ConceptOperationSpec struct {
+	Subject  string
+	Carrier  string
+	Family   string
+	Trilemma string
+}
+
+// ConceptOperationCohort reconstructs the expected concept-operation cohort
+// from the non-concept intervention indicators. The terminal rule is fixed:
+// both registered terminal bindings are always part of the cohort.
+func ConceptOperationCohort(indicators []metric.Indicator) ([]ConceptOperationSpec, error) {
+	source, err := buildBindings(indicators)
+	if err != nil {
+		return nil, err
+	}
+	return conceptOperationSpecs(source)
+}
+
+// ConceptIDForOperation returns the catalog concept bound to an operation.
+func ConceptIDForOperation(operation string) (string, bool) {
+	conceptID, ok := operationConceptIDs[operation]
+	return conceptID, ok
+}
+
+// ConceptOperationIndicatorID returns the canonical indicator ID for an
+// operation, including the explicit unresolved form for unmapped operations.
+func ConceptOperationIndicatorID(operation string) string {
+	if _, ok := operationConceptIDs[operation]; ok {
+		return "gooo.concept.operation." + operation + ".v1"
+	}
+	return "gooo.concept.unresolved-operation." + operation + ".v1"
+}
+
+// IsConceptOperationBinding identifies the declared concept-operation
+// binding family. This is a schema boundary, not an observed-count heuristic.
+func IsConceptOperationBinding(indicatorID string) bool {
+	return strings.HasPrefix(indicatorID, "gooo.concept.operation.") ||
+		strings.HasPrefix(indicatorID, "gooo.concept.unresolved-operation.")
 }
 
 func conceptOperationBindings(value languageconcept.Artifact, source []Binding) ([]Binding, error) {
@@ -16,6 +62,24 @@ func conceptOperationBindings(value languageconcept.Artifact, source []Binding) 
 	for _, concept := range value.Report.Concepts {
 		known[concept.ID] = true
 	}
+	specs, err := conceptOperationSpecs(source)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]Binding, 0, len(specs))
+	for _, spec := range specs {
+		binding, err := conceptOperationBinding(value.ArtifactDigest, conceptOperation{
+			subject: spec.Subject, carrier: spec.Carrier, family: spec.Family, trilemma: spec.Trilemma,
+		}, known)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, binding)
+	}
+	return result, nil
+}
+
+func conceptOperationSpecs(source []Binding) ([]ConceptOperationSpec, error) {
 	byOperation := make(map[string]conceptOperation)
 	for _, binding := range source {
 		current := conceptOperation{binding.MetaOperation, binding.MetaOperation, binding.Family, binding.Trilemma}
@@ -31,13 +95,10 @@ func conceptOperationBindings(value languageconcept.Artifact, source []Binding) 
 		keys = append(keys, operation)
 	}
 	sort.Strings(keys)
-	result := make([]Binding, 0, len(keys))
+	result := make([]ConceptOperationSpec, 0, len(keys))
 	for _, operation := range keys {
-		binding, err := conceptOperationBinding(value.ArtifactDigest, byOperation[operation], known)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, binding)
+		value := byOperation[operation]
+		result = append(result, ConceptOperationSpec{Subject: value.subject, Carrier: value.carrier, Family: value.family, Trilemma: value.trilemma})
 	}
 	return result, nil
 }

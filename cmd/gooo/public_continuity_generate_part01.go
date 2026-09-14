@@ -32,6 +32,9 @@ func loadContinuityCertificate(options generateOptions, input generateInput, rea
 	if cache.HashBytes(input.source).String() != certificate.Binding.SourceDigest {
 		return certificate, digest, "STALE_SOURCE"
 	}
+	if cache.HashBytes(input.previousGo).String() != certificate.Binding.PreviousGoDigest {
+		return certificate, digest, "BINDING_MISMATCH"
+	}
 	if certificate.Binding.ToolchainDigest != generation.SemanticRetentionToolchainDigest() {
 		return certificate, digest, "MISMATCHED_TOOLCHAIN"
 	}
