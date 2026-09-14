@@ -148,3 +148,57 @@ whole historical file. A proposal and a passing temporary build are still not
 persistent source adoption. Recover candidate bytes from CI, then obtain the
 separate public-profile owner's native acceptance before adoption. No source
 write permission, CI skip, promotion authority or performance claim is added.
+
+
+## Opt-in canonical Go pipeline
+
+A separate pipeline entry point connects the guard and renderer through the
+existing Gooo semantic graph. The default adapter and single-activity API still
+require two entities and one activity; they never guess this larger contract.
+
+~~~gooo
+package goerrorguard
+namespace goerrorguard
+entity Source id "gooo://error-guard/source"
+entity RawCandidate id "gooo://error-guard/raw-candidate"
+entity Candidate id "gooo://error-guard/candidate"
+activity GuardWrite(Source) -> RawCandidate computes "go-error-guard:v2;function=runMetaPolicyGenerationProfile;writer=stdout;writer-type=interfaceWriter;source=sha256:SOURCE_HEX;handler=sha256:HANDLER_HEX"
+activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.0"
+~~~
+
+SOURCE_HEX and HANDLER_HEX are placeholders, not executable pins. The guard may
+select the existing v1 or v2 profile without changing that profile's rules.
+
+~~~sh
+go run ./examples/meta-policy-compilation/go-error-guard \
+  -pipeline \
+  -program /caller/input/canonical-guard.gooo \
+  -source /caller/input/original.go \
+  > /caller/output/pipeline-proposal.json
+~~~
+
+The guard's raw candidate stays under the guard field. The top-level
+candidate_source is the canonical result of the explicitly declared renderer.
+Both activity IDs and the full input program/semantic digests are retained.
+The formatter version must exactly match the declared Go runtime version;
+this is a toolchain selection boundary, not a binary signature or provenance
+proof for an arbitrary host.
+
+Rendering requires the original source to already be canonical. It rejects
+formatting changes outside the original guard edit span instead of normalizing
+unrelated source. Its three native go/format calls check the original, render
+the raw candidate, and check the formatted candidate's fixed point. A failed
+guard does not invoke the renderer; it retains the direct failure and the
+renderer dependency-blocked UNKNOWN frontier separately.
+
+A rendered result remains a PROPOSED candidate with UNKNOWN independent
+admission and zero mutation/promotion authority. Formatter fixed point is not
+semantic equivalence, a repair acceptance, an execution receipt, or an
+automatic repository change.
+
+The native pipeline case uses the same five public-generation leaves and
+runtime-input protections as the raw v2 case, but its after variant consumes
+the pipeline's canonical output. Before4PASS/1FAIL and after5PASS/0FAIL remain
+requirements until observed in CI. It adds two focused CLI trials, not another
+full-suite invocation. The adapter has separate default/explicit-opt-in tests.
+No local Go invocation or CI/ownership-policy change accompanies this feature.

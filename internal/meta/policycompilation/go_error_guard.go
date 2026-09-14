@@ -56,6 +56,10 @@ func ProposeGoErrorGuard(filename string, program, source []byte) (GoErrorGuardP
 		return report, fmt.Errorf("%s: %w", report.Reason, err)
 	}
 	report.ActivityID, report.SemanticDigest = activity, semanticDigest
+	return proposeGoErrorGuardSource(report, profile, source)
+}
+
+func proposeGoErrorGuardSource(report GoErrorGuardProposal, profile goErrorGuardProgram, source []byte) (GoErrorGuardProposal, error) {
 	if profile.source != report.SourceDigest {
 		return declineGoErrorGuard(report, "REFUTED", "GO_SOURCE_PIN_MISMATCH", "", "")
 	}
