@@ -658,11 +658,11 @@ func verifierCacheEnvironment(environment []string, trace *metaExecutionTrace) [
 	}
 	value := ""
 	for _, entry := range environment {
-		if strings.HasPrefix(entry, "GODEBUG=") {
-			value = strings.TrimPrefix(entry, "GODEBUG=")
+		if after, ok := strings.CutPrefix(entry, "GODEBUG="); ok {
+			value = after
 		}
 	}
-	for _, setting := range strings.Split(value, ",") {
+	for setting := range strings.SplitSeq(value, ",") {
 		name, _, present := strings.Cut(setting, "=")
 		if present && name == "gocachetest" {
 			return environment

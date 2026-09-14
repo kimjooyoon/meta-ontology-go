@@ -422,7 +422,7 @@ func TestVerifierCacheNativeSourceChangeCannotReuseSuccess(t *testing.T) {
 	// Synthetic cache conformance only, not a production speedup or utility claim.
 	root := t.TempDir()
 	files := map[string]string{
-		"go.mod": "module " + verifierPackageSummaryModulePrefix + "/cachewitness\n\ngo 1.27.0\n",
+		"go.mod":   "module " + verifierPackageSummaryModulePrefix + "/cachewitness\n\ngo 1.27.0\n",
 		"value.go": "package cachewitness\n\nfunc Value() int { return 42 }\n",
 		"value_test.go": fmt.Sprintf("package cachewitness\n\nimport \"testing\"\n\nfunc TestValue(t *testing.T) {\n"+
 			"t.Log(%q)\nif Value() != 42 { t.Fatal(\"value changed\") }\n}\n", root),

@@ -154,18 +154,18 @@ const (
 
 // Native diagnostic text explains cache decisions; it cannot authorize reuse.
 type metaVerifierCache struct {
-	Unit                  string   `json:"unit"`
-	CoverageScope         string   `json:"coverage_scope"`
-	InputCoverage         string   `json:"input_coverage"`
-	RawStderrDigest       string   `json:"raw_stderr_digest"`
-	StderrBytes           int      `json:"stderr_bytes"`
-	ProcessBinding        string   `json:"process_binding"`
-	DiagnosticRows        int      `json:"diagnostic_rows"`
-	NonDiagnosticLines    int      `json:"non_diagnostic_lines"`
-	Samples               []string `json:"samples"`
-	NativeInterpretation  string   `json:"native_interpretation"`
-	ReuseAuthority        string   `json:"reuse_authority"`
-	Improvement           string   `json:"improvement"`
+	Unit                 string   `json:"unit"`
+	CoverageScope        string   `json:"coverage_scope"`
+	InputCoverage        string   `json:"input_coverage"`
+	RawStderrDigest      string   `json:"raw_stderr_digest"`
+	StderrBytes          int      `json:"stderr_bytes"`
+	ProcessBinding       string   `json:"process_binding"`
+	DiagnosticRows       int      `json:"diagnostic_rows"`
+	NonDiagnosticLines   int      `json:"non_diagnostic_lines"`
+	Samples              []string `json:"samples"`
+	NativeInterpretation string   `json:"native_interpretation"`
+	ReuseAuthority       string   `json:"reuse_authority"`
+	Improvement          string   `json:"improvement"`
 }
 
 func observeMetaVerifierCache(result processResult) *metaVerifierCache {

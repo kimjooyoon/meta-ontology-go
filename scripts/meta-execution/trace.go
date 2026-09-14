@@ -128,7 +128,7 @@ func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest
 	event.InvocationID = trace.state.invocationID
 	event.EventSequence = trace.state.nextEventSequence()
 	event.Cost = trace.state.cost.observe(event, time.Now())
-// Capture the process-return clock before parsing diagnostic output.
+	// Capture the process-return clock before parsing diagnostic output.
 	if boundary == "PROCESS_RETURNED" && commandKind == "verifier" && len(observedOutput) == 1 {
 		event.VerifierWork = observeMetaVerifierWork(observedOutput[0])
 		event.VerifierCache = observeMetaVerifierCache(observedOutput[0])
