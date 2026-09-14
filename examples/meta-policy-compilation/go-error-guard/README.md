@@ -104,3 +104,47 @@ The oracle is separate from proposal generation but uses the same Go ecosystem,
 not a diverse independent implementation. Adoption, external utility and
 performance improvement remain UNKNOWN. No CI policy, fixed denominator,
 local Go execution or automatic repository repair is added by this change.
+
+## V2: a local writer interface and a return-only handler
+
+V1 is unchanged. Select V2 explicitly when a free function returns from its
+guarded branch and then prints the human result before its final return:
+
+~~~gooo
+package goerrorguard
+namespace goerrorguard
+entity Source id "gooo://error-guard/source"
+entity Candidate id "gooo://error-guard/candidate"
+activity GuardWrite(Source) -> Candidate computes "go-error-guard:v2;function=runMetaPolicyGenerationProfile;writer=stdout;writer-type=interfaceWriter;source=sha256:SOURCE_HEX;handler=sha256:HANDLER_HEX"
+~~~
+
+The placeholders are not executable pins. V2 has exactly five fields:
+function, writer, writer-type, source and handler. The writer type must be an
+explicitly selected, non-generic, non-aliased local interface with exactly
+Write([]byte) (int, error). Embedded or imported interfaces and changed method
+sets are not inferred. The copied error handler must contain only one return.
+The guarded branch, discarded Fprintf and final return must be consecutive at
+the end of their block. Ambiguity and unsupported shapes remain UNKNOWN.
+
+The actual public generation and policy-revision functions at accepted source
+ad3af2b2f70ca2dfd3cb477b5cea7cce855c9032 are retained as one original Go fixture.
+Both are proposal cases; this change's native behavioral case covers public
+generation only. It must not be reported as policy-revision runtime coverage.
+
+The native case adds one frozen test file through an external build overlay,
+without writing a test into the repository. Its effective oracle digest covers
+the complete active test-source map plus that exact additional file. The
+runtime policy.gooo input is pinned and checked unchanged, separately from the
+base snapshot's billing inputs. The criteria are five leaf paths: human and JSON
+delivery to accepted and rejected writers, plus the existing exact-four-file
+regression. The required original result is 4 pass / 1 fail; a generated candidate
+must produce 5 pass / 0 fail. Counts are requirements until CI evidence exists.
+
+Successful human and JSON bytes must remain exact. Rejected delivery must not
+erase already-generated external files or change the input source. The native
+case uses two additional focused Go test processes, not another full suite.
+It follows declarations after repository projection rather than replacing the
+whole historical file. A proposal and a passing temporary build are still not
+persistent source adoption. Recover candidate bytes from CI, then obtain the
+separate public-profile owner's native acceptance before adoption. No source
+write permission, CI skip, promotion authority or performance claim is added.

@@ -7,6 +7,9 @@ import (
 )
 
 func findGoErrorGuards(file *ast.File, profile goErrorGuardProgram) ([]goErrorGuardMatch, int) {
+	if profile.returnOnly {
+		return findGoReturnGuards(file, profile)
+	}
 	matches := []goErrorGuardMatch{}
 	functions := 0
 	formatImport, writerImport := goGuardImport(file, "fmt"), goGuardImport(file, "io")
