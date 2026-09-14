@@ -60,6 +60,7 @@ type metaExecutionTraceEvent struct {
 	ReturnErrorObserved         *bool              `json:"return_error_observed,omitempty"`
 	Cost                        *metaExecutionCost `json:"cost,omitempty"`
 	VerifierWork                *metaVerifierWork  `json:"verifier_work,omitempty"`
+	VerifierCache               *metaVerifierCache `json:"verifier_cache,omitempty"`
 }
 
 func newMetaExecutionTraceState() *metaExecutionTraceState {
@@ -127,9 +128,10 @@ func (trace metaExecutionTrace) emit(boundary, pass, commandKind, contractDigest
 	event.InvocationID = trace.state.invocationID
 	event.EventSequence = trace.state.nextEventSequence()
 	event.Cost = trace.state.cost.observe(event, time.Now())
-	// Capture the process-return clock before parsing diagnostic stdout.
+// Capture the process-return clock before parsing diagnostic output.
 	if boundary == "PROCESS_RETURNED" && commandKind == "verifier" && len(observedOutput) == 1 {
 		event.VerifierWork = observeMetaVerifierWork(observedOutput[0])
+		event.VerifierCache = observeMetaVerifierCache(observedOutput[0])
 	}
 	payload, err := json.Marshal(event)
 	if err != nil {

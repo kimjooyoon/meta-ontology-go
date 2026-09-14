@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"bytes"
+	"time"
+)
 
 // Cost is diagnostic, never part of canonical output or permission evidence.
 type metaExecutionCost struct {
@@ -140,4 +143,87 @@ func observeMetaVerifierWork(result processResult) *metaVerifierWork {
 		}
 	}
 	return work
+}
+
+const (
+	maxVerifierCacheStderrBytes = 64 * 1024
+	maxVerifierCacheLineBytes   = 1024
+	maxVerifierCacheRows        = 512
+	maxVerifierCacheSamples     = 16
+)
+
+// Native diagnostic text explains cache decisions; it cannot authorize reuse.
+type metaVerifierCache struct {
+	Unit                  string   `json:"unit"`
+	CoverageScope         string   `json:"coverage_scope"`
+	InputCoverage         string   `json:"input_coverage"`
+	RawStderrDigest       string   `json:"raw_stderr_digest"`
+	StderrBytes           int      `json:"stderr_bytes"`
+	ProcessBinding        string   `json:"process_binding"`
+	DiagnosticRows        int      `json:"diagnostic_rows"`
+	NonDiagnosticLines    int      `json:"non_diagnostic_lines"`
+	Samples               []string `json:"samples"`
+	NativeInterpretation  string   `json:"native_interpretation"`
+	ReuseAuthority        string   `json:"reuse_authority"`
+	Improvement           string   `json:"improvement"`
+}
+
+func observeMetaVerifierCache(result processResult) *metaVerifierCache {
+	digest := digestBytes(result.Stderr)
+	cache := &metaVerifierCache{
+		Unit: "NATIVE_DIAGNOSTIC_LINES_NOT_TEST_CASES", CoverageScope: "BOUNDED_STDERR_PARSE_ONLY",
+		RawStderrDigest: digest, StderrBytes: len(result.Stderr), ProcessBinding: "UNOBSERVED",
+		Samples: []string{}, NativeInterpretation: "NOT_INFERRED",
+		ReuseAuthority: "NONE", Improvement: "UNKNOWN",
+	}
+	if result.Observation.RawStderrDigest != "" {
+		cache.ProcessBinding = "MISMATCH"
+		if result.Observation.RawStderrDigest == digest && result.Observation.StderrBytes == len(result.Stderr) {
+			cache.ProcessBinding = "MATCHED"
+		}
+	}
+	cache.observeLines(result.Stderr)
+	return cache
+}
+
+func (cache *metaVerifierCache) observeLines(data []byte) {
+	truncated := len(data) > maxVerifierCacheStderrBytes
+	if truncated {
+		data = data[:maxVerifierCacheStderrBytes]
+		data = data[:bytes.LastIndexByte(data, '\n')+1]
+	}
+	for len(data) > 0 {
+		line, remaining, _ := bytes.Cut(data, []byte{'\n'})
+		data = remaining
+		line = bytes.TrimSuffix(line, []byte{'\r'})
+		if len(line) > maxVerifierCacheLineBytes {
+			truncated = true
+			continue
+		}
+		if len(line) == 0 {
+			continue
+		}
+		if !bytes.HasPrefix(line, []byte("testcache: ")) {
+			cache.NonDiagnosticLines++
+			continue
+		}
+		if cache.DiagnosticRows == maxVerifierCacheRows {
+			truncated = true
+			break
+		}
+		cache.DiagnosticRows++
+		if len(cache.Samples) < maxVerifierCacheSamples {
+			cache.Samples = append(cache.Samples, string(line))
+		}
+	}
+	switch {
+	case truncated:
+		cache.InputCoverage = "TRUNCATED"
+	case cache.NonDiagnosticLines > 0:
+		cache.InputCoverage = "NON_DIAGNOSTIC_INPUT"
+	case cache.DiagnosticRows == 0:
+		cache.InputCoverage = "NO_CACHE_DIAGNOSTICS"
+	default:
+		cache.InputCoverage = "COMPLETE"
+	}
 }
