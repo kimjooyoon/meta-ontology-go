@@ -31,7 +31,13 @@ type GoErrorGuardProposal struct {
 }
 
 type goErrorGuardProgram struct {
-	function, writer, diagnostic, source, handler string
+	function   string
+	writer     string
+	diagnostic string
+	source     string
+	handler    string
+	writerType string
+	returnOnly bool
 }
 
 // ProposeGoErrorGuard implements an opt-in computes profile, not a v3 policy
@@ -120,6 +126,9 @@ func compileGoErrorGuard(filename string, source []byte) (goErrorGuardProgram, s
 
 func parseGoErrorGuardProgram(raw string) (goErrorGuardProgram, error) {
 	parts := strings.Split(raw, ";")
+	if parts[0] == "go-error-guard:v2" {
+		return parseGoReturnGuardProgram(parts)
+	}
 	if len(parts) != 6 || parts[0] != "go-error-guard:v1" {
 		return goErrorGuardProgram{}, fmt.Errorf("unsupported guard computes profile")
 	}
@@ -146,7 +155,13 @@ func parseGoErrorGuardProgram(raw string) (goErrorGuardProgram, error) {
 	if len(values) != 5 || values["writer"] == values["diagnostic"] {
 		return goErrorGuardProgram{}, fmt.Errorf("guard requires five distinct keys and two writers")
 	}
-	return goErrorGuardProgram{values["function"], values["writer"], values["diagnostic"], values["source"], values["handler"]}, nil
+	return goErrorGuardProgram{
+		function:   values["function"],
+		writer:     values["writer"],
+		diagnostic: values["diagnostic"],
+		source:     values["source"],
+		handler:    values["handler"],
+	}, nil
 }
 
 func declineGoErrorGuard(report GoErrorGuardProposal, state, reason, class, next string) (GoErrorGuardProposal, error) {

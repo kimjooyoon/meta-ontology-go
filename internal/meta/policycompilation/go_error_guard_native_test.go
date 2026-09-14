@@ -62,6 +62,11 @@ func TestGoErrorGuardGeneratedCandidateUsesFrozenNativeOracle(t *testing.T) {
 }
 
 func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []byte, view goGuardNativeView, subject string) (map[string][]string, int) {
+	pattern := "^(TestRunSourcePackageOutputFailureIsNotSuccess|TestRunSourcePrintsHumanPackageSummary|TestRunSourceJSONPackageReplayIsByteStable)$"
+	return runGoGuardNativeOverlayPaths(t, root, temp, trial, source, view, subject, pattern, goErrorGuardNativePaths)
+}
+
+func runGoGuardNativeOverlayPaths(t *testing.T, root, temp, trial string, source []byte, view goGuardNativeView, subject, pattern string, paths []string) (map[string][]string, int) {
 	t.Helper()
 	owner, rebound, err := bindGoGuardDeclaration(view.files, view.production, subject, source)
 	if err != nil {
@@ -82,7 +87,6 @@ func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []by
 	writeGoGuardNativeFile(t, overlayPath, overlay)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	pattern := "^(TestRunSourcePackageOutputFailureIsNotSuccess|TestRunSourcePrintsHumanPackageSummary|TestRunSourceJSONPackageReplayIsByteStable)$"
 	command := exec.CommandContext(ctx, "go", "test", "-json", "-count=1", "-mod=readonly", "-overlay", overlayPath, "-run", pattern, "./cmd/gooo")
 	command.Dir = root
 	var stdout, stderr bytes.Buffer
@@ -100,10 +104,14 @@ func runGoGuardNativeOverlay(t *testing.T, root, temp, trial string, source []by
 	writeGoGuardNativeFile(t, filepath.Join(temp, trial+"-stderr.txt"), stderr.Bytes())
 	t.Logf("native %s command=%q source=%s stdout_digest=%s stderr_digest=%s exit=%d\nstdout:\n%s\nstderr:\n%s",
 		trial, command.Args, DigestBytes(source), DigestBytes(stdout.Bytes()), DigestBytes(stderr.Bytes()), code, stdout.String(), stderr.String())
-	return collectGoGuardNativeEvents(t, stdout.Bytes()), code
+	return collectGoGuardNativeEventsForPaths(t, stdout.Bytes(), paths), code
 }
 
 func collectGoGuardNativeEvents(t *testing.T, raw []byte) map[string][]string {
+	return collectGoGuardNativeEventsForPaths(t, raw, goErrorGuardNativePaths)
+}
+
+func collectGoGuardNativeEventsForPaths(t *testing.T, raw []byte, paths []string) map[string][]string {
 	t.Helper()
 	results := make(map[string][]string)
 	decoder := json.NewDecoder(bytes.NewReader(raw))
@@ -121,7 +129,7 @@ func collectGoGuardNativeEvents(t *testing.T, raw []byte) map[string][]string {
 		if event.Action != "pass" && event.Action != "fail" {
 			continue
 		}
-		for _, path := range goErrorGuardNativePaths {
+		for _, path := range paths {
 			if path == event.Test {
 				results[path] = append(results[path], event.Action)
 			}
