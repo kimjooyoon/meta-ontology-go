@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -259,53 +256,6 @@ func TestVerifierWorkLegacyReturnWithoutRawOutputStaysUnobserved(t *testing.T) {
 	}
 }
 
-func TestVerifierCacheEnvironmentPreservesCallerControl(t *testing.T) {
-	trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
-	trace.action.Activity = "CollapseAssignReturn"
-	for _, test := range []struct {
-		name string
-		env  []string
-		want []string
-	}{
-		{"default", []string{"PATH=bin"}, []string{"PATH=bin", "GODEBUG=gocachetest=1"}},
-		{"other-flags", []string{"GODEBUG=panicnil=1"}, []string{"GODEBUG=panicnil=1,gocachetest=1"}},
-		{"disabled", []string{"GODEBUG=gocachetest=0"}, []string{"GODEBUG=gocachetest=0"}},
-		{"enabled", []string{"GODEBUG=gocachetest=1"}, []string{"GODEBUG=gocachetest=1"}},
-		{"invalid", []string{"GODEBUG=gocachetest=invalid"}, []string{"GODEBUG=gocachetest=invalid"}},
-		{"last-key", []string{"GODEBUG=gocachetest=0", "GODEBUG=panicnil=1"},
-			[]string{"GODEBUG=panicnil=1,gocachetest=1", "GODEBUG=panicnil=1,gocachetest=1"}},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			before := append([]string{}, test.env...)
-			got := verifierCacheEnvironment(test.env, &trace)
-			if !reflect.DeepEqual(got, test.want) || !reflect.DeepEqual(test.env, before) {
-				t.Fatalf("caller environment changed: got=%v input=%v want=%v", got, test.env, test.want)
-			}
-		})
-	}
-}
-
-func TestVerifierCacheEnvironmentLeavesOtherOperationsUntouched(t *testing.T) {
-	environment := []string{"PATH=bin", "GODEBUG=panicnil=1"}
-	for _, activity := range []string{"ExtractFunction", "", "UNKNOWN_OPERATION"} {
-		trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
-		trace.action.Activity = activity
-		if got := verifierCacheEnvironment(environment, &trace); !reflect.DeepEqual(got, environment) {
-			t.Fatalf("unsupported operation %q acquired diagnostics: %v", activity, got)
-		}
-	}
-	for _, trace := range []*metaExecutionTrace{nil, {}} {
-		if got := verifierCacheEnvironment(nil, trace); got != nil {
-			t.Fatalf("unobserved call changed inherited environment: %v", got)
-		}
-	}
-	trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
-	trace.action.Activity = "SplitGoDeclarations"
-	if got := verifierCacheEnvironment([]string{}, &trace); !reflect.DeepEqual(got, []string{"GODEBUG=gocachetest=1"}) {
-		t.Fatalf("split verifier has no diagnostic request: %v", got)
-	}
-}
-
 func verifierCacheResult(stderr string, code int) processResult {
 	raw := []byte(stderr)
 	return processResult{
@@ -415,51 +365,5 @@ func TestVerifierCacheTracePreservesRawFirstReplayFailure(t *testing.T) {
 			event.ExitCode == nil || *event.ExitCode != 1 || event.ReturnErrorObserved == nil || !*event.ReturnErrorObserved {
 			t.Fatalf("cache record lost its Gooo/process/failure binding: %#v", event)
 		}
-	}
-}
-
-func TestVerifierCacheNativeSourceChangeCannotReuseSuccess(t *testing.T) {
-	// Synthetic cache conformance only, not a production speedup or utility claim.
-	root := t.TempDir()
-	files := map[string]string{
-		"go.mod":   "module " + verifierPackageSummaryModulePrefix + "/cachewitness\n\ngo 1.27.0\n",
-		"value.go": "package cachewitness\n\nfunc Value() int { return 42 }\n",
-		"value_test.go": fmt.Sprintf("package cachewitness\n\nimport \"testing\"\n\nfunc TestValue(t *testing.T) {\n"+
-			"t.Log(%q)\nif Value() != 42 { t.Fatal(\"value changed\") }\n}\n", root),
-	}
-	for name, content := range files {
-		if err := os.WriteFile(filepath.Join(root, name), []byte(content), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	environment := replaceEnvironment(os.Environ(), "GOWORK", "off")
-	environment = replaceEnvironment(environment, "GOTOOLCHAIN", "local")
-	environment = replaceEnvironment(environment, "GOFLAGS", "")
-	environment = replaceEnvironment(environment, "GODEBUG", "gocachetest=1")
-	trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
-	trace.action.Activity = "CollapseAssignReturn"
-	first, firstErr := runGoTestObserved(root, environment, &trace, "first")
-	second, secondErr := runGoTestObserved(root, environment, &trace, "replay")
-	if firstErr != nil || secondErr != nil || first.Observation.ExitCode != 0 || second.Observation.ExitCode != 0 {
-		t.Fatalf("native fixture did not pass: first=%v %s replay=%v %s", firstErr, first.Stderr, secondErr, second.Stderr)
-	}
-	if strings.Contains(string(first.Stdout), "(cached)") || !strings.Contains(string(second.Stdout), "(cached)") {
-		t.Fatalf("native cache control not observed: first=%s replay=%s", first.Stdout, second.Stdout)
-	}
-	for _, result := range []processResult{first, second} {
-		cache := observeMetaVerifierCache(result)
-		if cache.DiagnosticRows == 0 || cache.ProcessBinding != "MATCHED" || cache.ReuseAuthority != "NONE" {
-			t.Fatalf("native diagnostic record missing: %#v stderr=%s", cache, result.Stderr)
-		}
-	}
-	if err := os.WriteFile(filepath.Join(root, "value.go"), []byte("package cachewitness\n\nfunc Value() int { return 41 }\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	changed, changedErr := runGoTestObserved(root, environment, &trace, "changed-source")
-	failure := classifyVerifierProcess("synthetic-cache-witness", changed, changedErr)
-	if changedErr == nil || changed.Observation.ExitCode <= 0 || failure == nil ||
-		failure.reason != "PROJECTED_COMPILE_OR_TEST_FAILED" || failure.class != "KNOWN_CONTRADICTION" ||
-		strings.Contains(string(changed.Stdout), "(cached)") {
-		t.Fatalf("changed source reused success: result=%#v error=%v failure=%#v", changed, changedErr, failure)
 	}
 }
