@@ -9,7 +9,7 @@ type GoGuardPipelineProposal struct {
 	SemanticDigest     string                 `json:"semantic_digest"`
 	SourceDigest       string                 `json:"source_digest"`
 	Guard              *GoErrorGuardProposal  `json:"guard,omitempty"`
-	Rendering          *GoGuardRendering       `json:"rendering,omitempty"`
+	Rendering          *GoGuardRendering      `json:"rendering,omitempty"`
 	CandidateDigest    string                 `json:"candidate_digest,omitempty"`
 	CandidateSource    string                 `json:"candidate_source,omitempty"`
 	Pending            *PolicyRevisionPending `json:"pending,omitempty"`
