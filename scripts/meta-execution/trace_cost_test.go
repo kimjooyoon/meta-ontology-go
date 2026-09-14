@@ -251,7 +251,179 @@ func TestVerifierWorkLegacyReturnWithoutRawOutputStaysUnobserved(t *testing.T) {
 	if err := json.Unmarshal(bytes.TrimSpace(output.Bytes()), &event); err != nil {
 		t.Fatal(err)
 	}
-	if event.VerifierWork != nil {
+	if event.VerifierWork != nil || event.VerifierCache != nil {
 		t.Fatalf("process metadata alone invented raw-output accounting: %#v", event)
+	}
+}
+
+func verifierCacheResult(stderr string, code int) processResult {
+	raw := []byte(stderr)
+	return processResult{
+		Observation: descriptorObservation([]string{"go", "test", "./..."}, nil, raw, code),
+		Stderr:      raw,
+	}
+}
+
+func TestVerifierCacheRetainsNativeTextWithoutInventingMeaning(t *testing.T) {
+	line := "testcache: fixture: native diagnostic not interpreted here"
+	result := verifierCacheResult(strings.Repeat(line+"\n", 20)+"PRIVATE-NON-CACHE-OUTPUT\n", 1)
+	got := observeMetaVerifierCache(result)
+	if got.DiagnosticRows != 20 || len(got.Samples) != 16 || got.Samples[0] != line ||
+		got.NonDiagnosticLines != 1 || got.InputCoverage != "NON_DIAGNOSTIC_INPUT" ||
+		got.Unit != "NATIVE_DIAGNOSTIC_LINES_NOT_TEST_CASES" || got.CoverageScope != "BOUNDED_STDERR_PARSE_ONLY" ||
+		got.NativeInterpretation != "NOT_INFERRED" || got.ReuseAuthority != "NONE" || got.Improvement != "UNKNOWN" {
+		t.Fatalf("native output became inferred work or permission: %#v", got)
+	}
+	encoded, err := json.Marshal(got)
+	if err != nil || strings.Contains(string(encoded), "PRIVATE-") {
+		t.Fatalf("non-cache stderr leaked: %s (%v)", encoded, err)
+	}
+}
+
+func TestVerifierCacheReportsBoundedAndMissingInput(t *testing.T) {
+	line := "testcache: fixture: native line\n"
+	for _, test := range []struct {
+		name     string
+		stderr   string
+		coverage string
+		rows     int
+	}{
+		{"empty", "", "NO_CACHE_DIAGNOSTICS", 0},
+		{"other", "compiler error\n", "NON_DIAGNOSTIC_INPUT", 0},
+		{"native", line, "COMPLETE", 1},
+		{"unterminated", strings.TrimSuffix(line, "\n"), "COMPLETE", 1},
+		{"rows", strings.Repeat(line, maxVerifierCacheRows+1), "TRUNCATED", maxVerifierCacheRows},
+		{"bytes", line + strings.Repeat("x", maxVerifierCacheStderrBytes), "TRUNCATED", 1},
+		{"partial-line", strings.Repeat("x", maxVerifierCacheStderrBytes+1), "TRUNCATED", 0},
+		{"long-line", "testcache: " + strings.Repeat("x", maxVerifierCacheLineBytes) + "\n" + line, "TRUNCATED", 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			result := verifierCacheResult(test.stderr, 0)
+			got := observeMetaVerifierCache(result)
+			if got.InputCoverage != test.coverage || got.DiagnosticRows != test.rows ||
+				got.RawStderrDigest != digestBytes(result.Stderr) || got.StderrBytes != len(result.Stderr) ||
+				got.ReuseAuthority != "NONE" || got.Improvement != "UNKNOWN" {
+				t.Fatalf("bounded observation lost uncertainty: %#v", got)
+			}
+		})
+	}
+}
+
+func TestVerifierCacheRequiresExactRawProcessBinding(t *testing.T) {
+	for _, condition := range []string{"matched", "missing", "digest", "size"} {
+		result := verifierCacheResult("testcache: fixture: native line\n", 0)
+		want := "MISMATCH"
+		switch condition {
+		case "matched":
+			want = "MATCHED"
+		case "missing":
+			result.Observation.RawStderrDigest, want = "", "UNOBSERVED"
+		case "digest":
+			result.Observation.RawStderrDigest = "sha256:" + strings.Repeat("0", 64)
+		case "size":
+			result.Observation.StderrBytes++
+		}
+		if got := observeMetaVerifierCache(result); got.ProcessBinding != want || got.DiagnosticRows != 1 {
+			t.Fatalf("%s binding was not preserved: %#v", condition, got)
+		}
+	}
+}
+
+func TestVerifierCacheTracePreservesRawFirstReplayFailure(t *testing.T) {
+	var output bytes.Buffer
+	trace := metaExecutionTrace{
+		headSHA: "head-cache", planDigest: "plan-cache", manifestDigest: "manifest-cache", sequence: 2,
+		state: newMetaExecutionTraceStateWithWriter(&output),
+	}
+	trace.action.Activity = "CollapseAssignReturn"
+	trace.action.InputContractSourceDigest = strings.Repeat("a", 64)
+	trace.action.InputContractSemanticDigest = strings.Repeat("b", 64)
+	for _, pass := range []string{"first", "replay"} {
+		output.Reset()
+		result := verifierCacheResult("testcache: fixture: input list not found: "+pass+"\n", 1)
+		failure := errors.New("verifier failed")
+		got, gotErr := observeProcessCall(&trace, pass, "verifier", func() (processResult, error) {
+			return result, failure
+		})
+		if !reflect.DeepEqual(got, result) || gotErr != failure {
+			t.Fatal("cache diagnostics changed the raw process result")
+		}
+		lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+		var event metaExecutionTraceEvent
+		if len(lines) != 2 {
+			t.Fatalf("unexpected event count: %d", len(lines))
+		}
+		if err := json.Unmarshal([]byte(lines[1]), &event); err != nil {
+			t.Fatal(err)
+		}
+		if event.Pass != pass || event.HeadSHA != trace.headSHA || event.PlanDigest != trace.planDigest ||
+			event.ManifestDigest != trace.manifestDigest || event.Activity != trace.action.Activity ||
+			event.InputContractSourceDigest != trace.action.InputContractSourceDigest ||
+			event.InputContractSemanticDigest != trace.action.InputContractSemanticDigest ||
+			event.VerifierCache == nil || event.VerifierCache.ProcessBinding != "MATCHED" ||
+			event.VerifierCache.RawStderrDigest != result.Observation.RawStderrDigest ||
+			event.VerifierCache.StageRows["PRIOR_INPUT_LIST_LOOKUP"] != 1 ||
+			len(event.VerifierCache.SampleStages) != 1 || event.VerifierCache.SampleStages[0] != "PRIOR_INPUT_LIST_LOOKUP" ||
+			event.ExitCode == nil || *event.ExitCode != 1 || event.ReturnErrorObserved == nil || !*event.ReturnErrorObserved {
+			t.Fatalf("cache record lost its Gooo/process/failure binding: %#v", event)
+		}
+	}
+}
+
+func TestVerifierCacheStagesPreserveLookupBoundariesWithoutInferringCause(t *testing.T) {
+	for _, test := range []struct {
+		name, message, stage string
+	}{
+		{"identity", "fixture: test ID aa => bb", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"missing-list", "fixture: input list not found: unavailable", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"list-envelope", "fixture: input list malformed", "PRIOR_INPUT_LIST_LOOKUP"},
+		{"list-record", "fixture: input list malformed (\"bad\")", "INPUT_LOG_PARSE"},
+		{"result-key", "fixture: test ID aa => input ID bb => cc", "TEST_OUTPUT_LOOKUP"},
+		{"missing-output", "fixture: test output not found: unavailable", "TEST_OUTPUT_LOOKUP"},
+		{"output-shape", "fixture: test output malformed", "TEST_OUTPUT_LOOKUP"},
+		{"expired", "fixture: test output expired due to go clean -testcache", "TEST_OUTPUT_LOOKUP"},
+		{"save-attempt", "fixture: save test ID aa => input ID bb => cc", "STORE_ATTEMPT"},
+		{"disabled", "caching disabled for test argument: -test.count=1", "CONFIGURATION"},
+		{"future", "fixture: future cache format", "UNRECOGNIZED"},
+		{"empty", "", "UNRECOGNIZED"},
+		{"empty-package", ": input list not found: unavailable", "UNRECOGNIZED"},
+		{"invalid-package", "fake package: input list not found: unavailable", "UNRECOGNIZED"},
+		{"incomplete-key", "fixture: test ID aa => input ID => cc", "UNRECOGNIZED"},
+		{"not-hex", "fixture: test ID zz => bb", "UNRECOGNIZED"},
+		{"save-without-input", "fixture: save test ID aa => bb", "UNRECOGNIZED"},
+		{"missing-detail", "fixture: input list not found: ", "UNRECOGNIZED"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			line := "testcache: " + test.message
+			got := observeMetaVerifierCache(verifierCacheResult(line+"\n", 0))
+			total := 0
+			for _, count := range got.StageRows {
+				total += count
+			}
+			if got.DiagnosticRows != 1 || total != 1 || len(got.StageRows) != 6 || got.StageRows[test.stage] != 1 ||
+				len(got.SampleStages) != 1 || got.SampleStages[0] != test.stage || got.Samples[0] != line ||
+				got.StageBasis != "GO_TESTCACHE_TEXT_V1_NOT_EXECUTION_ATTESTATION" ||
+				got.LookupIdentityKind != "NOT_EXPOSED_BY_NATIVE_TEXT" || got.ProcessBinding != "MATCHED" ||
+				got.NativeInterpretation != "NOT_INFERRED" || got.ReuseAuthority != "NONE" || got.Improvement != "UNKNOWN" {
+				t.Fatalf("diagnostic shape became a cause or execution claim: %#v", got)
+			}
+		})
+	}
+}
+
+func TestVerifierCacheStageCountsKeepBoundedCoverageBeyondSampleLimit(t *testing.T) {
+	line := "testcache: fixture: input list not found: unavailable\n"
+	for _, rows := range []int{maxVerifierCacheSamples + 3, maxVerifierCacheRows + 1} {
+		got := observeMetaVerifierCache(verifierCacheResult(strings.Repeat(line, rows), 0))
+		want, coverage := rows, "COMPLETE"
+		if want > maxVerifierCacheRows {
+			want, coverage = maxVerifierCacheRows, "TRUNCATED"
+		}
+		if got.DiagnosticRows != want || got.StageRows["PRIOR_INPUT_LIST_LOOKUP"] != want ||
+			got.StageRows["TEST_OUTPUT_LOOKUP"] != 0 || got.StageRows["UNRECOGNIZED"] != 0 ||
+			len(got.Samples) != maxVerifierCacheSamples || len(got.SampleStages) != len(got.Samples) ||
+			got.InputCoverage != coverage || got.LookupIdentityKind != "NOT_EXPOSED_BY_NATIVE_TEXT" {
+			t.Fatalf("sample limit concealed stage counts or lookup uncertainty: %#v", got)
+		}
 	}
 }
