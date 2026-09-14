@@ -639,7 +639,39 @@ func runGoTest(root string, environment []string) processResult {
 }
 
 func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) (processResult, error) {
+	environment = verifierCacheEnvironment(environment, trace)
 	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+}
+
+// Only these operations already exclude verifier output from semantic replay.
+func verifierCacheEnvironment(environment []string, trace *metaExecutionTrace) []string {
+	if trace == nil || trace.state == nil {
+		return environment
+	}
+	switch trace.action.Activity {
+	case "SplitGoDeclarations", "CollapseAssignReturn":
+	default:
+		return environment
+	}
+	if environment == nil {
+		environment = os.Environ()
+	}
+	value := ""
+	for _, entry := range environment {
+		if after, ok := strings.CutPrefix(entry, "GODEBUG="); ok {
+			value = after
+		}
+	}
+	for setting := range strings.SplitSeq(value, ",") {
+		name, _, present := strings.Cut(setting, "=")
+		if present && name == "gocachetest" {
+			return environment
+		}
+	}
+	if value != "" {
+		value += ","
+	}
+	return replaceEnvironment(environment, "GODEBUG", value+"gocachetest=1")
 }
 
 func classifyVerifierProcess(step string, result processResult, runErr error) *operationError {
