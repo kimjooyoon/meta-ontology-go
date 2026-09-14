@@ -202,3 +202,67 @@ the pipeline's canonical output. Before4PASS/1FAIL and after5PASS/0FAIL remain
 requirements until observed in CI. It adds two focused CLI trials, not another
 full-suite invocation. The adapter has separate default/explicit-opt-in tests.
 No local Go invocation or CI/ownership-policy change accompanies this feature.
+
+
+## V3: stop a declared human-output branch at its first delivery failure
+
+This explicit profile addresses the actual normal-generation reporter
+reportGenerateSuccess, rather than relabeling a synthetic formatting example
+as public adoption. Its original Go source is frozen from
+cmd/gooo/generate_pipeline_part03.go, last changed at
+f8005181f66921d6668eb8465325b21308a0eef8. That reporter has three conditional
+human-output sites and a separate JSON-handler return.
+
+~~~gooo
+package goerrorguard
+namespace goerrorguard
+entity Source id "gooo://error-guard/source"
+entity RawCandidate id "gooo://error-guard/raw-candidate"
+entity Candidate id "gooo://error-guard/candidate"
+activity GuardHumanOutput(Source) -> RawCandidate computes "go-error-guard:v3;function=reportGenerateSuccess;writer=stdout;mode=jsonMode;handler-call=writeJSONReport;writes=3;source=sha256:SOURCE_HEX;handler=sha256:HANDLER_HEX"
+activity Canonicalize(RawCandidate) -> Candidate computes "go-source-format:v1;toolchain=go1.27.0"
+~~~
+
+Use the existing explicit -pipeline adapter. SOURCE_HEX and HANDLER_HEX remain
+non-executable placeholders. The seven v3 fields select the function, io.Writer
+parameter, bool mode parameter, existing JSON handler call, exact positive
+write-site count, source digest and handler-block digest. Nothing is selected
+from a natural-language title. V1 and v2 matching are unchanged.
+
+The first statement must be if !mode with no initializer or else. Its body
+contains discarded fmt.Fprintf calls to the selected writer, optionally inside
+initializer-free/else-free conditional blocks, followed by the same one-value
+return as the function's final return. Conditions cannot invoke functions,
+receive from channels or reference the output writer. The writer cannot
+escape through another formatting argument. Loops, concurrency, closures as
+statements, local binding changes and unsupported writer types are not guessed
+through. The explicitly named JSON function must use the selected writer and a
+return-only error guard; a shadowed local handler is unsupported.
+
+The compiler copies that pinned handler around each declared write, preserving
+evaluation order and existing bytes between writes. edit_start/edit_end enclose
+the selected call sites; bytes outside that interval are unchanged.
+guarded_calls is the generated number of guarded sites, not a test count or
+quality score. A mismatched declared count or digest is REFUTED. Missing or
+unsupported selection retains the existing six-field UNKNOWN cause.
+
+The independent frozen native oracle has exactly eight leaves: four actual
+public generate human/JSON accepted/rejected-output cases, plus four direct
+reporter cases covering second-write failure, third-write failure, all messages
+delivered and absent discovery. The public cases retain exact generated file
+bytes, parse the generated Go, and preserve their Gooo runtime input. Conditional
+cases require the exact delivered prefix and no later writes after failure.
+A successful baseline call freezes each public case's expected artifacts before
+its delivery trial; this does not add Go build/test invocations.
+
+Required native results are before5PASS/3FAIL and canonical after8PASS/0FAIL.
+These are requirements until CI observes them. The native test uses two focused
+Go test processes with the same external overlay oracle, not another full suite.
+It follows the actual declaration after projection and retains the base view.
+
+This prepares compiler capability only. No public production reporter is changed
+here. Candidate publication, the separate declared public-profile owner, full
+native acceptance and subsequent accepted execution are still needed for
+adoption. Neither the Gooo declaration nor canonical formatting can accept its
+own repair, lower its oracle, authorize repository writes or claim utility or
+performance improvement.
