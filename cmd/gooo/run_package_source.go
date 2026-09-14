@@ -77,12 +77,15 @@ func writeSourcePackageResult(receipt packageexecution.Receipt, filename string,
 			return exitFailure
 		}
 	} else if receipt.Decision == "PASS" && receipt.Execution != nil {
-		fmt.Fprintf(stdout, "executed package: %s.%s(%s) -> %s sources=%d digest=%s scope=%s\n",
+		if _, err := fmt.Fprintf(stdout, "executed package: %s.%s(%s) -> %s sources=%d digest=%s scope=%s\n",
 			receipt.Execution.Entry.Package,
 			receipt.Execution.Entry.Activity,
 			inputNames(receipt.Execution.Entry.Inputs),
 			receipt.Execution.Entry.Output.Name,
-			len(receipt.Sources), receipt.Digest, receipt.Scope)
+			len(receipt.Sources), receipt.Digest, receipt.Scope); err != nil {
+			fmt.Fprintf(stderr, "gooo: run package: %v\n", err)
+			return exitFailure
+		}
 	} else if len(receipt.Diagnostics) > 0 {
 		diagnostic := receipt.Diagnostics[0]
 		fmt.Fprintf(stderr, "%s: %s: %s\n", filename, diagnostic.Code, diagnostic.Message)
