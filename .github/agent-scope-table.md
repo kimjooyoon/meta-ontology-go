@@ -65,6 +65,7 @@ allowed repository prefix and do not create additional branch aliases.
 | `agent/ci-generator-current7` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-scope-triage` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/ci-workflow` | `.github/**`, `scripts/**`, `internal/verify/**` |
+| `agent/runtime-repair-candidate-validation-20260915` | `cmd/gooo/**`, `internal/valueexecution/**` |
 | `agent/ci-workflow-stage` | `.github/**`, `scripts/**`, `internal/verify/**` |
 | `agent/cli` | `cmd/gooo/**` |
 | `agent/cli-bootstrap-contract` | `cmd/gooo/**` |

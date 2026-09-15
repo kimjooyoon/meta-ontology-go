@@ -1009,6 +1009,13 @@
       ]
     },
     {
+      "branch": "agent/runtime-repair-candidate-validation-20260915",
+      "paths": [
+        "cmd/gooo/**",
+        "internal/valueexecution/**"
+      ]
+    },
+    {
       "branch": "agent/ci-workflow-stage",
       "paths": [
         ".github/**",
