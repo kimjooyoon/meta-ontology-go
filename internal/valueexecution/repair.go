@@ -25,7 +25,7 @@ func ProposeRepair(comparison ReplayComparison) (RepairCandidate, error) {
 		return RepairCandidate{}, errors.New("repair candidate requires a refuted replay comparison")
 	}
 	digest := DigestReplayComparison(comparison)
-	return RepairCandidate{
+	candidate := RepairCandidate{
 		Schema:           RepairCandidateSchema,
 		CandidateID:      "gooo://repair-candidate/" + digest[len("sha256:"):16],
 		ComparisonDigest: digest,
@@ -36,7 +36,41 @@ func ProposeRepair(comparison ReplayComparison) (RepairCandidate, error) {
 		RepositoryWrites: 0,
 		NextOperation:    comparison.NextOperation,
 		BlockedBy:        append([]string(nil), comparison.BlockedBy...),
-	}, nil
+	}
+	if err := ValidateRepairCandidate(candidate); err != nil {
+		return RepairCandidate{}, err
+	}
+	return candidate, nil
+}
+
+// ValidateRepairCandidate checks the detached candidate contract before a
+// downstream consumer can treat it as a valid next operation. It grants no
+// execution or repository authority.
+func ValidateRepairCandidate(candidate RepairCandidate) error {
+	if candidate.Schema != RepairCandidateSchema || candidate.TriggerState != ReplayRefuted || candidate.Target != "VALUE_EXECUTION_REPLAY" {
+		return errors.New("repair candidate identity is invalid")
+	}
+	if !validDigest(candidate.ComparisonDigest) {
+		return errors.New("repair candidate comparison digest is invalid")
+	}
+	wantID := "gooo://repair-candidate/" + candidate.ComparisonDigest[len("sha256:"):16]
+	if candidate.CandidateID != wantID {
+		return errors.New("repair candidate id does not match comparison digest")
+	}
+	if candidate.TriggerReason == "" || candidate.NextOperation == "" || candidate.ExecutionAllowed || candidate.RepositoryWrites != 0 {
+		return errors.New("repair candidate authority boundary is invalid")
+	}
+	seen := make(map[string]struct{}, len(candidate.BlockedBy))
+	for _, item := range candidate.BlockedBy {
+		if item == "" {
+			return errors.New("repair candidate blocked frontier contains an empty item")
+		}
+		if _, exists := seen[item]; exists {
+			return errors.New("repair candidate blocked frontier contains a duplicate item")
+		}
+		seen[item] = struct{}{}
+	}
+	return nil
 }
 
 func DigestReplayComparison(comparison ReplayComparison) string {
