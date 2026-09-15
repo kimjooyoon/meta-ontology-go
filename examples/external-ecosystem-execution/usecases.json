@@ -1,0 +1,51 @@
+{
+  "schema": "external-ecosystem-execution-usecases/v1",
+  "denominator": {
+    "version": "external-ecosystem-execution-denominator/v1",
+    "completed_required": 8,
+    "total": 8,
+    "basis_points_required": 10000
+  },
+  "execution": {
+    "repository": "https://github.com/cosmos72/gomacro",
+    "commit": "cf0d4bf32da393dbda97e3572f216731013ffa55",
+    "tree": "8cc240a53dd29432ad83620b20fd8a0a05674c6d",
+    "go_version": "go1.27.0",
+    "runs": 2,
+    "normalized_replays_required": 2
+  },
+  "regression": {
+    "passed_required": 10,
+    "total": 10,
+    "unknown_evidence_cases": 3,
+    "known_invariant_failure_cases": 6,
+    "exact_success_cases": 1
+  },
+  "observed_baseline": {
+    "decision": "FAIL_CLOSED",
+    "resolution": "EXACT",
+    "completed": 6,
+    "total": 8,
+    "basis_points": 7500,
+    "terminal_outcomes_per_run": 981,
+    "pass_outcomes_per_run": 953,
+    "skip_outcomes_per_run": 20,
+    "fail_outcomes_per_run": 7,
+    "build_fail_outcomes_per_run": 1,
+    "normalized_sha256": "sha256:0bb017f6c946d799c5fef316462dd03ad667fcfbfd99a69c1d1cfe61c4812f93"
+  },
+  "boundaries": {
+    "source_writes": 0,
+    "external_checkout_writes": 0,
+    "official_mutations": 0,
+    "promotions": 0,
+    "local_tests": 0
+  },
+  "assurance": {
+    "before_completed": 11,
+    "before_total": 12,
+    "after_completed": 11,
+    "after_total": 12,
+    "activation_requires_later_merged_artifact": true
+  }
+}

@@ -1,0 +1,6 @@
+package valuewitness
+namespace valuewitness
+
+entity Integer id "gooo://value-witness/entity/integer"
+
+activity Increment(Integer) -> Integer computes "int.add:1"

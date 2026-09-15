@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/vertical-slice-closure-eligibility-use-cases/v1",
+  "denominator_total": 8,
+  "cases": [
+    {"id": "exact", "decision": "ELIGIBLE", "resolution": "EXACT", "effect": "NO_EFFECT"},
+    {"id": "assurance-unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "shadow-unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "assurance-digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"},
+    {"id": "shadow-digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"},
+    {"id": "unknown-top-decision", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "semantic-link-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"},
+    {"id": "observed-write", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "gooo/language-deterministic-query-example/v1",
+  "concept": "language-deterministic-query",
+  "meta_operation": "execute-reified-deterministic-query-plan",
+  "fixed_cases": 32,
+  "binding_cases": 28,
+  "law_cases": 4,
+  "expected_decision": "PASS",
+  "expected_resolution": "EXACT",
+  "repository_writes": 0,
+  "mutation_authorities": 0
+}

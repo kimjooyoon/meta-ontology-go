@@ -12,7 +12,7 @@ import (
 
 func TestMarshalGraphDumpRejectsOversizeOutput(t *testing.T) {
 	ir := semantic.NewIR("billing", semantic.Namespace("billing"))
-	for index := 0; index < 15000; index++ {
+	for index := range 15000 {
 		id := semantic.MustIdentity(fmt.Sprintf("billing://entity/item-%05d", index))
 		if err := ir.AddNode(semantic.Node{ID: id, Kind: semantic.Entity, Namespace: "billing", Name: fmt.Sprintf("Item%05d", index)}); err != nil {
 			t.Fatal(err)

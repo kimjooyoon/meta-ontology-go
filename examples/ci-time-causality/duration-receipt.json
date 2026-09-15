@@ -1,0 +1,286 @@
+{
+  "schema": "gooo/ci-time-causality/duration-receipt/v1",
+  "contract_id": "ci-time-causality-v1",
+  "source_digest": "sha256:a45675079c7e80c8324578ed999e73ccdb6f553f2c1ce35cac223e2809fb4fc1",
+  "immutable_fixture_digest": "sha256:d41f4c6fdc33a5442339d83fdc1f4e68f8fcb317393188aa6b0fe67004d662cd",
+  "ir_digest": "sha256:1292a28d338696ff8245a309ca7abcf18ed01991b9eaebba0a4c1ba18c43e5f0",
+  "generated_evaluator_digest": "sha256:cd837bed10b30d0d42d5990d39535c168904f3ce261f03787574666d6be12d6f",
+  "summary": {
+    "total": 12,
+    "closed": 3,
+    "unknown": 4,
+    "refuted": 5
+  },
+  "results": [
+    {
+      "case_id": "closed-same-operation-positive",
+      "category": "CLOSED",
+      "expected_decision": "CLOSED",
+      "expected_reason": "DURATION_DERIVED",
+      "decision": "CLOSED",
+      "reason": "DURATION_DERIVED",
+      "resolution": "EXACT",
+      "description": "One operation identity and one UTC clock domain produce a positive duration.",
+      "duration_ms": 2500,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": []
+    },
+    {
+      "case_id": "closed-same-operation-zero",
+      "category": "CLOSED",
+      "expected_decision": "CLOSED",
+      "expected_reason": "DURATION_DERIVED",
+      "decision": "CLOSED",
+      "reason": "DURATION_DERIVED",
+      "resolution": "EXACT",
+      "description": "Equal timestamps in one operation are an exact zero duration, not missing evidence.",
+      "duration_ms": 0,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": []
+    },
+    {
+      "case_id": "closed-separate-provider-observations",
+      "category": "CLOSED",
+      "expected_decision": "CLOSED",
+      "expected_reason": "SEPARATE_OBSERVATIONS_NOT_AGGREGATED",
+      "decision": "CLOSED",
+      "reason": "SEPARATE_OBSERVATIONS_NOT_AGGREGATED",
+      "resolution": "EXACT",
+      "description": "Source CI and OpenTofu are independently closed observations; their timestamps are never aggregated.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": true,
+      "derived_observations": [
+        {
+          "observation_id": "obs-source-ci-33365730047",
+          "operation_id": "github-actions:source-ci:run:33365730047",
+          "scope": "source-ci",
+          "duration_ms": 676000
+        },
+        {
+          "observation_id": "obs-opentofu-33365730033",
+          "operation_id": "github-actions:opentofu:run:33365730033",
+          "scope": "opentofu",
+          "duration_ms": 79000
+        }
+      ],
+      "violations": []
+    },
+    {
+      "case_id": "unknown-missing-start",
+      "category": "UNKNOWN",
+      "expected_decision": "UNKNOWN",
+      "expected_reason": "MISSING_START_TIME",
+      "decision": "UNKNOWN",
+      "reason": "MISSING_START_TIME",
+      "resolution": "UNKNOWN",
+      "description": "An end time without a start time cannot be derived.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [],
+      "unknown": {
+        "stage": "DURATION",
+        "step": "READ_START_TIME",
+        "reason": "MISSING_START_TIME",
+        "unknown_class": "DIRECT_MISSING",
+        "next_operation": "RESTORE_START_TIME",
+        "blocked_by": [
+          "start-time"
+        ]
+      }
+    },
+    {
+      "case_id": "unknown-missing-end",
+      "category": "UNKNOWN",
+      "expected_decision": "UNKNOWN",
+      "expected_reason": "MISSING_END_TIME",
+      "decision": "UNKNOWN",
+      "reason": "MISSING_END_TIME",
+      "resolution": "UNKNOWN",
+      "description": "A start time without an end time cannot be derived.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [],
+      "unknown": {
+        "stage": "DURATION",
+        "step": "READ_END_TIME",
+        "reason": "MISSING_END_TIME",
+        "unknown_class": "DIRECT_MISSING",
+        "next_operation": "RESTORE_END_TIME",
+        "blocked_by": [
+          "end-time"
+        ]
+      }
+    },
+    {
+      "case_id": "unknown-clock-domain",
+      "category": "UNKNOWN",
+      "expected_decision": "UNKNOWN",
+      "expected_reason": "CLOCK_DOMAIN_UNKNOWN",
+      "decision": "UNKNOWN",
+      "reason": "CLOCK_DOMAIN_UNKNOWN",
+      "resolution": "UNKNOWN",
+      "description": "Timestamps with no declared clock domain are not comparable.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [],
+      "unknown": {
+        "stage": "DURATION",
+        "step": "VALIDATE_CLOCK_DOMAIN",
+        "reason": "CLOCK_DOMAIN_UNKNOWN",
+        "unknown_class": "DIRECT_UNKNOWN",
+        "next_operation": "DECLARE_CLOCK_DOMAIN",
+        "blocked_by": [
+          "clock-domain"
+        ]
+      }
+    },
+    {
+      "case_id": "unknown-missing-artifact",
+      "category": "UNKNOWN",
+      "expected_decision": "UNKNOWN",
+      "expected_reason": "ARTIFACT_MISSING",
+      "decision": "UNKNOWN",
+      "reason": "ARTIFACT_MISSING",
+      "resolution": "UNKNOWN",
+      "description": "A timestamp pair without its required artifact evidence is unresolved.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [],
+      "unknown": {
+        "stage": "EVIDENCE",
+        "step": "READ_ARTIFACT",
+        "reason": "ARTIFACT_MISSING",
+        "unknown_class": "DIRECT_MISSING",
+        "next_operation": "RESTORE_ARTIFACT",
+        "blocked_by": [
+          "artifact"
+        ]
+      }
+    },
+    {
+      "case_id": "refuted-negative-duration",
+      "category": "REFUTED",
+      "expected_decision": "REFUTED",
+      "expected_reason": "REFUTED_CLOCK_ORDER",
+      "decision": "REFUTED",
+      "reason": "REFUTED_CLOCK_ORDER",
+      "resolution": "EXACT",
+      "description": "End before start in one operation is REFUTED_CLOCK_ORDER and never zero-clamped.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [
+        "NEGATIVE_DURATION"
+      ]
+    },
+    {
+      "case_id": "refuted-cross-run-subtraction",
+      "category": "REFUTED",
+      "expected_decision": "REFUTED",
+      "expected_reason": "CROSS_RUN_JOB_PROVIDER_SUBTRACTION_FORBIDDEN",
+      "decision": "REFUTED",
+      "reason": "CROSS_RUN_JOB_PROVIDER_SUBTRACTION_FORBIDDEN",
+      "resolution": "EXACT",
+      "description": "Run, job, and provider boundaries cannot be crossed to manufacture one duration.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [
+        "RUN_ID_MISMATCH",
+        "JOB_ID_MISMATCH",
+        "PROVIDER_MISMATCH"
+      ]
+    },
+    {
+      "case_id": "refuted-operation-id-mismatch",
+      "category": "REFUTED",
+      "expected_decision": "REFUTED",
+      "expected_reason": "OPERATION_ID_MISMATCH",
+      "decision": "REFUTED",
+      "reason": "OPERATION_ID_MISMATCH",
+      "resolution": "EXACT",
+      "description": "Two operation identities in one job are not one interval.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [
+        "OPERATION_ID_MISMATCH"
+      ]
+    },
+    {
+      "case_id": "refuted-malformed-timezone",
+      "category": "REFUTED",
+      "expected_decision": "REFUTED",
+      "expected_reason": "MALFORMED_TIMEZONE",
+      "decision": "REFUTED",
+      "reason": "MALFORMED_TIMEZONE",
+      "resolution": "EXACT",
+      "description": "A timestamp with an invalid timezone offset is malformed evidence.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [
+        "MALFORMED_TIMEZONE"
+      ]
+    },
+    {
+      "case_id": "refuted-clamp-to-zero-attempt",
+      "category": "REFUTED",
+      "expected_decision": "REFUTED",
+      "expected_reason": "CLAMP_TO_ZERO_FORBIDDEN",
+      "decision": "REFUTED",
+      "reason": "CLAMP_TO_ZERO_FORBIDDEN",
+      "resolution": "EXACT",
+      "description": "A request to clamp a negative duration to zero is an explicit fail-closed violation.",
+      "duration_ms": null,
+      "aggregate_performed": false,
+      "aggregate_forbidden": false,
+      "derived_observations": null,
+      "violations": [
+        "NEGATIVE_DURATION",
+        "CLAMP_TO_ZERO_ATTEMPT"
+      ]
+    }
+  ],
+  "runtime": {
+    "wall_ms": 1,
+    "peak_rss_kib": 7436,
+    "measured_by": "go-time-and-getrusage-rusage-self",
+    "scope": "parse-ir-generate-evaluate-replay-and-inventory-before-json-serialization"
+  },
+  "input_inventory": {
+    "input_dirs": 10,
+    "input_files": 14,
+    "physical_files": 14,
+    "physical_bytes": 63766,
+    "go_files": 7,
+    "go_lines": 1221,
+    "gooo_files": 1,
+    "gooo_lines": 15
+  },
+  "repository_writes": 0,
+  "local_test_executions": 0,
+  "cross_project_required_gates": 0,
+  "aggregation_rule": "Only same operation_id, run_id, job_id, provider, and clock_domain may form one duration; source-ci and opentofu remain separate observations.",
+  "retry_attempts": [
+    1,
+    2
+  ]
+}

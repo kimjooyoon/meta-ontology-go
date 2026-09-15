@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/ci-effort-observation-contract/v1",
+  "id": "ci-effort-observation-v1",
+  "cells": [
+    {"id":"WORKFLOW_WINDOW","meta_operation":"ObserveCIWorkflowWindow","proof_choice":"FOUNDATION","indicator":"DRIVER","activity":"ObserveCIWorkflowWindow","input_id":"gooo://ci-effort-observation/input/workflow-window","output_id":"gooo://ci-effort-observation/output/workflow-window"},
+    {"id":"OPERATION_MANIFEST","meta_operation":"BindVerificationOperationManifest","proof_choice":"FOUNDATION","indicator":"GUARDRAIL","activity":"BindVerificationOperationManifest","input_id":"gooo://ci-effort-observation/input/operation-manifest","output_id":"gooo://ci-effort-observation/output/operation-manifest"},
+    {"id":"VERIFICATION_RUNTIME","meta_operation":"ObserveVerificationRuntime","proof_choice":"FOUNDATION","indicator":"OUTCOME","activity":"ObserveVerificationRuntime","input_id":"gooo://ci-effort-observation/input/verification-runtime","output_id":"gooo://ci-effort-observation/output/verification-runtime"},
+    {"id":"EXECUTED_VERIFICATIONS","meta_operation":"AccountExecutedVerifications","proof_choice":"COHERENCE","indicator":"OUTCOME","activity":"AccountExecutedVerifications","input_id":"gooo://ci-effort-observation/input/executed-verifications","output_id":"gooo://ci-effort-observation/output/executed-verifications"},
+    {"id":"SKIPPED_VERIFICATIONS","meta_operation":"AccountSkippedVerifications","proof_choice":"COHERENCE","indicator":"DRIVER","activity":"AccountSkippedVerifications","input_id":"gooo://ci-effort-observation/input/skipped-verifications","output_id":"gooo://ci-effort-observation/output/skipped-verifications"},
+    {"id":"REUSE_DECISION","meta_operation":"EvaluateExactEvidenceReuse","proof_choice":"REGRESSION","indicator":"GUARDRAIL","activity":"EvaluateExactEvidenceReuse","input_id":"gooo://ci-effort-observation/input/reuse-decision","output_id":"gooo://ci-effort-observation/output/reuse-decision"},
+    {"id":"REUSE_REJECTIONS_UNKNOWN","meta_operation":"RecordReuseRejectionsAndUnknowns","proof_choice":"REGRESSION","indicator":"GUARDRAIL","activity":"RecordReuseRejectionsAndUnknowns","input_id":"gooo://ci-effort-observation/input/reuse-rejections-unknown","output_id":"gooo://ci-effort-observation/output/reuse-rejections-unknown"},
+    {"id":"OPENTOFU_BINDING","meta_operation":"BindOpenTofuObservation","proof_choice":"REGRESSION","indicator":"OUTCOME","activity":"BindOpenTofuObservation","input_id":"gooo://ci-effort-observation/input/opentofu-observation","output_id":"gooo://ci-effort-observation/output/opentofu-observation"}
+  ],
+  "graph_program": "examples/ci-effort-observation/main.gooo",
+  "not_claimed": [
+    "critical path without dependency proof",
+    "performance improvement without an exact same-condition pair",
+    "Terraform or any OpenTofu source build",
+    "repository mutation authority"
+  ]
+}

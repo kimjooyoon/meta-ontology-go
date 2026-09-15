@@ -1,0 +1,20 @@
+package rollbackintegrityactivation
+namespace rollbackintegrityactivation
+
+entity AssuranceCapsule id "gooo://rollback-integrity-activation/entity/assurance-capsule"
+entity EligibilityCapsule id "gooo://rollback-integrity-activation/entity/eligibility-capsule"
+entity BoundAssurance id "gooo://rollback-integrity-activation/entity/bound-assurance"
+entity BoundEligibility id "gooo://rollback-integrity-activation/entity/bound-eligibility"
+entity PredecessorSemantics id "gooo://rollback-integrity-activation/entity/predecessor-semantics"
+entity EligibilityDecision id "gooo://rollback-integrity-activation/entity/eligibility-decision"
+entity ActivationTransition id "gooo://rollback-integrity-activation/entity/activation-transition"
+entity BlockedTransition id "gooo://rollback-integrity-activation/entity/blocked-transition"
+entity ActivationReceipt id "gooo://rollback-integrity-activation/entity/activation-receipt"
+
+activity BindAssuranceCapsule(AssuranceCapsule) -> BoundAssurance
+activity BindEligibilityCapsule(EligibilityCapsule) -> BoundEligibility
+activity ConsumePredecessorSemantics(BoundAssurance) -> PredecessorSemantics
+activity PreserveUnknownResolution(BoundEligibility) -> EligibilityDecision
+activity ApplyRollbackIntegrityTransition(EligibilityDecision) -> ActivationTransition
+activity DenyActivationWithoutProof(PredecessorSemantics) -> BlockedTransition
+activity EmitReadOnlyActivationReceipt(ActivationTransition) -> ActivationReceipt

@@ -1,0 +1,17 @@
+package externalconformanceactivation
+namespace externalconformanceactivation
+
+entity AssuranceCapsule id "gooo://external-conformance-activation/entity/assurance-capsule"
+entity EligibilityCapsule id "gooo://external-conformance-activation/entity/eligibility-capsule"
+entity MergeCapsule id "gooo://external-conformance-activation/entity/merge-capsule"
+entity BoundEvidence id "gooo://external-conformance-activation/entity/bound-evidence"
+entity PredecessorSemantics id "gooo://external-conformance-activation/entity/predecessor-semantics"
+entity ActivationDecision id "gooo://external-conformance-activation/entity/activation-decision"
+entity AssuranceTransition id "gooo://external-conformance-activation/entity/assurance-transition"
+entity ActivationReceipt id "gooo://external-conformance-activation/entity/activation-receipt"
+
+activity BindActivationCapsules(AssuranceCapsule, EligibilityCapsule, MergeCapsule) -> BoundEvidence
+activity ConsumePredecessorSemantics(BoundEvidence) -> PredecessorSemantics
+activity PreserveUnknownResolution(BoundEvidence) -> ActivationDecision
+activity ApplyExternalConformanceTransition(PredecessorSemantics, ActivationDecision) -> AssuranceTransition
+activity EmitReadOnlyActivationReceipt(AssuranceTransition) -> ActivationReceipt

@@ -1,0 +1,178 @@
+{
+  "schema": "gooo/changed-surface-receipt-eligibility/v1",
+  "subject_sha": "1b9acfaac0ff2d1a2353de6c5019d515ab542eb3",
+  "evidence_subject_sha": "25ee2f076d67eafceec4eac3ff4d85a90abb597f",
+  "decision": "ELIGIBLE",
+  "resolution": "EXACT",
+  "enforcement_effect": "NO_EFFECT",
+  "reason": "CHANGED_SURFACE_RECEIPT_PROMOTION_ELIGIBLE",
+  "denominator_id": "gooo/changed-surface-receipt-eligibility-denominator/v1",
+  "denominator_digest": "sha256:8412383255326ba2d59c7c175c10dd5720fc8a977aea093a511940098b30a9e2",
+  "artifacts": [
+    {
+      "name": "language-assurance",
+      "artifact_id": 9511257735,
+      "artifact_digest": "sha256:c1da86e6c384b903fd1d5ecf3b17489d28cc89670d630a753a99aded96b52653",
+      "capsule_digest": "sha256:a086d68d8fd4ed493d4e8ce199c620b99f58d5c713e34325edfd6f1384476202",
+      "observed_digest": "sha256:a086d68d8fd4ed493d4e8ce199c620b99f58d5c713e34325edfd6f1384476202",
+      "exact": true
+    },
+    {
+      "name": "changed-surface-receipt-report",
+      "artifact_id": 9511274498,
+      "artifact_digest": "sha256:9cf5e762dcf353810647cee60947dd0fcfe315539776b80aef48f69464389d6e",
+      "capsule_digest": "sha256:ba25d0ee3ee0943bbb7c345040a1178626c511aa73ff08df25284677033e09d3",
+      "observed_digest": "sha256:ba25d0ee3ee0943bbb7c345040a1178626c511aa73ff08df25284677033e09d3",
+      "exact": true
+    },
+    {
+      "name": "changed-surface-receipt-suite",
+      "artifact_id": 9511274498,
+      "artifact_digest": "sha256:9cf5e762dcf353810647cee60947dd0fcfe315539776b80aef48f69464389d6e",
+      "capsule_digest": "sha256:b50e515649ab22a047f7c2d75009c4a43aa98430fa250ab69c999957fcc24f26",
+      "observed_digest": "sha256:b50e515649ab22a047f7c2d75009c4a43aa98430fa250ab69c999957fcc24f26",
+      "exact": true
+    }
+  ],
+  "transition": {
+    "metric_id": "gooo.metric.semantic.changed-surface-receipt-totality.v1",
+    "meta_operation": "totalize-changed-surface-receipts",
+    "from_status": "NOT_IMPLEMENTED",
+    "from_resolution": "NONE",
+    "eligible_status": "OPERATING",
+    "eligible_resolution": "EXACT"
+  },
+  "summary": {
+    "denominator_total": 12,
+    "before_operating": 8,
+    "after_operating": 9,
+    "before_coverage_bps": 6666,
+    "after_coverage_bps": 7500,
+    "capsules_total": 3,
+    "capsules_exact": 3,
+    "capsule_coverage_bps": 10000,
+    "shadow_cases_total": 6,
+    "shadow_cases_passed": 6,
+    "meta_operations_required": 1,
+    "meta_operations_observed": 1,
+    "meta_operation_coverage_bps": 10000,
+    "eligible_paths": 1,
+    "unknown_paths": 0,
+    "blocked_paths": 0
+  },
+  "indicators": [
+    {
+      "metric_id": "gooo.metric.semantic.changed-surface-receipt-eligibility-bps.v1",
+      "class": "OUTCOME",
+      "proof_choice": "COHERENCE",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "evaluate-receipt-eligibility",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.evidence.changed-surface-receipt-capsule-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "consume-receipt-conformance-suite",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.meta.changed-surface-receipt-operation-bps.v1",
+      "class": "DRIVER",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "consume-receipt-meta-report",
+      "unit": "basis_points",
+      "relation": "GREATER_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 10000,
+      "target": 10000,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.epistemic.changed-surface-receipt-eligibility-unknown.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "REGRESSION",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "preserve-receipt-eligibility-unknown",
+      "unit": "paths",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.effects.changed-surface-receipt-eligibility-writes.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "FOUNDATION",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "bind-receipt-assurance-baseline",
+      "unit": "writes",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    },
+    {
+      "metric_id": "gooo.metric.semantic.changed-surface-receipt-eligibility-applied.v1",
+      "class": "GUARDRAIL",
+      "proof_choice": "COHERENCE",
+      "producer": "changedsurfacereceipteligibility.Evaluate",
+      "consumer": "language-assurance-promotion-gate",
+      "meta_operation": "deny-receipt-promotion-side-effects",
+      "unit": "transitions",
+      "relation": "LESS_OR_EQUAL",
+      "resolution": "EXACT",
+      "value": 0,
+      "target": 0,
+      "satisfied": true
+    }
+  ],
+  "meta_operations": [
+    {
+      "id": "bind-receipt-assurance-baseline",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "consume-receipt-meta-report",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "consume-receipt-conformance-suite",
+      "proof_choice": "FOUNDATION"
+    },
+    {
+      "id": "evaluate-receipt-eligibility",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "deny-receipt-promotion-side-effects",
+      "proof_choice": "COHERENCE"
+    },
+    {
+      "id": "preserve-receipt-eligibility-unknown",
+      "proof_choice": "REGRESSION"
+    }
+  ],
+  "repository_writes": 0,
+  "promotion_applied": 0,
+  "report_digest": "sha256:96317cd87644ca478e918d5e20690aff57de8a9d52c0f1ee7c5c3463be0ab61e"
+}

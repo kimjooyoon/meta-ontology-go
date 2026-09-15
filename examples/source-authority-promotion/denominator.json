@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/source-authority-promotion-eligibility-denominator/v1",
+  "cases": [
+    {
+      "id": "eligible",
+      "expected_decision": "ELIGIBLE",
+      "expected_resolution": "EXACT",
+      "expected_reason": "SOURCE_AUTHORITY_PROMOTION_ELIGIBLE"
+    },
+    {
+      "id": "upstream-not-exact",
+      "expected_decision": "BLOCK",
+      "expected_resolution": "INVARIANT_ONLY",
+      "expected_reason": "UPSTREAM_SOURCE_EVIDENCE_NOT_EXACT"
+    },
+    {
+      "id": "baseline-already-operating",
+      "expected_decision": "BLOCK",
+      "expected_resolution": "INVARIANT_ONLY",
+      "expected_reason": "SOURCE_AUTHORITY_BASELINE_NOT_NOT_IMPLEMENTED"
+    }
+  ]
+}

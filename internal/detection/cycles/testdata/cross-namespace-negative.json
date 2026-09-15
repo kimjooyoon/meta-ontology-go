@@ -1,0 +1,11 @@
+{
+  "name": "same-name-different-namespace",
+  "graph": {
+    "nodes": [
+      {"id": "billing://entity/payment", "kind": "Entity", "namespace": "billing", "name": "Payment"},
+      {"id": "fraud://entity/payment", "kind": "Entity", "namespace": "fraud", "name": "Payment"}
+    ],
+    "edges": []
+  },
+  "expected": {}
+}

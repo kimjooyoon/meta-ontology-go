@@ -1,0 +1,478 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "direct",
+      "partition": "direct",
+      "graph": {
+        "snapshotId": "s-direct",
+        "commands": [
+          {"id": "cmd.compile", "argv": ["gooo", "compile", "main.gooo"], "cpuUnits": 3, "memoryCeiling": 10}
+        ],
+        "edges": [],
+        "roots": ["cmd.compile"]
+      },
+      "evidence": {
+        "snapshotId": "s-direct",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/main.gooo", "owners": ["cmd.compile"], "blob": "sha-direct", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [
+          {"path": "/src/main.gooo", "kind": "modify", "blob": "sha-direct"}
+        ]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.compile"], "argv": {"cmd.compile": ["gooo", "compile", "main.gooo"]}, "cpuUnits": 3, "memoryCeiling": 10, "pathCount": 1, "canonicalDigest": "b253e7dadf4aa2704ab3946bad8e703830d8de5195a29e95212dde3b4684364b"}
+    },
+    {
+      "name": "transitive",
+      "partition": "transitive",
+      "graph": {
+        "snapshotId": "s-transitive",
+        "commands": [
+          {"id": "cmd.compile", "argv": ["gooo", "compile"], "cpuUnits": 3, "memoryCeiling": 10},
+          {"id": "cmd.test", "argv": ["gooo", "test"], "cpuUnits": 5, "memoryCeiling": 20},
+          {"id": "cmd.package", "argv": ["tar", "-cf", "out.tar"], "cpuUnits": 7, "memoryCeiling": 30}
+        ],
+        "edges": [{"from": "cmd.compile", "to": "cmd.test"}, {"from": "cmd.test", "to": "cmd.package"}],
+        "roots": ["cmd.compile"]
+      },
+      "evidence": {
+        "snapshotId": "s-transitive",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/model.gooo", "owners": ["cmd.compile"], "blob": "sha-transitive", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [{"path": "/src/model.gooo", "kind": "modify", "blob": "sha-transitive"}]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.compile", "cmd.package", "cmd.test"], "argv": {"cmd.compile": ["gooo", "compile"], "cmd.package": ["tar", "-cf", "out.tar"], "cmd.test": ["gooo", "test"]}, "cpuUnits": 15, "memoryCeiling": 60, "pathCount": 1, "canonicalDigest": "032810a235254cc1f74343d0ebdd3b550c705faa9468208a11a6de87123fef3d"}
+    },
+    {
+      "name": "deletion-union",
+      "partition": "deletion union",
+      "graph": {
+        "snapshotId": "s-delete",
+        "commands": [
+          {"id": "cmd.consume", "argv": ["gooo", "consume"], "cpuUnits": 3, "memoryCeiling": 5},
+          {"id": "cmd.old", "argv": ["gooo", "old"], "cpuUnits": 2, "memoryCeiling": 4}
+        ],
+        "edges": [{"from": "cmd.old", "to": "cmd.consume"}],
+        "roots": ["cmd.old"]
+      },
+      "evidence": {
+        "snapshotId": "s-delete",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/removed.gooo", "owners": ["cmd.old", "cmd.consume"], "blob": "", "present": false, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [{"path": "/src/removed.gooo", "kind": "delete", "blob": ""}]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.consume", "cmd.old"], "argv": {"cmd.consume": ["gooo", "consume"], "cmd.old": ["gooo", "old"]}, "cpuUnits": 5, "memoryCeiling": 9, "pathCount": 1, "canonicalDigest": "ee053add12f71cfa6c0e4fa0f6bcd35c21b85190e4e01987b4916f3d77f45868"}
+    },
+    {
+      "name": "stable-id-relocation",
+      "partition": "stable-ID relocation",
+      "graph": {
+        "snapshotId": "s-relocate",
+        "commands": [
+          {"id": "cmd.compile", "argv": ["gooo", "compile", "new.gooo"], "cpuUnits": 4, "memoryCeiling": 8}
+        ],
+        "edges": [],
+        "roots": ["cmd.compile"]
+      },
+      "evidence": {
+        "snapshotId": "s-relocate",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/old.gooo", "owners": ["cmd.compile"], "blob": "", "present": false, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"},
+          {"path": "/src/new.gooo", "owners": ["cmd.compile"], "blob": "sha-new", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [
+          {"path": "/src/new.gooo", "kind": "relocate", "blob": "sha-new"},
+          {"path": "/src/old.gooo", "kind": "delete", "blob": ""}
+        ]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.compile"], "argv": {"cmd.compile": ["gooo", "compile", "new.gooo"]}, "cpuUnits": 4, "memoryCeiling": 8, "pathCount": 2, "canonicalDigest": "a00d635c3031102ffd0cfdf86d856463e684e9cc3813f96aeb53805806f74311"}
+    },
+    {
+      "name": "unknown-path",
+      "partition": "unknown path",
+      "graph": {
+        "snapshotId": "s-unknown",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-unknown",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/unknown.gooo", "owners": [], "blob": "sha-unknown", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [{"path": "/src/unknown.gooo", "kind": "modify", "blob": "sha-unknown"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "UNKNOWN_PATH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "f0b159e5bbb08699e0c09453531f32feb87f9c637a11bfb64a89000ddffad8d4"}
+    },
+    {
+      "name": "blob-mismatch",
+      "partition": "blob mismatch",
+      "graph": {
+        "snapshotId": "s-blob",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-blob",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/main.gooo", "owners": ["cmd.build"], "blob": "sha-current", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [{"path": "/src/main.gooo", "kind": "modify", "blob": "sha-observed"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "BLOB_MISMATCH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "7436374a50a3a0238a88ebb8a846fb8571a01703756e655f22b628d7c8bf971d"}
+    },
+    {
+      "name": "snapshot-mismatch",
+      "partition": "snapshot mismatch",
+      "graph": {
+        "snapshotId": "s-graph",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-evidence",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [],
+        "changes": [{"path": "/src/main.gooo", "kind": "modify", "blob": "sha"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "SNAPSHOT_MISMATCH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "1f02bfc21c111db457a4d6ac7eb3ef55d10d7e5c918ab91864249fddf02981c4"}
+    },
+    {
+      "name": "duplicate-id",
+      "partition": "duplicate ID",
+      "graph": {
+        "snapshotId": "s-duplicate",
+        "commands": [
+          {"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 1, "memoryCeiling": 2},
+          {"id": "cmd.build", "argv": ["gooo", "build", "again"], "cpuUnits": 1, "memoryCeiling": 2}
+        ],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {"snapshotId": "s-duplicate", "complete": true, "globalGuards": false, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "DUPLICATE_COMMAND_ID", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "1afc34501722ab7d17dde8ac6d973ba1c2011767ffb4a871c4d02cdc26d160cb"}
+    },
+    {
+      "name": "dangling-command",
+      "partition": "dangling command",
+      "graph": {
+        "snapshotId": "s-dangling-command",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 1, "memoryCeiling": 2}],
+        "edges": [],
+        "roots": ["cmd.missing"]
+      },
+      "evidence": {"snapshotId": "s-dangling-command", "complete": true, "globalGuards": false, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "DANGLING_COMMAND", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "26ebed3c8d1d68b5a87ff7c686c657d47cc9159b99a843274f1bcc9cbd3e67f9"}
+    },
+    {
+      "name": "dangling-edge",
+      "partition": "dangling edge",
+      "graph": {
+        "snapshotId": "s-dangling-edge",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 1, "memoryCeiling": 2}],
+        "edges": [{"from": "cmd.build", "to": "cmd.missing"}],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {"snapshotId": "s-dangling-edge", "complete": true, "globalGuards": false, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "DANGLING_EDGE", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "7dd79423b18b857544eb79023008867f3446cd479156dfedf5e180c91791ca29"}
+    },
+    {
+      "name": "empty-argv",
+      "partition": "empty argv",
+      "graph": {
+        "snapshotId": "s-empty-argv",
+        "commands": [{"id": "cmd.empty", "argv": [], "cpuUnits": 1, "memoryCeiling": 2}],
+        "edges": [],
+        "roots": ["cmd.empty"]
+      },
+      "evidence": {"snapshotId": "s-empty-argv", "complete": true, "globalGuards": false, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "EMPTY_ARGV", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "51ae7631110edd400f291dc1ec3c8973946c713f4a48c295e7453b81c689ea13"}
+    },
+    {
+      "name": "nul-argv",
+      "partition": "NUL argv",
+      "graph": {
+        "snapshotId": "s-nul-argv",
+        "commands": [{"id": "cmd.nul", "argv": ["gooo", "bad\u0000arg"], "cpuUnits": 1, "memoryCeiling": 2}],
+        "edges": [],
+        "roots": ["cmd.nul"]
+      },
+      "evidence": {"snapshotId": "s-nul-argv", "complete": true, "globalGuards": false, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "NUL_ARGV", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "9f2f72afdceac43b5a2da4259472a0529237f4a49d4b8220732ba4b6d76dac6d"}
+    },
+    {
+      "name": "shell-looking-literal-argv",
+      "partition": "shell-looking literal argv",
+      "graph": {
+        "snapshotId": "s-literal",
+        "commands": [{"id": "cmd.literal", "argv": ["sh", "-c", "echo \"$HOME; rm -rf /\""], "cpuUnits": 6, "memoryCeiling": 12}],
+        "edges": [],
+        "roots": ["cmd.literal"]
+      },
+      "evidence": {
+        "snapshotId": "s-literal",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/script.gooo", "owners": ["cmd.literal"], "blob": "sha-literal", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/script.gooo", "kind": "modify", "blob": "sha-literal"}]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.literal"], "argv": {"cmd.literal": ["sh", "-c", "echo \"$HOME; rm -rf /\""]}, "cpuUnits": 6, "memoryCeiling": 12, "pathCount": 1, "canonicalDigest": "c084f2a7a6a4a437713a3df92f54f55efac044834c9972428caf6e8a1a5b39f6"}
+    },
+    {
+      "name": "order-permutations",
+      "partition": "order permutations",
+      "graph": {
+        "snapshotId": "s-order",
+        "commands": [
+          {"id": "cmd.b", "argv": ["gooo", "b"], "cpuUnits": 2, "memoryCeiling": 3},
+          {"id": "cmd.a", "argv": ["gooo", "a"], "cpuUnits": 1, "memoryCeiling": 4}
+        ],
+        "edges": [{"from": "cmd.a", "to": "cmd.b"}],
+        "roots": ["cmd.b", "cmd.a"]
+      },
+      "evidence": {
+        "snapshotId": "s-order",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/b.gooo", "owners": ["cmd.b"], "blob": "sha-b", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"},
+          {"path": "/src/a.gooo", "owners": ["cmd.a"], "blob": "sha-a", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [
+          {"path": "/src/b.gooo", "kind": "modify", "blob": "sha-b"},
+          {"path": "/src/a.gooo", "kind": "modify", "blob": "sha-a"}
+        ]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["cmd.a", "cmd.b"], "argv": {"cmd.a": ["gooo", "a"], "cmd.b": ["gooo", "b"]}, "cpuUnits": 3, "memoryCeiling": 7, "pathCount": 2, "canonicalDigest": "b97e1537c87f16d58757c445550eb35d0c8ddd6f4eac5a8098af627f5bbac4b3"}
+    },
+    {
+      "name": "cpu-overflow",
+      "partition": "CPU overflow",
+      "graph": {
+        "snapshotId": "s-cpu-overflow",
+        "commands": [
+          {"id": "cmd.a", "argv": ["gooo", "a"], "cpuUnits": 18446744073709551615, "memoryCeiling": 1},
+          {"id": "cmd.b", "argv": ["gooo", "b"], "cpuUnits": 1, "memoryCeiling": 1}
+        ],
+        "edges": [{"from": "cmd.a", "to": "cmd.b"}],
+        "roots": ["cmd.a"]
+      },
+      "evidence": {
+        "snapshotId": "s-cpu-overflow",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/a.gooo", "owners": ["cmd.a"], "blob": "sha-a", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/a.gooo", "kind": "modify", "blob": "sha-a"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "CPU_OVERFLOW", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "0a117661c86472426ca87a05f4a7784db1517294cfe09aeaabb179ed20d72ec6"}
+    },
+    {
+      "name": "memory-overflow",
+      "partition": "memory overflow",
+      "graph": {
+        "snapshotId": "s-memory-overflow",
+        "commands": [
+          {"id": "cmd.a", "argv": ["gooo", "a"], "cpuUnits": 1, "memoryCeiling": 18446744073709551615},
+          {"id": "cmd.b", "argv": ["gooo", "b"], "cpuUnits": 1, "memoryCeiling": 1}
+        ],
+        "edges": [{"from": "cmd.a", "to": "cmd.b"}],
+        "roots": ["cmd.a"]
+      },
+      "evidence": {
+        "snapshotId": "s-memory-overflow",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/a.gooo", "owners": ["cmd.a"], "blob": "sha-a", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/a.gooo", "kind": "modify", "blob": "sha-a"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "MEMORY_OVERFLOW", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "7b10fe34605538c4a17426d44b2a3aee02e84a2541c7df455a0fa9f0a77d2385"}
+    },
+    {
+      "name": "missing-evidence-path",
+      "partition": "missing evidence path",
+      "graph": {
+        "snapshotId": "s-missing-path",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-missing-path",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/other.gooo", "owners": ["cmd.build"], "blob": "sha-other", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/missing.gooo", "kind": "modify", "blob": "sha-missing"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "MISSING_EVIDENCE_PATH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "7445f84e225019f29b2170429b1c1cc584a95e135aacc644dd0267693be4f91d"}
+    },
+    {
+      "name": "disconnected-evidence-path",
+      "partition": "disconnected evidence path",
+      "graph": {
+        "snapshotId": "s-disconnected",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-disconnected",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/main.gooo", "owners": ["cmd.build"], "blob": "sha-main", "present": true, "connected": false, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/main.gooo", "kind": "modify", "blob": "sha-main"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "DISCONNECTED_EVIDENCE_PATH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "0337dc49745e09d448ba5bddb5068ee5f7f9e7197fb38bb50467579e44299198"}
+    },
+    {
+      "name": "ambiguous-evidence-path",
+      "partition": "ambiguous evidence path",
+      "graph": {
+        "snapshotId": "s-ambiguous",
+        "commands": [
+          {"id": "cmd.a", "argv": ["gooo", "a"], "cpuUnits": 1, "memoryCeiling": 2},
+          {"id": "cmd.b", "argv": ["gooo", "b"], "cpuUnits": 1, "memoryCeiling": 2}
+        ],
+        "edges": [],
+        "roots": ["cmd.a", "cmd.b"]
+      },
+      "evidence": {
+        "snapshotId": "s-ambiguous",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/shared.gooo", "owners": ["cmd.a", "cmd.b"], "blob": "sha-shared", "present": true, "connected": true, "ambiguous": true, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/shared.gooo", "kind": "modify", "blob": "sha-shared"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "AMBIGUOUS_EVIDENCE_PATH", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "e67e230a1845351fd308c5880ad01f5b5e990dabcc2326bf02f8d379c928f618"}
+    },
+    {
+      "name": "global-guards-only",
+      "partition": "global guards only",
+      "graph": {
+        "snapshotId": "s-global",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {"snapshotId": "s-global", "complete": true, "globalGuards": true, "paths": [], "changes": []},
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "GLOBAL_GUARD", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "a09e5d58f0ca17c28748553703bf1bef57b30c512532e6a94b28196ba45b8cb3"}
+    },
+    {
+      "name": "multiple-roots",
+      "partition": "multiple roots",
+      "graph": {
+        "snapshotId": "s-roots",
+        "commands": [
+          {"id": "root.api", "argv": ["gooo", "api"], "cpuUnits": 2, "memoryCeiling": 4},
+          {"id": "root.worker", "argv": ["gooo", "worker"], "cpuUnits": 3, "memoryCeiling": 5}
+        ],
+        "edges": [],
+        "roots": ["root.api", "root.worker"]
+      },
+      "evidence": {
+        "snapshotId": "s-roots",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [
+          {"path": "/src/api.gooo", "owners": ["root.api"], "blob": "sha-api", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"},
+          {"path": "/src/worker.gooo", "owners": ["root.worker"], "blob": "sha-worker", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}
+        ],
+        "changes": [
+          {"path": "/src/worker.gooo", "kind": "modify", "blob": "sha-worker"},
+          {"path": "/src/api.gooo", "kind": "modify", "blob": "sha-api"}
+        ]
+      },
+      "expected": {"decision": "SELECTIVE", "reason": "COMPLETE_EVIDENCE", "commandIds": ["root.api", "root.worker"], "argv": {"root.api": ["gooo", "api"], "root.worker": ["gooo", "worker"]}, "cpuUnits": 5, "memoryCeiling": 9, "pathCount": 2, "canonicalDigest": "683d571279222ee9124bd2abda1a6d968da88137b803bff461367400832eaa6e"}
+    },
+    {
+      "name": "candidate-non-authority",
+      "partition": "candidate non-authority",
+      "graph": {
+        "snapshotId": "s-candidate",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-candidate",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/candidate.gooo", "owners": ["cmd.build"], "blob": "sha-candidate", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "candidate"}],
+        "changes": [{"path": "/src/candidate.gooo", "kind": "modify", "blob": "sha-candidate"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "NON_AUTHORITY_EVIDENCE", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "d0e5de561ab95ec85253b90c4d0df9e045b329dbba62c2521ddb1980d77c0665"}
+    },
+    {
+      "name": "derived-non-authority",
+      "partition": "derived non-authority",
+      "graph": {
+        "snapshotId": "s-derived",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-derived",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/derived.gooo", "owners": ["cmd.build"], "blob": "sha-derived", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "derived"}],
+        "changes": [{"path": "/src/derived.gooo", "kind": "modify", "blob": "sha-derived"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "NON_AUTHORITY_EVIDENCE", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "9c2b886b88858645f4381e5cf5a10787ebd53399966e40ad6d7acfc778b6ff37"}
+    },
+    {
+      "name": "incomplete-evidence",
+      "partition": "incomplete",
+      "graph": {
+        "snapshotId": "s-incomplete",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-incomplete",
+        "complete": false,
+        "globalGuards": false,
+        "paths": [{"path": "/src/main.gooo", "owners": ["cmd.build"], "blob": "sha-main", "present": true, "connected": true, "ambiguous": false, "stale": false, "authority": "authoritative"}],
+        "changes": [{"path": "/src/main.gooo", "kind": "modify", "blob": "sha-main"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "INCOMPLETE_EVIDENCE", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "7da5a1dbd3a8b6017740d1478d9eb714949fdef50a837f8a1d791e8b71ec84b0"}
+    },
+    {
+      "name": "stale-evidence",
+      "partition": "stale",
+      "graph": {
+        "snapshotId": "s-stale",
+        "commands": [{"id": "cmd.build", "argv": ["gooo", "build"], "cpuUnits": 2, "memoryCeiling": 4}],
+        "edges": [],
+        "roots": ["cmd.build"]
+      },
+      "evidence": {
+        "snapshotId": "s-stale",
+        "complete": true,
+        "globalGuards": false,
+        "paths": [{"path": "/src/main.gooo", "owners": ["cmd.build"], "blob": "sha-main", "present": true, "connected": true, "ambiguous": false, "stale": true, "authority": "authoritative"}],
+        "changes": [{"path": "/src/main.gooo", "kind": "modify", "blob": "sha-main"}]
+      },
+      "expected": {"decision": "FULL_SUITE_FALLBACK", "reason": "STALE_EVIDENCE", "commandIds": [], "argv": {}, "cpuUnits": 0, "memoryCeiling": 0, "pathCount": 0, "canonicalDigest": "82a56b69d083b3b45720224c8e536b5fb4c77ac132db1db5b7214dcf32c6b895"}
+    }
+  ]
+}

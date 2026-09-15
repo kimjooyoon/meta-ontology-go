@@ -1,0 +1,19 @@
+{
+  "schema": "gooo/changed-surface-receipt-activation-evidence/v1",
+  "predecessor_sha": "1b9acfaac0ff2d1a2353de6c5019d515ab542eb3",
+  "capsules": [
+    {
+      "id": 9511928780,
+      "name": "language-assurance-1b9acfaac0ff2d1a2353de6c5019d515ab542eb3",
+      "digest": "sha256:99cc771dbcc9fdea6a3df534e63f5de5357efab5ed521590a3c0fec1ff4b229a",
+      "capsule_digest": "sha256:6cfdc133e9797483b88a368fc0e5eeb73659d0731a5438ae6e4fffdf12730cc6"
+    },
+    {
+      "id": 9511958307,
+      "name": "changed-surface-receipt-eligibility-1b9acfaac0ff2d1a2353de6c5019d515ab542eb3",
+      "digest": "sha256:7bc661464f478d6d37d9fa231c03f5308a2c7e448086da592d21066777b6376c",
+      "capsule_digest": "sha256:53ee343de4b5116b6a4810132d5b6b668b56e4ebbd23516b1549a7651f4acb23",
+      "semantic_digest": "sha256:96317cd87644ca478e918d5e20690aff57de8a9d52c0f1ee7c5c3463be0ab61e"
+    }
+  ]
+}

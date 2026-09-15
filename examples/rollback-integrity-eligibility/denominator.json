@@ -1,0 +1,21 @@
+{
+  "schema": "gooo/rollback-integrity-eligibility-denominator/v1",
+  "metric_id": "gooo.metric.operation.rollback-integrity.v1",
+  "meta_operation": "verify-rollback-integrity",
+  "evidence_subject_sha": "1f27d342faf7a435ca4c534e2a816f29befe21a4",
+  "capsules_total": 3,
+  "shadow_replays_total": 2,
+  "shadow_cases_total": 7,
+  "cases": [
+    {"id": "exact", "decision": "ELIGIBLE", "resolution": "EXACT", "effect": "NO_EFFECT"},
+    {"id": "unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"},
+    {"id": "subject-unknown", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"}
+  ],
+  "projected_transition": {
+    "operating": {"before": 9, "after": 10, "total": 12},
+    "coverage_bps": {"before": 7500, "after": 8333}
+  },
+  "repository_writes": 0,
+  "promotion_applied": 0
+}

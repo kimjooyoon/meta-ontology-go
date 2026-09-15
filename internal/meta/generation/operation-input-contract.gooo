@@ -1,0 +1,26 @@
+package operationinputcontract
+namespace operationinputcontract
+
+entity FunctionInput id "gooo://meta-operation-input-contract/entity/function-input"
+entity FileInput id "gooo://meta-operation-input-contract/entity/file-input"
+entity OperationResult id "gooo://meta-operation-input-contract/entity/result"
+entity ImportNormalizationPolicy id "gooo://meta-operation-input-contract/entity/import-normalization-policy"
+entity ReturnShapeObligation id "gooo://meta-operation-input-contract/entity/return-shape-obligation"
+entity ControlFlowObligation id "gooo://meta-operation-input-contract/entity/control-flow-obligation"
+entity FreeBindingsObligation id "gooo://meta-operation-input-contract/entity/free-bindings-obligation"
+entity CalleeEffectsObligation id "gooo://meta-operation-input-contract/entity/callee-effects-obligation"
+entity RenderedCapacityObligation id "gooo://meta-operation-input-contract/entity/rendered-capacity-obligation"
+entity ProjectedConformanceObligation id "gooo://meta-operation-input-contract/entity/projected-conformance-obligation"
+
+activity CollapseAssignReturn(FunctionInput) -> OperationResult
+activity SplitGoDeclarations(FileInput) -> OperationResult
+activity SplitGoooSections(FileInput) -> OperationResult
+activity ExtractFunction(FunctionInput) -> OperationResult
+activity NormalizeEligibleImportGroup(FileInput) -> ImportNormalizationPolicy
+activity NormalizeNamedAliasImportHeader(FileInput) -> ImportNormalizationPolicy
+activity ProveReturnShape(FunctionInput) -> ReturnShapeObligation
+activity ProveControlFlow(ReturnShapeObligation) -> ControlFlowObligation
+activity ProveFreeBindings(ControlFlowObligation) -> FreeBindingsObligation
+activity ProveCalleeEffects(FreeBindingsObligation) -> CalleeEffectsObligation
+activity ProveRenderedCapacity(CalleeEffectsObligation) -> RenderedCapacityObligation
+activity ProveProjectedConformance(RenderedCapacityObligation) -> ProjectedConformanceObligation

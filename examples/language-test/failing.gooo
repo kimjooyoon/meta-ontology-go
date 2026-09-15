@@ -1,0 +1,10 @@
+package billingtest
+namespace billingtest
+
+entity Order id "billing-test://entity/order"
+entity PaymentMethod id "billing-test://entity/payment-method"
+entity Payment id "billing-test://entity/payment"
+entity Refund id "billing-test://entity/refund"
+entity PayOrderProducesRefund id "gooo://test/activity/PayOrder/output/Refund"
+
+activity PayOrder(Order, PaymentMethod) -> Payment

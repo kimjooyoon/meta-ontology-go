@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/vertical-slice-closure-shadow-evidence/v1",
+  "metric_id": "gooo.metric.capability.vertical-slice-closure.v1",
+  "meta_operation": "close-vertical-slice",
+  "predecessor_sha": "145b81c8bb8e4b1eb46cb10af0ea21a6b6be51b5",
+  "denominator_digest": "sha256:6b4b3793133313d430d4c53792baf04cb17fc0fd9ac5592aeb33bc01c0ad6962",
+  "assurance": {
+    "artifact_id": 9518495029,
+    "archive_digest": "sha256:48663ffb5d413de23b6efc90cb08229d7c56cef4798a0545aa89510a3f21781f",
+    "payload_digest": "sha256:13581ebf64e0e3a512d1e8b3ca05de05e14d4453b64f3c7eff8e3b854a89d969"
+  },
+  "boundary_run_id": 32723609143,
+  "boundaries": [
+    {"id": "syntax", "artifact_id": 9518763501, "archive_digest": "sha256:9f4069973181119e00304343ca0cc670b7e832dc0d45c8085f78d162a7f0629c", "payload_digest": "sha256:57af95075eed92c9ab1112c8362837876d3aec0c59832e5b78b08ae741e8bb29"},
+    {"id": "semantics", "artifact_id": 9518757655, "archive_digest": "sha256:34620309f72f37531d00c65a1410e3058c0d32fd910d00fce899669a23ffb40e", "payload_digest": "sha256:59a609cf859ff2c8087df024268834dfe673ba782e28b46f614a4dbc3b55d461"},
+    {"id": "binding", "artifact_id": 9518757975, "archive_digest": "sha256:3379834dbc6bdc446531686fc28fd508d5bec754763401e0d38789fa23858492", "payload_digest": "sha256:b728556a067d2227ad96ddf8d8a68f9a9fda7775ce11adbfaf730d3c63158c3e"},
+    {"id": "use-cases", "artifact_id": 9518763127, "archive_digest": "sha256:92dcceef93853a2fcc33acc99ea2ad233da022a70bd49ab64557977a970b75b8", "payload_digest": "sha256:76f883488e9cfb2433c8012dc3c75f431bb04cecda00ee2ba9a1d2d5f216d2c9"},
+    {"id": "toolchain", "artifact_id": 9518761346, "archive_digest": "sha256:52c684e39cb0415b7bc93ff52723a86f97d8d92aebce785ca3872f13cf2dc0fd", "payload_digest": "sha256:353d5a165460f1c5679c944e6a350d811a4e0e13502308cb4c628d07e56798fa"},
+    {"id": "release", "artifact_id": 9518762392, "archive_digest": "sha256:be343240565a36b0dddabeb713255b2f63431378ea40fec32988f6db38cc3d79", "payload_digest": "sha256:5606c5a029a7d54738f2ee3a683408d910ae8a0b86994270718075bc3a3d0fa9"}
+  ],
+  "repository_writes": 0,
+  "promotion_applied": 0
+}

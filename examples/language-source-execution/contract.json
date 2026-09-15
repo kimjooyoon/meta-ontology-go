@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/language-source-execution-contract/v1",
+  "version": 1,
+  "cases": [
+    {"id":"execute-billing","kind":"POSITIVE","expected_decision":"PASS","expected_reason":"SOURCE_ACTIVITY_EXECUTED","proof_choice":"FOUNDATION","meta_operation":"execute-source-activity"},
+    {"id":"deterministic-replay","kind":"POSITIVE","expected_decision":"PASS","expected_reason":"SOURCE_ACTIVITY_EXECUTED","proof_choice":"COHERENCE","meta_operation":"replay-source-execution-result"},
+    {"id":"unknown-entry","kind":"GUARDRAIL","expected_decision":"FAIL_CLOSED","expected_reason":"SOURCE_ENTRY_UNKNOWN","proof_choice":"REGRESSION","meta_operation":"reject-source-runtime-failure"},
+    {"id":"invalid-syntax","kind":"GUARDRAIL","expected_decision":"FAIL_CLOSED","expected_reason":"SOURCE_SYNTAX_INVALID","proof_choice":"REGRESSION","meta_operation":"reject-source-runtime-failure"}
+  ]
+}

@@ -1,0 +1,17 @@
+package metaactionability
+namespace metaactionability
+
+entity BoundIndicators id "gooo://meta-actionability/entity/bound-indicators"
+entity RootScopedIndicators id "gooo://meta-actionability/entity/root-scoped-indicators"
+entity BindingGuardrail id "gooo://meta-actionability/entity/binding-guardrail"
+entity ExecutableRegistry id "gooo://meta-actionability/entity/executable-registry"
+entity ActionabilityCoverage id "gooo://meta-actionability/entity/actionability-coverage"
+entity ImprovementDecision id "gooo://meta-actionability/entity/improvement-decision"
+entity ReplayReceipt id "gooo://meta-actionability/entity/replay-receipt"
+
+activity PreserveProjectRootExemption(BoundIndicators) -> RootScopedIndicators
+activity PreserveMetaBindingGuardrail(RootScopedIndicators) -> BindingGuardrail
+activity RegisterExecutableMetaOperation(BindingGuardrail) -> ExecutableRegistry
+activity ResolveIndicatorExecutor(ExecutableRegistry) -> ActionabilityCoverage
+activity SelectMissingExecutor(ActionabilityCoverage) -> ImprovementDecision
+activity ReplayActionabilityReport(ImprovementDecision) -> ReplayReceipt

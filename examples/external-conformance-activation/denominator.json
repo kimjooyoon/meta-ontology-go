@@ -1,0 +1,14 @@
+{
+  "schema": "gooo/external-conformance-activation-denominator/v1",
+  "total": 8,
+  "cases": [
+    {"id": "exact", "decision": "APPLIED", "resolution": "EXACT"},
+    {"id": "unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY"},
+    {"id": "eligibility-unknown", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"},
+    {"id": "eligibility-fixed-point", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"},
+    {"id": "eligibility-unrecognized", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"},
+    {"id": "assurance-unknown", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"},
+    {"id": "merge-unknown", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN"}
+  ]
+}

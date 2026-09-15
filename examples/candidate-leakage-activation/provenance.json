@@ -1,0 +1,22 @@
+{
+  "schema": "gooo/candidate-leakage-activation-provenance/v1",
+  "predecessor_sha": "308233198b91a47bdfc34016f73e44905e2be582",
+  "workflow_run_id": 32696964866,
+  "artifacts": [
+    {
+      "id": 9509154504,
+      "name": "language-assurance-308233198b91a47bdfc34016f73e44905e2be582",
+      "digest": "sha256:d6006f0d8db1bd12c1b527afa7bbf8a1bc2e60dbd7352c2665216fdd39f91a56",
+      "capsule": "internal/meta/languageassurance/candidateleakageactivation/evidence/assurance.json",
+      "capsule_digest": "sha256:22cbebb4ddf03dbf114a8ce7b70deb6c74910a5bf1b4af21c863bd198ea8e741"
+    },
+    {
+      "id": 9509166817,
+      "name": "candidate-leakage-eligibility-308233198b91a47bdfc34016f73e44905e2be582",
+      "digest": "sha256:db7636e6c831afc1a68148c0cecc9f1d057532bda020f0562bf26328c8c39089",
+      "capsule": "internal/meta/languageassurance/candidateleakageactivation/evidence/eligibility.json",
+      "capsule_digest": "sha256:e816861985039c32ba1e064fbf5db537a3567f6982da496b9a2cd34058ad3a8b",
+      "semantic_digest": "sha256:4e9697727a34dae856a77d2b349a0992b1bea888be0cde7db2bcca8b73ddefc9"
+    }
+  ]
+}
