@@ -25,6 +25,7 @@ type jsonReport struct {
 	File                     string          `json:"file,omitempty"`
 	Output                   string          `json:"output,omitempty"`
 	Manifest                 string          `json:"manifest,omitempty"`
+	RuntimePlan              string          `json:"runtime_plan,omitempty"`
 	PreviousGo               string          `json:"previous_go,omitempty"`
 	ProtectedBytesEqual      *bool           `json:"protected_bytes_equal,omitempty"`
 	SemanticHash             string          `json:"semantic_hash,omitempty"`
