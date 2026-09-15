@@ -3,16 +3,16 @@ package valueexecution
 import "errors"
 
 type RepairCandidate struct {
-	Schema            string      `json:"schema"`
-	CandidateID       string      `json:"candidate_id"`
-	ComparisonDigest  string      `json:"comparison_digest"`
-	TriggerState      ReplayState `json:"trigger_state"`
-	TriggerReason     string      `json:"trigger_reason"`
-	Target            string      `json:"target"`
-	ExecutionAllowed  bool        `json:"execution_allowed"`
-	RepositoryWrites  int         `json:"repository_writes"`
-	NextOperation     string      `json:"next_operation"`
-	BlockedBy         []string    `json:"blocked_by"`
+	Schema           string      `json:"schema"`
+	CandidateID      string      `json:"candidate_id"`
+	ComparisonDigest string      `json:"comparison_digest"`
+	TriggerState     ReplayState `json:"trigger_state"`
+	TriggerReason    string      `json:"trigger_reason"`
+	Target           string      `json:"target"`
+	ExecutionAllowed bool        `json:"execution_allowed"`
+	RepositoryWrites int         `json:"repository_writes"`
+	NextOperation    string      `json:"next_operation"`
+	BlockedBy        []string    `json:"blocked_by"`
 }
 
 const RepairCandidateSchema = "gooo/value-execution-repair-candidate/v1"
