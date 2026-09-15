@@ -25,6 +25,8 @@ type generateArtifacts struct {
 	output       string
 	manifestPath string
 	manifest     projectionManifest
+	runtimePlanPath string
+	runtimePlanData []byte
 	cleanupDirs  []string
 }
 
