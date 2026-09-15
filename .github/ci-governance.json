@@ -2306,6 +2306,15 @@
       ]
     },
     {
+      "branch": "agent/repair-recipe-source-boundary-v2-20260916",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/functionextractorrecipe/recipes.json",
+        "internal/verify/scope_recipe_source_boundary_v2.go"
+      ]
+    },
+    {
       "branch": "agent/promotion-authorized-continuity",
       "paths": [
         ".github/agent-scope-table.md",
