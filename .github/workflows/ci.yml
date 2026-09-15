@@ -28,6 +28,7 @@ jobs:
   format:
     name: gofmt
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -227,6 +228,7 @@ jobs:
   vet:
     name: go vet
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -247,6 +249,7 @@ jobs:
   test:
     name: go test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -267,6 +270,7 @@ jobs:
   race:
     name: go test -race
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -287,6 +291,7 @@ jobs:
   semantic:
     name: Semantic conformance
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -315,6 +320,7 @@ jobs:
     needs: [format, vet, test, race, semantic]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -646,6 +652,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -773,6 +780,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, evidence, feedback-predecessor]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1254,6 +1262,7 @@ jobs:
     needs: [proof]
     if: ${{ !cancelled() && github.event_name == 'pull_request' && github.head_ref == 'agent/foundation-authorization-dev-sync-20260831' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1321,6 +1330,7 @@ jobs:
     name: FOUNDATION authorization protocol
     if: ${{ github.event_name == 'pull_request' && github.base_ref == 'dev' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -1460,6 +1470,7 @@ jobs:
     name: Reconciliation post-main verification
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1533,6 +1544,7 @@ jobs:
     needs: [format, vet, test, race, semantic, policy, proof]
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -1826,6 +1838,7 @@ jobs:
   feedback-predecessor:
     name: Feedback predecessor
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -1941,6 +1954,7 @@ jobs:
   language-package-execution:
     name: Language package execution
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -1963,6 +1977,7 @@ jobs:
     needs: [feedback-predecessor]
     if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7

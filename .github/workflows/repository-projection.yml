@@ -12,6 +12,7 @@ jobs:
   roundtrip:
     name: repository projection roundtrip
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       EXACT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       METRICS_COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
