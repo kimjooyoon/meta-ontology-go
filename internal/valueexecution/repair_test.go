@@ -14,6 +14,23 @@ func TestProposeRepairCreatesNonExecutingCandidate(t *testing.T) {
 	if repair.Schema != RepairCandidateSchema || repair.TriggerState != ReplayRefuted || repair.ExecutionAllowed || repair.RepositoryWrites != 0 || repair.ComparisonDigest == "" {
 		t.Fatalf("repair = %#v", repair)
 	}
+	if err := ValidateRepairCandidate(repair); err != nil {
+		t.Fatalf("generated repair candidate did not validate: %v", err)
+	}
+}
+
+func TestValidateRepairCandidateRejectsForgedIdentity(t *testing.T) {
+	baseline := replayFixture("one")
+	candidate := replayFixture("one")
+	candidate.Activities = []string{"Tampered"}
+	repair, err := ProposeRepair(CompareReplay(baseline, candidate))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repair.CandidateID = "gooo://repair-candidate/forged"
+	if err := ValidateRepairCandidate(repair); err == nil {
+		t.Fatal("forged repair candidate was accepted")
+	}
 }
 
 func TestProposeRepairDoesNotPromoteUnknown(t *testing.T) {
