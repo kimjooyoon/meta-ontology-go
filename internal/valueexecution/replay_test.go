@@ -47,3 +47,13 @@ func TestCompareReplayFailsClosedForIncompleteReceipt(t *testing.T) {
 		t.Fatalf("comparison = %#v", comparison)
 	}
 }
+
+func TestCompareReplayRefutesReceiptContentTampering(t *testing.T) {
+	baseline := replayFixture("one")
+	candidate := replayFixture("one")
+	candidate.Activities = []string{"Tampered"}
+	comparison := CompareReplay(baseline, candidate)
+	if comparison.State != ReplayRefuted || comparison.Reason != "REPLAY_RECEIPT_DIGEST_INVALID" || comparison.NextOperation != "PRESERVE_COUNTEREXAMPLE_AND_OPEN_REPAIR_CANDIDATE" {
+		t.Fatalf("comparison = %#v", comparison)
+	}
+}

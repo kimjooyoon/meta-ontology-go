@@ -14,6 +14,8 @@ type ReplayComparison struct {
 	Schema          string      `json:"schema"`
 	State           ReplayState `json:"state"`
 	Reason          string      `json:"reason"`
+	NextOperation   string      `json:"next_operation"`
+	BlockedBy       []string    `json:"blocked_by"`
 	SamePlan        bool        `json:"same_plan"`
 	SameInput       bool        `json:"same_input"`
 	SameExecution   bool        `json:"same_execution"`
@@ -39,27 +41,39 @@ func CompareReplay(baseline, candidate Execution) ReplayComparison {
 		BaselineDigest:  baseline.ExecutionDigest,
 		CandidateDigest: candidate.ExecutionDigest,
 	}
-	if !validReplayExecution(baseline) || !validReplayExecution(candidate) {
+	if !replayReceiptShapeValid(baseline) || !replayReceiptShapeValid(candidate) {
 		comparison.State = ReplayUnknown
 		comparison.Reason = "REPLAY_RECEIPT_INCOMPLETE"
+		comparison.NextOperation = "CAPTURE_COMPLETE_EXECUTION_RECEIPT"
+		comparison.BlockedBy = []string{"execution_receipt"}
+		return comparison
+	}
+	if executionDigest(baseline) != baseline.ExecutionDigest || executionDigest(candidate) != candidate.ExecutionDigest {
+		comparison.State = ReplayRefuted
+		comparison.Reason = "REPLAY_RECEIPT_DIGEST_INVALID"
+		comparison.NextOperation = "PRESERVE_COUNTEREXAMPLE_AND_OPEN_REPAIR_CANDIDATE"
 		return comparison
 	}
 	if !comparison.SamePlan || !comparison.SameInput {
 		comparison.State = ReplayUnknown
 		comparison.Reason = "REPLAY_SCOPE_MISMATCH"
+		comparison.NextOperation = "CAPTURE_MATCHING_PLAN_AND_INPUT_RECEIPT"
+		comparison.BlockedBy = []string{"plan_digest", "input_digest"}
 		return comparison
 	}
 	if !comparison.SameExecution {
 		comparison.State = ReplayRefuted
 		comparison.Reason = "REPLAY_EXECUTION_DIGEST_MISMATCH"
+		comparison.NextOperation = "PRESERVE_COUNTEREXAMPLE_AND_OPEN_REPAIR_CANDIDATE"
 		return comparison
 	}
 	comparison.State = ReplayClosed
 	comparison.Reason = "DETERMINISTIC_REPLAY"
+	comparison.NextOperation = "REUSE_REPLAY_EVIDENCE"
 	return comparison
 }
 
-func validReplayExecution(execution Execution) bool {
+func replayReceiptShapeValid(execution Execution) bool {
 	return execution.Scope != "" && validDigest(execution.PlanDigest) &&
 		validDigest(execution.InputDigest) && validDigest(execution.ExecutionDigest)
 }
