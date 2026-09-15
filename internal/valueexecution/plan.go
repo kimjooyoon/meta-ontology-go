@@ -82,7 +82,7 @@ func CompilePlan(filename string, source []byte) (Plan, error) {
 // Execute runs one isolated plan instance. The map supplies exactly one
 // Integer input for each root activity; bound activities must receive their
 // input from a validated ProducedResult edge.
-func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
+func (plan Plan) Execute(rootInputs map[string]int64) (execution Execution, err error) {
 	if err := plan.validateCompiledAuthority(); err != nil {
 		return Execution{}, err
 	}
@@ -97,7 +97,7 @@ func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
 		return Execution{}, err
 	}
 	values := make(map[string]ProducedResult, len(plan.programs))
-	execution := Execution{
+	execution = Execution{
 		Scope:       RegisteredValueOperationScope,
 		PlanDigest:  planExecutionDigest(plan),
 		InputDigest: digestValue(rootInputs),
