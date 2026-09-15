@@ -1,0 +1,6 @@
+package billing
+namespace billing
+
+entity Order id "billing://entity/order"
+entity Payment id "billing://entity/payment"
+activity PayOrder(Order) -> Payment

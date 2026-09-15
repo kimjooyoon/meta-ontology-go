@@ -1,0 +1,330 @@
+[
+  {
+    "name": "minimum-pressure-count-one-rejected",
+    "decode_error": true,
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 1,
+      "cpu_capacity": 1,
+      "registered_paths": ["repo/a"],
+      "pressures": [
+        {
+          "id": "pressure/only",
+          "work_id": "work/only",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/a", "mode": "W"}]
+        }
+      ]
+    },
+    "expected": {"status": "REJECTED", "selected_ids": [], "work_ids": []}
+  },
+  {
+    "name": "exact-m-two-priority-and-id-tie-break",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 2,
+      "cpu_capacity": 2,
+      "registered_paths": ["repo/a", "repo/b"],
+      "pressures": [
+        {
+          "id": "pressure/b",
+          "work_id": "work/b",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/b", "mode": "W"}]
+        },
+        {
+          "id": "pressure/a",
+          "work_id": "work/a",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/a", "mode": "W"}]
+        }
+      ]
+    },
+    "permutation_test": true,
+    "expected": {
+      "status": "PASS",
+      "selected_ids": ["pressure/a", "pressure/b"],
+      "work_ids": ["work/a", "work/b"]
+    }
+  },
+  {
+    "name": "missing-pressure-is-unknown",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 2,
+      "cpu_capacity": 2,
+      "registered_paths": ["repo/a", "repo/b"]
+    },
+    "expected": {"status": "UNKNOWN", "selected_ids": [], "work_ids": []}
+  },
+  {
+    "name": "priority-before-id-tie-break",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 3,
+      "cpu_capacity": 2,
+      "registered_paths": ["repo/a", "repo/z", "repo/low"],
+      "pressures": [
+        {
+          "id": "pressure/z",
+          "work_id": "work/z",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/z", "mode": "W"}]
+        },
+        {
+          "id": "pressure/low",
+          "work_id": "work/low",
+          "priority": 2,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/low", "mode": "W"}]
+        },
+        {
+          "id": "pressure/a",
+          "work_id": "work/a",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/a", "mode": "W"}]
+        }
+      ]
+    },
+    "permutation_test": true,
+    "expected": {
+      "status": "PASS",
+      "selected_ids": ["pressure/a", "pressure/z"],
+      "work_ids": ["work/a", "work/z"]
+    }
+  },
+  {
+    "name": "non-pass-prerequisite-is-blocked",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 2,
+      "cpu_capacity": 2,
+      "registered_paths": ["repo/a", "repo/b"],
+      "pressures": [
+        {
+          "id": "pressure/blocked-a",
+          "work_id": "work/blocked-a",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "FAIL",
+          "claims": [{"path": "repo/a", "mode": "W"}]
+        },
+        {
+          "id": "pressure/blocked-b",
+          "work_id": "work/blocked-b",
+          "priority": 2,
+          "cpu": 1,
+          "prerequisite": "UNKNOWN",
+          "claims": [{"path": "repo/b", "mode": "W"}]
+        }
+      ]
+    },
+    "expected": {"status": "BLOCKED", "selected_ids": [], "work_ids": []}
+  },
+  {
+    "name": "cpu-capacity-is-blocked",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 2,
+      "cpu_capacity": 1,
+      "registered_paths": ["repo/a", "repo/b"],
+      "pressures": [
+        {
+          "id": "pressure/cpu-a",
+          "work_id": "work/cpu-a",
+          "priority": 1,
+          "cpu": 2,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/a", "mode": "W"}]
+        },
+        {
+          "id": "pressure/cpu-b",
+          "work_id": "work/cpu-b",
+          "priority": 2,
+          "cpu": 2,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/b", "mode": "W"}]
+        }
+      ]
+    },
+    "expected": {"status": "BLOCKED", "selected_ids": [], "work_ids": []}
+  },
+  {
+    "name": "read-write-conflicts-and-disjoint-path",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 7,
+      "cpu_capacity": 7,
+      "registered_paths": ["repo/shared", "repo/wr", "repo/rw", "repo/disjoint"],
+      "pressures": [
+        {
+          "id": "pressure/ww-a",
+          "work_id": "work/ww-a",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/shared", "mode": "W"}]
+        },
+        {
+          "id": "pressure/ww-b",
+          "work_id": "work/ww-b",
+          "priority": 2,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/shared", "mode": "W"}]
+        },
+        {
+          "id": "pressure/wr-w",
+          "work_id": "work/wr-w",
+          "priority": 3,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/wr", "mode": "W"}]
+        },
+        {
+          "id": "pressure/wr-r",
+          "work_id": "work/wr-r",
+          "priority": 4,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/wr", "mode": "R"}]
+        },
+        {
+          "id": "pressure/rw-r",
+          "work_id": "work/rw-r",
+          "priority": 5,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/rw", "mode": "R"}]
+        },
+        {
+          "id": "pressure/rw-w",
+          "work_id": "work/rw-w",
+          "priority": 6,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/rw", "mode": "W"}]
+        },
+        {
+          "id": "pressure/disjoint",
+          "work_id": "work/disjoint",
+          "priority": 7,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/disjoint", "mode": "R"}]
+        }
+      ]
+    },
+    "required_conflicts": [
+      ["pressure/ww-a", "pressure/ww-b"],
+      ["pressure/wr-w", "pressure/wr-r"],
+      ["pressure/rw-r", "pressure/rw-w"]
+    ],
+    "expected": {
+      "status": "PASS",
+      "selected_ids": [
+        "pressure/ww-a",
+        "pressure/wr-w",
+        "pressure/rw-r",
+        "pressure/disjoint"
+      ],
+      "work_ids": ["work/ww-a", "work/wr-w", "work/rw-r", "work/disjoint"]
+    }
+  },
+  {
+    "name": "greedy-maximal-not-maximum",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 3,
+      "cpu_capacity": 3,
+      "registered_paths": ["repo/x", "repo/y"],
+      "pressures": [
+        {
+          "id": "pressure/greedy-a",
+          "work_id": "work/greedy-a",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [
+            {"path": "repo/x", "mode": "W"},
+            {"path": "repo/y", "mode": "W"}
+          ]
+        },
+        {
+          "id": "pressure/greedy-b",
+          "work_id": "work/greedy-b",
+          "priority": 2,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/x", "mode": "W"}]
+        },
+        {
+          "id": "pressure/greedy-c",
+          "work_id": "work/greedy-c",
+          "priority": 3,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/y", "mode": "W"}]
+        }
+      ]
+    },
+    "permutation_test": true,
+    "greedy_nonmaximum": true,
+    "expected": {
+      "status": "PASS",
+      "quality": "MAXIMAL",
+      "selected_ids": ["pressure/greedy-a"],
+      "work_ids": ["work/greedy-a"]
+    }
+  },
+  {
+    "name": "missing-ambiguous-and-unregistered-path-fields-unknown",
+    "input": {
+      "version": "workfrontier/v1",
+      "m": 3,
+      "cpu_capacity": 3,
+      "registered_paths": ["repo/known"],
+      "pressures": [
+        {
+          "id": "pressure/missing-path",
+          "work_id": "work/missing-path",
+          "priority": 1,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"mode": "W"}]
+        },
+        {
+          "id": "pressure/unregistered-path",
+          "work_id": "work/unregistered-path",
+          "priority": 2,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [{"path": "repo/unknown", "mode": "W"}]
+        },
+        {
+          "id": "pressure/ambiguous-path",
+          "work_id": "work/ambiguous-path",
+          "priority": 3,
+          "cpu": 1,
+          "prerequisite": "PASS",
+          "claims": [
+            {"path": "repo/known", "mode": "R"},
+            {"path": "repo/known", "mode": "W"}
+          ]
+        }
+      ]
+    },
+    "expected": {"status": "UNKNOWN", "selected_ids": [], "work_ids": []}
+  }
+]

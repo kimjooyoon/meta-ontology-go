@@ -1,0 +1,34 @@
+{
+  "schema": "gooo/external-ecosystem-reference/v1",
+  "reference_id": "cosmos72/gomacro@cf0d4bf32da393dbda97e3572f216731013ffa55",
+  "repository_url": "https://github.com/cosmos72/gomacro",
+  "commit_sha": "cf0d4bf32da393dbda97e3572f216731013ffa55",
+  "tree_sha": "8cc240a53dd29432ad83620b20fd8a0a05674c6d",
+  "license_spdx": "MPL-2.0",
+  "module_path": "github.com/cosmos72/gomacro",
+  "module_go_version": "1.23.0",
+  "documents": [
+    {
+      "id": "README",
+      "url": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/README.md",
+      "sha256": "sha256:8b453f2cfb1808b0de96a530525889f4bcdcc6b5aa866d8fc93b10d1473e2bc7",
+      "bytes": 23127
+    },
+    {
+      "id": "GO_MOD",
+      "url": "https://github.com/cosmos72/gomacro/blob/cf0d4bf32da393dbda97e3572f216731013ffa55/go.mod",
+      "sha256": "sha256:95da44a97a57bc25ef6eac57d519281a3ccb3662ecb352e9fb6abdb22f804250",
+      "bytes": 328
+    }
+  ],
+  "capabilities": [
+    {"id": "REPL", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-interactive-loop", "status": "REFERENCE_ONLY"},
+    {"id": "EMBEDDED_EVAL", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-embedded-evaluator", "status": "REFERENCE_ONLY"},
+    {"id": "SOURCE_SCRIPTING", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-source-execution", "status": "REFERENCE_ONLY"},
+    {"id": "AST_MACRO_EXPANSION", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-ast-transformation", "status": "REFERENCE_ONLY"},
+    {"id": "THIRD_PARTY_IMPORT", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-import-boundary", "status": "REFERENCE_ONLY"},
+    {"id": "GENERICS", "relation": "DOCUMENTED_LIMITATION", "meta_operation": "preserve-upstream-limitation", "status": "REFERENCE_ONLY"},
+    {"id": "DEBUGGER", "relation": "STRUCTURAL_HINT", "meta_operation": "compare-debug-observability", "status": "REFERENCE_ONLY"},
+    {"id": "UNRESTRICTED_MACRO_EFFECTS", "relation": "GUARDRAIL_CONTRAST", "meta_operation": "deny-unsealed-meta-effects", "status": "REFERENCE_ONLY"}
+  ]
+}

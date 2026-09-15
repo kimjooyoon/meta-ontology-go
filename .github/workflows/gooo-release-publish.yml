@@ -1,0 +1,660 @@
+name: Gooo experimental release publish
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/gooo-release-publish.yml'
+      - 'docs/external/gooo-release-publication-v1.md'
+      - 'examples/gooo-release-publication/**'
+      - 'internal/verify/scope_gooo_experimental_release.go'
+      - '.github/ci-governance.json'
+      - '.github/agent-scope-table.md'
+  workflow_dispatch:
+    inputs:
+      readiness_run_id:
+        description: Successful push-to-dev Gooo release readiness run ID
+        required: true
+        type: string
+      validated_sha:
+        description: Exact dev commit proven by the readiness run
+        required: true
+        type: string
+      tag:
+        description: Experimental release tag
+        required: true
+        default: v0.2.0-dev
+        type: string
+
+permissions: {}
+
+env:
+  RELEASE_PROBE_IMAGE: ubuntu:24.04@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517
+
+concurrency:
+  group: gooo-experimental-release-${{ github.event.pull_request.number || inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  conformance:
+    name: Gooo release publication conformance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      EXACT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.validated_sha || github.event.pull_request.head.sha }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || 'v0.2.0-dev' }}
+      GOTOOLCHAIN: go1.27.0
+    steps:
+      - name: Bind dispatched source to current dev before executing it
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXACT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)" = "$EXACT_SHA"
+      - name: Check out exact publication contract
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.EXACT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+      - name: Bind and check the Gooo publication authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="examples/gooo-release-publication/main.gooo"
+          output="$RUNNER_TEMP/gooo-release-publication-contract"
+          mkdir -p "$output"
+          test "$(git rev-parse HEAD)" = "$EXACT_SHA"
+          test "$RELEASE_TAG" = "v0.2.0-dev"
+          go run ./cmd/gooo check "$source" > "$output/check.stdout"
+          version_json="$(go run ./cmd/gooo version --json)"
+          jq -e '
+            .schema_version == "gooo-version/v1" and
+            .language == "gooo" and .version == "0.2.0-dev" and
+            .status == "development"
+          ' <<< "$version_json"
+          activity_total="$(awk '$1 == "activity" { count++ } END { print count + 0 }' "$source")"
+          test "$activity_total" -eq 8
+          source_digest="sha256:$(sha256sum "$source" | awk '{print $1}')"
+          check_digest="sha256:$(sha256sum "$output/check.stdout" | awk '{print $1}')"
+          jq -n \
+            --arg head "$EXACT_SHA" \
+            --arg tag "$RELEASE_TAG" \
+            --arg source "$source" \
+            --arg source_digest "$source_digest" \
+            --arg check_digest "$check_digest" \
+            --argjson activities "$activity_total" \
+            '{
+              schema:"gooo/release-publication-contract/v1",
+              head_sha:$head,
+              meta_operation:"publish-exact-experimental-release",
+              meta_source:{path:$source,digest:$source_digest,check_digest:$check_digest,activities:$activities},
+              identity:{tag:$tag,version:"0.2.0-dev",status:"development",version_schema:"gooo-version/v1",prerelease:true,latest:false},
+              cells:[
+                {id:"VALIDATED_MERGE_EVIDENCE",proof_choice:"FOUNDATION"},
+                {id:"EXPERIMENTAL_RELEASE_IDENTITY",proof_choice:"FOUNDATION"},
+                {id:"RELEASE_PAYLOAD",proof_choice:"COHERENCE"},
+                {id:"PAYLOAD_CHECKSUMS",proof_choice:"REGRESSION"},
+                {id:"ANNOTATED_TAG",proof_choice:"FOUNDATION"},
+                {id:"DRAFT_PRERELEASE",proof_choice:"COHERENCE"},
+                {id:"DRAFT_ASSET_SET",proof_choice:"REGRESSION"},
+                {id:"PUBLISHED_PRERELEASE",proof_choice:"COHERENCE"}
+              ],
+              assets:{total:8,checksum_entries:7,names:[
+                "SHA256SUMS","gooo-darwin-amd64.tar.gz","gooo-linux-amd64.tar.gz",
+                "gooo-windows-amd64.zip","release-eligibility.json",
+                "release-manifest.json","release-report.json","version.json"
+              ]}
+            }' > "$output/contract.json"
+          jq -e '
+            .meta_source.activities == 8 and (.cells | length) == 8 and
+            .assets.total == 8 and .assets.checksum_entries == 7 and
+            ([.cells[].proof_choice] | unique | sort) == ["COHERENCE","FOUNDATION","REGRESSION"]
+          ' "$output/contract.json"
+      - name: Prepare actual Gooo and isolation counterexample archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          cases="$RUNNER_TEMP/release-probe-cases"
+          mkdir -p "$cases/actual" "$cases/guard"
+          CGO_ENABLED=0 go build -trimpath -o "$cases/actual/gooo" ./cmd/gooo
+          tar -czf "$cases/actual.tar.gz" -C "$cases/actual" gooo
+          cat > "$cases/guard/gooo" <<'PROBE'
+          #!/bin/sh
+          set -eu
+          test "$(id -u)" = 65534
+          test "$(awk '$1 == "CapEff:" { print $2 }' /proc/self/status)" = 0000000000000000
+          test "$(awk '$1 == "NoNewPrivs:" { print $2 }' /proc/self/status)" = 1
+          awk '$2 == "/" { found=1; n=split($4,a,","); for(i=1;i<=n;i++) if(a[i]=="ro") ro=1 } END { exit !(found && ro) }' /proc/mounts
+          if touch /gooo-root-write-probe 2>/dev/null; then exit 1; fi
+          test -z "${GH_TOKEN-}${GITHUB_TOKEN-}${ACTIONS_RUNTIME_TOKEN-}${GOOO_PROBE_SENTINEL-}"
+          test -z "${ACTIONS_CACHE_URL-}${ACTIONS_RESULTS_URL-}"
+          awk 'NR > 1 && $1 != "lo" { bad=1 } END { exit bad }' /proc/net/route
+          test ! -e /var/run/docker.sock
+          test ! -e /github/workspace
+          printf '%s\n' '{"guards":["NON_ROOT","NO_CAPABILITIES","NO_NEW_PRIVILEGES","READ_ONLY_ROOT","TOKEN_ENV_ABSENT","CACHE_ENDPOINT_ENV_ABSENT","NO_NETWORK_ROUTE","NO_HOST_INTERFACES"]}'
+          PROBE
+          chmod 755 "$cases/guard/gooo"
+          tar -czf "$cases/guard.tar.gz" -C "$cases/guard" gooo
+          docker pull "$RELEASE_PROBE_IMAGE"
+      - name: Probe actual Gooo archive with the publication execution boundary
+        env:
+          ARCHIVE_INPUT: ${{ runner.temp }}/release-probe-cases/actual.tar.gz
+          PROBE_OUTPUT: ${{ runner.temp }}/gooo-release-publication-contract/probe-version.json
+        shell: bash
+        run: &isolated_release_probe |
+          set -euo pipefail
+          test -f "$ARCHIVE_INPUT"
+          sandbox="gooo-release-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$GITHUB_JOB"
+          trap 'docker rm --force "$sandbox" >/dev/null 2>&1 || true' EXIT
+          ulimit -f 128
+          timeout --signal=TERM --kill-after=5s 60s docker run --rm --init \
+            --name "$sandbox" --pull=never --network=none --read-only \
+            --user=65534:65534 --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=64 --memory=256m --memory-swap=256m --cpus=1 --log-driver=none \
+            --tmpfs /tmp:rw,exec,nosuid,nodev,size=64m,mode=1777 \
+            --mount "type=bind,src=$ARCHIVE_INPUT,dst=/input/archive.tar.gz,readonly" \
+            "$RELEASE_PROBE_IMAGE" sh -c '
+              set -eu
+              mkdir /tmp/payload
+              tar --extract --gzip --file /input/archive.tar.gz --directory /tmp/payload \
+                --no-same-owner --no-same-permissions
+              exec /tmp/payload/gooo version --json
+            ' > "$PROBE_OUTPUT"
+      - name: Exercise the same boundary against authority access attempts
+        env:
+          ARCHIVE_INPUT: ${{ runner.temp }}/release-probe-cases/guard.tar.gz
+          PROBE_OUTPUT: ${{ runner.temp }}/gooo-release-publication-contract/probe-guards.json
+          GH_TOKEN: forbidden-host-token-sentinel
+          ACTIONS_RUNTIME_TOKEN: forbidden-runtime-token-sentinel
+          ACTIONS_CACHE_URL: https://cache.invalid
+          ACTIONS_RESULTS_URL: https://results.invalid
+          GOOO_PROBE_SENTINEL: must-not-enter-container
+        shell: bash
+        run: *isolated_release_probe
+      - name: Bind observed execution isolation to AssembleReleasePayload
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/gooo-release-publication-contract"
+          source="examples/gooo-release-publication/main.gooo"
+          grep -Fx 'activity AssembleReleasePayload(ValidatedMergeEvidence, ReleaseIdentity) -> ReleasePayload' "$source"
+          jq -e '
+            .schema_version == "gooo-version/v1" and .language == "gooo" and
+            .version == "0.2.0-dev" and .status == "development" and
+            .semantic_ir == "semantic-ir/v1" and .semantic_check == "gooo-semantic-check/v1" and
+            .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
+          ' "$output/probe-version.json"
+          jq -e '.guards == [
+            "NON_ROOT","NO_CAPABILITIES","NO_NEW_PRIVILEGES","READ_ONLY_ROOT",
+            "TOKEN_ENV_ABSENT","CACHE_ENDPOINT_ENV_ABSENT","NO_NETWORK_ROUTE","NO_HOST_INTERFACES"
+          ]' "$output/probe-guards.json"
+          jq -n --arg sha "$EXACT_SHA" --arg image "$RELEASE_PROBE_IMAGE" \
+            --arg source "$source" --arg digest "sha256:$(sha256sum "$source" | awk '{print $1}')" \
+            --arg version_digest "sha256:$(sha256sum "$output/probe-version.json" | awk '{print $1}')" \
+            --arg guards_digest "sha256:$(sha256sum "$output/probe-guards.json" | awk '{print $1}')" \
+            '{
+              schema:"gooo/release-execution-isolation/v1",head_sha:$sha,image:$image,
+              meta_source:{path:$source,digest:$digest,activity:"AssembleReleasePayload",output_entity:"release://entity/payload"},
+              cases:[{id:"ACTUAL_GOOO_VERSION",state:"PASS"},{id:"AUTHORITY_ACCESS_COUNTEREXAMPLE",state:"PASS"}],
+              cases_closed:2,cases_total:2,guard_checks:8,
+              version_digest:$version_digest,guards_digest:$guards_digest,
+              observation_scope:"CALLER_OWNED_CI_TEMP_ARCHIVES",
+              utility:"UNKNOWN",improvement:"UNKNOWN",promotion_authorized:false
+            }' > "$output/isolation.json"
+          jq --arg digest "sha256:$(sha256sum "$output/isolation.json" | awk '{print $1}')" \
+            --arg image "$RELEASE_PROBE_IMAGE" \
+            '.artifact_execution = {receipt_digest:$digest,image:$image,cases_closed:2,cases_total:2,guard_checks:8}' \
+            "$output/contract.json" > "$output/contract.bound.json"
+          mv "$output/contract.bound.json" "$output/contract.json"
+      - name: Upload exact publication contract
+        uses: actions/upload-artifact@v7
+        with:
+          name: gooo-release-publication-contract-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/gooo-release-publication-contract
+          if-no-files-found: error
+          retention-days: 30
+
+  prepare:
+    name: Prepare exact Gooo prerelease
+    if: github.event_name == 'workflow_dispatch'
+    needs: [conformance]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
+      VALIDATED_SHA: ${{ inputs.validated_sha }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      GOTOOLCHAIN: go1.27.0
+    steps:
+      - name: Check out exact validated merge
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.VALIDATED_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          # Downloaded release candidates must not populate reusable caches.
+          cache: false
+      - name: Build trusted witness before downloading release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)" = "$VALIDATED_SHA"
+          mkdir -p "$RUNNER_TEMP/release-trusted"
+          go build -trimpath -o "$RUNNER_TEMP/release-trusted/toolchain-release-witness" ./cmd/toolchain-release-witness
+          docker pull "$RELEASE_PROBE_IMAGE"
+      - name: Download publication meta contract
+        uses: actions/download-artifact@v8
+        with:
+          name: gooo-release-publication-contract-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/publication-contract
+      - name: Resolve exact merge-SHA readiness evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RELEASE_TAG" = "v0.2.0-dev"
+          [[ "$VALIDATED_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$READINESS_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          test "$(git rev-parse HEAD)" = "$VALIDATED_SHA"
+          dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
+          test "$dev_sha" = "$VALIDATED_SHA"
+
+          run_json="$RUNNER_TEMP/readiness-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" > "$run_json"
+          jq -e --arg sha "$VALIDATED_SHA" '
+            .name == "Gooo release readiness" and .event == "push" and
+            .head_branch == "dev" and .head_sha == $sha and
+            .status == "completed" and .conclusion == "success"
+          ' "$run_json"
+
+          evidence="$RUNNER_TEMP/readiness-evidence"
+          gh run download "$READINESS_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "gooo-release-evidence-$VALIDATED_SHA" \
+            --dir "$evidence"
+          jq -e --arg sha "$VALIDATED_SHA" '
+            .schema == "gooo/release-eligibility/v1" and .head_sha == $sha and
+            .decision == "EVIDENCE_CLOSED" and .resolution == "EXACT" and
+            .next_operation == "PUBLISH_GOOO_EXPERIMENTAL_RELEASE" and
+            .summary.total_work == 7 and .summary.closed == 7 and
+            .summary.unknown == 0 and .summary.refuted == 0 and
+            .summary.repository_writes == 0
+          ' "$evidence/eligibility.json"
+
+          source_digest="sha256:$(sha256sum examples/gooo-release-publication/main.gooo | awk '{print $1}')"
+          jq -e --arg sha "$VALIDATED_SHA" --arg digest "$source_digest" '
+            .head_sha == $sha and .meta_source.digest == $digest and
+            .meta_source.activities == 8 and (.cells | length) == 8 and
+            .assets.total == 8 and .assets.checksum_entries == 7
+          ' "$RUNNER_TEMP/publication-contract/contract.json"
+          isolation="$RUNNER_TEMP/publication-contract/isolation.json"
+          isolation_digest="sha256:$(sha256sum "$isolation" | awk '{print $1}')"
+          jq -e --arg sha "$VALIDATED_SHA" --arg source "$source_digest" --arg image "$RELEASE_PROBE_IMAGE" '
+            .head_sha == $sha and .image == $image and
+            .meta_source.digest == $source and .meta_source.activity == "AssembleReleasePayload" and
+            .cases_closed == 2 and .cases_total == 2 and .guard_checks == 8 and
+            ([.cases[].state] | all(. == "PASS")) and .promotion_authorized == false
+          ' "$isolation"
+          jq -e --arg digest "$isolation_digest" --arg image "$RELEASE_PROBE_IMAGE" '
+            .artifact_execution.receipt_digest == $digest and .artifact_execution.image == $image and
+            .artifact_execution.cases_closed == 2 and .artifact_execution.cases_total == 2 and
+            .artifact_execution.guard_checks == 8
+          ' "$RUNNER_TEMP/publication-contract/contract.json"
+      - name: Re-evaluate readiness and stage exact archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/readiness-evidence"
+          contract="$RUNNER_TEMP/publication-contract/contract.json"
+          dist="$RUNNER_TEMP/gooo-release-dist"
+          mkdir -p "$dist"
+
+          "$RUNNER_TEMP/release-trusted/toolchain-release-witness" \
+            --root "$GITHUB_WORKSPACE" \
+            --expected-head "$VALIDATED_SHA" \
+            --concept "$evidence/concept/artifact.json" \
+            --corpus "$GITHUB_WORKSPACE/examples/toolchain-cross-platform-release/corpus.json" \
+            --receipts "$evidence/receipts" \
+            --check "$evidence/first/artifact.json" \
+            --bundle "$evidence/first/bundle"
+
+          cp "$evidence/first/bundle/gooo-darwin-amd64.tar.gz" "$dist/"
+          cp "$evidence/first/bundle/gooo-linux-amd64.tar.gz" "$dist/"
+          cp "$evidence/first/bundle/gooo-windows-amd64.zip" "$dist/"
+          cp "$evidence/first/artifact.json" "$dist/release-report.json"
+          cp "$evidence/eligibility.json" "$dist/release-eligibility.json"
+
+      - name: Probe exact release archive without host authority
+        env:
+          ARCHIVE_INPUT: ${{ runner.temp }}/gooo-release-dist/gooo-linux-amd64.tar.gz
+          PROBE_OUTPUT: ${{ runner.temp }}/gooo-release-dist/version.json
+        shell: bash
+        run: *isolated_release_probe
+      - name: Assemble eight assets from the sandboxed version observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          contract="$RUNNER_TEMP/publication-contract/contract.json"
+          dist="$RUNNER_TEMP/gooo-release-dist"
+          jq -e '
+            .schema_version == "gooo-version/v1" and .language == "gooo" and
+            .version == "0.2.0-dev" and .status == "development" and
+            .semantic_ir == "semantic-ir/v1" and
+            .semantic_check == "gooo-semantic-check/v1" and
+            .graph == "gooo-graph/v1" and .fix_plan == "gooo-fix-plan/v1"
+          ' "$dist/version.json"
+
+          payloads=(
+            gooo-darwin-amd64.tar.gz
+            gooo-linux-amd64.tar.gz
+            gooo-windows-amd64.zip
+            release-eligibility.json
+            release-report.json
+            version.json
+          )
+          assets_ndjson="$RUNNER_TEMP/release-assets.ndjson"
+          : > "$assets_ndjson"
+          for name in "${payloads[@]}"; do
+            digest="sha256:$(sha256sum "$dist/$name" | awk '{print $1}')"
+            bytes="$(wc -c < "$dist/$name" | tr -d ' ')"
+            jq -cn --arg name "$name" --arg digest "$digest" --argjson bytes "$bytes" \
+              '{name:$name,digest:$digest,bytes:$bytes}' >> "$assets_ndjson"
+          done
+          jq -s '.' "$assets_ndjson" > "$RUNNER_TEMP/release-assets.json"
+
+          report_digest="$(jq -r .report_digest "$dist/release-report.json")"
+          source_report_digest="$(jq -r .source_report_digest "$dist/release-eligibility.json")"
+          concept_digest="$(jq -r .concept_digest "$dist/release-eligibility.json")"
+          meta_source_digest="$(jq -r .meta_source.digest "$contract")"
+          contract_digest="sha256:$(sha256sum "$contract" | awk '{print $1}')"
+          jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg head "$VALIDATED_SHA" \
+            --argjson run_id "$READINESS_RUN_ID" \
+            --arg report_digest "$report_digest" \
+            --arg source_report_digest "$source_report_digest" \
+            --arg concept_digest "$concept_digest" \
+            --arg meta_source_digest "$meta_source_digest" \
+            --arg contract_digest "$contract_digest" \
+            --slurpfile assets "$RUNNER_TEMP/release-assets.json" \
+            '{
+              schema:"gooo/release-manifest/v1",
+              tag:$tag,head_sha:$head,version:"0.2.0-dev",status:"development",
+              prerelease:true,latest:false,readiness_run_id:$run_id,
+              release_report_digest:$report_digest,
+              source_report_digest:$source_report_digest,
+              concept_digest:$concept_digest,
+              publication_meta_operation:"publish-exact-experimental-release",
+              publication_meta_source_digest:$meta_source_digest,
+              publication_contract_digest:$contract_digest,
+              payload_total:6,assets:$assets[0],repository_writes:0
+            }' > "$dist/release-manifest.json"
+
+          (
+            cd "$dist"
+            sha256sum "${payloads[@]}" release-manifest.json | sort -k2 > SHA256SUMS
+            test "$(wc -l < SHA256SUMS | tr -d ' ')" -eq 7
+            sha256sum -c SHA256SUMS
+            observed_assets="$RUNNER_TEMP/observed-release-assets.txt"
+            expected_assets="$RUNNER_TEMP/expected-release-assets.txt"
+            find . -maxdepth 1 -type f -printf '%f\n' | sort > "$observed_assets"
+            printf '%s\n' \
+              SHA256SUMS \
+              gooo-darwin-amd64.tar.gz \
+              gooo-linux-amd64.tar.gz \
+              gooo-windows-amd64.zip \
+              release-eligibility.json \
+              release-manifest.json \
+              release-report.json \
+              version.json > "$expected_assets"
+            cmp "$expected_assets" "$observed_assets"
+            test "$(find . -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 8
+          )
+          git diff --quiet
+          test -z "$(git ls-files --others --exclude-standard)"
+      - name: Upload exact eight-asset publication candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/gooo-release-dist
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish exact Gooo prerelease
+    if: github.event_name == 'workflow_dispatch'
+    needs: [prepare]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: gooo-experimental-release
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      READINESS_RUN_ID: ${{ inputs.readiness_run_id }}
+      VALIDATED_SHA: ${{ inputs.validated_sha }}
+      RELEASE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Download exact publication candidate
+        uses: actions/download-artifact@v8
+        with:
+          name: gooo-release-publication-candidate-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/gooo-release-dist
+      - name: Revalidate publication authority and absence
+        shell: bash
+        run: |
+          set -euo pipefail
+          dist="$RUNNER_TEMP/gooo-release-dist"
+          test "$RELEASE_TAG" = "v0.2.0-dev"
+          dev_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/dev" --jq .object.sha)"
+          test "$dev_sha" = "$VALIDATED_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID" \
+            --jq '.conclusion' | grep -Fx success
+          jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
+            .head_sha == $sha and .tag == $tag and .version == "0.2.0-dev" and
+            .status == "development" and .prerelease == true and .latest == false and
+            .payload_total == 6 and (.assets | length) == 6 and
+            .repository_writes == 0
+          ' "$dist/release-manifest.json"
+          (
+            cd "$dist"
+            test "$(find . -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 8
+            test "$(wc -l < SHA256SUMS | tr -d ' ')" -eq 7
+            sha256sum -c SHA256SUMS
+          )
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "release tag already exists"
+            exit 1
+          fi
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release already exists"
+            exit 1
+          fi
+      - name: Create annotated tag and verified draft prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          dist="$RUNNER_TEMP/gooo-release-dist"
+          notes="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes" <<EOF
+          # Gooo v0.2.0-dev
+
+          Experimental Gooo CLI prerelease for exact commit \`$VALIDATED_SHA\`.
+
+          - readiness run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$READINESS_RUN_ID
+          - release cases: 20/20
+          - meta-bound indicators: 39/39
+          - release-readiness cells: 7/7
+          - publication assets: 8/8
+          - repository writes during readiness: 0
+
+          This is a development prerelease, not a stable compatibility promise.
+          EOF
+
+          tag_object="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
+            -f tag="$RELEASE_TAG" \
+            -f message="Gooo v0.2.0-dev experimental prerelease" \
+            -f object="$VALIDATED_SHA" \
+            -f type="commit" \
+            --jq .sha)"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref="refs/tags/$RELEASE_TAG" \
+            -f sha="$tag_object" >/dev/null
+
+          gh release create "$RELEASE_TAG" "$dist"/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --draft \
+            --prerelease \
+            --latest=false \
+            --title "Gooo v0.2.0-dev" \
+            --notes-file "$notes"
+      - name: Verify draft and publish prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_json="$RUNNER_TEMP/release.json"
+          tag_ref="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$RELEASE_TAG" --jq .object.sha)"
+          tag_target="$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$tag_ref" --jq .object.sha)"
+          test "$tag_target" = "$VALIDATED_SHA"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,url,assets > "$release_json"
+          jq -e --arg tag "$RELEASE_TAG" '
+            .tagName == $tag and .isDraft == true and .isPrerelease == true and
+            ([.assets[].name] | sort) == [
+              "SHA256SUMS","gooo-darwin-amd64.tar.gz","gooo-linux-amd64.tar.gz",
+              "gooo-windows-amd64.zip","release-eligibility.json",
+              "release-manifest.json","release-report.json","version.json"
+            ]
+          ' "$release_json"
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --draft=false --prerelease --latest=false
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json tagName,isDraft,isPrerelease,url,assets > "$release_json"
+          jq -e '.isDraft == false and .isPrerelease == true and (.assets | length) == 8' "$release_json"
+
+          manifest="$RUNNER_TEMP/gooo-release-dist/release-manifest.json"
+          jq \
+            --arg sha "$VALIDATED_SHA" \
+            --arg tag "$RELEASE_TAG" \
+            --arg manifest_digest "sha256:$(sha256sum "$manifest" | awk '{print $1}')" \
+            --arg meta_source_digest "$(jq -r .publication_meta_source_digest "$manifest")" \
+            '{
+              schema:"gooo/release-publication/v1",
+              head_sha:$sha,tag:$tag,
+              decision:"PUBLISHED",resolution:"EXACT",
+              reason:"GOOO_EXPERIMENTAL_PRERELEASE_PUBLISHED",
+              next_operation:"VERIFY_EXTERNAL_CONSUMER",
+              mutation_allowed:true,
+              manifest_digest:$manifest_digest,
+              publication_meta_source_digest:$meta_source_digest,
+              release:{url:.url,prerelease:.isPrerelease,draft:.isDraft,asset_names:[.assets[].name]|sort},
+              claim:{id:"release://gooo/v0.2.0-dev",entity:"GoooExperimentalPrerelease",status:"DISCHARGED",state:"CLOSED"},
+              summary:{total_work:8,closed:8,unknown:0,refuted:0,assets_published:(.assets|length),assets_total:8,checksum_entries:7,repository_writes:0}
+            }' "$release_json" > "$RUNNER_TEMP/publication.json"
+      - name: Upload publication result
+        uses: actions/upload-artifact@v7
+        with:
+          name: gooo-release-published-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/publication.json
+          if-no-files-found: error
+          retention-days: 90
+
+  publication:
+    name: Gooo release publication receipt
+    if: always() && github.event_name == 'workflow_dispatch'
+    needs: [prepare, publish]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: read
+    env:
+      VALIDATED_SHA: ${{ inputs.validated_sha }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      PREPARE_RESULT: ${{ needs.prepare.result }}
+      PUBLISH_RESULT: ${{ needs.publish.result }}
+    steps:
+      - name: Record fail-closed publication state
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/final" "$RUNNER_TEMP/published"
+          jq -n \
+            --arg sha "$VALIDATED_SHA" \
+            --arg tag "$RELEASE_TAG" \
+            --arg prepare "$PREPARE_RESULT" \
+            --arg publish "$PUBLISH_RESULT" \
+            '{
+              schema:"gooo/release-publication/v1",
+              head_sha:$sha,tag:$tag,
+              decision:"FAIL_CLOSED",resolution:"OPERATION_CLASS",
+              reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",
+              next_operation:"RESOLVE_RELEASE_PUBLICATION_FAILURE",
+              mutation_allowed:false,
+              upstream:{prepare:$prepare,publish:$publish},
+              claim:{
+                id:"release://gooo/v0.2.0-dev",entity:"GoooExperimentalPrerelease",
+                status:"ACTIVE",state:"UNKNOWN",resolution:"OPERATION_CLASS",
+                stage:"RELEASE",step:"PUBLISH_PRERELEASE",
+                reason:"RELEASE_PUBLICATION_UPSTREAM_NOT_SUCCESS",
+                next_operation:"RESOLVE_RELEASE_PUBLICATION_FAILURE"
+              },
+              summary:{total_work:8,closed:0,unknown:8,refuted:0,assets_published:null,assets_total:8,checksum_entries:null,repository_writes:null}
+            }' > "$RUNNER_TEMP/final/publication.json"
+      - name: Download closed publication result
+        if: needs.prepare.result == 'success' && needs.publish.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: gooo-release-published-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/published
+      - name: Select authoritative publication result
+        if: always()
+        shell: bash
+        run: |
+          if [[ "$PREPARE_RESULT" == "success" && "$PUBLISH_RESULT" == "success" && -f "$RUNNER_TEMP/published/publication.json" ]]; then
+            cp "$RUNNER_TEMP/published/publication.json" "$RUNNER_TEMP/final/publication.json"
+          fi
+      - name: Upload final publication receipt
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gooo-release-publication-final-${{ env.VALIDATED_SHA }}
+          path: ${{ runner.temp }}/final/publication.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Enforce exact publication
+        if: always()
+        shell: bash
+        run: |
+          test "$PREPARE_RESULT" = "success"
+          test "$PUBLISH_RESULT" = "success"
+          jq -e --arg sha "$VALIDATED_SHA" --arg tag "$RELEASE_TAG" '
+            .schema == "gooo/release-publication/v1" and
+            .head_sha == $sha and .tag == $tag and
+            .decision == "PUBLISHED" and .resolution == "EXACT" and
+            .next_operation == "VERIFY_EXTERNAL_CONSUMER" and
+            .summary.total_work == 8 and .summary.closed == 8 and
+            .summary.unknown == 0 and .summary.refuted == 0 and
+            .summary.assets_published == 8 and .summary.assets_total == 8 and
+            .summary.checksum_entries == 7 and .summary.repository_writes == 0
+          ' "$RUNNER_TEMP/final/publication.json"

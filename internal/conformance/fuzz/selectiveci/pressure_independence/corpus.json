@@ -1,0 +1,234 @@
+{
+  "schema": "gooo/pressure-independence-corpus/v1",
+  "canonical_digest": "sha256:56b9d1188e2bdd7b92338d1ee469c0a730c9676e975c9050b78ad27a5ef8d38d",
+  "cases": [
+    {
+      "name": "two-independent-groups-pass",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-pass",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-pass","input_digest":"sha256:81bb19b4a8fb427c32f8303fce1f506575c89c08b462bf33d00b3c8075966e07","selected_ids":["pressure-a","pressure-b"],"unselected_ids":[],"unknown_ids":[],"distinct_group_count":2,"decision":"PASS","reason":"NONE","full_suite_required":false,"proof_valid":true,"cost_receipt":{"cpu_core_ns":2,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:6f57a7ac896c8d0f9807361830047d5a4e4ee96461b17a25bdca963c776f34ca","replay_digest":"sha256:dea1a74c3949c95a63ef6f9aa5929e882cc6009a72c7352a256d73c06ba21d62"}
+    },
+    {
+      "name": "two-ids-one-group-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-same-group",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:7d4e0570f87df93543b273fd6ecf111b3a3a2d28801e870a109c81f6ad5e14d5",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-same-group","input_digest":"sha256:f43942a5935aa160d80e28bda1bbde5337c9c933128c8e3b83e71e6a0cdd27ff","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":1,"decision":"UNKNOWN","reason":"INDEPENDENT_GROUP_SHORTFALL","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:5b8a4c639a94ffb39f521553e0455d7f6f7b6d05e46500f691671bc563b6386b","replay_digest":"sha256:7495ff3909ac1af43ce84eadc1d3fc8bac53a02565f951565e02cd80e9c21fca"}
+    },
+    {
+      "name": "missing-group-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-missing-group",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:dbfa24c1c06c061a6abddc496adff52d0fd2eb9b88aa1ffe70e52827211a2795",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-group","input_digest":"sha256:a4f4f9b8b8354d44d5752766203ad3341dfcf6f3b45a8398aba0b0e2a73c6d12","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"APPLICABILITY_UNPROVEN","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:24f41cd0f37d6e314c01f0dc39c3966efcf6b0d72e0acc32befb2d22fa9716da","replay_digest":"sha256:46516ad0ca5005aecbef45215f95383b5c0fd94848a5d5a5f519498ea4ceb881"}
+    },
+    {
+      "name": "missing-applicability-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-missing-rule",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:306a3fc97dd8ed01f02b5f96b2897492dd3619026436a7510c9f623411f38edc",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": ""}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-rule","input_digest":"sha256:f6fd09c7f450702135f827a144bc6c140d7db4d9c5c83bf4658611a1b1624541","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"APPLICABILITY_UNPROVEN","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:5a8a9af64a463cf09bd041085ca06481a1804e314634f44ff44ccc1eaf4f3daf","replay_digest":"sha256:7a0e56a67251ca312ca5faa872456a12416ec508c3be29fe6f2fb5304b8b6155"}
+    },
+    {
+      "name": "conflicting-group-binding-fail-closed",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-conflict",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:8a0ab5d5268de0dcd36eedfbb051a8668aaaeaf0ade64a799eb4b3f7dd0ba78d",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-conflict","input_digest":"sha256:2144c8e5c43bf6c4c2def4861f12d4ffe71e2e1242468240dcc98e9e6b417737","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"FAIL_CLOSED","reason":"CONFLICTING_GROUP_BINDING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":8,"prov_records":4,"prov_paths":2},"canonical_output_digest":"sha256:3435447dfd42f0571b42279da92f5f627606e1f66cf464b3f58948b33f746f75","replay_digest":"sha256:7cd176888591464457f931b4a1ac7b523de1506ae903f9f069ff84a95da40b6f"}
+    },
+    {
+      "name": "duplicate-pressure-id-fail-closed",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-duplicate",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:97f9a892e5de1deba4ebd4cf7fd54efc2665f6891ad14c369d047f0ec626393c",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"},
+          {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}
+        ],
+        "required_pressure_ids": ["pressure-a", "pressure-b"],
+        "guard_ids": ["guard-a"],
+        "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-duplicate","input_digest":"sha256:e7f67a0e6638d948525180bb50fdfecbd95ad664a0d572efbe321e2632e89462","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"FAIL_CLOSED","reason":"DUPLICATE_PRESSURE_ID","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":8,"prov_records":4,"prov_paths":2},"canonical_output_digest":"sha256:7b60c5c60a694b5199a8cadfe4936c0921f4a1df5505ae076da75df8c1bc855d","replay_digest":"sha256:119e0a5f9a785445d6caf39928fd307da6190f7d4e7e8154f3fbde6e35b58c8e"}
+    },
+    {
+      "name": "stale-registry-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-registry",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:058c1921030681f08fe463c394e8f4b63e3c79f67428aaf5b997fa32251f347f",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1,
+        "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-registry","input_digest":"sha256:7f7f1d8c2d24d79216866716c7562196134112ee434f0b0380d1d78267052490","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:04a04b75fe102bc44d3a458c62787315bb3bd1347aa0aa7e2a3b09a13b337723","replay_digest":"sha256:96775b5854e492390a1c2d43269d557b64944e6c56859964558f06e22c457972"}
+    },
+    {
+      "name": "stale-policy-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-policy",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c",
+        "policy_digest": "sha256:12ffd7499959311ebd5a905fdd75eb9710de4be90866283f28593db7542e7549",
+        "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-policy","input_digest":"sha256:8aea049cab7cccf477bb489ebd9a02d5b2f58da6a3dd357ab14cbe489a72772d","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:7176b33bf9265617b8363679718fd8f696e1c3e27501707a4e7e307c0aa3ff95","replay_digest":"sha256:15456bbefa2fa9034a25c2abdddbc0c64525c3c27cdf868ce0ab22127eedee80"}
+    },
+    {
+      "name": "stale-snapshot-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1",
+        "fixture_id": "fixture-stale-snapshot",
+        "authority_snapshot_digest": "sha256:939aec6b6b938872e6be3d203302bbefcd9a77250c6480a5d846f5f2fa33b755",
+        "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530",
+        "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a",
+        "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95",
+        "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-stale-snapshot","input_digest":"sha256:aedfe4164e9e610f6de92a807ff5eee1c3b4e3d1c2ab871581ccdfd1ae00eee2","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"STALE_DIGEST","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:52cbc67c935e42f8de12d745b7f87027c67220c4d3f761cadc9ce2450e40515c","replay_digest":"sha256:40f1285c96c51c89b50950b0878818c555ac837ce99ec01bb861f96f17e88d6d"}
+    },
+    {
+      "name": "missing-resource-ceiling-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-missing-resource",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c", "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530", "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a", "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95", "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 0, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-resource","input_digest":"sha256:44f130b757bb5c46580bd46d93270793e7387687008881b035f952d63f29a362","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"REQUIRED_INPUT_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:41a2b9551bdbf233ef87927ac71c3febfb70d8947fc435888db20ab7c07e76ae","replay_digest":"sha256:57ba36bbd63f9dff2ed81af10b3875f2b4530bd43c56263b8ee2f2f6dfe0f673"}
+    },
+    {
+      "name": "missing-prov-ceiling-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-missing-prov",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c", "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530", "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a", "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95", "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": ["path-a", "path-b"],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 0}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-missing-prov","input_digest":"sha256:d8496c06ba4afb38f874f6cb2aa57a830d2b6744f9b3d5429df7b0065ddf06df","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"REQUIRED_INPUT_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":7,"prov_records":3,"prov_paths":2},"canonical_output_digest":"sha256:8eccf660f524a51325da0a7f2fa6fa4fe05bddeb46edc2e1e96953ad72c68997","replay_digest":"sha256:b53ee6c925c341a9707b1d389437a897827f3d625a2dca9f49ec080bdf60e640"}
+    },
+    {
+      "name": "unbounded-frontier-unknown",
+      "input": {
+        "schema": "gooo/pressure-independence/v1", "fixture_id": "fixture-unbounded",
+        "authority_snapshot_digest": "sha256:ba09f54d95c64b224fc51992197d6945d9f0803a630e51d56e61786a1d294c2c", "policy_digest": "sha256:73e190933d8e0673f4b18c82b61162152bd84ddca774cc99be83b7b85623e530", "registry_digest": "sha256:8d6fd851a8707aec478ff2d5550d449e189c37cf7cc9f7cb2ef6907f6ce8e28a", "oracle_digest": "sha256:0dd730672b1c24231ebe836f20333b478b39afd6499a67d9af7c5632ed7fdd95", "toolchain_options_digest": "sha256:72e33ef765ce0c03628daabd009ff1f84952dcdbf685ad8bc6fa1204ab3c09b9",
+        "requested_K": 1, "minimum_independent": 2,
+        "pressure_records": [{"pressure_id": "pressure-a", "category_id": "category-a", "independence_group_id": "group-a", "applicability_rule_id": "rule-v1"}, {"pressure_id": "pressure-b", "category_id": "category-b", "independence_group_id": "group-b", "applicability_rule_id": "rule-v1"}],
+        "required_pressure_ids": ["pressure-a", "pressure-b"], "guard_ids": ["guard-a"], "finite_path_ids": [],
+        "resource_ceilings": {"cpu_core_ns": 10, "memory_bytes": 65536, "work_units": 20, "prov_records": 10, "prov_paths": 4}
+      },
+      "expected": {"schema":"gooo/pressure-independence/v1","fixture_id":"fixture-unbounded","input_digest":"sha256:4cb7e1e7d7ad53e39a1a48d19a6f04e1acde22872b63e2ebfb7ae710b77c08c8","selected_ids":[],"unselected_ids":[],"unknown_ids":["pressure-a","pressure-b"],"distinct_group_count":0,"decision":"UNKNOWN","reason":"PROV_PATH_MISSING","full_suite_required":true,"proof_valid":false,"cost_receipt":{"cpu_core_ns":0,"memory_bytes":2048,"work_units":5,"prov_records":3,"prov_paths":0},"canonical_output_digest":"sha256:cf12df532250c14b7f4b4e6041f4b8e263f7d2de251c7fe5b433c94098cc0873","replay_digest":"sha256:09e4238f09bb29da70e3f439b2f1709628b741cf1c960a6125ed81c327396ec2"}
+    }
+  ]
+}

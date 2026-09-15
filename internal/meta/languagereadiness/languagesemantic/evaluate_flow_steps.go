@@ -1,0 +1,27 @@
+package languagesemantic
+
+var evaluateFlowSteps = []func(*evaluateFlowState){
+	evaluateFlowStep01,
+	evaluateFlowStep02,
+	evaluateFlowStep03,
+	evaluateFlowStep04,
+	evaluateFlowStep05,
+	evaluateFlowStep06,
+	evaluateFlowStep07,
+	evaluateFlowStep08,
+	evaluateFlowStep09,
+	evaluateFlowStep10,
+	evaluateFlowStep11,
+	evaluateFlowStep12,
+	evaluateFlowStep13,
+	evaluateFlowStep14,
+	evaluateFlowStep15,
+	evaluateFlowStep16,
+	evaluateFlowStep17,
+	evaluateFlowStep18,
+	evaluateFlowStep19,
+	evaluateFlowStep20,
+	evaluateFlowStep21,
+	evaluateFlowStep22,
+	evaluateFlowStep23,
+}

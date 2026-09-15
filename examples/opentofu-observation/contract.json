@@ -1,0 +1,25 @@
+{
+  "schema": "gooo/opentofu-observation-contract/v1",
+  "id": "opentofu-released-cli-observation-v1",
+  "cells": [
+    {"id":"OPENTOFU_RELEASE_PIN","meta_operation":"PinOpenTofuRelease","proof_choice":"FOUNDATION","indicator":"DRIVER"},
+    {"id":"ASSET_CHECKSUM","meta_operation":"VerifyOpenTofuAssetChecksum","proof_choice":"FOUNDATION","indicator":"GUARDRAIL"},
+    {"id":"CLI_VERSION_JSON","meta_operation":"ObserveOpenTofuVersionJSON","proof_choice":"FOUNDATION","indicator":"OUTCOME"},
+    {"id":"FIXTURE_INPUT_DIGEST","meta_operation":"PinOpenTofuFixtureInput","proof_choice":"FOUNDATION","indicator":"DRIVER"},
+    {"id":"PLAN_JSON_SCHEMA","meta_operation":"ValidateOpenTofuPlanJSON","proof_choice":"COHERENCE","indicator":"OUTCOME"},
+    {"id":"TEST_EVENT_INVENTORY","meta_operation":"AccountOpenTofuTestEvents","proof_choice":"COHERENCE","indicator":"OUTCOME"},
+    {"id":"COMMAND_RUNTIME_RECEIPT","meta_operation":"RecordOpenTofuCommandRuntime","proof_choice":"COHERENCE","indicator":"DRIVER"},
+    {"id":"PEAK_RSS_OBSERVATION","meta_operation":"ObserveOpenTofuPeakRSS","proof_choice":"COHERENCE","indicator":"DRIVER"},
+    {"id":"DETERMINISTIC_PLAN_REPLAY","meta_operation":"ReplayOpenTofuPlanJSON","proof_choice":"REGRESSION","indicator":"GUARDRAIL"},
+    {"id":"DETERMINISTIC_TEST_REPLAY","meta_operation":"ReplayOpenTofuTestEvents","proof_choice":"REGRESSION","indicator":"GUARDRAIL"},
+    {"id":"REUSE_ELIGIBILITY","meta_operation":"EvaluateOpenTofuTestReuse","proof_choice":"REGRESSION","indicator":"GUARDRAIL"},
+    {"id":"HUMAN_REPORT","meta_operation":"PublishOpenTofuObservationReport","proof_choice":"REGRESSION","indicator":"OUTCOME"}
+  ],
+  "graph_program": "examples/opentofu-observation/main.gooo",
+  "not_claimed": [
+    "OpenTofu source compatibility beyond the pinned released CLI",
+    "provider behavior or infrastructure correctness",
+    "performance improvement without an exact comparable pair",
+    "apply, deployment, credentials, or remote backend authority"
+  ]
+}

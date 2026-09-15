@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/meta-foundation-authorization/v2",
+  "decision": "FOUNDATION",
+  "reason": "NO_AUTHORIZED_MAIN_TO_DEV_PROTECTED_KERNEL_ROUTE",
+  "repository": "kimjooyoon/meta-ontology-go",
+  "foundation_override_success_count": 3,
+  "foundation_override_marker": "FOUNDATION_OVERRIDE_SUCCESS_COUNT=3",
+  "candidate": {
+    "pull_request": 609,
+    "branch": "agent/dev-main-sync-20260831-rerun",
+    "base_branch": "dev",
+    "base_sha": "e440cbc99f24ceb8385f1b89c70f8cdada10cdbb",
+    "head_sha": "8b47db349315c02933296423b0ae7fa80ffeb1dc",
+    "merge_base_sha": "bc5dc21788aa4c7d46d1f8ab516f8218bb423fdc",
+    "changed_file_count": 92,
+    "changed_paths_sha256": "sha256:7d50d27859d8e755edcce625c2cef34c5902528b19a3a4ebf73bd59dac296cac",
+    "protected_intersection_count": 26,
+    "protected_intersection_sha256": "sha256:204b3569310bffb0d3a6fafaddfec5930e99309281badd768b2c52dfbc07f3bf"
+  },
+  "dispatch": {
+    "receipt_path": ".github/governance-denominator-v6-foundation-authorization-dispatch.json",
+    "receipt_sha256": "sha256:71996119c1eba1d548e7e75b2947a9c53b53c7b64b24679452e3637bf84a0383",
+    "mode": "single-use",
+    "consumed": false,
+    "replay_decision": "REFUTED"
+  }
+}

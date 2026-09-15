@@ -1,0 +1,22 @@
+{
+  "name": "minimal-invalid-provenance",
+  "graph": {
+    "nodes": [
+      {"id": "billing://entity/order", "kind": "Entity", "namespace": "billing", "name": "Order"},
+      {"id": "billing://entity/duplicate", "kind": "Entity", "namespace": "billing", "name": "Order"},
+      {"id": "billing://activity/pay", "kind": "Activity", "namespace": "billing", "name": "PayOrder"}
+    ],
+    "edges": [
+      {"subject": "billing://activity/pay", "predicate": "used", "object": "billing://entity/order"},
+      {"subject": "billing://entity/order", "predicate": "wasGeneratedBy", "object": "billing://activity/pay"},
+      {"subject": "billing://entity/order", "predicate": "used", "object": "billing://entity/duplicate"},
+      {"subject": "billing://activity/pay", "predicate": "used", "object": "billing://entity/missing"}
+    ]
+  },
+  "expected": {
+    "cycle": 1,
+    "illegal-relation-direction": 1,
+    "namespace-collision": 1,
+    "unresolved-stable-id": 1
+  }
+}

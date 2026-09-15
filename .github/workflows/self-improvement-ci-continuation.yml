@@ -1,0 +1,96 @@
+name: Self-improvement CI continuation contract
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - '.github/workflows/self-improvement-candidate-authorization.yml'
+      - '.github/workflows/self-improvement-ci-continuation.yml'
+      - '.github/workflows/self-improvement-execution-contract.yml'
+      - '.github/workflows/self-improvement-execution-grant.yml'
+      - 'examples/self-improvement-ci-continuation/**'
+      - 'internal/meta/selfimprovementcontinuation/**'
+      - 'scripts/self-improvement-ci-continuation/**'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  continuation:
+    name: Verify Gooo CI continuation contract
+    runs-on: ubuntu-latest
+    env:
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+    steps:
+      - name: Check out exact review subject
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Run continuation package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          go test ./internal/meta/selfimprovementcontinuation
+          go test -race ./internal/meta/selfimprovementcontinuation
+
+      - name: Emit and independently verify nine continuation cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/self-improvement-ci-continuation"
+          go run ./scripts/self-improvement-ci-continuation \
+            -mode cases \
+            -contract examples/self-improvement-ci-continuation/continuation.gooo \
+            -output "$RUNNER_TEMP/self-improvement-ci-continuation/canonical-cases.json" \
+            -check
+          jq -e '
+            .schema == "gooo/self-improvement-ci-continuation-cases/v1" and
+            .policy.schema == "gooo/self-improvement-ci-continuation-policy/v1" and
+            .policy.state_count == 12 and .policy.transition_count == 9 and
+            .policy.case_count == 9 and .case_denominator == 9 and
+            .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and
+            .replay_equal and .metrics.workflow_run_continuation_edges_before == 2 and
+            .metrics.workflow_run_continuation_edges_after == 0 and
+            .metrics.exact_identity_bindings_before == 0 and
+            .metrics.exact_identity_bindings_after == 2 and
+            .metrics.manual_dispatches_before == 0 and .metrics.manual_dispatches_after == 0 and
+            .metrics.live_grant_decision == 0 and .metrics.live_grants == 0 and
+            .metrics.live_execution_count == 0 and .metrics.grant_consumed_uses == 0 and
+            .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and
+            .metrics.canonical_cases == 9 and .metrics.canonical_execution_count == 0 and
+            .metrics.six_field_unknowns == 3 and .metrics.unauthorized_dispatches == 0 and
+            .metrics.fallback_accepted == 0 and .metrics.independent_replay_comparisons == 1 and
+            .metrics.artifact_files == 5 and .metrics.artifact_types == 5 and
+            .metrics.performance_improvement == "UNKNOWN" and
+            ([.cases[] | select(.pass == false)] | length) == 0' \
+            "$RUNNER_TEMP/self-improvement-ci-continuation/canonical-cases.json" >/dev/null
+
+      - name: Confirm depth-reset triggers are dispatch-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -n 'workflow_run:' .github/workflows/self-improvement-execution-contract.yml
+          ! grep -n 'workflow_run:' .github/workflows/self-improvement-execution-grant.yml
+          grep -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-contract.yml
+          grep -n 'workflow_dispatch:' .github/workflows/self-improvement-execution-grant.yml
+
+      - name: Upload continuation contract evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-ci-continuation-contract-${{ github.sha }}
+          path: ${{ runner.temp }}/self-improvement-ci-continuation/*.json
+          if-no-files-found: error
+          retention-days: 14

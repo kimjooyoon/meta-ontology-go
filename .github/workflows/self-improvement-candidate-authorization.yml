@@ -1,0 +1,441 @@
+name: Self-improvement candidate authorization bridge
+
+on:
+  workflow_run:
+    workflows: ["Self-improvement non-executing candidate"]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      candidate_artifact_id:
+        description: Candidate artifact ID to inspect
+        required: true
+        type: string
+      candidate_artifact_digest:
+        description: Expected sha256 digest of the candidate artifact archive
+        required: true
+        type: string
+      decision:
+        description: Explicit human decision; this does not authorize execution
+        required: true
+        type: choice
+        options:
+          - ALLOW
+          - DENY
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  bridge-candidate-authorization:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || github.run_id }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_attempt || github.run_attempt }}
+      SOURCE_HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      DISPATCH_ARTIFACT_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.candidate_artifact_id || '' }}
+      DISPATCH_ARTIFACT_DIGEST: ${{ github.event_name == 'workflow_dispatch' && inputs.candidate_artifact_digest || '' }}
+      DISPATCH_DECISION: ${{ github.event_name == 'workflow_dispatch' && inputs.decision || '' }}
+
+    steps:
+      - name: Checkout the authorization bridge
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+          check-latest: true
+
+      - name: Locate and seal candidate artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/candidate-authorization"
+          input="$work/input"
+          mkdir -p "$input"
+          artifact_id=0
+          artifact_name="self-improvement-nonexecuting-candidate-$SOURCE_HEAD_SHA"
+          expected_digest=""
+          artifact_run_id="$SOURCE_RUN_ID"
+          artifact_run_attempt="$SOURCE_RUN_ATTEMPT"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$work/source-artifacts.json" || true
+            if [ -s "$work/source-artifacts.json" ]; then
+              artifact_id="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name and .expired == false)] | if length == 1 then .[0].id else 0 end' "$work/source-artifacts.json" || echo 0)"
+            fi
+          else
+            artifact_id="$DISPATCH_ARTIFACT_ID"
+            expected_digest="$DISPATCH_ARTIFACT_DIGEST"
+            artifact_name="dispatch-candidate-$artifact_id"
+            if ! [[ "$artifact_id" =~ ^[1-9][0-9]*$ ]]; then
+              artifact_id=0
+            fi
+            if [ "$artifact_id" -gt 0 ]; then
+              if gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json"; then
+                artifact_run_id="$(jq -r '.workflow_run.id // 0' "$work/artifact.json")"
+                if [ "$artifact_run_id" -gt 0 ]; then
+                  artifact_run_attempt="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$artifact_run_id" --jq '.run_attempt' || echo 0)"
+                fi
+                artifact_name="$(jq -r '.name' "$work/artifact.json")"
+              else
+                artifact_id=0
+              fi
+            fi
+          fi
+          archive="$work/candidate.zip"
+          archive_digest=""
+          artifact_size=0
+          expired=true
+          if [ "$artifact_id" -gt 0 ]; then
+            if [ ! -s "$work/artifact.json" ]; then
+              gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" > "$work/artifact.json" || true
+            fi
+            if [ -s "$work/artifact.json" ]; then
+              expired="$(jq -r '.expired' "$work/artifact.json" || echo true)"
+              artifact_size="$(jq -r '.size_in_bytes // 0' "$work/artifact.json" || echo 0)"
+            fi
+            if [ "$expired" = "false" ]; then
+              download_exit=0
+              curl --fail --location --silent --show-error \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+                -o "$archive" || download_exit=$?
+              if [ "$download_exit" -eq 0 ]; then
+                archive_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+              else
+                expired=true
+              fi
+            fi
+          fi
+          unzip -q "$archive" -d "$input" 2>/dev/null || true
+          candidate="$work/missing-candidate.json"
+          while IFS= read -r file; do
+            if jq -e '.schema == "gooo/self-improvement-nonexecuting-candidate/v1"' "$file" >/dev/null; then
+              candidate="$file"
+              break
+            fi
+          done < <(find "$input" -type f -name '*.json' -print | sort)
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson run_id "$artifact_run_id" \
+            --argjson run_attempt "$artifact_run_attempt" \
+            --argjson artifact_id "$artifact_id" \
+            --arg artifact_name "$artifact_name" \
+            --arg archive_digest "$archive_digest" \
+            --argjson size_bytes "$artifact_size" \
+            --argjson expired "$expired" \
+            '{repository:$repository,run_id:$run_id,run_attempt:$run_attempt,artifact_id:$artifact_id,artifact_name:$artifact_name,archive_digest:$archive_digest,size_bytes:$size_bytes,expired:$expired}' \
+            > "$work/metadata.json"
+          echo "WORK=$work" >> "$GITHUB_ENV"
+          echo "CANDIDATE=$candidate" >> "$GITHUB_ENV"
+          echo "EXPECTED_ARTIFACT_DIGEST=$expected_digest" >> "$GITHUB_ENV"
+          jq -r '"candidate artifact: id=\(.artifact_id), name=\(.artifact_name), expired=\(.expired), archive=\(.archive_digest // "UNKNOWN")"' "$work/metadata.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Emit exact candidate authorization request
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$WORK"
+          go run ./scripts/self-improvement-candidate-authorization \
+            -mode request \
+            -contract examples/self-improvement/authorization.gooo \
+            -candidate "$CANDIDATE" \
+            -metadata "$WORK/metadata.json" \
+            -output "$WORK/request.json" \
+            -check
+          if jq -e '.schema == "gooo/self-improvement-candidate-authorization-request/v1"' "$WORK/request.json" >/dev/null; then
+            jq -r '"request: \(.decision)/\(.resolution), structural_unbound_edges \(.metrics.structural_unbound_edges_before) -> \(.metrics.structural_unbound_edges_after), live_authorized=\(.live_authorized) (\(.live_state))"' "$WORK/request.json" >> "$GITHUB_STEP_SUMMARY"
+          else
+            jq -r '"request unavailable: \(.decision)/\(.resolution)/\(.reason)"' "$WORK/request.json" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Resolve explicit decision or preserve live UNKNOWN
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! jq -e '.schema == "gooo/self-improvement-candidate-authorization-request/v1"' "$WORK/request.json" >/dev/null; then
+            cp "$WORK/request.json" "$WORK/resolution.json"
+            exit 0
+          fi
+          decision_path=""
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            candidate_artifact_digest="$EXPECTED_ARTIFACT_DIGEST"
+            if [ -z "$candidate_artifact_digest" ]; then
+              candidate_artifact_digest="$(jq -r '.artifact.archive_digest' "$WORK/request.json")"
+            fi
+            jq -n \
+              --arg decision "$DISPATCH_DECISION" \
+              --arg request_digest "$(jq -r '.digest' "$WORK/request.json")" \
+              --arg candidate_id "$(jq -r '.candidate.candidate_id' "$WORK/request.json")" \
+              --arg candidate_digest "$(jq -r '.candidate.candidate_digest' "$WORK/request.json")" \
+              --arg candidate_report_digest "$(jq -r '.candidate.candidate_report_digest' "$WORK/request.json")" \
+              --arg source_observation_digest "$(jq -r '.candidate.source_observation_digest' "$WORK/request.json")" \
+              --arg input_source_digest "$(jq -r '.candidate.input_source_digest' "$WORK/request.json")" \
+              --arg execution_input_digest "$(jq -r '.candidate.execution_input_digest' "$WORK/request.json")" \
+              --arg policy_digest "$(jq -r '.candidate.policy_digest' "$WORK/request.json")" \
+              --arg contract_digest "$(jq -r '.candidate.contract_canonical_digest' "$WORK/request.json")" \
+              --arg subject_sha "$(jq -r '.candidate.subject_sha' "$WORK/request.json")" \
+              --arg scope_digest "$(jq -r '.candidate.scope_digest' "$WORK/request.json")" \
+              --arg repository "$GITHUB_REPOSITORY" \
+              --arg actor "$GITHUB_ACTOR" \
+              --argjson workflow_run_id "$GITHUB_RUN_ID" \
+              --argjson workflow_run_attempt "$GITHUB_RUN_ATTEMPT" \
+              --argjson candidate_artifact_id "$(jq -r '.artifact.artifact_id' "$WORK/request.json")" \
+              --arg candidate_artifact_digest "$candidate_artifact_digest" \
+              '{schema:"gooo/self-improvement-candidate-authorization-decision/v1",decision:$decision,request_digest:$request_digest,candidate_id:$candidate_id,candidate_digest:$candidate_digest,candidate_report_digest:$candidate_report_digest,source_observation_digest:$source_observation_digest,input_source_digest:$input_source_digest,execution_input_digest:$execution_input_digest,policy_digest:$policy_digest,contract_digest:$contract_digest,subject_sha:$subject_sha,scope_digest:$scope_digest,repository:$repository,actor:$actor,workflow_run_id:$workflow_run_id,workflow_run_attempt:$workflow_run_attempt,candidate_artifact_id:$candidate_artifact_id,candidate_artifact_digest:$candidate_artifact_digest,decision_source:"workflow_dispatch",identity_assurance:"UNSIGNED_GITHUB_ACTOR_METADATA"}' \
+              > "$WORK/decision.json"
+            decision_path="$WORK/decision.json"
+          fi
+          for pass in first second; do
+            if [ -n "$decision_path" ]; then
+              go run ./scripts/self-improvement-candidate-authorization \
+                -mode resolve -request "$WORK/request.json" -decision "$decision_path" \
+                -output "$WORK/resolution-$pass.json" -check
+            else
+              go run ./scripts/self-improvement-candidate-authorization \
+                -mode resolve -request "$WORK/request.json" \
+                -output "$WORK/resolution-$pass.json" -check
+            fi
+          done
+          cmp "$WORK/resolution-first.json" "$WORK/resolution-second.json"
+          cp "$WORK/resolution-first.json" "$WORK/resolution.json"
+          go run ./scripts/self-improvement-candidate-authorization \
+            -mode verify -request "$WORK/request.json" -resolution "$WORK/resolution.json" \
+            -output "$WORK/verification.json" -check
+          jq -r '"resolution: \(.decision)/\(.outcome // "")/\(.reason), live_authorized=\(.live_authorized) (\(.live_state)), writes=\(.repository_writes), local_tests=\(.local_test_executions)"' "$WORK/resolution.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Emit and independently verify canonical authorization cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! jq -e '.schema == "gooo/self-improvement-candidate-authorization-request/v1"' "$WORK/request.json" >/dev/null; then
+            exit 0
+          fi
+          go run ./scripts/self-improvement-candidate-authorization \
+            -mode cases -request "$WORK/request.json" -output "$WORK/canonical-cases.json" -check
+          jq -e '.case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .counts == {CLOSED:3,UNKNOWN:3,REFUTED:3} and .replay_equal and .live_authorized == 0 and .live_state == "UNKNOWN" and .metrics.structural_unbound_edges_before == 1 and .metrics.structural_unbound_edges_after == 0 and .metrics.fallback_accepted == 0 and .metrics.repository_writes == 0 and .metrics.local_test_executions == 0 and .roundtrip.authorization_roundtrip_exact_before == 0 and .roundtrip.authorization_roundtrip_exact_after == 1 and .roundtrip.pointer_identity_dependency_before == 1 and .roundtrip.pointer_identity_dependency_after == 0 and .roundtrip.counterexample_run_id == 33926584593' "$WORK/canonical-cases.json" >/dev/null
+          jq -r '"canonical cases: \(.case_denominator) (\(.closed_cases) CLOSED / \(.unknown_cases) UNKNOWN / \(.refuted_cases) REFUTED), replay_equal=\(.replay_equal), live_authorized=\(.live_authorized)"' "$WORK/canonical-cases.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload candidate authorization bridge artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-candidate-authorization-${{ env.SOURCE_HEAD_SHA }}
+          path: ${{ runner.temp }}/candidate-authorization/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  emit-v25-continuation:
+    name: Emit exact v25 continuation proof
+    needs: bridge-candidate-authorization
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    env:
+      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_REF: refs/heads/${{ github.event.workflow_run.head_branch }}
+      AUTH_RUN_ID: ${{ github.run_id }}
+      AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out exact source head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Install Go 1.27
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.0'
+          cache: false
+
+      - name: Verify exact auth run and source artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-ci-continuation"
+          source_dir="$work/source-auth"
+          output_dir="$work/output"
+          mkdir -p "$source_dir" "$output_dir"
+          auth_workflow_name="Self-improvement candidate authorization bridge"
+          auth_workflow_path=".github/workflows/self-improvement-candidate-authorization.yml"
+          auth_artifact_name="self-improvement-candidate-authorization-$SOURCE_HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AUTH_RUN_ID" > "$work/source-run.json"
+          jq -e --argjson id "$AUTH_RUN_ID" --argjson attempt "$AUTH_RUN_ATTEMPT" \
+            --arg name "$auth_workflow_name" --arg path "$auth_workflow_path" \
+            --arg repository "$GITHUB_REPOSITORY" --arg sha "$SOURCE_HEAD_SHA" \
+            '.id == $id and .run_attempt == $attempt and .name == $name and .path == $path and
+             .event == "workflow_run" and .head_branch == "dev" and .head_sha == $sha and
+             .head_repository.full_name == $repository and .repository.full_name == $repository' \
+            "$work/source-run.json" >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AUTH_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json"
+          artifact_count="$(jq -r --arg name "$auth_artifact_name" '[.artifacts[] | select(.name == $name)] | length' "$work/artifacts.json")"
+          test "$artifact_count" = 1
+          artifact_id="$(jq -r --arg name "$auth_artifact_name" '[.artifacts[] | select(.name == $name)][0].id' "$work/artifacts.json")"
+          api_digest="$(jq -r --arg name "$auth_artifact_name" '[.artifacts[] | select(.name == $name)][0].digest' "$work/artifacts.json")"
+          expired="$(jq -r --arg name "$auth_artifact_name" '[.artifacts[] | select(.name == $name)][0].expired' "$work/artifacts.json")"
+          test "$expired" = false
+          test "$api_digest" != null
+          archive="$work/auth.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" -o "$archive"
+          observed_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+          test "$observed_digest" = "$api_digest"
+          unzip -q "$archive" -d "$source_dir"
+          request="$(find "$source_dir" -type f -name request.json -print -quit)"
+          resolution="$(find "$source_dir" -type f -name resolution.json -print -quit)"
+          verification="$(find "$source_dir" -type f -name verification.json -print -quit)"
+          test -n "$request"
+          test -n "$resolution"
+          test -n "$verification"
+          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg repository "$GITHUB_REPOSITORY" \
+            '.schema == "gooo/self-improvement-candidate-authorization-request/v1" and
+             .candidate.subject_sha == $sha and .candidate.execution_input_digest != null and
+             .live_authorized == 0 and .live_state == "UNKNOWN" and
+             .repository_writes == 0 and .local_test_executions == 0' "$request" >/dev/null
+          jq -e '.schema == "gooo/self-improvement-candidate-authorization-resolution/v1" and
+             .live_authorized == 0 and .live_state == "UNKNOWN" and
+             .repository_writes == 0 and .local_test_executions == 0' "$resolution" >/dev/null
+          receipt_digest="$(jq -r '.digest' "$verification")"
+          jq -e '.schema == "gooo/self-improvement-candidate-authorization-verification/v1" and
+             .decision_verified == true and .live_authorized == 0 and .live_state == "UNKNOWN" and
+             .repository_writes == 0 and .local_test_executions == 0 and
+             (.digest | startswith("sha256:"))' "$verification" >/dev/null
+          input="$work/input.json"
+          jq -n \
+            --arg workflow "$auth_workflow_name" --arg path "$auth_workflow_path" \
+            --arg repository "$GITHUB_REPOSITORY" --arg event workflow_run --arg ref "$SOURCE_REF" \
+            --arg sha "$SOURCE_HEAD_SHA" --arg artifact "$auth_artifact_name" \
+            --arg archive_digest "$api_digest" --arg observed_digest "$observed_digest" \
+            --arg receipt_digest "$receipt_digest" --arg target "Self-improvement candidate execution contract" \
+            --arg target_path ".github/workflows/self-improvement-execution-contract.yml" \
+            --arg run "$AUTH_RUN_ID" --arg attempt "$AUTH_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
+            '{source_workflow_name:$workflow,source_workflow_path:$path,source_repository:$repository,source_event:$event,source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$artifact,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$observed_digest,source_receipt_digest:$receipt_digest,target_workflow_name:$target,target_workflow_path:$target_path,dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",replay:false,duplicate_dispatch:false,duplicate_conflict:false,manual_dispatches:0,unauthorized_dispatches:0,execution_authorized:false,execution_grants:0,live_grant_decision:0,live_execution_count:0,grant_consumed_uses:0,repository_writes:0,local_test_executions:0}' \
+            > "$input"
+          mkdir -p "$output_dir"
+          env -u GH_TOKEN -u GITHUB_TOKEN go run ./scripts/self-improvement-ci-continuation \
+            -mode live -contract examples/self-improvement-ci-continuation/continuation.gooo \
+            -input "$input" -output "$output_dir/continuation.json" -check
+          env -u GH_TOKEN -u GITHUB_TOKEN go run ./scripts/self-improvement-ci-continuation \
+            -mode cases -contract examples/self-improvement-ci-continuation/continuation.gooo \
+            -output "$output_dir/canonical-cases.json" -check
+          jq '.verification' "$output_dir/continuation.json" > "$output_dir/verification.json"
+          cp "$request" "$output_dir/source-authorization-request.json"
+          cp "$resolution" "$output_dir/source-authorization-resolution.json"
+          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg archive "$api_digest" \
+            '.schema == "gooo/self-improvement-ci-continuation/v1" and
+             .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.source_artifact_archive_digest == $archive and
+             .request.continuation_input.source_artifact_observed_digest == $archive and
+             .request.continuation_input.repository_writes == 0 and
+             .request.continuation_input.local_test_executions == 0 and
+             .resolution.execution_authorized == false and
+             .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
+             .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
+             .resolution.repository_writes == 0 and .resolution.local_test_executions == 0 and
+             .verification.verified == true' "$output_dir/continuation.json" >/dev/null
+          echo "CONTINUATION_OUTPUT=$output_dir" >> "$GITHUB_ENV"
+
+      - name: Upload exact continuation proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: self-improvement-ci-continuation-${{ env.SOURCE_HEAD_SHA }}
+          path: ${{ runner.temp }}/self-improvement-ci-continuation/output/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  dispatch-v25-continuation:
+    name: Dispatch exact v25 verifier
+    needs: emit-v25-continuation
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch == 'dev'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    env:
+      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_REF: refs/heads/${{ github.event.workflow_run.head_branch }}
+      AUTH_RUN_ID: ${{ github.run_id }}
+      AUTH_RUN_ATTEMPT: ${{ github.run_attempt }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify continuation artifact and dispatch v25
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/self-improvement-ci-continuation-dispatch"
+          mkdir -p "$work/source"
+          artifact_name="self-improvement-ci-continuation-$SOURCE_HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$AUTH_RUN_ID/artifacts?per_page=100" > "$work/artifacts.json"
+          test "$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)] | length' "$work/artifacts.json")" = 1
+          artifact_id="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].id' "$work/artifacts.json")"
+          archive_digest="$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].digest' "$work/artifacts.json")"
+          test "$(jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name)][0].expired' "$work/artifacts.json")" = false
+          archive="$work/continuation.zip"
+          curl --fail --location --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" -o "$archive"
+          observed_digest="sha256:$(sha256sum "$archive" | awk '{print $1}')"
+          test "$observed_digest" = "$archive_digest"
+          unzip -q "$archive" -d "$work/source"
+          continuation="$work/source/continuation.json"
+          jq -e --arg sha "$SOURCE_HEAD_SHA" --arg digest "$archive_digest" \
+            '.schema == "gooo/self-improvement-ci-continuation/v1" and
+             .digest != null and (.digest | startswith("sha256:")) and
+             .request.continuation_input.source_head_sha == $sha and
+             .request.continuation_input.source_run_id == ($ENV.AUTH_RUN_ID|tonumber) and
+             .request.continuation_input.source_artifact_name == ("self-improvement-candidate-authorization-"+$sha) and
+             .request.continuation_input.source_artifact_archive_digest != null and
+             .request.continuation_input.source_artifact_observed_digest == .request.continuation_input.source_artifact_archive_digest and
+             .verification.verified == true and .resolution.execution_authorized == false and
+             .resolution.execution_grants == 0 and .resolution.live_grant_decision == 0 and
+             .resolution.live_execution_count == 0 and .resolution.grant_consumed_uses == 0 and
+             .resolution.repository_writes == 0 and .resolution.local_test_executions == 0' "$continuation" >/dev/null
+          receipt_digest="$(jq -r '.digest' "$continuation")"
+          source_workflow_name="$(jq -r '.request.continuation_input.source_workflow_name' "$continuation")"
+          source_workflow_path="$(jq -r '.request.continuation_input.source_workflow_path' "$continuation")"
+          source_event="$(jq -r '.request.continuation_input.source_event' "$continuation")"
+          jq -n \
+            --arg ref "$SOURCE_REF" --arg sha "$SOURCE_HEAD_SHA" --arg name "$artifact_name" \
+            --arg source_workflow "$source_workflow_name" --arg source_path "$source_workflow_path" \
+            --arg source_event "$source_event" --arg repository "$GITHUB_REPOSITORY" \
+            --arg archive_digest "$archive_digest" --arg receipt_digest "$receipt_digest" \
+            --arg run "$AUTH_RUN_ID" --arg attempt "$AUTH_RUN_ATTEMPT" --arg artifact_id "$artifact_id" \
+            '{ref:"dev",inputs:{source_workflow_name:$source_workflow,source_workflow_path:$source_path,source_repository:$repository,source_event:$source_event,source_ref:$ref,source_head_sha:$sha,source_run_id:$run,source_run_attempt:$attempt,source_artifact_name:$name,source_artifact_id:$artifact_id,source_artifact_archive_digest:$archive_digest,source_artifact_observed_digest:$archive_digest,source_receipt_digest:$receipt_digest,target_workflow_name:"Self-improvement candidate execution contract",target_workflow_path:".github/workflows/self-improvement-execution-contract.yml",dispatch_ref:"dev",dispatch_mode:"workflow_dispatch",continuation_request_digest:$receipt_digest}}' \
+            > "$work/v25-dispatch.json"
+          jq -e '(.inputs | type) == "object" and ([.inputs[] | type] | all(. == "string"))' \
+            "$work/v25-dispatch.json" >/dev/null
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/self-improvement-execution-contract.yml/dispatches" \
+            --input "$work/v25-dispatch.json"

@@ -1,0 +1,16 @@
+{
+  "schema": "gooo/candidate-leakage-eligibility-denominator/v1",
+  "metric_id": "gooo.metric.semantic.candidate-leakage.v1",
+  "evidence_subject_sha": "466c12d94f657f2e04f355919788260c17faa678",
+  "cases": [
+    {"id": "exact", "decision": "ELIGIBLE", "resolution": "EXACT", "effect": "NO_EFFECT"},
+    {"id": "unavailable", "decision": "FAIL_CLOSED", "resolution": "UNKNOWN", "effect": "BLOCK"},
+    {"id": "digest-mismatch", "decision": "FAIL_CLOSED", "resolution": "INVARIANT_ONLY", "effect": "BLOCK"}
+  ],
+  "projected_transition": {
+    "operating": {"before": 7, "after": 8, "total": 12},
+    "coverage_bps": {"before": 5833, "after": 6666}
+  },
+  "repository_writes": 0,
+  "promotion_applied": 0
+}

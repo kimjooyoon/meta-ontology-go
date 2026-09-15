@@ -1,0 +1,29 @@
+{
+  "schema": "gooo/language-utility-contract/v1",
+  "id": "gooo-language-utility-v1",
+  "stages": [
+    {"id":"SOURCE_PRESENT","proof_choice":"foundation"},
+    {"id":"SYNTAX_ACCEPTED","proof_choice":"foundation"},
+    {"id":"SEMANTIC_ACCEPTED","proof_choice":"coherence"},
+    {"id":"OUTCOME_OBSERVED","proof_choice":"coherence"},
+    {"id":"DETERMINISTIC_REPLAY","proof_choice":"regression"},
+    {"id":"RESOURCE_OBSERVED","proof_choice":"regression"},
+    {"id":"USER_ARTIFACT_VERIFIED","proof_choice":"coherence"}
+  ],
+  "use_cases": [
+    {"id":"ci-plan-selection","label":"Select CI checks from changed paths"},
+    {"id":"source-execution","label":"Execute a Gooo source activity"},
+    {"id":"artifact-emission","label":"Emit a user artifact from Gooo definitions"},
+    {"id":"profiling","label":"Profile a Gooo activity"},
+    {"id":"debugging","label":"Pause and inspect a Gooo activity"},
+    {"id":"package-execution","label":"Execute a multi-file Gooo package"}
+  ],
+  "floors": {"closed_cells":39,"complete_use_cases":4},
+  "not_claimed": [
+    "business correctness",
+    "production readiness",
+    "comparative language performance",
+    "external adoption",
+    "general-purpose language completeness"
+  ]
+}

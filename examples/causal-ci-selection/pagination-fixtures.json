@@ -1,0 +1,42 @@
+{
+  "schema": "gooo/causal-ci-selection-pagination-fixtures/v1",
+  "source_class": "SYNTHETIC_FIXTURE",
+  "expected_ids": [
+    "normal-multi-page",
+    "inconsistent-total",
+    "repeated-next-link",
+    "page-cap-exceeded",
+    "malformed-url",
+    "malformed-header",
+    "duplicate-run-id",
+    "last-page"
+  ],
+  "cases": [
+    {"id": "normal-multi-page", "expected_reason": "", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":1}]}", "link": "</runs?page=2>; rel=\"next\""},
+      {"path": "/runs?page=2", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":2}]}", "link": ""}
+    ]},
+    {"id": "inconsistent-total", "expected_reason": "WORKFLOW_RUN_PAGINATION_INCOMPLETE", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":3}]}", "link": ""}
+    ]},
+    {"id": "repeated-next-link", "expected_reason": "WORKFLOW_RUN_NEXT_LINK_REPEATED", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":4}]}", "link": "</runs?page=1>; rel=\"next\""}
+    ]},
+    {"id": "page-cap-exceeded", "expected_reason": "WORKFLOW_RUN_PAGE_CAP_EXCEEDED", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":1001,\"workflow_runs\":[{\"id\":1}]}", "link": "</runs?page=2>; rel=\"next\""}
+    ]},
+    {"id": "malformed-url", "expected_reason": "WORKFLOW_RUN_LINK_MALFORMED", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":5}]}", "link": "<http://[::1>; rel=\"next\""}
+    ]},
+    {"id": "malformed-header", "expected_reason": "WORKFLOW_RUN_LINK_MALFORMED", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":6}]}", "link": "not-a-link"}
+    ]},
+    {"id": "duplicate-run-id", "expected_reason": "WORKFLOW_RUN_DUPLICATE_ID", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":7}]}", "link": "</runs?page=2>; rel=\"next\""},
+      {"path": "/runs?page=2", "status": 200, "body": "{\"total_count\":2,\"workflow_runs\":[{\"id\":7}]}", "link": ""}
+    ]},
+    {"id": "last-page", "expected_reason": "", "pages": [
+      {"path": "/runs?page=1", "status": 200, "body": "{\"total_count\":1,\"workflow_runs\":[{\"id\":8}]}", "link": ""}
+    ]}
+  ]
+}

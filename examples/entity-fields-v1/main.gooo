@@ -1,0 +1,9 @@
+package entityfieldsv1
+namespace entityfieldsv1
+
+entity Order id "billing://entity/order" fields {
+    field OrderNumber id "billing://field/order-number" type string required one
+    field CustomerName id "billing://field/customer-name" type string required one
+}
+
+activity LoadOrder(Order) -> Order computes "field.read:CustomerName=billing://field/customer-name"

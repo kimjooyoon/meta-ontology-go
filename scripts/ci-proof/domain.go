@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -28,13 +27,14 @@ type domainEvidence struct {
 }
 
 type domainCommand struct {
-	Command      string `json:"command"`
-	Fixture      string `json:"fixture,omitempty"`
-	Status       string `json:"status"`
-	Available    bool   `json:"available"`
-	Reason       string `json:"reason,omitempty"`
-	Output       string `json:"output,omitempty"`
-	OutputSHA256 string `json:"output_sha256"`
+	Command      string            `json:"command"`
+	Fixture      string            `json:"fixture,omitempty"`
+	Status       string            `json:"status"`
+	Available    bool              `json:"available"`
+	Reason       string            `json:"reason,omitempty"`
+	Output       string            `json:"output,omitempty"`
+	OutputSHA256 string            `json:"output_sha256"`
+	Observation  *graphObservation `json:"observation,omitempty"`
 }
 
 type domainEvidenceDigest struct {
@@ -55,6 +55,9 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 	if domain.Graph.Status != "deferred" || domain.Graph.Available || domain.Graph.Command == "" {
 		return fmt.Errorf("graph domain evidence must remain explicitly deferred")
 	}
+	if err := validateGraphObservation(domain.Graph); err != nil {
+		return err
+	}
 	if domain.ObserverStatus != "unavailable" || len(domain.ObserverReceiptRefs) != 0 || domain.ProtectionStatus != "unavailable" || domain.ProvenanceStatus != "not_applicable" {
 		return fmt.Errorf("domain evidence status is not CI-only and deterministic")
 	}
@@ -68,10 +71,4 @@ func validateDomainEvidence(domain domainEvidence, evidence evidenceInput, conte
 		return fmt.Errorf("domain evidence digest mismatch")
 	}
 	return nil
-}
-
-func digestDomainEvidence(domain domainEvidence) string {
-	domain.Digests.DomainSHA256 = ""
-	data, _ := json.Marshal(domain)
-	return digestBytes(data)
 }

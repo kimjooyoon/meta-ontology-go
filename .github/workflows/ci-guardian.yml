@@ -10,6 +10,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  issues: read
   actions: read
 
 jobs:
@@ -20,7 +21,7 @@ jobs:
     steps:
       - name: Checkout default workflow authority
         # v4: 11d5960a326750d5838078e36cf38b85af677262
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.workflow_sha }}
           fetch-depth: 1
@@ -28,7 +29,7 @@ jobs:
       - name: Validate guardian observer environment
         id: observer-environment
         continue-on-error: true
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           GUARDIAN_WORKFLOW_SHA: ${{ github.workflow_sha }}
           GUARDIAN_RUN_ID: ${{ github.run_id }}
@@ -56,6 +57,14 @@ jobs:
             }
             fs.writeFileSync('ci-guardian-environment.json', JSON.stringify(snapshot, null, 2) + '\n');
             core.setOutput('verified', snapshot.read_status === 'verified' ? 'true' : 'false');
+      - name: Run successor protocol witnesses
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            require('./scripts/ci-proof/foundation_authorization_protocol_test');
+            require('./scripts/ci-proof/guardian_successor_test');
+            require('./scripts/ci-proof/linear_tree_reconciliation_test');
       - name: Mint current-repository Guardian App token
         id: guardian-app-token
         if: github.base_ref == 'main' && steps.observer-environment.outputs.verified == 'true'
@@ -73,7 +82,7 @@ jobs:
           permission-administration: read
       - name: Inspect changed paths from default authority
         # v7: f28e40c7f34bde8b3046d885e986cb6290c5673b
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           GUARDIAN_WORKFLOW_REF: ${{ github.workflow_ref }}
           GUARDIAN_WORKFLOW_SHA: ${{ github.workflow_sha }}
@@ -90,6 +99,8 @@ jobs:
             const fs = require('node:fs');
             const crypto = require('node:crypto');
             const guardian = require('./scripts/ci-proof/guardian');
+            const successor = require('./scripts/ci-proof/guardian_successor');
+            const reconciliation = require('./scripts/ci-proof/linear_tree_reconciliation');
             const eventPull = context.payload.pull_request;
             const repository = context.payload.repository && context.payload.repository.full_name;
             const defaultBranch = context.payload.repository && context.payload.repository.default_branch;
@@ -106,12 +117,44 @@ jobs:
             let devBranchProtection = null;
             let observerEnvironmentSnapshot = null;
             let installationRepositoryScope = null;
+            let reconciliationProtocol = null;
+            let baseCommit = null;
+            let baseKernelBlobs = null;
+            let preCorrectionKernelBlobs = null;
+            let correctionChangedPaths = null;
+            let beforeDigest = null;
+            let afterDigest = null;
             let observedPull = eventPull;
             let result = {decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: 'guardian observation was incomplete', files: [], kernelPaths: []};
             try {
               const pull = guardian.validateGuardianPullRequest(eventPull);
               if (!repository || !/^[0-9a-f]{40}$/i.test(workflowSha || '') || !/^[0-9a-f]{40}$/i.test(runtimeSha || '') || !workflowRef || !runtimeRef || !Number.isInteger(runId) || runId < 1 || !Number.isInteger(runAttempt) || runAttempt < 1) {
                 throw guardian.guardianFailure('runtime workflow/ref/run identity is missing or malformed');
+              }
+              const route = guardian.routeForPull(pull);
+              const observerTokenSource = 'github_app_installation';
+              const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
+              const appSlug = process.env.GUARDIAN_APP_SLUG || '';
+              const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
+              if (route === 'promotion_main' || route === reconciliation.ROUTE) {
+                branchProtection = guardian.emptyBranchProtection({
+                  branch: 'main', repository, policySHA, eventRef: runtimeRef, checkoutRef: runtimeSha,
+                  baseSHA: pull.base.sha, headSHA: pull.head.sha, runId, runAttempt, workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource, appInstallationId, appSlug, missingReason: 'guardian_observation_not_completed',
+                });
+                devBranchProtection = guardian.emptyBranchProtection({
+                  branch: 'dev', repository, policySHA, eventRef: runtimeRef, checkoutRef: runtimeSha,
+                  baseSHA: pull.base.sha, headSHA: pull.head.sha, runId, runAttempt, workflowSHA: workflowSha,
+                  tokenSource: observerTokenSource, appInstallationId, appSlug, missingReason: 'guardian_observation_not_completed',
+                });
+                observerEnvironmentSnapshot = guardian.emptyGuardianEnvironment({
+                  repository, tokenSource: 'github.token', runId, runAttempt, workflowSHA: workflowSha,
+                  missingReason: 'guardian_observation_not_completed',
+                });
+                installationRepositoryScope = guardian.emptyInstallationRepositoryScope({
+                  repository, installationId: 0, tokenSource: observerTokenSource, runId, runAttempt,
+                  workflowSHA: workflowSha, missingReason: 'guardian_observation_not_completed',
+                });
               }
               liveBefore = await guardian.readLiveTopology({
                 getRef: (parameters) => github.rest.git.getRef(parameters),
@@ -151,8 +194,89 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
-              const route = guardian.routeForPull(observedPull);
-              if (route === 'promotion_main') {
+              if (route === reconciliation.ROUTE) {
+                reconciliationProtocol = await reconciliation.evaluatePromotion({
+                  pull: observedPull,
+                  repository,
+                  workflowRef,
+                  workflowSha,
+                  runtimeRef,
+                  runtimeSha,
+                  runId,
+                  runAttempt,
+                  liveBefore,
+                  liveAfter,
+                  changedFiles: result.files,
+                  listComments: (parameters) => github.rest.issues.listComments(parameters),
+                  compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                  getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                  getTree: (parameters) => github.rest.git.getTree(parameters),
+                });
+                result = {...result, reconciliationProtocol};
+                if (reconciliationProtocol.decision === 'PASS') {
+                  result = {...result, decision: 'PASS', code: null, reason: reconciliationProtocol.reason};
+                } else {
+                  result = {...result, decision: 'FAIL_CLOSED', code: reconciliation.RECONCILIATION_CODE || guardian.RECONCILIATION_CODE, reason: reconciliationProtocol.reason};
+                }
+              }
+              if (result.authorizationRequired === true && route === guardian.FOUNDATION_ROUTE) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
+              }
+              if (route === guardian.FOUNDATION_ROUTE) {
+                const baseCommitResponse = await github.rest.repos.getCommit({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: observedPull.base.sha,
+                });
+                if (!baseCommitResponse || !baseCommitResponse.data || !Array.isArray(baseCommitResponse.data.parents)) {
+                  throw guardian.guardianFailure('foundation correction base commit attestation is unavailable or malformed');
+                }
+                baseCommit = baseCommitResponse.data;
+                const correctionCompareResponse = await github.rest.repos.compareCommits({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  base: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  head: observedPull.base.sha,
+                });
+                if (!correctionCompareResponse || !correctionCompareResponse.data || !Array.isArray(correctionCompareResponse.data.files)) {
+                  throw guardian.guardianFailure('foundation correction changed-path attestation is unavailable or malformed');
+                }
+                correctionChangedPaths = [...new Set(correctionCompareResponse.data.files
+                  .flatMap((file) => [file && file.filename, file && file.previous_filename])
+                  .filter((path) => path && guardian.isProtectedKernelPath(path)))].sort();
+                const currentBaseKernelBlobs = {};
+                preCorrectionKernelBlobs = {};
+                for (const path of guardian.FOUNDATION_BOOTSTRAP.baseDriftKernelPaths) {
+                  const currentResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: observedPull.base.sha,
+                  });
+                  const preCorrectionResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path,
+                    ref: guardian.FOUNDATION_BOOTSTRAP.preCorrectionBaseSnapshot,
+                  });
+                  if (!currentResponse || !currentResponse.data || Array.isArray(currentResponse.data) || currentResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(currentResponse.data.sha || '') || !preCorrectionResponse || !preCorrectionResponse.data || Array.isArray(preCorrectionResponse.data) || preCorrectionResponse.data.type !== 'file' || !/^[0-9a-f]{40}$/i.test(preCorrectionResponse.data.sha || '')) {
+                    throw guardian.guardianFailure(`foundation bootstrap base-drift blob attestation is unavailable or malformed: ${path}`);
+                  }
+                  currentBaseKernelBlobs[path] = currentResponse.data.sha;
+                  preCorrectionKernelBlobs[path] = preCorrectionResponse.data.sha;
+                }
+                baseKernelBlobs = Object.fromEntries(guardian.FOUNDATION_BOOTSTRAP.remainingBaseSatisfiedKernelPaths.map((path) => [path, currentBaseKernelBlobs[path]]));
+                const foundation = guardian.foundationBootstrapDecision({pull: observedPull, result, liveBefore, liveAfter, baseCommit, baseKernelBlobs, preCorrectionKernelBlobs, correctionChangedPaths});
+                if (foundation.decision === 'FOUNDATION') {
+                  result = {...result, decision: 'PASS', code: null, reason: guardian.FOUNDATION_BOOTSTRAP.foundationOverrideMarker, foundationBootstrap: foundation};
+                } else {
+                  result = {...result, foundationBootstrap: foundation};
+                }
+              }
+              if (route === 'promotion_main' && result.authorizationRequired === true) {
+                result = {...result, decision: 'FAIL_CLOSED', code: guardian.ROOT_FAILURE_CODE, reason: result.reason};
+              }
+              if (route === 'promotion_main' || route === reconciliation.ROUTE) {
                 try {
                   observerEnvironmentSnapshot = JSON.parse(fs.readFileSync('ci-guardian-environment.json', 'utf8'));
                 } catch (error) {
@@ -160,9 +284,6 @@ jobs:
                 }
                 const observerToken = process.env.GUARDIAN_APP_TOKEN || '';
                 const observerClient = observerToken ? github.getOctokit(observerToken) : null;
-                const observerTokenSource = 'github_app_installation';
-                const appInstallationId = Number(process.env.GUARDIAN_APP_INSTALLATION_ID || 0);
-                const appSlug = process.env.GUARDIAN_APP_SLUG || '';
                 installationRepositoryScope = await guardian.observeInstallationRepositoryScope({
                   listRepositories: (parameters) => observerClient ? observerClient.request('GET /installation/repositories', parameters) : Promise.resolve({status: 403}),
                   repository,
@@ -173,7 +294,6 @@ jobs:
                   workflowSHA: workflowSha,
                 });
                 const getProtection = (parameters) => observerClient ? observerClient.rest.repos.getBranchProtection(parameters) : Promise.resolve({status: 403});
-                const policySHA = crypto.createHash('sha256').update(fs.readFileSync('.github/ci-governance.json')).digest('hex');
                 branchProtection = await guardian.observeBranchProtection({
                   getProtection,
                   branch: 'main',
@@ -209,10 +329,48 @@ jobs:
                   appSlug,
                 });
               }
-              let beforeDigest = null;
-              let afterDigest = null;
               checkName = guardian.checkNameForRoute(guardian.routeForPull(observedPull));
-              if (result.kernelPaths.length > 0 && guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName})) {
+              if (guardian.routeForPull(observedPull) === 'feature_dev' && result.authorizationRequired === true) {
+                try {
+                  const authorizationResponse = await github.rest.repos.getContent({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: '.github/foundation-authorization.json',
+                    ref: workflowSha,
+                  });
+                  const authorizationData = authorizationResponse && authorizationResponse.data;
+                  const policy = authorizationData && !Array.isArray(authorizationData) && authorizationData.content
+                    ? JSON.parse(Buffer.from(authorizationData.content.replace(/\s/g, ''), 'base64').toString('utf8'))
+                    : null;
+                  const authorization = await guardian.observeFoundationAuthorization({
+                    policy,
+                    pull: observedPull,
+                    changedFiles: result.files,
+                    kernelPaths: result.kernelPaths,
+                    workflowSha,
+                    getPull: (parameters) => github.rest.pulls.get(parameters),
+                    compareCommits: (parameters) => github.rest.repos.compareCommits(parameters),
+                    getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                    getContent: (parameters) => github.rest.repos.getContent(parameters),
+                    getTree: (parameters) => github.rest.git.getTree(parameters),
+                  });
+                  result = {...result, foundationAuthorization: authorization};
+                  if (authorization.decision === 'PASS') {
+                    result = {...result, decision: 'PASS', code: null, reason: authorization.reason, foundationAuthorization: authorization};
+                  } else {
+                    result = {...result, decision: 'FAIL_CLOSED', code: authorization.code || guardian.FOUNDATION_AUTHORIZATION_CODE, reason: authorization.reason};
+                  }
+                } catch (error) {
+                  const authorization = {decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: error.message || String(error)};
+                  result = {...result, decision: 'FAIL_CLOSED', code: authorization.code, reason: authorization.reason, foundationAuthorization: authorization};
+                }
+              }
+              const trustedPromotion = guardian.trustedDevPromotion({pull: observedPull, repository, defaultBranch, workflowRef, workflowSha, runtimeSha, liveBefore, liveAfter, checkName});
+              const authorizedFoundationFeature = guardian.routeForPull(observedPull) === 'feature_dev'
+                && result.decision === 'PASS'
+                && result.foundationAuthorization
+                && result.foundationAuthorization.decision === 'PASS';
+              if (result.kernelPaths.length > 0 && (trustedPromotion || authorizedFoundationFeature)) {
                 beforeDigest = await guardian.kernelTreeDigest({
                   getCommit: (parameters) => github.rest.repos.getCommit(parameters),
                   getTree: (parameters) => github.rest.git.getTree(parameters),
@@ -227,13 +385,51 @@ jobs:
                   repo: context.repo.repo,
                   ref: observedPull.head.sha,
                 });
+                if (authorizedFoundationFeature && (beforeDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_before_sha256) || afterDigest !== (result.foundationAuthorization.fixture_v3 && result.foundationAuthorization.fixture_v3.kernel_after_sha256))) {
+                  result = {...result, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest', foundationAuthorization: {...result.foundationAuthorization, decision: 'FAIL_CLOSED', code: guardian.FOUNDATION_AUTHORIZATION_CODE, reason: 'Foundation authorization kernel digest does not match live before/after digest'}};
+                }
               }
               result = guardian.classifyGuardianDecision({pull: observedPull, repository, defaultBranch, workflowRef, eventRef: runtimeRef, workflowSha, runtimeSha, result, kernelBeforeDigest: beforeDigest, kernelAfterDigest: afterDigest, liveBefore, liveAfter, checkName});
-              if (route === 'promotion_main' && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
+              if ((route === 'promotion_main' || route === reconciliation.ROUTE) && (!branchProtection || branchProtection.read_status !== 'verified' || !devBranchProtection || devBranchProtection.read_status !== 'verified' || !observerEnvironmentSnapshot || observerEnvironmentSnapshot.read_status !== 'verified')) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.PROTECTION_CODE, reason: (branchProtection && branchProtection.missing_reason) || (observerEnvironmentSnapshot && observerEnvironmentSnapshot.missing_reason) || 'trusted protection observer evidence is unavailable'};
               }
-              if (route === 'promotion_main' && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
+              if ((route === 'promotion_main' || route === reconciliation.ROUTE) && (!installationRepositoryScope || installationRepositoryScope.read_status !== 'verified' || installationRepositoryScope.exact_match !== true)) {
                 result = {...result, decision: 'FAIL_CLOSED', code: guardian.INSTALLATION_SCOPE_CODE, reason: (installationRepositoryScope && installationRepositoryScope.missing_reason) || 'installation repository scope observer evidence is unavailable'};
+              }
+              if (route === 'promotion_main') {
+                const successorProtocol = await successor.evaluatePromotion({
+                  pull: observedPull,
+                  repository,
+                  workflowRef,
+                  workflowSha,
+                  runtimeRef,
+                  runtimeSha,
+                  runId,
+                  runAttempt,
+                  liveBefore,
+                  liveAfter,
+                  changedFiles: result.files,
+                  listComments: (parameters) => github.rest.issues.listComments(parameters),
+                  getCommit: (parameters) => github.rest.repos.getCommit(parameters),
+                  getTree: (parameters) => github.rest.git.getTree(parameters),
+                });
+                if (successorProtocol.decision === 'PASS') {
+                  result = {
+                    ...result,
+                    decision: 'PASS',
+                    code: null,
+                    reason: successorProtocol.reason,
+                    successorProtocol,
+                    kernelBeforeDigest: successorProtocol.kernel.before_sha256,
+                    kernelAfterDigest: successorProtocol.kernel.after_sha256,
+                  };
+                  branchProtection = null;
+                  devBranchProtection = null;
+                  observerEnvironmentSnapshot = null;
+                  installationRepositoryScope = null;
+                } else {
+                  result = {...result, decision: 'FAIL_CLOSED', code: successorProtocol.code, reason: successorProtocol.reason, successorProtocol};
+                }
               }
             } catch (error) {
               result = {...result, decision: 'FAIL_CLOSED', code: error.code || guardian.ROOT_FAILURE_CODE, reason: error.message || String(error)};
@@ -285,6 +481,18 @@ jobs:
             } catch (error) {
               validationError = error;
             }
+            if (artifact.decision === 'PASS') {
+              const kernelAttestation = guardian.validateKernelDigestAttestation({
+                kernelPaths: artifact.kernel_paths,
+                computedBeforeDigest: beforeDigest,
+                computedAfterDigest: afterDigest,
+                artifactBeforeDigest: artifact.kernel_before_sha256,
+                artifactAfterDigest: artifact.kernel_after_sha256,
+              });
+              if (kernelAttestation.decision !== 'PASS' && !validationError) {
+                validationError = guardian.guardianFailure(kernelAttestation.reason);
+              }
+            }
             await core.summary
               .addHeading(artifact.check_name || 'CI guardian shadow')
               .addRaw(`schema=${artifact.schema}\n`)
@@ -295,6 +503,7 @@ jobs:
               .addRaw(`head_binding=${artifact.head_binding_status}\n`)
               .addRaw(`base=${artifact.base_ref}@${artifact.base_sha}\n`)
               .addRaw(`head=${artifact.head_ref}@${artifact.head_sha}\n`)
+              .addRaw(`kernel_attestation=${artifact.decision === 'PASS' ? guardian.validateKernelDigestAttestation({kernelPaths: artifact.kernel_paths, computedBeforeDigest: beforeDigest, computedAfterDigest: afterDigest, artifactBeforeDigest: artifact.kernel_before_sha256, artifactAfterDigest: artifact.kernel_after_sha256}).decision : 'NOT_APPLICABLE'}\n`)
               .addRaw(`bundle=${artifact.bundle_sha256}\n`)
               .write();
             if (validationError) {
@@ -305,7 +514,7 @@ jobs:
       - name: Upload guardian observation
         if: ${{ always() }}
         # v4: ea165f8d65b6e75b540449e92b4886f43607fa02
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ci-guardian-${{ github.run_id }}-${{ github.run_attempt }}
           path: ci-guardian.json

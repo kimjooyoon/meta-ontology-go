@@ -10,8 +10,8 @@ func billingIR() SemanticIR {
 	return SemanticIR{
 		Package: "billinggen",
 		Entities: []Entity{
-			{ID: "billing://entity/order", Name: "Order", GoName: "Order", Fields: []Field{{Name: "ID", GoName: "ID", GoType: "string"}}},
-			{ID: "billing://entity/payment", Name: "Payment", GoName: "Payment", Fields: []Field{{Name: "ID", GoName: "ID", GoType: "string"}}},
+			{ID: "billing://entity/order", Name: "Order", GoName: "Order"},
+			{ID: "billing://entity/payment", Name: "Payment", GoName: "Payment"},
 		},
 		Activities: []Activity{{
 			ID: "billing://activity/pay-order", Name: "PayOrder", GoName: "PayOrder",
@@ -43,12 +43,12 @@ func TestGeneratePreservesHandwrittenSlot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	previous := strings.Replace(string(first.Source), "return Payment{}", "return Payment{ID: order.ID}", 1)
+	previous := strings.Replace(string(first.Source), "return Payment{}", "return Payment{}\n\t// order preserved", 1)
 	second, err := Generate(billingIR(), []byte(previous))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(second.Source), "return Payment{ID: order.ID}") {
+	if !strings.Contains(string(second.Source), "// order preserved") {
 		t.Fatalf("handwritten slot was not preserved:\n%s", second.Source)
 	}
 }

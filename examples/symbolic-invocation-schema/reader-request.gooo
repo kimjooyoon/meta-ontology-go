@@ -1,0 +1,6 @@
+package checkout
+namespace checkout
+
+entity ReaderProjection id "urn:gooo:checkout:reader-projection"
+entity ReaderView id "urn:gooo:checkout:reader-view"
+activity ReadUserProjection(ReaderProjection) -> ReaderView computes "reader.project:USER:DECISION_AND_COUNTS_ONLY"

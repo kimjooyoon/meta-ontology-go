@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/toolchain-lsp-corpus/v1",
+  "cases": [
+    {"id":"server-lifecycle","group":"PROTOCOL","expected":"PASS"},
+    {"id":"initialize-capabilities","group":"PROTOCOL","expected":"PASS"},
+    {"id":"diagnostics-clean","group":"PROTOCOL","expected":"PASS"},
+    {"id":"hover","group":"PROTOCOL","expected":"PASS"},
+    {"id":"completion","group":"PROTOCOL","expected":"PASS"},
+    {"id":"definition","group":"PROTOCOL","expected":"PASS"},
+    {"id":"document-symbol","group":"PROTOCOL","expected":"PASS"},
+    {"id":"workspace-symbol","group":"PROTOCOL","expected":"PASS"},
+    {"id":"references","group":"PROTOCOL","expected":"PASS"},
+    {"id":"semantic-tokens","group":"PROTOCOL","expected":"PASS"},
+    {"id":"diagnostics-malformed","group":"PROTOCOL","expected":"PASS"},
+    {"id":"unsupported-method","group":"PROTOCOL","expected":"FAIL_CLOSED"},
+    {"id":"close-clears-diagnostics","group":"PROTOCOL","expected":"PASS"},
+    {"id":"shutdown-exit","group":"PROTOCOL","expected":"PASS"},
+    {"id":"transcript-replay","group":"PROTOCOL","expected":"PASS"},
+    {"id":"utf16-roundtrip","group":"PROTOCOL","expected":"PASS"},
+    {"id":"coupling-pass","group":"COUPLING","expected":"PASS"},
+    {"id":"coupling-upstream-unknown","group":"COUPLING","expected":"LOWER_RESOLUTION"},
+    {"id":"coupling-upstream-fail-closed","group":"COUPLING","expected":"FAIL_CLOSED"},
+    {"id":"coupling-stale-snapshot","group":"COUPLING","expected":"LOWER_RESOLUTION"},
+    {"id":"coupling-cancelled","group":"COUPLING","expected":"LOWER_RESOLUTION"},
+    {"id":"coupling-input-immutability","group":"COUPLING","expected":"PASS"}
+  ]
+}

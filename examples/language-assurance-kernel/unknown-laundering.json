@@ -1,0 +1,23 @@
+{
+  "schema": "gooo/language-assurance-transaction/v1",
+  "transaction_id": "unknown-laundering-promotion",
+  "authority_routes": [
+    {
+      "rule_id": "promotion-policy-v1",
+      "authored_by": "contract-author",
+      "promoted_by": "promoter"
+    }
+  ],
+  "role_bindings": [
+    {"principal": "contract-author", "roles": ["CONTRACT_AUTHOR"]},
+    {"principal": "implementer", "roles": ["IMPLEMENTER"]},
+    {"principal": "evaluator-author", "roles": ["EVALUATOR_AUTHOR"]},
+    {"principal": "adapter-author", "roles": ["ADAPTER_AUTHOR"]},
+    {"principal": "policy-adopter", "roles": ["POLICY_ADOPTER"]},
+    {"principal": "promoter", "roles": ["PROMOTER"]},
+    {"principal": "auditor", "roles": ["AUDITOR"]}
+  ],
+  "decision_transitions": [
+    {"id": "promotion-decision", "input": "UNKNOWN", "output": "FIXED_POINT"}
+  ]
+}

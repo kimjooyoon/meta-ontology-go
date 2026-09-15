@@ -1,0 +1,32 @@
+{
+  "schema": "gooo/activity-cardinality-conformance-denominator/v1",
+  "selection_evidence": {
+    "repository": "kimjooyoon/gooo-link",
+    "tag": "v0.2.0-dev",
+    "tag_object_sha": "f3d4363aa6fc9c6c32d61bd3fbf5fdb4e3057df1",
+    "target_commit_sha": "5e8ccf3088c976aada8bf0931d51f65ba65ff3e8",
+    "asset_name": "gooo-link-core-improvement-selection.json",
+    "asset_sha256": "3ae48eae1496f1989801b923e2100bd1a4c32d8692cc4e4286cbed3e132877b6",
+    "candidate_id": "GOOO_CORE_ACTIVITY_CARDINALITY_RESOLUTION_V1",
+    "implementation_before": "NOT_IMPLEMENTED"
+  },
+  "summary": {
+    "total": 12,
+    "proof_choices": {"FOUNDATION": 4, "COHERENCE": 4, "REGRESSION": 4},
+    "indicator_classes": {"OUTCOME": 3, "DRIVER": 5, "GUARDRAIL": 4}
+  },
+  "cells": [
+    {"id":"selector-contract","activity":"ObserveSelectorContract","proof_choice":"FOUNDATION","indicator_class":"DRIVER"},
+    {"id":"semantic-graph","activity":"BindSemanticGraph","proof_choice":"FOUNDATION","indicator_class":"DRIVER"},
+    {"id":"source-digest","activity":"BindSourceDigest","proof_choice":"FOUNDATION","indicator_class":"GUARDRAIL"},
+    {"id":"selector-input","activity":"ValidateSelectorInput","proof_choice":"FOUNDATION","indicator_class":"DRIVER"},
+    {"id":"zero","activity":"ResolveZeroMatches","proof_choice":"COHERENCE","indicator_class":"OUTCOME"},
+    {"id":"one","activity":"ResolveOneMatch","proof_choice":"COHERENCE","indicator_class":"OUTCOME"},
+    {"id":"many","activity":"ResolveManyMatches","proof_choice":"COHERENCE","indicator_class":"OUTCOME"},
+    {"id":"claim","activity":"ExposeClaimTransition","proof_choice":"COHERENCE","indicator_class":"DRIVER"},
+    {"id":"replay","activity":"ReplayResolution","proof_choice":"REGRESSION","indicator_class":"DRIVER"},
+    {"id":"graph-hash","activity":"PreserveGraphHash","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"},
+    {"id":"runtime","activity":"ObserveRuntimeBudget","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"},
+    {"id":"workspace","activity":"PreserveRepositoryWorkspace","proof_choice":"REGRESSION","indicator_class":"GUARDRAIL"}
+  ]
+}

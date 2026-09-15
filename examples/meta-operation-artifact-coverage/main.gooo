@@ -1,0 +1,17 @@
+package operationartifactcoverage
+namespace operationartifactcoverage
+
+entity ExecutableOperations id "gooo://operation-artifact-coverage/entity/executable-operations"
+entity ArtifactContracts id "gooo://operation-artifact-coverage/entity/artifact-contracts"
+entity ExactHeadEvidence id "gooo://operation-artifact-coverage/entity/exact-head-evidence"
+entity CoverageIndicators id "gooo://operation-artifact-coverage/entity/coverage-indicators"
+entity ReadOnlyGuardrail id "gooo://operation-artifact-coverage/entity/read-only-guardrail"
+entity ImprovementDecision id "gooo://operation-artifact-coverage/entity/improvement-decision"
+entity ReplayReceipt id "gooo://operation-artifact-coverage/entity/replay-receipt"
+
+activity BindOperationArtifactFoundation(ExecutableOperations) -> ArtifactContracts
+activity ResolveCanonicalOperationArtifact(ArtifactContracts) -> ExactHeadEvidence
+activity MeasureOperationArtifactCoverage(ExactHeadEvidence) -> CoverageIndicators
+activity PreserveReadOnlyArtifactObservation(CoverageIndicators) -> ReadOnlyGuardrail
+activity SelectUncoveredOperation(ReadOnlyGuardrail) -> ImprovementDecision
+activity ReplayOperationArtifactCoverage(ImprovementDecision) -> ReplayReceipt

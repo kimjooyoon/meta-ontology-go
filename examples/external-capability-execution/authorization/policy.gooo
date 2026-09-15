@@ -1,0 +1,27 @@
+package externalcapabilityauthorization
+namespace externalcapabilityauthorization
+
+entity CapabilityRequest id "gooo://external-capability/authorization/request"
+entity ExecutionReportEvidence id "gooo://external-capability/authorization/evidence/execution-report"
+entity OperationEvidence id "gooo://external-capability/authorization/evidence/operation"
+entity SubjectEvidence id "gooo://external-capability/authorization/evidence/subject"
+entity IssuerEvidence id "gooo://external-capability/authorization/evidence/issuer"
+entity ScopeEvidence id "gooo://external-capability/authorization/evidence/scope"
+entity PolicyFoundationEvidence id "gooo://external-capability/authorization/evidence/policy-foundation"
+entity DefaultDenyEvidence id "gooo://external-capability/authorization/evidence/default-deny"
+entity InvocationEvidence id "gooo://external-capability/authorization/evidence/invocation"
+entity NonceEvidence id "gooo://external-capability/authorization/evidence/nonce"
+entity EffectCeilingEvidence id "gooo://external-capability/authorization/evidence/effect-ceiling"
+entity AuthorizationReceipt id "gooo://external-capability/authorization/receipt"
+
+activity BindExecutionReport(CapabilityRequest) -> ExecutionReportEvidence
+activity BindOperation(CapabilityRequest) -> OperationEvidence
+activity BindSubject(CapabilityRequest) -> SubjectEvidence
+activity BindIssuer(CapabilityRequest) -> IssuerEvidence
+activity BindScope(CapabilityRequest) -> ScopeEvidence
+activity BindPolicyFoundation(CapabilityRequest) -> PolicyFoundationEvidence
+activity EnforceDefaultDeny(CapabilityRequest) -> DefaultDenyEvidence
+activity BindInvocation(CapabilityRequest) -> InvocationEvidence
+activity BindNonce(CapabilityRequest) -> NonceEvidence
+activity EnforceEffectCeiling(CapabilityRequest) -> EffectCeilingEvidence
+activity ReduceAuthorization(CapabilityRequest) -> AuthorizationReceipt

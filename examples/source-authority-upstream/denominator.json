@@ -1,0 +1,27 @@
+{
+  "schema": "gooo/upstream-source-conformance-denominator/v1",
+  "denominator_id": "gooo/upstream-source-conformance-denominator/v1",
+  "cases": [
+    {
+      "id": "exact",
+      "observation": "SATISFIED",
+      "resolution": "EXACT",
+      "enforcement": "ALLOW",
+      "reason": "SOURCE_SNAPSHOT_EXACT"
+    },
+    {
+      "id": "digest-mismatch",
+      "observation": "UNKNOWN",
+      "resolution": "INVARIANT_ONLY",
+      "enforcement": "BLOCK",
+      "reason": "SOURCE_DIGEST_MISMATCH"
+    },
+    {
+      "id": "authority-mismatch",
+      "observation": "UNKNOWN",
+      "resolution": "INVARIANT_ONLY",
+      "enforcement": "BLOCK",
+      "reason": "AUTHORITY_SCOPE_MISMATCH"
+    }
+  ]
+}

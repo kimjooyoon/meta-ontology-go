@@ -12,7 +12,7 @@ func TestProjectionMetadataV1ReplayBindsBytesAndIdentityDeterministically(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	previous := bytes.Replace(first.Source, []byte("return Artifact{}"), []byte("return Artifact{Digest: source.Digest}"), 1)
+	previous := bytes.Replace(first.Source, []byte("return Artifact{}"), []byte("return Artifact{}\n\t// metadata replay preserved"), 1)
 	if bytes.Equal(previous, first.Source) {
 		t.Fatal("fixture did not produce a protected handwritten replay input")
 	}
@@ -52,7 +52,7 @@ func TestProjectionMetadataV1ReplayBindsBytesAndIdentityDeterministically(t *tes
 			t.Fatalf("replayed source-map identity %q changed: %#v %#v", id, left, right)
 		}
 	}
-	if !bytes.Contains(replayed.Source, []byte("return Artifact{Digest: source.Digest}")) {
+	if !bytes.Contains(replayed.Source, []byte("// metadata replay preserved")) {
 		t.Fatal("replay did not preserve handwritten slot bytes")
 	}
 	if !reflect.DeepEqual(ir, beforeIR) || !bytes.Equal(previous, beforePrevious) {

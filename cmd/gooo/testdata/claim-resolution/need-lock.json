@@ -1,0 +1,10 @@
+{
+  "schema": "gooo/claim-resolution/need-lock/v1",
+  "repository": "kimjooyoon/gooo-link",
+  "tag": "v0.9.0-dev",
+  "tag_object_sha": "9e337e1ab950040cbfda280c6a40824fd5c47184",
+  "target_commit_sha": "2aa784d40821a3655e65448c9a73928f8b777370",
+  "asset_id": 533513259,
+  "asset_name": "gooo-link-v0.9.0-dev-cross-consumer-primitive-need.json",
+  "sha256": "2b83bb2fa6de3ed89f02e59b745512e590801e27aaa70caa241cff9c0339ef52"
+}

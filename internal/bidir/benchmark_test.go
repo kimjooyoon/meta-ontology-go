@@ -36,7 +36,7 @@ func BenchmarkReconcileScaling(b *testing.B) {
 
 func benchmarkDocument(activityCount int) Document {
 	document := Document{Package: "benchmark", Namespace: "benchmark"}
-	for index := 0; index < activityCount; index++ {
+	for index := range activityCount {
 		id := ID(fmt.Sprintf("benchmark://activity/a-%03d", index))
 		document.Declarations = append(document.Declarations, Declaration{
 			Kind: ActivityKind,
@@ -49,7 +49,7 @@ func benchmarkDocument(activityCount int) Document {
 
 func benchmarkDelta(edgeCount int) FactDelta {
 	facts := make(FactSet, edgeCount)
-	for index := 0; index < edgeCount; index++ {
+	for index := range edgeCount {
 		fact := NewSourcedFact(
 			DeterministicFact,
 			ID(fmt.Sprintf("benchmark://activity/a-%03d", index)),

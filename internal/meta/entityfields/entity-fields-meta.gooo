@@ -1,0 +1,19 @@
+package entityfieldsmeta
+namespace entityfieldsmeta
+
+entity EntityFieldsProof id "gooo://entity-fields/proof" fields {
+    field Evidence id "gooo://entity-fields/proof/evidence" type string required one
+}
+
+activity ParseEntityFields(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.parse:v1"
+activity FormatEntityFields(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.format:v1"
+activity BindEntityFieldsProfile(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.profile:v1"
+activity LowerEntityFields(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.lower:v1"
+activity ValidateStableIDs(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.ids:v1"
+activity PreserveDeclarationOrder(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.order:v1"
+activity RoundTripGet(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.get:v1"
+activity RoundTripPut(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.put:v1"
+activity GenerateGoProjection(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.go:v1"
+activity GenerateSourceMap(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.source-map:v1"
+activity ResolveLSPNavigation(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.lsp:v1"
+activity PublishEntityFieldsReceipt(EntityFieldsProof) -> EntityFieldsProof computes "entity-fields.receipt:v1"

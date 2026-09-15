@@ -1,0 +1,101 @@
+{
+  "schema": "gooo/ci-concurrency-lane-usecases/v1",
+  "cases": [
+    {
+      "id": "head-first-attempt",
+      "contract": "expected",
+      "run_attempt": 1,
+      "expected_decision": "EXACT",
+      "expected_reason": "HEAD_LANE_BOUND",
+      "expected_resolution": "run_attempt",
+      "expected_next_operation": "continue-ci-proof",
+      "expected_execution_authorized": true,
+      "expected_lane_class": "head",
+      "expected_head_preemption_risk": 0
+    },
+    {
+      "id": "rerun-second-attempt",
+      "contract": "expected",
+      "run_attempt": 2,
+      "expected_decision": "EXACT",
+      "expected_reason": "RERUN_ISOLATED_FROM_HEAD",
+      "expected_resolution": "run_attempt",
+      "expected_next_operation": "continue-ci-proof",
+      "expected_execution_authorized": true,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 0
+    },
+    {
+      "id": "rerun-third-attempt",
+      "contract": "expected",
+      "run_attempt": 3,
+      "expected_decision": "EXACT",
+      "expected_reason": "RERUN_ISOLATED_FROM_HEAD",
+      "expected_resolution": "run_attempt",
+      "expected_next_operation": "continue-ci-proof",
+      "expected_execution_authorized": true,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 0
+    },
+    {
+      "id": "legacy-rerun-shares-head",
+      "contract": "legacy",
+      "run_attempt": 2,
+      "expected_decision": "LOWER_RESOLUTION",
+      "expected_reason": "RERUN_SHARES_HEAD_LANE",
+      "expected_resolution": "workflow_scope",
+      "expected_next_operation": "bind-rerun-to-isolated-lane",
+      "expected_execution_authorized": false,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 1
+    },
+    {
+      "id": "legacy-head-unversioned",
+      "contract": "legacy",
+      "run_attempt": 1,
+      "expected_decision": "LOWER_RESOLUTION",
+      "expected_reason": "HEAD_LANE_LEGACY_UNVERSIONED",
+      "expected_resolution": "workflow_scope",
+      "expected_next_operation": "bind-rerun-to-isolated-lane",
+      "expected_execution_authorized": false,
+      "expected_lane_class": "head",
+      "expected_head_preemption_risk": 0
+    },
+    {
+      "id": "concurrency-contract-missing",
+      "contract": "missing",
+      "run_attempt": 2,
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "CONCURRENCY_LANE_CONTRACT_MISSING",
+      "expected_resolution": "none",
+      "expected_next_operation": "repair-ci-concurrency-contract",
+      "expected_execution_authorized": false,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 1
+    },
+    {
+      "id": "concurrency-contract-ambiguous",
+      "contract": "duplicate",
+      "run_attempt": 2,
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "CONCURRENCY_LANE_CONTRACT_AMBIGUOUS",
+      "expected_resolution": "none",
+      "expected_next_operation": "repair-ci-concurrency-contract",
+      "expected_execution_authorized": false,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 1
+    },
+    {
+      "id": "concurrency-contract-unknown",
+      "contract": "unknown",
+      "run_attempt": 2,
+      "expected_decision": "FAIL_CLOSED",
+      "expected_reason": "CONCURRENCY_LANE_CONTRACT_UNKNOWN",
+      "expected_resolution": "none",
+      "expected_next_operation": "repair-ci-concurrency-contract",
+      "expected_execution_authorized": false,
+      "expected_lane_class": "replay",
+      "expected_head_preemption_risk": 1
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+package workgraph
+namespace workgraph
+
+entity Project id "workgraph://entity/project"
+entity ProjectObservationClaim id "workgraph://claim/reproducible-project-observation"
+entity ProjectEvidence id "workgraph://entity/evidence"
+entity UnknownCoordinate id "workgraph://entity/unknown-coordinate"
+entity ProjectArtifact id "workgraph://entity/artifact"
+entity ResourceObservation id "workgraph://entity/resource-observation"
+entity DecisionReceipt id "workgraph://entity/decision-receipt"
+
+activity ObserveProject(Project) -> ProjectObservationClaim
+activity CheckProject(ProjectObservationClaim) -> ProjectEvidence
+activity BindProjectEvidence(ProjectObservationClaim, ProjectEvidence) -> ProjectObservationClaim
+activity ReplayProjectGeneration(ProjectEvidence) -> ProjectEvidence
+activity GenerateProjectArtifact(ProjectObservationClaim, ProjectEvidence) -> ProjectArtifact
+activity ObserveProjectResources(ProjectArtifact) -> ResourceObservation
+activity CloseProjectClaim(ProjectArtifact, ResourceObservation) -> DecisionReceipt
+activity LowerProjectResolution(ProjectObservationClaim, UnknownCoordinate) -> ProjectObservationClaim

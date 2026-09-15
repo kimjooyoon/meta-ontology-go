@@ -1,0 +1,12 @@
+package claimresolutiontuple
+namespace claimresolutiontuple
+
+entity ClaimInput id "gooo://claim-resolution/input"
+entity ClaimResolutionPrimitive id "gooo://claim-resolution/gooo.primitive.claim-resolution-tuple.v1"
+
+activity ClosedClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=CLOSED;stage=NONE;step=NONE;reason=CLAIM_EVIDENCE_CLOSED;unknown_class=NONE;next_operation=NONE"
+activity UnknownDirectClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=UNKNOWN;stage=SOURCE;step=OBSERVE_INPUT;reason=INPUT_UNAVAILABLE;unknown_class=DIRECT_MISSING;next_operation=PROVIDE_INPUT"
+activity UnknownContextClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=UNKNOWN;stage=EVALUATION;step=RESOLVE_CONTEXT;reason=CONTEXT_UNAVAILABLE;unknown_class=CONTEXT_MISSING;next_operation=PROVIDE_CONTEXT"
+activity RefutedClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=REFUTED;stage=SOURCE;step=VERIFY_INPUT;reason=INPUT_MISMATCH;unknown_class=NONE;next_operation=RESTORE_EXPECTED_INPUT"
+activity InvalidUnknownClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=UNKNOWN;stage=SOURCE;step=OBSERVE_INPUT;reason=INPUT_UNAVAILABLE;unknown_class=NONE;next_operation=PROVIDE_INPUT"
+activity InvalidStateClaim(ClaimInput) -> ClaimResolutionPrimitive computes "claim.resolve:v1;state=FIXED_POINT;stage=NONE;step=NONE;reason=UNRECOGNIZED_STATE;unknown_class=NONE;next_operation=NONE"

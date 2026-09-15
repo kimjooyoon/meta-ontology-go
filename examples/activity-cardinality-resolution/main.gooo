@@ -1,0 +1,29 @@
+package activitycardinalityresolution
+namespace activitycardinalityresolution
+
+entity SelectorContract id "gooo://activity-cardinality/entity/selector-contract"
+entity SemanticGraph id "gooo://activity-cardinality/entity/semantic-graph"
+entity SourceBinding id "gooo://activity-cardinality/entity/source-binding"
+entity ValidSelector id "gooo://activity-cardinality/entity/valid-selector"
+entity ZeroResolution id "gooo://activity-cardinality/entity/zero-resolution"
+entity OneResolution id "gooo://activity-cardinality/entity/one-resolution"
+entity ManyResolution id "gooo://activity-cardinality/entity/many-resolution"
+entity ClaimTransition id "gooo://activity-cardinality/entity/claim-transition"
+entity ReplayReceipt id "gooo://activity-cardinality/entity/replay-receipt"
+entity GraphReceipt id "gooo://activity-cardinality/entity/graph-receipt"
+entity RuntimeReceipt id "gooo://activity-cardinality/entity/runtime-receipt"
+entity WorkspaceReceipt id "gooo://activity-cardinality/entity/workspace-receipt"
+entity ConformanceReceipt id "gooo://activity-cardinality/entity/conformance-receipt"
+
+activity ObserveSelectorContract(SelectorContract) -> SemanticGraph
+activity BindSemanticGraph(SemanticGraph) -> SourceBinding
+activity BindSourceDigest(SourceBinding) -> ValidSelector
+activity ValidateSelectorInput(ValidSelector) -> ZeroResolution
+activity ResolveZeroMatches(ZeroResolution) -> OneResolution
+activity ResolveOneMatch(OneResolution) -> ManyResolution
+activity ResolveManyMatches(ManyResolution) -> ClaimTransition
+activity ExposeClaimTransition(ClaimTransition) -> ReplayReceipt
+activity ReplayResolution(ReplayReceipt) -> GraphReceipt
+activity PreserveGraphHash(GraphReceipt) -> RuntimeReceipt
+activity ObserveRuntimeBudget(RuntimeReceipt) -> WorkspaceReceipt
+activity PreserveRepositoryWorkspace(WorkspaceReceipt) -> ConformanceReceipt

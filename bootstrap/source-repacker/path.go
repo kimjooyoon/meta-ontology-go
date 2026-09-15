@@ -1,0 +1,54 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func secureSourcePath(root, subject string) (string, error) {
+	if subject == "" || filepath.IsAbs(subject) {
+		return "", fmt.Errorf("subject must be a relative file path")
+	}
+	clean := filepath.Clean(filepath.FromSlash(subject))
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("subject escapes repository: %q", subject)
+	}
+	rootPath, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve root: %w", err)
+	}
+	target, err := filepath.EvalSymlinks(filepath.Join(rootPath, clean))
+	if err != nil {
+		return "", fmt.Errorf("resolve subject: %w", err)
+	}
+	relative, err := filepath.Rel(rootPath, target)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("subject escapes repository: %q", subject)
+	}
+	return target, nil
+}
+
+func replaceFile(path string, data []byte, mode os.FileMode) error {
+	temporary, err := stage(path, data, mode)
+	if err != nil {
+		return err
+	}
+	return os.Rename(temporary, path)
+}
+
+func blockedReason(declarations, targets int, reducible, supported bool) string {
+	switch {
+	case declarations == 0:
+		return "no-movable-declaration"
+	case targets == 0:
+		return "no-build-domain-destination"
+	case !reducible:
+		return "requires-multiple-or-extraction"
+	case !supported:
+		return "import-conflict"
+	default:
+		return "destination-capacity"
+	}
+}

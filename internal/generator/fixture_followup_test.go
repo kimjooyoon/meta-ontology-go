@@ -10,7 +10,7 @@ import (
 func TestFixtureRemovalPreservesRetainedRegionAndSlot(t *testing.T) {
 	first := mustAcceptanceResult(t, acceptanceFixture(), nil)
 	previous := bytes.Replace(first.Source, []byte("package bootstrapgen\n"), []byte("package bootstrapgen\n\nvar Keep = 7\n"), 1)
-	previous = bytes.Replace(previous, []byte("return Artifact{}"), []byte("return Artifact{Digest: source.Digest}"), 1)
+	previous = bytes.Replace(previous, []byte("return Artifact{}"), []byte("return Artifact{}\n\t// source digest preserved"), 1)
 	changed := acceptanceFixture()
 	changed.Activities = changed.Activities[:1]
 	second := mustAcceptanceResult(t, changed, previous)
@@ -20,7 +20,7 @@ func TestFixtureRemovalPreservesRetainedRegionAndSlot(t *testing.T) {
 	if !bytes.Equal(testGeneratedBlock(t, first.Source, "gooo://entity/source"), testGeneratedBlock(t, second.Source, "gooo://entity/source")) {
 		t.Fatal("retained entity region changed")
 	}
-	if !strings.Contains(string(second.Source), "return Artifact{Digest: source.Digest}") {
+	if !strings.Contains(string(second.Source), "// source digest preserved") {
 		t.Fatal("handwritten slot was not preserved")
 	}
 	if strings.Contains(string(second.Source), `id="gooo://activity/inspect"`) || len(second.SourceMap.Lookup("gooo://activity/inspect")) != 0 {

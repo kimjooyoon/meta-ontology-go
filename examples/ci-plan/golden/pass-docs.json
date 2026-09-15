@@ -1,0 +1,1 @@
+{"schema":"gooo/ci-plan-golden/v1","case_id":"pass-docs","checks":[{"id":"docs-check","command":"gooo check docs","files":["docs/language/ci-plan.md"],"reasons":[{"operation":"ci.rule:docs:v1","file":"docs/language/ci-plan.md","source_path":"examples/ci-plan/main.gooo","source_line":9}]}]}

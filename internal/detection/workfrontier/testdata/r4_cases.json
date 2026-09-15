@@ -1,0 +1,12 @@
+[
+  {"name":"acyclic","status":"PASS","reason":"NONE"},
+  {"name":"self-loop","status":"BLOCKED","reason":"NONE"},
+  {"name":"two-node-cycle","status":"BLOCKED","reason":"NONE"},
+  {"name":"missing-bound","status":"UNKNOWN","reason":"UNBOUNDED_FRONTIER"},
+  {"name":"zero-bound","status":"UNKNOWN","reason":"UNBOUNDED_FRONTIER"},
+  {"name":"conflicting-rule","status":"FAIL_CLOSED","reason":"CONFLICTING_SCC_RULE"},
+  {"name":"stale-digest","status":"UNKNOWN","reason":"UNBOUNDED_FRONTIER"},
+  {"name":"unreachable-cycle","status":"PASS","reason":"NONE"},
+  {"name":"reordered-input","status":"BLOCKED","reason":"NONE"},
+  {"name":"iteration-exhaustion","status":"UNKNOWN","reason":"ITERATION_EXHAUSTED"}
+]

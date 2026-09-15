@@ -1,0 +1,46 @@
+{
+  "schema": "gooo/source-backed-authority-contract/v1",
+  "metric_id": "gooo.metric.semantic.source-backed-authority.v1",
+  "meta_operation": "bind-source-backed-authority",
+  "proof_choice": "FOUNDATION",
+  "denominator_id": "gooo/language-assurance-denominator/v1",
+  "adoption_state": "CONTRACT_ONLY",
+  "readiness_credit": 0,
+  "measurement": {
+    "numerator": "accepted_facts_with_exact_source_span_digest_and_authority_ref",
+    "denominator": "accepted_facts",
+    "unit": "basis_points",
+    "target": 10000
+  },
+  "states": {
+    "observation": ["SATISFIED", "NOT_SATISFIED", "UNKNOWN", "ERROR"],
+    "resolution": ["EXACT", "INVARIANT_ONLY"],
+    "enforcement": ["ALLOW", "BLOCK", "NO_EFFECT"]
+  },
+  "rules": [
+    "accepted_fact_requires_source_ref",
+    "source_ref_requires_exact_snapshot_digest",
+    "accepted_fact_requires_exact_byte_span",
+    "span_digest_must_match_source_bytes",
+    "accepted_fact_requires_authority_ref",
+    "authority_ref_must_authorize_exact_source_scope",
+    "semantic_interpretation_remains_candidate"
+  ],
+  "unknown_evidence": {
+    "observation": "UNKNOWN",
+    "resolution": "INVARIANT_ONLY",
+    "enforcement": "BLOCK",
+    "reason": "SOURCE_AUTHORITY_EVIDENCE_UNKNOWN"
+  },
+  "empty_denominator": {
+    "observation": "UNKNOWN",
+    "resolution": "INVARIANT_ONLY",
+    "enforcement": "BLOCK",
+    "reason": "SOURCE_AUTHORITY_DENOMINATOR_EMPTY"
+  },
+  "scope": {
+    "accepted_fact_mode": "EXACT_SOURCE_BYTES_ONLY",
+    "semantic_interpretation": "CANDIDATE_ONLY",
+    "live_url_without_snapshot": "UNKNOWN"
+  }
+}

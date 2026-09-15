@@ -1,0 +1,326 @@
+{
+  "authority": {
+    "core_contract": "NOT_DEFINED",
+    "core_implementation": "NOT_CLAIMED",
+    "cross_project_required_gates": 0,
+    "current_consumer_branches": 0,
+    "evidence": "PINNED_IMMUTABLE_RELEASE_ASSETS",
+    "local_tests_run": 0,
+    "observation_scope": "CROSS_CONSUMER_PRIMITIVE_NEED_ONLY",
+    "root_readme_readiness": "EXCLUDED",
+    "source_repository_writes": 0
+  },
+  "candidate": {
+    "base_claim_fields": {
+      "observed": 5,
+      "total": 5
+    },
+    "compatibility_gaps": {
+      "observed": 1,
+      "total": 1
+    },
+    "consumer_envelopes": {
+      "observed": 3,
+      "total": 3
+    },
+    "id": "gooo.primitive.claim-resolution-tuple.v1",
+    "implementation_status": "NOT_SELECTED",
+    "state": "OBSERVED",
+    "typed_unknown_roles": {
+      "observed": 2,
+      "total": 2
+    },
+    "unknown_producers": {
+      "observed": 2,
+      "total": 2
+    }
+  },
+  "cells": [
+    {
+      "activity": "ObserveLocalLedgerRelease",
+      "blocked_by": [],
+      "id": "local-ledger-release",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "FOUNDATION",
+      "reason": "LOCAL_LEDGER_RELEASE_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "ObserveDesignEvidenceRelease",
+      "blocked_by": [],
+      "id": "design-evidence-release",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "FOUNDATION",
+      "reason": "DESIGN_EVIDENCE_RELEASE_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "ObserveInfraEvidenceRelease",
+      "blocked_by": [],
+      "id": "infra-evidence-release",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "FOUNDATION",
+      "reason": "INFRA_EVIDENCE_RELEASE_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "BindCommonClaimEnvelope",
+      "blocked_by": [],
+      "id": "common-report-envelope",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "FOUNDATION",
+      "reason": "COMMON_REPORT_ENVELOPE_OBSERVED_IN_THREE_CONSUMERS",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "ObserveBaseClaimResolutionTuple",
+      "blocked_by": [],
+      "id": "base-claim-resolution-tuple",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "COHERENCE",
+      "reason": "BASE_CLAIM_RESOLUTION_TUPLE_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "ObserveThreeStateClaimLifecycle",
+      "blocked_by": [],
+      "id": "three-state-claim-lifecycle",
+      "indicator_class": "OUTCOME",
+      "next_operation": "NONE",
+      "proof": "COHERENCE",
+      "reason": "CLOSED_UNKNOWN_REFUTED_LIFECYCLE_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "CountUnknownProducingConsumers",
+      "blocked_by": [],
+      "id": "unknown-producing-consumers",
+      "indicator_class": "DRIVER",
+      "next_operation": "NONE",
+      "proof": "COHERENCE",
+      "reason": "TWO_UNKNOWN_PRODUCING_CONSUMERS_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "BindTypedUnknownEvidenceRoles",
+      "blocked_by": [],
+      "id": "typed-unknown-evidence-roles",
+      "indicator_class": "GUARDRAIL",
+      "next_operation": "NONE",
+      "proof": "COHERENCE",
+      "reason": "TYPED_UNKNOWN_PRODUCER_AND_GUARD_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "ExposeClaimResolutionCompatibilityGap",
+      "blocked_by": [],
+      "id": "claim-resolution-compatibility-gap",
+      "indicator_class": "GUARDRAIL",
+      "next_operation": "NONE",
+      "proof": "REGRESSION",
+      "reason": "LOCAL_LEDGER_UNKNOWN_CLASS_GAP_EXPOSED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "PreserveObservationAuthorityBoundary",
+      "blocked_by": [],
+      "id": "observation-authority-boundary",
+      "indicator_class": "GUARDRAIL",
+      "next_operation": "NONE",
+      "proof": "REGRESSION",
+      "reason": "OBSERVATION_ONLY_AUTHORITY_PRESERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "RejectTitleOnlyExperimentMapping",
+      "blocked_by": [],
+      "id": "direct-experiment-mapping",
+      "indicator_class": "GUARDRAIL",
+      "next_operation": "NONE",
+      "proof": "REGRESSION",
+      "reason": "NO_DIRECT_EXPERIMENT_MAPPING_OBSERVED",
+      "state": "CLOSED",
+      "unknown_class": null
+    },
+    {
+      "activity": "SelectMinimalCoreContractOperation",
+      "blocked_by": [],
+      "id": "minimal-core-contract-operation",
+      "indicator_class": "OUTCOME",
+      "next_operation": "NONE",
+      "proof": "REGRESSION",
+      "reason": "MINIMAL_CORE_CONTRACT_OPERATION_SELECTED",
+      "state": "CLOSED",
+      "unknown_class": null
+    }
+  ],
+  "claim": {
+    "blocked_by": [],
+    "next_operation": "DEFINE_MINIMAL_CLAIM_RESOLUTION_CORE_CONTRACT",
+    "reason": "CROSS_CONSUMER_CLAIM_RESOLUTION_NEED_OBSERVED",
+    "stage": null,
+    "state": "CLOSED",
+    "step": null,
+    "unknown_class": null
+  },
+  "consumer_observations": {
+    "design_evidence": {
+      "complete": "CLOSED",
+      "unknown_guard": "UNKNOWN_TUPLE_INCOMPLETE"
+    },
+    "infra_evidence": {
+      "complete": "CLOSED",
+      "refuted": "REFUTED",
+      "unknown": "UNKNOWN",
+      "unknown_class": "DIRECT_MISSING"
+    },
+    "local_ledger": {
+      "complete": "CLOSED",
+      "refuted": "REFUTED",
+      "unknown": "UNKNOWN",
+      "unknown_class_present": false
+    }
+  },
+  "decision": "CROSS_CONSUMER_PRIMITIVE_NEED_OBSERVED",
+  "experiments": {
+    "automatic_merge_allowed": false,
+    "candidate_mentions": 0,
+    "direct_mappings": 0,
+    "open": 29
+  },
+  "indicator_classes": [
+    {
+      "class": "DRIVER",
+      "closed": 6,
+      "total": 6
+    },
+    {
+      "class": "OUTCOME",
+      "closed": 2,
+      "total": 2
+    },
+    {
+      "class": "GUARDRAIL",
+      "closed": 4,
+      "total": 4
+    }
+  ],
+  "indicators": [
+    {
+      "activity": "BindCommonClaimEnvelope",
+      "class": "DRIVER",
+      "id": "gooo.metric.cross-consumer.consumer-releases.v1",
+      "total": 3,
+      "unit": "releases",
+      "value": 3
+    },
+    {
+      "activity": "BindCommonClaimEnvelope",
+      "class": "DRIVER",
+      "id": "gooo.metric.cross-consumer.common-envelopes.v1",
+      "total": 3,
+      "unit": "consumers",
+      "value": 3
+    },
+    {
+      "activity": "ObserveThreeStateClaimLifecycle",
+      "class": "OUTCOME",
+      "id": "gooo.metric.cross-consumer.claim-states.v1",
+      "total": 3,
+      "unit": "states",
+      "value": 3
+    },
+    {
+      "activity": "CountUnknownProducingConsumers",
+      "class": "DRIVER",
+      "id": "gooo.metric.cross-consumer.unknown-producers.v1",
+      "total": 2,
+      "unit": "consumers",
+      "value": 2
+    },
+    {
+      "activity": "BindTypedUnknownEvidenceRoles",
+      "class": "GUARDRAIL",
+      "id": "gooo.metric.cross-consumer.typed-unknown-roles.v1",
+      "total": 2,
+      "unit": "roles",
+      "value": 2
+    },
+    {
+      "activity": "ExposeClaimResolutionCompatibilityGap",
+      "class": "GUARDRAIL",
+      "id": "gooo.metric.cross-consumer.compatibility-gaps.v1",
+      "total": 1,
+      "unit": "gaps",
+      "value": 1
+    },
+    {
+      "activity": "RejectTitleOnlyExperimentMapping",
+      "class": "GUARDRAIL",
+      "id": "gooo.metric.cross-consumer.direct-experiment-mappings.v1",
+      "total": 29,
+      "unit": "pull_requests",
+      "value": 0
+    },
+    {
+      "activity": "PreserveObservationAuthorityBoundary",
+      "class": "GUARDRAIL",
+      "id": "gooo.metric.cross-consumer.repository-writes.v1",
+      "total": 0,
+      "unit": "writes",
+      "value": 0
+    }
+  ],
+  "proofs": [
+    {
+      "choice": "FOUNDATION",
+      "closed": 4,
+      "total": 4
+    },
+    {
+      "choice": "COHERENCE",
+      "closed": 4,
+      "total": 4
+    },
+    {
+      "choice": "REGRESSION",
+      "closed": 4,
+      "total": 4
+    }
+  ],
+  "scenario": "complete",
+  "schema": "gooo/link/cross-consumer-primitive-need-report/v1",
+  "subject_sha": "2aa784d40821a3655e65448c9a73928f8b777370",
+  "summary": {
+    "base_claim_consumers": 3,
+    "claim_states": 3,
+    "closed": 12,
+    "common_envelopes": 3,
+    "compatibility_gaps": 1,
+    "consumer_releases": 3,
+    "dependency_blocked": 0,
+    "direct_mappings": 0,
+    "direct_missing": 0,
+    "open_experiments": 29,
+    "refuted": 0,
+    "total": 12,
+    "typed_unknown_roles": 2,
+    "unknown": 0,
+    "unknown_producers": 2
+  }
+}
