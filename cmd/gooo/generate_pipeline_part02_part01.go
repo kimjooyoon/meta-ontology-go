@@ -43,8 +43,25 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 		return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.outputDir, "io.manifest-path", "manifest path", err, input.file)
 	}
 	manifest.GeneratedFile = output
+	runtimePlanPath := ""
+	var runtimePlanData []byte
+	if len(generation.ir.RuntimeBindings) > 0 {
+		if options.runtimePlanFilename == "" {
+			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.required", "runtime plan required for runtime bindings", errRuntimePlanRequired, input.file)
+		}
+		runtimePlanPath, err = resolveOutputPath(root, options.runtimePlanFilename)
+		if err != nil {
+			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.runtimePlanFilename, "io.runtime-plan-path", "runtime plan path", err, input.file)
+		}
+		runtimePlanData, err = buildRuntimePlanData(input.source, generation.ir)
+		if err != nil {
+			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.build", "runtime plan failed", err, input.file)
+		}
+		cleanupDirs = append(cleanupDirs, missingDirectoryChain(filepath.Dir(runtimePlanPath))...)
+		cleanupDirs = uniquePaths(cleanupDirs)
+	}
 	buildSucceeded = true
-	return generateArtifacts{ir: generation.ir, result: generation.result, output: output, manifestPath: manifestPath, manifest: manifest, cleanupDirs: cleanupDirs}, exitOK
+	return generateArtifacts{ir: generation.ir, result: generation.result, output: output, manifestPath: manifestPath, manifest: manifest, runtimePlanPath: runtimePlanPath, runtimePlanData: runtimePlanData, cleanupDirs: cleanupDirs}, exitOK
 }
 func reportGenerateError(jsonMode bool, stdout, stderr io.Writer, filename, code, prefix string, err error, file *syntax.File) int {
 	if jsonMode {
@@ -59,10 +76,14 @@ func writeGenerateArtifacts(artifacts generateArtifacts, jsonMode bool, stdout, 
 		_ = cleanupGenerateDirectories(artifacts.cleanupDirs)
 		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.manifestPath, "io.write-manifest", "write manifest", err)
 	}
-	if err := writeAtomicFiles([]atomicWrite{
+	writes := []atomicWrite{
 		{path: artifacts.output, data: artifacts.result.Source},
 		{path: artifacts.manifestPath, data: manifestBytes},
-	}); err != nil {
+	}
+	if artifacts.runtimePlanPath != "" {
+		writes = append(writes, atomicWrite{path: artifacts.runtimePlanPath, data: artifacts.runtimePlanData})
+	}
+	if err := writeAtomicFiles(writes); err != nil {
 		_ = cleanupGenerateDirectories(artifacts.cleanupDirs)
 		return reportGenerateIOError(jsonMode, stdout, stderr, artifacts.output, "io.write", "write generated source and manifest", err)
 	}
