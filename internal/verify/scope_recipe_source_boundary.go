@@ -7,5 +7,6 @@ func init() {
 		"internal/meta/functionextractorrecipe/recipes.json",
 		"internal/verify/scope_recipe_source_boundary.go",
 		".github/agent-scope-table.md",
+		".github/ci-governance.json",
 	}
 }
