@@ -87,9 +87,11 @@ func DocumentEquivalent(left, right Document) bool {
 }
 
 type canonicalDocumentEvidence struct {
-	Package      string
-	Namespace    string
-	Declarations []declarationEvidence
+	Package         string
+	Namespace       string
+	Declarations    []declarationEvidence
+	Policies        []semantic.Policy
+	RuntimeBindings []RuntimeBinding
 }
 
 type declarationEvidence struct {
@@ -124,7 +126,9 @@ type referenceEvidence struct {
 }
 
 func documentEvidence(document Document) canonicalDocumentEvidence {
-	result := canonicalDocumentEvidence{Package: document.Package, Namespace: document.Namespace}
+	result := canonicalDocumentEvidence{Package: document.Package, Namespace: document.Namespace,
+		Policies:        append([]semantic.Policy(nil), document.Policies...),
+		RuntimeBindings: append([]RuntimeBinding(nil), document.RuntimeBindings...)}
 	idsByName := make(map[string]ID, len(document.Declarations))
 	for _, declaration := range document.Declarations {
 		id, _ := declarationIdentity(document.Namespace, declaration)

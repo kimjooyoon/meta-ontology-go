@@ -23,7 +23,136 @@ func Compile(source []byte) (CompiledPolicy, error) {
 }
 
 func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
-	ir, err := lowerPolicy(filename, source)
+	return compileNamedForIdentity(filename, source, "metapolicycompilation", "metapolicycompilation")
+}
+
+// CompileForIdentity compiles the bounded public profile while requiring the
+// caller's expected package and namespace to match the source header exactly.
+// The legacy Compile and CompileNamed entry points retain their fixture-bound
+// identity for existing witness contracts.
+func CompileForIdentity(filename string, source []byte, expectedPackage, expectedNamespace string) (CompiledPolicy, error) {
+	if strings.TrimSpace(expectedPackage) == "" || strings.TrimSpace(expectedNamespace) == "" {
+		return CompiledPolicy{}, errors.New("expected policy package and namespace are required")
+	}
+	return compileNamedForIdentity(filename, source, expectedPackage, expectedNamespace)
+}
+
+// PolicyDecisionRevision names an exact source-bound decision change.
+// It is a proposal request, not permission to change a repository or policy gate.
+type PolicyDecisionRevision struct {
+	ExpectedSourceDigest string
+	Condition            string
+	FromDecision         string
+	ToDecision           string
+}
+
+// PolicyDecisionProposal retains both compiled source contracts. CandidateSource
+// is a canonical semantic projection, not a byte-preserving source patch.
+// Successful compilation is not independent conformance or acceptance.
+type PolicyDecisionProposal struct {
+	Original           CompiledPolicy
+	Candidate          CompiledPolicy
+	CandidateSource    string
+	ChangedCoordinates []string
+}
+
+// ProposePolicyDecisionRevision changes one transition target and its matching
+// case decision in a detached first-class policy AST. It neither writes source
+// nor executes generated code, and it never repairs UNKNOWN metadata implicitly.
+func ProposePolicyDecisionRevision(filename string, source []byte, expectedPackage, expectedNamespace string, revision PolicyDecisionRevision) (PolicyDecisionProposal, error) {
+	source = append([]byte(nil), source...)
+	if revision.ExpectedSourceDigest == "" || revision.ExpectedSourceDigest != DigestBytes(source) {
+		return PolicyDecisionProposal{}, errors.New("policy revision source digest is missing or stale")
+	}
+	if !knownCondition(revision.Condition) || !knownDecision(revision.FromDecision) || !knownDecision(revision.ToDecision) {
+		return PolicyDecisionProposal{}, errors.New("policy revision requires an explicit known condition and decisions")
+	}
+	if revision.FromDecision == revision.ToDecision {
+		return PolicyDecisionProposal{}, errors.New("policy revision does not change a decision")
+	}
+	original, err := CompileForIdentity(filename, source, expectedPackage, expectedNamespace)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("compile policy revision source: %w", err)
+	}
+	_, file, err := lowerPolicy(filename, source, expectedPackage, expectedNamespace)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("parse policy revision source: %w", err)
+	}
+	declarations := file.Decls
+	if declarations == nil {
+		declarations = file.Declarations
+	}
+	var selected *syntax.PolicyDecl
+	selectedIndex := -1
+	for index, declaration := range declarations {
+		if current, ok := declaration.(*syntax.PolicyDecl); ok {
+			if current == nil || selected != nil {
+				return PolicyDecisionProposal{}, errors.New("policy revision requires exactly one first-class declaration")
+			}
+			selected, selectedIndex = current, index
+		}
+	}
+	if selected == nil {
+		return PolicyDecisionProposal{}, errors.New("policy revision requires typed first-class syntax, not an opaque value program")
+	}
+	canonicalSource, err := syntax.Format(file)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("format policy revision baseline: %w", err)
+	}
+	canonical, err := CompileForIdentity(filename, []byte(canonicalSource), expectedPackage, expectedNamespace)
+	if err != nil || canonical.SemanticDigest != original.SemanticDigest {
+		return PolicyDecisionProposal{}, fmt.Errorf("policy revision baseline normalization did not preserve semantics: %v", err)
+	}
+	detached := selected.Clone()
+	transitionCount, caseCount := 0, 0
+	for index, transition := range detached.Transitions {
+		if transition.From != revision.Condition {
+			continue
+		}
+		transitionCount++
+		if transition.To != revision.FromDecision {
+			return PolicyDecisionProposal{}, errors.New("policy revision transition decision is stale")
+		}
+		detached.Transitions[index].To = revision.ToDecision
+	}
+	for _, current := range detached.Cases {
+		if current.Name != revision.Condition {
+			continue
+		}
+		caseCount++
+		if current.Resolution == nil || current.Resolution.Decision != revision.FromDecision {
+			return PolicyDecisionProposal{}, errors.New("policy revision case decision is missing or stale")
+		}
+		current.Resolution.Decision = revision.ToDecision
+	}
+	if transitionCount != 1 || caseCount != 1 {
+		return PolicyDecisionProposal{}, fmt.Errorf("policy revision requires one transition and one case; found %d/%d", transitionCount, caseCount)
+	}
+	candidateFile := *file
+	candidateDeclarations := append([]syntax.Declaration(nil), declarations...)
+	candidateDeclarations[selectedIndex] = detached
+	candidateFile.Decls, candidateFile.Declarations = candidateDeclarations, candidateDeclarations
+	candidateSource, err := syntax.Format(&candidateFile)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("format policy revision candidate: %w", err)
+	}
+	candidate, err := CompileForIdentity(filename, []byte(candidateSource), expectedPackage, expectedNamespace)
+	if err != nil {
+		return PolicyDecisionProposal{}, fmt.Errorf("compile policy revision candidate without implicit metadata repair: %w", err)
+	}
+	if candidate.SemanticDigest == original.SemanticDigest {
+		return PolicyDecisionProposal{}, errors.New("policy revision produced no semantic change")
+	}
+	return PolicyDecisionProposal{
+		Original:           original,
+		Candidate:          candidate,
+		CandidateSource:    candidateSource,
+		ChangedCoordinates: []string{"transition.to", "case.resolution.decision"},
+	}, nil
+}
+
+func compileNamedForIdentity(filename string, source []byte, expectedPackage, expectedNamespace string) (CompiledPolicy, error) {
+	ir, file, err := lowerPolicy(filename, source, expectedPackage, expectedNamespace)
 	if err != nil {
 		return CompiledPolicy{}, fmt.Errorf("lower policy: %w", err)
 	}
@@ -31,30 +160,42 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 	rules := make([]Rule, 0, FixedDenominator)
 	var reduction DecisionReduction
 	reductionCount := 0
-	for _, node := range ir.Graph.Nodes() {
-		if node.Kind != semantic.Activity {
-			continue
+	structure := StructureMetrics{}
+	if len(ir.Policies) > 0 {
+		if len(ir.Policies) != 1 {
+			return CompiledPolicy{}, errors.New("exactly one first-class policy is required")
 		}
-		values, err := parseActivityProgram(node.ValueProgram)
+		rules, reduction, structure, err = compileFirstClassPolicy(file, ir.Policies[0])
 		if err != nil {
-			return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+			return CompiledPolicy{}, fmt.Errorf("compile first-class policy: %w", err)
 		}
-		if values.Reduction != "" {
-			reductionCount++
-			if reductionCount > 1 {
-				return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+		reductionCount = 1
+	} else {
+		for _, node := range ir.Graph.Nodes() {
+			if node.Kind != semantic.Activity {
+				continue
 			}
-			reduction, err = parseDecisionReduction(values.Reduction)
+			values, err := parseActivityProgram(node.ValueProgram)
 			if err != nil {
 				return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
 			}
+			if values.Reduction != "" {
+				reductionCount++
+				if reductionCount > 1 {
+					return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
+				}
+				reduction, err = parseDecisionReduction(values.Reduction)
+				if err != nil {
+					return CompiledPolicy{}, fmt.Errorf("activity %q: %w", node.Name, err)
+				}
+			}
+			rules = append(rules, Rule{
+				ActivityID: string(node.ID), ActivityName: node.Name,
+				Role: values.Role, MetaOperation: values.MetaOperation,
+				ProofChoice: values.ProofChoice, Stage: values.Stage,
+				Step: values.Step, Reason: values.Reason, Claim: values.Claim,
+			})
 		}
-		rules = append(rules, Rule{
-			ActivityID: string(node.ID), ActivityName: node.Name,
-			Role: values.Role, MetaOperation: values.MetaOperation,
-			ProofChoice: values.ProofChoice, Stage: values.Stage,
-			Step: values.Step, Reason: values.Reason, Claim: values.Claim,
-		})
 	}
 	if len(rules) != FixedDenominator {
 		return CompiledPolicy{}, fmt.Errorf("fixed denominator changed: got %d want %d", len(rules), FixedDenominator)
@@ -74,27 +215,31 @@ func CompileNamed(filename string, source []byte) (CompiledPolicy, error) {
 	if reductionCount != 1 {
 		return CompiledPolicy{}, errors.New("decision reduction must be declared exactly once")
 	}
+	compiledPolicyID := policyID
+	if len(ir.Policies) == 1 {
+		compiledPolicyID = string(ir.Policies[0].ID)
+	}
 	return CompiledPolicy{
-		Schema: SchemaVersion, PolicyID: policyID,
+		Schema: SchemaVersion, PolicyID: compiledPolicyID,
 		Package: ir.Package, Namespace: ir.Namespace.String(),
 		SourceDigest: DigestBytes(source), SemanticDigest: SemanticDigest(ir.StableHash()),
-		Denominator: FixedDenominator, Rules: rules, Reduction: reduction,
+		Denominator: FixedDenominator, Rules: rules, Reduction: reduction, Structure: structure,
 	}, nil
 }
 
-func lowerPolicy(filename string, source []byte) (semantic.IR, error) {
+func lowerPolicy(filename string, source []byte, expectedPackage, expectedNamespace string) (semantic.IR, *syntax.File, error) {
 	file, diagnostics := syntax.ParseFile(filename, string(source))
 	if diagnostics.HasErrors() {
-		return semantic.IR{}, errors.New(diagnostics.Error().Error())
+		return semantic.IR{}, nil, errors.New(diagnostics.Error().Error())
 	}
 	ir, err := bidir.Lower(file)
 	if err != nil {
-		return semantic.IR{}, err
+		return semantic.IR{}, nil, err
 	}
-	if ir.Package != "metapolicycompilation" || ir.Namespace.String() != "metapolicycompilation" {
-		return semantic.IR{}, fmt.Errorf("policy package/namespace is %q/%q, want metapolicycompilation", ir.Package, ir.Namespace)
+	if ir.Package != expectedPackage || ir.Namespace.String() != expectedNamespace {
+		return semantic.IR{}, nil, fmt.Errorf("policy package/namespace is %q/%q, want %s/%s", ir.Package, ir.Namespace, expectedPackage, expectedNamespace)
 	}
-	return ir, nil
+	return ir, file, nil
 }
 
 func validateClaimPredicates(rules []Rule) error {

@@ -29,16 +29,18 @@ type Coordinate struct {
 }
 
 type ContractEvidence struct {
-	ContractID      string `json:"contract_id"`
-	Path            string `json:"path"`
-	Package         string `json:"package"`
-	Namespace       string `json:"namespace"`
-	EntityCount     int    `json:"entity_count"`
-	ActivityCount   int    `json:"activity_count"`
-	ObligationTotal int    `json:"obligation_total"`
-	SourceLines     int    `json:"source_lines"`
-	SourceDigest    string `json:"source_digest"`
-	CanonicalDigest string `json:"canonical_digest"`
+	ContractID       string           `json:"contract_id"`
+	Path             string           `json:"path"`
+	Package          string           `json:"package"`
+	Namespace        string           `json:"namespace"`
+	EntityCount      int              `json:"entity_count"`
+	ActivityCount    int              `json:"activity_count"`
+	ObligationTotal  int              `json:"obligation_total"`
+	SourceLines      int              `json:"source_lines"`
+	SourceDigest     string           `json:"source_digest"`
+	CanonicalDigest  string           `json:"canonical_digest"`
+	SemanticDigest   string           `json:"semantic_digest"`
+	ResolutionPolicy ResolutionPolicy `json:"resolution_policy"`
 }
 
 type ProducerInput struct {

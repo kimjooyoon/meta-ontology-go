@@ -60,7 +60,7 @@ func (server *Server) changeDocument(ctx context.Context, request requestEnvelop
 		server.mu.Unlock()
 		return nil, nil, nil
 	}
-	document.version, document.text, document.result = params.TextDocument.Version, text, result
+	document.version, document.text, document.result, document.cacheKey = params.TextDocument.Version, text, result, documentCacheKey{}
 	server.mu.Unlock()
 	notification, err := diagnosticsNotification(params.TextDocument.URI, result.Diagnostics)
 	return nil, oneNotification(notification, err), err

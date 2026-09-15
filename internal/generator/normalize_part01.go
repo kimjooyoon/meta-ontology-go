@@ -12,7 +12,7 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 		return SemanticIR{}, fmt.Errorf("generator: invalid Go package %q", input.Package)
 	}
 	result := copyIR(input)
-	canonicalizeIRCollections(&result)
+	canonicalizeIREmptyCollections(&result)
 	if err := normalizeImports(&result); err != nil {
 		return SemanticIR{}, err
 	}
@@ -35,21 +35,35 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 	return result, nil
 }
 
-// canonicalizeIRCollections gives semantically equivalent nil and empty
-// collections one wire representation without changing caller-owned input.
+// canonicalizeIREmptyCollections gives semantically equivalent nil and empty
+// collections one wire representation without allocating replacement slices.
 // This keeps generated metadata digests independent of how an adapter
-// materializes absent optional declarations.
-func canonicalizeIRCollections(ir *SemanticIR) {
-	ir.Imports = append([]Import{}, ir.Imports...)
-	ir.Entities = append([]Entity{}, ir.Entities...)
-	for index := range ir.Entities {
-		ir.Entities[index].Fields = append([]Field{}, ir.Entities[index].Fields...)
+// materializes absent optional declarations after the single deep-copy pass.
+func canonicalizeIREmptyCollections(ir *SemanticIR) {
+	if len(ir.Imports) == 0 {
+		ir.Imports = []Import{}
 	}
-	ir.Activities = append([]Activity{}, ir.Activities...)
+	if len(ir.Entities) == 0 {
+		ir.Entities = []Entity{}
+	}
+	for index := range ir.Entities {
+		if len(ir.Entities[index].Fields) == 0 {
+			ir.Entities[index].Fields = []Field{}
+		}
+	}
+	if len(ir.Activities) == 0 {
+		ir.Activities = []Activity{}
+	}
 	for index := range ir.Activities {
-		ir.Activities[index].Inputs = append([]Port{}, ir.Activities[index].Inputs...)
-		ir.Activities[index].Outputs = append([]Port{}, ir.Activities[index].Outputs...)
-		ir.Activities[index].Slots = append([]Slot{}, ir.Activities[index].Slots...)
+		if len(ir.Activities[index].Inputs) == 0 {
+			ir.Activities[index].Inputs = []Port{}
+		}
+		if len(ir.Activities[index].Outputs) == 0 {
+			ir.Activities[index].Outputs = []Port{}
+		}
+		if len(ir.Activities[index].Slots) == 0 {
+			ir.Activities[index].Slots = []Slot{}
+		}
 	}
 }
 func copyIR(input SemanticIR) SemanticIR {

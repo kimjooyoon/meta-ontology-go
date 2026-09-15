@@ -10,7 +10,7 @@ import (
 
 func TestEvaluateFixedPackageCases(t *testing.T) {
 	report := Evaluate(testInput(t))
-	if report.Decision != "PASS" || report.Summary.CasesSatisfied != 5 || report.Summary.CasesTotal != 5 {
+	if report.Scope != ExecutionScope || report.Decision != "PASS" || report.Summary.CasesSatisfied != 5 || report.Summary.CasesTotal != 5 {
 		t.Fatalf("decision=%s cases=%d/%d", report.Decision, report.Summary.CasesSatisfied, report.Summary.CasesTotal)
 	}
 	if report.Views[0].FactsDigest != report.Views[2].FactsDigest || len(report.Views[0].VisibleFacts) >= len(report.Views[2].VisibleFacts) {

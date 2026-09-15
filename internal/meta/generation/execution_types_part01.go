@@ -1,6 +1,6 @@
 package generation
 
-const ExecutionManifestSchemaVersion = "gooo/meta-operation-execution/v6"
+const ExecutionManifestSchemaVersion = "gooo/meta-operation-execution/v7"
 
 type ExecutionDecision string
 

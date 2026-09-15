@@ -1,5 +1,7 @@
 package selfimprovementcandidate
 
+import valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
+
 type Coordinate struct {
 	Satisfied   int `json:"satisfied"`
 	Total       int `json:"total"`
@@ -25,23 +27,24 @@ type Summary struct {
 }
 
 type Report struct {
-	Schema                  string           `json:"schema"`
-	Metaprogram             string           `json:"metaprogram"`
-	SubjectSHA              string           `json:"subject_sha"`
-	SourceWorkflowRunID     int64            `json:"source_workflow_run_id"`
-	SourceObservationDigest string           `json:"source_observation_digest"`
-	SourceFileDigest        string           `json:"source_file_digest"`
-	Contract                ContractEvidence `json:"contract"`
-	PolicyVersion           string           `json:"policy_version"`
-	Decision                string           `json:"decision"`
-	Resolution              string           `json:"resolution"`
-	Reason                  string           `json:"reason"`
-	Summary                 Summary          `json:"summary"`
-	Candidates              []Candidate      `json:"candidates"`
-	Authority               Authority        `json:"authority"`
-	Indicators              []Indicator      `json:"indicators"`
-	Views                   []View           `json:"views"`
-	Proofs                  []Proof          `json:"proofs"`
-	NotClaimed              []string         `json:"not_claimed"`
-	Digest                  string           `json:"digest"`
+	Schema                  string                            `json:"schema"`
+	Metaprogram             string                            `json:"metaprogram"`
+	SubjectSHA              string                            `json:"subject_sha"`
+	SourceWorkflowRunID     int64                             `json:"source_workflow_run_id"`
+	SourceObservationDigest string                            `json:"source_observation_digest"`
+	SourceFileDigest        string                            `json:"source_file_digest"`
+	Contract                ContractEvidence                  `json:"contract"`
+	PolicyVersion           string                            `json:"policy_version"`
+	Decision                string                            `json:"decision"`
+	Resolution              string                            `json:"resolution"`
+	Reason                  string                            `json:"reason"`
+	Summary                 Summary                           `json:"summary"`
+	Candidates              []Candidate                       `json:"candidates"`
+	ExecutionInput          *valuewitnessinput.ExecutionInput `json:"execution_input,omitempty"`
+	Authority               Authority                         `json:"authority"`
+	Indicators              []Indicator                       `json:"indicators"`
+	Views                   []View                            `json:"views"`
+	Proofs                  []Proof                           `json:"proofs"`
+	NotClaimed              []string                          `json:"not_claimed"`
+	Digest                  string                            `json:"digest"`
 }

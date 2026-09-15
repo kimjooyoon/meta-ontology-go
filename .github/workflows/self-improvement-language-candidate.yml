@@ -10,7 +10,11 @@ on:
       - examples/self-improvement/transport.gooo
       - examples/self-improvement/TRANSPORT.md
       - examples/self-improvement/CANDIDATE.md
+      - examples/language-value-witness/main.gooo
+      - examples/self-improvement-value-witness-execution-input/**
       - internal/meta/selfimprovementcandidate/**
+      - internal/meta/selfimprovementvaluewitnessinput/**
+      - internal/valueexecution/**
       - internal/meta/selfimprovementtransport/**
       - internal/meta/languagereadiness/languagesyntax/**
       - scripts/self-improvement-candidate/**
@@ -39,11 +43,11 @@ jobs:
       SOURCE_ARTIFACT_NAME: self-improvement-language-observation
       EVENT_NAME: ${{ github.event_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TOOLING_SHA }}
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.x
           check-latest: true
@@ -53,8 +57,28 @@ jobs:
           set -euo pipefail
           tool="$RUNNER_TEMP/candidate/transport-tool"
           mkdir -p "$tool"
-          go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
-          go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
+          build_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/build-peak-rss-kib" \
+            go build -o "$tool/self-improvement-transport" ./scripts/self-improvement-transport
+          build_selector_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/build-selector-peak-rss-kib" \
+            go build -o "$tool/select-transport-artifact" ./scripts/self-improvement-transport-selector
+          build_end_ms="$(date +%s%3N)"
+          test_start_ms="$(date +%s%3N)"
+          /usr/bin/time -f '%M' -o "$tool/test-peak-rss-kib" \
+            go test ./internal/meta/selfimprovementtransport
+          test_end_ms="$(date +%s%3N)"
+          jq -n \
+            --argjson build_wall_ms "$((build_end_ms - build_start_ms))" \
+            --argjson selector_build_wall_ms "$((build_end_ms - build_selector_start_ms))" \
+            --argjson test_wall_ms "$((test_end_ms - test_start_ms))" \
+            --arg build_peak_rss_kib "$(cat "$tool/build-peak-rss-kib")" \
+            --arg selector_build_peak_rss_kib "$(cat "$tool/build-selector-peak-rss-kib")" \
+            --arg test_peak_rss_kib "$(cat "$tool/test-peak-rss-kib")" \
+            '{schema:"gooo/self-improvement-transport-runtime/v1",build_wall_ms:($build_wall_ms|tonumber),selector_build_wall_ms:($selector_build_wall_ms|tonumber),test_wall_ms:($test_wall_ms|tonumber),build_peak_rss_kib:($build_peak_rss_kib|tonumber),selector_build_peak_rss_kib:($selector_build_peak_rss_kib|tonumber),test_peak_rss_kib:($test_peak_rss_kib|tonumber),runtime_comparable:false,runtime_unknown:"NO_EXACT_BEFORE_AFTER_RUNTIME_PAIR"}' \
+            > "$RUNNER_TEMP/candidate/runtime-measurements.json"
+          jq -r '"runtime observation: build \(.build_wall_ms) ms / \(.build_peak_rss_kib) KiB; test \(.test_wall_ms) ms / \(.test_peak_rss_kib) KiB; comparison UNKNOWN (\(.runtime_unknown))"' \
+            "$RUNNER_TEMP/candidate/runtime-measurements.json" >> "$GITHUB_STEP_SUMMARY"
           cp examples/self-improvement/transport.gooo "$tool/transport.gooo"
       - name: Reproduce exact observation for PR
         if: github.event_name == 'pull_request'
@@ -96,7 +120,7 @@ jobs:
           cp "$output/producer.json" "$artifact/producer.json"
       - name: Upload PR observation transport witness
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SOURCE_ARTIFACT_NAME }}
           path: ${{ runner.temp }}/candidate/source-artifact
@@ -147,12 +171,13 @@ jobs:
           fi
           "$RUNNER_TEMP/candidate/transport-tool/select-transport-artifact" \
             -mode transport -receipt "$transport/lifecycle.json" \
-            -archive "$archive" -download-exit "$download_exit"
+            -archive "$archive" -download-exit "$download_exit" \
+            -output "$transport/metadata.json"
           jq -r '"artifact lifecycle: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_step_total) (\(.metrics.coverage_basis_points) bps), unknown-path \(.metrics.unknown_path_count), \(.coordinate.stage)/\(.coordinate.step)/\(.reason)"' \
             "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload artifact lifecycle receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-artifact-lifecycle-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
           path: ${{ runner.temp }}/candidate/transport/lifecycle.json
@@ -186,14 +211,18 @@ jobs:
           set -euo pipefail
           input="$RUNNER_TEMP/candidate/input"
           transport="$RUNNER_TEMP/candidate/transport"
-          "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
-            -mode consume \
-            -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
-            -repository "$GITHUB_REPOSITORY" -run-id "$SOURCE_RUN_ID" \
-            -observation "$input/first.json" -producer "$input/producer.json" \
-            -metadata "$transport/metadata.json" \
-            -archive-digest "$(cat "$transport/archive-digest.txt")" \
-            -output "$transport/receipt.json" -check-read-only
+          for replay in first second; do
+            "$RUNNER_TEMP/candidate/transport-tool/self-improvement-transport" \
+              -mode consume \
+              -contract "$RUNNER_TEMP/candidate/transport-tool/transport.gooo" \
+              -repository "$GITHUB_REPOSITORY" -run-id "$SOURCE_RUN_ID" \
+              -observation "$input/first.json" -producer "$input/producer.json" \
+              -metadata "$transport/metadata.json" \
+              -archive-digest "$(cat "$transport/archive-digest.txt")" \
+              -output "$transport/receipt-$replay.json" -check-read-only
+          done
+          cmp "$transport/receipt-first.json" "$transport/receipt-second.json"
+          cp "$transport/receipt-first.json" "$transport/receipt.json"
           subject_sha="$(jq -r '.subject_sha' "$transport/receipt.json")"
           if ! [[ "$subject_sha" =~ ^[0-9a-f]{40}$ ]]; then
             echo "CONSUME/recompute-subject-digest: invalid producer subject" >&2
@@ -204,7 +233,7 @@ jobs:
           jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
             "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout verified producer subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.verify-transport.outputs.subject_sha }}
           persist-credentials: false
@@ -227,14 +256,30 @@ jobs:
               -observation "$input" -output "$output/$pass.json" -check
           done
           cmp "$output/first.json" "$output/second.json"
+          jq -e '
+            if (.execution_input.schema == "gooo/self-improvement-value-witness-execution-input/v1" and
+                .execution_input.source.path == "examples/language-value-witness/main.gooo" and
+                (.execution_input.source.bytes | length) > 0 and
+                (.execution_input.corpus | length) == 5 and
+                .execution_input.allowed_effects == [] and
+                .execution_input.max_executions == 1 and
+                .execution_input.repository_writes_allowed == false and
+                .execution_input.digest == .candidates[0].execution_input_digest)
+            then .execution_input else error("execution input binding is not exact") end
+          ' "$output/first.json" > "$output/execution-input.json"
           jq -r '"candidate: \(.decision) \(.summary.candidate_count), achieved \(.summary.achieved_delta)/1, target \(.summary.target_delta)/1"' "$output/first.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head non-executing candidate
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-nonexecuting-candidate-${{ github.event_name == 'workflow_run' && steps.verify-transport.outputs.subject_sha || env.HEAD_SHA }}
           path: |
             ${{ runner.temp }}/candidate/output/first.json
+            ${{ runner.temp }}/candidate/output/execution-input.json
             ${{ runner.temp }}/candidate/transport/receipt.json
+            ${{ runner.temp }}/candidate/transport/receipt-first.json
+            ${{ runner.temp }}/candidate/transport/receipt-second.json
             ${{ runner.temp }}/candidate/transport/lifecycle.json
+            ${{ runner.temp }}/candidate/transport/metadata.json
+            ${{ runner.temp }}/candidate/runtime-measurements.json
           if-no-files-found: error
           retention-days: 14

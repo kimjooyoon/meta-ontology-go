@@ -27,6 +27,7 @@ type proofBundle struct {
 	BaseRef                string                       `json:"base_ref"`
 	BaseSHA                string                       `json:"base_sha"`
 	HeadSHA                string                       `json:"head_sha"`
+	HeadRef                string                       `json:"head_ref"`
 	Ref                    string                       `json:"ref"`
 	EventRef               string                       `json:"event_ref"`
 	CheckoutRef            string                       `json:"checkout_ref"`

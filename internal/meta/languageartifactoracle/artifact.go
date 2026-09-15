@@ -1,6 +1,7 @@
 package languageartifactoracle
 
 const SourceArtifactSchema = "gooo/source-execution-receipt/v1"
+const SourceArtifactScope = "DECLARATION_RESOLUTION_ONLY"
 
 type artifactBinding struct {
 	Name string `json:"name"`
@@ -34,6 +35,7 @@ type artifactEffects struct {
 
 type sourceArtifact struct {
 	Schema         string               `json:"schema"`
+	Scope          string               `json:"scope"`
 	Decision       string               `json:"decision"`
 	Reason         string               `json:"reason"`
 	Resolution     string               `json:"resolution"`

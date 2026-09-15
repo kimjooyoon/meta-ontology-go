@@ -21,15 +21,16 @@ func ExtractWithResult(root, logical string) (Result, error) {
 		return Result{}, err
 	}
 	original := append([]byte(nil), source...)
-	source, fset, file, err = prepareParsedSource(root, logical, source, fset, file)
+	var strategyEvidence []StrategyEvidence
+	source, fset, file, strategyEvidence, err = prepareParsedSource(root, logical, source, fset, file)
 	if err != nil {
-		return Result{}, err
+		return Result{}, withCallbackExtractionProposal(root, logical, original, err)
 	}
 	list, all, err := extractionInputs(root, source, fset, file)
 	if err != nil {
 		return Result{}, err
 	}
-	return buildExtractionResult(root, logical, original, source, fset, file, list, all)
+	return buildExtractionResult(root, logical, original, source, fset, file, list, all, strategyEvidence)
 }
 
 func readParsedSource(root, logical string) ([]byte, *token.FileSet, *ast.File, error) {
@@ -70,7 +71,7 @@ func extractionInputs(root string, source []byte, fset *token.FileSet, file *ast
 	return list, all, nil
 }
 
-func buildExtractionResult(root, logical string, original, source []byte, fset *token.FileSet, file *ast.File, list []importSpec, all []declaration) (Result, error) {
+func buildExtractionResult(root, logical string, original, source []byte, fset *token.FileSet, file *ast.File, list []importSpec, all []declaration, strategyEvidence []StrategyEvidence) (Result, error) {
 	output, partitions, err := capacityRender(fset, file, source, all, list, 75)
 	if err != nil {
 		return Result{}, err
@@ -82,7 +83,11 @@ func buildExtractionResult(root, logical string, original, source []byte, fset *
 	generated := map[string][]byte{logical: output.source}
 	maps.Copy(generated, helpers)
 	paths = append([]string{logical}, paths...)
-	return Result{Generated: generated, Paths: paths, Operations: extractionOperations(original, source, partitions)}, nil
+	strategyEvidence, err = finalizeReturnTailEvidence(root, logical, generated, strategyEvidence)
+	if err != nil {
+		return Result{}, err
+	}
+	return Result{Generated: generated, Paths: paths, Operations: extractionOperations(original, source, partitions), Evidence: strategyEvidence}, nil
 }
 
 func renderHelperFiles(root, logical string, source []byte, fset *token.FileSet, file *ast.File, list []importSpec, partitions [][]declaration) (map[string][]byte, []string, error) {

@@ -9,6 +9,9 @@ func Validate(receipt Receipt) error {
 	if receipt.Schema != ReceiptSchema {
 		return fmt.Errorf("SOURCE_EXECUTION_SCHEMA_UNKNOWN")
 	}
+	if receipt.Scope != DeclarationResolutionScope {
+		return fmt.Errorf("SOURCE_EXECUTION_SCOPE_UNKNOWN")
+	}
 	if receipt.Decision != "PASS" && receipt.Decision != "FAIL_CLOSED" {
 		return fmt.Errorf("SOURCE_EXECUTION_DECISION_UNKNOWN")
 	}
@@ -35,6 +38,7 @@ func Validate(receipt Receipt) error {
 
 func validateSuccess(receipt Receipt) error {
 	want := []string{"SOURCE_PARSED", "SEMANTIC_LOWERED", "ACTIVITY_INVOKED", "ENTITY_PRODUCED"}
+	wantSubjects := []string{receipt.SourceDigest, receipt.SemanticDigest, receipt.Entry.Activity, receipt.Entry.Output.ID}
 	if receipt.Reason != "SOURCE_ACTIVITY_EXECUTED" || len(receipt.Diagnostics) != 0 ||
 		receipt.Entry.Activity == "" || receipt.Entry.Output.ID == "" || len(receipt.Events) != len(want) {
 		return fmt.Errorf("SOURCE_EXECUTION_SUCCESS_INVALID")
@@ -42,6 +46,9 @@ func validateSuccess(receipt Receipt) error {
 	for index, event := range receipt.Events {
 		if event.Sequence != index+1 || event.Kind != want[index] || event.Subject == "" {
 			return fmt.Errorf("SOURCE_EXECUTION_EVENT_INVALID")
+		}
+		if event.Subject != wantSubjects[index] {
+			return fmt.Errorf("SOURCE_EXECUTION_EVENT_SUBJECT_BINDING_INVALID")
 		}
 	}
 	return nil

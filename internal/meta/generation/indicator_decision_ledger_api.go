@@ -9,3 +9,7 @@ func BuildIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions [
 func buildPlanIndicatorDecisionLedger(indicators []sourcepolicy.Indicator, actions []Action, deferred []string) (IndicatorDecisionLedger, error) {
 	return buildIndicatorDecisionLedger(indicators, actions, deferred)
 }
+
+func buildPlanIndicatorDecisionLedgerWithRefuted(indicators []sourcepolicy.Indicator, actions []Action, deferred, refuted []string) (IndicatorDecisionLedger, error) {
+	return buildIndicatorDecisionLedgerWithRefuted(indicators, actions, deferred, refuted)
+}

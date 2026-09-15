@@ -16,7 +16,7 @@ func compareArtifact(want projection, artifact sourceArtifact, filename, sourceD
 		artifact.Digest == artifactDigest(artifact),
 		artifact.SourceDigest == sourceDigest,
 		artifact.Schema == SourceArtifactSchema && artifact.Decision == "PASS" &&
-			artifact.Reason == "SOURCE_ACTIVITY_EXECUTED" && artifact.Resolution == "EXACT" && artifact.Filename == filename,
+			artifact.Scope == SourceArtifactScope && artifact.Reason == "SOURCE_ACTIVITY_EXECUTED" && artifact.Resolution == "EXACT" && artifact.Filename == filename,
 		artifact.Entry.Package == want.Package && artifact.Entry.Namespace == want.Namespace && artifact.Entry.Activity == want.Activity,
 		reflect.DeepEqual(artifact.Entry.Inputs, want.Inputs),
 		artifact.Entry.Output == want.Output,

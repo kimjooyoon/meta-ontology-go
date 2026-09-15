@@ -53,7 +53,14 @@ func lowerContextWithTypesAndEntityFieldsSupportAndImplicitActivityPorts(ctx con
 		return semantic.IR{}, err
 	}
 	document.ImplicitActivityPorts = allowImplicitActivityPorts
-	return lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, support)
+	ir, err := lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx, document, registry, support)
+	if err != nil {
+		return semantic.IR{}, err
+	}
+	if err := ir.Validate(); err != nil {
+		return semantic.IR{}, err
+	}
+	return ir, nil
 }
 func nonNilLowerContext(ctx context.Context) context.Context {
 	if ctx == nil {

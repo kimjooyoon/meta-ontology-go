@@ -24,6 +24,7 @@ const (
 	TokenRightParen       = TokenRParen
 	TokenLeftBrace        = TokenLBrace
 	TokenRightBrace       = TokenRBrace
+	TokenPeriod           = TokenDot
 )
 
 var tokenKindNames = [...]string{
@@ -42,6 +43,7 @@ var tokenKindNames = [...]string{
 	TokenArrow:      "->",
 	TokenLBrace:     "{",
 	TokenRBrace:     "}",
+	TokenDot:        ".",
 }
 
 // String returns a stable human-readable token name.

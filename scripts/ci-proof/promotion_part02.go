@@ -12,7 +12,11 @@ func validatePromotionAuthorization(bundle proofBundle) error {
 		return nil
 	}
 	authorization := bundle.PromotionAuthorization
-	if authorization == nil || authorization.Operation != "fast_forward" || authorization.Source != "dev" || authorization.Target != "main" || authorization.BaseSHA != bundle.BaseSHA || authorization.HeadSHA != bundle.HeadSHA || !validSHA(authorization.BaseSHA) || !validSHA(authorization.HeadSHA) || !validDigest(authorization.ProofDigest) || authorization.ProofDigest != bundle.Digests.Bundle {
+	expectedOperation := "fast_forward"
+	if isReconciliationBundle(bundle) {
+		expectedOperation = "squash_linear"
+	}
+	if authorization == nil || authorization.Operation != expectedOperation || authorization.Source != "dev" || authorization.Target != "main" || authorization.BaseSHA != bundle.BaseSHA || authorization.HeadSHA != bundle.HeadSHA || !validSHA(authorization.BaseSHA) || !validSHA(authorization.HeadSHA) || !validDigest(authorization.ProofDigest) || authorization.ProofDigest != bundle.Digests.Bundle {
 		return fmt.Errorf("promotion authorization is missing or not bound to the proof digest")
 	}
 	if authorization.Decision == "FAIL_CLOSED" {

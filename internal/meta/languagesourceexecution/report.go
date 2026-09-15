@@ -43,6 +43,7 @@ type Proof struct {
 
 type Artifact struct {
 	Schema            string       `json:"schema"`
+	Scope             string       `json:"scope"`
 	HeadSHA           string       `json:"head_sha"`
 	Decision          string       `json:"decision"`
 	Resolution        string       `json:"resolution"`

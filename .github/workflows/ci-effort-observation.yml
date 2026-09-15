@@ -24,14 +24,27 @@ jobs:
       SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
       SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || '' }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      TRIGGER_SOURCE_WORKFLOW: .github/workflows/ci.yml
+      TRIGGER_SOURCE_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+      TRIGGER_SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt || '' }}
+      TRIGGER_SOURCE_SUBJECT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      TRIGGER_SOURCE_REF: ${{ github.event.workflow_run.ref || '' }}
+      TRIGGER_SOURCE_EVENT: ${{ github.event.workflow_run.event || 'pull_request' }}
+      TRIGGER_SOURCE_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name || github.repository }}
+      TRIGGER_SOURCE_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch || github.event.pull_request.head.ref || github.ref_name || '' }}
+      CONSUMER_WORKFLOW: CI effort observation
+      CONSUMER_RUN_ID: ${{ github.run_id }}
+      CONSUMER_RUN_ATTEMPT: ${{ github.run_attempt }}
+      CONSUMER_SUBJECT_SHA: ${{ github.sha }}
+      CONSUMER_REF: ${{ github.ref }}
       GH_TOKEN: ${{ github.token }}
       GOWORK: off
       GOFLAGS: -mod=readonly
     steps:
-      - name: Checkout exact source head
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Checkout current observer implementation
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: ${{ env.HEAD_SHA }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -41,33 +54,299 @@ jobs:
           go-version: '1.27.0'
           cache: false
 
-      - name: Collect exact source and OpenTofu inputs
+      - name: Build and verify canonical workflow-lineage conformance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(go env GOVERSION)" = "go1.27.0"
+          lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
+          mkdir -p "$lineage_root/conformance"
+          go build -o "$lineage_root/lineage" ./scripts/ci-effort-observation-lineage
+          go test ./scripts/ci-effort-observation-lineage
+          go test ./scripts/ci-effort-observation
+          "$lineage_root/lineage" -mode run --source examples/ci-effort-observation/main.gooo --out "$lineage_root/conformance"
+          "$lineage_root/lineage" -mode verify --report "$lineage_root/conformance/publish/workflow-lineage-report.json"
+          test "$(find "$lineage_root/conformance/publish" -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 21
+          jq -e '.decision == "CLOSED" and .provenance_state == "EXACT" and .case_denominator == 9 and .closed_cases == 3 and .unknown_cases == 3 and .refuted_cases == 3 and .cases_satisfied == 9 and .cases_total == 9 and .active_lineage_roots == 1 and .stale_misattributed_current_head_failures_before == 2 and .stale_misattributed_current_head_failures_after == 0 and .stale_source_states_unknown == 3 and .unknown_six_field_preservations == 3 and .contradictions_refuted == 3 and .exact_replay_comparisons == 1 and .fallback_to_current_dev_accepted == 0 and .fallback_to_current_dev_rejected == 1 and .repository_writes == 0 and .local_test_executions == 0 and (.cases[3:6] | all(.decision == "UNKNOWN" and .unknown.stage != "" and .unknown.step != "" and .unknown.reason != "" and .unknown.unknown_class != "" and .unknown.next_operation != "" and (.unknown.blocked_by | length) > 0)) and (.cases[6:9] | all(.decision == "REFUTED" and .unknown == null))' "$lineage_root/conformance/publish/workflow-lineage-report.json" > /dev/null
+
+          runtime_root="$RUNNER_TEMP/ci-effort-observation-runtime"
+          runtime_binary="$runtime_root/ci-effort-observation"
+          runtime_program="$GITHUB_WORKSPACE/examples/ci-effort-observation/main.gooo"
+          mkdir -p "$runtime_root"
+          observer_commit="$(git rev-parse HEAD)"
+          test "$observer_commit" = "$GITHUB_SHA"
+          go build -o "$runtime_binary" ./scripts/ci-effort-observation
+          chmod 0555 "$runtime_binary"
+          runtime_binary_digest="sha256:$(sha256sum "$runtime_binary" | awk '{print $1}')"
+          runtime_program_digest="sha256:$(sha256sum "$runtime_program" | awk '{print $1}')"
+          test "$runtime_binary_digest" = "sha256:$(sha256sum "$runtime_binary" | awk '{print $1}')"
+          test -s "$runtime_binary"
+          test -s "$runtime_program"
+          {
+            echo "CI_EFFORT_OBSERVER_RUNTIME=$runtime_binary"
+            echo "CI_EFFORT_OBSERVER_COMMIT=$observer_commit"
+            echo "CI_EFFORT_OBSERVER_BINARY_DIGEST=$runtime_binary_digest"
+            echo "CI_EFFORT_OBSERVER_PROGRAM=$runtime_program"
+            echo "CI_EFFORT_OBSERVER_PROGRAM_DIGEST=$runtime_program_digest"
+          } >> "$GITHUB_ENV"
+
+      - name: Checkout exact source for observer inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          path: source-worktree
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve exact source workflow lineage
         shell: bash
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/ci-effort-observation"
-          mkdir -p "$root/source" "$root/ci-evidence" "$root/ci-summary" "$root/opentofu" "$root/first" "$root/second"
-          if [ -z "$SOURCE_RUN_ID" ]; then
-            for attempt in $(seq 1 80); do
-              candidate="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=100" | jq -er --arg head "$HEAD_SHA" '[.workflow_runs[] | select(.head_sha == $head)] | sort_by(.id) | last // empty | .id' || true)"
-              if [ -n "$candidate" ]; then
-                status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$candidate" | jq -r .status)"
-                if [ "$status" = completed ]; then
-                  SOURCE_RUN_ID="$candidate"
-                  SOURCE_RUN_ATTEMPT="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" | jq -r .run_attempt)"
-                  break
-                fi
-              fi
-              if [ "$attempt" -eq 80 ]; then
-                echo "exact CI source run did not complete for $HEAD_SHA" >&2
-                exit 1
-              fi
-              sleep 15
-            done
+          lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
+          mkdir -p "$root/source" "$root/ci-evidence" "$root/ci-summary" "$root/opentofu" "$root/first" "$root/second" "$lineage_root/actual"
+          event_run_id="${SOURCE_RUN_ID:-0}"
+          event_run_attempt="${SOURCE_RUN_ATTEMPT:-0}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ] && [ "$event_run_id" -le 0 ]; then
+            echo "workflow_run source identity is missing workflow_run.id; recording UNKNOWN without a subject or branch fallback" >&2
           fi
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$root/source/run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$root/source/jobs.json"
-          gh run download "$SOURCE_RUN_ID" --name "ci-evidence-$SOURCE_RUN_ID-$SOURCE_RUN_ATTEMPT" --dir "$root/ci-evidence"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$event_run_id" -le 0 ]; then
+            candidate="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$HEAD_SHA&event=pull_request&per_page=100" | jq -er --arg head "$HEAD_SHA" '[.workflow_runs[] | select(.head_sha == $head)] | sort_by(.id) | last // empty | .id' || true)"
+            if [ -n "$candidate" ]; then
+              event_run_id="$candidate"
+            else
+              echo "exact CI source run is not available yet for $HEAD_SHA; lineage will remain UNKNOWN and terminal collection is deferred" >&2
+            fi
+          fi
+          if [ "$event_run_id" -gt 0 ] && gh api "repos/$GITHUB_REPOSITORY/actions/runs/$event_run_id" > "$root/source/run.json"; then
+            jq '{id:(.id // 0),name:(.name // ""),workflow_name:(.path // ""),workflow_path:(.path // ""),workflow_id:(.workflow_id // 0),event:(.event // ""),ref:(.ref // null),ref_state:(if has("ref") | not then "MISSING" elif .ref == null then "NULL" elif .ref == "" then "EMPTY" else "VALUE" end),head_branch:(.head_branch // ""),head_sha:(.head_sha // ""),head_repository:(.head_repository.full_name // ""),api_repository:(.repository.full_name // ""),api_query_run_id:(.id // 0),resolved_by:"actions-run-api:workflow_run.id",status:(.status // ""),conclusion:(.conclusion // ""),run_attempt:(.run_attempt // 0),created_at,run_started_at,updated_at,html_url}' "$root/source/run.json" > "$lineage_root/source-run.json"
+          else
+            printf '%s\n' '{"id":0,"name":"","workflow_name":"","workflow_path":"","workflow_id":0,"event":"","ref":null,"ref_state":"MISSING","head_branch":"","head_sha":"","head_repository":"","api_repository":"","api_query_run_id":0,"resolved_by":"","status":"","conclusion":"","run_attempt":0}' > "$lineage_root/source-run.json"
+          fi
+          source_api_run_id="$(jq -r '.id // 0' "$lineage_root/source-run.json")"
+          source_api_attempt="$(jq -r '.run_attempt // 0' "$lineage_root/source-run.json")"
+          source_api_status="$(jq -r '.status // ""' "$lineage_root/source-run.json")"
+          source_run_id="$event_run_id"
+          source_run_attempt="$event_run_attempt"
+          if [ "$source_api_run_id" -gt 0 ]; then
+            source_run_id="$source_api_run_id"
+            source_run_attempt="$source_api_attempt"
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              event_run_attempt="$source_api_attempt"
+            fi
+            if ! gh api "repos/$GITHUB_REPOSITORY/actions/runs/$source_api_run_id/jobs?per_page=100" > "$root/source/jobs.json"; then
+              printf '%s\n' '{"jobs":[]}' > "$root/source/jobs.json"
+            fi
+          else
+            printf '%s\n' '{"jobs":[]}' > "$root/source/jobs.json"
+          fi
+          SOURCE_RUN_ID="$source_run_id"
+          SOURCE_RUN_ATTEMPT="$source_run_attempt"
+          SOURCE_API_STATUS="$source_api_status"
+          SOURCE_TERMINAL=false
+          if [ "$source_api_status" = "completed" ]; then
+            SOURCE_TERMINAL=true
+          fi
+          echo "SOURCE_RUN_ID=$SOURCE_RUN_ID" >> "$GITHUB_ENV"
+          echo "SOURCE_RUN_ATTEMPT=$SOURCE_RUN_ATTEMPT" >> "$GITHUB_ENV"
+          echo "SOURCE_API_STATUS=$SOURCE_API_STATUS" >> "$GITHUB_ENV"
+          echo "SOURCE_TERMINAL=$SOURCE_TERMINAL" >> "$GITHUB_ENV"
+          expected_artifact_name="ci-evidence-$SOURCE_RUN_ID-$SOURCE_RUN_ATTEMPT"
+          artifact_api="$root/source/artifacts-api.json"
+          if [ "$source_api_run_id" -gt 0 ] && gh api "repos/$GITHUB_REPOSITORY/actions/runs/$source_api_run_id/artifacts?per_page=100" > "$artifact_api"; then
+            artifact_rows="$(jq --arg name "$expected_artifact_name" '[.artifacts[] | select(.name == $name)]' "$artifact_api")"
+            artifact_count="$(jq 'length' <<< "$artifact_rows")"
+            if [ "$artifact_count" -eq 1 ] && gh run download "$SOURCE_RUN_ID" --name "$expected_artifact_name" --dir "$root/ci-evidence" >/dev/null 2>&1 &&
+              test -s "$root/ci-evidence/ci-evidence.json" &&
+              jq -e --arg repository "$GITHUB_REPOSITORY" --arg subject "$HEAD_SHA" --argjson run "$SOURCE_RUN_ID" --argjson attempt "$SOURCE_RUN_ATTEMPT" '.repository == $repository and .head_sha == $subject and .run_id == $run and .run_attempt == $attempt' "$root/ci-evidence/ci-evidence.json" >/dev/null; then
+              jq --arg name "$expected_artifact_name" --argjson run "$SOURCE_RUN_ID" --argjson attempt "$SOURCE_RUN_ATTEMPT" --arg subject "$(jq -r .head_sha "$root/ci-evidence/ci-evidence.json")" '{lookup_status:"ok",artifacts:[.artifacts[] | select(.name == $name) | {id:(.id // 0),name:(.name // ""),digest:(.digest // ""),payload_digest:(.payload_digest // ""),size_in_bytes:(.size_in_bytes // 0),expired:(.expired // false),run_id:(.workflow_run.id // $run),run_attempt:$attempt,subject_sha:$subject,subject_binding:"ci-evidence.head_sha"}]}' "$artifact_api" > "$lineage_root/artifacts.json"
+            else
+              jq --arg name "$expected_artifact_name" --argjson run "$SOURCE_RUN_ID" --argjson attempt "$SOURCE_RUN_ATTEMPT" '{lookup_status:"ok",artifacts:[.artifacts[] | select(.name == $name) | {id:(.id // 0),name:(.name // ""),digest:(.digest // ""),payload_digest:(.payload_digest // ""),size_in_bytes:(.size_in_bytes // 0),expired:(.expired // false),run_id:(.workflow_run.id // $run),run_attempt:$attempt,subject_sha:"",subject_binding:""}]}' "$artifact_api" > "$lineage_root/artifacts.json"
+            fi
+          else
+            printf '%s\n' '{"lookup_status":"unavailable","artifacts":[]}' > "$lineage_root/artifacts.json"
+          fi
+          source_ref="$(jq -r 'if .ref == null then "" else .ref end' "$lineage_root/source-run.json")"
+          source_ref_state="$(jq -r '.ref_state // "MISSING"' "$lineage_root/source-run.json")"
+          source_head_branch="$(jq -r '.head_branch // ""' "$lineage_root/source-run.json")"
+          source_event="$(jq -r '.event // ""' "$lineage_root/source-run.json")"
+          source_repo="$(jq -r '.head_repository // ""' "$lineage_root/source-run.json")"
+          trigger_ref_state="$source_ref_state"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            trigger_ref_state="$(jq -r 'if (.workflow_run | has("ref") | not) then "MISSING" elif .workflow_run.ref == null then "NULL" elif .workflow_run.ref == "" then "EMPTY" else "VALUE" end' "$GITHUB_EVENT_PATH")"
+          fi
+          jq -n \
+            --arg workflow "$TRIGGER_SOURCE_WORKFLOW" \
+            --argjson run "${event_run_id:-0}" \
+            --argjson attempt "${event_run_attempt:-0}" \
+            --arg subject "$HEAD_SHA" \
+            --arg source_ref "$source_ref" \
+            --arg source_ref_state "$trigger_ref_state" \
+            --arg source_head_branch "$TRIGGER_SOURCE_HEAD_BRANCH" \
+            --arg source_event "$TRIGGER_SOURCE_EVENT" \
+            --arg source_repo "$TRIGGER_SOURCE_REPOSITORY" \
+            --arg consumer "$CONSUMER_WORKFLOW" \
+            --argjson consumer_run "$CONSUMER_RUN_ID" \
+            --argjson consumer_attempt "$CONSUMER_RUN_ATTEMPT" \
+            --arg consumer_subject "$CONSUMER_SUBJECT_SHA" \
+            --arg consumer_ref "$CONSUMER_REF" \
+            '{source_workflow:$workflow,source_run_id:$run,source_run_attempt:$attempt,source_subject_sha:$subject,source_ref:$source_ref,source_ref_state:$source_ref_state,source_head_branch:$source_head_branch,source_event:$source_event,source_repository:$source_repo,consumer_workflow:$consumer,consumer_run_id:$consumer_run,consumer_run_attempt:$consumer_attempt,consumer_subject_sha:$consumer_subject,consumer_ref:$consumer_ref}' > "$lineage_root/trigger.json"
+          set +e
+          "$lineage_root/lineage" -mode observe --source examples/ci-effort-observation/main.gooo --out "$lineage_root/actual" --trigger "$lineage_root/trigger.json" --run "$lineage_root/source-run.json" --artifacts "$lineage_root/artifacts.json"
+          lineage_status=$?
+          set -e
+          cat "$lineage_root/actual/lineage.env" >> "$GITHUB_ENV"
+          lineage_decision="$(awk -F= '$1 == "LINEAGE_DECISION" { value=substr($0, index($0, "=") + 1) } END { print value }' "$lineage_root/actual/lineage.env")"
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ] && [ "$SOURCE_TERMINAL" != true ]; then
+            source_identity_exact=false
+            if [ "$source_api_run_id" -gt 0 ] && jq -e \
+              --argjson run "$event_run_id" \
+              --arg head "$HEAD_SHA" \
+              --arg repository "$GITHUB_REPOSITORY" \
+              --arg workflow "$TRIGGER_SOURCE_WORKFLOW" \
+              --arg event "$TRIGGER_SOURCE_EVENT" \
+              --arg branch "$TRIGGER_SOURCE_HEAD_BRANCH" \
+              '.id == $run and .api_query_run_id == $run and .run_attempt > 0 and .head_sha == $head and .head_repository == $repository and .api_repository == $repository and .workflow_path == $workflow and .event == $event and .head_branch == $branch' \
+              "$lineage_root/source-run.json" > /dev/null; then
+              source_identity_exact=true
+            fi
+            if [ "$source_api_run_id" -gt 0 ] && [ "$source_identity_exact" != true ]; then
+              echo "non-terminal source failed exact identity binding" >&2
+              exit 1
+            fi
+            if [ "$lineage_decision" != "UNKNOWN" ]; then
+              echo "non-terminal pull-request source produced unexpected lineage decision: $lineage_decision" >&2
+              exit 1
+            fi
+            echo "LINEAGE_DECISION=UNKNOWN" >> "$GITHUB_ENV"
+            echo "LINEAGE_DEFERRED=true" >> "$GITHUB_ENV"
+            lineage_status=0
+          else
+            echo "LINEAGE_DEFERRED=false" >> "$GITHUB_ENV"
+          fi
+          exit "$lineage_status"
+
+      - name: Materialize diagnostic-only pending lineage preview
+        if: always() && env.LINEAGE_DEFERRED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
+          mkdir -p "$root/pending-lineage"
+          source_status="$(jq -r '.status // ""' "$lineage_root/source-run.json")"
+          source_state="UNKNOWN"
+          reason="SOURCE_RUN_API_UNAVAILABLE"
+          unknown_class="UNAVAILABLE"
+          next_operation="collect-on-workflow-run-completed"
+          blocked_by='["exact_source_workflow_run"]'
+          if [ "$source_status" != "" ] && [ "$source_status" != "completed" ]; then
+            source_state="PENDING"
+            reason="SOURCE_WORKFLOW_NOT_TERMINAL"
+            unknown_class="PENDING"
+            blocked_by='["source_workflow_run_completed"]'
+          elif [ "$(jq -r '.id // 0' "$lineage_root/source-run.json")" = "0" ]; then
+            reason="EXACT_SOURCE_RUN_MISSING"
+            unknown_class="DIRECT_MISSING"
+          fi
+          jq -n \
+            --arg schema "gooo/ci-effort-observation-pending-lineage/v1" \
+            --arg observer_status "REGISTRATION_COMPLETE" \
+            --arg decision "UNKNOWN" \
+            --arg resolution "DIAGNOSTIC_ONLY_PENDING_LINEAGE" \
+            --arg collection_status "DEFERRED" \
+            --arg source_state "$source_state" \
+            --arg source_status "$source_status" \
+            --arg stage "resolve-source-workflow" \
+            --arg step "await-terminal-source" \
+            --arg reason "$reason" \
+            --arg unknown_class "$unknown_class" \
+            --arg next_operation "$next_operation" \
+            --argjson blocked_by "$blocked_by" \
+            --arg workflow "$TRIGGER_SOURCE_WORKFLOW" \
+            --arg head "$HEAD_SHA" \
+            --argjson run "${SOURCE_RUN_ID:-0}" \
+            --argjson attempt "${SOURCE_RUN_ATTEMPT:-0}" \
+            --arg source_event "$TRIGGER_SOURCE_EVENT" \
+            --arg source_repository "$TRIGGER_SOURCE_REPOSITORY" \
+            --arg program "examples/ci-effort-observation/main.gooo" \
+            --arg operations "examples/ci-effort-observation/operations.json" \
+            --arg contract "examples/ci-effort-observation/contract.json" \
+            '{schema:$schema,observer_status:$observer_status,decision:$decision,resolution:$resolution,collection_status:$collection_status,source_state:$source_state,source_api_status:$source_status,source_workflow:$workflow,source_run_id:$run,source_run_attempt:$attempt,source_head_sha:$head,source_event:$source_event,source_repository:$source_repository,unknown:{stage:$stage,step:$step,reason:$reason,unknown_class:$unknown_class,next_operation:$next_operation,blocked_by:$blocked_by},timing:{status:"UNAVAILABLE",window_wall_ms:null,job_wall_ms:null,step_wall_ms:null},semantic:{terminal_source_validation:false,terminal_effort_report:false,reuse_allowed:false,promotion_allowed:false},program:{source:$program,operations_manifest:$operations,contract:$contract},diagnostic_only:true}' \
+            > "$root/pending-lineage/pending-lineage.json"
+          cat > "$root/pending-lineage/README.txt" <<EOF
+          This diagnostic-only preview records source workflow lineage that is not terminal.
+          It is not a CI effort receipt, terminal source validation, success result, or promotion input.
+          The existing terminal collector remains deferred to the workflow_run(completed) path.
+          Program: examples/ci-effort-observation/main.gooo
+          Contract: examples/ci-effort-observation/contract.json
+          EOF
+          cat "$root/pending-lineage/pending-lineage.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Produce read-only failed-source timing and operation observation
+        if: env.LINEAGE_DECISION == 'REFUTED' && env.LINEAGE_OBSERVATION_ELIGIBILITY == 'ELIGIBLE' && env.LINEAGE_DEFERRED != 'true'
+        working-directory: source-worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          lineage_root="$RUNNER_TEMP/ci-effort-observation-lineage"
+          mkdir -p "$root/read-only"
+          test "$(sha256sum "$CI_EFFORT_OBSERVER_RUNTIME" | awk '{print "sha256:"$1}')" = "$CI_EFFORT_OBSERVER_BINARY_DIGEST"
+          test "$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)" = "$CI_EFFORT_OBSERVER_COMMIT"
+          test "$(sha256sum "$CI_EFFORT_OBSERVER_PROGRAM" | awk '{print "sha256:"$1}')" = "$CI_EFFORT_OBSERVER_PROGRAM_DIGEST"
+          jq -n \
+            --arg schema "gooo/ci-effort-observer-runtime-binding/v1" \
+            --arg observer_commit "$CI_EFFORT_OBSERVER_COMMIT" \
+            --arg observer_expected_sha "$GITHUB_SHA" \
+            --arg observer_runtime "$CI_EFFORT_OBSERVER_RUNTIME" \
+            --arg observer_binary_digest "$CI_EFFORT_OBSERVER_BINARY_DIGEST" \
+            --arg observer_program "$CI_EFFORT_OBSERVER_PROGRAM" \
+            --arg observer_program_digest "$CI_EFFORT_OBSERVER_PROGRAM_DIGEST" \
+            --slurpfile source "$root/source/run.json" \
+            '{schema:$schema,observer:{checkout_commit:$observer_commit,expected_workflow_sha:$observer_expected_sha,runtime_path:$observer_runtime,binary_digest:$observer_binary_digest,program_path:$observer_program,program_digest:$observer_program_digest,program_role:"current-observer-policy"},source:{head_sha:$source[0].head_sha,run_id:$source[0].id,run_attempt:$source[0].run_attempt,inputs:"exact-source-snapshot"}}' > "$root/read-only/observer-runtime-binding.json"
+          "$CI_EFFORT_OBSERVER_RUNTIME" \
+            --read-only \
+            --run "$root/source/run.json" \
+            --jobs "$root/source/jobs.json" \
+            --manifest examples/ci-effort-observation/operations.json \
+            --contract examples/ci-effort-observation/contract.json \
+            --program "$CI_EFFORT_OBSERVER_PROGRAM" \
+            --lineage-observation "$lineage_root/actual/lineage-observation.json" \
+            --read-only-observation "$lineage_root/actual/read-only-observation.json" \
+            --output "$root/read-only/report.json" \
+            --markdown "$root/read-only/report.md" \
+            --check
+          jq -e --arg head "$HEAD_SHA" '
+            .schema == "gooo/ci-effort-observation-read-only/v1" and
+            .decision == "REFUTED" and .resolution == "READ_ONLY" and .lineage_state == "MISMATCH" and
+            .head_sha == $head and .source_run_id > 0 and .source_run_attempt > 0 and
+            .source_run_status == "completed" and .source_run_conclusion != "" and .source_run_conclusion != "success" and
+            .source_failure_kept == true and .exact_source_identity == true and
+            .evidence_reuse_allowed == false and .promotion_allowed == false and
+            .repository_writes == 0 and .local_test_executions == 0 and .improvement == "UNKNOWN" and
+            (.timing.window_wall_ms | type) == "number" and (.timing.window_wall_ms >= 0) and
+            (.timing.observed_job_intervals | floor) == .timing.observed_job_intervals and
+            (.timing.observed_step_intervals | floor) == .timing.observed_step_intervals and
+            (.timing.missing_job_intervals | floor) == .timing.missing_job_intervals and
+            (.timing.missing_step_intervals | floor) == .timing.missing_step_intervals and
+            (.operations | length) == 7 and
+            .operation_counts.manifest == 7 and
+            (.operation_counts.observed + .operation_counts.skipped + .operation_counts.missing + .operation_counts.rejected) == 7 and
+            (.operations | all(.wall_ms >= 0))
+          ' "$root/read-only/report.json" > /dev/null
+          cat "$root/read-only/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Collect exact source and OpenTofu inputs
+        if: env.LINEAGE_DECISION == 'CLOSED' && env.LINEAGE_DEFERRED != 'true'
+        working-directory: source-worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/ci-effort-observation"
+          if [ ! -s "$root/ci-evidence/ci-evidence.json" ]; then
+            gh run download "$SOURCE_RUN_ID" --name "ci-evidence-$SOURCE_RUN_ID-$SOURCE_RUN_ATTEMPT" --dir "$root/ci-evidence"
+          fi
           gh run download "$SOURCE_RUN_ID" --name "ci-summary-$HEAD_SHA" --dir "$root/ci-summary"
           test -s "$root/ci-evidence/ci-evidence.json"
           test -s "$root/ci-summary/ci-summary.json"
@@ -83,15 +362,19 @@ jobs:
           env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE git status --porcelain=v1 --untracked-files=all > "$root/repository-status-before.txt"
 
       - name: Validate observer package in CI
+        if: env.LINEAGE_DECISION == 'CLOSED' && env.LINEAGE_DEFERRED != 'true'
+        working-directory: source-worktree
         run: go test ./scripts/ci-effort-observation
 
       - name: Produce exact CI effort receipt and replay
+        if: env.LINEAGE_DECISION == 'CLOSED' && env.LINEAGE_DEFERRED != 'true'
+        working-directory: source-worktree
         shell: bash
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/ci-effort-observation"
           source_event="$(jq -r .event "$root/source/run.json")"
-          source_ref="$(jq -r .ref "$root/source/run.json")"
+          source_ref="$(jq -r 'if .ref == null then "" else .ref end' "$root/source/run.json")"
           environment="repository=$GITHUB_REPOSITORY;event=$source_event;ref=$source_ref;head=$HEAD_SHA;toolchain=go1.27.0;permissions=contents:read,actions:read;workspace=<workspace>"
           args=(
             --run "$root/source/run.json"
@@ -132,9 +415,37 @@ jobs:
           jq -e '(.runtime_cases | length) == 5 and ([.runtime_cases[].id] == ["equal-timestamp-coarse", "empty-synthetic-interval", "reversed-interval", "malformed-timestamp", "negative-duration"]) and ([.runtime_cases[].decision] == ["PASS", "REFUTED", "REFUTED", "REFUTED", "REFUTED"]) and ([.runtime_cases[].resolution] == ["LOWER/SOURCE_SECOND", "EXACT", "EXACT", "EXACT", "EXACT"])' "$root/first/report.json" > /dev/null
           cat "$root/first/report.md" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload exact CI effort receipt
+      - name: Record unresolved workflow-lineage observation
+        if: env.LINEAGE_DECISION == 'UNKNOWN'
+        shell: bash
+        run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record read-only source-failure observation eligibility
+        if: env.LINEAGE_DECISION == 'REFUTED' && env.LINEAGE_OBSERVATION_ELIGIBILITY == 'ELIGIBLE'
+        shell: bash
+        run: cat "$RUNNER_TEMP/ci-effort-observation-lineage/actual/lineage-human.txt" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload exact workflow-lineage receipts
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ci-effort-observation-lineage-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/ci-effort-observation-lineage
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload diagnostic-only pending lineage preview
+        if: always() && env.LINEAGE_DEFERRED == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ci-effort-observation-pending-lineage-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/ci-effort-observation/pending-lineage
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload exact CI effort receipt
+        if: always() && env.LINEAGE_DEFERRED != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ci-effort-observation-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/ci-effort-observation

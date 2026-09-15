@@ -34,6 +34,9 @@ func validIndicatorApplicability(indicator sourcepolicy.Indicator) bool {
 			indicator.ApplicabilityReason != sourcepolicy.ApplicabilityReasonCatalogApplicable {
 			return false
 		}
+		if indicator.Operation == sourcepolicy.OperationRegisterSyntax {
+			return validRegistrationIndicator(indicator)
+		}
 		if sourcepolicy.IsLineCapMetric(indicator.MetricID) {
 			return indicator.Role == sourcepolicy.IndicatorRoleDriver && !indicator.Blocking &&
 				indicator.Relation == sourcepolicy.RelationLessOrEqual &&

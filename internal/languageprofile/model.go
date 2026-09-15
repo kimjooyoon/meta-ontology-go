@@ -6,6 +6,7 @@ const (
 	ReceiptSchema          = "gooo/language-profile-receipt/v1"
 	RunnerScopedResolution = "RUNNER_SCOPED"
 	MaximumSamples         = 20
+	ExecutionScope         = sourceexecution.DeclarationResolutionScope
 )
 
 type Request struct {
@@ -56,6 +57,7 @@ type Effects struct {
 
 type Receipt struct {
 	Schema         string                `json:"schema"`
+	Scope          string                `json:"scope"`
 	Decision       string                `json:"decision"`
 	Resolution     string                `json:"resolution"`
 	Reason         string                `json:"reason"`

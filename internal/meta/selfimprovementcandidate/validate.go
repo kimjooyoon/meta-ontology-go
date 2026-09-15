@@ -3,6 +3,8 @@ package selfimprovementcandidate
 import (
 	"fmt"
 	"slices"
+
+	valuewitnessinput "github.com/kimjooyoon/meta-ontology-go/internal/meta/selfimprovementvaluewitnessinput"
 )
 
 func Validate(report Report, expectedHead string, sourceRunID int64) error {
@@ -19,7 +21,7 @@ func Validate(report Report, expectedHead string, sourceRunID int64) error {
 	}
 	switch report.Decision {
 	case DecisionProposed:
-		if !validProposed(report) {
+		if !validProposed(report) || report.ExecutionInput == nil || valuewitnessinput.Validate(*report.ExecutionInput) != nil {
 			return fmt.Errorf("proposed candidate mismatch")
 		}
 	case DecisionFailClosed:
@@ -41,6 +43,11 @@ func authorityClosed(authority Authority) bool {
 func validProposed(report Report) bool {
 	return report.Resolution == ResolutionExact && report.Reason == ReasonProposed &&
 		len(report.Candidates) == 1 && validCandidate(report.Candidates[0], report.SourceObservationDigest) &&
+		report.ExecutionInput != nil && report.ExecutionInput.CandidateStableID == report.Candidates[0].ID &&
+		report.ExecutionInput.CandidateDigest == report.Candidates[0].Digest &&
+		report.ExecutionInput.SubjectSHA == report.SubjectSHA &&
+		report.ExecutionInput.ObservationDigest == report.SourceObservationDigest &&
+		report.ExecutionInput.Digest == report.Candidates[0].ExecutionInputDigest &&
 		coordinateEquals(report.Summary.Coordinates, 16, 16) &&
 		coordinateEquals(report.Summary.SourceCoordinates, 16, 16) &&
 		report.Summary.EligibleGaps == 1 && report.Summary.CandidateCount == 1 &&

@@ -1,7 +1,7 @@
 package languagepackageexecution
 
 func Evaluate(input Input) Report {
-	report := Report{Schema: ReportSchema, HeadSHA: input.HeadSHA, Cases: []CaseResult{}, Indicators: []Indicator{}, Proofs: []Proof{}, Views: []AudienceView{}}
+	report := Report{Schema: ReportSchema, Scope: ExecutionScope, HeadSHA: input.HeadSHA, Cases: []CaseResult{}, Indicators: []Indicator{}, Proofs: []Proof{}, Views: []AudienceView{}}
 	evidence := evidenceByID(input.Cases)
 	for _, spec := range input.Contract.Cases {
 		result := evaluateCase(spec, evidence[spec.ID])

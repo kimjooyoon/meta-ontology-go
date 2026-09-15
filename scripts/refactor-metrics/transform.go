@@ -53,7 +53,11 @@ func transformCandidate(root string, candidate candidate, write bool) error {
 	if err := format.Node(&output, fset, file); err != nil {
 		return err
 	}
-	if bytes.Equal(source, output.Bytes()) {
+	formatted, err := format.Source(output.Bytes())
+	if err != nil {
+		return err
+	}
+	if bytes.Equal(source, formatted) {
 		return fmt.Errorf("candidate %q produced no change", candidate.raw)
 	}
 	if !write {
@@ -63,5 +67,5 @@ func transformCandidate(root string, candidate candidate, write bool) error {
 	if err != nil {
 		return err
 	}
-	return writeAtomic(path, output.Bytes(), info.Mode())
+	return writeAtomic(path, formatted, info.Mode())
 }

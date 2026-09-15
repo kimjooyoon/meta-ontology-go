@@ -47,3 +47,20 @@ type ActivityDecl struct {
 
 func (*ActivityDecl) declarationNode()   {}
 func (d *ActivityDecl) SourceSpan() Span { return d.Span }
+
+// BindingEndpoint identifies one of the two fixed runtime ports supported by
+// the first binding grammar slice.
+type BindingEndpoint struct {
+	Span     Span
+	Activity NameRef
+	Port     NameRef
+}
+
+// BindingDecl records an explicit result-to-input edge. It is intentionally
+// not a Declaration: binding semantics are carried by the execution-plan
+// extension rather than by the PROV declaration vocabulary.
+type BindingDecl struct {
+	Span     Span
+	Producer BindingEndpoint
+	Consumer BindingEndpoint
+}

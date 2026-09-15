@@ -21,7 +21,9 @@ func expectedActionOutcome(
 
 func validateActionOutcomes(actions []Action) error {
 	for index, action := range actions {
-		if !actionMatchesSourceIndicator(action) {
+		if !actionMatchesSourceIndicator(action) || action.SubjectKind == "" ||
+			action.InputSubjectKind == "" || action.SubjectKind != action.InputSubjectKind ||
+			!validDigest(action.InputContractSourceDigest) || !validDigest(action.InputContractSemanticDigest) {
 			return fmt.Errorf("selected action %d indicator membership mismatch", index)
 		}
 		expected := action.SourceIndicator.Outcome()
@@ -34,7 +36,9 @@ func validateActionOutcomes(actions []Action) error {
 
 func validateExecutionOutcomes(steps []ExecutionStep) error {
 	for index, step := range steps {
-		if !stepMatchesSourceIndicator(step) {
+		if !stepMatchesSourceIndicator(step) || step.SubjectKind == "" ||
+			step.InputSubjectKind == "" || step.SubjectKind != step.InputSubjectKind ||
+			!validDigest(step.InputContractSourceDigest) || !validDigest(step.InputContractSemanticDigest) {
 			return fmt.Errorf("execution step %d indicator membership mismatch", index)
 		}
 		expected := step.SourceIndicator.Outcome()

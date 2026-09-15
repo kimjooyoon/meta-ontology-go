@@ -13,7 +13,7 @@ func selectedImports(decls []ast.Decl, list []importSpec, includeBlank bool) (ma
 	for _, decl := range decls {
 		ast.Inspect(decl, func(node ast.Node) bool {
 			if selector, ok := node.(*ast.SelectorExpr); ok {
-				if ident, ok := selector.X.(*ast.Ident); ok {
+				if ident, ok := selector.X.(*ast.Ident); ok && ident.Obj == nil {
 					used[ident.Name] = true
 				}
 			}
