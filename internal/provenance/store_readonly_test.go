@@ -80,6 +80,7 @@ func newReadOnlyWitnessStore(t *testing.T, candidate bool) *Store {
 	records := BillingFixture()
 	if candidate {
 		records[0].Status = StatusCandidate
+		records[0].Attributes["status"] = string(StatusCandidate)
 	}
 	if err := store.Append(records...); err != nil {
 		t.Fatal(err)
