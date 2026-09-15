@@ -3023,6 +3023,13 @@
         ".github/ci-governance.json",
         "internal/verify/scope_dev_main_topology_repair_20260902.go"
       ]
+    },
+    {
+      "branch": "agent/runtime-repair-candidate-validation-20260915",
+      "paths": [
+        "cmd/gooo/**",
+        "internal/valueexecution/**"
+      ]
     }
   ],
   "protected_kernel_paths": [

@@ -8,4 +8,8 @@ func init() {
 		".github/ci-governance.json",
 		"internal/verify/scope_dev_main_topology_repair_20260902.go",
 	}
+	branchScopeAllowlist["agent/runtime-repair-candidate-validation-20260915"] = []string{
+		"cmd/gooo",
+		"internal/valueexecution",
+	}
 }
