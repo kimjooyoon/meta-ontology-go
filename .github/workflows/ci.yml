@@ -1330,7 +1330,6 @@ jobs:
     name: FOUNDATION authorization protocol
     if: ${{ github.event_name == 'pull_request' && github.base_ref == 'dev' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -1838,7 +1837,6 @@ jobs:
   feedback-predecessor:
     name: Feedback predecessor
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -1954,7 +1952,6 @@ jobs:
   language-package-execution:
     name: Language package execution
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -1977,7 +1974,6 @@ jobs:
     needs: [feedback-predecessor]
     if: ${{ (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && needs.feedback-predecessor.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
