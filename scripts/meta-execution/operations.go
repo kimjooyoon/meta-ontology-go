@@ -651,7 +651,7 @@ func runGoTest(root string, environment []string) processResult {
 	return runProcessResult(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."})
 }
 
-func runGoTestObserved(root string, environment, packageDir string, trace *metaExecutionTrace, pass string) (processResult, error) {
+func runGoTestObserved(root string, environment []string, packageDir string, trace *metaExecutionTrace, pass string) (processResult, error) {
 	environment = verifierCacheEnvironment(environment, trace)
 	packagePattern := "./..."
 	if packageDir != "" && packageDir != "." && packageDir != string(filepath.Separator) {
