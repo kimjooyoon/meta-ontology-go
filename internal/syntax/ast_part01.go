@@ -24,6 +24,7 @@ type File struct {
 	// the same ordered values for callers that prefer the longer name.
 	Decls        []Declaration
 	Declarations []Declaration
+	Bindings     []BindingDecl
 }
 
 // SourceFile and AST are descriptive aliases for callers that prefer those

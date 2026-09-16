@@ -50,6 +50,10 @@ func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (str
 				return "", err
 			}
 		}
+		for _, binding := range file.Bindings {
+			output.WriteByte('\n')
+			fmt.Fprintf(&output, "bind %s.%s -> %s.%s", binding.SourceActivity, binding.SourcePort, binding.TargetActivity, binding.TargetPort)
+		}
 	}
 	output.WriteByte('\n')
 	return output.String(), nil

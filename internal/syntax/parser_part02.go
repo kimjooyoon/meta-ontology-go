@@ -56,6 +56,8 @@ func (p *Parser) parseFile() *File {
 		case p.at(TokenActivity):
 			file.Decls = append(file.Decls, p.parseActivity())
 			file.Declarations = file.Decls
+		case p.at(TokenIdentifier) && p.peek().Value == "bind":
+			file.Bindings = append(file.Bindings, p.parseBinding())
 		case p.at(TokenIdentifier) && p.peek().Value == "policy":
 			file.Decls = append(file.Decls, p.parsePolicy())
 			file.Declarations = file.Decls
