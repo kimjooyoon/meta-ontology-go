@@ -185,9 +185,9 @@ func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.
 	trace := metaExecutionTrace{state: newMetaExecutionTraceStateWithWriter(&bytes.Buffer{})}
 	trace.action.Activity = "CollapseAssignReturn"
 	restoreVerifierReplayFixture(t, replay, source, root)
-	first, firstErr := runGoTestObserved(root, environment, &trace, "first")
+	first, firstErr := runGoTestObserved(root, environment, ".", &trace, "first")
 	restoreVerifierReplayFixture(t, replay, source, root)
-	second, secondErr := runGoTestObserved(root, environment, &trace, "replay")
+	second, secondErr := runGoTestObserved(root, environment, ".", &trace, "replay")
 	if firstErr != nil || secondErr != nil || first.Observation.ExitCode != 0 || second.Observation.ExitCode != 0 {
 		t.Fatalf("native fixture did not pass: first=%v %s replay=%v %s", firstErr, first.Stderr, secondErr, second.Stderr)
 	}
@@ -203,7 +203,7 @@ func TestVerifierCacheInvocationNativeSourceChangeCannotReuseSuccess(t *testing.
 	}
 	write("value.go", "package cachewitness\n\nfunc Value() int { return 41 }\n")
 	restoreVerifierReplayFixture(t, replay, source, root)
-	changed, changedErr := runGoTestObserved(root, environment, &trace, "changed-source")
+	changed, changedErr := runGoTestObserved(root, environment, ".", &trace, "changed-source")
 	failure := classifyVerifierProcess("synthetic-cache-witness", changed, changedErr)
 	if changedErr == nil || changed.Observation.ExitCode <= 0 || failure == nil ||
 		failure.reason != "PROJECTED_COMPILE_OR_TEST_FAILED" || failure.class != "KNOWN_CONTRADICTION" ||
