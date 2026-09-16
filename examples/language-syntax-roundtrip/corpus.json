@@ -546,7 +546,7 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
-    },
+    }
   ],
   "package_units": [
     {
