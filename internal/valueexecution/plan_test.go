@@ -33,6 +33,9 @@ func TestCompilePlanExecutesActualFanoutAndFreshRuns(t *testing.T) {
 	if first.ApplyCalls != 3 || first.Deliveries != 2 {
 		t.Fatalf("execution counts = applies:%d deliveries:%d, want 3 and 2", first.ApplyCalls, first.Deliveries)
 	}
+	if first.PlanDigest == "" || first.InputDigest == "" || first.ExecutionDigest == "" {
+		t.Fatalf("execution provenance digests are incomplete: %#v", first)
+	}
 	for activity, want := range map[string]int64{"Produce": 42, "ConsumeA": 43, "ConsumeB": 43} {
 		result, ok := first.Results[activity]
 		if !ok || result.Value != want || result.ProducerActivity != activity || !validDigest(result.ResultDigest) {
@@ -46,6 +49,13 @@ func TestCompilePlanExecutesActualFanoutAndFreshRuns(t *testing.T) {
 	}
 	if second.Results["ConsumeA"].Value != 7 || second.Results["ConsumeB"].Value != 7 {
 		t.Fatalf("fresh plan run mixed stale values: %#v", second.Results)
+	}
+	if second.PlanDigest != first.PlanDigest || second.InputDigest == first.InputDigest || second.ExecutionDigest == first.ExecutionDigest {
+		t.Fatalf("execution provenance did not distinguish plan and input identity: first=%#v second=%#v", first, second)
+	}
+	third, err := plan.Execute(map[string]int64{"Produce": 41})
+	if err != nil || third.ExecutionDigest != first.ExecutionDigest {
+		t.Fatalf("identical execution replay changed digest: first=%q third=%q err=%v", first.ExecutionDigest, third.ExecutionDigest, err)
 	}
 }
 

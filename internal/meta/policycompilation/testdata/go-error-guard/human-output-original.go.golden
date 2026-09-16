@@ -11,17 +11,11 @@ import (
 
 func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, discovery *publicdiscovery.Result, jsonMode bool, stdout io.Writer) int {
 	if !jsonMode {
-		if _, err := fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName)); err != nil {
-			return exitFailure
-		}
+		fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName))
 		if discovery != nil {
-			if _, err := fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision); err != nil {
-				return exitFailure
-			}
+			fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision)
 			if discovery.Report.CandidatesEmitted > 0 {
-				if _, err := fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath); err != nil {
-					return exitFailure
-				}
+				fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath)
 			}
 		}
 		return exitOK
