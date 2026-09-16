@@ -1,0 +1,17 @@
+package domainobservation
+namespace domain_observation
+
+entity Service id "gooo://domain-observation/entity/service"
+entity Symptom id "gooo://domain-observation/entity/symptom"
+entity Diagnosis id "gooo://domain-observation/entity/diagnosis"
+entity Resolution id "gooo://domain-observation/entity/resolution"
+entity Outcome id "gooo://domain-observation/entity/outcome"
+
+activity ObserveSymptom(Service) -> Symptom computes "observation=service-latency;fact=explicit"
+activity ProposeDiagnosis(Symptom) -> Diagnosis computes "proposal=bounded;inference=explicit"
+activity ApplyResolution(Diagnosis) -> Resolution computes "effect=configuration-change;authority=explicit"
+activity RecordOutcome(Resolution) -> Outcome computes "result=observed;claim=explicit"
+
+bind ObserveSymptom.result -> ProposeDiagnosis.input
+bind ProposeDiagnosis.result -> ApplyResolution.input
+bind ApplyResolution.result -> RecordOutcome.input
