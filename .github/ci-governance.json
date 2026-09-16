@@ -4471,6 +4471,17 @@
         "examples/billing-package/EXPERIMENT.md",
         "internal/verify/scope_cap_03_billing_user_transcript_20260911.go"
       ]
+    },
+    {
+      "branch": "agent/runtime-repair-authority-20260916",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/emit_dispatch.go",
+        "cmd/gooo/main_part01.go",
+        "internal/valueexecution/repair.go",
+        "internal/valueexecution/repair_test.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
