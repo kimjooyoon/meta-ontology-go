@@ -54,6 +54,7 @@ type Document struct {
 	Declarations          []Declaration
 	Policies              []semantic.Policy
 	Relations             []Relation
+	BindingEdges          []BindingEdge
 	ImplicitActivityPorts bool
 }
 
