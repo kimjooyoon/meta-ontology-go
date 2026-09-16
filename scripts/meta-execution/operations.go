@@ -347,7 +347,7 @@ func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, 
 		failure.evidence = splitFailureEvidence(report)
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator}, failure
 	}
-	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	verifier, verifierErr := runGoTestObserved(temporary, environment, filepath.Dir(action.Subject), &trace, pass)
 	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
@@ -477,7 +477,7 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{action.Evaluator, subject.Path, subject.Name}, evaluatorRaw, nil)
-	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	verifier, verifierErr := runGoTestObserved(temporary, environment, filepath.Dir(subject.Path), &trace, pass)
 	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
@@ -651,9 +651,14 @@ func runGoTest(root string, environment []string) processResult {
 	return runProcessResult(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."})
 }
 
-func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) (processResult, error) {
+func runGoTestObserved(root string, environment []string, packageDir string, trace *metaExecutionTrace, pass string) (processResult, error) {
 	environment = verifierCacheEnvironment(environment, trace)
-	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+	packagePattern := "./..."
+	if packageDir != "" && packageDir != "." && packageDir != string(filepath.Separator) {
+		packagePattern = "./" + filepath.ToSlash(filepath.Clean(packageDir))
+	}
+	args := []string{"go", "test", packagePattern}
+	return runProcessObserved(root, environment, args, args, trace, pass, "verifier")
 }
 
 // Only these operations already exclude verifier output from semantic replay.
