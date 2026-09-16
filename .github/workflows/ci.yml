@@ -526,7 +526,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: meta-boundary-journals-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/source-metrics/*.trace.ndjson
+          path: |
+            ${{ runner.temp }}/source-metrics/*.trace.ndjson
+            ${{ runner.temp }}/source-metrics/*.verifier-package-summaries.json
           if-no-files-found: warn
           retention-days: 30
       - name: Reconstruct observed boundary costs

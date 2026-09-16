@@ -149,33 +149,97 @@ jobs:
             any(.cases[]; any(.claim_predicates[]; .outcome == "OPEN")) and
             any(.cases[]; .generated.decision == "UNKNOWN" and .generated.stage != "FIXED_POINT" and .generated.unknown_class != "" and .generated.next_operation != "" and (.generated.blocked_by | length) > 0)
           ' "$root/first/receipt.json"
+          jq -e '
+            .schema == "gooo/meta-policy-compilation/v3" and
+            .policy_id == "gooo://meta-policy-compilation/policy/v4"
+          ' "$root/first/policy.json"
+          jq -e '
+            .policy.schema == "gooo/meta-policy-compilation/v3" and
+            .policy.policy_id == "gooo://meta-policy-compilation/policy/v4"
+          ' "$root/first/artifact.json"
 
           mkdir -p "$root/intervention"
           cp examples/meta-policy-compilation/policy.gooo "$root/intervention/comment.gooo"
           printf '\n// nonsemantic intervention: comments do not alter the lowered policy\n' >> "$root/intervention/comment.gooo"
-          sed 's/SEMANTIC_EQUIVALENCE_PROVED/SEMANTIC_EQUIVALENCE_INTERVENED/' examples/meta-policy-compilation/policy.gooo > "$root/intervention/semantic.gooo"
-          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/comment.gooo" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/comment"
-          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/semantic.gooo" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/semantic"
-          for variant in base comment semantic; do
+          sed 's/SEMANTIC_EQUIVALENCE_PROVED/SEMANTIC_EQUIVALENCE_INTERVENED/' examples/meta-policy-compilation/policy.gooo > "$root/intervention/reason.gooo"
+          awk '
+            /transition "SEMANTIC_EQUIVALENCE" -> "PASS"/ {
+              sub(/"PASS"/, "\"FAIL_CLOSED\"")
+              transition_changes++
+            }
+            /^    case "SEMANTIC_EQUIVALENCE"/ { in_semantic_case=1 }
+            in_semantic_case && /decision "PASS"/ {
+              sub(/decision "PASS"/, "decision \"FAIL_CLOSED\"")
+              decision_changes++
+              in_semantic_case=0
+            }
+            { print }
+            END {
+              if (transition_changes != 1 || decision_changes != 1) exit 1
+            }
+          ' examples/meta-policy-compilation/policy.gooo > "$root/intervention/strict.gooo"
+          diff -u examples/meta-policy-compilation/policy.gooo "$root/intervention/strict.gooo" > "$root/intervention/strict.diff" || true
+          test "$(grep -Ec '^[-+][^-+]' "$root/intervention/strict.diff")" -eq 4
+          grep -F -- '-    transition "SEMANTIC_EQUIVALENCE" -> "PASS"' "$root/intervention/strict.diff"
+          grep -F -- '+    transition "SEMANTIC_EQUIVALENCE" -> "FAIL_CLOSED"' "$root/intervention/strict.diff"
+          grep -F -- '-            decision "PASS"' "$root/intervention/strict.diff"
+          grep -F -- '+            decision "FAIL_CLOSED"' "$root/intervention/strict.diff"
+          sed -e 's/^package metapolicycompilation$/package metapolicyalternate/' -e 's/^namespace metapolicycompilation$/namespace metapolicyalternate/' examples/meta-policy-compilation/policy.gooo > "$root/intervention/identity.gooo"
+          jq 'map(if .id == "pass-semantic-equivalence" then .validator_expectation = "FAIL_CLOSED" else . end)' examples/meta-policy-compilation/cases.json > "$root/intervention/strict-cases.json"
+          mkdir -p "$root/intervention/comment-project" "$root/intervention/reason-project" "$root/intervention/strict-project" "$root/intervention/identity-project"
+          cp "$root/intervention/comment.gooo" "$root/intervention/comment-project/policy.gooo"
+          cp "$root/intervention/reason.gooo" "$root/intervention/reason-project/policy.gooo"
+          cp "$root/intervention/strict.gooo" "$root/intervention/strict-project/policy.gooo"
+          cp "$root/intervention/identity.gooo" "$root/intervention/identity-project/policy.gooo"
+          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/comment-project/policy.gooo" -profile-project-root "$root/intervention/comment-project" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/comment"
+          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/reason-project/policy.gooo" -profile-project-root "$root/intervention/reason-project" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/reason"
+          go run ./cmd/meta-policy-compilation-witness -policy "$root/intervention/strict-project/policy.gooo" -profile-project-root "$root/intervention/strict-project" -cases "$root/intervention/strict-cases.json" -output "$root/intervention/strict"
+          go run ./cmd/meta-policy-compilation-witness -profile-package metapolicyalternate -profile-namespace metapolicyalternate -policy "$root/intervention/identity-project/policy.gooo" -profile-project-root "$root/intervention/identity-project" -cases examples/meta-policy-compilation/cases.json -output "$root/intervention/identity"
+          for variant in base comment reason strict identity; do
             case "$variant" in
               base) receipt="$root/first/receipt.json" ;;
               comment) receipt="$root/intervention/comment/receipt.json" ;;
-              semantic) receipt="$root/intervention/semantic/receipt.json" ;;
+              reason) receipt="$root/intervention/reason/receipt.json" ;;
+              strict) receipt="$root/intervention/strict/receipt.json" ;;
+              identity) receipt="$root/intervention/identity/receipt.json" ;;
             esac
-            jq '[.cases[] | {id:.id, source:(.source | {decision, stage, step, reason, unknown_class, next_operation, blocked_by}), generated:(.generated | {decision, stage, step, reason, unknown_class, next_operation, blocked_by}), independent:(.independent | {decision, stage, step, reason, unknown_class, next_operation, blocked_by})}]' "$receipt" > "$root/intervention/$variant-behavior.json"
+            jq '[.cases[] | {case_id:.id, source:(.source | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator}), generated:(.generated | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator}), independent:(.independent | {case_id, decision, matched_condition, stage, step, reason, unknown_class, next_operation, blocked_by, fixed_denominator})}]' "$receipt" > "$root/intervention/$variant-behavior.json"
+            jq '[.cases[] | {case_id:.id, source:(.source | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator}), generated:(.generated | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator}), independent:(.independent | {case_id, decision, matched_condition, stage, step, unknown_class, next_operation, blocked_by, fixed_denominator})}]' "$receipt" > "$root/intervention/$variant-decision-behavior.json"
             jq '[.claims.events[] | {claim_id, predicate, from, to, decision, stage, step, reason}]' "$receipt" > "$root/intervention/$variant-claims.json"
           done
           cmp "$root/intervention/base-behavior.json" "$root/intervention/comment-behavior.json"
           cmp "$root/intervention/base-claims.json" "$root/intervention/comment-claims.json"
-          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.source_digest != $comment[0].policy.source_digest' >/dev/null
-          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.semantic_digest == $comment[0].policy.semantic_digest' >/dev/null
-          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile semantic "$root/intervention/semantic/receipt.json" '$base[0].policy.semantic_digest != $semantic[0].policy.semantic_digest' >/dev/null
-          if cmp "$root/intervention/base-behavior.json" "$root/intervention/semantic-behavior.json"; then
-            echo 'semantic intervention did not change behavior' >&2
+          cmp "$root/intervention/base-behavior.json" "$root/intervention/identity-behavior.json"
+          cmp "$root/intervention/base-claims.json" "$root/intervention/identity-claims.json"
+          cmp "$root/intervention/base-decision-behavior.json" "$root/intervention/reason-decision-behavior.json"
+          cmp "$root/intervention/base-decision-behavior.json" "$root/intervention/comment-decision-behavior.json"
+          cmp "$root/intervention/base-decision-behavior.json" "$root/intervention/identity-decision-behavior.json"
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile comment "$root/intervention/comment/receipt.json" '$base[0].policy.source_digest != $comment[0].policy.source_digest and $base[0].policy.semantic_digest == $comment[0].policy.semantic_digest' >/dev/null
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile reason "$root/intervention/reason/receipt.json" '$base[0].policy.source_digest != $reason[0].policy.source_digest and $base[0].policy.semantic_digest != $reason[0].policy.semantic_digest' >/dev/null
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile identity "$root/intervention/identity/receipt.json" '$base[0].policy.source_digest != $identity[0].policy.source_digest and $base[0].policy.semantic_digest != $identity[0].policy.semantic_digest and $identity[0].policy.package == "metapolicyalternate" and $identity[0].policy.namespace == "metapolicyalternate"' >/dev/null
+          # The reason variant changes source and semantic digests while retaining the ruling fields.
+          if cmp "$root/intervention/base-behavior.json" "$root/intervention/reason-behavior.json"; then
+            echo 'reason intervention did not change the observed reason' >&2
             exit 1
           fi
-          if cmp "$root/intervention/base-claims.json" "$root/intervention/semantic-claims.json"; then
-            echo 'semantic intervention did not change claim transitions' >&2
+          jq -n -e --slurpfile base "$root/first/receipt.json" --slurpfile reason "$root/intervention/reason/receipt.json" '
+            $base[0].policy.source_digest != $reason[0].policy.source_digest and
+            $base[0].policy.semantic_digest != $reason[0].policy.semantic_digest and
+            (any($base[0].cases[]; .id == "pass-semantic-equivalence" and .source.reason != ($reason[0].cases[] | select(.id == "pass-semantic-equivalence") | .source.reason)))
+          ' >/dev/null
+          jq -n -e --slurpfile base "$root/intervention/base-behavior.json" --slurpfile strict "$root/intervention/strict-behavior.json" --slurpfile strict_receipt "$root/intervention/strict/receipt.json" '
+            ([$base[0][] | select(.case_id != "pass-semantic-equivalence")] == [$strict[0][] | select(.case_id != "pass-semantic-equivalence")]) and
+            ([$strict_receipt[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.decision == "FAIL_CLOSED") and
+            ([$strict_receipt[0].cases[] | select(.id == "pass-semantic-equivalence")][0].generated.matched_condition == "SEMANTIC_EQUIVALENCE")
+          ' >/dev/null
+          jq -e '([.cases[] | select(.generated.decision == "PASS")] | length) == 1 and ([.cases[] | select(.generated.decision == "PASS")][0].generated.matched_condition == "SEMANTIC_EQUIVALENCE")' "$root/first/receipt.json"
+          jq -e '([.cases[] | select(.generated.matched_condition == "SEMANTIC_EQUIVALENCE")] | length) == 1 and ([.cases[] | select(.generated.matched_condition == "SEMANTIC_EQUIVALENCE")][0].generated.decision == "FAIL_CLOSED") and (.summary.pass_count == 0) and (.summary.fail_closed_count == 2) and (.summary.unknown_count == 1)' "$root/intervention/strict/receipt.json"
+          if cmp "$root/intervention/base-behavior.json" "$root/intervention/strict-behavior.json"; then
+            echo 'strict intervention did not change behavior' >&2
+            exit 1
+          fi
+          if cmp "$root/intervention/base-claims.json" "$root/intervention/strict-claims.json"; then
+            echo 'strict intervention did not change claim transitions' >&2
             exit 1
           fi
 
@@ -316,6 +380,9 @@ jobs:
             -policy examples/meta-policy-compilation/policy.gooo \
             -cases examples/meta-policy-compilation/cases.json \
             -artifact "$RUNNER_TEMP/meta-policy-compilation/first" \
+            -manifest "$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
             -output "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
           jq -e '
             .schema == "gooo/meta-policy-compilation-consumer/v3" and
@@ -333,6 +400,92 @@ jobs:
             .subject_resolution == "RESOLVED" and .subject_decision.decision == "PASS"
           ' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json"
           jq -r '"### Independent Gooo consumer\n- raw Gooo parse: " + (.raw_policy_parsed|tostring) + "\n- source/generated/independent: 3/3/3\n- import boundary: producer compiler " + .import_boundary.producer_compiler_imports + "\n- synthetic evidence/current evidence: " + ((.synthetic_evidence|length)|tostring) + "/" + .current_evidence.class + "\n- subject: " + .subject_resolution + " / " + .subject_decision.decision' "$RUNNER_TEMP/meta-policy-compilation/consumer-report.json" >> "$GITHUB_STEP_SUMMARY"
+          mutation_root="$RUNNER_TEMP/meta-policy-compilation/mutations"
+          mkdir -p "$mutation_root"
+          public_manifest="$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json"
+          cp "$public_manifest" "$mutation_root/manifest-unknown.json"
+          jq '.unexpected_field = true' "$mutation_root/manifest-unknown.json" > "$mutation_root/manifest-unknown.json.tmp"
+          mv "$mutation_root/manifest-unknown.json.tmp" "$mutation_root/manifest-unknown.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$RUNNER_TEMP/meta-policy-compilation/first" \
+            -manifest "$mutation_root/manifest-unknown.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/manifest-unknown-report.json"; then
+            echo 'manifest with an unknown field was accepted' >&2
+            exit 1
+          fi
+          cp "$public_manifest" "$mutation_root/manifest-missing-authority.json"
+          jq 'del(.mutation_authority)' "$mutation_root/manifest-missing-authority.json" > "$mutation_root/manifest-missing-authority.json.tmp"
+          mv "$mutation_root/manifest-missing-authority.json.tmp" "$mutation_root/manifest-missing-authority.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$RUNNER_TEMP/meta-policy-compilation/first" \
+            -manifest "$mutation_root/manifest-missing-authority.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/manifest-missing-authority-report.json"; then
+            echo 'manifest with missing mutation authority was accepted' >&2
+            exit 1
+          fi
+          cp "$public_manifest" "$mutation_root/manifest-trailing.json"
+          printf '\n{}\n' >> "$mutation_root/manifest-trailing.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$RUNNER_TEMP/meta-policy-compilation/first" \
+            -manifest "$mutation_root/manifest-trailing.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/manifest-trailing-report.json"; then
+            echo 'manifest with trailing JSON was accepted' >&2
+            exit 1
+          fi
+          cp -R "$RUNNER_TEMP/meta-policy-compilation/first" "$mutation_root/schema"
+          jq '.policy.schema = "gooo/meta-policy-compilation/v4"' "$mutation_root/schema/artifact.json" > "$mutation_root/schema/artifact.json.tmp"
+          mv "$mutation_root/schema/artifact.json.tmp" "$mutation_root/schema/artifact.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$mutation_root/schema" \
+            -manifest "$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/schema-report.json"; then
+            echo 'policy schema mutation was accepted' >&2
+            exit 1
+          fi
+          cp -R "$RUNNER_TEMP/meta-policy-compilation/first" "$mutation_root/policy"
+          jq '.rules[0].reason = (.rules[0].reason + "-tampered")' "$mutation_root/policy/policy.json" > "$mutation_root/policy/policy.json.tmp"
+          mv "$mutation_root/policy/policy.json.tmp" "$mutation_root/policy/policy.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$mutation_root/policy" \
+            -manifest "$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/policy-report.json"; then
+            echo 'policy mutation with preserved digests was accepted' >&2
+            exit 1
+          fi
+          cp -R "$RUNNER_TEMP/meta-policy-compilation/first" "$mutation_root/artifact"
+          jq '.policy.rules[0].reason = (.policy.rules[0].reason + "-tampered")' "$mutation_root/artifact/artifact.json" > "$mutation_root/artifact/artifact.json.tmp"
+          mv "$mutation_root/artifact/artifact.json.tmp" "$mutation_root/artifact/artifact.json"
+          if go run ./cmd/meta-policy-compilation-consumer \
+            -policy examples/meta-policy-compilation/policy.gooo \
+            -cases examples/meta-policy-compilation/cases.json \
+            -artifact "$mutation_root/artifact" \
+            -manifest "$RUNNER_TEMP/meta-policy-compilation/first-public/generation-manifest.json" \
+            -profile-package metapolicycompilation \
+            -profile-namespace metapolicycompilation \
+            -output "$mutation_root/artifact-report.json"; then
+            echo 'artifact policy mutation with preserved digests was accepted' >&2
+            exit 1
+          fi
       - name: Upload independent consumer report
         if: always()
         uses: actions/upload-artifact@v7

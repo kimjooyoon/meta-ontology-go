@@ -43,6 +43,7 @@ func run(configuration options) error {
 		return fmt.Errorf("open operation boundary journal: %w", err)
 	}
 	defer journal.Close()
+	defer func() { _ = traceState.writeVerifierPackageSummary() }()
 	bundle, bundleErr := executeSelectedOperationsWithTrace(plan, manifest, workspaceRoot(), traceState)
 	if bundleErr != nil {
 		return fmt.Errorf("execute selected operations: %w", bundleErr)

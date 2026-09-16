@@ -54,6 +54,8 @@ func ReconcileWithOptions(base Model, changes FactDelta, options ReconcileOption
 		}
 	}
 	if len(result.Conflicts) > 0 {
+		result.ValidatedBeforeRollback = result.Accepted.Normalized()
+		result.Accepted = nil
 		result.Model = base
 		return result, &ReconcileError{Conflicts: result.Conflicts}
 	}

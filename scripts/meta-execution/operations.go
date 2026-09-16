@@ -285,11 +285,16 @@ func executeAction(workspace, gitDir, metricsPath string, plan generation.Plan, 
 }
 
 func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace) (operationMaterialization, *operationError) {
-	first, firstErr := materializeSplit(workspace, gitDir, metricsPath, plan, action, trace, "first")
+	replay, prepareErr := newMetaReplayWorkspace()
+	if prepareErr != nil {
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
+	}
+	defer replay.close()
+	first, firstErr := materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, trace, "first", replay)
 	if firstErr != nil {
 		return first, firstErr
 	}
-	second, secondErr := materializeSplit(workspace, gitDir, metricsPath, plan, action, trace, "replay")
+	second, secondErr := materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, trace, "replay", replay)
 	if secondErr != nil {
 		return second, secondErr
 	}
@@ -301,11 +306,19 @@ func executeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, a
 }
 
 func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace, pass string) (operationMaterialization, *operationError) {
-	temporary, err := copyWorkspace(workspace)
+	replay, prepareErr := newMetaReplayWorkspace()
+	if prepareErr != nil {
+		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
+	}
+	defer replay.close()
+	return materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath, plan, action, trace, pass, replay)
+}
+
+func materializeSplitWithReplayWorkspace(workspace, gitDir, metricsPath string, plan generation.Plan, action generation.Action, trace metaExecutionTrace, pass string, replay *metaReplayWorkspace) (operationMaterialization, *operationError) {
+	temporary, err := replay.restore(workspace)
 	if err != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "materialize-disposable-workspace", "WORKSPACE_MATERIALIZATION_FAILED", "DIRECT_MISSING", "restore-workspace")
 	}
-	defer os.RemoveAll(temporary)
 	snapshot, snapshotErr := readOnlyGitSnapshot(gitDir, plan.HeadSHA)
 	if snapshotErr != nil {
 		return operationMaterialization{}, newOperationError("prepare-workspace", "isolate-git-context", "GIT_SNAPSHOT_UNAVAILABLE", "DIRECT_MISSING", "restore-git-context")
@@ -334,9 +347,9 @@ func materializeSplit(workspace, gitDir, metricsPath string, plan generation.Pla
 		failure.evidence = splitFailureEvidence(report)
 		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator}, failure
 	}
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
-	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
 	canonical, err := splitReplayProjectionBytes(evidence, result.Observation, evaluator, verifier.Observation)
 	if err != nil {
@@ -464,9 +477,9 @@ func evaluateExtractMaterialization(temporary string, environment []string, befo
 	}
 	evaluatorRaw, _ := json.Marshal(report)
 	evaluator := descriptorObservation([]string{action.Evaluator, subject.Path, subject.Name}, evaluatorRaw, nil)
-	verifier := runGoTestObserved(temporary, environment, &trace, pass)
-	if verifier.Observation.ExitCode != 0 {
-		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, newOperationError("verify-operation", "go-test-projected-workspace", "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	if failure := classifyVerifierProcess("go-test-projected-workspace", verifier, verifierErr); failure != nil {
+		return operationMaterialization{Executor: result.Observation, Evaluator: evaluator, Verifier: verifier.Observation}, failure
 	}
 	validation.ProjectedTestsPassed = true
 	outputs, err := outputBytes(temporary, observed)
@@ -638,9 +651,65 @@ func runGoTest(root string, environment []string) processResult {
 	return runProcessResult(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."})
 }
 
-func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) processResult {
-	result, _ := runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
-	return result
+func runGoTestObserved(root string, environment []string, trace *metaExecutionTrace, pass string) (processResult, error) {
+	environment = verifierCacheEnvironment(environment, trace)
+	return runProcessObserved(root, environment, []string{"go", "test", "./..."}, []string{"go", "test", "./..."}, trace, pass, "verifier")
+}
+
+// Only these operations already exclude verifier output from semantic replay.
+func verifierCacheEnvironment(environment []string, trace *metaExecutionTrace) []string {
+	if trace == nil || trace.state == nil {
+		return environment
+	}
+	switch trace.action.Activity {
+	case "SplitGoDeclarations", "CollapseAssignReturn":
+	default:
+		return environment
+	}
+	if environment == nil {
+		environment = os.Environ()
+	}
+	value := ""
+	for _, entry := range environment {
+		if after, ok := strings.CutPrefix(entry, "GODEBUG="); ok {
+			value = after
+		}
+	}
+	for setting := range strings.SplitSeq(value, ",") {
+		name, _, present := strings.Cut(setting, "=")
+		if present && name == "gocachetest" {
+			return environment
+		}
+	}
+	if value != "" {
+		value += ","
+	}
+	return replaceEnvironment(environment, "GODEBUG", value+"gocachetest=1")
+}
+
+func classifyVerifierProcess(step string, result processResult, runErr error) *operationError {
+	if runErr == nil && result.Observation.ExitCode == 0 {
+		return nil
+	}
+	if verifierProcessExitedPositive(result, runErr) {
+		return newOperationError("verify-operation", step, "PROJECTED_COMPILE_OR_TEST_FAILED", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	reason := "PROJECTED_COMPILE_OR_TEST_UNAVAILABLE"
+	if exitError, ok := errors.AsType[*exec.ExitError](runErr); ok && exitError.ExitCode() < 0 {
+		reason = "PROJECTED_COMPILE_OR_TEST_INTERRUPTED"
+	}
+	return newOperationError("verify-operation", step, reason, "DIRECT_MISSING", "restore-operation-evidence")
+}
+
+func verifierProcessExitedPositive(result processResult, runErr error) bool {
+	if result.Observation.ExitCode <= 0 {
+		return false
+	}
+	if runErr == nil {
+		return true
+	}
+	exitError, ok := errors.AsType[*exec.ExitError](runErr)
+	return ok && exitError.ExitCode() > 0
 }
 
 func runProcessResult(root string, environment, descriptor, actual []string) processResult {
@@ -664,9 +733,9 @@ func runProcess(root string, environment, descriptor, actual []string) (processR
 	err := command.Run()
 	exitCode := 0
 	if err != nil {
-		exitCode = 1
-		if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
-			exitCode = exitError.ExitCode()
+		exitCode = -1
+		if command.ProcessState != nil {
+			exitCode = command.ProcessState.ExitCode()
 		}
 	}
 	observation := descriptorObservation(descriptor, stdout.Bytes(), stderr.Bytes(), exitCode)
@@ -836,6 +905,53 @@ func makeReadOnlySnapshot(root string) error {
 		}
 		return os.Chmod(path, mode)
 	})
+}
+
+// A replay reuses an address, never a previously transformed tree.
+type metaReplayWorkspace struct {
+	path string
+}
+
+func newMetaReplayWorkspace() (*metaReplayWorkspace, error) {
+	path, err := os.MkdirTemp("", "meta-operation-replay-")
+	if err != nil {
+		return nil, err
+	}
+	return &metaReplayWorkspace{path: path}, nil
+}
+
+func (replay *metaReplayWorkspace) restore(source string) (string, error) {
+	if replay == nil || replay.path == "" {
+		return "", fmt.Errorf("replay workspace is unavailable")
+	}
+	sourceInfo, err := os.Stat(source)
+	if err != nil {
+		return "", err
+	}
+	if !sourceInfo.IsDir() {
+		return "", fmt.Errorf("replay source is not a directory")
+	}
+	if currentInfo, err := os.Stat(replay.path); err == nil && os.SameFile(sourceInfo, currentInfo) {
+		return "", fmt.Errorf("replay source aliases its disposable workspace")
+	}
+	if err := os.RemoveAll(replay.path); err != nil {
+		return "", err
+	}
+	if err := os.Mkdir(replay.path, 0o700); err != nil {
+		return "", err
+	}
+	if err := copyTree(source, replay.path); err != nil {
+		return "", err
+	}
+	return replay.path, nil
+}
+
+func (replay *metaReplayWorkspace) close() {
+	if replay == nil || replay.path == "" {
+		return
+	}
+	_ = os.RemoveAll(replay.path)
+	replay.path = ""
 }
 
 func copyWorkspace(source string) (string, error) {

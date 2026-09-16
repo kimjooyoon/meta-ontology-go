@@ -42,9 +42,7 @@ func InspectInputs(repository fs.FS, request Request) (string, string, error) {
 }
 
 func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
-	if request.BaseVersion < 22 || request.BaseVersion > 10000 ||
-		!validPath(request.Case.Path) || !strings.HasPrefix(request.Case.Path, "examples/") ||
-		!strings.HasSuffix(request.Case.Path, ".gooo") {
+	if request.BaseVersion < 22 || request.BaseVersion > 10000 || !registrationSourcePath(request.Case.Path) {
 		return nil, failure("REFUTED", "validate-request", "REGISTRATION_INPUT_INVALID", "", "correct-explicit-input")
 	}
 	paths, err := sourceInputPaths(repository)
@@ -73,6 +71,12 @@ func readInputs(repository fs.FS, request Request) (map[string][]byte, error) {
 	return inputs, nil
 }
 
+// registrationSourcePath admits explicit lexical source domains, not write authority.
+func registrationSourcePath(path string) bool {
+	return validPath(path) && strings.HasSuffix(path, ".gooo") &&
+		(strings.HasPrefix(path, "examples/") || strings.HasPrefix(path, "internal/meta/"))
+}
+
 func Compile(repository fs.FS, request Request) (Plan, error) {
 	inputs, err := readInputs(repository, request)
 	if err != nil {
@@ -95,6 +99,28 @@ func Compile(repository fs.FS, request Request) (Plan, error) {
 	return Plan{request: request, inputs: inputs, digest: digestValue(inputs), binding: binding}, nil
 }
 
+func validateMetaSourceRegistration(registry languagesyntax.Registry, request Request) error {
+	count := 0
+	for _, path := range registry.MetaSources {
+		if path == request.Case.Path {
+			count++
+		}
+	}
+	if !request.PromoteMetaSource {
+		if count != 0 {
+			return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
+		}
+		return nil
+	}
+	if count == 0 {
+		return failure("REFUTED", "promote-meta-source", "REGISTRATION_META_SOURCE_NOT_REGISTERED", "", "select-registered-meta-source")
+	}
+	if count != 1 {
+		return failure("REFUTED", "promote-meta-source", "REGISTRATION_META_SOURCE_NOT_UNIQUE", "", "restore-exact-source-membership")
+	}
+	return nil
+}
+
 func validateCase(repository fs.FS, request Request, inputs map[string][]byte) error {
 	definition := request.Case
 	if definition.ID == "" || definition.Kind != languagesyntax.KindValid ||
@@ -113,8 +139,8 @@ func validateCase(repository fs.FS, request Request, inputs map[string][]byte) e
 			return failure("REFUTED", "register-case", "REGISTRATION_CASE_ALREADY_EXISTS", "", "report-counterexample")
 		}
 	}
-	if slices.Contains(registry.MetaSources, definition.Path) {
-		return failure("REFUTED", "register-case", "REGISTRATION_SOURCE_ALREADY_REGISTERED", "", "report-counterexample")
+	if err := validateMetaSourceRegistration(registry, request); err != nil {
+		return err
 	}
 	for _, unit := range registry.PackageUnits {
 		if slices.Contains(unit.Members, definition.Path) {

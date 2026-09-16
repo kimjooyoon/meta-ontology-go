@@ -133,6 +133,20 @@
       ]
     },
     {
+      "branch": "agent/verifier-package-summary-advisory-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/ci.yml",
+        "internal/verify/scope_verifier_package_summary_advisory_20260911.go",
+        "scripts/meta-execution/observation_journal.go",
+        "scripts/meta-execution/run.go",
+        "scripts/meta-execution/trace.go",
+        "scripts/meta-execution/verifier_package_summary.go",
+        "scripts/meta-execution/verifier_package_summary_test.go"
+      ]
+    },
+    {
       "branch": "agent/observation-boundary-journal-20260907",
       "paths": [
         ".github/agent-scope-table.md",
@@ -1359,6 +1373,16 @@
       ]
     },
     {
+      "branch": "agent/feedback-write-count-boundary-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/feedback-semantic-state-witness/**",
+        "internal/meta/feedbackstate/**",
+        "internal/verify/scope_feedback_write_count_boundary_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/formatter",
       "paths": [
         "internal/formatter/**"
@@ -1891,6 +1915,22 @@
       ]
     },
     {
+      "branch": "agent/language-semantic-upstream-contract-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_08.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_flow_step_14.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_syntaxcase.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_upstreamsyntax_test.go",
+        "internal/meta/languagereadiness/languagesemantic/evaluate_validatesyntaxreceipt.go",
+        "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+        "internal/verify/scope_language_semantic_upstream_contract_20260911.go"
+      ]
+    },
+    {
       "branch": "agent/language-source-execution",
       "paths": [
         ".github/agent-scope-table.md",
@@ -2076,6 +2116,21 @@
         "internal/meta/metricprogram/**",
         "internal/meta/metricprogram/verify/**",
         "internal/verify/scope_part01.go",
+        "scripts/metric-meta-program/**"
+      ]
+    },
+    {
+      "branch": "agent/concept-operation-binding-receipt-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/metric-counterfactual.yml",
+        ".github/workflows/transformation-effect.yml",
+        "cmd/language-readiness-witness/**",
+        "internal/meta/languagereadiness/**",
+        "internal/meta/metricprogram/**",
+        "internal/meta/metricstrategy/**",
+        "internal/verify/scope_concept_operation_binding_receipt.go",
         "scripts/metric-meta-program/**"
       ]
     },
@@ -3375,6 +3430,31 @@
       ]
     },
     {
+      "branch": "agent/meta-policy-public-profile-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/meta-policy-compilation.yml",
+        "cmd/gooo/generate_part01.go",
+        "cmd/gooo/generate_pipeline_part03.go",
+        "cmd/gooo/meta_policy_profile.go",
+        "cmd/gooo/meta_policy_profile_test.go",
+        "cmd/meta-policy-compilation-consumer/main.go",
+        "cmd/meta-policy-compilation-witness/main.go",
+        "docs/language/meta-policy-compilation.md",
+        "internal/meta/policycompilation/compile.go",
+        "internal/meta/policycompilation/evaluate.go",
+        "internal/meta/policycompilation/judge.go",
+        "internal/meta/policycompilation/model.go",
+        "internal/meta/policycompilation/profile.go",
+        "internal/meta/policycompilation/receipt.go",
+        "internal/meta/policycompilation/strict_json.go",
+        "internal/meta/policycompilation/strict_json_test.go",
+        "internal/meta/policycompilation/verify.go",
+        "internal/verify/scope_meta_policy_compilation_semantic_authority_20260901.go"
+      ]
+    },
+    {
       "branch": "agent/first-class-meta-policy-v20",
       "paths": [
         ".github/agent-scope-table.md",
@@ -3546,6 +3626,16 @@
         ".github/foundation-authorization-protocol.json",
         ".github/workflows/ci.yml",
         "internal/verify/scope_foundation_authorization_protocol_20260903.go",
+        "scripts/ci-proof/foundation_authorization_protocol.js",
+        "scripts/ci-proof/foundation_authorization_protocol_test.js"
+      ]
+    },
+    {
+      "branch": "agent/foundation-authorization-protocol-frontier-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_foundation_authorization_protocol_frontier_20260911.go",
         "scripts/ci-proof/foundation_authorization_protocol.js",
         "scripts/ci-proof/foundation_authorization_protocol_test.js"
       ]
@@ -3834,6 +3924,16 @@
         "internal/meta/publicdiscovery",
         "internal/verify/scope_compiler_self_improvement_20260903.go",
         "scripts/self-improvement-public-continuity"
+      ]
+    },
+    {
+      "branch": "agent/continuity-previous-go-binding-785",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_part02_test.go",
+        "cmd/gooo/public_continuity_generate_part01.go",
+        "internal/verify/scope_compiler_self_improvement_20260903.go"
       ]
     },
     {
@@ -4350,6 +4450,26 @@
         "scripts/language-profile-experiment/main.sh",
         "scripts/language-source-execution/main.sh",
         "scripts/language-value-witness/main.go"
+      ]
+    },
+    {
+      "branch": "agent/verifier-observation-classification-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_verifier_observation_classification_20260911.go",
+        "scripts/meta-execution/operations.go",
+        "scripts/meta-execution/collapse.go",
+        "scripts/meta-execution/operation_process_classification_test.go"
+      ]
+    },
+    {
+      "branch": "agent/cap-03-billing-user-transcript-20260911",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/billing-package/EXPERIMENT.md",
+        "internal/verify/scope_cap_03_billing_user_transcript_20260911.go"
       ]
     }
   ],
