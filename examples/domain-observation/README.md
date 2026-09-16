@@ -11,6 +11,9 @@ The domain is intentionally concrete:
 
 The source is a domain definition, not an implementation claim. The compiler
 checks its semantic structure and can generate the corresponding Go artifact.
+The activity chain is intentionally declared without runtime bindings because
+the current generic generator rejects those bindings fail-closed; executing
+the chain is a separate compiler capability to add with its own evidence.
 The workflow generates it twice and compares the bytes, so a successful run
 proves deterministic generation only. Runtime usefulness, performance, and
 operational correctness remain separate observations.
