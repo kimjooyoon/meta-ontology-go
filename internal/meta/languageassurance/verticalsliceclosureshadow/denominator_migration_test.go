@@ -53,7 +53,7 @@ func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 }
 
 func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
-	if digestBytes(embeddedDenominatorV30) != DenominatorMigrationV29Digest {
+	if digestBytes(embeddedDenominatorV30) != DenominatorMigrationV30Digest {
 		t.Fatal("the previous denominator evidence was rewritten")
 	}
 	var previous, current denominator
