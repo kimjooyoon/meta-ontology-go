@@ -15,5 +15,9 @@ The workflow generates it twice and compares the bytes, so a successful run
 proves deterministic generation only. Runtime usefulness, performance, and
 operational correctness remain separate observations.
 
+`main.gooo` is the bound domain model. `definition.gooo` is its generator-safe
+projection. CI checks that the bound model is rejected fail-closed by the
+generic generator, then proves deterministic generation of the projection.
+
 This boundary is deliberate: facts about the domain are preserved as inputs,
 while conclusions about the incident stay explicit and inspectable.

@@ -33,12 +33,20 @@ jobs:
           cache: false
       - name: Check semantic domain definition
         run: go run ./cmd/gooo check --semantic examples/domain-observation/main.gooo
+      - name: Preserve unsupported runtime binding as FAIL_CLOSED
+        run: |
+          set +e
+          output="$(go run ./cmd/gooo generate examples/domain-observation/main.gooo --out "$RUNNER_TEMP/domain-observation/rejected" 2>&1)"
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq 'runtime bindings are unsupported' <<< "$output"
       - name: Generate two independent artifacts
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/domain-observation/first" "$RUNNER_TEMP/domain-observation/second"
-          go run ./cmd/gooo generate examples/domain-observation/main.gooo --out "$RUNNER_TEMP/domain-observation/first"
-          go run ./cmd/gooo generate examples/domain-observation/main.gooo --out "$RUNNER_TEMP/domain-observation/second"
+          go run ./cmd/gooo generate examples/domain-observation/definition.gooo --out "$RUNNER_TEMP/domain-observation/first"
+          go run ./cmd/gooo generate examples/domain-observation/definition.gooo --out "$RUNNER_TEMP/domain-observation/second"
           cmp "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go" "$RUNNER_TEMP/domain-observation/second/semantic.gooo.go"
           test -s "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go"
           test -z "$(gofmt -l "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go")"
