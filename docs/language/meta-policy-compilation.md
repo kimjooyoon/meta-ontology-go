@@ -496,13 +496,21 @@ contracts before calling the worker. Strict request decoding and exact policy-by
 binding also precede the call. A native invocation or cancelled attempt is not a
 successful generated execution; the nested observation retains actual counts,
 failure causes and the six-field UNKNOWN records.
+The independent composition route may additionally carry a separate
+generated-judge execution envelope. The consumer accepts that envelope only
+when source, semantic, generated-judge, input and result digests all match and
+every generated result matches its own reduction. A mismatch is REFUTED, not
+UNKNOWN or a successful receipt.
 
 With this explicit flag, stdout uses `gooo/meta-policy-revision-operation/v1`.
 Its `observation` member remains the unchanged v1 producer receipt. That member
 can be passed to the existing independent consumer together with the original
 policy and request bytes. The new native CLI test exercises those two separate
-processes and checks that all three caller inputs remain unchanged. Consumer
-receipt consistency does not attest process execution or grant policy adoption.
+processes and checks that all three caller inputs remain unchanged. Without an
+independent execution envelope, receipt consistency preserves the
+PROCESS_EXECUTION_NOT_ATTESTED UNKNOWN. With the envelope, only the separately
+executed generated candidate is observed; adoption, mutation and promotion
+remain UNKNOWN or zero-authority.
 
 Without the flag, the existing revision-observation output remains unchanged.
 The four-artifact compilation profile, two-artifact revision profile, legacy
