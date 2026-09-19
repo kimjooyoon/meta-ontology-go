@@ -32,7 +32,11 @@ func TestDocumentFromSyntaxUsesTypedPlanValidation(t *testing.T) {
 		t.Fatal(diagnostics)
 	}
 
-	if _, err := DocumentFromSyntax(file); err == nil || !strings.Contains(err.Error(), "typed plan") {
+	document, err := DocumentFromSyntax(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LowerDocument(document); err == nil || !strings.Contains(err.Error(), "typed plan") {
 		t.Fatalf("lowering did not report the typed-plan defect: %v", err)
 	}
 }

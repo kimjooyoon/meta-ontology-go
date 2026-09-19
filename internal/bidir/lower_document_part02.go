@@ -14,6 +14,11 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	if err := validateDocumentSpans(document); err != nil {
 		return semantic.IR{}, err
 	}
+	if len(document.BindingEdges) > 0 {
+		if _, err := CompileTypedPlan(document); err != nil {
+			return semantic.IR{}, err
+		}
+	}
 	namespaceText := strings.TrimSpace(document.Namespace)
 	if namespaceText == "" {
 		namespaceText = "gooo"
