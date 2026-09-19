@@ -1,0 +1,82 @@
+name: Problem-solving scope conformance
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/problem-solving-scope.yml
+      - docs/governance/problem-solving-scope.md
+      - docs/governance/problem-solving-scope.json
+  push:
+    branches:
+      - dev
+    paths:
+      - .github/agent-scope-table.md
+      - .github/ci-governance.json
+      - .github/workflows/problem-solving-scope.yml
+      - docs/governance/problem-solving-scope.md
+      - docs/governance/problem-solving-scope.json
+
+permissions:
+  contents: read
+
+jobs:
+  scope-policy:
+    name: problem-solving-scope
+    runs-on: ubuntu-latest
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact policy head
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          persist-credentials: false
+
+      - name: Validate machine-readable scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy=docs/governance/problem-solving-scope.json
+          jq -e '
+            .schema == "gooo/problem-solving-scope/v1" and
+            .primary_lane.name == "compiler-definition-and-defect-resolution" and
+            (.primary_lane.required_evidence | sort) == ["input_identity", "outcome", "source_head", "toolchain_identity"] and
+            (.failure_classes | keys) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "SCOPE_CONFLICT", "SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN"] and
+            .failure_classes.SEMANTIC_DEFECT.lane_effect == "STOP_AND_REPAIR" and
+            .failure_classes.SEMANTIC_UNKNOWN.lane_effect == "HOLD_SEMANTIC_LANE" and
+            .failure_classes.SCOPE_CONFLICT.lane_effect == "HOLD_CONFLICTING_LANE" and
+            (.failure_classes | to_entries | map(select(.key != "SEMANTIC_DEFECT") | .value.continue_independent_work) | all) and
+            (.continuation.never_relabel | sort) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION"] and
+            (.continuation.required_record_fields | sort) == ["cause", "evidence_identity", "next_operation", "source_head"] and
+            .continuation.blocked_scope == "registered_lane_only" and
+            .continuation.merge_authority == "protected_server_rules" and
+            .decision_order == ["SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN", "SCOPE_CONFLICT", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "ADVISORY_FAILURE"]
+          ' "$policy"
+
+      - name: Validate human-readable decision protocol
+        shell: bash
+        run: |
+          set -euo pipefail
+          doc=docs/governance/problem-solving-scope.md
+          rg -q '^## Resolution decision protocol$' "$doc"
+          rg -q 'The repository is not the default unit of blockage' "$doc"
+          rg -q '`STOP_AND_REPAIR`' "$doc"
+          rg -q '`KEEP_PENDING_CONTINUE`' "$doc"
+          rg -q 'Merge authority is separate' "$doc"
+          rg -q '`evidence_identity`' "$doc"
+
+      - name: Publish exact policy observation
+        shell: bash
+        run: |
+          {
+            echo "### Problem-solving scope"
+            echo "- source head: \`${HEAD_SHA}\`"
+            echo "- semantic defect: \`STOP_AND_REPAIR\`"
+            echo "- infrastructure, queue, advisory: continue independently without relabeling"
+            echo "- merge authority: protected server rules"
+          } >> "$GITHUB_STEP_SUMMARY"

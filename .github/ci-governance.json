@@ -4577,6 +4577,16 @@
         "internal/valueexecution/source_revision.go",
         "internal/verify/scope_revise_from_handoff_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/problem-solving-continuation-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/problem-solving-scope.yml",
+        "docs/governance/problem-solving-scope.md",
+        "docs/governance/problem-solving-scope.json"
+      ]
     }
   ],
   "protected_kernel_paths": [

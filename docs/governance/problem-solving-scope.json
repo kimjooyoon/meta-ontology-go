@@ -1,0 +1,67 @@
+{
+  "schema": "gooo/problem-solving-scope/v1",
+  "primary_lane": {
+    "name": "compiler-definition-and-defect-resolution",
+    "scope": "compiler definition and defect resolution",
+    "required_evidence": [
+      "source_head",
+      "input_identity",
+      "toolchain_identity",
+      "outcome"
+    ],
+    "does_not_claim": [
+      "whole-language completion",
+      "utility",
+      "performance improvement"
+    ]
+  },
+  "failure_classes": {
+    "SEMANTIC_DEFECT": {
+      "lane_effect": "STOP_AND_REPAIR",
+      "continue_independent_work": false
+    },
+    "SEMANTIC_UNKNOWN": {
+      "lane_effect": "HOLD_SEMANTIC_LANE",
+      "continue_independent_work": true
+    },
+    "SCOPE_CONFLICT": {
+      "lane_effect": "HOLD_CONFLICTING_LANE",
+      "continue_independent_work": true
+    },
+    "INFRASTRUCTURE_FAILURE": {
+      "lane_effect": "CONTINUE_INDEPENDENT",
+      "continue_independent_work": true
+    },
+    "QUEUE_OR_STALE_OBSERVATION": {
+      "lane_effect": "KEEP_PENDING_CONTINUE",
+      "continue_independent_work": true
+    },
+    "ADVISORY_FAILURE": {
+      "lane_effect": "CONTINUE_ADVISORY",
+      "continue_independent_work": true
+    }
+  },
+  "continuation": {
+    "blocked_scope": "registered_lane_only",
+    "never_relabel": [
+      "INFRASTRUCTURE_FAILURE",
+      "QUEUE_OR_STALE_OBSERVATION",
+      "ADVISORY_FAILURE"
+    ],
+    "required_record_fields": [
+      "source_head",
+      "cause",
+      "next_operation",
+      "evidence_identity"
+    ],
+    "merge_authority": "protected_server_rules"
+  },
+  "decision_order": [
+    "SEMANTIC_DEFECT",
+    "SEMANTIC_UNKNOWN",
+    "SCOPE_CONFLICT",
+    "INFRASTRUCTURE_FAILURE",
+    "QUEUE_OR_STALE_OBSERVATION",
+    "ADVISORY_FAILURE"
+  ]
+}
