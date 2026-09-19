@@ -57,6 +57,15 @@
   ],
   "ownership": [
     {
+      "branch": "agent/ci-gofmt-baseline-repair-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/valueexecution/source_revision_next_run.go",
+        "internal/verify/scope_ci_gofmt_baseline_repair_20260920.go"
+      ]
+    },
+    {
       "branch": "agent/callback-observer-cli-20260910",
       "paths": [
         ".github/agent-scope-table.md",
