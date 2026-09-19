@@ -63,6 +63,11 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 			TargetPort:     binding.Consumer.Port.Name,
 		})
 	}
+	if len(document.BindingEdges) > 0 {
+		if _, err := CompileTypedPlan(document); err != nil {
+			return Document{}, err
+		}
+	}
 	for _, declaration := range syntaxDeclarations(file) {
 		if err := checkLowerContext(ctx); err != nil {
 			return Document{}, err
