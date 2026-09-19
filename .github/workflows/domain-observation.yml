@@ -70,16 +70,24 @@ jobs:
           mkdir -p "$out"
           "$cli" check --semantic examples/domain-observation/main.gooo > "$out/semantic-check.txt" 2>&1
           "$cli" check --semantic examples/domain-observation/incident.gooo > "$out/incident-semantic-check.txt" 2>&1
-          if "$cli" generate examples/domain-observation/main.gooo --out "$out/rejected" > "$out/rejected.log" 2>&1; then
-            echo 'bound generation unexpectedly succeeded' >&2; exit 1
-          fi
-          grep -Fq 'runtime bindings are unsupported' "$out/rejected.log"
+          bound="$out/bound"
+          "$cli" generate examples/domain-observation/main.gooo --out "$bound" --runtime-plan runtime-plan.json > "$out/bound.log" 2>&1
+          test -s "$bound/semantic.gooo.go"
+          test -s "$bound/semantic.gooo.manifest.jsonl"
+          test -s "$bound/runtime-plan.json"
+          jq -e '
+            .schema == "gooo/runtime-plan/v1" and
+            (.source_digest | length == 64) and
+            (.semantic_hash | length == 64) and
+            (.runtime_binding_count == (.bindings | length)) and
+            (.runtime_binding_count > 0)
+          ' "$bound/runtime-plan.json"
           "$cli" generate examples/domain-observation/definition.gooo --out "$out/first"
           "$cli" generate examples/domain-observation/definition.gooo --out "$out/second"
           cmp "$out/first/semantic.gooo.go" "$out/second/semantic.gooo.go"
           test -s "$out/first/semantic.gooo.go"
           test -z "$(gofmt -l "$out/first/semantic.gooo.go")"
-          echo '- separate binding-free structural projection: byte replay passed; not generated runtime execution' >> "$GITHUB_STEP_SUMMARY"
+          echo '- runtime-bound generation: explicit runtime-plan artifact and generated Go output passed' >> "$GITHUB_STEP_SUMMARY"
       - name: Validate scope registration and execution regression suites
         run: |
           set -euo pipefail
