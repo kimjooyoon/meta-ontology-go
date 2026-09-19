@@ -88,6 +88,22 @@ jobs:
           test -s "$out/first/semantic.gooo.go"
           test -z "$(gofmt -l "$out/first/semantic.gooo.go")"
           echo '- runtime-bound generation: explicit runtime-plan artifact and generated Go output passed' >> "$GITHUB_STEP_SUMMARY"
+      - name: Reverse-observe generated Go against the Gooo authority
+        run: |
+          set -euo pipefail
+          cli="$RUNNER_TEMP/gooo-domain-cli"
+          out="$RUNNER_TEMP/domain-evidence/generation"
+          "$cli" analyze examples/domain-observation/definition.gooo --go "$out/first/semantic.gooo.go" > "$out/first/analyze.json"
+          "$cli" analyze examples/domain-observation/definition.gooo --go "$out/second/semantic.gooo.go" > "$out/second/analyze.json"
+          cmp "$out/first/analyze.json" "$out/second/analyze.json"
+          jq -e '
+            .schema_version == "analyzer-semantic-delta/v1" and
+            .semantic_equal == true and
+            .authority_semantic_digest == .observed_semantic_digest and
+            .write_effect == "no-write" and
+            (.digest | length == 64)
+          ' "$out/first/analyze.json"
+          echo '- generated Go reverse observation: authority/IR digest equality and no-write passed' >> "$GITHUB_STEP_SUMMARY"
       - name: Validate scope registration and execution regression suites
         run: |
           set -euo pipefail

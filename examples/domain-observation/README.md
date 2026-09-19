@@ -67,7 +67,10 @@ claims that the compiler produced them.
 
 The generic Go generator rejects the bound/feedback program. `definition.gooo`
 is a separate binding-free structural projection. Its two generated outputs are
-compared for byte replay only; they do not demonstrate generated execution of the
+compared for byte replay and then reverse-observed with `gooo analyze` against
+the same Gooo authority. That reverse observation proves only that the generated
+markers and registered semantic facts retain the same IR identity with
+`write_effect=no-write`; it does not demonstrate generated execution of the
 original program. The actual budget computation uses the source interpreter.
 
 ## Evidence and remaining work
