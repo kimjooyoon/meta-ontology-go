@@ -15,6 +15,24 @@
       "performance improvement"
     ]
   },
+  "resolution_scope": {
+    "unit": [
+      "registered_lane",
+      "semantic_question",
+      "evidence_identity"
+    ],
+    "repository_wide_stop": false,
+    "stop_only_when": [
+      "SEMANTIC_DEFECT",
+      "SEMANTIC_UNKNOWN",
+      "SCOPE_CONFLICT"
+    ],
+    "independent_lane_continues_when": [
+      "INFRASTRUCTURE_FAILURE",
+      "QUEUE_OR_STALE_OBSERVATION",
+      "ADVISORY_FAILURE"
+    ]
+  },
   "ci_observation_roles": [
     {
       "role": "COMPILER_REQUIRED",
@@ -77,6 +95,16 @@
       "evidence_identity"
     ],
     "merge_authority": "protected_server_rules"
+  },
+  "merge_boundary": {
+    "semantic_closure": "COMPILER_REQUIRED",
+    "integration_authority": "PROTECTED_MERGE",
+    "must_not_infer_from": [
+      "DIAGNOSTIC",
+      "PENDING_EXTERNAL",
+      "successful_unrelated_check",
+      "queued_check"
+    ]
   },
   "decision_order": [
     "SEMANTIC_DEFECT",

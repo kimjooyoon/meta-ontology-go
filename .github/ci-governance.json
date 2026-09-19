@@ -4658,6 +4658,16 @@
         "examples/domain-observation/observe.sh",
         "internal/verify/scope_accepted_revision_generated_observation_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/problem-solving-scope-boundary-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/problem-solving-scope.yml",
+        "docs/governance/problem-solving-scope.md",
+        "docs/governance/problem-solving-scope.json"
+      ]
     }
   ],
   "protected_kernel_paths": [
