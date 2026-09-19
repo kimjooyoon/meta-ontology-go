@@ -7,12 +7,12 @@ import (
 
 type options struct {
 	mode, contractPath, v24RequestPath, v24ResolutionPath, v24VerificationPath string
-	v25ContractPath, sourcePath, sourceProvenancePath, outputPath, outputDir    string
-	grantRequestPath, resolutionPath                      string
-	decision, decisionSource, actor, repository, event    string
-	workflowRunID                                         int64
-	workflowRunAttempt                                    int
-	check                                                 bool
+	v25ContractPath, sourcePath, sourceProvenancePath, outputPath, outputDir   string
+	grantRequestPath, resolutionPath                                           string
+	decision, decisionSource, actor, repository, event                         string
+	workflowRunID                                                              int64
+	workflowRunAttempt                                                         int
+	check                                                                      bool
 }
 
 func main() {

@@ -9,7 +9,7 @@ func TestCanonicalExecutorFixtureAdversarialCopyIsPure(t *testing.T) {
 	original := CanonicalExecutorGrantFixture{
 		Verification: CanonicalExecutorVerification{
 			Counts: map[string]int{"CLOSED": 1},
-			Cases: []CanonicalExecutorVerificationCase{{MissingFields: []string{"candidate_input_digest"}}},
+			Cases:  []CanonicalExecutorVerificationCase{{MissingFields: []string{"candidate_input_digest"}}},
 		},
 		Manifest: CanonicalExecutorBindingManifest{ArtifactNames: []string{"canonical-executor-grant-request.json"}},
 	}

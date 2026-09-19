@@ -65,25 +65,25 @@ const (
 )
 
 type V24Binding struct {
-	RequestSchema           string `json:"request_schema"`
-	RequestDigest           string `json:"request_digest"`
-	ResolutionSchema        string `json:"resolution_schema"`
-	ResolutionDigest        string `json:"resolution_digest"`
-	CandidateStableID       string `json:"candidate_stable_id"`
-	CandidateDigest         string `json:"candidate_digest"`
-	SubjectSHA              string `json:"subject_sha"`
-	ObservationDigest       string `json:"observation_digest"`
+	RequestSchema     string `json:"request_schema"`
+	RequestDigest     string `json:"request_digest"`
+	ResolutionSchema  string `json:"resolution_schema"`
+	ResolutionDigest  string `json:"resolution_digest"`
+	CandidateStableID string `json:"candidate_stable_id"`
+	CandidateDigest   string `json:"candidate_digest"`
+	SubjectSHA        string `json:"subject_sha"`
+	ObservationDigest string `json:"observation_digest"`
 	// ContractDigest is the candidate policy contract root carried by v24.
 	// AuthorizationContractDigest is the distinct v24 authorization contract
 	// root; both are preserved so a policy root cannot masquerade as an
 	// authorization root.
-	ContractDigest          string `json:"contract_digest"`
+	ContractDigest              string `json:"contract_digest"`
 	AuthorizationContractDigest string `json:"authorization_contract_digest"`
-	AuthorizationDecision   string `json:"authorization_decision"`
-	AuthorizationResolution string `json:"authorization_resolution"`
-	AuthorizationOutcome    string `json:"authorization_outcome"`
-	RequestValid            bool   `json:"request_valid"`
-	ResolutionValid         bool   `json:"resolution_valid"`
+	AuthorizationDecision       string `json:"authorization_decision"`
+	AuthorizationResolution     string `json:"authorization_resolution"`
+	AuthorizationOutcome        string `json:"authorization_outcome"`
+	RequestValid                bool   `json:"request_valid"`
+	ResolutionValid             bool   `json:"resolution_valid"`
 }
 
 type V25Binding struct {
@@ -229,19 +229,19 @@ type GrantMetrics struct {
 }
 
 type PolicyEvidence struct {
-	Schema           string `json:"schema"`
-	PolicyID         string `json:"policy_id"`
-	SourceDigest     string `json:"source_digest"`
-	CanonicalDigest  string `json:"canonical_digest"`
-	SemanticIRDigest string `json:"semantic_ir_digest"`
-	FullIRDigest     string `json:"full_ir_digest"`
+	Schema                 string `json:"schema"`
+	PolicyID               string `json:"policy_id"`
+	SourceDigest           string `json:"source_digest"`
+	CanonicalDigest        string `json:"canonical_digest"`
+	SemanticIRDigest       string `json:"semantic_ir_digest"`
+	FullIRDigest           string `json:"full_ir_digest"`
 	SemanticContractDigest string `json:"semantic_contract_digest"`
-	StateCount       int    `json:"state_count"`
-	TransitionCount  int    `json:"transition_count"`
-	CaseCount        int    `json:"case_count"`
-	ClosedCases      int    `json:"closed_cases"`
-	UnknownCases     int    `json:"unknown_cases"`
-	RefutedCases     int    `json:"refuted_cases"`
+	StateCount             int    `json:"state_count"`
+	TransitionCount        int    `json:"transition_count"`
+	CaseCount              int    `json:"case_count"`
+	ClosedCases            int    `json:"closed_cases"`
+	UnknownCases           int    `json:"unknown_cases"`
+	RefutedCases           int    `json:"refuted_cases"`
 }
 
 type GrantResolution struct {
@@ -365,7 +365,7 @@ type CanonicalCaseReport struct {
 
 type PolicyProgram struct {
 	Evidence         PolicyEvidence                    `json:"evidence"`
-	Policy           semantic.Policy                  `json:"-"`
+	Policy           semantic.Policy                   `json:"-"`
 	Inventory        SourceInventory                   `json:"inventory"`
 	ExecutorContract CanonicalExecutorSemanticContract `json:"executor_contract"`
 }
