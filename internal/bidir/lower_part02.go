@@ -51,16 +51,16 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		if binding.Feedback {
 			continue
 		}
-		source, sourceOK := idsByName[binding.SourceActivity]
-		target, targetOK := idsByName[binding.TargetActivity]
+		source, sourceOK := idsByName[binding.Producer.Activity.Name]
+		target, targetOK := idsByName[binding.Consumer.Activity.Name]
 		if !sourceOK || !targetOK {
 			return Document{}, fmt.Errorf("binding references unknown activity")
 		}
 		document.BindingEdges = append(document.BindingEdges, BindingEdge{
 			SourceActivity: source,
-			SourcePort:     binding.SourcePort,
+			SourcePort:     binding.Producer.Port.Name,
 			TargetActivity: target,
-			TargetPort:     binding.TargetPort,
+			TargetPort:     binding.Consumer.Port.Name,
 		})
 	}
 	for _, declaration := range syntaxDeclarations(file) {
