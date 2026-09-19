@@ -15,6 +15,28 @@
       "performance improvement"
     ]
   },
+  "ci_observation_roles": [
+    {
+      "role": "COMPILER_REQUIRED",
+      "answers": "focused compiler rule and regression observation",
+      "does_not_answer": "unrelated workflow, security, queue, or ecosystem health"
+    },
+    {
+      "role": "DIAGNOSTIC",
+      "answers": "independent cost, provenance, security, or ecosystem observation",
+      "does_not_answer": "bounded compiler semantic closure"
+    },
+    {
+      "role": "PENDING_EXTERNAL",
+      "answers": "non-terminal runner, dependency, permission, queue, or external observation",
+      "does_not_answer": "success, failure, or permission to relabel the result"
+    },
+    {
+      "role": "PROTECTED_MERGE",
+      "answers": "server-side branch protection requirements",
+      "does_not_answer": "compiler evidence or a local policy override"
+    }
+  ],
   "failure_classes": {
     "SEMANTIC_DEFECT": {
       "lane_effect": "STOP_AND_REPAIR",
