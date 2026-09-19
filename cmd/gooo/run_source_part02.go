@@ -10,10 +10,10 @@ import (
 
 type runSourceOptions struct {
 	iterations int
-	filename string
-	entry    string
-	input    string
-	record   bool
+	filename   string
+	entry      string
+	input      string
+	record     bool
 }
 
 func parseRunSourceArguments(args []string) (runSourceOptions, error) {

@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	RuntimeBindingSchema = "gooo.runtime-binding/v1"
+	RuntimeBindingSchema  = "gooo.runtime-binding/v1"
 	RuntimeFeedbackSchema = "gooo.runtime-feedback/v1"
-	RuntimeOutputPort    = "result"
-	RuntimeInputPort     = "input"
+	RuntimeOutputPort     = "result"
+	RuntimeInputPort      = "input"
 )
 
 var (
