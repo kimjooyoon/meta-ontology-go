@@ -3689,7 +3689,8 @@
         ".github/ci-governance.json",
         ".github/workflows/domain-observation.yml",
         "examples/domain-observation/README.md",
-        "examples/domain-observation/main.gooo"
+        "examples/domain-observation/main.gooo",
+        "internal/syntax/binding_parser_test.go"
       ]
     }
   ],
