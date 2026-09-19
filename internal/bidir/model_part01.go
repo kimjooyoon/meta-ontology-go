@@ -46,6 +46,7 @@ type BindingEndpoint struct {
 // producer result identity and a consumer port cannot be reconstructed from
 // an entity-level used/wasGeneratedBy pair.
 type RuntimeBinding struct {
+	Feedback bool
 	Producer BindingEndpoint
 	Consumer BindingEndpoint
 	Entity   ID
@@ -71,6 +72,7 @@ type Document struct {
 	Declarations          []Declaration
 	Policies              []semantic.Policy
 	Relations             []Relation
+	BindingEdges          []BindingEdge
 	RuntimeBindings       []RuntimeBinding
 	ImplicitActivityPorts bool
 }

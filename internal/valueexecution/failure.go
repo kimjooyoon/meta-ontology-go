@@ -30,6 +30,7 @@ const (
 	ReasonExternalInputUnexpected   = "VALUE_EXTERNAL_INPUT_UNEXPECTED"
 	ReasonBindingResultInvalid      = "VALUE_BINDING_RESULT_INVALID"
 	ReasonPlanExecutionFailed       = "VALUE_PLAN_EXECUTION_FAILED"
+	ReasonSourceRevisionInvalid     = "VALUE_SOURCE_REVISION_INVALID"
 )
 
 type Failure struct {

@@ -18,6 +18,10 @@ func formatBinding(output *strings.Builder, binding BindingDecl) error {
 	if err := validateIdentifier(binding.Consumer.Port.Name, "binding consumer port"); err != nil {
 		return err
 	}
-	fmt.Fprintf(output, "bind %s.%s -> %s.%s", binding.Producer.Activity.Name, binding.Producer.Port.Name, binding.Consumer.Activity.Name, binding.Consumer.Port.Name)
+	keyword := "bind"
+	if binding.Feedback {
+		keyword = "feedback"
+	}
+	fmt.Fprintf(output, "%s %s.%s -> %s.%s", keyword, binding.Producer.Activity.Name, binding.Producer.Port.Name, binding.Consumer.Activity.Name, binding.Consumer.Port.Name)
 	return nil
 }

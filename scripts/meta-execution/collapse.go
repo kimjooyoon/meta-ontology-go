@@ -192,7 +192,7 @@ func materializeCollapseWithReplayWorkspace(workspace, gitDir, metricsPath strin
 	if failure := validateCollapseOutput(beforeInspection, afterAppliedInspection, afterApplied); failure != nil {
 		return materialized, failure
 	}
-	verifier, verifierErr := runGoTestObserved(temporary, environment, &trace, pass)
+	verifier, verifierErr := runGoTestObserved(temporary, environment, filepath.Dir(subject.Path), &trace, pass)
 	materialized.Verifier = verifier.Observation
 	after, err := os.ReadFile(sourcePath)
 	if err != nil {
