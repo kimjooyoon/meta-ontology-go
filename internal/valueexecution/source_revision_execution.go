@@ -27,6 +27,8 @@ type AcceptedSourceRevisionExecution struct {
 	InputDigest           string      `json:"input_digest"`
 	EvaluationState       ReplayState `json:"evaluation_state"`
 	EvaluationReason      string      `json:"evaluation_reason"`
+	NextOperation         string      `json:"next_operation"`
+	BlockedBy             []string    `json:"blocked_by"`
 	ExecutionAllowed      bool        `json:"execution_allowed"`
 	RepositoryWrites      int         `json:"repository_writes"`
 	Execution             Execution   `json:"execution"`
@@ -74,6 +76,7 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 		ExplicitDecision: request.ExplicitDecision, SourceDigest: sourceDigest, CandidateSourceDigest: candidateDigest,
 		RevisionCandidateID: request.Revision.CandidateID, Activity: request.Activity, InputDigest: inputDigest,
 		EvaluationState: request.Evaluation.State, EvaluationReason: request.Evaluation.Reason,
+		NextOperation: "CAPTURE_NEXT_RUN_COMPARISON", BlockedBy: []string{},
 		ExecutionAllowed: false, RepositoryWrites: 0, Execution: execution,
 	}, nil
 }

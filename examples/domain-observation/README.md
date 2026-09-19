@@ -99,6 +99,8 @@ operation.
 The final `run-accepted-revision --accept` of `candidate.gooo` is an explicit
 caller action. The command requires the revision/evaluation/source/input digests
 to agree and compares its reexecution with the accepted evaluation receipt. It
+returns `next_operation: CAPTURE_NEXT_RUN_COMPARISON` with an empty
+`blocked_by` frontier so a later run can resume from an explicit causal point.
 is not an automatic source write, commit, merge, deployment or compiler
 self-modification. The example therefore demonstrates an executable repair loop, while
 `source_repair_adoption` remains `EXPLICIT_CALLER` and utility/improvement

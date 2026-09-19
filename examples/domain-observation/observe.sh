@@ -114,6 +114,7 @@ jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_RECOVERED_BASELINE_FAI
   --evaluation "$out/source-revision-evaluation/evaluation.json" \
   --activity ObserveRepair --input "$repair_input" --accept > "$out/accepted-source-reexecution.json"
 jq -e '.decision == "PASS" and .explicit_decision == "ACCEPT" and
+  .next_operation == "CAPTURE_NEXT_RUN_COMPARISON" and (.blocked_by | length) == 0 and
   .execution_allowed == false and .repository_writes == 0 and
   .execution.results.ObserveRepair.value == 9223372036854775807' \
   "$out/accepted-source-reexecution.json" > /dev/null
