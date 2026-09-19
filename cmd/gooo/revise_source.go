@@ -67,13 +67,20 @@ func parseReviseSourceArguments(args []string) (reviseSourceOptions, error) {
 		seen[args[index]] = true
 		index++
 		switch args[index-1] {
-		case "--source-digest": options.sourceDigest = args[index]
-		case "--activity": options.activity = args[index]
-		case "--expected": options.expected = args[index]
-		case "--replace": options.replacement = args[index]
-		case "--reason": options.reason = args[index]
-		case "--out": options.outputDir = args[index]
-		default: return reviseSourceOptions{}, fmt.Errorf("%s", reviseSourceUsage)
+		case "--source-digest":
+			options.sourceDigest = args[index]
+		case "--activity":
+			options.activity = args[index]
+		case "--expected":
+			options.expected = args[index]
+		case "--replace":
+			options.replacement = args[index]
+		case "--reason":
+			options.reason = args[index]
+		case "--out":
+			options.outputDir = args[index]
+		default:
+			return reviseSourceOptions{}, fmt.Errorf("%s", reviseSourceUsage)
 		}
 	}
 	if options.filename == "" || options.sourceDigest == "" || options.activity == "" || options.expected == "" || options.replacement == "" || options.reason == "" || options.outputDir == "" {

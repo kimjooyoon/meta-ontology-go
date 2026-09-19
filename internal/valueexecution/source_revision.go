@@ -12,25 +12,25 @@ const SourceRevisionSchema = "gooo/value-execution-source-revision/v1"
 const SourceRevisionEvaluationSchema = "gooo/value-execution-source-revision-evaluation/v1"
 
 type SourceRevisionRequest struct {
-	SourceDigest      string `json:"source_digest"`
-	Activity          string `json:"activity"`
-	ExpectedProgram   string `json:"expected_program"`
+	SourceDigest       string `json:"source_digest"`
+	Activity           string `json:"activity"`
+	ExpectedProgram    string `json:"expected_program"`
 	ReplacementProgram string `json:"replacement_program"`
-	TriggerReason     string `json:"trigger_reason"`
+	TriggerReason      string `json:"trigger_reason"`
 }
 
 type SourceRevision struct {
-	Schema                string `json:"schema"`
-	CandidateID           string `json:"candidate_id"`
-	SourceDigest          string `json:"source_digest"`
-	CandidateSourceDigest string `json:"candidate_source_digest"`
-	Activity              string `json:"activity"`
-	BeforeProgram         string `json:"before_program"`
-	AfterProgram          string `json:"after_program"`
-	TriggerReason         string `json:"trigger_reason"`
-	ExecutionAllowed      bool   `json:"execution_allowed"`
-	RepositoryWrites      int    `json:"repository_writes"`
-	NextOperation         string `json:"next_operation"`
+	Schema                string   `json:"schema"`
+	CandidateID           string   `json:"candidate_id"`
+	SourceDigest          string   `json:"source_digest"`
+	CandidateSourceDigest string   `json:"candidate_source_digest"`
+	Activity              string   `json:"activity"`
+	BeforeProgram         string   `json:"before_program"`
+	AfterProgram          string   `json:"after_program"`
+	TriggerReason         string   `json:"trigger_reason"`
+	ExecutionAllowed      bool     `json:"execution_allowed"`
+	RepositoryWrites      int      `json:"repository_writes"`
+	NextOperation         string   `json:"next_operation"`
 	BlockedBy             []string `json:"blocked_by"`
 }
 
@@ -107,7 +107,7 @@ func ProposeSourceRevision(filename string, source []byte, request SourceRevisio
 		TriggerReason: request.TriggerReason, ExecutionAllowed: false, RepositoryWrites: 0,
 		NextOperation: "EVALUATE_SOURCE_REVISION_INDEPENDENTLY", BlockedBy: []string{"independent_evaluation"},
 	}
-	revision.CandidateID = "gooo://source-revision/" + digestValue(revision)[len("sha256:") : len("sha256:")+16]
+	revision.CandidateID = "gooo://source-revision/" + digestValue(revision)[len("sha256:"):len("sha256:")+16]
 	return candidate, revision, nil
 }
 
@@ -118,7 +118,7 @@ func EvaluateSourceRevision(revision SourceRevision, baselineFilename string, ba
 	evaluation := SourceRevisionEvaluation{
 		Schema: SourceRevisionEvaluationSchema, State: ReplayUnknown,
 		Reason: "SOURCE_REVISION_EVALUATION_UNKNOWN", NextOperation: "REPAIR_SOURCE_REVISION_EVALUATION_INPUT",
-		BlockedBy: []string{"revision_receipt", "source_digests", "activity"},
+		BlockedBy:    []string{"revision_receipt", "source_digests", "activity"},
 		SourceDigest: digestBytes(baselineSource), CandidateSourceDigest: digestBytes(candidateSource),
 		Activity: activity, InputDigest: digestValue(map[string]int64{activity: input}), RepositoryWrites: 0,
 	}
