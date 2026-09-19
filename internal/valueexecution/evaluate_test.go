@@ -57,6 +57,22 @@ func TestCompileLowersRegisteredSubtractOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersRegisteredMultiplyOperationAndRejectsOverflow(t *testing.T) {
+	program, err := Compile("multiply.gooo", valueFixture(`activity Multiply(Integer) -> Integer computes "int.mul:3"`), "Multiply")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.mul" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("multiply operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{7}); err != nil || got != 21 {
+		t.Fatalf("multiply execution = %d / %v, want 21 / nil", got, err)
+	}
+	if _, err := program.Execute([]int64{1 << 62}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("multiply overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)
