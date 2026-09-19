@@ -2,7 +2,7 @@ package bidir
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 )
 
 // BindingEdge is an explicit typed data-flow edge between activity ports.
@@ -87,7 +87,7 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 		}
 	}
 	for len(queue) > 0 {
-		sort.Slice(queue, func(i, j int) bool { return queue[i] < queue[j] })
+		slices.Sort(queue)
 		id := queue[0]
 		queue = queue[1:]
 		plan.Activities = append(plan.Activities, id)
