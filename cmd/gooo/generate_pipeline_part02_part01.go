@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 	"io"
 	"path/filepath"
@@ -53,7 +54,18 @@ func buildGenerateArtifacts(options generateOptions, input generateInput, jsonMo
 		if err != nil {
 			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.runtimePlanFilename, "io.runtime-plan-path", "runtime plan path", err, input.file)
 		}
-		runtimePlanData, err = buildRuntimePlanData(input.source, generation.ir)
+		document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(input.file, syntax.EntityFieldsV1Support())
+		if err != nil {
+			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.lower", "runtime plan lowering", err, input.file)
+		}
+		var typedPlan bidir.TypedPlan
+		if len(document.BindingEdges) > 0 {
+			typedPlan, err = bidir.CompileTypedPlan(document)
+			if err != nil {
+				return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.validate", "runtime plan validation", err, input.file)
+			}
+		}
+		runtimePlanData, err = buildRuntimePlanDataWithTypedPlan(input.source, generation.ir, typedPlan)
 		if err != nil {
 			return generateArtifacts{}, reportGenerateError(jsonMode, stdout, stderr, options.filename, "runtime-plan.build", "runtime plan failed", err, input.file)
 		}

@@ -73,6 +73,11 @@ markers and registered semantic facts retain the same IR identity with
 `write_effect=no-write`; it does not demonstrate generated execution of the
 original program. The actual budget computation uses the source interpreter.
 
+When generation is requested with `--runtime-plan`, the generated runtime-plan
+artifact now carries the validated typed-plan digest and deterministic activity
+order. These fields are compiler evidence for the explicit `bind` graph; they
+are not an execution grant, source adoption, or repository-write authority.
+
 ## Evidence and remaining work
 
 The Actions artifact retains exact source/head/base/workflow/toolchain/run

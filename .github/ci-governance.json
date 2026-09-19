@@ -4708,6 +4708,21 @@
         "cmd/gooo/run_accepted_revision_test.go",
         "internal/verify/scope_format_accepted_revision_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/typed-generated-plan-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/generate_pipeline_part02_part01.go",
+        "cmd/gooo/runtime_binding_boundary_test.go",
+        "cmd/gooo/runtime_plan.go",
+        "examples/domain-observation/README.md",
+        "internal/bidir/lower_part02.go",
+        "internal/bidir/typed_plan.go",
+        "internal/bidir/typed_plan_test.go",
+        "internal/verify/scope_typed_generated_plan_20260920.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
