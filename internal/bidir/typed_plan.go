@@ -3,6 +3,7 @@ package bidir
 import (
 	"fmt"
 	"slices"
+	"sort"
 )
 
 // BindingEdge is an explicit typed data-flow edge between activity ports.
