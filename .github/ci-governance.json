@@ -4613,6 +4613,17 @@
         "internal/valueexecution/source_revision_execution.go",
         "internal/valueexecution/source_revision_execution_test.go"
       ]
+    },
+    {
+      "branch": "agent/accepted-revision-provenance-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/domain-observation/README.md",
+        "examples/domain-observation/observe.sh",
+        "internal/valueexecution/source_revision_execution.go",
+        "internal/valueexecution/source_revision_execution_test.go"
+      ]
     }
   ],
   "protected_kernel_paths": [

@@ -35,7 +35,7 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Decision != "PASS" || result.ExecutionAllowed || result.RepositoryWrites != 0 || result.Execution.ExecutionDigest != evaluation.CandidateExecution.ExecutionDigest {
+	if result.Decision != "PASS" || result.ExecutionAllowed || result.RepositoryWrites != 0 || result.NextOperation != "CAPTURE_NEXT_RUN_COMPARISON" || len(result.BlockedBy) != 0 || result.Execution.ExecutionDigest != evaluation.CandidateExecution.ExecutionDigest {
 		t.Fatalf("accepted execution = %#v", result)
 	}
 }
