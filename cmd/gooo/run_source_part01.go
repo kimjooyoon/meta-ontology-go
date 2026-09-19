@@ -11,7 +11,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-const runSourceUsage = "usage: gooo run [--json] --entry <activity> [--input <input.json> | --record-input <record.json>] [--iterations N] <file.gooo|package-directory>"
+const runSourceUsage = "usage: gooo run [--json] --entry <activity> [--input <input.json> | --record-input <record.json>] [--runtime-plan <runtime-plan.json>] [--iterations N] <file.gooo|package-directory>"
 
 func runSource(args []string, reader SourceReader, stdout, stderr io.Writer) int {
 	if handled, code := maybeRunSourcePackage(args, stdout, stderr); handled {
@@ -69,12 +69,19 @@ func runSourceValuePlan(options runSourceOptions, source []byte, reader SourceRe
 	if err != nil {
 		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
 	}
+	runtimePlanDigest := ""
+	if options.runtimePlan != "" {
+		runtimePlanDigest, err = loadRuntimePlanContract(reader, options.runtimePlan, source, plan)
+		if err != nil {
+			return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
+		}
+	}
 	rootInput, err := decodePlanInput(input)
 	if err != nil {
 		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, valueexecution.Execution{}, err)
 	}
 	if options.iterations > 0 {
-		return runSourceContinuation(options, plan, rootInput, jsonMode, stdout, stderr)
+		return runSourceContinuation(options, plan, rootInput, runtimePlanDigest, jsonMode, stdout, stderr)
 	}
 	execution, err := plan.Execute(map[string]int64{options.entry: rootInput})
 	if err != nil {
@@ -86,11 +93,13 @@ func runSourceValuePlan(options runSourceOptions, source []byte, reader SourceRe
 		SourcePath          string                   `json:"source_path"`
 		SourceDigest        string                   `json:"source_digest"`
 		SemanticFingerprint string                   `json:"semantic_fingerprint"`
+		RuntimePlanDigest   string                   `json:"runtime_plan_digest,omitempty"`
 		Entry               string                   `json:"entry"`
 		Execution           valueexecution.Execution `json:"execution"`
 	}{
 		Schema: "gooo/value-execution-plan/v1", Decision: "PASS", SourcePath: options.filename,
-		SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint, Entry: options.entry, Execution: execution,
+		SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint, RuntimePlanDigest: runtimePlanDigest,
+		Entry: options.entry, Execution: execution,
 	}
 	if jsonMode {
 		encoder := json.NewEncoder(stdout)

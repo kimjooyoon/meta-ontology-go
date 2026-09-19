@@ -9,7 +9,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/valueexecution"
 )
 
-func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, input int64, jsonMode bool, stdout, stderr io.Writer) int {
+func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, input int64, runtimePlanDigest string, jsonMode bool, stdout, stderr io.Writer) int {
 	trace, err := plan.ExecuteIterations(context.Background(), map[string]int64{options.entry: input}, options.iterations)
 	decision, code := "PASS", exitOK
 	if err != nil {
@@ -22,8 +22,11 @@ func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, i
 			SourcePath          string                      `json:"source_path"`
 			SourceDigest        string                      `json:"source_digest"`
 			SemanticFingerprint string                      `json:"semantic_fingerprint"`
+			RuntimePlanDigest   string                      `json:"runtime_plan_digest,omitempty"`
 			Continuation        valueexecution.Continuation `json:"continuation"`
-		}{valueexecution.ContinuationSchema, decision, options.filename, plan.SourceDigest, plan.SemanticFingerprint, trace}
+		}{Schema: valueexecution.ContinuationSchema, Decision: decision, SourcePath: options.filename,
+			SourceDigest: plan.SourceDigest, SemanticFingerprint: plan.SemanticFingerprint,
+			RuntimePlanDigest: runtimePlanDigest, Continuation: trace}
 		if encodeErr := json.NewEncoder(stdout).Encode(payload); encodeErr != nil {
 			return exitFailure
 		}
