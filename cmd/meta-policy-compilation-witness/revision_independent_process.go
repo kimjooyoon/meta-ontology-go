@@ -112,9 +112,9 @@ func runRevisionConsumer(ctx context.Context, directory, executable string, sour
 func observeIndependentPolicyExecution(ctx context.Context,
 	observation *policycompilation.PolicyRevisionObservation) (policycompilation.PolicyRevisionIndependentExecution, error) {
 	execution := policycompilation.PolicyRevisionIndependentExecution{
-		Schema: "gooo/meta-policy-independent-execution/v1",
+		Schema:        "gooo/meta-policy-independent-execution/v1",
 		ExecutionMode: "SEPARATE_GENERATED_JUDGE_PROCESS",
-		ExitCode: -1,
+		ExitCode:      -1,
 	}
 	if observation == nil {
 		return execution, errors.New("independent execution requires a revision observation")
