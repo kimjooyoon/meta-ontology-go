@@ -88,6 +88,13 @@ func composeIndependentRevision(ctx context.Context, filename string, source, re
 		revisionCompositionUnknown(report, "REVISION_EXECUTION", "REVISION_EXECUTION_INCOMPLETE", "OBSERVE_SOURCE_BOUND_REVISION")
 		return errors.Join(err, errors.New("source-bound revision observation did not complete"))
 	}
+	independent, independentErr := observeIndependentPolicyExecution(ctx, operation.Observation)
+	operation.Observation.IndependentExecution = &independent
+	if independentErr != nil {
+		revisionCompositionUnknown(report, "INDEPENDENT_EXECUTION",
+			"INDEPENDENT_POLICY_EXECUTION_INCOMPLETE", "RERUN_INDEPENDENT_POLICY_EXECUTION")
+		return independentErr
+	}
 	payload, err := json.Marshal(operation.Observation)
 	if err != nil {
 		return err

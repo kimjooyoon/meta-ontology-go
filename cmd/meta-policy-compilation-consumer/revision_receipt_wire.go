@@ -110,6 +110,22 @@ type revisionWireExecution struct {
 	WallMilliseconds     int64                `json:"wall_ms"`
 }
 
+type revisionWireIndependentExecution struct {
+	Schema               string               `json:"schema"`
+	ExecutionMode        string               `json:"execution_mode"`
+	SourceDigest         string               `json:"source_digest"`
+	SemanticDigest       string               `json:"semantic_digest"`
+	GeneratedJudgeDigest  string               `json:"generated_judge_digest"`
+	InputDigest          string               `json:"input_digest"`
+	ResultsDigest        string               `json:"results_digest"`
+	RequestedCases       int                  `json:"requested_cases"`
+	ObservedCases        int                  `json:"observed_cases"`
+	Results              []revisionWireResult `json:"results"`
+	ProcessStarted       bool                 `json:"process_started"`
+	ExitCode             int                  `json:"exit_code"`
+	WallMilliseconds     int64                `json:"wall_ms"`
+}
+
 type revisionWireTransition struct {
 	CaseID                      string `json:"case_id"`
 	InputsIdentical             bool   `json:"inputs_identical"`
@@ -145,6 +161,7 @@ type revisionWireObservation struct {
 	ChangedCoordinates    []string                 `json:"changed_coordinates"`
 	Baseline              revisionWireExecution    `json:"baseline"`
 	Candidate             revisionWireExecution    `json:"candidate"`
+	IndependentExecution  *revisionWireIndependentExecution `json:"independent_execution,omitempty"`
 	Transitions           []revisionWireTransition `json:"transitions"`
 	Counts                revisionWireCounts       `json:"counts"`
 	ExecutionStatus       string                   `json:"execution_status"`

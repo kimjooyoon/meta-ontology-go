@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -106,4 +107,44 @@ func runRevisionConsumer(ctx context.Context, directory, executable string, sour
 		return capture, fmt.Errorf("capture independent consumer: %w", err)
 	}
 	return capture, nil
+}
+
+func observeIndependentPolicyExecution(ctx context.Context,
+	observation *policycompilation.PolicyRevisionObservation) (policycompilation.PolicyRevisionIndependentExecution, error) {
+	execution := policycompilation.PolicyRevisionIndependentExecution{
+		Schema: "gooo/meta-policy-independent-execution/v1",
+		ExecutionMode: "SEPARATE_GENERATED_JUDGE_PROCESS",
+		ExitCode: -1,
+	}
+	if observation == nil {
+		return execution, errors.New("independent execution requires a revision observation")
+	}
+	execution.SourceDigest = observation.CandidatePolicy.SourceDigest
+	execution.SemanticDigest = observation.CandidatePolicy.SemanticDigest
+	execution.GeneratedJudgeDigest = observation.Candidate.GeneratedJudgeDigest
+	inputs := append([]policycompilation.Case(nil), observation.Candidate.DeclaredInputs...)
+	inputBytes, err := json.Marshal(inputs)
+	if err != nil {
+		return execution, err
+	}
+	execution.InputDigest = policycompilation.DigestBytes(inputBytes)
+	execution.RequestedCases = len(inputs)
+	start := time.Now()
+	results, runErr := policycompilation.ExecuteGeneratedBatch(ctx, []byte(observation.Candidate.GeneratedJudgeSource), inputs)
+	execution.WallMilliseconds = time.Since(start).Milliseconds()
+	execution.Results = append([]policycompilation.DecisionResult(nil), results...)
+	execution.ObservedCases = len(results)
+	resultBytes, marshalErr := json.Marshal(execution.Results)
+	if marshalErr == nil {
+		execution.ResultsDigest = policycompilation.DigestBytes(resultBytes)
+	}
+	if runErr != nil {
+		execution.ExecutionError = runErr.Error()
+		return execution, runErr
+	}
+	if marshalErr != nil {
+		return execution, marshalErr
+	}
+	execution.ProcessStarted, execution.ExitCode = true, 0
+	return execution, nil
 }

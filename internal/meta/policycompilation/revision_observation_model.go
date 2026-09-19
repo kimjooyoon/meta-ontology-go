@@ -74,6 +74,7 @@ type PolicyRevisionObservation struct {
 	OriginalPolicy        CompiledPolicy                     `json:"original_policy"`
 	CandidatePolicy       CompiledPolicy                     `json:"candidate_policy"`
 	CandidateSource       string                             `json:"candidate_source"`
+	IndependentExecution  *PolicyRevisionIndependentExecution `json:"independent_execution,omitempty"`
 	ChangedCoordinates    []string                           `json:"changed_coordinates"`
 	Baseline              PolicyRevisionExecution            `json:"baseline"`
 	Candidate             PolicyRevisionExecution            `json:"candidate"`
