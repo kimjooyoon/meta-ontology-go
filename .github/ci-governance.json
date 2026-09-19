@@ -3690,6 +3690,8 @@
         ".github/workflows/domain-observation.yml",
         "examples/domain-observation/README.md",
         "examples/domain-observation/main.gooo",
+        "internal/syntax/binding_ast.go",
+        "internal/syntax/binding_parser.go",
         "internal/syntax/binding_parser_test.go"
       ]
     }

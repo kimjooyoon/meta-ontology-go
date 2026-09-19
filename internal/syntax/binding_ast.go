@@ -5,4 +5,6 @@ type BindingDecl struct {
 	Span Span
 	SourceActivity, SourcePort string
 	TargetActivity, TargetPort string
+	SourceActivitySpan, SourcePortSpan Span
+	TargetActivitySpan, TargetPortSpan Span
 }

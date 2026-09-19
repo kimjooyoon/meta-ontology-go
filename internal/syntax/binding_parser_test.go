@@ -23,4 +23,8 @@ bind Observe.result -> Diagnose.input`
 	if binding.Span.Filename != "binding.gooo" || binding.Span.Start.Line != 5 {
 		t.Fatalf("binding provenance span = %#v", binding.Span)
 	}
+	if binding.SourceActivitySpan.Start.Column != 6 || binding.SourcePortSpan.Start.Column != 14 ||
+		binding.TargetActivitySpan.Start.Column != 24 || binding.TargetPortSpan.Start.Column != 33 {
+		t.Fatalf("binding endpoint spans = %#v", binding)
+	}
 }
