@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
@@ -89,15 +88,4 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 	}
 
 	return cache.HashBytes(raw).String(), nil
-}
-
-func requireJSONEOF(decoder *json.Decoder) error {
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		if err == nil {
-			return fmt.Errorf("trailing JSON value")
-		}
-		return err
-	}
-	return nil
 }
