@@ -104,6 +104,11 @@ caller action. The command requires the revision/evaluation/source/input digests
 to agree and compares its reexecution with the accepted evaluation receipt. It
 returns `next_operation: CAPTURE_NEXT_RUN_COMPARISON` with an empty
 `blocked_by` frontier so a later run can resume from an explicit causal point.
+The dogfood workflow first calls compare-accepted-revision with the same
+baseline, candidate, and input. It reproduces the declared baseline failure,
+reproduces the accepted candidate execution, and records CLOSED/IMPROVED with
+RECORD_IMPROVEMENT_EVIDENCE; a digest mismatch is REFUTED and an identity
+mismatch is UNKNOWN.
 The dogfood workflow then generates Go from that accepted candidate and runs the
 same reverse observation against `candidate.gooo`, preserving the equality and
 no-write evidence as a separate generated-artifact fact.

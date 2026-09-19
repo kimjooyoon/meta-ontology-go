@@ -39,6 +39,8 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runEvaluateRevision(args[1:], OSFileReader{}, stdout, stderr)
 	case "run-accepted-revision":
 		return runAcceptedRevision(args[1:], OSFileReader{}, stdout, stderr)
+	case "compare-accepted-revision":
+		return runCompareAcceptedRevision(args[1:], OSFileReader{}, stdout, stderr)
 	case "profile":
 		return runProfile(args[1:], OSFileReader{}, languageprofile.RuntimeMeasurer{}, stdout, stderr)
 	case "debug":
