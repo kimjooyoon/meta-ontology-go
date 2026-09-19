@@ -15,3 +15,17 @@ func indexDeferredIndicatorIDs(ids []string) (map[string]struct{}, error) {
 	}
 	return indexed, nil
 }
+
+func indexRefutedIndicatorIDs(ids []string) (map[string]struct{}, error) {
+	indexed := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if !validIndicatorDecisionLedgerDigest(id) {
+			return nil, fmt.Errorf("invalid refuted indicator id %q", id)
+		}
+		if _, exists := indexed[id]; exists {
+			return nil, fmt.Errorf("duplicate refuted indicator id %q", id)
+		}
+		indexed[id] = struct{}{}
+	}
+	return indexed, nil
+}

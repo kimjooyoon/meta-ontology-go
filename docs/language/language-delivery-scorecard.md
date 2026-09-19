@@ -37,6 +37,12 @@ The separately uploaded unknown-top report must become `FAIL_CLOSED /
 LOWER_RESOLUTION`; it cannot mint delivery credit. The only remaining known gap
 is external-dependency execution.
 
+The source-execution receipt and its delivery support view require scope
+`DECLARATION_RESOLUTION_ONLY`. Their activity/entity events do not claim
+registered-value operation execution, handwritten Go-body execution, or
+external effects; the separately scoped value witness covers only registered
+operations.
+
 ## Status semantics
 
 | Status | Meaning | Resolution effect |

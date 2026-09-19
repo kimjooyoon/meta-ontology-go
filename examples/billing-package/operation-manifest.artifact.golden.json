@@ -4,7 +4,7 @@
   "resolution": "EXACT",
   "reason": "OPERATION_MANIFEST_EMITTED",
   "kind": "operation-manifest",
-  "subject_digest": "sha256:14d4ce3669226139d0cdfd813d75fd8cf1afe4f006dd0173ea6a41a9ec08174f",
+  "subject_digest": "sha256:8f1117c151aa2daaf8080cb5234056f46d5df096424807f5d9c6b88e1b851659",
   "package": {
     "path": "billing-package",
     "name": "billing",
@@ -50,5 +50,5 @@
     "repository_writes": 0,
     "mutation_authority": false
   },
-  "digest": "sha256:91de31e1ac25ae9b1391216436930b152d009a8ed34e848a89553bc5a76f70cc"
+  "digest": "sha256:950b3c8495e4b6800ce8cc08adfc36a5abc99a7cb7ac63003f10e5d7b6b8941b"
 }

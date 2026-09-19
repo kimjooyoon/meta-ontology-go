@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -384,12 +385,7 @@ func sortedStrings(values []string) []string {
 }
 
 func contains(values []string, wanted string) bool {
-	for _, value := range values {
-		if value == wanted {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(values, wanted)
 }
 
 func clearRequestDigest(value ContinuationRequest) ContinuationRequest {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -26,6 +27,9 @@ const (
 	UnknownNext      = "REPAIR_CANONICAL_GRAPH_OR_RECEIPT"
 	RefutedReason    = "FAIL_CLOSED_PARTIAL_REUSE_CONTRADICTION"
 )
+
+// ErrInvalidReceipt identifies invalid content, not unavailable input.
+var ErrInvalidReceipt = errors.New("partial reuse receipt content is invalid")
 
 var compilerManifestPaths = []string{
 	"cmd/gooo/generate_part01.go",
@@ -118,7 +122,95 @@ func ReleasedToolDigest(compiler string) string {
 func ToolchainDigest() string { return generation.SemanticRetentionToolchainDigest() }
 
 func TestCommand(partition Partition) string {
-	return "go test -tags partial_reuse_example -run ^" + partition.TestName + "$ -count=1 ."
+	return "go " + strings.Join(TestCommandArgs(partition), " ")
+}
+
+func TestCommandArgs(partition Partition) []string {
+	return []string{"test", "-json", "-tags", "partial_reuse_example", "-run", "^" + regexp.QuoteMeta(partition.TestName) + "$", "-count=1", "."}
+}
+
+// ObserveTestOutput counts executed tests, never a requested or declared count.
+func ObserveTestOutput(output []byte, expected []string) ([]string, error) {
+	states := make(map[string]int, len(expected))
+	for _, name := range expected {
+		if name == "" || strings.Contains(name, "/") {
+			return nil, errors.New("partial reuse expected test identity is invalid")
+		}
+		if _, exists := states[name]; exists {
+			return nil, errors.New("partial reuse expected test identity is duplicated")
+		}
+		states[name] = 0
+	}
+	if len(states) == 0 {
+		return nil, errors.New("partial reuse expected test cohort is empty")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	var passed []string
+	var packageName string
+	started, completed := false, false
+	for {
+		var event struct{ Action, Package, Test string }
+		if err := decoder.Decode(&event); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("partial reuse test JSON: %w", err)
+		}
+		if event.Package == "" || (packageName != "" && packageName != event.Package) {
+			return nil, errors.New("partial reuse test package identity is missing or ambiguous")
+		}
+		packageName = event.Package
+		if event.Action == "fail" || event.Action == "skip" || (completed && event.Action != "output") {
+			return nil, errors.New("partial reuse test execution is not a complete success")
+		}
+		if event.Test == "" {
+			switch event.Action {
+			case "start":
+				if started {
+					return nil, errors.New("partial reuse test package started twice")
+				}
+				started = true
+			case "pass":
+				if !started {
+					return nil, errors.New("partial reuse test package did not start")
+				}
+				completed = true
+			case "output":
+			default:
+				return nil, errors.New("partial reuse test package action is unknown")
+			}
+			continue
+		}
+		root, _, subtest := strings.Cut(event.Test, "/")
+		state, exists := states[root]
+		if !exists || !started || completed {
+			return nil, errors.New("partial reuse observed an unexpected test or event order")
+		}
+		switch event.Action {
+		case "run":
+			if !subtest {
+				if state != 0 {
+					return nil, errors.New("partial reuse test ran more than once")
+				}
+				states[root] = 1
+			}
+		case "pass":
+			if !subtest {
+				if state != 1 {
+					return nil, errors.New("partial reuse test passed without one run")
+				}
+				states[root] = 2
+				passed = append(passed, root)
+			}
+		case "output", "pause", "cont":
+		default:
+			return nil, errors.New("partial reuse test action is unknown")
+		}
+	}
+	if !completed || len(passed) != len(expected) {
+		return nil, errors.New("partial reuse successful test cohort is incomplete")
+	}
+	return passed, nil
 }
 
 func TestCommandDigest(command, contract string) string {
@@ -198,7 +290,7 @@ func ValidateReceipt(receipt Receipt) error {
 
 func VerifyReceipt(receipt Receipt, expected Binding, partition string) error {
 	if err := ValidateReceipt(receipt); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	if receipt.Partition != partition || receipt.Binding != expected {
 		return errors.New("partial reuse receipt does not bind the exact partition inputs")
@@ -250,14 +342,14 @@ func ReadReceipt(filename string) (Receipt, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&receipt); err != nil {
-		return Receipt{}, err
+		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
-		return Receipt{}, errors.New("partial reuse receipt contains trailing JSON")
+		return Receipt{}, fmt.Errorf("%w: trailing JSON", ErrInvalidReceipt)
 	}
 	if err := ValidateReceipt(receipt); err != nil {
-		return Receipt{}, err
+		return Receipt{}, fmt.Errorf("%w: %w", ErrInvalidReceipt, err)
 	}
 	return receipt, nil
 }

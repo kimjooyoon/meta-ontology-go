@@ -43,11 +43,11 @@ jobs:
       SOURCE_ARTIFACT_NAME: self-improvement-language-observation
       EVENT_NAME: ${{ github.event_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.TOOLING_SHA }}
           persist-credentials: false
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: 1.27.x
           check-latest: true
@@ -120,7 +120,7 @@ jobs:
           cp "$output/producer.json" "$artifact/producer.json"
       - name: Upload PR observation transport witness
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.SOURCE_ARTIFACT_NAME }}
           path: ${{ runner.temp }}/candidate/source-artifact
@@ -177,7 +177,7 @@ jobs:
             "$transport/lifecycle.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload artifact lifecycle receipt
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-artifact-lifecycle-${{ env.SOURCE_RUN_ID }}-${{ env.SOURCE_RUN_ATTEMPT }}
           path: ${{ runner.temp }}/candidate/transport/lifecycle.json
@@ -233,7 +233,7 @@ jobs:
           jq -r '"transport: \(.decision) \(.metrics.verified_total)/\(.metrics.fixed_obligation_total) (\(.metrics.coverage_basis_points) bps), unknown \(.open_obligation_ids | join(","))"' \
             "$transport/receipt.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout verified producer subject
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.verify-transport.outputs.subject_sha }}
           persist-credentials: false
@@ -269,7 +269,7 @@ jobs:
           ' "$output/first.json" > "$output/execution-input.json"
           jq -r '"candidate: \(.decision) \(.summary.candidate_count), achieved \(.summary.achieved_delta)/1, target \(.summary.target_delta)/1"' "$output/first.json" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload exact-head non-executing candidate
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: self-improvement-nonexecuting-candidate-${{ github.event_name == 'workflow_run' && steps.verify-transport.outputs.subject_sha || env.HEAD_SHA }}
           path: |

@@ -8,47 +8,80 @@ on:
       - examples/domain-observation/**
       - cmd/gooo/**
       - internal/**
+      - go.mod
+      - go.sum
   push:
-    branches: [dev]
+    branches: [dev, agent/typed-binding-plan-20260916]
     paths:
       - .github/workflows/domain-observation.yml
       - examples/domain-observation/**
       - cmd/gooo/**
       - internal/**
+      - go.mod
+      - go.sum
 
 permissions:
   contents: read
 
+concurrency:
+  group: domain-observation-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   observe:
-    name: Check and deterministically generate domain model
+    name: Check binding compiler and domain definition
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.27.0'
+          go-version-file: go.mod
           cache: false
-      - name: Check semantic domain definition
-        run: go run ./cmd/gooo check --semantic examples/domain-observation/main.gooo
-      - name: Generate two independent artifacts
+      - name: Record exact compiler observation subject
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/domain-observation"
+          jq -n --arg source_sha "$(git rev-parse HEAD)" \
+            --arg head_sha "${PR_HEAD:-$GITHUB_SHA}" --arg base_sha "$PR_BASE" \
+            --arg toolchain "$(go version)" --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg workflow_sha "$GITHUB_WORKFLOW_SHA" \
+            --arg fixture_sha256 "$(sha256sum examples/domain-observation/main.gooo | cut -d' ' -f1)" \
+            '{source_sha:$source_sha,head_sha:$head_sha,base_sha:$base_sha,toolchain:$toolchain,
+              run_id:$run_id,run_attempt:$run_attempt,workflow_sha:$workflow_sha,
+              fixture_sha256:$fixture_sha256,evidence_scope:"syntax-and-bidir-compiler",
+              generator_binding_support:"UNSUPPORTED",runtime_utility:"UNKNOWN"}' \
+            > "$RUNNER_TEMP/domain-observation/subject.json"
+      - name: Execute syntax and lowering regression tests
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/domain-observation/first" "$RUNNER_TEMP/domain-observation/second"
-          go run ./cmd/gooo generate examples/domain-observation/main.gooo --out "$RUNNER_TEMP/domain-observation/first"
-          go run ./cmd/gooo generate examples/domain-observation/main.gooo --out "$RUNNER_TEMP/domain-observation/second"
-          cmp "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go" "$RUNNER_TEMP/domain-observation/second/semantic.gooo.go"
-          test -s "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go"
-          test -z "$(gofmt -l "$RUNNER_TEMP/domain-observation/first/semantic.gooo.go")"
-      - name: Publish human-readable observation
+          go test -count=1 -json ./internal/syntax ./internal/bidir \
+            | tee "$RUNNER_TEMP/domain-observation/tests.ndjson"
+      - name: Check semantic domain definition
+        run: |
+          set -euo pipefail
+          go run ./cmd/gooo check --semantic examples/domain-observation/main.gooo \
+            2>&1 | tee "$RUNNER_TEMP/domain-observation/semantic-check.txt"
+      - name: Publish bounded compiler result
         run: |
           {
-            echo '### Domain observation'
-            echo '- domain: service incident resolution'
-            echo '- semantic check: CLOSED'
-            echo '- deterministic generation: CLOSED (1/1)'
-            echo '- runtime usefulness: UNKNOWN (not claimed by this fixture)'
-            echo '- repository writes: 0'
+            echo '### Domain observation: compiler scope only'
+            echo '- syntax and bidirectional lowering suites: passed for the recorded source'
+            echo '- fixture semantic check: passed'
+            echo '- binding generation: UNSUPPORTED; no generated artifact claimed'
+            echo '- runtime usefulness and measured improvement: UNKNOWN'
+            echo '- merge authorization: not produced by this workflow'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain observations, including failures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: domain-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/domain-observation/
+          if-no-files-found: error
+          retention-days: 14

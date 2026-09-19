@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect"
 )
@@ -21,9 +24,17 @@ func run(args []string) error {
 	if cfg.verify != "" {
 		return transformationeffect.VerifyFiles(cfg.verify, cfg.generatedReceipts, cfg.executedProvenance, cfg.patch)
 	}
+	var progressWriter io.Writer = os.Stderr
+	invocation, invocationErr := invocationID(cfg.output)
+	if invocationErr != nil {
+		fmt.Fprintf(os.Stderr, "transformation-effect: diagnostic invocation identity unavailable: %v\n", invocationErr)
+		invocation = ""
+		progressWriter = nil
+	}
 	result, err := transformationeffect.Build(transformationeffect.Options{
 		Root: cfg.root, MetricsPath: cfg.metrics, PlanPath: cfg.plan, ExecutionPath: cfg.execution,
 		ReceiptsPath: cfg.receipts, ProvenancePath: cfg.provenance, ExpectedSHA: cfg.expected,
+		ProgressWriter: progressWriter, InvocationID: invocation,
 	})
 	if err != nil {
 		if diagnosticErr := transformationeffect.WriteReplayDiagnostic(cfg.output, err); diagnosticErr != nil {
@@ -37,6 +48,26 @@ func run(args []string) error {
 	fmt.Printf("transformation-effect: decision=%s effects=%d status=%s\n",
 		result.Ledger.Decision, len(result.Ledger.Effects), result.Ledger.Status)
 	return nil
+}
+
+func invocationID(output string) (string, error) {
+	token := make([]byte, 16)
+	if _, err := rand.Read(token); err != nil {
+		return "", fmt.Errorf("generate diagnostic invocation identity: %w", err)
+	}
+	runID := os.Getenv("GITHUB_RUN_ID")
+	attempt := os.Getenv("GITHUB_RUN_ATTEMPT")
+	job := os.Getenv("GITHUB_JOB")
+	if runID == "" {
+		runID = "local"
+	}
+	if attempt == "" {
+		attempt = "1"
+	}
+	if job == "" {
+		job = "transformation-effect"
+	}
+	return fmt.Sprintf("%s/%s/%s/%s:%s", runID, attempt, job, hex.EncodeToString(token), output), nil
 }
 
 func parseConfig(args []string) (config, error) {

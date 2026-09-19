@@ -40,7 +40,7 @@ func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (str
 	}
 	var output strings.Builder
 	fmt.Fprintf(&output, "package %s\nnamespace %s\n", file.Package.Name, file.Namespace.Name)
-	if len(declarations) > 0 {
+	if len(declarations) > 0 || len(file.Bindings) > 0 {
 		output.WriteByte('\n')
 		for index, declaration := range declarations {
 			if index > 0 {
@@ -50,9 +50,13 @@ func FormatWithEntityFieldsSupport(file *File, support EntityFieldsSupport) (str
 				return "", err
 			}
 		}
-		for _, binding := range file.Bindings {
-			output.WriteByte('\n')
-			fmt.Fprintf(&output, "bind %s.%s -> %s.%s", binding.SourceActivity, binding.SourcePort, binding.TargetActivity, binding.TargetPort)
+		for index, binding := range file.Bindings {
+			if len(declarations) > 0 || index > 0 {
+				output.WriteByte('\n')
+			}
+			if err := formatBinding(&output, binding); err != nil {
+				return "", err
+			}
 		}
 	}
 	output.WriteByte('\n')

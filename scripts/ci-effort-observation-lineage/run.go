@@ -60,6 +60,15 @@ func runConformance(sourcePath, out string) error {
 	if failureEvaluation.Decision != publicworkflowlineage.DecisionRefuted || !failureEvaluation.ProductFailureKept {
 		return errors.New("source product or test failure was relabeled as stale UNKNOWN")
 	}
+	failureObservation := policy.EvaluateReadOnlyObservation(failureProbe)
+	if failureObservation.Eligibility != publicworkflowlineage.ObservationAllowed || failureObservation.Decision != publicworkflowlineage.DecisionRefuted || failureObservation.LineageState != publicworkflowlineage.StateMismatch || !failureObservation.SourceFailureKept || !failureObservation.TimingObservationEligible || !failureObservation.OperationObservationEligible || failureObservation.EvidenceReuseAllowed || failureObservation.PromotionAllowed {
+		return errors.New("exact source failure did not receive read-only observation eligibility without reuse or promotion authority")
+	}
+	mismatchProbe := fixture(policy, policy.Cases[6], 6)
+	mismatchObservation := policy.EvaluateReadOnlyObservation(mismatchProbe)
+	if mismatchObservation.Eligibility != publicworkflowlineage.ObservationDenied || mismatchObservation.TimingObservationEligible || mismatchObservation.OperationObservationEligible || mismatchObservation.EvidenceReuseAllowed || mismatchObservation.PromotionAllowed {
+		return errors.New("mismatched source identity received read-only observation eligibility")
+	}
 	value := makeReport(policy, cases, failureEvaluation.ProductFailureKept, time.Since(started))
 	if err := validateConformance(value); err != nil {
 		return err

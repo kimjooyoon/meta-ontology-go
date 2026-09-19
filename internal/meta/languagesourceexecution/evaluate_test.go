@@ -35,9 +35,9 @@ func testInput(t *testing.T) Input {
 
 func TestEvaluateSourceExecutionContract(t *testing.T) {
 	artifact := Evaluate(testInput(t))
-	if artifact.Decision != "PASS" || artifact.Summary.CasesSatisfied != 4 ||
+	if artifact.Scope != sourceexecution.DeclarationResolutionScope || artifact.Decision != "PASS" || artifact.Summary.CasesSatisfied != 4 ||
 		artifact.Summary.SourceExecutions != 1 || artifact.Summary.DeterministicReplays != 1 ||
-		artifact.Summary.DiagnosticRejections != 2 || artifact.Digest == "" {
+		artifact.Summary.DiagnosticRejections != 2 || artifact.Digest == "" || len(artifact.NotClaimed) != 6 {
 		t.Fatalf("artifact=%#v", artifact)
 	}
 }

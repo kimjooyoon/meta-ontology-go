@@ -16,15 +16,15 @@ bind Observe.result -> Diagnose.input`
 		t.Fatalf("bindings = %#v", file)
 	}
 	binding := file.Bindings[0]
-	if binding.SourceActivity != "Observe" || binding.SourcePort != "result" ||
-		binding.TargetActivity != "Diagnose" || binding.TargetPort != "input" {
+	if binding.Producer.Activity.Name != "Observe" || binding.Producer.Port.Name != "result" ||
+		binding.Consumer.Activity.Name != "Diagnose" || binding.Consumer.Port.Name != "input" {
 		t.Fatalf("binding endpoints = %#v", binding)
 	}
 	if binding.Span.Filename != "binding.gooo" || binding.Span.Start.Line != 5 {
 		t.Fatalf("binding provenance span = %#v", binding.Span)
 	}
-	if binding.SourceActivitySpan.Start.Column != 6 || binding.SourcePortSpan.Start.Column != 14 ||
-		binding.TargetActivitySpan.Start.Column != 24 || binding.TargetPortSpan.Start.Column != 33 {
+	if binding.Producer.Activity.Span.Start.Column != 6 || binding.Producer.Port.Span.Start.Column != 14 ||
+		binding.Consumer.Activity.Span.Start.Column != 24 || binding.Consumer.Port.Span.Start.Column != 33 {
 		t.Fatalf("binding endpoint spans = %#v", binding)
 	}
 }

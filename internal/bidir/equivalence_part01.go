@@ -25,7 +25,7 @@ func relationSemanticEqual(left, right Relation) bool {
 // SemanticEquivalent ignores presentation, source spans, and candidates.
 func SemanticEquivalent(left, right Model) bool {
 	left, right = left.Normalized(), right.Normalized()
-	if len(left.Nodes) != len(right.Nodes) || len(left.Relations) != len(right.Relations) {
+	if len(left.Nodes) != len(right.Nodes) || len(left.Relations) != len(right.Relations) || len(left.RuntimeBindings) != len(right.RuntimeBindings) {
 		return false
 	}
 	for index := range left.Nodes {
@@ -35,6 +35,12 @@ func SemanticEquivalent(left, right Model) bool {
 	}
 	for index := range left.Relations {
 		if !relationSemanticEqual(left.Relations[index], right.Relations[index]) {
+			return false
+		}
+	}
+	leftBindings, rightBindings := sortedModelRuntimeBindings(left.RuntimeBindings), sortedModelRuntimeBindings(right.RuntimeBindings)
+	for index := range leftBindings {
+		if runtimeBindingKey(leftBindings[index]) != runtimeBindingKey(rightBindings[index]) || leftBindings[index].Entity != rightBindings[index].Entity {
 			return false
 		}
 	}
@@ -64,6 +70,13 @@ func SemanticFingerprint(model Model) string {
 		writeFingerprintPart(&canonical, string(relation.Source))
 		writeFingerprintPart(&canonical, string(relation.Target))
 		writeMapFingerprint(&canonical, relation.Attributes)
+	}
+	for _, binding := range sortedModelRuntimeBindings(model.RuntimeBindings) {
+		writeFingerprintPart(&canonical, string(binding.Producer.Activity.ID))
+		writeFingerprintPart(&canonical, binding.Producer.Port.Name)
+		writeFingerprintPart(&canonical, string(binding.Consumer.Activity.ID))
+		writeFingerprintPart(&canonical, binding.Consumer.Port.Name)
+		writeFingerprintPart(&canonical, string(binding.Entity))
 	}
 	digest := sha256.Sum256([]byte(canonical.String()))
 	return hex.EncodeToString(digest[:])

@@ -18,6 +18,8 @@ const compilerSelfImprovementPartialReuse20260904V15Branch = "agent/compiler-sel
 const compilerSelfImprovementResolutionRepair20260904V16Branch = "agent/compiler-self-improvement-resolution-repair-20260904-v16"
 const compilerSelfImprovementWorkflowLineage20260904V17Branch = "agent/compiler-self-improvement-workflow-lineage-20260904-v17"
 const compilerSelfImprovementCompatibility20260904V18Branch = "agent/compiler-self-improvement-compatibility-20260904-v18"
+const compilerConformanceEvidenceUpload20260911Branch = "agent/compiler-conformance-evidence-upload-20260911"
+const continuityPreviousGoBinding20260911Branch = "agent/continuity-previous-go-binding-785"
 
 func init() {
 	branchScopeAllowlist[compilerSelfImprovement20260903Branch] = []string{
@@ -266,5 +268,18 @@ func init() {
 		"internal/meta/retentionpolicy/generated/evaluator.go",
 		"internal/verify/scope_compiler_self_improvement_20260903.go",
 		"scripts/self-improvement-compiler-compatibility",
+	}
+	branchScopeAllowlist[compilerConformanceEvidenceUpload20260911Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		".github/workflows/compiler-self-improvement.yml",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
+	}
+	branchScopeAllowlist[continuityPreviousGoBinding20260911Branch] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"cmd/gooo/generate_part02_test.go",
+		"cmd/gooo/public_continuity_generate_part01.go",
+		"internal/verify/scope_compiler_self_improvement_20260903.go",
 	}
 }

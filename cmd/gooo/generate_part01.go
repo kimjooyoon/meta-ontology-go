@@ -28,6 +28,9 @@ func runGenerate(args []string, reader SourceReader, parser SourceParser, stdout
 		return code
 	}
 	started := time.Now()
+	if options.profile != "" {
+		return runMetaPolicyGenerationProfile(options, input, jsonMode, stdout, stderr)
+	}
 	if options.compatibilityCertificateFilename != "" {
 		return runCompatibilityGenerate(options, input, reader, jsonMode, stdout, stderr, deadline)
 	}
@@ -82,6 +85,9 @@ func publicObservationManifestDigest(manifest projectionManifest) (string, error
 func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {
 	if err := ir.Validate(); err != nil {
 		return generator.SemanticIR{}, err
+	}
+	if len(ir.RuntimeBindings) != 0 {
+		return generator.SemanticIR{}, errRuntimeBindingsUnsupportedByGenerator
 	}
 	model := generator.SemanticIR{Package: ir.Package}
 	entities := make(map[string]int)

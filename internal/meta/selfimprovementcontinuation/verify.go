@@ -9,8 +9,8 @@ func Verify(program PolicyProgram, request ContinuationRequest, resolution Conti
 		IndependentDecision: decision, IndependentResolution: outcome, IndependentReason: reason,
 		IndependentReplayComparisons: 1, ExecutionAuthorized: false, LiveGrantDecision: 0,
 		LiveExecutionCount: 0, GrantConsumedUses: 0, RepositoryWrites: 0, LocalTestExecutions: 0,
-	}
-	verification.Verified = request.Digest == requestDigest(request) && resolution.RequestDigest == request.Digest && reflect.DeepEqual(request.Input, resolution.Input) && resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && !resolution.ExecutionAuthorized && resolution.ExecutionGrants == 0 && resolution.LiveGrantDecision == 0 && resolution.LiveExecutionCount == 0 && resolution.GrantConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil
+
+		Verified: request.Digest == requestDigest(request) && resolution.RequestDigest == request.Digest && reflect.DeepEqual(request.Input, resolution.Input) && resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && !resolution.ExecutionAuthorized && resolution.ExecutionGrants == 0 && resolution.LiveGrantDecision == 0 && resolution.LiveExecutionCount == 0 && resolution.GrantConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil}
 	verification.Digest = verificationDigest(verification)
 	return verification
 }

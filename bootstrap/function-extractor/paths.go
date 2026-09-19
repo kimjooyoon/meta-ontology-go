@@ -44,13 +44,13 @@ func appendUnique(values []string, value string) []string {
 	return append(values, value)
 }
 
-func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) ([]string, error) {
+func stageGenericExtraction(root, logical string, buffers map[string][]byte, created map[string]bool, changed, made map[string][]string) ([]string, []projectionextractor.StrategyEvidence, error) {
 	result, err := projectionextractor.ExtractWithResult(root, logical)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(result.Operations) == 0 {
-		return nil, fmt.Errorf("generic extraction performed no operation")
+		return nil, nil, fmt.Errorf("generic extraction performed no operation")
 	}
 	for path, data := range result.Generated {
 		buffers[path] = data
@@ -60,7 +60,7 @@ func stageGenericExtraction(root, logical string, buffers map[string][]byte, cre
 			made[logical] = appendUnique(made[logical], path)
 		}
 	}
-	return append([]string{}, result.Operations...), nil
+	return append([]string{}, result.Operations...), append([]projectionextractor.StrategyEvidence{}, result.Evidence...), nil
 }
 
 func extractionFailure(logical string, err error) extractionFailureRecord {

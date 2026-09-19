@@ -37,4 +37,11 @@ func init() {
 		"AGENTS.md",
 		"CONTRIBUTING.md",
 	}
+	branchScopeAllowlist["agent/main-history-reconciliation-policy-route-20260903"] = []string{
+		".github/agent-scope-table.md",
+		".github/ci-governance.json",
+		"internal/verify/policy_part06.go",
+		"internal/verify/scope_main_history_reconciliation_protocol_20260903.go",
+		"internal/verify/transition_policy_test.go",
+	}
 }

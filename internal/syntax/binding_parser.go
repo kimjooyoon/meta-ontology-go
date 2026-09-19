@@ -2,18 +2,34 @@ package syntax
 
 func (p *Parser) parseBinding() BindingDecl {
 	keyword := p.advance()
-	result := BindingDecl{Span: keyword.Span}
-	left := p.expectIdentifier("binding source activity", DiagExpectedIdentifier)
-	p.expect(TokenDot, ".", DiagUnexpectedDeclaration)
-	source := p.expectIdentifier("binding source port", DiagExpectedIdentifier)
+	producer := p.parseBindingEndpoint()
 	p.expect(TokenArrow, "->", DiagExpectedArrow)
-	right := p.expectIdentifier("binding target activity", DiagExpectedIdentifier)
-	p.expect(TokenDot, ".", DiagUnexpectedDeclaration)
-	target := p.expectIdentifier("binding target port", DiagExpectedIdentifier)
-	result.SourceActivity, result.SourcePort = left.Name, source.Name
-	result.TargetActivity, result.TargetPort = right.Name, target.Name
-	result.SourceActivitySpan, result.SourcePortSpan = left.Span, source.Span
-	result.TargetActivitySpan, result.TargetPortSpan = right.Span, target.Span
-	if !target.Span.IsEmpty() { result.Span.End = target.Span.End }
-	return result
+	consumer := p.parseBindingEndpoint()
+	end := keyword.Span.End
+	if !producer.Span.IsEmpty() {
+		end = producer.Span.End
+	}
+	if !consumer.Span.IsEmpty() {
+		end = consumer.Span.End
+	}
+	return BindingDecl{
+		Span:     startSpan(p.filename, keyword.Span.Start, end),
+		Producer: producer,
+		Consumer: consumer,
+	}
+}
+
+func (p *Parser) parseBindingEndpoint() BindingEndpoint {
+	activity := p.expectIdentifier("binding activity", DiagExpectedIdentifier)
+	p.expect(TokenDot, ".", DiagExpectedDot)
+	port := p.expectIdentifier("binding port", DiagExpectedIdentifier)
+	end := activity.Span.End
+	if !port.Span.IsEmpty() {
+		end = port.Span.End
+	}
+	return BindingEndpoint{
+		Span:     startSpan(p.filename, activity.Span.Start, end),
+		Activity: activity,
+		Port:     port,
+	}
 }

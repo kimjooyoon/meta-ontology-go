@@ -263,6 +263,25 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-runtime-binding",
+      "path": "examples/language-runtime-binding/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-record-binding",
+      "path": "examples/language-record-binding/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY",
+      "entity_fields": true
+    },
+    {
       "id": "self-improvement-value-witness-execution-input",
       "path": "examples/self-improvement-value-witness-execution-input/contract.gooo",
       "kind": "VALID",
@@ -298,17 +317,17 @@
       "meta_operation": "replay-language-syntax",
       "scope": "LANGUAGE_CAPABILITY"
     },
-{
-  "id": "claim-dependency-causality",
-  "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
-  "kind": "VALID",
-  "expected_decision": "PASS",
-  "proof_choice": "COHERENCE",
-  "meta_operation": "replay-language-syntax",
-  "scope": "LANGUAGE_CAPABILITY"
-},
-{
-  "id": "roundtrip-minimal",
+    {
+      "id": "claim-dependency-causality",
+      "path": "cmd/gooo/testdata/claim-dependency/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "roundtrip-minimal",
       "path": "internal/detection/roundtrip/testdata/minimal.gooo",
       "kind": "VALID",
       "expected_decision": "PASS",
@@ -518,6 +537,15 @@
       "proof_choice": "COHERENCE",
       "meta_operation": "replay-language-syntax",
       "scope": "GOVERNANCE_OBSERVATION"
+    },
+    {
+      "id": "self-improvement-ci-continuation",
+      "path": "examples/self-improvement-ci-continuation/continuation.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "GOVERNANCE_OBSERVATION"
     }
   ],
   "package_units": [
@@ -574,7 +602,13 @@
     }
   ],
   "meta_sources": [
+    "internal/meta/syntaxregistration/contract.gooo",
     "internal/meta/entityfields/entity-fields-meta.gooo",
-    "examples/public-trust-surface/main.gooo"
+    "examples/public-trust-surface/main.gooo",
+    "internal/meta/generation/operation-input-contract.gooo",
+    "internal/meta/generation/callback-preview-contract.gooo",
+    "internal/meta/generation/callback-extraction-contract.gooo",
+    "internal/meta/policycompilation/revision-operation.gooo",
+    "examples/relay-game-contract/main.gooo"
   ]
 }

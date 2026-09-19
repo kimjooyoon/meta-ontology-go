@@ -1,18 +1,19 @@
 package main
 
 type graphDump struct {
-	SchemaVersion string              `json:"schema_version"`
-	GraphHash     string              `json:"graph_hash"`
-	SourceDigest  string              `json:"source_digest"`
-	IR            graphIRStatus       `json:"ir"`
-	Evidence      graphReferenceState `json:"evidence"`
-	Provenance    graphReferenceState `json:"provenance"`
-	Projection    graphStatus         `json:"projection"`
-	Lowering      graphStatus         `json:"lowering"`
-	Output        graphStatus         `json:"output"`
-	Authorities   graphAuthorities    `json:"authorities"`
-	Nodes         []graphNode         `json:"nodes"`
-	Relations     []graphRelation     `json:"relations"`
+	SchemaVersion   string                `json:"schema_version"`
+	GraphHash       string                `json:"graph_hash"`
+	SourceDigest    string                `json:"source_digest"`
+	IR              graphIRStatus         `json:"ir"`
+	Evidence        graphReferenceState   `json:"evidence"`
+	Provenance      graphReferenceState   `json:"provenance"`
+	Projection      graphStatus           `json:"projection"`
+	Lowering        graphStatus           `json:"lowering"`
+	Output          graphStatus           `json:"output"`
+	Authorities     graphAuthorities      `json:"authorities"`
+	Nodes           []graphNode           `json:"nodes"`
+	Relations       []graphRelation       `json:"relations"`
+	RuntimeBindings []graphRuntimeBinding `json:"runtime_bindings,omitempty"`
 }
 type graphIRStatus struct {
 	Status         string `json:"status"`
@@ -52,6 +53,15 @@ type graphField struct {
 	Presence    string    `json:"presence"`
 	Cardinality string    `json:"cardinality"`
 	Source      graphSpan `json:"source"`
+}
+type graphRuntimeBinding struct {
+	Schema           string    `json:"schema"`
+	ProducerActivity string    `json:"producer_activity"`
+	ProducerPort     string    `json:"producer_port"`
+	ConsumerActivity string    `json:"consumer_activity"`
+	ConsumerPort     string    `json:"consumer_port"`
+	Entity           string    `json:"entity"`
+	Source           graphSpan `json:"source"`
 }
 type graphSpan struct {
 	File  string        `json:"file"`

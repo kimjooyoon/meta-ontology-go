@@ -3,6 +3,7 @@ package publicworkflowlineage
 const (
 	PolicySchema              = "gooo/public-workflow-lineage-policy/v1"
 	ReportSchema              = "gooo/public-workflow-lineage-report/v1"
+	ObservationSchema         = "gooo/public-workflow-lineage-observation/v1"
 	EvaluatorSchema           = "gooo/public-workflow-lineage-evaluator/v1"
 	PolicyName                = "EXACT_SUBJECT_WORKFLOW_LINEAGE_CONTRACT"
 	DecisionClosed            = "CLOSED"
@@ -31,6 +32,11 @@ const (
 	SourceReceiptCount        = 2
 	ConsumerReceiptCount      = 2
 	EvidenceArtifactCount     = 21
+	ObservationAllowed        = "ELIGIBLE"
+	ObservationDenied         = "INELIGIBLE"
+	ReadOnlyPermission        = "READ_ONLY"
+	ExactSuccessReuse         = "EXACT_SUCCESS_ONLY"
+	NoPromotionPermission     = "NONE"
 )
 
 type CaseSpec struct {
@@ -68,9 +74,22 @@ type Policy struct {
 	CausalFields            []string       `json:"causal_fields"`
 	LineageEdges            []string       `json:"lineage_edges"`
 	RefutedDominatesUnknown bool           `json:"refuted_dominates_unknown"`
+	ReadOnlyPermissions     Permissions    `json:"read_only_permissions"`
 	Metrics                 map[string]int `json:"metrics"`
 	Cases                   []CaseSpec     `json:"cases"`
 }
+
+// ReadOnlyPermissions binds observation eligibility to the existing semantic
+// activities without granting the observation projection reuse or promotion
+// authority.
+type Permissions struct {
+	WorkflowWindow      string `json:"workflow_window"`
+	VerificationRuntime string `json:"verification_runtime"`
+	EvidenceReuse       string `json:"evidence_reuse"`
+	Promotion           string `json:"promotion"`
+}
+
+type ReadOnlyPermissions = Permissions
 
 type Trigger struct {
 	SourceWorkflow      string `json:"source_workflow"`
@@ -163,4 +182,19 @@ type Evaluation struct {
 	ProvenanceState     string         `json:"provenance_state"`
 	ProductFailureKept  bool           `json:"product_failure_kept"`
 	ArtifactIdentity    string         `json:"artifact_identity,omitempty"`
+}
+
+type ReadOnlyObservationEvaluation struct {
+	Schema                       string         `json:"schema"`
+	Eligibility                  string         `json:"eligibility"`
+	Decision                     string         `json:"decision"`
+	LineageState                 string         `json:"lineage_state"`
+	Reason                       string         `json:"reason"`
+	ExactSourceIdentity          bool           `json:"exact_source_identity"`
+	TimingObservationEligible    bool           `json:"timing_observation_eligible"`
+	OperationObservationEligible bool           `json:"operation_observation_eligible"`
+	EvidenceReuseAllowed         bool           `json:"evidence_reuse_allowed"`
+	PromotionAllowed             bool           `json:"promotion_allowed"`
+	SourceFailureKept            bool           `json:"source_failure_kept"`
+	Unknown                      *CausalUnknown `json:"unknown,omitempty"`
 }

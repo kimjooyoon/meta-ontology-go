@@ -1,0 +1,18 @@
+package recordbinding
+namespace recordbinding
+
+entity Observation id "gooo://record-binding/entity/observation" fields {
+    field State id "gooo://record-binding/field/State" type string required one
+    field EvidenceDigest id "gooo://record-binding/field/EvidenceDigest" type string required one
+    field ObservedCount id "gooo://record-binding/field/ObservedCount" type string required one
+    field RequiredCount id "gooo://record-binding/field/RequiredCount" type string required one
+    field Scope id "gooo://record-binding/field/Scope" type string required one
+    field NextOperation id "gooo://record-binding/field/NextOperation" type string required one
+}
+
+activity Capture(Observation) -> Observation computes "record.forward:v1"
+activity Review(Observation) -> Observation computes "record.forward:v1"
+activity Report(Observation) -> Observation computes "record.forward:v1"
+
+bind Capture.result -> Review.input
+bind Capture.result -> Report.input

@@ -59,6 +59,8 @@ func expectedRegistry() Registry {
 		valid("self-improvement-execution-contract", "examples/self-improvement-execution-contract/contract.gooo"),
 		valid("self-improvement-execution-grant", "examples/self-improvement-execution-grant/grant.gooo"),
 		valid("language-value-witness", "examples/language-value-witness/main.gooo"),
+		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
+		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
 		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),
 		valid("language-operation-catalog-unknown", "examples/language-operation-catalog/unknown.gooo"),
@@ -87,7 +89,8 @@ func expectedRegistry() Registry {
 		entityFields,
 		valid("temporal-transition-ticket", "examples/temporal-transition-ticket/main.gooo"),
 		governance("live-governance-snapshot", "examples/live-governance-snapshot/main.gooo"),
-	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo"}}
+		governance("self-improvement-ci-continuation", "examples/self-improvement-ci-continuation/continuation.gooo"),
+	}, PackageUnits: []PackageDefinition{packageUnit, symbolicUnit, selfImprovementObservationUnit, partialReuseUnit}, MetaSources: []string{"internal/meta/syntaxregistration/contract.gooo", "internal/meta/entityfields/entity-fields-meta.gooo", "examples/public-trust-surface/main.gooo", "internal/meta/generation/operation-input-contract.gooo", "internal/meta/generation/callback-preview-contract.gooo", "internal/meta/generation/callback-extraction-contract.gooo", "internal/meta/policycompilation/revision-operation.gooo", "examples/relay-game-contract/main.gooo"}}
 }
 
 func decodeRegistry(raw []byte) (Registry, error) {
@@ -132,8 +135,8 @@ func validateCaseScopes(registry Registry) error {
 		}
 	}
 	if capability != FixedCapabilityTotal || governance != FixedGovernanceTotal ||
-		len(governanceIDs) != 1 || governanceIDs[0] != "live-governance-snapshot" ||
-		len(governancePaths) != 1 || governancePaths[0] != "examples/live-governance-snapshot/main.gooo" {
+		!reflect.DeepEqual(governanceIDs, []string{"live-governance-snapshot", "self-improvement-ci-continuation"}) ||
+		!reflect.DeepEqual(governancePaths, []string{"examples/live-governance-snapshot/main.gooo", "examples/self-improvement-ci-continuation/continuation.gooo"}) {
 		return fmt.Errorf("language syntax scope partition mismatch")
 	}
 	return nil

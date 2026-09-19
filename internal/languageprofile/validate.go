@@ -10,6 +10,9 @@ func Validate(receipt Receipt) error {
 	if receipt.Schema != ReceiptSchema {
 		return fmt.Errorf("PROFILE_SCHEMA_UNKNOWN")
 	}
+	if receipt.Scope != ExecutionScope {
+		return fmt.Errorf("PROFILE_SCOPE_UNKNOWN")
+	}
 	if receipt.Decision != "PASS" && receipt.Decision != "FAIL_CLOSED" {
 		return fmt.Errorf("PROFILE_DECISION_UNKNOWN")
 	}

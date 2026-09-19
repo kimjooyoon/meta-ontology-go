@@ -37,8 +37,11 @@ func executionStepFor(action Action) ExecutionStep {
 	return ExecutionStep{
 		ActionIndicatorID: action.IndicatorID,
 		MetricID:          action.MetricID, Subject: action.Subject,
-		SubjectKind: action.SubjectKind, Applicability: action.Applicability,
-		ApplicabilityRule: action.ApplicabilityRule, ApplicabilityReason: action.ApplicabilityReason,
+		SubjectKind: action.SubjectKind, InputSubjectKind: action.InputSubjectKind,
+		InputContractSourceDigest:   action.InputContractSourceDigest,
+		InputContractSemanticDigest: action.InputContractSemanticDigest,
+		Applicability:               action.Applicability,
+		ApplicabilityRule:           action.ApplicabilityRule, ApplicabilityReason: action.ApplicabilityReason,
 		Blocking: action.Blocking, SourceIndicator: action.SourceIndicator,
 		IndicatorOutcome:  action.IndicatorOutcome,
 		MetricProofChoice: action.MetricProofChoice, MetricProducer: action.MetricProducer,
@@ -50,7 +53,8 @@ func executionStepFor(action Action) ExecutionStep {
 		Executor:            action.Executor, Evaluator: action.Evaluator,
 		RequiredIndicatorIDs: append([]string{}, action.RequiredIndicatorIDs...),
 		ReceiptRequired:      action.ReceiptRequired, Priority: action.Priority,
-		WorkspaceMode: WorkspaceModeDisposable,
-		WriteBoundary: WriteBoundarySandboxOnly,
+		RegistrationRequest: cloneRegistrationRequest(action.RegistrationRequest),
+		WorkspaceMode:       WorkspaceModeDisposable,
+		WriteBoundary:       WriteBoundarySandboxOnly,
 	}
 }

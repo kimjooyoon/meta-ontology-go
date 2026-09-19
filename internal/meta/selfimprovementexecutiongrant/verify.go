@@ -15,8 +15,8 @@ func Verify(program PolicyProgram, input GrantInput, resolution GrantResolution)
 	verification := Verification{Schema: VerificationSchema, RequestDigest: input.Request.Digest,
 		ResolutionDigest: resolution.Digest, IndependentDecision: decision, IndependentResolution: outcome,
 		IndependentReason: reason, IndependentReplayComparisons: 1, LiveGrants: 0,
-		ExecutionCount: 0, GrantConsumedUses: 0, RepositoryWrites: 0, LocalTestExecutions: 0}
-	verification.Verified = resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && resolution.RequestDigest == input.Request.Digest && !resolution.OneUseEnforced && resolution.ExecutionCount == 0 && resolution.ConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil
+		ExecutionCount: 0, GrantConsumedUses: 0, RepositoryWrites: 0, LocalTestExecutions: 0,
+		Verified: resolution.Decision == decision && resolution.Resolution == outcome && resolution.Reason == reason && resolution.RequestDigest == input.Request.Digest && !resolution.OneUseEnforced && resolution.ExecutionCount == 0 && resolution.ConsumedUses == 0 && resolution.RepositoryWrites == 0 && resolution.LocalTestExecutions == 0 && ValidateResolution(resolution) == nil}
 	if resolution.GrantAllowsExecution {
 		verification.LiveGrants = boolInt(input.Live)
 	}
