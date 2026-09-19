@@ -18,6 +18,7 @@ type Plan struct {
 	SemanticFingerprint  string
 	programs             map[string]Program
 	bindings             []bidir.RuntimeBinding
+	feedbacks            []bidir.RuntimeBinding
 	compiledFilename     string
 	compiledSourceDigest string
 	compiledFingerprint  string
@@ -71,30 +72,44 @@ func CompilePlan(filename string, source []byte) (Plan, error) {
 	if activities == 0 {
 		return Plan{}, failAt(ReasonPlanInvalid, "PLAN", "require-activity", "source declares no activities")
 	}
-	if err := validatePlanBindings(programs, model.RuntimeBindings); err != nil {
+	var bindings, feedbacks []bidir.RuntimeBinding
+	for _, binding := range model.RuntimeBindings {
+		if binding.Feedback {
+			feedbacks = append(feedbacks, binding)
+		} else {
+			bindings = append(bindings, binding)
+		}
+	}
+	if err := validatePlanBindings(programs, bindings); err != nil {
 		return Plan{}, err
 	}
 	return Plan{Filename: filename, SourceDigest: digestBytes(source), SemanticFingerprint: bidir.SemanticFingerprint(model), programs: programs,
-		bindings: append([]bidir.RuntimeBinding(nil), model.RuntimeBindings...), compiledFilename: filename,
+		bindings: bindings, feedbacks: feedbacks, compiledFilename: filename,
 		compiledSourceDigest: digestBytes(source), compiledFingerprint: bidir.SemanticFingerprint(model)}, nil
 }
 
 // Execute runs one isolated plan instance. The map supplies exactly one
 // Integer input for each root activity; bound activities must receive their
 // input from a validated ProducedResult edge.
-func (plan Plan) Execute(rootInputs map[string]int64) (execution Execution, err error) {
+func (plan Plan) Execute(rootInputs map[string]int64) (Execution, error) {
+	execution, _, err := plan.executeIteration(rootInputs)
+	return execution, err
+}
+
+// executeIteration keeps result handles private; failed runs never release them.
+func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execution, results map[string]ProducedResult, err error) {
 	if err := plan.validateCompiledAuthority(); err != nil {
-		return Execution{}, err
+		return Execution{}, nil, err
 	}
 	order, incoming, _, err := plan.executionOrder()
 	if err != nil {
-		return Execution{}, err
+		return Execution{}, nil, err
 	}
 	if err := validateExecutionBindings(plan.programs, plan.bindings); err != nil {
-		return Execution{}, err
+		return Execution{}, nil, err
 	}
 	if err := validateRootInputs(plan.programs, incoming, rootInputs); err != nil {
-		return Execution{}, err
+		return Execution{}, nil, err
 	}
 	values := make(map[string]ProducedResult, len(plan.programs))
 	execution = Execution{
@@ -108,35 +123,35 @@ func (plan Plan) Execute(rootInputs map[string]int64) (execution Execution, err 
 		input, hasInput := rootInputs[activity]
 		if !hasInput {
 			for _, binding := range incoming[activity] {
-				result, ok := values[string(binding.Producer.Activity.Name)]
+				result, ok := values[binding.Producer.Activity.Name]
 				if !ok {
-					return execution, failAt(ReasonPlanExecutionFailed, "EXECUTE", "read-bound-input", activity)
+					return execution, nil, failAt(ReasonPlanExecutionFailed, "EXECUTE", "read-bound-input", activity)
 				}
-				if err := validateBindingResult(plan.programs[string(binding.Producer.Activity.Name)], plan.programs[activity], binding, result); err != nil {
-					return execution, err
+				if err := validateBindingResult(plan.programs[binding.Producer.Activity.Name], plan.programs[activity], binding, result); err != nil {
+					return execution, nil, err
 				}
 				input, err = integerResult(result)
 				if err != nil {
-					return execution, err
+					return execution, nil, err
 				}
 				execution.Deliveries++
 				hasInput = true
 			}
 		}
 		if !hasInput {
-			return execution, failAt(ReasonExternalInputMissing, "EXECUTE", "require-external-root-input", activity)
+			return execution, nil, failAt(ReasonExternalInputMissing, "EXECUTE", "require-external-root-input", activity)
 		}
 		result, err := plan.programs[activity].executeResult([]int64{input}, func() {
 			execution.ApplyCalls++
 			execution.Activities = append(execution.Activities, activity)
 		})
 		if err != nil {
-			return execution, err
+			return execution, nil, err
 		}
 		values[activity] = result
 		execution.Results[activity] = result.Evidence()
 	}
-	return execution, nil
+	return execution, values, nil
 }
 
 func (plan Plan) validateCompiledAuthority() error {

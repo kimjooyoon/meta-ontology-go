@@ -13,6 +13,7 @@ func (p *Parser) parseBinding() BindingDecl {
 		end = consumer.Span.End
 	}
 	return BindingDecl{
+		Feedback: keyword.Value == "feedback",
 		Span:     startSpan(p.filename, keyword.Span.Start, end),
 		Producer: producer,
 		Consumer: consumer,

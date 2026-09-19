@@ -27,6 +27,7 @@ func lowerRuntimeBindings(model *Model, bindings []RuntimeBinding, names map[str
 			return fmt.Errorf("runtime binding %d consumer %q is not an activity", index, consumer)
 		}
 		model.RuntimeBindings = append(model.RuntimeBindings, RuntimeBinding{
+			Feedback: binding.Feedback,
 			Producer: BindingEndpoint{
 				Activity: Reference{ID: producer, Name: binding.Producer.Activity.Name, Namespace: model.Namespace, Span: binding.Producer.Activity.Span},
 				Port:     binding.Producer.Port,
@@ -184,6 +185,9 @@ func validateModelRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 	indegree := make(map[ID]int, len(bindings)*2)
 	outgoing := make(map[ID][]ID, len(bindings))
 	for _, binding := range bindings {
+		if binding.Feedback {
+			continue
+		}
 		producer, consumer := binding.Producer.Activity.ID, binding.Consumer.Activity.ID
 		indegree[producer] = indegree[producer]
 		indegree[consumer]++
@@ -216,8 +220,12 @@ func validateModelRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 }
 
 func runtimeBindingKey(binding RuntimeBinding) string {
-	return string(binding.Producer.Activity.ID) + "\x00" + binding.Producer.Port.Name + "\x00" +
+	key := string(binding.Producer.Activity.ID) + "\x00" + binding.Producer.Port.Name + "\x00" +
 		string(binding.Consumer.Activity.ID) + "\x00" + binding.Consumer.Port.Name
+	if binding.Feedback {
+		return "feedback\x00" + key
+	}
+	return key
 }
 
 func sortedModelRuntimeBindings(bindings []RuntimeBinding) []RuntimeBinding {

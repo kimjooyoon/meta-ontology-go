@@ -62,6 +62,7 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 			return Document{}, err
 		}
 		document.RuntimeBindings = append(document.RuntimeBindings, RuntimeBinding{
+			Feedback: binding.Feedback,
 			Producer: BindingEndpoint{
 				Activity: Reference{Name: binding.Producer.Activity.Name, Span: toSourceSpan(binding.Producer.Activity.Span)},
 				Port:     Reference{Name: binding.Producer.Port.Name, Span: toSourceSpan(binding.Producer.Port.Span)},
