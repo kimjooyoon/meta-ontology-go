@@ -112,6 +112,14 @@ func activityPortType(declaration Declaration, port string, input bool) (ID, boo
 	if input {
 		references = declaration.Inputs
 	}
+	if len(references) == 1 {
+		if input && port == "input" {
+			return references[0].ID, true
+		}
+		if !input && port == "result" {
+			return references[0].ID, true
+		}
+	}
 	for _, reference := range references {
 		if reference.Name == port {
 			return reference.ID, true
