@@ -70,15 +70,15 @@ jobs:
         run: |
           set -euo pipefail
           doc=docs/governance/problem-solving-scope.md
-          rg -q '^## Resolution decision protocol$' "$doc"
-          rg -q 'The repository is not the default unit of blockage' "$doc"
-          rg -q '`STOP_AND_REPAIR`' "$doc"
-            rg -q '`KEEP_PENDING_CONTINUE`' "$doc"
-            rg -q 'Merge authority is separate' "$doc"
-            rg -q '`evidence_identity`' "$doc"
-            rg -q '^## Bounded problem-solving scope$' "$doc"
-            rg -q 'The default action is therefore not “stop the project”' "$doc"
-            rg -q '^### CI is an observation boundary, not a universal authority$' "$doc"
+          grep -Eq '^## Resolution decision protocol$' "$doc"
+          grep -Eq 'The repository is not the default unit of blockage' "$doc"
+          grep -Eq '`STOP_AND_REPAIR`' "$doc"
+          grep -Eq '`KEEP_PENDING_CONTINUE`' "$doc"
+          grep -Eq 'Merge authority is separate' "$doc"
+          grep -Eq '`evidence_identity`' "$doc"
+          grep -Eq '^## Bounded problem-solving scope$' "$doc"
+          grep -Eq 'The default action is therefore not “stop the project”' "$doc"
+          grep -Eq '^### CI is an observation boundary, not a universal authority$' "$doc"
 
       - name: Publish exact policy observation
         shell: bash
