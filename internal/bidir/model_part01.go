@@ -72,6 +72,7 @@ type Document struct {
 	Declarations          []Declaration
 	Policies              []semantic.Policy
 	Relations             []Relation
+	BindingEdges          []BindingEdge
 	RuntimeBindings       []RuntimeBinding
 	ImplicitActivityPorts bool
 }

@@ -105,3 +105,21 @@ claims remain separate observations.
 The full self-improvement goal still requires a later system boundary to use
 accepted changes under an explicit policy. No new whole-language completeness
 percentage is introduced.
+
+## Independent semantic domain fixture
+
+`incident.gooo` keeps the incident-resolution domain separate from the
+executable continuation in `main.gooo`. It declares an observed service
+symptom, a bounded diagnosis, an explicit resolution, and an observed outcome:
+
+```gooo
+activity ObserveSymptom(Service) -> Symptom computes "observation=service-latency;fact=explicit"
+activity ProposeDiagnosis(Symptom) -> Diagnosis computes "proposal=bounded;inference=explicit"
+activity ApplyResolution(Diagnosis) -> Resolution computes "effect=configuration-change;authority=explicit"
+activity RecordOutcome(Resolution) -> Outcome computes "result=observed;claim=explicit"
+```
+
+This fixture is used for semantic checking only. Its bindings are intentionally
+not presented as generated runtime support. The workflow records its semantic
+check separately from the executable continuation, so a failure in one scope
+does not become an unsupported claim about the other.

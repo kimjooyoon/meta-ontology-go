@@ -69,6 +69,7 @@ jobs:
           out="$RUNNER_TEMP/domain-evidence/generation"
           mkdir -p "$out"
           "$cli" check --semantic examples/domain-observation/main.gooo > "$out/semantic-check.txt" 2>&1
+          "$cli" check --semantic examples/domain-observation/incident.gooo > "$out/incident-semantic-check.txt" 2>&1
           if "$cli" generate examples/domain-observation/main.gooo --out "$out/rejected" > "$out/rejected.log" 2>&1; then
             echo 'bound generation unexpectedly succeeded' >&2; exit 1
           fi

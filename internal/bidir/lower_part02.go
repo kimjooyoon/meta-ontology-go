@@ -43,6 +43,34 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		}
 		document.Declarations = append(document.Declarations, adapted)
 	}
+	idsByName := make(map[string]ID, len(document.Declarations))
+	for _, declaration := range document.Declarations {
+		id := declaration.ID
+		if id == "" {
+			canonical, err := declarationIdentity(document.Namespace, declaration)
+			if err != nil {
+				return Document{}, err
+			}
+			id = canonical
+		}
+		idsByName[declaration.Name] = id
+	}
+	for _, binding := range file.Bindings {
+		if binding.Feedback {
+			continue
+		}
+		source, sourceOK := idsByName[binding.Producer.Activity.Name]
+		target, targetOK := idsByName[binding.Consumer.Activity.Name]
+		if !sourceOK || !targetOK {
+			return Document{}, fmt.Errorf("binding references unknown activity")
+		}
+		document.BindingEdges = append(document.BindingEdges, BindingEdge{
+			SourceActivity: source,
+			SourcePort:     binding.Producer.Port.Name,
+			TargetActivity: target,
+			TargetPort:     binding.Consumer.Port.Name,
+		})
+	}
 	for _, declaration := range syntaxDeclarations(file) {
 		if err := checkLowerContext(ctx); err != nil {
 			return Document{}, err
