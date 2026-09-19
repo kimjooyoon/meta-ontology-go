@@ -54,7 +54,7 @@ func (plan Plan) ExecuteIterations(ctx context.Context, rootInputs map[string]in
 
 func (plan Plan) executeIterations(ctx context.Context, inputs map[string]int64, iterations int, trace Continuation) (Continuation, error) {
 	pendingDeliveries := 0
-	for index := 0; index < iterations; index++ {
+	for index := range iterations {
 		if err := ctx.Err(); err != nil {
 			return trace, failAt(ReasonContinuationCanceled, "CONTINUE", "check-iteration-context", err.Error())
 		}
