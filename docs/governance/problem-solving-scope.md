@@ -43,6 +43,46 @@ and another compiler primitive with a disjoint source surface.
 The blocked lane must retain its exact head, cause, next operation, and evidence
 identity. A timeout or missing artifact is never relabeled as a pass.
 
+## Resolution decision protocol
+
+Classify the observation at the smallest registered ownership scope before
+deciding whether to wait. The repository is not the default unit of blockage.
+
+| Decision | Applies to | Required action | Independent work |
+| --- | --- | --- | --- |
+| `STOP_AND_REPAIR` | `SEMANTIC_DEFECT` | Repair the compiler path and rerun its focused regression observation. | Continue only on disjoint scopes. |
+| `HOLD_SEMANTIC_LANE` | `SEMANTIC_UNKNOWN` | Make the missing rule, input, or evidence boundary explicit before closing the lane. | Continue on disjoint scopes. |
+| `HOLD_CONFLICTING_LANE` | `SCOPE_CONFLICT` | Resolve ownership or authority conflict without widening the proposed delta. | Continue on non-conflicting scopes. |
+| `CONTINUE_INDEPENDENT` | `INFRASTRUCTURE_FAILURE` | Record the external cause and next operation; do not reinterpret it as a compiler result. | Yes. |
+| `KEEP_PENDING_CONTINUE` | `QUEUE_OR_STALE_OBSERVATION` | Preserve the exact run, head, and missing terminal observation. | Yes. |
+| `CONTINUE_ADVISORY` | `ADVISORY_FAILURE` | Keep the signal as follow-up evidence outside compiler closure. | Yes. |
+
+The first three decisions constrain the affected lane. The last three do not
+close the semantic question, but they also do not justify stopping unrelated
+compiler work, documentation, provenance capture, or independent dogfood.
+Continuing is not a retry disguised as success: the exact cause, next
+operation, and evidence identity remain `UNKNOWN` until a terminal observation
+exists.
+
+### Merge authority is separate
+
+This protocol answers “what work may continue?” It does not answer “may this
+commit merge?”. A merge is accepted only through the repository's actual
+protected-branch rules and required contexts. A focused compiler observation
+can close the bounded semantic question without claiming that every advisory,
+queued, or infrastructure observation is healthy; conversely, a protected
+merge must never be inferred from a policy classification alone.
+
+Every non-terminal record retains these fields:
+
+- `source_head`
+- `cause`
+- `next_operation`
+- `evidence_identity`
+
+This keeps the continuation decision replayable and prevents a blocked CI
+observation from becoming an implicit compiler verdict.
+
 ## Merge boundary
 
 This policy does not weaken GitHub branch protection, required contexts, review,
