@@ -4789,6 +4789,16 @@
         "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v32.json",
         "internal/verify/scope_vertical_slice_denominator_v32_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/repair-value-witness-registry-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/meta/selfimprovementvaluewitnessinput/build.go",
+        "internal/meta/selfimprovementvaluewitnessinput/input_test.go",
+        "internal/verify/scope_repair_value_witness_registry_20260920.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
