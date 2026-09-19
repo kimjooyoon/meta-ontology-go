@@ -32,6 +32,8 @@ type SourceRevision struct {
 	RepositoryWrites      int      `json:"repository_writes"`
 	NextOperation         string   `json:"next_operation"`
 	BlockedBy             []string `json:"blocked_by"`
+	RepairHandoffDigest   string   `json:"repair_handoff_digest,omitempty"`
+	RepairCandidateID     string   `json:"repair_candidate_id,omitempty"`
 }
 
 type SourceRevisionEvaluation struct {
