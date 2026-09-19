@@ -18,6 +18,26 @@ Candidate generation, deterministic replay, and provenance are evidence in this
 lane. They are not adoption or self-improvement success until a subsequent run
 uses the accepted semantic result.
 
+## CI observation roles are not one verdict
+
+CI results are classified by the question they can answer, not collapsed into a
+single repository-wide pass or fail value:
+
+| Role | Answers | Does not answer |
+| --- | --- | --- |
+| `COMPILER_REQUIRED` | Whether the focused compiler rule and its regression case were observed on the changed head. | Whether unrelated workflows, security checks, or queued jobs are healthy. |
+| `DIAGNOSTIC` | What an independent cost, provenance, security, or ecosystem observation recorded. | Whether the bounded compiler question is semantically closed. |
+| `PENDING_EXTERNAL` | That a runner, dependency, permission, queue, or external observation has not produced a terminal result. | Success, failure, or permission to relabel the observation. |
+| `PROTECTED_MERGE` | What the repository's server-side branch rules require before integration. | A replacement for compiler evidence or a local policy override. |
+
+Only `COMPILER_REQUIRED` evidence can close the primary compiler lane, and it
+does so only for the registered semantic scope. `DIAGNOSTIC` and
+`PENDING_EXTERNAL` observations remain provenance-bearing follow-up records;
+they may block their own lane but do not automatically block an independent
+compiler lane. `PROTECTED_MERGE` is evaluated separately by GitHub's actual
+rules. No role permits bypassing a required check, inventing a terminal result,
+or merging a protected branch outside its server policy.
+
 ## Failure classes
 
 | Class | Meaning | Effect on the lane |
