@@ -19,6 +19,22 @@ func TestProposeRepairCreatesNonExecutingCandidate(t *testing.T) {
 	}
 }
 
+func TestProposeRepairUsesSixteenDigestCharactersForCandidateID(t *testing.T) {
+	baseline := replayFixture("one")
+	candidate := replayFixture("one")
+	candidate.Activities = []string{"Tampered"}
+	repair, err := ProposeRepair(CompareReplay(baseline, candidate))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const prefix = "sha256:"
+	digest := repair.ComparisonDigest[len(prefix):]
+	want := "gooo://repair-candidate/" + digest[:16]
+	if repair.CandidateID != want {
+		t.Fatalf("candidate id = %q, want %q", repair.CandidateID, want)
+	}
+}
+
 func TestValidateRepairCandidateRejectsForgedIdentity(t *testing.T) {
 	baseline := replayFixture("one")
 	candidate := replayFixture("one")

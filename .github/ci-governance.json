@@ -4587,6 +4587,15 @@
         "docs/governance/problem-solving-scope.md",
         "docs/governance/problem-solving-scope.json"
       ]
+    },
+    {
+      "branch": "agent/repair-candidate-digest-boundary-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/valueexecution/repair.go",
+        "internal/valueexecution/repair_test.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
