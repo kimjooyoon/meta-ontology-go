@@ -9,5 +9,6 @@ func init() {
 		"internal/valueexecution/source_revision_next_run.go",
 		"internal/verify/scope_ci_gofmt_baseline_repair_20260920.go",
 		"internal/verify/scope_problem_solving_scope_boundary_20260920.go",
+		"internal/verify/scope_value_program_operation_contract_20260920.go",
 	}
 }

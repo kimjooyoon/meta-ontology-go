@@ -7,6 +7,6 @@ func init() {
 		".github/workflows/problem-solving-scope.yml",
 		"docs/governance/problem-solving-scope.md",
 		"docs/governance/problem-solving-scope.json",
-		"internal/verify/scope_problem-solving_scope_boundary_20260920.go",
+		"internal/verify/scope_problem_solving_scope_boundary_20260920.go",
 	}
 }

@@ -65,7 +65,8 @@
         "internal/valuecatalog/evaluate.go",
         "internal/valueexecution/source_revision_next_run.go",
         "internal/verify/scope_ci_gofmt_baseline_repair_20260920.go",
-        "internal/verify/scope_problem_solving_scope_boundary_20260920.go"
+        "internal/verify/scope_problem_solving_scope_boundary_20260920.go",
+        "internal/verify/scope_value_program_operation_contract_20260920.go"
       ]
     },
     {
@@ -4692,9 +4693,10 @@
        "examples/language-value-witness/README.md",
        "internal/valueexecution/evaluate_test.go",
        "internal/valueexecution/measurement.go",
-       "internal/valueexecution/operation_spec_validate.go",
-       "internal/valueexecution/registry.go",
-       "internal/valueexecution/validate.go"
+     "internal/valueexecution/operation_spec_validate.go",
+     "internal/valueexecution/registry.go",
+     "internal/valueexecution/validate.go",
+     "internal/verify/scope_value_program_operation_contract_20260920.go"
      ]
     },
     {
