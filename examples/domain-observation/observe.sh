@@ -10,7 +10,10 @@ test ! -e "$out"
 mkdir -p "$out"
 source_path=examples/domain-observation/main.gooo
 input_path=examples/domain-observation/input.json
-sha256sum "$source_path" "$input_path" examples/domain-observation/definition.gooo > "$out/source-before.sha256"
+repair_source=examples/domain-observation/repair.gooo
+repair_input=examples/domain-observation/repair-input.json
+repair_digest="sha256:$(sha256sum "$repair_source" | awk '{print $1}')"
+sha256sum "$source_path" "$input_path" examples/domain-observation/definition.gooo "$repair_source" "$repair_input" > "$out/source-before.sha256"
 
 # A concrete execution, not generation of a binding-free substitute.
 start_ns="$(date +%s%N)"
@@ -88,6 +91,28 @@ jq -e '.state == "REFUTED" and .reason == "REPLAY_RECEIPT_DIGEST_INVALID"' "$out
 "$cli" propose-repair "$out/synthetic-refutation.json" --out "$out/synthetic-candidate" > "$out/synthetic-candidate.log"
 jq -e '.trigger_state == "REFUTED" and .execution_allowed == false and .repository_writes == 0' \
   "$out/synthetic-candidate/repair-candidate.json" > /dev/null
+
+# A source revision is an exact external candidate. The compiler does not edit
+# repair.gooo, and the candidate is independently evaluated before the caller
+# explicitly re-executes it.
+"$cli" revise-source "$repair_source" --source-digest "$repair_digest" \
+  --activity ObserveRepair --expected 'int.add:1' --replace 'int.add:0' \
+  --reason VALUE_INTEGER_OVERFLOW --out "$out/source-revision" > "$out/source-revision.log"
+jq -e '.execution_allowed == false and .repository_writes == 0 and
+  .source_digest == "'"$repair_digest"'" and
+  .next_operation == "EVALUATE_SOURCE_REVISION_INDEPENDENTLY"' \
+  "$out/source-revision/revision.json" > /dev/null
+"$cli" evaluate-revision "$repair_source" "$out/source-revision/candidate.gooo" \
+  --revision "$out/source-revision/revision.json" --activity ObserveRepair \
+  --input "$repair_input" --out "$out/source-revision-evaluation" > "$out/source-revision-evaluation.log"
+jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_RECOVERED_BASELINE_FAILURE" and
+  .accepted == true and .candidate_executed == true and .repository_writes == 0 and
+  .baseline_failure.code == "VALUE_INTEGER_OVERFLOW"' \
+  "$out/source-revision-evaluation/evaluation.json" > /dev/null
+"$cli" run --json --entry ObserveRepair --input "$repair_input" \
+  "$out/source-revision/candidate.gooo" > "$out/accepted-source-reexecution.json"
+jq -e '.decision == "PASS" and .execution.results.ObserveRepair.value == 9223372036854775807' \
+  "$out/accepted-source-reexecution.json" > /dev/null
 sha256sum -c "$out/source-before.sha256" > "$out/source-after-check.txt"
 
 jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
@@ -95,6 +120,9 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   --slurpfile changed "$out/changed-input-comparison.json" --slurpfile recovery "$out/recovery-comparison.json" \
   --slurpfile continuation "$out/continuation.json" --slurpfile failed_continuation "$out/failed-continuation.json" \
   --slurpfile refuted "$out/synthetic-refutation.json" \
+  --slurpfile source_revision "$out/source-revision/revision.json" \
+  --slurpfile source_revision_evaluation "$out/source-revision-evaluation/evaluation.json" \
+  --slurpfile accepted_source "$out/accepted-source-reexecution.json" \
   --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$(cat "$out/first-peak-rss-kib.txt")" \
   '{schema:"gooo/domain-budget-observation/v1",source_digest:$first[0].source_digest,
     semantic_fingerprint:$first[0].semantic_fingerprint,
@@ -109,7 +137,12 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       apply_calls:$failure[0].execution.apply_calls,deliveries:$failure[0].execution.deliveries},
     replay:$replay[0].state,changed_input:$changed[0].state,recovery:$recovery[0].state,
     synthetic_corruption:$refuted[0].state,synthetic_candidate_execution_allowed:false,
-    fixture_files_unchanged:3,runtime_mode:"source-interpreter",
+    source_revision:{state:$source_revision_evaluation[0].state,reason:$source_revision_evaluation[0].reason,
+      candidate_id:$source_revision[0].candidate_id,source_digest:$source_revision[0].source_digest,
+      candidate_source_digest:$source_revision[0].candidate_source_digest,execution_allowed:$source_revision[0].execution_allowed,
+      repository_writes:$source_revision_evaluation[0].repository_writes,
+      accepted_source_reexecution:$accepted_source[0].decision},
+    fixture_files_unchanged:5,runtime_mode:"source-interpreter",
     generator_binding_support:"UNSUPPORTED",orchestration:"source-feedback",
     continuation:{requested:$continuation[0].continuation.iterations_requested,
       completed:$continuation[0].continuation.iterations_completed,
@@ -119,7 +152,7 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       observed_iterations:($failed_continuation[0].continuation.executions|length),
       feedback_deliveries:$failed_continuation[0].continuation.feedback_deliveries,
       failure:$failed_continuation[0].continuation.failure},
-    external_utility:"UNKNOWN",source_repair_adoption:"NOT_IMPLEMENTED",improvement:"UNKNOWN"}' \
+    external_utility:"UNKNOWN",source_repair_adoption:"EXPLICIT_CALLER",improvement:"UNKNOWN"}' \
   > "$out/observation.json"
-jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: NOT_IMPLEMENTED"' \
+ jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); accepted reexecution: \(.source_revision.accepted_source_reexecution)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: EXPLICIT_CALLER"' \
   "$out/observation.json" > "$out/report.md"

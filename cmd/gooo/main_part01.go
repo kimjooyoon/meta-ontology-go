@@ -29,6 +29,10 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runCompareReplay(args[1:], OSFileReader{}, stdout, stderr)
 	case "propose-repair":
 		return runProposeRepair(args[1:], OSFileReader{}, stdout, stderr)
+	case "revise-source":
+		return runReviseSource(args[1:], OSFileReader{}, stdout, stderr)
+	case "evaluate-revision":
+		return runEvaluateRevision(args[1:], OSFileReader{}, stdout, stderr)
 	case "profile":
 		return runProfile(args[1:], OSFileReader{}, languageprofile.RuntimeMeasurer{}, stdout, stderr)
 	case "debug":

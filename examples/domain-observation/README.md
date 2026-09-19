@@ -81,8 +81,27 @@ feedback deliveries. `observation.json` derives observations from these receipts
 run measurements, not inferred improvements.
 
 This is language-owned value continuation, not self-modifying source or autonomous
-adoption. Non-negative business budgets, remote work, persistent scheduling,
-source-repair acceptance and external usefulness are not proven by this example.
-The full self-improvement goal still requires a source-defined repair to be
-independently evaluated and its accepted change used by a later execution. No new
-whole-language completeness percentage is introduced.
+adoption. Non-negative business budgets, remote work, persistent scheduling and
+external usefulness are not proven by this example.
+
+## Exact source revision boundary
+
+`repair.gooo` is a deliberately small repair fixture. Its baseline operation
+adds one to the maximum signed integer and therefore fails with an explicit
+`VALUE_INTEGER_OVERFLOW` observation. The caller asks `revise-source` for one
+exact activity replacement, receives `candidate.gooo` and `revision.json` in an
+external directory, and then calls `evaluate-revision` with the same source
+input. The evaluator reaches `CLOSED` only when the baseline failed for the
+declared reason and the candidate succeeds. It records both source digests,
+the input digest, the baseline failure, candidate execution and the next
+operation.
+
+The final `run` of `candidate.gooo` is an explicit caller action. It is not an
+automatic source write, commit, merge, deployment or compiler self-modification.
+The example therefore demonstrates an executable repair loop, while
+`source_repair_adoption` remains `EXPLICIT_CALLER` and utility/improvement
+claims remain separate observations.
+
+The full self-improvement goal still requires a later system boundary to use
+accepted changes under an explicit policy. No new whole-language completeness
+percentage is introduced.
