@@ -15,7 +15,7 @@ func Validate(report Report, headSHA string) error {
 	if report.Decision != DecisionProven || report.Reason != ReasonExactWitness || report.Resolution != ResolutionCoreValue {
 		return fmt.Errorf("value witness failed closed: %s / %s / %s / %s", report.Decision, report.Reason, report.Resolution, firstUnsatisfiedIndicator(report.Indicators))
 	}
-	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 1 || report.Registry.InvokedOperations != 1 {
+	if report.ValueProgram != "int.add:1" || report.Registry.RegisteredOperations != 2 || report.Registry.InvokedOperations != 1 {
 		return fmt.Errorf("value program registry is not exact")
 	}
 	if !validDigest(report.SourceDigest) || !validDigest(report.ValueProgramDigest) || report.SemanticFingerprint == "" || report.CoreIRFingerprint == "" {

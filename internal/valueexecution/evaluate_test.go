@@ -44,6 +44,19 @@ func TestCompileLowersAndDefendsTypedOperationIR(t *testing.T) {
 	}
 }
 
+func TestCompileLowersRegisteredSubtractOperation(t *testing.T) {
+	program, err := Compile("subtract.gooo", valueFixture(`activity Decrement(Integer) -> Integer computes "int.sub:2"`), "Decrement")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.sub" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("subtract operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{7}); err != nil || got != 5 {
+		t.Fatalf("subtract execution = %d / %v, want 5 / nil", got, err)
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)
