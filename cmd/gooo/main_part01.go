@@ -33,6 +33,8 @@ func runWithInput(args []string, input io.Reader, stdout, stderr io.Writer) int 
 		return runConsumeRepair(args[1:], OSFileReader{}, stdout, stderr)
 	case "revise-source":
 		return runReviseSource(args[1:], OSFileReader{}, stdout, stderr)
+	case "revise-from-handoff":
+		return runReviseFromHandoff(args[1:], OSFileReader{}, stdout, stderr)
 	case "evaluate-revision":
 		return runEvaluateRevision(args[1:], OSFileReader{}, stdout, stderr)
 	case "profile":

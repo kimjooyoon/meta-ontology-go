@@ -13,6 +13,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runProposeRepair(args[1:], OSFileReader{}, stdout, stderr)
 	case "consume-repair":
 		return runConsumeRepair(args[1:], OSFileReader{}, stdout, stderr)
+	case "revise-from-handoff":
+		return runReviseFromHandoff(args[1:], OSFileReader{}, stdout, stderr)
 	case "emit":
 		return runEmit(args[1:], stdout, stderr)
 	case "certify":
