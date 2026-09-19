@@ -3681,6 +3681,16 @@
         "internal/verify/scope_gooo_self_improvement_execution_grant_v26_2.go",
         "scripts/self-improvement-execution-grant"
       ]
+    },
+    {
+      "branch": "agent/typed-binding-plan-20260916",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/domain-observation.yml",
+        "examples/domain-observation/README.md",
+        "examples/domain-observation/main.gooo"
+      ]
     }
   ],
   "protected_kernel_paths": [
