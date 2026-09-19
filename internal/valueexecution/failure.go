@@ -20,6 +20,7 @@ const (
 	ReasonOperationIRInvalid        = "VALUE_OPERATION_IR_INVALID"
 	ReasonInputArityMismatch        = "VALUE_INPUT_ARITY_MISMATCH"
 	ReasonIntegerOverflow           = "VALUE_INTEGER_OVERFLOW"
+	ReasonIntegerDivisionByZero     = "VALUE_INTEGER_DIVISION_BY_ZERO"
 	ReasonIndicatorUnsatisfied      = "VALUE_INDICATOR_UNSATISFIED"
 	ReasonProgramAuthorityInvalid   = "VALUE_PROGRAM_AUTHORITY_INVALID"
 	ReasonProgramAuthorityMismatch  = "VALUE_PROGRAM_AUTHORITY_MISMATCH"

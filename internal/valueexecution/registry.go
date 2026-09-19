@@ -26,6 +26,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
 	}, Apply: checkedMultiply},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.div", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow, ReasonIntegerDivisionByZero},
+	}, Apply: checkedDivide},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -86,4 +92,14 @@ func checkedMultiply(input, operand int64) (int64, error) {
 		return result, nil
 	}
 	return 0, nil
+}
+
+func checkedDivide(input, operand int64) (int64, error) {
+	if operand == 0 {
+		return 0, failAt(ReasonIntegerDivisionByZero, "EXECUTE", "apply-int-div", "integer division by zero")
+	}
+	if input == math.MinInt64 && operand == -1 {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-div", "int64 division overflow")
+	}
+	return input / operand, nil
 }
