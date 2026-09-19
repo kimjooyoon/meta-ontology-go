@@ -100,8 +100,12 @@ func TestIndependentRevisionCompositionPublicCommand(t *testing.T) {
 		return report, runError
 	}
 	report, err := invoke(binaries[1], digest)
-	if err != nil || report.Decision != "INDEPENDENT_RECONSTRUCTION_OBSERVED" || report.Pending != nil ||
-		report.Operation == nil || report.Operation.Observation == nil || !report.Consumer.Started || report.Consumer.ExitCode != 0 {
+	if err != nil || report.Decision != "INDEPENDENT_EXECUTION_OBSERVED" || report.Pending != nil ||
+		report.Operation == nil || report.Operation.Observation == nil ||
+		report.Operation.Observation.IndependentExecution == nil ||
+		!report.Operation.Observation.IndependentExecution.ProcessStarted ||
+		report.Operation.Observation.IndependentExecution.ExitCode != 0 ||
+		!report.Consumer.Started || report.Consumer.ExitCode != 0 {
 		t.Fatalf("independent composition did not close: %+v error=%v", report, err)
 	}
 	operation := report.Operation
@@ -199,7 +203,7 @@ func testIndependentConsumerCounterexamples(t *testing.T, original []byte,
 	}
 	for name, data := range map[string][]byte{
 		"null": []byte("null"), "trailing": append(bytes.Clone(original), []byte("{}")...),
-		"unknown-decision": bytes.Replace(original, []byte("RECEIPT_CONSISTENT_ONLY"), []byte("FIXED_POINT"), 1),
+		"unknown-decision": bytes.Replace(original, []byte("INDEPENDENT_EXECUTION_OBSERVED"), []byte("FIXED_POINT"), 1),
 		"wrong-source":     bytes.Replace(original, []byte(operation.PolicySourceDigest), []byte(policycompilation.DigestBytes([]byte("wrong"))), 1),
 		"duplicate":        []byte(strings.Replace(string(original), "\"schema\":", "\"schema\":\"forged\",\"schema\":", 1)),
 	} {

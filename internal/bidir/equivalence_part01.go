@@ -72,6 +72,9 @@ func SemanticFingerprint(model Model) string {
 		writeMapFingerprint(&canonical, relation.Attributes)
 	}
 	for _, binding := range sortedModelRuntimeBindings(model.RuntimeBindings) {
+		if binding.Feedback {
+			writeFingerprintPart(&canonical, "feedback")
+		}
 		writeFingerprintPart(&canonical, string(binding.Producer.Activity.ID))
 		writeFingerprintPart(&canonical, binding.Producer.Port.Name)
 		writeFingerprintPart(&canonical, string(binding.Consumer.Activity.ID))

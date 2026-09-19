@@ -2,6 +2,12 @@
 
 This experiment adds one deliberately small value-level program to Gooo:
 `Increment` selects the registered pure operation `int.add` with operand `1`.
+The same typed operation registry also contains `int.sub`, `int.mul`, `int.div`,
+and `int.mod`, all version 1. The witness intentionally keeps using `int.add` so
+its value-level evidence remains focused on one declared program while the
+compiler's additional operations are exercised by separate regression cases,
+including checked `int.mul` overflow, fail-closed `int.div` zero-divisor and
+minimum-integer overflow cases, and `int.mod` zero-divisor handling.
 
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
@@ -19,3 +25,19 @@ the same schema name but no scope are rejected rather than defaulted.
 This does not claim a general expression language, arbitrary value types,
 core IR execution or code generation, runtime memory or performance bounds, or
 authority to mutate the repository.
+
+## From one witness to a typed plan
+
+The same `Integer -> Integer` activity shape can be composed into an explicit
+typed execution plan with `CompilePlan` and `Plan.Execute`. The plan validates
+every declared result-to-input edge, chooses a deterministic activity order,
+records deliveries and results, and rejects missing roots, cycles, overflow, or
+tampered authority before unsafe work is applied.
+
+This is intentionally a separate capability boundary. A `.gooo` file may
+declare and query a multi-activity bind while the general Go generator still
+reports that runtime bindings are unsupported. The correct state is therefore
+`FAIL_CLOSED`, not a fabricated generated program. A future self-improvement
+candidate must preserve the source and semantic digests, generate the plan,
+replay it independently, compare the receipt with the baseline, and only then
+propose adoption.

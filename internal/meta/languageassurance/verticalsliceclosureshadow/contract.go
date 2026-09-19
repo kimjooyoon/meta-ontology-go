@@ -34,6 +34,10 @@ const (
 	// V30 binds the existing 58 language capabilities after the source-bound
 	// record transport fixture was registered in the syntax corpus.
 	DenominatorMigrationV30Digest = "sha256:9c19b37f8f28fb534f82b82570ddccc5ca31dbd36e50df5a810b8cb920a201ed"
+	// V31 binds the two domain-observation capabilities registered in the syntax corpus.
+	DenominatorMigrationV31Digest = "sha256:dc340f0762355614683760a0c3ac0152cbad73c847ccaae2f1e720c87e3d1f50"
+	// V32 binds the three observed domain-syntax capabilities registered in the syntax corpus.
+	DenominatorMigrationV32Digest = "sha256:9f06d115bc42f534e17fb34d276ad729e00e905eb547a6776be83befe9c92989"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

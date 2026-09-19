@@ -20,6 +20,8 @@ const (
 	ReasonOperationIRInvalid        = "VALUE_OPERATION_IR_INVALID"
 	ReasonInputArityMismatch        = "VALUE_INPUT_ARITY_MISMATCH"
 	ReasonIntegerOverflow           = "VALUE_INTEGER_OVERFLOW"
+	ReasonIntegerDivisionByZero     = "VALUE_INTEGER_DIVISION_BY_ZERO"
+	ReasonIntegerModuloByZero       = "VALUE_INTEGER_MODULO_BY_ZERO"
 	ReasonIndicatorUnsatisfied      = "VALUE_INDICATOR_UNSATISFIED"
 	ReasonProgramAuthorityInvalid   = "VALUE_PROGRAM_AUTHORITY_INVALID"
 	ReasonProgramAuthorityMismatch  = "VALUE_PROGRAM_AUTHORITY_MISMATCH"
@@ -30,6 +32,7 @@ const (
 	ReasonExternalInputUnexpected   = "VALUE_EXTERNAL_INPUT_UNEXPECTED"
 	ReasonBindingResultInvalid      = "VALUE_BINDING_RESULT_INVALID"
 	ReasonPlanExecutionFailed       = "VALUE_PLAN_EXECUTION_FAILED"
+	ReasonSourceRevisionInvalid     = "VALUE_SOURCE_REVISION_INVALID"
 )
 
 type Failure struct {

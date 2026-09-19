@@ -8,8 +8,8 @@ import (
 
 func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	raw := activeDenominator()
-	if digestBytes(raw) != DenominatorMigrationV30Digest || activeDenominatorDigest() != DenominatorMigrationV30Digest {
-		t.Fatal("active denominator is not the pinned v30 migration")
+	if digestBytes(raw) != DenominatorMigrationV32Digest || activeDenominatorDigest() != DenominatorMigrationV32Digest {
+		t.Fatal("active denominator is not the pinned v32 migration")
 	}
 	var observed struct {
 		Version    int `json:"version"`
@@ -22,8 +22,8 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	if err := json.Unmarshal(raw, &observed); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Version != 30 || len(observed.Boundaries) != 6 ||
-		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 58 {
+	if observed.Version != 32 || len(observed.Boundaries) != 6 ||
+		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 63 {
 		t.Fatalf("migration changed the declared capability boundary: %#v", observed)
 	}
 	links := 0
@@ -40,7 +40,7 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 
 func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 	raw := activeDenominator()
-	lowered := bytes.Replace(raw, []byte(`"target": 58`), []byte(`"target": 57`), 1)
+	lowered := bytes.Replace(raw, []byte(`"target": 63`), []byte(`"target": 62`), 1)
 	if bytes.Equal(raw, lowered) {
 		t.Fatal("counterexample did not change the syntax target")
 	}
@@ -53,29 +53,30 @@ func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 }
 
 func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
-	if digestBytes(embeddedDenominatorV29) != DenominatorMigrationV29Digest {
-		t.Fatal("the previous denominator evidence was rewritten")
+	if digestBytes(embeddedDenominatorV30) != DenominatorMigrationV30Digest ||
+		digestBytes(embeddedDenominatorV31) != DenominatorMigrationV31Digest {
+		t.Fatal("historical denominator evidence was rewritten")
 	}
 	var previous, current denominator
-	if err := json.Unmarshal(embeddedDenominatorV29, &previous); err != nil {
+	if err := json.Unmarshal(embeddedDenominatorV31, &previous); err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(activeDenominator(), &current); err != nil {
 		t.Fatal(err)
 	}
-	if previous.Version != 29 || current.Version != 30 ||
+	if previous.Version != 31 || current.Version != 32 ||
 		len(previous.Boundaries) != 6 || len(current.Boundaries) != 6 {
 		t.Fatal("migration changed the boundary inventory")
 	}
 	for index, expected := range previous.Boundaries {
 		if index == 0 {
-			expected.Target++
+			expected.Target += 3
 		}
 		if current.Boundaries[index] != expected {
 			t.Fatalf("migration changed unrelated boundary %d: %#v", index, current.Boundaries[index])
 		}
 	}
-	if _, err := decodeDenominator(embeddedDenominatorV29); err == nil {
+	if _, err := decodeDenominator(embeddedDenominatorV31); err == nil {
 		t.Fatal("the historical denominator authorized the new capability")
 	}
 }

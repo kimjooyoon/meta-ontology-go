@@ -61,7 +61,7 @@ func TestIndependentRevisionCompositionPublicObservation(t *testing.T) {
 	}
 	envelope := independentPublicField[map[string]json.RawMessage](t, stdout.Bytes())
 	if independentPublicField[string](t, envelope["schema"]) != "gooo/meta-policy-revision-independent-observation/v1" ||
-		independentPublicField[string](t, envelope["decision"]) != "INDEPENDENT_RECONSTRUCTION_OBSERVED" {
+		independentPublicField[string](t, envelope["decision"]) != "INDEPENDENT_EXECUTION_OBSERVED" {
 		t.Fatal("public command did not produce its versioned observation")
 	}
 	operation := independentPublicField[PolicyRevisionOperationObservation](t, envelope["operation"])
@@ -81,8 +81,8 @@ func TestIndependentRevisionCompositionPublicObservation(t *testing.T) {
 	}
 	independent := independentPublicField[map[string]json.RawMessage](t, []byte(consumerStdout))
 	comparisons := independentPublicField[int](t, independent["independent_result_comparisons"])
-	if comparisons != 6*len(request.Cases) || independentPublicField[bool](t, independent["policy_execution_observed"]) {
-		t.Fatal("reconstruction counts or historical process boundary changed")
+	if comparisons != 7*len(request.Cases) || !independentPublicField[bool](t, independent["policy_execution_observed"]) {
+		t.Fatal("independent execution envelope was not observed and compared")
 	}
 	counts := operation.Observation.Counts
 	if counts.RequestedCasePairs != len(request.Cases) || counts.ObservedCasePairs != len(request.Cases) ||
@@ -106,7 +106,7 @@ func TestIndependentRevisionCompositionPublicObservation(t *testing.T) {
 		}
 	}
 	event, err := json.Marshal(map[string]any{
-		"decision": "INDEPENDENT_RECONSTRUCTION_OBSERVED", "gooo_binding": operation.Binding,
+		"decision": "INDEPENDENT_EXECUTION_OBSERVED", "gooo_binding": operation.Binding,
 		"counts": counts, "independent_result_comparisons": comparisons,
 		"public_command_exit_code": command.ProcessState.ExitCode(), "public_command_wall_ms": wallMilliseconds,
 		"consumer_executable_digest": consumerDigest, "consumer_stdout_digest": DigestBytes([]byte(consumerStdout)),

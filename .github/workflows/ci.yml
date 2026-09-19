@@ -267,6 +267,7 @@ jobs:
   race:
     name: go test -race
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:

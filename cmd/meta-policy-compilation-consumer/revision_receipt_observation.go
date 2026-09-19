@@ -14,7 +14,8 @@ import (
 )
 
 // Receipt interpretation uses consumer-owned wire declarations and raw Gooo.
-// Producer execution remains a separate, unobserved claim in this observer.
+// An explicitly supplied independent envelope can close only the generated
+// execution claim; adoption and mutation remain outside this observer.
 const revisionReceiptSchema = "gooo/meta-policy-revision-receipt-observation/v1"
 
 type revisionReceiptCheck struct {
@@ -476,6 +477,52 @@ func reconstructRevisionReceipt(filename string, source, requestBytes, reportByt
 	if counts.RequestedTransitionsObserved == 0 {
 		pending = append(pending, pendingRecord("REQUEST_COVERAGE", "OBSERVE_REQUESTED_TRANSITION",
 			"REQUESTED_TRANSITION_NOT_OBSERVED", "SUPPLY_CASE_PAIR_EXERCISING_REQUESTED_CONDITION"))
+	}
+	if independent := supplied.IndependentExecution; independent != nil {
+		independentInputs := make([]revisionWireCase, 0, len(request.Cases))
+		independentExpected := make([]revisionWireResult, 0, len(request.Cases))
+		for _, pair := range request.Cases {
+			independentInputs = append(independentInputs, pair.Candidate)
+			independentExpected = append(independentExpected, revisionReceiptEvaluate(candidate, afterRules, pair.Candidate))
+		}
+		inputBytes, inputErr := json.Marshal(independentInputs)
+		resultBytes, resultErr := json.Marshal(independent.Results)
+		independentOK := inputErr == nil && resultErr == nil &&
+			independent.Schema == "gooo/meta-policy-independent-execution/v1" &&
+			independent.ExecutionMode == "SEPARATE_GENERATED_JUDGE_PROCESS" &&
+			independent.SourceDigest == candidate.SourceDigest &&
+			independent.SemanticDigest == candidate.SemanticDigest &&
+			independent.GeneratedJudgeDigest == supplied.Candidate.GeneratedJudgeDigest &&
+			independent.InputDigest == digestBytes(inputBytes) &&
+			independent.ResultsDigest == digestBytes(resultBytes) &&
+			independent.ProcessStarted && independent.ExitCode == 0 &&
+			independent.RequestedCases == len(independentExpected) &&
+			independent.ObservedCases == len(independentExpected) &&
+			len(independent.Results) == len(independentExpected) &&
+			independent.WallMilliseconds >= 0
+		for index, result := range independent.Results {
+			observed.IndependentComparisons++
+			independentOK = independentOK && index < len(independentExpected) &&
+				revisionReceiptEqual(result, independentExpected[index])
+		}
+		if independentOK {
+			observed.ExecutionObserved = true
+			if observed.Decision != "REFUTED" {
+				observed.Decision = "INDEPENDENT_EXECUTION_OBSERVED"
+			}
+			observed.ExecutionUnknown = sourceObservationUnknown{}
+			observed.UnobservedClaims = []string{
+				"POLICY_STRUCTURE_METRICS", "WALL_TIME_ACCURACY", "REPOSITORY_WRITE_SET",
+				"EXTERNAL_UTILITY", "CAUSAL_IMPROVEMENT", "AUTOMATIC_ADOPTION",
+			}
+		} else if observed.Decision != "REFUTED" {
+			observed.Decision = "REFUTED"
+			observed.ExecutionUnknown = sourceObservationUnknown{
+				State: "REFUTED", Stage: "INDEPENDENT_EXECUTION", Step: "COMPARE_GENERATED_RESULTS",
+				Reason: "INDEPENDENT_EXECUTION_RESULT_MISMATCH", UnknownClass: "DIRECT_MISSING",
+				NextOperation: "REPAIR_INDEPENDENT_EXECUTION_BINDING", BlockedBy: []string{},
+			}
+		}
 	}
 	admission := pendingRecord("INDEPENDENT_VALIDATION", "OBSERVE_REVISION_CANDIDATE",
 		"INDEPENDENT_REVISION_EVIDENCE_MISSING", "RUN_INDEPENDENT_REVISION_OBSERVER")

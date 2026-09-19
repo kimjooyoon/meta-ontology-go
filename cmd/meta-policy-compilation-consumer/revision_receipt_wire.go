@@ -110,6 +110,22 @@ type revisionWireExecution struct {
 	WallMilliseconds     int64                `json:"wall_ms"`
 }
 
+type revisionWireIndependentExecution struct {
+	Schema               string               `json:"schema"`
+	ExecutionMode        string               `json:"execution_mode"`
+	SourceDigest         string               `json:"source_digest"`
+	SemanticDigest       string               `json:"semantic_digest"`
+	GeneratedJudgeDigest string               `json:"generated_judge_digest"`
+	InputDigest          string               `json:"input_digest"`
+	ResultsDigest        string               `json:"results_digest"`
+	RequestedCases       int                  `json:"requested_cases"`
+	ObservedCases        int                  `json:"observed_cases"`
+	Results              []revisionWireResult `json:"results"`
+	ProcessStarted       bool                 `json:"process_started"`
+	ExitCode             int                  `json:"exit_code"`
+	WallMilliseconds     int64                `json:"wall_ms"`
+}
+
 type revisionWireTransition struct {
 	CaseID                      string `json:"case_id"`
 	InputsIdentical             bool   `json:"inputs_identical"`
@@ -134,26 +150,27 @@ type revisionWireCounts struct {
 }
 
 type revisionWireObservation struct {
-	Schema                string                   `json:"schema"`
-	SourceFile            string                   `json:"source_file"`
-	RequestDigest         string                   `json:"canonical_request_digest"`
-	RequestArtifactDigest string                   `json:"request_artifact_digest,omitempty"`
-	Request               revisionWireRequest      `json:"request"`
-	OriginalPolicy        revisionWirePolicy       `json:"original_policy"`
-	CandidatePolicy       revisionWirePolicy       `json:"candidate_policy"`
-	CandidateSource       string                   `json:"candidate_source"`
-	ChangedCoordinates    []string                 `json:"changed_coordinates"`
-	Baseline              revisionWireExecution    `json:"baseline"`
-	Candidate             revisionWireExecution    `json:"candidate"`
-	Transitions           []revisionWireTransition `json:"transitions"`
-	Counts                revisionWireCounts       `json:"counts"`
-	ExecutionStatus       string                   `json:"execution_status"`
-	ExecutionConformance  string                   `json:"execution_conformance"`
-	Admission             revisionWirePending      `json:"admission"`
-	Pending               []revisionWirePending    `json:"pending"`
-	InputProvenance       string                   `json:"input_provenance"`
-	RepositoryObservation string                   `json:"repository_observation"`
-	Improvement           string                   `json:"improvement"`
-	MutationAuthority     int                      `json:"mutation_authority"`
-	PromotionAuthority    int                      `json:"promotion_authority"`
+	Schema                string                            `json:"schema"`
+	SourceFile            string                            `json:"source_file"`
+	RequestDigest         string                            `json:"canonical_request_digest"`
+	RequestArtifactDigest string                            `json:"request_artifact_digest,omitempty"`
+	Request               revisionWireRequest               `json:"request"`
+	OriginalPolicy        revisionWirePolicy                `json:"original_policy"`
+	CandidatePolicy       revisionWirePolicy                `json:"candidate_policy"`
+	CandidateSource       string                            `json:"candidate_source"`
+	ChangedCoordinates    []string                          `json:"changed_coordinates"`
+	Baseline              revisionWireExecution             `json:"baseline"`
+	Candidate             revisionWireExecution             `json:"candidate"`
+	IndependentExecution  *revisionWireIndependentExecution `json:"independent_execution,omitempty"`
+	Transitions           []revisionWireTransition          `json:"transitions"`
+	Counts                revisionWireCounts                `json:"counts"`
+	ExecutionStatus       string                            `json:"execution_status"`
+	ExecutionConformance  string                            `json:"execution_conformance"`
+	Admission             revisionWirePending               `json:"admission"`
+	Pending               []revisionWirePending             `json:"pending"`
+	InputProvenance       string                            `json:"input_provenance"`
+	RepositoryObservation string                            `json:"repository_observation"`
+	Improvement           string                            `json:"improvement"`
+	MutationAuthority     int                               `json:"mutation_authority"`
+	PromotionAuthority    int                               `json:"promotion_authority"`
 }

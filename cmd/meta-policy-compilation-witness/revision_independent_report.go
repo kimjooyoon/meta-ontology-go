@@ -50,15 +50,15 @@ func checkRevisionConsumerReport(data []byte, operation policycompilation.Policy
 	if operation.Observation == nil || view.Schema != "gooo/meta-policy-revision-receipt-observation/v1" ||
 		view.SourceDigest != operation.PolicySourceDigest || view.RequestArtifactDigest != operation.RequestArtifactDigest ||
 		view.CanonicalRequestDigest != operation.Observation.RequestDigest ||
-		view.ReportArtifactDigest != policycompilation.DigestBytes(report) || view.ExecutionObserved ||
+		view.ReportArtifactDigest != policycompilation.DigestBytes(report) || !view.ExecutionObserved ||
 		view.Improvement != "UNKNOWN" || view.MutationAuthority != 0 || view.PromotionAuthority != 0 {
 		return "UNKNOWN", errors.New("consumer report schema, exact input binding, or authority differs")
 	}
 	if view.Decision == "REFUTED" {
 		return "REFUTED", errors.New("independent consumer refuted the fresh report")
 	}
-	if view.Decision != "RECEIPT_CONSISTENT_ONLY" {
-		return "UNKNOWN", errors.New("consumer did not establish receipt consistency")
+	if view.Decision != "INDEPENDENT_EXECUTION_OBSERVED" {
+		return "UNKNOWN", errors.New("consumer did not establish independent generated execution")
 	}
 	expected := map[string]bool{
 		"SOURCE_BINDING": false, "REQUEST_BINDING": false, "REVISION_SCOPE": false,
@@ -80,10 +80,13 @@ func checkRevisionConsumerReport(data []byte, operation policycompilation.Policy
 	for _, phase := range []policycompilation.PolicyRevisionExecution{operation.Observation.Baseline, operation.Observation.Candidate} {
 		comparisons += len(phase.SourceResults) + len(phase.FirstResults) + len(phase.ReplayResults)
 	}
+	if independent := operation.Observation.IndependentExecution; independent != nil {
+		comparisons += len(independent.Results)
+	}
 	if comparisons == 0 || view.Comparisons != comparisons {
 		return "UNKNOWN", errors.New("consumer result comparison count differs from the fresh report")
 	}
-	return "INDEPENDENT_RECONSTRUCTION_OBSERVED", nil
+	return "INDEPENDENT_EXECUTION_OBSERVED", nil
 }
 
 // Preserve one-object framing and reject duplicate keys at every nesting level.

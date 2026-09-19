@@ -23,6 +23,7 @@ type GoErrorGuardProposal struct {
 	CandidateSource    string                 `json:"candidate_source,omitempty"`
 	EditStart          int                    `json:"edit_start"`
 	EditEnd            int                    `json:"edit_end"`
+	GuardedCalls       int                    `json:"guarded_calls,omitempty"`
 	Pending            *PolicyRevisionPending `json:"pending,omitempty"`
 	Admission          PolicyRevisionPending  `json:"admission"`
 	Improvement        string                 `json:"improvement"`
@@ -31,17 +32,21 @@ type GoErrorGuardProposal struct {
 }
 
 type goErrorGuardProgram struct {
-	function   string
-	writer     string
-	diagnostic string
-	source     string
-	handler    string
-	writerType string
-	returnOnly bool
+	function    string
+	writer      string
+	diagnostic  string
+	source      string
+	handler     string
+	writerType  string
+	returnOnly  bool
+	humanBranch bool
+	mode        string
+	handlerCall string
+	writeCount  int
 }
 
-// ProposeGoErrorGuard implements an opt-in computes profile, not a v3 policy
-// revision or a semantics-preserving extraction. It never executes or applies
+// ProposeGoErrorGuard implements an opt-in computes profile, not a policy
+// decision revision or a semantics-preserving extraction. It never executes or applies
 // the candidate. Edit offsets are zero-based byte offsets in the pinned source.
 func ProposeGoErrorGuard(filename string, program, source []byte) (GoErrorGuardProposal, error) {
 	report := GoErrorGuardProposal{
@@ -68,6 +73,9 @@ func proposeGoErrorGuardSource(report GoErrorGuardProposal, profile goErrorGuard
 	if err != nil {
 		report.State, report.Reason = "REFUTED", "GO_SOURCE_SYNTAX_INVALID"
 		return report, fmt.Errorf("%s: %w", report.Reason, err)
+	}
+	if profile.humanBranch {
+		return proposeGoHumanOutputGuard(report, profile, source, set, file)
 	}
 	matches, functions := findGoErrorGuards(file, profile)
 	if functions > 1 || len(matches) > 1 {
@@ -130,6 +138,9 @@ func compileGoErrorGuard(filename string, source []byte) (goErrorGuardProgram, s
 
 func parseGoErrorGuardProgram(raw string) (goErrorGuardProgram, error) {
 	parts := strings.Split(raw, ";")
+	if parts[0] == "go-error-guard:v3" {
+		return parseGoHumanGuardProgram(parts)
+	}
 	if parts[0] == "go-error-guard:v2" {
 		return parseGoReturnGuardProgram(parts)
 	}

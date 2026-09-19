@@ -60,6 +60,8 @@ type BindingEndpoint struct {
 // not a Declaration: binding semantics are carried by the execution-plan
 // extension rather than by the PROV declaration vocabulary.
 type BindingDecl struct {
+	// Feedback delivers a successful result to the next invocation, not this one.
+	Feedback bool
 	Span     Span
 	Producer BindingEndpoint
 	Consumer BindingEndpoint

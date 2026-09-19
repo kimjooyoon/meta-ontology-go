@@ -11,11 +11,22 @@ import (
 
 func reportGenerateSuccess(options generateOptions, input generateInput, artifacts generateArtifacts, discovery *publicdiscovery.Result, jsonMode bool, stdout io.Writer) int {
 	if !jsonMode {
-		fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName))
+		if _, err := fmt.Fprintf(stdout, "generated: %s\n", filepath.Join(options.outputDir, generatedFileName)); err != nil {
+			return exitFailure
+		}
+		if artifacts.runtimePlanPath != "" {
+			if _, err := fmt.Fprintf(stdout, "runtime plan: %s\n", artifacts.runtimePlanPath); err != nil {
+				return exitFailure
+			}
+		}
 		if discovery != nil {
-			fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision)
+			if _, err := fmt.Fprintf(stdout, "observation: %s (%s)\n", discovery.Report.MachineReportPath, discovery.Report.Decision); err != nil {
+				return exitFailure
+			}
 			if discovery.Report.CandidatesEmitted > 0 {
-				fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath)
+				if _, err := fmt.Fprintf(stdout, "candidate: %s\n", discovery.CandidatePath); err != nil {
+					return exitFailure
+				}
 			}
 		}
 		return exitOK
@@ -23,6 +34,7 @@ func reportGenerateSuccess(options generateOptions, input generateInput, artifac
 	report := newJSONReport("generate", "ok", options.filename, syntaxCLIDiagnostics(input.diagnostics))
 	report.Output = artifacts.output
 	report.Manifest = artifacts.manifestPath
+	report.RuntimePlan = artifacts.runtimePlanPath
 	report.PreviousGo = options.previousGo
 	report.ProtectedBytesEqual = &artifacts.manifest.ProtectedBytesEqual
 	report.SemanticHash = artifacts.ir.StableHash()
@@ -55,6 +67,7 @@ type generateOptions struct {
 	outputDir                        string
 	previousGo                       string
 	manifestPath                     string
+	runtimePlanFilename              string
 	retentionReport                  bool
 	retainedCertificateFilename      string
 	continuityCertificateFilename    string
@@ -120,7 +133,7 @@ func parseGenerateArguments(args []string) (generateOptions, error) {
 		default:
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
-		if options.previousGo != "" || options.manifestPath != "" || options.retentionReport || options.publicRetentionRequested() || options.continuityCertificateFilename != "" || options.compatibilityCertificateFilename != "" || options.observationLedgerDir != "" {
+		if options.previousGo != "" || options.manifestPath != "" || options.runtimePlanFilename != "" || options.retentionReport || options.publicRetentionRequested() || options.continuityCertificateFilename != "" || options.compatibilityCertificateFilename != "" || options.observationLedgerDir != "" {
 			return generateOptions{}, fmt.Errorf("%s", usage)
 		}
 	}
@@ -174,6 +187,8 @@ func setOutputGenerateOption(options *generateOptions, name, value string) bool 
 		return setGenerateString(&options.previousGo, value)
 	case "--manifest":
 		return setGenerateString(&options.manifestPath, value)
+	case "--runtime-plan":
+		return setGenerateString(&options.runtimePlanFilename, value)
 	default:
 		return false
 	}

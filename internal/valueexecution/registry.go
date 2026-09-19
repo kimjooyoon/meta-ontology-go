@@ -14,6 +14,30 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
 	}, Apply: checkedAdd},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.sub", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
+	}, Apply: checkedSubtract},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.mul", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
+	}, Apply: checkedMultiply},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.div", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow, ReasonIntegerDivisionByZero},
+	}, Apply: checkedDivide},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.mod", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerModuloByZero},
+	}, Apply: checkedModulo},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -50,4 +74,45 @@ func checkedAdd(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-add", "negative int64 overflow")
 	}
 	return input + operand, nil
+}
+
+func checkedSubtract(input, operand int64) (int64, error) {
+	if operand > 0 && input < math.MinInt64+operand {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-sub", "negative int64 overflow")
+	}
+	if operand < 0 && input > math.MaxInt64+operand {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-sub", "positive int64 overflow")
+	}
+	return input - operand, nil
+}
+
+func checkedMultiply(input, operand int64) (int64, error) {
+	if input != 0 && operand != 0 {
+		if (input == math.MinInt64 && operand == -1) || (operand == math.MinInt64 && input == -1) {
+			return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-mul", "int64 multiplication overflow")
+		}
+		result := input * operand
+		if result/operand != input {
+			return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-mul", "int64 multiplication overflow")
+		}
+		return result, nil
+	}
+	return 0, nil
+}
+
+func checkedDivide(input, operand int64) (int64, error) {
+	if operand == 0 {
+		return 0, failAt(ReasonIntegerDivisionByZero, "EXECUTE", "apply-int-div", "integer division by zero")
+	}
+	if input == math.MinInt64 && operand == -1 {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-div", "int64 division overflow")
+	}
+	return input / operand, nil
+}
+
+func checkedModulo(input, operand int64) (int64, error) {
+	if operand == 0 {
+		return 0, failAt(ReasonIntegerModuloByZero, "EXECUTE", "apply-int-mod", "integer modulo by zero")
+	}
+	return input % operand, nil
 }

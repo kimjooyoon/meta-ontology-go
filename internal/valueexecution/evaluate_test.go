@@ -1,6 +1,7 @@
 package valueexecution
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -41,6 +42,89 @@ func TestCompileLowersAndDefendsTypedOperationIR(t *testing.T) {
 	_, err = program.Execute([]int64{1})
 	if got := Reason(err); got != ReasonOperationIRInvalid {
 		t.Fatalf("tampered IR reason = %s, want %s", got, ReasonOperationIRInvalid)
+	}
+}
+
+func TestCompileLowersRegisteredSubtractOperation(t *testing.T) {
+	program, err := Compile("subtract.gooo", valueFixture(`activity Decrement(Integer) -> Integer computes "int.sub:2"`), "Decrement")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.sub" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("subtract operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{7}); err != nil || got != 5 {
+		t.Fatalf("subtract execution = %d / %v, want 5 / nil", got, err)
+	}
+}
+
+func TestCompileLowersRegisteredMultiplyOperationAndRejectsOverflow(t *testing.T) {
+	program, err := Compile("multiply.gooo", valueFixture(`activity Multiply(Integer) -> Integer computes "int.mul:3"`), "Multiply")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.mul" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("multiply operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{7}); err != nil || got != 21 {
+		t.Fatalf("multiply execution = %d / %v, want 21 / nil", got, err)
+	}
+	if _, err := program.Execute([]int64{1 << 62}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("multiply overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+}
+
+func TestCompileLowersRegisteredDivideOperationAndRejectsInvalidDivisors(t *testing.T) {
+	program, err := Compile("divide.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:2"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.div" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("divide operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{8}); err != nil || got != 4 {
+		t.Fatalf("divide execution = %d / %v, want 4 / nil", got, err)
+	}
+	zero, err := Compile("divide-zero.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:0"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := zero.Execute([]int64{8}); Reason(err) != ReasonIntegerDivisionByZero {
+		t.Fatalf("divide-by-zero reason = %s, want %s", Reason(err), ReasonIntegerDivisionByZero)
+	}
+	overflow, err := Compile("divide-overflow.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:-1"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := overflow.Execute([]int64{math.MinInt64}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("divide overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+}
+
+func TestCompileLowersRegisteredModuloOperationAndRejectsZeroDivisor(t *testing.T) {
+	program, err := Compile("modulo.gooo", valueFixture(`activity Remainder(Integer) -> Integer computes "int.mod:3"`), "Remainder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.mod" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("modulo operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{8}); err != nil || got != 2 {
+		t.Fatalf("modulo execution = %d / %v, want 2 / nil", got, err)
+	}
+	zero, err := Compile("modulo-zero.gooo", valueFixture(`activity Remainder(Integer) -> Integer computes "int.mod:0"`), "Remainder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := zero.Execute([]int64{8}); Reason(err) != ReasonIntegerModuloByZero {
+		t.Fatalf("modulo-by-zero reason = %s, want %s", Reason(err), ReasonIntegerModuloByZero)
+	}
+	minimum, err := Compile("modulo-minimum.gooo", valueFixture(`activity Remainder(Integer) -> Integer computes "int.mod:-1"`), "Remainder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := minimum.Execute([]int64{math.MinInt64}); err != nil || got != 0 {
+		t.Fatalf("minimum modulo execution = %d / %v, want 0 / nil", got, err)
 	}
 }
 

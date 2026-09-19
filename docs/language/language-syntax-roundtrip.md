@@ -10,13 +10,14 @@ readiness credit.
 
 ## Fixed denominator
 
-The `v2` registry contains exactly 44 cases: 41 valid sources and three invalid
-fixtures. The current registry observation contains 44 cases, while the
-independent repository observation contains 48 `.gooo` files and 794 physical
+The `v2` registry contains exactly 65 cases: 62 valid sources and three invalid
+fixtures. The current registry observation contains 65 cases, while the
+independent repository observation contains 78 `.gooo` files and 2048 physical
 Gooo lines. Each observed file carries its individual line count and source
-digest. Of the 44 cases, 43 are
-`LANGUAGE_CAPABILITY` and one (`live-governance-snapshot`) is a separate
-`GOVERNANCE_OBSERVATION` case. EntityFields is a language capability case; its
+digest. Of the 65 cases, 63 are
+`LANGUAGE_CAPABILITY` and two (`live-governance-snapshot` and
+`self-improvement-ci-continuation`) are separate `GOVERNANCE_OBSERVATION`
+cases. EntityFields is a language capability case; its
 12 proof activities live in the separate `internal/meta/entityfields/entity-fields-meta.gooo`
 meta source and are not emitted into the user/domain Go projection. These are
 fixed observation denominators, not a quality score.
@@ -46,8 +47,8 @@ does not become a fixed point; it produces `FAIL_CLOSED` at `LOWER_RESOLUTION`.
 
 GitHub Actions produces the EntityFields receipt twice outside the repository,
 compares the bytes, and consumes the exact first/replay artifacts again. The
-language registry transition is observed as overall `43/43` to `44/44`, with
-language capability `42/42` to `43/43` and governance observation `1/1` to
-`1/1`; this is a denominator observation, not an improvement score. The
+The registry denominator transition from 62 to 65 cases adds the incident,
+repair, and repair-handoff declarations as explicit capability inputs; this is
+a denominator observation, not an improvement score. The
 EntityFields operation has no exact before/after pair, so improvement remains
 `UNKNOWN`.

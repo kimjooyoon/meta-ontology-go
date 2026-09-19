@@ -1,0 +1,117 @@
+{
+  "schema": "gooo/problem-solving-scope/v1",
+  "primary_lane": {
+    "name": "compiler-definition-and-defect-resolution",
+    "scope": "compiler definition and defect resolution",
+    "required_evidence": [
+      "source_head",
+      "input_identity",
+      "toolchain_identity",
+      "outcome"
+    ],
+    "does_not_claim": [
+      "whole-language completion",
+      "utility",
+      "performance improvement"
+    ]
+  },
+  "resolution_scope": {
+    "unit": [
+      "registered_lane",
+      "semantic_question",
+      "evidence_identity"
+    ],
+    "repository_wide_stop": false,
+    "stop_only_when": [
+      "SEMANTIC_DEFECT",
+      "SEMANTIC_UNKNOWN",
+      "SCOPE_CONFLICT"
+    ],
+    "independent_lane_continues_when": [
+      "INFRASTRUCTURE_FAILURE",
+      "QUEUE_OR_STALE_OBSERVATION",
+      "ADVISORY_FAILURE"
+    ]
+  },
+  "ci_observation_roles": [
+    {
+      "role": "COMPILER_REQUIRED",
+      "answers": "focused compiler rule and regression observation",
+      "does_not_answer": "unrelated workflow, security, queue, or ecosystem health"
+    },
+    {
+      "role": "DIAGNOSTIC",
+      "answers": "independent cost, provenance, security, or ecosystem observation",
+      "does_not_answer": "bounded compiler semantic closure"
+    },
+    {
+      "role": "PENDING_EXTERNAL",
+      "answers": "non-terminal runner, dependency, permission, queue, or external observation",
+      "does_not_answer": "success, failure, or permission to relabel the result"
+    },
+    {
+      "role": "PROTECTED_MERGE",
+      "answers": "server-side branch protection requirements",
+      "does_not_answer": "compiler evidence or a local policy override"
+    }
+  ],
+  "failure_classes": {
+    "SEMANTIC_DEFECT": {
+      "lane_effect": "STOP_AND_REPAIR",
+      "continue_independent_work": false
+    },
+    "SEMANTIC_UNKNOWN": {
+      "lane_effect": "HOLD_SEMANTIC_LANE",
+      "continue_independent_work": true
+    },
+    "SCOPE_CONFLICT": {
+      "lane_effect": "HOLD_CONFLICTING_LANE",
+      "continue_independent_work": true
+    },
+    "INFRASTRUCTURE_FAILURE": {
+      "lane_effect": "CONTINUE_INDEPENDENT",
+      "continue_independent_work": true
+    },
+    "QUEUE_OR_STALE_OBSERVATION": {
+      "lane_effect": "KEEP_PENDING_CONTINUE",
+      "continue_independent_work": true
+    },
+    "ADVISORY_FAILURE": {
+      "lane_effect": "CONTINUE_ADVISORY",
+      "continue_independent_work": true
+    }
+  },
+  "continuation": {
+    "blocked_scope": "registered_lane_only",
+    "never_relabel": [
+      "INFRASTRUCTURE_FAILURE",
+      "QUEUE_OR_STALE_OBSERVATION",
+      "ADVISORY_FAILURE"
+    ],
+    "required_record_fields": [
+      "source_head",
+      "cause",
+      "next_operation",
+      "evidence_identity"
+    ],
+    "merge_authority": "protected_server_rules"
+  },
+  "merge_boundary": {
+    "semantic_closure": "COMPILER_REQUIRED",
+    "integration_authority": "PROTECTED_MERGE",
+    "must_not_infer_from": [
+      "DIAGNOSTIC",
+      "PENDING_EXTERNAL",
+      "successful_unrelated_check",
+      "queued_check"
+    ]
+  },
+  "decision_order": [
+    "SEMANTIC_DEFECT",
+    "SEMANTIC_UNKNOWN",
+    "SCOPE_CONFLICT",
+    "INFRASTRUCTURE_FAILURE",
+    "QUEUE_OR_STALE_OBSERVATION",
+    "ADVISORY_FAILURE"
+  ]
+}

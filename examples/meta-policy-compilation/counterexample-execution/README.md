@@ -22,6 +22,11 @@ The stdout report preserves the proposal, exact `revision_request_json` bytes
 and nested Gooo operation/execution receipt. The request string and nested
 observation can be passed to the existing independent receipt consumer.
 That consumer checks consistency, not independent execution or adoption.
+Without an independent execution envelope, that consumer checks consistency,
+not process execution or adoption. The independent composition command adds
+such an envelope only after executing the generated candidate judge in a
+separate bounded process; the consumer then rechecks source, semantic, judge,
+input and result digests and fails closed on any mismatch.
 Empty case coverage retains its six-field UNKNOWN cause. Failed native work
 retains both its earlier proposal and incomplete execution evidence.
 
@@ -29,6 +34,8 @@ Native CI exercises the public CLI, independent receipt consumer and a fresh
 process consuming the emitted candidate judge. This is a synthetic, bounded
 next-use witness, not autonomous persistent policy adoption or external utility.
 Its three input pairs yield observed counters, not a language completion score.
+The new process evidence closes generated execution only; it does not close
+adoption, mutation, promotion or utility.
 Proposal-stage `NOT_OBSERVED` stays historical; later execution has its own
 receipt. Input files remain immutable; generated execution uses temporary space.
 No repository writes, promotion, runtime-speed improvement or cache proof is

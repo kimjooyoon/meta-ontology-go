@@ -13,6 +13,9 @@ func compileRecordBindings(ir semantic.IR, programs map[string]recordProgram) (m
 	}
 	incoming := map[string]string{}
 	for _, binding := range ir.RuntimeBindings {
+		if binding.Schema == semantic.RuntimeFeedbackSchema {
+			return nil, failAt(ReasonPlanInvalid, "PLAN", "reject-record-feedback", "record continuation is unsupported")
+		}
 		producer, producerOK := names[binding.ProducerActivity.String()]
 		consumer, consumerOK := names[binding.ConsumerActivity.String()]
 		if !producerOK || !consumerOK || binding.ProducerPort != semantic.RuntimeOutputPort ||
