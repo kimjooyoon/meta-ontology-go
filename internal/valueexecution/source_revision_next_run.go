@@ -50,15 +50,15 @@ func CompareAcceptedRevisionNextRun(request AcceptedRevisionNextRunRequest) Acce
 	candidateDigest := digestBytes(request.CandidateSource)
 	inputDigest := digestValue(map[string]int64{request.Activity: request.Input})
 	comparison := AcceptedRevisionNextRunComparison{
-		Schema:                AcceptedRevisionNextRunComparisonSchema,
-		State:                 ReplayUnknown,
-		Outcome:               NextRunOutcomeUnknown,
-		Reason:                "NEXT_RUN_SCOPE_UNKNOWN",
-		NextOperation:         "CAPTURE_MATCHING_NEXT_RUN_INPUTS",
-		BlockedBy:             []string{"revision_identity", "source_digests", "activity", "input_digest"},
-		SourceDigest:          sourceDigest, CandidateSourceDigest: candidateDigest,
-		RevisionCandidateID:   request.Revision.CandidateID, Activity: request.Activity,
-		InputDigest:           inputDigest, ExecutionAllowed: false, RepositoryWrites: 0,
+		Schema:        AcceptedRevisionNextRunComparisonSchema,
+		State:         ReplayUnknown,
+		Outcome:       NextRunOutcomeUnknown,
+		Reason:        "NEXT_RUN_SCOPE_UNKNOWN",
+		NextOperation: "CAPTURE_MATCHING_NEXT_RUN_INPUTS",
+		BlockedBy:     []string{"revision_identity", "source_digests", "activity", "input_digest"},
+		SourceDigest:  sourceDigest, CandidateSourceDigest: candidateDigest,
+		RevisionCandidateID: request.Revision.CandidateID, Activity: request.Activity,
+		InputDigest: inputDigest, ExecutionAllowed: false, RepositoryWrites: 0,
 	}
 	if request.Revision.Schema != SourceRevisionSchema || request.Revision.CandidateID == "" || request.Revision.ExecutionAllowed || request.Revision.RepositoryWrites != 0 || request.Revision.TriggerReason == "" ||
 		request.Evaluation.Schema != SourceRevisionEvaluationSchema || request.Evaluation.State != ReplayClosed || !request.Evaluation.Accepted || !request.Evaluation.CandidateExecuted || request.Evaluation.RepositoryWrites != 0 ||

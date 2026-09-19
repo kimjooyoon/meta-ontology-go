@@ -70,15 +70,31 @@ jobs:
         run: |
           set -euo pipefail
           doc=docs/governance/problem-solving-scope.md
-          rg -q '^## Resolution decision protocol$' "$doc"
-          rg -q 'The repository is not the default unit of blockage' "$doc"
-          rg -q '`STOP_AND_REPAIR`' "$doc"
-            rg -q '`KEEP_PENDING_CONTINUE`' "$doc"
-            rg -q 'Merge authority is separate' "$doc"
-            rg -q '`evidence_identity`' "$doc"
-            rg -q '^## Bounded problem-solving scope$' "$doc"
-            rg -q 'The default action is therefore not “stop the project”' "$doc"
-            rg -q '^### CI is an observation boundary, not a universal authority$' "$doc"
+          assert_contains() {
+            local needle="$1"
+            if ! grep -Fq -- "$needle" "$doc"; then
+              echo "missing human-readable scope assertion: $needle" >&2
+              return 1
+            fi
+          }
+          assert_line() {
+            local needle="$1"
+            if ! grep -Fxq -- "$needle" "$doc"; then
+              echo "missing exact human-readable scope heading: $needle" >&2
+              return 1
+            fi
+          }
+          assert_line '## Resolution decision protocol'
+          assert_contains 'The repository is not the default unit of blockage'
+          assert_contains '`STOP_AND_REPAIR`'
+          assert_contains '`KEEP_PENDING_CONTINUE`'
+          assert_contains 'Merge authority is separate'
+          assert_contains '`evidence_identity`'
+          assert_line '## Bounded problem-solving scope'
+          assert_contains 'The default action'
+          assert_contains 'is therefore not'
+          assert_contains 'smallest affected lane'
+          assert_line '### CI is an observation boundary, not a universal authority'
 
       - name: Publish exact policy observation
         shell: bash
