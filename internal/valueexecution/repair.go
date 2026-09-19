@@ -17,6 +17,9 @@ type RepairCandidate struct {
 
 const RepairCandidateSchema = "gooo/value-execution-repair-candidate/v1"
 
+const repairCandidateDigestPrefix = "sha256:"
+const repairCandidateDigestChars = 16
+
 // ProposeRepair turns only a known replay contradiction into a non-executing
 // candidate. It never edits source, runs a repair, or treats UNKNOWN as a
 // repair trigger.
@@ -27,7 +30,7 @@ func ProposeRepair(comparison ReplayComparison) (RepairCandidate, error) {
 	digest := DigestReplayComparison(comparison)
 	candidate := RepairCandidate{
 		Schema:           RepairCandidateSchema,
-		CandidateID:      "gooo://repair-candidate/" + digest[len("sha256:"):16],
+		CandidateID:      repairCandidateID(digest),
 		ComparisonDigest: digest,
 		TriggerState:     comparison.State,
 		TriggerReason:    comparison.Reason,
@@ -53,7 +56,7 @@ func ValidateRepairCandidate(candidate RepairCandidate) error {
 	if !validDigest(candidate.ComparisonDigest) {
 		return errors.New("repair candidate comparison digest is invalid")
 	}
-	wantID := "gooo://repair-candidate/" + candidate.ComparisonDigest[len("sha256:"):16]
+	wantID := repairCandidateID(candidate.ComparisonDigest)
 	if candidate.CandidateID != wantID {
 		return errors.New("repair candidate id does not match comparison digest")
 	}
@@ -75,4 +78,9 @@ func ValidateRepairCandidate(candidate RepairCandidate) error {
 
 func DigestReplayComparison(comparison ReplayComparison) string {
 	return digestValue(comparison)
+}
+
+func repairCandidateID(comparisonDigest string) string {
+	start := len(repairCandidateDigestPrefix)
+	return "gooo://repair-candidate/" + comparisonDigest[start:start+repairCandidateDigestChars]
 }
