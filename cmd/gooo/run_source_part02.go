@@ -9,11 +9,12 @@ import (
 )
 
 type runSourceOptions struct {
-	iterations int
-	filename   string
-	entry      string
-	input      string
-	record     bool
+	iterations  int
+	filename    string
+	entry       string
+	input       string
+	record      bool
+	runtimePlan string
 }
 
 func parseRunSourceArguments(args []string) (runSourceOptions, error) {
@@ -46,6 +47,15 @@ func parseRunSourceArguments(args []string) (runSourceOptions, error) {
 			if options.record && options.input == "" {
 				return runSourceOptions{}, errors.New(runSourceUsage)
 			}
+		case "--runtime-plan":
+			if options.runtimePlan != "" || index+1 >= len(args) {
+				return runSourceOptions{}, errors.New(runSourceUsage)
+			}
+			index++
+			options.runtimePlan = args[index]
+			if options.runtimePlan == "" {
+				return runSourceOptions{}, errors.New(runSourceUsage)
+			}
 		default:
 			if strings.HasPrefix(args[index], "-") || options.filename != "" {
 				return runSourceOptions{}, errors.New(runSourceUsage)
@@ -54,7 +64,8 @@ func parseRunSourceArguments(args []string) (runSourceOptions, error) {
 		}
 	}
 	if options.filename == "" || strings.TrimSpace(options.entry) == "" ||
-		(options.iterations > 0 && (options.input == "" || options.record)) {
+		(options.iterations > 0 && (options.input == "" || options.record)) ||
+		(options.runtimePlan != "" && (options.input == "" || options.record)) {
 		return runSourceOptions{}, errors.New(runSourceUsage)
 	}
 	return options, nil
