@@ -11,6 +11,8 @@ func runExtensionCommand(args []string, stdout, stderr io.Writer) int {
 		return runCompareReplay(args[1:], OSFileReader{}, stdout, stderr)
 	case "propose-repair":
 		return runProposeRepair(args[1:], OSFileReader{}, stdout, stderr)
+	case "consume-repair":
+		return runConsumeRepair(args[1:], OSFileReader{}, stdout, stderr)
 	case "emit":
 		return runEmit(args[1:], stdout, stderr)
 	case "certify":
