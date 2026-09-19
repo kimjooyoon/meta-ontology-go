@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func TestRunSourceInputExecutesRuntimeBindingPlan(t *testing.T) {
@@ -43,6 +46,113 @@ func TestRunSourceInputExecutesRuntimeBindingPlan(t *testing.T) {
 	if report.Decision != "PASS" || report.Execution.ApplyCalls != 3 || report.Execution.Deliveries != 2 ||
 		report.Execution.Results["ConsumeA"].Value != 43 || report.Execution.Results["ConsumeB"].Value != 43 {
 		t.Fatalf("CLI plan report = %#v", report)
+	}
+}
+
+func TestRunSourceVerifiesRuntimePlanContractBeforeExecution(t *testing.T) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("resolve runtime binding fixture path")
+	}
+	source, err := os.ReadFile(filepath.Join(filepath.Dir(currentFile), "..", "..", "examples", "language-runtime-binding", "main.gooo"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, diagnostics := syntax.ParseFile("fixture.gooo", string(source))
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("parse fixture: diagnostics=%v file=%#v", diagnostics, file)
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := bidir.DocumentFromSyntax(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	typedPlan, err := bidir.CompileTypedPlan(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtimePlan, err := buildRuntimePlanDataWithTypedPlan(source, ir, typedPlan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := runSourceReaderWithFiles{
+		"fixture.gooo": source,
+		"input.json":  []byte(`{"value":41}`),
+		"runtime-plan.json": runtimePlan,
+	}
+	var stdout, stderr bytes.Buffer
+	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "--runtime-plan", "runtime-plan.json", "fixture.gooo"}, reader, &stdout, &stderr)
+	if code != exitOK || stderr.Len() != 0 {
+		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var report struct {
+		Decision          string `json:"decision"`
+		RuntimePlanDigest string `json:"runtime_plan_digest"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Decision != "PASS" || report.RuntimePlanDigest == "" {
+		t.Fatalf("runtime plan contract report = %#v", report)
+	}
+}
+
+func TestRunSourceRejectsStaleRuntimePlanBeforeExecution(t *testing.T) {
+	source := []byte(`package runtimebinding
+namespace runtimebinding
+entity Integer id "gooo://runtime-binding/entity/integer"
+activity Produce(Integer) -> Integer computes "int.add:1"
+`)
+	file, diagnostics := syntax.ParseFile("fixture.gooo", string(source))
+	if diagnostics.HasErrors() || file == nil {
+		t.Fatalf("parse fixture: diagnostics=%v file=%#v", diagnostics, file)
+	}
+	ir, err := bidir.Lower(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtimePlan, err := buildRuntimePlanData(source, ir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var document runtimePlanDocument
+	if err := json.Unmarshal(runtimePlan, &document); err != nil {
+		t.Fatal(err)
+	}
+	document.SourceDigest = "sha256:stale"
+	stalePlan, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reader := runSourceReaderWithFiles{
+		"fixture.gooo":       source,
+		"input.json":         []byte(`{"value":41}`),
+		"runtime-plan.json": stalePlan,
+	}
+	var stdout, stderr bytes.Buffer
+	code := runSource([]string{"--json", "--entry", "Produce", "--input", "input.json", "--runtime-plan", "runtime-plan.json", "fixture.gooo"}, reader, &stdout, &stderr)
+	if code != exitFailure || stderr.Len() != 0 {
+		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
+	}
+	var report struct {
+		Decision  string `json:"decision"`
+		Reason    string `json:"reason"`
+		Failure   struct {
+			Stage       string `json:"stage"`
+			Step        string `json:"step"`
+		} `json:"failure"`
+		Execution struct {
+			ApplyCalls int `json:"apply_calls"`
+		} `json:"execution"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Decision != "FAIL_CLOSED" || report.Reason != "VALUE_PLAN_INVALID" || report.Failure.Stage != "PLAN" || report.Failure.Step != "validate-runtime-plan-contract" || report.Execution.ApplyCalls != 0 {
+		t.Fatalf("stale runtime plan report = %#v", report)
 	}
 }
 
