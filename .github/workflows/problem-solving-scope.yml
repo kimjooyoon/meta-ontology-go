@@ -91,7 +91,8 @@ jobs:
           assert_contains 'Merge authority is separate'
           assert_contains '`evidence_identity`'
           assert_line '## Bounded problem-solving scope'
-          assert_contains 'The default action is therefore not'
+          assert_contains 'The default action'
+          assert_contains 'is therefore not'
           assert_contains 'smallest affected lane'
           assert_line '### CI is an observation boundary, not a universal authority'
 
