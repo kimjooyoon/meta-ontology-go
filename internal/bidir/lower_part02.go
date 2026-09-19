@@ -69,6 +69,7 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 			SourcePort:     binding.Producer.Port.Name,
 			TargetActivity: target,
 			TargetPort:     binding.Consumer.Port.Name,
+			Span:           toSourceSpan(binding.Span),
 		})
 	}
 	for _, declaration := range syntaxDeclarations(file) {

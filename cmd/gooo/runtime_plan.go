@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 )
@@ -14,6 +15,8 @@ type runtimePlanDocument struct {
 	Schema              string               `json:"schema"`
 	SourceDigest        string               `json:"source_digest"`
 	SemanticHash        string               `json:"semantic_hash"`
+	TypedPlanDigest     string               `json:"typed_plan_digest,omitempty"`
+	ActivityOrder       []string             `json:"activity_order,omitempty"`
 	RuntimeBindingCount int                  `json:"runtime_binding_count"`
 	Bindings            []runtimePlanBinding `json:"bindings"`
 }
@@ -28,6 +31,10 @@ type runtimePlanBinding struct {
 }
 
 func buildRuntimePlanData(source []byte, ir semantic.IR) ([]byte, error) {
+	return buildRuntimePlanDataWithTypedPlan(source, ir, bidir.TypedPlan{})
+}
+
+func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan bidir.TypedPlan) ([]byte, error) {
 	bindings := make([]runtimePlanBinding, 0, len(ir.RuntimeBindings))
 	for _, binding := range ir.RuntimeBindings {
 		bindings = append(bindings, runtimePlanBinding{
@@ -51,6 +58,13 @@ func buildRuntimePlanData(source []byte, ir semantic.IR) ([]byte, error) {
 	document := runtimePlanDocument{
 		Schema: runtimePlanSchema, SourceDigest: cache.HashBytes(source).String(), SemanticHash: ir.StableHash(),
 		RuntimeBindingCount: len(bindings), Bindings: bindings,
+	}
+	if len(typedPlan.Activities) > 0 {
+		document.TypedPlanDigest = typedPlan.Digest()
+		document.ActivityOrder = make([]string, len(typedPlan.Activities))
+		for index, activity := range typedPlan.Activities {
+			document.ActivityOrder[index] = string(activity)
+		}
 	}
 	data, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
