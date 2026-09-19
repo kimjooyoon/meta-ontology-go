@@ -32,6 +32,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow, ReasonIntegerDivisionByZero},
 	}, Apply: checkedDivide},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.mod", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerModuloByZero},
+	}, Apply: checkedModulo},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -102,4 +108,11 @@ func checkedDivide(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-div", "int64 division overflow")
 	}
 	return input / operand, nil
+}
+
+func checkedModulo(input, operand int64) (int64, error) {
+	if operand == 0 {
+		return 0, failAt(ReasonIntegerModuloByZero, "EXECUTE", "apply-int-mod", "integer modulo by zero")
+	}
+	return input % operand, nil
 }

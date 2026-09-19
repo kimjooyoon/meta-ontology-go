@@ -9,7 +9,7 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	if spec.Schema != OperationSpecSchema || spec.Version != 1 {
 		return fmt.Errorf("operation identity is not closed")
 	}
-	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" {
+	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" {
 		return fmt.Errorf("operation identity is not registered")
 	}
 	if spec.Arity != 1 || !slices.Equal(spec.InputEntities, []string{IntegerEntity}) || spec.OutputEntity != IntegerEntity {
@@ -21,6 +21,9 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	expectedFailures := []string{ReasonInputArityMismatch, ReasonIntegerOverflow}
 	if spec.ID == "int.div" {
 		expectedFailures = append(expectedFailures, ReasonIntegerDivisionByZero)
+	}
+	if spec.ID == "int.mod" {
+		expectedFailures = []string{ReasonInputArityMismatch, ReasonIntegerModuloByZero}
 	}
 	if !slices.Equal(spec.FailureReasons, expectedFailures) {
 		return fmt.Errorf("operation failure set is not closed")
