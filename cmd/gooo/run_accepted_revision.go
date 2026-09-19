@@ -13,7 +13,7 @@ const runAcceptedRevisionUsage = "usage: gooo run-accepted-revision <baseline.go
 
 type runAcceptedRevisionOptions struct {
 	baseline, candidate, revision, evaluation, activity, input string
-	accept                                                       bool
+	accept                                                     bool
 }
 
 func runAcceptedRevision(args []string, reader SourceReader, stdout, stderr io.Writer) int {

@@ -51,10 +51,10 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 		t.Fatalf("accepted code=%d stderr=%q", code, stderr.String())
 	}
 	var result struct {
-		Decision          string `json:"decision"`
-		ExecutionAllowed  bool   `json:"execution_allowed"`
-		RepositoryWrites  int    `json:"repository_writes"`
-		Execution         struct {
+		Decision         string `json:"decision"`
+		ExecutionAllowed bool   `json:"execution_allowed"`
+		RepositoryWrites int    `json:"repository_writes"`
+		Execution        struct {
 			Results map[string]struct {
 				Value int64 `json:"value"`
 			} `json:"results"`

@@ -4698,6 +4698,16 @@
         "internal/valueexecution/source_revision_next_run_test.go",
         "internal/verify/scope_accepted_revision_next_run_comparison_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/format-accepted-revision-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/run_accepted_revision.go",
+        "cmd/gooo/run_accepted_revision_test.go",
+        "internal/verify/scope_format_accepted_revision_20260920.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
