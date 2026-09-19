@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
@@ -41,7 +40,7 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 	if document.Schema != runtimePlanSchema {
 		return "", fmt.Errorf("unsupported runtime plan schema %q", document.Schema)
 	}
-	expectedSourceDigest := cache.HashBytes(source).String()
+	expectedSourceDigest := runtimePlanSourceDigest(source)
 	if document.SourceDigest != expectedSourceDigest || plan.SourceDigest != expectedSourceDigest {
 		return "", fmt.Errorf("source digest mismatch: artifact=%q expected=%q plan=%q", document.SourceDigest, expectedSourceDigest, plan.SourceDigest)
 	}
@@ -89,15 +88,4 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 	}
 
 	return cache.HashBytes(raw).String(), nil
-}
-
-func requireJSONEOF(decoder *json.Decoder) error {
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		if err == nil {
-			return fmt.Errorf("trailing JSON value")
-		}
-		return err
-	}
-	return nil
 }

@@ -79,8 +79,8 @@ func TestRunSourceVerifiesRuntimePlanContractBeforeExecution(t *testing.T) {
 		t.Fatal(err)
 	}
 	reader := runSourceReaderWithFiles{
-		"fixture.gooo": source,
-		"input.json":  []byte(`{"value":41}`),
+		"fixture.gooo":      source,
+		"input.json":        []byte(`{"value":41}`),
 		"runtime-plan.json": runtimePlan,
 	}
 	var stdout, stderr bytes.Buffer
@@ -128,8 +128,8 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 		t.Fatal(err)
 	}
 	reader := runSourceReaderWithFiles{
-		"fixture.gooo":       source,
-		"input.json":         []byte(`{"value":41}`),
+		"fixture.gooo":      source,
+		"input.json":        []byte(`{"value":41}`),
 		"runtime-plan.json": stalePlan,
 	}
 	var stdout, stderr bytes.Buffer
@@ -138,11 +138,11 @@ activity Produce(Integer) -> Integer computes "int.add:1"
 		t.Fatalf("code=%d stderr=%q stdout=%q", code, stderr.String(), stdout.String())
 	}
 	var report struct {
-		Decision  string `json:"decision"`
-		Reason    string `json:"reason"`
-		Failure   struct {
-			Stage       string `json:"stage"`
-			Step        string `json:"step"`
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+		Failure  struct {
+			Stage string `json:"stage"`
+			Step  string `json:"step"`
 		} `json:"failure"`
 		Execution struct {
 			ApplyCalls int `json:"apply_calls"`
