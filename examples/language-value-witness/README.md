@@ -3,7 +3,9 @@
 This experiment adds one deliberately small value-level program to Gooo:
 `Increment` selects the registered pure operation `int.add` with operand `1`.
 The same typed operation registry also contains `int.sub`, `int.mul`, `int.div`,
-and `int.mod`, all version 1. The witness intentionally keeps using `int.add` so
+`int.mod`, and `int.neg`, all version 1. `int.neg:0` uses the explicit zero
+literal as a no-configuration sentinel, rejects any other operand at IR
+validation, and fails closed for `MinInt64` negation overflow. The witness intentionally keeps using `int.add` so
 its value-level evidence remains focused on one declared program while the
 compiler's additional operations are exercised by separate regression cases,
 including checked `int.mul` overflow, fail-closed `int.div` zero-divisor and

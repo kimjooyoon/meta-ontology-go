@@ -38,6 +38,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerModuloByZero},
 	}, Apply: checkedModulo},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.neg", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
+	}, Apply: checkedNegate},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -115,4 +121,14 @@ func checkedModulo(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonIntegerModuloByZero, "EXECUTE", "apply-int-mod", "integer modulo by zero")
 	}
 	return input % operand, nil
+}
+
+func checkedNegate(input, operand int64) (int64, error) {
+	if operand != 0 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-int-neg", "int.neg requires a zero sentinel operand")
+	}
+	if input == math.MinInt64 {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-neg", "int64 negation overflow")
+	}
+	return -input, nil
 }
