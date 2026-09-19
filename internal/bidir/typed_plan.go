@@ -13,6 +13,10 @@ type BindingEdge struct {
 	SourcePort     string
 	TargetActivity ID
 	TargetPort     string
+	SourceActivitySpan SourceSpan
+	SourcePortSpan     SourceSpan
+	TargetActivitySpan SourceSpan
+	TargetPortSpan     SourceSpan
 }
 
 // TypedPlan is the validated, deterministic execution order for binding edges.

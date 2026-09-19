@@ -3690,6 +3690,9 @@
         ".github/workflows/domain-observation.yml",
         "examples/domain-observation/README.md",
         "examples/domain-observation/main.gooo",
+        "internal/bidir/binding_provenance_test.go",
+        "internal/bidir/lower_part02.go",
+        "internal/bidir/typed_plan.go",
         "internal/syntax/binding_ast.go",
         "internal/syntax/binding_parser.go",
         "internal/syntax/binding_parser_test.go"

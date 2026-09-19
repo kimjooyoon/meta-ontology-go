@@ -49,7 +49,12 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 		source, sourceOK := idsByName[binding.SourceActivity]
 		target, targetOK := idsByName[binding.TargetActivity]
 		if !sourceOK || !targetOK { return Document{}, fmt.Errorf("binding references unknown activity") }
-		document.BindingEdges = append(document.BindingEdges, BindingEdge{SourceActivity: source, SourcePort: binding.SourcePort, TargetActivity: target, TargetPort: binding.TargetPort})
+		document.BindingEdges = append(document.BindingEdges, BindingEdge{
+			SourceActivity: source, SourcePort: binding.SourcePort,
+			TargetActivity: target, TargetPort: binding.TargetPort,
+			SourceActivitySpan: toSourceSpan(binding.SourceActivitySpan), SourcePortSpan: toSourceSpan(binding.SourcePortSpan),
+			TargetActivitySpan: toSourceSpan(binding.TargetActivitySpan), TargetPortSpan: toSourceSpan(binding.TargetPortSpan),
+		})
 	}
 	for _, declaration := range syntaxDeclarations(file) {
 		if err := checkLowerContext(ctx); err != nil {
