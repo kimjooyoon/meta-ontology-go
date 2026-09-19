@@ -77,8 +77,8 @@ jobs:
           test -s "$bound/runtime-plan.json"
           jq -e '
             .schema == "gooo/runtime-plan/v1" and
-            (.source_digest | startswith("sha256:")) and
-            (.semantic_hash | startswith("sha256:")) and
+            (.source_digest | length == 64) and
+            (.semantic_hash | length == 64) and
             (.runtime_binding_count == (.bindings | length)) and
             (.runtime_binding_count > 0)
           ' "$bound/runtime-plan.json"
