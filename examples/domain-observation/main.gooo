@@ -9,3 +9,5 @@ activity PublishRemaining(Integer) -> Integer computes "int.add:0"
 
 bind ObserveBudget.result -> ConsumeAttempt.input
 bind ConsumeAttempt.result -> PublishRemaining.input
+
+feedback PublishRemaining.result -> ObserveBudget.input

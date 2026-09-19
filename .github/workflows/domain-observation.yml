@@ -82,7 +82,7 @@ jobs:
       - name: Validate scope registration and execution regression suites
         run: |
           set -euo pipefail
-          go test -count=1 -json ./internal/verify ./internal/valueexecution \
+          go test -count=1 -json ./internal/syntax ./internal/bidir ./internal/semantic ./internal/valueexecution ./internal/verify ./cmd/gooo \
             | tee "$RUNNER_TEMP/domain-evidence/tests.ndjson"
       - name: Retain evidence even when another boundary fails
         if: always()

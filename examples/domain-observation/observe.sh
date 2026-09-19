@@ -25,10 +25,18 @@ jq -e '.decision == "PASS" and .execution.apply_calls == 3 and .execution.delive
   .execution.results.ObserveBudget.value == 3 and .execution.results.ConsumeAttempt.value == 2 and
   .execution.results.PublishRemaining.value == 2' "$out/first.json" > /dev/null
 
-# The next invocation consumes the prior observed result, not a second literal.
-# This is explicit caller orchestration, not an autonomous adoption capability.
-jq '{value:.execution.results.PublishRemaining.value}' "$out/first.json" > "$out/next-input.json"
-"$cli" run --json --entry ObserveBudget --input "$out/next-input.json" "$source_path" > "$out/next.json"
+# Gooo owns the feedback edge. The caller supplies only the initial value and bound.
+"$cli" run --json --entry ObserveBudget --input "$input_path" --iterations 2 "$source_path" > "$out/continuation.json"
+jq -e '.decision == "PASS" and .continuation.iterations_requested == 2 and
+  .continuation.iterations_completed == 2 and .continuation.feedback_deliveries == 1 and
+  (.continuation.executions | length) == 2 and .continuation.failure == null and
+  .continuation.executions[0].results.PublishRemaining.value == 2 and
+  .continuation.executions[1].results.ObserveBudget.value == 2 and
+  .continuation.executions[1].results.PublishRemaining.value == 1' "$out/continuation.json" > /dev/null
+# Project the already executed second receipt for the existing replay comparator.
+# This projection does not choose input, perform an execution or grant authority.
+jq '{schema:"gooo/value-execution-plan/v1",decision,source_path,source_digest,semantic_fingerprint,
+  entry:"ObserveBudget",execution:.continuation.executions[1]}' "$out/continuation.json" > "$out/next.json"
 jq -e --slurpfile previous "$out/first.json" '.decision == "PASS" and
   .source_digest == $previous[0].source_digest and .semantic_fingerprint == $previous[0].semantic_fingerprint and
   .execution.plan_digest == $previous[0].execution.plan_digest and
@@ -59,6 +67,18 @@ jq -e '.decision == "FAIL_CLOSED" and .reason == "VALUE_INTEGER_OVERFLOW" and
 "$cli" compare --json "$out/first.json" "$out/after-failure.json" > "$out/recovery-comparison.json"
 jq -e '.state == "CLOSED" and .reason == "DETERMINISTIC_REPLAY"' "$out/recovery-comparison.json" > /dev/null
 
+# The continuation runtime stops on the second iteration's real failure.
+printf '{"value":-9223372036854775807}\n' > "$out/late-underflow-input.json"
+if "$cli" run --json --entry ObserveBudget --input "$out/late-underflow-input.json" --iterations 3 "$source_path" > "$out/failed-continuation.json"; then
+  printf 'failed continuation unexpectedly reached its limit\n' >&2; exit 1
+fi
+jq -e '.decision == "FAIL_CLOSED" and .continuation.iterations_requested == 3 and
+  .continuation.iterations_completed == 1 and .continuation.feedback_deliveries == 1 and
+  (.continuation.executions | length) == 2 and .continuation.executions[1].apply_calls == 2 and
+  .continuation.failure.code == "VALUE_INTEGER_OVERFLOW" and
+  .continuation.failure.stage == "EXECUTE" and .continuation.failure.step == "apply-int-add"' \
+  "$out/failed-continuation.json" > /dev/null
+
 # Synthetic corruption demonstrates refutation, not a discovered runtime bug.
 jq '.execution.results.PublishRemaining.value += 1' "$out/first.json" > "$out/synthetic-tampered.json"
 if "$cli" compare --json "$out/first.json" "$out/synthetic-tampered.json" > "$out/synthetic-refutation.json"; then
@@ -73,6 +93,7 @@ sha256sum -c "$out/source-before.sha256" > "$out/source-after-check.txt"
 jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   --slurpfile failure "$out/underflow.json" --slurpfile replay "$out/replay-comparison.json" \
   --slurpfile changed "$out/changed-input-comparison.json" --slurpfile recovery "$out/recovery-comparison.json" \
+  --slurpfile continuation "$out/continuation.json" --slurpfile failed_continuation "$out/failed-continuation.json" \
   --slurpfile refuted "$out/synthetic-refutation.json" \
   --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$(cat "$out/first-peak-rss-kib.txt")" \
   '{schema:"gooo/domain-budget-observation/v1",source_digest:$first[0].source_digest,
@@ -89,7 +110,15 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
     replay:$replay[0].state,changed_input:$changed[0].state,recovery:$recovery[0].state,
     synthetic_corruption:$refuted[0].state,synthetic_candidate_execution_allowed:false,
     fixture_files_unchanged:3,runtime_mode:"source-interpreter",
-    generator_binding_support:"UNSUPPORTED",orchestration:"explicit-caller",
+    generator_binding_support:"UNSUPPORTED",orchestration:"source-feedback",
+    continuation:{requested:$continuation[0].continuation.iterations_requested,
+      completed:$continuation[0].continuation.iterations_completed,
+      feedback_deliveries:$continuation[0].continuation.feedback_deliveries,
+      digest:$continuation[0].continuation.digest},
+    failed_continuation:{completed:$failed_continuation[0].continuation.iterations_completed,
+      observed_iterations:($failed_continuation[0].continuation.executions|length),
+      feedback_deliveries:$failed_continuation[0].continuation.feedback_deliveries,
+      failure:$failed_continuation[0].continuation.failure},
     external_utility:"UNKNOWN",source_repair_adoption:"NOT_IMPLEMENTED",improvement:"UNKNOWN"}' \
   > "$out/observation.json"
 jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: NOT_IMPLEMENTED"' \

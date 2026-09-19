@@ -10,6 +10,7 @@ import (
 
 const (
 	RuntimeBindingSchema = "gooo.runtime-binding/v1"
+	RuntimeFeedbackSchema = "gooo.runtime-feedback/v1"
 	RuntimeOutputPort    = "result"
 	RuntimeInputPort     = "input"
 )
@@ -38,6 +39,7 @@ type RuntimeBinding struct {
 }
 
 type RuntimeBindingKey struct {
+	Feedback         bool
 	ProducerActivity ID
 	ProducerPort     string
 	ConsumerActivity ID
@@ -46,6 +48,7 @@ type RuntimeBindingKey struct {
 
 func (b RuntimeBinding) Key() RuntimeBindingKey {
 	return RuntimeBindingKey{
+		Feedback:         b.Schema == RuntimeFeedbackSchema,
 		ProducerActivity: b.ProducerActivity,
 		ProducerPort:     b.ProducerPort,
 		ConsumerActivity: b.ConsumerActivity,
@@ -57,7 +60,7 @@ func (b RuntimeBinding) Normalized() (RuntimeBinding, error) {
 	if strings.TrimSpace(b.Schema) == "" {
 		b.Schema = RuntimeBindingSchema
 	}
-	if b.Schema != RuntimeBindingSchema {
+	if b.Schema != RuntimeBindingSchema && b.Schema != RuntimeFeedbackSchema {
 		return RuntimeBinding{}, fmt.Errorf("%w: unsupported schema %q", ErrRuntimeBindingInvalid, b.Schema)
 	}
 	producer, err := ParseIdentity(b.ProducerActivity.String())
@@ -109,7 +112,11 @@ func (b RuntimeBinding) SemanticCanonical() string {
 		b = normalized
 	}
 	var builder strings.Builder
-	builder.WriteString("runtime-binding\t")
+	if b.Schema == RuntimeFeedbackSchema {
+		builder.WriteString("runtime-feedback\t")
+	} else {
+		builder.WriteString("runtime-binding\t")
+	}
 	writeCanonicalField(&builder, b.ProducerActivity.String())
 	writeCanonicalField(&builder, b.ProducerPort)
 	writeCanonicalField(&builder, b.ConsumerActivity.String())
@@ -191,6 +198,9 @@ func validateRuntimeBindingAcyclic(bindings []RuntimeBinding) error {
 	indegree := make(map[ID]int, len(bindings)*2)
 	outgoing := make(map[ID][]ID, len(bindings))
 	for _, binding := range bindings {
+		if binding.Schema == RuntimeFeedbackSchema {
+			continue
+		}
 		producer, consumer := binding.ProducerActivity, binding.ConsumerActivity
 		indegree[producer] = indegree[producer]
 		indegree[consumer]++
@@ -226,6 +236,9 @@ func sortedRuntimeBindings(bindings []RuntimeBinding) []RuntimeBinding {
 	result := append([]RuntimeBinding(nil), bindings...)
 	sort.SliceStable(result, func(i, j int) bool {
 		left, right := result[i].Key(), result[j].Key()
+		if left.Feedback != right.Feedback {
+			return !left.Feedback
+		}
 		if left.ProducerActivity != right.ProducerActivity {
 			return left.ProducerActivity < right.ProducerActivity
 		}
