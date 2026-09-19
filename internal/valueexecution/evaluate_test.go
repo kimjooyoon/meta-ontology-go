@@ -1,6 +1,7 @@
 package valueexecution
 
 import (
+	"math"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -70,6 +71,33 @@ func TestCompileLowersRegisteredMultiplyOperationAndRejectsOverflow(t *testing.T
 	}
 	if _, err := program.Execute([]int64{1 << 62}); Reason(err) != ReasonIntegerOverflow {
 		t.Fatalf("multiply overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+}
+
+func TestCompileLowersRegisteredDivideOperationAndRejectsInvalidDivisors(t *testing.T) {
+	program, err := Compile("divide.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:2"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.div" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("divide operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{8}); err != nil || got != 4 {
+		t.Fatalf("divide execution = %d / %v, want 4 / nil", got, err)
+	}
+	zero, err := Compile("divide-zero.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:0"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := zero.Execute([]int64{8}); Reason(err) != ReasonIntegerDivisionByZero {
+		t.Fatalf("divide-by-zero reason = %s, want %s", Reason(err), ReasonIntegerDivisionByZero)
+	}
+	overflow, err := Compile("divide-overflow.gooo", valueFixture(`activity Divide(Integer) -> Integer computes "int.div:-1"`), "Divide")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := overflow.Execute([]int64{math.MinInt64}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("divide overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
 	}
 }
 
