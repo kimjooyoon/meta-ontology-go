@@ -18,6 +18,37 @@ Candidate generation, deterministic replay, and provenance are evidence in this
 lane. They are not adoption or self-improvement success until a subsequent run
 uses the accepted semantic result.
 
+## Bounded problem-solving scope
+
+The unit of problem solving is the tuple `(registered lane, semantic question,
+evidence identity)`, not the repository, pull request, or workflow. A blocked
+tuple remains blocked, while disjoint tuples may continue. The default action
+is therefore not “stop the project”; it is “stop the smallest affected lane”.
+
+The project stops a lane only when one of these conditions is observed:
+
+- the focused compiler observation contradicts the declared semantic rule;
+- the rule, input boundary, or required compiler evidence is insufficient to
+  decide the changed path; or
+- the proposed delta crosses an authority or ownership boundary for that lane.
+
+The project does not stop an independent compiler lane merely because a
+diagnostic, security, dependency, runner, queue, or provenance observation is
+non-terminal or failed. Those observations retain their exact cause and next
+operation, but remain separate work. Continuing an independent lane is not a
+retry, a bypass, or a claim that the external observation passed.
+
+The smallest-scope rule has four consequences:
+
+1. `COMPILER_REQUIRED` evidence may close only the registered semantic question
+   that it exercised.
+2. `DIAGNOSTIC` and `PENDING_EXTERNAL` evidence may block their own lane, but
+   cannot silently become a compiler defect or compiler pass.
+3. `PROTECTED_MERGE` evidence answers only the server-side integration question;
+   it cannot be replaced by a local classification or a focused compiler run.
+4. No semantic closure is inferred from a successful unrelated check, and no
+   independent progress is discarded because a different lane is pending.
+
 ## CI observation roles are not one verdict
 
 CI results are classified by the question they can answer, not collapsed into a
@@ -102,6 +133,15 @@ Every non-terminal record retains these fields:
 
 This keeps the continuation decision replayable and prevents a blocked CI
 observation from becoming an implicit compiler verdict.
+
+### CI is an observation boundary, not a universal authority
+
+CI is trusted for the observation it actually ran, at the exact source head and
+input/toolchain identity recorded by that observation. It is not trusted as a
+single repository-wide verdict. A failed or queued job outside the focused
+compiler role is a fact to classify and preserve, not a reason to rewrite the
+compiler result or stop unrelated work. Conversely, a focused compiler result
+does not authorize adoption, release, or merge by itself.
 
 ## Merge boundary
 

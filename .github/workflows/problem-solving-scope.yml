@@ -46,6 +46,10 @@ jobs:
             .schema == "gooo/problem-solving-scope/v1" and
             .primary_lane.name == "compiler-definition-and-defect-resolution" and
             (.primary_lane.required_evidence | sort) == ["input_identity", "outcome", "source_head", "toolchain_identity"] and
+            (.resolution_scope.unit | sort) == ["evidence_identity", "registered_lane", "semantic_question"] and
+            .resolution_scope.repository_wide_stop == false and
+            (.resolution_scope.stop_only_when | sort) == ["SCOPE_CONFLICT", "SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN"] and
+            (.resolution_scope.independent_lane_continues_when | sort) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION"] and
             (.failure_classes | keys) == ["ADVISORY_FAILURE", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "SCOPE_CONFLICT", "SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN"] and
             .failure_classes.SEMANTIC_DEFECT.lane_effect == "STOP_AND_REPAIR" and
             .failure_classes.SEMANTIC_UNKNOWN.lane_effect == "HOLD_SEMANTIC_LANE" and
@@ -55,6 +59,9 @@ jobs:
             (.continuation.required_record_fields | sort) == ["cause", "evidence_identity", "next_operation", "source_head"] and
             .continuation.blocked_scope == "registered_lane_only" and
             .continuation.merge_authority == "protected_server_rules" and
+            .merge_boundary.semantic_closure == "COMPILER_REQUIRED" and
+            .merge_boundary.integration_authority == "PROTECTED_MERGE" and
+            (.merge_boundary.must_not_infer_from | sort) == ["DIAGNOSTIC", "PENDING_EXTERNAL", "queued_check", "successful_unrelated_check"] and
             .decision_order == ["SEMANTIC_DEFECT", "SEMANTIC_UNKNOWN", "SCOPE_CONFLICT", "INFRASTRUCTURE_FAILURE", "QUEUE_OR_STALE_OBSERVATION", "ADVISORY_FAILURE"]
           ' "$policy"
 
@@ -66,9 +73,12 @@ jobs:
           rg -q '^## Resolution decision protocol$' "$doc"
           rg -q 'The repository is not the default unit of blockage' "$doc"
           rg -q '`STOP_AND_REPAIR`' "$doc"
-          rg -q '`KEEP_PENDING_CONTINUE`' "$doc"
-          rg -q 'Merge authority is separate' "$doc"
-          rg -q '`evidence_identity`' "$doc"
+            rg -q '`KEEP_PENDING_CONTINUE`' "$doc"
+            rg -q 'Merge authority is separate' "$doc"
+            rg -q '`evidence_identity`' "$doc"
+            rg -q '^## Bounded problem-solving scope$' "$doc"
+            rg -q 'The default action is therefore not “stop the project”' "$doc"
+            rg -q '^### CI is an observation boundary, not a universal authority$' "$doc"
 
       - name: Publish exact policy observation
         shell: bash
@@ -78,5 +88,8 @@ jobs:
             echo "- source head: \`${HEAD_SHA}\`"
             echo "- semantic defect: \`STOP_AND_REPAIR\`"
             echo "- infrastructure, queue, advisory: continue independently without relabeling"
+            echo "- bounded scope: registered lane + semantic question + evidence identity"
+            echo "- repository-wide stop: \`false\`"
+            echo "- semantic closure: focused \`COMPILER_REQUIRED\` only"
             echo "- merge authority: protected server rules"
           } >> "$GITHUB_STEP_SUMMARY"
