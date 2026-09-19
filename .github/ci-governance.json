@@ -57,6 +57,19 @@
   ],
   "ownership": [
     {
+      "branch": "agent/ci-gofmt-baseline-repair-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/problem-solving-scope.yml",
+        "internal/valuecatalog/evaluate.go",
+        "internal/valueexecution/source_revision_next_run.go",
+        "internal/verify/scope_ci_gofmt_baseline_repair_20260920.go",
+        "internal/verify/scope_problem_solving_scope_boundary_20260920.go",
+        "internal/verify/scope_value_program_operation_contract_20260920.go"
+      ]
+    },
+    {
       "branch": "agent/callback-observer-cli-20260910",
       "paths": [
         ".github/agent-scope-table.md",
@@ -4557,7 +4570,9 @@
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
         ".github/workflows/repair-handoff-dogfood.yml",
-        "examples/repair-handoff/**",
+        "examples/repair-handoff/main.gooo",
+        "examples/repair-handoff/repair-candidate.json",
+        "examples/repair-handoff/README.md",
         "internal/verify/scope_repair_handoff_dogfood_20260920.go"
       ]
     },
@@ -4666,7 +4681,8 @@
         ".github/ci-governance.json",
         ".github/workflows/problem-solving-scope.yml",
         "docs/governance/problem-solving-scope.md",
-        "docs/governance/problem-solving-scope.json"
+        "docs/governance/problem-solving-scope.json",
+        "internal/verify/scope_problem_solving_scope_boundary_20260920.go"
       ]
     },
     {
@@ -4677,9 +4693,10 @@
        "examples/language-value-witness/README.md",
        "internal/valueexecution/evaluate_test.go",
        "internal/valueexecution/measurement.go",
-       "internal/valueexecution/operation_spec_validate.go",
-       "internal/valueexecution/registry.go",
-       "internal/valueexecution/validate.go"
+     "internal/valueexecution/operation_spec_validate.go",
+     "internal/valueexecution/registry.go",
+     "internal/valueexecution/validate.go",
+     "internal/verify/scope_value_program_operation_contract_20260920.go"
      ]
     },
     {
