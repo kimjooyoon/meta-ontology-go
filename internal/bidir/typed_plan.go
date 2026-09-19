@@ -1,9 +1,12 @@
 package bidir
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"sort"
+	"strings"
 )
 
 // BindingEdge is an explicit typed data-flow edge between activity ports.
@@ -14,6 +17,7 @@ type BindingEdge struct {
 	SourcePort     string
 	TargetActivity ID
 	TargetPort     string
+	Span           SourceSpan
 }
 
 // TypedPlan is the validated, deterministic execution order for binding edges.
@@ -21,6 +25,32 @@ type BindingEdge struct {
 type TypedPlan struct {
 	Activities []ID
 	Edges      []BindingEdge
+}
+
+// Canonical is the source-span-free identity of a validated typed plan.
+// Source order remains available on Document.BindingEdges for diagnostics, but
+// the compiled plan identity is independent of presentation order and spans.
+func (plan TypedPlan) Canonical() string {
+	var builder strings.Builder
+	writeTypedPlanPart(&builder, "gooo/typed-plan/v1")
+	for _, activity := range plan.Activities {
+		writeTypedPlanPart(&builder, "activity")
+		writeTypedPlanPart(&builder, string(activity))
+	}
+	for _, edge := range plan.Edges {
+		writeTypedPlanPart(&builder, "edge")
+		writeTypedPlanPart(&builder, string(edge.SourceActivity))
+		writeTypedPlanPart(&builder, edge.SourcePort)
+		writeTypedPlanPart(&builder, string(edge.TargetActivity))
+		writeTypedPlanPart(&builder, edge.TargetPort)
+	}
+	return builder.String()
+}
+
+// Digest returns the deterministic identity of the validated plan.
+func (plan TypedPlan) Digest() string {
+	digest := sha256.Sum256([]byte(plan.Canonical()))
+	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 // CompileTypedPlan validates explicit binding edges and returns a canonical
@@ -56,7 +86,7 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 	for id := range activities {
 		indegree[id] = 0
 	}
-	for _, edge := range plan.Edges {
+	for index, edge := range plan.Edges {
 		source, sourceOK := activities[edge.SourceActivity]
 		target, targetOK := activities[edge.TargetActivity]
 		if !sourceOK || !targetOK {
@@ -67,16 +97,22 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 			return TypedPlan{}, fmt.Errorf("typed plan: duplicate edge %q", key)
 		}
 		seen[key] = struct{}{}
-		sourceType, ok := activityPortType(source, edge.SourcePort, false)
-		if !ok {
-			return TypedPlan{}, fmt.Errorf("typed plan: unknown source port %q", edge.SourcePort)
+		sourceType, ok, err := activityPortType(source, edge.SourcePort, false)
+		if err != nil {
+			return TypedPlan{}, fmt.Errorf("typed plan: edge %d source port %q: %w", index, edge.SourcePort, err)
 		}
-		targetType, ok := activityPortType(target, edge.TargetPort, true)
 		if !ok {
-			return TypedPlan{}, fmt.Errorf("typed plan: unknown target port %q", edge.TargetPort)
+			return TypedPlan{}, fmt.Errorf("typed plan: edge %d unknown source port %q", index, edge.SourcePort)
+		}
+		targetType, ok, err := activityPortType(target, edge.TargetPort, true)
+		if err != nil {
+			return TypedPlan{}, fmt.Errorf("typed plan: edge %d target port %q: %w", index, edge.TargetPort, err)
+		}
+		if !ok {
+			return TypedPlan{}, fmt.Errorf("typed plan: edge %d unknown target port %q", index, edge.TargetPort)
 		}
 		if sourceType != targetType {
-			return TypedPlan{}, fmt.Errorf("typed plan: port type mismatch %q != %q", sourceType, targetType)
+			return TypedPlan{}, fmt.Errorf("typed plan: edge %d port type mismatch %q != %q", index, sourceType, targetType)
 		}
 		adjacency[edge.SourceActivity] = append(adjacency[edge.SourceActivity], edge.TargetActivity)
 		indegree[edge.TargetActivity]++
@@ -108,23 +144,37 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 	return plan, nil
 }
 
-func activityPortType(declaration Declaration, port string, input bool) (ID, bool) {
+func activityPortType(declaration Declaration, port string, input bool) (ID, bool, error) {
 	references := declaration.Outputs
+	direction := "output"
 	if input {
 		references = declaration.Inputs
+		direction = "input"
 	}
 	if len(references) == 1 {
 		if input && port == "input" {
-			return references[0].ID, true
+			return references[0].ID, true, nil
 		}
 		if !input && port == "result" {
-			return references[0].ID, true
+			return references[0].ID, true, nil
 		}
 	}
+	var match ID
+	matches := 0
 	for _, reference := range references {
 		if reference.Name == port {
-			return reference.ID, true
+			match = reference.ID
+			matches++
 		}
 	}
-	return "", false
+	if matches > 1 {
+		return "", false, fmt.Errorf("ambiguous %s port %q", direction, port)
+	}
+	return match, matches == 1, nil
+}
+
+func writeTypedPlanPart(builder *strings.Builder, value string) {
+	fmt.Fprintf(builder, "%d:", len(value))
+	builder.WriteString(value)
+	builder.WriteByte('\n')
 }
