@@ -4550,6 +4550,16 @@
         "internal/valueexecution/repair_handoff_test.go",
         "internal/verify/scope_repair_handoff_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/repair-handoff-dogfood-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/repair-handoff-dogfood.yml",
+        "examples/repair-handoff/**",
+        "internal/verify/scope_repair_handoff_dogfood_20260920.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
