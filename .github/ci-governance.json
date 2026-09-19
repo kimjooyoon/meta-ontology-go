@@ -4700,6 +4700,16 @@
       ]
     },
     {
+      "branch": "agent/format-accepted-revision-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/run_accepted_revision.go",
+        "cmd/gooo/run_accepted_revision_test.go",
+        "internal/verify/scope_format_accepted_revision_20260920.go"
+      ]
+    },
+    {
       "branch": "agent/typed-generated-plan-20260920",
       "paths": [
         ".github/agent-scope-table.md",
