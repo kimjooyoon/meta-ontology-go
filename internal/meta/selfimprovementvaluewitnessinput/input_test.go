@@ -21,6 +21,20 @@ func TestBuildBindsExactValueWitnessInput(t *testing.T) {
 	}
 }
 
+func TestBuildAcceptsRegisteredOperationWithinExpandedRegistry(t *testing.T) {
+	if len(KnownRegistry().Operations) <= 1 {
+		t.Fatalf("registry regression fixture did not contain multiple operations: %d", len(KnownRegistry().Operations))
+	}
+	input, err := BuildFromBytes(SourcePath, []byte(CanonicalSource), ActivityName,
+		digestBytes([]byte("candidate")), digestBytes([]byte("candidate-digest")), strings.Repeat("c", 40), digestBytes([]byte("observation")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(input); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestValidateRejectsSnapshotMutation(t *testing.T) {
 	input, err := BuildFromBytes(SourcePath, []byte(CanonicalSource), ActivityName,
 		digestBytes([]byte("candidate")), digestBytes([]byte("candidate-digest")), strings.Repeat("b", 40), digestBytes([]byte("observation")))

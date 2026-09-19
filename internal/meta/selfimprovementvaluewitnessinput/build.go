@@ -68,7 +68,7 @@ func BuildFromBytes(sourcePath string, raw []byte, activity, candidateStableID, 
 		return ExecutionInput{}, errors.New("registered value-witness program is not the exact operation")
 	}
 	registry := KnownRegistry()
-	if len(registry.Operations) != 1 || !reflect.DeepEqual(registry.Operations[0], program.Operation.Spec) {
+	if !registryContainsOperation(registry, program.Operation.Spec) {
 		return ExecutionInput{}, errors.New("compiled operation is not the registered evaluator operation")
 	}
 	span := sourceSpan(declaration.Span)
@@ -93,6 +93,15 @@ func BuildFromBytes(sourcePath string, raw []byte, activity, candidateStableID, 
 	}
 	input.Digest = executionInputDigest(input)
 	return input, nil
+}
+
+func registryContainsOperation(registry RegistryIdentity, wanted valueexecution.OperationSpec) bool {
+	for _, operation := range registry.Operations {
+		if reflect.DeepEqual(operation, wanted) {
+			return true
+		}
+	}
+	return false
 }
 
 func BindCandidateDigest(input *ExecutionInput, candidateDigest string) {
