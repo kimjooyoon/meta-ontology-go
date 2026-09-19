@@ -1,6 +1,11 @@
 package bidir
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+)
 
 func TestCompileTypedPlanExcludesCrossInvocationFeedback(t *testing.T) {
 	document := feedbackDocument(t, feedbackSource)
@@ -17,5 +22,17 @@ func TestCompileTypedPlanExcludesCrossInvocationFeedback(t *testing.T) {
 	}
 	if len(plan.Activities) != 2 {
 		t.Fatalf("typed plan activities = %d, want both activities", len(plan.Activities))
+	}
+}
+
+func TestDocumentFromSyntaxUsesTypedPlanValidation(t *testing.T) {
+	source := strings.Replace(feedbackSource, "Finish.input", "Finish.missing", 1)
+	file, diagnostics := syntax.ParseFile("typed-plan.gooo", source)
+	if diagnostics.HasErrors() {
+		t.Fatal(diagnostics)
+	}
+
+	if _, err := DocumentFromSyntax(file); err == nil || !strings.Contains(err.Error(), "typed plan") {
+		t.Fatalf("lowering did not report the typed-plan defect: %v", err)
 	}
 }
