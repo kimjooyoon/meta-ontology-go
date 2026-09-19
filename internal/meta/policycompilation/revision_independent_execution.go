@@ -16,5 +16,6 @@ type PolicyRevisionIndependentExecution struct {
 	Results              []DecisionResult `json:"results"`
 	ProcessStarted       bool             `json:"process_started"`
 	ExitCode             int              `json:"exit_code"`
+	ExecutionError       string           `json:"execution_error,omitempty"`
 	WallMilliseconds     int64            `json:"wall_ms"`
 }
