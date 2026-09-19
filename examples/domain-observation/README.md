@@ -96,9 +96,11 @@ declared reason and the candidate succeeds. It records both source digests,
 the input digest, the baseline failure, candidate execution and the next
 operation.
 
-The final `run` of `candidate.gooo` is an explicit caller action. It is not an
-automatic source write, commit, merge, deployment or compiler self-modification.
-The example therefore demonstrates an executable repair loop, while
+The final `run-accepted-revision --accept` of `candidate.gooo` is an explicit
+caller action. The command requires the revision/evaluation/source/input digests
+to agree and compares its reexecution with the accepted evaluation receipt. It
+is not an automatic source write, commit, merge, deployment or compiler
+self-modification. The example therefore demonstrates an executable repair loop, while
 `source_repair_adoption` remains `EXPLICIT_CALLER` and utility/improvement
 claims remain separate observations.
 

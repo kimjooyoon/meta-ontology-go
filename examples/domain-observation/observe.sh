@@ -94,7 +94,7 @@ jq -e '.trigger_state == "REFUTED" and .execution_allowed == false and .reposito
 
 # A source revision is an exact external candidate. The compiler does not edit
 # repair.gooo, and the candidate is independently evaluated before the caller
-# explicitly re-executes it.
+# explicitly accepts and re-executes it through the typed CLI boundary.
 "$cli" revise-source "$repair_source" --source-digest "$repair_digest" \
   --activity ObserveRepair --expected 'int.add:1' --replace 'int.add:0' \
   --reason VALUE_INTEGER_OVERFLOW --out "$out/source-revision" > "$out/source-revision.log"
@@ -109,9 +109,13 @@ jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_RECOVERED_BASELINE_FAI
   .accepted == true and .candidate_executed == true and .repository_writes == 0 and
   .baseline_failure.code == "VALUE_INTEGER_OVERFLOW"' \
   "$out/source-revision-evaluation/evaluation.json" > /dev/null
-"$cli" run --json --entry ObserveRepair --input "$repair_input" \
-  "$out/source-revision/candidate.gooo" > "$out/accepted-source-reexecution.json"
-jq -e '.decision == "PASS" and .execution.results.ObserveRepair.value == 9223372036854775807' \
+"$cli" run-accepted-revision "$repair_source" "$out/source-revision/candidate.gooo" \
+  --revision "$out/source-revision/revision.json" \
+  --evaluation "$out/source-revision-evaluation/evaluation.json" \
+  --activity ObserveRepair --input "$repair_input" --accept > "$out/accepted-source-reexecution.json"
+jq -e '.decision == "PASS" and .explicit_decision == "ACCEPT" and
+  .execution_allowed == false and .repository_writes == 0 and
+  .execution.results.ObserveRepair.value == 9223372036854775807' \
   "$out/accepted-source-reexecution.json" > /dev/null
 sha256sum -c "$out/source-before.sha256" > "$out/source-after-check.txt"
 
