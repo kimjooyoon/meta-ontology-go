@@ -45,7 +45,8 @@ func validateDenominator(value denominator) error {
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v28" && value.Version == 28) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v29" && value.Version == 29) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v30" && value.Version == 30) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v31" && value.Version == 31)
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v31" && value.Version == 31) ||
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v32" && value.Version == 32)
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
 		!validHeader || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
