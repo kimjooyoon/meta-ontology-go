@@ -2,6 +2,10 @@
 
 This experiment adds one deliberately small value-level program to Gooo:
 `Increment` selects the registered pure operation `int.add` with operand `1`.
+The same typed operation registry also contains `int.sub` version 1; the
+witness intentionally keeps using `int.add` so its value-level evidence remains
+focused on one declared program while the compiler's second operation is
+exercised by a separate regression case.
 
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate

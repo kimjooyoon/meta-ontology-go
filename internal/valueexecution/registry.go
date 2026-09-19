@@ -14,6 +14,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
 	}, Apply: checkedAdd},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.sub", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
+	}, Apply: checkedSubtract},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -50,4 +56,14 @@ func checkedAdd(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-add", "negative int64 overflow")
 	}
 	return input + operand, nil
+}
+
+func checkedSubtract(input, operand int64) (int64, error) {
+	if operand > 0 && input < math.MinInt64+operand {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-sub", "negative int64 overflow")
+	}
+	if operand < 0 && input > math.MaxInt64+operand {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-sub", "positive int64 overflow")
+	}
+	return input - operand, nil
 }

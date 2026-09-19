@@ -4668,6 +4668,19 @@
         "docs/governance/problem-solving-scope.md",
         "docs/governance/problem-solving-scope.json"
       ]
+    },
+    {
+      "branch": "agent/value-program-operation-contract-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/language-value-witness/README.md",
+        "internal/valueexecution/evaluate_test.go",
+        "internal/valueexecution/measurement.go",
+        "internal/valueexecution/operation_spec_validate.go",
+        "internal/valueexecution/registry.go",
+        "internal/valueexecution/validate.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
