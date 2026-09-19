@@ -118,6 +118,20 @@ jq -e '.decision == "PASS" and .explicit_decision == "ACCEPT" and
   .execution_allowed == false and .repository_writes == 0 and
   .execution.results.ObserveRepair.value == 9223372036854775807' \
   "$out/accepted-source-reexecution.json" > /dev/null
+# The accepted candidate remains an external input. Generate it, then reverse-
+# observe its Go output against the candidate authority without writing either
+# source tree or granting source-adoption authority.
+accepted_generation="$out/source-revision-accepted-generation"
+mkdir -p "$accepted_generation"
+"$cli" generate "$out/source-revision/candidate.gooo" --out "$accepted_generation" > "$out/accepted-source-generation.log"
+"$cli" analyze "$out/source-revision/candidate.gooo" --go "$accepted_generation/semantic.gooo.go" > "$out/accepted-source-reverse-observation.json"
+jq -e '
+  .schema_version == "analyzer-semantic-delta/v1" and
+  .semantic_equal == true and
+  .authority_semantic_digest == .observed_semantic_digest and
+  .write_effect == "no-write" and
+  (.digest | length == 64)
+' "$out/accepted-source-reverse-observation.json" > /dev/null
 sha256sum -c "$out/source-before.sha256" > "$out/source-after-check.txt"
 
 jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
@@ -128,6 +142,7 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   --slurpfile source_revision "$out/source-revision/revision.json" \
   --slurpfile source_revision_evaluation "$out/source-revision-evaluation/evaluation.json" \
   --slurpfile accepted_source "$out/accepted-source-reexecution.json" \
+  --slurpfile accepted_generation "$out/accepted-source-reverse-observation.json" \
   --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$(cat "$out/first-peak-rss-kib.txt")" \
   '{schema:"gooo/domain-budget-observation/v1",source_digest:$first[0].source_digest,
     semantic_fingerprint:$first[0].semantic_fingerprint,
@@ -146,7 +161,11 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       candidate_id:$source_revision[0].candidate_id,source_digest:$source_revision[0].source_digest,
       candidate_source_digest:$source_revision[0].candidate_source_digest,execution_allowed:$source_revision[0].execution_allowed,
       repository_writes:$source_revision_evaluation[0].repository_writes,
-      accepted_source_reexecution:$accepted_source[0].decision},
+      accepted_source_reexecution:$accepted_source[0].decision,
+      accepted_generated_go_reverse_observation:{semantic_equal:$accepted_generation[0].semantic_equal,
+        authority_semantic_digest:$accepted_generation[0].authority_semantic_digest,
+        observed_semantic_digest:$accepted_generation[0].observed_semantic_digest,
+        write_effect:$accepted_generation[0].write_effect}},
     fixture_files_unchanged:5,runtime_mode:"source-interpreter",
     generator_binding_support:"UNSUPPORTED",orchestration:"source-feedback",
     continuation:{requested:$continuation[0].continuation.iterations_requested,
@@ -159,5 +178,5 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       failure:$failed_continuation[0].continuation.failure},
     external_utility:"UNKNOWN",source_repair_adoption:"EXPLICIT_CALLER",improvement:"UNKNOWN"}' \
   > "$out/observation.json"
- jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); accepted reexecution: \(.source_revision.accepted_source_reexecution)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: EXPLICIT_CALLER"' \
+ jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); accepted reexecution: \(.source_revision.accepted_source_reexecution)\n- accepted candidate generated Go reverse observation: \(.source_revision.accepted_generated_go_reverse_observation.semantic_equal), write effect=\(.source_revision.accepted_generated_go_reverse_observation.write_effect)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: EXPLICIT_CALLER"' \
   "$out/observation.json" > "$out/report.md"

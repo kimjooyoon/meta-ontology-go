@@ -4648,6 +4648,16 @@
         "examples/domain-observation/README.md",
         "internal/verify/scope_generated_go_reverse_observation_20260920.go"
       ]
+    },
+    {
+      "branch": "agent/accepted-revision-generated-observation-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/domain-observation/README.md",
+        "examples/domain-observation/observe.sh",
+        "internal/verify/scope_accepted_revision_generated_observation_20260920.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
