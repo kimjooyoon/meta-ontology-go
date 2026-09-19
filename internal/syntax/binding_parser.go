@@ -10,8 +10,8 @@ func (p *Parser) parseBinding() BindingDecl {
 	right := p.expectIdentifier("binding target activity", DiagExpectedIdentifier)
 	p.expect(TokenDot, ".", DiagUnexpectedDeclaration)
 	target := p.expectIdentifier("binding target port", DiagExpectedIdentifier)
-	result.SourceActivity, result.SourcePort = left.Value, source.Value
-	result.TargetActivity, result.TargetPort = right.Value, target.Value
+	result.SourceActivity, result.SourcePort = left.Name, source.Name
+	result.TargetActivity, result.TargetPort = right.Name, target.Name
 	if !target.Span.IsEmpty() { result.Span.End = target.Span.End }
 	return result
 }
