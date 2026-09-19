@@ -128,6 +128,26 @@ func TestCompileLowersRegisteredModuloOperationAndRejectsZeroDivisor(t *testing.
 	}
 }
 
+func TestCompileLowersRegisteredNegateOperationAndRejectsInvalidOperandAndMinimum(t *testing.T) {
+	program, err := Compile("negate.gooo", valueFixture(`activity Negate(Integer) -> Integer computes "int.neg:0"`), "Negate")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.neg" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("negate operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{7}); err != nil || got != -7 {
+		t.Fatalf("negate execution = %d / %v, want -7 / nil", got, err)
+	}
+	if _, err := program.Execute([]int64{math.MinInt64}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("negate overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+	invalid, err := Compile("negate-invalid.gooo", valueFixture(`activity Negate(Integer) -> Integer computes "int.neg:1"`), "Negate")
+	if err == nil || invalid.Operation.Spec.ID != "" || Reason(err) != ReasonOperationIRInvalid {
+		t.Fatalf("invalid negate operand = %#v / %v, want operation IR invalid", invalid, err)
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)
