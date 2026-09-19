@@ -31,10 +31,18 @@ func CompileTypedPlan(document Document) (TypedPlan, error) {
 		if declaration.Kind != ActivityKind {
 			continue
 		}
-		if _, exists := activities[declaration.ID]; exists {
-			return TypedPlan{}, fmt.Errorf("typed plan: duplicate activity %q", declaration.ID)
+		id := declaration.ID
+		if id == "" {
+			canonical, err := declarationIdentity(document.Namespace, declaration)
+			if err != nil {
+				return TypedPlan{}, fmt.Errorf("typed plan: activity %q: %w", declaration.Name, err)
+			}
+			id = canonical
 		}
-		activities[declaration.ID] = declaration
+		if _, exists := activities[id]; exists {
+			return TypedPlan{}, fmt.Errorf("typed plan: duplicate activity %q", id)
+		}
+		activities[id] = declaration
 	}
 	if len(document.BindingEdges) == 0 {
 		return TypedPlan{}, fmt.Errorf("typed plan: no explicit binding edges")

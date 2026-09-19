@@ -45,7 +45,15 @@ func documentFromSyntaxContextWithEntityFieldsSupport(ctx context.Context, file 
 	}
 	idsByName := make(map[string]ID, len(document.Declarations))
 	for _, declaration := range document.Declarations {
-		idsByName[declaration.Name] = declaration.ID
+		id := declaration.ID
+		if id == "" {
+			canonical, err := declarationIdentity(document.Namespace, declaration)
+			if err != nil {
+				return Document{}, err
+			}
+			id = canonical
+		}
+		idsByName[declaration.Name] = id
 	}
 	for _, binding := range file.Bindings {
 		if binding.Feedback {
