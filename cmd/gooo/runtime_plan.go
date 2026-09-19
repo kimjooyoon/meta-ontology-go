@@ -34,6 +34,10 @@ func buildRuntimePlanData(source []byte, ir semantic.IR) ([]byte, error) {
 	return buildRuntimePlanDataWithTypedPlan(source, ir, bidir.TypedPlan{})
 }
 
+func runtimePlanSourceDigest(source []byte) string {
+	return "sha256:" + cache.HashBytes(source).String()
+}
+
 func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan bidir.TypedPlan) ([]byte, error) {
 	bindings := make([]runtimePlanBinding, 0, len(ir.RuntimeBindings))
 	for _, binding := range ir.RuntimeBindings {
@@ -56,7 +60,7 @@ func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan 
 		return left.ConsumerPort < right.ConsumerPort
 	})
 	document := runtimePlanDocument{
-		Schema: runtimePlanSchema, SourceDigest: cache.HashBytes(source).String(), SemanticHash: ir.StableHash(),
+		Schema: runtimePlanSchema, SourceDigest: runtimePlanSourceDigest(source), SemanticHash: ir.StableHash(),
 		RuntimeBindingCount: len(bindings), Bindings: bindings,
 	}
 	if len(typedPlan.Activities) > 0 {

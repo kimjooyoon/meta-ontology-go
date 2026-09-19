@@ -40,7 +40,7 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 	if document.Schema != runtimePlanSchema {
 		return "", fmt.Errorf("unsupported runtime plan schema %q", document.Schema)
 	}
-	expectedSourceDigest := cache.HashBytes(source).String()
+	expectedSourceDigest := runtimePlanSourceDigest(source)
 	if document.SourceDigest != expectedSourceDigest || plan.SourceDigest != expectedSourceDigest {
 		return "", fmt.Errorf("source digest mismatch: artifact=%q expected=%q plan=%q", document.SourceDigest, expectedSourceDigest, plan.SourceDigest)
 	}
