@@ -14,11 +14,6 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	if err := validateDocumentSpans(document); err != nil {
 		return semantic.IR{}, err
 	}
-	if len(document.BindingEdges) > 0 {
-		if _, err := CompileTypedPlan(document); err != nil {
-			return semantic.IR{}, err
-		}
-	}
 	namespaceText := strings.TrimSpace(document.Namespace)
 	if namespaceText == "" {
 		namespaceText = "gooo"
@@ -43,6 +38,11 @@ func lowerDocumentContextWithTypesAndEntityFieldsSupport(ctx context.Context, do
 	}
 	if err := lowerDocumentRuntimeBindings(ctx, &ir, document, namespace, ids, names); err != nil {
 		return semantic.IR{}, err
+	}
+	if len(document.BindingEdges) > 0 {
+		if _, err := CompileTypedPlan(document); err != nil {
+			return semantic.IR{}, err
+		}
 	}
 	for _, policy := range document.Policies {
 		if err := checkLowerContext(ctx); err != nil {

@@ -25,9 +25,8 @@ func TestCompileTypedPlanExcludesCrossInvocationFeedback(t *testing.T) {
 	}
 }
 
-func TestDocumentFromSyntaxUsesTypedPlanValidation(t *testing.T) {
-	source := strings.Replace(feedbackSource, "Finish.input", "Finish.missing", 1)
-	file, diagnostics := syntax.ParseFile("typed-plan.gooo", source)
+func TestLowerDocumentUsesTypedPlanValidationForTypedCarrier(t *testing.T) {
+	file, diagnostics := syntax.ParseFile("typed-plan.gooo", feedbackSource)
 	if diagnostics.HasErrors() {
 		t.Fatal(diagnostics)
 	}
@@ -36,6 +35,8 @@ func TestDocumentFromSyntaxUsesTypedPlanValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	document.BindingEdges[0].TargetPort = "missing"
+	document.RuntimeBindings = nil
 	if _, err := LowerDocument(document); err == nil || !strings.Contains(err.Error(), "typed plan") {
 		t.Fatalf("lowering did not report the typed-plan defect: %v", err)
 	}
