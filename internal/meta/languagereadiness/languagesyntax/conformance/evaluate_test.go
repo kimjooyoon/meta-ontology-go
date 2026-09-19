@@ -152,7 +152,7 @@ func TestRemovingRecordBindingCannotLowerCorpusDenominator(t *testing.T) {
 	}
 	report := languagesyntax.Evaluate(repository, testHead, mutated, languageconcept.BuildArtifact(repository))
 	if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Total != 65 || report.Summary.Executed != 0 || report.Summary.Unresolved != 65 {
+		report.Summary.Total != 65 || report.Summary.Executed != 0 || report.Summary.Unresolved != 65 {
 		t.Fatalf("removing a case reduced proof obligations: %#v", report.Summary)
 	}
 }
