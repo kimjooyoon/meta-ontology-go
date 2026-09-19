@@ -6,8 +6,3 @@ entity Integer id "gooo://domain-observation/entity/integer"
 activity ObserveBudget(Integer) -> Integer computes "int.add:0"
 activity ConsumeAttempt(Integer) -> Integer computes "int.add:-1"
 activity PublishRemaining(Integer) -> Integer computes "int.add:0"
-
-bind ObserveBudget.result -> ConsumeAttempt.input
-bind ConsumeAttempt.result -> PublishRemaining.input
-
-feedback PublishRemaining.result -> ObserveBudget.input

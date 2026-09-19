@@ -530,6 +530,24 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "domain-observation-definition",
+      "path": "examples/domain-observation/definition.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "domain-observation-runtime-binding",
+      "path": "examples/domain-observation/main.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "live-governance-snapshot",
       "path": "examples/live-governance-snapshot/main.gooo",
       "kind": "VALID",

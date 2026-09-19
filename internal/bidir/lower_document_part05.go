@@ -96,8 +96,12 @@ func lowerDocumentRuntimeBindings(ctx context.Context, ir *semantic.IR, document
 			}
 			entity = producerEntity
 		}
+		schema := semantic.RuntimeBindingSchema
+		if binding.Feedback {
+			schema = semantic.RuntimeFeedbackSchema
+		}
 		ir.RuntimeBindings = append(ir.RuntimeBindings, semantic.RuntimeBinding{
-			Schema:           semantic.RuntimeBindingSchema,
+			Schema:           schema,
 			ProducerActivity: producer,
 			ProducerPort:     binding.Producer.Port.Name,
 			ConsumerActivity: consumer,

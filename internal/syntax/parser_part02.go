@@ -61,10 +61,10 @@ func (p *Parser) parseFile() *File {
 		case p.at(TokenIdentifier) && p.peek().Value == "policy":
 			file.Decls = append(file.Decls, p.parsePolicy())
 			file.Declarations = file.Decls
-		case p.at(TokenIdentifier) && p.peek().Value == "bind":
+		case p.at(TokenIdentifier) && (p.peek().Value == "bind" || p.peek().Value == "feedback"):
 			file.Bindings = append(file.Bindings, p.parseBinding())
 		default:
-			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected entity, activity, policy, or binding")
+			p.error(DiagUnexpectedDeclaration, p.peek().Span, "expected entity, activity, policy, binding, or feedback")
 			p.advance()
 		}
 	}
