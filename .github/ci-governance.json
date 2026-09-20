@@ -4805,6 +4805,11 @@
         "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
         "internal/meta/languagereadiness/languagesemantic/model.go",
         "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v33.json",
+        "internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
         "internal/verify/scope_value_program_dogfood_sign_20260920.go"
       ]
     },

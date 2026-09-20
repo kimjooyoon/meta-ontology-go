@@ -15,7 +15,7 @@ import (
 
 func decodeDenominator(raw []byte) (denominator, error) {
 	digest := digestBytes(raw)
-	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest {
+	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest {
 		return denominator{}, fmt.Errorf("denominator digest mismatch")
 	}
 	var value denominator
@@ -46,7 +46,8 @@ func validateDenominator(value denominator) error {
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v29" && value.Version == 29) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v30" && value.Version == 30) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v31" && value.Version == 31) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v32" && value.Version == 32)
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v32" && value.Version == 32) ||
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v33" && value.Version == 33)
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
 		!validHeader || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")
