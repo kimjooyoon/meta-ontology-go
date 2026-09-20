@@ -238,7 +238,10 @@ func TestCompileLowersTypedBooleanOperation(t *testing.T) {
 	if program.Operation.Spec.ID != "int.iszero" || program.Operation.Spec.OutputEntity != BooleanEntity {
 		t.Fatalf("boolean operation contract is not closed: %#v", program.Operation.Spec)
 	}
-	for _, test := range []struct { input int64; want bool }{{0, true}, {7, false}} {
+	for _, test := range []struct {
+		input int64
+		want  bool
+	}{{0, true}, {7, false}} {
 		result, err := program.ExecuteResult([]int64{test.input})
 		if err != nil {
 			t.Fatalf("execute iszero(%d): %v", test.input, err)
