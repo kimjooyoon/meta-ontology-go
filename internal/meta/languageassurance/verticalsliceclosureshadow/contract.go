@@ -47,7 +47,7 @@ const (
 	// V36 binds the int.abs value witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV36Digest = "sha256:07ef17811672785448a4ef38baec9b970d116024ce6fac5afae8d5b187a82b1c"
 	// V37 binds the parameterized int.add:2 value witness registered in the syntax and semantic corpora.
-	DenominatorMigrationV37Digest = "sha256:c0feff0ec84d412f80cf492d65f5bd456133d1a550aeccd713f21e83fed17831"
+	DenominatorMigrationV37Digest = "sha256:e014188ea0aac72592d17a30fbb6210d50553995bb9628d19eb57291c97abbe2"
 	// V38 binds the int.mul:3 value witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV38Digest = "sha256:f2db6d69f4bb0ba9fb50a2e8e8b4054bdacbe048470ce21a16e0b8cf72575952"
 	// V39 binds the int.div:2 value witness and its fail-closed divisor boundary.
@@ -60,6 +60,8 @@ const (
 	DenominatorMigrationV42Digest = "sha256:1538f5a331e6e436aee9ac1e0b29d5940b56dbf416645f9acab8afe30bf8d68f"
 	// V43 binds the existing 75 language capabilities after the syntax registry denominator was restored.
 	DenominatorMigrationV43Digest = "sha256:cc71098af93f003e6e5c01e845ac5dba204acfdb866bf2a46ada1fc29ff2142c"
+	// V44 binds the two Boolean-and language capabilities registered after the v43 snapshot.
+	DenominatorMigrationV44Digest = "sha256:3af46b88345fb50ba3b032a9112cab9781ac1cb9deefff40adabbd4cd4c13b08"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
