@@ -74,7 +74,6 @@ var integerOperationRegistry = []registeredOperation{
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedIsZero},
-
 }
 
 var booleanOperationRegistry = []registeredOperation{
