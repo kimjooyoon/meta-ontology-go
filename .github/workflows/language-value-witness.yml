@@ -603,6 +603,119 @@ jobs:
           path: ${{ runner.temp }}/language-value-iszero-positive-execution
           if-no-files-found: error
           retention-days: 14
+      - name: Dogfood the registered bool.not:0 Gooo declaration and generated Go
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-bool-not-dogfood"
+          mkdir -p "$output/first" "$output/second"
+          go run ./cmd/gooo check --semantic examples/language-value-witness/not.gooo > "$output/check.txt"
+          for pass in first second; do
+            go run ./cmd/gooo generate examples/language-value-witness/not.gooo --out "$output/$pass"
+            test -s "$output/$pass/semantic.gooo.go"
+            test -s "$output/$pass/semantic.gooo.manifest.jsonl"
+            test -z "$(gofmt -l "$output/$pass/semantic.gooo.go")"
+          done
+          cmp "$output/first/semantic.gooo.go" "$output/second/semantic.gooo.go"
+          jq -S 'del(.generated_file)' "$output/first/semantic.gooo.manifest.jsonl" > "$output/first/canonical-manifest.json"
+          jq -S 'del(.generated_file)' "$output/second/semantic.gooo.manifest.jsonl" > "$output/second/canonical-manifest.json"
+          cmp "$output/first/canonical-manifest.json" "$output/second/canonical-manifest.json"
+          {
+            echo "### Gooo bool.not:0 dogfood"
+            echo '- declaration: `examples/language-value-witness/not.gooo`'
+            echo '- semantic check: `PASS`'
+            echo '- generated Go replay: `IDENTICAL`'
+            echo '- generated manifest replay: `IDENTICAL (canonical; output path excluded)`'
+            echo '- canonical Boolean input policy: `FAIL_CLOSED`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload bool.not:0 dogfood evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-bool-not-dogfood-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-bool-not-dogfood
+          if-no-files-found: error
+          retention-days: 14
+      - name: Execute the bool.not:0 Gooo plan and replay its receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-bool-not-execution"
+          mkdir -p "$output"
+          printf '{"value":0}\n' > "$output/input.json"
+          for pass in first second; do
+            go run ./cmd/gooo run --json --entry Not \
+              --input "$output/input.json" \
+              examples/language-value-witness/not.gooo > "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+          jq -e '
+            .schema == "gooo/value-execution-plan/v1" and
+            .decision == "PASS" and
+            .entry == "Not" and
+            .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.results.Not.output_entity == "Boolean" and
+            .execution.apply_calls == 1 and
+            .execution.deliveries == 0 and
+            .execution.results.Not.value == 1 and
+            .execution.results.Not.operation_spec_digest != "" and
+            .execution.results.Not.result_digest != ""
+          ' "$output/first.json" > /dev/null
+          {
+            echo "### Gooo bool.not:0 execution"
+            echo '- declaration: `examples/language-value-witness/not.gooo`'
+            echo '- input: `false (0)`'
+            echo '- observed result: `true (1)`'
+            echo '- execution receipt replay: `IDENTICAL`'
+            echo '- canonical Boolean input policy: `FAIL_CLOSED`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload bool.not:0 execution evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-bool-not-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-bool-not-execution
+          if-no-files-found: error
+          retention-days: 14
+      - name: Execute the true bool.not:0 Gooo plan and replay its receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-bool-not-true-execution"
+          mkdir -p "$output"
+          printf '{"value":1}\n' > "$output/input.json"
+          for pass in first second; do
+            go run ./cmd/gooo run --json --entry Not \
+              --input "$output/input.json" \
+              examples/language-value-witness/not.gooo > "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+          jq -e '
+            .schema == "gooo/value-execution-plan/v1" and
+            .decision == "PASS" and
+            .entry == "Not" and
+            .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.results.Not.output_entity == "Boolean" and
+            .execution.apply_calls == 1 and
+            .execution.deliveries == 0 and
+            .execution.results.Not.value == 0 and
+            .execution.results.Not.operation_spec_digest != "" and
+            .execution.results.Not.result_digest != ""
+          ' "$output/first.json" > /dev/null
+          {
+            echo "### Gooo bool.not:0 true execution"
+            echo '- input: `true (1)`'
+            echo '- observed result: `false (0)`'
+            echo '- execution receipt replay: `IDENTICAL`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload true bool.not:0 execution evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-bool-not-true-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-bool-not-true-execution
+          if-no-files-found: error
+          retention-days: 14
       - name: Replay exact Gooo value witness
         shell: bash
         run: |
