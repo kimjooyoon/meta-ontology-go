@@ -83,6 +83,9 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		if index == 0 {
 			expected.Target += 2
 		}
+		if index == 4 {
+			expected.Target -= 6
+		}
 		if current.Boundaries[index] != expected {
 			t.Fatalf("migration changed unrelated boundary %d: %#v", index, current.Boundaries[index])
 		}
