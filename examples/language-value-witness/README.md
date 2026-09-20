@@ -39,6 +39,12 @@ The zero operand is an explicit sentinel for the unary operation; minimum-intege
 overflow remains fail-closed in the executor rather than being hidden by the
 dogfood example.
 
+`abs.gooo` extends the same declaration-to-receipt path to `int.abs:0`. CI
+executes input `-9`, requires `Absolute = 9`, and replays the generated Go,
+canonical manifest, and detached execution receipt. The minimum signed integer
+case remains an explicit fail-closed executor boundary, not a silently coerced
+dogfood result.
+
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR

@@ -55,6 +55,9 @@ var embeddedDenominatorV34 []byte
 //go:embed evidence/denominator-v35.json
 var embeddedDenominatorV35 []byte
 
+//go:embed evidence/denominator-v36.json
+var embeddedDenominatorV36 []byte
+
 func EmbeddedAssurance() []byte {
 	return append([]byte(nil), embeddedAssurance...)
 }
@@ -95,6 +98,8 @@ func activeDenominator() []byte {
 		return embeddedDenominatorV34
 	case 66:
 		return embeddedDenominatorV35
+	case 67:
+		return embeddedDenominatorV36
 	default:
 		return nil
 	}
@@ -132,6 +137,8 @@ func activeDenominatorDigest() string {
 		return DenominatorMigrationV34Digest
 	case 66:
 		return DenominatorMigrationV35Digest
+	case 67:
+		return DenominatorMigrationV36Digest
 	default:
 		return ""
 	}
