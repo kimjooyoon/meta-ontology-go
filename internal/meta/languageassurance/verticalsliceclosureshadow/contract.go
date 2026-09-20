@@ -54,6 +54,8 @@ const (
 	DenominatorMigrationV39Digest = "sha256:aa81b4ccb99a2a23179f59f0706a534f4fef0a69ad9336fb3f94207e4d787b33"
 	// V40 binds the int.max:0 comparison witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV40Digest = "sha256:cd8913a5b59c3ef5854722f2049ed94e1b9b153b8b26ff2764ae385c5be40a6d"
+	// V41 binds the inverse int.min:0 comparison witness and corrects the max scope provenance.
+	DenominatorMigrationV41Digest = "sha256:f16924dbb2385fb88a64d497de5d193266a09d3df4c2bbcc14d7b1c2c226f425"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

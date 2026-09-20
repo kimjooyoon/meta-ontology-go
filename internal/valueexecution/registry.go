@@ -62,6 +62,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch},
 	}, Apply: checkedMaximum},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.min", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch},
+	}, Apply: checkedMinimum},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -179,6 +185,13 @@ func checkedSign(input, operand int64) (int64, error) {
 
 func checkedMaximum(input, operand int64) (int64, error) {
 	if input > operand {
+		return input, nil
+	}
+	return operand, nil
+}
+
+func checkedMinimum(input, operand int64) (int64, error) {
+	if input < operand {
 		return input, nil
 	}
 	return operand, nil
