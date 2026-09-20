@@ -50,6 +50,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
 	}, Apply: checkedAbsolute},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.sign", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
+	}, Apply: checkedSign},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -150,4 +156,17 @@ func checkedAbsolute(input, operand int64) (int64, error) {
 		return -input, nil
 	}
 	return input, nil
+}
+
+func checkedSign(input, operand int64) (int64, error) {
+	if operand != 0 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-int-sign", "int.sign requires a zero sentinel operand")
+	}
+	if input < 0 {
+		return -1, nil
+	}
+	if input > 0 {
+		return 1, nil
+	}
+	return 0, nil
 }

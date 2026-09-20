@@ -9,7 +9,7 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	if spec.Schema != OperationSpecSchema || spec.Version != 1 {
 		return fmt.Errorf("operation identity is not closed")
 	}
-	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" {
+	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" && spec.ID != "int.sign" {
 		return fmt.Errorf("operation identity is not registered")
 	}
 	if spec.Arity != 1 || !slices.Equal(spec.InputEntities, []string{IntegerEntity}) || spec.OutputEntity != IntegerEntity {
@@ -47,7 +47,7 @@ func ValidateOperationIR(ir OperationIR) error {
 	if ir.Program != fmt.Sprintf("%s:%d", ir.Spec.ID, ir.Operand.Int64) {
 		return fmt.Errorf("operation IR program binding is invalid")
 	}
-	if (ir.Spec.ID == "int.neg" || ir.Spec.ID == "int.abs") && ir.Operand.Int64 != 0 {
+	if (ir.Spec.ID == "int.neg" || ir.Spec.ID == "int.abs" || ir.Spec.ID == "int.sign") && ir.Operand.Int64 != 0 {
 		return fmt.Errorf("%s requires a zero sentinel operand", ir.Spec.ID)
 	}
 	return nil
