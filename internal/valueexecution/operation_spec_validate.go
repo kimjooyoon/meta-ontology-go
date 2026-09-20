@@ -9,12 +9,12 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	if spec.Schema != OperationSpecSchema || spec.Version != 1 {
 		return fmt.Errorf("operation identity is not closed")
 	}
-	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" && spec.ID != "int.sign" && spec.ID != "int.max" && spec.ID != "int.min" && spec.ID != "int.iszero" && spec.ID != "bool.not" {
+	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" && spec.ID != "int.sign" && spec.ID != "int.max" && spec.ID != "int.min" && spec.ID != "int.iszero" && spec.ID != "int.eq" && spec.ID != "bool.not" {
 		return fmt.Errorf("operation identity is not registered")
 	}
 	expectedInput := IntegerEntity
 	expectedOutput := IntegerEntity
-	if spec.ID == "int.iszero" || spec.ID == "bool.not" {
+	if spec.ID == "int.iszero" || spec.ID == "int.eq" || spec.ID == "bool.not" {
 		expectedOutput = BooleanEntity
 	}
 	if spec.ID == "bool.not" {
@@ -29,7 +29,7 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	expectedFailures := []string{ReasonInputArityMismatch, ReasonIntegerOverflow}
 	if spec.ID == "int.iszero" || spec.ID == "bool.not" {
 		expectedFailures = []string{ReasonInputArityMismatch, ReasonOperationIRInvalid}
-	} else if spec.ID == "int.max" || spec.ID == "int.min" {
+	} else if spec.ID == "int.eq" || spec.ID == "int.max" || spec.ID == "int.min" {
 		expectedFailures = []string{ReasonInputArityMismatch}
 	} else if spec.ID == "int.sign" {
 		expectedFailures = []string{ReasonInputArityMismatch, ReasonOperationIRInvalid}
