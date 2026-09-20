@@ -44,6 +44,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
 	}, Apply: checkedNegate},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.abs", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonIntegerOverflow},
+	}, Apply: checkedAbsolute},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -131,4 +137,17 @@ func checkedNegate(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-neg", "int64 negation overflow")
 	}
 	return -input, nil
+}
+
+func checkedAbsolute(input, operand int64) (int64, error) {
+	if operand != 0 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-int-abs", "int.abs requires a zero sentinel operand")
+	}
+	if input == math.MinInt64 {
+		return 0, failAt(ReasonIntegerOverflow, "EXECUTE", "apply-int-abs", "int64 absolute value overflow")
+	}
+	if input < 0 {
+		return -input, nil
+	}
+	return input, nil
 }
