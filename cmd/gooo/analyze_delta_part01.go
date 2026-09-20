@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"path/filepath"
+	"time"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"io"
-	"time"
 )
 
 func readAnalyzeAuthority(filename string, reader SourceReader, parser SourceParser, deadline time.Time) (semantic.IR, generator.SemanticIR, error) {
@@ -39,7 +41,11 @@ func readAnalyzeSources(files []string, reader SourceReader, model generator.Sem
 		if err := validateAnalyzeGeneratedSource(model, authority, source); err != nil {
 			return nil, fmt.Errorf("%s: %w", filename, err)
 		}
-		sources = append(sources, analyzer.SourceFile{Filename: filename, PackagePath: authority.Package, Source: source})
+		logicalFilename := filename
+		if len(files) == 1 {
+			logicalFilename = filepath.Base(filename)
+		}
+		sources = append(sources, analyzer.SourceFile{Filename: logicalFilename, PackagePath: authority.Package, Source: source})
 	}
 	return sources, nil
 }
