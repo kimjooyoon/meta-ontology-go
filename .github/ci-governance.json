@@ -4798,6 +4798,13 @@
         ".github/workflows/language-value-witness.yml",
         "examples/language-value-witness/README.md",
         "examples/language-value-witness/sign.gooo",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "examples/language-semantic-model/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/languagereadiness/languagesyntax/model.go",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesemantic/model.go",
+        "internal/meta/languagereadiness/languagesemantic/registry_definition.go",
         "internal/verify/scope_value_program_dogfood_sign_20260920.go"
       ]
     },
