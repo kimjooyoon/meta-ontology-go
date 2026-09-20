@@ -20,6 +20,13 @@ semantic binding and generates it twice, requiring identical Go and manifest
 outputs. This keeps the new operation visible as a real Gooo source program
 without changing the existing self-improvement corpus.
 
+`mod.gooo` applies the same bounded dogfood lane to `int.mod:3`. Its focused
+CI observation checks semantic binding, generates Go twice, and compares the
+canonical manifests in caller-owned temporary output. The lane is classified as
+`COMPILER_REQUIRED` only for this declaration and its replay identity; queued,
+runner, security, or other diagnostic observations remain separate rather than
+blocking unrelated compiler work or being relabeled as compiler success.
+
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
