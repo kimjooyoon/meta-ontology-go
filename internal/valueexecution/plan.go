@@ -130,7 +130,7 @@ func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execut
 				if err := validateBindingResult(plan.programs[binding.Producer.Activity.Name], plan.programs[activity], binding, result); err != nil {
 					return execution, nil, err
 				}
-				input, err = integerResult(result)
+				input, err = boundResultValue(result, plan.programs[activity].Operation.Spec.InputEntities[0])
 				if err != nil {
 					return execution, nil, err
 				}
@@ -353,10 +353,24 @@ func validateBindingResult(producer, consumer Program, binding bidir.RuntimeBind
 	return nil
 }
 
-func integerResult(result ProducedResult) (int64, error) {
-	value, err := result.Integer()
-	if err != nil {
-		return 0, failAt(ReasonBindingResultInvalid, "EXECUTE", "read-bound-integer", err.Error())
+func boundResultValue(result ProducedResult, expectedEntity string) (int64, error) {
+	switch expectedEntity {
+	case IntegerEntity:
+		value, err := result.Integer()
+		if err != nil {
+			return 0, failAt(ReasonBindingResultInvalid, "EXECUTE", "read-bound-integer", err.Error())
+		}
+		return int64(value), nil
+	case BooleanEntity:
+		value, err := result.Boolean()
+		if err != nil {
+			return 0, failAt(ReasonBindingResultInvalid, "EXECUTE", "read-bound-boolean", err.Error())
+		}
+		if value {
+			return 1, nil
+		}
+		return 0, nil
+	default:
+		return 0, failAt(ReasonBindingResultInvalid, "TYPECHECK", "read-bound-value", fmt.Sprintf("unsupported bound input entity %q", expectedEntity))
 	}
-	return int64(value), nil
 }
