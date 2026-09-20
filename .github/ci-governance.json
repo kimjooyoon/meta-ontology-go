@@ -5135,6 +5135,22 @@
       ]
     },
     {
+      "branch": "agent/accepted-revision-next-run-staging-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo/check_part02_test.go",
+        "cmd/gooo/main_part01.go",
+        "cmd/gooo/stage_accepted_revision.go",
+        "cmd/gooo/stage_accepted_revision_test.go",
+        "cmd/gooo/usage.go",
+        "examples/domain-observation/README.md",
+        "examples/domain-observation/observe.sh",
+        "internal/valueexecution/source_revision_next_run_staging.go",
+        "internal/valueexecution/source_revision_next_run_staging_test.go"
+      ]
+    },
+    {
       "branch": "agent/accepted-revision-counterexample-20260920",
       "paths": [
         ".github/agent-scope-table.md",

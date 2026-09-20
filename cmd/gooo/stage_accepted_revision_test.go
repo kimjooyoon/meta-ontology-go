@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
