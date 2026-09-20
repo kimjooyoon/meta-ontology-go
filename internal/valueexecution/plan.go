@@ -374,3 +374,7 @@ func boundResultValue(result ProducedResult, expectedEntity string) (int64, erro
 		return 0, failAt(ReasonBindingResultInvalid, "TYPECHECK", "read-bound-value", fmt.Sprintf("unsupported bound input entity %q", expectedEntity))
 	}
 }
+
+func integerResult(result ProducedResult) (int64, error) {
+	return boundResultValue(result, IntegerEntity)
+}
