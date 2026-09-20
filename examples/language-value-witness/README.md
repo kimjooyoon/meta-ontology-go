@@ -45,7 +45,12 @@ canonical manifest, and detached execution receipt. The minimum signed integer
 case remains an explicit fail-closed executor boundary, not a silently coerced
 dogfood result.
 
-The CI receipt records five exact input/output cases, eight fail-closed
+`add.gooo` extends the path to a parameterized `int.add:2` operation. CI
+executes input `7`, requires `AddTwo = 9`, and replays the generated Go,
+canonical manifest, and detached execution receipt without changing the
+canonical `int.add:1` self-improvement witness.
+
+The CI receipt records six exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
 semantic fingerprints. Core IR preservation and fingerprint sensitivity are
