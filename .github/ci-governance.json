@@ -765,6 +765,17 @@
       ]
     },
     {
+      "branch": "agent/source-subject-witness-catalog-boundary-v1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_source_subject_witness_catalog_boundary_v1.go",
+        "internal/verify/scope_source_subject_witness_catalog_boundary_v1_test.go",
+        "scripts/source-subject-witness/function_binding.go",
+        "scripts/source-subject-witness/function_catalog_boundary_test.go"
+      ]
+    },
+    {
       "branch": "agent/source-subject-witness-producer-v1",
       "paths": [
         ".github/agent-scope-table.md",

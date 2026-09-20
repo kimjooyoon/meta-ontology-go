@@ -27,7 +27,7 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 				return nil, err
 			}
 		default:
-			return nil, fmt.Errorf("function indicator %q is outside the exact catalog", row.MetricID)
+			continue
 		}
 		rows := bySubject[row.Subject]
 		for _, existing := range rows {
