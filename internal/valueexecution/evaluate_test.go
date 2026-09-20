@@ -168,6 +168,32 @@ func TestCompileLowersRegisteredAbsoluteOperationAndRejectsInvalidOperandAndMini
 	}
 }
 
+func TestCompileLowersRegisteredSignOperationAndRejectsInvalidOperand(t *testing.T) {
+	program, err := Compile("sign.gooo", valueFixture(`activity Sign(Integer) -> Integer computes "int.sign:0"`), "Sign")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.sign" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("sign operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct {
+		input int64
+		want  int64
+	}{
+		{input: -7, want: -1},
+		{input: 0, want: 0},
+		{input: 7, want: 1},
+	} {
+		if got, err := program.Execute([]int64{test.input}); err != nil || got != test.want {
+			t.Fatalf("sign execution for %d = %d / %v, want %d / nil", test.input, got, err, test.want)
+		}
+	}
+	invalid, err := Compile("sign-invalid.gooo", valueFixture(`activity Sign(Integer) -> Integer computes "int.sign:1"`), "Sign")
+	if err == nil || invalid.Operation.Spec.ID != "" || Reason(err) != ReasonOperationIRInvalid {
+		t.Fatalf("invalid sign operand = %#v / %v, want operation IR invalid", invalid, err)
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)
