@@ -3,7 +3,7 @@
 This experiment adds one deliberately small value-level program to Gooo:
 `Increment` selects the registered pure operation `int.add` with operand `1`.
 The same typed operation registry also contains `int.sub`, `int.mul`, `int.div`,
-`int.mod`, `int.neg`, `int.abs`, `int.sign`, `int.max`, `int.min`, and `int.iszero`, all version 1. `int.neg:0`,
+`int.mod`, `int.neg`, `int.abs`, `int.sign`, `int.max`, `int.min`, `int.iszero`, and `bool.not`, all version 1. `int.neg:0`,
 `int.abs:0`, and `int.sign:0`
 use the explicit zero literal as a no-configuration sentinel, reject any other
 operand at IR validation, and fail closed for `MinInt64` negation or
@@ -64,6 +64,8 @@ undefined result.
 `min.gooo` adds the inverse comparison primitive `int.min:0`. CI executes `-7 -> -7` and `7 -> 0`, so both comparison directions are represented as real `.gooo` declarations with deterministic replay.
 
 `iszero.gooo` crosses the first explicit type boundary: `Integer -> Boolean`. The sealed result authority exposes `Boolean()` only for the declared Boolean entity and accepts only the canonical `0/1` encoding. CI proves `0 -> true` and `7 -> false` through the same replayable plan.
+
+`not.gooo` consumes that Boolean boundary directly. The `bool.not:0` operation accepts only canonical `0/1` input, returns the opposite Boolean encoding, and fails closed for any non-Boolean integer value. CI proves `false -> true` and `true -> false` through the same generated and replayed plan path.
 
 The CI receipt records eleven exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate

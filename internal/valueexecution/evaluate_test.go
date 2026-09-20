@@ -253,6 +253,32 @@ func TestCompileLowersTypedBooleanOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersBooleanNotOperation(t *testing.T) {
+	source := []byte("package valuewitness\nnamespace valuewitness\n\n" +
+		"entity Boolean id \"gooo://value-witness/entity/boolean\"\n\n" +
+		"activity Not(Boolean) -> Boolean computes \"bool.not:0\"\n")
+	program, err := Compile("not.gooo", source, "Not")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "bool.not" || program.Operation.Spec.InputEntities[0] != BooleanEntity || program.Operation.Spec.OutputEntity != BooleanEntity {
+		t.Fatalf("boolean not contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct {
+		input int64
+		want  bool
+	}{{0, true}, {1, false}} {
+		result, err := program.ExecuteResult([]int64{test.input})
+		if err != nil {
+			t.Fatalf("execute not(%d): %v", test.input, err)
+		}
+		got, err := result.Boolean()
+		if err != nil || got != test.want {
+			t.Fatalf("not(%d) = %t / %v, want %t / nil", test.input, got, err, test.want)
+		}
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)

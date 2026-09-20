@@ -74,6 +74,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedIsZero},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "bool.not", Version: 1, Arity: 1,
+		InputEntities: []string{BooleanEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
+	}, Apply: checkedBooleanNot},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -211,4 +217,14 @@ func checkedIsZero(input, operand int64) (int64, error) {
 		return 1, nil
 	}
 	return 0, nil
+}
+
+func checkedBooleanNot(input, operand int64) (int64, error) {
+	if operand != 0 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-bool-not", "bool.not requires a zero sentinel operand")
+	}
+	if input != 0 && input != 1 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-bool-not", "bool.not requires canonical Boolean input")
+	}
+	return 1 - input, nil
 }
