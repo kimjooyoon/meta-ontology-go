@@ -1,6 +1,6 @@
 package verify
 
-const sourceSubjectWitnessCatalogBoundaryBranch = "agent/source-subject-witness-catalog-boundary-v1"
+const sourceSubjectWitnessCatalogBoundaryBranch = "agent/source-subject-witness-catalog-boundary-v2"
 
 func init() {
 	branchScopeAllowlist[sourceSubjectWitnessCatalogBoundaryBranch] = []string{

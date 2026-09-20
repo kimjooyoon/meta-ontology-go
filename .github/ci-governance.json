@@ -765,7 +765,7 @@
       ]
     },
     {
-      "branch": "agent/source-subject-witness-catalog-boundary-v1",
+      "branch": "agent/source-subject-witness-catalog-boundary-v2",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
