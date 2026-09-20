@@ -26,6 +26,11 @@ canonical manifests in caller-owned temporary output. The lane is classified as
 `COMPILER_REQUIRED` only for this declaration and its replay identity; queued,
 runner, security, or other diagnostic observations remain separate rather than
 blocking unrelated compiler work or being relabeled as compiler success.
+The same declaration is then executed through the existing typed plan CLI with
+input `41`; CI requires the detached receipt to report `Remainder = 2`, retain
+source and semantic identities, and replay byte-identically. This is execution
+evidence for the registered value operation, not evidence of arbitrary generated
+Go runtime support.
 
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
