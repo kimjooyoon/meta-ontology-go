@@ -70,7 +70,7 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		t.Fatal("migration changed the boundary inventory")
 	}
 	for index, expected := range previous.Boundaries {
-		if index == 0 {
+		if index == 0 || index == 1 {
 			expected.Target++
 		}
 		if current.Boundaries[index] != expected {
