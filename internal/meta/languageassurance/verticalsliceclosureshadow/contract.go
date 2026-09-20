@@ -58,6 +58,8 @@ const (
 	DenominatorMigrationV41Digest = "sha256:f16924dbb2385fb88a64d497de5d193266a09d3df4c2bbcc14d7b1c2c226f425"
 	// V42 binds the typed Integer-to-Boolean int.iszero:0 comparison witness.
 	DenominatorMigrationV42Digest = "sha256:1538f5a331e6e436aee9ac1e0b29d5940b56dbf416645f9acab8afe30bf8d68f"
+	// V43 binds the existing 75 language capabilities after the syntax registry denominator was restored.
+	DenominatorMigrationV43Digest = "sha256:ba4bd20f9dca0eb35975ca4085e349a5aca1773fa85f846d2eaccc4d019fbf21"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
