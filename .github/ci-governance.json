@@ -5308,7 +5308,8 @@
         "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
         "internal/meta/languagereadiness/languagesyntax/model.go",
         "internal/meta/languagereadiness/languagesyntax/registry.go",
-        "internal/meta/languagereadiness/languagesyntax/validate.go"
+        "internal/meta/languagereadiness/languagesyntax/validate.go",
+        "internal/verify/scope_language_syntax_unknown_corpus_digest_20260920.go"
       ]
     },
     {
