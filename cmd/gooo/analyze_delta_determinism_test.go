@@ -8,7 +8,7 @@ import (
 )
 
 func TestRunAnalyzeStableAcrossSingleGeneratedGoOutputRoots(t *testing.T) {
-	_, generated := billingAnalyzeFiles(t, billingAnalyzeAuthority)
+	authority, generated := billingAnalyzeFiles(t, billingAnalyzeAuthority)
 	generatedSource, err := os.ReadFile(generated)
 	if err != nil {
 		t.Fatalf("read generated source: %v", err)
@@ -23,11 +23,11 @@ func TestRunAnalyzeStableAcrossSingleGeneratedGoOutputRoots(t *testing.T) {
 		t.Fatalf("write second generated source: %v", err)
 	}
 
-	first, firstCode, firstErr := runAnalyzePaths(billingAnalyzeAuthority, firstPath)
+	first, firstCode, firstErr := runAnalyzePaths(authority, firstPath)
 	if firstErr != "" || firstCode != exitOK {
 		t.Fatalf("first analysis failed: code=%d err=%v", firstCode, firstErr)
 	}
-	second, secondCode, secondErr := runAnalyzePaths(billingAnalyzeAuthority, secondPath)
+	second, secondCode, secondErr := runAnalyzePaths(authority, secondPath)
 	if secondErr != "" || secondCode != exitOK {
 		t.Fatalf("second analysis failed: code=%d err=%v", secondCode, secondErr)
 	}
