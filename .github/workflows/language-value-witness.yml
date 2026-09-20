@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-runtime-binding/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
       - internal/semantic/**
@@ -18,6 +19,7 @@ on:
     paths:
       - .github/workflows/language-value-witness.yml
       - examples/language-value-witness/**
+      - examples/language-runtime-binding/**
       - examples/language-syntax-roundtrip/corpus.json
       - internal/bidir/**
       - internal/semantic/**
@@ -790,6 +792,71 @@ jobs:
         with:
           name: language-value-bool-and-execution-${{ env.HEAD_SHA }}
           path: ${{ runner.temp }}/language-value-bool-and-execution
+          if-no-files-found: error
+          retention-days: 14
+      - name: Execute the typed bool.and:1 plan and replay its receipts
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-runtime-boolean-and-plan"
+          mkdir -p "$output"
+          for input in 0 7; do
+            if [ "$input" -eq 0 ]; then
+              expected_zero=1
+              expected_not=0
+              expected_and=0
+            else
+              expected_zero=0
+              expected_not=1
+              expected_and=1
+            fi
+            printf '{"value":%s}\n' "$input" > "$output/input-$input.json"
+            for pass in first second; do
+              go run ./cmd/gooo run --json --entry IsZero \
+                --input "$output/input-$input.json" \
+                examples/language-runtime-binding/boolean-and.gooo > "$output/$input-$pass.json"
+            done
+            cmp "$output/$input-first.json" "$output/$input-second.json"
+            jq -e \
+              --argjson expected_zero "$expected_zero" \
+              --argjson expected_not "$expected_not" \
+              --argjson expected_and "$expected_and" '
+              .schema == "gooo/value-execution-plan/v1" and
+              .decision == "PASS" and
+              .entry == "IsZero" and
+              .execution.scope == "REGISTERED_VALUE_OPERATION" and
+              .execution.apply_calls == 3 and
+              .execution.deliveries == 2 and
+              .execution.activities == ["IsZero", "Not", "And"] and
+              .execution.plan_digest != "" and
+              .execution.input_digest != "" and
+              .execution.execution_digest != "" and
+              .execution.results.IsZero.output_entity == "Boolean" and
+              .execution.results.Not.output_entity == "Boolean" and
+              .execution.results.And.output_entity == "Boolean" and
+              .execution.results.IsZero.value == $expected_zero and
+              .execution.results.Not.value == $expected_not and
+              .execution.results.And.value == $expected_and and
+              .execution.results.IsZero.result_digest != "" and
+              .execution.results.Not.result_digest != "" and
+              .execution.results.And.result_digest != ""
+            ' "$output/$input-first.json" > /dev/null
+          done
+          {
+            echo "### Gooo typed bool.and:1 plan"
+            echo '- declaration: `examples/language-runtime-binding/boolean-and.gooo`'
+            echo '- typed path: `IsZero -> Not -> And`'
+            echo '- inputs: `0`, `7`'
+            echo '- plan execution: `3 applies / 2 deliveries` per input'
+            echo '- Boolean entity preservation: `PASS`'
+            echo '- execution receipt replay: `IDENTICAL`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload typed bool.and:1 plan evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-runtime-boolean-and-plan-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-runtime-boolean-and-plan
           if-no-files-found: error
           retention-days: 14
       - name: Replay exact Gooo value witness
