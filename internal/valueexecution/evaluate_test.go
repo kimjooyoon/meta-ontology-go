@@ -148,6 +148,26 @@ func TestCompileLowersRegisteredNegateOperationAndRejectsInvalidOperandAndMinimu
 	}
 }
 
+func TestCompileLowersRegisteredAbsoluteOperationAndRejectsInvalidOperandAndMinimum(t *testing.T) {
+	program, err := Compile("absolute.gooo", valueFixture(`activity Absolute(Integer) -> Integer computes "int.abs:0"`), "Absolute")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.abs" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("absolute operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	if got, err := program.Execute([]int64{-7}); err != nil || got != 7 {
+		t.Fatalf("absolute execution = %d / %v, want 7 / nil", got, err)
+	}
+	if _, err := program.Execute([]int64{math.MinInt64}); Reason(err) != ReasonIntegerOverflow {
+		t.Fatalf("absolute overflow reason = %s, want %s", Reason(err), ReasonIntegerOverflow)
+	}
+	invalid, err := Compile("absolute-invalid.gooo", valueFixture(`activity Absolute(Integer) -> Integer computes "int.abs:1"`), "Absolute")
+	if err == nil || invalid.Operation.Spec.ID != "" || Reason(err) != ReasonOperationIRInvalid {
+		t.Fatalf("invalid absolute operand = %#v / %v, want operation IR invalid", invalid, err)
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)
