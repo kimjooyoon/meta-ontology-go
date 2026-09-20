@@ -129,6 +129,21 @@ jq -e '.state == "CLOSED" and .outcome == "IMPROVED" and
   .execution_allowed == false and .repository_writes == 0 and
   .accepted_execution_digest == .next_candidate_execution_digest' \
   "$out/accepted-next-run-comparison.json" > /dev/null
+"$cli" stage-accepted-revision "$out/source-revision/candidate.gooo" \
+  --comparison "$out/accepted-next-run-comparison.json" \
+  --out "$out/staged-next-run" > "$out/staged-next-run-manifest.json"
+jq -e '.schema == "gooo/value-execution-accepted-revision-next-run-stage/v1" and
+  .decision == "STAGED" and .execution_allowed == false and .repository_writes == 0' \
+  "$out/staged-next-run-manifest.json" > /dev/null
+cmp "$out/source-revision/candidate.gooo" "$out/staged-next-run/candidate.gooo"
+"$cli" run --json --entry ObserveRepair --input "$repair_input" \
+  "$out/staged-next-run/candidate.gooo" > "$out/staged-next-run-execution.json"
+jq -e '.decision == "PASS" and
+  .execution.results.ObserveRepair.value == 9223372036854775807 and
+  .execution.execution_digest != ""' "$out/staged-next-run-execution.json" > /dev/null
+jq -e --slurpfile comparison "$out/accepted-next-run-comparison.json" \
+  '.execution.execution_digest == $comparison[0].accepted_execution_digest' \
+  "$out/staged-next-run-execution.json" > /dev/null
 # The accepted candidate remains an external input. Generate it, then reverse-
 # observe its Go output against the candidate authority without writing either
 # source tree or granting source-adoption authority.
@@ -154,6 +169,8 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   --slurpfile source_revision_evaluation "$out/source-revision-evaluation/evaluation.json" \
   --slurpfile accepted_source "$out/accepted-source-reexecution.json" \
   --slurpfile accepted_next_run "$out/accepted-next-run-comparison.json" \
+  --slurpfile next_run_stage "$out/staged-next-run-manifest.json" \
+  --slurpfile next_run_execution "$out/staged-next-run-execution.json" \
   --slurpfile accepted_generation "$out/accepted-source-reverse-observation.json" \
   --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$(cat "$out/first-peak-rss-kib.txt")" \
   '{schema:"gooo/domain-budget-observation/v1",source_digest:$first[0].source_digest,
@@ -178,6 +195,10 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
         reason:$accepted_next_run[0].reason,accepted_execution_digest:$accepted_next_run[0].accepted_execution_digest,
         next_candidate_execution_digest:$accepted_next_run[0].next_candidate_execution_digest,
         repository_writes:$accepted_next_run[0].repository_writes},
+      next_run_stage:{decision:$next_run_stage[0].decision,
+        candidate_source_digest:$next_run_stage[0].candidate_source_digest,
+        comparison_digest:$next_run_stage[0].comparison_digest,
+        execution_digest:$next_run_execution[0].execution.execution_digest},
       accepted_generated_go_reverse_observation:{semantic_equal:$accepted_generation[0].semantic_equal,
         authority_semantic_digest:$accepted_generation[0].authority_semantic_digest,
         observed_semantic_digest:$accepted_generation[0].observed_semantic_digest,
@@ -196,4 +217,4 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   > "$out/observation.json"
  jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); accepted reexecution: \(.source_revision.accepted_source_reexecution)\n- accepted candidate generated Go reverse observation: \(.source_revision.accepted_generated_go_reverse_observation.semantic_equal), write effect=\(.source_revision.accepted_generated_go_reverse_observation.write_effect)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: EXPLICIT_CALLER"' \
   "$out/observation.json" > "$out/report.md"
-printf '%s\n' '- accepted revision next run: see observation.json source_revision.accepted_source_next_run_comparison (CLOSED/IMPROVED expected)' >> "$out/report.md"
+printf '%s\n' '- accepted revision next run: external stage is STAGED and the staged candidate executes PASS; see observation.json source_revision.next_run_stage' >> "$out/report.md"

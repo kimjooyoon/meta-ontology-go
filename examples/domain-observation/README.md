@@ -126,6 +126,14 @@ The full self-improvement goal still requires a later system boundary to use
 accepted changes under an explicit policy. No new whole-language completeness
 percentage is introduced.
 
+The accepted candidate can now cross an explicit external staging boundary.
+When the next-run comparison is exactly `CLOSED/IMPROVED`, the example writes
+the candidate, comparison receipt, and stage manifest to a caller-owned output
+directory, then executes that staged candidate on the next run. The execution
+digest must match the accepted receipt. This is not source adoption: the
+repository and original `.gooo` input remain unchanged, while UNKNOWN and
+REFUTED comparisons are rejected before staging output is created.
+
 ## Independent semantic domain fixture
 
 `incident.gooo` keeps the incident-resolution domain separate from the
