@@ -20,5 +20,10 @@ func init() {
 		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v40.json",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/denominator_migration_test.go",
 		"internal/verify/scope_value_program_runtime_dogfood_max_20260920.go",
+		"internal/valueexecution/evaluate_test.go",
+		"internal/valueexecution/measurement.go",
+		"internal/valueexecution/operation_spec_validate.go",
+		"internal/valueexecution/registry.go",
+		"internal/valueexecution/validate.go",
 	}
 }

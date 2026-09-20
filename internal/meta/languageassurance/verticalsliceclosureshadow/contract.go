@@ -56,6 +56,8 @@ const (
 	DenominatorMigrationV40Digest = "sha256:cd8913a5b59c3ef5854722f2049ed94e1b9b153b8b26ff2764ae385c5be40a6d"
 	// V41 binds the inverse int.min:0 comparison witness and corrects the max scope provenance.
 	DenominatorMigrationV41Digest = "sha256:f16924dbb2385fb88a64d497de5d193266a09d3df4c2bbcc14d7b1c2c226f425"
+	// V42 binds the typed Integer-to-Boolean int.iszero:0 comparison witness.
+	DenominatorMigrationV42Digest = "sha256:1538f5a331e6e436aee9ac1e0b29d5940b56dbf416645f9acab8afe30bf8d68f"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

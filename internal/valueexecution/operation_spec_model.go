@@ -4,6 +4,7 @@ const (
 	OperationSpecSchema = "gooo.operation-spec/v1"
 	OperationIRSchema   = "gooo.operation-invocation-ir/v1"
 	IntegerEntity       = "Integer"
+	BooleanEntity       = "Boolean"
 	OperandInt64Literal = "INT64_LITERAL"
 	EffectPureValue     = "PURE_VALUE"
 	Deterministic       = "DETERMINISTIC"
