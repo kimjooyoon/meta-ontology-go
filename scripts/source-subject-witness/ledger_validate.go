@@ -40,6 +40,11 @@ func validateLedger(ledger witnessLedger) error {
 	}
 	counts := countWitnesses(ledger.Witnesses)
 	counts.MetaIndicators = ledger.Counts.MetaIndicators
+	if counts.SourceIndicatorsApplicable > ledger.Counts.SourceIndicatorsApplicable || counts.SourceIndicatorsNotApplicable > ledger.Counts.SourceIndicatorsNotApplicable {
+		return fmt.Errorf("ledger witness applicability exceeds source indicator applicability")
+	}
+	counts.SourceIndicatorsApplicable = ledger.Counts.SourceIndicatorsApplicable
+	counts.SourceIndicatorsNotApplicable = ledger.Counts.SourceIndicatorsNotApplicable
 	if counts != ledger.Counts || digestValues(ledger.Witnesses) != ledger.SubjectWitnessDigest {
 		return fmt.Errorf("ledger counts or subject digest mismatch")
 	}
