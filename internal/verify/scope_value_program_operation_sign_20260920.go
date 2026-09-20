@@ -9,6 +9,7 @@ func init() {
 		"internal/valueexecution/measurement.go",
 		"internal/valueexecution/operation_spec_validate.go",
 		"internal/valueexecution/registry.go",
+		"internal/valueexecution/validate.go",
 		"internal/verify/scope_value_program_operation_sign_20260920.go",
 	}
 }

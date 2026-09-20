@@ -19,7 +19,9 @@ func ValidateOperationSpec(spec OperationSpec) error {
 		return fmt.Errorf("operation semantics are not closed")
 	}
 	expectedFailures := []string{ReasonInputArityMismatch, ReasonIntegerOverflow}
-	if spec.ID == "int.div" {
+	if spec.ID == "int.sign" {
+		expectedFailures = []string{ReasonInputArityMismatch, ReasonOperationIRInvalid}
+	} else if spec.ID == "int.div" {
 		expectedFailures = append(expectedFailures, ReasonIntegerDivisionByZero)
 	}
 	if spec.ID == "int.mod" {
