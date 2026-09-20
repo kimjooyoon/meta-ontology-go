@@ -15,7 +15,7 @@ import (
 
 func decodeDenominator(raw []byte) (denominator, error) {
 	digest := digestBytes(raw)
-	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest && digest != DenominatorMigrationV34Digest && digest != DenominatorMigrationV35Digest && digest != DenominatorMigrationV36Digest && digest != DenominatorMigrationV37Digest && digest != DenominatorMigrationV38Digest {
+	if digest != DenominatorDigest && digest != DenominatorMigrationDigest && digest != DenominatorMigrationV23Digest && digest != DenominatorMigrationV24Digest && digest != DenominatorMigrationV25Digest && digest != DenominatorMigrationV26Digest && digest != DenominatorMigrationV27Digest && digest != DenominatorMigrationV28Digest && digest != DenominatorMigrationV29Digest && digest != DenominatorMigrationV30Digest && digest != DenominatorMigrationV31Digest && digest != DenominatorMigrationV32Digest && digest != DenominatorMigrationV33Digest && digest != DenominatorMigrationV34Digest && digest != DenominatorMigrationV35Digest && digest != DenominatorMigrationV36Digest && digest != DenominatorMigrationV37Digest && digest != DenominatorMigrationV38Digest && digest != DenominatorMigrationV39Digest {
 		return denominator{}, fmt.Errorf("denominator digest mismatch")
 	}
 	var value denominator
@@ -52,7 +52,8 @@ func validateDenominator(value denominator) error {
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v35" && value.Version == 35) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v36" && value.Version == 36) ||
 		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v37" && value.Version == 37) ||
-		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v38" && value.Version == 38)
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v38" && value.Version == 38) ||
+		(value.DenominatorID == "gooo.denominator.capability.vertical-slice-closure.v39" && value.Version == 39)
 	if value.Schema != "gooo/vertical-slice-boundary-denominator/v1" ||
 		!validHeader || len(value.Boundaries) != len(expected) {
 		return fmt.Errorf("denominator header mismatch")

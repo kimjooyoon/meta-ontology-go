@@ -54,7 +54,12 @@ canonical `int.add:1` self-improvement witness.
 executes input `4`, requires `Multiply = 12`, and replays the generated Go,
 canonical manifest, and detached execution receipt.
 
-The CI receipt records seven exact input/output cases, eight fail-closed
+`div.gooo` extends the path to the registered `int.div:2` operation. CI
+executes input `8`, requires `Quotient = 4`, and preserves zero-divisor
+handling as an explicit `FAIL_CLOSED` boundary rather than accepting an
+undefined result.
+
+The CI receipt records eight exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
 semantic fingerprints. Core IR preservation and fingerprint sensitivity are
