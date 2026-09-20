@@ -20,6 +20,18 @@ bind Produce.result -> ConsumeA.input
 bind Produce.result -> ConsumeB.input
 `
 
+const typedBooleanCompositionFixture = `package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+entity Boolean id "gooo://runtime-binding/entity/boolean"
+
+activity IsZero(Integer) -> Boolean computes "int.iszero:0"
+activity Not(Boolean) -> Boolean computes "bool.not:0"
+
+bind IsZero.result -> Not.input
+`
+
 func TestCompilePlanExecutesActualFanoutAndFreshRuns(t *testing.T) {
 	plan, err := CompilePlan("fanout.gooo", []byte(runtimeBindingFanoutFixture))
 	if err != nil {
@@ -56,6 +68,31 @@ func TestCompilePlanExecutesActualFanoutAndFreshRuns(t *testing.T) {
 	third, err := plan.Execute(map[string]int64{"Produce": 41})
 	if err != nil || third.ExecutionDigest != first.ExecutionDigest {
 		t.Fatalf("identical execution replay changed digest: first=%q third=%q err=%v", first.ExecutionDigest, third.ExecutionDigest, err)
+	}
+}
+
+func TestCompilePlanPreservesTypedBooleanComposition(t *testing.T) {
+	plan, err := CompilePlan("boolean-composition.gooo", []byte(typedBooleanCompositionFixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		input       int64
+		isZeroValue int64
+		notValue    int64
+	}{{0, 1, 0}, {7, 0, 1}} {
+		execution, err := plan.Execute(map[string]int64{"IsZero": test.input})
+		if err != nil {
+			t.Fatalf("execute composition(%d): %v", test.input, err)
+		}
+		isZero, isZeroOK := execution.Results["IsZero"]
+		not, notOK := execution.Results["Not"]
+		if execution.ApplyCalls != 2 || execution.Deliveries != 1 || !isZeroOK || !notOK ||
+			isZero.OutputEntity != BooleanEntity || not.OutputEntity != BooleanEntity ||
+			isZero.Value != test.isZeroValue || not.Value != test.notValue ||
+			!validDigest(isZero.ResultDigest) || !validDigest(not.ResultDigest) {
+			t.Fatalf("typed composition(%d) = %#v, want iszero=%d not=%d", test.input, execution, test.isZeroValue, test.notValue)
+		}
 	}
 }
 

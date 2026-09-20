@@ -67,6 +67,8 @@ undefined result.
 
 `not.gooo` consumes that Boolean boundary directly. The `bool.not:0` operation accepts only canonical `0/1` input, returns the opposite Boolean encoding, and fails closed for any non-Boolean integer value. CI proves `false -> true` and `true -> false` through the same generated and replayed plan path.
 
+The typed plan regression composes these declarations as `IsZero.result -> Not.input`. It verifies that a Boolean result is delivered as a Boolean input, then observes `0 -> false` and `7 -> true` with two applies and one delivery. This is plan execution evidence, not a claim that runtime bindings are supported by the general Go generator.
+
 The CI receipt records eleven exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
