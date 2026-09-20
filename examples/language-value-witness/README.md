@@ -14,6 +14,12 @@ compiler's additional operations are exercised by separate regression cases,
 including checked `int.mul` overflow, fail-closed `int.div` zero-divisor and
 minimum-integer overflow cases, and `int.mod` zero-divisor handling.
 
+`sign.gooo` is a second dogfood declaration for `int.sign:0`. It is not
+substituted for the canonical witness: the value-witness workflow checks its
+semantic binding and generates it twice, requiring identical Go and manifest
+outputs. This keeps the new operation visible as a real Gooo source program
+without changing the existing self-improvement corpus.
+
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR

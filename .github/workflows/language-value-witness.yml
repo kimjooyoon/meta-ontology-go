@@ -91,6 +91,36 @@ jobs:
             scripts/language-value-witness
       - name: Compile parser, semantic binding, and value executor
         run: go test ./internal/syntax ./internal/bidir ./internal/semantic ./internal/valueexecution
+      - name: Dogfood the int.sign Gooo declaration and generated Go
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-sign-dogfood"
+          mkdir -p "$output/first" "$output/second"
+          go run ./cmd/gooo check --semantic examples/language-value-witness/sign.gooo > "$output/check.txt"
+          for pass in first second; do
+            go run ./cmd/gooo generate examples/language-value-witness/sign.gooo --out "$output/$pass"
+            test -s "$output/$pass/semantic.gooo.go"
+            test -s "$output/$pass/semantic.gooo.manifest.jsonl"
+            test -z "$(gofmt -l "$output/$pass/semantic.gooo.go")"
+          done
+          cmp "$output/first/semantic.gooo.go" "$output/second/semantic.gooo.go"
+          cmp "$output/first/semantic.gooo.manifest.jsonl" "$output/second/semantic.gooo.manifest.jsonl"
+          {
+            echo "### Gooo int.sign dogfood"
+            echo '- declaration: `examples/language-value-witness/sign.gooo`'
+            echo '- semantic check: `PASS`'
+            echo '- generated Go replay: `IDENTICAL`'
+            echo '- generated manifest replay: `IDENTICAL`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload int.sign dogfood evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-sign-dogfood-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-sign-dogfood
+          if-no-files-found: error
+          retention-days: 14
       - name: Replay exact Gooo value witness
         shell: bash
         run: |
