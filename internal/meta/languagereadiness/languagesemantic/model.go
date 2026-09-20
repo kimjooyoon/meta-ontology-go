@@ -4,7 +4,7 @@ const (
 	ReportSchema   = "gooo/language-semantic-model/v1"
 	RegistrySchema = "gooo/language-semantic-model-corpus/v1"
 	ConceptID      = "language-semantic-model"
-	FixedTotal     = 41
+	FixedTotal     = 42
 )
 
 type Decision string

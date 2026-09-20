@@ -488,15 +488,15 @@ jobs:
           path: ${{ runner.temp }}/language-value-mul-execution
           if-no-files-found: error
           retention-days: 14
-      - name: Dogfood the registered int.div:2 Gooo declaration and generated Go
+      - name: Dogfood the registered int.max:0 Gooo declaration and generated Go
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/language-value-div-dogfood"
+          output="$RUNNER_TEMP/language-value-max-dogfood"
           mkdir -p "$output/first" "$output/second"
-          go run ./cmd/gooo check --semantic examples/language-value-witness/div.gooo > "$output/check.txt"
+          go run ./cmd/gooo check --semantic examples/language-value-witness/max.gooo > "$output/check.txt"
           for pass in first second; do
-            go run ./cmd/gooo generate examples/language-value-witness/div.gooo --out "$output/$pass"
+            go run ./cmd/gooo generate examples/language-value-witness/max.gooo --out "$output/$pass"
             test -s "$output/$pass/semantic.gooo.go"
             test -s "$output/$pass/semantic.gooo.manifest.jsonl"
             test -z "$(gofmt -l "$output/$pass/semantic.gooo.go")"
@@ -506,61 +506,99 @@ jobs:
           jq -S 'del(.generated_file)' "$output/second/semantic.gooo.manifest.jsonl" > "$output/second/canonical-manifest.json"
           cmp "$output/first/canonical-manifest.json" "$output/second/canonical-manifest.json"
           {
-            echo "### Gooo int.div:2 dogfood"
-            echo '- declaration: `examples/language-value-witness/div.gooo`'
+            echo "### Gooo int.max:0 dogfood"
+            echo '- declaration: `examples/language-value-witness/max.gooo`'
             echo '- semantic check: `PASS`'
             echo '- generated Go replay: `IDENTICAL`'
             echo '- generated manifest replay: `IDENTICAL (canonical; output path excluded)`'
-            echo '- zero-divisor policy: `FAIL_CLOSED`'
+            echo '- zero-maxisor policy: `FAIL_CLOSED`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload int.div:2 dogfood evidence
+      - name: Upload int.max:0 dogfood evidence
         uses: actions/upload-artifact@v7
         with:
-          name: language-value-div-dogfood-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-div-dogfood
+          name: language-value-max-dogfood-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-max-dogfood
           if-no-files-found: error
           retention-days: 14
-      - name: Execute the int.div:2 Gooo plan and replay its receipt
+      - name: Execute the int.max:0 Gooo plan and replay its receipt
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/language-value-div-execution"
+          output="$RUNNER_TEMP/language-value-max-execution"
           mkdir -p "$output"
-          printf '{"value":8}\n' > "$output/input.json"
+          printf '{"value":-7}\n' > "$output/input.json"
           for pass in first second; do
-            go run ./cmd/gooo run --json --entry Quotient \
+            go run ./cmd/gooo run --json --entry AtLeastZero \
               --input "$output/input.json" \
-              examples/language-value-witness/div.gooo > "$output/$pass.json"
+              examples/language-value-witness/max.gooo > "$output/$pass.json"
           done
           cmp "$output/first.json" "$output/second.json"
           jq -e '
             .schema == "gooo/value-execution-plan/v1" and
             .decision == "PASS" and
-            .entry == "Quotient" and
+            .entry == "AtLeastZero" and
             .source_digest != "" and
             .semantic_fingerprint != "" and
             .execution.scope == "REGISTERED_VALUE_OPERATION" and
             .execution.apply_calls == 1 and
             .execution.deliveries == 0 and
-            .execution.results.Quotient.value == 4 and
-            .execution.results.Quotient.operation_spec_digest != "" and
-            .execution.results.Quotient.result_digest != ""
+            .execution.results.AtLeastZero.value == 0 and
+            .execution.results.AtLeastZero.operation_spec_digest != "" and
+            .execution.results.AtLeastZero.result_digest != ""
           ' "$output/first.json" > /dev/null
           {
-            echo "### Gooo int.div:2 execution"
-            echo '- declaration: `examples/language-value-witness/div.gooo`'
-            echo '- input: `8`'
-            echo '- observed result: `4`'
+            echo "### Gooo int.max:0 execution"
+            echo '- declaration: `examples/language-value-witness/max.gooo`'
+            echo '- input: `-7`'
+            echo '- observed result: `0`'
             echo '- execution receipt replay: `IDENTICAL`'
-            echo '- zero-divisor policy: `FAIL_CLOSED`'
+            echo '- zero-maxisor policy: `FAIL_CLOSED`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload int.div:2 execution evidence
+      - name: Upload int.max:0 execution evidence
         uses: actions/upload-artifact@v7
         with:
-          name: language-value-div-execution-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-div-execution
+          name: language-value-max-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-max-execution
+          if-no-files-found: error
+          retention-days: 14
+      - name: Execute the positive int.max:0 Gooo plan and replay its receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-max-positive-execution"
+          mkdir -p "$output"
+          printf '{"value":7}\n' > "$output/input.json"
+          for pass in first second; do
+            go run ./cmd/gooo run --json --entry AtLeastZero \
+              --input "$output/input.json" \
+              examples/language-value-witness/max.gooo > "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+          jq -e '
+            .schema == "gooo/value-execution-plan/v1" and
+            .decision == "PASS" and
+            .entry == "AtLeastZero" and
+            .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.apply_calls == 1 and
+            .execution.deliveries == 0 and
+            .execution.results.AtLeastZero.value == 7 and
+            .execution.results.AtLeastZero.operation_spec_digest != "" and
+            .execution.results.AtLeastZero.result_digest != ""
+          ' "$output/first.json" > /dev/null
+          {
+            echo "### Gooo int.max:0 positive execution"
+            echo '- input: `7`'
+            echo '- observed result: `7`'
+            echo '- execution receipt replay: `IDENTICAL`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload positive int.max:0 execution evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-max-positive-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-max-positive-execution
           if-no-files-found: error
           retention-days: 14
       - name: Replay exact Gooo value witness
