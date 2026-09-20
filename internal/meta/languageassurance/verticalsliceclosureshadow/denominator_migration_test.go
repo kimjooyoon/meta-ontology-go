@@ -59,7 +59,7 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		t.Fatal("historical denominator evidence was rewritten")
 	}
 	var previous, current denominator
-	if err := json.Unmarshal(embeddedDenominatorV31, &previous); err != nil {
+	if err := json.Unmarshal(embeddedDenominatorV32, &previous); err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(activeDenominator(), &current); err != nil {
