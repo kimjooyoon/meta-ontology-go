@@ -64,6 +64,9 @@ func ValidateOperationIR(ir OperationIR) error {
 	if (ir.Spec.ID == "int.neg" || ir.Spec.ID == "int.abs" || ir.Spec.ID == "int.sign" || ir.Spec.ID == "int.iszero" || ir.Spec.ID == "bool.not") && ir.Operand.Int64 != 0 {
 		return fmt.Errorf("%s requires a zero sentinel operand", ir.Spec.ID)
 	}
+	if ir.Spec.ID == "bool.and" && ir.Operand.Int64 != 0 && ir.Operand.Int64 != 1 {
+		return fmt.Errorf("bool.and requires a canonical Boolean operand")
+	}
 	return nil
 }
 
