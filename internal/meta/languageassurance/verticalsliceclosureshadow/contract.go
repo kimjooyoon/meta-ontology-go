@@ -42,6 +42,8 @@ const (
 	DenominatorMigrationV33Digest = "sha256:99bf0a1c500684969a3fbe208bb18583e985ef3c37a38f535072ab25158cbfcd"
 	// V34 binds the int.mod value witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV34Digest = "sha256:15015d1f028d254513ee97ab36fed60ddf9cbcf97f61e19957a4e7bb974795e5"
+	// V35 binds the int.neg value witness registered in the syntax and semantic corpora.
+	DenominatorMigrationV35Digest = "sha256:ccbe1f2aec8512d535446b1626ab752b2b442c7f26fbafe125c2f93a44f969a7"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

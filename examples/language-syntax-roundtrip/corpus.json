@@ -281,6 +281,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-value-witness-neg",
+      "path": "examples/language-value-witness/neg.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-runtime-binding",
       "path": "examples/language-runtime-binding/main.gooo",
       "kind": "VALID",
