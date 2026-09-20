@@ -1,7 +1,7 @@
 package languagesemantic
 
 const (
-	expectedSources    = 35
+	expectedSources    = 36
 	expectedLaws       = 3
 	expectedRejections = 2
 )

@@ -50,6 +50,8 @@ const (
 	DenominatorMigrationV37Digest = "sha256:c0feff0ec84d412f80cf492d65f5bd456133d1a550aeccd713f21e83fed17831"
 	// V38 binds the int.mul:3 value witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV38Digest = "sha256:f2db6d69f4bb0ba9fb50a2e8e8b4054bdacbe048470ce21a16e0b8cf72575952"
+	// V39 binds the int.div:2 value witness and its fail-closed divisor boundary.
+	DenominatorMigrationV39Digest = "sha256:aa81b4ccb99a2a23179f59f0706a534f4fef0a69ad9336fb3f94207e4d787b33"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"
