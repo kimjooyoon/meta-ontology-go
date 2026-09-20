@@ -59,10 +59,10 @@ func validateLedger(ledger witnessLedger) error {
 		}
 		seen := make(map[string]bool, len(ledger.SourceObservations))
 		for _, observation := range ledger.SourceObservations {
-			if observation.Satisfied || observation.Value <= observation.Limit {
-				return fmt.Errorf("source observation %q is not an unsatisfied driver", observation.Subject)
+			if observation.Satisfied {
+				return fmt.Errorf("source observation %q is satisfied", observation.Subject)
 			}
-			if err := validateLineCapIndicator(observation); err != nil {
+			if err := validateIndicatorState(observation); err != nil {
 				return err
 			}
 			key := observation.MetricID + "\x00" + observation.Subject

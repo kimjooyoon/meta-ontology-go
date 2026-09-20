@@ -60,10 +60,40 @@ func validateIndicatorState(row sourceIndicator) error {
 		return sourceValidationFailure("SOURCE_NOT_APPLICABLE_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if !row.Satisfied {
-		return sourceValidationFailure("SOURCE_INDICATOR_UNEXPECTED_UNSATISFIED", "KNOWN_CONTRADICTION", "report-counterexample")
+		return validateUnsatisfiedIndicator(row)
 	}
 	if row.Decision != "PASS" || row.EvaluationState != "EVALUATED" || row.FailureReason != "NONE" {
 		return sourceValidationFailure("SOURCE_INDICATOR_OUTCOME_CONTRADICTION", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	return nil
+}
+
+func validateUnsatisfiedIndicator(row sourceIndicator) error {
+	if !exactApplicable(row) || row.Decision != "FAIL_CLOSED" || row.EvaluationState != "EVALUATED" || row.FailureReason != "PREDICATE_FALSE" || row.FailureCode != row.MetricID+"#predicate-false" {
+		return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_SHAPE_INVALID", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	if row.Blocking {
+		if row.EnforcementEffect != "BLOCK" {
+			return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_SHAPE_INVALID", "KNOWN_CONTRADICTION", "report-counterexample")
+		}
+	} else if row.EnforcementEffect != "NO_EFFECT" {
+		return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_SHAPE_INVALID", "KNOWN_CONTRADICTION", "report-counterexample")
+	}
+	switch row.Relation {
+	case "equal":
+		if row.Value == row.Limit {
+			return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_PREDICATE_MATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		}
+	case "less_or_equal":
+		if row.Value <= row.Limit {
+			return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_PREDICATE_MATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		}
+	case "greater_or_equal":
+		if row.Value >= row.Limit {
+			return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_PREDICATE_MATCH", "KNOWN_CONTRADICTION", "report-counterexample")
+		}
+	default:
+		return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_RELATION_UNKNOWN", "UNKNOWN", "classify-indicator-relation")
 	}
 	return nil
 }
