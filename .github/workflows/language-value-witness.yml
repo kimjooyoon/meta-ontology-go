@@ -155,6 +155,47 @@ jobs:
           path: ${{ runner.temp }}/language-value-mod-dogfood
           if-no-files-found: error
           retention-days: 14
+      - name: Execute the int.mod Gooo plan and replay its receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/language-value-mod-execution"
+          mkdir -p "$output"
+          printf '{"value":41}\n' > "$output/input.json"
+          for pass in first second; do
+            go run ./cmd/gooo run --json --entry Remainder \
+              --input "$output/input.json" \
+              examples/language-value-witness/mod.gooo > "$output/$pass.json"
+          done
+          cmp "$output/first.json" "$output/second.json"
+          jq -e '
+            .schema == "gooo/value-execution-plan/v1" and
+            .decision == "PASS" and
+            .entry == "Remainder" and
+            .source_digest != "" and
+            .semantic_fingerprint != "" and
+            .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.apply_calls == 1 and
+            .execution.deliveries == 0 and
+            .execution.results.Remainder.value == 2 and
+            .execution.results.Remainder.operation_spec_digest != "" and
+            .execution.results.Remainder.result_digest != ""
+          ' "$output/first.json" > /dev/null
+          {
+            echo "### Gooo int.mod execution"
+            echo '- declaration: `examples/language-value-witness/mod.gooo`'
+            echo '- input: `41`'
+            echo '- observed result: `2`'
+            echo '- execution receipt replay: `IDENTICAL`'
+            echo '- repository writes: `0`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload int.mod execution evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: language-value-mod-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-mod-execution
+          if-no-files-found: error
+          retention-days: 14
       - name: Replay exact Gooo value witness
         shell: bash
         run: |
