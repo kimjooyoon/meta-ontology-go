@@ -194,6 +194,22 @@ func TestCompileLowersRegisteredSignOperationAndRejectsInvalidOperand(t *testing
 	}
 }
 
+func TestCompileLowersRegisteredMaximumOperation(t *testing.T) {
+	program, err := Compile("maximum.gooo", valueFixture(`activity AtLeastZero(Integer) -> Integer computes "int.max:0"`), "AtLeastZero")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.max" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("maximum operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct{ input, want int64 }{{-7, 0}, {7, 7}} {
+		got, err := program.Execute([]int64{test.input})
+		if err != nil || got != test.want {
+			t.Fatalf("maximum execution = %d / %v, want %d / nil", got, err, test.want)
+		}
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)

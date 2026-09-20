@@ -56,6 +56,12 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedSign},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "int.max", Version: 1, Arity: 1,
+		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: IntegerEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch},
+	}, Apply: checkedMaximum},
 }
 
 func operationByID(id string) (registeredOperation, bool) {
@@ -169,4 +175,11 @@ func checkedSign(input, operand int64) (int64, error) {
 		return 1, nil
 	}
 	return 0, nil
+}
+
+func checkedMaximum(input, operand int64) (int64, error) {
+	if input > operand {
+		return input, nil
+	}
+	return operand, nil
 }
