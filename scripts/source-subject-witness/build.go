@@ -48,6 +48,7 @@ func buildLedger(report sourceReport, expectedSHA string) (witnessLedger, error)
 	sort.Slice(witnesses, func(i, j int) bool { return witnessKey(witnesses[i]) < witnessKey(witnesses[j]) })
 	counts := countWitnesses(witnesses)
 	counts.MetaIndicators = len(report.Meta.Indicators)
+	counts.SourceIndicatorsApplicable, counts.SourceIndicatorsNotApplicable = countSourceIndicatorApplicability(report.Meta.Indicators)
 	observations := unsatisfiedIndicators(report.Meta.Indicators)
 	ledger := witnessLedger{Schema: "gooo/source-subject-witness-ledger/v3", Repository: report.Repository, CommitSHA: report.CommitSHA, SourceSchema: report.Meta.Schema, Policy: report.Meta.Policy, PolicyDigest: digestJSON(report.Meta.Policy), RootTopologyExempt: report.Meta.Policy.ExemptProjectRootTopology, RootREADMEExempt: report.Meta.Policy.ExemptProjectRootREADME, Counts: counts, SubjectWitnessDigest: digestValues(witnesses), MetaIndicatorDigest: digestValues(report.Meta.Indicators), Status: "BOUND", ObservationState: observationState(observations), ClaimState: claimState(observations), SourceObservations: observations, SourceObservationDigest: digestValues(observations), Witnesses: witnesses}
 	ledger.Indicators = buildLedgerIndicators(ledger)

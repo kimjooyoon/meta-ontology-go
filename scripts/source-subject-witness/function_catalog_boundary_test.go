@@ -23,3 +23,14 @@ func TestCompileFunctionWitnessesPreservesCatalogBoundary(t *testing.T) {
 		t.Fatalf("catalog witness set changed unexpectedly: %#v", witnesses)
 	}
 }
+
+func TestCountSourceIndicatorApplicabilityIncludesOutOfCatalogRows(t *testing.T) {
+	applicable, notApplicable := countSourceIndicatorApplicability([]sourceIndicator{
+		{Applicability: "APPLICABLE"},
+		{Applicability: "NOT_APPLICABLE"},
+		{Applicability: "APPLICABLE"},
+	})
+	if applicable != 2 || notApplicable != 1 {
+		t.Fatalf("source applicability counts = %d/%d, want 2/1", applicable, notApplicable)
+	}
+}
