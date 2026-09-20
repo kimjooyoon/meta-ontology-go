@@ -859,6 +859,8 @@ jobs:
           path: ${{ runner.temp }}/language-runtime-boolean-and-plan
           if-no-files-found: error
           retention-days: 14
+      - name: Preserve refuted accepted-revision evidence
+        run: go test ./internal/valueexecution -run TestCompareAcceptedRevisionNextRunRefutesTamperedAcceptedReceipt -count=1
       - name: Replay exact Gooo value witness
         shell: bash
         run: |
