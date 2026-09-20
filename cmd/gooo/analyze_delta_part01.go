@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
+	"time"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/analyzer"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/generator"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
-	"io"
-	"time"
 )
 
 func readAnalyzeAuthority(filename string, reader SourceReader, parser SourceParser, deadline time.Time) (semantic.IR, generator.SemanticIR, error) {
