@@ -4634,6 +4634,17 @@
       ]
     },
     {
+      "branch": "agent/repair-handoff-runtime-plan-contract-20260921",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        ".github/workflows/domain-observation.yml",
+        ".github/workflows/repair-handoff-dogfood.yml",
+        "internal/verify/scope_repair_handoff_runtime_plan_contract_20260921.go",
+        "internal/verify/scope_repair_handoff_runtime_plan_contract_20260921_test.go"
+      ]
+    },
+    {
       "branch": "agent/revise-from-handoff-20260920",
       "paths": [
         ".github/agent-scope-table.md",
