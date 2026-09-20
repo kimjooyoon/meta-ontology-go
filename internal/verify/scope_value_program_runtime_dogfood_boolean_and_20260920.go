@@ -4,6 +4,7 @@ func init() {
 	branchScopeAllowlist["agent/value-program-runtime-dogfood-boolean-and-20260920-v2"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		".github/workflows/language-value-witness.yml",
 		"examples/language-value-witness/and.gooo",
 		"internal/valueexecution/evaluate_test.go",
 		"internal/valueexecution/measurement.go",
