@@ -279,6 +279,36 @@ func TestCompileLowersBooleanNotOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersBooleanAndOperationAndRejectsNonBooleanOperand(t *testing.T) {
+	source := []byte("package valuewitness\nnamespace valuewitness\n\n" +
+		"entity Boolean id \"gooo://value-witness/entity/boolean\"\n\n" +
+		"activity And(Boolean) -> Boolean computes \"bool.and:1\"\n")
+	program, err := Compile("and.gooo", source, "And")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "bool.and" || program.Operation.Spec.InputEntities[0] != BooleanEntity || program.Operation.Spec.OutputEntity != BooleanEntity {
+		t.Fatalf("boolean and contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct {
+		input int64
+		want  bool
+	}{{0, false}, {1, true}} {
+		result, err := program.ExecuteResult([]int64{test.input})
+		if err != nil {
+			t.Fatalf("execute and(%d): %v", test.input, err)
+		}
+		got, err := result.Boolean()
+		if err != nil || got != test.want {
+			t.Fatalf("and(%d) = %t / %v, want %t / nil", test.input, got, err, test.want)
+		}
+	}
+	invalid, err := Compile("and-invalid.gooo", []byte(strings.Replace(string(source), "bool.and:1", "bool.and:2", 1)), "And")
+	if err == nil || invalid.Operation.Spec.ID != "" || Reason(err) != ReasonOperationIRInvalid {
+		t.Fatalf("invalid boolean operand = %#v / %v, want operation IR invalid", invalid, err)
+	}
+}
+
 func TestCompileLowersRegisteredEqualOperationToBoolean(t *testing.T) {
 	source := []byte("package valuewitness\nnamespace valuewitness\n\n" +
 		"entity Integer id \"gooo://value-witness/entity/integer\"\n" +

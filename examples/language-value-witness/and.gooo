@@ -1,0 +1,6 @@
+package valuewitness
+namespace valuewitness
+
+entity Boolean id "gooo://value-witness/entity/boolean"
+
+activity And(Boolean) -> Boolean computes "bool.and:1"

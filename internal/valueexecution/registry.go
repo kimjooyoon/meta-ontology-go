@@ -83,6 +83,12 @@ var booleanOperationRegistry = []registeredOperation{
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedBooleanNot},
+	{Spec: OperationSpec{
+		Schema: OperationSpecSchema, ID: "bool.and", Version: 1, Arity: 1,
+		InputEntities: []string{BooleanEntity}, OperandKind: OperandInt64Literal,
+		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
+		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
+	}, Apply: checkedBooleanAnd},
 }
 
 var intEqualOperation = registeredOperation{Spec: OperationSpec{
@@ -246,4 +252,17 @@ func checkedBooleanNot(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-bool-not", "bool.not requires canonical Boolean input")
 	}
 	return 1 - input, nil
+}
+
+func checkedBooleanAnd(input, operand int64) (int64, error) {
+	if input != 0 && input != 1 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-bool-and", "bool.and requires canonical Boolean input")
+	}
+	if operand != 0 && operand != 1 {
+		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-bool-and", "bool.and requires a canonical Boolean operand")
+	}
+	if input == 1 && operand == 1 {
+		return 1, nil
+	}
+	return 0, nil
 }
