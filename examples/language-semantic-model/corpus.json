@@ -178,6 +178,20 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-language-value-witness-not",
+      "kind": "SOURCE",
+      "path": "examples/language-value-witness/not.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
+      "id": "semantic-language-value-witness-equal",
+      "kind": "SOURCE",
+      "path": "examples/language-value-witness/equal.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "semantic-language-operation-catalog",
       "kind": "SOURCE",
       "path": "examples/language-operation-catalog/main.gooo",

@@ -279,6 +279,33 @@ func TestCompileLowersBooleanNotOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersRegisteredEqualOperationToBoolean(t *testing.T) {
+	source := []byte("package valuewitness\nnamespace valuewitness\n\n" +
+		"entity Integer id \"gooo://value-witness/entity/integer\"\n" +
+		"entity Boolean id \"gooo://value-witness/entity/boolean\"\n\n" +
+		"activity IsSeven(Integer) -> Boolean computes \"int.eq:7\"\n")
+	program, err := Compile("equal.gooo", source, "IsSeven")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.eq" || program.Operation.Spec.InputEntities[0] != IntegerEntity || program.Operation.Spec.OutputEntity != BooleanEntity || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("equal operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct {
+		input int64
+		want  bool
+	}{{7, true}, {6, false}} {
+		result, err := program.ExecuteResult([]int64{test.input})
+		if err != nil {
+			t.Fatalf("execute equal(%d): %v", test.input, err)
+		}
+		got, err := result.Boolean()
+		if err != nil || got != test.want {
+			t.Fatalf("equal(%d) = %t / %v, want %t / nil", test.input, got, err, test.want)
+		}
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)

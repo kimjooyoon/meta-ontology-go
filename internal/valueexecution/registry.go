@@ -7,7 +7,7 @@ type registeredOperation struct {
 	Apply func(int64, int64) (int64, error)
 }
 
-var operationRegistry = []registeredOperation{
+var integerOperationRegistry = []registeredOperation{
 	{Spec: OperationSpec{
 		Schema: OperationSpecSchema, ID: "int.add", Version: 1, Arity: 1,
 		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
@@ -74,6 +74,9 @@ var operationRegistry = []registeredOperation{
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedIsZero},
+}
+
+var booleanOperationRegistry = []registeredOperation{
 	{Spec: OperationSpec{
 		Schema: OperationSpecSchema, ID: "bool.not", Version: 1, Arity: 1,
 		InputEntities: []string{BooleanEntity}, OperandKind: OperandInt64Literal,
@@ -81,6 +84,15 @@ var operationRegistry = []registeredOperation{
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedBooleanNot},
 }
+
+var intEqualOperation = registeredOperation{Spec: OperationSpec{
+	Schema: OperationSpecSchema, ID: "int.eq", Version: 1, Arity: 1,
+	InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
+	OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
+	FailureReasons: []string{ReasonInputArityMismatch},
+}, Apply: checkedEqual}
+
+var operationRegistry = append(append([]registeredOperation{}, integerOperationRegistry...), append(booleanOperationRegistry, intEqualOperation)...)
 
 func operationByID(id string) (registeredOperation, bool) {
 	for _, operation := range operationRegistry {
@@ -214,6 +226,13 @@ func checkedIsZero(input, operand int64) (int64, error) {
 		return 0, failAt(ReasonOperationIRInvalid, "EXECUTE", "apply-int-iszero", "int.iszero requires a zero sentinel operand")
 	}
 	if input == 0 {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+func checkedEqual(input, operand int64) (int64, error) {
+	if input == operand {
 		return 1, nil
 	}
 	return 0, nil

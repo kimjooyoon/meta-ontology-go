@@ -353,6 +353,24 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-value-witness-not",
+      "path": "examples/language-value-witness/not.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
+      "id": "language-value-witness-equal",
+      "path": "examples/language-value-witness/equal.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-runtime-binding",
       "path": "examples/language-runtime-binding/main.gooo",
       "kind": "VALID",

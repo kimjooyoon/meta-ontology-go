@@ -96,6 +96,44 @@ func TestCompilePlanPreservesTypedBooleanComposition(t *testing.T) {
 	}
 }
 
+func TestCompilePlanPreservesMultiHopTypedBooleanComposition(t *testing.T) {
+	fixture := `package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+entity Boolean id "gooo://runtime-binding/entity/boolean"
+
+activity IsSeven(Integer) -> Boolean computes "int.eq:7"
+activity Not(Boolean) -> Boolean computes "bool.not:0"
+activity Restore(Boolean) -> Boolean computes "bool.not:0"
+
+bind IsSeven.result -> Not.input
+bind Not.result -> Restore.input
+`
+	plan, err := CompilePlan("boolean-composition-multihop.gooo", []byte(fixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		input int64
+		want  int64
+	}{{7, 1}, {6, 0}} {
+		execution, err := plan.Execute(map[string]int64{"IsSeven": test.input})
+		if err != nil {
+			t.Fatalf("execute multihop composition(%d): %v", test.input, err)
+		}
+		isSeven, isSevenOK := execution.Results["IsSeven"]
+		not, notOK := execution.Results["Not"]
+		restored, restoredOK := execution.Results["Restore"]
+		if execution.ApplyCalls != 3 || execution.Deliveries != 2 || !isSevenOK || !notOK || !restoredOK ||
+			isSeven.OutputEntity != BooleanEntity || not.OutputEntity != BooleanEntity || restored.OutputEntity != BooleanEntity ||
+			isSeven.Value != test.want || not.Value != 1-test.want || restored.Value != test.want ||
+			!validDigest(isSeven.ResultDigest) || !validDigest(not.ResultDigest) || !validDigest(restored.ResultDigest) {
+			t.Fatalf("multi-hop typed composition(%d) = %#v, want %d -> %d -> %d", test.input, execution, test.want, 1-test.want, test.want)
+		}
+	}
+}
+
 func TestPlanFailsClosedWithoutRootInputOrWithUnexpectedInput(t *testing.T) {
 	plan, err := CompilePlan("fanout.gooo", []byte(runtimeBindingFanoutFixture))
 	if err != nil {
