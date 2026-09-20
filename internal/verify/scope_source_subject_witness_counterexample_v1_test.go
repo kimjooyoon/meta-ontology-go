@@ -4,7 +4,7 @@ import "testing"
 
 func TestSourceSubjectWitnessCounterexampleScope(t *testing.T) {
 	paths, ok := BranchScope(sourceSubjectWitnessCounterexampleBranch)
-	if !ok || len(paths) != 10 {
+	if !ok || len(paths) != 9 {
 		t.Fatalf("source witness counterexample branch was not registered exactly: known=%t paths=%d", ok, len(paths))
 	}
 	allowed := []string{

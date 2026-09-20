@@ -69,7 +69,7 @@ func validateIndicatorState(row sourceIndicator) error {
 }
 
 func validateUnsatisfiedIndicator(row sourceIndicator) error {
-	if !exactApplicable(row) || row.Decision != "FAIL_CLOSED" || row.EvaluationState != "EVALUATED" || row.FailureReason != "PREDICATE_FALSE" || row.FailureCode != row.MetricID+"#predicate-false" {
+	if row.Applicability != "APPLICABLE" || row.ApplicabilityRuleID != defaultApplicabilityRule || row.ApplicabilityReason != "CATALOG_APPLICABLE" || row.Decision != "FAIL_CLOSED" || row.EvaluationState != "EVALUATED" || row.FailureReason != "PREDICATE_FALSE" || row.FailureCode != row.MetricID+"#predicate-false" {
 		return sourceValidationFailure("SOURCE_INDICATOR_UNSATISFIED_SHAPE_INVALID", "KNOWN_CONTRADICTION", "report-counterexample")
 	}
 	if row.Blocking {
