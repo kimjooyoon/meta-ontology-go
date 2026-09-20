@@ -5147,7 +5147,8 @@
         "examples/domain-observation/README.md",
         "examples/domain-observation/observe.sh",
         "internal/valueexecution/source_revision_next_run_staging.go",
-        "internal/valueexecution/source_revision_next_run_staging_test.go"
+        "internal/valueexecution/source_revision_next_run_staging_test.go",
+        "internal/verify/scope_accepted_revision_next_run_staging_20260920.go"
       ]
     },
     {
