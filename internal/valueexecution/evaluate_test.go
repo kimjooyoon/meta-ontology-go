@@ -226,6 +226,30 @@ func TestCompileLowersRegisteredMinimumOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersTypedBooleanOperation(t *testing.T) {
+	source := []byte("package valuewitness\nnamespace valuewitness\n\n" +
+		"entity Integer id \"gooo://value-witness/entity/integer\"\n" +
+		"entity Boolean id \"gooo://value-witness/entity/boolean\"\n\n" +
+		"activity IsZero(Integer) -> Boolean computes \"int.iszero:0\"\n")
+	program, err := Compile("iszero.gooo", source, "IsZero")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.iszero" || program.Operation.Spec.OutputEntity != BooleanEntity {
+		t.Fatalf("boolean operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct { input int64; want bool }{{0, true}, {7, false}} {
+		result, err := program.ExecuteResult([]int64{test.input})
+		if err != nil {
+			t.Fatalf("execute iszero(%d): %v", test.input, err)
+		}
+		got, err := result.Boolean()
+		if err != nil || got != test.want {
+			t.Fatalf("iszero(%d) = %t / %v, want %t / nil", test.input, got, err, test.want)
+		}
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)

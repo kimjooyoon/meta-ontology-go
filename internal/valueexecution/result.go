@@ -109,3 +109,17 @@ func (result ProducedResult) Integer() (IntegerValue, error) {
 	}
 	return IntegerValue(result.value), nil
 }
+
+// Boolean returns the validated Boolean value carried by a typed result.
+func (result ProducedResult) Boolean() (bool, error) {
+	if err := result.validate(); err != nil {
+		return false, err
+	}
+	if result.authority.outputEntityName != BooleanEntity {
+		return false, failAt(ReasonResultHandleInvalid, "RESULT", "read-boolean-result", fmt.Sprintf("output entity %q is not %q", result.authority.outputEntityName, BooleanEntity))
+	}
+	if result.value != 0 && result.value != 1 {
+		return false, failAt(ReasonResultHandleInvalid, "RESULT", "read-boolean-result", "Boolean result is not encoded as 0 or 1")
+	}
+	return result.value == 1, nil
+}

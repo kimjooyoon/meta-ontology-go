@@ -488,15 +488,15 @@ jobs:
           path: ${{ runner.temp }}/language-value-mul-execution
           if-no-files-found: error
           retention-days: 14
-      - name: Dogfood the registered int.min:0 Gooo declaration and generated Go
+      - name: Dogfood the registered int.iszero:0 Gooo declaration and generated Go
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/language-value-min-dogfood"
+          output="$RUNNER_TEMP/language-value-iszero-dogfood"
           mkdir -p "$output/first" "$output/second"
-          go run ./cmd/gooo check --semantic examples/language-value-witness/min.gooo > "$output/check.txt"
+          go run ./cmd/gooo check --semantic examples/language-value-witness/iszero.gooo > "$output/check.txt"
           for pass in first second; do
-            go run ./cmd/gooo generate examples/language-value-witness/min.gooo --out "$output/$pass"
+            go run ./cmd/gooo generate examples/language-value-witness/iszero.gooo --out "$output/$pass"
             test -s "$output/$pass/semantic.gooo.go"
             test -s "$output/$pass/semantic.gooo.manifest.jsonl"
             test -z "$(gofmt -l "$output/$pass/semantic.gooo.go")"
@@ -506,99 +506,101 @@ jobs:
           jq -S 'del(.generated_file)' "$output/second/semantic.gooo.manifest.jsonl" > "$output/second/canonical-manifest.json"
           cmp "$output/first/canonical-manifest.json" "$output/second/canonical-manifest.json"
           {
-            echo "### Gooo int.min:0 dogfood"
-            echo '- declaration: `examples/language-value-witness/min.gooo`'
+            echo "### Gooo int.iszero:0 dogfood"
+            echo '- declaration: `examples/language-value-witness/iszero.gooo`'
             echo '- semantic check: `PASS`'
             echo '- generated Go replay: `IDENTICAL`'
             echo '- generated manifest replay: `IDENTICAL (canonical; output path excluded)`'
-            echo '- zero-minisor policy: `FAIL_CLOSED`'
+            echo '- zero-iszeroisor policy: `FAIL_CLOSED`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload int.min:0 dogfood evidence
+      - name: Upload int.iszero:0 dogfood evidence
         uses: actions/upload-artifact@v7
         with:
-          name: language-value-min-dogfood-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-min-dogfood
+          name: language-value-iszero-dogfood-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-iszero-dogfood
           if-no-files-found: error
           retention-days: 14
-      - name: Execute the int.min:0 Gooo plan and replay its receipt
+      - name: Execute the int.iszero:0 Gooo plan and replay its receipt
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/language-value-min-execution"
+          output="$RUNNER_TEMP/language-value-iszero-execution"
           mkdir -p "$output"
-          printf '{"value":-7}\n' > "$output/input.json"
+          printf '{"value":0}\n' > "$output/input.json"
           for pass in first second; do
-            go run ./cmd/gooo run --json --entry AtMostZero \
+            go run ./cmd/gooo run --json --entry IsZero \
               --input "$output/input.json" \
-              examples/language-value-witness/min.gooo > "$output/$pass.json"
+              examples/language-value-witness/iszero.gooo > "$output/$pass.json"
           done
           cmp "$output/first.json" "$output/second.json"
           jq -e '
             .schema == "gooo/value-execution-plan/v1" and
             .decision == "PASS" and
-            .entry == "AtMostZero" and
+            .entry == "IsZero" and
             .source_digest != "" and
             .semantic_fingerprint != "" and
             .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.results.IsZero.output_entity == "Boolean" and
             .execution.apply_calls == 1 and
             .execution.deliveries == 0 and
-            .execution.results.AtMostZero.value == -7 and
-            .execution.results.AtMostZero.operation_spec_digest != "" and
-            .execution.results.AtMostZero.result_digest != ""
+            .execution.results.IsZero.value == 1 and
+            .execution.results.IsZero.operation_spec_digest != "" and
+            .execution.results.IsZero.result_digest != ""
           ' "$output/first.json" > /dev/null
           {
-            echo "### Gooo int.min:0 execution"
-            echo '- declaration: `examples/language-value-witness/min.gooo`'
+            echo "### Gooo int.iszero:0 execution"
+            echo '- declaration: `examples/language-value-witness/iszero.gooo`'
             echo '- input: `-7`'
-            echo '- observed result: `-7`'
+            echo '- observed result: `1`'
             echo '- execution receipt replay: `IDENTICAL`'
-            echo '- zero-minisor policy: `FAIL_CLOSED`'
+            echo '- zero-iszeroisor policy: `FAIL_CLOSED`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload int.min:0 execution evidence
+      - name: Upload int.iszero:0 execution evidence
         uses: actions/upload-artifact@v7
         with:
-          name: language-value-min-execution-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-min-execution
+          name: language-value-iszero-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-iszero-execution
           if-no-files-found: error
           retention-days: 14
-      - name: Execute the positive int.min:0 Gooo plan and replay its receipt
+      - name: Execute the positive int.iszero:0 Gooo plan and replay its receipt
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/language-value-min-positive-execution"
+          output="$RUNNER_TEMP/language-value-iszero-positive-execution"
           mkdir -p "$output"
           printf '{"value":7}\n' > "$output/input.json"
           for pass in first second; do
-            go run ./cmd/gooo run --json --entry AtMostZero \
+            go run ./cmd/gooo run --json --entry IsZero \
               --input "$output/input.json" \
-              examples/language-value-witness/min.gooo > "$output/$pass.json"
+              examples/language-value-witness/iszero.gooo > "$output/$pass.json"
           done
           cmp "$output/first.json" "$output/second.json"
           jq -e '
             .schema == "gooo/value-execution-plan/v1" and
             .decision == "PASS" and
-            .entry == "AtMostZero" and
+            .entry == "IsZero" and
             .execution.scope == "REGISTERED_VALUE_OPERATION" and
+            .execution.results.IsZero.output_entity == "Boolean" and
             .execution.apply_calls == 1 and
             .execution.deliveries == 0 and
-            .execution.results.AtMostZero.value == 0 and
-            .execution.results.AtMostZero.operation_spec_digest != "" and
-            .execution.results.AtMostZero.result_digest != ""
+            .execution.results.IsZero.value == 0 and
+            .execution.results.IsZero.operation_spec_digest != "" and
+            .execution.results.IsZero.result_digest != ""
           ' "$output/first.json" > /dev/null
           {
-            echo "### Gooo int.min:0 positive execution"
+            echo "### Gooo int.iszero:0 positive execution"
             echo '- input: `7`'
             echo '- observed result: `0`'
             echo '- execution receipt replay: `IDENTICAL`'
             echo '- repository writes: `0`'
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload positive int.min:0 execution evidence
+      - name: Upload positive int.iszero:0 execution evidence
         uses: actions/upload-artifact@v7
         with:
-          name: language-value-min-positive-execution-${{ env.HEAD_SHA }}
-          path: ${{ runner.temp }}/language-value-min-positive-execution
+          name: language-value-iszero-positive-execution-${{ env.HEAD_SHA }}
+          path: ${{ runner.temp }}/language-value-iszero-positive-execution
           if-no-files-found: error
           retention-days: 14
       - name: Replay exact Gooo value witness
