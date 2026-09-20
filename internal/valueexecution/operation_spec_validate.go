@@ -9,15 +9,15 @@ func ValidateOperationSpec(spec OperationSpec) error {
 	if spec.Schema != OperationSpecSchema || spec.Version != 1 {
 		return fmt.Errorf("operation identity is not closed")
 	}
-	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" && spec.ID != "int.sign" && spec.ID != "int.max" && spec.ID != "int.min" && spec.ID != "int.iszero" && spec.ID != "int.eq" && spec.ID != "bool.not" {
+	if spec.ID != "int.add" && spec.ID != "int.sub" && spec.ID != "int.mul" && spec.ID != "int.div" && spec.ID != "int.mod" && spec.ID != "int.neg" && spec.ID != "int.abs" && spec.ID != "int.sign" && spec.ID != "int.max" && spec.ID != "int.min" && spec.ID != "int.iszero" && spec.ID != "int.eq" && spec.ID != "bool.not" && spec.ID != "bool.and" {
 		return fmt.Errorf("operation identity is not registered")
 	}
 	expectedInput := IntegerEntity
 	expectedOutput := IntegerEntity
-	if spec.ID == "int.iszero" || spec.ID == "int.eq" || spec.ID == "bool.not" {
+	if spec.ID == "int.iszero" || spec.ID == "int.eq" || spec.ID == "bool.not" || spec.ID == "bool.and" {
 		expectedOutput = BooleanEntity
 	}
-	if spec.ID == "bool.not" {
+	if spec.ID == "bool.not" || spec.ID == "bool.and" {
 		expectedInput = BooleanEntity
 	}
 	if spec.Arity != 1 || !slices.Equal(spec.InputEntities, []string{expectedInput}) || spec.OutputEntity != expectedOutput {
@@ -27,7 +27,7 @@ func ValidateOperationSpec(spec OperationSpec) error {
 		return fmt.Errorf("operation semantics are not closed")
 	}
 	expectedFailures := []string{ReasonInputArityMismatch, ReasonIntegerOverflow}
-	if spec.ID == "int.iszero" || spec.ID == "bool.not" {
+	if spec.ID == "int.iszero" || spec.ID == "bool.not" || spec.ID == "bool.and" {
 		expectedFailures = []string{ReasonInputArityMismatch, ReasonOperationIRInvalid}
 	} else if spec.ID == "int.eq" || spec.ID == "int.max" || spec.ID == "int.min" {
 		expectedFailures = []string{ReasonInputArityMismatch}
