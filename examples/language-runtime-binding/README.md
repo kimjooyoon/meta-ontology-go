@@ -19,3 +19,13 @@ go run ./cmd/gooo run --json --entry Produce --input input.json examples/languag
 
 where `input.json` contains `{"value":41}` (an integer literal is also
 accepted).
+
+## Typed Boolean plan composition
+
+`boolean-and.gooo` extends the same native plan boundary with a typed
+Boolean chain: `IsZero.result -> Not.input -> And.input`. The plan preserves
+the declared `Boolean` entity at both deliveries, applies three registered
+pure operations, and records two deliveries. The final `bool.and:1` step is
+deliberately observed through the plan rather than treated as a registry-only
+capability; its source, semantic, plan, and result identities remain part of
+the replayable receipt.

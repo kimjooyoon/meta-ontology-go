@@ -96,6 +96,52 @@ func TestCompilePlanPreservesTypedBooleanComposition(t *testing.T) {
 	}
 }
 
+func TestCompilePlanPreservesBooleanAndComposition(t *testing.T) {
+	fixture := `package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+entity Boolean id "gooo://runtime-binding/entity/boolean"
+
+activity IsZero(Integer) -> Boolean computes "int.iszero:0"
+activity Not(Boolean) -> Boolean computes "bool.not:0"
+activity And(Boolean) -> Boolean computes "bool.and:1"
+
+bind IsZero.result -> Not.input
+bind Not.result -> And.input
+`
+	plan, err := CompilePlan("boolean-and-composition.gooo", []byte(fixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		input       int64
+		isZeroValue int64
+		notValue    int64
+		andValue    int64
+	}{{0, 1, 0, 0}, {7, 0, 1, 1}} {
+		execution, err := plan.Execute(map[string]int64{"IsZero": test.input})
+		if err != nil {
+			t.Fatalf("execute Boolean and composition(%d): %v", test.input, err)
+		}
+		isZero, isZeroOK := execution.Results["IsZero"]
+		not, notOK := execution.Results["Not"]
+		and, andOK := execution.Results["And"]
+		if execution.ApplyCalls != 3 || execution.Deliveries != 2 ||
+			len(execution.Activities) != 3 || execution.Activities[0] != "IsZero" ||
+			execution.Activities[1] != "Not" || execution.Activities[2] != "And" ||
+			!isZeroOK || !notOK || !andOK ||
+			isZero.OutputEntity != BooleanEntity || not.OutputEntity != BooleanEntity || and.OutputEntity != BooleanEntity ||
+			isZero.Value != test.isZeroValue || not.Value != test.notValue || and.Value != test.andValue ||
+			!validDigest(execution.PlanDigest) || !validDigest(execution.InputDigest) ||
+			!validDigest(execution.ExecutionDigest) || !validDigest(isZero.ResultDigest) ||
+			!validDigest(not.ResultDigest) || !validDigest(and.ResultDigest) {
+			t.Fatalf("Boolean and composition(%d) = %#v, want %d -> %d -> %d",
+				test.input, execution, test.isZeroValue, test.notValue, test.andValue)
+		}
+	}
+}
+
 func TestCompilePlanPreservesMultiHopTypedBooleanComposition(t *testing.T) {
 	fixture := `package runtimebinding
 namespace runtimebinding
