@@ -48,6 +48,8 @@ const (
 	DenominatorMigrationV36Digest = "sha256:07ef17811672785448a4ef38baec9b970d116024ce6fac5afae8d5b187a82b1c"
 	// V37 binds the parameterized int.add:2 value witness registered in the syntax and semantic corpora.
 	DenominatorMigrationV37Digest = "sha256:c0feff0ec84d412f80cf492d65f5bd456133d1a550aeccd713f21e83fed17831"
+	// V38 binds the int.mul:3 value witness registered in the syntax and semantic corpora.
+	DenominatorMigrationV38Digest = "sha256:f2db6d69f4bb0ba9fb50a2e8e8b4054bdacbe048470ce21a16e0b8cf72575952"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

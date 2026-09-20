@@ -308,6 +308,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-value-witness-mul",
+      "path": "examples/language-value-witness/mul.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-runtime-binding",
       "path": "examples/language-runtime-binding/main.gooo",
       "kind": "VALID",

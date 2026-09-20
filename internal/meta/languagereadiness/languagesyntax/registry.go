@@ -64,6 +64,7 @@ func expectedRegistry() Registry {
 		valid("language-value-witness-neg", "examples/language-value-witness/neg.gooo"),
 		valid("language-value-witness-abs", "examples/language-value-witness/abs.gooo"),
 		valid("language-value-witness-add", "examples/language-value-witness/add.gooo"),
+		valid("language-value-witness-mul", "examples/language-value-witness/mul.gooo"),
 		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
 		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
 		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),

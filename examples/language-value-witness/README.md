@@ -50,7 +50,11 @@ executes input `7`, requires `AddTwo = 9`, and replays the generated Go,
 canonical manifest, and detached execution receipt without changing the
 canonical `int.add:1` self-improvement witness.
 
-The CI receipt records six exact input/output cases, eight fail-closed
+`mul.gooo` extends the path to the registered `int.mul:3` operation. CI
+executes input `4`, requires `Multiply = 12`, and replays the generated Go,
+canonical manifest, and detached execution receipt.
+
+The CI receipt records seven exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
 semantic fingerprints. Core IR preservation and fingerprint sensitivity are
