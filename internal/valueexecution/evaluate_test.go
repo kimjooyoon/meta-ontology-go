@@ -210,6 +210,22 @@ func TestCompileLowersRegisteredMaximumOperation(t *testing.T) {
 	}
 }
 
+func TestCompileLowersRegisteredMinimumOperation(t *testing.T) {
+	program, err := Compile("minimum.gooo", valueFixture(`activity AtMostZero(Integer) -> Integer computes "int.min:0"`), "AtMostZero")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if program.Operation.Spec.ID != "int.min" || program.Operation.Spec.Effect != EffectPureValue || program.Operation.Spec.Determinism != Deterministic {
+		t.Fatalf("minimum operation contract is not closed: %#v", program.Operation.Spec)
+	}
+	for _, test := range []struct{ input, want int64 }{{-7, -7}, {7, 0}} {
+		got, err := program.Execute([]int64{test.input})
+		if err != nil || got != test.want {
+			t.Fatalf("minimum execution = %d / %v, want %d / nil", got, err, test.want)
+		}
+	}
+}
+
 func TestCompileRejectsRuntimeBindingsWithoutAPlan(t *testing.T) {
 	source := append(valueFixture(`activity Increment(Integer) -> Integer computes "int.add:1"`),
 		[]byte("bind Increment.result -> Increment.input\n")...)

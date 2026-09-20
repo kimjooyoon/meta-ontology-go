@@ -335,6 +335,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-value-witness-min",
+      "path": "examples/language-value-witness/min.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-runtime-binding",
       "path": "examples/language-runtime-binding/main.gooo",
       "kind": "VALID",
