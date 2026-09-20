@@ -7,7 +7,7 @@ type registeredOperation struct {
 	Apply func(int64, int64) (int64, error)
 }
 
-var operationRegistry = append([]registeredOperation{
+var integerOperationRegistry = []registeredOperation{
 	{Spec: OperationSpec{
 		Schema: OperationSpecSchema, ID: "int.add", Version: 1, Arity: 1,
 		InputEntities: []string{IntegerEntity}, OperandKind: OperandInt64Literal,
@@ -74,13 +74,17 @@ var operationRegistry = append([]registeredOperation{
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedIsZero},
+
+}
+
+var booleanOperationRegistry = []registeredOperation{
 	{Spec: OperationSpec{
 		Schema: OperationSpecSchema, ID: "bool.not", Version: 1, Arity: 1,
 		InputEntities: []string{BooleanEntity}, OperandKind: OperandInt64Literal,
 		OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 		FailureReasons: []string{ReasonInputArityMismatch, ReasonOperationIRInvalid},
 	}, Apply: checkedBooleanNot},
-}, intEqualOperation)
+}
 
 var intEqualOperation = registeredOperation{Spec: OperationSpec{
 	Schema: OperationSpecSchema, ID: "int.eq", Version: 1, Arity: 1,
@@ -88,6 +92,8 @@ var intEqualOperation = registeredOperation{Spec: OperationSpec{
 	OutputEntity: BooleanEntity, Effect: EffectPureValue, Determinism: Deterministic,
 	FailureReasons: []string{ReasonInputArityMismatch},
 }, Apply: checkedEqual}
+
+var operationRegistry = append(append([]registeredOperation{}, integerOperationRegistry...), append(booleanOperationRegistry, intEqualOperation)...)
 
 func operationByID(id string) (registeredOperation, bool) {
 	for _, operation := range operationRegistry {
