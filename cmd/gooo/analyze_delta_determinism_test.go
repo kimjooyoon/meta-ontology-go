@@ -24,11 +24,11 @@ func TestRunAnalyzeStableAcrossSingleGeneratedGoOutputRoots(t *testing.T) {
 	}
 
 	first, firstCode, firstErr := runAnalyzePaths(billingAnalyzeAuthority, firstPath)
-	if firstErr != nil || firstCode != exitOK {
+	if firstErr != "" || firstCode != exitOK {
 		t.Fatalf("first analysis failed: code=%d err=%v", firstCode, firstErr)
 	}
 	second, secondCode, secondErr := runAnalyzePaths(billingAnalyzeAuthority, secondPath)
-	if secondErr != nil || secondCode != exitOK {
+	if secondErr != "" || secondCode != exitOK {
 		t.Fatalf("second analysis failed: code=%d err=%v", secondCode, secondErr)
 	}
 	if !bytes.Equal(first, second) {
