@@ -32,6 +32,13 @@ source and semantic identities, and replay byte-identically. This is execution
 evidence for the registered value operation, not evidence of arbitrary generated
 Go runtime support.
 
+`neg.gooo` applies the same closed loop to `int.neg:0`. CI executes the
+declaration with input `5`, requires the detached receipt to report `Negate = -5`,
+and compares the generated Go, manifest, and execution receipt across two runs.
+The zero operand is an explicit sentinel for the unary operation; minimum-integer
+overflow remains fail-closed in the executor rather than being hidden by the
+dogfood example.
+
 The CI receipt records five exact input/output cases, eight fail-closed
 counterexamples, three reader resolutions, and the fixed scoped coordinate
 `0/1 -> 1/1`. The program participates in both the bidirectional and core IR
