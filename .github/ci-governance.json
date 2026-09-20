@@ -5064,7 +5064,6 @@
         "internal/valueexecution/operation_spec_validate.go",
         "internal/valueexecution/registry.go",
         "internal/valueexecution/validate.go",
-        "internal/verify/scope_value_program_runtime_dogfood_max_20260920.go",
         "internal/verify/scope_value_program_runtime_dogfood_min_20260920.go"
       ]
     },
@@ -5107,6 +5106,15 @@
         "internal/verify/scope_value_program_runtime_dogfood_min_20260920.go",
         "internal/verify/scope_value_program_runtime_scope_provenance_fix_20260920.go",
         "internal/verify/scope_value_program_runtime_scope_provenance_fix_20260920_test.go"
+      ]
+    },
+    {
+      "branch": "agent/value-program-runtime-scope-table-fix-20260920",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "internal/verify/scope_value_program_runtime_scope_table_fix_20260920.go",
+        "internal/verify/scope_value_program_runtime_scope_table_fix_20260920_test.go"
       ]
     },
     {
