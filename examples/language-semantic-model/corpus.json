@@ -136,6 +136,13 @@
       "meta_operation": "lower-normalize-replay"
     },
     {
+      "id": "semantic-language-value-witness-add",
+      "kind": "SOURCE",
+      "path": "examples/language-value-witness/add.gooo",
+      "proof_choice": "FOUNDATION",
+      "meta_operation": "lower-normalize-replay"
+    },
+    {
       "id": "semantic-language-operation-catalog",
       "kind": "SOURCE",
       "path": "examples/language-operation-catalog/main.gooo",
