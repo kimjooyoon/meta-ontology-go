@@ -8,8 +8,8 @@ import (
 
 func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	raw := activeDenominator()
-	if digestBytes(raw) != DenominatorMigrationV35Digest || activeDenominatorDigest() != DenominatorMigrationV35Digest {
-		t.Fatal("active denominator is not the pinned v35 migration")
+	if digestBytes(raw) != DenominatorMigrationV36Digest || activeDenominatorDigest() != DenominatorMigrationV36Digest {
+		t.Fatal("active denominator is not the pinned v36 migration")
 	}
 	var observed struct {
 		Version    int `json:"version"`
@@ -22,8 +22,8 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	if err := json.Unmarshal(raw, &observed); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Version != 35 || len(observed.Boundaries) != 6 ||
-		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 66 {
+	if observed.Version != 36 || len(observed.Boundaries) != 6 ||
+		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 67 {
 		t.Fatalf("migration changed the declared capability boundary: %#v", observed)
 	}
 	links := 0
@@ -40,7 +40,7 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 
 func TestCurrentDenominatorRejectsLoweredTarget(t *testing.T) {
 	raw := activeDenominator()
-	lowered := bytes.Replace(raw, []byte(`"target": 66`), []byte(`"target": 65`), 1)
+	lowered := bytes.Replace(raw, []byte(`"target": 67`), []byte(`"target": 66`), 1)
 	if bytes.Equal(raw, lowered) {
 		t.Fatal("counterexample did not change the syntax target")
 	}
@@ -57,17 +57,18 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		digestBytes(embeddedDenominatorV31) != DenominatorMigrationV31Digest ||
 		digestBytes(embeddedDenominatorV32) != DenominatorMigrationV32Digest ||
 		digestBytes(embeddedDenominatorV33) != DenominatorMigrationV33Digest ||
-		digestBytes(embeddedDenominatorV34) != DenominatorMigrationV34Digest {
+		digestBytes(embeddedDenominatorV34) != DenominatorMigrationV34Digest ||
+		digestBytes(embeddedDenominatorV35) != DenominatorMigrationV35Digest {
 		t.Fatal("historical denominator evidence was rewritten")
 	}
 	var previous, current denominator
-	if err := json.Unmarshal(embeddedDenominatorV34, &previous); err != nil {
+	if err := json.Unmarshal(embeddedDenominatorV35, &previous); err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(activeDenominator(), &current); err != nil {
 		t.Fatal(err)
 	}
-	if previous.Version != 34 || current.Version != 35 ||
+	if previous.Version != 35 || current.Version != 36 ||
 		len(previous.Boundaries) != 6 || len(current.Boundaries) != 6 {
 		t.Fatal("migration changed the boundary inventory")
 	}
