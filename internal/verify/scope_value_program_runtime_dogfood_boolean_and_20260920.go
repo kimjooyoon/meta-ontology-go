@@ -1,7 +1,7 @@
 package verify
 
 func init() {
-	branchScopeAllowlist["agent/value-program-runtime-dogfood-boolean-and-20260920"] = []string{
+	branchScopeAllowlist["agent/value-program-runtime-dogfood-boolean-and-20260920-v2"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
 		"examples/language-value-witness/and.gooo",

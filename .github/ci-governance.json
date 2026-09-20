@@ -5066,7 +5066,7 @@
       ]
     },
     {
-      "branch": "agent/value-program-runtime-dogfood-boolean-and-20260920",
+      "branch": "agent/value-program-runtime-dogfood-boolean-and-20260920-v2",
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
