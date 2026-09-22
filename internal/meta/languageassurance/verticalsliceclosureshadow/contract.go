@@ -62,6 +62,8 @@ const (
 	DenominatorMigrationV43Digest = "sha256:cc71098af93f003e6e5c01e845ac5dba204acfdb866bf2a46ada1fc29ff2142c"
 	// V44 binds the two Boolean-and language capabilities registered after the v43 snapshot.
 	DenominatorMigrationV44Digest = "sha256:3af46b88345fb50ba3b032a9112cab9781ac1cb9deefff40adabbd4cd4c13b08"
+	// V45 binds the corresponding two semantic cases added with the Boolean-and capabilities.
+	DenominatorMigrationV45Digest = "sha256:676ca467e080dad459a9a7f5c5b0d82f6ba2eb136ba73a8ec13d9165db4ad624"
 
 	DecisionShadowPass  = "SHADOW_PASS"
 	DecisionFailClosed  = "FAIL_CLOSED"

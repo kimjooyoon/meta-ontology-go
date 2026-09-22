@@ -11,6 +11,7 @@ func init() {
 		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence.go",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v43.json",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v44.json",
+		"internal/meta/languageassurance/verticalsliceclosureshadow/evidence/denominator-v45.json",
 		"internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
 		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
