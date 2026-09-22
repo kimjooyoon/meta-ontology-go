@@ -15,6 +15,8 @@ func init() {
 		"internal/meta/languagereadiness/languagesyntax/model.go",
 		"internal/meta/languagereadiness/languagesyntax/registry.go",
 		"internal/meta/languagereadiness/languagesyntax/validate.go",
+		"internal/meta/languagereadiness/languagesemantic/model.go",
 		"internal/verify/scope_language_syntax_unknown_corpus_digest_20260920.go",
+		"scripts/source-subject-witness/function_binding.go",
 	}
 }
