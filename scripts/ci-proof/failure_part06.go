@@ -34,6 +34,9 @@ func validateFailureManifest(manifest failureManifest, binding failureBinding) e
 	if err := validateTerminalFailureMapping(manifest, binding); err != nil {
 		return err
 	}
+	if err := validateTerminalFailureEvidence(manifest); err != nil {
+		return err
+	}
 	if err := validateFailureEvidence(manifest); err != nil {
 		return err
 	}
