@@ -16,6 +16,7 @@ type documentProvenance struct {
 	URI              string `json:"uri"`
 	SubjectDigest    string `json:"subject_digest"`
 	SourceDigest     string `json:"source_digest"`
+	SemanticDigest   string `json:"semantic_digest"`
 	ProfileDigest    string `json:"profile_digest"`
 	ToolchainDigest  string `json:"toolchain_digest"`
 	ContractDigest   string `json:"contract_digest"`
@@ -23,7 +24,7 @@ type documentProvenance struct {
 }
 
 func documentProvenanceDigest(value documentProvenance) string {
-	return analysisprovenance.Digest(value.SourceDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
+	return analysisprovenance.DocumentDigest(value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
 }
 
 func (server *Server) documentProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
@@ -38,7 +39,8 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	stored, exists := server.documents[params.TextDocument.URI]
 	if exists {
 		key := stored.cacheKey
-		stored = &document{version: stored.version, text: stored.text, cacheKey: key}
+		semanticDigest := stored.result.semanticDigest
+		stored = &document{version: stored.version, text: stored.text, cacheKey: key, result: ParseResult{semanticDigest: semanticDigest}}
 	}
 	server.mu.RUnlock()
 	if !exists || stored.cacheKey.sourceDigest == "" {
@@ -47,7 +49,7 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	provenance := documentProvenance{
 		Schema: documentProvenanceSchema, URI: params.TextDocument.URI,
 		SubjectDigest: stored.cacheKey.sourceDigest,
-		SourceDigest: stored.cacheKey.sourceDigest, ProfileDigest: stored.cacheKey.profileDigest,
+		SourceDigest: stored.cacheKey.sourceDigest, SemanticDigest: stored.result.semanticDigest, ProfileDigest: stored.cacheKey.profileDigest,
 		ToolchainDigest: stored.cacheKey.toolchainDigest, ContractDigest: stored.cacheKey.contractDigest,
 	}
 	provenance.ProvenanceDigest = documentProvenanceDigest(provenance)
@@ -68,7 +70,7 @@ func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, erro
 func validateDocumentProvenance(value documentProvenance) error {
 	if value.Schema != documentProvenanceSchema || value.URI == "" ||
 		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != value.SourceDigest ||
-		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
+		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.SemanticDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
 		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
 		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
 		return errors.New("document provenance identity is invalid")

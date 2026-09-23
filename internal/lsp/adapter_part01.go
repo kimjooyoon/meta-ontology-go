@@ -46,6 +46,7 @@ func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string
 			result.Diagnostics = append(result.Diagnostics, semanticDiagnostic(uri, source, file, err))
 		} else {
 			result.semanticValid = true
+			result.semanticDigest = ir.StableHash()
 			ids, names = loweredIdentities(ir)
 		}
 	}

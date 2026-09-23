@@ -60,6 +60,10 @@ type ParseResult struct {
 	References  []Reference
 	Diagnostics []Diagnostic
 
+	// semanticDigest is the stable digest of the accepted lowered IR. It is
+	// retained for provenance responses without exposing the internal IR.
+	semanticDigest string
+
 	// semanticChecked distinguishes the authoritative syntax adapter from
 	// test/integration parsers supplied through ParserFunc. A checked result
 	// never falls back to name-only links when lowering was rejected.
