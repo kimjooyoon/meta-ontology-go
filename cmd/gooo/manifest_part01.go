@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter"
 	"io"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/conformance/adapter"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 const projectionManifestSchema = "gooo/cli/generate-manifest/v1"
@@ -30,6 +32,7 @@ type projectionManifest struct {
 	ProtectedBytesEqual bool                     `json:"protected_bytes_equal"`
 	GeneratedFile       string                   `json:"generated_file"`
 	ResponseDigest      string                   `json:"response_digest"`
+	AnalysisProvenance  *generation.SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
 	EvidenceManifest    adapter.EvidenceManifest `json:"evidence_manifest"`
 }
 

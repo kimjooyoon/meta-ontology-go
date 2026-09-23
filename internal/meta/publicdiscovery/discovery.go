@@ -191,6 +191,7 @@ type outputSignature struct {
 	ManifestDigest string
 }
 
+func PolicySourcePath() string         { return discoverypolicy.PolicySourcePath() }
 func PolicySourceDigest() string       { return discoverypolicy.PolicySourceDigest() }
 func GeneratedEvaluatorDigest() string { return discoverypolicy.GeneratedEvaluatorDigest() }
 

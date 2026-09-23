@@ -51,6 +51,8 @@ func GeneratedEvaluatorDigest() string { return generatedpolicy.EvaluatorDigest 
 
 func GeneratedEvaluatorCaseIDs() []string { return generatedpolicy.CaseIDs() }
 
+func PolicySourcePath() string { return generatedpolicy.PolicySourcePath }
+
 func PolicySourceDigest() string { return generatedpolicy.PolicySourceDigest }
 
 func Evaluate(caseID string) (string, bool) { return generatedpolicy.Evaluate(caseID) }
