@@ -58,7 +58,7 @@ func (graph Graph) Story(id ID, snapshot provenance.Snapshot) (StoryResponse, er
 	story := StoryResponse{
 		Schema: StorySchema, SemanticID: ID(canonical),
 		SemanticDigest: metadata.SemanticDigest, GraphHash: metadata.GraphHash,
-		Relationships: []Fact{}, Evidence: [], Status: StoryUnknown,
+		Relationships: []Fact{}, Evidence: []StoryEvidenceReference{}, Status: StoryUnknown,
 		Reason: "UNKNOWN_SEMANTIC_ID",
 	}
 	node, found := graph.Node(ID(canonical))
