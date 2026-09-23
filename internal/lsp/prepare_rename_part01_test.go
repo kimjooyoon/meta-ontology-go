@@ -1,42 +1,23 @@
 package lsp
 
-// PrepareRenameResult identifies the exact client-side range that a later
-// rename request may edit. It carries no mutation authority.
-type PrepareRenameResult struct {
-	Range       Range  `json:"range"`
-	Placeholder string `json:"placeholder,omitempty"`
-}
+import "testing"
 
-func (server *Server) prepareRenameRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
-	var params TextDocumentPositionParams
-	if decodeParams(request.Params, &params) != nil || params.TextDocument.URI == "" {
-		return responseOrNil(request.ID, invalidParams, "Invalid prepare rename parameters"), nil, nil
-	}
-	document, exists := server.referenceDocument(params.TextDocument.URI)
-	if !exists {
-		return resultResponse(request.ID, nil), nil, nil
-	}
-	if document.result.semanticChecked && !document.result.semanticValid {
-		return resultResponse(request.ID, nil), nil, nil
-	}
-	targetID, targetName, err := referenceTargetForDocument(document, params.Position)
-	if err != nil {
-		return responseOrNil(request.ID, invalidParams, "Invalid prepare rename position"), nil, nil
-	}
-	if targetID == "" || targetName == "" {
-		return resultResponse(request.ID, nil), nil, nil
-	}
-	prepared, ok := prepareRenameForTarget(params.TextDocument.URI, targetID, targetName, allSymbols(document.result), document.result.References)
+func TestPrepareRenameForTargetUsesSemanticIdentityRange(t *testing.T) {
+	id := "gooo://entity/order"
+	symbols := []Symbol{{ID: id, Name: "Order", SelectionRange: testRange(0, 0, 0, 5)}}
+	references := []Reference{{ID: id, Name: "Order", Range: testRange(1, 8, 1, 13)}}
+	prepared, ok := prepareRenameForTarget("file:///example.gooo", id, "Order", symbols, references)
 	if !ok {
-		return resultResponse(request.ID, nil), nil, nil
+		t.Fatal("prepare rename did not find semantic target")
 	}
-	return resultResponse(request.ID, prepared), nil, nil
+	if prepared.Range != symbols[0].SelectionRange || prepared.Placeholder != "Order" {
+		t.Fatalf("prepared rename = %#v", prepared)
+	}
 }
 
-func prepareRenameForTarget(uri, targetID, targetName string, symbols []Symbol, references []Reference) (PrepareRenameResult, bool) {
-	locations := canonicalReferenceLocationsForTarget(uri, targetID, targetName, symbols, references, true)
-	if len(locations) == 0 {
-		return PrepareRenameResult{}, false
+func TestPrepareRenameForTargetRejectsUnknownSemanticIdentity(t *testing.T) {
+	prepared, ok := prepareRenameForTarget("file:///example.gooo", "gooo://missing", "Missing", nil, nil)
+	if ok {
+		t.Fatalf("unknown semantic target was prepared: %#v", prepared)
 	}
-	return PrepareRenameResult{Range: locations[0].Range, Placeholder: targetName}, true
 }
