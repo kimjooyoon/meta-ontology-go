@@ -418,6 +418,8 @@ jobs:
               cp "$root/counterexamples.json" "$root/diagnostic.json"
             elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/verification.json" >/dev/null 2>&1; then
               cp "$root/verification.json" "$root/diagnostic.json"
+            elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "UNKNOWN" and .upstream != null' "$root/verification.json" >/dev/null 2>&1; then
+              cp "$root/verification.json" "$root/diagnostic.json"
             else
               jq -n --arg stage "$stage" --arg step "focused-transformation" --arg reason "FOCUSED_JOB_COMMAND_FAILED" --arg command "$BASH_COMMAND" --argjson exit_code "$status" --argjson line "${BASH_LINENO[0]:-0}" '{schema:"gooo/transformation-effect-focused-diagnostic/v1",decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",stage:$stage,step:$step,reason:$reason,unknown_class:"UNCATALOGED_CAUSE",next_operation:"restore-transformation-evidence",blocked_by:[],command:$command,exit_code:$exit_code,line:$line}' > "$root/diagnostic.json"
             fi
@@ -475,6 +477,8 @@ jobs:
             if [[ -s "$root/counterexamples.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/counterexamples.json" >/dev/null 2>&1; then
               cp "$root/counterexamples.json" "$root/diagnostic.json"
             elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "REFUTED" and .resolution == "EXACT"' "$root/verification.json" >/dev/null 2>&1; then
+              cp "$root/verification.json" "$root/diagnostic.json"
+            elif [[ -s "$root/verification.json" ]] && jq -e '.decision == "UNKNOWN" and .upstream != null' "$root/verification.json" >/dev/null 2>&1; then
               cp "$root/verification.json" "$root/diagnostic.json"
             else
               jq -n --arg stage "$stage" --arg step "focused-transformation" --arg reason "FOCUSED_JOB_COMMAND_FAILED" --arg command "$BASH_COMMAND" --argjson exit_code "$status" --argjson line "${BASH_LINENO[0]:-0}" '{schema:"gooo/transformation-effect-focused-diagnostic/v1",decision:"UNKNOWN",resolution:"LOWER_RESOLUTION",stage:$stage,step:$step,reason:$reason,unknown_class:"UNCATALOGED_CAUSE",next_operation:"restore-transformation-evidence",blocked_by:[],command:$command,exit_code:$exit_code,line:$line}' > "$root/diagnostic.json"
