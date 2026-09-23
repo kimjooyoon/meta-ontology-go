@@ -12,7 +12,7 @@ func assertBillingNavigation(t *testing.T, messages [][]byte, document *document
 		Result *Hover `json:"result"`
 	}
 	decodeJSON(t, messages[3], &hover)
-	if hover.Result == nil || hover.Result.Contents.Value != "activity PayOrder" {
+	if hover.Result == nil || !strings.Contains(hover.Result.Contents.Value, "activity PayOrder") || !strings.Contains(hover.Result.Contents.Value, wantIDs["PayOrder"]) {
 		t.Fatalf("activity hover = %#v", hover.Result)
 	}
 	if symbol, ok := symbolAtPosition(*document, Position{Line: 7, Character: 10}); !ok || symbol.ID != wantIDs["PayOrder"] {
