@@ -39,7 +39,7 @@ func (server *Server) completionRequest(ctx context.Context, request requestEnve
 	if err := server.refresh(ctx, params.TextDocument.URI); err != nil {
 		return featureErrorResponse(request.ID, err, ctx)
 	}
-	return resultResponse(request.ID, server.completion(params.TextDocument.URI)), nil, nil
+	return resultResponse(request.ID, server.completionAt(params.TextDocument.URI, params.Position, true)), nil, nil
 }
 func (server *Server) definitionRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
