@@ -9,9 +9,7 @@ import (
 func TestDiagnosticProvenanceBindsDocumentAndDiagnostics(t *testing.T) {
 	server := NewServer()
 	uri := "file:///diagnostics.gooo"
-	source := "package diagnostics
-namespace diagnostics
-"
+	source := "package diagnostics\nnamespace diagnostics\n"
 	server.documents[uri] = &document{text: source}
 	params, err := json.Marshal(diagnosticProvenanceParams{TextDocument: TextDocumentIdentifier{URI: uri}})
 	if err != nil {
@@ -36,9 +34,7 @@ namespace diagnostics
 	if err := validateDiagnosticProvenance(value); err != nil {
 		t.Fatal(err)
 	}
-	changedSource := "package diagnostics
-namespace changed
-"
+	changedSource := "package diagnostics\nnamespace changed\n"
 	changeParams, err := json.Marshal(map[string]any{
 		"textDocument": map[string]any{"uri": uri, "version": 2},
 		"contentChanges": []any{map[string]any{"text": changedSource}},
