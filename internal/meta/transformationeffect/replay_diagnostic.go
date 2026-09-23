@@ -1,6 +1,7 @@
 package transformationeffect
 
 import (
+	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 )
 
 const replayDiagnosticSchema = "gooo/transformation-effect-replay-diagnostic/v1"
+const OperationProgressFilename = "operation-progress.jsonl"
 
 type replayDivergence struct {
 	Stage    string
@@ -136,21 +138,38 @@ func replayValue(value any) string {
 	return string(payload)
 }
 
+type ReplayActiveOperation struct {
+	HeadSHA                     string `json:"head_sha"`
+	InvocationID                string `json:"invocation_id"`
+	Sequence                    int    `json:"sequence"`
+	ActionIndicatorID           string `json:"action_indicator_id"`
+	Operation                   string `json:"operation"`
+	Activity                    string `json:"activity"`
+	Executor                    string `json:"executor"`
+	Subject                     string `json:"subject"`
+	SubjectKind                 string `json:"subject_kind"`
+	InputContractSourceDigest   string `json:"input_contract_source_digest"`
+	InputContractSemanticDigest string `json:"input_contract_semantic_digest"`
+	Phase                       string `json:"phase"`
+	Boundary                    string `json:"boundary"`
+}
+
 type ReplayDiagnostic struct {
-	Schema        string   `json:"schema"`
-	Decision      string   `json:"decision"`
-	Resolution    string   `json:"resolution"`
-	Stage         string   `json:"stage"`
-	Step          string   `json:"step"`
-	Reason        string   `json:"reason"`
-	UnknownClass  string   `json:"unknown_class,omitempty"`
-	NextOperation string   `json:"next_operation,omitempty"`
-	BlockedBy     []string `json:"blocked_by"`
-	FieldPath     string   `json:"field_path"`
-	Expected      string   `json:"expected,omitempty"`
-	Observed      string   `json:"observed,omitempty"`
-	ExpectedHash  string   `json:"expected_sha256,omitempty"`
-	ObservedHash  string   `json:"observed_sha256,omitempty"`
+	Schema          string                 `json:"schema"`
+	Decision        string                 `json:"decision"`
+	Resolution      string                 `json:"resolution"`
+	Stage           string                 `json:"stage"`
+	Step            string                 `json:"step"`
+	Reason          string                 `json:"reason"`
+	UnknownClass    string                 `json:"unknown_class,omitempty"`
+	NextOperation   string                 `json:"next_operation,omitempty"`
+	BlockedBy       []string               `json:"blocked_by"`
+	FieldPath       string                 `json:"field_path"`
+	Expected        string                 `json:"expected,omitempty"`
+	Observed        string                 `json:"observed,omitempty"`
+	ExpectedHash    string                 `json:"expected_sha256,omitempty"`
+	ObservedHash    string                 `json:"observed_sha256,omitempty"`
+	ActiveOperation *ReplayActiveOperation `json:"active_operation,omitempty"`
 }
 
 func WriteReplayDiagnostic(outputPath string, cause error) error {
@@ -162,6 +181,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_UNCATALOGED",
 		UnknownClass: "UNCATALOGED_CAUSE", NextOperation: "report-counterexample",
 		BlockedBy: []string{}}
+	diagnostic.ActiveOperation = readActiveReplayOperation(filepath.Join(filepath.Dir(outputPath), OperationProgressFilename))
 	if divergence, ok := errors.AsType[*replayDivergence](cause); ok {
 		diagnostic.Decision = "REFUTED"
 		diagnostic.Resolution = "EXACT"
@@ -187,6 +207,9 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		diagnostic.ExpectedHash = replayDigest(binding.Expected)
 		diagnostic.ObservedHash = replayDigest(binding.Observed)
 	}
+	if diagnostic.Decision == "UNKNOWN" && diagnostic.ActiveOperation != nil {
+		diagnostic.NextOperation = "observe-interrupted-operation"
+	}
 	payload, err := json.MarshalIndent(diagnostic, "", "  ")
 	if err != nil {
 		return err
@@ -196,6 +219,51 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		return err
 	}
 	return os.WriteFile(path, append(payload, '\n'), 0o644)
+}
+
+func readActiveReplayOperation(path string) *ReplayActiveOperation {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer file.Close()
+	active := make(map[string]operationProgressEvent)
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		var event operationProgressEvent
+		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
+			return nil
+		}
+		key := event.InvocationID + "\x00" + event.ActionIndicatorID + "\x00" + event.Phase
+		switch event.Boundary {
+		case "ENTERED":
+			active[key] = event
+		case "RETURNED":
+			delete(active, key)
+		}
+	}
+	if err := scanner.Err(); err != nil || len(active) == 0 {
+		return nil
+	}
+	var latest operationProgressEvent
+	found := false
+	for _, event := range active {
+		if !found || event.Sequence > latest.Sequence {
+			latest = event
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	return &ReplayActiveOperation{
+		HeadSHA: latest.HeadSHA, InvocationID: latest.InvocationID, Sequence: latest.Sequence,
+		ActionIndicatorID: latest.ActionIndicatorID, Operation: latest.Operation,
+		Activity: latest.Activity, Executor: latest.Executor, Subject: latest.Subject,
+		SubjectKind: latest.SubjectKind, InputContractSourceDigest: latest.InputContractSourceDigest,
+		InputContractSemanticDigest: latest.InputContractSemanticDigest, Phase: latest.Phase,
+		Boundary: latest.Boundary,
+	}
 }
 
 func replayDigest(value string) string {
