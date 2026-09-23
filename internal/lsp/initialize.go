@@ -33,10 +33,12 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				"goooReferencesProvenance": map[string]string{
 					"method": "gooo/referencesProvenance", "schema": referencesProvenanceSchema,
 				},
+				"goooDiagnosticProvenance": map[string]string{
+					"method": "gooo/diagnosticProvenance", "schema": diagnosticProvenanceSchema,
+				},
 			},
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
 	}
 	return resultResponse(request.ID, result), nil, nil
 }
-
