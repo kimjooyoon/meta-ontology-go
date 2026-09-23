@@ -29,4 +29,27 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" {
 		t.Fatalf("incomplete document provenance: %#v", value)
 	}
+
+	changedSource := "package provenance\nnamespace changed\n"
+	changeParams, err := json.Marshal(map[string]any{
+		"textDocument": map[string]any{"uri": uri, "version": 2},
+		"contentChanges": []any{map[string]any{"text": changedSource}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := server.didChange(context.Background(), requestEnvelope{Params: changeParams}); err != nil {
+		t.Fatal(err)
+	}
+	response, _, err = server.documentProvenanceRequest(context.Background(), requestEnvelope{ID: json.RawMessage("2"), Params: params})
+	if err != nil {
+		t.Fatal(err)
+	}
+	changed, err := decodeDocumentProvenance(response.Result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if changed.SourceDigest != digestText(changedSource) || changed.SourceDigest == value.SourceDigest {
+		t.Fatalf("document provenance was stale after change: before=%#v after=%#v", value, changed)
+	}
 }
