@@ -18,6 +18,14 @@ type SourceRevisionRequest struct {
 	ExpectedProgram    string `json:"expected_program"`
 	ReplacementProgram string `json:"replacement_program"`
 	TriggerReason      string `json:"trigger_reason"`
+	AnalysisProvenance *AnalysisProvenance `json:"analysis_provenance,omitempty"`
+}
+
+type AnalysisProvenance struct {
+	SourceDigest   string `json:"source_digest"`
+	ProfileDigest  string `json:"profile_digest"`
+	ToolchainDigest string `json:"toolchain_digest"`
+	ContractDigest string `json:"contract_digest"`
 }
 
 type SourceRevision struct {
@@ -35,6 +43,7 @@ type SourceRevision struct {
 	BlockedBy             []string `json:"blocked_by"`
 	RepairHandoffDigest   string   `json:"repair_handoff_digest,omitempty"`
 	RepairCandidateID     string   `json:"repair_candidate_id,omitempty"`
+	AnalysisProvenance    *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 }
 
 type SourceRevisionContract struct {
@@ -62,6 +71,7 @@ type SourceRevisionEvaluation struct {
 	ContractInputs          []int64     `json:"contract_inputs,omitempty"`
 	ContractExpectedOutputs map[int64]int64 `json:"contract_expected_outputs,omitempty"`
 	ContractDigest          string      `json:"contract_digest,omitempty"`
+	AnalysisProvenance      *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 	ContractPreservation    bool        `json:"contract_preservation"`
 	RegressionEvidence      []string    `json:"regression_evidence,omitempty"`
 	AdoptionAuthorized      bool        `json:"adoption_authorized"`
@@ -74,6 +84,9 @@ type SourceRevisionEvaluation struct {
 func ProposeSourceRevision(filename string, source []byte, request SourceRevisionRequest) ([]byte, SourceRevision, error) {
 	if !validDigest(request.SourceDigest) || request.SourceDigest != digestBytes(source) {
 		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "match-source-digest", "source digest does not match the supplied source")
+	}
+	if request.AnalysisProvenance != nil && !request.AnalysisProvenance.validFor(request.SourceDigest) {
+		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "validate-analysis-provenance", "analysis provenance is not bound to the supplied source")
 	}
 	if strings.TrimSpace(request.Activity) == "" || request.ExpectedProgram == "" || request.ReplacementProgram == "" || request.TriggerReason == "" {
 		return nil, SourceRevision{}, failAt(ReasonSourceRevisionInvalid, "PROPOSE", "require-explicit-revision", "activity, expected program, replacement program and trigger reason are required")
@@ -123,6 +136,7 @@ func ProposeSourceRevision(filename string, source []byte, request SourceRevisio
 		BeforeProgram: request.ExpectedProgram, AfterProgram: request.ReplacementProgram,
 		TriggerReason: request.TriggerReason, ExecutionAllowed: false, RepositoryWrites: 0,
 		NextOperation: "EVALUATE_SOURCE_REVISION_INDEPENDENTLY", BlockedBy: []string{"independent_evaluation"},
+		AnalysisProvenance: cloneAnalysisProvenance(request.AnalysisProvenance),
 	}
 	revision.CandidateID = "gooo://source-revision/" + digestValue(revision)[len("sha256:"):len("sha256:")+16]
 	return candidate, revision, nil
@@ -138,6 +152,7 @@ func EvaluateSourceRevision(revision SourceRevision, baselineFilename string, ba
 		BlockedBy:    []string{"revision_receipt", "source_digests", "activity"},
 		SourceDigest: digestBytes(baselineSource), CandidateSourceDigest: digestBytes(candidateSource),
 		Activity: activity, InputDigest: digestValue(map[string]int64{activity: input}), RepositoryWrites: 0,
+		AnalysisProvenance: cloneAnalysisProvenance(revision.AnalysisProvenance),
 	}
 	if revision.Schema != SourceRevisionSchema || revision.ExecutionAllowed || revision.RepositoryWrites != 0 || revision.SourceDigest != evaluation.SourceDigest || revision.CandidateSourceDigest != evaluation.CandidateSourceDigest || revision.Activity != activity || revision.TriggerReason == "" {
 		return evaluation
@@ -172,6 +187,18 @@ func EvaluateSourceRevision(revision SourceRevision, baselineFilename string, ba
 	evaluation.BlockedBy = []string{"contract_preservation", "explicit_adoption_decision"}
 	evaluation.Accepted = false
 	return evaluation
+}
+
+func (provenance *AnalysisProvenance) validFor(sourceDigest string) bool {
+	return provenance != nil && provenance.SourceDigest == sourceDigest && validDigest(provenance.ProfileDigest) && validDigest(provenance.ToolchainDigest) && validDigest(provenance.ContractDigest)
+}
+
+func cloneAnalysisProvenance(provenance *AnalysisProvenance) *AnalysisProvenance {
+	if provenance == nil {
+		return nil
+	}
+	copy := *provenance
+	return &copy
 }
 
 // VerifySourceRevisionContract checks a bounded, explicit set of successful

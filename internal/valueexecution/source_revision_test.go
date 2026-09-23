@@ -32,6 +32,29 @@ func TestProposeSourceRevisionReplacesOnlyTheExactActivityProgram(t *testing.T) 
 	}
 }
 
+func TestSourceRevisionCarriesAnalysisProvenanceThroughEvaluation(t *testing.T) {
+	source := []byte(sourceRevisionFixture)
+	provenance := &AnalysisProvenance{
+		SourceDigest: digestBytes(source), ProfileDigest: digestBytes([]byte("profile")),
+		ToolchainDigest: digestBytes([]byte("toolchain")), ContractDigest: digestBytes([]byte("lsp-contract")),
+	}
+	_, revision, err := ProposeSourceRevision("revision.gooo", source, SourceRevisionRequest{
+		SourceDigest: digestBytes(source), Activity: "Observe", ExpectedProgram: "int.add:1",
+		ReplacementProgram: "int.add:0", TriggerReason: ReasonIntegerOverflow, AnalysisProvenance: provenance,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if revision.AnalysisProvenance == nil || *revision.AnalysisProvenance != *provenance {
+		t.Fatalf("source revision lost analysis provenance: %#v", revision)
+	}
+	candidate := []byte(strings.Replace(string(source), `computes "int.add:1"`, `computes "int.add:0"`, 1))
+	evaluation := EvaluateSourceRevision(revision, "revision.gooo", source, "candidate.gooo", candidate, "Observe", math.MaxInt64)
+	if evaluation.AnalysisProvenance == nil || *evaluation.AnalysisProvenance != *provenance {
+		t.Fatalf("evaluation lost analysis provenance: %#v", evaluation)
+	}
+}
+
 func TestProposeSourceRevisionFailsClosedForDigestExpectedProgramAndAmbiguity(t *testing.T) {
 	cases := []SourceRevisionRequest{
 		{SourceDigest: "sha256:" + strings.Repeat("0", 64), Activity: "Observe", ExpectedProgram: "int.add:1", ReplacementProgram: "int.add:0", TriggerReason: ReasonIntegerOverflow},

@@ -33,6 +33,7 @@ type AcceptedSourceRevisionExecution struct {
 	AdoptionAuthorized    bool        `json:"adoption_authorized"`
 	RepositoryWrites      int         `json:"repository_writes"`
 	Execution             Execution   `json:"execution"`
+	AnalysisProvenance    *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 }
 
 // ExecuteAcceptedSourceRevision re-executes a candidate only after an
@@ -48,8 +49,14 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 	if request.Revision.Schema != SourceRevisionSchema || request.Revision.CandidateID == "" || request.Revision.ExecutionAllowed || request.Revision.RepositoryWrites != 0 {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-revision-authority", "source revision is not a non-executing candidate")
 	}
+	if request.Revision.AnalysisProvenance != nil && !request.Revision.AnalysisProvenance.validFor(digestBytes(request.BaselineSource)) {
+		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-analysis-provenance", "source revision analysis provenance is not source-bound")
+	}
 	if request.Evaluation.Schema != SourceRevisionEvaluationSchema || request.Evaluation.State != ReplayClosed || !request.Evaluation.Accepted || !request.Evaluation.CandidateExecuted || !request.Evaluation.ContractPreservation || len(request.Evaluation.ContractInputs) == 0 || request.Evaluation.RepositoryWrites != 0 {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-evaluation-closure", "source revision evaluation is not an accepted closed observation")
+	}
+	if !sameAnalysisProvenance(request.Revision.AnalysisProvenance, request.Evaluation.AnalysisProvenance) {
+		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "bind-analysis-provenance", "revision and evaluation provenance do not agree")
 	}
 	sourceDigest := digestBytes(request.BaselineSource)
 	candidateDigest := digestBytes(request.CandidateSource)
@@ -84,5 +91,13 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 		EvaluationState: request.Evaluation.State, EvaluationReason: request.Evaluation.Reason,
 		NextOperation: "CAPTURE_NEXT_RUN_COMPARISON", BlockedBy: []string{},
 		ExecutionAllowed: false, AdoptionAuthorized: true, RepositoryWrites: 0, Execution: execution,
+		AnalysisProvenance: cloneAnalysisProvenance(request.Evaluation.AnalysisProvenance),
 	}, nil
+}
+
+func sameAnalysisProvenance(left, right *AnalysisProvenance) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return *left == *right
 }
