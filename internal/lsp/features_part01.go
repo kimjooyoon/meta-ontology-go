@@ -30,7 +30,7 @@ func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
 			}
 		}
 	}
-	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: symbolDetail(symbol)}, Range: &rangeValue}, true
+	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: hoverSymbolDetail(*document, symbol)}, Range: &rangeValue}, true
 }
 func (server *Server) completion(uri string) *CompletionList {
 	return server.completionAt(uri, Position{}, false)
