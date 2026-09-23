@@ -18,13 +18,13 @@ const (
 // already observed semantic authority boundary. It is provenance only: it
 // never verifies workload credentials, grants effects, or authorizes work.
 type WorkloadAuthorityProvenance struct {
-	Schema                      string         `json:"schema"`
-	WorkloadURI                 string         `json:"workload_uri"`
-	TrustDomain                 string         `json:"trust_domain"`
-	WorkloadPath                string         `json:"workload_path"`
-	AuthorityDigest             string         `json:"authority_digest"`
-	AuthorityObservationDigest  string         `json:"authority_observation_digest"`
-	SourceRevision              SourceRevision `json:"source_revision"`
+	Schema                     string         `json:"schema"`
+	WorkloadURI                string         `json:"workload_uri"`
+	TrustDomain                string         `json:"trust_domain"`
+	WorkloadPath               string         `json:"workload_path"`
+	AuthorityDigest            string         `json:"authority_digest"`
+	AuthorityObservationDigest string         `json:"authority_observation_digest"`
+	SourceRevision             SourceRevision `json:"source_revision"`
 	OperationID                string         `json:"operation_id"`
 	BoundaryStatus             string         `json:"boundary_status"`
 	BindingStatus              string         `json:"binding_status"`
@@ -65,9 +65,9 @@ func ObserveWorkloadAuthorityProvenance(workloadURI string, boundary AuthorityBo
 		AuthorityDigest:            boundary.AuthorityDigest,
 		AuthorityObservationDigest: boundary.StableHash(),
 		SourceRevision:             boundary.SourceRevision,
-		OperationID:               boundary.OperationID,
-		BoundaryStatus:            boundary.BoundaryStatus,
-		BindingStatus:             status,
+		OperationID:                boundary.OperationID,
+		BoundaryStatus:             boundary.BoundaryStatus,
+		BindingStatus:              status,
 		NonAuthorizing:             true,
 	}, nil
 }
