@@ -65,21 +65,8 @@ func TestDiagnosticProvenanceBindsDocumentAndDiagnostics(t *testing.T) {
 }
 
 func TestDiagnosticProvenanceUnknownWithoutSourceDigest(t *testing.T) {
-	server := NewServer()
 	uri := "file:///unknown-diagnostics.gooo"
-	server.documents[uri] = &document{result: ParseResult{}}
-	params, err := json.Marshal(diagnosticProvenanceParams{TextDocument: TextDocumentIdentifier{URI: uri}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	response, _, err := server.diagnosticProvenanceRequest(context.Background(), requestEnvelope{ID: json.RawMessage("1"), Params: params})
-	if err != nil {
-		t.Fatal(err)
-	}
-	value, err := decodeDiagnosticProvenance(response.Result)
-	if err != nil {
-		t.Fatal(err)
-	}
+	value := observeDiagnosticProvenance(uri, document{result: ParseResult{}}, documentCacheKey{})
 	if value.Decision != diagnosticProvenanceUnknown || value.Reason != "MISSING_SOURCE_DIGEST" || !value.NonAuthorizing {
 		t.Fatalf("unexpected unknown diagnostic provenance: %#v", value)
 	}
