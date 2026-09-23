@@ -45,6 +45,38 @@ type Counterexample struct {
 	Observed   string `json:"observed"`
 }
 
+type UpstreamFailure struct {
+	ActionIndicatorID string   `json:"action_indicator_id"`
+	Decision          string   `json:"decision"`
+	Stage             string   `json:"stage"`
+	Step              string   `json:"step"`
+	Reason            string   `json:"reason"`
+	UnknownClass      string   `json:"unknown_class,omitempty"`
+	NextOperation     string   `json:"next_operation"`
+	BlockedBy         []string `json:"blocked_by"`
+}
+
+type UpstreamUnknown struct {
+	ActionIndicatorID   string   `json:"action_indicator_id"`
+	RequiredIndicatorID string   `json:"required_indicator_id"`
+	Stage               string   `json:"stage"`
+	Step                string   `json:"step"`
+	Reason              string   `json:"reason"`
+	UnknownClass        string   `json:"unknown_class"`
+	NextOperation       string   `json:"next_operation"`
+	BlockedBy           []string `json:"blocked_by"`
+}
+
+type UpstreamCause struct {
+	ReceiptReportDigest string            `json:"receipt_report_digest"`
+	Decision            string            `json:"decision"`
+	Reason              string            `json:"reason"`
+	FailureCount        int               `json:"failure_count"`
+	UnknownCount        int               `json:"unknown_count"`
+	Failures            []UpstreamFailure `json:"failures"`
+	Unknowns            []UpstreamUnknown `json:"unknowns"`
+}
+
 type Report struct {
 	Schema                    string           `json:"schema"`
 	Decision                  string           `json:"decision"`
@@ -78,6 +110,7 @@ type Report struct {
 	Improvement               string           `json:"improvement"`
 	OperationOutcome          string           `json:"operation_outcome"`
 	PromotionAuthorized       bool             `json:"promotion_authorized"`
+	Upstream                *UpstreamCause   `json:"upstream,omitempty"`
 	Runtime                   Runtime          `json:"runtime"`
 	Counterexamples           []Counterexample `json:"counterexamples,omitempty"`
 }

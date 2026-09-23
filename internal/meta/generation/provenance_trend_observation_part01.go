@@ -85,10 +85,14 @@ func (observation ProvenanceTrendObservation) Validate() error {
 		return errors.New("provenance trend observation identity is invalid")
 	}
 	if observation.PreviousDigest != "" && !validEnvelopeDigest(observation.PreviousDigest) {
-		return errors.New("provenance trend previous digest is invalid")
+		if observation.Reason != "MALFORMED_PROVENANCE_EVIDENCE_DIGEST" {
+			return errors.New("provenance trend previous digest is invalid")
+		}
 	}
 	if observation.CurrentDigest != "" && !validEnvelopeDigest(observation.CurrentDigest) {
-		return errors.New("provenance trend current digest is invalid")
+		if observation.Reason != "MALFORMED_PROVENANCE_EVIDENCE_DIGEST" {
+			return errors.New("provenance trend current digest is invalid")
+		}
 	}
 	expected := ObserveProvenanceTrend(
 		observation.PreviousDigest,
