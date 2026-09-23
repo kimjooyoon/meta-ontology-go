@@ -18,8 +18,12 @@ func (g Generator) renderBlocks(ir SemanticIR, previous parsedMarkers) (map[stri
 		blocks[entity.ID] = block
 		order = append(order, entity.ID)
 	}
-	for _, activity := range ir.Activities {
-		block, err := formatBlock(ir.Package, renderActivity(activity, previous.Slots))
+	for activityIndex, activity := range ir.Activities {
+		runtimeSupport := ""
+		if activityIndex == len(ir.Activities)-1 && len(ir.RuntimeBindings) > 0 {
+			runtimeSupport = renderRuntimeBindingSupport(ir)
+		}
+		block, err := formatBlock(ir.Package, renderActivityWithSupport(activity, previous.Slots, runtimeSupport))
 		if err != nil {
 			return nil, nil, fmt.Errorf("generator: format activity %q: %w", activity.ID, err)
 		}
@@ -44,6 +48,9 @@ func renderEntity(entity Entity) string {
 	return output.String()
 }
 func renderActivity(activity Activity, previous map[string]parsedSlot) string {
+	return renderActivityWithSupport(activity, previous, "")
+}
+func renderActivityWithSupport(activity Activity, previous map[string]parsedSlot, runtimeSupport string) string {
 	var output strings.Builder
 	fmt.Fprintf(&output, "%s\n", generatedMarker(generatedStartPrefix, activity.ID, "activity"))
 	fmt.Fprintf(&output, "func %s(%s)%s {\n", activity.GoName, renderInputs(activity.Inputs), renderOutputs(activity.Outputs))
@@ -64,6 +71,12 @@ func renderActivity(activity Activity, previous map[string]parsedSlot) string {
 		fmt.Fprintf(&output, "\t%s\n", slotMarker(slotEndPrefix, slot.ID))
 	}
 	output.WriteString("}\n")
+	if runtimeSupport != "" {
+		output.WriteString(runtimeSupport)
+		if !strings.HasSuffix(runtimeSupport, "\n") {
+			output.WriteByte('\n')
+		}
+	}
 	fmt.Fprintf(&output, "%s\n", generatedMarker(generatedEndPrefix, activity.ID, "activity"))
 	return output.String()
 }

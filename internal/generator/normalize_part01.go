@@ -16,6 +16,12 @@ func normalizeIR(input SemanticIR) (SemanticIR, error) {
 	if err := normalizeImports(&result); err != nil {
 		return SemanticIR{}, err
 	}
+	if len(result.RuntimeBindings) > 0 {
+		if err := validateRuntimeBindingSupport(result); err != nil {
+			return SemanticIR{}, err
+		}
+		result.Imports = ensureRuntimeReflectionImport(result.Imports)
+	}
 	types, err := normalizeEntities(&result)
 	if err != nil {
 		return SemanticIR{}, err
