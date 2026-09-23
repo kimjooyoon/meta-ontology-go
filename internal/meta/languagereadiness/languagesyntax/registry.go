@@ -114,6 +114,9 @@ func expectedRegistry() Registry {
 
 func decodeRegistry(raw []byte) (Registry, error) {
 	registry := Registry{}
+	if err := validateJSONKeyUniqueness(raw); err != nil {
+		return registry, fmt.Errorf("decode language syntax registry: %w", err)
+	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&registry); err != nil {
@@ -129,6 +132,65 @@ func decodeRegistry(raw []byte) (Registry, error) {
 		return registry, fmt.Errorf("language syntax registry mismatch")
 	}
 	return registry, nil
+}
+
+func validateJSONKeyUniqueness(raw []byte) error {
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	if err := walkJSONValue(decoder); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		if err == nil {
+			return fmt.Errorf("trailing JSON value")
+		}
+		return err
+	}
+	return nil
+}
+
+func walkJSONValue(decoder *json.Decoder) error {
+	token, err := decoder.Token()
+	if err != nil {
+		return err
+	}
+	delim, ok := token.(json.Delim)
+	if !ok {
+		return nil
+	}
+	switch delim {
+	case '{':
+		seen := map[string]bool{}
+		for decoder.More() {
+			keyToken, err := decoder.Token()
+			if err != nil {
+				return err
+			}
+			key, ok := keyToken.(string)
+			if !ok {
+				return fmt.Errorf("object key is not a string")
+			}
+			if seen[key] {
+				return fmt.Errorf("duplicate JSON object key %q", key)
+			}
+			seen[key] = true
+			if err := walkJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		_, err := decoder.Token()
+		return err
+	case '[':
+		for decoder.More() {
+			if err := walkJSONValue(decoder); err != nil {
+				return err
+			}
+		}
+		_, err := decoder.Token()
+		return err
+	default:
+		return fmt.Errorf("unexpected JSON delimiter %q", delim)
+	}
 }
 
 func CapabilityCaseTotal() int {
