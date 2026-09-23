@@ -65,7 +65,7 @@ func TestRunGeneratePreservesPreviousGoAndPublishesManifest(t *testing.T) {
 		t.Fatalf("incomplete previous-Go manifest: %#v", manifest)
 	}
 	provenance := manifest.AnalysisProvenance
-	if provenance == nil || provenance.SourcePath != sourcePath || provenance.ContractPath != publicdiscovery.PolicySourcePath() || provenance.SourceDigest != cache.HashBytes([]byte(validSource)).String() || provenance.ContractDigest != publicdiscovery.PolicySourceDigest() || provenance.ProvenanceDigest == "" {
+	if provenance == nil || provenance.SourcePath != sourcePath || provenance.ContractPath != publicdiscovery.PolicySourcePath() || provenance.SourceDigest != cache.HashBytes([]byte(validSource)).String() || provenance.SubjectDigest != generation.SemanticAnalysisSubjectDigest(sourcePath, cache.HashBytes([]byte(validSource)).String()) || provenance.ContractDigest != publicdiscovery.PolicySourceDigest() || provenance.ProvenanceDigest == "" {
 		t.Fatalf("manifest provenance is incomplete: %#v", provenance)
 	}
 	if want := generation.SemanticAnalysisProvenanceDigest(provenance.SourceDigest, provenance.ProfileDigest, provenance.ToolchainDigest, provenance.ContractDigest); provenance.ProvenanceDigest != want {
