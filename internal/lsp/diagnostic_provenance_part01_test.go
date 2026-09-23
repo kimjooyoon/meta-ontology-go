@@ -71,7 +71,7 @@ namespace changed
 func TestDiagnosticProvenanceUnknownWithoutSourceDigest(t *testing.T) {
 	server := NewServer()
 	uri := "file:///unknown-diagnostics.gooo"
-	server.documents[uri] = &document{result: ParseResult{URI: uri}}
+	server.documents[uri] = &document{result: ParseResult{}}
 	params, err := json.Marshal(diagnosticProvenanceParams{TextDocument: TextDocumentIdentifier{URI: uri}})
 	if err != nil {
 		t.Fatal(err)
