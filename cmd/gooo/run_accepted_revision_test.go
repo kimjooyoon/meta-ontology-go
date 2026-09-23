@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func TestRunAcceptedRevisionRequiresExplicitAcceptanceAndReexecutesCandidate(t *testing.T) {
+func TestRunAcceptedRevisionRejectsWithoutContractEvidence(t *testing.T) {
 	root := t.TempDir()
 	baselinePath := filepath.Join(root, "baseline.gooo")
 	inputPath := filepath.Join(root, "input.json")
@@ -38,32 +37,8 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 	if code := runEvaluateRevision([]string{baselinePath, filepath.Join(candidateDir, "candidate.gooo"), "--revision", filepath.Join(candidateDir, "revision.json"), "--activity", "Observe", "--input", inputPath, "--out", evaluationDir}, OSFileReader{}, &stdout, &stderr); code != exitOK {
 		t.Fatalf("evaluate code=%d stderr=%q", code, stderr.String())
 	}
-	args := []string{baselinePath, filepath.Join(candidateDir, "candidate.gooo"), "--revision", filepath.Join(candidateDir, "revision.json"), "--evaluation", filepath.Join(evaluationDir, "evaluation.json"), "--activity", "Observe", "--input", inputPath}
-	stdout.Reset()
-	stderr.Reset()
-	if code := runAcceptedRevision(args, OSFileReader{}, &stdout, &stderr); code != exitUsage {
-		t.Fatalf("missing accept code=%d stderr=%q", code, stderr.String())
-	}
-	args = append(args, "--accept")
-	stdout.Reset()
-	stderr.Reset()
-	if code := runAcceptedRevision(args, OSFileReader{}, &stdout, &stderr); code != exitOK {
-		t.Fatalf("accepted code=%d stderr=%q", code, stderr.String())
-	}
-	var result struct {
-		Decision         string `json:"decision"`
-		ExecutionAllowed bool   `json:"execution_allowed"`
-		RepositoryWrites int    `json:"repository_writes"`
-		Execution        struct {
-			Results map[string]struct {
-				Value int64 `json:"value"`
-			} `json:"results"`
-		} `json:"execution"`
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
-		t.Fatal(err)
-	}
-	if result.Decision != "PASS" || result.ExecutionAllowed || result.RepositoryWrites != 0 || result.Execution.Results["Observe"].Value != 9223372036854775807 {
-		t.Fatalf("result = %#v", result)
+	args := []string{baselinePath, filepath.Join(candidateDir, "candidate.gooo"), "--revision", filepath.Join(candidateDir, "revision.json"), "--evaluation", filepath.Join(evaluationDir, "evaluation.json"), "--activity", "Observe", "--input", inputPath, "--accept"}
+	if code := runAcceptedRevision(args, OSFileReader{}, &stdout, &stderr); code == exitOK {
+		t.Fatal("accepted execution passed without contract evidence")
 	}
 }

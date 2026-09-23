@@ -32,6 +32,29 @@ func TestProposeSourceRevisionReplacesOnlyTheExactActivityProgram(t *testing.T) 
 	}
 }
 
+func TestSourceRevisionCarriesAnalysisProvenanceThroughEvaluation(t *testing.T) {
+	source := []byte(sourceRevisionFixture)
+	provenance := &AnalysisProvenance{
+		SourceDigest: digestBytes(source), ProfileDigest: digestBytes([]byte("profile")),
+		ToolchainDigest: digestBytes([]byte("toolchain")), ContractDigest: digestBytes([]byte("lsp-contract")),
+	}
+	_, revision, err := ProposeSourceRevision("revision.gooo", source, SourceRevisionRequest{
+		SourceDigest: digestBytes(source), Activity: "Observe", ExpectedProgram: "int.add:1",
+		ReplacementProgram: "int.add:0", TriggerReason: ReasonIntegerOverflow, AnalysisProvenance: provenance,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if revision.AnalysisProvenance == nil || *revision.AnalysisProvenance != *provenance {
+		t.Fatalf("source revision lost analysis provenance: %#v", revision)
+	}
+	candidate := []byte(strings.Replace(string(source), `computes "int.add:1"`, `computes "int.add:0"`, 1))
+	evaluation := EvaluateSourceRevision(revision, "revision.gooo", source, "candidate.gooo", candidate, "Observe", math.MaxInt64)
+	if evaluation.AnalysisProvenance == nil || *evaluation.AnalysisProvenance != *provenance {
+		t.Fatalf("evaluation lost analysis provenance: %#v", evaluation)
+	}
+}
+
 func TestProposeSourceRevisionFailsClosedForDigestExpectedProgramAndAmbiguity(t *testing.T) {
 	cases := []SourceRevisionRequest{
 		{SourceDigest: "sha256:" + strings.Repeat("0", 64), Activity: "Observe", ExpectedProgram: "int.add:1", ReplacementProgram: "int.add:0", TriggerReason: ReasonIntegerOverflow},
@@ -50,7 +73,7 @@ func TestProposeSourceRevisionFailsClosedForDigestExpectedProgramAndAmbiguity(t 
 	}
 }
 
-func TestEvaluateSourceRevisionRequiresKnownFailureAndAcceptsRecoveredCandidate(t *testing.T) {
+func TestEvaluateSourceRevisionSeparatesCounterexampleRecoveryFromContractAcceptance(t *testing.T) {
 	baseline := []byte(sourceRevisionFixture)
 	candidate, revision, err := ProposeSourceRevision("revision.gooo", baseline, SourceRevisionRequest{
 		SourceDigest: digestBytes(baseline), Activity: "Observe", ExpectedProgram: "int.add:1",
@@ -60,11 +83,15 @@ func TestEvaluateSourceRevisionRequiresKnownFailureAndAcceptsRecoveredCandidate(
 		t.Fatal(err)
 	}
 	evaluation := EvaluateSourceRevision(revision, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", math.MaxInt64)
-	if evaluation.State != ReplayClosed || !evaluation.Accepted || !evaluation.CandidateExecuted || evaluation.BaselineFailure == nil || evaluation.BaselineFailure.Code != ReasonIntegerOverflow {
+	if evaluation.State != ReplayClosed || evaluation.Accepted || !evaluation.CounterexampleRecovered || evaluation.ContractPreservation || !evaluation.CandidateExecuted || evaluation.BaselineFailure == nil || evaluation.BaselineFailure.Code != ReasonIntegerOverflow {
 		t.Fatalf("accepted evaluation = %#v", evaluation)
 	}
-	if evaluation.RepositoryWrites != 0 || evaluation.NextOperation != "RUN_ACCEPTED_SOURCE_REVISION" || len(evaluation.BlockedBy) != 0 {
+	if evaluation.RepositoryWrites != 0 || evaluation.NextOperation != "VERIFY_SOURCE_REVISION_CONTRACT" || len(evaluation.BlockedBy) == 0 {
 		t.Fatalf("accepted evaluation authority = %#v", evaluation)
+	}
+	contract := VerifySourceRevisionContract(revision, evaluation, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: []int64{0}})
+	if contract.State != ReplayRefuted || contract.Accepted || contract.ContractPreservation || contract.Reason != "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED" {
+		t.Fatalf("contract-changing candidate was accepted: %#v", contract)
 	}
 
 	unchanged := EvaluateSourceRevision(revision, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", 0)
@@ -76,5 +103,21 @@ func TestEvaluateSourceRevisionRequiresKnownFailureAndAcceptsRecoveredCandidate(
 	unknown := EvaluateSourceRevision(wrongSource, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", math.MaxInt64)
 	if unknown.State != ReplayUnknown || unknown.Reason != "SOURCE_REVISION_EVALUATION_UNKNOWN" {
 		t.Fatalf("mismatched source = %#v", unknown)
+	}
+}
+
+func TestVerifySourceRevisionContractCanRequireIndependentExpectedOutputs(t *testing.T) {
+	source := []byte(sourceRevisionFixture)
+	evaluation := SourceRevisionEvaluation{State: ReplayClosed, CounterexampleRecovered: true, CandidateExecuted: true}
+	contract := SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: []int64{0}, ExpectedOutputs: map[int64]int64{0: 1}}
+	verified := VerifySourceRevisionContract(SourceRevision{}, evaluation, "revision.gooo", source, "candidate.gooo", source, "Observe", contract)
+	if !verified.ContractPreservation || verified.ContractDigest == "" || verified.ContractExpectedOutputs[0] != 1 {
+		t.Fatalf("explicit expected output was not retained as contract evidence: %#v", verified)
+	}
+
+	contract.ExpectedOutputs[0] = 2
+	refuted := VerifySourceRevisionContract(SourceRevision{}, evaluation, "revision.gooo", source, "candidate.gooo", source, "Observe", contract)
+	if refuted.State != ReplayRefuted || refuted.Reason != "SOURCE_REVISION_CONTRACT_BASELINE_EXPECTATION_MISMATCH" || refuted.ContractPreservation {
+		t.Fatalf("baseline expectation mismatch was accepted: %#v", refuted)
 	}
 }

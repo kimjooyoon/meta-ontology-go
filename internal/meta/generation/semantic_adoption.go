@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
 const (
@@ -26,61 +27,78 @@ const (
 	SemanticAdoptionRefuted             = "REFUTED"
 )
 
+type SemanticAdoptionProvenance struct {
+	SourcePath       string `json:"source_path,omitempty"`
+	ContractPath     string `json:"contract_path,omitempty"`
+	SourceDigest     string `json:"source_digest"`
+	ProfileDigest    string `json:"profile_digest"`
+	ToolchainDigest  string `json:"toolchain_digest"`
+	ContractDigest   string `json:"contract_digest"`
+	ProvenanceDigest string `json:"provenance_digest,omitempty"`
+}
+
+func SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest string) string {
+	return analysisprovenance.Digest(sourceDigest, profileDigest, toolchainDigest, contractDigest)
+}
+
 // SemanticAdoptionProposal is a caller-owned proposal derived from one stable
 // observation candidate. It never grants execution or repository mutation.
 type SemanticAdoptionProposal struct {
-	Schema            string                       `json:"schema"`
-	ObservationDigest string                       `json:"observation_digest"`
-	ContractDigest    string                       `json:"contract_digest"`
-	InputSourceDigest string                       `json:"input_source_digest"`
-	Candidate         SemanticObservationCandidate `json:"candidate"`
-	Target            string                       `json:"target"`
-	Mode              string                       `json:"mode"`
-	ExecutionAllowed  bool                         `json:"execution_allowed"`
-	RepositoryWrites  int                          `json:"repository_writes"`
+	Schema             string                       `json:"schema"`
+	ObservationDigest  string                       `json:"observation_digest"`
+	ContractDigest     string                       `json:"contract_digest"`
+	InputSourceDigest  string                       `json:"input_source_digest"`
+	AnalysisProvenance *SemanticAdoptionProvenance  `json:"analysis_provenance,omitempty"`
+	Candidate          SemanticObservationCandidate `json:"candidate"`
+	Target             string                       `json:"target"`
+	Mode               string                       `json:"mode"`
+	ExecutionAllowed   bool                         `json:"execution_allowed"`
+	RepositoryWrites   int                          `json:"repository_writes"`
 }
 
 // SemanticAdoptionAuthorization is the explicit human-controlled input that
 // permits a proposal to exercise the bounded compiler reuse path.
 type SemanticAdoptionAuthorization struct {
-	Schema               string `json:"schema"`
-	AuthorizationID      string `json:"authorization_id"`
-	AuthorizationMode    string `json:"authorization_mode"`
-	ProposalDigest       string `json:"proposal_digest"`
-	CandidateStableID    string `json:"candidate_stable_id"`
-	CandidateInputDigest string `json:"candidate_input_digest"`
-	ContractDigest       string `json:"contract_digest"`
-	InputSourceDigest    string `json:"input_source_digest"`
-	Authorized           bool   `json:"authorized"`
-	RepositoryWrites     int    `json:"repository_writes"`
-	LocalTestExecutions  int    `json:"local_test_executions"`
+	Schema               string                      `json:"schema"`
+	AuthorizationID      string                      `json:"authorization_id"`
+	AuthorizationMode    string                      `json:"authorization_mode"`
+	ProposalDigest       string                      `json:"proposal_digest"`
+	CandidateStableID    string                      `json:"candidate_stable_id"`
+	CandidateInputDigest string                      `json:"candidate_input_digest"`
+	ContractDigest       string                      `json:"contract_digest"`
+	InputSourceDigest    string                      `json:"input_source_digest"`
+	AnalysisProvenance   *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
+	Authorized           bool                        `json:"authorized"`
+	RepositoryWrites     int                         `json:"repository_writes"`
+	LocalTestExecutions  int                         `json:"local_test_executions"`
 }
 
 // SemanticAdoptionEvidence records the exact compiler result produced after
 // authorization. Counts are execution observations, not inferred savings.
 type SemanticAdoptionEvidence struct {
-	Schema                string                `json:"schema"`
-	ProposalDigest        string                `json:"proposal_digest"`
-	AuthorizationDigest   string                `json:"authorization_digest"`
-	CandidateStableID     string                `json:"candidate_stable_id"`
-	InputDigest           string                `json:"input_digest"`
-	BeforeOperationCount  int                   `json:"before_operation_count"`
-	AfterOperationCount   int                   `json:"after_operation_count"`
-	CacheMisses           int                   `json:"cache_misses"`
-	CacheHits             int                   `json:"cache_hits"`
-	ReuseApplied          bool                  `json:"reuse_applied"`
-	BehaviorEqual         bool                  `json:"behavior_equal"`
-	DeterminismEqual      bool                  `json:"determinism_equal"`
-	BeforeOutputDigest    string                `json:"before_output_digest"`
-	AdoptedOutputDigest   string                `json:"adopted_output_digest"`
-	AdoptedReplayDigest   string                `json:"adopted_replay_digest"`
-	BeforeSemanticDigest  string                `json:"before_semantic_digest"`
-	AdoptedSemanticDigest string                `json:"adopted_semantic_digest"`
-	Decision              string                `json:"decision"`
-	Reason                string                `json:"reason"`
-	Unknown               *EnvelopeUnknownState `json:"unknown"`
-	RepositoryWrites      int                   `json:"repository_writes"`
-	LocalTestExecutions   int                   `json:"local_test_executions"`
+	Schema                string                      `json:"schema"`
+	ProposalDigest        string                      `json:"proposal_digest"`
+	AuthorizationDigest   string                      `json:"authorization_digest"`
+	CandidateStableID     string                      `json:"candidate_stable_id"`
+	InputDigest           string                      `json:"input_digest"`
+	BeforeOperationCount  int                         `json:"before_operation_count"`
+	AfterOperationCount   int                         `json:"after_operation_count"`
+	CacheMisses           int                         `json:"cache_misses"`
+	CacheHits             int                         `json:"cache_hits"`
+	ReuseApplied          bool                        `json:"reuse_applied"`
+	BehaviorEqual         bool                        `json:"behavior_equal"`
+	DeterminismEqual      bool                        `json:"determinism_equal"`
+	BeforeOutputDigest    string                      `json:"before_output_digest"`
+	AdoptedOutputDigest   string                      `json:"adopted_output_digest"`
+	AdoptedReplayDigest   string                      `json:"adopted_replay_digest"`
+	BeforeSemanticDigest  string                      `json:"before_semantic_digest"`
+	AdoptedSemanticDigest string                      `json:"adopted_semantic_digest"`
+	Decision              string                      `json:"decision"`
+	Reason                string                      `json:"reason"`
+	Unknown               *EnvelopeUnknownState       `json:"unknown"`
+	RepositoryWrites      int                         `json:"repository_writes"`
+	LocalTestExecutions   int                         `json:"local_test_executions"`
+	AnalysisProvenance    *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
 }
 
 // SemanticAdoptionRuntimeMetrics are measured by the caller-owned compiler
@@ -113,6 +131,7 @@ type SemanticAdoptionReport struct {
 	IndependentReason    string                         `json:"independent_reason"`
 	RepositoryWrites     int                            `json:"repository_writes"`
 	LocalTestExecutions  int                            `json:"local_test_executions"`
+	AnalysisProvenance   *SemanticAdoptionProvenance    `json:"analysis_provenance,omitempty"`
 }
 
 func AdoptionUnknownState() *EnvelopeUnknownState {
@@ -137,6 +156,9 @@ func ValidateSemanticAdoptionProposal(proposal SemanticAdoptionProposal) error {
 		!cache.Digest(proposal.InputSourceDigest).Known() || proposal.Target != SemanticAdoptionTarget ||
 		proposal.Mode != SemanticAdoptionMode || proposal.ExecutionAllowed || proposal.RepositoryWrites != 0 {
 		return errors.New("semantic adoption proposal is not a bounded proposal-only artifact")
+	}
+	if proposal.AnalysisProvenance != nil && !validSemanticAdoptionProvenance(proposal.AnalysisProvenance) {
+		return errors.New("semantic adoption proposal provenance is invalid")
 	}
 	if proposal.Candidate.StableID == "" || proposal.Candidate.Phase != SemanticObservationPhase ||
 		proposal.Candidate.OperationID != SemanticObservationOperationID ||
@@ -163,6 +185,9 @@ func ValidateSemanticAdoptionAuthorization(authorization SemanticAdoptionAuthori
 		authorization.RepositoryWrites != 0 || authorization.LocalTestExecutions != 0 {
 		return errors.New("semantic adoption authorization is invalid")
 	}
+	if authorization.AnalysisProvenance != nil && !validSemanticAdoptionProvenance(authorization.AnalysisProvenance) {
+		return errors.New("semantic adoption authorization provenance is invalid")
+	}
 	return nil
 }
 
@@ -171,6 +196,9 @@ func ValidateSemanticAdoptionEvidence(evidence SemanticAdoptionEvidence) error {
 		!cache.Digest(evidence.AuthorizationDigest).Known() || evidence.CandidateStableID == "" ||
 		!cache.Digest(evidence.InputDigest).Known() || evidence.RepositoryWrites != 0 || evidence.LocalTestExecutions != 0 {
 		return errors.New("semantic adoption evidence is invalid")
+	}
+	if evidence.AnalysisProvenance != nil && !validSemanticAdoptionProvenance(evidence.AnalysisProvenance) {
+		return errors.New("semantic adoption evidence provenance is invalid")
 	}
 	if evidence.Decision == "UNKNOWN" {
 		if evidence.Unknown == nil || evidence.Reason != SemanticAdoptionUnknownReason || !SameAdoptionUnknown(evidence.Unknown, AdoptionUnknownState()) ||
@@ -209,6 +237,11 @@ func VerifySemanticAdoption(proposal SemanticAdoptionProposal, proposalDigest st
 	if authorization.ProposalDigest != proposalDigest || authorization.CandidateStableID != proposal.Candidate.StableID ||
 		authorization.CandidateInputDigest != proposal.Candidate.InputDigest ||
 		authorization.ContractDigest != proposal.ContractDigest || authorization.InputSourceDigest != proposal.InputSourceDigest {
+		return SemanticAdoptionRefuted, SemanticAdoptionRefutedReason, nil, nil
+	}
+	if !sameSemanticAdoptionProvenance(proposal.AnalysisProvenance, authorization.AnalysisProvenance) ||
+		!sameSemanticAdoptionProvenance(proposal.AnalysisProvenance, evidence.AnalysisProvenance) ||
+		(proposal.AnalysisProvenance != nil && proposal.AnalysisProvenance.SourceDigest != proposal.InputSourceDigest) {
 		return SemanticAdoptionRefuted, SemanticAdoptionRefutedReason, nil, nil
 	}
 	if !authorization.Authorized {
@@ -263,4 +296,20 @@ func SameAdoptionUnknown(left, right *EnvelopeUnknownState) bool {
 	return left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason &&
 		left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation &&
 		strings.Join(left.BlockedBy, "\x00") == strings.Join(right.BlockedBy, "\x00")
+}
+
+func validSemanticAdoptionProvenance(provenance *SemanticAdoptionProvenance) bool {
+	if provenance == nil {
+		return false
+	}
+	pathsConsistent := (provenance.SourcePath == "" && provenance.ContractPath == "") || (provenance.SourcePath != "" && provenance.ContractPath != "")
+	digestConsistent := provenance.ProvenanceDigest == "" || provenance.ProvenanceDigest == SemanticAnalysisProvenanceDigest(provenance.SourceDigest, provenance.ProfileDigest, provenance.ToolchainDigest, provenance.ContractDigest)
+	return pathsConsistent && digestConsistent && cache.Digest(provenance.SourceDigest).Known() && cache.Digest(provenance.ProfileDigest).Known() && cache.Digest(provenance.ToolchainDigest).Known() && cache.Digest(provenance.ContractDigest).Known()
+}
+
+func sameSemanticAdoptionProvenance(left, right *SemanticAdoptionProvenance) bool {
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	return *left == *right
 }

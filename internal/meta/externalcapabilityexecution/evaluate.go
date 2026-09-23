@@ -1,6 +1,11 @@
 package externalcapabilityexecution
 
 func Evaluate(observation Observation) Report {
+	var principal *PrincipalBinding
+	if observation.Principal != nil {
+		copy := *observation.Principal
+		principal = &copy
+	}
 	report := Report{
 		Schema: ReportSchema, SubjectSHA: observation.SubjectSHA,
 		Total: MetricDenominator, Parent: observation.Parent,
@@ -8,6 +13,7 @@ func Evaluate(observation Observation) Report {
 		RepositoryWrites:         observation.RepositoryWrites,
 		ExternalRepositoryWrites: observation.ExternalRepositoryWrites,
 		ObservationDigest:        observation.ObservationDigest,
+		Principal:                principal,
 
 		Indicators: makeIndicators(observation)}
 	for _, metric := range report.Indicators {
@@ -21,6 +27,15 @@ func Evaluate(observation Observation) Report {
 	}
 	report.BasisPoints = report.Completed * 10000 / report.Total
 	report.Proofs = makeProofs(report.Indicators)
+	if principal != nil {
+		if err := principal.Validate(); err != nil {
+			report.Decision, report.Resolution = DecisionFailClosed, ResolutionUnknown
+			report.EnforcementEffect, report.Reason = EffectBlock, ReasonPrincipal
+			report.ReportDigest = ""
+			report.ReportDigest = digestValue(report)
+			return report
+		}
+	}
 	switch {
 	case report.UnknownIndicators > 0:
 		report.Decision, report.Resolution = DecisionFailClosed, ResolutionUnknown

@@ -70,4 +70,8 @@ func assertInitialize(t *testing.T, payload []byte) {
 	if message.Result.Capabilities.TextDocumentSync.Change != 2 {
 		t.Fatalf("text document sync = %#v, want incremental change 2", message.Result.Capabilities.TextDocumentSync)
 	}
+	provenance, ok := message.Result.Capabilities.Experimental["goooDocumentProvenance"].(map[string]any)
+	if !ok || provenance["method"] != "gooo/documentProvenance" || provenance["schema"] != documentProvenanceSchema {
+		t.Fatalf("document provenance capability = %#v", message.Result.Capabilities.Experimental)
+	}
 }

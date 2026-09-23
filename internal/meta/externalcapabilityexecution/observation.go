@@ -14,6 +14,7 @@ type Observation struct {
 	OfficialMutationCount    int             `json:"official_mutation_count"`
 	PromotionCount           int             `json:"promotion_count"`
 	UnknownEvents            []string        `json:"unknown_events"`
+	Principal                *PrincipalBinding `json:"principal,omitempty"`
 	ObservationDigest        string          `json:"observation_digest"`
 }
 

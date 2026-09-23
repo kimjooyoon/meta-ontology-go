@@ -12,17 +12,22 @@ func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	analysis := &AnalysisProvenanceBinding{
+		SourceDigest: digestBytes([]byte("analysis-source")), ProfileDigest: digestBytes([]byte("profile")),
+		ToolchainDigest: digestBytes([]byte("toolchain")), ContractDigest: digestBytes([]byte("contract")),
+	}
 	binding := ProjectionBinding{
 		Schema: projectionBindingSchemaV1, SourceDigest: base.Metadata.SourceDigest,
 		SemanticIRDigest: base.Metadata.SemanticIRDigest, SourceMapDigest: base.Metadata.SourceMapDigest,
-		EvidenceDigest: digestBytes([]byte("evidence")), ProvenanceDigest: digestBytes([]byte("provenance")),
+		EvidenceDigest: digestBytes([]byte("evidence")), AnalysisProvenance: analysis,
 		Toolchain: ToolchainIdentity{Status: "BOUND", Value: "go1.26.5"},
+		ProvenanceDigest: analysisProvenanceDigest(*analysis),
 	}
 	bound, err := GenerateWithBinding(ir, nil, binding)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bound.Metadata.Source.Status != "BOUND" || bound.Metadata.Provenance.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Value != "go1.26.5" {
+	if bound.Metadata.Source.Status != "BOUND" || bound.Metadata.Provenance.Status != "UNVERIFIED" || bound.Metadata.ProvenanceDigest != binding.ProvenanceDigest || bound.Metadata.AnalysisProvenance == nil || !reflect.DeepEqual(*bound.Metadata.AnalysisProvenance, *analysis) || bound.Metadata.Toolchain.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Value != "go1.26.5" {
 		t.Fatalf("binding status not reflected: %#v", bound.Metadata)
 	}
 	if bound.Metadata.Evidence.Decision != "UNVERIFIED" || bound.Metadata.Authority.Provenance != "caller-supplied-unverified" {

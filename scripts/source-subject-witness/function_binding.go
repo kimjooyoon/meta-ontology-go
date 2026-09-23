@@ -27,7 +27,10 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 				return nil, err
 			}
 		default:
-			continue
+			if isKnownFunctionMetric(row.MetricID) {
+				continue
+			}
+			return nil, fmt.Errorf("function subject %q metric %q is outside the known function catalog", row.Subject, row.MetricID)
 		}
 		rows := bySubject[row.Subject]
 		for _, existing := range rows {
@@ -55,6 +58,15 @@ func compileFunctionWitnesses(indicators []sourceIndicator) ([]subjectWitness, e
 		witnesses = append(witnesses, sealWitness(witness))
 	}
 	return witnesses, nil
+}
+
+func isKnownFunctionMetric(metric string) bool {
+	switch metric {
+	case "gooo.metric.refactor.assign-return.v1", "gooo.metric.refactor.duplicate-body.v1":
+		return true
+	default:
+		return false
+	}
 }
 
 func validateFunctionIndicator(row sourceIndicator) error {

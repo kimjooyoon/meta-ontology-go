@@ -108,6 +108,7 @@ func observeCompilerPair(options observeOptions, inputs observationInputs, recor
 	if err != nil {
 		return generation.SemanticObservation{}, err
 	}
+	observation.AnalysisProvenance = semanticAdoptionProvenance(options.inputFilename, cache.HashBytes(inputs.inputSource).String(), options.contractFilename, cache.HashBytes(inputs.contractSource).String())
 	observation.Metrics.InputGoooPhysicalLines = countObservationPhysicalLines(inputs.inputSource)
 	observation.Metrics.OutputArtifactFiles = 1
 	observation.Metrics.AllocationCount = int64(afterMem.Mallocs - beforeMem.Mallocs)

@@ -16,6 +16,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 			DefinitionProvider:      true,
 			DocumentSymbolProvider:  true,
 			ReferencesProvider:      true,
+			RenameProvider:          true,
 			WorkspaceSymbolProvider: &WorkspaceSymbolOptions{Schema: WorkspaceSymbolProtocolSchema},
 			SemanticTokensProvider: &SemanticTokensOptions{
 				Schema: SemanticTokensProtocolSchema,
@@ -24,6 +25,11 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 					TokenModifiers: []string{},
 				},
 				Full: true,
+			},
+			Experimental: map[string]any{
+				"goooDocumentProvenance": map[string]string{
+					"method": "gooo/documentProvenance", "schema": documentProvenanceSchema,
+				},
 			},
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},

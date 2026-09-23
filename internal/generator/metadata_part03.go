@@ -15,6 +15,19 @@ func (result ProjectionMetadataV1) CanonicalJSON() ([]byte, error) {
 		!validDigest(result.Metadata.SourceMapDigest) || result.Metadata.SourceMapDigest != digestSourceMap(result.SourceMap) {
 		return nil, fmt.Errorf("generator: projection metadata digest mismatch")
 	}
+	if result.Metadata.ProvenanceDigest != "" && !validDigest(result.Metadata.ProvenanceDigest) {
+		return nil, fmt.Errorf("generator: projection metadata provenance digest is invalid")
+	}
+	if err := validateAnalysisProvenanceBinding(result.Metadata.AnalysisProvenance); err != nil {
+		return nil, err
+	}
+	if result.Metadata.AnalysisProvenance != nil && result.Metadata.ProvenanceDigest != analysisProvenanceDigest(*result.Metadata.AnalysisProvenance) {
+		return nil, fmt.Errorf("generator: projection metadata provenance does not match analysis provenance")
+	}
+	if (result.Metadata.Provenance.Status == "DEFERRED" && result.Metadata.ProvenanceDigest != "") ||
+		(result.Metadata.Provenance.Status == "UNVERIFIED" && result.Metadata.ProvenanceDigest == "") {
+		return nil, fmt.Errorf("generator: provenance status and digest are inconsistent")
+	}
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return nil, fmt.Errorf("generator: marshal projection metadata: %w", err)

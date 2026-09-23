@@ -25,6 +25,7 @@ type Report struct {
 	Parent                   ParentReport `json:"parent"`
 	Indicators               []Indicator  `json:"indicators"`
 	Proofs                   []Proof      `json:"proofs"`
+	Principal                *PrincipalBinding `json:"principal,omitempty"`
 	ObservationDigest        string       `json:"observation_digest"`
 	ReportDigest             string       `json:"report_digest"`
 }

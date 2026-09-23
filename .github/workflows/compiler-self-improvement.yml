@@ -108,6 +108,7 @@ jobs:
           cache_state="cold-per-measurement;setup-go-cache=false;GOCACHE-isolated;GOMODCACHE-shared-read-only"
           gomodcache="$(go env GOMODCACHE)"
           benchmark_name="BenchmarkRefreshExactInput"
+          test_name="TestRefreshReusesExactDocumentAndInvalidatesChangedSource"
           benchmark_harness="internal/lsp/server_part01_test.go"
 
           measure_command() {
@@ -154,7 +155,7 @@ jobs:
             generation="$(measure_command "$root" "$work/cache-$side-generation" "$side-generation" go run ./cmd/gooo generate "$fixture" --out "$first")"
             measure_command "$root" "$work/cache-$side-replay" "$side-replay" go run ./cmd/gooo generate "$fixture" --out "$replay" >/dev/null
             build="$(measure_command "$root" "$work/cache-$side-build" "$side-build" go test ./internal/lsp -run '^$' -count=1)"
-            test="$(measure_command "$root" "$work/cache-$side-test" "$side-test" go test ./internal/lsp -run '^TestServerLifecycleDiagnosticsAndFeatures$' -count=1 -json)"
+            test="$(measure_command "$root" "$work/cache-$side-test" "$side-test" go test ./internal/lsp -run "^${test_name}$" -count=1 -json)"
             benchmark="$(measure_command "$root" "$work/cache-$side-benchmark" "$side-benchmark" go test ./internal/lsp -run '^$' -bench "^${benchmark_name}$" -benchmem -count=1)"
             executed="$(jq -s '[.[] | select(.Action == "pass" and .Test != null)] | length' "$work/measurements/$side-test/stdout")"
             primary_count="$(awk -v name="$benchmark_name" '$1 ~ "^" name {for (i = 1; i <= NF; i++) if ($i == "parse-calls/op") {printf "%.0f\n", $(i - 1); exit}}' "$work/measurements/$side-benchmark/stdout")"

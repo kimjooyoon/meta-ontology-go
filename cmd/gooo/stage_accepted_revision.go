@@ -11,11 +11,22 @@ import (
 )
 
 func runStageAcceptedRevision(args []string, reader SourceReader, stdout, stderr io.Writer) int {
-	if len(args) < 1 {
-		fmt.Fprintln(stderr, "usage: gooo stage-accepted-revision <candidate.gooo> --comparison <comparison.json> --out <directory>")
+	candidatePath, comparisonPath, outputDir, ok := parseStageAcceptedRevisionArgs(args, stderr)
+	if !ok {
 		return exitUsage
 	}
+	candidateSource, comparison, stage, ok := loadStageAcceptedRevision(candidatePath, comparisonPath, reader, stderr)
+	if !ok {
+		return exitFailure
+	}
+	return writeStageAcceptedRevision(outputDir, candidateSource, comparison, stage, stdout, stderr)
+}
 
+func parseStageAcceptedRevisionArgs(args []string, stderr io.Writer) (string, string, string, bool) {
+	if len(args) < 1 {
+		fmt.Fprintln(stderr, "usage: gooo stage-accepted-revision <candidate.gooo> --comparison <comparison.json> --out <directory>")
+		return "", "", "", false
+	}
 	candidatePath := args[0]
 	comparisonPath := ""
 	outputDir := ""
@@ -24,48 +35,54 @@ func runStageAcceptedRevision(args []string, reader SourceReader, stdout, stderr
 		case "--comparison":
 			if comparisonPath != "" || i+1 >= len(args) {
 				fmt.Fprintln(stderr, "stage-accepted-revision: invalid --comparison")
-				return exitUsage
+				return "", "", "", false
 			}
 			i++
 			comparisonPath = args[i]
 		case "--out":
 			if outputDir != "" || i+1 >= len(args) {
 				fmt.Fprintln(stderr, "stage-accepted-revision: invalid --out")
-				return exitUsage
+				return "", "", "", false
 			}
 			i++
 			outputDir = args[i]
 		default:
 			fmt.Fprintf(stderr, "stage-accepted-revision: unknown argument %q\n", args[i])
-			return exitUsage
+			return "", "", "", false
 		}
 	}
 	if comparisonPath == "" || outputDir == "" {
 		fmt.Fprintln(stderr, "stage-accepted-revision: --comparison and --out are required")
-		return exitUsage
+		return "", "", "", false
 	}
+	return candidatePath, comparisonPath, outputDir, true
+}
 
+func loadStageAcceptedRevision(candidatePath, comparisonPath string, reader SourceReader, stderr io.Writer) ([]byte, valueexecution.AcceptedRevisionNextRunComparison, valueexecution.AcceptedRevisionNextRunStage, bool) {
 	candidateSource, err := reader.ReadFile(candidatePath)
 	if err != nil {
 		fmt.Fprintf(stderr, "stage-accepted-revision: read candidate: %v\n", err)
-		return exitFailure
+		return nil, valueexecution.AcceptedRevisionNextRunComparison{}, valueexecution.AcceptedRevisionNextRunStage{}, false
 	}
 	comparisonBytes, err := reader.ReadFile(comparisonPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "stage-accepted-revision: read comparison: %v\n", err)
-		return exitFailure
+		return nil, valueexecution.AcceptedRevisionNextRunComparison{}, valueexecution.AcceptedRevisionNextRunStage{}, false
 	}
 	var comparison valueexecution.AcceptedRevisionNextRunComparison
 	if err := json.Unmarshal(comparisonBytes, &comparison); err != nil {
 		fmt.Fprintf(stderr, "stage-accepted-revision: decode comparison: %v\n", err)
-		return exitFailure
+		return nil, valueexecution.AcceptedRevisionNextRunComparison{}, valueexecution.AcceptedRevisionNextRunStage{}, false
 	}
 	stage, err := valueexecution.PrepareAcceptedRevisionNextRunStage(comparison, candidateSource)
 	if err != nil {
 		fmt.Fprintf(stderr, "stage-accepted-revision: fail closed: %v\n", err)
-		return exitFailure
+		return nil, valueexecution.AcceptedRevisionNextRunComparison{}, valueexecution.AcceptedRevisionNextRunStage{}, false
 	}
+	return candidateSource, comparison, stage, true
+}
 
+func writeStageAcceptedRevision(outputDir string, candidateSource []byte, comparison valueexecution.AcceptedRevisionNextRunComparison, stage valueexecution.AcceptedRevisionNextRunStage, stdout, stderr io.Writer) int {
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		fmt.Fprintf(stderr, "stage-accepted-revision: create output: %v\n", err)
 		return exitFailure

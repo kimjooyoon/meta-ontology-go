@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 	"reflect"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/lsp"
 )
 
 func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
@@ -37,6 +38,7 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 		DefinitionProvider:     true,
 		DocumentSymbolProvider: true,
 		ReferencesProvider:     true,
+		RenameProvider:         true,
 		WorkspaceSymbolProvider: &lsp.WorkspaceSymbolOptions{
 			Schema: lsp.WorkspaceSymbolProtocolSchema,
 		},
@@ -47,6 +49,12 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 				TokenModifiers: []string{},
 			},
 			Full: true,
+		},
+		Experimental: map[string]any{
+			"goooDocumentProvenance": map[string]any{
+				"method": "gooo/documentProvenance",
+				"schema": "gooo/lsp-document-provenance/v1",
+			},
 		},
 	}
 	if !reflect.DeepEqual(initialize.Result.Capabilities, want) {

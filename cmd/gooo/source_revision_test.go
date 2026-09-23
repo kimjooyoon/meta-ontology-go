@@ -43,13 +43,14 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 		t.Fatal(err)
 	}
 	var decoded struct {
-		State    string `json:"state"`
-		Accepted bool   `json:"accepted"`
+		State                   string `json:"state"`
+		Accepted                bool   `json:"accepted"`
+		CounterexampleRecovered bool   `json:"counterexample_recovered"`
 	}
 	if err := json.Unmarshal(report, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if decoded.State != "CLOSED" || !decoded.Accepted {
+	if decoded.State != "CLOSED" || decoded.Accepted || !decoded.CounterexampleRecovered {
 		t.Fatalf("evaluation = %#v", decoded)
 	}
 }

@@ -26,6 +26,13 @@ type Location struct {
 	URI   string `json:"uri"`
 	Range Range  `json:"range"`
 }
+type TextEdit struct {
+	Range   Range  `json:"range"`
+	NewText string `json:"newText"`
+}
+type WorkspaceEdit struct {
+	Changes map[string][]TextEdit `json:"changes,omitempty"`
+}
 type DocumentSymbol struct {
 	// ID is an internal correspondence key. DocumentSymbol has no standard
 	// wire identity field, so it is projected through Detail instead.

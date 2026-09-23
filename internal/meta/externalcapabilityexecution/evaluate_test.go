@@ -24,3 +24,20 @@ func TestFixedDenominators(t *testing.T) {
 		t.Fatalf("metrics=%d cases=%d", MetricDenominator, len(caseIDs))
 	}
 }
+
+func TestInvalidPrincipalEvidenceFailsClosedWithoutGrantingCapability(t *testing.T) {
+	binding, err := BindPrincipal(principalSourceDigest, "spiffe://ci.example.org", "spiffe://ci.example.org/workload/gooo", "gooo://external-capability/execute", principalNonce)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binding.Subject = "spiffe://ci.example.org/workload/tampered"
+	observation := exactObservation("subject")
+	observation.Principal = &binding
+	report := Evaluate(observation)
+	if report.Decision != DecisionFailClosed || report.Resolution != ResolutionUnknown || report.EnforcementEffect != EffectBlock || report.Reason != ReasonPrincipal {
+		t.Fatalf("invalid principal crossed capability boundary: %#v", report)
+	}
+	if report.Principal == nil || report.Principal.Subject != binding.Subject || report.PromotionCount != 0 || report.RepositoryWrites != 0 || report.ExternalRepositoryWrites != 0 {
+		t.Fatalf("invalid principal report lost provenance or changed authority: %#v", report)
+	}
+}
