@@ -7,11 +7,17 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect/workspace"
 )
 
-func Build(opts Options) (Result, error) {
+func Build(opts Options) (result Result, err error) {
 	in, err := loadInputs(opts)
 	if err != nil {
 		return Result{}, err
 	}
+	defer func() {
+		if err != nil {
+			err = &replayDiagnosticContext{Cause: err, Report: in.receipts}
+		}
+	}()
+
 	sourceBefore, err := workspace.Scan(opts.Root)
 	if err != nil {
 		return Result{}, err
