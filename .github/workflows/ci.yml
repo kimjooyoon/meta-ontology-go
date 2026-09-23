@@ -1736,6 +1736,21 @@ jobs:
             }
             const priority = ['CI-GATE-001', 'CI-PROVENANCE-001', 'CI-ARTIFACT-001', 'CI-FRESHNESS-001', 'CI-SCOPE-001', 'CI-CONTRACT-001', 'CI-DEPENDENCY-001', 'CI-OWNERSHIP-001', 'CI-UNCLASSIFIED-001', 'CI-TEST-001'];
             const terminalFailureCodes = terminalFailures.map(job => job.name === 'CI proof bundle' ? (proofFailureCodes[0] || 'CI-UNCLASSIFIED-001') : classifyTerminalJob(job));
+            const terminalFailureEvidence = terminalFailures.map((job, index) => {
+              const failedStep = (job.steps || []).find(step => step.status === 'completed' && step.conclusion && step.conclusion !== 'success' && step.conclusion !== 'skipped');
+              const classification = job.name === 'CI proof bundle' ? 'proof_evidence' : terminalCodes.has(job.name) ? 'known_job' : 'unclassified_job';
+              const reason = job.name === 'CI proof bundle'
+                ? `proof_state:${proofState}`
+                : terminalCodes.has(job.name)
+                  ? `catalog_mapping:${failedStep?.name || 'terminal_job_conclusion'}`
+                  : 'unknown_terminal_job';
+              return {
+                job: {id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt},
+                code: terminalFailureCodes[index],
+                classification,
+                reason,
+              };
+            });
             failureCodes = [...new Set([...terminalFailureCodes, ...proofFailureCodes])].sort();
             code = priority.find(candidate => failureCodes.includes(candidate)) || 'CI-UNCLASSIFIED-001';
             const message = `${failed.name} concluded ${failed.conclusion} for exact run ${context.runId} attempt ${runAttempt}; codes=${failureCodes.join(',')}`;
@@ -1764,6 +1779,7 @@ jobs:
               artifact_reason: artifactReason,
               terminal_failures: terminalFailures.map(job => ({id: job.id, name: job.name, status: job.status, conclusion: job.conclusion, head_sha: job.head_sha, run_id: job.run_id, run_attempt: runAttempt})),
               terminal_failure_codes: terminalFailureCodes,
+              terminal_failure_evidence: terminalFailureEvidence,
               job: {
                 id: failed.id,
                 name: failed.name,

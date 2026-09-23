@@ -12,6 +12,12 @@ type failureJob struct {
 	RunID      int64  `json:"run_id"`
 	RunAttempt int64  `json:"run_attempt"`
 }
+type terminalFailureEvidence struct {
+	Job            failureJob `json:"job"`
+	Code           string     `json:"code"`
+	Classification string     `json:"classification"`
+	Reason         string     `json:"reason"`
+}
 type failureInput struct {
 	Code                 string          `json:"code"`
 	FailureCodes         []string        `json:"failure_codes"`
@@ -25,8 +31,9 @@ type failureInput struct {
 	ArtifactStatus       string          `json:"artifact_status"`
 	ArtifactReason       string          `json:"artifact_reason"`
 	TerminalFailures     []failureJob    `json:"terminal_failures"`
-	TerminalFailureCodes []string        `json:"terminal_failure_codes"`
-	Job                  failureJob      `json:"job"`
+	TerminalFailureCodes    []string                   `json:"terminal_failure_codes"`
+	TerminalFailureEvidence []terminalFailureEvidence `json:"terminal_failure_evidence"`
+	Job                     failureJob                 `json:"job"`
 }
 type failureBinding struct {
 	Repository  string
