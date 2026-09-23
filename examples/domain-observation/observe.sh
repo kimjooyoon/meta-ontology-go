@@ -105,7 +105,7 @@ jq -e '.execution_allowed == false and .repository_writes == 0 and
 "$cli" evaluate-revision "$repair_source" "$out/source-revision/candidate.gooo" \
   --revision "$out/source-revision/revision.json" --activity ObserveRepair \
   --input "$repair_input" --out "$out/source-revision-evaluation" > "$out/source-revision-evaluation.log"
-jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_RECOVERED_BASELINE_FAILURE" and
+jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_COUNTEREXAMPLE_RECOVERED" and
 	.accepted == false and .candidate_executed == true and .repository_writes == 0 and
 	.next_operation == "VERIFY_SOURCE_REVISION_CONTRACT" and
 	.baseline_failure.code == "VALUE_INTEGER_OVERFLOW"' \
