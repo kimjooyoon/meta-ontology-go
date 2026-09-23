@@ -11,10 +11,10 @@ import (
 const WorkloadIdentityAuthorityNonAuthorizing = "non_authorizing"
 
 type WorkloadIdentityObservation struct {
-	ID               string
+	ID                string
 	AttestationDigest string
-	ExpiresAt        time.Time
-	NonAuthorizing   bool
+	ExpiresAt         time.Time
+	NonAuthorizing    bool
 }
 
 // ParseWorkloadIdentityAttributes validates an optional workload identity
