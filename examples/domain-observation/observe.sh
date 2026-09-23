@@ -93,8 +93,8 @@ jq -e '.trigger_state == "REFUTED" and .execution_allowed == false and .reposito
   "$out/synthetic-candidate/repair-candidate.json" > /dev/null
 
 # A source revision is an exact external candidate. The compiler does not edit
-# repair.gooo, and the candidate is independently evaluated before the caller
-# explicitly accepts and re-executes it through the typed CLI boundary.
+# repair.gooo, and the candidate is independently evaluated before contract
+# preservation is checked through the typed CLI boundary.
 "$cli" revise-source "$repair_source" --source-digest "$repair_digest" \
   --activity ObserveRepair --expected 'int.add:1' --replace 'int.add:0' \
   --reason VALUE_INTEGER_OVERFLOW --out "$out/source-revision" > "$out/source-revision.log"
@@ -106,58 +106,39 @@ jq -e '.execution_allowed == false and .repository_writes == 0 and
   --revision "$out/source-revision/revision.json" --activity ObserveRepair \
   --input "$repair_input" --out "$out/source-revision-evaluation" > "$out/source-revision-evaluation.log"
 jq -e '.state == "CLOSED" and .reason == "SOURCE_REVISION_RECOVERED_BASELINE_FAILURE" and
-  .accepted == true and .candidate_executed == true and .repository_writes == 0 and
-  .baseline_failure.code == "VALUE_INTEGER_OVERFLOW"' \
-  "$out/source-revision-evaluation/evaluation.json" > /dev/null
-"$cli" run-accepted-revision "$repair_source" "$out/source-revision/candidate.gooo" \
-  --revision "$out/source-revision/revision.json" \
-  --evaluation "$out/source-revision-evaluation/evaluation.json" \
-  --activity ObserveRepair --input "$repair_input" --accept > "$out/accepted-source-reexecution.json"
-jq -e '.decision == "PASS" and .explicit_decision == "ACCEPT" and
-  .next_operation == "CAPTURE_NEXT_RUN_COMPARISON" and (.blocked_by | length) == 0 and
-  .execution_allowed == false and .repository_writes == 0 and
-  .execution.results.ObserveRepair.value == 9223372036854775807' \
-  "$out/accepted-source-reexecution.json" > /dev/null
-"$cli" compare-accepted-revision "$repair_source" "$out/source-revision/candidate.gooo" \
-  --revision "$out/source-revision/revision.json" \
-  --evaluation "$out/source-revision-evaluation/evaluation.json" \
-  --accepted "$out/accepted-source-reexecution.json" \
-  --activity ObserveRepair --input "$repair_input" > "$out/accepted-next-run-comparison.json"
-jq -e '.state == "CLOSED" and .outcome == "IMPROVED" and
-  .reason == "SOURCE_REVISION_IMPROVED_ON_NEXT_RUN" and
-  .next_operation == "RECORD_IMPROVEMENT_EVIDENCE" and
-  .execution_allowed == false and .repository_writes == 0 and
-  .accepted_execution_digest == .next_candidate_execution_digest' \
-  "$out/accepted-next-run-comparison.json" > /dev/null
-"$cli" stage-accepted-revision "$out/source-revision/candidate.gooo" \
-  --comparison "$out/accepted-next-run-comparison.json" \
-  --out "$out/staged-next-run" > "$out/staged-next-run-manifest.json"
-jq -e '.schema == "gooo/value-execution-accepted-revision-next-run-stage/v1" and
-  .decision == "STAGED" and .execution_allowed == false and .repository_writes == 0' \
-  "$out/staged-next-run-manifest.json" > /dev/null
-cmp "$out/source-revision/candidate.gooo" "$out/staged-next-run/candidate.gooo"
-"$cli" run --json --entry ObserveRepair --input "$repair_input" \
-  "$out/staged-next-run/candidate.gooo" > "$out/staged-next-run-execution.json"
-jq -e '.decision == "PASS" and
-  .execution.results.ObserveRepair.value == 9223372036854775807 and
-  .execution.execution_digest != ""' "$out/staged-next-run-execution.json" > /dev/null
-jq -e --slurpfile comparison "$out/accepted-next-run-comparison.json" \
-  '.execution.execution_digest == $comparison[0].accepted_execution_digest' \
-  "$out/staged-next-run-execution.json" > /dev/null
-# The accepted candidate remains an external input. Generate it, then reverse-
-# observe its Go output against the candidate authority without writing either
-# source tree or granting source-adoption authority.
-accepted_generation="$out/source-revision-accepted-generation"
-mkdir -p "$accepted_generation"
-"$cli" generate "$out/source-revision/candidate.gooo" --out "$accepted_generation" > "$out/accepted-source-generation.log"
-"$cli" analyze "$out/source-revision/candidate.gooo" --go "$accepted_generation/semantic.gooo.go" > "$out/accepted-source-reverse-observation.json"
+	.accepted == false and .candidate_executed == true and .repository_writes == 0 and
+	.next_operation == "VERIFY_SOURCE_REVISION_CONTRACT" and
+	.baseline_failure.code == "VALUE_INTEGER_OVERFLOW"' \
+	"$out/source-revision-evaluation/evaluation.json" > /dev/null
+# Verify the broader contract explicitly. This candidate repairs one overflow
+# counterexample but changes ordinary outputs, so the language must refute it
+# and keep adoption blocked rather than silently accepting it.
+printf '[0,1,2,3]\n' > "$out/source-revision-contract-inputs.json"
+if "$cli" verify-revision-contract "$repair_source" "$out/source-revision/candidate.gooo" \
+	--revision "$out/source-revision/revision.json" \
+	--evaluation "$out/source-revision-evaluation/evaluation.json" \
+	--activity ObserveRepair --inputs "$out/source-revision-contract-inputs.json" \
+	--out "$out/source-revision-contract" > "$out/source-revision-contract.log" 2>&1; then
+	printf 'contract-violating candidate unexpectedly passed verification\n' >&2
+	exit 1
+fi
+jq -e '.state == "REFUTED" and .reason == "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED" and
+	.contract_preservation == false and .accepted == false and
+	.adoption_authorized == false and .repository_writes == 0' \
+	"$out/source-revision-contract/evaluation.json" > /dev/null
+# The rejected candidate remains an external input. Generate it, then reverse-
+# observe its Go output without granting source-adoption authority.
+candidate_generation="$out/source-revision-candidate-generation"
+mkdir -p "$candidate_generation"
+"$cli" generate "$out/source-revision/candidate.gooo" --out "$candidate_generation" > "$out/candidate-source-generation.log"
+"$cli" analyze "$out/source-revision/candidate.gooo" --go "$candidate_generation/semantic.gooo.go" > "$candidate_generation/analyze.json"
 jq -e '
-  .schema_version == "analyzer-semantic-delta/v1" and
-  .semantic_equal == true and
-  .authority_semantic_digest == .observed_semantic_digest and
-  .write_effect == "no-write" and
-  (.digest | length == 64)
-' "$out/accepted-source-reverse-observation.json" > /dev/null
+	.schema_version == "analyzer-semantic-delta/v1" and
+	.semantic_equal == true and
+	.authority_semantic_digest == .observed_semantic_digest and
+	.write_effect == "no-write" and
+	(.digest | length == 64)
+' "$candidate_generation/analyze.json" > /dev/null
 sha256sum -c "$out/source-before.sha256" > "$out/source-after-check.txt"
 
 jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
@@ -166,12 +147,8 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
   --slurpfile continuation "$out/continuation.json" --slurpfile failed_continuation "$out/failed-continuation.json" \
   --slurpfile refuted "$out/synthetic-refutation.json" \
   --slurpfile source_revision "$out/source-revision/revision.json" \
-  --slurpfile source_revision_evaluation "$out/source-revision-evaluation/evaluation.json" \
-  --slurpfile accepted_source "$out/accepted-source-reexecution.json" \
-  --slurpfile accepted_next_run "$out/accepted-next-run-comparison.json" \
-  --slurpfile next_run_stage "$out/staged-next-run-manifest.json" \
-  --slurpfile next_run_execution "$out/staged-next-run-execution.json" \
-  --slurpfile accepted_generation "$out/accepted-source-reverse-observation.json" \
+	--slurpfile source_revision_evaluation "$out/source-revision-contract/evaluation.json" \
+	--slurpfile candidate_generation "$out/source-revision-candidate-generation/analyze.json" \
   --argjson wall_ms "$wall_ms" --argjson peak_rss_kib "$(cat "$out/first-peak-rss-kib.txt")" \
   '{schema:"gooo/domain-budget-observation/v1",source_digest:$first[0].source_digest,
     semantic_fingerprint:$first[0].semantic_fingerprint,
@@ -190,19 +167,15 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       candidate_id:$source_revision[0].candidate_id,source_digest:$source_revision[0].source_digest,
       candidate_source_digest:$source_revision[0].candidate_source_digest,execution_allowed:$source_revision[0].execution_allowed,
       repository_writes:$source_revision_evaluation[0].repository_writes,
-      accepted_source_reexecution:$accepted_source[0].decision,
-      accepted_source_next_run_comparison:{state:$accepted_next_run[0].state,outcome:$accepted_next_run[0].outcome,
-        reason:$accepted_next_run[0].reason,accepted_execution_digest:$accepted_next_run[0].accepted_execution_digest,
-        next_candidate_execution_digest:$accepted_next_run[0].next_candidate_execution_digest,
-        repository_writes:$accepted_next_run[0].repository_writes},
-      next_run_stage:{decision:$next_run_stage[0].decision,
-        candidate_source_digest:$next_run_stage[0].candidate_source_digest,
-        comparison_digest:$next_run_stage[0].comparison_digest,
-        execution_digest:$next_run_execution[0].execution.execution_digest},
-      accepted_generated_go_reverse_observation:{semantic_equal:$accepted_generation[0].semantic_equal,
-        authority_semantic_digest:$accepted_generation[0].authority_semantic_digest,
-        observed_semantic_digest:$accepted_generation[0].observed_semantic_digest,
-        write_effect:$accepted_generation[0].write_effect}},
+	  	contract_verification:{state:$source_revision_evaluation[0].state,reason:$source_revision_evaluation[0].reason,
+	  	  contract_preservation:$source_revision_evaluation[0].contract_preservation,
+	  	  accepted:$source_revision_evaluation[0].accepted,
+	  	  adoption_authorized:$source_revision_evaluation[0].adoption_authorized,
+	  	  next_operation:$source_revision_evaluation[0].next_operation},
+	  	candidate_generated_go_reverse_observation:{semantic_equal:$candidate_generation[0].semantic_equal,
+	  	  authority_semantic_digest:$candidate_generation[0].authority_semantic_digest,
+	  	  observed_semantic_digest:$candidate_generation[0].observed_semantic_digest,
+	  	  write_effect:$candidate_generation[0].write_effect}},
     fixture_files_unchanged:5,runtime_mode:"source-interpreter",
     generator_binding_support:"UNSUPPORTED",orchestration:"source-feedback",
     continuation:{requested:$continuation[0].continuation.iterations_requested,
@@ -215,6 +188,6 @@ jq -n --slurpfile first "$out/first.json" --slurpfile next "$out/next.json" \
       failure:$failed_continuation[0].continuation.failure},
     external_utility:"UNKNOWN",source_repair_adoption:"EXPLICIT_CALLER",improvement:"UNKNOWN"}' \
   > "$out/observation.json"
- jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); accepted reexecution: \(.source_revision.accepted_source_reexecution)\n- accepted candidate generated Go reverse observation: \(.source_revision.accepted_generated_go_reverse_observation.semantic_equal), write effect=\(.source_revision.accepted_generated_go_reverse_observation.write_effect)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: EXPLICIT_CALLER"' \
+ jq -r '"### Executed Gooo budget domain\n- first: \(.first.input) -> \(.first.output); applies=\(.first.apply_calls), deliveries=\(.first.deliveries)\n- next consumes prior output: \(.next.input) -> \(.next.output)\n- real failure: \(.failure.reason), \(.failure.stage)/\(.failure.step)\n- replay/recovery: \(.replay)/\(.recovery); changed-input comparison: \(.changed_input)\n- synthetic corruption: \(.synthetic_corruption); candidate cannot execute\n- source revision: \(.source_revision.state)/\(.source_revision.reason); contract verification: \(.source_revision.contract_verification.state)/\(.source_revision.contract_verification.reason)\n- rejected candidate generated Go reverse observation: \(.source_revision.candidate_generated_go_reverse_observation.semantic_equal), write effect=\(.source_revision.candidate_generated_go_reverse_observation.write_effect)\n- first process: \(.first.wall_ms) ms, peak RSS \(.first.peak_rss_kib) KiB\n- utility/improvement: UNKNOWN; source-repair adoption: BLOCKED_BY_CONTRACT"' \
   "$out/observation.json" > "$out/report.md"
-printf '%s\n' '- accepted revision next run: external stage is STAGED and the staged candidate executes PASS; see observation.json source_revision.next_run_stage' >> "$out/report.md"
+printf '%s\n' '- source revision contract: candidate refuted and adoption remains blocked; see observation.json source_revision.contract_verification' >> "$out/report.md"

@@ -47,6 +47,8 @@ func runWithInputCommandsOne(args []string, stdout, stderr io.Writer) (int, bool
 		return runReviseFromHandoff(args[1:], OSFileReader{}, stdout, stderr), true
 	case "evaluate-revision":
 		return runEvaluateRevision(args[1:], OSFileReader{}, stdout, stderr), true
+	case "verify-revision-contract":
+		return runVerifyRevisionContract(args[1:], OSFileReader{}, stdout, stderr), true
 	case "run-accepted-revision":
 		return runAcceptedRevision(args[1:], OSFileReader{}, stdout, stderr), true
 	case "compare-accepted-revision":

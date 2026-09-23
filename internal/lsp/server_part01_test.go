@@ -146,6 +146,7 @@ func BenchmarkRefreshExactInput(b *testing.B) {
 	}
 	calls = 0
 	b.ResetTimer()
+	b.ReportAllocs()
 	for index := 0; index < b.N; index++ {
 		if err := server.refresh(context.Background(), uri); err != nil {
 			b.Fatal(err)
