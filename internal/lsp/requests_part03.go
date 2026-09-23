@@ -24,7 +24,7 @@ func (server *Server) canRunAsync(request requestEnvelope) bool {
 		return false
 	}
 	switch request.Method {
-	case "textDocument/hover", "textDocument/completion", "textDocument/definition", "textDocument/semanticTokens/full", "gooo/documentProvenance", "gooo/referencesProvenance":
+	case "textDocument/hover", "textDocument/completion", "textDocument/definition", "textDocument/semanticTokens/full", "gooo/documentProvenance", "gooo/referencesProvenance", "gooo/diagnosticProvenance":
 		return true
 	default:
 		return false
@@ -37,4 +37,3 @@ func decodeRequest(payload []byte) (requestEnvelope, bool) {
 	}
 	return request, true
 }
-

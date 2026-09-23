@@ -58,6 +58,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.documentProvenanceRequest(ctx, request)
 	case "gooo/referencesProvenance":
 		return server.referencesProvenanceRequest(ctx, request)
+	case "gooo/diagnosticProvenance":
+		return server.diagnosticProvenanceRequest(ctx, request)
 	case "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
@@ -73,4 +75,3 @@ func (server *Server) shutdownRequest(request requestEnvelope) *responseEnvelope
 	}
 	return resultResponse(request.ID, nil)
 }
-
