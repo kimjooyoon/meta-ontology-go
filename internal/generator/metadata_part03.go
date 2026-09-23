@@ -15,6 +15,9 @@ func (result ProjectionMetadataV1) CanonicalJSON() ([]byte, error) {
 		!validDigest(result.Metadata.SourceMapDigest) || result.Metadata.SourceMapDigest != digestSourceMap(result.SourceMap) {
 		return nil, fmt.Errorf("generator: projection metadata digest mismatch")
 	}
+	if result.Metadata.ProvenanceDigest != "" && !validDigest(result.Metadata.ProvenanceDigest) {
+		return nil, fmt.Errorf("generator: projection metadata provenance digest is invalid")
+	}
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return nil, fmt.Errorf("generator: marshal projection metadata: %w", err)

@@ -21,6 +21,7 @@ func GenerateWithBinding(ir SemanticIR, previous []byte, binding ProjectionBindi
 		result.Metadata.Evidence = EvidenceStatus{Decision: "UNVERIFIED", Refs: []string{binding.EvidenceDigest}}
 	}
 	if binding.ProvenanceDigest != "" {
+		result.Metadata.ProvenanceDigest = binding.ProvenanceDigest
 		result.Metadata.Provenance = BindingStatus{Status: "UNVERIFIED", Authority: "caller-supplied-unverified"}
 	}
 	if binding.Toolchain.Value != "" {

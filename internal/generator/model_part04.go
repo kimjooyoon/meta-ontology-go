@@ -26,6 +26,7 @@ type GenerationMetadata struct {
 	SourceDigest     string                `json:"source_digest"`
 	SemanticIRDigest string                `json:"semantic_ir_digest"`
 	SourceMapDigest  string                `json:"source_map_digest"`
+	ProvenanceDigest string                `json:"provenance_digest,omitempty"`
 	Source           BindingStatus         `json:"source"`
 	SemanticIR       BindingStatus         `json:"semantic_ir"`
 	Provenance       BindingStatus         `json:"provenance"`

@@ -22,7 +22,7 @@ func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bound.Metadata.Source.Status != "BOUND" || bound.Metadata.Provenance.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Value != "go1.26.5" {
+	if bound.Metadata.Source.Status != "BOUND" || bound.Metadata.Provenance.Status != "UNVERIFIED" || bound.Metadata.ProvenanceDigest != binding.ProvenanceDigest || bound.Metadata.Toolchain.Status != "UNVERIFIED" || bound.Metadata.Toolchain.Value != "go1.26.5" {
 		t.Fatalf("binding status not reflected: %#v", bound.Metadata)
 	}
 	if bound.Metadata.Evidence.Decision != "UNVERIFIED" || bound.Metadata.Authority.Provenance != "caller-supplied-unverified" {
