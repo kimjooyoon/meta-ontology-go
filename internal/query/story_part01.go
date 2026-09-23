@@ -3,6 +3,7 @@ package query
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"sort"
 
 	provenance "github.com/kimjooyoon/meta-ontology-go/internal/provenance"
