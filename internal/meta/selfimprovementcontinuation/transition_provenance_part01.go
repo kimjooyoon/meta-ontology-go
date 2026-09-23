@@ -7,41 +7,53 @@ import (
 )
 
 const (
-	ContinuationTransitionProvenanceSchema  = "gooo/continuation-transition-provenance/v1"
-	ContinuationTransitionImproved          = "IMPROVED"
-	ContinuationTransitionRegressed         = "REGRESSED"
-	ContinuationTransitionStable            = "STABLE"
-	ContinuationTransitionUnknown           = "UNKNOWN"
+	ContinuationTransitionProvenanceSchema = "gooo/continuation-transition-provenance/v1"
+	ContinuationTransitionImproved         = "IMPROVED"
+	ContinuationTransitionRegressed        = "REGRESSED"
+	ContinuationTransitionStable           = "STABLE"
+	ContinuationTransitionUnknown          = "UNKNOWN"
 )
 
 type ContinuationTransitionProvenance struct {
 	Schema                   string
 	BeforeResolutionDigest   string
 	AfterResolutionDigest    string
-	BeforeDecision            Decision
-	AfterDecision             Decision
-	ClosedCasesDelta          int
-	UnknownCasesDelta         int
-	RefutedCasesDelta         int
-	Direction                 string
+	BeforeDecision           Decision
+	AfterDecision            Decision
+	BeforeClosedCases        int
+	AfterClosedCases         int
+	BeforeUnknownCases       int
+	AfterUnknownCases        int
+	BeforeRefutedCases       int
+	AfterRefutedCases        int
+	ClosedCasesDelta         int
+	UnknownCasesDelta        int
+	RefutedCasesDelta        int
+	Direction                string
 	Reason                   string
-	NonAuthorizing            bool
-	ObservationDigest         string
+	NonAuthorizing           bool
+	ObservationDigest        string
 }
 
 func ObserveContinuationTransition(before, after ContinuationResolution) ContinuationTransitionProvenance {
 	observation := ContinuationTransitionProvenance{
-		Schema:                 ContinuationTransitionProvenanceSchema,
-		BeforeResolutionDigest: before.Digest,
-		AfterResolutionDigest:  after.Digest,
-		BeforeDecision:          before.Decision,
-		AfterDecision:           after.Decision,
-		ClosedCasesDelta:        after.Metrics.ClosedCases - before.Metrics.ClosedCases,
-		UnknownCasesDelta:       after.Metrics.UnknownCases - before.Metrics.UnknownCases,
-		RefutedCasesDelta:       after.Metrics.RefutedCases - before.Metrics.RefutedCases,
-		Direction:               ContinuationTransitionUnknown,
-		Reason:                  "CONTINUATION_TRANSITION_UNKNOWN",
-		NonAuthorizing:          true,
+		Schema:                   ContinuationTransitionProvenanceSchema,
+		BeforeResolutionDigest:   before.Digest,
+		AfterResolutionDigest:    after.Digest,
+		BeforeDecision:           before.Decision,
+		AfterDecision:            after.Decision,
+		BeforeClosedCases:        before.Metrics.ClosedCases,
+		AfterClosedCases:         after.Metrics.ClosedCases,
+		BeforeUnknownCases:       before.Metrics.UnknownCases,
+		AfterUnknownCases:        after.Metrics.UnknownCases,
+		BeforeRefutedCases:       before.Metrics.RefutedCases,
+		AfterRefutedCases:        after.Metrics.RefutedCases,
+		ClosedCasesDelta:         after.Metrics.ClosedCases - before.Metrics.ClosedCases,
+		UnknownCasesDelta:        after.Metrics.UnknownCases - before.Metrics.UnknownCases,
+		RefutedCasesDelta:        after.Metrics.RefutedCases - before.Metrics.RefutedCases,
+		Direction:                ContinuationTransitionUnknown,
+		Reason:                   "CONTINUATION_TRANSITION_UNKNOWN",
+		NonAuthorizing:           true,
 	}
 	if before.Digest == "" || after.Digest == "" ||
 		!validDigest(before.Digest) || !validDigest(after.Digest) {
@@ -76,6 +88,12 @@ func (observation ContinuationTransitionProvenance) Canonical() string {
 		observation.AfterResolutionDigest,
 		string(observation.BeforeDecision),
 		string(observation.AfterDecision),
+		strconv.Itoa(observation.BeforeClosedCases),
+		strconv.Itoa(observation.AfterClosedCases),
+		strconv.Itoa(observation.BeforeUnknownCases),
+		strconv.Itoa(observation.AfterUnknownCases),
+		strconv.Itoa(observation.BeforeRefutedCases),
+		strconv.Itoa(observation.AfterRefutedCases),
 		strconv.Itoa(observation.ClosedCasesDelta),
 		strconv.Itoa(observation.UnknownCasesDelta),
 		strconv.Itoa(observation.RefutedCasesDelta),
@@ -101,21 +119,27 @@ func (observation ContinuationTransitionProvenance) Validate() error {
 	}
 	expected := ObserveContinuationTransition(
 		ContinuationResolution{
-			Digest: observation.BeforeResolutionDigest,
+			Digest:   observation.BeforeResolutionDigest,
 			Decision: observation.BeforeDecision,
-			Metrics: Metrics{ClosedCases: 0, UnknownCases: 0, RefutedCases: 0},
+			Metrics: Metrics{
+				ClosedCases:  observation.BeforeClosedCases,
+				UnknownCases: observation.BeforeUnknownCases,
+				RefutedCases: observation.BeforeRefutedCases,
+			},
 		},
 		ContinuationResolution{
-			Digest: observation.AfterResolutionDigest,
+			Digest:   observation.AfterResolutionDigest,
 			Decision: observation.AfterDecision,
 			Metrics: Metrics{
-				ClosedCases:  observation.ClosedCasesDelta,
-				UnknownCases: observation.UnknownCasesDelta,
-				RefutedCases: observation.RefutedCasesDelta,
+				ClosedCases:  observation.AfterClosedCases,
+				UnknownCases: observation.AfterUnknownCases,
+				RefutedCases: observation.AfterRefutedCases,
 			},
 		},
 	)
-	_ = expected
+	if observation != expected {
+		return errors.New("continuation transition provenance does not match snapshots")
+	}
 	return nil
 }
 
