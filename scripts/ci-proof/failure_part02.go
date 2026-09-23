@@ -45,6 +45,7 @@ type failureManifest struct {
 	ArtifactReason       string            `json:"artifact_reason"`
 	TerminalFailures     []failureJob      `json:"terminal_failures"`
 	TerminalFailureCodes []string          `json:"terminal_failure_codes"`
+	TerminalFailureEvidence []terminalFailureEvidence `json:"terminal_failure_evidence"`
 	Message              string            `json:"message"`
 	Remediation          string            `json:"remediation"`
 	HandoffOwner         string            `json:"handoff_owner"`
