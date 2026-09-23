@@ -62,7 +62,7 @@ func ObserveWorkloadAuthorityProvenance(workloadURI string, boundary AuthorityBo
 		WorkloadURI:                workloadURI,
 		TrustDomain:                identity.trustDomain,
 		WorkloadPath:               identity.workloadPath,
-		IdentityDigest:              workloadIdentityDigest(workloadURI),
+		IdentityDigest:             workloadIdentityDigest(workloadURI),
 		AuthorityDigest:            boundary.AuthorityDigest,
 		AuthorityObservationDigest: boundary.StableHash(),
 		SourceRevision:             boundary.SourceRevision,
