@@ -2,7 +2,6 @@ package generation
 
 import (
 	"errors"
-	"slices"
 	"strconv"
 	"strings"
 )
