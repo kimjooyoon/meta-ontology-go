@@ -7,22 +7,22 @@ import (
 )
 
 const (
-	ProvenanceTrendObservationSchema  = "gooo/provenance-trend-observation/v1"
-	ProvenanceTrendImproved           = "IMPROVED"
-	ProvenanceTrendRegressed          = "REGRESSED"
-	ProvenanceTrendStable             = "STABLE"
-	ProvenanceTrendUnknown            = "UNKNOWN"
+	ProvenanceTrendObservationSchema = "gooo/provenance-trend-observation/v1"
+	ProvenanceTrendImproved          = "IMPROVED"
+	ProvenanceTrendRegressed         = "REGRESSED"
+	ProvenanceTrendStable            = "STABLE"
+	ProvenanceTrendUnknown           = "UNKNOWN"
 )
 
 type ProvenanceTrendObservation struct {
-	Schema          string
-	PreviousDigest  string
-	CurrentDigest   string
-	PreviousValue   int
-	CurrentValue    int
-	Direction       string
-	Reason          string
-	NonAuthorizing  bool
+	Schema            string
+	PreviousDigest    string
+	CurrentDigest     string
+	PreviousValue     int
+	CurrentValue      int
+	Direction         string
+	Reason            string
+	NonAuthorizing    bool
 	ObservationDigest string
 }
 
