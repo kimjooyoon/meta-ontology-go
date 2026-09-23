@@ -243,7 +243,6 @@ func validateUpstreamReport(report publicorchestration.Report, policy publicorch
 	return nil
 }
 
-func executePositive
 func executePositive(input runInput, policy publicpartialreuse.Policy, item publicpartialreuse.Case, source, testContract []byte, compiler string, upstream publicorchestration.Report, out string) (caseArtifacts, error) {
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		return caseArtifacts{}, err
