@@ -4,6 +4,8 @@ func init() {
 	branchScopeAllowlist["agent/language-syntax-unknown-corpus-digest-20260920"] = []string{
 		".github/agent-scope-table.md",
 		".github/ci-governance.json",
+		"cmd/gooo/main_part01.go",
+		"cmd/gooo/stage_accepted_revision.go",
 		"examples/language-syntax-roundtrip/corpus.json",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/contract.go",
 		"internal/meta/languageassurance/verticalsliceclosureshadow/denominator.go",
