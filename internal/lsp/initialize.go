@@ -36,6 +36,13 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				"goooDiagnosticProvenance": map[string]string{
 					"method": "gooo/diagnosticProvenance", "schema": diagnosticProvenanceSchema,
 				},
+				"goooStoryProvenance": map[string]string{
+
+					"method": "gooo/storyProvenance",
+
+					"schema": storyProvenanceSchema,
+
+				},
 				"goooCompletionProvenance": map[string]string{
 					"method": "gooo/completionProvenance", "schema": completionProvenanceSchema,
 				},
@@ -45,4 +52,3 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 	}
 	return resultResponse(request.ID, result), nil, nil
 }
-
