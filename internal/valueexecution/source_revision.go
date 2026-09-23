@@ -38,8 +38,9 @@ type SourceRevision struct {
 }
 
 type SourceRevisionContract struct {
-	Scope  string  `json:"scope"`
-	Inputs []int64 `json:"inputs"`
+	Scope          string           `json:"scope"`
+	Inputs         []int64          `json:"inputs"`
+	ExpectedOutputs map[int64]int64 `json:"expected_outputs,omitempty"`
 }
 
 type SourceRevisionEvaluation struct {
@@ -59,6 +60,7 @@ type SourceRevisionEvaluation struct {
 	Scope                   string      `json:"scope"`
 	CounterexampleRecovered bool        `json:"counterexample_recovered"`
 	ContractInputs          []int64     `json:"contract_inputs,omitempty"`
+	ContractExpectedOutputs map[int64]int64 `json:"contract_expected_outputs,omitempty"`
 	ContractDigest          string      `json:"contract_digest,omitempty"`
 	ContractPreservation    bool        `json:"contract_preservation"`
 	RegressionEvidence      []string    `json:"regression_evidence,omitempty"`
@@ -193,9 +195,21 @@ func VerifySourceRevisionContract(revision SourceRevision, evaluation SourceRevi
 		if baselineErr != nil {
 			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_BASELINE_NOT_PROVEN", "PRESERVE_BASELINE_CONTRACT")
 		}
+		if expected, ok := contract.ExpectedOutputs[input]; ok {
+			baselineResult, resultOK := baselineExecution.Results[activity]
+			if !resultOK || baselineResult.Value != expected {
+				return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_BASELINE_EXPECTATION_MISMATCH", "REVIEW_SOURCE_REVISION_CONTRACT_EXPECTATIONS")
+			}
+		}
 		candidateExecution, candidateErr := candidatePlan.Execute(map[string]int64{activity: input})
 		if candidateErr != nil {
 			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_CANDIDATE_REGRESSION", "PRESERVE_CANDIDATE_CONTRACT")
+		}
+		if expected, ok := contract.ExpectedOutputs[input]; ok {
+			candidateResult, resultOK := candidateExecution.Results[activity]
+			if !resultOK || candidateResult.Value != expected {
+				return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_CANDIDATE_EXPECTATION_MISMATCH", "PRESERVE_CANDIDATE_CONTRACT")
+			}
 		}
 		if !sameContractResult(baselineExecution, candidateExecution, activity) {
 			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED", "PRESERVE_CANDIDATE_CONTRACT")
@@ -208,7 +222,17 @@ func VerifySourceRevisionContract(revision SourceRevision, evaluation SourceRevi
 	}
 	evaluation.Scope = "CONTRACT_PRESERVATION"
 	evaluation.ContractInputs = append([]int64(nil), contract.Inputs...)
-	evaluation.ContractDigest = digestValue(map[string]any{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence})
+	if len(contract.ExpectedOutputs) > 0 {
+		evaluation.ContractExpectedOutputs = make(map[int64]int64, len(contract.ExpectedOutputs))
+		for input, output := range contract.ExpectedOutputs {
+			evaluation.ContractExpectedOutputs[input] = output
+		}
+	}
+	contractDigestInput := map[string]any{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence}
+	if len(contract.ExpectedOutputs) > 0 {
+		contractDigestInput["expected_outputs"] = contract.ExpectedOutputs
+	}
+	evaluation.ContractDigest = digestValue(contractDigestInput)
 	evaluation.ContractPreservation = true
 	evaluation.RegressionEvidence = evidence
 	evaluation.AdoptionAuthorized = false

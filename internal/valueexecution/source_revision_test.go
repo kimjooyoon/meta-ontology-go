@@ -82,3 +82,19 @@ func TestEvaluateSourceRevisionSeparatesCounterexampleRecoveryFromContractAccept
 		t.Fatalf("mismatched source = %#v", unknown)
 	}
 }
+
+func TestVerifySourceRevisionContractCanRequireIndependentExpectedOutputs(t *testing.T) {
+	source := []byte(sourceRevisionFixture)
+	evaluation := SourceRevisionEvaluation{State: ReplayClosed, CounterexampleRecovered: true, CandidateExecuted: true}
+	contract := SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: []int64{0}, ExpectedOutputs: map[int64]int64{0: 1}}
+	verified := VerifySourceRevisionContract(SourceRevision{}, evaluation, "revision.gooo", source, "candidate.gooo", source, "Observe", contract)
+	if !verified.ContractPreservation || verified.ContractDigest == "" || verified.ContractExpectedOutputs[0] != 1 {
+		t.Fatalf("explicit expected output was not retained as contract evidence: %#v", verified)
+	}
+
+	contract.ExpectedOutputs[0] = 2
+	refuted := VerifySourceRevisionContract(SourceRevision{}, evaluation, "revision.gooo", source, "candidate.gooo", source, "Observe", contract)
+	if refuted.State != ReplayRefuted || refuted.Reason != "SOURCE_REVISION_CONTRACT_BASELINE_EXPECTATION_MISMATCH" || refuted.ContractPreservation {
+		t.Fatalf("baseline expectation mismatch was accepted: %#v", refuted)
+	}
+}

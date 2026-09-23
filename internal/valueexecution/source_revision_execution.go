@@ -59,7 +59,7 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "bind-evaluation-digests", "revision, evaluation, source, candidate, or input identity does not match")
 	}
 	current := EvaluateSourceRevision(request.Revision, request.BaselineFilename, request.BaselineSource, request.CandidateFilename, request.CandidateSource, request.Activity, request.Input)
-	verified := VerifySourceRevisionContract(request.Revision, current, request.BaselineFilename, request.BaselineSource, request.CandidateFilename, request.CandidateSource, request.Activity, SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: request.Evaluation.ContractInputs})
+	verified := VerifySourceRevisionContract(request.Revision, current, request.BaselineFilename, request.BaselineSource, request.CandidateFilename, request.CandidateSource, request.Activity, SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: request.Evaluation.ContractInputs, ExpectedOutputs: request.Evaluation.ContractExpectedOutputs})
 	if !verified.ContractPreservation || verified.ContractDigest != request.Evaluation.ContractDigest {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "replay-contract-preservation", "source revision contract evidence is not reproducible")
 	}
