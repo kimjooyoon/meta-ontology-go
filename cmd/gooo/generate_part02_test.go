@@ -64,6 +64,13 @@ func TestRunGeneratePreservesPreviousGoAndPublishesManifest(t *testing.T) {
 	if manifest.Schema != projectionManifestSchema || manifest.Status != "pass" || !manifest.PreviousGoProvided || manifest.PreviousGoDigest == "" || !manifest.ProtectedBytesEqual || manifest.ResponseDigest == "" || manifest.EvidenceManifest.PayloadSHA256 == "" {
 		t.Fatalf("incomplete previous-Go manifest: %#v", manifest)
 	}
+	provenance := manifest.AnalysisProvenance
+	if provenance == nil || provenance.SourcePath != sourcePath || provenance.ContractPath != publicdiscovery.PolicySourcePath() || provenance.SourceDigest != cache.HashBytes([]byte(validSource)).String() || provenance.ContractDigest != publicdiscovery.PolicySourceDigest() || provenance.ProvenanceDigest == "" {
+		t.Fatalf("manifest provenance is incomplete: %#v", provenance)
+	}
+	if want := generation.SemanticAnalysisProvenanceDigest(provenance.SourceDigest, provenance.ProfileDigest, provenance.ToolchainDigest, provenance.ContractDigest); provenance.ProvenanceDigest != want {
+		t.Fatalf("manifest provenance digest = %q, want %q", provenance.ProvenanceDigest, want)
+	}
 	if got, err := os.ReadFile(sourcePath); err != nil || !bytes.Equal(got, []byte(validSource)) {
 		t.Fatalf("source was modified: %v", err)
 	}
