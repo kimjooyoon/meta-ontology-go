@@ -3,10 +3,23 @@ package generator
 // SemanticIR is the local DTO consumed by the Go projection. IDs are stable
 // declaration identity; names are presentation and may change.
 type SemanticIR struct {
-	Package    string
-	Imports    []Import
-	Entities   []Entity
-	Activities []Activity
+	Package         string
+	Imports         []Import
+	Entities        []Entity
+	Activities      []Activity
+	RuntimeBindings []RuntimeBinding
+}
+
+// RuntimeBinding preserves a typed .gooo bind edge through generator-owned
+// projection metadata. Execution remains an explicit runtime-plan concern.
+type RuntimeBinding struct {
+	Schema           string
+	ProducerActivity string
+	ProducerPort     string
+	ConsumerActivity string
+	ConsumerPort     string
+	Entity           string
+	Source           SourceSpan
 }
 
 // Import describes a Go import required by a projected type.

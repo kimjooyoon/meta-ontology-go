@@ -54,6 +54,9 @@ func canonicalizeIREmptyCollections(ir *SemanticIR) {
 	if len(ir.Activities) == 0 {
 		ir.Activities = []Activity{}
 	}
+	if len(ir.RuntimeBindings) == 0 {
+		ir.RuntimeBindings = []RuntimeBinding{}
+	}
 	for index := range ir.Activities {
 		if len(ir.Activities[index].Inputs) == 0 {
 			ir.Activities[index].Inputs = []Port{}
@@ -71,6 +74,7 @@ func copyIR(input SemanticIR) SemanticIR {
 	result.Imports = append([]Import(nil), input.Imports...)
 	result.Entities = append([]Entity(nil), input.Entities...)
 	result.Activities = append([]Activity(nil), input.Activities...)
+	result.RuntimeBindings = append([]RuntimeBinding(nil), input.RuntimeBindings...)
 	for index := range result.Entities {
 		result.Entities[index].Fields = append([]Field(nil), input.Entities[index].Fields...)
 		for fieldIndex := range result.Entities[index].Fields {

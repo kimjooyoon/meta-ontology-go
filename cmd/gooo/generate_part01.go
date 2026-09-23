@@ -86,7 +86,18 @@ func projectionIR(ir semantic.IR) (generator.SemanticIR, error) {
 	if err := ir.Validate(); err != nil {
 		return generator.SemanticIR{}, err
 	}
-	model := generator.SemanticIR{Package: ir.Package}
+	model := generator.SemanticIR{Package: ir.Package, RuntimeBindings: make([]generator.RuntimeBinding, 0, len(ir.RuntimeBindings))}
+	for _, binding := range ir.RuntimeBindings {
+		model.RuntimeBindings = append(model.RuntimeBindings, generator.RuntimeBinding{
+			Schema:           binding.Schema,
+			ProducerActivity: string(binding.ProducerActivity),
+			ProducerPort:     binding.ProducerPort,
+			ConsumerActivity: string(binding.ConsumerActivity),
+			ConsumerPort:     binding.ConsumerPort,
+			Entity:           string(binding.Entity),
+			Source:           generatorSpan(binding.Span),
+		})
+	}
 	entities := make(map[string]int)
 	activities := make(map[string]int)
 	for _, node := range ir.Graph.Nodes() {
