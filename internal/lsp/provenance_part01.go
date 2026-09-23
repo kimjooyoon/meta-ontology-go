@@ -3,17 +3,29 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"strings"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 )
 
 const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
 
 type documentProvenance struct {
-	Schema         string `json:"schema"`
-	URI            string `json:"uri"`
-	SourceDigest   string `json:"source_digest"`
-	ProfileDigest  string `json:"profile_digest"`
+	Schema          string `json:"schema"`
+	URI             string `json:"uri"`
+	SourceDigest    string `json:"source_digest"`
+	ProfileDigest   string `json:"profile_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
-	ContractDigest string `json:"contract_digest"`
+	ContractDigest  string `json:"contract_digest"`
+	ProvenanceDigest string `json:"provenance_digest"`
+}
+
+func documentProvenanceDigest(value documentProvenance) string {
+	canonical := strings.Join([]string{
+		value.Schema, value.URI, value.SourceDigest, value.ProfileDigest,
+		value.ToolchainDigest, value.ContractDigest,
+	}, "\x00")
+	return cache.HashBytes([]byte(canonical)).String()
 }
 
 func (server *Server) documentProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
@@ -34,11 +46,13 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	if !exists || stored.cacheKey.sourceDigest == "" {
 		return resultResponse(request.ID, nil), nil, nil
 	}
-	return resultResponse(request.ID, documentProvenance{
+	provenance := documentProvenance{
 		Schema: documentProvenanceSchema, URI: params.TextDocument.URI,
 		SourceDigest: stored.cacheKey.sourceDigest, ProfileDigest: stored.cacheKey.profileDigest,
 		ToolchainDigest: stored.cacheKey.toolchainDigest, ContractDigest: stored.cacheKey.contractDigest,
-	}), nil, nil
+	}
+	provenance.ProvenanceDigest = documentProvenanceDigest(provenance)
+	return resultResponse(request.ID, provenance), nil, nil
 }
 
 func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, error) {

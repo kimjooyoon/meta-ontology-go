@@ -26,7 +26,7 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" {
+	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" || value.ProvenanceDigest == "" {
 		t.Fatalf("incomplete document provenance: %#v", value)
 	}
 
@@ -49,7 +49,7 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if changed.SourceDigest != digestText(changedSource) || changed.SourceDigest == value.SourceDigest {
+	if changed.SourceDigest != digestText(changedSource) || changed.SourceDigest == value.SourceDigest || changed.ProvenanceDigest == value.ProvenanceDigest {
 		t.Fatalf("document provenance was stale after change: before=%#v after=%#v", value, changed)
 	}
 }
