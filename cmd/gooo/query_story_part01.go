@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	queryengine "github.com/kimjooyoon/meta-ontology-go/internal/query"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
-	"io"
 )
 
 func runQueryStory(options queryOptions, ir semantic.IR, filename string, jsonMode bool, stdout, stderr io.Writer) int {
@@ -24,7 +25,7 @@ func runQueryStory(options queryOptions, ir semantic.IR, filename string, jsonMo
 	if err != nil {
 		return reportFailure(jsonMode, stdout, stderr, "query", filename, "query.story_id", err.Error(), syntax.Span{})
 	}
-	story, err := graph.Story(id, snapshot)
+	story, err := graph.StoryWithEvidenceBinding(id, snapshot)
 	if err != nil {
 		return reportFailure(jsonMode, stdout, stderr, "query", filename, "query.story", err.Error(), syntax.Span{})
 	}
