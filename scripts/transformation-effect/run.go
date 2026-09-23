@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/transformationeffect"
 )
@@ -25,6 +26,16 @@ func run(args []string) error {
 		return transformationeffect.VerifyFiles(cfg.verify, cfg.generatedReceipts, cfg.executedProvenance, cfg.patch)
 	}
 	var progressWriter io.Writer = os.Stderr
+	progressPath := filepath.Join(filepath.Dir(cfg.output), transformationeffect.OperationProgressFilename)
+	if err := os.MkdirAll(filepath.Dir(progressPath), 0o755); err != nil {
+		return fmt.Errorf("create transformation-effect output directory: %w", err)
+	}
+	progressFile, err := os.OpenFile(progressPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("open transformation-effect progress output: %w", err)
+	}
+	defer progressFile.Close()
+	progressWriter = io.MultiWriter(os.Stderr, progressFile)
 	invocation, invocationErr := invocationID(cfg.output)
 	if invocationErr != nil {
 		fmt.Fprintf(os.Stderr, "transformation-effect: diagnostic invocation identity unavailable: %v\n", invocationErr)
