@@ -1,5 +1,12 @@
 package lsp
 
+// PrepareRenameResult identifies the exact client-side range that a later
+// rename request may edit. It carries no mutation authority.
+type PrepareRenameResult struct {
+	Range       Range  `json:"range"`
+	Placeholder string `json:"placeholder,omitempty"`
+}
+
 func (server *Server) prepareRenameRequest(request requestEnvelope) (*responseEnvelope, [][]byte, error) {
 	var params TextDocumentPositionParams
 	if decodeParams(request.Params, &params) != nil || params.TextDocument.URI == "" {
