@@ -12,12 +12,12 @@ import (
 const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
 
 type documentProvenance struct {
-	Schema          string `json:"schema"`
-	URI             string `json:"uri"`
-	SourceDigest    string `json:"source_digest"`
-	ProfileDigest   string `json:"profile_digest"`
-	ToolchainDigest string `json:"toolchain_digest"`
-	ContractDigest  string `json:"contract_digest"`
+	Schema           string `json:"schema"`
+	URI              string `json:"uri"`
+	SourceDigest     string `json:"source_digest"`
+	ProfileDigest    string `json:"profile_digest"`
+	ToolchainDigest  string `json:"toolchain_digest"`
+	ContractDigest   string `json:"contract_digest"`
 	ProvenanceDigest string `json:"provenance_digest"`
 }
 

@@ -28,12 +28,12 @@ const (
 )
 
 type SemanticAdoptionProvenance struct {
-	SourcePath      string `json:"source_path,omitempty"`
-	ContractPath    string `json:"contract_path,omitempty"`
-	SourceDigest    string `json:"source_digest"`
-	ProfileDigest   string `json:"profile_digest"`
-	ToolchainDigest string `json:"toolchain_digest"`
-	ContractDigest  string `json:"contract_digest"`
+	SourcePath       string `json:"source_path,omitempty"`
+	ContractPath     string `json:"contract_path,omitempty"`
+	SourceDigest     string `json:"source_digest"`
+	ProfileDigest    string `json:"profile_digest"`
+	ToolchainDigest  string `json:"toolchain_digest"`
+	ContractDigest   string `json:"contract_digest"`
 	ProvenanceDigest string `json:"provenance_digest,omitempty"`
 }
 
@@ -44,16 +44,16 @@ func SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDige
 // SemanticAdoptionProposal is a caller-owned proposal derived from one stable
 // observation candidate. It never grants execution or repository mutation.
 type SemanticAdoptionProposal struct {
-	Schema            string                       `json:"schema"`
-	ObservationDigest string                       `json:"observation_digest"`
-	ContractDigest    string                       `json:"contract_digest"`
-	InputSourceDigest string                       `json:"input_source_digest"`
+	Schema             string                       `json:"schema"`
+	ObservationDigest  string                       `json:"observation_digest"`
+	ContractDigest     string                       `json:"contract_digest"`
+	InputSourceDigest  string                       `json:"input_source_digest"`
 	AnalysisProvenance *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
-	Candidate         SemanticObservationCandidate `json:"candidate"`
-	Target            string                       `json:"target"`
-	Mode              string                       `json:"mode"`
-	ExecutionAllowed  bool                         `json:"execution_allowed"`
-	RepositoryWrites  int                          `json:"repository_writes"`
+	Candidate          SemanticObservationCandidate `json:"candidate"`
+	Target             string                       `json:"target"`
+	Mode               string                       `json:"mode"`
+	ExecutionAllowed   bool                         `json:"execution_allowed"`
+	RepositoryWrites   int                          `json:"repository_writes"`
 }
 
 // SemanticAdoptionAuthorization is the explicit human-controlled input that
