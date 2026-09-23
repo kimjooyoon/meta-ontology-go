@@ -138,4 +138,3 @@ func (observation CapabilityProvenanceSurfaceObservation) Validate() error {
 	}
 	return nil
 }
-
