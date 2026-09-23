@@ -21,26 +21,26 @@ const (
 // capability lineage observations. It is evidence only and never authorizes
 // the transition it describes.
 type CapabilityProvenanceDelta struct {
-	Schema                 string                          `json:"schema"`
-	PreviousChainDigest    string                          `json:"previous_chain_digest"`
-	CurrentChainDigest     string                          `json:"current_chain_digest"`
-	PreviousSourceRevision SourceRevision                   `json:"previous_source_revision"`
-	CurrentSourceRevision  SourceRevision                   `json:"current_source_revision"`
+	Schema                 string                            `json:"schema"`
+	PreviousChainDigest    string                            `json:"previous_chain_digest"`
+	CurrentChainDigest     string                            `json:"current_chain_digest"`
+	PreviousSourceRevision SourceRevision                    `json:"previous_source_revision"`
+	CurrentSourceRevision  SourceRevision                    `json:"current_source_revision"`
 	Changes                []CapabilityProvenanceDeltaChange `json:"changes"`
-	Verdict                string                          `json:"verdict"`
-	NonAuthorizing         bool                            `json:"non_authorizing"`
-	DeltaDigest            string                          `json:"delta_digest"`
+	Verdict                string                            `json:"verdict"`
+	NonAuthorizing         bool                              `json:"non_authorizing"`
+	DeltaDigest            string                            `json:"delta_digest"`
 }
 
 // CapabilityProvenanceDeltaChange identifies one changed lineage phase.
 type CapabilityProvenanceDeltaChange struct {
-	Sequence   int    `json:"sequence"`
-	Phase      string `json:"phase"`
-	Kind       string `json:"kind"`
-	BeforeID   string `json:"before_id"`
+	Sequence     int    `json:"sequence"`
+	Phase        string `json:"phase"`
+	Kind         string `json:"kind"`
+	BeforeID     string `json:"before_id"`
 	BeforeDigest string `json:"before_digest"`
-	AfterID    string `json:"after_id"`
-	AfterDigest string `json:"after_digest"`
+	AfterID      string `json:"after_id"`
+	AfterDigest  string `json:"after_digest"`
 }
 
 // CompareCapabilityProvenanceLineage computes a phase-by-phase delta while
