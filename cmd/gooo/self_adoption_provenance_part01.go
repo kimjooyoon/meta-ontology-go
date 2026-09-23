@@ -8,10 +8,11 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
-func semanticAdoptionProvenance(sourceDigest, contractDigest string) *generation.SemanticAdoptionProvenance {
+func semanticAdoptionProvenance(sourcePath, sourceDigest, contractPath, contractDigest string) *generation.SemanticAdoptionProvenance {
 	profile := syntax.CurrentEntityFieldsSupport().Profile
 	profileDigest := cache.HashBytes([]byte(fmt.Sprintf("%s|%d|%s", profile.ID, profile.Version, profile.Digest))).String()
 	return &generation.SemanticAdoptionProvenance{
+		SourcePath: sourcePath, ContractPath: contractPath,
 		SourceDigest: sourceDigest, ProfileDigest: profileDigest,
 		ToolchainDigest: generation.SemanticRetentionToolchainDigest(), ContractDigest: contractDigest,
 	}

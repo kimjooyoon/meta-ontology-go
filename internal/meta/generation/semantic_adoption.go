@@ -27,6 +27,8 @@ const (
 )
 
 type SemanticAdoptionProvenance struct {
+	SourcePath      string `json:"source_path,omitempty"`
+	ContractPath    string `json:"contract_path,omitempty"`
 	SourceDigest    string `json:"source_digest"`
 	ProfileDigest   string `json:"profile_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
