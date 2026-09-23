@@ -13,7 +13,7 @@ import (
 const verifyRevisionContractUsage = "usage: gooo verify-revision-contract <baseline.gooo> <candidate.gooo> --revision <revision.json> --evaluation <evaluation.json> --activity <name> --inputs <inputs.json> --out <directory>"
 
 type verifyRevisionContractOptions struct {
-	baseline, candidate, revision, evaluation, activity, inputs, outputDir string
+	baseline, candidate, revision, evaluation, activity, inputs, expectedOutputs, outputDir string
 }
 
 func runVerifyRevisionContract(args []string, reader SourceReader, stdout, stderr io.Writer) int {
@@ -47,6 +47,19 @@ func runVerifyRevisionContract(args []string, reader SourceReader, stdout, stder
 		fmt.Fprintln(stderr, err)
 		return exitFailure
 	}
+	var expectedOutputs map[int64]int64
+	if options.expectedOutputs != "" {
+		expectedOutputsData, readErr := reader.ReadFile(options.expectedOutputs)
+		if readErr != nil {
+			fmt.Fprintln(stderr, readErr)
+			return exitFailure
+		}
+		if err := json.Unmarshal(expectedOutputsData, &expectedOutputs); err != nil || len(expectedOutputs) == 0 {
+			fmt.Fprintln(stderr, "gooo: verify-revision-contract: expected outputs must be a non-empty JSON object")
+			return exitFailure
+		}
+	}
+
 	var revision valueexecution.SourceRevision
 	if err := json.Unmarshal(revisionData, &revision); err != nil {
 		fmt.Fprintf(stderr, "gooo: verify-revision-contract: decode revision: %v\n", err)
@@ -64,7 +77,7 @@ func runVerifyRevisionContract(args []string, reader SourceReader, stdout, stder
 	}
 	result := valueexecution.VerifySourceRevisionContract(
 		revision, evaluation, options.baseline, baselineSource, options.candidate, candidateSource,
-		options.activity, valueexecution.SourceRevisionContract{Scope: valueexecution.SourceRevisionContractScope, Inputs: inputs},
+		options.activity, valueexecution.SourceRevisionContract{Scope: valueexecution.SourceRevisionContractScope, Inputs: inputs, ExpectedOutputs: expectedOutputs},
 	)
 	payload, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -107,6 +120,8 @@ func parseVerifyRevisionContractArguments(args []string) (verifyRevisionContract
 			options.activity = args[index]
 		case "--inputs":
 			options.inputs = args[index]
+		case "--expected-outputs":
+			options.expectedOutputs = args[index]
 		case "--out":
 			options.outputDir = args[index]
 		default:
