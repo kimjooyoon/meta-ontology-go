@@ -79,7 +79,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          set +e
           gofmt -d \
             internal/meta/generation/*.go \
             internal/meta/languagereadiness/languagesyntax/model.go \
@@ -131,11 +130,7 @@ jobs:
             scripts/self-improvement-cycle/cycle_test.go \
             scripts/self-improvement-cycle/validate.go \
             internal/verify/scope_gooo_core_conformance_registry.go \
-            > "$RUNNER_TEMP/core-conformance-format.diff" 2>&1
-          gofmt_status=$?
-          set -e
-          cat "$RUNNER_TEMP/core-conformance-format.diff"
-          test "$gofmt_status" -eq 0
+            > "$RUNNER_TEMP/core-conformance-format.diff"
           test ! -s "$RUNNER_TEMP/core-conformance-format.diff"
       - name: Test registry, inventory and pinned denominator
         shell: bash
