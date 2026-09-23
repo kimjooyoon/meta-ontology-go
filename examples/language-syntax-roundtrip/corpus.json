@@ -398,6 +398,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-runtime-binding-typed-chain",
+      "path": "examples/language-runtime-binding/typed-chain.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-record-binding",
       "path": "examples/language-record-binding/main.gooo",
       "kind": "VALID",
