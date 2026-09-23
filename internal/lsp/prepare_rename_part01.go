@@ -48,6 +48,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.referencesRequest(request)
 	case "textDocument/rename":
 		return server.renameRequest(request)
+	case "textDocument/prepareRename":
+		return server.prepareRenameRequest(request)
 	case "workspace/symbol":
 		return server.workspaceSymbolRequest(request)
 	case "textDocument/semanticTokens/full":
