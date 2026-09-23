@@ -38,6 +38,7 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 		DefinitionProvider:     true,
 		DocumentSymbolProvider: true,
 		ReferencesProvider:     true,
+		RenameProvider:         true,
 		WorkspaceSymbolProvider: &lsp.WorkspaceSymbolOptions{
 			Schema: lsp.WorkspaceSymbolProtocolSchema,
 		},
