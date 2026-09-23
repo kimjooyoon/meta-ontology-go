@@ -3,6 +3,7 @@ package languagesyntax
 import (
 	"strings"
 	"testing"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 func TestLanguageSyntaxReadinessProvenanceComposesDeclarations(t *testing.T) {
@@ -19,7 +20,7 @@ func TestLanguageSyntaxReadinessProvenanceComposesDeclarations(t *testing.T) {
 		Source: Source{
 			RegistryDigest:   digestBytes([]byte("registry")),
 			CorpusDigest:     digestBytes([]byte("corpus")),
-			GoooFiles:        []string{"examples/alpha.gooo"},
+			GoooFiles:        []replay.FileObservation{{Path: "examples/alpha.gooo"}},
 			ObservationKnown: true,
 			ConceptBound:     true,
 		},
@@ -54,7 +55,7 @@ func TestLanguageSyntaxReadinessProvenancePreservesUnknownAndRefuted(t *testing.
 		HeadSHA:  head,
 		Source: Source{
 			RegistryDigest:  digestBytes([]byte("registry")),
-			GoooFiles:       []string{"examples/alpha.gooo"},
+			GoooFiles:       []replay.FileObservation{{Path: "examples/alpha.gooo"}},
 			UnregisteredGooo: []string{"examples/rogue.gooo"},
 		},
 	})
