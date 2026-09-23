@@ -53,7 +53,19 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 		Experimental: map[string]any{
 			"goooDocumentProvenance": map[string]any{
 				"method": "gooo/documentProvenance",
-				"schema": "gooo/lsp-document-provenance/v1",
+				"schema": "gooo/lsp-document-provenance/v3",
+			},
+			"goooReferencesProvenance": map[string]any{
+				"method": "gooo/referencesProvenance",
+				"schema": "gooo/lsp-references-provenance/v1",
+			},
+			"goooDiagnosticProvenance": map[string]any{
+				"method": "gooo/diagnosticProvenance",
+				"schema": "gooo/lsp-diagnostic-provenance/v1",
+			},
+			"goooCompletionProvenance": map[string]any{
+				"method": "gooo/completionProvenance",
+				"schema": "gooo/lsp-completion-provenance/v1",
 			},
 		},
 	}
