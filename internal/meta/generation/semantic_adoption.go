@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
 const (
@@ -37,7 +38,7 @@ type SemanticAdoptionProvenance struct {
 }
 
 func SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest string) string {
-	return cache.HashBytes([]byte(strings.Join([]string{sourceDigest, profileDigest, toolchainDigest, contractDigest}, "\x00"))).String()
+	return analysisprovenance.Digest(sourceDigest, profileDigest, toolchainDigest, contractDigest)
 }
 
 // SemanticAdoptionProposal is a caller-owned proposal derived from one stable

@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
 const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
@@ -22,7 +22,7 @@ type documentProvenance struct {
 }
 
 func documentProvenanceDigest(value documentProvenance) string {
-	return generation.SemanticAnalysisProvenanceDigest(value.SourceDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
+	return analysisprovenance.Digest(value.SourceDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
 }
 
 func (server *Server) documentProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
