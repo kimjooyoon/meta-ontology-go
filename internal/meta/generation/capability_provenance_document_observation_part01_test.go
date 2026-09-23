@@ -60,20 +60,21 @@ func TestCapabilityProvenanceDocumentObservationPreservesUnknownAndRefuted(t *te
 	if err := missing.Validate(); err != nil {
 		t.Fatalf("validate missing observation: %v", err)
 	}
-	invalid := CapabilityProvenanceDocumentObservationInput{
+	valid := cache.HashBytes([]byte("bridge-valid")).String()
+	wrongDocumentDigest := cache.HashBytes([]byte("bridge-wrong-document")).String()
+	refuted := ObserveCapabilityProvenanceSurfaceFromDocument(CapabilityProvenanceDocumentObservationInput{
 		Schema:                   CapabilityProvenanceDocumentObservationSchema,
-		SubjectDigest:            "sha256:" + "0",
-		SourceDigest:             "sha256:" + "0",
-		SemanticDigest:           "sha256:" + "0",
-		ProfileDigest:            "sha256:" + "0",
-		ToolchainDigest:          "sha256:" + "0",
-		ContractDigest:           "sha256:" + "0",
-		SymbolMapDigest:          "sha256:" + "0",
-		ReferenceMapDigest:       "sha256:" + "0",
-		DocumentProvenanceDigest: "sha256:" + "0",
-		GeneratedDigest:          "sha256:" + "0",
-	}
-	refuted := ObserveCapabilityProvenanceSurfaceFromDocument(invalid)
+		SubjectDigest:            valid,
+		SourceDigest:             valid,
+		SemanticDigest:           valid,
+		ProfileDigest:            valid,
+		ToolchainDigest:          valid,
+		ContractDigest:           valid,
+		SymbolMapDigest:          valid,
+		ReferenceMapDigest:       valid,
+		DocumentProvenanceDigest: wrongDocumentDigest,
+		GeneratedDigest:          valid,
+	})
 	if refuted.Decision != CapabilityProvenanceSurfaceRefuted || refuted.Reason != "DOCUMENT_PROVENANCE_DIGEST_MISMATCH" {
 		t.Fatalf("refuted observation = %#v", refuted)
 	}
