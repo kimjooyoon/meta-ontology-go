@@ -236,36 +236,11 @@ jobs:
       PLATFORM_RESULT: ${{ needs.platform.result }}
       AGGREGATE_RESULT: ${{ needs.aggregate.result }}
     steps:
-      - name: Record fail-closed upstream state
+      - name: Prepare fail-closed eligibility paths
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/final" "$RUNNER_TEMP/downloaded"
-          jq -n \
-            --arg sha "$EXACT_SHA" \
-            --arg platform "$PLATFORM_RESULT" \
-            --arg aggregate "$AGGREGATE_RESULT" \
-            '{
-              schema:"gooo/release-eligibility/v1",
-              head_sha:$sha,
-              decision:"FAIL_CLOSED",
-              resolution:"OPERATION_CLASS",
-              reason:"RELEASE_READINESS_UPSTREAM_NOT_SUCCESS",
-              next_operation:"RERUN_GOOO_RELEASE_READINESS",
-              mutation_allowed:false,
-              upstream:{platform:$platform,aggregate:$aggregate},
-              claim:{
-                id:"release://gooo/experimental-candidate-evidence",
-                entity:"GoooExperimentalReleaseCandidateEvidence",
-                status:"ACTIVE",
-                state:"UNKNOWN",
-                resolution:"OPERATION_CLASS",
-                stage:"CI",
-                step:"AGGREGATE_RELEASE_EVIDENCE",
-                reason:"RELEASE_READINESS_UPSTREAM_NOT_SUCCESS",
-                next_operation:"RERUN_GOOO_RELEASE_READINESS"
-              },
-              summary:{total_work:7,closed:0,unknown:7,refuted:0,repository_writes:null}
-            }' > "$RUNNER_TEMP/final/eligibility.json"
       - name: Download closed eligibility evidence
         if: needs.platform.result == 'success' && needs.aggregate.result == 'success'
         uses: actions/download-artifact@v8
@@ -276,9 +251,101 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [[ "$PLATFORM_RESULT" == "success" && "$AGGREGATE_RESULT" == "success" && -f "$RUNNER_TEMP/downloaded/eligibility.json" ]]; then
-            cp "$RUNNER_TEMP/downloaded/eligibility.json" "$RUNNER_TEMP/final/eligibility.json"
+          set -euo pipefail
+          bash "$GITHUB_WORKSPACE/scripts/release-readiness/select-eligibility.sh"             "$EXACT_SHA"             "$PLATFORM_RESULT"             "$AGGREGATE_RESULT"             "$RUNNER_TEMP/final/fallback-eligibility.json"             "$RUNNER_TEMP/downloaded/eligibility.json"             "$RUNNER_TEMP/final/eligibility.json"
+
+      - name: Execute UNKNOWN fallback regression cohort
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/release-fallback-regression"
+          mkdir -p "$root"
+          helper="$GITHUB_WORKSPACE/scripts/release-readiness/select-eligibility.sh"
+          declared=4
+          executed=0
+          run_unknown_case() {
+            local id="$1"
+            local platform="$2"
+            local aggregate="$3"
+            local expected_reason="$4"
+            local expected_class="$5"
+            local expected_blocked="$6"
+            local output="$root/$id.json"
+            bash "$helper" "$EXACT_SHA" "$platform" "$aggregate"               "$root/$id-fallback.json" "$root/$id-missing.json" "$output"
+            jq -e               --arg reason "$expected_reason"               --arg unknown_class "$expected_class"               --argjson blocked_by "$expected_blocked" '
+                .schema == "gooo/release-eligibility/v1" and
+                .head_sha == $EXACT_SHA and
+                .decision == "FAIL_CLOSED" and
+                .resolution == "OPERATION_CLASS" and
+                .claim.state == "UNKNOWN" and
+                .claim.stage == "CI" and
+                .claim.step == "AGGREGATE_RELEASE_EVIDENCE" and
+                .claim.reason == $reason and
+                .claim.unknown_class == $unknown_class and
+                .claim.next_operation == "RERUN_GOOO_RELEASE_READINESS" and
+                .claim.blocked_by == $blocked_by
+              ' "$output"
+            executed=$((executed + 1))
+          }
+          run_unknown_case             "upstream-non-success" "failure" "success"             "RELEASE_READINESS_UPSTREAM_NOT_SUCCESS"             "UPSTREAM_JOB_NON_SUCCESS"             '["platform:failure"]'
+          run_unknown_case             "eligibility-evidence-unavailable" "success" "success"             "RELEASE_READINESS_ELIGIBILITY_EVIDENCE_UNAVAILABLE"             "ELIGIBILITY_ARTIFACT_UNAVAILABLE"             '["gooo-release-eligibility-'"$EXACT_SHA"'/eligibility.json"]'
+
+          jq -n --arg sha "$EXACT_SHA" '{
+            schema:"gooo/release-eligibility/v1",
+            head_sha:$sha,
+            decision:"EVIDENCE_CLOSED",
+            resolution:"EXACT",
+            summary:{total_work:7,closed:7,unknown:0,refuted:0,repository_writes:0}
+          }' > "$root/valid-receipt.json"
+          bash "$helper" "$EXACT_SHA" success success             "$root/valid-fallback.json" "$root/valid-receipt.json" "$root/valid-output.json"
+          jq -e --arg sha "$EXACT_SHA" '
+            .decision == "EVIDENCE_CLOSED" and
+            .resolution == "EXACT" and
+            .head_sha == $sha
+          ' "$root/valid-output.json"
+          executed=$((executed + 1))
+
+          jq -n --arg wrong "wrong-$EXACT_SHA" '{
+            schema:"gooo/release-eligibility/v1",
+            head_sha:$wrong,
+            decision:"EVIDENCE_CLOSED",
+            resolution:"EXACT"
+          }' > "$root/wrong-head-receipt.json"
+          bash "$helper" "$EXACT_SHA" success success             "$root/wrong-fallback.json" "$root/wrong-head-receipt.json" "$root/wrong-head-output.json"
+          if jq -e --arg sha "$EXACT_SHA" '
+            .decision == "EVIDENCE_CLOSED" and
+            .resolution == "EXACT" and
+            .head_sha == $sha
+          ' "$root/wrong-head-output.json"; then
+            echo "wrong-head receipt was accepted by selection" >&2
+            exit 1
           fi
+          executed=$((executed + 1))
+
+          jq -n             --arg sha "$EXACT_SHA"             --argjson declared "$declared"             --argjson executed "$executed"             '{
+              schema:"gooo/release-eligibility-fallback-regression/v1",
+              head_sha:$sha,
+              declared_cases:$declared,
+              executed_cases:$executed,
+              cases:[
+                {id:"upstream-non-success",status:"PASS"},
+                {id:"eligibility-evidence-unavailable",status:"PASS"},
+                {id:"valid-receipt",status:"PASS"},
+                {id:"wrong-head-receipt",status:"PASS"}
+              ],
+              mutation_allowed:false
+            }' > "$root/cohort.json"
+          test "$executed" -eq "$declared"
+
+      - name: Upload UNKNOWN fallback regression cohort
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gooo-release-eligibility-fallback-regression-${{ env.EXACT_SHA }}
+          path: ${{ runner.temp }}/release-fallback-regression/cohort.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload final fail-closed eligibility receipt
         if: always()
         uses: actions/upload-artifact@v7
