@@ -97,13 +97,14 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 	}
 	evidence.Decision, evidence.Reason, evidence.Unknown = decision, reason, unknown
 	boundObservation := bindAdoptionObservation(observation, evidence, decision)
+	analysisProvenance := semanticAdoptionProvenance(cache.HashBytes(inputs.inputSource).String(), cache.HashBytes(inputs.contractSource).String())
 	return generation.SemanticAdoptionReport{
 		Schema: generation.SemanticAdoptionReportSchema, Lifecycle: adoptionLifecycle(authorization.Authorized),
 		ObservationDigest: cache.HashBytes(observationData).String(), ProposalDigest: proposalDigest,
 		AuthorizationDigest: authorizationDigest, Proposal: proposal, Authorization: authorization,
 		Evidence: evidence, Observation: boundObservation, BeforeRuntimeMetrics: before.metrics,
 		AfterRuntimeMetrics: adopted.metrics, IndependentDecision: decision, IndependentReason: reason,
-		RepositoryWrites: 0, LocalTestExecutions: 0,
+		RepositoryWrites: 0, LocalTestExecutions: 0, AnalysisProvenance: analysisProvenance,
 	}, nil
 }
 

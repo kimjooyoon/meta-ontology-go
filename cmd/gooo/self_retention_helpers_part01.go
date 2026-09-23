@@ -106,6 +106,12 @@ func validateRetentionEvidence(inputs observationInputs, evidence retentionEvide
 	if err := validateRetentionAdoptionReport(evidence); err != nil {
 		return err
 	}
+	if provenance := evidence.adoption.AnalysisProvenance; provenance != nil {
+		if provenance.SourceDigest != cache.HashBytes(inputs.inputSource).String() || provenance.ContractDigest != cache.HashBytes(inputs.contractSource).String() ||
+			!cache.Digest(provenance.ProfileDigest).Known() || !cache.Digest(provenance.ToolchainDigest).Known() {
+			return retentionInputBindingError{"adoption provenance is not bound to the supplied source, contract, profile, and toolchain"}
+		}
+	}
 	return nil
 }
 
