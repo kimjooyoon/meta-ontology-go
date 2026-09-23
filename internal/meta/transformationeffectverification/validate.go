@@ -23,7 +23,9 @@ func Verify(opts Options) (Report, error) {
 		return failureReport(err), err
 	}
 	if err := validateBundle(bundle, opts.ExpectedHead); err != nil {
-		return failureReport(err), err
+		report := failureReport(err)
+		projectUpstreamCause(&report, bundle.Receipts)
+		return report, err
 	}
 	return successReport(bundle), nil
 }
