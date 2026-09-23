@@ -3,6 +3,7 @@ package query
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"sort"
 
 	provenance "github.com/kimjooyoon/meta-ontology-go/internal/provenance"
@@ -82,7 +83,7 @@ func (graph Graph) Story(id ID, snapshot provenance.Snapshot) (StoryResponse, er
 			SourceDigest: record.SourceDigest, SemanticDigest: record.SemanticDigest,
 			GraphDigest: record.GraphDigest, Sequence: record.Sequence,
 			Predecessor: copyDigestLink(record.Predecessor),
-			Attributes: copyAttributes(record.Attributes), Freshness: record.Freshness,
+			Attributes:  copyAttributes(record.Attributes), Freshness: record.Freshness,
 			Hash: record.Hash,
 		})
 	}
@@ -175,9 +176,7 @@ func copyAttributes(value map[string]string) map[string]string {
 		return nil
 	}
 	result := make(map[string]string, len(value))
-	for key, item := range value {
-		result[key] = item
-	}
+	maps.Copy(result, value)
 	return result
 }
 
