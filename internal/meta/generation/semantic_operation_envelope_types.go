@@ -281,6 +281,7 @@ type SemanticObservation struct {
 	Contract             SemanticObservationContract     `json:"contract"`
 	ContractDigest       string                          `json:"contract_digest"`
 	InputSourceDigest    string                          `json:"input_source_digest"`
+	AnalysisProvenance   *SemanticAdoptionProvenance      `json:"analysis_provenance,omitempty"`
 	Events               []SemanticObservationEvent      `json:"events"`
 	ObservedOperations   int                             `json:"observed_operations"`
 	DistinctInputDigests int                             `json:"distinct_input_digests"`

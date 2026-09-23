@@ -70,7 +70,7 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 		return generation.SemanticAdoptionReport{}, err
 	}
 	analysisProvenance := semanticAdoptionProvenance(options.inputFilename, cache.HashBytes(inputs.inputSource).String(), options.contractFilename, cache.HashBytes(inputs.contractSource).String())
-	if err := validateAdoptionProvenanceChain(proposal, authorization, analysisProvenance); err != nil {
+	if err := validateAdoptionProvenanceChain(observation, proposal, authorization, analysisProvenance); err != nil {
 		return generation.SemanticAdoptionReport{}, err
 	}
 	proposalDigest := cache.HashBytes(proposalData).String()
@@ -114,13 +114,14 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 	}, nil
 }
 
-func validateAdoptionProvenanceChain(proposal generation.SemanticAdoptionProposal, authorization generation.SemanticAdoptionAuthorization, expected *generation.SemanticAdoptionProvenance) error {
-	proposalProvenance, authorizationProvenance := proposal.AnalysisProvenance, authorization.AnalysisProvenance
-	if proposalProvenance == nil && authorizationProvenance == nil {
+func validateAdoptionProvenanceChain(observation generation.SemanticObservation, proposal generation.SemanticAdoptionProposal, authorization generation.SemanticAdoptionAuthorization, expected *generation.SemanticAdoptionProvenance) error {
+	observationProvenance, proposalProvenance, authorizationProvenance := observation.AnalysisProvenance, proposal.AnalysisProvenance, authorization.AnalysisProvenance
+	if observationProvenance == nil && proposalProvenance == nil && authorizationProvenance == nil {
 		return nil
 	}
-	if proposalProvenance == nil || authorizationProvenance == nil || *proposalProvenance != *expected || *authorizationProvenance != *expected {
-		return fmt.Errorf("adoption provenance is not continuous across proposal and authorization")
+	if observationProvenance == nil || proposalProvenance == nil || authorizationProvenance == nil ||
+		*observationProvenance != *expected || *proposalProvenance != *expected || *authorizationProvenance != *expected {
+		return fmt.Errorf("adoption provenance is not continuous across observation, proposal, and authorization")
 	}
 	return nil
 }

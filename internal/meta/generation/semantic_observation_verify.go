@@ -73,6 +73,11 @@ func independentlyClassifySemanticObservation(observation SemanticObservation) (
 	if observation.Schema != SemanticObservationSchema {
 		return "", "", nil, errors.New("semantic observation schema mismatch")
 	}
+	if observation.AnalysisProvenance != nil {
+		if !validSemanticAdoptionProvenance(observation.AnalysisProvenance) || observation.AnalysisProvenance.SourceDigest != observation.InputSourceDigest || observation.AnalysisProvenance.ContractDigest != observation.ContractDigest {
+			return "REFUTED", SemanticObservationContradiction, nil, nil
+		}
+	}
 	if observation.ContractDigest == "" || !knownEnvelopeDigest(observation.ContractDigest) {
 		return "", "", nil, errors.New("semantic observation contract digest is unknown")
 	}
