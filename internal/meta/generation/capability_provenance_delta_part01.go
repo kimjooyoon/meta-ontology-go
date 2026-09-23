@@ -40,7 +40,7 @@ type CapabilityProvenanceDeltaChange struct {
 	BeforeID   string `json:"before_id"`
 	BeforeDigest string `json:"before_digest"`
 	AfterID    string `json:"after_id"`
-	AfterDigest string @@json:"after_digest"`
+	AfterDigest string `json:"after_digest"`
 }
 
 // CompareCapabilityProvenanceLineage computes a phase-by-phase delta while
