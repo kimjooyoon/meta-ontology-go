@@ -9,7 +9,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
-const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
+const documentProvenanceSchema = "gooo/lsp-document-provenance/v2"
 
 type documentProvenance struct {
 	Schema           string `json:"schema"`
@@ -20,11 +20,13 @@ type documentProvenance struct {
 	ProfileDigest    string `json:"profile_digest"`
 	ToolchainDigest  string `json:"toolchain_digest"`
 	ContractDigest   string `json:"contract_digest"`
+	SymbolMapDigest  string `json:"symbol_map_digest"`
+	Symbols          []documentProvenanceSymbol `json:"symbols"`
 	ProvenanceDigest string `json:"provenance_digest"`
 }
 
 func documentProvenanceDigest(value documentProvenance) string {
-	return analysisprovenance.DocumentDigest(value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
+	return analysisprovenance.DocumentDigestWithSymbolMap(value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest, value.SymbolMapDigest)
 }
 
 func (server *Server) documentProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
@@ -39,8 +41,8 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	stored, exists := server.documents[params.TextDocument.URI]
 	if exists {
 		key := stored.cacheKey
-		semanticDigest := stored.result.semanticDigest
-		stored = &document{version: stored.version, text: stored.text, cacheKey: key, result: ParseResult{semanticDigest: semanticDigest}}
+		result := cloneParseResult(stored.result)
+		stored = &document{version: stored.version, text: stored.text, cacheKey: key, result: result}
 	}
 	server.mu.RUnlock()
 	if !exists || stored.cacheKey.sourceDigest == "" {
@@ -51,7 +53,9 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 		SubjectDigest: stored.cacheKey.sourceDigest,
 		SourceDigest: stored.cacheKey.sourceDigest, SemanticDigest: stored.result.semanticDigest, ProfileDigest: stored.cacheKey.profileDigest,
 		ToolchainDigest: stored.cacheKey.toolchainDigest, ContractDigest: stored.cacheKey.contractDigest,
+		Symbols: documentProvenanceSymbols(stored.result),
 	}
+	provenance.SymbolMapDigest = documentProvenanceSymbolMapDigest(provenance.Symbols)
 	provenance.ProvenanceDigest = documentProvenanceDigest(provenance)
 	return resultResponse(request.ID, provenance), nil, nil
 }
@@ -72,8 +76,12 @@ func validateDocumentProvenance(value documentProvenance) error {
 		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != value.SourceDigest ||
 		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.SemanticDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
 		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
+		!cache.Digest(value.SymbolMapDigest).Known() || value.SymbolMapDigest != documentProvenanceSymbolMapDigest(value.Symbols) ||
 		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
 		return errors.New("document provenance identity is invalid")
+	}
+	if err := validateDocumentProvenanceSymbols(value.Symbols); err != nil {
+		return err
 	}
 	return nil
 }
