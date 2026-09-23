@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicorchestration"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicpartialreuse"
 )
 
@@ -30,7 +32,15 @@ func run(input runInput) error {
 	if err != nil {
 		return err
 	}
-	upstream, upstreamBytes, err := readUpstream(input.OrchestrationReport)
+	orchestrationSource, err := readRegular(input.OrchestrationSource)
+	if err != nil {
+		return err
+	}
+	orchestrationPolicy, err := publicorchestration.Load(input.OrchestrationSource, orchestrationSource)
+	if err != nil {
+		return err
+	}
+	upstream, upstreamBytes, err := readUpstream(input.OrchestrationReport, orchestrationPolicy)
 	if err != nil {
 		return err
 	}
@@ -160,28 +170,80 @@ func validateInput(input runInput) error {
 	return nil
 }
 
-type upstreamReport struct {
-	Schema    string `json:"schema"`
-	Decision  string `json:"decision"`
-	Operation string `json:"operation"`
-}
-
-func readUpstream(filename string) (upstreamReport, []byte, error) {
+func readUpstream(filename string, policy publicorchestration.Policy) (publicorchestration.Report, []byte, error) {
 	data, err := readRegular(filename)
 	if err != nil {
-		return upstreamReport{}, nil, err
+		return publicorchestration.Report{}, nil, err
 	}
-	var report upstreamReport
-	if err := json.Unmarshal(data, &report); err != nil {
+	var report publicorchestration.Report
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&report); err != nil {
 		return report, nil, err
 	}
-	if report.Schema != "gooo/public-self-improvement-orchestration-report/v1" || report.Decision != publicpartialreuse.DecisionClosed || report.Operation != "gooo.self-improvement.public-orchestration" {
-		return report, nil, errors.New("v14 orchestration report is not a closed authorized boundary")
+	var extra any
+	if err := decoder.Decode(&extra); err == nil {
+		return report, nil, errors.New("orchestration report contains multiple JSON values")
+	} else if err != io.EOF {
+		return report, nil, err
+	}
+	if err := validateUpstreamReport(report, policy); err != nil {
+		return report, nil, err
 	}
 	return report, data, nil
 }
 
-func executePositive(input runInput, policy publicpartialreuse.Policy, item publicpartialreuse.Case, source, testContract []byte, compiler string, upstream upstreamReport, out string) (caseArtifacts, error) {
+func validateUpstreamReport(report publicorchestration.Report, policy publicorchestration.Policy) error {
+	if report.Schema != publicorchestration.ReportSchema ||
+		report.Decision != publicorchestration.DecisionClosed ||
+		report.CaseID != publicorchestration.CaseAuthorizedOrchestration ||
+		report.Unknown != nil ||
+		report.Operation != policy.Operation ||
+		report.Boundary != "AUTHORIZE" ||
+		!slices.Equal(report.StatePath, []string{"AUTHORIZE", "CERTIFY", "GENERATE", "VALIDATE", "REUSE", "EVIDENCE"}) ||
+		report.PolicySourceDigest != policy.SourceDigest ||
+		report.PolicySemanticDigest != policy.SemanticDigest ||
+		report.PolicyEvaluatorDigest != policy.EvaluatorDigest ||
+		report.CaseDenominator != len(publicorchestration.CanonicalCaseIDs()) ||
+		report.ArtifactDenominator != publicorchestration.ArtifactDenominator ||
+		report.RepositoryWrites != 0 ||
+		report.LocalTestExecutions != 0 ||
+		report.RuntimeComparable ||
+		report.RuntimeUnknown == nil ||
+		report.After.WallMS <= 0 ||
+		report.After.PeakRSSKib <= 0 ||
+		!report.Comparisons.GeneratedBytesEqual ||
+		!report.Comparisons.GeneratedSemanticEqual ||
+		!report.Comparisons.TestContractBytesEqual ||
+		!report.Comparisons.ReceiptBindingEqual ||
+		!report.Comparisons.ContinuityPreserved ||
+		!report.Comparisons.SafetyOutcomesPreserved {
+		return errors.New("orchestration report is not a typed, source-bound authorized boundary")
+	}
+	if report.RuntimeUnknown.Stage == "" || report.RuntimeUnknown.Step == "" || report.RuntimeUnknown.Reason == "" ||
+		report.RuntimeUnknown.UnknownClass == "" || report.RuntimeUnknown.NextOperation == "" || len(report.RuntimeUnknown.BlockedBy) == 0 {
+		return errors.New("orchestration runtime UNKNOWN metadata is incomplete")
+	}
+	if report.CandidateID == "" {
+		return errors.New("orchestration report omits the exact candidate identity")
+	}
+	for name, value := range map[string]string{
+		"policy source": report.PolicySourceDigest, "policy semantic": report.PolicySemanticDigest,
+		"policy evaluator": report.PolicyEvaluatorDigest, "candidate": report.CandidateDigest,
+		"handoff": report.HandoffDigest, "authorization": report.AuthorizationDigest,
+		"certificate": report.CertificateDigest, "receipt": report.ReceiptDigest,
+	} {
+		if !cache.Digest(value).Known() {
+			return fmt.Errorf("orchestration report has unknown %s digest", name)
+		}
+	}
+	if len(report.Cases) != 0 && len(report.Cases) != len(publicorchestration.CanonicalCaseIDs()) {
+		return errors.New("orchestration report case table has an unexpected denominator")
+	}
+	return nil
+}
+
+func executePositive(input runInput, policy publicpartialreuse.Policy, item publicpartialreuse.Case, source, testContract []byte, compiler string, upstream publicorchestration.Report, out string) (caseArtifacts, error) {
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		return caseArtifacts{}, err
 	}

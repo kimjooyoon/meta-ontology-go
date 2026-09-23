@@ -239,7 +239,7 @@ func verifyPrepareReport(policy publicorchestration.Policy, report publicorchest
 }
 
 func verifyClosedResume(policy publicorchestration.Policy, report publicorchestration.Report, handoff publicorchestration.Handoff, authorization publiccontinuity.DecisionReceipt, certificate publiccontinuity.Certificate) error {
-	if report.Decision != publicorchestration.DecisionClosed || report.CaseID != publicorchestration.CaseAuthorizedOrchestration || report.Unknown != nil || !sameStrings(report.StatePath, policy.ResumePath) || report.HandoffDigest != handoff.HandoffID || report.AuthorizationDigest == "" || report.CertificateDigest != certificate.CertificateID || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || authorization.Decision != publiccontinuity.DecisionAccept {
+	if report.Decision != publicorchestration.DecisionClosed || report.CaseID != publicorchestration.CaseAuthorizedOrchestration || report.Unknown != nil || !sameStrings(report.StatePath, policy.ResumePath) || report.HandoffDigest != handoff.HandoffID || report.CandidateDigest != handoff.CandidateDigest || report.CandidateID != handoff.CandidateID || report.AuthorizationDigest == "" || report.CertificateDigest != certificate.CertificateID || report.RepositoryWrites != 0 || report.LocalTestExecutions != 0 || authorization.Decision != publiccontinuity.DecisionAccept {
 		return errors.New("resume did not prove the exact authorized state path")
 	}
 	return nil

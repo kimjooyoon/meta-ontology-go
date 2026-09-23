@@ -260,6 +260,8 @@ func runResume(input orchestrationInput) error {
 		return errors.New("ordinary generated manifest semantic digest differs from lowered policy")
 	}
 	report := baseReport(policy, publicorchestration.CaseAuthorizedOrchestration, publicorchestration.DecisionClosed, nil, append([]string(nil), policy.ResumePath...))
+	report.CandidateDigest = candidateDigest
+	report.CandidateID = candidate.CandidateID
 	report.Reason = policyCaseReason(policy, publicorchestration.CaseAuthorizedOrchestration)
 	report.Before = policy.Before
 	report.After = policy.After

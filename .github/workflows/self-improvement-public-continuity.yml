@@ -682,6 +682,7 @@ jobs:
           go build -o "$root/partial-reuse" ./scripts/self-improvement-public-partial-reuse
           "$root/partial-reuse" -mode run \
             -source "$repo/examples/self-improvement-partial-reuse/main.gooo" \
+            -orchestration-source "$repo/examples/self-improvement-discovery/project.gooo" \
             -test-contract "$repo/examples/self-improvement-partial-reuse/generated_project_test.go" \
             -gooo "$root/gooo" -orchestration-report "$upstream" -repo-root "$repo" -out "$root/evidence"
           "$root/partial-reuse" -mode verify \
@@ -706,6 +707,29 @@ jobs:
             .runtime_comparable == false and .runtime_unknown == "RUNTIME_MODES_NOT_EQUIVALENT" and
             .repository_writes == 0 and .local_test_executions == 0
           ' "$root/evidence/partial-reuse-report.json"
+
+      - name: Reject labels-only and contradictory orchestration admission
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          repo="$(pwd)"
+          root="$RUNNER_TEMP/public-continuity/partial-reuse"
+          upstream="$RUNNER_TEMP/public-continuity/orchestration/resume/orchestration-report.json"
+          source="$repo/examples/self-improvement-partial-reuse/main.gooo"
+          contract="$repo/examples/self-improvement-partial-reuse/generated_project_test.go"
+          orchestration_source="$repo/examples/self-improvement-discovery/project.gooo"
+          labels="$root/labels-only.json"
+          contradictory="$root/contradictory-upstream.json"
+          jq -n '{schema:"gooo/public-self-improvement-orchestration-report/v1",decision:"CLOSED",operation:"gooo.self-improvement.public-orchestration"}' > "$labels"
+          if "$root/partial-reuse" -mode run -source "$source" -test-contract "$contract" -gooo "$root/gooo" -orchestration-source "$orchestration_source" -orchestration-report "$labels" -repo-root "$repo" -out "$root/labels-only-evidence"; then
+            echo "labels-only orchestration admission unexpectedly succeeded" >&2
+            exit 1
+          fi
+          jq '.repository_writes = 1' "$upstream" > "$contradictory"
+          if "$root/partial-reuse" -mode run -source "$source" -test-contract "$contract" -gooo "$root/gooo" -orchestration-source "$orchestration_source" -orchestration-report "$contradictory" -repo-root "$repo" -out "$root/contradictory-evidence"; then
+            echo "contradictory orchestration admission unexpectedly succeeded" >&2
+            exit 1
+          fi
 
       - name: Upload graph-driven partial test reuse dossier
         if: always()
