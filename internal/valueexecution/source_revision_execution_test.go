@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestExecuteAcceptedSourceRevisionRequiresDecisionAndBindsReexecution(t *testing.T) {
+func TestExecuteAcceptedSourceRevisionRequiresContractEvidence(t *testing.T) {
 	baseline := []byte(`package revision
 namespace revision
 entity Integer id "revision://entity/integer"
@@ -20,23 +20,16 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 		t.Fatal(err)
 	}
 	evaluation := EvaluateSourceRevision(revision, "baseline.gooo", baseline, "candidate.gooo", candidate, "Observe", math.MaxInt64)
-	if evaluation.State != ReplayClosed || !evaluation.Accepted {
+	if evaluation.State != ReplayClosed || evaluation.Accepted || !evaluation.CounterexampleRecovered {
 		t.Fatalf("evaluation = %#v", evaluation)
 	}
 	baseRequest := AcceptedSourceRevisionRequest{
 		Revision: revision, Evaluation: evaluation, BaselineFilename: "baseline.gooo", BaselineSource: baseline,
 		CandidateFilename: "candidate.gooo", CandidateSource: candidate, Activity: "Observe", Input: math.MaxInt64,
 	}
-	if _, err := ExecuteAcceptedSourceRevision(baseRequest); err == nil {
-		t.Fatal("accepted revision executed without an explicit decision")
-	}
 	baseRequest.ExplicitDecision = AcceptedSourceRevisionDecision
-	result, err := ExecuteAcceptedSourceRevision(baseRequest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result.Decision != "PASS" || result.ExecutionAllowed || result.RepositoryWrites != 0 || result.NextOperation != "CAPTURE_NEXT_RUN_COMPARISON" || len(result.BlockedBy) != 0 || result.Execution.ExecutionDigest != evaluation.CandidateExecution.ExecutionDigest {
-		t.Fatalf("accepted execution = %#v", result)
+	if _, err := ExecuteAcceptedSourceRevision(baseRequest); err == nil {
+		t.Fatal("counterexample recovery was adopted without contract evidence")
 	}
 }
 

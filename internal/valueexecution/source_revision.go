@@ -43,28 +43,28 @@ type SourceRevisionContract struct {
 }
 
 type SourceRevisionEvaluation struct {
-	Schema                string      `json:"schema"`
-	State                 ReplayState `json:"state"`
-	Reason                string      `json:"reason"`
-	NextOperation         string      `json:"next_operation"`
-	BlockedBy             []string    `json:"blocked_by"`
-	SourceDigest          string      `json:"source_digest"`
-	CandidateSourceDigest string      `json:"candidate_source_digest"`
-	Activity              string      `json:"activity"`
-	InputDigest           string      `json:"input_digest"`
-	BaselineExecution     Execution   `json:"baseline_execution"`
-	CandidateExecution    Execution   `json:"candidate_execution"`
-	BaselineFailure       *Failure    `json:"baseline_failure,omitempty"`
-	CandidateExecuted     bool        `json:"candidate_executed"`
-	Scope                 string      `json:"scope"`
-	CounterexampleRecovered bool      `json:"counterexample_recovered"`
-	ContractInputs        []int64     `json:"contract_inputs,omitempty"`
-	ContractDigest        string      `json:"contract_digest,omitempty"`
-	ContractPreservation  bool        `json:"contract_preservation"`
-	RegressionEvidence    []string    `json:"regression_evidence,omitempty"`
-	AdoptionAuthorized    bool        `json:"adoption_authorized"`
-	Accepted              bool        `json:"accepted"`
-	RepositoryWrites      int         `json:"repository_writes"`
+	Schema                  string      `json:"schema"`
+	State                   ReplayState `json:"state"`
+	Reason                  string      `json:"reason"`
+	NextOperation           string      `json:"next_operation"`
+	BlockedBy               []string    `json:"blocked_by"`
+	SourceDigest            string      `json:"source_digest"`
+	CandidateSourceDigest   string      `json:"candidate_source_digest"`
+	Activity                string      `json:"activity"`
+	InputDigest             string      `json:"input_digest"`
+	BaselineExecution       Execution   `json:"baseline_execution"`
+	CandidateExecution      Execution   `json:"candidate_execution"`
+	BaselineFailure         *Failure    `json:"baseline_failure,omitempty"`
+	CandidateExecuted       bool        `json:"candidate_executed"`
+	Scope                   string      `json:"scope"`
+	CounterexampleRecovered bool        `json:"counterexample_recovered"`
+	ContractInputs          []int64     `json:"contract_inputs,omitempty"`
+	ContractDigest          string      `json:"contract_digest,omitempty"`
+	ContractPreservation    bool        `json:"contract_preservation"`
+	RegressionEvidence      []string    `json:"regression_evidence,omitempty"`
+	AdoptionAuthorized      bool        `json:"adoption_authorized"`
+	Accepted                bool        `json:"accepted"`
+	RepositoryWrites        int         `json:"repository_writes"`
 }
 
 // ProposeSourceRevision creates an exact, external candidate. It never edits
@@ -200,15 +200,15 @@ func VerifySourceRevisionContract(revision SourceRevision, evaluation SourceRevi
 		if !sameContractResult(baselineExecution, candidateExecution, activity) {
 			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED", "PRESERVE_CANDIDATE_CONTRACT")
 		}
-		evidence = append(evidence, digestValue(map[string]interface{}{
+		evidence = append(evidence, digestValue(map[string]any{
 			"activity": activity, "input": input,
-			"baseline": baselineExecution.Results[activity].Value,
+			"baseline":  baselineExecution.Results[activity].Value,
 			"candidate": candidateExecution.Results[activity].Value,
 		}))
 	}
 	evaluation.Scope = "CONTRACT_PRESERVATION"
 	evaluation.ContractInputs = append([]int64(nil), contract.Inputs...)
-	evaluation.ContractDigest = digestValue(map[string]interface{}{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence})
+	evaluation.ContractDigest = digestValue(map[string]any{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence})
 	evaluation.ContractPreservation = true
 	evaluation.RegressionEvidence = evidence
 	evaluation.AdoptionAuthorized = false
