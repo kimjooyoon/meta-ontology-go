@@ -1,0 +1,11 @@
+package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+
+activity ProposeCandidate(Integer) -> Integer computes "int.add:1"
+activity RecordIndependentReview(Integer) -> Integer computes "int.add:1"
+activity CommitCandidate(Integer) -> Integer computes "int.add:1"
+
+bind ProposeCandidate.result -> RecordIndependentReview.input
+bind RecordIndependentReview.result -> CommitCandidate.input
