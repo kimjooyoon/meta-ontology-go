@@ -17,16 +17,16 @@ const (
 // CapabilityProvenanceLineage is the deterministic origin chain for one
 // observed capability. It is an evidence projection and never authorizes work.
 type CapabilityProvenanceLineage struct {
-	Schema                     string                         `json:"schema"`
-	SourceRevision             SourceRevision                 `json:"source_revision"`
-	OperationID                string                         `json:"operation_id"`
+	Schema                     string                            `json:"schema"`
+	SourceRevision             SourceRevision                    `json:"source_revision"`
+	OperationID                string                            `json:"operation_id"`
 	Steps                      []CapabilityProvenanceLineageStep `json:"steps"`
-	AuthorityObservationDigest string                         `json:"authority_observation_digest"`
-	WorkloadProvenanceDigest   string                         `json:"workload_provenance_digest"`
-	CapabilityHandleDigest     string                         `json:"capability_handle_digest"`
-	Verdict                    string                         `json:"verdict"`
-	NonAuthorizing             bool                           `json:"non_authorizing"`
-	ChainDigest                string                         `json:"chain_digest"`
+	AuthorityObservationDigest string                            `json:"authority_observation_digest"`
+	WorkloadProvenanceDigest   string                            `json:"workload_provenance_digest"`
+	CapabilityHandleDigest     string                            `json:"capability_handle_digest"`
+	Verdict                    string                            `json:"verdict"`
+	NonAuthorizing             bool                              `json:"non_authorizing"`
+	ChainDigest                string                            `json:"chain_digest"`
 }
 
 // CapabilityProvenanceLineageStep is one exact hop in the computed origin.
@@ -57,9 +57,9 @@ func ObserveCapabilityProvenanceLineage(workload WorkloadAuthorityProvenance, bo
 		return CapabilityProvenanceLineage{}, errors.New("capability provenance lineage requires a known handle status")
 	}
 	lineage := CapabilityProvenanceLineage{
-		Schema:                     CapabilityProvenanceLineageSchema,
-		SourceRevision:             boundary.SourceRevision,
-		OperationID:                boundary.OperationID,
+		Schema:         CapabilityProvenanceLineageSchema,
+		SourceRevision: boundary.SourceRevision,
+		OperationID:    boundary.OperationID,
 		Steps: []CapabilityProvenanceLineageStep{
 			{Phase: "SOURCE_REVISION", ID: boundary.SourceRevision.ID, Digest: boundary.SourceRevision.Digest},
 			{Phase: "AUTHORITY_BOUNDARY", ID: boundary.OperationID, Digest: boundary.StableHash()},
