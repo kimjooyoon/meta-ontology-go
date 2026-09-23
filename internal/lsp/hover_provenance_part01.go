@@ -1,6 +1,9 @@
 package lsp
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 const hoverProvenanceSchema = "gooo/lsp-hover-provenance/v1"
 
@@ -28,7 +31,9 @@ func hoverProvenanceDetail(document document) string {
 		ProfileDigest:   document.cacheKey.profileDigest,
 		ToolchainDigest: document.cacheKey.toolchainDigest,
 		ContractDigest:  document.cacheKey.contractDigest,
+		Symbols:          documentProvenanceSymbols(document.result),
 	}
+	value.SymbolMapDigest = documentProvenanceSymbolMapDigest(value.Symbols)
 	value.SubjectDigest = value.SourceDigest
 	value.ProvenanceDigest = documentProvenanceDigest(value)
 	return strings.Join([]string{
@@ -38,6 +43,8 @@ func hoverProvenanceDetail(document document) string {
 		"profile digest: " + value.ProfileDigest,
 		"toolchain digest: " + value.ToolchainDigest,
 		"contract digest: " + value.ContractDigest,
+		"symbol origin count: " + strconv.Itoa(len(value.Symbols)),
+		"symbol map digest: " + value.SymbolMapDigest,
 		"provenance digest: " + value.ProvenanceDigest,
 	}, "\n")
 }
