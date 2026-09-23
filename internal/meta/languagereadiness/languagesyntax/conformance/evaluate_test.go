@@ -34,7 +34,7 @@ func TestCompleteCorpusProvesSyntaxRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	if report.Decision != languagesyntax.DecisionPass || report.Resolution != languagesyntax.ResolutionExact ||
-		report.Summary.Satisfied != 80 || report.Summary.ValidCases != 77 ||
+		report.Summary.Satisfied != 81 || report.Summary.ValidCases != 78 ||
 		report.Summary.InvalidCases != 3 || report.Summary.Unresolved != 0 ||
 		report.Summary.CapabilitySatisfied != languagesyntax.FixedCapabilityTotal ||
 		report.Summary.CapabilityTotal != languagesyntax.FixedCapabilityTotal ||
@@ -75,14 +75,14 @@ func TestUnknownRegistryLowersResolution(t *testing.T) {
 			t.Fatal(err)
 		}
 		if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-			report.Summary.Executed != 0 || report.Summary.Unresolved != 80 {
+			report.Summary.Executed != 0 || report.Summary.Unresolved != 81 {
 			t.Fatalf("unknown registry was not lowered: %#v", report)
 		}
 	}
 }
 
 func TestScopePartitionUsesFixedDenominatorsAndRejectsDrift(t *testing.T) {
-	if languagesyntax.FixedTotal != 80 || languagesyntax.FixedCapabilityTotal != 78 ||
+	if languagesyntax.FixedTotal != 81 || languagesyntax.FixedCapabilityTotal != 79 ||
 		languagesyntax.FixedGovernanceTotal != 2 ||
 		languagesyntax.FixedCapabilityTotal+languagesyntax.FixedGovernanceTotal != languagesyntax.FixedTotal {
 		t.Fatalf("scope denominators drifted: total=%d capability=%d governance=%d", languagesyntax.FixedTotal,
@@ -152,7 +152,7 @@ func TestRemovingRecordBindingCannotLowerCorpusDenominator(t *testing.T) {
 	}
 	report := languagesyntax.Evaluate(repository, testHead, mutated, languageconcept.BuildArtifact(repository))
 	if report.Decision != languagesyntax.DecisionClosed || report.Resolution != languagesyntax.ResolutionLower ||
-		report.Summary.Total != 80 || report.Summary.Executed != 0 || report.Summary.Unresolved != 80 {
+		report.Summary.Total != 81 || report.Summary.Executed != 0 || report.Summary.Unresolved != 81 {
 		t.Fatalf("removing a case reduced proof obligations: %#v", report.Summary)
 	}
 }
