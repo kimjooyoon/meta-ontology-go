@@ -21,8 +21,8 @@ func TestGenerateWithBindingReplaysAndBinds(t *testing.T) {
 		SemanticIRDigest: base.Metadata.SemanticIRDigest, SourceMapDigest: base.Metadata.SourceMapDigest,
 		EvidenceDigest: digestBytes([]byte("evidence")), AnalysisProvenance: analysis,
 		Toolchain: ToolchainIdentity{Status: "BOUND", Value: "go1.26.5"},
+		ProvenanceDigest: analysisProvenanceDigest(*analysis),
 	}
-	binding.ProvenanceDigest = analysisProvenanceDigest(*analysis)
 	bound, err := GenerateWithBinding(ir, nil, binding)
 	if err != nil {
 		t.Fatal(err)

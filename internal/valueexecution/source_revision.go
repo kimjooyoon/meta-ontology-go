@@ -2,6 +2,7 @@ package valueexecution
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -22,61 +23,61 @@ type SourceRevisionRequest struct {
 }
 
 type AnalysisProvenance struct {
-	SourceDigest   string `json:"source_digest"`
-	ProfileDigest  string `json:"profile_digest"`
+	SourceDigest    string `json:"source_digest"`
+	ProfileDigest   string `json:"profile_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
-	ContractDigest string `json:"contract_digest"`
+	ContractDigest  string `json:"contract_digest"`
 }
 
 type SourceRevision struct {
-	Schema                string   `json:"schema"`
-	CandidateID           string   `json:"candidate_id"`
-	SourceDigest          string   `json:"source_digest"`
-	CandidateSourceDigest string   `json:"candidate_source_digest"`
-	Activity              string   `json:"activity"`
-	BeforeProgram         string   `json:"before_program"`
-	AfterProgram          string   `json:"after_program"`
-	TriggerReason         string   `json:"trigger_reason"`
-	ExecutionAllowed      bool     `json:"execution_allowed"`
-	RepositoryWrites      int      `json:"repository_writes"`
-	NextOperation         string   `json:"next_operation"`
-	BlockedBy             []string `json:"blocked_by"`
-	RepairHandoffDigest   string   `json:"repair_handoff_digest,omitempty"`
-	RepairCandidateID     string   `json:"repair_candidate_id,omitempty"`
+	Schema                string              `json:"schema"`
+	CandidateID           string              `json:"candidate_id"`
+	SourceDigest          string              `json:"source_digest"`
+	CandidateSourceDigest string              `json:"candidate_source_digest"`
+	Activity              string              `json:"activity"`
+	BeforeProgram         string              `json:"before_program"`
+	AfterProgram          string              `json:"after_program"`
+	TriggerReason         string              `json:"trigger_reason"`
+	ExecutionAllowed      bool                `json:"execution_allowed"`
+	RepositoryWrites      int                 `json:"repository_writes"`
+	NextOperation         string              `json:"next_operation"`
+	BlockedBy             []string            `json:"blocked_by"`
+	RepairHandoffDigest   string              `json:"repair_handoff_digest,omitempty"`
+	RepairCandidateID     string              `json:"repair_candidate_id,omitempty"`
 	AnalysisProvenance    *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 }
 
 type SourceRevisionContract struct {
-	Scope          string           `json:"scope"`
-	Inputs         []int64          `json:"inputs"`
+	Scope           string          `json:"scope"`
+	Inputs          []int64         `json:"inputs"`
 	ExpectedOutputs map[int64]int64 `json:"expected_outputs,omitempty"`
 }
 
 type SourceRevisionEvaluation struct {
-	Schema                  string      `json:"schema"`
-	State                   ReplayState `json:"state"`
-	Reason                  string      `json:"reason"`
-	NextOperation           string      `json:"next_operation"`
-	BlockedBy               []string    `json:"blocked_by"`
-	SourceDigest            string      `json:"source_digest"`
-	CandidateSourceDigest   string      `json:"candidate_source_digest"`
-	Activity                string      `json:"activity"`
-	InputDigest             string      `json:"input_digest"`
-	BaselineExecution       Execution   `json:"baseline_execution"`
-	CandidateExecution      Execution   `json:"candidate_execution"`
-	BaselineFailure         *Failure    `json:"baseline_failure,omitempty"`
-	CandidateExecuted       bool        `json:"candidate_executed"`
-	Scope                   string      `json:"scope"`
-	CounterexampleRecovered bool        `json:"counterexample_recovered"`
-	ContractInputs          []int64     `json:"contract_inputs,omitempty"`
-	ContractExpectedOutputs map[int64]int64 `json:"contract_expected_outputs,omitempty"`
-	ContractDigest          string      `json:"contract_digest,omitempty"`
+	Schema                  string              `json:"schema"`
+	State                   ReplayState         `json:"state"`
+	Reason                  string              `json:"reason"`
+	NextOperation           string              `json:"next_operation"`
+	BlockedBy               []string            `json:"blocked_by"`
+	SourceDigest            string              `json:"source_digest"`
+	CandidateSourceDigest   string              `json:"candidate_source_digest"`
+	Activity                string              `json:"activity"`
+	InputDigest             string              `json:"input_digest"`
+	BaselineExecution       Execution           `json:"baseline_execution"`
+	CandidateExecution      Execution           `json:"candidate_execution"`
+	BaselineFailure         *Failure            `json:"baseline_failure,omitempty"`
+	CandidateExecuted       bool                `json:"candidate_executed"`
+	Scope                   string              `json:"scope"`
+	CounterexampleRecovered bool                `json:"counterexample_recovered"`
+	ContractInputs          []int64             `json:"contract_inputs,omitempty"`
+	ContractExpectedOutputs map[int64]int64     `json:"contract_expected_outputs,omitempty"`
+	ContractDigest          string              `json:"contract_digest,omitempty"`
 	AnalysisProvenance      *AnalysisProvenance `json:"analysis_provenance,omitempty"`
-	ContractPreservation    bool        `json:"contract_preservation"`
-	RegressionEvidence      []string    `json:"regression_evidence,omitempty"`
-	AdoptionAuthorized      bool        `json:"adoption_authorized"`
-	Accepted                bool        `json:"accepted"`
-	RepositoryWrites        int         `json:"repository_writes"`
+	ContractPreservation    bool                `json:"contract_preservation"`
+	RegressionEvidence      []string            `json:"regression_evidence,omitempty"`
+	AdoptionAuthorized      bool                `json:"adoption_authorized"`
+	Accepted                bool                `json:"accepted"`
+	RepositoryWrites        int                 `json:"repository_writes"`
 }
 
 // ProposeSourceRevision creates an exact, external candidate. It never edits
@@ -251,9 +252,7 @@ func VerifySourceRevisionContract(revision SourceRevision, evaluation SourceRevi
 	evaluation.ContractInputs = append([]int64(nil), contract.Inputs...)
 	if len(contract.ExpectedOutputs) > 0 {
 		evaluation.ContractExpectedOutputs = make(map[int64]int64, len(contract.ExpectedOutputs))
-		for input, output := range contract.ExpectedOutputs {
-			evaluation.ContractExpectedOutputs[input] = output
-		}
+		maps.Copy(evaluation.ContractExpectedOutputs, contract.ExpectedOutputs)
 	}
 	contractDigestInput := map[string]any{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence}
 	if len(contract.ExpectedOutputs) > 0 {
