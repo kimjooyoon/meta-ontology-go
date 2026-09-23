@@ -80,6 +80,10 @@ func validateAnalysisProvenanceBinding(value *AnalysisProvenanceBinding) error {
 	if value == nil {
 		return nil
 	}
+	pathsConsistent := (value.SourcePath == "" && value.ContractPath == "") || (value.SourcePath != "" && value.ContractPath != "")
+	if !pathsConsistent {
+		return fmt.Errorf("generator: analysis provenance source and contract paths are inconsistent")
+	}
 	if !validDigest(value.SourceDigest) || !validDigest(value.ProfileDigest) || !validDigest(value.ToolchainDigest) || !validDigest(value.ContractDigest) {
 		return fmt.Errorf("generator: analysis provenance contains an invalid digest")
 	}
