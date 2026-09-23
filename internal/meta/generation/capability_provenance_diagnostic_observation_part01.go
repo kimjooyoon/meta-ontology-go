@@ -2,6 +2,7 @@ package generation
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
@@ -122,24 +123,15 @@ func (observation CapabilityProvenanceDiagnosticObservation) Canonical() string 
 		observation.DiagnosticMapDigest,
 		observation.ReverseObservationDigest,
 		observation.DeltaSeriesDigest,
-		strings.Join([]string{
-			strings.TrimSpace(strings.Join([]string{
-				strings.TrimSpace(strings.Join([]string{
-					string(rune(observation.Metrics.DeltaCount)),
-				}, "")),
-			}, "")),
-		}, ""),
+		strconv.Itoa(observation.Metrics.DeltaCount),
+		strconv.Itoa(observation.Metrics.ChangeCount),
+		strconv.Itoa(observation.Metrics.ClosedDeltas),
+		strconv.Itoa(observation.Metrics.UnknownDeltas),
+		strconv.Itoa(observation.Metrics.RefutedDeltas),
 		observation.Metrics.FinalVerdict,
-		strings.ToUpper(strings.TrimSpace(strings.Join([]string{
-			strings.TrimSpace(strings.Join([]string{
-				strings.TrimSpace(strings.Join([]string{
-					"non_authorizing",
-				}, "")),
-			}, "")),
-		}, ""))),
+		strconv.FormatBool(observation.NonAuthorizing),
 	}, "\x1f")
 }
-
 func (observation CapabilityProvenanceDiagnosticObservation) Validate() error {
 	if observation.Schema != CapabilityProvenanceDiagnosticObservationSchema ||
 		!observation.NonAuthorizing || observation.Decision == "" || observation.Reason == "" {
