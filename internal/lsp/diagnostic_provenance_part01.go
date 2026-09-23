@@ -100,7 +100,7 @@ func observeDiagnosticProvenance(uri string, value document, key documentCacheKe
 		}
 	}
 	observation.DocumentProvenanceDigest = diagnosticDocumentProvenanceDigest(value, key)
-	observation.Diagnostics = diagnosticProvenanceItems(value.result.Diagnostics)
+	observation.Diagnostics = diagnosticProvenanceItems(value.result.Diagnostics, observation.DocumentProvenanceDigest)
 	observation.Decision = diagnosticProvenanceClosed
 	observation.Reason = "DIAGNOSTIC_SURFACE_BOUND"
 	return finalizeDiagnosticProvenance(observation)
@@ -121,7 +121,7 @@ func diagnosticDocumentProvenanceDigest(value document, key documentCacheKey) st
 	return documentProvenanceDigest(provenance)
 }
 
-func diagnosticProvenanceItems(values []Diagnostic) []diagnosticProvenanceItem {
+func diagnosticProvenanceItems(values []Diagnostic, documentProvenanceDigest string) []diagnosticProvenanceItem {
 	result := make([]diagnosticProvenanceItem, 0, len(values))
 	for _, value := range values {
 		item := diagnosticProvenanceItem{
@@ -195,7 +195,7 @@ func validateDiagnosticProvenance(value diagnosticProvenanceObservation) error {
 		return errors.New("diagnostic provenance map is invalid")
 	}
 	for _, item := range value.Diagnostics {
-		if !cache.Digest(item.OriginDigest).Known() || item.OriginDigest != diagnosticProvenanceItemDigest(item) {
+		if !cache.Digest(item.OriginDigest).Known() || item.OriginDigest != diagnosticProvenanceItemDigest(item) || !cache.Digest(item.DocumentProvenanceDigest).Known() || item.DocumentProvenanceDigest != value.DocumentProvenanceDigest {
 			return errors.New("diagnostic provenance item origin is invalid")
 		}
 	}
