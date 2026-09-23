@@ -22,6 +22,7 @@ type WorkloadAuthorityProvenance struct {
 	WorkloadURI                string         `json:"workload_uri"`
 	TrustDomain                string         `json:"trust_domain"`
 	WorkloadPath               string         `json:"workload_path"`
+	IdentityDigest              string         `json:"identity_digest"`
 	AuthorityDigest            string         `json:"authority_digest"`
 	AuthorityObservationDigest string         `json:"authority_observation_digest"`
 	SourceRevision             SourceRevision `json:"source_revision"`
