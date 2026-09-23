@@ -22,7 +22,7 @@ func main() {
 	var err error
 	switch *mode {
 	case "run":
-		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationReport: *orchestration, RepoRoot: *repoRoot, Out: *out})
+		err = run(runInput{Source: *source, TestContract: *testContract, Gooo: *gooo, OrchestrationSource: *orchestrationSource, OrchestrationReport: *orchestration, RepoRoot: *repoRoot, Out: *out})
 	case "verify":
 		err = verify(*reportPath, *humanOutput)
 	default:
