@@ -48,7 +48,7 @@ type SemanticAdoptionProposal struct {
 	ObservationDigest  string                       `json:"observation_digest"`
 	ContractDigest     string                       `json:"contract_digest"`
 	InputSourceDigest  string                       `json:"input_source_digest"`
-	AnalysisProvenance *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
+	AnalysisProvenance *SemanticAdoptionProvenance  `json:"analysis_provenance,omitempty"`
 	Candidate          SemanticObservationCandidate `json:"candidate"`
 	Target             string                       `json:"target"`
 	Mode               string                       `json:"mode"`
@@ -59,45 +59,45 @@ type SemanticAdoptionProposal struct {
 // SemanticAdoptionAuthorization is the explicit human-controlled input that
 // permits a proposal to exercise the bounded compiler reuse path.
 type SemanticAdoptionAuthorization struct {
-	Schema               string `json:"schema"`
-	AuthorizationID      string `json:"authorization_id"`
-	AuthorizationMode    string `json:"authorization_mode"`
-	ProposalDigest       string `json:"proposal_digest"`
-	CandidateStableID    string `json:"candidate_stable_id"`
-	CandidateInputDigest string `json:"candidate_input_digest"`
-	ContractDigest       string `json:"contract_digest"`
-	InputSourceDigest    string `json:"input_source_digest"`
+	Schema               string                      `json:"schema"`
+	AuthorizationID      string                      `json:"authorization_id"`
+	AuthorizationMode    string                      `json:"authorization_mode"`
+	ProposalDigest       string                      `json:"proposal_digest"`
+	CandidateStableID    string                      `json:"candidate_stable_id"`
+	CandidateInputDigest string                      `json:"candidate_input_digest"`
+	ContractDigest       string                      `json:"contract_digest"`
+	InputSourceDigest    string                      `json:"input_source_digest"`
 	AnalysisProvenance   *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
-	Authorized           bool   `json:"authorized"`
-	RepositoryWrites     int    `json:"repository_writes"`
-	LocalTestExecutions  int    `json:"local_test_executions"`
+	Authorized           bool                        `json:"authorized"`
+	RepositoryWrites     int                         `json:"repository_writes"`
+	LocalTestExecutions  int                         `json:"local_test_executions"`
 }
 
 // SemanticAdoptionEvidence records the exact compiler result produced after
 // authorization. Counts are execution observations, not inferred savings.
 type SemanticAdoptionEvidence struct {
-	Schema                string                `json:"schema"`
-	ProposalDigest        string                `json:"proposal_digest"`
-	AuthorizationDigest   string                `json:"authorization_digest"`
-	CandidateStableID     string                `json:"candidate_stable_id"`
-	InputDigest           string                `json:"input_digest"`
-	BeforeOperationCount  int                   `json:"before_operation_count"`
-	AfterOperationCount   int                   `json:"after_operation_count"`
-	CacheMisses           int                   `json:"cache_misses"`
-	CacheHits             int                   `json:"cache_hits"`
-	ReuseApplied          bool                  `json:"reuse_applied"`
-	BehaviorEqual         bool                  `json:"behavior_equal"`
-	DeterminismEqual      bool                  `json:"determinism_equal"`
-	BeforeOutputDigest    string                `json:"before_output_digest"`
-	AdoptedOutputDigest   string                `json:"adopted_output_digest"`
-	AdoptedReplayDigest   string                `json:"adopted_replay_digest"`
-	BeforeSemanticDigest  string                `json:"before_semantic_digest"`
-	AdoptedSemanticDigest string                `json:"adopted_semantic_digest"`
-	Decision              string                `json:"decision"`
-	Reason                string                `json:"reason"`
-	Unknown               *EnvelopeUnknownState `json:"unknown"`
-	RepositoryWrites      int                   `json:"repository_writes"`
-	LocalTestExecutions   int                   `json:"local_test_executions"`
+	Schema                string                      `json:"schema"`
+	ProposalDigest        string                      `json:"proposal_digest"`
+	AuthorizationDigest   string                      `json:"authorization_digest"`
+	CandidateStableID     string                      `json:"candidate_stable_id"`
+	InputDigest           string                      `json:"input_digest"`
+	BeforeOperationCount  int                         `json:"before_operation_count"`
+	AfterOperationCount   int                         `json:"after_operation_count"`
+	CacheMisses           int                         `json:"cache_misses"`
+	CacheHits             int                         `json:"cache_hits"`
+	ReuseApplied          bool                        `json:"reuse_applied"`
+	BehaviorEqual         bool                        `json:"behavior_equal"`
+	DeterminismEqual      bool                        `json:"determinism_equal"`
+	BeforeOutputDigest    string                      `json:"before_output_digest"`
+	AdoptedOutputDigest   string                      `json:"adopted_output_digest"`
+	AdoptedReplayDigest   string                      `json:"adopted_replay_digest"`
+	BeforeSemanticDigest  string                      `json:"before_semantic_digest"`
+	AdoptedSemanticDigest string                      `json:"adopted_semantic_digest"`
+	Decision              string                      `json:"decision"`
+	Reason                string                      `json:"reason"`
+	Unknown               *EnvelopeUnknownState       `json:"unknown"`
+	RepositoryWrites      int                         `json:"repository_writes"`
+	LocalTestExecutions   int                         `json:"local_test_executions"`
 	AnalysisProvenance    *SemanticAdoptionProvenance `json:"analysis_provenance,omitempty"`
 }
 
@@ -131,7 +131,7 @@ type SemanticAdoptionReport struct {
 	IndependentReason    string                         `json:"independent_reason"`
 	RepositoryWrites     int                            `json:"repository_writes"`
 	LocalTestExecutions  int                            `json:"local_test_executions"`
-	AnalysisProvenance   *SemanticAdoptionProvenance   `json:"analysis_provenance,omitempty"`
+	AnalysisProvenance   *SemanticAdoptionProvenance    `json:"analysis_provenance,omitempty"`
 }
 
 func AdoptionUnknownState() *EnvelopeUnknownState {
