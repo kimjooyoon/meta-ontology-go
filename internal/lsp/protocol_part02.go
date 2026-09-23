@@ -53,6 +53,9 @@ type WorkspaceSymbolParams struct {
 type SemanticTokensParams struct {
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 }
+type DocumentProvenanceParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
 type SemanticTokens struct {
 	ResultID string   `json:"resultId,omitempty"`
 	Data     []uint32 `json:"data"`

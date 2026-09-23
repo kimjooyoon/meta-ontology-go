@@ -50,6 +50,8 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 		return server.workspaceSymbolRequest(request)
 	case "textDocument/semanticTokens/full":
 		return server.semanticTokensRequest(ctx, request)
+	case "gooo/documentProvenance":
+		return server.documentProvenanceRequest(ctx, request)
 	case "textDocument/rename", "textDocument/formatting":
 		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	default:
