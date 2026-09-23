@@ -293,7 +293,11 @@ func SameAdoptionUnknown(left, right *EnvelopeUnknownState) bool {
 }
 
 func validSemanticAdoptionProvenance(provenance *SemanticAdoptionProvenance) bool {
-	return provenance != nil && cache.Digest(provenance.SourceDigest).Known() && cache.Digest(provenance.ProfileDigest).Known() && cache.Digest(provenance.ToolchainDigest).Known() && cache.Digest(provenance.ContractDigest).Known()
+	if provenance == nil {
+		return false
+	}
+	pathsConsistent := (provenance.SourcePath == "" && provenance.ContractPath == "") || (provenance.SourcePath != "" && provenance.ContractPath != "")
+	return pathsConsistent && cache.Digest(provenance.SourceDigest).Known() && cache.Digest(provenance.ProfileDigest).Known() && cache.Digest(provenance.ToolchainDigest).Known() && cache.Digest(provenance.ContractDigest).Known()
 }
 
 func sameSemanticAdoptionProvenance(left, right *SemanticAdoptionProvenance) bool {
