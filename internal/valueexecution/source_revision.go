@@ -10,6 +10,7 @@ import (
 
 const SourceRevisionSchema = "gooo/value-execution-source-revision/v1"
 const SourceRevisionEvaluationSchema = "gooo/value-execution-source-revision-evaluation/v1"
+const SourceRevisionContractScope = "EXPLICIT_INPUT_SET"
 
 type SourceRevisionRequest struct {
 	SourceDigest       string `json:"source_digest"`
@@ -36,6 +37,11 @@ type SourceRevision struct {
 	RepairCandidateID     string   `json:"repair_candidate_id,omitempty"`
 }
 
+type SourceRevisionContract struct {
+	Scope  string  `json:"scope"`
+	Inputs []int64 `json:"inputs"`
+}
+
 type SourceRevisionEvaluation struct {
 	Schema                string      `json:"schema"`
 	State                 ReplayState `json:"state"`
@@ -50,6 +56,13 @@ type SourceRevisionEvaluation struct {
 	CandidateExecution    Execution   `json:"candidate_execution"`
 	BaselineFailure       *Failure    `json:"baseline_failure,omitempty"`
 	CandidateExecuted     bool        `json:"candidate_executed"`
+	Scope                 string      `json:"scope"`
+	CounterexampleRecovered bool      `json:"counterexample_recovered"`
+	ContractInputs        []int64     `json:"contract_inputs,omitempty"`
+	ContractDigest        string      `json:"contract_digest,omitempty"`
+	ContractPreservation  bool        `json:"contract_preservation"`
+	RegressionEvidence    []string    `json:"regression_evidence,omitempty"`
+	AdoptionAuthorized    bool        `json:"adoption_authorized"`
 	Accepted              bool        `json:"accepted"`
 	RepositoryWrites      int         `json:"repository_writes"`
 }
@@ -150,11 +163,66 @@ func EvaluateSourceRevision(revision SourceRevision, baselineFilename string, ba
 		return refuteSourceRevision(evaluation, "SOURCE_REVISION_CANDIDATE_NOT_RECOVERED", "PRESERVE_CANDIDATE_COUNTEREXAMPLE")
 	}
 	evaluation.State = ReplayClosed
-	evaluation.Reason = "SOURCE_REVISION_RECOVERED_BASELINE_FAILURE"
-	evaluation.NextOperation = "RUN_ACCEPTED_SOURCE_REVISION"
-	evaluation.BlockedBy = nil
-	evaluation.Accepted = true
+	evaluation.Scope = "COUNTEREXAMPLE_RECOVERY"
+	evaluation.CounterexampleRecovered = true
+	evaluation.Reason = "SOURCE_REVISION_COUNTEREXAMPLE_RECOVERED"
+	evaluation.NextOperation = "VERIFY_SOURCE_REVISION_CONTRACT"
+	evaluation.BlockedBy = []string{"contract_preservation", "explicit_adoption_decision"}
+	evaluation.Accepted = false
 	return evaluation
+}
+
+// VerifySourceRevisionContract checks a bounded, explicit set of successful
+// baseline inputs. Recovering one counterexample is not evidence that the
+// candidate preserves the surrounding contract.
+func VerifySourceRevisionContract(revision SourceRevision, evaluation SourceRevisionEvaluation, baselineFilename string, baselineSource []byte, candidateFilename string, candidateSource []byte, activity string, contract SourceRevisionContract) SourceRevisionEvaluation {
+	if evaluation.State != ReplayClosed || !evaluation.CounterexampleRecovered || !evaluation.CandidateExecuted || evaluation.RepositoryWrites != 0 || contract.Scope != SourceRevisionContractScope || len(contract.Inputs) == 0 {
+		return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_UNKNOWN", "REPAIR_SOURCE_REVISION_CONTRACT_INPUT")
+	}
+	baselinePlan, err := CompilePlan(baselineFilename, baselineSource)
+	if err != nil {
+		return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_BASELINE_NOT_EXECUTABLE", "PRESERVE_BASELINE_CONTRACT")
+	}
+	candidatePlan, err := CompilePlan(candidateFilename, candidateSource)
+	if err != nil {
+		return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_CANDIDATE_NOT_EXECUTABLE", "PRESERVE_CANDIDATE_CONTRACT")
+	}
+	evidence := make([]string, 0, len(contract.Inputs))
+	for _, input := range contract.Inputs {
+		baselineExecution, baselineErr := baselinePlan.Execute(map[string]int64{activity: input})
+		if baselineErr != nil {
+			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_BASELINE_NOT_PROVEN", "PRESERVE_BASELINE_CONTRACT")
+		}
+		candidateExecution, candidateErr := candidatePlan.Execute(map[string]int64{activity: input})
+		if candidateErr != nil {
+			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_CANDIDATE_REGRESSION", "PRESERVE_CANDIDATE_CONTRACT")
+		}
+		if !sameContractResult(baselineExecution, candidateExecution, activity) {
+			return refuteSourceRevision(evaluation, "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED", "PRESERVE_CANDIDATE_CONTRACT")
+		}
+		evidence = append(evidence, digestValue(map[string]interface{}{
+			"activity": activity, "input": input,
+			"baseline": baselineExecution.Results[activity].Value,
+			"candidate": candidateExecution.Results[activity].Value,
+		}))
+	}
+	evaluation.Scope = "CONTRACT_PRESERVATION"
+	evaluation.ContractInputs = append([]int64(nil), contract.Inputs...)
+	evaluation.ContractDigest = digestValue(map[string]interface{}{"scope": contract.Scope, "inputs": contract.Inputs, "evidence": evidence})
+	evaluation.ContractPreservation = true
+	evaluation.RegressionEvidence = evidence
+	evaluation.AdoptionAuthorized = false
+	evaluation.Accepted = true
+	evaluation.Reason = "SOURCE_REVISION_CONTRACT_PRESERVED"
+	evaluation.NextOperation = "REQUEST_EXPLICIT_SOURCE_REVISION_ADOPTION"
+	evaluation.BlockedBy = []string{"explicit_adoption_decision"}
+	return evaluation
+}
+
+func sameContractResult(baseline, candidate Execution, activity string) bool {
+	base, baseOK := baseline.Results[activity]
+	candidateResult, candidateOK := candidate.Results[activity]
+	return baseOK && candidateOK && base.Scope == candidateResult.Scope && base.ProducerActivity == candidateResult.ProducerActivity && base.OutputEntity == candidateResult.OutputEntity && base.Value == candidateResult.Value
 }
 
 func refuteSourceRevision(evaluation SourceRevisionEvaluation, reason, next string) SourceRevisionEvaluation {

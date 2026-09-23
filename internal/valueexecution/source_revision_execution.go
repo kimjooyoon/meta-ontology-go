@@ -30,6 +30,7 @@ type AcceptedSourceRevisionExecution struct {
 	NextOperation         string      `json:"next_operation"`
 	BlockedBy             []string    `json:"blocked_by"`
 	ExecutionAllowed      bool        `json:"execution_allowed"`
+	AdoptionAuthorized    bool        `json:"adoption_authorized"`
 	RepositoryWrites      int         `json:"repository_writes"`
 	Execution             Execution   `json:"execution"`
 }
@@ -47,7 +48,7 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 	if request.Revision.Schema != SourceRevisionSchema || request.Revision.CandidateID == "" || request.Revision.ExecutionAllowed || request.Revision.RepositoryWrites != 0 {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-revision-authority", "source revision is not a non-executing candidate")
 	}
-	if request.Evaluation.Schema != SourceRevisionEvaluationSchema || request.Evaluation.State != ReplayClosed || !request.Evaluation.Accepted || !request.Evaluation.CandidateExecuted || request.Evaluation.RepositoryWrites != 0 {
+	if request.Evaluation.Schema != SourceRevisionEvaluationSchema || request.Evaluation.State != ReplayClosed || !request.Evaluation.Accepted || !request.Evaluation.CandidateExecuted || !request.Evaluation.ContractPreservation || len(request.Evaluation.ContractInputs) == 0 || request.Evaluation.RepositoryWrites != 0 {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-evaluation-closure", "source revision evaluation is not an accepted closed observation")
 	}
 	sourceDigest := digestBytes(request.BaselineSource)
@@ -56,6 +57,11 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 	if request.Revision.SourceDigest != sourceDigest || request.Revision.CandidateSourceDigest != candidateDigest || request.Revision.Activity != request.Activity ||
 		request.Evaluation.SourceDigest != sourceDigest || request.Evaluation.CandidateSourceDigest != candidateDigest || request.Evaluation.Activity != request.Activity || request.Evaluation.InputDigest != inputDigest {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "bind-evaluation-digests", "revision, evaluation, source, candidate, or input identity does not match")
+	}
+	current := EvaluateSourceRevision(request.Revision, request.BaselineFilename, request.BaselineSource, request.CandidateFilename, request.CandidateSource, request.Activity, request.Input)
+	verified := VerifySourceRevisionContract(request.Revision, current, request.BaselineFilename, request.BaselineSource, request.CandidateFilename, request.CandidateSource, request.Activity, SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: request.Evaluation.ContractInputs})
+	if !verified.ContractPreservation || verified.ContractDigest != request.Evaluation.ContractDigest {
+		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "replay-contract-preservation", "source revision contract evidence is not reproducible")
 	}
 	if !replayReceiptShapeValid(request.Evaluation.CandidateExecution) {
 		return AcceptedSourceRevisionExecution{}, failAt(ReasonSourceRevisionInvalid, "ACCEPT", "validate-candidate-receipt", "accepted evaluation has no complete candidate execution receipt")
@@ -77,6 +83,6 @@ func ExecuteAcceptedSourceRevision(request AcceptedSourceRevisionRequest) (Accep
 		RevisionCandidateID: request.Revision.CandidateID, Activity: request.Activity, InputDigest: inputDigest,
 		EvaluationState: request.Evaluation.State, EvaluationReason: request.Evaluation.Reason,
 		NextOperation: "CAPTURE_NEXT_RUN_COMPARISON", BlockedBy: []string{},
-		ExecutionAllowed: false, RepositoryWrites: 0, Execution: execution,
+		ExecutionAllowed: false, AdoptionAuthorized: true, RepositoryWrites: 0, Execution: execution,
 	}, nil
 }

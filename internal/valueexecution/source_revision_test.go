@@ -50,7 +50,7 @@ func TestProposeSourceRevisionFailsClosedForDigestExpectedProgramAndAmbiguity(t 
 	}
 }
 
-func TestEvaluateSourceRevisionRequiresKnownFailureAndAcceptsRecoveredCandidate(t *testing.T) {
+func TestEvaluateSourceRevisionSeparatesCounterexampleRecoveryFromContractAcceptance(t *testing.T) {
 	baseline := []byte(sourceRevisionFixture)
 	candidate, revision, err := ProposeSourceRevision("revision.gooo", baseline, SourceRevisionRequest{
 		SourceDigest: digestBytes(baseline), Activity: "Observe", ExpectedProgram: "int.add:1",
@@ -60,11 +60,15 @@ func TestEvaluateSourceRevisionRequiresKnownFailureAndAcceptsRecoveredCandidate(
 		t.Fatal(err)
 	}
 	evaluation := EvaluateSourceRevision(revision, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", math.MaxInt64)
-	if evaluation.State != ReplayClosed || !evaluation.Accepted || !evaluation.CandidateExecuted || evaluation.BaselineFailure == nil || evaluation.BaselineFailure.Code != ReasonIntegerOverflow {
+	if evaluation.State != ReplayClosed || evaluation.Accepted || !evaluation.CounterexampleRecovered || evaluation.ContractPreservation || !evaluation.CandidateExecuted || evaluation.BaselineFailure == nil || evaluation.BaselineFailure.Code != ReasonIntegerOverflow {
 		t.Fatalf("accepted evaluation = %#v", evaluation)
 	}
-	if evaluation.RepositoryWrites != 0 || evaluation.NextOperation != "RUN_ACCEPTED_SOURCE_REVISION" || len(evaluation.BlockedBy) != 0 {
+	if evaluation.RepositoryWrites != 0 || evaluation.NextOperation != "VERIFY_SOURCE_REVISION_CONTRACT" || len(evaluation.BlockedBy) == 0 {
 		t.Fatalf("accepted evaluation authority = %#v", evaluation)
+	}
+	contract := VerifySourceRevisionContract(revision, evaluation, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", SourceRevisionContract{Scope: SourceRevisionContractScope, Inputs: []int64{0}})
+	if contract.State != ReplayRefuted || contract.Accepted || contract.ContractPreservation || contract.Reason != "SOURCE_REVISION_CONTRACT_OUTPUT_CHANGED" {
+		t.Fatalf("contract-changing candidate was accepted: %#v", contract)
 	}
 
 	unchanged := EvaluateSourceRevision(revision, "revision.gooo", baseline, "candidate.gooo", candidate, "Observe", 0)
