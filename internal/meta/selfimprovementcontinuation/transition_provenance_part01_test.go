@@ -22,8 +22,8 @@ func TestObserveContinuationTransitionPreservesImprovementAndRegression(t *testi
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
 			observation := ObserveContinuationTransition(
-				ContinuationResolution{Digest: beforeDigest, Decision: testCase.before},
-				ContinuationResolution{Digest: afterDigest, Decision: testCase.after},
+				ContinuationResolution{Digest: beforeDigest, Decision: testCase.before, Metrics: Metrics{ClosedCases: 1, UnknownCases: 2, RefutedCases: 3}},
+				ContinuationResolution{Digest: afterDigest, Decision: testCase.after, Metrics: Metrics{ClosedCases: 2, UnknownCases: 3, RefutedCases: 4}},
 			)
 			if observation.Direction != testCase.direction || observation.Reason != testCase.reason {
 				t.Fatalf("observation = %#v", observation)
@@ -32,6 +32,19 @@ func TestObserveContinuationTransitionPreservesImprovementAndRegression(t *testi
 				t.Fatalf("Validate() error = %v", err)
 			}
 		})
+	}
+}
+
+func TestObserveContinuationTransitionRejectsSnapshotTampering(t *testing.T) {
+	beforeDigest := "sha256:" + strings.Repeat("a", 64)
+	afterDigest := "sha256:" + strings.Repeat("b", 64)
+	observation := ObserveContinuationTransition(
+		ContinuationResolution{Digest: beforeDigest, Decision: DecisionClosed, Metrics: Metrics{ClosedCases: 2}},
+		ContinuationResolution{Digest: afterDigest, Decision: DecisionUnknown, Metrics: Metrics{ClosedCases: 1}},
+	)
+	observation.AfterClosedCases = 9
+	if err := observation.Validate(); err == nil {
+		t.Fatal("tampered continuation snapshot was accepted")
 	}
 }
 
@@ -45,6 +58,6 @@ func TestObserveContinuationTransitionPreservesUnknownEvidence(t *testing.T) {
 		t.Fatalf("observation = %#v", observation)
 	}
 	if err := observation.Validate(); err != nil {
-		t.Fatalf("Validate() error = %v", err)
+		t.Fatalf("unknown Validate() error = %v", err)
 	}
 }
