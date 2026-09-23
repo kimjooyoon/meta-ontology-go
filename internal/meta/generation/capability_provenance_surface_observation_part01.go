@@ -42,7 +42,7 @@ type CapabilityProvenanceSurfaceObservation struct {
 	GeneratedDigest          string                             `json:"generated_digest,omitempty"`
 	ReverseObservationDigest string                             `json:"reverse_observation_digest,omitempty"`
 	DeltaSeriesDigest        string                             `json:"delta_series_digest,omitempty"`
-	Metrics                  CapabilityProvenanceSurfaceMetrics  `json:"metrics"`
+	Metrics                  CapabilityProvenanceSurfaceMetrics `json:"metrics"`
 	NonAuthorizing           bool                               `json:"non_authorizing"`
 	ObservationDigest        string                             `json:"observation_digest"`
 }
@@ -138,3 +138,4 @@ func (observation CapabilityProvenanceSurfaceObservation) Validate() error {
 	}
 	return nil
 }
+
