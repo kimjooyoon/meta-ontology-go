@@ -2,6 +2,8 @@ package lsp
 
 import (
 	"sort"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
@@ -30,12 +32,10 @@ func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
 	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: symbol.Detail}, Range: &rangeValue}, true
 }
 func (server *Server) completion(uri string) *CompletionList {
-	items := []CompletionItem{
-		{Label: "activity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
-		{Label: "entity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
-		{Label: "id", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
-		{Label: "namespace", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
-		{Label: "package", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
+	keywords := syntax.CanonicalKeywordNames()
+	items := make([]CompletionItem, 0, len(keywords))
+	for _, keyword := range keywords {
+		items = append(items, CompletionItem{Label: keyword, Kind: int(SymbolKeyword), Detail: "gooo keyword"})
 	}
 	server.mu.RLock()
 	document, ok := server.documents[uri]
