@@ -62,17 +62,20 @@ func ObserveCapabilityProvenanceSurface(input CapabilityProvenanceSurfaceObserva
 		name  string
 		value string
 	}{
-		{name: , value: input.SourceDigest},
-		{name: , value: input.SemanticDigest},
-		{name: , value: input.GeneratedDigest},
-		{name: , value: input.ReverseObservationDigest},
+		{name: "source_digest", value: input.SourceDigest},
+		{name: "semantic_digest", value: input.SemanticDigest},
+		{name: "generated_digest", value: input.GeneratedDigest},
+		{name: "reverse_observation_digest", value: input.ReverseObservationDigest},
 	}
 	for _, binding := range ordered {
-		if binding.value ==  {
-			observation.Reason =  + strings.ToUpper(binding.name)
+		if binding.value == "" {
+			observation.Reason = "MISSING_" + strings.ToUpper(binding.name)
+			return finalizeCapabilityProvenanceSurfaceObservation(observation)
 		}
 		if !cache.Digest(binding.value).Known() {
-			observation.Reason =  + strings.ToUpper(binding.name)
+			observation.Decision = CapabilityProvenanceSurfaceRefuted
+			observation.Reason = "MALFORMED_" + strings.ToUpper(binding.name)
+			return finalizeCapabilityProvenanceSurfaceObservation(observation)
 		}
 	}
 	if input.DeltaSeries.Schema == "" || len(input.DeltaSeries.Deltas) == 0 {
