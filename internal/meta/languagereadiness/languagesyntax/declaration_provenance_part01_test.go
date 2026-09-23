@@ -2,13 +2,14 @@ package languagesyntax
 
 import (
 	"testing"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 func TestLanguageSyntaxDeclarationProvenanceBindsGoooInventory(t *testing.T) {
 	source := Source{
 		RegistryDigest:   digestBytes([]byte("registry")),
 		CorpusDigest:     digestBytes([]byte("corpus")),
-		GoooFiles:        []string{"examples/alpha.gooo", "examples/beta.gooo"},
+		GoooFiles:        []replay.FileObservation{{Path: "examples/alpha.gooo"}, {Path: "examples/beta.gooo"}},
 		ObservationKnown: true,
 		ConceptBound:     true,
 	}
@@ -40,7 +41,7 @@ func TestLanguageSyntaxDeclarationProvenancePreservesDriftAndUnknown(t *testing.
 
 	refuted := ObserveLanguageSyntaxDeclarationProvenance(Source{
 		RegistryDigest:   digestBytes([]byte("registry")),
-		GoooFiles:        []string{"examples/alpha.gooo"},
+		GoooFiles:        []replay.FileObservation{{Path: "examples/alpha.gooo"}},
 		UnregisteredGooo: []string{"examples/rogue.gooo"},
 	})
 	if refuted.Decision != LanguageSyntaxDeclarationProvenanceRefuted ||
