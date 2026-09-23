@@ -26,7 +26,8 @@ type diagnosticProvenanceItem struct {
 	Code         string             `json:"code,omitempty"`
 	Source       string             `json:"source,omitempty"`
 	Message       string             `json:"message"`
-	OriginDigest string             `json:"origin_digest"`
+	OriginDigest              string `json:"origin_digest"`
+	DocumentProvenanceDigest string `json:"document_provenance_digest"`
 }
 
 type diagnosticProvenanceObservation struct {
