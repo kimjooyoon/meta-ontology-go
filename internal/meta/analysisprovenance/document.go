@@ -13,3 +13,11 @@ func DocumentDigest(sourceDigest, semanticDigest, profileDigest, toolchainDigest
 		sourceDigest, semanticDigest, profileDigest, toolchainDigest, contractDigest,
 	}, "\x00"))).String()
 }
+
+// DocumentDigestWithSymbolMap binds a document's analysis inputs to the exact
+// source-origin projection exposed by an editor integration.
+func DocumentDigestWithSymbolMap(sourceDigest, semanticDigest, profileDigest, toolchainDigest, contractDigest, symbolMapDigest string) string {
+	return cache.HashBytes([]byte(strings.Join([]string{
+		sourceDigest, semanticDigest, profileDigest, toolchainDigest, contractDigest, symbolMapDigest,
+	}, "\x00"))).String()
+}
