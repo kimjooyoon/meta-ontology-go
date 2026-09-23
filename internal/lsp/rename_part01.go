@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"slices"
 	"unicode"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -68,10 +69,5 @@ func validRenameIdentifier(value string) bool {
 }
 
 func containsSyntaxKeyword(value string) bool {
-	for _, keyword := range syntax.CanonicalKeywordNames() {
-		if keyword == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(syntax.CanonicalKeywordNames(), value)
 }
