@@ -1,0 +1,9 @@
+package runtimebinding
+namespace runtimebinding
+
+entity Integer id "gooo://runtime-binding/entity/integer"
+
+activity SuspendExecution(Integer) -> Integer computes "int.add:1"
+activity ResumeExecution(Integer) -> Integer computes "int.add:1"
+
+bind SuspendExecution.result -> ResumeExecution.input
