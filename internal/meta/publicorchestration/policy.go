@@ -110,6 +110,8 @@ type Policy struct {
 	Activity         string       `json:"activity"`
 	Name             string       `json:"name"`
 	Operation        string       `json:"operation"`
+	CandidateDigest       string             `json:"candidate_digest,omitempty"`
+	CandidateID           string             `json:"candidate_id,omitempty"`
 	Bindings         []string     `json:"bindings"`
 	States           []string     `json:"states"`
 	Transitions      []Transition `json:"transitions"`
