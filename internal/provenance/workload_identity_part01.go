@@ -10,6 +10,14 @@ import (
 
 const WorkloadIdentityAuthorityNonAuthorizing = "non_authorizing"
 
+type WorkloadIdentityFreshness string
+
+const (
+	WorkloadIdentityFreshnessUnknown WorkloadIdentityFreshness = "UNKNOWN"
+	WorkloadIdentityFreshnessFresh   WorkloadIdentityFreshness = "FRESH"
+	WorkloadIdentityFreshnessExpired WorkloadIdentityFreshness = "EXPIRED"
+)
+
 type WorkloadIdentityObservation struct {
 	ID                string
 	AttestationDigest string
@@ -52,6 +60,17 @@ func ParseWorkloadIdentityAttributes(attributes map[string]string) (WorkloadIden
 		ID: identity, AttestationDigest: attestation, ExpiresAt: expiresAt,
 		NonAuthorizing: true,
 	}, nil
+}
+
+
+func (observation WorkloadIdentityObservation) FreshnessAt(now time.Time) WorkloadIdentityFreshness {
+	if observation.ID == "" || observation.ExpiresAt.IsZero() || now.IsZero() {
+		return WorkloadIdentityFreshnessUnknown
+	}
+	if now.Before(observation.ExpiresAt) {
+		return WorkloadIdentityFreshnessFresh
+	}
+	return WorkloadIdentityFreshnessExpired
 }
 
 func isSHA256Digest(value string) bool {
