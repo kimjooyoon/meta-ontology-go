@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
@@ -38,9 +39,6 @@ func (server *Server) completion(uri string) *CompletionList {
 func (server *Server) completionAt(uri string, position Position, usePosition bool) *CompletionList {
 	keywords := syntax.CanonicalKeywordNames()
 	items := make([]CompletionItem, 0, len(keywords))
-	for _, keyword := range keywords {
-		items = append(items, CompletionItem{Label: keyword, Kind: int(SymbolKeyword), Detail: "gooo keyword"})
-	}
 	server.mu.RLock()
 	document, ok := server.documents[uri]
 	if ok {
@@ -48,10 +46,25 @@ func (server *Server) completionAt(uri string, position Position, usePosition bo
 		document = &copyValue
 	}
 	server.mu.RUnlock()
+	prefix := ""
+	if ok {
+		if usePosition {
+			prefix, _, _, _ = wordAt(document.text, position)
+		}
+	}
+	for _, keyword := range keywords {
+		if !completionMatchesPrefix(keyword, prefix) {
+			continue
+		}
+		items = append(items, CompletionItem{Label: keyword, Kind: int(SymbolKeyword), Detail: "gooo keyword"})
+	}
 	if ok {
 		expectedKind, contextAware := completionExpectedSymbolKind(document.text, position, usePosition)
 		for _, symbol := range allSymbols(document.result) {
 			if contextAware && symbol.Kind != expectedKind {
+				continue
+			}
+			if !completionMatchesPrefix(symbol.Name, prefix) {
 				continue
 			}
 			item := CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail}
@@ -63,4 +76,8 @@ func (server *Server) completionAt(uri string, position Position, usePosition bo
 	}
 	sort.SliceStable(items, func(left, right int) bool { return items[left].Label < items[right].Label })
 	return &CompletionList{Items: uniqueCompletionItems(items)}
+}
+
+func completionMatchesPrefix(label, prefix string) bool {
+	return prefix == "" || strings.HasPrefix(strings.ToLower(label), strings.ToLower(prefix))
 }
