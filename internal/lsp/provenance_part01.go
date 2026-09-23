@@ -14,6 +14,7 @@ const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
 type documentProvenance struct {
 	Schema           string `json:"schema"`
 	URI              string `json:"uri"`
+	SubjectDigest    string `json:"subject_digest"`
 	SourceDigest     string `json:"source_digest"`
 	ProfileDigest    string `json:"profile_digest"`
 	ToolchainDigest  string `json:"toolchain_digest"`
@@ -45,6 +46,7 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	}
 	provenance := documentProvenance{
 		Schema: documentProvenanceSchema, URI: params.TextDocument.URI,
+		SubjectDigest: analysisprovenance.SubjectDigest(params.TextDocument.URI, stored.cacheKey.sourceDigest),
 		SourceDigest: stored.cacheKey.sourceDigest, ProfileDigest: stored.cacheKey.profileDigest,
 		ToolchainDigest: stored.cacheKey.toolchainDigest, ContractDigest: stored.cacheKey.contractDigest,
 	}
@@ -65,6 +67,7 @@ func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, erro
 
 func validateDocumentProvenance(value documentProvenance) error {
 	if value.Schema != documentProvenanceSchema || value.URI == "" ||
+		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != analysisprovenance.SubjectDigest(value.URI, value.SourceDigest) ||
 		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
 		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
 		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
