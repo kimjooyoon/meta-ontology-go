@@ -22,6 +22,7 @@ type WorkloadAuthorityProvenance struct {
 	WorkloadURI                string         `json:"workload_uri"`
 	TrustDomain                string         `json:"trust_domain"`
 	WorkloadPath               string         `json:"workload_path"`
+	IdentityDigest             string         `json:"identity_digest"`
 	AuthorityDigest            string         `json:"authority_digest"`
 	AuthorityObservationDigest string         `json:"authority_observation_digest"`
 	SourceRevision             SourceRevision `json:"source_revision"`
@@ -62,6 +63,7 @@ func ObserveWorkloadAuthorityProvenance(workloadURI string, boundary AuthorityBo
 		WorkloadURI:                workloadURI,
 		TrustDomain:                identity.trustDomain,
 		WorkloadPath:               identity.workloadPath,
+		IdentityDigest:             workloadIdentityDigest(workloadURI),
 		AuthorityDigest:            boundary.AuthorityDigest,
 		AuthorityObservationDigest: boundary.StableHash(),
 		SourceRevision:             boundary.SourceRevision,
@@ -103,6 +105,13 @@ func (p WorkloadAuthorityProvenance) StableHash() string {
 type workloadIdentity struct {
 	trustDomain  string
 	workloadPath string
+}
+
+func workloadIdentityDigest(workloadURI string) string {
+	return envelopeDigestString(strings.Join([]string{
+		"spiffe-workload-identity/v1",
+		workloadURI,
+	}, "\t"))
 }
 
 func parseWorkloadURI(value string) (workloadIdentity, error) {
