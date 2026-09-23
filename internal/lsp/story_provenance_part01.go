@@ -3,6 +3,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sort"
 )
 
@@ -45,7 +46,7 @@ func (server *Server) storyProvenanceRequest(ctx context.Context, request reques
 		return nil, nil, err
 	}
 	if params.TextDocument.URI == "" || params.SemanticID == "" {
-		return nil, nil, json.InvalidUnmarshalError{}
+		return nil, nil, errors.New("story provenance requires textDocument URI and semantic_id")
 	}
 
 	observation := storyProvenanceObservation{
@@ -60,7 +61,7 @@ func (server *Server) storyProvenanceRequest(ctx context.Context, request reques
 	document, ok := server.documents[params.TextDocument.URI]
 	if !ok || document == nil {
 		observation.StoryDigest = storyProvenanceDigest(observation)
-		return resultResponse(request.ID, observation)
+		return resultResponse(request.ID, observation), nil, nil
 	}
 	observation.SourceDigest = document.cacheKey.sourceDigest
 	observation.ProfileDigest = document.cacheKey.profileDigest
@@ -70,7 +71,7 @@ func (server *Server) storyProvenanceRequest(ctx context.Context, request reques
 	if observation.SourceDigest == "" || observation.SemanticDigest == "" {
 		observation.Reason = "MISSING_SEMANTIC_IDENTITY"
 		observation.StoryDigest = storyProvenanceDigest(observation)
-		return resultResponse(request.ID, observation)
+		return resultResponse(request.ID, observation), nil, nil
 	}
 
 	origins := make([]storyProvenanceOrigin, 0)
@@ -93,7 +94,7 @@ func (server *Server) storyProvenanceRequest(ctx context.Context, request reques
 		observation.DeclarationFound = true
 	}
 	observation.StoryDigest = storyProvenanceDigest(observation)
-	return resultResponse(request.ID, observation)
+	return resultResponse(request.ID, observation), nil, nil
 }
 
 func appendStoryProvenanceOrigins(origins []storyProvenanceOrigin, values any, kind, semanticID string) []storyProvenanceOrigin {
