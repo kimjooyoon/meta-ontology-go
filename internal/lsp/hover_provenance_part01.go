@@ -32,8 +32,10 @@ func hoverProvenanceDetail(document document) string {
 		ToolchainDigest: document.cacheKey.toolchainDigest,
 		ContractDigest:  document.cacheKey.contractDigest,
 		Symbols:          documentProvenanceSymbols(document.result),
+		References:       documentProvenanceReferences(document.result),
 	}
 	value.SymbolMapDigest = documentProvenanceSymbolMapDigest(value.Symbols)
+	value.ReferenceMapDigest = documentProvenanceReferenceMapDigest(value.References)
 	value.SubjectDigest = value.SourceDigest
 	value.ProvenanceDigest = documentProvenanceDigest(value)
 	return strings.Join([]string{
@@ -45,6 +47,8 @@ func hoverProvenanceDetail(document document) string {
 		"contract digest: " + value.ContractDigest,
 		"symbol origin count: " + strconv.Itoa(len(value.Symbols)),
 		"symbol map digest: " + value.SymbolMapDigest,
+		"reference origin count: " + strconv.Itoa(len(value.References)),
+		"reference map digest: " + value.ReferenceMapDigest,
 		"provenance digest: " + value.ProvenanceDigest,
 	}, "\n")
 }
