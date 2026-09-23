@@ -21,6 +21,7 @@ type ServerCapabilities struct {
 	ReferencesProvider      bool                    `json:"referencesProvider,omitempty"`
 	WorkspaceSymbolProvider *WorkspaceSymbolOptions `json:"workspaceSymbolProvider,omitempty"`
 	SemanticTokensProvider  *SemanticTokensOptions  `json:"semanticTokensProvider,omitempty"`
+	Experimental             map[string]any          `json:"experimental,omitempty"`
 }
 type InitializeResult struct {
 	Capabilities ServerCapabilities `json:"capabilities"`

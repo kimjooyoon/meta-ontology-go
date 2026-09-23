@@ -25,6 +25,11 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				},
 				Full: true,
 			},
+			Experimental: map[string]any{
+				"goooDocumentProvenance": map[string]string{
+					"method": "gooo/documentProvenance", "schema": documentProvenanceSchema,
+				},
+			},
 		},
 		ServerInfo: ServerInfo{Name: "gooo-lsp", Version: "current-ddaf"},
 	}
