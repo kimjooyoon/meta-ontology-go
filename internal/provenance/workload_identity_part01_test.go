@@ -1,6 +1,7 @@
 package provenance
 
 import (
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -9,7 +10,7 @@ import (
 func TestParseWorkloadIdentityAttributesIsExplicitlyNonAuthorizing(t *testing.T) {
 	observation, err := ParseWorkloadIdentityAttributes(map[string]string{
 		"workload_identity":            "spiffe://example.org/ns/billing/sa/worker",
-		"workload_attestation_digest": "sha256:" + strings.Repeat("a", 64),
+		"workload_attestation_digest":  "sha256:" + strings.Repeat("a", 64),
 		"workload_identity_expires_at": "2026-09-24T12:00:00Z",
 		"workload_identity_authority":  WorkloadIdentityAuthorityNonAuthorizing,
 	})
@@ -27,7 +28,7 @@ func TestParseWorkloadIdentityAttributesIsExplicitlyNonAuthorizing(t *testing.T)
 func TestParseWorkloadIdentityAttributesRejectsAuthorityAndShapeConfusion(t *testing.T) {
 	base := map[string]string{
 		"workload_identity":            "spiffe://example.org/ns/billing/sa/worker",
-		"workload_attestation_digest": "sha256:" + strings.Repeat("b", 64),
+		"workload_attestation_digest":  "sha256:" + strings.Repeat("b", 64),
 		"workload_identity_expires_at": "2026-09-24T12:00:00Z",
 		"workload_identity_authority":  WorkloadIdentityAuthorityNonAuthorizing,
 	}
@@ -38,9 +39,7 @@ func TestParseWorkloadIdentityAttributesRejectsAuthorityAndShapeConfusion(t *tes
 	} {
 		t.Run(name, func(t *testing.T) {
 			value := make(map[string]string, len(base))
-			for key, item := range base {
-				value[key] = item
-			}
+			maps.Copy(value, base)
 			mutate(value)
 			if _, err := ParseWorkloadIdentityAttributes(value); err == nil {
 				t.Fatal("invalid workload identity observation was accepted")
