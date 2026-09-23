@@ -31,6 +31,8 @@ type Execution struct {
 	PlanDigest      string                    `json:"plan_digest"`
 	InputDigest     string                    `json:"input_digest"`
 	ExecutionDigest string                    `json:"execution_digest"`
+	Phase           ExecutionPhase            `json:"phase"`
+	Conditions      []ExecutionCondition      `json:"conditions"`
 	Results         map[string]ResultEvidence `json:"results"`
 	ApplyCalls      int                       `json:"apply_calls"`
 	Deliveries      int                       `json:"deliveries"`
@@ -101,24 +103,29 @@ func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execut
 	if err := plan.validateCompiledAuthority(); err != nil {
 		return Execution{}, nil, err
 	}
-	order, incoming, _, err := plan.executionOrder()
-	if err != nil {
-		return Execution{}, nil, err
-	}
-	if err := validateExecutionBindings(plan.programs, plan.bindings); err != nil {
-		return Execution{}, nil, err
-	}
-	if err := validateRootInputs(plan.programs, incoming, rootInputs); err != nil {
-		return Execution{}, nil, err
-	}
-	values := make(map[string]ProducedResult, len(plan.programs))
 	execution = Execution{
 		Scope:       RegisteredValueOperationScope,
 		PlanDigest:  planExecutionDigest(plan),
 		InputDigest: digestValue(rootInputs),
+		Phase:       ExecutionPhaseRunning,
+		Conditions:  executionRunningConditions(),
 		Results:     make(map[string]ResultEvidence, len(plan.programs)),
 	}
-	defer func() { execution.ExecutionDigest = executionDigest(execution) }()
+	defer func() {
+		execution.Phase, execution.Conditions = executionLifecycle(err)
+		execution.ExecutionDigest = executionDigest(execution)
+	}()
+	order, incoming, _, err := plan.executionOrder()
+	if err != nil {
+		return execution, nil, err
+	}
+	if err := validateExecutionBindings(plan.programs, plan.bindings); err != nil {
+		return execution, nil, err
+	}
+	if err := validateRootInputs(plan.programs, incoming, rootInputs); err != nil {
+		return execution, nil, err
+	}
+	values := make(map[string]ProducedResult, len(plan.programs))
 	for _, activity := range order {
 		input, hasInput := rootInputs[activity]
 		if !hasInput {
