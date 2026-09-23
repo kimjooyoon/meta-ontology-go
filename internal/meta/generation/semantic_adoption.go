@@ -33,6 +33,11 @@ type SemanticAdoptionProvenance struct {
 	ProfileDigest   string `json:"profile_digest"`
 	ToolchainDigest string `json:"toolchain_digest"`
 	ContractDigest  string `json:"contract_digest"`
+	ProvenanceDigest string `json:"provenance_digest,omitempty"`
+}
+
+func SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest string) string {
+	return cache.HashBytes([]byte(strings.Join([]string{sourceDigest, profileDigest, toolchainDigest, contractDigest}, "\x00"))).String()
 }
 
 // SemanticAdoptionProposal is a caller-owned proposal derived from one stable
@@ -297,7 +302,8 @@ func validSemanticAdoptionProvenance(provenance *SemanticAdoptionProvenance) boo
 		return false
 	}
 	pathsConsistent := (provenance.SourcePath == "" && provenance.ContractPath == "") || (provenance.SourcePath != "" && provenance.ContractPath != "")
-	return pathsConsistent && cache.Digest(provenance.SourceDigest).Known() && cache.Digest(provenance.ProfileDigest).Known() && cache.Digest(provenance.ToolchainDigest).Known() && cache.Digest(provenance.ContractDigest).Known()
+	digestConsistent := provenance.ProvenanceDigest == "" || provenance.ProvenanceDigest == SemanticAnalysisProvenanceDigest(provenance.SourceDigest, provenance.ProfileDigest, provenance.ToolchainDigest, provenance.ContractDigest)
+	return pathsConsistent && digestConsistent && cache.Digest(provenance.SourceDigest).Known() && cache.Digest(provenance.ProfileDigest).Known() && cache.Digest(provenance.ToolchainDigest).Known() && cache.Digest(provenance.ContractDigest).Known()
 }
 
 func sameSemanticAdoptionProvenance(left, right *SemanticAdoptionProvenance) bool {

@@ -11,9 +11,11 @@ import (
 func semanticAdoptionProvenance(sourcePath, sourceDigest, contractPath, contractDigest string) *generation.SemanticAdoptionProvenance {
 	profile := syntax.CurrentEntityFieldsSupport().Profile
 	profileDigest := cache.HashBytes([]byte(fmt.Sprintf("%s|%d|%s", profile.ID, profile.Version, profile.Digest))).String()
+	toolchainDigest := generation.SemanticRetentionToolchainDigest()
 	return &generation.SemanticAdoptionProvenance{
 		SourcePath: sourcePath, ContractPath: contractPath,
 		SourceDigest: sourceDigest, ProfileDigest: profileDigest,
-		ToolchainDigest: generation.SemanticRetentionToolchainDigest(), ContractDigest: contractDigest,
+		ToolchainDigest: toolchainDigest, ContractDigest: contractDigest,
+		ProvenanceDigest: generation.SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest),
 	}
 }

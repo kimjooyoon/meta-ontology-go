@@ -26,7 +26,7 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" || value.ProvenanceDigest == "" {
+	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" || value.ProvenanceDigest == "" || value.ProvenanceDigest != documentProvenanceDigest(value) {
 		t.Fatalf("incomplete document provenance: %#v", value)
 	}
 

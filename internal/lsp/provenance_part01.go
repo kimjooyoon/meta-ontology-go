@@ -3,9 +3,8 @@ package lsp
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
 const documentProvenanceSchema = "gooo/lsp-document-provenance/v1"
@@ -21,11 +20,7 @@ type documentProvenance struct {
 }
 
 func documentProvenanceDigest(value documentProvenance) string {
-	canonical := strings.Join([]string{
-		value.Schema, value.URI, value.SourceDigest, value.ProfileDigest,
-		value.ToolchainDigest, value.ContractDigest,
-	}, "\x00")
-	return cache.HashBytes([]byte(canonical)).String()
+	return generation.SemanticAnalysisProvenanceDigest(value.SourceDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest)
 }
 
 func (server *Server) documentProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {
