@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"strings"
 )
 
 // GenerateWithBinding verifies an opt-in authoritative binding without
@@ -22,6 +23,12 @@ func GenerateWithBinding(ir SemanticIR, previous []byte, binding ProjectionBindi
 	}
 	if binding.ProvenanceDigest != "" {
 		result.Metadata.ProvenanceDigest = binding.ProvenanceDigest
+		result.Metadata.Provenance = BindingStatus{Status: "UNVERIFIED", Authority: "caller-supplied-unverified"}
+	}
+	if binding.AnalysisProvenance != nil {
+		analysisProvenance := *binding.AnalysisProvenance
+		result.Metadata.AnalysisProvenance = &analysisProvenance
+		result.Metadata.ProvenanceDigest = analysisProvenanceDigest(analysisProvenance)
 		result.Metadata.Provenance = BindingStatus{Status: "UNVERIFIED", Authority: "caller-supplied-unverified"}
 	}
 	if binding.Toolchain.Value != "" {
@@ -53,8 +60,28 @@ func validateProjectionBinding(result ProjectionMetadataV1, ir SemanticIR, bindi
 	if binding.ProvenanceDigest != "" && !validDigest(binding.ProvenanceDigest) {
 		return fmt.Errorf("generator: invalid provenance digest")
 	}
+	if err := validateAnalysisProvenanceBinding(binding.AnalysisProvenance); err != nil {
+		return err
+	}
+	if binding.AnalysisProvenance != nil && binding.ProvenanceDigest != "" && binding.ProvenanceDigest != analysisProvenanceDigest(*binding.AnalysisProvenance) {
+		return fmt.Errorf("generator: provenance digest does not match analysis provenance")
+	}
 	if binding.Toolchain.Value != "" && binding.Toolchain.Status != "BOUND" {
 		return fmt.Errorf("generator: supplied toolchain identity must be BOUND")
+	}
+	return nil
+}
+
+func analysisProvenanceDigest(value AnalysisProvenanceBinding) string {
+	return digestBytes([]byte(strings.Join([]string{value.SourceDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest}, "\x00")))
+}
+
+func validateAnalysisProvenanceBinding(value *AnalysisProvenanceBinding) error {
+	if value == nil {
+		return nil
+	}
+	if !validDigest(value.SourceDigest) || !validDigest(value.ProfileDigest) || !validDigest(value.ToolchainDigest) || !validDigest(value.ContractDigest) {
+		return fmt.Errorf("generator: analysis provenance contains an invalid digest")
 	}
 	return nil
 }

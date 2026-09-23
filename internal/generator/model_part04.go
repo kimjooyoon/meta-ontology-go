@@ -18,7 +18,15 @@ type ProjectionBinding struct {
 	SourceMapDigest  string            `json:"source_map_digest"`
 	EvidenceDigest   string            `json:"evidence_digest,omitempty"`
 	ProvenanceDigest string            `json:"provenance_digest,omitempty"`
+	AnalysisProvenance *AnalysisProvenanceBinding `json:"analysis_provenance,omitempty"`
 	Toolchain        ToolchainIdentity `json:"toolchain"`
+}
+
+type AnalysisProvenanceBinding struct {
+	SourceDigest    string `json:"source_digest"`
+	ProfileDigest   string `json:"profile_digest"`
+	ToolchainDigest string `json:"toolchain_digest"`
+	ContractDigest  string `json:"contract_digest"`
 }
 
 // GenerationMetadata describes reproducible projection inputs and trust.
@@ -27,6 +35,7 @@ type GenerationMetadata struct {
 	SemanticIRDigest string                `json:"semantic_ir_digest"`
 	SourceMapDigest  string                `json:"source_map_digest"`
 	ProvenanceDigest string                `json:"provenance_digest,omitempty"`
+	AnalysisProvenance *AnalysisProvenanceBinding `json:"analysis_provenance,omitempty"`
 	Source           BindingStatus         `json:"source"`
 	SemanticIR       BindingStatus         `json:"semantic_ir"`
 	Provenance       BindingStatus         `json:"provenance"`

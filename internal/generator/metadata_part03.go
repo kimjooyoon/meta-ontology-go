@@ -18,6 +18,12 @@ func (result ProjectionMetadataV1) CanonicalJSON() ([]byte, error) {
 	if result.Metadata.ProvenanceDigest != "" && !validDigest(result.Metadata.ProvenanceDigest) {
 		return nil, fmt.Errorf("generator: projection metadata provenance digest is invalid")
 	}
+	if err := validateAnalysisProvenanceBinding(result.Metadata.AnalysisProvenance); err != nil {
+		return nil, err
+	}
+	if result.Metadata.AnalysisProvenance != nil && result.Metadata.ProvenanceDigest != analysisProvenanceDigest(*result.Metadata.AnalysisProvenance) {
+		return nil, fmt.Errorf("generator: projection metadata provenance does not match analysis provenance")
+	}
 	if (result.Metadata.Provenance.Status == "DEFERRED" && result.Metadata.ProvenanceDigest != "") ||
 		(result.Metadata.Provenance.Status == "UNVERIFIED" && result.Metadata.ProvenanceDigest == "") {
 		return nil, fmt.Errorf("generator: provenance status and digest are inconsistent")
