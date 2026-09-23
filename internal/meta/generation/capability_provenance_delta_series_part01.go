@@ -62,7 +62,7 @@ func (s CapabilityProvenanceDeltaSeries) Validate() error {
 	if err != nil {
 		return err
 	}
-	if !slices.Equal(s.Deltas, expected.Deltas) ||
+	if !capabilityProvenanceDeltaSeriesDeltasEqual(s.Deltas, expected.Deltas) ||
 		s.FinalDelta.Canonical() != expected.FinalDelta.Canonical() ||
 		s.FinalDelta.DeltaDigest != expected.FinalDelta.DeltaDigest ||
 		s.FirstChainDigest != expected.FirstChainDigest ||
@@ -93,4 +93,17 @@ func (s CapabilityProvenanceDeltaSeries) Canonical() string {
 
 func (s CapabilityProvenanceDeltaSeries) StableHash() string {
 	return envelopeDigestString(s.Canonical())
+}
+
+func capabilityProvenanceDeltaSeriesDeltasEqual(left, right []CapabilityProvenanceDelta) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index].Canonical() != right[index].Canonical() ||
+			left[index].DeltaDigest != right[index].DeltaDigest {
+			return false
+		}
+	}
+	return true
 }
