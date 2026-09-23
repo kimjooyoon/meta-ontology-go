@@ -35,7 +35,7 @@ type completionProvenanceObservation struct {
 	Position                 Position                        `json:"position"`
 	SourceDigest             string                          `json:"source_digest,omitempty"`
 	SemanticDigest           string                          `json:"semantic_digest,omitempty"`
-	ProfileDigest             string                          `json:"profile_digest,omitempty"`
+	ProfileDigest            string                          `json:"profile_digest,omitempty"`
 	ToolchainDigest          string                          `json:"toolchain_digest,omitempty"`
 	ContractDigest           string                          `json:"contract_digest,omitempty"`
 	DocumentProvenanceDigest string                          `json:"document_provenance_digest,omitempty"`
@@ -71,14 +71,14 @@ func observeCompletionProvenance(server *Server, uri string, position Position, 
 	observation := completionProvenanceObservation{
 		Schema: completionProvenanceSchema, URI: uri, Position: position,
 		Candidates: []completionProvenanceCandidate{},
-		Decision: completionProvenanceUnknown, Reason: "MISSING_SOURCE_DIGEST",
+		Decision:   completionProvenanceUnknown, Reason: "MISSING_SOURCE_DIGEST",
 		NonAuthorizing: true,
-	}
-	observation.SourceDigest = key.sourceDigest
-	observation.SemanticDigest = value.result.semanticDigest
-	observation.ProfileDigest = key.profileDigest
-	observation.ToolchainDigest = key.toolchainDigest
-	observation.ContractDigest = key.contractDigest
+
+		SourceDigest:    key.sourceDigest,
+		SemanticDigest:  value.result.semanticDigest,
+		ProfileDigest:   key.profileDigest,
+		ToolchainDigest: key.toolchainDigest,
+		ContractDigest:  key.contractDigest}
 	if value.result.semanticChecked && !value.result.semanticValid {
 		observation.Reason = "SEMANTIC_INVALID"
 		return finalizeCompletionProvenance(observation)

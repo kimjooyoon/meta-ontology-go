@@ -21,12 +21,12 @@ type diagnosticProvenanceParams struct {
 }
 
 type diagnosticProvenanceItem struct {
-	Range         Range              `json:"range"`
-	Severity      DiagnosticSeverity `json:"severity,omitempty"`
-	Code          string             `json:"code,omitempty"`
-	Source        string             `json:"source,omitempty"`
+	Range        Range              `json:"range"`
+	Severity     DiagnosticSeverity `json:"severity,omitempty"`
+	Code         string             `json:"code,omitempty"`
+	Source       string             `json:"source,omitempty"`
 	Message       string             `json:"message"`
-	OriginDigest  string             `json:"origin_digest"`
+	OriginDigest string             `json:"origin_digest"`
 }
 
 type diagnosticProvenanceObservation struct {
@@ -74,12 +74,12 @@ func observeDiagnosticProvenance(uri string, value document, key documentCacheKe
 		Decision:    diagnosticProvenanceUnknown,
 		Reason:      "MISSING_SOURCE_DIGEST",
 		NonAuthorizing: true,
-	}
-	observation.SourceDigest = key.sourceDigest
-	observation.SemanticDigest = value.result.semanticDigest
-	observation.ProfileDigest = key.profileDigest
-	observation.ToolchainDigest = key.toolchainDigest
-	observation.ContractDigest = key.contractDigest
+
+		SourceDigest:    key.sourceDigest,
+		SemanticDigest:  value.result.semanticDigest,
+		ProfileDigest:   key.profileDigest,
+		ToolchainDigest: key.toolchainDigest,
+		ContractDigest:  key.contractDigest}
 	if value.result.semanticChecked && !value.result.semanticValid {
 		observation.Reason = "SEMANTIC_INVALID"
 		return finalizeDiagnosticProvenance(observation)

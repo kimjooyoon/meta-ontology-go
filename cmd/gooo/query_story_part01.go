@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-
 	queryengine "github.com/kimjooyoon/meta-ontology-go/internal/query"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
