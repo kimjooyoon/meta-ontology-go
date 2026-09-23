@@ -69,6 +69,10 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 	if err := validateAdoptionInputs(inputs, observationData, observation, proposalData, proposal, authorization); err != nil {
 		return generation.SemanticAdoptionReport{}, err
 	}
+	analysisProvenance := semanticAdoptionProvenance(options.inputFilename, cache.HashBytes(inputs.inputSource).String(), options.contractFilename, cache.HashBytes(inputs.contractSource).String())
+	if err := validateAdoptionProvenanceChain(proposal, authorization, analysisProvenance); err != nil {
+		return generation.SemanticAdoptionReport{}, err
+	}
 	proposalDigest := cache.HashBytes(proposalData).String()
 	authorizationDigest := cache.HashBytes(authorizationData).String()
 	evidence := generation.SemanticAdoptionEvidence{
@@ -91,13 +95,15 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 		evidence.Reason = generation.SemanticAdoptionUnknownReason
 		evidence.Unknown = generation.AdoptionUnknownState()
 	}
+	if proposal.AnalysisProvenance != nil {
+		evidence.AnalysisProvenance = analysisProvenance
+	}
 	decision, reason, unknown, err := generation.VerifySemanticAdoption(proposal, proposalDigest, authorization, authorizationDigest, evidence)
 	if err != nil {
 		return generation.SemanticAdoptionReport{}, fmt.Errorf("independent verification: %w", err)
 	}
 	evidence.Decision, evidence.Reason, evidence.Unknown = decision, reason, unknown
 	boundObservation := bindAdoptionObservation(observation, evidence, decision)
-	analysisProvenance := semanticAdoptionProvenance(options.inputFilename, cache.HashBytes(inputs.inputSource).String(), options.contractFilename, cache.HashBytes(inputs.contractSource).String())
 	return generation.SemanticAdoptionReport{
 		Schema: generation.SemanticAdoptionReportSchema, Lifecycle: adoptionLifecycle(authorization.Authorized),
 		ObservationDigest: cache.HashBytes(observationData).String(), ProposalDigest: proposalDigest,
@@ -106,6 +112,17 @@ func buildAdoptionReport(options adoptionOptions, inputs observationInputs, read
 		AfterRuntimeMetrics: adopted.metrics, IndependentDecision: decision, IndependentReason: reason,
 		RepositoryWrites: 0, LocalTestExecutions: 0, AnalysisProvenance: analysisProvenance,
 	}, nil
+}
+
+func validateAdoptionProvenanceChain(proposal generation.SemanticAdoptionProposal, authorization generation.SemanticAdoptionAuthorization, expected *generation.SemanticAdoptionProvenance) error {
+	proposalProvenance, authorizationProvenance := proposal.AnalysisProvenance, authorization.AnalysisProvenance
+	if proposalProvenance == nil && authorizationProvenance == nil {
+		return nil
+	}
+	if proposalProvenance == nil || authorizationProvenance == nil || *proposalProvenance != *expected || *authorizationProvenance != *expected {
+		return fmt.Errorf("adoption provenance is not continuous across proposal and authorization")
+	}
+	return nil
 }
 
 func bindAdoptionObservation(observation generation.SemanticObservation, evidence generation.SemanticAdoptionEvidence, decision string) generation.SemanticObservation {
