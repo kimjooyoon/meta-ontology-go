@@ -60,16 +60,16 @@ func (server *Server) diagnosticProvenanceRequest(ctx context.Context, request r
 		key := stored.cacheKey
 		value := documentCopy(stored)
 		server.mu.RUnlock()
-		return resultResponse(request.ID, observeDiagnosticProvenance(value, key)), nil, nil
+		return resultResponse(request.ID, observeDiagnosticProvenance(params.TextDocument.URI, value, key)), nil, nil
 	}
 	server.mu.RUnlock()
 	return resultResponse(request.ID, nil), nil, nil
 }
 
-func observeDiagnosticProvenance(value document, key documentCacheKey) diagnosticProvenanceObservation {
+func observeDiagnosticProvenance(uri string, value document, key documentCacheKey) diagnosticProvenanceObservation {
 	observation := diagnosticProvenanceObservation{
 		Schema:      diagnosticProvenanceSchema,
-		URI:         value.result.URI,
+		URI:         uri,
 		Diagnostics: []diagnosticProvenanceItem{},
 		Decision:    diagnosticProvenanceUnknown,
 		Reason:      "MISSING_SOURCE_DIGEST",
