@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
 func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
@@ -28,7 +26,7 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SubjectDigest != analysisprovenance.SubjectDigest(uri, digestText(source)) || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" || value.ProvenanceDigest == "" || value.ProvenanceDigest != documentProvenanceDigest(value) {
+	if value.Schema != documentProvenanceSchema || value.URI != uri || value.SubjectDigest != digestText(source) || value.SourceDigest != digestText(source) || value.ProfileDigest == "" || value.ToolchainDigest == "" || value.ContractDigest == "" || value.ProvenanceDigest == "" || value.ProvenanceDigest != documentProvenanceDigest(value) {
 		t.Fatalf("incomplete document provenance: %#v", value)
 	}
 

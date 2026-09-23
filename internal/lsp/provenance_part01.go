@@ -46,7 +46,7 @@ func (server *Server) documentProvenanceRequest(ctx context.Context, request req
 	}
 	provenance := documentProvenance{
 		Schema: documentProvenanceSchema, URI: params.TextDocument.URI,
-		SubjectDigest: analysisprovenance.SubjectDigest(params.TextDocument.URI, stored.cacheKey.sourceDigest),
+		SubjectDigest: stored.cacheKey.sourceDigest,
 		SourceDigest: stored.cacheKey.sourceDigest, ProfileDigest: stored.cacheKey.profileDigest,
 		ToolchainDigest: stored.cacheKey.toolchainDigest, ContractDigest: stored.cacheKey.contractDigest,
 	}
@@ -67,7 +67,7 @@ func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, erro
 
 func validateDocumentProvenance(value documentProvenance) error {
 	if value.Schema != documentProvenanceSchema || value.URI == "" ||
-		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != analysisprovenance.SubjectDigest(value.URI, value.SourceDigest) ||
+		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != value.SourceDigest ||
 		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
 		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
 		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {

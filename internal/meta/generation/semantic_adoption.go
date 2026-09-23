@@ -31,7 +31,6 @@ type SemanticAdoptionProvenance struct {
 	SourcePath       string `json:"source_path,omitempty"`
 	ContractPath     string `json:"contract_path,omitempty"`
 	SourceDigest     string `json:"source_digest"`
-	SubjectDigest    string `json:"subject_digest,omitempty"`
 	ProfileDigest    string `json:"profile_digest"`
 	ToolchainDigest  string `json:"toolchain_digest"`
 	ContractDigest   string `json:"contract_digest"`
@@ -40,10 +39,6 @@ type SemanticAdoptionProvenance struct {
 
 func SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest string) string {
 	return analysisprovenance.Digest(sourceDigest, profileDigest, toolchainDigest, contractDigest)
-}
-
-func SemanticAnalysisSubjectDigest(sourcePath, sourceDigest string) string {
-	return analysisprovenance.SubjectDigest(sourcePath, sourceDigest)
 }
 
 // SemanticAdoptionProposal is a caller-owned proposal derived from one stable

@@ -14,7 +14,7 @@ func semanticAdoptionProvenance(sourcePath, sourceDigest, contractPath, contract
 	toolchainDigest := generation.SemanticRetentionToolchainDigest()
 	return &generation.SemanticAdoptionProvenance{
 		SourcePath: sourcePath, ContractPath: contractPath,
-		SourceDigest: sourceDigest, SubjectDigest: generation.SemanticAnalysisSubjectDigest(sourcePath, sourceDigest), ProfileDigest: profileDigest,
+		SourceDigest: sourceDigest, ProfileDigest: profileDigest,
 		ToolchainDigest: toolchainDigest, ContractDigest: contractDigest,
 		ProvenanceDigest: generation.SemanticAnalysisProvenanceDigest(sourceDigest, profileDigest, toolchainDigest, contractDigest),
 	}
