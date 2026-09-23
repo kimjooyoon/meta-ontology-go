@@ -55,7 +55,7 @@ func ObserveCapabilityProvenanceSurfaceFromDocumentWithDiagnostics(input Capabil
 		GeneratedDigest:          input.GeneratedDigest,
 		DocumentProvenanceDigest: input.DocumentProvenanceDigest,
 
-		NonAuthorizing:           true,
+		NonAuthorizing: true,
 	}
 	if input.Schema == "" {
 		return finalizeCapabilityProvenanceDiagnosticObservation(observation, CapabilityProvenanceSurfaceUnknown, "MISSING_DIAGNOSTIC_PROVENANCE_SCHEMA")
