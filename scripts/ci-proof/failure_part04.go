@@ -35,7 +35,7 @@ func buildFailureManifest(input failureInput, binding failureBinding) (failureMa
 		CatalogRef: failureCatalogPath + "@" + binding.HeadSHA, CatalogVersion: 1, CatalogSHA256: failureCatalogDigest,
 		Rejections: input.Rejections, MissingReasons: input.MissingReasons, Artifacts: input.Artifacts, ProofArtifactRef: input.ProofArtifact,
 		ArtifactStatus: input.ArtifactStatus, ArtifactReason: input.ArtifactReason, Message: input.Message, Remediation: input.Remediation,
-		TerminalFailures: append([]failureJob(nil), input.TerminalFailures...), TerminalFailureCodes: append([]string(nil), input.TerminalFailureCodes...),
+		TerminalFailures: append([]failureJob(nil), input.TerminalFailures...), TerminalFailureCodes: append([]string(nil), input.TerminalFailureCodes...), TerminalFailureEvidence: append([]terminalFailureEvidence(nil), input.TerminalFailureEvidence...),
 		HandoffRequired: entry.HandoffRequired, HandoffOwner: entry.Owner,
 	}
 	if len(manifest.FailureCodes) == 0 {
