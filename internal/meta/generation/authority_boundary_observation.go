@@ -13,20 +13,20 @@ const AuthorityBoundaryObservationSchema = "gooo/authority-boundary-observation/
 // AuthorityBoundaryObservation is an evidence-only projection of a semantic
 // operation's effect boundary. It never authorizes execution or promotion.
 type AuthorityBoundaryObservation struct {
-	Schema                  string
-	AuthorityDigest         string
-	SourceRevision          SourceRevision
-	OperationID             string
-	RequestDigest           string
-	GrantDigest             string
-	ResultDigest            string
-	RequestedEffects        []string
-	GrantedEffects          []string
-	ObservedResultEffects   []string
-	RequestWithinGrant      bool
-	ResultWithinGrant       bool
-	ResultSourceRevisionOK  bool
-	BoundaryStatus          string
+	Schema                 string
+	AuthorityDigest        string
+	SourceRevision         SourceRevision
+	OperationID            string
+	RequestDigest          string
+	GrantDigest            string
+	ResultDigest           string
+	RequestedEffects       []string
+	GrantedEffects         []string
+	ObservedResultEffects  []string
+	RequestWithinGrant     bool
+	ResultWithinGrant      bool
+	ResultSourceRevisionOK bool
+	BoundaryStatus         string
 }
 
 // ObserveAuthorityBoundary calculates the declared effect boundary directly
