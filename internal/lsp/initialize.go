@@ -16,6 +16,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 			DefinitionProvider:      true,
 			DocumentSymbolProvider:  true,
 			ReferencesProvider:      true,
+			RenameProvider:          true,
 			WorkspaceSymbolProvider: &WorkspaceSymbolOptions{Schema: WorkspaceSymbolProtocolSchema},
 			SemanticTokensProvider: &SemanticTokensOptions{
 				Schema: SemanticTokensProtocolSchema,

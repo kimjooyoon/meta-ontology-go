@@ -19,6 +19,7 @@ type ServerCapabilities struct {
 	DefinitionProvider      bool                    `json:"definitionProvider,omitempty"`
 	DocumentSymbolProvider  bool                    `json:"documentSymbolProvider,omitempty"`
 	ReferencesProvider      bool                    `json:"referencesProvider,omitempty"`
+	RenameProvider          bool                    `json:"renameProvider,omitempty"`
 	WorkspaceSymbolProvider *WorkspaceSymbolOptions `json:"workspaceSymbolProvider,omitempty"`
 	SemanticTokensProvider  *SemanticTokensOptions  `json:"semanticTokensProvider,omitempty"`
 	Experimental             map[string]any          `json:"experimental,omitempty"`
@@ -47,6 +48,11 @@ type TextDocumentPositionParams struct {
 }
 type DocumentSymbolParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+type RenameParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Position     Position               `json:"position"`
+	NewName      string                 `json:"newName"`
 }
 type WorkspaceSymbolParams struct {
 	Query string `json:"query"`
