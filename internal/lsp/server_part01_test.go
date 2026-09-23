@@ -44,6 +44,7 @@ func TestServerLifecycleDiagnosticsAndFeatures(t *testing.T) {
 	assertDiagnostics(t, messages[1], uri, "")
 	assertHover(t, messages[2], "entity Order")
 	assertCompletion(t, messages[3], "Order")
+	assertCompletion(t, messages[3], "id")
 	assertDefinition(t, messages[4], uri)
 	assertDiagnostics(t, messages[5], uri, "lex.unterminated-string")
 	assertResultID(t, messages[6], 5)

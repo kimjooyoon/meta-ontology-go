@@ -33,6 +33,7 @@ func (server *Server) completion(uri string) *CompletionList {
 	items := []CompletionItem{
 		{Label: "activity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 		{Label: "entity", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
+		{Label: "id", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 		{Label: "namespace", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 		{Label: "package", Kind: int(SymbolKeyword), Detail: "gooo keyword"},
 	}
