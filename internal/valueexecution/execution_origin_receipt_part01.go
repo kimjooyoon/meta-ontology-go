@@ -37,7 +37,7 @@ func ObserveExecutionOrigin(origin provenance.OriginChainObservation, execution 
 		OriginDigest:    origin.Digest,
 		ExecutionDigest: execution.ExecutionDigest,
 		Phase:           execution.Phase,
-		Conditions:      canonicalExecutionConditions(execution.Conditions),
+		Conditions:      canonicalOriginExecutionConditions(execution.Conditions),
 		Status:          ExecutionOriginStatusUnknown,
 		NonAuthorizing:  true,
 	}
@@ -65,7 +65,7 @@ func knownExecutionPhase(phase ExecutionPhase) bool {
 	}
 }
 
-func canonicalExecutionConditions(conditions []ExecutionCondition) []ExecutionCondition {
+func canonicalOriginExecutionConditions(conditions []ExecutionCondition) []ExecutionCondition {
 	result := append([]ExecutionCondition(nil), conditions...)
 	sort.SliceStable(result, func(left, right int) bool {
 		if result[left].Type != result[right].Type {
