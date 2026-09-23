@@ -24,13 +24,17 @@ func TestHoverSymbolDetailIncludesExactDocumentProvenance(t *testing.T) {
 		ProfileDigest:   "profile-digest",
 		ToolchainDigest: "toolchain-digest",
 		ContractDigest:  "contract-digest",
+		Symbols:          documentProvenanceSymbols(document.result),
 	}
+	expected.SymbolMapDigest = documentProvenanceSymbolMapDigest(expected.Symbols)
 	expected.ProvenanceDigest = documentProvenanceDigest(expected)
 	for _, fragment := range []string{
 		"entity Order (semantic ID: billing://entity/order)",
 		"provenance schema: " + hoverProvenanceSchema,
 		"source digest: " + expected.SourceDigest,
 		"semantic digest: " + expected.SemanticDigest,
+		"symbol origin count: 0",
+		"symbol map digest: " + expected.SymbolMapDigest,
 		"provenance digest: " + expected.ProvenanceDigest,
 	} {
 		if !strings.Contains(detail, fragment) {
