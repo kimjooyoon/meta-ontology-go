@@ -54,7 +54,7 @@ func ObserveCapabilityProvenanceSurfaceFromDocumentWithDiagnostics(input Capabil
 		SemanticDigest:           input.SemanticDigest,
 		GeneratedDigest:          input.GeneratedDigest,
 		DocumentProvenanceDigest: input.DocumentProvenanceDigest,
-		DiagnosticMapDigest:      input.DiagnosticMapDigest,
+
 		NonAuthorizing:           true,
 	}
 	if input.Schema == "" {
@@ -67,6 +67,7 @@ func ObserveCapabilityProvenanceSurfaceFromDocumentWithDiagnostics(input Capabil
 		return finalizeCapabilityProvenanceDiagnosticObservation(observation, CapabilityProvenanceSurfaceUnknown, "MISSING_DIAGNOSTIC_MAP_DIGEST")
 	}
 	if !cache.Digest(input.DiagnosticMapDigest).Known() {
+	observation.DiagnosticMapDigest = input.DiagnosticMapDigest
 		return finalizeCapabilityProvenanceDiagnosticObservation(observation, CapabilityProvenanceSurfaceRefuted, "MALFORMED_DIAGNOSTIC_MAP_DIGEST")
 	}
 	base := ObserveCapabilityProvenanceSurfaceFromDocument(CapabilityProvenanceDocumentObservationInput{
