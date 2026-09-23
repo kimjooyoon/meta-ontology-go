@@ -32,6 +32,10 @@ func (server *Server) hover(params TextDocumentPositionParams) (*Hover, bool) {
 	return &Hover{Contents: MarkupContent{Kind: "plaintext", Value: symbol.Detail}, Range: &rangeValue}, true
 }
 func (server *Server) completion(uri string) *CompletionList {
+	return server.completionAt(uri, Position{}, false)
+}
+
+func (server *Server) completionAt(uri string, position Position, usePosition bool) *CompletionList {
 	keywords := syntax.CanonicalKeywordNames()
 	items := make([]CompletionItem, 0, len(keywords))
 	for _, keyword := range keywords {
@@ -45,7 +49,11 @@ func (server *Server) completion(uri string) *CompletionList {
 	}
 	server.mu.RUnlock()
 	if ok {
+		expectedKind, contextAware := completionExpectedSymbolKind(document.text, position, usePosition)
 		for _, symbol := range allSymbols(document.result) {
+			if contextAware && symbol.Kind != expectedKind {
+				continue
+			}
 			item := CompletionItem{Label: symbol.Name, Kind: int(symbol.Kind), Detail: symbol.Detail}
 			if symbol.ID != "" {
 				item.Documentation = "semantic ID: " + symbol.ID
