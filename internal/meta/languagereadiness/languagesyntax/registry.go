@@ -75,6 +75,7 @@ func expectedRegistry() Registry {
 		valid("language-runtime-binding", "examples/language-runtime-binding/main.gooo"),
 		valid("language-runtime-binding-and", "examples/language-runtime-binding/boolean-and.gooo"),
 		valid("language-runtime-binding-typed-chain", "examples/language-runtime-binding/typed-chain.gooo"),
+		valid("language-runtime-binding-suspend-resume", "examples/language-runtime-binding/suspend-resume.gooo"),
 		{ID: "language-record-binding", Path: "examples/language-record-binding/main.gooo", Kind: KindValid, ExpectedDecision: DecisionPass, ProofChoice: "COHERENCE", MetaOperation: "replay-language-syntax", Scope: ScopeLanguageCapability, EntityFields: true},
 		valid("self-improvement-value-witness-execution-input", "examples/self-improvement-value-witness-execution-input/contract.gooo"),
 		valid("language-operation-catalog", "examples/language-operation-catalog/main.gooo"),

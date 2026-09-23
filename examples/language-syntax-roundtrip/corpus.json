@@ -407,6 +407,15 @@
       "scope": "LANGUAGE_CAPABILITY"
     },
     {
+      "id": "language-runtime-binding-suspend-resume",
+      "path": "examples/language-runtime-binding/suspend-resume.gooo",
+      "kind": "VALID",
+      "expected_decision": "PASS",
+      "proof_choice": "COHERENCE",
+      "meta_operation": "replay-language-syntax",
+      "scope": "LANGUAGE_CAPABILITY"
+    },
+    {
       "id": "language-record-binding",
       "path": "examples/language-record-binding/main.gooo",
       "kind": "VALID",
