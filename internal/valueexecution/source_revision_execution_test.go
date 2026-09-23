@@ -26,8 +26,8 @@ activity Observe(Integer) -> Integer computes "int.add:1"
 	baseRequest := AcceptedSourceRevisionRequest{
 		Revision: revision, Evaluation: evaluation, BaselineFilename: "baseline.gooo", BaselineSource: baseline,
 		CandidateFilename: "candidate.gooo", CandidateSource: candidate, Activity: "Observe", Input: math.MaxInt64,
+		ExplicitDecision: AcceptedSourceRevisionDecision,
 	}
-	baseRequest.ExplicitDecision = AcceptedSourceRevisionDecision
 	if _, err := ExecuteAcceptedSourceRevision(baseRequest); err == nil {
 		t.Fatal("counterexample recovery was adopted without contract evidence")
 	}
