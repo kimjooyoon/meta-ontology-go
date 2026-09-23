@@ -150,17 +150,10 @@ type ReplayDiagnostic struct {
 	Expected      string   `json:"expected,omitempty"`
 	Observed      string   `json:"observed,omitempty"`
 	ExpectedHash  string   `json:"expected_sha256,omitempty"`
-	Upstream      *ReplayDiagnosticUpstream `json:"upstream,omitempty"`
 	ObservedHash  string   `json:"observed_sha256,omitempty"`
 }
 
 func WriteReplayDiagnostic(outputPath string, cause error) error {
-	diagnosticCause := cause
-	var upstream *ReplayDiagnosticUpstream
-	if context, ok := errors.AsType[*replayDiagnosticContext](cause); ok {
-		diagnosticCause = context.Cause
-		upstream = newReplayDiagnosticUpstream(context.Report)
-	}
 	if outputPath == "" {
 		return nil
 	}
@@ -168,8 +161,8 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		Resolution: "LOWER_RESOLUTION", Stage: "validate-inputs",
 		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_UNCATALOGED",
 		UnknownClass: "UNCATALOGED_CAUSE", NextOperation: "report-counterexample",
-		BlockedBy: []string{}, Upstream: upstream}
-	if divergence, ok := errors.AsType[*replayDivergence](diagnosticCause); ok {
+		BlockedBy: []string{}}
+	if divergence, ok := errors.AsType[*replayDivergence](cause); ok {
 		diagnostic.Decision = "REFUTED"
 		diagnostic.Resolution = "EXACT"
 		diagnostic.Step = divergence.Step
@@ -181,7 +174,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		diagnostic.Observed = divergence.Observed
 		diagnostic.ExpectedHash = replayDigest(divergence.Expected)
 		diagnostic.ObservedHash = replayDigest(divergence.Observed)
-	} else if binding, ok := errors.AsType[*executorBindingError](diagnosticCause); ok {
+	} else if binding, ok := errors.AsType[*executorBindingError](cause); ok {
 		diagnostic.Decision = "REFUTED"
 		diagnostic.Resolution = "EXACT"
 		diagnostic.Step = "bind-executor"
@@ -194,8 +187,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		diagnostic.ExpectedHash = replayDigest(binding.Expected)
 		diagnostic.ObservedHash = replayDigest(binding.Observed)
 	}
-1
-	applyReplayDiagnosticUpstream(&diagnostic, upstream)
+	payload, err := json.MarshalIndent(diagnostic, "", "  ")
 	if err != nil {
 		return err
 	}

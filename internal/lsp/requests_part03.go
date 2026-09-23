@@ -37,4 +37,3 @@ func decodeRequest(payload []byte) (requestEnvelope, bool) {
 	}
 	return request, true
 }
-

@@ -67,6 +67,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 				"method": "gooo/completionProvenance",
 				"schema": "gooo/lsp-completion-provenance/v1",
 			},
+			"goooStoryProvenance": map[string]any{
+				"method": "gooo/storyProvenance",
+				"schema": "gooo/lsp-story-provenance/v1",
+			},
 		},
 	}
 	if !reflect.DeepEqual(initialize.Result.Capabilities, want) {
