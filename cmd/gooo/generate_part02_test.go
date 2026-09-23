@@ -71,6 +71,21 @@ func TestRunGeneratePreservesPreviousGoAndPublishesManifest(t *testing.T) {
 	if want := generation.SemanticAnalysisProvenanceDigest(provenance.SourceDigest, provenance.ProfileDigest, provenance.ToolchainDigest, provenance.ContractDigest); provenance.ProvenanceDigest != want {
 		t.Fatalf("manifest provenance digest = %q, want %q", provenance.ProvenanceDigest, want)
 	}
+	manifestDigest, err := publicObservationManifestDigest(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tampered := manifest
+	tamperedProvenance := *provenance
+	tamperedProvenance.ProvenanceDigest = cache.HashBytes([]byte("tampered-provenance")).String()
+	tampered.AnalysisProvenance = &tamperedProvenance
+	tamperedDigest, err := publicObservationManifestDigest(tampered)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifestDigest == tamperedDigest {
+		t.Fatal("public observation manifest digest ignored provenance tampering")
+	}
 	if got, err := os.ReadFile(sourcePath); err != nil || !bytes.Equal(got, []byte(validSource)) {
 		t.Fatalf("source was modified: %v", err)
 	}
