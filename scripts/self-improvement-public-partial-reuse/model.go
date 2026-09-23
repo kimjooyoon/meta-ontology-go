@@ -6,6 +6,7 @@ type runInput struct {
 	Source              string
 	TestContract        string
 	Gooo                string
+	OrchestrationSource string
 	OrchestrationReport string
 	RepoRoot            string
 	Out                 string
