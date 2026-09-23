@@ -3,7 +3,9 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
 )
 
@@ -55,5 +57,18 @@ func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, erro
 	if err := json.Unmarshal(payload, &value); err != nil {
 		return documentProvenance{}, err
 	}
+	if err := validateDocumentProvenance(value); err != nil {
+		return documentProvenance{}, err
+	}
 	return value, nil
+}
+
+func validateDocumentProvenance(value documentProvenance) error {
+	if value.Schema != documentProvenanceSchema || value.URI == "" ||
+		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
+		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
+		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
+		return errors.New("document provenance identity is invalid")
+	}
+	return nil
 }

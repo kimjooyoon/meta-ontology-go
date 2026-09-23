@@ -52,4 +52,9 @@ func TestDocumentProvenanceExposesExactAnalysisIdentity(t *testing.T) {
 	if changed.SourceDigest != digestText(changedSource) || changed.SourceDigest == value.SourceDigest || changed.ProvenanceDigest == value.ProvenanceDigest {
 		t.Fatalf("document provenance was stale after change: before=%#v after=%#v", value, changed)
 	}
+	tampered := changed
+	tampered.SourceDigest = value.SourceDigest
+	if validateDocumentProvenance(tampered) == nil {
+		t.Fatal("tampered document provenance was accepted")
+	}
 }
