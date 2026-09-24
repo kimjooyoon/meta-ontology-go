@@ -59,7 +59,9 @@ func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string
 		}
 	}
 
-	seedFallbackLSPIdentities(file, ids, names)
+	if result.semanticValid {
+		seedFallbackLSPIdentities(file, ids, names)
+	}
 
 	if file != nil {
 		if err := appendHeaderSymbols(&result, source, file); err != nil {

@@ -12,8 +12,8 @@ import (
 // neither representation grants authorization.
 func knownLSPProvenanceDigest(value string) bool {
 	const scheme = "sha256:"
-	if strings.HasPrefix(value, scheme) {
-		value = strings.TrimPrefix(value, scheme)
+	if after, ok := strings.CutPrefix(value, scheme); ok {
+		value = after
 	}
 	return cache.Digest(value).Known()
 }
