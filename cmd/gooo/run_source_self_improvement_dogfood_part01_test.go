@@ -76,11 +76,11 @@ func dogfoodSelfImprovementContext(plan valueexecution.Plan) valueexecution.Impr
 		Inputs: valueexecution.EnvironmentInputs{
 			SourceDigest:        plan.SourceDigest,
 			SemanticFingerprint: plan.SemanticFingerprint,
-			ToolchainDigest:     cache.HashBytes([]byte("go-toolchain")).String(),
-			ContractDigest:      cache.HashBytes([]byte("gooo-contract-v1")).String(),
-			ModelDigest:         cache.HashBytes([]byte("gooo-model-v1")).String(),
-			SkillDigest:         cache.HashBytes([]byte("gooo-skill-v1")).String(),
-			GatewayPolicyDigest: cache.HashBytes([]byte("gooo-gateway-policy-v1")).String(),
+			ToolchainDigest:     "sha256:" + cache.HashBytes([]byte("go-toolchain")).String(),
+			ContractDigest:      "sha256:" + cache.HashBytes([]byte("gooo-contract-v1")).String(),
+			ModelDigest:         "sha256:" + cache.HashBytes([]byte("gooo-model-v1")).String(),
+			SkillDigest:         "sha256:" + cache.HashBytes([]byte("gooo-skill-v1")).String(),
+			GatewayPolicyDigest: "sha256:" + cache.HashBytes([]byte("gooo-gateway-policy-v1")).String(),
 		},
 	})
 }

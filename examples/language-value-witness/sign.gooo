@@ -1,6 +1,0 @@
-package valuewitness
-namespace valuewitness
-
-entity Integer id "gooo://value-witness/entity/integer"
-
-activity Sign(Integer) -> Integer computes "int.sign:0"

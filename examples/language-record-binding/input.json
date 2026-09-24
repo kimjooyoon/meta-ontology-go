@@ -1,8 +1,0 @@
-{
-  "State": "UNKNOWN",
-  "EvidenceDigest": "",
-  "ObservedCount": "0",
-  "RequiredCount": "1",
-  "Scope": "PACKAGE_TEST_EVENTS_ONLY",
-  "NextOperation": "CAPTURE_NATIVE_OBSERVATION"
-}
