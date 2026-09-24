@@ -5539,9 +5539,6 @@
       "paths": [
         ".github/agent-scope-table.md",
         ".github/ci-governance.json",
-        "examples/language-syntax-roundtrip/corpus.json",
-        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
-        "internal/meta/languagereadiness/languagesyntax/registry.go",
         "internal/meta/generation/self_improvement_outcome_contract.gooo",
         "internal/meta/generation/self_improvement_outcome_part01.go",
         "internal/meta/generation/self_improvement_outcome_part01_test.go",
