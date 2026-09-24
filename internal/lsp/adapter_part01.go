@@ -3,11 +3,11 @@ package lsp
 import (
 	"context"
 	"errors"
-	"strings"
-	"unicode"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
+	"strings"
+	"unicode"
 )
 
 type loweredSymbolKey struct {

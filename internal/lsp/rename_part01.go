@@ -17,8 +17,8 @@ func (server *Server) renameRequest(request requestEnvelope) (*responseEnvelope,
 		return resultResponse(request.ID, nil), nil, nil
 	}
 	if document.result.semanticChecked && !document.result.semanticValid {
-		return resultResponse(request.ID, nil), nil, nil
-	}
+		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
+}
 	targetID, targetName, err := referenceTargetForDocument(document, params.Position)
 	if err != nil {
 		return responseOrNil(request.ID, invalidParams, "Invalid rename position"), nil, nil
