@@ -86,5 +86,3 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 	}
 	assertLSPResponseID(t, messages[1], 2)
 }
-
-
