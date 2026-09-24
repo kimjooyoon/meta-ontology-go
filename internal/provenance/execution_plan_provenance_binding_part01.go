@@ -175,9 +175,10 @@ func countBoundExecutionPlanStagesPart01(
 ) int {
 	count := 0
 	for _, stage := range stages {
-		if stage.Bound {
-			count++
+		if !stage.Bound {
+			break
 		}
+		count++
 	}
 	return count
 }
