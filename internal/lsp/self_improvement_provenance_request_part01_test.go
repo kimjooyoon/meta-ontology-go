@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+
+	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 )
 
 func TestSelfImprovementProvenanceChainRequestReportsNextMissingStage(t *testing.T) {
