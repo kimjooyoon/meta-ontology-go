@@ -131,6 +131,7 @@ func diagnosticProvenanceItems(values []Diagnostic, documentProvenanceDigest str
 			Code:     value.Code,
 			Source:   value.Source,
 			Message:  value.Message,
+			DocumentProvenanceDigest: documentProvenanceDigest,
 		}
 		item.OriginDigest = diagnosticProvenanceItemDigest(item)
 		result = append(result, item)
