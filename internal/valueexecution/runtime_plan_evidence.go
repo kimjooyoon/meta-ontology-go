@@ -27,6 +27,12 @@ func (trace Continuation) BindRuntimePlanDigest(digest string) (Continuation, er
 		trace.Executions[index] = bound
 	}
 	trace.RuntimePlanDigest = digest
-	trace.Digest = digestValue(trace)
+	trace.Digest = continuationDigest(trace)
 	return trace, nil
+}
+
+
+func continuationDigest(trace Continuation) string {
+	trace.Digest = ""
+	return digestValue(trace)
 }

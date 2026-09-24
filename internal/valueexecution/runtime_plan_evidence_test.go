@@ -30,11 +30,14 @@ func TestRuntimePlanDigestBindsExecutionAndContinuationEvidence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Continuation.BindRuntimePlanDigest() error = %v", err)
 	}
+	expectedTraceDigest := boundTrace
+	expectedTraceDigest.Digest = ""
 	if boundTrace.RuntimePlanDigest != digest || len(boundTrace.Executions) != 1 ||
-		boundTrace.Executions[0].RuntimePlanDigest != digest || boundTrace.Digest != digestValue(boundTrace) {
+		boundTrace.Executions[0].RuntimePlanDigest != digest || boundTrace.Digest != digestValue(expectedTraceDigest) {
 		t.Fatalf("bound continuation evidence = %#v", boundTrace)
 	}
 	if _, err := execution.BindRuntimePlanDigest("not-a-digest"); err == nil {
 		t.Fatal("invalid runtime plan digest was accepted")
 	}
 }
+
