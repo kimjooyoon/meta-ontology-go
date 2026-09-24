@@ -42,8 +42,7 @@ func ObserveExecutionEvidencePrefix(stageDigests []string) ExecutionEvidencePref
 		StageDigests:      stages,
 		MissingStageIndex: missingStageIndex,
 		NonAuthorizing:    true,
-	}
-	observation.EvidencePrefixDigest = executionEvidencePrefixDigest(stages, missingStageIndex)
+		EvidencePrefixDigest: executionEvidencePrefixDigest(stages, missingStageIndex)}
 	if missingStageIndex < 0 && len(stages) > 0 {
 		observation.Status = ExecutionEvidencePrefixComplete
 		observation.Reason = "EXECUTION_EVIDENCE_COMPLETE"
