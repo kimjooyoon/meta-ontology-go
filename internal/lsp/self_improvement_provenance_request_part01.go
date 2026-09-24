@@ -15,7 +15,7 @@ type SelfImprovementProvenanceChainResponsePart01 struct {
 
 func (value SelfImprovementProvenanceChainResponsePart01) Validate() error {
 	if value.Schema != SelfImprovementProvenanceChainSchemaPart01 {
-		return errInvalidSelfImprovementProvenanceChainResponsePart01("schema does not match")
+		return invalidSelfImprovementProvenanceChainResponsePart01("schema does not match")
 	}
 	return value.SelfImprovementProvenanceChainProjectionPart01.Validate()
 }
