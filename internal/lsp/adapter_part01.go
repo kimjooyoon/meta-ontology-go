@@ -3,6 +3,8 @@ package lsp
 import (
 	"context"
 	"errors"
+	"strings"
+	"unicode"
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/semantic"
 	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
@@ -57,6 +59,8 @@ func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string
 		}
 	}
 
+	seedFallbackLSPIdentities(file, ids, names)
+
 	if file != nil {
 		if err := appendHeaderSymbols(&result, source, file); err != nil {
 			return ParseResult{}, err
@@ -72,4 +76,80 @@ func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string
 func normalizeParseResult(uri, source string, result ParseResult) ParseResult {
 	result.Diagnostics = canonicalDiagnosticOrder(uri, source, result.Diagnostics)
 	return result
+}
+
+func seedFallbackLSPIdentities(file *syntax.File, ids map[loweredSymbolKey]string, names map[string]string) {
+	if file == nil || file.Namespace == nil {
+		return
+	}
+	namespace := strings.TrimSpace(file.Namespace.Name)
+	if namespace == "" {
+		return
+	}
+	for _, declaration := range syntaxDeclarations(file) {
+		var name string
+		var span syntax.Span
+		var kind semantic.Kind
+		var explicit string
+		switch value := declaration.(type) {
+		case *syntax.EntityDecl:
+			name, span, kind, explicit = value.Name, value.Span, semantic.Entity, value.ID
+		case *syntax.ActivityDecl:
+			name, span, kind = value.Name, value.Span, semantic.Activity
+		default:
+			continue
+		}
+		id := explicit
+		if id == "" {
+			id = fallbackLSPIdentity(namespace, kind, name)
+		}
+		if id == "" {
+			continue
+		}
+		key := loweredSymbolKey{start: span.Start.Offset, end: span.End.Offset, kind: kind, name: name}
+		if ids[key] == "" {
+			ids[key] = id
+		}
+		if names[name] == "" {
+			names[name] = id
+		}
+	}
+}
+
+func fallbackLSPIdentity(namespace string, kind semantic.Kind, name string) string {
+	segment := ""
+	switch kind {
+	case semantic.Entity:
+		segment = "entity"
+	case semantic.Activity:
+		segment = "activity"
+	default:
+		return ""
+	}
+	slug := fallbackLPSSlug(name)
+	if slug == "" {
+		return ""
+	}
+	namespace = strings.ReplaceAll(namespace, "_", "-")
+	return namespace + "://" + segment + "/" + slug
+}
+
+func fallbackLPSSlug(value string) string {
+	var builder strings.Builder
+	lastDash := false
+	var previous rune
+	for _, current := range value {
+		if unicode.IsUpper(current) && unicode.IsLower(previous) && builder.Len() > 0 && !lastDash {
+			builder.WriteByte('-')
+		}
+		if unicode.IsLetter(current) || unicode.IsDigit(current) {
+			builder.WriteRune(unicode.ToLower(current))
+			lastDash = false
+		} else if builder.Len() > 0 && !lastDash {
+			builder.WriteByte('-')
+			lastDash = true
+		}
+		previous = current
+	}
+	return strings.Trim(builder.String(), "-")
 }

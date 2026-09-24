@@ -49,7 +49,13 @@ func (server *Server) completionAt(uri string, position Position, usePosition bo
 	prefix := ""
 	if ok {
 		if usePosition {
-			prefix, _, _, _ = wordAt(document.text, position)
+			word, _, end, found := wordAt(document.text, position)
+			offset, offsetErr := PositionToOffset(document.text, position)
+			if !found || offsetErr != nil || offset != end {
+				prefix = ""
+			} else {
+				prefix = word
+			}
 		}
 	}
 	for _, keyword := range keywords {

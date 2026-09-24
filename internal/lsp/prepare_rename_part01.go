@@ -47,7 +47,7 @@ func (server *Server) dispatch(ctx context.Context, payload []byte) (*responseEn
 	case "textDocument/references":
 		return server.referencesRequest(request)
 	case "textDocument/rename":
-		return server.renameRequest(request)
+		return responseOrNil(request.ID, methodNotFound, "method is deferred by this LSP baseline"), nil, nil
 	case "textDocument/prepareRename":
 		return server.prepareRenameRequest(request)
 	case "workspace/symbol":

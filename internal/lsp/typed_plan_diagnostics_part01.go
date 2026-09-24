@@ -30,6 +30,7 @@ func typedPlanDiagnostic(uri, source string, err error) (Diagnostic, error) {
 	if endErr != nil {
 		return Diagnostic{}, endErr
 	}
+	end.Character = len(source)
 	return Diagnostic{
 		Range:    Range{Start: start, End: end},
 		Severity: DiagnosticError,
