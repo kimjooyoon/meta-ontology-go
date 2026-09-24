@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 )
@@ -71,3 +70,4 @@ func (server *Server) executionPlanProvenanceRequest(
 	}
 	return resultResponse(request.ID, binding), nil, nil
 }
+
