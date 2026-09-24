@@ -24,7 +24,7 @@ func (server *Server) canRunAsync(request requestEnvelope) bool {
 		return false
 	}
 	switch request.Method {
-	case "textDocument/hover", "textDocument/completion", "textDocument/definition", "textDocument/semanticTokens/full", "gooo/documentProvenance", "gooo/referencesProvenance", "gooo/diagnosticProvenance", "gooo/completionProvenance":
+	case "textDocument/hover", "textDocument/completion", "textDocument/definition", "textDocument/semanticTokens/full", "gooo/documentProvenance", "gooo/selfImprovementProvenance", "gooo/executionPlanProvenance", "gooo/referencesProvenance", "gooo/diagnosticProvenance", "gooo/completionProvenance":
 		return true
 	default:
 		return false

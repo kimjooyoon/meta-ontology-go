@@ -33,10 +33,11 @@ type GatewayObservation struct {
 	Reason       string                   `json:"reason"`
 }
 
-// Digest identifies the host policy independently of allowlist order.
+// Digest identifies the canonical host policy independently of allowlist
+// order, host case, and a trailing dot. Invalid entries remain represented so
+// a policy cannot lose provenance merely because an entry is unusable.
 func (policy GatewayPolicy) Digest() string {
-	hosts := append([]string(nil), policy.AllowedHosts...)
-	sort.Strings(hosts)
+	hosts := canonicalGatewayHosts(policy.AllowedHosts)
 	sum := sha256.Sum256([]byte(strings.Join(hosts, "\x00")))
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
@@ -62,6 +63,24 @@ func (policy GatewayPolicy) ObserveHost(host string) GatewayObservation {
 	observation.Status = GatewayObservationDenied
 	observation.Reason = "GATEWAY_HOST_NOT_ALLOWLISTED"
 	return observation
+}
+
+func canonicalGatewayHosts(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	hosts := make([]string, 0, len(values))
+	for _, value := range values {
+		canonical, valid := normalizeGatewayHost(value)
+		if !valid {
+			canonical = "invalid:" + strings.TrimSpace(value)
+		}
+		if _, exists := seen[canonical]; exists {
+			continue
+		}
+		seen[canonical] = struct{}{}
+		hosts = append(hosts, canonical)
+	}
+	sort.Strings(hosts)
+	return hosts
 }
 
 func normalizeGatewayHost(host string) (string, bool) {

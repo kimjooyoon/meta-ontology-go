@@ -30,6 +30,12 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				"goooDocumentProvenance": map[string]string{
 					"method": "gooo/documentProvenance", "schema": documentProvenanceSchema,
 				},
+				"goooSelfImprovementProvenance": map[string]string{
+					"method": "gooo/selfImprovementProvenance", "schema": SelfImprovementProvenanceChainSchemaPart01,
+				},
+				"goooExecutionPlanProvenance": map[string]string{
+					"method": "gooo/executionPlanProvenance", "schema": ExecutionPlanProvenanceSchemaPart01,
+				},
 				"goooReferencesProvenance": map[string]string{
 					"method": "gooo/referencesProvenance", "schema": referencesProvenanceSchema,
 				},
@@ -37,10 +43,7 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 					"method": "gooo/diagnosticProvenance", "schema": diagnosticProvenanceSchema,
 				},
 				"goooStoryProvenance": map[string]string{
-
-					"method": "gooo/storyProvenance",
-
-					"schema": storyProvenanceSchema,
+					"method": "gooo/storyProvenance", "schema": storyProvenanceSchema,
 				},
 				"goooCompletionProvenance": map[string]string{
 					"method": "gooo/completionProvenance", "schema": completionProvenanceSchema,

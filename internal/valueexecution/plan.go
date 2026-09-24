@@ -27,16 +27,18 @@ type Plan struct {
 // Execution is a detached summary of one plan run. Results contain evidence,
 // not ProducedResult handles; the handles never leave the per-run store.
 type Execution struct {
-	Scope           string                    `json:"scope"`
-	PlanDigest      string                    `json:"plan_digest"`
-	InputDigest     string                    `json:"input_digest"`
-	ExecutionDigest string                    `json:"execution_digest"`
-	Phase           ExecutionPhase            `json:"phase"`
-	Conditions      []ExecutionCondition      `json:"conditions"`
-	Results         map[string]ResultEvidence `json:"results"`
-	ApplyCalls      int                       `json:"apply_calls"`
-	Deliveries      int                       `json:"deliveries"`
-	Activities      []string                  `json:"activities"`
+	Scope             string                    `json:"scope"`
+	PlanDigest        string                    `json:"plan_digest"`
+	RuntimePlanDigest string                    `json:"runtime_plan_digest,omitempty"`
+	InputDigest       string                    `json:"input_digest"`
+	ExecutionDigest   string                    `json:"execution_digest"`
+	Phase             ExecutionPhase            `json:"phase"`
+	Conditions        []ExecutionCondition      `json:"conditions"`
+	Results           map[string]ResultEvidence `json:"results"`
+	ApplyCalls        int                       `json:"apply_calls"`
+	Deliveries        int                       `json:"deliveries"`
+	Activities        []string                  `json:"activities"`
+	BindingEdgeOrder  []string                  `json:"binding_edge_order,omitempty"`
 }
 
 // CompilePlan parses, lowers, validates, and compiles every value activity in
@@ -104,12 +106,13 @@ func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execut
 		return Execution{}, nil, err
 	}
 	execution = Execution{
-		Scope:       RegisteredValueOperationScope,
-		PlanDigest:  planExecutionDigest(plan),
-		InputDigest: digestValue(rootInputs),
-		Phase:       ExecutionPhaseRunning,
-		Conditions:  executionRunningConditions(),
-		Results:     make(map[string]ResultEvidence, len(plan.programs)),
+		Scope:            RegisteredValueOperationScope,
+		PlanDigest:       planExecutionDigest(plan),
+		InputDigest:      digestValue(rootInputs),
+		Phase:            ExecutionPhaseRunning,
+		Conditions:       executionRunningConditions(),
+		BindingEdgeOrder: plan.bindingEdgeOrder(),
+		Results:          make(map[string]ResultEvidence, len(plan.programs)),
 	}
 	defer func() {
 		execution.Phase, execution.Conditions = executionLifecycle(err)
@@ -245,6 +248,15 @@ func validatePlanBindings(programs map[string]Program, bindings []bidir.RuntimeB
 		seenConsumers[consumerKey] = struct{}{}
 	}
 	return nil
+}
+
+func (plan Plan) bindingEdgeOrder() []string {
+	order := make([]string, len(plan.bindings))
+	for index, binding := range plan.bindings {
+		order[index] = fmt.Sprintf("%s:%s->%s:%s", binding.Producer.Activity.Name, binding.Producer.Port.Name, binding.Consumer.Activity.Name, binding.Consumer.Port.Name)
+	}
+	slices.Sort(order)
+	return order
 }
 
 func (plan Plan) executionOrder() ([]string, map[string][]bidir.RuntimeBinding, map[string][]bidir.RuntimeBinding, error) {

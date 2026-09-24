@@ -70,3 +70,34 @@ func TestCISCOPE001UnknownAgentPushFailsClosed(t *testing.T) {
 		}
 	}
 }
+func TestCIHEAD006IdentityOnlySkipsUnknownBranchScope(t *testing.T) {
+	actual, err := runGit(".", "rev-parse", "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := runGit(".", "rev-parse", "HEAD^")
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual = strings.TrimSpace(actual)
+	base = strings.TrimSpace(base)
+	if err := run(".", "", base, actual, "", "", "agent/lsp-cycle-result-provenance-dev-20260924-r1", actual, false, true, true); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCIHEAD007EmptyRouteDefaultsToIdentityOnly(t *testing.T) {
+	actual, err := runGit(".", "rev-parse", "HEAD")
+	if err != nil {
+		t.Fatal(err)
+	}
+	base, err := runGit(".", "rev-parse", "HEAD^")
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual = strings.TrimSpace(actual)
+	base = strings.TrimSpace(base)
+	if err := run(".", "", base, actual, "", "", "agent/lsp-cycle-result-provenance-dev-20260924-r1", actual, false, true, false); err != nil {
+		t.Fatal(err)
+	}
+}
