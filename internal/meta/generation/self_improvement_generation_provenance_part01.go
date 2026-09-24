@@ -1,6 +1,7 @@
 package generation
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
