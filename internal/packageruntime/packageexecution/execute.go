@@ -27,6 +27,7 @@ func reduceExecution(request Request, parsed parsedPackage, nested sourceexecuti
 	receipt := baseReceipt(request, parsed.evidence, parsed.events)
 	receipt.Package = parsed.packageName
 	receipt.Namespace = parsed.namespace
+	receipt.SourceIdentityDigest = sourceIdentityDigest(request.Sources)
 	receipt.CombinedSourceDigest = digestBytes([]byte(parsed.source))
 	receipt.SemanticDigest = nested.SemanticDigest
 	receipt.Execution = &nested

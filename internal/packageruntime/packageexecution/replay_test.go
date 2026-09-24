@@ -22,7 +22,7 @@ func TestReplayRejectsChangedSourceIdentity(t *testing.T) {
 	if err := ValidateReplay(replayed); err != nil {
 		t.Fatalf("rejection receipt was not sealed: %v", err)
 	}
-	if replayed.Decision != "FAIL_CLOSED" || replayed.Reason != "PACKAGE_ARTIFACT_SOURCE_DIGEST_MISMATCH" {
+	if replayed.Decision != "FAIL_CLOSED" || replayed.Reason != "PACKAGE_ARTIFACT_SOURCE_IDENTITY_MISMATCH" {
 		t.Fatalf("changed source was accepted: %#v", replayed)
 	}
 }

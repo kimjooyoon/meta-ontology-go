@@ -11,19 +11,21 @@ import (
 const ReplayReceiptSchema = `gooo/package-source-execution-replay-receipt/v1`
 
 type ReplayReceipt struct {
-	Schema                 string       `json:"schema"`
-	Scope                  string       `json:"scope"`
-	Decision               string       `json:"decision"`
-	Reason                 string       `json:"reason"`
-	Resolution             string       `json:"resolution"`
-	ArtifactDigest         string       `json:"artifact_digest,omitempty"`
-	ExpectedSourceDigest   string       `json:"expected_source_digest,omitempty"`
-	ObservedSourceDigest   string       `json:"observed_source_digest,omitempty"`
-	ExpectedSemanticDigest string       `json:"expected_semantic_digest,omitempty"`
-	ObservedSemanticDigest string       `json:"observed_semantic_digest,omitempty"`
-	Replay                 *Receipt     `json:"replay,omitempty"`
-	Diagnostics            []Diagnostic `json:"diagnostics"`
-	Digest                 string       `json:"digest"`
+	Schema                       string       `json:"schema"`
+	Scope                        string       `json:"scope"`
+	Decision                     string       `json:"decision"`
+	Reason                       string       `json:"reason"`
+	Resolution                   string       `json:"resolution"`
+	ArtifactDigest               string       `json:"artifact_digest,omitempty"`
+	ExpectedSourceIdentityDigest string       `json:"expected_source_identity_digest,omitempty"`
+	ObservedSourceIdentityDigest string       `json:"observed_source_identity_digest,omitempty"`
+	ExpectedSourceDigest         string       `json:"expected_source_digest,omitempty"`
+	ObservedSourceDigest         string       `json:"observed_source_digest,omitempty"`
+	ExpectedSemanticDigest       string       `json:"expected_semantic_digest,omitempty"`
+	ObservedSemanticDigest       string       `json:"observed_semantic_digest,omitempty"`
+	Replay                       *Receipt     `json:"replay,omitempty"`
+	Diagnostics                  []Diagnostic `json:"diagnostics"`
+	Digest                       string       `json:"digest"`
 }
 
 // Replay consumes a sealed package receipt and independently executes the
@@ -41,13 +43,20 @@ func Replay(request Request, artifact Receipt) ReplayReceipt {
 
 	observed := Execute(request)
 	receipt.Replay = &observed
+	receipt.ObservedSourceIdentityDigest = observed.SourceIdentityDigest
 	receipt.ObservedSourceDigest = observed.CombinedSourceDigest
 	receipt.ObservedSemanticDigest = observed.SemanticDigest
 	if observed.Decision != "PASS" {
 		return rejectReplay(receipt, "PACKAGE_ARTIFACT_REPLAY_EXECUTION_REJECTED", "clean-source replay did not produce a passing package receipt", "EXACT")
 	}
+	if artifact.SourceIdentityDigest == "" || observed.SourceIdentityDigest == "" {
+		return rejectReplay(receipt, "PACKAGE_ARTIFACT_SOURCE_IDENTITY_MISSING", "sealed artifact or clean-source replay has no exact source identity", "EXACT")
+	}
+	if artifact.SourceIdentityDigest != observed.SourceIdentityDigest {
+		return rejectReplay(receipt, "PACKAGE_ARTIFACT_SOURCE_IDENTITY_MISMATCH", "sealed artifact source identity differs from clean-source replay", "EXACT")
+	}
 	if artifact.CombinedSourceDigest != observed.CombinedSourceDigest {
-		return rejectReplay(receipt, "PACKAGE_ARTIFACT_SOURCE_DIGEST_MISMATCH", "sealed artifact source digest differs from clean-source replay", "EXACT")
+		return rejectReplay(receipt, "PACKAGE_ARTIFACT_SOURCE_DIGEST_MISMATCH", "sealed artifact canonical source digest differs from clean-source replay", "EXACT")
 	}
 	if artifact.SemanticDigest != observed.SemanticDigest {
 		return rejectReplay(receipt, "PACKAGE_ARTIFACT_SEMANTIC_DIGEST_MISMATCH", "sealed artifact semantic digest differs from clean-source replay", "EXACT")
@@ -65,12 +74,13 @@ func Replay(request Request, artifact Receipt) ReplayReceipt {
 
 func replayBase(artifact Receipt) ReplayReceipt {
 	return ReplayReceipt{
-		Schema:                 ReplayReceiptSchema,
-		Scope:                  sourceexecution.DeclarationResolutionScope,
-		ArtifactDigest:         artifact.Digest,
-		ExpectedSourceDigest:   artifact.CombinedSourceDigest,
-		ExpectedSemanticDigest: artifact.SemanticDigest,
-		Diagnostics:            []Diagnostic{},
+		Schema:                       ReplayReceiptSchema,
+		Scope:                        sourceexecution.DeclarationResolutionScope,
+		ArtifactDigest:               artifact.Digest,
+		ExpectedSourceIdentityDigest: artifact.SourceIdentityDigest,
+		ExpectedSourceDigest:         artifact.CombinedSourceDigest,
+		ExpectedSemanticDigest:       artifact.SemanticDigest,
+		Diagnostics:                  []Diagnostic{},
 	}
 }
 
@@ -106,6 +116,8 @@ func ValidateReplay(receipt ReplayReceipt) error {
 			return fmt.Errorf("packageexecution: passing replay contradicts nested execution")
 		}
 		if !strings.HasPrefix(receipt.ArtifactDigest, "sha256:") ||
+			receipt.ExpectedSourceIdentityDigest == "" ||
+			receipt.ExpectedSourceIdentityDigest != receipt.ObservedSourceIdentityDigest ||
 			receipt.ExpectedSourceDigest == "" ||
 			receipt.ExpectedSourceDigest != receipt.ObservedSourceDigest ||
 			receipt.ExpectedSemanticDigest == "" ||
