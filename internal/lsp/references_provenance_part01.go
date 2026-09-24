@@ -66,16 +66,17 @@ func (server *Server) referencesProvenanceRequest(ctx context.Context, request r
 		if err != nil {
 			return responseOrNil(request.ID, invalidParams, "Invalid references provenance position"), nil, nil
 		}
-		observation := observeReferencesProvenance(document, key, targetID, targetName, params.Context.IncludeDeclaration)
+		observation := observeReferencesProvenance(params.TextDocument.URI, document, key, targetID, targetName, params.Context.IncludeDeclaration)
 		return resultResponse(request.ID, observation), nil, nil
 	}
 	server.mu.RUnlock()
 	return resultResponse(request.ID, nil), nil, nil
 }
 
-func observeReferencesProvenance(document document, key documentCacheKey, targetID, targetName string, includeDeclaration bool) referencesProvenanceObservation {
+func observeReferencesProvenance(uri string, document document, key documentCacheKey, targetID, targetName string, includeDeclaration bool) referencesProvenanceObservation {
 	value := referencesProvenanceObservation{
 		Schema:             referencesProvenanceSchema,
+		URI:                uri,
 		SourceDigest:       key.sourceDigest,
 		SemanticDigest:     document.result.semanticDigest,
 		ProfileDigest:      key.profileDigest,
@@ -103,7 +104,7 @@ func observeReferencesProvenance(document document, key documentCacheKey, target
 		{name: "TOOLCHAIN_DIGEST", value: value.ToolchainDigest},
 		{name: "CONTRACT_DIGEST", value: value.ContractDigest},
 	} {
-		if !cache.Digest(required.value).Known() {
+		if !knownLSPProvenanceDigest(required.value).Known() {
 			value.Reason = "MISSING_" + required.name
 			return finalizeReferencesProvenance(value)
 		}
@@ -207,28 +208,28 @@ func validateReferencesProvenance(value referencesProvenanceObservation) error {
 		return errors.New("references provenance decision is invalid")
 	}
 	for _, digest := range []string{value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest} {
-		if digest != "" && !cache.Digest(digest).Known() {
+		if digest != "" && !knownLSPProvenanceDigest(digest).Known() {
 			return errors.New("references provenance binding is invalid")
 		}
 	}
-	if !cache.Digest(value.LocationMapDigest).Known() || value.LocationMapDigest != referencesProvenanceLocationMapDigest(value.Locations) {
+	if !knownLSPProvenanceDigest(value.LocationMapDigest).Known() || value.LocationMapDigest != referencesProvenanceLocationMapDigest(value.Locations) {
 		return errors.New("references provenance location map is invalid")
 	}
 	for _, location := range value.Locations {
 		if location.URI != value.URI || (location.Role != "reference" && location.Role != "declaration") ||
-			!cache.Digest(location.OriginDigest).Known() || location.OriginDigest != referencesProvenanceLocationDigest(location) {
+			!knownLSPProvenanceDigest(location.OriginDigest).Known() || location.OriginDigest != referencesProvenanceLocationDigest(location) {
 			return errors.New("references provenance location origin is invalid")
 		}
 	}
 	if value.Decision == referencesProvenanceClosed {
 		if value.TargetName == "" || value.TargetSemanticID == "" ||
-			!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.SemanticDigest).Known() ||
-			!cache.Digest(value.ProfileDigest).Known() || !cache.Digest(value.ToolchainDigest).Known() ||
-			!cache.Digest(value.ContractDigest).Known() {
+			!knownLSPProvenanceDigest(value.SourceDigest).Known() || !knownLSPProvenanceDigest(value.SemanticDigest).Known() ||
+			!knownLSPProvenanceDigest(value.ProfileDigest).Known() || !knownLSPProvenanceDigest(value.ToolchainDigest).Known() ||
+			!knownLSPProvenanceDigest(value.ContractDigest).Known() {
 			return errors.New("references provenance closed binding is incomplete")
 		}
 	}
-	if !cache.Digest(value.ObservationDigest).Known() || value.ObservationDigest != referencesProvenanceObservationDigest(value) {
+	if !knownLSPProvenanceDigest(value.ObservationDigest).Known() || value.ObservationDigest != referencesProvenanceObservationDigest(value) {
 		return errors.New("references provenance observation is invalid")
 	}
 	return nil

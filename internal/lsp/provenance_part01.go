@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/analysisprovenance"
 )
 
@@ -77,12 +76,12 @@ func decodeDocumentProvenance(payload json.RawMessage) (documentProvenance, erro
 
 func validateDocumentProvenance(value documentProvenance) error {
 	if value.Schema != documentProvenanceSchema || value.URI == "" ||
-		!cache.Digest(value.SubjectDigest).Known() || value.SubjectDigest != value.SourceDigest ||
-		!cache.Digest(value.SourceDigest).Known() || !cache.Digest(value.SemanticDigest).Known() || !cache.Digest(value.ProfileDigest).Known() ||
-		!cache.Digest(value.ToolchainDigest).Known() || !cache.Digest(value.ContractDigest).Known() ||
-		!cache.Digest(value.SymbolMapDigest).Known() || value.SymbolMapDigest != documentProvenanceSymbolMapDigest(value.Symbols) ||
-		!cache.Digest(value.ReferenceMapDigest).Known() || value.ReferenceMapDigest != documentProvenanceReferenceMapDigest(value.References) ||
-		!cache.Digest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
+		!knownLSPProvenanceDigest(value.SubjectDigest).Known() || value.SubjectDigest != value.SourceDigest ||
+		!knownLSPProvenanceDigest(value.SourceDigest).Known() || !knownLSPProvenanceDigest(value.SemanticDigest).Known() || !knownLSPProvenanceDigest(value.ProfileDigest).Known() ||
+		!knownLSPProvenanceDigest(value.ToolchainDigest).Known() || !knownLSPProvenanceDigest(value.ContractDigest).Known() ||
+		!knownLSPProvenanceDigest(value.SymbolMapDigest).Known() || value.SymbolMapDigest != documentProvenanceSymbolMapDigest(value.Symbols) ||
+		!knownLSPProvenanceDigest(value.ReferenceMapDigest).Known() || value.ReferenceMapDigest != documentProvenanceReferenceMapDigest(value.References) ||
+		!knownLSPProvenanceDigest(value.ProvenanceDigest).Known() || value.ProvenanceDigest != documentProvenanceDigest(value) {
 		return errors.New("document provenance identity is invalid")
 	}
 	if err := validateDocumentProvenanceSymbols(value.Symbols); err != nil {
