@@ -1,0 +1,25 @@
+package capabilityeffectprovenance
+namespace capabilityeffectprovenance
+
+entity CapabilityEffectDeclaration id "gooo://capability-effect-provenance/entity/CapabilityEffectDeclaration" fields {
+    field SourceDeclarationPath id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/SourceDeclarationPath" type string required one
+    field SourceDeclarationDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/SourceDeclarationDigest" type string required one
+    field SemanticIRDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/SemanticIRDigest" type string required one
+    field ExecutionPlanDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/ExecutionPlanDigest" type string required one
+    field WorkloadIdentityDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/WorkloadIdentityDigest" type string required one
+    field ScopeDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/ScopeDigest" type string required one
+    field EffectSetDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/EffectSetDigest" type string required one
+    field StageIndex id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/StageIndex" type string required one
+    field AttenuationEdgeDigest id "gooo://capability-effect-provenance/field/CapabilityEffectDeclaration/AttenuationEdgeDigest" type string required one
+}
+
+entity CapabilityEffectGenerationObservation id "gooo://capability-effect-provenance/entity/CapabilityEffectGenerationObservation" fields {
+    field GeneratedArtifactDigest id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/GeneratedArtifactDigest" type string required one
+    field ReverseObservationDigest id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/ReverseObservationDigest" type string required one
+    field MetricEvidenceDigest id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/MetricEvidenceDigest" type string required one
+    field Status id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/Status" type string required one
+    field FirstUnknownStage id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/FirstUnknownStage" type string required one
+    field BindingDigest id "gooo://capability-effect-provenance/field/CapabilityEffectGenerationObservation/BindingDigest" type string required one
+}
+
+activity BindCapabilityEffectProvenance(CapabilityEffectDeclaration) -> CapabilityEffectGenerationObservation computes "capability-effect-provenance.binding:v1;authority=PROPOSAL_ONLY;unknown_preserves_first_stage=true;widening=REFUTED"
