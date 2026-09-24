@@ -58,6 +58,8 @@ func ObserveSelfImprovementExecutionRequest(
 		observation.Reason = "EXECUTION_REQUEST_IDENTITY_MISSING"
 	case request.EnvironmentDigest == "" || request.WorkloadIdentityDigest == "" || request.GatewayPolicyDigest == "":
 		observation.Reason = "EXECUTION_REQUEST_SECURITY_DIGEST_MISSING"
+	case !validDigest(request.EnvironmentDigest) || !validDigest(request.WorkloadIdentityDigest) || !validDigest(request.GatewayPolicyDigest):
+		observation.Reason = "EXECUTION_REQUEST_SECURITY_DIGEST_INVALID"
 	default:
 		observation.Status = SelfImprovementExecutionRequestStatusReady
 		observation.Reason = "EXECUTION_REQUEST_EVIDENCE_READY"
