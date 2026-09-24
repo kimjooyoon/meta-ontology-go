@@ -5533,6 +5533,22 @@
         "internal/lsp/self_improvement_hover_evidence_prefix_part01_test.go",
         "internal/verify/scope_part01.go"
       ]
+    },
+    {
+      "branch": "agent/self-improvement-outcome-receipt-dev-20260925-r1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "examples/language-syntax-roundtrip/corpus.json",
+        "internal/meta/languagereadiness/languagesyntax/conformance/evaluate_test.go",
+        "internal/meta/languagereadiness/languagesyntax/registry.go",
+        "internal/meta/generation/self_improvement_outcome_contract.gooo",
+        "internal/meta/generation/self_improvement_outcome_part01.go",
+        "internal/meta/generation/self_improvement_outcome_part01_test.go",
+        "internal/provenance/self_improvement_outcome_part01.go",
+        "internal/provenance/self_improvement_outcome_part01_test.go",
+        "internal/verify/scope_part01.go"
+      ]
     }
   ],
   "protected_kernel_paths": [
