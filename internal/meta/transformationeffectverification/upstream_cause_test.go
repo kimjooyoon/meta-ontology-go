@@ -20,9 +20,9 @@ func TestProjectUpstreamCausePreservesReceiptFrontier(t *testing.T) {
 		Unknowns: []generation.ReceiptUnknown{{
 			ActionIndicatorID: "operation-1", RequiredIndicatorID: "indicator-1",
 			Stage: "execute", Step: "compile", Reason: generation.ReceiptReason("PROJECTED_COMPILE_OR_TEST_FAILED"),
-			UnknownClass: generation.ReceiptUnknownClassDependencyBlocked,
+			UnknownClass:  generation.ReceiptUnknownClassDependencyBlocked,
 			NextOperation: "restore-operation-evidence",
-			BlockedBy: []string{"operation-failure:operation-1"},
+			BlockedBy:     []string{"operation-failure:operation-1"},
 		}},
 	}
 	var target Report

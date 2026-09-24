@@ -18,8 +18,8 @@ const (
 
 type referencesProvenanceParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
-	Position     *Position               `json:"position"`
-	Context      ReferenceContext        `json:"context"`
+	Position     *Position              `json:"position"`
+	Context      ReferenceContext       `json:"context"`
 }
 
 type referencesProvenanceLocation struct {

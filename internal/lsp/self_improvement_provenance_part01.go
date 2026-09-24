@@ -20,18 +20,18 @@ const (
 // detached execution observation. It is display evidence, not an edit or an
 // authorization grant.
 type SelfImprovementProvenanceObservation struct {
-	Schema					string					`json:"schema"`
-	URI						string					`json:"uri"`
-	Version					int						`json:"version"`
-	OriginDigest					string					`json:"origin_digest,omitempty"`
-	EnvironmentDigest			string					`json:"environment_digest,omitempty"`
-	CandidateStatus				valueexecution.SelfImprovementStatus	`json:"candidate_status"`
-	CandidateDigest				string					`json:"candidate_digest,omitempty"`
-	ExecutionObservationDigest	string					`json:"execution_observation_digest,omitempty"`
-	Decision					string					`json:"decision"`
-	Reason						string					`json:"reason"`
-	NonAuthorizing				bool						`json:"non_authorizing"`
-	ObservationDigest			string					`json:"observation_digest"`
+	Schema                     string                               `json:"schema"`
+	URI                        string                               `json:"uri"`
+	Version                    int                                  `json:"version"`
+	OriginDigest               string                               `json:"origin_digest,omitempty"`
+	EnvironmentDigest          string                               `json:"environment_digest,omitempty"`
+	CandidateStatus            valueexecution.SelfImprovementStatus `json:"candidate_status"`
+	CandidateDigest            string                               `json:"candidate_digest,omitempty"`
+	ExecutionObservationDigest string                               `json:"execution_observation_digest,omitempty"`
+	Decision                   string                               `json:"decision"`
+	Reason                     string                               `json:"reason"`
+	NonAuthorizing             bool                                 `json:"non_authorizing"`
+	ObservationDigest          string                               `json:"observation_digest"`
 }
 
 // ObserveSelfImprovementProvenance keeps a complete, non-UNKNOWN result

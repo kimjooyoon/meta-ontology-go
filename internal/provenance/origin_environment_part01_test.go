@@ -8,7 +8,7 @@ import (
 func completeOriginEnvironmentObservation() OriginChainObservation {
 	return ObserveOriginChain(OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      "typed_chain",
+		DeclarationSymbol:     "typed_chain",
 		IRNode:                "ir:typed_chain",
 		GeneratedURI:          "generated://typed_chain",
 		GeneratedSymbol:       "typed_chain",

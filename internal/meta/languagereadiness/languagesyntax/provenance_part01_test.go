@@ -56,9 +56,9 @@ func TestLanguageSyntaxProvenancePreservesUnknownAndRefuted(t *testing.T) {
 
 	head := strings.Repeat("b", 40)
 	report := seal(Report{
-		Schema:   ReportSchema,
-		HeadSHA:  head,
-		Source:   Source{ExpectedHeadSHA: head},
+		Schema:  ReportSchema,
+		HeadSHA: head,
+		Source:  Source{ExpectedHeadSHA: head},
 	})
 	report.ReportDigest = digestBytes([]byte("tampered"))
 	refuted := ObserveLanguageSyntaxProvenance(report)

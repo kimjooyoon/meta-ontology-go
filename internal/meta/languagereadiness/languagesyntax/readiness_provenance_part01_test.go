@@ -1,9 +1,9 @@
 package languagesyntax
 
 import (
+	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 	"strings"
 	"testing"
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/languagereadiness/languagesyntax/replay"
 )
 
 func TestLanguageSyntaxReadinessProvenanceComposesDeclarations(t *testing.T) {
@@ -51,11 +51,11 @@ func TestLanguageSyntaxReadinessProvenancePreservesUnknownAndRefuted(t *testing.
 
 	head := strings.Repeat("b", 40)
 	refuted := seal(Report{
-		Schema:   ReportSchema,
-		HeadSHA:  head,
+		Schema:  ReportSchema,
+		HeadSHA: head,
 		Source: Source{
-			RegistryDigest:  digestBytes([]byte("registry")),
-			GoooFiles:       []replay.FileObservation{{Path: "examples/alpha.gooo"}},
+			RegistryDigest:   digestBytes([]byte("registry")),
+			GoooFiles:        []replay.FileObservation{{Path: "examples/alpha.gooo"}},
 			UnregisteredGooo: []string{"examples/rogue.gooo"},
 		},
 	})

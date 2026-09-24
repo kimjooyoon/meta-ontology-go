@@ -15,24 +15,24 @@ type WorkloadIdentityEvidenceStatus string
 
 const (
 	WorkloadIdentityEvidenceUnknown  WorkloadIdentityEvidenceStatus = "UNKNOWN"
-	WorkloadIdentityEvidenceObserved  WorkloadIdentityEvidenceStatus = "OBSERVED"
-	WorkloadIdentityEvidenceExpired   WorkloadIdentityEvidenceStatus = "EXPIRED"
+	WorkloadIdentityEvidenceObserved WorkloadIdentityEvidenceStatus = "OBSERVED"
+	WorkloadIdentityEvidenceExpired  WorkloadIdentityEvidenceStatus = "EXPIRED"
 )
 
 // WorkloadIdentityEvidence binds identity, SVID, and trust-bundle digests
 // without claiming that cryptographic verification or authorization occurred.
 type WorkloadIdentityEvidence struct {
-	Schema             string                        `json:"schema"`
-	ID                 string                        `json:"id"`
-	TrustDomain        string                        `json:"trust_domain,omitempty"`
-	AttestationDigest  string                        `json:"attestation_digest,omitempty"`
-	SVIDDigest         string                        `json:"svid_digest,omitempty"`
-	TrustBundleDigest  string                        `json:"trust_bundle_digest,omitempty"`
-	Freshness          WorkloadIdentityFreshness     `json:"freshness"`
-	Status             WorkloadIdentityEvidenceStatus `json:"status"`
-	Reason             string                        `json:"reason"`
-	NonAuthorizing     bool                          `json:"non_authorizing"`
-	EvidenceDigest     string                        `json:"evidence_digest"`
+	Schema            string                         `json:"schema"`
+	ID                string                         `json:"id"`
+	TrustDomain       string                         `json:"trust_domain,omitempty"`
+	AttestationDigest string                         `json:"attestation_digest,omitempty"`
+	SVIDDigest        string                         `json:"svid_digest,omitempty"`
+	TrustBundleDigest string                         `json:"trust_bundle_digest,omitempty"`
+	Freshness         WorkloadIdentityFreshness      `json:"freshness"`
+	Status            WorkloadIdentityEvidenceStatus `json:"status"`
+	Reason            string                         `json:"reason"`
+	NonAuthorizing    bool                           `json:"non_authorizing"`
+	EvidenceDigest    string                         `json:"evidence_digest"`
 }
 
 // ObserveWorkloadIdentityEvidence combines identity observations with the

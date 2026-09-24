@@ -23,7 +23,7 @@ type LanguageSyntaxProvenanceObservation struct {
 	SourceDigest             string
 	ReportDigest             string
 	CaseEvidenceDigest       string
-	IndicatorDigest           string
+	IndicatorDigest          string
 	ReverseObservationDigest string
 	Satisfied                int
 	Total                    int
@@ -34,17 +34,17 @@ type LanguageSyntaxProvenanceObservation struct {
 
 func ObserveLanguageSyntaxProvenance(report Report) LanguageSyntaxProvenanceObservation {
 	observation := LanguageSyntaxProvenanceObservation{
-		Schema:            LanguageSyntaxProvenanceSchema,
-		Decision:          LanguageSyntaxProvenanceUnknown,
-		Reason:            "LANGUAGE_SYNTAX_PROVENANCE_UNKNOWN",
-		ReportedDecision:  report.Decision,
-		ReportedReason:    report.Reason,
-		HeadSHA:           report.HeadSHA,
-		ReportDigest:      report.ReportDigest,
-		Satisfied:         report.Summary.Satisfied,
-		Total:             report.Summary.Total,
-		Unresolved:         report.Summary.Unresolved,
-		NonAuthorizing:    true,
+		Schema:           LanguageSyntaxProvenanceSchema,
+		Decision:         LanguageSyntaxProvenanceUnknown,
+		Reason:           "LANGUAGE_SYNTAX_PROVENANCE_UNKNOWN",
+		ReportedDecision: report.Decision,
+		ReportedReason:   report.Reason,
+		HeadSHA:          report.HeadSHA,
+		ReportDigest:     report.ReportDigest,
+		Satisfied:        report.Summary.Satisfied,
+		Total:            report.Summary.Total,
+		Unresolved:       report.Summary.Unresolved,
+		NonAuthorizing:   true,
 	}
 	if report.Schema == "" {
 		return finalizeLanguageSyntaxProvenance(observation, LanguageSyntaxProvenanceUnknown, "MISSING_REPORT_SCHEMA")

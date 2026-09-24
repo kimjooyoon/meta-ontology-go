@@ -15,13 +15,13 @@ const SelfImprovementContinuationStatusPause SelfImprovementContinuationStatus =
 const SelfImprovementContinuationStatusUnknown SelfImprovementContinuationStatus = "UNKNOWN"
 
 type SelfImprovementContinuationObservation struct {
-	Schema          string                         `json:"schema"`
-	HistoryDigest   string                         `json:"history_digest"`
-	SelectionDigest string                         `json:"selection_digest"`
+	Schema          string                            `json:"schema"`
+	HistoryDigest   string                            `json:"history_digest"`
+	SelectionDigest string                            `json:"selection_digest"`
 	Status          SelfImprovementContinuationStatus `json:"status"`
-	Reason          string                         `json:"reason"`
-	NonAuthorizing  bool                           `json:"non_authorizing"`
-	Digest          string                         `json:"digest"`
+	Reason          string                            `json:"reason"`
+	NonAuthorizing  bool                              `json:"non_authorizing"`
+	Digest          string                            `json:"digest"`
 }
 
 // ObserveSelfImprovementContinuation combines prior execution history with a

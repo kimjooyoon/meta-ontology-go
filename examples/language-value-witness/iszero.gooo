@@ -1,7 +1,0 @@
-package valuewitness
-namespace valuewitness
-
-entity Integer id "gooo://value-witness/entity/integer"
-entity Boolean id "gooo://value-witness/entity/boolean"
-
-activity IsZero(Integer) -> Boolean computes "int.iszero:0"

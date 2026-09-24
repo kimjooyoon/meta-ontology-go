@@ -82,4 +82,3 @@ func TestStoryKeepsMissingEvidenceExplicit(t *testing.T) {
 		t.Fatalf("unknown endpoint was not explicit: %#v", unknown)
 	}
 }
-

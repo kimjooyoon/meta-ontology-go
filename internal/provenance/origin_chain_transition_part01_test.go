@@ -39,9 +39,9 @@ func TestUpdateOriginChainRejectsTamperingAndReportsMetricChange(t *testing.T) {
 
 func TestUpdateOriginChainDoesNotComparePartialEvidence(t *testing.T) {
 	partial := ObserveOriginChain(OriginChain{
-		DeclarationURI:   "examples/language-runtime-binding/typed-chain.gooo",
+		DeclarationURI:    "examples/language-runtime-binding/typed-chain.gooo",
 		DeclarationSymbol: "activity TypedChain",
-		IRNode:           "activity:TypedChain",
+		IRNode:            "activity:TypedChain",
 	})
 	if !partial.Verified() {
 		t.Fatal("partial canonical observation must still verify its own shape")

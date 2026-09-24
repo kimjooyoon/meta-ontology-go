@@ -13,8 +13,8 @@ func TestReferencesProvenanceBindsSemanticLocations(t *testing.T) {
 	semanticDigest := cache.HashBytes([]byte("references-provenance-ir")).String()
 	parser := ParserFunc(func(string, string) ParseResult {
 		return ParseResult{
-			Symbols: []Symbol{{Name: "Order", ID: "order-id", SelectionRange: testRange(0, 0, 0, 5)}},
-			References: []Reference{{Name: "Order", ID: "order-id", Range: testRange(0, 6, 0, 11)}},
+			Symbols:        []Symbol{{Name: "Order", ID: "order-id", SelectionRange: testRange(0, 0, 0, 5)}},
+			References:     []Reference{{Name: "Order", ID: "order-id", Range: testRange(0, 6, 0, 11)}},
 			semanticDigest: semanticDigest, semanticChecked: true, semanticValid: true,
 		}
 	})
@@ -24,7 +24,7 @@ func TestReferencesProvenanceBindsSemanticLocations(t *testing.T) {
 		t.Fatalf("didOpen() error = %v", err)
 	}
 	response, _, err := server.referencesProvenanceRequest(context.Background(), requestEnvelope{
-		ID: json.RawMessage("1"),
+		ID:     json.RawMessage("1"),
 		Params: json.RawMessage(`{"textDocument":{"uri":"` + uri + `"},"position":{"line":0,"character":1},"context":{"includeDeclaration":true}}`),
 	})
 	if err != nil || response == nil {
@@ -54,7 +54,7 @@ func TestReferencesProvenancePreservesUnknownForAmbiguousTarget(t *testing.T) {
 	semanticDigest := cache.HashBytes([]byte("references-provenance-ambiguous-ir")).String()
 	parser := ParserFunc(func(string, string) ParseResult {
 		return ParseResult{
-			Symbols: []Symbol{{Name: "Dup"}, {Name: "Dup"}},
+			Symbols:        []Symbol{{Name: "Dup"}, {Name: "Dup"}},
 			semanticDigest: semanticDigest, semanticChecked: true, semanticValid: true,
 		}
 	})
@@ -64,7 +64,7 @@ func TestReferencesProvenancePreservesUnknownForAmbiguousTarget(t *testing.T) {
 		t.Fatalf("didOpen() error = %v", err)
 	}
 	response, _, err := server.referencesProvenanceRequest(context.Background(), requestEnvelope{
-		ID: json.RawMessage("1"),
+		ID:     json.RawMessage("1"),
 		Params: json.RawMessage(`{"textDocument":{"uri":"` + uri + `"},"position":{"line":0,"character":1}}`),
 	})
 	if err != nil || response == nil {

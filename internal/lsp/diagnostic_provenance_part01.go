@@ -21,13 +21,13 @@ type diagnosticProvenanceParams struct {
 }
 
 type diagnosticProvenanceItem struct {
-	Range        Range              `json:"range"`
-	Severity     DiagnosticSeverity `json:"severity,omitempty"`
-	Code         string             `json:"code,omitempty"`
-	Source       string             `json:"source,omitempty"`
-	Message       string             `json:"message"`
-	OriginDigest              string `json:"origin_digest"`
-	DocumentProvenanceDigest string `json:"document_provenance_digest"`
+	Range                    Range              `json:"range"`
+	Severity                 DiagnosticSeverity `json:"severity,omitempty"`
+	Code                     string             `json:"code,omitempty"`
+	Source                   string             `json:"source,omitempty"`
+	Message                  string             `json:"message"`
+	OriginDigest             string             `json:"origin_digest"`
+	DocumentProvenanceDigest string             `json:"document_provenance_digest"`
 }
 
 type diagnosticProvenanceObservation struct {
@@ -69,11 +69,11 @@ func (server *Server) diagnosticProvenanceRequest(ctx context.Context, request r
 
 func observeDiagnosticProvenance(uri string, value document, key documentCacheKey) diagnosticProvenanceObservation {
 	observation := diagnosticProvenanceObservation{
-		Schema:      diagnosticProvenanceSchema,
-		URI:         uri,
-		Diagnostics: []diagnosticProvenanceItem{},
-		Decision:    diagnosticProvenanceUnknown,
-		Reason:      "MISSING_SOURCE_DIGEST",
+		Schema:         diagnosticProvenanceSchema,
+		URI:            uri,
+		Diagnostics:    []diagnosticProvenanceItem{},
+		Decision:       diagnosticProvenanceUnknown,
+		Reason:         "MISSING_SOURCE_DIGEST",
 		NonAuthorizing: true,
 
 		SourceDigest:    key.sourceDigest,

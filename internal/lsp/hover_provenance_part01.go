@@ -31,8 +31,8 @@ func hoverProvenanceDetail(document document) string {
 		ProfileDigest:   document.cacheKey.profileDigest,
 		ToolchainDigest: document.cacheKey.toolchainDigest,
 		ContractDigest:  document.cacheKey.contractDigest,
-		Symbols:          documentProvenanceSymbols(document.result),
-		References:       documentProvenanceReferences(document.result),
+		Symbols:         documentProvenanceSymbols(document.result),
+		References:      documentProvenanceReferences(document.result),
 	}
 	value.SymbolMapDigest = documentProvenanceSymbolMapDigest(value.Symbols)
 	value.ReferenceMapDigest = documentProvenanceReferenceMapDigest(value.References)

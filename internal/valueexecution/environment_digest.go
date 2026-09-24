@@ -55,7 +55,7 @@ func ObserveEnvironment(inputs EnvironmentInputs) EnvironmentObservation {
 		Status:         EnvironmentStatusUnknown,
 		Reason:         "ENVIRONMENT_INPUT_INCOMPLETE",
 		NonAuthorizing: true,
-		Missing: missingEnvironmentInputs(inputs)}
+		Missing:        missingEnvironmentInputs(inputs)}
 	if len(observation.Missing) != 0 {
 		return observation
 	}

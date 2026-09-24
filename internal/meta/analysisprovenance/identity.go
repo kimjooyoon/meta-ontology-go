@@ -15,12 +15,12 @@ const ObservationIdentitySchema = "gooo/analysis-observation-identity/v1"
 // the analysis inputs. It is observation provenance, not an execution grant,
 // an issuer credential, or a promotion decision.
 type ObservationIdentity struct {
-	Schema          string `json:"schema"`
-	SubjectDigest   string `json:"subject_digest"`
-	SemanticDigest  string `json:"semantic_digest"`
-	ProfileDigest   string `json:"profile_digest"`
-	ToolchainDigest string `json:"toolchain_digest"`
-	ContractDigest  string `json:"contract_digest"`
+	Schema           string `json:"schema"`
+	SubjectDigest    string `json:"subject_digest"`
+	SemanticDigest   string `json:"semantic_digest"`
+	ProfileDigest    string `json:"profile_digest"`
+	ToolchainDigest  string `json:"toolchain_digest"`
+	ContractDigest   string `json:"contract_digest"`
 	ProvenanceDigest string `json:"provenance_digest"`
 }
 
@@ -47,11 +47,11 @@ func (identity ObservationIdentity) Validate() error {
 		return fmt.Errorf("analysis observation identity schema is %q", identity.Schema)
 	}
 	for name, value := range map[string]string{
-		"subject_digest":   identity.SubjectDigest,
-		"semantic_digest":  identity.SemanticDigest,
-		"profile_digest":   identity.ProfileDigest,
-		"toolchain_digest": identity.ToolchainDigest,
-		"contract_digest":  identity.ContractDigest,
+		"subject_digest":    identity.SubjectDigest,
+		"semantic_digest":   identity.SemanticDigest,
+		"profile_digest":    identity.ProfileDigest,
+		"toolchain_digest":  identity.ToolchainDigest,
+		"contract_digest":   identity.ContractDigest,
 		"provenance_digest": identity.ProvenanceDigest,
 	} {
 		if !cache.Digest(value).Known() {

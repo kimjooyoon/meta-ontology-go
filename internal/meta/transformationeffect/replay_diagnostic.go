@@ -181,7 +181,7 @@ func WriteReplayDiagnostic(outputPath string, cause error) error {
 		Step: "validate-artifact-set", Reason: "META_ARTIFACT_VALIDATION_UNCATALOGED",
 		UnknownClass: "UNCATALOGED_CAUSE", NextOperation: "report-counterexample",
 		BlockedBy:       []string{},
-	ActiveOperation: readActiveReplayOperation(filepath.Join(filepath.Dir(outputPath), OperationProgressFilename))}
+		ActiveOperation: readActiveReplayOperation(filepath.Join(filepath.Dir(outputPath), OperationProgressFilename))}
 	if divergence, ok := errors.AsType[*replayDivergence](cause); ok {
 		diagnostic.Decision = "REFUTED"
 		diagnostic.Resolution = "EXACT"

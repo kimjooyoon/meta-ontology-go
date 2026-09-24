@@ -116,9 +116,15 @@ func completionProvenanceCandidates(values []CompletionItem) []completionProvena
 	}
 	sort.SliceStable(result, func(left, right int) bool {
 		first, second := result[left], result[right]
-		if first.Label != second.Label { return first.Label < second.Label }
-		if first.Kind != second.Kind { return first.Kind < second.Kind }
-		if first.Detail != second.Detail { return first.Detail < second.Detail }
+		if first.Label != second.Label {
+			return first.Label < second.Label
+		}
+		if first.Kind != second.Kind {
+			return first.Kind < second.Kind
+		}
+		if first.Detail != second.Detail {
+			return first.Detail < second.Detail
+		}
 		return first.Documentation < second.Documentation
 	})
 	return result
@@ -178,8 +184,11 @@ func validateCompletionProvenance(value completionProvenanceObservation) error {
 
 func decodeCompletionProvenance(payload json.RawMessage) (completionProvenanceObservation, error) {
 	var value completionProvenanceObservation
-	if err := json.Unmarshal(payload, &value); err != nil { return completionProvenanceObservation{}, err }
-	if err := validateCompletionProvenance(value); err != nil { return completionProvenanceObservation{}, err }
+	if err := json.Unmarshal(payload, &value); err != nil {
+		return completionProvenanceObservation{}, err
+	}
+	if err := validateCompletionProvenance(value); err != nil {
+		return completionProvenanceObservation{}, err
+	}
 	return value, nil
 }
-

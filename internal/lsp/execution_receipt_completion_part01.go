@@ -15,13 +15,13 @@ const ExecutionBackedCompletionStatusComplete ExecutionBackedCompletionStatus = 
 const ExecutionBackedCompletionStatusUnknown ExecutionBackedCompletionStatus = "UNKNOWN"
 
 type ExecutionBackedCompletionObservation struct {
-	Schema          string                         `json:"schema"`
-	CompletionDigest string                        `json:"completion_digest"`
-	ReceiptDigest   string                         `json:"receipt_digest"`
-	Status          ExecutionBackedCompletionStatus `json:"status"`
-	Reason          string                         `json:"reason"`
-	NonAuthorizing  bool                           `json:"non_authorizing"`
-	Digest          string                         `json:"digest"`
+	Schema           string                          `json:"schema"`
+	CompletionDigest string                          `json:"completion_digest"`
+	ReceiptDigest    string                          `json:"receipt_digest"`
+	Status           ExecutionBackedCompletionStatus `json:"status"`
+	Reason           string                          `json:"reason"`
+	NonAuthorizing   bool                            `json:"non_authorizing"`
+	Digest           string                          `json:"digest"`
 }
 
 // ObserveExecutionBackedCompletion connects editor evidence to a completed

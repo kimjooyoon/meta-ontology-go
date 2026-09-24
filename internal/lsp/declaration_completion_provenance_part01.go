@@ -23,18 +23,18 @@ type DeclarationCompletionContext struct {
 }
 
 type DeclarationCompletionObservation struct {
-	Schema            string                   `json:"schema"`
-	DocumentURI       string                   `json:"document_uri"`
-	DocumentVersion   int                      `json:"document_version"`
-	DeclarationSymbol string                   `json:"declaration_symbol"`
-	Label             string                   `json:"label"`
-	Detail            string                   `json:"detail"`
-	OriginDigest      string                   `json:"origin_digest"`
-	EnvironmentDigest string                   `json:"environment_digest"`
+	Schema            string                      `json:"schema"`
+	DocumentURI       string                      `json:"document_uri"`
+	DocumentVersion   int                         `json:"document_version"`
+	DeclarationSymbol string                      `json:"declaration_symbol"`
+	Label             string                      `json:"label"`
+	Detail            string                      `json:"detail"`
+	OriginDigest      string                      `json:"origin_digest"`
+	EnvironmentDigest string                      `json:"environment_digest"`
 	Status            DeclarationCompletionStatus `json:"status"`
-	Reason            string                   `json:"reason"`
-	NonAuthorizing    bool                     `json:"non_authorizing"`
-	Digest            string                   `json:"digest"`
+	Reason            string                      `json:"reason"`
+	NonAuthorizing    bool                        `json:"non_authorizing"`
+	Digest            string                      `json:"digest"`
 }
 
 // ObserveDeclarationCompletion binds an LSP completion candidate to the

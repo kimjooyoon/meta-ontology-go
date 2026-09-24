@@ -1,6 +1,0 @@
-package valuewitness
-namespace valuewitness
-
-entity Integer id "gooo://value-witness/entity/integer"
-
-activity Multiply(Integer) -> Integer computes "int.mul:3"

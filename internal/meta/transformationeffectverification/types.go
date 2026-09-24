@@ -110,7 +110,7 @@ type Report struct {
 	Improvement               string           `json:"improvement"`
 	OperationOutcome          string           `json:"operation_outcome"`
 	PromotionAuthorized       bool             `json:"promotion_authorized"`
-	Upstream                *UpstreamCause   `json:"upstream,omitempty"`
+	Upstream                  *UpstreamCause   `json:"upstream,omitempty"`
 	Runtime                   Runtime          `json:"runtime"`
 	Counterexamples           []Counterexample `json:"counterexamples,omitempty"`
 }

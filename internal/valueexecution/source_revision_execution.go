@@ -16,23 +16,23 @@ type AcceptedSourceRevisionRequest struct {
 }
 
 type AcceptedSourceRevisionExecution struct {
-	Schema                string      `json:"schema"`
-	Decision              string      `json:"decision"`
-	Reason                string      `json:"reason"`
-	ExplicitDecision      string      `json:"explicit_decision"`
-	SourceDigest          string      `json:"source_digest"`
-	CandidateSourceDigest string      `json:"candidate_source_digest"`
-	RevisionCandidateID   string      `json:"revision_candidate_id"`
-	Activity              string      `json:"activity"`
-	InputDigest           string      `json:"input_digest"`
-	EvaluationState       ReplayState `json:"evaluation_state"`
-	EvaluationReason      string      `json:"evaluation_reason"`
-	NextOperation         string      `json:"next_operation"`
-	BlockedBy             []string    `json:"blocked_by"`
-	ExecutionAllowed      bool        `json:"execution_allowed"`
-	AdoptionAuthorized    bool        `json:"adoption_authorized"`
-	RepositoryWrites      int         `json:"repository_writes"`
-	Execution             Execution   `json:"execution"`
+	Schema                string              `json:"schema"`
+	Decision              string              `json:"decision"`
+	Reason                string              `json:"reason"`
+	ExplicitDecision      string              `json:"explicit_decision"`
+	SourceDigest          string              `json:"source_digest"`
+	CandidateSourceDigest string              `json:"candidate_source_digest"`
+	RevisionCandidateID   string              `json:"revision_candidate_id"`
+	Activity              string              `json:"activity"`
+	InputDigest           string              `json:"input_digest"`
+	EvaluationState       ReplayState         `json:"evaluation_state"`
+	EvaluationReason      string              `json:"evaluation_reason"`
+	NextOperation         string              `json:"next_operation"`
+	BlockedBy             []string            `json:"blocked_by"`
+	ExecutionAllowed      bool                `json:"execution_allowed"`
+	AdoptionAuthorized    bool                `json:"adoption_authorized"`
+	RepositoryWrites      int                 `json:"repository_writes"`
+	Execution             Execution           `json:"execution"`
 	AnalysisProvenance    *AnalysisProvenance `json:"analysis_provenance,omitempty"`
 }
 

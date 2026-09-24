@@ -1,6 +1,0 @@
-package domainobservation
-namespace domain_observation
-
-entity Integer id "gooo://domain-observation/entity/integer"
-
-activity ObserveRepair(Integer) -> Integer computes "int.add:1"

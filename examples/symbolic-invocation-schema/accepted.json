@@ -1,7 +1,0 @@
-{
-  "activity": "Checkout",
-  "inputs": [
-    "urn:gooo:checkout:cart",
-    "urn:gooo:checkout:payment-method"
-  ]
-}

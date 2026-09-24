@@ -23,20 +23,20 @@ type storyProvenanceOrigin struct {
 }
 
 type storyProvenanceObservation struct {
-	Schema           string                   `json:"schema"`
-	URI              string                   `json:"uri"`
-	SemanticID       string                   `json:"semantic_id"`
-	Status           string                   `json:"status"`
-	Reason           string                   `json:"reason"`
-	SourceDigest     string                   `json:"source_digest,omitempty"`
-	SemanticDigest   string                   `json:"semantic_digest,omitempty"`
-	ProfileDigest    string                   `json:"profile_digest,omitempty"`
-	ToolchainDigest  string                   `json:"toolchain_digest,omitempty"`
-	ContractDigest   string                   `json:"contract_digest,omitempty"`
-	DeclarationFound bool                     `json:"declaration_found"`
+	Schema           string                  `json:"schema"`
+	URI              string                  `json:"uri"`
+	SemanticID       string                  `json:"semantic_id"`
+	Status           string                  `json:"status"`
+	Reason           string                  `json:"reason"`
+	SourceDigest     string                  `json:"source_digest,omitempty"`
+	SemanticDigest   string                  `json:"semantic_digest,omitempty"`
+	ProfileDigest    string                  `json:"profile_digest,omitempty"`
+	ToolchainDigest  string                  `json:"toolchain_digest,omitempty"`
+	ContractDigest   string                  `json:"contract_digest,omitempty"`
+	DeclarationFound bool                    `json:"declaration_found"`
 	Origins          []storyProvenanceOrigin `json:"origins"`
-	NonAuthorizing   bool                     `json:"non_authorizing"`
-	StoryDigest      string                   `json:"story_digest"`
+	NonAuthorizing   bool                    `json:"non_authorizing"`
+	StoryDigest      string                  `json:"story_digest"`
 }
 
 func (server *Server) storyProvenanceRequest(ctx context.Context, request requestEnvelope) (*responseEnvelope, [][]byte, error) {

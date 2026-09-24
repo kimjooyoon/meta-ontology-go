@@ -12,11 +12,11 @@ import (
 type OriginChainStage string
 
 const (
-	OriginChainStageDeclaration       OriginChainStage = "DECLARATION"
-	OriginChainStageIR                OriginChainStage = "IR"
-	OriginChainStageGeneration        OriginChainStage = "GENERATION"
+	OriginChainStageDeclaration        OriginChainStage = "DECLARATION"
+	OriginChainStageIR                 OriginChainStage = "IR"
+	OriginChainStageGeneration         OriginChainStage = "GENERATION"
 	OriginChainStageReverseObservation OriginChainStage = "REVERSE_OBSERVATION"
-	OriginChainStageMetric            OriginChainStage = "METRIC"
+	OriginChainStageMetric             OriginChainStage = "METRIC"
 )
 
 // OriginChainStatus describes whether all required origin links are present.
@@ -34,7 +34,7 @@ const (
 // is never inferred from the other fields.
 type OriginChain struct {
 	DeclarationURI        string `json:"declaration_uri"`
-	DeclarationSymbol      string `json:"declaration_symbol"`
+	DeclarationSymbol     string `json:"declaration_symbol"`
 	IRNode                string `json:"ir_node"`
 	GeneratedURI          string `json:"generated_uri"`
 	GeneratedSymbol       string `json:"generated_symbol"`
@@ -48,7 +48,7 @@ type OriginChain struct {
 // OriginChainObservation is a value-level result of inspecting an origin
 // chain. A PARTIAL or UNKNOWN result is deliberately not comparable as proof.
 type OriginChainObservation struct {
-	Chain   OriginChain       `json:"chain"`
+	Chain   OriginChain        `json:"chain"`
 	Status  OriginChainStatus  `json:"status"`
 	Missing []OriginChainStage `json:"missing,omitempty"`
 	Reason  string             `json:"reason,omitempty"`
