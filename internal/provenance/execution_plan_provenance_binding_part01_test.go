@@ -59,6 +59,36 @@ func TestBindExecutionPlanKeepsUnknownProvenanceUnknown(t *testing.T) {
 	}
 }
 
+func TestExecutionPlanBindingPreservesTypedPlanIdentity(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("e", 64)
+	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)
+	activities := []string{"runtimebinding.ProposeCandidate", "runtimebinding.RecordIndependentReview", "runtimebinding.CommitCandidate"}
+	binding := BindExecutionPlanToProvenanceWithTypedPlanPart01(
+		"compile-gooo",
+		digest,
+		"model/gooo-planner-v1",
+		GatewayPolicy{},
+		ExecutionPlanLifecycleResumed,
+		digest,
+		activities,
+		2,
+		chain,
+	)
+	if binding.Plan.TypedPlanDigest != digest || binding.Plan.RuntimeBindingCount != 2 || len(binding.Plan.ActivityOrder) != len(activities) {
+		t.Fatalf("typed plan metadata = %#v", binding.Plan)
+	}
+	if binding.Status != ExecutionPlanBindingBound {
+		t.Fatalf("typed plan binding = %#v", binding)
+	}
+	if err := binding.Validate(); err != nil {
+		t.Fatalf("typed plan binding validation failed: %v", err)
+	}
+	binding.Plan.ActivityOrder[1] = "tampered"
+	if err := binding.Validate(); err == nil {
+		t.Fatal("tampered typed activity order was accepted")
+	}
+}
+
 func TestExecutionPlanBindingRejectsTamperedEvidence(t *testing.T) {
 	digest := "sha256:" + strings.Repeat("c", 64)
 	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)

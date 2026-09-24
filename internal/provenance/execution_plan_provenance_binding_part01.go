@@ -34,6 +34,9 @@ type ExecutionPlanPart01 struct {
 	GatewayPolicyDigest string                       `json:"gateway_policy_digest"`
 	Model               string                       `json:"model"`
 	Lifecycle           ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+	TypedPlanDigest     string                       `json:"typed_plan_digest,omitempty"`
+	ActivityOrder       []string                     `json:"activity_order,omitempty"`
+	RuntimeBindingCount int                          `json:"runtime_binding_count,omitempty"`
 }
 
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
@@ -66,13 +69,45 @@ func BindExecutionPlanToProvenancePart01(
 	lifecycle ExecutionPlanLifecyclePart01,
 	chain SelfImprovementProvenanceChainPart01,
 ) ExecutionPlanProvenanceBindingPart01 {
+	return BindExecutionPlanToProvenanceWithTypedPlanPart01(
+		task,
+		workspaceDigest,
+		model,
+		gatewayPolicy,
+		lifecycle,
+		"",
+		nil,
+		0,
+		chain,
+	)
+}
+
+// BindExecutionPlanToProvenanceWithTypedPlanPart01 adds the validated
+// declaration-level typed plan identity to the evidence boundary. The typed
+// plan is still observation only: it does not execute activities or authorize
+// adoption.
+func BindExecutionPlanToProvenanceWithTypedPlanPart01(
+	task,
+	workspaceDigest,
+	model string,
+	gatewayPolicy GatewayPolicy,
+	lifecycle ExecutionPlanLifecyclePart01,
+	typedPlanDigest string,
+	activityOrder []string,
+	runtimeBindingCount int,
+	chain SelfImprovementProvenanceChainPart01,
+) ExecutionPlanProvenanceBindingPart01 {
 	stages := append([]SelfImprovementProvenanceStagePart01(nil), chain.Stages...)
+	order := append([]string(nil), activityOrder...)
 	plan := ExecutionPlanPart01{
 		Task:                strings.TrimSpace(task),
 		WorkspaceDigest:     strings.TrimSpace(workspaceDigest),
 		GatewayPolicyDigest: gatewayPolicy.Digest(),
 		Model:               strings.TrimSpace(model),
 		Lifecycle:           lifecycle,
+		TypedPlanDigest:     strings.TrimSpace(typedPlanDigest),
+		ActivityOrder:       order,
+		RuntimeBindingCount: runtimeBindingCount,
 	}
 	if !validExecutionPlanLifecyclePart01(plan.Lifecycle) {
 		plan.Lifecycle = ExecutionPlanLifecycleUnknown
@@ -91,6 +126,7 @@ func BindExecutionPlanToProvenancePart01(
 		NonAuthorizing:        true,
 		NextRequiredStage:     nextExecutionPlanStagePart01(stages),
 	}
+	typedPlanReason := executionPlanTypedMetadataReasonPart01(plan)
 	switch {
 	case plan.Task == "" || plan.WorkspaceDigest == "" || plan.Model == "":
 		binding.CausalReason = "EXECUTION_PLAN_INPUT_INCOMPLETE"
@@ -98,6 +134,8 @@ func BindExecutionPlanToProvenancePart01(
 		binding.CausalReason = "EXECUTION_PLAN_WORKSPACE_DIGEST_INVALID"
 	case !validExecutionPlanLifecyclePart01(lifecycle):
 		binding.CausalReason = "EXECUTION_PLAN_LIFECYCLE_INVALID"
+	case typedPlanReason != "":
+		binding.CausalReason = typedPlanReason
 	case chain.Validate() != nil:
 		binding.CausalReason = "PROVENANCE_CHAIN_INVALID"
 	case chain.Status != SelfImprovementProvenanceChainBoundPart01:
@@ -123,6 +161,9 @@ func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 	}
 	if binding.TotalStages != len(binding.ProvenanceStages) {
 		return fmt.Errorf("execution-plan provenance binding total stage count does not match its stages")
+	}
+	if reason := executionPlanTypedMetadataReasonPart01(binding.Plan); reason != "" {
+		return fmt.Errorf("execution-plan typed metadata is invalid: %s", reason)
 	}
 	if binding.BoundStages != countBoundExecutionPlanStagesPart01(binding.ProvenanceStages) {
 		return fmt.Errorf("execution-plan provenance binding bound stage count does not match its stages")
@@ -211,17 +252,22 @@ func executionPlanEvidencePrefixDigestPart01(
 	var canonical strings.Builder
 	fmt.Fprintf(
 		&canonical,
-		"task=%s;workspace=%s;gateway=%s;model=%s;lifecycle=%s;chain=%s;status=%s;reason=%s;missing=%d;",
+		"task=%s;workspace=%s;gateway=%s;model=%s;lifecycle=%s;typed=%s;edges=%d;chain=%s;status=%s;reason=%s;missing=%d;",
 		binding.Plan.Task,
 		binding.Plan.WorkspaceDigest,
 		binding.Plan.GatewayPolicyDigest,
 		binding.Plan.Model,
 		binding.Plan.Lifecycle,
+		binding.Plan.TypedPlanDigest,
+		binding.Plan.RuntimeBindingCount,
 		binding.ProvenanceChainDigest,
 		binding.Status,
 		binding.CausalReason,
 		binding.MissingStageIndex,
 	)
+	for _, activity := range binding.Plan.ActivityOrder {
+		fmt.Fprintf(&canonical, "activity=%s;", activity)
+	}
 	for index, stage := range binding.ProvenanceStages {
 		if binding.MissingStageIndex >= 0 && index >= binding.MissingStageIndex {
 			break
@@ -230,6 +276,33 @@ func executionPlanEvidencePrefixDigestPart01(
 	}
 	digest := sha256.Sum256([]byte(canonical.String()))
 	return "sha256:" + hex.EncodeToString(digest[:])
+}
+
+func executionPlanTypedMetadataReasonPart01(plan ExecutionPlanPart01) string {
+	if plan.TypedPlanDigest == "" {
+		if len(plan.ActivityOrder) != 0 || plan.RuntimeBindingCount != 0 {
+			return "EXECUTION_PLAN_TYPED_PLAN_INCOMPLETE"
+		}
+		return ""
+	}
+	if !isSHA256Digest(plan.TypedPlanDigest) {
+		return "EXECUTION_PLAN_TYPED_PLAN_DIGEST_INVALID"
+	}
+	if len(plan.ActivityOrder) == 0 || plan.RuntimeBindingCount <= 0 {
+		return "EXECUTION_PLAN_TYPED_PLAN_INCOMPLETE"
+	}
+	seen := make(map[string]struct{}, len(plan.ActivityOrder))
+	for _, activity := range plan.ActivityOrder {
+		activity = strings.TrimSpace(activity)
+		if activity == "" {
+			return "EXECUTION_PLAN_TYPED_PLAN_ACTIVITY_INVALID"
+		}
+		if _, exists := seen[activity]; exists {
+			return "EXECUTION_PLAN_TYPED_PLAN_ACTIVITY_DUPLICATE"
+		}
+		seen[activity] = struct{}{}
+	}
+	return ""
 }
 
 func validExecutionPlanLifecyclePart01(value ExecutionPlanLifecyclePart01) bool {

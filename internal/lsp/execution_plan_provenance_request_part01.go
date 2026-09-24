@@ -3,7 +3,9 @@ package lsp
 import (
 	"context"
 
+	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
+	"github.com/kimjooyoon/meta-ontology-go/internal/syntax"
 )
 
 const ExecutionPlanProvenanceSchemaPart01 = provenance.ExecutionPlanProvenanceBindingSchemaPart01
@@ -15,6 +17,26 @@ type ExecutionPlanProvenanceParamsPart01 struct {
 	Model           string                                  `json:"model"`
 	GatewayPolicy   provenance.GatewayPolicy                `json:"gateway_policy"`
 	Lifecycle       provenance.ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+}
+
+func executionPlanTypedMetadataPart01(text string) (string, []string, int) {
+	file, diagnostics := syntax.ParseFile("execution-plan-provenance.gooo", text)
+	if diagnostics.HasErrors() || file == nil {
+		return "", nil, 0
+	}
+	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
+	if err != nil || len(document.BindingEdges) == 0 {
+		return "", nil, 0
+	}
+	typedPlan, err := bidir.CompileTypedPlan(document)
+	if err != nil {
+		return "", nil, 0
+	}
+	activityOrder := make([]string, len(typedPlan.Activities))
+	for index, activity := range typedPlan.Activities {
+		activityOrder[index] = string(activity)
+	}
+	return typedPlan.Digest(), activityOrder, len(typedPlan.Edges)
 }
 
 func (server *Server) executionPlanProvenanceRequest(
@@ -30,6 +52,9 @@ func (server *Server) executionPlanProvenanceRequest(
 	}
 
 	var chain provenance.SelfImprovementProvenanceChainPart01
+	var typedPlanDigest string
+	var activityOrder []string
+	var runtimeBindingCount int
 	server.mu.RLock()
 	stored, exists := server.documents[params.TextDocument.URI]
 	if exists {
@@ -55,14 +80,18 @@ func (server *Server) executionPlanProvenanceRequest(
 			"",
 			"",
 		)
+		typedPlanDigest, activityOrder, runtimeBindingCount = executionPlanTypedMetadataPart01(stored.text)
 	}
 
-	binding := provenance.BindExecutionPlanToProvenancePart01(
+	binding := provenance.BindExecutionPlanToProvenanceWithTypedPlanPart01(
 		params.Task,
 		params.WorkspaceDigest,
 		params.Model,
 		params.GatewayPolicy,
 		params.Lifecycle,
+		typedPlanDigest,
+		activityOrder,
+		runtimeBindingCount,
 		chain,
 	)
 	if err := binding.Validate(); err != nil {
