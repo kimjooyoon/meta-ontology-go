@@ -84,6 +84,8 @@ var embeddedDenominatorV44 []byte
 
 //go:embed evidence/denominator-v45.json
 var embeddedDenominatorV45 []byte
+//go:embed evidence/denominator-v46.json
+var embeddedDenominatorV46 []byte
 
 func EmbeddedAssurance() []byte {
 	return append([]byte(nil), embeddedAssurance...)
