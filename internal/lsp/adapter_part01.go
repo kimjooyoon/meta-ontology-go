@@ -44,6 +44,12 @@ func adaptSyntaxResultContextWithSupport(ctx context.Context, uri, source string
 				return ParseResult{}, err
 			}
 			result.Diagnostics = append(result.Diagnostics, semanticDiagnostic(uri, source, file, err))
+		} else if typedPlanErr := validateTypedPlanForLSP(canonicalSyntaxFile(file), support); typedPlanErr != nil {
+			diagnostic, diagnosticErr := typedPlanDiagnostic(uri, source, typedPlanErr)
+			if diagnosticErr != nil {
+				return ParseResult{}, diagnosticErr
+			}
+			result.Diagnostics = append(result.Diagnostics, diagnostic)
 		} else {
 			result.semanticValid = true
 			result.semanticDigest = ir.StableHash()
