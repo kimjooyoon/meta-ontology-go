@@ -6,7 +6,7 @@ type SelfImprovementOutcomeReceipt = provenance.SelfImprovementOutcomeReceipt
 type SelfImprovementOutcomeStatus = provenance.SelfImprovementOutcomeStatus
 
 const (
-	SelfImprovementOutcomeSchema = provenance.SelfImprovementOutcomeSchema
+	SelfImprovementOutcomeSchema  = provenance.SelfImprovementOutcomeSchema
 	SelfImprovementOutcomeClosed  = provenance.SelfImprovementOutcomeClosed
 	SelfImprovementOutcomeUnknown = provenance.SelfImprovementOutcomeUnknown
 	SelfImprovementOutcomeRefuted = provenance.SelfImprovementOutcomeRefuted
