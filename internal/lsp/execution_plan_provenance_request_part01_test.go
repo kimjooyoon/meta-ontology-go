@@ -95,9 +95,9 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 	semanticDigest := cache.HashBytes([]byte("execution-plan-ir")).String()
 	parser := ParserFunc(func(string, string) ParseResult {
 		return ParseResult{
-			Symbols:          []Symbol{{Name: "Order", ID: "order-id", SelectionRange: testRange(0, 0, 0, 5)}},
-			References:       []Reference{{Name: "Order", ID: "order-id", Range: testRange(0, 6, 0, 11)}},
-			semanticDigest:   semanticDigest,
+			Symbols:         []Symbol{{Name: "Order", ID: "order-id", SelectionRange: testRange(0, 0, 0, 5)}},
+			References:      []Reference{{Name: "Order", ID: "order-id", Range: testRange(0, 6, 0, 11)}},
+			semanticDigest:  semanticDigest,
 			semanticChecked: true,
 			semanticValid:   true,
 		}
@@ -150,4 +150,3 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 		t.Fatal("tampered execution-plan provenance binding was accepted")
 	}
 }
-

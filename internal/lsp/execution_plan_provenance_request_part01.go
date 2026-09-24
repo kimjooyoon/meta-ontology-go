@@ -99,4 +99,3 @@ func (server *Server) executionPlanProvenanceRequest(
 	}
 	return resultResponse(request.ID, binding), nil, nil
 }
-
