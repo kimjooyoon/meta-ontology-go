@@ -94,7 +94,7 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		}
 	}
 	for index, expected := range prior.Boundaries {
-		if index == "0 || index == 1" {
+		if index == 0 || index == 1 {
 			expected.Target += 2
 		}
 		if current.Boundaries[index] != expected {
