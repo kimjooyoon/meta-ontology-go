@@ -29,24 +29,24 @@ const (
 // ExecutionPlanPart01 separates declarative task, workspace, gateway, model,
 // and lifecycle identities without granting any execution or adoption power.
 type ExecutionPlanPart01 struct {
-	Task               string                        `json:"task"`
-	WorkspaceDigest    string                        `json:"workspace_digest"`
+	Task                string                       `json:"task"`
+	WorkspaceDigest     string                       `json:"workspace_digest"`
 	GatewayPolicyDigest string                       `json:"gateway_policy_digest"`
-	Model              string                        `json:"model"`
-	Lifecycle          ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+	Model               string                       `json:"model"`
+	Lifecycle           ExecutionPlanLifecyclePart01 `json:"lifecycle"`
 }
 
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
 // the six-stage provenance chain. It is evidence only, never authorization.
 type ExecutionPlanProvenanceBindingPart01 struct {
-	Schema                  string                              `json:"schema"`
-	Plan                    ExecutionPlanPart01                 `json:"plan"`
-	ProvenanceChainDigest   string                              `json:"provenance_chain_digest"`
-	Status                  ExecutionPlanBindingStatusPart01   `json:"status"`
-	CausalReason            string                              `json:"causal_reason"`
-	AdoptionAuthorized      bool                                `json:"adoption_authorized"`
-	NonAuthorizing          bool                                `json:"non_authorizing"`
-	BindingDigest           string                              `json:"binding_digest"`
+	Schema                string                           `json:"schema"`
+	Plan                  ExecutionPlanPart01              `json:"plan"`
+	ProvenanceChainDigest string                           `json:"provenance_chain_digest"`
+	Status                ExecutionPlanBindingStatusPart01 `json:"status"`
+	CausalReason          string                           `json:"causal_reason"`
+	AdoptionAuthorized    bool                             `json:"adoption_authorized"`
+	NonAuthorizing        bool                             `json:"non_authorizing"`
+	BindingDigest         string                           `json:"binding_digest"`
 }
 
 // BindExecutionPlanToProvenancePart01 records an AX-shaped declarative
