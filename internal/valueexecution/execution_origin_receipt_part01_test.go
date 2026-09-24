@@ -20,8 +20,9 @@ func TestObserveExecutionOriginBindsPhaseWithoutGrantingAuthority(t *testing.T) 
 		EvidenceDigest:        "sha256:typed-chain-observation",
 	})
 	execution := Execution{
-		ExecutionDigest: "sha256:execution-observation",
-		Phase:           ExecutionPhaseCompleted,
+		ExecutionDigest:   "sha256:execution-observation",
+		RuntimePlanDigest: "sha256:runtime-plan-observation",
+		Phase:             ExecutionPhaseCompleted,
 		Conditions: []ExecutionCondition{
 			{Type: ExecutionConditionComplete, Status: ExecutionConditionTrue, Reason: "EXECUTION_FINISHED"},
 			{Type: ExecutionConditionPlanReady, Status: ExecutionConditionTrue, Reason: "COMPILED_PLAN_VALIDATED"},
@@ -32,7 +33,7 @@ func TestObserveExecutionOriginBindsPhaseWithoutGrantingAuthority(t *testing.T) 
 	if receipt.Status != ExecutionOriginStatusBound || receipt.Reason != "ORIGIN_BOUND_TO_EXECUTION" {
 		t.Fatalf("receipt=%#v", receipt)
 	}
-	if receipt.Phase != ExecutionPhaseCompleted || receipt.ReceiptDigest == "" {
+	if receipt.Phase != ExecutionPhaseCompleted || receipt.ReceiptDigest == "" || receipt.RuntimePlanDigest != execution.RuntimePlanDigest {
 		t.Fatalf("receipt lost execution identity: %#v", receipt)
 	}
 	if !receipt.NonAuthorizing || len(receipt.Conditions) != 2 {
