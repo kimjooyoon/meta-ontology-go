@@ -33,6 +33,9 @@ func (server *Server) initialize(request requestEnvelope) (*responseEnvelope, []
 				"goooSelfImprovementProvenance": map[string]string{
 					"method": "gooo/selfImprovementProvenance", "schema": SelfImprovementProvenanceChainSchemaPart01,
 				},
+				"goooExecutionPlanProvenance": map[string]string{
+					"method": "gooo/executionPlanProvenance", "schema": ExecutionPlanProvenanceSchemaPart01,
+				},
 				"goooReferencesProvenance": map[string]string{
 					"method": "gooo/referencesProvenance", "schema": referencesProvenanceSchema,
 				},
