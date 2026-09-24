@@ -67,14 +67,14 @@ type SPIFFEExecutionBoundaryEnvelopePart01 struct {
 // metrics without turning them into authorization.
 type SPIFFEExecutionBoundaryReverseObservationPart01 struct {
 	Schema                   string                               `json:"schema"`
-	Status                   SPIFFEExecutionBoundaryStatusPart01 `json:"status"`
+	Status                   SPIFFEExecutionBoundaryStatusPart01  `json:"status"`
 	Reason                   string                               `json:"reason"`
 	MissingStageIndex        int                                  `json:"missing_stage_index"`
 	NonAuthorizing           bool                                 `json:"non_authorizing"`
 	GoooDeclarationDigest    string                               `json:"gooo_declaration_digest"`
 	IRDigest                 string                               `json:"ir_digest"`
 	GeneratedArtifactDigest  string                               `json:"generated_artifact_digest"`
-	ReverseObservationDigest string                              `json:"reverse_observation_digest"`
+	ReverseObservationDigest string                               `json:"reverse_observation_digest"`
 	ExecutionPlanDigest      string                               `json:"execution_plan_digest"`
 	Metrics                  SPIFFEExecutionBoundaryMetricsPart01 `json:"metrics"`
 	EnvelopeDigest           string                               `json:"envelope_digest"`

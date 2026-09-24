@@ -17,7 +17,7 @@ func validSPIFFEExecutionBoundaryInputPart01() SPIFFEExecutionBoundaryInputPart0
 		ReverseObservationDigest:  "sha256:" + strings.Repeat("e", 64),
 		ExecutionPlanDigest:       "sha256:" + strings.Repeat("f", 64),
 		Metrics: SPIFFEExecutionBoundaryMetricsPart01{
-			GeneratedArtifactCount:   1,
+			GeneratedArtifactCount:  1,
 			ReverseObservationCount: 1,
 			EvidenceStageCount:      8,
 		},
