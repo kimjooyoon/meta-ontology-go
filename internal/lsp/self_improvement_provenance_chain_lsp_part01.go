@@ -7,25 +7,25 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kimjooyoon/meta-ontology-go/internal/meta/generation"
+	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
 )
 
 type SelfImprovementProvenanceChainProjectionPart01 struct {
-	URI                string                                            `json:"uri"`
-	Version            int                                               `json:"version"`
-	Status             string                                            `json:"status"`
-	CausalReason       string                                            `json:"causal_reason"`
-	ChainDigest        string                                            `json:"chain_digest"`
-	Stages             []generation.SelfImprovementProvenanceStagePart01 `json:"stages"`
-	AdoptionAuthorized bool                                              `json:"adoption_authorized"`
-	NonAuthorizing     bool                                              `json:"non_authorizing"`
-	Digest             string                                            `json:"digest"`
+	URI                string                                      `json:"uri"`
+	Version            int                                         `json:"version"`
+	Status             string                                      `json:"status"`
+	CausalReason       string                                      `json:"causal_reason"`
+	ChainDigest        string                                      `json:"chain_digest"`
+	Stages             []provenance.SelfImprovementProvenanceStagePart01 `json:"stages"`
+	AdoptionAuthorized bool                                        `json:"adoption_authorized"`
+	NonAuthorizing     bool                                        `json:"non_authorizing"`
+	Digest             string                                      `json:"digest"`
 }
 
 func ProjectSelfImprovementProvenanceChainPart01(
 	uri string,
 	version int,
-	chain generation.SelfImprovementProvenanceChainPart01,
+	chain provenance.SelfImprovementProvenanceChainPart01,
 ) (SelfImprovementProvenanceChainProjectionPart01, error) {
 	uri = strings.TrimSpace(uri)
 	if uri == "" {
@@ -43,7 +43,7 @@ func ProjectSelfImprovementProvenanceChainPart01(
 		Status:             chain.Status,
 		CausalReason:       chain.CausalReason,
 		ChainDigest:        chain.ChainDigest,
-		Stages:             append([]generation.SelfImprovementProvenanceStagePart01(nil), chain.Stages...),
+		Stages:             append([]provenance.SelfImprovementProvenanceStagePart01(nil), chain.Stages...),
 		AdoptionAuthorized: false,
 		NonAuthorizing:     true,
 	}
@@ -64,8 +64,8 @@ func (projection SelfImprovementProvenanceChainProjectionPart01) Validate() erro
 	if !projection.NonAuthorizing {
 		return fmt.Errorf("self-improvement provenance chain projection must remain non-authorizing")
 	}
-	if projection.Status != generation.SelfImprovementProvenanceChainBoundPart01 &&
-		projection.Status != generation.SelfImprovementProvenanceChainUnknownPart01 {
+	if projection.Status != provenance.SelfImprovementProvenanceChainBoundPart01 &&
+		projection.Status != provenance.SelfImprovementProvenanceChainUnknownPart01 {
 		return fmt.Errorf("unknown self-improvement provenance chain projection status %q", projection.Status)
 	}
 	if projection.ChainDigest == "" || projection.Digest == "" ||
