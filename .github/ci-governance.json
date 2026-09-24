@@ -5341,6 +5341,19 @@
         "internal/verify/scope_repair_value_witness_registry_20260920.go"
       ]
     }
+,
+    {
+      "branch": "agent/lsp-cycle-result-provenance-dev-20260924-r1",
+      "paths": [
+        ".github/agent-scope-table.md",
+        ".github/ci-governance.json",
+        "cmd/gooo",
+        "internal/lsp",
+        "internal/meta/generation",
+        "internal/provenance",
+        "internal/verify/scope_part01.go"
+      ]
+    }
   ],
   "protected_kernel_paths": [
     ".github/workflows/**",
