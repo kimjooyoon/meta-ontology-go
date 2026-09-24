@@ -32,9 +32,13 @@ bind RecordIndependentReview.result -> CommitCandidate.input
 			semanticValid:   true,
 		}
 	})
+	sourceJSON, err := json.Marshal(source)
+	if err != nil {
+		t.Fatal(err)
+	}
 	server := NewServer(parser)
-	_, _, err := server.didOpen(context.Background(), requestEnvelope{
-		Params: json.RawMessage(`{"textDocument":{"uri":"` + uri + `","version":1,"text":` + mustJSON(source) + `}}`),
+	_, _, err = server.didOpen(context.Background(), requestEnvelope{
+		Params: json.RawMessage(`{"textDocument":{"uri":"` + uri + `","version":1,"text":` + string(sourceJSON) + `}}`),
 	})
 	if err != nil {
 		t.Fatalf("didOpen() error = %v", err)
@@ -146,3 +150,4 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 		t.Fatal("tampered execution-plan provenance binding was accepted")
 	}
 }
+
