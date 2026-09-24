@@ -8,7 +8,7 @@ import (
 
 func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	raw := activeDenominator()
-	if digestBytes(raw) != DenominatorMigrationV46Digest || activeDenominatorDigest() != DenominatorMigrationV46Digest {
+	if digestBytes(raw) != DenominatorMigrationV45Digest || activeDenominatorDigest() != DenominatorMigrationV45Digest {
 		t.Fatal("active denominator is not the pinned v45 migration")
 	}
 	var observed struct {
@@ -22,7 +22,7 @@ func TestCurrentDenominatorPinsExistingCapabilities(t *testing.T) {
 	if err := json.Unmarshal(raw, &observed); err != nil {
 		t.Fatal(err)
 	}
-	if observed.Version != 46 || len(observed.Boundaries) != 6 ||
+	if observed.Version != 45 || len(observed.Boundaries) != 6 ||
 		observed.Boundaries[0].ID != "syntax" || observed.Boundaries[0].Target != 77 ||
 		observed.Boundaries[1].ID != "semantics" || observed.Boundaries[1].Target != 46 {
 		t.Fatalf("migration changed the declared capability boundary: %#v", observed)
@@ -72,16 +72,16 @@ func TestRecordMigrationPreservesPreviousBoundaryEvidence(t *testing.T) {
 		t.Fatal("historical denominator evidence was rewritten")
 	}
 	var previous, prior, current denominator
-	if err := json.Unmarshal(embeddedDenominatorV44, &previous); err != nil {
+	if err := json.Unmarshal(embeddedDenominatorV43, &previous); err != nil {
 		t.Fatal(err)
 	}
 	if err := json.Unmarshal(activeDenominator(), &current); err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(embeddedDenominatorV45, &prior); err != nil {
+	if err := json.Unmarshal(embeddedDenominatorV44, &prior); err != nil {
 		t.Fatal(err)
 	}
-	if previous.Version != 44 || prior.Version != 45 || current.Version != 46 ||
+	if previous.Version != 43 || prior.Version != 44 || current.Version != 45 ||
 		len(previous.Boundaries) != 6 || len(prior.Boundaries) != 6 || len(current.Boundaries) != 6 {
 		t.Fatal("migration changed the boundary inventory")
 	}
