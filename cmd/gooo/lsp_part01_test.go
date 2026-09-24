@@ -71,6 +71,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 				"method": "gooo/completionProvenance",
 				"schema": "gooo/lsp-completion-provenance/v1",
 			},
+			"goooExecutionPlanProvenance": map[string]any{
+				"method": "gooo/executionPlanProvenance",
+				"schema": "gooo/execution-plan-provenance-binding/v1",
+			},
 			"goooStoryProvenance": map[string]any{
 				"method": "gooo/storyProvenance",
 				"schema": "gooo/lsp-story-provenance/v1",
@@ -82,3 +86,4 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 	}
 	assertLSPResponseID(t, messages[1], 2)
 }
+
