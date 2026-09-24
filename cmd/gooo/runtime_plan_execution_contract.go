@@ -96,5 +96,6 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 		return "", fmt.Errorf("runtime plan contains typed-plan identity without explicit binding edges")
 	}
 
-	return cache.HashBytes(raw).String(), nil
+	return "sha256:" + cache.HashBytes(raw).String(), nil
 }
+
