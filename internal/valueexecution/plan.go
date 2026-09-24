@@ -36,7 +36,8 @@ type Execution struct {
 	Results         map[string]ResultEvidence `json:"results"`
 	ApplyCalls      int                       `json:"apply_calls"`
 	Deliveries      int                       `json:"deliveries"`
-	Activities      []string                  `json:"activities"`
+	Activities       []string                  `json:"activities"`
+	BindingEdgeOrder []string                  `json:"binding_edge_order,omitempty"`
 }
 
 // CompilePlan parses, lowers, validates, and compiles every value activity in
@@ -108,8 +109,9 @@ func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execut
 		PlanDigest:  planExecutionDigest(plan),
 		InputDigest: digestValue(rootInputs),
 		Phase:       ExecutionPhaseRunning,
-		Conditions:  executionRunningConditions(),
-		Results:     make(map[string]ResultEvidence, len(plan.programs)),
+		Conditions:      executionRunningConditions(),
+		BindingEdgeOrder: plan.bindingEdgeOrder(),
+		Results:          make(map[string]ResultEvidence, len(plan.programs)),
 	}
 	defer func() {
 		execution.Phase, execution.Conditions = executionLifecycle(err)
@@ -245,6 +247,15 @@ func validatePlanBindings(programs map[string]Program, bindings []bidir.RuntimeB
 		seenConsumers[consumerKey] = struct{}{}
 	}
 	return nil
+}
+
+func (plan Plan) bindingEdgeOrder() []string {
+	order := make([]string, len(plan.bindings))
+	for index, binding := range plan.bindings {
+		order[index] = fmt.Sprintf("%s:%s->%s:%s", binding.Producer.Activity.Name, binding.Producer.Port.Name, binding.Consumer.Activity.Name, binding.Consumer.Port.Name)
+	}
+	slices.Sort(order)
+	return order
 }
 
 func (plan Plan) executionOrder() ([]string, map[string][]bidir.RuntimeBinding, map[string][]bidir.RuntimeBinding, error) {
