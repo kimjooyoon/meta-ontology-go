@@ -10,10 +10,18 @@ const hoverProvenanceSchema = "gooo/lsp-hover-provenance/v1"
 func hoverSymbolDetail(document document, symbol Symbol) string {
 	detail := symbolDetail(symbol)
 	provenance := hoverProvenanceDetail(document)
-	if provenance == "" {
+	evidence := hoverSelfImprovementEvidenceDetail(document)
+	if provenance == "" && evidence == "" {
 		return detail
 	}
-	return detail + "\n\n" + provenance
+	sections := []string{detail}
+	if provenance != "" {
+		sections = append(sections, provenance)
+	}
+	if evidence != "" {
+		sections = append(sections, evidence)
+	}
+	return strings.Join(sections, "\n\n")
 }
 
 func hoverProvenanceDetail(document document) string {
