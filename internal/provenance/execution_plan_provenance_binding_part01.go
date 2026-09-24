@@ -88,8 +88,8 @@ func BindExecutionPlanToProvenancePart01(
 		Status:                ExecutionPlanBindingUnknown,
 		CausalReason:          "EXECUTION_PLAN_INPUT_INCOMPLETE",
 		AdoptionAuthorized:    false,
-		NonAuthorizing:    true,
-		NextRequiredStage: nextExecutionPlanStagePart01(stages),
+		NonAuthorizing:        true,
+		NextRequiredStage:     nextExecutionPlanStagePart01(stages),
 	}
 	switch {
 	case plan.Task == "" || plan.WorkspaceDigest == "" || plan.Model == "":
