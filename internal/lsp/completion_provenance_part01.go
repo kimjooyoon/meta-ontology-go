@@ -92,7 +92,7 @@ func observeCompletionProvenance(server *Server, uri string, position Position, 
 		{"TOOLCHAIN_DIGEST", observation.ToolchainDigest},
 		{"CONTRACT_DIGEST", observation.ContractDigest},
 	} {
-		if !knownLSPProvenanceDigest(required.value).Known() {
+		if !knownLSPProvenanceDigest(required.value) {
 			observation.Reason = "MISSING_" + required.name
 			return finalizeCompletionProvenance(observation)
 		}
@@ -161,22 +161,22 @@ func validateCompletionProvenance(value completionProvenanceObservation) error {
 		return errors.New("completion provenance decision is invalid")
 	}
 	for _, digest := range []string{value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest, value.DocumentProvenanceDigest} {
-		if digest != "" && !knownLSPProvenanceDigest(digest).Known() {
+		if digest != "" && !knownLSPProvenanceDigest(digest) {
 			return errors.New("completion provenance binding is invalid")
 		}
 	}
-	if !knownLSPProvenanceDigest(value.CandidateMapDigest).Known() || value.CandidateMapDigest != completionProvenanceCandidateMapDigest(value.Candidates) {
+	if !knownLSPProvenanceDigest(value.CandidateMapDigest) || value.CandidateMapDigest != completionProvenanceCandidateMapDigest(value.Candidates) {
 		return errors.New("completion provenance candidate map is invalid")
 	}
 	for _, item := range value.Candidates {
-		if item.Label == "" || !knownLSPProvenanceDigest(item.OriginDigest).Known() || item.OriginDigest != completionProvenanceCandidateDigest(item) {
+		if item.Label == "" || !knownLSPProvenanceDigest(item.OriginDigest) || item.OriginDigest != completionProvenanceCandidateDigest(item) {
 			return errors.New("completion provenance candidate origin is invalid")
 		}
 	}
-	if value.Decision == completionProvenanceClosed && (!knownLSPProvenanceDigest(value.SourceDigest).Known() || !knownLSPProvenanceDigest(value.SemanticDigest).Known() || !knownLSPProvenanceDigest(value.ProfileDigest).Known() || !knownLSPProvenanceDigest(value.ToolchainDigest).Known() || !knownLSPProvenanceDigest(value.ContractDigest).Known() || !knownLSPProvenanceDigest(value.DocumentProvenanceDigest).Known()) {
+	if value.Decision == completionProvenanceClosed && (!knownLSPProvenanceDigest(value.SourceDigest) || !knownLSPProvenanceDigest(value.SemanticDigest) || !knownLSPProvenanceDigest(value.ProfileDigest) || !knownLSPProvenanceDigest(value.ToolchainDigest) || !knownLSPProvenanceDigest(value.ContractDigest) || !knownLSPProvenanceDigest(value.DocumentProvenanceDigest)) {
 		return errors.New("completion provenance closed binding is incomplete")
 	}
-	if !knownLSPProvenanceDigest(value.ObservationDigest).Known() || value.ObservationDigest != completionProvenanceObservationDigest(value) {
+	if !knownLSPProvenanceDigest(value.ObservationDigest) || value.ObservationDigest != completionProvenanceObservationDigest(value) {
 		return errors.New("completion provenance observation is invalid")
 	}
 	return nil

@@ -95,7 +95,7 @@ func observeDiagnosticProvenance(uri string, value document, key documentCacheKe
 		{name: "TOOLCHAIN_DIGEST", value: observation.ToolchainDigest},
 		{name: "CONTRACT_DIGEST", value: observation.ContractDigest},
 	} {
-		if !knownLSPProvenanceDigest(required.value).Known() {
+		if !knownLSPProvenanceDigest(required.value) {
 			observation.Reason = "MISSING_" + required.name
 			return finalizeDiagnosticProvenance(observation)
 		}
@@ -189,26 +189,26 @@ func validateDiagnosticProvenance(value diagnosticProvenanceObservation) error {
 		return errors.New("diagnostic provenance decision is invalid")
 	}
 	for _, digest := range []string{value.SourceDigest, value.SemanticDigest, value.ProfileDigest, value.ToolchainDigest, value.ContractDigest, value.DocumentProvenanceDigest} {
-		if digest != "" && !knownLSPProvenanceDigest(digest).Known() {
+		if digest != "" && !knownLSPProvenanceDigest(digest) {
 			return errors.New("diagnostic provenance binding is invalid")
 		}
 	}
-	if !knownLSPProvenanceDigest(value.DiagnosticMapDigest).Known() || value.DiagnosticMapDigest != diagnosticProvenanceMapDigest(value.Diagnostics) {
+	if !knownLSPProvenanceDigest(value.DiagnosticMapDigest) || value.DiagnosticMapDigest != diagnosticProvenanceMapDigest(value.Diagnostics) {
 		return errors.New("diagnostic provenance map is invalid")
 	}
 	for _, item := range value.Diagnostics {
-		if !knownLSPProvenanceDigest(item.OriginDigest).Known() || item.OriginDigest != diagnosticProvenanceItemDigest(item) || !knownLSPProvenanceDigest(item.DocumentProvenanceDigest).Known() || item.DocumentProvenanceDigest != value.DocumentProvenanceDigest {
+		if !knownLSPProvenanceDigest(item.OriginDigest) || item.OriginDigest != diagnosticProvenanceItemDigest(item) || !knownLSPProvenanceDigest(item.DocumentProvenanceDigest) || item.DocumentProvenanceDigest != value.DocumentProvenanceDigest {
 			return errors.New("diagnostic provenance item origin is invalid")
 		}
 	}
 	if value.Decision == diagnosticProvenanceClosed {
-		if !knownLSPProvenanceDigest(value.SourceDigest).Known() || !knownLSPProvenanceDigest(value.SemanticDigest).Known() ||
-			!knownLSPProvenanceDigest(value.ProfileDigest).Known() || !knownLSPProvenanceDigest(value.ToolchainDigest).Known() ||
-			!knownLSPProvenanceDigest(value.ContractDigest).Known() || !knownLSPProvenanceDigest(value.DocumentProvenanceDigest).Known() {
+		if !knownLSPProvenanceDigest(value.SourceDigest) || !knownLSPProvenanceDigest(value.SemanticDigest) ||
+			!knownLSPProvenanceDigest(value.ProfileDigest) || !knownLSPProvenanceDigest(value.ToolchainDigest) ||
+			!knownLSPProvenanceDigest(value.ContractDigest) || !knownLSPProvenanceDigest(value.DocumentProvenanceDigest) {
 			return errors.New("diagnostic provenance closed binding is incomplete")
 		}
 	}
-	if !knownLSPProvenanceDigest(value.ObservationDigest).Known() || value.ObservationDigest != diagnosticProvenanceObservationDigest(value) {
+	if !knownLSPProvenanceDigest(value.ObservationDigest) || value.ObservationDigest != diagnosticProvenanceObservationDigest(value) {
 		return errors.New("diagnostic provenance observation is invalid")
 	}
 	return nil
