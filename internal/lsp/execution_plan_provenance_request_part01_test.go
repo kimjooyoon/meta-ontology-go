@@ -126,6 +126,7 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 		Model:           "model-1",
 		GatewayPolicy:   provenance.GatewayPolicy{AllowedHosts: []string{"api.example.invalid"}},
 		Lifecycle:       provenance.ExecutionPlanLifecyclePlanned,
+		WorkloadIdentity: &provenance.WorkloadIdentityProvenanceBinding{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -143,6 +144,7 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 	}
 	if binding.Schema != ExecutionPlanProvenanceSchemaPart01 ||
 		binding.Status != provenance.ExecutionPlanBindingUnknown ||
+		binding.CausalReason != "EXECUTION_PLAN_WORKLOAD_IDENTITY_INVALID" ||
 		binding.BoundStages != 4 ||
 		binding.TotalStages != 6 ||
 		binding.MissingStageIndex != 4 ||
