@@ -22,12 +22,12 @@ type ExecutionOriginReceipt struct {
 	OriginDigest      string                `json:"origin_digest,omitempty"`
 	ExecutionDigest   string                `json:"execution_digest,omitempty"`
 	RuntimePlanDigest string                `json:"runtime_plan_digest,omitempty"`
-	Phase           ExecutionPhase        `json:"phase"`
-	Conditions      []ExecutionCondition  `json:"conditions"`
-	Status          ExecutionOriginStatus `json:"status"`
-	Reason          string                `json:"reason"`
-	NonAuthorizing  bool                  `json:"non_authorizing"`
-	ReceiptDigest   string                `json:"receipt_digest"`
+	Phase             ExecutionPhase        `json:"phase"`
+	Conditions        []ExecutionCondition  `json:"conditions"`
+	Status            ExecutionOriginStatus `json:"status"`
+	Reason            string                `json:"reason"`
+	NonAuthorizing    bool                  `json:"non_authorizing"`
+	ReceiptDigest     string                `json:"receipt_digest"`
 }
 
 // ObserveExecutionOrigin creates a deterministic, non-authorizing link
@@ -39,9 +39,9 @@ func ObserveExecutionOrigin(origin provenance.OriginChainObservation, execution 
 		ExecutionDigest:   execution.ExecutionDigest,
 		RuntimePlanDigest: execution.RuntimePlanDigest,
 		Phase:             execution.Phase,
-		Conditions:      canonicalOriginExecutionConditions(execution.Conditions),
-		Status:          ExecutionOriginStatusUnknown,
-		NonAuthorizing:  true,
+		Conditions:        canonicalOriginExecutionConditions(execution.Conditions),
+		Status:            ExecutionOriginStatusUnknown,
+		NonAuthorizing:    true,
 	}
 	switch {
 	case !origin.Verified() || !origin.Comparable():

@@ -27,18 +27,18 @@ type Plan struct {
 // Execution is a detached summary of one plan run. Results contain evidence,
 // not ProducedResult handles; the handles never leave the per-run store.
 type Execution struct {
-	Scope           string                    `json:"scope"`
-	PlanDigest      string                    `json:"plan_digest"`
+	Scope             string                    `json:"scope"`
+	PlanDigest        string                    `json:"plan_digest"`
 	RuntimePlanDigest string                    `json:"runtime_plan_digest,omitempty"`
-	InputDigest     string                    `json:"input_digest"`
-	ExecutionDigest string                    `json:"execution_digest"`
-	Phase           ExecutionPhase            `json:"phase"`
-	Conditions      []ExecutionCondition      `json:"conditions"`
-	Results         map[string]ResultEvidence `json:"results"`
-	ApplyCalls      int                       `json:"apply_calls"`
-	Deliveries      int                       `json:"deliveries"`
+	InputDigest       string                    `json:"input_digest"`
+	ExecutionDigest   string                    `json:"execution_digest"`
+	Phase             ExecutionPhase            `json:"phase"`
+	Conditions        []ExecutionCondition      `json:"conditions"`
+	Results           map[string]ResultEvidence `json:"results"`
+	ApplyCalls        int                       `json:"apply_calls"`
+	Deliveries        int                       `json:"deliveries"`
 	Activities       []string                  `json:"activities"`
-	BindingEdgeOrder []string                  `json:"binding_edge_order,omitempty"`
+	BindingEdgeOrder  []string                  `json:"binding_edge_order,omitempty"`
 }
 
 // CompilePlan parses, lowers, validates, and compiles every value activity in
@@ -106,11 +106,11 @@ func (plan Plan) executeIteration(rootInputs map[string]int64) (execution Execut
 		return Execution{}, nil, err
 	}
 	execution = Execution{
-		Scope:       RegisteredValueOperationScope,
-		PlanDigest:  planExecutionDigest(plan),
-		InputDigest: digestValue(rootInputs),
-		Phase:       ExecutionPhaseRunning,
-		Conditions:      executionRunningConditions(),
+		Scope:            RegisteredValueOperationScope,
+		PlanDigest:       planExecutionDigest(plan),
+		InputDigest:      digestValue(rootInputs),
+		Phase:            ExecutionPhaseRunning,
+		Conditions:       executionRunningConditions(),
 		BindingEdgeOrder: plan.bindingEdgeOrder(),
 		Results:          make(map[string]ResultEvidence, len(plan.programs)),
 	}

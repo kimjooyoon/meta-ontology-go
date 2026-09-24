@@ -31,7 +31,6 @@ func (trace Continuation) BindRuntimePlanDigest(digest string) (Continuation, er
 	return trace, nil
 }
 
-
 func continuationDigest(trace Continuation) string {
 	trace.Digest = ""
 	return digestValue(trace)

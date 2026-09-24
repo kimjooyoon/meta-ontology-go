@@ -8,9 +8,9 @@ import (
 func TestRuntimePlanDigestBindsExecutionAndContinuationEvidence(t *testing.T) {
 	digest := "sha256:" + strings.Repeat("a", 64)
 	execution := Execution{
-		Scope:     RegisteredValueOperationScope,
+		Scope:      RegisteredValueOperationScope,
 		PlanDigest: digest,
-		Phase:     ExecutionPhaseCompleted,
+		Phase:      ExecutionPhaseCompleted,
 	}
 	boundExecution, err := execution.BindRuntimePlanDigest(digest)
 	if err != nil {
@@ -40,4 +40,3 @@ func TestRuntimePlanDigestBindsExecutionAndContinuationEvidence(t *testing.T) {
 		t.Fatal("invalid runtime plan digest was accepted")
 	}
 }
-
