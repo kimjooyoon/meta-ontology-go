@@ -33,10 +33,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 	}
 	want := lsp.ServerCapabilities{
 		TextDocumentSync:       lsp.TextDocumentSyncOptions{OpenClose: true, Change: 2},
-		HoverProvider:           true,
-		CompletionProvider:      &lsp.CompletionOptions{},
-		DefinitionProvider:      true,
-		DocumentSymbolProvider:  true,
+		HoverProvider:          true,
+		CompletionProvider:     &lsp.CompletionOptions{},
+		DefinitionProvider:     true,
+		DocumentSymbolProvider: true,
 		ReferencesProvider:     true,
 		RenameProvider:         true,
 		WorkspaceSymbolProvider: &lsp.WorkspaceSymbolOptions{
