@@ -18,6 +18,7 @@ type ExecutionPlanProvenanceParamsPart01 struct {
 	Model           string                                  `json:"model"`
 	GatewayPolicy   provenance.GatewayPolicy                `json:"gateway_policy"`
 	Lifecycle       provenance.ExecutionPlanLifecyclePart01 `json:"lifecycle"`
+	WorkloadIdentity *provenance.WorkloadIdentityProvenanceBinding `json:"workload_identity,omitempty"`
 }
 
 func executionPlanBindingEdgeKeyPart01(edge bidir.BindingEdge) string {
@@ -97,18 +98,36 @@ func (server *Server) executionPlanProvenanceRequest(
 		)
 	}
 
-	binding := provenance.BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
-		params.Task,
-		params.WorkspaceDigest,
-		params.Model,
-		params.GatewayPolicy,
-		params.Lifecycle,
-		typedPlanDigest,
-		activityOrder,
-		bindingEdgeOrder,
-		runtimeBindingCount,
-		chain,
-	)
+	var binding provenance.ExecutionPlanProvenanceBindingPart01
+	if params.WorkloadIdentity == nil {
+		binding = provenance.BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
+			params.Task,
+			params.WorkspaceDigest,
+			params.Model,
+			params.GatewayPolicy,
+			params.Lifecycle,
+			typedPlanDigest,
+			activityOrder,
+			bindingEdgeOrder,
+			runtimeBindingCount,
+			chain,
+		)
+	} else {
+		binding = provenance.BindExecutionPlanToProvenanceWithTypedPlanAndWorkloadIdentityPart01(
+			params.Task,
+			params.WorkspaceDigest,
+			params.Model,
+			params.GatewayPolicy,
+			params.Lifecycle,
+			typedPlanDigest,
+			activityOrder,
+			bindingEdgeOrder,
+			runtimeBindingCount,
+			*params.WorkloadIdentity,
+			chain,
+		)
+	}
+
 	if err := binding.Validate(); err != nil {
 		return featureErrorResponse(request.ID, err, ctx)
 	}
