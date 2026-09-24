@@ -34,8 +34,8 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 	want := lsp.ServerCapabilities{
 		TextDocumentSync:       lsp.TextDocumentSyncOptions{OpenClose: true, Change: 2},
 		HoverProvider:          true,
-		CompletionProvider:     &lsp.CompletionOptions{},
-		DefinitionProvider:     true,
+		CompletionProvider:      &lsp.CompletionOptions{},
+		DefinitionProvider:      true,
 		DocumentSymbolProvider: true,
 		ReferencesProvider:     true,
 		RenameProvider:         true,
@@ -43,7 +43,7 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 			Schema: lsp.WorkspaceSymbolProtocolSchema,
 		},
 		SemanticTokensProvider: &lsp.SemanticTokensOptions{
-			Schema: lsp.SemanticTokensProtocolSchema,
+			Schema: SemanticTokensProtocolSchema,
 			Legend: lsp.SemanticTokensLegend{
 				TokenTypes:     []string{"entity", "activity", "reference", "symbol"},
 				TokenModifiers: []string{},
@@ -54,6 +54,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 			"goooDocumentProvenance": map[string]any{
 				"method": "gooo/documentProvenance",
 				"schema": "gooo/lsp-document-provenance/v3",
+			},
+			"goooSelfImprovementProvenance": map[string]any{
+				"method": "gooo/selfImprovementProvenance",
+				"schema": "gooo/lsp-self-improvement-provenance-chain/v1",
 			},
 			"goooReferencesProvenance": map[string]any{
 				"method": "gooo/referencesProvenance",
