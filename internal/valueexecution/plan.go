@@ -29,6 +29,7 @@ type Plan struct {
 type Execution struct {
 	Scope           string                    `json:"scope"`
 	PlanDigest      string                    `json:"plan_digest"`
+	RuntimePlanDigest string                    `json:"runtime_plan_digest,omitempty"`
 	InputDigest     string                    `json:"input_digest"`
 	ExecutionDigest string                    `json:"execution_digest"`
 	Phase           ExecutionPhase            `json:"phase"`

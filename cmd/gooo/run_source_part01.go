@@ -84,6 +84,13 @@ func runSourceValuePlan(options runSourceOptions, source []byte, reader SourceRe
 		return runSourceContinuation(options, plan, rootInput, runtimePlanDigest, jsonMode, stdout, stderr)
 	}
 	execution, err := plan.Execute(map[string]int64{options.entry: rootInput})
+	if runtimePlanDigest != "" {
+		var bindErr error
+		execution, bindErr = execution.BindRuntimePlanDigest(runtimePlanDigest)
+		if err == nil {
+			err = bindErr
+		}
+	}
 	if err != nil {
 		return reportPlanFailure(jsonMode, stdout, stderr, options.filename, execution, err)
 	}

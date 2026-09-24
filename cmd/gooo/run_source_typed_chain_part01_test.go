@@ -91,6 +91,9 @@ func TestRunSourceTypedRuntimeChainHasIndependentReplayEvidence(t *testing.T) {
 	if planned.RuntimePlanDigest == "" {
 		t.Fatal("typed runtime plan digest was not retained in execution evidence")
 	}
+	if planned.Execution.RuntimePlanDigest != planned.RuntimePlanDigest {
+		t.Fatalf("execution runtime plan digest = %q, want %q", planned.Execution.RuntimePlanDigest, planned.RuntimePlanDigest)
+	}
 	if len(planned.Execution.BindingEdgeOrder) != len(wantEdges) || planned.Execution.BindingEdgeOrder[0] != wantEdges[0] || planned.Execution.BindingEdgeOrder[1] != wantEdges[1] {
 		t.Fatalf("planned runtime chain edge order = %#v, want %#v", planned.Execution.BindingEdgeOrder, wantEdges)
 	}

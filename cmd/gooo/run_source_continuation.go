@@ -11,6 +11,13 @@ import (
 
 func runSourceContinuation(options runSourceOptions, plan valueexecution.Plan, input int64, runtimePlanDigest string, jsonMode bool, stdout, stderr io.Writer) int {
 	trace, err := plan.ExecuteIterations(context.Background(), map[string]int64{options.entry: input}, options.iterations)
+	if runtimePlanDigest != "" {
+		var bindErr error
+		trace, bindErr = trace.BindRuntimePlanDigest(runtimePlanDigest)
+		if err == nil {
+			err = bindErr
+		}
+	}
 	decision, code := "PASS", exitOK
 	if err != nil {
 		decision, code = "FAIL_CLOSED", exitFailure
