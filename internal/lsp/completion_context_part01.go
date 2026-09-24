@@ -14,7 +14,8 @@ func completionExpectedSymbolKind(source string, position Position, usePosition 
 	offset, err := PositionToOffset(source, position)
 	if err != nil || offset < 0 || offset > len(source) {
 		return 0, false
-	}	lineStart := strings.LastIndexByte(source[:offset], '\n') + 1
+	}
+	lineStart := strings.LastIndexByte(source[:offset], '\n') + 1
 	prefix := strings.TrimSpace(source[lineStart:offset])
 	if kind, ok := completionExpectedEntityFieldKind(source, offset, prefix); ok {
 		return kind, true
