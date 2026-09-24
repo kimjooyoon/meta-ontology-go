@@ -5,13 +5,13 @@ import "strings"
 // EnvironmentInputs identifies the inputs that make an execution replayable.
 // These are observations, not authorization grants.
 type EnvironmentInputs struct {
-	SourceDigest         string `json:"source_digest"`
-	SemanticFingerprint  string `json:"semantic_fingerprint"`
-	ToolchainDigest      string `json:"toolchain_digest"`
-	ContractDigest       string `json:"contract_digest"`
-	ModelDigest          string `json:"model_digest"`
-	SkillDigest          string `json:"skill_digest"`
-	GatewayPolicyDigest  string `json:"gateway_policy_digest"`
+	SourceDigest        string `json:"source_digest"`
+	SemanticFingerprint string `json:"semantic_fingerprint"`
+	ToolchainDigest     string `json:"toolchain_digest"`
+	ContractDigest      string `json:"contract_digest"`
+	ModelDigest         string `json:"model_digest"`
+	SkillDigest         string `json:"skill_digest"`
+	GatewayPolicyDigest string `json:"gateway_policy_digest"`
 }
 
 // EnvironmentStatus describes whether the environment boundary was measured.
@@ -25,13 +25,13 @@ const (
 // EnvironmentObservation is a stable, non-authorizing description of the
 // environment boundary used for one replay comparison.
 type EnvironmentObservation struct {
-	Schema        string               `json:"schema"`
-	Inputs        EnvironmentInputs    `json:"inputs"`
-	Status        EnvironmentStatus    `json:"status"`
-	Missing       []string             `json:"missing,omitempty"`
-	Reason        string               `json:"reason"`
-	Digest        string               `json:"digest,omitempty"`
-	NonAuthorizing bool                `json:"non_authorizing"`
+	Schema         string            `json:"schema"`
+	Inputs         EnvironmentInputs `json:"inputs"`
+	Status         EnvironmentStatus `json:"status"`
+	Missing        []string          `json:"missing,omitempty"`
+	Reason         string            `json:"reason"`
+	Digest         string            `json:"digest,omitempty"`
+	NonAuthorizing bool              `json:"non_authorizing"`
 }
 
 const EnvironmentDigestSchema = "gooo/value-execution-environment/v1"
@@ -55,16 +55,15 @@ func ObserveEnvironment(inputs EnvironmentInputs) EnvironmentObservation {
 		Status:         EnvironmentStatusUnknown,
 		Reason:         "ENVIRONMENT_INPUT_INCOMPLETE",
 		NonAuthorizing: true,
-	}
-	observation.Missing = missingEnvironmentInputs(inputs)
+		Missing: missingEnvironmentInputs(inputs)}
 	if len(observation.Missing) != 0 {
 		return observation
 	}
 	observation.Status = EnvironmentStatusReady
 	observation.Reason = "ENVIRONMENT_BOUND"
 	observation.Digest = digestValue(struct {
-		Schema string             `json:"schema"`
-		Inputs EnvironmentInputs  `json:"inputs"`
+		Schema string            `json:"schema"`
+		Inputs EnvironmentInputs `json:"inputs"`
 	}{Schema: EnvironmentDigestSchema, Inputs: inputs})
 	return observation
 }
