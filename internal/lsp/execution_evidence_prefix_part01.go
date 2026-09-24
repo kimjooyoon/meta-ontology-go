@@ -38,10 +38,10 @@ func ObserveExecutionEvidencePrefix(stageDigests []string) ExecutionEvidencePref
 	}
 
 	observation := ExecutionEvidencePrefixObservation{
-		Schema:            ExecutionEvidencePrefixObservationSchema,
-		StageDigests:      stages,
-		MissingStageIndex: missingStageIndex,
-		NonAuthorizing:    true,
+		Schema:               ExecutionEvidencePrefixObservationSchema,
+		StageDigests:         stages,
+		MissingStageIndex:    missingStageIndex,
+		NonAuthorizing:       true,
 		EvidencePrefixDigest: executionEvidencePrefixDigest(stages, missingStageIndex)}
 	if missingStageIndex < 0 && len(stages) > 0 {
 		observation.Status = ExecutionEvidencePrefixComplete
