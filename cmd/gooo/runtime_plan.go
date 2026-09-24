@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
@@ -17,6 +18,7 @@ type runtimePlanDocument struct {
 	SemanticHash        string               `json:"semantic_hash"`
 	TypedPlanDigest     string               `json:"typed_plan_digest,omitempty"`
 	ActivityOrder       []string             `json:"activity_order,omitempty"`
+	BindingEdgeOrder    []string             `json:"binding_edge_order,omitempty"`
 	RuntimeBindingCount int                  `json:"runtime_binding_count"`
 	Bindings            []runtimePlanBinding `json:"bindings"`
 }
@@ -28,6 +30,10 @@ type runtimePlanBinding struct {
 	ConsumerActivity string `json:"consumer_activity"`
 	ConsumerPort     string `json:"consumer_port"`
 	Entity           string `json:"entity"`
+}
+
+func runtimePlanBindingEdgeKey(edge bidir.BindingEdge) string {
+	return fmt.Sprintf("%s:%s->%s:%s", edge.SourceActivity, edge.SourcePort, edge.TargetActivity, edge.TargetPort)
 }
 
 func buildRuntimePlanData(source []byte, ir semantic.IR) ([]byte, error) {
@@ -68,6 +74,10 @@ func buildRuntimePlanDataWithTypedPlan(source []byte, ir semantic.IR, typedPlan 
 		document.ActivityOrder = make([]string, len(typedPlan.Activities))
 		for index, activity := range typedPlan.Activities {
 			document.ActivityOrder[index] = string(activity)
+		}
+		document.BindingEdgeOrder = make([]string, len(typedPlan.Edges))
+		for index, edge := range typedPlan.Edges {
+			document.BindingEdgeOrder[index] = runtimePlanBindingEdgeKey(edge)
 		}
 	}
 	data, err := json.MarshalIndent(document, "", "  ")

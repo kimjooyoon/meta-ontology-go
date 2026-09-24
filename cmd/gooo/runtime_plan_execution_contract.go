@@ -83,7 +83,16 @@ func validateRuntimePlanContract(source []byte, plan valueexecution.Plan, raw []
 				return "", fmt.Errorf("typed-plan activity order mismatch at %d: artifact=%q expected=%q", index, document.ActivityOrder[index], activity)
 			}
 		}
-	} else if document.TypedPlanDigest != "" || len(document.ActivityOrder) != 0 {
+		if len(document.BindingEdgeOrder) != len(typedPlan.Edges) {
+			return "", fmt.Errorf("typed-plan binding edge order length mismatch: artifact=%d expected=%d", len(document.BindingEdgeOrder), len(typedPlan.Edges))
+		}
+		for index, edge := range typedPlan.Edges {
+			want := runtimePlanBindingEdgeKey(edge)
+			if document.BindingEdgeOrder[index] != want {
+				return "", fmt.Errorf("typed-plan binding edge order mismatch at %d: artifact=%q expected=%q", index, document.BindingEdgeOrder[index], want)
+			}
+		}
+	} else if document.TypedPlanDigest != "" || len(document.ActivityOrder) != 0 || len(document.BindingEdgeOrder) != 0 {
 		return "", fmt.Errorf("runtime plan contains typed-plan identity without explicit binding edges")
 	}
 
