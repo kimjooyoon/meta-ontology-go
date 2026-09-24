@@ -13,6 +13,7 @@ const ReasonContinuationCanceled = "VALUE_CONTINUATION_CANCELED"
 type Continuation struct {
 	Schema              string      `json:"schema"`
 	PlanDigest          string      `json:"plan_digest"`
+	RuntimePlanDigest   string      `json:"runtime_plan_digest,omitempty"`
 	IterationsRequested int         `json:"iterations_requested"`
 	IterationsCompleted int         `json:"iterations_completed"`
 	FeedbackDeliveries  int         `json:"feedback_deliveries"`

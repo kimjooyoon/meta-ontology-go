@@ -48,6 +48,13 @@ func TestRunSourceTypedRuntimeChainHasIndependentReplayEvidence(t *testing.T) {
 	if first.Decision != "PASS" || first.Execution.Scope != valueexecution.RegisteredValueOperationScope || first.Execution.ApplyCalls != 3 || first.Execution.Deliveries != 2 || len(first.Execution.Activities) != 3 || first.Execution.Results["CommitCandidate"].Value != 44 {
 		t.Fatalf("typed runtime chain report = %#v", first)
 	}
+	wantEdges := []string{
+		"ProposeCandidate:result->RecordIndependentReview:input",
+		"RecordIndependentReview:result->CommitCandidate:input",
+	}
+	if len(first.Execution.BindingEdgeOrder) != len(wantEdges) || first.Execution.BindingEdgeOrder[0] != wantEdges[0] || first.Execution.BindingEdgeOrder[1] != wantEdges[1] {
+		t.Fatalf("typed runtime chain edge order = %#v, want %#v", first.Execution.BindingEdgeOrder, wantEdges)
+	}
 	firstExecution, err := json.Marshal(first.Execution)
 	if err != nil {
 		t.Fatal(err)
@@ -83,6 +90,12 @@ func TestRunSourceTypedRuntimeChainHasIndependentReplayEvidence(t *testing.T) {
 	planned := run(runtimePlan)
 	if planned.RuntimePlanDigest == "" {
 		t.Fatal("typed runtime plan digest was not retained in execution evidence")
+	}
+	if planned.Execution.RuntimePlanDigest != planned.RuntimePlanDigest {
+		t.Fatalf("execution runtime plan digest = %q, want %q", planned.Execution.RuntimePlanDigest, planned.RuntimePlanDigest)
+	}
+	if len(planned.Execution.BindingEdgeOrder) != len(wantEdges) || planned.Execution.BindingEdgeOrder[0] != wantEdges[0] || planned.Execution.BindingEdgeOrder[1] != wantEdges[1] {
+		t.Fatalf("planned runtime chain edge order = %#v, want %#v", planned.Execution.BindingEdgeOrder, wantEdges)
 	}
 }
 

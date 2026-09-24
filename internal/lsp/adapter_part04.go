@@ -62,6 +62,9 @@ func appendActivity(result *ParseResult, source string, activity *syntax.Activit
 		return err
 	}
 	id := ids[loweredSymbolKey{start: activity.Span.Start.Offset, end: activity.Span.End.Offset, kind: semantic.Activity, name: activity.Name}]
+	if id == "" {
+		id = names[activity.Name]
+	}
 	result.Symbols = append(result.Symbols, Symbol{
 		Name: activity.Name, ID: id, Kind: SymbolFunction, Detail: "activity " + activity.Name,
 		Range: rangeValue, SelectionRange: selection,

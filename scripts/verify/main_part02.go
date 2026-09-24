@@ -6,7 +6,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
-func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
+func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps, identityOnly bool) error {
 	if !skipCaps {
 		if err := checkSourcePolicyForRun(root, storageRoot); err != nil {
 			return err
@@ -14,6 +14,18 @@ func run(root, storageRoot, from, to, head, base, branch, expectedHead string, c
 	}
 	if capsOnly {
 		return nil
+	}
+	// The lightweight CI preflight intentionally has no PR route inputs.
+	// Keep its identity checks fail-closed while deferring ownership and route
+	// checks to the later full scope gate.
+	if head == "" && base == "" {
+		identityOnly = true
+	}
+	if identityOnly {
+		if err := validateScopeRevisions(from, to, expectedHead); err != nil {
+			return err
+		}
+		return verifyPRCheckoutIdentity(root, from, to, expectedHead)
 	}
 	if err := checkAgentPushBranch(branch); err != nil {
 		return err

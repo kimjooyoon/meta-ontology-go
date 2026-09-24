@@ -14,7 +14,7 @@ func summarize(input Input, indicators []Indicator) Summary {
 			BasisPoints: basisPoints(satisfied, len(indicators))},
 		Artifacts: ArtifactSummary{Manifest: boolInt(manifestEmitted(input)),
 			Interface:     boolInt(interfaceEmitted(input)),
-			GoldenMatches: boolInt(reflect.DeepEqual(input.Manifest, input.ManifestGolden)) + boolInt(reflect.DeepEqual(input.Interface, input.InterfaceGolden)),
+			GoldenMatches: boolInt(goldenEqual(input.Manifest, input.ManifestGolden)) + boolInt(goldenEqual(input.Interface, input.InterfaceGolden)),
 			Replays:       boolInt(reflect.DeepEqual(input.Manifest, input.ManifestReplay)) + boolInt(reflect.DeepEqual(input.Interface, input.InterfaceReplay))},
 		Resolution: ResolutionSummary{ManifestDefinitions: len(input.Manifest.Definitions.Files),
 			InterfaceDefinitions: len(input.Interface.Definitions.Files),

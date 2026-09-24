@@ -55,6 +55,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 				"method": "gooo/documentProvenance",
 				"schema": "gooo/lsp-document-provenance/v3",
 			},
+			"goooSelfImprovementProvenance": map[string]any{
+				"method": "gooo/selfImprovementProvenance",
+				"schema": "gooo/lsp-self-improvement-provenance-chain/v1",
+			},
 			"goooReferencesProvenance": map[string]any{
 				"method": "gooo/referencesProvenance",
 				"schema": "gooo/lsp-references-provenance/v1",
@@ -66,6 +70,10 @@ func TestRunLSPInitializeAdvertisesExactSupportedCapabilities(t *testing.T) {
 			"goooCompletionProvenance": map[string]any{
 				"method": "gooo/completionProvenance",
 				"schema": "gooo/lsp-completion-provenance/v1",
+			},
+			"goooExecutionPlanProvenance": map[string]any{
+				"method": "gooo/executionPlanProvenance",
+				"schema": "gooo/execution-plan-provenance-binding/v1",
 			},
 			"goooStoryProvenance": map[string]any{
 				"method": "gooo/storyProvenance",

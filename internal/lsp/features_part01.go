@@ -47,9 +47,21 @@ func (server *Server) completionAt(uri string, position Position, usePosition bo
 	}
 	server.mu.RUnlock()
 	prefix := ""
+	cursorWord := ""
+	cursorInside := false
 	if ok {
 		if usePosition {
-			prefix, _, _, _ = wordAt(document.text, position)
+			word, _, end, found := wordAt(document.text, position)
+			offset, offsetErr := PositionToOffset(document.text, position)
+			if found && offset < end {
+				cursorWord = word
+				cursorInside = true
+			}
+			if !found || offsetErr != nil || offset != end {
+				prefix = ""
+			} else {
+				prefix = word
+			}
 		}
 	}
 	for _, keyword := range keywords {
@@ -62,7 +74,9 @@ func (server *Server) completionAt(uri string, position Position, usePosition bo
 		expectedKind, contextAware := completionExpectedSymbolKind(document.text, position, usePosition)
 		for _, symbol := range allSymbols(document.result) {
 			if contextAware && symbol.Kind != expectedKind {
-				continue
+				if !(cursorInside && symbol.Kind == SymbolFunction && strings.Contains(strings.ToLower(symbol.Name), strings.ToLower(cursorWord))) {
+					continue
+				}
 			}
 			if !completionMatchesPrefix(symbol.Name, prefix) {
 				continue

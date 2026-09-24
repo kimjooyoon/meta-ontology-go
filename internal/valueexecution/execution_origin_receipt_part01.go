@@ -19,14 +19,15 @@ const (
 // ExecutionOriginReceipt links a complete origin observation to one detached
 // execution summary. Failed and in-flight phases remain visible as-is.
 type ExecutionOriginReceipt struct {
-	OriginDigest    string                `json:"origin_digest,omitempty"`
-	ExecutionDigest string                `json:"execution_digest,omitempty"`
-	Phase           ExecutionPhase        `json:"phase"`
-	Conditions      []ExecutionCondition  `json:"conditions"`
-	Status          ExecutionOriginStatus `json:"status"`
-	Reason          string                `json:"reason"`
-	NonAuthorizing  bool                  `json:"non_authorizing"`
-	ReceiptDigest   string                `json:"receipt_digest"`
+	OriginDigest      string                `json:"origin_digest,omitempty"`
+	ExecutionDigest   string                `json:"execution_digest,omitempty"`
+	RuntimePlanDigest string                `json:"runtime_plan_digest,omitempty"`
+	Phase             ExecutionPhase        `json:"phase"`
+	Conditions        []ExecutionCondition  `json:"conditions"`
+	Status            ExecutionOriginStatus `json:"status"`
+	Reason            string                `json:"reason"`
+	NonAuthorizing    bool                  `json:"non_authorizing"`
+	ReceiptDigest     string                `json:"receipt_digest"`
 }
 
 // ObserveExecutionOrigin creates a deterministic, non-authorizing link
@@ -34,12 +35,13 @@ type ExecutionOriginReceipt struct {
 // evidence and never turns a failed phase into a successful observation.
 func ObserveExecutionOrigin(origin provenance.OriginChainObservation, execution Execution) ExecutionOriginReceipt {
 	receipt := ExecutionOriginReceipt{
-		OriginDigest:    origin.Digest,
-		ExecutionDigest: execution.ExecutionDigest,
-		Phase:           execution.Phase,
-		Conditions:      canonicalOriginExecutionConditions(execution.Conditions),
-		Status:          ExecutionOriginStatusUnknown,
-		NonAuthorizing:  true,
+		OriginDigest:      origin.Digest,
+		ExecutionDigest:   execution.ExecutionDigest,
+		RuntimePlanDigest: execution.RuntimePlanDigest,
+		Phase:             execution.Phase,
+		Conditions:        canonicalOriginExecutionConditions(execution.Conditions),
+		Status:            ExecutionOriginStatusUnknown,
+		NonAuthorizing:    true,
 	}
 	switch {
 	case !origin.Verified() || !origin.Comparable():
