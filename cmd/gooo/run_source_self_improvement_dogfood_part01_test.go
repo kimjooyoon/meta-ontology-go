@@ -89,7 +89,7 @@ func dogfoodSelfImprovementOrigin(execution valueexecution.Execution, label stri
 	encoded, _ := json.Marshal(execution)
 	return provenance.ObserveOriginChain(provenance.OriginChain{
 		DeclarationURI:        "examples/language-runtime-binding/typed-chain.gooo",
-		DeclarationSymbol:      "activity CommitCandidate",
+		DeclarationSymbol:     "activity CommitCandidate",
 		IRNode:                "activity:CommitCandidate",
 		GeneratedURI:          "cmd/gooo/run_source_typed_chain_part01_test.go",
 		GeneratedSymbol:       "TestRunSourceTypedRuntimeChainHasIndependentReplayEvidence",
