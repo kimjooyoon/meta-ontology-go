@@ -89,6 +89,38 @@ func TestExecutionPlanBindingPreservesTypedPlanIdentity(t *testing.T) {
 	}
 }
 
+func TestExecutionPlanBindingPreservesTypedPlanEdgeIdentity(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("e", 64)
+	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)
+	activities := []string{"runtimebinding.ProposeCandidate", "runtimebinding.RecordIndependentReview", "runtimebinding.CommitCandidate"}
+	edges := []string{
+		"runtimebinding.ProposeCandidate:result->runtimebinding.RecordIndependentReview:input",
+		"runtimebinding.RecordIndependentReview:result->runtimebinding.CommitCandidate:input",
+	}
+	binding := BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
+		"compile-gooo",
+		digest,
+		"model/gooo-planner-v1",
+		GatewayPolicy{},
+		ExecutionPlanLifecycleResumed,
+		digest,
+		activities,
+		edges,
+		2,
+		chain,
+	)
+	if len(binding.Plan.BindingEdgeOrder) != len(edges) {
+		t.Fatalf("binding edge order = %#v", binding.Plan.BindingEdgeOrder)
+	}
+	if err := binding.Validate(); err != nil {
+		t.Fatalf("typed plan edge binding validation failed: %v", err)
+	}
+	binding.Plan.BindingEdgeOrder[0] = "tampered"
+	if err := binding.Validate(); err == nil {
+		t.Fatal("tampered typed plan edge order was accepted")
+	}
+}
+
 func TestExecutionPlanBindingRejectsTamperedEvidence(t *testing.T) {
 	digest := "sha256:" + strings.Repeat("c", 64)
 	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)

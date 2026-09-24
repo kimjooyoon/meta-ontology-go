@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/bidir"
 	"github.com/kimjooyoon/meta-ontology-go/internal/provenance"
@@ -19,24 +20,32 @@ type ExecutionPlanProvenanceParamsPart01 struct {
 	Lifecycle       provenance.ExecutionPlanLifecyclePart01 `json:"lifecycle"`
 }
 
-func executionPlanTypedMetadataPart01(text string) (string, []string, int) {
+func executionPlanBindingEdgeKeyPart01(edge bidir.BindingEdge) string {
+	return fmt.Sprintf("%s:%s->%s:%s", edge.SourceActivity, edge.SourcePort, edge.TargetActivity, edge.TargetPort)
+}
+
+func executionPlanTypedMetadataPart01(text string) (string, []string, []string, int) {
 	file, diagnostics := syntax.ParseFile("execution-plan-provenance.gooo", text)
 	if diagnostics.HasErrors() || file == nil {
-		return "", nil, 0
+		return "", nil, nil, 0
 	}
 	document, err := bidir.DocumentFromSyntaxWithEntityFieldsSupport(file, syntax.EntityFieldsV1Support())
 	if err != nil || len(document.BindingEdges) == 0 {
-		return "", nil, 0
+		return "", nil, nil, 0
 	}
 	typedPlan, err := bidir.CompileTypedPlan(document)
 	if err != nil {
-		return "", nil, 0
+		return "", nil, nil, 0
 	}
 	activityOrder := make([]string, len(typedPlan.Activities))
 	for index, activity := range typedPlan.Activities {
 		activityOrder[index] = string(activity)
 	}
-	return typedPlan.Digest(), activityOrder, len(typedPlan.Edges)
+	edgeOrder := make([]string, len(typedPlan.Edges))
+	for index, edge := range typedPlan.Edges {
+		edgeOrder[index] = executionPlanBindingEdgeKeyPart01(edge)
+	}
+	return typedPlan.Digest(), activityOrder, edgeOrder, len(typedPlan.Edges)
 }
 
 func (server *Server) executionPlanProvenanceRequest(
@@ -54,6 +63,7 @@ func (server *Server) executionPlanProvenanceRequest(
 	var chain provenance.SelfImprovementProvenanceChainPart01
 	var typedPlanDigest string
 	var activityOrder []string
+	var bindingEdgeOrder []string
 	var runtimeBindingCount int
 	server.mu.RLock()
 	stored, exists := server.documents[params.TextDocument.URI]
@@ -80,10 +90,10 @@ func (server *Server) executionPlanProvenanceRequest(
 			"",
 			"",
 		)
-		typedPlanDigest, activityOrder, runtimeBindingCount = executionPlanTypedMetadataPart01(stored.text)
+		typedPlanDigest, activityOrder, bindingEdgeOrder, runtimeBindingCount = executionPlanTypedMetadataPart01(stored.text)
 	}
 
-	binding := provenance.BindExecutionPlanToProvenanceWithTypedPlanPart01(
+	binding := provenance.BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
 		params.Task,
 		params.WorkspaceDigest,
 		params.Model,
@@ -91,6 +101,7 @@ func (server *Server) executionPlanProvenanceRequest(
 		params.Lifecycle,
 		typedPlanDigest,
 		activityOrder,
+		bindingEdgeOrder,
 		runtimeBindingCount,
 		chain,
 	)

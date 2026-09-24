@@ -77,12 +77,19 @@ bind RecordIndependentReview.result -> CommitCandidate.input
 	if err != nil {
 		t.Fatal(err)
 	}
-	if binding.Plan.TypedPlanDigest != typedPlan.Digest() || binding.Plan.RuntimeBindingCount != len(typedPlan.Edges) || len(binding.Plan.ActivityOrder) != len(typedPlan.Activities) {
+	if binding.Plan.TypedPlanDigest != typedPlan.Digest() || binding.Plan.RuntimeBindingCount != len(typedPlan.Edges) ||
+		len(binding.Plan.ActivityOrder) != len(typedPlan.Activities) || len(binding.Plan.BindingEdgeOrder) != len(typedPlan.Edges) {
 		t.Fatalf("typed plan provenance = %#v, want digest %s, edges %d, activities %d", binding.Plan, typedPlan.Digest(), len(typedPlan.Edges), len(typedPlan.Activities))
 	}
 	for index, activity := range typedPlan.Activities {
 		if binding.Plan.ActivityOrder[index] != string(activity) {
 			t.Fatalf("activity order[%d] = %q, want %q", index, binding.Plan.ActivityOrder[index], activity)
+		}
+	}
+	for index, edge := range typedPlan.Edges {
+		want := executionPlanBindingEdgeKeyPart01(edge)
+		if binding.Plan.BindingEdgeOrder[index] != want {
+			t.Fatalf("binding edge order[%d] = %q, want %q", index, binding.Plan.BindingEdgeOrder[index], want)
 		}
 	}
 	if err := binding.Validate(); err != nil {

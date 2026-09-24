@@ -36,6 +36,7 @@ type ExecutionPlanPart01 struct {
 	Lifecycle           ExecutionPlanLifecyclePart01 `json:"lifecycle"`
 	TypedPlanDigest     string                       `json:"typed_plan_digest,omitempty"`
 	ActivityOrder       []string                     `json:"activity_order,omitempty"`
+	BindingEdgeOrder    []string                     `json:"binding_edge_order,omitempty"`
 	RuntimeBindingCount int                          `json:"runtime_binding_count,omitempty"`
 }
 
@@ -97,8 +98,38 @@ func BindExecutionPlanToProvenanceWithTypedPlanPart01(
 	runtimeBindingCount int,
 	chain SelfImprovementProvenanceChainPart01,
 ) ExecutionPlanProvenanceBindingPart01 {
+	return BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
+		task,
+		workspaceDigest,
+		model,
+		gatewayPolicy,
+		lifecycle,
+		typedPlanDigest,
+		activityOrder,
+		nil,
+		runtimeBindingCount,
+		chain,
+	)
+}
+
+// BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01 adds the validated
+// declaration-level typed plan identity and canonical edge order to the
+// evidence boundary. The plan remains observation only.
+func BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
+	task,
+	workspaceDigest,
+	model string,
+	gatewayPolicy GatewayPolicy,
+	lifecycle ExecutionPlanLifecyclePart01,
+	typedPlanDigest string,
+	activityOrder []string,
+	bindingEdgeOrder []string,
+	runtimeBindingCount int,
+	chain SelfImprovementProvenanceChainPart01,
+) ExecutionPlanProvenanceBindingPart01 {
 	stages := append([]SelfImprovementProvenanceStagePart01(nil), chain.Stages...)
 	order := append([]string(nil), activityOrder...)
+	edgeOrder := append([]string(nil), bindingEdgeOrder...)
 	plan := ExecutionPlanPart01{
 		Task:                strings.TrimSpace(task),
 		WorkspaceDigest:     strings.TrimSpace(workspaceDigest),
@@ -107,6 +138,7 @@ func BindExecutionPlanToProvenanceWithTypedPlanPart01(
 		Lifecycle:           lifecycle,
 		TypedPlanDigest:     strings.TrimSpace(typedPlanDigest),
 		ActivityOrder:       order,
+		BindingEdgeOrder:    edgeOrder,
 		RuntimeBindingCount: runtimeBindingCount,
 	}
 	if !validExecutionPlanLifecyclePart01(plan.Lifecycle) {
@@ -268,6 +300,9 @@ func executionPlanEvidencePrefixDigestPart01(
 	for _, activity := range binding.Plan.ActivityOrder {
 		fmt.Fprintf(&canonical, "activity=%s;", activity)
 	}
+	for _, edge := range binding.Plan.BindingEdgeOrder {
+		fmt.Fprintf(&canonical, "edge=%s;", edge)
+	}
 	for index, stage := range binding.ProvenanceStages {
 		if binding.MissingStageIndex >= 0 && index >= binding.MissingStageIndex {
 			break
@@ -280,7 +315,7 @@ func executionPlanEvidencePrefixDigestPart01(
 
 func executionPlanTypedMetadataReasonPart01(plan ExecutionPlanPart01) string {
 	if plan.TypedPlanDigest == "" {
-		if len(plan.ActivityOrder) != 0 || plan.RuntimeBindingCount != 0 {
+		if len(plan.ActivityOrder) != 0 || len(plan.BindingEdgeOrder) != 0 || plan.RuntimeBindingCount != 0 {
 			return "EXECUTION_PLAN_TYPED_PLAN_INCOMPLETE"
 		}
 		return ""
@@ -301,6 +336,22 @@ func executionPlanTypedMetadataReasonPart01(plan ExecutionPlanPart01) string {
 			return "EXECUTION_PLAN_TYPED_PLAN_ACTIVITY_DUPLICATE"
 		}
 		seen[activity] = struct{}{}
+	}
+	if len(plan.BindingEdgeOrder) != 0 {
+		if len(plan.BindingEdgeOrder) != plan.RuntimeBindingCount {
+			return "EXECUTION_PLAN_TYPED_PLAN_EDGE_COUNT_MISMATCH"
+		}
+		seenEdges := make(map[string]struct{}, len(plan.BindingEdgeOrder))
+		for _, edge := range plan.BindingEdgeOrder {
+			edge = strings.TrimSpace(edge)
+			if edge == "" {
+				return "EXECUTION_PLAN_TYPED_PLAN_EDGE_INVALID"
+			}
+			if _, exists := seenEdges[edge]; exists {
+				return "EXECUTION_PLAN_TYPED_PLAN_EDGE_DUPLICATE"
+			}
+			seenEdges[edge] = struct{}{}
+		}
 	}
 	return ""
 }
