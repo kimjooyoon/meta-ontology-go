@@ -6,7 +6,7 @@ func TestValidateSelfImprovementOutcomeDoesNotAuthorizeFromProvenance(t *testing
 	receipt := SelfImprovementOutcomeReceipt{
 		SchemaVersion:                   SelfImprovementOutcomeSchema,
 		ScenarioID:                      "generation-outcome",
-		TrialIndex:                     0,
+		TrialIndex:                      0,
 		CounterexampleRecovered:         SelfImprovementOutcomeClosed,
 		ContractPreserved:               SelfImprovementOutcomeClosed,
 		RegressionEvidence:              SelfImprovementOutcomeClosed,
