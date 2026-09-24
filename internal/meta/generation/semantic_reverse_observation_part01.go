@@ -24,18 +24,18 @@ var semanticOperationArtifactNames = [...]string{
 // SemanticReverseObservation records only evidence obtained by rereading the
 // caller-owned generated artifacts and checking them against the .gooo source.
 type SemanticReverseObservation struct {
-	Schema                string          `json:"schema"`
-	AuthorityDigest       string          `json:"authority_digest"`
-	ScenarioID            string          `json:"scenario_id"`
-	ReceiptDigest         string          `json:"receipt_digest"`
+	Schema                string            `json:"schema"`
+	AuthorityDigest       string            `json:"authority_digest"`
+	ScenarioID            string            `json:"scenario_id"`
+	ReceiptDigest         string            `json:"receipt_digest"`
 	ArtifactDigests       map[string]string `json:"artifact_digests"`
-	ArtifactCount         int             `json:"artifact_count"`
-	Decision              string          `json:"decision"`
-	Reason                string          `json:"reason"`
-	ObservationDecision   string          `json:"observation_decision"`
-	ObservationReason     string          `json:"observation_reason"`
-	ObservationCandidates int             `json:"observation_candidates"`
-	Metrics               EnvelopeMetrics `json:"metrics"`
+	ArtifactCount         int               `json:"artifact_count"`
+	Decision              string            `json:"decision"`
+	Reason                string            `json:"reason"`
+	ObservationDecision   string            `json:"observation_decision"`
+	ObservationReason     string            `json:"observation_reason"`
+	ObservationCandidates int               `json:"observation_candidates"`
+	Metrics               EnvelopeMetrics   `json:"metrics"`
 }
 
 // SemanticOperationRoundTrip keeps the generated IR beside its independent
