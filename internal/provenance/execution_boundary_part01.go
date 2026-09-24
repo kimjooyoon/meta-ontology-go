@@ -25,54 +25,60 @@ const (
 )
 
 type ExecutionBoundaryInput struct {
-	DeclarationDigest        string
-	ContractDigest           string
-	IRDigest                 string
-	GeneratedDigest          string
-	ReverseObservationDigest string
-	TaskDigest               string
-	WorkspaceDigest          string
-	GatewayPolicyDigest      string
-	ModelDigest              string
+	DeclarationDigest            string
+	ContractDigest               string
+	IRDigest                     string
+	GeneratedDigest              string
+	ReverseObservationDigest     string
+	CounterexampleRecoveryDigest string
+	ContractPreservationDigest   string
+	TaskDigest                   string
+	WorkspaceDigest              string
+	GatewayPolicyDigest          string
+	ModelDigest                  string
 }
 
 type ExecutionBoundaryObservation struct {
-	Schema                   string                     `json:"schema"`
-	DeclarationDigest        string                     `json:"declaration_digest,omitempty"`
-	ContractDigest           string                     `json:"contract_digest,omitempty"`
-	IRDigest                 string                     `json:"ir_digest,omitempty"`
-	GeneratedDigest          string                     `json:"generated_digest,omitempty"`
-	ReverseObservationDigest string                     `json:"reverse_observation_digest,omitempty"`
-	TaskDigest               string                     `json:"task_digest,omitempty"`
-	WorkspaceDigest          string                     `json:"workspace_digest,omitempty"`
-	GatewayPolicyDigest      string                     `json:"gateway_policy_digest,omitempty"`
-	ModelDigest              string                     `json:"model_digest,omitempty"`
-	Lifecycle                ExecutionBoundaryLifecycle `json:"lifecycle"`
-	EvidencePrefixDigest     string                     `json:"evidence_prefix_digest"`
-	MissingStageIndex        int                        `json:"missing_stage_index"`
-	Decision                 string                     `json:"decision"`
-	Reason                   string                     `json:"reason"`
-	NonAuthorizing           bool                       `json:"non_authorizing"`
-	ObservationDigest        string                     `json:"observation_digest"`
+	Schema                       string                     `json:"schema"`
+	DeclarationDigest            string                     `json:"declaration_digest,omitempty"`
+	ContractDigest               string                     `json:"contract_digest,omitempty"`
+	IRDigest                     string                     `json:"ir_digest,omitempty"`
+	GeneratedDigest              string                     `json:"generated_digest,omitempty"`
+	ReverseObservationDigest     string                     `json:"reverse_observation_digest,omitempty"`
+	CounterexampleRecoveryDigest string                     `json:"counterexample_recovery_digest,omitempty"`
+	ContractPreservationDigest   string                     `json:"contract_preservation_digest,omitempty"`
+	TaskDigest                   string                     `json:"task_digest,omitempty"`
+	WorkspaceDigest              string                     `json:"workspace_digest,omitempty"`
+	GatewayPolicyDigest          string                     `json:"gateway_policy_digest,omitempty"`
+	ModelDigest                  string                     `json:"model_digest,omitempty"`
+	Lifecycle                    ExecutionBoundaryLifecycle `json:"lifecycle"`
+	EvidencePrefixDigest         string                     `json:"evidence_prefix_digest"`
+	MissingStageIndex            int                        `json:"missing_stage_index"`
+	Decision                     string                     `json:"decision"`
+	Reason                       string                     `json:"reason"`
+	NonAuthorizing               bool                       `json:"non_authorizing"`
+	ObservationDigest            string                     `json:"observation_digest"`
 }
 
 func ObserveExecutionBoundary(input ExecutionBoundaryInput, lifecycle ExecutionBoundaryLifecycle) ExecutionBoundaryObservation {
 	value := ExecutionBoundaryObservation{
-		Schema:                   ExecutionBoundaryObservationSchema,
-		DeclarationDigest:        strings.TrimSpace(input.DeclarationDigest),
-		ContractDigest:           strings.TrimSpace(input.ContractDigest),
-		IRDigest:                 strings.TrimSpace(input.IRDigest),
-		GeneratedDigest:          strings.TrimSpace(input.GeneratedDigest),
-		ReverseObservationDigest: strings.TrimSpace(input.ReverseObservationDigest),
-		TaskDigest:               strings.TrimSpace(input.TaskDigest),
-		WorkspaceDigest:          strings.TrimSpace(input.WorkspaceDigest),
-		GatewayPolicyDigest:      strings.TrimSpace(input.GatewayPolicyDigest),
-		ModelDigest:              strings.TrimSpace(input.ModelDigest),
-		Lifecycle:                lifecycle,
-		MissingStageIndex:        -1,
-		Decision:                 ExecutionBoundaryDecisionUnknown,
-		Reason:                   "EXECUTION_BOUNDARY_INCOMPLETE",
-		NonAuthorizing:           true,
+		Schema:                       ExecutionBoundaryObservationSchema,
+		DeclarationDigest:            strings.TrimSpace(input.DeclarationDigest),
+		ContractDigest:               strings.TrimSpace(input.ContractDigest),
+		IRDigest:                     strings.TrimSpace(input.IRDigest),
+		GeneratedDigest:              strings.TrimSpace(input.GeneratedDigest),
+		ReverseObservationDigest:     strings.TrimSpace(input.ReverseObservationDigest),
+		CounterexampleRecoveryDigest: strings.TrimSpace(input.CounterexampleRecoveryDigest),
+		ContractPreservationDigest:   strings.TrimSpace(input.ContractPreservationDigest),
+		TaskDigest:                   strings.TrimSpace(input.TaskDigest),
+		WorkspaceDigest:              strings.TrimSpace(input.WorkspaceDigest),
+		GatewayPolicyDigest:          strings.TrimSpace(input.GatewayPolicyDigest),
+		ModelDigest:                  strings.TrimSpace(input.ModelDigest),
+		Lifecycle:                    lifecycle,
+		MissingStageIndex:            -1,
+		Decision:                     ExecutionBoundaryDecisionUnknown,
+		Reason:                       "EXECUTION_BOUNDARY_INCOMPLETE",
+		NonAuthorizing:               true,
 	}
 	for index, digest := range executionBoundaryStages(value) {
 		if !isSHA256Digest(digest) {
@@ -105,6 +111,10 @@ func ValidateExecutionBoundaryObservation(value ExecutionBoundaryObservation) er
 	if value.Decision != ExecutionBoundaryDecisionClosed && value.Decision != ExecutionBoundaryDecisionUnknown {
 		return errors.New("execution boundary decision is invalid")
 	}
+	if !executionBoundaryRequiresTerminalEvidence(value.Lifecycle) &&
+		(value.CounterexampleRecoveryDigest != "" || value.ContractPreservationDigest != "") {
+		return errors.New("terminal execution boundary evidence is unexpected")
+	}
 	expectedMissing := -1
 	for index, digest := range executionBoundaryStages(value) {
 		if digest != "" && !isSHA256Digest(digest) {
@@ -117,7 +127,8 @@ func ValidateExecutionBoundaryObservation(value ExecutionBoundaryObservation) er
 	if value.MissingStageIndex != expectedMissing {
 		return errors.New("execution boundary missing stage is invalid")
 	}
-	if value.Decision == ExecutionBoundaryDecisionClosed && (value.MissingStageIndex != -1 || !validExecutionBoundaryLifecycle(value.Lifecycle)) {
+	if value.Decision == ExecutionBoundaryDecisionClosed &&
+		(value.MissingStageIndex != -1 || !validExecutionBoundaryLifecycle(value.Lifecycle)) {
 		return errors.New("closed execution boundary is incomplete")
 	}
 	if value.Decision == ExecutionBoundaryDecisionUnknown && value.MissingStageIndex == -1 && validExecutionBoundaryLifecycle(value.Lifecycle) {
@@ -133,17 +144,29 @@ func ValidateExecutionBoundaryObservation(value ExecutionBoundaryObservation) er
 }
 
 func executionBoundaryStages(value ExecutionBoundaryObservation) []string {
-	return []string{
+	stages := []string{
 		value.DeclarationDigest,
 		value.ContractDigest,
 		value.IRDigest,
 		value.GeneratedDigest,
 		value.ReverseObservationDigest,
+	}
+	if executionBoundaryRequiresTerminalEvidence(value.Lifecycle) {
+		stages = append(stages,
+			value.CounterexampleRecoveryDigest,
+			value.ContractPreservationDigest,
+		)
+	}
+	return append(stages,
 		value.TaskDigest,
 		value.WorkspaceDigest,
 		value.GatewayPolicyDigest,
 		value.ModelDigest,
-	}
+	)
+}
+
+func executionBoundaryRequiresTerminalEvidence(value ExecutionBoundaryLifecycle) bool {
+	return value == ExecutionBoundaryFailed || value == ExecutionBoundaryTerminating
 }
 
 func validExecutionBoundaryLifecycle(value ExecutionBoundaryLifecycle) bool {

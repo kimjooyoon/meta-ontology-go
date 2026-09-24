@@ -50,11 +50,11 @@ func TestExecutionBoundaryBindsPipelineAndAXLifecycle(t *testing.T) {
 
 func TestExecutionBoundaryPreservesFirstUnknownStage(t *testing.T) {
 	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
-		DeclarationDigest: executionBoundaryTestDigest('a'),
-		ContractDigest:    executionBoundaryTestDigest('0'),
-		IRDigest:          executionBoundaryTestDigest('b'),
-		TaskDigest:        executionBoundaryTestDigest('e'),
-		WorkspaceDigest:   executionBoundaryTestDigest('f'),
+		DeclarationDigest:        executionBoundaryTestDigest('a'),
+		ContractDigest:           executionBoundaryTestDigest('0'),
+		IRDigest:                 executionBoundaryTestDigest('b'),
+		TaskDigest:               executionBoundaryTestDigest('e'),
+		WorkspaceDigest:          executionBoundaryTestDigest('f'),
 	}, ExecutionBoundaryRunning)
 	if value.Decision != ExecutionBoundaryDecisionUnknown || value.Reason != "EXECUTION_BOUNDARY_DIGEST_INCOMPLETE" ||
 		value.MissingStageIndex != 3 || value.EvidencePrefixDigest == "" {
@@ -62,5 +62,41 @@ func TestExecutionBoundaryPreservesFirstUnknownStage(t *testing.T) {
 	}
 	if err := ValidateExecutionBoundaryObservation(value); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestExecutionBoundaryRequiresTerminalRecoveryAndPreservation(t *testing.T) {
+	input := ExecutionBoundaryInput{
+		DeclarationDigest:        executionBoundaryTestDigest('a'),
+		ContractDigest:           executionBoundaryTestDigest('0'),
+		IRDigest:                 executionBoundaryTestDigest('b'),
+		GeneratedDigest:          executionBoundaryTestDigest('c'),
+		ReverseObservationDigest: executionBoundaryTestDigest('d'),
+		TaskDigest:               executionBoundaryTestDigest('e'),
+		WorkspaceDigest:          executionBoundaryTestDigest('f'),
+		GatewayPolicyDigest:      executionBoundaryTestDigest('1'),
+		ModelDigest:              executionBoundaryTestDigest('2'),
+	}
+	value := ObserveExecutionBoundary(input, ExecutionBoundaryFailed)
+	if value.Decision != ExecutionBoundaryDecisionUnknown || value.MissingStageIndex != 5 ||
+		value.Reason != "EXECUTION_BOUNDARY_DIGEST_INCOMPLETE" {
+		t.Fatalf("unexpected terminal evidence gap: %#v", value)
+	}
+	if err := ValidateExecutionBoundaryObservation(value); err != nil {
+		t.Fatal(err)
+	}
+	input.CounterexampleRecoveryDigest = executionBoundaryTestDigest('3')
+	input.ContractPreservationDigest = executionBoundaryTestDigest('4')
+	value = ObserveExecutionBoundary(input, ExecutionBoundaryFailed)
+	if value.Decision != ExecutionBoundaryDecisionClosed || value.MissingStageIndex != -1 {
+		t.Fatalf("terminal evidence was not closed: %#v", value)
+	}
+	if err := ValidateExecutionBoundaryObservation(value); err != nil {
+		t.Fatal(err)
+	}
+	tampered := value
+	tampered.ContractPreservationDigest = executionBoundaryTestDigest('9')
+	if ValidateExecutionBoundaryObservation(tampered) == nil {
+		t.Fatal("tampered contract preservation evidence was accepted")
 	}
 }
