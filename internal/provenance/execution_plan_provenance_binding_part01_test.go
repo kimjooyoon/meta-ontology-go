@@ -161,3 +161,69 @@ func TestExecutionPlanInvalidBoundaryRemainsUnknown(t *testing.T) {
 		t.Fatalf("unknown boundary validation failed: %v", err)
 	}
 }
+
+func TestExecutionPlanBindingPreservesWorkloadIdentityObservation(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("a", 64)
+	identity := WorkloadIdentityProvenanceBinding{
+		Schema:                 WorkloadIdentityProvenanceBindingSchema,
+		ProvenanceChainDigest:  digest,
+		IdentityEvidenceDigest: digest,
+		Status:                 WorkloadIdentityProvenanceBindingObserved,
+		Reason:                 "PROVENANCE_AND_IDENTITY_EVIDENCE_BOUND",
+		NonAuthorizing:         true,
+	}
+	identity.BindingDigest = workloadIdentityProvenanceBindingDigest(identity)
+	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)
+	binding := BindExecutionPlanToProvenanceWithWorkloadIdentityPart01(
+		"compile-gooo",
+		digest,
+		"model/gooo-planner-v1",
+		GatewayPolicy{AllowedHosts: []string{"api.example.com"}},
+		ExecutionPlanLifecycleResumed,
+		identity,
+		chain,
+	)
+	if binding.Status != ExecutionPlanBindingBound ||
+		binding.CausalReason != "EXECUTION_PLAN_PROVENANCE_AND_IDENTITY_BOUND" ||
+		binding.Plan.WorkloadIdentityBindingDigest != identity.BindingDigest {
+		t.Fatalf("workload identity execution binding = %#v", binding)
+	}
+	if err := binding.Validate(); err != nil {
+		t.Fatalf("workload identity execution binding validation failed: %v", err)
+	}
+	binding.Plan.WorkloadIdentityBindingDigest = "sha256:" + strings.Repeat("f", 64)
+	if err := binding.Validate(); err == nil {
+		t.Fatal("tampered workload identity binding digest was accepted")
+	}
+}
+
+func TestExecutionPlanBindingKeepsUnknownWorkloadIdentityUnknown(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("b", 64)
+	identity := WorkloadIdentityProvenanceBinding{
+		Schema:                 WorkloadIdentityProvenanceBindingSchema,
+		ProvenanceChainDigest:  digest,
+		IdentityEvidenceDigest: digest,
+		Status:                 WorkloadIdentityProvenanceBindingUnknown,
+		Reason:                 "IDENTITY_EVIDENCE_NOT_OBSERVED",
+		NonAuthorizing:         true,
+	}
+	identity.BindingDigest = workloadIdentityProvenanceBindingDigest(identity)
+	chain := BuildSelfImprovementProvenanceChainPart01(digest, digest, digest, digest, digest, digest)
+	binding := BindExecutionPlanToProvenanceWithWorkloadIdentityPart01(
+		"compile-gooo",
+		digest,
+		"model/gooo-planner-v1",
+		GatewayPolicy{},
+		ExecutionPlanLifecyclePlanned,
+		identity,
+		chain,
+	)
+	if binding.Status != ExecutionPlanBindingUnknown ||
+		binding.CausalReason != "EXECUTION_PLAN_WORKLOAD_IDENTITY_UNKNOWN" ||
+		binding.Plan.WorkloadIdentityBindingDigest != identity.BindingDigest {
+		t.Fatalf("unknown workload identity execution binding = %#v", binding)
+	}
+	if err := binding.Validate(); err != nil {
+		t.Fatalf("unknown workload identity execution binding validation failed: %v", err)
+	}
+}

@@ -38,6 +38,7 @@ type ExecutionPlanPart01 struct {
 	ActivityOrder       []string                     `json:"activity_order,omitempty"`
 	BindingEdgeOrder    []string                     `json:"binding_edge_order,omitempty"`
 	RuntimeBindingCount int                          `json:"runtime_binding_count,omitempty"`
+	WorkloadIdentityBindingDigest string `json:"workload_identity_binding_digest,omitempty"`
 }
 
 // ExecutionPlanProvenanceBindingPart01 binds an execution-plan observation to
@@ -181,6 +182,31 @@ func BindExecutionPlanToProvenanceWithTypedPlanEdgesPart01(
 	return binding
 }
 
+
+func BindExecutionPlanToProvenanceWithWorkloadIdentityPart01(
+	task, workspaceDigest, model string,
+	gatewayPolicy GatewayPolicy,
+	lifecycle ExecutionPlanLifecyclePart01,
+	identity WorkloadIdentityProvenanceBinding,
+	chain SelfImprovementProvenanceChainPart01,
+) ExecutionPlanProvenanceBindingPart01 {
+	binding := BindExecutionPlanToProvenancePart01(task, workspaceDigest, model, gatewayPolicy, lifecycle, chain)
+	binding.Plan.WorkloadIdentityBindingDigest = strings.TrimSpace(identity.BindingDigest)
+	switch {
+	case identity.Validate() != nil:
+		binding.Status = ExecutionPlanBindingUnknown
+		binding.CausalReason = "EXECUTION_PLAN_WORKLOAD_IDENTITY_INVALID"
+	case identity.Status != WorkloadIdentityProvenanceBindingObserved:
+		binding.Status = ExecutionPlanBindingUnknown
+		binding.CausalReason = "EXECUTION_PLAN_WORKLOAD_IDENTITY_UNKNOWN"
+	case binding.Status == ExecutionPlanBindingBound:
+		binding.CausalReason = "EXECUTION_PLAN_PROVENANCE_AND_IDENTITY_BOUND"
+	}
+	binding.EvidencePrefixDigest = executionPlanEvidencePrefixDigestPart01(binding)
+	binding.BindingDigest = hashExecutionPlanProvenanceBindingPart01(binding)
+	return binding
+}
+
 func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 	if binding.Schema != ExecutionPlanProvenanceBindingSchemaPart01 {
 		return fmt.Errorf("unexpected execution-plan provenance schema %q", binding.Schema)
@@ -196,6 +222,9 @@ func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 	}
 	if reason := executionPlanTypedMetadataReasonPart01(binding.Plan); reason != "" {
 		return fmt.Errorf("execution-plan typed metadata is invalid: %s", reason)
+	}
+	if binding.Plan.WorkloadIdentityBindingDigest != "" && !isSHA256Digest(binding.Plan.WorkloadIdentityBindingDigest) {
+		return fmt.Errorf("execution-plan workload identity binding digest is invalid")
 	}
 	if binding.BoundStages != countBoundExecutionPlanStagesPart01(binding.ProvenanceStages) {
 		return fmt.Errorf("execution-plan provenance binding bound stage count does not match its stages")
@@ -226,7 +255,7 @@ func (binding ExecutionPlanProvenanceBindingPart01) Validate() error {
 		if binding.ProvenanceChainDigest == "" {
 			return fmt.Errorf("bound execution plan requires a provenance chain digest")
 		}
-		if binding.CausalReason != "EXECUTION_PLAN_PROVENANCE_BOUND" {
+		if binding.CausalReason != "EXECUTION_PLAN_PROVENANCE_BOUND" && binding.CausalReason != "EXECUTION_PLAN_PROVENANCE_AND_IDENTITY_BOUND" {
 			return fmt.Errorf("bound execution plan has unexpected reason %q", binding.CausalReason)
 		}
 		if binding.TotalStages != 6 || binding.BoundStages != 6 ||
@@ -284,7 +313,7 @@ func executionPlanEvidencePrefixDigestPart01(
 	var canonical strings.Builder
 	fmt.Fprintf(
 		&canonical,
-		"task=%s;workspace=%s;gateway=%s;model=%s;lifecycle=%s;typed=%s;edges=%d;chain=%s;status=%s;reason=%s;missing=%d;",
+		"task=%s;workspace=%s;gateway=%s;model=%s;lifecycle=%s;typed=%s;edges=%d;chain=%s;identity=%s;status=%s;reason=%s;missing=%d;",
 		binding.Plan.Task,
 		binding.Plan.WorkspaceDigest,
 		binding.Plan.GatewayPolicyDigest,
@@ -293,6 +322,7 @@ func executionPlanEvidencePrefixDigestPart01(
 		binding.Plan.TypedPlanDigest,
 		binding.Plan.RuntimeBindingCount,
 		binding.ProvenanceChainDigest,
+		binding.Plan.WorkloadIdentityBindingDigest,
 		binding.Status,
 		binding.CausalReason,
 		binding.MissingStageIndex,
