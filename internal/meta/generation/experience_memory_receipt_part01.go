@@ -8,9 +8,9 @@ type ExperienceMemoryReceipt = provenance.ExperienceMemoryReceipt
 
 const (
 	ExperienceMemoryReceiptSchema = provenance.ExperienceMemoryReceiptSchema
-	ExperienceMemoryClosed         = provenance.ExperienceMemoryClosed
-	ExperienceMemoryUnknown        = provenance.ExperienceMemoryUnknown
-	ExperienceMemoryRefuted        = provenance.ExperienceMemoryRefuted
+	ExperienceMemoryClosed        = provenance.ExperienceMemoryClosed
+	ExperienceMemoryUnknown       = provenance.ExperienceMemoryUnknown
+	ExperienceMemoryRefuted       = provenance.ExperienceMemoryRefuted
 )
 
 func ObserveExperienceMemory(receipt ExperienceMemoryReceipt, expected ExperienceMemoryFingerprint) ExperienceMemoryReceipt {
