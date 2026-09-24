@@ -139,6 +139,8 @@ func activeDenominator() []byte {
 		return embeddedDenominatorV43
 	case 77:
 		return embeddedDenominatorV45
+	case 79:
+		return embeddedDenominatorV46
 	default:
 		return nil
 	}
@@ -188,6 +190,8 @@ func activeDenominatorDigest() string {
 		return DenominatorMigrationV43Digest
 	case 77:
 		return DenominatorMigrationV45Digest
+	case 79:
+		return DenominatorMigrationV46Digest
 	default:
 		return ""
 	}
