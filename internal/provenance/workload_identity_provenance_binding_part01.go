@@ -21,13 +21,13 @@ const (
 // It never turns identity, SVID, or trust-bundle observations into adoption
 // or merge authority.
 type WorkloadIdentityProvenanceBinding struct {
-	Schema                 string                              `json:"schema"`
-	ProvenanceChainDigest  string                              `json:"provenance_chain_digest"`
-	IdentityEvidenceDigest string                              `json:"identity_evidence_digest"`
+	Schema                 string                                  `json:"schema"`
+	ProvenanceChainDigest  string                                  `json:"provenance_chain_digest"`
+	IdentityEvidenceDigest string                                  `json:"identity_evidence_digest"`
 	Status                 WorkloadIdentityProvenanceBindingStatus `json:"status"`
-	Reason                 string                              `json:"reason"`
-	NonAuthorizing         bool                                `json:"non_authorizing"`
-	BindingDigest           string                              `json:"binding_digest"`
+	Reason                 string                                  `json:"reason"`
+	NonAuthorizing         bool                                    `json:"non_authorizing"`
+	BindingDigest          string                                  `json:"binding_digest"`
 }
 
 // BindWorkloadIdentityEvidenceToProvenancePart01 joins already-observed
