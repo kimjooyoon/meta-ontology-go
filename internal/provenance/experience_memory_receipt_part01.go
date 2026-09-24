@@ -16,30 +16,30 @@ const (
 )
 
 type ExperienceMemoryFingerprint struct {
-	ScenarioID     string
-	SourceDigest   string
-	FixtureDigest  string
+	ScenarioID      string
+	SourceDigest    string
+	FixtureDigest   string
 	ToolchainDigest string
 	EvaluatorDigest string
-	ScopeDigest    string
+	ScopeDigest     string
 }
 
 type ExperienceMemoryReceipt struct {
 	SchemaVersion string
 	ExperienceID  string
-	Fingerprint  ExperienceMemoryFingerprint
+	Fingerprint   ExperienceMemoryFingerprint
 	OutcomeDigest string
 	Status        ExperienceMemoryObservationStatus
 
 	CounterexamplePreserved bool
-	MissingStageIndex      int
-	MissingStage           string
-	UnknownReason          string
+	MissingStageIndex       int
+	MissingStage            string
+	UnknownReason           string
 }
 
 func NewExperienceMemoryReceipt() ExperienceMemoryReceipt {
 	return ExperienceMemoryReceipt{
-		SchemaVersion:    ExperienceMemoryReceiptSchema,
+		SchemaVersion:     ExperienceMemoryReceiptSchema,
 		MissingStageIndex: -1,
 	}
 }
