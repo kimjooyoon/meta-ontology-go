@@ -54,3 +54,11 @@ func TestExperienceMemoryPreservesFirstUnknownStage(t *testing.T) {
 		t.Fatalf("first UNKNOWN stage was not preserved: %#v", receipt)
 	}
 }
+
+func TestExperienceMemoryClosedRequiresOutcomeDigest(t *testing.T) {
+	receipt := completeExperienceMemoryReceipt()
+	receipt.OutcomeDigest = ""
+	if err := receipt.Validate(); err == nil {
+		t.Fatal("expected CLOSED receipt without outcome digest to be rejected")
+	}
+}
