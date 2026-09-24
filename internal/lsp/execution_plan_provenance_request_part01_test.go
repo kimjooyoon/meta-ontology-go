@@ -120,12 +120,13 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 		t.Fatalf("didOpen() error = %v", err)
 	}
 	params, err := json.Marshal(ExecutionPlanProvenanceParamsPart01{
-		TextDocument:    TextDocumentIdentifier{URI: uri},
-		Task:            "task-1",
-		WorkspaceDigest: cache.HashBytes([]byte("workspace-1")).String(),
-		Model:           "model-1",
-		GatewayPolicy:   provenance.GatewayPolicy{AllowedHosts: []string{"api.example.invalid"}},
-		Lifecycle:       provenance.ExecutionPlanLifecyclePlanned,
+		TextDocument:     TextDocumentIdentifier{URI: uri},
+		Task:             "task-1",
+		WorkspaceDigest:  cache.HashBytes([]byte("workspace-1")).String(),
+		Model:            "model-1",
+		GatewayPolicy:    provenance.GatewayPolicy{AllowedHosts: []string{"api.example.invalid"}},
+		Lifecycle:        provenance.ExecutionPlanLifecyclePlanned,
+		WorkloadIdentity: &provenance.WorkloadIdentityProvenanceBinding{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -143,6 +144,7 @@ func TestExecutionPlanProvenancePreservesUnknownWithoutFullChain(t *testing.T) {
 	}
 	if binding.Schema != ExecutionPlanProvenanceSchemaPart01 ||
 		binding.Status != provenance.ExecutionPlanBindingUnknown ||
+		binding.CausalReason != "EXECUTION_PLAN_WORKLOAD_IDENTITY_INVALID" ||
 		binding.BoundStages != 4 ||
 		binding.TotalStages != 6 ||
 		binding.MissingStageIndex != 4 ||
