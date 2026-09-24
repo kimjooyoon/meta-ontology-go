@@ -57,11 +57,11 @@ func replayPackageRequest() Request {
 		Sources: []Source{
 			{
 				Filename: "activity.gooo",
-				Content: "package billing\nnamespace billing\n\nactivity PayOrder(Order) -> Receipt\n",
+				Content:  "package billing\nnamespace billing\n\nactivity PayOrder(Order) -> Receipt\n",
 			},
 			{
 				Filename: "entities.gooo",
-				Content: "package billing\nnamespace billing\n\nentity Order id \"urn:gooo:billing:order\"\nentity Receipt id \"urn:gooo:billing:receipt\"\n",
+				Content:  "package billing\nnamespace billing\n\nentity Order id \"urn:gooo:billing:order\"\nentity Receipt id \"urn:gooo:billing:receipt\"\n",
 			},
 		},
 	}

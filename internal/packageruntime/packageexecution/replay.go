@@ -11,19 +11,19 @@ import (
 const ReplayReceiptSchema = `gooo/package-source-execution-replay-receipt/v1`
 
 type ReplayReceipt struct {
-	Schema                  string   `json:"schema"`
-	Scope                   string   `json:"scope"`
-	Decision                string   `json:"decision"`
-	Reason                  string   `json:"reason"`
-	Resolution              string   `json:"resolution"`
-	ArtifactDigest          string   `json:"artifact_digest,omitempty"`
-	ExpectedSourceDigest   string   `json:"expected_source_digest,omitempty"`
-	ObservedSourceDigest   string   `json:"observed_source_digest,omitempty"`
-	ExpectedSemanticDigest string   `json:"expected_semantic_digest,omitempty"`
-	ObservedSemanticDigest string   `json:"observed_semantic_digest,omitempty"`
-	Replay                  *Receipt `json:"replay,omitempty"`
-	Diagnostics             []Diagnostic `json:"diagnostics"`
-	Digest                  string   `json:"digest"`
+	Schema                 string       `json:"schema"`
+	Scope                  string       `json:"scope"`
+	Decision               string       `json:"decision"`
+	Reason                 string       `json:"reason"`
+	Resolution             string       `json:"resolution"`
+	ArtifactDigest         string       `json:"artifact_digest,omitempty"`
+	ExpectedSourceDigest   string       `json:"expected_source_digest,omitempty"`
+	ObservedSourceDigest   string       `json:"observed_source_digest,omitempty"`
+	ExpectedSemanticDigest string       `json:"expected_semantic_digest,omitempty"`
+	ObservedSemanticDigest string       `json:"observed_semantic_digest,omitempty"`
+	Replay                 *Receipt     `json:"replay,omitempty"`
+	Diagnostics            []Diagnostic `json:"diagnostics"`
+	Digest                 string       `json:"digest"`
 }
 
 // Replay consumes a sealed package receipt and independently executes the
@@ -65,12 +65,12 @@ func Replay(request Request, artifact Receipt) ReplayReceipt {
 
 func replayBase(artifact Receipt) ReplayReceipt {
 	return ReplayReceipt{
-		Schema:                  ReplayReceiptSchema,
-		Scope:                   sourceexecution.DeclarationResolutionScope,
-		ArtifactDigest:          artifact.Digest,
+		Schema:                 ReplayReceiptSchema,
+		Scope:                  sourceexecution.DeclarationResolutionScope,
+		ArtifactDigest:         artifact.Digest,
 		ExpectedSourceDigest:   artifact.CombinedSourceDigest,
 		ExpectedSemanticDigest: artifact.SemanticDigest,
-		Diagnostics:             []Diagnostic{},
+		Diagnostics:            []Diagnostic{},
 	}
 }
 
