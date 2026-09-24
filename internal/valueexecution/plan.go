@@ -37,7 +37,7 @@ type Execution struct {
 	Results           map[string]ResultEvidence `json:"results"`
 	ApplyCalls        int                       `json:"apply_calls"`
 	Deliveries        int                       `json:"deliveries"`
-	Activities       []string                  `json:"activities"`
+	Activities        []string                  `json:"activities"`
 	BindingEdgeOrder  []string                  `json:"binding_edge_order,omitempty"`
 }
 
