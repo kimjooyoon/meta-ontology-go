@@ -37,7 +37,7 @@ func TestScopePreflightRunsBeforeExpensiveEvidenceAndKeepsFinalCheck(t *testing.
 		"GOOO_SCOPE_TO: ${{ github.event.pull_request.head.sha }}",
 		"GOOO_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}",
 		"GOOO_SCOPE_BRANCH: ${{ github.event.pull_request.head.ref }}",
-		"run: go run ./scripts/verify --skip-caps --identity-only --head= --base=",
+		"run: go run ./scripts/verify --skip-caps --head= --base=",
 	} {
 		if !strings.Contains(preflight, required) {
 			t.Errorf("preflight lost exact input or failure behavior: %s", required)
