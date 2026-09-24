@@ -17,12 +17,13 @@ func main() {
 	expectedHead := flag.String("expected-head", os.Getenv("GOOO_EXPECTED_HEAD"), "expected checked-out pull-request head revision")
 	capsOnly := flag.Bool("caps-only", false, "emit only source-cap observations")
 	skipCaps := flag.Bool("skip-caps", false, "skip source-cap observations and run scope checks")
+	identityOnly := flag.Bool("identity-only", false, "validate checkout identity and scope revisions without ownership or route checks")
 	flag.Parse()
 	if err := validateCapMode(*capsOnly, *skipCaps); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if err := run(*root, *storageRoot, *from, *to, *head, *base, *branch, *expectedHead, *capsOnly, *skipCaps); err != nil {
+	if err := run(*root, *storageRoot, *from, *to, *head, *base, *branch, *expectedHead, *capsOnly, *skipCaps, *identityOnly); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

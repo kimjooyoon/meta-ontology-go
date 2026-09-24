@@ -6,7 +6,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/verify"
 )
 
-func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps bool) error {
+func run(root, storageRoot, from, to, head, base, branch, expectedHead string, capsOnly, skipCaps, identityOnly bool) error {
 	if !skipCaps {
 		if err := checkSourcePolicyForRun(root, storageRoot); err != nil {
 			return err
@@ -14,6 +14,12 @@ func run(root, storageRoot, from, to, head, base, branch, expectedHead string, c
 	}
 	if capsOnly {
 		return nil
+	}
+	if identityOnly {
+		if err := validateScopeRevisions(from, to, expectedHead); err != nil {
+			return err
+		}
+		return verifyPRCheckoutIdentity(root, from, to, expectedHead)
 	}
 	if err := checkAgentPushBranch(branch); err != nil {
 		return err
