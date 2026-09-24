@@ -1,0 +1,64 @@
+package provenance
+
+import (
+	"strings"
+	"testing"
+)
+
+func executionBoundaryTestDigest(value byte) string {
+	return "sha256:" + strings.Repeat(string(value), 64)
+}
+
+func TestExecutionBoundaryBindsPipelineAndAXLifecycle(t *testing.T) {
+	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
+		DeclarationDigest:        executionBoundaryTestDigest('a'),
+		IRDigest:                 executionBoundaryTestDigest('b'),
+		GeneratedDigest:          executionBoundaryTestDigest('c'),
+		ReverseObservationDigest: executionBoundaryTestDigest('d'),
+		TaskDigest:               executionBoundaryTestDigest('e'),
+		WorkspaceDigest:          executionBoundaryTestDigest('f'),
+		GatewayPolicyDigest:      executionBoundaryTestDigest('1'),
+		ModelDigest:              executionBoundaryTestDigest('2'),
+	}, ExecutionBoundarySuspended)
+	if value.Decision != ExecutionBoundaryDecisionClosed || value.Reason != "EXECUTION_BOUNDARY_OBSERVED" ||
+		value.MissingStageIndex != -1 || value.EvidencePrefixDigest == "" || !value.NonAuthorizing {
+		t.Fatalf("incomplete execution boundary observation: %#v", value)
+	}
+	if err := ValidateExecutionBoundaryObservation(value); err != nil {
+		t.Fatal(err)
+	}
+	changed := ObserveExecutionBoundary(ExecutionBoundaryInput{
+		DeclarationDigest:        value.DeclarationDigest,
+		IRDigest:                 value.IRDigest,
+		GeneratedDigest:          value.GeneratedDigest,
+		ReverseObservationDigest: value.ReverseObservationDigest,
+		TaskDigest:               value.TaskDigest,
+		WorkspaceDigest:          value.WorkspaceDigest,
+		GatewayPolicyDigest:      value.GatewayPolicyDigest,
+		ModelDigest:              executionBoundaryTestDigest('3'),
+	}, ExecutionBoundaryRunning)
+	if changed.ObservationDigest == value.ObservationDigest || changed.EvidencePrefixDigest == value.EvidencePrefixDigest {
+		t.Fatal("execution boundary change was not reflected in evidence")
+	}
+	tampered := value
+	tampered.EvidencePrefixDigest = executionBoundaryTestDigest('9')
+	if ValidateExecutionBoundaryObservation(tampered) == nil {
+		t.Fatal("tampered execution boundary prefix was accepted")
+	}
+}
+
+func TestExecutionBoundaryPreservesFirstUnknownStage(t *testing.T) {
+	value := ObserveExecutionBoundary(ExecutionBoundaryInput{
+		DeclarationDigest: executionBoundaryTestDigest('a'),
+		IRDigest:          executionBoundaryTestDigest('b'),
+		TaskDigest:        executionBoundaryTestDigest('e'),
+		WorkspaceDigest:   executionBoundaryTestDigest('f'),
+	}, ExecutionBoundaryRunning)
+	if value.Decision != ExecutionBoundaryDecisionUnknown || value.Reason != "EXECUTION_BOUNDARY_DIGEST_INCOMPLETE" ||
+		value.MissingStageIndex != 2 || value.EvidencePrefixDigest == "" {
+		t.Fatalf("unexpected first unresolved execution stage: %#v", value)
+	}
+	if err := ValidateExecutionBoundaryObservation(value); err != nil {
+		t.Fatal(err)
+	}
+}
