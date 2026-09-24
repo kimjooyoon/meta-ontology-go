@@ -16,6 +16,9 @@ func TestProjectSelfImprovementProvenanceChainPart01ExposesEvidenceBoundary(t *t
 		projection.CausalReason != provenance.SelfImprovementProvenanceChainCompleteReasonPart01 {
 		t.Fatalf("projection = %+v", projection)
 	}
+	if projection.BoundStages != 6 || projection.TotalStages != 6 || projection.NextRequiredStage != "" {
+		t.Fatalf("projection stage summary = %+v", projection)
+	}
 	if projection.AdoptionAuthorized || !projection.NonAuthorizing || projection.Digest == "" {
 		t.Fatalf("projection must remain non-authorizing and digestable: %+v", projection)
 	}
@@ -33,6 +36,10 @@ func TestProjectSelfImprovementProvenanceChainPart01PreservesUnknown(t *testing.
 	if projection.Status != provenance.SelfImprovementProvenanceChainUnknownPart01 ||
 		projection.CausalReason != "MISSING_REVERSE_OBSERVATION_DIGEST" {
 		t.Fatalf("projection = %+v", projection)
+	}
+	if projection.BoundStages != 5 || projection.TotalStages != 6 ||
+		projection.NextRequiredStage != "reverse-observation" {
+		t.Fatalf("projection stage summary = %+v", projection)
 	}
 	if err := projection.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v", err)

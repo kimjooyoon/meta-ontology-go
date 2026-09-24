@@ -17,6 +17,9 @@ type SelfImprovementProvenanceChainProjectionPart01 struct {
 	CausalReason       string                                            `json:"causal_reason"`
 	ChainDigest        string                                            `json:"chain_digest"`
 	Stages             []provenance.SelfImprovementProvenanceStagePart01 `json:"stages"`
+	BoundStages        int                                               `json:"bound_stages"`
+	TotalStages        int                                               `json:"total_stages"`
+	NextRequiredStage  string                                            `json:"next_required_stage"`
 	AdoptionAuthorized bool                                              `json:"adoption_authorized"`
 	NonAuthorizing     bool                                              `json:"non_authorizing"`
 	Digest             string                                            `json:"digest"`
@@ -37,6 +40,12 @@ func ProjectSelfImprovementProvenanceChainPart01(
 	if err := chain.Validate(); err != nil {
 		return SelfImprovementProvenanceChainProjectionPart01{}, fmt.Errorf("validate self-improvement provenance chain: %w", err)
 	}
+	boundStages := 0
+	for _, stage := range chain.Stages {
+		if stage.Bound {
+			boundStages++
+		}
+	}
 	projection := SelfImprovementProvenanceChainProjectionPart01{
 		URI:                uri,
 		Version:            version,
@@ -44,6 +53,9 @@ func ProjectSelfImprovementProvenanceChainPart01(
 		CausalReason:       chain.CausalReason,
 		ChainDigest:        chain.ChainDigest,
 		Stages:             append([]provenance.SelfImprovementProvenanceStagePart01(nil), chain.Stages...),
+		BoundStages:        boundStages,
+		TotalStages:        len(chain.Stages),
+		NextRequiredStage:  nextSelfImprovementProvenanceStagePart01(chain),
 		AdoptionAuthorized: false,
 		NonAuthorizing:     true,
 	}
@@ -68,11 +80,51 @@ func (projection SelfImprovementProvenanceChainProjectionPart01) Validate() erro
 		projection.Status != provenance.SelfImprovementProvenanceChainUnknownPart01 {
 		return fmt.Errorf("unknown self-improvement provenance chain projection status %q", projection.Status)
 	}
+	if projection.TotalStages != len(projection.Stages) {
+		return fmt.Errorf("self-improvement provenance chain projection total stage count does not match its stages")
+	}
+	boundStages := 0
+	for _, stage := range projection.Stages {
+		if stage.Bound {
+			boundStages++
+		}
+	}
+	if projection.BoundStages != boundStages {
+		return fmt.Errorf("self-improvement provenance chain projection bound stage count does not match its stages")
+	}
+	if projection.NextRequiredStage != nextSelfImprovementProvenanceStagePart01FromStages(projection.Stages) {
+		return fmt.Errorf("self-improvement provenance chain projection next required stage does not match its stages")
+	}
+	if projection.Status == provenance.SelfImprovementProvenanceChainBoundPart01 &&
+		projection.NextRequiredStage != "" {
+		return fmt.Errorf("bound self-improvement provenance chain projection has a next required stage")
+	}
+	if projection.Status == provenance.SelfImprovementProvenanceChainUnknownPart01 &&
+		projection.NextRequiredStage == "" {
+		return fmt.Errorf("unknown self-improvement provenance chain projection has no next required stage")
+	}
 	if projection.ChainDigest == "" || projection.Digest == "" ||
 		projection.Digest != digestSelfImprovementProvenanceChainProjectionPart01(projection) {
 		return fmt.Errorf("self-improvement provenance chain projection digest does not match its evidence")
 	}
 	return nil
+}
+
+func nextSelfImprovementProvenanceStagePart01(
+	chain provenance.SelfImprovementProvenanceChainPart01,
+) string {
+	return nextSelfImprovementProvenanceStagePart01FromStages(chain.Stages)
+}
+
+func nextSelfImprovementProvenanceStagePart01FromStages(
+	stages []provenance.SelfImprovementProvenanceStagePart01,
+) string {
+	for _, stage := range stages {
+		if !stage.Bound {
+			return stage.Name
+		}
+	}
+	return ""
 }
 
 func digestSelfImprovementProvenanceChainProjectionPart01(
