@@ -172,6 +172,8 @@ type Report struct {
 	PolicySourceDigest    string             `json:"policy_source_digest"`
 	PolicySemanticDigest  string             `json:"policy_semantic_digest"`
 	PolicyEvaluatorDigest string             `json:"policy_evaluator_digest"`
+	CandidateDigest	string	`json:"candidate_digest,omitempty"`
+	CandidateID	string	`json:"candidate_id,omitempty"`
 	Operation             string             `json:"operation"`
 	StatePath             []string           `json:"state_path"`
 	Boundary              string             `json:"authorization_boundary"`

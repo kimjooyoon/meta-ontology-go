@@ -74,6 +74,12 @@ func CompareReplay(baseline, candidate Execution) ReplayComparison {
 }
 
 func replayReceiptShapeValid(execution Execution) bool {
+	// A failed or in-flight lifecycle receipt is evidence of an attempted
+	// execution, never a successful replay boundary. Legacy receipts without a
+	// phase remain readable, while new receipts fail closed on explicit failure.
+	if execution.Phase == ExecutionPhaseRunning || execution.Phase == ExecutionPhaseFailed {
+		return false
+	}
 	return execution.Scope != "" && validDigest(execution.PlanDigest) &&
 		validDigest(execution.InputDigest) && validDigest(execution.ExecutionDigest)
 }

@@ -7,6 +7,10 @@ on:
     workflows: ["Language example experiment"]
     types: [completed]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
 permissions:
   actions: read
   attestations: write
