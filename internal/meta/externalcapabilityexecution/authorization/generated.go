@@ -14,5 +14,6 @@ func normalizeGenerated(path string, raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	delete(manifest, "generated_file")
+	delete(manifest, "analysis_provenance")
 	return json.Marshal(manifest)
 }
