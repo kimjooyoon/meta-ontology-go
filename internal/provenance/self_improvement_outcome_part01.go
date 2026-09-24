@@ -26,9 +26,9 @@ type SelfImprovementOutcomeReceipt struct {
 	EvaluatorDigest string
 
 	CounterexampleRecovered SelfImprovementOutcomeStatus
-	ContractPreserved      SelfImprovementOutcomeStatus
-	RegressionEvidence     SelfImprovementOutcomeStatus
-	AdoptionAuthorized     SelfImprovementOutcomeStatus
+	ContractPreserved       SelfImprovementOutcomeStatus
+	RegressionEvidence      SelfImprovementOutcomeStatus
+	AdoptionAuthorized      SelfImprovementOutcomeStatus
 
 	AdoptionAuthorityEvidenceDigest string
 	AdoptionAuthorityIndependent    bool
@@ -40,7 +40,7 @@ type SelfImprovementOutcomeReceipt struct {
 
 func NewSelfImprovementOutcomeReceipt() SelfImprovementOutcomeReceipt {
 	return SelfImprovementOutcomeReceipt{
-		SchemaVersion:    SelfImprovementOutcomeSchema,
+		SchemaVersion:     SelfImprovementOutcomeSchema,
 		MissingStageIndex: -1,
 	}
 }
@@ -76,9 +76,9 @@ func (r SelfImprovementOutcomeReceipt) Validate() error {
 	}
 	for name, status := range map[string]SelfImprovementOutcomeStatus{
 		"counterexample_recovered": r.CounterexampleRecovered,
-		"contract_preserved":      r.ContractPreserved,
-		"regression_evidence":     r.RegressionEvidence,
-		"adoption_authorized":     r.AdoptionAuthorized,
+		"contract_preserved":       r.ContractPreserved,
+		"regression_evidence":      r.RegressionEvidence,
+		"adoption_authorized":      r.AdoptionAuthorized,
 	} {
 		switch status {
 		case SelfImprovementOutcomeClosed, SelfImprovementOutcomeUnknown, SelfImprovementOutcomeRefuted:
