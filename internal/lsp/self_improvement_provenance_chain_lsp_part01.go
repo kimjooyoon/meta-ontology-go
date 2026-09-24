@@ -20,11 +20,21 @@ type SelfImprovementProvenanceChainProjectionPart01 struct {
 	BoundStages          int                                               `json:"bound_stages"`
 	TotalStages          int                                               `json:"total_stages"`
 	NextRequiredStage    string                                            `json:"next_required_stage"`
+	Recovery             SelfImprovementProvenanceRecoveryPart01           `json:"recovery"`
 	AdoptionAuthorized   bool                                              `json:"adoption_authorized"`
 	NonAuthorizing       bool                                              `json:"non_authorizing"`
 	EvidencePrefixDigest string                                            `json:"evidence_prefix_digest"`
 	MissingStageIndex    int                                               `json:"missing_stage_index"`
 	Digest               string                                            `json:"digest"`
+}
+
+type SelfImprovementProvenanceRecoveryPart01 struct {
+	Stage            string `json:"stage"`
+	StageIndex       int    `json:"stage_index"`
+	RequiredEvidence string `json:"required_evidence"`
+	Action           string `json:"action"`
+	NonAuthorizing   bool   `json:"non_authorizing"`
+	Digest           string `json:"digest"`
 }
 
 func ProjectSelfImprovementProvenanceChainPart01(
@@ -62,6 +72,7 @@ func ProjectSelfImprovementProvenanceChainPart01(
 		NonAuthorizing:     true,
 		MissingStageIndex:  missingStageIndexPart01(chain.Stages),
 	}
+	projection.Recovery = recoveryPart01(projection)
 	projection.EvidencePrefixDigest = evidencePrefixDigestPart01(projection)
 	projection.Digest = digestSelfImprovementProvenanceChainProjectionPart01(projection)
 	return projection, nil
@@ -107,6 +118,9 @@ func (projection SelfImprovementProvenanceChainProjectionPart01) Validate() erro
 		projection.NextRequiredStage == "" {
 		return fmt.Errorf("unknown self-improvement provenance chain projection has no next required stage")
 	}
+	if projection.Recovery != recoveryPart01(projection) {
+		return fmt.Errorf("self-improvement provenance recovery does not match its missing stage")
+	}
 	if projection.ChainDigest == "" || projection.EvidencePrefixDigest == "" ||
 		projection.EvidencePrefixDigest != evidencePrefixDigestPart01(projection) ||
 		projection.Digest == "" ||
@@ -114,6 +128,50 @@ func (projection SelfImprovementProvenanceChainProjectionPart01) Validate() erro
 		return fmt.Errorf("self-improvement provenance chain projection digest does not match its evidence")
 	}
 	return nil
+}
+
+func recoveryPart01(
+	projection SelfImprovementProvenanceChainProjectionPart01,
+) SelfImprovementProvenanceRecoveryPart01 {
+	recovery := SelfImprovementProvenanceRecoveryPart01{
+		StageIndex:     projection.MissingStageIndex,
+		NonAuthorizing: true,
+	}
+	if projection.MissingStageIndex < 0 {
+		recovery.Action = "NO_ACTION_REQUIRED"
+	} else {
+		recovery.Stage = projection.NextRequiredStage
+		recovery.RequiredEvidence = requiredEvidencePart01(recovery.Stage)
+		recovery.Action = "BIND_" + strings.ToUpper(strings.ReplaceAll(recovery.Stage, "-", "_")) + "_DIGEST"
+	}
+	recovery.Digest = digestRecoveryPart01(recovery)
+	return recovery
+}
+
+func requiredEvidencePart01(stage string) string {
+	switch stage {
+	case "gooo-declaration":
+		return "DECLARATION_DIGEST"
+	case "source":
+		return "SOURCE_DIGEST"
+	case "semantic-ir":
+		return "SEMANTIC_IR_DIGEST"
+	case "semantic-graph":
+		return "SEMANTIC_GRAPH_DIGEST"
+	case "generated":
+		return "GENERATED_DIGEST"
+	case "reverse-observation":
+		return "REVERSE_OBSERVATION_DIGEST"
+	default:
+		return ""
+	}
+}
+
+func digestRecoveryPart01(value SelfImprovementProvenanceRecoveryPart01) string {
+	value.Digest = ""
+	encoded, _ := json.Marshal(value)
+	digest := sha256.Sum256(encoded)
+	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 func nextSelfImprovementProvenanceStagePart01(
