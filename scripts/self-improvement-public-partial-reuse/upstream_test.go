@@ -10,7 +10,7 @@ import (
 	"github.com/kimjooyoon/meta-ontology-go/internal/meta/publicorchestration"
 )
 
-func testDigest() string { return "sha256:" + strings.Repeat("a", 64) }
+func testDigest() string { return strings.Repeat("a", 64) }
 
 func testPolicy() publicorchestration.Policy {
 	digest := testDigest()
