@@ -1,6 +1,9 @@
 package valueexecution
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestObserveSelfImprovementExecutionRequestFailsClosed(t *testing.T) {
 	observation := ObserveSelfImprovementExecutionRequest(
@@ -43,5 +46,31 @@ func TestObserveSelfImprovementExecutionRequestRejectsMalformedSecurityDigest(t 
 	}
 	if !observation.NonAuthorizing || observation.Digest == "" {
 		t.Fatal("malformed security digest must remain non-authorizing and digestable")
+	}
+}
+
+func TestObserveSelfImprovementExecutionRequestAcceptsBareHexSecurityDigests(t *testing.T) {
+	selection := SelfImprovementCandidateSelectionObservation{
+		Schema:         SelfImprovementCandidateSelectionObservationSchema,
+		Status:         SelfImprovementCandidateSelectionStatusSelected,
+		NonAuthorizing: true,
+		Digest:         "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+	}
+	bareDigest := strings.Repeat("a", 64)
+	observation := ObserveSelfImprovementExecutionRequest(
+		selection,
+		SelfImprovementExecutionRequestContext{
+			RequestID:              "request-bare-hex",
+			SourceURI:              "file:///workspace/candidate.gooo",
+			EnvironmentDigest:      bareDigest,
+			WorkloadIdentityDigest: bareDigest,
+			GatewayPolicyDigest:    bareDigest,
+		},
+	)
+	if observation.Status != SelfImprovementExecutionRequestStatusReady {
+		t.Fatalf("status=%q, want ready; reason=%q", observation.Status, observation.Reason)
+	}
+	if observation.Reason != "EXECUTION_REQUEST_EVIDENCE_READY" || !observation.NonAuthorizing || observation.Digest == "" {
+		t.Fatalf("unexpected bare-hex execution request observation: %#v", observation)
 	}
 }

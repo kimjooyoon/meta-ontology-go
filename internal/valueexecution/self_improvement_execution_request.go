@@ -1,6 +1,8 @@
 package valueexecution
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 
 	"github.com/kimjooyoon/meta-ontology-go/internal/cache"
@@ -58,7 +60,7 @@ func ObserveSelfImprovementExecutionRequest(
 		observation.Reason = "EXECUTION_REQUEST_IDENTITY_MISSING"
 	case request.EnvironmentDigest == "" || request.WorkloadIdentityDigest == "" || request.GatewayPolicyDigest == "":
 		observation.Reason = "EXECUTION_REQUEST_SECURITY_DIGEST_MISSING"
-	case !validDigest(request.EnvironmentDigest) || !validDigest(request.WorkloadIdentityDigest) || !validDigest(request.GatewayPolicyDigest):
+	case !validExecutionRequestSecurityDigest(request.EnvironmentDigest) || !validExecutionRequestSecurityDigest(request.WorkloadIdentityDigest) || !validExecutionRequestSecurityDigest(request.GatewayPolicyDigest):
 		observation.Reason = "EXECUTION_REQUEST_SECURITY_DIGEST_INVALID"
 	default:
 		observation.Status = SelfImprovementExecutionRequestStatusReady
@@ -72,4 +74,15 @@ func selfImprovementExecutionRequestObservationDigest(observation SelfImprovemen
 	observation.Digest = ""
 	encoded, _ := json.Marshal(observation)
 	return cache.HashBytes(encoded).String()
+}
+
+func validExecutionRequestSecurityDigest(value string) bool {
+	if validDigest(value) {
+		return true
+	}
+	if len(value) != sha256.Size*2 {
+		return false
+	}
+	_, err := hex.DecodeString(value)
+	return err == nil
 }
